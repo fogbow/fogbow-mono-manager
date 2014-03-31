@@ -1,7 +1,5 @@
 package org.fogbowcloud.manager.occi;
 
-import org.restlet.engine.adapter.HttpRequest;
-import org.restlet.engine.header.Header;
 import org.restlet.resource.Get;
 import org.restlet.resource.Post;
 import org.restlet.resource.ServerResource;
@@ -10,14 +8,16 @@ public class Request extends ServerResource {
 
 	@Get
     public String fetch() {
-		HttpRequest req = (HttpRequest) getRequest();
-		Header xAttr = req.getHeaders().getFirst(normalize("X-OCCI-Attribute"));
-        return xAttr.getValue();
+		//HttpRequest req = (HttpRequest) getRequest();
+		//Header xAttr = req.getHeaders().getFirst(normalize("Category"));
+		return "X-OCCI-RequestId: REQUESNASAKJBADJHDJABHCXJHBDSJHBshabxjabhscjhabcjhba"; 
     }
 
 	@Post
     public String post() {
-        return "";
+		//HttpRequest req = (HttpRequest) getRequest();		
+		//Header xAttr = req.getHeaders().getFirst(normalize("Category"));
+		return "X-OCCI-RequestId: REQUESNASAKJBADJHDJABHCXJHBDSJHBshabxjabhscjhabcjhba"; 
     }
 	
 	private static String normalize(String headerName) {
@@ -27,5 +27,4 @@ public class Request extends ServerResource {
 				lowerHeaderArray[0]);
 		return new String(lowerHeaderArray);
 	}
-	
 }
