@@ -1,5 +1,6 @@
 package org.fogbowcloud.manager.occi;
 
+import org.restlet.resource.Delete;
 import org.restlet.resource.Get;
 import org.restlet.resource.Post;
 import org.restlet.resource.ServerResource;
@@ -19,6 +20,11 @@ public class Request extends ServerResource {
 		//Header xAttr = req.getHeaders().getFirst(normalize("Category"));
 		return "X-OCCI-RequestId: REQUESNASAKJBADJHDJABHCXJHBDSJHBshabxjabhscjhabcjhba"; 
     }
+	
+	@Delete
+	public String remove(){
+		return null;
+	}
 	
 	private static String normalize(String headerName) {
 		String lowerHeader = headerName.toLowerCase();
