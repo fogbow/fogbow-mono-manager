@@ -65,8 +65,8 @@ public class TestDeleteRequest {
 	public void testDeleteSpecificRequest() throws URISyntaxException, HttpException, IOException {
 		// Post
 		HttpPost post = new HttpPost(TestRequestHelper.URI_FOGBOW_REQUEST);
-		Category category = new Category(HeaderConstants.TERM_FOGBOW_REQUEST,
-				HeaderConstants.TERM_FOGBOW_REQUEST, HeaderConstants.KIND_CLASS);
+		Category category = new Category(Request.TERM_FOGBOW_REQUEST,
+				Request.TERM_FOGBOW_REQUEST, HeaderConstants.KIND_CLASS);
 		post.addHeader(HeaderConstants.CONTENT_TYPE, TestRequestHelper.CONTENT_TYPE_OCCI);
 		post.addHeader(HeaderConstants.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
 		post.addHeader(HeaderConstants.CATEGORY, category.getHeaderFormat());
@@ -98,13 +98,13 @@ public class TestDeleteRequest {
 	public void testDeleteManyRequest() throws URISyntaxException, HttpException, IOException {
 		// Post
 		HttpPost post = new HttpPost(TestRequestHelper.URI_FOGBOW_REQUEST);
-		Category category = new Category(HeaderConstants.TERM_FOGBOW_REQUEST,
-				HeaderConstants.TERM_FOGBOW_REQUEST, HeaderConstants.KIND_CLASS);
+		Category category = new Category(Request.TERM_FOGBOW_REQUEST,
+				Request.TERM_FOGBOW_REQUEST, HeaderConstants.KIND_CLASS);
 		post.addHeader(HeaderConstants.CONTENT_TYPE, TestRequestHelper.CONTENT_TYPE_OCCI);
 		post.addHeader(HeaderConstants.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
 		post.addHeader(HeaderConstants.CATEGORY, category.getHeaderFormat());
 		post.addHeader(HeaderConstants.X_OCCI_ATTRIBUTE,
-				HeaderConstants.ATRIBUTE_INSTANCE_FOGBOW_REQUEST + " = 200");
+				Request.ATRIBUTE_INSTANCE_FOGBOW_REQUEST + " = 200");
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
 		List<String> requestIDs = TestRequestHelper.getRequestIds(response);
@@ -137,13 +137,13 @@ public class TestDeleteRequest {
 	public void testDeleteAllRequest() throws URISyntaxException, HttpException, IOException {
 		// Post
 		HttpPost post = new HttpPost(TestRequestHelper.URI_FOGBOW_REQUEST);
-		Category category = new Category(HeaderConstants.TERM_FOGBOW_REQUEST,
-				HeaderConstants.TERM_FOGBOW_REQUEST, HeaderConstants.KIND_CLASS);
+		Category category = new Category(Request.TERM_FOGBOW_REQUEST,
+				Request.TERM_FOGBOW_REQUEST, HeaderConstants.KIND_CLASS);
 		post.addHeader(HeaderConstants.CONTENT_TYPE, TestRequestHelper.CONTENT_TYPE_OCCI);
 		post.addHeader(HeaderConstants.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
 		post.addHeader(HeaderConstants.CATEGORY, category.getHeaderFormat());
 		post.addHeader(HeaderConstants.X_OCCI_ATTRIBUTE,
-				HeaderConstants.ATRIBUTE_INSTANCE_FOGBOW_REQUEST + " = 200");
+				Request.ATRIBUTE_INSTANCE_FOGBOW_REQUEST + " = 200");
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
 		List<String> requestIDs = TestRequestHelper.getRequestIds(response);
