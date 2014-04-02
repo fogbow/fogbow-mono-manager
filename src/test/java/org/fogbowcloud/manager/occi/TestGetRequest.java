@@ -5,6 +5,7 @@ import java.net.URISyntaxException;
 
 import org.apache.http.HttpException;
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
 import org.apache.http.ParseException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
@@ -13,6 +14,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.fogbowcloud.manager.occi.core.RequestState;
 import org.fogbowcloud.manager.occi.model.Category;
+import org.fogbowcloud.manager.occi.model.FogbowResourceConstants;
 import org.fogbowcloud.manager.occi.model.HeaderConstants;
 import org.fogbowcloud.manager.occi.model.TestRequestHelper;
 import org.junit.After;
@@ -27,7 +29,7 @@ public class TestGetRequest {
 	@Before
 	public void setup() throws Exception {
 		this.testRequestHelper = new TestRequestHelper();
-		testRequestHelper.inicializeComponent();
+		testRequestHelper.initializeComponent(null, null);
 	}
 
 	@Test
@@ -39,7 +41,7 @@ public class TestGetRequest {
 		HttpResponse response = client.execute(get);
 
 		Assert.assertEquals(0, TestRequestHelper.getRequestIds(response).size());
-		Assert.assertEquals(HeaderConstants.OK_RESPONSE, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 
 	@Test
@@ -51,7 +53,7 @@ public class TestGetRequest {
 		HttpResponse response = client.execute(get);
 
 		Assert.assertEquals(0, TestRequestHelper.getRequestIds(response).size());
-		Assert.assertEquals(HeaderConstants.OK_RESPONSE, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 
 	@Test
@@ -62,20 +64,20 @@ public class TestGetRequest {
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(get);
 
-		Assert.assertEquals(HeaderConstants.UNAUTHORIZED_RESPONSE, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HttpStatus.SC_UNAUTHORIZED, response.getStatusLine().getStatusCode());
 	}
 
 	@Test
 	public void testGetResquestTwoIds() throws URISyntaxException, HttpException, IOException {
 		// Post
 		HttpPost post = new HttpPost(TestRequestHelper.URI_FOGBOW_REQUEST);
-		Category category = new Category(Request.TERM_FOGBOW_REQUEST,
-				Request.SCHEME_FOGBOW_REQUEST, HeaderConstants.KIND_CLASS);
+		Category category = new Category(FogbowResourceConstants.TERM_FOGBOW_REQUEST,
+				FogbowResourceConstants.SCHEME_FOGBOW_REQUEST, HeaderConstants.KIND_CLASS);
 		post.addHeader(HeaderConstants.CONTENT_TYPE, TestRequestHelper.CONTENT_TYPE_OCCI);
 		post.addHeader(HeaderConstants.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
 		post.addHeader(HeaderConstants.CATEGORY, category.getHeaderFormat());
 		post.addHeader(HeaderConstants.X_OCCI_ATTRIBUTE,
-				Request.ATRIBUTE_INSTANCE_FOGBOW_REQUEST + " = 2");
+				FogbowResourceConstants.ATRIBUTE_INSTANCE_FOGBOW_REQUEST + " = 2");
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
 		// Get
@@ -84,22 +86,22 @@ public class TestGetRequest {
 		get.addHeader(HeaderConstants.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
 		client = new DefaultHttpClient();
 		response = client.execute(get);
-		
+
 		Assert.assertEquals(2, TestRequestHelper.getRequestIds(response).size());
-		Assert.assertEquals(HeaderConstants.OK_RESPONSE, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 
 	@Test
 	public void testGetResquestManyIds() throws URISyntaxException, HttpException, IOException {
 		// Post
 		HttpPost post = new HttpPost(TestRequestHelper.URI_FOGBOW_REQUEST);
-		Category category = new Category(Request.TERM_FOGBOW_REQUEST,
-				Request.SCHEME_FOGBOW_REQUEST, HeaderConstants.KIND_CLASS);
+		Category category = new Category(FogbowResourceConstants.TERM_FOGBOW_REQUEST,
+				FogbowResourceConstants.SCHEME_FOGBOW_REQUEST, HeaderConstants.KIND_CLASS);
 		post.addHeader(HeaderConstants.CONTENT_TYPE, TestRequestHelper.CONTENT_TYPE_OCCI);
 		post.addHeader(HeaderConstants.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
 		post.addHeader(HeaderConstants.CATEGORY, category.getHeaderFormat());
 		post.addHeader(HeaderConstants.X_OCCI_ATTRIBUTE,
-				Request.ATRIBUTE_INSTANCE_FOGBOW_REQUEST + " = 200");
+				FogbowResourceConstants.ATRIBUTE_INSTANCE_FOGBOW_REQUEST + " = 200");
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
 		// Get
@@ -110,7 +112,7 @@ public class TestGetRequest {
 		response = client.execute(get);
 
 		Assert.assertEquals(200, TestRequestHelper.getRequestIds(response).size());
-		Assert.assertEquals(HeaderConstants.OK_RESPONSE, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 
 	@Test
@@ -118,13 +120,13 @@ public class TestGetRequest {
 			HttpException {
 		// Post
 		HttpPost post = new HttpPost(TestRequestHelper.URI_FOGBOW_REQUEST);
-		Category category = new Category(Request.TERM_FOGBOW_REQUEST,
-				Request.SCHEME_FOGBOW_REQUEST, HeaderConstants.KIND_CLASS);
+		Category category = new Category(FogbowResourceConstants.TERM_FOGBOW_REQUEST,
+				FogbowResourceConstants.SCHEME_FOGBOW_REQUEST, HeaderConstants.KIND_CLASS);
 		post.addHeader(HeaderConstants.CONTENT_TYPE, TestRequestHelper.CONTENT_TYPE_OCCI);
 		post.addHeader(HeaderConstants.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
 		post.addHeader(HeaderConstants.CATEGORY, category.getHeaderFormat());
 		post.addHeader(HeaderConstants.X_OCCI_ATTRIBUTE,
-				Request.ATRIBUTE_INSTANCE_FOGBOW_REQUEST + " = 1");
+				FogbowResourceConstants.ATRIBUTE_INSTANCE_FOGBOW_REQUEST + " = 1");
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
 		// Get
@@ -134,7 +136,7 @@ public class TestGetRequest {
 		get.addHeader(HeaderConstants.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
 		response = client.execute(get);
 
-		Assert.assertEquals(HeaderConstants.OK_RESPONSE, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 
 	@Test
@@ -146,7 +148,7 @@ public class TestGetRequest {
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(get);
 
-		Assert.assertEquals(HeaderConstants.NOT_FOUND_RESPONSE, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatusLine().getStatusCode());
 	}
 
 	@Test
@@ -154,13 +156,13 @@ public class TestGetRequest {
 			HttpException {
 		// Post
 		HttpPost post = new HttpPost(TestRequestHelper.URI_FOGBOW_REQUEST);
-		Category category = new Category(Request.TERM_FOGBOW_REQUEST,
-				Request.SCHEME_FOGBOW_REQUEST, HeaderConstants.KIND_CLASS);
+		Category category = new Category(FogbowResourceConstants.TERM_FOGBOW_REQUEST,
+				FogbowResourceConstants.SCHEME_FOGBOW_REQUEST, HeaderConstants.KIND_CLASS);
 		post.addHeader(HeaderConstants.CONTENT_TYPE, TestRequestHelper.CONTENT_TYPE_OCCI);
 		post.addHeader(HeaderConstants.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
 		post.addHeader(HeaderConstants.CATEGORY, category.getHeaderFormat());
 		post.addHeader(HeaderConstants.X_OCCI_ATTRIBUTE,
-				Request.ATRIBUTE_INSTANCE_FOGBOW_REQUEST + " = 1");
+				FogbowResourceConstants.ATRIBUTE_INSTANCE_FOGBOW_REQUEST + " = 1");
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
 		// Get
@@ -172,7 +174,7 @@ public class TestGetRequest {
 
 		String responseStr = EntityUtils.toString(response.getEntity(), TestRequestHelper.UTF_8);
 		Assert.assertEquals(RequestState.OPEN.getValue(), responseStr);
-		Assert.assertEquals(HeaderConstants.OK_RESPONSE, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 
 	@After

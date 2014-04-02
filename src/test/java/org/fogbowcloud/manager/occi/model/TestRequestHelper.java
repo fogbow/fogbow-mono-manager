@@ -8,6 +8,10 @@ import org.apache.http.HttpResponse;
 import org.apache.http.ParseException;
 import org.apache.http.util.EntityUtils;
 import org.fogbowcloud.manager.occi.OCCIApplication;
+import org.fogbowcloud.manager.occi.Request;
+import org.fogbowcloud.manager.occi.plugins.ComputePlugin;
+import org.fogbowcloud.manager.occi.plugins.IdentityPlugin;
+import org.mockito.Mockito;
 import org.restlet.Component;
 import org.restlet.data.Protocol;
 
@@ -22,10 +26,16 @@ public class TestRequestHelper {
 
 	private final int PORT_ENDPOINT = 8182;
 
-	public void inicializeComponent() throws Exception {
+	public void initializeComponent(ComputePlugin computePlugin, IdentityPlugin identityPlugin) throws Exception {
 		component = new Component();
 		component.getServers().add(Protocol.HTTP, PORT_ENDPOINT);
-		component.getDefaultHost().attach(new OCCIApplication());
+		
+		OCCIApplication application = new OCCIApplication();
+		
+		application.setComputePlugin(computePlugin);		
+		application.setIdentityPlugin(identityPlugin);
+
+		component.getDefaultHost().attach(application);
 		component.start();
 	}
 
@@ -37,7 +47,7 @@ public class TestRequestHelper {
 			IOException {
 		String responseStr = EntityUtils.toString(response.getEntity(), UTF_8);
 
-		String[] tokens = responseStr.split("X-OCCI-RequestId:");
+		String[] tokens = responseStr.split(Request.X_OCCI_LOCATION);
 		List<String> requestIds = new ArrayList<String>();
 
 		for (int i = 0; i < tokens.length; i++) {

@@ -9,13 +9,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
 import org.fogbowcloud.manager.occi.core.RequestState;
 import org.fogbowcloud.manager.occi.core.RequestType;
 import org.fogbowcloud.manager.occi.core.RequestUnit;
 import org.fogbowcloud.manager.occi.exception.IrregularSyntaxOCCIExtException;
 import org.fogbowcloud.manager.occi.model.Category;
+import org.fogbowcloud.manager.occi.model.FogbowResourceConstants;
 import org.fogbowcloud.manager.occi.model.HeaderConstants;
 import org.restlet.data.Status;
 import org.restlet.engine.adapter.HttpRequest;
@@ -26,25 +28,12 @@ import org.restlet.resource.ServerResource;
 
 public class Request extends ServerResource {
 
-	public static final String TERM_FOGBOW_REQUEST = "fogbow-request";
-	public static final String SCHEME_FOGBOW_REQUEST = "http://schemas.fogbowcloud.org/request#";
-	public static final String CLASS_FOGBOW_REQUEST = "kind";
-	public static final String ATRIBUTE_INSTANCE_FOGBOW_REQUEST = "org.fogbowcloud.request.instance";
-	public static final String ATRIBUTE_TYPE_FOGBOW_REQUEST = "org.fogbowcloud.request.type";
-	public static final String ATRIBUTE_VALID_UNTIL_FOGBOW_REQUEST = "org.fogbowcloud.request.valid-until";
-	public static final String ATRIBUTE_VALID_FROM_FOGBOW_REQUEST = "org.fogbowcloud.request.valid-from";
-	private final int DEFAULT_INSTANCES = 1;
-
-	private Map<String, List<RequestUnit>> userToRequests;
-
-	public Request() {
-		// TODO get from BD
-		this.userToRequests = new ConcurrentHashMap<String, List<RequestUnit>>();
-	}
+	public static final String X_OCCI_LOCATION = "X-OCCI-Location: ";
 
 	@Get
 	public String fetch() {
-		return null;
+		OCCIApplication application = (OCCIApplication) getApplication();
+		return application.getComputePlugin().toString();
 	}
 
 	@Delete
@@ -55,11 +44,21 @@ public class Request extends ServerResource {
 	@Post
 	public String post() {
 		try {
+			OCCIApplication application = (OCCIApplication) getApplication();
+			Map<String, List<RequestUnit>> userToRequests = application.getUserToRequest();
+			
+			//getting token
 			HttpRequest req = (HttpRequest) getRequest();
 			String token = req.getHeaders().getValues(HeaderConstants.X_AUTH_TOKEN);
-			if (isValidToken(token)) {
+						
+			String requestEndpoint = req.getHostRef() + req.getHttpCall().getRequestUri();
+			if (application.getIdentityPlugin().isValidToken(token)) {
+				
+				//checking fogbow headers
 				validateContentType(req);
+				
 				List<Category> listCategory = getListCategory(req);
+				
 				validateRequestCategory(listCategory);
 				Map<String, String> mapAttributes = getAtributes(req);
 				int numberInstanceRequest = getAttributeInstances(mapAttributes);
@@ -70,24 +69,29 @@ public class Request extends ServerResource {
 				if (userToRequests.get(token) == null) {
 					userToRequests.put(token, new ArrayList<RequestUnit>());
 				}
+				
 				List<RequestUnit> currentRequestUnits = new ArrayList<RequestUnit>();
 				for (int i = 0; i < numberInstanceRequest; i++) {
 					String requestId = String.valueOf(UUID.randomUUID());
-					RequestUnit requestUnit = new RequestUnit(requestId, "", RequestState.OPEN);
+					RequestUnit requestUnit = new RequestUnit(requestId, "", RequestState.OPEN);					
 					currentRequestUnits.add(requestUnit);
+					
+					//FIXME Choose submit request to private cloud or other manager
+					HttpResponse cloudResponse = application.getComputePlugin().requestInstance(req);
+										
 				}
 				userToRequests.get(token).addAll(currentRequestUnits);
-				return generateResponseId(currentRequestUnits);
+				return generateResponseId(currentRequestUnits, requestEndpoint);
 			} else {
-				setStatus(new Status(HeaderConstants.NOT_FOUND_RESPONSE));
+				setStatus(new Status(HttpStatus.SC_UNAUTHORIZED));
 				return "Without authorization";
 			}
 		} catch (IrregularSyntaxOCCIExtException e) {
-			setStatus(new Status(HeaderConstants.BAD_REQUEST_RESPONSE));
+			setStatus(new Status(HttpStatus.SC_BAD_REQUEST));
 			e.printStackTrace();
 			return "Irregular Syntax";
 		} catch (IllegalArgumentException e) {
-			setStatus(new Status(HeaderConstants.BAD_REQUEST_RESPONSE));
+			setStatus(new Status(HttpStatus.SC_BAD_REQUEST));
 			e.printStackTrace();
 			return "Irregular Syntax";
 		} catch (Exception e) {
@@ -96,10 +100,10 @@ public class Request extends ServerResource {
 		}
 	}
 
-	private String generateResponseId(List<RequestUnit> requestUnits) {
+	private String generateResponseId(List<RequestUnit> requestUnits, String requestEndpoint) {
 		String response = "";
 		for (RequestUnit request : requestUnits) {
-			response += "X-OCCI-RequestId:" + request.getId();
+			response += X_OCCI_LOCATION + requestEndpoint + request.getId() + "\n";
 		}
 		return response;
 	}
@@ -114,11 +118,11 @@ public class Request extends ServerResource {
 	private int getAttributeInstances(Map<String, String> map)
 			throws IrregularSyntaxOCCIExtException {
 		try {
-			String instances = map.get(ATRIBUTE_INSTANCE_FOGBOW_REQUEST);
+			String instances = map.get(FogbowResourceConstants.ATRIBUTE_INSTANCE_FOGBOW_REQUEST);
 			if (instances == null || instances.equals("")) {
-				return DEFAULT_INSTANCES;
+				return FogbowResourceConstants.DEFAULT_VALUE_INSTANCES_FOGBOW_REQUEST;
 			} else {
-				return Integer.parseInt(map.get(ATRIBUTE_INSTANCE_FOGBOW_REQUEST));
+				return Integer.parseInt(map.get(FogbowResourceConstants.ATRIBUTE_INSTANCE_FOGBOW_REQUEST));
 			}
 		} catch (NumberFormatException e) {
 			e.printStackTrace();
@@ -127,12 +131,11 @@ public class Request extends ServerResource {
 	}
 
 	private String getAttributeType(Map<String, String> map) throws IrregularSyntaxOCCIExtException {
-		String type = map.get(ATRIBUTE_TYPE_FOGBOW_REQUEST);
+		String type = map.get(FogbowResourceConstants.ATRIBUTE_TYPE_FOGBOW_REQUEST);
 		if (type == null || type.equals("")) {
 			return null;
 		} else {
 			for (int i = 0; i < RequestType.values().length; i++) {
-				System.out.println(RequestType.values()[i]);
 				if (type.equals(RequestType.values()[i].getValue())) {
 					return type;
 				}
@@ -145,10 +148,9 @@ public class Request extends ServerResource {
 	private Date getAttributeValidFrom(Map<String, String> map)
 			throws IrregularSyntaxOCCIExtException {
 		try {
-			String dataString = map.get(ATRIBUTE_VALID_FROM_FOGBOW_REQUEST);
+			String dataString = map.get(FogbowResourceConstants.ATRIBUTE_VALID_FROM_FOGBOW_REQUEST);
 			if (dataString != null && !dataString.equals("")) {
 				DateFormat formatter = new SimpleDateFormat("yy-MM-dd");
-				System.out.println("dATA :" + dataString);
 				return (Date) formatter.parse(dataString);
 			}
 			return null;
@@ -161,10 +163,9 @@ public class Request extends ServerResource {
 	private Date getAttributeValidUntil(Map<String, String> map)
 			throws IrregularSyntaxOCCIExtException {
 		try {
-			String dataString = map.get(ATRIBUTE_VALID_UNTIL_FOGBOW_REQUEST);
+			String dataString = map.get(FogbowResourceConstants.ATRIBUTE_VALID_UNTIL_FOGBOW_REQUEST);
 			if (dataString != null && !dataString.equals("")) {
 				DateFormat formatter = new SimpleDateFormat("yy-MM-dd");
-				System.out.println("dATA :" + dataString);
 				return (Date) formatter.parse(dataString);
 			}
 			return null;
@@ -193,7 +194,7 @@ public class Request extends ServerResource {
 	private void validateRequestCategory(List<Category> listCategory)
 			throws IrregularSyntaxOCCIExtException {
 		for (Category category : listCategory) {
-			if (category.getTerm().equals(TERM_FOGBOW_REQUEST)) {
+			if (category.getTerm().equals(FogbowResourceConstants.TERM_FOGBOW_REQUEST)) {
 				if (validateCategory(category) == false) {
 					throw new IrregularSyntaxOCCIExtException();
 				}
@@ -204,13 +205,9 @@ public class Request extends ServerResource {
 	}
 
 	private boolean validateCategory(Category category) {
-		System.out.println(category.getTerm().equals(TERM_FOGBOW_REQUEST));
-		System.out.println(category.getCatClass().equals(CLASS_FOGBOW_REQUEST));
-		System.out.println(category.getScheme().equals(SCHEME_FOGBOW_REQUEST));
-
-		if (category.getTerm().equals(TERM_FOGBOW_REQUEST)
-				&& category.getCatClass().equals(CLASS_FOGBOW_REQUEST)
-				&& category.getScheme().equals(SCHEME_FOGBOW_REQUEST)) {
+		if (category.getTerm().equals(FogbowResourceConstants.TERM_FOGBOW_REQUEST)
+				&& category.getCatClass().equals(FogbowResourceConstants.CLASS_FOGBOW_REQUEST)
+				&& category.getScheme().equals(FogbowResourceConstants.SCHEME_FOGBOW_REQUEST)) {
 			return true;
 		}
 		return false;
@@ -225,21 +222,25 @@ public class Request extends ServerResource {
 		String catClass = "";
 		for (int i = 0; i < valuesCategory.length; i++) {
 			String[] tokenValuesCAtegory = valuesCategory[i].split(";");
-			Category category = null;
-			for (int j = 0; j < tokenValuesCAtegory.length; j++) {
-				String[] nameValue = tokenValuesCAtegory[j].split("=");
-				if (nameValue.length == 1) {
-					term = nameValue[0].trim();
-				} else if (nameValue[0].trim().equals(HeaderConstants.SCHEME_CATEGORY)) {
-					scheme = nameValue[1].replace("\"", "").trim();
-				} else if (nameValue[0].trim().equals(HeaderConstants.CLASS_CATEGORY)) {
-					catClass = nameValue[1].replace("\"", "").trim();
-				} else {
-					throw new IrregularSyntaxOCCIExtException();
+			if(tokenValuesCAtegory.length < 3){
+				Category category = null;
+				for (int j = 0; j < tokenValuesCAtegory.length; j++) {
+					String[] nameValue = tokenValuesCAtegory[j].split("=");
+					if (nameValue.length == 1) {
+						term = nameValue[0].trim();
+					} else if (nameValue[0].trim().equals(HeaderConstants.SCHEME_CATEGORY)) {
+						scheme = nameValue[1].replace("\"", "").trim();
+					} else if (nameValue[0].trim().equals(HeaderConstants.CLASS_CATEGORY)) {
+						catClass = nameValue[1].replace("\"", "").trim();
+					} else {
+						throw new IrregularSyntaxOCCIExtException();
+					}
 				}
+				category = new Category(term, scheme, catClass);
+				listCategory.add(category);
+			}else{
+				throw new IrregularSyntaxOCCIExtException();
 			}
-			category = new Category(term, scheme, catClass);
-			listCategory.add(category);
 		}
 		return listCategory;
 	}
