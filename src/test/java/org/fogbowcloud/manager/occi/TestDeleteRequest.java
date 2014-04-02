@@ -36,7 +36,7 @@ public class TestDeleteRequest {
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(delete);
 
-		Assert.assertEquals(HeaderConstants.RESPONSE_200, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HeaderConstants.OK_RESPONSE, response.getStatusLine().getStatusCode());
 	}
 
 	@Test
@@ -48,17 +48,17 @@ public class TestDeleteRequest {
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(get);
 		Assert.assertEquals(0, TestRequestHelper.getRequestIds(response).size());
-		Assert.assertEquals(HeaderConstants.RESPONSE_200, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HeaderConstants.OK_RESPONSE, response.getStatusLine().getStatusCode());
 		// Delete
 		HttpDelete delete = new HttpDelete(TestRequestHelper.URI_FOGBOW_REQUEST);
 		delete.addHeader(HeaderConstants.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
 		client = new DefaultHttpClient();
 		response = client.execute(delete);
-		Assert.assertEquals(HeaderConstants.RESPONSE_200, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HeaderConstants.OK_RESPONSE, response.getStatusLine().getStatusCode());
 		//Get
 		response = client.execute(get);
 		Assert.assertEquals(0, TestRequestHelper.getRequestIds(response).size());
-		Assert.assertEquals(HeaderConstants.RESPONSE_200, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HeaderConstants.OK_RESPONSE, response.getStatusLine().getStatusCode());
 	}
 
 	@Test
@@ -75,14 +75,14 @@ public class TestDeleteRequest {
 		List<String> requestIDs = TestRequestHelper.getRequestIds(response);
 
 		Assert.assertEquals(1, requestIDs.size());
-		Assert.assertEquals(HeaderConstants.RESPONSE_200, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HeaderConstants.OK_RESPONSE, response.getStatusLine().getStatusCode());
 		// Delete
 		HttpDelete delete = new HttpDelete(TestRequestHelper.URI_FOGBOW_REQUEST + "/"
 				+ requestIDs.get(0));
 		delete.addHeader(HeaderConstants.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
 		response = client.execute(delete);
 
-		Assert.assertEquals(HeaderConstants.RESPONSE_200, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HeaderConstants.OK_RESPONSE, response.getStatusLine().getStatusCode());
 		// Get
 		HttpGet get = new HttpGet(TestRequestHelper.URI_FOGBOW_REQUEST);
 		get.addHeader(HeaderConstants.CONTENT_TYPE, TestRequestHelper.CONTENT_TYPE_OCCI);
@@ -91,7 +91,7 @@ public class TestDeleteRequest {
 		response = client.execute(get);
 
 		Assert.assertEquals(0, TestRequestHelper.getRequestIds(response).size());
-		Assert.assertEquals(HeaderConstants.RESPONSE_200, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HeaderConstants.OK_RESPONSE, response.getStatusLine().getStatusCode());
 	}
 
 	@Test
@@ -110,7 +110,7 @@ public class TestDeleteRequest {
 		List<String> requestIDs = TestRequestHelper.getRequestIds(response);
 
 		Assert.assertEquals(200, requestIDs.size());
-		Assert.assertEquals(HeaderConstants.RESPONSE_200, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HeaderConstants.OK_RESPONSE, response.getStatusLine().getStatusCode());
 
 		
 		// Delete
@@ -119,7 +119,7 @@ public class TestDeleteRequest {
 			delete = new HttpDelete(TestRequestHelper.URI_FOGBOW_REQUEST + "/" + requestId);
 			delete.addHeader(HeaderConstants.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
 			response = client.execute(delete);
-			Assert.assertEquals(HeaderConstants.RESPONSE_200, response.getStatusLine()
+			Assert.assertEquals(HeaderConstants.OK_RESPONSE, response.getStatusLine()
 					.getStatusCode());
 		}
 
@@ -130,7 +130,7 @@ public class TestDeleteRequest {
 		response = client.execute(get);
 
 		Assert.assertEquals(0, TestRequestHelper.getRequestIds(response).size());
-		Assert.assertEquals(HeaderConstants.RESPONSE_200, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HeaderConstants.OK_RESPONSE, response.getStatusLine().getStatusCode());
 	}
 
 	@Test
@@ -149,14 +149,14 @@ public class TestDeleteRequest {
 		List<String> requestIDs = TestRequestHelper.getRequestIds(response);
 
 		Assert.assertEquals(200, requestIDs.size());
-		Assert.assertEquals(HeaderConstants.RESPONSE_200, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HeaderConstants.OK_RESPONSE, response.getStatusLine().getStatusCode());
 
 		// Delete
 		HttpDelete delete = new HttpDelete(TestRequestHelper.URI_FOGBOW_REQUEST);
 		delete.addHeader(HeaderConstants.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
 		response = client.execute(delete);
 		
-		Assert.assertEquals(HeaderConstants.RESPONSE_200, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HeaderConstants.OK_RESPONSE, response.getStatusLine().getStatusCode());
 
 		// Get
 		HttpGet get = new HttpGet(TestRequestHelper.URI_FOGBOW_REQUEST);
@@ -165,7 +165,7 @@ public class TestDeleteRequest {
 		response = client.execute(get);
 
 		Assert.assertEquals(0, TestRequestHelper.getRequestIds(response).size());
-		Assert.assertEquals(HeaderConstants.RESPONSE_200, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HeaderConstants.OK_RESPONSE, response.getStatusLine().getStatusCode());
 	}
 
 	@Test
@@ -176,7 +176,7 @@ public class TestDeleteRequest {
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(delete);
 
-		Assert.assertEquals(HeaderConstants.RESPONSE_404, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HeaderConstants.NOT_FOUND_RESPONSE, response.getStatusLine().getStatusCode());
 	}
 
 	@Test
@@ -187,7 +187,7 @@ public class TestDeleteRequest {
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(delete);
 
-		Assert.assertEquals(HeaderConstants.RESPONSE_401, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HeaderConstants.UNAUTHORIZED_RESPONSE, response.getStatusLine().getStatusCode());
 	}
 
 	@After

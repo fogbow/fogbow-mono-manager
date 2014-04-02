@@ -40,7 +40,7 @@ public class TestPostRequest {
 		List<String> requestIDs = TestRequestHelper.getRequestIds(response);
 
 		Assert.assertEquals(1, requestIDs.size());
-		Assert.assertEquals(HeaderConstants.RESPONSE_200, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HeaderConstants.OK_RESPONSE, response.getStatusLine().getStatusCode());
 	}
 
 	@Test
@@ -51,14 +51,14 @@ public class TestPostRequest {
 		post.addHeader(HeaderConstants.CONTENT_TYPE, TestRequestHelper.CONTENT_TYPE_OCCI);
 		post.addHeader(HeaderConstants.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
 		post.addHeader(HeaderConstants.CATEGORY, category.getHeaderFormat());
-		post.addHeader(HeaderConstants.X_OCCI_ATTRIBUTE,
-				Request.ATRIBUTE_INSTANCE_FOGBOW_REQUEST + " = 2");
+		post.addHeader(HeaderConstants.X_OCCI_ATTRIBUTE, Request.ATRIBUTE_INSTANCE_FOGBOW_REQUEST
+				+ " = 2");
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
 		List<String> requestIDs = TestRequestHelper.getRequestIds(response);
 
 		Assert.assertEquals(2, requestIDs.size());
-		Assert.assertEquals(HeaderConstants.RESPONSE_200, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HeaderConstants.OK_RESPONSE, response.getStatusLine().getStatusCode());
 	}
 
 	@Test
@@ -70,14 +70,14 @@ public class TestPostRequest {
 		post.addHeader(HeaderConstants.CONTENT_TYPE, TestRequestHelper.CONTENT_TYPE_OCCI);
 		post.addHeader(HeaderConstants.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
 		post.addHeader(HeaderConstants.CATEGORY, category.getHeaderFormat());
-		post.addHeader(HeaderConstants.X_OCCI_ATTRIBUTE,
-				Request.ATRIBUTE_INSTANCE_FOGBOW_REQUEST + " = 200");
+		post.addHeader(HeaderConstants.X_OCCI_ATTRIBUTE, Request.ATRIBUTE_INSTANCE_FOGBOW_REQUEST
+				+ " = 200");
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
 		List<String> requestIDs = TestRequestHelper.getRequestIds(response);
 
 		Assert.assertEquals(200, requestIDs.size());
-		Assert.assertEquals(HeaderConstants.RESPONSE_200, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HeaderConstants.OK_RESPONSE, response.getStatusLine().getStatusCode());
 	}
 
 	@Test
@@ -92,7 +92,8 @@ public class TestPostRequest {
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
 
-		Assert.assertEquals(HeaderConstants.RESPONSE_400, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HeaderConstants.BAD_REQUEST_RESPONSE, response.getStatusLine()
+				.getStatusCode());
 	}
 
 	@Test
@@ -107,7 +108,8 @@ public class TestPostRequest {
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
 
-		Assert.assertEquals(HeaderConstants.RESPONSE_400, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HeaderConstants.BAD_REQUEST_RESPONSE, response.getStatusLine()
+				.getStatusCode());
 	}
 
 	@Test
@@ -122,7 +124,8 @@ public class TestPostRequest {
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
 
-		Assert.assertEquals(HeaderConstants.RESPONSE_400, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HeaderConstants.BAD_REQUEST_RESPONSE, response.getStatusLine()
+				.getStatusCode());
 	}
 
 	@Test
@@ -134,11 +137,13 @@ public class TestPostRequest {
 		post.addHeader(HeaderConstants.CONTENT_TYPE, TestRequestHelper.CONTENT_TYPE_OCCI);
 		post.addHeader(HeaderConstants.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
 		post.addHeader(HeaderConstants.CATEGORY, category.getHeaderFormat());
-		post.addHeader(HeaderConstants.X_OCCI_ATTRIBUTE, Request.ATRIBUTE_INSTANCE_FOGBOW_REQUEST + " =\"x\"");
+		post.addHeader(HeaderConstants.X_OCCI_ATTRIBUTE, Request.ATRIBUTE_INSTANCE_FOGBOW_REQUEST
+				+ " =\"x\"");
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
 
-		Assert.assertEquals(HeaderConstants.RESPONSE_400, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HeaderConstants.BAD_REQUEST_RESPONSE, response.getStatusLine()
+				.getStatusCode());
 	}
 
 	@Test
@@ -153,7 +158,8 @@ public class TestPostRequest {
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
 
-		Assert.assertEquals(HeaderConstants.RESPONSE_401, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HeaderConstants.UNAUTHORIZED_RESPONSE, response.getStatusLine()
+				.getStatusCode());
 	}
 
 	@Test
@@ -168,7 +174,8 @@ public class TestPostRequest {
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
 
-		Assert.assertEquals(HeaderConstants.RESPONSE_400, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HeaderConstants.BAD_REQUEST_RESPONSE, response.getStatusLine()
+				.getStatusCode());
 	}
 
 	@Test
@@ -180,12 +187,13 @@ public class TestPostRequest {
 		post.addHeader(HeaderConstants.CONTENT_TYPE, TestRequestHelper.CONTENT_TYPE_OCCI);
 		post.addHeader(HeaderConstants.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
 		post.addHeader(HeaderConstants.CATEGORY, category.getHeaderFormat());
-		post.addHeader(HeaderConstants.X_OCCI_ATTRIBUTE,
-				Request.ATRIBUTE_INSTANCE_FOGBOW_REQUEST + " =\"x\"");
+		post.addHeader(HeaderConstants.X_OCCI_ATTRIBUTE, Request.ATRIBUTE_INSTANCE_FOGBOW_REQUEST
+				+ " =\"x\"");
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
 
-		Assert.assertEquals(HeaderConstants.RESPONSE_400, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HeaderConstants.BAD_REQUEST_RESPONSE, response.getStatusLine()
+				.getStatusCode());
 	}
 
 	@Test
@@ -197,12 +205,13 @@ public class TestPostRequest {
 		post.addHeader(HeaderConstants.CONTENT_TYPE, TestRequestHelper.CONTENT_TYPE_OCCI);
 		post.addHeader(HeaderConstants.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
 		post.addHeader(HeaderConstants.CATEGORY, category.getHeaderFormat());
-		post.addHeader(HeaderConstants.X_OCCI_ATTRIBUTE,
-				Request.ATRIBUTE_TYPE_FOGBOW_REQUEST + " =\"x\"");
+		post.addHeader(HeaderConstants.X_OCCI_ATTRIBUTE, Request.ATRIBUTE_TYPE_FOGBOW_REQUEST
+				+ " =\"x\"");
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
 
-		Assert.assertEquals(HeaderConstants.RESPONSE_400, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HeaderConstants.BAD_REQUEST_RESPONSE, response.getStatusLine()
+				.getStatusCode());
 	}
 
 	@Test
@@ -214,12 +223,13 @@ public class TestPostRequest {
 		post.addHeader(HeaderConstants.CONTENT_TYPE, TestRequestHelper.CONTENT_TYPE_OCCI);
 		post.addHeader(HeaderConstants.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
 		post.addHeader(HeaderConstants.CATEGORY, category.getHeaderFormat());
-		post.addHeader(HeaderConstants.X_OCCI_ATTRIBUTE,
-				Request.ATRIBUTE_VALID_FROM_FOGBOW_REQUEST + " =\"x\"");
+		post.addHeader(HeaderConstants.X_OCCI_ATTRIBUTE, Request.ATRIBUTE_VALID_FROM_FOGBOW_REQUEST
+				+ " =\"x\"");
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
 
-		Assert.assertEquals(HeaderConstants.RESPONSE_400, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HeaderConstants.BAD_REQUEST_RESPONSE, response.getStatusLine()
+				.getStatusCode());
 	}
 
 	@Test
@@ -236,7 +246,8 @@ public class TestPostRequest {
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
 
-		Assert.assertEquals(HeaderConstants.RESPONSE_400, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HeaderConstants.BAD_REQUEST_RESPONSE, response.getStatusLine()
+				.getStatusCode());
 	}
 
 	@Test
@@ -248,19 +259,19 @@ public class TestPostRequest {
 		post.addHeader(HeaderConstants.CONTENT_TYPE, TestRequestHelper.CONTENT_TYPE_OCCI);
 		post.addHeader(HeaderConstants.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
 		post.addHeader(HeaderConstants.CATEGORY, category.getHeaderFormat());
-		post.addHeader(HeaderConstants.X_OCCI_ATTRIBUTE,
-				Request.ATRIBUTE_INSTANCE_FOGBOW_REQUEST + "=10");
-		post.addHeader(HeaderConstants.X_OCCI_ATTRIBUTE,
-				Request.ATRIBUTE_TYPE_FOGBOW_REQUEST + "=\"one-time\"");
+		post.addHeader(HeaderConstants.X_OCCI_ATTRIBUTE, Request.ATRIBUTE_INSTANCE_FOGBOW_REQUEST
+				+ "=10");
+		post.addHeader(HeaderConstants.X_OCCI_ATTRIBUTE, Request.ATRIBUTE_TYPE_FOGBOW_REQUEST
+				+ "=\"one-time\"");
 		post.addHeader(HeaderConstants.X_OCCI_ATTRIBUTE,
 				Request.ATRIBUTE_VALID_UNTIL_FOGBOW_REQUEST + "=\"2014-04-01\"");
-		post.addHeader(HeaderConstants.X_OCCI_ATTRIBUTE,
-				Request.ATRIBUTE_VALID_FROM_FOGBOW_REQUEST + "=\"2014-03-30\"");
+		post.addHeader(HeaderConstants.X_OCCI_ATTRIBUTE, Request.ATRIBUTE_VALID_FROM_FOGBOW_REQUEST
+				+ "=\"2014-03-30\"");
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
 
 		Assert.assertEquals(10, TestRequestHelper.getRequestIds(response).size());
-		Assert.assertEquals(HeaderConstants.RESPONSE_200, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HeaderConstants.OK_RESPONSE, response.getStatusLine().getStatusCode());
 	}
 
 	@After

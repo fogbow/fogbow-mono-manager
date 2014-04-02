@@ -27,6 +27,9 @@ public class Category {
 	}
 
 	public void setTerm(String term) {
+		if(term == null || term.equals("")){
+			throw new IllegalArgumentException();
+		}
 		this.term = term;
 	}
 
@@ -35,6 +38,9 @@ public class Category {
 	}
 
 	public void setScheme(String scheme) {
+		if(scheme == null || scheme.equals("")){
+			throw new IllegalArgumentException();
+		}		
 		this.scheme = scheme;
 	}
 
@@ -43,6 +49,9 @@ public class Category {
 	}
 
 	public void setCatClass(String catClass) {
+		if(catClass == null || catClass.equals("")){
+			throw new IllegalArgumentException();
+		}		
 		this.catClass = catClass;
 	}
 

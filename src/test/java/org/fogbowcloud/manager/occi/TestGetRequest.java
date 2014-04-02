@@ -11,6 +11,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
+import org.fogbowcloud.manager.occi.core.RequestState;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.HeaderConstants;
 import org.fogbowcloud.manager.occi.model.TestRequestHelper;
@@ -38,7 +39,7 @@ public class TestGetRequest {
 		HttpResponse response = client.execute(get);
 
 		Assert.assertEquals(0, TestRequestHelper.getRequestIds(response).size());
-		Assert.assertEquals(HeaderConstants.RESPONSE_200, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HeaderConstants.OK_RESPONSE, response.getStatusLine().getStatusCode());
 	}
 
 	@Test
@@ -50,7 +51,7 @@ public class TestGetRequest {
 		HttpResponse response = client.execute(get);
 
 		Assert.assertEquals(0, TestRequestHelper.getRequestIds(response).size());
-		Assert.assertEquals(HeaderConstants.RESPONSE_200, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HeaderConstants.OK_RESPONSE, response.getStatusLine().getStatusCode());
 	}
 
 	@Test
@@ -61,7 +62,7 @@ public class TestGetRequest {
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(get);
 
-		Assert.assertEquals(HeaderConstants.RESPONSE_401, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HeaderConstants.UNAUTHORIZED_RESPONSE, response.getStatusLine().getStatusCode());
 	}
 
 	@Test
@@ -83,9 +84,9 @@ public class TestGetRequest {
 		get.addHeader(HeaderConstants.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
 		client = new DefaultHttpClient();
 		response = client.execute(get);
-
+		
 		Assert.assertEquals(2, TestRequestHelper.getRequestIds(response).size());
-		Assert.assertEquals(HeaderConstants.RESPONSE_200, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HeaderConstants.OK_RESPONSE, response.getStatusLine().getStatusCode());
 	}
 
 	@Test
@@ -109,7 +110,7 @@ public class TestGetRequest {
 		response = client.execute(get);
 
 		Assert.assertEquals(200, TestRequestHelper.getRequestIds(response).size());
-		Assert.assertEquals(HeaderConstants.RESPONSE_200, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HeaderConstants.OK_RESPONSE, response.getStatusLine().getStatusCode());
 	}
 
 	@Test
@@ -133,7 +134,7 @@ public class TestGetRequest {
 		get.addHeader(HeaderConstants.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
 		response = client.execute(get);
 
-		Assert.assertEquals(HeaderConstants.RESPONSE_200, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HeaderConstants.OK_RESPONSE, response.getStatusLine().getStatusCode());
 	}
 
 	@Test
@@ -145,7 +146,7 @@ public class TestGetRequest {
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(get);
 
-		Assert.assertEquals(HeaderConstants.RESPONSE_404, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HeaderConstants.NOT_FOUND_RESPONSE, response.getStatusLine().getStatusCode());
 	}
 
 	@Test
@@ -170,8 +171,8 @@ public class TestGetRequest {
 		response = client.execute(get);
 
 		String responseStr = EntityUtils.toString(response.getEntity(), TestRequestHelper.UTF_8);
-		Assert.assertEquals(HeaderConstants.OPEN_STATE_REQUEST, responseStr);
-		Assert.assertEquals(HeaderConstants.RESPONSE_200, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(RequestState.OPEN.getValue(), responseStr);
+		Assert.assertEquals(HeaderConstants.OK_RESPONSE, response.getStatusLine().getStatusCode());
 	}
 
 	@After
