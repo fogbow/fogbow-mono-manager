@@ -5,8 +5,8 @@ public class RequestUnit {
 	private String id;
 	private String instanceId;
 	private RequestState state;
-	
-	public RequestUnit(String id, String instanceId, RequestState state) {	
+
+	public RequestUnit(String id, String instanceId, RequestState state) {
 		this.id = id;
 		setInstanceId(instanceId);
 		setState(state);
@@ -31,5 +31,9 @@ public class RequestUnit {
 	public String getId() {
 		return id;
 	}
-	
+
+	public String toHttMessageFormat() {
+		return "RequestId=" + id + "; State=" + state.getValue() + "; InstanceId= " + instanceId;
+	}
+
 }

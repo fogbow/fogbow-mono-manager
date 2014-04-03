@@ -57,7 +57,7 @@ public class TestPostRequest {
 		post.addHeader(HeaderConstants.CATEGORY, category.getHeaderFormat());
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
-		List<String> requestIDs = TestRequestHelper.getRequestIds(response);
+		List<String> requestIDs = TestRequestHelper.getRequestLocations(response);
 
 		Assert.assertEquals(1, requestIDs.size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
@@ -75,7 +75,7 @@ public class TestPostRequest {
 				FogbowResourceConstants.ATRIBUTE_INSTANCE_FOGBOW_REQUEST + " = 2");
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
-		List<String> requestIDs = TestRequestHelper.getRequestIds(response);
+		List<String> requestIDs = TestRequestHelper.getRequestLocations(response);
 
 		Assert.assertEquals(2, requestIDs.size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
@@ -94,7 +94,7 @@ public class TestPostRequest {
 				FogbowResourceConstants.ATRIBUTE_INSTANCE_FOGBOW_REQUEST + " = 200");
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
-		List<String> requestIDs = TestRequestHelper.getRequestIds(response);
+		List<String> requestIDs = TestRequestHelper.getRequestLocations(response);
 
 		Assert.assertEquals(200, requestIDs.size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
@@ -280,7 +280,7 @@ public class TestPostRequest {
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
 
-		Assert.assertEquals(10, TestRequestHelper.getRequestIds(response).size());
+		Assert.assertEquals(10, TestRequestHelper.getRequestLocations(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 

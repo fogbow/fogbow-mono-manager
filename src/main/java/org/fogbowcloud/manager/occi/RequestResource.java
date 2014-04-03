@@ -10,12 +10,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
+import org.fogbowcloud.manager.occi.core.FogbowUtils;
 import org.fogbowcloud.manager.occi.core.RequestState;
 import org.fogbowcloud.manager.occi.core.RequestType;
 import org.fogbowcloud.manager.occi.core.RequestUnit;
-import org.fogbowcloud.manager.occi.exception.IrregularSyntaxOCCIExtException;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.FogbowResourceConstants;
 import org.fogbowcloud.manager.occi.model.HeaderConstants;
@@ -26,116 +25,90 @@ import org.restlet.resource.Get;
 import org.restlet.resource.Post;
 import org.restlet.resource.ServerResource;
 
-public class Request extends ServerResource {
+public class RequestResource extends ServerResource {
 
 	public static final String X_OCCI_LOCATION = "X-OCCI-Location: ";
 
 	@Get
 	public String fetch() {
-		try {
-			OCCIApplication application = (OCCIApplication) getApplication();
-			Map<String, List<RequestUnit>> userToRequests = application.getUserToRequest();
-			
-			HttpRequest req = (HttpRequest) getRequest();
-			String token = req.getHeaders().getValues(HeaderConstants.X_AUTH_TOKEN);
-			String requestEndpoint = req.getHostRef() + req.getHttpCall().getRequestUri();
-			if (application.getIdentityPlugin().isValidToken(token)) {
-				
-				if (userToRequests.get(token) == null) {
-					userToRequests.put(token, new ArrayList<RequestUnit>());
-				}
-				
-				List<RequestUnit> currentRequestUnits = new ArrayList<RequestUnit>();								
-				currentRequestUnits.addAll(userToRequests.get(token));
+		OCCIApplication application = (OCCIApplication) getApplication();
 
-				System.out.println(currentRequestUnits.size());
-				
-				return generateResponseId(currentRequestUnits, requestEndpoint);
-			} else {
-				setStatus(new Status(HttpStatus.SC_UNAUTHORIZED));
-				return "Without authorization";
-			}			
-		} catch (Exception e) {
-			e.printStackTrace();
-			setStatus(new Status(HttpStatus.SC_BAD_REQUEST));
-			return "error";			
-		}
+		HttpRequest req = (HttpRequest) getRequest();
+		String userToken = req.getHeaders().getValues(HeaderConstants.X_AUTH_TOKEN);
+		String requestEndpoint = req.getHostRef() + req.getHttpCall().getRequestUri();
+
+		return generateResponseId(application.getRequestsFromUser(userToken), requestEndpoint);
 	}
 
 	@Delete
 	public String remove() {
-		try {
-			OCCIApplication application = (OCCIApplication) getApplication();
-			Map<String, List<RequestUnit>> userToRequests = application.getUserToRequest();
-			
-			HttpRequest req = (HttpRequest) getRequest();
-			String token = req.getHeaders().getValues(HeaderConstants.X_AUTH_TOKEN);
-
-			if (application.getIdentityPlugin().isValidToken(token)) {				
-				
-				if (userToRequests.get(token) == null) {
-					userToRequests.put(token, new ArrayList<RequestUnit>());
-				}
-				
-				userToRequests.get(token).clear();
-				
-				return "removed";
-			} else {
-				setStatus(new Status(HttpStatus.SC_UNAUTHORIZED));
-				return "Without authorization";
-			}			
-		} catch (Exception e) {
-			e.printStackTrace();
-			setStatus(new Status(HttpStatus.SC_BAD_REQUEST));
-			return "error";			
-		}
+		// try {
+		// OCCIApplication application = (OCCIApplication) getApplication();
+		// Map<String, List<RequestUnit>> userToRequests =
+		// application.getUserToRequest();
+		//
+		// HttpRequest req = (HttpRequest) getRequest();
+		// String token =
+		// req.getHeaders().getValues(HeaderConstants.X_AUTH_TOKEN);
+		//
+		// if (application.getIdentityPlugin().isValidToken(token)) {
+		//
+		// if (userToRequests.get(token) == null) {
+		// userToRequests.put(token, new ArrayList<RequestUnit>());
+		// }
+		//
+		// userToRequests.get(token).clear();
+		//
+		// return "removed";
+		// } else {
+		// setStatus(new Status(HttpStatus.SC_UNAUTHORIZED));
+		// return "Without authorization";
+		// }
+		// } catch (Exception e) {
+		// e.printStackTrace();
+		// setStatus(new Status(HttpStatus.SC_BAD_REQUEST));
+		// return "error";
+		// }
+		return null;
 	}
 
 	@Post
 	public String post() {
 		try {
 			OCCIApplication application = (OCCIApplication) getApplication();
-			Map<String, List<RequestUnit>> userToRequests = application.getUserToRequest();
-			
-			//getting token
-			HttpRequest req = (HttpRequest) getRequest();
-			String token = req.getHeaders().getValues(HeaderConstants.X_AUTH_TOKEN);
-						
-			String requestEndpoint = req.getHostRef() + req.getHttpCall().getRequestUri();
-			if (application.getIdentityPlugin().isValidToken(token)) {
-				
-				//checking fogbow headers
-				validateContentType(req);
-				
-				List<Category> listCategory = getListCategory(req);
-				
-				validateRequestCategory(listCategory);
-				Map<String, String> mapAttributes = getAtributes(req);
-				int numberInstanceRequest = getAttributeInstances(mapAttributes);
-				String typeResques = getAttributeType(mapAttributes);
-				Date validFromRequest = getAttributeValidFrom(mapAttributes);
-				Date validUntilRequest = getAttributeValidUntil(mapAttributes);
 
-				if (userToRequests.get(token) == null) {
-					userToRequests.put(token, new ArrayList<RequestUnit>());
-				}
-				
-				List<RequestUnit> currentRequestUnits = new ArrayList<RequestUnit>();
-				for (int i = 0; i < numberInstanceRequest; i++) {
-					String requestId = String.valueOf(UUID.randomUUID());
-					RequestUnit requestUnit = new RequestUnit(requestId, "", RequestState.OPEN);					
-					currentRequestUnits.add(requestUnit);
-					
-					//FIXME Choose submit request to private cloud or other manager
-					HttpResponse cloudResponse = application.getComputePlugin().requestInstance(req);
-										
-				}
-				userToRequests.get(token).addAll(currentRequestUnits);
-				return generateResponseId(currentRequestUnits, requestEndpoint);
-			} else {
-				setStatus(new Status(HttpStatus.SC_UNAUTHORIZED));
-				return "Without authorization";
+			// getting token
+			HttpRequest req = (HttpRequest) getRequest();
+			String userToken = req.getHeaders().getValues(HeaderConstants.X_AUTH_TOKEN);
+
+			String requestEndpoint = req.getHostRef() + req.getHttpCall().getRequestUri();
+			
+			//TODO 
+			FogbowUtils.checkFogbowHeaders(req.getHeaders());
+
+						
+			// checking fogbow headers
+			validateContentType(req);
+
+			List<Category> listCategory = getListCategory(req);
+
+			validateRequestCategory(listCategory);
+			Map<String, String> mapAttributes = getAtributes(req);
+			int numberInstanceRequest = getAttributeInstances(mapAttributes);
+			String typeResques = getAttributeType(mapAttributes);
+			Date validFromRequest = getAttributeValidFrom(mapAttributes);
+			Date validUntilRequest = getAttributeValidUntil(mapAttributes);
+
+			List<RequestUnit> currentRequestUnits = new ArrayList<RequestUnit>();
+			for (int i = 0; i < numberInstanceRequest; i++) {
+				String requestId = String.valueOf(UUID.randomUUID());
+				RequestUnit requestUnit = new RequestUnit(requestId, "", RequestState.OPEN);
+				currentRequestUnits.add(requestUnit);
+
+				application.newRequest(userToken, requestUnit, req);
+
 			}
+			return generateResponseId(currentRequestUnits, requestEndpoint);
 		} catch (IrregularSyntaxOCCIExtException e) {
 			setStatus(new Status(HttpStatus.SC_BAD_REQUEST));
 			e.printStackTrace();
@@ -144,18 +117,16 @@ public class Request extends ServerResource {
 			setStatus(new Status(HttpStatus.SC_BAD_REQUEST));
 			e.printStackTrace();
 			return "Irregular Syntax";
-		} catch (Exception e) {
-			e.printStackTrace();
-			return "Other error";
 		}
 	}
 
 	private String generateResponseId(List<RequestUnit> requestUnits, String requestEndpoint) {
+
 		String response = "";
 		for (RequestUnit request : requestUnits) {
-			response += X_OCCI_LOCATION + requestEndpoint + request.getId() + "\n";
+			response += X_OCCI_LOCATION + requestEndpoint + "/" + request.getId();
 		}
-		if(response.equals("")){
+		if (response.equals("")) {
 			response = "Empty";
 		}
 		return response;
@@ -175,7 +146,8 @@ public class Request extends ServerResource {
 			if (instances == null || instances.equals("")) {
 				return FogbowResourceConstants.DEFAULT_VALUE_INSTANCES_FOGBOW_REQUEST;
 			} else {
-				return Integer.parseInt(map.get(FogbowResourceConstants.ATRIBUTE_INSTANCE_FOGBOW_REQUEST));
+				return Integer.parseInt(map
+						.get(FogbowResourceConstants.ATRIBUTE_INSTANCE_FOGBOW_REQUEST));
 			}
 		} catch (NumberFormatException e) {
 			e.printStackTrace();
@@ -183,7 +155,8 @@ public class Request extends ServerResource {
 		}
 	}
 
-	protected String getAttributeType(Map<String, String> map) throws IrregularSyntaxOCCIExtException {
+	protected String getAttributeType(Map<String, String> map)
+			throws IrregularSyntaxOCCIExtException {
 		String type = map.get(FogbowResourceConstants.ATRIBUTE_TYPE_FOGBOW_REQUEST);
 		if (type == null || type.equals("")) {
 			return null;
@@ -216,7 +189,8 @@ public class Request extends ServerResource {
 	protected Date getAttributeValidUntil(Map<String, String> map)
 			throws IrregularSyntaxOCCIExtException {
 		try {
-			String dataString = map.get(FogbowResourceConstants.ATRIBUTE_VALID_UNTIL_FOGBOW_REQUEST);
+			String dataString = map
+					.get(FogbowResourceConstants.ATRIBUTE_VALID_UNTIL_FOGBOW_REQUEST);
 			if (dataString != null && !dataString.equals("")) {
 				DateFormat formatter = new SimpleDateFormat("yy-MM-dd");
 				return (Date) formatter.parse(dataString);
@@ -275,7 +249,7 @@ public class Request extends ServerResource {
 		String catClass = "";
 		for (int i = 0; i < valuesCategory.length; i++) {
 			String[] tokenValuesCAtegory = valuesCategory[i].split(";");
-			if(tokenValuesCAtegory.length > 2){
+			if (tokenValuesCAtegory.length > 2) {
 				Category category = null;
 				for (int j = 0; j < tokenValuesCAtegory.length; j++) {
 					String[] nameValue = tokenValuesCAtegory[j].split("=");
@@ -291,19 +265,11 @@ public class Request extends ServerResource {
 				}
 				category = new Category(term, scheme, catClass);
 				listCategory.add(category);
-			}else{
+			} else {
 				throw new IrregularSyntaxOCCIExtException();
 			}
 		}
 		return listCategory;
-	}
-
-	private boolean isValidToken(String token) {
-		// TODO check token and user
-		if (token == null || token.equals("")) {
-			return false;
-		}
-		return true;
 	}
 
 	private static String normalize(String headerName) {

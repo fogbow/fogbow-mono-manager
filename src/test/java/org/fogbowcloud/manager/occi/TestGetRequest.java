@@ -58,7 +58,7 @@ public class TestGetRequest {
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(get);
 
-		Assert.assertEquals(0, TestRequestHelper.getRequestIds(response).size());
+		Assert.assertEquals(0, TestRequestHelper.getRequestLocations(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 
@@ -70,12 +70,12 @@ public class TestGetRequest {
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(get);
 
-		Assert.assertEquals(0, TestRequestHelper.getRequestIds(response).size());
+		Assert.assertEquals(0, TestRequestHelper.getRequestLocations(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 
 	@Test
-	public void testGetRequestInvalidTOken() throws URISyntaxException, HttpException, IOException {
+	public void testGetRequestInvalidToken() throws URISyntaxException, HttpException, IOException {
 		HttpGet get = new HttpGet(TestRequestHelper.URI_FOGBOW_REQUEST);
 		get.addHeader(HeaderConstants.CONTENT_TYPE, TestRequestHelper.CONTENT_TYPE_OCCI);
 		get.addHeader(HeaderConstants.X_AUTH_TOKEN, "invalid_token");
@@ -105,7 +105,7 @@ public class TestGetRequest {
 		client = new DefaultHttpClient();
 		response = client.execute(get);
 
-		Assert.assertEquals(2, TestRequestHelper.getRequestIds(response).size());
+		Assert.assertEquals(2, TestRequestHelper.getRequestLocations(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 
@@ -129,7 +129,7 @@ public class TestGetRequest {
 		client = new DefaultHttpClient();
 		response = client.execute(get);
 
-		Assert.assertEquals(200, TestRequestHelper.getRequestIds(response).size());
+		Assert.assertEquals(200, TestRequestHelper.getRequestLocations(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 
@@ -148,8 +148,7 @@ public class TestGetRequest {
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
 		// Get
-		HttpGet get = new HttpGet(TestRequestHelper.URI_FOGBOW_REQUEST + "/"
-				+ TestRequestHelper.getRequestIds(response).get(0));
+		HttpGet get = new HttpGet(TestRequestHelper.getRequestLocations(response).get(0));
 		get.addHeader(HeaderConstants.CONTENT_TYPE, TestRequestHelper.CONTENT_TYPE_OCCI);
 		get.addHeader(HeaderConstants.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
 		response = client.execute(get);
@@ -184,14 +183,13 @@ public class TestGetRequest {
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
 		// Get
-		HttpGet get = new HttpGet(TestRequestHelper.URI_FOGBOW_REQUEST + "/"
-				+ TestRequestHelper.getRequestIds(response).get(0));
+		HttpGet get = new HttpGet(TestRequestHelper.getRequestLocations(response).get(0));
 		get.addHeader(HeaderConstants.CONTENT_TYPE, TestRequestHelper.CONTENT_TYPE_OCCI);
 		get.addHeader(HeaderConstants.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
 		response = client.execute(get);
 
-		String responseStr = EntityUtils.toString(response.getEntity(), TestRequestHelper.UTF_8);
-		Assert.assertEquals(RequestState.OPEN.getValue(), responseStr);
+		String requestDetails = EntityUtils.toString(response.getEntity(), TestRequestHelper.UTF_8);
+		Assert.assertEquals(RequestState.OPEN.getValue(), testRequestHelper.getStateFromRequestDetails(requestDetails));
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 

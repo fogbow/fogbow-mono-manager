@@ -67,7 +67,7 @@ public class TestDeleteRequest {
 		get.addHeader(HeaderConstants.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(get);
-		Assert.assertEquals(0, TestRequestHelper.getRequestIds(response).size());
+		Assert.assertEquals(0, TestRequestHelper.getRequestLocations(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 		// Delete
 		HttpDelete delete = new HttpDelete(TestRequestHelper.URI_FOGBOW_REQUEST);
@@ -77,7 +77,7 @@ public class TestDeleteRequest {
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 		//Get
 		response = client.execute(get);
-		Assert.assertEquals(0, TestRequestHelper.getRequestIds(response).size());
+		Assert.assertEquals(0, TestRequestHelper.getRequestLocations(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 
@@ -92,7 +92,7 @@ public class TestDeleteRequest {
 		post.addHeader(HeaderConstants.CATEGORY, category.getHeaderFormat());
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
-		List<String> requestIDs = TestRequestHelper.getRequestIds(response);
+		List<String> requestIDs = TestRequestHelper.getRequestLocations(response);
 
 		Assert.assertEquals(1, requestIDs.size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
@@ -110,7 +110,7 @@ public class TestDeleteRequest {
 
 		response = client.execute(get);
 
-		Assert.assertEquals(0, TestRequestHelper.getRequestIds(response).size());
+		Assert.assertEquals(0, TestRequestHelper.getRequestLocations(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 
@@ -127,7 +127,7 @@ public class TestDeleteRequest {
 				FogbowResourceConstants.ATRIBUTE_INSTANCE_FOGBOW_REQUEST + " = 200");
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
-		List<String> requestIDs = TestRequestHelper.getRequestIds(response);
+		List<String> requestIDs = TestRequestHelper.getRequestLocations(response);
 
 		Assert.assertEquals(200, requestIDs.size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
@@ -148,7 +148,7 @@ public class TestDeleteRequest {
 		get.addHeader(HeaderConstants.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
 		response = client.execute(get);
 
-		Assert.assertEquals(0, TestRequestHelper.getRequestIds(response).size());
+		Assert.assertEquals(0, TestRequestHelper.getRequestLocations(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 
@@ -165,7 +165,7 @@ public class TestDeleteRequest {
 				FogbowResourceConstants.ATRIBUTE_INSTANCE_FOGBOW_REQUEST + " = 200");
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
-		List<String> requestIDs = TestRequestHelper.getRequestIds(response);
+		List<String> requestIDs = TestRequestHelper.getRequestLocations(response);
 
 		Assert.assertEquals(200, requestIDs.size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
@@ -183,7 +183,7 @@ public class TestDeleteRequest {
 		get.addHeader(HeaderConstants.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
 		response = client.execute(get);
 
-		Assert.assertEquals(0, TestRequestHelper.getRequestIds(response).size());
+		Assert.assertEquals(0, TestRequestHelper.getRequestLocations(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 
