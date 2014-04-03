@@ -222,7 +222,7 @@ public class Request extends ServerResource {
 		String catClass = "";
 		for (int i = 0; i < valuesCategory.length; i++) {
 			String[] tokenValuesCAtegory = valuesCategory[i].split(";");
-			if(tokenValuesCAtegory.length < 3){
+			if(tokenValuesCAtegory.length > 2){
 				Category category = null;
 				for (int j = 0; j < tokenValuesCAtegory.length; j++) {
 					String[] nameValue = tokenValuesCAtegory[j].split("=");

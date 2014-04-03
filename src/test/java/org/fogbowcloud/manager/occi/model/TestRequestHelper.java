@@ -47,11 +47,14 @@ public class TestRequestHelper {
 			IOException {
 		String responseStr = EntityUtils.toString(response.getEntity(), UTF_8);
 
+		System.out.println(responseStr);
+		
 		String[] tokens = responseStr.split(Request.X_OCCI_LOCATION);
 		List<String> requestIds = new ArrayList<String>();
 
 		for (int i = 0; i < tokens.length; i++) {
 			if (!tokens[i].equals("")) {
+				System.out.println(tokens[i]);
 				requestIds.add(tokens[i]);
 			}
 		}
