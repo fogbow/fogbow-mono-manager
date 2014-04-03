@@ -45,20 +45,19 @@ public class TestRequestHelper {
 
 	public static List<String> getRequestIds(HttpResponse response) throws ParseException,
 			IOException {
-		String responseStr = EntityUtils.toString(response.getEntity(), UTF_8);
-
-		System.out.println(responseStr);
+		String responseStr = EntityUtils.toString(response.getEntity(), UTF_8);	
 		
-		String[] tokens = responseStr.split(Request.X_OCCI_LOCATION);
 		List<String> requestIds = new ArrayList<String>();
-
-		for (int i = 0; i < tokens.length; i++) {
-			if (!tokens[i].equals("")) {
-				System.out.println(tokens[i]);
-				requestIds.add(tokens[i]);
+		if(responseStr.contains(Request.X_OCCI_LOCATION)){
+			String[] tokens = responseStr.split(Request.X_OCCI_LOCATION);
+			
+			for (int i = 0; i < tokens.length; i++) {
+				if (!tokens[i].equals("")) {
+					requestIds.add(tokens[i]);
+				}
 			}
 		}
-
+		
 		return requestIds;
 	}
 }

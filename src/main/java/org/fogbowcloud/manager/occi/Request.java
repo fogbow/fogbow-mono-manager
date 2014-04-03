@@ -32,13 +32,63 @@ public class Request extends ServerResource {
 
 	@Get
 	public String fetch() {
-		OCCIApplication application = (OCCIApplication) getApplication();
-		return application.getComputePlugin().toString();
+		try {
+			OCCIApplication application = (OCCIApplication) getApplication();
+			Map<String, List<RequestUnit>> userToRequests = application.getUserToRequest();
+			
+			HttpRequest req = (HttpRequest) getRequest();
+			String token = req.getHeaders().getValues(HeaderConstants.X_AUTH_TOKEN);
+			String requestEndpoint = req.getHostRef() + req.getHttpCall().getRequestUri();
+			if (application.getIdentityPlugin().isValidToken(token)) {
+				
+				if (userToRequests.get(token) == null) {
+					userToRequests.put(token, new ArrayList<RequestUnit>());
+				}
+				
+				List<RequestUnit> currentRequestUnits = new ArrayList<RequestUnit>();								
+				currentRequestUnits.addAll(userToRequests.get(token));
+
+				System.out.println(currentRequestUnits.size());
+				
+				return generateResponseId(currentRequestUnits, requestEndpoint);
+			} else {
+				setStatus(new Status(HttpStatus.SC_UNAUTHORIZED));
+				return "Without authorization";
+			}			
+		} catch (Exception e) {
+			e.printStackTrace();
+			setStatus(new Status(HttpStatus.SC_BAD_REQUEST));
+			return "error";			
+		}
 	}
 
 	@Delete
 	public String remove() {
-		return null;
+		try {
+			OCCIApplication application = (OCCIApplication) getApplication();
+			Map<String, List<RequestUnit>> userToRequests = application.getUserToRequest();
+			
+			HttpRequest req = (HttpRequest) getRequest();
+			String token = req.getHeaders().getValues(HeaderConstants.X_AUTH_TOKEN);
+
+			if (application.getIdentityPlugin().isValidToken(token)) {				
+				
+				if (userToRequests.get(token) == null) {
+					userToRequests.put(token, new ArrayList<RequestUnit>());
+				}
+				
+				userToRequests.get(token).clear();
+				
+				return "removed";
+			} else {
+				setStatus(new Status(HttpStatus.SC_UNAUTHORIZED));
+				return "Without authorization";
+			}			
+		} catch (Exception e) {
+			e.printStackTrace();
+			setStatus(new Status(HttpStatus.SC_BAD_REQUEST));
+			return "error";			
+		}
 	}
 
 	@Post
@@ -105,6 +155,9 @@ public class Request extends ServerResource {
 		for (RequestUnit request : requestUnits) {
 			response += X_OCCI_LOCATION + requestEndpoint + request.getId() + "\n";
 		}
+		if(response.equals("")){
+			response = "Empty";
+		}
 		return response;
 	}
 
@@ -115,7 +168,7 @@ public class Request extends ServerResource {
 		}
 	}
 
-	private int getAttributeInstances(Map<String, String> map)
+	protected int getAttributeInstances(Map<String, String> map)
 			throws IrregularSyntaxOCCIExtException {
 		try {
 			String instances = map.get(FogbowResourceConstants.ATRIBUTE_INSTANCE_FOGBOW_REQUEST);
@@ -130,7 +183,7 @@ public class Request extends ServerResource {
 		}
 	}
 
-	private String getAttributeType(Map<String, String> map) throws IrregularSyntaxOCCIExtException {
+	protected String getAttributeType(Map<String, String> map) throws IrregularSyntaxOCCIExtException {
 		String type = map.get(FogbowResourceConstants.ATRIBUTE_TYPE_FOGBOW_REQUEST);
 		if (type == null || type.equals("")) {
 			return null;
@@ -145,7 +198,7 @@ public class Request extends ServerResource {
 
 	}
 
-	private Date getAttributeValidFrom(Map<String, String> map)
+	protected Date getAttributeValidFrom(Map<String, String> map)
 			throws IrregularSyntaxOCCIExtException {
 		try {
 			String dataString = map.get(FogbowResourceConstants.ATRIBUTE_VALID_FROM_FOGBOW_REQUEST);
@@ -160,7 +213,7 @@ public class Request extends ServerResource {
 		}
 	}
 
-	private Date getAttributeValidUntil(Map<String, String> map)
+	protected Date getAttributeValidUntil(Map<String, String> map)
 			throws IrregularSyntaxOCCIExtException {
 		try {
 			String dataString = map.get(FogbowResourceConstants.ATRIBUTE_VALID_UNTIL_FOGBOW_REQUEST);
