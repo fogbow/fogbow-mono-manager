@@ -8,12 +8,13 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.fogbowcloud.manager.occi.core.ErrorType;
-import org.fogbowcloud.manager.occi.core.FogbowUtils;
+import org.fogbowcloud.manager.occi.core.FogbowResource;
+import org.fogbowcloud.manager.occi.core.HeaderUtils;
 import org.fogbowcloud.manager.occi.core.OCCIException;
-import org.fogbowcloud.manager.occi.core.RequestState;
-import org.fogbowcloud.manager.occi.core.RequestUnit;
 import org.fogbowcloud.manager.occi.plugins.ComputePlugin;
 import org.fogbowcloud.manager.occi.plugins.IdentityPlugin;
+import org.fogbowcloud.manager.occi.request.RequestState;
+import org.fogbowcloud.manager.occi.request.RequestUnit;
 import org.restlet.Application;
 import org.restlet.Restlet;
 import org.restlet.engine.adapter.HttpRequest;
@@ -66,33 +67,30 @@ public class OCCIApplication extends Application {
 		return requestIdToRequestUnit.get(requestId);
 	}
 
-	public RequestUnit newRequest(String userToken, HttpRequest req) {
+	public RequestUnit newRequest(String userToken, List<FogbowResource> requestResources,
+			Map<String, String> xOCCIAtt) {
 		checkUserToken(userToken);
+		
 		if (userToRequestIds.get(userToken) == null) {
 			userToRequestIds.put(userToken, new ArrayList<String>());
 		}
-
 		String requestId = String.valueOf(UUID.randomUUID());
-
-		String type = FogbowUtils.getAttType(req.getHeaders());
-		Date validFrom = FogbowUtils.getAttValidFrom(req.getHeaders());
-		Date validUntil = FogbowUtils.getAttValidUntil(req.getHeaders());
-
-		RequestUnit requestUnit = new RequestUnit(requestId, "", RequestState.OPEN, validFrom,
-				validUntil, type, req);
+		RequestUnit requestUnit = new RequestUnit(requestId, "", RequestState.OPEN,
+				requestResources, xOCCIAtt);
 
 		userToRequestIds.get(userToken).add(requestUnit.getId());
 		requestIdToRequestUnit.put(requestUnit.getId(), requestUnit);
 
-		submitRequest(requestUnit, req);
+		submitRequest(requestUnit, requestResources, xOCCIAtt);
 
 		return requestUnit;
 	}
 
 	// FIXME Should req be an attribute of requestUnit?
-	private void submitRequest(RequestUnit requestUnit, HttpRequest req) {
+	private void submitRequest(RequestUnit requestUnit, List<FogbowResource> requestResources,
+			Map<String, String> xOCCIAtt) {
 		// TODO Choose if submit to local or remote cloud and submit
-		computePlugin.requestInstance(req);
+		computePlugin.requestInstance(requestResources, xOCCIAtt);
 	}
 
 	public List<RequestUnit> getRequestsFromUser(String userToken) {

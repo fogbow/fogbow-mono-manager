@@ -3,6 +3,7 @@ package org.fogbowcloud.manager.occi;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.http.HttpException;
 import org.apache.http.HttpResponse;
@@ -17,16 +18,16 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicStatusLine;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.model.FogbowResourceConstants;
-import org.fogbowcloud.manager.occi.model.HeaderConstants;
+import org.fogbowcloud.manager.occi.model.OCCIHeaders;
 import org.fogbowcloud.manager.occi.model.TestRequestHelper;
 import org.fogbowcloud.manager.occi.plugins.ComputePlugin;
 import org.fogbowcloud.manager.occi.plugins.IdentityPlugin;
+import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.restlet.engine.adapter.HttpRequest;
 
 public class TestDeleteRequest {
 
@@ -40,8 +41,8 @@ public class TestDeleteRequest {
 				new BasicStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_OK, null), null);
 
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
-		Mockito.when(computePlugin.requestInstance(Mockito.any(HttpRequest.class))).thenReturn(
-				response);
+		Mockito.when(computePlugin.requestInstance(Mockito.any(List.class), Mockito.any(Map.class)))
+				.thenReturn(response);
 
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.isValidToken(TestRequestHelper.ACCESS_TOKEN)).thenReturn(true);
@@ -52,7 +53,7 @@ public class TestDeleteRequest {
 	@Test
 	public void testRequest() throws URISyntaxException, HttpException, IOException {
 		HttpDelete delete = new HttpDelete(TestRequestHelper.URI_FOGBOW_REQUEST);
-		delete.addHeader(HeaderConstants.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
+		delete.addHeader(OCCIHeaders.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(delete);
 
@@ -63,15 +64,15 @@ public class TestDeleteRequest {
 	public void testDeleteEmptyRequest() throws URISyntaxException, HttpException, IOException {
 		// Get
 		HttpGet get = new HttpGet(TestRequestHelper.URI_FOGBOW_REQUEST);
-		get.addHeader(HeaderConstants.CONTENT_TYPE, TestRequestHelper.CONTENT_TYPE_OCCI);
-		get.addHeader(HeaderConstants.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
+		get.addHeader(OCCIHeaders.CONTENT_TYPE, TestRequestHelper.CONTENT_TYPE_OCCI);
+		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(get);
 		Assert.assertEquals(0, TestRequestHelper.getRequestLocations(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 		// Delete
 		HttpDelete delete = new HttpDelete(TestRequestHelper.URI_FOGBOW_REQUEST);
-		delete.addHeader(HeaderConstants.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
+		delete.addHeader(OCCIHeaders.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
 		client = new DefaultHttpClient();
 		response = client.execute(delete);
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
@@ -85,11 +86,11 @@ public class TestDeleteRequest {
 	public void testDeleteSpecificRequest() throws URISyntaxException, HttpException, IOException {
 		// Post
 		HttpPost post = new HttpPost(TestRequestHelper.URI_FOGBOW_REQUEST);
-		Category category = new Category(FogbowResourceConstants.TERM_FOGBOW_REQUEST,
-				FogbowResourceConstants.SCHEME_FOGBOW_REQUEST, HeaderConstants.KIND_CLASS);
-		post.addHeader(HeaderConstants.CONTENT_TYPE, TestRequestHelper.CONTENT_TYPE_OCCI);
-		post.addHeader(HeaderConstants.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
-		post.addHeader(HeaderConstants.CATEGORY, category.getHeaderFormat());
+		Category category = new Category(FogbowResourceConstants.TERM,
+				FogbowResourceConstants.SCHEME, OCCIHeaders.KIND_CLASS);
+		post.addHeader(OCCIHeaders.CONTENT_TYPE, TestRequestHelper.CONTENT_TYPE_OCCI);
+		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
+		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
 		List<String> requestLocations = TestRequestHelper.getRequestLocations(response);
@@ -98,14 +99,14 @@ public class TestDeleteRequest {
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 		// Delete
 		HttpDelete delete = new HttpDelete(requestLocations.get(0));
-		delete.addHeader(HeaderConstants.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
+		delete.addHeader(OCCIHeaders.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
 		response = client.execute(delete);
 
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 		// Get
 		HttpGet get = new HttpGet(TestRequestHelper.URI_FOGBOW_REQUEST);
-		get.addHeader(HeaderConstants.CONTENT_TYPE, TestRequestHelper.CONTENT_TYPE_OCCI);
-		get.addHeader(HeaderConstants.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
+		get.addHeader(OCCIHeaders.CONTENT_TYPE, TestRequestHelper.CONTENT_TYPE_OCCI);
+		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
 
 		response = client.execute(get);
 
@@ -118,13 +119,13 @@ public class TestDeleteRequest {
 			IOException {
 		// Post
 		HttpPost post = new HttpPost(TestRequestHelper.URI_FOGBOW_REQUEST);
-		Category category = new Category(FogbowResourceConstants.TERM_FOGBOW_REQUEST,
-				FogbowResourceConstants.SCHEME_FOGBOW_REQUEST, HeaderConstants.KIND_CLASS);
-		post.addHeader(HeaderConstants.CONTENT_TYPE, TestRequestHelper.CONTENT_TYPE_OCCI);
-		post.addHeader(HeaderConstants.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
-		post.addHeader(HeaderConstants.CATEGORY, category.getHeaderFormat());
-		post.addHeader(HeaderConstants.X_OCCI_ATTRIBUTE,
-				FogbowResourceConstants.ATRIBUTE_INSTANCE_FOGBOW_REQUEST + " = 200");
+		Category category = new Category(FogbowResourceConstants.TERM,
+				FogbowResourceConstants.SCHEME, OCCIHeaders.KIND_CLASS);
+		post.addHeader(OCCIHeaders.CONTENT_TYPE, TestRequestHelper.CONTENT_TYPE_OCCI);
+		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
+		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
+		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE,
+				RequestAttribute.INSTANCE_COUNT.getValue() + " = 200");
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
 		List<String> requestLocations = TestRequestHelper.getRequestLocations(response);
@@ -136,16 +137,16 @@ public class TestDeleteRequest {
 		HttpDelete delete;
 		for (String requestLocation : requestLocations) {
 			delete = new HttpDelete(requestLocation);
-			delete.addHeader(HeaderConstants.CONTENT_TYPE, TestRequestHelper.CONTENT_TYPE_OCCI);
-			delete.addHeader(HeaderConstants.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
+			delete.addHeader(OCCIHeaders.CONTENT_TYPE, TestRequestHelper.CONTENT_TYPE_OCCI);
+			delete.addHeader(OCCIHeaders.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
 			response = client.execute(delete);
 			Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 		}
 
 		// Get
 		HttpGet get = new HttpGet(TestRequestHelper.URI_FOGBOW_REQUEST);
-		get.addHeader(HeaderConstants.CONTENT_TYPE, TestRequestHelper.CONTENT_TYPE_OCCI);
-		get.addHeader(HeaderConstants.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
+		get.addHeader(OCCIHeaders.CONTENT_TYPE, TestRequestHelper.CONTENT_TYPE_OCCI);
+		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
 		response = client.execute(get);
 
 		Assert.assertEquals(0, TestRequestHelper.getRequestLocations(response).size());
@@ -156,13 +157,13 @@ public class TestDeleteRequest {
 	public void testDeleteAllRequests() throws URISyntaxException, HttpException, IOException {
 		// Post
 		HttpPost post = new HttpPost(TestRequestHelper.URI_FOGBOW_REQUEST);
-		Category category = new Category(FogbowResourceConstants.TERM_FOGBOW_REQUEST,
-				FogbowResourceConstants.SCHEME_FOGBOW_REQUEST, HeaderConstants.KIND_CLASS);
-		post.addHeader(HeaderConstants.CONTENT_TYPE, TestRequestHelper.CONTENT_TYPE_OCCI);
-		post.addHeader(HeaderConstants.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
-		post.addHeader(HeaderConstants.CATEGORY, category.getHeaderFormat());
-		post.addHeader(HeaderConstants.X_OCCI_ATTRIBUTE,
-				FogbowResourceConstants.ATRIBUTE_INSTANCE_FOGBOW_REQUEST + " = 200");
+		Category category = new Category(FogbowResourceConstants.TERM,
+				FogbowResourceConstants.SCHEME, OCCIHeaders.KIND_CLASS);
+		post.addHeader(OCCIHeaders.CONTENT_TYPE, TestRequestHelper.CONTENT_TYPE_OCCI);
+		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
+		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
+		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE,
+				RequestAttribute.INSTANCE_COUNT.getValue() + " = 200");
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
 		List<String> requestIDs = TestRequestHelper.getRequestLocations(response);
@@ -172,16 +173,16 @@ public class TestDeleteRequest {
 
 		// Delete
 		HttpDelete delete = new HttpDelete(TestRequestHelper.URI_FOGBOW_REQUEST);
-		delete.addHeader(HeaderConstants.CONTENT_TYPE, TestRequestHelper.CONTENT_TYPE_OCCI);
-		delete.addHeader(HeaderConstants.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
+		delete.addHeader(OCCIHeaders.CONTENT_TYPE, TestRequestHelper.CONTENT_TYPE_OCCI);
+		delete.addHeader(OCCIHeaders.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
 		response = client.execute(delete);
 
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 
 		// Get
 		HttpGet get = new HttpGet(TestRequestHelper.URI_FOGBOW_REQUEST);
-		get.addHeader(HeaderConstants.CONTENT_TYPE, TestRequestHelper.CONTENT_TYPE_OCCI);
-		get.addHeader(HeaderConstants.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
+		get.addHeader(OCCIHeaders.CONTENT_TYPE, TestRequestHelper.CONTENT_TYPE_OCCI);
+		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
 		response = client.execute(get);
 
 		Assert.assertEquals(0, TestRequestHelper.getRequestLocations(response).size());
@@ -192,8 +193,8 @@ public class TestDeleteRequest {
 	public void testDeleteRequestNotFound() throws URISyntaxException, HttpException, IOException {
 		HttpDelete delete = new HttpDelete(TestRequestHelper.URI_FOGBOW_REQUEST + "/"
 				+ "not_found_id");
-		delete.addHeader(HeaderConstants.CONTENT_TYPE, TestRequestHelper.CONTENT_TYPE_OCCI);
-		delete.addHeader(HeaderConstants.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
+		delete.addHeader(OCCIHeaders.CONTENT_TYPE, TestRequestHelper.CONTENT_TYPE_OCCI);
+		delete.addHeader(OCCIHeaders.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(delete);
 
@@ -203,8 +204,8 @@ public class TestDeleteRequest {
 	@Test
 	public void testDeleteWithInvalidToken() throws URISyntaxException, HttpException, IOException {
 		HttpDelete delete = new HttpDelete(TestRequestHelper.URI_FOGBOW_REQUEST);
-		delete.addHeader(HeaderConstants.CONTENT_TYPE, TestRequestHelper.CONTENT_TYPE_OCCI);
-		delete.addHeader(HeaderConstants.X_AUTH_TOKEN, "invalid_token");
+		delete.addHeader(OCCIHeaders.CONTENT_TYPE, TestRequestHelper.CONTENT_TYPE_OCCI);
+		delete.addHeader(OCCIHeaders.X_AUTH_TOKEN, "invalid_token");
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(delete);
 

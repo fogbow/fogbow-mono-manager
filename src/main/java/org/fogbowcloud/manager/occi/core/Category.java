@@ -1,14 +1,13 @@
 package org.fogbowcloud.manager.occi.core;
 
-import java.util.List;
 
+//FIXME This class may be divided in two. ResourceCategory and RequestCategory
 public class Category {
 
 	private String term;
 	private String scheme;
 	private String catClass;
-	private List<String> attributes;
-	private List<String> actions;
+
 
 	public Category(String term, String scheme, String catClass) {
 		setTerm(term);
@@ -16,7 +15,8 @@ public class Category {
 		setCatClass(catClass);
 	}
 
-	public String getHeaderFormat() {
+
+	public String toHeader() {
 		return getTerm() + "; scheme=\"" + getScheme() + "\"; class=\"" + getCatClass() + "\"";
 	}
 
@@ -51,22 +51,6 @@ public class Category {
 			throw new IllegalArgumentException();
 		}
 		this.catClass = catClass;
-	}
-
-	public List<String> getAttributes() {
-		return attributes;
-	}
-
-	public void setAttributes(List<String> attributes) {
-		this.attributes = attributes;
-	}
-
-	public List<String> getActions() {
-		return actions;
-	}
-
-	public void setActions(List<String> actions) {
-		this.actions = actions;
 	}
 
 }

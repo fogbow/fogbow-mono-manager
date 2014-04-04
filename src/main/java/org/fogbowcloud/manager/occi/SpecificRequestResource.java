@@ -1,7 +1,7 @@
 package org.fogbowcloud.manager.occi;
 
-import org.fogbowcloud.manager.occi.core.FogbowUtils;
-import org.fogbowcloud.manager.occi.core.RequestUnit;
+import org.fogbowcloud.manager.occi.core.HeaderUtils;
+import org.fogbowcloud.manager.occi.request.RequestUnit;
 import org.restlet.engine.adapter.HttpRequest;
 import org.restlet.resource.Delete;
 import org.restlet.resource.Get;
@@ -14,7 +14,7 @@ public class SpecificRequestResource extends ServerResource {
 		String requestId = (String) getRequestAttributes().get("requestid");
 
 		HttpRequest req = (HttpRequest) getRequest();
-		String userToken = FogbowUtils.getToken(req.getHeaders());
+		String userToken = HeaderUtils.getToken(req.getHeaders());
 		OCCIApplication application = (OCCIApplication) getApplication();
 		RequestUnit requestUnit = application.getRequestDetails(userToken, requestId);
 		return requestUnit.toHttMessageFormat();
@@ -26,7 +26,7 @@ public class SpecificRequestResource extends ServerResource {
 
 		OCCIApplication application = (OCCIApplication) getApplication();
 		HttpRequest req = (HttpRequest) getRequest();
-		String userToken = FogbowUtils.getToken(req.getHeaders());
+		String userToken = HeaderUtils.getToken(req.getHeaders());
 		application.removeRequest(userToken, requestId);
 		return "OK";
 	}

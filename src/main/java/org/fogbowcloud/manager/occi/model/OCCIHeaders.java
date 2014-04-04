@@ -1,6 +1,6 @@
 package org.fogbowcloud.manager.occi.model;
 
-public class HeaderConstants {
+public class OCCIHeaders {
 
 	// header constants
 	public static final String CONTENT_TYPE = "Content-Type";

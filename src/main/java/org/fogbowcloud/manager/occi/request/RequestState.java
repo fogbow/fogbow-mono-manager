@@ -1,4 +1,4 @@
-package org.fogbowcloud.manager.occi.core;
+package org.fogbowcloud.manager.occi.request;
 
 public enum RequestState {
 	OPEN("open"), FAILED("failed"), FULLFIELD("fullfield"), CANCELED("canceled"), CLOSED("closed");

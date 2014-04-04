@@ -12,7 +12,7 @@ import org.apache.http.ParseException;
 import org.apache.http.util.EntityUtils;
 import org.fogbowcloud.manager.occi.OCCIApplication;
 import org.fogbowcloud.manager.occi.RequestResource;
-import org.fogbowcloud.manager.occi.core.FogbowUtils;
+import org.fogbowcloud.manager.occi.core.HeaderUtils;
 import org.fogbowcloud.manager.occi.plugins.ComputePlugin;
 import org.fogbowcloud.manager.occi.plugins.IdentityPlugin;
 import org.restlet.Component;
@@ -52,8 +52,8 @@ public class TestRequestHelper {
 		String responseStr = EntityUtils.toString(response.getEntity(), UTF_8);
 
 		List<String> requestIds = new ArrayList<String>();
-		if (responseStr.contains(FogbowUtils.X_OCCI_LOCATION)) {
-			String[] tokens = responseStr.split(FogbowUtils.X_OCCI_LOCATION);
+		if (responseStr.contains(HeaderUtils.X_OCCI_LOCATION)) {
+			String[] tokens = responseStr.split(HeaderUtils.X_OCCI_LOCATION);
 
 			for (int i = 0; i < tokens.length; i++) {
 				if (!tokens[i].equals("")) {

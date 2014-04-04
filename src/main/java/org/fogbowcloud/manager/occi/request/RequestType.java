@@ -1,9 +1,11 @@
-package org.fogbowcloud.manager.occi.core;
+package org.fogbowcloud.manager.occi.request;
 
-public enum RequestType{
-	ONE_TIME("one-time") ,PERSISTENT("persistent");
+public enum RequestType {
+	
+	ONE_TIME("one-time"), PERSISTENT("persistent");
 	
 	private String value;
+	
 	RequestType(String value) {
 		this.value = value;
 	}

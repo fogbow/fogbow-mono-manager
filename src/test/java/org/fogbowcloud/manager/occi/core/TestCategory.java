@@ -46,7 +46,7 @@ public class TestCategory {
 	@Test
 	public void validCategoryEmptyClass() {
 		Category category = new Category("term", "scheme", "class");
-		String headerFormat = category.getHeaderFormat();
+		String headerFormat = category.toHeader();
 		
 		Assert.assertEquals("term; scheme=\"scheme\"; class=\"class\"", headerFormat);
 	}			
