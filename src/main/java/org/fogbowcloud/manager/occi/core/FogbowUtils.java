@@ -45,7 +45,7 @@ public class FogbowUtils {
 	}
 
 	public static int getAttributeInstances(Series<Header> headers) {
-		Map<String,String> map = getAtributes(headers);
+		Map<String, String> map = getAtributes(headers);
 		try {
 			String instances = map.get(FogbowResourceConstants.ATRIBUTE_INSTANCE_FOGBOW_REQUEST);
 			if (instances == null || instances.equals("")) {
@@ -58,17 +58,17 @@ public class FogbowUtils {
 			throw new OCCIException(ErrorType.BAD_REQUEST, "Irregular Syntax.");
 		}
 	}
-	
-	public static String getToken(Series<Header> headers){
+
+	public static String getToken(Series<Header> headers) {
 		String token = headers.getValues(HeaderConstants.X_AUTH_TOKEN);
-		if(token == null || token.equals("")){
+		if (token == null || token.equals("")) {
 			throw new OCCIException(ErrorType.UNAUTHORIZED, "Authentication required.");
 		}
 		return token;
 	}
 
-	public static String getAttType(Series<Header> headers){
-		Map<String,String> map = getAtributes(headers);
+	public static String getAttType(Series<Header> headers) {
+		Map<String, String> map = getAtributes(headers);
 		String type = map.get(FogbowResourceConstants.ATRIBUTE_TYPE_FOGBOW_REQUEST);
 		if (type == null || type.equals("")) {
 			return null;
@@ -83,9 +83,9 @@ public class FogbowUtils {
 
 	}
 
-	public static Date getAttValidFrom(Series<Header> headers){
-		Map<String,String> map = getAtributes(headers);
-		try {			
+	public static Date getAttValidFrom(Series<Header> headers) {
+		Map<String, String> map = getAtributes(headers);
+		try {
 			String dataString = map.get(FogbowResourceConstants.ATRIBUTE_VALID_FROM_FOGBOW_REQUEST);
 			if (dataString != null && !dataString.equals("")) {
 				DateFormat formatter = new SimpleDateFormat("yy-MM-dd");
@@ -97,8 +97,8 @@ public class FogbowUtils {
 		}
 	}
 
-	public static Date getAttValidUntil(Series<Header> headers){
-		Map<String,String> map = getAtributes(headers);
+	public static Date getAttValidUntil(Series<Header> headers) {
+		Map<String, String> map = getAtributes(headers);
 		try {
 			String dataString = map
 					.get(FogbowResourceConstants.ATRIBUTE_VALID_UNTIL_FOGBOW_REQUEST);
@@ -112,20 +112,30 @@ public class FogbowUtils {
 		}
 	}
 
-	public static Map<String, String> getAtributes(Series<Header> headers){
-		String[] valuesAttributes = headers.getValuesArray(
-				normalize(HeaderConstants.X_OCCI_ATTRIBUTE));
+	public static Map<String, String> getAtributes(Series<Header> headers) {
+		String[] valuesAttributes = headers
+				.getValuesArray(normalize(HeaderConstants.X_OCCI_ATTRIBUTE));
 		Map<String, String> mapAttributes = new HashMap();
 		for (int i = 0; i < valuesAttributes.length; i++) {
 			String[] tokensAttribute = valuesAttributes[i].split("=");
 			if (tokensAttribute.length != 2) {
 				throw new OCCIException(ErrorType.BAD_REQUEST, "Irregular Syntax.");
 			}
-			String name = tokensAttribute[0].trim();
+			String name = checkFogBowAttributes(tokensAttribute[0].trim());
 			String value = tokensAttribute[1].replace("\"", "").trim();
 			mapAttributes.put(name, value);
 		}
 		return mapAttributes;
+	}
+
+	public static String checkFogBowAttributes(String nameAttribute) {
+		FogbowRequestAttributes[] attributesFogbowResquest = FogbowRequestAttributes.values();
+		for (int i = 0; i < attributesFogbowResquest.length; i++) {
+			if (nameAttribute.equals(attributesFogbowResquest[i].getValue())) {
+				return nameAttribute;
+			}
+		}
+		throw new OCCIException(ErrorType.BAD_REQUEST, "Attribute not found");
 	}
 
 	public static void validateRequestCategory(List<Category> listCategory) {
@@ -149,10 +159,9 @@ public class FogbowUtils {
 		return false;
 	}
 
-	public static List<Category> getListCategory(Series<Header> headers){
+	public static List<Category> getListCategory(Series<Header> headers) {
 		List<Category> listCategory = new ArrayList();
-		String[] valuesCategory = headers.getValuesArray(
-				normalize(HeaderConstants.CATEGORY));
+		String[] valuesCategory = headers.getValuesArray(normalize(HeaderConstants.CATEGORY));
 		String term = "";
 		String scheme = "";
 		String catClass = "";
@@ -173,10 +182,10 @@ public class FogbowUtils {
 					}
 				}
 				try {
-					category = new Category(term, scheme, catClass);	
+					category = new Category(term, scheme, catClass);
 				} catch (IllegalArgumentException e) {
 					throw new OCCIException(ErrorType.BAD_REQUEST, "Irregular Syntax.");
-				}				
+				}
 				listCategory.add(category);
 			} else {
 				throw new OCCIException(ErrorType.BAD_REQUEST, "Irregular Syntax.");
@@ -190,6 +199,6 @@ public class FogbowUtils {
 		char[] lowerHeaderArray = lowerHeader.toCharArray();
 		lowerHeaderArray[0] = Character.toUpperCase(lowerHeaderArray[0]);
 		return new String(lowerHeaderArray);
-	}	
-	
+	}
+
 }
