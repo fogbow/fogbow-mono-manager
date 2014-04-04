@@ -3,8 +3,6 @@ package org.fogbowcloud.manager.occi.model;
 import java.util.List;
 
 public class Category {
-
-	
 	
 	private String term;
 	private String scheme;
