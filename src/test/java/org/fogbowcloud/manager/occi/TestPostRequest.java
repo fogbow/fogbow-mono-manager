@@ -13,7 +13,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.DefaultHttpResponseFactory;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicStatusLine;
-import org.fogbowcloud.manager.occi.model.Category;
+import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.model.FogbowResourceConstants;
 import org.fogbowcloud.manager.occi.model.HeaderConstants;
 import org.fogbowcloud.manager.occi.model.TestRequestHelper;

@@ -1,4 +1,4 @@
-package org.fogbowcloud.manager.occi.model;
+package org.fogbowcloud.manager.occi.core;
 
 import java.util.List;
 

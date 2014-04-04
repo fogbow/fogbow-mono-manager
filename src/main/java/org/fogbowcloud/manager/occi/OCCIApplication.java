@@ -1,12 +1,16 @@
 package org.fogbowcloud.manager.occi;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.fogbowcloud.manager.occi.core.ErrorType;
+import org.fogbowcloud.manager.occi.core.FogbowUtils;
 import org.fogbowcloud.manager.occi.core.OCCIException;
+import org.fogbowcloud.manager.occi.core.RequestState;
 import org.fogbowcloud.manager.occi.core.RequestUnit;
 import org.fogbowcloud.manager.occi.plugins.ComputePlugin;
 import org.fogbowcloud.manager.occi.plugins.IdentityPlugin;
@@ -57,35 +61,42 @@ public class OCCIApplication extends Application {
 	}
 
 	public RequestUnit getRequestDetails(String userToken, String requestId) {
-		if (!identityPlugin.isValidToken(userToken)) {
-			throw new OCCIException(ErrorType.UNAUTHORIZED, "User is not authorized.");
-		}
-		if (userToRequestIds.get(userToken) == null
-				|| !userToRequestIds.get(userToken).contains(requestId)) {
-			throw new OCCIException(ErrorType.NOT_FOUND, "Request id is not found.");
-		}
+		checkUserToken(userToken);
+		checkRequestId(userToken, requestId);
 		return requestIdToRequestUnit.get(requestId);
 	}
 
-	public void newRequest(String userToken, RequestUnit requestUnit, HttpRequest req) {
-		if (!identityPlugin.isValidToken(userToken)) {
-			throw new OCCIException(ErrorType.UNAUTHORIZED, "User is not authorized.");
-		}
+	public RequestUnit newRequest(String userToken, HttpRequest req) {
+		checkUserToken(userToken);
 		if (userToRequestIds.get(userToken) == null) {
 			userToRequestIds.put(userToken, new ArrayList<String>());
 		}
 
+		String requestId = String.valueOf(UUID.randomUUID());
+
+		String type = FogbowUtils.getAttType(req.getHeaders());
+		Date validFrom = FogbowUtils.getAttValidFrom(req.getHeaders());
+		Date validUntil = FogbowUtils.getAttValidUntil(req.getHeaders());
+
+		RequestUnit requestUnit = new RequestUnit(requestId, "", RequestState.OPEN, validFrom,
+				validUntil, type, req);
+
 		userToRequestIds.get(userToken).add(requestUnit.getId());
 		requestIdToRequestUnit.put(requestUnit.getId(), requestUnit);
 
-		// TODO Here is the correct place to it?
+		submitRequest(requestUnit, req);
+
+		return requestUnit;
+	}
+
+	// FIXME Should req be an attribute of requestUnit?
+	private void submitRequest(RequestUnit requestUnit, HttpRequest req) {
+		// TODO Choose if submit to local or remote cloud and submit
 		computePlugin.requestInstance(req);
 	}
 
 	public List<RequestUnit> getRequestsFromUser(String userToken) {
-		if (!identityPlugin.isValidToken(userToken)) {
-			throw new OCCIException(ErrorType.UNAUTHORIZED, "User is not authorized.");
-		}
+		checkUserToken(userToken);
 
 		List<RequestUnit> requests = new ArrayList<RequestUnit>();
 		if (userToRequestIds.get(userToken) != null) {
@@ -96,4 +107,35 @@ public class OCCIApplication extends Application {
 		return requests;
 	}
 
+	public void removeAllRequests(String userToken) {
+		checkUserToken(userToken);
+
+		if (userToRequestIds.get(userToken) != null) {
+			for (String requestId : userToRequestIds.get(userToken)) {
+				requestIdToRequestUnit.remove(requestId);
+			}
+			userToRequestIds.remove(userToken);
+		}
+	}
+
+	public void removeRequest(String userToken, String requestId) {
+		checkUserToken(userToken);
+		checkRequestId(userToken, requestId);
+
+		userToRequestIds.get(userToken).remove(requestId);
+		requestIdToRequestUnit.get(requestId);
+	}
+
+	private void checkRequestId(String userToken, String requestId) {
+		if (userToRequestIds.get(userToken) == null
+				|| !userToRequestIds.get(userToken).contains(requestId)) {
+			throw new OCCIException(ErrorType.NOT_FOUND, "Resource not found.");
+		}
+	}
+
+	private void checkUserToken(String userToken) {
+		if (!identityPlugin.isValidToken(userToken)) {
+			throw new OCCIException(ErrorType.UNAUTHORIZED, "Authentication required.");
+		}
+	}
 }

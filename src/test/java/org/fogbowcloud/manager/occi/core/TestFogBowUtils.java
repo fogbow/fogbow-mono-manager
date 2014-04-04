@@ -2,7 +2,6 @@ package org.fogbowcloud.manager.occi.core;
 
 import java.util.List;
 
-import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.FogbowResourceConstants;
 import org.fogbowcloud.manager.occi.model.HeaderConstants;
 import org.fogbowcloud.manager.occi.model.TestRequestHelper;
@@ -65,7 +64,7 @@ public class TestFogBowUtils {
 				FogbowUtils.normalize(HeaderConstants.X_OCCI_ATTRIBUTE),
 				FogbowResourceConstants.ATRIBUTE_TYPE_FOGBOW_REQUEST + " = "
 						+ RequestType.ONE_TIME.getValue());
-		String type = FogbowUtils.getAttributeType(headers);
+		String type = FogbowUtils.getAttType(headers);
 
 		Assert.assertEquals(RequestType.ONE_TIME.getValue(), type);
 	}
@@ -74,7 +73,7 @@ public class TestFogBowUtils {
 	public void testWrongAttributeType() {
 		headers.add(FogbowUtils.normalize(HeaderConstants.X_OCCI_ATTRIBUTE),
 				FogbowResourceConstants.ATRIBUTE_TYPE_FOGBOW_REQUEST + " = wrong");
-		FogbowUtils.getAttributeType(headers);
+		FogbowUtils.getAttType(headers);
 	}
 
 	// *
@@ -82,21 +81,21 @@ public class TestFogBowUtils {
 	public void testEmptyAttributeType() {
 		headers.add(FogbowUtils.normalize(HeaderConstants.X_OCCI_ATTRIBUTE),
 				FogbowResourceConstants.ATRIBUTE_TYPE_FOGBOW_REQUEST + " =");
-		FogbowUtils.getAttributeType(headers);
+		FogbowUtils.getAttType(headers);
 	}
 
 	@Test(expected = OCCIException.class)
 	public void testWrongAttributeValidFrom() {
 		headers.add(FogbowUtils.normalize(HeaderConstants.X_OCCI_ATTRIBUTE),
 				FogbowResourceConstants.ATRIBUTE_VALID_FROM_FOGBOW_REQUEST + " = wrong");
-		FogbowUtils.getAttributeValidFrom(headers);
+		FogbowUtils.getAttValidFrom(headers);
 	}
 
 	@Test(expected = OCCIException.class)
 	public void testWrongAttributeValidUntil() {
 		headers.add(FogbowUtils.normalize(HeaderConstants.X_OCCI_ATTRIBUTE),
 				FogbowResourceConstants.ATRIBUTE_VALID_UNTIL_FOGBOW_REQUEST + " = wrong");
-		FogbowUtils.getAttributeValidUntil(headers);
+		FogbowUtils.getAttValidUntil(headers);
 	}
 
 	@Test

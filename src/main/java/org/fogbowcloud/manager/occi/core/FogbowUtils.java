@@ -9,8 +9,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.fogbowcloud.manager.occi.IrregularSyntaxOCCIExtException;
-import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.FogbowResourceConstants;
 import org.fogbowcloud.manager.occi.model.HeaderConstants;
 import org.restlet.engine.adapter.HttpRequest;
@@ -64,12 +62,12 @@ public class FogbowUtils {
 	public static String getToken(Series<Header> headers){
 		String token = headers.getValues(HeaderConstants.X_AUTH_TOKEN);
 		if(token == null || token.equals("")){
-			throw new OCCIException(ErrorType.BAD_REQUEST, "Irregular Syntax.");
+			throw new OCCIException(ErrorType.UNAUTHORIZED, "Authentication required.");
 		}
 		return token;
 	}
 
-	public static String getAttributeType(Series<Header> headers){
+	public static String getAttType(Series<Header> headers){
 		Map<String,String> map = getAtributes(headers);
 		String type = map.get(FogbowResourceConstants.ATRIBUTE_TYPE_FOGBOW_REQUEST);
 		if (type == null || type.equals("")) {
@@ -85,7 +83,7 @@ public class FogbowUtils {
 
 	}
 
-	public static Date getAttributeValidFrom(Series<Header> headers){
+	public static Date getAttValidFrom(Series<Header> headers){
 		Map<String,String> map = getAtributes(headers);
 		try {			
 			String dataString = map.get(FogbowResourceConstants.ATRIBUTE_VALID_FROM_FOGBOW_REQUEST);
@@ -99,7 +97,7 @@ public class FogbowUtils {
 		}
 	}
 
-	public static Date getAttributeValidUntil(Series<Header> headers){
+	public static Date getAttValidUntil(Series<Header> headers){
 		Map<String,String> map = getAtributes(headers);
 		try {
 			String dataString = map
