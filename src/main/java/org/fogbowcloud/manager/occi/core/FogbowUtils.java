@@ -39,7 +39,7 @@ public class FogbowUtils {
 		return response;
 	}
 
-	private static void validateContentType(Series<Header> headers) {
+	public static void validateContentType(Series<Header> headers) {
 		String contentType = headers.getValues(HeaderConstants.CONTENT_TYPE);
 		if (!contentType.equals(HeaderConstants.OCCI_CONTENT_TYPE)) {
 			throw new OCCIException(ErrorType.BAD_REQUEST, "Irregular Syntax.");
@@ -95,7 +95,6 @@ public class FogbowUtils {
 			}
 			return null;
 		} catch (ParseException e) {
-			e.printStackTrace();
 			throw new OCCIException(ErrorType.BAD_REQUEST, "Irregular Syntax.");
 		}
 	}
@@ -131,7 +130,7 @@ public class FogbowUtils {
 		return mapAttributes;
 	}
 
-	private static void validateRequestCategory(List<Category> listCategory) {
+	public static void validateRequestCategory(List<Category> listCategory) {
 		for (Category category : listCategory) {
 			if (category.getTerm().equals(FogbowResourceConstants.TERM_FOGBOW_REQUEST)) {
 				if (validateCategory(category) == false) {
@@ -175,7 +174,11 @@ public class FogbowUtils {
 						throw new OCCIException(ErrorType.BAD_REQUEST, "Irregular Syntax.");
 					}
 				}
-				category = new Category(term, scheme, catClass);
+				try {
+					category = new Category(term, scheme, catClass);	
+				} catch (IllegalArgumentException e) {
+					throw new OCCIException(ErrorType.BAD_REQUEST, "Irregular Syntax.");
+				}				
 				listCategory.add(category);
 			} else {
 				throw new OCCIException(ErrorType.BAD_REQUEST, "Irregular Syntax.");
@@ -184,7 +187,7 @@ public class FogbowUtils {
 		return listCategory;
 	}
 
-	private static String normalize(String headerName) {
+	public static String normalize(String headerName) {
 		String lowerHeader = headerName.toLowerCase();
 		char[] lowerHeaderArray = lowerHeader.toCharArray();
 		lowerHeaderArray[0] = Character.toUpperCase(lowerHeaderArray[0]);

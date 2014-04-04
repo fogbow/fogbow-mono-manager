@@ -3,7 +3,7 @@ package org.fogbowcloud.manager.occi.model;
 import java.util.List;
 
 public class Category {
-	
+
 	private String term;
 	private String scheme;
 	private String catClass;
@@ -15,9 +15,9 @@ public class Category {
 		setScheme(scheme);
 		setCatClass(catClass);
 	}
-	
-	public String getHeaderFormat(){				
-		return getTerm() + "; scheme=\"" + getScheme() + "\"; class=\"" + getCatClass() + "\"" ;
+
+	public String getHeaderFormat() {
+		return getTerm() + "; scheme=\"" + getScheme() + "\"; class=\"" + getCatClass() + "\"";
 	}
 
 	public String getTerm() {
@@ -25,7 +25,7 @@ public class Category {
 	}
 
 	public void setTerm(String term) {
-		if(term == null || term.equals("")){
+		if (term == null || term.equals("")) {
 			throw new IllegalArgumentException();
 		}
 		this.term = term;
@@ -36,9 +36,9 @@ public class Category {
 	}
 
 	public void setScheme(String scheme) {
-		if(scheme == null || scheme.equals("")){
+		if (scheme == null || scheme.equals("")) {
 			throw new IllegalArgumentException();
-		}		
+		}
 		this.scheme = scheme;
 	}
 
@@ -47,9 +47,9 @@ public class Category {
 	}
 
 	public void setCatClass(String catClass) {
-		if(catClass == null || catClass.equals("")){
+		if (catClass == null || catClass.equals("")) {
 			throw new IllegalArgumentException();
-		}		
+		}
 		this.catClass = catClass;
 	}
 
