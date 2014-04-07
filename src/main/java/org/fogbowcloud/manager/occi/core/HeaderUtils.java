@@ -42,7 +42,7 @@ public class HeaderUtils {
 	public static void checkOCCIContentType(Series<Header> headers) {
 		String contentType = headers.getValues(OCCIHeaders.CONTENT_TYPE);
 		if (!contentType.equals(OCCIHeaders.OCCI_CONTENT_TYPE)) {
-			throw new OCCIException(ErrorType.BAD_REQUEST, "Irregular Syntax.");
+			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}
 	}
 
@@ -56,14 +56,14 @@ public class HeaderUtils {
 				return Integer.parseInt(map.get(RequestAttribute.INSTANCE_COUNT.getValue()));
 			}
 		} catch (NumberFormatException e) {
-			throw new OCCIException(ErrorType.BAD_REQUEST, "Irregular Syntax.");
+			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}
 	}
 
 	public static String getToken(Series<Header> headers) {
 		String token = headers.getValues(OCCIHeaders.X_AUTH_TOKEN);
 		if (token == null || token.equals("")) {
-			throw new OCCIException(ErrorType.UNAUTHORIZED, "Authentication required.");
+			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}
 		return token;
 	}
@@ -122,7 +122,7 @@ public class HeaderUtils {
 			String[] tokensAttribute = valuesAttributes[i].split("=");
 			if (tokensAttribute.length != 2) {
 				throw new OCCIException(ErrorType.BAD_REQUEST,
-						"There are unsupported attributes in the request.");
+						ResponseConstants.UNSUPPORTED_ATTRIBUTES);
 			}
 			// String name = checkFogBowAttributes(tokensAttribute[0].trim());
 			String name = tokensAttribute[0].trim();
@@ -147,12 +147,12 @@ public class HeaderUtils {
 		for (Category category : listCategory) {
 			if (category.getTerm().equals(FogbowResourceConstants.TERM)) {
 				if (validateCategory(category) == false) {
-					throw new OCCIException(ErrorType.BAD_REQUEST, "Irregular Syntax.");
+					throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 				}
 				return;
 			}
 		}
-		throw new OCCIException(ErrorType.BAD_REQUEST, "Irregular Syntax.");
+		throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 	}
 
 	public static boolean validateCategory(Category category) {
@@ -172,28 +172,28 @@ public class HeaderUtils {
 		String catClass = "";
 		for (int i = 0; i < valuesCategory.length; i++) {
 			String[] tokenValuesCAtegory = valuesCategory[i].split(";");
-			if (tokenValuesCAtegory.length > 2) {
+			if (tokenValuesCAtegory.length == 3) {
 				Category category = null;
 				for (int j = 0; j < tokenValuesCAtegory.length; j++) {
 					String[] nameValue = tokenValuesCAtegory[j].split("=");
-					if (nameValue.length == 1) {
+					if (j == 0 && nameValue.length == 1) {
 						term = nameValue[0].trim();
 					} else if (nameValue[0].trim().equals(OCCIHeaders.SCHEME_CATEGORY)) {
 						scheme = nameValue[1].replace("\"", "").trim();
 					} else if (nameValue[0].trim().equals(OCCIHeaders.CLASS_CATEGORY)) {
 						catClass = nameValue[1].replace("\"", "").trim();
 					} else {
-						throw new OCCIException(ErrorType.BAD_REQUEST, "Irregular Syntax.");
+						throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 					}
 				}
 				try {
 					category = new Category(term, scheme, catClass);
 				} catch (IllegalArgumentException e) {
-					throw new OCCIException(ErrorType.BAD_REQUEST, "Irregular Syntax.");
+					throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 				}
 				listCategory.add(category);
 			} else {
-				throw new OCCIException(ErrorType.BAD_REQUEST, "Irregular Syntax.");
+				throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 			}
 		}
 		return listCategory;
@@ -226,19 +226,17 @@ public class HeaderUtils {
 					|| attName.equals(RequestAttribute.VALID_UNTIL.getValue())) {
 				checkDateValue(xOCCIAtt.get(attName));
 			}
-
 		}
 	}
 
 	private static void checkDateValue(String dataString) {
-		// TODO Auto-generated method stub
 		try {
 			if (dataString != null && !dataString.equals("")) {
 				DateFormat formatter = new SimpleDateFormat("yy-MM-dd");
 				formatter.parse(dataString);
 			}
 		} catch (ParseException e) {
-			throw new OCCIException(ErrorType.BAD_REQUEST, "Irregular Syntax.");
+			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}
 	}
 
@@ -248,7 +246,7 @@ public class HeaderUtils {
 				return;
 			}
 		}
-		throw new OCCIException(ErrorType.BAD_REQUEST, "Irregular Syntax.");
+		throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 	}
 
 	public static Map<String, String> addDefaultValuesOnXOCCIAtt(Map<String, String> xOCCIAtt) {

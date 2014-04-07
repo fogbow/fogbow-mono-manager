@@ -1,6 +1,7 @@
 package org.fogbowcloud.manager.occi;
 
 import org.fogbowcloud.manager.occi.core.HeaderUtils;
+import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.request.RequestUnit;
 import org.restlet.engine.adapter.HttpRequest;
 import org.restlet.resource.Delete;
@@ -28,7 +29,7 @@ public class SpecificRequestResource extends ServerResource {
 		HttpRequest req = (HttpRequest) getRequest();
 		String userToken = HeaderUtils.getToken(req.getHeaders());
 		application.removeRequest(userToken, requestId);
-		return "OK";
+		return ResponseConstants.OK ;
 	}
 
 }

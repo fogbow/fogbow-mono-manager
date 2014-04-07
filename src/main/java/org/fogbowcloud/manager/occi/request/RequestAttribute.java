@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public enum RequestAttribute {
+	
 	INSTANCE_COUNT("org.fogbowcloud.request.instance-count"), 
 	TYPE("org.fogbowcloud.request.type"),
 	VALID_UNTIL("org.fogbowcloud.request.valid-until"), 

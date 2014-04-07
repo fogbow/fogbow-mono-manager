@@ -1,7 +1,6 @@
 package org.fogbowcloud.manager.occi;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -9,7 +8,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.FogbowResource;
-import org.fogbowcloud.manager.occi.core.HeaderUtils;
 import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.plugins.ComputePlugin;
 import org.fogbowcloud.manager.occi.plugins.IdentityPlugin;
@@ -17,7 +15,6 @@ import org.fogbowcloud.manager.occi.request.RequestState;
 import org.fogbowcloud.manager.occi.request.RequestUnit;
 import org.restlet.Application;
 import org.restlet.Restlet;
-import org.restlet.engine.adapter.HttpRequest;
 import org.restlet.routing.Router;
 
 public class OCCIApplication extends Application {
@@ -37,7 +34,8 @@ public class OCCIApplication extends Application {
 	public Restlet createInboundRoot() {
 		Router router = new Router(getContext());
 		router.attach("/request", RequestResource.class);
-		router.attach("/request/{requestid}", SpecificRequestResource.class);
+		router.attach("/request/{requestid}", RequestResource.class);
+		// router.attach("/request/{requestid}", SpecificRequestResource.class);
 		return router;
 	}
 
@@ -70,7 +68,7 @@ public class OCCIApplication extends Application {
 	public RequestUnit newRequest(String userToken, List<FogbowResource> requestResources,
 			Map<String, String> xOCCIAtt) {
 		checkUserToken(userToken);
-		
+
 		if (userToRequestIds.get(userToken) == null) {
 			userToRequestIds.put(userToken, new ArrayList<String>());
 		}

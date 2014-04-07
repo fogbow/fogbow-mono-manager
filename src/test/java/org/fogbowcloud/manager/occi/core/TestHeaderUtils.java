@@ -1,6 +1,7 @@
 package org.fogbowcloud.manager.occi.core;
 
 import java.util.List;
+import java.util.Map;
 
 import org.fogbowcloud.manager.occi.model.FogbowResourceConstants;
 import org.fogbowcloud.manager.occi.model.OCCIHeaders;
@@ -12,7 +13,7 @@ import org.junit.Test;
 import org.restlet.engine.header.Header;
 import org.restlet.util.Series;
 
-public class TestFogBowUtils {
+public class TestHeaderUtils {
 
 	Series<Header> headers;
 
@@ -28,6 +29,7 @@ public class TestFogBowUtils {
 
 		Assert.assertEquals(TestRequestHelper.ACCESS_TOKEN, token);
 	}
+
 	@Test(expected = OCCIException.class)
 	public void testEmptyToken() {
 		headers.add(OCCIHeaders.X_AUTH_TOKEN, "");
@@ -37,7 +39,14 @@ public class TestFogBowUtils {
 	@Test
 	public void testValidAttributeInstaces() {
 		headers.add(HeaderUtils.normalize(OCCIHeaders.X_OCCI_ATTRIBUTE),
-				RequestAttribute.INSTANCE_COUNT.getValue() + " = 1");
+				RequestAttribute.INSTANCE_COUNT.getValue() + " = 6");
+		int instances = HeaderUtils.getNumberOfInstances(headers);
+
+		Assert.assertEquals(6, instances);
+	}
+
+	@Test
+	public void testValidAttributeInstacesValeuDefault() {
 		int instances = HeaderUtils.getNumberOfInstances(headers);
 
 		Assert.assertEquals(1, instances);
@@ -50,53 +59,12 @@ public class TestFogBowUtils {
 		HeaderUtils.getNumberOfInstances(headers);
 	}
 
-	// *
 	@Test(expected = OCCIException.class)
 	public void testEmptyAttributeInstaces() {
 		headers.add(HeaderUtils.normalize(OCCIHeaders.X_OCCI_ATTRIBUTE),
 				RequestAttribute.INSTANCE_COUNT.getValue() + " =");
 		HeaderUtils.getNumberOfInstances(headers);
 	}
-
-//	@Test
-//	public void testValidAttributeType() {
-//		headers.add(
-//				FogbowUtils.normalize(HeaderConstants.X_OCCI_ATTRIBUTE),
-//				FogbowResourceConstants.ATRIBUTE_TYPE_FOGBOW_REQUEST + " = "
-//						+ RequestType.ONE_TIME.getValue());
-//		String type = FogbowUtils.getAttType(headers);
-//
-//		Assert.assertEquals(RequestType.ONE_TIME.getValue(), type);
-//	}
-//
-//	@Test(expected = OCCIException.class)
-//	public void testWrongAttributeType() {
-//		headers.add(FogbowUtils.normalize(HeaderConstants.X_OCCI_ATTRIBUTE),
-//				FogbowResourceConstants.ATRIBUTE_TYPE_FOGBOW_REQUEST + " = wrong");
-//		FogbowUtils.getAttType(headers);
-//	}
-//
-//	// *
-//	@Test(expected = OCCIException.class)
-//	public void testEmptyAttributeType() {
-//		headers.add(FogbowUtils.normalize(HeaderConstants.X_OCCI_ATTRIBUTE),
-//				FogbowResourceConstants.ATRIBUTE_TYPE_FOGBOW_REQUEST + " =");
-//		FogbowUtils.getAttType(headers);
-//	}
-//
-//	@Test(expected = OCCIException.class)
-//	public void testWrongAttributeValidFrom() {
-//		headers.add(FogbowUtils.normalize(HeaderConstants.X_OCCI_ATTRIBUTE),
-//				FogbowResourceConstants.ATRIBUTE_VALID_FROM_FOGBOW_REQUEST + " = wrong");
-//		FogbowUtils.getAttValidFrom(headers);
-//	}
-//
-//	@Test(expected = OCCIException.class)
-//	public void testWrongAttributeValidUntil() {
-//		headers.add(FogbowUtils.normalize(HeaderConstants.X_OCCI_ATTRIBUTE),
-//				FogbowResourceConstants.ATRIBUTE_VALID_UNTIL_FOGBOW_REQUEST + " = wrong");
-//		FogbowUtils.getAttValidUntil(headers);
-//	}
 
 	@Test
 	public void testGetOneCategory() {
@@ -137,8 +105,43 @@ public class TestFogBowUtils {
 	}
 
 	@Test(expected = OCCIException.class)
-	public void testGetCategorWithoutClass() {
+	public void testGetCategoryWithoutClass() {
 		headers.add(HeaderUtils.normalize(OCCIHeaders.CATEGORY), "termOK ; scheme=\"schema\"");
+		HeaderUtils.getListCategory(headers);
+	}
+
+	@Test(expected = OCCIException.class)
+	public void testGetCategoryEmptyTerm() {
+		headers.add(HeaderUtils.normalize(OCCIHeaders.CATEGORY),
+				"; scheme=\"schema\" ; class=\"mixin\"");
+		HeaderUtils.getListCategory(headers);
+	}
+
+	@Test(expected = OCCIException.class)
+	public void testGetCategoryEmptyScheme() {
+		headers.add(HeaderUtils.normalize(OCCIHeaders.CATEGORY),
+				"termOK; scheme=\"\" ; class=\"mixin\"");
+		HeaderUtils.getListCategory(headers);
+	}
+
+	@Test(expected = OCCIException.class)
+	public void testGetCategoryEmptyClass() {
+		headers.add(HeaderUtils.normalize(OCCIHeaders.CATEGORY),
+				"termOK; scheme=\"scheme\" ; class=\"\"");
+		HeaderUtils.getListCategory(headers);
+	}
+
+	@Test(expected = OCCIException.class)
+	public void testGetCategoryWrongTerm() {
+		headers.add(HeaderUtils.normalize(OCCIHeaders.CATEGORY),
+				"termOK = wrongsyntax; scheme=\"scheme\" ; class=\"class\"");
+		HeaderUtils.getListCategory(headers);
+	}
+
+	@Test(expected = OCCIException.class)
+	public void testGetCategoryWrongSyntax() {
+		headers.add(HeaderUtils.normalize(OCCIHeaders.CATEGORY),
+				"termOK; scheme=\"scheme\" ; class=\"\"; wrong =\"wrong\"");
 		HeaderUtils.getListCategory(headers);
 	}
 
@@ -166,6 +169,51 @@ public class TestFogBowUtils {
 	}
 
 	@Test
+	public void testCheckAttributes() {
+		headers.add(HeaderUtils.normalize(OCCIHeaders.X_OCCI_ATTRIBUTE),
+				RequestAttribute.INSTANCE_COUNT.getValue() + "=10");
+		headers.add(HeaderUtils.normalize(OCCIHeaders.X_OCCI_ATTRIBUTE),
+				RequestAttribute.TYPE.getValue() + "=\"one-time\"");
+		headers.add(HeaderUtils.normalize(OCCIHeaders.X_OCCI_ATTRIBUTE),
+				RequestAttribute.VALID_FROM.getValue() + "=\"2014-04-01\"");
+		headers.add(HeaderUtils.normalize(OCCIHeaders.X_OCCI_ATTRIBUTE),
+				RequestAttribute.VALID_UNTIL.getValue() + "=\"2014-03-30\"");
+		Map<String, String> xOCCIAtt = HeaderUtils.getXOCCIAtributes(headers);
+
+		HeaderUtils.checkXOCCIAtt(xOCCIAtt);
+	}
+
+	@Test(expected = OCCIException.class)
+	public void testCheckAttributesWrongType() {
+		headers.add(HeaderUtils.normalize(OCCIHeaders.X_OCCI_ATTRIBUTE),
+				RequestAttribute.INSTANCE_COUNT.getValue() + "=10");
+		headers.add(HeaderUtils.normalize(OCCIHeaders.X_OCCI_ATTRIBUTE),
+				RequestAttribute.TYPE.getValue() + "=\"wrong\"");
+		headers.add(HeaderUtils.normalize(OCCIHeaders.X_OCCI_ATTRIBUTE),
+				RequestAttribute.VALID_FROM.getValue() + "=\"2014-04-01\"");
+		headers.add(HeaderUtils.normalize(OCCIHeaders.X_OCCI_ATTRIBUTE),
+				RequestAttribute.VALID_UNTIL.getValue() + "=\"2014-03-30\"");
+		Map<String, String> xOCCIAtt = HeaderUtils.getXOCCIAtributes(headers);
+
+		HeaderUtils.checkXOCCIAtt(xOCCIAtt);
+	}
+
+	@Test(expected = OCCIException.class)
+	public void testCheckAttributesWrongDate() {
+		headers.add(HeaderUtils.normalize(OCCIHeaders.X_OCCI_ATTRIBUTE),
+				RequestAttribute.INSTANCE_COUNT.getValue() + "=10");
+		headers.add(HeaderUtils.normalize(OCCIHeaders.X_OCCI_ATTRIBUTE),
+				RequestAttribute.TYPE.getValue() + "=\"one-tine\"");
+		headers.add(HeaderUtils.normalize(OCCIHeaders.X_OCCI_ATTRIBUTE),
+				RequestAttribute.VALID_FROM.getValue() + "=\"wrong\"");
+		headers.add(HeaderUtils.normalize(OCCIHeaders.X_OCCI_ATTRIBUTE),
+				RequestAttribute.VALID_UNTIL.getValue() + "=\"2014-03-30\"");
+		Map<String, String> xOCCIAtt = HeaderUtils.getXOCCIAtributes(headers);
+
+		HeaderUtils.checkXOCCIAtt(xOCCIAtt);
+	}
+
+	@Test
 	public void testValidCategoryFogbowRequest() {
 		Category category = new Category(FogbowResourceConstants.TERM,
 				FogbowResourceConstants.SCHEME, OCCIHeaders.KIND_CLASS);
@@ -176,10 +224,15 @@ public class TestFogBowUtils {
 
 	@Test(expected = OCCIException.class)
 	public void testInvalidCategoryFogbowRequest() {
-		Category category = new Category("fogbow-request-wrong",
-				FogbowResourceConstants.SCHEME, OCCIHeaders.KIND_CLASS);
+		Category category = new Category("fogbow-request-wrong", FogbowResourceConstants.SCHEME,
+				OCCIHeaders.KIND_CLASS);
 		headers.add(HeaderUtils.normalize(OCCIHeaders.CATEGORY), category.toHeader());
 		List<Category> listCategory = HeaderUtils.getListCategory(headers);
 		HeaderUtils.validateRequestCategory(listCategory);
+	}
+
+	@Test
+	public void testNormalize() {
+		Assert.assertEquals("Fulano", HeaderUtils.normalize("FULANO"));
 	}
 }

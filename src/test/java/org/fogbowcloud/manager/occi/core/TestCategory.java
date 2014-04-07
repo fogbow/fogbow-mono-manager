@@ -1,8 +1,5 @@
 package org.fogbowcloud.manager.occi.core;
 
-import static org.junit.Assert.*;
-
-import org.fogbowcloud.manager.occi.core.Category;
 import org.junit.Assert;
 import org.junit.Test;
 
