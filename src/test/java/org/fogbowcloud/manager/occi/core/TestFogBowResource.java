@@ -10,37 +10,37 @@ public class TestFogBowResource {
 
 	@Test
 	public void validCategory() {
-		new FogbowResource("term", "scheme", "class", null, null, null, null, null);
+		new Resource("term", "scheme", "class", null, null, null, null, null);
 	}
 
 	@Test(expected = IllegalArgumentException.class)
 	public void invalidCategoryEmptyTerm() {
-		new FogbowResource("", "scheme", "class", null, null, null, null, null);
+		new Resource("", "scheme", "class", null, null, null, null, null);
 	}
 
 	@Test(expected = IllegalArgumentException.class)
 	public void invalidCategoryNullTerm() {
-		new FogbowResource(null, "scheme", "class", null, null, null, null, null);
+		new Resource(null, "scheme", "class", null, null, null, null, null);
 	}
 
 	@Test(expected = IllegalArgumentException.class)
 	public void invalidCategoryEmptyScheme() {
-		new FogbowResource("term", "", "class", null, null, null, null, null);
+		new Resource("term", "", "class", null, null, null, null, null);
 	}
 
 	@Test(expected = IllegalArgumentException.class)
 	public void invalidCategoryNullScheme() {
-		new FogbowResource("term", null, "class", null, null, null, null, null);
+		new Resource("term", null, "class", null, null, null, null, null);
 	}
 
 	@Test(expected = IllegalArgumentException.class)
 	public void invalidCategoryEmptyClass() {
-		new FogbowResource("term", "scheme", "", null, null, null, null, null);
+		new Resource("term", "scheme", "", null, null, null, null, null);
 	}
 
 	@Test(expected = IllegalArgumentException.class)
 	public void invalidCategoryNullClass() {
-		new FogbowResource("term", "scheme", null, null, null, null, null, null);
+		new Resource("term", "scheme", null, null, null, null, null, null);
 	}
 
 	@Test
@@ -49,18 +49,18 @@ public class TestFogBowResource {
 		attributes.add("attribute1");
 		attributes.add("attribute2");
 		attributes.add("attribute3");
-		FogbowResource fogbowResource = new FogbowResource("term", "scheme", "class", attributes,
+		Resource resource = new Resource("term", "scheme", "class", attributes,
 				null, null, null, null);
 
-		Assert.assertTrue(fogbowResource.supportAtt("attribute1"));
+		Assert.assertTrue(resource.supportAtt("attribute1"));
 	}
 
 	public void testMatches() {
-		FogbowResource fogbowResource = new FogbowResource("term", "scheme", "class", null, null,
+		Resource resource = new Resource("term", "scheme", "class", null, null,
 				null, null, null);
 		Category category = new Category("term", "scheme", "class");
 
-		Assert.assertTrue(fogbowResource.matches(category));
+		Assert.assertTrue(resource.matches(category));
 	}
 
 }

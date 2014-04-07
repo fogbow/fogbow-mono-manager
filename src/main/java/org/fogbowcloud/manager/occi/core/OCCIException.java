@@ -6,6 +6,8 @@ import org.restlet.resource.ResourceException;
 
 public class OCCIException extends ResourceException {
 	
+	private static final long serialVersionUID = 6258329809337522269L;
+	
 	public OCCIException(ErrorType type, String description) {
 		super(new Status(getStatusCode(type)), description);
 	}
@@ -25,6 +27,4 @@ public class OCCIException extends ResourceException {
 		}
 		return 0;
 	}
-
-	private static final long serialVersionUID = 6258329809337522269L;
 }

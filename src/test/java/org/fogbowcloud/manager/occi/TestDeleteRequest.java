@@ -17,10 +17,10 @@ import org.apache.http.impl.DefaultHttpResponseFactory;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicStatusLine;
 import org.fogbowcloud.manager.occi.core.Category;
-import org.fogbowcloud.manager.occi.model.FogbowResourceConstants;
-import org.fogbowcloud.manager.occi.model.OCCIHeaders;
+import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.plugins.ComputePlugin;
 import org.fogbowcloud.manager.occi.plugins.IdentityPlugin;
+import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.junit.After;
 import org.junit.Assert;
@@ -85,8 +85,8 @@ public class TestDeleteRequest {
 	public void testDeleteSpecificRequest() throws URISyntaxException, HttpException, IOException {
 		// Post
 		HttpPost post = new HttpPost(RequestHelper.URI_FOGBOW_REQUEST);
-		Category category = new Category(FogbowResourceConstants.TERM,
-				FogbowResourceConstants.SCHEME, OCCIHeaders.KIND_CLASS);
+		Category category = new Category(RequestConstants.TERM,
+				RequestConstants.SCHEME, OCCIHeaders.KIND_CLASS);
 		post.addHeader(OCCIHeaders.CONTENT_TYPE, RequestHelper.CONTENT_TYPE_OCCI);
 		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, RequestHelper.ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
@@ -118,8 +118,8 @@ public class TestDeleteRequest {
 			IOException {
 		// Post
 		HttpPost post = new HttpPost(RequestHelper.URI_FOGBOW_REQUEST);
-		Category category = new Category(FogbowResourceConstants.TERM,
-				FogbowResourceConstants.SCHEME, OCCIHeaders.KIND_CLASS);
+		Category category = new Category(RequestConstants.TERM,
+				RequestConstants.SCHEME, OCCIHeaders.KIND_CLASS);
 		post.addHeader(OCCIHeaders.CONTENT_TYPE, RequestHelper.CONTENT_TYPE_OCCI);
 		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, RequestHelper.ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
@@ -156,8 +156,8 @@ public class TestDeleteRequest {
 	public void testDeleteAllRequests() throws URISyntaxException, HttpException, IOException {
 		// Post
 		HttpPost post = new HttpPost(RequestHelper.URI_FOGBOW_REQUEST);
-		Category category = new Category(FogbowResourceConstants.TERM,
-				FogbowResourceConstants.SCHEME, OCCIHeaders.KIND_CLASS);
+		Category category = new Category(RequestConstants.TERM,
+				RequestConstants.SCHEME, OCCIHeaders.KIND_CLASS);
 		post.addHeader(OCCIHeaders.CONTENT_TYPE, RequestHelper.CONTENT_TYPE_OCCI);
 		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, RequestHelper.ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());

@@ -6,13 +6,14 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
-import org.fogbowcloud.manager.occi.core.FogbowResource;
+import org.fogbowcloud.manager.occi.core.Resource;
 import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.plugins.ComputePlugin;
 import org.fogbowcloud.manager.occi.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.occi.request.RequestState;
-import org.fogbowcloud.manager.occi.request.RequestUnit;
+import org.fogbowcloud.manager.occi.request.Request;
 import org.restlet.Application;
 import org.restlet.Restlet;
 import org.restlet.routing.Router;
@@ -23,19 +24,18 @@ public class OCCIApplication extends Application {
 	private ComputePlugin computePlugin;
 	private Map<String, List<String>> userToRequestIds;
 
-	private Map<String, RequestUnit> requestIdToRequestUnit;
+	private Map<String, Request> requestIdToRequestUnit;
 
 	public OCCIApplication() {
 		this.userToRequestIds = new ConcurrentHashMap<String, List<String>>();
-		this.requestIdToRequestUnit = new ConcurrentHashMap<String, RequestUnit>();
+		this.requestIdToRequestUnit = new ConcurrentHashMap<String, Request>();
 	}
 
 	@Override
 	public Restlet createInboundRoot() {
 		Router router = new Router(getContext());
-		router.attach("/request", RequestResource.class);
-		router.attach("/request/{requestid}", RequestResource.class);
-		// router.attach("/request/{requestid}", SpecificRequestResource.class);
+		router.attach("/request", RequestServerResource.class);
+		router.attach("/request/{requestid}", RequestServerResource.class);
 		return router;
 	}
 
@@ -59,13 +59,13 @@ public class OCCIApplication extends Application {
 		return identityPlugin;
 	}
 
-	public RequestUnit getRequestDetails(String userToken, String requestId) {
+	public Request getRequestDetails(String userToken, String requestId) {
 		checkUserToken(userToken);
 		checkRequestId(userToken, requestId);
 		return requestIdToRequestUnit.get(requestId);
 	}
 
-	public RequestUnit newRequest(String userToken, List<FogbowResource> requestResources,
+	public Request newRequest(String userToken, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
 		checkUserToken(userToken);
 
@@ -73,28 +73,28 @@ public class OCCIApplication extends Application {
 			userToRequestIds.put(userToken, new ArrayList<String>());
 		}
 		String requestId = String.valueOf(UUID.randomUUID());
-		RequestUnit requestUnit = new RequestUnit(requestId, "", RequestState.OPEN,
-				requestResources, xOCCIAtt);
+		Request request = new Request(requestId, "", RequestState.OPEN,
+				categories, xOCCIAtt);
 
-		userToRequestIds.get(userToken).add(requestUnit.getId());
-		requestIdToRequestUnit.put(requestUnit.getId(), requestUnit);
+		userToRequestIds.get(userToken).add(request.getId());
+		requestIdToRequestUnit.put(request.getId(), request);
 
-		submitRequest(requestUnit, requestResources, xOCCIAtt);
+		submitRequest(request, categories, xOCCIAtt);
 
-		return requestUnit;
+		return request;
 	}
 
 	// FIXME Should req be an attribute of requestUnit?
-	private void submitRequest(RequestUnit requestUnit, List<FogbowResource> requestResources,
+	private void submitRequest(Request request, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
 		// TODO Choose if submit to local or remote cloud and submit
-		computePlugin.requestInstance(requestResources, xOCCIAtt);
+		computePlugin.requestInstance(categories, xOCCIAtt);
 	}
 
-	public List<RequestUnit> getRequestsFromUser(String userToken) {
+	public List<Request> getRequestsFromUser(String userToken) {
 		checkUserToken(userToken);
 
-		List<RequestUnit> requests = new ArrayList<RequestUnit>();
+		List<Request> requests = new ArrayList<Request>();
 		if (userToRequestIds.get(userToken) != null) {
 			for (String requestId : userToRequestIds.get(userToken)) {
 				requests.add(requestIdToRequestUnit.get(requestId));

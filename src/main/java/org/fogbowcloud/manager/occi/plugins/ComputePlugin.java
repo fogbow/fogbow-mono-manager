@@ -4,11 +4,10 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.http.HttpResponse;
-import org.fogbowcloud.manager.occi.core.FogbowResource;
-import org.restlet.engine.adapter.HttpRequest;
+import org.fogbowcloud.manager.occi.core.Category;
 
 public interface ComputePlugin {
 
-	public HttpResponse requestInstance(List<FogbowResource> requestResources, Map<String, String> xOCCIAtt);
+	public HttpResponse requestInstance(List<Category> requestResources, Map<String, String> xOCCIAtt);
 	
 }

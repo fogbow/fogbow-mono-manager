@@ -4,8 +4,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.fogbowcloud.manager.occi.RequestHelper;
-import org.fogbowcloud.manager.occi.model.FogbowResourceConstants;
-import org.fogbowcloud.manager.occi.model.OCCIHeaders;
+import org.fogbowcloud.manager.occi.RequestServerResource;
+import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.junit.Assert;
 import org.junit.Before;
@@ -25,7 +25,7 @@ public class TestHeaderUtils {
 	@Test
 	public void testValidSyntaxToken() {
 		headers.add(OCCIHeaders.X_AUTH_TOKEN, RequestHelper.ACCESS_TOKEN);
-		String token = HeaderUtils.getToken(headers);
+		String token = HeaderUtils.getAuthToken(headers);
 
 		Assert.assertEquals(RequestHelper.ACCESS_TOKEN, token);
 	}
@@ -33,21 +33,29 @@ public class TestHeaderUtils {
 	@Test(expected = OCCIException.class)
 	public void testEmptyToken() {
 		headers.add(OCCIHeaders.X_AUTH_TOKEN, "");
-		HeaderUtils.getToken(headers);
+		HeaderUtils.getAuthToken(headers);
 	}
 
 	@Test
 	public void testValidAttributeInstaces() {
 		headers.add(HeaderUtils.normalize(OCCIHeaders.X_OCCI_ATTRIBUTE),
 				RequestAttribute.INSTANCE_COUNT.getValue() + " = 6");
-		int instances = HeaderUtils.getNumberOfInstances(headers);
+		
+		Map<String, String> xOCCIAtt = HeaderUtils.getXOCCIAtributes(headers);
+		xOCCIAtt = RequestServerResource.normalizeXOCCIAtt(xOCCIAtt);
+		System.out.println(xOCCIAtt.get(RequestAttribute.INSTANCE_COUNT.getValue()));
+		int instances = Integer.valueOf(
+				xOCCIAtt.get(RequestAttribute.INSTANCE_COUNT.getValue()));
 
 		Assert.assertEquals(6, instances);
 	}
 
 	@Test
 	public void testValidAttributeInstacesValeuDefault() {
-		int instances = HeaderUtils.getNumberOfInstances(headers);
+		Map<String, String> xOCCIAtt = HeaderUtils.getXOCCIAtributes(headers);
+		xOCCIAtt = RequestServerResource.normalizeXOCCIAtt(xOCCIAtt);
+		int instances = Integer.valueOf(
+				xOCCIAtt.get(RequestAttribute.INSTANCE_COUNT.getValue()));
 
 		Assert.assertEquals(1, instances);
 	}
@@ -56,36 +64,44 @@ public class TestHeaderUtils {
 	public void testWrongAttributeInstaces() {
 		headers.add(HeaderUtils.normalize(OCCIHeaders.X_OCCI_ATTRIBUTE),
 				RequestAttribute.INSTANCE_COUNT.getValue() + " = wrong");
-		HeaderUtils.getNumberOfInstances(headers);
+		
+		Map<String, String> xOCCIAtt = HeaderUtils.getXOCCIAtributes(headers);
+		xOCCIAtt = RequestServerResource.normalizeXOCCIAtt(xOCCIAtt);
+		int instances = Integer.valueOf(
+				RequestAttribute.INSTANCE_COUNT.getValue());				
 	}
 
 	@Test(expected = OCCIException.class)
 	public void testEmptyAttributeInstaces() {
 		headers.add(HeaderUtils.normalize(OCCIHeaders.X_OCCI_ATTRIBUTE),
 				RequestAttribute.INSTANCE_COUNT.getValue() + " =");
-		HeaderUtils.getNumberOfInstances(headers);
+		
+		Map<String, String> xOCCIAtt = HeaderUtils.getXOCCIAtributes(headers);
+		xOCCIAtt = RequestServerResource.normalizeXOCCIAtt(xOCCIAtt);
+		int instances = Integer.valueOf(
+				RequestAttribute.INSTANCE_COUNT.getValue());
 	}
 
 	@Test
 	public void testGetOneCategory() {
-		Category category = new Category(FogbowResourceConstants.TERM,
-				FogbowResourceConstants.SCHEME, OCCIHeaders.KIND_CLASS);
+		Category category = new Category(RequestConstants.TERM,
+				RequestConstants.SCHEME, OCCIHeaders.KIND_CLASS);
 		headers.add(HeaderUtils.normalize(OCCIHeaders.CATEGORY), category.toHeader());
-		List<Category> listCAtegory = HeaderUtils.getListCategory(headers);
+		List<Category> listCAtegory = HeaderUtils.getCategories(headers);
 
 		Assert.assertEquals(1, listCAtegory.size());
 	}
 
 	@Test
 	public void testGetManyCategory() {
-		Category category = new Category(FogbowResourceConstants.TERM,
-				FogbowResourceConstants.SCHEME, OCCIHeaders.KIND_CLASS);
+		Category category = new Category(RequestConstants.TERM,
+				RequestConstants.SCHEME, OCCIHeaders.KIND_CLASS);
 		Category category2 = new Category("m1-namo", "namo-teste", OCCIHeaders.MIXIN_CLASS);
 		Category category3 = new Category("stonage", "stonage", OCCIHeaders.MIXIN_CLASS);
 		headers.add(HeaderUtils.normalize(OCCIHeaders.CATEGORY), category.toHeader());
 		headers.add(HeaderUtils.normalize(OCCIHeaders.CATEGORY), category2.toHeader());
 		headers.add(HeaderUtils.normalize(OCCIHeaders.CATEGORY), category3.toHeader());
-		List<Category> listCAtegory = HeaderUtils.getListCategory(headers);
+		List<Category> listCAtegory = HeaderUtils.getCategories(headers);
 
 		Assert.assertEquals(3, listCAtegory.size());
 	}
@@ -94,65 +110,55 @@ public class TestHeaderUtils {
 	public void testGetCategoryWrongSchemaSyntax() {
 		headers.add(HeaderUtils.normalize(OCCIHeaders.CATEGORY),
 				"termOK ; schemeWRONG=\"schema\" ; class=\"mixin\"");
-		HeaderUtils.getListCategory(headers);
+		HeaderUtils.getCategories(headers);
 	}
 
 	@Test(expected = OCCIException.class)
 	public void testGetCategoryWrongClassSyntax() {
 		headers.add(HeaderUtils.normalize(OCCIHeaders.CATEGORY),
 				"termOK ; scheme=\"schema\" ; classWRONG=\"mixin\"");
-		HeaderUtils.getListCategory(headers);
+		HeaderUtils.getCategories(headers);
 	}
 
 	@Test(expected = OCCIException.class)
 	public void testGetCategoryWithoutClass() {
 		headers.add(HeaderUtils.normalize(OCCIHeaders.CATEGORY), "termOK ; scheme=\"schema\"");
-		HeaderUtils.getListCategory(headers);
+		HeaderUtils.getCategories(headers);
 	}
 
 	@Test(expected = OCCIException.class)
 	public void testGetCategoryEmptyTerm() {
 		headers.add(HeaderUtils.normalize(OCCIHeaders.CATEGORY),
 				"; scheme=\"schema\" ; class=\"mixin\"");
-		HeaderUtils.getListCategory(headers);
+		HeaderUtils.getCategories(headers);
 	}
 
 	@Test(expected = OCCIException.class)
 	public void testGetCategoryEmptyScheme() {
 		headers.add(HeaderUtils.normalize(OCCIHeaders.CATEGORY),
 				"termOK; scheme=\"\" ; class=\"mixin\"");
-		HeaderUtils.getListCategory(headers);
+		HeaderUtils.getCategories(headers);
 	}
 
 	@Test(expected = OCCIException.class)
 	public void testGetCategoryEmptyClass() {
 		headers.add(HeaderUtils.normalize(OCCIHeaders.CATEGORY),
 				"termOK; scheme=\"scheme\" ; class=\"\"");
-		HeaderUtils.getListCategory(headers);
+		HeaderUtils.getCategories(headers);
 	}
 
 	@Test(expected = OCCIException.class)
 	public void testGetCategoryWrongTerm() {
 		headers.add(HeaderUtils.normalize(OCCIHeaders.CATEGORY),
 				"termOK = wrongsyntax; scheme=\"scheme\" ; class=\"class\"");
-		HeaderUtils.getListCategory(headers);
+		HeaderUtils.getCategories(headers);
 	}
 
 	@Test(expected = OCCIException.class)
 	public void testGetCategoryWrongSyntax() {
 		headers.add(HeaderUtils.normalize(OCCIHeaders.CATEGORY),
 				"termOK; scheme=\"scheme\" ; class=\"\"; wrong =\"wrong\"");
-		HeaderUtils.getListCategory(headers);
-	}
-
-	@Test
-	public void testValidCheckFogbowHeaders() {
-		headers.add(HeaderUtils.normalize(OCCIHeaders.CONTENT_TYPE),
-				RequestHelper.CONTENT_TYPE_OCCI);
-		Category category = new Category(FogbowResourceConstants.TERM,
-				FogbowResourceConstants.SCHEME, OCCIHeaders.KIND_CLASS);
-		headers.add(HeaderUtils.normalize(OCCIHeaders.CATEGORY), category.toHeader());
-		HeaderUtils.checkFogbowHeaders(headers);
+		HeaderUtils.getCategories(headers);
 	}
 
 	@Test
@@ -180,7 +186,7 @@ public class TestHeaderUtils {
 				RequestAttribute.VALID_UNTIL.getValue() + "=\"2014-03-30\"");
 		Map<String, String> xOCCIAtt = HeaderUtils.getXOCCIAtributes(headers);
 
-		HeaderUtils.checkXOCCIAtt(xOCCIAtt);
+		RequestServerResource.normalizeXOCCIAtt(xOCCIAtt);
 	}
 
 	@Test(expected = OCCIException.class)
@@ -195,7 +201,7 @@ public class TestHeaderUtils {
 				RequestAttribute.VALID_UNTIL.getValue() + "=\"2014-03-30\"");
 		Map<String, String> xOCCIAtt = HeaderUtils.getXOCCIAtributes(headers);
 
-		HeaderUtils.checkXOCCIAtt(xOCCIAtt);
+		RequestServerResource.normalizeXOCCIAtt(xOCCIAtt);
 	}
 
 	@Test(expected = OCCIException.class)
@@ -210,25 +216,25 @@ public class TestHeaderUtils {
 				RequestAttribute.VALID_UNTIL.getValue() + "=\"2014-03-30\"");
 		Map<String, String> xOCCIAtt = HeaderUtils.getXOCCIAtributes(headers);
 
-		HeaderUtils.checkXOCCIAtt(xOCCIAtt);
+		RequestServerResource.normalizeXOCCIAtt(xOCCIAtt);
 	}
 
 	@Test
 	public void testValidCategoryFogbowRequest() {
-		Category category = new Category(FogbowResourceConstants.TERM,
-				FogbowResourceConstants.SCHEME, OCCIHeaders.KIND_CLASS);
+		Category category = new Category(RequestConstants.TERM,
+				RequestConstants.SCHEME, OCCIHeaders.KIND_CLASS);
 		headers.add(HeaderUtils.normalize(OCCIHeaders.CATEGORY), category.toHeader());
-		List<Category> listCategory = HeaderUtils.getListCategory(headers);
-		HeaderUtils.validateRequestCategory(listCategory);
+		List<Category> categories = HeaderUtils.getCategories(headers);
+		HeaderUtils.checkCategories(categories, RequestConstants.TERM);
 	}
 
 	@Test(expected = OCCIException.class)
 	public void testInvalidCategoryFogbowRequest() {
-		Category category = new Category("fogbow-request-wrong", FogbowResourceConstants.SCHEME,
+		Category category = new Category("fogbow-request-wrong", RequestConstants.SCHEME,
 				OCCIHeaders.KIND_CLASS);
 		headers.add(HeaderUtils.normalize(OCCIHeaders.CATEGORY), category.toHeader());
-		List<Category> listCategory = HeaderUtils.getListCategory(headers);
-		HeaderUtils.validateRequestCategory(listCategory);
+		List<Category> categories = HeaderUtils.getCategories(headers);
+		HeaderUtils.checkCategories(categories, RequestConstants.TERM);
 	}
 
 	@Test

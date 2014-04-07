@@ -7,13 +7,11 @@ public class Category {
 	private String scheme;
 	private String catClass;
 
-
 	public Category(String term, String scheme, String catClass) {
 		setTerm(term);
 		setScheme(scheme);
 		setCatClass(catClass);
 	}
-
 
 	public String toHeader() {
 		return getTerm() + "; scheme=\"" + getScheme() + "\"; class=\"" + getCatClass() + "\"";
@@ -52,4 +50,17 @@ public class Category {
 		this.catClass = catClass;
 	}
 
+	@Override
+	public boolean equals(Object obj) {
+		if (!(obj instanceof Category)) {
+			return false;
+		}
+		Category category = (Category) obj;
+		if (category.getTerm().equals(getTerm())
+				&& category.getCatClass().equals(getCatClass())
+				&& category.getScheme().equals(getScheme())) {
+			return true;
+		}
+		return false;
+	}
 }

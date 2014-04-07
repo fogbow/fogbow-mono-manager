@@ -8,11 +8,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.fogbowcloud.manager.occi.model.FogbowResourceConstants;
-import org.fogbowcloud.manager.occi.model.OCCIHeaders;
+import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestType;
-import org.fogbowcloud.manager.occi.request.RequestUnit;
+import org.fogbowcloud.manager.occi.request.Request;
 import org.restlet.engine.adapter.HttpRequest;
 import org.restlet.engine.header.Header;
 import org.restlet.util.Series;
@@ -21,16 +20,10 @@ public class HeaderUtils {
 
 	public static final String X_OCCI_LOCATION = "X-OCCI-Location: ";
 
-	public static void checkFogbowHeaders(Series<Header> headers) {
-		checkOCCIContentType(headers);
-		List<Category> listCategory = getListCategory(headers);
-		validateRequestCategory(listCategory);
-	}
-
-	public static String generateResponseId(List<RequestUnit> requestUnits, HttpRequest req) {
+	public static String generateResponseId(List<Request> requests, HttpRequest req) {
 		String requestEndpoint = req.getHostRef() + req.getHttpCall().getRequestUri();
 		String response = "";
-		for (RequestUnit request : requestUnits) {
+		for (Request request : requests) {
 			response += X_OCCI_LOCATION + requestEndpoint + "/" + request.getId();
 		}
 		if (response.equals("")) {
@@ -46,74 +39,13 @@ public class HeaderUtils {
 		}
 	}
 
-	public static int getNumberOfInstances(Series<Header> headers) {
-		Map<String, String> map = getXOCCIAtributes(headers);
-		try {
-			String instances = map.get(RequestAttribute.INSTANCE_COUNT.getValue());
-			if (instances == null || instances.equals("")) {
-				return FogbowResourceConstants.DEFAULT_INSTANCE_COUNT;
-			} else {
-				return Integer.parseInt(map.get(RequestAttribute.INSTANCE_COUNT.getValue()));
-			}
-		} catch (NumberFormatException e) {
-			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
-		}
-	}
-
-	public static String getToken(Series<Header> headers) {
+	public static String getAuthToken(Series<Header> headers) {
 		String token = headers.getValues(OCCIHeaders.X_AUTH_TOKEN);
 		if (token == null || token.equals("")) {
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}
 		return token;
 	}
-
-	// public static String getAttType(Series<Header> headers) {
-	// Map<String, String> map = getXOCCIAtributes(headers);
-	// String type =
-	// map.get(FogbowResourceConstants.ATRIBUTE_TYPE_FOGBOW_REQUEST);
-	// if (type == null || type.equals("")) {
-	// return null;
-	// } else {
-	// for (int i = 0; i < RequestType.values().length; i++) {
-	// if (type.equals(RequestType.values()[i].getValue())) {
-	// return type;
-	// }
-	// }
-	// throw new OCCIException(ErrorType.BAD_REQUEST, "Irregular Syntax.");
-	// }
-	//
-	// }
-
-	// public static Date getAttValidFrom(Series<Header> headers) {
-	// Map<String, String> map = getXOCCIAtributes(headers);
-	// try {
-	// String dataString =
-	// map.get(FogbowResourceConstants.ATRIBUTE_VALID_FROM_FOGBOW_REQUEST);
-	// if (dataString != null && !dataString.equals("")) {
-	// DateFormat formatter = new SimpleDateFormat("yy-MM-dd");
-	// return (Date) formatter.parse(dataString);
-	// }
-	// return null;
-	// } catch (ParseException e) {
-	// throw new OCCIException(ErrorType.BAD_REQUEST, "Irregular Syntax.");
-	// }
-	// }
-	//
-	// public static Date getAttValidUntil(Series<Header> headers) {
-	// Map<String, String> map = getXOCCIAtributes(headers);
-	// try {
-	// String dataString = map
-	// .get(FogbowResourceConstants.ATRIBUTE_VALID_UNTIL_FOGBOW_REQUEST);
-	// if (dataString != null && !dataString.equals("")) {
-	// DateFormat formatter = new SimpleDateFormat("yy-MM-dd");
-	// return (Date) formatter.parse(dataString);
-	// }
-	// return null;
-	// } catch (ParseException e) {
-	// throw new OCCIException(ErrorType.BAD_REQUEST, "Irregular Syntax.");
-	// }
-	// }
 
 	public static Map<String, String> getXOCCIAtributes(Series<Header> headers) {
 		String[] valuesAttributes = headers.getValuesArray(normalize(OCCIHeaders.X_OCCI_ATTRIBUTE));
@@ -124,7 +56,6 @@ public class HeaderUtils {
 				throw new OCCIException(ErrorType.BAD_REQUEST,
 						ResponseConstants.UNSUPPORTED_ATTRIBUTES);
 			}
-			// String name = checkFogBowAttributes(tokensAttribute[0].trim());
 			String name = tokensAttribute[0].trim();
 			String value = tokensAttribute[1].replace("\"", "").trim();
 			mapAttributes.put(name, value);
@@ -132,39 +63,7 @@ public class HeaderUtils {
 		return mapAttributes;
 	}
 
-	// public static String checkFogBowAttributes(String nameAttribute) {
-	// FogbowRequestAttributes[] attributesFogbowResquest =
-	// FogbowRequestAttributes.values();
-	// for (int i = 0; i < attributesFogbowResquest.length; i++) {
-	// if (nameAttribute.equals(attributesFogbowResquest[i].getValue())) {
-	// return nameAttribute;
-	// }
-	// }
-	// throw new OCCIException(ErrorType.BAD_REQUEST, "Attribute not found");
-	// }
-
-	public static void validateRequestCategory(List<Category> listCategory) {
-		for (Category category : listCategory) {
-			if (category.getTerm().equals(FogbowResourceConstants.TERM)) {
-				if (validateCategory(category) == false) {
-					throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
-				}
-				return;
-			}
-		}
-		throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
-	}
-
-	public static boolean validateCategory(Category category) {
-		if (category.getTerm().equals(FogbowResourceConstants.TERM)
-				&& category.getCatClass().equals(FogbowResourceConstants.CLASS)
-				&& category.getScheme().equals(FogbowResourceConstants.SCHEME)) {
-			return true;
-		}
-		return false;
-	}
-
-	public static List<Category> getListCategory(Series<Header> headers) {
+	public static List<Category> getCategories(Series<Header> headers) {
 		List<Category> listCategory = new ArrayList<Category>();
 		String[] valuesCategory = headers.getValuesArray(normalize(OCCIHeaders.CATEGORY));
 		String term = "";
@@ -206,30 +105,26 @@ public class HeaderUtils {
 		return new String(lowerHeaderArray);
 	}
 
-	public static List<FogbowResource> getPossibleResources() {
-		FogbowResource fogbowRequest = new FogbowResource(FogbowResourceConstants.TERM,
-				FogbowResourceConstants.SCHEME, FogbowResourceConstants.CLASS,
-				RequestAttribute.getValues(), new ArrayList<String>(), "$EndPoint/request",
-				"Request new Instances", "");
-
-		List<FogbowResource> resources = new ArrayList<FogbowResource>();
-		resources.add(fogbowRequest);
-		return resources;
-	}
-
-	public static void checkXOCCIAtt(Map<String, String> xOCCIAtt) {
-
-		for (String attName : xOCCIAtt.keySet()) {
-			if (attName.equals(RequestAttribute.TYPE.getValue())) {
-				checkTypeValue(xOCCIAtt.get(attName));
-			} else if (attName.equals(RequestAttribute.VALID_FROM.getValue())
-					|| attName.equals(RequestAttribute.VALID_UNTIL.getValue())) {
-				checkDateValue(xOCCIAtt.get(attName));
-			}
+	public static void checkCategories(List<Category> categories, String mandatoryTerm) {
+		List<Resource> resources = ResourceRepository.get(categories);
+		
+		if(resources.size() != categories.size()){
+			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);		
 		}
+		for (Category category : categories) {
+			if (category.getTerm().equals(mandatoryTerm)) {
+				Resource resource = ResourceRepository.get(mandatoryTerm);
+				if (resource == null || !resource.matches(category)) {
+					throw new OCCIException(ErrorType.BAD_REQUEST, 
+							ResponseConstants.IRREGULAR_SYNTAX);
+				}
+				return;
+			}
+		}		
+		throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);		
 	}
 
-	private static void checkDateValue(String dataString) {
+	public static void checkDateValue(String dataString) {
 		try {
 			if (dataString != null && !dataString.equals("")) {
 				DateFormat formatter = new SimpleDateFormat("yy-MM-dd");
@@ -240,18 +135,12 @@ public class HeaderUtils {
 		}
 	}
 
-	private static void checkTypeValue(String typeValue) {
-		for (int i = 0; i < RequestType.values().length; i++) {
-			if (typeValue.equals(RequestType.values()[i].getValue())) {
-				return;
-			}
+	public static void checkIntegerValue(String intString) {
+		try {
+			Integer.parseInt(intString);
+		} catch (Exception e) {
+			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}
-		throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
-	}
-
-	public static Map<String, String> addDefaultValuesOnXOCCIAtt(Map<String, String> xOCCIAtt) {
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 }
