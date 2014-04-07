@@ -1,4 +1,4 @@
-package org.fogbowcloud.manager.occi.model;
+package org.fogbowcloud.manager.occi;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -17,7 +17,7 @@ import org.fogbowcloud.manager.occi.plugins.IdentityPlugin;
 import org.restlet.Component;
 import org.restlet.data.Protocol;
 
-public class TestRequestHelper {
+public class RequestHelper {
 
 	private Component component;
 

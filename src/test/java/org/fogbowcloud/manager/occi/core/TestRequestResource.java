@@ -2,10 +2,10 @@ package org.fogbowcloud.manager.occi.core;
 
 import java.util.List;
 
+import org.fogbowcloud.manager.occi.RequestHelper;
 import org.fogbowcloud.manager.occi.RequestResource;
 import org.fogbowcloud.manager.occi.model.FogbowResourceConstants;
 import org.fogbowcloud.manager.occi.model.OCCIHeaders;
-import org.fogbowcloud.manager.occi.model.TestRequestHelper;
 import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.junit.Assert;
 import org.junit.Before;
@@ -27,9 +27,9 @@ public class TestRequestResource {
 		Category category = new Category(FogbowResourceConstants.TERM,
 				FogbowResourceConstants.SCHEME, OCCIHeaders.KIND_CLASS);
 		headers.add(HeaderUtils.normalize(OCCIHeaders.CATEGORY), category.toHeader());
-		headers.add(OCCIHeaders.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
+		headers.add(OCCIHeaders.X_AUTH_TOKEN, RequestHelper.ACCESS_TOKEN);
 		headers.add(HeaderUtils.normalize(OCCIHeaders.CONTENT_TYPE),
-				TestRequestHelper.CONTENT_TYPE_OCCI);
+				RequestHelper.CONTENT_TYPE_OCCI);
 		headers.add(HeaderUtils.normalize(OCCIHeaders.X_OCCI_ATTRIBUTE),
 				RequestAttribute.INSTANCE_COUNT.getValue() + "=10");
 		headers.add(HeaderUtils.normalize(OCCIHeaders.X_OCCI_ATTRIBUTE),

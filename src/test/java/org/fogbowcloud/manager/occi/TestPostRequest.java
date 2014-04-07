@@ -17,7 +17,6 @@ import org.apache.http.message.BasicStatusLine;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.model.FogbowResourceConstants;
 import org.fogbowcloud.manager.occi.model.OCCIHeaders;
-import org.fogbowcloud.manager.occi.model.TestRequestHelper;
 import org.fogbowcloud.manager.occi.plugins.ComputePlugin;
 import org.fogbowcloud.manager.occi.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.occi.request.RequestAttribute;
@@ -29,11 +28,11 @@ import org.mockito.Mockito;
 
 public class TestPostRequest {
 
-	private TestRequestHelper testRequestHelper;
+	private RequestHelper requestHelper;
 
 	@Before
 	public void setup() throws Exception {
-		this.testRequestHelper = new TestRequestHelper();
+		this.requestHelper = new RequestHelper();
 
 		HttpResponse response = new DefaultHttpResponseFactory().newHttpResponse(
 				new BasicStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_OK, null), null);
@@ -43,22 +42,22 @@ public class TestPostRequest {
 				.thenReturn(response);
 
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
-		Mockito.when(identityPlugin.isValidToken(TestRequestHelper.ACCESS_TOKEN)).thenReturn(true);
+		Mockito.when(identityPlugin.isValidToken(RequestHelper.ACCESS_TOKEN)).thenReturn(true);
 
-		this.testRequestHelper.initializeComponent(computePlugin, identityPlugin);
+		this.requestHelper.initializeComponent(computePlugin, identityPlugin);
 	}
 
 	@Test
 	public void testPostRequest() throws URISyntaxException, HttpException, IOException {
-		HttpPost post = new HttpPost(TestRequestHelper.URI_FOGBOW_REQUEST);
+		HttpPost post = new HttpPost(RequestHelper.URI_FOGBOW_REQUEST);
 		Category category = new Category(FogbowResourceConstants.TERM,
 				FogbowResourceConstants.SCHEME, OCCIHeaders.KIND_CLASS);
-		post.addHeader(OCCIHeaders.CONTENT_TYPE, TestRequestHelper.CONTENT_TYPE_OCCI);
-		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
+		post.addHeader(OCCIHeaders.CONTENT_TYPE, RequestHelper.CONTENT_TYPE_OCCI);
+		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, RequestHelper.ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
-		List<String> requestIDs = TestRequestHelper.getRequestLocations(response);
+		List<String> requestIDs = RequestHelper.getRequestLocations(response);
 
 		Assert.assertEquals(1, requestIDs.size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
@@ -66,17 +65,17 @@ public class TestPostRequest {
 
 	@Test
 	public void testPostRequestTwoInstances() throws URISyntaxException, HttpException, IOException {
-		HttpPost post = new HttpPost(TestRequestHelper.URI_FOGBOW_REQUEST);
+		HttpPost post = new HttpPost(RequestHelper.URI_FOGBOW_REQUEST);
 		Category category = new Category(FogbowResourceConstants.TERM,
 				FogbowResourceConstants.SCHEME, OCCIHeaders.KIND_CLASS);
-		post.addHeader(OCCIHeaders.CONTENT_TYPE, TestRequestHelper.CONTENT_TYPE_OCCI);
-		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
+		post.addHeader(OCCIHeaders.CONTENT_TYPE, RequestHelper.CONTENT_TYPE_OCCI);
+		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, RequestHelper.ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
 		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE,
 				RequestAttribute.INSTANCE_COUNT.getValue() + " = 2");
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
-		List<String> requestIDs = TestRequestHelper.getRequestLocations(response);
+		List<String> requestIDs = RequestHelper.getRequestLocations(response);
 
 		Assert.assertEquals(2, requestIDs.size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
@@ -85,17 +84,17 @@ public class TestPostRequest {
 	@Test
 	public void testPostRequestManyInstances() throws URISyntaxException, HttpException,
 			IOException {
-		HttpPost post = new HttpPost(TestRequestHelper.URI_FOGBOW_REQUEST);
+		HttpPost post = new HttpPost(RequestHelper.URI_FOGBOW_REQUEST);
 		Category category = new Category(FogbowResourceConstants.TERM,
 				FogbowResourceConstants.SCHEME, OCCIHeaders.KIND_CLASS);
-		post.addHeader(OCCIHeaders.CONTENT_TYPE, TestRequestHelper.CONTENT_TYPE_OCCI);
-		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
+		post.addHeader(OCCIHeaders.CONTENT_TYPE, RequestHelper.CONTENT_TYPE_OCCI);
+		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, RequestHelper.ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
 		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE,
 				RequestAttribute.INSTANCE_COUNT.getValue() + " = 200");
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
-		List<String> requestIDs = TestRequestHelper.getRequestLocations(response);
+		List<String> requestIDs = RequestHelper.getRequestLocations(response);
 
 		Assert.assertEquals(200, requestIDs.size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
@@ -104,11 +103,11 @@ public class TestPostRequest {
 	@Test
 	public void testPostInvalidCategoryTermRequest() throws URISyntaxException, HttpException,
 			IOException {
-		HttpPost post = new HttpPost(TestRequestHelper.URI_FOGBOW_REQUEST);
+		HttpPost post = new HttpPost(RequestHelper.URI_FOGBOW_REQUEST);
 		Category category = new Category("wrong", FogbowResourceConstants.SCHEME,
 				OCCIHeaders.KIND_CLASS);
-		post.addHeader(OCCIHeaders.CONTENT_TYPE, TestRequestHelper.CONTENT_TYPE_OCCI);
-		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
+		post.addHeader(OCCIHeaders.CONTENT_TYPE, RequestHelper.CONTENT_TYPE_OCCI);
+		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, RequestHelper.ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
@@ -119,11 +118,11 @@ public class TestPostRequest {
 	@Test
 	public void testPostInvalidCategorySchemeRequest() throws URISyntaxException, HttpException,
 			IOException {
-		HttpPost post = new HttpPost(TestRequestHelper.URI_FOGBOW_REQUEST);
+		HttpPost post = new HttpPost(RequestHelper.URI_FOGBOW_REQUEST);
 		Category category = new Category(FogbowResourceConstants.TERM,
 				"http://schemas.fogbowcloud.org/wrong#", OCCIHeaders.KIND_CLASS);
-		post.addHeader(OCCIHeaders.CONTENT_TYPE, TestRequestHelper.CONTENT_TYPE_OCCI);
-		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
+		post.addHeader(OCCIHeaders.CONTENT_TYPE, RequestHelper.CONTENT_TYPE_OCCI);
+		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, RequestHelper.ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
@@ -134,11 +133,11 @@ public class TestPostRequest {
 	@Test
 	public void testPostInvalidCategoryClassRequest() throws URISyntaxException, HttpException,
 			IOException {
-		HttpPost post = new HttpPost(TestRequestHelper.URI_FOGBOW_REQUEST);
+		HttpPost post = new HttpPost(RequestHelper.URI_FOGBOW_REQUEST);
 		Category category = new Category(FogbowResourceConstants.TERM,
 				FogbowResourceConstants.SCHEME, "mixin");
-		post.addHeader(OCCIHeaders.CONTENT_TYPE, TestRequestHelper.CONTENT_TYPE_OCCI);
-		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
+		post.addHeader(OCCIHeaders.CONTENT_TYPE, RequestHelper.CONTENT_TYPE_OCCI);
+		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, RequestHelper.ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
@@ -149,11 +148,11 @@ public class TestPostRequest {
 	@Test
 	public void testPostInvalidAttributeRequest() throws URISyntaxException, HttpException,
 			IOException {
-		HttpPost post = new HttpPost(TestRequestHelper.URI_FOGBOW_REQUEST);
+		HttpPost post = new HttpPost(RequestHelper.URI_FOGBOW_REQUEST);
 		Category category = new Category(FogbowResourceConstants.TERM,
 				FogbowResourceConstants.SCHEME, OCCIHeaders.KIND_CLASS);
-		post.addHeader(OCCIHeaders.CONTENT_TYPE, TestRequestHelper.CONTENT_TYPE_OCCI);
-		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
+		post.addHeader(OCCIHeaders.CONTENT_TYPE, RequestHelper.CONTENT_TYPE_OCCI);
+		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, RequestHelper.ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
 		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE,
 				RequestAttribute.INSTANCE_COUNT.getValue() + " =\"x\"");
@@ -166,10 +165,10 @@ public class TestPostRequest {
 	@Test
 	public void testPostInvalidAcessTokenRequest() throws URISyntaxException, HttpException,
 			IOException {
-		HttpPost post = new HttpPost(TestRequestHelper.URI_FOGBOW_REQUEST);
+		HttpPost post = new HttpPost(RequestHelper.URI_FOGBOW_REQUEST);
 		Category category = new Category(FogbowResourceConstants.TERM,
 				FogbowResourceConstants.SCHEME, OCCIHeaders.KIND_CLASS);
-		post.addHeader(OCCIHeaders.CONTENT_TYPE, TestRequestHelper.CONTENT_TYPE_OCCI);
+		post.addHeader(OCCIHeaders.CONTENT_TYPE, RequestHelper.CONTENT_TYPE_OCCI);
 		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, "invalid_acess_token");
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
 		HttpClient client = new DefaultHttpClient();
@@ -181,11 +180,11 @@ public class TestPostRequest {
 	@Test
 	public void testPostInvalidContentTypeRequest() throws URISyntaxException, HttpException,
 			IOException {
-		HttpPost post = new HttpPost(TestRequestHelper.URI_FOGBOW_REQUEST);
+		HttpPost post = new HttpPost(RequestHelper.URI_FOGBOW_REQUEST);
 		Category category = new Category(FogbowResourceConstants.TERM,
 				FogbowResourceConstants.SCHEME, OCCIHeaders.KIND_CLASS);
 		post.addHeader(OCCIHeaders.CONTENT_TYPE, "text/plain");
-		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
+		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, RequestHelper.ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
@@ -196,11 +195,11 @@ public class TestPostRequest {
 	@Test
 	public void testPostRequestInvalidAttributeInstances() throws URISyntaxException,
 			HttpException, IOException {
-		HttpPost post = new HttpPost(TestRequestHelper.URI_FOGBOW_REQUEST);
+		HttpPost post = new HttpPost(RequestHelper.URI_FOGBOW_REQUEST);
 		Category category = new Category(FogbowResourceConstants.TERM,
 				FogbowResourceConstants.SCHEME, OCCIHeaders.KIND_CLASS);
-		post.addHeader(OCCIHeaders.CONTENT_TYPE, TestRequestHelper.CONTENT_TYPE_OCCI);
-		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
+		post.addHeader(OCCIHeaders.CONTENT_TYPE, RequestHelper.CONTENT_TYPE_OCCI);
+		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, RequestHelper.ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
 		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE,
 				RequestAttribute.INSTANCE_COUNT.getValue() + " =\"x\"");
@@ -213,11 +212,11 @@ public class TestPostRequest {
 	@Test
 	public void testPostRequestInvalidAttributeType() throws URISyntaxException, HttpException,
 			IOException {
-		HttpPost post = new HttpPost(TestRequestHelper.URI_FOGBOW_REQUEST);
+		HttpPost post = new HttpPost(RequestHelper.URI_FOGBOW_REQUEST);
 		Category category = new Category(FogbowResourceConstants.TERM,
 				FogbowResourceConstants.SCHEME, OCCIHeaders.KIND_CLASS);
-		post.addHeader(OCCIHeaders.CONTENT_TYPE, TestRequestHelper.CONTENT_TYPE_OCCI);
-		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
+		post.addHeader(OCCIHeaders.CONTENT_TYPE, RequestHelper.CONTENT_TYPE_OCCI);
+		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, RequestHelper.ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
 		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE,
 				RequestAttribute.TYPE.getValue() + " =\"x\"");
@@ -230,11 +229,11 @@ public class TestPostRequest {
 	@Test
 	public void testPostRequestInvalidAttributeValidFrom() throws URISyntaxException,
 			HttpException, IOException {
-		HttpPost post = new HttpPost(TestRequestHelper.URI_FOGBOW_REQUEST);
+		HttpPost post = new HttpPost(RequestHelper.URI_FOGBOW_REQUEST);
 		Category category = new Category(FogbowResourceConstants.TERM,
 				FogbowResourceConstants.SCHEME, OCCIHeaders.KIND_CLASS);
-		post.addHeader(OCCIHeaders.CONTENT_TYPE, TestRequestHelper.CONTENT_TYPE_OCCI);
-		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
+		post.addHeader(OCCIHeaders.CONTENT_TYPE, RequestHelper.CONTENT_TYPE_OCCI);
+		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, RequestHelper.ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
 		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE,
 				RequestAttribute.INSTANCE_COUNT.getValue() + " =\"x\"");
@@ -247,11 +246,11 @@ public class TestPostRequest {
 	@Test
 	public void testPostRequestInvalidAttributeValidUntil() throws URISyntaxException,
 			HttpException, IOException {
-		HttpPost post = new HttpPost(TestRequestHelper.URI_FOGBOW_REQUEST);
+		HttpPost post = new HttpPost(RequestHelper.URI_FOGBOW_REQUEST);
 		Category category = new Category(FogbowResourceConstants.TERM,
 				FogbowResourceConstants.SCHEME, OCCIHeaders.KIND_CLASS);
-		post.addHeader(OCCIHeaders.CONTENT_TYPE, TestRequestHelper.CONTENT_TYPE_OCCI);
-		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
+		post.addHeader(OCCIHeaders.CONTENT_TYPE, RequestHelper.CONTENT_TYPE_OCCI);
+		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, RequestHelper.ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
 		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE,
 				RequestAttribute.VALID_UNTIL.getValue() + " =\"x\"");
@@ -264,11 +263,11 @@ public class TestPostRequest {
 	@Test
 	public void testPostRequestAllAttributes() throws URISyntaxException, HttpException,
 			IOException {
-		HttpPost post = new HttpPost(TestRequestHelper.URI_FOGBOW_REQUEST);
+		HttpPost post = new HttpPost(RequestHelper.URI_FOGBOW_REQUEST);
 		Category category = new Category(FogbowResourceConstants.TERM,
 				FogbowResourceConstants.SCHEME, OCCIHeaders.KIND_CLASS);
-		post.addHeader(OCCIHeaders.CONTENT_TYPE, TestRequestHelper.CONTENT_TYPE_OCCI);
-		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
+		post.addHeader(OCCIHeaders.CONTENT_TYPE, RequestHelper.CONTENT_TYPE_OCCI);
+		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, RequestHelper.ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
 		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE,
 				RequestAttribute.INSTANCE_COUNT.getValue() + "=10");
@@ -281,12 +280,12 @@ public class TestPostRequest {
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
 
-		Assert.assertEquals(10, TestRequestHelper.getRequestLocations(response).size());
+		Assert.assertEquals(10, RequestHelper.getRequestLocations(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		this.testRequestHelper.stopComponent();
+		this.requestHelper.stopComponent();
 	}
 }

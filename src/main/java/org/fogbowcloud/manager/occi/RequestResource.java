@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.FogbowResource;
@@ -22,6 +23,8 @@ import org.restlet.util.Series;
 
 public class RequestResource extends ServerResource {
 
+	private static final Logger LOGGER = Logger.getLogger(RequestResource.class);
+	
 	@Get
 	public String fetch() {
 		OCCIApplication application = (OCCIApplication) getApplication();
@@ -30,8 +33,10 @@ public class RequestResource extends ServerResource {
 		String requestId = (String) getRequestAttributes().get("requestid");
 		
 		if (requestId == null) {
+			LOGGER.info("Getting all request of token :" + userToken);
 			return HeaderUtils.generateResponseId(application.getRequestsFromUser(userToken), req);
 		}else{
+			LOGGER.info("Getting request(" + requestId + ") of token :" + userToken);
 			RequestUnit requestUnit = application.getRequestDetails(userToken, requestId);
 			return requestUnit.toHttMessageFormat();
 		}
@@ -45,9 +50,11 @@ public class RequestResource extends ServerResource {
 		String requestId = (String) getRequestAttributes().get("requestid");
 		
 		if (requestId == null) {
+			LOGGER.info("Removing all request of token :" + userToken);
 			application.removeAllRequests(userToken);
 			return ResponseConstants.OK;
 		} else {
+			LOGGER.info("Removing request(" + requestId + ") of token :" + userToken);
 			application.removeRequest(userToken, requestId);
 			return ResponseConstants.OK;
 		}
@@ -74,6 +81,8 @@ public class RequestResource extends ServerResource {
 
 		int numberOfInstances = HeaderUtils.getNumberOfInstances(req.getHeaders());
 
+		LOGGER.info("Request " );
+		
 		List<RequestUnit> currentRequestUnits = new ArrayList<RequestUnit>();
 		for (int i = 0; i < numberOfInstances; i++) {
 			currentRequestUnits.add(application.newRequest(userToken, requestResources, xOCCIAtt));

@@ -3,9 +3,9 @@ package org.fogbowcloud.manager.occi.core;
 import java.util.List;
 import java.util.Map;
 
+import org.fogbowcloud.manager.occi.RequestHelper;
 import org.fogbowcloud.manager.occi.model.FogbowResourceConstants;
 import org.fogbowcloud.manager.occi.model.OCCIHeaders;
-import org.fogbowcloud.manager.occi.model.TestRequestHelper;
 import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.junit.Assert;
 import org.junit.Before;
@@ -24,10 +24,10 @@ public class TestHeaderUtils {
 
 	@Test
 	public void testValidSyntaxToken() {
-		headers.add(OCCIHeaders.X_AUTH_TOKEN, TestRequestHelper.ACCESS_TOKEN);
+		headers.add(OCCIHeaders.X_AUTH_TOKEN, RequestHelper.ACCESS_TOKEN);
 		String token = HeaderUtils.getToken(headers);
 
-		Assert.assertEquals(TestRequestHelper.ACCESS_TOKEN, token);
+		Assert.assertEquals(RequestHelper.ACCESS_TOKEN, token);
 	}
 
 	@Test(expected = OCCIException.class)
@@ -148,7 +148,7 @@ public class TestHeaderUtils {
 	@Test
 	public void testValidCheckFogbowHeaders() {
 		headers.add(HeaderUtils.normalize(OCCIHeaders.CONTENT_TYPE),
-				TestRequestHelper.CONTENT_TYPE_OCCI);
+				RequestHelper.CONTENT_TYPE_OCCI);
 		Category category = new Category(FogbowResourceConstants.TERM,
 				FogbowResourceConstants.SCHEME, OCCIHeaders.KIND_CLASS);
 		headers.add(HeaderUtils.normalize(OCCIHeaders.CATEGORY), category.toHeader());
@@ -158,7 +158,7 @@ public class TestHeaderUtils {
 	@Test
 	public void testValidContentType() {
 		headers.add(HeaderUtils.normalize(OCCIHeaders.CONTENT_TYPE),
-				TestRequestHelper.CONTENT_TYPE_OCCI);
+				RequestHelper.CONTENT_TYPE_OCCI);
 		HeaderUtils.checkOCCIContentType(headers);
 	}
 
