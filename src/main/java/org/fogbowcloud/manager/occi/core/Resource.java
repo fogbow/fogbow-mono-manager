@@ -10,26 +10,49 @@ public class Resource {
 	private String location;
 	private String title;
 	private String rel;
-	
-	public Resource(Category category, List<String> supportedAtt,
-			List<String> actions, String location, String title, String rel) {
+
+	public Resource(Category category, List<String> supportedAtt, List<String> actions,
+			String location, String title, String rel) {
+		setAttributes(supportedAtt);
+		setActions(actions);
 		this.category = category;
-		this.attributes= supportedAtt;
-		this.actions = actions;
+		this.location = location;
 		this.title = title;
 		this.rel = rel;
 	}
-	
+
 	public Resource(String term, String scheme, String catClass, List<String> supportedAtt,
 			List<String> actions, String location, String title, String rel) {
-		this(new Category(term, scheme, catClass), supportedAtt, 
-				actions, location, title, rel);
+		this(new Category(term, scheme, catClass), supportedAtt, actions, location, title, rel);
+	}
+
+	public String toHeader() {
+		return category.getTerm() + "; scheme=\"" + category.getScheme() + "\"; class=\""
+				+ category.getCatClass() + "\" attributes=\"" + attributesToHeader() + "\" actions=\""
+				+ actionsToHeader() + "\" location=\"" + getLocation() + "\" title=\"" + getTitle()
+				+ "\" rel=\"" + getRel() + "\"";
 	}
 	
+	private String actionsToHeader() {
+		String actionsString = "";
+		for (String action : getActions()) {
+			actionsString += action + " ";
+		}
+		return actionsString.trim();		
+	}
+	
+	private String attributesToHeader() {
+		String attributesString = "";
+		for (String attribute : getAttributes()) {
+			attributesString += attribute + " ";
+		}
+		return attributesString.trim();		
+	}	
+
 	public Category getCategory() {
 		return category;
 	}
-	
+
 	public List<String> getAttributes() {
 		return attributes;
 	}
@@ -45,7 +68,7 @@ public class Resource {
 	public void setActions(List<String> actions) {
 		this.actions = actions;
 	}
-	
+
 	public String getLocation() {
 		return location;
 	}
@@ -62,7 +85,7 @@ public class Resource {
 		return getCategory().equals(category);
 	}
 
-	public boolean supportAtt(String attributeName) {		
+	public boolean supportAtt(String attributeName) {
 		return attributes.contains(attributeName);
 	}
 }

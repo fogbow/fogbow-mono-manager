@@ -39,4 +39,15 @@ public class TestResourceRepository {
 
 		Assert.assertTrue(category.equals(resourceEquals.getCategory()));
 	}
+	
+	@Test
+	public void testGetUnknownSpecificResource() {
+		Category category = new Category(RequestConstants.TERM, RequestConstants.SCHEME,
+				OCCIHeaders.KIND_CLASS);
+		headers.add(HeaderUtils.normalize(OCCIHeaders.CATEGORY), category.toHeader());
+
+		Resource resourceEquals = ResourceRepository.get("unknown");
+
+		Assert.assertNull(resourceEquals);
+	}
 }

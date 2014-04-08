@@ -9,8 +9,9 @@ import org.junit.Test;
 public class TestResource {
 
 	@Test
-	public void validCategory() {
-		new Resource("term", "scheme", "class", null, null, null, null, null);
+	public void validResource() {
+		new Resource("term", "scheme", "class", new ArrayList<String>(), new ArrayList<String>(),
+				"location", "title", "rel");
 	}
 
 	@Test(expected = IllegalArgumentException.class)
@@ -44,20 +45,36 @@ public class TestResource {
 	}
 
 	@Test
+	public void testToHeader() {
+		List<String> attributes = new ArrayList<String>();
+		attributes.add("attribute1");
+		attributes.add("attribute2");
+		List<String> actions = new ArrayList<String>();
+		actions.add("action1");
+		actions.add("action2");
+		Resource resource = new Resource("term", "scheme", "class", attributes, actions,
+				"location", "title", "rel");
+
+		String testString = "term; scheme=\"scheme\"; class=\"class\" "
+				+ "attributes=\"attribute1 attribute2\" actions=\"action1 action2\" "
+				+ "location=\"location\" title=\"title\" rel=\"rel\"";
+		Assert.assertEquals(testString, resource.toHeader());
+	}
+
+	@Test
 	public void testContainsAttribute() {
 		List<String> attributes = new ArrayList<String>();
 		attributes.add("attribute1");
 		attributes.add("attribute2");
 		attributes.add("attribute3");
-		Resource resource = new Resource("term", "scheme", "class", attributes,
-				null, null, null, null);
+		Resource resource = new Resource("term", "scheme", "class", attributes, null, null, null,
+				null);
 
 		Assert.assertTrue(resource.supportAtt("attribute1"));
 	}
 
 	public void testMatches() {
-		Resource resource = new Resource("term", "scheme", "class", null, null,
-				null, null, null);
+		Resource resource = new Resource("term", "scheme", "class", null, null, null, null, null);
 		Category category = new Category("term", "scheme", "class");
 
 		Assert.assertTrue(resource.matches(category));
