@@ -33,20 +33,6 @@ public class ResourceRepository {
 		return requestResources;
 	}
 	
-	public static List<Category> getCategories(List<Category> categories) {
-		List<Resource> allResources = getAll();
-		List<Category> requestCategories = new ArrayList<Category>();
-		for (Category requestCategory : categories) {			
-			for (Resource resource : allResources) {				
-				if (resource.matches(requestCategory)) {
-					requestCategories.add(resource.getCategory());
-					break;
-				}
-			}
-		}	
-		return requestCategories;
-	}
-	
 	public static Resource get(String term) {
 		List<Resource> allResources = getAll();
 		for (Resource resource : allResources) {				
@@ -56,28 +42,4 @@ public class ResourceRepository {
 		}
 		return null;		
 	}
-	
-//	if (categories.size() != requestResources.size() || !isValidFogbowRequest) {
-//		throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
-//	}	
-	
-//	if(requestCategory.getTerm().equals(RequestConstants.TERM)){
-//		isValidFogbowRequest = true;
-//	}
-	
-//	Map<String, String> attributes = HeaderUtils.getXOCCIAtributes(headers);
-//	for (String attributeName : attributes.keySet()) {
-//		boolean supportedAtt = false;
-//		for (Resource resource : requestResources) {
-//			if (resource.supportAtt(attributeName)) {
-//				supportedAtt = true;
-//				break;
-//			}
-//		}
-//		if (!supportedAtt) {
-//			throw new OCCIException(ErrorType.BAD_REQUEST,
-//					ResponseConstants.UNSUPPORTED_ATTRIBUTES);
-//		}
-//	}	
-	
 }

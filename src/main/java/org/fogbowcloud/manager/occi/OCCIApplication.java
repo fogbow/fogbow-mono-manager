@@ -6,10 +6,12 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.Resource;
 import org.fogbowcloud.manager.occi.core.OCCIException;
+import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.plugins.ComputePlugin;
 import org.fogbowcloud.manager.occi.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.occi.request.RequestState;
@@ -23,8 +25,9 @@ public class OCCIApplication extends Application {
 	private IdentityPlugin identityPlugin;
 	private ComputePlugin computePlugin;
 	private Map<String, List<String>> userToRequestIds;
-
 	private Map<String, Request> requestIdToRequestUnit;
+	
+	private static final Logger LOGGER = Logger.getLogger(OCCIApplication.class);
 
 	public OCCIApplication() {
 		this.userToRequestIds = new ConcurrentHashMap<String, List<String>>();
@@ -125,13 +128,13 @@ public class OCCIApplication extends Application {
 	private void checkRequestId(String userToken, String requestId) {
 		if (userToRequestIds.get(userToken) == null
 				|| !userToRequestIds.get(userToken).contains(requestId)) {
-			throw new OCCIException(ErrorType.NOT_FOUND, "Resource not found.");
+			throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
 		}
 	}
 
 	private void checkUserToken(String userToken) {
 		if (!identityPlugin.isValidToken(userToken)) {
-			throw new OCCIException(ErrorType.UNAUTHORIZED, "Authentication required.");
+			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}
 	}
 }

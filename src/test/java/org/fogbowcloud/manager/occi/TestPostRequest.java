@@ -18,8 +18,8 @@ import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.plugins.ComputePlugin;
 import org.fogbowcloud.manager.occi.plugins.IdentityPlugin;
-import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.fogbowcloud.manager.occi.request.RequestAttribute;
+import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -95,7 +95,7 @@ public class TestPostRequest {
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
 		List<String> requestIDs = RequestHelper.getRequestLocations(response);
-
+		
 		Assert.assertEquals(200, requestIDs.size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}

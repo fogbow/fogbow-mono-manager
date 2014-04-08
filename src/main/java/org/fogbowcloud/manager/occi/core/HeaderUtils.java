@@ -24,11 +24,11 @@ public class HeaderUtils {
 		String requestEndpoint = req.getHostRef() + req.getHttpCall().getRequestUri();
 		String response = "";
 		for (Request request : requests) {
-			response += X_OCCI_LOCATION + requestEndpoint + "/" + request.getId();
+			response += X_OCCI_LOCATION + requestEndpoint + "/" + request.getId() + "\n";
 		}
 		if (response.equals("")) {
 			response = "Empty";
-		}
+		}		
 		return response;
 	}
 
@@ -142,5 +142,4 @@ public class HeaderUtils {
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}
 	}
-
 }

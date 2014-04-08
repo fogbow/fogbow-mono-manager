@@ -16,11 +16,11 @@ public enum RequestAttribute {
 		this.value = value;
 	}
 	
-	public String getValue(){
+	public String getValue() {
 		return this.value;
 	}
 	
-	public static List<String> getValues(){	
+	public static List<String> getValues() {	
 		List<String> values = new ArrayList<String>();		
 		RequestAttribute[] elements = values();
 		for (RequestAttribute attribute : elements) {

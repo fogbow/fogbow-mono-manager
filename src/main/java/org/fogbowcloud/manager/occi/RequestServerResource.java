@@ -52,7 +52,7 @@ public class RequestServerResource extends ServerResource {
 		String requestId = (String) getRequestAttributes().get("requestid");
 
 		if (requestId == null) {
-			LOGGER.info("Removing all request of token :" + userToken);
+			LOGGER.info("Removing all requests of token :" + userToken);
 			application.removeAllRequests(userToken);
 			return ResponseConstants.OK;
 		}
@@ -119,7 +119,7 @@ public class RequestServerResource extends ServerResource {
 	    return defOCCIAtt;
 	}
 
-	private static void checkRequestType(String enumString) {
+	public static void checkRequestType(String enumString) {
 		for (int i = 0; i < RequestType.values().length; i++) {
 			if (enumString.equals(RequestType.values()[i].getValue())) {
 				return;

@@ -46,6 +46,14 @@ public class TestCategory {
 		String headerFormat = category.toHeader();
 		
 		Assert.assertEquals("term; scheme=\"scheme\"; class=\"class\"", headerFormat);
-	}			
+	}	
+	
+	@Test
+	public void testEquals(){
+		Category category = new Category("term", "scheme", "class");
+		Category categoryEquals = new Category("term", "scheme", "class");
+		
+		Assert.assertTrue(category.equals(categoryEquals));
+	}
 	
 }
