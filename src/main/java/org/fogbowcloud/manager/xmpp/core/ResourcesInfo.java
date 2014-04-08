@@ -1,6 +1,7 @@
 package org.fogbowcloud.manager.xmpp.core;
 
 public class ResourcesInfo {
+	
 	private String id;
 	private String cpuIdle;
 	private String cpuInUse;
@@ -9,7 +10,6 @@ public class ResourcesInfo {
 
 	public ResourcesInfo(String id, String cpuIdle, String cpuInUse,
 			String memIdle, String memInUse) {
-
 		setId(id);
 		setCpuIdle(cpuIdle);
 		setCpuInUse(cpuInUse);
@@ -22,7 +22,7 @@ public class ResourcesInfo {
 	}
 
 	public void setId(String id) {
-		if (id == null || "".equals(id)) {
+		if (id == null || id.isEmpty()) {
 			throw new IllegalArgumentException("ResourceInfo id is invalid.");
 		}
 		this.id = id;
