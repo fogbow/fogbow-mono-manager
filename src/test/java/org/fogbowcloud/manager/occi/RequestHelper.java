@@ -24,7 +24,7 @@ public class RequestHelper {
 	public static final String CONTENT_TYPE_OCCI = "text/occi";
 	public static final String URI_FOGBOW_REQUEST = "http://localhost:8182/request";
 	public static final String UTF_8 = "utf-8";
-
+	public static final String USER_MOCK = "user_mock";
 	private final int PORT_ENDPOINT = 8182;
 
 	public void initializeComponent(ComputePlugin computePlugin, IdentityPlugin identityPlugin)
