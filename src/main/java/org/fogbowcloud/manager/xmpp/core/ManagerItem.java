@@ -33,10 +33,7 @@ public class ManagerItem {
 	        SimpleDateFormat dateFormatISO8601 = new SimpleDateFormat(
 	                ISO_8601_DATE_FORMAT, Locale.ROOT);
 	        dateFormatISO8601.setTimeZone(TimeZone.getTimeZone("GMT"));
-	        
-	        Date date = new Date(lastTime);
-
-	        return dateFormatISO8601.format(date);
+	        return dateFormatISO8601.format(new Date(lastTime));
 	    }
 	    
 	    /**
@@ -44,9 +41,7 @@ public class ManagerItem {
 	     *  
 	     * @param lastTime
 	     */
-	    protected void setLastTime(long lastTime){
+	    public void setLastTime(long lastTime){
 	    	this.lastTime = lastTime;
 	    }
-	
-
 }

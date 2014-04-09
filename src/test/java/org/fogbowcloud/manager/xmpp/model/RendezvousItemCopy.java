@@ -9,6 +9,7 @@ import org.fogbowcloud.manager.xmpp.core.ResourcesInfo;
 import org.fogbowcloud.manager.xmpp.core.model.DateUtils;
 
 public class RendezvousItemCopy {
+	
 	public static final String ISO_8601_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
     private long lastTime;
     private ResourcesInfo resourcesInfo;
