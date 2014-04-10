@@ -15,10 +15,12 @@ public class TestManagerItem {
 
 	private ResourcesInfo resources;
 	private String DATE = "2000-10-31T01:30:00.000+0000";
-
+	ManagerTestHelper managerTestHelper;
+	
 	@Before
 	public void setUp() {
-		resources = ManagerTestHelper.getResources();
+		managerTestHelper = new ManagerTestHelper();
+		resources = managerTestHelper.getResources();
 	}
 
 	@Test(expected = IllegalArgumentException.class)
