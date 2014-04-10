@@ -47,6 +47,7 @@ public class TestGetRequest {
 
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.isValidToken(RequestHelper.ACCESS_TOKEN)).thenReturn(true);
+		Mockito.when(identityPlugin.getUser(RequestHelper.ACCESS_TOKEN)).thenReturn(RequestHelper.USER_MOCK);
 
 		requestHelper.initializeComponent(computePlugin, identityPlugin);
 	}

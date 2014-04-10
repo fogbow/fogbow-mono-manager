@@ -68,18 +68,20 @@ public class OCCIApplication extends Application {
 		return requestIdToRequestUnit.get(requestId);
 	}
 
-	public Request newRequest(String userToken, List<Category> categories,
+	public Request newRequest(String authToken, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
-		checkUserToken(userToken);
-
-		if (userToRequestIds.get(userToken) == null) {
-			userToRequestIds.put(userToken, new ArrayList<String>());
+		checkUserToken(authToken);
+		
+		String user = getIdentityPlugin().getUser(authToken);
+		
+		if (userToRequestIds.get(user) == null) {
+			userToRequestIds.put(user, new ArrayList<String>());
 		}
 		String requestId = String.valueOf(UUID.randomUUID());
 		Request request = new Request(requestId, "", RequestState.OPEN,
 				categories, xOCCIAtt);
 
-		userToRequestIds.get(userToken).add(request.getId());
+		userToRequestIds.get(user).add(request.getId());
 		requestIdToRequestUnit.put(request.getId(), request);
 
 		submitRequest(request, categories, xOCCIAtt);
@@ -94,40 +96,45 @@ public class OCCIApplication extends Application {
 		computePlugin.requestInstance(categories, xOCCIAtt);
 	}
 
-	public List<Request> getRequestsFromUser(String userToken) {
-		checkUserToken(userToken);
-
+	public List<Request> getRequestsFromUser(String authToken) {
+		checkUserToken(authToken);
+		String user = getIdentityPlugin().getUser(authToken);
+		
 		List<Request> requests = new ArrayList<Request>();
-		if (userToRequestIds.get(userToken) != null) {
-			for (String requestId : userToRequestIds.get(userToken)) {
+		if (userToRequestIds.get(user) != null) {
+			for (String requestId : userToRequestIds.get(user)) {
 				requests.add(requestIdToRequestUnit.get(requestId));
 			}
 		}
 		return requests;
 	}
 
-	public void removeAllRequests(String userToken) {
-		checkUserToken(userToken);
-
-		if (userToRequestIds.get(userToken) != null) {
-			for (String requestId : userToRequestIds.get(userToken)) {
+	public void removeAllRequests(String authToken) {
+		checkUserToken(authToken);
+		String user = getIdentityPlugin().getUser(authToken);
+		
+		if (userToRequestIds.get(user) != null) {
+			for (String requestId : userToRequestIds.get(user)) {
 				requestIdToRequestUnit.remove(requestId);
 			}
-			userToRequestIds.remove(userToken);
+			userToRequestIds.remove(user);
 		}
 	}
 
 	public void removeRequest(String userToken, String requestId) {
 		checkUserToken(userToken);
 		checkRequestId(userToken, requestId);
-
-		userToRequestIds.get(userToken).remove(requestId);
+		String user = getIdentityPlugin().getUser(userToken);
+		
+		userToRequestIds.get(user).remove(requestId);
 		requestIdToRequestUnit.get(requestId);
 	}
 
-	private void checkRequestId(String userToken, String requestId) {
-		if (userToRequestIds.get(userToken) == null
-				|| !userToRequestIds.get(userToken).contains(requestId)) {
+	private void checkRequestId(String authToken, String requestId) {
+		String user = getIdentityPlugin().getUser(authToken);
+		
+		if (userToRequestIds.get(user) == null
+				|| !userToRequestIds.get(user).contains(requestId)) {
 			throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
 		}
 	}
