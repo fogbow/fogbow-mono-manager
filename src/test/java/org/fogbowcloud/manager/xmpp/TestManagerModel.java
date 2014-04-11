@@ -13,12 +13,14 @@ import org.junit.Test;
 
 public class TestManagerModel {
 
+	ManagerTestHelper managerTestHelper;
 	private ManagerModel managerModel;
 	private ResourcesInfo resources;
 
 	@Before
 	public void setUp() {
-		resources = ManagerTestHelper.getResources();
+	    managerTestHelper = new ManagerTestHelper();
+		resources = managerTestHelper.getResources();
 		managerModel = new ManagerModel();
 	}
 
