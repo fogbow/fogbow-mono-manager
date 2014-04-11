@@ -1,4 +1,4 @@
-package org.fogbowcloud.manager.occi.plugins;
+package org.fogbowcloud.manager.occi.plugins.openstack;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -6,32 +6,34 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
-import org.fogbowcloud.manager.occi.RequestHelper;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
+import org.fogbowcloud.manager.occi.model.RequestHelper;
+import org.fogbowcloud.manager.occi.plugins.IdentityPlugin;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
 public class IdentityOpenStackPlugin implements IdentityPlugin {
 
-	public static final String DEFAULT_END_POINT_TOKENS = "http://127.0.0.1:5000/v3/auth/tokens/";
-	private String endPoint;
+//	public static final String DEFAULT_END_POINT_TOKENS = "http://127.0.0.1:5000/v3/auth/tokens/";
+	private String keystoneEndPoint;
 	
-	public IdentityOpenStackPlugin() {
-		this.endPoint = DEFAULT_END_POINT_TOKENS;
-	}
+//	public IdentityOpenStackPlugin() {
+//		this.endPoint = DEFAULT_END_POINT_TOKENS;
+//	}
 	
 	public IdentityOpenStackPlugin(String endPoint) {
-		this.endPoint = endPoint;
+		this.keystoneEndPoint = endPoint;
 	}
 	
 	public boolean isValidToken(String token) {
+		System.out.println("TESTE3");
 		try {
 			HttpClient httpCLient = new DefaultHttpClient();
-			HttpGet httpGet = new HttpGet(this.endPoint);
+			HttpGet httpGet = new HttpGet(this.keystoneEndPoint);
 			httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, token);
 			httpGet.addHeader(OCCIHeaders.X_SUBJEC_TOKEN, token);
 			HttpResponse response = httpCLient.execute(httpGet);
@@ -50,7 +52,7 @@ public class IdentityOpenStackPlugin implements IdentityPlugin {
 	public String getUser(String token) {
 		try {
 			HttpClient httpCLient = new DefaultHttpClient();
-			HttpGet httpGet = new HttpGet(this.endPoint);
+			HttpGet httpGet = new HttpGet(this.keystoneEndPoint);
 			httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, token);
 			httpGet.addHeader(OCCIHeaders.X_SUBJEC_TOKEN, token);
 			HttpResponse response = httpCLient.execute(httpGet);
@@ -71,12 +73,8 @@ public class IdentityOpenStackPlugin implements IdentityPlugin {
 
 	private String getUserNameUserFromJson(String responseStr) {
 		try {
-			JSONTokener tokener = new JSONTokener(responseStr);
-			JSONObject root = new JSONObject(tokener);
-			root = (JSONObject) root.get("token");
-			root = (JSONObject) root.get("user");
-
-			return root.get("name").toString();
+			JSONObject root = new JSONObject(responseStr);
+			return root.getJSONObject("token").getJSONObject("user").getString("name");			
 		} catch (JSONException e) {
 			return null;
 		}

@@ -5,12 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.HttpVersion;
-import org.apache.http.impl.DefaultHttpResponseFactory;
-import org.apache.http.message.BasicStatusLine;
 import org.fogbowcloud.manager.occi.core.Category;
+import org.fogbowcloud.manager.occi.model.RequestHelper;
 import org.fogbowcloud.manager.occi.plugins.ComputePlugin;
 import org.fogbowcloud.manager.occi.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.occi.request.Request;
@@ -27,12 +23,9 @@ public class TestOCCIApplication {
 	public void setUp() {
 		this.occiApplication = new OCCIApplication();
 
-		HttpResponse response = new DefaultHttpResponseFactory().newHttpResponse(
-				new BasicStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_OK, null), null);
-
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		Mockito.when(computePlugin.requestInstance(Mockito.any(List.class), Mockito.any(Map.class)))
-				.thenReturn(response);
+				.thenReturn("");
 
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.isValidToken(RequestHelper.ACCESS_TOKEN)).thenReturn(true);

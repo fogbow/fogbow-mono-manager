@@ -62,9 +62,9 @@ public class OCCIApplication extends Application {
 		return identityPlugin;
 	}
 
-	public Request getRequestDetails(String userToken, String requestId) {
-		checkUserToken(userToken);
-		checkRequestId(userToken, requestId);
+	public Request getRequestDetails(String authToken, String requestId) {
+		checkUserToken(authToken);
+		checkRequestId(authToken, requestId);
 		return requestIdToRequestUnit.get(requestId);
 	}
 
@@ -121,10 +121,10 @@ public class OCCIApplication extends Application {
 		}
 	}
 
-	public void removeRequest(String userToken, String requestId) {
-		checkUserToken(userToken);
-		checkRequestId(userToken, requestId);
-		String user = getIdentityPlugin().getUser(userToken);
+	public void removeRequest(String althToken, String requestId) {
+		checkUserToken(althToken);
+		checkRequestId(althToken, requestId);
+		String user = getIdentityPlugin().getUser(althToken);
 		
 		userToRequestIds.get(user).remove(requestId);
 		requestIdToRequestUnit.get(requestId);
