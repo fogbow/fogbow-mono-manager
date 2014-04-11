@@ -21,22 +21,22 @@ public class ComputeOpenStackPlugin implements ComputePlugin {
 		return null;
 	}
 
-	public InstanceState getInstanceDetails(String instanceId) {
+	public InstanceState getInstanceDetails(String authToken, String instanceId) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	public List<String> getInstancesFromUser(String username) {
+	public List<String> getInstancesFromUser(String authToken) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	public void removeAllInstances(String username) {
+	public void removeAllInstances(String authToken) {
 		// TODO Auto-generated method stub
 
 	}
 
-	public void removeInstance(String username, String instanceId) {
+	public void removeInstance(String authToken, String instanceId) {
 		// TODO Auto-generated method stub
 
 	}
