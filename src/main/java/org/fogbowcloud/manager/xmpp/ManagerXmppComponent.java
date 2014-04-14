@@ -51,6 +51,7 @@ public class ManagerXmppComponent extends XMPPComponent {
 	public void whoIsalive() {
 		IQ iq = new IQ(Type.get);
 		iq.setTo(rendezvousURL);
+		iq.setFrom(getJID());
 		iq.getElement().addElement("query", WHOISALIVE_NAMESPACE);
 		IQ response = (IQ) this.syncSendPacket(iq);
 		managerFacade.getItemsFromIQ(response);
