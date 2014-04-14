@@ -18,7 +18,6 @@ public class ComputeApplication extends Application {
 	public static final String TARGET = "/compute";
 
 	private Map<String, String> userToInstanceId;
-	private Map<String, InstanceState> instanceIdToState;
 	private static InstanceIdGenerator idGenerator;
 
 	@Override

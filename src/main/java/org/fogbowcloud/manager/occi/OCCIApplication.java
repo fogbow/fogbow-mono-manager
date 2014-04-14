@@ -84,16 +84,17 @@ public class OCCIApplication extends Application {
 		userToRequestIds.get(user).add(request.getId());
 		requestIdToRequestUnit.put(request.getId(), request);
 
-		submitRequest(request, categories, xOCCIAtt);
+		submitRequest(authToken, request, categories, xOCCIAtt);
 
 		return request;
 	}
 
 	// FIXME Should req be an attribute of requestUnit?
-	private void submitRequest(Request request, List<Category> categories,
+	private void submitRequest(String authToken, Request request, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
 		// TODO Choose if submit to local or remote cloud and submit
-		computePlugin.requestInstance(categories, xOCCIAtt);
+		//TODO remove fogbow attributes from xOCCIAtt
+		computePlugin.requestInstance(authToken, categories, xOCCIAtt);
 	}
 
 	public List<Request> getRequestsFromUser(String authToken) {

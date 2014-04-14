@@ -7,7 +7,7 @@ import org.fogbowcloud.manager.occi.core.Category;
 
 public interface ComputePlugin {
 
-	public String requestInstance(List<Category> categories, Map<String, String> xOCCIAtt);
+	public String requestInstance(String authToken,List<Category> categories, Map<String, String> xOCCIAtt);
 
-	public List<String> getInstancesFromUser(String username);
+	public String getInstancesFromUser(String authToken);
 }

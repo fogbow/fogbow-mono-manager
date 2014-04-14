@@ -36,7 +36,7 @@ public class TestPostRequest {
 		this.requestHelper = new RequestHelper();
 
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
-		Mockito.when(computePlugin.requestInstance(Mockito.any(List.class), Mockito.any(Map.class)))
+		Mockito.when(computePlugin.requestInstance(Mockito.anyString(), Mockito.any(List.class), Mockito.any(Map.class)))
 				.thenReturn("");
 
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
