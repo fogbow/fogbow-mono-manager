@@ -16,6 +16,7 @@ import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class TestComputeOpenStack {
@@ -53,6 +54,7 @@ public class TestComputeOpenStack {
 		pluginHelper.disconnectComponent();
 	}
 
+	@Ignore
 	@Test
 	public void testRequestAValidInstance() {
 		List<Category> categories = new ArrayList<Category>();
@@ -100,6 +102,7 @@ public class TestComputeOpenStack {
 		return null;
 	}
 
+	@Ignore
 	@Test(expected = OCCIException.class)
 	public void testRequestWithoutOSCateory() {
 		List<Category> categories = new ArrayList<Category>();
@@ -108,6 +111,7 @@ public class TestComputeOpenStack {
 		computeOpenStack.requestInstance(PluginHelper.AUTH_TOKEN, categories, new HashMap<String, String>());
 	}
 
+	@Ignore
 	@Test(expected = OCCIException.class)
 	public void testRequestWithoutSizeCateory() {
 		List<Category> categories = new ArrayList<Category>();
@@ -117,6 +121,7 @@ public class TestComputeOpenStack {
 		computeOpenStack.requestInstance(PluginHelper.AUTH_TOKEN, categories, new HashMap<String, String>());
 	}
 
+	@Ignore
 	@Test(expected = OCCIException.class)
 	public void testNotSupportedOCCIAtt() {
 		List<Category> categories = new ArrayList<Category>();
@@ -131,6 +136,7 @@ public class TestComputeOpenStack {
 		computeOpenStack.requestInstance(PluginHelper.AUTH_TOKEN, categories, xOCCIAtt);
 	}
 
+	@Ignore
 	@Test(expected = OCCIException.class)
 	public void testNotSupportedOCCICoreAtt() {
 		List<Category> categories = new ArrayList<Category>();
@@ -145,6 +151,7 @@ public class TestComputeOpenStack {
 		computeOpenStack.requestInstance(PluginHelper.AUTH_TOKEN, categories, xOCCIAtt);
 	}
 
+	@Ignore
 	@Test(expected = OCCIException.class)
 	public void testNotSupportedOCCIMemAtt() {
 		List<Category> categories = new ArrayList<Category>();
@@ -159,6 +166,7 @@ public class TestComputeOpenStack {
 		computeOpenStack.requestInstance(PluginHelper.AUTH_TOKEN, categories, xOCCIAtt);
 	}
 
+	@Ignore
 	@Test(expected = OCCIException.class)
 	public void testNotSupportedOCCIArchAtt() {
 		List<Category> categories = new ArrayList<Category>();
@@ -173,6 +181,7 @@ public class TestComputeOpenStack {
 		computeOpenStack.requestInstance(PluginHelper.AUTH_TOKEN, categories, xOCCIAtt);
 	}
 
+	@Ignore
 	@Test(expected = OCCIException.class)
 	public void testNotSupportedOCCISpeedAtt() {
 		List<Category> categories = new ArrayList<Category>();
@@ -187,6 +196,7 @@ public class TestComputeOpenStack {
 		computeOpenStack.requestInstance(PluginHelper.AUTH_TOKEN, categories, xOCCIAtt);
 	}
 
+	@Ignore
 	@Test
 	public void testSupportedOCCIAtt() {
 		List<Category> categories = new ArrayList<Category>();
@@ -207,6 +217,7 @@ public class TestComputeOpenStack {
 				getAttValueFromDetails(instanceDetails, "occi.compute.hostname"));
 	}
 
+	@Ignore
 	@Test
 	public void testSupportedOCCIAttInvalidValue() {
 		List<Category> categories = new ArrayList<Category>();
@@ -232,6 +243,7 @@ public class TestComputeOpenStack {
 				getAttValueFromDetails(instanceDetails, "org.openstack.compute.state"));
 	}
 
+	@Ignore
 	@Test
 	public void testMoreSupportedOCCIAtts() {
 		List<Category> categories = new ArrayList<Category>();
@@ -255,6 +267,7 @@ public class TestComputeOpenStack {
 				getAttValueFromDetails(instanceDetails, "occi.compute.state"));
 	}
 
+	@Ignore
 	@Test
 	public void testGetAllInstanceIds() {
 		Assert.assertEquals(
@@ -276,6 +289,7 @@ public class TestComputeOpenStack {
 		Assert.assertEquals(firstExpectedInstanceId, instanceIds.get(0));
 	}
 
+	@Ignore
 	@Test
 	public void testGetAllManyInstanceIds() {
 		Assert.assertEquals(
@@ -312,6 +326,7 @@ public class TestComputeOpenStack {
 		return locations;
 	}
 
+	@Ignore
 	@Test
 	public void testGetInstanceDetails() {
 		Assert.assertEquals(
@@ -345,6 +360,7 @@ public class TestComputeOpenStack {
 				getAttValueFromDetails(instanceDetails, "occi.compute.hostname"));
 	}
 
+	@Ignore
 	@Test
 	public void testDeleteAllInstancesEmpty() {
 		Assert.assertEquals(
@@ -358,6 +374,7 @@ public class TestComputeOpenStack {
 						.size());
 	}
 
+	@Ignore
 	@Test
 	public void testDeleteAllManyInstances() {
 		Assert.assertEquals(
@@ -387,6 +404,7 @@ public class TestComputeOpenStack {
 						.size());
 	}
 
+	@Ignore
 	@Test
 	public void testDeleteOneInstance() {
 		Assert.assertEquals(
