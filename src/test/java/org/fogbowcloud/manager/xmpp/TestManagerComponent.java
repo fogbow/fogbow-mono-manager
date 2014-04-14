@@ -37,7 +37,7 @@ public class TestManagerComponent {
 		managerXmppComponent = managerTestHelper
 				.initializeXMPPManagerComponent(false);
 		final XMPPClient xmppClient = managerTestHelper.createXMPPClient();
-		
+
 		final BlockingQueue<Packet> blockingQueue = new LinkedBlockingQueue<Packet>(
 				1);
 
@@ -56,18 +56,16 @@ public class TestManagerComponent {
 		xmppClient.on(new PacketFilter() {
 			@Override
 			public boolean accept(Packet packet) {
-				return packet.getFrom().toBareJID().equals(
-						ManagerTestHelper.MANAGER_COMPONENT_URL);
+				return packet.getFrom().toBareJID()
+						.equals(ManagerTestHelper.MANAGER_COMPONENT_URL);
 			}
 		}, callback);
 
 		managerXmppComponent.iAmAlive();
 
 		Packet packet = blockingQueue.poll(5, TimeUnit.SECONDS);
-		
 		Element element = packet.getElement().element("query");
 		Element iqelement = element.element("status");
-
 		String cpuIdle = iqelement.element("cpu-idle").getText();
 		String cpuInUse = iqelement.element("cpu-inuse").getText();
 		String memIdle = iqelement.element("mem-idle").getText();
@@ -85,7 +83,8 @@ public class TestManagerComponent {
 	}
 
 	@Test
-	public void testWhoIsAlive() throws XMPPException, InterruptedException, ComponentException {
+	public void testWhoIsAlive() throws XMPPException, InterruptedException,
+			ComponentException {
 		managerXmppComponent = managerTestHelper
 				.initializeXMPPManagerComponent(false);
 		final XMPPClient xmppClient = managerTestHelper.createXMPPClient();
@@ -112,8 +111,8 @@ public class TestManagerComponent {
 		xmppClient.on(new PacketFilter() {
 			@Override
 			public boolean accept(Packet packet) {
-				return packet.getFrom().toBareJID().equals(
-						ManagerTestHelper.MANAGER_COMPONENT_URL);
+				return packet.getFrom().toBareJID()
+						.equals(ManagerTestHelper.MANAGER_COMPONENT_URL);
 			}
 		}, callback);
 		managerXmppComponent.whoIsalive();
@@ -129,11 +128,11 @@ public class TestManagerComponent {
 	}
 
 	@Test
-	public void testCallIAmAlive() throws XMPPException, InterruptedException, ComponentException {
-		managerXmppComponent = managerTestHelper
-				.initializeXMPPManagerComponent(true);
+	public void testCallIAmAlive() throws XMPPException, InterruptedException,
+			ComponentException {
 		final XMPPClient xmppClient = managerTestHelper.createXMPPClient();
 		final Semaphore semaphore = new Semaphore(0);
+		
 		final PacketListener callbackIAmAlive = new PacketListener() {
 			public void processPacket(Packet packet) {
 				IQ iAmAlive = (IQ) packet;
@@ -141,18 +140,82 @@ public class TestManagerComponent {
 				xmppClient.send(IQ.createResultIQ(iAmAlive));
 			}
 		};
+		
+		final PacketListener callbackWhoIsAlive = new PacketListener() {
+			public void processPacket(Packet packet) {
+				IQ whoIsAlive = (IQ) packet;
+				List<RendezvousItemCopy> aliveIds = new ArrayList<RendezvousItemCopy>();
+				aliveIds.add(new RendezvousItemCopy(managerTestHelper
+						.getResources()));
+				IQ iq = managerTestHelper.createWhoIsAliveResponse(
+						(ArrayList<RendezvousItemCopy>) aliveIds, whoIsAlive);
+				try {
+					xmppClient.syncSend(iq);
+				} catch (XMPPException e) {
+					//No problem if exception is throwed
+				}
 
+			}
+		};
+		
 		xmppClient.on(new PacketFilter() {
 			@Override
 			public boolean accept(Packet packet) {
-				System.out.println(packet);
-				Element element  = packet.getElement().element("query");
-				return element.getNamespace()
-						.equals(ManagerTestHelper.IAMALIVE_NAMESPACE);
+				Element element = packet.getElement().element("query");
+				return element.getNamespaceURI().equals(
+						ManagerTestHelper.IAMALIVE_NAMESPACE);
 			}
 		}, callbackIAmAlive);
 		
+		xmppClient.on(new PacketFilter() {
+			@Override
+			public boolean accept(Packet packet) {
+				Element element = packet.getElement().element("query");
+				return element.getNamespaceURI().equals(
+						ManagerTestHelper.WHOISALIVE_NAMESPACE);
+			}
+		}, callbackWhoIsAlive);
+		
+		managerXmppComponent = managerTestHelper
+				.initializeXMPPManagerComponent(true);
 		Assert.assertTrue(semaphore.tryAcquire(10000, TimeUnit.MILLISECONDS));
+	}
+
+	@Test
+	public void testCallWhoIsAlive() throws XMPPException,
+			InterruptedException, ComponentException {
+		final XMPPClient xmppClient = managerTestHelper.createXMPPClient();
+		final Semaphore semaphore = new Semaphore(0);
+		final PacketListener callbackWhoIsAlive = new PacketListener() {
+			public void processPacket(Packet packet) {
+				IQ whoIsAlive = (IQ) packet;
+				List<RendezvousItemCopy> aliveIds = new ArrayList<RendezvousItemCopy>();
+				aliveIds.add(new RendezvousItemCopy(managerTestHelper
+						.getResources()));
+				IQ iq = managerTestHelper.createWhoIsAliveResponse(
+						(ArrayList<RendezvousItemCopy>) aliveIds, whoIsAlive);
+				try {
+					xmppClient.syncSend(iq);
+				} catch (XMPPException e) {
+					//No problem if exception is throwed
+				}
+				semaphore.release();
+			}
+		};
+		xmppClient.on(new PacketFilter() {
+			@Override
+			public boolean accept(Packet packet) {
+				Element element = packet.getElement().element("query");
+				return element.getNamespaceURI().equals(
+						ManagerTestHelper.WHOISALIVE_NAMESPACE);
+			}
+		}, callbackWhoIsAlive);
+
+		managerXmppComponent = managerTestHelper
+				.initializeXMPPManagerComponent(true);
+		Assert.assertTrue(semaphore.tryAcquire(20000, TimeUnit.MILLISECONDS));
+		Assert.assertEquals(1, managerXmppComponent.getManagerFacade()
+				.getManagerModel().getMembers().size());
 	}
 
 	@After

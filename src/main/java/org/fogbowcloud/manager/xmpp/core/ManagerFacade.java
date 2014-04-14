@@ -15,6 +15,7 @@ public class ManagerFacade {
 		this.managerModel = managerModel;
 	}
 
+	@SuppressWarnings("unchecked")
 	public ArrayList<ManagerItem> getItemsFromIQ(
 			IQ responseFromWhoIsAliveIQ) {
 		Element queryElement = responseFromWhoIsAliveIQ.getElement().element(

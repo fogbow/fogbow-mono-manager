@@ -17,24 +17,24 @@ public class ManagerXmppComponent extends XMPPComponent {
 	public static final String WHOISALIVE_NAMESPACE = "http://fogbowcloud.org/rendezvous/whoisalive";
 	public static final String IAMALIVE_NAMESPACE = "http://fogbowcloud.org/rendezvous/iamalive";
 	private ManagerFacade managerFacade;
-	private long PERIOD = 10;
+	private long PERIOD = 100;
 	private final Timer timer = new Timer();
-	
+
 	public ManagerXmppComponent(String jid, String password, String server,
 			int port) {
 		super(jid, password, server, port);
-		managerFacade  = new ManagerFacade(new ManagerModel());
+		managerFacade = new ManagerFacade(new ManagerModel());
 	}
-	
+
 	@Override
 	public void connect() throws ComponentException {
 		super.connect();
 	}
-	
+
 	public void init() {
 		callIamAlive();
 	}
-	
+
 	public void iAmAlive() {
 		IQ iq = new IQ(Type.get);
 		iq.setTo(rendezvousURL);
@@ -45,8 +45,7 @@ public class ManagerXmppComponent extends XMPPComponent {
 		statusEl.addElement("cpu-inuse").setText("value2");
 		statusEl.addElement("mem-idle").setText("value3");
 		statusEl.addElement("mem-inuse").setText("value4");
-		
-		this.sendPacket(iq);
+		this.syncSendPacket(iq);
 	}
 
 	public void whoIsalive() {
@@ -56,18 +55,17 @@ public class ManagerXmppComponent extends XMPPComponent {
 		IQ response = (IQ) this.syncSendPacket(iq);
 		managerFacade.getItemsFromIQ(response);
 	}
-	
-	private void callIamAlive(
-			) {
+
+	private void callIamAlive() {
 		timer.schedule(new TimerTask() {
 			@Override
 			public void run() {
 				iAmAlive();
 				whoIsalive();
 			}
-		}, 0, PERIOD );
+		}, 0, PERIOD);
 	}
-	
+
 	public void setRendezvousURL(String url) {
 		rendezvousURL = url;
 	}
