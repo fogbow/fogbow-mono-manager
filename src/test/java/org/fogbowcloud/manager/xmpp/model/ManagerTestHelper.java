@@ -90,7 +90,7 @@ public class ManagerTestHelper {
 				MANAGER_COMPONENT_PASS, SERVER_HOST, SERVER_COMPONENT_PORT);
 		managerXmppComponent.setDescription("Manager Component");
 		managerXmppComponent.setName("Manager");
-		managerXmppComponent.setRendezvousURL(CLIENT_ADRESS + SMACK_ENDING);
+		managerXmppComponent.setRendezvousAdress(CLIENT_ADRESS + SMACK_ENDING);
 		managerXmppComponent.connect();
 		managerXmppComponent.process();
 		if (init) {

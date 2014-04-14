@@ -13,12 +13,12 @@ import org.xmpp.packet.IQ.Type;
 
 public class ManagerXmppComponent extends XMPPComponent {
 
-	private String rendezvousURL;
 	public static final String WHOISALIVE_NAMESPACE = "http://fogbowcloud.org/rendezvous/whoisalive";
 	public static final String IAMALIVE_NAMESPACE = "http://fogbowcloud.org/rendezvous/iamalive";
+	private static long PERIOD = 100;
 	private ManagerFacade managerFacade;
-	private long PERIOD = 100;
 	private final Timer timer = new Timer();
+	private String rendezvousAdress;
 
 	public ManagerXmppComponent(String jid, String password, String server,
 			int port) {
@@ -34,10 +34,11 @@ public class ManagerXmppComponent extends XMPPComponent {
 	public void init() {
 		callIamAlive();
 	}
-
+	
+	//TODO complete with calls from openstack
 	public void iAmAlive() {
 		IQ iq = new IQ(Type.get);
-		iq.setTo(rendezvousURL);
+		iq.setTo(rendezvousAdress);
 		iq.setFrom(getJID());
 		Element statusEl = iq.getElement()
 				.addElement("query", IAMALIVE_NAMESPACE).addElement("status");
@@ -50,8 +51,8 @@ public class ManagerXmppComponent extends XMPPComponent {
 
 	public void whoIsalive() {
 		IQ iq = new IQ(Type.get);
-		iq.setTo(rendezvousURL);
-		iq.setFrom(getJID());
+		iq.setTo(rendezvousAdress);
+		
 		iq.getElement().addElement("query", WHOISALIVE_NAMESPACE);
 		IQ response = (IQ) this.syncSendPacket(iq);
 		managerFacade.getItemsFromIQ(response);
@@ -67,8 +68,8 @@ public class ManagerXmppComponent extends XMPPComponent {
 		}, 0, PERIOD);
 	}
 
-	public void setRendezvousURL(String url) {
-		rendezvousURL = url;
+	public void setRendezvousAdress(String adress) {
+		rendezvousAdress = adress;
 	}
 
 	public ManagerFacade getManagerFacade() {
