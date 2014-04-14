@@ -114,7 +114,6 @@ public class TestManagerComponent {
 		xmppClient.on(new PacketFilter() {
 			@Override
 			public boolean accept(Packet packet) {
-				System.out.println(packet.toXML());
 				if (packet.getFrom() == null) {
 					return false;
 				}
@@ -219,7 +218,6 @@ public class TestManagerComponent {
 		xmppClient.on(new PacketFilter() {
 			@Override
 			public boolean accept(Packet packet) {
-				System.out.println(packet.toXML());
 				Element element = packet.getElement().element("query");
 				if (element == null) {
 					return false;
