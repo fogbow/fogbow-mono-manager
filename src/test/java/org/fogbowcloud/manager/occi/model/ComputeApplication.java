@@ -78,30 +78,30 @@ public class ComputeApplication extends Application {
 
 		@Post
 		public String post() {
-			String instanceId = String.valueOf(idGenerator.generateId());
-			
-			ComputeApplication application = (ComputeApplication) getApplication();
-			HttpRequest req = (HttpRequest) getRequest();
-
-			List<Category> categories = HeaderUtils.getCategories(req.getHeaders());
-			HeaderUtils.checkOCCIContentType(req.getHeaders());
-
-			Map<String, String> xOCCIAtt = HeaderUtils.getXOCCIAtributes(req.getHeaders());
-			xOCCIAtt = normalizeXOCCIAtt(xOCCIAtt);
-
-			String authToken = HeaderUtils.getAuthToken(req.getHeaders());
-			Integer instanceCount = Integer.valueOf(xOCCIAtt.get(RequestAttribute.INSTANCE_COUNT
-					.getValue()));
-
-			LOGGER.info("Request " + instanceCount + " instances");
-
-			List<Request> currentRequestUnits = new ArrayList<Request>();
-			for (int i = 0; i < instanceCount; i++) {
-				currentRequestUnits.add(application.newRequest(authToken, categories, xOCCIAtt));
-			}
-			return HeaderUtils.generateResponseId(currentRequestUnits, req);
-			
-			
+//			String instanceId = String.valueOf(idGenerator.generateId());
+//			
+//			ComputeApplication application = (ComputeApplication) getApplication();
+//			HttpRequest req = (HttpRequest) getRequest();
+//
+//			List<Category> categories = HeaderUtils.getCategories(req.getHeaders());
+//			HeaderUtils.checkOCCIContentType(req.getHeaders());
+//
+//			Map<String, String> xOCCIAtt = HeaderUtils.getXOCCIAtributes(req.getHeaders());
+//			xOCCIAtt = normalizeXOCCIAtt(xOCCIAtt);
+//
+//			String authToken = HeaderUtils.getAuthToken(req.getHeaders());
+//			Integer instanceCount = Integer.valueOf(xOCCIAtt.get(RequestAttribute.INSTANCE_COUNT
+//					.getValue()));
+//
+//			LOGGER.info("Request " + instanceCount + " instances");
+//
+//			List<Request> currentRequestUnits = new ArrayList<Request>();
+//			for (int i = 0; i < instanceCount; i++) {
+//				currentRequestUnits.add(application.newRequest(authToken, categories, xOCCIAtt));
+//			}
+//			return HeaderUtils.generateResponseId(currentRequestUnits, req);
+//			
+//			
 			return "";
 		}
 
