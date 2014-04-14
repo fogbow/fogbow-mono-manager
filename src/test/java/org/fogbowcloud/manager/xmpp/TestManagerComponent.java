@@ -179,6 +179,7 @@ public class TestManagerComponent {
 		managerXmppComponent = managerTestHelper
 				.initializeXMPPManagerComponent(true);
 		Assert.assertTrue(semaphore.tryAcquire(10000, TimeUnit.MILLISECONDS));
+		xmppClient.disconnect();
 	}
 
 	@Test
@@ -216,6 +217,7 @@ public class TestManagerComponent {
 		Assert.assertTrue(semaphore.tryAcquire(20000, TimeUnit.MILLISECONDS));
 		Assert.assertEquals(1, managerXmppComponent.getManagerFacade()
 				.getManagerModel().getMembers().size());
+		xmppClient.disconnect();
 	}
 
 	@After
