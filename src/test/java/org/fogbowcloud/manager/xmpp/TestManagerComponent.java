@@ -111,6 +111,9 @@ public class TestManagerComponent {
 		xmppClient.on(new PacketFilter() {
 			@Override
 			public boolean accept(Packet packet) {
+				if (packet.getFrom() == null) {
+					return false;
+				}
 				return packet.getFrom().toBareJID()
 						.equals(ManagerTestHelper.MANAGER_COMPONENT_URL);
 			}
@@ -207,6 +210,9 @@ public class TestManagerComponent {
 			@Override
 			public boolean accept(Packet packet) {
 				Element element = packet.getElement().element("query");
+				if (element == null) {
+					return false;
+				}
 				return element.getNamespaceURI().equals(
 						ManagerTestHelper.WHOISALIVE_NAMESPACE);
 			}
