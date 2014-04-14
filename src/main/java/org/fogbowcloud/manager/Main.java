@@ -1,7 +1,6 @@
 package org.fogbowcloud.manager;
 
 import org.fogbowcloud.manager.occi.OCCIApplication;
-import org.fogbowcloud.manager.occi.model.KeystoneApplication;
 import org.restlet.Component;
 import org.restlet.data.Protocol;
 
@@ -11,7 +10,6 @@ public class Main {
 		Component component = new Component();
 		component.getServers().add(Protocol.HTTP, 8182);
 		component.getDefaultHost().attach(new OCCIApplication());
-		component.getDefaultHost().attach(new KeystoneApplication());
 		component.start();
 	}
 }
