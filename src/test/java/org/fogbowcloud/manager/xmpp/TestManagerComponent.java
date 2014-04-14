@@ -23,10 +23,10 @@ import org.xmpp.packet.IQ;
 import org.xmpp.packet.Packet;
 
 public class TestManagerComponent {
-
+	
 	private ManagerTestHelper managerTestHelper;
 	private ManagerXmppComponent managerXmppComponent;
-
+	
 	@Before
 	public void setUp() throws ComponentException {
 		managerTestHelper = new ManagerTestHelper();

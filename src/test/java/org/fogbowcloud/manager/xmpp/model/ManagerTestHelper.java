@@ -11,6 +11,7 @@ import org.fogbowcloud.manager.xmpp.core.ResourcesInfo;
 import org.jamppa.client.XMPPClient;
 import org.jamppa.client.plugin.xep0077.XEP0077;
 import org.jivesoftware.smack.XMPPException;
+import org.xbill.DNS.tests.primary;
 import org.xmpp.component.ComponentException;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.Packet;
@@ -20,9 +21,10 @@ public class ManagerTestHelper {
 	private static final int SERVER_CLIENT_PORT = 5222;
 	private static final int SERVER_COMPONENT_PORT = 5347;
 	private static final String SERVER_HOST = "localhost";
-	private static final String CLIENT_URL = "client@test.com/Smack";
+	private static final String CLIENT_ADRESS = "client@test.com";
 	private static final String CLIENT_PASS = "password";
-
+	private static final String SMACK_ENDING = "/Smack";
+	
 	public static final String MANAGER_COMPONENT_URL = "manager.test.com";
 	public static final String MANAGER_COMPONENT_PASS = "password";
 
@@ -66,13 +68,13 @@ public class ManagerTestHelper {
 
 	public XMPPClient createXMPPClient() throws XMPPException {
 
-		XMPPClient xmppClient = new XMPPClient(CLIENT_URL, CLIENT_PASS,
+		XMPPClient xmppClient = new XMPPClient(CLIENT_ADRESS, CLIENT_PASS,
 				SERVER_HOST, SERVER_CLIENT_PORT);
 		XEP0077 register = new XEP0077();
 		xmppClient.registerPlugin(register);
 		xmppClient.connect();
 		try {
-			register.createAccount(CLIENT_URL, CLIENT_PASS);
+			register.createAccount(CLIENT_ADRESS, CLIENT_PASS);
 		} catch (XMPPException e) {
 		}
 
@@ -88,7 +90,7 @@ public class ManagerTestHelper {
 				MANAGER_COMPONENT_PASS, SERVER_HOST, SERVER_COMPONENT_PORT);
 		managerXmppComponent.setDescription("Manager Component");
 		managerXmppComponent.setName("Manager");
-		managerXmppComponent.setRendezvousURL(CLIENT_URL);
+		managerXmppComponent.setRendezvousURL(CLIENT_ADRESS + SMACK_ENDING);
 		managerXmppComponent.connect();
 		managerXmppComponent.process();
 		if (init) {
