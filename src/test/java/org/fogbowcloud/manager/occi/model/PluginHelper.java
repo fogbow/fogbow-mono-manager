@@ -43,6 +43,7 @@ public class PluginHelper {
 				expectedInstanceIds.get(1), expectedInstanceIds.get(2), expectedInstanceIds.get(3),
 				expectedInstanceIds.get(4));
 		computeApplication.setIdGenerator(idGenerator);
+		computeApplication.putTokenAndUser(AUTH_TOKEN, USERNAME);
 
 		this.component.getDefaultHost().attach(computeApplication);
 		this.component.start();

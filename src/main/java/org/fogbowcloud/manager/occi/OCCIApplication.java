@@ -26,13 +26,13 @@ public class OCCIApplication extends Application {
 	private IdentityPlugin identityPlugin;
 	private ComputePlugin computePlugin;
 	private Map<String, List<String>> userToRequestIds;
-	private Map<String, Request> requestIdToRequestUnit;
+	private Map<String, Request> requestIdToRequest;
 	
 	private static final Logger LOGGER = Logger.getLogger(OCCIApplication.class);
 
 	public OCCIApplication() {
 		this.userToRequestIds = new ConcurrentHashMap<String, List<String>>();
-		this.requestIdToRequestUnit = new ConcurrentHashMap<String, Request>();
+		this.requestIdToRequest = new ConcurrentHashMap<String, Request>();
 	}
 
 	@Override
@@ -51,6 +51,7 @@ public class OCCIApplication extends Application {
 		return computePlugin;
 	}
 
+	//TODO It is really needed?
 	public Map<String, List<String>> getUserToRequestIds() {
 		return userToRequestIds;
 	}
@@ -66,7 +67,7 @@ public class OCCIApplication extends Application {
 	public Request getRequestDetails(String authToken, String requestId) {
 		checkUserToken(authToken);
 		checkRequestId(authToken, requestId);
-		return requestIdToRequestUnit.get(requestId);
+		return requestIdToRequest.get(requestId);
 	}
 
 	public Request newRequest(String authToken, List<Category> categories,
@@ -83,7 +84,7 @@ public class OCCIApplication extends Application {
 				categories, xOCCIAtt);
 
 		userToRequestIds.get(user).add(request.getId());
-		requestIdToRequestUnit.put(request.getId(), request);
+		requestIdToRequest.put(request.getId(), request);
 
 		submitRequest(authToken, request, categories, xOCCIAtt);
 
@@ -110,7 +111,7 @@ public class OCCIApplication extends Application {
 		List<Request> requests = new ArrayList<Request>();
 		if (userToRequestIds.get(user) != null) {
 			for (String requestId : userToRequestIds.get(user)) {
-				requests.add(requestIdToRequestUnit.get(requestId));
+				requests.add(requestIdToRequest.get(requestId));
 			}
 		}
 		return requests;
@@ -122,19 +123,19 @@ public class OCCIApplication extends Application {
 		
 		if (userToRequestIds.get(user) != null) {
 			for (String requestId : userToRequestIds.get(user)) {
-				requestIdToRequestUnit.remove(requestId);
+				requestIdToRequest.remove(requestId);
 			}
 			userToRequestIds.remove(user);
 		}
 	}
 
-	public void removeRequest(String althToken, String requestId) {
-		checkUserToken(althToken);
-		checkRequestId(althToken, requestId);
-		String user = getIdentityPlugin().getUser(althToken);
+	public void removeRequest(String authToken, String requestId) {
+		checkUserToken(authToken);
+		checkRequestId(authToken, requestId);
+		String user = getIdentityPlugin().getUser(authToken);
 		
 		userToRequestIds.get(user).remove(requestId);
-		requestIdToRequestUnit.get(requestId);
+		requestIdToRequest.remove(requestId);
 	}
 
 	private void checkRequestId(String authToken, String requestId) {
@@ -146,8 +147,8 @@ public class OCCIApplication extends Application {
 		}
 	}
 
-	private void checkUserToken(String userToken) {
-		if (!identityPlugin.isValidToken(userToken)) {
+	private void checkUserToken(String authToken) {
+		if (!identityPlugin.isValidToken(authToken)) {
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}
 	}

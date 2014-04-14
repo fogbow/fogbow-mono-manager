@@ -28,6 +28,7 @@ import org.fogbowcloud.manager.occi.request.RequestConstants;
 
 public class ComputeOpenStackPlugin implements ComputePlugin {
 
+	public  static final String OS_SCHEME = "http://schemas.openstack.org/template/os#";
 	private String computeEndPoint;
 	private static final Logger LOGGER = Logger.getLogger(ComputeOpenStackPlugin.class);
 
@@ -49,7 +50,7 @@ public class ComputeOpenStackPlugin implements ComputePlugin {
 				"http://schemas.openstack.org/template/resource#", "mixin"));
 		termToOSCategory.put(RequestConstants.UBUNTU64_TERM, new Category(
 				"cadf2e29-7216-4a5e-9364-cf6513d5f1fd",
-				"http://schemas.openstack.org/template/os#", "mixin"));
+				OS_SCHEME, "mixin"));
 	}
 
 	@Override
