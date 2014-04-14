@@ -8,5 +8,6 @@ public class ResponseConstants {
 	public static final String UNSUPPORTED_ATTRIBUTES = 
 			"There are unsupported attributes in the request.";
 	public static final String OK = "Ok";
+	public static final String CLOUD_NOT_SUPPORT_CATEGORY = "The cloud does not support category: ";
 
 }

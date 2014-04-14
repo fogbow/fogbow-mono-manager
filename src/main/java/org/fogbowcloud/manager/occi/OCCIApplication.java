@@ -14,6 +14,7 @@ import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.plugins.ComputePlugin;
 import org.fogbowcloud.manager.occi.plugins.IdentityPlugin;
+import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestState;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.restlet.Application;
@@ -62,9 +63,9 @@ public class OCCIApplication extends Application {
 		return identityPlugin;
 	}
 
-	public Request getRequestDetails(String userToken, String requestId) {
-		checkUserToken(userToken);
-		checkRequestId(userToken, requestId);
+	public Request getRequestDetails(String authToken, String requestId) {
+		checkUserToken(authToken);
+		checkRequestId(authToken, requestId);
 		return requestIdToRequestUnit.get(requestId);
 	}
 
@@ -84,16 +85,22 @@ public class OCCIApplication extends Application {
 		userToRequestIds.get(user).add(request.getId());
 		requestIdToRequestUnit.put(request.getId(), request);
 
-		submitRequest(request, categories, xOCCIAtt);
+		submitRequest(authToken, request, categories, xOCCIAtt);
 
 		return request;
 	}
 
 	// FIXME Should req be an attribute of requestUnit?
-	private void submitRequest(Request request, List<Category> categories,
+	private void submitRequest(String authToken, Request request, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
 		// TODO Choose if submit to local or remote cloud and submit
-		computePlugin.requestInstance(categories, xOCCIAtt);
+		
+		//TODO remove fogbow attributes from xOCCIAtt
+		for (String keyAttributes: RequestAttribute.getValues()) {
+			xOCCIAtt.remove(keyAttributes);
+		}
+		
+		computePlugin.requestInstance(authToken, categories, xOCCIAtt);
 	}
 
 	public List<Request> getRequestsFromUser(String authToken) {
@@ -121,10 +128,10 @@ public class OCCIApplication extends Application {
 		}
 	}
 
-	public void removeRequest(String userToken, String requestId) {
-		checkUserToken(userToken);
-		checkRequestId(userToken, requestId);
-		String user = getIdentityPlugin().getUser(userToken);
+	public void removeRequest(String althToken, String requestId) {
+		checkUserToken(althToken);
+		checkRequestId(althToken, requestId);
+		String user = getIdentityPlugin().getUser(althToken);
 		
 		userToRequestIds.get(user).remove(requestId);
 		requestIdToRequestUnit.get(requestId);

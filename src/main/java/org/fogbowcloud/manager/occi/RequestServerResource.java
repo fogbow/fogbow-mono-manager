@@ -26,19 +26,19 @@ import org.restlet.resource.ServerResource;
 public class RequestServerResource extends ServerResource {
 
 	private static final Logger LOGGER = Logger.getLogger(RequestServerResource.class);
-	
+
 	@Get
 	public String fetch() {
 		OCCIApplication application = (OCCIApplication) getApplication();
 		HttpRequest req = (HttpRequest) getRequest();
 		String userToken = HeaderUtils.getAuthToken(req.getHeaders());
 		String requestId = (String) getRequestAttributes().get("requestid");
-		
+
 		if (requestId == null) {
 			LOGGER.info("Getting all requests of token :" + userToken);
 			return HeaderUtils.generateResponseId(application.getRequestsFromUser(userToken), req);
-		} 
-		
+		}
+
 		LOGGER.info("Getting request(" + requestId + ") of token :" + userToken);
 		Request request = application.getRequestDetails(userToken, requestId);
 		return request.toHttpMessageFormat();
@@ -56,7 +56,7 @@ public class RequestServerResource extends ServerResource {
 			application.removeAllRequests(userToken);
 			return ResponseConstants.OK;
 		}
-	
+
 		LOGGER.info("Removing request(" + requestId + ") of token :" + userToken);
 		application.removeRequest(userToken, requestId);
 		return ResponseConstants.OK;
@@ -69,39 +69,38 @@ public class RequestServerResource extends ServerResource {
 
 		List<Category> categories = HeaderUtils.getCategories(req.getHeaders());
 		HeaderUtils.checkCategories(categories, RequestConstants.TERM);
-		HeaderUtils.checkOCCIContentType(req.getHeaders());		
-		
+		HeaderUtils.checkOCCIContentType(req.getHeaders());
+
 		Map<String, String> xOCCIAtt = HeaderUtils.getXOCCIAtributes(req.getHeaders());
 		xOCCIAtt = normalizeXOCCIAtt(xOCCIAtt);
 
 		String authToken = HeaderUtils.getAuthToken(req.getHeaders());
-		Integer instanceCount = Integer.valueOf(xOCCIAtt.get(
-				RequestAttribute.INSTANCE_COUNT.getValue()));
-	
+		Integer instanceCount = Integer.valueOf(xOCCIAtt.get(RequestAttribute.INSTANCE_COUNT
+				.getValue()));
+
 		LOGGER.info("Request " + instanceCount + " instances");
-		
+
 		List<Request> currentRequestUnits = new ArrayList<Request>();
 		for (int i = 0; i < instanceCount; i++) {
 			currentRequestUnits.add(application.newRequest(authToken, categories, xOCCIAtt));
 		}
 		return HeaderUtils.generateResponseId(currentRequestUnits, req);
 	}
-	
+
 	public static Map<String, String> normalizeXOCCIAtt(Map<String, String> xOCCIAtt) {
 		Map<String, String> defOCCIAtt = new HashMap<String, String>();
-		defOCCIAtt.put(RequestAttribute.TYPE.getValue(), 
-				RequestConstants.DEFAULT_TYPE);
-		defOCCIAtt.put(RequestAttribute.INSTANCE_COUNT.getValue(), 
+		defOCCIAtt.put(RequestAttribute.TYPE.getValue(), RequestConstants.DEFAULT_TYPE);
+		defOCCIAtt.put(RequestAttribute.INSTANCE_COUNT.getValue(),
 				RequestConstants.DEFAULT_INSTANCE_COUNT.toString());
-		
+
 		defOCCIAtt.putAll(xOCCIAtt);
-		
-	    checkRequestType(defOCCIAtt.get(RequestAttribute.TYPE.getValue()));
-	    HeaderUtils.checkDateValue(defOCCIAtt.get(RequestAttribute.VALID_FROM.getValue()));
-	    HeaderUtils.checkDateValue(defOCCIAtt.get(RequestAttribute.VALID_UNTIL.getValue()));
-	    HeaderUtils.checkIntegerValue(defOCCIAtt.get(RequestAttribute.INSTANCE_COUNT.getValue()));
-	    
-	    List<Resource> requestResources = ResourceRepository.getAll();
+
+		checkRequestType(defOCCIAtt.get(RequestAttribute.TYPE.getValue()));
+		HeaderUtils.checkDateValue(defOCCIAtt.get(RequestAttribute.VALID_FROM.getValue()));
+		HeaderUtils.checkDateValue(defOCCIAtt.get(RequestAttribute.VALID_UNTIL.getValue()));
+		HeaderUtils.checkIntegerValue(defOCCIAtt.get(RequestAttribute.INSTANCE_COUNT.getValue()));
+
+		List<Resource> requestResources = ResourceRepository.getAll();
 		for (String attributeName : xOCCIAtt.keySet()) {
 			boolean supportedAtt = false;
 			for (Resource resource : requestResources) {
@@ -114,9 +113,9 @@ public class RequestServerResource extends ServerResource {
 				throw new OCCIException(ErrorType.BAD_REQUEST,
 						ResponseConstants.UNSUPPORTED_ATTRIBUTES);
 			}
-		}		    
-	    
-	    return defOCCIAtt;
+		}
+
+		return defOCCIAtt;
 	}
 
 	public static void checkRequestType(String enumString) {
