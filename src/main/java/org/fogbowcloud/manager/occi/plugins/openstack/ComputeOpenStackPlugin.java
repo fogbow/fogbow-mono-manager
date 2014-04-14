@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.codec.Charsets;
 import org.apache.http.HttpException;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -22,7 +23,6 @@ import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
-import org.fogbowcloud.manager.occi.model.RequestHelper;
 import org.fogbowcloud.manager.occi.plugins.ComputePlugin;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
 
@@ -83,12 +83,12 @@ public class ComputeOpenStackPlugin implements ComputePlugin {
 			HttpResponse response = httpCLient.execute(httpPost);
 			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
 				throw new OCCIException(ErrorType.UNAUTHORIZED, EntityUtils.toString(
-						response.getEntity(), RequestHelper.UTF_8));
+						response.getEntity(), String.valueOf(Charsets.UTF_8)));
 			} else if (response.getStatusLine().getStatusCode() == HttpStatus.SC_BAD_REQUEST) {
 				throw new OCCIException(ErrorType.NOT_FOUND, EntityUtils.toString(
-						response.getEntity(), RequestHelper.UTF_8));
+						response.getEntity(), String.valueOf(Charsets.UTF_8)));
 			}
-			return EntityUtils.toString(response.getEntity(), RequestHelper.UTF_8);
+			return EntityUtils.toString(response.getEntity(), String.valueOf(Charsets.UTF_8));
 		} catch (URISyntaxException e) {
 			LOGGER.error(e);
 		} catch (HttpException e) {
@@ -112,7 +112,7 @@ public class ComputeOpenStackPlugin implements ComputePlugin {
 			} else if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_FOUND) {
 				throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
 			}
-			return EntityUtils.toString(response.getEntity(), RequestHelper.UTF_8);
+			return EntityUtils.toString(response.getEntity(), String.valueOf(Charsets.UTF_8));
 		} catch (URISyntaxException e) {
 			LOGGER.error(e);
 		} catch (HttpException e) {
@@ -134,7 +134,7 @@ public class ComputeOpenStackPlugin implements ComputePlugin {
 			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
 				throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 			}
-			return EntityUtils.toString(response.getEntity(), RequestHelper.UTF_8);
+			return EntityUtils.toString(response.getEntity(), String.valueOf(Charsets.UTF_8));
 		} catch (URISyntaxException e) {
 			LOGGER.error(e);
 		} catch (HttpException e) {
@@ -156,7 +156,7 @@ public class ComputeOpenStackPlugin implements ComputePlugin {
 			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
 				throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 			}
-			return EntityUtils.toString(response.getEntity(), RequestHelper.UTF_8);
+			return EntityUtils.toString(response.getEntity(), String.valueOf(Charsets.UTF_8));
 		} catch (URISyntaxException e) {
 			LOGGER.error(e);
 		} catch (HttpException e) {
@@ -180,7 +180,7 @@ public class ComputeOpenStackPlugin implements ComputePlugin {
 			} else if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_FOUND) {
 				throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
 			}
-			return EntityUtils.toString(response.getEntity(), RequestHelper.UTF_8);
+			return EntityUtils.toString(response.getEntity(), String.valueOf(Charsets.UTF_8));
 		} catch (URISyntaxException e) {
 			LOGGER.error(e);
 		} catch (HttpException e) {

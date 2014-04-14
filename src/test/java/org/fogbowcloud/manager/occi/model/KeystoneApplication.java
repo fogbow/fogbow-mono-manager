@@ -23,13 +23,11 @@ public class KeystoneApplication extends Application {
 	public static String TARGET = "/v3/auth/tokens/";
 	
 	public KeystoneApplication() {
-		System.out.println("TESTE1");
 		this.tokenToUser = new HashMap<String, String>();
 	}
 	
 	@Override
 	public Restlet createInboundRoot() {
-		System.out.println("TESTE2");
 		Router router = new Router(getContext());
 		router.attach(TARGET, KeystoneServer.class);
 		return router;

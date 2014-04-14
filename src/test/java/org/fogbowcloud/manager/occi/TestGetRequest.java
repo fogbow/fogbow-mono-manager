@@ -5,6 +5,7 @@ import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.codec.Charsets;
 import org.apache.http.HttpException;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -37,12 +38,14 @@ public class TestGetRequest {
 		this.requestHelper = new RequestHelper();
 
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
-		Mockito.when(computePlugin.requestInstance(Mockito.anyString(), Mockito.any(List.class), Mockito.any(Map.class)))
-				.thenReturn("");
+		Mockito.when(
+				computePlugin.requestInstance(Mockito.anyString(), Mockito.any(List.class),
+						Mockito.any(Map.class))).thenReturn("");
 
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.isValidToken(RequestHelper.ACCESS_TOKEN)).thenReturn(true);
-		Mockito.when(identityPlugin.getUser(RequestHelper.ACCESS_TOKEN)).thenReturn(RequestHelper.USER_MOCK);
+		Mockito.when(identityPlugin.getUser(RequestHelper.ACCESS_TOKEN)).thenReturn(
+				RequestHelper.USER_MOCK);
 
 		requestHelper.initializeComponent(computePlugin, identityPlugin);
 	}
@@ -86,13 +89,13 @@ public class TestGetRequest {
 	public void testGetResquestTwoIds() throws URISyntaxException, HttpException, IOException {
 		// Post
 		HttpPost post = new HttpPost(RequestHelper.URI_FOGBOW_REQUEST);
-		Category category = new Category(RequestConstants.TERM,
-				RequestConstants.SCHEME, OCCIHeaders.KIND_CLASS);
+		Category category = new Category(RequestConstants.TERM, RequestConstants.SCHEME,
+				OCCIHeaders.KIND_CLASS);
 		post.addHeader(OCCIHeaders.CONTENT_TYPE, RequestHelper.CONTENT_TYPE_OCCI);
 		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, RequestHelper.ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
-		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE,
-				RequestAttribute.INSTANCE_COUNT.getValue() + " = 2");
+		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, RequestAttribute.INSTANCE_COUNT.getValue()
+				+ " = 2");
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
 		// Get
@@ -110,13 +113,13 @@ public class TestGetRequest {
 	public void testGetResquestManyIds() throws URISyntaxException, HttpException, IOException {
 		// Post
 		HttpPost post = new HttpPost(RequestHelper.URI_FOGBOW_REQUEST);
-		Category category = new Category(RequestConstants.TERM,
-				RequestConstants.SCHEME, OCCIHeaders.KIND_CLASS);
+		Category category = new Category(RequestConstants.TERM, RequestConstants.SCHEME,
+				OCCIHeaders.KIND_CLASS);
 		post.addHeader(OCCIHeaders.CONTENT_TYPE, RequestHelper.CONTENT_TYPE_OCCI);
 		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, RequestHelper.ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
-		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE,
-				RequestAttribute.INSTANCE_COUNT.getValue() + " = 200");
+		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, RequestAttribute.INSTANCE_COUNT.getValue()
+				+ " = 200");
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
 		// Get
@@ -135,13 +138,13 @@ public class TestGetRequest {
 			HttpException {
 		// Post
 		HttpPost post = new HttpPost(RequestHelper.URI_FOGBOW_REQUEST);
-		Category category = new Category(RequestConstants.TERM,
-				RequestConstants.SCHEME, OCCIHeaders.KIND_CLASS);
+		Category category = new Category(RequestConstants.TERM, RequestConstants.SCHEME,
+				OCCIHeaders.KIND_CLASS);
 		post.addHeader(OCCIHeaders.CONTENT_TYPE, RequestHelper.CONTENT_TYPE_OCCI);
 		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, RequestHelper.ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
-		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE,
-				RequestAttribute.INSTANCE_COUNT.getValue() + " = 1");
+		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, RequestAttribute.INSTANCE_COUNT.getValue()
+				+ " = 1");
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
 		// Get
@@ -170,13 +173,13 @@ public class TestGetRequest {
 			HttpException {
 		// Post
 		HttpPost post = new HttpPost(RequestHelper.URI_FOGBOW_REQUEST);
-		Category category = new Category(RequestConstants.TERM,
-				RequestConstants.SCHEME, OCCIHeaders.KIND_CLASS);
+		Category category = new Category(RequestConstants.TERM, RequestConstants.SCHEME,
+				OCCIHeaders.KIND_CLASS);
 		post.addHeader(OCCIHeaders.CONTENT_TYPE, RequestHelper.CONTENT_TYPE_OCCI);
 		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, RequestHelper.ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
-		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE,
-				RequestAttribute.INSTANCE_COUNT.getValue() + " = 1");
+		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, RequestAttribute.INSTANCE_COUNT.getValue()
+				+ " = 1");
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
 		// Get
@@ -185,7 +188,8 @@ public class TestGetRequest {
 		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, RequestHelper.ACCESS_TOKEN);
 		response = client.execute(get);
 
-		String requestDetails = EntityUtils.toString(response.getEntity(), RequestHelper.UTF_8);
+		String requestDetails = EntityUtils.toString(response.getEntity(),
+				String.valueOf(Charsets.UTF_8));
 		Assert.assertEquals(RequestState.OPEN.getValue(),
 				requestHelper.getStateFromRequestDetails(requestDetails));
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
