@@ -51,7 +51,7 @@ public class IdentityOpenStackPlugin implements IdentityPlugin {
 			HttpResponse response = httpCLient.execute(httpGet);
 			String responseStr = EntityUtils.toString(response.getEntity(), 
 					RequestHelper.UTF_8);
-
+			
 			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
 				throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 			}

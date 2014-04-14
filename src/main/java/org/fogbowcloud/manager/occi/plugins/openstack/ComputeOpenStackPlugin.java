@@ -7,8 +7,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.print.attribute.HashAttributeSet;
-
 import org.apache.http.HttpException;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -33,6 +31,10 @@ public class ComputeOpenStackPlugin implements ComputePlugin {
 	private String computeEndPoint;
 	private static final Logger LOGGER = Logger.getLogger(ComputeOpenStackPlugin.class);
 
+	private final String TERM_COMPUTE = "compute";
+	private final String SCHEM_COMPUTE = "http://schemas.ogf.org/occi/infrastructure#";
+	private final String CLASS_COMPUTE = "kind";
+
 	private Map<String, Category> termToOSCategory;
 
 	public ComputeOpenStackPlugin(String computeEndPoint) {
@@ -45,40 +47,48 @@ public class ComputeOpenStackPlugin implements ComputePlugin {
 				"http://schemas.openstack.org/template/resource#", "mixin"));
 		termToOSCategory.put(RequestConstants.LARGE_TERM, new Category("m1-large",
 				"http://schemas.openstack.org/template/resource#", "mixin"));
-		termToOSCategory.put(RequestConstants.UBUNTU64_TERM, new Category("m1-small",
+		termToOSCategory.put(RequestConstants.UBUNTU64_TERM, new Category(
+				"cadf2e29-7216-4a5e-9364-cf6513d5f1fd",
 				"http://schemas.openstack.org/template/os#", "mixin"));
 	}
 
 	@Override
-	public String requestInstance(String authToken, List<Category> categories, Map<String, String> xOCCIAtt) {
-		List<Category> openStackCategories = new ArrayList<Category>();		
+	public String requestInstance(String authToken, List<Category> categories,
+			Map<String, String> xOCCIAtt) {
+		List<Category> openStackCategories = new ArrayList<Category>();
+
+		Category categoryCompute = new Category(TERM_COMPUTE, SCHEM_COMPUTE, CLASS_COMPUTE);
+		openStackCategories.add(categoryCompute);
+
 		for (Category category : categories) {
-			if (termToOSCategory.get(category.getTerm()) == null){
-				throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.CLOUD_NOT_SUPPORT_CATEGORY + category.getTerm());
-			} 
+			if (termToOSCategory.get(category.getTerm()) == null) {
+				throw new OCCIException(ErrorType.BAD_REQUEST,
+						ResponseConstants.CLOUD_NOT_SUPPORT_CATEGORY + category.getTerm());
+			}
 			openStackCategories.add(termToOSCategory.get(category.getTerm()));
 		}
-		
+
 		HttpClient httpCLient = new DefaultHttpClient();
 		HttpPost httpPost;
 		try {
 			httpPost = new HttpPost(computeEndPoint);
 			httpPost.addHeader(OCCIHeaders.X_AUTH_TOKEN, authToken);
-			//add categories and xOCCIAtt
 			for (Category category : openStackCategories) {
-				httpPost.addHeader(OCCIHeaders.CATEGORY, category.toHeader());	
-			}			
+				httpPost.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
+			}
 			for (String attName : xOCCIAtt.keySet()) {
-				httpPost.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, attName + "=" + "\""+ xOCCIAtt.get(attName)+ "\"");	
+				httpPost.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE,
+						attName + "=" + "\"" + xOCCIAtt.get(attName) + "\"");
 			}
 			HttpResponse response = httpCLient.execute(httpPost);
 			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
-				throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
-			} else if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_FOUND) {
-				throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
+				throw new OCCIException(ErrorType.UNAUTHORIZED, EntityUtils.toString(
+						response.getEntity(), RequestHelper.UTF_8));
+			} else if (response.getStatusLine().getStatusCode() == HttpStatus.SC_BAD_REQUEST) {
+				throw new OCCIException(ErrorType.NOT_FOUND, EntityUtils.toString(
+						response.getEntity(), RequestHelper.UTF_8));
 			}
-			return EntityUtils.toString(response.getEntity(),
-					RequestHelper.UTF_8);
+			return EntityUtils.toString(response.getEntity(), RequestHelper.UTF_8);
 		} catch (URISyntaxException e) {
 			LOGGER.error(e);
 		} catch (HttpException e) {

@@ -14,6 +14,7 @@ import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.plugins.ComputePlugin;
 import org.fogbowcloud.manager.occi.plugins.IdentityPlugin;
+import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestState;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.restlet.Application;
@@ -93,7 +94,12 @@ public class OCCIApplication extends Application {
 	private void submitRequest(String authToken, Request request, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
 		// TODO Choose if submit to local or remote cloud and submit
+		
 		//TODO remove fogbow attributes from xOCCIAtt
+		for (String keyAttributes: RequestAttribute.getValues()) {
+			xOCCIAtt.remove(keyAttributes);
+		}
+		
 		computePlugin.requestInstance(authToken, categories, xOCCIAtt);
 	}
 
