@@ -25,6 +25,7 @@ import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.plugins.ComputePlugin;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
+import org.fogbowcloud.manager.xmpp.core.ResourcesInfo;
 import org.restlet.engine.header.HeaderConstants;
 
 public class ComputeOpenStackPlugin implements ComputePlugin {
@@ -191,6 +192,12 @@ public class ComputeOpenStackPlugin implements ComputePlugin {
 		} catch (IOException e) {
 			LOGGER.error(e);
 		}
+		return null;
+	}
+
+	@Override
+	public ResourcesInfo getResourcesInfo(String authToken) {
+		// TODO Create this Method
 		return null;
 	}
 }

@@ -4,6 +4,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import org.dom4j.Element;
+import org.fogbowcloud.manager.occi.plugins.ComputePlugin;
 import org.fogbowcloud.manager.xmpp.core.ManagerFacade;
 import org.fogbowcloud.manager.xmpp.core.ManagerModel;
 import org.jamppa.component.XMPPComponent;
@@ -19,11 +20,13 @@ public class ManagerXmppComponent extends XMPPComponent {
 	private ManagerFacade managerFacade;
 	private final Timer timer = new Timer();
 	private String rendezvousAdress;
-
+	private ComputePlugin plugin;
+	
 	public ManagerXmppComponent(String jid, String password, String server,
-			int port) {
+			int port, ComputePlugin plugin) {
 		super(jid, password, server, port);
 		managerFacade = new ManagerFacade(new ManagerModel());
+		this.plugin = plugin;
 	}
 
 	@Override
@@ -31,21 +34,20 @@ public class ManagerXmppComponent extends XMPPComponent {
 		super.connect();
 	}
 
-	public void init() {
-		callIamAlive();
+	public void init(String authToken) {
+		callIamAlive(authToken);
 	}
 	
-	//TODO complete with calls from openstack
-	public void iAmAlive() {
+	public void iAmAlive(String authToken) {
 		IQ iq = new IQ(Type.get);
 		iq.setTo(rendezvousAdress);
 		iq.setFrom(getJID());
 		Element statusEl = iq.getElement()
 				.addElement("query", IAMALIVE_NAMESPACE).addElement("status");
-		statusEl.addElement("cpu-idle").setText("value1");
-		statusEl.addElement("cpu-inuse").setText("value2");
-		statusEl.addElement("mem-idle").setText("value3");
-		statusEl.addElement("mem-inuse").setText("value4");
+		statusEl.addElement("cpu-idle").setText(plugin.getResourcesInfo(authToken).getCpuIdle());
+		statusEl.addElement("cpu-inuse").setText(plugin.getResourcesInfo(authToken).getCpuInUse());
+		statusEl.addElement("mem-idle").setText(plugin.getResourcesInfo(authToken).getMemIdle());
+		statusEl.addElement("mem-inuse").setText(plugin.getResourcesInfo(authToken).getMemInUse());
 		this.syncSendPacket(iq);
 	}
 
@@ -58,11 +60,11 @@ public class ManagerXmppComponent extends XMPPComponent {
 		managerFacade.getItemsFromIQ(response);
 	}
 
-	private void callIamAlive() {
+	private void callIamAlive(final String authToken) {
 		timer.schedule(new TimerTask() {
 			@Override
 			public void run() {
-				iAmAlive();
+				iAmAlive(authToken);
 				whoIsalive();
 			}
 		}, 0, PERIOD);

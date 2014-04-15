@@ -64,7 +64,7 @@ public class TestManagerComponent {
 			}
 		}, callback);
 
-		managerXmppComponent.iAmAlive();
+		managerXmppComponent.iAmAlive(ManagerTestHelper.AUTH_TOKEN);
 
 		Packet packet = blockingQueue.poll(5, TimeUnit.SECONDS);
 		Element element = packet.getElement().element("query");

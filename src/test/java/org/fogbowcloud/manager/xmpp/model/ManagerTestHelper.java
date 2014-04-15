@@ -6,12 +6,14 @@ import java.util.List;
 
 import org.dom4j.Attribute;
 import org.dom4j.Element;
+import org.fogbowcloud.manager.occi.plugins.ComputePlugin;
+import org.fogbowcloud.manager.occi.plugins.openstack.ComputeOpenStackPlugin;
 import org.fogbowcloud.manager.xmpp.ManagerXmppComponent;
 import org.fogbowcloud.manager.xmpp.core.ResourcesInfo;
 import org.jamppa.client.XMPPClient;
 import org.jamppa.client.plugin.xep0077.XEP0077;
 import org.jivesoftware.smack.XMPPException;
-import org.xbill.DNS.tests.primary;
+import org.mockito.Mockito;
 import org.xmpp.component.ComponentException;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.Packet;
@@ -24,9 +26,10 @@ public class ManagerTestHelper {
 	private static final String CLIENT_ADRESS = "client@test.com";
 	private static final String CLIENT_PASS = "password";
 	private static final String SMACK_ENDING = "/Smack";
-	
+
 	public static final String MANAGER_COMPONENT_URL = "manager.test.com";
 	public static final String MANAGER_COMPONENT_PASS = "password";
+	public static final String AUTH_TOKEN = "HgfugGJHgJgHJGjGJgJg-857GHGYHjhHjH";
 
 	public static final String WHOISALIVE_NAMESPACE = "http://fogbowcloud.org/rendezvous/whoisalive";
 	public static final String IAMALIVE_NAMESPACE = "http://fogbowcloud.org/rendezvous/iamalive";
@@ -86,15 +89,20 @@ public class ManagerTestHelper {
 
 	public ManagerXmppComponent initializeXMPPManagerComponent(boolean init)
 			throws ComponentException {
+		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		managerXmppComponent = new ManagerXmppComponent(MANAGER_COMPONENT_URL,
-				MANAGER_COMPONENT_PASS, SERVER_HOST, SERVER_COMPONENT_PORT);
+				MANAGER_COMPONENT_PASS, SERVER_HOST, SERVER_COMPONENT_PORT,
+				computePlugin);
+		Mockito.when(computePlugin.getResourcesInfo(AUTH_TOKEN)).thenReturn(
+				getResources());
+
 		managerXmppComponent.setDescription("Manager Component");
 		managerXmppComponent.setName("Manager");
 		managerXmppComponent.setRendezvousAdress(CLIENT_ADRESS + SMACK_ENDING);
 		managerXmppComponent.connect();
 		managerXmppComponent.process();
 		if (init) {
-			managerXmppComponent.init();
+			managerXmppComponent.init(AUTH_TOKEN);
 		}
 		return managerXmppComponent;
 	}
@@ -110,8 +118,7 @@ public class ManagerTestHelper {
 
 	@SuppressWarnings("unchecked")
 	public List<RendezvousItemCopy> getItemsFromIQ(Packet response) {
-		Element queryElement = response.getElement().element(
-				"query");
+		Element queryElement = response.getElement().element("query");
 		Iterator<Element> itemIterator = queryElement.elementIterator("item");
 		ArrayList<RendezvousItemCopy> aliveItems = new ArrayList<RendezvousItemCopy>();
 
@@ -123,7 +130,7 @@ public class ManagerTestHelper {
 			String cpuInUse = statusEl.element("cpu-inuse").getText();
 			String memIdle = statusEl.element("mem-idle").getText();
 			String memInUse = statusEl.element("mem-inuse").getText();
-			//String updated = statusEl.element("updated").getText();
+			// String updated = statusEl.element("updated").getText();
 
 			ResourcesInfo resources = new ResourcesInfo(id.getValue(), cpuIdle,
 					cpuInUse, memIdle, memInUse);
