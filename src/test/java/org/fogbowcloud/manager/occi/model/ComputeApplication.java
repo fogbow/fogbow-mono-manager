@@ -14,7 +14,6 @@ import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.plugins.openstack.ComputeOpenStackPlugin;
-import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.restlet.Application;
 import org.restlet.Restlet;
 import org.restlet.engine.adapter.HttpRequest;
@@ -27,6 +26,12 @@ import org.restlet.routing.Router;
 public class ComputeApplication extends Application {
 
 	public static final String TARGET = "/compute";
+	public static final String CORE_ATTRIBUTE_OCCI = "occi.compute.cores";
+	public static final String MEMORY_ATTRIBUTE_OCCI = "occi.compute.memory";
+	public static final String ARCHITECTURE_ATTRIBUTE_OCCI = "occi.compute.architecture";
+	public static final String SPEED_ATTRIBUTE_OCCI = "occi.compute.speed";
+	public static final String HOSTNAME_ATTRIBUTE_OCCI = "occi.compute.hostname";
+	public static final String ID_CORE_ATTRIBUTE_OCCI = "occi.core.id";
 
 	private Map<String, List<String>> userToInstanceId;
 	private Map<String, String> instanceIdToDetails;
@@ -47,26 +52,26 @@ public class ComputeApplication extends Application {
 
 	private void normalizeDefaultAttributes() {
 		Map<String, String> attributesToValueSmall = new HashMap<String, String>();
-		attributesToValueSmall.put("occi.compute.cores", "1");
-		attributesToValueSmall.put("occi.compute.memory", "2");
-		attributesToValueSmall.put("occi.compute.speed", "0");
-		this.termToAttributes.put("m1-small", attributesToValueSmall);
+		attributesToValueSmall.put(CORE_ATTRIBUTE_OCCI, "1");
+		attributesToValueSmall.put(MEMORY_ATTRIBUTE_OCCI, "2");
+		attributesToValueSmall.put(SPEED_ATTRIBUTE_OCCI, "0");
+		this.termToAttributes.put(ComputeOpenStackPlugin.FLAVOR_SMALL_TERM , attributesToValueSmall);
 
 		Map<String, String> attributesToValueMedium = new HashMap<String, String>();
-		attributesToValueMedium.put("occi.compute.cores", "2");
-		attributesToValueMedium.put("occi.compute.memory", "2520");
-		attributesToValueMedium.put("occi.compute.speed", "0");
-		this.termToAttributes.put("m1-medium", attributesToValueMedium);
+		attributesToValueMedium.put(CORE_ATTRIBUTE_OCCI, "2");
+		attributesToValueMedium.put(MEMORY_ATTRIBUTE_OCCI, "2520");
+		attributesToValueMedium.put(SPEED_ATTRIBUTE_OCCI, "0");
+		this.termToAttributes.put(ComputeOpenStackPlugin.FLAVOR_MEDIUM_TERM, attributesToValueMedium);
 
 		Map<String, String> attributesToValueLarge = new HashMap<String, String>();
-		attributesToValueLarge.put("occi.compute.cores", "3");
-		attributesToValueLarge.put("occi.compute.memory", "3520");
-		attributesToValueLarge.put("occi.compute.speed", "0");
-		this.termToAttributes.put("m1-large", attributesToValueLarge);
+		attributesToValueLarge.put(CORE_ATTRIBUTE_OCCI, "3");
+		attributesToValueLarge.put(MEMORY_ATTRIBUTE_OCCI, "3520");
+		attributesToValueLarge.put(SPEED_ATTRIBUTE_OCCI, "0");
+		this.termToAttributes.put(ComputeOpenStackPlugin.FLAVOR_LARGE_TERM, attributesToValueLarge);
 		
 		Map<String, String> attributesToValueUbuntu = new HashMap<String, String>();
-		attributesToValueUbuntu.put("occi.compute.architecture", "64");
-		this.termToAttributes.put("cadf2e29-7216-4a5e-9364-cf6513d5f1fd", attributesToValueUbuntu);		
+		attributesToValueUbuntu.put(ARCHITECTURE_ATTRIBUTE_OCCI, "64");
+		this.termToAttributes.put(ComputeOpenStackPlugin.IMAGE_UBUNTU_64_TERM, attributesToValueUbuntu);		
 	}
 
 	@Override
@@ -125,16 +130,16 @@ public class ComputeApplication extends Application {
 			}
 		}
 		//default machine size
-		if (!xOCCIAtt.containsKey("occi.compute.cores")){
+		if (!xOCCIAtt.containsKey(CORE_ATTRIBUTE_OCCI)){
 			xOCCIAtt.putAll(termToAttributes.get("m1-small"));
 		}
 
 		String instanceId = idGenerator.generateId();
 		
-		if(!xOCCIAtt.containsKey("occi.compute.hostname")){
-			xOCCIAtt.put("occi.compute.hostname", "server-" + instanceId);
+		if(!xOCCIAtt.containsKey(HOSTNAME_ATTRIBUTE_OCCI)){
+			xOCCIAtt.put(HOSTNAME_ATTRIBUTE_OCCI, "server-" + instanceId);
 		}
-		xOCCIAtt.put("occi.core.id", instanceId);
+		xOCCIAtt.put(ID_CORE_ATTRIBUTE_OCCI, instanceId);
 
 		userToInstanceId.get(user).add(instanceId);
 		String details = mountDetails(categories, xOCCIAtt);
@@ -155,11 +160,11 @@ public class ComputeApplication extends Application {
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.INVALID_OS_TEMPLATE);
 		}
 		List<String> imutableAtt = new ArrayList<String>();
-		imutableAtt.add("occi.core.id");
-		imutableAtt.add("occi.compute.cores");
-		imutableAtt.add("occi.compute.memory");
-		imutableAtt.add("occi.compute.architecture");
-		imutableAtt.add("occi.compute.speed");
+		imutableAtt.add(ID_CORE_ATTRIBUTE_OCCI);
+		imutableAtt.add(CORE_ATTRIBUTE_OCCI);
+		imutableAtt.add(MEMORY_ATTRIBUTE_OCCI);
+		imutableAtt.add(ARCHITECTURE_ATTRIBUTE_OCCI);
+		imutableAtt.add(SPEED_ATTRIBUTE_OCCI);
 
 		for (String attName : xOCCIAtt.keySet()) {
 			if (imutableAtt.contains(attName)) {

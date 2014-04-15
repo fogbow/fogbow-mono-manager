@@ -26,7 +26,7 @@ public class OCCIApplication extends Application {
 	private ComputePlugin computePlugin;
 	private Map<String, List<String>> userToRequestIds;
 	private Map<String, Request> requestIdToRequest;
-	
+
 	private static final Logger LOGGER = Logger.getLogger(OCCIApplication.class);
 
 	public OCCIApplication() {
@@ -50,7 +50,7 @@ public class OCCIApplication extends Application {
 		return computePlugin;
 	}
 
-	//TODO It is really needed?
+	// TODO It is really needed?
 	public Map<String, List<String>> getUserToRequestIds() {
 		return userToRequestIds;
 	}
@@ -72,15 +72,14 @@ public class OCCIApplication extends Application {
 	public Request newRequest(String authToken, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
 		checkUserToken(authToken);
-		
+
 		String user = getIdentityPlugin().getUser(authToken);
-		
+
 		if (userToRequestIds.get(user) == null) {
 			userToRequestIds.put(user, new ArrayList<String>());
 		}
 		String requestId = String.valueOf(UUID.randomUUID());
-		Request request = new Request(requestId, "", RequestState.OPEN,
-				categories, xOCCIAtt);
+		Request request = new Request(requestId, "", RequestState.OPEN, categories, xOCCIAtt);
 
 		userToRequestIds.get(user).add(request.getId());
 		requestIdToRequest.put(request.getId(), request);
@@ -94,19 +93,19 @@ public class OCCIApplication extends Application {
 	private void submitRequest(String authToken, Request request, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
 		// TODO Choose if submit to local or remote cloud and submit
-		
-		//TODO remove fogbow attributes from xOCCIAtt
-		for (String keyAttributes: RequestAttribute.getValues()) {
+
+		// TODO remove fogbow attributes from xOCCIAtt
+		for (String keyAttributes : RequestAttribute.getValues()) {
 			xOCCIAtt.remove(keyAttributes);
 		}
-		
+
 		computePlugin.requestInstance(authToken, categories, xOCCIAtt);
 	}
 
 	public List<Request> getRequestsFromUser(String authToken) {
 		checkUserToken(authToken);
 		String user = getIdentityPlugin().getUser(authToken);
-		
+
 		List<Request> requests = new ArrayList<Request>();
 		if (userToRequestIds.get(user) != null) {
 			for (String requestId : userToRequestIds.get(user)) {
@@ -119,7 +118,7 @@ public class OCCIApplication extends Application {
 	public void removeAllRequests(String authToken) {
 		checkUserToken(authToken);
 		String user = getIdentityPlugin().getUser(authToken);
-		
+
 		if (userToRequestIds.get(user) != null) {
 			for (String requestId : userToRequestIds.get(user)) {
 				requestIdToRequest.remove(requestId);
@@ -132,16 +131,15 @@ public class OCCIApplication extends Application {
 		checkUserToken(authToken);
 		checkRequestId(authToken, requestId);
 		String user = getIdentityPlugin().getUser(authToken);
-		
+
 		userToRequestIds.get(user).remove(requestId);
 		requestIdToRequest.remove(requestId);
 	}
 
 	private void checkRequestId(String authToken, String requestId) {
 		String user = getIdentityPlugin().getUser(authToken);
-		
-		if (userToRequestIds.get(user) == null
-				|| !userToRequestIds.get(user).contains(requestId)) {
+
+		if (userToRequestIds.get(user) == null || !userToRequestIds.get(user).contains(requestId)) {
 			throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
 		}
 	}

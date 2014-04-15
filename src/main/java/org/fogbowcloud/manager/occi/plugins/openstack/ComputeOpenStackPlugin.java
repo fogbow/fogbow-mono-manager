@@ -26,11 +26,10 @@ import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.plugins.ComputePlugin;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.fogbowcloud.manager.xmpp.core.ResourcesInfo;
-import org.restlet.engine.header.HeaderConstants;
 
 public class ComputeOpenStackPlugin implements ComputePlugin {
 
-	public  static final String OS_SCHEME = "http://schemas.openstack.org/template/os#";
+	public static final String OS_SCHEME = "http://schemas.openstack.org/template/os#";
 	private String computeEndPoint;
 	private static final Logger LOGGER = Logger.getLogger(ComputeOpenStackPlugin.class);
 
@@ -38,20 +37,24 @@ public class ComputeOpenStackPlugin implements ComputePlugin {
 	private final String SCHEM_COMPUTE = "http://schemas.ogf.org/occi/infrastructure#";
 	private final String CLASS_COMPUTE = "kind";
 
+	public static final String FLAVOR_SMALL_TERM = "m1-small";
+	public static final String FLAVOR_MEDIUM_TERM = "m1-medium";
+	public static final String FLAVOR_LARGE_TERM = "m1-large";
+	public static final String IMAGE_UBUNTU_64_TERM = "cadf2e29-7216-4a5e-9364-cf6513d5f1fd";
+
 	private Map<String, Category> termToOSCategory;
 
 	public ComputeOpenStackPlugin(String computeEndPoint) {
 		this.computeEndPoint = computeEndPoint;
 		termToOSCategory = new HashMap<String, Category>();
 
-		termToOSCategory.put(RequestConstants.SMALL_TERM, new Category("m1-small",
+		termToOSCategory.put(RequestConstants.SMALL_TERM, new Category(FLAVOR_SMALL_TERM,
 				"http://schemas.openstack.org/template/resource#", "mixin"));
-		termToOSCategory.put(RequestConstants.MEDIUM_TERM, new Category("m1-medium",
+		termToOSCategory.put(RequestConstants.MEDIUM_TERM, new Category(FLAVOR_MEDIUM_TERM,
 				"http://schemas.openstack.org/template/resource#", "mixin"));
-		termToOSCategory.put(RequestConstants.LARGE_TERM, new Category("m1-large",
+		termToOSCategory.put(RequestConstants.LARGE_TERM, new Category(FLAVOR_LARGE_TERM,
 				"http://schemas.openstack.org/template/resource#", "mixin"));
-		termToOSCategory.put(RequestConstants.UBUNTU64_TERM, new Category(
-				"cadf2e29-7216-4a5e-9364-cf6513d5f1fd",
+		termToOSCategory.put(RequestConstants.UBUNTU64_TERM, new Category(IMAGE_UBUNTU_64_TERM,
 				OS_SCHEME, "mixin"));
 	}
 
@@ -197,7 +200,7 @@ public class ComputeOpenStackPlugin implements ComputePlugin {
 
 	@Override
 	public ResourcesInfo getResourcesInfo(String authToken) {
-		// TODO Create this Method
+		// TODO Auto-generated method stub
 		return null;
 	}
 }
