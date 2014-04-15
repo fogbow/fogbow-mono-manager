@@ -33,7 +33,7 @@ public class HeaderUtils {
 		String requestEndpoint = req.getHostRef() + req.getHttpCall().getRequestUri();
 		String response = "";
 		for (String location : instances) {
-			response += X_OCCI_LOCATION + requestEndpoint + "/" + location + "\n";
+			response += X_OCCI_LOCATION + requestEndpoint + "/" + location + "\n";			
 		}
 		if (response.equals("")) {
 			response = "Empty";

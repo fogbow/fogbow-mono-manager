@@ -1,6 +1,5 @@
 package org.fogbowcloud.manager.occi.model;
 
-import java.awt.Image;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -19,7 +18,6 @@ import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.restlet.Application;
 import org.restlet.Restlet;
 import org.restlet.engine.adapter.HttpRequest;
-import org.restlet.engine.header.HeaderConstants;
 import org.restlet.resource.Delete;
 import org.restlet.resource.Get;
 import org.restlet.resource.Post;
@@ -35,11 +33,40 @@ public class ComputeApplication extends Application {
 	private static InstanceIdGenerator idGenerator;
 	private Map<String, String> keystoneTokenToUser;
 
+	private Map<String, Map<String, String>> termToAttributes;
+
 	public ComputeApplication() {
 		userToInstanceId = new HashMap<String, List<String>>();
 		instanceIdToDetails = new HashMap<String, String>();
 		idGenerator = new InstanceIdGenerator();
 		keystoneTokenToUser = new HashMap<String, String>();
+		termToAttributes = new HashMap<String, Map<String, String>>();
+		
+		normalizeDefaultAttributes();
+	}
+
+	private void normalizeDefaultAttributes() {
+		Map<String, String> attributesToValueSmall = new HashMap<String, String>();
+		attributesToValueSmall.put("occi.compute.cores", "1");
+		attributesToValueSmall.put("occi.compute.memory", "2");
+		attributesToValueSmall.put("occi.compute.speed", "0");
+		this.termToAttributes.put("m1-small", attributesToValueSmall);
+
+		Map<String, String> attributesToValueMedium = new HashMap<String, String>();
+		attributesToValueMedium.put("occi.compute.cores", "2");
+		attributesToValueMedium.put("occi.compute.memory", "2520");
+		attributesToValueMedium.put("occi.compute.speed", "0");
+		this.termToAttributes.put("m1-medium", attributesToValueMedium);
+
+		Map<String, String> attributesToValueLarge = new HashMap<String, String>();
+		attributesToValueLarge.put("occi.compute.cores", "3");
+		attributesToValueLarge.put("occi.compute.memory", "3520");
+		attributesToValueLarge.put("occi.compute.speed", "0");
+		this.termToAttributes.put("m1-large", attributesToValueLarge);
+		
+		Map<String, String> attributesToValueUbuntu = new HashMap<String, String>();
+		attributesToValueUbuntu.put("occi.compute.architecture", "64");
+		this.termToAttributes.put("cadf2e29-7216-4a5e-9364-cf6513d5f1fd", attributesToValueUbuntu);		
 	}
 
 	@Override
@@ -88,38 +115,56 @@ public class ComputeApplication extends Application {
 		String user = keystoneTokenToUser.get(authToken);
 		if (userToInstanceId.get(user) == null) {
 			userToInstanceId.put(user, new ArrayList<String>());
-		}		
+		}
 		checkRules(categories, xOCCIAtt);
 
-		//TODO put right attributes
-		
+		for (Category category : categories) {
+			Map<String, String> attributesPerTerm = termToAttributes.get(category.getTerm());
+			if (attributesPerTerm != null) {
+				xOCCIAtt.putAll(attributesPerTerm);
+			}
+		}
+		//default machine size
+		if (!xOCCIAtt.containsKey("occi.compute.cores")){
+			xOCCIAtt.putAll(termToAttributes.get("m1-small"));
+		}
+
 		String instanceId = idGenerator.generateId();
+		
+		if(!xOCCIAtt.containsKey("occi.compute.hostname")){
+			xOCCIAtt.put("occi.compute.hostname", "server-" + instanceId);
+		}
+		xOCCIAtt.put("occi.core.id", instanceId);
+
 		userToInstanceId.get(user).add(instanceId);
 		String details = mountDetails(categories, xOCCIAtt);
 		instanceIdToDetails.put(instanceId, details);
+		
 		return instanceId;
 	}
 
 	private void checkRules(List<Category> categories, Map<String, String> xOCCIAtt) {
 		boolean OSFound = false;
 		for (Category category : categories) {
-			if (category.getScheme().equals(ComputeOpenStackPlugin.OS_SCHEME)){
+			if (category.getScheme().equals(ComputeOpenStackPlugin.OS_SCHEME)) {
 				OSFound = true;
 				break;
 			}
 		}
-		if (!OSFound){
+		if (!OSFound) {
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.INVALID_OS_TEMPLATE);
 		}
 		List<String> imutableAtt = new ArrayList<String>();
+		imutableAtt.add("occi.core.id");
 		imutableAtt.add("occi.compute.cores");
 		imutableAtt.add("occi.compute.memory");
 		imutableAtt.add("occi.compute.architecture");
 		imutableAtt.add("occi.compute.speed");
-		
+
 		for (String attName : xOCCIAtt.keySet()) {
-			if(imutableAtt.contains(attName)){
-				throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.UNSUPPORTED_ATTRIBUTES);
+			if (imutableAtt.contains(attName)) {
+				throw new OCCIException(ErrorType.BAD_REQUEST,
+						ResponseConstants.UNSUPPORTED_ATTRIBUTES);
 			}
 		}
 	}
@@ -130,8 +175,9 @@ public class ComputeApplication extends Application {
 			st.append(category.toHeader() + "\n");
 		}
 		for (String attName : xOCCIAtt.keySet()) {
-			st.append(OCCIHeaders.X_OCCI_ATTRIBUTE + ": " + attName + "=" + "\"" +xOCCIAtt.get(attName) + "\"");
-		}		
+			st.append(OCCIHeaders.X_OCCI_ATTRIBUTE + ": " + attName + "=" + "\""
+					+ xOCCIAtt.get(attName) + "\"" + "\n");
+		}
 		return st.toString();
 	}
 
