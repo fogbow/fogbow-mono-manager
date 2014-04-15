@@ -17,11 +17,13 @@ public class TestManagerFacade {
 
 	ManagerModel managerModel;
 	ManagerFacade managerFacade;
-
+	ManagerTestHelper managerTestHelper;
+	
 	@Before
 	public void setUp() {
 		managerModel = new ManagerModel();
 		managerFacade = new ManagerFacade(managerModel);
+		managerTestHelper = new ManagerTestHelper();
 	}
 
 	@Test(expected = IllegalArgumentException.class)
@@ -37,8 +39,8 @@ public class TestManagerFacade {
 
 	@Test
 	public void testGet0ItemsFromIQ() {
-		IQ iq = ManagerTestHelper
-				.createResponse(new ArrayList<RendezvousItemCopy>());
+		IQ iq = managerTestHelper
+				.createWhoIsAliveResponse(new ArrayList<RendezvousItemCopy>(), new IQ());
 		List<ManagerItem> members = managerFacade.getItemsFromIQ(iq);
 		Assert.assertEquals(0, members.size());
 		Assert.assertEquals(0, managerFacade.getManagerModel().getMembers()
@@ -47,9 +49,9 @@ public class TestManagerFacade {
 
 	@Test
 	public void testGet1ItemFromIQ() {
-		List<RendezvousItemCopy> items = new ArrayList<RendezvousItemCopy>();
-		items.add(new RendezvousItemCopy(ManagerTestHelper.getResources()));
-		IQ iq = ManagerTestHelper.createResponse(items);
+		ArrayList<RendezvousItemCopy> items = new ArrayList<RendezvousItemCopy>();
+		items.add(new RendezvousItemCopy(managerTestHelper.getResources()));
+		IQ iq = managerTestHelper.createWhoIsAliveResponse(items, new IQ());
 		List<ManagerItem> members = managerFacade.getItemsFromIQ(iq);
 		Assert.assertEquals(1, members.size());
 		Assert.assertEquals("abc", members.get(0).getResourcesInfo().getId());
@@ -59,11 +61,11 @@ public class TestManagerFacade {
 
 	@Test
 	public void testGetManyItemsFromIQ() {
-		List<RendezvousItemCopy> items = new ArrayList<RendezvousItemCopy>();
+		ArrayList<RendezvousItemCopy> items = new ArrayList<RendezvousItemCopy>();
 		for (int i = 0; i < 10; i++) {
-			items.add(new RendezvousItemCopy(ManagerTestHelper.getResources()));
+			items.add(new RendezvousItemCopy(managerTestHelper.getResources()));
 		}
-		IQ iq = ManagerTestHelper.createResponse(items);
+		IQ iq = managerTestHelper.createWhoIsAliveResponse(items, new IQ());
 		List<ManagerItem> members = managerFacade.getItemsFromIQ(iq);
 		Assert.assertEquals(10, members.size());
 		for (int i = 0; i < 10; i++) {

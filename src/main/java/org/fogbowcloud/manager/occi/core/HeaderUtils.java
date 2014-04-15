@@ -8,9 +8,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.fogbowcloud.manager.occi.request.RequestConstants;
-import org.fogbowcloud.manager.occi.request.RequestAttribute;
-import org.fogbowcloud.manager.occi.request.RequestType;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.restlet.engine.adapter.HttpRequest;
 import org.restlet.engine.header.Header;
@@ -28,7 +25,19 @@ public class HeaderUtils {
 		}
 		if (response.equals("")) {
 			response = "Empty";
-		}		
+		}
+		return response;
+	}
+
+	public static String generateResponseInstanceLocations(List<String> instances, HttpRequest req) {
+		String requestEndpoint = req.getHostRef() + req.getHttpCall().getRequestUri();
+		String response = "";
+		for (String location : instances) {
+			response += X_OCCI_LOCATION + requestEndpoint + "/" + location + "\n";			
+		}
+		if (response.equals("")) {
+			response = "Empty";
+		}
 		return response;
 	}
 
@@ -82,13 +91,15 @@ public class HeaderUtils {
 					} else if (nameValue[0].trim().equals(OCCIHeaders.CLASS_CATEGORY)) {
 						catClass = nameValue[1].replace("\"", "").trim();
 					} else {
-						throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
+						throw new OCCIException(ErrorType.BAD_REQUEST,
+								ResponseConstants.IRREGULAR_SYNTAX);
 					}
 				}
 				try {
 					category = new Category(term, scheme, catClass);
 				} catch (IllegalArgumentException e) {
-					throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
+					throw new OCCIException(ErrorType.BAD_REQUEST,
+							ResponseConstants.IRREGULAR_SYNTAX);
 				}
 				listCategory.add(category);
 			} else {
@@ -107,21 +118,21 @@ public class HeaderUtils {
 
 	public static void checkCategories(List<Category> categories, String mandatoryTerm) {
 		List<Resource> resources = ResourceRepository.get(categories);
-		
-		if(resources.size() != categories.size()){
-			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);		
+
+		if (resources.size() != categories.size()) {
+			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}
 		for (Category category : categories) {
 			if (category.getTerm().equals(mandatoryTerm)) {
 				Resource resource = ResourceRepository.get(mandatoryTerm);
 				if (resource == null || !resource.matches(category)) {
-					throw new OCCIException(ErrorType.BAD_REQUEST, 
+					throw new OCCIException(ErrorType.BAD_REQUEST,
 							ResponseConstants.IRREGULAR_SYNTAX);
 				}
 				return;
 			}
-		}		
-		throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);		
+		}
+		throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 	}
 
 	public static void checkDateValue(String dataString) {

@@ -1,6 +1,5 @@
 package org.fogbowcloud.manager.occi.core;
 
-//FIXME This class may be divided in two. ResourceCategory and RequestCategory
 public class Category {
 
 	private String term;

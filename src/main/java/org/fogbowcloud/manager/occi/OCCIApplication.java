@@ -9,13 +9,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
-import org.fogbowcloud.manager.occi.core.Resource;
 import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.plugins.ComputePlugin;
 import org.fogbowcloud.manager.occi.plugins.IdentityPlugin;
-import org.fogbowcloud.manager.occi.request.RequestState;
 import org.fogbowcloud.manager.occi.request.Request;
+import org.fogbowcloud.manager.occi.request.RequestAttribute;
+import org.fogbowcloud.manager.occi.request.RequestState;
 import org.restlet.Application;
 import org.restlet.Restlet;
 import org.restlet.routing.Router;
@@ -25,13 +25,13 @@ public class OCCIApplication extends Application {
 	private IdentityPlugin identityPlugin;
 	private ComputePlugin computePlugin;
 	private Map<String, List<String>> userToRequestIds;
-	private Map<String, Request> requestIdToRequestUnit;
-	
+	private Map<String, Request> requestIdToRequest;
+
 	private static final Logger LOGGER = Logger.getLogger(OCCIApplication.class);
 
 	public OCCIApplication() {
 		this.userToRequestIds = new ConcurrentHashMap<String, List<String>>();
-		this.requestIdToRequestUnit = new ConcurrentHashMap<String, Request>();
+		this.requestIdToRequest = new ConcurrentHashMap<String, Request>();
 	}
 
 	@Override
@@ -50,6 +50,7 @@ public class OCCIApplication extends Application {
 		return computePlugin;
 	}
 
+	// TODO It is really needed?
 	public Map<String, List<String>> getUserToRequestIds() {
 		return userToRequestIds;
 	}
@@ -62,78 +63,89 @@ public class OCCIApplication extends Application {
 		return identityPlugin;
 	}
 
-	public Request getRequestDetails(String userToken, String requestId) {
-		checkUserToken(userToken);
-		checkRequestId(userToken, requestId);
-		return requestIdToRequestUnit.get(requestId);
+	public Request getRequestDetails(String authToken, String requestId) {
+		checkUserToken(authToken);
+		checkRequestId(authToken, requestId);
+		return requestIdToRequest.get(requestId);
 	}
 
-	public Request newRequest(String userToken, List<Category> categories,
+	public Request newRequest(String authToken, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
-		checkUserToken(userToken);
+		checkUserToken(authToken);
 
-		if (userToRequestIds.get(userToken) == null) {
-			userToRequestIds.put(userToken, new ArrayList<String>());
+		String user = getIdentityPlugin().getUser(authToken);
+
+		if (userToRequestIds.get(user) == null) {
+			userToRequestIds.put(user, new ArrayList<String>());
 		}
 		String requestId = String.valueOf(UUID.randomUUID());
-		Request request = new Request(requestId, "", RequestState.OPEN,
-				categories, xOCCIAtt);
+		Request request = new Request(requestId, "", RequestState.OPEN, categories, xOCCIAtt);
 
-		userToRequestIds.get(userToken).add(request.getId());
-		requestIdToRequestUnit.put(request.getId(), request);
+		userToRequestIds.get(user).add(request.getId());
+		requestIdToRequest.put(request.getId(), request);
 
-		submitRequest(request, categories, xOCCIAtt);
+		submitRequest(authToken, request, categories, xOCCIAtt);
 
 		return request;
 	}
 
 	// FIXME Should req be an attribute of requestUnit?
-	private void submitRequest(Request request, List<Category> categories,
+	private void submitRequest(String authToken, Request request, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
 		// TODO Choose if submit to local or remote cloud and submit
-		computePlugin.requestInstance(categories, xOCCIAtt);
+
+		// TODO remove fogbow attributes from xOCCIAtt
+		for (String keyAttributes : RequestAttribute.getValues()) {
+			xOCCIAtt.remove(keyAttributes);
+		}
+
+		computePlugin.requestInstance(authToken, categories, xOCCIAtt);
 	}
 
-	public List<Request> getRequestsFromUser(String userToken) {
-		checkUserToken(userToken);
+	public List<Request> getRequestsFromUser(String authToken) {
+		checkUserToken(authToken);
+		String user = getIdentityPlugin().getUser(authToken);
 
 		List<Request> requests = new ArrayList<Request>();
-		if (userToRequestIds.get(userToken) != null) {
-			for (String requestId : userToRequestIds.get(userToken)) {
-				requests.add(requestIdToRequestUnit.get(requestId));
+		if (userToRequestIds.get(user) != null) {
+			for (String requestId : userToRequestIds.get(user)) {
+				requests.add(requestIdToRequest.get(requestId));
 			}
 		}
 		return requests;
 	}
 
-	public void removeAllRequests(String userToken) {
-		checkUserToken(userToken);
+	public void removeAllRequests(String authToken) {
+		checkUserToken(authToken);
+		String user = getIdentityPlugin().getUser(authToken);
 
-		if (userToRequestIds.get(userToken) != null) {
-			for (String requestId : userToRequestIds.get(userToken)) {
-				requestIdToRequestUnit.remove(requestId);
+		if (userToRequestIds.get(user) != null) {
+			for (String requestId : userToRequestIds.get(user)) {
+				requestIdToRequest.remove(requestId);
 			}
-			userToRequestIds.remove(userToken);
+			userToRequestIds.remove(user);
 		}
 	}
 
-	public void removeRequest(String userToken, String requestId) {
-		checkUserToken(userToken);
-		checkRequestId(userToken, requestId);
+	public void removeRequest(String authToken, String requestId) {
+		checkUserToken(authToken);
+		checkRequestId(authToken, requestId);
+		String user = getIdentityPlugin().getUser(authToken);
 
-		userToRequestIds.get(userToken).remove(requestId);
-		requestIdToRequestUnit.get(requestId);
+		userToRequestIds.get(user).remove(requestId);
+		requestIdToRequest.remove(requestId);
 	}
 
-	private void checkRequestId(String userToken, String requestId) {
-		if (userToRequestIds.get(userToken) == null
-				|| !userToRequestIds.get(userToken).contains(requestId)) {
+	private void checkRequestId(String authToken, String requestId) {
+		String user = getIdentityPlugin().getUser(authToken);
+
+		if (userToRequestIds.get(user) == null || !userToRequestIds.get(user).contains(requestId)) {
 			throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
 		}
 	}
 
-	private void checkUserToken(String userToken) {
-		if (!identityPlugin.isValidToken(userToken)) {
+	private void checkUserToken(String authToken) {
+		if (!identityPlugin.isValidToken(authToken)) {
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}
 	}
