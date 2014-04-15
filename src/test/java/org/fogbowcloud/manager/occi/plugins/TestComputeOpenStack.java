@@ -26,15 +26,15 @@ public class TestComputeOpenStack {
 	private final String FOURTH_EXPECTED_INSTANCE_ID = "qwuif8ad-19a3-4afg-1l77-tred90crei0q";
 	private final String THIRD_EXPECTED_INSTANCE_ID = "cg2563ee-503c-6abr-54gl-ba8d12hf0pof";
 	private final String SECOND_EXPECTED_INSTANCE_ID = "at62f3ad-67ac-56gb-8a55-adbm98cdee9f";
+	private final String COMPUTE_END_POINT = "http://localhost:" + PluginHelper.PORT_ENDPOINT
+			+ ComputeApplication.TARGET;
+	private final String PREFIX_RESPONSE_LOCATION = HeaderUtils.X_OCCI_LOCATION
+			+ COMPUTE_END_POINT + "/";
+
+	
 	private ComputeOpenStackPlugin computeOpenStack;
 	private PluginHelper pluginHelper;
 	List<String> expectedInstanceIds;
-
-	private final String COMPUTE_END_POINT = "http://localhost:" + PluginHelper.PORT_ENDPOINT
-			+ ComputeApplication.TARGET;
-
-	private final String PREFIX_RESPONSE_LOCATION = HeaderUtils.X_OCCI_LOCATION
-			+ COMPUTE_END_POINT + "/";
 
 	@Before
 	public void setUp() throws Exception {
@@ -57,7 +57,6 @@ public class TestComputeOpenStack {
 		pluginHelper.disconnectComponent();
 	}
 
-	// @Ignore
 	@Test
 	public void testRequestAValidInstance() {
 		List<Category> categories = new ArrayList<Category>();
@@ -73,25 +72,14 @@ public class TestComputeOpenStack {
 		String instanceDetails = computeOpenStack.getInstanceDetails(PluginHelper.AUTH_TOKEN,
 				FIRST_EXPECTED_INSTANCE_ID);
 		
-		// String instanceDetails =
-		// "Category: compute; scheme=\"http://schemas.ogf.org/occi/infrastructure#\"; class=\"kind\"; title=\"Compute Resource\"; rel=\"http://schemas.ogf.org/occi/core#resource\"; location=\"http://localhost:8787/compute/\"; attributes=\"occi.compute.architecture occi.compute.state{immutable} occi.compute.speed occi.compute.memory occi.compute.cores occi.compute.hostname\"; actions=\"http://schemas.ogf.org/occi/infrastructure/compute/action#start http://schemas.ogf.org/occi/infrastructure/compute/action#stop http://schemas.ogf.org/occi/infrastructure/compute/action#restart http://schemas.ogf.org/occi/infrastructure/compute/action#suspend"
-		// + "\n"
-		// + "X-OCCI-Attribute: org.openstack.compute.console.vnc=\"N/A\"" +
-		// "\n" +
-		// "X-OCCI-Attribute: occi.compute.architecture=\"x86\"" + "\n" +
-		// "X-OCCI-Attribute: occi.compute.state=\"inactive\"" + "\n" +
-		// "X-OCCI-Attribute: occi.compute.speed=\"0.0\"+ \"\n" +
-		// "X-OCCI-Attribute: org.openstack.compute.state=\"building\""+ "\n" +
-		// "X-OCCI-Attribute: occi.compute.memory=\"0.0625\""+ "\n" +
-		// "X-OCCI-Attribute: occi.compute.cores=\"1\""+ "\n";
 		Assert.assertEquals(1,
-				Integer.parseInt(getAttValueFromDetails(instanceDetails, "occi.compute.cores")));
+				Integer.parseInt(getAttValueFromDetails(instanceDetails, ComputeApplication.CORE_ATTRIBUTE_OCCI)));
 		Assert.assertEquals(2,
-				Integer.parseInt(getAttValueFromDetails(instanceDetails, "occi.compute.memory")));
+				Integer.parseInt(getAttValueFromDetails(instanceDetails, ComputeApplication.MEMORY_ATTRIBUTE_OCCI)));
 		Assert.assertEquals(64, Integer.parseInt(getAttValueFromDetails(instanceDetails,
-				"occi.compute.architecture")));
+				ComputeApplication.ARCHITECTURE_ATTRIBUTE_OCCI)));
 		Assert.assertEquals("server-" + FIRST_EXPECTED_INSTANCE_ID,
-				getAttValueFromDetails(instanceDetails, "occi.compute.hostname"));
+				getAttValueFromDetails(instanceDetails, ComputeApplication.HOSTNAME_ATTRIBUTE_OCCI));
 	}
 
 	private String getAttValueFromDetails(String instanceDetails, String attName) {
@@ -107,7 +95,6 @@ public class TestComputeOpenStack {
 		return null;
 	}
 
-	// @Ignore
 	@Test(expected = OCCIException.class)
 	public void testRequestWithoutOSCateory() {
 		List<Category> categories = new ArrayList<Category>();
@@ -117,7 +104,6 @@ public class TestComputeOpenStack {
 				new HashMap<String, String>());
 	}
 
-	// @Ignore
 	@Test
 	public void testRequestWithoutSizeCateory() {
 		List<Category> categories = new ArrayList<Category>();
@@ -128,7 +114,6 @@ public class TestComputeOpenStack {
 				PluginHelper.AUTH_TOKEN, categories, new HashMap<String, String>()));
 	}
 
-	// @Ignore
 	@Test(expected = OCCIException.class)
 	public void testNotSupportedOCCICoreAtt() {
 		List<Category> categories = new ArrayList<Category>();
@@ -138,12 +123,11 @@ public class TestComputeOpenStack {
 				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
-		xOCCIAtt.put("occi.compute.cores", "3");
+		xOCCIAtt.put(ComputeApplication.CORE_ATTRIBUTE_OCCI, "3");
 
 		computeOpenStack.requestInstance(PluginHelper.AUTH_TOKEN, categories, xOCCIAtt);
 	}
 
-	// @Ignore
 	@Test(expected = OCCIException.class)
 	public void testNotSupportedOCCIMemAtt() {
 		List<Category> categories = new ArrayList<Category>();
@@ -153,12 +137,11 @@ public class TestComputeOpenStack {
 				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
-		xOCCIAtt.put("occi.compute.memory", "5");
+		xOCCIAtt.put(ComputeApplication.MEMORY_ATTRIBUTE_OCCI, "5");
 
 		computeOpenStack.requestInstance(PluginHelper.AUTH_TOKEN, categories, xOCCIAtt);
 	}
 
-	// @Ignore
 	@Test(expected = OCCIException.class)
 	public void testNotSupportedOCCIArchAtt() {
 		List<Category> categories = new ArrayList<Category>();
@@ -168,12 +151,11 @@ public class TestComputeOpenStack {
 				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
-		xOCCIAtt.put("occi.compute.architecture", "x86");
+		xOCCIAtt.put(ComputeApplication.ARCHITECTURE_ATTRIBUTE_OCCI, "x86");
 
 		computeOpenStack.requestInstance(PluginHelper.AUTH_TOKEN, categories, xOCCIAtt);
 	}
 
-	// @Ignore
 	@Test(expected = OCCIException.class)
 	public void testNotSupportedOCCISpeedAtt() {
 		List<Category> categories = new ArrayList<Category>();
@@ -183,12 +165,11 @@ public class TestComputeOpenStack {
 				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
-		xOCCIAtt.put("occi.compute.speed", "2");
+		xOCCIAtt.put(ComputeApplication.SPEED_ATTRIBUTE_OCCI, "2");
 
 		computeOpenStack.requestInstance(PluginHelper.AUTH_TOKEN, categories, xOCCIAtt);
 	}
 
-	// @Ignore
 	@Test
 	public void testSupportedOCCIAtt() {
 		List<Category> categories = new ArrayList<Category>();
@@ -198,7 +179,7 @@ public class TestComputeOpenStack {
 				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
-		xOCCIAtt.put("occi.compute.hostname", "server-test");
+		xOCCIAtt.put(ComputeApplication.HOSTNAME_ATTRIBUTE_OCCI, "server-test");
 
 		Assert.assertEquals(PREFIX_RESPONSE_LOCATION + FIRST_EXPECTED_INSTANCE_ID,
 				computeOpenStack.requestInstance(PluginHelper.AUTH_TOKEN, categories, xOCCIAtt));
@@ -206,10 +187,9 @@ public class TestComputeOpenStack {
 		String instanceDetails = computeOpenStack.getInstanceDetails(PluginHelper.AUTH_TOKEN,
 				FIRST_EXPECTED_INSTANCE_ID);
 		Assert.assertEquals("server-test",
-				getAttValueFromDetails(instanceDetails, "occi.compute.hostname"));
+				getAttValueFromDetails(instanceDetails, ComputeApplication.HOSTNAME_ATTRIBUTE_OCCI));
 	}
 
-	// @Ignore
 	@Test
 	public void testMoreSupportedOCCIAtts() {
 		List<Category> categories = new ArrayList<Category>();
@@ -219,7 +199,7 @@ public class TestComputeOpenStack {
 				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
-		xOCCIAtt.put("occi.compute.hostname", "server-test");
+		xOCCIAtt.put(ComputeApplication.HOSTNAME_ATTRIBUTE_OCCI, "server-test");
 		xOCCIAtt.put("occi.compute.state", "inactive");
 
 		Assert.assertEquals(PREFIX_RESPONSE_LOCATION +  FIRST_EXPECTED_INSTANCE_ID,
@@ -228,12 +208,11 @@ public class TestComputeOpenStack {
 		String instanceDetails = computeOpenStack.getInstanceDetails(PluginHelper.AUTH_TOKEN,
 				FIRST_EXPECTED_INSTANCE_ID);
 		Assert.assertEquals("server-test",
-				getAttValueFromDetails(instanceDetails, "occi.compute.hostname"));
+				getAttValueFromDetails(instanceDetails, ComputeApplication.HOSTNAME_ATTRIBUTE_OCCI));
 		Assert.assertEquals("inactive",
 				getAttValueFromDetails(instanceDetails, "occi.compute.state"));
 	}
 
-	// @Ignore
 	@Test
 	public void testGetAllInstanceIds() {
 		Assert.assertEquals(
@@ -255,7 +234,6 @@ public class TestComputeOpenStack {
 		Assert.assertEquals(COMPUTE_END_POINT + "/" + FIRST_EXPECTED_INSTANCE_ID, instanceIds.get(0));
 	}
 
-	// @Ignore
 	@Test
 	public void testGetAllManyInstanceIds() {
 		Assert.assertEquals(
@@ -297,7 +275,6 @@ public class TestComputeOpenStack {
 		return new ArrayList<String>();
 	}
 
-	// @Ignore
 	@Test
 	public void testGetInstanceDetails() {
 		Assert.assertEquals(
@@ -320,18 +297,17 @@ public class TestComputeOpenStack {
 		String instanceDetails = computeOpenStack.getInstanceDetails(PluginHelper.AUTH_TOKEN,
 				FIRST_EXPECTED_INSTANCE_ID);
 		Assert.assertEquals(FIRST_EXPECTED_INSTANCE_ID,
-				getAttValueFromDetails(instanceDetails, "occi.core.id"));
+				getAttValueFromDetails(instanceDetails, ComputeApplication.ID_CORE_ATTRIBUTE_OCCI));
 		Assert.assertEquals(1,
-				Integer.parseInt(getAttValueFromDetails(instanceDetails, "occi.compute.cores")));
+				Integer.parseInt(getAttValueFromDetails(instanceDetails, ComputeApplication.CORE_ATTRIBUTE_OCCI)));
 		Assert.assertEquals(2,
-				Integer.parseInt(getAttValueFromDetails(instanceDetails, "occi.compute.memory")));
+				Integer.parseInt(getAttValueFromDetails(instanceDetails, ComputeApplication.MEMORY_ATTRIBUTE_OCCI)));
 		Assert.assertEquals(64, Integer.parseInt(getAttValueFromDetails(instanceDetails,
-				"occi.compute.architecture")));
+				ComputeApplication.ARCHITECTURE_ATTRIBUTE_OCCI)));
 		Assert.assertEquals("server-" + FIRST_EXPECTED_INSTANCE_ID,
-				getAttValueFromDetails(instanceDetails, "occi.compute.hostname"));
+				getAttValueFromDetails(instanceDetails, ComputeApplication.HOSTNAME_ATTRIBUTE_OCCI));
 	}
 
-	// @Ignore
 	@Test
 	public void testDeleteAllInstancesEmpty() {
 		Assert.assertEquals(
@@ -345,7 +321,6 @@ public class TestComputeOpenStack {
 						.size());
 	}
 
-	// @Ignore
 	@Test
 	public void testDeleteAllManyInstances() {
 		Assert.assertEquals(
@@ -375,7 +350,6 @@ public class TestComputeOpenStack {
 						.size());
 	}
 
-	// @Ignore
 	@Test
 	public void testDeleteOneInstance() {
 		Assert.assertEquals(
