@@ -19,7 +19,7 @@ public class ManagerXmppComponent extends XMPPComponent {
 	private static long PERIOD = 100;
 	private ManagerFacade managerFacade;
 	private final Timer timer = new Timer();
-	private String rendezvousAdress;
+	private String rendezvousAddress;
 	private ComputePlugin plugin;
 	
 	public ManagerXmppComponent(String jid, String password, String server,
@@ -40,7 +40,7 @@ public class ManagerXmppComponent extends XMPPComponent {
 	
 	public void iAmAlive(String authToken) {
 		IQ iq = new IQ(Type.get);
-		iq.setTo(rendezvousAdress);
+		iq.setTo(rendezvousAddress);
 		iq.setFrom(getJID());
 		Element statusEl = iq.getElement()
 				.addElement("query", IAMALIVE_NAMESPACE).addElement("status");
@@ -53,8 +53,8 @@ public class ManagerXmppComponent extends XMPPComponent {
 
 	public void whoIsalive() {
 		IQ iq = new IQ(Type.get);
-		iq.setTo(rendezvousAdress);
-		
+		iq.setTo(rendezvousAddress);
+		iq.setFrom(getJID());
 		iq.getElement().addElement("query", WHOISALIVE_NAMESPACE);
 		IQ response = (IQ) this.syncSendPacket(iq);
 		managerFacade.getItemsFromIQ(response);
@@ -70,8 +70,8 @@ public class ManagerXmppComponent extends XMPPComponent {
 		}, 0, PERIOD);
 	}
 
-	public void setRendezvousAdress(String adress) {
-		rendezvousAdress = adress;
+	public void setRendezvousAddress(String address) {
+		rendezvousAddress = address;
 	}
 
 	public ManagerFacade getManagerFacade() {

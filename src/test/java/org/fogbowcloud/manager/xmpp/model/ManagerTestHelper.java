@@ -7,7 +7,6 @@ import java.util.List;
 import org.dom4j.Attribute;
 import org.dom4j.Element;
 import org.fogbowcloud.manager.occi.plugins.ComputePlugin;
-import org.fogbowcloud.manager.occi.plugins.openstack.ComputeOpenStackPlugin;
 import org.fogbowcloud.manager.xmpp.ManagerXmppComponent;
 import org.fogbowcloud.manager.xmpp.core.ResourcesInfo;
 import org.jamppa.client.XMPPClient;
@@ -98,7 +97,7 @@ public class ManagerTestHelper {
 
 		managerXmppComponent.setDescription("Manager Component");
 		managerXmppComponent.setName("Manager");
-		managerXmppComponent.setRendezvousAdress(CLIENT_ADRESS + SMACK_ENDING);
+		managerXmppComponent.setRendezvousAddress(CLIENT_ADRESS + SMACK_ENDING);
 		managerXmppComponent.connect();
 		managerXmppComponent.process();
 		if (init) {
