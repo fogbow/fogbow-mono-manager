@@ -4,10 +4,9 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.fogbowcloud.manager.occi.core.ErrorType;
-import org.fogbowcloud.manager.occi.core.OCCIException;
+import org.apache.http.HttpStatus;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
-import org.fogbowcloud.manager.occi.core.ResponseConstants;
+import org.fogbowcloud.manager.occi.plugins.openstack.IdentityOpenStackPlugin;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.restlet.Application;
@@ -18,6 +17,7 @@ import org.restlet.representation.Representation;
 import org.restlet.representation.StringRepresentation;
 import org.restlet.resource.Get;
 import org.restlet.resource.Post;
+import org.restlet.resource.ResourceException;
 import org.restlet.resource.ServerResource;
 import org.restlet.routing.Router;
 
@@ -26,22 +26,23 @@ public class KeystoneApplication extends Application {
 	public static String TARGET_TOKENS = "/v3/auth/tokens/";
 	public static String TARGET_AUTH_TOKEN = "/v2.0/tokens";
 
-	private Map<String,String> tokenToUser;
-	
+	private Map<String, String> tokenToUser;
+
 	private String usernameAdmin;
 	private String passwordAdmin;
 	private String defaultToken;
-	
+
 	public KeystoneApplication() {
 		this.tokenToUser = new HashMap<String, String>();
 	}
-	
-	public KeystoneApplication(String usernameAdmin, String passwordAdmin) {
+
+	public KeystoneApplication(String usernameAdmin, String passwordAdmin, String defaultToken) {
 		this.tokenToUser = new HashMap<String, String>();
 		this.usernameAdmin = usernameAdmin;
 		this.passwordAdmin = passwordAdmin;
+		this.defaultToken = defaultToken;
 	}
-	
+
 	@Override
 	public Restlet createInboundRoot() {
 		Router router = new Router(getContext());
@@ -49,30 +50,29 @@ public class KeystoneApplication extends Application {
 		router.attach(TARGET_AUTH_TOKEN, KeystoneServer.class);
 		return router;
 	}
-	
-	public String getUserFromToken(String token){
+
+	public String getUserFromToken(String token) {
 		return this.tokenToUser.get(token);
 	}
-	
-	public void putTokenAndUser(String authToken, String user){
+
+	public void putTokenAndUser(String authToken, String user) {
 		this.tokenToUser.put(authToken, user);
-		this.defaultToken = authToken;
 	}
-	
-	public void checkUserByToken(String token){
+
+	public void checkUserByToken(String token) {
 		String user = this.tokenToUser.get(token);
-		if(user == null || user.equals("")){
-			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
+		if (user == null || user.equals("")) {
+			throw new ResourceException(HttpStatus.SC_UNAUTHORIZED);
 		}
 	}
-	
+
 	public void authenticationCheck(String username, String password) {
-		if(!this.usernameAdmin.equals(username) || !this.passwordAdmin.equals(password)){
-			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
+		if (!this.usernameAdmin.equals(username) || !this.passwordAdmin.equals(password)) {
+			throw new ResourceException(HttpStatus.SC_UNAUTHORIZED);
 		}
 	}
-	
-	public String getDefaultToken(){
+
+	public String getDefaultToken() {
 		return this.defaultToken;
 	}
 
@@ -85,57 +85,64 @@ public class KeystoneApplication extends Application {
 			String token = req.getHeaders().getValues(OCCIHeaders.X_AUTH_TOKEN);
 			keyStoneApplication.checkUserByToken(token);
 			String user = keyStoneApplication.getUserFromToken(token);
-			return mountJSONObject(token, user);
+			return mountJSONResponseUserPerToken(token, user);
 		}
-		
+
 		@Post
 		public Representation post(Representation entity) {
 			KeystoneApplication keyStoneApplication = (KeystoneApplication) getApplication();
-			HttpRequest req = (HttpRequest) getRequest();
+
 			String jsonCredentials = "";
 			try {
-				 jsonCredentials = entity.getText();
-			} catch (IOException e) {}	
-			
-			String username = getUserFeatureCredentials(jsonCredentials, "username");
-			String password = getUserFeatureCredentials(jsonCredentials, "password");
+				jsonCredentials = entity.getText();
+			} catch (IOException e) {
+			}
+
+			String username = getUserFeatureCredentials(jsonCredentials,
+					IdentityOpenStackPlugin.USERNAME_KEYSTONE);
+			String password = getUserFeatureCredentials(jsonCredentials,
+					IdentityOpenStackPlugin.PASSWORD_KEYSTONE);
 			keyStoneApplication.authenticationCheck(username, password);
-			
-			return new StringRepresentation(mountJSONResponseAuthenticateToken(keyStoneApplication.getDefaultToken()), MediaType.TEXT_ALL);
+
+			return new StringRepresentation(
+					mountJSONResponseAuthenticateToken(keyStoneApplication.getDefaultToken()),
+					MediaType.TEXT_ALL);
 		}
-	
-		private String mountJSONResponseAuthenticateToken(String token){
+
+		private String mountJSONResponseAuthenticateToken(String token) {
 			try {
 				JSONObject rootIdTOken = new JSONObject();
-				rootIdTOken.put("id", token);
+				rootIdTOken.put(IdentityOpenStackPlugin.ID_KEYSTONE, token);
 				JSONObject rootToken = new JSONObject();
-				rootToken.put("token", rootIdTOken);
+				rootToken.put(IdentityOpenStackPlugin.TOKEN_KEYSTONE, rootIdTOken);
 				JSONObject rootAccess = new JSONObject();
-				rootAccess.put("access", rootToken);
+				rootAccess.put(IdentityOpenStackPlugin.ACCESS_KEYSTONE, rootToken);
 				return rootAccess.toString();
 			} catch (JSONException e) {
 				e.printStackTrace();
-			}			
+			}
 			return null;
 		}
-	
-		private String getUserFeatureCredentials(String jsonCredentials, String feature){
+
+		private String getUserFeatureCredentials(String jsonCredentials, String feature) {
 			try {
 				JSONObject root = new JSONObject(jsonCredentials);
-				return root.getJSONObject("auth").getJSONObject("passwordCredentials").getString(feature).toString();
+				return root.getJSONObject(IdentityOpenStackPlugin.AUTH_KEYSTONE)
+						.getJSONObject(IdentityOpenStackPlugin.PASSWORD_CREDENTIALS_KEYSTONE)
+						.getString(feature).toString();
 			} catch (JSONException e) {
 				return null;
 			}
 		}
-		
-		private String mountJSONObject(String token, String user) {
+
+		private String mountJSONResponseUserPerToken(String token, String user) {
 			try {
 				JSONObject nameObject = new JSONObject();
-				nameObject.put("name", user);
-				JSONObject tokenObject = new JSONObject();		
-				tokenObject.put("user", nameObject);
+				nameObject.put(IdentityOpenStackPlugin.NAME_KEYSTONE, user);
+				JSONObject tokenObject = new JSONObject();
+				tokenObject.put(IdentityOpenStackPlugin.USER_KEYSTONE, nameObject);
 				JSONObject accessObject = new JSONObject();
-				accessObject.put("token", tokenObject);				
+				accessObject.put(IdentityOpenStackPlugin.TOKEN_KEYSTONE, tokenObject);
 				return accessObject.toString();
 			} catch (JSONException e) {
 			}
