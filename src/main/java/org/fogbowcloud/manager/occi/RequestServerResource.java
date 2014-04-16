@@ -1,6 +1,5 @@
 package org.fogbowcloud.manager.occi;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -75,15 +74,8 @@ public class RequestServerResource extends ServerResource {
 		xOCCIAtt = normalizeXOCCIAtt(xOCCIAtt);
 
 		String authToken = HeaderUtils.getAuthToken(req.getHeaders());
-		Integer instanceCount = Integer.valueOf(xOCCIAtt.get(RequestAttribute.INSTANCE_COUNT
-				.getValue()));
 
-		LOGGER.info("Request " + instanceCount + " instances");
-
-		List<Request> currentRequests = new ArrayList<Request>();
-		for (int i = 0; i < instanceCount; i++) {
-			currentRequests.add(application.newRequest(authToken, categories, xOCCIAtt));
-		}
+		List<Request> currentRequests = application.newRequests(authToken, categories, xOCCIAtt);
 		return HeaderUtils.generateResponseId(currentRequests, req);
 	}
 

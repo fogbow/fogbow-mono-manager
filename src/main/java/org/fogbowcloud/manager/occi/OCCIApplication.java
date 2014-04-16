@@ -1,8 +1,12 @@
 package org.fogbowcloud.manager.occi;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -17,6 +21,7 @@ import org.fogbowcloud.manager.occi.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestState;
+import org.fogbowcloud.manager.occi.request.RequestsBox;
 import org.restlet.Application;
 import org.restlet.Restlet;
 import org.restlet.routing.Router;
@@ -25,14 +30,62 @@ public class OCCIApplication extends Application {
 
 	private IdentityPlugin identityPlugin;
 	private ComputePlugin computePlugin;
-	private Map<String, List<String>> userToRequestIds;
+	private Map<String, RequestsBox> userToRequestIds;
 	private Map<String, Request> requestIdToRequest;
+	private final Timer timer = new Timer();
+	protected static final long PERIOD = 50;
 
 	private static final Logger LOGGER = Logger.getLogger(OCCIApplication.class);
 
 	public OCCIApplication() {
-		this.userToRequestIds = new ConcurrentHashMap<String, List<String>>();
+		this.userToRequestIds = new ConcurrentHashMap<String, RequestsBox>();
 		this.requestIdToRequest = new ConcurrentHashMap<String, Request>();
+		submitRequests();
+	}
+
+	private void submitRequests() {
+		timer.schedule(new TimerTask() {
+			@Override
+			public void run() {
+				checkAndSubmitOpenRequests();
+			}
+		}, 0, PERIOD);
+	}
+
+	private void checkAndSubmitOpenRequests() {
+		Iterator<Entry<String, RequestsBox>> iter = userToRequestIds.entrySet().iterator();
+		while (iter.hasNext()) {
+			Entry<String, RequestsBox> entry = iter.next();
+			String user = entry.getKey();
+			RequestsBox requestBoxes = entry.getValue();
+			List<String> openIds = new ArrayList<String>();
+			openIds.addAll(requestBoxes.getOpenIds());
+
+			for (String requestId : openIds) {
+				Request request = requestIdToRequest.get(requestId);
+				// TODO before submit request we have to check
+				try {
+					submitLocalRequest(request);
+					userToRequestIds.get(user).openToFulfilled(request.getId());
+				} catch (OCCIException e) {
+					if (e.getStatus().equals(ErrorType.BAD_REQUEST)
+							&& e.getMessage().contains(
+									ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES)) {
+						submitRemoteRequest(request); // FIXME submit more than
+														// one at same time
+					} else {
+						// TODO set state to fail?
+						updateStateToFailed(user, request);
+						throw e;
+					}
+				}
+			}
+		}
+	}
+
+	private void updateStateToFailed(String user, Request request) {
+		userToRequestIds.get(user).openToFailed(request.getId());
+		requestIdToRequest.get(request.getId()).setState(RequestState.FAILED);
 	}
 
 	@Override
@@ -65,55 +118,53 @@ public class OCCIApplication extends Application {
 		return requestIdToRequest.get(requestId);
 	}
 
-	public Request newRequest(String authToken, List<Category> categories,
+	public List<Request> newRequests(String authToken, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
 		checkUserToken(authToken);
 
 		String user = getIdentityPlugin().getUser(authToken);
 
 		if (userToRequestIds.get(user) == null) {
-			userToRequestIds.put(user, new ArrayList<String>());
+			userToRequestIds.put(user, new RequestsBox());
 		}
 
-		String requestId = String.valueOf(UUID.randomUUID());
-		Request request = new Request(requestId, "", RequestState.OPEN, categories, xOCCIAtt);
+		Integer instanceCount = Integer.valueOf(xOCCIAtt.get(RequestAttribute.INSTANCE_COUNT
+				.getValue()));
+		LOGGER.info("Request " + instanceCount + " instances");
 
-		userToRequestIds.get(user).add(request.getId());
-		requestIdToRequest.put(request.getId(), request);
+		List<Request> currentRequests = new ArrayList<Request>();
+		for (int i = 0; i < instanceCount; i++) {
+			String requestId = String.valueOf(UUID.randomUUID());
+			Request request = new Request(requestId, authToken, "", RequestState.OPEN, categories,
+					xOCCIAtt);
+			currentRequests.add(request);
 
-		try {
-			submitLocalRequest(authToken, request, categories, xOCCIAtt);
-		} catch (OCCIException e) {
-			if (e.getStatus().equals(ErrorType.BAD_REQUEST)
-					&& e.getMessage().equals(ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES)) {
-				submitRemoteRequest(authToken, request, categories, xOCCIAtt);
-			} else {
-				throw e;
-			}
+			userToRequestIds.get(user).addOpen(request.getId());
+			requestIdToRequest.put(request.getId(), request);
 		}
-		return request;
+		return currentRequests;
 	}
 
-	private void submitRemoteRequest(String authToken, Request request, List<Category> categories,
-			Map<String, String> xOCCIAtt) {
+	private void submitRemoteRequest(Request request) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
-	private void submitLocalRequest(String authToken, Request request, List<Category> categories,
-			Map<String, String> xOCCIAtt) {
+	private void submitLocalRequest(Request request) {
 		// Removing all xOCCI Attribute specific to request type
+		Map<String, String> xOCCIAtt = request.getxOCCIAtt();
 		for (String keyAttributes : RequestAttribute.getValues()) {
 			xOCCIAtt.remove(keyAttributes);
 		}
-		String instanceLocation = computePlugin.requestInstance(authToken, categories, xOCCIAtt);
+		String instanceLocation = computePlugin.requestInstance(request.getAuthToken(),
+				request.getCategories(), xOCCIAtt);
 		instanceLocation = instanceLocation.replace(HeaderUtils.X_OCCI_LOCATION, "").trim();
-		updateRequestState(request, instanceLocation);
+		updateStateToFulfilled(request.getId(), instanceLocation);
 	}
 
-	private void updateRequestState(Request request, String instanceLocation) {
-		requestIdToRequest.get(request.getId()).setInstanceId(instanceLocation);
-		requestIdToRequest.get(request.getId()).setState(RequestState.FULFILLED);
+	private void updateStateToFulfilled(String requestId, String instanceLocation) {
+		requestIdToRequest.get(requestId).setInstanceId(instanceLocation);
+		requestIdToRequest.get(requestId).setState(RequestState.FULFILLED);
 	}
 
 	public List<Request> getRequestsFromUser(String authToken) {
@@ -122,7 +173,7 @@ public class OCCIApplication extends Application {
 
 		List<Request> requests = new ArrayList<Request>();
 		if (userToRequestIds.get(user) != null) {
-			for (String requestId : userToRequestIds.get(user)) {
+			for (String requestId : userToRequestIds.get(user).getAllRequestIds()) {
 				requests.add(requestIdToRequest.get(requestId));
 			}
 		}
@@ -134,7 +185,7 @@ public class OCCIApplication extends Application {
 		String user = getIdentityPlugin().getUser(authToken);
 
 		if (userToRequestIds.get(user) != null) {
-			for (String requestId : userToRequestIds.get(user)) {
+			for (String requestId : userToRequestIds.get(user).getAllRequestIds()) {
 				requestIdToRequest.remove(requestId);
 			}
 			userToRequestIds.remove(user);
