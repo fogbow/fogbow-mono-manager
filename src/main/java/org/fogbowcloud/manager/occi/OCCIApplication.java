@@ -9,6 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
+import org.fogbowcloud.manager.occi.core.HeaderUtils;
 import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.plugins.ComputePlugin;
@@ -50,11 +51,6 @@ public class OCCIApplication extends Application {
 		return computePlugin;
 	}
 
-	// TODO It is really needed?
-	public Map<String, List<String>> getUserToRequestIds() {
-		return userToRequestIds;
-	}
-
 	public void setIdentityPlugin(IdentityPlugin identityPlugin) {
 		this.identityPlugin = identityPlugin;
 	}
@@ -78,28 +74,46 @@ public class OCCIApplication extends Application {
 		if (userToRequestIds.get(user) == null) {
 			userToRequestIds.put(user, new ArrayList<String>());
 		}
+
 		String requestId = String.valueOf(UUID.randomUUID());
 		Request request = new Request(requestId, "", RequestState.OPEN, categories, xOCCIAtt);
 
 		userToRequestIds.get(user).add(request.getId());
 		requestIdToRequest.put(request.getId(), request);
 
-		submitRequest(authToken, request, categories, xOCCIAtt);
-
+		try {
+			submitLocalRequest(authToken, request, categories, xOCCIAtt);
+		} catch (OCCIException e) {
+			if (e.getStatus().equals(ErrorType.BAD_REQUEST)
+					&& e.getMessage().equals(ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES)) {
+				submitRemoteRequest(authToken, request, categories, xOCCIAtt);
+			} else {
+				throw e;
+			}
+		}
 		return request;
 	}
 
-	// FIXME Should req be an attribute of requestUnit?
-	private void submitRequest(String authToken, Request request, List<Category> categories,
+	private void submitRemoteRequest(String authToken, Request request, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
-		// TODO Choose if submit to local or remote cloud and submit
+		// TODO Auto-generated method stub
+		
+	}
 
-		// TODO remove fogbow attributes from xOCCIAtt
+	private void submitLocalRequest(String authToken, Request request, List<Category> categories,
+			Map<String, String> xOCCIAtt) {
+		// Removing all xOCCI Attribute specific to request type
 		for (String keyAttributes : RequestAttribute.getValues()) {
 			xOCCIAtt.remove(keyAttributes);
 		}
+		String instanceLocation = computePlugin.requestInstance(authToken, categories, xOCCIAtt);
+		instanceLocation = instanceLocation.replace(HeaderUtils.X_OCCI_LOCATION, "").trim();
+		updateRequestState(request, instanceLocation);
+	}
 
-		computePlugin.requestInstance(authToken, categories, xOCCIAtt);
+	private void updateRequestState(Request request, String instanceLocation) {
+		requestIdToRequest.get(request.getId()).setInstanceId(instanceLocation);
+		requestIdToRequest.get(request.getId()).setState(RequestState.FULFILLED);
 	}
 
 	public List<Request> getRequestsFromUser(String authToken) {

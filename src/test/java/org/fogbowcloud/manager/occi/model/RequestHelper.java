@@ -26,12 +26,13 @@ public class RequestHelper {
 	public static final String CONTENT_TYPE_OCCI = "text/occi";
 	public static final String URI_FOGBOW_REQUEST = "http://localhost:8182/request";
 	public static final String USER_MOCK = "user_mock";
-	private final int PORT_ENDPOINT = 8182;
+	public static final int ENDPOINT_PORT = 8182;
+	
 
 	public void initializeComponent(ComputePlugin computePlugin, IdentityPlugin identityPlugin)
 			throws Exception {
 		component = new Component();
-		component.getServers().add(Protocol.HTTP, PORT_ENDPOINT);
+		component.getServers().add(Protocol.HTTP, ENDPOINT_PORT);
 
 		OCCIApplication application = new OCCIApplication();
 

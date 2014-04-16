@@ -80,11 +80,11 @@ public class RequestServerResource extends ServerResource {
 
 		LOGGER.info("Request " + instanceCount + " instances");
 
-		List<Request> currentRequestUnits = new ArrayList<Request>();
+		List<Request> currentRequests = new ArrayList<Request>();
 		for (int i = 0; i < instanceCount; i++) {
-			currentRequestUnits.add(application.newRequest(authToken, categories, xOCCIAtt));
+			currentRequests.add(application.newRequest(authToken, categories, xOCCIAtt));
 		}
-		return HeaderUtils.generateResponseId(currentRequestUnits, req);
+		return HeaderUtils.generateResponseId(currentRequests, req);
 	}
 
 	public static Map<String, String> normalizeXOCCIAtt(Map<String, String> xOCCIAtt) {

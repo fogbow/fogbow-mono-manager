@@ -16,7 +16,9 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.fogbowcloud.manager.occi.core.Category;
+import org.fogbowcloud.manager.occi.core.HeaderUtils;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
+import org.fogbowcloud.manager.occi.model.ComputeApplication;
 import org.fogbowcloud.manager.occi.model.RequestHelper;
 import org.fogbowcloud.manager.occi.plugins.ComputePlugin;
 import org.fogbowcloud.manager.occi.plugins.IdentityPlugin;
@@ -32,6 +34,8 @@ import org.mockito.Mockito;
 public class TestGetRequest {
 
 	private RequestHelper requestHelper;
+	private String instanceLocation = HeaderUtils.X_OCCI_LOCATION + "http://localhost:" + RequestHelper.ENDPOINT_PORT
+			+ ComputeApplication.TARGET + "/b122f3ad-503c-4abb-8a55-ba8d90cfce9f";
 
 	@Before
 	public void setup() throws Exception {
@@ -40,7 +44,7 @@ public class TestGetRequest {
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		Mockito.when(
 				computePlugin.requestInstance(Mockito.anyString(), Mockito.any(List.class),
-						Mockito.any(Map.class))).thenReturn("");
+						Mockito.any(Map.class))).thenReturn(instanceLocation);
 
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.isValidToken(RequestHelper.ACCESS_TOKEN)).thenReturn(true);
@@ -190,7 +194,7 @@ public class TestGetRequest {
 
 		String requestDetails = EntityUtils.toString(response.getEntity(),
 				String.valueOf(Charsets.UTF_8));
-		Assert.assertEquals(RequestState.OPEN.getValue(),
+		Assert.assertEquals(RequestState.FULFILLED.getValue(),
 				requestHelper.getStateFromRequestDetails(requestDetails));
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}

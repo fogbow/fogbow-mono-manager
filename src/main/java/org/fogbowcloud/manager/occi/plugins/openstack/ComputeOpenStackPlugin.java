@@ -34,28 +34,29 @@ public class ComputeOpenStackPlugin implements ComputePlugin {
 	private static final Logger LOGGER = Logger.getLogger(ComputeOpenStackPlugin.class);
 
 	private final String TERM_COMPUTE = "compute";
-	private final String SCHEM_COMPUTE = "http://schemas.ogf.org/occi/infrastructure#";
+	private final String SCHEME_COMPUTE = "http://schemas.ogf.org/occi/infrastructure#";
 	private final String CLASS_COMPUTE = "kind";
 
-	public static final String FLAVOR_SMALL_TERM = "m1-small";
-	public static final String FLAVOR_MEDIUM_TERM = "m1-medium";
-	public static final String FLAVOR_LARGE_TERM = "m1-large";
-	public static final String IMAGE_UBUNTU_64_TERM = "cadf2e29-7216-4a5e-9364-cf6513d5f1fd";
+	public static final String SMALL_FLAVOR_TERM = "m1-small";
+	public static final String MEDIUM_FLAVOR_TERM = "m1-medium";
+	public static final String LARGE_FLAVOR_TERM = "m1-large";
+	public static final String CIRROS_IMAGE_TERM = "cadf2e29-7216-4a5e-9364-cf6513d5f1fd";
 
-	private Map<String, Category> termToOSCategory;
+	private Map<String, Category> fogTermToOpensStackCategory;
 
 	public ComputeOpenStackPlugin(String computeEndPoint) {
 		this.computeEndPoint = computeEndPoint;
-		termToOSCategory = new HashMap<String, Category>();
+		fogTermToOpensStackCategory = new HashMap<String, Category>();
 
-		termToOSCategory.put(RequestConstants.SMALL_TERM, new Category(FLAVOR_SMALL_TERM,
-				"http://schemas.openstack.org/template/resource#", "mixin"));
-		termToOSCategory.put(RequestConstants.MEDIUM_TERM, new Category(FLAVOR_MEDIUM_TERM,
-				"http://schemas.openstack.org/template/resource#", "mixin"));
-		termToOSCategory.put(RequestConstants.LARGE_TERM, new Category(FLAVOR_LARGE_TERM,
-				"http://schemas.openstack.org/template/resource#", "mixin"));
-		termToOSCategory.put(RequestConstants.UBUNTU64_TERM, new Category(IMAGE_UBUNTU_64_TERM,
-				OS_SCHEME, "mixin"));
+		//FIXME this code have to load this configuration from a conf file
+		fogTermToOpensStackCategory.put(RequestConstants.SMALL_TERM, new Category(SMALL_FLAVOR_TERM,
+				"http://schemas.openstack.org/template/resource#", OCCIHeaders.MIXIN_CLASS));
+		fogTermToOpensStackCategory.put(RequestConstants.MEDIUM_TERM, new Category(MEDIUM_FLAVOR_TERM,
+				"http://schemas.openstack.org/template/resource#", OCCIHeaders.MIXIN_CLASS));
+		fogTermToOpensStackCategory.put(RequestConstants.LARGE_TERM, new Category(LARGE_FLAVOR_TERM,
+				"http://schemas.openstack.org/template/resource#", OCCIHeaders.MIXIN_CLASS));
+		fogTermToOpensStackCategory.put(RequestConstants.LINUX_X86_TERM, new Category(CIRROS_IMAGE_TERM,
+				OS_SCHEME, OCCIHeaders.MIXIN_CLASS));
 	}
 
 	@Override
@@ -63,15 +64,15 @@ public class ComputeOpenStackPlugin implements ComputePlugin {
 			Map<String, String> xOCCIAtt) {
 		List<Category> openStackCategories = new ArrayList<Category>();
 
-		Category categoryCompute = new Category(TERM_COMPUTE, SCHEM_COMPUTE, CLASS_COMPUTE);
+		Category categoryCompute = new Category(TERM_COMPUTE, SCHEME_COMPUTE, CLASS_COMPUTE);
 		openStackCategories.add(categoryCompute);
 
 		for (Category category : categories) {
-			if (termToOSCategory.get(category.getTerm()) == null) {
+			if (fogTermToOpensStackCategory.get(category.getTerm()) == null) {
 				throw new OCCIException(ErrorType.BAD_REQUEST,
 						ResponseConstants.CLOUD_NOT_SUPPORT_CATEGORY + category.getTerm());
 			}
-			openStackCategories.add(termToOSCategory.get(category.getTerm()));
+			openStackCategories.add(fogTermToOpensStackCategory.get(category.getTerm()));
 		}
 
 		HttpClient httpCLient = new DefaultHttpClient();
@@ -174,6 +175,7 @@ public class ComputeOpenStackPlugin implements ComputePlugin {
 		return null;
 	}
 
+	@Override
 	public String removeInstance(String authToken, String instanceId) {
 		HttpClient httpCLient = new DefaultHttpClient();
 		HttpDelete httpDelete;

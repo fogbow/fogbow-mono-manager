@@ -55,23 +55,23 @@ public class ComputeApplication extends Application {
 		attributesToValueSmall.put(CORE_ATTRIBUTE_OCCI, "1");
 		attributesToValueSmall.put(MEMORY_ATTRIBUTE_OCCI, "2");
 		attributesToValueSmall.put(SPEED_ATTRIBUTE_OCCI, "0");
-		this.termToAttributes.put(ComputeOpenStackPlugin.FLAVOR_SMALL_TERM , attributesToValueSmall);
+		this.termToAttributes.put(ComputeOpenStackPlugin.SMALL_FLAVOR_TERM , attributesToValueSmall);
 
 		Map<String, String> attributesToValueMedium = new HashMap<String, String>();
 		attributesToValueMedium.put(CORE_ATTRIBUTE_OCCI, "2");
 		attributesToValueMedium.put(MEMORY_ATTRIBUTE_OCCI, "2520");
 		attributesToValueMedium.put(SPEED_ATTRIBUTE_OCCI, "0");
-		this.termToAttributes.put(ComputeOpenStackPlugin.FLAVOR_MEDIUM_TERM, attributesToValueMedium);
+		this.termToAttributes.put(ComputeOpenStackPlugin.MEDIUM_FLAVOR_TERM, attributesToValueMedium);
 
 		Map<String, String> attributesToValueLarge = new HashMap<String, String>();
 		attributesToValueLarge.put(CORE_ATTRIBUTE_OCCI, "3");
 		attributesToValueLarge.put(MEMORY_ATTRIBUTE_OCCI, "3520");
 		attributesToValueLarge.put(SPEED_ATTRIBUTE_OCCI, "0");
-		this.termToAttributes.put(ComputeOpenStackPlugin.FLAVOR_LARGE_TERM, attributesToValueLarge);
+		this.termToAttributes.put(ComputeOpenStackPlugin.LARGE_FLAVOR_TERM, attributesToValueLarge);
 		
 		Map<String, String> attributesToValueUbuntu = new HashMap<String, String>();
 		attributesToValueUbuntu.put(ARCHITECTURE_ATTRIBUTE_OCCI, "64");
-		this.termToAttributes.put(ComputeOpenStackPlugin.IMAGE_UBUNTU_64_TERM, attributesToValueUbuntu);		
+		this.termToAttributes.put(ComputeOpenStackPlugin.CIRROS_IMAGE_TERM, attributesToValueUbuntu);		
 	}
 
 	@Override
