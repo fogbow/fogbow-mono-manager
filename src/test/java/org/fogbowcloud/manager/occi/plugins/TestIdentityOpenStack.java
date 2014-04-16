@@ -11,15 +11,18 @@ import org.junit.Test;
 
 public class TestIdentityOpenStack {
 
+	private final String KEYSTONE_END_POINT_TOKENS = "http://localhost:"
+			+ PluginHelper.PORT_ENDPOINT + KeystoneApplication.TARGET_TOKENS;
+	private final String KEYSTONE_END_POINT_AUTH_TOKEN = "http://localhost:"
+			+ PluginHelper.PORT_ENDPOINT + KeystoneApplication.TARGET_AUTH_TOKEN;
+
 	private IdentityOpenStackPlugin identityOpenStack;
 	private PluginHelper pluginHelper;
 
-	private final String KEYSTONE_END_POINT = "http://localhost:" + PluginHelper.PORT_ENDPOINT
-			+ KeystoneApplication.TARGET;
-
 	@Before
 	public void setUp() throws Exception {
-		this.identityOpenStack = new IdentityOpenStackPlugin(KEYSTONE_END_POINT);
+		this.identityOpenStack = new IdentityOpenStackPlugin(KEYSTONE_END_POINT_TOKENS,
+				KEYSTONE_END_POINT_AUTH_TOKEN);
 		this.pluginHelper = new PluginHelper();
 		this.pluginHelper.initializeKeystoneComponent();
 	}
@@ -48,5 +51,22 @@ public class TestIdentityOpenStack {
 	@Test(expected = OCCIException.class)
 	public void testGetNameUserFromTokenInvalid() {
 		this.identityOpenStack.getUser("invalid_token");
+	}
+
+	@Test
+	public void testGetToken() {
+		String token = this.identityOpenStack
+				.getToken(PluginHelper.USERNAME, PluginHelper.PASSWORD);
+		Assert.assertEquals(PluginHelper.AUTH_TOKEN, token);
+	}
+
+	@Test(expected = OCCIException.class)
+	public void testGetTokenWrongUsername() {
+		this.identityOpenStack.getToken("wrong", PluginHelper.USERNAME);
+	}
+
+	@Test(expected = OCCIException.class)
+	public void testGetTokenWrongPassword() {
+		this.identityOpenStack.getToken(PluginHelper.PASSWORD, "wrong");
 	}
 }

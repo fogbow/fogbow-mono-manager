@@ -13,6 +13,7 @@ public class PluginHelper {
 
 	public static final String AUTH_TOKEN = "HgfugGJHgJgHJGjGJgJg-857GHGYHjhHjH";
 	public static final String USERNAME = "admin";
+	public static final String PASSWORD = "reverse";
 
 	public static final int PORT_ENDPOINT = 8182;
 
@@ -24,9 +25,9 @@ public class PluginHelper {
 		this.component = new Component();
 		this.component.getServers().add(Protocol.HTTP, PORT_ENDPOINT);
 
-		KeystoneApplication keystoneApplication = new KeystoneApplication();
+		KeystoneApplication keystoneApplication = new KeystoneApplication(USERNAME, PASSWORD);
 		keystoneApplication.putTokenAndUser(AUTH_TOKEN, USERNAME);
-
+		
 		this.component.getDefaultHost().attach(keystoneApplication);
 		this.component.start();
 	}
