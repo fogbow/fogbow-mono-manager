@@ -48,15 +48,18 @@ public class ComputeOpenStackPlugin implements ComputePlugin {
 		this.computeEndPoint = computeEndPoint;
 		fogTermToOpensStackCategory = new HashMap<String, Category>();
 
-		//FIXME this code have to load this configuration from a conf file
-		fogTermToOpensStackCategory.put(RequestConstants.SMALL_TERM, new Category(SMALL_FLAVOR_TERM,
-				"http://schemas.openstack.org/template/resource#", OCCIHeaders.MIXIN_CLASS));
-		fogTermToOpensStackCategory.put(RequestConstants.MEDIUM_TERM, new Category(MEDIUM_FLAVOR_TERM,
-				"http://schemas.openstack.org/template/resource#", OCCIHeaders.MIXIN_CLASS));
-		fogTermToOpensStackCategory.put(RequestConstants.LARGE_TERM, new Category(LARGE_FLAVOR_TERM,
-				"http://schemas.openstack.org/template/resource#", OCCIHeaders.MIXIN_CLASS));
-		fogTermToOpensStackCategory.put(RequestConstants.LINUX_X86_TERM, new Category(CIRROS_IMAGE_TERM,
-				OS_SCHEME, OCCIHeaders.MIXIN_CLASS));
+		// FIXME this code have to load this configuration from a conf file
+		fogTermToOpensStackCategory.put(RequestConstants.SMALL_TERM, new Category(
+				SMALL_FLAVOR_TERM, "http://schemas.openstack.org/template/resource#",
+				OCCIHeaders.MIXIN_CLASS));
+		fogTermToOpensStackCategory.put(RequestConstants.MEDIUM_TERM, new Category(
+				MEDIUM_FLAVOR_TERM, "http://schemas.openstack.org/template/resource#",
+				OCCIHeaders.MIXIN_CLASS));
+		fogTermToOpensStackCategory.put(RequestConstants.LARGE_TERM, new Category(
+				LARGE_FLAVOR_TERM, "http://schemas.openstack.org/template/resource#",
+				OCCIHeaders.MIXIN_CLASS));
+		fogTermToOpensStackCategory.put(RequestConstants.LINUX_X86_TERM, new Category(
+				CIRROS_IMAGE_TERM, OS_SCHEME, OCCIHeaders.MIXIN_CLASS));
 	}
 
 	@Override
