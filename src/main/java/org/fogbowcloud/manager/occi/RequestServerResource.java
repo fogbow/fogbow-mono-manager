@@ -35,7 +35,7 @@ public class RequestServerResource extends ServerResource {
 
 		if (requestId == null) {
 			LOGGER.info("Getting all requests of token :" + userToken);
-			return HeaderUtils.generateResponseId(application.getRequestsFromUser(userToken), req);
+			return generateResponse(application.getRequestsFromUser(userToken), req);
 		}
 
 		LOGGER.info("Getting request(" + requestId + ") of token :" + userToken);
@@ -75,8 +75,8 @@ public class RequestServerResource extends ServerResource {
 
 		String authToken = HeaderUtils.getAuthToken(req.getHeaders());
 
-		List<Request> currentRequests = application.newRequests(authToken, categories, xOCCIAtt);
-		return HeaderUtils.generateResponseId(currentRequests, req);
+		List<Request> currentRequests = application.createRequests(authToken, categories, xOCCIAtt);
+		return generateResponse(currentRequests, req);
 	}
 
 	public static Map<String, String> normalizeXOCCIAtt(Map<String, String> xOCCIAtt) {
@@ -110,12 +110,24 @@ public class RequestServerResource extends ServerResource {
 		return defOCCIAtt;
 	}
 
-	public static void checkRequestType(String enumString) {
+	protected static void checkRequestType(String enumString) {
 		for (int i = 0; i < RequestType.values().length; i++) {
 			if (enumString.equals(RequestType.values()[i].getValue())) {
 				return;
 			}
 		}
 		throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
+	}
+	
+	protected static String generateResponse(List<Request> requests, HttpRequest req) {
+		String requestEndpoint = req.getHostRef() + req.getHttpCall().getRequestUri();
+		String response = "";
+		for (Request request : requests) {
+			response += HeaderUtils.X_OCCI_LOCATION + requestEndpoint + "/" + request.getId() + "\n";
+		}
+		if (response.equals("")) {
+			response = "Empty";
+		}
+		return response;
 	}
 }

@@ -35,7 +35,7 @@ public class ComputeApplication extends Application {
 
 	private Map<String, List<String>> userToInstanceId;
 	private Map<String, String> instanceIdToDetails;
-	private static InstanceIdGenerator idGenerator;
+	private InstanceIdGenerator idGenerator;
 	private Map<String, String> keystoneTokenToUser;
 
 	private Map<String, Map<String, String>> termToAttributes;
@@ -224,11 +224,23 @@ public class ComputeApplication extends Application {
 
 			if (instanceId == null) {
 				LOGGER.info("Getting all instance ids from token :" + userToken);
-				return HeaderUtils.generateResponseInstanceLocations(
+				return generateResponse(
 						computeApplication.getAllInstanceIds(userToken), req);
 			}
 			LOGGER.info("Getting request(" + instanceId + ") of token :" + userToken);
 			return computeApplication.getInstanceDetails(userToken, instanceId);
+		}
+		
+		private static String generateResponse(List<String> instances, HttpRequest req) {
+			String requestEndpoint = req.getHostRef() + req.getHttpCall().getRequestUri();
+			String response = "";
+			for (String location : instances) {
+				response += HeaderUtils.X_OCCI_LOCATION + requestEndpoint + "/" + location + "\n";			
+			}
+			if (response.equals("")) {
+				response = "Empty";
+			}
+			return response;
 		}
 
 		@Post

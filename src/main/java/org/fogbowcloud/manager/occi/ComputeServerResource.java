@@ -1,5 +1,7 @@
 package org.fogbowcloud.manager.occi;
 
+import java.util.List;
+
 import org.fogbowcloud.manager.occi.core.HeaderUtils;
 import org.restlet.engine.adapter.HttpRequest;
 import org.restlet.resource.Delete;
@@ -46,5 +48,17 @@ public class ComputeServerResource extends ServerResource{
 	@Post
 	public String post() {
 		return null;
+	}
+	
+	protected static String generateResponse(List<String> instances, HttpRequest req) {
+		String requestEndpoint = req.getHostRef() + req.getHttpCall().getRequestUri();
+		String response = "";
+		for (String location : instances) {
+			response += HeaderUtils.X_OCCI_LOCATION + requestEndpoint + "/" + location + "\n";			
+		}
+		if (response.equals("")) {
+			response = "Empty";
+		}
+		return response;
 	}
 }

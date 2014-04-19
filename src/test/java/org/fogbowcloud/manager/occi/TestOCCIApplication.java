@@ -31,6 +31,7 @@ public class TestOCCIApplication {
 
 	private Map<String, String> xOCCIAtt;
 
+	@SuppressWarnings("unchecked")
 	@Before
 	public void setUp() {
 		occiApplication = new OCCIApplication();
@@ -56,7 +57,7 @@ public class TestOCCIApplication {
 
 	@Test
 	public void testGetRequestDetails() throws InterruptedException {
-		occiApplication.newRequests(RequestHelper.ACCESS_TOKEN, new ArrayList<Category>(), xOCCIAtt);
+		occiApplication.createRequests(RequestHelper.ACCESS_TOKEN, new ArrayList<Category>(), xOCCIAtt);
 		List<Request> requests = occiApplication.getRequestsFromUser(RequestHelper.ACCESS_TOKEN);
 		Assert.assertEquals(1, requests.size());
 		String requestId = requests.get(0).getId();
@@ -70,7 +71,7 @@ public class TestOCCIApplication {
 	
 	@Test
 	public void testGetRequestDetailsAfterPeriod() throws InterruptedException {
-		occiApplication.newRequests(RequestHelper.ACCESS_TOKEN, new ArrayList<Category>(), xOCCIAtt);
+		occiApplication.createRequests(RequestHelper.ACCESS_TOKEN, new ArrayList<Category>(), xOCCIAtt);
 		List<Request> requests = occiApplication.getRequestsFromUser(RequestHelper.ACCESS_TOKEN);
 		Assert.assertEquals(1, requests.size());
 		String requestId = requests.get(0).getId();
@@ -90,7 +91,7 @@ public class TestOCCIApplication {
 
 	@Test
 	public void testResquestUser() {
-		this.occiApplication.newRequests(RequestHelper.ACCESS_TOKEN, new ArrayList<Category>(),
+		this.occiApplication.createRequests(RequestHelper.ACCESS_TOKEN, new ArrayList<Category>(),
 				xOCCIAtt);
 		List<Request> requestsFromUser = occiApplication
 				.getRequestsFromUser(RequestHelper.ACCESS_TOKEN);
@@ -102,7 +103,7 @@ public class TestOCCIApplication {
 	public void testManyResquestUser() {
 		int numberOfInstances = 10;
 		xOCCIAtt.put(RequestAttribute.INSTANCE_COUNT.getValue(), String.valueOf(numberOfInstances));
-		this.occiApplication.newRequests(RequestHelper.ACCESS_TOKEN, new ArrayList<Category>(),
+		this.occiApplication.createRequests(RequestHelper.ACCESS_TOKEN, new ArrayList<Category>(),
 				xOCCIAtt);
 		List<Request> requestsFromUser = occiApplication
 				.getRequestsFromUser(RequestHelper.ACCESS_TOKEN);
@@ -114,7 +115,7 @@ public class TestOCCIApplication {
 	public void testRemoveAllRequest() {
 		int numberOfInstances = 10;
 		xOCCIAtt.put(RequestAttribute.INSTANCE_COUNT.getValue(), String.valueOf(numberOfInstances));
-		occiApplication.newRequests(RequestHelper.ACCESS_TOKEN, new ArrayList<Category>(), xOCCIAtt);
+		occiApplication.createRequests(RequestHelper.ACCESS_TOKEN, new ArrayList<Category>(), xOCCIAtt);
 
 		List<Request> requestsFromUser = occiApplication
 				.getRequestsFromUser(RequestHelper.ACCESS_TOKEN);
@@ -131,7 +132,7 @@ public class TestOCCIApplication {
 	public void testRemoveSpecificRequest() {
 		int numberOfInstances = 10;
 		xOCCIAtt.put(RequestAttribute.INSTANCE_COUNT.getValue(), String.valueOf(numberOfInstances));
-		occiApplication.newRequests(RequestHelper.ACCESS_TOKEN, new ArrayList<Category>(), xOCCIAtt);
+		occiApplication.createRequests(RequestHelper.ACCESS_TOKEN, new ArrayList<Category>(), xOCCIAtt);
 
 		List<Request> requestsFromUser = occiApplication
 				.getRequestsFromUser(RequestHelper.ACCESS_TOKEN);
