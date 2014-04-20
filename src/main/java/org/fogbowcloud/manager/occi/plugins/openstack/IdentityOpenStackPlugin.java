@@ -1,5 +1,7 @@
 package org.fogbowcloud.manager.occi.plugins.openstack;
 
+import java.util.Properties;
+
 import org.apache.commons.codec.Charsets;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -28,18 +30,22 @@ public class IdentityOpenStackPlugin implements IdentityPlugin {
 	public static final String USER_KEYSTONE = "user";
 	public static final String NAME_KEYSTONE = "name";
 	
-	private String keystoneEndPointTokens;
-	private String keystoneEndPointAuthToken;
+	private static String V3_ENDPOINT_PATH = "/v3/auth/tokens/";
+	private static String V2_ENDPOINT_PATH = "/v2.0/tokens";
+	
+	private String v2Endpoint;
+	private String v3Endpoint;
 
-	public IdentityOpenStackPlugin(String endPointTokens, String endPointAuthToken) {
-		this.keystoneEndPointTokens = endPointTokens;
-		this.keystoneEndPointAuthToken = endPointAuthToken;
+	public IdentityOpenStackPlugin(Properties properties) {
+		String keystoneUrl = properties.getProperty("identity_openstack_url");
+		this.v3Endpoint = keystoneUrl + V3_ENDPOINT_PATH;
+		this.v2Endpoint = keystoneUrl + V2_ENDPOINT_PATH;
 	}
 
 	public boolean isValidToken(String authToken) {
 		try {
 			HttpClient httpCLient = new DefaultHttpClient();
-			HttpGet httpGet = new HttpGet(this.keystoneEndPointTokens);
+			HttpGet httpGet = new HttpGet(this.v2Endpoint);
 			httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, authToken);
 			httpGet.addHeader(OCCIHeaders.X_SUBJEC_TOKEN, authToken);
 			HttpResponse response = httpCLient.execute(httpGet);
@@ -58,7 +64,7 @@ public class IdentityOpenStackPlugin implements IdentityPlugin {
 	public String getUser(String authToken) {
 		try {
 			HttpClient httpCLient = new DefaultHttpClient();
-			HttpGet httpGet = new HttpGet(this.keystoneEndPointTokens);
+			HttpGet httpGet = new HttpGet(this.v2Endpoint);
 			httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, authToken);
 			httpGet.addHeader(OCCIHeaders.X_SUBJEC_TOKEN, authToken);
 			HttpResponse response = httpCLient.execute(httpGet);
@@ -81,7 +87,7 @@ public class IdentityOpenStackPlugin implements IdentityPlugin {
 	public String getToken(String username, String password) {
 		try {
 			HttpClient httpClient = new DefaultHttpClient();
-			HttpPost httpPost = new HttpPost(this.keystoneEndPointAuthToken);
+			HttpPost httpPost = new HttpPost(this.v3Endpoint);
 
 			httpPost.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.JSON_CONTENT_TYPE);
 			httpPost.addHeader(OCCIHeaders.ACCEPT, OCCIHeaders.JSON_ACCEPT);
@@ -129,6 +135,6 @@ public class IdentityOpenStackPlugin implements IdentityPlugin {
 	}
 
 	public void setEnd(String end) {
-		this.keystoneEndPointAuthToken = end;
+		this.v3Endpoint = end;
 	}
 }

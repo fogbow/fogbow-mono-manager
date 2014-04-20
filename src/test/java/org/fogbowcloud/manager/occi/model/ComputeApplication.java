@@ -33,6 +33,10 @@ public class ComputeApplication extends Application {
 	public static final String HOSTNAME_ATTRIBUTE_OCCI = "occi.compute.hostname";
 	public static final String ID_CORE_ATTRIBUTE_OCCI = "occi.core.id";
 
+	public static final String SMALL_FLAVOR_TERM = "m1-small";
+	public static final String MEDIUM_FLAVOR_TERM = "m1-medium";
+	public static final String LARGE_FLAVOR_TERM = "m1-large";
+	
 	private Map<String, List<String>> userToInstanceId;
 	private Map<String, String> instanceIdToDetails;
 	private InstanceIdGenerator idGenerator;
@@ -55,19 +59,19 @@ public class ComputeApplication extends Application {
 		attributesToValueSmall.put(CORE_ATTRIBUTE_OCCI, "1");
 		attributesToValueSmall.put(MEMORY_ATTRIBUTE_OCCI, "2");
 		attributesToValueSmall.put(SPEED_ATTRIBUTE_OCCI, "0");
-		this.termToAttributes.put(ComputeOpenStackPlugin.SMALL_FLAVOR_TERM , attributesToValueSmall);
+		this.termToAttributes.put(SMALL_FLAVOR_TERM , attributesToValueSmall);
 
 		Map<String, String> attributesToValueMedium = new HashMap<String, String>();
 		attributesToValueMedium.put(CORE_ATTRIBUTE_OCCI, "2");
 		attributesToValueMedium.put(MEMORY_ATTRIBUTE_OCCI, "2520");
 		attributesToValueMedium.put(SPEED_ATTRIBUTE_OCCI, "0");
-		this.termToAttributes.put(ComputeOpenStackPlugin.MEDIUM_FLAVOR_TERM, attributesToValueMedium);
+		this.termToAttributes.put(MEDIUM_FLAVOR_TERM, attributesToValueMedium);
 
 		Map<String, String> attributesToValueLarge = new HashMap<String, String>();
 		attributesToValueLarge.put(CORE_ATTRIBUTE_OCCI, "3");
 		attributesToValueLarge.put(MEMORY_ATTRIBUTE_OCCI, "3520");
 		attributesToValueLarge.put(SPEED_ATTRIBUTE_OCCI, "0");
-		this.termToAttributes.put(ComputeOpenStackPlugin.LARGE_FLAVOR_TERM, attributesToValueLarge);
+		this.termToAttributes.put(LARGE_FLAVOR_TERM, attributesToValueLarge);
 		
 		Map<String, String> attributesToValueUbuntu = new HashMap<String, String>();
 		attributesToValueUbuntu.put(ARCHITECTURE_ATTRIBUTE_OCCI, "64");

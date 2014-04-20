@@ -1,0 +1,13 @@
+xmpp_jid=manager.test.com
+xmpp_password=password
+xmpp_host=127.0.0.1
+xmpp_port=5347
+
+compute_class=org.fogbowcloud.manager.occi.plugins.openstack.ComputeOpenStackPlugin
+compute_openstack_url=http://localhost:8182
+compute_openstack_flavor_small=m1-small
+compute_openstack_flavor_medium=m1-medium
+compute_openstack_flavor_large=m1-large
+
+identity_class=org.fogbowcloud.manager.occi.plugins.openstack.IdentityOpenStackPlugin
+identity_openstack_url=http://localhost:5000

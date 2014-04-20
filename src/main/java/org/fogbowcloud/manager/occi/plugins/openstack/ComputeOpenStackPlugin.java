@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import org.apache.commons.codec.Charsets;
 import org.apache.http.HttpException;
@@ -29,39 +30,36 @@ import org.fogbowcloud.manager.xmpp.core.ResourcesInfo;
 
 public class ComputeOpenStackPlugin implements ComputePlugin {
 
-	public static final String OS_SCHEME = "http://schemas.openstack.org/template/os#";
-	private String computeEndPoint;
 	private static final Logger LOGGER = Logger.getLogger(ComputeOpenStackPlugin.class);
-
-	private final String TERM_COMPUTE = "compute";
-	private final String SCHEME_COMPUTE = "http://schemas.ogf.org/occi/infrastructure#";
-	private final String CLASS_COMPUTE = "kind";
-
-	public static final String SMALL_FLAVOR_TERM = "m1-small";
-	public static final String MEDIUM_FLAVOR_TERM = "m1-medium";
-	public static final String LARGE_FLAVOR_TERM = "m1-large";
+	private static final String TERM_COMPUTE = "compute";
+	private static final String SCHEME_COMPUTE = "http://schemas.ogf.org/occi/infrastructure#";
+	private static final String CLASS_COMPUTE = "kind";
+	private static final String COMPUTE_ENDPOINT = "/compute";
+	
+	public static final String OS_SCHEME = "http://schemas.openstack.org/template/os#";
 	public static final String CIRROS_IMAGE_TERM = "cadf2e29-7216-4a5e-9364-cf6513d5f1fd";
 
-	private Map<String, Category> fogTermToOpensStackCategory;
+	private String computeEndpoint;
+	private Map<String, Category> fogTermToOpensStackCategory = new HashMap<String, Category>();
 
-	public ComputeOpenStackPlugin(String computeEndPoint) {
-		this.computeEndPoint = computeEndPoint;
-		fogTermToOpensStackCategory = new HashMap<String, Category>();
-
-		// FIXME this code have to load this configuration from a conf file
-		fogTermToOpensStackCategory.put(RequestConstants.SMALL_TERM, new Category(
-				SMALL_FLAVOR_TERM, "http://schemas.openstack.org/template/resource#",
-				OCCIHeaders.MIXIN_CLASS));
-		fogTermToOpensStackCategory.put(RequestConstants.MEDIUM_TERM, new Category(
-				MEDIUM_FLAVOR_TERM, "http://schemas.openstack.org/template/resource#",
-				OCCIHeaders.MIXIN_CLASS));
-		fogTermToOpensStackCategory.put(RequestConstants.LARGE_TERM, new Category(
-				LARGE_FLAVOR_TERM, "http://schemas.openstack.org/template/resource#",
-				OCCIHeaders.MIXIN_CLASS));
+	public ComputeOpenStackPlugin(Properties properties) {
+		this.computeEndpoint = properties.getProperty("compute_openstack_url") + COMPUTE_ENDPOINT;
+		fogTermToOpensStackCategory.put(RequestConstants.SMALL_TERM, createFlavorCategory(
+				"compute_openstack_flavor_small", properties));
+		fogTermToOpensStackCategory.put(RequestConstants.MEDIUM_TERM, createFlavorCategory(
+				"compute_openstack_flavor_medium", properties));
+		fogTermToOpensStackCategory.put(RequestConstants.LARGE_TERM, createFlavorCategory(
+				"compute_openstack_flavor_large", properties));
 		fogTermToOpensStackCategory.put(RequestConstants.LINUX_X86_TERM, new Category(
 				CIRROS_IMAGE_TERM, OS_SCHEME, OCCIHeaders.MIXIN_CLASS));
 	}
-
+	
+	private static Category createFlavorCategory(String flavorPropName, Properties properties) {
+		return new Category(properties.getProperty(flavorPropName),
+				"http://schemas.openstack.org/template/resource#",
+				OCCIHeaders.MIXIN_CLASS);
+	}
+	
 	@Override
 	public String requestInstance(String authToken, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
@@ -81,7 +79,7 @@ public class ComputeOpenStackPlugin implements ComputePlugin {
 		HttpClient httpCLient = new DefaultHttpClient();
 		HttpPost httpPost;
 		try {
-			httpPost = new HttpPost(computeEndPoint);
+			httpPost = new HttpPost(computeEndpoint);
 			httpPost.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 			httpPost.addHeader(OCCIHeaders.X_AUTH_TOKEN, authToken);
 			for (Category category : openStackCategories) {
@@ -114,7 +112,7 @@ public class ComputeOpenStackPlugin implements ComputePlugin {
 		HttpClient httpCLient = new DefaultHttpClient();
 		HttpGet httpGet;
 		try {
-			httpGet = new HttpGet(computeEndPoint + "/" + instanceId);
+			httpGet = new HttpGet(computeEndpoint + "/" + instanceId);
 			httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, authToken);
 			HttpResponse response = httpCLient.execute(httpGet);
 
@@ -138,7 +136,7 @@ public class ComputeOpenStackPlugin implements ComputePlugin {
 		HttpClient httpCLient = new DefaultHttpClient();
 		HttpGet httpGet;
 		try {
-			httpGet = new HttpGet(computeEndPoint);
+			httpGet = new HttpGet(computeEndpoint);
 			httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, authToken);
 			HttpResponse response = httpCLient.execute(httpGet);
 
@@ -160,7 +158,7 @@ public class ComputeOpenStackPlugin implements ComputePlugin {
 		HttpClient httpCLient = new DefaultHttpClient();
 		HttpDelete httpDelete;
 		try {
-			httpDelete = new HttpDelete(computeEndPoint);
+			httpDelete = new HttpDelete(computeEndpoint);
 			httpDelete.addHeader(OCCIHeaders.X_AUTH_TOKEN, authToken);
 			HttpResponse response = httpCLient.execute(httpDelete);
 
@@ -183,7 +181,7 @@ public class ComputeOpenStackPlugin implements ComputePlugin {
 		HttpClient httpCLient = new DefaultHttpClient();
 		HttpDelete httpDelete;
 		try {
-			httpDelete = new HttpDelete(computeEndPoint + "/" + instanceId);
+			httpDelete = new HttpDelete(computeEndpoint + "/" + instanceId);
 			httpDelete.addHeader(OCCIHeaders.X_AUTH_TOKEN, authToken);
 			HttpResponse response = httpCLient.execute(httpDelete);
 

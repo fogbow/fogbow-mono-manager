@@ -10,6 +10,7 @@ import org.xmpp.packet.IQ;
 public class ManagerFacade {
 	
 	private ManagerModel managerModel;
+	
 	public ManagerFacade(ManagerModel managerModel) {
 		if (managerModel == null) throw new IllegalArgumentException();
 		this.managerModel = managerModel;

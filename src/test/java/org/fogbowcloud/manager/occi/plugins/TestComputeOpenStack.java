@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.StringTokenizer;
 
 import org.fogbowcloud.manager.occi.core.Category;
@@ -21,15 +22,15 @@ import org.junit.Test;
 
 public class TestComputeOpenStack {
 
-	private final String FIRST_INSTANCE_ID = "b122f3ad-503c-4abb-8a55-ba8d90cfce9f";
-	private final String FIFTH_INSTANCE_ID = "hla256kh-43ar-67ww-ao90-fa8d456fce9f";
-	private final String FOURTH_INSTANCE_ID = "qwuif8ad-19a3-4afg-1l77-tred90crei0q";
-	private final String THIRD_INSTANCE_ID = "cg2563ee-503c-6abr-54gl-ba8d12hf0pof";
-	private final String SECOND_INSTANCE_ID = "at62f3ad-67ac-56gb-8a55-adbm98cdee9f";
-	private final String COMPUTE_END_POINT = "http://localhost:" + PluginHelper.PORT_ENDPOINT
-			+ ComputeApplication.TARGET;
-	private final String LOCATION_INSTANCE_PREFIX = HeaderUtils.X_OCCI_LOCATION + COMPUTE_END_POINT
-			+ "/";
+	private static final String FIRST_INSTANCE_ID = "b122f3ad-503c-4abb-8a55-ba8d90cfce9f";
+	private static final String FIFTH_INSTANCE_ID = "hla256kh-43ar-67ww-ao90-fa8d456fce9f";
+	private static final String FOURTH_INSTANCE_ID = "qwuif8ad-19a3-4afg-1l77-tred90crei0q";
+	private static final String THIRD_INSTANCE_ID = "cg2563ee-503c-6abr-54gl-ba8d12hf0pof";
+	private static final String SECOND_INSTANCE_ID = "at62f3ad-67ac-56gb-8a55-adbm98cdee9f";
+	
+	private static final String URL = "http://localhost:" + PluginHelper.PORT_ENDPOINT;
+	private static final String LOCATION_INSTANCE_PREFIX = HeaderUtils.X_OCCI_LOCATION
+			+ URL + ComputeApplication.TARGET + "/";
 
 	private ComputeOpenStackPlugin computeOpenStack;
 	private PluginHelper pluginHelper;
@@ -37,7 +38,13 @@ public class TestComputeOpenStack {
 
 	@Before
 	public void setUp() throws Exception {
-		computeOpenStack = new ComputeOpenStackPlugin(COMPUTE_END_POINT);
+		Properties properties = new Properties();
+		properties.put("compute_openstack_url", URL);
+		properties.put("compute_openstack_flavor_small", ComputeApplication.SMALL_FLAVOR_TERM);
+		properties.put("compute_openstack_flavor_medium", ComputeApplication.MEDIUM_FLAVOR_TERM);
+		properties.put("compute_openstack_flavor_large", ComputeApplication.MEDIUM_FLAVOR_TERM);
+		
+		computeOpenStack = new ComputeOpenStackPlugin(properties);
 
 		// five first generated instance ids
 		expectedInstanceIds = new ArrayList<String>();
@@ -231,7 +238,7 @@ public class TestComputeOpenStack {
 		instanceLocations = getInstanceLocations(computeOpenStack
 				.getInstancesFromUser(PluginHelper.AUTH_TOKEN));
 		Assert.assertEquals(1, instanceLocations.size());
-		Assert.assertEquals(COMPUTE_END_POINT + "/" + FIRST_INSTANCE_ID, instanceLocations.get(0));
+		Assert.assertEquals(URL + "/" + FIRST_INSTANCE_ID, instanceLocations.get(0));
 	}
 
 	@Test
@@ -256,7 +263,7 @@ public class TestComputeOpenStack {
 				.getInstancesFromUser(PluginHelper.AUTH_TOKEN));
 		Assert.assertEquals(expectedInstanceIds.size(), instanceLocations.size());
 		for (String expectedId : expectedInstanceIds) {
-			Assert.assertTrue(instanceLocations.contains(COMPUTE_END_POINT + "/" + expectedId));
+			Assert.assertTrue(instanceLocations.contains(URL + "/" + expectedId));
 		}
 	}
 
