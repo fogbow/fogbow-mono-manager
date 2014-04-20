@@ -7,6 +7,7 @@ import org.dom4j.Element;
 import org.fogbowcloud.manager.occi.plugins.ComputePlugin;
 import org.fogbowcloud.manager.xmpp.core.ManagerFacade;
 import org.fogbowcloud.manager.xmpp.core.ManagerModel;
+import org.fogbowcloud.manager.xmpp.core.ResourcesInfo;
 import org.jamppa.component.XMPPComponent;
 import org.xmpp.component.ComponentException;
 import org.xmpp.packet.IQ;
@@ -44,10 +45,11 @@ public class ManagerXmppComponent extends XMPPComponent {
 		iq.setFrom(getJID());
 		Element statusEl = iq.getElement()
 				.addElement("query", IAMALIVE_NAMESPACE).addElement("status");
-		statusEl.addElement("cpu-idle").setText(plugin.getResourcesInfo(authToken).getCpuIdle());
-		statusEl.addElement("cpu-inuse").setText(plugin.getResourcesInfo(authToken).getCpuInUse());
-		statusEl.addElement("mem-idle").setText(plugin.getResourcesInfo(authToken).getMemIdle());
-		statusEl.addElement("mem-inuse").setText(plugin.getResourcesInfo(authToken).getMemInUse());
+		ResourcesInfo resourcesInfo = plugin.getResourcesInfo(authToken);
+		statusEl.addElement("cpu-idle").setText(resourcesInfo.getCpuIdle());
+		statusEl.addElement("cpu-inuse").setText(resourcesInfo.getCpuInUse());
+		statusEl.addElement("mem-idle").setText(resourcesInfo.getMemIdle());
+		statusEl.addElement("mem-inuse").setText(resourcesInfo.getMemInUse());
 		this.syncSendPacket(iq);
 	}
 
