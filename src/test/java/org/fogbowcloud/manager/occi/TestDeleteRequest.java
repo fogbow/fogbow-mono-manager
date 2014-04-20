@@ -30,6 +30,7 @@ public class TestDeleteRequest {
 
 	RequestHelper requestHelper;
 
+	@SuppressWarnings("unchecked")
 	@Before
 	public void setup() throws Exception {
 		this.requestHelper = new RequestHelper();

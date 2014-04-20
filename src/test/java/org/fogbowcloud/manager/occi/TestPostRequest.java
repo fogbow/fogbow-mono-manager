@@ -8,12 +8,9 @@ import java.util.Map;
 import org.apache.http.HttpException;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
-import org.apache.http.HttpVersion;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.DefaultHttpResponseFactory;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.message.BasicStatusLine;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.model.RequestHelper;
@@ -31,6 +28,7 @@ public class TestPostRequest {
 
 	private RequestHelper requestHelper;
 
+	@SuppressWarnings("unchecked")
 	@Before
 	public void setup() throws Exception {
 		this.requestHelper = new RequestHelper();

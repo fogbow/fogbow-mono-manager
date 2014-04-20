@@ -37,6 +37,7 @@ public class TestGetRequest {
 	private String instanceLocation = HeaderUtils.X_OCCI_LOCATION + "http://localhost:" + RequestHelper.ENDPOINT_PORT
 			+ ComputeApplication.TARGET + "/b122f3ad-503c-4abb-8a55-ba8d90cfce9f";
 
+	@SuppressWarnings("unchecked")
 	@Before
 	public void setup() throws Exception {
 		this.requestHelper = new RequestHelper();

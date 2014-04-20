@@ -1,6 +1,5 @@
 package org.fogbowcloud.manager.occi;
 
-import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -46,7 +45,7 @@ public class TestDeleteCompute {
 		httpDelete.addHeader(OCCIHeaders.CONTENT_TYPE, RequestHelper.CONTENT_TYPE_OCCI);
 		httpDelete.addHeader(OCCIHeaders.X_AUTH_TOKEN, "wrong");
 		HttpClient client = new DefaultHttpClient();
-		HttpResponse response = client.execute(httpDelete);	
+		client.execute(httpDelete);	
 	}
 	
 	@Ignore
@@ -56,7 +55,7 @@ public class TestDeleteCompute {
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, RequestHelper.CONTENT_TYPE_OCCI);
 		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, "wrong");
 		HttpClient client = new DefaultHttpClient();
-		HttpResponse response = client.execute(get);	
+		client.execute(get);	
 	}	
 	
 	

@@ -124,7 +124,7 @@ public class TestGetCompute {
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, "wrong");
 		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, RequestHelper.ACCESS_TOKEN);
 		HttpClient client = new DefaultHttpClient();
-		HttpResponse response = client.execute(httpGet);	
+		client.execute(httpGet);	
 	}
 
 	@Ignore
@@ -134,7 +134,7 @@ public class TestGetCompute {
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, RequestHelper.CONTENT_TYPE_OCCI);
 		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, "wrong");
 		HttpClient client = new DefaultHttpClient();
-		HttpResponse response = client.execute(httpGet);	
+		client.execute(httpGet);	
 	}
 	
 	@Ignore
@@ -144,6 +144,6 @@ public class TestGetCompute {
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, RequestHelper.CONTENT_TYPE_OCCI);
 		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, "wrong");
 		HttpClient client = new DefaultHttpClient();
-		HttpResponse response = client.execute(httpGet);	
+		client.execute(httpGet);	
 	}	
 }
