@@ -1,4 +1,4 @@
-package org.fogbowcloud.manager.xmpp.core;
+package org.fogbowcloud.manager.core.model;
 
 import java.util.LinkedList;
 import java.util.List;

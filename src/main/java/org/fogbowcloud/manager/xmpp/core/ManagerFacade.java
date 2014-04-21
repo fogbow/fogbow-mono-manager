@@ -5,6 +5,9 @@ import java.util.Iterator;
 
 import org.dom4j.Attribute;
 import org.dom4j.Element;
+import org.fogbowcloud.manager.core.model.ManagerItem;
+import org.fogbowcloud.manager.core.model.ManagerModel;
+import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.xmpp.packet.IQ;
 
 public class ManagerFacade {

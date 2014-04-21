@@ -1,4 +1,4 @@
-package org.fogbowcloud.manager.occi.plugins;
+package org.fogbowcloud.manager.core.plugins;
 
 public interface IdentityPlugin {
 

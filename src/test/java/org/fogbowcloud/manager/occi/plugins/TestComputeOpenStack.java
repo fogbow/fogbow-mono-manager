@@ -7,13 +7,13 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.StringTokenizer;
 
+import org.fogbowcloud.manager.core.plugins.openstack.OpenStackComputePlugin;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.HeaderUtils;
 import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.model.ComputeApplication;
 import org.fogbowcloud.manager.occi.model.PluginHelper;
-import org.fogbowcloud.manager.occi.plugins.openstack.ComputeOpenStackPlugin;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.junit.After;
 import org.junit.Assert;
@@ -32,7 +32,7 @@ public class TestComputeOpenStack {
 	private static final String LOCATION_INSTANCE_PREFIX = HeaderUtils.X_OCCI_LOCATION
 			+ URL + ComputeApplication.TARGET + "/";
 
-	private ComputeOpenStackPlugin computeOpenStack;
+	private OpenStackComputePlugin computeOpenStack;
 	private PluginHelper pluginHelper;
 	List<String> expectedInstanceIds;
 
@@ -44,7 +44,7 @@ public class TestComputeOpenStack {
 		properties.put("compute_openstack_flavor_medium", ComputeApplication.MEDIUM_FLAVOR_TERM);
 		properties.put("compute_openstack_flavor_large", ComputeApplication.MEDIUM_FLAVOR_TERM);
 		
-		computeOpenStack = new ComputeOpenStackPlugin(properties);
+		computeOpenStack = new OpenStackComputePlugin(properties);
 
 		// five first generated instance ids
 		expectedInstanceIds = new ArrayList<String>();

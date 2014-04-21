@@ -6,9 +6,9 @@ import java.util.List;
 
 import org.dom4j.Attribute;
 import org.dom4j.Element;
-import org.fogbowcloud.manager.occi.plugins.ComputePlugin;
+import org.fogbowcloud.manager.core.model.ResourcesInfo;
+import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.xmpp.ManagerXmppComponent;
-import org.fogbowcloud.manager.xmpp.core.ResourcesInfo;
 import org.jamppa.client.XMPPClient;
 import org.jamppa.client.plugin.xep0077.XEP0077;
 import org.jivesoftware.smack.XMPPException;

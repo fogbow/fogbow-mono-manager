@@ -1,4 +1,4 @@
-package org.fogbowcloud.manager.occi.plugins.openstack;
+package org.fogbowcloud.manager.core.plugins.openstack;
 
 import java.util.Properties;
 
@@ -12,13 +12,13 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
+import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
-import org.fogbowcloud.manager.occi.plugins.IdentityPlugin;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.restlet.resource.ResourceException;
 
-public class IdentityOpenStackPlugin implements IdentityPlugin {
+public class OpenStackIdentityPlugin implements IdentityPlugin {
 
 	public static final String USERNAME_KEYSTONE = "username";
 	public static final String PASSWORD_KEYSTONE = "password";
@@ -36,7 +36,7 @@ public class IdentityOpenStackPlugin implements IdentityPlugin {
 	private String v2Endpoint;
 	private String v3Endpoint;
 
-	public IdentityOpenStackPlugin(Properties properties) {
+	public OpenStackIdentityPlugin(Properties properties) {
 		String keystoneUrl = properties.getProperty("identity_openstack_url");
 		this.v3Endpoint = keystoneUrl + V3_ENDPOINT_PATH;
 		this.v2Endpoint = keystoneUrl + V2_ENDPOINT_PATH;

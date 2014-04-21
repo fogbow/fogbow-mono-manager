@@ -7,13 +7,13 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.core.plugins.openstack.OpenStackComputePlugin;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.HeaderUtils;
 import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
-import org.fogbowcloud.manager.occi.plugins.openstack.ComputeOpenStackPlugin;
 import org.restlet.Application;
 import org.restlet.Restlet;
 import org.restlet.engine.adapter.HttpRequest;
@@ -75,7 +75,7 @@ public class ComputeApplication extends Application {
 		
 		Map<String, String> attributesToValueUbuntu = new HashMap<String, String>();
 		attributesToValueUbuntu.put(ARCHITECTURE_ATTRIBUTE_OCCI, "64");
-		this.termToAttributes.put(ComputeOpenStackPlugin.CIRROS_IMAGE_TERM, attributesToValueUbuntu);		
+		this.termToAttributes.put(OpenStackComputePlugin.CIRROS_IMAGE_TERM, attributesToValueUbuntu);		
 	}
 
 	@Override
@@ -155,7 +155,7 @@ public class ComputeApplication extends Application {
 	private void checkRules(List<Category> categories, Map<String, String> xOCCIAtt) {
 		boolean OSFound = false;
 		for (Category category : categories) {
-			if (category.getScheme().equals(ComputeOpenStackPlugin.OS_SCHEME)) {
+			if (category.getScheme().equals(OpenStackComputePlugin.OS_SCHEME)) {
 				OSFound = true;
 				break;
 			}

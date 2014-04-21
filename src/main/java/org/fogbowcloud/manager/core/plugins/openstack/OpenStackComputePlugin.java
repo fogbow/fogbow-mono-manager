@@ -1,4 +1,4 @@
-package org.fogbowcloud.manager.occi.plugins.openstack;
+package org.fogbowcloud.manager.core.plugins.openstack;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -19,18 +19,18 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.core.model.ResourcesInfo;
+import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
-import org.fogbowcloud.manager.occi.plugins.ComputePlugin;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
-import org.fogbowcloud.manager.xmpp.core.ResourcesInfo;
 
-public class ComputeOpenStackPlugin implements ComputePlugin {
+public class OpenStackComputePlugin implements ComputePlugin {
 
-	private static final Logger LOGGER = Logger.getLogger(ComputeOpenStackPlugin.class);
+	private static final Logger LOGGER = Logger.getLogger(OpenStackComputePlugin.class);
 	private static final String TERM_COMPUTE = "compute";
 	private static final String SCHEME_COMPUTE = "http://schemas.ogf.org/occi/infrastructure#";
 	private static final String CLASS_COMPUTE = "kind";
@@ -42,7 +42,7 @@ public class ComputeOpenStackPlugin implements ComputePlugin {
 	private String computeEndpoint;
 	private Map<String, Category> fogTermToOpensStackCategory = new HashMap<String, Category>();
 
-	public ComputeOpenStackPlugin(Properties properties) {
+	public OpenStackComputePlugin(Properties properties) {
 		this.computeEndpoint = properties.getProperty("compute_openstack_url") + COMPUTE_ENDPOINT;
 		fogTermToOpensStackCategory.put(RequestConstants.SMALL_TERM, createFlavorCategory(
 				"compute_openstack_flavor_small", properties));

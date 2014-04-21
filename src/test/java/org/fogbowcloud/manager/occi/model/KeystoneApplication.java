@@ -5,8 +5,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.http.HttpStatus;
+import org.fogbowcloud.manager.core.plugins.openstack.OpenStackIdentityPlugin;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
-import org.fogbowcloud.manager.occi.plugins.openstack.IdentityOpenStackPlugin;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.restlet.Application;
@@ -99,9 +99,9 @@ public class KeystoneApplication extends Application {
 			}
 
 			String username = getUserFeatureCredentials(jsonCredentials,
-					IdentityOpenStackPlugin.USERNAME_KEYSTONE);
+					OpenStackIdentityPlugin.USERNAME_KEYSTONE);
 			String password = getUserFeatureCredentials(jsonCredentials,
-					IdentityOpenStackPlugin.PASSWORD_KEYSTONE);
+					OpenStackIdentityPlugin.PASSWORD_KEYSTONE);
 			keyStoneApplication.authenticationCheck(username, password);
 
 			return new StringRepresentation(
@@ -112,11 +112,11 @@ public class KeystoneApplication extends Application {
 		private String mountJSONResponseAuthenticateToken(String token) {
 			try {
 				JSONObject rootIdTOken = new JSONObject();
-				rootIdTOken.put(IdentityOpenStackPlugin.ID_KEYSTONE, token);
+				rootIdTOken.put(OpenStackIdentityPlugin.ID_KEYSTONE, token);
 				JSONObject rootToken = new JSONObject();
-				rootToken.put(IdentityOpenStackPlugin.TOKEN_KEYSTONE, rootIdTOken);
+				rootToken.put(OpenStackIdentityPlugin.TOKEN_KEYSTONE, rootIdTOken);
 				JSONObject rootAccess = new JSONObject();
-				rootAccess.put(IdentityOpenStackPlugin.ACCESS_KEYSTONE, rootToken);
+				rootAccess.put(OpenStackIdentityPlugin.ACCESS_KEYSTONE, rootToken);
 				return rootAccess.toString();
 			} catch (JSONException e) {
 				e.printStackTrace();
@@ -127,8 +127,8 @@ public class KeystoneApplication extends Application {
 		private String getUserFeatureCredentials(String jsonCredentials, String feature) {
 			try {
 				JSONObject root = new JSONObject(jsonCredentials);
-				return root.getJSONObject(IdentityOpenStackPlugin.AUTH_KEYSTONE)
-						.getJSONObject(IdentityOpenStackPlugin.PASSWORD_CREDENTIALS_KEYSTONE)
+				return root.getJSONObject(OpenStackIdentityPlugin.AUTH_KEYSTONE)
+						.getJSONObject(OpenStackIdentityPlugin.PASSWORD_CREDENTIALS_KEYSTONE)
 						.getString(feature).toString();
 			} catch (JSONException e) {
 				return null;
@@ -138,11 +138,11 @@ public class KeystoneApplication extends Application {
 		private String mountJSONResponseUserPerToken(String token, String user) {
 			try {
 				JSONObject nameObject = new JSONObject();
-				nameObject.put(IdentityOpenStackPlugin.NAME_KEYSTONE, user);
+				nameObject.put(OpenStackIdentityPlugin.NAME_KEYSTONE, user);
 				JSONObject tokenObject = new JSONObject();
-				tokenObject.put(IdentityOpenStackPlugin.USER_KEYSTONE, nameObject);
+				tokenObject.put(OpenStackIdentityPlugin.USER_KEYSTONE, nameObject);
 				JSONObject accessObject = new JSONObject();
-				accessObject.put(IdentityOpenStackPlugin.TOKEN_KEYSTONE, tokenObject);
+				accessObject.put(OpenStackIdentityPlugin.TOKEN_KEYSTONE, tokenObject);
 				return accessObject.toString();
 			} catch (JSONException e) {
 			}

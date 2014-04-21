@@ -4,8 +4,8 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import org.fogbowcloud.manager.xmpp.core.ManagerItem;
-import org.fogbowcloud.manager.xmpp.core.ResourcesInfo;
+import org.fogbowcloud.manager.core.model.ManagerItem;
+import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.xmpp.model.ManagerTestHelper;
 import org.junit.Assert;
 import org.junit.Before;

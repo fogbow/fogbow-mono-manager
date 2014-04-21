@@ -2,8 +2,8 @@ package org.fogbowcloud.manager.occi.plugins;
 
 import java.util.Properties;
 
+import org.fogbowcloud.manager.core.plugins.openstack.OpenStackIdentityPlugin;
 import org.fogbowcloud.manager.occi.model.PluginHelper;
-import org.fogbowcloud.manager.occi.plugins.openstack.IdentityOpenStackPlugin;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -13,14 +13,14 @@ import org.restlet.resource.ResourceException;
 public class TestIdentityOpenStack {
 
 	private final String KEYSTONE_URL = "http://localhost:" + PluginHelper.PORT_ENDPOINT;
-	private IdentityOpenStackPlugin identityOpenStack;
+	private OpenStackIdentityPlugin identityOpenStack;
 	private PluginHelper pluginHelper;
 
 	@Before
 	public void setUp() throws Exception {
 		Properties properties = new Properties();
 		properties.put("identity_openstack_url", KEYSTONE_URL);
-		this.identityOpenStack = new IdentityOpenStackPlugin(properties);
+		this.identityOpenStack = new OpenStackIdentityPlugin(properties);
 		this.pluginHelper = new PluginHelper();
 		this.pluginHelper.initializeKeystoneComponent();
 	}

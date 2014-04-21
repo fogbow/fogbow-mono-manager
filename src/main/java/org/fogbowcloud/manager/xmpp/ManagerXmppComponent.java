@@ -4,10 +4,10 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import org.dom4j.Element;
-import org.fogbowcloud.manager.occi.plugins.ComputePlugin;
+import org.fogbowcloud.manager.core.model.ManagerModel;
+import org.fogbowcloud.manager.core.model.ResourcesInfo;
+import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.xmpp.core.ManagerFacade;
-import org.fogbowcloud.manager.xmpp.core.ManagerModel;
-import org.fogbowcloud.manager.xmpp.core.ResourcesInfo;
 import org.jamppa.component.XMPPComponent;
 import org.xmpp.component.ComponentException;
 import org.xmpp.packet.IQ;

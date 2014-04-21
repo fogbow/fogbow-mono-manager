@@ -3,9 +3,9 @@ package org.fogbowcloud.manager.xmpp;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.fogbowcloud.manager.xmpp.core.ManagerItem;
-import org.fogbowcloud.manager.xmpp.core.ManagerModel;
-import org.fogbowcloud.manager.xmpp.core.ResourcesInfo;
+import org.fogbowcloud.manager.core.model.ManagerItem;
+import org.fogbowcloud.manager.core.model.ManagerModel;
+import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.xmpp.model.ManagerTestHelper;
 import org.junit.Assert;
 import org.junit.Before;

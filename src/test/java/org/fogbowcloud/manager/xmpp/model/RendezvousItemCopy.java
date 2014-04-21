@@ -5,7 +5,7 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
 
-import org.fogbowcloud.manager.xmpp.core.ResourcesInfo;
+import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.xmpp.core.model.DateUtils;
 
 public class RendezvousItemCopy {
