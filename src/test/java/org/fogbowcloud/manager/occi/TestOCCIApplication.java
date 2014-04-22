@@ -61,7 +61,7 @@ public class TestOCCIApplication {
 		List<Request> requests = occiApplication.getRequestsFromUser(RequestHelper.ACCESS_TOKEN);
 		Assert.assertEquals(1, requests.size());
 		String requestId = requests.get(0).getId();
-		Request requestDetails = occiApplication.getRequestDetails(RequestHelper.ACCESS_TOKEN,
+		Request requestDetails = occiApplication.getRequest(RequestHelper.ACCESS_TOKEN,
 				requestId);
 
 		Assert.assertEquals(requestId, requestDetails.getId());
@@ -75,7 +75,7 @@ public class TestOCCIApplication {
 		List<Request> requests = occiApplication.getRequestsFromUser(RequestHelper.ACCESS_TOKEN);
 		Assert.assertEquals(1, requests.size());
 		String requestId = requests.get(0).getId();
-		Request requestDetails = occiApplication.getRequestDetails(RequestHelper.ACCESS_TOKEN,
+		Request requestDetails = occiApplication.getRequest(RequestHelper.ACCESS_TOKEN,
 				requestId);
 
 		Assert.assertEquals(requestId, requestDetails.getId());

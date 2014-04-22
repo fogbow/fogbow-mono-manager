@@ -26,6 +26,7 @@ import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
+import org.fogbowcloud.manager.occi.request.Instance;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
 
 public class OpenStackComputePlugin implements ComputePlugin {
@@ -108,7 +109,7 @@ public class OpenStackComputePlugin implements ComputePlugin {
 		return null;
 	}
 
-	public String getInstanceDetails(String authToken, String instanceId) {
+	public Instance getInstance(String authToken, String instanceId) {
 		HttpClient httpCLient = new DefaultHttpClient();
 		HttpGet httpGet;
 		try {
@@ -121,7 +122,8 @@ public class OpenStackComputePlugin implements ComputePlugin {
 			} else if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_FOUND) {
 				throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
 			}
-			return EntityUtils.toString(response.getEntity(), String.valueOf(Charsets.UTF_8));
+//			return EntityUtils.toString(response.getEntity(), String.valueOf(Charsets.UTF_8));
+			return null;
 		} catch (URISyntaxException e) {
 			LOGGER.error(e);
 		} catch (HttpException e) {
@@ -132,7 +134,7 @@ public class OpenStackComputePlugin implements ComputePlugin {
 		return null;
 	}
 
-	public String getInstancesFromUser(String authToken) {
+	public List<Instance> getInstances(String authToken) {
 		HttpClient httpCLient = new DefaultHttpClient();
 		HttpGet httpGet;
 		try {
@@ -143,7 +145,8 @@ public class OpenStackComputePlugin implements ComputePlugin {
 			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
 				throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 			}
-			return EntityUtils.toString(response.getEntity(), String.valueOf(Charsets.UTF_8));
+//			return EntityUtils.toString(response.getEntity(), String.valueOf(Charsets.UTF_8));
+			return null;
 		} catch (URISyntaxException e) {
 			LOGGER.error(e);
 		} catch (HttpException e) {
@@ -154,18 +157,16 @@ public class OpenStackComputePlugin implements ComputePlugin {
 		return null;
 	}
 
-	public String removeAllInstances(String authToken) {
+	public void removeInstances(String authToken) {
 		HttpClient httpCLient = new DefaultHttpClient();
 		HttpDelete httpDelete;
 		try {
 			httpDelete = new HttpDelete(computeEndpoint);
 			httpDelete.addHeader(OCCIHeaders.X_AUTH_TOKEN, authToken);
 			HttpResponse response = httpCLient.execute(httpDelete);
-
 			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
 				throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 			}
-			return EntityUtils.toString(response.getEntity(), String.valueOf(Charsets.UTF_8));
 		} catch (URISyntaxException e) {
 			LOGGER.error(e);
 		} catch (HttpException e) {
@@ -173,11 +174,10 @@ public class OpenStackComputePlugin implements ComputePlugin {
 		} catch (IOException e) {
 			LOGGER.error(e);
 		}
-		return null;
 	}
 
 	@Override
-	public String removeInstance(String authToken, String instanceId) {
+	public void removeInstance(String authToken, String instanceId) {
 		HttpClient httpCLient = new DefaultHttpClient();
 		HttpDelete httpDelete;
 		try {
@@ -190,7 +190,6 @@ public class OpenStackComputePlugin implements ComputePlugin {
 			} else if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_FOUND) {
 				throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
 			}
-			return EntityUtils.toString(response.getEntity(), String.valueOf(Charsets.UTF_8));
 		} catch (URISyntaxException e) {
 			LOGGER.error(e);
 		} catch (HttpException e) {
@@ -198,7 +197,6 @@ public class OpenStackComputePlugin implements ComputePlugin {
 		} catch (IOException e) {
 			LOGGER.error(e);
 		}
-		return null;
 	}
 
 	@Override

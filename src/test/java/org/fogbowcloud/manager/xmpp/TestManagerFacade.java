@@ -3,9 +3,9 @@ package org.fogbowcloud.manager.xmpp;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.fogbowcloud.manager.core.ManagerFacade;
 import org.fogbowcloud.manager.core.model.ManagerItem;
 import org.fogbowcloud.manager.core.model.ManagerModel;
-import org.fogbowcloud.manager.xmpp.core.ManagerFacade;
 import org.fogbowcloud.manager.xmpp.model.ManagerTestHelper;
 import org.fogbowcloud.manager.xmpp.model.RendezvousItemCopy;
 import org.junit.Assert;

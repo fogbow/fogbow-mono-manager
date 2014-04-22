@@ -4,10 +4,8 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import org.dom4j.Element;
-import org.fogbowcloud.manager.core.model.ManagerModel;
+import org.fogbowcloud.manager.core.ManagerFacade;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
-import org.fogbowcloud.manager.core.plugins.ComputePlugin;
-import org.fogbowcloud.manager.xmpp.core.ManagerFacade;
 import org.jamppa.component.XMPPComponent;
 import org.xmpp.component.ComponentException;
 import org.xmpp.packet.IQ;
@@ -21,13 +19,11 @@ public class ManagerXmppComponent extends XMPPComponent {
 	private ManagerFacade managerFacade;
 	private final Timer timer = new Timer();
 	private String rendezvousAddress;
-	private ComputePlugin plugin;
 	
 	public ManagerXmppComponent(String jid, String password, String server,
-			int port, ComputePlugin plugin) {
+			int port, ManagerFacade managerFacade) {
 		super(jid, password, server, port);
-		managerFacade = new ManagerFacade(new ManagerModel());
-		this.plugin = plugin;
+		this.managerFacade = managerFacade;
 	}
 
 	@Override
@@ -35,17 +31,17 @@ public class ManagerXmppComponent extends XMPPComponent {
 		super.connect();
 	}
 
-	public void init(String authToken) {
-		callIamAlive(authToken);
+	public void init() {
+		callIamAlive();
 	}
 	
-	public void iAmAlive(String authToken) {
+	public void iAmAlive() {
 		IQ iq = new IQ(Type.get);
 		iq.setTo(rendezvousAddress);
 		iq.setFrom(getJID());
 		Element statusEl = iq.getElement()
 				.addElement("query", IAMALIVE_NAMESPACE).addElement("status");
-		ResourcesInfo resourcesInfo = plugin.getResourcesInfo(authToken);
+		ResourcesInfo resourcesInfo = managerFacade.getResourcesInfo();
 		statusEl.addElement("cpu-idle").setText(resourcesInfo.getCpuIdle());
 		statusEl.addElement("cpu-inuse").setText(resourcesInfo.getCpuInUse());
 		statusEl.addElement("mem-idle").setText(resourcesInfo.getMemIdle());
@@ -62,11 +58,11 @@ public class ManagerXmppComponent extends XMPPComponent {
 		managerFacade.getItemsFromIQ(response);
 	}
 
-	private void callIamAlive(final String authToken) {
+	private void callIamAlive() {
 		timer.schedule(new TimerTask() {
 			@Override
 			public void run() {
-				iAmAlive(authToken);
+				iAmAlive();
 				whoIsalive();
 			}
 		}, 0, PERIOD);

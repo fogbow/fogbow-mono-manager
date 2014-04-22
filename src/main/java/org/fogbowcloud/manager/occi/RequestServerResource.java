@@ -31,7 +31,7 @@ public class RequestServerResource extends ServerResource {
 		OCCIApplication application = (OCCIApplication) getApplication();
 		HttpRequest req = (HttpRequest) getRequest();
 		String userToken = HeaderUtils.getAuthToken(req.getHeaders());
-		String requestId = (String) getRequestAttributes().get("requestid");
+		String requestId = (String) getRequestAttributes().get("requestId");
 
 		if (requestId == null) {
 			LOGGER.info("Getting all requests of token :" + userToken);
@@ -39,7 +39,7 @@ public class RequestServerResource extends ServerResource {
 		}
 
 		LOGGER.info("Getting request(" + requestId + ") of token :" + userToken);
-		Request request = application.getRequestDetails(userToken, requestId);
+		Request request = application.getRequest(userToken, requestId);
 		return request.toHttpMessageFormat();
 	}
 
@@ -48,7 +48,7 @@ public class RequestServerResource extends ServerResource {
 		OCCIApplication application = (OCCIApplication) getApplication();
 		HttpRequest req = (HttpRequest) getRequest();
 		String userToken = HeaderUtils.getAuthToken(req.getHeaders());
-		String requestId = (String) getRequestAttributes().get("requestid");
+		String requestId = (String) getRequestAttributes().get("requestId");
 
 		if (requestId == null) {
 			LOGGER.info("Removing all requests of token :" + userToken);

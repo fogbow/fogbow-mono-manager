@@ -17,12 +17,13 @@ public class ComputeServerResource extends ServerResource{
 		HttpRequest req = (HttpRequest) getRequest();
 //		HeaderUtils.checkOCCIContentType(req.getHeaders());
 		String authToken = HeaderUtils.getAuthToken(req.getHeaders());
-		String idVM = (String) getRequestAttributes().get("vmid");
+		String idVM = (String) getRequestAttributes().get("instanceId");
 
 		if (idVM == null) {
-			application.getAllVMFromUser(authToken);			
+			application.getInstances(authToken);			
 		}
-		return application.getSpecificVMDetails(authToken, idVM);	
+//		return application.getInstance(authToken, idVM);
+		return null;
 	}
 	
 	@Delete
@@ -30,12 +31,14 @@ public class ComputeServerResource extends ServerResource{
 		OCCIApplication application = (OCCIApplication) getApplication();
 		HttpRequest req = (HttpRequest) getRequest();
 		String authToken = HeaderUtils.getAuthToken(req.getHeaders());
-		String idVM = (String) getRequestAttributes().get("vmid");
+		String idVM = (String) getRequestAttributes().get("instanceId");
 
 		if (idVM == null) {
-			return application.removeAllVMFromUser(authToken);			
+//			return application.removeInstances(authToken);
+			return null;
 		}
-		return application.removeSpecificInstanceVm(authToken, idVM);		
+//		return application.removeInstance(authToken, idVM);
+		return null;
 	}
 	
 	@Post

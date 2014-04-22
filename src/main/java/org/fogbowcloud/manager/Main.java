@@ -3,8 +3,7 @@ package org.fogbowcloud.manager;
 import java.io.FileInputStream;
 import java.util.Properties;
 
-import org.fogbowcloud.manager.core.plugins.ComputePlugin;
-import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
+import org.fogbowcloud.manager.core.ManagerFacade;
 import org.fogbowcloud.manager.occi.OCCIApplication;
 import org.fogbowcloud.manager.xmpp.ManagerXmppComponent;
 import org.restlet.Component;
@@ -17,22 +16,17 @@ public class Main {
 		FileInputStream input = new FileInputStream(args[0]);
 		properties.load(input);
 		
-		ComputePlugin computePlugin = (ComputePlugin) createInstance(
-				"compute_class", properties);
-		IdentityPlugin identityPlugin = (IdentityPlugin) createInstance(
-				"identity_class", properties);
-
+		ManagerFacade facade = new ManagerFacade(properties);
+		
 		ManagerXmppComponent xmpp = new ManagerXmppComponent(properties.getProperty("xmpp_jid"), 
 				properties.getProperty("xmpp_password"), 
 				properties.getProperty("xmpp_host"), 
 				Integer.parseInt(properties.getProperty("xmpp_port")), 
-				computePlugin);
+				facade);
 		xmpp.connect();
 		xmpp.process(false);
 		
-		OCCIApplication application = new OCCIApplication();
-		application.setComputePlugin(computePlugin);
-		application.setIdentityPlugin(identityPlugin);
+		OCCIApplication application = new OCCIApplication(facade);
 		
 		Component http = new Component();
 		http.getServers().add(Protocol.HTTP, 8182);
@@ -40,9 +34,4 @@ public class Main {
 		http.start();
 	}
 
-	private static Object createInstance(String propName, Properties properties)
-			throws Exception {
-		return Class.forName(properties.getProperty(propName))
-				.getConstructor(Properties.class).newInstance(properties);
-	}
 }

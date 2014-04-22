@@ -75,7 +75,7 @@ public class TestComputeOpenStack {
 				computeOpenStack.requestInstance(PluginHelper.AUTH_TOKEN, categories,
 						new HashMap<String, String>()));
 
-		String instanceDetails = computeOpenStack.getInstanceDetails(PluginHelper.AUTH_TOKEN,
+		String instanceDetails = computeOpenStack.getInstance(PluginHelper.AUTH_TOKEN,
 				FIRST_INSTANCE_ID);
 
 		Assert.assertEquals(1, Integer.parseInt(getAttValueFromDetails(instanceDetails,
@@ -191,7 +191,7 @@ public class TestComputeOpenStack {
 		Assert.assertEquals(LOCATION_INSTANCE_PREFIX + FIRST_INSTANCE_ID,
 				computeOpenStack.requestInstance(PluginHelper.AUTH_TOKEN, categories, xOCCIAtt));
 
-		String instanceDetails = computeOpenStack.getInstanceDetails(PluginHelper.AUTH_TOKEN,
+		String instanceDetails = computeOpenStack.getInstance(PluginHelper.AUTH_TOKEN,
 				FIRST_INSTANCE_ID);
 		Assert.assertEquals("server-test",
 				getAttValueFromDetails(instanceDetails, ComputeApplication.HOSTNAME_ATTRIBUTE_OCCI));
@@ -212,7 +212,7 @@ public class TestComputeOpenStack {
 		Assert.assertEquals(LOCATION_INSTANCE_PREFIX + FIRST_INSTANCE_ID,
 				computeOpenStack.requestInstance(PluginHelper.AUTH_TOKEN, categories, xOCCIAtt));
 
-		String instanceDetails = computeOpenStack.getInstanceDetails(PluginHelper.AUTH_TOKEN,
+		String instanceDetails = computeOpenStack.getInstance(PluginHelper.AUTH_TOKEN,
 				FIRST_INSTANCE_ID);
 		Assert.assertEquals("server-test",
 				getAttValueFromDetails(instanceDetails, ComputeApplication.HOSTNAME_ATTRIBUTE_OCCI));
@@ -223,7 +223,7 @@ public class TestComputeOpenStack {
 	@Test
 	public void testGetAllInstanceIds() {
 		List<String> instanceLocations = getInstanceLocations(computeOpenStack
-				.getInstancesFromUser(PluginHelper.AUTH_TOKEN));
+				.getInstances(PluginHelper.AUTH_TOKEN));
 		Assert.assertEquals(0, instanceLocations.size());
 
 		// requesting one default instance
@@ -236,7 +236,7 @@ public class TestComputeOpenStack {
 
 		// check getting all instance ids
 		instanceLocations = getInstanceLocations(computeOpenStack
-				.getInstancesFromUser(PluginHelper.AUTH_TOKEN));
+				.getInstances(PluginHelper.AUTH_TOKEN));
 		Assert.assertEquals(1, instanceLocations.size());
 		Assert.assertEquals(URL + "/" + FIRST_INSTANCE_ID, instanceLocations.get(0));
 	}
@@ -244,7 +244,7 @@ public class TestComputeOpenStack {
 	@Test
 	public void testGetAllManyInstanceIds() {
 		List<String> instanceLocations = getInstanceLocations(computeOpenStack
-				.getInstancesFromUser(PluginHelper.AUTH_TOKEN));
+				.getInstances(PluginHelper.AUTH_TOKEN));
 		Assert.assertEquals(0, instanceLocations.size());
 
 		// requesting default instance
@@ -260,7 +260,7 @@ public class TestComputeOpenStack {
 
 		// check getting all instance ids
 		instanceLocations = getInstanceLocations(computeOpenStack
-				.getInstancesFromUser(PluginHelper.AUTH_TOKEN));
+				.getInstances(PluginHelper.AUTH_TOKEN));
 		Assert.assertEquals(expectedInstanceIds.size(), instanceLocations.size());
 		for (String expectedId : expectedInstanceIds) {
 			Assert.assertTrue(instanceLocations.contains(URL + "/" + expectedId));
@@ -283,7 +283,7 @@ public class TestComputeOpenStack {
 	@Test
 	public void testGetInstanceDetails() {
 		List<String> instanceLocations = getInstanceLocations(computeOpenStack
-				.getInstancesFromUser(PluginHelper.AUTH_TOKEN));
+				.getInstances(PluginHelper.AUTH_TOKEN));
 		Assert.assertEquals(0, instanceLocations.size());
 
 		// requesting one default instance
@@ -296,9 +296,9 @@ public class TestComputeOpenStack {
 
 		// check instance details
 		instanceLocations = getInstanceLocations(computeOpenStack
-				.getInstancesFromUser(PluginHelper.AUTH_TOKEN));
+				.getInstances(PluginHelper.AUTH_TOKEN));
 		Assert.assertEquals(1, instanceLocations.size());
-		String instanceDetails = computeOpenStack.getInstanceDetails(PluginHelper.AUTH_TOKEN,
+		String instanceDetails = computeOpenStack.getInstance(PluginHelper.AUTH_TOKEN,
 				FIRST_INSTANCE_ID);
 		Assert.assertEquals(FIRST_INSTANCE_ID,
 				getAttValueFromDetails(instanceDetails, ComputeApplication.ID_CORE_ATTRIBUTE_OCCI));
@@ -315,19 +315,19 @@ public class TestComputeOpenStack {
 	@Test
 	public void testDeleteAllInstancesEmpty() {
 		List<String> instanceLocations = getInstanceLocations(computeOpenStack
-				.getInstancesFromUser(PluginHelper.AUTH_TOKEN));
+				.getInstances(PluginHelper.AUTH_TOKEN));
 		Assert.assertEquals(0, instanceLocations.size());
 
-		computeOpenStack.removeAllInstances(PluginHelper.AUTH_TOKEN);
+		computeOpenStack.removeInstances(PluginHelper.AUTH_TOKEN);
 		instanceLocations = getInstanceLocations(computeOpenStack
-				.getInstancesFromUser(PluginHelper.AUTH_TOKEN));
+				.getInstances(PluginHelper.AUTH_TOKEN));
 		Assert.assertEquals(0, instanceLocations.size());
 	}
 
 	@Test
 	public void testDeleteAllManyInstances() {
 		List<String> instanceLocations = getInstanceLocations(computeOpenStack
-				.getInstancesFromUser(PluginHelper.AUTH_TOKEN));
+				.getInstances(PluginHelper.AUTH_TOKEN));
 		Assert.assertEquals(0, instanceLocations.size());
 
 		// requesting default instances
@@ -342,20 +342,20 @@ public class TestComputeOpenStack {
 
 		// check number of instances
 		instanceLocations = getInstanceLocations(computeOpenStack
-				.getInstancesFromUser(PluginHelper.AUTH_TOKEN));
+				.getInstances(PluginHelper.AUTH_TOKEN));
 		Assert.assertEquals(expectedInstanceIds.size(), instanceLocations.size());
 
 		// removing all instances
-		computeOpenStack.removeAllInstances(PluginHelper.AUTH_TOKEN);
+		computeOpenStack.removeInstances(PluginHelper.AUTH_TOKEN);
 		instanceLocations = getInstanceLocations(computeOpenStack
-				.getInstancesFromUser(PluginHelper.AUTH_TOKEN));
+				.getInstances(PluginHelper.AUTH_TOKEN));
 		Assert.assertEquals(0, instanceLocations.size());
 	}
 
 	@Test
 	public void testDeleteOneInstance() {
 		List<String> instanceLocations = getInstanceLocations(computeOpenStack
-				.getInstancesFromUser(PluginHelper.AUTH_TOKEN));
+				.getInstances(PluginHelper.AUTH_TOKEN));
 		Assert.assertEquals(0, instanceLocations.size());
 
 		// requesting default instances
@@ -370,13 +370,13 @@ public class TestComputeOpenStack {
 
 		// check number of instances
 		instanceLocations = getInstanceLocations(computeOpenStack
-				.getInstancesFromUser(PluginHelper.AUTH_TOKEN));
+				.getInstances(PluginHelper.AUTH_TOKEN));
 		Assert.assertEquals(expectedInstanceIds.size(), instanceLocations.size());
 
 		// removing one instances
 		computeOpenStack.removeInstance(PluginHelper.AUTH_TOKEN, FIRST_INSTANCE_ID);
 		instanceLocations = getInstanceLocations(computeOpenStack
-				.getInstancesFromUser(PluginHelper.AUTH_TOKEN));
+				.getInstances(PluginHelper.AUTH_TOKEN));
 		Assert.assertEquals(expectedInstanceIds.size() - 1, instanceLocations.size());
 	}
 }
