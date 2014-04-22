@@ -15,4 +15,8 @@ public interface ComputePlugin {
 	public ResourcesInfo getResourcesInfo (String authToken);
 	
 	public String removeInstance(String authToken, String instanceId);
+	
+	public String getInstanceDetails(String authToken, String instanceId); 
+	
+	public String removeAllInstances(String authToken);
 }

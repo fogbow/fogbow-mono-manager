@@ -15,34 +15,27 @@ public class ComputeServerResource extends ServerResource{
 	public String fetch() {		
 		OCCIApplication application = (OCCIApplication) getApplication();
 		HttpRequest req = (HttpRequest) getRequest();
-		String userToken = HeaderUtils.getAuthToken(req.getHeaders());
+//		HeaderUtils.checkOCCIContentType(req.getHeaders());
+		String authToken = HeaderUtils.getAuthToken(req.getHeaders());
 		String idVM = (String) getRequestAttributes().get("vmid");
 
 		if (idVM == null) {
-			//TODO implemet 
-//			return application.getAllInstacesVM;			
+			application.getAllVMFromUser(authToken);			
 		}
-		//TODO implemet 
-//		return application.getSpecificInstanceVm(idVM);
-		
-		return null;
+		return application.getSpecificVMDetails(authToken, idVM);	
 	}
 	
 	@Delete
 	public String remove() {
 		OCCIApplication application = (OCCIApplication) getApplication();
 		HttpRequest req = (HttpRequest) getRequest();
-		String userToken = HeaderUtils.getAuthToken(req.getHeaders());
+		String authToken = HeaderUtils.getAuthToken(req.getHeaders());
 		String idVM = (String) getRequestAttributes().get("vmid");
 
 		if (idVM == null) {
-			//TODO implemet 
-//			return application.removeAllInstacesVM;			
+			return application.removeAllVMFromUser(authToken);			
 		}
-		//TODO implemet 
-//		return application.removeSpecificInstanceVm(idVM);
-		
-		return null;
+		return application.removeSpecificInstanceVm(authToken, idVM);		
 	}
 	
 	@Post

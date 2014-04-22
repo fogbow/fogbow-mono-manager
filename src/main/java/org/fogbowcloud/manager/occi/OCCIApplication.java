@@ -74,6 +74,8 @@ public class OCCIApplication extends Application {
 		Router router = new Router(getContext());
 		router.attach("/request", RequestServerResource.class);
 		router.attach("/request/{requestid}", RequestServerResource.class);
+		router.attach("/compute/", ComputeServerResource.class);
+		router.attach("/compute/{vmid}", ComputeServerResource.class);
 		return router;
 	}
 
@@ -168,5 +170,33 @@ public class OCCIApplication extends Application {
 		if (!identityPlugin.isValidToken(authToken)) {
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}
+	}
+
+	public String getAllVMFromUser(String authToken) {
+		checkUserToken(authToken);
+		//TODO check other manager
+		
+		return this.computePlugin.getInstancesFromUser(authToken);
+	}
+
+	public String getSpecificVMDetails(String authToken, String idVM) {
+		checkUserToken(authToken);
+		//TODO check other manager
+		
+		return this.computePlugin.getInstanceDetails(authToken, idVM);
+	}
+
+	public String removeAllVMFromUser(String authToken) {
+		checkUserToken(authToken);
+		//TODO check other manager
+		
+		return this.computePlugin.removeAllInstances(authToken);
+	}
+
+	public String removeSpecificInstanceVm(String authToken, String idVM) {
+		checkUserToken(authToken);
+		//TODO check other manager
+		
+		return this.computePlugin.removeInstance(authToken, idVM);
 	}
 }

@@ -8,6 +8,8 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.protocol.HTTP;
+import org.apache.http.util.EntityUtils;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.occi.core.Category;
@@ -64,17 +66,13 @@ public class TestGetCompute {
 	public void TestGetComputeOneVM() throws Exception{
 		//Post /request
 		HttpPost httpPost = new HttpPost(RequestHelper.URI_FOGBOW_REQUEST);
+		HttpClient client = new DefaultHttpClient();
 		Category category = new Category(RequestConstants.TERM,
 				RequestConstants.SCHEME, OCCIHeaders.KIND_CLASS);
 		httpPost.addHeader(OCCIHeaders.CONTENT_TYPE, RequestHelper.CONTENT_TYPE_OCCI);
 		httpPost.addHeader(OCCIHeaders.X_AUTH_TOKEN, RequestHelper.ACCESS_TOKEN);
 		httpPost.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
-		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(httpPost);
-		List<String> requestIDs = RequestHelper.getRequestLocations(response);
-
-		Assert.assertEquals(1, requestIDs.size());
-		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 		
 		//Get /compute/
 		HttpGet httpGet = new HttpGet(RequestHelper.URI_FOGBOW_COMPUTE);
@@ -114,6 +112,36 @@ public class TestGetCompute {
 		response = client.execute(httpGet);	
 		
 		Assert.assertEquals(3, RequestHelper.getRequestLocations(response).size());
+		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+	}	
+	
+	@Ignore
+	@Test
+	public void TestGetComputeDetailsSpecificVM() throws Exception{
+		//Post /request
+		HttpPost httpPost = new HttpPost(RequestHelper.URI_FOGBOW_REQUEST);
+		HttpClient client = new DefaultHttpClient();
+		Category category = new Category(RequestConstants.TERM,
+				RequestConstants.SCHEME, OCCIHeaders.KIND_CLASS);
+		httpPost.addHeader(OCCIHeaders.CONTENT_TYPE, RequestHelper.CONTENT_TYPE_OCCI);
+		httpPost.addHeader(OCCIHeaders.X_AUTH_TOKEN, RequestHelper.ACCESS_TOKEN);
+		httpPost.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
+		HttpResponse response = client.execute(httpPost);
+		
+		String responseStr = EntityUtils.toString(response.getEntity(), HTTP.UTF_8);
+		String idVm = responseStr.replace("X-OCCI-Location: http://localhost:8182/request/", "").trim();
+		
+		//Get /compute/$VM
+		HttpGet httpGet = new HttpGet(RequestHelper.URI_FOGBOW_COMPUTE + idVm);
+		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, RequestHelper.CONTENT_TYPE_OCCI);
+		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, RequestHelper.ACCESS_TOKEN);
+		client = new DefaultHttpClient();
+		response = client.execute(httpGet);	
+		responseStr = EntityUtils.toString(response.getEntity(), HTTP.UTF_8);
+		System.out.println(responseStr);
+		
+		
+		Assert.assertEquals(1, RequestHelper.getRequestLocations(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}	
 	

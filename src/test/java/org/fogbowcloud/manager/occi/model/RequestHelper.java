@@ -14,7 +14,10 @@ import org.apache.http.util.EntityUtils;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.occi.OCCIApplication;
+import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.HeaderUtils;
+import org.fogbowcloud.manager.occi.request.Request;
+import org.mockito.Mockito;
 import org.restlet.Component;
 import org.restlet.data.Protocol;
 
@@ -28,10 +31,8 @@ public class RequestHelper {
 	public static final String URI_FOGBOW_COMPUTE = "http://localhost:8182/compute/";
 	public static final String USER_MOCK = "user_mock";
 	public static final int ENDPOINT_PORT = 8182;
-	
 
-	public void initializeComponent(ComputePlugin computePlugin, IdentityPlugin identityPlugin)
-			throws Exception {
+	public void initializeComponent(ComputePlugin computePlugin, IdentityPlugin identityPlugin) throws Exception {
 		component = new Component();
 		component.getServers().add(Protocol.HTTP, ENDPOINT_PORT);
 
