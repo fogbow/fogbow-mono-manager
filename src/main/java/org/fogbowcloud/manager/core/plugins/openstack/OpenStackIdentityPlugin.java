@@ -13,10 +13,12 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
+import org.fogbowcloud.manager.occi.core.ErrorType;
+import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
+import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.restlet.resource.ResourceException;
 
 public class OpenStackIdentityPlugin implements IdentityPlugin {
 
@@ -29,10 +31,10 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 	public static final String ACCESS_KEYSTONE = "Access";
 	public static final String USER_KEYSTONE = "user";
 	public static final String NAME_KEYSTONE = "name";
-	
+
 	private static String V3_ENDPOINT_PATH = "/v3/auth/tokens/";
 	private static String V2_ENDPOINT_PATH = "/v2.0/tokens";
-	
+
 	private String v2Endpoint;
 	private String v3Endpoint;
 
@@ -53,14 +55,14 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 					String.valueOf(Charsets.UTF_8));
 
 			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
-				throw new ResourceException(HttpStatus.SC_UNAUTHORIZED);
+				throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 			}
 			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_FOUND) {
-				throw new ResourceException(HttpStatus.SC_NOT_FOUND);
+				throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
 			}
 			return getUserNameUserFromJson(responseStr);
 		} catch (Exception e) {
-			throw new ResourceException(HttpStatus.SC_BAD_REQUEST);
+			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}
 	}
 
@@ -81,25 +83,25 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 			JSONObject rootMain = new JSONObject();
 			rootMain.put(AUTH_KEYSTONE, rootAuth);
 			httpPost.setEntity(new StringEntity(rootMain.toString(), HTTP.UTF_8));
-			
+
 			HttpResponse response = httpClient.execute(httpPost);
 			String responseStr = EntityUtils.toString(response.getEntity(), HTTP.UTF_8);
-			
+
 			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
-				throw new ResourceException(HttpStatus.SC_UNAUTHORIZED);
+				throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 			}
-			
+
 			return getTokenFromJson(responseStr);
 		} catch (Exception e) {
-			throw new ResourceException(HttpStatus.SC_BAD_REQUEST);
+			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}
 	}
 
 	private String getUserNameUserFromJson(String responseStr) {
 		try {
 			JSONObject root = new JSONObject(responseStr);
-			return root.getJSONObject(TOKEN_KEYSTONE)
-					.getJSONObject(USER_KEYSTONE).getString(NAME_KEYSTONE);
+			return root.getJSONObject(TOKEN_KEYSTONE).getJSONObject(USER_KEYSTONE)
+					.getString(NAME_KEYSTONE);
 		} catch (JSONException e) {
 			return null;
 		}
@@ -108,8 +110,8 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 	private String getTokenFromJson(String responseStr) {
 		try {
 			JSONObject root = new JSONObject(responseStr);
-			return root.getJSONObject(ACCESS_KEYSTONE)
-					.getJSONObject(TOKEN_KEYSTONE).getString(ID_KEYSTONE);
+			return root.getJSONObject(ACCESS_KEYSTONE).getJSONObject(TOKEN_KEYSTONE)
+					.getString(ID_KEYSTONE);
 		} catch (JSONException e) {
 			return null;
 		}

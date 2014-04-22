@@ -24,7 +24,6 @@ import org.fogbowcloud.manager.occi.request.Request;
 import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestRepository;
 import org.fogbowcloud.manager.occi.request.RequestState;
-import org.restlet.resource.ResourceException;
 
 public class ManagerFacade {
 
@@ -72,11 +71,7 @@ public class ManagerFacade {
 	}
 
 	public String getUser(String authToken) {
-		try {
-			return identityPlugin.getUser(authToken);
-		} catch (ResourceException e) {
-			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
-		}
+		return identityPlugin.getUser(authToken);
 	}
 
 	public List<Request> getRequestsFromUser(String authToken) {
