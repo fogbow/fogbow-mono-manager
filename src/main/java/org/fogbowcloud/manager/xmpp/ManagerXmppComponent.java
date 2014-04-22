@@ -1,10 +1,14 @@
 package org.fogbowcloud.manager.xmpp;
 
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import org.dom4j.Attribute;
 import org.dom4j.Element;
 import org.fogbowcloud.manager.core.ManagerFacade;
+import org.fogbowcloud.manager.core.model.ManagerItem;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.jamppa.component.XMPPComponent;
 import org.xmpp.component.ComponentException;
@@ -55,7 +59,33 @@ public class ManagerXmppComponent extends XMPPComponent {
 		iq.setFrom(getJID());
 		iq.getElement().addElement("query", WHOISALIVE_NAMESPACE);
 		IQ response = (IQ) this.syncSendPacket(iq);
-		managerFacade.getItemsFromIQ(response);
+		
+		ArrayList<ManagerItem> members = getMembersFromIQ(response);
+		managerFacade.updateMembers(members);
+	}
+	
+	@SuppressWarnings("unchecked")
+	private static ArrayList<ManagerItem> getMembersFromIQ(
+			IQ responseFromWhoIsAliveIQ) {
+		Element queryElement = responseFromWhoIsAliveIQ.getElement().element(
+				"query");
+		Iterator<Element> itemIterator = queryElement.elementIterator("item");
+		ArrayList<ManagerItem> aliveItems = new ArrayList<ManagerItem>();
+
+		while (itemIterator.hasNext()) {
+			Element itemEl = (Element) itemIterator.next();
+			Attribute id = itemEl.attribute("id");
+			Element statusEl = itemEl.element("status");
+			String cpuIdle = statusEl.element("cpu-idle").getText();
+			String cpuInUse = statusEl.element("cpu-inuse").getText();
+			String memIdle = statusEl.element("mem-idle").getText();
+			String memInUse = statusEl.element("mem-inuse").getText();
+			ResourcesInfo resources = new ResourcesInfo(id.getValue(), cpuIdle,
+					cpuInUse, memIdle, memInUse);
+			ManagerItem item = new ManagerItem(resources);
+			aliveItems.add(item);
+		}
+		return aliveItems;
 	}
 
 	private void callIamAlive() {

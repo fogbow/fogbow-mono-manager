@@ -64,7 +64,7 @@ public class TestManagerComponent {
 			}
 		}, callback);
 
-		managerXmppComponent.iAmAlive(ManagerTestHelper.AUTH_TOKEN);
+		managerXmppComponent.iAmAlive();
 
 		Packet packet = blockingQueue.poll(5, TimeUnit.SECONDS);
 		Element element = packet.getElement().element("query");
@@ -86,8 +86,7 @@ public class TestManagerComponent {
 	}
 
 	@Test
-	public void testWhoIsAlive() throws XMPPException, InterruptedException,
-			ComponentException {
+	public void testWhoIsAlive() throws Exception {
 		managerXmppComponent = managerTestHelper
 				.initializeXMPPManagerComponent(false);
 		final XMPPClient xmppClient = managerTestHelper.createXMPPClient();
@@ -129,13 +128,12 @@ public class TestManagerComponent {
 				ManagerTestHelper.WHOISALIVE_NAMESPACE);
 
 		Assert.assertEquals(1, managerXmppComponent.getManagerFacade()
-				.getManagerModel().getMembers().size());
+				.getMembers().size());
 		xmppClient.disconnect();
 	}
 
 	@Test
-	public void testCallIAmAlive() throws XMPPException, InterruptedException,
-			ComponentException {
+	public void testCallIAmAlive() throws Exception {
 		final XMPPClient xmppClient = managerTestHelper.createXMPPClient();
 		final Semaphore semaphore = new Semaphore(0);
 		
@@ -195,8 +193,7 @@ public class TestManagerComponent {
 	}
 
 	@Test
-	public void testCallWhoIsAlive() throws XMPPException,
-			InterruptedException, ComponentException {
+	public void testCallWhoIsAlive() throws Exception {
 		final XMPPClient xmppClient = managerTestHelper.createXMPPClient();
 		final Semaphore semaphore = new Semaphore(0);
 		final PacketListener callbackWhoIsAlive = new PacketListener() {
@@ -231,7 +228,7 @@ public class TestManagerComponent {
 				.initializeXMPPManagerComponent(true);
 		Assert.assertTrue(semaphore.tryAcquire(20000, TimeUnit.MILLISECONDS));
 		Assert.assertEquals(1, managerXmppComponent.getManagerFacade()
-				.getManagerModel().getMembers().size());
+				.getMembers().size());
 		xmppClient.disconnect();
 	}
 

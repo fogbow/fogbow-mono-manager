@@ -4,6 +4,8 @@ import java.io.FileInputStream;
 import java.util.Properties;
 
 import org.fogbowcloud.manager.core.ManagerFacade;
+import org.fogbowcloud.manager.core.plugins.ComputePlugin;
+import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.occi.OCCIApplication;
 import org.fogbowcloud.manager.xmpp.ManagerXmppComponent;
 import org.restlet.Component;
@@ -16,7 +18,14 @@ public class Main {
 		FileInputStream input = new FileInputStream(args[0]);
 		properties.load(input);
 		
+		ComputePlugin computePlugin = (ComputePlugin) createInstance(
+				"compute_class", properties);
+		IdentityPlugin identityPlugin = (IdentityPlugin) createInstance(
+				"identity_class", properties);
+		
 		ManagerFacade facade = new ManagerFacade(properties);
+		facade.setComputePlugin(computePlugin);
+		facade.setIdentityPlugin(identityPlugin);
 		
 		ManagerXmppComponent xmpp = new ManagerXmppComponent(properties.getProperty("xmpp_jid"), 
 				properties.getProperty("xmpp_password"), 
@@ -33,5 +42,12 @@ public class Main {
 		http.getDefaultHost().attach(application);
 		http.start();
 	}
+	
+	private static Object createInstance(String propName, Properties properties)
+			throws Exception {
+		return Class.forName(properties.getProperty(propName))
+				.getConstructor(Properties.class).newInstance(properties);
+	}
+
 
 }

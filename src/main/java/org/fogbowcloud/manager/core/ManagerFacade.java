@@ -1,7 +1,6 @@
 package org.fogbowcloud.manager.core;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -11,8 +10,6 @@ import java.util.TimerTask;
 import java.util.UUID;
 
 import org.apache.log4j.Logger;
-import org.dom4j.Attribute;
-import org.dom4j.Element;
 import org.fogbowcloud.manager.core.model.ManagerItem;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
@@ -27,7 +24,6 @@ import org.fogbowcloud.manager.occi.request.Request;
 import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestRepository;
 import org.fogbowcloud.manager.occi.request.RequestState;
-import org.xmpp.packet.IQ;
 
 public class ManagerFacade {
 	
@@ -44,41 +40,17 @@ public class ManagerFacade {
 	
 	public ManagerFacade(Properties properties) throws Exception {
 		this.properties = properties;
-		this.computePlugin = (ComputePlugin) createInstance(
-				"compute_class", properties);
-		this.identityPlugin = (IdentityPlugin) createInstance(
-				"identity_class", properties);
+		if (properties == null) {
+			throw new IllegalArgumentException();
+		}
 	}
 	
-	private static Object createInstance(String propName, Properties properties)
-			throws Exception {
-		return Class.forName(properties.getProperty(propName))
-				.getConstructor(Properties.class).newInstance(properties);
+	public void setComputePlugin(ComputePlugin computePlugin) {
+		this.computePlugin = computePlugin;
 	}
-
-	@SuppressWarnings("unchecked")
-	public ArrayList<ManagerItem> getItemsFromIQ(
-			IQ responseFromWhoIsAliveIQ) {
-		Element queryElement = responseFromWhoIsAliveIQ.getElement().element(
-				"query");
-		Iterator<Element> itemIterator = queryElement.elementIterator("item");
-		ArrayList<ManagerItem> aliveItems = new ArrayList<ManagerItem>();
-
-		while (itemIterator.hasNext()) {
-			Element itemEl = (Element) itemIterator.next();
-			Attribute id = itemEl.attribute("id");
-			Element statusEl = itemEl.element("status");
-			String cpuIdle = statusEl.element("cpu-idle").getText();
-			String cpuInUse = statusEl.element("cpu-inuse").getText();
-			String memIdle = statusEl.element("mem-idle").getText();
-			String memInUse = statusEl.element("mem-inuse").getText();
-			ResourcesInfo resources = new ResourcesInfo(id.getValue(), cpuIdle,
-					cpuInUse, memIdle, memInUse);
-			ManagerItem item = new ManagerItem(resources);
-			aliveItems.add(item);
-		}
-		updateMembers(aliveItems);
-		return aliveItems;
+	
+	public void setIdentityPlugin(IdentityPlugin identityPlugin) {
+		this.identityPlugin = identityPlugin;
 	}
 
 	public void updateMembers(List<ManagerItem> members) {

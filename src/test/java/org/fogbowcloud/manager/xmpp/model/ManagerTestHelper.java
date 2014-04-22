@@ -3,11 +3,14 @@ package org.fogbowcloud.manager.xmpp.model;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Properties;
 
 import org.dom4j.Attribute;
 import org.dom4j.Element;
+import org.fogbowcloud.manager.core.ManagerFacade;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
+import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.xmpp.ManagerXmppComponent;
 import org.jamppa.client.XMPPClient;
 import org.jamppa.client.plugin.xep0077.XEP0077;
@@ -25,10 +28,10 @@ public class ManagerTestHelper {
 	private static final String CLIENT_ADRESS = "client@test.com";
 	private static final String CLIENT_PASS = "password";
 	private static final String SMACK_ENDING = "/Smack";
+	private static final String TOKEN = "token";
 
 	public static final String MANAGER_COMPONENT_URL = "manager.test.com";
 	public static final String MANAGER_COMPONENT_PASS = "password";
-	public static final String AUTH_TOKEN = "HgfugGJHgJgHJGjGJgJg-857GHGYHjhHjH";
 
 	public static final String WHOISALIVE_NAMESPACE = "http://fogbowcloud.org/rendezvous/whoisalive";
 	public static final String IAMALIVE_NAMESPACE = "http://fogbowcloud.org/rendezvous/iamalive";
@@ -87,13 +90,24 @@ public class ManagerTestHelper {
 	}
 
 	public ManagerXmppComponent initializeXMPPManagerComponent(boolean init)
-			throws ComponentException {
+			throws Exception {
+		
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
+		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
+		
+		Properties properties = new Properties();
+		properties.put("federation.user.name", "fogbow");
+		properties.put("federation.user.password", "fogbow");
+		
+		ManagerFacade managerFacade = new ManagerFacade(properties);
+		managerFacade.setComputePlugin(computePlugin);
+		managerFacade.setIdentityPlugin(identityPlugin);
+		
 		managerXmppComponent = new ManagerXmppComponent(MANAGER_COMPONENT_URL,
 				MANAGER_COMPONENT_PASS, SERVER_HOST, SERVER_COMPONENT_PORT,
-				computePlugin);
-		Mockito.when(computePlugin.getResourcesInfo(AUTH_TOKEN)).thenReturn(
-				getResources());
+				managerFacade);
+		Mockito.when(computePlugin.getResourcesInfo(TOKEN)).thenReturn(getResources());
+		Mockito.when(identityPlugin.getToken("fogbow", "fogbow")).thenReturn(TOKEN);
 
 		managerXmppComponent.setDescription("Manager Component");
 		managerXmppComponent.setName("Manager");
@@ -101,7 +115,7 @@ public class ManagerTestHelper {
 		managerXmppComponent.connect();
 		managerXmppComponent.process();
 		if (init) {
-			managerXmppComponent.init(AUTH_TOKEN);
+			managerXmppComponent.init();
 		}
 		return managerXmppComponent;
 	}

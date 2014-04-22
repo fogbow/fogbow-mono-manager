@@ -19,5 +19,5 @@ public interface ComputePlugin {
 	
 	public void removeInstances(String authToken);
 	
-	public ResourcesInfo getResourcesInfo (String authToken);
+	public ResourcesInfo getResourcesInfo(String authToken);
 }
