@@ -124,14 +124,16 @@ public class OpenStackComputePlugin implements ComputePlugin {
 			}
 //			return EntityUtils.toString(response.getEntity(), String.valueOf(Charsets.UTF_8));
 			return null;
-		} catch (URISyntaxException e) {
+		} catch (URISyntaxException e) {			
 			LOGGER.error(e);
+			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
 		} catch (HttpException e) {
 			LOGGER.error(e);
+			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
 		} catch (IOException e) {
 			LOGGER.error(e);
+			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
 		}
-		return null;
 	}
 
 	public List<Instance> getInstances(String authToken) {
@@ -149,12 +151,14 @@ public class OpenStackComputePlugin implements ComputePlugin {
 			return null;
 		} catch (URISyntaxException e) {
 			LOGGER.error(e);
+			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
 		} catch (HttpException e) {
 			LOGGER.error(e);
+			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
 		} catch (IOException e) {
 			LOGGER.error(e);
+			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
 		}
-		return null;
 	}
 
 	public void removeInstances(String authToken) {
@@ -169,10 +173,13 @@ public class OpenStackComputePlugin implements ComputePlugin {
 			}
 		} catch (URISyntaxException e) {
 			LOGGER.error(e);
+			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
 		} catch (HttpException e) {
 			LOGGER.error(e);
+			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
 		} catch (IOException e) {
 			LOGGER.error(e);
+			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
 		}
 	}
 
@@ -192,10 +199,13 @@ public class OpenStackComputePlugin implements ComputePlugin {
 			}
 		} catch (URISyntaxException e) {
 			LOGGER.error(e);
+			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
 		} catch (HttpException e) {
 			LOGGER.error(e);
+			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
 		} catch (IOException e) {
 			LOGGER.error(e);
+			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
 		}
 	}
 
