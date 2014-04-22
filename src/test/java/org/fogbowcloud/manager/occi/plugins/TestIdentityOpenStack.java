@@ -32,12 +32,13 @@ public class TestIdentityOpenStack {
 
 	@Test
 	public void testValidToken() {
-		Assert.assertTrue(this.identityOpenStack.isValidToken(PluginHelper.AUTH_TOKEN));
+		Assert.assertEquals(PluginHelper.USERNAME_FOGBOW,
+				this.identityOpenStack.getUser(PluginHelper.AUTH_TOKEN));
 	}
 
-	@Test
+	@Test(expected = ResourceException.class)
 	public void testInvalidToken() {
-		Assert.assertFalse(identityOpenStack.isValidToken("Invalid Token"));
+		identityOpenStack.getUser("Invalid Token");
 	}
 
 	@Test
@@ -53,8 +54,8 @@ public class TestIdentityOpenStack {
 
 	@Test
 	public void testGetToken() {
-		String token = this.identityOpenStack
-				.getToken(PluginHelper.USERNAME_FOGBOW, PluginHelper.PASSWORD_FOGBOW);
+		String token = this.identityOpenStack.getToken(PluginHelper.USERNAME_FOGBOW,
+				PluginHelper.PASSWORD_FOGBOW);
 		Assert.assertEquals(PluginHelper.AUTH_TOKEN, token);
 	}
 
