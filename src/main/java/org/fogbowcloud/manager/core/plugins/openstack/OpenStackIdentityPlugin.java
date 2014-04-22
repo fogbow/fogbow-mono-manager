@@ -42,25 +42,6 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 		this.v2Endpoint = keystoneUrl + V2_ENDPOINT_PATH;
 	}
 
-	public boolean isValidToken(String authToken) {
-		try {
-			HttpClient httpCLient = new DefaultHttpClient();
-			HttpGet httpGet = new HttpGet(this.v2Endpoint);
-			httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, authToken);
-			httpGet.addHeader(OCCIHeaders.X_SUBJEC_TOKEN, authToken);
-			HttpResponse response = httpCLient.execute(httpGet);
-
-			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED
-					|| response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_FOUND) {
-				return false;
-			}
-			return true;
-		} catch (Exception e) {
-			e.printStackTrace();
-			return false;
-		}
-	}
-
 	public String getUser(String authToken) {
 		try {
 			HttpClient httpCLient = new DefaultHttpClient();

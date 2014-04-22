@@ -24,20 +24,21 @@ import org.fogbowcloud.manager.occi.request.Request;
 import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestRepository;
 import org.fogbowcloud.manager.occi.request.RequestState;
+import org.restlet.resource.ResourceException;
 
 public class ManagerFacade {
-	
+
 	private static final Logger LOGGER = Logger.getLogger(ManagerFacade.class);
 	protected static final long PERIOD = 50;
-	
+
 	private final Timer timer = new Timer();
 	private List<ManagerItem> members = new LinkedList<ManagerItem>();
 	private RequestRepository requests = new RequestRepository();
-	
+
 	private ComputePlugin computePlugin;
 	private IdentityPlugin identityPlugin;
 	private Properties properties;
-	
+
 	public ManagerFacade(Properties properties) throws Exception {
 		this.properties = properties;
 		if (properties == null) {
@@ -63,85 +64,86 @@ public class ManagerFacade {
 	public List<ManagerItem> getMembers() {
 		return members;
 	}
-	
+
 	public ResourcesInfo getResourcesInfo() {
-		String token = identityPlugin.getToken(properties.getProperty("federation.user.name"), 
+		String token = identityPlugin.getToken(properties.getProperty("federation.user.name"),
 				properties.getProperty("federation.user.password"));
 		return computePlugin.getResourcesInfo(token);
 	}
 
 	public String getUser(String authToken) {
-		return identityPlugin.getUser(authToken);
-	}
-
-	public List<Request> getRequestsFromUser(String authToken) {
-		checkUserToken(authToken);
-		String user = getUser(authToken);
-		return requests.getByUser(user);
-	}
-	
-	private void checkUserToken(String authToken) {
-		if (!identityPlugin.isValidToken(authToken)) {
+		try {
+			return identityPlugin.getUser(authToken);
+		} catch (ResourceException e) {
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}
 	}
 
+	public List<Request> getRequestsFromUser(String authToken) {
+		String user = getUser(authToken);
+		return requests.getByUser(user);
+	}
+
 	public void removeAllRequests(String authToken) {
-		checkUserToken(authToken);
-		String user = identityPlugin.getUser(authToken);
+		String user = getUser(authToken);
 		requests.removeByUser(user);
 	}
 
 	public void removeRequest(String authToken, String requestId) {
-		checkUserToken(authToken);
 		checkRequestId(authToken, requestId);
 		requests.remove(requestId);
 	}
-	
+
 	private void checkRequestId(String authToken, String requestId) {
-		String user = identityPlugin.getUser(authToken);
+		String user = getUser(authToken);
 		if (requests.get(user, requestId) == null) {
 			throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
 		}
 	}
-	
+
 	public List<Instance> getInstances(String authToken) {
-		checkUserToken(authToken);
-		//TODO check other manager
-		
+		// TODO check other manager
+
 		return this.computePlugin.getInstances(authToken);
 	}
 
 	public Instance getInstance(String authToken, String instanceId) {
-		checkUserToken(authToken);
-		//TODO check other manager
-		
+		// TODO check other manager
+		checkInstanceId(authToken, instanceId);
 		return this.computePlugin.getInstance(authToken, instanceId);
 	}
 
 	public void removeInstances(String authToken) {
-		checkUserToken(authToken);
-		//TODO check other manager
-		
+		// TODO check other manager
+
 		this.computePlugin.removeInstances(authToken);
 	}
 
 	public void removeInstance(String authToken, String instanceId) {
-		checkUserToken(authToken);
-		//TODO check other manager
-		
+		// TODO check other manager
+
+		checkInstanceId(authToken, instanceId);
 		this.computePlugin.removeInstance(authToken, instanceId);
 	}
-	
+
+	private void checkInstanceId(String authToken, String instanceId) {
+		String user = getUser(authToken);
+		List<Request> userRequests = requests.getByUser(user);
+		for (Request request : userRequests) {
+			if (instanceId.equals(request.getInstanceId())) {
+				return;
+			}
+		}
+		throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
+	}
+
 	public Request getRequest(String authToken, String requestId) {
-		checkUserToken(authToken);
 		checkRequestId(authToken, requestId);
 		return requests.get(requestId);
 	}
-	
+
 	public List<Request> createRequests(String authToken, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
-		checkUserToken(authToken);
 		String user = getUser(authToken);
 
 		Integer instanceCount = Integer.valueOf(xOCCIAtt.get(RequestAttribute.INSTANCE_COUNT
@@ -176,7 +178,7 @@ public class ManagerFacade {
 		request.setInstanceId(instanceLocation);
 		request.setState(RequestState.FULFILLED);
 	}
-	
+
 	private void submitRequests() {
 		timer.schedule(new TimerTask() {
 			@Override
@@ -194,14 +196,13 @@ public class ManagerFacade {
 				request.setState(RequestState.FULFILLED);
 			} catch (OCCIException e) {
 				if (e.getStatus().equals(ErrorType.BAD_REQUEST)
-						&& e.getMessage().contains(
-								ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES)) {
+						&& e.getMessage().contains(ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES)) {
 					submitRemoteRequest(request); // FIXME submit more than
 													// one at same time
 				} else {
 					// TODO set state to fail?
 					request.setState(RequestState.FAILED);
-//					throw e;
+					// throw e;
 				}
 			}
 		}
