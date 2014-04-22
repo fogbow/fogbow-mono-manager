@@ -4,7 +4,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
+import org.fogbowcloud.manager.core.ManagerFacade;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.occi.core.Category;
@@ -34,7 +36,8 @@ public class TestOCCIApplication {
 	@SuppressWarnings("unchecked")
 	@Before
 	public void setUp() {
-		occiApplication = new OCCIApplication();
+		ManagerFacade managerFacade = new ManagerFacade(new Properties());
+		occiApplication = new OCCIApplication(managerFacade);
 
 		// default instance count value is 1
 		xOCCIAtt = new HashMap<String, String>();
@@ -47,12 +50,11 @@ public class TestOCCIApplication {
 						Mockito.any(Map.class))).thenReturn(instanceLocation);
 
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
-		Mockito.when(identityPlugin.isValidToken(RequestHelper.ACCESS_TOKEN)).thenReturn(true);
 		Mockito.when(identityPlugin.getUser(RequestHelper.ACCESS_TOKEN)).thenReturn(
 				RequestHelper.USER_MOCK);
 
-		occiApplication.setIdentityPlugin(identityPlugin);
-		occiApplication.setComputePlugin(computePlugin);
+		managerFacade.setIdentityPlugin(identityPlugin);
+		managerFacade.setComputePlugin(computePlugin);
 	}
 
 	@Test
@@ -82,7 +84,7 @@ public class TestOCCIApplication {
 		Assert.assertEquals("", requestDetails.getInstanceId());
 		Assert.assertEquals(RequestState.OPEN, requestDetails.getState());
 
-		Thread.sleep(OCCIApplication.PERIOD);
+		Thread.sleep(ManagerFacade.SCHEDULER_PERIOD);
 				
 		Assert.assertEquals(requestId, requestDetails.getId());
 		Assert.assertEquals(expectedInstanceId, requestDetails.getInstanceId());

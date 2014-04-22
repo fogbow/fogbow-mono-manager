@@ -18,8 +18,11 @@ import org.apache.http.util.EntityUtils;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.occi.core.Category;
+import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.HeaderUtils;
+import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
+import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.model.ComputeApplication;
 import org.fogbowcloud.manager.occi.model.RequestHelper;
 import org.fogbowcloud.manager.occi.request.RequestAttribute;
@@ -48,9 +51,10 @@ public class TestGetRequest {
 						Mockito.any(Map.class))).thenReturn(instanceLocation);
 
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
-		Mockito.when(identityPlugin.isValidToken(RequestHelper.ACCESS_TOKEN)).thenReturn(true);
 		Mockito.when(identityPlugin.getUser(RequestHelper.ACCESS_TOKEN)).thenReturn(
 				RequestHelper.USER_MOCK);
+		Mockito.when(identityPlugin.getUser(RequestHelper.INVALID_TOKEN)).thenThrow(
+				new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED));
 
 		requestHelper.initializeComponent(computePlugin, identityPlugin);
 	}
@@ -83,7 +87,7 @@ public class TestGetRequest {
 	public void testGetRequestInvalidToken() throws URISyntaxException, HttpException, IOException {
 		HttpGet get = new HttpGet(RequestHelper.URI_FOGBOW_REQUEST);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, RequestHelper.CONTENT_TYPE_OCCI);
-		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, "invalid_token");
+		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, RequestHelper.INVALID_TOKEN);
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(get);
 

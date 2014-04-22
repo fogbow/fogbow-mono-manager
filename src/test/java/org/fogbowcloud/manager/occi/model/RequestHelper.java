@@ -5,19 +5,18 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.StringTokenizer;
 
 import org.apache.commons.codec.Charsets;
 import org.apache.http.HttpResponse;
 import org.apache.http.ParseException;
 import org.apache.http.util.EntityUtils;
+import org.fogbowcloud.manager.core.ManagerFacade;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.occi.OCCIApplication;
-import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.HeaderUtils;
-import org.fogbowcloud.manager.occi.request.Request;
-import org.mockito.Mockito;
 import org.restlet.Component;
 import org.restlet.data.Protocol;
 
@@ -26,21 +25,23 @@ public class RequestHelper {
 	private Component component;
 
 	public static final String ACCESS_TOKEN = "HgjhgYUDFTGBgrbelihBDFGBÇuyrb";
+	public static final String INVALID_TOKEN = "invalid-token";
 	public static final String CONTENT_TYPE_OCCI = "text/occi";
 	public static final String URI_FOGBOW_REQUEST = "http://localhost:8182/request";
 	public static final String URI_FOGBOW_COMPUTE = "http://localhost:8182/compute/";
 	public static final String USER_MOCK = "user_mock";
 	public static final int ENDPOINT_PORT = 8182;
 
+
 	public void initializeComponent(ComputePlugin computePlugin, IdentityPlugin identityPlugin) throws Exception {
 		component = new Component();
 		component.getServers().add(Protocol.HTTP, ENDPOINT_PORT);
 
-		OCCIApplication application = new OCCIApplication();
-		application.setComputePlugin(computePlugin);
-		application.setIdentityPlugin(identityPlugin);
-
-		component.getDefaultHost().attach(application);
+		ManagerFacade facade = new ManagerFacade(new Properties());
+		facade.setComputePlugin(computePlugin);
+		facade.setIdentityPlugin(identityPlugin);
+		
+		component.getDefaultHost().attach(new OCCIApplication(facade));
 		component.start();
 	}
 

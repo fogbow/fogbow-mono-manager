@@ -16,7 +16,10 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.occi.core.Category;
+import org.fogbowcloud.manager.occi.core.ErrorType;
+import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
+import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.model.RequestHelper;
 import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
@@ -40,8 +43,9 @@ public class TestDeleteRequest {
 				.thenReturn("");
 
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
-		Mockito.when(identityPlugin.isValidToken(RequestHelper.ACCESS_TOKEN)).thenReturn(true);
 		Mockito.when(identityPlugin.getUser(RequestHelper.ACCESS_TOKEN)).thenReturn(RequestHelper.USER_MOCK);
+		Mockito.when(identityPlugin.getUser(RequestHelper.INVALID_TOKEN)).thenThrow(
+				new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED));
 
 		this.requestHelper.initializeComponent(computePlugin, identityPlugin);
 	}
@@ -201,7 +205,7 @@ public class TestDeleteRequest {
 	public void testDeleteWithInvalidToken() throws URISyntaxException, HttpException, IOException {
 		HttpDelete delete = new HttpDelete(RequestHelper.URI_FOGBOW_REQUEST);
 		delete.addHeader(OCCIHeaders.CONTENT_TYPE, RequestHelper.CONTENT_TYPE_OCCI);
-		delete.addHeader(OCCIHeaders.X_AUTH_TOKEN, "invalid_token");
+		delete.addHeader(OCCIHeaders.X_AUTH_TOKEN, RequestHelper.INVALID_TOKEN);
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(delete);
 

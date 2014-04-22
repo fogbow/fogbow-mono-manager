@@ -28,7 +28,7 @@ import org.fogbowcloud.manager.occi.request.RequestState;
 public class ManagerFacade {
 
 	private static final Logger LOGGER = Logger.getLogger(ManagerFacade.class);
-	protected static final long PERIOD = 50;
+	public static final long SCHEDULER_PERIOD = 50;
 
 	private final Timer timer = new Timer();
 	private List<ManagerItem> members = new LinkedList<ManagerItem>();
@@ -38,7 +38,7 @@ public class ManagerFacade {
 	private IdentityPlugin identityPlugin;
 	private Properties properties;
 
-	public ManagerFacade(Properties properties) throws Exception {
+	public ManagerFacade(Properties properties) {
 		this.properties = properties;
 		if (properties == null) {
 			throw new IllegalArgumentException();
@@ -180,7 +180,7 @@ public class ManagerFacade {
 			public void run() {
 				checkAndSubmitOpenRequests();
 			}
-		}, 0, PERIOD);
+		}, 0, SCHEDULER_PERIOD);
 	}
 
 	private void checkAndSubmitOpenRequests() {
