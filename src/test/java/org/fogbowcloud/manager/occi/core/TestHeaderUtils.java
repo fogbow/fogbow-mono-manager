@@ -2,8 +2,8 @@ package org.fogbowcloud.manager.occi.core;
 
 import java.util.List;
 
-import org.fogbowcloud.manager.occi.model.RequestHelper;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
+import org.fogbowcloud.manager.occi.util.RequestHelper;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;

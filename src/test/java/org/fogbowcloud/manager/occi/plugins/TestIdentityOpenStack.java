@@ -3,7 +3,7 @@ package org.fogbowcloud.manager.occi.plugins;
 import java.util.Properties;
 
 import org.fogbowcloud.manager.core.plugins.openstack.OpenStackIdentityPlugin;
-import org.fogbowcloud.manager.occi.model.PluginHelper;
+import org.fogbowcloud.manager.occi.util.PluginHelper;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;

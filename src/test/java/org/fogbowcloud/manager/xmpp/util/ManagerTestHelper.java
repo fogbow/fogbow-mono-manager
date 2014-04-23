@@ -1,4 +1,4 @@
-package org.fogbowcloud.manager.xmpp.model;
+package org.fogbowcloud.manager.xmpp.util;
 
 import java.util.ArrayList;
 import java.util.Iterator;

@@ -5,8 +5,10 @@ import java.util.Map;
 
 import org.fogbowcloud.manager.core.ManagerFacade;
 import org.fogbowcloud.manager.occi.core.Category;
-import org.fogbowcloud.manager.occi.request.Instance;
+import org.fogbowcloud.manager.occi.instance.ComputeServerResource;
+import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.request.Request;
+import org.fogbowcloud.manager.occi.request.RequestServerResource;
 import org.restlet.Application;
 import org.restlet.Restlet;
 import org.restlet.routing.Router;

@@ -7,14 +7,14 @@ import java.util.TimeZone;
 
 import org.fogbowcloud.manager.xmpp.core.model.DateUtils;
 
-public class ManagerItem {
+public class FederationMember {
 
 	public static final String ISO_8601_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
 	
 	private long lastTime;
 	private ResourcesInfo resourcesInfo;
 
-	public ManagerItem(ResourcesInfo resourcesInfo) {
+	public FederationMember(ResourcesInfo resourcesInfo) {
 		if (resourcesInfo == null) {
 			throw new IllegalArgumentException();
 		}

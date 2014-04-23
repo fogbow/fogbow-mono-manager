@@ -8,8 +8,8 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 import org.dom4j.Element;
-import org.fogbowcloud.manager.xmpp.model.ManagerTestHelper;
-import org.fogbowcloud.manager.xmpp.model.RendezvousItemCopy;
+import org.fogbowcloud.manager.xmpp.util.ManagerTestHelper;
+import org.fogbowcloud.manager.xmpp.util.RendezvousItemCopy;
 import org.jamppa.client.XMPPClient;
 import org.jivesoftware.smack.PacketListener;
 import org.jivesoftware.smack.XMPPException;

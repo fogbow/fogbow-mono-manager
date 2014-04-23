@@ -8,10 +8,9 @@ import java.util.TimerTask;
 import org.dom4j.Attribute;
 import org.dom4j.Element;
 import org.fogbowcloud.manager.core.ManagerFacade;
-import org.fogbowcloud.manager.core.model.ManagerItem;
+import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.jamppa.component.XMPPComponent;
-import org.xmpp.component.ComponentException;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.IQ.Type;
 
@@ -19,6 +18,8 @@ public class ManagerXmppComponent extends XMPPComponent {
 
 	public static final String WHOISALIVE_NAMESPACE = "http://fogbowcloud.org/rendezvous/whoisalive";
 	public static final String IAMALIVE_NAMESPACE = "http://fogbowcloud.org/rendezvous/iamalive";
+	public static final String REQUEST_NAMESPACE = "http://fogbowcloud.org/manager/request";
+	
 	private static long PERIOD = 100;
 	private ManagerFacade managerFacade;
 	private final Timer timer = new Timer();
@@ -30,13 +31,8 @@ public class ManagerXmppComponent extends XMPPComponent {
 		this.managerFacade = managerFacade;
 	}
 
-	@Override
-	public void connect() throws ComponentException {
-		super.connect();
-	}
-
 	public void init() {
-		callIamAlive();
+		scheduleIamAlive();
 	}
 	
 	public void iAmAlive() {
@@ -60,17 +56,17 @@ public class ManagerXmppComponent extends XMPPComponent {
 		iq.getElement().addElement("query", WHOISALIVE_NAMESPACE);
 		IQ response = (IQ) this.syncSendPacket(iq);
 		
-		ArrayList<ManagerItem> members = getMembersFromIQ(response);
+		ArrayList<FederationMember> members = getMembersFromIQ(response);
 		managerFacade.updateMembers(members);
 	}
 	
 	@SuppressWarnings("unchecked")
-	private static ArrayList<ManagerItem> getMembersFromIQ(
+	private static ArrayList<FederationMember> getMembersFromIQ(
 			IQ responseFromWhoIsAliveIQ) {
 		Element queryElement = responseFromWhoIsAliveIQ.getElement().element(
 				"query");
 		Iterator<Element> itemIterator = queryElement.elementIterator("item");
-		ArrayList<ManagerItem> aliveItems = new ArrayList<ManagerItem>();
+		ArrayList<FederationMember> aliveItems = new ArrayList<FederationMember>();
 
 		while (itemIterator.hasNext()) {
 			Element itemEl = (Element) itemIterator.next();
@@ -82,13 +78,13 @@ public class ManagerXmppComponent extends XMPPComponent {
 			String memInUse = statusEl.element("mem-inuse").getText();
 			ResourcesInfo resources = new ResourcesInfo(id.getValue(), cpuIdle,
 					cpuInUse, memIdle, memInUse);
-			ManagerItem item = new ManagerItem(resources);
+			FederationMember item = new FederationMember(resources);
 			aliveItems.add(item);
 		}
 		return aliveItems;
 	}
 
-	private void callIamAlive() {
+	private void scheduleIamAlive() {
 		timer.schedule(new TimerTask() {
 			@Override
 			public void run() {

@@ -1,4 +1,4 @@
-package org.fogbowcloud.manager.occi.request;
+package org.fogbowcloud.manager.occi.instance;
 
 import java.util.ArrayList;
 import java.util.List;

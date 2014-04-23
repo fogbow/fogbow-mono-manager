@@ -4,13 +4,15 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
 
 import org.apache.log4j.Logger;
-import org.fogbowcloud.manager.core.model.ManagerItem;
+import org.dom4j.Element;
+import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
@@ -19,24 +21,31 @@ import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.HeaderUtils;
 import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
-import org.fogbowcloud.manager.occi.request.Instance;
+import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestRepository;
 import org.fogbowcloud.manager.occi.request.RequestState;
+import org.fogbowcloud.manager.xmpp.ManagerXmppComponent;
+import org.jamppa.component.PacketSender;
+import org.xmpp.packet.IQ;
 
 public class ManagerFacade {
 
 	private static final Logger LOGGER = Logger.getLogger(ManagerFacade.class);
-	public static final long SCHEDULER_PERIOD = 50;
+	public static final long SCHEDULER_PERIOD = 30000;
 
+	private boolean scheduled = false;
 	private final Timer timer = new Timer();
-	private List<ManagerItem> members = new LinkedList<ManagerItem>();
+	
+	private List<FederationMember> members = new LinkedList<FederationMember>();
 	private RequestRepository requests = new RequestRepository();
+	private FederationMemberPicker memberPicker = new RoundRobinMemberPicker();
 
 	private ComputePlugin computePlugin;
 	private IdentityPlugin identityPlugin;
 	private Properties properties;
+	private PacketSender packetSender;
 
 	public ManagerFacade(Properties properties) {
 		this.properties = properties;
@@ -53,14 +62,14 @@ public class ManagerFacade {
 		this.identityPlugin = identityPlugin;
 	}
 
-	public void updateMembers(List<ManagerItem> members) {
+	public void updateMembers(List<FederationMember> members) {
 		if (members == null) {
 			throw new IllegalArgumentException();
 		}
 		this.members = members;
 	}
 
-	public List<ManagerItem> getMembers() {
+	public List<FederationMember> getMembers() {
 		return members;
 	}
 
@@ -153,29 +162,73 @@ public class ManagerFacade {
 			currentRequests.add(request);
 			requests.addRequest(user, request);
 		}
+		if (!scheduled) {
+			scheduleRequests();
+		}
+		
 		return currentRequests;
 	}
 
-	private void submitRemoteRequest(Request request) {
-		// TODO Auto-generated method stub
-
+	private boolean submitRemoteRequest(Request request) {
+		FederationMember member = memberPicker.pick(getMembers());
+		IQ iq = new IQ();
+		iq.setTo(member.getResourcesInfo().getId());
+		Element queryEl = iq.getElement().addElement("query", 
+				ManagerXmppComponent.REQUEST_NAMESPACE);
+		for (Category category : request.getCategories()) {
+			Element categoryEl = queryEl.addElement("category");
+			categoryEl.addElement("class").setText(category.getCatClass());
+			categoryEl.addElement("term").setText(category.getTerm());
+			categoryEl.addElement("scheme").setText(category.getScheme());
+		}
+		for (Entry<String, String> xOCCIEntry : request.getxOCCIAtt().entrySet()) {
+			Element attributeEl = queryEl.addElement("attribute");
+			attributeEl.addAttribute("var", xOCCIEntry.getKey());
+			attributeEl.addElement("value").setText(xOCCIEntry.getValue());
+		}
+		IQ response = (IQ) packetSender.syncSendPacket(iq);
+		if (response.getError() != null) {
+			return false;
+		}
+		request.setState(RequestState.FULFILLED);
+		request.setInstanceId(response.getElement()
+				.element("query")
+				.element("instance")
+				.elementText("id"));
+		return true;
 	}
 
-	private void submitLocalRequest(Request request) {
-		// Removing all xOCCI Attribute specific to request type
+	private boolean submitLocalRequest(Request request) {
 		Map<String, String> xOCCIAtt = request.getxOCCIAtt();
 		for (String keyAttributes : RequestAttribute.getValues()) {
 			xOCCIAtt.remove(keyAttributes);
 		}
-		String instanceLocation = computePlugin.requestInstance(request.getAuthToken(),
-				request.getCategories(), xOCCIAtt);
+		
+		String instanceLocation = null;
+		try {
+			instanceLocation = computePlugin.requestInstance(request.getAuthToken(),
+					request.getCategories(), xOCCIAtt);
+		} catch (OCCIException e) {
+			if (e.getStatus().equals(ErrorType.BAD_REQUEST)
+					&& e.getMessage().contains(ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES)) {
+				return false;
+			} else {
+				//TODO Think this through...
+				request.setState(RequestState.FAILED);
+				LOGGER.warn("Request failed locally for an unknown reason.", e);
+				return true;
+			}
+		}
+		
 		instanceLocation = instanceLocation.replace(HeaderUtils.X_OCCI_LOCATION, "").trim();
 		request.setInstanceId(instanceLocation);
 		request.setState(RequestState.FULFILLED);
+		return true;
 	}
 
-	private void submitRequests() {
-		timer.schedule(new TimerTask() {
+	private void scheduleRequests() {
+		scheduled = true;
+		timer.scheduleAtFixedRate(new TimerTask() {
 			@Override
 			public void run() {
 				checkAndSubmitOpenRequests();
@@ -184,22 +237,17 @@ public class ManagerFacade {
 	}
 
 	private void checkAndSubmitOpenRequests() {
+		boolean allFulfilled = true;
 		for (Request request : requests.get(RequestState.OPEN)) {
-			// TODO before submit request we have to check
-			try {
-				submitLocalRequest(request);
-				request.setState(RequestState.FULFILLED);
-			} catch (OCCIException e) {
-				if (e.getStatus().equals(ErrorType.BAD_REQUEST)
-						&& e.getMessage().contains(ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES)) {
-					submitRemoteRequest(request); // FIXME submit more than
-													// one at same time
-				} else {
-					// TODO set state to fail?
-					request.setState(RequestState.FAILED);
-					// throw e;
-				}
-			}
+			allFulfilled &= submitLocalRequest(request) || submitRemoteRequest(request);
 		}
+		if (allFulfilled) {
+			timer.cancel();
+			scheduled = false;
+		}
+	}
+
+	public void setPacketSender(PacketSender packetSender) {
+		this.packetSender = packetSender;
 	}
 }

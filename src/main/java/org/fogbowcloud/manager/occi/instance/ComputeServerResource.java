@@ -1,7 +1,8 @@
-package org.fogbowcloud.manager.occi;
+package org.fogbowcloud.manager.occi.instance;
 
 import java.util.List;
 
+import org.fogbowcloud.manager.occi.OCCIApplication;
 import org.fogbowcloud.manager.occi.core.HeaderUtils;
 import org.restlet.engine.adapter.HttpRequest;
 import org.restlet.resource.Delete;

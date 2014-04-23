@@ -1,4 +1,4 @@
-package org.fogbowcloud.manager.occi.model;
+package org.fogbowcloud.manager.occi.util;
 
 import java.util.ArrayList;
 import java.util.HashMap;

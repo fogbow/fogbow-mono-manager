@@ -1,8 +1,8 @@
-package org.fogbowcloud.manager.occi.model;
+package org.fogbowcloud.manager.occi.util;
 
 import java.util.List;
 
-import org.fogbowcloud.manager.occi.model.ComputeApplication.InstanceIdGenerator;
+import org.fogbowcloud.manager.occi.util.ComputeApplication.InstanceIdGenerator;
 import org.mockito.Mockito;
 import org.restlet.Component;
 import org.restlet.data.Protocol;

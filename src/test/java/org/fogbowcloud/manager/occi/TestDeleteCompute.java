@@ -7,7 +7,7 @@ import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
-import org.fogbowcloud.manager.occi.model.RequestHelper;
+import org.fogbowcloud.manager.occi.util.RequestHelper;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;

@@ -12,9 +12,10 @@ import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.HeaderUtils;
 import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
-import org.fogbowcloud.manager.occi.model.ComputeApplication;
-import org.fogbowcloud.manager.occi.model.PluginHelper;
+import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
+import org.fogbowcloud.manager.occi.util.ComputeApplication;
+import org.fogbowcloud.manager.occi.util.PluginHelper;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -75,17 +76,17 @@ public class TestComputeOpenStack {
 				computeOpenStack.requestInstance(PluginHelper.AUTH_TOKEN, categories,
 						new HashMap<String, String>()));
 
-		String instanceDetails = computeOpenStack.getInstance(PluginHelper.AUTH_TOKEN,
+		Instance instance = computeOpenStack.getInstance(PluginHelper.AUTH_TOKEN,
 				FIRST_INSTANCE_ID);
 
-		Assert.assertEquals(1, Integer.parseInt(getAttValueFromDetails(instanceDetails,
+		Assert.assertEquals(1, Integer.parseInt(getAttValueFromDetails(instance,
 				ComputeApplication.CORE_ATTRIBUTE_OCCI)));
-		Assert.assertEquals(2, Integer.parseInt(getAttValueFromDetails(instanceDetails,
+		Assert.assertEquals(2, Integer.parseInt(getAttValueFromDetails(instance,
 				ComputeApplication.MEMORY_ATTRIBUTE_OCCI)));
-		Assert.assertEquals(64, Integer.parseInt(getAttValueFromDetails(instanceDetails,
+		Assert.assertEquals(64, Integer.parseInt(getAttValueFromDetails(instance,
 				ComputeApplication.ARCHITECTURE_ATTRIBUTE_OCCI)));
 		Assert.assertEquals("server-" + FIRST_INSTANCE_ID,
-				getAttValueFromDetails(instanceDetails, ComputeApplication.HOSTNAME_ATTRIBUTE_OCCI));
+				getAttValueFromDetails(instance, ComputeApplication.HOSTNAME_ATTRIBUTE_OCCI));
 	}
 
 	private String getAttValueFromDetails(String instanceDetails, String attName) {

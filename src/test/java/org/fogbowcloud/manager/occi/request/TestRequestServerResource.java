@@ -1,14 +1,14 @@
-package org.fogbowcloud.manager.occi;
+package org.fogbowcloud.manager.occi.request;
 
 import java.util.Map;
 
-import org.fogbowcloud.manager.occi.RequestServerResource;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.HeaderUtils;
 import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
+import org.fogbowcloud.manager.occi.request.RequestServerResource;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
