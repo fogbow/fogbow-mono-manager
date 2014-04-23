@@ -10,7 +10,10 @@ import org.fogbowcloud.manager.core.ManagerFacade;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.occi.core.Category;
+import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.HeaderUtils;
+import org.fogbowcloud.manager.occi.core.OCCIException;
+import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
@@ -34,13 +37,14 @@ public class TestOCCIApplication {
 	
 	private OCCIApplication occiApplication;
 	private Map<String, String> xOCCIAtt;
+	ManagerFacade managerFacade;
 
 	@SuppressWarnings("unchecked")
 	@Before
 	public void setUp() {
 		Properties properties = new Properties();
 		properties.put("scheduler_period", SCHEDULER_PERIOD.toString());
-		ManagerFacade managerFacade = new ManagerFacade(properties);
+		managerFacade = new ManagerFacade(properties);
 		occiApplication = new OCCIApplication(managerFacade);
 
 		// default instance count value is 1
@@ -51,7 +55,7 @@ public class TestOCCIApplication {
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		Mockito.when(
 				computePlugin.requestInstance(Mockito.anyString(), Mockito.any(List.class),
-						Mockito.any(Map.class))).thenReturn(INSTANCE_LOCATION);
+						Mockito.any(Map.class))).thenThrow(new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES));
 
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.getUser(RequestHelper.ACCESS_TOKEN)).thenReturn(
@@ -77,6 +81,12 @@ public class TestOCCIApplication {
 	
 	@Test
 	public void testGetRequestDetailsAfterPeriod() throws InterruptedException {
+		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
+		Mockito.when(
+				computePlugin.requestInstance(Mockito.anyString(), Mockito.any(List.class),
+						Mockito.any(Map.class))).thenReturn(INSTANCE_LOCATION);
+		managerFacade.setComputePlugin(computePlugin);
+		
 		occiApplication.createRequests(RequestHelper.ACCESS_TOKEN, new ArrayList<Category>(), xOCCIAtt);
 		List<Request> requests = occiApplication.getRequestsFromUser(RequestHelper.ACCESS_TOKEN);
 		Assert.assertEquals(1, requests.size());
@@ -87,7 +97,7 @@ public class TestOCCIApplication {
 		Assert.assertEquals(requestId, requestDetails.getId());
 		Assert.assertNull(requestDetails.getInstanceId());
 		Assert.assertEquals(RequestState.OPEN, requestDetails.getState());
-
+		
 		Thread.sleep(SCHEDULER_PERIOD * 2);
 				
 		Assert.assertEquals(requestId, requestDetails.getId());
