@@ -10,14 +10,16 @@ public class Request {
 	private String id;
 	private String authToken;
 	private String instanceId;
+	private String memberId;
 	private RequestState state;
 	private List<Category> categories;
 	private Map<String, String> xOCCIAtt;
 	
 	public Request(String id, String authToken, String instanceId, RequestState state,
-			List<Category> categories, Map<String, String> xOCCIAtt) {
+			List<Category> categories, Map<String, String> xOCCIAtt, String memberId) {
 		this.id = id;
 		this.authToken = authToken;
+		this.memberId = memberId;
 		setInstanceId(instanceId);
 		setState(state);
 		this.categories = categories;
@@ -64,5 +66,13 @@ public class Request {
 
 	public Map<String, String> getxOCCIAtt() {
 		return this.xOCCIAtt;
+	}
+
+	public String getMemberId() {
+		return memberId;
+	}
+
+	public void setMemberId(String memberId) {
+		this.memberId = memberId;
 	}
 }
