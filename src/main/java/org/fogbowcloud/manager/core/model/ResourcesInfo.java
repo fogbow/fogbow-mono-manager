@@ -1,5 +1,8 @@
 package org.fogbowcloud.manager.core.model;
 
+import java.util.LinkedList;
+import java.util.List;
+
 public class ResourcesInfo {
 	
 	private String id;
@@ -7,14 +10,16 @@ public class ResourcesInfo {
 	private String cpuInUse;
 	private String memIdle;
 	private String memInUse;
-
+	private List<Flavour> flavours;
+	
 	public ResourcesInfo(String id, String cpuIdle, String cpuInUse,
-			String memIdle, String memInUse) {
+			String memIdle, String memInUse, List<Flavour> flavours) {
 		setId(id);
 		setCpuIdle(cpuIdle);
 		setCpuInUse(cpuInUse);
 		setMemIdle(memIdle);
 		setMemInUse(memInUse);
+		this.setFlavours(flavours);
 	}
 
 	public String getId() {
@@ -74,5 +79,13 @@ public class ResourcesInfo {
 					"ResourceInfo mem-inuse is invalid.");
 		}
 		this.memInUse = memInUse;
+	}
+
+	public List<Flavour> getFlavours() {
+		return flavours;
+	}
+
+	public void setFlavours(List<Flavour> flavours) {
+		this.flavours = flavours;
 	}
 }
