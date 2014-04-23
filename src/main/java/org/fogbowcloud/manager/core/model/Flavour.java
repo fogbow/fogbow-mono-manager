@@ -1,5 +1,6 @@
 package org.fogbowcloud.manager.core.model;
 
+//TODO rename this class to Flavor
 public class Flavour {
 	
 	private int capacity;

@@ -76,7 +76,9 @@ public class ManagerFacade {
 	public ResourcesInfo getResourcesInfo() {
 		String token = identityPlugin.getToken(properties.getProperty("federation.user.name"),
 				properties.getProperty("federation.user.password"));
-		return computePlugin.getResourcesInfo(token);
+		ResourcesInfo resourcesInfo = computePlugin.getResourcesInfo(token);
+		resourcesInfo.setId(properties.getProperty("xmpp_jid"));
+		return resourcesInfo;
 	}
 
 	public String getUser(String authToken) {

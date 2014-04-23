@@ -19,6 +19,8 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
+import org.apache.log4j.varia.FallbackErrorHandler;
+import org.fogbowcloud.manager.core.model.Flavour;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.occi.core.Category;
@@ -223,7 +225,29 @@ public class OpenStackComputePlugin implements ComputePlugin {
 
 	@Override
 	public ResourcesInfo getResourcesInfo(String authToken) {
-		// TODO Auto-generated method stub
-		return null;
+		// TODO Fake resources
+		String cpuIdle = "1000";
+		String cpuInUse = "0";
+		String memIdle = "2048000";
+		String memInUse = "0";		
+		return new ResourcesInfo(null, cpuIdle, cpuInUse, memIdle, memInUse, getFlavors(cpuIdle, memIdle));
+	}
+
+	private List<Flavour> getFlavors(String cpuIdleStr, String memIdleStr) {
+		int cpuIdle = Integer.parseInt(cpuIdleStr);
+		int memIdle = Integer.parseInt(memIdleStr);		
+		List<Flavour> flavors = new ArrayList<Flavour>();
+		
+		//flavors 
+		int capacity = Math.min(cpuIdle / 1, memIdle / 2048);		
+		Flavour smallFlavor = new Flavour(RequestConstants.SMALL_TERM, "1", "2048", capacity);
+		capacity = Math.min(cpuIdle / 2, memIdle / 4096);		
+		Flavour mediumFlavor = new Flavour(RequestConstants.MEDIUM_TERM, "2", "4096", capacity);
+		capacity = Math.min(cpuIdle / 4, memIdle / 8192);
+		Flavour largeFlavor = new Flavour(RequestConstants.LARGE_TERM, "4", "8192", capacity);
+		flavors.add(smallFlavor);
+		flavors.add(mediumFlavor);
+		flavors.add(largeFlavor);
+		return flavors;
 	}
 }
