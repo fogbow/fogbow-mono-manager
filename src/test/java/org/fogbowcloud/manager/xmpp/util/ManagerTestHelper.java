@@ -45,7 +45,8 @@ public class ManagerTestHelper {
 
 	public ResourcesInfo getResources() {
 		List<Flavour> flavours = new LinkedList<Flavour>();
-		flavours.add(new Flavour("samll", "cpu", "mem", 2));
+		flavours.add(new Flavour("small", "cpu", "mem", 2));
+		flavours.add(new Flavour("small", "cpu", "mem", 3));
 		ResourcesInfo resources = new ResourcesInfo("abc", "value1", "value2",
 				"value3", "value4", flavours);
 		return resources;
@@ -115,6 +116,7 @@ public class ManagerTestHelper {
 		Properties properties = new Properties();
 		properties.put("federation.user.name", "fogbow");
 		properties.put("federation.user.password", "fogbow");
+		properties.put("xmpp_jid", "manager.test.com");
 
 		ManagerFacade managerFacade = new ManagerFacade(properties);
 		managerFacade.setComputePlugin(computePlugin);

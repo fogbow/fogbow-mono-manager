@@ -23,10 +23,10 @@ import org.xmpp.packet.IQ;
 import org.xmpp.packet.Packet;
 
 public class TestManagerComponent {
-	
+
 	private ManagerTestHelper managerTestHelper;
 	private ManagerXmppComponent managerXmppComponent;
-	
+
 	@Before
 	public void setUp() throws ComponentException {
 		managerTestHelper = new ManagerTestHelper();
@@ -136,7 +136,7 @@ public class TestManagerComponent {
 	public void testCallIAmAlive() throws Exception {
 		final XMPPClient xmppClient = managerTestHelper.createXMPPClient();
 		final Semaphore semaphore = new Semaphore(0);
-		
+
 		final PacketListener callbackIAmAlive = new PacketListener() {
 			public void processPacket(Packet packet) {
 				IQ iAmAlive = (IQ) packet;
@@ -144,7 +144,7 @@ public class TestManagerComponent {
 				xmppClient.send(IQ.createResultIQ(iAmAlive));
 			}
 		};
-		
+
 		final PacketListener callbackWhoIsAlive = new PacketListener() {
 			public void processPacket(Packet packet) {
 				IQ whoIsAlive = (IQ) packet;
@@ -156,12 +156,12 @@ public class TestManagerComponent {
 				try {
 					xmppClient.syncSend(iq);
 				} catch (XMPPException e) {
-					//No problem if exception is throwed
+					// No problem if exception is throwed
 				}
 
 			}
 		};
-		
+
 		xmppClient.on(new PacketFilter() {
 			@Override
 			public boolean accept(Packet packet) {
@@ -173,7 +173,7 @@ public class TestManagerComponent {
 						ManagerTestHelper.IAMALIVE_NAMESPACE);
 			}
 		}, callbackIAmAlive);
-		
+
 		xmppClient.on(new PacketFilter() {
 			@Override
 			public boolean accept(Packet packet) {
@@ -185,10 +185,14 @@ public class TestManagerComponent {
 						ManagerTestHelper.WHOISALIVE_NAMESPACE);
 			}
 		}, callbackWhoIsAlive);
-		
+
 		managerXmppComponent = managerTestHelper
 				.initializeXMPPManagerComponent(true);
 		Assert.assertTrue(semaphore.tryAcquire(10000, TimeUnit.MILLISECONDS));
+		Assert.assertEquals(2, managerXmppComponent.getManagerFacade()
+				.getMembers().get(0).getResourcesInfo().getFlavours().size());
+		Assert.assertEquals("small", managerXmppComponent.getManagerFacade()
+				.getMembers().get(0).getResourcesInfo().getFlavours().get(0).getName());
 		xmppClient.disconnect();
 	}
 
@@ -207,7 +211,7 @@ public class TestManagerComponent {
 				try {
 					xmppClient.syncSend(iq);
 				} catch (XMPPException e) {
-					//No problem if exception is throwed
+					// No problem if exception is throwed
 				}
 				semaphore.release();
 			}
@@ -229,6 +233,9 @@ public class TestManagerComponent {
 		Assert.assertTrue(semaphore.tryAcquire(20000, TimeUnit.MILLISECONDS));
 		Assert.assertEquals(1, managerXmppComponent.getManagerFacade()
 				.getMembers().size());
+		Assert.assertEquals("small", managerXmppComponent.getManagerFacade()
+				.getMembers().get(0).getResourcesInfo().getFlavours().get(0)
+				.getName());
 		xmppClient.disconnect();
 	}
 

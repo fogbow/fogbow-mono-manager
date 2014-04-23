@@ -50,7 +50,6 @@ public class ManagerPacketHelper {
 		iq.getElement().addElement("query",
 				ManagerXmppComponent.WHOISALIVE_NAMESPACE);
 		IQ response = (IQ) packetSender.syncSendPacket(iq);
-
 		ArrayList<FederationMember> members = getMembersFromIQ(response);
 		return members;
 	}
@@ -73,10 +72,10 @@ public class ManagerPacketHelper {
 			String memInUse = statusEl.element("mem-inuse").getText();
 
 			List<Flavour> flavoursList = new LinkedList<Flavour>();
-			Iterator<Element> flavourIterator = itemEl
+			Iterator<Element> flavourIterator = statusEl
 					.elementIterator("flavor");
 			while (flavourIterator.hasNext()) {
-				Element flavour = (Element) itemIterator.next();
+				Element flavour = (Element) flavourIterator.next();
 				String name = flavour.element("name").getText();
 				String cpu = flavour.element("cpu").getText();
 				String mem = flavour.element("mem").getText();
