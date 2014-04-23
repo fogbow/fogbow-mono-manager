@@ -238,8 +238,10 @@ public class ComputeApplication extends Application {
 		private static String generateResponse(List<String> instances, HttpRequest req) {
 			String requestEndpoint = req.getHostRef() + req.getHttpCall().getRequestUri();
 			String response = "";
-			for (String location : instances) {
-				response += HeaderUtils.X_OCCI_LOCATION + requestEndpoint + "/" + location + "\n";			
+			if(instances != null){
+				for (String location : instances) {
+					response += HeaderUtils.X_OCCI_LOCATION + requestEndpoint + "/" + location + "\n";			
+				}
 			}
 			if (response.equals("")) {
 				response = "Empty";

@@ -36,7 +36,7 @@ public class OpenStackComputePlugin implements ComputePlugin {
 	private static final String SCHEME_COMPUTE = "http://schemas.ogf.org/occi/infrastructure#";
 	private static final String CLASS_COMPUTE = "kind";
 	private static final String COMPUTE_ENDPOINT = "/compute";
-	
+
 	public static final String OS_SCHEME = "http://schemas.openstack.org/template/os#";
 	public static final String CIRROS_IMAGE_TERM = "cadf2e29-7216-4a5e-9364-cf6513d5f1fd";
 
@@ -45,22 +45,21 @@ public class OpenStackComputePlugin implements ComputePlugin {
 
 	public OpenStackComputePlugin(Properties properties) {
 		this.computeEndpoint = properties.getProperty("compute_openstack_url") + COMPUTE_ENDPOINT;
-		fogTermToOpensStackCategory.put(RequestConstants.SMALL_TERM, createFlavorCategory(
-				"compute_openstack_flavor_small", properties));
-		fogTermToOpensStackCategory.put(RequestConstants.MEDIUM_TERM, createFlavorCategory(
-				"compute_openstack_flavor_medium", properties));
-		fogTermToOpensStackCategory.put(RequestConstants.LARGE_TERM, createFlavorCategory(
-				"compute_openstack_flavor_large", properties));
+		fogTermToOpensStackCategory.put(RequestConstants.SMALL_TERM,
+				createFlavorCategory("compute_openstack_flavor_small", properties));
+		fogTermToOpensStackCategory.put(RequestConstants.MEDIUM_TERM,
+				createFlavorCategory("compute_openstack_flavor_medium", properties));
+		fogTermToOpensStackCategory.put(RequestConstants.LARGE_TERM,
+				createFlavorCategory("compute_openstack_flavor_large", properties));
 		fogTermToOpensStackCategory.put(RequestConstants.LINUX_X86_TERM, new Category(
 				CIRROS_IMAGE_TERM, OS_SCHEME, OCCIHeaders.MIXIN_CLASS));
 	}
-	
+
 	private static Category createFlavorCategory(String flavorPropName, Properties properties) {
 		return new Category(properties.getProperty(flavorPropName),
-				"http://schemas.openstack.org/template/resource#",
-				OCCIHeaders.MIXIN_CLASS);
+				"http://schemas.openstack.org/template/resource#", OCCIHeaders.MIXIN_CLASS);
 	}
-	
+
 	@Override
 	public String requestInstance(String authToken, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
@@ -122,9 +121,10 @@ public class OpenStackComputePlugin implements ComputePlugin {
 			} else if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_FOUND) {
 				throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
 			}
-//			return EntityUtils.toString(response.getEntity(), String.valueOf(Charsets.UTF_8));
-			return null;
-		} catch (URISyntaxException e) {			
+			String responseStr = EntityUtils.toString(response.getEntity(),
+					String.valueOf(Charsets.UTF_8));
+			return Instance.parseInstanceDetails(responseStr);
+		} catch (URISyntaxException e) {
 			LOGGER.error(e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
 		} catch (HttpException e) {
@@ -147,8 +147,9 @@ public class OpenStackComputePlugin implements ComputePlugin {
 			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
 				throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 			}
-//			return EntityUtils.toString(response.getEntity(), String.valueOf(Charsets.UTF_8));
-			return null;
+			String responseStr = EntityUtils.toString(response.getEntity(),
+					String.valueOf(Charsets.UTF_8));
+			return returnInstances(responseStr);
 		} catch (URISyntaxException e) {
 			LOGGER.error(e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
@@ -159,6 +160,17 @@ public class OpenStackComputePlugin implements ComputePlugin {
 			LOGGER.error(e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
 		}
+	}
+
+	private List<Instance> returnInstances(String responseStr) {
+		List<Instance> instances = new ArrayList<Instance>();
+		String[] lines = responseStr.split("\n");
+		for (String line : lines) {
+			if (line.contains(Instance.PREFIX_DEFAULT_INSTANCE)) {
+				instances.add(Instance.parseInstanceId(line));
+			}
+		}
+		return instances;
 	}
 
 	public void removeInstances(String authToken) {

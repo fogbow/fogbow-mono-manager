@@ -79,14 +79,14 @@ public class TestComputeOpenStack {
 		Instance instance = computeOpenStack.getInstance(PluginHelper.AUTH_TOKEN,
 				FIRST_INSTANCE_ID);
 
-		Assert.assertEquals(1, Integer.parseInt(getAttValueFromDetails(instance,
+		Assert.assertEquals(1, Integer.parseInt(getAttValueFromDetails(instance.toOCCIMassageFormatDetails(),
 				ComputeApplication.CORE_ATTRIBUTE_OCCI)));
-		Assert.assertEquals(2, Integer.parseInt(getAttValueFromDetails(instance,
+		Assert.assertEquals(2, Integer.parseInt(getAttValueFromDetails(instance.toOCCIMassageFormatDetails(),
 				ComputeApplication.MEMORY_ATTRIBUTE_OCCI)));
-		Assert.assertEquals(64, Integer.parseInt(getAttValueFromDetails(instance,
+		Assert.assertEquals(64, Integer.parseInt(getAttValueFromDetails(instance.toOCCIMassageFormatDetails(),
 				ComputeApplication.ARCHITECTURE_ATTRIBUTE_OCCI)));
 		Assert.assertEquals("server-" + FIRST_INSTANCE_ID,
-				getAttValueFromDetails(instance, ComputeApplication.HOSTNAME_ATTRIBUTE_OCCI));
+				getAttValueFromDetails(instance.toOCCIMassageFormatDetails(), ComputeApplication.HOSTNAME_ATTRIBUTE_OCCI));
 	}
 
 	private String getAttValueFromDetails(String instanceDetails, String attName) {
@@ -193,7 +193,7 @@ public class TestComputeOpenStack {
 				computeOpenStack.requestInstance(PluginHelper.AUTH_TOKEN, categories, xOCCIAtt));
 
 		String instanceDetails = computeOpenStack.getInstance(PluginHelper.AUTH_TOKEN,
-				FIRST_INSTANCE_ID);
+				FIRST_INSTANCE_ID).toOCCIMassageFormatDetails();
 		Assert.assertEquals("server-test",
 				getAttValueFromDetails(instanceDetails, ComputeApplication.HOSTNAME_ATTRIBUTE_OCCI));
 	}
@@ -214,7 +214,7 @@ public class TestComputeOpenStack {
 				computeOpenStack.requestInstance(PluginHelper.AUTH_TOKEN, categories, xOCCIAtt));
 
 		String instanceDetails = computeOpenStack.getInstance(PluginHelper.AUTH_TOKEN,
-				FIRST_INSTANCE_ID);
+				FIRST_INSTANCE_ID).toOCCIMassageFormatDetails();
 		Assert.assertEquals("server-test",
 				getAttValueFromDetails(instanceDetails, ComputeApplication.HOSTNAME_ATTRIBUTE_OCCI));
 		Assert.assertEquals("inactive",
@@ -239,7 +239,7 @@ public class TestComputeOpenStack {
 		instanceLocations = getInstanceLocations(computeOpenStack
 				.getInstances(PluginHelper.AUTH_TOKEN));
 		Assert.assertEquals(1, instanceLocations.size());
-		Assert.assertEquals(URL + "/" + FIRST_INSTANCE_ID, instanceLocations.get(0));
+		Assert.assertEquals(URL + ComputeApplication.TARGET + "/" + FIRST_INSTANCE_ID, instanceLocations.get(0));
 	}
 
 	@Test
@@ -264,21 +264,18 @@ public class TestComputeOpenStack {
 				.getInstances(PluginHelper.AUTH_TOKEN));
 		Assert.assertEquals(expectedInstanceIds.size(), instanceLocations.size());
 		for (String expectedId : expectedInstanceIds) {
-			Assert.assertTrue(instanceLocations.contains(URL + "/" + expectedId));
+			Assert.assertTrue(instanceLocations.contains(URL + ComputeApplication.TARGET + "/" + expectedId));
 		}
 	}
 
-	private List<String> getInstanceLocations(String instancesFromUser) {
-		if (instancesFromUser.contains(HeaderUtils.X_OCCI_LOCATION)) {
-			String[] tokens = instancesFromUser.split("\n");
-			List<String> locations = new ArrayList<String>();
-			for (int i = 0; i < tokens.length; i++) {
-				String[] lineTokens = tokens[i].split("Location:");
-				locations.add(lineTokens[1].trim());
-			}
-			return locations;
+	private List<String> getInstanceLocations(List<Instance> intances) {
+		List<String> locations = new ArrayList<String>();
+		for (Instance instance : intances) {
+			String instanceMessage = instance.toOCCIMassageFormatLocation();
+			String[] lineTokens = instance.toOCCIMassageFormatLocation().split("Location:");
+			locations.add(lineTokens[1].trim());
 		}
-		return new ArrayList<String>();
+		return locations;
 	}
 
 	@Test
@@ -300,7 +297,7 @@ public class TestComputeOpenStack {
 				.getInstances(PluginHelper.AUTH_TOKEN));
 		Assert.assertEquals(1, instanceLocations.size());
 		String instanceDetails = computeOpenStack.getInstance(PluginHelper.AUTH_TOKEN,
-				FIRST_INSTANCE_ID);
+				FIRST_INSTANCE_ID).toOCCIMassageFormatDetails();
 		Assert.assertEquals(FIRST_INSTANCE_ID,
 				getAttValueFromDetails(instanceDetails, ComputeApplication.ID_CORE_ATTRIBUTE_OCCI));
 		Assert.assertEquals(1, Integer.parseInt(getAttValueFromDetails(instanceDetails,

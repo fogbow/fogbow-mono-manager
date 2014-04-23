@@ -4,54 +4,52 @@ import java.util.List;
 
 import org.fogbowcloud.manager.occi.OCCIApplication;
 import org.fogbowcloud.manager.occi.core.HeaderUtils;
+import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.restlet.engine.adapter.HttpRequest;
 import org.restlet.resource.Delete;
 import org.restlet.resource.Get;
 import org.restlet.resource.Post;
 import org.restlet.resource.ServerResource;
 
-public class ComputeServerResource extends ServerResource{
+public class ComputeServerResource extends ServerResource {
 
 	@Get
-	public String fetch() {		
+	public String fetch() {
 		OCCIApplication application = (OCCIApplication) getApplication();
 		HttpRequest req = (HttpRequest) getRequest();
-//		HeaderUtils.checkOCCIContentType(req.getHeaders());
 		String authToken = HeaderUtils.getAuthToken(req.getHeaders());
-		String idVM = (String) getRequestAttributes().get("instanceId");
+		String instanceId = (String) getRequestAttributes().get("instanceId");
 
-		if (idVM == null) {
-			application.getInstances(authToken);			
+		if (instanceId == null) {
+			return generateResponse(application.getInstances(authToken));
 		}
-//		return application.getInstance(authToken, idVM);
-		return null;
+		return application.getInstance(authToken, instanceId).toOCCIMassageFormatDetails();
 	}
-	
+
 	@Delete
 	public String remove() {
 		OCCIApplication application = (OCCIApplication) getApplication();
 		HttpRequest req = (HttpRequest) getRequest();
 		String authToken = HeaderUtils.getAuthToken(req.getHeaders());
-		String idVM = (String) getRequestAttributes().get("instanceId");
+		String instanceId = (String) getRequestAttributes().get("instanceId");
 
-		if (idVM == null) {
-//			return application.removeInstances(authToken);
-			return null;
+		if (instanceId == null) {
+			application.removeInstances(authToken);
+			return ResponseConstants.OK;
 		}
-//		return application.removeInstance(authToken, idVM);
-		return null;
+		application.removeInstance(authToken, instanceId);
+		return ResponseConstants.OK;
 	}
-	
+
 	@Post
 	public String post() {
 		return null;
 	}
-	
-	protected static String generateResponse(List<String> instances, HttpRequest req) {
-		String requestEndpoint = req.getHostRef() + req.getHttpCall().getRequestUri();
+
+	protected static String generateResponse(List<Instance> instances) {
 		String response = "";
-		for (String location : instances) {
-			response += HeaderUtils.X_OCCI_LOCATION + requestEndpoint + "/" + location + "\n";			
+		for (Instance intance : instances) {
+			response += HeaderUtils.X_OCCI_LOCATION + intance.toOCCIMassageFormatLocation() + "\n";
 		}
 		if (response.equals("")) {
 			response = "Empty";
