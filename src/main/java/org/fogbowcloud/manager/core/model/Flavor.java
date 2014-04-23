@@ -1,14 +1,14 @@
 package org.fogbowcloud.manager.core.model;
 
 //TODO rename this class to Flavor
-public class Flavour {
+public class Flavor {
 	
 	private Integer capacity;
 	private String name;
 	private String cpu;
 	private String mem;
 
-	public Flavour(String name, String cpu, String mem, Integer capacity) {
+	public Flavor(String name, String cpu, String mem, Integer capacity) {
 		this.setName(name);
 		this.setCpu(cpu);
 		this.setMem(mem);

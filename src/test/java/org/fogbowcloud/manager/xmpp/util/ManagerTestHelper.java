@@ -10,7 +10,7 @@ import org.dom4j.Attribute;
 import org.dom4j.Element;
 import org.fogbowcloud.manager.core.ManagerFacade;
 import org.fogbowcloud.manager.core.model.FederationMember;
-import org.fogbowcloud.manager.core.model.Flavour;
+import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
@@ -45,9 +45,9 @@ public class ManagerTestHelper {
 	private ManagerXmppComponent managerXmppComponent;
 
 	public ResourcesInfo getResources() {
-		List<Flavour> flavours = new LinkedList<Flavour>();
-		flavours.add(new Flavour("small", "cpu", "mem", 2));
-		flavours.add(new Flavour("small", "cpu", "mem", 3));
+		List<Flavor> flavours = new LinkedList<Flavor>();
+		flavours.add(new Flavor("small", "cpu", "mem", 2));
+		flavours.add(new Flavor("small", "cpu", "mem", 3));
 		ResourcesInfo resources = new ResourcesInfo("abc", "value1", "value2",
 				"value3", "value4", flavours);
 		return resources;
@@ -72,9 +72,9 @@ public class ManagerTestHelper {
 			statusEl.addElement("mem-inuse").setText(
 					rendezvousItem.getResourcesInfo().getMemInUse());
 
-			List<Flavour> flavours = rendezvousItem.getResourcesInfo()
+			List<Flavor> flavours = rendezvousItem.getResourcesInfo()
 					.getFlavours();
-			for (Flavour f : flavours) {
+			for (Flavor f : flavours) {
 				Element flavorElement = statusEl.addElement("flavor");
 				flavorElement.addElement("name").setText(f.getName());
 				flavorElement.addElement("cpu").setText(f.getCpu());
@@ -85,7 +85,6 @@ public class ManagerTestHelper {
 			statusEl.addElement("cert");
 			statusEl.addElement("updated").setText(
 					String.valueOf(rendezvousItem.getFormattedTime()));
-			// add rendezvous item like it should be
 		}
 		return resultIQ;
 	}
@@ -166,7 +165,7 @@ public class ManagerTestHelper {
 			String memIdle = statusEl.element("mem-idle").getText();
 			String memInUse = statusEl.element("mem-inuse").getText();
 
-			List<Flavour> flavoursList = new LinkedList<Flavour>();
+			List<Flavor> flavoursList = new LinkedList<Flavor>();
 			Iterator<Element> flavourIterator = itemEl
 					.elementIterator("flavor");
 			while (flavourIterator.hasNext()) {
@@ -176,7 +175,7 @@ public class ManagerTestHelper {
 				String mem = flavour.element("mem").getText();
 				int capacity = Integer.parseInt(flavour.element("capacity")
 						.getText());
-				Flavour flavor = new Flavour(name, cpu, mem, capacity);
+				Flavor flavor = new Flavor(name, cpu, mem, capacity);
 				flavoursList.add(flavor);
 			}
 
