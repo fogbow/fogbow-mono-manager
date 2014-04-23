@@ -24,19 +24,23 @@ import org.mockito.Mockito;
 
 public class TestOCCIApplication {
 
-	private OCCIApplication occiApplication;
-	private String instanceLocation = HeaderUtils.X_OCCI_LOCATION + "http://localhost:"
-			+ RequestHelper.ENDPOINT_PORT + ComputeApplication.TARGET
+	private static final String INSTANCE_LOCATION = HeaderUtils.X_OCCI_LOCATION
+			+ "http://localhost:" + RequestHelper.ENDPOINT_PORT
+			+ ComputeApplication.TARGET
 			+ "/b122f3ad-503c-4abb-8a55-ba8d90cfce9f";
-	private String expectedInstanceId = instanceLocation.replace(HeaderUtils.X_OCCI_LOCATION, "")
-			.trim();
-
+	private static final String INSTANCE_ID = INSTANCE_LOCATION.replace(
+			HeaderUtils.X_OCCI_LOCATION, "").trim();
+	private static final Long SCHEDULER_PERIOD = 500L;
+	
+	private OCCIApplication occiApplication;
 	private Map<String, String> xOCCIAtt;
 
 	@SuppressWarnings("unchecked")
 	@Before
 	public void setUp() {
-		ManagerFacade managerFacade = new ManagerFacade(new Properties());
+		Properties properties = new Properties();
+		properties.put("scheduler_period", SCHEDULER_PERIOD.toString());
+		ManagerFacade managerFacade = new ManagerFacade(properties);
 		occiApplication = new OCCIApplication(managerFacade);
 
 		// default instance count value is 1
@@ -47,7 +51,7 @@ public class TestOCCIApplication {
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		Mockito.when(
 				computePlugin.requestInstance(Mockito.anyString(), Mockito.any(List.class),
-						Mockito.any(Map.class))).thenReturn(instanceLocation);
+						Mockito.any(Map.class))).thenReturn(INSTANCE_LOCATION);
 
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.getUser(RequestHelper.ACCESS_TOKEN)).thenReturn(
@@ -67,7 +71,7 @@ public class TestOCCIApplication {
 				requestId);
 
 		Assert.assertEquals(requestId, requestDetails.getId());
-		Assert.assertEquals("", requestDetails.getInstanceId());
+		Assert.assertNull(requestDetails.getInstanceId());
 		Assert.assertEquals(RequestState.OPEN, requestDetails.getState());
 	}
 	
@@ -81,13 +85,13 @@ public class TestOCCIApplication {
 				requestId);
 
 		Assert.assertEquals(requestId, requestDetails.getId());
-		Assert.assertEquals("", requestDetails.getInstanceId());
+		Assert.assertNull(requestDetails.getInstanceId());
 		Assert.assertEquals(RequestState.OPEN, requestDetails.getState());
 
-		Thread.sleep(ManagerFacade.SCHEDULER_PERIOD);
+		Thread.sleep(SCHEDULER_PERIOD * 2);
 				
 		Assert.assertEquals(requestId, requestDetails.getId());
-		Assert.assertEquals(expectedInstanceId, requestDetails.getInstanceId());
+		Assert.assertEquals(INSTANCE_ID, requestDetails.getInstanceId());
 		Assert.assertEquals(RequestState.FULFILLED, requestDetails.getState());
 	}
 
