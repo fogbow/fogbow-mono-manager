@@ -129,6 +129,10 @@ public class TestManagerComponent {
 
 		Assert.assertEquals(1, managerXmppComponent.getManagerFacade()
 				.getMembers().size());
+		Assert.assertEquals(2, managerXmppComponent.getManagerFacade()
+				.getMembers().get(0).getResourcesInfo().getFlavours().size());
+		Assert.assertEquals("small", managerXmppComponent.getManagerFacade()
+				.getMembers().get(0).getResourcesInfo().getFlavours().get(0).getName());
 		xmppClient.disconnect();
 	}
 
@@ -156,7 +160,7 @@ public class TestManagerComponent {
 				try {
 					xmppClient.syncSend(iq);
 				} catch (XMPPException e) {
-					// No problem if exception is throwed
+					// No problem if exception is thrown
 				}
 
 			}
@@ -189,10 +193,6 @@ public class TestManagerComponent {
 		managerXmppComponent = managerTestHelper
 				.initializeXMPPManagerComponent(true);
 		Assert.assertTrue(semaphore.tryAcquire(10000, TimeUnit.MILLISECONDS));
-		Assert.assertEquals(2, managerXmppComponent.getManagerFacade()
-				.getMembers().get(0).getResourcesInfo().getFlavours().size());
-		Assert.assertEquals("small", managerXmppComponent.getManagerFacade()
-				.getMembers().get(0).getResourcesInfo().getFlavours().get(0).getName());
 		xmppClient.disconnect();
 	}
 
