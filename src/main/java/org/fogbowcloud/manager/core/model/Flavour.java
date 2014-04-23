@@ -3,24 +3,23 @@ package org.fogbowcloud.manager.core.model;
 //TODO rename this class to Flavor
 public class Flavour {
 	
-	private int capacity;
+	private Integer capacity;
 	private String name;
 	private String cpu;
 	private String mem;
 
-	public Flavour(String name, String cpu, String mem, int capacity) {
+	public Flavour(String name, String cpu, String mem, Integer capacity) {
 		this.setName(name);
 		this.setCpu(cpu);
 		this.setMem(mem);
 		this.setCapacity(capacity);
-		
 	}
 
-	public int getCapacity() {
+	public Integer getCapacity() {
 		return capacity;
 	}
 
-	public void setCapacity(int capacity) {
+	public void setCapacity(Integer capacity) {
 		this.capacity = capacity;
 	}
 

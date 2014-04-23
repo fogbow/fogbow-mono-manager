@@ -108,30 +108,61 @@ public class ManagerFacade {
 	}
 
 	public List<Instance> getInstances(String authToken) {
-		// TODO check other manager
-
+		// TODO check other manager	
+		
 		return this.computePlugin.getInstances(authToken);
 	}
 
 	public Instance getInstance(String authToken, String instanceId) {
-		// TODO check other manager
-		checkInstanceId(authToken, instanceId);
-		return this.computePlugin.getInstance(authToken, instanceId);
+		Request request = getRequestFromInstance(authToken, instanceId);
+		if(isLocal(request)){
+			return this.computePlugin.getInstance(authToken, instanceId);	
+		} else {
+			return createGetInstanceIQ(authToken, request);
+		}	
+	}
+
+	private Instance createGetInstanceIQ(String authToken, Request request) {
+		return null;
 	}
 
 	public void removeInstances(String authToken) {
 		// TODO check other manager
-
+		
 		this.computePlugin.removeInstances(authToken);
 	}
 
-	public void removeInstance(String authToken, String instanceId) {
-		// TODO check other manager
-
-		checkInstanceId(authToken, instanceId);
-		this.computePlugin.removeInstance(authToken, instanceId);
+	public void removeInstance(String authToken, String instanceId) {		
+		Request request = getRequestFromInstance(authToken, instanceId);
+		if(isLocal(request)){
+			this.computePlugin.removeInstance(authToken, instanceId);	
+		} else {
+			createRemoveIQ(authToken, request);
+		}	
 	}
 
+	private void createRemoveIQ(String authToken, Request request) {
+		// TODO Auto-generated method stub		
+	}
+
+	public Request getRequestFromInstance(String authToken, String instanceId){
+		String user = getUser(authToken);
+		List<Request> userRequests = requests.getByUser(user);
+		for (Request request : userRequests) {
+			if (instanceId.equals(request.getInstanceId())) {
+				return request;
+			}
+		}
+		throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);		
+	}
+	
+	private boolean isLocal(Request request) {
+		if(request.getMemberId() == null){
+			return true;
+		}
+		return false;
+	}
+	
 	private void checkInstanceId(String authToken, String instanceId) {
 		String user = getUser(authToken);
 		List<Request> userRequests = requests.getByUser(user);
@@ -160,7 +191,7 @@ public class ManagerFacade {
 		for (int i = 0; i < instanceCount; i++) {
 			String requestId = String.valueOf(UUID.randomUUID());
 			Request request = new Request(requestId, authToken, "", RequestState.OPEN, categories,
-					xOCCIAtt);
+					xOCCIAtt, null);
 			currentRequests.add(request);
 			requests.addRequest(user, request);
 		}

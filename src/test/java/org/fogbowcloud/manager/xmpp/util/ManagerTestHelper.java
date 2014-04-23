@@ -2,12 +2,14 @@ package org.fogbowcloud.manager.xmpp.util;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
 
 import org.dom4j.Attribute;
 import org.dom4j.Element;
 import org.fogbowcloud.manager.core.ManagerFacade;
+import org.fogbowcloud.manager.core.model.Flavour;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
@@ -42,8 +44,10 @@ public class ManagerTestHelper {
 	private ManagerXmppComponent managerXmppComponent;
 
 	public ResourcesInfo getResources() {
+		List<Flavour> flavours = new LinkedList<Flavour>();
+		flavours.add(new Flavour("samll", "cpu", "mem", 2));
 		ResourcesInfo resources = new ResourcesInfo("abc", "value1", "value2",
-				"value3", "value4");
+				"value3", "value4", flavours);
 		return resources;
 	}
 
@@ -52,21 +56,34 @@ public class ManagerTestHelper {
 		IQ resultIQ = IQ.createResultIQ(iq);
 		Element queryElement = resultIQ.getElement().addElement("query",
 				WHOISALIVE_NAMESPACE);
-		for (RendezvousItemCopy rendezvouItem : aliveIds) {
+		for (RendezvousItemCopy rendezvousItem : aliveIds) {
 			Element itemEl = queryElement.addElement("item");
-			itemEl.addAttribute("id", rendezvouItem.getResourcesInfo().getId());
+			itemEl.addAttribute("id", rendezvousItem.getResourcesInfo().getId());
 
 			Element statusEl = itemEl.addElement("status");
 			statusEl.addElement("cpu-idle").setText(
-					rendezvouItem.getResourcesInfo().getCpuIdle());
+					rendezvousItem.getResourcesInfo().getCpuIdle());
 			statusEl.addElement("cpu-inuse").setText(
-					rendezvouItem.getResourcesInfo().getCpuInUse());
+					rendezvousItem.getResourcesInfo().getCpuInUse());
 			statusEl.addElement("mem-idle").setText(
-					rendezvouItem.getResourcesInfo().getMemIdle());
+					rendezvousItem.getResourcesInfo().getMemIdle());
 			statusEl.addElement("mem-inuse").setText(
-					rendezvouItem.getResourcesInfo().getMemInUse());
+					rendezvousItem.getResourcesInfo().getMemInUse());
+
+			List<Flavour> flavours = rendezvousItem.getResourcesInfo()
+					.getFlavours();
+			for (Flavour f : flavours) {
+				Element flavorElement = statusEl.addElement("flavor");
+				flavorElement.addElement("name").setText(f.getName());
+				flavorElement.addElement("cpu").setText(f.getCpu());
+				flavorElement.addElement("mem").setText(f.getMem());
+				flavorElement.addElement("capacity").setText(
+						f.getCapacity().toString());
+			}
+			statusEl.addElement("cert");
 			statusEl.addElement("updated").setText(
-					String.valueOf(rendezvouItem.getFormattedTime()));
+					String.valueOf(rendezvousItem.getFormattedTime()));
+			// add rendezvous item like it should be
 		}
 		return resultIQ;
 	}
@@ -91,23 +108,25 @@ public class ManagerTestHelper {
 
 	public ManagerXmppComponent initializeXMPPManagerComponent(boolean init)
 			throws Exception {
-		
+
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
-		
+
 		Properties properties = new Properties();
 		properties.put("federation.user.name", "fogbow");
 		properties.put("federation.user.password", "fogbow");
-		
+
 		ManagerFacade managerFacade = new ManagerFacade(properties);
 		managerFacade.setComputePlugin(computePlugin);
 		managerFacade.setIdentityPlugin(identityPlugin);
-		
+
 		managerXmppComponent = new ManagerXmppComponent(MANAGER_COMPONENT_URL,
 				MANAGER_COMPONENT_PASS, SERVER_HOST, SERVER_COMPONENT_PORT,
 				managerFacade);
-		Mockito.when(computePlugin.getResourcesInfo(TOKEN)).thenReturn(getResources());
-		Mockito.when(identityPlugin.getToken("fogbow", "fogbow")).thenReturn(TOKEN);
+		Mockito.when(computePlugin.getResourcesInfo(TOKEN)).thenReturn(
+				getResources());
+		Mockito.when(identityPlugin.getToken("fogbow", "fogbow")).thenReturn(
+				TOKEN);
 
 		managerXmppComponent.setDescription("Manager Component");
 		managerXmppComponent.setName("Manager");
@@ -143,10 +162,23 @@ public class ManagerTestHelper {
 			String cpuInUse = statusEl.element("cpu-inuse").getText();
 			String memIdle = statusEl.element("mem-idle").getText();
 			String memInUse = statusEl.element("mem-inuse").getText();
-			// String updated = statusEl.element("updated").getText();
+
+			List<Flavour> flavoursList = new LinkedList<Flavour>();
+			Iterator<Element> flavourIterator = itemEl
+					.elementIterator("flavor");
+			while (flavourIterator.hasNext()) {
+				Element flavour = (Element) itemIterator.next();
+				String name = flavour.element("name").getText();
+				String cpu = flavour.element("cpu").getText();
+				String mem = flavour.element("mem").getText();
+				int capacity = Integer.parseInt(flavour.element("capacity")
+						.getText());
+				Flavour flavor = new Flavour(name, cpu, mem, capacity);
+				flavoursList.add(flavor);
+			}
 
 			ResourcesInfo resources = new ResourcesInfo(id.getValue(), cpuIdle,
-					cpuInUse, memIdle, memInUse);
+					cpuInUse, memIdle, memInUse, flavoursList);
 			RendezvousItemCopy item = new RendezvousItemCopy(resources);
 			aliveItems.add(item);
 		}

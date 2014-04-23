@@ -1,0 +1,94 @@
+package org.fogbowcloud.manager.xmpp;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+
+import org.dom4j.Attribute;
+import org.dom4j.Element;
+import org.fogbowcloud.manager.core.model.FederationMember;
+import org.fogbowcloud.manager.core.model.Flavour;
+import org.fogbowcloud.manager.core.model.ResourcesInfo;
+import org.jamppa.component.PacketSender;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.IQ.Type;
+
+public class ManagerPacketHelper {
+
+	public static void iAmAlive(ResourcesInfo resourcesInfo,
+			String rendezvousAddress, PacketSender packetSender) {
+		IQ iq = new IQ(Type.get);
+		iq.setTo(rendezvousAddress);
+		Element statusEl = iq.getElement()
+				.addElement("query", ManagerXmppComponent.IAMALIVE_NAMESPACE)
+				.addElement("status");
+		statusEl.addElement("cpu-idle").setText(resourcesInfo.getCpuIdle());
+		statusEl.addElement("cpu-inuse").setText(resourcesInfo.getCpuInUse());
+		statusEl.addElement("mem-idle").setText(resourcesInfo.getMemIdle());
+		statusEl.addElement("mem-inuse").setText(resourcesInfo.getMemInUse());
+		List<Flavour> flavours = resourcesInfo.getFlavours();
+		for (Flavour f : flavours) {
+			Element flavorElement = statusEl.addElement("flavor");
+			flavorElement.addElement("name").setText(f.getName());
+			flavorElement.addElement("cpu").setText(f.getCpu());
+			flavorElement.addElement("mem").setText(f.getMem());
+			flavorElement.addElement("capacity").setText(
+					f.getCapacity().toString());
+		}
+		statusEl.addElement("cert");
+		packetSender.syncSendPacket(iq);
+	}
+
+	public static List<FederationMember> whoIsalive(String rendezvousAddress,
+			PacketSender packetSender) {
+		IQ iq = new IQ(Type.get);
+		iq.setTo(rendezvousAddress);
+		iq.getElement().addElement("query",
+				ManagerXmppComponent.WHOISALIVE_NAMESPACE);
+		IQ response = (IQ) packetSender.syncSendPacket(iq);
+
+		ArrayList<FederationMember> members = getMembersFromIQ(response);
+		return members;
+	}
+
+	@SuppressWarnings("unchecked")
+	private static ArrayList<FederationMember> getMembersFromIQ(
+			IQ responseFromWhoIsAliveIQ) {
+		Element queryElement = responseFromWhoIsAliveIQ.getElement().element(
+				"query");
+		Iterator<Element> itemIterator = queryElement.elementIterator("item");
+		ArrayList<FederationMember> aliveItems = new ArrayList<FederationMember>();
+
+		while (itemIterator.hasNext()) {
+			Element itemEl = (Element) itemIterator.next();
+			Attribute id = itemEl.attribute("id");
+			Element statusEl = itemEl.element("status");
+			String cpuIdle = statusEl.element("cpu-idle").getText();
+			String cpuInUse = statusEl.element("cpu-inuse").getText();
+			String memIdle = statusEl.element("mem-idle").getText();
+			String memInUse = statusEl.element("mem-inuse").getText();
+
+			List<Flavour> flavoursList = new LinkedList<Flavour>();
+			Iterator<Element> flavourIterator = itemEl
+					.elementIterator("flavor");
+			while (flavourIterator.hasNext()) {
+				Element flavour = (Element) itemIterator.next();
+				String name = flavour.element("name").getText();
+				String cpu = flavour.element("cpu").getText();
+				String mem = flavour.element("mem").getText();
+				int capacity = Integer.parseInt(flavour.element("capacity")
+						.getText());
+				Flavour flavor = new Flavour(name, cpu, mem, capacity);
+				flavoursList.add(flavor);
+			}
+
+			ResourcesInfo resources = new ResourcesInfo(id.getValue(), cpuIdle,
+					cpuInUse, memIdle, memInUse, flavoursList);
+			FederationMember item = new FederationMember(resources);
+			aliveItems.add(item);
+		}
+		return aliveItems;
+	}
+
+}
