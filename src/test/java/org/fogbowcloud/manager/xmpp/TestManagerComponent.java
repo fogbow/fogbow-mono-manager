@@ -8,8 +8,8 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 import org.dom4j.Element;
+import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.xmpp.util.ManagerTestHelper;
-import org.fogbowcloud.manager.xmpp.util.RendezvousItemCopy;
 import org.jamppa.client.XMPPClient;
 import org.jivesoftware.smack.PacketListener;
 import org.jivesoftware.smack.XMPPException;
@@ -101,11 +101,11 @@ public class TestManagerComponent {
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
-				List<RendezvousItemCopy> aliveIds = new ArrayList<RendezvousItemCopy>();
-				aliveIds.add(new RendezvousItemCopy(managerTestHelper
+				List<FederationMember> aliveIds = new ArrayList<FederationMember>();
+				aliveIds.add(new FederationMember(managerTestHelper
 						.getResources()));
 				IQ iq = managerTestHelper.createWhoIsAliveResponse(
-						(ArrayList<RendezvousItemCopy>) aliveIds, whoIsAlive);
+						(ArrayList<FederationMember>) aliveIds, whoIsAlive);
 				xmppClient.send(iq);
 			}
 		};
@@ -152,11 +152,11 @@ public class TestManagerComponent {
 		final PacketListener callbackWhoIsAlive = new PacketListener() {
 			public void processPacket(Packet packet) {
 				IQ whoIsAlive = (IQ) packet;
-				List<RendezvousItemCopy> aliveIds = new ArrayList<RendezvousItemCopy>();
-				aliveIds.add(new RendezvousItemCopy(managerTestHelper
+				List<FederationMember> aliveIds = new ArrayList<FederationMember>();
+				aliveIds.add(new FederationMember(managerTestHelper
 						.getResources()));
 				IQ iq = managerTestHelper.createWhoIsAliveResponse(
-						(ArrayList<RendezvousItemCopy>) aliveIds, whoIsAlive);
+						(ArrayList<FederationMember>) aliveIds, whoIsAlive);
 				try {
 					xmppClient.syncSend(iq);
 				} catch (XMPPException e) {
@@ -203,11 +203,11 @@ public class TestManagerComponent {
 		final PacketListener callbackWhoIsAlive = new PacketListener() {
 			public void processPacket(Packet packet) {
 				IQ whoIsAlive = (IQ) packet;
-				List<RendezvousItemCopy> aliveIds = new ArrayList<RendezvousItemCopy>();
-				aliveIds.add(new RendezvousItemCopy(managerTestHelper
+				List<FederationMember> aliveIds = new ArrayList<FederationMember>();
+				aliveIds.add(new FederationMember(managerTestHelper
 						.getResources()));
 				IQ iq = managerTestHelper.createWhoIsAliveResponse(
-						(ArrayList<RendezvousItemCopy>) aliveIds, whoIsAlive);
+						(ArrayList<FederationMember>) aliveIds, whoIsAlive);
 				try {
 					xmppClient.syncSend(iq);
 				} catch (XMPPException e) {

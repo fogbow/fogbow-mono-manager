@@ -9,6 +9,7 @@ import java.util.Properties;
 import org.dom4j.Attribute;
 import org.dom4j.Element;
 import org.fogbowcloud.manager.core.ManagerFacade;
+import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.Flavour;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
@@ -52,12 +53,12 @@ public class ManagerTestHelper {
 		return resources;
 	}
 
-	public IQ createWhoIsAliveResponse(ArrayList<RendezvousItemCopy> aliveIds,
+	public IQ createWhoIsAliveResponse(ArrayList<FederationMember> aliveIds,
 			IQ iq) {
 		IQ resultIQ = IQ.createResultIQ(iq);
 		Element queryElement = resultIQ.getElement().addElement("query",
 				WHOISALIVE_NAMESPACE);
-		for (RendezvousItemCopy rendezvousItem : aliveIds) {
+		for (FederationMember rendezvousItem : aliveIds) {
 			Element itemEl = queryElement.addElement("item");
 			itemEl.addAttribute("id", rendezvousItem.getResourcesInfo().getId());
 
@@ -151,10 +152,10 @@ public class ManagerTestHelper {
 	}
 
 	@SuppressWarnings("unchecked")
-	public List<RendezvousItemCopy> getItemsFromIQ(Packet response) {
+	public List<FederationMember> getItemsFromIQ(Packet response) {
 		Element queryElement = response.getElement().element("query");
 		Iterator<Element> itemIterator = queryElement.elementIterator("item");
-		ArrayList<RendezvousItemCopy> aliveItems = new ArrayList<RendezvousItemCopy>();
+		ArrayList<FederationMember> aliveItems = new ArrayList<FederationMember>();
 
 		while (itemIterator.hasNext()) {
 			Element itemEl = (Element) itemIterator.next();
@@ -181,7 +182,7 @@ public class ManagerTestHelper {
 
 			ResourcesInfo resources = new ResourcesInfo(id.getValue(), cpuIdle,
 					cpuInUse, memIdle, memInUse, flavoursList);
-			RendezvousItemCopy item = new RendezvousItemCopy(resources);
+			FederationMember item = new FederationMember(resources);
 			aliveItems.add(item);
 		}
 		return aliveItems;
