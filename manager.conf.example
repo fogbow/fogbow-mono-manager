@@ -11,3 +11,8 @@ compute_openstack_flavor_large=m1-large
 
 identity_class=org.fogbowcloud.manager.occi.plugins.openstack.OpenStackIdentityPlugin
 identity_openstack_url=http://localhost:5000
+
+federation.user.name=fogbow
+federation.user.password=fogbow
+
+scheduler_period=30000

@@ -30,7 +30,7 @@ import org.jamppa.component.PacketSender;
 public class ManagerFacade {
 
 	private static final Logger LOGGER = Logger.getLogger(ManagerFacade.class);
-	public static final long SCHEDULER_PERIOD = 30000;
+	public static final long DEFAULT_SCHEDULER_PERIOD = 30000;
 
 	private boolean scheduled = false;
 	private final Timer timer = new Timer();
@@ -207,7 +207,7 @@ public class ManagerFacade {
 		List<Request> currentRequests = new ArrayList<Request>();
 		for (int i = 0; i < instanceCount; i++) {
 			String requestId = String.valueOf(UUID.randomUUID());
-			Request request = new Request(requestId, authToken, "", RequestState.OPEN, categories,
+			Request request = new Request(requestId, authToken, null, RequestState.OPEN, categories,
 					xOCCIAtt, null);
 			currentRequests.add(request);
 			requests.addRequest(user, request);
@@ -264,12 +264,17 @@ public class ManagerFacade {
 
 	private void scheduleRequests() {
 		scheduled = true;
+		String schedulerPeriodStr = properties.getProperty(
+				"scheduler_period");
+		long schedulerPeriod = schedulerPeriodStr == null ? 
+				DEFAULT_SCHEDULER_PERIOD : Long.valueOf(schedulerPeriodStr);
+		
 		timer.scheduleAtFixedRate(new TimerTask() {
 			@Override
 			public void run() {
 				checkAndSubmitOpenRequests();
 			}
-		}, 0, SCHEDULER_PERIOD);
+		}, 0, schedulerPeriod);
 	}
 
 	private void checkAndSubmitOpenRequests() {
