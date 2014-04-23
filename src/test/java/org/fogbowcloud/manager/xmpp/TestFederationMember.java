@@ -3,8 +3,10 @@ package org.fogbowcloud.manager.xmpp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.LinkedList;
 
 import org.fogbowcloud.manager.core.model.FederationMember;
+import org.fogbowcloud.manager.core.model.Flavour;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.xmpp.util.ManagerTestHelper;
 import org.junit.Assert;
@@ -31,31 +33,31 @@ public class TestFederationMember {
 	@Test(expected = IllegalArgumentException.class)
 	public void testNullResourceId() {
 		new ResourcesInfo(null, "cpuIdle",
-				"cpuInUse", "memIdle", "memInUse");
+				"cpuInUse", "memIdle", "memInUse", new LinkedList<Flavour>());
 	}
 	
 	@Test(expected = IllegalArgumentException.class)
 	public void testNullResourcesCpuIdle() {
 		new ResourcesInfo("id", null,
-				"cpuInUse", "memIdle", "memInUse");
+				"cpuInUse", "memIdle", "memInUse", new LinkedList<Flavour>());
 	}
 	
 	@Test(expected = IllegalArgumentException.class)
 	public void testNullResourcesCpuInUse() {
 		new ResourcesInfo("id", "CpuIdle",
-				null, "memIdle", "memInUse");
+				null, "memIdle", "memInUse", new LinkedList<Flavour>());
 	}
 	
 	@Test(expected = IllegalArgumentException.class)
 	public void testNullResourcesMemIdle() {
 		new ResourcesInfo("id", "CpuIdle",
-				"cpuInUse", null, "memInUse");
+				"cpuInUse", null, "memInUse", new LinkedList<Flavour>());
 	}
 	
 	@Test(expected = IllegalArgumentException.class)
 	public void testNullResourcesMemInUse() {
 		new ResourcesInfo("id", "CpuIdle",
-				"cpuInUse", "memIdle", null);
+				"cpuInUse", "memIdle", null, new LinkedList<Flavour>());
 	}
 	
 	@Test
