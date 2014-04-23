@@ -34,7 +34,7 @@ public class ManagerFacade {
 
 	private boolean scheduled = false;
 	private final Timer timer = new Timer();
-	
+
 	private List<FederationMember> members = new LinkedList<FederationMember>();
 	private RequestRepository requests = new RequestRepository();
 	private FederationMemberPicker memberPicker = new RoundRobinMemberPicker();
@@ -50,11 +50,11 @@ public class ManagerFacade {
 			throw new IllegalArgumentException();
 		}
 	}
-	
+
 	public void setComputePlugin(ComputePlugin computePlugin) {
 		this.computePlugin = computePlugin;
 	}
-	
+
 	public void setIdentityPlugin(IdentityPlugin identityPlugin) {
 		this.identityPlugin = identityPlugin;
 	}
@@ -71,8 +71,7 @@ public class ManagerFacade {
 	}
 
 	public ResourcesInfo getResourcesInfo() {
-		String token = identityPlugin.getToken(properties.getProperty("federation.user.name"),
-				properties.getProperty("federation.user.password"));
+		String token = getFederationUserToken();
 		ResourcesInfo resourcesInfo = computePlugin.getResourcesInfo(token);
 		resourcesInfo.setId(properties.getProperty("xmpp_jid"));
 		return resourcesInfo;
@@ -105,18 +104,18 @@ public class ManagerFacade {
 	}
 
 	public List<Instance> getInstances(String authToken) {
-		// TODO check other manager	
-		
+		// TODO check other manager
+
 		return this.computePlugin.getInstances(authToken);
 	}
 
 	public Instance getInstance(String authToken, String instanceId) {
 		Request request = getRequestFromInstance(authToken, instanceId);
-		if(isLocal(request)){
-			return this.computePlugin.getInstance(authToken, instanceId);	
+		if (isLocal(request)) {
+			return this.computePlugin.getInstance(authToken, instanceId);
 		} else {
 			return createGetInstanceIQ(authToken, request);
-		}	
+		}
 	}
 
 	private Instance createGetInstanceIQ(String authToken, Request request) {
@@ -125,24 +124,24 @@ public class ManagerFacade {
 
 	public void removeInstances(String authToken) {
 		// TODO check other manager
-		
+
 		this.computePlugin.removeInstances(authToken);
 	}
 
-	public void removeInstance(String authToken, String instanceId) {		
+	public void removeInstance(String authToken, String instanceId) {
 		Request request = getRequestFromInstance(authToken, instanceId);
-		if(isLocal(request)){
-			this.computePlugin.removeInstance(authToken, instanceId);	
+		if (isLocal(request)) {
+			this.computePlugin.removeInstance(authToken, instanceId);
 		} else {
 			createRemoveIQ(authToken, request);
-		}	
+		}
 	}
 
 	private void createRemoveIQ(String authToken, Request request) {
-		// TODO Auto-generated method stub		
+		// TODO Auto-generated method stub
 	}
 
-	public Request getRequestFromInstance(String authToken, String instanceId){
+	public Request getRequestFromInstance(String authToken, String instanceId) {
 		String user = getUser(authToken);
 		List<Request> userRequests = requests.getByUser(user);
 		for (Request request : userRequests) {
@@ -150,30 +149,51 @@ public class ManagerFacade {
 				return request;
 			}
 		}
-		throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);		
+		throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
 	}
-	
+
 	private boolean isLocal(Request request) {
-		if(request.getMemberId() == null){
+		if (request.getMemberId() == null) {
 			return true;
 		}
 		return false;
-	}
-	
-	private void checkInstanceId(String authToken, String instanceId) {
-		String user = getUser(authToken);
-		List<Request> userRequests = requests.getByUser(user);
-		for (Request request : userRequests) {
-			if (instanceId.equals(request.getInstanceId())) {
-				return;
-			}
-		}
-		throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
 	}
 
 	public Request getRequest(String authToken, String requestId) {
 		checkRequestId(authToken, requestId);
 		return requests.get(requestId);
+	}
+
+	public String createRemoteRequest(List<Category> categories, Map<String, String> xOCCIAtt) {
+		String token = getFederationUserToken();
+		try {
+			return computePlugin.requestInstance(token, categories, xOCCIAtt);
+		} catch (OCCIException e) {
+			LOGGER.error(e);
+			return null;
+		}
+	}
+
+	// TODO Think about always get new federation user token or store a valid one.
+	private String getFederationUserToken() {
+		String token = identityPlugin.getToken(properties.getProperty("federation.user.name"),
+				properties.getProperty("federation.user.password"));
+		return token;
+	}
+
+	public Instance getRemoteInstance(String instanceId) {
+		String token = getFederationUserToken();
+		try {
+			return computePlugin.getInstance(token, instanceId);
+		} catch (OCCIException e) {
+			LOGGER.error(e);
+			return null;
+		}
+	}
+
+	public void removeRemoteInstance(String instanceId) {
+		String token = getFederationUserToken();
+		computePlugin.removeInstance(token, instanceId);
 	}
 
 	public List<Request> createRequests(String authToken, List<Category> categories,
@@ -195,20 +215,20 @@ public class ManagerFacade {
 		if (!scheduled) {
 			scheduleRequests();
 		}
-		
+
 		return currentRequests;
 	}
 
 	private boolean submitRemoteRequest(Request request) {
 		FederationMember member = memberPicker.pick(getMembers());
 		String memberAddress = member.getResourcesInfo().getId();
-		
-		String remoteInstanceId = ManagerPacketHelper.remoteRequest(request, 
-				memberAddress, packetSender);
+
+		String remoteInstanceId = ManagerPacketHelper.remoteRequest(request, memberAddress,
+				packetSender);
 		if (remoteInstanceId == null) {
 			return false;
 		}
-		
+
 		request.setState(RequestState.FULFILLED);
 		request.setInstanceId(remoteInstanceId);
 		return true;
@@ -219,7 +239,7 @@ public class ManagerFacade {
 		for (String keyAttributes : RequestAttribute.getValues()) {
 			xOCCIAtt.remove(keyAttributes);
 		}
-		
+
 		String instanceLocation = null;
 		try {
 			instanceLocation = computePlugin.requestInstance(request.getAuthToken(),
@@ -229,13 +249,13 @@ public class ManagerFacade {
 					&& e.getMessage().contains(ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES)) {
 				return false;
 			} else {
-				//TODO Think this through...
+				// TODO Think this through...
 				request.setState(RequestState.FAILED);
 				LOGGER.warn("Request failed locally for an unknown reason.", e);
 				return true;
 			}
 		}
-		
+
 		instanceLocation = instanceLocation.replace(HeaderUtils.X_OCCI_LOCATION, "").trim();
 		request.setInstanceId(instanceLocation);
 		request.setState(RequestState.FULFILLED);
