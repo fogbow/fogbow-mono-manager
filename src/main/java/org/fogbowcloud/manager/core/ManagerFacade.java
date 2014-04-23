@@ -4,14 +4,12 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
 
 import org.apache.log4j.Logger;
-import org.dom4j.Element;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
@@ -26,9 +24,8 @@ import org.fogbowcloud.manager.occi.request.Request;
 import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestRepository;
 import org.fogbowcloud.manager.occi.request.RequestState;
-import org.fogbowcloud.manager.xmpp.ManagerXmppComponent;
+import org.fogbowcloud.manager.xmpp.ManagerPacketHelper;
 import org.jamppa.component.PacketSender;
-import org.xmpp.packet.IQ;
 
 public class ManagerFacade {
 
@@ -171,30 +168,16 @@ public class ManagerFacade {
 
 	private boolean submitRemoteRequest(Request request) {
 		FederationMember member = memberPicker.pick(getMembers());
-		IQ iq = new IQ();
-		iq.setTo(member.getResourcesInfo().getId());
-		Element queryEl = iq.getElement().addElement("query", 
-				ManagerXmppComponent.REQUEST_NAMESPACE);
-		for (Category category : request.getCategories()) {
-			Element categoryEl = queryEl.addElement("category");
-			categoryEl.addElement("class").setText(category.getCatClass());
-			categoryEl.addElement("term").setText(category.getTerm());
-			categoryEl.addElement("scheme").setText(category.getScheme());
-		}
-		for (Entry<String, String> xOCCIEntry : request.getxOCCIAtt().entrySet()) {
-			Element attributeEl = queryEl.addElement("attribute");
-			attributeEl.addAttribute("var", xOCCIEntry.getKey());
-			attributeEl.addElement("value").setText(xOCCIEntry.getValue());
-		}
-		IQ response = (IQ) packetSender.syncSendPacket(iq);
-		if (response.getError() != null) {
+		String memberAddress = member.getResourcesInfo().getId();
+		
+		String remoteInstanceId = ManagerPacketHelper.remoteRequest(request, 
+				memberAddress, packetSender);
+		if (remoteInstanceId == null) {
 			return false;
 		}
+		
 		request.setState(RequestState.FULFILLED);
-		request.setInstanceId(response.getElement()
-				.element("query")
-				.element("instance")
-				.elementText("id"));
+		request.setInstanceId(remoteInstanceId);
 		return true;
 	}
 

@@ -4,12 +4,15 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map.Entry;
 
 import org.dom4j.Attribute;
 import org.dom4j.Element;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.Flavour;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
+import org.fogbowcloud.manager.occi.core.Category;
+import org.fogbowcloud.manager.occi.request.Request;
 import org.jamppa.component.PacketSender;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.IQ.Type;
@@ -91,4 +94,30 @@ public class ManagerPacketHelper {
 		return aliveItems;
 	}
 
+	public static String remoteRequest(Request request,
+			String memberAddress, PacketSender packetSender) {
+		IQ iq = new IQ();
+		iq.setTo(memberAddress);
+		Element queryEl = iq.getElement().addElement("query",
+				ManagerXmppComponent.REQUEST_NAMESPACE);
+		for (Category category : request.getCategories()) {
+			Element categoryEl = queryEl.addElement("category");
+			categoryEl.addElement("class").setText(category.getCatClass());
+			categoryEl.addElement("term").setText(category.getTerm());
+			categoryEl.addElement("scheme").setText(category.getScheme());
+		}
+		for (Entry<String, String> xOCCIEntry : request.getxOCCIAtt()
+				.entrySet()) {
+			Element attributeEl = queryEl.addElement("attribute");
+			attributeEl.addAttribute("var", xOCCIEntry.getKey());
+			attributeEl.addElement("value").setText(xOCCIEntry.getValue());
+		}
+		IQ response = (IQ) packetSender.syncSendPacket(iq);
+		if (response.getError() != null) {
+			return null;
+		}
+		return response.getElement().element("query")
+				.element("instance")
+				.elementText("id");
+	}
 }
