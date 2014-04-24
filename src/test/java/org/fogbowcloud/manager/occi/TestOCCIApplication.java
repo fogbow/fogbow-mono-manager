@@ -28,13 +28,12 @@ import org.mockito.Mockito;
 public class TestOCCIApplication {
 
 	private static final String INSTANCE_LOCATION = HeaderUtils.X_OCCI_LOCATION
-			+ "http://localhost:" + RequestHelper.ENDPOINT_PORT
-			+ ComputeApplication.TARGET
+			+ "http://localhost:" + RequestHelper.ENDPOINT_PORT + ComputeApplication.TARGET
 			+ "/b122f3ad-503c-4abb-8a55-ba8d90cfce9f";
 	private static final String INSTANCE_ID = INSTANCE_LOCATION.replace(
 			HeaderUtils.X_OCCI_LOCATION, "").trim();
 	private static final Long SCHEDULER_PERIOD = 500L;
-	
+
 	private OCCIApplication occiApplication;
 	private Map<String, String> xOCCIAtt;
 	ManagerFacade managerFacade;
@@ -55,7 +54,9 @@ public class TestOCCIApplication {
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		Mockito.when(
 				computePlugin.requestInstance(Mockito.anyString(), Mockito.any(List.class),
-						Mockito.any(Map.class))).thenThrow(new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES));
+						Mockito.any(Map.class))).thenThrow(
+				new OCCIException(ErrorType.BAD_REQUEST,
+						ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES));
 
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.getUser(RequestHelper.ACCESS_TOKEN)).thenReturn(
@@ -67,39 +68,34 @@ public class TestOCCIApplication {
 
 	@Test
 	public void testGetRequestDetails() throws InterruptedException {
-		occiApplication.createRequests(RequestHelper.ACCESS_TOKEN, new ArrayList<Category>(), xOCCIAtt);
+		occiApplication.createRequests(RequestHelper.ACCESS_TOKEN, new ArrayList<Category>(),
+				xOCCIAtt);
 		List<Request> requests = occiApplication.getRequestsFromUser(RequestHelper.ACCESS_TOKEN);
 		Assert.assertEquals(1, requests.size());
 		String requestId = requests.get(0).getId();
-		Request requestDetails = occiApplication.getRequest(RequestHelper.ACCESS_TOKEN,
-				requestId);
+		Request requestDetails = occiApplication.getRequest(RequestHelper.ACCESS_TOKEN, requestId);
 
 		Assert.assertEquals(requestId, requestDetails.getId());
 		Assert.assertNull(requestDetails.getInstanceId());
 		Assert.assertEquals(RequestState.OPEN, requestDetails.getState());
 	}
-	
+
 	@Test
 	public void testGetRequestDetailsAfterPeriod() throws InterruptedException {
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
-		Mockito.when(
-				computePlugin.requestInstance(Mockito.anyString(), Mockito.any(List.class),
-						Mockito.any(Map.class))).thenReturn(INSTANCE_LOCATION);
-		managerFacade.setComputePlugin(computePlugin);
+		Mockito.when(computePlugin.requestInstance(Mockito.anyString(), Mockito.any(List.class), Mockito.any(Map.class)))
+				.thenReturn(INSTANCE_LOCATION);
 		
-		occiApplication.createRequests(RequestHelper.ACCESS_TOKEN, new ArrayList<Category>(), xOCCIAtt);
+		managerFacade.setComputePlugin(computePlugin);
+		occiApplication.createRequests(RequestHelper.ACCESS_TOKEN, new ArrayList<Category>(),
+				xOCCIAtt);
 		List<Request> requests = occiApplication.getRequestsFromUser(RequestHelper.ACCESS_TOKEN);
 		Assert.assertEquals(1, requests.size());
 		String requestId = requests.get(0).getId();
-		Request requestDetails = occiApplication.getRequest(RequestHelper.ACCESS_TOKEN,
-				requestId);
-
-		Assert.assertEquals(requestId, requestDetails.getId());
-		Assert.assertNull(requestDetails.getInstanceId());
-		Assert.assertEquals(RequestState.OPEN, requestDetails.getState());
+		Request requestDetails = occiApplication.getRequest(RequestHelper.ACCESS_TOKEN, requestId);
 		
 		Thread.sleep(SCHEDULER_PERIOD * 2);
-				
+
 		Assert.assertEquals(requestId, requestDetails.getId());
 		Assert.assertEquals(INSTANCE_ID, requestDetails.getInstanceId());
 		Assert.assertEquals(RequestState.FULFILLED, requestDetails.getState());
@@ -131,7 +127,8 @@ public class TestOCCIApplication {
 	public void testRemoveAllRequest() {
 		int numberOfInstances = 10;
 		xOCCIAtt.put(RequestAttribute.INSTANCE_COUNT.getValue(), String.valueOf(numberOfInstances));
-		occiApplication.createRequests(RequestHelper.ACCESS_TOKEN, new ArrayList<Category>(), xOCCIAtt);
+		occiApplication.createRequests(RequestHelper.ACCESS_TOKEN, new ArrayList<Category>(),
+				xOCCIAtt);
 
 		List<Request> requestsFromUser = occiApplication
 				.getRequestsFromUser(RequestHelper.ACCESS_TOKEN);
@@ -148,7 +145,8 @@ public class TestOCCIApplication {
 	public void testRemoveSpecificRequest() {
 		int numberOfInstances = 10;
 		xOCCIAtt.put(RequestAttribute.INSTANCE_COUNT.getValue(), String.valueOf(numberOfInstances));
-		occiApplication.createRequests(RequestHelper.ACCESS_TOKEN, new ArrayList<Category>(), xOCCIAtt);
+		occiApplication.createRequests(RequestHelper.ACCESS_TOKEN, new ArrayList<Category>(),
+				xOCCIAtt);
 
 		List<Request> requestsFromUser = occiApplication
 				.getRequestsFromUser(RequestHelper.ACCESS_TOKEN);
