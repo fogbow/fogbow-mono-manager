@@ -1,176 +1,150 @@
 package org.fogbowcloud.manager.occi;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.protocol.HTTP;
-import org.apache.http.util.EntityUtils;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
-import org.fogbowcloud.manager.occi.core.Category;
-import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
-import org.fogbowcloud.manager.occi.request.RequestAttribute;
-import org.fogbowcloud.manager.occi.request.RequestConstants;
-import org.fogbowcloud.manager.occi.util.RequestHelper;
+import org.fogbowcloud.manager.occi.core.Resource;
+import org.fogbowcloud.manager.occi.instance.Instance;
+import org.fogbowcloud.manager.occi.instance.Instance.Link;
+import org.fogbowcloud.manager.occi.request.Request;
+import org.fogbowcloud.manager.occi.util.OCCITestHelper;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
 
 public class TestGetCompute {
 
-	//TODO rename 
-	RequestHelper requestHelper;
+	private static final String INSTANCE_1_ID = "test1";
+	private static final String INSTANCE_2_ID = "test2";
+	
+	OCCITestHelper helper;
 	
 	@Before
 	public void setup() throws Exception {
-		this.requestHelper = new RequestHelper();
+		this.helper = new OCCITestHelper();
 
+		List<Resource> list = new ArrayList<Resource>();
+		Map<String, String> map = new HashMap<String, String>();
+		map.put("test", "test");
+		Link link = null;
+		Instance instance1 = new Instance(INSTANCE_1_ID, list, map, link);
+		
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
-
+		Mockito.when(computePlugin.getInstance(Mockito.anyString(), 
+				Mockito.eq(INSTANCE_1_ID))).thenReturn(instance1);
+		Mockito.when(computePlugin.getInstance(Mockito.anyString(), 
+				Mockito.eq(INSTANCE_2_ID))).thenReturn(new Instance(INSTANCE_2_ID));
+		
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
-		Mockito.when(identityPlugin.getUser(RequestHelper.ACCESS_TOKEN)).thenReturn(RequestHelper.USER_MOCK);
-
-		this.requestHelper.initializeComponent(computePlugin, identityPlugin);
+		Mockito.when(identityPlugin.getUser(OCCITestHelper.ACCESS_TOKEN)).thenReturn(
+				OCCITestHelper.USER_MOCK);
+		
+		List<Request> requests = new LinkedList<Request>();
+		Request request1 = new Request("1", OCCITestHelper.ACCESS_TOKEN, 
+				OCCITestHelper.USER_MOCK, null, null);
+		request1.setInstanceId(INSTANCE_1_ID);
+		requests.add(request1);
+		Request request2 = new Request("2", OCCITestHelper.ACCESS_TOKEN, 
+				OCCITestHelper.USER_MOCK, null, null);
+		request2.setInstanceId(INSTANCE_2_ID);
+		requests.add(request2);
+		
+		this.helper.initializeComponentCompute(computePlugin, identityPlugin, requests);
 	}
 	
 	@After 
 	public void tearDown() throws Exception{
-		this.requestHelper.stopComponent();
+		this.helper.stopComponent();
 	}
 	
-	@Ignore
 	@Test
-	public void TestGetComputeEmpty() throws Exception{
-		HttpGet httpGet = new HttpGet(RequestHelper.URI_FOGBOW_COMPUTE);
-		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, RequestHelper.CONTENT_TYPE_OCCI);
-		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, RequestHelper.ACCESS_TOKEN);
+	public void TestGetComputeOk() throws Exception{
+		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE);
+		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
+		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(httpGet);	
 		
-		Assert.assertEquals(0, RequestHelper.getRequestLocations(response).size());
+		Assert.assertEquals(2, OCCITestHelper.getRequestLocations(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
-	
-	@Ignore
-	@Test
-	public void TestGetComputeOneVM() throws Exception{
-		//Post /request
-		HttpPost httpPost = new HttpPost(RequestHelper.URI_FOGBOW_REQUEST);
-		HttpClient client = new DefaultHttpClient();
-		Category category = new Category(RequestConstants.TERM,
-				RequestConstants.SCHEME, OCCIHeaders.KIND_CLASS);
-		httpPost.addHeader(OCCIHeaders.CONTENT_TYPE, RequestHelper.CONTENT_TYPE_OCCI);
-		httpPost.addHeader(OCCIHeaders.X_AUTH_TOKEN, RequestHelper.ACCESS_TOKEN);
-		httpPost.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
-		HttpResponse response = client.execute(httpPost);
-		
-		//Get /compute/
-		HttpGet httpGet = new HttpGet(RequestHelper.URI_FOGBOW_COMPUTE);
-		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, RequestHelper.CONTENT_TYPE_OCCI);
-		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, RequestHelper.ACCESS_TOKEN);
-		client = new DefaultHttpClient();
-		response = client.execute(httpGet);	
-		
-		Assert.assertEquals(1, RequestHelper.getRequestLocations(response).size());
-		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
-	}
-	
-	@Ignore
-	@Test
-	public void TestGetComputeManyVMs() throws Exception{
-		//Post /request
-		HttpPost httpPost = new HttpPost(RequestHelper.URI_FOGBOW_REQUEST);
-		Category category = new Category(RequestConstants.TERM,
-				RequestConstants.SCHEME, OCCIHeaders.KIND_CLASS);
-		httpPost.addHeader(OCCIHeaders.CONTENT_TYPE, RequestHelper.CONTENT_TYPE_OCCI);
-		httpPost.addHeader(OCCIHeaders.X_AUTH_TOKEN, RequestHelper.ACCESS_TOKEN);
-		httpPost.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
-		httpPost.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE,
-				RequestAttribute.INSTANCE_COUNT.getValue() + " = 3");
-		HttpClient client = new DefaultHttpClient();
-		HttpResponse response = client.execute(httpPost);
-		List<String> requestIDs = RequestHelper.getRequestLocations(response);
 
-		Assert.assertEquals(3, requestIDs.size());
-		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
-		
-		//Get /compute/
-		HttpGet httpGet = new HttpGet(RequestHelper.URI_FOGBOW_COMPUTE);
-		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, RequestHelper.CONTENT_TYPE_OCCI);
-		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, RequestHelper.ACCESS_TOKEN);
-		client = new DefaultHttpClient();
-		response = client.execute(httpGet);	
-		
-		Assert.assertEquals(3, RequestHelper.getRequestLocations(response).size());
-		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
-	}	
-	
-	@Ignore
 	@Test
-	public void TestGetComputeDetailsSpecificVM() throws Exception{
-		//Post /request
-		HttpPost httpPost = new HttpPost(RequestHelper.URI_FOGBOW_REQUEST);
+	public void TestGetSpecificInstanceFound() throws Exception {
+		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE + INSTANCE_1_ID);
+		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
+		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		HttpClient client = new DefaultHttpClient();
-		Category category = new Category(RequestConstants.TERM,
-				RequestConstants.SCHEME, OCCIHeaders.KIND_CLASS);
-		httpPost.addHeader(OCCIHeaders.CONTENT_TYPE, RequestHelper.CONTENT_TYPE_OCCI);
-		httpPost.addHeader(OCCIHeaders.X_AUTH_TOKEN, RequestHelper.ACCESS_TOKEN);
-		httpPost.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
-		HttpResponse response = client.execute(httpPost);
+		HttpResponse response = client.execute(httpGet);	
 		
-		String responseStr = EntityUtils.toString(response.getEntity(), HTTP.UTF_8);
-		String idVm = responseStr.replace("X-OCCI-Location: http://localhost:8182/request/", "").trim();
-		
-		//Get /compute/$VM
-		HttpGet httpGet = new HttpGet(RequestHelper.URI_FOGBOW_COMPUTE + idVm);
-		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, RequestHelper.CONTENT_TYPE_OCCI);
-		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, RequestHelper.ACCESS_TOKEN);
-		client = new DefaultHttpClient();
-		response = client.execute(httpGet);	
-		responseStr = EntityUtils.toString(response.getEntity(), HTTP.UTF_8);
-		System.out.println(responseStr);
-		
-		
-		Assert.assertEquals(1, RequestHelper.getRequestLocations(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}	
 	
-	@Ignore
-	@Test(expected = OCCIException.class)
-	public void TestWrongContentType() throws Exception{
-		HttpGet httpGet = new HttpGet(RequestHelper.URI_FOGBOW_COMPUTE);
+	@Test
+	public void TestGetSpecificInstanceNotFound() throws Exception {
+		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE + "wrong");
+		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
+		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		HttpClient client = new DefaultHttpClient();
+		HttpResponse response = client.execute(httpGet);	
+		
+		Assert.assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatusLine().getStatusCode());
+	}
+	
+	@Test
+	public void TestWrongContentType() throws Exception {
+		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE);
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, "wrong");
-		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, RequestHelper.ACCESS_TOKEN);
+		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		HttpClient client = new DefaultHttpClient();
-		client.execute(httpGet);	
+		HttpResponse response = client.execute(httpGet);
+		
+		Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusLine().getStatusCode());
 	}
 
-	@Ignore
-	@Test(expected = OCCIException.class)
-	public void TestWrongAccessToken() throws Exception{
-		HttpGet httpGet = new HttpGet(RequestHelper.URI_FOGBOW_COMPUTE);
-		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, RequestHelper.CONTENT_TYPE_OCCI);
-		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, "wrong");
+	@Test
+	public void TestAccessToken() throws Exception {
+		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE);
+		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
+		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		HttpClient client = new DefaultHttpClient();
-		client.execute(httpGet);	
-	}
+		HttpResponse response = client.execute(httpGet);
+		
+		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+	}	
 	
-	@Ignore
-	@Test(expected = OCCIException.class)
-	public void TestInvalidVM() throws Exception{
-		HttpGet httpGet = new HttpGet(RequestHelper.URI_FOGBOW_COMPUTE);
-		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, RequestHelper.CONTENT_TYPE_OCCI);
+	@Test
+	public void TestWrongAccessToken() throws Exception {
+		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE + INSTANCE_1_ID);
+		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
 		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, "wrong");
 		HttpClient client = new DefaultHttpClient();
-		client.execute(httpGet);	
+		HttpResponse response = client.execute(httpGet);
+		
+		Assert.assertEquals(HttpStatus.SC_UNAUTHORIZED, response.getStatusLine().getStatusCode());
+	}	
+	
+	@Test
+	public void TestEmptyAccessToken() throws Exception {
+		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE);
+		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
+		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, "");
+		HttpClient client = new DefaultHttpClient();
+		HttpResponse response = client.execute(httpGet);
+		
+		Assert.assertEquals(HttpStatus.SC_UNAUTHORIZED, response.getStatusLine().getStatusCode());
 	}	
 }

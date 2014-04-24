@@ -25,7 +25,7 @@ import org.restlet.routing.Router;
 
 public class ComputeApplication extends Application {
 
-	public static final String TARGET = "/compute";
+	public static final String TARGET = "/compute/";
 	public static final String CORE_ATTRIBUTE_OCCI = "occi.compute.cores";
 	public static final String MEMORY_ATTRIBUTE_OCCI = "occi.compute.memory";
 	public static final String ARCHITECTURE_ATTRIBUTE_OCCI = "occi.compute.architecture";
@@ -82,7 +82,7 @@ public class ComputeApplication extends Application {
 	public Restlet createInboundRoot() {
 		Router router = new Router(getContext());
 		router.attach(TARGET, ComputeServer.class);
-		router.attach(TARGET + "/{instanceid}", ComputeServer.class);
+		router.attach(TARGET + "{instanceid}", ComputeServer.class);
 		return router;
 	}
 

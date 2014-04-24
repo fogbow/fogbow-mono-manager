@@ -104,28 +104,45 @@ public class ManagerFacade {
 	}
 
 	public List<Instance> getInstances(String authToken) {
-		// TODO check other manager
-
-		return this.computePlugin.getInstances(authToken);
+		List<Instance> instances = new ArrayList<Instance>();
+		for (Request request : requests.getByUser(getUser(authToken))) {
+			String instanceId = request.getInstanceId();
+			if (instanceId == null) {
+				continue;
+			}
+			if (isLocal(request)) {
+				instances.add(this.computePlugin.getInstance(authToken, instanceId));
+			} else {
+				instances.add(getRemoteInstance(request)); 
+			}			
+		}
+		return instances;
 	}
 
 	public Instance getInstance(String authToken, String instanceId) {
 		Request request = getRequestFromInstance(authToken, instanceId);
 		if (isLocal(request)) {
 			return this.computePlugin.getInstance(authToken, instanceId);
-		} else {
-			return createGetInstanceIQ(authToken, request);
-		}
+		} 
+		return getRemoteInstance(request);
 	}
 
-	private Instance createGetInstanceIQ(String authToken, Request request) {
+	private Instance getRemoteInstance(Request request) {
 		return null;
 	}
 
 	public void removeInstances(String authToken) {
-		// TODO check other manager
-
-		this.computePlugin.removeInstances(authToken);
+		for (Request request : requests.getByUser(getUser(authToken))) {
+			String instanceId = request.getInstanceId();
+			if (instanceId == null) {
+				continue;
+			}
+			if (isLocal(request)) {
+				this.computePlugin.removeInstance(authToken, instanceId);
+			} else {
+				removeRemoteInstance(request); 
+			}			
+		}
 	}
 
 	public void removeInstance(String authToken, String instanceId) {
@@ -133,19 +150,23 @@ public class ManagerFacade {
 		if (isLocal(request)) {
 			this.computePlugin.removeInstance(authToken, instanceId);
 		} else {
-			createRemoveIQ(authToken, request);
+			removeRemoteInstance(request);
 		}
 	}
 
-	private void createRemoveIQ(String authToken, Request request) {
+	private void removeRemoteInstance(Request request) {
 		// TODO Auto-generated method stub
 	}
 
 	public Request getRequestFromInstance(String authToken, String instanceId) {
 		String user = getUser(authToken);
-		List<Request> userRequests = requests.getByUser(user);
+		List<Request> userRequests = requests.getAll();
 		for (Request request : userRequests) {
 			if (instanceId.equals(request.getInstanceId())) {
+				if (!request.getUser().equals(user)) {
+					throw new OCCIException(ErrorType.UNAUTHORIZED, 
+							ResponseConstants.UNAUTHORIZED);
+				}
 				return request;
 			}
 		}
@@ -153,10 +174,7 @@ public class ManagerFacade {
 	}
 
 	private boolean isLocal(Request request) {
-		if (request.getMemberId() == null) {
-			return true;
-		}
-		return false;
+		return request.getMemberId() == null;
 	}
 
 	public Request getRequest(String authToken, String requestId) {
@@ -181,7 +199,7 @@ public class ManagerFacade {
 		return token;
 	}
 
-	public Instance getRemoteInstance(String instanceId) {
+	public Instance getInstanceForRemoteMember(String instanceId) {
 		String token = getFederationUserToken();
 		try {
 			return computePlugin.getInstance(token, instanceId);
@@ -191,7 +209,7 @@ public class ManagerFacade {
 		}
 	}
 
-	public void removeRemoteInstance(String instanceId) {
+	public void removeInstanceForRemoteMember(String instanceId) {
 		String token = getFederationUserToken();
 		computePlugin.removeInstance(token, instanceId);
 	}
@@ -207,8 +225,7 @@ public class ManagerFacade {
 		List<Request> currentRequests = new ArrayList<Request>();
 		for (int i = 0; i < instanceCount; i++) {
 			String requestId = String.valueOf(UUID.randomUUID());
-			Request request = new Request(requestId, authToken, null, RequestState.OPEN, categories,
-					xOCCIAtt, null);
+			Request request = new Request(requestId, authToken, user, categories, xOCCIAtt);
 			currentRequests.add(request);
 			requests.addRequest(user, request);
 		}
@@ -290,5 +307,9 @@ public class ManagerFacade {
 
 	public void setPacketSender(PacketSender packetSender) {
 		this.packetSender = packetSender;
+	}
+
+	public void setRequests(RequestRepository requests) {
+		this.requests = requests;
 	}
 }
