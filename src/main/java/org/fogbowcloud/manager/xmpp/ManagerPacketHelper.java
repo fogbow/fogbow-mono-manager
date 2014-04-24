@@ -24,6 +24,8 @@ import org.fogbowcloud.manager.occi.request.Request;
 import org.jamppa.component.PacketSender;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.IQ.Type;
+import org.xmpp.packet.PacketError;
+import org.xmpp.packet.PacketError.Condition;
 
 public class ManagerPacketHelper {
 
@@ -106,6 +108,7 @@ public class ManagerPacketHelper {
 			String memberAddress, PacketSender packetSender) {
 		IQ iq = new IQ();
 		iq.setTo(memberAddress);
+		iq.setType(Type.set);
 		Element queryEl = iq.getElement().addElement("query",
 				ManagerXmppComponent.REQUEST_NAMESPACE);
 		for (Category category : request.getCategories()) {
@@ -133,6 +136,7 @@ public class ManagerPacketHelper {
 			String memberAddress, PacketSender packetSender) {
 		IQ iq = new IQ();
 		iq.setTo(memberAddress);
+		iq.setType(Type.get);
 		Element queryEl = iq.getElement().addElement("query",
 				ManagerXmppComponent.GETINSTANCE_NAMESPACE);
 		Element instanceEl = queryEl.addElement("instance");
@@ -147,10 +151,11 @@ public class ManagerPacketHelper {
 				.element("instance"));
 	}
 
-	public static void getRemoteResponseDelete(Request request,
+	public static void deleteRemoteInstace(Request request,
 			String memberAddress, PacketSender packetSender) {
 		IQ iq = new IQ();
 		iq.setTo(memberAddress);
+		iq.setType(Type.set);
 		Element queryEl = iq.getElement().addElement("query",
 				ManagerXmppComponent.REMOVEINSTANCE_NAMESPACE);
 		Element instanceEl = queryEl.addElement("instance");
@@ -158,14 +163,21 @@ public class ManagerPacketHelper {
 		
 		IQ response = (IQ) packetSender.syncSendPacket(iq);
 		if (response.getError() != null) {
-		}	
-		
-		String error = response.getElement().element("error").getText();
-		if(error.equals("NOT_FOUND")){
-			throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
+			raiseException(response.getError());
 		}
 	}
 	
+	private static void raiseException(PacketError error) {
+		Condition condition = error.getCondition();
+		if (condition.equals(Condition.item_not_found)) {
+			throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
+		}
+		if (condition.equals(Condition.not_authorized)) {
+			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
+		}
+		throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
+	}
+
 	@SuppressWarnings("unchecked")
 	private static Instance parseInstance(Element instanceEl) {
 		String id = instanceEl.element("id").getText();
