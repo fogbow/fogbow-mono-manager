@@ -12,6 +12,7 @@ public class ManagerXmppComponent extends XMPPComponent {
 	public static final String WHOISALIVE_NAMESPACE = "http://fogbowcloud.org/rendezvous/whoisalive";
 	public static final String IAMALIVE_NAMESPACE = "http://fogbowcloud.org/rendezvous/iamalive";
 	public static final String REQUEST_NAMESPACE = "http://fogbowcloud.org/manager/request";
+	public static final String GETINSTANCE_NAMESPACE = "http://fogbowcloud.org/manager/getinstance";
 
 	private static long PERIOD = 100;
 	private ManagerFacade managerFacade;
