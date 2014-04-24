@@ -40,7 +40,7 @@ public class TestComputeOpenStack {
 	@Before
 	public void setUp() throws Exception {
 		Properties properties = new Properties();
-		properties.put("compute_openstack_url", URL);
+		properties.put("compute_openstack_occi_url", URL);
 		properties.put("compute_openstack_flavor_small", ComputeApplication.SMALL_FLAVOR_TERM);
 		properties.put("compute_openstack_flavor_medium", ComputeApplication.MEDIUM_FLAVOR_TERM);
 		properties.put("compute_openstack_flavor_large", ComputeApplication.MEDIUM_FLAVOR_TERM);

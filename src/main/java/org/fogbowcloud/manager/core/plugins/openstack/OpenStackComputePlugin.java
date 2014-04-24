@@ -29,23 +29,39 @@ import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class OpenStackComputePlugin implements ComputePlugin {
 
+	private static final String ABSOLUTE = "absolute";
+	private static final String LIMITS = "limits";
 	private static final Logger LOGGER = Logger.getLogger(OpenStackComputePlugin.class);
 	private static final String TERM_COMPUTE = "compute";
 	private static final String SCHEME_COMPUTE = "http://schemas.ogf.org/occi/infrastructure#";
 	private static final String CLASS_COMPUTE = "kind";
 	private static final String COMPUTE_ENDPOINT = "/compute/";
+	private final String federationTenantId;
+	private final String COMPUTE_V2_API_ENDEPOINT = "/v2/";
 
 	public static final String OS_SCHEME = "http://schemas.openstack.org/template/os#";
 	public static final String CIRROS_IMAGE_TERM = "cadf2e29-7216-4a5e-9364-cf6513d5f1fd";
+	private static final String MAX_TOTAL_CORES_ATT = "maxTotalCores";
+	private static final String TOTAL_CORES_USED_ATT = "totalCoresUsed";
+	private static final String MAX_TOTAL_RAM_SIZE_ATT = "maxTotalRAMSize";
+	private static final String TOTAL_RAM_USED_ATT = "totalRAMUsed";
 
-	private String computeEndpoint;
+	private String computeOCCIEndpoint;
+	private String computeV2APIEndepoint;
 	private Map<String, Category> fogTermToOpensStackCategory = new HashMap<String, Category>();
 
 	public OpenStackComputePlugin(Properties properties) {
-		this.computeEndpoint = properties.getProperty("compute_openstack_url") + COMPUTE_ENDPOINT;
+		this.computeOCCIEndpoint = properties.getProperty("compute_openstack_occi_url")
+				+ COMPUTE_ENDPOINT;
+		this.computeV2APIEndepoint = properties.getProperty("compute_openstack_v2api_url")
+				+ COMPUTE_V2_API_ENDEPOINT;
+		this.federationTenantId = properties.getProperty("federation_user_tenant_id");
+
 		fogTermToOpensStackCategory.put(RequestConstants.SMALL_TERM,
 				createFlavorCategory("compute_openstack_flavor_small", properties));
 		fogTermToOpensStackCategory.put(RequestConstants.MEDIUM_TERM,
@@ -80,7 +96,7 @@ public class OpenStackComputePlugin implements ComputePlugin {
 		HttpClient httpCLient = new DefaultHttpClient();
 		HttpPost httpPost;
 		try {
-			httpPost = new HttpPost(computeEndpoint);
+			httpPost = new HttpPost(computeOCCIEndpoint);
 			httpPost.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 			httpPost.addHeader(OCCIHeaders.X_AUTH_TOKEN, authToken);
 			for (Category category : openStackCategories) {
@@ -113,7 +129,7 @@ public class OpenStackComputePlugin implements ComputePlugin {
 		HttpClient httpCLient = new DefaultHttpClient();
 		HttpGet httpGet;
 		try {
-			httpGet = new HttpGet(computeEndpoint + instanceId);
+			httpGet = new HttpGet(computeOCCIEndpoint + instanceId);
 			httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, authToken);
 			HttpResponse response = httpCLient.execute(httpGet);
 
@@ -141,7 +157,7 @@ public class OpenStackComputePlugin implements ComputePlugin {
 		HttpClient httpCLient = new DefaultHttpClient();
 		HttpGet httpGet;
 		try {
-			httpGet = new HttpGet(computeEndpoint);
+			httpGet = new HttpGet(computeOCCIEndpoint);
 			httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, authToken);
 			HttpResponse response = httpCLient.execute(httpGet);
 
@@ -178,7 +194,7 @@ public class OpenStackComputePlugin implements ComputePlugin {
 		HttpClient httpCLient = new DefaultHttpClient();
 		HttpDelete httpDelete;
 		try {
-			httpDelete = new HttpDelete(computeEndpoint);
+			httpDelete = new HttpDelete(computeOCCIEndpoint);
 			httpDelete.addHeader(OCCIHeaders.X_AUTH_TOKEN, authToken);
 			HttpResponse response = httpCLient.execute(httpDelete);
 			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
@@ -201,7 +217,7 @@ public class OpenStackComputePlugin implements ComputePlugin {
 		HttpClient httpCLient = new DefaultHttpClient();
 		HttpDelete httpDelete;
 		try {
-			httpDelete = new HttpDelete(computeEndpoint + instanceId);
+			httpDelete = new HttpDelete(computeOCCIEndpoint + instanceId);
 			httpDelete.addHeader(OCCIHeaders.X_AUTH_TOKEN, authToken);
 			HttpResponse response = httpCLient.execute(httpDelete);
 
@@ -224,23 +240,59 @@ public class OpenStackComputePlugin implements ComputePlugin {
 
 	@Override
 	public ResourcesInfo getResourcesInfo(String authToken) {
-		// TODO Fake resources
-		String cpuIdle = "1000";
-		String cpuInUse = "0";
-		String memIdle = "2048000";
-		String memInUse = "0";		
-		return new ResourcesInfo(null, cpuIdle, cpuInUse, memIdle, memInUse, getFlavors(cpuIdle, memIdle));
+		HttpClient httpCLient = new DefaultHttpClient();
+		HttpGet httpGet;
+		try {
+			httpGet = new HttpGet(computeV2APIEndepoint + federationTenantId + "/limits");
+			httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, authToken);
+			HttpResponse response = httpCLient.execute(httpGet);
+
+			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
+				throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
+			} else if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_FOUND) {
+				throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
+			}
+			String responseStr = EntityUtils.toString(response.getEntity(),
+					String.valueOf(Charsets.UTF_8));
+
+			String maxCpu = getAttFromJson(MAX_TOTAL_CORES_ATT, responseStr);
+			String cpuInUse = getAttFromJson(TOTAL_CORES_USED_ATT, responseStr);
+			String maxMem = getAttFromJson(MAX_TOTAL_RAM_SIZE_ATT, responseStr);
+			String memInUse = getAttFromJson(TOTAL_RAM_USED_ATT, responseStr);
+
+			int cpuIdle = Integer.parseInt(maxCpu) - Integer.parseInt(cpuInUse);
+			int memIdle = Integer.parseInt(maxMem) - Integer.parseInt(memInUse);
+
+			return new ResourcesInfo(null, String.valueOf(cpuIdle), cpuInUse,
+					String.valueOf(memIdle), memInUse, getFlavors(cpuIdle, memIdle));
+
+		} catch (URISyntaxException e) {
+			LOGGER.error(e);
+			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
+		} catch (HttpException e) {
+			LOGGER.error(e);
+			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
+		} catch (IOException e) {
+			LOGGER.error(e);
+			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
+		}
 	}
 
-	private List<Flavor> getFlavors(String cpuIdleStr, String memIdleStr) {
-		int cpuIdle = Integer.parseInt(cpuIdleStr);
-		int memIdle = Integer.parseInt(memIdleStr);		
+	private String getAttFromJson(String attName, String responseStr) {
+		try {
+			JSONObject root = new JSONObject(responseStr);
+			return root.getJSONObject(LIMITS).getJSONObject(ABSOLUTE).getString(attName).toString();
+		} catch (JSONException e) {
+			return null;
+		}
+	}
+
+	private List<Flavor> getFlavors(int cpuIdle, int memIdle) {
 		List<Flavor> flavors = new ArrayList<Flavor>();
-		
-		//flavors 
-		int capacity = Math.min(cpuIdle / 1, memIdle / 2048);		
+		// flavors
+		int capacity = Math.min(cpuIdle / 1, memIdle / 2048);
 		Flavor smallFlavor = new Flavor(RequestConstants.SMALL_TERM, "1", "2048", capacity);
-		capacity = Math.min(cpuIdle / 2, memIdle / 4096);		
+		capacity = Math.min(cpuIdle / 2, memIdle / 4096);
 		Flavor mediumFlavor = new Flavor(RequestConstants.MEDIUM_TERM, "2", "4096", capacity);
 		capacity = Math.min(cpuIdle / 4, memIdle / 8192);
 		Flavor largeFlavor = new Flavor(RequestConstants.LARGE_TERM, "4", "8192", capacity);

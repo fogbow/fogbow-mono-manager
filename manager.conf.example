@@ -4,7 +4,8 @@ xmpp_host=127.0.0.1
 xmpp_port=5347
 
 compute_class=org.fogbowcloud.manager.occi.plugins.openstack.OpenStackComputePlugin
-compute_openstack_url=http://localhost:8182
+compute_openstack_occi_url=http://localhost:8182
+compute_openstack_v2api_url=http://localhost:8182
 compute_openstack_flavor_small=m1-small
 compute_openstack_flavor_medium=m1-medium
 compute_openstack_flavor_large=m1-large
@@ -12,7 +13,8 @@ compute_openstack_flavor_large=m1-large
 identity_class=org.fogbowcloud.manager.occi.plugins.openstack.OpenStackIdentityPlugin
 identity_openstack_url=http://localhost:5000
 
-federation.user.name=fogbow
-federation.user.password=fogbow
+federation_user_name=fogbow
+federation_user_password=fogbow
+federation_use_tenant_id=$tenantId
 
 scheduler_period=30000

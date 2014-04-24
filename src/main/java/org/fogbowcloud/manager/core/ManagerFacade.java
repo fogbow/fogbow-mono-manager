@@ -194,8 +194,8 @@ public class ManagerFacade {
 
 	// TODO Think about always get new federation user token or store a valid one.
 	private String getFederationUserToken() {
-		String token = identityPlugin.getToken(properties.getProperty("federation.user.name"),
-				properties.getProperty("federation.user.password"));
+		String token = identityPlugin.getToken(properties.getProperty("federation_user_name"),
+				properties.getProperty("federation_user_password"));
 		return token;
 	}
 
