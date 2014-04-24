@@ -182,7 +182,7 @@ public class ManagerFacade {
 		return requests.get(requestId);
 	}
 
-	public String createRemoteRequest(List<Category> categories, Map<String, String> xOCCIAtt) {
+	public String createRequestForRemoteMember(List<Category> categories, Map<String, String> xOCCIAtt) {
 		String token = getFederationUserToken();
 		try {
 			return computePlugin.requestInstance(token, categories, xOCCIAtt);

@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.http.HttpStatus;
 import org.dom4j.Attribute;
 import org.dom4j.Element;
 import org.fogbowcloud.manager.core.model.FederationMember;
@@ -236,5 +237,18 @@ public class ManagerPacketHelper {
 		}
 		
 		return new Instance(id, resources, attributes, link);
+	}
+
+	public static Condition getCondition(OCCIException e) {
+		switch (e.getStatus().getCode()) {
+		case HttpStatus.SC_NOT_FOUND:
+			return Condition.item_not_found;
+		case HttpStatus.SC_UNAUTHORIZED:
+			return Condition.not_authorized;
+		case HttpStatus.SC_BAD_REQUEST:
+			return Condition.bad_request;
+		default:
+			return Condition.internal_server_error;
+		}
 	}
 }

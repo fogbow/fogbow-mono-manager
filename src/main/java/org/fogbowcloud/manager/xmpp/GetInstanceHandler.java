@@ -24,8 +24,8 @@ public class GetInstanceHandler extends AbstractQueryHandler {
 
 	@Override
 	public IQ handle(IQ query) {
-		String instanceId = query.getElement().element("instance")
-				.elementText("id");
+		String instanceId = query.getElement().element("query")
+				.element("instance").elementText("id");
 		Instance instance = facade.getInstanceForRemoteMember(instanceId);
 		
 		IQ response = IQ.createResultIQ(query);

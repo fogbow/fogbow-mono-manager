@@ -26,6 +26,7 @@ public class ManagerXmppComponent extends XMPPComponent {
 		this.managerFacade = managerFacade;
 		addGetHandler(new GetInstanceHandler(managerFacade));
 		addSetHandler(new RemoveInstanceHandler(managerFacade));
+		addSetHandler(new RequestInstanceHandler(managerFacade));
 	}
 
 	public void init() {
