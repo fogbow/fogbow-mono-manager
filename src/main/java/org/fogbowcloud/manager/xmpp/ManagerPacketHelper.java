@@ -152,7 +152,7 @@ public class ManagerPacketHelper {
 		IQ iq = new IQ();
 		iq.setTo(memberAddress);
 		Element queryEl = iq.getElement().addElement("query",
-				ManagerXmppComponent.REMOVEINSTACE_NAMESPACE);
+				ManagerXmppComponent.REMOVEINSTANCE_NAMESPACE);
 		Element instanceEl = queryEl.addElement("instance");
 		instanceEl.addElement("id").setText(request.getInstanceId());
 		

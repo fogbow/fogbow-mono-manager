@@ -199,8 +199,16 @@ public class Instance {
 			this.name = name;
 		}
 		
+		public String getName() {
+			return name;
+		}
+		
 		public void setAttributes(Map<String,String> attributes){
 			this.attributes = attributes;
+		}
+		
+		public Map<String, String> getAttributes() {
+			return attributes;
 		}
 	}
 }

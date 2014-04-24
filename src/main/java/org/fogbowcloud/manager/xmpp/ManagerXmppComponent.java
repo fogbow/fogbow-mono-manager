@@ -13,7 +13,7 @@ public class ManagerXmppComponent extends XMPPComponent {
 	public static final String IAMALIVE_NAMESPACE = "http://fogbowcloud.org/rendezvous/iamalive";
 	public static final String REQUEST_NAMESPACE = "http://fogbowcloud.org/manager/request";
 	public static final String GETINSTANCE_NAMESPACE = "http://fogbowcloud.org/manager/getinstance";
-	public static final String REMOVEINSTACE_NAMESPACE = "http://fogbowcloud.org/manager/removoinstace";
+	public static final String REMOVEINSTANCE_NAMESPACE = "http://fogbowcloud.org/manager/removeinstance";
 
 	private static long PERIOD = 100;
 	private ManagerFacade managerFacade;
@@ -24,6 +24,8 @@ public class ManagerXmppComponent extends XMPPComponent {
 			int port, ManagerFacade managerFacade) {
 		super(jid, password, server, port);
 		this.managerFacade = managerFacade;
+		addGetHandler(new GetInstanceHandler(managerFacade));
+		addSetHandler(new RemoveInstanceHandler(managerFacade));
 	}
 
 	public void init() {
