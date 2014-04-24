@@ -12,6 +12,7 @@ import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.occi.core.Category;
+import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.jamppa.component.PacketSender;
 import org.xmpp.packet.IQ;
@@ -118,5 +119,27 @@ public class ManagerPacketHelper {
 		return response.getElement().element("query")
 				.element("instance")
 				.elementText("id");
+	}
+	
+	public static Instance getRemoteInstance(Request request,
+			String memberAddress, PacketSender packetSender) {
+		IQ iq = new IQ();
+		iq.setTo(memberAddress);
+		Element queryEl = iq.getElement().addElement("query",
+				ManagerXmppComponent.GETINSTANCE_NAMESPACE);
+		Element instanceEl = queryEl.addElement("instance");
+		instanceEl.addElement("id").setText(request.getInstanceId());
+		
+		IQ response = (IQ) packetSender.syncSendPacket(iq);
+		if (response.getError() != null) {
+			return null;
+		}
+		
+		return parseInstance(response.getElement().element("query")
+				.element("instance"));
+	}	
+	
+	private static Instance parseInstance(Element instanceEl) {
+		return null;
 	}
 }
