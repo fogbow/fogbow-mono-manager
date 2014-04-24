@@ -189,7 +189,7 @@ public class ManagerPacketHelper {
 		Map<String, String> attributesLink = new HashMap<String, String>();
 		while (linkAttributeIterator.hasNext()) {
 			Element itemAttributeEl = (Element) linkAttributeIterator.next();
-			String key = itemAttributeEl.getStringValue();
+			String key = itemAttributeEl.attributeValue("val");
 			String value = itemAttributeEl.getText();
 			attributesLink.put(key, value);
 		}		
@@ -230,7 +230,7 @@ public class ManagerPacketHelper {
 		Map<String, String> attributes = new HashMap<String, String>();
 		while (attributesIterator.hasNext()) {
 			Element attributeEl = (Element) attributesIterator.next();
-			String key = attributeEl.getStringValue();
+			String key = attributeEl.attributeValue("val");
 			String value = attributeEl.getText();
 			attributes.put(key, value);
 		}
