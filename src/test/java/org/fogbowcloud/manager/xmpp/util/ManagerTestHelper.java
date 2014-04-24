@@ -9,7 +9,8 @@ import java.util.Properties;
 import org.dom4j.Attribute;
 import org.dom4j.Element;
 import org.fogbowcloud.manager.core.ManagerFacade;
-import org.fogbowcloud.manager.core.model.Flavour;
+import org.fogbowcloud.manager.core.model.FederationMember;
+import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
@@ -44,19 +45,20 @@ public class ManagerTestHelper {
 	private ManagerXmppComponent managerXmppComponent;
 
 	public ResourcesInfo getResources() {
-		List<Flavour> flavours = new LinkedList<Flavour>();
-		flavours.add(new Flavour("samll", "cpu", "mem", 2));
+		List<Flavor> flavours = new LinkedList<Flavor>();
+		flavours.add(new Flavor("small", "cpu", "mem", 2));
+		flavours.add(new Flavor("small", "cpu", "mem", 3));
 		ResourcesInfo resources = new ResourcesInfo("abc", "value1", "value2",
 				"value3", "value4", flavours);
 		return resources;
 	}
 
-	public IQ createWhoIsAliveResponse(ArrayList<RendezvousItemCopy> aliveIds,
+	public IQ createWhoIsAliveResponse(ArrayList<FederationMember> aliveIds,
 			IQ iq) {
 		IQ resultIQ = IQ.createResultIQ(iq);
 		Element queryElement = resultIQ.getElement().addElement("query",
 				WHOISALIVE_NAMESPACE);
-		for (RendezvousItemCopy rendezvousItem : aliveIds) {
+		for (FederationMember rendezvousItem : aliveIds) {
 			Element itemEl = queryElement.addElement("item");
 			itemEl.addAttribute("id", rendezvousItem.getResourcesInfo().getId());
 
@@ -70,9 +72,9 @@ public class ManagerTestHelper {
 			statusEl.addElement("mem-inuse").setText(
 					rendezvousItem.getResourcesInfo().getMemInUse());
 
-			List<Flavour> flavours = rendezvousItem.getResourcesInfo()
+			List<Flavor> flavours = rendezvousItem.getResourcesInfo()
 					.getFlavours();
-			for (Flavour f : flavours) {
+			for (Flavor f : flavours) {
 				Element flavorElement = statusEl.addElement("flavor");
 				flavorElement.addElement("name").setText(f.getName());
 				flavorElement.addElement("cpu").setText(f.getCpu());
@@ -83,7 +85,6 @@ public class ManagerTestHelper {
 			statusEl.addElement("cert");
 			statusEl.addElement("updated").setText(
 					String.valueOf(rendezvousItem.getFormattedTime()));
-			// add rendezvous item like it should be
 		}
 		return resultIQ;
 	}
@@ -115,6 +116,7 @@ public class ManagerTestHelper {
 		Properties properties = new Properties();
 		properties.put("federation.user.name", "fogbow");
 		properties.put("federation.user.password", "fogbow");
+		properties.put("xmpp_jid", "manager.test.com");
 
 		ManagerFacade managerFacade = new ManagerFacade(properties);
 		managerFacade.setComputePlugin(computePlugin);
@@ -149,10 +151,10 @@ public class ManagerTestHelper {
 	}
 
 	@SuppressWarnings("unchecked")
-	public List<RendezvousItemCopy> getItemsFromIQ(Packet response) {
+	public List<FederationMember> getItemsFromIQ(Packet response) {
 		Element queryElement = response.getElement().element("query");
 		Iterator<Element> itemIterator = queryElement.elementIterator("item");
-		ArrayList<RendezvousItemCopy> aliveItems = new ArrayList<RendezvousItemCopy>();
+		ArrayList<FederationMember> aliveItems = new ArrayList<FederationMember>();
 
 		while (itemIterator.hasNext()) {
 			Element itemEl = (Element) itemIterator.next();
@@ -163,7 +165,7 @@ public class ManagerTestHelper {
 			String memIdle = statusEl.element("mem-idle").getText();
 			String memInUse = statusEl.element("mem-inuse").getText();
 
-			List<Flavour> flavoursList = new LinkedList<Flavour>();
+			List<Flavor> flavoursList = new LinkedList<Flavor>();
 			Iterator<Element> flavourIterator = itemEl
 					.elementIterator("flavor");
 			while (flavourIterator.hasNext()) {
@@ -173,13 +175,13 @@ public class ManagerTestHelper {
 				String mem = flavour.element("mem").getText();
 				int capacity = Integer.parseInt(flavour.element("capacity")
 						.getText());
-				Flavour flavor = new Flavour(name, cpu, mem, capacity);
+				Flavor flavor = new Flavor(name, cpu, mem, capacity);
 				flavoursList.add(flavor);
 			}
 
 			ResourcesInfo resources = new ResourcesInfo(id.getValue(), cpuIdle,
 					cpuInUse, memIdle, memInUse, flavoursList);
-			RendezvousItemCopy item = new RendezvousItemCopy(resources);
+			FederationMember item = new FederationMember(resources);
 			aliveItems.add(item);
 		}
 		return aliveItems;

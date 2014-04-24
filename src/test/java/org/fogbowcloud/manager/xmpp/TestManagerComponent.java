@@ -8,8 +8,8 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 import org.dom4j.Element;
+import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.xmpp.util.ManagerTestHelper;
-import org.fogbowcloud.manager.xmpp.util.RendezvousItemCopy;
 import org.jamppa.client.XMPPClient;
 import org.jivesoftware.smack.PacketListener;
 import org.jivesoftware.smack.XMPPException;
@@ -23,10 +23,10 @@ import org.xmpp.packet.IQ;
 import org.xmpp.packet.Packet;
 
 public class TestManagerComponent {
-	
+
 	private ManagerTestHelper managerTestHelper;
 	private ManagerXmppComponent managerXmppComponent;
-	
+
 	@Before
 	public void setUp() throws ComponentException {
 		managerTestHelper = new ManagerTestHelper();
@@ -101,11 +101,11 @@ public class TestManagerComponent {
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
-				List<RendezvousItemCopy> aliveIds = new ArrayList<RendezvousItemCopy>();
-				aliveIds.add(new RendezvousItemCopy(managerTestHelper
+				List<FederationMember> aliveIds = new ArrayList<FederationMember>();
+				aliveIds.add(new FederationMember(managerTestHelper
 						.getResources()));
 				IQ iq = managerTestHelper.createWhoIsAliveResponse(
-						(ArrayList<RendezvousItemCopy>) aliveIds, whoIsAlive);
+						(ArrayList<FederationMember>) aliveIds, whoIsAlive);
 				xmppClient.send(iq);
 			}
 		};
@@ -129,6 +129,10 @@ public class TestManagerComponent {
 
 		Assert.assertEquals(1, managerXmppComponent.getManagerFacade()
 				.getMembers().size());
+		Assert.assertEquals(2, managerXmppComponent.getManagerFacade()
+				.getMembers().get(0).getResourcesInfo().getFlavours().size());
+		Assert.assertEquals("small", managerXmppComponent.getManagerFacade()
+				.getMembers().get(0).getResourcesInfo().getFlavours().get(0).getName());
 		xmppClient.disconnect();
 	}
 
@@ -136,7 +140,7 @@ public class TestManagerComponent {
 	public void testCallIAmAlive() throws Exception {
 		final XMPPClient xmppClient = managerTestHelper.createXMPPClient();
 		final Semaphore semaphore = new Semaphore(0);
-		
+
 		final PacketListener callbackIAmAlive = new PacketListener() {
 			public void processPacket(Packet packet) {
 				IQ iAmAlive = (IQ) packet;
@@ -144,24 +148,24 @@ public class TestManagerComponent {
 				xmppClient.send(IQ.createResultIQ(iAmAlive));
 			}
 		};
-		
+
 		final PacketListener callbackWhoIsAlive = new PacketListener() {
 			public void processPacket(Packet packet) {
 				IQ whoIsAlive = (IQ) packet;
-				List<RendezvousItemCopy> aliveIds = new ArrayList<RendezvousItemCopy>();
-				aliveIds.add(new RendezvousItemCopy(managerTestHelper
+				List<FederationMember> aliveIds = new ArrayList<FederationMember>();
+				aliveIds.add(new FederationMember(managerTestHelper
 						.getResources()));
 				IQ iq = managerTestHelper.createWhoIsAliveResponse(
-						(ArrayList<RendezvousItemCopy>) aliveIds, whoIsAlive);
+						(ArrayList<FederationMember>) aliveIds, whoIsAlive);
 				try {
 					xmppClient.syncSend(iq);
 				} catch (XMPPException e) {
-					//No problem if exception is throwed
+					// No problem if exception is thrown
 				}
 
 			}
 		};
-		
+
 		xmppClient.on(new PacketFilter() {
 			@Override
 			public boolean accept(Packet packet) {
@@ -173,7 +177,7 @@ public class TestManagerComponent {
 						ManagerTestHelper.IAMALIVE_NAMESPACE);
 			}
 		}, callbackIAmAlive);
-		
+
 		xmppClient.on(new PacketFilter() {
 			@Override
 			public boolean accept(Packet packet) {
@@ -185,7 +189,7 @@ public class TestManagerComponent {
 						ManagerTestHelper.WHOISALIVE_NAMESPACE);
 			}
 		}, callbackWhoIsAlive);
-		
+
 		managerXmppComponent = managerTestHelper
 				.initializeXMPPManagerComponent(true);
 		Assert.assertTrue(semaphore.tryAcquire(10000, TimeUnit.MILLISECONDS));
@@ -199,15 +203,15 @@ public class TestManagerComponent {
 		final PacketListener callbackWhoIsAlive = new PacketListener() {
 			public void processPacket(Packet packet) {
 				IQ whoIsAlive = (IQ) packet;
-				List<RendezvousItemCopy> aliveIds = new ArrayList<RendezvousItemCopy>();
-				aliveIds.add(new RendezvousItemCopy(managerTestHelper
+				List<FederationMember> aliveIds = new ArrayList<FederationMember>();
+				aliveIds.add(new FederationMember(managerTestHelper
 						.getResources()));
 				IQ iq = managerTestHelper.createWhoIsAliveResponse(
-						(ArrayList<RendezvousItemCopy>) aliveIds, whoIsAlive);
+						(ArrayList<FederationMember>) aliveIds, whoIsAlive);
 				try {
 					xmppClient.syncSend(iq);
 				} catch (XMPPException e) {
-					//No problem if exception is throwed
+					// No problem if exception is throwed
 				}
 				semaphore.release();
 			}
@@ -229,6 +233,9 @@ public class TestManagerComponent {
 		Assert.assertTrue(semaphore.tryAcquire(20000, TimeUnit.MILLISECONDS));
 		Assert.assertEquals(1, managerXmppComponent.getManagerFacade()
 				.getMembers().size());
+		Assert.assertEquals("small", managerXmppComponent.getManagerFacade()
+				.getMembers().get(0).getResourcesInfo().getFlavours().get(0)
+				.getName());
 		xmppClient.disconnect();
 	}
 

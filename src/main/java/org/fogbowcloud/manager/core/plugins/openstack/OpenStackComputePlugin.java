@@ -19,8 +19,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
-import org.apache.log4j.varia.FallbackErrorHandler;
-import org.fogbowcloud.manager.core.model.Flavour;
+import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.occi.core.Category;
@@ -37,7 +36,7 @@ public class OpenStackComputePlugin implements ComputePlugin {
 	private static final String TERM_COMPUTE = "compute";
 	private static final String SCHEME_COMPUTE = "http://schemas.ogf.org/occi/infrastructure#";
 	private static final String CLASS_COMPUTE = "kind";
-	private static final String COMPUTE_ENDPOINT = "/compute";
+	private static final String COMPUTE_ENDPOINT = "/compute/";
 
 	public static final String OS_SCHEME = "http://schemas.openstack.org/template/os#";
 	public static final String CIRROS_IMAGE_TERM = "cadf2e29-7216-4a5e-9364-cf6513d5f1fd";
@@ -114,7 +113,7 @@ public class OpenStackComputePlugin implements ComputePlugin {
 		HttpClient httpCLient = new DefaultHttpClient();
 		HttpGet httpGet;
 		try {
-			httpGet = new HttpGet(computeEndpoint + "/" + instanceId);
+			httpGet = new HttpGet(computeEndpoint + instanceId);
 			httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, authToken);
 			HttpResponse response = httpCLient.execute(httpGet);
 
@@ -202,7 +201,7 @@ public class OpenStackComputePlugin implements ComputePlugin {
 		HttpClient httpCLient = new DefaultHttpClient();
 		HttpDelete httpDelete;
 		try {
-			httpDelete = new HttpDelete(computeEndpoint + "/" + instanceId);
+			httpDelete = new HttpDelete(computeEndpoint + instanceId);
 			httpDelete.addHeader(OCCIHeaders.X_AUTH_TOKEN, authToken);
 			HttpResponse response = httpCLient.execute(httpDelete);
 
@@ -233,18 +232,18 @@ public class OpenStackComputePlugin implements ComputePlugin {
 		return new ResourcesInfo(null, cpuIdle, cpuInUse, memIdle, memInUse, getFlavors(cpuIdle, memIdle));
 	}
 
-	private List<Flavour> getFlavors(String cpuIdleStr, String memIdleStr) {
+	private List<Flavor> getFlavors(String cpuIdleStr, String memIdleStr) {
 		int cpuIdle = Integer.parseInt(cpuIdleStr);
 		int memIdle = Integer.parseInt(memIdleStr);		
-		List<Flavour> flavors = new ArrayList<Flavour>();
+		List<Flavor> flavors = new ArrayList<Flavor>();
 		
 		//flavors 
 		int capacity = Math.min(cpuIdle / 1, memIdle / 2048);		
-		Flavour smallFlavor = new Flavour(RequestConstants.SMALL_TERM, "1", "2048", capacity);
+		Flavor smallFlavor = new Flavor(RequestConstants.SMALL_TERM, "1", "2048", capacity);
 		capacity = Math.min(cpuIdle / 2, memIdle / 4096);		
-		Flavour mediumFlavor = new Flavour(RequestConstants.MEDIUM_TERM, "2", "4096", capacity);
+		Flavor mediumFlavor = new Flavor(RequestConstants.MEDIUM_TERM, "2", "4096", capacity);
 		capacity = Math.min(cpuIdle / 4, memIdle / 8192);
-		Flavour largeFlavor = new Flavour(RequestConstants.LARGE_TERM, "4", "8192", capacity);
+		Flavor largeFlavor = new Flavor(RequestConstants.LARGE_TERM, "4", "8192", capacity);
 		flavors.add(smallFlavor);
 		flavors.add(mediumFlavor);
 		flavors.add(largeFlavor);

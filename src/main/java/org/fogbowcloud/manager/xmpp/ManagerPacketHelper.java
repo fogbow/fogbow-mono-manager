@@ -9,7 +9,7 @@ import java.util.Map.Entry;
 import org.dom4j.Attribute;
 import org.dom4j.Element;
 import org.fogbowcloud.manager.core.model.FederationMember;
-import org.fogbowcloud.manager.core.model.Flavour;
+import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.request.Request;
@@ -30,8 +30,8 @@ public class ManagerPacketHelper {
 		statusEl.addElement("cpu-inuse").setText(resourcesInfo.getCpuInUse());
 		statusEl.addElement("mem-idle").setText(resourcesInfo.getMemIdle());
 		statusEl.addElement("mem-inuse").setText(resourcesInfo.getMemInUse());
-		List<Flavour> flavours = resourcesInfo.getFlavours();
-		for (Flavour f : flavours) {
+		List<Flavor> flavours = resourcesInfo.getFlavours();
+		for (Flavor f : flavours) {
 			Element flavorElement = statusEl.addElement("flavor");
 			flavorElement.addElement("name").setText(f.getName());
 			flavorElement.addElement("cpu").setText(f.getCpu());
@@ -50,7 +50,6 @@ public class ManagerPacketHelper {
 		iq.getElement().addElement("query",
 				ManagerXmppComponent.WHOISALIVE_NAMESPACE);
 		IQ response = (IQ) packetSender.syncSendPacket(iq);
-
 		ArrayList<FederationMember> members = getMembersFromIQ(response);
 		return members;
 	}
@@ -72,17 +71,17 @@ public class ManagerPacketHelper {
 			String memIdle = statusEl.element("mem-idle").getText();
 			String memInUse = statusEl.element("mem-inuse").getText();
 
-			List<Flavour> flavoursList = new LinkedList<Flavour>();
-			Iterator<Element> flavourIterator = itemEl
+			List<Flavor> flavoursList = new LinkedList<Flavor>();
+			Iterator<Element> flavourIterator = statusEl
 					.elementIterator("flavor");
 			while (flavourIterator.hasNext()) {
-				Element flavour = (Element) itemIterator.next();
+				Element flavour = (Element) flavourIterator.next();
 				String name = flavour.element("name").getText();
 				String cpu = flavour.element("cpu").getText();
 				String mem = flavour.element("mem").getText();
 				int capacity = Integer.parseInt(flavour.element("capacity")
 						.getText());
-				Flavour flavor = new Flavour(name, cpu, mem, capacity);
+				Flavor flavor = new Flavor(name, cpu, mem, capacity);
 				flavoursList.add(flavor);
 			}
 

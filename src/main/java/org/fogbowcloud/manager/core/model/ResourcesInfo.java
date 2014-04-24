@@ -1,6 +1,5 @@
 package org.fogbowcloud.manager.core.model;
 
-import java.util.LinkedList;
 import java.util.List;
 
 public class ResourcesInfo {
@@ -10,10 +9,10 @@ public class ResourcesInfo {
 	private String cpuInUse;
 	private String memIdle;
 	private String memInUse;
-	private List<Flavour> flavours;
+	private List<Flavor> flavours;
 	
 	public ResourcesInfo(String id, String cpuIdle, String cpuInUse,
-			String memIdle, String memInUse, List<Flavour> flavours) {
+			String memIdle, String memInUse, List<Flavor> flavours) {
 		setId(id);
 		setCpuIdle(cpuIdle);
 		setCpuInUse(cpuInUse);
@@ -81,11 +80,11 @@ public class ResourcesInfo {
 		this.memInUse = memInUse;
 	}
 
-	public List<Flavour> getFlavours() {
+	public List<Flavor> getFlavours() {
 		return flavours;
 	}
 
-	public void setFlavours(List<Flavour> flavours) {
+	public void setFlavours(List<Flavor> flavours) {
 		this.flavours = flavours;
 	}
 }

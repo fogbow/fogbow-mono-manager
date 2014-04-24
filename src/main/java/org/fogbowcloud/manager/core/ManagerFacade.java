@@ -104,9 +104,21 @@ public class ManagerFacade {
 	}
 
 	public List<Instance> getInstances(String authToken) {
-		// TODO check other manager
+		// TODO check other manager		
+		List<Instance> instances = new ArrayList<Instance>();
+		for (Request request : requests.getByUser(getUser(authToken))) {
+			if (isLocal(request)) {
+				instances.addAll(this.computePlugin.getInstances(authToken));
+			} else {
+				instances.addAll(createGetInstancesIQ(request)); 
+			}			
+		}
+		return instances;
+	}
 
-		return this.computePlugin.getInstances(authToken);
+	private List<Instance> createGetInstancesIQ(Request request) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	public Instance getInstance(String authToken, String instanceId) {
@@ -124,8 +136,18 @@ public class ManagerFacade {
 
 	public void removeInstances(String authToken) {
 		// TODO check other manager
+		for (Request request : requests.getByUser(getUser(authToken))) {
+			if (isLocal(request)) {
+				this.computePlugin.removeInstances(authToken);
+			} else {
+				createRemoveInstancesIQ(request); 
+			}			
+		}
+	}
 
-		this.computePlugin.removeInstances(authToken);
+	private void createRemoveInstancesIQ(Request request) {
+		// TODO Auto-generated method stub
+		
 	}
 
 	public void removeInstance(String authToken, String instanceId) {
@@ -290,5 +312,9 @@ public class ManagerFacade {
 
 	public void setPacketSender(PacketSender packetSender) {
 		this.packetSender = packetSender;
+	}
+
+	public void setRequests(RequestRepository requests) {
+		this.requests = requests;
 	}
 }
