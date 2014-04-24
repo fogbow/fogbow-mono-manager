@@ -124,11 +124,13 @@ public class ManagerFacade {
 
 	public void removeInstances(String authToken) {
 		// TODO check other manager
-
+		getUser(authToken);
+		
 		this.computePlugin.removeInstances(authToken);
 	}
 
 	public void removeInstance(String authToken, String instanceId) {
+		System.out.println("removing");
 		Request request = getRequestFromInstance(authToken, instanceId);
 		if (isLocal(request)) {
 			this.computePlugin.removeInstance(authToken, instanceId);
@@ -290,5 +292,9 @@ public class ManagerFacade {
 
 	public void setPacketSender(PacketSender packetSender) {
 		this.packetSender = packetSender;
+	}
+
+	public void setRequests(RequestRepository requests) {
+		this.requests = requests;
 	}
 }

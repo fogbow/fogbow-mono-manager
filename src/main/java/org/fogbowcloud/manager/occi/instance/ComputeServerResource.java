@@ -17,22 +17,24 @@ public class ComputeServerResource extends ServerResource {
 	public String fetch() {
 		OCCIApplication application = (OCCIApplication) getApplication();
 		HttpRequest req = (HttpRequest) getRequest();
+		HeaderUtils.checkOCCIContentType(req.getHeaders());
 		String authToken = HeaderUtils.getAuthToken(req.getHeaders());
 		String instanceId = (String) getRequestAttributes().get("instanceId");
-
+		
 		if (instanceId == null) {
 			return generateResponse(application.getInstances(authToken));
-		}
-		return application.getInstance(authToken, instanceId).toOCCIMassageFormatDetails();
+		}		
+		return application.getInstance(authToken, instanceId).toOCCIMassageFormatDetails();			
 	}
 
 	@Delete
 	public String remove() {
 		OCCIApplication application = (OCCIApplication) getApplication();
 		HttpRequest req = (HttpRequest) getRequest();
+		HeaderUtils.checkOCCIContentType(req.getHeaders());
 		String authToken = HeaderUtils.getAuthToken(req.getHeaders());
 		String instanceId = (String) getRequestAttributes().get("instanceId");
-
+		
 		if (instanceId == null) {
 			application.removeInstances(authToken);
 			return ResponseConstants.OK;

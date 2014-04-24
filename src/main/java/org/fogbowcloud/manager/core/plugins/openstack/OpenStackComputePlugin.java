@@ -19,7 +19,6 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
-import org.apache.log4j.varia.FallbackErrorHandler;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
@@ -37,7 +36,7 @@ public class OpenStackComputePlugin implements ComputePlugin {
 	private static final String TERM_COMPUTE = "compute";
 	private static final String SCHEME_COMPUTE = "http://schemas.ogf.org/occi/infrastructure#";
 	private static final String CLASS_COMPUTE = "kind";
-	private static final String COMPUTE_ENDPOINT = "/compute";
+	private static final String COMPUTE_ENDPOINT = "/compute/";
 
 	public static final String OS_SCHEME = "http://schemas.openstack.org/template/os#";
 	public static final String CIRROS_IMAGE_TERM = "cadf2e29-7216-4a5e-9364-cf6513d5f1fd";
@@ -114,7 +113,7 @@ public class OpenStackComputePlugin implements ComputePlugin {
 		HttpClient httpCLient = new DefaultHttpClient();
 		HttpGet httpGet;
 		try {
-			httpGet = new HttpGet(computeEndpoint + "/" + instanceId);
+			httpGet = new HttpGet(computeEndpoint + instanceId);
 			httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, authToken);
 			HttpResponse response = httpCLient.execute(httpGet);
 
@@ -202,7 +201,7 @@ public class OpenStackComputePlugin implements ComputePlugin {
 		HttpClient httpCLient = new DefaultHttpClient();
 		HttpDelete httpDelete;
 		try {
-			httpDelete = new HttpDelete(computeEndpoint + "/" + instanceId);
+			httpDelete = new HttpDelete(computeEndpoint + instanceId);
 			httpDelete.addHeader(OCCIHeaders.X_AUTH_TOKEN, authToken);
 			HttpResponse response = httpCLient.execute(httpDelete);
 

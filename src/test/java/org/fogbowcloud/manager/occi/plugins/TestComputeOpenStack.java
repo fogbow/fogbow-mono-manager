@@ -271,7 +271,7 @@ public class TestComputeOpenStack {
 	private List<String> getInstanceLocations(List<Instance> intances) {
 		List<String> locations = new ArrayList<String>();
 		for (Instance instance : intances) {
-			String instanceMessage = instance.toOCCIMassageFormatLocation();
+//			String instanceMessage = instance.toOCCIMassageFormatLocation();
 			String[] lineTokens = instance.toOCCIMassageFormatLocation().split("Location:");
 			locations.add(lineTokens[1].trim());
 		}
