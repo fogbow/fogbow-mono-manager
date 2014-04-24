@@ -104,9 +104,21 @@ public class ManagerFacade {
 	}
 
 	public List<Instance> getInstances(String authToken) {
-		// TODO check other manager
+		// TODO check other manager		
+		List<Instance> instances = new ArrayList<Instance>();
+		for (Request request : requests.getByUser(getUser(authToken))) {
+			if (isLocal(request)) {
+				instances.addAll(this.computePlugin.getInstances(authToken));
+			} else {
+				instances.addAll(createGetInstancesIQ(request)); 
+			}			
+		}
+		return instances;
+	}
 
-		return this.computePlugin.getInstances(authToken);
+	private List<Instance> createGetInstancesIQ(Request request) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	public Instance getInstance(String authToken, String instanceId) {
@@ -124,13 +136,21 @@ public class ManagerFacade {
 
 	public void removeInstances(String authToken) {
 		// TODO check other manager
-		getUser(authToken);
+		for (Request request : requests.getByUser(getUser(authToken))) {
+			if (isLocal(request)) {
+				this.computePlugin.removeInstances(authToken);
+			} else {
+				createRemoveInstancesIQ(request); 
+			}			
+		}
+	}
+
+	private void createRemoveInstancesIQ(Request request) {
+		// TODO Auto-generated method stub
 		
-		this.computePlugin.removeInstances(authToken);
 	}
 
 	public void removeInstance(String authToken, String instanceId) {
-		System.out.println("removing");
 		Request request = getRequestFromInstance(authToken, instanceId);
 		if (isLocal(request)) {
 			this.computePlugin.removeInstance(authToken, instanceId);
