@@ -26,7 +26,7 @@ public class ManagerPacketHelper {
 		Element statusEl = iq.getElement()
 				.addElement("query", ManagerXmppComponent.IAMALIVE_NAMESPACE)
 				.addElement("status");
-		iq.getElement().addElement("cert");
+		iq.getElement().element("query").addElement("cert");
 		statusEl.addElement("cpu-idle").setText(resourcesInfo.getCpuIdle());
 		statusEl.addElement("cpu-inuse").setText(resourcesInfo.getCpuInUse());
 		statusEl.addElement("mem-idle").setText(resourcesInfo.getMemIdle());
