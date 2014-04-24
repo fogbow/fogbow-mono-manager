@@ -77,4 +77,14 @@ public class RequestRepository {
 			}
 		}
 	}
+
+	public List<Request> getAll() {
+		List<Request> allRequests = new LinkedList<Request>();
+		for (List<Request> userRequests : requests.values()) {
+			for (Request request : userRequests) {
+				allRequests.add(request);
+			}
+		}
+		return allRequests;
+	}
 }

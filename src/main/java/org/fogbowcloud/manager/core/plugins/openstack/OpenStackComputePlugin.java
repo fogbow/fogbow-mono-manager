@@ -124,7 +124,7 @@ public class OpenStackComputePlugin implements ComputePlugin {
 			}
 			String responseStr = EntityUtils.toString(response.getEntity(),
 					String.valueOf(Charsets.UTF_8));
-			return Instance.parseInstanceDetails(responseStr);
+			return Instance.parseInstance(instanceId, responseStr);
 		} catch (URISyntaxException e) {
 			LOGGER.error(e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
@@ -150,7 +150,7 @@ public class OpenStackComputePlugin implements ComputePlugin {
 			}
 			String responseStr = EntityUtils.toString(response.getEntity(),
 					String.valueOf(Charsets.UTF_8));
-			return returnInstances(responseStr);
+			return parseInstances(responseStr);
 		} catch (URISyntaxException e) {
 			LOGGER.error(e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
@@ -163,12 +163,12 @@ public class OpenStackComputePlugin implements ComputePlugin {
 		}
 	}
 
-	private List<Instance> returnInstances(String responseStr) {
+	private List<Instance> parseInstances(String responseStr) {
 		List<Instance> instances = new ArrayList<Instance>();
 		String[] lines = responseStr.split("\n");
 		for (String line : lines) {
 			if (line.contains(Instance.PREFIX_DEFAULT_INSTANCE)) {
-				instances.add(Instance.parseInstanceId(line));
+				instances.add(Instance.parseInstance(line));
 			}
 		}
 		return instances;

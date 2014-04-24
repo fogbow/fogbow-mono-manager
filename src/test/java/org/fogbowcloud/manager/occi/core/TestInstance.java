@@ -10,7 +10,7 @@ public class TestInstance {
 	@Test
 	public void testParteId() {
 		String textResponse = "X-OCCI-Location: http://localhost:8787/compute/c1490207-6be7-4303-a41c-f8a4b1b9c25d";
-		Instance instance = Instance.parseInstanceId(textResponse);
+		Instance instance = Instance.parseInstance(textResponse);
 
 		Assert.assertEquals(textResponse, instance.toOCCIMassageFormatLocation());
 	}
@@ -38,7 +38,7 @@ public class TestInstance {
 				+ "X-OCCI-Attribute: occi.compute.cores=\"1\"\n"
 				+ "X-OCCI-Attribute: occi.compute.hostname=\"server-c1490207-6be7-4303-a41c-f8a4b1b9c25d\"\n"
 				+ "X-OCCI-Attribute: occi.core.id=\"c1490207-6be7-4303-a41c-f8a4b1b9c25d\"";
-		Instance instance = Instance.parseInstanceDetails(textResponse);
+		Instance instance = Instance.parseInstance(textResponse);
 		
 		Assert.assertEquals(textResponse, instance.toOCCIMassageFormatDetails());
 	}

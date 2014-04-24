@@ -22,7 +22,7 @@ import org.fogbowcloud.manager.occi.request.RequestRepository;
 import org.restlet.Component;
 import org.restlet.data.Protocol;
 
-public class RequestHelper {
+public class OCCITestHelper {
 
 	public static String INSTANCE_ID = "1234567ujhgf45hdb4w";
 	public static final String ACCESS_TOKEN = "HgjhgYUDFTGBgrbelihBDFGBÇuyrb";
@@ -48,7 +48,8 @@ public class RequestHelper {
 		component.start();
 	}
 	
-	public void initializeComponentCompute(ComputePlugin computePlugin, IdentityPlugin identityPlugin) throws Exception {
+	public void initializeComponentCompute(ComputePlugin computePlugin, IdentityPlugin identityPlugin, 
+			List<Request> requestsToAdd) throws Exception {
 		component = new Component();
 		component.getServers().add(Protocol.HTTP, ENDPOINT_PORT);
 
@@ -57,10 +58,10 @@ public class RequestHelper {
 		facade.setIdentityPlugin(identityPlugin);
 
 		requests = new RequestRepository();
-		Request request = new Request("1", RequestHelper.ACCESS_TOKEN, INSTANCE_ID, 
-				null, null, null, null);
-		requests.addRequest(RequestHelper.USER_MOCK, request);						
 		facade.setRequests(requests);
+		for (Request request : requestsToAdd) {
+			requests.addRequest(OCCITestHelper.USER_MOCK, request);
+		}
 		
 		component.getDefaultHost().attach(new OCCIApplication(facade));
 		component.start();

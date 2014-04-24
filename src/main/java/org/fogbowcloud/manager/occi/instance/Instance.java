@@ -26,60 +26,61 @@ public class Instance {
 		this.id = id;
 	}	
 	
-	public Instance(List<Resource> resources, Map<String, String> attributes, Link link) {
+	public Instance(String id, List<Resource> resources, Map<String, String> attributes, Link link) {
+		this(id);
 		this.resources = resources;
 		this.attributes = attributes;
 		this.link = link;
 	}
 	
-	public static Instance parseInstanceId(String textResponse) {
-		return new Instance(textResponse.replace(PREFIX_DEFAULT_INSTANCE , "").trim());
+	public static Instance parseInstance(String textResponse) {
+		return new Instance(textResponse.replace(PREFIX_DEFAULT_INSTANCE, "").trim());
 	}
 	
-	public static Instance parseInstanceDetails(String textResponse) {
+	public static Instance parseInstance(String id, String textResponse) {
 		List<Resource> resources = new ArrayList<Resource>();
 		Map<String, String> attributes = new HashMap<String, String>();
 		Link link = null;
-		
+
 		String[] lines = textResponse.split("\n");
 		for (String line : lines) {
-			System.out.println("Line = " + line);
 			if (line.contains("Category:")) {
 				String[] blockLine = line.split(";");
-				
 				String[] blockValues;
-				String term = ""; 
+				String term = "";
 				String scheme = "";
 				String catClass = "";
 				String title = "";
 				String rel = "";
 				String location = "";
 				List<String> attributesResource = new ArrayList<String>();
-				List<String> actionsResource = new ArrayList<String>(); 
-				
-				for (String block: blockLine) {
-					if(block.contains(CATEGORY)) {
+				List<String> actionsResource = new ArrayList<String>();
+
+				for (String block : blockLine) {
+					if (block.contains(CATEGORY)) {
 						blockValues = block.split(":");
 						term = blockValues[1].trim();
 					} else {
 						blockValues = block.split("=");
 						if (blockValues[0].contains("scheme")) {
 							scheme = blockValues[1].replace("\"", "").trim();
-						}else if (blockValues[0].contains("class")) {
+						} else if (blockValues[0].contains("class")) {
 							catClass = blockValues[1].replace("\"", "").trim();
-						}else if (blockValues[0].contains("title")) {
+						} else if (blockValues[0].contains("title")) {
 							title = blockValues[1].replace("\"", "").trim();
-						}else if (blockValues[0].contains("rel")) {
+						} else if (blockValues[0].contains("rel")) {
 							rel = blockValues[1].replace("\"", "").trim();
-						}else if (blockValues[0].contains("location")) {
+						} else if (blockValues[0].contains("location")) {
 							location = blockValues[1].replace("\"", "").trim();
-						}else if (blockValues[0].contains("attributes")) {
-							String[] attributesValues = blockValues[1].replace("\"", "").split(" ");
+						} else if (blockValues[0].contains("attributes")) {
+							String[] attributesValues = blockValues[1].replace(
+									"\"", "").split(" ");
 							for (String attribute : attributesValues) {
 								attributesResource.add(attribute);
 							}
-						}else if (blockValues[0].contains("actions")) {
-							String[] actionsValues = blockValues[1].replace("\"", "").split(" ");
+						} else if (blockValues[0].contains("actions")) {
+							String[] actionsValues = blockValues[1].replace(
+									"\"", "").split(" ");
 							for (String action : actionsValues) {
 								actionsResource.add(action);
 							}
@@ -87,16 +88,19 @@ public class Instance {
 					}
 				}
 				Category category = new Category(term, scheme, catClass);
-				resources.add(new Resource(category, attributesResource, actionsResource, location, title, rel));
-			}else if (line.contains("Link")){
+				resources.add(new Resource(category, attributesResource,
+						actionsResource, location, title, rel));
+			} else if (line.contains("Link")) {
 				link = Link.parseLink(line);
-			}else if (line.contains("X-OCCI-Attribute: ")){
-				
-				String[] blockLine = line.replace(PREFIX_DEFAULT_ATTRIBUTE, "").split("=");
-				attributes.put(blockLine[0], blockLine[1].replace("\"", "").trim());
+			} else if (line.contains("X-OCCI-Attribute: ")) {
+
+				String[] blockLine = line.replace(PREFIX_DEFAULT_ATTRIBUTE, "")
+						.split("=");
+				attributes.put(blockLine[0], blockLine[1].replace("\"", "")
+						.trim());
 			}
-		}		
-		return new Instance(resources, attributes, link);
+		}
+		return new Instance(id, resources, attributes, link);
 	}	
 	
 	public String toOCCIMassageFormatLocation(){
@@ -108,7 +112,7 @@ public class Instance {
 		for (Resource resource : this.resources) {
 			messageFormat += CATEGORY + " " + resource.toHeader() + "\n";
 		}
-		if(link != null){
+		if (link != null){
 			messageFormat += this.link.toOCCIMessageFormatLink() + "\n";
 		}
 		for (String key : this.attributes.keySet()) {

@@ -14,22 +14,26 @@ public class Request {
 	private RequestState state;
 	private List<Category> categories;
 	private Map<String, String> xOCCIAtt;
+	private String user;
 	
-	public Request(String id, String authToken, String instanceId, RequestState state,
-			List<Category> categories, Map<String, String> xOCCIAtt, String memberId) {
+	public Request(String id, String authToken, String user, 
+			List<Category> categories, Map<String, String> xOCCIAtt) {
 		this.id = id;
 		this.authToken = authToken;
-		this.memberId = memberId;
-		setInstanceId(instanceId);
-		setState(state);
+		this.user = user;
 		this.categories = categories;
 		this.xOCCIAtt = xOCCIAtt;
+		setState(RequestState.OPEN);
 	}
 	
 	public List<Category> getCategories() {
 		return categories;
 	}
 
+	public String getUser() {
+		return user;
+	}
+	
 	public String getInstanceId() {
 		return instanceId;
 	}
