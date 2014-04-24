@@ -26,6 +26,7 @@ public class ManagerPacketHelper {
 		Element statusEl = iq.getElement()
 				.addElement("query", ManagerXmppComponent.IAMALIVE_NAMESPACE)
 				.addElement("status");
+		iq.getElement().addElement("cert");
 		statusEl.addElement("cpu-idle").setText(resourcesInfo.getCpuIdle());
 		statusEl.addElement("cpu-inuse").setText(resourcesInfo.getCpuInUse());
 		statusEl.addElement("mem-idle").setText(resourcesInfo.getMemIdle());
@@ -39,7 +40,6 @@ public class ManagerPacketHelper {
 			flavorElement.addElement("capacity").setText(
 					f.getCapacity().toString());
 		}
-		statusEl.addElement("cert");
 		packetSender.syncSendPacket(iq);
 	}
 
@@ -65,6 +65,7 @@ public class ManagerPacketHelper {
 		while (itemIterator.hasNext()) {
 			Element itemEl = (Element) itemIterator.next();
 			Attribute id = itemEl.attribute("id");
+			//TODO get certificate
 			Element statusEl = itemEl.element("status");
 			String cpuIdle = statusEl.element("cpu-idle").getText();
 			String cpuInUse = statusEl.element("cpu-inuse").getText();
