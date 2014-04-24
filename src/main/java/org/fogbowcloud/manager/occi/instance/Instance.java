@@ -158,8 +158,16 @@ public class Instance {
 		
 		private static final String NAME_LINK = "Link:";
 		
-		private String link;
-		private Map<String, String> itens; 
+		private String name;
+		private Map<String, String> attributes; 
+		
+		public Link() {
+		}
+		
+		public Link(String name, Map<String, String> attributes) {
+			this.name = name;
+			this.attributes = attributes;
+		}
 		
 		public static Link parseLink(String line){
 			Link link = new Link();
@@ -169,30 +177,30 @@ public class Instance {
 			for (String block : blockLine) {
 				if(block.contains(NAME_LINK)){
 					String[] blockValues = block.split(":");
-					link.setLink(blockValues[1].replace("\"", "").trim()); 
+					link.setName(blockValues[1].replace("\"", "").trim()); 
 				}else{
 					String[] blockValues = block.split("=");
 					itens.put(blockValues[0].replace("\"", "").trim(), blockValues[1].replace("\"", "").trim());
 				}
 			}
-			link.setItens(itens);
+			link.setAttributes(itens);
 			return link;
 		}
 		
 		public String toOCCIMessageFormatLink(){
 			String itensMessageFormat = "";
-			for (String key : this.itens.keySet()) {
-				itensMessageFormat += " " + key + "=\"" + this.itens.get(key) + "\";";
+			for (String key : this.attributes.keySet()) {
+				itensMessageFormat += " " + key + "=\"" + this.attributes.get(key) + "\";";
 			}
-			return NAME_LINK + " " + this.link + ";" + itensMessageFormat;
+			return NAME_LINK + " " + this.name + ";" + itensMessageFormat;
 		}
 		
-		public void setLink(String link) {
-			this.link = link;
+		public void setName(String name) {
+			this.name = name;
 		}
 		
-		public void setItens(Map<String,String> itens){
-			this.itens = itens;
+		public void setAttributes(Map<String,String> attributes){
+			this.attributes = attributes;
 		}
 	}
 }

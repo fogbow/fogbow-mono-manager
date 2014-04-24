@@ -1,9 +1,11 @@
 package org.fogbowcloud.manager.xmpp;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import org.dom4j.Attribute;
@@ -12,7 +14,12 @@ import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.occi.core.Category;
+import org.fogbowcloud.manager.occi.core.ErrorType;
+import org.fogbowcloud.manager.occi.core.OCCIException;
+import org.fogbowcloud.manager.occi.core.Resource;
+import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.instance.Instance;
+import org.fogbowcloud.manager.occi.instance.Instance.Link;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.jamppa.component.PacketSender;
 import org.xmpp.packet.IQ;
@@ -137,9 +144,84 @@ public class ManagerPacketHelper {
 		
 		return parseInstance(response.getElement().element("query")
 				.element("instance"));
-	}	
+	}
+
+	public static void getRemoteResponseDelete(Request request,
+			String memberAddress, PacketSender packetSender) {
+		IQ iq = new IQ();
+		iq.setTo(memberAddress);
+		Element queryEl = iq.getElement().addElement("query",
+				ManagerXmppComponent.REMOVEINSTACE_NAMESPACE);
+		Element instanceEl = queryEl.addElement("instance");
+		instanceEl.addElement("id").setText(request.getInstanceId());
+		
+		IQ response = (IQ) packetSender.syncSendPacket(iq);
+		if (response.getError() != null) {
+		}	
+		
+		String error = response.getElement().element("error").getText();
+		if(error.equals("NOT_FOUND")){
+			throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
+		}
+	}
 	
+	@SuppressWarnings("unchecked")
 	private static Instance parseInstance(Element instanceEl) {
-		return null;
+		String id = instanceEl.element("id").getText();
+
+		Element linkEl = instanceEl.element("link");		
+		String linkName = linkEl.elementText("name");
+		Iterator<Element> linkAttributeIterator = linkEl.elementIterator("attribute");
+		
+		Map<String, String> attributesLink = new HashMap<String, String>();
+		while (linkAttributeIterator.hasNext()) {
+			Element itemAttributeEl = (Element) linkAttributeIterator.next();
+			String key = itemAttributeEl.getStringValue();
+			String value = itemAttributeEl.getText();
+			attributesLink.put(key, value);
+		}		
+		Link link = new Link(linkName, attributesLink);
+				
+		Iterator<Element> resourceIterator = instanceEl.elementIterator("resource");
+		List<Resource> resources = new ArrayList<Resource>();
+		while (resourceIterator.hasNext()) {
+			Element itemResourseEl = (Element) resourceIterator.next();
+			String termCategory = itemResourseEl.element("category").element("term").getText();
+			String schemeCategory = itemResourseEl.element("category").element("scheme").getText();
+			String classCategory = itemResourseEl.element("category").element("class").getText();
+			Category category = new Category(termCategory, schemeCategory, classCategory);
+
+			Iterator<Element> resourceAttributeIterator = instanceEl.elementIterator("attribute");
+			List<String> resourceAttributes = new ArrayList<String>();
+			while (resourceAttributeIterator.hasNext()) {
+				Element itemResourseAttributeEl = (Element) resourceAttributeIterator.next();				
+				resourceAttributes.add(itemResourseAttributeEl.getText());
+			}
+			
+			Iterator<Element> resourceActionsIterator = instanceEl.elementIterator("action");
+			List<String> resourceActions = new ArrayList<String>();
+			while (resourceActionsIterator.hasNext()) {
+				Element itemResourseActionEl = (Element) resourceActionsIterator.next();				
+				resourceActions.add(itemResourseActionEl.getText());
+			}			
+			
+			String location = itemResourseEl.element("location").getText();
+			String title = itemResourseEl.element("title").getText();
+			String rel = itemResourseEl.element("rel").getText();
+			
+			resources.add(new Resource(category, resourceAttributes, resourceActions, location, title, rel));
+		}				
+		
+		Iterator<Element> attributesIterator = instanceEl.elementIterator("attribute");
+		
+		Map<String, String> attributes = new HashMap<String, String>();
+		while (attributesIterator.hasNext()) {
+			Element attributeEl = (Element) attributesIterator.next();
+			String key = attributeEl.getStringValue();
+			String value = attributeEl.getText();
+			attributes.put(key, value);
+		}
+		
+		return new Instance(id, resources, attributes, link);
 	}
 }
