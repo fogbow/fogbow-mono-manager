@@ -24,7 +24,6 @@ import org.restlet.data.Protocol;
 
 public class OCCITestHelper {
 
-	public static String INSTANCE_ID = "1234567ujhgf45hdb4w";
 	public static final String ACCESS_TOKEN = "HgjhgYUDFTGBgrbelihBDFGBÇuyrb";
 	public static final String INVALID_TOKEN = "invalid-token";
 	public static final String CONTENT_TYPE_OCCI = "text/occi";
@@ -34,7 +33,7 @@ public class OCCITestHelper {
 	public static final int ENDPOINT_PORT = 8182;
 
 	private Component component;
-	RequestRepository requests;
+	private RequestRepository requests;
 	
 	public void initializeComponent(ComputePlugin computePlugin, IdentityPlugin identityPlugin) throws Exception {
 		component = new Component();

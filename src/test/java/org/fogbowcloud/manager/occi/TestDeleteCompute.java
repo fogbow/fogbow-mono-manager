@@ -7,6 +7,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpDelete;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
@@ -20,38 +21,44 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 public class TestDeleteCompute {
-
-	// TODO rename
-	OCCITestHelper requestHelper;
+	
+	public static String INSTANCE_ID = "1234567ujhgf45hdb4w";
+	public static String OTHER_INSTANCE_ID = "otherInstanceId";
+	
+	private OCCITestHelper helper;
 
 	@Before
 	public void setup() throws Exception {
-		this.requestHelper = new OCCITestHelper();
+		this.helper = new OCCITestHelper();
 
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		Mockito.doNothing().when(computePlugin).removeInstances(OCCITestHelper.ACCESS_TOKEN);
 		Mockito.doNothing().when(computePlugin)
-				.removeInstance(OCCITestHelper.ACCESS_TOKEN, OCCITestHelper.INSTANCE_ID);
+				.removeInstance(OCCITestHelper.ACCESS_TOKEN, INSTANCE_ID);
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.getUser(OCCITestHelper.ACCESS_TOKEN)).thenReturn(
 				OCCITestHelper.USER_MOCK);
 
 		List<Request> requests = new LinkedList<Request>();
-		Request request = new Request("1", OCCITestHelper.ACCESS_TOKEN, 
+		Request request1 = new Request("1", OCCITestHelper.ACCESS_TOKEN, 
 				OCCITestHelper.USER_MOCK, null, null);
-		request.setInstanceId(OCCITestHelper.INSTANCE_ID);
-		requests.add(request);
+		request1.setInstanceId(INSTANCE_ID);
+		requests.add(request1);
+		Request request2 = new Request("1", "otherToken", 
+				"otherUser", null, null);
+		request2.setInstanceId(OTHER_INSTANCE_ID);
+		requests.add(request2);		
 		
-		this.requestHelper.initializeComponentCompute(computePlugin, identityPlugin, requests);
+		this.helper.initializeComponentCompute(computePlugin, identityPlugin, requests);
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		this.requestHelper.stopComponent();
+		this.helper.stopComponent();
 	}
 
 	@Test
-	public void TestDelete() throws Exception {
+	public void testDelete() throws Exception {
 		HttpDelete httpDelete = new HttpDelete(OCCITestHelper.URI_FOGBOW_COMPUTE + "");
 		httpDelete.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
 		httpDelete.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
@@ -60,11 +67,22 @@ public class TestDeleteCompute {
 
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
+	
+	@Test
+	public void testDeleteSpecificInstanceOtherUser() throws Exception {
+		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE + OTHER_INSTANCE_ID);
+		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
+		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		HttpClient client = new DefaultHttpClient();
+		HttpResponse response = client.execute(httpGet);	
+		
+		Assert.assertEquals(HttpStatus.SC_UNAUTHORIZED, response.getStatusLine().getStatusCode());		
+	}	
 
 	@Test
-	public void TestDeleteSpecificInstanceFound() throws Exception {
+	public void testDeleteSpecificInstanceFound() throws Exception {
 		HttpDelete httpDelete = new HttpDelete(OCCITestHelper.URI_FOGBOW_COMPUTE
-				+ OCCITestHelper.INSTANCE_ID);
+				+ INSTANCE_ID);
 		httpDelete.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
 		httpDelete.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		HttpClient client = new DefaultHttpClient();
@@ -74,7 +92,7 @@ public class TestDeleteCompute {
 	}
 
 	@Test
-	public void TestDeleteSpecificInstanceNotFound() throws Exception {
+	public void testDeleteSpecificInstanceNotFound() throws Exception {
 		HttpDelete httpDelete = new HttpDelete(OCCITestHelper.URI_FOGBOW_COMPUTE + "wrong");
 		httpDelete.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
 		httpDelete.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
@@ -85,9 +103,9 @@ public class TestDeleteCompute {
 	}
 
 	@Test
-	public void TestWrongAccessToken() throws Exception {
+	public void testWrongAccessToken() throws Exception {
 		HttpDelete httpDelete = new HttpDelete(OCCITestHelper.URI_FOGBOW_COMPUTE
-				+ OCCITestHelper.INSTANCE_ID);
+				+ INSTANCE_ID);
 		httpDelete.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
 		httpDelete.addHeader(OCCIHeaders.X_AUTH_TOKEN, "wrong");
 		HttpClient client = new DefaultHttpClient();
@@ -97,7 +115,7 @@ public class TestDeleteCompute {
 	}
 
 	@Test
-	public void TestEmptyAccessToken() throws Exception {
+	public void testEmptyAccessToken() throws Exception {
 		HttpDelete httpDelete = new HttpDelete(OCCITestHelper.URI_FOGBOW_COMPUTE);
 		httpDelete.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
 		httpDelete.addHeader(OCCIHeaders.X_AUTH_TOKEN, "");
@@ -108,7 +126,7 @@ public class TestDeleteCompute {
 	}
 
 	@Test
-	public void TestWrongContentType() throws Exception {
+	public void testWrongContentType() throws Exception {
 		HttpDelete get = new HttpDelete(OCCITestHelper.URI_FOGBOW_COMPUTE);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, "wrong");
 		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);

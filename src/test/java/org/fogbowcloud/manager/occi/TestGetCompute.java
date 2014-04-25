@@ -29,8 +29,9 @@ public class TestGetCompute {
 
 	private static final String INSTANCE_1_ID = "test1";
 	private static final String INSTANCE_2_ID = "test2";
+	private static final String INSTANCE_3_ID_WITHOUT_USER = "test3";
 	
-	OCCITestHelper helper;
+	private OCCITestHelper helper;
 	
 	@Before
 	public void setup() throws Exception {
@@ -47,6 +48,8 @@ public class TestGetCompute {
 				Mockito.eq(INSTANCE_1_ID))).thenReturn(instance1);
 		Mockito.when(computePlugin.getInstance(Mockito.anyString(), 
 				Mockito.eq(INSTANCE_2_ID))).thenReturn(new Instance(INSTANCE_2_ID));
+		Mockito.when(computePlugin.getInstance(Mockito.anyString(), 
+				Mockito.eq(INSTANCE_3_ID_WITHOUT_USER))).thenReturn(instance1);		
 		
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.getUser(OCCITestHelper.ACCESS_TOKEN)).thenReturn(
@@ -61,6 +64,10 @@ public class TestGetCompute {
 				OCCITestHelper.USER_MOCK, null, null);
 		request2.setInstanceId(INSTANCE_2_ID);
 		requests.add(request2);
+		Request request3 = new Request("3", "token", 
+				"user", null, null);
+		request3.setInstanceId(INSTANCE_3_ID_WITHOUT_USER);
+		requests.add(request3);		
 		
 		this.helper.initializeComponentCompute(computePlugin, identityPlugin, requests);
 	}
@@ -71,19 +78,19 @@ public class TestGetCompute {
 	}
 	
 	@Test
-	public void TestGetComputeOk() throws Exception{
+	public void testGetComputeOk() throws Exception{
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE);
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
 		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(httpGet);	
 		
-		Assert.assertEquals(2, OCCITestHelper.getRequestLocations(response).size());
+		Assert.assertEquals(3, OCCITestHelper.getRequestLocations(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 
 	@Test
-	public void TestGetSpecificInstanceFound() throws Exception {
+	public void testGetSpecificInstanceFound() throws Exception {
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE + INSTANCE_1_ID);
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
 		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
@@ -94,7 +101,7 @@ public class TestGetCompute {
 	}	
 	
 	@Test
-	public void TestGetSpecificInstanceNotFound() throws Exception {
+	public void testGetSpecificInstanceNotFound() throws Exception {
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE + "wrong");
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
 		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
@@ -105,7 +112,18 @@ public class TestGetCompute {
 	}
 	
 	@Test
-	public void TestWrongContentType() throws Exception {
+	public void testGetSpecificInstanceOtherUser() throws Exception {
+		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE + INSTANCE_3_ID_WITHOUT_USER);
+		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
+		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		HttpClient client = new DefaultHttpClient();
+		HttpResponse response = client.execute(httpGet);	
+		
+		Assert.assertEquals(HttpStatus.SC_UNAUTHORIZED, response.getStatusLine().getStatusCode());		
+	}
+	
+	@Test
+	public void testWrongContentType() throws Exception {
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE);
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, "wrong");
 		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
@@ -116,7 +134,7 @@ public class TestGetCompute {
 	}
 
 	@Test
-	public void TestAccessToken() throws Exception {
+	public void testAccessToken() throws Exception {
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE);
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
 		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
@@ -127,7 +145,7 @@ public class TestGetCompute {
 	}	
 	
 	@Test
-	public void TestWrongAccessToken() throws Exception {
+	public void testWrongAccessToken() throws Exception {
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE + INSTANCE_1_ID);
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
 		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, "wrong");
@@ -138,7 +156,7 @@ public class TestGetCompute {
 	}	
 	
 	@Test
-	public void TestEmptyAccessToken() throws Exception {
+	public void testEmptyAccessToken() throws Exception {
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE);
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
 		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, "");
