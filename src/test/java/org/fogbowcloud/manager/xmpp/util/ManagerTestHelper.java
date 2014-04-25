@@ -17,7 +17,11 @@ import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.xmpp.ManagerXmppComponent;
 import org.jamppa.client.XMPPClient;
 import org.jamppa.client.plugin.xep0077.XEP0077;
+import org.jamppa.component.PacketSender;
+import org.jivesoftware.smack.PacketCollector;
 import org.jivesoftware.smack.XMPPException;
+import org.jivesoftware.smack.filter.PacketFilter;
+import org.jivesoftware.smack.filter.PacketIDFilter;
 import org.mockito.Mockito;
 import org.xmpp.component.ComponentException;
 import org.xmpp.packet.IQ;
@@ -43,6 +47,8 @@ public class ManagerTestHelper {
 	public static final int TIMEOUT_GRACE = 500;
 
 	private ManagerXmppComponent managerXmppComponent;
+	private ComputePlugin computePlugin;
+	private IdentityPlugin identityPlugin;
 
 	public ResourcesInfo getResources() {
 		List<Flavor> flavours = new LinkedList<Flavor>();
@@ -106,16 +112,47 @@ public class ManagerTestHelper {
 
 		return xmppClient;
 	}
+	
+	public PacketSender createPacketSender() throws XMPPException {
+		final XMPPClient xmppClient = createXMPPClient();
+		PacketSender sender = new PacketSender() {
+			@Override
+			public Packet syncSendPacket(Packet packet) {
+				PacketFilter responseFilter = new PacketIDFilter(packet.getID());
+				PacketCollector response = xmppClient.getConnection()
+						.createPacketCollector(responseFilter);
+				xmppClient.getConnection().sendPacket(packet);
+				Packet result = response.nextResult(5000);
+				response.cancel();
+				return result;
+			}
+			
+			@Override
+			public void sendPacket(Packet packet) {
+				xmppClient.send(packet);
+			}
+		};
+		return sender;
+	}
+	
+	
+	public ComputePlugin getComputePlugin() {
+		return computePlugin;
+	}
+	
+	public IdentityPlugin getIdentityPlugin() {
+		return identityPlugin;
+	}
 
 	public ManagerXmppComponent initializeXMPPManagerComponent(boolean init)
 			throws Exception {
 
-		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
-		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
+		this.computePlugin = Mockito.mock(ComputePlugin.class);
+		this.identityPlugin = Mockito.mock(IdentityPlugin.class);
 
 		Properties properties = new Properties();
-		properties.put("federation.user.name", "fogbow");
-		properties.put("federation.user.password", "fogbow");
+		properties.put("federation_user_name", "fogbow");
+		properties.put("federation_user_password", "fogbow");
 		properties.put("xmpp_jid", "manager.test.com");
 
 		ManagerFacade managerFacade = new ManagerFacade(properties);
@@ -138,6 +175,37 @@ public class ManagerTestHelper {
 		if (init) {
 			managerXmppComponent.init();
 		}
+		return managerXmppComponent;
+	}
+	
+	public ManagerXmppComponent initializeLocalXMPPManagerComponent()
+			throws Exception {
+
+		this.computePlugin = Mockito.mock(ComputePlugin.class);
+		this.identityPlugin = Mockito.mock(IdentityPlugin.class);
+
+		Properties properties = new Properties();
+		properties.put("federation_user_name", "fogbow");
+		properties.put("federation_user_password", "fogbow");
+		properties.put("xmpp_jid", "manager.test.com");
+
+		ManagerFacade managerFacade = new ManagerFacade(properties);
+		managerFacade.setComputePlugin(computePlugin);
+		managerFacade.setIdentityPlugin(identityPlugin);
+
+		managerXmppComponent = new ManagerXmppComponent(MANAGER_COMPONENT_URL,
+				MANAGER_COMPONENT_PASS, SERVER_HOST, SERVER_COMPONENT_PORT,
+				managerFacade);
+		Mockito.when(computePlugin.getResourcesInfo(TOKEN)).thenReturn(
+				getResources());
+		Mockito.when(identityPlugin.getToken("fogbow", "fogbow")).thenReturn(
+				TOKEN);
+
+		managerXmppComponent.setDescription("Manager Component");
+		managerXmppComponent.setName("Manager");
+		managerXmppComponent.setRendezvousAddress(CLIENT_ADRESS + SMACK_ENDING);
+		managerXmppComponent.connect();
+		managerXmppComponent.process();
 		return managerXmppComponent;
 	}
 

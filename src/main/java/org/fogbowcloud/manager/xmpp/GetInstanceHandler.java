@@ -6,6 +6,7 @@ import java.util.Map.Entry;
 import org.dom4j.Element;
 import org.fogbowcloud.manager.core.ManagerFacade;
 import org.fogbowcloud.manager.occi.core.Category;
+import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.Resource;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.instance.Instance.Link;
@@ -26,9 +27,17 @@ public class GetInstanceHandler extends AbstractQueryHandler {
 	public IQ handle(IQ query) {
 		String instanceId = query.getElement().element("query")
 				.element("instance").elementText("id");
-		Instance instance = facade.getInstanceForRemoteMember(instanceId);
 		
+		Instance instance = null;
 		IQ response = IQ.createResultIQ(query);
+		
+		try {
+			instance = facade.getInstanceForRemoteMember(instanceId);
+		} catch (OCCIException e) {
+			response.setError(ManagerPacketHelper.getCondition(e));
+			return response;
+		}
+		
 		if (instance == null) {
 			response.setError(Condition.item_not_found);
 			return response;
@@ -74,7 +83,8 @@ public class GetInstanceHandler extends AbstractQueryHandler {
 			attributeEl.addAttribute("val", instanceAtt.getKey());
 			attributeEl.setText(instanceAtt.getValue());
 		}
-		
+	
+		System.out.println(response.toString());
 		return response;
 	}
 

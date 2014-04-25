@@ -141,11 +141,19 @@ public class ManagerPacketHelper {
 		Element queryEl = iq.getElement().addElement("query",
 				ManagerXmppComponent.GETINSTANCE_NAMESPACE);
 		Element instanceEl = queryEl.addElement("instance");
-		instanceEl.addElement("id").setText(request.getInstanceId());
+		try {
+			instanceEl.addElement("id").setText(request.getInstanceId());	
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
 		
 		IQ response = (IQ) packetSender.syncSendPacket(iq);
 		if (response.getError() != null) {
-			return null;
+			if (response.getError().getCondition().equals(
+					Condition.item_not_found)) {
+				return null;
+			}
+			raiseException(response.getError());
 		}
 		
 		return parseInstance(response.getElement().element("query")
@@ -184,7 +192,7 @@ public class ManagerPacketHelper {
 		String id = instanceEl.element("id").getText();
 
 		Element linkEl = instanceEl.element("link");		
-		String linkName = linkEl.elementText("name");
+		String linkName = linkEl.element("link").getText();
 		Iterator<Element> linkAttributeIterator = linkEl.elementIterator("attribute");
 		
 		Map<String, String> attributesLink = new HashMap<String, String>();
@@ -205,14 +213,14 @@ public class ManagerPacketHelper {
 			String classCategory = itemResourseEl.element("category").element("class").getText();
 			Category category = new Category(termCategory, schemeCategory, classCategory);
 
-			Iterator<Element> resourceAttributeIterator = instanceEl.elementIterator("attribute");
+			Iterator<Element> resourceAttributeIterator = itemResourseEl.element("category").elementIterator("attribute");
 			List<String> resourceAttributes = new ArrayList<String>();
 			while (resourceAttributeIterator.hasNext()) {
 				Element itemResourseAttributeEl = (Element) resourceAttributeIterator.next();				
 				resourceAttributes.add(itemResourseAttributeEl.getText());
 			}
 			
-			Iterator<Element> resourceActionsIterator = instanceEl.elementIterator("action");
+			Iterator<Element> resourceActionsIterator = itemResourseEl.element("category").elementIterator("action");
 			List<String> resourceActions = new ArrayList<String>();
 			while (resourceActionsIterator.hasNext()) {
 				Element itemResourseActionEl = (Element) resourceActionsIterator.next();				

@@ -9,6 +9,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
 
+import org.apache.http.HttpStatus;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
@@ -194,7 +195,8 @@ public class ManagerFacade {
 
 	// TODO Think about always get new federation user token or store a valid one.
 	private String getFederationUserToken() {
-		String token = identityPlugin.getToken(properties.getProperty("federation_user_name"),
+		String token = identityPlugin.getToken(
+				properties.getProperty("federation_user_name"),
 				properties.getProperty("federation_user_password"));
 		return token;
 	}
@@ -204,8 +206,10 @@ public class ManagerFacade {
 		try {
 			return computePlugin.getInstance(token, instanceId);
 		} catch (OCCIException e) {
-			LOGGER.error(e);
-			return null;
+			if (e.getStatus().getCode() == HttpStatus.SC_NOT_FOUND) {
+				return null;
+			}
+			throw e;
 		}
 	}
 

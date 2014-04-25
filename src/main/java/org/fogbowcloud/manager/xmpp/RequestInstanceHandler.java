@@ -38,7 +38,7 @@ public class RequestInstanceHandler extends AbstractQueryHandler {
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
 		List<Element> attributesEl = queryEl.elements("attribute");
 		for (Element attributeEl : attributesEl) {
-			xOCCIAtt.put(attributeEl.attributeValue("var"), attributeEl.getText());
+			xOCCIAtt.put(attributeEl.attributeValue("var"), attributeEl.element("value").getText());
 		}
 		
 		IQ response = IQ.createResultIQ(query);

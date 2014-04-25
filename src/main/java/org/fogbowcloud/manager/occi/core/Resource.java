@@ -27,27 +27,32 @@ public class Resource {
 	}
 
 	public String toHeader() {
+		String title = "";
+		if (!getTitle().equals(null) || !getTitle().equals("")) {
+			title = "\"; title=\"" + getTitle();
+		}
+
 		return category.getTerm() + "; scheme=\"" + category.getScheme() + "\"; class=\""
-				+ category.getCatClass() + "\" attributes=\"" + attributesToHeader() + "\" actions=\""
-				+ actionsToHeader() + "\" location=\"" + getLocation() + "\" title=\"" + getTitle()
-				+ "\" rel=\"" + getRel() + "\"";
+				+ category.getCatClass() + title + "\"; rel=\"" + getRel() + "\"; location=\""
+				+ getLocation() + "\"; attributes=\"" + attributesToHeader() + "\"; actions=\""
+				+ actionsToHeader() + "\"";
 	}
-	
+
 	private String actionsToHeader() {
 		String actionsString = "";
 		for (String action : getActions()) {
 			actionsString += action + " ";
 		}
-		return actionsString.trim();		
+		return actionsString.trim();
 	}
-	
+
 	private String attributesToHeader() {
 		String attributesString = "";
 		for (String attribute : getAttributes()) {
 			attributesString += attribute + " ";
 		}
-		return attributesString.trim();		
-	}	
+		return attributesString.trim();
+	}
 
 	public Category getCategory() {
 		return category;
