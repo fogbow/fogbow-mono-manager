@@ -23,6 +23,7 @@ import org.junit.Test;
 
 public class TestComputeOpenStack {
 
+	private static final String CIRROS_IMAGE_TERM = "cadf2e29-7216-4a5e-9364-cf6513d5f1fd";
 	private static final String FIRST_INSTANCE_ID = "b122f3ad-503c-4abb-8a55-ba8d90cfce9f";
 	private static final String FIFTH_INSTANCE_ID = "hla256kh-43ar-67ww-ao90-fa8d456fce9f";
 	private static final String FOURTH_INSTANCE_ID = "qwuif8ad-19a3-4afg-1l77-tred90crei0q";
@@ -44,6 +45,7 @@ public class TestComputeOpenStack {
 		properties.put("compute_openstack_flavor_small", ComputeApplication.SMALL_FLAVOR_TERM);
 		properties.put("compute_openstack_flavor_medium", ComputeApplication.MEDIUM_FLAVOR_TERM);
 		properties.put("compute_openstack_flavor_large", ComputeApplication.MEDIUM_FLAVOR_TERM);
+		properties.put("compute_openstack_default_cirros_image", CIRROS_IMAGE_TERM);
 		
 		computeOpenStack = new OpenStackComputePlugin(properties);
 

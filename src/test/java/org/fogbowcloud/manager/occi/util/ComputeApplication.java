@@ -75,7 +75,7 @@ public class ComputeApplication extends Application {
 		
 		Map<String, String> attributesToValueUbuntu = new HashMap<String, String>();
 		attributesToValueUbuntu.put(ARCHITECTURE_ATTRIBUTE_OCCI, "64");
-		this.termToAttributes.put(OpenStackComputePlugin.CIRROS_IMAGE_TERM, attributesToValueUbuntu);		
+		this.termToAttributes.put("cadf2e29-7216-4a5e-9364-cf6513d5f1fd", attributesToValueUbuntu);		
 	}
 
 	@Override

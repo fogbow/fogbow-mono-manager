@@ -45,7 +45,6 @@ public class OpenStackComputePlugin implements ComputePlugin {
 	private final String COMPUTE_V2_API_ENDEPOINT = "/v2/";
 
 	public static final String OS_SCHEME = "http://schemas.openstack.org/template/os#";
-	public static final String CIRROS_IMAGE_TERM = "cadf2e29-7216-4a5e-9364-cf6513d5f1fd";
 	private static final String MAX_TOTAL_CORES_ATT = "maxTotalCores";
 	private static final String TOTAL_CORES_USED_ATT = "totalCoresUsed";
 	private static final String MAX_TOTAL_RAM_SIZE_ATT = "maxTotalRAMSize";
@@ -69,7 +68,8 @@ public class OpenStackComputePlugin implements ComputePlugin {
 		fogTermToOpensStackCategory.put(RequestConstants.LARGE_TERM,
 				createFlavorCategory("compute_openstack_flavor_large", properties));
 		fogTermToOpensStackCategory.put(RequestConstants.LINUX_X86_TERM, new Category(
-				CIRROS_IMAGE_TERM, OS_SCHEME, OCCIHeaders.MIXIN_CLASS));
+				properties.getProperty("compute_openstack_default_cirros_image"), 
+				OS_SCHEME, OCCIHeaders.MIXIN_CLASS));
 	}
 
 	private static Category createFlavorCategory(String flavorPropName, Properties properties) {
