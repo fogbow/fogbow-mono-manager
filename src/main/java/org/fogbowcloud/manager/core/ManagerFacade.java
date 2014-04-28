@@ -51,7 +51,7 @@ public class ManagerFacade {
 			throw new IllegalArgumentException();
 		}
 	}
-
+	
 	public void setComputePlugin(ComputePlugin computePlugin) {
 		this.computePlugin = computePlugin;
 	}
@@ -69,6 +69,10 @@ public class ManagerFacade {
 
 	public List<FederationMember> getMembers() {
 		return members;
+	}
+	
+	public void setMembers(List<FederationMember> members) {
+		this.members = members;
 	}
 
 	public ResourcesInfo getResourcesInfo() {
