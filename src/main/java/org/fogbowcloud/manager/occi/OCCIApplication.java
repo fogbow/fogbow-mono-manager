@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.fogbowcloud.manager.core.ManagerFacade;
+import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.instance.ComputeServerResource;
 import org.fogbowcloud.manager.occi.instance.Instance;
@@ -28,7 +29,12 @@ public class OCCIApplication extends Application {
 		router.attach("/request/{requestId}", RequestServerResource.class);
 		router.attach("/compute/", ComputeServerResource.class);
 		router.attach("/compute/{instanceId}", ComputeServerResource.class);
+		router.attach("/members", MemberServerResource.class);
 		return router;
+	}
+	
+	public List<FederationMember> getFederationMembers() {		
+		return managerFacade.getMembers();
 	}
 
 	public Request getRequest(String authToken, String requestId) {
