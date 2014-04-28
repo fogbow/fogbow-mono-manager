@@ -126,7 +126,11 @@ public class ManagerPacketHelper {
 		}
 		IQ response = (IQ) packetSender.syncSendPacket(iq);
 		if (response.getError() != null) {
-			return null;
+			if (response.getError().getCondition().equals(
+					Condition.item_not_found)) {
+				return null;
+			}
+			raiseException(response.getError());
 		}
 		return response.getElement().element("query")
 				.element("instance")

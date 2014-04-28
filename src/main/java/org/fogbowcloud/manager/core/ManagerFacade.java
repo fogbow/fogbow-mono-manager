@@ -188,8 +188,10 @@ public class ManagerFacade {
 		try {
 			return computePlugin.requestInstance(token, categories, xOCCIAtt);
 		} catch (OCCIException e) {
-			LOGGER.error(e);
-			return null;
+			if (e.getStatus().getCode() == HttpStatus.SC_BAD_REQUEST) {
+				return null;
+			}
+			throw e;
 		}
 	}
 

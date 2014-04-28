@@ -84,7 +84,6 @@ public class GetInstanceHandler extends AbstractQueryHandler {
 			attributeEl.setText(instanceAtt.getValue());
 		}
 	
-		System.out.println(response.toString());
 		return response;
 	}
 

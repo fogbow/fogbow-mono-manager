@@ -19,9 +19,6 @@ public class Instance {
 	private Link link;
 	private Map<String, String> attributes;
 
-	public Instance() {
-	}
-
 	public Instance(String id) {
 		this.id = id;
 	}
@@ -118,24 +115,12 @@ public class Instance {
 		return messageFormat.trim();
 	}
 
-	public void setId(String id) {
-		this.id = id;
-	}
-
 	public List<Resource> getResources() {
 		return resources;
 	}
 
-	public void setResources(List<Resource> resources) {
-		this.resources = resources;
-	}
-
 	public Map<String, String> getAttributes() {
 		return attributes;
-	}
-
-	public void setAttributes(Map<String, String> attributes) {
-		this.attributes = attributes;
 	}
 
 	public String getId() {
@@ -144,10 +129,6 @@ public class Instance {
 
 	public Link getLink() {
 		return link;
-	}
-
-	public void setLink(Link link) {
-		this.link = link;
 	}
 
 	public static class Link {

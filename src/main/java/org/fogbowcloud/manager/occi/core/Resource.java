@@ -28,14 +28,30 @@ public class Resource {
 
 	public String toHeader() {
 		String title = "";
-		if (!getTitle().equals(null) || !getTitle().equals("")) {
+		String rel = "";
+		String location = "";
+		String actions = "";
+		String attributes = "";
+		if (!getTitle().equals("")) {
 			title = "\"; title=\"" + getTitle();
 		}
+		if (!getRel().equals("")) {
+			rel = "\"; rel=\"" + getRel();
+		}
+		if (!getLocation().equals("")) {
+			location = "\"; location=\"" + getLocation();
+		}
+		if(getActions().size() != 0 ){
+			actions = "\"; actions=\"" + actionsToHeader();
+		}
+		if(getAttributes().size() != 0){
+			attributes = "\"; attributes=\"" + attributesToHeader();
+		}
+		 
 
 		return category.getTerm() + "; scheme=\"" + category.getScheme() + "\"; class=\""
-				+ category.getCatClass() + title + "\"; rel=\"" + getRel() + "\"; location=\""
-				+ getLocation() + "\"; attributes=\"" + attributesToHeader() + "\"; actions=\""
-				+ actionsToHeader() + "\"";
+				+ category.getCatClass() + title + rel + location 
+				+ attributes + actions + "\"";
 	}
 
 	private String actionsToHeader() {
