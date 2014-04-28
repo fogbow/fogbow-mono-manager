@@ -4,6 +4,8 @@ import java.util.List;
 
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.Flavor;
+import org.fogbowcloud.manager.occi.core.HeaderUtils;
+import org.restlet.engine.adapter.HttpRequest;
 import org.restlet.resource.Get;
 import org.restlet.resource.ServerResource;
 
@@ -12,7 +14,9 @@ public class MemberServerResource extends ServerResource {
 	@Get
 	public String fetch() {
 		OCCIApplication application = (OCCIApplication) getApplication();
-
+		HttpRequest req = (HttpRequest) getRequest();
+		HeaderUtils.checkOCCIContentType(req.getHeaders());
+		
 		List<FederationMember> federationMembers = application.getFederationMembers();
 		if (federationMembers == null) {
 			return " ";

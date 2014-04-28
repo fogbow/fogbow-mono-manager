@@ -15,6 +15,8 @@ import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
+import org.fogbowcloud.manager.occi.core.OCCIException;
+import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.util.OCCITestHelper;
 import org.junit.After;
 import org.junit.Assert;
@@ -62,6 +64,7 @@ public class TestMemberServerResource {
 		this.helper.initializeComponentMember(computePlugin, identityPlugin, federationMembers);		
 		
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_MEMBER);
+		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(get);
 
@@ -77,13 +80,14 @@ public class TestMemberServerResource {
 	}
 
 	@Test
-	public void testGetMemberWrong() throws Exception {
+	public void testGetMemberEmpty() throws Exception {
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 
 		this.helper.initializeComponentMember(computePlugin, identityPlugin, null);
 		
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_MEMBER);
+		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(get);
 
@@ -93,6 +97,21 @@ public class TestMemberServerResource {
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 		Assert.assertEquals(" ", responseStr);
 	}
+	
+	@Test
+	public void testGetMemberWrongContentType() throws Exception {
+		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
+		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
+
+		this.helper.initializeComponentMember(computePlugin, identityPlugin, null);
+		
+		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_MEMBER);
+		get.addHeader(OCCIHeaders.CONTENT_TYPE, "wrong");
+		HttpClient client = new DefaultHttpClient();
+		HttpResponse response = client.execute(get);
+
+		Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusLine().getStatusCode());
+	}	
 	
 	private boolean checkResponse(String response) {
 		String[] tokens = response.split("\n");
