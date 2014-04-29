@@ -83,7 +83,9 @@ public class TestMemberServerResource {
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 
-		this.helper.initializeComponentMember(computePlugin, identityPlugin, null);
+		List<FederationMember> federationMembers = new ArrayList<FederationMember>();
+		
+		this.helper.initializeComponentMember(computePlugin, identityPlugin, federationMembers);
 		
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_MEMBER);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
