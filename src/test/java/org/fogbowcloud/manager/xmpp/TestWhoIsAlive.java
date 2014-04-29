@@ -1,5 +1,7 @@
 package org.fogbowcloud.manager.xmpp;
 
+import java.io.IOException;
+import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -49,10 +51,23 @@ public class TestWhoIsAlive {
 					e.printStackTrace();
 				}
 				List<FederationMember> aliveIds = new ArrayList<FederationMember>();
-				aliveIds.add(new FederationMember(managerTestHelper
-						.getResources()));
-				IQ iq = managerTestHelper.createWhoIsAliveResponse(
-						(ArrayList<FederationMember>) aliveIds, whoIsAlive);
+				try {
+					aliveIds.add(new FederationMember(managerTestHelper
+							.getResources()));
+				} catch (CertificateException e) {
+					e.printStackTrace();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				IQ iq = null;
+				try {
+					iq = managerTestHelper.createWhoIsAliveResponse(
+							(ArrayList<FederationMember>) aliveIds, whoIsAlive);
+				} catch (CertificateException e) {
+					e.printStackTrace();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 				xmppClient.send(iq);
 			}
 		};
@@ -79,7 +94,8 @@ public class TestWhoIsAlive {
 		Assert.assertEquals(2, managerXmppComponent.getManagerFacade()
 				.getMembers().get(0).getResourcesInfo().getFlavours().size());
 		Assert.assertEquals("small", managerXmppComponent.getManagerFacade()
-				.getMembers().get(0).getResourcesInfo().getFlavours().get(0).getName());
+				.getMembers().get(0).getResourcesInfo().getFlavours().get(0)
+				.getName());
 		xmppClient.disconnect();
 	}
 
@@ -91,10 +107,23 @@ public class TestWhoIsAlive {
 			public void processPacket(Packet packet) {
 				IQ whoIsAlive = (IQ) packet;
 				List<FederationMember> aliveIds = new ArrayList<FederationMember>();
-				aliveIds.add(new FederationMember(managerTestHelper
-						.getResources()));
-				IQ iq = managerTestHelper.createWhoIsAliveResponse(
-						(ArrayList<FederationMember>) aliveIds, whoIsAlive);
+				try {
+					aliveIds.add(new FederationMember(managerTestHelper
+							.getResources()));
+				} catch (CertificateException e1) {
+					e1.printStackTrace();
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+				IQ iq = null;
+				try {
+					iq = managerTestHelper.createWhoIsAliveResponse(
+							(ArrayList<FederationMember>) aliveIds, whoIsAlive);
+				} catch (CertificateException e1) {
+					e1.printStackTrace();
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
 				try {
 					xmppClient.syncSend(iq);
 				} catch (XMPPException e) {
@@ -123,6 +152,9 @@ public class TestWhoIsAlive {
 		Assert.assertEquals("small", managerXmppComponent.getManagerFacade()
 				.getMembers().get(0).getResourcesInfo().getFlavours().get(0)
 				.getName());
+		Assert.assertEquals(managerTestHelper.getCertificate(),
+				managerXmppComponent.getManagerFacade().getMembers().get(0)
+						.getResourcesInfo().getCert());
 		xmppClient.disconnect();
 	}
 

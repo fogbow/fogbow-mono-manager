@@ -271,7 +271,7 @@ public class OpenStackComputePlugin implements ComputePlugin {
 			int memIdle = Integer.parseInt(maxMem) - Integer.parseInt(memInUse);
 
 			return new ResourcesInfo(null, String.valueOf(cpuIdle), cpuInUse,
-					String.valueOf(memIdle), memInUse, getFlavors(cpuIdle, memIdle));
+					String.valueOf(memIdle), memInUse, getFlavors(cpuIdle, memIdle), null);
 
 		} catch (URISyntaxException e) {
 			LOGGER.error(e);

@@ -1,5 +1,7 @@
 package org.fogbowcloud.manager.xmpp;
 
+import java.io.IOException;
+import java.security.cert.CertificateException;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -33,7 +35,7 @@ public class ManagerXmppComponent extends XMPPComponent {
 		scheduleIamAlive();
 	}
 
-	public void iAmAlive() {
+	public void iAmAlive() throws CertificateException, IOException {
 		ManagerPacketHelper.iAmAlive(managerFacade.getResourcesInfo(),
 				rendezvousAddress, this);
 	}
@@ -44,7 +46,7 @@ public class ManagerXmppComponent extends XMPPComponent {
 		super.send(packet);
 	}
 
-	public void whoIsalive() {
+	public void whoIsalive() throws CertificateException {
 		managerFacade.updateMembers(ManagerPacketHelper.whoIsalive(
 				rendezvousAddress, this));
 	}
@@ -53,8 +55,18 @@ public class ManagerXmppComponent extends XMPPComponent {
 		timer.schedule(new TimerTask() {
 			@Override
 			public void run() {
-				iAmAlive();
-				whoIsalive();
+				try {
+					iAmAlive();
+				} catch (CertificateException e) {
+					e.printStackTrace();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				try {
+					whoIsalive();
+				} catch (CertificateException e) {
+					e.printStackTrace();
+				}
 			}
 		}, 0, PERIOD);
 	}

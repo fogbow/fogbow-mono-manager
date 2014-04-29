@@ -16,7 +16,7 @@ public class CertificateHandlerHelper {
 	private static final String CERTIFICATE_KEY = "certificate";
 	private final static String CONFIG_PATH = "src/test/resources/manager.conf.test";
 
-	public static String ConvertToSendingFormat() throws CertificateException,
+	public static String convertToSendingFormat() throws CertificateException,
 			IOException {
 		Certificate cert = getCertificate();
 		byte[] base64Certificate = Base64.encodeBase64(cert.getEncoded());
@@ -39,7 +39,7 @@ public class CertificateHandlerHelper {
 		return cert;
 	}
 	
-	public static Certificate ConvertToCertificateFormat(
+	public static Certificate convertToCertificateFormat(
 			String base64StringCertificate) throws CertificateException {
 		byte[] base64BytesCertificate = base64StringCertificate.getBytes();
 		CertificateFactory certFactory = CertificateFactory.getInstance("X.509");

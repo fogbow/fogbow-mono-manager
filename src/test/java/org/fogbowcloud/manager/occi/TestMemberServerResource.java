@@ -53,9 +53,9 @@ public class TestMemberServerResource {
 		flavours.add(new Flavor(FLAVOUR_1, "3", "135", 2));
 		flavours.add(new Flavor(FLAVOUR_2, "3", "135", 2));
 		ResourcesInfo resourcesInfo = new ResourcesInfo(ID_RESOURCEINFO1, "2", "1", "100", "35",
-				flavours);
+				flavours, null);
 		ResourcesInfo resourcesInfo2 = new ResourcesInfo(ID_RESOURCEINFO2, "2", "1", "100", "35",
-				null);
+				null, null);
 		federationMembers.add(new FederationMember(resourcesInfo));
 		federationMembers.add(new FederationMember(resourcesInfo));
 		federationMembers.add(new FederationMember(resourcesInfo2));

@@ -1,5 +1,8 @@
 package org.fogbowcloud.manager.xmpp.util;
 
+import java.io.IOException;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -8,6 +11,7 @@ import java.util.Properties;
 
 import org.dom4j.Attribute;
 import org.dom4j.Element;
+import org.fogbowcloud.manager.core.CertificateHandlerHelper;
 import org.fogbowcloud.manager.core.ManagerFacade;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.Flavor;
@@ -50,24 +54,26 @@ public class ManagerTestHelper {
 	private ComputePlugin computePlugin;
 	private IdentityPlugin identityPlugin;
 
-	public ResourcesInfo getResources() {
+	public ResourcesInfo getResources() throws CertificateException,
+			IOException {
 		List<Flavor> flavours = new LinkedList<Flavor>();
 		flavours.add(new Flavor("small", "cpu", "mem", 2));
 		flavours.add(new Flavor("small", "cpu", "mem", 3));
 		ResourcesInfo resources = new ResourcesInfo("abc", "value1", "value2",
-				"value3", "value4", flavours);
+				"value3", "value4", flavours, getCertificate());
 		return resources;
 	}
 
 	public IQ createWhoIsAliveResponse(ArrayList<FederationMember> aliveIds,
-			IQ iq) {
+			IQ iq) throws CertificateException, IOException {
 		IQ resultIQ = IQ.createResultIQ(iq);
 		Element queryElement = resultIQ.getElement().addElement("query",
 				WHOISALIVE_NAMESPACE);
 		for (FederationMember rendezvousItem : aliveIds) {
 			Element itemEl = queryElement.addElement("item");
 			itemEl.addAttribute("id", rendezvousItem.getResourcesInfo().getId());
-
+			itemEl.addElement("cert").setText(
+					CertificateHandlerHelper.convertToSendingFormat());
 			Element statusEl = itemEl.addElement("status");
 			statusEl.addElement("cpu-idle").setText(
 					rendezvousItem.getResourcesInfo().getCpuIdle());
@@ -112,7 +118,7 @@ public class ManagerTestHelper {
 
 		return xmppClient;
 	}
-	
+
 	public PacketSender createPacketSender() throws XMPPException {
 		final XMPPClient xmppClient = createXMPPClient();
 		PacketSender sender = new PacketSender() {
@@ -126,7 +132,7 @@ public class ManagerTestHelper {
 				response.cancel();
 				return result;
 			}
-			
+
 			@Override
 			public void sendPacket(Packet packet) {
 				xmppClient.send(packet);
@@ -134,12 +140,11 @@ public class ManagerTestHelper {
 		};
 		return sender;
 	}
-	
-	
+
 	public ComputePlugin getComputePlugin() {
 		return computePlugin;
 	}
-	
+
 	public IdentityPlugin getIdentityPlugin() {
 		return identityPlugin;
 	}
@@ -177,7 +182,7 @@ public class ManagerTestHelper {
 		}
 		return managerXmppComponent;
 	}
-	
+
 	public ManagerXmppComponent initializeLocalXMPPManagerComponent()
 			throws Exception {
 
@@ -219,7 +224,7 @@ public class ManagerTestHelper {
 	}
 
 	@SuppressWarnings("unchecked")
-	public List<FederationMember> getItemsFromIQ(Packet response) {
+	public List<FederationMember> getItemsFromIQ(Packet response) throws CertificateException, IOException {
 		Element queryElement = response.getElement().element("query");
 		Iterator<Element> itemIterator = queryElement.elementIterator("item");
 		ArrayList<FederationMember> aliveItems = new ArrayList<FederationMember>();
@@ -228,11 +233,11 @@ public class ManagerTestHelper {
 			Element itemEl = (Element) itemIterator.next();
 			Attribute id = itemEl.attribute("id");
 			Element statusEl = itemEl.element("status");
-			String cpuIdle = statusEl.element("cpu-idle").getText();
+			Certificate cert = CertificateHandlerHelper.convertToCertificateFormat(itemEl.element("cert").getText());			
+					String cpuIdle = statusEl.element("cpu-idle").getText();
 			String cpuInUse = statusEl.element("cpu-inuse").getText();
 			String memIdle = statusEl.element("mem-idle").getText();
 			String memInUse = statusEl.element("mem-inuse").getText();
-
 			List<Flavor> flavoursList = new LinkedList<Flavor>();
 			Iterator<Element> flavourIterator = itemEl
 					.elementIterator("flavor");
@@ -248,11 +253,16 @@ public class ManagerTestHelper {
 			}
 
 			ResourcesInfo resources = new ResourcesInfo(id.getValue(), cpuIdle,
-					cpuInUse, memIdle, memInUse, flavoursList);
+					cpuInUse, memIdle, memInUse, flavoursList, cert);
 			FederationMember item = new FederationMember(resources);
 			aliveItems.add(item);
 		}
 		return aliveItems;
+	}
+
+	public Certificate getCertificate() throws CertificateException,
+			IOException {
+		return CertificateHandlerHelper.getCertificate();
 	}
 
 	/*

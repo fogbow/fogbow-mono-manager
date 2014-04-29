@@ -1,5 +1,7 @@
 package org.fogbowcloud.manager.xmpp;
 
+import java.io.IOException;
+import java.security.cert.CertificateException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -20,7 +22,7 @@ public class TestFederationMember {
 	ManagerTestHelper managerTestHelper;
 	
 	@Before
-	public void setUp() {
+	public void setUp() throws CertificateException, IOException {
 		managerTestHelper = new ManagerTestHelper();
 		resources = managerTestHelper.getResources();
 	}
@@ -31,33 +33,33 @@ public class TestFederationMember {
 	}
 
 	@Test(expected = IllegalArgumentException.class)
-	public void testNullResourceId() {
+	public void testNullResourceId() throws CertificateException, IOException {
 		new ResourcesInfo(null, "cpuIdle",
-				"cpuInUse", "memIdle", "memInUse", new LinkedList<Flavor>());
+				"cpuInUse", "memIdle", "memInUse", new LinkedList<Flavor>(), managerTestHelper.getCertificate());
 	}
 	
 	@Test(expected = IllegalArgumentException.class)
-	public void testNullResourcesCpuIdle() {
+	public void testNullResourcesCpuIdle() throws CertificateException, IOException {
 		new ResourcesInfo("id", null,
-				"cpuInUse", "memIdle", "memInUse", new LinkedList<Flavor>());
+				"cpuInUse", "memIdle", "memInUse", new LinkedList<Flavor>(), managerTestHelper.getCertificate());
 	}
 	
 	@Test(expected = IllegalArgumentException.class)
-	public void testNullResourcesCpuInUse() {
+	public void testNullResourcesCpuInUse() throws CertificateException, IOException {
 		new ResourcesInfo("id", "CpuIdle",
-				null, "memIdle", "memInUse", new LinkedList<Flavor>());
+				null, "memIdle", "memInUse", new LinkedList<Flavor>(), managerTestHelper.getCertificate());
 	}
 	
 	@Test(expected = IllegalArgumentException.class)
-	public void testNullResourcesMemIdle() {
+	public void testNullResourcesMemIdle() throws CertificateException, IOException {
 		new ResourcesInfo("id", "CpuIdle",
-				"cpuInUse", null, "memInUse", new LinkedList<Flavor>());
+				"cpuInUse", null, "memInUse", new LinkedList<Flavor>(), managerTestHelper.getCertificate());
 	}
 	
 	@Test(expected = IllegalArgumentException.class)
-	public void testNullResourcesMemInUse() {
+	public void testNullResourcesMemInUse() throws CertificateException, IOException {
 		new ResourcesInfo("id", "CpuIdle",
-				"cpuInUse", "memIdle", null, new LinkedList<Flavor>());
+				"cpuInUse", "memIdle", null, new LinkedList<Flavor>(), managerTestHelper.getCertificate());
 	}
 	
 	@Test

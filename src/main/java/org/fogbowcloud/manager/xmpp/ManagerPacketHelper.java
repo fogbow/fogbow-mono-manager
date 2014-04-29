@@ -1,5 +1,8 @@
 package org.fogbowcloud.manager.xmpp;
 
+import java.io.IOException;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -11,6 +14,7 @@ import java.util.Map.Entry;
 import org.apache.http.HttpStatus;
 import org.dom4j.Attribute;
 import org.dom4j.Element;
+import org.fogbowcloud.manager.core.CertificateHandlerHelper;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
@@ -31,13 +35,15 @@ import org.xmpp.packet.PacketError.Condition;
 public class ManagerPacketHelper {
 
 	public static void iAmAlive(ResourcesInfo resourcesInfo,
-			String rendezvousAddress, PacketSender packetSender) {
+			String rendezvousAddress, PacketSender packetSender)
+			throws CertificateException, IOException {
 		IQ iq = new IQ(Type.get);
 		iq.setTo(rendezvousAddress);
 		Element statusEl = iq.getElement()
 				.addElement("query", ManagerXmppComponent.IAMALIVE_NAMESPACE)
 				.addElement("status");
-		iq.getElement().element("query").addElement("cert");
+		iq.getElement().element("query").addElement("cert")
+				.setText(CertificateHandlerHelper.convertToSendingFormat());
 		statusEl.addElement("cpu-idle").setText(resourcesInfo.getCpuIdle());
 		statusEl.addElement("cpu-inuse").setText(resourcesInfo.getCpuInUse());
 		statusEl.addElement("mem-idle").setText(resourcesInfo.getMemIdle());
@@ -55,7 +61,7 @@ public class ManagerPacketHelper {
 	}
 
 	public static List<FederationMember> whoIsalive(String rendezvousAddress,
-			PacketSender packetSender) {
+			PacketSender packetSender) throws CertificateException {
 		IQ iq = new IQ(Type.get);
 		iq.setTo(rendezvousAddress);
 		iq.getElement().addElement("query",
@@ -67,7 +73,7 @@ public class ManagerPacketHelper {
 
 	@SuppressWarnings("unchecked")
 	private static ArrayList<FederationMember> getMembersFromIQ(
-			IQ responseFromWhoIsAliveIQ) {
+			IQ responseFromWhoIsAliveIQ) throws CertificateException {
 		Element queryElement = responseFromWhoIsAliveIQ.getElement().element(
 				"query");
 		Iterator<Element> itemIterator = queryElement.elementIterator("item");
@@ -76,7 +82,9 @@ public class ManagerPacketHelper {
 		while (itemIterator.hasNext()) {
 			Element itemEl = (Element) itemIterator.next();
 			Attribute id = itemEl.attribute("id");
-			//TODO get certificate
+			Certificate cert = CertificateHandlerHelper
+					.convertToCertificateFormat(itemEl.element("cert")
+							.getText());
 			Element statusEl = itemEl.element("status");
 			String cpuIdle = statusEl.element("cpu-idle").getText();
 			String cpuInUse = statusEl.element("cpu-inuse").getText();
@@ -98,15 +106,15 @@ public class ManagerPacketHelper {
 			}
 
 			ResourcesInfo resources = new ResourcesInfo(id.getValue(), cpuIdle,
-					cpuInUse, memIdle, memInUse, flavoursList);
+					cpuInUse, memIdle, memInUse, flavoursList, cert);
 			FederationMember item = new FederationMember(resources);
 			aliveItems.add(item);
 		}
 		return aliveItems;
 	}
 
-	public static String remoteRequest(Request request,
-			String memberAddress, PacketSender packetSender) {
+	public static String remoteRequest(Request request, String memberAddress,
+			PacketSender packetSender) {
 		IQ iq = new IQ();
 		iq.setTo(memberAddress);
 		iq.setType(Type.set);
@@ -126,18 +134,18 @@ public class ManagerPacketHelper {
 		}
 		IQ response = (IQ) packetSender.syncSendPacket(iq);
 		if (response.getError() != null) {
-			if (response.getError().getCondition().equals(
-					Condition.item_not_found)) {
+			if (response.getError().getCondition()
+					.equals(Condition.item_not_found)) {
 				return null;
 			}
 			raiseException(response.getError());
 		}
-		return response.getElement().element("query")
-				.element("instance")
+		return response.getElement().element("query").element("instance")
 				.elementText("id");
 	}
-	
-	public static Instance getRemoteInstance(Request request, PacketSender packetSender) {
+
+	public static Instance getRemoteInstance(Request request,
+			PacketSender packetSender) {
 		IQ iq = new IQ();
 		iq.setTo(request.getMemberId());
 		iq.setType(Type.get);
@@ -145,25 +153,25 @@ public class ManagerPacketHelper {
 				ManagerXmppComponent.GETINSTANCE_NAMESPACE);
 		Element instanceEl = queryEl.addElement("instance");
 		try {
-			instanceEl.addElement("id").setText(request.getInstanceId());	
+			instanceEl.addElement("id").setText(request.getInstanceId());
 		} catch (Exception e) {
 			// TODO: handle exception
 		}
-		
+
 		IQ response = (IQ) packetSender.syncSendPacket(iq);
 		if (response.getError() != null) {
-			if (response.getError().getCondition().equals(
-					Condition.item_not_found)) {
+			if (response.getError().getCondition()
+					.equals(Condition.item_not_found)) {
 				return null;
 			}
 			raiseException(response.getError());
 		}
-		
+
 		return parseInstance(response.getElement().element("query")
 				.element("instance"));
 	}
 
-	public static void deleteRemoteInstace(Request request, 
+	public static void deleteRemoteInstace(Request request,
 			PacketSender packetSender) {
 		IQ iq = new IQ();
 		iq.setTo(request.getMemberId());
@@ -172,73 +180,88 @@ public class ManagerPacketHelper {
 				ManagerXmppComponent.REMOVEINSTANCE_NAMESPACE);
 		Element instanceEl = queryEl.addElement("instance");
 		instanceEl.addElement("id").setText(request.getInstanceId());
-		
+
 		IQ response = (IQ) packetSender.syncSendPacket(iq);
 		if (response.getError() != null) {
 			raiseException(response.getError());
 		}
 	}
-	
+
 	private static void raiseException(PacketError error) {
 		Condition condition = error.getCondition();
 		if (condition.equals(Condition.item_not_found)) {
-			throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
+			throw new OCCIException(ErrorType.NOT_FOUND,
+					ResponseConstants.NOT_FOUND);
 		}
 		if (condition.equals(Condition.not_authorized)) {
-			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
+			throw new OCCIException(ErrorType.UNAUTHORIZED,
+					ResponseConstants.UNAUTHORIZED);
 		}
-		throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
+		throw new OCCIException(ErrorType.BAD_REQUEST,
+				ResponseConstants.IRREGULAR_SYNTAX);
 	}
 
 	@SuppressWarnings("unchecked")
 	private static Instance parseInstance(Element instanceEl) {
 		String id = instanceEl.element("id").getText();
 
-		Element linkEl = instanceEl.element("link");		
+		Element linkEl = instanceEl.element("link");
 		String linkName = linkEl.element("link").getText();
-		Iterator<Element> linkAttributeIterator = linkEl.elementIterator("attribute");
-		
+		Iterator<Element> linkAttributeIterator = linkEl
+				.elementIterator("attribute");
+
 		Map<String, String> attributesLink = new HashMap<String, String>();
 		while (linkAttributeIterator.hasNext()) {
 			Element itemAttributeEl = (Element) linkAttributeIterator.next();
 			String key = itemAttributeEl.attributeValue("val");
 			String value = itemAttributeEl.getText();
 			attributesLink.put(key, value);
-		}		
+		}
 		Link link = new Link(linkName, attributesLink);
-				
-		Iterator<Element> resourceIterator = instanceEl.elementIterator("resource");
+
+		Iterator<Element> resourceIterator = instanceEl
+				.elementIterator("resource");
 		List<Resource> resources = new ArrayList<Resource>();
 		while (resourceIterator.hasNext()) {
 			Element itemResourseEl = (Element) resourceIterator.next();
-			String termCategory = itemResourseEl.element("category").element("term").getText();
-			String schemeCategory = itemResourseEl.element("category").element("scheme").getText();
-			String classCategory = itemResourseEl.element("category").element("class").getText();
-			Category category = new Category(termCategory, schemeCategory, classCategory);
+			String termCategory = itemResourseEl.element("category")
+					.element("term").getText();
+			String schemeCategory = itemResourseEl.element("category")
+					.element("scheme").getText();
+			String classCategory = itemResourseEl.element("category")
+					.element("class").getText();
+			Category category = new Category(termCategory, schemeCategory,
+					classCategory);
 
-			Iterator<Element> resourceAttributeIterator = itemResourseEl.element("category").elementIterator("attribute");
+			Iterator<Element> resourceAttributeIterator = itemResourseEl
+					.element("category").elementIterator("attribute");
 			List<String> resourceAttributes = new ArrayList<String>();
 			while (resourceAttributeIterator.hasNext()) {
-				Element itemResourseAttributeEl = (Element) resourceAttributeIterator.next();				
+				Element itemResourseAttributeEl = (Element) resourceAttributeIterator
+						.next();
 				resourceAttributes.add(itemResourseAttributeEl.getText());
 			}
-			
-			Iterator<Element> resourceActionsIterator = itemResourseEl.element("category").elementIterator("action");
+
+			Iterator<Element> resourceActionsIterator = itemResourseEl.element(
+					"category").elementIterator("action");
 			List<String> resourceActions = new ArrayList<String>();
 			while (resourceActionsIterator.hasNext()) {
-				Element itemResourseActionEl = (Element) resourceActionsIterator.next();				
+				Element itemResourseActionEl = (Element) resourceActionsIterator
+						.next();
 				resourceActions.add(itemResourseActionEl.getText());
-			}			
-			
+			}
+
 			String location = itemResourseEl.element("location").getText();
 			String title = itemResourseEl.element("title").getText();
 			String rel = itemResourseEl.element("rel").getText();
-			
-			resources.add(new Resource(category, resourceAttributes, resourceActions, location, title, rel));
-		}				
-		
-		Iterator<Element> attributesIterator = instanceEl.elementIterator("attribute");
-		
+
+			resources.add(new Resource(category, resourceAttributes,
+					resourceActions, location, title, rel));
+		}
+
+		Iterator<Element> attributesIterator = instanceEl
+				.elementIterator("attribute");
+
 		Map<String, String> attributes = new HashMap<String, String>();
 		while (attributesIterator.hasNext()) {
 			Element attributeEl = (Element) attributesIterator.next();
@@ -246,7 +269,7 @@ public class ManagerPacketHelper {
 			String value = attributeEl.getText();
 			attributes.put(key, value);
 		}
-		
+
 		return new Instance(id, resources, attributes, link);
 	}
 

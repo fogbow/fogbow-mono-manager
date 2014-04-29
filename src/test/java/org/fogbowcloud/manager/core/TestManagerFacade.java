@@ -1,5 +1,7 @@
 package org.fogbowcloud.manager.core;
 
+import java.io.IOException;
+import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -35,7 +37,7 @@ public class TestManagerFacade {
 	}
 
 	@Test
-	public void testGet1ItemFromIQ() {
+	public void testGet1ItemFromIQ() throws CertificateException, IOException {
 		FederationMember managerItem = new FederationMember(managerTestHelper.getResources());
 		List<FederationMember> items = new LinkedList<FederationMember>();
 		items.add(managerItem);
@@ -48,7 +50,7 @@ public class TestManagerFacade {
 	}
 
 	@Test
-	public void testGetManyItemsFromIQ() {
+	public void testGetManyItemsFromIQ() throws CertificateException, IOException {
 		ArrayList<FederationMember> items = new ArrayList<FederationMember>();
 		for (int i = 0; i < 10; i++) {
 			items.add(new FederationMember(managerTestHelper.getResources()));

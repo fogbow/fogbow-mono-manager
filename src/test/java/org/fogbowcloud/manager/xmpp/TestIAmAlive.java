@@ -1,5 +1,7 @@
 package org.fogbowcloud.manager.xmpp;
 
+import java.io.IOException;
+import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -84,7 +86,7 @@ public class TestIAmAlive {
 
 		xmppClient.disconnect();
 	}
-	
+
 	@Test
 	public void testCallIAmAlive() throws Exception {
 		final XMPPClient xmppClient = managerTestHelper.createXMPPClient();
@@ -102,10 +104,23 @@ public class TestIAmAlive {
 			public void processPacket(Packet packet) {
 				IQ whoIsAlive = (IQ) packet;
 				List<FederationMember> aliveIds = new ArrayList<FederationMember>();
-				aliveIds.add(new FederationMember(managerTestHelper
-						.getResources()));
-				IQ iq = managerTestHelper.createWhoIsAliveResponse(
-						(ArrayList<FederationMember>) aliveIds, whoIsAlive);
+				try {
+					aliveIds.add(new FederationMember(managerTestHelper
+							.getResources()));
+				} catch (CertificateException e1) {
+					e1.printStackTrace();
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+				IQ iq = null;
+				try {
+					iq = managerTestHelper.createWhoIsAliveResponse(
+							(ArrayList<FederationMember>) aliveIds, whoIsAlive);
+				} catch (CertificateException e1) {
+					e1.printStackTrace();
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
 				try {
 					xmppClient.syncSend(iq);
 				} catch (XMPPException e) {
