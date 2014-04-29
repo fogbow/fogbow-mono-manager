@@ -19,6 +19,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.core.SSHTunnel;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
@@ -34,17 +35,19 @@ import org.json.JSONObject;
 
 public class OpenStackComputePlugin implements ComputePlugin {
 
+	private static final String INSTANCE_SCHEME = "http://schemas.openstack.org/compute/instance#";
+	private static final String SCHEME_COMPUTE = "http://schemas.ogf.org/occi/infrastructure#";
+	public static final String OS_SCHEME = "http://schemas.openstack.org/template/os#";
+	
 	private static final String ABSOLUTE = "absolute";
 	private static final String LIMITS = "limits";
 	private static final Logger LOGGER = Logger.getLogger(OpenStackComputePlugin.class);
 	private static final String TERM_COMPUTE = "compute";
-	private static final String SCHEME_COMPUTE = "http://schemas.ogf.org/occi/infrastructure#";
 	private static final String CLASS_COMPUTE = "kind";
 	private static final String COMPUTE_ENDPOINT = "/compute/";
 	private final String federationTenantId;
 	private final String COMPUTE_V2_API_ENDEPOINT = "/v2/";
 
-	public static final String OS_SCHEME = "http://schemas.openstack.org/template/os#";
 	private static final String MAX_TOTAL_CORES_ATT = "maxTotalCores";
 	private static final String TOTAL_CORES_USED_ATT = "totalCoresUsed";
 	private static final String MAX_TOTAL_RAM_SIZE_ATT = "maxTotalRAMSize";
@@ -70,6 +73,8 @@ public class OpenStackComputePlugin implements ComputePlugin {
 		fogTermToOpensStackCategory.put(RequestConstants.LINUX_X86_TERM, new Category(
 				properties.getProperty("compute_openstack_default_cirros_image"), 
 				OS_SCHEME, OCCIHeaders.MIXIN_CLASS));
+		fogTermToOpensStackCategory.put(RequestConstants.USER_DATA_TERM, 
+				new Category("user_data", INSTANCE_SCHEME, OCCIHeaders.MIXIN_CLASS));
 	}
 
 	private static Category createFlavorCategory(String flavorPropName, Properties properties) {
@@ -92,8 +97,10 @@ public class OpenStackComputePlugin implements ComputePlugin {
 			}
 			openStackCategories.add(fogTermToOpensStackCategory.get(category.getTerm()));
 		}
+		
+		xOCCIAtt.put("org.openstack.compute.user_data", xOCCIAtt.remove(SSHTunnel.USER_DATA_ATT));
 
-		HttpClient httpCLient = new DefaultHttpClient();
+		HttpClient httpClient = new DefaultHttpClient();
 		HttpPost httpPost;
 		try {
 			httpPost = new HttpPost(computeOCCIEndpoint);
@@ -106,7 +113,7 @@ public class OpenStackComputePlugin implements ComputePlugin {
 				httpPost.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE,
 						attName + "=" + "\"" + xOCCIAtt.get(attName) + "\"");
 			}
-			HttpResponse response = httpCLient.execute(httpPost);
+			HttpResponse response = httpClient.execute(httpPost);
 			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
 				throw new OCCIException(ErrorType.UNAUTHORIZED, EntityUtils.toString(
 						response.getEntity(), String.valueOf(Charsets.UTF_8)));

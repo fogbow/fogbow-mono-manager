@@ -232,6 +232,12 @@ public class ManagerFacade {
 				.getValue()));
 		LOGGER.info("Request " + instanceCount + " instances");
 
+		try {
+			SSHTunnel.create(properties, categories, xOCCIAtt);
+		} catch (Exception e) {
+			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.NOT_FOUND);
+		}
+		
 		List<Request> currentRequests = new ArrayList<Request>();
 		for (int i = 0; i < instanceCount; i++) {
 			String requestId = String.valueOf(UUID.randomUUID());

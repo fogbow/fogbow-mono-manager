@@ -19,3 +19,7 @@ federation_user_password=fogbow
 federation_user_tenant_id=$tenantId
 
 scheduler_period=30000
+
+ssh_tunnel_host=10.0.0.1
+ssh_tunnel_user=fogbow
+ssh_tunnel_port_range=50000:59999

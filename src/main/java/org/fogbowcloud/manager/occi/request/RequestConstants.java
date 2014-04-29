@@ -21,4 +21,7 @@ public class RequestConstants {
 
 	// general
 	public static final String MIXIN_CLASS = "mixin";
+	
+	// ssh
+	public static final String USER_DATA_TERM = "fogbow-userdata";
 }
