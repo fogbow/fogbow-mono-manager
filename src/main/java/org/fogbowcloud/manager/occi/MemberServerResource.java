@@ -18,7 +18,7 @@ public class MemberServerResource extends ServerResource {
 		HeaderUtils.checkOCCIContentType(req.getHeaders());
 		
 		List<FederationMember> federationMembers = application.getFederationMembers();
-		if (federationMembers == null) {
+		if (federationMembers.size() == 0) {
 			return " ";
 		}
 		
