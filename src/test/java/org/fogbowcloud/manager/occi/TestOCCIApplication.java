@@ -9,6 +9,7 @@ import java.util.Properties;
 import org.fogbowcloud.manager.core.ManagerFacade;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
+import org.fogbowcloud.manager.core.ssh.SSHTunnel;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.HeaderUtils;
@@ -62,8 +63,11 @@ public class TestOCCIApplication {
 		Mockito.when(identityPlugin.getUser(OCCITestHelper.ACCESS_TOKEN)).thenReturn(
 				OCCITestHelper.USER_MOCK);
 
+		SSHTunnel sshTunnel = Mockito.mock(SSHTunnel.class);
+		
 		managerFacade.setIdentityPlugin(identityPlugin);
 		managerFacade.setComputePlugin(computePlugin);
+		managerFacade.setSSHTunnel(sshTunnel);
 	}
 
 	@Test
