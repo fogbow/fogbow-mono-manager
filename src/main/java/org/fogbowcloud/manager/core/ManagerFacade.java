@@ -349,4 +349,8 @@ public class ManagerFacade {
 	public void setRequests(RequestRepository requests) {
 		this.requests = requests;
 	}
+	
+	public String getToken(String username, String password) {
+		return identityPlugin.getToken(username, password);
+	}
 }

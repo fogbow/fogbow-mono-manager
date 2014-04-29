@@ -31,6 +31,8 @@ public class Main {
 		jc.addCommand("request", request);
 		InstanceCommand instance = new InstanceCommand();
 		jc.addCommand("instance", instance);
+		TokenCommand token = new TokenCommand();
+		jc.addCommand("token", token);		
 		
 		jc.setProgramName("fogbow-cli");
 		jc.parse(args);
@@ -67,9 +69,9 @@ public class Main {
 					return;
 				}
 				Set<String> headers = new HashSet<String>();
-				headers.add("Category: fogbow-request; scheme=\"http://schemas.fogbowcloud.org/template/request#\"; class=\"mixin\"");
-				headers.add("X-OCCI-Attribute: fogbow.request.maxinstance = " + request.instanceCount);
-				headers.add("X-OCCI-Attribute: fogbow.request.type = one-time");
+				headers.add("Category: fogbow-request; scheme=\"http://schemas.fogbowcloud.org/request#\"; class=\"kind\"");
+				headers.add("X-OCCI-Attribute: org.fogbowcloud.request.instance-count = " + request.instanceCount);
+				headers.add("X-OCCI-Attribute: org.fogbowcloud.request.type = one-time");
 				headers.add("Category: " + request.flavor + "; scheme=\"http://schemas.fogbowcloud.org/template/resource#\"; class=\"mixin\"");
 				headers.add("Category: " + request.image + "; scheme=\"http://schemas.fogbowcloud.org/template/os#\"; class=\"mixin\"");
 				doRequest("post", url + "/request", request.authToken, headers);
@@ -91,6 +93,13 @@ public class Main {
 				doRequest("delete", url + "/compute/" + instance.instanceId, 
 						instance.authToken);
 			}
+		} else if (parsedCommand.equals("token")) {
+			String url = token.url;
+			Set<String> headers = new HashSet<String>();
+			headers.add("password: " + token.password);
+			headers.add("username: " + token.username);	
+			
+			doRequest("get", url + "/token", null, headers);
 		}
 	}
 
@@ -115,7 +124,7 @@ public class Main {
 			request.addHeader(OCCIHeaders.X_AUTH_TOKEN, authToken);
 		}
 		for (String header : additionalHeaders) {
-			String[] splitHeader = header.split(":");
+			String[] splitHeader = header.split(": ");
 			request.addHeader(splitHeader[0].trim(), splitHeader[1].trim());
 		}
 		
@@ -177,4 +186,15 @@ public class Main {
 		String instanceId = null;
 	}
 	
+	@Parameters(separators = "=", commandDescription = "Token operations")
+	private static class TokenCommand extends Command {
+		@Parameter(names = "--get", description = "Get token")
+		Boolean get = false;
+		
+		@Parameter(names = "--password", description = "Password")
+		String password = null;
+		
+		@Parameter(names = "--username", description = "Username")
+		String username = null;		
+	}	
 }

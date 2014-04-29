@@ -30,7 +30,12 @@ public class OCCIApplication extends Application {
 		router.attach("/compute/", ComputeServerResource.class);
 		router.attach("/compute/{instanceId}", ComputeServerResource.class);
 		router.attach("/members", MemberServerResource.class);
+		router.attach("/token", TokenServerResource.class);
 		return router;
+	}
+	
+	public String getToken(String username, String password) {
+		return managerFacade.getToken(username, password);
 	}
 	
 	public List<FederationMember> getFederationMembers() {		

@@ -28,7 +28,7 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 	public static final String AUTH_KEYSTONE = "auth";
 	public static final String TOKEN_KEYSTONE = "token";
 	public static final String ID_KEYSTONE = "id";
-	public static final String ACCESS_KEYSTONE = "Access";
+	public static final String ACCESS_KEYSTONE = "access";
 	public static final String USER_KEYSTONE = "user";
 	public static final String NAME_KEYSTONE = "name";
 
@@ -47,12 +47,10 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 	public String getUser(String authToken) {
 		try {
 			HttpClient httpCLient = new DefaultHttpClient();
-			HttpGet httpGet = new HttpGet(this.v2Endpoint);
+			HttpGet httpGet = new HttpGet(this.v3Endpoint);
 			httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, authToken);
 			httpGet.addHeader(OCCIHeaders.X_SUBJEC_TOKEN, authToken);
 			HttpResponse response = httpCLient.execute(httpGet);
-			String responseStr = EntityUtils.toString(response.getEntity(),
-					String.valueOf(Charsets.UTF_8));
 
 			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
 				throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
@@ -60,6 +58,9 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_FOUND) {
 				throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
 			}
+			
+			String responseStr = EntityUtils.toString(response.getEntity(),
+					String.valueOf(Charsets.UTF_8));
 			return getUserNameUserFromJson(responseStr);
 		} catch (Exception e) {
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
@@ -70,7 +71,7 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 	public String getToken(String username, String password) {
 		try {
 			HttpClient httpClient = new DefaultHttpClient();
-			HttpPost httpPost = new HttpPost(this.v3Endpoint);
+			HttpPost httpPost = new HttpPost(this.v2Endpoint);
 
 			httpPost.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.JSON_CONTENT_TYPE);
 			httpPost.addHeader(OCCIHeaders.ACCEPT, OCCIHeaders.JSON_ACCEPT);
@@ -93,6 +94,7 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 
 			return getTokenFromJson(responseStr);
 		} catch (Exception e) {
+			e.printStackTrace();
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}
 	}
@@ -113,6 +115,7 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 			return root.getJSONObject(ACCESS_KEYSTONE).getJSONObject(TOKEN_KEYSTONE)
 					.getString(ID_KEYSTONE);
 		} catch (JSONException e) {
+			e.printStackTrace();
 			return null;
 		}
 	}
