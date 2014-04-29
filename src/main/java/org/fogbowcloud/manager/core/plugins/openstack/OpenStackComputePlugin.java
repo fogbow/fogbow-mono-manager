@@ -19,10 +19,10 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
-import org.fogbowcloud.manager.core.SSHTunnel;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
+import org.fogbowcloud.manager.core.ssh.DefaultSSHTunnel;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.OCCIException;
@@ -98,7 +98,7 @@ public class OpenStackComputePlugin implements ComputePlugin {
 			openStackCategories.add(fogTermToOpensStackCategory.get(category.getTerm()));
 		}
 		
-		xOCCIAtt.put("org.openstack.compute.user_data", xOCCIAtt.remove(SSHTunnel.USER_DATA_ATT));
+		xOCCIAtt.put("org.openstack.compute.user_data", xOCCIAtt.remove(DefaultSSHTunnel.USER_DATA_ATT));
 
 		HttpClient httpClient = new DefaultHttpClient();
 		HttpPost httpPost;

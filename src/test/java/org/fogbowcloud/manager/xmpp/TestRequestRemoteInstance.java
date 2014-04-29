@@ -66,6 +66,7 @@ public class TestRequestRemoteInstance {
 		return request;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testRequestRemoteRequestCloundNotSupport() throws Exception {
 		managerTestHelper.initializeXMPPManagerComponent(false);
@@ -82,6 +83,7 @@ public class TestRequestRemoteInstance {
 		Assert.assertNull(remoteRequest);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testRequestRemoteRequestNotFound() throws Exception {
 		managerTestHelper.initializeXMPPManagerComponent(false);
@@ -96,6 +98,7 @@ public class TestRequestRemoteInstance {
 		Assert.assertNull(remoteRequest);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test(expected = OCCIException.class)
 	public void testRequestRemoteRequestUnauthorized() throws Exception {
 		managerTestHelper.initializeXMPPManagerComponent(false);

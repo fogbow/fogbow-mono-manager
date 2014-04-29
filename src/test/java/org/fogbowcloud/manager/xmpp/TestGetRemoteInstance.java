@@ -76,9 +76,10 @@ public class TestGetRemoteInstance {
 
 		Request request = new Request("anyvalue", "anyvalue", USER_DEFAULT, null, null);
 		request.setInstanceId(INSTANCE_DEFAULT);
+		request.setMemberId(MANAGER_COMPONENT_URL);
 		
-		Instance remoteInstance = ManagerPacketHelper.getRemoteInstance(request,
-				MANAGER_COMPONENT_URL, managerTestHelper.createPacketSender());
+		Instance remoteInstance = ManagerPacketHelper.getRemoteInstance(request,  
+				managerTestHelper.createPacketSender());
 
 		Assert.assertEquals(instance.getId(), remoteInstance.getId());
 		Assert.assertEquals(instance.getAttributes(), remoteInstance.getAttributes());
@@ -92,6 +93,7 @@ public class TestGetRemoteInstance {
 	public void testGetRemoteInstaceNotFound() throws Exception {
 		Request request = new Request("anyvalue", WRONG_TOKEN, USER_DEFAULT, null, null);
 		request.setInstanceId(INSTANCE_DEFAULT);
+		request.setMemberId(MANAGER_COMPONENT_URL);
 
 		managerTestHelper.initializeXMPPManagerComponent(false);
 
@@ -99,7 +101,7 @@ public class TestGetRemoteInstance {
 				.when(this.managerTestHelper.getComputePlugin())
 				.getInstance(Mockito.anyString(), Mockito.anyString());
 
-		Assert.assertNull(ManagerPacketHelper.getRemoteInstance(request, MANAGER_COMPONENT_URL,
+		Assert.assertNull(ManagerPacketHelper.getRemoteInstance(request,
 				managerTestHelper.createPacketSender()));
 	}
 
@@ -107,6 +109,7 @@ public class TestGetRemoteInstance {
 	public void testGetRemoteInstanceUnauthorized() throws Exception {
 		Request request = new Request("anyvalue", WRONG_TOKEN, USER_DEFAULT, null, null);
 		request.setInstanceId(INSTANCE_OTHER_USER);
+		request.setMemberId(MANAGER_COMPONENT_URL);
 
 		managerTestHelper.initializeXMPPManagerComponent(false);
 
@@ -114,7 +117,7 @@ public class TestGetRemoteInstance {
 				.when(this.managerTestHelper.getComputePlugin())
 				.getInstance(Mockito.eq(TOKEN), Mockito.eq(INSTANCE_OTHER_USER));
 
-		ManagerPacketHelper.getRemoteInstance(request, MANAGER_COMPONENT_URL,
+		ManagerPacketHelper.getRemoteInstance(request, 
 				managerTestHelper.createPacketSender());
 	}	
 }

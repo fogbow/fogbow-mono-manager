@@ -137,10 +137,9 @@ public class ManagerPacketHelper {
 				.elementText("id");
 	}
 	
-	public static Instance getRemoteInstance(Request request,
-			String memberAddress, PacketSender packetSender) {
+	public static Instance getRemoteInstance(Request request, PacketSender packetSender) {
 		IQ iq = new IQ();
-		iq.setTo(memberAddress);
+		iq.setTo(request.getMemberId());
 		iq.setType(Type.get);
 		Element queryEl = iq.getElement().addElement("query",
 				ManagerXmppComponent.GETINSTANCE_NAMESPACE);
@@ -164,10 +163,10 @@ public class ManagerPacketHelper {
 				.element("instance"));
 	}
 
-	public static void deleteRemoteInstace(Request request,
-			String memberAddress, PacketSender packetSender) {
+	public static void deleteRemoteInstace(Request request, 
+			PacketSender packetSender) {
 		IQ iq = new IQ();
-		iq.setTo(memberAddress);
+		iq.setTo(request.getMemberId());
 		iq.setType(Type.set);
 		Element queryEl = iq.getElement().addElement("query",
 				ManagerXmppComponent.REMOVEINSTANCE_NAMESPACE);

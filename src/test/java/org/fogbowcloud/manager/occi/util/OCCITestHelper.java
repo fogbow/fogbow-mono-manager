@@ -16,10 +16,12 @@ import org.fogbowcloud.manager.core.ManagerFacade;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
+import org.fogbowcloud.manager.core.ssh.SSHTunnel;
 import org.fogbowcloud.manager.occi.OCCIApplication;
 import org.fogbowcloud.manager.occi.core.HeaderUtils;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.fogbowcloud.manager.occi.request.RequestRepository;
+import org.mockito.Mockito;
 import org.restlet.Component;
 import org.restlet.data.Protocol;
 
@@ -44,6 +46,7 @@ public class OCCITestHelper {
 		ManagerFacade facade = new ManagerFacade(new Properties());
 		facade.setComputePlugin(computePlugin);
 		facade.setIdentityPlugin(identityPlugin);
+		facade.setSSHTunnel(Mockito.mock(SSHTunnel.class));
 		
 		component.getDefaultHost().attach(new OCCIApplication(facade));
 		component.start();
@@ -57,6 +60,7 @@ public class OCCITestHelper {
 		ManagerFacade facade = new ManagerFacade(new Properties());
 		facade.setComputePlugin(computePlugin);
 		facade.setIdentityPlugin(identityPlugin);
+		facade.setSSHTunnel(Mockito.mock(SSHTunnel.class));
 
 		requests = new RequestRepository();
 		facade.setRequests(requests);

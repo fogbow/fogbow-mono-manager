@@ -1,5 +1,7 @@
 package org.fogbowcloud.manager.occi.request;
 
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -29,6 +31,13 @@ public class Request {
 	public List<Category> getCategories() {
 		return categories;
 	}
+	
+	public void addCategory(Category category) {
+		if (categories == null) {
+			categories = new LinkedList<Category>();
+		}
+		categories.add(category);
+	}
 
 	public String getUser() {
 		return user;
@@ -55,18 +64,26 @@ public class Request {
 	}
 
 	public String getAttValue(String attributeName){
+		if (xOCCIAtt == null) {
+			return null;
+		}
 		return xOCCIAtt.get(attributeName);
+	}
+	
+	public void putAttValue(String attributeName, String attributeValue){
+		if (xOCCIAtt == null) {
+			xOCCIAtt = new HashMap<String, String>();
+		}
+		xOCCIAtt.put(attributeName, attributeValue);
 	}
 	
 	public String toHttpMessageFormat() {
 		return "RequestId=" + id + "; State=" + state.getValue() + "; InstanceId= " + instanceId;
 	}
 
-
 	public String getAuthToken() {
 		return this.authToken;
 	}
-
 
 	public Map<String, String> getxOCCIAtt() {
 		return this.xOCCIAtt;

@@ -1,6 +1,7 @@
 package org.fogbowcloud.manager.occi.instance;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -121,6 +122,13 @@ public class Instance {
 
 	public Map<String, String> getAttributes() {
 		return attributes;
+	}
+	
+	public void addAttribute(String key, String value) {
+		if (attributes == null) {
+			attributes = new HashMap<String, String>();
+		}
+		attributes.put(key, value);
 	}
 
 	public String getId() {

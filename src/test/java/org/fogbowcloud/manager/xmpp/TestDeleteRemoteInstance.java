@@ -38,16 +38,17 @@ public class TestDeleteRemoteInstance {
 	public void testDeleteRemoteInstance() throws Exception {
 		Request request = new Request("anyvalue", "anyvalue", USER_DEFAULT, null, null);
 		request.setInstanceId(INSTANCE_DEFAULT);
+		request.setMemberId(MANAGER_COMPONENT_URL);
 
 		managerTestHelper.initializeXMPPManagerComponent(false);
-		ManagerPacketHelper.deleteRemoteInstace(request, MANAGER_COMPONENT_URL,
-				managerTestHelper.createPacketSender());
+		ManagerPacketHelper.deleteRemoteInstace(request, managerTestHelper.createPacketSender());
 	}
 
 	@Test(expected = OCCIException.class)
 	public void testDeleteRemoteInstaceNotFound() throws Exception {
 		Request request = new Request("anyvalue", WRONG_TOKEN, USER_DEFAULT, null, null);
 		request.setInstanceId(INSTANCE_DEFAULT);
+		request.setMemberId(MANAGER_COMPONENT_URL);
 
 		managerTestHelper.initializeXMPPManagerComponent(false);
 
@@ -55,14 +56,14 @@ public class TestDeleteRemoteInstance {
 				.when(this.managerTestHelper.getComputePlugin())
 				.removeInstance(Mockito.anyString(), Mockito.anyString());
 
-		ManagerPacketHelper.deleteRemoteInstace(request, MANAGER_COMPONENT_URL,
-				managerTestHelper.createPacketSender());
+		ManagerPacketHelper.deleteRemoteInstace(request, managerTestHelper.createPacketSender());
 	}
 
 	@Test(expected = OCCIException.class)
 	public void testDeleteRemoteInstanceUnauthorized() throws Exception {
 		Request request = new Request("anyvalue", WRONG_TOKEN, USER_DEFAULT, null, null);
 		request.setInstanceId(INSTANCE_OTHER_USER);
+		request.setMemberId(MANAGER_COMPONENT_URL);
 
 		managerTestHelper.initializeXMPPManagerComponent(false);
 
@@ -70,7 +71,6 @@ public class TestDeleteRemoteInstance {
 				.when(this.managerTestHelper.getComputePlugin())
 				.removeInstance(Mockito.eq(TOKEN), Mockito.eq(INSTANCE_OTHER_USER));
 
-		ManagerPacketHelper.deleteRemoteInstace(request, MANAGER_COMPONENT_URL,
-				managerTestHelper.createPacketSender());
+		ManagerPacketHelper.deleteRemoteInstace(request, managerTestHelper.createPacketSender());
 	}
 }

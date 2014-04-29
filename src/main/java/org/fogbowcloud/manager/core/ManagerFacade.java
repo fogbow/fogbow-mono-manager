@@ -15,6 +15,8 @@ import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
+import org.fogbowcloud.manager.core.ssh.DefaultSSHTunnel;
+import org.fogbowcloud.manager.core.ssh.SSHTunnel;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.HeaderUtils;
@@ -44,12 +46,18 @@ public class ManagerFacade {
 	private IdentityPlugin identityPlugin;
 	private Properties properties;
 	private PacketSender packetSender;
+	
+	private SSHTunnel sshTunnel = new DefaultSSHTunnel();
 
 	public ManagerFacade(Properties properties) {
 		this.properties = properties;
 		if (properties == null) {
 			throw new IllegalArgumentException();
 		}
+	}
+	
+	public void setSSHTunnel(SSHTunnel sshTunnel) {
+		this.sshTunnel = sshTunnel;
 	}
 	
 	public void setComputePlugin(ComputePlugin computePlugin) {
@@ -115,25 +123,35 @@ public class ManagerFacade {
 			if (instanceId == null) {
 				continue;
 			}
-			if (isLocal(request)) {
-				instances.add(this.computePlugin.getInstance(authToken, instanceId));
-			} else {
-				instances.add(getRemoteInstance(request)); 
-			}			
+			instances.add(getInstance(authToken, instanceId, request));
 		}
 		return instances;
 	}
 
 	public Instance getInstance(String authToken, String instanceId) {
 		Request request = getRequestFromInstance(authToken, instanceId);
+		return getInstance(authToken, instanceId, request);
+	}
+
+	private Instance getInstance(String authToken, String instanceId,
+			Request request) {
+		Instance instance = null;
 		if (isLocal(request)) {
-			return this.computePlugin.getInstance(authToken, instanceId);
-		} 
-		return getRemoteInstance(request);
+			instance = this.computePlugin.getInstance(authToken, instanceId);
+		} else {
+			instance = getRemoteInstance(request);
+		}
+		String sshAddress = request.getAttValue(DefaultSSHTunnel.SSH_ADDRESS_ATT);
+		if (sshAddress != null) {
+			instance.addAttribute(DefaultSSHTunnel.SSH_ADDRESS_ATT, 
+					sshAddress);
+		}
+		
+		return instance;
 	}
 
 	private Instance getRemoteInstance(Request request) {
-		return null;
+		return ManagerPacketHelper.getRemoteInstance(request, packetSender);
 	}
 
 	public void removeInstances(String authToken) {
@@ -142,16 +160,18 @@ public class ManagerFacade {
 			if (instanceId == null) {
 				continue;
 			}
-			if (isLocal(request)) {
-				this.computePlugin.removeInstance(authToken, instanceId);
-			} else {
-				removeRemoteInstance(request); 
-			}			
+			removeInstance(authToken, instanceId, request);
 		}
 	}
 
 	public void removeInstance(String authToken, String instanceId) {
 		Request request = getRequestFromInstance(authToken, instanceId);
+		removeInstance(authToken, instanceId, request);
+	}
+
+	private void removeInstance(String authToken, String instanceId,
+			Request request) {
+		sshTunnel.release(request);
 		if (isLocal(request)) {
 			this.computePlugin.removeInstance(authToken, instanceId);
 		} else {
@@ -160,7 +180,7 @@ public class ManagerFacade {
 	}
 
 	private void removeRemoteInstance(Request request) {
-		// TODO Auto-generated method stub
+		ManagerPacketHelper.deleteRemoteInstace(request, packetSender);
 	}
 
 	public Request getRequestFromInstance(String authToken, String instanceId) {
@@ -187,7 +207,7 @@ public class ManagerFacade {
 		return requests.get(requestId);
 	}
 
-	public String createRequestForRemoteMember(List<Category> categories, Map<String, String> xOCCIAtt) {
+	public String submitRequestForRemoteMember(List<Category> categories, Map<String, String> xOCCIAtt) {
 		String token = getFederationUserToken();
 		try {
 			return computePlugin.requestInstance(token, categories, xOCCIAtt);
@@ -232,16 +252,16 @@ public class ManagerFacade {
 				.getValue()));
 		LOGGER.info("Request " + instanceCount + " instances");
 
-		try {
-			SSHTunnel.create(properties, categories, xOCCIAtt);
-		} catch (Exception e) {
-			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.NOT_FOUND);
-		}
 		
 		List<Request> currentRequests = new ArrayList<Request>();
 		for (int i = 0; i < instanceCount; i++) {
 			String requestId = String.valueOf(UUID.randomUUID());
 			Request request = new Request(requestId, authToken, user, categories, xOCCIAtt);
+			try {
+				sshTunnel.create(properties, request);
+			} catch (Exception e) {
+				request.setState(RequestState.FAILED);
+			}
 			currentRequests.add(request);
 			requests.addRequest(user, request);
 		}
@@ -255,7 +275,8 @@ public class ManagerFacade {
 	private boolean submitRemoteRequest(Request request) {
 		FederationMember member = memberPicker.pick(getMembers());
 		String memberAddress = member.getResourcesInfo().getId();
-
+		request.setMemberId(memberAddress);
+		
 		String remoteInstanceId = ManagerPacketHelper.remoteRequest(request, memberAddress,
 				packetSender);
 		if (remoteInstanceId == null) {
@@ -268,15 +289,11 @@ public class ManagerFacade {
 	}
 
 	private boolean submitLocalRequest(Request request) {
-		Map<String, String> xOCCIAtt = request.getxOCCIAtt();
-		for (String keyAttributes : RequestAttribute.getValues()) {
-			xOCCIAtt.remove(keyAttributes);
-		}
-
+		request.setMemberId(null);
 		String instanceLocation = null;
 		try {
 			instanceLocation = computePlugin.requestInstance(request.getAuthToken(),
-					request.getCategories(), xOCCIAtt);
+					request.getCategories(), request.getxOCCIAtt());
 		} catch (OCCIException e) {
 			if (e.getStatus().equals(ErrorType.BAD_REQUEST)
 					&& e.getMessage().contains(ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES)) {
@@ -313,6 +330,10 @@ public class ManagerFacade {
 	private void checkAndSubmitOpenRequests() {
 		boolean allFulfilled = true;
 		for (Request request : requests.get(RequestState.OPEN)) {
+			Map<String, String> xOCCIAtt = request.getxOCCIAtt();
+			for (String keyAttributes : RequestAttribute.getValues()) {
+				xOCCIAtt.remove(keyAttributes);
+			}
 			allFulfilled &= submitLocalRequest(request) || submitRemoteRequest(request);
 		}
 		if (allFulfilled) {
