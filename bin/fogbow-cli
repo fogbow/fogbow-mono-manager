@@ -1,3 +1,4 @@
 #!/bin/bash
-
-java -cp .:./lib/* org.fogbowcloud.manager.cli.Main $@
+DIRNAME=`dirname $0`
+cd $DIRNAME/..
+java -cp target/manager-0.0.1-SNAPSHOT.jar:target/lib/* org.fogbowcloud.manager.cli.Main $@
