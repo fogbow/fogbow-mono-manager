@@ -15,13 +15,18 @@ public class ResourcesInfo {
 	
 	public ResourcesInfo(String id, String cpuIdle, String cpuInUse,
 			String memIdle, String memInUse, List<Flavor> flavours, Certificate cert) {
-		this.setCert(cert);
+		setCert(cert);
 		setId(id);
 		setCpuIdle(cpuIdle);
 		setCpuInUse(cpuInUse);
 		setMemIdle(memIdle);
 		setMemInUse(memInUse);
-		this.setFlavours(flavours);
+		setFlavours(flavours);
+	}
+	
+	public ResourcesInfo(String cpuIdle, String cpuInUse,
+			String memIdle, String memInUse, List<Flavor> flavours, Certificate cert) {
+		this(null, cpuIdle, cpuInUse, memIdle, memInUse, flavours, cert);
 	}
 
 	public String getId() {
@@ -29,7 +34,7 @@ public class ResourcesInfo {
 	}
 
 	public void setId(String id) {
-		if (id == null || id.isEmpty()) {
+		if (id.isEmpty()) {
 			throw new IllegalArgumentException("ResourceInfo id is invalid.");
 		}
 		this.id = id;
