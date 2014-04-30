@@ -16,7 +16,8 @@ identity_openstack_url=http://localhost:5000
 
 federation_user_name=fogbow
 federation_user_password=fogbow
-federation_user_tenant_id=$tenantId
+federation_user_tenant_id=d39e3c9bba294e3d9c47b8df9e29d81e
+federation_user_tenant_name=demo
 
 scheduler_period=30000
 
