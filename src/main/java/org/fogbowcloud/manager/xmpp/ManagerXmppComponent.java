@@ -5,6 +5,7 @@ import java.security.cert.CertificateException;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.ManagerFacade;
 import org.jamppa.component.XMPPComponent;
 import org.xmpp.packet.Packet;
@@ -18,6 +19,7 @@ public class ManagerXmppComponent extends XMPPComponent {
 	public static final String REMOVEINSTANCE_NAMESPACE = "http://fogbowcloud.org/manager/removeinstance";
 
 	private static long PERIOD = 30000;
+	private static Logger LOGGER = Logger.getLogger(ManagerXmppComponent.class);
 	private ManagerFacade managerFacade;
 	private final Timer timer = new Timer();
 	private String rendezvousAddress;
@@ -57,15 +59,13 @@ public class ManagerXmppComponent extends XMPPComponent {
 			public void run() {
 				try {
 					iAmAlive();
-				} catch (CertificateException e) {
-					e.printStackTrace();
-				} catch (IOException e) {
-					e.printStackTrace();
+				} catch (Exception e) {
+					LOGGER.error(e);
 				}
 				try {
 					whoIsalive();
-				} catch (CertificateException e) {
-					e.printStackTrace();
+				} catch (Exception e) {
+					LOGGER.error(e);
 				}
 			}
 		}, 0, PERIOD);
