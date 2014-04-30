@@ -34,9 +34,6 @@ public class ResourcesInfo {
 	}
 
 	public void setId(String id) {
-		if (id.isEmpty()) {
-			throw new IllegalArgumentException("ResourceInfo id is invalid.");
-		}
 		this.id = id;
 	}
 
