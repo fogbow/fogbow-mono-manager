@@ -6,11 +6,17 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.occi.instance.ComputeServerResource;
+
 public class RequestRepository {
+
+	private static final Logger LOGGER = Logger.getLogger(RequestRepository.class);
 
 	private Map<String, List<Request>> requests = new HashMap<String, List<Request>>();
 	
 	public void addRequest(String user, Request request) {
+		LOGGER.debug("Adding request " + request.getId() + " to user " + user);
 		List<Request> userRequests = requests.get(user);
 		if (userRequests == null) {
 			userRequests = new LinkedList<Request>();
@@ -35,23 +41,28 @@ public class RequestRepository {
 		for (List<Request> userRequests : requests.values()) {
 			for (Request request : userRequests) {
 				if (request.getId().equals(requestId)) {
+					LOGGER.debug("Getting request id " + request);
 					return request;
 				}
 			}
 		}
+		LOGGER.debug("Request id " + requestId + " was not found.");
 		return null;
 	}
 
 	public Request get(String user, String requestId) {
 		List<Request> userRequests = requests.get(user);
 		if (userRequests == null) {
+			LOGGER.debug("User " + user + " does not have requests.");
 			return null;
 		}
 		for (Request request : userRequests) {
 			if (request.getId().equals(requestId)) {
+				LOGGER.debug("Getting request " + request + " owner by user " + user);
 				return request;
 			}
 		}
+		LOGGER.debug("Request " + requestId + " owner by user " + user + " was not found.");
 		return null;
 	}
 	

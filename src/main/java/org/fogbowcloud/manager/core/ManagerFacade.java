@@ -112,6 +112,8 @@ public class ManagerFacade {
 	private void checkRequestId(String authToken, String requestId) {
 		String user = getUser(authToken);
 		if (requests.get(user, requestId) == null) {
+			LOGGER.warn("User " + user + " does not have requesId " + requestId);
+			LOGGER.warn("Throwing OCCIException at checkRequesId: " + ResponseConstants.NOT_FOUND);
 			throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
 		}
 	}
@@ -182,15 +184,18 @@ public class ManagerFacade {
 
 	public Request getRequestFromInstance(String authToken, String instanceId) {
 		String user = getUser(authToken);
+		LOGGER.debug("Getting instance " + instanceId + " of user " + user);
 		List<Request> userRequests = requests.getAll();
 		for (Request request : userRequests) {
 			if (instanceId.equals(request.getInstanceId())) {
 				if (!request.getUser().equals(user)) {
+					LOGGER.warn("Throwing OCCIException at getRequestFromInstance: " + ResponseConstants.UNAUTHORIZED);
 					throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 				}
 				return request;
 			}
 		}
+		LOGGER.warn("Throwing OCCIException at getRequestFromInstance: " + ResponseConstants.NOT_FOUND);
 		throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
 	}
 

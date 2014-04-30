@@ -2,9 +2,11 @@ package org.fogbowcloud.manager.occi.instance;
 
 import java.util.List;
 
+import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.occi.OCCIApplication;
 import org.fogbowcloud.manager.occi.core.HeaderUtils;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
+import org.fogbowcloud.manager.occi.request.RequestServerResource;
 import org.restlet.engine.adapter.HttpRequest;
 import org.restlet.resource.Delete;
 import org.restlet.resource.Get;
@@ -12,6 +14,8 @@ import org.restlet.resource.Post;
 import org.restlet.resource.ServerResource;
 
 public class ComputeServerResource extends ServerResource {
+
+	private static final Logger LOGGER = Logger.getLogger(ComputeServerResource.class);
 
 	@Get
 	public String fetch() {
@@ -22,8 +26,12 @@ public class ComputeServerResource extends ServerResource {
 		String instanceId = (String) getRequestAttributes().get("instanceId");
 		
 		if (instanceId == null) {
+			LOGGER.info("Getting all instances of token :" + authToken);
 			return generateResponse(application.getInstances(authToken));
-		}		
+		}	
+		
+		LOGGER.info("Getting instance " + instanceId);
+		
 		return application.getInstance(authToken, instanceId).toOCCIMassageFormatDetails();			
 	}
 
@@ -36,9 +44,13 @@ public class ComputeServerResource extends ServerResource {
 		String instanceId = (String) getRequestAttributes().get("instanceId");
 		
 		if (instanceId == null) {
+			LOGGER.info("Removing all instances of token :" + authToken);
 			application.removeInstances(authToken);
 			return ResponseConstants.OK;
 		}
+		
+		LOGGER.info("Removing instance " + instanceId);
+		
 		application.removeInstance(authToken, instanceId);
 		return ResponseConstants.OK;
 	}

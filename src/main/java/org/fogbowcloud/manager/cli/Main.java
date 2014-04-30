@@ -7,6 +7,7 @@ import java.util.Set;
 
 import org.apache.http.HttpException;
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
@@ -139,7 +140,11 @@ public class Main {
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(request);
 		
-		System.out.println(EntityUtils.toString(response.getEntity()));
+		if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK){
+			System.out.println(EntityUtils.toString(response.getEntity()));
+		} else {
+			System.out.println(response.getStatusLine().toString());
+		}
 	}
 	
 	private static class Command {
