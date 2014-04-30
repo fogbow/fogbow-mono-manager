@@ -125,6 +125,8 @@ public class OpenStackComputePlugin implements ComputePlugin {
 				throw new OCCIException(ErrorType.NOT_FOUND, EntityUtils.toString(
 						response.getEntity(), String.valueOf(Charsets.UTF_8)));
 			}
+			
+//			String instanceLocation = response.getFirstHeader("Location").getValue();
 			return EntityUtils.toString(response.getEntity(), String.valueOf(Charsets.UTF_8));
 		} catch (URISyntaxException e) {
 			LOGGER.error(e);

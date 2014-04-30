@@ -261,6 +261,8 @@ public class ComputeApplication extends Application {
 
 			String computeEndpoint = req.getHostRef() + req.getHttpCall().getRequestUri();
 			String instanceId = application.newInstance(authToken, categories, xOCCIAtt);
+			
+			
 			return HeaderUtils.X_OCCI_LOCATION + computeEndpoint + "/" + instanceId;
 		}
 
