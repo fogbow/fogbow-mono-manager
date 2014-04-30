@@ -6,7 +6,6 @@ import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.occi.OCCIApplication;
 import org.fogbowcloud.manager.occi.core.HeaderUtils;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
-import org.fogbowcloud.manager.occi.request.RequestServerResource;
 import org.restlet.engine.adapter.HttpRequest;
 import org.restlet.resource.Delete;
 import org.restlet.resource.Get;
@@ -63,7 +62,7 @@ public class ComputeServerResource extends ServerResource {
 	protected static String generateResponse(List<Instance> instances) {
 		String response = "";
 		for (Instance intance : instances) {
-			response += HeaderUtils.X_OCCI_LOCATION + intance.toOCCIMassageFormatLocation() + "\n";
+			response += intance.toOCCIMassageFormatLocation() + "\n";
 		}
 		if (response.equals("")) {
 			response = "Empty";

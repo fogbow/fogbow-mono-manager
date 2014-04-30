@@ -19,7 +19,6 @@ import org.fogbowcloud.manager.core.ssh.DefaultSSHTunnel;
 import org.fogbowcloud.manager.core.ssh.SSHTunnel;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
-import org.fogbowcloud.manager.occi.core.HeaderUtils;
 import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.instance.Instance;
@@ -119,13 +118,19 @@ public class ManagerFacade {
 	}
 
 	public List<Instance> getInstances(String authToken) {
+		LOGGER.debug("Getting instances of token " + authToken);
 		List<Instance> instances = new ArrayList<Instance>();
 		for (Request request : requests.getByUser(getUser(authToken))) {
 			String instanceId = request.getInstanceId();
+			LOGGER.debug("InstanceId " + instanceId);
 			if (instanceId == null) {
 				continue;
 			}
-			instances.add(getInstance(authToken, instanceId, request));
+			try {
+				instances.add(getInstance(authToken, instanceId, request));
+			} catch (Exception e) {
+				LOGGER.warn("Exception thown while getting instance " + instanceId + ".", e);
+			}
 		}
 		return instances;
 	}
@@ -176,6 +181,11 @@ public class ManagerFacade {
 		} else {
 			removeRemoteInstance(request);
 		}
+		request.setInstanceId(null);
+		request.setMemberId(null);
+		if (request.getAttValue(RequestAttribute.TYPE.getValue()).equals("persistent")) {
+			request.setState(RequestState.OPEN);
+		}
 	}
 
 	private void removeRemoteInstance(Request request) {
@@ -189,13 +199,15 @@ public class ManagerFacade {
 		for (Request request : userRequests) {
 			if (instanceId.equals(request.getInstanceId())) {
 				if (!request.getUser().equals(user)) {
-					LOGGER.warn("Throwing OCCIException at getRequestFromInstance: " + ResponseConstants.UNAUTHORIZED);
+					LOGGER.warn("Throwing OCCIException at getRequestFromInstance: "
+							+ ResponseConstants.UNAUTHORIZED);
 					throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 				}
 				return request;
 			}
 		}
-		LOGGER.warn("Throwing OCCIException at getRequestFromInstance: " + ResponseConstants.NOT_FOUND);
+		LOGGER.warn("Throwing OCCIException at getRequestFromInstance: "
+				+ ResponseConstants.NOT_FOUND);
 		throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
 	}
 
@@ -295,12 +307,12 @@ public class ManagerFacade {
 
 	private boolean submitLocalRequest(Request request) {
 		request.setMemberId(null);
-		String instanceLocation = null;
-		
+		String instanceId = null;
+
 		LOGGER.info("Submiting local request " + request);
-		
+
 		try {
-			instanceLocation = computePlugin.requestInstance(request.getAuthToken(),
+			instanceId = computePlugin.requestInstance(request.getAuthToken(),
 					request.getCategories(), request.getxOCCIAtt());
 		} catch (OCCIException e) {
 			if (e.getStatus().equals(ErrorType.BAD_REQUEST)
@@ -315,8 +327,7 @@ public class ManagerFacade {
 			}
 		}
 
-		instanceLocation = instanceLocation.replace(HeaderUtils.X_OCCI_LOCATION, "").trim();
-		request.setInstanceId(instanceLocation);
+		request.setInstanceId(instanceId);
 		request.setState(RequestState.FULFILLED);
 		LOGGER.debug("Fulfilled Request: " + request);
 		return true;
@@ -327,7 +338,7 @@ public class ManagerFacade {
 		String schedulerPeriodStr = properties.getProperty("scheduler_period");
 		long schedulerPeriod = schedulerPeriodStr == null ? DEFAULT_SCHEDULER_PERIOD : Long
 				.valueOf(schedulerPeriodStr);
-		
+
 		timer = new Timer();
 		timer.scheduleAtFixedRate(new TimerTask() {
 			@Override

@@ -38,7 +38,7 @@ public class OpenStackComputePlugin implements ComputePlugin {
 	private static final String INSTANCE_SCHEME = "http://schemas.openstack.org/compute/instance#";
 	private static final String SCHEME_COMPUTE = "http://schemas.ogf.org/occi/infrastructure#";
 	public static final String OS_SCHEME = "http://schemas.openstack.org/template/os#";
-	
+
 	private static final String ABSOLUTE = "absolute";
 	private static final String LIMITS = "limits";
 	private static final Logger LOGGER = Logger.getLogger(OpenStackComputePlugin.class);
@@ -70,11 +70,11 @@ public class OpenStackComputePlugin implements ComputePlugin {
 				createFlavorCategory("compute_openstack_flavor_medium", properties));
 		fogTermToOpensStackCategory.put(RequestConstants.LARGE_TERM,
 				createFlavorCategory("compute_openstack_flavor_large", properties));
-		fogTermToOpensStackCategory.put(RequestConstants.LINUX_X86_TERM, new Category(
-				properties.getProperty("compute_openstack_default_cirros_image"), 
-				OS_SCHEME, OCCIHeaders.MIXIN_CLASS));
-		fogTermToOpensStackCategory.put(RequestConstants.USER_DATA_TERM, 
-				new Category("user_data", INSTANCE_SCHEME, OCCIHeaders.MIXIN_CLASS));
+		fogTermToOpensStackCategory.put(RequestConstants.LINUX_X86_TERM,
+				new Category(properties.getProperty("compute_openstack_default_cirros_image"),
+						OS_SCHEME, OCCIHeaders.MIXIN_CLASS));
+		fogTermToOpensStackCategory.put(RequestConstants.USER_DATA_TERM, new Category("user_data",
+				INSTANCE_SCHEME, OCCIHeaders.MIXIN_CLASS));
 	}
 
 	private static Category createFlavorCategory(String flavorPropName, Properties properties) {
@@ -90,10 +90,10 @@ public class OpenStackComputePlugin implements ComputePlugin {
 		Category categoryCompute = new Category(TERM_COMPUTE, SCHEME_COMPUTE, CLASS_COMPUTE);
 		openStackCategories.add(categoryCompute);
 
-		//removing fogbow-request category
+		// removing fogbow-request category
 		categories.remove(new Category(RequestConstants.TERM, RequestConstants.SCHEME,
 				RequestConstants.CLASS));
-		
+
 		for (Category category : categories) {
 			if (fogTermToOpensStackCategory.get(category.getTerm()) == null) {
 				throw new OCCIException(ErrorType.BAD_REQUEST,
@@ -101,8 +101,10 @@ public class OpenStackComputePlugin implements ComputePlugin {
 			}
 			openStackCategories.add(fogTermToOpensStackCategory.get(category.getTerm()));
 		}
-		
-		xOCCIAtt.put("org.openstack.compute.user_data", xOCCIAtt.remove(DefaultSSHTunnel.USER_DATA_ATT));
+
+		xOCCIAtt.put("org.openstack.compute.user_data",
+				xOCCIAtt.remove(DefaultSSHTunnel.USER_DATA_ATT));
+		xOCCIAtt.remove(DefaultSSHTunnel.SSH_ADDRESS_ATT);
 
 		HttpClient httpClient = new DefaultHttpClient();
 		HttpPost httpPost;
@@ -138,8 +140,8 @@ public class OpenStackComputePlugin implements ComputePlugin {
 	}
 
 	private String getInstanceId(String instanceLocation) {
-		//location format: OCCI_URL + COMPUTE_ENDPOINT + instanceID
-		String[] tokens = instanceLocation.split(COMPUTE_ENDPOINT);		
+		// location format: OCCI_URL + COMPUTE_ENDPOINT + instanceID
+		String[] tokens = instanceLocation.split(COMPUTE_ENDPOINT);
 		return tokens[1];
 	}
 
@@ -281,8 +283,8 @@ public class OpenStackComputePlugin implements ComputePlugin {
 			int cpuIdle = Integer.parseInt(maxCpu) - Integer.parseInt(cpuInUse);
 			int memIdle = Integer.parseInt(maxMem) - Integer.parseInt(memInUse);
 
-			return new ResourcesInfo(String.valueOf(cpuIdle), cpuInUse,
-					String.valueOf(memIdle), memInUse, getFlavors(cpuIdle, memIdle), null);
+			return new ResourcesInfo(String.valueOf(cpuIdle), cpuInUse, String.valueOf(memIdle),
+					memInUse, getFlavors(cpuIdle, memIdle), null);
 
 		} catch (URISyntaxException e) {
 			LOGGER.error(e);

@@ -67,6 +67,7 @@ public class RequestRepository {
 	}
 	
 	public List<Request> getByUser(String user) {
+		LOGGER.debug("Getting instances by user " + user );
 		List<Request> userRequests = requests.get(user);
 		return userRequests == null ? new LinkedList<Request>()
 				: new LinkedList<Request>(userRequests);
@@ -77,6 +78,8 @@ public class RequestRepository {
 	}
 	
 	public void remove(String requestId) {
+		LOGGER.debug("Removing requestId " + requestId );
+
 		for (List<Request> userRequests : requests.values()) {
 			Iterator<Request> iterator = userRequests.iterator();
 			while (iterator.hasNext()) {

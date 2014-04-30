@@ -86,7 +86,7 @@ public class Request {
 	}
 
 	public Map<String, String> getxOCCIAtt() {
-		return this.xOCCIAtt;
+		return new HashMap<String, String>(xOCCIAtt);
 	}
 
 	public String getMemberId() {

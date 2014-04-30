@@ -25,8 +25,10 @@ public class OCCIApplication extends Application {
 	@Override
 	public Restlet createInboundRoot() {
 		Router router = new Router(getContext());
+		router.attach("/request/", RequestServerResource.class);
 		router.attach("/request", RequestServerResource.class);
 		router.attach("/request/{requestId}", RequestServerResource.class);
+		router.attach("/compute", ComputeServerResource.class);
 		router.attach("/compute/", ComputeServerResource.class);
 		router.attach("/compute/{instanceId}", ComputeServerResource.class);
 		router.attach("/members", MemberServerResource.class);
