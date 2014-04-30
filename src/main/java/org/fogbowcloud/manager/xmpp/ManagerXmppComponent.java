@@ -17,7 +17,7 @@ public class ManagerXmppComponent extends XMPPComponent {
 	public static final String GETINSTANCE_NAMESPACE = "http://fogbowcloud.org/manager/getinstance";
 	public static final String REMOVEINSTANCE_NAMESPACE = "http://fogbowcloud.org/manager/removeinstance";
 
-	private static long PERIOD = 100;
+	private static long PERIOD = 30000;
 	private ManagerFacade managerFacade;
 	private final Timer timer = new Timer();
 	private String rendezvousAddress;

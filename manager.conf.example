@@ -3,6 +3,8 @@ xmpp_password=password
 xmpp_host=127.0.0.1
 xmpp_port=5347
 
+rendezvous_jid=rendezvous.test.com
+
 compute_class=org.fogbowcloud.manager.occi.plugins.openstack.OpenStackComputePlugin
 compute_openstack_occi_url=http://localhost:8182
 compute_openstack_v2api_url=http://localhost:8182

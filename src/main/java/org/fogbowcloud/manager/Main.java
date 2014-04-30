@@ -32,6 +32,7 @@ public class Main {
 				properties.getProperty("xmpp_host"), 
 				Integer.parseInt(properties.getProperty("xmpp_port")), 
 				facade);
+		xmpp.setRendezvousAddress(properties.getProperty("rendezvous_jid"));
 		xmpp.connect();
 		xmpp.process(false);
 		xmpp.init();
