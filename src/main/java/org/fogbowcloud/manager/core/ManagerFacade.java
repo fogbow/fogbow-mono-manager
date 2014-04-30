@@ -36,7 +36,7 @@ public class ManagerFacade {
 	public static final long DEFAULT_SCHEDULER_PERIOD = 30000;
 
 	private boolean scheduled = false;
-	private final Timer timer = new Timer();
+	private Timer timer;
 
 	private List<FederationMember> members = new LinkedList<FederationMember>();
 	private RequestRepository requests = new RequestRepository();
@@ -327,7 +327,8 @@ public class ManagerFacade {
 		String schedulerPeriodStr = properties.getProperty("scheduler_period");
 		long schedulerPeriod = schedulerPeriodStr == null ? DEFAULT_SCHEDULER_PERIOD : Long
 				.valueOf(schedulerPeriodStr);
-
+		
+		timer = new Timer();
 		timer.scheduleAtFixedRate(new TimerTask() {
 			@Override
 			public void run() {
