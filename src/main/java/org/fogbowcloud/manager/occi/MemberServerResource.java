@@ -19,50 +19,37 @@ public class MemberServerResource extends ServerResource {
 		
 		List<FederationMember> federationMembers = application.getFederationMembers();
 		if (federationMembers.size() == 0) {
-			return " ";
+			return new String();
 		}
 		
 		return generateResponse(federationMembers);
 	}
 
 	private String generateResponse(List<FederationMember> federationMembers) {
-		String response = "";
+		StringBuilder response = new StringBuilder();
 		for (FederationMember federationMember : federationMembers) {
 			String id = federationMember.getResourcesInfo().getId();
+			response.append("id=").append(id).append(";");
 			String cpuIdle = federationMember.getResourcesInfo().getCpuIdle();
+			response.append("cpuIdle=").append(cpuIdle).append(";");
 			String cpuInUse = federationMember.getResourcesInfo().getCpuInUse();
+			response.append("cpuInUse=").append(cpuInUse).append(";");
 			String memIdle = federationMember.getResourcesInfo().getMemIdle();
+			response.append("memIdle=").append(memIdle).append(";");
 			String memInUse = federationMember.getResourcesInfo().getMemInUse();
-
-			String flavorStr = "";
-			if (federationMember.getResourcesInfo().getFlavours() != null){
+			response.append("memInUse=").append(memInUse).append(";");
+			
+			if (federationMember.getResourcesInfo().getFlavours() != null) {
 				for (Flavor flavor : federationMember.getResourcesInfo().getFlavours()) {
 					String nameFlavor = flavor.getName();
 					Integer capacityFlavor = flavor.getCapacity();
-					flavorStr = "flavour : \"" + nameFlavor + ", capacity=\"" + capacityFlavor + "";
+					response.append("flavor: '").append(nameFlavor).append(", capacity=\"")
+						.append(capacityFlavor).append("\"';");
 				}
 			}
-
-			if (!cpuIdle.equals("")) {
-				cpuIdle = " ; " + "cpuIdle=\"" + cpuIdle ;
-			}
-			if (!cpuInUse.equals("")) {
-				cpuInUse = "\" ; " + "cpuInUse=\"" + cpuInUse;
-			}
-			if (!memIdle.equals("")) {
-				memIdle = "\" ; " + "menIdle=\"" + memIdle;
-			}
-			if (!memInUse.equals("")) {
-				memInUse = "\" ; " + "menInUse=\"" + memInUse;
-			}
-			if (!flavorStr.equals("")) {
-				flavorStr = "\" ; " + flavorStr + "\"";
-			}
-
-			response += "id=\"" + id + "\"" + cpuIdle + cpuInUse + memIdle 
-					+ memInUse + flavorStr + "\"\n";
+			response.append("\n");
 		}
 
-		return response.trim();
+		return response.toString().trim();
 	}
 }

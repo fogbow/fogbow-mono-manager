@@ -60,12 +60,12 @@ public class ManagerXmppComponent extends XMPPComponent {
 				try {
 					iAmAlive();
 				} catch (Exception e) {
-					LOGGER.error(e);
+					LOGGER.error("Failure during IAmAlive()", e);
 				}
 				try {
 					whoIsalive();
 				} catch (Exception e) {
-					LOGGER.error(e);
+					LOGGER.error("Failure during whoIsAlive()", e);
 				}
 			}
 		}, 0, PERIOD);
