@@ -17,9 +17,9 @@ public class Request {
 	private List<Category> categories;
 	private Map<String, String> xOCCIAtt;
 	private String user;
-	
-	public Request(String id, String authToken, String user, 
-			List<Category> categories, Map<String, String> xOCCIAtt) {
+
+	public Request(String id, String authToken, String user, List<Category> categories,
+			Map<String, String> xOCCIAtt) {
 		this.id = id;
 		this.authToken = authToken;
 		this.user = user;
@@ -27,11 +27,11 @@ public class Request {
 		this.xOCCIAtt = xOCCIAtt;
 		setState(RequestState.OPEN);
 	}
-	
+
 	public List<Category> getCategories() {
 		return categories;
 	}
-	
+
 	public void addCategory(Category category) {
 		if (categories == null) {
 			categories = new LinkedList<Category>();
@@ -42,7 +42,7 @@ public class Request {
 	public String getUser() {
 		return user;
 	}
-	
+
 	public String getInstanceId() {
 		return instanceId;
 	}
@@ -63,20 +63,20 @@ public class Request {
 		return id;
 	}
 
-	public String getAttValue(String attributeName){
+	public String getAttValue(String attributeName) {
 		if (xOCCIAtt == null) {
 			return null;
 		}
 		return xOCCIAtt.get(attributeName);
 	}
-	
-	public void putAttValue(String attributeName, String attributeValue){
+
+	public void putAttValue(String attributeName, String attributeValue) {
 		if (xOCCIAtt == null) {
 			xOCCIAtt = new HashMap<String, String>();
 		}
 		xOCCIAtt.put(attributeName, attributeValue);
 	}
-	
+
 	public String toHttpMessageFormat() {
 		return "RequestId=" + id + "; State=" + state.getValue() + "; InstanceId= " + instanceId;
 	}
@@ -95,5 +95,11 @@ public class Request {
 
 	public void setMemberId(String memberId) {
 		this.memberId = memberId;
+	}
+
+	public String toString() {
+		return "id: " + id + ", authToken: " + authToken + ", user:  " + user + ", instanceId: "
+				+ instanceId + ", memberId: " + memberId + ", state: " + state + ", categories: "
+				+ categories + ", xOCCIAtt: " + xOCCIAtt;
 	}
 }

@@ -46,7 +46,7 @@ public class ManagerFacade {
 	private IdentityPlugin identityPlugin;
 	private Properties properties;
 	private PacketSender packetSender;
-	
+
 	private SSHTunnel sshTunnel = new DefaultSSHTunnel();
 
 	public ManagerFacade(Properties properties) {
@@ -55,11 +55,11 @@ public class ManagerFacade {
 			throw new IllegalArgumentException();
 		}
 	}
-	
+
 	public void setSSHTunnel(SSHTunnel sshTunnel) {
 		this.sshTunnel = sshTunnel;
 	}
-	
+
 	public void setComputePlugin(ComputePlugin computePlugin) {
 		this.computePlugin = computePlugin;
 	}
@@ -78,7 +78,7 @@ public class ManagerFacade {
 	public List<FederationMember> getMembers() {
 		return members;
 	}
-	
+
 	public void setMembers(List<FederationMember> members) {
 		this.members = members;
 	}
@@ -133,8 +133,7 @@ public class ManagerFacade {
 		return getInstance(authToken, instanceId, request);
 	}
 
-	private Instance getInstance(String authToken, String instanceId,
-			Request request) {
+	private Instance getInstance(String authToken, String instanceId, Request request) {
 		Instance instance = null;
 		if (isLocal(request)) {
 			instance = this.computePlugin.getInstance(authToken, instanceId);
@@ -143,10 +142,9 @@ public class ManagerFacade {
 		}
 		String sshAddress = request.getAttValue(DefaultSSHTunnel.SSH_ADDRESS_ATT);
 		if (sshAddress != null) {
-			instance.addAttribute(DefaultSSHTunnel.SSH_ADDRESS_ATT, 
-					sshAddress);
+			instance.addAttribute(DefaultSSHTunnel.SSH_ADDRESS_ATT, sshAddress);
 		}
-		
+
 		return instance;
 	}
 
@@ -169,8 +167,7 @@ public class ManagerFacade {
 		removeInstance(authToken, instanceId, request);
 	}
 
-	private void removeInstance(String authToken, String instanceId,
-			Request request) {
+	private void removeInstance(String authToken, String instanceId, Request request) {
 		sshTunnel.release(request);
 		if (isLocal(request)) {
 			this.computePlugin.removeInstance(authToken, instanceId);
@@ -189,8 +186,7 @@ public class ManagerFacade {
 		for (Request request : userRequests) {
 			if (instanceId.equals(request.getInstanceId())) {
 				if (!request.getUser().equals(user)) {
-					throw new OCCIException(ErrorType.UNAUTHORIZED, 
-							ResponseConstants.UNAUTHORIZED);
+					throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 				}
 				return request;
 			}
@@ -207,7 +203,8 @@ public class ManagerFacade {
 		return requests.get(requestId);
 	}
 
-	public String submitRequestForRemoteMember(List<Category> categories, Map<String, String> xOCCIAtt) {
+	public String submitRequestForRemoteMember(List<Category> categories,
+			Map<String, String> xOCCIAtt) {
 		String token = getFederationUserToken();
 		try {
 			return computePlugin.requestInstance(token, categories, xOCCIAtt);
@@ -219,10 +216,10 @@ public class ManagerFacade {
 		}
 	}
 
-	// TODO Think about always get new federation user token or store a valid one.
+	// TODO Think about always get new federation user token or store a valid
+	// one.
 	private String getFederationUserToken() {
-		String token = identityPlugin.getToken(
-				properties.getProperty("federation_user_name"),
+		String token = identityPlugin.getToken(properties.getProperty("federation_user_name"),
 				properties.getProperty("federation_user_password"));
 		return token;
 	}
@@ -252,7 +249,6 @@ public class ManagerFacade {
 				.getValue()));
 		LOGGER.info("Request " + instanceCount + " instances");
 
-		
 		List<Request> currentRequests = new ArrayList<Request>();
 		for (int i = 0; i < instanceCount; i++) {
 			String requestId = String.valueOf(UUID.randomUUID());
@@ -260,8 +256,10 @@ public class ManagerFacade {
 			try {
 				sshTunnel.create(properties, request);
 			} catch (Exception e) {
+				LOGGER.warn("Exception while creating ssh tunnel.", e);
 				request.setState(RequestState.FAILED);
 			}
+			LOGGER.debug("Updated request with tunnel properties : " + request);
 			currentRequests.add(request);
 			requests.addRequest(user, request);
 		}
@@ -276,7 +274,9 @@ public class ManagerFacade {
 		FederationMember member = memberPicker.pick(getMembers());
 		String memberAddress = member.getResourcesInfo().getId();
 		request.setMemberId(memberAddress);
-		
+
+		LOGGER.info("Submiting request " + request.getId() + " to member " + memberAddress);
+
 		String remoteInstanceId = ManagerPacketHelper.remoteRequest(request, memberAddress,
 				packetSender);
 		if (remoteInstanceId == null) {
@@ -291,12 +291,16 @@ public class ManagerFacade {
 	private boolean submitLocalRequest(Request request) {
 		request.setMemberId(null);
 		String instanceLocation = null;
+		
+		LOGGER.info("Submiting local request " + request);
+		
 		try {
 			instanceLocation = computePlugin.requestInstance(request.getAuthToken(),
 					request.getCategories(), request.getxOCCIAtt());
 		} catch (OCCIException e) {
 			if (e.getStatus().equals(ErrorType.BAD_REQUEST)
 					&& e.getMessage().contains(ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES)) {
+				LOGGER.warn("Request failed locally for quota exceeded.", e);
 				return false;
 			} else {
 				// TODO Think this through...
@@ -309,16 +313,16 @@ public class ManagerFacade {
 		instanceLocation = instanceLocation.replace(HeaderUtils.X_OCCI_LOCATION, "").trim();
 		request.setInstanceId(instanceLocation);
 		request.setState(RequestState.FULFILLED);
+		LOGGER.debug("Fulfilled Request: " + request);
 		return true;
 	}
 
 	private void scheduleRequests() {
 		scheduled = true;
-		String schedulerPeriodStr = properties.getProperty(
-				"scheduler_period");
-		long schedulerPeriod = schedulerPeriodStr == null ? 
-				DEFAULT_SCHEDULER_PERIOD : Long.valueOf(schedulerPeriodStr);
-		
+		String schedulerPeriodStr = properties.getProperty("scheduler_period");
+		long schedulerPeriod = schedulerPeriodStr == null ? DEFAULT_SCHEDULER_PERIOD : Long
+				.valueOf(schedulerPeriodStr);
+
 		timer.scheduleAtFixedRate(new TimerTask() {
 			@Override
 			public void run() {
@@ -329,6 +333,8 @@ public class ManagerFacade {
 
 	private void checkAndSubmitOpenRequests() {
 		boolean allFulfilled = true;
+		LOGGER.debug("Checking and submiting requests.");
+
 		for (Request request : requests.get(RequestState.OPEN)) {
 			Map<String, String> xOCCIAtt = request.getxOCCIAtt();
 			for (String keyAttributes : RequestAttribute.getValues()) {
@@ -337,6 +343,7 @@ public class ManagerFacade {
 			allFulfilled &= submitLocalRequest(request) || submitRemoteRequest(request);
 		}
 		if (allFulfilled) {
+			LOGGER.info("All request fulfilled.");
 			timer.cancel();
 			scheduled = false;
 		}
@@ -349,7 +356,7 @@ public class ManagerFacade {
 	public void setRequests(RequestRepository requests) {
 		this.requests = requests;
 	}
-	
+
 	public String getToken(String username, String password) {
 		return identityPlugin.getToken(username, password);
 	}
