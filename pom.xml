@@ -31,7 +31,7 @@
         <configuration>
           <executable>java</executable>
           <arguments>
-            <argument>-Dlog4j.configuration=file:log4j.cfg.xml</argument>
+            <argument>-Dlog4j.configuration=file:log4j.properties</argument>
             <argument>-cp</argument>
             <argument>${project.build.directory}/${project.artifactId}-${project.version}.jar:${project.build.directory}/lib/*</argument>
             <argument>org.fogbowcloud.manager.Main</argument>
