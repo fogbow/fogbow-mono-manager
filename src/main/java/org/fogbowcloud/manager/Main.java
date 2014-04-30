@@ -34,6 +34,7 @@ public class Main {
 				facade);
 		xmpp.connect();
 		xmpp.process(false);
+		xmpp.init();
 		facade.setPacketSender(xmpp);
 		
 		OCCIApplication application = new OCCIApplication(facade);
