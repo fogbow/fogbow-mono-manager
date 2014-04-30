@@ -90,6 +90,10 @@ public class OpenStackComputePlugin implements ComputePlugin {
 		Category categoryCompute = new Category(TERM_COMPUTE, SCHEME_COMPUTE, CLASS_COMPUTE);
 		openStackCategories.add(categoryCompute);
 
+		//removing fogbow-request category
+		categories.remove(new Category(RequestConstants.TERM, RequestConstants.SCHEME,
+				RequestConstants.CLASS));
+		
 		for (Category category : categories) {
 			if (fogTermToOpensStackCategory.get(category.getTerm()) == null) {
 				throw new OCCIException(ErrorType.BAD_REQUEST,
