@@ -125,8 +125,8 @@ public class OpenStackComputePlugin implements ComputePlugin {
 				throw new OCCIException(ErrorType.NOT_FOUND, EntityUtils.toString(
 						response.getEntity(), String.valueOf(Charsets.UTF_8)));
 			}
-			
-			return response.getFirstHeader("Location").getValue();
+			String instanceLocation = response.getFirstHeader("Location").getValue();
+			return getInstanceId(instanceLocation);
 		} catch (URISyntaxException e) {
 			LOGGER.error(e);
 		} catch (HttpException e) {
@@ -135,6 +135,12 @@ public class OpenStackComputePlugin implements ComputePlugin {
 			LOGGER.error(e);
 		}
 		return null;
+	}
+
+	private String getInstanceId(String instanceLocation) {
+		//location format: OCCI_URL + COMPUTE_ENDPOINT + instanceID
+		String[] tokens = instanceLocation.split(COMPUTE_ENDPOINT);		
+		return tokens[1];
 	}
 
 	public Instance getInstance(String authToken, String instanceId) {
