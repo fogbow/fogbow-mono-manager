@@ -92,11 +92,7 @@ public class TestMemberServerResource {
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(get);
 
-		String responseStr = EntityUtils.toString(response.getEntity(),
-				String.valueOf(Charsets.UTF_8));
-
-		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
-		Assert.assertEquals(" ", responseStr);
+		Assert.assertEquals(HttpStatus.SC_NO_CONTENT, response.getStatusLine().getStatusCode());
 	}
 	
 	@Test

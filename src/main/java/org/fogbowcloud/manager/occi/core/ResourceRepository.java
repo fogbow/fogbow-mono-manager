@@ -27,7 +27,7 @@ public class ResourceRepository {
 				"Medium Flavor", "");
 		Resource fogbowLargeFlavor = new Resource(RequestConstants.LARGE_TERM,
 				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS,
-				new ArrayList<String>(), new ArrayList<String>(), FOGBOWCLOUD_ENDPOINT + "/small",
+				new ArrayList<String>(), new ArrayList<String>(), FOGBOWCLOUD_ENDPOINT + "/large",
 				"Large Flavor", "");
 		// image flavors
 		Resource fogbowLinuxX86Flavor = new Resource(RequestConstants.LINUX_X86_TERM,

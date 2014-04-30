@@ -31,12 +31,6 @@ public class TestFederationMember {
 	public void testInvalidResources() {
 		new FederationMember(null);
 	}
-
-	@Test(expected = IllegalArgumentException.class)
-	public void testNullResourceId() throws CertificateException, IOException {
-		new ResourcesInfo(null, "cpuIdle",
-				"cpuInUse", "memIdle", "memInUse", new LinkedList<Flavor>(), managerTestHelper.getCertificate());
-	}
 	
 	@Test(expected = IllegalArgumentException.class)
 	public void testNullResourcesCpuIdle() throws CertificateException, IOException {
