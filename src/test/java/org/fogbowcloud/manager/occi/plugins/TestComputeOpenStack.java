@@ -9,7 +9,6 @@ import java.util.StringTokenizer;
 
 import org.fogbowcloud.manager.core.plugins.openstack.OpenStackComputePlugin;
 import org.fogbowcloud.manager.occi.core.Category;
-import org.fogbowcloud.manager.occi.core.HeaderUtils;
 import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.instance.Instance;
@@ -29,10 +28,9 @@ public class TestComputeOpenStack {
 	private static final String FOURTH_INSTANCE_ID = "qwuif8ad-19a3-4afg-1l77-tred90crei0q";
 	private static final String THIRD_INSTANCE_ID = "cg2563ee-503c-6abr-54gl-ba8d12hf0pof";
 	private static final String SECOND_INSTANCE_ID = "at62f3ad-67ac-56gb-8a55-adbm98cdee9f";
-	
+
 	private static final String URL = "http://localhost:" + PluginHelper.PORT_ENDPOINT;
-	private static final String LOCATION_INSTANCE_PREFIX = HeaderUtils.X_OCCI_LOCATION
-			+ URL + ComputeApplication.TARGET + "/";
+	private static final String LOCATION_INSTANCE_PREFIX = URL + ComputeApplication.TARGET + "/";
 
 	private OpenStackComputePlugin computeOpenStack;
 	private PluginHelper pluginHelper;
@@ -46,7 +44,7 @@ public class TestComputeOpenStack {
 		properties.put("compute_openstack_flavor_medium", ComputeApplication.MEDIUM_FLAVOR_TERM);
 		properties.put("compute_openstack_flavor_large", ComputeApplication.MEDIUM_FLAVOR_TERM);
 		properties.put("compute_openstack_default_cirros_image", CIRROS_IMAGE_TERM);
-		
+
 		computeOpenStack = new OpenStackComputePlugin(properties);
 
 		// five first generated instance ids
@@ -78,17 +76,20 @@ public class TestComputeOpenStack {
 				computeOpenStack.requestInstance(PluginHelper.AUTH_TOKEN, categories,
 						new HashMap<String, String>()));
 
-		Instance instance = computeOpenStack.getInstance(PluginHelper.AUTH_TOKEN,
-				FIRST_INSTANCE_ID);
+		Instance instance = computeOpenStack
+				.getInstance(PluginHelper.AUTH_TOKEN, FIRST_INSTANCE_ID);
 
-		Assert.assertEquals(1, Integer.parseInt(getAttValueFromDetails(instance.toOCCIMassageFormatDetails(),
-				ComputeApplication.CORE_ATTRIBUTE_OCCI)));
-		Assert.assertEquals(2, Integer.parseInt(getAttValueFromDetails(instance.toOCCIMassageFormatDetails(),
-				ComputeApplication.MEMORY_ATTRIBUTE_OCCI)));
-		Assert.assertEquals(64, Integer.parseInt(getAttValueFromDetails(instance.toOCCIMassageFormatDetails(),
+		Assert.assertEquals(1, Integer.parseInt(getAttValueFromDetails(
+				instance.toOCCIMassageFormatDetails(), ComputeApplication.CORE_ATTRIBUTE_OCCI)));
+		Assert.assertEquals(2, Integer.parseInt(getAttValueFromDetails(
+				instance.toOCCIMassageFormatDetails(), ComputeApplication.MEMORY_ATTRIBUTE_OCCI)));
+		Assert.assertEquals(64, Integer.parseInt(getAttValueFromDetails(
+				instance.toOCCIMassageFormatDetails(),
 				ComputeApplication.ARCHITECTURE_ATTRIBUTE_OCCI)));
-		Assert.assertEquals("server-" + FIRST_INSTANCE_ID,
-				getAttValueFromDetails(instance.toOCCIMassageFormatDetails(), ComputeApplication.HOSTNAME_ATTRIBUTE_OCCI));
+		Assert.assertEquals(
+				"server-" + FIRST_INSTANCE_ID,
+				getAttValueFromDetails(instance.toOCCIMassageFormatDetails(),
+						ComputeApplication.HOSTNAME_ATTRIBUTE_OCCI));
 	}
 
 	private String getAttValueFromDetails(String instanceDetails, String attName) {
@@ -241,7 +242,8 @@ public class TestComputeOpenStack {
 		instanceLocations = getInstanceLocations(computeOpenStack
 				.getInstances(PluginHelper.AUTH_TOKEN));
 		Assert.assertEquals(1, instanceLocations.size());
-		Assert.assertEquals(URL + ComputeApplication.TARGET + "/" + FIRST_INSTANCE_ID, instanceLocations.get(0));
+		Assert.assertEquals(URL + ComputeApplication.TARGET + "/" + FIRST_INSTANCE_ID,
+				instanceLocations.get(0));
 	}
 
 	@Test
@@ -266,14 +268,15 @@ public class TestComputeOpenStack {
 				.getInstances(PluginHelper.AUTH_TOKEN));
 		Assert.assertEquals(expectedInstanceIds.size(), instanceLocations.size());
 		for (String expectedId : expectedInstanceIds) {
-			Assert.assertTrue(instanceLocations.contains(URL + ComputeApplication.TARGET + "/" + expectedId));
+			Assert.assertTrue(instanceLocations.contains(URL + ComputeApplication.TARGET + "/"
+					+ expectedId));
 		}
 	}
 
 	private List<String> getInstanceLocations(List<Instance> intances) {
 		List<String> locations = new ArrayList<String>();
 		for (Instance instance : intances) {
-//			String instanceMessage = instance.toOCCIMassageFormatLocation();
+			// String instanceMessage = instance.toOCCIMassageFormatLocation();
 			String[] lineTokens = instance.toOCCIMassageFormatLocation().split("Location:");
 			locations.add(lineTokens[1].trim());
 		}
