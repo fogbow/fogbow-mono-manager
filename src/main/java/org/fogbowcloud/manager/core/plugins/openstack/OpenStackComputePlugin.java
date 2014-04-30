@@ -48,7 +48,7 @@ public class OpenStackComputePlugin implements ComputePlugin {
 	private static final String COMPUTE_ENDPOINT = "/compute/";
 	private final String federationTenantId;
 	private final String federationTenantName;
-	private final String COMPUTE_V2_API_ENDEPOINT = "/v2/";
+	private final String COMPUTE_V2_API_ENDPOINT = "/v2/";
 
 	private static final String MAX_TOTAL_CORES_ATT = "maxTotalCores";
 	private static final String TOTAL_CORES_USED_ATT = "totalCoresUsed";
@@ -63,7 +63,7 @@ public class OpenStackComputePlugin implements ComputePlugin {
 		this.computeOCCIEndpoint = properties.getProperty("compute_openstack_occi_url")
 				+ COMPUTE_ENDPOINT;
 		this.computeV2APIEndepoint = properties.getProperty("compute_openstack_v2api_url")
-				+ COMPUTE_V2_API_ENDEPOINT;
+				+ COMPUTE_V2_API_ENDPOINT;
 		this.federationTenantId = properties.getProperty("federation_user_tenant_id");
 		this.federationTenantName = properties.getProperty("federation_user_tenant_name");
 

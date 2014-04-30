@@ -5,7 +5,7 @@ public class OCCIHeaders {
 	// header constants
 	public static final String CONTENT_TYPE = "Content-Type";
 	public static final String X_AUTH_TOKEN = "X-Auth-Token";
-	public static final String X_SUBJEC_TOKEN = "X-Subject-Token";
+	public static final String X_SUBJECT_TOKEN = "X-Subject-Token";
 
 	// occi constants
 	public static final String CATEGORY = "Category";

@@ -22,6 +22,7 @@ import org.json.JSONObject;
 
 public class OpenStackIdentityPlugin implements IdentityPlugin {
 
+	private static final String TENANT_NAME = "tenantName";
 	public static final String USERNAME_KEYSTONE = "username";
 	public static final String PASSWORD_KEYSTONE = "password";
 	public static final String PASSWORD_CREDENTIALS_KEYSTONE = "passwordCredentials";
@@ -37,9 +38,11 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 
 	private String v2Endpoint;
 	private String v3Endpoint;
+	private String federationTenantName;
 
 	public OpenStackIdentityPlugin(Properties properties) {
 		String keystoneUrl = properties.getProperty("identity_openstack_url");
+		this.federationTenantName = properties.getProperty("federation_user_tenant_name");
 		this.v3Endpoint = keystoneUrl + V3_ENDPOINT_PATH;
 		this.v2Endpoint = keystoneUrl + V2_ENDPOINT_PATH;
 	}
@@ -49,7 +52,7 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 			HttpClient httpCLient = new DefaultHttpClient();
 			HttpGet httpGet = new HttpGet(this.v3Endpoint);
 			httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, authToken);
-			httpGet.addHeader(OCCIHeaders.X_SUBJEC_TOKEN, authToken);
+			httpGet.addHeader(OCCIHeaders.X_SUBJECT_TOKEN, authToken);
 			HttpResponse response = httpCLient.execute(httpGet);
 
 			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
@@ -76,14 +79,15 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 			httpPost.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.JSON_CONTENT_TYPE);
 			httpPost.addHeader(OCCIHeaders.ACCEPT, OCCIHeaders.JSON_ACCEPT);
 
-			JSONObject rootCredentials = new JSONObject();
-			rootCredentials.put(USERNAME_KEYSTONE, username);
-			rootCredentials.put(PASSWORD_KEYSTONE, password);
-			JSONObject rootAuth = new JSONObject();
-			rootAuth.put(PASSWORD_CREDENTIALS_KEYSTONE, rootCredentials);
-			JSONObject rootMain = new JSONObject();
-			rootMain.put(AUTH_KEYSTONE, rootAuth);
-			httpPost.setEntity(new StringEntity(rootMain.toString(), HTTP.UTF_8));
+			JSONObject passwordCredentials = new JSONObject();
+			passwordCredentials.put(USERNAME_KEYSTONE, username);
+			passwordCredentials.put(PASSWORD_KEYSTONE, password);
+			JSONObject auth = new JSONObject();
+			auth.put(PASSWORD_CREDENTIALS_KEYSTONE, passwordCredentials);
+			auth.put(TENANT_NAME, this.federationTenantName);
+			JSONObject root = new JSONObject();
+			root.put(AUTH_KEYSTONE, auth);
+			httpPost.setEntity(new StringEntity(root.toString(), HTTP.UTF_8));
 
 			HttpResponse response = httpClient.execute(httpPost);
 			String responseStr = EntityUtils.toString(response.getEntity(), HTTP.UTF_8);
