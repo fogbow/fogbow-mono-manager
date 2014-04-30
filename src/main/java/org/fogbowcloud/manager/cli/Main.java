@@ -92,7 +92,7 @@ public class Main {
 					doRequest("get", url + "/compute/" + instance.instanceId, 
 							instance.authToken);
 				} else {
-					doRequest("get", url + "/compute", instance.authToken);
+					doRequest("get", url + "/compute/", instance.authToken);
 				}
 			} else if (instance.delete) {
 				if (instance.instanceId == null) {
