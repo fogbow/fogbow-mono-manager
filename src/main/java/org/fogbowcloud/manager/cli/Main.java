@@ -50,12 +50,16 @@ public class Main {
 		} else if (parsedCommand.equals("request")) {
 			String url = request.url;
 			if (request.get) {
-				if (request.create || request.delete || request.requestId == null) {
+				if (request.create || request.delete) {
 					jc.usage();
 					return;
 				}
-				doRequest("get", url + "/request/" + request.requestId, 
-						request.authToken);
+				if (request.requestId != null) {
+					doRequest("get", url + "/request/" + request.requestId, 
+							request.authToken);
+				} else {
+					doRequest("get", url + "/request", request.authToken);
+				}
 			} else if (request.delete) {
 				if (request.create || request.get || request.requestId == null) {
 					jc.usage();
@@ -82,14 +86,18 @@ public class Main {
 				jc.usage();
 				return;
 			}
-			if (instance.instanceId == null) {
-				jc.usage();
-				return;
-			}
 			if (instance.get) {
-				doRequest("get", url + "/compute/" + instance.instanceId, 
-						instance.authToken);
+				if (instance.instanceId != null) {
+					doRequest("get", url + "/compute/" + instance.instanceId, 
+							instance.authToken);
+				} else {
+					doRequest("get", url + "/compute", instance.authToken);
+				}
 			} else if (instance.delete) {
+				if (instance.instanceId == null) {
+					jc.usage();
+					return;
+				}
 				doRequest("delete", url + "/compute/" + instance.instanceId, 
 						instance.authToken);
 			}
