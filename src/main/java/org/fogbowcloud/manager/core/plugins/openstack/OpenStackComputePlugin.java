@@ -35,7 +35,6 @@ import org.json.JSONObject;
 
 public class OpenStackComputePlugin implements ComputePlugin {
 
-	private static final String X_AUTH_PROJECT_ID = "X-Auth-Project-Id";
 	private static final String INSTANCE_SCHEME = "http://schemas.openstack.org/compute/instance#";
 	private static final String SCHEME_COMPUTE = "http://schemas.ogf.org/occi/infrastructure#";
 	public static final String OS_SCHEME = "http://schemas.openstack.org/template/os#";
@@ -47,7 +46,6 @@ public class OpenStackComputePlugin implements ComputePlugin {
 	private static final String CLASS_COMPUTE = "kind";
 	private static final String COMPUTE_ENDPOINT = "/compute/";
 	private final String federationTenantId;
-	private final String federationTenantName;
 	private final String COMPUTE_V2_API_ENDPOINT = "/v2/";
 
 	private static final String MAX_TOTAL_CORES_ATT = "maxTotalCores";
@@ -65,7 +63,6 @@ public class OpenStackComputePlugin implements ComputePlugin {
 		this.computeV2APIEndepoint = properties.getProperty("compute_openstack_v2api_url")
 				+ COMPUTE_V2_API_ENDPOINT;
 		this.federationTenantId = properties.getProperty("federation_user_tenant_id");
-		this.federationTenantName = properties.getProperty("federation_user_tenant_name");
 
 		fogTermToOpensStackCategory.put(RequestConstants.SMALL_TERM,
 				createFlavorCategory("compute_openstack_flavor_small", properties));
@@ -255,7 +252,6 @@ public class OpenStackComputePlugin implements ComputePlugin {
 		try {
 			httpGet = new HttpGet(computeV2APIEndepoint + federationTenantId + "/limits");
 			httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, authToken);
-			httpGet.addHeader(X_AUTH_PROJECT_ID, federationTenantName);
 			HttpResponse response = httpCLient.execute(httpGet);
 
 			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
