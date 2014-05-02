@@ -325,7 +325,7 @@ public class ManagerFacade {
 			instanceId = computePlugin.requestInstance(request.getAuthToken(),
 					request.getCategories(), request.getxOCCIAtt());
 		} catch (OCCIException e) {
-			if (e.getStatus().equals(ErrorType.QUOTA_EXCEEDED)) {
+			if (e.getStatus().getCode() == HttpStatus.SC_INSUFFICIENT_SPACE_ON_RESOURCE) {
 				LOGGER.warn("Request failed locally for quota exceeded.", e);
 				return false;
 			} else {

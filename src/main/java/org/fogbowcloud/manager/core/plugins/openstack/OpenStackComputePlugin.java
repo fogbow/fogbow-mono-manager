@@ -123,10 +123,10 @@ public class OpenStackComputePlugin implements ComputePlugin {
 			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
 				throw new OCCIException(ErrorType.UNAUTHORIZED, errorMessage);
 			} else if (response.getStatusLine().getStatusCode() == HttpStatus.SC_BAD_REQUEST) {
-//				if (errorMessage.contains(ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES)) {
+				if (errorMessage.contains(ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES)) {
 					throw new OCCIException(ErrorType.QUOTA_EXCEEDED, errorMessage);
-//				}
-//				throw new OCCIException(ErrorType.BAD_REQUEST, errorMessage);
+				}
+				throw new OCCIException(ErrorType.BAD_REQUEST, errorMessage);
 			}
 
 			return response.getFirstHeader("Location").getValue();
