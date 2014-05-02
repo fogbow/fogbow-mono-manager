@@ -39,7 +39,7 @@ public class ManagerXmppComponent extends XMPPComponent {
 
 	public void iAmAlive() throws CertificateException, IOException {
 		ManagerPacketHelper.iAmAlive(managerFacade.getResourcesInfo(),
-				rendezvousAddress, this);
+				rendezvousAddress, managerFacade.getProperties(), this);
 	}
 
 	@Override

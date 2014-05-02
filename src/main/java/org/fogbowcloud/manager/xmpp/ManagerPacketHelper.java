@@ -11,8 +11,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.logging.Logger;
 import java.util.Properties;
+import java.util.logging.Logger;
 
 import org.apache.http.HttpStatus;
 import org.dom4j.Attribute;
@@ -29,7 +29,6 @@ import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.instance.Instance.Link;
 import org.fogbowcloud.manager.occi.request.Request;
-import org.fogbowcloud.manager.xmpp.util.ManagerTestHelper;
 import org.jamppa.component.PacketSender;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.IQ.Type;
@@ -42,7 +41,8 @@ public class ManagerPacketHelper {
 			.getLogger(ManagerPacketHelper.class.getName());
 	
 	public static void iAmAlive(ResourcesInfo resourcesInfo,
-			String rendezvousAddress, PacketSender packetSender)
+			String rendezvousAddress, Properties properties, 
+			PacketSender packetSender)
 			throws IOException {
 		IQ iq = new IQ(Type.get);
 		iq.setTo(rendezvousAddress);
@@ -51,8 +51,8 @@ public class ManagerPacketHelper {
 				.addElement("status");
 
 		try {
-			Properties properties = new Properties();
-			FileInputStream input = new FileInputStream(ManagerTestHelper.CONFIG_PATH);
+			FileInputStream input = new FileInputStream(
+					properties.getProperty("cert_path"));
 			properties.load(input);
 			iq.getElement().element("query").addElement("cert")
 					.setText(CertificateHandlerHelper.getBase64Certificate(properties));
