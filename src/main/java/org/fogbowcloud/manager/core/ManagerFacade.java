@@ -298,7 +298,7 @@ public class ManagerFacade {
 	}
 
 	private boolean submitRemoteRequest(Request request) {
-		FederationMember member = memberPicker.pick(getMembers());
+		FederationMember member = memberPicker.pick(this);
 		String memberAddress = member.getResourcesInfo().getId();
 		request.setMemberId(memberAddress);
 
@@ -386,5 +386,9 @@ public class ManagerFacade {
 
 	public Token getToken(Map<String, String> attributesToken) {
 		return identityPlugin.getToken(attributesToken);
+	}
+	
+	public Properties getProperties() {
+		return properties;
 	}
 }
