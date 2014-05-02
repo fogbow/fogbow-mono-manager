@@ -198,13 +198,21 @@ public class ManagerFacade {
 	private void removeRemoteInstance(Request request) {
 		ManagerPacketHelper.deleteRemoteInstace(request, packetSender);
 	}
+	
+	private static String normalizeInstanceId(String instanceId) {
+		if (!instanceId.contains("/")) {
+			return instanceId;
+		}
+		String[] splitInstanceId = instanceId.split("/");
+		return splitInstanceId[splitInstanceId.length - 1];
+	}
 
 	public Request getRequestFromInstance(String authToken, String instanceId) {
 		String user = getUser(authToken);
 		LOGGER.debug("Getting instance " + instanceId + " of user " + user);
 		List<Request> userRequests = requests.getAll();
 		for (Request request : userRequests) {
-			if (instanceId.equals(request.getInstanceId())) {
+			if (instanceId.equals(normalizeInstanceId(request.getInstanceId()))) {
 				if (!request.getUser().equals(user)) {
 					LOGGER.warn("Throwing OCCIException at getRequestFromInstance: "
 							+ ResponseConstants.UNAUTHORIZED);
