@@ -101,11 +101,9 @@ public class ManagerPacketHelper {
 			Certificate cert = null;
 			
 			try {
-				cert = CertificateHandlerHelper
-						.parseCertificate(itemEl.element("cert")
-								.getText());
-			} catch (CertificateException e) {
-				LOGGER.warning("Certificate can not be Parsed.");
+				cert = CertificateHandlerHelper.parseCertificate(itemEl.element("cert").getText());
+			} catch (Exception e) {
+				LOGGER.warning("Certificate could not be parsed.");
 			}
 			
 			Element statusEl = itemEl.element("status");
