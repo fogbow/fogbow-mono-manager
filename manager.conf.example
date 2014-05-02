@@ -18,7 +18,6 @@ identity_openstack_url=http://localhost:5000
 
 federation_user_name=fogbow
 federation_user_password=fogbow
-federation_user_tenant_id=d39e3c9bba294e3d9c47b8df9e29d81e
 federation_user_tenant_name=demo
 
 scheduler_period=30000
@@ -26,3 +25,5 @@ scheduler_period=30000
 ssh_tunnel_host=10.0.0.1
 ssh_tunnel_user=fogbow
 ssh_tunnel_port_range=50000:59999
+
+http_port = 8182

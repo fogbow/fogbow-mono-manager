@@ -1,8 +1,13 @@
 package org.fogbowcloud.manager.occi.plugins;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
 import org.fogbowcloud.manager.core.plugins.openstack.OpenStackIdentityPlugin;
+import org.fogbowcloud.manager.occi.core.OCCIException;
+import org.fogbowcloud.manager.occi.core.OCCIHeaders;
+import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.util.PluginHelper;
 import org.junit.After;
 import org.junit.Assert;
@@ -54,18 +59,30 @@ public class TestIdentityOpenStack {
 
 	@Test
 	public void testGetToken() {
-		String token = this.identityOpenStack.getToken(PluginHelper.USERNAME_FOGBOW,
-				PluginHelper.PASSWORD_FOGBOW);
-		Assert.assertEquals(PluginHelper.AUTH_TOKEN, token);
+		Map<String, String> tokenAttributes = new HashMap<String, String>();
+		tokenAttributes.put(OCCIHeaders.X_TOKEN_USER, PluginHelper.USERNAME_FOGBOW);
+		tokenAttributes.put(OCCIHeaders.X_TOKEN_PASS, PluginHelper.PASSWORD_FOGBOW);
+		tokenAttributes.put(OCCIHeaders.X_TOKEN_TENANT_NAME, "admin");
+		Token token = this.identityOpenStack.getToken(tokenAttributes);
+		String authToken = token.get(OCCIHeaders.X_TOKEN);
+		Assert.assertEquals(PluginHelper.AUTH_TOKEN, authToken);			
 	}
 
-	@Test(expected = ResourceException.class)
+	@Test(expected = OCCIException.class)
 	public void testGetTokenWrongUsername() {
-		this.identityOpenStack.getToken("wrong", PluginHelper.USERNAME_FOGBOW);
+		Map<String, String> tokenAttributes = new HashMap<String, String>();
+		tokenAttributes.put(OCCIHeaders.X_TOKEN_USER, "wrong");
+		tokenAttributes.put(OCCIHeaders.X_TOKEN_PASS, PluginHelper.PASSWORD_FOGBOW);
+		tokenAttributes.put(OCCIHeaders.X_TOKEN_TENANT_NAME, "");		
+		this.identityOpenStack.getToken(tokenAttributes);
 	}
 
-	@Test(expected = ResourceException.class)
+	@Test(expected = OCCIException.class)
 	public void testGetTokenWrongPassword() {
-		this.identityOpenStack.getToken(PluginHelper.PASSWORD_FOGBOW, "wrong");
+		Map<String, String> tokenAttributes = new HashMap<String, String>();
+		tokenAttributes.put(OCCIHeaders.X_TOKEN_USER, PluginHelper.USERNAME_FOGBOW);
+		tokenAttributes.put(OCCIHeaders.X_TOKEN_PASS, "worng");
+		tokenAttributes.put(OCCIHeaders.X_TOKEN_TENANT_NAME, "");		
+		this.identityOpenStack.getToken(tokenAttributes);
 	}
 }

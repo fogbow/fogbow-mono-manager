@@ -41,7 +41,8 @@ public class Main {
 		OCCIApplication application = new OCCIApplication(facade);
 		
 		Component http = new Component();
-		http.getServers().add(Protocol.HTTP, 8182);
+		http.getServers().add(Protocol.HTTP, Integer
+				.parseInt(properties.getProperty("http_port")));
 		http.getDefaultHost().attach(application);
 		http.start();
 	}
@@ -51,6 +52,6 @@ public class Main {
 		return Class.forName(properties.getProperty(propName))
 				.getConstructor(Properties.class).newInstance(properties);
 	}
-
-
+	
+	
 }

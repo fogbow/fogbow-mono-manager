@@ -6,6 +6,7 @@ import java.util.Map;
 import org.fogbowcloud.manager.core.ManagerFacade;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.occi.core.Category;
+import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.instance.ComputeServerResource;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.request.Request;
@@ -25,8 +26,8 @@ public class OCCIApplication extends Application {
 	@Override
 	public Restlet createInboundRoot() {
 		Router router = new Router(getContext());
-		router.attach("/request/", RequestServerResource.class);
 		router.attach("/request", RequestServerResource.class);
+		router.attach("/request/", RequestServerResource.class);
 		router.attach("/request/{requestId}", RequestServerResource.class);
 		router.attach("/compute", ComputeServerResource.class);
 		router.attach("/compute/", ComputeServerResource.class);
@@ -36,8 +37,8 @@ public class OCCIApplication extends Application {
 		return router;
 	}
 	
-	public String getToken(String username, String password) {
-		return managerFacade.getToken(username, password);
+	public Token getToken(Map<String, String> attributesToken) {
+		return managerFacade.getToken(attributesToken);
 	}
 	
 	public List<FederationMember> getFederationMembers() {		

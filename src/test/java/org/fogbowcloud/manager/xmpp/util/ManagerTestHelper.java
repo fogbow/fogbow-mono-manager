@@ -6,9 +6,11 @@ import java.io.IOException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import org.dom4j.Attribute;
@@ -20,6 +22,8 @@ import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
+import org.fogbowcloud.manager.occi.core.OCCIHeaders;
+import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.xmpp.ManagerXmppComponent;
 import org.jamppa.client.XMPPClient;
 import org.jamppa.client.plugin.xep0077.XEP0077;
@@ -41,7 +45,7 @@ public class ManagerTestHelper {
 	private static final String CLIENT_ADRESS = "client@test.com";
 	private static final String CLIENT_PASS = "password";
 	private static final String SMACK_ENDING = "/Smack";
-	private static final String TOKEN = "token";
+	private static final Token TOKEN = new Token(new HashMap<String, String>());
 
 	public static final String MANAGER_COMPONENT_URL = "manager.test.com";
 	public static final String MANAGER_COMPONENT_PASS = "password";
@@ -57,47 +61,48 @@ public class ManagerTestHelper {
 	private ManagerXmppComponent managerXmppComponent;
 	private ComputePlugin computePlugin;
 	private IdentityPlugin identityPlugin;
+	private Token tokenDefault;
 
-	public ResourcesInfo getResources() throws CertificateException,
-			IOException {
+	public ManagerTestHelper() {
+		Map<String, String> tokenAttributes = new HashMap<String, String>();
+		tokenAttributes.put(OCCIHeaders.X_TOKEN, "token");
+		tokenAttributes.put(OCCIHeaders.X_TOKEN_TENANT_ID, "tenantId_r4fci3qhbcy3b");
+		this.tokenDefault = new Token(tokenAttributes);
+	}
+
+	public ResourcesInfo getResources() throws CertificateException, IOException {
 		List<Flavor> flavours = new LinkedList<Flavor>();
 		flavours.add(new Flavor("small", "cpu", "mem", 2));
 		flavours.add(new Flavor("small", "cpu", "mem", 3));
-		ResourcesInfo resources = new ResourcesInfo("abc", "value1", "value2",
-				"value3", "value4", flavours, getCertificate());
+		ResourcesInfo resources = new ResourcesInfo("abc", "value1", "value2", "value3", "value4",
+				flavours, getCertificate());
 		return resources;
 	}
 
-	public IQ createWhoIsAliveResponse(ArrayList<FederationMember> aliveIds,
-			IQ iq) throws CertificateException, IOException {
+	public IQ createWhoIsAliveResponse(ArrayList<FederationMember> aliveIds, IQ iq)
+			throws CertificateException, IOException {
 		IQ resultIQ = IQ.createResultIQ(iq);
-		Element queryElement = resultIQ.getElement().addElement("query",
-				WHOISALIVE_NAMESPACE);
+		Element queryElement = resultIQ.getElement().addElement("query", WHOISALIVE_NAMESPACE);
 		for (FederationMember rendezvousItem : aliveIds) {
 			Element itemEl = queryElement.addElement("item");
 			itemEl.addAttribute("id", rendezvousItem.getResourcesInfo().getId());
-			// exception too
 			itemEl.addElement("cert").setText(
 					CertificateHandlerHelper.getBase64Certificate(getProperties()));
 			Element statusEl = itemEl.addElement("status");
-			statusEl.addElement("cpu-idle").setText(
-					rendezvousItem.getResourcesInfo().getCpuIdle());
+			statusEl.addElement("cpu-idle").setText(rendezvousItem.getResourcesInfo().getCpuIdle());
 			statusEl.addElement("cpu-inuse").setText(
 					rendezvousItem.getResourcesInfo().getCpuInUse());
-			statusEl.addElement("mem-idle").setText(
-					rendezvousItem.getResourcesInfo().getMemIdle());
+			statusEl.addElement("mem-idle").setText(rendezvousItem.getResourcesInfo().getMemIdle());
 			statusEl.addElement("mem-inuse").setText(
 					rendezvousItem.getResourcesInfo().getMemInUse());
 
-			List<Flavor> flavours = rendezvousItem.getResourcesInfo()
-					.getFlavours();
+			List<Flavor> flavours = rendezvousItem.getResourcesInfo().getFlavours();
 			for (Flavor f : flavours) {
 				Element flavorElement = statusEl.addElement("flavor");
 				flavorElement.addElement("name").setText(f.getName());
 				flavorElement.addElement("cpu").setText(f.getCpu());
 				flavorElement.addElement("mem").setText(f.getMem());
-				flavorElement.addElement("capacity").setText(
-						f.getCapacity().toString());
+				flavorElement.addElement("capacity").setText(f.getCapacity().toString());
 			}
 			statusEl.addElement("cert");
 			statusEl.addElement("updated").setText(
@@ -108,8 +113,8 @@ public class ManagerTestHelper {
 
 	public XMPPClient createXMPPClient() throws XMPPException {
 
-		XMPPClient xmppClient = new XMPPClient(CLIENT_ADRESS, CLIENT_PASS,
-				SERVER_HOST, SERVER_CLIENT_PORT);
+		XMPPClient xmppClient = new XMPPClient(CLIENT_ADRESS, CLIENT_PASS, SERVER_HOST,
+				SERVER_CLIENT_PORT);
 		XEP0077 register = new XEP0077();
 		xmppClient.registerPlugin(register);
 		xmppClient.connect();
@@ -130,8 +135,8 @@ public class ManagerTestHelper {
 			@Override
 			public Packet syncSendPacket(Packet packet) {
 				PacketFilter responseFilter = new PacketIDFilter(packet.getID());
-				PacketCollector response = xmppClient.getConnection()
-						.createPacketCollector(responseFilter);
+				PacketCollector response = xmppClient.getConnection().createPacketCollector(
+						responseFilter);
 				xmppClient.getConnection().sendPacket(packet);
 				Packet result = response.nextResult(5000);
 				response.cancel();
@@ -154,8 +159,7 @@ public class ManagerTestHelper {
 		return identityPlugin;
 	}
 
-	public ManagerXmppComponent initializeXMPPManagerComponent(boolean init)
-			throws Exception {
+	public ManagerXmppComponent initializeXMPPManagerComponent(boolean init) throws Exception {
 
 		this.computePlugin = Mockito.mock(ComputePlugin.class);
 		this.identityPlugin = Mockito.mock(IdentityPlugin.class);
@@ -163,6 +167,7 @@ public class ManagerTestHelper {
 		Properties properties = new Properties();
 		properties.put("federation_user_name", "fogbow");
 		properties.put("federation_user_password", "fogbow");
+		properties.put("federation_user_tenant_name", "fogbow");
 		properties.put("xmpp_jid", "manager.test.com");
 
 		ManagerFacade managerFacade = new ManagerFacade(properties);
@@ -170,12 +175,12 @@ public class ManagerTestHelper {
 		managerFacade.setIdentityPlugin(identityPlugin);
 
 		managerXmppComponent = new ManagerXmppComponent(MANAGER_COMPONENT_URL,
-				MANAGER_COMPONENT_PASS, SERVER_HOST, SERVER_COMPONENT_PORT,
-				managerFacade);
-		Mockito.when(computePlugin.getResourcesInfo(TOKEN)).thenReturn(
+				MANAGER_COMPONENT_PASS, SERVER_HOST, SERVER_COMPONENT_PORT, managerFacade);
+
+		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class))).thenReturn(
 				getResources());
-		Mockito.when(identityPlugin.getToken("fogbow", "fogbow")).thenReturn(
-				TOKEN);
+
+		Mockito.when(identityPlugin.getToken(Mockito.anyMap())).thenReturn(tokenDefault);
 
 		managerXmppComponent.setDescription("Manager Component");
 		managerXmppComponent.setName("Manager");
@@ -188,8 +193,7 @@ public class ManagerTestHelper {
 		return managerXmppComponent;
 	}
 
-	public ManagerXmppComponent initializeLocalXMPPManagerComponent()
-			throws Exception {
+	public ManagerXmppComponent initializeLocalXMPPManagerComponent() throws Exception {
 
 		this.computePlugin = Mockito.mock(ComputePlugin.class);
 		this.identityPlugin = Mockito.mock(IdentityPlugin.class);
@@ -204,12 +208,12 @@ public class ManagerTestHelper {
 		managerFacade.setIdentityPlugin(identityPlugin);
 
 		managerXmppComponent = new ManagerXmppComponent(MANAGER_COMPONENT_URL,
-				MANAGER_COMPONENT_PASS, SERVER_HOST, SERVER_COMPONENT_PORT,
-				managerFacade);
-		Mockito.when(computePlugin.getResourcesInfo(TOKEN)).thenReturn(
+				MANAGER_COMPONENT_PASS, SERVER_HOST, SERVER_COMPONENT_PORT, managerFacade);
+
+		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class))).thenReturn(
 				getResources());
-		Mockito.when(identityPlugin.getToken("fogbow", "fogbow")).thenReturn(
-				TOKEN);
+
+		Mockito.when(identityPlugin.getToken(Mockito.anyMap())).thenReturn(tokenDefault);
 
 		managerXmppComponent.setDescription("Manager Component");
 		managerXmppComponent.setName("Manager");
@@ -246,21 +250,19 @@ public class ManagerTestHelper {
 			String memIdle = statusEl.element("mem-idle").getText();
 			String memInUse = statusEl.element("mem-inuse").getText();
 			List<Flavor> flavoursList = new LinkedList<Flavor>();
-			Iterator<Element> flavourIterator = itemEl
-					.elementIterator("flavor");
+			Iterator<Element> flavourIterator = itemEl.elementIterator("flavor");
 			while (flavourIterator.hasNext()) {
 				Element flavour = (Element) itemIterator.next();
 				String name = flavour.element("name").getText();
 				String cpu = flavour.element("cpu").getText();
 				String mem = flavour.element("mem").getText();
-				int capacity = Integer.parseInt(flavour.element("capacity")
-						.getText());
+				int capacity = Integer.parseInt(flavour.element("capacity").getText());
 				Flavor flavor = new Flavor(name, cpu, mem, capacity);
 				flavoursList.add(flavor);
 			}
 
-			ResourcesInfo resources = new ResourcesInfo(id.getValue(), cpuIdle,
-					cpuInUse, memIdle, memInUse, flavoursList, cert);
+			ResourcesInfo resources = new ResourcesInfo(id.getValue(), cpuIdle, cpuInUse, memIdle,
+					memInUse, flavoursList, cert);
 			FederationMember item = new FederationMember(resources);
 			aliveItems.add(item);
 		}

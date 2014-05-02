@@ -30,9 +30,8 @@ public class TestOCCIApplication {
 
 	private static final String INSTANCE_LOCATION = HeaderUtils.X_OCCI_LOCATION
 			+ "http://localhost:" +OCCITestHelper.ENDPOINT_PORT + ComputeApplication.TARGET
-			+ "/b122f3ad-503c-4abb-8a55-ba8d90cfce9f";
-	private static final String INSTANCE_ID = INSTANCE_LOCATION.replace(
-			HeaderUtils.X_OCCI_LOCATION, "").trim();
+			+ "b122f3ad-503c-4abb-8a55-ba8d90cfce9f";
+	private static final String INSTANCE_ID = INSTANCE_LOCATION;
 	private static final Long SCHEDULER_PERIOD = 500L;
 
 	private OCCIApplication occiApplication;

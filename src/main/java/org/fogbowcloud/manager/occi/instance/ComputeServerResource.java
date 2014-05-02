@@ -41,7 +41,6 @@ public class ComputeServerResource extends ServerResource {
 		HeaderUtils.checkOCCIContentType(req.getHeaders());
 		String authToken = HeaderUtils.getAuthToken(req.getHeaders());
 		String instanceId = (String) getRequestAttributes().get("instanceId");
-		
 		if (instanceId == null) {
 			LOGGER.info("Removing all instances of token :" + authToken);
 			application.removeInstances(authToken);
@@ -51,7 +50,7 @@ public class ComputeServerResource extends ServerResource {
 		LOGGER.info("Removing instance " + instanceId);
 		
 		application.removeInstance(authToken, instanceId);
-		return ResponseConstants.OK;
+		return ResponseConstants.OK;			
 	}
 
 	@Post
