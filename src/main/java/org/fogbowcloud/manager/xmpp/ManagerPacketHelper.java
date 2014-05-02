@@ -56,8 +56,8 @@ public class ManagerPacketHelper {
 			properties.load(input);
 			iq.getElement().element("query").addElement("cert")
 					.setText(CertificateHandlerHelper.getBase64Certificate(properties));
-		} catch (CertificateException e) {
-			LOGGER.warning("Certificate does not Exist");
+		} catch (Exception e) {
+			LOGGER.warning("Could not load certificate");
 		}
 		
 		statusEl.addElement("cpu-idle").setText(resourcesInfo.getCpuIdle());
