@@ -287,14 +287,4 @@ public class ManagerTestHelper {
 			IOException {
 		return CertificateHandlerHelper.getCertificate(getProperties());
 	}
-
-	/*
-	 * public static IQ createIAmAliveIQ() { IQ iq = new IQ(Type.get);
-	 * iq.setTo(RENDEZVOUS_COMPONENT_URL); Element statusEl = iq.getElement()
-	 * .addElement("query", IAMALIVE_NAMESPACE).addElement("status");
-	 * statusEl.addElement("cpu-idle").setText("valor1");
-	 * statusEl.addElement("cpu-inuse").setText("valor2");
-	 * statusEl.addElement("mem-idle").setText("valor3");
-	 * statusEl.addElement("mem-inuse").setText("valor4"); return iq; }
-	 */
 }
