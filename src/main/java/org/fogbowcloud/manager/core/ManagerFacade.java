@@ -1,6 +1,7 @@
 package org.fogbowcloud.manager.core;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -20,7 +21,9 @@ import org.fogbowcloud.manager.core.ssh.SSHTunnel;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.OCCIException;
+import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
+import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.fogbowcloud.manager.occi.request.RequestAttribute;
@@ -83,7 +86,7 @@ public class ManagerFacade {
 	}
 
 	public ResourcesInfo getResourcesInfo() {
-		String token = getFederationUserToken();
+		Token token = getFederationUserToken();
 		ResourcesInfo resourcesInfo = computePlugin.getResourcesInfo(token);
 		resourcesInfo.setId(properties.getProperty("xmpp_jid"));
 		return resourcesInfo;
@@ -183,7 +186,8 @@ public class ManagerFacade {
 		}
 		request.setInstanceId(null);
 		request.setMemberId(null);
-		if (request.getAttValue(RequestAttribute.TYPE.getValue()).equals("persistent")) {
+		if (request.getAttValue(RequestAttribute.TYPE.getValue()) != null 
+				&& request.getAttValue(RequestAttribute.TYPE.getValue()).equals("persistent")) {
 			request.setState(RequestState.OPEN);
 		}
 	}
@@ -222,7 +226,7 @@ public class ManagerFacade {
 
 	public String submitRequestForRemoteMember(List<Category> categories,
 			Map<String, String> xOCCIAtt) {
-		String token = getFederationUserToken();
+		String token = getFederationUserToken().get(OCCIHeaders.X_TOKEN);
 		try {
 			return computePlugin.requestInstance(token, categories, xOCCIAtt);
 		} catch (OCCIException e) {
@@ -235,14 +239,20 @@ public class ManagerFacade {
 
 	// TODO Think about always get new federation user token or store a valid
 	// one.
-	private String getFederationUserToken() {
-		String token = identityPlugin.getToken(properties.getProperty("federation_user_name"),
-				properties.getProperty("federation_user_password"));
-		return token;
+	private Token getFederationUserToken() {
+		Map<String, String> tokenAttributes = new HashMap<String, String>();
+		String username = properties.getProperty("federation_user_name");
+		String password = properties.getProperty("federation_user_password");
+		String tenantName = properties.getProperty("federation_user_tenant_name");
+		tokenAttributes.put(OCCIHeaders.X_TOKEN_USER, username);
+		tokenAttributes.put(OCCIHeaders.X_TOKEN_PASS, password);
+		tokenAttributes.put(OCCIHeaders.X_TOKEN_TENANT_NAME, tenantName);		
+		
+		return identityPlugin.getToken(tokenAttributes);
 	}
 
 	public Instance getInstanceForRemoteMember(String instanceId) {
-		String token = getFederationUserToken();
+		String token = getFederationUserToken().get(OCCIHeaders.X_TOKEN);
 		try {
 			return computePlugin.getInstance(token, instanceId);
 		} catch (OCCIException e) {
@@ -254,7 +264,7 @@ public class ManagerFacade {
 	}
 
 	public void removeInstanceForRemoteMember(String instanceId) {
-		String token = getFederationUserToken();
+		String token = getFederationUserToken().get(OCCIHeaders.X_TOKEN);
 		computePlugin.removeInstance(token, instanceId);
 	}
 
@@ -374,7 +384,7 @@ public class ManagerFacade {
 		this.requests = requests;
 	}
 
-	public String getToken(String username, String password) {
-		return identityPlugin.getToken(username, password);
+	public Token getToken(Map<String, String> attributesToken) {
+		return identityPlugin.getToken(attributesToken);
 	}
 }

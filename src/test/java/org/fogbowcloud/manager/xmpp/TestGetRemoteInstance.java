@@ -78,8 +78,13 @@ public class TestGetRemoteInstance {
 		request.setInstanceId(INSTANCE_DEFAULT);
 		request.setMemberId(MANAGER_COMPONENT_URL);
 		
-		Instance remoteInstance = ManagerPacketHelper.getRemoteInstance(request,  
-				managerTestHelper.createPacketSender());
+		Instance remoteInstance = null;
+		try {
+			remoteInstance = ManagerPacketHelper.getRemoteInstance(request,  
+					managerTestHelper.createPacketSender());			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 
 		Assert.assertEquals(instance.getId(), remoteInstance.getId());
 		Assert.assertEquals(instance.getAttributes(), remoteInstance.getAttributes());

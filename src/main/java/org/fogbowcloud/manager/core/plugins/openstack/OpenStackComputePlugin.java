@@ -28,6 +28,7 @@ import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
+import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.json.JSONException;
@@ -45,7 +46,6 @@ public class OpenStackComputePlugin implements ComputePlugin {
 	private static final String TERM_COMPUTE = "compute";
 	private static final String CLASS_COMPUTE = "kind";
 	private static final String COMPUTE_ENDPOINT = "/compute/";
-	private final String federationTenantId;
 	private final String COMPUTE_V2_API_ENDPOINT = "/v2/";
 
 	private static final String MAX_TOTAL_CORES_ATT = "maxTotalCores";
@@ -54,15 +54,14 @@ public class OpenStackComputePlugin implements ComputePlugin {
 	private static final String TOTAL_RAM_USED_ATT = "totalRAMUsed";
 
 	private String computeOCCIEndpoint;
-	private String computeV2APIEndepoint;
+	private String computeV2APIEndpoint;
 	private Map<String, Category> fogTermToOpensStackCategory = new HashMap<String, Category>();
 
 	public OpenStackComputePlugin(Properties properties) {
 		this.computeOCCIEndpoint = properties.getProperty("compute_openstack_occi_url")
 				+ COMPUTE_ENDPOINT;
-		this.computeV2APIEndepoint = properties.getProperty("compute_openstack_v2api_url")
+		this.computeV2APIEndpoint = properties.getProperty("compute_openstack_v2api_url")
 				+ COMPUTE_V2_API_ENDPOINT;
-		this.federationTenantId = properties.getProperty("federation_user_tenant_id");
 
 		fogTermToOpensStackCategory.put(RequestConstants.SMALL_TERM,
 				createFlavorCategory("compute_openstack_flavor_small", properties));
@@ -104,7 +103,6 @@ public class OpenStackComputePlugin implements ComputePlugin {
 
 		xOCCIAtt.put("org.openstack.compute.user_data",
 				xOCCIAtt.remove(DefaultSSHTunnel.USER_DATA_ATT));
-		xOCCIAtt.remove(DefaultSSHTunnel.SSH_ADDRESS_ATT);
 
 		HttpClient httpClient = new DefaultHttpClient();
 		HttpPost httpPost;
@@ -127,8 +125,8 @@ public class OpenStackComputePlugin implements ComputePlugin {
 				throw new OCCIException(ErrorType.NOT_FOUND, EntityUtils.toString(
 						response.getEntity(), String.valueOf(Charsets.UTF_8)));
 			}
-			String instanceLocation = response.getFirstHeader("Location").getValue();
-			return getInstanceId(instanceLocation);
+
+			return response.getFirstHeader("Location").getValue();
 		} catch (URISyntaxException e) {
 			LOGGER.error(e);
 		} catch (HttpException e) {
@@ -137,12 +135,6 @@ public class OpenStackComputePlugin implements ComputePlugin {
 			LOGGER.error(e);
 		}
 		return null;
-	}
-
-	private String getInstanceId(String instanceLocation) {
-		// location format: OCCI_URL + COMPUTE_ENDPOINT + instanceID
-		String[] tokens = instanceLocation.split(COMPUTE_ENDPOINT);
-		return tokens[1];
 	}
 
 	public Instance getInstance(String authToken, String instanceId) {
@@ -259,12 +251,13 @@ public class OpenStackComputePlugin implements ComputePlugin {
 	}
 
 	@Override
-	public ResourcesInfo getResourcesInfo(String authToken) {
+	public ResourcesInfo getResourcesInfo(Token token) {
 		HttpClient httpCLient = new DefaultHttpClient();
 		HttpGet httpGet;
 		try {
-			httpGet = new HttpGet(computeV2APIEndepoint + federationTenantId + "/limits");
-			httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, authToken);
+			httpGet = new HttpGet(computeV2APIEndpoint
+					+ token.getAttributes().get(OCCIHeaders.X_TOKEN_TENANT_ID) + "/limits");
+			httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, token.get(OCCIHeaders.X_TOKEN));
 			HttpResponse response = httpCLient.execute(httpGet);
 
 			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {

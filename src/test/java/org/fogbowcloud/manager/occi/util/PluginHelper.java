@@ -1,7 +1,11 @@
 package org.fogbowcloud.manager.occi.util;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import org.fogbowcloud.manager.occi.core.OCCIHeaders;
+import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.util.ComputeApplication.InstanceIdGenerator;
 import org.mockito.Mockito;
 import org.restlet.Component;
@@ -12,6 +16,7 @@ public class PluginHelper {
 	private Component component;
 
 	public static final String AUTH_TOKEN = "HgfugGJHgJgHJGjGJgJg-857GHGYHjhHjH";
+	public static final String TENANT_ID = "TEnAHDH49U";
 	public static final String USERNAME_FOGBOW = "admin";
 	public static final String PASSWORD_FOGBOW = "reverse";
 
@@ -25,8 +30,13 @@ public class PluginHelper {
 		this.component = new Component();
 		this.component.getServers().add(Protocol.HTTP, PORT_ENDPOINT);
 
+		Map<String, String> tokenAttributes = new HashMap<String, String>();
+		tokenAttributes.put(OCCIHeaders.X_TOKEN, AUTH_TOKEN);
+		tokenAttributes.put(OCCIHeaders.X_TOKEN_TENANT_ID, TENANT_ID);
+		Token token = new Token(tokenAttributes);
+		
 		KeystoneApplication keystoneApplication = new KeystoneApplication(USERNAME_FOGBOW, PASSWORD_FOGBOW,
-				AUTH_TOKEN);
+				token);
 		keystoneApplication.putTokenAndUser(AUTH_TOKEN, USERNAME_FOGBOW);
 
 		this.component.getDefaultHost().attach(keystoneApplication);

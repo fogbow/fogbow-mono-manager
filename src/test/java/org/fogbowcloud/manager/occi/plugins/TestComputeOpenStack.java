@@ -30,7 +30,8 @@ public class TestComputeOpenStack {
 	private static final String SECOND_INSTANCE_ID = "at62f3ad-67ac-56gb-8a55-adbm98cdee9f";
 
 	private static final String URL = "http://localhost:" + PluginHelper.PORT_ENDPOINT;
-
+	private static final String PREFIX_INSTANCE = "http://localhost:8182/compute/"; 
+	
 	private OpenStackComputePlugin computeOpenStack;
 	private PluginHelper pluginHelper;
 	List<String> expectedInstanceIds;
@@ -71,7 +72,7 @@ public class TestComputeOpenStack {
 		categories.add(new Category(RequestConstants.LINUX_X86_TERM,
 				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 
-		Assert.assertEquals(FIRST_INSTANCE_ID,
+		Assert.assertEquals(PREFIX_INSTANCE + FIRST_INSTANCE_ID,
 				computeOpenStack.requestInstance(PluginHelper.AUTH_TOKEN, categories,
 						new HashMap<String, String>()));
 
@@ -119,7 +120,7 @@ public class TestComputeOpenStack {
 		categories.add(new Category(RequestConstants.LINUX_X86_TERM,
 				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 
-		Assert.assertEquals(FIRST_INSTANCE_ID,
+		Assert.assertEquals(PREFIX_INSTANCE + FIRST_INSTANCE_ID,
 				computeOpenStack.requestInstance(PluginHelper.AUTH_TOKEN, categories,
 						new HashMap<String, String>()));
 	}
@@ -191,7 +192,7 @@ public class TestComputeOpenStack {
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
 		xOCCIAtt.put(ComputeApplication.HOSTNAME_ATTRIBUTE_OCCI, "server-test");
 
-		Assert.assertEquals(FIRST_INSTANCE_ID,
+		Assert.assertEquals(PREFIX_INSTANCE + FIRST_INSTANCE_ID,
 				computeOpenStack.requestInstance(PluginHelper.AUTH_TOKEN, categories, xOCCIAtt));
 
 		String instanceDetails = computeOpenStack.getInstance(PluginHelper.AUTH_TOKEN,
@@ -212,7 +213,7 @@ public class TestComputeOpenStack {
 		xOCCIAtt.put(ComputeApplication.HOSTNAME_ATTRIBUTE_OCCI, "server-test");
 		xOCCIAtt.put("occi.compute.state", "inactive");
 
-		Assert.assertEquals(FIRST_INSTANCE_ID,
+		Assert.assertEquals(PREFIX_INSTANCE + FIRST_INSTANCE_ID,
 				computeOpenStack.requestInstance(PluginHelper.AUTH_TOKEN, categories, xOCCIAtt));
 
 		String instanceDetails = computeOpenStack.getInstance(PluginHelper.AUTH_TOKEN,
@@ -233,7 +234,7 @@ public class TestComputeOpenStack {
 		List<Category> categories = new ArrayList<Category>();
 		categories.add(new Category(RequestConstants.LINUX_X86_TERM,
 				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
-		Assert.assertEquals(FIRST_INSTANCE_ID,
+		Assert.assertEquals(PREFIX_INSTANCE + FIRST_INSTANCE_ID,
 				computeOpenStack.requestInstance(PluginHelper.AUTH_TOKEN, categories,
 						new HashMap<String, String>()));
 
@@ -257,7 +258,7 @@ public class TestComputeOpenStack {
 				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 
 		for (String instanceId : expectedInstanceIds) {
-			Assert.assertEquals(instanceId, computeOpenStack
+			Assert.assertEquals(PREFIX_INSTANCE + instanceId, computeOpenStack
 					.requestInstance(PluginHelper.AUTH_TOKEN, categories,
 							new HashMap<String, String>()));
 		}
@@ -292,7 +293,7 @@ public class TestComputeOpenStack {
 		List<Category> categories = new ArrayList<Category>();
 		categories.add(new Category(RequestConstants.LINUX_X86_TERM,
 				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
-		Assert.assertEquals(FIRST_INSTANCE_ID,
+		Assert.assertEquals(PREFIX_INSTANCE + FIRST_INSTANCE_ID,
 				computeOpenStack.requestInstance(PluginHelper.AUTH_TOKEN, categories,
 						new HashMap<String, String>()));
 
@@ -337,7 +338,7 @@ public class TestComputeOpenStack {
 		categories.add(new Category(RequestConstants.LINUX_X86_TERM,
 				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 		for (String instanceId : expectedInstanceIds) {
-			Assert.assertEquals(instanceId, computeOpenStack
+			Assert.assertEquals(PREFIX_INSTANCE + instanceId, computeOpenStack
 					.requestInstance(PluginHelper.AUTH_TOKEN, categories,
 							new HashMap<String, String>()));
 		}
@@ -365,7 +366,7 @@ public class TestComputeOpenStack {
 		categories.add(new Category(RequestConstants.LINUX_X86_TERM,
 				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 		for (String instanceId : expectedInstanceIds) {
-			Assert.assertEquals(instanceId, computeOpenStack
+			Assert.assertEquals(PREFIX_INSTANCE + instanceId, computeOpenStack
 					.requestInstance(PluginHelper.AUTH_TOKEN, categories,
 							new HashMap<String, String>()));
 		}

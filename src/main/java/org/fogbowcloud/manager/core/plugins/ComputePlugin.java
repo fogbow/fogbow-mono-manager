@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.occi.core.Category;
+import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.instance.Instance;
 
 public interface ComputePlugin {
@@ -19,5 +20,5 @@ public interface ComputePlugin {
 	
 	public void removeInstances(String authToken);
 	
-	public ResourcesInfo getResourcesInfo(String authToken);
+	public ResourcesInfo getResourcesInfo(Token token);
 }

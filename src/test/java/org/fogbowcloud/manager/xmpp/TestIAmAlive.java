@@ -65,8 +65,12 @@ public class TestIAmAlive {
 						.equals(ManagerTestHelper.MANAGER_COMPONENT_URL);
 			}
 		}, callback);
-
-		managerXmppComponent.iAmAlive();
+		
+		try {
+			managerXmppComponent.iAmAlive();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 
 		Packet packet = blockingQueue.poll(5, TimeUnit.SECONDS);
 		Element element = packet.getElement().element("query");
