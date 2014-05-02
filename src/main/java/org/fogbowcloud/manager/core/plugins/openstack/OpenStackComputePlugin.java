@@ -118,12 +118,15 @@ public class OpenStackComputePlugin implements ComputePlugin {
 						attName + "=" + "\"" + xOCCIAtt.get(attName) + "\"");
 			}
 			HttpResponse response = httpClient.execute(httpPost);
+			String errorMessage = EntityUtils.toString(
+					response.getEntity(), String.valueOf(Charsets.UTF_8));
 			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
-				throw new OCCIException(ErrorType.UNAUTHORIZED, EntityUtils.toString(
-						response.getEntity(), String.valueOf(Charsets.UTF_8)));
+				throw new OCCIException(ErrorType.UNAUTHORIZED, errorMessage);
 			} else if (response.getStatusLine().getStatusCode() == HttpStatus.SC_BAD_REQUEST) {
-				throw new OCCIException(ErrorType.NOT_FOUND, EntityUtils.toString(
-						response.getEntity(), String.valueOf(Charsets.UTF_8)));
+				if (errorMessage.contains(ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES)) {
+					throw new OCCIException(ErrorType.QUOTA_EXCEEDED, errorMessage);
+				}
+				throw new OCCIException(ErrorType.BAD_REQUEST, errorMessage);
 			}
 
 			return response.getFirstHeader("Location").getValue();
