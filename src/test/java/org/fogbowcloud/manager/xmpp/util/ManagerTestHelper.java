@@ -1,5 +1,7 @@
 package org.fogbowcloud.manager.xmpp.util;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
@@ -50,6 +52,8 @@ public class ManagerTestHelper {
 	public static final int TEST_DEFAULT_TIMEOUT = 10000;
 	public static final int TIMEOUT_GRACE = 500;
 
+	public final static String CONFIG_PATH = "src/test/resources/manager.conf.test";
+
 	private ManagerXmppComponent managerXmppComponent;
 	private ComputePlugin computePlugin;
 	private IdentityPlugin identityPlugin;
@@ -72,8 +76,9 @@ public class ManagerTestHelper {
 		for (FederationMember rendezvousItem : aliveIds) {
 			Element itemEl = queryElement.addElement("item");
 			itemEl.addAttribute("id", rendezvousItem.getResourcesInfo().getId());
+			// exception too
 			itemEl.addElement("cert").setText(
-					CertificateHandlerHelper.convertToSendingFormat());
+					CertificateHandlerHelper.getBase64Certificate(getProperties()));
 			Element statusEl = itemEl.addElement("status");
 			statusEl.addElement("cpu-idle").setText(
 					rendezvousItem.getResourcesInfo().getCpuIdle());
@@ -224,7 +229,8 @@ public class ManagerTestHelper {
 	}
 
 	@SuppressWarnings("unchecked")
-	public List<FederationMember> getItemsFromIQ(Packet response) throws CertificateException, IOException {
+	public List<FederationMember> getItemsFromIQ(Packet response)
+			throws CertificateException, IOException {
 		Element queryElement = response.getElement().element("query");
 		Iterator<Element> itemIterator = queryElement.elementIterator("item");
 		ArrayList<FederationMember> aliveItems = new ArrayList<FederationMember>();
@@ -233,8 +239,9 @@ public class ManagerTestHelper {
 			Element itemEl = (Element) itemIterator.next();
 			Attribute id = itemEl.attribute("id");
 			Element statusEl = itemEl.element("status");
-			Certificate cert = CertificateHandlerHelper.convertToCertificateFormat(itemEl.element("cert").getText());			
-					String cpuIdle = statusEl.element("cpu-idle").getText();
+			Certificate cert = CertificateHandlerHelper.parseCertificate(itemEl
+					.element("cert").getText());
+			String cpuIdle = statusEl.element("cpu-idle").getText();
 			String cpuInUse = statusEl.element("cpu-inuse").getText();
 			String memIdle = statusEl.element("mem-idle").getText();
 			String memInUse = statusEl.element("mem-inuse").getText();
@@ -260,9 +267,23 @@ public class ManagerTestHelper {
 		return aliveItems;
 	}
 
+	public Properties getProperties() throws IOException {
+		Properties properties = new Properties();
+		FileInputStream input = new FileInputStream(CONFIG_PATH);
+		properties.load(input);
+		return properties;
+	}
+	
+	public Properties getProperties(String path) throws IOException {
+		Properties properties = new Properties();
+		FileInputStream input = new FileInputStream(path);
+		properties.load(input);
+		return properties;
+	}
+	
 	public Certificate getCertificate() throws CertificateException,
 			IOException {
-		return CertificateHandlerHelper.getCertificate();
+		return CertificateHandlerHelper.getCertificate(getProperties());
 	}
 
 	/*

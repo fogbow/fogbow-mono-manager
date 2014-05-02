@@ -1,5 +1,6 @@
 package org.fogbowcloud.manager.xmpp;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
@@ -10,6 +11,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.logging.Logger;
+import java.util.Properties;
 
 import org.apache.http.HttpStatus;
 import org.dom4j.Attribute;
@@ -26,6 +29,7 @@ import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.instance.Instance.Link;
 import org.fogbowcloud.manager.occi.request.Request;
+import org.fogbowcloud.manager.xmpp.util.ManagerTestHelper;
 import org.jamppa.component.PacketSender;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.IQ.Type;
@@ -33,17 +37,29 @@ import org.xmpp.packet.PacketError;
 import org.xmpp.packet.PacketError.Condition;
 
 public class ManagerPacketHelper {
-
+	
+	private final static Logger LOGGER = Logger
+			.getLogger(ManagerPacketHelper.class.getName());
+	
 	public static void iAmAlive(ResourcesInfo resourcesInfo,
 			String rendezvousAddress, PacketSender packetSender)
-			throws CertificateException, IOException {
+			throws IOException {
 		IQ iq = new IQ(Type.get);
 		iq.setTo(rendezvousAddress);
 		Element statusEl = iq.getElement()
 				.addElement("query", ManagerXmppComponent.IAMALIVE_NAMESPACE)
 				.addElement("status");
-		iq.getElement().element("query").addElement("cert")
-				.setText(CertificateHandlerHelper.convertToSendingFormat());
+
+		try {
+			Properties properties = new Properties();
+			FileInputStream input = new FileInputStream(ManagerTestHelper.CONFIG_PATH);
+			properties.load(input);
+			iq.getElement().element("query").addElement("cert")
+					.setText(CertificateHandlerHelper.getBase64Certificate(properties));
+		} catch (CertificateException e) {
+			LOGGER.warning("Certificate does not Exist");
+		}
+		
 		statusEl.addElement("cpu-idle").setText(resourcesInfo.getCpuIdle());
 		statusEl.addElement("cpu-inuse").setText(resourcesInfo.getCpuInUse());
 		statusEl.addElement("mem-idle").setText(resourcesInfo.getMemIdle());
@@ -73,7 +89,7 @@ public class ManagerPacketHelper {
 
 	@SuppressWarnings("unchecked")
 	private static ArrayList<FederationMember> getMembersFromIQ(
-			IQ responseFromWhoIsAliveIQ) throws CertificateException {
+			IQ responseFromWhoIsAliveIQ) {
 		Element queryElement = responseFromWhoIsAliveIQ.getElement().element(
 				"query");
 		Iterator<Element> itemIterator = queryElement.elementIterator("item");
@@ -82,9 +98,16 @@ public class ManagerPacketHelper {
 		while (itemIterator.hasNext()) {
 			Element itemEl = (Element) itemIterator.next();
 			Attribute id = itemEl.attribute("id");
-			Certificate cert = CertificateHandlerHelper
-					.convertToCertificateFormat(itemEl.element("cert")
-							.getText());
+			Certificate cert = null;
+			
+			try {
+				cert = CertificateHandlerHelper
+						.parseCertificate(itemEl.element("cert")
+								.getText());
+			} catch (CertificateException e) {
+				LOGGER.warning("Certificate can not be Parsed.");
+			}
+			
 			Element statusEl = itemEl.element("status");
 			String cpuIdle = statusEl.element("cpu-idle").getText();
 			String cpuInUse = statusEl.element("cpu-inuse").getText();
