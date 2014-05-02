@@ -146,8 +146,11 @@ public class ManagerFacade {
 	private Instance getInstance(String authToken, String instanceId, Request request) {
 		Instance instance = null;
 		if (isLocal(request)) {
+			LOGGER.debug(instanceId + " is local, getting its information in the local cloud.");
 			instance = this.computePlugin.getInstance(authToken, instanceId);
 		} else {
+			LOGGER.debug(instanceId + " is remote, going out to " + 
+					request.getMemberId() + " to get its information.");
 			instance = getRemoteInstance(request);
 		}
 		String sshAddress = request.getAttValue(DefaultSSHTunnel.SSH_ADDRESS_ATT);
