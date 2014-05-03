@@ -18,6 +18,7 @@ import org.apache.http.HttpStatus;
 import org.dom4j.Attribute;
 import org.dom4j.Element;
 import org.fogbowcloud.manager.core.CertificateHandlerHelper;
+import org.fogbowcloud.manager.core.ManagerFacade;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
@@ -174,7 +175,8 @@ public class ManagerPacketHelper {
 				ManagerXmppComponent.GETINSTANCE_NAMESPACE);
 		Element instanceEl = queryEl.addElement("instance");
 		try {
-			instanceEl.addElement("id").setText(request.getInstanceId());
+			instanceEl.addElement("id").setText(
+					ManagerFacade.normalizeInstanceId(request.getInstanceId()));
 		} catch (Exception e) {
 			// TODO: handle exception
 		}
@@ -200,7 +202,8 @@ public class ManagerPacketHelper {
 		Element queryEl = iq.getElement().addElement("query",
 				ManagerXmppComponent.REMOVEINSTANCE_NAMESPACE);
 		Element instanceEl = queryEl.addElement("instance");
-		instanceEl.addElement("id").setText(request.getInstanceId());
+		instanceEl.addElement("id").setText(
+				ManagerFacade.normalizeInstanceId(request.getInstanceId()));
 
 		IQ response = (IQ) packetSender.syncSendPacket(iq);
 		if (response.getError() != null) {

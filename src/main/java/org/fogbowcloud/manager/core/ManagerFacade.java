@@ -199,7 +199,7 @@ public class ManagerFacade {
 		ManagerPacketHelper.deleteRemoteInstace(request, packetSender);
 	}
 	
-	private static String normalizeInstanceId(String instanceId) {
+	public static String normalizeInstanceId(String instanceId) {
 		if (!instanceId.contains("/")) {
 			return instanceId;
 		}

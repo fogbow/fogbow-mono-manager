@@ -152,7 +152,10 @@ public class OpenStackComputePlugin implements ComputePlugin {
 				throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 			} else if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_FOUND) {
 				throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
+			} else if (response.getStatusLine().getStatusCode() >= 400) {
+				throw new OCCIException(ErrorType.BAD_REQUEST, response.getStatusLine().toString());
 			}
+			
 			String responseStr = EntityUtils.toString(response.getEntity(),
 					String.valueOf(Charsets.UTF_8));
 			return Instance.parseInstance(instanceId, responseStr);
