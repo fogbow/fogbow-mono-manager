@@ -1,4 +1,4 @@
 #!/bin/bash
 DIRNAME=`dirname $0`
 cd $DIRNAME/..
-java -cp target/manager-0.0.1-SNAPSHOT.jar:target/lib/* org.fogbowcloud.manager.cli.Main $@
+java -Dlog4j.configuration=file:log4j.properties -cp target/manager-0.0.1-SNAPSHOT.jar:target/lib/* org.fogbowcloud.manager.cli.Main $@
