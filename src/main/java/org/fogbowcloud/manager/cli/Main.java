@@ -45,8 +45,8 @@ public class Main {
 		jc.setProgramName("fogbow-cli");
 		jc.parse(args);
 
-		String parsedCommand = jc.getParsedCommand();
-
+		String parsedCommand = jc.getParsedCommand();		
+		
 		if (parsedCommand == null) {
 			jc.usage();
 			return;
@@ -113,6 +113,12 @@ public class Main {
 			}
 		} else if (parsedCommand.equals("token")) {
 			String url = token.url;
+			
+			if(token.password == null) {
+				System.out.print("Password:");
+				token.password = new String(JCommander.getConsole().readPassword(false));
+			}
+			
 			Set<Header> headers = new HashSet<Header>();
 			headers.add(new BasicHeader(OCCIHeaders.X_TOKEN_USER, token.username));
 			headers.add(new BasicHeader(OCCIHeaders.X_TOKEN_PASS, token.password));
@@ -212,7 +218,7 @@ public class Main {
 		@Parameter(names = "--get", description = "Get token")
 		Boolean get = false;
 
-		@Parameter(names = "--password", required = true, description = "Password", password = true)
+		@Parameter(names = "--password", required = false, description = "Password") 
 		String password = null;
 
 		@Parameter(names = "--username", required = true, description = "Username")
