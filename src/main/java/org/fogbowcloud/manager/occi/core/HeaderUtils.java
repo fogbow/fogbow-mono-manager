@@ -8,38 +8,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.fogbowcloud.manager.occi.request.Request;
-import org.restlet.engine.adapter.HttpRequest;
 import org.restlet.engine.header.Header;
 import org.restlet.util.Series;
 
 public class HeaderUtils {
 
 	public static final String X_OCCI_LOCATION = "X-OCCI-Location: ";
-
-	public static String generateResponseId(List<Request> requests, HttpRequest req) {
-		String requestEndpoint = req.getHostRef() + req.getHttpCall().getRequestUri();
-		String response = "";
-		for (Request request : requests) {
-			response += X_OCCI_LOCATION + requestEndpoint + "/" + request.getId() + "\n";
-		}
-		if (response.equals("")) {
-			response = "Empty";
-		}
-		return response;
-	}
-
-	public static String generateResponseInstanceLocations(List<String> instances, HttpRequest req) {
-		String requestEndpoint = req.getHostRef() + req.getHttpCall().getRequestUri();
-		String response = "";
-		for (String location : instances) {
-			response += X_OCCI_LOCATION + requestEndpoint + "/" + location + "\n";			
-		}
-		if (response.equals("")) {
-			response = "Empty";
-		}
-		return response;
-	}
 
 	public static void checkOCCIContentType(Series<Header> headers) {
 		String contentType = headers.getValues(OCCIHeaders.CONTENT_TYPE);

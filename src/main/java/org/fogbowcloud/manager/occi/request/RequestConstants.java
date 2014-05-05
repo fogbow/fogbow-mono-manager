@@ -17,8 +17,11 @@ public class RequestConstants {
 
 	// image flavors
 	public static final String TEMPLATE_OS_SCHEME = "http://schemas.fogbowcloud.org/template/os#";
-	public static final String UBUNTU64_TERM = "fogbow-ubuntu64";
+	public static final String LINUX_X86_TERM = "fogbow-linux-x86";
 
 	// general
 	public static final String MIXIN_CLASS = "mixin";
+	
+	// ssh
+	public static final String USER_DATA_TERM = "fogbow-userdata";
 }

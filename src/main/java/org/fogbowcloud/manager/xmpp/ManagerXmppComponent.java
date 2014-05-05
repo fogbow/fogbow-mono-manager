@@ -1,71 +1,72 @@
 package org.fogbowcloud.manager.xmpp;
 
+import java.io.IOException;
+import java.security.cert.CertificateException;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import org.dom4j.Element;
-import org.fogbowcloud.manager.occi.plugins.ComputePlugin;
-import org.fogbowcloud.manager.xmpp.core.ManagerFacade;
-import org.fogbowcloud.manager.xmpp.core.ManagerModel;
+import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.core.ManagerFacade;
 import org.jamppa.component.XMPPComponent;
-import org.xmpp.component.ComponentException;
-import org.xmpp.packet.IQ;
-import org.xmpp.packet.IQ.Type;
+import org.xmpp.packet.Packet;
 
 public class ManagerXmppComponent extends XMPPComponent {
 
 	public static final String WHOISALIVE_NAMESPACE = "http://fogbowcloud.org/rendezvous/whoisalive";
 	public static final String IAMALIVE_NAMESPACE = "http://fogbowcloud.org/rendezvous/iamalive";
-	private static long PERIOD = 100;
+	public static final String REQUEST_NAMESPACE = "http://fogbowcloud.org/manager/request";
+	public static final String GETINSTANCE_NAMESPACE = "http://fogbowcloud.org/manager/getinstance";
+	public static final String REMOVEINSTANCE_NAMESPACE = "http://fogbowcloud.org/manager/removeinstance";
+
+	private static long PERIOD = 30000;
+	private static Logger LOGGER = Logger.getLogger(ManagerXmppComponent.class);
 	private ManagerFacade managerFacade;
 	private final Timer timer = new Timer();
 	private String rendezvousAddress;
-	private ComputePlugin plugin;
-	
+
 	public ManagerXmppComponent(String jid, String password, String server,
-			int port, ComputePlugin plugin) {
+			int port, ManagerFacade managerFacade) {
 		super(jid, password, server, port);
-		managerFacade = new ManagerFacade(new ManagerModel());
-		this.plugin = plugin;
+		this.managerFacade = managerFacade;
+		addGetHandler(new GetInstanceHandler(managerFacade));
+		addSetHandler(new RemoveInstanceHandler(managerFacade));
+		addSetHandler(new RequestInstanceHandler(managerFacade));
+	}
+
+	public void init() {
+		scheduleIamAlive();
+	}
+
+	public void iAmAlive() throws CertificateException, IOException {
+		ManagerPacketHelper.iAmAlive(managerFacade.getResourcesInfo(),
+				rendezvousAddress, managerFacade.getProperties(), this);
 	}
 
 	@Override
-	public void connect() throws ComponentException {
-		super.connect();
+	protected void send(Packet packet) {
+		packet.setFrom(getJID());
+		super.send(packet);
 	}
 
-	public void init(String authToken) {
-		callIamAlive(authToken);
-	}
-	
-	public void iAmAlive(String authToken) {
-		IQ iq = new IQ(Type.get);
-		iq.setTo(rendezvousAddress);
-		iq.setFrom(getJID());
-		Element statusEl = iq.getElement()
-				.addElement("query", IAMALIVE_NAMESPACE).addElement("status");
-		statusEl.addElement("cpu-idle").setText(plugin.getResourcesInfo(authToken).getCpuIdle());
-		statusEl.addElement("cpu-inuse").setText(plugin.getResourcesInfo(authToken).getCpuInUse());
-		statusEl.addElement("mem-idle").setText(plugin.getResourcesInfo(authToken).getMemIdle());
-		statusEl.addElement("mem-inuse").setText(plugin.getResourcesInfo(authToken).getMemInUse());
-		this.syncSendPacket(iq);
+	public void whoIsalive() throws CertificateException {
+		managerFacade.updateMembers(ManagerPacketHelper.whoIsalive(
+				rendezvousAddress, this));
 	}
 
-	public void whoIsalive() {
-		IQ iq = new IQ(Type.get);
-		iq.setTo(rendezvousAddress);
-		iq.setFrom(getJID());
-		iq.getElement().addElement("query", WHOISALIVE_NAMESPACE);
-		IQ response = (IQ) this.syncSendPacket(iq);
-		managerFacade.getItemsFromIQ(response);
-	}
-
-	private void callIamAlive(final String authToken) {
+	private void scheduleIamAlive() {
 		timer.schedule(new TimerTask() {
 			@Override
 			public void run() {
-				iAmAlive(authToken);
-				whoIsalive();
+				try {
+					iAmAlive();
+				} catch (Exception e) {
+					LOGGER.error("Failure during IAmAlive()", e);
+				}
+				try {
+					whoIsalive();
+				} catch (Exception e) {
+					LOGGER.error("Failure during whoIsAlive()", e);
+				}
 			}
 		}, 0, PERIOD);
 	}

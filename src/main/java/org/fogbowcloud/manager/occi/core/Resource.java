@@ -27,27 +27,48 @@ public class Resource {
 	}
 
 	public String toHeader() {
+		String title = "";
+		String rel = "";
+		String location = "";
+		String actions = "";
+		String attributes = "";
+		if (!getTitle().equals("")) {
+			title = "\"; title=\"" + getTitle();
+		}
+		if (!getRel().equals("")) {
+			rel = "\"; rel=\"" + getRel();
+		}
+		if (!getLocation().equals("")) {
+			location = "\"; location=\"" + getLocation();
+		}
+		if(getActions().size() != 0 ){
+			actions = "\"; actions=\"" + actionsToHeader();
+		}
+		if(getAttributes().size() != 0){
+			attributes = "\"; attributes=\"" + attributesToHeader();
+		}
+		 
+
 		return category.getTerm() + "; scheme=\"" + category.getScheme() + "\"; class=\""
-				+ category.getCatClass() + "\" attributes=\"" + attributesToHeader() + "\" actions=\""
-				+ actionsToHeader() + "\" location=\"" + getLocation() + "\" title=\"" + getTitle()
-				+ "\" rel=\"" + getRel() + "\"";
+				+ category.getCatClass() + title + rel + location 
+				+ attributes + actions + "\"";
 	}
-	
+
 	private String actionsToHeader() {
 		String actionsString = "";
 		for (String action : getActions()) {
 			actionsString += action + " ";
 		}
-		return actionsString.trim();		
+		return actionsString.trim();
 	}
-	
+
 	private String attributesToHeader() {
 		String attributesString = "";
 		for (String attribute : getAttributes()) {
 			attributesString += attribute + " ";
 		}
-		return attributesString.trim();		
-	}	
+		return attributesString.trim();
+	}
 
 	public Category getCategory() {
 		return category;

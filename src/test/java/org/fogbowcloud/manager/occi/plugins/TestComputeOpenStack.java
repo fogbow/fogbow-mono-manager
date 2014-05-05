@@ -4,16 +4,17 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.StringTokenizer;
 
+import org.fogbowcloud.manager.core.plugins.openstack.OpenStackComputePlugin;
 import org.fogbowcloud.manager.occi.core.Category;
-import org.fogbowcloud.manager.occi.core.HeaderUtils;
 import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
-import org.fogbowcloud.manager.occi.model.ComputeApplication;
-import org.fogbowcloud.manager.occi.model.PluginHelper;
-import org.fogbowcloud.manager.occi.plugins.openstack.ComputeOpenStackPlugin;
+import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
+import org.fogbowcloud.manager.occi.util.ComputeApplication;
+import org.fogbowcloud.manager.occi.util.PluginHelper;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -21,32 +22,38 @@ import org.junit.Test;
 
 public class TestComputeOpenStack {
 
-	private final String FIRST_EXPECTED_INSTANCE_ID = "b122f3ad-503c-4abb-8a55-ba8d90cfce9f";
-	private final String FIFTH_EXPECTED_INSTANCE_ID = "hla256kh-43ar-67ww-ao90-fa8d456fce9f";
-	private final String FOURTH_EXPECTED_INSTANCE_ID = "qwuif8ad-19a3-4afg-1l77-tred90crei0q";
-	private final String THIRD_EXPECTED_INSTANCE_ID = "cg2563ee-503c-6abr-54gl-ba8d12hf0pof";
-	private final String SECOND_EXPECTED_INSTANCE_ID = "at62f3ad-67ac-56gb-8a55-adbm98cdee9f";
-	private final String COMPUTE_END_POINT = "http://localhost:" + PluginHelper.PORT_ENDPOINT
-			+ ComputeApplication.TARGET;
-	private final String PREFIX_RESPONSE_LOCATION = HeaderUtils.X_OCCI_LOCATION
-			+ COMPUTE_END_POINT + "/";
+	private static final String CIRROS_IMAGE_TERM = "cadf2e29-7216-4a5e-9364-cf6513d5f1fd";
+	private static final String FIRST_INSTANCE_ID = "b122f3ad-503c-4abb-8a55-ba8d90cfce9f";
+	private static final String FIFTH_INSTANCE_ID = "hla256kh-43ar-67ww-ao90-fa8d456fce9f";
+	private static final String FOURTH_INSTANCE_ID = "qwuif8ad-19a3-4afg-1l77-tred90crei0q";
+	private static final String THIRD_INSTANCE_ID = "cg2563ee-503c-6abr-54gl-ba8d12hf0pof";
+	private static final String SECOND_INSTANCE_ID = "at62f3ad-67ac-56gb-8a55-adbm98cdee9f";
 
+	private static final String URL = "http://localhost:" + PluginHelper.PORT_ENDPOINT;
+	private static final String PREFIX_INSTANCE = "http://localhost:8182/compute/"; 
 	
-	private ComputeOpenStackPlugin computeOpenStack;
+	private OpenStackComputePlugin computeOpenStack;
 	private PluginHelper pluginHelper;
 	List<String> expectedInstanceIds;
 
 	@Before
 	public void setUp() throws Exception {
-		computeOpenStack = new ComputeOpenStackPlugin(COMPUTE_END_POINT);
+		Properties properties = new Properties();
+		properties.put("compute_openstack_occi_url", URL);
+		properties.put("compute_openstack_flavor_small", ComputeApplication.SMALL_FLAVOR_TERM);
+		properties.put("compute_openstack_flavor_medium", ComputeApplication.MEDIUM_FLAVOR_TERM);
+		properties.put("compute_openstack_flavor_large", ComputeApplication.MEDIUM_FLAVOR_TERM);
+		properties.put("compute_openstack_default_cirros_image", CIRROS_IMAGE_TERM);
+
+		computeOpenStack = new OpenStackComputePlugin(properties);
 
 		// five first generated instance ids
 		expectedInstanceIds = new ArrayList<String>();
-		expectedInstanceIds.add(FIRST_EXPECTED_INSTANCE_ID);
-		expectedInstanceIds.add(SECOND_EXPECTED_INSTANCE_ID);
-		expectedInstanceIds.add(THIRD_EXPECTED_INSTANCE_ID);
-		expectedInstanceIds.add(FOURTH_EXPECTED_INSTANCE_ID);
-		expectedInstanceIds.add(FIFTH_EXPECTED_INSTANCE_ID);
+		expectedInstanceIds.add(FIRST_INSTANCE_ID);
+		expectedInstanceIds.add(SECOND_INSTANCE_ID);
+		expectedInstanceIds.add(THIRD_INSTANCE_ID);
+		expectedInstanceIds.add(FOURTH_INSTANCE_ID);
+		expectedInstanceIds.add(FIFTH_INSTANCE_ID);
 
 		pluginHelper = new PluginHelper();
 		pluginHelper.initializeComputeComponent(expectedInstanceIds);
@@ -62,24 +69,27 @@ public class TestComputeOpenStack {
 		List<Category> categories = new ArrayList<Category>();
 		categories.add(new Category(RequestConstants.SMALL_TERM,
 				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
-		categories.add(new Category(RequestConstants.UBUNTU64_TERM,
+		categories.add(new Category(RequestConstants.LINUX_X86_TERM,
 				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 
-		Assert.assertEquals(PREFIX_RESPONSE_LOCATION + FIRST_EXPECTED_INSTANCE_ID,
+		Assert.assertEquals(PREFIX_INSTANCE + FIRST_INSTANCE_ID,
 				computeOpenStack.requestInstance(PluginHelper.AUTH_TOKEN, categories,
 						new HashMap<String, String>()));
 
-		String instanceDetails = computeOpenStack.getInstanceDetails(PluginHelper.AUTH_TOKEN,
-				FIRST_EXPECTED_INSTANCE_ID);
-		
-		Assert.assertEquals(1,
-				Integer.parseInt(getAttValueFromDetails(instanceDetails, ComputeApplication.CORE_ATTRIBUTE_OCCI)));
-		Assert.assertEquals(2,
-				Integer.parseInt(getAttValueFromDetails(instanceDetails, ComputeApplication.MEMORY_ATTRIBUTE_OCCI)));
-		Assert.assertEquals(64, Integer.parseInt(getAttValueFromDetails(instanceDetails,
+		Instance instance = computeOpenStack
+				.getInstance(PluginHelper.AUTH_TOKEN, FIRST_INSTANCE_ID);
+
+		Assert.assertEquals(1, Integer.parseInt(getAttValueFromDetails(
+				instance.toOCCIMassageFormatDetails(), ComputeApplication.CORE_ATTRIBUTE_OCCI)));
+		Assert.assertEquals(2, Integer.parseInt(getAttValueFromDetails(
+				instance.toOCCIMassageFormatDetails(), ComputeApplication.MEMORY_ATTRIBUTE_OCCI)));
+		Assert.assertEquals(64, Integer.parseInt(getAttValueFromDetails(
+				instance.toOCCIMassageFormatDetails(),
 				ComputeApplication.ARCHITECTURE_ATTRIBUTE_OCCI)));
-		Assert.assertEquals("server-" + FIRST_EXPECTED_INSTANCE_ID,
-				getAttValueFromDetails(instanceDetails, ComputeApplication.HOSTNAME_ATTRIBUTE_OCCI));
+		Assert.assertEquals(
+				"server-" + FIRST_INSTANCE_ID,
+				getAttValueFromDetails(instance.toOCCIMassageFormatDetails(),
+						ComputeApplication.HOSTNAME_ATTRIBUTE_OCCI));
 	}
 
 	private String getAttValueFromDetails(String instanceDetails, String attName) {
@@ -88,7 +98,7 @@ public class TestComputeOpenStack {
 			String line = st.nextToken();
 			if (line.contains(OCCIHeaders.X_OCCI_ATTRIBUTE) && line.contains(attName)) {
 				StringTokenizer st2 = new StringTokenizer(line, "=");
-				st2.nextToken(); // attName 
+				st2.nextToken(); // attName
 				return st2.nextToken().replaceAll("\"", "");
 			}
 		}
@@ -107,11 +117,12 @@ public class TestComputeOpenStack {
 	@Test
 	public void testRequestWithoutSizeCateory() {
 		List<Category> categories = new ArrayList<Category>();
-		categories.add(new Category(RequestConstants.UBUNTU64_TERM,
+		categories.add(new Category(RequestConstants.LINUX_X86_TERM,
 				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 
-		Assert.assertEquals(PREFIX_RESPONSE_LOCATION + FIRST_EXPECTED_INSTANCE_ID, computeOpenStack.requestInstance(
-				PluginHelper.AUTH_TOKEN, categories, new HashMap<String, String>()));
+		Assert.assertEquals(PREFIX_INSTANCE + FIRST_INSTANCE_ID,
+				computeOpenStack.requestInstance(PluginHelper.AUTH_TOKEN, categories,
+						new HashMap<String, String>()));
 	}
 
 	@Test(expected = OCCIException.class)
@@ -119,7 +130,7 @@ public class TestComputeOpenStack {
 		List<Category> categories = new ArrayList<Category>();
 		categories.add(new Category(RequestConstants.SMALL_TERM,
 				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
-		categories.add(new Category(RequestConstants.UBUNTU64_TERM,
+		categories.add(new Category(RequestConstants.LINUX_X86_TERM,
 				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
@@ -133,7 +144,7 @@ public class TestComputeOpenStack {
 		List<Category> categories = new ArrayList<Category>();
 		categories.add(new Category(RequestConstants.SMALL_TERM,
 				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
-		categories.add(new Category(RequestConstants.UBUNTU64_TERM,
+		categories.add(new Category(RequestConstants.LINUX_X86_TERM,
 				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
@@ -147,7 +158,7 @@ public class TestComputeOpenStack {
 		List<Category> categories = new ArrayList<Category>();
 		categories.add(new Category(RequestConstants.SMALL_TERM,
 				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
-		categories.add(new Category(RequestConstants.UBUNTU64_TERM,
+		categories.add(new Category(RequestConstants.LINUX_X86_TERM,
 				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
@@ -161,7 +172,7 @@ public class TestComputeOpenStack {
 		List<Category> categories = new ArrayList<Category>();
 		categories.add(new Category(RequestConstants.SMALL_TERM,
 				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
-		categories.add(new Category(RequestConstants.UBUNTU64_TERM,
+		categories.add(new Category(RequestConstants.LINUX_X86_TERM,
 				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
@@ -175,17 +186,17 @@ public class TestComputeOpenStack {
 		List<Category> categories = new ArrayList<Category>();
 		categories.add(new Category(RequestConstants.SMALL_TERM,
 				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
-		categories.add(new Category(RequestConstants.UBUNTU64_TERM,
+		categories.add(new Category(RequestConstants.LINUX_X86_TERM,
 				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
 		xOCCIAtt.put(ComputeApplication.HOSTNAME_ATTRIBUTE_OCCI, "server-test");
 
-		Assert.assertEquals(PREFIX_RESPONSE_LOCATION + FIRST_EXPECTED_INSTANCE_ID,
+		Assert.assertEquals(PREFIX_INSTANCE + FIRST_INSTANCE_ID,
 				computeOpenStack.requestInstance(PluginHelper.AUTH_TOKEN, categories, xOCCIAtt));
 
-		String instanceDetails = computeOpenStack.getInstanceDetails(PluginHelper.AUTH_TOKEN,
-				FIRST_EXPECTED_INSTANCE_ID);
+		String instanceDetails = computeOpenStack.getInstance(PluginHelper.AUTH_TOKEN,
+				FIRST_INSTANCE_ID).toOCCIMassageFormatDetails();
 		Assert.assertEquals("server-test",
 				getAttValueFromDetails(instanceDetails, ComputeApplication.HOSTNAME_ATTRIBUTE_OCCI));
 	}
@@ -195,18 +206,18 @@ public class TestComputeOpenStack {
 		List<Category> categories = new ArrayList<Category>();
 		categories.add(new Category(RequestConstants.SMALL_TERM,
 				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
-		categories.add(new Category(RequestConstants.UBUNTU64_TERM,
+		categories.add(new Category(RequestConstants.LINUX_X86_TERM,
 				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
 		xOCCIAtt.put(ComputeApplication.HOSTNAME_ATTRIBUTE_OCCI, "server-test");
 		xOCCIAtt.put("occi.compute.state", "inactive");
 
-		Assert.assertEquals(PREFIX_RESPONSE_LOCATION +  FIRST_EXPECTED_INSTANCE_ID,
+		Assert.assertEquals(PREFIX_INSTANCE + FIRST_INSTANCE_ID,
 				computeOpenStack.requestInstance(PluginHelper.AUTH_TOKEN, categories, xOCCIAtt));
 
-		String instanceDetails = computeOpenStack.getInstanceDetails(PluginHelper.AUTH_TOKEN,
-				FIRST_EXPECTED_INSTANCE_ID);
+		String instanceDetails = computeOpenStack.getInstance(PluginHelper.AUTH_TOKEN,
+				FIRST_INSTANCE_ID).toOCCIMassageFormatDetails();
 		Assert.assertEquals("server-test",
 				getAttValueFromDetails(instanceDetails, ComputeApplication.HOSTNAME_ATTRIBUTE_OCCI));
 		Assert.assertEquals("inactive",
@@ -215,167 +226,160 @@ public class TestComputeOpenStack {
 
 	@Test
 	public void testGetAllInstanceIds() {
-		Assert.assertEquals(
-				0,
-				getInstanceLocations(computeOpenStack.getInstancesFromUser(PluginHelper.AUTH_TOKEN))
-						.size());
+		List<String> instanceLocations = getInstanceLocations(computeOpenStack
+				.getInstances(PluginHelper.AUTH_TOKEN));
+		Assert.assertEquals(0, instanceLocations.size());
 
 		// requesting one default instance
 		List<Category> categories = new ArrayList<Category>();
-		categories.add(new Category(RequestConstants.UBUNTU64_TERM,
+		categories.add(new Category(RequestConstants.LINUX_X86_TERM,
 				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
-		Assert.assertEquals(PREFIX_RESPONSE_LOCATION + FIRST_EXPECTED_INSTANCE_ID, computeOpenStack.requestInstance(
-				PluginHelper.AUTH_TOKEN, categories, new HashMap<String, String>()));
+		Assert.assertEquals(PREFIX_INSTANCE + FIRST_INSTANCE_ID,
+				computeOpenStack.requestInstance(PluginHelper.AUTH_TOKEN, categories,
+						new HashMap<String, String>()));
 
 		// check getting all instance ids
-		List<String> instanceIds = getInstanceLocations(computeOpenStack
-				.getInstancesFromUser(PluginHelper.AUTH_TOKEN));
-		Assert.assertEquals(1, instanceIds.size());
-		Assert.assertEquals(COMPUTE_END_POINT + "/" + FIRST_EXPECTED_INSTANCE_ID, instanceIds.get(0));
+		instanceLocations = getInstanceLocations(computeOpenStack
+				.getInstances(PluginHelper.AUTH_TOKEN));
+		Assert.assertEquals(1, instanceLocations.size());
+		Assert.assertEquals(URL + ComputeApplication.TARGET + "/" + FIRST_INSTANCE_ID,
+				instanceLocations.get(0));
 	}
 
 	@Test
 	public void testGetAllManyInstanceIds() {
-		Assert.assertEquals(
-				0,
-				getInstanceLocations(computeOpenStack.getInstancesFromUser(PluginHelper.AUTH_TOKEN))
-						.size());
+		List<String> instanceLocations = getInstanceLocations(computeOpenStack
+				.getInstances(PluginHelper.AUTH_TOKEN));
+		Assert.assertEquals(0, instanceLocations.size());
 
 		// requesting default instance
 		List<Category> categories = new ArrayList<Category>();
-		categories.add(new Category(RequestConstants.UBUNTU64_TERM,
+		categories.add(new Category(RequestConstants.LINUX_X86_TERM,
 				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 
 		for (String instanceId : expectedInstanceIds) {
-			Assert.assertEquals(PREFIX_RESPONSE_LOCATION + instanceId, computeOpenStack.requestInstance(
-					PluginHelper.AUTH_TOKEN, categories, new HashMap<String, String>()));
+			Assert.assertEquals(PREFIX_INSTANCE + instanceId, computeOpenStack
+					.requestInstance(PluginHelper.AUTH_TOKEN, categories,
+							new HashMap<String, String>()));
 		}
 
 		// check getting all instance ids
-		List<String> instanceIds = getInstanceLocations(computeOpenStack
-				.getInstancesFromUser(PluginHelper.AUTH_TOKEN));
-		Assert.assertEquals(expectedInstanceIds.size(), instanceIds.size());
-		System.out.println(instanceIds);
+		instanceLocations = getInstanceLocations(computeOpenStack
+				.getInstances(PluginHelper.AUTH_TOKEN));
+		Assert.assertEquals(expectedInstanceIds.size(), instanceLocations.size());
 		for (String expectedId : expectedInstanceIds) {
-			System.out.println(COMPUTE_END_POINT + expectedId);
-			Assert.assertTrue(instanceIds.contains(COMPUTE_END_POINT + "/" + expectedId));
+			Assert.assertTrue(instanceLocations.contains(URL + ComputeApplication.TARGET + "/"
+					+ expectedId));
 		}
 	}
 
-	private List<String> getInstanceLocations(String instancesFromUser) {
-		if(instancesFromUser.contains(HeaderUtils.X_OCCI_LOCATION)){
-			String[] tokens = instancesFromUser.split("\n");
-			List<String> locations = new ArrayList<String>();
-			for (int i = 0; i < tokens.length; i++) {
-				String[] lineTokens = tokens[i].split("Location:");
-				locations.add(lineTokens[1].trim());
-			}
-			return locations;			
+	private List<String> getInstanceLocations(List<Instance> intances) {
+		List<String> locations = new ArrayList<String>();
+		for (Instance instance : intances) {
+			// String instanceMessage = instance.toOCCIMassageFormatLocation();
+			String[] lineTokens = instance.toOCCIMassageFormatLocation().split("Location:");
+			locations.add(lineTokens[1].trim());
 		}
-		return new ArrayList<String>();
+		return locations;
 	}
 
 	@Test
 	public void testGetInstanceDetails() {
-		Assert.assertEquals(
-				0,
-				getInstanceLocations(computeOpenStack.getInstancesFromUser(PluginHelper.AUTH_TOKEN))
-						.size());
+		List<String> instanceLocations = getInstanceLocations(computeOpenStack
+				.getInstances(PluginHelper.AUTH_TOKEN));
+		Assert.assertEquals(0, instanceLocations.size());
 
 		// requesting one default instance
 		List<Category> categories = new ArrayList<Category>();
-		categories.add(new Category(RequestConstants.UBUNTU64_TERM,
+		categories.add(new Category(RequestConstants.LINUX_X86_TERM,
 				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
-		Assert.assertEquals(PREFIX_RESPONSE_LOCATION + FIRST_EXPECTED_INSTANCE_ID, computeOpenStack.requestInstance(
-				PluginHelper.AUTH_TOKEN, categories, new HashMap<String, String>()));
+		Assert.assertEquals(PREFIX_INSTANCE + FIRST_INSTANCE_ID,
+				computeOpenStack.requestInstance(PluginHelper.AUTH_TOKEN, categories,
+						new HashMap<String, String>()));
 
 		// check instance details
-		Assert.assertEquals(
-				1,
-				getInstanceLocations(computeOpenStack.getInstancesFromUser(PluginHelper.AUTH_TOKEN))
-						.size());
-		String instanceDetails = computeOpenStack.getInstanceDetails(PluginHelper.AUTH_TOKEN,
-				FIRST_EXPECTED_INSTANCE_ID);
-		Assert.assertEquals(FIRST_EXPECTED_INSTANCE_ID,
+		instanceLocations = getInstanceLocations(computeOpenStack
+				.getInstances(PluginHelper.AUTH_TOKEN));
+		Assert.assertEquals(1, instanceLocations.size());
+		String instanceDetails = computeOpenStack.getInstance(PluginHelper.AUTH_TOKEN,
+				FIRST_INSTANCE_ID).toOCCIMassageFormatDetails();
+		Assert.assertEquals(FIRST_INSTANCE_ID,
 				getAttValueFromDetails(instanceDetails, ComputeApplication.ID_CORE_ATTRIBUTE_OCCI));
-		Assert.assertEquals(1,
-				Integer.parseInt(getAttValueFromDetails(instanceDetails, ComputeApplication.CORE_ATTRIBUTE_OCCI)));
-		Assert.assertEquals(2,
-				Integer.parseInt(getAttValueFromDetails(instanceDetails, ComputeApplication.MEMORY_ATTRIBUTE_OCCI)));
+		Assert.assertEquals(1, Integer.parseInt(getAttValueFromDetails(instanceDetails,
+				ComputeApplication.CORE_ATTRIBUTE_OCCI)));
+		Assert.assertEquals(2, Integer.parseInt(getAttValueFromDetails(instanceDetails,
+				ComputeApplication.MEMORY_ATTRIBUTE_OCCI)));
 		Assert.assertEquals(64, Integer.parseInt(getAttValueFromDetails(instanceDetails,
 				ComputeApplication.ARCHITECTURE_ATTRIBUTE_OCCI)));
-		Assert.assertEquals("server-" + FIRST_EXPECTED_INSTANCE_ID,
+		Assert.assertEquals("server-" + FIRST_INSTANCE_ID,
 				getAttValueFromDetails(instanceDetails, ComputeApplication.HOSTNAME_ATTRIBUTE_OCCI));
 	}
 
 	@Test
 	public void testDeleteAllInstancesEmpty() {
-		Assert.assertEquals(
-				0,
-				getInstanceLocations(computeOpenStack.getInstancesFromUser(PluginHelper.AUTH_TOKEN))
-						.size());
-		computeOpenStack.removeAllInstances(PluginHelper.AUTH_TOKEN);
-		Assert.assertEquals(
-				0,
-				getInstanceLocations(computeOpenStack.getInstancesFromUser(PluginHelper.AUTH_TOKEN))
-						.size());
+		List<String> instanceLocations = getInstanceLocations(computeOpenStack
+				.getInstances(PluginHelper.AUTH_TOKEN));
+		Assert.assertEquals(0, instanceLocations.size());
+
+		computeOpenStack.removeInstances(PluginHelper.AUTH_TOKEN);
+		instanceLocations = getInstanceLocations(computeOpenStack
+				.getInstances(PluginHelper.AUTH_TOKEN));
+		Assert.assertEquals(0, instanceLocations.size());
 	}
 
 	@Test
 	public void testDeleteAllManyInstances() {
-		Assert.assertEquals(
-				0,
-				getInstanceLocations(computeOpenStack.getInstancesFromUser(PluginHelper.AUTH_TOKEN))
-						.size());
+		List<String> instanceLocations = getInstanceLocations(computeOpenStack
+				.getInstances(PluginHelper.AUTH_TOKEN));
+		Assert.assertEquals(0, instanceLocations.size());
 
 		// requesting default instances
 		List<Category> categories = new ArrayList<Category>();
-		categories.add(new Category(RequestConstants.UBUNTU64_TERM,
+		categories.add(new Category(RequestConstants.LINUX_X86_TERM,
 				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 		for (String instanceId : expectedInstanceIds) {
-			Assert.assertEquals(PREFIX_RESPONSE_LOCATION  + instanceId, computeOpenStack.requestInstance(
-					PluginHelper.AUTH_TOKEN, categories, new HashMap<String, String>()));
+			Assert.assertEquals(PREFIX_INSTANCE + instanceId, computeOpenStack
+					.requestInstance(PluginHelper.AUTH_TOKEN, categories,
+							new HashMap<String, String>()));
 		}
 
 		// check number of instances
-		List<String> instanceIds = getInstanceLocations(computeOpenStack
-				.getInstancesFromUser(PluginHelper.AUTH_TOKEN));
-		Assert.assertEquals(expectedInstanceIds.size(), instanceIds.size());
+		instanceLocations = getInstanceLocations(computeOpenStack
+				.getInstances(PluginHelper.AUTH_TOKEN));
+		Assert.assertEquals(expectedInstanceIds.size(), instanceLocations.size());
 
 		// removing all instances
-		computeOpenStack.removeAllInstances(PluginHelper.AUTH_TOKEN);
-		Assert.assertEquals(
-				0,
-				getInstanceLocations(computeOpenStack.getInstancesFromUser(PluginHelper.AUTH_TOKEN))
-						.size());
+		computeOpenStack.removeInstances(PluginHelper.AUTH_TOKEN);
+		instanceLocations = getInstanceLocations(computeOpenStack
+				.getInstances(PluginHelper.AUTH_TOKEN));
+		Assert.assertEquals(0, instanceLocations.size());
 	}
 
 	@Test
 	public void testDeleteOneInstance() {
-		Assert.assertEquals(
-				0,
-				getInstanceLocations(computeOpenStack.getInstancesFromUser(PluginHelper.AUTH_TOKEN))
-						.size());
+		List<String> instanceLocations = getInstanceLocations(computeOpenStack
+				.getInstances(PluginHelper.AUTH_TOKEN));
+		Assert.assertEquals(0, instanceLocations.size());
 
 		// requesting default instances
 		List<Category> categories = new ArrayList<Category>();
-		categories.add(new Category(RequestConstants.UBUNTU64_TERM,
+		categories.add(new Category(RequestConstants.LINUX_X86_TERM,
 				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 		for (String instanceId : expectedInstanceIds) {
-			Assert.assertEquals(PREFIX_RESPONSE_LOCATION + instanceId, computeOpenStack.requestInstance(
-					PluginHelper.AUTH_TOKEN, categories, new HashMap<String, String>()));
+			Assert.assertEquals(PREFIX_INSTANCE + instanceId, computeOpenStack
+					.requestInstance(PluginHelper.AUTH_TOKEN, categories,
+							new HashMap<String, String>()));
 		}
 
 		// check number of instances
-		List<String> instanceIds = getInstanceLocations(computeOpenStack
-				.getInstancesFromUser(PluginHelper.AUTH_TOKEN));
-		Assert.assertEquals(expectedInstanceIds.size(), instanceIds.size());
+		instanceLocations = getInstanceLocations(computeOpenStack
+				.getInstances(PluginHelper.AUTH_TOKEN));
+		Assert.assertEquals(expectedInstanceIds.size(), instanceLocations.size());
 
 		// removing one instances
-		computeOpenStack.removeInstance(PluginHelper.AUTH_TOKEN, FIRST_EXPECTED_INSTANCE_ID);
-		Assert.assertEquals(
-				expectedInstanceIds.size() - 1,
-				getInstanceLocations(computeOpenStack.getInstancesFromUser(PluginHelper.AUTH_TOKEN))
-						.size());
+		computeOpenStack.removeInstance(PluginHelper.AUTH_TOKEN, FIRST_INSTANCE_ID);
+		instanceLocations = getInstanceLocations(computeOpenStack
+				.getInstances(PluginHelper.AUTH_TOKEN));
+		Assert.assertEquals(expectedInstanceIds.size() - 1, instanceLocations.size());
 	}
 }

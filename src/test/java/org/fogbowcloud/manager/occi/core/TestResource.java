@@ -55,9 +55,9 @@ public class TestResource {
 		Resource resource = new Resource("term", "scheme", "class", attributes, actions,
 				"location", "title", "rel");
 
-		String testString = "term; scheme=\"scheme\"; class=\"class\" "
-				+ "attributes=\"attribute1 attribute2\" actions=\"action1 action2\" "
-				+ "location=\"location\" title=\"title\" rel=\"rel\"";
+		String testString = "term; scheme=\"scheme\"; class=\"class\"; title=\"title\"; "
+				+ "rel=\"rel\"; location=\"location\"; "
+				+ "attributes=\"attribute1 attribute2\"; actions=\"action1 action2\"";
 		Assert.assertEquals(testString, resource.toHeader());
 	}
 
