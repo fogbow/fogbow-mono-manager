@@ -71,6 +71,7 @@ public class ManagerFacade {
 	}
 
 	public void updateMembers(List<FederationMember> members) {
+		LOGGER.debug("Updating members: " + members);
 		if (members == null) {
 			throw new IllegalArgumentException();
 		}
@@ -103,10 +104,12 @@ public class ManagerFacade {
 
 	public void removeAllRequests(String authToken) {
 		String user = getUser(authToken);
+		LOGGER.debug("Removing all requests of user: " + user);
 		requests.removeByUser(user);
 	}
 
 	public void removeRequest(String authToken, String requestId) {
+		LOGGER.debug("Removing requestId: " + requestId);
 		checkRequestId(authToken, requestId);
 		requests.remove(requestId);
 	}
@@ -114,8 +117,7 @@ public class ManagerFacade {
 	private void checkRequestId(String authToken, String requestId) {
 		String user = getUser(authToken);
 		if (requests.get(user, requestId) == null) {
-			LOGGER.warn("User " + user + " does not have requesId " + requestId);
-			LOGGER.warn("Throwing OCCIException at checkRequesId: " + ResponseConstants.NOT_FOUND);
+			LOGGER.debug("User " + user + " does not have requesId " + requestId);
 			throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
 		}
 	}
@@ -149,8 +151,8 @@ public class ManagerFacade {
 			LOGGER.debug(instanceId + " is local, getting its information in the local cloud.");
 			instance = this.computePlugin.getInstance(authToken, instanceId);
 		} else {
-			LOGGER.debug(instanceId + " is remote, going out to " + 
-					request.getMemberId() + " to get its information.");
+			LOGGER.debug(instanceId + " is remote, going out to " + request.getMemberId()
+					+ " to get its information.");
 			instance = getRemoteInstance(request);
 		}
 		String sshAddress = request.getAttValue(DefaultSSHTunnel.SSH_ADDRESS_ATT);
@@ -166,7 +168,9 @@ public class ManagerFacade {
 	}
 
 	public void removeInstances(String authToken) {
-		for (Request request : requests.getByUser(getUser(authToken))) {
+		String user = getUser(authToken);
+		LOGGER.debug("Removing instances of user: " + user);
+		for (Request request : requests.getByUser(user)) {
 			String instanceId = request.getInstanceId();
 			if (instanceId == null) {
 				continue;
@@ -189,16 +193,17 @@ public class ManagerFacade {
 		}
 		request.setInstanceId(null);
 		request.setMemberId(null);
-		if (request.getAttValue(RequestAttribute.TYPE.getValue()) != null 
+		if (request.getAttValue(RequestAttribute.TYPE.getValue()) != null
 				&& request.getAttValue(RequestAttribute.TYPE.getValue()).equals("persistent")) {
 			request.setState(RequestState.OPEN);
 		}
+		// TODO if request type is one-time, request state is set to CLOSED
 	}
 
 	private void removeRemoteInstance(Request request) {
 		ManagerPacketHelper.deleteRemoteInstace(request, packetSender);
 	}
-	
+
 	public static String normalizeInstanceId(String instanceId) {
 		if (!instanceId.contains("/")) {
 			return instanceId;
@@ -214,15 +219,11 @@ public class ManagerFacade {
 		for (Request request : userRequests) {
 			if (instanceId.equals(normalizeInstanceId(request.getInstanceId()))) {
 				if (!request.getUser().equals(user)) {
-					LOGGER.warn("Throwing OCCIException at getRequestFromInstance: "
-							+ ResponseConstants.UNAUTHORIZED);
 					throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 				}
 				return request;
 			}
 		}
-		LOGGER.warn("Throwing OCCIException at getRequestFromInstance: "
-				+ ResponseConstants.NOT_FOUND);
 		throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
 	}
 
@@ -231,12 +232,15 @@ public class ManagerFacade {
 	}
 
 	public Request getRequest(String authToken, String requestId) {
+		LOGGER.debug("Getting requestId " + requestId);
 		checkRequestId(authToken, requestId);
 		return requests.get(requestId);
 	}
 
 	public String submitRequestForRemoteMember(List<Category> categories,
 			Map<String, String> xOCCIAtt) {
+		LOGGER.info("Submiting request with categories: " + categories + " and xOCCIAtt: "
+				+ xOCCIAtt + " for remote member.");
 		String token = getFederationUserToken().get(OCCIHeaders.X_TOKEN);
 		try {
 			return computePlugin.requestInstance(token, categories, xOCCIAtt);
@@ -257,16 +261,18 @@ public class ManagerFacade {
 		String tenantName = properties.getProperty("federation_user_tenant_name");
 		tokenAttributes.put(OCCIHeaders.X_TOKEN_USER, username);
 		tokenAttributes.put(OCCIHeaders.X_TOKEN_PASS, password);
-		tokenAttributes.put(OCCIHeaders.X_TOKEN_TENANT_NAME, tenantName);		
-		
+		tokenAttributes.put(OCCIHeaders.X_TOKEN_TENANT_NAME, tenantName);
+
 		return identityPlugin.getToken(tokenAttributes);
 	}
 
 	public Instance getInstanceForRemoteMember(String instanceId) {
+		LOGGER.info("Getting instance " + instanceId + " for remote member.");
 		String token = getFederationUserToken().get(OCCIHeaders.X_TOKEN);
 		try {
 			return computePlugin.getInstance(token, instanceId);
 		} catch (OCCIException e) {
+			LOGGER.warn("Exception while getting instance " + instanceId + " for remote member.", e);
 			if (e.getStatus().getCode() == HttpStatus.SC_NOT_FOUND) {
 				return null;
 			}
@@ -275,6 +281,7 @@ public class ManagerFacade {
 	}
 
 	public void removeInstanceForRemoteMember(String instanceId) {
+		LOGGER.info("Removing instance " + instanceId + " for remote member.");
 		String token = getFederationUserToken().get(OCCIHeaders.X_TOKEN);
 		computePlugin.removeInstance(token, instanceId);
 	}
@@ -297,7 +304,7 @@ public class ManagerFacade {
 				LOGGER.warn("Exception while creating ssh tunnel.", e);
 				request.setState(RequestState.FAILED);
 			}
-			LOGGER.debug("Updated request with tunnel properties : " + request);
+			LOGGER.info("Created request: " + request);
 			currentRequests.add(request);
 			requests.addRequest(user, request);
 		}
@@ -313,7 +320,7 @@ public class ManagerFacade {
 		String memberAddress = member.getResourcesInfo().getId();
 		request.setMemberId(memberAddress);
 
-		LOGGER.info("Submiting request " + request.getId() + " to member " + memberAddress);
+		LOGGER.info("Submiting request " + request + " to member " + memberAddress);
 
 		String remoteInstanceId = ManagerPacketHelper.remoteRequest(request, memberAddress,
 				packetSender);
@@ -336,6 +343,7 @@ public class ManagerFacade {
 			instanceId = computePlugin.requestInstance(request.getAuthToken(),
 					request.getCategories(), request.getxOCCIAtt());
 		} catch (OCCIException e) {
+			//TODO check if this is the error code!
 			if (e.getStatus().getCode() == HttpStatus.SC_INSUFFICIENT_SPACE_ON_RESOURCE) {
 				LOGGER.warn("Request failed locally for quota exceeded.", e);
 				return false;
@@ -397,7 +405,7 @@ public class ManagerFacade {
 	public Token getToken(Map<String, String> attributesToken) {
 		return identityPlugin.getToken(attributesToken);
 	}
-	
+
 	public Properties getProperties() {
 		return properties;
 	}
