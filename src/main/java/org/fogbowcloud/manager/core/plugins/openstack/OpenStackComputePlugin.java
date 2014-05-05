@@ -4,11 +4,14 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 import org.apache.commons.codec.Charsets;
+import org.apache.http.Header;
 import org.apache.http.HttpException;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -16,7 +19,9 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.model.Flavor;
@@ -104,20 +109,18 @@ public class OpenStackComputePlugin implements ComputePlugin {
 		xOCCIAtt.put("org.openstack.compute.user_data",
 				xOCCIAtt.remove(DefaultSSHTunnel.USER_DATA_ATT));
 
-		HttpClient httpClient = new DefaultHttpClient();
-		HttpPost httpPost;
-		try {
-			httpPost = new HttpPost(computeOCCIEndpoint);
-			httpPost.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-			httpPost.addHeader(OCCIHeaders.X_AUTH_TOKEN, authToken);
-			for (Category category : openStackCategories) {
-				httpPost.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
-			}
-			for (String attName : xOCCIAtt.keySet()) {
-				httpPost.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE,
-						attName + "=" + "\"" + xOCCIAtt.get(attName) + "\"");
-			}
-			HttpResponse response = httpClient.execute(httpPost);
+		Set<Header> headers = new HashSet<Header>();			
+		for (Category category : openStackCategories) {
+			headers.add(new BasicHeader(OCCIHeaders.CATEGORY, category.toHeader()));
+		}
+		for (String attName : xOCCIAtt.keySet()) {
+			headers.add(new BasicHeader(OCCIHeaders.X_OCCI_ATTRIBUTE
+					, attName + "=" + "\"" + xOCCIAtt.get(attName) + "\""));
+		}
+		try {	
+			HttpResponse response = doRequest("post", computeOCCIEndpoint
+					, authToken, headers);
+			
 			String errorMessage = EntityUtils.toString(
 					response.getEntity(), String.valueOf(Charsets.UTF_8));
 			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
@@ -141,13 +144,9 @@ public class OpenStackComputePlugin implements ComputePlugin {
 	}
 
 	public Instance getInstance(String authToken, String instanceId) {
-		HttpClient httpCLient = new DefaultHttpClient();
-		HttpGet httpGet;
 		try {
-			httpGet = new HttpGet(computeOCCIEndpoint + instanceId);
-			httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, authToken);
-			HttpResponse response = httpCLient.execute(httpGet);
-
+			HttpResponse response = doRequest("get", computeOCCIEndpoint + instanceId
+					, authToken);
 			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
 				throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 			} else if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_FOUND) {
@@ -172,12 +171,8 @@ public class OpenStackComputePlugin implements ComputePlugin {
 	}
 
 	public List<Instance> getInstances(String authToken) {
-		HttpClient httpCLient = new DefaultHttpClient();
-		HttpGet httpGet;
 		try {
-			httpGet = new HttpGet(computeOCCIEndpoint);
-			httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, authToken);
-			HttpResponse response = httpCLient.execute(httpGet);
+			HttpResponse response = doRequest("get", computeOCCIEndpoint, authToken);
 
 			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
 				throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
@@ -209,12 +204,8 @@ public class OpenStackComputePlugin implements ComputePlugin {
 	}
 
 	public void removeInstances(String authToken) {
-		HttpClient httpCLient = new DefaultHttpClient();
-		HttpDelete httpDelete;
 		try {
-			httpDelete = new HttpDelete(computeOCCIEndpoint);
-			httpDelete.addHeader(OCCIHeaders.X_AUTH_TOKEN, authToken);
-			HttpResponse response = httpCLient.execute(httpDelete);
+			HttpResponse response = doRequest("delete", computeOCCIEndpoint, authToken);
 			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
 				throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 			}
@@ -232,12 +223,9 @@ public class OpenStackComputePlugin implements ComputePlugin {
 
 	@Override
 	public void removeInstance(String authToken, String instanceId) {
-		HttpClient httpCLient = new DefaultHttpClient();
-		HttpDelete httpDelete;
 		try {
-			httpDelete = new HttpDelete(computeOCCIEndpoint + instanceId);
-			httpDelete.addHeader(OCCIHeaders.X_AUTH_TOKEN, authToken);
-			HttpResponse response = httpCLient.execute(httpDelete);
+			HttpResponse response = doRequest("delete", computeOCCIEndpoint + instanceId
+					, authToken);
 
 			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
 				throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
@@ -258,13 +246,10 @@ public class OpenStackComputePlugin implements ComputePlugin {
 
 	@Override
 	public ResourcesInfo getResourcesInfo(Token token) {
-		HttpClient httpCLient = new DefaultHttpClient();
-		HttpGet httpGet;
 		try {
-			httpGet = new HttpGet(computeV2APIEndpoint
-					+ token.getAttributes().get(OCCIHeaders.X_TOKEN_TENANT_ID) + "/limits");
-			httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, token.get(OCCIHeaders.X_TOKEN));
-			HttpResponse response = httpCLient.execute(httpGet);
+			HttpResponse response = doRequest("get", computeV2APIEndpoint
+					+ token.getAttributes().get(OCCIHeaders.X_TOKEN_TENANT_ID) + "/limits"
+					, token.get(OCCIHeaders.X_TOKEN));
 
 			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
 				throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
@@ -296,6 +281,35 @@ public class OpenStackComputePlugin implements ComputePlugin {
 			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
 		}
 	}
+	
+	private static HttpResponse doRequest(String method, String endpoint, String authToken)
+			throws URISyntaxException, HttpException, IOException {
+		return doRequest(method, endpoint, authToken, new HashSet<Header>());
+	}
+	
+	private static HttpResponse doRequest(String method, String endpoint, String authToken,
+			Set<Header> additionalHeaders) throws URISyntaxException, HttpException, IOException {
+		HttpUriRequest request = null;
+		if (method.equals("get")) {
+			request = new HttpGet(endpoint);
+		} else if (method.equals("delete")) {
+			request = new HttpDelete(endpoint);
+		} else if (method.equals("post")) {
+			request = new HttpPost(endpoint);
+			request.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
+		}
+		if (authToken != null) {
+			request.addHeader(OCCIHeaders.X_AUTH_TOKEN, authToken);
+		}
+		for (Header header : additionalHeaders) {
+			request.addHeader(header);
+		}
+		
+		HttpClient client = new DefaultHttpClient();
+		HttpResponse response = client.execute(request);
+		
+		return response;
+	}	
 
 	private String getAttFromJson(String attName, String responseStr) {
 		try {
