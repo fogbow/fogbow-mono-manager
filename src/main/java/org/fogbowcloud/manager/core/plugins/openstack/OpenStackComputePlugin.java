@@ -1,7 +1,5 @@
 package org.fogbowcloud.manager.core.plugins.openstack;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -12,7 +10,6 @@ import java.util.Set;
 
 import org.apache.commons.codec.Charsets;
 import org.apache.http.Header;
-import org.apache.http.HttpException;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
@@ -41,6 +38,8 @@ import org.json.JSONObject;
 
 public class OpenStackComputePlugin implements ComputePlugin {
 
+	// According to OCCI specification 
+	private static final int LAST_SUCCESSFUL_STATUS = 204;
 	private static final String INSTANCE_SCHEME = "http://schemas.openstack.org/compute/instance#";
 	private static final String SCHEME_COMPUTE = "http://schemas.ogf.org/occi/infrastructure#";
 	public static final String OS_SCHEME = "http://schemas.openstack.org/template/os#";
@@ -117,79 +116,43 @@ public class OpenStackComputePlugin implements ComputePlugin {
 			headers.add(new BasicHeader(OCCIHeaders.X_OCCI_ATTRIBUTE
 					, attName + "=" + "\"" + xOCCIAtt.get(attName) + "\""));
 		}
-		try {	
-			HttpResponse response = doRequest("post", computeOCCIEndpoint
-					, authToken, headers);
-			
-			String errorMessage = EntityUtils.toString(
-					response.getEntity(), String.valueOf(Charsets.UTF_8));
-			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
-				throw new OCCIException(ErrorType.UNAUTHORIZED, errorMessage);
-			} else if (response.getStatusLine().getStatusCode() == HttpStatus.SC_BAD_REQUEST) {
-//				if (errorMessage.contains(ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES)) {
-					throw new OCCIException(ErrorType.QUOTA_EXCEEDED, errorMessage);
-//				}
-//				throw new OCCIException(ErrorType.BAD_REQUEST, errorMessage);
-			}
-
-			return response.getFirstHeader("Location").getValue();
-		} catch (URISyntaxException e) {
-			LOGGER.error(e);
-		} catch (HttpException e) {
-			LOGGER.error(e);
-		} catch (IOException e) {
-			LOGGER.error(e);
+		
+		HttpResponse response = doRequest("post", computeOCCIEndpoint
+					, authToken, headers);;
+		
+		Header locationHeader = response.getFirstHeader("Location");
+		if (locationHeader != null) {
+			return locationHeader.getValue();	
 		}
 		return null;
 	}
 
-	public Instance getInstance(String authToken, String instanceId) {
-		try {
-			HttpResponse response = doRequest("get", computeOCCIEndpoint + instanceId
+	public Instance getInstance(String authToken, String instanceId){
+		HttpResponse response = doRequest("get", computeOCCIEndpoint + instanceId
 					, authToken);
-			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
-				throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
-			} else if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_FOUND) {
-				throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
-			} else if (response.getStatusLine().getStatusCode() >= 400) {
-				throw new OCCIException(ErrorType.BAD_REQUEST, response.getStatusLine().toString());
-			}
-			
-			String responseStr = EntityUtils.toString(response.getEntity(),
-					String.valueOf(Charsets.UTF_8));
-			return Instance.parseInstance(instanceId, responseStr);
-		} catch (URISyntaxException e) {
+		String responseStr = null;
+		try {
+			responseStr = EntityUtils.toString(response.getEntity(),
+					String.valueOf(Charsets.UTF_8));			
+		} catch (Exception e) {
 			LOGGER.error(e);
-			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
-		} catch (HttpException e) {
-			LOGGER.error(e);
-			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
-		} catch (IOException e) {
-			LOGGER.error(e);
-			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
+			return null;
 		}
+		
+		return Instance.parseInstance(instanceId, responseStr);
 	}
 
 	public List<Instance> getInstances(String authToken) {
+		HttpResponse response = doRequest("get", computeOCCIEndpoint, authToken);
+		String responseStr = null;
 		try {
-			HttpResponse response = doRequest("get", computeOCCIEndpoint, authToken);
-
-			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
-				throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
-			}
-			String responseStr = EntityUtils.toString(response.getEntity(),
-					String.valueOf(Charsets.UTF_8));
-			return parseInstances(responseStr);
-		} catch (URISyntaxException e) {
+			responseStr = EntityUtils.toString(response.getEntity(),
+					String.valueOf(Charsets.UTF_8));				
+		} catch (Exception e) {
 			LOGGER.error(e);
-			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
-		} catch (HttpException e) {
-			LOGGER.error(e);
-			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
-		} catch (IOException e) {
-			LOGGER.error(e);
-			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
+			return null;
 		}
+		return parseInstances(responseStr);
 	}
 
 	private List<Instance> parseInstances(String responseStr) {
@@ -204,112 +167,94 @@ public class OpenStackComputePlugin implements ComputePlugin {
 	}
 
 	public void removeInstances(String authToken) {
-		try {
-			HttpResponse response = doRequest("delete", computeOCCIEndpoint, authToken);
-			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
-				throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
-			}
-		} catch (URISyntaxException e) {
-			LOGGER.error(e);
-			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
-		} catch (HttpException e) {
-			LOGGER.error(e);
-			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
-		} catch (IOException e) {
-			LOGGER.error(e);
-			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
-		}
+		doRequest("delete", computeOCCIEndpoint, authToken); 
 	}
 
 	@Override
 	public void removeInstance(String authToken, String instanceId) {
-		try {
-			HttpResponse response = doRequest("delete", computeOCCIEndpoint + instanceId
-					, authToken);
-
-			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
-				throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
-			} else if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_FOUND) {
-				throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
-			}
-		} catch (URISyntaxException e) {
-			LOGGER.error(e);
-			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
-		} catch (HttpException e) {
-			LOGGER.error(e);
-			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
-		} catch (IOException e) {
-			LOGGER.error(e);
-			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
-		}
+		doRequest("delete", computeOCCIEndpoint + instanceId
+					, authToken);	
 	}
 
 	@Override
 	public ResourcesInfo getResourcesInfo(Token token) {
-		try {
-			HttpResponse response = doRequest("get", computeV2APIEndpoint
+		HttpResponse response = doRequest("get", computeV2APIEndpoint
 					+ token.getAttributes().get(OCCIHeaders.X_TOKEN_TENANT_ID) + "/limits"
 					, token.get(OCCIHeaders.X_TOKEN));
+		String responseStr = null;
 
-			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
-				throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
-			} else if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_FOUND) {
-				throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
-			}
-			String responseStr = EntityUtils.toString(response.getEntity(),
-					String.valueOf(Charsets.UTF_8));
-
-			String maxCpu = getAttFromJson(MAX_TOTAL_CORES_ATT, responseStr);
-			String cpuInUse = getAttFromJson(TOTAL_CORES_USED_ATT, responseStr);
-			String maxMem = getAttFromJson(MAX_TOTAL_RAM_SIZE_ATT, responseStr);
-			String memInUse = getAttFromJson(TOTAL_RAM_USED_ATT, responseStr);
-
-			int cpuIdle = Integer.parseInt(maxCpu) - Integer.parseInt(cpuInUse);
-			int memIdle = Integer.parseInt(maxMem) - Integer.parseInt(memInUse);
-
-			return new ResourcesInfo(String.valueOf(cpuIdle), cpuInUse, String.valueOf(memIdle),
-					memInUse, getFlavors(cpuIdle, memIdle), null);
-
-		} catch (URISyntaxException e) {
+		try {
+			responseStr = EntityUtils.toString(response.getEntity(),
+					String.valueOf(Charsets.UTF_8));				
+		} catch (Exception e) {
 			LOGGER.error(e);
-			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
-		} catch (HttpException e) {
-			LOGGER.error(e);
-			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
-		} catch (IOException e) {
-			LOGGER.error(e);
-			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
+			return null;
 		}
+
+		String maxCpu = getAttFromJson(MAX_TOTAL_CORES_ATT, responseStr);
+		String cpuInUse = getAttFromJson(TOTAL_CORES_USED_ATT, responseStr);
+		String maxMem = getAttFromJson(MAX_TOTAL_RAM_SIZE_ATT, responseStr);
+		String memInUse = getAttFromJson(TOTAL_RAM_USED_ATT, responseStr);
+
+		int cpuIdle = Integer.parseInt(maxCpu) - Integer.parseInt(cpuInUse);
+		int memIdle = Integer.parseInt(maxMem) - Integer.parseInt(memInUse);
+
+		return new ResourcesInfo(String.valueOf(cpuIdle), cpuInUse, String.valueOf(memIdle),
+				memInUse, getFlavors(cpuIdle, memIdle), null);		
 	}
 	
-	private static HttpResponse doRequest(String method, String endpoint, String authToken)
-			throws URISyntaxException, HttpException, IOException {
+	private HttpResponse doRequest(String method, String endpoint, String authToken) {
 		return doRequest(method, endpoint, authToken, new HashSet<Header>());
 	}
 	
-	private static HttpResponse doRequest(String method, String endpoint, String authToken,
-			Set<Header> additionalHeaders) throws URISyntaxException, HttpException, IOException {
-		HttpUriRequest request = null;
-		if (method.equals("get")) {
-			request = new HttpGet(endpoint);
-		} else if (method.equals("delete")) {
-			request = new HttpDelete(endpoint);
-		} else if (method.equals("post")) {
-			request = new HttpPost(endpoint);
-			request.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		}
-		if (authToken != null) {
-			request.addHeader(OCCIHeaders.X_AUTH_TOKEN, authToken);
-		}
-		for (Header header : additionalHeaders) {
-			request.addHeader(header);
+	private HttpResponse doRequest(String method, String endpoint, String authToken,
+			Set<Header> additionalHeaders){	
+		HttpResponse response;
+		try {
+			HttpUriRequest request = null;
+			if (method.equals("get")) {
+				request = new HttpGet(endpoint);
+			} else if (method.equals("delete")) {
+				request = new HttpDelete(endpoint);
+			} else if (method.equals("post")) {
+				request = new HttpPost(endpoint);
+				request.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
+			}
+			if (authToken != null) {
+				request.addHeader(OCCIHeaders.X_AUTH_TOKEN, authToken);
+			}
+			for (Header header : additionalHeaders) {
+				request.addHeader(header);
+			}
+						
+			HttpClient client = new DefaultHttpClient();
+			response = client.execute(request);	
+			
+		} catch (Exception e) {
+			LOGGER.error(e);
+			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());			
 		}
 		
-		HttpClient client = new DefaultHttpClient();
-		HttpResponse response = client.execute(request);
+		checkStatusResponse(response);
 		
 		return response;
 	}	
+	
+	private void checkStatusResponse(HttpResponse response){
+		if (response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
+			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
+		} else if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_FOUND) {
+			throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
+		} else if (response.getStatusLine().getStatusCode() == HttpStatus.SC_BAD_REQUEST) {
+//			if (errorMessage.contains(ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES)) {
+//				throw new OCCIException(ErrorType.QUOTA_EXCEEDED, errorMessage);
+			throw new OCCIException(ErrorType.QUOTA_EXCEEDED, "QUOTA_EXCEEDED");
+//			}
+//			throw new OCCIException(ErrorType.BAD_REQUEST, errorMessage);
+		}else if (response.getStatusLine().getStatusCode() > LAST_SUCCESSFUL_STATUS) {
+			throw new OCCIException(ErrorType.BAD_REQUEST, response.getStatusLine().toString());
+		}			
+	}
 
 	private String getAttFromJson(String attName, String responseStr) {
 		try {
