@@ -38,8 +38,7 @@ import org.json.JSONObject;
 
 public class OpenStackComputePlugin implements ComputePlugin {
 
-	// According to OCCI specification 
-	private static final int LAST_SUCCESSFUL_STATUS = 204;
+	private static final int LAST_SUCCESSFUL_STATUS = 204; // According to OCCI specification
 	private static final String INSTANCE_SCHEME = "http://schemas.openstack.org/compute/instance#";
 	private static final String SCHEME_COMPUTE = "http://schemas.ogf.org/occi/infrastructure#";
 	public static final String OS_SCHEME = "http://schemas.openstack.org/template/os#";
@@ -108,37 +107,44 @@ public class OpenStackComputePlugin implements ComputePlugin {
 		xOCCIAtt.put("org.openstack.compute.user_data",
 				xOCCIAtt.remove(DefaultSSHTunnel.USER_DATA_ATT));
 
-		Set<Header> headers = new HashSet<Header>();			
+		Set<Header> headers = new HashSet<Header>();
 		for (Category category : openStackCategories) {
 			headers.add(new BasicHeader(OCCIHeaders.CATEGORY, category.toHeader()));
 		}
 		for (String attName : xOCCIAtt.keySet()) {
-			headers.add(new BasicHeader(OCCIHeaders.X_OCCI_ATTRIBUTE
-					, attName + "=" + "\"" + xOCCIAtt.get(attName) + "\""));
+			headers.add(new BasicHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, attName + "=" + "\""
+					+ xOCCIAtt.get(attName) + "\""));
 		}
-		
-		HttpResponse response = doRequest("post", computeOCCIEndpoint
-					, authToken, headers);;
-		
+
+		HttpResponse response = doRequest("post", computeOCCIEndpoint, authToken, headers);
+		;
+
 		Header locationHeader = response.getFirstHeader("Location");
 		if (locationHeader != null) {
-			return locationHeader.getValue();	
+			return normalizeInstanceId(locationHeader.getValue());
 		}
 		return null;
 	}
 
-	public Instance getInstance(String authToken, String instanceId){
-		HttpResponse response = doRequest("get", computeOCCIEndpoint + instanceId
-					, authToken);
+	private String normalizeInstanceId(String instanceId) {
+		if (!instanceId.contains("/")) {
+			return instanceId;
+		}
+		String[] splitInstanceId = instanceId.split("/");
+		return splitInstanceId[splitInstanceId.length - 1];
+	}
+
+	public Instance getInstance(String authToken, String instanceId) {
+		HttpResponse response = doRequest("get", computeOCCIEndpoint + instanceId, authToken);
 		String responseStr = null;
 		try {
-			responseStr = EntityUtils.toString(response.getEntity(),
-					String.valueOf(Charsets.UTF_8));			
+			responseStr = EntityUtils
+					.toString(response.getEntity(), String.valueOf(Charsets.UTF_8));
 		} catch (Exception e) {
 			LOGGER.error(e);
 			return null;
 		}
-		
+
 		return Instance.parseInstance(instanceId, responseStr);
 	}
 
@@ -146,8 +152,8 @@ public class OpenStackComputePlugin implements ComputePlugin {
 		HttpResponse response = doRequest("get", computeOCCIEndpoint, authToken);
 		String responseStr = null;
 		try {
-			responseStr = EntityUtils.toString(response.getEntity(),
-					String.valueOf(Charsets.UTF_8));				
+			responseStr = EntityUtils
+					.toString(response.getEntity(), String.valueOf(Charsets.UTF_8));
 		} catch (Exception e) {
 			LOGGER.error(e);
 			return null;
@@ -167,25 +173,24 @@ public class OpenStackComputePlugin implements ComputePlugin {
 	}
 
 	public void removeInstances(String authToken) {
-		doRequest("delete", computeOCCIEndpoint, authToken); 
+		doRequest("delete", computeOCCIEndpoint, authToken);
 	}
 
 	@Override
 	public void removeInstance(String authToken, String instanceId) {
-		doRequest("delete", computeOCCIEndpoint + instanceId
-					, authToken);	
+		doRequest("delete", computeOCCIEndpoint + instanceId, authToken);
 	}
 
 	@Override
 	public ResourcesInfo getResourcesInfo(Token token) {
-		HttpResponse response = doRequest("get", computeV2APIEndpoint
-					+ token.getAttributes().get(OCCIHeaders.X_TOKEN_TENANT_ID) + "/limits"
-					, token.get(OCCIHeaders.X_TOKEN));
+		HttpResponse response = doRequest("get",
+				computeV2APIEndpoint + token.getAttributes().get(OCCIHeaders.X_TOKEN_TENANT_ID)
+						+ "/limits", token.get(OCCIHeaders.X_TOKEN));
 		String responseStr = null;
 
 		try {
-			responseStr = EntityUtils.toString(response.getEntity(),
-					String.valueOf(Charsets.UTF_8));				
+			responseStr = EntityUtils
+					.toString(response.getEntity(), String.valueOf(Charsets.UTF_8));
 		} catch (Exception e) {
 			LOGGER.error(e);
 			return null;
@@ -200,15 +205,15 @@ public class OpenStackComputePlugin implements ComputePlugin {
 		int memIdle = Integer.parseInt(maxMem) - Integer.parseInt(memInUse);
 
 		return new ResourcesInfo(String.valueOf(cpuIdle), cpuInUse, String.valueOf(memIdle),
-				memInUse, getFlavors(cpuIdle, memIdle), null);		
+				memInUse, getFlavors(cpuIdle, memIdle), null);
 	}
-	
+
 	private HttpResponse doRequest(String method, String endpoint, String authToken) {
 		return doRequest(method, endpoint, authToken, new HashSet<Header>());
 	}
-	
+
 	private HttpResponse doRequest(String method, String endpoint, String authToken,
-			Set<Header> additionalHeaders){	
+			Set<Header> additionalHeaders) {
 		HttpResponse response;
 		try {
 			HttpUriRequest request = null;
@@ -226,34 +231,36 @@ public class OpenStackComputePlugin implements ComputePlugin {
 			for (Header header : additionalHeaders) {
 				request.addHeader(header);
 			}
-						
+
 			HttpClient client = new DefaultHttpClient();
-			response = client.execute(request);	
-			
+			response = client.execute(request);
+
 		} catch (Exception e) {
 			LOGGER.error(e);
-			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());			
+			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
 		}
-		
+
 		checkStatusResponse(response);
-		
+
 		return response;
-	}	
-	
-	private void checkStatusResponse(HttpResponse response){
+	}
+
+	private void checkStatusResponse(HttpResponse response) {
 		if (response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		} else if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_FOUND) {
 			throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
 		} else if (response.getStatusLine().getStatusCode() == HttpStatus.SC_BAD_REQUEST) {
-//			if (errorMessage.contains(ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES)) {
-//				throw new OCCIException(ErrorType.QUOTA_EXCEEDED, errorMessage);
+			// if
+			// (errorMessage.contains(ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES))
+			// {
+			// throw new OCCIException(ErrorType.QUOTA_EXCEEDED, errorMessage);
 			throw new OCCIException(ErrorType.QUOTA_EXCEEDED, "QUOTA_EXCEEDED");
-//			}
-//			throw new OCCIException(ErrorType.BAD_REQUEST, errorMessage);
-		}else if (response.getStatusLine().getStatusCode() > LAST_SUCCESSFUL_STATUS) {
+			// }
+			// throw new OCCIException(ErrorType.BAD_REQUEST, errorMessage);
+		} else if (response.getStatusLine().getStatusCode() > LAST_SUCCESSFUL_STATUS) {
 			throw new OCCIException(ErrorType.BAD_REQUEST, response.getStatusLine().toString());
-		}			
+		}
 	}
 
 	private String getAttFromJson(String attName, String responseStr) {

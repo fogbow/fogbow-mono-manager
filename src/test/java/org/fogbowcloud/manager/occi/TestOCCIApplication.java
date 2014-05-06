@@ -12,14 +12,12 @@ import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.ssh.SSHTunnel;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
-import org.fogbowcloud.manager.occi.core.HeaderUtils;
 import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.fogbowcloud.manager.occi.request.RequestState;
-import org.fogbowcloud.manager.occi.util.ComputeApplication;
 import org.fogbowcloud.manager.occi.util.OCCITestHelper;
 import org.junit.Assert;
 import org.junit.Before;
@@ -28,10 +26,7 @@ import org.mockito.Mockito;
 
 public class TestOCCIApplication {
 
-	private static final String INSTANCE_LOCATION = HeaderUtils.X_OCCI_LOCATION
-			+ "http://localhost:" +OCCITestHelper.ENDPOINT_PORT + ComputeApplication.TARGET
-			+ "b122f3ad-503c-4abb-8a55-ba8d90cfce9f";
-	private static final String INSTANCE_ID = INSTANCE_LOCATION;
+	private static final String INSTANCE_ID = "b122f3ad-503c-4abb-8a55-ba8d90cfce9f";
 	private static final Long SCHEDULER_PERIOD = 500L;
 
 	private OCCIApplication occiApplication;
@@ -88,7 +83,7 @@ public class TestOCCIApplication {
 	public void testGetRequestDetailsAfterPeriod() throws InterruptedException {
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		Mockito.when(computePlugin.requestInstance(Mockito.anyString(), Mockito.any(List.class), Mockito.any(Map.class)))
-				.thenReturn(INSTANCE_LOCATION);
+				.thenReturn(INSTANCE_ID);
 		
 		managerFacade.setComputePlugin(computePlugin);
 		occiApplication.createRequests(OCCITestHelper.ACCESS_TOKEN, new ArrayList<Category>(),

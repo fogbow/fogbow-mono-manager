@@ -197,19 +197,11 @@ public class ManagerFacade {
 				&& request.getAttValue(RequestAttribute.TYPE.getValue()).equals("persistent")) {
 			request.setState(RequestState.OPEN);
 		}
-		// TODO if request type is one-time, request state is set to CLOSED
+		//TODO check if closed updated
 	}
 
 	private void removeRemoteInstance(Request request) {
 		ManagerPacketHelper.deleteRemoteInstace(request, packetSender);
-	}
-
-	public static String normalizeInstanceId(String instanceId) {
-		if (!instanceId.contains("/")) {
-			return instanceId;
-		}
-		String[] splitInstanceId = instanceId.split("/");
-		return splitInstanceId[splitInstanceId.length - 1];
 	}
 
 	public Request getRequestFromInstance(String authToken, String instanceId) {
@@ -217,7 +209,7 @@ public class ManagerFacade {
 		LOGGER.debug("Getting instance " + instanceId + " of user " + user);
 		List<Request> userRequests = requests.getAll();
 		for (Request request : userRequests) {
-			if (instanceId.equals(normalizeInstanceId(request.getInstanceId()))) {
+			if (instanceId.equals(request.getInstanceId())) {
 				if (!request.getUser().equals(user)) {
 					throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 				}

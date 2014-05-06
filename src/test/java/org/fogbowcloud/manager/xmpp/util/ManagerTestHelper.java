@@ -1,7 +1,6 @@
 package org.fogbowcloud.manager.xmpp.util;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
@@ -46,6 +45,8 @@ public class ManagerTestHelper {
 	private static final String CLIENT_PASS = "password";
 	private static final String SMACK_ENDING = "/Smack";
 	private static final Token TOKEN = new Token(new HashMap<String, String>());
+	public static final String ACCESS_TOKEN_ID = "HgjhgYUDFTGBgrbelihBDFGBÇuyrb";
+	public static final String USER_NAME = "user";
 
 	public static final String MANAGER_COMPONENT_URL = "manager.test.com";
 	public static final String MANAGER_COMPONENT_PASS = "password";
