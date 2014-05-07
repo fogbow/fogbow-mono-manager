@@ -310,6 +310,9 @@ public class ManagerFacade {
 
 	private boolean submitRemoteRequest(Request request) {
 		FederationMember member = memberPicker.pick(this);
+		if (member == null) {
+			return false;
+		}
 		String memberAddress = member.getResourcesInfo().getId();
 		request.setMemberId(memberAddress);
 

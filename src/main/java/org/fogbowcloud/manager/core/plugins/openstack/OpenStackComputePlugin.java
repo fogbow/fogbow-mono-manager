@@ -38,7 +38,8 @@ import org.json.JSONObject;
 
 public class OpenStackComputePlugin implements ComputePlugin {
 
-	private static final int LAST_SUCCESSFUL_STATUS = 204; // According to OCCI specification
+	// According to OCCI specification
+	private static final int LAST_SUCCESSFUL_STATUS = 204;
 	private static final String INSTANCE_SCHEME = "http://schemas.openstack.org/compute/instance#";
 	private static final String SCHEME_COMPUTE = "http://schemas.ogf.org/occi/infrastructure#";
 	public static final String OS_SCHEME = "http://schemas.openstack.org/template/os#";
@@ -116,8 +117,8 @@ public class OpenStackComputePlugin implements ComputePlugin {
 					+ xOCCIAtt.get(attName) + "\""));
 		}
 
-		HttpResponse response = doRequest("post", computeOCCIEndpoint, authToken, headers);
-		;
+		HttpResponse response = doRequest("post", computeOCCIEndpoint, authToken, headers)
+				.getHttpResponse();
 
 		Header locationHeader = response.getFirstHeader("Location");
 		if (locationHeader != null) {
@@ -135,29 +136,16 @@ public class OpenStackComputePlugin implements ComputePlugin {
 	}
 
 	public Instance getInstance(String authToken, String instanceId) {
-		HttpResponse response = doRequest("get", computeOCCIEndpoint + instanceId, authToken);
-		String responseStr = null;
-		try {
-			responseStr = EntityUtils
-					.toString(response.getEntity(), String.valueOf(Charsets.UTF_8));
-		} catch (Exception e) {
-			LOGGER.error(e);
-			return null;
-		}
+
+		String responseStr = doRequest("get", computeOCCIEndpoint + instanceId, authToken)
+				.getResponseString();
 
 		return Instance.parseInstance(instanceId, responseStr);
 	}
 
 	public List<Instance> getInstances(String authToken) {
-		HttpResponse response = doRequest("get", computeOCCIEndpoint, authToken);
-		String responseStr = null;
-		try {
-			responseStr = EntityUtils
-					.toString(response.getEntity(), String.valueOf(Charsets.UTF_8));
-		} catch (Exception e) {
-			LOGGER.error(e);
-			return null;
-		}
+		String responseStr = doRequest("get", computeOCCIEndpoint, authToken).getResponseString();
+
 		return parseInstances(responseStr);
 	}
 
@@ -183,18 +171,10 @@ public class OpenStackComputePlugin implements ComputePlugin {
 
 	@Override
 	public ResourcesInfo getResourcesInfo(Token token) {
-		HttpResponse response = doRequest("get",
+		String responseStr = doRequest(
+				"get",
 				computeV2APIEndpoint + token.getAttributes().get(OCCIHeaders.X_TOKEN_TENANT_ID)
-						+ "/limits", token.get(OCCIHeaders.X_TOKEN));
-		String responseStr = null;
-
-		try {
-			responseStr = EntityUtils
-					.toString(response.getEntity(), String.valueOf(Charsets.UTF_8));
-		} catch (Exception e) {
-			LOGGER.error(e);
-			return null;
-		}
+						+ "/limits", token.get(OCCIHeaders.X_TOKEN)).getResponseString();
 
 		String maxCpu = getAttFromJson(MAX_TOTAL_CORES_ATT, responseStr);
 		String cpuInUse = getAttFromJson(TOTAL_CORES_USED_ATT, responseStr);
@@ -208,13 +188,14 @@ public class OpenStackComputePlugin implements ComputePlugin {
 				memInUse, getFlavors(cpuIdle, memIdle), null);
 	}
 
-	private HttpResponse doRequest(String method, String endpoint, String authToken) {
+	private Response doRequest(String method, String endpoint, String authToken) {
 		return doRequest(method, endpoint, authToken, new HashSet<Header>());
 	}
 
-	private HttpResponse doRequest(String method, String endpoint, String authToken,
+	private Response doRequest(String method, String endpoint, String authToken,
 			Set<Header> additionalHeaders) {
-		HttpResponse response;
+		HttpResponse httpResponse;
+		String responseStr = null;
 		try {
 			HttpUriRequest request = null;
 			if (method.equals("get")) {
@@ -233,31 +214,32 @@ public class OpenStackComputePlugin implements ComputePlugin {
 			}
 
 			HttpClient client = new DefaultHttpClient();
-			response = client.execute(request);
+			httpResponse = client.execute(request);
+
+			responseStr = EntityUtils.toString(httpResponse.getEntity(),
+					String.valueOf(Charsets.UTF_8));
 
 		} catch (Exception e) {
 			LOGGER.error(e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
 		}
 
-		checkStatusResponse(response);
+		checkStatusResponse(httpResponse, responseStr);
 
-		return response;
+		return new Response(httpResponse, responseStr);
 	}
 
-	private void checkStatusResponse(HttpResponse response) {
+	private void checkStatusResponse(HttpResponse response, String errorMessage) {
 		if (response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		} else if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_FOUND) {
 			throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
 		} else if (response.getStatusLine().getStatusCode() == HttpStatus.SC_BAD_REQUEST) {
-			// if
-			// (errorMessage.contains(ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES))
-			// {
-			// throw new OCCIException(ErrorType.QUOTA_EXCEEDED, errorMessage);
-			throw new OCCIException(ErrorType.QUOTA_EXCEEDED, "QUOTA_EXCEEDED");
-			// }
-			// throw new OCCIException(ErrorType.BAD_REQUEST, errorMessage);
+			if (errorMessage.contains(ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES)) {
+				throw new OCCIException(ErrorType.QUOTA_EXCEEDED,
+						ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES);
+			}
+			throw new OCCIException(ErrorType.BAD_REQUEST, errorMessage);
 		} else if (response.getStatusLine().getStatusCode() > LAST_SUCCESSFUL_STATUS) {
 			throw new OCCIException(ErrorType.BAD_REQUEST, response.getStatusLine().toString());
 		}
@@ -285,5 +267,24 @@ public class OpenStackComputePlugin implements ComputePlugin {
 		flavors.add(mediumFlavor);
 		flavors.add(largeFlavor);
 		return flavors;
+	}
+
+	private class Response {
+
+		private HttpResponse httpResponse;
+		private String responseString;
+
+		public Response(HttpResponse httpResponse, String responseString) {
+			this.httpResponse = httpResponse;
+			this.responseString = responseString;
+		}
+
+		public HttpResponse getHttpResponse() {
+			return httpResponse;
+		}
+
+		public String getResponseString() {
+			return responseString;
+		}
 	}
 }
