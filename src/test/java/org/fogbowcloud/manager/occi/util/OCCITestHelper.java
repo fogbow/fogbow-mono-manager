@@ -12,7 +12,7 @@ import org.apache.commons.codec.Charsets;
 import org.apache.http.HttpResponse;
 import org.apache.http.ParseException;
 import org.apache.http.util.EntityUtils;
-import org.fogbowcloud.manager.core.ManagerFacade;
+import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
@@ -43,7 +43,7 @@ public class OCCITestHelper {
 		component = new Component();
 		component.getServers().add(Protocol.HTTP, ENDPOINT_PORT);
 
-		ManagerFacade facade = new ManagerFacade(new Properties());
+		ManagerController facade = new ManagerController(new Properties());
 		facade.setComputePlugin(computePlugin);
 		facade.setIdentityPlugin(identityPlugin);
 		facade.setSSHTunnel(Mockito.mock(SSHTunnel.class));
@@ -57,7 +57,7 @@ public class OCCITestHelper {
 		component = new Component();
 		component.getServers().add(Protocol.HTTP, ENDPOINT_PORT);
 
-		ManagerFacade facade = new ManagerFacade(new Properties());
+		ManagerController facade = new ManagerController(new Properties());
 		facade.setComputePlugin(computePlugin);
 		facade.setIdentityPlugin(identityPlugin);
 		facade.setSSHTunnel(Mockito.mock(SSHTunnel.class));
@@ -77,7 +77,7 @@ public class OCCITestHelper {
 		component = new Component();
 		component.getServers().add(Protocol.HTTP, ENDPOINT_PORT);
 
-		ManagerFacade facade = new ManagerFacade(new Properties());
+		ManagerController facade = new ManagerController(new Properties());
 		facade.setComputePlugin(computePlugin);
 		facade.setIdentityPlugin(identityPlugin);
 		facade.setMembers(federationMembers);

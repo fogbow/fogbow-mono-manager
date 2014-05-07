@@ -3,7 +3,7 @@ package org.fogbowcloud.manager.occi;
 import java.util.List;
 import java.util.Map;
 
-import org.fogbowcloud.manager.core.ManagerFacade;
+import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.Token;
@@ -17,9 +17,9 @@ import org.restlet.routing.Router;
 
 public class OCCIApplication extends Application {
 
-	private ManagerFacade managerFacade;
+	private ManagerController managerFacade;
 
-	public OCCIApplication(ManagerFacade facade) {
+	public OCCIApplication(ManagerController facade) {
 		this.managerFacade = facade;
 	}
 

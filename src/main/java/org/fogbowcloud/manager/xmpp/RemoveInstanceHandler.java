@@ -1,15 +1,15 @@
 package org.fogbowcloud.manager.xmpp;
 
-import org.fogbowcloud.manager.core.ManagerFacade;
+import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.jamppa.component.handler.AbstractQueryHandler;
 import org.xmpp.packet.IQ;
 
 public class RemoveInstanceHandler extends AbstractQueryHandler {
 
-	private ManagerFacade facade;
+	private ManagerController facade;
 
-	public RemoveInstanceHandler(ManagerFacade facade) {
+	public RemoveInstanceHandler(ManagerController facade) {
 		super(ManagerXmppComponent.REMOVEINSTANCE_NAMESPACE);
 		this.facade = facade;
 	}

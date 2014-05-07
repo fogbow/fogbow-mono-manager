@@ -4,6 +4,6 @@ import org.fogbowcloud.manager.core.model.FederationMember;
 
 public interface FederationMemberPicker {
 
-	public FederationMember pick(ManagerFacade facade);
+	public FederationMember pick(ManagerController facade);
 	
 }

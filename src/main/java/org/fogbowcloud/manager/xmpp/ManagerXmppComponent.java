@@ -6,7 +6,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import org.apache.log4j.Logger;
-import org.fogbowcloud.manager.core.ManagerFacade;
+import org.fogbowcloud.manager.core.ManagerController;
 import org.jamppa.component.XMPPComponent;
 import org.xmpp.packet.Packet;
 
@@ -20,12 +20,12 @@ public class ManagerXmppComponent extends XMPPComponent {
 
 	private static long PERIOD = 30000;
 	private static Logger LOGGER = Logger.getLogger(ManagerXmppComponent.class);
-	private ManagerFacade managerFacade;
+	private ManagerController managerFacade;
 	private final Timer timer = new Timer();
 	private String rendezvousAddress;
 
 	public ManagerXmppComponent(String jid, String password, String server,
-			int port, ManagerFacade managerFacade) {
+			int port, ManagerController managerFacade) {
 		super(jid, password, server, port);
 		this.managerFacade = managerFacade;
 		addGetHandler(new GetInstanceHandler(managerFacade));
@@ -75,7 +75,7 @@ public class ManagerXmppComponent extends XMPPComponent {
 		rendezvousAddress = address;
 	}
 
-	public ManagerFacade getManagerFacade() {
+	public ManagerController getManagerFacade() {
 		return managerFacade;
 	}
 

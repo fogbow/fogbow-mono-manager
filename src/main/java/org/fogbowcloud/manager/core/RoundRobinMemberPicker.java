@@ -9,7 +9,7 @@ public class RoundRobinMemberPicker implements FederationMemberPicker {
 	private int current = -1;
 	
 	@Override
-	public FederationMember pick(ManagerFacade facade) {
+	public FederationMember pick(ManagerController facade) {
 		List<FederationMember> members = facade.getMembers();
 		if (members.isEmpty()) {
 			return null;

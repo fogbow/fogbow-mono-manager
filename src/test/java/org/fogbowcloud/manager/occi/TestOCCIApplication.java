@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import org.fogbowcloud.manager.core.ManagerFacade;
+import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.ssh.SSHTunnel;
@@ -31,14 +31,14 @@ public class TestOCCIApplication {
 
 	private OCCIApplication occiApplication;
 	private Map<String, String> xOCCIAtt;
-	ManagerFacade managerFacade;
+	ManagerController managerFacade;
 
 	@SuppressWarnings("unchecked")
 	@Before
 	public void setUp() {
 		Properties properties = new Properties();
 		properties.put("scheduler_period", SCHEDULER_PERIOD.toString());
-		managerFacade = new ManagerFacade(properties);
+		managerFacade = new ManagerController(properties);
 		occiApplication = new OCCIApplication(managerFacade);
 
 		// default instance count value is 1

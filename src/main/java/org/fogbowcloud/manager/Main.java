@@ -3,7 +3,7 @@ package org.fogbowcloud.manager;
 import java.io.FileInputStream;
 import java.util.Properties;
 
-import org.fogbowcloud.manager.core.ManagerFacade;
+import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.occi.OCCIApplication;
@@ -23,7 +23,7 @@ public class Main {
 		IdentityPlugin identityPlugin = (IdentityPlugin) createInstance(
 				"identity_class", properties);
 		
-		ManagerFacade facade = new ManagerFacade(properties);
+		ManagerController facade = new ManagerController(properties);
 		facade.setComputePlugin(computePlugin);
 		facade.setIdentityPlugin(identityPlugin);
 		

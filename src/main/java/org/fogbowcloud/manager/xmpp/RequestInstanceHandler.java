@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.dom4j.Element;
-import org.fogbowcloud.manager.core.ManagerFacade;
+import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.jamppa.component.handler.AbstractQueryHandler;
@@ -15,9 +15,9 @@ import org.xmpp.packet.PacketError.Condition;
 
 public class RequestInstanceHandler extends AbstractQueryHandler {
 
-	private ManagerFacade facade;
+	private ManagerController facade;
 
-	public RequestInstanceHandler(ManagerFacade facade) {
+	public RequestInstanceHandler(ManagerController facade) {
 		super(ManagerXmppComponent.REQUEST_NAMESPACE);
 		this.facade = facade;
 	}

@@ -15,7 +15,7 @@ import java.util.Properties;
 import org.dom4j.Attribute;
 import org.dom4j.Element;
 import org.fogbowcloud.manager.core.CertificateHandlerHelper;
-import org.fogbowcloud.manager.core.ManagerFacade;
+import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
@@ -171,7 +171,7 @@ public class ManagerTestHelper {
 		properties.put("federation_user_tenant_name", "fogbow");
 		properties.put("xmpp_jid", "manager.test.com");
 
-		ManagerFacade managerFacade = new ManagerFacade(properties);
+		ManagerController managerFacade = new ManagerController(properties);
 		managerFacade.setComputePlugin(computePlugin);
 		managerFacade.setIdentityPlugin(identityPlugin);
 
@@ -204,7 +204,7 @@ public class ManagerTestHelper {
 		properties.put("federation_user_password", "fogbow");
 		properties.put("xmpp_jid", "manager.test.com");
 
-		ManagerFacade managerFacade = new ManagerFacade(properties);
+		ManagerController managerFacade = new ManagerController(properties);
 		managerFacade.setComputePlugin(computePlugin);
 		managerFacade.setIdentityPlugin(identityPlugin);
 

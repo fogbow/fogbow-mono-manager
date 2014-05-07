@@ -29,12 +29,13 @@ import org.fogbowcloud.manager.occi.request.Request;
 import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestRepository;
 import org.fogbowcloud.manager.occi.request.RequestState;
+import org.fogbowcloud.manager.occi.request.RequestType;
 import org.fogbowcloud.manager.xmpp.ManagerPacketHelper;
 import org.jamppa.component.PacketSender;
 
-public class ManagerFacade {
+public class ManagerController {
 
-	private static final Logger LOGGER = Logger.getLogger(ManagerFacade.class);
+	private static final Logger LOGGER = Logger.getLogger(ManagerController.class);
 	public static final long DEFAULT_SCHEDULER_PERIOD = 30000;
 
 	private boolean scheduled = false;
@@ -51,7 +52,7 @@ public class ManagerFacade {
 
 	private SSHTunnel sshTunnel = new DefaultSSHTunnel();
 
-	public ManagerFacade(Properties properties) {
+	public ManagerController(Properties properties) {
 		this.properties = properties;
 		if (properties == null) {
 			throw new IllegalArgumentException();
@@ -194,8 +195,12 @@ public class ManagerFacade {
 		request.setInstanceId(null);
 		request.setMemberId(null);
 		if (request.getAttValue(RequestAttribute.TYPE.getValue()) != null
-				&& request.getAttValue(RequestAttribute.TYPE.getValue()).equals("persistent")) {
+				&& request.getAttValue(RequestAttribute.TYPE.getValue()).equals(
+						RequestType.PERSISTENT.getValue())) {
 			request.setState(RequestState.OPEN);
+			if (!scheduled) {
+				scheduleRequests();
+			}
 		} else {
 			request.setState(RequestState.CLOSED);
 		}
@@ -339,7 +344,7 @@ public class ManagerFacade {
 			instanceId = computePlugin.requestInstance(request.getAuthToken(),
 					request.getCategories(), request.getxOCCIAtt());
 		} catch (OCCIException e) {
-			//TODO check if this is the error code!
+			// TODO check if this is the error code!
 			if (e.getStatus().getCode() == HttpStatus.SC_INSUFFICIENT_SPACE_ON_RESOURCE) {
 				LOGGER.warn("Request failed locally for quota exceeded.", e);
 				return false;
