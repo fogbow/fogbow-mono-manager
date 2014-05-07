@@ -196,8 +196,9 @@ public class ManagerFacade {
 		if (request.getAttValue(RequestAttribute.TYPE.getValue()) != null
 				&& request.getAttValue(RequestAttribute.TYPE.getValue()).equals("persistent")) {
 			request.setState(RequestState.OPEN);
+		} else {
+			request.setState(RequestState.CLOSED);
 		}
-		//TODO check if closed updated
 	}
 
 	private void removeRemoteInstance(Request request) {
