@@ -10,7 +10,8 @@ public class OCCIHeaders {
 	public static final String X_TOKEN_PASS = "X-Token-Pass";
 	public static final String X_TOKEN_TENANT_NAME = "X-Token-Tenant-Name";	
 	public static final String X_TOKEN_TENANT_ID = "X-Token-Tenant-Id";	
-	public static final String X_TOKEN = "X-Token";	
+	public static final String X_TOKEN_ACCESS_ID = "X-Token-Access-Id";	
+	public static final String X_TOKEN_EXPIRATION_DATE = "X-Token-Expiration-Date";	
 	
 	// occi constants
 	public static final String CATEGORY = "Category";

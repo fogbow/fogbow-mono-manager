@@ -66,7 +66,7 @@ public class ManagerTestHelper {
 
 	public ManagerTestHelper() {
 		Map<String, String> tokenAttributes = new HashMap<String, String>();
-		tokenAttributes.put(OCCIHeaders.X_TOKEN, "token");
+		tokenAttributes.put(OCCIHeaders.X_TOKEN_ACCESS_ID, "token");
 		tokenAttributes.put(OCCIHeaders.X_TOKEN_TENANT_ID, "tenantId_r4fci3qhbcy3b");
 		this.tokenDefault = new Token(tokenAttributes);
 	}

@@ -41,6 +41,7 @@ public class ManagerController {
 	private boolean scheduled = false;
 	private Timer timer;
 
+	private Token tokenMemberLocal = new Token(new HashMap<String, String>());
 	private List<FederationMember> members = new LinkedList<FederationMember>();
 	private RequestRepository requests = new RequestRepository();
 	private FederationMemberPicker memberPicker = new RoundRobinMemberPicker();
@@ -239,7 +240,7 @@ public class ManagerController {
 			Map<String, String> xOCCIAtt) {
 		LOGGER.info("Submiting request with categories: " + categories + " and xOCCIAtt: "
 				+ xOCCIAtt + " for remote member.");
-		String token = getFederationUserToken().get(OCCIHeaders.X_TOKEN);
+		String token = getFederationUserToken().get(OCCIHeaders.X_TOKEN_ACCESS_ID);
 		try {
 			return computePlugin.requestInstance(token, categories, xOCCIAtt);
 		} catch (OCCIException e) {
@@ -249,10 +250,8 @@ public class ManagerController {
 			throw e;
 		}
 	}
-
-	// TODO Think about always get new federation user token or store a valid
-	// one.
-	private Token getFederationUserToken() {
+	
+	protected Token getFederationUserToken() {
 		Map<String, String> tokenAttributes = new HashMap<String, String>();
 		String username = properties.getProperty("federation_user_name");
 		String password = properties.getProperty("federation_user_password");
@@ -260,13 +259,17 @@ public class ManagerController {
 		tokenAttributes.put(OCCIHeaders.X_TOKEN_USER, username);
 		tokenAttributes.put(OCCIHeaders.X_TOKEN_PASS, password);
 		tokenAttributes.put(OCCIHeaders.X_TOKEN_TENANT_NAME, tenantName);
-
-		return identityPlugin.getToken(tokenAttributes);
-	}
+		
+		if (tokenMemberLocal.isExpiredToken()) {
+			Token token = identityPlugin.getToken(tokenAttributes);
+			this.tokenMemberLocal = token;
+		}
+		return this.tokenMemberLocal;
+	}	
 
 	public Instance getInstanceForRemoteMember(String instanceId) {
 		LOGGER.info("Getting instance " + instanceId + " for remote member.");
-		String token = getFederationUserToken().get(OCCIHeaders.X_TOKEN);
+		String token = getFederationUserToken().get(OCCIHeaders.X_TOKEN_ACCESS_ID);
 		try {
 			return computePlugin.getInstance(token, instanceId);
 		} catch (OCCIException e) {
@@ -280,7 +283,7 @@ public class ManagerController {
 
 	public void removeInstanceForRemoteMember(String instanceId) {
 		LOGGER.info("Removing instance " + instanceId + " for remote member.");
-		String token = getFederationUserToken().get(OCCIHeaders.X_TOKEN);
+		String token = getFederationUserToken().get(OCCIHeaders.X_TOKEN_ACCESS_ID);
 		computePlugin.removeInstance(token, instanceId);
 	}
 

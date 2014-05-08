@@ -113,12 +113,15 @@ public class KeystoneApplication extends Application {
 
 		private String mountJSONResponseAuthenticateToken(Token token) {
 			try {
-				String tokenId = token.get(OCCIHeaders.X_TOKEN);
+				String tokenId = token.get(OCCIHeaders.X_TOKEN_ACCESS_ID);
 				String tenantId = token.get(OCCIHeaders.X_TOKEN_TENANT_ID);
+				String expirationDate = token.get(OCCIHeaders.X_TOKEN_EXPIRATION_DATE);
+				
 				JSONObject rootIdTenantToken = new JSONObject();
 				rootIdTenantToken.put(OpenStackIdentityPlugin.ID_KEYSTONE, tenantId);
 				JSONObject rootIdToken = new JSONObject();
 				rootIdToken.put(OpenStackIdentityPlugin.ID_KEYSTONE, tokenId);
+				rootIdToken.put(OpenStackIdentityPlugin.EXPIRES_KEYSTONE, expirationDate);
 				rootIdToken.put(OpenStackIdentityPlugin.TENANT_KEYSTONE, rootIdTenantToken);
 				JSONObject rootToken = new JSONObject();
 				rootToken.put(OpenStackIdentityPlugin.TOKEN_KEYSTONE, rootIdToken);

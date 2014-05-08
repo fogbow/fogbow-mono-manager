@@ -37,6 +37,7 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 	public static final String ID_KEYSTONE = "id";
 	public static final String TENANT_KEYSTONE = "tenant";
 	public static final String ACCESS_KEYSTONE = "access";
+	public static final String EXPIRES_KEYSTONE = "expires";
 	public static final String USER_KEYSTONE = "user";
 	public static final String NAME_KEYSTONE = "name";
 
@@ -136,9 +137,11 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 		String token = tokenKeyStone.getString(ID_KEYSTONE);
 		String tenantId = tokenKeyStone.getJSONObject(TENANT_KEYSTONE)
 				.getString(ID_KEYSTONE);
+		String expirationDateToken = tokenKeyStone.getString(EXPIRES_KEYSTONE);		
 		
-		attributes.put(OCCIHeaders.X_TOKEN, token);
+		attributes.put(OCCIHeaders.X_TOKEN_ACCESS_ID, token);
 		attributes.put(OCCIHeaders.X_TOKEN_TENANT_ID, tenantId);
+		attributes.put(OCCIHeaders.X_TOKEN_EXPIRATION_DATE, expirationDateToken);
 		
 		return new Token(attributes);
 	}

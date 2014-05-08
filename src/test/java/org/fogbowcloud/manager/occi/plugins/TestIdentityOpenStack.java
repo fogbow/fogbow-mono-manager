@@ -64,8 +64,12 @@ public class TestIdentityOpenStack {
 		tokenAttributes.put(OCCIHeaders.X_TOKEN_PASS, PluginHelper.PASSWORD_FOGBOW);
 		tokenAttributes.put(OCCIHeaders.X_TOKEN_TENANT_NAME, "admin");
 		Token token = this.identityOpenStack.getToken(tokenAttributes);
-		String authToken = token.get(OCCIHeaders.X_TOKEN);
-		Assert.assertEquals(PluginHelper.AUTH_TOKEN, authToken);			
+		String authToken = token.get(OCCIHeaders.X_TOKEN_ACCESS_ID);
+		String tenantID = token.get(OCCIHeaders.X_TOKEN_TENANT_ID);
+		String expirationDate = token.get(OCCIHeaders.X_TOKEN_EXPIRATION_DATE);
+		Assert.assertEquals(PluginHelper.AUTH_TOKEN, authToken);
+		Assert.assertEquals(PluginHelper.TENANT_ID, tenantID);
+		Assert.assertEquals(PluginHelper.EXPIRATION_DATA, expirationDate);
 	}
 
 	@Test(expected = OCCIException.class)
@@ -73,7 +77,7 @@ public class TestIdentityOpenStack {
 		Map<String, String> tokenAttributes = new HashMap<String, String>();
 		tokenAttributes.put(OCCIHeaders.X_TOKEN_USER, "wrong");
 		tokenAttributes.put(OCCIHeaders.X_TOKEN_PASS, PluginHelper.PASSWORD_FOGBOW);
-		tokenAttributes.put(OCCIHeaders.X_TOKEN_TENANT_NAME, "");		
+		tokenAttributes.put(OCCIHeaders.X_TOKEN_TENANT_NAME, "");
 		this.identityOpenStack.getToken(tokenAttributes);
 	}
 
@@ -82,7 +86,7 @@ public class TestIdentityOpenStack {
 		Map<String, String> tokenAttributes = new HashMap<String, String>();
 		tokenAttributes.put(OCCIHeaders.X_TOKEN_USER, PluginHelper.USERNAME_FOGBOW);
 		tokenAttributes.put(OCCIHeaders.X_TOKEN_PASS, "worng");
-		tokenAttributes.put(OCCIHeaders.X_TOKEN_TENANT_NAME, "");		
+		tokenAttributes.put(OCCIHeaders.X_TOKEN_TENANT_NAME, "");
 		this.identityOpenStack.getToken(tokenAttributes);
 	}
 }

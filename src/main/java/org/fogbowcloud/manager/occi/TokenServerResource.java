@@ -36,6 +36,6 @@ public class TokenServerResource extends ServerResource {
 		}
 		
 		Map<String, String> tokenAttributes = token.getAttributes();
-		return tokenAttributes.get(OCCIHeaders.X_TOKEN);
+		return tokenAttributes.get(OCCIHeaders.X_TOKEN_ACCESS_ID);
 	}
 }
