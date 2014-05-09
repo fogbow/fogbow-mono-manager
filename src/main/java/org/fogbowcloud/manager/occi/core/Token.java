@@ -19,6 +19,7 @@ public class Token {
 	public String get(String attributeName) {
 		try {
 			return attributes.get(attributeName);
+			//TODO Which exception could happen here?
 		} catch (Exception e) {
 			return null;
 		}

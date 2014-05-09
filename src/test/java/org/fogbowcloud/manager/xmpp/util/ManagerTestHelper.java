@@ -45,9 +45,7 @@ public class ManagerTestHelper {
 	private static final String CLIENT_PASS = "password";
 	private static final String SMACK_ENDING = "/Smack";
 	private static final Token TOKEN = new Token(new HashMap<String, String>());
-	public static final String ACCESS_TOKEN_ID = "HgjhgYUDFTGBgrbelihBDFGBÇuyrb";
-	public static final String USER_NAME = "user";
-
+	
 	public static final String MANAGER_COMPONENT_URL = "manager.test.com";
 	public static final String MANAGER_COMPONENT_PASS = "password";
 
@@ -58,6 +56,7 @@ public class ManagerTestHelper {
 	public static final int TIMEOUT_GRACE = 500;
 
 	public final static String CONFIG_PATH = "src/test/resources/manager.conf.test";
+
 
 	private ManagerXmppComponent managerXmppComponent;
 	private ComputePlugin computePlugin;
