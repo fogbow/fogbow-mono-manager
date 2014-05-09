@@ -41,6 +41,8 @@ public class Main {
 		jc.addCommand("instance", instance);
 		TokenCommand token = new TokenCommand();
 		jc.addCommand("token", token);
+		QueryCommand query = new QueryCommand();
+		jc.addCommand("query", query);
 
 		jc.setProgramName("fogbow-cli");
 		jc.parse(args);
@@ -125,6 +127,10 @@ public class Main {
 			headers.add(new BasicHeader(OCCIHeaders.X_TOKEN_TENANT_NAME, token.tenantName));
 
 			doRequest("get", url + "/token", null, headers);
+		} else if (parsedCommand.equals("query")) {
+			String url = token.url;
+			
+			doRequest("get", url + "/-/", null);
 		}
 	}
 
@@ -226,5 +232,11 @@ public class Main {
 
 		@Parameter(names = "--tenantName", required = true, description = "TenantName")
 		String tenantName = null;
+	}
+	
+	@Parameters(separators = "=", commandDescription = "Resources Fogbow")
+	private static class QueryCommand extends Command {
+		@Parameter(names = "--get", description = "Get all resources")
+		Boolean get = false;
 	}
 }

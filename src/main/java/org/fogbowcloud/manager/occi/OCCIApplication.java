@@ -34,6 +34,7 @@ public class OCCIApplication extends Application {
 		router.attach("/compute/{instanceId}", ComputeServerResource.class);
 		router.attach("/members", MemberServerResource.class);
 		router.attach("/token", TokenServerResource.class);
+		router.attach("/-/", QueryServerResource.class);
 		return router;
 	}
 	

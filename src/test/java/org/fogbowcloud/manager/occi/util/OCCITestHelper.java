@@ -34,13 +34,15 @@ public class OCCITestHelper {
 	public static final String URI_FOGBOW_COMPUTE = "http://localhost:8182/compute/";
 	public static final String URI_FOGBOW_MEMBER = "http://localhost:8182/members";
 	public static final String URI_FOGBOW_TOKEN = "http://localhost:8182/token";
+	public static final String URI_FOGBOW_QUERY = "http://localhost:8182/-/";
 	public static final String USER_MOCK = "user_mock";
 	public static final int ENDPOINT_PORT = 8182;
 
 	private Component component;
 	private RequestRepository requests;
-	
-	public void initializeComponent(ComputePlugin computePlugin, IdentityPlugin identityPlugin) throws Exception {
+
+	public void initializeComponent(ComputePlugin computePlugin, IdentityPlugin identityPlugin)
+			throws Exception {
 		component = new Component();
 		component.getServers().add(Protocol.HTTP, ENDPOINT_PORT);
 
@@ -48,13 +50,13 @@ public class OCCITestHelper {
 		facade.setComputePlugin(computePlugin);
 		facade.setIdentityPlugin(identityPlugin);
 		facade.setSSHTunnel(Mockito.mock(SSHTunnel.class));
-		
+
 		component.getDefaultHost().attach(new OCCIApplication(facade));
 		component.start();
 	}
-	
-	public void initializeComponentCompute(ComputePlugin computePlugin, IdentityPlugin identityPlugin, 
-			List<Request> requestsToAdd) throws Exception {
+
+	public void initializeComponentCompute(ComputePlugin computePlugin,
+			IdentityPlugin identityPlugin, List<Request> requestsToAdd) throws Exception {
 		component = new Component();
 		component.getServers().add(Protocol.HTTP, ENDPOINT_PORT);
 
@@ -68,13 +70,14 @@ public class OCCITestHelper {
 		for (Request request : requestsToAdd) {
 			requests.addRequest(OCCITestHelper.USER_MOCK, request);
 		}
-		
+
 		component.getDefaultHost().attach(new OCCIApplication(facade));
 		component.start();
 	}
-	
-	public void initializeComponentMember(ComputePlugin computePlugin, IdentityPlugin identityPlugin,
-			List<FederationMember> federationMembers) throws Exception {
+
+	public void initializeComponentMember(ComputePlugin computePlugin,
+			IdentityPlugin identityPlugin, List<FederationMember> federationMembers)
+			throws Exception {
 		component = new Component();
 		component.getServers().add(Protocol.HTTP, ENDPOINT_PORT);
 
@@ -82,10 +85,10 @@ public class OCCITestHelper {
 		facade.setComputePlugin(computePlugin);
 		facade.setIdentityPlugin(identityPlugin);
 		facade.setMembers(federationMembers);
-		
+
 		component.getDefaultHost().attach(new OCCIApplication(facade));
 		component.start();
-	}	
+	}
 
 	public void stopComponent() throws Exception {
 		component.stop();

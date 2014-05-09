@@ -45,7 +45,7 @@ public class TestTokenServerResource {
 
 	@Test
 	public void testGetTokenWrongContentType() throws Exception {
-		this.helper.initializeComponentMember(computePlugin, identityPlugin, null);
+		this.helper.initializeComponent(computePlugin, identityPlugin);
 
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_TOKEN);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, "wrong");
@@ -55,6 +55,7 @@ public class TestTokenServerResource {
 		Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusLine().getStatusCode());
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testGetToken() throws Exception {
 		Map<String, String> tokenAttributes = new HashMap<String, String>();
@@ -63,7 +64,7 @@ public class TestTokenServerResource {
 		
 		Mockito.when(identityPlugin.getToken(Mockito.anyMap())).thenReturn(token);
 		
-		this.helper.initializeComponentMember(computePlugin, identityPlugin, null);
+		this.helper.initializeComponent(computePlugin, identityPlugin);
 
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_TOKEN);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
@@ -71,18 +72,19 @@ public class TestTokenServerResource {
 		HttpResponse response = client.execute(get);
 
 		String responseStr = EntityUtils.toString(response.getEntity(),
-				String.valueOf(Charsets.UTF_8));				
+				String.valueOf(Charsets.UTF_8));			
 		
 		Assert.assertEquals(ACCESS_TOKEN_ID, responseStr);
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}	
 	
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testGetTokenUnauthorized() throws Exception {
 		Mockito.when(identityPlugin.getToken(Mockito.anyMap()))
 			.thenThrow(new OCCIException(ErrorType.UNAUTHORIZED, ""));
 		
-		this.helper.initializeComponentMember(computePlugin, identityPlugin, null);
+		this.helper.initializeComponent(computePlugin, identityPlugin);
 
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_TOKEN);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
