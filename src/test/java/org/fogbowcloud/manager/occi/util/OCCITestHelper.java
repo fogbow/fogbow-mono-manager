@@ -33,6 +33,7 @@ public class OCCITestHelper {
 	public static final String URI_FOGBOW_REQUEST = "http://localhost:8182/request";
 	public static final String URI_FOGBOW_COMPUTE = "http://localhost:8182/compute/";
 	public static final String URI_FOGBOW_MEMBER = "http://localhost:8182/members";
+	public static final String URI_FOGBOW_TOKEN = "http://localhost:8182/token";
 	public static final String USER_MOCK = "user_mock";
 	public static final int ENDPOINT_PORT = 8182;
 

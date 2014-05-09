@@ -31,9 +31,13 @@ public class TestMemberServerResource {
 	private final String ID_RESOURCEINFO2 = "id2";
 
 	private OCCITestHelper helper;
-
+	private ComputePlugin computePlugin;
+	private IdentityPlugin identityPlugin;
+	
 	@Before
 	public void setup() throws Exception {
+		this.computePlugin = Mockito.mock(ComputePlugin.class);
+		this.identityPlugin = Mockito.mock(IdentityPlugin.class);
 		this.helper = new OCCITestHelper();
 	}
 
@@ -44,10 +48,6 @@ public class TestMemberServerResource {
 
 	@Test
 	public void testGetMember() throws Exception {
-		
-		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
-		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
-
 		List<FederationMember> federationMembers = new ArrayList<FederationMember>();
 		List<Flavor> flavours = new ArrayList<Flavor>();
 		flavours.add(new Flavor(FLAVOUR_1, "3", "135", 2));
@@ -80,11 +80,7 @@ public class TestMemberServerResource {
 
 	@Test
 	public void testGetMemberEmpty() throws Exception {
-		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
-		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
-
 		List<FederationMember> federationMembers = new ArrayList<FederationMember>();
-		
 		this.helper.initializeComponentMember(computePlugin, identityPlugin, federationMembers);
 		
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_MEMBER);
@@ -97,9 +93,6 @@ public class TestMemberServerResource {
 	
 	@Test
 	public void testGetMemberWrongContentType() throws Exception {
-		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
-		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
-
 		this.helper.initializeComponentMember(computePlugin, identityPlugin, null);
 		
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_MEMBER);
