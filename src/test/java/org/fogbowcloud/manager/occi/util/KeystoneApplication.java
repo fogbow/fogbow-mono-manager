@@ -6,6 +6,8 @@ import java.util.Map;
 
 import org.apache.http.HttpStatus;
 import org.fogbowcloud.manager.core.plugins.openstack.OpenStackIdentityPlugin;
+import org.fogbowcloud.manager.occi.core.ErrorType;
+import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.json.JSONException;
@@ -23,9 +25,9 @@ import org.restlet.resource.ServerResource;
 import org.restlet.routing.Router;
 
 public class KeystoneApplication extends Application {
-
-	public static String TARGET_TOKENS = "/v3/auth/tokens/";
-	public static String TARGET_AUTH_TOKEN = "/v2.0/tokens";
+	
+	public static String TARGET_TOKEN_POST = "/v2.0/tokens";
+	public static String TARGET_TOKEN_GET = "/v2.0/tokens/{tokenId}";
 
 	private Map<String, String> tokenToUser;
 
@@ -47,8 +49,8 @@ public class KeystoneApplication extends Application {
 	@Override
 	public Restlet createInboundRoot() {
 		Router router = new Router(getContext());
-		router.attach(TARGET_TOKENS, KeystoneServer.class);
-		router.attach(TARGET_AUTH_TOKEN, KeystoneServer.class);
+		router.attach(TARGET_TOKEN_POST, KeystoneServer.class);
+		router.attach(TARGET_TOKEN_GET, KeystoneServer.class);
 		return router;
 	}
 
@@ -84,7 +86,7 @@ public class KeystoneApplication extends Application {
 			KeystoneApplication keyStoneApplication = (KeystoneApplication) getApplication();
 			HttpRequest req = (HttpRequest) getRequest();
 			String token = req.getHeaders().getValues(OCCIHeaders.X_AUTH_TOKEN);
-			keyStoneApplication.checkUserByToken(token);
+			keyStoneApplication.checkUserByToken(token);		
 			String user = keyStoneApplication.getUserFromToken(token);
 			return mountJSONResponseUserPerToken(token, user);
 		}
@@ -145,14 +147,14 @@ public class KeystoneApplication extends Application {
 			}
 		}
 
-		private String mountJSONResponseUserPerToken(String token, String user) {
+		private String mountJSONResponseUserPerToken(String token, String username) {
 			try {
-				JSONObject nameObject = new JSONObject();
-				nameObject.put(OpenStackIdentityPlugin.NAME_KEYSTONE, user);
-				JSONObject tokenObject = new JSONObject();
-				tokenObject.put(OpenStackIdentityPlugin.USER_KEYSTONE, nameObject);
+				JSONObject usernameObject = new JSONObject();
+				usernameObject.put(OpenStackIdentityPlugin.NAME_KEYSTONE, username);
+				JSONObject userObject = new JSONObject();
+				userObject.put(OpenStackIdentityPlugin.USER_KEYSTONE, usernameObject);
 				JSONObject accessObject = new JSONObject();
-				accessObject.put(OpenStackIdentityPlugin.TOKEN_KEYSTONE, tokenObject);
+				accessObject.put(OpenStackIdentityPlugin.ACCESS_KEYSTONE, userObject);
 				return accessObject.toString();
 			} catch (JSONException e) {
 			}
