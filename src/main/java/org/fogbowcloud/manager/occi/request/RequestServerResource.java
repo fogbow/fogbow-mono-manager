@@ -81,6 +81,7 @@ public class RequestServerResource extends ServerResource {
 		defOCCIAtt.put(RequestAttribute.TYPE.getValue(), RequestConstants.DEFAULT_TYPE);
 		defOCCIAtt.put(RequestAttribute.INSTANCE_COUNT.getValue(),
 				RequestConstants.DEFAULT_INSTANCE_COUNT.toString());
+		//TODO add date default values
 
 		defOCCIAtt.putAll(xOCCIAtt);
 
@@ -89,6 +90,8 @@ public class RequestServerResource extends ServerResource {
 		HeaderUtils.checkDateValue(defOCCIAtt.get(RequestAttribute.VALID_UNTIL.getValue()));
 		HeaderUtils.checkIntegerValue(defOCCIAtt.get(RequestAttribute.INSTANCE_COUNT.getValue()));
 
+		//TODO check from is before until dates
+		
 		List<Resource> requestResources = ResourceRepository.getAll();
 		for (String attributeName : xOCCIAtt.keySet()) {
 			boolean supportedAtt = false;

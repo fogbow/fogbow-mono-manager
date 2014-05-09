@@ -9,6 +9,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.fogbowcloud.manager.core.TestManagerController;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
@@ -38,6 +39,8 @@ public class TestDeleteCompute {
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.getUser(OCCITestHelper.ACCESS_TOKEN)).thenReturn(
 				OCCITestHelper.USER_MOCK);
+		Mockito.when(identityPlugin.getTokenExpiresDate(OCCITestHelper.ACCESS_TOKEN)).thenReturn(
+				TestManagerController.getDateISO8601Format(System.currentTimeMillis() + OCCITestHelper.LONG_TIME));
 
 		List<Request> requests = new LinkedList<Request>();
 		Request request1 = new Request("1", OCCITestHelper.ACCESS_TOKEN, 

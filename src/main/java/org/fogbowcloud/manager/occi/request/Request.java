@@ -1,11 +1,17 @@
 package org.fogbowcloud.manager.occi.request;
 
+import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.TimeZone;
 
+import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.occi.core.Category;
+import org.fogbowcloud.manager.occi.core.OCCIHeaders;
+import org.fogbowcloud.manager.xmpp.core.model.DateUtils;
 
 public class Request {
 
@@ -101,5 +107,19 @@ public class Request {
 		return "id: " + id + ", authToken: " + authToken + ", user:  " + user + ", instanceId: "
 				+ instanceId + ", memberId: " + memberId + ", state: " + state + ", categories: "
 				+ categories + ", xOCCIAtt: " + xOCCIAtt;
+	}
+
+	public boolean isExpired() {
+		String expirationDateSrt = xOCCIAtt.get(RequestAttribute.VALID_UNTIL.getValue());
+		SimpleDateFormat dateFormatISO8601 = new SimpleDateFormat(
+				FederationMember.ISO_8601_DATE_FORMAT, Locale.ROOT);
+		dateFormatISO8601.setTimeZone(TimeZone.getTimeZone("GMT"));
+		long expirationDateMillis;
+		try {
+			expirationDateMillis = dateFormatISO8601.parse(expirationDateSrt).getTime();
+		} catch (Exception e) {
+			return true;
+		}
+		return expirationDateMillis < new DateUtils().currentTimeMillis();
 	}
 }

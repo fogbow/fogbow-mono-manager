@@ -50,6 +50,7 @@ public class TestManagerController {
 	public static final String ACCESS_TOKEN_ID_2 = "2222CVXV23T4TG42VVCV";
 	private static final Long GRACE_TIME = 30L;
 	private static final String TENANT_NAME = "tenantName";
+	private static final long LONG_TIME = 1 * 24 * 60 * 60 * 1000;
 
 	@Before
 	public void setUp() throws Exception {
@@ -178,6 +179,8 @@ public class TestManagerController {
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(
 				USER_NAME);
+		Mockito.when(identityPlugin.getTokenExpiresDate(ACCESS_TOKEN_ID)).thenReturn(
+				getDateISO8601Format(System.currentTimeMillis() + LONG_TIME));
 
 		SSHTunnel sshTunnel = Mockito.mock(SSHTunnel.class);
 
@@ -221,6 +224,8 @@ public class TestManagerController {
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(
 				USER_NAME);
+		Mockito.when(identityPlugin.getTokenExpiresDate(ACCESS_TOKEN_ID)).thenReturn(
+				getDateISO8601Format(System.currentTimeMillis() + LONG_TIME));
 
 		SSHTunnel sshTunnel = Mockito.mock(SSHTunnel.class);
 
@@ -278,6 +283,8 @@ public class TestManagerController {
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(
 				USER_NAME);
+		Mockito.when(identityPlugin.getTokenExpiresDate(ACCESS_TOKEN_ID)).thenReturn(
+				getDateISO8601Format(System.currentTimeMillis() + LONG_TIME));
 
 		SSHTunnel sshTunnel = Mockito.mock(SSHTunnel.class);
 
@@ -336,7 +343,9 @@ public class TestManagerController {
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(
 				USER_NAME);
-
+		Mockito.when(identityPlugin.getTokenExpiresDate(ACCESS_TOKEN_ID)).thenReturn(
+				getDateISO8601Format(System.currentTimeMillis() + LONG_TIME));
+		
 		SSHTunnel sshTunnel = Mockito.mock(SSHTunnel.class);
 
 		managerController.setIdentityPlugin(identityPlugin);
@@ -452,7 +461,7 @@ public class TestManagerController {
 	}
 
 	@Test
-	public void testPersistentRequestSetFulfilledAndOpenAndClosed() throws InterruptedException {
+	public void testPersistentRequestSetFulfilledAndClosed() throws InterruptedException {
 
 		Properties properties = new Properties();
 		properties.put("scheduler_period", SCHEDULER_PERIOD.toString());
@@ -478,7 +487,7 @@ public class TestManagerController {
 		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID_2)).thenReturn(
 				USER_NAME);
 
-		long expirationTime = System.currentTimeMillis() + 2 * SCHEDULER_PERIOD;
+		long expirationTime = System.currentTimeMillis() + SCHEDULER_PERIOD + GRACE_TIME;
 		String expirationDateStr = getDateISO8601Format(expirationTime);
 
 		Mockito.when(identityPlugin.getTokenExpiresDate(ACCESS_TOKEN_ID)).thenReturn(
@@ -503,22 +512,14 @@ public class TestManagerController {
 				.getAttValue(RequestAttribute.TYPE.getValue()));
 		Assert.assertEquals(RequestState.FULFILLED, requests.get(0).getState());
 		Assert.assertNull(requests.get(0).getMemberId());
-
+		
+		Thread.sleep(SCHEDULER_PERIOD);		
+		
 		// removing instance
-		managerController.removeInstance(ACCESS_TOKEN_ID, INSTANCE_ID);
+		managerController.removeInstance(ACCESS_TOKEN_ID_2, INSTANCE_ID);
 
-		requests = managerController.getRequestsFromUser(ACCESS_TOKEN_ID);
-
-		Assert.assertEquals(1, requests.size());
-		Assert.assertEquals(RequestType.PERSISTENT.getValue(), requests.get(0)
-				.getAttValue(RequestAttribute.TYPE.getValue()));
-		Assert.assertEquals(RequestState.OPEN, requests.get(0).getState());
-		Assert.assertNull(requests.get(0).getInstanceId());
-		Assert.assertNull(requests.get(0).getMemberId());
-
-		// getting second instance
-		Thread.sleep(SCHEDULER_PERIOD + GRACE_TIME);
-
+		Thread.sleep(SCHEDULER_PERIOD);
+		
 		requests = managerController.getRequestsFromUser(ACCESS_TOKEN_ID_2);
 
 		Assert.assertEquals(1, requests.size());
@@ -598,7 +599,7 @@ public class TestManagerController {
 	}
 	
 	
-	private String getDateISO8601Format(long dateMili) {
+	public static String getDateISO8601Format(long dateMili) {
 		SimpleDateFormat dateFormatISO8601 = new SimpleDateFormat(
 				FederationMember.ISO_8601_DATE_FORMAT, Locale.ROOT);
 		dateFormatISO8601.setTimeZone(TimeZone.getTimeZone("GMT"));

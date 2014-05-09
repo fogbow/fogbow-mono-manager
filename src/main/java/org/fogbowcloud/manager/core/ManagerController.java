@@ -10,6 +10,8 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
 
+import javax.management.modelmbean.RequiredModelMBean;
+
 import org.apache.http.HttpStatus;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.model.FederationMember;
@@ -31,6 +33,7 @@ import org.fogbowcloud.manager.occi.request.RequestRepository;
 import org.fogbowcloud.manager.occi.request.RequestState;
 import org.fogbowcloud.manager.occi.request.RequestType;
 import org.fogbowcloud.manager.xmpp.ManagerPacketHelper;
+import org.fogbowcloud.manager.xmpp.core.model.DateUtils;
 import org.jamppa.component.PacketSender;
 
 public class ManagerController {
@@ -290,6 +293,12 @@ public class ManagerController {
 	public List<Request> createRequests(String authToken, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
 		String user = getUser(authToken);
+		String tokenExpiresDate = identityPlugin.getTokenExpiresDate(authToken);
+		
+		//TODO check if UNTIL is before token expires date 
+		if (xOCCIAtt.get(RequestAttribute.VALID_UNTIL.getValue()) == null){
+			xOCCIAtt.put(RequestAttribute.VALID_UNTIL.getValue(), tokenExpiresDate);
+		}
 
 		Integer instanceCount = Integer.valueOf(xOCCIAtt.get(RequestAttribute.INSTANCE_COUNT
 				.getValue()));
@@ -314,6 +323,11 @@ public class ManagerController {
 		}
 
 		return currentRequests;
+	}
+
+	private boolean validUntilDate(String string) {
+		// TODO Auto-generated method stub
+		return false;
 	}
 
 	private boolean submitRemoteRequest(Request request) {
@@ -386,10 +400,14 @@ public class ManagerController {
 
 		for (Request request : requests.get(RequestState.OPEN)) {
 			Map<String, String> xOCCIAtt = request.getxOCCIAtt();
-			for (String keyAttributes : RequestAttribute.getValues()) {
-				xOCCIAtt.remove(keyAttributes);
+			if (!request.isExpired()){
+				for (String keyAttributes : RequestAttribute.getValues()) {
+					xOCCIAtt.remove(keyAttributes);
+				}
+				allFulfilled &= submitLocalRequest(request) || submitRemoteRequest(request);
+			} else {
+				request.setState(RequestState.CLOSED);
 			}
-			allFulfilled &= submitLocalRequest(request) || submitRemoteRequest(request);
 		}
 		if (allFulfilled) {
 			LOGGER.info("All request fulfilled.");
