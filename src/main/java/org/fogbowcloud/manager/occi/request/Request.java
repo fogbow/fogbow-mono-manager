@@ -1,6 +1,7 @@
 package org.fogbowcloud.manager.occi.request;
 
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -10,7 +11,6 @@ import java.util.TimeZone;
 
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.occi.core.Category;
-import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.xmpp.core.model.DateUtils;
 
 public class Request {
@@ -109,17 +109,37 @@ public class Request {
 				+ categories + ", xOCCIAtt: " + xOCCIAtt;
 	}
 
-	public boolean isExpired() {
+	public boolean isIntoValidPeriod() {
+		String startDateStr = xOCCIAtt.get(RequestAttribute.VALID_FROM.getValue());		
+		SimpleDateFormat dateFormatISO8601 = new SimpleDateFormat(
+				FederationMember.ISO_8601_DATE_FORMAT, Locale.ROOT);
+		dateFormatISO8601.setTimeZone(TimeZone.getTimeZone("GMT"));		
+		long startDateMillis;
+		try {
+			if (startDateStr != null){
+				startDateMillis = dateFormatISO8601.parse(startDateStr).getTime();
+			} else {
+				startDateMillis = new DateUtils().currentTimeMillis();
+			}
+		} catch (Exception e) {
+			return false;
+		}
+		long now = new DateUtils().currentTimeMillis();
+		return startDateMillis <= now && !isExpired();
+	}
+
+	public boolean isExpired() {		
 		String expirationDateSrt = xOCCIAtt.get(RequestAttribute.VALID_UNTIL.getValue());
 		SimpleDateFormat dateFormatISO8601 = new SimpleDateFormat(
 				FederationMember.ISO_8601_DATE_FORMAT, Locale.ROOT);
-		dateFormatISO8601.setTimeZone(TimeZone.getTimeZone("GMT"));
-		long expirationDateMillis;
+		dateFormatISO8601.setTimeZone(TimeZone.getTimeZone("GMT"));		
+		long expirationDateMillis;		
 		try {
 			expirationDateMillis = dateFormatISO8601.parse(expirationDateSrt).getTime();
 		} catch (Exception e) {
 			return true;
 		}
-		return expirationDateMillis < new DateUtils().currentTimeMillis();
+		long now = new DateUtils().currentTimeMillis();
+		return expirationDateMillis < now;
 	}
 }

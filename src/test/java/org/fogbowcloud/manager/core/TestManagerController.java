@@ -598,8 +598,344 @@ public class TestManagerController {
 		Assert.assertEquals(RequestState.CLOSED, requests.get(0).getState());
 		Assert.assertNull(requests.get(0).getInstanceId());
 		Assert.assertNull(requests.get(0).getMemberId());
+
 	}
 	
+	@Test
+	public void testOneTimeRequestValidFromInFuture() throws InterruptedException {
+		Properties properties = new Properties();
+		properties.put("scheduler_period", SCHEDULER_PERIOD.toString());
+		managerController = new ManagerController(properties);
+
+		long now = System.currentTimeMillis();
+		long startRequestTime = now + (SCHEDULER_PERIOD * 2);
+		
+		// default instance count value is 1
+		Map<String, String> xOCCIAtt = new HashMap<String, String>();
+		xOCCIAtt.put(RequestAttribute.INSTANCE_COUNT.getValue(),
+				String.valueOf(RequestConstants.DEFAULT_INSTANCE_COUNT));
+		xOCCIAtt.put(RequestAttribute.TYPE.getValue(),
+				String.valueOf(RequestType.ONE_TIME.getValue()));
+		xOCCIAtt.put(RequestAttribute.VALID_FROM.getValue(),
+				getDateISO8601Format(startRequestTime));
+
+		// mocking compute
+		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
+		Mockito.when(
+				computePlugin.requestInstance(Mockito.anyString(),
+						Mockito.any(List.class), Mockito.any(Map.class)))
+				.thenReturn(INSTANCE_ID);
+
+		// mocking identity
+		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
+		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(
+				USER_NAME);
+		Mockito.when(identityPlugin.getTokenExpiresDate(ACCESS_TOKEN_ID)).thenReturn(
+				getDateISO8601Format(now + LONG_TIME));
+
+		// mocking sshTunnel
+		SSHTunnel sshTunnel = Mockito.mock(SSHTunnel.class);
+
+		managerController.setIdentityPlugin(identityPlugin);
+		managerController.setComputePlugin(computePlugin);
+		managerController.setSSHTunnel(sshTunnel);
+
+		// creating request
+		managerController.createRequests(ACCESS_TOKEN_ID,
+				new ArrayList<Category>(), xOCCIAtt);
+
+		List<Request> requests = managerController
+				.getRequestsFromUser(ACCESS_TOKEN_ID);
+
+		Assert.assertEquals(1, requests.size());
+		Assert.assertEquals(RequestType.ONE_TIME.getValue(), requests.get(0)
+				.getAttValue(RequestAttribute.TYPE.getValue()));
+		Assert.assertEquals(RequestState.OPEN, requests.get(0).getState());
+		Assert.assertNull(requests.get(0).getInstanceId());
+		Assert.assertNull(requests.get(0).getMemberId());
+
+		Thread.sleep(SCHEDULER_PERIOD + GRACE_TIME);
+
+		requests = managerController.getRequestsFromUser(ACCESS_TOKEN_ID);
+
+		//request is not in validity period yet
+		Assert.assertEquals(1, requests.size());
+		Assert.assertEquals(RequestType.ONE_TIME.getValue(), requests.get(0)
+				.getAttValue(RequestAttribute.TYPE.getValue()));
+		Assert.assertEquals(RequestState.OPEN, requests.get(0).getState());
+		Assert.assertNull(requests.get(0).getInstanceId());
+		Assert.assertNull(requests.get(0).getMemberId());
+
+		Thread.sleep(SCHEDULER_PERIOD + GRACE_TIME);
+		
+		//request is in validity period
+		requests = managerController.getRequestsFromUser(ACCESS_TOKEN_ID);
+		
+		Assert.assertEquals(1, requests.size());
+		Assert.assertEquals(RequestType.ONE_TIME.getValue(), requests.get(0)
+				.getAttValue(RequestAttribute.TYPE.getValue()));
+		Assert.assertEquals(RequestState.FULFILLED, requests.get(0).getState());
+		Assert.assertEquals(INSTANCE_ID, requests.get(0).getInstanceId());
+		Assert.assertNull(requests.get(0).getMemberId());
+	}
+	
+	@Test
+	public void testPersistentRequestValidFromInFuture() throws InterruptedException {
+		Properties properties = new Properties();
+		properties.put("scheduler_period", SCHEDULER_PERIOD.toString());
+		managerController = new ManagerController(properties);
+
+		long now = System.currentTimeMillis();
+		long startRequestTime = now + (SCHEDULER_PERIOD * 2);
+		
+		// default instance count value is 1
+		Map<String, String> xOCCIAtt = new HashMap<String, String>();
+		xOCCIAtt.put(RequestAttribute.INSTANCE_COUNT.getValue(),
+				String.valueOf(RequestConstants.DEFAULT_INSTANCE_COUNT));
+		xOCCIAtt.put(RequestAttribute.TYPE.getValue(),
+				RequestType.PERSISTENT.getValue());
+		xOCCIAtt.put(RequestAttribute.VALID_FROM.getValue(),
+				getDateISO8601Format(startRequestTime));
+
+		// mocking compute
+		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
+		Mockito.when(
+				computePlugin.requestInstance(Mockito.anyString(),
+						Mockito.any(List.class), Mockito.any(Map.class)))
+				.thenReturn(INSTANCE_ID);
+
+		// mocking identity
+		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
+		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(
+				USER_NAME);
+		Mockito.when(identityPlugin.getTokenExpiresDate(ACCESS_TOKEN_ID)).thenReturn(
+				getDateISO8601Format(now + LONG_TIME));
+
+		// mocking sshTunnel
+		SSHTunnel sshTunnel = Mockito.mock(SSHTunnel.class);
+
+		managerController.setIdentityPlugin(identityPlugin);
+		managerController.setComputePlugin(computePlugin);
+		managerController.setSSHTunnel(sshTunnel);
+
+		// creating request
+		managerController.createRequests(ACCESS_TOKEN_ID,
+				new ArrayList<Category>(), xOCCIAtt);
+
+		List<Request> requests = managerController
+				.getRequestsFromUser(ACCESS_TOKEN_ID);
+
+		Assert.assertEquals(1, requests.size());
+		Assert.assertEquals(RequestType.PERSISTENT.getValue(), requests.get(0)
+				.getAttValue(RequestAttribute.TYPE.getValue()));
+		Assert.assertEquals(RequestState.OPEN, requests.get(0).getState());
+		Assert.assertNull(requests.get(0).getInstanceId());
+		Assert.assertNull(requests.get(0).getMemberId());
+
+		Thread.sleep(SCHEDULER_PERIOD + GRACE_TIME);
+
+		requests = managerController.getRequestsFromUser(ACCESS_TOKEN_ID);
+
+		//request is not in validity period yet
+		Assert.assertEquals(1, requests.size());
+		Assert.assertEquals(RequestType.PERSISTENT.getValue(), requests.get(0)
+				.getAttValue(RequestAttribute.TYPE.getValue()));
+		Assert.assertEquals(RequestState.OPEN, requests.get(0).getState());
+		Assert.assertNull(requests.get(0).getInstanceId());
+		Assert.assertNull(requests.get(0).getMemberId());
+
+		Thread.sleep(SCHEDULER_PERIOD + GRACE_TIME);
+		
+		//request is in validity period
+		requests = managerController.getRequestsFromUser(ACCESS_TOKEN_ID);
+		
+		Assert.assertEquals(1, requests.size());
+		Assert.assertEquals(RequestType.PERSISTENT.getValue(), requests.get(0)
+				.getAttValue(RequestAttribute.TYPE.getValue()));
+		Assert.assertEquals(RequestState.FULFILLED, requests.get(0).getState());
+		Assert.assertEquals(INSTANCE_ID, requests.get(0).getInstanceId());
+		Assert.assertNull(requests.get(0).getMemberId());
+	}
+	
+	@Test
+	public void testOneTimeRequestValidityPeriodInFuture() throws InterruptedException {
+		Properties properties = new Properties();
+		properties.put("scheduler_period", SCHEDULER_PERIOD.toString());
+		managerController = new ManagerController(properties);
+
+		long now = System.currentTimeMillis();
+		long startRequestTime = now + (SCHEDULER_PERIOD * 2);
+		long expirationRequestTime = now + (SCHEDULER_PERIOD * 3);
+		
+		// default instance count value is 1
+		Map<String, String> xOCCIAtt = new HashMap<String, String>();
+		xOCCIAtt.put(RequestAttribute.INSTANCE_COUNT.getValue(),
+				String.valueOf(RequestConstants.DEFAULT_INSTANCE_COUNT));
+		xOCCIAtt.put(RequestAttribute.TYPE.getValue(),
+				RequestType.ONE_TIME.getValue());
+		xOCCIAtt.put(RequestAttribute.VALID_FROM.getValue(),
+				getDateISO8601Format(startRequestTime));
+		xOCCIAtt.put(RequestAttribute.VALID_UNTIL.getValue(),
+				getDateISO8601Format(expirationRequestTime));
+
+		// mocking compute
+		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
+		Mockito.when(
+				computePlugin.requestInstance(Mockito.anyString(),
+						Mockito.any(List.class), Mockito.any(Map.class)))
+				.thenReturn(INSTANCE_ID);
+
+		// mocking identity
+		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
+		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(
+				USER_NAME);
+		Mockito.when(identityPlugin.getTokenExpiresDate(ACCESS_TOKEN_ID)).thenReturn(
+				getDateISO8601Format(now + LONG_TIME));
+
+		// mocking sshTunnel
+		SSHTunnel sshTunnel = Mockito.mock(SSHTunnel.class);
+
+		managerController.setIdentityPlugin(identityPlugin);
+		managerController.setComputePlugin(computePlugin);
+		managerController.setSSHTunnel(sshTunnel);
+
+		// creating request
+		managerController.createRequests(ACCESS_TOKEN_ID,
+				new ArrayList<Category>(), xOCCIAtt);
+
+		List<Request> requests = managerController
+				.getRequestsFromUser(ACCESS_TOKEN_ID);
+
+		Thread.sleep(SCHEDULER_PERIOD + GRACE_TIME);
+
+		requests = managerController.getRequestsFromUser(ACCESS_TOKEN_ID);
+
+		//request is not in validity period yet
+		Assert.assertEquals(1, requests.size());
+		Assert.assertEquals(RequestType.ONE_TIME.getValue(), requests.get(0)
+				.getAttValue(RequestAttribute.TYPE.getValue()));
+		Assert.assertEquals(RequestState.OPEN, requests.get(0).getState());
+		Assert.assertNull(requests.get(0).getInstanceId());
+		Assert.assertNull(requests.get(0).getMemberId());
+
+		Thread.sleep(SCHEDULER_PERIOD + GRACE_TIME);
+		
+		//request is in validity period
+		requests = managerController.getRequestsFromUser(ACCESS_TOKEN_ID);
+		
+		Assert.assertEquals(1, requests.size());
+		Assert.assertEquals(RequestType.ONE_TIME.getValue(), requests.get(0)
+				.getAttValue(RequestAttribute.TYPE.getValue()));
+		Assert.assertEquals(RequestState.FULFILLED, requests.get(0).getState());
+		Assert.assertEquals(INSTANCE_ID, requests.get(0).getInstanceId());
+		Assert.assertNull(requests.get(0).getMemberId());
+		
+		//remove instance
+		managerController.removeInstance(ACCESS_TOKEN_ID, INSTANCE_ID);
+		
+		Thread.sleep(SCHEDULER_PERIOD + GRACE_TIME);
+		
+		//request is not in validity period anymore
+		requests = managerController.getRequestsFromUser(ACCESS_TOKEN_ID);
+		
+		Assert.assertEquals(1, requests.size());
+		Assert.assertEquals(RequestType.ONE_TIME.getValue(), requests.get(0)
+				.getAttValue(RequestAttribute.TYPE.getValue()));
+		Assert.assertEquals(RequestState.CLOSED, requests.get(0).getState());
+		Assert.assertNull(requests.get(0).getInstanceId());
+		Assert.assertNull(requests.get(0).getMemberId());
+	}
+	
+	@Test
+	public void testPersistentRequestValidityPeriodInFuture() throws InterruptedException {
+		Properties properties = new Properties();
+		properties.put("scheduler_period", SCHEDULER_PERIOD.toString());
+		managerController = new ManagerController(properties);
+
+		long now = System.currentTimeMillis();
+		long startRequestTime = now + (SCHEDULER_PERIOD * 2);
+		long expirationRequestTime = now + (SCHEDULER_PERIOD * 3);
+		
+		// default instance count value is 1
+		Map<String, String> xOCCIAtt = new HashMap<String, String>();
+		xOCCIAtt.put(RequestAttribute.INSTANCE_COUNT.getValue(),
+				String.valueOf(RequestConstants.DEFAULT_INSTANCE_COUNT));
+		xOCCIAtt.put(RequestAttribute.TYPE.getValue(),
+				RequestType.PERSISTENT.getValue());
+		xOCCIAtt.put(RequestAttribute.VALID_FROM.getValue(),
+				getDateISO8601Format(startRequestTime));
+		xOCCIAtt.put(RequestAttribute.VALID_UNTIL.getValue(),
+				getDateISO8601Format(expirationRequestTime));
+
+		// mocking compute
+		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
+		Mockito.when(
+				computePlugin.requestInstance(Mockito.anyString(),
+						Mockito.any(List.class), Mockito.any(Map.class)))
+				.thenReturn(INSTANCE_ID);
+
+		// mocking identity
+		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
+		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(
+				USER_NAME);
+		Mockito.when(identityPlugin.getTokenExpiresDate(ACCESS_TOKEN_ID)).thenReturn(
+				getDateISO8601Format(now + LONG_TIME));
+
+		// mocking sshTunnel
+		SSHTunnel sshTunnel = Mockito.mock(SSHTunnel.class);
+
+		managerController.setIdentityPlugin(identityPlugin);
+		managerController.setComputePlugin(computePlugin);
+		managerController.setSSHTunnel(sshTunnel);
+
+		// creating request
+		managerController.createRequests(ACCESS_TOKEN_ID,
+				new ArrayList<Category>(), xOCCIAtt);
+
+		List<Request> requests = managerController
+				.getRequestsFromUser(ACCESS_TOKEN_ID);
+
+		Thread.sleep(SCHEDULER_PERIOD + GRACE_TIME);
+
+		requests = managerController.getRequestsFromUser(ACCESS_TOKEN_ID);
+
+		//request is not in validity period yet
+		Assert.assertEquals(1, requests.size());
+		Assert.assertEquals(RequestType.PERSISTENT.getValue(), requests.get(0)
+				.getAttValue(RequestAttribute.TYPE.getValue()));
+		Assert.assertEquals(RequestState.OPEN, requests.get(0).getState());
+		Assert.assertNull(requests.get(0).getInstanceId());
+		Assert.assertNull(requests.get(0).getMemberId());
+
+		Thread.sleep(SCHEDULER_PERIOD + GRACE_TIME);
+		
+		//request is in validity period
+		requests = managerController.getRequestsFromUser(ACCESS_TOKEN_ID);
+		
+		Assert.assertEquals(1, requests.size());
+		Assert.assertEquals(RequestType.PERSISTENT.getValue(), requests.get(0)
+				.getAttValue(RequestAttribute.TYPE.getValue()));
+		Assert.assertEquals(RequestState.FULFILLED, requests.get(0).getState());
+		Assert.assertEquals(INSTANCE_ID, requests.get(0).getInstanceId());
+		Assert.assertNull(requests.get(0).getMemberId());
+		
+		Thread.sleep(SCHEDULER_PERIOD + GRACE_TIME);
+		
+		//remove instance
+		managerController.removeInstance(ACCESS_TOKEN_ID, INSTANCE_ID);
+
+		Thread.sleep(SCHEDULER_PERIOD + GRACE_TIME);
+		
+		//request is not in validity period anymore
+		requests = managerController.getRequestsFromUser(ACCESS_TOKEN_ID);
+		
+		Assert.assertEquals(1, requests.size());
+		Assert.assertEquals(RequestType.PERSISTENT.getValue(), requests.get(0)
+				.getAttValue(RequestAttribute.TYPE.getValue()));
+		Assert.assertEquals(RequestState.CLOSED, requests.get(0).getState());
+		Assert.assertNull(requests.get(0).getInstanceId());
+		Assert.assertNull(requests.get(0).getMemberId());
+	}
 	
 	public static String getDateISO8601Format(long dateMili) {
 		SimpleDateFormat dateFormatISO8601 = new SimpleDateFormat(
@@ -608,5 +944,4 @@ public class TestManagerController {
 		String expirationDate = dateFormatISO8601.format(new Date(dateMili));
 		return expirationDate;
 	}
-
 }

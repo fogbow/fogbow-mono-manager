@@ -321,13 +321,7 @@ public class ManagerController {
 		if (!scheduled) {
 			scheduleRequests();
 		}
-
 		return currentRequests;
-	}
-
-	private boolean validUntilDate(String string) {
-		// TODO Auto-generated method stub
-		return false;
 	}
 
 	private boolean submitRemoteRequest(Request request) {
@@ -399,14 +393,16 @@ public class ManagerController {
 		LOGGER.debug("Checking and submiting requests.");
 
 		for (Request request : requests.get(RequestState.OPEN)) {
-			Map<String, String> xOCCIAtt = request.getxOCCIAtt();
-			if (!request.isExpired()){
+			Map<String, String> xOCCIAtt = request.getxOCCIAtt();			
+			if (request.isIntoValidPeriod()){
 				for (String keyAttributes : RequestAttribute.getValues()) {
 					xOCCIAtt.remove(keyAttributes);
 				}
 				allFulfilled &= submitLocalRequest(request) || submitRemoteRequest(request);
-			} else {
+			} else if (request.isExpired()){
 				request.setState(RequestState.CLOSED);
+			} else {
+				allFulfilled = false;
 			}
 		}
 		if (allFulfilled) {
