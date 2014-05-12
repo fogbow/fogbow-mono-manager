@@ -11,6 +11,7 @@ import org.fogbowcloud.manager.xmpp.core.model.DateUtils;
 public class Token {
 
 	private Map<String, String> attributes;
+	private DateUtils dateUtils = new DateUtils();
 
 	public Token(Map<String, String> attributes) {
 		this.attributes = attributes;
@@ -41,6 +42,10 @@ public class Token {
 		} catch (Exception e) {
 			return true;
 		}
-		return expirationDateMillis < new DateUtils().currentTimeMillis();
+		return expirationDateMillis < dateUtils.currentTimeMillis();
+	}
+	
+	public void setDateUtils(DateUtils dateUtils){
+		this.dateUtils = dateUtils;
 	}
 }

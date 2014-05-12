@@ -29,6 +29,7 @@ import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.fogbowcloud.manager.occi.request.RequestState;
 import org.fogbowcloud.manager.occi.request.RequestType;
+import org.fogbowcloud.manager.xmpp.core.model.DateUtils;
 import org.fogbowcloud.manager.xmpp.util.ManagerTestHelper;
 import org.junit.Assert;
 import org.junit.Before;
@@ -58,7 +59,6 @@ public class TestManagerController {
 		managerTestHelper = new ManagerTestHelper();
 	}
 
-	// TODO mock date
 	@Test
 	public void testGetFederationMember() throws InterruptedException {
 		Properties properties = new Properties();
@@ -107,7 +107,9 @@ public class TestManagerController {
 				OCCIHeaders.X_TOKEN_ACCESS_ID);
 		Assert.assertEquals(ACCESS_TOKEN_ID, accessToken);
 
-		Thread.sleep(300);
+		DateUtils dateUtils = Mockito.mock(DateUtils.class);
+		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(expirationTime + GRACE_TIME);
+		token.setDateUtils(dateUtils);
 
 		// Get new token
 		accessToken = managerController.getFederationUserToken().get(

@@ -22,7 +22,7 @@ public class QueryServerResource extends ServerResource {
 	public String generateResponse(List<Resource> allResources) {
 		String response = "";
 		for (Resource resource : allResources) {
-			response += resource.toHeader() + "\n"; 
+			response += "Category: " + resource.toHeader() + "\n"; 
 		}
 		return response.trim();
 	}
