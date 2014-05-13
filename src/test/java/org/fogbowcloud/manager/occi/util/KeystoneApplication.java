@@ -6,8 +6,6 @@ import java.util.Map;
 
 import org.apache.http.HttpStatus;
 import org.fogbowcloud.manager.core.plugins.openstack.OpenStackIdentityPlugin;
-import org.fogbowcloud.manager.occi.core.ErrorType;
-import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.json.JSONException;
@@ -25,7 +23,7 @@ import org.restlet.resource.ServerResource;
 import org.restlet.routing.Router;
 
 public class KeystoneApplication extends Application {
-	
+
 	public static String TARGET_TOKEN_POST = "/v2.0/tokens";
 	public static String TARGET_TOKEN_GET = "/v2.0/tokens/{tokenId}";
 
@@ -33,14 +31,19 @@ public class KeystoneApplication extends Application {
 
 	private String usernameAdmin;
 	private String passwordAdmin;
+	private String tenantName;
+	private String validToken;
 	private Token defaultToken;
 
 	public KeystoneApplication() {
 		this.tokenToUser = new HashMap<String, String>();
 	}
 
-	public KeystoneApplication(String usernameAdmin, String passwordAdmin, Token defaultToken) {
+	public KeystoneApplication(String usernameAdmin, String passwordAdmin, String tenantName,
+			String validToken, Token defaultToken) {
 		this.tokenToUser = new HashMap<String, String>();
+		this.tenantName = tenantName;
+		this.validToken = validToken;
 		this.usernameAdmin = usernameAdmin;
 		this.passwordAdmin = passwordAdmin;
 		this.defaultToken = defaultToken;
@@ -69,8 +72,15 @@ public class KeystoneApplication extends Application {
 		}
 	}
 
-	public void authenticationCheck(String username, String password) {
-		if (!this.usernameAdmin.equals(username) || !this.passwordAdmin.equals(password)) {
+	public void authenticationCheckToken(String idToken, String tenantName) {
+		if (!this.validToken.equals(idToken) || !this.tenantName.equals(tenantName)) {
+			throw new ResourceException(HttpStatus.SC_UNAUTHORIZED);
+		}
+	}
+
+	public void checkAuthenticationCredentials(String username, String password, String tenantName) {
+		if (!this.usernameAdmin.equals(username) || !this.passwordAdmin.equals(password)
+				|| !this.tenantName.equals(tenantName)) {
 			throw new ResourceException(HttpStatus.SC_UNAUTHORIZED);
 		}
 	}
@@ -86,7 +96,7 @@ public class KeystoneApplication extends Application {
 			KeystoneApplication keyStoneApplication = (KeystoneApplication) getApplication();
 			HttpRequest req = (HttpRequest) getRequest();
 			String token = req.getHeaders().getValues(OCCIHeaders.X_AUTH_TOKEN);
-			keyStoneApplication.checkUserByToken(token);		
+			keyStoneApplication.checkUserByToken(token);
 			String user = keyStoneApplication.getUserFromToken(token);
 			return mountJSONResponseUserPerToken(token, user);
 		}
@@ -101,16 +111,22 @@ public class KeystoneApplication extends Application {
 			} catch (IOException e) {
 			}
 
-			String username = getUserFeatureCredentials(jsonCredentials,
-					OpenStackIdentityPlugin.KEYSTONE_USERNAME);
-			String password = getUserFeatureCredentials(jsonCredentials,
-					OpenStackIdentityPlugin.KEYSTONE_PASSWORD);
+			String tenantNname = getTenantName(jsonCredentials);
+			String idToken = getIdToken(jsonCredentials);
+			if (idToken != null) {
+				keyStoneApplication.authenticationCheckToken(idToken, tenantNname);
+			} else {
+				String username = getUserFeatureCredentials(jsonCredentials,
+						OpenStackIdentityPlugin.USERNAME_KEYSTONE);
+				String password = getUserFeatureCredentials(jsonCredentials,
+						OpenStackIdentityPlugin.PASSWORD_KEYSTONE);
 
-			keyStoneApplication.authenticationCheck(username, password);
+				keyStoneApplication.checkAuthenticationCredentials(username, password, tenantNname);
+			}
 
 			return new StringRepresentation(
 					mountJSONResponseAuthenticateToken(keyStoneApplication.getDefaultToken()),
-					MediaType.TEXT_ALL);				
+					MediaType.TEXT_ALL);
 		}
 
 		private String mountJSONResponseAuthenticateToken(Token token) {
@@ -118,7 +134,7 @@ public class KeystoneApplication extends Application {
 				String tokenId = token.get(OCCIHeaders.X_TOKEN_ACCESS_ID);
 				String tenantId = token.get(OCCIHeaders.X_TOKEN_TENANT_ID);
 				String expirationDate = token.get(OCCIHeaders.X_TOKEN_EXPIRATION_DATE);
-				
+
 				JSONObject rootIdTenantToken = new JSONObject();
 				rootIdTenantToken.put(OpenStackIdentityPlugin.ID_KEYSTONE, tenantId);
 				JSONObject rootIdToken = new JSONObject();
@@ -136,11 +152,32 @@ public class KeystoneApplication extends Application {
 			return null;
 		}
 
+		private String getIdToken(String jsonCredentials) {
+			try {
+				JSONObject root = new JSONObject(jsonCredentials);
+				return root.getJSONObject(OpenStackIdentityPlugin.AUTH_KEYSTONE)
+						.getJSONObject(OpenStackIdentityPlugin.TOKEN_KEYSTONE)
+						.getString(OpenStackIdentityPlugin.ID_KEYSTONE).toString();
+			} catch (JSONException e) {
+				return null;
+			}
+		}
+
+		private String getTenantName(String jsonCredentials) {
+			try {
+				JSONObject root = new JSONObject(jsonCredentials);
+				return root.getJSONObject(OpenStackIdentityPlugin.AUTH_KEYSTONE)
+						.getString(OpenStackIdentityPlugin.TENANT_NAME_KEYSTONE).toString();
+			} catch (JSONException e) {
+				return null;
+			}
+		}
+
 		private String getUserFeatureCredentials(String jsonCredentials, String feature) {
 			try {
 				JSONObject root = new JSONObject(jsonCredentials);
 				return root.getJSONObject(OpenStackIdentityPlugin.AUTH_KEYSTONE)
-						.getJSONObject(OpenStackIdentityPlugin.PASSWORD_CREDENTIALS)
+						.getJSONObject(OpenStackIdentityPlugin.PASSWORD_CREDENTIALS_KEYSTONE)
 						.getString(feature).toString();
 			} catch (JSONException e) {
 				return null;

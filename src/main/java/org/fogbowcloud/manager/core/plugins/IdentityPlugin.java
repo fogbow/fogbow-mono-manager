@@ -10,5 +10,7 @@ public interface IdentityPlugin {
 	
 	public String getTokenExpiresDate(String tokenId);
 	
-	public Token getToken(Map<String, String> tokenAttributes);
+	public Token getToken(Map<String, String> tokenCredentials);
+	
+	public Token updateToken(Map<String, String> tokenAttributes);
 }

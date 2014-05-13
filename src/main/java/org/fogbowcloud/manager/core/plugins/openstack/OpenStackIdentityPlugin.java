@@ -26,10 +26,10 @@ import org.json.JSONObject;
 
 public class OpenStackIdentityPlugin implements IdentityPlugin {
 
-	private static final String KEYSTONE_TENANT_NAME = "tenantName";
-	public static final String KEYSTONE_USERNAME = "username";
-	public static final String KEYSTONE_PASSWORD = "password";
-	public static final String PASSWORD_CREDENTIALS = "passwordCredentials";
+	public static final String TENANT_NAME_KEYSTONE = "tenantName";
+	public static final String USERNAME_KEYSTONE = "username";
+	public static final String PASSWORD_KEYSTONE = "password";
+	public static final String PASSWORD_CREDENTIALS_KEYSTONE = "passwordCredentials";
 	public static final String AUTH_KEYSTONE = "auth";
 	public static final String TOKEN_KEYSTONE = "token";
 	public static final String ID_KEYSTONE = "id";
@@ -91,13 +91,45 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 			httpPost.addHeader(OCCIHeaders.ACCEPT, OCCIHeaders.JSON_ACCEPT);
 
 			JSONObject passwordCredentials = new JSONObject();
-			passwordCredentials.put(KEYSTONE_USERNAME,
+			passwordCredentials.put(USERNAME_KEYSTONE,
 					tokenAttributes.get(OCCIHeaders.X_TOKEN_USER));
-			passwordCredentials.put(KEYSTONE_PASSWORD,
+			passwordCredentials.put(PASSWORD_KEYSTONE,
 					tokenAttributes.get(OCCIHeaders.X_TOKEN_PASS));
 			JSONObject auth = new JSONObject();
-			auth.put(KEYSTONE_TENANT_NAME, tokenAttributes.get(OCCIHeaders.X_TOKEN_TENANT_NAME));
-			auth.put(PASSWORD_CREDENTIALS, passwordCredentials);
+			auth.put(TENANT_NAME_KEYSTONE, tokenAttributes.get(OCCIHeaders.X_TOKEN_TENANT_NAME));
+			auth.put(PASSWORD_CREDENTIALS_KEYSTONE, passwordCredentials);
+			JSONObject root = new JSONObject();
+			root.put(AUTH_KEYSTONE, auth);
+			httpPost.setEntity(new StringEntity(root.toString(), HTTP.UTF_8));
+			response = httpClient.execute(httpPost);
+
+			responseStr = EntityUtils.toString(response.getEntity(), HTTP.UTF_8);
+		} catch (Exception e) {
+			LOGGER.error(e);
+			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
+		}
+		checkStatusResponse(response);
+
+		return getTokenFromJson(responseStr);
+	}
+	
+	@Override
+	public Token updateToken(Map<String, String> tokenAttributes) {
+		HttpResponse response;
+		String responseStr = null;
+		try {
+			HttpClient httpClient = new DefaultHttpClient();
+			HttpPost httpPost = new HttpPost(this.v2Endpoint);
+
+			httpPost.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.JSON_CONTENT_TYPE);
+			httpPost.addHeader(OCCIHeaders.ACCEPT, OCCIHeaders.JSON_ACCEPT);
+
+			JSONObject idToken = new JSONObject();
+			idToken.put(ID_KEYSTONE,
+					tokenAttributes.get(OCCIHeaders.X_TOKEN_ACCESS_ID));
+			JSONObject auth = new JSONObject();
+			auth.put(TENANT_NAME_KEYSTONE, tokenAttributes.get(OCCIHeaders.X_TOKEN_TENANT_NAME));
+			auth.put(TOKEN_KEYSTONE, idToken);
 			JSONObject root = new JSONObject();
 			root.put(AUTH_KEYSTONE, auth);
 			httpPost.setEntity(new StringEntity(root.toString(), HTTP.UTF_8));

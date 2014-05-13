@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.swing.text.TabableView;
+
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.util.ComputeApplication.InstanceIdGenerator;
@@ -16,10 +18,12 @@ public class PluginHelper {
 	private Component component;
 
 	public static final String AUTH_TOKEN = "HgfugGJHgJgHJGjGJgJg-857GHGYHjhHjH";
+	public static final String VALID_TOKEN = "JgY45SDNFfdh348by89byfjhihjfjhfccv";
 	public static final String TENANT_ID = "fc394f2ab2df4114bde39905f800dc57";
 	public static final String EXPIRATION_DATA = "2014-01-31T15:30:58Z";
 	public static final String USERNAME_FOGBOW = "admin";
 	public static final String PASSWORD_FOGBOW = "reverse";
+	public static final String TENANTNAME_FOGBOW = "admin";
 
 	public static final int PORT_ENDPOINT = 8182;
 
@@ -37,8 +41,9 @@ public class PluginHelper {
 		tokenAttributes.put(OCCIHeaders.X_TOKEN_EXPIRATION_DATE, EXPIRATION_DATA);
 		Token token = new Token(tokenAttributes);
 		
-		KeystoneApplication keystoneApplication = new KeystoneApplication(USERNAME_FOGBOW, PASSWORD_FOGBOW,
-				token);
+		KeystoneApplication keystoneApplication = new KeystoneApplication(USERNAME_FOGBOW, PASSWORD_FOGBOW
+				, TENANTNAME_FOGBOW, VALID_TOKEN, token);
+		
 		keystoneApplication.putTokenAndUser(AUTH_TOKEN, USERNAME_FOGBOW);
 
 		this.component.getDefaultHost().attach(keystoneApplication);
