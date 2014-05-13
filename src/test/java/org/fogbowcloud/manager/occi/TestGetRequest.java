@@ -15,7 +15,6 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
-import org.fogbowcloud.manager.core.TestManagerController;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.occi.core.Category;
@@ -54,8 +53,6 @@ public class TestGetRequest {
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.getUser(OCCITestHelper.ACCESS_TOKEN)).thenReturn(
 				OCCITestHelper.USER_MOCK);
-		Mockito.when(identityPlugin.getTokenExpiresDate(OCCITestHelper.ACCESS_TOKEN)).thenReturn(
-				TestManagerController.getDateISO8601Format(System.currentTimeMillis() + OCCITestHelper.LONG_TIME));
 		Mockito.when(identityPlugin.getUser(OCCITestHelper.INVALID_TOKEN)).thenThrow(
 				new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED));
 

@@ -1,7 +1,6 @@
 package org.fogbowcloud.manager.occi.request;
 
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -130,6 +129,9 @@ public class Request {
 
 	public boolean isExpired() {		
 		String expirationDateSrt = xOCCIAtt.get(RequestAttribute.VALID_UNTIL.getValue());
+		if (expirationDateSrt == null){
+			return false;
+		}
 		SimpleDateFormat dateFormatISO8601 = new SimpleDateFormat(
 				FederationMember.ISO_8601_DATE_FORMAT, Locale.ROOT);
 		dateFormatISO8601.setTimeZone(TimeZone.getTimeZone("GMT"));		

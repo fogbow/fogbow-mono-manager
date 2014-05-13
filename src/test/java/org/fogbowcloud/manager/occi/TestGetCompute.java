@@ -55,8 +55,6 @@ public class TestGetCompute {
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.getUser(OCCITestHelper.ACCESS_TOKEN)).thenReturn(
 				OCCITestHelper.USER_MOCK);
-		Mockito.when(identityPlugin.getTokenExpiresDate(OCCITestHelper.ACCESS_TOKEN)).thenReturn(
-				TestManagerController.getDateISO8601Format(System.currentTimeMillis() + OCCITestHelper.LONG_TIME));
 		
 		List<Request> requests = new LinkedList<Request>();
 		Request request1 = new Request("1", OCCITestHelper.ACCESS_TOKEN, 

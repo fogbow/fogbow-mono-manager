@@ -20,7 +20,7 @@ public class PluginHelper {
 	public static final String AUTH_TOKEN = "HgfugGJHgJgHJGjGJgJg-857GHGYHjhHjH";
 	public static final String VALID_TOKEN = "JgY45SDNFfdh348by89byfjhihjfjhfccv";
 	public static final String TENANT_ID = "fc394f2ab2df4114bde39905f800dc57";
-	public static final String EXPIRATION_DATA = "2014-01-31T15:30:58Z";
+	public static final String EXPIRATION_DATE = "2014-01-31T15:30:58Z";
 	public static final String USERNAME_FOGBOW = "admin";
 	public static final String PASSWORD_FOGBOW = "reverse";
 	public static final String TENANTNAME_FOGBOW = "admin";
@@ -38,7 +38,7 @@ public class PluginHelper {
 		Map<String, String> tokenAttributes = new HashMap<String, String>();
 		tokenAttributes.put(OCCIHeaders.X_TOKEN_ACCESS_ID, AUTH_TOKEN);
 		tokenAttributes.put(OCCIHeaders.X_TOKEN_TENANT_ID, TENANT_ID);
-		tokenAttributes.put(OCCIHeaders.X_TOKEN_EXPIRATION_DATE, EXPIRATION_DATA);
+		tokenAttributes.put(OCCIHeaders.X_TOKEN_EXPIRATION_DATE, EXPIRATION_DATE);
 		Token token = new Token(tokenAttributes);
 		
 		KeystoneApplication keystoneApplication = new KeystoneApplication(USERNAME_FOGBOW, PASSWORD_FOGBOW

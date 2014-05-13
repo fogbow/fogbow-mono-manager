@@ -1,6 +1,7 @@
 package org.fogbowcloud.manager.core;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -9,8 +10,6 @@ import java.util.Properties;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
-
-import javax.management.modelmbean.RequiredModelMBean;
 
 import org.apache.http.HttpStatus;
 import org.apache.log4j.Logger;
@@ -33,7 +32,6 @@ import org.fogbowcloud.manager.occi.request.RequestRepository;
 import org.fogbowcloud.manager.occi.request.RequestState;
 import org.fogbowcloud.manager.occi.request.RequestType;
 import org.fogbowcloud.manager.xmpp.ManagerPacketHelper;
-import org.fogbowcloud.manager.xmpp.core.model.DateUtils;
 import org.jamppa.component.PacketSender;
 
 public class ManagerController {
@@ -295,11 +293,6 @@ public class ManagerController {
 		String user = getUser(authToken);
 		String tokenExpiresDate = identityPlugin.getTokenExpiresDate(authToken);
 		
-		//TODO check if UNTIL is before token expires date 
-		if (xOCCIAtt.get(RequestAttribute.VALID_UNTIL.getValue()) == null){
-			xOCCIAtt.put(RequestAttribute.VALID_UNTIL.getValue(), tokenExpiresDate);
-		}
-
 		Integer instanceCount = Integer.valueOf(xOCCIAtt.get(RequestAttribute.INSTANCE_COUNT
 				.getValue()));
 		LOGGER.info("Request " + instanceCount + " instances");

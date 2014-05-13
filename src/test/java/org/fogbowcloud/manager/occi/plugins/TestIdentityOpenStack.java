@@ -69,7 +69,7 @@ public class TestIdentityOpenStack {
 		String expirationDate = token.get(OCCIHeaders.X_TOKEN_EXPIRATION_DATE);
 		Assert.assertEquals(PluginHelper.AUTH_TOKEN, authToken);
 		Assert.assertEquals(PluginHelper.TENANT_ID, tenantID);
-		Assert.assertEquals(PluginHelper.EXPIRATION_DATA, expirationDate);
+		Assert.assertEquals(PluginHelper.EXPIRATION_DATE, expirationDate);
 	}
 
 	@Test
@@ -84,7 +84,7 @@ public class TestIdentityOpenStack {
 		String expirationDate = token.get(OCCIHeaders.X_TOKEN_EXPIRATION_DATE);
 		Assert.assertEquals(PluginHelper.AUTH_TOKEN, authToken);
 		Assert.assertEquals(PluginHelper.TENANT_ID, tenantID);
-		Assert.assertEquals(PluginHelper.EXPIRATION_DATA, expirationDate);
+		Assert.assertEquals(PluginHelper.EXPIRATION_DATE, expirationDate);
 
 		Map<String, String> tokenAttributes2 = new HashMap<String, String>();
 		tokenAttributes2.put(OCCIHeaders.X_TOKEN_ACCESS_ID, PluginHelper.VALID_TOKEN);
@@ -95,7 +95,7 @@ public class TestIdentityOpenStack {
 		expirationDate = token2.get(OCCIHeaders.X_TOKEN_EXPIRATION_DATE);
 		Assert.assertEquals(PluginHelper.AUTH_TOKEN, authToken);
 		Assert.assertEquals(PluginHelper.TENANT_ID, tenantID);
-		Assert.assertEquals(PluginHelper.EXPIRATION_DATA, expirationDate);
+		Assert.assertEquals(PluginHelper.EXPIRATION_DATE, expirationDate);
 	}
 
 	@Test(expected = OCCIException.class)

@@ -57,8 +57,6 @@ public class TestOCCIApplication {
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.getUser(OCCITestHelper.ACCESS_TOKEN)).thenReturn(
 				OCCITestHelper.USER_MOCK);
-		Mockito.when(identityPlugin.getTokenExpiresDate(OCCITestHelper.ACCESS_TOKEN)).thenReturn(
-				TestManagerController.getDateISO8601Format(System.currentTimeMillis() + OCCITestHelper.LONG_TIME));
 
 		SSHTunnel sshTunnel = Mockito.mock(SSHTunnel.class);
 		
