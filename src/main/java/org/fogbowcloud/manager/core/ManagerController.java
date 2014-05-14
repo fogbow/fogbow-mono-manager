@@ -31,15 +31,19 @@ import org.fogbowcloud.manager.occi.request.RequestRepository;
 import org.fogbowcloud.manager.occi.request.RequestState;
 import org.fogbowcloud.manager.occi.request.RequestType;
 import org.fogbowcloud.manager.xmpp.ManagerPacketHelper;
+import org.fogbowcloud.manager.xmpp.core.model.DateUtils;
 import org.jamppa.component.PacketSender;
 
 public class ManagerController {
 
 	private static final Logger LOGGER = Logger.getLogger(ManagerController.class);
-	public static final long DEFAULT_SCHEDULER_PERIOD = 30000;
+	public static final long DEFAULT_SCHEDULER_PERIOD = 30000; // 30 seconds
+	private static final long DEFAULT_TOKEN_UPDATE_PERIOD = 300000; // 5 minutes
 
 	private boolean scheduled = false;
-	private Timer timer;
+	private boolean tokenUpdaterOn = false;
+	private Timer requestSchedulerTimer;
+	private Timer tokenUpdaterTimer;
 
 	private Token tokenMemberLocal;
 	private List<FederationMember> members = new LinkedList<FederationMember>();
@@ -240,7 +244,7 @@ public class ManagerController {
 			Map<String, String> xOCCIAtt) {
 		LOGGER.info("Submiting request with categories: " + categories + " and xOCCIAtt: "
 				+ xOCCIAtt + " for remote member.");
-		String token = getFederationUserToken().getAccessId();//(OCCIHeaders.X_TOKEN_ACCESS_ID);
+		String token = getFederationUserToken().getAccessId();// (OCCIHeaders.X_TOKEN_ACCESS_ID);
 		try {
 			return computePlugin.requestInstance(token, categories, xOCCIAtt);
 		} catch (OCCIException e) {
@@ -250,7 +254,7 @@ public class ManagerController {
 			throw e;
 		}
 	}
-	
+
 	protected Token getFederationUserToken() {
 		Map<String, String> tokenAttributes = new HashMap<String, String>();
 		String username = properties.getProperty("federation_user_name");
@@ -259,17 +263,17 @@ public class ManagerController {
 		tokenAttributes.put(OCCIHeaders.X_TOKEN_USER, username);
 		tokenAttributes.put(OCCIHeaders.X_TOKEN_PASS, password);
 		tokenAttributes.put(OCCIHeaders.X_TOKEN_TENANT_NAME, tenantName);
-		
+
 		if (tokenMemberLocal == null || tokenMemberLocal.isExpiredToken()) {
 			Token token = identityPlugin.getToken(tokenAttributes);
 			this.tokenMemberLocal = token;
 		}
 		return this.tokenMemberLocal;
-	}	
+	}
 
 	public Instance getInstanceForRemoteMember(String instanceId) {
 		LOGGER.info("Getting instance " + instanceId + " for remote member.");
-		String token = getFederationUserToken().getAccessId();//get(OCCIHeaders.X_TOKEN_ACCESS_ID);
+		String token = getFederationUserToken().getAccessId();// get(OCCIHeaders.X_TOKEN_ACCESS_ID);
 		try {
 			return computePlugin.getInstance(token, instanceId);
 		} catch (OCCIException e) {
@@ -283,7 +287,7 @@ public class ManagerController {
 
 	public void removeInstanceForRemoteMember(String instanceId) {
 		LOGGER.info("Removing instance " + instanceId + " for remote member.");
-		String token = getFederationUserToken().getAccessId();//(OCCIHeaders.X_TOKEN_ACCESS_ID);
+		String token = getFederationUserToken().getAccessId();// (OCCIHeaders.X_TOKEN_ACCESS_ID);
 		computePlugin.removeInstance(token, instanceId);
 	}
 
@@ -293,7 +297,7 @@ public class ManagerController {
 
 		Token userToken = identityPlugin.getToken(authToken);
 		LOGGER.debug("User Token: " + userToken);
-		
+
 		Integer instanceCount = Integer.valueOf(xOCCIAtt.get(RequestAttribute.INSTANCE_COUNT
 				.getValue()));
 		LOGGER.info("Request " + instanceCount + " instances");
@@ -315,7 +319,49 @@ public class ManagerController {
 		if (!scheduled) {
 			scheduleRequests();
 		}
+		if (!tokenUpdaterOn) {
+			turnOnTokenUpdater();
+		}
 		return currentRequests;
+	}
+
+	private void turnOnTokenUpdater() {
+		tokenUpdaterOn = true;
+		String tokenUpdaterPeriodStr = properties.getProperty("token_update_period");
+		final long tokenUpdatePeriod = tokenUpdaterPeriodStr == null ? DEFAULT_TOKEN_UPDATE_PERIOD
+				: Long.valueOf(tokenUpdaterPeriodStr);
+
+		tokenUpdaterTimer = new Timer();
+		tokenUpdaterTimer.scheduleAtFixedRate(new TimerTask() {
+			@Override
+			public void run() {
+				checkAndUpdateRequestToken(tokenUpdatePeriod);
+			}
+		}, 0, tokenUpdatePeriod);
+	}
+
+	// TODO Refactor! Think about not call updateToken to requests of same user
+	protected void checkAndUpdateRequestToken(long tokenUpdatePeriod) {
+		List<Request> allRequests = requests.getAll();
+		boolean turnOffTimer = true;
+		for (Request request : allRequests) {
+			if (!request.getState().equals(RequestState.CLOSED)
+					&& !request.getState().equals(RequestState.FAILED)) {
+				turnOffTimer = false;
+				long validInterval = request.getToken().getExpirationDate().getTime()
+						- new DateUtils().currentTimeMillis();
+				if (validInterval < 2 * tokenUpdatePeriod) {
+					Token newToken = identityPlugin.updateToken(request.getToken());
+					request.setToken(newToken);
+				}
+			}
+		}
+
+		if (turnOffTimer) {
+			LOGGER.info("There are not requests.");
+			tokenUpdaterTimer.cancel();
+			tokenUpdaterOn = false;
+		}
 	}
 
 	private boolean submitRemoteRequest(Request request) {
@@ -346,7 +392,7 @@ public class ManagerController {
 		LOGGER.info("Submiting local request " + request);
 
 		try {
-			instanceId = computePlugin.requestInstance(request.getAuthToken(),
+			instanceId = computePlugin.requestInstance(request.getToken().getAccessId(),
 					request.getCategories(), request.getxOCCIAtt());
 		} catch (OCCIException e) {
 			// TODO check if this is the error code!
@@ -373,8 +419,8 @@ public class ManagerController {
 		long schedulerPeriod = schedulerPeriodStr == null ? DEFAULT_SCHEDULER_PERIOD : Long
 				.valueOf(schedulerPeriodStr);
 
-		timer = new Timer();
-		timer.scheduleAtFixedRate(new TimerTask() {
+		requestSchedulerTimer = new Timer();
+		requestSchedulerTimer.scheduleAtFixedRate(new TimerTask() {
 			@Override
 			public void run() {
 				checkAndSubmitOpenRequests();
@@ -387,13 +433,13 @@ public class ManagerController {
 		LOGGER.debug("Checking and submiting requests.");
 
 		for (Request request : requests.get(RequestState.OPEN)) {
-			Map<String, String> xOCCIAtt = request.getxOCCIAtt();			
-			if (request.isIntoValidPeriod()){
+			Map<String, String> xOCCIAtt = request.getxOCCIAtt();
+			if (request.isIntoValidPeriod()) {
 				for (String keyAttributes : RequestAttribute.getValues()) {
 					xOCCIAtt.remove(keyAttributes);
 				}
 				allFulfilled &= submitLocalRequest(request) || submitRemoteRequest(request);
-			} else if (request.isExpired()){
+			} else if (request.isExpired()) {
 				request.setState(RequestState.CLOSED);
 			} else {
 				allFulfilled = false;
@@ -401,7 +447,7 @@ public class ManagerController {
 		}
 		if (allFulfilled) {
 			LOGGER.info("All request fulfilled.");
-			timer.cancel();
+			requestSchedulerTimer.cancel();
 			scheduled = false;
 		}
 	}

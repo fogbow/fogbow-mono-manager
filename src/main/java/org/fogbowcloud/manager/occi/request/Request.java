@@ -87,12 +87,12 @@ public class Request {
 		return "RequestId=" + id + "; State=" + state.getValue() + "; InstanceId= " + instanceId;
 	}
 
-	//TODO Review if we need this method 
-	public String getAuthToken() {
-		if (token == null){
-			return null;
-		}
-		return this.token.getAccessId();
+	public Token getToken() {		
+		return this.token;
+	}
+	
+	public void setToken(Token token) {
+		this.token = token;		
 	}
 
 	public Map<String, String> getxOCCIAtt() {
