@@ -17,7 +17,6 @@ public class PluginHelper {
 	private Component component;
 
 	public static final String AUTH_TOKEN = "HgfugGJHgJgHJGjGJgJg-857GHGYHjhHjH";
-	public static final String VALID_TOKEN = "JgY45SDNFfdh348by89byfjhihjfjhfccv";
 	public static final String TENANT_ID = "fc394f2ab2df4114bde39905f800dc57";
 	public static final String TENANT_NAME = "admin";
 
@@ -44,7 +43,7 @@ public class PluginHelper {
 
 		// TODO Refactor! We really need all these args to KeytoneApplication?
 		KeystoneApplication keystoneApplication = new KeystoneApplication(USERNAME_FOGBOW,
-				PASSWORD_FOGBOW, TENANT_NAME, VALID_TOKEN, token);
+				PASSWORD_FOGBOW, TENANT_NAME, AUTH_TOKEN, token);
 
 		keystoneApplication.putTokenAndUser(AUTH_TOKEN, USERNAME_FOGBOW);
 

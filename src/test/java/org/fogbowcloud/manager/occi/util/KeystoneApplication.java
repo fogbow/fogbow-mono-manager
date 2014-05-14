@@ -108,7 +108,7 @@ public class KeystoneApplication extends Application {
 		@Post
 		public Representation post(Representation entity) {
 			KeystoneApplication keyStoneApplication = (KeystoneApplication) getApplication();
-
+			
 			String jsonCredentials = "";
 			try {
 				jsonCredentials = entity.getText();
