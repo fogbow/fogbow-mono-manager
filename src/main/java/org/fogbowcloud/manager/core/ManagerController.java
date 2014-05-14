@@ -39,11 +39,14 @@ public class ManagerController {
 	private static final Logger LOGGER = Logger.getLogger(ManagerController.class);
 	public static final long DEFAULT_SCHEDULER_PERIOD = 30000; // 30 seconds
 	private static final long DEFAULT_TOKEN_UPDATE_PERIOD = 300000; // 5 minutes
+	private static final long DEFAULT_INSTANCE_MONITORING_PERIOD = 120000; //2 minutes
 
 	private boolean scheduled = false;
-	private boolean tokenUpdaterOn = false;
+	private boolean tokenUpdatingOn = false;
+	private boolean instanceMonitoringOn = false;
 	private Timer requestSchedulerTimer;
 	private Timer tokenUpdaterTimer;
+	private Timer instanceMonitoringTimer;
 
 	private Token tokenMemberLocal;
 	private List<FederationMember> members = new LinkedList<FederationMember>();
@@ -151,6 +154,7 @@ public class ManagerController {
 		return getInstance(authToken, instanceId, request);
 	}
 
+	//TODO Review the needs of these args. Request object already has othe information 
 	private Instance getInstance(String authToken, String instanceId, Request request) {
 		Instance instance = null;
 		if (isLocal(request)) {
@@ -199,6 +203,10 @@ public class ManagerController {
 		}
 		request.setInstanceId(null);
 		request.setMemberId(null);
+		updateRequestState(request);
+	}
+
+	private void updateRequestState(Request request) {
 		if (request.getAttValue(RequestAttribute.TYPE.getValue()) != null
 				&& request.getAttValue(RequestAttribute.TYPE.getValue()).equals(
 						RequestType.PERSISTENT.getValue())) {
@@ -319,17 +327,63 @@ public class ManagerController {
 		if (!scheduled) {
 			scheduleRequests();
 		}
-		if (!tokenUpdaterOn) {
-			turnOnTokenUpdater();
+		if (!tokenUpdatingOn) {
+			turnOnTokenUpdating();
 		}
+
 		return currentRequests;
 	}
 
-	private void turnOnTokenUpdater() {
-		tokenUpdaterOn = true;
-		String tokenUpdaterPeriodStr = properties.getProperty("token_update_period");
-		final long tokenUpdatePeriod = tokenUpdaterPeriodStr == null ? DEFAULT_TOKEN_UPDATE_PERIOD
-				: Long.valueOf(tokenUpdaterPeriodStr);
+	private void turnOnInstancesMonitoring() {
+		instanceMonitoringOn = true;
+		String instanceMonitoringPeriodStr = properties.getProperty("instance_monitoring_period");
+		final long instanceMonitoringPeriod = instanceMonitoringPeriodStr == null ? DEFAULT_INSTANCE_MONITORING_PERIOD
+				: Long.valueOf(instanceMonitoringPeriodStr);
+
+		instanceMonitoringTimer = new Timer();
+		instanceMonitoringTimer.scheduleAtFixedRate(new TimerTask() {
+			@Override
+			public void run() {
+				monitorInstances();
+			}
+		}, 0, instanceMonitoringPeriod);
+	}
+
+	protected void monitorInstances() {
+		boolean turnOffTimer = true;
+
+		//monitoring fulfilled requests
+		for (Request request : requests.get(RequestState.FULFILLED)) {
+			turnOffTimer = false;
+			try {
+				getInstance(request.getToken().getAccessId(), request.getInstanceId(), request);
+			} catch (OCCIException e) { //TODO Only NOT FOUND exception type?
+				updateRequestState(requests.get(request.getId()));
+			}
+		}
+		
+		//monitoring deleted requests
+		for (Request request : requests.get(RequestState.DELETED)) {
+			turnOffTimer = false;
+			try {
+				getInstance(request.getToken().getAccessId(), request.getInstanceId(), request);
+			} catch (OCCIException e) {
+				requests.remove(request.getId());
+			}
+		}
+		
+		if (turnOffTimer) {
+			LOGGER.info("There are not requests.");
+			instanceMonitoringTimer.cancel();
+			instanceMonitoringOn = false;
+		}
+	}
+
+	private void turnOnTokenUpdating() {
+		tokenUpdatingOn = true;
+		String tokenUpdatePeriodStr = properties.getProperty("token_update_period");
+		final long tokenUpdatePeriod = tokenUpdatePeriodStr == null ? DEFAULT_TOKEN_UPDATE_PERIOD
+				: Long.valueOf(tokenUpdatePeriodStr);
 
 		tokenUpdaterTimer = new Timer();
 		tokenUpdaterTimer.scheduleAtFixedRate(new TimerTask() {
@@ -352,7 +406,7 @@ public class ManagerController {
 						- new DateUtils().currentTimeMillis();
 				if (validInterval < 2 * tokenUpdatePeriod) {
 					Token newToken = identityPlugin.updateToken(request.getToken());
-					request.setToken(newToken);
+					requests.get(request.getId()).setToken(newToken);
 				}
 			}
 		}
@@ -360,7 +414,7 @@ public class ManagerController {
 		if (turnOffTimer) {
 			LOGGER.info("There are not requests.");
 			tokenUpdaterTimer.cancel();
-			tokenUpdaterOn = false;
+			tokenUpdatingOn = false;
 		}
 	}
 
@@ -382,6 +436,9 @@ public class ManagerController {
 
 		request.setState(RequestState.FULFILLED);
 		request.setInstanceId(remoteInstanceId);
+		if(!instanceMonitoringOn){
+			turnOnInstancesMonitoring();
+		}
 		return true;
 	}
 
@@ -410,6 +467,9 @@ public class ManagerController {
 		request.setInstanceId(instanceId);
 		request.setState(RequestState.FULFILLED);
 		LOGGER.debug("Fulfilled Request: " + request);
+		if (!instanceMonitoringOn){
+			turnOnInstancesMonitoring();
+		}		
 		return true;
 	}
 
