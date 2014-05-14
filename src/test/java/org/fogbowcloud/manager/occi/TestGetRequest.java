@@ -2,6 +2,7 @@ package org.fogbowcloud.manager.occi;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -23,6 +24,7 @@ import org.fogbowcloud.manager.occi.core.HeaderUtils;
 import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
+import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.fogbowcloud.manager.occi.request.RequestState;
@@ -55,6 +57,13 @@ public class TestGetRequest {
 				OCCITestHelper.USER_MOCK);
 		Mockito.when(identityPlugin.getUser(OCCITestHelper.INVALID_TOKEN)).thenThrow(
 				new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED));
+		
+		HashMap<String, String> tokenAttr = new HashMap<String, String>();
+		tokenAttr.put(OCCIHeaders.X_TOKEN_USER, OCCITestHelper.USER_MOCK);
+		Token userToken = new Token(OCCITestHelper.ACCESS_TOKEN,
+				OCCITestHelper.TOKEN_FUTURE_EXPIRATION, tokenAttr);
+		
+		Mockito.when(identityPlugin.getToken(OCCITestHelper.ACCESS_TOKEN)).thenReturn(userToken);
 
 		requestHelper.initializeComponent(computePlugin, identityPlugin);
 	}

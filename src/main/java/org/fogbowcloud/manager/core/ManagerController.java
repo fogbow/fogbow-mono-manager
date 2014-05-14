@@ -1,7 +1,6 @@
 package org.fogbowcloud.manager.core;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -42,7 +41,7 @@ public class ManagerController {
 	private boolean scheduled = false;
 	private Timer timer;
 
-	private Token tokenMemberLocal = new Token(new HashMap<String, String>());
+	private Token tokenMemberLocal;
 	private List<FederationMember> members = new LinkedList<FederationMember>();
 	private RequestRepository requests = new RequestRepository();
 	private FederationMemberPicker memberPicker = new RoundRobinMemberPicker();
@@ -241,7 +240,7 @@ public class ManagerController {
 			Map<String, String> xOCCIAtt) {
 		LOGGER.info("Submiting request with categories: " + categories + " and xOCCIAtt: "
 				+ xOCCIAtt + " for remote member.");
-		String token = getFederationUserToken().get(OCCIHeaders.X_TOKEN_ACCESS_ID);
+		String token = getFederationUserToken().getAccessId();//(OCCIHeaders.X_TOKEN_ACCESS_ID);
 		try {
 			return computePlugin.requestInstance(token, categories, xOCCIAtt);
 		} catch (OCCIException e) {
@@ -261,7 +260,7 @@ public class ManagerController {
 		tokenAttributes.put(OCCIHeaders.X_TOKEN_PASS, password);
 		tokenAttributes.put(OCCIHeaders.X_TOKEN_TENANT_NAME, tenantName);
 		
-		if (tokenMemberLocal.isExpiredToken()) {
+		if (tokenMemberLocal == null || tokenMemberLocal.isExpiredToken()) {
 			Token token = identityPlugin.getToken(tokenAttributes);
 			this.tokenMemberLocal = token;
 		}
@@ -270,7 +269,7 @@ public class ManagerController {
 
 	public Instance getInstanceForRemoteMember(String instanceId) {
 		LOGGER.info("Getting instance " + instanceId + " for remote member.");
-		String token = getFederationUserToken().get(OCCIHeaders.X_TOKEN_ACCESS_ID);
+		String token = getFederationUserToken().getAccessId();//get(OCCIHeaders.X_TOKEN_ACCESS_ID);
 		try {
 			return computePlugin.getInstance(token, instanceId);
 		} catch (OCCIException e) {
@@ -284,14 +283,16 @@ public class ManagerController {
 
 	public void removeInstanceForRemoteMember(String instanceId) {
 		LOGGER.info("Removing instance " + instanceId + " for remote member.");
-		String token = getFederationUserToken().get(OCCIHeaders.X_TOKEN_ACCESS_ID);
+		String token = getFederationUserToken().getAccessId();//(OCCIHeaders.X_TOKEN_ACCESS_ID);
 		computePlugin.removeInstance(token, instanceId);
 	}
 
 	public List<Request> createRequests(String authToken, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
 		String user = getUser(authToken);
-		String tokenExpiresDate = identityPlugin.getTokenExpiresDate(authToken);
+
+		Token userToken = identityPlugin.getToken(authToken);
+		LOGGER.debug("User Token: " + userToken);
 		
 		Integer instanceCount = Integer.valueOf(xOCCIAtt.get(RequestAttribute.INSTANCE_COUNT
 				.getValue()));
@@ -300,7 +301,7 @@ public class ManagerController {
 		List<Request> currentRequests = new ArrayList<Request>();
 		for (int i = 0; i < instanceCount; i++) {
 			String requestId = String.valueOf(UUID.randomUUID());
-			Request request = new Request(requestId, authToken, user, categories, xOCCIAtt);
+			Request request = new Request(requestId, userToken, user, categories, xOCCIAtt);
 			try {
 				sshTunnel.create(properties, request);
 			} catch (Exception e) {

@@ -2,6 +2,7 @@ package org.fogbowcloud.manager.occi.util;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +20,7 @@ import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.ssh.SSHTunnel;
 import org.fogbowcloud.manager.occi.OCCIApplication;
 import org.fogbowcloud.manager.occi.core.HeaderUtils;
+import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.fogbowcloud.manager.occi.request.RequestRepository;
 import org.mockito.Mockito;
@@ -27,7 +29,7 @@ import org.restlet.data.Protocol;
 
 public class OCCITestHelper {
 
-	public static final String ACCESS_TOKEN = "HgjhgYUDFTGBgrbelihBDFGBÇuyrb";
+	public static final String ACCESS_TOKEN = "HgjhgYUDFTGBgrbelihBDFGB40uyrb";
 	public static final String INVALID_TOKEN = "invalid-token";
 	public static final String CONTENT_TYPE_OCCI = "text/occi";
 	public static final String URI_FOGBOW_REQUEST = "http://localhost:8182/request";
@@ -38,6 +40,7 @@ public class OCCITestHelper {
 	public static final String USER_MOCK = "user_mock";
 	public static final int ENDPOINT_PORT = 8182;
 	public static final long LONG_TIME = 24 * 60 * 60 * 1000; //one day
+	public static final Date TOKEN_FUTURE_EXPIRATION = new Date(System.currentTimeMillis() + LONG_TIME);
 
 	private Component component;
 	private RequestRepository requests;

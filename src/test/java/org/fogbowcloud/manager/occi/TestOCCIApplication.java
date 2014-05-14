@@ -7,14 +7,15 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.fogbowcloud.manager.core.ManagerController;
-import org.fogbowcloud.manager.core.TestManagerController;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.ssh.SSHTunnel;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.OCCIException;
+import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
+import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
@@ -57,6 +58,12 @@ public class TestOCCIApplication {
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.getUser(OCCITestHelper.ACCESS_TOKEN)).thenReturn(
 				OCCITestHelper.USER_MOCK);
+		HashMap<String, String> tokenAttr = new HashMap<String, String>();
+		tokenAttr.put(OCCIHeaders.X_TOKEN_USER, OCCITestHelper.USER_MOCK);
+		Token userToken = new Token(OCCITestHelper.ACCESS_TOKEN,
+				OCCITestHelper.TOKEN_FUTURE_EXPIRATION, tokenAttr);
+		
+		Mockito.when(identityPlugin.getToken(Mockito.anyString())).thenReturn(userToken);
 
 		SSHTunnel sshTunnel = Mockito.mock(SSHTunnel.class);
 		

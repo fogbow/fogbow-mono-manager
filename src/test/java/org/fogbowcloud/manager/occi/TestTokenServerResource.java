@@ -1,7 +1,6 @@
 package org.fogbowcloud.manager.occi;
 
 import java.util.HashMap;
-import java.util.Map;
 
 import org.apache.commons.codec.Charsets;
 import org.apache.http.HttpResponse;
@@ -24,9 +23,9 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 public class TestTokenServerResource {
-	
+
 	private final String ACCESS_TOKEN_ID = "e723tgdjscbh1gyFV4GFC3OQ";
-	
+
 	private OCCITestHelper helper;
 	private ComputePlugin computePlugin;
 	private IdentityPlugin identityPlugin;
@@ -54,16 +53,15 @@ public class TestTokenServerResource {
 
 		Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusLine().getStatusCode());
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testGetToken() throws Exception {
-		Map<String, String> tokenAttributes = new HashMap<String, String>();
-		tokenAttributes.put(OCCIHeaders.X_TOKEN_ACCESS_ID, ACCESS_TOKEN_ID);
-		Token token = new Token(tokenAttributes);
-		
+		Token token = new Token(ACCESS_TOKEN_ID, OCCITestHelper.TOKEN_FUTURE_EXPIRATION,
+				new HashMap<String, String>());
+
 		Mockito.when(identityPlugin.getToken(Mockito.anyMap())).thenReturn(token);
-		
+
 		this.helper.initializeComponent(computePlugin, identityPlugin);
 
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_TOKEN);
@@ -72,18 +70,18 @@ public class TestTokenServerResource {
 		HttpResponse response = client.execute(get);
 
 		String responseStr = EntityUtils.toString(response.getEntity(),
-				String.valueOf(Charsets.UTF_8));			
-		
+				String.valueOf(Charsets.UTF_8));
+
 		Assert.assertEquals(ACCESS_TOKEN_ID, responseStr);
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
-	}	
-	
+	}
+
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testGetTokenUnauthorized() throws Exception {
-		Mockito.when(identityPlugin.getToken(Mockito.anyMap()))
-			.thenThrow(new OCCIException(ErrorType.UNAUTHORIZED, ""));
-		
+		Mockito.when(identityPlugin.getToken(Mockito.anyMap())).thenThrow(
+				new OCCIException(ErrorType.UNAUTHORIZED, ""));
+
 		this.helper.initializeComponent(computePlugin, identityPlugin);
 
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_TOKEN);
@@ -91,7 +89,6 @@ public class TestTokenServerResource {
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(get);
 
-		Assert.assertEquals(HttpStatus.SC_UNAUTHORIZED, response.getStatusLine()
-				.getStatusCode());
-	}	
+		Assert.assertEquals(HttpStatus.SC_UNAUTHORIZED, response.getStatusLine().getStatusCode());
+	}
 }

@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -23,6 +24,7 @@ import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.Token;
+import org.fogbowcloud.manager.occi.util.OCCITestHelper;
 import org.fogbowcloud.manager.xmpp.ManagerXmppComponent;
 import org.jamppa.client.XMPPClient;
 import org.jamppa.client.plugin.xep0077.XEP0077;
@@ -44,8 +46,9 @@ public class ManagerTestHelper {
 	private static final String CLIENT_ADRESS = "client@test.com";
 	private static final String CLIENT_PASS = "password";
 	private static final String SMACK_ENDING = "/Smack";
-	private static final Token TOKEN = new Token(new HashMap<String, String>());
-	
+	// private static final Token TOKEN = new Token(new HashMap<String,
+	// String>());
+
 	public static final String MANAGER_COMPONENT_URL = "manager.test.com";
 	public static final String MANAGER_COMPONENT_PASS = "password";
 
@@ -57,7 +60,6 @@ public class ManagerTestHelper {
 
 	public final static String CONFIG_PATH = "src/test/resources/manager.conf.test";
 
-
 	private ManagerXmppComponent managerXmppComponent;
 	private ComputePlugin computePlugin;
 	private IdentityPlugin identityPlugin;
@@ -65,9 +67,9 @@ public class ManagerTestHelper {
 
 	public ManagerTestHelper() {
 		Map<String, String> tokenAttributes = new HashMap<String, String>();
-		tokenAttributes.put(OCCIHeaders.X_TOKEN_ACCESS_ID, "token");
 		tokenAttributes.put(OCCIHeaders.X_TOKEN_TENANT_ID, "tenantId_r4fci3qhbcy3b");
-		this.tokenDefault = new Token(tokenAttributes);
+		this.tokenDefault = new Token("token", new Date(System.currentTimeMillis()
+				+ OCCITestHelper.LONG_TIME), tokenAttributes);
 	}
 
 	public ResourcesInfo getResources() throws CertificateException, IOException {
@@ -233,8 +235,8 @@ public class ManagerTestHelper {
 	}
 
 	@SuppressWarnings("unchecked")
-	public List<FederationMember> getItemsFromIQ(Packet response)
-			throws CertificateException, IOException {
+	public List<FederationMember> getItemsFromIQ(Packet response) throws CertificateException,
+			IOException {
 		Element queryElement = response.getElement().element("query");
 		Iterator<Element> itemIterator = queryElement.elementIterator("item");
 		ArrayList<FederationMember> aliveItems = new ArrayList<FederationMember>();
@@ -243,8 +245,8 @@ public class ManagerTestHelper {
 			Element itemEl = (Element) itemIterator.next();
 			Attribute id = itemEl.attribute("id");
 			Element statusEl = itemEl.element("status");
-			Certificate cert = CertificateHandlerHelper.parseCertificate(itemEl
-					.element("cert").getText());
+			Certificate cert = CertificateHandlerHelper.parseCertificate(itemEl.element("cert")
+					.getText());
 			String cpuIdle = statusEl.element("cpu-idle").getText();
 			String cpuInUse = statusEl.element("cpu-inuse").getText();
 			String memIdle = statusEl.element("mem-idle").getText();
@@ -275,16 +277,15 @@ public class ManagerTestHelper {
 		properties.load(input);
 		return properties;
 	}
-	
+
 	public Properties getProperties(String path) throws IOException {
 		Properties properties = new Properties();
 		FileInputStream input = new FileInputStream(path);
 		properties.load(input);
 		return properties;
 	}
-	
-	public Certificate getCertificate() throws CertificateException,
-			IOException {
+
+	public Certificate getCertificate() throws CertificateException, IOException {
 		return CertificateHandlerHelper.getCertificate(getProperties());
 	}
 }

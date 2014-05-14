@@ -29,6 +29,7 @@ import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.fogbowcloud.manager.occi.request.RequestState;
 import org.fogbowcloud.manager.occi.request.RequestType;
+import org.fogbowcloud.manager.occi.util.OCCITestHelper;
 import org.fogbowcloud.manager.xmpp.core.model.DateUtils;
 import org.fogbowcloud.manager.xmpp.util.ManagerTestHelper;
 import org.junit.Assert;
@@ -53,10 +54,15 @@ public class TestManagerController {
 	private static final String TENANT_NAME = "tenantName";
 	private static final long LONG_TIME = 1 * 24 * 60 * 60 * 1000;
 
+	Token userToken;
+
 	@Before
 	public void setUp() throws Exception {
 		managerController = new ManagerController(new Properties());
 		managerTestHelper = new ManagerTestHelper();
+		HashMap<String, String> tokenAttr = new HashMap<String, String>();
+		tokenAttr.put(OCCIHeaders.X_TOKEN_USER, USER_NAME);
+		userToken = new Token(ACCESS_TOKEN_ID, OCCITestHelper.TOKEN_FUTURE_EXPIRATION, tokenAttr);
 	}
 
 	@Test
@@ -73,32 +79,31 @@ public class TestManagerController {
 		attributesToken.put(OCCIHeaders.X_TOKEN_PASS, USER_PASS);
 		attributesToken.put(OCCIHeaders.X_TOKEN_TENANT_NAME, TENANT_NAME);
 
-		long expirationTime = System.currentTimeMillis() + 250;
-
-		String expirationDateStr = getDateISO8601Format(expirationTime);
+		long expirationTime = System.currentTimeMillis() + 500;
 
 		Map<String, String> attributesTokenReturn = new HashMap<String, String>();
-		attributesTokenReturn.put(OCCIHeaders.X_TOKEN_ACCESS_ID, ACCESS_TOKEN_ID);
 		attributesTokenReturn.put(OCCIHeaders.X_TOKEN_TENANT_ID, "987654321");
-		attributesTokenReturn.put(OCCIHeaders.X_TOKEN_EXPIRATION_DATE, expirationDateStr);
-		Token token = new Token(attributesTokenReturn);
+		attributesTokenReturn.put(OCCIHeaders.X_TOKEN_TENANT_NAME, TENANT_NAME);
+		attributesTokenReturn.put(OCCIHeaders.X_TOKEN_USER, USER_NAME);		
+		Token token = new Token(ACCESS_TOKEN_ID, new Date(expirationTime), attributesTokenReturn);
 
 		Map<String, String> attributesTokenReturn2 = new HashMap<String, String>();
-		attributesTokenReturn2.put(OCCIHeaders.X_TOKEN_ACCESS_ID, ACCESS_TOKEN_ID_2);
 		attributesTokenReturn2.put(OCCIHeaders.X_TOKEN_TENANT_ID, "987654321");
-		attributesTokenReturn2.put(OCCIHeaders.X_TOKEN_EXPIRATION_DATE, "data");
-		Token token2 = new Token(attributesTokenReturn2);
+		attributesTokenReturn2.put(OCCIHeaders.X_TOKEN_TENANT_NAME, TENANT_NAME);
+		attributesTokenReturn2.put(OCCIHeaders.X_TOKEN_USER, USER_NAME);
+
+		Token token2 = new Token(ACCESS_TOKEN_ID_2, new Date(expirationTime + LONG_TIME), attributesTokenReturn2);
 
 		Mockito.when(openStackidentityPlugin.getToken(attributesToken)).thenReturn(token, token2);
 		managerController.setIdentityPlugin(openStackidentityPlugin);
 
 		// Get new token
 		Token federationUserToken = managerController.getFederationUserToken();
-		String accessToken = federationUserToken.get(OCCIHeaders.X_TOKEN_ACCESS_ID);
+		String accessToken = federationUserToken.getAccessId();
 		Assert.assertEquals(ACCESS_TOKEN_ID, accessToken);
 
 		// Use member token
-		accessToken = managerController.getFederationUserToken().get(OCCIHeaders.X_TOKEN_ACCESS_ID);
+		accessToken = managerController.getFederationUserToken().getAccessId();
 		Assert.assertEquals(ACCESS_TOKEN_ID, accessToken);
 
 		DateUtils dateUtils = Mockito.mock(DateUtils.class);
@@ -106,7 +111,7 @@ public class TestManagerController {
 		token.setDateUtils(dateUtils);
 
 		// Get new token
-		accessToken = managerController.getFederationUserToken().get(OCCIHeaders.X_TOKEN_ACCESS_ID);
+		accessToken = managerController.getFederationUserToken().getAccessId();
 		Assert.assertEquals(ACCESS_TOKEN_ID_2, accessToken);
 	}
 
@@ -169,6 +174,7 @@ public class TestManagerController {
 
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(USER_NAME);
+		Mockito.when(identityPlugin.getToken(ACCESS_TOKEN_ID)).thenReturn(userToken);
 
 		SSHTunnel sshTunnel = Mockito.mock(SSHTunnel.class);
 
@@ -208,6 +214,7 @@ public class TestManagerController {
 
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(USER_NAME);
+		Mockito.when(identityPlugin.getToken(ACCESS_TOKEN_ID)).thenReturn(userToken);
 
 		SSHTunnel sshTunnel = Mockito.mock(SSHTunnel.class);
 
@@ -262,6 +269,7 @@ public class TestManagerController {
 
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(USER_NAME);
+		Mockito.when(identityPlugin.getToken(ACCESS_TOKEN_ID)).thenReturn(userToken);
 
 		SSHTunnel sshTunnel = Mockito.mock(SSHTunnel.class);
 
@@ -316,6 +324,7 @@ public class TestManagerController {
 
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(USER_NAME);
+		Mockito.when(identityPlugin.getToken(ACCESS_TOKEN_ID)).thenReturn(userToken);
 
 		SSHTunnel sshTunnel = Mockito.mock(SSHTunnel.class);
 
@@ -389,6 +398,7 @@ public class TestManagerController {
 		// mocking identity
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(USER_NAME);
+		Mockito.when(identityPlugin.getToken(ACCESS_TOKEN_ID)).thenReturn(userToken);
 
 		// mocking sshTunnel
 		SSHTunnel sshTunnel = Mockito.mock(SSHTunnel.class);
@@ -447,6 +457,7 @@ public class TestManagerController {
 		// mocking identity
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(USER_NAME);
+		Mockito.when(identityPlugin.getToken(ACCESS_TOKEN_ID)).thenReturn(userToken);
 
 		// mocking sshTunnel
 		SSHTunnel sshTunnel = Mockito.mock(SSHTunnel.class);
@@ -512,6 +523,7 @@ public class TestManagerController {
 		// mocking identity
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(USER_NAME);
+		Mockito.when(identityPlugin.getToken(ACCESS_TOKEN_ID)).thenReturn(userToken);
 
 		// mocking sshTunnel
 		SSHTunnel sshTunnel = Mockito.mock(SSHTunnel.class);
@@ -574,6 +586,7 @@ public class TestManagerController {
 		// mocking identity
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(USER_NAME);
+		Mockito.when(identityPlugin.getToken(ACCESS_TOKEN_ID)).thenReturn(userToken);
 
 		// mocking sshTunnel
 		SSHTunnel sshTunnel = Mockito.mock(SSHTunnel.class);
@@ -647,6 +660,7 @@ public class TestManagerController {
 		// mocking identity
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(USER_NAME);
+		Mockito.when(identityPlugin.getToken(ACCESS_TOKEN_ID)).thenReturn(userToken);
 
 		// mocking sshTunnel
 		SSHTunnel sshTunnel = Mockito.mock(SSHTunnel.class);
@@ -720,6 +734,7 @@ public class TestManagerController {
 		// mocking identity
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(USER_NAME);
+		Mockito.when(identityPlugin.getToken(ACCESS_TOKEN_ID)).thenReturn(userToken);
 
 		// mocking sshTunnel
 		SSHTunnel sshTunnel = Mockito.mock(SSHTunnel.class);
@@ -801,6 +816,7 @@ public class TestManagerController {
 		// mocking identity
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(USER_NAME);
+		Mockito.when(identityPlugin.getToken(ACCESS_TOKEN_ID)).thenReturn(userToken);
 
 		// mocking sshTunnel
 		SSHTunnel sshTunnel = Mockito.mock(SSHTunnel.class);
@@ -861,6 +877,7 @@ public class TestManagerController {
 				FederationMember.ISO_8601_DATE_FORMAT, Locale.ROOT);
 		dateFormatISO8601.setTimeZone(TimeZone.getTimeZone("GMT"));
 		String expirationDate = dateFormatISO8601.format(new Date(dateMili));
+		System.out.println("exp" + expirationDate);
 		return expirationDate;
 	}
 }

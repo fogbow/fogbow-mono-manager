@@ -1,10 +1,14 @@
 package org.fogbowcloud.manager.occi.util;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
+import java.util.TimeZone;
 
 import org.apache.http.HttpStatus;
+import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.plugins.openstack.OpenStackIdentityPlugin;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.Token;
@@ -111,17 +115,17 @@ public class KeystoneApplication extends Application {
 			} catch (IOException e) {
 			}
 
-			String tenantNname = getTenantName(jsonCredentials);
+			String tenantName = getTenantName(jsonCredentials);
 			String idToken = getIdToken(jsonCredentials);
 			if (idToken != null) {
-				keyStoneApplication.authenticationCheckToken(idToken, tenantNname);
+				keyStoneApplication.authenticationCheckToken(idToken, tenantName);
 			} else {
 				String username = getUserFeatureCredentials(jsonCredentials,
 						OpenStackIdentityPlugin.USERNAME_KEYSTONE);
 				String password = getUserFeatureCredentials(jsonCredentials,
 						OpenStackIdentityPlugin.PASSWORD_KEYSTONE);
 
-				keyStoneApplication.checkAuthenticationCredentials(username, password, tenantNname);
+				keyStoneApplication.checkAuthenticationCredentials(username, password, tenantName);
 			}
 
 			return new StringRepresentation(
@@ -131,16 +135,23 @@ public class KeystoneApplication extends Application {
 
 		private String mountJSONResponseAuthenticateToken(Token token) {
 			try {
-				String tokenId = token.get(OCCIHeaders.X_TOKEN_ACCESS_ID);
+				String tokenAccessId = token.getAccessId();
 				String tenantId = token.get(OCCIHeaders.X_TOKEN_TENANT_ID);
-				String expirationDate = token.get(OCCIHeaders.X_TOKEN_EXPIRATION_DATE);
+				String tenantName = token.get(OCCIHeaders.X_TOKEN_TENANT_NAME);
 
-				JSONObject rootIdTenantToken = new JSONObject();
-				rootIdTenantToken.put(OpenStackIdentityPlugin.ID_KEYSTONE, tenantId);
+				SimpleDateFormat dateFormatISO8601 = new SimpleDateFormat(
+						FederationMember.ISO_8601_DATE_FORMAT, Locale.ROOT);
+				dateFormatISO8601.setTimeZone(TimeZone.getTimeZone("GMT"));
+				String expirationDate = dateFormatISO8601.format(token.getExpirationDate());
+
 				JSONObject rootIdToken = new JSONObject();
-				rootIdToken.put(OpenStackIdentityPlugin.ID_KEYSTONE, tokenId);
+
+				JSONObject rootTenant = new JSONObject();
+				rootTenant.put(OpenStackIdentityPlugin.ID_KEYSTONE, tenantId);
+				rootTenant.put(OpenStackIdentityPlugin.NAME_KEYSTONE, tenantName);
+				rootIdToken.put(OpenStackIdentityPlugin.ID_KEYSTONE, tokenAccessId);
 				rootIdToken.put(OpenStackIdentityPlugin.EXPIRES_KEYSTONE, expirationDate);
-				rootIdToken.put(OpenStackIdentityPlugin.TENANT_KEYSTONE, rootIdTenantToken);
+				rootIdToken.put(OpenStackIdentityPlugin.TENANT_KEYSTONE, rootTenant);
 				JSONObject rootToken = new JSONObject();
 				rootToken.put(OpenStackIdentityPlugin.TOKEN_KEYSTONE, rootIdToken);
 				JSONObject rootAccess = new JSONObject();
