@@ -1,9 +1,13 @@
 package org.fogbowcloud.manager.xmpp;
 
+import java.util.HashMap;
+
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
+import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.request.Request;
+import org.fogbowcloud.manager.occi.util.OCCITestHelper;
 import org.fogbowcloud.manager.xmpp.util.ManagerTestHelper;
 import org.jivesoftware.smack.XMPPException;
 import org.junit.After;
@@ -36,7 +40,8 @@ public class TestDeleteRemoteInstance {
 
 	@Test
 	public void testDeleteRemoteInstance() throws Exception {
-		Request request = new Request("anyvalue", "anyvalue", USER_DEFAULT, null, null);
+		Request request = new Request("anyvalue", new Token("anyvalue",
+				OCCITestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), USER_DEFAULT, null, null);
 		request.setInstanceId(INSTANCE_DEFAULT);
 		request.setMemberId(MANAGER_COMPONENT_URL);
 
@@ -46,7 +51,8 @@ public class TestDeleteRemoteInstance {
 
 	@Test(expected = OCCIException.class)
 	public void testDeleteRemoteInstaceNotFound() throws Exception {
-		Request request = new Request("anyvalue", WRONG_TOKEN, USER_DEFAULT, null, null);
+		Request request = new Request("anyvalue", new Token(WRONG_TOKEN,
+				OCCITestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), USER_DEFAULT, null, null);
 		request.setInstanceId(INSTANCE_DEFAULT);
 		request.setMemberId(MANAGER_COMPONENT_URL);
 
@@ -61,7 +67,8 @@ public class TestDeleteRemoteInstance {
 
 	@Test(expected = OCCIException.class)
 	public void testDeleteRemoteInstanceUnauthorized() throws Exception {
-		Request request = new Request("anyvalue", WRONG_TOKEN, USER_DEFAULT, null, null);
+		Request request = new Request("anyvalue",  new Token(WRONG_TOKEN,
+				OCCITestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), USER_DEFAULT, null, null);
 		request.setInstanceId(INSTANCE_OTHER_USER);
 		request.setMemberId(MANAGER_COMPONENT_URL);
 

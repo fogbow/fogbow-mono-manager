@@ -4,6 +4,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,6 +14,7 @@ import org.restlet.util.Series;
 
 public class HeaderUtils {
 
+	public static final String REQUEST_DATE_FORMAT = "yyyy-MM-dd";
 	public static final String X_OCCI_LOCATION = "X-OCCI-Location: ";
 
 	public static void checkOCCIContentType(Series<Header> headers) {
@@ -112,7 +114,7 @@ public class HeaderUtils {
 	public static void checkDateValue(String dataString) {
 		try {
 			if (dataString != null && !dataString.equals("")) {
-				DateFormat formatter = new SimpleDateFormat("yy-MM-dd");
+				DateFormat formatter = new SimpleDateFormat(REQUEST_DATE_FORMAT);
 				formatter.parse(dataString);
 			}
 		} catch (ParseException e) {

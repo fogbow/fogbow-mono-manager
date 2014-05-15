@@ -10,9 +10,11 @@ import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.Resource;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
+import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.instance.Instance.Link;
 import org.fogbowcloud.manager.occi.request.Request;
+import org.fogbowcloud.manager.occi.util.OCCITestHelper;
 import org.fogbowcloud.manager.xmpp.util.ManagerTestHelper;
 import org.jivesoftware.smack.XMPPException;
 import org.junit.After;
@@ -74,7 +76,8 @@ public class TestGetRemoteInstance {
 				.getInstance(Mockito.eq(TOKEN), Mockito.eq(INSTANCE_DEFAULT)))
 				.thenReturn(instance);
 
-		Request request = new Request("anyvalue", "anyvalue", USER_DEFAULT, null, null);
+		Request request = new Request("anyvalue",  new Token("anyvalue",
+				OCCITestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), USER_DEFAULT, null, null);
 		request.setInstanceId(INSTANCE_DEFAULT);
 		request.setMemberId(MANAGER_COMPONENT_URL);
 		
@@ -96,7 +99,8 @@ public class TestGetRemoteInstance {
 	
 	@Test
 	public void testGetRemoteInstaceNotFound() throws Exception {
-		Request request = new Request("anyvalue", WRONG_TOKEN, USER_DEFAULT, null, null);
+		Request request = new Request("anyvalue", new Token( WRONG_TOKEN,
+				OCCITestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), USER_DEFAULT, null, null);
 		request.setInstanceId(INSTANCE_DEFAULT);
 		request.setMemberId(MANAGER_COMPONENT_URL);
 
@@ -112,7 +116,8 @@ public class TestGetRemoteInstance {
 
 	@Test(expected=OCCIException.class)
 	public void testGetRemoteInstanceUnauthorized() throws Exception {
-		Request request = new Request("anyvalue", WRONG_TOKEN, USER_DEFAULT, null, null);
+		Request request = new Request("anyvalue", new Token( WRONG_TOKEN,
+				OCCITestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), USER_DEFAULT, null, null);
 		request.setInstanceId(INSTANCE_OTHER_USER);
 		request.setMemberId(MANAGER_COMPONENT_URL);
 

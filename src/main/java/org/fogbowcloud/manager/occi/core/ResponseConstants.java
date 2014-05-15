@@ -11,5 +11,6 @@ public class ResponseConstants {
 	public static final String COULD_NOT_CREATE_TUNNEL = "SSH tunnel could not be created.";
 	public static final String INVALID_OS_TEMPLATE = "Please provide a valid OS Template.";
 	public static final String QUOTA_EXCEEDED_FOR_INSTANCES = "Quota exceeded";
+	public static final String INVALID_DATE_ATTRIBUTES = "Invalid valid from and valid until attributes.";
 
 }

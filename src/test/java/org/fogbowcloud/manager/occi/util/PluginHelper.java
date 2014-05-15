@@ -1,5 +1,6 @@
 package org.fogbowcloud.manager.occi.util;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,7 +18,10 @@ public class PluginHelper {
 
 	public static final String AUTH_TOKEN = "HgfugGJHgJgHJGjGJgJg-857GHGYHjhHjH";
 	public static final String TENANT_ID = "fc394f2ab2df4114bde39905f800dc57";
-	public static final String EXPIRATION_DATA = "2014-01-31T15:30:58Z";
+	public static final String TENANT_NAME = "admin";
+
+	public static final Date EXPIRATION_DATE = new Date(System.currentTimeMillis()
+			+ OCCITestHelper.LONG_TIME);
 	public static final String USERNAME_FOGBOW = "admin";
 	public static final String PASSWORD_FOGBOW = "reverse";
 
@@ -32,13 +36,15 @@ public class PluginHelper {
 		this.component.getServers().add(Protocol.HTTP, PORT_ENDPOINT);
 
 		Map<String, String> tokenAttributes = new HashMap<String, String>();
-		tokenAttributes.put(OCCIHeaders.X_TOKEN_ACCESS_ID, AUTH_TOKEN);
 		tokenAttributes.put(OCCIHeaders.X_TOKEN_TENANT_ID, TENANT_ID);
-		tokenAttributes.put(OCCIHeaders.X_TOKEN_EXPIRATION_DATE, EXPIRATION_DATA);
-		Token token = new Token(tokenAttributes);
-		
-		KeystoneApplication keystoneApplication = new KeystoneApplication(USERNAME_FOGBOW, PASSWORD_FOGBOW,
-				token);
+		tokenAttributes.put(OCCIHeaders.X_TOKEN_USER, USERNAME_FOGBOW);
+		tokenAttributes.put(OCCIHeaders.X_TOKEN_TENANT_NAME, TENANT_NAME);
+		Token token = new Token(AUTH_TOKEN, EXPIRATION_DATE, tokenAttributes);
+
+		// TODO Refactor! We really need all these args to KeytoneApplication?
+		KeystoneApplication keystoneApplication = new KeystoneApplication(USERNAME_FOGBOW,
+				PASSWORD_FOGBOW, TENANT_NAME, AUTH_TOKEN, token);
+
 		keystoneApplication.putTokenAndUser(AUTH_TOKEN, USERNAME_FOGBOW);
 
 		this.component.getDefaultHost().attach(keystoneApplication);

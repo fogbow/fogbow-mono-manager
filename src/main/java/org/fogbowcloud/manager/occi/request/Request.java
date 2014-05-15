@@ -10,13 +10,13 @@ import java.util.TimeZone;
 
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.occi.core.Category;
-import org.fogbowcloud.manager.occi.core.OCCIHeaders;
+import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.xmpp.core.model.DateUtils;
 
 public class Request {
 
 	private String id;
-	private String authToken;
+	private Token token;
 	private String instanceId;
 	private String memberId;
 	private RequestState state;
@@ -24,10 +24,10 @@ public class Request {
 	private Map<String, String> xOCCIAtt;
 	private String user;
 
-	public Request(String id, String authToken, String user, List<Category> categories,
+	public Request(String id, Token token, String user, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
 		this.id = id;
-		this.authToken = authToken;
+		this.token = token;
 		this.user = user;
 		this.categories = categories;
 		this.xOCCIAtt = xOCCIAtt;
@@ -87,8 +87,12 @@ public class Request {
 		return "RequestId=" + id + "; State=" + state.getValue() + "; InstanceId= " + instanceId;
 	}
 
-	public String getAuthToken() {
-		return this.authToken;
+	public Token getToken() {		
+		return this.token;
+	}
+	
+	public void setToken(Token token) {
+		this.token = token;		
 	}
 
 	public Map<String, String> getxOCCIAtt() {
@@ -104,22 +108,46 @@ public class Request {
 	}
 
 	public String toString() {
-		return "id: " + id + ", authToken: " + authToken + ", user:  " + user + ", instanceId: "
+		return "id: " + id + ", token: " + token + ", user:  " + user + ", instanceId: "
 				+ instanceId + ", memberId: " + memberId + ", state: " + state + ", categories: "
 				+ categories + ", xOCCIAtt: " + xOCCIAtt;
 	}
 
-	public boolean isExpired() {
-		String expirationDateSrt = xOCCIAtt.get(RequestAttribute.VALID_UNTIL.getValue());
+	public boolean isIntoValidPeriod() {
+		String startDateStr = xOCCIAtt.get(RequestAttribute.VALID_FROM.getValue());		
 		SimpleDateFormat dateFormatISO8601 = new SimpleDateFormat(
 				FederationMember.ISO_8601_DATE_FORMAT, Locale.ROOT);
-		dateFormatISO8601.setTimeZone(TimeZone.getTimeZone("GMT"));
-		long expirationDateMillis;
+		dateFormatISO8601.setTimeZone(TimeZone.getTimeZone("GMT"));		
+		long startDateMillis;
+		try {
+			if (startDateStr != null){
+				startDateMillis = dateFormatISO8601.parse(startDateStr).getTime();
+			} else {
+				startDateMillis = new DateUtils().currentTimeMillis();
+			}
+		} catch (Exception e) {
+			return false;
+		}
+		long now = new DateUtils().currentTimeMillis();
+		return startDateMillis <= now && !isExpired();
+	}
+
+	public boolean isExpired() {		
+		String expirationDateSrt = xOCCIAtt.get(RequestAttribute.VALID_UNTIL.getValue());
+		if (expirationDateSrt == null){
+			return false;
+		}
+		//TODO Refactor! This code is repeated at many places
+		SimpleDateFormat dateFormatISO8601 = new SimpleDateFormat(
+				FederationMember.ISO_8601_DATE_FORMAT, Locale.ROOT);
+		dateFormatISO8601.setTimeZone(TimeZone.getTimeZone("GMT"));		
+		long expirationDateMillis;		
 		try {
 			expirationDateMillis = dateFormatISO8601.parse(expirationDateSrt).getTime();
 		} catch (Exception e) {
 			return true;
 		}
-		return expirationDateMillis < new DateUtils().currentTimeMillis();
+		long now = new DateUtils().currentTimeMillis();
+		return expirationDateMillis < now;
 	}
 }

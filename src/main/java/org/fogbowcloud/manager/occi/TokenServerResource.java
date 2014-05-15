@@ -31,11 +31,9 @@ public class TokenServerResource extends ServerResource {
 	}
 
 	public String generateResponse(Token token) {
-		if(token == null || token.getAttributes().size() == 0) {
+		if (token == null) {
 			return new String();
 		}
-		
-		Map<String, String> tokenAttributes = token.getAttributes();
-		return tokenAttributes.get(OCCIHeaders.X_TOKEN_ACCESS_ID);
+		return token.getAccessId();
 	}
 }

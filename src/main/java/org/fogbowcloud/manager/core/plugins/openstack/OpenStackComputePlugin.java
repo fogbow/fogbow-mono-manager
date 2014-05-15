@@ -46,7 +46,6 @@ public class OpenStackComputePlugin implements ComputePlugin {
 
 	private static final String ABSOLUTE = "absolute";
 	private static final String LIMITS = "limits";
-	private static final Logger LOGGER = Logger.getLogger(OpenStackComputePlugin.class);
 	private static final String TERM_COMPUTE = "compute";
 	private static final String CLASS_COMPUTE = "kind";
 	private static final String COMPUTE_ENDPOINT = "/compute/";
@@ -61,6 +60,8 @@ public class OpenStackComputePlugin implements ComputePlugin {
 	private String computeV2APIEndpoint;
 	private Map<String, Category> fogTermToOpensStackCategory = new HashMap<String, Category>();
 
+	private static final Logger LOGGER = Logger.getLogger(OpenStackComputePlugin.class);
+	
 	public OpenStackComputePlugin(Properties properties) {
 		this.computeOCCIEndpoint = properties.getProperty("compute_openstack_occi_url")
 				+ COMPUTE_ENDPOINT;
@@ -174,7 +175,7 @@ public class OpenStackComputePlugin implements ComputePlugin {
 		String responseStr = doRequest(
 				"get",
 				computeV2APIEndpoint + token.getAttributes().get(OCCIHeaders.X_TOKEN_TENANT_ID)
-						+ "/limits", token.get(OCCIHeaders.X_TOKEN_ACCESS_ID)).getResponseString();
+						+ "/limits", token.getAccessId()).getResponseString();
 
 		String maxCpu = getAttFromJson(MAX_TOTAL_CORES_ATT, responseStr);
 		String cpuInUse = getAttFromJson(TOTAL_CORES_USED_ATT, responseStr);

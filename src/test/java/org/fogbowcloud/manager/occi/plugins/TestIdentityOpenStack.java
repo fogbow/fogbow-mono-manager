@@ -1,5 +1,6 @@
 package org.fogbowcloud.manager.occi.plugins;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -62,14 +63,37 @@ public class TestIdentityOpenStack {
 		Map<String, String> tokenAttributes = new HashMap<String, String>();
 		tokenAttributes.put(OCCIHeaders.X_TOKEN_USER, PluginHelper.USERNAME_FOGBOW);
 		tokenAttributes.put(OCCIHeaders.X_TOKEN_PASS, PluginHelper.PASSWORD_FOGBOW);
-		tokenAttributes.put(OCCIHeaders.X_TOKEN_TENANT_NAME, "admin");
+		tokenAttributes.put(OCCIHeaders.X_TOKEN_TENANT_NAME, PluginHelper.TENANT_NAME);
 		Token token = this.identityOpenStack.getToken(tokenAttributes);
-		String authToken = token.get(OCCIHeaders.X_TOKEN_ACCESS_ID);
+		String authToken = token.getAccessId();
 		String tenantID = token.get(OCCIHeaders.X_TOKEN_TENANT_ID);
-		String expirationDate = token.get(OCCIHeaders.X_TOKEN_EXPIRATION_DATE);
+		Date expirationDate = token.getExpirationDate();
 		Assert.assertEquals(PluginHelper.AUTH_TOKEN, authToken);
 		Assert.assertEquals(PluginHelper.TENANT_ID, tenantID);
-		Assert.assertEquals(PluginHelper.EXPIRATION_DATA, expirationDate);
+		Assert.assertEquals(PluginHelper.EXPIRATION_DATE, expirationDate);
+	}
+
+	@Test
+	public void testUpgradeToken() {
+		Map<String, String> tokenAttributes = new HashMap<String, String>();
+		tokenAttributes.put(OCCIHeaders.X_TOKEN_USER, PluginHelper.USERNAME_FOGBOW);
+		tokenAttributes.put(OCCIHeaders.X_TOKEN_PASS, PluginHelper.PASSWORD_FOGBOW);
+		tokenAttributes.put(OCCIHeaders.X_TOKEN_TENANT_NAME, PluginHelper.TENANT_NAME);
+		Token token = this.identityOpenStack.getToken(tokenAttributes);
+		String authToken = token.getAccessId();
+		String tenantID = token.get(OCCIHeaders.X_TOKEN_TENANT_ID);
+		Date expirationDate = token.getExpirationDate();
+		Assert.assertEquals(PluginHelper.AUTH_TOKEN, authToken);
+		Assert.assertEquals(PluginHelper.TENANT_ID, tenantID);
+		Assert.assertEquals(PluginHelper.EXPIRATION_DATE, expirationDate);
+
+		Token token2 = this.identityOpenStack.updateToken(token);
+		authToken = token2.getAccessId();
+		tenantID = token2.get(OCCIHeaders.X_TOKEN_TENANT_ID);
+		expirationDate = token2.getExpirationDate();
+		Assert.assertEquals(PluginHelper.AUTH_TOKEN, authToken);
+		Assert.assertEquals(PluginHelper.TENANT_ID, tenantID);
+		Assert.assertEquals(PluginHelper.EXPIRATION_DATE, expirationDate);
 	}
 
 	@Test(expected = OCCIException.class)

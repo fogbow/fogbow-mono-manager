@@ -1,8 +1,12 @@
 package org.fogbowcloud.manager.core.plugins.openstack;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
+import java.util.TimeZone;
 
 import org.apache.commons.codec.Charsets;
 import org.apache.http.HttpResponse;
@@ -15,21 +19,21 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 public class OpenStackIdentityPlugin implements IdentityPlugin {
 
-	private static final String KEYSTONE_TENANT_NAME = "tenantName";
-	public static final String KEYSTONE_USERNAME = "username";
-	public static final String KEYSTONE_PASSWORD = "password";
-	public static final String PASSWORD_CREDENTIALS = "passwordCredentials";
+	public static final String TENANT_NAME_KEYSTONE = "tenantName";
+	public static final String USERNAME_KEYSTONE = "username";
+	public static final String PASSWORD_KEYSTONE = "password";
+	public static final String PASSWORD_CREDENTIALS_KEYSTONE = "passwordCredentials";
 	public static final String AUTH_KEYSTONE = "auth";
 	public static final String TOKEN_KEYSTONE = "token";
 	public static final String ID_KEYSTONE = "id";
@@ -52,20 +56,22 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 
 	@Override
 	public String getTokenExpiresDate(String tokenId) {
-		return getUserDateExpirationTokenFromJson(getResponseJson(tokenId));
+		Token token = getToken(tokenId);
+		return token.getExpirationDate().toString();
 	}
 
-	public String getUser(String authToken) {
-		return getUserNameUserFromJson(getResponseJson(authToken));
+	public String getUser(String tokenId) {
+		Token token = getToken(tokenId);
+		return token.get(OCCIHeaders.X_TOKEN_USER);
 	}
 
-	public String getResponseJson(String authToken) {
+	public String getResponseJson(String tokenId) {
 		HttpResponse response;
 		String responseStr = null;
 		try {
 			HttpClient httpCLient = new DefaultHttpClient();
-			HttpGet httpGet = new HttpGet(this.v2Endpoint + "/" + authToken);
-			httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, authToken);
+			HttpGet httpGet = new HttpGet(this.v2Endpoint + "/" + tokenId);
+			httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, tokenId);
 			response = httpCLient.execute(httpGet);
 
 			responseStr = EntityUtils
@@ -91,13 +97,44 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 			httpPost.addHeader(OCCIHeaders.ACCEPT, OCCIHeaders.JSON_ACCEPT);
 
 			JSONObject passwordCredentials = new JSONObject();
-			passwordCredentials.put(KEYSTONE_USERNAME,
+			passwordCredentials.put(USERNAME_KEYSTONE,
 					tokenAttributes.get(OCCIHeaders.X_TOKEN_USER));
-			passwordCredentials.put(KEYSTONE_PASSWORD,
+			passwordCredentials.put(PASSWORD_KEYSTONE,
 					tokenAttributes.get(OCCIHeaders.X_TOKEN_PASS));
 			JSONObject auth = new JSONObject();
-			auth.put(KEYSTONE_TENANT_NAME, tokenAttributes.get(OCCIHeaders.X_TOKEN_TENANT_NAME));
-			auth.put(PASSWORD_CREDENTIALS, passwordCredentials);
+			auth.put(TENANT_NAME_KEYSTONE, tokenAttributes.get(OCCIHeaders.X_TOKEN_TENANT_NAME));
+			auth.put(PASSWORD_CREDENTIALS_KEYSTONE, passwordCredentials);
+			JSONObject root = new JSONObject();
+			root.put(AUTH_KEYSTONE, auth);
+			httpPost.setEntity(new StringEntity(root.toString(), HTTP.UTF_8));
+			response = httpClient.execute(httpPost);
+
+			responseStr = EntityUtils.toString(response.getEntity(), HTTP.UTF_8);
+		} catch (Exception e) {
+			LOGGER.error(e);
+			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
+		}
+		checkStatusResponse(response);
+
+		return getTokenFromJson(responseStr);
+	}
+
+	@Override
+	public Token updateToken(Token token) {
+		HttpResponse response;
+		String responseStr = null;
+		try {
+			HttpClient httpClient = new DefaultHttpClient();
+			HttpPost httpPost = new HttpPost(this.v2Endpoint);
+
+			httpPost.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.JSON_CONTENT_TYPE);
+			httpPost.addHeader(OCCIHeaders.ACCEPT, OCCIHeaders.JSON_ACCEPT);
+
+			JSONObject idToken = new JSONObject();
+			idToken.put(ID_KEYSTONE, token.getAccessId());
+			JSONObject auth = new JSONObject();
+			auth.put(TENANT_NAME_KEYSTONE, token.get(OCCIHeaders.X_TOKEN_TENANT_NAME));
+			auth.put(TOKEN_KEYSTONE, idToken);
 			JSONObject root = new JSONObject();
 			root.put(AUTH_KEYSTONE, auth);
 			httpPost.setEntity(new StringEntity(root.toString(), HTTP.UTF_8));
@@ -123,26 +160,6 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 		}
 	}
 
-	private String getUserNameUserFromJson(String responseStr) {
-		try {
-			JSONObject root = new JSONObject(responseStr);
-			return root.getJSONObject(ACCESS_KEYSTONE).getJSONObject(USER_KEYSTONE)
-					.getString(NAME_KEYSTONE);
-		} catch (JSONException e) {
-			return null;
-		}
-	}
-
-	private String getUserDateExpirationTokenFromJson(String responseStr) {
-		try {
-			JSONObject root = new JSONObject(responseStr);
-			return root.getJSONObject(ACCESS_KEYSTONE).getJSONObject(TOKEN_KEYSTONE)
-					.getString(EXPIRES_KEYSTONE);
-		} catch (JSONException e) {
-			return null;
-		}
-	}
-
 	private Token getTokenFromJson(String responseStr) {
 		try {
 			Map<String, String> attributes = new HashMap<String, String>();
@@ -151,15 +168,60 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 					TOKEN_KEYSTONE);
 			String token = tokenKeyStone.getString(ID_KEYSTONE);
 			String tenantId = tokenKeyStone.getJSONObject(TENANT_KEYSTONE).getString(ID_KEYSTONE);
+			String tenantName = tokenKeyStone.getJSONObject(TENANT_KEYSTONE).getString(
+					NAME_KEYSTONE);
 			String expirationDateToken = tokenKeyStone.getString(EXPIRES_KEYSTONE);
 
-			attributes.put(OCCIHeaders.X_TOKEN_ACCESS_ID, token);
 			attributes.put(OCCIHeaders.X_TOKEN_TENANT_ID, tenantId);
-			attributes.put(OCCIHeaders.X_TOKEN_EXPIRATION_DATE, expirationDateToken);
+			attributes.put(OCCIHeaders.X_TOKEN_TENANT_NAME, tenantName);
 
-			return new Token(attributes);
+			return new Token(token, getDate(expirationDateToken), attributes);
 		} catch (Exception e) {
+			LOGGER.error("Exception while getting token from json.", e);
 			return null;
 		}
 	}
+
+	private Date getDate(String expirationDateStr) {
+		SimpleDateFormat dateFormatISO8601 = new SimpleDateFormat(
+				FederationMember.ISO_8601_DATE_FORMAT, Locale.ROOT);
+		dateFormatISO8601.setTimeZone(TimeZone.getTimeZone("GMT"));
+		try {
+			return dateFormatISO8601.parse(expirationDateStr);
+		} catch (Exception e) {
+			LOGGER.error("Exception while getting date from String.", e);
+			return null;
+		}
+	}
+
+	@Override
+	public Token getToken(String tokenId) {
+		String responseJson = getResponseJson(tokenId);
+		String accessId = tokenId;
+		long expirationTimeMillis = 0;
+		String user = null;
+		try {
+			//TODO Refactor! This code is repeated at many classes
+			SimpleDateFormat dateFormatISO8601 = new SimpleDateFormat(
+					FederationMember.ISO_8601_DATE_FORMAT, Locale.ROOT);
+			dateFormatISO8601.setTimeZone(TimeZone.getTimeZone("GMT"));
+
+			JSONObject root = new JSONObject(responseJson);
+
+			user = root.getJSONObject(ACCESS_KEYSTONE).getJSONObject(USER_KEYSTONE)
+					.getString(NAME_KEYSTONE);
+
+			String expirationTime = root.getJSONObject(ACCESS_KEYSTONE)
+					.getJSONObject(TOKEN_KEYSTONE).getString(EXPIRES_KEYSTONE);
+			expirationTimeMillis = dateFormatISO8601.parse(expirationTime).getTime();
+		} catch (Exception e) {
+			LOGGER.error(e);
+		}
+
+		Map<String, String> tokenAttributes = new HashMap<String, String>();
+		tokenAttributes.put(OCCIHeaders.X_TOKEN_USER, user);
+
+		return new Token(accessId, new Date(expirationTimeMillis), tokenAttributes);
+	}
+
 }
