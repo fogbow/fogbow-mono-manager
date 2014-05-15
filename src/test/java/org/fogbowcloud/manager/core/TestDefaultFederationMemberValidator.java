@@ -1,58 +1,87 @@
 package org.fogbowcloud.manager.core;
 
 import java.io.IOException;
-import java.security.cert.Certificate;
+import java.security.InvalidKeyException;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.PublicKey;
+import java.security.SignatureException;
 import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.LinkedList;
 import java.util.List;
 
-import javax.security.auth.x500.X500Principal;
-
 import org.fogbowcloud.manager.core.model.FederationMember;
+import org.fogbowcloud.manager.core.model.Flavor;
+import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.xmpp.util.ManagerTestHelper;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 public class TestDefaultFederationMemberValidator {
 	ManagerTestHelper helper;
-	FederationMemberValidator validator;
-	
+	DefaultFederationMemberValidator validator;
+	X509Certificate mockCA;
+	X509Certificate mockCertificate;
+	FederationMember member;
+	PublicKey publicKey;
+
 	@Before
-	public void setUp() {
+	public void setUp() throws NoSuchAlgorithmException {
+		KeyPairGenerator keyGenerator = KeyPairGenerator.getInstance("RSA");
+		KeyPair keys = keyGenerator.generateKeyPair();
+		publicKey = keys.getPublic();
 		helper = new ManagerTestHelper();
 		validator = new DefaultFederationMemberValidator();
-		X500Principal ca = new X500Principal(
-				"O=Internet Widgits Pty Ltd, L=Campina Gande, ST=Paraiba, C=BR");
-		X500Principal ca2 = new X500Principal(
-				"O=Internet Widgits Pty Ltd, ST=Some-State, C=BR");
-		List<X500Principal> list = new LinkedList<X500Principal>();
-		list.add(ca);
-		list.add(ca2);
+		X509Certificate mockCA = Mockito.mock(X509Certificate.class);
+		Mockito.doReturn(publicKey).when(mockCA).getPublicKey();
+		List<X509Certificate> list = new LinkedList<X509Certificate>();
+		list.add(mockCA);
 		validator.setValidCAs(list);
+		mockCertificate = Mockito.mock(X509Certificate.class);
+		member = new FederationMember(new ResourcesInfo("cpuIdle", "cpuInUse",
+				"memIdle", "memInUse", new LinkedList<Flavor>(),
+				mockCertificate));
+
 	}
-	
+
 	@Test
-	public void testValidMember() throws CertificateException, IOException {
-		
-		ManagerTestHelper helper = new ManagerTestHelper();
-		Certificate cert = CertificateHandlerHelper.getCertificate(helper
-				.getProperties());
-		FederationMemberValidator validator = new DefaultFederationMemberValidator();
-		//see if is this cert in the helper
-		FederationMember member = new FederationMember(helper.getResources());
-		Assert.assertTrue(validator.validateDonatorMember(member));
+	public void testValidMember() throws CertificateException, IOException,
+			InvalidKeyException, NoSuchAlgorithmException,
+			NoSuchProviderException, SignatureException {
+
+		Mockito.doNothing().when(mockCertificate).checkValidity();
+		Mockito.doNothing().when(mockCertificate).verify(publicKey);
+		Assert.assertTrue(validator.canDonateTo(member));
 	}
-	
+
 	@Test
-	public void testExpiredMember() throws CertificateException, IOException {
-		
-		Certificate cert = CertificateHandlerHelper.getCertificate(helper
-				.getProperties(/*add expired certificate*/));
-		FederationMemberValidator validator = new DefaultFederationMemberValidator();
-	
-		FederationMember member = new FederationMember(helper.getResources());
-		Assert.assertTrue(validator.validateDonatorMember(member));
+	public void testInvalidMember() throws CertificateException, IOException,
+			InvalidKeyException, NoSuchAlgorithmException,
+			NoSuchProviderException, SignatureException {
+
+		Mockito.doThrow(new SignatureException()).when(mockCertificate)
+				.verify(publicKey);
+		Mockito.doNothing().when(mockCertificate).checkValidity();
+		Assert.assertFalse(validator.canDonateTo(member));
 	}
-	
+
+	@Test
+	public void testExpiredMember() throws CertificateException, IOException,
+			InvalidKeyException, NoSuchAlgorithmException,
+			NoSuchProviderException, SignatureException {
+		// this method is invalid to get the exception here-- how to do that?
+		// use a real expired certificate?
+		
+		//gambiarra
+		Mockito.doThrow(new IllegalArgumentException())
+		 .when(mockCertificate).checkValidity();
+		
+		 Mockito.doNothing().when(mockCertificate).verify(publicKey);
+		Assert.assertFalse(validator.canDonateTo(member));
+	}
 }

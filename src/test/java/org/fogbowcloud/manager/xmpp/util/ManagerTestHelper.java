@@ -2,8 +2,8 @@ package org.fogbowcloud.manager.xmpp.util;
 
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -243,7 +243,7 @@ public class ManagerTestHelper {
 			Element itemEl = (Element) itemIterator.next();
 			Attribute id = itemEl.attribute("id");
 			Element statusEl = itemEl.element("status");
-			Certificate cert = CertificateHandlerHelper.parseCertificate(itemEl
+			X509Certificate cert = CertificateHandlerHelper.parseCertificate(itemEl
 					.element("cert").getText());
 			String cpuIdle = statusEl.element("cpu-idle").getText();
 			String cpuInUse = statusEl.element("cpu-inuse").getText();
@@ -283,7 +283,7 @@ public class ManagerTestHelper {
 		return properties;
 	}
 	
-	public Certificate getCertificate() throws CertificateException,
+	public X509Certificate getCertificate() throws CertificateException,
 			IOException {
 		return CertificateHandlerHelper.getCertificate(getProperties());
 	}

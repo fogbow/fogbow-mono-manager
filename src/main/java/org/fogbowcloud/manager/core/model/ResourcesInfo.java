@@ -1,6 +1,6 @@
 package org.fogbowcloud.manager.core.model;
 
-import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
 import java.util.List;
 
 public class ResourcesInfo {
@@ -11,10 +11,10 @@ public class ResourcesInfo {
 	private String memIdle;
 	private String memInUse;
 	private List<Flavor> flavours;
-	private Certificate cert;
+	private X509Certificate cert;
 	
 	public ResourcesInfo(String id, String cpuIdle, String cpuInUse,
-			String memIdle, String memInUse, List<Flavor> flavours, Certificate cert) {
+			String memIdle, String memInUse, List<Flavor> flavours, X509Certificate cert) {
 		setCert(cert);
 		setId(id);
 		setCpuIdle(cpuIdle);
@@ -25,7 +25,7 @@ public class ResourcesInfo {
 	}
 	
 	public ResourcesInfo(String cpuIdle, String cpuInUse,
-			String memIdle, String memInUse, List<Flavor> flavours, Certificate cert) {
+			String memIdle, String memInUse, List<Flavor> flavours, X509Certificate cert) {
 		this(null, cpuIdle, cpuInUse, memIdle, memInUse, flavours, cert);
 	}
 
@@ -93,11 +93,11 @@ public class ResourcesInfo {
 		this.flavours = flavours;
 	}
 
-	public Certificate getCert() {
+	public X509Certificate getCert() {
 		return cert;
 	}
 
-	public void setCert(Certificate cert) {
+	public void setCert(X509Certificate cert) {
 		this.cert = cert;
 	}
 }

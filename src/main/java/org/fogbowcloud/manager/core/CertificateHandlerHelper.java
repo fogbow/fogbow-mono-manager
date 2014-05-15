@@ -13,7 +13,6 @@ import java.util.Properties;
 import java.util.logging.Logger;
 
 import org.apache.commons.codec.binary.Base64;
-import org.restlet.engine.log.LoggerFacade;
 
 public class CertificateHandlerHelper {
 	private static final String CERTIFICATE_KEY = "certificate";
@@ -32,7 +31,7 @@ public class CertificateHandlerHelper {
 		return new String(base64Certificate);
 	}
 
-	public static Certificate getCertificate(Properties properties)
+	public static X509Certificate getCertificate(Properties properties)
 			throws CertificateException {
 		String path = properties.getProperty(CERTIFICATE_KEY);
 		if (path == null || path.isEmpty()) {
@@ -48,10 +47,10 @@ public class CertificateHandlerHelper {
 			LOGGER.warning("File does not Exist." + e1);
 			return null;
 		}
-		Certificate cert = null;
+		X509Certificate cert = null;
 		try {
 			try {
-				cert = (Certificate) certFactory
+				cert = (X509Certificate) certFactory
 						.generateCertificate(new FileInputStream(path));
 			} catch (FileNotFoundException e) {
 				LOGGER.warning("Wring Path, File does not Exist." + e);
@@ -70,8 +69,29 @@ public class CertificateHandlerHelper {
 		}
 		return cert;
 	}
-
-	public static Certificate parseCertificate(String base64StringCertificate)
+	
+	public static X509Certificate getCertificate(String path)
+			throws CertificateException {
+		
+		CertificateFactory certFactory;
+		certFactory = CertificateFactory.getInstance("X.509");
+		X509Certificate cert = null;
+		try {
+			try {
+				cert = (X509Certificate) certFactory
+						.generateCertificate(new FileInputStream(path));
+			} catch (FileNotFoundException e) {
+				LOGGER.warning("Wring Path, File does not Exist." + e);
+				return null;
+			}
+		} catch (CertificateException e) {
+			LOGGER.warning("Certificate does not Exist" + e);
+			return null;
+		}
+		return cert;
+	}
+	
+	public static X509Certificate parseCertificate(String base64StringCertificate)
 			throws CertificateException {
 		byte[] base64BytesCertificate;
 		try {
