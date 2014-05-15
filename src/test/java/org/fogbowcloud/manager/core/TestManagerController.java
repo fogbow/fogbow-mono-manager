@@ -2,9 +2,9 @@ package org.fogbowcloud.manager.core;
 
 import java.io.IOException;
 import java.security.cert.CertificateException;
-import java.sql.Date;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -16,6 +16,7 @@ import java.util.TimeZone;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
+import org.fogbowcloud.manager.core.plugins.openstack.OpenStackComputePlugin;
 import org.fogbowcloud.manager.core.plugins.openstack.OpenStackIdentityPlugin;
 import org.fogbowcloud.manager.core.ssh.SSHTunnel;
 import org.fogbowcloud.manager.occi.core.Category;
@@ -24,9 +25,11 @@ import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
+import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
+import org.fogbowcloud.manager.occi.request.RequestRepository;
 import org.fogbowcloud.manager.occi.request.RequestState;
 import org.fogbowcloud.manager.occi.request.RequestType;
 import org.fogbowcloud.manager.occi.util.OCCITestHelper;
@@ -42,9 +45,6 @@ public class TestManagerController {
 	private static final String INSTANCE_ID = "b122f3ad-503c-4abb-8a55-ba8d90cfce9f";
 	private static final String SECOND_INSTANCE_ID = "rt22e67-5fgt-457a-3rt6-gt78124fhj9p";
 
-	ManagerController managerController;
-	ManagerTestHelper managerTestHelper;
-
 	private static final Long SCHEDULER_PERIOD = 500L;
 	public static final String USER_NAME = "user";
 	public static final String USER_PASS = "password";
@@ -54,7 +54,9 @@ public class TestManagerController {
 	private static final String TENANT_NAME = "tenantName";
 	private static final long LONG_TIME = 1 * 24 * 60 * 60 * 1000;
 
-	Token userToken;
+	private Token userToken;
+	private ManagerController managerController;
+	private ManagerTestHelper managerTestHelper;
 
 	@Before
 	public void setUp() throws Exception {
@@ -84,7 +86,7 @@ public class TestManagerController {
 		Map<String, String> attributesTokenReturn = new HashMap<String, String>();
 		attributesTokenReturn.put(OCCIHeaders.X_TOKEN_TENANT_ID, "987654321");
 		attributesTokenReturn.put(OCCIHeaders.X_TOKEN_TENANT_NAME, TENANT_NAME);
-		attributesTokenReturn.put(OCCIHeaders.X_TOKEN_USER, USER_NAME);		
+		attributesTokenReturn.put(OCCIHeaders.X_TOKEN_USER, USER_NAME);
 		Token token = new Token(ACCESS_TOKEN_ID, new Date(expirationTime), attributesTokenReturn);
 
 		Map<String, String> attributesTokenReturn2 = new HashMap<String, String>();
@@ -92,7 +94,8 @@ public class TestManagerController {
 		attributesTokenReturn2.put(OCCIHeaders.X_TOKEN_TENANT_NAME, TENANT_NAME);
 		attributesTokenReturn2.put(OCCIHeaders.X_TOKEN_USER, USER_NAME);
 
-		Token token2 = new Token(ACCESS_TOKEN_ID_2, new Date(expirationTime + LONG_TIME), attributesTokenReturn2);
+		Token token2 = new Token(ACCESS_TOKEN_ID_2, new Date(expirationTime + LONG_TIME),
+				attributesTokenReturn2);
 
 		Mockito.when(openStackidentityPlugin.getToken(attributesToken)).thenReturn(token, token2);
 		managerController.setIdentityPlugin(openStackidentityPlugin);
@@ -113,6 +116,303 @@ public class TestManagerController {
 		// Get new token
 		accessToken = managerController.getFederationUserToken().getAccessId();
 		Assert.assertEquals(ACCESS_TOKEN_ID_2, accessToken);
+	}
+
+	@Test
+	public void testcheckAndUpdateRequestToken() throws InterruptedException {
+		final String firstTokenId = "firstTokenId";
+		final String secontTokenId = "secondTokenId";
+		final int timeDefault = 100;
+		final long now = System.currentTimeMillis();
+
+		Properties properties = new Properties();
+		properties.put("token_update_period", Integer.toString(timeDefault));
+		managerController = new ManagerController(properties);
+
+		DateUtils dateUtils = Mockito.mock(DateUtils.class);
+
+		RequestRepository requestRepository = new RequestRepository();
+
+		Token token = new Token(firstTokenId, new Date(now + (4 * timeDefault)),
+				new HashMap<String, String>());
+		Request request1 = new Request("id1", token, USER_NAME, null, null);
+		request1.setState(RequestState.OPEN);
+		Request request2 = new Request("id2", token, USER_NAME, null, null);
+		request2.setState(RequestState.OPEN);
+		Request request3 = new Request("id3", token, USER_NAME, null, null);
+		request3.setState(RequestState.OPEN);
+		Request request4 = new Request("id4", token, USER_NAME, null, null);
+		request4.setState(RequestState.CLOSED);
+		requestRepository.addRequest(USER_NAME, request1);
+		requestRepository.addRequest(USER_NAME, request2);
+		requestRepository.addRequest(USER_NAME, request3);
+		requestRepository.addRequest(USER_NAME, request4);
+		managerController.setRequests(requestRepository);
+
+		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
+		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(USER_NAME);
+		Token tokenUpdatedFirstTime = new Token(secontTokenId, new Date(System.currentTimeMillis()
+				+ timeDefault), new HashMap<String, String>());
+		Mockito.when(identityPlugin.updateToken(Mockito.any(Token.class))).thenReturn(
+				tokenUpdatedFirstTime);
+
+		managerController.setIdentityPlugin(identityPlugin);
+
+		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
+		managerController.setDateUtils(dateUtils);
+		managerController.turnOnTokenUpdating();
+
+		List<Request> requestsFromUser = managerController.getRequestsFromUser(ACCESS_TOKEN_ID);
+		for (Request request : requestsFromUser) {
+			if (request.getState().equals(RequestState.OPEN)) {
+				Assert.assertEquals(firstTokenId, request.getToken().getAccessId());
+			} else if (request.getState().equals(RequestState.CLOSED)) {
+				Assert.assertEquals(firstTokenId, request.getToken().getAccessId());
+			}
+		}
+
+		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now + (3 * timeDefault));
+		managerController.setDateUtils(dateUtils);
+
+		Thread.sleep(timeDefault * 2);
+
+		requestsFromUser = managerController.getRequestsFromUser(ACCESS_TOKEN_ID);
+		for (Request request : requestsFromUser) {
+			if (request.getState().equals(RequestState.OPEN)) {
+				Assert.assertEquals(secontTokenId, request.getToken().getAccessId());
+			} else if (request.getState().equals(RequestState.CLOSED)) {
+				Assert.assertEquals(firstTokenId, request.getToken().getAccessId());
+			}
+		}
+	}
+
+	@Test
+	public void testMonitoringInstancesDeleted() throws InterruptedException {
+		final int timeDefault = 100;
+
+		Properties properties = new Properties();
+		properties.put("instance_monitoring_period", Integer.toString(timeDefault));
+		managerController = new ManagerController(properties);
+
+		Token token = new Token("id", new Date(), new HashMap<String, String>());
+		Request request1 = new Request("id1", token, USER_NAME, null, null);
+		request1.setState(RequestState.DELETED);
+		Request request2 = new Request("id2", token, USER_NAME, null, null);
+		request2.setState(RequestState.DELETED);
+		Request request3 = new Request("id3", token, USER_NAME, null, null);
+		request3.setState(RequestState.DELETED);
+		RequestRepository requestRepository = new RequestRepository();
+		requestRepository.addRequest(USER_NAME, request1);
+		requestRepository.addRequest(USER_NAME, request2);
+		requestRepository.addRequest(USER_NAME, request3);
+		managerController.setRequests(requestRepository);
+
+		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
+		managerController.setIdentityPlugin(identityPlugin);
+		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
+		managerController.setComputePlugin(computePlugin);
+		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(USER_NAME);
+
+		managerController.removeAllRequests(ACCESS_TOKEN_ID);
+		
+		Mockito.when(computePlugin.getInstance(Mockito.anyString(), Mockito.anyString()))
+		.thenReturn(new Instance("id"));
+
+		Assert.assertEquals(requestRepository.getAll().size(),
+				managerController.getRequestsFromUser(ACCESS_TOKEN_ID).size());
+		
+		managerController.turnOnInstancesMonitoring();
+		
+		Assert.assertEquals(requestRepository.getAll().size(),
+				managerController.getRequestsFromUser(ACCESS_TOKEN_ID).size());
+
+		Thread.sleep(timeDefault * 2);
+
+		Assert.assertEquals(requestRepository.getAll().size(),
+				managerController.getRequestsFromUser(ACCESS_TOKEN_ID).size());;
+	}
+	
+	@Test
+	public void testMonitoringLostInstancesDeleted() throws InterruptedException {
+		final int timeDefault = 100;
+
+		Properties properties = new Properties();
+		properties.put("instance_monitoring_period", Integer.toString(timeDefault));
+		managerController = new ManagerController(properties);
+
+		Token token = new Token("id", new Date(), new HashMap<String, String>());
+		Request request1 = new Request("id1", token, USER_NAME, null, null);
+		request1.setState(RequestState.DELETED);
+		Request request2 = new Request("id2", token, USER_NAME, null, null);
+		request2.setState(RequestState.DELETED);
+		RequestRepository requestRepository = new RequestRepository();
+		requestRepository.addRequest(USER_NAME, request1);
+		requestRepository.addRequest(USER_NAME, request2);
+		managerController.setRequests(requestRepository);
+
+		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
+		managerController.setIdentityPlugin(identityPlugin);
+		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
+		managerController.setComputePlugin(computePlugin);
+		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(USER_NAME);
+
+		Mockito.when(computePlugin.getInstance(Mockito.anyString(), Mockito.anyString()))
+		.thenThrow(new OCCIException(ErrorType.NOT_FOUND, ""));
+
+		Assert.assertEquals(requestRepository.getAll().size(),
+				managerController.getRequestsFromUser(ACCESS_TOKEN_ID).size());
+		
+		managerController.turnOnInstancesMonitoring();
+		
+		Assert.assertEquals(requestRepository.getAll().size(),
+				managerController.getRequestsFromUser(ACCESS_TOKEN_ID).size());
+
+		Thread.sleep(timeDefault * 2);
+
+		Assert.assertEquals(requestRepository.getAll().size(),
+				managerController.getRequestsFromUser(ACCESS_TOKEN_ID).size());;
+	}
+	
+	@Test
+	public void testMonitoringLostInstances() throws InterruptedException {
+		final int timeDefault = 100;
+
+		Properties properties = new Properties();
+		properties.put("instance_monitoring_period", Integer.toString(timeDefault));
+		managerController = new ManagerController(properties);
+
+		Token token = new Token("id", new Date(), new HashMap<String, String>());
+		Request request1 = new Request("id1", token, USER_NAME, null, null);
+		request1.setState(RequestState.FULFILLED);
+		Request request2 = new Request("id2", token, USER_NAME, null, null);
+		request2.setState(RequestState.FULFILLED);
+		RequestRepository requestRepository = new RequestRepository();
+		requestRepository.addRequest(USER_NAME, request1);
+		requestRepository.addRequest(USER_NAME, request2);
+		managerController.setRequests(requestRepository);
+
+		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
+		managerController.setIdentityPlugin(identityPlugin);
+		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
+		managerController.setComputePlugin(computePlugin);
+		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(USER_NAME);
+
+		managerController.turnOnInstancesMonitoring();
+
+		List<Request> requestsFromUser = managerController.getRequestsFromUser(ACCESS_TOKEN_ID);
+		for (Request request : requestsFromUser) {
+			Assert.assertTrue(request.getState().equals(RequestState.FULFILLED));
+		}
+
+		Mockito.when(computePlugin.getInstance(Mockito.anyString(), Mockito.anyString()))
+				.thenThrow(new OCCIException(ErrorType.NOT_FOUND, ""));
+
+		Thread.sleep(timeDefault * 2);
+
+		requestsFromUser = managerController.getRequestsFromUser(ACCESS_TOKEN_ID);
+		for (Request request : requestsFromUser) {
+			Assert.assertTrue(request.getState().equals(RequestState.CLOSED));
+		}
+	}
+
+	@Test
+	public void testMonitoringLostInstancesPersistent() throws InterruptedException {
+		final int timeDefault = 100;
+
+		Properties properties = new Properties();
+		properties.put("instance_monitoring_period", Integer.toString(timeDefault));
+		properties.put("scheduler_period", Integer.toString(timeDefault));
+		
+		managerController = new ManagerController(properties);
+
+		Token token = new Token("id", new Date(), new HashMap<String, String>());
+		Map<String, String> map = new HashMap<String, String>();
+		map.put(RequestAttribute.TYPE.getValue(), RequestType.PERSISTENT.getValue());
+		Request request1 = new Request("id1", token, USER_NAME, null, map);
+		request1.setState(RequestState.FULFILLED);
+		Request request2 = new Request("id2", token, USER_NAME, null, map);
+		request2.setState(RequestState.FULFILLED);
+		RequestRepository requestRepository = new RequestRepository();
+		requestRepository.addRequest(USER_NAME, request1);
+		requestRepository.addRequest(USER_NAME, request2);
+		managerController.setRequests(requestRepository);
+
+		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
+		managerController.setIdentityPlugin(identityPlugin);
+		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
+		managerController.setComputePlugin(computePlugin);
+		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(USER_NAME);
+
+		List<Request> requestsFromUser = managerController.getRequestsFromUser(ACCESS_TOKEN_ID);
+		for (Request request : requestsFromUser) {
+			Assert.assertTrue(request.getState().equals(RequestState.FULFILLED));
+		}
+
+		Mockito.when(computePlugin.getInstance(Mockito.anyString(), Mockito.anyString()))
+				.thenThrow(new OCCIException(ErrorType.NOT_FOUND, ""));
+		managerController.turnOnInstancesMonitoring();
+		
+		boolean wasOpen = false;
+		for (int i = 0; i < 10; i++) {
+			Thread.sleep(20);			
+			for (Request request : requestsFromUser) {	
+				requestsFromUser = managerController.getRequestsFromUser(ACCESS_TOKEN_ID);
+				if(request.getState().equals(RequestState.OPEN)) {
+					wasOpen = true;
+				}
+			}
+		}
+		
+		Assert.assertTrue(wasOpen);
+		
+		Thread.sleep(timeDefault);
+		
+		requestsFromUser = managerController.getRequestsFromUser(ACCESS_TOKEN_ID);
+		for (Request request : requestsFromUser) {			
+			Assert.assertTrue(request.getState().equals(RequestState.FULFILLED));
+		}	
+	}
+
+	@Test
+	public void testMonitoringInstances() throws InterruptedException {
+		final int timeDefault = 100;
+
+		Properties properties = new Properties();
+		properties.put("instance_monitoring_period", Integer.toString(timeDefault));
+		managerController = new ManagerController(properties);
+
+		Token token = new Token("id", new Date(), new HashMap<String, String>());
+		Request request1 = new Request("id1", token, USER_NAME, null, null);
+		request1.setState(RequestState.FULFILLED);
+		Request request2 = new Request("id2", token, USER_NAME, null, null);
+		request2.setState(RequestState.FULFILLED);
+		RequestRepository requestRepository = new RequestRepository();
+		requestRepository.addRequest(USER_NAME, request1);
+		requestRepository.addRequest(USER_NAME, request2);
+		managerController.setRequests(requestRepository);
+
+		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
+		managerController.setIdentityPlugin(identityPlugin);
+		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
+		managerController.setComputePlugin(computePlugin);
+		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(USER_NAME);
+
+		managerController.turnOnInstancesMonitoring();
+
+		List<Request> requestsFromUser = managerController.getRequestsFromUser(ACCESS_TOKEN_ID);
+		for (Request request : requestsFromUser) {
+			Assert.assertTrue(request.getState().equals(RequestState.FULFILLED));
+		}
+
+		Mockito.when(computePlugin.getInstance(Mockito.anyString(), Mockito.anyString()))
+				.thenReturn(new Instance("id"));
+
+		Thread.sleep(timeDefault * 2);
+
+		requestsFromUser = managerController.getRequestsFromUser(ACCESS_TOKEN_ID);
+		for (Request request : requestsFromUser) {
+			Assert.assertTrue(request.getState().equals(RequestState.FULFILLED));
+		}
 	}
 
 	@Test(expected = IllegalArgumentException.class)
@@ -155,6 +455,7 @@ public class TestManagerController {
 		Assert.assertEquals(10, managerController.getMembers().size());
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testGetRequestsByUser() throws InterruptedException {
 
@@ -195,6 +496,7 @@ public class TestManagerController {
 		Assert.assertNull(requests.get(0).getMemberId());
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testOneTimeRequestSetFulfilledAndClosed() throws InterruptedException {
 
@@ -244,6 +546,7 @@ public class TestManagerController {
 		Assert.assertNull(requests.get(0).getMemberId());
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testPersistentRequestSetFulfilledAndOpen() throws InterruptedException {
 
@@ -303,6 +606,7 @@ public class TestManagerController {
 		Assert.assertNull(requests.get(0).getMemberId());
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testPersistentRequestSetFulfilledAndOpenAndFulfilled() throws InterruptedException {
 
@@ -370,6 +674,7 @@ public class TestManagerController {
 		Assert.assertNull(requests.get(0).getMemberId());
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testPersistentRequestSetOpenAndClosed() throws InterruptedException {
 		Properties properties = new Properties();
@@ -431,6 +736,7 @@ public class TestManagerController {
 		Assert.assertNull(requests.get(0).getMemberId());
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testPersistentRequestSetFulfilledAndClosed() throws InterruptedException {
 
@@ -496,6 +802,7 @@ public class TestManagerController {
 		Assert.assertNull(requests.get(0).getMemberId());
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testOneTimeRequestSetOpenAndClosed() throws InterruptedException {
 		Properties properties = new Properties();
@@ -557,6 +864,7 @@ public class TestManagerController {
 
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testOneTimeRequestValidFromInFuture() throws InterruptedException {
 		Properties properties = new Properties();
@@ -632,6 +940,7 @@ public class TestManagerController {
 		Assert.assertNull(requests.get(0).getMemberId());
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testPersistentRequestValidFromInFuture() throws InterruptedException {
 		Properties properties = new Properties();
@@ -706,6 +1015,7 @@ public class TestManagerController {
 		Assert.assertNull(requests.get(0).getMemberId());
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testOneTimeRequestValidityPeriodInFuture() throws InterruptedException {
 		Properties properties = new Properties();
@@ -788,6 +1098,7 @@ public class TestManagerController {
 		Assert.assertNull(requests.get(0).getMemberId());
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testPersistentRequestValidityPeriodInFuture() throws InterruptedException {
 		Properties properties = new Properties();
@@ -877,7 +1188,6 @@ public class TestManagerController {
 				FederationMember.ISO_8601_DATE_FORMAT, Locale.ROOT);
 		dateFormatISO8601.setTimeZone(TimeZone.getTimeZone("GMT"));
 		String expirationDate = dateFormatISO8601.format(new Date(dateMili));
-		System.out.println("exp" + expirationDate);
 		return expirationDate;
 	}
 }
