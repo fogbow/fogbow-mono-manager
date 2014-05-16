@@ -39,7 +39,8 @@ public class ManagerController {
 	private static final Logger LOGGER = Logger.getLogger(ManagerController.class);
 	public static final long DEFAULT_SCHEDULER_PERIOD = 30000; // 30 seconds
 	private static final long DEFAULT_TOKEN_UPDATE_PERIOD = 300000; // 5 minutes
-	private static final long DEFAULT_INSTANCE_MONITORING_PERIOD = 120000; //2 minutes
+	private static final long DEFAULT_INSTANCE_MONITORING_PERIOD = 120000; // 2
+																			// minutes
 
 	private boolean scheduled = false;
 	private boolean tokenUpdatingOn = false;
@@ -58,6 +59,7 @@ public class ManagerController {
 	private Properties properties;
 	private PacketSender packetSender;
 
+	private DateUtils dateUtils = new DateUtils();
 	private SSHTunnel sshTunnel = new DefaultSSHTunnel();
 
 	public ManagerController(Properties properties) {
@@ -120,7 +122,7 @@ public class ManagerController {
 	public void removeRequest(String authToken, String requestId) {
 		LOGGER.debug("Removing requestId: " + requestId);
 		checkRequestId(authToken, requestId);
-		requests.remove(requestId);
+		requests.remove(requestId);			
 	}
 
 	private void checkRequestId(String authToken, String requestId) {
@@ -154,7 +156,8 @@ public class ManagerController {
 		return getInstance(authToken, instanceId, request);
 	}
 
-	//TODO Review the needs of these args. Request object already has othe information 
+	// TODO Review the needs of these args. Request object already has othe
+	// information
 	private Instance getInstance(String authToken, String instanceId, Request request) {
 		Instance instance = null;
 		if (isLocal(request)) {
@@ -334,7 +337,7 @@ public class ManagerController {
 		return currentRequests;
 	}
 
-	private void turnOnInstancesMonitoring() {
+	protected void turnOnInstancesMonitoring() {
 		instanceMonitoringOn = true;
 		String instanceMonitoringPeriodStr = properties.getProperty("instance_monitoring_period");
 		final long instanceMonitoringPeriod = instanceMonitoringPeriodStr == null ? DEFAULT_INSTANCE_MONITORING_PERIOD
@@ -352,26 +355,26 @@ public class ManagerController {
 	protected void monitorInstances() {
 		boolean turnOffTimer = true;
 
-		//monitoring fulfilled requests
+		// monitoring fulfilled requests
 		for (Request request : requests.get(RequestState.FULFILLED)) {
 			turnOffTimer = false;
 			try {
 				getInstance(request.getToken().getAccessId(), request.getInstanceId(), request);
-			} catch (OCCIException e) { //TODO Only NOT FOUND exception type?
+			} catch (OCCIException e) { // TODO Only NOT FOUND exception type?
 				updateRequestState(requests.get(request.getId()));
 			}
 		}
-		
-		//monitoring deleted requests
+
+		// monitoring deleted requests
 		for (Request request : requests.get(RequestState.DELETED)) {
 			turnOffTimer = false;
 			try {
 				getInstance(request.getToken().getAccessId(), request.getInstanceId(), request);
 			} catch (OCCIException e) {
-				requests.remove(request.getId());
+				requests.excluding(request.getId());
 			}
 		}
-		
+
 		if (turnOffTimer) {
 			LOGGER.info("There are not requests.");
 			instanceMonitoringTimer.cancel();
@@ -403,7 +406,7 @@ public class ManagerController {
 					&& !request.getState().equals(RequestState.FAILED)) {
 				turnOffTimer = false;
 				long validInterval = request.getToken().getExpirationDate().getTime()
-						- new DateUtils().currentTimeMillis();
+						- dateUtils.currentTimeMillis();
 				if (validInterval < 2 * tokenUpdatePeriod) {
 					Token newToken = identityPlugin.updateToken(request.getToken());
 					requests.get(request.getId()).setToken(newToken);
@@ -436,7 +439,7 @@ public class ManagerController {
 
 		request.setState(RequestState.FULFILLED);
 		request.setInstanceId(remoteInstanceId);
-		if(!instanceMonitoringOn){
+		if (!instanceMonitoringOn) {
 			turnOnInstancesMonitoring();
 		}
 		return true;
@@ -467,9 +470,9 @@ public class ManagerController {
 		request.setInstanceId(instanceId);
 		request.setState(RequestState.FULFILLED);
 		LOGGER.debug("Fulfilled Request: " + request);
-		if (!instanceMonitoringOn){
+		if (!instanceMonitoringOn) {
 			turnOnInstancesMonitoring();
-		}		
+		}
 		return true;
 	}
 
@@ -526,5 +529,9 @@ public class ManagerController {
 
 	public Properties getProperties() {
 		return properties;
+	}
+	
+	public void setDateUtils(DateUtils dateUtils) {
+		this.dateUtils = dateUtils;
 	}
 }

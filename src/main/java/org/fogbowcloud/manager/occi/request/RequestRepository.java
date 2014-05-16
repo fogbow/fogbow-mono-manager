@@ -68,16 +68,48 @@ public class RequestRepository {
 	public List<Request> getByUser(String user) {
 		LOGGER.debug("Getting instances by user " + user);
 		List<Request> userRequests = requests.get(user);
-		return userRequests == null ? new LinkedList<Request>() : new LinkedList<Request>(
-				userRequests);
+		// return userRequests == null ? new LinkedList<Request>() : new
+		// LinkedList<Request>(
+		// userRequests);
+		return userRequests == null ? new LinkedList<Request>()
+				: normalizeRequestsByUser(userRequests);
+
+	}
+
+	private List<Request> normalizeRequestsByUser(List<Request> userRequests) {
+		List<Request> requests = new LinkedList<Request>();
+		for (Request userRequest : userRequests) {
+			if (!userRequest.getState().equals(RequestState.DELETED)) {
+				requests.add(userRequest);
+			}
+		}
+		return requests;
 	}
 
 	public void removeByUser(String user) {
-		requests.remove(user);
+		List<Request> requestsByUser = requests.get(user);
+		if (requestsByUser != null) {
+			for (Request request : requestsByUser) {
+				remove(request.getId());
+			}
+		}
 	}
 
 	public void remove(String requestId) {
 		LOGGER.debug("Removing requestId " + requestId);
+
+		for (List<Request> userRequests : requests.values()) {
+			for (Request request : userRequests) {
+				if (request.getId().equals(requestId)) {
+					request.setState(RequestState.DELETED);
+					return;
+				}
+			}
+		}
+	}
+
+	public void excluding(String requestId) {
+		LOGGER.debug("Excluing requestId " + requestId);
 
 		for (List<Request> userRequests : requests.values()) {
 			Iterator<Request> iterator = userRequests.iterator();
@@ -89,6 +121,7 @@ public class RequestRepository {
 				}
 			}
 		}
+
 	}
 
 	public List<Request> getAll() {
