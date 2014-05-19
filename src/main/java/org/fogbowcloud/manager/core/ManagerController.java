@@ -39,8 +39,7 @@ public class ManagerController {
 	private static final Logger LOGGER = Logger.getLogger(ManagerController.class);
 	public static final long DEFAULT_SCHEDULER_PERIOD = 30000; // 30 seconds
 	private static final long DEFAULT_TOKEN_UPDATE_PERIOD = 300000; // 5 minutes
-	private static final long DEFAULT_INSTANCE_MONITORING_PERIOD = 120000; // 2
-																			// minutes
+	private static final long DEFAULT_INSTANCE_MONITORING_PERIOD = 120000; // 2 minutes
 
 	private boolean scheduled = false;
 	private boolean tokenUpdatingOn = false;
@@ -255,7 +254,7 @@ public class ManagerController {
 			Map<String, String> xOCCIAtt) {
 		LOGGER.info("Submiting request with categories: " + categories + " and xOCCIAtt: "
 				+ xOCCIAtt + " for remote member.");
-		String token = getFederationUserToken().getAccessId();// (OCCIHeaders.X_TOKEN_ACCESS_ID);
+		String token = getFederationUserToken().getAccessId();
 		try {
 			return computePlugin.requestInstance(token, categories, xOCCIAtt);
 		} catch (OCCIException e) {
@@ -284,7 +283,7 @@ public class ManagerController {
 
 	public Instance getInstanceForRemoteMember(String instanceId) {
 		LOGGER.info("Getting instance " + instanceId + " for remote member.");
-		String token = getFederationUserToken().getAccessId();// get(OCCIHeaders.X_TOKEN_ACCESS_ID);
+		String token = getFederationUserToken().getAccessId();
 		try {
 			return computePlugin.getInstance(token, instanceId);
 		} catch (OCCIException e) {
@@ -298,7 +297,7 @@ public class ManagerController {
 
 	public void removeInstanceForRemoteMember(String instanceId) {
 		LOGGER.info("Removing instance " + instanceId + " for remote member.");
-		String token = getFederationUserToken().getAccessId();// (OCCIHeaders.X_TOKEN_ACCESS_ID);
+		String token = getFederationUserToken().getAccessId();
 		computePlugin.removeInstance(token, instanceId);
 	}
 
