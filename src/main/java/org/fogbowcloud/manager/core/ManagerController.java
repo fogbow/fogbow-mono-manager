@@ -36,7 +36,8 @@ import org.jamppa.component.PacketSender;
 
 public class ManagerController {
 
-	private static final Logger LOGGER = Logger.getLogger(ManagerController.class);
+	private static final Logger LOGGER = Logger
+			.getLogger(ManagerController.class);
 	public static final long DEFAULT_SCHEDULER_PERIOD = 30000; // 30 seconds
 	private static final long DEFAULT_TOKEN_UPDATE_PERIOD = 300000; // 5 minutes
 	private static final long DEFAULT_INSTANCE_MONITORING_PERIOD = 120000; // 2
@@ -58,6 +59,7 @@ public class ManagerController {
 	private IdentityPlugin identityPlugin;
 	private Properties properties;
 	private PacketSender packetSender;
+	private FederationMemberValidator validator = new DefaultFederationMemberValidator();
 
 	private DateUtils dateUtils = new DateUtils();
 	private SSHTunnel sshTunnel = new DefaultSSHTunnel();
@@ -122,14 +124,16 @@ public class ManagerController {
 	public void removeRequest(String authToken, String requestId) {
 		LOGGER.debug("Removing requestId: " + requestId);
 		checkRequestId(authToken, requestId);
-		requests.remove(requestId);			
+		requests.remove(requestId);
 	}
 
 	private void checkRequestId(String authToken, String requestId) {
 		String user = getUser(authToken);
 		if (requests.get(user, requestId) == null) {
-			LOGGER.debug("User " + user + " does not have requesId " + requestId);
-			throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
+			LOGGER.debug("User " + user + " does not have requesId "
+					+ requestId);
+			throw new OCCIException(ErrorType.NOT_FOUND,
+					ResponseConstants.NOT_FOUND);
 		}
 	}
 
@@ -145,7 +149,8 @@ public class ManagerController {
 			try {
 				instances.add(getInstance(authToken, instanceId, request));
 			} catch (Exception e) {
-				LOGGER.warn("Exception thown while getting instance " + instanceId + ".", e);
+				LOGGER.warn("Exception thown while getting instance "
+						+ instanceId + ".", e);
 			}
 		}
 		return instances;
@@ -158,17 +163,20 @@ public class ManagerController {
 
 	// TODO Review the needs of these args. Request object already has othe
 	// information
-	private Instance getInstance(String authToken, String instanceId, Request request) {
+	private Instance getInstance(String authToken, String instanceId,
+			Request request) {
 		Instance instance = null;
 		if (isLocal(request)) {
-			LOGGER.debug(instanceId + " is local, getting its information in the local cloud.");
+			LOGGER.debug(instanceId
+					+ " is local, getting its information in the local cloud.");
 			instance = this.computePlugin.getInstance(authToken, instanceId);
 		} else {
-			LOGGER.debug(instanceId + " is remote, going out to " + request.getMemberId()
-					+ " to get its information.");
+			LOGGER.debug(instanceId + " is remote, going out to "
+					+ request.getMemberId() + " to get its information.");
 			instance = getRemoteInstance(request);
 		}
-		String sshAddress = request.getAttValue(DefaultSSHTunnel.SSH_ADDRESS_ATT);
+		String sshAddress = request
+				.getAttValue(DefaultSSHTunnel.SSH_ADDRESS_ATT);
 		if (sshAddress != null) {
 			instance.addAttribute(DefaultSSHTunnel.SSH_ADDRESS_ATT, sshAddress);
 		}
@@ -197,7 +205,8 @@ public class ManagerController {
 		removeInstance(authToken, instanceId, request);
 	}
 
-	private void removeInstance(String authToken, String instanceId, Request request) {
+	private void removeInstance(String authToken, String instanceId,
+			Request request) {
 		sshTunnel.release(request);
 		if (isLocal(request)) {
 			this.computePlugin.removeInstance(authToken, instanceId);
@@ -211,8 +220,8 @@ public class ManagerController {
 
 	private void updateRequestState(Request request) {
 		if (request.getAttValue(RequestAttribute.TYPE.getValue()) != null
-				&& request.getAttValue(RequestAttribute.TYPE.getValue()).equals(
-						RequestType.PERSISTENT.getValue())) {
+				&& request.getAttValue(RequestAttribute.TYPE.getValue())
+						.equals(RequestType.PERSISTENT.getValue())) {
 			request.setState(RequestState.OPEN);
 			if (!scheduled) {
 				scheduleRequests();
@@ -233,12 +242,14 @@ public class ManagerController {
 		for (Request request : userRequests) {
 			if (instanceId.equals(request.getInstanceId())) {
 				if (!request.getUser().equals(user)) {
-					throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
+					throw new OCCIException(ErrorType.UNAUTHORIZED,
+							ResponseConstants.UNAUTHORIZED);
 				}
 				return request;
 			}
 		}
-		throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
+		throw new OCCIException(ErrorType.NOT_FOUND,
+				ResponseConstants.NOT_FOUND);
 	}
 
 	private boolean isLocal(Request request) {
@@ -251,26 +262,34 @@ public class ManagerController {
 		return requests.get(requestId);
 	}
 
-	public String submitRequestForRemoteMember(List<Category> categories,
+	public String submitRequestForRemoteMember(String memberId, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
-		LOGGER.info("Submiting request with categories: " + categories + " and xOCCIAtt: "
-				+ xOCCIAtt + " for remote member.");
-		String token = getFederationUserToken().getAccessId();// (OCCIHeaders.X_TOKEN_ACCESS_ID);
-		try {
-			return computePlugin.requestInstance(token, categories, xOCCIAtt);
-		} catch (OCCIException e) {
-			if (e.getStatus().getCode() == HttpStatus.SC_BAD_REQUEST) {
-				return null;
+		for (FederationMember member: members) {
+			if (member.getResourcesInfo().getId().equals(memberId)) {
+				if (validator.canReceiveFrom(member)) {
+					LOGGER.info("Submiting request with categories: " + categories + " and xOCCIAtt: "
+							+ xOCCIAtt + " for remote member.");
+					String token = getFederationUserToken().getAccessId();// (OCCIHeaders.X_TOKEN_ACCESS_ID);
+					try {
+						return computePlugin.requestInstance(token, categories, xOCCIAtt);
+					} catch (OCCIException e) {
+						if (e.getStatus().getCode() == HttpStatus.SC_BAD_REQUEST) {
+							return null;
+						}
+						throw e;
+					}
+				}
 			}
-			throw e;
 		}
+		return null;
 	}
 
 	protected Token getFederationUserToken() {
 		Map<String, String> tokenAttributes = new HashMap<String, String>();
 		String username = properties.getProperty("federation_user_name");
 		String password = properties.getProperty("federation_user_password");
-		String tenantName = properties.getProperty("federation_user_tenant_name");
+		String tenantName = properties
+				.getProperty("federation_user_tenant_name");
 		tokenAttributes.put(OCCIHeaders.X_TOKEN_USER, username);
 		tokenAttributes.put(OCCIHeaders.X_TOKEN_PASS, password);
 		tokenAttributes.put(OCCIHeaders.X_TOKEN_TENANT_NAME, tenantName);
@@ -288,7 +307,8 @@ public class ManagerController {
 		try {
 			return computePlugin.getInstance(token, instanceId);
 		} catch (OCCIException e) {
-			LOGGER.warn("Exception while getting instance " + instanceId + " for remote member.", e);
+			LOGGER.warn("Exception while getting instance " + instanceId
+					+ " for remote member.", e);
 			if (e.getStatus().getCode() == HttpStatus.SC_NOT_FOUND) {
 				return null;
 			}
@@ -302,21 +322,22 @@ public class ManagerController {
 		computePlugin.removeInstance(token, instanceId);
 	}
 
-	public List<Request> createRequests(String authToken, List<Category> categories,
-			Map<String, String> xOCCIAtt) {
+	public List<Request> createRequests(String authToken,
+			List<Category> categories, Map<String, String> xOCCIAtt) {
 		String user = getUser(authToken);
 
 		Token userToken = identityPlugin.getToken(authToken);
 		LOGGER.debug("User Token: " + userToken);
 
-		Integer instanceCount = Integer.valueOf(xOCCIAtt.get(RequestAttribute.INSTANCE_COUNT
-				.getValue()));
+		Integer instanceCount = Integer.valueOf(xOCCIAtt
+				.get(RequestAttribute.INSTANCE_COUNT.getValue()));
 		LOGGER.info("Request " + instanceCount + " instances");
 
 		List<Request> currentRequests = new ArrayList<Request>();
 		for (int i = 0; i < instanceCount; i++) {
 			String requestId = String.valueOf(UUID.randomUUID());
-			Request request = new Request(requestId, userToken, user, categories, xOCCIAtt);
+			Request request = new Request(requestId, userToken, user,
+					categories, xOCCIAtt);
 			try {
 				sshTunnel.create(properties, request);
 			} catch (Exception e) {
@@ -339,7 +360,8 @@ public class ManagerController {
 
 	protected void turnOnInstancesMonitoring() {
 		instanceMonitoringOn = true;
-		String instanceMonitoringPeriodStr = properties.getProperty("instance_monitoring_period");
+		String instanceMonitoringPeriodStr = properties
+				.getProperty("instance_monitoring_period");
 		final long instanceMonitoringPeriod = instanceMonitoringPeriodStr == null ? DEFAULT_INSTANCE_MONITORING_PERIOD
 				: Long.valueOf(instanceMonitoringPeriodStr);
 
@@ -359,7 +381,8 @@ public class ManagerController {
 		for (Request request : requests.get(RequestState.FULFILLED)) {
 			turnOffTimer = false;
 			try {
-				getInstance(request.getToken().getAccessId(), request.getInstanceId(), request);
+				getInstance(request.getToken().getAccessId(),
+						request.getInstanceId(), request);
 			} catch (OCCIException e) { // TODO Only NOT FOUND exception type?
 				updateRequestState(requests.get(request.getId()));
 			}
@@ -369,7 +392,8 @@ public class ManagerController {
 		for (Request request : requests.get(RequestState.DELETED)) {
 			turnOffTimer = false;
 			try {
-				getInstance(request.getToken().getAccessId(), request.getInstanceId(), request);
+				getInstance(request.getToken().getAccessId(),
+						request.getInstanceId(), request);
 			} catch (OCCIException e) {
 				requests.excluding(request.getId());
 			}
@@ -384,7 +408,8 @@ public class ManagerController {
 
 	private void turnOnTokenUpdating() {
 		tokenUpdatingOn = true;
-		String tokenUpdatePeriodStr = properties.getProperty("token_update_period");
+		String tokenUpdatePeriodStr = properties
+				.getProperty("token_update_period");
 		final long tokenUpdatePeriod = tokenUpdatePeriodStr == null ? DEFAULT_TOKEN_UPDATE_PERIOD
 				: Long.valueOf(tokenUpdatePeriodStr);
 
@@ -405,10 +430,12 @@ public class ManagerController {
 			if (!request.getState().equals(RequestState.CLOSED)
 					&& !request.getState().equals(RequestState.FAILED)) {
 				turnOffTimer = false;
-				long validInterval = request.getToken().getExpirationDate().getTime()
+				long validInterval = request.getToken().getExpirationDate()
+						.getTime()
 						- dateUtils.currentTimeMillis();
 				if (validInterval < 2 * tokenUpdatePeriod) {
-					Token newToken = identityPlugin.updateToken(request.getToken());
+					Token newToken = identityPlugin.updateToken(request
+							.getToken());
 					requests.get(request.getId()).setToken(newToken);
 				}
 			}
@@ -429,10 +456,11 @@ public class ManagerController {
 		String memberAddress = member.getResourcesInfo().getId();
 		request.setMemberId(memberAddress);
 
-		LOGGER.info("Submiting request " + request + " to member " + memberAddress);
+		LOGGER.info("Submiting request " + request + " to member "
+				+ memberAddress);
 
-		String remoteInstanceId = ManagerPacketHelper.remoteRequest(request, memberAddress,
-				packetSender);
+		String remoteInstanceId = ManagerPacketHelper.remoteRequest(request,
+				memberAddress, packetSender);
 		if (remoteInstanceId == null) {
 			return false;
 		}
@@ -452,8 +480,9 @@ public class ManagerController {
 		LOGGER.info("Submiting local request " + request);
 
 		try {
-			instanceId = computePlugin.requestInstance(request.getToken().getAccessId(),
-					request.getCategories(), request.getxOCCIAtt());
+			instanceId = computePlugin.requestInstance(request.getToken()
+					.getAccessId(), request.getCategories(), request
+					.getxOCCIAtt());
 		} catch (OCCIException e) {
 			// TODO check if this is the error code!
 			if (e.getStatus().getCode() == HttpStatus.SC_INSUFFICIENT_SPACE_ON_RESOURCE) {
@@ -479,8 +508,8 @@ public class ManagerController {
 	private void scheduleRequests() {
 		scheduled = true;
 		String schedulerPeriodStr = properties.getProperty("scheduler_period");
-		long schedulerPeriod = schedulerPeriodStr == null ? DEFAULT_SCHEDULER_PERIOD : Long
-				.valueOf(schedulerPeriodStr);
+		long schedulerPeriod = schedulerPeriodStr == null ? DEFAULT_SCHEDULER_PERIOD
+				: Long.valueOf(schedulerPeriodStr);
 
 		requestSchedulerTimer = new Timer();
 		requestSchedulerTimer.scheduleAtFixedRate(new TimerTask() {
@@ -501,7 +530,8 @@ public class ManagerController {
 				for (String keyAttributes : RequestAttribute.getValues()) {
 					xOCCIAtt.remove(keyAttributes);
 				}
-				allFulfilled &= submitLocalRequest(request) || submitRemoteRequest(request);
+				allFulfilled &= submitLocalRequest(request)
+						|| submitRemoteRequest(request);
 			} else if (request.isExpired()) {
 				request.setState(RequestState.CLOSED);
 			} else {
@@ -530,8 +560,12 @@ public class ManagerController {
 	public Properties getProperties() {
 		return properties;
 	}
-	
+
 	public void setDateUtils(DateUtils dateUtils) {
 		this.dateUtils = dateUtils;
+	}
+
+	public FederationMemberValidator getValidator() {
+		return validator;
 	}
 }

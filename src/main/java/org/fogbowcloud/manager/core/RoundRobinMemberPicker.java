@@ -7,7 +7,7 @@ import org.fogbowcloud.manager.core.model.FederationMember;
 public class RoundRobinMemberPicker implements FederationMemberPicker {
 
 	private int current = -1;
-	
+
 	@Override
 	public FederationMember pick(ManagerController facade) {
 		List<FederationMember> members = facade.getMembers();
@@ -16,13 +16,15 @@ public class RoundRobinMemberPicker implements FederationMemberPicker {
 		}
 		current = (current + 1) % members.size();
 		FederationMember currentMember = members.get(current);
-		
+
 		String myJid = facade.getProperties().getProperty("xmpp_jid");
-		if (currentMember.getResourcesInfo().getId().equals(myJid) && members.size() > 1) {
+		if (currentMember.getResourcesInfo().getId().equals(myJid)
+				&& members.size() > 1
+				&& facade.getValidator().canDonateTo(currentMember)) {
 			current = (current + 1) % members.size();
 			currentMember = members.get(current);
 		}
-		
+
 		return members.get(current);
 	}
 

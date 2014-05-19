@@ -19,27 +19,23 @@ public class DefaultFederationMemberValidator implements FederationMemberValidat
 	
 	@Override
 	public boolean canDonateTo(FederationMember member) {
-		boolean canDonate = false;
 		X509Certificate cert = member.getResourcesInfo().getCert();
-		
-		for (X509Certificate ca: validCAs) {
-			try {
-				cert.verify(ca.getPublicKey());
-				canDonate = true;
-			} catch (InvalidKeyException e) {
-			} catch (CertificateException e) {
-			} catch (NoSuchAlgorithmException e) {
-			} catch (NoSuchProviderException e) {
-			} catch (SignatureException e) {
-			}
-		}
 		
 		try {
 			cert.checkValidity();
 		} catch (Exception e) {
-			canDonate = false;
-		} 
-		return canDonate ;
+			return false;
+		}
+	
+		for (X509Certificate ca: validCAs) {
+			try {
+				cert.verify(ca.getPublicKey());
+				return true;
+			} catch (Exception e) {
+			}
+		}
+		
+		return false;
 	}
 
 	@Override
