@@ -26,6 +26,10 @@ public class Token {
 	public String getAccessId() {
 		return this.accessId;
 	}
+	
+	public void setAccessId(String accessId) {
+		this.accessId = accessId;
+	} 
 
 	public Date getExpirationDate() {
 		return this.expirationDate;

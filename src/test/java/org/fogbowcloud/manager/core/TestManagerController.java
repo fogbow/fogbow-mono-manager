@@ -132,18 +132,29 @@ public class TestManagerController {
 		RequestRepository requestRepository = new RequestRepository();
 		Token token = new Token(firstTokenId, new Date(now + (4 * timeDefault)),
 				new HashMap<String, String>());
+		Token token2 = new Token(firstTokenId, new Date(now + (4 * timeDefault)),
+				new HashMap<String, String>());
+		Token token3 = new Token(firstTokenId, new Date(now + (4 * timeDefault)),
+				new HashMap<String, String>());
+		Token token4 = new Token(firstTokenId, new Date(now + (4 * timeDefault)),
+				new HashMap<String, String>());
+		Token token5 = new Token(firstTokenId, new Date(now + (4 * timeDefault)),
+				new HashMap<String, String>());
 		Request request1 = new Request("id1", token, USER_NAME, null, null);
 		request1.setState(RequestState.OPEN);
-		Request request2 = new Request("id2", token, USER_NAME, null, null);
+		Request request2 = new Request("id2", token2, USER_NAME, null, null);
 		request2.setState(RequestState.OPEN);
-		Request request3 = new Request("id3", token, USER_NAME, null, null);
+		Request request3 = new Request("id3", token3, USER_NAME, null, null);
 		request3.setState(RequestState.OPEN);
-		Request request4 = new Request("id4", token, USER_NAME, null, null);
+		Request request4 = new Request("id4", token4, USER_NAME, null, null);
 		request4.setState(RequestState.CLOSED);
+		Request request5 = new Request("id5", token5, USER_NAME, null, null);
+		request5.setState(RequestState.FAILED);
 		requestRepository.addRequest(USER_NAME, request1);
 		requestRepository.addRequest(USER_NAME, request2);
 		requestRepository.addRequest(USER_NAME, request3);
 		requestRepository.addRequest(USER_NAME, request4);
+		requestRepository.addRequest(USER_NAME, request5);
 		managerController.setRequests(requestRepository);
 
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
@@ -161,7 +172,8 @@ public class TestManagerController {
 		for (Request request : requestsFromUser) {
 			if (request.getState().equals(RequestState.OPEN)) {
 				Assert.assertEquals(firstTokenId, request.getToken().getAccessId());
-			} else if (request.getState().equals(RequestState.CLOSED)) {
+			} else if (request.getState().equals(RequestState.CLOSED)
+					|| request.getState().equals(RequestState.FAILED)) {
 				Assert.assertEquals(firstTokenId, request.getToken().getAccessId());
 			}
 		}
@@ -174,7 +186,8 @@ public class TestManagerController {
 		for (Request request : requestsFromUser) {
 			if (request.getState().equals(RequestState.OPEN)) {
 				Assert.assertEquals(secontTokenId, request.getToken().getAccessId());
-			} else if (request.getState().equals(RequestState.CLOSED)) {
+			} else if (request.getState().equals(RequestState.CLOSED)
+					|| request.getState().equals(RequestState.FAILED)) {
 				Assert.assertEquals(firstTokenId, request.getToken().getAccessId());
 			}
 		}
@@ -353,7 +366,7 @@ public class TestManagerController {
 		Assert.assertTrue(wasOpen);
 
 		Thread.sleep(timeDefaultSchedulePeriod * 100);
-		
+
 		requestsFromUser = managerController.getRequestsFromUser(ACCESS_TOKEN_ID);
 		for (Request request : requestsFromUser) {
 			Assert.assertTrue(request.getState().equals(RequestState.FULFILLED));
