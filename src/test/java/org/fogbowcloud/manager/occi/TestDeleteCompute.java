@@ -38,16 +38,14 @@ public class TestDeleteCompute {
 		Mockito.doNothing().when(computePlugin)
 				.removeInstance(OCCITestHelper.ACCESS_TOKEN, INSTANCE_ID);
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
-		Mockito.when(identityPlugin.getUser(OCCITestHelper.ACCESS_TOKEN)).thenReturn(
-				OCCITestHelper.USER_MOCK);
 
 		List<Request> requests = new LinkedList<Request>();
-		Request request1 = new Request("1", new Token(OCCITestHelper.ACCESS_TOKEN,
+		Request request1 = new Request("1", new Token(OCCITestHelper.ACCESS_TOKEN, OCCITestHelper.USER_MOCK, 
 				OCCITestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()),
 				OCCITestHelper.USER_MOCK, null, null);
 		request1.setInstanceId(INSTANCE_ID);
 		requests.add(request1);
-		Request request2 = new Request("1", new Token("otherToken",
+		Request request2 = new Request("1", new Token("otherToken", "otherUser", 
 				OCCITestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), "otherUser", null, null);
 		request2.setInstanceId(OTHER_INSTANCE_ID);
 		requests.add(request2);

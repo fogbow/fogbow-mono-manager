@@ -57,10 +57,10 @@ public class TestTokenServerResource {
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testGetToken() throws Exception {
-		Token token = new Token(ACCESS_TOKEN_ID, OCCITestHelper.TOKEN_FUTURE_EXPIRATION,
+		Token token = new Token(ACCESS_TOKEN_ID, "user", OCCITestHelper.TOKEN_FUTURE_EXPIRATION,
 				new HashMap<String, String>());
 
-		Mockito.when(identityPlugin.getToken(Mockito.anyMap())).thenReturn(token);
+		Mockito.when(identityPlugin.createToken(Mockito.anyMap())).thenReturn(token);
 
 		this.helper.initializeComponent(computePlugin, identityPlugin);
 
@@ -79,7 +79,7 @@ public class TestTokenServerResource {
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testGetTokenUnauthorized() throws Exception {
-		Mockito.when(identityPlugin.getToken(Mockito.anyMap())).thenThrow(
+		Mockito.when(identityPlugin.createToken(Mockito.anyMap())).thenThrow(
 				new OCCIException(ErrorType.UNAUTHORIZED, ""));
 
 		this.helper.initializeComponent(computePlugin, identityPlugin);

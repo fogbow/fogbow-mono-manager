@@ -53,14 +53,14 @@ public class TestGetRequest {
 						Mockito.any(Map.class))).thenReturn(instanceLocation);
 
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
-		Mockito.when(identityPlugin.getUser(OCCITestHelper.ACCESS_TOKEN)).thenReturn(
-				OCCITestHelper.USER_MOCK);
-		Mockito.when(identityPlugin.getUser(OCCITestHelper.INVALID_TOKEN)).thenThrow(
-				new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED));
+//		Mockito.when(identityPlugin.getUser(OCCITestHelper.ACCESS_TOKEN)).thenReturn(
+//				OCCITestHelper.USER_MOCK);
+//		Mockito.when(identityPlugin.getUser(OCCITestHelper.INVALID_TOKEN)).thenThrow(
+//				new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED));
 		
 		HashMap<String, String> tokenAttr = new HashMap<String, String>();
-		tokenAttr.put(OCCIHeaders.X_TOKEN_USER, OCCITestHelper.USER_MOCK);
-		Token userToken = new Token(OCCITestHelper.ACCESS_TOKEN,
+//		tokenAttr.put(OCCIHeaders.X_TOKEN_USER, OCCITestHelper.USER_MOCK);
+		Token userToken = new Token(OCCITestHelper.ACCESS_TOKEN, OCCITestHelper.USER_MOCK,
 				OCCITestHelper.TOKEN_FUTURE_EXPIRATION, tokenAttr);
 		
 		Mockito.when(identityPlugin.getToken(OCCITestHelper.ACCESS_TOKEN)).thenReturn(userToken);

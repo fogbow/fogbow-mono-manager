@@ -108,7 +108,7 @@ public class RequestRepository {
 		}
 	}
 
-	public void excluding(String requestId) {
+	public void exclude(String requestId) {
 		LOGGER.debug("Excluing requestId " + requestId);
 
 		for (List<Request> userRequests : requests.values()) {
@@ -121,7 +121,6 @@ public class RequestRepository {
 				}
 			}
 		}
-
 	}
 
 	public List<Request> getAll() {

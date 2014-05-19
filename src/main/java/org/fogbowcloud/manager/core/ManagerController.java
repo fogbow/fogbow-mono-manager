@@ -6,7 +6,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
 
@@ -41,14 +40,11 @@ public class ManagerController {
 	private static final long DEFAULT_TOKEN_UPDATE_PERIOD = 300000; // 5 minutes
 	private static final long DEFAULT_INSTANCE_MONITORING_PERIOD = 120000; // 2 minutes
 
-	private boolean scheduled = false;
-	private boolean tokenUpdatingOn = false;
-	private boolean instanceMonitoringOn = false;
-	private Timer requestSchedulerTimer;
-	private Timer tokenUpdaterTimer;
-	private Timer instanceMonitoringTimer;
+	private ManagerTimer requestSchedulerTimer = new ManagerTimer();
+	private ManagerTimer tokenUpdaterTimer = new ManagerTimer();
+	private ManagerTimer instanceMonitoringTimer = new ManagerTimer();
 
-	private Token tokenMemberLocal;
+	private Token federationUserToken;
 	private List<FederationMember> members = new LinkedList<FederationMember>();
 	private RequestRepository requests = new RequestRepository();
 	private FederationMemberPicker memberPicker = new RoundRobinMemberPicker();
@@ -103,8 +99,8 @@ public class ManagerController {
 		return resourcesInfo;
 	}
 
-	public String getUser(String authToken) {
-		return identityPlugin.getUser(authToken);
+	public String getUser(String accessId) {
+		return identityPlugin.getToken(accessId).getUser();
 	}
 
 	public List<Request> getRequestsFromUser(String authToken) {
@@ -152,7 +148,7 @@ public class ManagerController {
 	}
 
 	public Instance getInstance(String authToken, String instanceId) {
-		Request request = getRequestFromInstance(authToken, instanceId);
+		Request request = getRequestForInstance(authToken, instanceId);
 		return getInstance(request);
 	}
 
@@ -192,7 +188,7 @@ public class ManagerController {
 	}
 
 	public void removeInstance(String authToken, String instanceId) {
-		Request request = getRequestFromInstance(authToken, instanceId);
+		Request request = getRequestForInstance(authToken, instanceId);
 		removeInstance(authToken, instanceId, request);
 	}
 
@@ -205,15 +201,13 @@ public class ManagerController {
 		}
 		request.setInstanceId(null);
 		request.setMemberId(null);
-		updateRequestState(request);
+		instanceRemoved(request);
 	}
 
-	private void updateRequestState(Request request) {
-		if (request.getAttValue(RequestAttribute.TYPE.getValue()) != null
-				&& request.getAttValue(RequestAttribute.TYPE.getValue()).equals(
-						RequestType.PERSISTENT.getValue())) {
+	private void instanceRemoved(Request request) {
+		if (isPersistent(request)) {
 			request.setState(RequestState.OPEN);
-			if (!scheduled) {
+			if (!requestSchedulerTimer.isScheduled()) {
 				scheduleRequests();
 			}
 		} else {
@@ -221,12 +215,18 @@ public class ManagerController {
 		}
 	}
 
+	private boolean isPersistent(Request request) {
+		return request.getAttValue(RequestAttribute.TYPE.getValue()) != null
+				&& request.getAttValue(RequestAttribute.TYPE.getValue()).equals(
+						RequestType.PERSISTENT.getValue());
+	}
+
 	private void removeRemoteInstance(Request request) {
 		ManagerPacketHelper.deleteRemoteInstace(request, packetSender);
 	}
 
-	public Request getRequestFromInstance(String authToken, String instanceId) {
-		String user = getUser(authToken);
+	public Request getRequestForInstance(String accessId, String instanceId) {
+		String user = getUser(accessId);
 		LOGGER.debug("Getting instance " + instanceId + " of user " + user);
 		List<Request> userRequests = requests.getAll();
 		for (Request request : userRequests) {
@@ -244,13 +244,13 @@ public class ManagerController {
 		return request.getMemberId() == null;
 	}
 
-	public Request getRequest(String authToken, String requestId) {
+	public Request getRequest(String accessId, String requestId) {
 		LOGGER.debug("Getting requestId " + requestId);
-		checkRequestId(authToken, requestId);
+		checkRequestId(accessId, requestId);
 		return requests.get(requestId);
 	}
 
-	public String submitRequestForRemoteMember(List<Category> categories,
+	public String createInstanceForRemoteMember(List<Category> categories,
 			Map<String, String> xOCCIAtt) {
 		LOGGER.info("Submiting request with categories: " + categories + " and xOCCIAtt: "
 				+ xOCCIAtt + " for remote member.");
@@ -266,19 +266,22 @@ public class ManagerController {
 	}
 
 	protected Token getFederationUserToken() {
-		Map<String, String> tokenAttributes = new HashMap<String, String>();
+		if (federationUserToken != null
+				&& identityPlugin.isValid(federationUserToken.getAccessId())) {
+			return this.federationUserToken;
+		}
+
+		Map<String, String> federationUserCredentials = new HashMap<String, String>();
 		String username = properties.getProperty("federation_user_name");
 		String password = properties.getProperty("federation_user_password");
 		String tenantName = properties.getProperty("federation_user_tenant_name");
-		tokenAttributes.put(OCCIHeaders.X_TOKEN_USER, username);
-		tokenAttributes.put(OCCIHeaders.X_TOKEN_PASS, password);
-		tokenAttributes.put(OCCIHeaders.X_TOKEN_TENANT_NAME, tenantName);
+		federationUserCredentials.put(OCCIHeaders.X_TOKEN_USER, username);
+		federationUserCredentials.put(OCCIHeaders.X_TOKEN_PASS, password);
+		federationUserCredentials.put(OCCIHeaders.X_TOKEN_TENANT_NAME, tenantName);
 
-		if (tokenMemberLocal == null || tokenMemberLocal.isExpiredToken()) {
-			Token token = identityPlugin.getToken(tokenAttributes);
-			this.tokenMemberLocal = token;
-		}
-		return this.tokenMemberLocal;
+		Token token = identityPlugin.createToken(federationUserCredentials);
+		this.federationUserToken = token;
+		return federationUserToken;
 	}
 
 	public Instance getInstanceForRemoteMember(String instanceId) {
@@ -326,23 +329,21 @@ public class ManagerController {
 			currentRequests.add(request);
 			requests.addRequest(user, request);
 		}
-		if (!scheduled) {
+		if (!requestSchedulerTimer.isScheduled()) {
 			scheduleRequests();
 		}
-		if (!tokenUpdatingOn) {
-			turnOnTokenUpdating();
+		if (!tokenUpdaterTimer.isScheduled()) {
+			triggerTokenUpdater();
 		}
 
 		return currentRequests;
 	}
 
-	protected void turnOnInstancesMonitoring() {
-		instanceMonitoringOn = true;
+	protected void triggerInstancesMonitor() {
 		String instanceMonitoringPeriodStr = properties.getProperty("instance_monitoring_period");
 		final long instanceMonitoringPeriod = instanceMonitoringPeriodStr == null ? DEFAULT_INSTANCE_MONITORING_PERIOD
 				: Long.valueOf(instanceMonitoringPeriodStr);
 
-		instanceMonitoringTimer = new Timer();
 		instanceMonitoringTimer.scheduleAtFixedRate(new TimerTask() {
 			@Override
 			public void run() {
@@ -353,41 +354,33 @@ public class ManagerController {
 
 	protected void monitorInstances() {
 		boolean turnOffTimer = true;
-
-		// monitoring fulfilled requests
-		for (Request request : requests.get(RequestState.FULFILLED)) {
-			turnOffTimer = false;
-			try {
-				getInstance(request);
-			} catch (OCCIException e) {
-				updateRequestState(requests.get(request.getId()));
-			}
-		}
-
-		// monitoring deleted requests
-		for (Request request : requests.get(RequestState.DELETED)) {
-			turnOffTimer = false;
-			try {
-				getInstance(request);
-			} catch (OCCIException e) {
-				requests.excluding(request.getId());
-			}
+		
+		for (Request request : requests.getAll()) {			
+			if (request.getState().in(RequestState.FULFILLED, RequestState.DELETED)){
+				turnOffTimer = false;
+				try {
+					getInstance(request);
+				} catch (OCCIException e) {
+					if (request.getState().in(RequestState.FULFILLED)){
+						instanceRemoved(requests.get(request.getId()));
+					} else if (request.getState().in(RequestState.DELETED)){
+						requests.exclude(request.getId());						
+					}
+				}	
+			}			
 		}
 
 		if (turnOffTimer) {
 			LOGGER.info("There are not requests.");
 			instanceMonitoringTimer.cancel();
-			instanceMonitoringOn = false;
 		}
 	}
 
-	private void turnOnTokenUpdating() {
-		tokenUpdatingOn = true;
+	private void triggerTokenUpdater() {
 		String tokenUpdatePeriodStr = properties.getProperty("token_update_period");
 		final long tokenUpdatePeriod = tokenUpdatePeriodStr == null ? DEFAULT_TOKEN_UPDATE_PERIOD
 				: Long.valueOf(tokenUpdatePeriodStr);
 
-		tokenUpdaterTimer = new Timer();
 		tokenUpdaterTimer.scheduleAtFixedRate(new TimerTask() {
 			@Override
 			public void run() {
@@ -399,34 +392,15 @@ public class ManagerController {
 	protected void checkAndUpdateRequestToken(long tokenUpdatePeriod) {
 		List<Request> allRequests = requests.getAll();
 		boolean turnOffTimer = true;
-		List<String> usersUpdated = new ArrayList<String>();
-		for (Request request : allRequests) {
-			boolean isUserUpdated = false;
-			for (String user : usersUpdated) {
-				if (user.equals(request.getUser())) {
-					isUserUpdated = true;
-					break;
-				}
-			}
 
-			if (!request.getState().equals(RequestState.CLOSED)
-					&& !request.getState().equals(RequestState.FAILED) && !isUserUpdated) {
+		for (Request request : allRequests) {
+			if (request.getState().notIn(RequestState.CLOSED, RequestState.FAILED)) {
 				turnOffTimer = false;
 				long validInterval = request.getToken().getExpirationDate().getTime()
 						- dateUtils.currentTimeMillis();
 				if (validInterval < 2 * tokenUpdatePeriod) {
-					Token newToken = identityPlugin.updateToken(request.getToken());
+					Token newToken = identityPlugin.createToken(request.getToken());
 					requests.get(request.getId()).setToken(newToken);
-
-					for (Request requestByUser : requests.getByUser(request.getUser())) {
-						if (!requestByUser.getState().equals(RequestState.CLOSED)
-								&& !requestByUser.getState().equals(RequestState.FAILED)) {
-							requests.get(requestByUser.getId()).getToken()
-									.setAccessId(newToken.getAccessId());
-						}
-					}
-
-					usersUpdated.add(request.getUser());
 				}
 			}
 		}
@@ -434,11 +408,10 @@ public class ManagerController {
 		if (turnOffTimer) {
 			LOGGER.info("There are not requests.");
 			tokenUpdaterTimer.cancel();
-			tokenUpdatingOn = false;
 		}
 	}
 
-	private boolean submitRemoteRequest(Request request) {
+	private boolean createRemoteInstance(Request request) {
 		FederationMember member = memberPicker.pick(this);
 		if (member == null) {
 			return false;
@@ -456,13 +429,13 @@ public class ManagerController {
 
 		request.setState(RequestState.FULFILLED);
 		request.setInstanceId(remoteInstanceId);
-		if (!instanceMonitoringOn) {
-			turnOnInstancesMonitoring();
+		if (!instanceMonitoringTimer.isScheduled()) {
+			triggerInstancesMonitor();
 		}
 		return true;
 	}
 
-	private boolean submitLocalRequest(Request request) {
+	private boolean createLocalInstance(Request request) {
 		request.setMemberId(null);
 		String instanceId = null;
 
@@ -486,19 +459,17 @@ public class ManagerController {
 		request.setInstanceId(instanceId);
 		request.setState(RequestState.FULFILLED);
 		LOGGER.debug("Fulfilled Request: " + request);
-		if (!instanceMonitoringOn) {
-			turnOnInstancesMonitoring();
+		if (!instanceMonitoringTimer.isScheduled()) {
+			triggerInstancesMonitor();
 		}
 		return true;
 	}
 
 	private void scheduleRequests() {
-		scheduled = true;
 		String schedulerPeriodStr = properties.getProperty("scheduler_period");
 		long schedulerPeriod = schedulerPeriodStr == null ? DEFAULT_SCHEDULER_PERIOD : Long
 				.valueOf(schedulerPeriodStr);
 
-		requestSchedulerTimer = new Timer();
 		requestSchedulerTimer.scheduleAtFixedRate(new TimerTask() {
 			@Override
 			public void run() {
@@ -517,7 +488,7 @@ public class ManagerController {
 				for (String keyAttributes : RequestAttribute.getValues()) {
 					xOCCIAtt.remove(keyAttributes);
 				}
-				allFulfilled &= submitLocalRequest(request) || submitRemoteRequest(request);
+				allFulfilled &= createLocalInstance(request) || createRemoteInstance(request);
 			} else if (request.isExpired()) {
 				request.setState(RequestState.CLOSED);
 			} else {
@@ -527,7 +498,6 @@ public class ManagerController {
 		if (allFulfilled) {
 			LOGGER.info("All request fulfilled.");
 			requestSchedulerTimer.cancel();
-			scheduled = false;
 		}
 	}
 
@@ -540,7 +510,7 @@ public class ManagerController {
 	}
 
 	public Token getToken(Map<String, String> attributesToken) {
-		return identityPlugin.getToken(attributesToken);
+		return identityPlugin.createToken(attributesToken);
 	}
 
 	public Properties getProperties() {

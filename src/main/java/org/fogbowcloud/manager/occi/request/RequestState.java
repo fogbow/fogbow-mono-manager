@@ -28,4 +28,22 @@ public enum RequestState {
 	public String getValue() {
 		return this.value;
 	}
+	
+	public boolean in(RequestState... requestStates) {
+		for (RequestState requestState : requestStates) {
+			if (requestState.equals(this)){
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	public boolean notIn(RequestState... requestStates) {
+		for (RequestState requestState : requestStates) {
+			if (requestState.equals(this)){
+				return false;
+			}
+		}
+		return true;
+	}
 }

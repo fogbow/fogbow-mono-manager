@@ -76,7 +76,7 @@ public class TestGetRemoteInstance {
 				.getInstance(Mockito.eq(TOKEN), Mockito.eq(INSTANCE_DEFAULT)))
 				.thenReturn(instance);
 
-		Request request = new Request("anyvalue",  new Token("anyvalue",
+		Request request = new Request("anyvalue",  new Token("anyvalue", OCCITestHelper.USER_MOCK,
 				OCCITestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), USER_DEFAULT, null, null);
 		request.setInstanceId(INSTANCE_DEFAULT);
 		request.setMemberId(MANAGER_COMPONENT_URL);
@@ -99,7 +99,7 @@ public class TestGetRemoteInstance {
 	
 	@Test
 	public void testGetRemoteInstaceNotFound() throws Exception {
-		Request request = new Request("anyvalue", new Token( WRONG_TOKEN,
+		Request request = new Request("anyvalue", new Token( WRONG_TOKEN, OCCITestHelper.USER_MOCK,
 				OCCITestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), USER_DEFAULT, null, null);
 		request.setInstanceId(INSTANCE_DEFAULT);
 		request.setMemberId(MANAGER_COMPONENT_URL);
@@ -116,7 +116,7 @@ public class TestGetRemoteInstance {
 
 	@Test(expected=OCCIException.class)
 	public void testGetRemoteInstanceUnauthorized() throws Exception {
-		Request request = new Request("anyvalue", new Token( WRONG_TOKEN,
+		Request request = new Request("anyvalue", new Token( WRONG_TOKEN, OCCITestHelper.USER_MOCK,
 				OCCITestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), USER_DEFAULT, null, null);
 		request.setInstanceId(INSTANCE_OTHER_USER);
 		request.setMemberId(MANAGER_COMPONENT_URL);

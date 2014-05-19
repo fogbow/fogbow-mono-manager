@@ -54,17 +54,6 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 		this.v2Endpoint = keystoneUrl + V2_ENDPOINT_PATH;
 	}
 
-	@Override
-	public String getTokenExpiresDate(String tokenId) {
-		Token token = getToken(tokenId);
-		return token.getExpirationDate().toString();
-	}
-
-	public String getUser(String tokenId) {
-		Token token = getToken(tokenId);
-		return token.get(OCCIHeaders.X_TOKEN_USER);
-	}
-
 	public String getResponseJson(String tokenId) {
 		HttpResponse response;
 		String responseStr = null;
@@ -86,7 +75,7 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 	}
 
 	@Override
-	public Token getToken(Map<String, String> tokenAttributes) {
+	public Token createToken(Map<String, String> tokenAttributes) {
 		HttpResponse response;
 		String responseStr = null;
 		try {
@@ -120,7 +109,7 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 	}
 
 	@Override
-	public Token updateToken(Token token) {
+	public Token createToken(Token token) {
 		HttpResponse response;
 		String responseStr = null;
 		try {
@@ -170,12 +159,15 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 			String tenantId = tokenKeyStone.getJSONObject(TENANT_KEYSTONE).getString(ID_KEYSTONE);
 			String tenantName = tokenKeyStone.getJSONObject(TENANT_KEYSTONE).getString(
 					NAME_KEYSTONE);
-			String expirationDateToken = tokenKeyStone.getString(EXPIRES_KEYSTONE);
+			String expirationDateToken = tokenKeyStone.getString(EXPIRES_KEYSTONE);			
+			
+			String user = root.getJSONObject(ACCESS_KEYSTONE).getJSONObject(USER_KEYSTONE)
+					.getString(NAME_KEYSTONE);
 
 			attributes.put(OCCIHeaders.X_TOKEN_TENANT_ID, tenantId);
 			attributes.put(OCCIHeaders.X_TOKEN_TENANT_NAME, tenantName);
 
-			return new Token(token, getDate(expirationDateToken), attributes);
+			return new Token(token, user, getDate(expirationDateToken), attributes);
 		} catch (Exception e) {
 			LOGGER.error("Exception while getting token from json.", e);
 			return null;
@@ -195,9 +187,8 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 	}
 
 	@Override
-	public Token getToken(String tokenId) {
-		String responseJson = getResponseJson(tokenId);
-		String accessId = tokenId;
+	public Token getToken(String accessId) {
+		String responseJson = getResponseJson(accessId);
 		long expirationTimeMillis = 0;
 		String user = null;
 		try {
@@ -221,7 +212,17 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 		Map<String, String> tokenAttributes = new HashMap<String, String>();
 		tokenAttributes.put(OCCIHeaders.X_TOKEN_USER, user);
 
-		return new Token(accessId, new Date(expirationTimeMillis), tokenAttributes);
+		return new Token(accessId, user, new Date(expirationTimeMillis), tokenAttributes);
+	}
+
+	@Override
+	public boolean isValid(String accessId) {
+		try{
+			getToken(accessId);
+			return true;
+		} catch (OCCIException e){
+			return false;
+		}
 	}
 
 }

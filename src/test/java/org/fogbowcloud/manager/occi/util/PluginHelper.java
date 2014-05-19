@@ -39,7 +39,7 @@ public class PluginHelper {
 		tokenAttributes.put(OCCIHeaders.X_TOKEN_TENANT_ID, TENANT_ID);
 		tokenAttributes.put(OCCIHeaders.X_TOKEN_USER, USERNAME_FOGBOW);
 		tokenAttributes.put(OCCIHeaders.X_TOKEN_TENANT_NAME, TENANT_NAME);
-		Token token = new Token(AUTH_TOKEN, EXPIRATION_DATE, tokenAttributes);
+		Token token = new Token(AUTH_TOKEN, USERNAME_FOGBOW, EXPIRATION_DATE, tokenAttributes);
 
 		// TODO Refactor! We really need all these args to KeytoneApplication?
 		KeystoneApplication keystoneApplication = new KeystoneApplication(USERNAME_FOGBOW,

@@ -46,8 +46,6 @@ public class ManagerTestHelper {
 	private static final String CLIENT_ADRESS = "client@test.com";
 	private static final String CLIENT_PASS = "password";
 	private static final String SMACK_ENDING = "/Smack";
-	// private static final Token TOKEN = new Token(new HashMap<String,
-	// String>());
 
 	public static final String MANAGER_COMPONENT_URL = "manager.test.com";
 	public static final String MANAGER_COMPONENT_PASS = "password";
@@ -68,7 +66,7 @@ public class ManagerTestHelper {
 	public ManagerTestHelper() {
 		Map<String, String> tokenAttributes = new HashMap<String, String>();
 		tokenAttributes.put(OCCIHeaders.X_TOKEN_TENANT_ID, "tenantId_r4fci3qhbcy3b");
-		this.tokenDefault = new Token("token", new Date(System.currentTimeMillis()
+		this.tokenDefault = new Token("token", "user", new Date(System.currentTimeMillis()
 				+ OCCITestHelper.LONG_TIME), tokenAttributes);
 	}
 
@@ -123,6 +121,7 @@ public class ManagerTestHelper {
 		try {
 			register.createAccount(CLIENT_ADRESS, CLIENT_PASS);
 		} catch (XMPPException e) {
+			e.printStackTrace();
 		}
 
 		xmppClient.login();
@@ -182,7 +181,7 @@ public class ManagerTestHelper {
 		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class))).thenReturn(
 				getResources());
 
-		Mockito.when(identityPlugin.getToken(Mockito.anyMap())).thenReturn(tokenDefault);
+		Mockito.when(identityPlugin.createToken(Mockito.anyMap())).thenReturn(tokenDefault);
 
 		managerXmppComponent.setDescription("Manager Component");
 		managerXmppComponent.setName("Manager");
@@ -215,7 +214,7 @@ public class ManagerTestHelper {
 		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class))).thenReturn(
 				getResources());
 
-		Mockito.when(identityPlugin.getToken(Mockito.anyMap())).thenReturn(tokenDefault);
+		Mockito.when(identityPlugin.createToken(Mockito.anyMap())).thenReturn(tokenDefault);
 
 		managerXmppComponent.setDescription("Manager Component");
 		managerXmppComponent.setName("Manager");

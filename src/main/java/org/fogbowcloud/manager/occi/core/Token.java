@@ -9,12 +9,14 @@ public class Token {
 
 	private Map<String, String> attributes;
 	private String accessId;
+	private String user;
 	private Date expirationDate;
 	private DateUtils dateUtils = new DateUtils();
 
-	//TODO Check invalid values
-	public Token(String accessId, Date expirationTime, Map<String, String> attributes) {
+	// TODO Check invalid values
+	public Token(String accessId, String user, Date expirationTime, Map<String, String> attributes) {
 		this.accessId = accessId;
+		this.user = user;
 		this.expirationDate = expirationTime;
 		this.attributes = attributes;
 	}
@@ -26,10 +28,6 @@ public class Token {
 	public String getAccessId() {
 		return this.accessId;
 	}
-	
-	public void setAccessId(String accessId) {
-		this.accessId = accessId;
-	} 
 
 	public Date getExpirationDate() {
 		return this.expirationDate;
@@ -49,7 +47,11 @@ public class Token {
 	}
 
 	public String toString() {
-		return "AccessId: " + accessId + ", expirationDate: " + expirationDate + " attributes: "
-				+ attributes;
+		return "AccessId: " + accessId + ", User: " + user + ", expirationDate: " + expirationDate
+				+ " attributes: " + attributes;
+	}
+
+	public String getUser() {
+		return this.user;
 	}
 }

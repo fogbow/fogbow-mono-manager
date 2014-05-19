@@ -56,11 +56,9 @@ public class TestOCCIApplication {
 						ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES));
 
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
-		Mockito.when(identityPlugin.getUser(OCCITestHelper.ACCESS_TOKEN)).thenReturn(
-				OCCITestHelper.USER_MOCK);
 		HashMap<String, String> tokenAttr = new HashMap<String, String>();
-		tokenAttr.put(OCCIHeaders.X_TOKEN_USER, OCCITestHelper.USER_MOCK);
-		Token userToken = new Token(OCCITestHelper.ACCESS_TOKEN,
+//		tokenAttr.put(OCCIHeaders.X_TOKEN_USER, OCCITestHelper.USER_MOCK);
+		Token userToken = new Token(OCCITestHelper.ACCESS_TOKEN, OCCITestHelper.USER_MOCK,
 				OCCITestHelper.TOKEN_FUTURE_EXPIRATION, tokenAttr);
 		
 		Mockito.when(identityPlugin.getToken(Mockito.anyString())).thenReturn(userToken);

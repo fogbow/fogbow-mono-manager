@@ -39,23 +39,23 @@ public class TestIdentityOpenStack {
 	@Test
 	public void testValidToken() {
 		Assert.assertEquals(PluginHelper.USERNAME_FOGBOW,
-				this.identityOpenStack.getUser(PluginHelper.AUTH_TOKEN));
+				this.identityOpenStack.getToken(PluginHelper.AUTH_TOKEN).getUser());
 	}
 
 	@Test(expected = ResourceException.class)
 	public void testInvalidToken() {
-		identityOpenStack.getUser("Invalid Token");
+		identityOpenStack.getToken("Invalid Token");
 	}
 
 	@Test
 	public void testGetNameUserFromToken() {
 		Assert.assertEquals(PluginHelper.USERNAME_FOGBOW,
-				this.identityOpenStack.getUser(PluginHelper.AUTH_TOKEN));
+				this.identityOpenStack.getToken(PluginHelper.AUTH_TOKEN).getUser());
 	}
 
 	@Test(expected = ResourceException.class)
 	public void testGetNameUserFromTokenInvalid() {
-		this.identityOpenStack.getUser("invalid_token");
+		this.identityOpenStack.getToken("invalid_token");
 	}
 
 	@Test
@@ -64,7 +64,7 @@ public class TestIdentityOpenStack {
 		tokenAttributes.put(OCCIHeaders.X_TOKEN_USER, PluginHelper.USERNAME_FOGBOW);
 		tokenAttributes.put(OCCIHeaders.X_TOKEN_PASS, PluginHelper.PASSWORD_FOGBOW);
 		tokenAttributes.put(OCCIHeaders.X_TOKEN_TENANT_NAME, PluginHelper.TENANT_NAME);
-		Token token = this.identityOpenStack.getToken(tokenAttributes);
+		Token token = this.identityOpenStack.createToken(tokenAttributes);
 		String authToken = token.getAccessId();
 		String tenantID = token.get(OCCIHeaders.X_TOKEN_TENANT_ID);
 		Date expirationDate = token.getExpirationDate();
@@ -79,7 +79,7 @@ public class TestIdentityOpenStack {
 		tokenAttributes.put(OCCIHeaders.X_TOKEN_USER, PluginHelper.USERNAME_FOGBOW);
 		tokenAttributes.put(OCCIHeaders.X_TOKEN_PASS, PluginHelper.PASSWORD_FOGBOW);
 		tokenAttributes.put(OCCIHeaders.X_TOKEN_TENANT_NAME, PluginHelper.TENANT_NAME);
-		Token token = this.identityOpenStack.getToken(tokenAttributes);
+		Token token = this.identityOpenStack.createToken(tokenAttributes);
 		String authToken = token.getAccessId();
 		String tenantID = token.get(OCCIHeaders.X_TOKEN_TENANT_ID);
 		Date expirationDate = token.getExpirationDate();
@@ -87,7 +87,7 @@ public class TestIdentityOpenStack {
 		Assert.assertEquals(PluginHelper.TENANT_ID, tenantID);
 		Assert.assertEquals(PluginHelper.EXPIRATION_DATE, expirationDate);
 
-		Token token2 = this.identityOpenStack.updateToken(token);
+		Token token2 = this.identityOpenStack.createToken(token);
 		authToken = token2.getAccessId();
 		tenantID = token2.get(OCCIHeaders.X_TOKEN_TENANT_ID);
 		expirationDate = token2.getExpirationDate();
@@ -102,7 +102,7 @@ public class TestIdentityOpenStack {
 		tokenAttributes.put(OCCIHeaders.X_TOKEN_USER, "wrong");
 		tokenAttributes.put(OCCIHeaders.X_TOKEN_PASS, PluginHelper.PASSWORD_FOGBOW);
 		tokenAttributes.put(OCCIHeaders.X_TOKEN_TENANT_NAME, "");
-		this.identityOpenStack.getToken(tokenAttributes);
+		this.identityOpenStack.createToken(tokenAttributes);
 	}
 
 	@Test(expected = OCCIException.class)
@@ -111,6 +111,6 @@ public class TestIdentityOpenStack {
 		tokenAttributes.put(OCCIHeaders.X_TOKEN_USER, PluginHelper.USERNAME_FOGBOW);
 		tokenAttributes.put(OCCIHeaders.X_TOKEN_PASS, "worng");
 		tokenAttributes.put(OCCIHeaders.X_TOKEN_TENANT_NAME, "");
-		this.identityOpenStack.getToken(tokenAttributes);
+		this.identityOpenStack.createToken(tokenAttributes);
 	}
 }

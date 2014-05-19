@@ -40,7 +40,7 @@ public class TestDeleteRemoteInstance {
 
 	@Test
 	public void testDeleteRemoteInstance() throws Exception {
-		Request request = new Request("anyvalue", new Token("anyvalue",
+		Request request = new Request("anyvalue", new Token("anyvalue", OCCITestHelper.USER_MOCK,
 				OCCITestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), USER_DEFAULT, null, null);
 		request.setInstanceId(INSTANCE_DEFAULT);
 		request.setMemberId(MANAGER_COMPONENT_URL);
@@ -51,7 +51,7 @@ public class TestDeleteRemoteInstance {
 
 	@Test(expected = OCCIException.class)
 	public void testDeleteRemoteInstaceNotFound() throws Exception {
-		Request request = new Request("anyvalue", new Token(WRONG_TOKEN,
+		Request request = new Request("anyvalue", new Token(WRONG_TOKEN, OCCITestHelper.USER_MOCK,
 				OCCITestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), USER_DEFAULT, null, null);
 		request.setInstanceId(INSTANCE_DEFAULT);
 		request.setMemberId(MANAGER_COMPONENT_URL);
@@ -67,7 +67,7 @@ public class TestDeleteRemoteInstance {
 
 	@Test(expected = OCCIException.class)
 	public void testDeleteRemoteInstanceUnauthorized() throws Exception {
-		Request request = new Request("anyvalue",  new Token(WRONG_TOKEN,
+		Request request = new Request("anyvalue",  new Token(WRONG_TOKEN, OCCITestHelper.USER_MOCK,
 				OCCITestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), USER_DEFAULT, null, null);
 		request.setInstanceId(INSTANCE_OTHER_USER);
 		request.setMemberId(MANAGER_COMPONENT_URL);
