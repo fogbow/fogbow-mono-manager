@@ -20,7 +20,7 @@ public class RoundRobinMemberPicker implements FederationMemberPicker {
 		String myJid = facade.getProperties().getProperty("xmpp_jid");
 		if (currentMember.getResourcesInfo().getId().equals(myJid)
 				&& members.size() > 1
-				&& facade.getValidator().canDonateTo(currentMember)) {
+				&& facade.getValidator().canReceiveFrom(currentMember)) {
 			current = (current + 1) % members.size();
 			currentMember = members.get(current);
 		}

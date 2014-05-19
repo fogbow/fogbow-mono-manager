@@ -147,7 +147,8 @@ public class ManagerController {
 				continue;
 			}
 			try {
-				instances.add(getInstance(authToken, instanceId, request));
+
+				instances.add(getInstance(request));
 			} catch (Exception e) {
 				LOGGER.warn("Exception thown while getting instance "
 						+ instanceId + ".", e);
@@ -158,20 +159,18 @@ public class ManagerController {
 
 	public Instance getInstance(String authToken, String instanceId) {
 		Request request = getRequestFromInstance(authToken, instanceId);
-		return getInstance(authToken, instanceId, request);
+		return getInstance(request);
 	}
 
-	// TODO Review the needs of these args. Request object already has othe
-	// information
-	private Instance getInstance(String authToken, String instanceId,
-			Request request) {
+	private Instance getInstance(Request request) {
 		Instance instance = null;
 		if (isLocal(request)) {
-			LOGGER.debug(instanceId
+			LOGGER.debug(request.getInstanceId()
 					+ " is local, getting its information in the local cloud.");
-			instance = this.computePlugin.getInstance(authToken, instanceId);
+			instance = this.computePlugin.getInstance(request.getToken()
+					.getAccessId(), request.getInstanceId());
 		} else {
-			LOGGER.debug(instanceId + " is remote, going out to "
+			LOGGER.debug(request.getInstanceId() + " is remote, going out to "
 					+ request.getMemberId() + " to get its information.");
 			instance = getRemoteInstance(request);
 		}
@@ -180,7 +179,6 @@ public class ManagerController {
 		if (sshAddress != null) {
 			instance.addAttribute(DefaultSSHTunnel.SSH_ADDRESS_ATT, sshAddress);
 		}
-
 		return instance;
 	}
 
@@ -262,26 +260,32 @@ public class ManagerController {
 		return requests.get(requestId);
 	}
 
-	public String submitRequestForRemoteMember(String memberId, List<Category> categories,
-			Map<String, String> xOCCIAtt) {
-		for (FederationMember member: members) {
+	public FederationMember getFederationMember(String memberId) {
+		for (FederationMember member : members) {
 			if (member.getResourcesInfo().getId().equals(memberId)) {
-				if (validator.canReceiveFrom(member)) {
-					LOGGER.info("Submiting request with categories: " + categories + " and xOCCIAtt: "
-							+ xOCCIAtt + " for remote member.");
-					String token = getFederationUserToken().getAccessId();// (OCCIHeaders.X_TOKEN_ACCESS_ID);
-					try {
-						return computePlugin.requestInstance(token, categories, xOCCIAtt);
-					} catch (OCCIException e) {
-						if (e.getStatus().getCode() == HttpStatus.SC_BAD_REQUEST) {
-							return null;
-						}
-						throw e;
-					}
-				}
+				return member;
 			}
 		}
 		return null;
+	}
+
+	public String submitRequestForRemoteMember(String memberId,
+			List<Category> categories, Map<String, String> xOCCIAtt) {
+
+		if (!validator.canDonateTo(getFederationMember(memberId))) {
+			return null;
+		}
+		LOGGER.info("Submiting request with categories: " + categories
+				+ " and xOCCIAtt: " + xOCCIAtt + " for remote member.");
+		String token = getFederationUserToken().getAccessId();// (OCCIHeaders.X_TOKEN_ACCESS_ID);
+		try {
+			return computePlugin.requestInstance(token, categories, xOCCIAtt);
+		} catch (OCCIException e) {
+			if (e.getStatus().getCode() == HttpStatus.SC_BAD_REQUEST) {
+				return null;
+			}
+			throw e;
+		}
 	}
 
 	protected Token getFederationUserToken() {
@@ -381,9 +385,8 @@ public class ManagerController {
 		for (Request request : requests.get(RequestState.FULFILLED)) {
 			turnOffTimer = false;
 			try {
-				getInstance(request.getToken().getAccessId(),
-						request.getInstanceId(), request);
-			} catch (OCCIException e) { // TODO Only NOT FOUND exception type?
+				getInstance(request);
+			} catch (OCCIException e) {
 				updateRequestState(requests.get(request.getId()));
 			}
 		}
@@ -392,8 +395,7 @@ public class ManagerController {
 		for (Request request : requests.get(RequestState.DELETED)) {
 			turnOffTimer = false;
 			try {
-				getInstance(request.getToken().getAccessId(),
-						request.getInstanceId(), request);
+				getInstance(request);
 			} catch (OCCIException e) {
 				requests.excluding(request.getId());
 			}
@@ -422,13 +424,22 @@ public class ManagerController {
 		}, 0, tokenUpdatePeriod);
 	}
 
-	// TODO Refactor! Think about not call updateToken to requests of same user
 	protected void checkAndUpdateRequestToken(long tokenUpdatePeriod) {
 		List<Request> allRequests = requests.getAll();
 		boolean turnOffTimer = true;
+		List<String> usersUpdated = new ArrayList<String>();
 		for (Request request : allRequests) {
+			boolean isUserUpdated = false;
+			for (String user : usersUpdated) {
+				if (user.equals(request.getUser())) {
+					isUserUpdated = true;
+					break;
+				}
+			}
+
 			if (!request.getState().equals(RequestState.CLOSED)
-					&& !request.getState().equals(RequestState.FAILED)) {
+					&& !request.getState().equals(RequestState.FAILED)
+					&& !isUserUpdated) {
 				turnOffTimer = false;
 				long validInterval = request.getToken().getExpirationDate()
 						.getTime()
@@ -437,6 +448,19 @@ public class ManagerController {
 					Token newToken = identityPlugin.updateToken(request
 							.getToken());
 					requests.get(request.getId()).setToken(newToken);
+
+					for (Request requestByUser : requests.getByUser(request
+							.getUser())) {
+						if (!requestByUser.getState().equals(
+								RequestState.CLOSED)
+								&& !requestByUser.getState().equals(
+										RequestState.FAILED)) {
+							requests.get(requestByUser.getId()).getToken()
+									.setAccessId(newToken.getAccessId());
+						}
+					}
+
+					usersUpdated.add(request.getUser());
 				}
 			}
 		}
@@ -484,7 +508,6 @@ public class ManagerController {
 					.getAccessId(), request.getCategories(), request
 					.getxOCCIAtt());
 		} catch (OCCIException e) {
-			// TODO check if this is the error code!
 			if (e.getStatus().getCode() == HttpStatus.SC_INSUFFICIENT_SPACE_ON_RESOURCE) {
 				LOGGER.warn("Request failed locally for quota exceeded.", e);
 				return false;

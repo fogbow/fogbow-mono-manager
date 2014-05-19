@@ -20,7 +20,6 @@ import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.ssh.SSHTunnel;
 import org.fogbowcloud.manager.occi.OCCIApplication;
 import org.fogbowcloud.manager.occi.core.HeaderUtils;
-import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.fogbowcloud.manager.occi.request.RequestRepository;
 import org.mockito.Mockito;

@@ -81,4 +81,10 @@ public class TestDefaultFederationMemberValidator {
 		Assert.assertFalse(validator.canDonateTo(member));
 		Assert.assertFalse(validator.canReceiveFrom(member));
 	}
+	
+	@Test
+	public void testNullMember() throws Exception {
+		Assert.assertFalse(validator.canDonateTo(null));
+		Assert.assertFalse(validator.canReceiveFrom(null));
+	}
 }
