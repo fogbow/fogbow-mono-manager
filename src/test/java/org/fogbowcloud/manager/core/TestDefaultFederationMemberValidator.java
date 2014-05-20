@@ -25,7 +25,7 @@ import org.mockito.Mockito;
 
 public class TestDefaultFederationMemberValidator {
 	ManagerTestHelper helper;
-	DefaultFederationMemberValidator validator;
+	RestrictCAsMemberValidator validator;
 	X509Certificate mockCA;
 	X509Certificate mockCertificate;
 	FederationMember member;
@@ -37,7 +37,7 @@ public class TestDefaultFederationMemberValidator {
 		KeyPair keys = keyGenerator.generateKeyPair();
 		publicKey = keys.getPublic();
 		helper = new ManagerTestHelper();
-		validator = new DefaultFederationMemberValidator();
+		validator = new RestrictCAsMemberValidator();
 		X509Certificate mockCA = Mockito.mock(X509Certificate.class);
 		Mockito.doReturn(publicKey).when(mockCA).getPublicKey();
 		List<X509Certificate> list = new LinkedList<X509Certificate>();

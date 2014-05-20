@@ -40,7 +40,8 @@ public class ManagerController {
 			.getLogger(ManagerController.class);
 	public static final long DEFAULT_SCHEDULER_PERIOD = 30000; // 30 seconds
 	private static final long DEFAULT_TOKEN_UPDATE_PERIOD = 300000; // 5 minutes
-	private static final long DEFAULT_INSTANCE_MONITORING_PERIOD = 120000; // 2 minutes
+	private static final long DEFAULT_INSTANCE_MONITORING_PERIOD = 120000; // 2
+																			// minutes
 
 	private boolean scheduled = false;
 	private boolean tokenUpdatingOn = false;
@@ -58,7 +59,7 @@ public class ManagerController {
 	private IdentityPlugin identityPlugin;
 	private Properties properties;
 	private PacketSender packetSender;
-	private FederationMemberValidator validator = new DefaultFederationMemberValidator();
+	private FederationMemberValidator validator = new RestrictCAsMemberValidator();
 
 	private DateUtils dateUtils = new DateUtils();
 	private SSHTunnel sshTunnel = new DefaultSSHTunnel();
@@ -271,7 +272,8 @@ public class ManagerController {
 	public String submitRequestForRemoteMember(String memberId,
 			List<Category> categories, Map<String, String> xOCCIAtt) {
 
-		if (!validator.canDonateTo(getFederationMember(memberId))) {
+		FederationMember member = getFederationMember(memberId);
+		if (!validator.canDonateTo(member)) {
 			return null;
 		}
 		LOGGER.info("Submiting request with categories: " + categories
@@ -589,5 +591,9 @@ public class ManagerController {
 
 	public FederationMemberValidator getValidator() {
 		return validator;
+	}
+
+	public void setValidator(FederationMemberValidator validator) {
+		this.validator = validator;
 	}
 }

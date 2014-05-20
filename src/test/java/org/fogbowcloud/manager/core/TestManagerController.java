@@ -4,18 +4,23 @@ import java.io.IOException;
 import java.security.cert.CertificateException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TimeZone;
 
 import org.fogbowcloud.manager.core.model.FederationMember;
+import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
+import org.fogbowcloud.manager.core.plugins.openstack.OpenStackComputePlugin;
 import org.fogbowcloud.manager.core.plugins.openstack.OpenStackIdentityPlugin;
 import org.fogbowcloud.manager.core.ssh.SSHTunnel;
 import org.fogbowcloud.manager.occi.core.Category;
@@ -56,14 +61,16 @@ public class TestManagerController {
 	private Token userToken;
 	private ManagerController managerController;
 	private ManagerTestHelper managerTestHelper;
-
+	private HashMap<String, String> tokenAttr ;
+	
 	@Before
 	public void setUp() throws Exception {
 		managerController = new ManagerController(new Properties());
 		managerTestHelper = new ManagerTestHelper();
-		HashMap<String, String> tokenAttr = new HashMap<String, String>();
+		tokenAttr = new HashMap<String, String>();
 		tokenAttr.put(OCCIHeaders.X_TOKEN_USER, USER_NAME);
-		userToken = new Token(ACCESS_TOKEN_ID, OCCITestHelper.TOKEN_FUTURE_EXPIRATION, tokenAttr);
+		userToken = new Token(ACCESS_TOKEN_ID,
+				OCCITestHelper.TOKEN_FUTURE_EXPIRATION, tokenAttr);
 	}
 
 	@Test
@@ -86,17 +93,20 @@ public class TestManagerController {
 		attributesTokenReturn.put(OCCIHeaders.X_TOKEN_TENANT_ID, "987654321");
 		attributesTokenReturn.put(OCCIHeaders.X_TOKEN_TENANT_NAME, TENANT_NAME);
 		attributesTokenReturn.put(OCCIHeaders.X_TOKEN_USER, USER_NAME);
-		Token token = new Token(ACCESS_TOKEN_ID, new Date(expirationTime), attributesTokenReturn);
+		Token token = new Token(ACCESS_TOKEN_ID, new Date(expirationTime),
+				attributesTokenReturn);
 
 		Map<String, String> attributesTokenReturn2 = new HashMap<String, String>();
 		attributesTokenReturn2.put(OCCIHeaders.X_TOKEN_TENANT_ID, "987654321");
-		attributesTokenReturn2.put(OCCIHeaders.X_TOKEN_TENANT_NAME, TENANT_NAME);
+		attributesTokenReturn2
+				.put(OCCIHeaders.X_TOKEN_TENANT_NAME, TENANT_NAME);
 		attributesTokenReturn2.put(OCCIHeaders.X_TOKEN_USER, USER_NAME);
 
-		Token token2 = new Token(ACCESS_TOKEN_ID_2, new Date(expirationTime + LONG_TIME),
-				attributesTokenReturn2);
+		Token token2 = new Token(ACCESS_TOKEN_ID_2, new Date(expirationTime
+				+ LONG_TIME), attributesTokenReturn2);
 
-		Mockito.when(openStackidentityPlugin.getToken(attributesToken)).thenReturn(token, token2);
+		Mockito.when(openStackidentityPlugin.getToken(attributesToken))
+				.thenReturn(token, token2);
 		managerController.setIdentityPlugin(openStackidentityPlugin);
 
 		// Get new token
@@ -109,7 +119,8 @@ public class TestManagerController {
 		Assert.assertEquals(ACCESS_TOKEN_ID, accessToken);
 
 		DateUtils dateUtils = Mockito.mock(DateUtils.class);
-		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(expirationTime + GRACE_TIME);
+		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(
+				expirationTime + GRACE_TIME);
 		token.setDateUtils(dateUtils);
 
 		// Get new token
@@ -130,15 +141,20 @@ public class TestManagerController {
 		DateUtils dateUtils = Mockito.mock(DateUtils.class);
 
 		RequestRepository requestRepository = new RequestRepository();
-		Token token = new Token(firstTokenId, new Date(now + (4 * timeDefault)),
+		Token token = new Token(firstTokenId,
+				new Date(now + (4 * timeDefault)),
 				new HashMap<String, String>());
-		Token token2 = new Token(firstTokenId, new Date(now + (4 * timeDefault)),
+		Token token2 = new Token(firstTokenId,
+				new Date(now + (4 * timeDefault)),
 				new HashMap<String, String>());
-		Token token3 = new Token(firstTokenId, new Date(now + (4 * timeDefault)),
+		Token token3 = new Token(firstTokenId,
+				new Date(now + (4 * timeDefault)),
 				new HashMap<String, String>());
-		Token token4 = new Token(firstTokenId, new Date(now + (4 * timeDefault)),
+		Token token4 = new Token(firstTokenId,
+				new Date(now + (4 * timeDefault)),
 				new HashMap<String, String>());
-		Token token5 = new Token(firstTokenId, new Date(now + (4 * timeDefault)),
+		Token token5 = new Token(firstTokenId,
+				new Date(now + (4 * timeDefault)),
 				new HashMap<String, String>());
 		Request request1 = new Request("id1", token, USER_NAME, null, null);
 		request1.setState(RequestState.OPEN);
@@ -158,43 +174,53 @@ public class TestManagerController {
 		managerController.setRequests(requestRepository);
 
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
-		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(USER_NAME);
-		Token tokenUpdatedFirstTime = new Token(secontTokenId, new Date(System.currentTimeMillis()
-				+ timeDefault), new HashMap<String, String>());
-		Mockito.when(identityPlugin.updateToken(Mockito.any(Token.class))).thenReturn(
-				tokenUpdatedFirstTime);
+		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(
+				USER_NAME);
+		Token tokenUpdatedFirstTime = new Token(secontTokenId, new Date(
+				System.currentTimeMillis() + timeDefault),
+				new HashMap<String, String>());
+		Mockito.when(identityPlugin.updateToken(Mockito.any(Token.class)))
+				.thenReturn(tokenUpdatedFirstTime);
 		managerController.setIdentityPlugin(identityPlugin);
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 		managerController.setDateUtils(dateUtils);
 
 		managerController.checkAndUpdateRequestToken(timeDefault);
-		List<Request> requestsFromUser = managerController.getRequestsFromUser(ACCESS_TOKEN_ID);
+		List<Request> requestsFromUser = managerController
+				.getRequestsFromUser(ACCESS_TOKEN_ID);
 		for (Request request : requestsFromUser) {
 			if (request.getState().equals(RequestState.OPEN)) {
-				Assert.assertEquals(firstTokenId, request.getToken().getAccessId());
+				Assert.assertEquals(firstTokenId, request.getToken()
+						.getAccessId());
 			} else if (request.getState().equals(RequestState.CLOSED)
 					|| request.getState().equals(RequestState.FAILED)) {
-				Assert.assertEquals(firstTokenId, request.getToken().getAccessId());
+				Assert.assertEquals(firstTokenId, request.getToken()
+						.getAccessId());
 			}
 		}
 
-		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now + (3 * timeDefault));
+		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(
+				now + (3 * timeDefault));
 		managerController.setDateUtils(dateUtils);
 
 		managerController.checkAndUpdateRequestToken(timeDefault);
-		requestsFromUser = managerController.getRequestsFromUser(ACCESS_TOKEN_ID);
+		requestsFromUser = managerController
+				.getRequestsFromUser(ACCESS_TOKEN_ID);
 		for (Request request : requestsFromUser) {
 			if (request.getState().equals(RequestState.OPEN)) {
-				Assert.assertEquals(secontTokenId, request.getToken().getAccessId());
+				Assert.assertEquals(secontTokenId, request.getToken()
+						.getAccessId());
 			} else if (request.getState().equals(RequestState.CLOSED)
 					|| request.getState().equals(RequestState.FAILED)) {
-				Assert.assertEquals(firstTokenId, request.getToken().getAccessId());
+				Assert.assertEquals(firstTokenId, request.getToken()
+						.getAccessId());
 			}
 		}
 	}
 
 	@Test
-	public void testMonitoringDeletedRequestAndFoundInstance() throws InterruptedException {
+	public void testMonitoringDeletedRequestAndFoundInstance()
+			throws InterruptedException {
 		Properties properties = new Properties();
 		properties.put("instance_monitoring_period", Long.toString(LONG_TIME));
 		managerController = new ManagerController(properties);
@@ -216,9 +242,11 @@ public class TestManagerController {
 		managerController.setIdentityPlugin(identityPlugin);
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		managerController.setComputePlugin(computePlugin);
-		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(USER_NAME);
-		Mockito.when(computePlugin.getInstance(Mockito.anyString(), Mockito.anyString()))
-				.thenReturn(new Instance("id"));
+		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(
+				USER_NAME);
+		Mockito.when(
+				computePlugin.getInstance(Mockito.anyString(),
+						Mockito.anyString())).thenReturn(new Instance("id"));
 
 		Assert.assertEquals(2, getRequestsDeleted(requestRepositoryCopy).size());
 
@@ -230,7 +258,8 @@ public class TestManagerController {
 		List<Request> requests = new ArrayList<Request>();
 		for (Request request : requestRepository.get(RequestState.DELETED)) {
 			try {
-				requests.add(managerController.getRequest(ACCESS_TOKEN_ID, request.getId()));
+				requests.add(managerController.getRequest(ACCESS_TOKEN_ID,
+						request.getId()));
 			} catch (Exception e) {
 			}
 		}
@@ -238,7 +267,8 @@ public class TestManagerController {
 	}
 
 	@Test
-	public void testMonitoringDeletedRequestAndNotFoundInstance() throws InterruptedException {
+	public void testMonitoringDeletedRequestAndNotFoundInstance()
+			throws InterruptedException {
 		Properties properties = new Properties();
 		properties.put("instance_monitoring_period", Long.toString(LONG_TIME));
 		managerController = new ManagerController(properties);
@@ -264,9 +294,12 @@ public class TestManagerController {
 		managerController.setIdentityPlugin(identityPlugin);
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		managerController.setComputePlugin(computePlugin);
-		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(USER_NAME);
-		Mockito.when(computePlugin.getInstance(Mockito.anyString(), Mockito.anyString()))
-				.thenThrow(new OCCIException(ErrorType.NOT_FOUND, ""));
+		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(
+				USER_NAME);
+		Mockito.when(
+				computePlugin.getInstance(Mockito.anyString(),
+						Mockito.anyString())).thenThrow(
+				new OCCIException(ErrorType.NOT_FOUND, ""));
 
 		Assert.assertEquals(2, getRequestsDeleted(requestRepositoryCopy).size());
 
@@ -275,7 +308,8 @@ public class TestManagerController {
 	}
 
 	@Test
-	public void testMonitoringFulfilledRequestAndNotFoundInstance() throws InterruptedException {
+	public void testMonitoringFulfilledRequestAndNotFoundInstance()
+			throws InterruptedException {
 		Properties properties = new Properties();
 		properties.put("instance_monitoring_period", Long.toString(LONG_TIME));
 		managerController = new ManagerController(properties);
@@ -294,19 +328,24 @@ public class TestManagerController {
 		managerController.setIdentityPlugin(identityPlugin);
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		managerController.setComputePlugin(computePlugin);
-		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(USER_NAME);
+		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(
+				USER_NAME);
 
 		managerController.monitorInstances();
-		List<Request> requestsFromUser = managerController.getRequestsFromUser(ACCESS_TOKEN_ID);
+		List<Request> requestsFromUser = managerController
+				.getRequestsFromUser(ACCESS_TOKEN_ID);
 		for (Request request : requestsFromUser) {
 			Assert.assertTrue(request.getState().equals(RequestState.FULFILLED));
 		}
 
-		Mockito.when(computePlugin.getInstance(Mockito.anyString(), Mockito.anyString()))
-				.thenThrow(new OCCIException(ErrorType.NOT_FOUND, ""));
+		Mockito.when(
+				computePlugin.getInstance(Mockito.anyString(),
+						Mockito.anyString())).thenThrow(
+				new OCCIException(ErrorType.NOT_FOUND, ""));
 
 		managerController.monitorInstances();
-		requestsFromUser = managerController.getRequestsFromUser(ACCESS_TOKEN_ID);
+		requestsFromUser = managerController
+				.getRequestsFromUser(ACCESS_TOKEN_ID);
 		for (Request request : requestsFromUser) {
 			Assert.assertTrue(request.getState().equals(RequestState.CLOSED));
 		}
@@ -314,17 +353,21 @@ public class TestManagerController {
 
 	@SuppressWarnings("unchecked")
 	@Test
-	public void testMonitoringFulfilledRequestAndPesistentInstance() throws InterruptedException {
+	public void testMonitoringFulfilledRequestAndPesistentInstance()
+			throws InterruptedException {
 		final int timeDefault = 100;
 		final int timeDefaultSchedulePeriod = 10;
 		Properties properties = new Properties();
-		properties.put("instance_monitoring_period", Integer.toString(timeDefault));
-		properties.put("scheduler_period", Integer.toString(timeDefaultSchedulePeriod));
+		properties.put("instance_monitoring_period",
+				Integer.toString(timeDefault));
+		properties.put("scheduler_period",
+				Integer.toString(timeDefaultSchedulePeriod));
 
 		managerController = new ManagerController(properties);
 		Token token = new Token("id", new Date(), new HashMap<String, String>());
 		Map<String, String> map = new HashMap<String, String>();
-		map.put(RequestAttribute.TYPE.getValue(), RequestType.PERSISTENT.getValue());
+		map.put(RequestAttribute.TYPE.getValue(),
+				RequestType.PERSISTENT.getValue());
 		Request request1 = new Request("id1", token, USER_NAME, null, map);
 		request1.setState(RequestState.FULFILLED);
 		Request request2 = new Request("id2", token, USER_NAME, null, map);
@@ -338,25 +381,30 @@ public class TestManagerController {
 		managerController.setIdentityPlugin(identityPlugin);
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		managerController.setComputePlugin(computePlugin);
-		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(USER_NAME);
+		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(
+				USER_NAME);
 		Mockito.when(
-				computePlugin.requestInstance(Mockito.anyString(), Mockito.anyList(),
-						Mockito.anyMap())).thenReturn("ok");
+				computePlugin.requestInstance(Mockito.anyString(),
+						Mockito.anyList(), Mockito.anyMap())).thenReturn("ok");
 
-		List<Request> requestsFromUser = managerController.getRequestsFromUser(ACCESS_TOKEN_ID);
+		List<Request> requestsFromUser = managerController
+				.getRequestsFromUser(ACCESS_TOKEN_ID);
 		for (Request request : requestsFromUser) {
 			Assert.assertTrue(request.getState().equals(RequestState.FULFILLED));
 		}
 
-		Mockito.when(computePlugin.getInstance(Mockito.anyString(), Mockito.anyString()))
-				.thenThrow(new OCCIException(ErrorType.NOT_FOUND, ""));
+		Mockito.when(
+				computePlugin.getInstance(Mockito.anyString(),
+						Mockito.anyString())).thenThrow(
+				new OCCIException(ErrorType.NOT_FOUND, ""));
 
 		managerController.monitorInstances();
 		boolean wasOpen = false;
 		for (int i = 0; i < 50; i++) {
 			Thread.sleep(1);
 			for (Request request : requestsFromUser) {
-				requestsFromUser = managerController.getRequestsFromUser(ACCESS_TOKEN_ID);
+				requestsFromUser = managerController
+						.getRequestsFromUser(ACCESS_TOKEN_ID);
 				if (request.getState().equals(RequestState.OPEN)) {
 					wasOpen = true;
 				}
@@ -367,14 +415,16 @@ public class TestManagerController {
 
 		Thread.sleep(timeDefaultSchedulePeriod * 100);
 
-		requestsFromUser = managerController.getRequestsFromUser(ACCESS_TOKEN_ID);
+		requestsFromUser = managerController
+				.getRequestsFromUser(ACCESS_TOKEN_ID);
 		for (Request request : requestsFromUser) {
 			Assert.assertTrue(request.getState().equals(RequestState.FULFILLED));
 		}
 	}
 
 	@Test
-	public void testMonitoringFulfilledRequestAndOnetimeInstance() throws InterruptedException {
+	public void testMonitoringFulfilledRequestAndOnetimeInstance()
+			throws InterruptedException {
 		Properties properties = new Properties();
 		properties.put("instance_monitoring_period", Long.toString(LONG_TIME));
 		managerController = new ManagerController(properties);
@@ -393,19 +443,23 @@ public class TestManagerController {
 		managerController.setIdentityPlugin(identityPlugin);
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		managerController.setComputePlugin(computePlugin);
-		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(USER_NAME);
+		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(
+				USER_NAME);
 
 		managerController.monitorInstances();
-		List<Request> requestsFromUser = managerController.getRequestsFromUser(ACCESS_TOKEN_ID);
+		List<Request> requestsFromUser = managerController
+				.getRequestsFromUser(ACCESS_TOKEN_ID);
 		for (Request request : requestsFromUser) {
 			Assert.assertTrue(request.getState().equals(RequestState.FULFILLED));
 		}
 
-		Mockito.when(computePlugin.getInstance(Mockito.anyString(), Mockito.anyString()))
-				.thenReturn(new Instance("id"));
+		Mockito.when(
+				computePlugin.getInstance(Mockito.anyString(),
+						Mockito.anyString())).thenReturn(new Instance("id"));
 
 		managerController.monitorInstances();
-		requestsFromUser = managerController.getRequestsFromUser(ACCESS_TOKEN_ID);
+		requestsFromUser = managerController
+				.getRequestsFromUser(ACCESS_TOKEN_ID);
 		for (Request request : requestsFromUser) {
 			Assert.assertTrue(request.getState().equals(RequestState.FULFILLED));
 		}
@@ -424,7 +478,8 @@ public class TestManagerController {
 
 	@Test
 	public void testGet1ItemFromIQ() throws CertificateException, IOException {
-		FederationMember managerItem = new FederationMember(managerTestHelper.getResources());
+		FederationMember managerItem = new FederationMember(
+				managerTestHelper.getResources());
 		List<FederationMember> items = new LinkedList<FederationMember>();
 		items.add(managerItem);
 		managerController.updateMembers(items);
@@ -436,7 +491,8 @@ public class TestManagerController {
 	}
 
 	@Test
-	public void testGetManyItemsFromIQ() throws CertificateException, IOException {
+	public void testGetManyItemsFromIQ() throws CertificateException,
+			IOException {
 		ArrayList<FederationMember> items = new ArrayList<FederationMember>();
 		for (int i = 0; i < 10; i++) {
 			items.add(new FederationMember(managerTestHelper.getResources()));
@@ -446,7 +502,8 @@ public class TestManagerController {
 		List<FederationMember> members = managerController.getMembers();
 		Assert.assertEquals(10, members.size());
 		for (int i = 0; i < 10; i++) {
-			Assert.assertEquals("abc", members.get(0).getResourcesInfo().getId());
+			Assert.assertEquals("abc", members.get(0).getResourcesInfo()
+					.getId());
 		}
 		Assert.assertEquals(10, managerController.getMembers().size());
 	}
@@ -466,12 +523,15 @@ public class TestManagerController {
 
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		Mockito.when(
-				computePlugin.requestInstance(Mockito.anyString(), Mockito.any(List.class),
-						Mockito.any(Map.class))).thenReturn(INSTANCE_ID);
+				computePlugin.requestInstance(Mockito.anyString(),
+						Mockito.any(List.class), Mockito.any(Map.class)))
+				.thenReturn(INSTANCE_ID);
 
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
-		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(USER_NAME);
-		Mockito.when(identityPlugin.getToken(ACCESS_TOKEN_ID)).thenReturn(userToken);
+		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(
+				USER_NAME);
+		Mockito.when(identityPlugin.getToken(ACCESS_TOKEN_ID)).thenReturn(
+				userToken);
 
 		SSHTunnel sshTunnel = Mockito.mock(SSHTunnel.class);
 
@@ -479,11 +539,13 @@ public class TestManagerController {
 		managerController.setComputePlugin(computePlugin);
 		managerController.setSSHTunnel(sshTunnel);
 
-		managerController.createRequests(ACCESS_TOKEN_ID, new ArrayList<Category>(), xOCCIAtt);
+		managerController.createRequests(ACCESS_TOKEN_ID,
+				new ArrayList<Category>(), xOCCIAtt);
 
 		Thread.sleep(SCHEDULER_PERIOD * 2);
 
-		List<Request> requests = managerController.getRequestsFromUser(ACCESS_TOKEN_ID);
+		List<Request> requests = managerController
+				.getRequestsFromUser(ACCESS_TOKEN_ID);
 
 		Assert.assertEquals(1, requests.size());
 		Assert.assertEquals(USER_NAME, requests.get(0).getUser());
@@ -494,7 +556,8 @@ public class TestManagerController {
 
 	@SuppressWarnings("unchecked")
 	@Test
-	public void testOneTimeRequestSetFulfilledAndClosed() throws InterruptedException {
+	public void testOneTimeRequestSetFulfilledAndClosed()
+			throws InterruptedException {
 
 		Properties properties = new Properties();
 		properties.put("scheduler_period", SCHEDULER_PERIOD.toString());
@@ -507,12 +570,15 @@ public class TestManagerController {
 
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		Mockito.when(
-				computePlugin.requestInstance(Mockito.anyString(), Mockito.any(List.class),
-						Mockito.any(Map.class))).thenReturn(INSTANCE_ID);
+				computePlugin.requestInstance(Mockito.anyString(),
+						Mockito.any(List.class), Mockito.any(Map.class)))
+				.thenReturn(INSTANCE_ID);
 
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
-		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(USER_NAME);
-		Mockito.when(identityPlugin.getToken(ACCESS_TOKEN_ID)).thenReturn(userToken);
+		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(
+				USER_NAME);
+		Mockito.when(identityPlugin.getToken(ACCESS_TOKEN_ID)).thenReturn(
+				userToken);
 
 		SSHTunnel sshTunnel = Mockito.mock(SSHTunnel.class);
 
@@ -520,11 +586,13 @@ public class TestManagerController {
 		managerController.setComputePlugin(computePlugin);
 		managerController.setSSHTunnel(sshTunnel);
 
-		managerController.createRequests(ACCESS_TOKEN_ID, new ArrayList<Category>(), xOCCIAtt);
+		managerController.createRequests(ACCESS_TOKEN_ID,
+				new ArrayList<Category>(), xOCCIAtt);
 
 		Thread.sleep(SCHEDULER_PERIOD);
 
-		List<Request> requests = managerController.getRequestsFromUser(ACCESS_TOKEN_ID);
+		List<Request> requests = managerController
+				.getRequestsFromUser(ACCESS_TOKEN_ID);
 
 		Assert.assertEquals(1, requests.size());
 		Assert.assertEquals(INSTANCE_ID, requests.get(0).getInstanceId());
@@ -544,7 +612,8 @@ public class TestManagerController {
 
 	@SuppressWarnings("unchecked")
 	@Test
-	public void testPersistentRequestSetFulfilledAndOpen() throws InterruptedException {
+	public void testPersistentRequestSetFulfilledAndOpen()
+			throws InterruptedException {
 		Properties properties = new Properties();
 		properties.put("scheduler_period", SCHEDULER_PERIOD.toString());
 		managerController = new ManagerController(properties);
@@ -558,16 +627,18 @@ public class TestManagerController {
 
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		Mockito.when(
-				computePlugin.requestInstance(Mockito.anyString(), Mockito.any(List.class),
-						Mockito.any(Map.class)))
+				computePlugin.requestInstance(Mockito.anyString(),
+						Mockito.any(List.class), Mockito.any(Map.class)))
 				.thenReturn(INSTANCE_ID)
 				.thenThrow(
 						new OCCIException(ErrorType.QUOTA_EXCEEDED,
 								ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES));
 
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
-		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(USER_NAME);
-		Mockito.when(identityPlugin.getToken(ACCESS_TOKEN_ID)).thenReturn(userToken);
+		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(
+				USER_NAME);
+		Mockito.when(identityPlugin.getToken(ACCESS_TOKEN_ID)).thenReturn(
+				userToken);
 
 		SSHTunnel sshTunnel = Mockito.mock(SSHTunnel.class);
 
@@ -575,16 +646,18 @@ public class TestManagerController {
 		managerController.setComputePlugin(computePlugin);
 		managerController.setSSHTunnel(sshTunnel);
 
-		managerController.createRequests(ACCESS_TOKEN_ID, new ArrayList<Category>(), xOCCIAtt);
+		managerController.createRequests(ACCESS_TOKEN_ID,
+				new ArrayList<Category>(), xOCCIAtt);
 
 		Thread.sleep(SCHEDULER_PERIOD);
 
-		List<Request> requests = managerController.getRequestsFromUser(ACCESS_TOKEN_ID);
+		List<Request> requests = managerController
+				.getRequestsFromUser(ACCESS_TOKEN_ID);
 
 		Assert.assertEquals(1, requests.size());
 		Assert.assertEquals(INSTANCE_ID, requests.get(0).getInstanceId());
-		Assert.assertEquals(RequestType.PERSISTENT.getValue(),
-				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
+		Assert.assertEquals(RequestType.PERSISTENT.getValue(), requests.get(0)
+				.getAttValue(RequestAttribute.TYPE.getValue()));
 		Assert.assertEquals(RequestState.FULFILLED, requests.get(0).getState());
 		Assert.assertNull(requests.get(0).getMemberId());
 
@@ -594,8 +667,8 @@ public class TestManagerController {
 		requests = managerController.getRequestsFromUser(ACCESS_TOKEN_ID);
 
 		Assert.assertEquals(1, requests.size());
-		Assert.assertEquals(RequestType.PERSISTENT.getValue(),
-				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
+		Assert.assertEquals(RequestType.PERSISTENT.getValue(), requests.get(0)
+				.getAttValue(RequestAttribute.TYPE.getValue()));
 		Assert.assertEquals(RequestState.OPEN, requests.get(0).getState());
 		Assert.assertNull(requests.get(0).getInstanceId());
 		Assert.assertNull(requests.get(0).getMemberId());
@@ -603,7 +676,8 @@ public class TestManagerController {
 
 	@SuppressWarnings("unchecked")
 	@Test
-	public void testPersistentRequestSetFulfilledAndOpenAndFulfilled() throws InterruptedException {
+	public void testPersistentRequestSetFulfilledAndOpenAndFulfilled()
+			throws InterruptedException {
 		Properties properties = new Properties();
 		properties.put("scheduler_period", Long.toString(SCHEDULER_PERIOD));
 		managerController = new ManagerController(properties);
@@ -617,12 +691,15 @@ public class TestManagerController {
 
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		Mockito.when(
-				computePlugin.requestInstance(Mockito.anyString(), Mockito.any(List.class),
-						Mockito.any(Map.class))).thenReturn(INSTANCE_ID, SECOND_INSTANCE_ID);
+				computePlugin.requestInstance(Mockito.anyString(),
+						Mockito.any(List.class), Mockito.any(Map.class)))
+				.thenReturn(INSTANCE_ID, SECOND_INSTANCE_ID);
 
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
-		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(USER_NAME);
-		Mockito.when(identityPlugin.getToken(ACCESS_TOKEN_ID)).thenReturn(userToken);
+		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(
+				USER_NAME);
+		Mockito.when(identityPlugin.getToken(ACCESS_TOKEN_ID)).thenReturn(
+				userToken);
 
 		SSHTunnel sshTunnel = Mockito.mock(SSHTunnel.class);
 
@@ -630,16 +707,18 @@ public class TestManagerController {
 		managerController.setComputePlugin(computePlugin);
 		managerController.setSSHTunnel(sshTunnel);
 
-		managerController.createRequests(ACCESS_TOKEN_ID, new ArrayList<Category>(), xOCCIAtt);
+		managerController.createRequests(ACCESS_TOKEN_ID,
+				new ArrayList<Category>(), xOCCIAtt);
 
 		Thread.sleep(SCHEDULER_PERIOD);
 
-		List<Request> requests = managerController.getRequestsFromUser(ACCESS_TOKEN_ID);
+		List<Request> requests = managerController
+				.getRequestsFromUser(ACCESS_TOKEN_ID);
 
 		Assert.assertEquals(1, requests.size());
 		Assert.assertEquals(INSTANCE_ID, requests.get(0).getInstanceId());
-		Assert.assertEquals(RequestType.PERSISTENT.getValue(),
-				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
+		Assert.assertEquals(RequestType.PERSISTENT.getValue(), requests.get(0)
+				.getAttValue(RequestAttribute.TYPE.getValue()));
 		Assert.assertEquals(RequestState.FULFILLED, requests.get(0).getState());
 		Assert.assertNull(requests.get(0).getMemberId());
 
@@ -649,8 +728,8 @@ public class TestManagerController {
 		requests = managerController.getRequestsFromUser(ACCESS_TOKEN_ID);
 
 		Assert.assertEquals(1, requests.size());
-		Assert.assertEquals(RequestType.PERSISTENT.getValue(),
-				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
+		Assert.assertEquals(RequestType.PERSISTENT.getValue(), requests.get(0)
+				.getAttValue(RequestAttribute.TYPE.getValue()));
 		Assert.assertEquals(RequestState.OPEN, requests.get(0).getState());
 		Assert.assertNull(requests.get(0).getInstanceId());
 		Assert.assertNull(requests.get(0).getMemberId());
@@ -662,20 +741,22 @@ public class TestManagerController {
 
 		Assert.assertEquals(1, requests.size());
 		Assert.assertEquals(SECOND_INSTANCE_ID, requests.get(0).getInstanceId());
-		Assert.assertEquals(RequestType.PERSISTENT.getValue(),
-				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
+		Assert.assertEquals(RequestType.PERSISTENT.getValue(), requests.get(0)
+				.getAttValue(RequestAttribute.TYPE.getValue()));
 		Assert.assertEquals(RequestState.FULFILLED, requests.get(0).getState());
 		Assert.assertNull(requests.get(0).getMemberId());
 	}
 
 	@SuppressWarnings("unchecked")
 	@Test
-	public void testPersistentRequestSetOpenAndClosed() throws InterruptedException {
+	public void testPersistentRequestSetOpenAndClosed()
+			throws InterruptedException {
 		Properties properties = new Properties();
 		properties.put("scheduler_period", SCHEDULER_PERIOD.toString());
 		managerController = new ManagerController(properties);
 
-		long expirationRequestTime = System.currentTimeMillis() + SCHEDULER_PERIOD;
+		long expirationRequestTime = System.currentTimeMillis()
+				+ SCHEDULER_PERIOD;
 
 		// default instance count value is 1
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
@@ -689,15 +770,18 @@ public class TestManagerController {
 		// mocking compute
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		Mockito.when(
-				computePlugin.requestInstance(Mockito.anyString(), Mockito.any(List.class),
-						Mockito.any(Map.class))).thenThrow(
-				new OCCIException(ErrorType.QUOTA_EXCEEDED,
-						ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES));
+				computePlugin.requestInstance(Mockito.anyString(),
+						Mockito.any(List.class), Mockito.any(Map.class)))
+				.thenThrow(
+						new OCCIException(ErrorType.QUOTA_EXCEEDED,
+								ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES));
 
 		// mocking identity
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
-		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(USER_NAME);
-		Mockito.when(identityPlugin.getToken(ACCESS_TOKEN_ID)).thenReturn(userToken);
+		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(
+				USER_NAME);
+		Mockito.when(identityPlugin.getToken(ACCESS_TOKEN_ID)).thenReturn(
+				userToken);
 
 		// mocking sshTunnel
 		SSHTunnel sshTunnel = Mockito.mock(SSHTunnel.class);
@@ -707,13 +791,15 @@ public class TestManagerController {
 		managerController.setSSHTunnel(sshTunnel);
 
 		// creating request
-		managerController.createRequests(ACCESS_TOKEN_ID, new ArrayList<Category>(), xOCCIAtt);
+		managerController.createRequests(ACCESS_TOKEN_ID,
+				new ArrayList<Category>(), xOCCIAtt);
 
-		List<Request> requests = managerController.getRequestsFromUser(ACCESS_TOKEN_ID);
+		List<Request> requests = managerController
+				.getRequestsFromUser(ACCESS_TOKEN_ID);
 
 		Assert.assertEquals(1, requests.size());
-		Assert.assertEquals(RequestType.PERSISTENT.getValue(),
-				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
+		Assert.assertEquals(RequestType.PERSISTENT.getValue(), requests.get(0)
+				.getAttValue(RequestAttribute.TYPE.getValue()));
 		Assert.assertEquals(RequestState.OPEN, requests.get(0).getState());
 		Assert.assertNull(requests.get(0).getInstanceId());
 		Assert.assertNull(requests.get(0).getMemberId());
@@ -723,8 +809,8 @@ public class TestManagerController {
 		requests = managerController.getRequestsFromUser(ACCESS_TOKEN_ID);
 
 		Assert.assertEquals(1, requests.size());
-		Assert.assertEquals(RequestType.PERSISTENT.getValue(),
-				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
+		Assert.assertEquals(RequestType.PERSISTENT.getValue(), requests.get(0)
+				.getAttValue(RequestAttribute.TYPE.getValue()));
 		Assert.assertEquals(RequestState.CLOSED, requests.get(0).getState());
 		Assert.assertNull(requests.get(0).getInstanceId());
 		Assert.assertNull(requests.get(0).getMemberId());
@@ -732,13 +818,15 @@ public class TestManagerController {
 
 	@SuppressWarnings("unchecked")
 	@Test
-	public void testPersistentRequestSetFulfilledAndClosed() throws InterruptedException {
+	public void testPersistentRequestSetFulfilledAndClosed()
+			throws InterruptedException {
 
 		Properties properties = new Properties();
 		properties.put("scheduler_period", SCHEDULER_PERIOD.toString());
 		managerController = new ManagerController(properties);
 
-		long expirationRequestTime = System.currentTimeMillis() + SCHEDULER_PERIOD + GRACE_TIME;
+		long expirationRequestTime = System.currentTimeMillis()
+				+ SCHEDULER_PERIOD + GRACE_TIME;
 
 		// default instance count value is 1
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
@@ -751,13 +839,16 @@ public class TestManagerController {
 
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		Mockito.when(
-				computePlugin.requestInstance(Mockito.anyString(), Mockito.any(List.class),
-						Mockito.any(Map.class))).thenReturn(INSTANCE_ID);
+				computePlugin.requestInstance(Mockito.anyString(),
+						Mockito.any(List.class), Mockito.any(Map.class)))
+				.thenReturn(INSTANCE_ID);
 
 		// mocking identity
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
-		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(USER_NAME);
-		Mockito.when(identityPlugin.getToken(ACCESS_TOKEN_ID)).thenReturn(userToken);
+		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(
+				USER_NAME);
+		Mockito.when(identityPlugin.getToken(ACCESS_TOKEN_ID)).thenReturn(
+				userToken);
 
 		// mocking sshTunnel
 		SSHTunnel sshTunnel = Mockito.mock(SSHTunnel.class);
@@ -766,16 +857,18 @@ public class TestManagerController {
 		managerController.setComputePlugin(computePlugin);
 		managerController.setSSHTunnel(sshTunnel);
 
-		managerController.createRequests(ACCESS_TOKEN_ID, new ArrayList<Category>(), xOCCIAtt);
+		managerController.createRequests(ACCESS_TOKEN_ID,
+				new ArrayList<Category>(), xOCCIAtt);
 
 		Thread.sleep(SCHEDULER_PERIOD);
 
-		List<Request> requests = managerController.getRequestsFromUser(ACCESS_TOKEN_ID);
+		List<Request> requests = managerController
+				.getRequestsFromUser(ACCESS_TOKEN_ID);
 
 		Assert.assertEquals(1, requests.size());
 		Assert.assertEquals(INSTANCE_ID, requests.get(0).getInstanceId());
-		Assert.assertEquals(RequestType.PERSISTENT.getValue(),
-				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
+		Assert.assertEquals(RequestType.PERSISTENT.getValue(), requests.get(0)
+				.getAttValue(RequestAttribute.TYPE.getValue()));
 		Assert.assertEquals(RequestState.FULFILLED, requests.get(0).getState());
 		Assert.assertNull(requests.get(0).getMemberId());
 
@@ -789,8 +882,8 @@ public class TestManagerController {
 		requests = managerController.getRequestsFromUser(ACCESS_TOKEN_ID);
 
 		Assert.assertEquals(1, requests.size());
-		Assert.assertEquals(RequestType.PERSISTENT.getValue(),
-				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
+		Assert.assertEquals(RequestType.PERSISTENT.getValue(), requests.get(0)
+				.getAttValue(RequestAttribute.TYPE.getValue()));
 		Assert.assertEquals(RequestState.CLOSED, requests.get(0).getState());
 		Assert.assertNull(requests.get(0).getInstanceId());
 		Assert.assertNull(requests.get(0).getMemberId());
@@ -798,33 +891,39 @@ public class TestManagerController {
 
 	@SuppressWarnings("unchecked")
 	@Test
-	public void testOneTimeRequestSetOpenAndClosed() throws InterruptedException {
+	public void testOneTimeRequestSetOpenAndClosed()
+			throws InterruptedException {
 		Properties properties = new Properties();
 		properties.put("scheduler_period", SCHEDULER_PERIOD.toString());
 		managerController = new ManagerController(properties);
 
-		long expirationRequestTime = System.currentTimeMillis() + SCHEDULER_PERIOD;
+		long expirationRequestTime = System.currentTimeMillis()
+				+ SCHEDULER_PERIOD;
 
 		// default instance count value is 1
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
 		xOCCIAtt.put(RequestAttribute.INSTANCE_COUNT.getValue(),
 				String.valueOf(RequestConstants.DEFAULT_INSTANCE_COUNT));
-		xOCCIAtt.put(RequestAttribute.TYPE.getValue(), RequestConstants.DEFAULT_TYPE);
+		xOCCIAtt.put(RequestAttribute.TYPE.getValue(),
+				RequestConstants.DEFAULT_TYPE);
 		xOCCIAtt.put(RequestAttribute.VALID_UNTIL.getValue(),
 				getDateISO8601Format(expirationRequestTime));
 
 		// mocking compute
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		Mockito.when(
-				computePlugin.requestInstance(Mockito.anyString(), Mockito.any(List.class),
-						Mockito.any(Map.class))).thenThrow(
-				new OCCIException(ErrorType.QUOTA_EXCEEDED,
-						ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES));
+				computePlugin.requestInstance(Mockito.anyString(),
+						Mockito.any(List.class), Mockito.any(Map.class)))
+				.thenThrow(
+						new OCCIException(ErrorType.QUOTA_EXCEEDED,
+								ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES));
 
 		// mocking identity
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
-		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(USER_NAME);
-		Mockito.when(identityPlugin.getToken(ACCESS_TOKEN_ID)).thenReturn(userToken);
+		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(
+				USER_NAME);
+		Mockito.when(identityPlugin.getToken(ACCESS_TOKEN_ID)).thenReturn(
+				userToken);
 
 		// mocking sshTunnel
 		SSHTunnel sshTunnel = Mockito.mock(SSHTunnel.class);
@@ -834,13 +933,15 @@ public class TestManagerController {
 		managerController.setSSHTunnel(sshTunnel);
 
 		// creating request
-		managerController.createRequests(ACCESS_TOKEN_ID, new ArrayList<Category>(), xOCCIAtt);
+		managerController.createRequests(ACCESS_TOKEN_ID,
+				new ArrayList<Category>(), xOCCIAtt);
 
-		List<Request> requests = managerController.getRequestsFromUser(ACCESS_TOKEN_ID);
+		List<Request> requests = managerController
+				.getRequestsFromUser(ACCESS_TOKEN_ID);
 
 		Assert.assertEquals(1, requests.size());
-		Assert.assertEquals(RequestType.ONE_TIME.getValue(),
-				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
+		Assert.assertEquals(RequestType.ONE_TIME.getValue(), requests.get(0)
+				.getAttValue(RequestAttribute.TYPE.getValue()));
 		Assert.assertEquals(RequestState.OPEN, requests.get(0).getState());
 		Assert.assertNull(requests.get(0).getInstanceId());
 		Assert.assertNull(requests.get(0).getMemberId());
@@ -850,8 +951,8 @@ public class TestManagerController {
 		requests = managerController.getRequestsFromUser(ACCESS_TOKEN_ID);
 
 		Assert.assertEquals(1, requests.size());
-		Assert.assertEquals(RequestType.ONE_TIME.getValue(),
-				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
+		Assert.assertEquals(RequestType.ONE_TIME.getValue(), requests.get(0)
+				.getAttValue(RequestAttribute.TYPE.getValue()));
 		Assert.assertEquals(RequestState.CLOSED, requests.get(0).getState());
 		Assert.assertNull(requests.get(0).getInstanceId());
 		Assert.assertNull(requests.get(0).getMemberId());
@@ -860,7 +961,8 @@ public class TestManagerController {
 
 	@SuppressWarnings("unchecked")
 	@Test
-	public void testOneTimeRequestValidFromInFuture() throws InterruptedException {
+	public void testOneTimeRequestValidFromInFuture()
+			throws InterruptedException {
 		Properties properties = new Properties();
 		properties.put("scheduler_period", SCHEDULER_PERIOD.toString());
 		managerController = new ManagerController(properties);
@@ -875,20 +977,24 @@ public class TestManagerController {
 				String.valueOf(RequestConstants.DEFAULT_INSTANCE_COUNT));
 		xOCCIAtt.put(RequestAttribute.TYPE.getValue(),
 				String.valueOf(RequestType.ONE_TIME.getValue()));
-		xOCCIAtt.put(RequestAttribute.VALID_FROM.getValue(), getDateISO8601Format(startRequestTime));
+		xOCCIAtt.put(RequestAttribute.VALID_FROM.getValue(),
+				getDateISO8601Format(startRequestTime));
 		xOCCIAtt.put(RequestAttribute.VALID_UNTIL.getValue(),
 				getDateISO8601Format(expirationRequestTime));
 
 		// mocking compute
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		Mockito.when(
-				computePlugin.requestInstance(Mockito.anyString(), Mockito.any(List.class),
-						Mockito.any(Map.class))).thenReturn(INSTANCE_ID);
+				computePlugin.requestInstance(Mockito.anyString(),
+						Mockito.any(List.class), Mockito.any(Map.class)))
+				.thenReturn(INSTANCE_ID);
 
 		// mocking identity
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
-		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(USER_NAME);
-		Mockito.when(identityPlugin.getToken(ACCESS_TOKEN_ID)).thenReturn(userToken);
+		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(
+				USER_NAME);
+		Mockito.when(identityPlugin.getToken(ACCESS_TOKEN_ID)).thenReturn(
+				userToken);
 
 		// mocking sshTunnel
 		SSHTunnel sshTunnel = Mockito.mock(SSHTunnel.class);
@@ -898,13 +1004,15 @@ public class TestManagerController {
 		managerController.setSSHTunnel(sshTunnel);
 
 		// creating request
-		managerController.createRequests(ACCESS_TOKEN_ID, new ArrayList<Category>(), xOCCIAtt);
+		managerController.createRequests(ACCESS_TOKEN_ID,
+				new ArrayList<Category>(), xOCCIAtt);
 
-		List<Request> requests = managerController.getRequestsFromUser(ACCESS_TOKEN_ID);
+		List<Request> requests = managerController
+				.getRequestsFromUser(ACCESS_TOKEN_ID);
 
 		Assert.assertEquals(1, requests.size());
-		Assert.assertEquals(RequestType.ONE_TIME.getValue(),
-				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
+		Assert.assertEquals(RequestType.ONE_TIME.getValue(), requests.get(0)
+				.getAttValue(RequestAttribute.TYPE.getValue()));
 		Assert.assertEquals(RequestState.OPEN, requests.get(0).getState());
 		Assert.assertNull(requests.get(0).getInstanceId());
 		Assert.assertNull(requests.get(0).getMemberId());
@@ -915,8 +1023,8 @@ public class TestManagerController {
 
 		// request is not in validity period yet
 		Assert.assertEquals(1, requests.size());
-		Assert.assertEquals(RequestType.ONE_TIME.getValue(),
-				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
+		Assert.assertEquals(RequestType.ONE_TIME.getValue(), requests.get(0)
+				.getAttValue(RequestAttribute.TYPE.getValue()));
 		Assert.assertEquals(RequestState.OPEN, requests.get(0).getState());
 		Assert.assertNull(requests.get(0).getInstanceId());
 		Assert.assertNull(requests.get(0).getMemberId());
@@ -927,8 +1035,8 @@ public class TestManagerController {
 		requests = managerController.getRequestsFromUser(ACCESS_TOKEN_ID);
 
 		Assert.assertEquals(1, requests.size());
-		Assert.assertEquals(RequestType.ONE_TIME.getValue(),
-				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
+		Assert.assertEquals(RequestType.ONE_TIME.getValue(), requests.get(0)
+				.getAttValue(RequestAttribute.TYPE.getValue()));
 		Assert.assertEquals(RequestState.FULFILLED, requests.get(0).getState());
 		Assert.assertEquals(INSTANCE_ID, requests.get(0).getInstanceId());
 		Assert.assertNull(requests.get(0).getMemberId());
@@ -936,7 +1044,8 @@ public class TestManagerController {
 
 	@SuppressWarnings("unchecked")
 	@Test
-	public void testPersistentRequestValidFromInFuture() throws InterruptedException {
+	public void testPersistentRequestValidFromInFuture()
+			throws InterruptedException {
 		Properties properties = new Properties();
 		properties.put("scheduler_period", SCHEDULER_PERIOD.toString());
 		managerController = new ManagerController(properties);
@@ -949,21 +1058,26 @@ public class TestManagerController {
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
 		xOCCIAtt.put(RequestAttribute.INSTANCE_COUNT.getValue(),
 				String.valueOf(RequestConstants.DEFAULT_INSTANCE_COUNT));
-		xOCCIAtt.put(RequestAttribute.TYPE.getValue(), RequestType.PERSISTENT.getValue());
-		xOCCIAtt.put(RequestAttribute.VALID_FROM.getValue(), getDateISO8601Format(startRequestTime));
+		xOCCIAtt.put(RequestAttribute.TYPE.getValue(),
+				RequestType.PERSISTENT.getValue());
+		xOCCIAtt.put(RequestAttribute.VALID_FROM.getValue(),
+				getDateISO8601Format(startRequestTime));
 		xOCCIAtt.put(RequestAttribute.VALID_UNTIL.getValue(),
 				getDateISO8601Format(expirationRequestTime));
 
 		// mocking compute
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		Mockito.when(
-				computePlugin.requestInstance(Mockito.anyString(), Mockito.any(List.class),
-						Mockito.any(Map.class))).thenReturn(INSTANCE_ID);
+				computePlugin.requestInstance(Mockito.anyString(),
+						Mockito.any(List.class), Mockito.any(Map.class)))
+				.thenReturn(INSTANCE_ID);
 
 		// mocking identity
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
-		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(USER_NAME);
-		Mockito.when(identityPlugin.getToken(ACCESS_TOKEN_ID)).thenReturn(userToken);
+		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(
+				USER_NAME);
+		Mockito.when(identityPlugin.getToken(ACCESS_TOKEN_ID)).thenReturn(
+				userToken);
 
 		// mocking sshTunnel
 		SSHTunnel sshTunnel = Mockito.mock(SSHTunnel.class);
@@ -973,13 +1087,15 @@ public class TestManagerController {
 		managerController.setSSHTunnel(sshTunnel);
 
 		// creating request
-		managerController.createRequests(ACCESS_TOKEN_ID, new ArrayList<Category>(), xOCCIAtt);
+		managerController.createRequests(ACCESS_TOKEN_ID,
+				new ArrayList<Category>(), xOCCIAtt);
 
-		List<Request> requests = managerController.getRequestsFromUser(ACCESS_TOKEN_ID);
+		List<Request> requests = managerController
+				.getRequestsFromUser(ACCESS_TOKEN_ID);
 
 		Assert.assertEquals(1, requests.size());
-		Assert.assertEquals(RequestType.PERSISTENT.getValue(),
-				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
+		Assert.assertEquals(RequestType.PERSISTENT.getValue(), requests.get(0)
+				.getAttValue(RequestAttribute.TYPE.getValue()));
 		Assert.assertEquals(RequestState.OPEN, requests.get(0).getState());
 		Assert.assertNull(requests.get(0).getInstanceId());
 		Assert.assertNull(requests.get(0).getMemberId());
@@ -990,8 +1106,8 @@ public class TestManagerController {
 
 		// request is not in validity period yet
 		Assert.assertEquals(1, requests.size());
-		Assert.assertEquals(RequestType.PERSISTENT.getValue(),
-				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
+		Assert.assertEquals(RequestType.PERSISTENT.getValue(), requests.get(0)
+				.getAttValue(RequestAttribute.TYPE.getValue()));
 		Assert.assertEquals(RequestState.OPEN, requests.get(0).getState());
 		Assert.assertNull(requests.get(0).getInstanceId());
 		Assert.assertNull(requests.get(0).getMemberId());
@@ -1002,8 +1118,8 @@ public class TestManagerController {
 		requests = managerController.getRequestsFromUser(ACCESS_TOKEN_ID);
 
 		Assert.assertEquals(1, requests.size());
-		Assert.assertEquals(RequestType.PERSISTENT.getValue(),
-				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
+		Assert.assertEquals(RequestType.PERSISTENT.getValue(), requests.get(0)
+				.getAttValue(RequestAttribute.TYPE.getValue()));
 		Assert.assertEquals(RequestState.FULFILLED, requests.get(0).getState());
 		Assert.assertEquals(INSTANCE_ID, requests.get(0).getInstanceId());
 		Assert.assertNull(requests.get(0).getMemberId());
@@ -1011,7 +1127,8 @@ public class TestManagerController {
 
 	@SuppressWarnings("unchecked")
 	@Test
-	public void testOneTimeRequestValidityPeriodInFuture() throws InterruptedException {
+	public void testOneTimeRequestValidityPeriodInFuture()
+			throws InterruptedException {
 		Properties properties = new Properties();
 		properties.put("scheduler_period", SCHEDULER_PERIOD.toString());
 		managerController = new ManagerController(properties);
@@ -1024,21 +1141,26 @@ public class TestManagerController {
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
 		xOCCIAtt.put(RequestAttribute.INSTANCE_COUNT.getValue(),
 				String.valueOf(RequestConstants.DEFAULT_INSTANCE_COUNT));
-		xOCCIAtt.put(RequestAttribute.TYPE.getValue(), RequestType.ONE_TIME.getValue());
-		xOCCIAtt.put(RequestAttribute.VALID_FROM.getValue(), getDateISO8601Format(startRequestTime));
+		xOCCIAtt.put(RequestAttribute.TYPE.getValue(),
+				RequestType.ONE_TIME.getValue());
+		xOCCIAtt.put(RequestAttribute.VALID_FROM.getValue(),
+				getDateISO8601Format(startRequestTime));
 		xOCCIAtt.put(RequestAttribute.VALID_UNTIL.getValue(),
 				getDateISO8601Format(expirationRequestTime));
 
 		// mocking compute
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		Mockito.when(
-				computePlugin.requestInstance(Mockito.anyString(), Mockito.any(List.class),
-						Mockito.any(Map.class))).thenReturn(INSTANCE_ID);
+				computePlugin.requestInstance(Mockito.anyString(),
+						Mockito.any(List.class), Mockito.any(Map.class)))
+				.thenReturn(INSTANCE_ID);
 
 		// mocking identity
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
-		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(USER_NAME);
-		Mockito.when(identityPlugin.getToken(ACCESS_TOKEN_ID)).thenReturn(userToken);
+		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(
+				USER_NAME);
+		Mockito.when(identityPlugin.getToken(ACCESS_TOKEN_ID)).thenReturn(
+				userToken);
 
 		// mocking sshTunnel
 		SSHTunnel sshTunnel = Mockito.mock(SSHTunnel.class);
@@ -1048,9 +1170,11 @@ public class TestManagerController {
 		managerController.setSSHTunnel(sshTunnel);
 
 		// creating request
-		managerController.createRequests(ACCESS_TOKEN_ID, new ArrayList<Category>(), xOCCIAtt);
+		managerController.createRequests(ACCESS_TOKEN_ID,
+				new ArrayList<Category>(), xOCCIAtt);
 
-		List<Request> requests = managerController.getRequestsFromUser(ACCESS_TOKEN_ID);
+		List<Request> requests = managerController
+				.getRequestsFromUser(ACCESS_TOKEN_ID);
 
 		Thread.sleep(SCHEDULER_PERIOD + GRACE_TIME);
 
@@ -1058,8 +1182,8 @@ public class TestManagerController {
 
 		// request is not in validity period yet
 		Assert.assertEquals(1, requests.size());
-		Assert.assertEquals(RequestType.ONE_TIME.getValue(),
-				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
+		Assert.assertEquals(RequestType.ONE_TIME.getValue(), requests.get(0)
+				.getAttValue(RequestAttribute.TYPE.getValue()));
 		Assert.assertEquals(RequestState.OPEN, requests.get(0).getState());
 		Assert.assertNull(requests.get(0).getInstanceId());
 		Assert.assertNull(requests.get(0).getMemberId());
@@ -1070,8 +1194,8 @@ public class TestManagerController {
 		requests = managerController.getRequestsFromUser(ACCESS_TOKEN_ID);
 
 		Assert.assertEquals(1, requests.size());
-		Assert.assertEquals(RequestType.ONE_TIME.getValue(),
-				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
+		Assert.assertEquals(RequestType.ONE_TIME.getValue(), requests.get(0)
+				.getAttValue(RequestAttribute.TYPE.getValue()));
 		Assert.assertEquals(RequestState.FULFILLED, requests.get(0).getState());
 		Assert.assertEquals(INSTANCE_ID, requests.get(0).getInstanceId());
 		Assert.assertNull(requests.get(0).getMemberId());
@@ -1085,8 +1209,8 @@ public class TestManagerController {
 		requests = managerController.getRequestsFromUser(ACCESS_TOKEN_ID);
 
 		Assert.assertEquals(1, requests.size());
-		Assert.assertEquals(RequestType.ONE_TIME.getValue(),
-				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
+		Assert.assertEquals(RequestType.ONE_TIME.getValue(), requests.get(0)
+				.getAttValue(RequestAttribute.TYPE.getValue()));
 		Assert.assertEquals(RequestState.CLOSED, requests.get(0).getState());
 		Assert.assertNull(requests.get(0).getInstanceId());
 		Assert.assertNull(requests.get(0).getMemberId());
@@ -1094,7 +1218,8 @@ public class TestManagerController {
 
 	@SuppressWarnings("unchecked")
 	@Test
-	public void testPersistentRequestValidityPeriodInFuture() throws InterruptedException {
+	public void testPersistentRequestValidityPeriodInFuture()
+			throws InterruptedException {
 		Properties properties = new Properties();
 		properties.put("scheduler_period", SCHEDULER_PERIOD.toString());
 		managerController = new ManagerController(properties);
@@ -1107,21 +1232,26 @@ public class TestManagerController {
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
 		xOCCIAtt.put(RequestAttribute.INSTANCE_COUNT.getValue(),
 				String.valueOf(RequestConstants.DEFAULT_INSTANCE_COUNT));
-		xOCCIAtt.put(RequestAttribute.TYPE.getValue(), RequestType.PERSISTENT.getValue());
-		xOCCIAtt.put(RequestAttribute.VALID_FROM.getValue(), getDateISO8601Format(startRequestTime));
+		xOCCIAtt.put(RequestAttribute.TYPE.getValue(),
+				RequestType.PERSISTENT.getValue());
+		xOCCIAtt.put(RequestAttribute.VALID_FROM.getValue(),
+				getDateISO8601Format(startRequestTime));
 		xOCCIAtt.put(RequestAttribute.VALID_UNTIL.getValue(),
 				getDateISO8601Format(expirationRequestTime));
 
 		// mocking compute
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		Mockito.when(
-				computePlugin.requestInstance(Mockito.anyString(), Mockito.any(List.class),
-						Mockito.any(Map.class))).thenReturn(INSTANCE_ID);
+				computePlugin.requestInstance(Mockito.anyString(),
+						Mockito.any(List.class), Mockito.any(Map.class)))
+				.thenReturn(INSTANCE_ID);
 
 		// mocking identity
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
-		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(USER_NAME);
-		Mockito.when(identityPlugin.getToken(ACCESS_TOKEN_ID)).thenReturn(userToken);
+		Mockito.when(identityPlugin.getUser(ACCESS_TOKEN_ID)).thenReturn(
+				USER_NAME);
+		Mockito.when(identityPlugin.getToken(ACCESS_TOKEN_ID)).thenReturn(
+				userToken);
 
 		// mocking sshTunnel
 		SSHTunnel sshTunnel = Mockito.mock(SSHTunnel.class);
@@ -1131,9 +1261,11 @@ public class TestManagerController {
 		managerController.setSSHTunnel(sshTunnel);
 
 		// creating request
-		managerController.createRequests(ACCESS_TOKEN_ID, new ArrayList<Category>(), xOCCIAtt);
+		managerController.createRequests(ACCESS_TOKEN_ID,
+				new ArrayList<Category>(), xOCCIAtt);
 
-		List<Request> requests = managerController.getRequestsFromUser(ACCESS_TOKEN_ID);
+		List<Request> requests = managerController
+				.getRequestsFromUser(ACCESS_TOKEN_ID);
 
 		Thread.sleep(SCHEDULER_PERIOD + GRACE_TIME);
 
@@ -1141,8 +1273,8 @@ public class TestManagerController {
 
 		// request is not in validity period yet
 		Assert.assertEquals(1, requests.size());
-		Assert.assertEquals(RequestType.PERSISTENT.getValue(),
-				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
+		Assert.assertEquals(RequestType.PERSISTENT.getValue(), requests.get(0)
+				.getAttValue(RequestAttribute.TYPE.getValue()));
 		Assert.assertEquals(RequestState.OPEN, requests.get(0).getState());
 		Assert.assertNull(requests.get(0).getInstanceId());
 		Assert.assertNull(requests.get(0).getMemberId());
@@ -1153,8 +1285,8 @@ public class TestManagerController {
 		requests = managerController.getRequestsFromUser(ACCESS_TOKEN_ID);
 
 		Assert.assertEquals(1, requests.size());
-		Assert.assertEquals(RequestType.PERSISTENT.getValue(),
-				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
+		Assert.assertEquals(RequestType.PERSISTENT.getValue(), requests.get(0)
+				.getAttValue(RequestAttribute.TYPE.getValue()));
 		Assert.assertEquals(RequestState.FULFILLED, requests.get(0).getState());
 		Assert.assertEquals(INSTANCE_ID, requests.get(0).getInstanceId());
 		Assert.assertNull(requests.get(0).getMemberId());
@@ -1170,8 +1302,8 @@ public class TestManagerController {
 		requests = managerController.getRequestsFromUser(ACCESS_TOKEN_ID);
 
 		Assert.assertEquals(1, requests.size());
-		Assert.assertEquals(RequestType.PERSISTENT.getValue(),
-				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
+		Assert.assertEquals(RequestType.PERSISTENT.getValue(), requests.get(0)
+				.getAttValue(RequestAttribute.TYPE.getValue()));
 		Assert.assertEquals(RequestState.CLOSED, requests.get(0).getState());
 		Assert.assertNull(requests.get(0).getInstanceId());
 		Assert.assertNull(requests.get(0).getMemberId());
@@ -1183,5 +1315,44 @@ public class TestManagerController {
 		dateFormatISO8601.setTimeZone(TimeZone.getTimeZone("GMT"));
 		String expirationDate = dateFormatISO8601.format(new Date(dateMili));
 		return expirationDate;
+	}
+
+	@Test
+	public void testSubmitRequestForRemoteMemberValidation() {
+		ResourcesInfo resources = Mockito.mock(ResourcesInfo.class);
+		Mockito.doReturn("abc").when(resources).getId();
+
+		FederationMember member = Mockito.mock(FederationMember.class);
+		Mockito.doReturn(resources).when(member).getResourcesInfo();
+		List<FederationMember> list = new LinkedList<FederationMember>();
+		list.add(member);
+		managerController.setMembers(list);
+
+		RestrictCAsMemberValidator validatorMock = Mockito
+				.mock(RestrictCAsMemberValidator.class);
+		Mockito.doReturn(true).when(validatorMock).canDonateTo(member);
+		managerController.setValidator(validatorMock);
+		
+		Token token = Mockito.mock(Token.class);
+		Mockito.doReturn(null).when(token).getAccessId();
+		
+		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
+		Mockito.when(identityPlugin.getToken(Mockito.anyMap())).thenReturn(
+				token);
+		managerController.setIdentityPlugin(identityPlugin);
+		
+		ComputePlugin plugin = Mockito.mock(OpenStackComputePlugin.class);
+		Mockito.doReturn("answer")
+				.when(plugin)
+				.requestInstance(null, null, null);
+		
+		managerController.setComputePlugin(plugin);
+		Assert.assertEquals("answer", managerController
+				.submitRequestForRemoteMember("abc", null, null));
+
+		Mockito.doReturn(false).when(validatorMock).canDonateTo(member);
+		managerController.setValidator(validatorMock);
+		Assert.assertEquals(null, managerController
+				.submitRequestForRemoteMember("abc", null, null));
 	}
 }

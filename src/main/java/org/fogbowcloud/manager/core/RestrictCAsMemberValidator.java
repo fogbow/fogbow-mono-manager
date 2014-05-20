@@ -6,7 +6,7 @@ import java.util.List;
 
 import org.fogbowcloud.manager.core.model.FederationMember;
 
-public class DefaultFederationMemberValidator implements
+public class RestrictCAsMemberValidator implements
 		FederationMemberValidator {
 
 	List<X509Certificate> validCAs = new LinkedList<X509Certificate>();
