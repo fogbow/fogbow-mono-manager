@@ -101,7 +101,11 @@ public class ManagerController {
 	}
 
 	public String getUser(String accessId) {
-		return identityPlugin.getToken(accessId).getUser();
+		Token token = identityPlugin.getToken(accessId);
+		if (token == null) {
+			return null;
+		}
+		return token.getUser();
 	}
 
 	public List<Request> getRequestsFromUser(String authToken) {

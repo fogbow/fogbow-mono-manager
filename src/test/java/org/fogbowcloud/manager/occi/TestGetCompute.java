@@ -1,6 +1,7 @@
 package org.fogbowcloud.manager.occi;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -54,8 +55,9 @@ public class TestGetCompute {
 						Mockito.eq(INSTANCE_3_ID_WITHOUT_USER))).thenReturn(instance1);
 
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
-//		Mockito.when(identityPlugin.getUser(OCCITestHelper.ACCESS_TOKEN)).thenReturn(
-//				OCCITestHelper.USER_MOCK);
+		Mockito.when(identityPlugin.getToken(OCCITestHelper.ACCESS_TOKEN)).thenReturn(
+				new Token("id", OCCITestHelper.USER_MOCK, new Date(),
+				new HashMap<String, String>()));
 
 		List<Request> requests = new LinkedList<Request>();
 		Request request1 = new Request("1", new Token(OCCITestHelper.ACCESS_TOKEN, OCCITestHelper.USER_MOCK, 

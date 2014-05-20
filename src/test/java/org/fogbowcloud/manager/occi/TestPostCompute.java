@@ -6,11 +6,4 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 public class TestPostCompute {
-
-	@Ignore
-	@Test
-	public void test() {
-		fail("Not yet implemented");
-	}
-
 }

@@ -1,5 +1,6 @@
 package org.fogbowcloud.manager.occi;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -38,15 +39,19 @@ public class TestDeleteCompute {
 		Mockito.doNothing().when(computePlugin)
 				.removeInstance(OCCITestHelper.ACCESS_TOKEN, INSTANCE_ID);
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
+		Mockito.when(identityPlugin.getToken(OCCITestHelper.ACCESS_TOKEN))
+				.thenReturn(new Token("1", OCCITestHelper.USER_MOCK, new Date(),
+				new HashMap<String, String>()));
 
 		List<Request> requests = new LinkedList<Request>();
-		Request request1 = new Request("1", new Token(OCCITestHelper.ACCESS_TOKEN, OCCITestHelper.USER_MOCK, 
-				OCCITestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()),
-				OCCITestHelper.USER_MOCK, null, null);
+		Request request1 = new Request("1", new Token(OCCITestHelper.ACCESS_TOKEN,
+				OCCITestHelper.USER_MOCK, OCCITestHelper.TOKEN_FUTURE_EXPIRATION,
+				new HashMap<String, String>()), OCCITestHelper.USER_MOCK, null, null);
 		request1.setInstanceId(INSTANCE_ID);
 		requests.add(request1);
-		Request request2 = new Request("1", new Token("otherToken", "otherUser", 
-				OCCITestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), "otherUser", null, null);
+		Request request2 = new Request("2", new Token("otherToken", "otherUser",
+				OCCITestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()),
+				"otherUser", null, null);
 		request2.setInstanceId(OTHER_INSTANCE_ID);
 		requests.add(request2);
 

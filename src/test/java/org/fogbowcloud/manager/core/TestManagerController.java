@@ -348,7 +348,6 @@ public class TestManagerController {
 
 		requestsFromUser = managerController.getRequestsFromUser(ACCESS_TOKEN_ID);
 		for (Request request : requestsFromUser) {
-			System.out.println("------> state: " + request.getState());
 			Assert.assertTrue(request.getState().equals(RequestState.FULFILLED));
 		}
 	}
