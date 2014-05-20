@@ -53,6 +53,7 @@ public class ManagerController {
 	private IdentityPlugin identityPlugin;
 	private Properties properties;
 	private PacketSender packetSender;
+	private FederationMemberValidator validator = new RestrictCAsMemberValidator();
 
 	private DateUtils dateUtils = new DateUtils();
 	private SSHTunnel sshTunnel = new DefaultSSHTunnel();
@@ -250,8 +251,23 @@ public class ManagerController {
 		return requests.get(requestId);
 	}
 
-	public String createInstanceForRemoteMember(List<Category> categories,
+	public FederationMember getFederationMember(String memberId) {
+		for (FederationMember member : members) {
+			if (member.getResourcesInfo().getId().equals(memberId)) {
+				return member;
+			}
+		}
+		return null;
+	}
+	
+	public String createInstanceForRemoteMember(String memberId, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
+		
+		FederationMember member = getFederationMember(memberId);
+		if (!validator.canDonateTo(member)) {
+			return null;
+		}
+		
 		LOGGER.info("Submiting request with categories: " + categories + " and xOCCIAtt: "
 				+ xOCCIAtt + " for remote member.");
 		String token = getFederationUserToken().getAccessId();
@@ -519,5 +535,13 @@ public class ManagerController {
 
 	public void setDateUtils(DateUtils dateUtils) {
 		this.dateUtils = dateUtils;
+	}
+	
+	public FederationMemberValidator getValidator() {
+		return validator;
+	}
+
+	public void setValidator(FederationMemberValidator validator) {
+		this.validator = validator;
 	}
 }

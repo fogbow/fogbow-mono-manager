@@ -4,18 +4,23 @@ import java.io.IOException;
 import java.security.cert.CertificateException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TimeZone;
 
 import org.fogbowcloud.manager.core.model.FederationMember;
+import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
+import org.fogbowcloud.manager.core.plugins.openstack.OpenStackComputePlugin;
 import org.fogbowcloud.manager.core.plugins.openstack.OpenStackIdentityPlugin;
 import org.fogbowcloud.manager.core.ssh.SSHTunnel;
 import org.fogbowcloud.manager.occi.core.Category;
@@ -1183,5 +1188,44 @@ public class TestManagerController {
 		dateFormatISO8601.setTimeZone(TimeZone.getTimeZone("GMT"));
 		String expirationDate = dateFormatISO8601.format(new Date(dateMili));
 		return expirationDate;
+	}
+
+	@Test
+	public void testSubmitRequestForRemoteMemberValidation() {
+		ResourcesInfo resources = Mockito.mock(ResourcesInfo.class);
+		Mockito.doReturn("abc").when(resources).getId();
+
+		FederationMember member = Mockito.mock(FederationMember.class);
+		Mockito.doReturn(resources).when(member).getResourcesInfo();
+		List<FederationMember> list = new LinkedList<FederationMember>();
+		list.add(member);
+		managerController.setMembers(list);
+
+		RestrictCAsMemberValidator validatorMock = Mockito
+				.mock(RestrictCAsMemberValidator.class);
+		Mockito.doReturn(true).when(validatorMock).canDonateTo(member);
+		managerController.setValidator(validatorMock);
+		
+		Token token = Mockito.mock(Token.class);
+		Mockito.doReturn(null).when(token).getAccessId();
+		
+		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
+		Mockito.when(identityPlugin.createToken(Mockito.anyMap())).thenReturn(
+				token);
+		managerController.setIdentityPlugin(identityPlugin);
+		
+		ComputePlugin plugin = Mockito.mock(OpenStackComputePlugin.class);
+		Mockito.doReturn("answer")
+				.when(plugin)
+				.requestInstance(null, null, null);
+		
+		managerController.setComputePlugin(plugin);
+		Assert.assertEquals("answer", managerController
+				.createInstanceForRemoteMember("abc", null, null));
+
+		Mockito.doReturn(false).when(validatorMock).canDonateTo(member);
+		managerController.setValidator(validatorMock);
+		Assert.assertEquals(null, managerController
+				.createInstanceForRemoteMember("abc", null, null));
 	}
 }

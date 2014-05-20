@@ -9,6 +9,7 @@ import java.security.NoSuchProviderException;
 import java.security.PublicKey;
 import java.security.SignatureException;
 import java.security.cert.CertificateException;
+import java.security.cert.CertificateExpiredException;
 import java.security.cert.X509Certificate;
 import java.util.LinkedList;
 import java.util.List;
@@ -24,7 +25,7 @@ import org.mockito.Mockito;
 
 public class TestDefaultFederationMemberValidator {
 	ManagerTestHelper helper;
-	DefaultFederationMemberValidator validator;
+	RestrictCAsMemberValidator validator;
 	X509Certificate mockCA;
 	X509Certificate mockCertificate;
 	FederationMember member;
@@ -36,7 +37,7 @@ public class TestDefaultFederationMemberValidator {
 		KeyPair keys = keyGenerator.generateKeyPair();
 		publicKey = keys.getPublic();
 		helper = new ManagerTestHelper();
-		validator = new DefaultFederationMemberValidator();
+		validator = new RestrictCAsMemberValidator();
 		X509Certificate mockCA = Mockito.mock(X509Certificate.class);
 		Mockito.doReturn(publicKey).when(mockCA).getPublicKey();
 		List<X509Certificate> list = new LinkedList<X509Certificate>();
@@ -57,6 +58,7 @@ public class TestDefaultFederationMemberValidator {
 		Mockito.doNothing().when(mockCertificate).checkValidity();
 		Mockito.doNothing().when(mockCertificate).verify(publicKey);
 		Assert.assertTrue(validator.canDonateTo(member));
+		Assert.assertTrue(validator.canReceiveFrom(member));
 	}
 
 	@Test
@@ -68,20 +70,21 @@ public class TestDefaultFederationMemberValidator {
 				.verify(publicKey);
 		Mockito.doNothing().when(mockCertificate).checkValidity();
 		Assert.assertFalse(validator.canDonateTo(member));
+		Assert.assertFalse(validator.canReceiveFrom(member));
 	}
 
 	@Test
-	public void testExpiredMember() throws CertificateException, IOException,
-			InvalidKeyException, NoSuchAlgorithmException,
-			NoSuchProviderException, SignatureException {
-		// this method is invalid to get the exception here-- how to do that?
-		// use a real expired certificate?
-		
-		//gambiarra
-		Mockito.doThrow(new IllegalArgumentException())
-		 .when(mockCertificate).checkValidity();
-		
-		 Mockito.doNothing().when(mockCertificate).verify(publicKey);
+	public void testExpiredMember() throws Exception {
+		Mockito.doThrow(new CertificateExpiredException())
+				.when(mockCertificate).checkValidity();
+		Mockito.doNothing().when(mockCertificate).verify(publicKey);
 		Assert.assertFalse(validator.canDonateTo(member));
+		Assert.assertFalse(validator.canReceiveFrom(member));
+	}
+	
+	@Test
+	public void testNullMember() throws Exception {
+		Assert.assertFalse(validator.canDonateTo(null));
+		Assert.assertFalse(validator.canReceiveFrom(null));
 	}
 }

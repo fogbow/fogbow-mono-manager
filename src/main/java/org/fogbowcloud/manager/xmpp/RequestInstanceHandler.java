@@ -29,26 +29,27 @@ public class RequestInstanceHandler extends AbstractQueryHandler {
 		List<Category> categories = new LinkedList<Category>();
 		List<Element> categoriesEl = queryEl.elements("category");
 		for (Element categoryEl : categoriesEl) {
-			Category category = new Category(
-					categoryEl.elementText("term"), 
-					categoryEl.elementText("scheme"), 
+			Category category = new Category(categoryEl.elementText("term"),
+					categoryEl.elementText("scheme"),
 					categoryEl.elementText("class"));
 			categories.add(category);
 		}
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
 		List<Element> attributesEl = queryEl.elements("attribute");
 		for (Element attributeEl : attributesEl) {
-			xOCCIAtt.put(attributeEl.attributeValue("var"), attributeEl.element("value").getText());
+			xOCCIAtt.put(attributeEl.attributeValue("var"), attributeEl
+					.element("value").getText());
 		}
-		
+
 		IQ response = IQ.createResultIQ(query);
 		try {
-			String instanceId = facade.createInstanceForRemoteMember(categories, xOCCIAtt);
+			String instanceId = facade.createInstanceForRemoteMember(query
+					.getFrom().toBareJID(), categories, xOCCIAtt);
 			if (instanceId == null) {
 				response.setError(Condition.item_not_found);
 			} else {
-				Element queryResponseEl = response.getElement().addElement("query",
-						ManagerXmppComponent.REQUEST_NAMESPACE);
+				Element queryResponseEl = response.getElement().addElement(
+						"query", ManagerXmppComponent.REQUEST_NAMESPACE);
 				queryResponseEl.addElement("instance").addElement("id")
 						.setText(instanceId);
 			}
