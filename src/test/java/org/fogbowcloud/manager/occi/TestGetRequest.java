@@ -2,6 +2,7 @@ package org.fogbowcloud.manager.occi;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,8 +40,9 @@ import org.mockito.Mockito;
 public class TestGetRequest {
 
 	private OCCITestHelper requestHelper;
-	private String instanceLocation = HeaderUtils.X_OCCI_LOCATION + "http://localhost:" + OCCITestHelper.ENDPOINT_PORT
-			+ ComputeApplication.TARGET + "/b122f3ad-503c-4abb-8a55-ba8d90cfce9f";
+	private String instanceLocation = HeaderUtils.X_OCCI_LOCATION + "http://localhost:"
+			+ OCCITestHelper.ENDPOINT_PORT + ComputeApplication.TARGET
+			+ "/b122f3ad-503c-4abb-8a55-ba8d90cfce9f";
 
 	@SuppressWarnings("unchecked")
 	@Before
@@ -53,16 +55,16 @@ public class TestGetRequest {
 						Mockito.any(Map.class))).thenReturn(instanceLocation);
 
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
-//		Mockito.when(identityPlugin.getUser(OCCITestHelper.ACCESS_TOKEN)).thenReturn(
-//				OCCITestHelper.USER_MOCK);
-//		Mockito.when(identityPlugin.getUser(OCCITestHelper.INVALID_TOKEN)).thenThrow(
-//				new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED));
-		
+		Mockito.when(identityPlugin.getToken(OCCITestHelper.ACCESS_TOKEN)).thenReturn(
+				new Token("id", OCCITestHelper.USER_MOCK, new Date(), 
+				new HashMap<String, String>()));
+		Mockito.when(identityPlugin.getToken(OCCITestHelper.INVALID_TOKEN)).thenThrow(
+				new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED));
+
 		HashMap<String, String> tokenAttr = new HashMap<String, String>();
-//		tokenAttr.put(OCCIHeaders.X_TOKEN_USER, OCCITestHelper.USER_MOCK);
 		Token userToken = new Token(OCCITestHelper.ACCESS_TOKEN, OCCITestHelper.USER_MOCK,
 				OCCITestHelper.TOKEN_FUTURE_EXPIRATION, tokenAttr);
-		
+
 		Mockito.when(identityPlugin.getToken(OCCITestHelper.ACCESS_TOKEN)).thenReturn(userToken);
 
 		requestHelper.initializeComponent(computePlugin, identityPlugin);
