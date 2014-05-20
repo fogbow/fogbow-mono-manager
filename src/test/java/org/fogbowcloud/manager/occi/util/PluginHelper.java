@@ -37,7 +37,7 @@ public class PluginHelper {
 
 		Map<String, String> tokenAttributes = new HashMap<String, String>();
 		tokenAttributes.put(OCCIHeaders.X_TOKEN_TENANT_ID, TENANT_ID);
-		tokenAttributes.put(OCCIHeaders.X_TOKEN_USER, USERNAME_FOGBOW);
+//		tokenAttributes.put(OCCIHeaders.X_TOKEN_USER, USERNAME_FOGBOW);
 		tokenAttributes.put(OCCIHeaders.X_TOKEN_TENANT_NAME, TENANT_NAME);
 		Token token = new Token(AUTH_TOKEN, USERNAME_FOGBOW, EXPIRATION_DATE, tokenAttributes);
 

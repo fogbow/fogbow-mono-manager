@@ -169,6 +169,7 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 
 			return new Token(token, user, getDate(expirationDateToken), attributes);
 		} catch (Exception e) {
+			e.printStackTrace();
 			LOGGER.error("Exception while getting token from json.", e);
 			return null;
 		}

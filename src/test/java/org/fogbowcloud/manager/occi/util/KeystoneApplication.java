@@ -152,11 +152,14 @@ public class KeystoneApplication extends Application {
 				rootIdToken.put(OpenStackIdentityPlugin.ID_KEYSTONE, tokenAccessId);
 				rootIdToken.put(OpenStackIdentityPlugin.EXPIRES_KEYSTONE, expirationDate);
 				rootIdToken.put(OpenStackIdentityPlugin.TENANT_KEYSTONE, rootTenant);
-				JSONObject rootToken = new JSONObject();
-				rootToken.put(OpenStackIdentityPlugin.TOKEN_KEYSTONE, rootIdToken);
 				JSONObject rootAccess = new JSONObject();
-				rootAccess.put(OpenStackIdentityPlugin.ACCESS_KEYSTONE, rootToken);
-				return rootAccess.toString();
+				rootAccess.put(OpenStackIdentityPlugin.TOKEN_KEYSTONE, rootIdToken);
+				JSONObject rootUserName = new JSONObject();
+				rootUserName.put(OpenStackIdentityPlugin.NAME_KEYSTONE, token.getUser());
+				rootAccess.put(OpenStackIdentityPlugin.USER_KEYSTONE, rootUserName);		
+				JSONObject rootMain = new JSONObject();
+				rootMain.put(OpenStackIdentityPlugin.ACCESS_KEYSTONE, rootAccess);
+				return rootMain.toString();
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}
