@@ -494,7 +494,7 @@ public class ManagerController {
 		}, 0, schedulerPeriod);
 	}
 
-	private void checkAndSubmitOpenRequests() {
+	protected void checkAndSubmitOpenRequests() {
 		boolean allFulfilled = true;
 		LOGGER.debug("Checking and submiting requests.");
 
