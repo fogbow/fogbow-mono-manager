@@ -20,6 +20,8 @@ federation_user_name=fogbow
 federation_user_password=fogbow
 federation_user_tenant_name=demo
 
+member_validator=org.fogbowcloud.manager.core.DefaultMemberValidator
+
 cert_path=
 
 scheduler_period=30000
