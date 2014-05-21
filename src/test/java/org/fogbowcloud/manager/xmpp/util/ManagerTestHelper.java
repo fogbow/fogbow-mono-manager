@@ -16,6 +16,8 @@ import java.util.Properties;
 import org.dom4j.Attribute;
 import org.dom4j.Element;
 import org.fogbowcloud.manager.core.CertificateHandlerHelper;
+import org.fogbowcloud.manager.core.DefaultMemberValidator;
+import org.fogbowcloud.manager.core.FederationMemberValidator;
 import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.Flavor;
@@ -33,6 +35,7 @@ import org.jivesoftware.smack.PacketCollector;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.filter.PacketFilter;
 import org.jivesoftware.smack.filter.PacketIDFilter;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.xmpp.component.ComponentException;
 import org.xmpp.packet.IQ;
@@ -174,6 +177,8 @@ public class ManagerTestHelper {
 		ManagerController managerFacade = new ManagerController(properties);
 		managerFacade.setComputePlugin(computePlugin);
 		managerFacade.setIdentityPlugin(identityPlugin);
+		FederationMemberValidator validator = new DefaultMemberValidator();
+		managerFacade.setValidator(validator);
 
 		managerXmppComponent = new ManagerXmppComponent(MANAGER_COMPONENT_URL,
 				MANAGER_COMPONENT_PASS, SERVER_HOST, SERVER_COMPONENT_PORT, managerFacade);
@@ -204,10 +209,12 @@ public class ManagerTestHelper {
 		properties.put("federation_user_password", "fogbow");
 		properties.put("xmpp_jid", "manager.test.com");
 
+		FederationMemberValidator validator = new DefaultMemberValidator();
 		ManagerController managerFacade = new ManagerController(properties);
 		managerFacade.setComputePlugin(computePlugin);
 		managerFacade.setIdentityPlugin(identityPlugin);
-
+		managerFacade.setValidator(validator);
+		
 		managerXmppComponent = new ManagerXmppComponent(MANAGER_COMPONENT_URL,
 				MANAGER_COMPONENT_PASS, SERVER_HOST, SERVER_COMPONENT_PORT, managerFacade);
 
