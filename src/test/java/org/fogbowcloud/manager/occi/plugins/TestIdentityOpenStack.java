@@ -6,11 +6,11 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.fogbowcloud.manager.core.plugins.openstack.OpenStackIdentityPlugin;
+import org.fogbowcloud.manager.core.util.DefaultDataTest;
 import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.util.PluginHelper;
-import org.fogbowcloud.manager.xmpp.util.TestHelperData;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -71,7 +71,7 @@ public class TestIdentityOpenStack {
 		Date expirationDate = token.getExpirationDate();
 		Assert.assertEquals(PluginHelper.ACCESS_ID, authToken);
 		Assert.assertEquals(PluginHelper.TENANT_ID, tenantID);
-		Assert.assertEquals(TestHelperData.TOKEN_FUTURE_EXPIRATION, expirationDate);
+		Assert.assertEquals(DefaultDataTest.TOKEN_FUTURE_EXPIRATION, expirationDate);
 	}
 
 	@Test
@@ -86,7 +86,7 @@ public class TestIdentityOpenStack {
 		Date expirationDate = token.getExpirationDate();
 		Assert.assertEquals(PluginHelper.ACCESS_ID, authToken);
 		Assert.assertEquals(PluginHelper.TENANT_ID, tenantID);
-		Assert.assertEquals(TestHelperData.TOKEN_FUTURE_EXPIRATION, expirationDate);
+		Assert.assertEquals(DefaultDataTest.TOKEN_FUTURE_EXPIRATION, expirationDate);
 
 		Token token2 = this.identityOpenStack.createToken(token);
 		authToken = token2.getAccessId();
@@ -94,7 +94,7 @@ public class TestIdentityOpenStack {
 		expirationDate = token2.getExpirationDate();
 		Assert.assertEquals(PluginHelper.ACCESS_ID, authToken);
 		Assert.assertEquals(PluginHelper.TENANT_ID, tenantID);
-		Assert.assertEquals(TestHelperData.TOKEN_FUTURE_EXPIRATION, expirationDate);
+		Assert.assertEquals(DefaultDataTest.TOKEN_FUTURE_EXPIRATION, expirationDate);
 	}
 
 	@Test(expected = OCCIException.class)

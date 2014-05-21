@@ -19,6 +19,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
+import org.fogbowcloud.manager.core.util.DefaultDataTest;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.HeaderUtils;
@@ -31,7 +32,6 @@ import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.fogbowcloud.manager.occi.request.RequestState;
 import org.fogbowcloud.manager.occi.util.ComputeApplication;
 import org.fogbowcloud.manager.occi.util.OCCITestHelper;
-import org.fogbowcloud.manager.xmpp.util.TestHelperData;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -64,7 +64,7 @@ public class TestGetRequest {
 
 		HashMap<String, String> tokenAttr = new HashMap<String, String>();
 		Token userToken = new Token(OCCITestHelper.ACCESS_TOKEN, OCCITestHelper.USER_MOCK,
-				TestHelperData.TOKEN_FUTURE_EXPIRATION, tokenAttr);
+				DefaultDataTest.TOKEN_FUTURE_EXPIRATION, tokenAttr);
 
 		Mockito.when(identityPlugin.getToken(OCCITestHelper.ACCESS_TOKEN)).thenReturn(userToken);
 

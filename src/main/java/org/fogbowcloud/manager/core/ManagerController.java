@@ -11,6 +11,7 @@ import java.util.UUID;
 
 import org.apache.http.HttpStatus;
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
@@ -30,7 +31,6 @@ import org.fogbowcloud.manager.occi.request.RequestRepository;
 import org.fogbowcloud.manager.occi.request.RequestState;
 import org.fogbowcloud.manager.occi.request.RequestType;
 import org.fogbowcloud.manager.xmpp.ManagerPacketHelper;
-import org.fogbowcloud.manager.xmpp.core.model.DateUtils;
 import org.jamppa.component.PacketSender;
 
 public class ManagerController {
@@ -108,42 +108,41 @@ public class ManagerController {
 		return token.getUser();
 	}
 
-	public List<Request> getRequestsFromUser(String authToken) {
-		String user = getUser(authToken);
+	public List<Request> getRequestsFromUser(String accessId) {
+		String user = getUser(accessId);
 		return requests.getByUser(user);
 	}
 
-	public void removeAllRequests(String authToken) {
-		String user = getUser(authToken);
+	public void removeAllRequests(String accessId) {
+		String user = getUser(accessId);
 		LOGGER.debug("Removing all requests of user: " + user);
 		requests.removeByUser(user);
 	}
 
-	public void removeRequest(String authToken, String requestId) {
+	public void removeRequest(String accessId, String requestId) {
 		LOGGER.debug("Removing requestId: " + requestId);
-		checkRequestId(authToken, requestId);
+		checkRequestId(accessId, requestId);
 		requests.remove(requestId);
 	}
 
-	private void checkRequestId(String authToken, String requestId) {
-		String user = getUser(authToken);
+	private void checkRequestId(String accessId, String requestId) {
+		String user = getUser(accessId);
 		if (requests.get(user, requestId) == null) {
 			LOGGER.debug("User " + user + " does not have requesId " + requestId);
 			throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
 		}
 	}
 
-	public List<Instance> getInstances(String authToken) {
-		LOGGER.debug("Getting instances of token " + authToken);
+	public List<Instance> getInstances(String accessId) {
+		LOGGER.debug("Getting instances of token " + accessId);
 		List<Instance> instances = new ArrayList<Instance>();
-		for (Request request : requests.getByUser(getUser(authToken))) {
+		for (Request request : requests.getByUser(getUser(accessId))) {
 			String instanceId = request.getInstanceId();
 			LOGGER.debug("InstanceId " + instanceId);
 			if (instanceId == null) {
 				continue;
 			}
 			try {
-
 				instances.add(getInstance(request));
 			} catch (Exception e) {
 				LOGGER.warn("Exception thown while getting instance " + instanceId + ".", e);
@@ -152,8 +151,8 @@ public class ManagerController {
 		return instances;
 	}
 
-	public Instance getInstance(String authToken, String instanceId) {
-		Request request = getRequestForInstance(authToken, instanceId);
+	public Instance getInstance(String accessId, String instanceId) {
+		Request request = getRequestForInstance(accessId, instanceId);
 		return getInstance(request);
 	}
 
@@ -180,27 +179,27 @@ public class ManagerController {
 		return ManagerPacketHelper.getRemoteInstance(request, packetSender);
 	}
 
-	public void removeInstances(String authToken) {
-		String user = getUser(authToken);
+	public void removeInstances(String accessId) {
+		String user = getUser(accessId);
 		LOGGER.debug("Removing instances of user: " + user);
 		for (Request request : requests.getByUser(user)) {
 			String instanceId = request.getInstanceId();
 			if (instanceId == null) {
 				continue;
 			}
-			removeInstance(authToken, instanceId, request);
+			removeInstance(accessId, instanceId, request);
 		}
 	}
 
-	public void removeInstance(String authToken, String instanceId) {
-		Request request = getRequestForInstance(authToken, instanceId);
-		removeInstance(authToken, instanceId, request);
+	public void removeInstance(String accessId, String instanceId) {
+		Request request = getRequestForInstance(accessId, instanceId);
+		removeInstance(accessId, instanceId, request);
 	}
 
-	private void removeInstance(String authToken, String instanceId, Request request) {
+	private void removeInstance(String accessId, String instanceId, Request request) {
 		sshTunnel.release(request);
 		if (isLocal(request)) {
-			this.computePlugin.removeInstance(authToken, instanceId);
+			this.computePlugin.removeInstance(accessId, instanceId);
 		} else {
 			removeRemoteInstance(request);
 		}
@@ -236,7 +235,7 @@ public class ManagerController {
 		List<Request> userRequests = requests.getAll();
 		for (Request request : userRequests) {
 			if (instanceId.equals(request.getInstanceId())) {
-				if (!request.getUser().equals(user)) {
+				if (!request.getToken().getUser().equals(user)) {
 					throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 				}
 				return request;
@@ -270,13 +269,12 @@ public class ManagerController {
 		FederationMember member = getFederationMember(memberId);
 		if (!validator.canDonateTo(member)) {
 			return null;
-		}
-		
+		}		
 		LOGGER.info("Submiting request with categories: " + categories + " and xOCCIAtt: "
 				+ xOCCIAtt + " for remote member.");
-		String token = getFederationUserToken().getAccessId();
+		String federationTokenAccessId = getFederationUserToken().getAccessId();
 		try {
-			return computePlugin.requestInstance(token, categories, xOCCIAtt);
+			return computePlugin.requestInstance(federationTokenAccessId, categories, xOCCIAtt);
 		} catch (OCCIException e) {
 			if (e.getStatus().getCode() == HttpStatus.SC_BAD_REQUEST) {
 				return null;
@@ -299,16 +297,15 @@ public class ManagerController {
 		federationUserCredentials.put(OCCIHeaders.X_TOKEN_PASS, password);
 		federationUserCredentials.put(OCCIHeaders.X_TOKEN_TENANT_NAME, tenantName);
 
-		Token token = identityPlugin.createToken(federationUserCredentials);
-		this.federationUserToken = token;
+		this.federationUserToken = identityPlugin.createToken(federationUserCredentials);
 		return federationUserToken;
 	}
 
 	public Instance getInstanceForRemoteMember(String instanceId) {
 		LOGGER.info("Getting instance " + instanceId + " for remote member.");
-		String token = getFederationUserToken().getAccessId();
+		String federationTokenAccessId = getFederationUserToken().getAccessId();
 		try {
-			return computePlugin.getInstance(token, instanceId);
+			return computePlugin.getInstance(federationTokenAccessId, instanceId);
 		} catch (OCCIException e) {
 			LOGGER.warn("Exception while getting instance " + instanceId + " for remote member.", e);
 			if (e.getStatus().getCode() == HttpStatus.SC_NOT_FOUND) {
@@ -320,15 +317,14 @@ public class ManagerController {
 
 	public void removeInstanceForRemoteMember(String instanceId) {
 		LOGGER.info("Removing instance " + instanceId + " for remote member.");
-		String token = getFederationUserToken().getAccessId();
-		computePlugin.removeInstance(token, instanceId);
+		String federationTokenAccessId = getFederationUserToken().getAccessId();
+		computePlugin.removeInstance(federationTokenAccessId, instanceId);
 	}
 
-	public List<Request> createRequests(String authToken, List<Category> categories,
+	public List<Request> createRequests(String accessId, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
-		String user = getUser(authToken);
 
-		Token userToken = identityPlugin.getToken(authToken);
+		Token userToken = identityPlugin.getToken(accessId);
 		LOGGER.debug("User Token: " + userToken);
 
 		Integer instanceCount = Integer.valueOf(xOCCIAtt.get(RequestAttribute.INSTANCE_COUNT
@@ -338,7 +334,7 @@ public class ManagerController {
 		List<Request> currentRequests = new ArrayList<Request>();
 		for (int i = 0; i < instanceCount; i++) {
 			String requestId = String.valueOf(UUID.randomUUID());
-			Request request = new Request(requestId, userToken, user, categories, xOCCIAtt);
+			Request request = new Request(requestId, userToken, categories, xOCCIAtt);
 			try {
 				sshTunnel.create(properties, request);
 			} catch (Exception e) {
@@ -347,7 +343,7 @@ public class ManagerController {
 			}
 			LOGGER.info("Created request: " + request);
 			currentRequests.add(request);
-			requests.addRequest(user, request);
+			requests.addRequest(userToken.getUser(), request);
 		}
 		if (!requestSchedulerTimer.isScheduled()) {
 			scheduleRequests();

@@ -1,4 +1,4 @@
-package org.fogbowcloud.manager.xmpp.util;
+package org.fogbowcloud.manager.core.util;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -38,7 +38,7 @@ import org.xmpp.component.ComponentException;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.Packet;
 
-public class ManagerTestHelper extends TestHelperData {
+public class ManagerTestHelper extends DefaultDataTest {
 
 	private ManagerXmppComponent managerXmppComponent;
 	private ComputePlugin computePlugin;

@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.fogbowcloud.manager.core.util.DefaultDataTest;
+import org.fogbowcloud.manager.core.util.ManagerTestHelper;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.OCCIException;
@@ -15,8 +17,6 @@ import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.instance.Instance.Link;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.fogbowcloud.manager.occi.util.OCCITestHelper;
-import org.fogbowcloud.manager.xmpp.util.ManagerTestHelper;
-import org.fogbowcloud.manager.xmpp.util.TestHelperData;
 import org.jivesoftware.smack.XMPPException;
 import org.junit.After;
 import org.junit.Assert;
@@ -58,7 +58,7 @@ public class TestGetRemoteInstance {
 
 		Link link = new Link("linkname", attributes);
 
-		return new Instance(TestHelperData.INSTANCE_ID, resources, attributes, link);
+		return new Instance(DefaultDataTest.INSTANCE_ID, resources, attributes, link);
 	}
 
 	@Test
@@ -68,14 +68,13 @@ public class TestGetRemoteInstance {
 
 		Mockito.when(
 				managerTestHelper.getComputePlugin().getInstance(
-						Mockito.eq(TestHelperData.ACCESS_TOKEN_ID),
-						Mockito.eq(TestHelperData.INSTANCE_ID))).thenReturn(instance);
+						Mockito.eq(DefaultDataTest.ACCESS_TOKEN_ID),
+						Mockito.eq(DefaultDataTest.INSTANCE_ID))).thenReturn(instance);
 
 		Request request = new Request("anyvalue", new Token("anyvalue", OCCITestHelper.USER_MOCK,
-				TestHelperData.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()),
-				TestHelperData.USER_NAME, null, null);
-		request.setInstanceId(TestHelperData.INSTANCE_ID);
-		request.setMemberId(TestHelperData.MANAGER_COMPONENT_URL);
+				DefaultDataTest.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), null, null);
+		request.setInstanceId(DefaultDataTest.INSTANCE_ID);
+		request.setMemberId(DefaultDataTest.MANAGER_COMPONENT_URL);
 
 		Instance remoteInstance = null;
 		try {
@@ -95,10 +94,9 @@ public class TestGetRemoteInstance {
 	@Test
 	public void testGetRemoteInstaceNotFound() throws Exception {
 		Request request = new Request("anyvalue", new Token(WRONG_TOKEN, OCCITestHelper.USER_MOCK,
-				TestHelperData.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()),
-				TestHelperData.USER_NAME, null, null);
-		request.setInstanceId(TestHelperData.INSTANCE_ID);
-		request.setMemberId(TestHelperData.MANAGER_COMPONENT_URL);
+				DefaultDataTest.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), null, null);
+		request.setInstanceId(DefaultDataTest.INSTANCE_ID);
+		request.setMemberId(DefaultDataTest.MANAGER_COMPONENT_URL);
 
 		managerTestHelper.initializeXMPPManagerComponent(false);
 
@@ -113,16 +111,15 @@ public class TestGetRemoteInstance {
 	@Test(expected = OCCIException.class)
 	public void testGetRemoteInstanceUnauthorized() throws Exception {
 		Request request = new Request("anyvalue", new Token(WRONG_TOKEN, OCCITestHelper.USER_MOCK,
-				TestHelperData.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()),
-				TestHelperData.USER_NAME, null, null);
+				DefaultDataTest.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), null, null);
 		request.setInstanceId(INSTANCE_OTHER_USER);
-		request.setMemberId(TestHelperData.MANAGER_COMPONENT_URL);
+		request.setMemberId(DefaultDataTest.MANAGER_COMPONENT_URL);
 
 		managerTestHelper.initializeXMPPManagerComponent(false);
 
 		Mockito.doThrow(new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED))
 				.when(this.managerTestHelper.getComputePlugin())
-				.getInstance(Mockito.eq(TestHelperData.ACCESS_TOKEN_ID),
+				.getInstance(Mockito.eq(DefaultDataTest.ACCESS_TOKEN_ID),
 						Mockito.eq(INSTANCE_OTHER_USER));
 
 		ManagerPacketHelper.getRemoteInstance(request, managerTestHelper.createPacketSender());

@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 
-import org.fogbowcloud.manager.xmpp.util.ManagerTestHelper;
+import org.fogbowcloud.manager.core.util.ManagerTestHelper;
 import org.junit.Assert;
 import org.junit.Test;
 

@@ -8,10 +8,10 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
 
+import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.Token;
-import org.fogbowcloud.manager.xmpp.core.model.DateUtils;
 
 public class Request {
 
@@ -22,13 +22,11 @@ public class Request {
 	private RequestState state;
 	private List<Category> categories;
 	private Map<String, String> xOCCIAtt;
-	private String user;
 
-	public Request(String id, Token token, String user, List<Category> categories,
+	public Request(String id, Token token, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
 		this.id = id;
 		this.token = token;
-		this.user = user;
 		this.categories = categories;
 		this.xOCCIAtt = xOCCIAtt;
 		setState(RequestState.OPEN);
@@ -43,10 +41,6 @@ public class Request {
 			categories = new LinkedList<Category>();
 		}
 		categories.add(category);
-	}
-
-	public String getUser() {
-		return user;
 	}
 
 	public String getInstanceId() {
@@ -108,9 +102,9 @@ public class Request {
 	}
 
 	public String toString() {
-		return "id: " + id + ", token: " + token + ", user:  " + user + ", instanceId: "
-				+ instanceId + ", memberId: " + memberId + ", state: " + state + ", categories: "
-				+ categories + ", xOCCIAtt: " + xOCCIAtt;
+		return "id: " + id + ", token: " + token + ", instanceId: " + instanceId + ", memberId: "
+				+ memberId + ", state: " + state + ", categories: " + categories + ", xOCCIAtt: "
+				+ xOCCIAtt;
 	}
 
 	public boolean isIntoValidPeriod() {

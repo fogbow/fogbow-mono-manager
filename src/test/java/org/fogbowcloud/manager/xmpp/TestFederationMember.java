@@ -10,7 +10,7 @@ import java.util.LinkedList;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
-import org.fogbowcloud.manager.xmpp.util.ManagerTestHelper;
+import org.fogbowcloud.manager.core.util.ManagerTestHelper;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;

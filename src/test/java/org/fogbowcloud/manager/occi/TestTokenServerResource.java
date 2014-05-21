@@ -11,12 +11,12 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
+import org.fogbowcloud.manager.core.util.DefaultDataTest;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.util.OCCITestHelper;
-import org.fogbowcloud.manager.xmpp.util.TestHelperData;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -58,7 +58,7 @@ public class TestTokenServerResource {
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testGetToken() throws Exception {
-		Token token = new Token(ACCESS_TOKEN_ID, "user", TestHelperData.TOKEN_FUTURE_EXPIRATION,
+		Token token = new Token(ACCESS_TOKEN_ID, "user", DefaultDataTest.TOKEN_FUTURE_EXPIRATION,
 				new HashMap<String, String>());
 
 		Mockito.when(identityPlugin.createToken(Mockito.anyMap())).thenReturn(token);

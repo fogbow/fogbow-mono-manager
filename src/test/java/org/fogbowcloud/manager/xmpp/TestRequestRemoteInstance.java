@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.fogbowcloud.manager.core.util.DefaultDataTest;
+import org.fogbowcloud.manager.core.util.ManagerTestHelper;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.OCCIException;
@@ -12,8 +14,6 @@ import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.fogbowcloud.manager.occi.util.OCCITestHelper;
-import org.fogbowcloud.manager.xmpp.util.ManagerTestHelper;
-import org.fogbowcloud.manager.xmpp.util.TestHelperData;
 import org.jivesoftware.smack.XMPPException;
 import org.junit.After;
 import org.junit.Assert;
@@ -65,7 +65,8 @@ public class TestRequestRemoteInstance {
 		attributes.put("key1", "value1");
 		attributes.put("key2", "value2");
 		Request request = new Request("anyvalue", new Token("anyvalue", OCCITestHelper.USER_MOCK,
-				TestHelperData.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), USER_DEFAULT, categories, attributes);
+				DefaultDataTest.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), categories,
+				attributes);
 		request.setInstanceId(INSTANCE_DEFAULT);
 		return request;
 	}

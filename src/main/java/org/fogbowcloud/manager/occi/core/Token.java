@@ -3,7 +3,7 @@ package org.fogbowcloud.manager.occi.core;
 import java.util.Date;
 import java.util.Map;
 
-import org.fogbowcloud.manager.xmpp.core.model.DateUtils;
+import org.fogbowcloud.manager.core.model.DateUtils;
 
 public class Token {
 

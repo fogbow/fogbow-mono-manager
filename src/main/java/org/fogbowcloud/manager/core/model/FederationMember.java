@@ -1,6 +1,5 @@
 package org.fogbowcloud.manager.core.model;
 
-import org.fogbowcloud.manager.xmpp.core.model.DateUtils;
 
 public class FederationMember {
 

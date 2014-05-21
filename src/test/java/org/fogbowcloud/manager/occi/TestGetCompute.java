@@ -14,6 +14,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
+import org.fogbowcloud.manager.core.util.DefaultDataTest;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.Resource;
 import org.fogbowcloud.manager.occi.core.Token;
@@ -21,7 +22,6 @@ import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.instance.Instance.Link;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.fogbowcloud.manager.occi.util.OCCITestHelper;
-import org.fogbowcloud.manager.xmpp.util.TestHelperData;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -61,19 +61,18 @@ public class TestGetCompute {
 				new HashMap<String, String>()));
 
 		List<Request> requests = new LinkedList<Request>();
-		Request request1 = new Request("1", new Token(OCCITestHelper.ACCESS_TOKEN, OCCITestHelper.USER_MOCK, 
-				TestHelperData.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()),
-				OCCITestHelper.USER_MOCK, null, null);
+		Request request1 = new Request("1", new Token(OCCITestHelper.ACCESS_TOKEN,
+				OCCITestHelper.USER_MOCK, DefaultDataTest.TOKEN_FUTURE_EXPIRATION,
+				new HashMap<String, String>()), null, null);
 		request1.setInstanceId(INSTANCE_1_ID);
 		requests.add(request1);
-		Request request2 = new Request("2", new Token(OCCITestHelper.ACCESS_TOKEN, OCCITestHelper.USER_MOCK,
-				TestHelperData.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()),
-				OCCITestHelper.USER_MOCK, null, null);
+		Request request2 = new Request("2", new Token(OCCITestHelper.ACCESS_TOKEN,
+				OCCITestHelper.USER_MOCK, DefaultDataTest.TOKEN_FUTURE_EXPIRATION,
+				new HashMap<String, String>()), null, null);
 		request2.setInstanceId(INSTANCE_2_ID);
 		requests.add(request2);
-		Request request3 = new Request("3", new Token("token", "user", 
-				TestHelperData.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), "user",
-				null, null);
+		Request request3 = new Request("3", new Token("token", "user",
+				DefaultDataTest.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), null, null);
 		request3.setInstanceId(INSTANCE_3_ID_WITHOUT_USER);
 		requests.add(request3);
 

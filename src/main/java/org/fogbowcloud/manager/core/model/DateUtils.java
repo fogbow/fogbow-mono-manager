@@ -1,11 +1,9 @@
-package org.fogbowcloud.manager.xmpp.core.model;
+package org.fogbowcloud.manager.core.model;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
-
-import org.fogbowcloud.manager.core.model.FederationMember;
 
 public class DateUtils {
 	

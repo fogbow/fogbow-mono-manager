@@ -11,8 +11,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.dom4j.Element;
 import org.fogbowcloud.manager.core.model.FederationMember;
-import org.fogbowcloud.manager.xmpp.util.ManagerTestHelper;
-import org.fogbowcloud.manager.xmpp.util.TestHelperData;
+import org.fogbowcloud.manager.core.util.DefaultDataTest;
+import org.fogbowcloud.manager.core.util.ManagerTestHelper;
 import org.jamppa.client.XMPPClient;
 import org.jivesoftware.smack.PacketListener;
 import org.jivesoftware.smack.XMPPException;
@@ -80,7 +80,7 @@ public class TestWhoIsAlive {
 					return false;
 				}
 				return packet.getFrom().toBareJID()
-						.equals(TestHelperData.MANAGER_COMPONENT_URL);
+						.equals(DefaultDataTest.MANAGER_COMPONENT_URL);
 			}
 		}, callback);
 		managerXmppComponent.whoIsalive();
@@ -88,7 +88,7 @@ public class TestWhoIsAlive {
 		Packet packet = blockingQueue.poll(5, TimeUnit.SECONDS);
 		Element element = packet.getElement().element("query");
 		Assert.assertEquals(element.getNamespaceURI(),
-				TestHelperData.WHOISALIVE_NAMESPACE);
+				DefaultDataTest.WHOISALIVE_NAMESPACE);
 
 		Assert.assertEquals(1, managerXmppComponent.getManagerFacade()
 				.getMembers().size());
@@ -141,7 +141,7 @@ public class TestWhoIsAlive {
 					return false;
 				}
 				return element.getNamespaceURI().equals(
-						TestHelperData.WHOISALIVE_NAMESPACE);
+						DefaultDataTest.WHOISALIVE_NAMESPACE);
 			}
 		}, callbackWhoIsAlive);
 
