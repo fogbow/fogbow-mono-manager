@@ -68,23 +68,22 @@ public class RequestRepository {
 	public List<Request> getByUser(String user) {
 		LOGGER.debug("Getting instances by user " + user);
 		List<Request> userRequests = requests.get(user);
-		// return userRequests == null ? new LinkedList<Request>() : new
-		// LinkedList<Request>(
-		// userRequests);
-		return userRequests == null ? new LinkedList<Request>()
-				: normalizeRequestsByUser(userRequests);
+		return userRequests == null ? new LinkedList<Request>() : new LinkedList<Request>(
+				userRequests);
+//		return userRequests == null ? new LinkedList<Request>()
+//				: normalizeRequestsByUser(userRequests);
 
 	}
 
-	private List<Request> normalizeRequestsByUser(List<Request> userRequests) {
-		List<Request> requests = new LinkedList<Request>();
-		for (Request userRequest : userRequests) {
-			if (!userRequest.getState().equals(RequestState.DELETED)) {
-				requests.add(userRequest);
-			}
-		}
-		return requests;
-	}
+//	private List<Request> normalizeRequestsByUser(List<Request> userRequests) {
+//		List<Request> requests = new LinkedList<Request>();
+//		for (Request userRequest : userRequests) {
+//			if (!userRequest.getState().equals(RequestState.DELETED)) {
+//				requests.add(userRequest);
+//			}
+//		}
+//		return requests;
+//	}
 
 	public void removeByUser(String user) {
 		List<Request> requestsByUser = requests.get(user);

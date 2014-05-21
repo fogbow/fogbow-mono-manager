@@ -123,9 +123,6 @@ public class RequestServerResource extends ServerResource {
 			response += HeaderUtils.X_OCCI_LOCATION + requestEndpoint + "/" + request.getId()
 					+ "\n";
 		}
-		if (response.equals("")) {
-			response = "Empty";
-		}
 		return response;
 	}
 }

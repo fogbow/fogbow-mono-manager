@@ -99,8 +99,13 @@ public class OCCITestHelper {
 
 	public static List<String> getRequestLocations(HttpResponse response) throws ParseException,
 			IOException {
-		String responseStr = EntityUtils.toString(response.getEntity(),
-				String.valueOf(Charsets.UTF_8));
+		String responseStr = "";
+		try {
+			responseStr = EntityUtils.toString(response.getEntity(),
+					String.valueOf(Charsets.UTF_8));			
+		} catch (Exception e) {
+			return new ArrayList<String>();
+		}
 
 		List<String> requestIds = new ArrayList<String>();
 		if (responseStr.contains(HeaderUtils.X_OCCI_LOCATION)) {

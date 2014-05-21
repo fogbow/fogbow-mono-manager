@@ -79,7 +79,7 @@ public class TestGetRequest {
 		HttpResponse response = client.execute(get);
 
 		Assert.assertEquals(0, OCCITestHelper.getRequestLocations(response).size());
-		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HttpStatus.SC_NO_CONTENT, response.getStatusLine().getStatusCode());
 	}
 
 	@Test
@@ -91,7 +91,7 @@ public class TestGetRequest {
 		HttpResponse response = client.execute(get);
 
 		Assert.assertEquals(0, OCCITestHelper.getRequestLocations(response).size());
-		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HttpStatus.SC_NO_CONTENT, response.getStatusLine().getStatusCode());
 	}
 
 	@Test

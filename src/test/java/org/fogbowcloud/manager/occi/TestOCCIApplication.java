@@ -13,7 +13,6 @@ import org.fogbowcloud.manager.core.ssh.SSHTunnel;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.OCCIException;
-import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.request.Request;
@@ -57,14 +56,13 @@ public class TestOCCIApplication {
 
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		HashMap<String, String> tokenAttr = new HashMap<String, String>();
-//		tokenAttr.put(OCCIHeaders.X_TOKEN_USER, OCCITestHelper.USER_MOCK);
 		Token userToken = new Token(OCCITestHelper.ACCESS_TOKEN, OCCITestHelper.USER_MOCK,
 				OCCITestHelper.TOKEN_FUTURE_EXPIRATION, tokenAttr);
-		
+
 		Mockito.when(identityPlugin.getToken(Mockito.anyString())).thenReturn(userToken);
 
 		SSHTunnel sshTunnel = Mockito.mock(SSHTunnel.class);
-		
+
 		managerFacade.setIdentityPlugin(identityPlugin);
 		managerFacade.setComputePlugin(computePlugin);
 		managerFacade.setSSHTunnel(sshTunnel);
@@ -88,9 +86,10 @@ public class TestOCCIApplication {
 	@Test
 	public void testGetRequestDetailsAfterPeriod() throws InterruptedException {
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
-		Mockito.when(computePlugin.requestInstance(Mockito.anyString(), Mockito.any(List.class), Mockito.any(Map.class)))
-				.thenReturn(INSTANCE_ID);
-		
+		Mockito.when(
+				computePlugin.requestInstance(Mockito.anyString(), Mockito.any(List.class),
+						Mockito.any(Map.class))).thenReturn(INSTANCE_ID);
+
 		managerFacade.setComputePlugin(computePlugin);
 		occiApplication.createRequests(OCCITestHelper.ACCESS_TOKEN, new ArrayList<Category>(),
 				xOCCIAtt);
@@ -98,7 +97,7 @@ public class TestOCCIApplication {
 		Assert.assertEquals(1, requests.size());
 		String requestId = requests.get(0).getId();
 		Request requestDetails = occiApplication.getRequest(OCCITestHelper.ACCESS_TOKEN, requestId);
-		
+
 		Thread.sleep(SCHEDULER_PERIOD * 2);
 
 		Assert.assertEquals(requestId, requestDetails.getId());
@@ -143,7 +142,7 @@ public class TestOCCIApplication {
 		occiApplication.removeAllRequests(OCCITestHelper.ACCESS_TOKEN);
 		requestsFromUser = occiApplication.getRequestsFromUser(OCCITestHelper.ACCESS_TOKEN);
 
-		Assert.assertEquals(0, requestsFromUser.size());
+		Assert.assertEquals(numberOfInstances, counterDeletedRequests(requestsFromUser));
 	}
 
 	@Test
@@ -161,6 +160,16 @@ public class TestOCCIApplication {
 		occiApplication.removeRequest(OCCITestHelper.ACCESS_TOKEN, requestsFromUser.get(1).getId());
 		requestsFromUser = occiApplication.getRequestsFromUser(OCCITestHelper.ACCESS_TOKEN);
 
-		Assert.assertEquals(numberOfInstances - 1, requestsFromUser.size());
+		Assert.assertEquals(1, counterDeletedRequests(requestsFromUser));
+	}
+
+	private int counterDeletedRequests(List<Request> requestsFromUser) {
+		int count = 0;
+		for (Request request : requestsFromUser) {
+			if (request.getState().equals(RequestState.DELETED)) {
+				count++;
+			}
+		}
+		return count;
 	}
 }
