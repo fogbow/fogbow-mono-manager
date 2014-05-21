@@ -21,6 +21,7 @@ import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.instance.Instance.Link;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.fogbowcloud.manager.occi.util.OCCITestHelper;
+import org.fogbowcloud.manager.xmpp.util.TestHelperData;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -61,17 +62,17 @@ public class TestGetCompute {
 
 		List<Request> requests = new LinkedList<Request>();
 		Request request1 = new Request("1", new Token(OCCITestHelper.ACCESS_TOKEN, OCCITestHelper.USER_MOCK, 
-				OCCITestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()),
+				TestHelperData.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()),
 				OCCITestHelper.USER_MOCK, null, null);
 		request1.setInstanceId(INSTANCE_1_ID);
 		requests.add(request1);
 		Request request2 = new Request("2", new Token(OCCITestHelper.ACCESS_TOKEN, OCCITestHelper.USER_MOCK,
-				OCCITestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()),
+				TestHelperData.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()),
 				OCCITestHelper.USER_MOCK, null, null);
 		request2.setInstanceId(INSTANCE_2_ID);
 		requests.add(request2);
 		Request request3 = new Request("3", new Token("token", "user", 
-				OCCITestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), "user",
+				TestHelperData.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), "user",
 				null, null);
 		request3.setInstanceId(INSTANCE_3_ID_WITHOUT_USER);
 		requests.add(request3);

@@ -17,6 +17,7 @@ import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.fogbowcloud.manager.occi.util.OCCITestHelper;
+import org.fogbowcloud.manager.xmpp.util.TestHelperData;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -45,12 +46,12 @@ public class TestDeleteCompute {
 
 		List<Request> requests = new LinkedList<Request>();
 		Request request1 = new Request("1", new Token(OCCITestHelper.ACCESS_TOKEN,
-				OCCITestHelper.USER_MOCK, OCCITestHelper.TOKEN_FUTURE_EXPIRATION,
+				OCCITestHelper.USER_MOCK, TestHelperData.TOKEN_FUTURE_EXPIRATION,
 				new HashMap<String, String>()), OCCITestHelper.USER_MOCK, null, null);
 		request1.setInstanceId(INSTANCE_ID);
 		requests.add(request1);
 		Request request2 = new Request("2", new Token("otherToken", "otherUser",
-				OCCITestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()),
+				TestHelperData.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()),
 				"otherUser", null, null);
 		request2.setInstanceId(OTHER_INSTANCE_ID);
 		requests.add(request2);

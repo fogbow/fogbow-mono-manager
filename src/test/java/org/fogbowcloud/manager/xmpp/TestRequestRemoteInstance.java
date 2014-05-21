@@ -13,6 +13,7 @@ import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.fogbowcloud.manager.occi.util.OCCITestHelper;
 import org.fogbowcloud.manager.xmpp.util.ManagerTestHelper;
+import org.fogbowcloud.manager.xmpp.util.TestHelperData;
 import org.jivesoftware.smack.XMPPException;
 import org.junit.After;
 import org.junit.Assert;
@@ -64,7 +65,7 @@ public class TestRequestRemoteInstance {
 		attributes.put("key1", "value1");
 		attributes.put("key2", "value2");
 		Request request = new Request("anyvalue", new Token("anyvalue", OCCITestHelper.USER_MOCK,
-				OCCITestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), USER_DEFAULT, categories, attributes);
+				TestHelperData.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), USER_DEFAULT, categories, attributes);
 		request.setInstanceId(INSTANCE_DEFAULT);
 		return request;
 	}

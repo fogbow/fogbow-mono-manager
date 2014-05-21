@@ -38,8 +38,6 @@ public class OCCITestHelper {
 	public static final String URI_FOGBOW_QUERY = "http://localhost:8182/-/";
 	public static final String USER_MOCK = "user_mock";
 	public static final int ENDPOINT_PORT = 8182;
-	public static final long LONG_TIME = 24 * 60 * 60 * 1000; //one day
-	public static final Date TOKEN_FUTURE_EXPIRATION = new Date(System.currentTimeMillis() + LONG_TIME);
 
 	private Component component;
 	private RequestRepository requests;

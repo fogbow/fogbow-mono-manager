@@ -20,6 +20,7 @@ import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.fogbowcloud.manager.occi.request.RequestState;
 import org.fogbowcloud.manager.occi.util.OCCITestHelper;
+import org.fogbowcloud.manager.xmpp.util.TestHelperData;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -51,13 +52,13 @@ public class TestOCCIApplication {
 		Mockito.when(
 				computePlugin.requestInstance(Mockito.anyString(), Mockito.any(List.class),
 						Mockito.any(Map.class))).thenThrow(
-				new OCCIException(ErrorType.BAD_REQUEST,
+				new OCCIException(ErrorType.QUOTA_EXCEEDED,
 						ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES));
 
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		HashMap<String, String> tokenAttr = new HashMap<String, String>();
 		Token userToken = new Token(OCCITestHelper.ACCESS_TOKEN, OCCITestHelper.USER_MOCK,
-				OCCITestHelper.TOKEN_FUTURE_EXPIRATION, tokenAttr);
+				TestHelperData.TOKEN_FUTURE_EXPIRATION, tokenAttr);
 
 		Mockito.when(identityPlugin.getToken(Mockito.anyString())).thenReturn(userToken);
 
@@ -77,6 +78,7 @@ public class TestOCCIApplication {
 		String requestId = requests.get(0).getId();
 		Request requestDetails = occiApplication.getRequest(OCCITestHelper.ACCESS_TOKEN, requestId);
 
+		Thread.sleep(100);
 		Assert.assertEquals(requestId, requestDetails.getId());
 		Assert.assertNull(requestDetails.getInstanceId());
 		Assert.assertEquals(RequestState.OPEN, requestDetails.getState());

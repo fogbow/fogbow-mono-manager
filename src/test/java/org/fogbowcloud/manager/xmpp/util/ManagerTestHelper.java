@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -26,7 +25,6 @@ import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.Token;
-import org.fogbowcloud.manager.occi.util.OCCITestHelper;
 import org.fogbowcloud.manager.xmpp.ManagerXmppComponent;
 import org.jamppa.client.XMPPClient;
 import org.jamppa.client.plugin.xep0077.XEP0077;
@@ -35,31 +33,12 @@ import org.jivesoftware.smack.PacketCollector;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.filter.PacketFilter;
 import org.jivesoftware.smack.filter.PacketIDFilter;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.xmpp.component.ComponentException;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.Packet;
 
-public class ManagerTestHelper {
-
-	private static final int SERVER_CLIENT_PORT = 5222;
-	private static final int SERVER_COMPONENT_PORT = 5347;
-	private static final String SERVER_HOST = "localhost";
-	private static final String CLIENT_ADRESS = "client@test.com";
-	private static final String CLIENT_PASS = "password";
-	private static final String SMACK_ENDING = "/Smack";
-
-	public static final String MANAGER_COMPONENT_URL = "manager.test.com";
-	public static final String MANAGER_COMPONENT_PASS = "password";
-
-	public static final String WHOISALIVE_NAMESPACE = "http://fogbowcloud.org/rendezvous/whoisalive";
-	public static final String IAMALIVE_NAMESPACE = "http://fogbowcloud.org/rendezvous/iamalive";
-
-	public static final int TEST_DEFAULT_TIMEOUT = 10000;
-	public static final int TIMEOUT_GRACE = 500;
-
-	public final static String CONFIG_PATH = "src/test/resources/manager.conf.test";
+public class ManagerTestHelper extends TestHelperData {
 
 	private ManagerXmppComponent managerXmppComponent;
 	private ComputePlugin computePlugin;
@@ -69,8 +48,7 @@ public class ManagerTestHelper {
 	public ManagerTestHelper() {
 		Map<String, String> tokenAttributes = new HashMap<String, String>();
 		tokenAttributes.put(OCCIHeaders.X_TOKEN_TENANT_ID, "tenantId_r4fci3qhbcy3b");
-		this.tokenDefault = new Token("token", "user", new Date(System.currentTimeMillis()
-				+ OCCITestHelper.LONG_TIME), tokenAttributes);
+		this.tokenDefault = new Token(ACCESS_TOKEN_ID, USER_NAME, TOKEN_FUTURE_EXPIRATION, tokenAttributes);
 	}
 
 	public ResourcesInfo getResources() throws CertificateException, IOException {
