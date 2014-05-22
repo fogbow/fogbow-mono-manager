@@ -16,12 +16,12 @@ import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
+import org.fogbowcloud.manager.core.plugins.openstack.OpenStackIdentityPlugin;
 import org.fogbowcloud.manager.core.ssh.DefaultSSHTunnel;
 import org.fogbowcloud.manager.core.ssh.SSHTunnel;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.OCCIException;
-import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.instance.Instance;
@@ -293,9 +293,9 @@ public class ManagerController {
 		String username = properties.getProperty("federation_user_name");
 		String password = properties.getProperty("federation_user_password");
 		String tenantName = properties.getProperty("federation_user_tenant_name");
-		federationUserCredentials.put(OCCIHeaders.X_TOKEN_USER, username);
-		federationUserCredentials.put(OCCIHeaders.X_TOKEN_PASS, password);
-		federationUserCredentials.put(OCCIHeaders.X_TOKEN_TENANT_NAME, tenantName);
+		federationUserCredentials.put(OpenStackIdentityPlugin.USER_KEY, username);
+		federationUserCredentials.put(OpenStackIdentityPlugin.PASSWORD_KEY, password);
+		federationUserCredentials.put(OpenStackIdentityPlugin.TENANT_NAME_KEY, tenantName);
 
 		this.federationUserToken = identityPlugin.createToken(federationUserCredentials);
 		return federationUserToken;

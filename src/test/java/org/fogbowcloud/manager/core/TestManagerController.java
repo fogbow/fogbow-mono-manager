@@ -23,7 +23,6 @@ import org.fogbowcloud.manager.core.util.ManagerTestHelper;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.OCCIException;
-import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.instance.Instance;
@@ -96,15 +95,15 @@ public class TestManagerController {
 		OpenStackIdentityPlugin openStackidentityPlugin = Mockito
 				.mock(OpenStackIdentityPlugin.class);
 		Map<String, String> tokenCredentials = new HashMap<String, String>();
-		tokenCredentials.put(OCCIHeaders.X_TOKEN_USER, DefaultDataTestHelper.USER_NAME);
-		tokenCredentials.put(OCCIHeaders.X_TOKEN_PASS, DefaultDataTestHelper.USER_PASS);
-		tokenCredentials.put(OCCIHeaders.X_TOKEN_TENANT_NAME, DefaultDataTestHelper.TENANT_NAME);
+		tokenCredentials.put(OpenStackIdentityPlugin.USER_KEY, DefaultDataTestHelper.USER_NAME);
+		tokenCredentials.put(OpenStackIdentityPlugin.PASSWORD_KEY, DefaultDataTestHelper.USER_PASS);
+		tokenCredentials.put(OpenStackIdentityPlugin.TENANT_NAME_KEY, DefaultDataTestHelper.TENANT_NAME);
 
 		long tokenExpirationTime = System.currentTimeMillis() + 500;
 
 		Map<String, String> attributesTokenReturn = new HashMap<String, String>();
-		attributesTokenReturn.put(OCCIHeaders.X_TOKEN_TENANT_ID, "987654321");
-		attributesTokenReturn.put(OCCIHeaders.X_TOKEN_TENANT_NAME, DefaultDataTestHelper.TENANT_NAME);
+		attributesTokenReturn.put(OpenStackIdentityPlugin.TENANT_ID_KEY, "987654321");
+		attributesTokenReturn.put(OpenStackIdentityPlugin.TENANT_NAME_KEY, DefaultDataTestHelper.TENANT_NAME);
 		Token token = new Token(DefaultDataTestHelper.ACCESS_TOKEN_ID, DefaultDataTestHelper.USER_NAME, new Date(
 				tokenExpirationTime), attributesTokenReturn);
 

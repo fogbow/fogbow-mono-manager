@@ -31,25 +31,18 @@ public class KeystoneApplication extends Application {
 	public static String TARGET_TOKEN_POST = "/v2.0/tokens";
 	public static String TARGET_TOKEN_GET = "/v2.0/tokens/{tokenId}";
 
-	private Map<String, String> tokenToUser;
+	private Map<String, String> accessIdToUser;
 
-	private String usernameAdmin;
-	private String passwordAdmin;
-	private String tenantName;
-	private String validToken;
+	private String userPassword;
 	private Token defaultToken;
 
 	public KeystoneApplication() {
-		this.tokenToUser = new HashMap<String, String>();
+		this.accessIdToUser = new HashMap<String, String>();
 	}
 
-	public KeystoneApplication(String usernameAdmin, String passwordAdmin, String tenantName,
-			String validToken, Token defaultToken) {
-		this.tokenToUser = new HashMap<String, String>();
-		this.tenantName = tenantName;
-		this.validToken = validToken;
-		this.usernameAdmin = usernameAdmin;
-		this.passwordAdmin = passwordAdmin;
+	public KeystoneApplication(Token defaultToken, String userPassword) {
+		this.accessIdToUser = new HashMap<String, String>();
+		this.userPassword = userPassword;
 		this.defaultToken = defaultToken;
 	}
 
@@ -61,30 +54,31 @@ public class KeystoneApplication extends Application {
 		return router;
 	}
 
-	public String getUserFromToken(String token) {
-		return this.tokenToUser.get(token);
+	public String getUserFromToken(String accessId) {
+		return this.accessIdToUser.get(accessId);
 	}
 
 	public void putTokenAndUser(String authToken, String user) {
-		this.tokenToUser.put(authToken, user);
+		this.accessIdToUser.put(authToken, user);
 	}
 
-	public void checkUserByToken(String token) {
-		String user = this.tokenToUser.get(token);
+	public void checkUserByAccessId(String accessId) {
+		String user = accessIdToUser.get(accessId);
 		if (user == null || user.equals("")) {
 			throw new ResourceException(HttpStatus.SC_UNAUTHORIZED);
 		}
 	}
 
-	public void authenticationCheckToken(String idToken, String tenantName) {
-		if (!this.validToken.equals(idToken) || !this.tenantName.equals(tenantName)) {
+	public void authenticationCheckToken(String accessId, String tenantName) {
+		if (!defaultToken.getAccessId().equals(accessId)
+				|| !defaultToken.get(OpenStackIdentityPlugin.TENANT_NAME_KEY).equals(tenantName)) {
 			throw new ResourceException(HttpStatus.SC_UNAUTHORIZED);
 		}
 	}
 
 	public void checkAuthenticationCredentials(String username, String password, String tenantName) {
-		if (!this.usernameAdmin.equals(username) || !this.passwordAdmin.equals(password)
-				|| !this.tenantName.equals(tenantName)) {
+		if (!defaultToken.getUser().equals(username) || !this.userPassword.equals(password)
+				|| !defaultToken.get(OpenStackIdentityPlugin.TENANT_NAME_KEY).equals(tenantName)) {
 			throw new ResourceException(HttpStatus.SC_UNAUTHORIZED);
 		}
 	}
@@ -100,7 +94,7 @@ public class KeystoneApplication extends Application {
 			KeystoneApplication keyStoneApplication = (KeystoneApplication) getApplication();
 			HttpRequest req = (HttpRequest) getRequest();
 			String token = req.getHeaders().getValues(OCCIHeaders.X_AUTH_TOKEN);
-			keyStoneApplication.checkUserByToken(token);
+			keyStoneApplication.checkUserByAccessId(token);
 			String user = keyStoneApplication.getUserFromToken(token);
 			return mountJSONResponseUserPerToken(token, user);
 		}
@@ -136,8 +130,8 @@ public class KeystoneApplication extends Application {
 		private String mountJSONResponseAuthenticateToken(Token token) {
 			try {
 				String tokenAccessId = token.getAccessId();
-				String tenantId = token.get(OCCIHeaders.X_TOKEN_TENANT_ID);
-				String tenantName = token.get(OCCIHeaders.X_TOKEN_TENANT_NAME);
+				String tenantId = token.get(OpenStackIdentityPlugin.TENANT_ID_KEY);
+				String tenantName = token.get(OpenStackIdentityPlugin.TENANT_NAME_KEY);
 
 				SimpleDateFormat dateFormatISO8601 = new SimpleDateFormat(
 						FederationMember.ISO_8601_DATE_FORMAT, Locale.ROOT);

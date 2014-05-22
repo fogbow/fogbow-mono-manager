@@ -1,12 +1,9 @@
 package org.fogbowcloud.manager.core.plugins.openstack;
 
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
-import java.util.TimeZone;
 
 import org.apache.commons.codec.Charsets;
 import org.apache.http.HttpResponse;
@@ -19,17 +16,25 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
-import org.fogbowcloud.manager.core.model.FederationMember;
+import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 public class OpenStackIdentityPlugin implements IdentityPlugin {
 
+	// keys for attributes map
+	public static final String USER_KEY = "X-Token-User";
+	public static final String PASSWORD_KEY = "X-Token-Password";
+	public static final String TENANT_ID_KEY = "X-Token-TenantId";
+	public static final String TENANT_NAME_KEY = "X-Token-TenantName";
+
+	// keystone json data
 	public static final String TENANT_NAME_KEYSTONE = "tenantName";
 	public static final String USERNAME_KEYSTONE = "username";
 	public static final String PASSWORD_KEYSTONE = "password";
@@ -42,11 +47,10 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 	public static final String EXPIRES_KEYSTONE = "expires";
 	public static final String USER_KEYSTONE = "user";
 	public static final String NAME_KEYSTONE = "name";
-	private static final Logger LOGGER = Logger.getLogger(OpenStackIdentityPlugin.class);
+
 	private static final int LAST_SUCCESSFUL_STATUS = 204;
-
+	private final Logger LOGGER = Logger.getLogger(OpenStackIdentityPlugin.class);
 	private static String V2_ENDPOINT_PATH = "/v2.0/tokens";
-
 	private String v2Endpoint;
 
 	public OpenStackIdentityPlugin(Properties properties) {
@@ -54,17 +58,46 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 		this.v2Endpoint = keystoneUrl + V2_ENDPOINT_PATH;
 	}
 
-	public String getResponseJson(String tokenId) {
+	@Override
+	public Token createToken(Map<String, String> credentials) {
+		JSONObject json;
+		try {
+			json = mountJson(credentials);
+		} catch (JSONException e) {
+			LOGGER.error(e);
+			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
+		}
+
+		String responseStr = doPostRequest(v2Endpoint, json);
+		return getTokenFromJson(responseStr);
+	}
+
+	private JSONObject mountJson(Map<String, String> credentials) throws JSONException {
+		JSONObject passwordCredentials = new JSONObject();
+		passwordCredentials.put(USERNAME_KEYSTONE,
+				credentials.get(OpenStackIdentityPlugin.USER_KEY));
+		passwordCredentials.put(PASSWORD_KEYSTONE,
+				credentials.get(OpenStackIdentityPlugin.PASSWORD_KEY));
+		JSONObject auth = new JSONObject();
+		auth.put(TENANT_NAME_KEYSTONE, credentials.get(TENANT_NAME_KEY));
+		auth.put(PASSWORD_CREDENTIALS_KEYSTONE, passwordCredentials);
+		JSONObject root = new JSONObject();
+		root.put(AUTH_KEYSTONE, auth);
+		return root;
+	}
+
+	private String doPostRequest(String endpoint, JSONObject json) {
 		HttpResponse response;
 		String responseStr = null;
 		try {
-			HttpClient httpCLient = new DefaultHttpClient();
-			HttpGet httpGet = new HttpGet(this.v2Endpoint + "/" + tokenId);
-			httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, tokenId);
-			response = httpCLient.execute(httpGet);
+			HttpPost request = new HttpPost(endpoint);
+			request.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.JSON_CONTENT_TYPE);
+			request.addHeader(OCCIHeaders.ACCEPT, OCCIHeaders.JSON_CONTENT_TYPE);
 
-			responseStr = EntityUtils
-					.toString(response.getEntity(), String.valueOf(Charsets.UTF_8));
+			request.setEntity(new StringEntity(json.toString(), HTTP.UTF_8));
+			HttpClient client = new DefaultHttpClient();
+			response = client.execute(request);
+			responseStr = EntityUtils.toString(response.getEntity(), HTTP.UTF_8);
 		} catch (Exception e) {
 			LOGGER.error(e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
@@ -75,68 +108,28 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 	}
 
 	@Override
-	public Token createToken(Map<String, String> tokenAttributes) {
-		HttpResponse response;
-		String responseStr = null;
+	public Token createToken(Token token) {
+		JSONObject json;
 		try {
-			HttpClient httpClient = new DefaultHttpClient();
-			HttpPost httpPost = new HttpPost(this.v2Endpoint);
-
-			httpPost.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.JSON_CONTENT_TYPE);
-			httpPost.addHeader(OCCIHeaders.ACCEPT, OCCIHeaders.JSON_ACCEPT);
-
-			JSONObject passwordCredentials = new JSONObject();
-			passwordCredentials.put(USERNAME_KEYSTONE,
-					tokenAttributes.get(OCCIHeaders.X_TOKEN_USER));
-			passwordCredentials.put(PASSWORD_KEYSTONE,
-					tokenAttributes.get(OCCIHeaders.X_TOKEN_PASS));
-			JSONObject auth = new JSONObject();
-			auth.put(TENANT_NAME_KEYSTONE, tokenAttributes.get(OCCIHeaders.X_TOKEN_TENANT_NAME));
-			auth.put(PASSWORD_CREDENTIALS_KEYSTONE, passwordCredentials);
-			JSONObject root = new JSONObject();
-			root.put(AUTH_KEYSTONE, auth);
-			httpPost.setEntity(new StringEntity(root.toString(), HTTP.UTF_8));
-			response = httpClient.execute(httpPost);
-
-			responseStr = EntityUtils.toString(response.getEntity(), HTTP.UTF_8);
-		} catch (Exception e) {
+			json = mountJson(token);
+		} catch (JSONException e) {
 			LOGGER.error(e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}
-		checkStatusResponse(response);
 
+		String responseStr = doPostRequest(v2Endpoint, json);
 		return getTokenFromJson(responseStr);
 	}
 
-	@Override
-	public Token createToken(Token token) {
-		HttpResponse response;
-		String responseStr = null;
-		try {
-			HttpClient httpClient = new DefaultHttpClient();
-			HttpPost httpPost = new HttpPost(this.v2Endpoint);
-
-			httpPost.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.JSON_CONTENT_TYPE);
-			httpPost.addHeader(OCCIHeaders.ACCEPT, OCCIHeaders.JSON_ACCEPT);
-
-			JSONObject idToken = new JSONObject();
-			idToken.put(ID_KEYSTONE, token.getAccessId());
-			JSONObject auth = new JSONObject();
-			auth.put(TENANT_NAME_KEYSTONE, token.get(OCCIHeaders.X_TOKEN_TENANT_NAME));
-			auth.put(TOKEN_KEYSTONE, idToken);
-			JSONObject root = new JSONObject();
-			root.put(AUTH_KEYSTONE, auth);
-			httpPost.setEntity(new StringEntity(root.toString(), HTTP.UTF_8));
-			response = httpClient.execute(httpPost);
-
-			responseStr = EntityUtils.toString(response.getEntity(), HTTP.UTF_8);
-		} catch (Exception e) {
-			LOGGER.error(e);
-			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
-		}
-		checkStatusResponse(response);
-
-		return getTokenFromJson(responseStr);
+	private JSONObject mountJson(Token token) throws JSONException {
+		JSONObject idToken = new JSONObject();
+		idToken.put(ID_KEYSTONE, token.getAccessId());
+		JSONObject auth = new JSONObject();
+		auth.put(TENANT_NAME_KEYSTONE, token.get(TENANT_NAME_KEY));
+		auth.put(TOKEN_KEYSTONE, idToken);
+		JSONObject root = new JSONObject();
+		root.put(AUTH_KEYSTONE, auth);
+		return root;
 	}
 
 	private void checkStatusResponse(HttpResponse response) {
@@ -151,7 +144,6 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 
 	private Token getTokenFromJson(String responseStr) {
 		try {
-			Map<String, String> attributes = new HashMap<String, String>();
 			JSONObject root = new JSONObject(responseStr);
 			JSONObject tokenKeyStone = root.getJSONObject(ACCESS_KEYSTONE).getJSONObject(
 					TOKEN_KEYSTONE);
@@ -159,30 +151,17 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 			String tenantId = tokenKeyStone.getJSONObject(TENANT_KEYSTONE).getString(ID_KEYSTONE);
 			String tenantName = tokenKeyStone.getJSONObject(TENANT_KEYSTONE).getString(
 					NAME_KEYSTONE);
-			String expirationDateToken = tokenKeyStone.getString(EXPIRES_KEYSTONE);			
-			
+			String expirationDateToken = tokenKeyStone.getString(EXPIRES_KEYSTONE);
 			String user = root.getJSONObject(ACCESS_KEYSTONE).getJSONObject(USER_KEYSTONE)
 					.getString(NAME_KEYSTONE);
 
-			attributes.put(OCCIHeaders.X_TOKEN_TENANT_ID, tenantId);
-			attributes.put(OCCIHeaders.X_TOKEN_TENANT_NAME, tenantName);
-
-			return new Token(token, user, getDate(expirationDateToken), attributes);
+			Map<String, String> tokenAtt = new HashMap<String, String>();
+			tokenAtt.put(TENANT_ID_KEY, tenantId);
+			tokenAtt.put(TENANT_NAME_KEY, tenantName);
+			return new Token(token, user, DateUtils.getDateFromISO8601Format(expirationDateToken),
+					tokenAtt);
 		} catch (Exception e) {
-			e.printStackTrace();
 			LOGGER.error("Exception while getting token from json.", e);
-			return null;
-		}
-	}
-
-	private Date getDate(String expirationDateStr) {
-		SimpleDateFormat dateFormatISO8601 = new SimpleDateFormat(
-				FederationMember.ISO_8601_DATE_FORMAT, Locale.ROOT);
-		dateFormatISO8601.setTimeZone(TimeZone.getTimeZone("GMT"));
-		try {
-			return dateFormatISO8601.parse(expirationDateStr);
-		} catch (Exception e) {
-			LOGGER.error("Exception while getting date from String.", e);
 			return null;
 		}
 	}
@@ -190,40 +169,60 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 	@Override
 	public Token getToken(String accessId) {
 		String responseJson = getResponseJson(accessId);
-		long expirationTimeMillis = 0;
+		Date expirationTime = null;
 		String user = null;
+		Map<String, String> tokenAttributes = new HashMap<String, String>();
 		try {
-			//TODO Refactor! This code is repeated at many classes
-			SimpleDateFormat dateFormatISO8601 = new SimpleDateFormat(
-					FederationMember.ISO_8601_DATE_FORMAT, Locale.ROOT);
-			dateFormatISO8601.setTimeZone(TimeZone.getTimeZone("GMT"));
-
 			JSONObject root = new JSONObject(responseJson);
-
 			user = root.getJSONObject(ACCESS_KEYSTONE).getJSONObject(USER_KEYSTONE)
 					.getString(NAME_KEYSTONE);
-
-			String expirationTime = root.getJSONObject(ACCESS_KEYSTONE)
+			String expirationTimeStr = root.getJSONObject(ACCESS_KEYSTONE)
 					.getJSONObject(TOKEN_KEYSTONE).getString(EXPIRES_KEYSTONE);
-			expirationTimeMillis = dateFormatISO8601.parse(expirationTime).getTime();
+			String tenantName = root.getJSONObject(ACCESS_KEYSTONE).getJSONObject(TOKEN_KEYSTONE)
+					.getJSONObject(TENANT_KEYSTONE).getString(NAME_KEYSTONE);
+			String tenantId = root.getJSONObject(ACCESS_KEYSTONE).getJSONObject(TOKEN_KEYSTONE)
+					.getJSONObject(TENANT_KEYSTONE).getString(ID_KEYSTONE);
+
+			tokenAttributes.put(OpenStackIdentityPlugin.TENANT_NAME_KEY, tenantName);
+			tokenAttributes.put(OpenStackIdentityPlugin.TENANT_ID_KEY, tenantId);
+			expirationTime = DateUtils.getDateFromISO8601Format(expirationTimeStr);
 		} catch (Exception e) {
 			LOGGER.error(e);
 		}
+		return new Token(accessId, user, expirationTime, tokenAttributes);
+	}
 
-		Map<String, String> tokenAttributes = new HashMap<String, String>();
-		tokenAttributes.put(OCCIHeaders.X_TOKEN_USER, user);
+	/*
+	 * The json response format can be seen in the following link:
+	 * http://developer.openstack.org/api-ref-identity-v2.html
+	 */
+	public String getResponseJson(String accessId) {
+		HttpResponse response;
+		String responseStr = null;
+		try {
+			HttpClient httpCLient = new DefaultHttpClient();
+			HttpGet httpGet = new HttpGet(this.v2Endpoint + "/" + accessId);
+			httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, accessId);
+			response = httpCLient.execute(httpGet);
 
-		return new Token(accessId, user, new Date(expirationTimeMillis), tokenAttributes);
+			responseStr = EntityUtils
+					.toString(response.getEntity(), String.valueOf(Charsets.UTF_8));
+		} catch (Exception e) {
+			LOGGER.error(e);
+			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
+		}
+		checkStatusResponse(response);
+
+		return responseStr;
 	}
 
 	@Override
 	public boolean isValid(String accessId) {
-		try{
+		try {
 			getToken(accessId);
 			return true;
-		} catch (OCCIException e){
+		} catch (OCCIException e) {
 			return false;
 		}
 	}
-
 }

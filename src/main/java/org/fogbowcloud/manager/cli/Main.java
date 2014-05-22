@@ -17,6 +17,7 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
+import org.fogbowcloud.manager.core.plugins.openstack.OpenStackIdentityPlugin;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 
 import com.beust.jcommander.JCommander;
@@ -122,9 +123,9 @@ public class Main {
 			}
 			
 			Set<Header> headers = new HashSet<Header>();
-			headers.add(new BasicHeader(OCCIHeaders.X_TOKEN_USER, token.username));
-			headers.add(new BasicHeader(OCCIHeaders.X_TOKEN_PASS, token.password));
-			headers.add(new BasicHeader(OCCIHeaders.X_TOKEN_TENANT_NAME, token.tenantName));
+			headers.add(new BasicHeader(OpenStackIdentityPlugin.USER_KEY, token.username));
+			headers.add(new BasicHeader(OpenStackIdentityPlugin.PASSWORD_KEY, token.password));
+			headers.add(new BasicHeader(OpenStackIdentityPlugin.TENANT_NAME_KEY, token.tenantName));
 
 			doRequest("get", url + "/token", null, headers);
 		} else if (parsedCommand.equals("query")) {

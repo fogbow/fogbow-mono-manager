@@ -5,8 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.fogbowcloud.manager.core.plugins.openstack.OpenStackIdentityPlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
-import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.util.ComputeApplication.InstanceIdGenerator;
 import org.mockito.Mockito;
@@ -37,14 +37,12 @@ public class PluginHelper {
 		this.component.getServers().add(Protocol.HTTP, PORT_ENDPOINT);
 
 		Map<String, String> tokenAttributes = new HashMap<String, String>();
-		tokenAttributes.put(OCCIHeaders.X_TOKEN_TENANT_ID, TENANT_ID);
-//		tokenAttributes.put(OCCIHeaders.X_TOKEN_USER, USERNAME_FOGBOW);
-		tokenAttributes.put(OCCIHeaders.X_TOKEN_TENANT_NAME, TENANT_NAME);
+		tokenAttributes.put(OpenStackIdentityPlugin.TENANT_ID_KEY, TENANT_ID);
+		tokenAttributes.put(OpenStackIdentityPlugin.TENANT_NAME_KEY, TENANT_NAME);
 		Token token = new Token(ACCESS_ID, USERNAME_FOGBOW, DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, tokenAttributes);
 
 		// TODO Refactor! We really need all these args to KeytoneApplication?
-		KeystoneApplication keystoneApplication = new KeystoneApplication(USERNAME_FOGBOW,
-				PASSWORD_FOGBOW, TENANT_NAME, ACCESS_ID, token);
+		KeystoneApplication keystoneApplication = new KeystoneApplication(token, PASSWORD_FOGBOW);
 
 		keystoneApplication.putTokenAndUser(ACCESS_ID, USERNAME_FOGBOW);
 

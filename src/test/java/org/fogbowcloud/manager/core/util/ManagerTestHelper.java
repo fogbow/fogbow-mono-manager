@@ -23,7 +23,7 @@ import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
-import org.fogbowcloud.manager.occi.core.OCCIHeaders;
+import org.fogbowcloud.manager.core.plugins.openstack.OpenStackIdentityPlugin;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.xmpp.ManagerXmppComponent;
 import org.jamppa.client.XMPPClient;
@@ -47,7 +47,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 
 	public ManagerTestHelper() {
 		Map<String, String> tokenAttributes = new HashMap<String, String>();
-		tokenAttributes.put(OCCIHeaders.X_TOKEN_TENANT_ID, "tenantId_r4fci3qhbcy3b");
+		tokenAttributes.put(OpenStackIdentityPlugin.TENANT_ID_KEY, "tenantId_r4fci3qhbcy3b");
 		this.tokenDefault = new Token(ACCESS_TOKEN_ID, USER_NAME, TOKEN_FUTURE_EXPIRATION, tokenAttributes);
 	}
 
@@ -226,7 +226,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		ArrayList<FederationMember> aliveItems = new ArrayList<FederationMember>();
 
 		while (itemIterator.hasNext()) {
-			Element itemEl = (Element) itemIterator.next();
+			Element itemEl = itemIterator.next();
 			Attribute id = itemEl.attribute("id");
 			Element statusEl = itemEl.element("status");
 			X509Certificate cert = CertificateHandlerHelper.parseCertificate(itemEl.element("cert")
@@ -238,7 +238,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 			List<Flavor> flavoursList = new LinkedList<Flavor>();
 			Iterator<Element> flavourIterator = itemEl.elementIterator("flavor");
 			while (flavourIterator.hasNext()) {
-				Element flavour = (Element) itemIterator.next();
+				Element flavour = itemIterator.next();
 				String name = flavour.element("name").getText();
 				String cpu = flavour.element("cpu").getText();
 				String mem = flavour.element("mem").getText();

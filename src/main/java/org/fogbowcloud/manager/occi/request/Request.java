@@ -1,15 +1,12 @@
 package org.fogbowcloud.manager.occi.request;
 
-import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
-import java.util.TimeZone;
 
 import org.fogbowcloud.manager.core.model.DateUtils;
-import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.Token;
 
@@ -23,8 +20,7 @@ public class Request {
 	private List<Category> categories;
 	private Map<String, String> xOCCIAtt;
 
-	public Request(String id, Token token, List<Category> categories,
-			Map<String, String> xOCCIAtt) {
+	public Request(String id, Token token, List<Category> categories, Map<String, String> xOCCIAtt) {
 		this.id = id;
 		this.token = token;
 		this.categories = categories;
@@ -81,12 +77,12 @@ public class Request {
 		return "RequestId=" + id + "; State=" + state.getValue() + "; InstanceId= " + instanceId;
 	}
 
-	public Token getToken() {		
+	public Token getToken() {
 		return this.token;
 	}
-	
+
 	public void setToken(Token token) {
-		this.token = token;		
+		this.token = token;
 	}
 
 	public Map<String, String> getxOCCIAtt() {
@@ -108,40 +104,28 @@ public class Request {
 	}
 
 	public boolean isIntoValidPeriod() {
-		String startDateStr = xOCCIAtt.get(RequestAttribute.VALID_FROM.getValue());		
-		SimpleDateFormat dateFormatISO8601 = new SimpleDateFormat(
-				FederationMember.ISO_8601_DATE_FORMAT, Locale.ROOT);
-		dateFormatISO8601.setTimeZone(TimeZone.getTimeZone("GMT"));		
-		long startDateMillis;
-		try {
-			if (startDateStr != null){
-				startDateMillis = dateFormatISO8601.parse(startDateStr).getTime();
-			} else {
-				startDateMillis = new DateUtils().currentTimeMillis();
+		String startDateStr = xOCCIAtt.get(RequestAttribute.VALID_FROM.getValue());
+		Date startDate = DateUtils.getDateFromISO8601Format(startDateStr);
+		if (startDate == null) {
+			if (startDateStr != null) {
+				return false;
 			}
-		} catch (Exception e) {
-			return false;
+			startDate = new Date();
 		}
 		long now = new DateUtils().currentTimeMillis();
-		return startDateMillis <= now && !isExpired();
+		return startDate.getTime() <= now && !isExpired();
 	}
 
-	public boolean isExpired() {		
-		String expirationDateSrt = xOCCIAtt.get(RequestAttribute.VALID_UNTIL.getValue());
-		if (expirationDateSrt == null){
+	public boolean isExpired() {
+		String expirationDateStr = xOCCIAtt.get(RequestAttribute.VALID_UNTIL.getValue());
+		Date expirationDate = DateUtils.getDateFromISO8601Format(expirationDateStr);
+		if (expirationDateStr == null) {
 			return false;
-		}
-		//TODO Refactor! This code is repeated at many places
-		SimpleDateFormat dateFormatISO8601 = new SimpleDateFormat(
-				FederationMember.ISO_8601_DATE_FORMAT, Locale.ROOT);
-		dateFormatISO8601.setTimeZone(TimeZone.getTimeZone("GMT"));		
-		long expirationDateMillis;		
-		try {
-			expirationDateMillis = dateFormatISO8601.parse(expirationDateSrt).getTime();
-		} catch (Exception e) {
+		} else if (expirationDate == null) {
 			return true;
 		}
+
 		long now = new DateUtils().currentTimeMillis();
-		return expirationDateMillis < now;
+		return expirationDate.getTime() < now;
 	}
 }

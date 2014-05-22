@@ -20,8 +20,6 @@ public class DefaultDataTestHelper {
 	public static final String CONFIG_PATH = "src/test/resources/manager.conf.test";
 	
 	//time data
-	public static final int TEST_DEFAULT_TIMEOUT = 10000;
-	public static final int TIMEOUT_GRACE = 500;	
 	public static final Long SCHEDULER_PERIOD = 500L;
 	public static final Long GRACE_TIME = 30L;
 	public static final long LONG_TIME = 1 * 24 * 60 * 60 * 1000; //one day
