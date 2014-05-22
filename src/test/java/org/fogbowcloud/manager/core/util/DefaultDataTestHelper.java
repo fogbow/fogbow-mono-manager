@@ -2,7 +2,7 @@ package org.fogbowcloud.manager.core.util;
 
 import java.util.Date;
 
-public class DefaultDataTest {
+public class DefaultDataTestHelper {
 
 	//xmpp data
 	protected static final int SERVER_CLIENT_PORT = 5222;

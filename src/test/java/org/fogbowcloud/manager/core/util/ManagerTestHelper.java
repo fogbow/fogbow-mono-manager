@@ -38,7 +38,7 @@ import org.xmpp.component.ComponentException;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.Packet;
 
-public class ManagerTestHelper extends DefaultDataTest {
+public class ManagerTestHelper extends DefaultDataTestHelper {
 
 	private ManagerXmppComponent managerXmppComponent;
 	private ComputePlugin computePlugin;

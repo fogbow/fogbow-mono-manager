@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.fogbowcloud.manager.core.util.DefaultDataTest;
+import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.util.ComputeApplication.InstanceIdGenerator;
@@ -40,7 +40,7 @@ public class PluginHelper {
 		tokenAttributes.put(OCCIHeaders.X_TOKEN_TENANT_ID, TENANT_ID);
 //		tokenAttributes.put(OCCIHeaders.X_TOKEN_USER, USERNAME_FOGBOW);
 		tokenAttributes.put(OCCIHeaders.X_TOKEN_TENANT_NAME, TENANT_NAME);
-		Token token = new Token(ACCESS_ID, USERNAME_FOGBOW, DefaultDataTest.TOKEN_FUTURE_EXPIRATION, tokenAttributes);
+		Token token = new Token(ACCESS_ID, USERNAME_FOGBOW, DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, tokenAttributes);
 
 		// TODO Refactor! We really need all these args to KeytoneApplication?
 		KeystoneApplication keystoneApplication = new KeystoneApplication(USERNAME_FOGBOW,

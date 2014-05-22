@@ -13,7 +13,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
-import org.fogbowcloud.manager.core.util.DefaultDataTest;
+import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.request.Request;
@@ -46,12 +46,12 @@ public class TestDeleteCompute {
 
 		List<Request> requests = new LinkedList<Request>();
 		Request request1 = new Request("1", new Token(OCCITestHelper.ACCESS_TOKEN,
-				OCCITestHelper.USER_MOCK, DefaultDataTest.TOKEN_FUTURE_EXPIRATION,
+				OCCITestHelper.USER_MOCK, DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
 				new HashMap<String, String>()), null, null);
 		request1.setInstanceId(INSTANCE_ID);
 		requests.add(request1);
 		Request request2 = new Request("2", new Token("otherToken", "otherUser",
-				DefaultDataTest.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), null, null);
+				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), null, null);
 		request2.setInstanceId(OTHER_INSTANCE_ID);
 		requests.add(request2);
 

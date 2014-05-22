@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.dom4j.Element;
 import org.fogbowcloud.manager.core.model.FederationMember;
-import org.fogbowcloud.manager.core.util.DefaultDataTest;
+import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.core.util.ManagerTestHelper;
 import org.jamppa.client.XMPPClient;
 import org.jivesoftware.smack.PacketListener;
@@ -63,7 +63,7 @@ public class TestIAmAlive {
 					return false;
 				}
 				return packet.getFrom().toBareJID()
-						.equals(DefaultDataTest.MANAGER_COMPONENT_URL);
+						.equals(DefaultDataTestHelper.MANAGER_COMPONENT_URL);
 			}
 		}, callback);
 		
@@ -143,7 +143,7 @@ public class TestIAmAlive {
 					return false;
 				}
 				return element.getNamespaceURI().equals(
-						DefaultDataTest.IAMALIVE_NAMESPACE);
+						DefaultDataTestHelper.IAMALIVE_NAMESPACE);
 			}
 		}, callbackIAmAlive);
 
@@ -155,7 +155,7 @@ public class TestIAmAlive {
 					return false;
 				}
 				return element.getNamespaceURI().equals(
-						DefaultDataTest.WHOISALIVE_NAMESPACE);
+						DefaultDataTestHelper.WHOISALIVE_NAMESPACE);
 			}
 		}, callbackWhoIsAlive);
 

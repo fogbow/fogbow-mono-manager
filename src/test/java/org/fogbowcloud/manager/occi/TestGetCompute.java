@@ -14,7 +14,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
-import org.fogbowcloud.manager.core.util.DefaultDataTest;
+import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.Resource;
 import org.fogbowcloud.manager.occi.core.Token;
@@ -62,17 +62,17 @@ public class TestGetCompute {
 
 		List<Request> requests = new LinkedList<Request>();
 		Request request1 = new Request("1", new Token(OCCITestHelper.ACCESS_TOKEN,
-				OCCITestHelper.USER_MOCK, DefaultDataTest.TOKEN_FUTURE_EXPIRATION,
+				OCCITestHelper.USER_MOCK, DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
 				new HashMap<String, String>()), null, null);
 		request1.setInstanceId(INSTANCE_1_ID);
 		requests.add(request1);
 		Request request2 = new Request("2", new Token(OCCITestHelper.ACCESS_TOKEN,
-				OCCITestHelper.USER_MOCK, DefaultDataTest.TOKEN_FUTURE_EXPIRATION,
+				OCCITestHelper.USER_MOCK, DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
 				new HashMap<String, String>()), null, null);
 		request2.setInstanceId(INSTANCE_2_ID);
 		requests.add(request2);
 		Request request3 = new Request("3", new Token("token", "user",
-				DefaultDataTest.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), null, null);
+				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), null, null);
 		request3.setInstanceId(INSTANCE_3_ID_WITHOUT_USER);
 		requests.add(request3);
 
