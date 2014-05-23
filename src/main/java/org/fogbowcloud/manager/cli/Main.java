@@ -26,10 +26,12 @@ import com.beust.jcommander.Parameters;
 
 public class Main {
 
-	private static String DEFAULT_URL = "http://localhost:8182";
-	private static int DEFAULT_INTANCE_COUNT = 1;
-	private static String DEFAULT_FLAVOR = "fogbow-small";
-	private static String DEFAULT_IMAGE = "fogbow-linux-x86";
+	protected static String DEFAULT_URL = "http://localhost:8182";
+	protected static int DEFAULT_INTANCE_COUNT = 1;
+	protected static String DEFAULT_FLAVOR = "fogbow-small";
+	protected static String DEFAULT_IMAGE = "fogbow-linux-x86";
+	
+	private static HttpClient client = new DefaultHttpClient();
 	
 	public static void main(String[] args) throws Exception {
 		JCommander jc = new JCommander();
@@ -157,8 +159,7 @@ public class Main {
 		for (Header header : additionalHeaders) {
 			request.addHeader(header);
 		}
-
-		HttpClient client = new DefaultHttpClient();
+		
 		HttpResponse response = client.execute(request);
 
 		if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
@@ -167,7 +168,11 @@ public class Main {
 			System.out.println(response.getStatusLine().toString());
 		}
 	}
-
+	
+	protected static void setClient(HttpClient client) {
+		Main.client = client;
+	}
+	
 	private static class Command {
 		@Parameter(names = "--url", description = "fogbow manager url")
 		String url = System.getenv("FOGBOW_URL") == null ?  Main.DEFAULT_URL : System.getenv("FOGBOW_URL");
