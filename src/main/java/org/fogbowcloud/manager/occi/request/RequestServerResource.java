@@ -27,16 +27,16 @@ public class RequestServerResource extends ServerResource {
 	public String fetch() {
 		OCCIApplication application = (OCCIApplication) getApplication();
 		HttpRequest req = (HttpRequest) getRequest();
-		String userToken = HeaderUtils.getAuthToken(req.getHeaders());
+		String accessId = HeaderUtils.getAuthToken(req.getHeaders());
 		String requestId = (String) getRequestAttributes().get("requestId");
 
 		if (requestId == null) {
-			LOGGER.info("Getting all requests of token :" + userToken);
-			return generateResponse(application.getRequestsFromUser(userToken), req);
+			LOGGER.info("Getting all requests of token :" + accessId);
+			return generateResponse(application.getRequestsFromUser(accessId), req);
 		}
 
-		LOGGER.info("Getting request(" + requestId + ") of token :" + userToken);
-		Request request = application.getRequest(userToken, requestId);
+		LOGGER.info("Getting request(" + requestId + ") of token :" + accessId);
+		Request request = application.getRequest(accessId, requestId);
 		return request.toHttpMessageFormat();
 	}
 
@@ -44,17 +44,17 @@ public class RequestServerResource extends ServerResource {
 	public String remove() {
 		OCCIApplication application = (OCCIApplication) getApplication();
 		HttpRequest req = (HttpRequest) getRequest();
-		String userToken = HeaderUtils.getAuthToken(req.getHeaders());
+		String accessId = HeaderUtils.getAuthToken(req.getHeaders());
 		String requestId = (String) getRequestAttributes().get("requestId");
 
 		if (requestId == null) {
-			LOGGER.info("Removing all requests of token :" + userToken);
-			application.removeAllRequests(userToken);
+			LOGGER.info("Removing all requests of token :" + accessId);
+			application.removeAllRequests(accessId);
 			return ResponseConstants.OK;
 		}
 
-		LOGGER.info("Removing request(" + requestId + ") of token :" + userToken);
-		application.removeRequest(userToken, requestId);
+		LOGGER.info("Removing request(" + requestId + ") of token :" + accessId);
+		application.removeRequest(accessId, requestId);
 		return ResponseConstants.OK;
 	}
 

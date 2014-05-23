@@ -24,6 +24,10 @@ import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.openstack.OpenStackIdentityPlugin;
+import org.fogbowcloud.manager.core.ssh.SSHTunnel;
+import org.fogbowcloud.manager.occi.core.ErrorType;
+import org.fogbowcloud.manager.occi.core.OCCIException;
+import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.xmpp.ManagerXmppComponent;
 import org.jamppa.client.XMPPClient;
@@ -43,12 +47,13 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 	private ManagerXmppComponent managerXmppComponent;
 	private ComputePlugin computePlugin;
 	private IdentityPlugin identityPlugin;
-	private Token tokenDefault;
+	private Token defaultToken;
 
 	public ManagerTestHelper() {
 		Map<String, String> tokenAttributes = new HashMap<String, String>();
 		tokenAttributes.put(OpenStackIdentityPlugin.TENANT_ID_KEY, "tenantId_r4fci3qhbcy3b");
-		this.tokenDefault = new Token(ACCESS_TOKEN_ID, USER_NAME, TOKEN_FUTURE_EXPIRATION, tokenAttributes);
+		this.defaultToken = new Token(ACCESS_TOKEN_ID, USER_NAME, TOKEN_FUTURE_EXPIRATION,
+				tokenAttributes);
 	}
 
 	public ResourcesInfo getResources() throws CertificateException, IOException {
@@ -164,7 +169,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class))).thenReturn(
 				getResources());
 
-		Mockito.when(identityPlugin.createToken(Mockito.anyMap())).thenReturn(tokenDefault);
+		Mockito.when(identityPlugin.createToken(Mockito.anyMap())).thenReturn(defaultToken);
 
 		managerXmppComponent.setDescription("Manager Component");
 		managerXmppComponent.setName("Manager");
@@ -192,14 +197,14 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		managerFacade.setComputePlugin(computePlugin);
 		managerFacade.setIdentityPlugin(identityPlugin);
 		managerFacade.setValidator(validator);
-		
+
 		managerXmppComponent = new ManagerXmppComponent(MANAGER_COMPONENT_URL,
 				MANAGER_COMPONENT_PASS, SERVER_HOST, SERVER_COMPONENT_PORT, managerFacade);
 
 		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class))).thenReturn(
 				getResources());
 
-		Mockito.when(identityPlugin.createToken(Mockito.anyMap())).thenReturn(tokenDefault);
+		Mockito.when(identityPlugin.createToken(Mockito.anyMap())).thenReturn(defaultToken);
 
 		managerXmppComponent.setDescription("Manager Component");
 		managerXmppComponent.setName("Manager");
@@ -272,4 +277,42 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 	public X509Certificate getCertificate() throws CertificateException, IOException {
 		return CertificateHandlerHelper.getCertificate(getProperties());
 	}
+
+	public ManagerController createDefaultManagerController() {
+		Properties properties = new Properties();
+		properties.put("federation_user_name", DefaultDataTestHelper.USER_NAME);
+		properties.put("federation_user_password", DefaultDataTestHelper.USER_PASS);
+		properties.put("federation_user_tenant_name", DefaultDataTestHelper.TENANT_NAME);
+		properties.put("scheduler_period", DefaultDataTestHelper.SCHEDULER_PERIOD.toString());
+		properties
+				.put("instance_monitoring_period", Long.toString(DefaultDataTestHelper.LONG_TIME));
+		ManagerController managerController = new ManagerController(properties);
+
+		// mocking compute
+		computePlugin = Mockito.mock(ComputePlugin.class);
+		Mockito.when(
+				computePlugin.requestInstance(Mockito.anyString(), Mockito.any(List.class),
+						Mockito.any(Map.class))).thenThrow(
+				new OCCIException(ErrorType.QUOTA_EXCEEDED,
+						ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES));
+
+		// mocking identity
+		identityPlugin = Mockito.mock(IdentityPlugin.class);
+		Mockito.when(identityPlugin.getToken(DefaultDataTestHelper.ACCESS_TOKEN_ID)).thenReturn(
+				defaultToken);
+
+		// mocking sshTunnel
+		SSHTunnel sshTunnel = Mockito.mock(SSHTunnel.class);
+
+		managerController.setIdentityPlugin(identityPlugin);
+		managerController.setComputePlugin(computePlugin);
+		managerController.setSSHTunnel(sshTunnel);
+
+		return managerController;
+	}
+
+	public Token getDefaultToken() {
+		return defaultToken;
+	}
+
 }

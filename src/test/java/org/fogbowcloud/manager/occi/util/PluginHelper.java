@@ -1,6 +1,5 @@
 package org.fogbowcloud.manager.occi.util;
 
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,10 +20,8 @@ public class PluginHelper {
 	public static final String TENANT_ID = "fc394f2ab2df4114bde39905f800dc57";
 	public static final String TENANT_NAME = "admin";
 
-//	public static final Date EXPIRATION_DATE = new Date(System.currentTimeMillis()
-//			+ TestHelperData.LONG_TIME);
-	public static final String USERNAME_FOGBOW = "admin";
-	public static final String PASSWORD_FOGBOW = "reverse";
+	public static final String USERNAME = "admin";
+	public static final String USER_PASS = "reverse";
 
 	public static final int PORT_ENDPOINT = 8182;
 
@@ -39,12 +36,12 @@ public class PluginHelper {
 		Map<String, String> tokenAttributes = new HashMap<String, String>();
 		tokenAttributes.put(OpenStackIdentityPlugin.TENANT_ID_KEY, TENANT_ID);
 		tokenAttributes.put(OpenStackIdentityPlugin.TENANT_NAME_KEY, TENANT_NAME);
-		Token token = new Token(ACCESS_ID, USERNAME_FOGBOW, DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, tokenAttributes);
+		Token token = new Token(ACCESS_ID, USERNAME,
+				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, tokenAttributes);
 
-		// TODO Refactor! We really need all these args to KeytoneApplication?
-		KeystoneApplication keystoneApplication = new KeystoneApplication(token, PASSWORD_FOGBOW);
+		KeystoneApplication keystoneApplication = new KeystoneApplication(token, USER_PASS);
 
-		keystoneApplication.putTokenAndUser(ACCESS_ID, USERNAME_FOGBOW);
+		keystoneApplication.putTokenAndUser(ACCESS_ID, USERNAME);
 
 		this.component.getDefaultHost().attach(keystoneApplication);
 		this.component.start();
@@ -62,7 +59,7 @@ public class PluginHelper {
 				expectedInstanceIds.get(1), expectedInstanceIds.get(2), expectedInstanceIds.get(3),
 				expectedInstanceIds.get(4));
 		computeApplication.setIdGenerator(idGenerator);
-		computeApplication.putTokenAndUser(ACCESS_ID, USERNAME_FOGBOW);
+		computeApplication.putTokenAndUser(ACCESS_ID, USERNAME);
 
 		this.component.getDefaultHost().attach(computeApplication);
 		this.component.start();

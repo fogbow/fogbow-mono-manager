@@ -38,7 +38,7 @@ public class TestIdentityOpenStack {
 
 	@Test
 	public void testValidToken() {
-		Assert.assertEquals(PluginHelper.USERNAME_FOGBOW,
+		Assert.assertEquals(PluginHelper.USERNAME,
 				this.identityOpenStack.getToken(PluginHelper.ACCESS_ID).getUser());
 	}
 
@@ -49,7 +49,7 @@ public class TestIdentityOpenStack {
 
 	@Test
 	public void testGetNameUserFromToken() {
-		Assert.assertEquals(PluginHelper.USERNAME_FOGBOW,
+		Assert.assertEquals(PluginHelper.USERNAME,
 				this.identityOpenStack.getToken(PluginHelper.ACCESS_ID).getUser());
 	}
 
@@ -61,8 +61,8 @@ public class TestIdentityOpenStack {
 	@Test
 	public void testGetToken() {
 		Map<String, String> tokenAttributes = new HashMap<String, String>();
-		tokenAttributes.put(OpenStackIdentityPlugin.USER_KEY, PluginHelper.USERNAME_FOGBOW);
-		tokenAttributes.put(OpenStackIdentityPlugin.PASSWORD_KEY, PluginHelper.PASSWORD_FOGBOW);
+		tokenAttributes.put(OpenStackIdentityPlugin.USER_KEY, PluginHelper.USERNAME);
+		tokenAttributes.put(OpenStackIdentityPlugin.PASSWORD_KEY, PluginHelper.USER_PASS);
 		tokenAttributes.put(OpenStackIdentityPlugin.TENANT_NAME_KEY, PluginHelper.TENANT_NAME);
 		Token token = this.identityOpenStack.createToken(tokenAttributes);
 		String authToken = token.getAccessId();
@@ -76,8 +76,8 @@ public class TestIdentityOpenStack {
 	@Test
 	public void testUpgradeToken() {
 		Map<String, String> tokenAttributes = new HashMap<String, String>();
-		tokenAttributes.put(OpenStackIdentityPlugin.USER_KEY, PluginHelper.USERNAME_FOGBOW);
-		tokenAttributes.put(OpenStackIdentityPlugin.PASSWORD_KEY, PluginHelper.PASSWORD_FOGBOW);
+		tokenAttributes.put(OpenStackIdentityPlugin.USER_KEY, PluginHelper.USERNAME);
+		tokenAttributes.put(OpenStackIdentityPlugin.PASSWORD_KEY, PluginHelper.USER_PASS);
 		tokenAttributes.put(OpenStackIdentityPlugin.TENANT_NAME_KEY, PluginHelper.TENANT_NAME);
 		Token token = this.identityOpenStack.createToken(tokenAttributes);
 		String authToken = token.getAccessId();
@@ -100,7 +100,7 @@ public class TestIdentityOpenStack {
 	public void testGetTokenWrongUsername() {
 		Map<String, String> tokenAttributes = new HashMap<String, String>();
 		tokenAttributes.put(OpenStackIdentityPlugin.USER_KEY, "wrong");
-		tokenAttributes.put(OpenStackIdentityPlugin.PASSWORD_KEY, PluginHelper.PASSWORD_FOGBOW);
+		tokenAttributes.put(OpenStackIdentityPlugin.PASSWORD_KEY, PluginHelper.USER_PASS);
 		tokenAttributes.put(OpenStackIdentityPlugin.TENANT_NAME_KEY, "");
 		this.identityOpenStack.createToken(tokenAttributes);
 	}
@@ -108,7 +108,7 @@ public class TestIdentityOpenStack {
 	@Test(expected = OCCIException.class)
 	public void testGetTokenWrongPassword() {
 		Map<String, String> tokenAttributes = new HashMap<String, String>();
-		tokenAttributes.put(OpenStackIdentityPlugin.USER_KEY, PluginHelper.USERNAME_FOGBOW);
+		tokenAttributes.put(OpenStackIdentityPlugin.USER_KEY, PluginHelper.USERNAME);
 		tokenAttributes.put(OpenStackIdentityPlugin.PASSWORD_KEY, "worng");
 		tokenAttributes.put(OpenStackIdentityPlugin.TENANT_NAME_KEY, "");
 		this.identityOpenStack.createToken(tokenAttributes);
