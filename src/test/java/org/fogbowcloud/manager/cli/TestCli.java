@@ -24,9 +24,11 @@ import com.beust.jcommander.ParameterException;
 
 public class TestCli {
 
+	private final String REQUEST_ID = "234GD0-43254435-4543T4";
+	
 	private Main cli;
 	private HttpClient client;
-	private HttpUriRequestMatcher matcher;
+	private HttpUriRequestMatcher expectedRequest;
 
 	@SuppressWarnings("static-access")
 	@Before
@@ -52,14 +54,14 @@ public class TestCli {
 		request.addHeader(OpenStackIdentityPlugin.USER_KEY, user);
 		request.addHeader(OpenStackIdentityPlugin.PASSWORD_KEY, password);
 		request.addHeader(OpenStackIdentityPlugin.TENANT_NAME_KEY, tenantName);
-		matcher = new HttpUriRequestMatcher(request);
+		expectedRequest = new HttpUriRequestMatcher(request);
 
 		String command = "token --get --url " + Main.DEFAULT_URL + " --username " + user
 				+ "  --tenantName " + tenantName + " --password " + password;
 
 		cli.main(createArgs(command));
 
-		Mockito.verify(client).execute(Mockito.argThat(matcher));
+		Mockito.verify(client).execute(Mockito.argThat(expectedRequest));
 	}
 
 	@SuppressWarnings("static-access")
@@ -74,13 +76,13 @@ public class TestCli {
 		request.addHeader(OpenStackIdentityPlugin.USER_KEY, user);
 		request.addHeader(OpenStackIdentityPlugin.PASSWORD_KEY, password);
 		request.addHeader(OpenStackIdentityPlugin.TENANT_NAME_KEY, tenantName);
-		matcher = new HttpUriRequestMatcher(request);
+		expectedRequest = new HttpUriRequestMatcher(request);
 
 		String command = "token --get --username " + user + "  --tenantName " + tenantName
 				+ " --password " + password;
 		cli.main(createArgs(command));
 
-		Mockito.verify(client).execute(Mockito.argThat(matcher));
+		Mockito.verify(client).execute(Mockito.argThat(expectedRequest));
 	}
 
 	@SuppressWarnings("static-access")
@@ -110,14 +112,14 @@ public class TestCli {
 		request.addHeader("Category", image
 				+ "; scheme=\"http://schemas.fogbowcloud.org/template/os#\"; class=\"mixin\"");
 		request.addHeader(OCCIHeaders.X_AUTH_TOKEN, DefaultDataTestHelper.ACCESS_TOKEN_ID);
-		matcher = new HttpUriRequestMatcher(request);
+		expectedRequest = new HttpUriRequestMatcher(request);
 
 		String command = "request --create --n " + intanceCount + " --url " + Main.DEFAULT_URL
 				+ " " + "--image " + image + " --flavor " + flavor + " --auth-token "
 				+ DefaultDataTestHelper.ACCESS_TOKEN_ID;
 		cli.main(createArgs(command));
 
-		Mockito.verify(client).execute(Mockito.argThat(matcher));
+		Mockito.verify(client).execute(Mockito.argThat(expectedRequest));
 	}
 
 	@SuppressWarnings("static-access")
@@ -135,26 +137,87 @@ public class TestCli {
 		request.addHeader("Category", Main.DEFAULT_IMAGE
 				+ "; scheme=\"http://schemas.fogbowcloud.org/template/os#\"; class=\"mixin\"");
 		request.addHeader(OCCIHeaders.X_AUTH_TOKEN, DefaultDataTestHelper.ACCESS_TOKEN_ID);
-		matcher = new HttpUriRequestMatcher(request);
+		expectedRequest = new HttpUriRequestMatcher(request);
 
 		String command = "request --create --url " + Main.DEFAULT_URL + " --auth-token "
 				+ DefaultDataTestHelper.ACCESS_TOKEN_ID;
 		cli.main(createArgs(command));
 
-		Mockito.verify(client).execute(Mockito.argThat(matcher));
+		Mockito.verify(client).execute(Mockito.argThat(expectedRequest));
 	}
+	
+	@SuppressWarnings("static-access")
+	@Test
+	public void commandGetSpecificRequest() throws Exception {
+		HttpUriRequest request = new HttpGet(Main.DEFAULT_URL + "/request/" + REQUEST_ID);
+		request.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
+
+		request.addHeader(OCCIHeaders.X_AUTH_TOKEN, DefaultDataTestHelper.ACCESS_TOKEN_ID);
+		expectedRequest = new HttpUriRequestMatcher(request);
+
+		String command = "request --get --url " + Main.DEFAULT_URL + " --auth-token "
+				+ DefaultDataTestHelper.ACCESS_TOKEN_ID + " --id " + REQUEST_ID;
+		cli.main(createArgs(command));
+
+		Mockito.verify(client).execute(Mockito.argThat(expectedRequest));
+	}	
+	
+	@SuppressWarnings("static-access")
+	@Test
+	public void commandGetRequest() throws Exception {
+		HttpUriRequest request = new HttpGet(Main.DEFAULT_URL + "/request");
+		request.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
+
+		request.addHeader(OCCIHeaders.X_AUTH_TOKEN, DefaultDataTestHelper.ACCESS_TOKEN_ID);
+		expectedRequest = new HttpUriRequestMatcher(request);
+
+		String command = "request --get --url " + Main.DEFAULT_URL + " --auth-token "
+				+ DefaultDataTestHelper.ACCESS_TOKEN_ID;
+		cli.main(createArgs(command));
+
+		Mockito.verify(client).execute(Mockito.argThat(expectedRequest));
+	}	
+	
+	@SuppressWarnings("static-access")
+	@Test
+	public void commandDeleteRequest() throws Exception {
+		HttpUriRequest request = new HttpDelete(Main.DEFAULT_URL + "/request/" + REQUEST_ID);
+		request.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
+
+		request.addHeader(OCCIHeaders.X_AUTH_TOKEN, DefaultDataTestHelper.ACCESS_TOKEN_ID);
+		expectedRequest = new HttpUriRequestMatcher(request);
+
+		String command = "request --delete --url " + Main.DEFAULT_URL + " --auth-token "
+				+ DefaultDataTestHelper.ACCESS_TOKEN_ID + " --id " + REQUEST_ID;
+		cli.main(createArgs(command));
+
+		Mockito.verify(client).execute(Mockito.argThat(expectedRequest));
+	}	
 
 	@SuppressWarnings("static-access")
 	@Test
 	public void commandGetQuery() throws Exception {
 		HttpUriRequest request = new HttpGet(Main.DEFAULT_URL + "/-/");
 		request.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		matcher = new HttpUriRequestMatcher(request);
+		expectedRequest = new HttpUriRequestMatcher(request);
 
 		String command = "query --get";
 		cli.main(createArgs(command));
 
-		Mockito.verify(client).execute(Mockito.argThat(matcher));
+		Mockito.verify(client).execute(Mockito.argThat(expectedRequest));
+	}
+	
+	@SuppressWarnings("static-access")
+	@Test
+	public void commandGetMember() throws Exception {
+		HttpUriRequest request = new HttpGet(Main.DEFAULT_URL + "/members");
+		request.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
+		expectedRequest = new HttpUriRequestMatcher(request);
+
+		String command = "member --get";
+		cli.main(createArgs(command));
+
+		Mockito.verify(client).execute(Mockito.argThat(expectedRequest));
 	}
 
 	@SuppressWarnings("static-access")
@@ -163,13 +226,13 @@ public class TestCli {
 		HttpUriRequest request = new HttpGet(Main.DEFAULT_URL + "/compute/");
 		request.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		request.addHeader(OCCIHeaders.X_AUTH_TOKEN, DefaultDataTestHelper.ACCESS_TOKEN_ID);
-		matcher = new HttpUriRequestMatcher(request);
+		expectedRequest = new HttpUriRequestMatcher(request);
 
 		String command = "instance --get --url " + Main.DEFAULT_URL + " " + " --auth-token "
 				+ DefaultDataTestHelper.ACCESS_TOKEN_ID;
 		cli.main(createArgs(command));
 
-		Mockito.verify(client).execute(Mockito.argThat(matcher));
+		Mockito.verify(client).execute(Mockito.argThat(expectedRequest));
 	}
 
 	@SuppressWarnings("static-access")
@@ -179,14 +242,14 @@ public class TestCli {
 				+ DefaultDataTestHelper.INSTANCE_ID);
 		request.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		request.addHeader(OCCIHeaders.X_AUTH_TOKEN, DefaultDataTestHelper.ACCESS_TOKEN_ID);
-		matcher = new HttpUriRequestMatcher(request);
+		expectedRequest = new HttpUriRequestMatcher(request);
 
 		String command = "instance --get --url " + Main.DEFAULT_URL + " " + "--id "
 				+ DefaultDataTestHelper.INSTANCE_ID + " --auth-token "
 				+ DefaultDataTestHelper.ACCESS_TOKEN_ID;
 		cli.main(createArgs(command));
 
-		Mockito.verify(client).execute(Mockito.argThat(matcher));
+		Mockito.verify(client).execute(Mockito.argThat(expectedRequest));
 	}
 
 	@SuppressWarnings("static-access")
@@ -196,7 +259,7 @@ public class TestCli {
 				+ DefaultDataTestHelper.INSTANCE_ID);
 		request.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		request.addHeader(OCCIHeaders.X_AUTH_TOKEN, DefaultDataTestHelper.ACCESS_TOKEN_ID);
-		matcher = new HttpUriRequestMatcher(request);
+		expectedRequest = new HttpUriRequestMatcher(request);
 
 		String command = "instance --delete --url " + Main.DEFAULT_URL + " " + "--id "
 				+ DefaultDataTestHelper.INSTANCE_ID + " --auth-token "
@@ -204,7 +267,7 @@ public class TestCli {
 
 		cli.main(createArgs(command));
 
-		Mockito.verify(client).execute(Mockito.argThat(matcher));
+		Mockito.verify(client).execute(Mockito.argThat(expectedRequest));
 	}
 
 	private String[] createArgs(String command) throws Exception {

@@ -90,4 +90,12 @@ public class DefaultSSHTunnel implements SSHTunnel {
 		}
 		return false;
 	}
+	
+	public Set<Integer> getTakenPorts() {
+		return takenPorts;
+	}
+	
+	public void setTakenPorts(Set<Integer> takenPorts) {
+		this.takenPorts = takenPorts;
+	}
 }
