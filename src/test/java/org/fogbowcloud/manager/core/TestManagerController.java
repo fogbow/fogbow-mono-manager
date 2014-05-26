@@ -282,6 +282,7 @@ public class TestManagerController {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testMonitorFulfilledAndPersistentRequest() throws InterruptedException {
 		Map<String, String> attributes = new HashMap<String, String>();
@@ -295,9 +296,6 @@ public class TestManagerController {
 
 		// updating compute mock
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
-		Mockito.when(
-				computePlugin.requestInstance(Mockito.anyString(), Mockito.any(List.class),
-						Mockito.any(Map.class))).thenReturn(DefaultDataTestHelper.INSTANCE_ID);
 		Mockito.when(computePlugin.getInstance(Mockito.anyString(), Mockito.anyString()))
 				.thenThrow(new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND));
 		managerController.setComputePlugin(computePlugin);
@@ -314,6 +312,14 @@ public class TestManagerController {
 		Assert.assertEquals(1, requestsFromUser.size());
 		Assert.assertEquals(RequestState.OPEN, requestsFromUser.get(0).getState());
 
+		Mockito.reset(computePlugin);
+		Mockito.when(
+				computePlugin.requestInstance(Mockito.anyString(),
+						Mockito.any(List.class), Mockito.any(Map.class)))
+				.thenReturn(DefaultDataTestHelper.INSTANCE_ID);
+		Mockito.when(
+				computePlugin.getInstance(Mockito.anyString(), Mockito.eq(DefaultDataTestHelper.INSTANCE_ID)))
+				.thenReturn(new Instance(DefaultDataTestHelper.INSTANCE_ID));
 		managerController.checkAndSubmitOpenRequests();
 
 		requestsFromUser = managerController
@@ -622,6 +628,7 @@ public class TestManagerController {
 		Assert.assertNull(requests.get(0).getMemberId());
 	}
 
+	@SuppressWarnings("unchecked")
 	private void mockRequestInstance() {
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		Mockito.when(
@@ -898,6 +905,7 @@ public class TestManagerController {
 		Assert.assertNull(requests.get(0).getMemberId());
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testSubmitRequestForRemoteMemberValidation() {
 		ResourcesInfo resources = Mockito.mock(ResourcesInfo.class);
