@@ -31,7 +31,6 @@ import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.xmpp.ManagerXmppComponent;
 import org.jamppa.client.XMPPClient;
-import org.jamppa.client.plugin.xep0077.XEP0077;
 import org.jamppa.component.PacketSender;
 import org.jivesoftware.smack.PacketCollector;
 import org.jivesoftware.smack.XMPPException;
@@ -48,6 +47,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 	private ComputePlugin computePlugin;
 	private IdentityPlugin identityPlugin;
 	private Token defaultToken;
+	private FakeXMPPServer fakeServer = new FakeXMPPServer();
 
 	public ManagerTestHelper() {
 		Map<String, String> tokenAttributes = new HashMap<String, String>();
@@ -99,18 +99,9 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 
 	public XMPPClient createXMPPClient() throws XMPPException {
 
-		XMPPClient xmppClient = new XMPPClient(CLIENT_ADRESS, CLIENT_PASS, SERVER_HOST,
-				SERVER_CLIENT_PORT);
-		XEP0077 register = new XEP0077();
-		xmppClient.registerPlugin(register);
-		xmppClient.connect();
-		try {
-			register.createAccount(CLIENT_ADRESS, CLIENT_PASS);
-		} catch (XMPPException e) {
-			e.printStackTrace();
-		}
-
-		xmppClient.login();
+		XMPPClient xmppClient = Mockito.spy(new XMPPClient(CLIENT_ADRESS, CLIENT_PASS, SERVER_HOST,
+				SERVER_CLIENT_PORT));
+		fakeServer.connect(xmppClient);
 		xmppClient.process(false);
 
 		return xmppClient;
@@ -124,7 +115,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 				PacketFilter responseFilter = new PacketIDFilter(packet.getID());
 				PacketCollector response = xmppClient.getConnection().createPacketCollector(
 						responseFilter);
-				xmppClient.getConnection().sendPacket(packet);
+				xmppClient.send(packet);
 				Packet result = response.nextResult(5000);
 				response.cancel();
 				return result;
@@ -146,6 +137,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		return identityPlugin;
 	}
 
+	@SuppressWarnings("unchecked")
 	public ManagerXmppComponent initializeXMPPManagerComponent(boolean init) throws Exception {
 
 		this.computePlugin = Mockito.mock(ComputePlugin.class);
@@ -163,8 +155,8 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		FederationMemberValidator validator = new DefaultMemberValidator();
 		managerFacade.setValidator(validator);
 
-		managerXmppComponent = new ManagerXmppComponent(MANAGER_COMPONENT_URL,
-				MANAGER_COMPONENT_PASS, SERVER_HOST, SERVER_COMPONENT_PORT, managerFacade);
+		managerXmppComponent = Mockito.spy(new ManagerXmppComponent(MANAGER_COMPONENT_URL,
+				MANAGER_COMPONENT_PASS, SERVER_HOST, SERVER_COMPONENT_PORT, managerFacade));
 
 		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class))).thenReturn(
 				getResources());
@@ -174,7 +166,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		managerXmppComponent.setDescription("Manager Component");
 		managerXmppComponent.setName("Manager");
 		managerXmppComponent.setRendezvousAddress(CLIENT_ADRESS + SMACK_ENDING);
-		managerXmppComponent.connect();
+		fakeServer.connect(managerXmppComponent);
 		managerXmppComponent.process();
 		if (init) {
 			managerXmppComponent.init();
@@ -182,6 +174,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		return managerXmppComponent;
 	}
 
+	@SuppressWarnings("unchecked")
 	public ManagerXmppComponent initializeLocalXMPPManagerComponent() throws Exception {
 
 		this.computePlugin = Mockito.mock(ComputePlugin.class);
@@ -198,18 +191,18 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		managerFacade.setIdentityPlugin(identityPlugin);
 		managerFacade.setValidator(validator);
 
-		managerXmppComponent = new ManagerXmppComponent(MANAGER_COMPONENT_URL,
-				MANAGER_COMPONENT_PASS, SERVER_HOST, SERVER_COMPONENT_PORT, managerFacade);
+		managerXmppComponent = Mockito.spy(new ManagerXmppComponent(MANAGER_COMPONENT_URL,
+				MANAGER_COMPONENT_PASS, SERVER_HOST, SERVER_COMPONENT_PORT, managerFacade));
 
 		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class))).thenReturn(
 				getResources());
 
 		Mockito.when(identityPlugin.createToken(Mockito.anyMap())).thenReturn(defaultToken);
-
+		
 		managerXmppComponent.setDescription("Manager Component");
 		managerXmppComponent.setName("Manager");
 		managerXmppComponent.setRendezvousAddress(CLIENT_ADRESS + SMACK_ENDING);
-		managerXmppComponent.connect();
+		fakeServer.connect(managerXmppComponent);
 		managerXmppComponent.process();
 		return managerXmppComponent;
 	}
@@ -220,7 +213,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 	}
 
 	public void shutdown() throws ComponentException {
-		managerXmppComponent.disconnect();
+		fakeServer.disconnect(managerXmppComponent.getJID().toBareJID());
 	}
 
 	@SuppressWarnings("unchecked")
@@ -278,6 +271,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		return CertificateHandlerHelper.getCertificate(getProperties());
 	}
 
+	@SuppressWarnings("unchecked")
 	public ManagerController createDefaultManagerController() {
 		Properties properties = new Properties();
 		properties.put("federation_user_name", DefaultDataTestHelper.USER_NAME);

@@ -41,8 +41,7 @@ public class TestIAmAlive {
 				.initializeXMPPManagerComponent(false);
 		final XMPPClient xmppClient = managerTestHelper.createXMPPClient();
 
-		final BlockingQueue<Packet> blockingQueue = new LinkedBlockingQueue<Packet>(
-				1);
+		final BlockingQueue<Packet> blockingQueue = new LinkedBlockingQueue<Packet>(1);
 
 		final PacketListener callback = new PacketListener() {
 			public void processPacket(Packet packet) {
