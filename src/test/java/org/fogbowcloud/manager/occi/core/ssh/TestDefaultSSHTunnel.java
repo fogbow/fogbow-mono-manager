@@ -28,13 +28,11 @@ public class TestDefaultSSHTunnel {
 
 	private DefaultSSHTunnel defaultSSHTunnel;
 
-	@Ignore
 	@Before
 	public void setUp() {
 		defaultSSHTunnel = new DefaultSSHTunnel();
 	}
 
-	@Ignore
 	@Test
 	public void create() throws FileNotFoundException, IOException {
 		final String host = "10.0.0.1";
@@ -65,7 +63,6 @@ public class TestDefaultSSHTunnel {
 				request.getAttValue(DefaultSSHTunnel.SSH_ADDRESS_ATT));
 	}
 
-	@Ignore
 	@Test
 	public void release() {
 		final int port = 50000;
@@ -97,8 +94,7 @@ public class TestDefaultSSHTunnel {
 			StringBuilder sb = new StringBuilder();
 			String line = bufferedReader.readLine();
 			while (line != null) {
-				sb.append(line);
-				sb.append(System.lineSeparator());
+				sb.append(line + "\n");
 				line = bufferedReader.readLine();
 			}
 			fullText = sb.toString();
