@@ -30,7 +30,7 @@ public class TestComputeOpenStack {
 	private static final String SECOND_INSTANCE_ID = "at62f3ad-67ac-56gb-8a55-adbm98cdee9f";
 
 	private static final String URL = "http://localhost:" + PluginHelper.PORT_ENDPOINT;
-	
+
 	private OpenStackComputePlugin computeOpenStack;
 	private PluginHelper pluginHelper;
 	List<String> expectedInstanceIds;
@@ -71,12 +71,10 @@ public class TestComputeOpenStack {
 		categories.add(new Category(RequestConstants.LINUX_X86_TERM,
 				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 
-		Assert.assertEquals(FIRST_INSTANCE_ID,
-				computeOpenStack.requestInstance(PluginHelper.ACCESS_ID, categories,
-						new HashMap<String, String>()));
+		Assert.assertEquals(FIRST_INSTANCE_ID, computeOpenStack.requestInstance(
+				PluginHelper.ACCESS_ID, categories, new HashMap<String, String>()));
 
-		Instance instance = computeOpenStack
-				.getInstance(PluginHelper.ACCESS_ID, FIRST_INSTANCE_ID);
+		Instance instance = computeOpenStack.getInstance(PluginHelper.ACCESS_ID, FIRST_INSTANCE_ID);
 
 		Assert.assertEquals(1, Integer.parseInt(getAttValueFromDetails(
 				instance.toOCCIMassageFormatDetails(), ComputeApplication.CORE_ATTRIBUTE_OCCI)));
@@ -119,9 +117,8 @@ public class TestComputeOpenStack {
 		categories.add(new Category(RequestConstants.LINUX_X86_TERM,
 				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 
-		Assert.assertEquals(FIRST_INSTANCE_ID,
-				computeOpenStack.requestInstance(PluginHelper.ACCESS_ID, categories,
-						new HashMap<String, String>()));
+		Assert.assertEquals(FIRST_INSTANCE_ID, computeOpenStack.requestInstance(
+				PluginHelper.ACCESS_ID, categories, new HashMap<String, String>()));
 	}
 
 	@Test(expected = OCCIException.class)
@@ -233,9 +230,8 @@ public class TestComputeOpenStack {
 		List<Category> categories = new ArrayList<Category>();
 		categories.add(new Category(RequestConstants.LINUX_X86_TERM,
 				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
-		Assert.assertEquals(FIRST_INSTANCE_ID,
-				computeOpenStack.requestInstance(PluginHelper.ACCESS_ID, categories,
-						new HashMap<String, String>()));
+		Assert.assertEquals(FIRST_INSTANCE_ID, computeOpenStack.requestInstance(
+				PluginHelper.ACCESS_ID, categories, new HashMap<String, String>()));
 
 		// check getting all instance ids
 		instanceLocations = getInstanceLocations(computeOpenStack
@@ -257,9 +253,8 @@ public class TestComputeOpenStack {
 				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 
 		for (String instanceId : expectedInstanceIds) {
-			Assert.assertEquals(instanceId, computeOpenStack
-					.requestInstance(PluginHelper.ACCESS_ID, categories,
-							new HashMap<String, String>()));
+			Assert.assertEquals(instanceId, computeOpenStack.requestInstance(
+					PluginHelper.ACCESS_ID, categories, new HashMap<String, String>()));
 		}
 
 		// check getting all instance ids
@@ -292,9 +287,8 @@ public class TestComputeOpenStack {
 		List<Category> categories = new ArrayList<Category>();
 		categories.add(new Category(RequestConstants.LINUX_X86_TERM,
 				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
-		Assert.assertEquals(FIRST_INSTANCE_ID,
-				computeOpenStack.requestInstance(PluginHelper.ACCESS_ID, categories,
-						new HashMap<String, String>()));
+		Assert.assertEquals(FIRST_INSTANCE_ID, computeOpenStack.requestInstance(
+				PluginHelper.ACCESS_ID, categories, new HashMap<String, String>()));
 
 		// check instance details
 		instanceLocations = getInstanceLocations(computeOpenStack
@@ -337,9 +331,8 @@ public class TestComputeOpenStack {
 		categories.add(new Category(RequestConstants.LINUX_X86_TERM,
 				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 		for (String instanceId : expectedInstanceIds) {
-			Assert.assertEquals(instanceId, computeOpenStack
-					.requestInstance(PluginHelper.ACCESS_ID, categories,
-							new HashMap<String, String>()));
+			Assert.assertEquals(instanceId, computeOpenStack.requestInstance(
+					PluginHelper.ACCESS_ID, categories, new HashMap<String, String>()));
 		}
 
 		// check number of instances
@@ -365,9 +358,8 @@ public class TestComputeOpenStack {
 		categories.add(new Category(RequestConstants.LINUX_X86_TERM,
 				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 		for (String instanceId : expectedInstanceIds) {
-			Assert.assertEquals(instanceId, computeOpenStack
-					.requestInstance(PluginHelper.ACCESS_ID, categories,
-							new HashMap<String, String>()));
+			Assert.assertEquals(instanceId, computeOpenStack.requestInstance(
+					PluginHelper.ACCESS_ID, categories, new HashMap<String, String>()));
 		}
 
 		// check number of instances

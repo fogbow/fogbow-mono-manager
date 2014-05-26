@@ -209,13 +209,17 @@ public class ManagerController {
 	}
 
 	private void instanceRemoved(Request request) {
-		if (isPersistent(request)) {
-			request.setState(RequestState.OPEN);
-			if (!requestSchedulerTimer.isScheduled()) {
-				scheduleRequests();
+		if (request.getState().notIn(RequestState.DELETED)){
+			if (isPersistent(request)) {
+				LOGGER.debug("Request: " + request + ", setting state to " + RequestState.OPEN);
+				request.setState(RequestState.OPEN);
+				if (!requestSchedulerTimer.isScheduled()) {
+					scheduleRequests();
+				}
+			} else {
+				LOGGER.debug("Request: " + request + ", setting state to " + RequestState.CLOSED);
+				request.setState(RequestState.CLOSED);
 			}
-		} else {
-			request.setState(RequestState.CLOSED);
 		}
 	}
 
@@ -370,13 +374,16 @@ public class ManagerController {
 
 	protected void monitorInstances() {
 		boolean turnOffTimer = true;
-		
+		LOGGER.info("Monitoring instances.");
+
 		for (Request request : requests.getAll()) {			
 			if (request.getState().in(RequestState.FULFILLED, RequestState.DELETED)){
 				turnOffTimer = false;
 				try {
+					LOGGER.debug("Monitoring instance of request: " + request);
 					getInstance(request);
 				} catch (OCCIException e) {
+					LOGGER.debug("Error while getInstance of " + request.getInstanceId(), e);
 					if (request.getState().in(RequestState.FULFILLED)){
 						instanceRemoved(requests.get(request.getId()));
 					} else if (request.getState().in(RequestState.DELETED)){
@@ -408,6 +415,8 @@ public class ManagerController {
 	protected void checkAndUpdateRequestToken(long tokenUpdatePeriod) {
 		List<Request> allRequests = requests.getAll();
 		boolean turnOffTimer = true;
+		
+		LOGGER.info("Checking and updating request token.");
 
 		for (Request request : allRequests) {
 			if (request.getState().notIn(RequestState.CLOSED, RequestState.FAILED)) {
@@ -416,6 +425,7 @@ public class ManagerController {
 						- dateUtils.currentTimeMillis();
 				if (validInterval < 2 * tokenUpdatePeriod) {
 					Token newToken = identityPlugin.createToken(request.getToken());
+					LOGGER.info("Setting new token "+ newToken + " on request " + request.getId());
 					requests.get(request.getId()).setToken(newToken);
 				}
 			}

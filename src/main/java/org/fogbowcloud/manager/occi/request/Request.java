@@ -74,7 +74,7 @@ public class Request {
 	}
 
 	public String toHttpMessageFormat() {
-		return "RequestId=" + id + "; State=" + state.getValue() + "; InstanceId= " + instanceId;
+		return "RequestId=" + id + "; State=" + state.getValue() + "; InstanceId=" + instanceId;
 	}
 
 	public Token getToken() {
