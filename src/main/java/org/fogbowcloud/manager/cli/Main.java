@@ -44,8 +44,8 @@ public class Main {
 		jc.addCommand("instance", instance);
 		TokenCommand token = new TokenCommand();
 		jc.addCommand("token", token);
-		QueryCommand query = new QueryCommand();
-		jc.addCommand("query", query);
+		ResourceCommand resource = new ResourceCommand();
+		jc.addCommand("resource", resource);
 
 		jc.setProgramName("fogbow-cli");
 		jc.parse(args);
@@ -130,7 +130,7 @@ public class Main {
 			headers.add(new BasicHeader(OpenStackIdentityPlugin.TENANT_NAME_KEY, token.tenantName));
 
 			doRequest("get", url + "/token", null, headers);
-		} else if (parsedCommand.equals("query")) {
+		} else if (parsedCommand.equals("resource")) {
 			String url = token.url;
 			
 			doRequest("get", url + "/-/", null);
@@ -241,7 +241,7 @@ public class Main {
 	}
 	
 	@Parameters(separators = "=", commandDescription = "Resources Fogbow")
-	private static class QueryCommand extends Command {
+	private static class ResourceCommand extends Command {
 		@Parameter(names = "--get", description = "Get all resources")
 		Boolean get = false;
 	}
