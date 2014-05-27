@@ -201,7 +201,7 @@ public class TestCli {
 		request.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		expectedRequest = new HttpUriRequestMatcher(request);
 
-		String command = "query --get";
+		String command = "resource --get";
 		cli.main(createArgs(command));
 
 		Mockito.verify(client).execute(Mockito.argThat(expectedRequest));

@@ -46,6 +46,12 @@ public class TestManagerController {
 	@Before
 	public void setUp() throws Exception {
 		managerTestHelper = new ManagerTestHelper();
+		/*
+		 * Default manager controller: computePlugin.requestInstance returns
+		 * QuotaExceededException identityPlugin.getToken(AccessId) returns
+		 * defaulToken schedulerPeriod and monitoringPeriod are long time (one
+		 * day)
+		 */
 		managerController = managerTestHelper.createDefaultManagerController();
 
 		// default instance count value is 1
@@ -56,8 +62,6 @@ public class TestManagerController {
 
 	@Test
 	public void testGetFederationMember() throws InterruptedException {
-		OpenStackIdentityPlugin openStackidentityPlugin = Mockito
-				.mock(OpenStackIdentityPlugin.class);
 		Map<String, String> tokenCredentials = new HashMap<String, String>();
 		tokenCredentials.put(OpenStackIdentityPlugin.USER_KEY, DefaultDataTestHelper.USER_NAME);
 		tokenCredentials.put(OpenStackIdentityPlugin.PASSWORD_KEY, DefaultDataTestHelper.USER_PASS);
@@ -70,15 +74,18 @@ public class TestManagerController {
 		attributesTokenReturn.put(OpenStackIdentityPlugin.TENANT_ID_KEY, "987654321");
 		attributesTokenReturn.put(OpenStackIdentityPlugin.TENANT_NAME_KEY,
 				DefaultDataTestHelper.TENANT_NAME);
-		Token token = new Token(DefaultDataTestHelper.ACCESS_TOKEN_ID,
+
+		Token firstToken = new Token(DefaultDataTestHelper.ACCESS_TOKEN_ID,
 				DefaultDataTestHelper.USER_NAME, new Date(tokenExpirationTime),
 				attributesTokenReturn);
-
-		Token token2 = new Token(ACCESS_TOKEN_ID_2, DefaultDataTestHelper.USER_NAME, new Date(
+		Token secondToken = new Token(ACCESS_TOKEN_ID_2, DefaultDataTestHelper.USER_NAME, new Date(
 				tokenExpirationTime + DefaultDataTestHelper.LONG_TIME), attributesTokenReturn);
 
-		Mockito.when(openStackidentityPlugin.createToken(tokenCredentials)).thenReturn(token,
-				token2);
+		// mocking identity plugin
+		OpenStackIdentityPlugin openStackidentityPlugin = Mockito
+				.mock(OpenStackIdentityPlugin.class);
+		Mockito.when(openStackidentityPlugin.createToken(tokenCredentials)).thenReturn(firstToken,
+				secondToken);
 		Mockito.when(openStackidentityPlugin.isValid(DefaultDataTestHelper.ACCESS_TOKEN_ID))
 				.thenReturn(true, false);
 		managerController.setIdentityPlugin(openStackidentityPlugin);
@@ -95,7 +102,7 @@ public class TestManagerController {
 		DateUtils dateUtils = Mockito.mock(DateUtils.class);
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(
 				tokenExpirationTime + DefaultDataTestHelper.GRACE_TIME);
-		token.setDateUtils(dateUtils);
+		firstToken.setDateUtils(dateUtils);
 
 		// Get new token
 		accessToken = managerController.getFederationUserToken().getAccessId();
@@ -108,20 +115,22 @@ public class TestManagerController {
 		final int tokenUpdaterInterval = 100;
 		long tokenExpirationTime = now + (4 * tokenUpdaterInterval);
 
-		Token token = new Token(DefaultDataTestHelper.ACCESS_TOKEN_ID,
+		Token firstToken = new Token(DefaultDataTestHelper.ACCESS_TOKEN_ID,
 				DefaultDataTestHelper.USER_NAME, new Date(tokenExpirationTime),
 				new HashMap<String, String>());
+
+		// setting request repository
 		RequestRepository requestRepository = new RequestRepository();
 		for (int i = 0; i < 5; i++) {
 			requestRepository.addRequest(DefaultDataTestHelper.USER_NAME, new Request("id" + i,
-					token, null, null));
+					firstToken, null, null));
 		}
 		managerController.setRequests(requestRepository);
 
 		// adding behaviour on identity mock
 		Token secondToken = new Token(ACCESS_TOKEN_ID_2, DefaultDataTestHelper.USER_NAME, new Date(
 				tokenExpirationTime + tokenUpdaterInterval), new HashMap<String, String>());
-		Mockito.when(managerTestHelper.getIdentityPlugin().createToken(token)).thenReturn(
+		Mockito.when(managerTestHelper.getIdentityPlugin().createToken(firstToken)).thenReturn(
 				secondToken);
 
 		// mocking date
@@ -131,6 +140,7 @@ public class TestManagerController {
 
 		managerController.checkAndUpdateRequestToken(tokenUpdaterInterval);
 
+		// check if requests has firstToken
 		List<Request> requestsFromUser = managerController
 				.getRequestsFromUser(DefaultDataTestHelper.ACCESS_TOKEN_ID);
 		for (Request request : requestsFromUser) {
@@ -149,6 +159,7 @@ public class TestManagerController {
 
 		managerController.checkAndUpdateRequestToken(tokenUpdaterInterval);
 
+		// check if open requests updated to secondToken
 		requestsFromUser = managerController
 				.getRequestsFromUser(DefaultDataTestHelper.ACCESS_TOKEN_ID);
 		for (Request request : requestsFromUser) {
@@ -163,6 +174,7 @@ public class TestManagerController {
 
 	@Test
 	public void testMonitorDeletedRequestWithInstance() throws InterruptedException {
+		// setting request repository
 		Request request1 = new Request("id1", managerTestHelper.getDefaultToken(), null, null);
 		request1.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
 		request1.setState(RequestState.DELETED);
@@ -181,6 +193,7 @@ public class TestManagerController {
 						Mockito.anyString())).thenReturn(
 				new Instance(DefaultDataTestHelper.INSTANCE_ID));
 
+		// checking deleted requests
 		List<Request> requestsFromUser = managerController.getRequestsFromUser(managerTestHelper
 				.getDefaultToken().getAccessId());
 		Assert.assertEquals(2, requestsFromUser.size());
@@ -189,6 +202,7 @@ public class TestManagerController {
 
 		managerController.monitorInstances();
 
+		// checking request was not removed
 		requestsFromUser = managerController.getRequestsFromUser(managerTestHelper
 				.getDefaultToken().getAccessId());
 		Assert.assertEquals(2, requestsFromUser.size());
@@ -198,6 +212,7 @@ public class TestManagerController {
 
 	@Test
 	public void testMonitorDeletedRequestWithoutInstance() throws InterruptedException {
+		// setting request repository
 		Request request1 = new Request("id1", managerTestHelper.getDefaultToken(), null, null);
 		request1.setState(RequestState.DELETED);
 		Request request2 = new Request("id2", managerTestHelper.getDefaultToken(), null, null);
@@ -217,6 +232,7 @@ public class TestManagerController {
 						Mockito.anyString())).thenThrow(
 				new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND));
 
+		// checking requests
 		Assert.assertEquals(
 				3,
 				managerController.getRequestsFromUser(
@@ -236,6 +252,7 @@ public class TestManagerController {
 
 		managerController.monitorInstances();
 
+		// checking deleted request was removed
 		Assert.assertEquals(
 				1,
 				managerController.getRequestsFromUser(
@@ -249,6 +266,7 @@ public class TestManagerController {
 
 	@Test
 	public void testMonitorFulfilledRequestWithoutInstance() throws InterruptedException {
+		// setting request repository
 		Request request1 = new Request("id1", managerTestHelper.getDefaultToken(), null, null);
 		request1.setState(RequestState.FULFILLED);
 		Request request2 = new Request("id2", managerTestHelper.getDefaultToken(), null, null);
@@ -265,6 +283,7 @@ public class TestManagerController {
 						Mockito.anyString())).thenThrow(
 				new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND));
 
+		// checking if requests were fulfilled
 		List<Request> requestsFromUser = managerController
 				.getRequestsFromUser(DefaultDataTestHelper.ACCESS_TOKEN_ID);
 		Assert.assertEquals(2, requestsFromUser.size());
@@ -274,6 +293,7 @@ public class TestManagerController {
 
 		managerController.monitorInstances();
 
+		// checking if requests were closed
 		requestsFromUser = managerController
 				.getRequestsFromUser(DefaultDataTestHelper.ACCESS_TOKEN_ID);
 		Assert.assertEquals(2, requestsFromUser.size());
@@ -287,6 +307,8 @@ public class TestManagerController {
 	public void testMonitorFulfilledAndPersistentRequest() throws InterruptedException {
 		Map<String, String> attributes = new HashMap<String, String>();
 		attributes.put(RequestAttribute.TYPE.getValue(), RequestType.PERSISTENT.getValue());
+
+		// setting request repository
 		Request request1 = new Request("id1", managerTestHelper.getDefaultToken(), null, attributes);
 		request1.setState(RequestState.FULFILLED);
 
@@ -295,11 +317,12 @@ public class TestManagerController {
 		managerController.setRequests(requestRepository);
 
 		// updating compute mock
-		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
-		Mockito.when(computePlugin.getInstance(Mockito.anyString(), Mockito.anyString()))
-				.thenThrow(new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND));
-		managerController.setComputePlugin(computePlugin);
+		Mockito.when(
+				managerTestHelper.getComputePlugin().getInstance(Mockito.anyString(),
+						Mockito.anyString())).thenThrow(
+				new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND));
 
+		// checking if request is fulfilled
 		List<Request> requestsFromUser = managerController
 				.getRequestsFromUser(DefaultDataTestHelper.ACCESS_TOKEN_ID);
 		Assert.assertEquals(1, requestsFromUser.size());
@@ -312,14 +335,18 @@ public class TestManagerController {
 		Assert.assertEquals(1, requestsFromUser.size());
 		Assert.assertEquals(RequestState.OPEN, requestsFromUser.get(0).getState());
 
-		Mockito.reset(computePlugin);
+		// updating compute mock
+		Mockito.reset(managerTestHelper.getComputePlugin());
 		Mockito.when(
-				computePlugin.requestInstance(Mockito.anyString(),
-						Mockito.any(List.class), Mockito.any(Map.class)))
-				.thenReturn(DefaultDataTestHelper.INSTANCE_ID);
+				managerTestHelper.getComputePlugin().requestInstance(Mockito.anyString(),
+						Mockito.any(List.class), Mockito.any(Map.class))).thenReturn(
+				DefaultDataTestHelper.INSTANCE_ID);
 		Mockito.when(
-				computePlugin.getInstance(Mockito.anyString(), Mockito.eq(DefaultDataTestHelper.INSTANCE_ID)))
-				.thenReturn(new Instance(DefaultDataTestHelper.INSTANCE_ID));
+				managerTestHelper.getComputePlugin().getInstance(Mockito.anyString(),
+						Mockito.eq(DefaultDataTestHelper.INSTANCE_ID))).thenReturn(
+				new Instance(DefaultDataTestHelper.INSTANCE_ID));
+
+		// getting instance for request
 		managerController.checkAndSubmitOpenRequests();
 
 		requestsFromUser = managerController
@@ -332,6 +359,7 @@ public class TestManagerController {
 	public void testMonitorFulfilledRequestWithInstance() throws InterruptedException {
 		final String SECOND_INSTANCE_ID = "rt22e67-5fgt-457a-3rt6-gt78124fhj9p";
 
+		// setting request repository
 		Request request1 = new Request("id1", managerTestHelper.getDefaultToken(), null, null);
 		request1.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
 		request1.setState(RequestState.FULFILLED);
@@ -351,6 +379,8 @@ public class TestManagerController {
 				new Instance(DefaultDataTestHelper.INSTANCE_ID));
 
 		managerController.monitorInstances();
+
+		// checking if requests were fulfilled yet
 		List<Request> requestsFromUser = managerController
 				.getRequestsFromUser(DefaultDataTestHelper.ACCESS_TOKEN_ID);
 		Assert.assertEquals(2, requestsFromUser.size());
@@ -359,6 +389,8 @@ public class TestManagerController {
 		}
 
 		managerController.monitorInstances();
+
+		// checking if request state did not change
 		requestsFromUser = managerController
 				.getRequestsFromUser(DefaultDataTestHelper.ACCESS_TOKEN_ID);
 		Assert.assertEquals(2, requestsFromUser.size());
@@ -411,14 +443,15 @@ public class TestManagerController {
 	public void testGetRequestsByUser() throws InterruptedException {
 		mockRequestInstance();
 
+		// creating request
 		managerController.createRequests(DefaultDataTestHelper.ACCESS_TOKEN_ID,
 				new ArrayList<Category>(), xOCCIAtt);
-
 		managerController.checkAndSubmitOpenRequests();
 
 		List<Request> requests = managerController
 				.getRequestsFromUser(DefaultDataTestHelper.ACCESS_TOKEN_ID);
 
+		// checking if request was rightly created
 		Assert.assertEquals(1, requests.size());
 		Assert.assertEquals(DefaultDataTestHelper.USER_NAME, requests.get(0).getToken().getUser());
 		Assert.assertEquals(DefaultDataTestHelper.INSTANCE_ID, requests.get(0).getInstanceId());
@@ -430,18 +463,22 @@ public class TestManagerController {
 	public void testOneTimeRequestSetFulfilledAndClosed() throws InterruptedException {
 		mockRequestInstance();
 
+		// creating request
 		managerController.createRequests(DefaultDataTestHelper.ACCESS_TOKEN_ID,
 				new ArrayList<Category>(), xOCCIAtt);
-
 		managerController.checkAndSubmitOpenRequests();
 
+		// checking if request was rightly created
 		List<Request> requests = managerController
 				.getRequestsFromUser(DefaultDataTestHelper.ACCESS_TOKEN_ID);
-
 		Assert.assertEquals(1, requests.size());
 		Assert.assertEquals(DefaultDataTestHelper.INSTANCE_ID, requests.get(0).getInstanceId());
 		Assert.assertEquals(RequestState.FULFILLED, requests.get(0).getState());
 		Assert.assertNull(requests.get(0).getMemberId());
+
+		// updating compute mock
+		Mockito.doNothing().when(managerTestHelper.getComputePlugin()).removeInstance(
+				DefaultDataTestHelper.ACCESS_TOKEN_ID, DefaultDataTestHelper.INSTANCE_ID);
 
 		// removing instance
 		managerController.removeInstance(DefaultDataTestHelper.ACCESS_TOKEN_ID,
@@ -457,19 +494,18 @@ public class TestManagerController {
 
 	@Test
 	public void testPersistentRequestSetFulfilledAndOpen() throws InterruptedException {
+		mockRequestInstance();
 		xOCCIAtt.put(RequestAttribute.TYPE.getValue(),
 				String.valueOf(RequestType.PERSISTENT.getValue()));
 
-		mockRequestInstance();
-
+		// creating request
 		managerController.createRequests(DefaultDataTestHelper.ACCESS_TOKEN_ID,
 				new ArrayList<Category>(), xOCCIAtt);
-
 		managerController.checkAndSubmitOpenRequests();
 
+		// checking if request was rightly created
 		List<Request> requests = managerController
 				.getRequestsFromUser(DefaultDataTestHelper.ACCESS_TOKEN_ID);
-
 		Assert.assertEquals(1, requests.size());
 		Assert.assertEquals(DefaultDataTestHelper.INSTANCE_ID, requests.get(0).getInstanceId());
 		Assert.assertEquals(RequestType.PERSISTENT.getValue(),
@@ -477,12 +513,21 @@ public class TestManagerController {
 		Assert.assertEquals(RequestState.FULFILLED, requests.get(0).getState());
 		Assert.assertNull(requests.get(0).getMemberId());
 
+		// updating compute mock
+		Mockito.when(
+				managerTestHelper.getComputePlugin().requestInstance(Mockito.anyString(),
+						Mockito.any(List.class), Mockito.any(Map.class))).thenThrow(
+				new OCCIException(ErrorType.QUOTA_EXCEEDED,
+						ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES));
+		Mockito.doNothing().when(managerTestHelper.getComputePlugin()).removeInstance(
+				DefaultDataTestHelper.ACCESS_TOKEN_ID, DefaultDataTestHelper.INSTANCE_ID);
+
 		// removing instance
 		managerController.removeInstance(DefaultDataTestHelper.ACCESS_TOKEN_ID,
 				DefaultDataTestHelper.INSTANCE_ID);
 
+		// checking request state was set to open
 		requests = managerController.getRequestsFromUser(DefaultDataTestHelper.ACCESS_TOKEN_ID);
-
 		Assert.assertEquals(1, requests.size());
 		Assert.assertEquals(RequestType.PERSISTENT.getValue(),
 				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
@@ -498,22 +543,19 @@ public class TestManagerController {
 		xOCCIAtt.put(RequestAttribute.TYPE.getValue(),
 				String.valueOf(RequestType.PERSISTENT.getValue()));
 
-		// mocking compute for 2 instances
-		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
-		Mockito.when(
-				computePlugin.requestInstance(Mockito.anyString(), Mockito.any(List.class),
-						Mockito.any(Map.class))).thenReturn(DefaultDataTestHelper.INSTANCE_ID,
-				SECOND_INSTANCE_ID);
-		managerController.setComputePlugin(computePlugin);
+		// mocking compute
+		mockRequestInstance();
 
+		// creating requests
 		managerController.createRequests(DefaultDataTestHelper.ACCESS_TOKEN_ID,
 				new ArrayList<Category>(), xOCCIAtt);
+		managerController.checkAndSubmitOpenRequests();
+		// Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD +
+		// DefaultDataTestHelper.GRACE_TIME);
 
-		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD + DefaultDataTestHelper.GRACE_TIME);
-
+		// checking if request was fulfilled with instanceID
 		List<Request> requests = managerController
 				.getRequestsFromUser(DefaultDataTestHelper.ACCESS_TOKEN_ID);
-
 		Assert.assertEquals(1, requests.size());
 		Assert.assertEquals(DefaultDataTestHelper.INSTANCE_ID, requests.get(0).getInstanceId());
 		Assert.assertEquals(RequestType.PERSISTENT.getValue(),
@@ -521,12 +563,22 @@ public class TestManagerController {
 		Assert.assertEquals(RequestState.FULFILLED, requests.get(0).getState());
 		Assert.assertNull(requests.get(0).getMemberId());
 
+		// updating compute mock
+		Mockito.reset(managerTestHelper.getComputePlugin());
+		Mockito.when(
+				managerTestHelper.getComputePlugin().requestInstance(Mockito.anyString(),
+						Mockito.any(List.class), Mockito.any(Map.class))).thenThrow(
+				new OCCIException(ErrorType.QUOTA_EXCEEDED,
+						ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES));
+		Mockito.doNothing().when(managerTestHelper.getComputePlugin()).removeInstance(
+				DefaultDataTestHelper.ACCESS_TOKEN_ID, DefaultDataTestHelper.INSTANCE_ID);
+		
 		// removing instance
 		managerController.removeInstance(DefaultDataTestHelper.ACCESS_TOKEN_ID,
 				DefaultDataTestHelper.INSTANCE_ID);
 
+		// checking if request state was to open
 		requests = managerController.getRequestsFromUser(DefaultDataTestHelper.ACCESS_TOKEN_ID);
-
 		Assert.assertEquals(1, requests.size());
 		Assert.assertEquals(RequestType.PERSISTENT.getValue(),
 				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
@@ -534,11 +586,19 @@ public class TestManagerController {
 		Assert.assertNull(requests.get(0).getInstanceId());
 		Assert.assertNull(requests.get(0).getMemberId());
 
+		// updating compute mock
+		Mockito.reset(managerTestHelper.getComputePlugin());
+		Mockito.when(
+				managerTestHelper.getComputePlugin().requestInstance(Mockito.anyString(),
+						Mockito.any(List.class), Mockito.any(Map.class))).thenReturn(
+				SECOND_INSTANCE_ID);
+
 		// getting second instance
-		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD * 2);
+		// Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD * 2);
+		managerController.checkAndSubmitOpenRequests();
 
+		// checking if request was fulfilled with secondInstance
 		requests = managerController.getRequestsFromUser(DefaultDataTestHelper.ACCESS_TOKEN_ID);
-
 		Assert.assertEquals(1, requests.size());
 		Assert.assertEquals(SECOND_INSTANCE_ID, requests.get(0).getInstanceId());
 		Assert.assertEquals(RequestType.PERSISTENT.getValue(),
@@ -552,6 +612,7 @@ public class TestManagerController {
 		long expirationRequestTime = System.currentTimeMillis()
 				+ DefaultDataTestHelper.SCHEDULER_PERIOD;
 
+		// setting request attributes
 		xOCCIAtt.put(RequestAttribute.TYPE.getValue(),
 				String.valueOf(RequestType.PERSISTENT.getValue()));
 		xOCCIAtt.put(RequestAttribute.VALID_UNTIL.getValue(),
@@ -561,9 +622,9 @@ public class TestManagerController {
 		managerController.createRequests(DefaultDataTestHelper.ACCESS_TOKEN_ID,
 				new ArrayList<Category>(), xOCCIAtt);
 
+		// checking if request is OPEN
 		List<Request> requests = managerController
 				.getRequestsFromUser(DefaultDataTestHelper.ACCESS_TOKEN_ID);
-
 		Assert.assertEquals(1, requests.size());
 		Assert.assertEquals(RequestType.PERSISTENT.getValue(),
 				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
@@ -571,10 +632,12 @@ public class TestManagerController {
 		Assert.assertNull(requests.get(0).getInstanceId());
 		Assert.assertNull(requests.get(0).getMemberId());
 
+		// waiting expiration time
 		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD + DefaultDataTestHelper.GRACE_TIME);
-
+		managerController.checkAndSubmitOpenRequests();
 		requests = managerController.getRequestsFromUser(DefaultDataTestHelper.ACCESS_TOKEN_ID);
 
+		// checking if request was closed
 		Assert.assertEquals(1, requests.size());
 		Assert.assertEquals(RequestType.PERSISTENT.getValue(),
 				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
@@ -588,6 +651,7 @@ public class TestManagerController {
 		long expirationRequestTime = System.currentTimeMillis()
 				+ DefaultDataTestHelper.SCHEDULER_PERIOD + DefaultDataTestHelper.GRACE_TIME;
 
+		// setting request attributes
 		xOCCIAtt.put(RequestAttribute.TYPE.getValue(),
 				String.valueOf(RequestType.PERSISTENT.getValue()));
 		xOCCIAtt.put(RequestAttribute.VALID_UNTIL.getValue(),
@@ -595,14 +659,16 @@ public class TestManagerController {
 
 		mockRequestInstance();
 
+		// creating request
 		managerController.createRequests(DefaultDataTestHelper.ACCESS_TOKEN_ID,
 				new ArrayList<Category>(), xOCCIAtt);
 
 		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD);
+		managerController.checkAndSubmitOpenRequests();
 
+		// checking request is fulfilled
 		List<Request> requests = managerController
 				.getRequestsFromUser(DefaultDataTestHelper.ACCESS_TOKEN_ID);
-
 		Assert.assertEquals(1, requests.size());
 		Assert.assertEquals(DefaultDataTestHelper.INSTANCE_ID, requests.get(0).getInstanceId());
 		Assert.assertEquals(RequestType.PERSISTENT.getValue(),
@@ -610,16 +676,26 @@ public class TestManagerController {
 		Assert.assertEquals(RequestState.FULFILLED, requests.get(0).getState());
 		Assert.assertNull(requests.get(0).getMemberId());
 
+		// waiting expiration time
 		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD);
+
+		// updating compute mock
+		Mockito.reset(managerTestHelper.getComputePlugin());
+		Mockito.when(
+				managerTestHelper.getComputePlugin().requestInstance(Mockito.anyString(),
+						Mockito.any(List.class), Mockito.any(Map.class))).thenThrow(
+				new OCCIException(ErrorType.QUOTA_EXCEEDED,
+						ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES));
+		Mockito.doNothing().when(managerTestHelper.getComputePlugin()).removeInstance(
+				DefaultDataTestHelper.ACCESS_TOKEN_ID, DefaultDataTestHelper.INSTANCE_ID);
 
 		// removing instance
 		managerController.removeInstance(DefaultDataTestHelper.ACCESS_TOKEN_ID,
 				DefaultDataTestHelper.INSTANCE_ID);
+		managerController.checkAndSubmitOpenRequests();
 
-		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD);
-
+		// checking if request state was set to closed
 		requests = managerController.getRequestsFromUser(DefaultDataTestHelper.ACCESS_TOKEN_ID);
-
 		Assert.assertEquals(1, requests.size());
 		Assert.assertEquals(RequestType.PERSISTENT.getValue(),
 				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
@@ -630,11 +706,11 @@ public class TestManagerController {
 
 	@SuppressWarnings("unchecked")
 	private void mockRequestInstance() {
-		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
+		Mockito.reset(managerTestHelper.getComputePlugin());
 		Mockito.when(
-				computePlugin.requestInstance(Mockito.anyString(), Mockito.any(List.class),
-						Mockito.any(Map.class))).thenReturn(DefaultDataTestHelper.INSTANCE_ID);
-		managerController.setComputePlugin(computePlugin);
+				managerTestHelper.getComputePlugin().requestInstance(Mockito.anyString(),
+						Mockito.any(List.class), Mockito.any(Map.class))).thenReturn(
+				DefaultDataTestHelper.INSTANCE_ID);
 	}
 
 	@Test
@@ -642,6 +718,7 @@ public class TestManagerController {
 		long expirationRequestTime = System.currentTimeMillis()
 				+ DefaultDataTestHelper.SCHEDULER_PERIOD;
 
+		// setting request attributes
 		xOCCIAtt.put(RequestAttribute.TYPE.getValue(), RequestType.ONE_TIME.getValue());
 		xOCCIAtt.put(RequestAttribute.VALID_UNTIL.getValue(),
 				DateUtils.getDateISO8601Format(expirationRequestTime));
@@ -650,9 +727,9 @@ public class TestManagerController {
 		managerController.createRequests(DefaultDataTestHelper.ACCESS_TOKEN_ID,
 				new ArrayList<Category>(), xOCCIAtt);
 
+		// checking if request was rightly created
 		List<Request> requests = managerController
 				.getRequestsFromUser(DefaultDataTestHelper.ACCESS_TOKEN_ID);
-
 		Assert.assertEquals(1, requests.size());
 		Assert.assertEquals(RequestType.ONE_TIME.getValue(),
 				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
@@ -660,10 +737,11 @@ public class TestManagerController {
 		Assert.assertNull(requests.get(0).getInstanceId());
 		Assert.assertNull(requests.get(0).getMemberId());
 
+		// waiting expiration time
 		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD + DefaultDataTestHelper.GRACE_TIME);
 
+		// checking if request state was set to closed
 		requests = managerController.getRequestsFromUser(DefaultDataTestHelper.ACCESS_TOKEN_ID);
-
 		Assert.assertEquals(1, requests.size());
 		Assert.assertEquals(RequestType.ONE_TIME.getValue(),
 				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
@@ -678,6 +756,7 @@ public class TestManagerController {
 		long startRequestTime = now + (DefaultDataTestHelper.SCHEDULER_PERIOD * 2);
 		long expirationRequestTime = now + DefaultDataTestHelper.LONG_TIME;
 
+		// setting request attributes
 		xOCCIAtt.put(RequestAttribute.TYPE.getValue(),
 				String.valueOf(RequestType.ONE_TIME.getValue()));
 		xOCCIAtt.put(RequestAttribute.VALID_FROM.getValue(),
@@ -691,9 +770,9 @@ public class TestManagerController {
 		managerController.createRequests(DefaultDataTestHelper.ACCESS_TOKEN_ID,
 				new ArrayList<Category>(), xOCCIAtt);
 
+		// checking if request was rightly created
 		List<Request> requests = managerController
 				.getRequestsFromUser(DefaultDataTestHelper.ACCESS_TOKEN_ID);
-
 		Assert.assertEquals(1, requests.size());
 		Assert.assertEquals(RequestType.ONE_TIME.getValue(),
 				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
@@ -701,11 +780,12 @@ public class TestManagerController {
 		Assert.assertNull(requests.get(0).getInstanceId());
 		Assert.assertNull(requests.get(0).getMemberId());
 
+		// sleeping for a time and request not valid yet
 		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD + DefaultDataTestHelper.GRACE_TIME);
+		managerController.checkAndSubmitOpenRequests();
 
+		// check request is not in valid period yet
 		requests = managerController.getRequestsFromUser(DefaultDataTestHelper.ACCESS_TOKEN_ID);
-
-		// request is not in valid period yet
 		Assert.assertEquals(1, requests.size());
 		Assert.assertEquals(RequestType.ONE_TIME.getValue(),
 				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
@@ -713,11 +793,12 @@ public class TestManagerController {
 		Assert.assertNull(requests.get(0).getInstanceId());
 		Assert.assertNull(requests.get(0).getMemberId());
 
+		// sleeping for a time and request is into valid period
 		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD + DefaultDataTestHelper.GRACE_TIME);
+		managerController.checkAndSubmitOpenRequests();
 
-		// request is in valid period
+		// check request is in valid period
 		requests = managerController.getRequestsFromUser(DefaultDataTestHelper.ACCESS_TOKEN_ID);
-
 		Assert.assertEquals(1, requests.size());
 		Assert.assertEquals(RequestType.ONE_TIME.getValue(),
 				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
@@ -732,6 +813,7 @@ public class TestManagerController {
 		long startRequestTime = now + (DefaultDataTestHelper.SCHEDULER_PERIOD * 2);
 		long expirationRequestTime = now + DefaultDataTestHelper.LONG_TIME;
 
+		// setting request attributes
 		xOCCIAtt.put(RequestAttribute.TYPE.getValue(), RequestType.PERSISTENT.getValue());
 		xOCCIAtt.put(RequestAttribute.VALID_FROM.getValue(),
 				DateUtils.getDateISO8601Format(startRequestTime));
@@ -744,9 +826,9 @@ public class TestManagerController {
 		managerController.createRequests(DefaultDataTestHelper.ACCESS_TOKEN_ID,
 				new ArrayList<Category>(), xOCCIAtt);
 
+		// checking if request was rightly created
 		List<Request> requests = managerController
 				.getRequestsFromUser(DefaultDataTestHelper.ACCESS_TOKEN_ID);
-
 		Assert.assertEquals(1, requests.size());
 		Assert.assertEquals(RequestType.PERSISTENT.getValue(),
 				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
@@ -754,11 +836,12 @@ public class TestManagerController {
 		Assert.assertNull(requests.get(0).getInstanceId());
 		Assert.assertNull(requests.get(0).getMemberId());
 
+		// sleeping for a time and request not valid yet
 		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD + DefaultDataTestHelper.GRACE_TIME);
+		managerController.checkAndSubmitOpenRequests();
 
+		// check request is not in valid period yet
 		requests = managerController.getRequestsFromUser(DefaultDataTestHelper.ACCESS_TOKEN_ID);
-
-		// request is not in valid period yet
 		Assert.assertEquals(1, requests.size());
 		Assert.assertEquals(RequestType.PERSISTENT.getValue(),
 				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
@@ -766,11 +849,12 @@ public class TestManagerController {
 		Assert.assertNull(requests.get(0).getInstanceId());
 		Assert.assertNull(requests.get(0).getMemberId());
 
+		// sleeping for a time and request is into valid period
 		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD + DefaultDataTestHelper.GRACE_TIME);
+		managerController.checkAndSubmitOpenRequests();
 
-		// request is in valid period
+		// check request is in valid period
 		requests = managerController.getRequestsFromUser(DefaultDataTestHelper.ACCESS_TOKEN_ID);
-
 		Assert.assertEquals(1, requests.size());
 		Assert.assertEquals(RequestType.PERSISTENT.getValue(),
 				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
@@ -785,6 +869,7 @@ public class TestManagerController {
 		long startRequestTime = now + (DefaultDataTestHelper.SCHEDULER_PERIOD * 2);
 		long expirationRequestTime = now + (DefaultDataTestHelper.SCHEDULER_PERIOD * 3);
 
+		// setting request attributes
 		xOCCIAtt.put(RequestAttribute.TYPE.getValue(), RequestType.ONE_TIME.getValue());
 		xOCCIAtt.put(RequestAttribute.VALID_FROM.getValue(),
 				DateUtils.getDateISO8601Format(startRequestTime));
@@ -797,14 +882,12 @@ public class TestManagerController {
 		managerController.createRequests(DefaultDataTestHelper.ACCESS_TOKEN_ID,
 				new ArrayList<Category>(), xOCCIAtt);
 
-		List<Request> requests = managerController
-				.getRequestsFromUser(DefaultDataTestHelper.ACCESS_TOKEN_ID);
-
+		// waiting for a time and request is not valid yet
 		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD + DefaultDataTestHelper.GRACE_TIME);
 
-		requests = managerController.getRequestsFromUser(DefaultDataTestHelper.ACCESS_TOKEN_ID);
-
 		// request is not in valid period yet
+		List<Request> requests = managerController
+				.getRequestsFromUser(DefaultDataTestHelper.ACCESS_TOKEN_ID);
 		Assert.assertEquals(1, requests.size());
 		Assert.assertEquals(RequestType.ONE_TIME.getValue(),
 				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
@@ -812,11 +895,11 @@ public class TestManagerController {
 		Assert.assertNull(requests.get(0).getInstanceId());
 		Assert.assertNull(requests.get(0).getMemberId());
 
+		// waiting for a time and request is into valid period
 		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD + DefaultDataTestHelper.GRACE_TIME);
 
-		// request is in valid period
+		// checking is request is fulfilled
 		requests = managerController.getRequestsFromUser(DefaultDataTestHelper.ACCESS_TOKEN_ID);
-
 		Assert.assertEquals(1, requests.size());
 		Assert.assertEquals(RequestType.ONE_TIME.getValue(),
 				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
@@ -824,15 +907,24 @@ public class TestManagerController {
 		Assert.assertEquals(DefaultDataTestHelper.INSTANCE_ID, requests.get(0).getInstanceId());
 		Assert.assertNull(requests.get(0).getMemberId());
 
-		// remove instance
+		// updating compute mock
+		Mockito.when(
+				managerTestHelper.getComputePlugin().requestInstance(Mockito.anyString(),
+						Mockito.any(List.class), Mockito.any(Map.class))).thenThrow(
+				new OCCIException(ErrorType.QUOTA_EXCEEDED,
+						ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES));
+		Mockito.doNothing().when(managerTestHelper.getComputePlugin()).removeInstance(
+				DefaultDataTestHelper.ACCESS_TOKEN_ID, DefaultDataTestHelper.INSTANCE_ID);
+
+		// removing instance
 		managerController.removeInstance(DefaultDataTestHelper.ACCESS_TOKEN_ID,
 				DefaultDataTestHelper.INSTANCE_ID);
 
+		// waiting for a time and request is not into valid period anymore
 		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD + DefaultDataTestHelper.GRACE_TIME);
 
-		// request is not in valid period anymore
+		// checking if request is not in valid period anymore
 		requests = managerController.getRequestsFromUser(DefaultDataTestHelper.ACCESS_TOKEN_ID);
-
 		Assert.assertEquals(1, requests.size());
 		Assert.assertEquals(RequestType.ONE_TIME.getValue(),
 				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
@@ -847,6 +939,7 @@ public class TestManagerController {
 		long startRequestTime = now + (DefaultDataTestHelper.SCHEDULER_PERIOD * 2);
 		long expirationRequestTime = now + (DefaultDataTestHelper.SCHEDULER_PERIOD * 3);
 
+		// setting request attributes
 		xOCCIAtt.put(RequestAttribute.TYPE.getValue(), RequestType.PERSISTENT.getValue());
 		xOCCIAtt.put(RequestAttribute.VALID_FROM.getValue(),
 				DateUtils.getDateISO8601Format(startRequestTime));
@@ -859,14 +952,12 @@ public class TestManagerController {
 		managerController.createRequests(DefaultDataTestHelper.ACCESS_TOKEN_ID,
 				new ArrayList<Category>(), xOCCIAtt);
 
-		List<Request> requests = managerController
-				.getRequestsFromUser(DefaultDataTestHelper.ACCESS_TOKEN_ID);
-
+		// waiting for a time and request is not valid yet
 		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD + DefaultDataTestHelper.GRACE_TIME);
 
-		requests = managerController.getRequestsFromUser(DefaultDataTestHelper.ACCESS_TOKEN_ID);
-
 		// request is not in valid period yet
+		List<Request> requests = managerController
+				.getRequestsFromUser(DefaultDataTestHelper.ACCESS_TOKEN_ID);
 		Assert.assertEquals(1, requests.size());
 		Assert.assertEquals(RequestType.PERSISTENT.getValue(),
 				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
@@ -874,11 +965,11 @@ public class TestManagerController {
 		Assert.assertNull(requests.get(0).getInstanceId());
 		Assert.assertNull(requests.get(0).getMemberId());
 
+		// waiting for a time and request is into valid period
 		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD + DefaultDataTestHelper.GRACE_TIME);
 
-		// request is in valid period
+		// checking is request is fulfilled
 		requests = managerController.getRequestsFromUser(DefaultDataTestHelper.ACCESS_TOKEN_ID);
-
 		Assert.assertEquals(1, requests.size());
 		Assert.assertEquals(RequestType.PERSISTENT.getValue(),
 				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
@@ -886,17 +977,24 @@ public class TestManagerController {
 		Assert.assertEquals(DefaultDataTestHelper.INSTANCE_ID, requests.get(0).getInstanceId());
 		Assert.assertNull(requests.get(0).getMemberId());
 
-		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD + DefaultDataTestHelper.GRACE_TIME);
+		// updating compute mock
+		Mockito.when(
+				managerTestHelper.getComputePlugin().requestInstance(Mockito.anyString(),
+						Mockito.any(List.class), Mockito.any(Map.class))).thenThrow(
+				new OCCIException(ErrorType.QUOTA_EXCEEDED,
+						ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES));
+		Mockito.doNothing().when(managerTestHelper.getComputePlugin()).removeInstance(
+				DefaultDataTestHelper.ACCESS_TOKEN_ID, DefaultDataTestHelper.INSTANCE_ID);
 
-		// remove instance
+		// removing instance
 		managerController.removeInstance(DefaultDataTestHelper.ACCESS_TOKEN_ID,
 				DefaultDataTestHelper.INSTANCE_ID);
 
+		// waiting for a time and request is not into valid period anymore
 		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD + DefaultDataTestHelper.GRACE_TIME);
 
-		// request is not in valid period anymore
+		// checking if request is not in valid period anymore
 		requests = managerController.getRequestsFromUser(DefaultDataTestHelper.ACCESS_TOKEN_ID);
-
 		Assert.assertEquals(1, requests.size());
 		Assert.assertEquals(RequestType.PERSISTENT.getValue(),
 				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));

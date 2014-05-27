@@ -10,8 +10,7 @@ public enum RequestState {
 	 * Fulfilled: The request is currently active (fulfilled) and has an
 	 * associated Instance.
 	 * 
-	 * Canceled: The request is canceled because the request went past its
-	 * expiration date.
+	 * Deleted: The request was deleted, but it still has a instance related to it.
 	 * 
 	 * Closed: The request either completed (a Instance was launched and
 	 * subsequently was interrupted or terminated), or was not fulfilled within
