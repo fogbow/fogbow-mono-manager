@@ -53,7 +53,7 @@ public class ManagerController {
 	private IdentityPlugin identityPlugin;
 	private Properties properties;
 	private PacketSender packetSender;
-	private FederationMemberValidator validator = new RestrictCAsMemberValidator();
+	private FederationMemberValidator validator = new DefaultMemberValidator();
 
 	private DateUtils dateUtils = new DateUtils();
 	private SSHTunnel sshTunnel = new DefaultSSHTunnel();
