@@ -1,9 +1,12 @@
 package org.fogbowcloud.manager.core.plugins.openstack;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
+import java.util.TimeZone;
 
 import org.apache.commons.codec.Charsets;
 import org.apache.http.HttpResponse;
@@ -28,6 +31,7 @@ import org.json.JSONObject;
 
 public class OpenStackIdentityPlugin implements IdentityPlugin {
 
+	public static final String OPEN_STACK_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ssX";
 	// keys for attributes map
 	public static final String USER_KEY = "X-Token-User";
 	public static final String PASSWORD_KEY = "X-Token-Password";
@@ -49,7 +53,7 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 	public static final String NAME_KEYSTONE = "name";
 
 	private static final int LAST_SUCCESSFUL_STATUS = 204;
-	private final Logger LOGGER = Logger.getLogger(OpenStackIdentityPlugin.class);
+	private final static Logger LOGGER = Logger.getLogger(OpenStackIdentityPlugin.class);
 	private static String V2_ENDPOINT_PATH = "/v2.0/tokens";
 	private String v2Endpoint;
 
@@ -158,7 +162,11 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 			Map<String, String> tokenAtt = new HashMap<String, String>();
 			tokenAtt.put(TENANT_ID_KEY, tenantId);
 			tokenAtt.put(TENANT_NAME_KEY, tenantName);
-			return new Token(token, user, DateUtils.getDateFromISO8601Format(expirationDateToken),
+			LOGGER.debug("json token: " + token);
+			LOGGER.debug("json user: " + user);
+			LOGGER.debug("json expirationDate: " + expirationDateToken);
+			LOGGER.debug("json attributes: " + tokenAtt);			
+			return new Token(token, user, getDateFromOpenStackFormat(expirationDateToken),
 					tokenAtt);
 		} catch (Exception e) {
 			LOGGER.error("Exception while getting token from json.", e);
@@ -185,7 +193,11 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 
 			tokenAttributes.put(OpenStackIdentityPlugin.TENANT_NAME_KEY, tenantName);
 			tokenAttributes.put(OpenStackIdentityPlugin.TENANT_ID_KEY, tenantId);
-			expirationTime = DateUtils.getDateFromISO8601Format(expirationTimeStr);
+			LOGGER.debug("json accessId: " + accessId);
+			LOGGER.debug("json user: " + user);
+			LOGGER.debug("json expirationDate: " + expirationTimeStr);
+			LOGGER.debug("json attributes: " + tokenAttributes);	
+			expirationTime = getDateFromOpenStackFormat(expirationTimeStr);
 		} catch (Exception e) {
 			LOGGER.error(e);
 		}
@@ -223,6 +235,24 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 			return true;
 		} catch (OCCIException e) {
 			return false;
+		}
+	}
+
+	public static String getDateOpenStackFormat(Date date) {
+		SimpleDateFormat dateFormatOpenStack = new SimpleDateFormat(OPEN_STACK_DATE_FORMAT, Locale.ROOT);
+		String expirationDate = dateFormatOpenStack.format(date);
+		return expirationDate;
+
+	}
+	
+	public static Date getDateFromOpenStackFormat(String expirationDateStr) {
+		SimpleDateFormat dateFormatOpenStack = new SimpleDateFormat(
+				OPEN_STACK_DATE_FORMAT, Locale.ROOT);
+		try {
+			return dateFormatOpenStack.parse(expirationDateStr);
+		} catch (Exception e) {
+			LOGGER.error("Exception while parsing date.", e);
+			return null;
 		}
 	}
 }

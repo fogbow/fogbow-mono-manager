@@ -293,6 +293,7 @@ public class ManagerController {
 			return this.federationUserToken;
 		}
 
+		//TODO Think about getting token independent of OpenStackPlugin 
 		Map<String, String> federationUserCredentials = new HashMap<String, String>();
 		String username = properties.getProperty("federation_user_name");
 		String password = properties.getProperty("federation_user_password");
@@ -419,15 +420,20 @@ public class ManagerController {
 		LOGGER.info("Checking and updating request token.");
 
 		for (Request request : allRequests) {
-			if (request.getState().notIn(RequestState.CLOSED, RequestState.FAILED)) {
-				turnOffTimer = false;
-				long validInterval = request.getToken().getExpirationDate().getTime()
-						- dateUtils.currentTimeMillis();
-				if (validInterval < 2 * tokenUpdatePeriod) {
-					Token newToken = identityPlugin.createToken(request.getToken());
-					LOGGER.info("Setting new token "+ newToken + " on request " + request.getId());
-					requests.get(request.getId()).setToken(newToken);
+			try{
+				if (request.getState().notIn(RequestState.CLOSED, RequestState.FAILED)) {
+					turnOffTimer = false;
+					long validInterval = request.getToken().getExpirationDate().getTime()
+							- dateUtils.currentTimeMillis();
+					LOGGER.debug("Valid interval of requestId " + request.getId() + " is " + validInterval);
+					if (validInterval < 2 * tokenUpdatePeriod) {
+						Token newToken = identityPlugin.createToken(request.getToken());
+						LOGGER.info("Setting new token "+ newToken + " on request " + request.getId());
+						requests.get(request.getId()).setToken(newToken);
+					}
 				}
+			} catch (Exception e){
+				LOGGER.error("Exception while checking token.", e);
 			}
 		}
 

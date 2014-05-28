@@ -2,13 +2,13 @@ package org.fogbowcloud.manager.occi.util;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
 
 import org.apache.http.HttpStatus;
-import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.plugins.openstack.OpenStackIdentityPlugin;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.Token;
@@ -133,10 +133,8 @@ public class KeystoneApplication extends Application {
 				String tenantId = token.get(OpenStackIdentityPlugin.TENANT_ID_KEY);
 				String tenantName = token.get(OpenStackIdentityPlugin.TENANT_NAME_KEY);
 
-				SimpleDateFormat dateFormatISO8601 = new SimpleDateFormat(
-						FederationMember.ISO_8601_DATE_FORMAT, Locale.ROOT);
-				dateFormatISO8601.setTimeZone(TimeZone.getTimeZone("GMT"));
-				String expirationDate = dateFormatISO8601.format(token.getExpirationDate());
+				String expirationDate = OpenStackIdentityPlugin.getDateOpenStackFormat(token
+						.getExpirationDate());
 
 				JSONObject rootIdToken = new JSONObject();
 

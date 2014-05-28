@@ -550,8 +550,6 @@ public class TestManagerController {
 		managerController.createRequests(DefaultDataTestHelper.ACCESS_TOKEN_ID,
 				new ArrayList<Category>(), xOCCIAtt);
 		managerController.checkAndSubmitOpenRequests();
-		// Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD +
-		// DefaultDataTestHelper.GRACE_TIME);
 
 		// checking if request was fulfilled with instanceID
 		List<Request> requests = managerController
@@ -594,7 +592,6 @@ public class TestManagerController {
 				SECOND_INSTANCE_ID);
 
 		// getting second instance
-		// Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD * 2);
 		managerController.checkAndSubmitOpenRequests();
 
 		// checking if request was fulfilled with secondInstance

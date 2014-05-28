@@ -48,7 +48,7 @@ public class Token {
 
 	public String toString() {
 		return "AccessId: " + accessId + ", User: " + user + ", expirationDate: " + expirationDate
-				+ " attributes: " + attributes;
+				+ ", attributes: " + attributes;
 	}
 
 	public String getUser() {
