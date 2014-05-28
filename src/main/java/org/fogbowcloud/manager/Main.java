@@ -78,5 +78,4 @@ public class Main {
 		return Class.forName(properties.getProperty(propName))
 				.getConstructor(Properties.class).newInstance(properties);
 	}
-
 }
