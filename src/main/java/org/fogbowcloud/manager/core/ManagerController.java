@@ -214,7 +214,7 @@ public class ManagerController {
 				LOGGER.debug("Request: " + request + ", setting state to " + RequestState.OPEN);
 				request.setState(RequestState.OPEN);
 				if (!requestSchedulerTimer.isScheduled()) {
-					scheduleRequests();
+					triggerRequestScheduler();
 				}
 			} else {
 				LOGGER.debug("Request: " + request + ", setting state to " + RequestState.CLOSED);
@@ -350,7 +350,7 @@ public class ManagerController {
 			requests.addRequest(userToken.getUser(), request);
 		}
 		if (!requestSchedulerTimer.isScheduled()) {
-			scheduleRequests();
+			triggerRequestScheduler();
 		}
 		if (!tokenUpdaterTimer.isScheduled()) {
 			triggerTokenUpdater();
@@ -491,7 +491,7 @@ public class ManagerController {
 		return true;
 	}
 
-	private void scheduleRequests() {
+	private void triggerRequestScheduler() {
 		String schedulerPeriodStr = properties.getProperty("scheduler_period");
 		long schedulerPeriod = schedulerPeriodStr == null ? DEFAULT_SCHEDULER_PERIOD : Long
 				.valueOf(schedulerPeriodStr);
