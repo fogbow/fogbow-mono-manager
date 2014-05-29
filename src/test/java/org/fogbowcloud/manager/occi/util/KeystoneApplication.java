@@ -70,15 +70,17 @@ public class KeystoneApplication extends Application {
 	}
 
 	public void authenticationCheckToken(String accessId, String tenantName) {
-		if (!defaultToken.getAccessId().equals(accessId)
-				|| !defaultToken.get(OpenStackIdentityPlugin.TENANT_NAME_KEY).equals(tenantName)) {
+		if (!defaultToken.getAccessId().equals(accessId)) {
 			throw new ResourceException(HttpStatus.SC_UNAUTHORIZED);
-		}
+		} else if (tenantName != null && !defaultToken.get(OpenStackIdentityPlugin.TENANT_NAME_KEY).equals(tenantName)){
+			throw new ResourceException(HttpStatus.SC_UNAUTHORIZED);
+		}		 
 	}
 
 	public void checkAuthenticationCredentials(String username, String password, String tenantName) {
-		if (!defaultToken.getUser().equals(username) || !this.userPassword.equals(password)
-				|| !defaultToken.get(OpenStackIdentityPlugin.TENANT_NAME_KEY).equals(tenantName)) {
+		if (!defaultToken.getUser().equals(username) || !this.userPassword.equals(password)) {
+			throw new ResourceException(HttpStatus.SC_UNAUTHORIZED);
+		} else if (tenantName != null && !defaultToken.get(OpenStackIdentityPlugin.TENANT_NAME_KEY).equals(tenantName)){
 			throw new ResourceException(HttpStatus.SC_UNAUTHORIZED);
 		}
 	}

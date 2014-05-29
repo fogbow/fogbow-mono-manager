@@ -151,17 +151,17 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 			JSONObject root = new JSONObject(responseStr);
 			JSONObject tokenKeyStone = root.getJSONObject(ACCESS_KEYSTONE).getJSONObject(
 					TOKEN_KEYSTONE);
-			String token = tokenKeyStone.getString(ID_KEYSTONE);
-			String tenantId = tokenKeyStone.getJSONObject(TENANT_KEYSTONE).getString(ID_KEYSTONE);
-			String tenantName = tokenKeyStone.getJSONObject(TENANT_KEYSTONE).getString(
-					NAME_KEYSTONE);
+			String token = tokenKeyStone.getString(ID_KEYSTONE);			
+//			String tenantId = tokenKeyStone.optJSONObject(TENANT_KEYSTONE).getString(ID_KEYSTONE);
+//			String tenantName = tokenKeyStone.getJSONObject(TENANT_KEYSTONE).getString(
+//					NAME_KEYSTONE);
 			String expirationDateToken = tokenKeyStone.getString(EXPIRES_KEYSTONE);
 			String user = root.getJSONObject(ACCESS_KEYSTONE).getJSONObject(USER_KEYSTONE)
 					.getString(NAME_KEYSTONE);
 
 			Map<String, String> tokenAtt = new HashMap<String, String>();
-			tokenAtt.put(TENANT_ID_KEY, tenantId);
-			tokenAtt.put(TENANT_NAME_KEY, tenantName);
+//			tokenAtt.put(TENANT_ID_KEY, tenantId);
+//			tokenAtt.put(TENANT_NAME_KEY, tenantName);
 			LOGGER.debug("json token: " + token);
 			LOGGER.debug("json user: " + user);
 			LOGGER.debug("json expirationDate: " + expirationDateToken);
