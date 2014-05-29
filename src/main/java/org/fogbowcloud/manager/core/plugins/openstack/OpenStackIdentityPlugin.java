@@ -31,7 +31,7 @@ import org.json.JSONObject;
 
 public class OpenStackIdentityPlugin implements IdentityPlugin {
 
-	public static final String OPEN_STACK_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ssX";
+	public static final String OPEN_STACK_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss'Z'";
 	// keys for attributes map
 	public static final String USER_KEY = "X-Token-User";
 	public static final String PASSWORD_KEY = "X-Token-Password";
