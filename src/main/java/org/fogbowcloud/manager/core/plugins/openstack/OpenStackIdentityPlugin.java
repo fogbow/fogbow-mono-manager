@@ -176,32 +176,21 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 
 	@Override
 	public Token getToken(String accessId) {
-		String responseJson = getResponseJson(accessId);
-		Date expirationTime = null;
-		String user = null;
-		Map<String, String> tokenAttributes = new HashMap<String, String>();
+		JSONObject root;
 		try {
-			JSONObject root = new JSONObject(responseJson);
-			user = root.getJSONObject(ACCESS_KEYSTONE).getJSONObject(USER_KEYSTONE)
-					.getString(NAME_KEYSTONE);
-			String expirationTimeStr = root.getJSONObject(ACCESS_KEYSTONE)
-					.getJSONObject(TOKEN_KEYSTONE).getString(EXPIRES_KEYSTONE);
-			String tenantName = root.getJSONObject(ACCESS_KEYSTONE).getJSONObject(TOKEN_KEYSTONE)
-					.getJSONObject(TENANT_KEYSTONE).getString(NAME_KEYSTONE);
-			String tenantId = root.getJSONObject(ACCESS_KEYSTONE).getJSONObject(TOKEN_KEYSTONE)
-					.getJSONObject(TENANT_KEYSTONE).getString(ID_KEYSTONE);
-
-			tokenAttributes.put(OpenStackIdentityPlugin.TENANT_NAME_KEY, tenantName);
-			tokenAttributes.put(OpenStackIdentityPlugin.TENANT_ID_KEY, tenantId);
-			LOGGER.debug("json accessId: " + accessId);
-			LOGGER.debug("json user: " + user);
-			LOGGER.debug("json expirationDate: " + expirationTimeStr);
-			LOGGER.debug("json attributes: " + tokenAttributes);	
-			expirationTime = getDateFromOpenStackFormat(expirationTimeStr);
-		} catch (Exception e) {
+			JSONObject idToken = new JSONObject();
+			idToken.put(ID_KEYSTONE, accessId);
+			JSONObject auth = new JSONObject();
+			auth.put(TOKEN_KEYSTONE, idToken);
+			root = new JSONObject();
+			root.put(AUTH_KEYSTONE, auth);		
+		} catch (JSONException e) {
 			LOGGER.error(e);
+			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}
-		return new Token(accessId, user, expirationTime, tokenAttributes);
+		
+		String responseStr = doPostRequest(v2Endpoint, root);
+		return getTokenFromJson(responseStr);
 	}
 
 	/*

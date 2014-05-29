@@ -28,7 +28,7 @@ public class DefaultDataTestHelper {
 	//test default values
 	public static final String USER_NAME = "user";
 	public static final String USER_PASS = "password";
-	public static final String ACCESS_TOKEN_ID = "HgjhgYUDFTGBgrbelihBDFGBÇuyrb";
+	public static final String ACCESS_TOKEN_ID = "accesstoken";
 	public static final String TENANT_NAME = "tenantName";
-	public static final String INSTANCE_ID = "b122f3ad-503c-4abb-8a55-ba8d90cfce9f";
+	public static final String INSTANCE_ID = "instanceid";
 }
