@@ -29,7 +29,8 @@ scheduler_period=30000
 token_update_period=300000
 instance_monitoring_period=120000
 
-ssh_tunnel_host=10.0.0.1
+ssh_tunnel_public_host=150.165.80.1
+ssh_tunnel_private_host=10.0.0.1
 ssh_tunnel_user=fogbow
 ssh_tunnel_port_range=50000:59999
 

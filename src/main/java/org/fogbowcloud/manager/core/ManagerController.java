@@ -168,9 +168,9 @@ public class ManagerController {
 					+ request.getMemberId() + " to get its information.");
 			instance = getRemoteInstance(request);
 		}
-		String sshAddress = request.getAttValue(DefaultSSHTunnel.SSH_ADDRESS_ATT);
+		String sshAddress = request.getAttValue(DefaultSSHTunnel.SSH_PUBLIC_ADDRESS_ATT);
 		if (sshAddress != null) {
-			instance.addAttribute(DefaultSSHTunnel.SSH_ADDRESS_ATT, sshAddress);
+			instance.addAttribute(DefaultSSHTunnel.SSH_PUBLIC_ADDRESS_ATT, sshAddress);
 		}
 		return instance;
 	}
