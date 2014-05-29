@@ -476,6 +476,9 @@ public class ManagerController {
 		try {
 			instanceId = computePlugin.requestInstance(request.getToken().getAccessId(),
 					request.getCategories(), request.getxOCCIAtt());
+			if (instanceId == null) {
+				return false;
+			}
 		} catch (OCCIException e) {
 			if (e.getStatus().getCode() == HttpStatus.SC_INSUFFICIENT_SPACE_ON_RESOURCE) {
 				LOGGER.warn("Request failed locally for quota exceeded.", e);
