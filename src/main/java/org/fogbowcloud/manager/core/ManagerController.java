@@ -38,7 +38,8 @@ public class ManagerController {
 	private static final Logger LOGGER = Logger.getLogger(ManagerController.class);
 	public static final long DEFAULT_SCHEDULER_PERIOD = 30000; // 30 seconds
 	private static final long DEFAULT_TOKEN_UPDATE_PERIOD = 300000; // 5 minutes
-	private static final long DEFAULT_INSTANCE_MONITORING_PERIOD = 120000; // 2 minutes
+	private static final long DEFAULT_INSTANCE_MONITORING_PERIOD = 120000; // 2
+																			// minutes
 
 	private ManagerTimer requestSchedulerTimer = new ManagerTimer();
 	private ManagerTimer tokenUpdaterTimer = new ManagerTimer();
@@ -203,23 +204,26 @@ public class ManagerController {
 		} else {
 			removeRemoteInstance(request);
 		}
-		request.setInstanceId(null);
-		request.setMemberId(null);
-		instanceRemoved(request);
+		
+		if (request.getState().equals(RequestState.DELETED)){
+			requests.exclude(request.getId());
+		} else {
+			request.setInstanceId(null);
+			request.setMemberId(null);
+			instanceRemoved(request);
+		}
 	}
 
 	private void instanceRemoved(Request request) {
-		if (request.getState().notIn(RequestState.DELETED)){
-			if (isPersistent(request)) {
-				LOGGER.debug("Request: " + request + ", setting state to " + RequestState.OPEN);
-				request.setState(RequestState.OPEN);
-				if (!requestSchedulerTimer.isScheduled()) {
-					triggerRequestScheduler();
-				}
-			} else {
-				LOGGER.debug("Request: " + request + ", setting state to " + RequestState.CLOSED);
-				request.setState(RequestState.CLOSED);
+		if (isPersistent(request)) {
+			LOGGER.debug("Request: " + request + ", setting state to " + RequestState.OPEN);
+			request.setState(RequestState.OPEN);
+			if (!requestSchedulerTimer.isScheduled()) {
+				triggerRequestScheduler();
 			}
+		} else {
+			LOGGER.debug("Request: " + request + ", setting state to " + RequestState.CLOSED);
+			request.setState(RequestState.CLOSED);
 		}
 	}
 
@@ -269,14 +273,14 @@ public class ManagerController {
 		}
 		return null;
 	}
-	
+
 	public String createInstanceForRemoteMember(String memberId, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
-		
+
 		FederationMember member = getFederationMember(memberId);
 		if (!validator.canDonateTo(member)) {
 			return null;
-		}		
+		}
 		LOGGER.info("Submiting request with categories: " + categories + " and xOCCIAtt: "
 				+ xOCCIAtt + " for remote member.");
 		String federationTokenAccessId = getFederationUserToken().getAccessId();
@@ -296,7 +300,7 @@ public class ManagerController {
 			return this.federationUserToken;
 		}
 
-		//TODO Think about getting token independent of OpenStackPlugin 
+		// TODO Think about getting token independent of OpenStackPlugin
 		Map<String, String> federationUserCredentials = new HashMap<String, String>();
 		String username = properties.getProperty("federation_user_name");
 		String password = properties.getProperty("federation_user_password");
@@ -380,21 +384,21 @@ public class ManagerController {
 		boolean turnOffTimer = true;
 		LOGGER.info("Monitoring instances.");
 
-		for (Request request : requests.getAll()) {			
-			if (request.getState().in(RequestState.FULFILLED, RequestState.DELETED)){
+		for (Request request : requests.getAll()) {
+			if (request.getState().in(RequestState.FULFILLED, RequestState.DELETED)) {
 				turnOffTimer = false;
 				try {
 					LOGGER.debug("Monitoring instance of request: " + request);
 					getInstance(request);
 				} catch (OCCIException e) {
 					LOGGER.debug("Error while getInstance of " + request.getInstanceId(), e);
-					if (request.getState().in(RequestState.FULFILLED)){
+					if (request.getState().in(RequestState.FULFILLED)) {
 						instanceRemoved(requests.get(request.getId()));
-					} else if (request.getState().in(RequestState.DELETED)){
-						requests.exclude(request.getId());						
+					} else if (request.getState().in(RequestState.DELETED)) {
+						requests.exclude(request.getId());
 					}
-				}	
-			}			
+				}
+			}
 		}
 
 		if (turnOffTimer) {
@@ -419,23 +423,25 @@ public class ManagerController {
 	protected void checkAndUpdateRequestToken(long tokenUpdatePeriod) {
 		List<Request> allRequests = requests.getAll();
 		boolean turnOffTimer = true;
-		
+
 		LOGGER.info("Checking and updating request token.");
 
 		for (Request request : allRequests) {
-			try{
+			try {
 				if (request.getState().notIn(RequestState.CLOSED, RequestState.FAILED)) {
 					turnOffTimer = false;
 					long validInterval = request.getToken().getExpirationDate().getTime()
 							- dateUtils.currentTimeMillis();
-					LOGGER.debug("Valid interval of requestId " + request.getId() + " is " + validInterval);
+					LOGGER.debug("Valid interval of requestId " + request.getId() + " is "
+							+ validInterval);
 					if (validInterval < 2 * tokenUpdatePeriod) {
 						Token newToken = identityPlugin.reIssueToken(request.getToken());
-						LOGGER.info("Setting new token "+ newToken + " on request " + request.getId());
+						LOGGER.info("Setting new token " + newToken + " on request "
+								+ request.getId());
 						requests.get(request.getId()).setToken(newToken);
 					}
 				}
-			} catch (Exception e){
+			} catch (Exception e) {
 				LOGGER.error("Exception while checking token.", e);
 			}
 		}
@@ -527,7 +533,8 @@ public class ManagerController {
 					xOCCIAtt.remove(keyAttributes);
 				}
 				allFulfilled &= createLocalInstance(request)
-						|| createLocalInstanceWithFederationUser(request) || createRemoteInstance(request);
+						|| createLocalInstanceWithFederationUser(request)
+						|| createRemoteInstance(request);
 			} else if (request.isExpired()) {
 				request.setState(RequestState.CLOSED);
 			} else {
@@ -547,13 +554,12 @@ public class ManagerController {
 
 		String remoteInstanceId = null;
 		try {
-			remoteInstanceId = createInstanceForRemoteMember(
-					properties.getProperty("xmpp_jid"), request.getCategories(),
-					request.getxOCCIAtt());
+			remoteInstanceId = createInstanceForRemoteMember(properties.getProperty("xmpp_jid"),
+					request.getCategories(), request.getxOCCIAtt());
 		} catch (Exception e) {
 			LOGGER.info("Could not create instance with federation user locally.");
 		}
-		
+
 		if (remoteInstanceId == null) {
 			return false;
 		}
@@ -585,7 +591,7 @@ public class ManagerController {
 	public void setDateUtils(DateUtils dateUtils) {
 		this.dateUtils = dateUtils;
 	}
-	
+
 	public FederationMemberValidator getValidator() {
 		return validator;
 	}
