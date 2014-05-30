@@ -28,8 +28,9 @@ public class Main {
 
 	protected static String DEFAULT_URL = "http://localhost:8182";
 	protected static int DEFAULT_INTANCE_COUNT = 1;
-	protected static String DEFAULT_FLAVOR = "fogbow-small";
-	protected static String DEFAULT_IMAGE = "fogbow-linux-x86";
+	protected static final String DEFAULT_TYPE = "one-time";
+	protected static final String DEFAULT_FLAVOR = "fogbow-small";
+	protected static final String DEFAULT_IMAGE = "fogbow-linux-x86";
 	
 	private static HttpClient client = new DefaultHttpClient();
 	
@@ -84,13 +85,19 @@ public class Main {
 					return;
 				}
 				
+				if (!request.type.equals("one-time")
+						&& !request.type.equals("persistent")) {
+					jc.usage();
+					return;
+				}
+				
 				Set<Header> headers = new HashSet<Header>();
 				headers.add(new BasicHeader("Category", 
 						"fogbow-request; scheme=\"http://schemas.fogbowcloud.org/request#\"; class=\"kind\""));
 				headers.add(new BasicHeader("X-OCCI-Attribute", 
 						"org.fogbowcloud.request.instance-count=" + request.instanceCount));
 				headers.add(new BasicHeader("X-OCCI-Attribute", 
-						"org.fogbowcloud.request.type=one-time"));
+						"org.fogbowcloud.request.type=" + request.type));
 				headers.add(new BasicHeader("Category", 
 						request.flavor + "; scheme=\"http://schemas.fogbowcloud.org/template/resource#\"; class=\"mixin\""));
 				headers.add(new BasicHeader("Category", 
@@ -211,6 +218,9 @@ public class Main {
 
 		@Parameter(names = "--flavor", description = "Instance flavor")
 		String flavor = Main.DEFAULT_FLAVOR;
+		
+		@Parameter(names = "--type", description = "Request type (one-time|persistent)")
+		String type = Main.DEFAULT_TYPE;
 	}
 
 	@Parameters(separators = "=", commandDescription = "Instance operations")
