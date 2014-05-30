@@ -264,6 +264,9 @@ public class ManagerController {
 				return member;
 			}
 		}
+		if (memberId.equals(properties.get("xmpp_jid"))) {
+			return new FederationMember(getResourcesInfo());
+		}
 		return null;
 	}
 	
@@ -523,7 +526,8 @@ public class ManagerController {
 				for (String keyAttributes : RequestAttribute.getValues()) {
 					xOCCIAtt.remove(keyAttributes);
 				}
-				allFulfilled &= createLocalInstance(request) || createRemoteInstance(request);
+				allFulfilled &= createLocalInstance(request)
+						|| createLocalInstanceWithFederationUser(request) || createRemoteInstance(request);
 			} else if (request.isExpired()) {
 				request.setState(RequestState.CLOSED);
 			} else {
@@ -534,6 +538,26 @@ public class ManagerController {
 			LOGGER.info("All request fulfilled.");
 			requestSchedulerTimer.cancel();
 		}
+	}
+
+	private boolean createLocalInstanceWithFederationUser(Request request) {
+		request.setMemberId(properties.getProperty("xmpp_jid"));
+
+		LOGGER.info("Submiting request " + request + " with federation user locally.");
+
+		String remoteInstanceId = createInstanceForRemoteMember(properties.getProperty("xmpp_jid"),
+				request.getCategories(), request.getxOCCIAtt());
+
+		if (remoteInstanceId == null) {
+			return false;
+		}
+
+		request.setState(RequestState.FULFILLED);
+		request.setInstanceId(remoteInstanceId);
+		if (!instanceMonitoringTimer.isScheduled()) {
+			triggerInstancesMonitor();
+		}
+		return true;
 	}
 
 	public void setPacketSender(PacketSender packetSender) {

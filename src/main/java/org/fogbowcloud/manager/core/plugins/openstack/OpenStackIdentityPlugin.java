@@ -60,7 +60,7 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 	 */
 	public static String V2_TOKENS_ENDPOINT_PATH = "/v2.0/tokens";
 	public static String V2_TENANTS_ENDPOINT_PATH = "/v2.0/tenants";
-	
+
 	private String v2TokensEndpoint;
 	private String v2TenantsEndpoint;
 
@@ -86,8 +86,7 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 
 	private JSONObject mountJson(Map<String, String> credentials) throws JSONException {
 		JSONObject passwordCredentials = new JSONObject();
-		passwordCredentials.put(USERNAME_PROP,
-				credentials.get(OpenStackIdentityPlugin.USER_KEY));
+		passwordCredentials.put(USERNAME_PROP, credentials.get(OpenStackIdentityPlugin.USER_KEY));
 		passwordCredentials.put(PASSWORD_PROP,
 				credentials.get(OpenStackIdentityPlugin.PASSWORD_KEY));
 		JSONObject auth = new JSONObject();
@@ -157,16 +156,14 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 	private Token getTokenFromJson(String responseStr) {
 		try {
 			JSONObject root = new JSONObject(responseStr);
-			JSONObject tokenKeyStone = root.getJSONObject(ACCESS_PROP).getJSONObject(
-					TOKEN_PROP);
-			String token = tokenKeyStone.getString(ID_PROP);			
+			JSONObject tokenKeyStone = root.getJSONObject(ACCESS_PROP).getJSONObject(TOKEN_PROP);
+			String token = tokenKeyStone.getString(ID_PROP);
 			String tenantId = "";
 			String tenantName = "";
 			Map<String, String> tokenAtt = new HashMap<String, String>();
 			try {
 				tenantId = tokenKeyStone.getJSONObject(TENANT_PROP).getString(ID_PROP);
-				tenantName = tokenKeyStone.getJSONObject(TENANT_PROP).getString(
-					NAME_PROP);
+				tenantName = tokenKeyStone.getJSONObject(TENANT_PROP).getString(NAME_PROP);
 				tokenAtt.put(TENANT_ID_KEY, tenantId);
 				tokenAtt.put(TENANT_NAME_KEY, tenantName);
 			} catch (JSONException e) {
@@ -175,13 +172,12 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 			String expirationDateToken = tokenKeyStone.getString(EXPIRES_PROP);
 			String user = root.getJSONObject(ACCESS_PROP).getJSONObject(USER_PROP)
 					.getString(NAME_PROP);
-		
+
 			LOGGER.debug("json token: " + token);
 			LOGGER.debug("json user: " + user);
 			LOGGER.debug("json expirationDate: " + expirationDateToken);
-			LOGGER.debug("json attributes: " + tokenAtt);			
-			return new Token(token, user, getDateFromOpenStackFormat(expirationDateToken),
-					tokenAtt);
+			LOGGER.debug("json attributes: " + tokenAtt);
+			return new Token(token, user, getDateFromOpenStackFormat(expirationDateToken), tokenAtt);
 		} catch (Exception e) {
 			LOGGER.error("Exception while getting token from json.", e);
 			return null;
@@ -192,23 +188,23 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 	public Token getToken(String accessId) {
 		String responseStr;
 		String tenantName = getTenantName(accessId);
-		
+
 		JSONObject root;
 		try {
 			JSONObject idToken = new JSONObject();
 			idToken.put(ID_PROP, accessId);
-			
+
 			JSONObject auth = new JSONObject();
 			auth.put(TOKEN_PROP, idToken);
 			auth.put(TENANT_NAME_PROP, tenantName);
-			
+
 			root = new JSONObject();
-			root.put(AUTH_PROP, auth);		
+			root.put(AUTH_PROP, auth);
 		} catch (JSONException e) {
 			LOGGER.error(e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}
-		
+
 		responseStr = doPostRequest(v2TokensEndpoint, root);
 		return getTokenFromJson(responseStr);
 	}
@@ -222,7 +218,7 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 			httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, accessId);
 			httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.JSON_CONTENT_TYPE);
 			httpGet.addHeader(OCCIHeaders.ACCEPT, OCCIHeaders.JSON_CONTENT_TYPE);
-	
+
 			response = httpCLient.execute(httpGet);
 			responseStr = EntityUtils
 					.toString(response.getEntity(), String.valueOf(Charsets.UTF_8));
@@ -239,8 +235,10 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 			System.out.println(responseStr);
 			JSONObject root = new JSONObject(responseStr);
 			JSONArray tenantsStone = root.getJSONArray(TENANTS_PROP);
-			JSONObject tenantStone = tenantsStone.getJSONObject(0); //getting first tenant
-			return tenantStone.getString(NAME_PROP);			
+			JSONObject tenantStone = tenantsStone.getJSONObject(0); // getting
+																	// first
+																	// tenant
+			return tenantStone.getString(NAME_PROP);
 		} catch (JSONException e) {
 			LOGGER.error(e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
@@ -258,15 +256,16 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 	}
 
 	public static String getDateOpenStackFormat(Date date) {
-		SimpleDateFormat dateFormatOpenStack = new SimpleDateFormat(OPEN_STACK_DATE_FORMAT, Locale.ROOT);
+		SimpleDateFormat dateFormatOpenStack = new SimpleDateFormat(OPEN_STACK_DATE_FORMAT,
+				Locale.ROOT);
 		String expirationDate = dateFormatOpenStack.format(date);
 		return expirationDate;
 
 	}
-	
+
 	public static Date getDateFromOpenStackFormat(String expirationDateStr) {
-		SimpleDateFormat dateFormatOpenStack = new SimpleDateFormat(
-				OPEN_STACK_DATE_FORMAT, Locale.ROOT);
+		SimpleDateFormat dateFormatOpenStack = new SimpleDateFormat(OPEN_STACK_DATE_FORMAT,
+				Locale.ROOT);
 		try {
 			return dateFormatOpenStack.parse(expirationDateStr);
 		} catch (Exception e) {
