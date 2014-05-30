@@ -545,9 +545,15 @@ public class ManagerController {
 
 		LOGGER.info("Submiting request " + request + " with federation user locally.");
 
-		String remoteInstanceId = createInstanceForRemoteMember(properties.getProperty("xmpp_jid"),
-				request.getCategories(), request.getxOCCIAtt());
-
+		String remoteInstanceId = null;
+		try {
+			remoteInstanceId = createInstanceForRemoteMember(
+					properties.getProperty("xmpp_jid"), request.getCategories(),
+					request.getxOCCIAtt());
+		} catch (Exception e) {
+			LOGGER.info("Could not create instance with federation user locally.");
+		}
+		
 		if (remoteInstanceId == null) {
 			return false;
 		}
