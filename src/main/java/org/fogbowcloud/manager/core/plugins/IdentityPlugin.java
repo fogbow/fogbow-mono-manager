@@ -8,7 +8,7 @@ public interface IdentityPlugin {
 
 	public Token createToken(Map<String, String> userCredentials);
 
-	public Token createToken(Token token);
+	public Token reIssueToken(Token token);
 
 	public Token getToken(String accessId);
 

@@ -131,7 +131,7 @@ public class TestManagerController {
 		// adding behaviour to identity mock
 		Token secondToken = new Token(ACCESS_TOKEN_ID_2, DefaultDataTestHelper.USER_NAME, new Date(
 				tokenExpirationTime + tokenUpdaterInterval), new HashMap<String, String>());
-		Mockito.when(managerTestHelper.getIdentityPlugin().createToken(firstToken)).thenReturn(
+		Mockito.when(managerTestHelper.getIdentityPlugin().reIssueToken(firstToken)).thenReturn(
 				secondToken);
 
 		// mocking date
@@ -553,8 +553,6 @@ public class TestManagerController {
 		managerController.createRequests(DefaultDataTestHelper.ACCESS_TOKEN_ID,
 				new ArrayList<Category>(), xOCCIAtt);
 		managerController.checkAndSubmitOpenRequests();
-		// Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD +
-		// DefaultDataTestHelper.GRACE_TIME);
 
 		// checking if request was fulfilled with instanceID
 		List<Request> requests = managerController
@@ -597,7 +595,6 @@ public class TestManagerController {
 				SECOND_INSTANCE_ID);
 
 		// getting second instance
-		// Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD * 2);
 		managerController.checkAndSubmitOpenRequests();
 
 		// checking if request was fulfilled with secondInstance

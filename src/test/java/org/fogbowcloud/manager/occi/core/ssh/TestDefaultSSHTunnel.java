@@ -35,18 +35,20 @@ public class TestDefaultSSHTunnel {
 
 	@Test
 	public void create() throws FileNotFoundException, IOException {
-		final String host = "10.0.0.1";
+		final String privateHostIP = "10.0.0.1";
+		final String publicHostIP = "150.165.80.1";
 		final String user = "fogbow";
 		final String portRanger = "50000:59999";
 		final String port = "50000";
 
 		String sshTunnelCmd = getScriptFogbowInjectTunnel();
 		sshTunnelCmd = sshTunnelCmd.replace("#REMOTE_USER#", user);
-		sshTunnelCmd = sshTunnelCmd.replace("#REMOTE_HOST#", host);
+		sshTunnelCmd = sshTunnelCmd.replace("#REMOTE_HOST#", privateHostIP);
 		sshTunnelCmd = sshTunnelCmd.replace("#REMOTE_PORT#", port);
 
 		Properties properties = new Properties();
-		properties.put("ssh_tunnel_host", host);
+		properties.put("ssh_tunnel_public_host", publicHostIP);
+		properties.put("ssh_tunnel_private_host", privateHostIP);
 		properties.put("ssh_tunnel_user", user);
 		properties.put("ssh_tunnel_port_range", portRanger);
 		Request request = new Request("is", new Token("accessId", "user", new Date(),
@@ -59,8 +61,10 @@ public class TestDefaultSSHTunnel {
 				.equals(RequestConstants.USER_DATA_TERM));
 		Assert.assertEquals(Base64.encodeBase64URLSafeString(sshTunnelCmd.getBytes(Charsets.UTF_8))
 				.length(), request.getAttValue(DefaultSSHTunnel.USER_DATA_ATT).length());
-		Assert.assertEquals(host + ":" + port,
+		Assert.assertEquals(privateHostIP + ":" + port,
 				request.getAttValue(DefaultSSHTunnel.SSH_ADDRESS_ATT));
+		Assert.assertEquals(publicHostIP + ":" + port,
+				request.getAttValue(DefaultSSHTunnel.SSH_PUBLIC_ADDRESS_ATT));
 	}
 
 	@Test

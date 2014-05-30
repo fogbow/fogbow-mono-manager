@@ -274,6 +274,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 	@SuppressWarnings("unchecked")
 	public ManagerController createDefaultManagerController() {
 		Properties properties = new Properties();
+		properties.put("federation_user_name", DefaultDataTestHelper.MANAGER_COMPONENT_URL);
 		properties.put("federation_user_name", DefaultDataTestHelper.USER_NAME);
 		properties.put("federation_user_password", DefaultDataTestHelper.USER_PASS);
 		properties.put("federation_user_tenant_name", DefaultDataTestHelper.TENANT_NAME);

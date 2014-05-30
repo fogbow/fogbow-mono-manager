@@ -89,6 +89,10 @@ public class OpenStackComputePlugin implements ComputePlugin {
 	@Override
 	public String requestInstance(String authToken, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
+		
+		LOGGER.debug("Requesting instance with accessId=" + authToken + "; categories="
+				+ categories + "; xOCCIAtt=" + xOCCIAtt);
+
 		List<Category> openStackCategories = new ArrayList<Category>();
 
 		Category categoryCompute = new Category(TERM_COMPUTE, SCHEME_COMPUTE, CLASS_COMPUTE);
@@ -214,6 +218,8 @@ public class OpenStackComputePlugin implements ComputePlugin {
 				request.addHeader(header);
 			}
 
+			LOGGER.debug("AccessId=" + authToken + "; headers=" + additionalHeaders);
+			
 			HttpClient client = new DefaultHttpClient();
 			httpResponse = client.execute(request);
 
