@@ -344,7 +344,8 @@ public class ManagerController {
 		List<Request> currentRequests = new ArrayList<Request>();
 		for (int i = 0; i < instanceCount; i++) {
 			String requestId = String.valueOf(UUID.randomUUID());
-			Request request = new Request(requestId, userToken, categories, xOCCIAtt);
+			Request request = new Request(requestId, userToken, 
+					new LinkedList<Category>(categories), new HashMap<String, String>(xOCCIAtt));
 			try {
 				sshTunnel.create(properties, request);
 			} catch (Exception e) {
