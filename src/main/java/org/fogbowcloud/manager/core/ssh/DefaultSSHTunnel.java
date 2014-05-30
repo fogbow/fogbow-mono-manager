@@ -42,7 +42,7 @@ public class DefaultSSHTunnel implements SSHTunnel {
 		Integer sshPort = null;
 		
 		for (Integer i = portFloor; i <= portCeiling; i++) {
-			if (!takenPorts.contains(i) && available(i)) {
+			if (!takenPorts.contains(i)/* && available(i)*/) {
 				sshPort = i;
 				takenPorts.add(i);
 				break;

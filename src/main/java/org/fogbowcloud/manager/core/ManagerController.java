@@ -198,24 +198,22 @@ public class ManagerController {
 	}
 
 	private void removeInstance(String accessId, String instanceId, Request request) {
-		sshTunnel.release(request);
 		if (isLocal(request)) {
 			this.computePlugin.removeInstance(accessId, instanceId);
 		} else {
 			removeRemoteInstance(request);
 		}
-		
-		if (request.getState().equals(RequestState.DELETED)){
-			requests.exclude(request.getId());
-		} else {
-			request.setInstanceId(null);
-			request.setMemberId(null);
-			instanceRemoved(request);
-		}
+		instanceRemoved(request);
 	}
 
 	private void instanceRemoved(Request request) {
-		if (isPersistent(request)) {
+		sshTunnel.release(request);
+		request.setInstanceId(null);
+		request.setMemberId(null);
+		
+		if (request.getState().equals(RequestState.DELETED)){
+			requests.exclude(request.getId());
+		} else if (isPersistent(request)) {
 			LOGGER.debug("Request: " + request + ", setting state to " + RequestState.OPEN);
 			request.setState(RequestState.OPEN);
 			if (!requestSchedulerTimer.isScheduled()) {
@@ -392,11 +390,7 @@ public class ManagerController {
 					getInstance(request);
 				} catch (OCCIException e) {
 					LOGGER.debug("Error while getInstance of " + request.getInstanceId(), e);
-					if (request.getState().in(RequestState.FULFILLED)) {
-						instanceRemoved(requests.get(request.getId()));
-					} else if (request.getState().in(RequestState.DELETED)) {
-						requests.exclude(request.getId());
-					}
+					instanceRemoved(requests.get(request.getId()));
 				}
 			}
 		}
