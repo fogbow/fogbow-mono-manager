@@ -93,7 +93,7 @@ public class TestIdentityOpenStack {
 				.getDateOpenStackFormat(DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION),
 				OpenStackIdentityPlugin.getDateOpenStackFormat(expirationDate));
 		
-		Token token2 = this.identityOpenStack.createToken(token);
+		Token token2 = this.identityOpenStack.reIssueToken(token);
 		authToken = token2.getAccessId();
 		tenantID = token2.get(OpenStackIdentityPlugin.TENANT_ID_KEY);
 		expirationDate = token2.getExpirationDate();

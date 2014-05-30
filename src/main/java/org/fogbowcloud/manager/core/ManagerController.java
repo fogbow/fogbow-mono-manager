@@ -427,7 +427,7 @@ public class ManagerController {
 							- dateUtils.currentTimeMillis();
 					LOGGER.debug("Valid interval of requestId " + request.getId() + " is " + validInterval);
 					if (validInterval < 2 * tokenUpdatePeriod) {
-						Token newToken = identityPlugin.createToken(request.getToken());
+						Token newToken = identityPlugin.reIssueToken(request.getToken());
 						LOGGER.info("Setting new token "+ newToken + " on request " + request.getId());
 						requests.get(request.getId()).setToken(newToken);
 					}

@@ -130,7 +130,7 @@ public class TestManagerController {
 		// adding behaviour on identity mock
 		Token secondToken = new Token(ACCESS_TOKEN_ID_2, DefaultDataTestHelper.USER_NAME, new Date(
 				tokenExpirationTime + tokenUpdaterInterval), new HashMap<String, String>());
-		Mockito.when(managerTestHelper.getIdentityPlugin().createToken(firstToken)).thenReturn(
+		Mockito.when(managerTestHelper.getIdentityPlugin().reIssueToken(firstToken)).thenReturn(
 				secondToken);
 
 		// mocking date
