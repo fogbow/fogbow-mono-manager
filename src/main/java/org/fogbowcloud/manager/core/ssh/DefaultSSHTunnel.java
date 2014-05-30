@@ -3,8 +3,8 @@ package org.fogbowcloud.manager.core.ssh;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.Socket;
+import java.net.DatagramSocket;
+import java.net.ServerSocket;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
@@ -42,7 +42,7 @@ public class DefaultSSHTunnel implements SSHTunnel {
 		Integer sshPort = null;
 		
 		for (Integer i = portFloor; i <= portCeiling; i++) {
-			if (!takenPorts.contains(i)/* && available(i)*/) {
+			if (!takenPorts.contains(i) && available(i)) {
 				sshPort = i;
 				takenPorts.add(i);
 				break;
@@ -70,23 +70,28 @@ public class DefaultSSHTunnel implements SSHTunnel {
 	}
 	
 	private static boolean available(int port) {
-		Socket socket = null;
+		ServerSocket ss = null;
+		DatagramSocket ds = null;
 		try {
-            socket = new Socket();
-            socket.connect(new InetSocketAddress(port), 200);
-            socket.close();
-            return true;
-        } catch (Exception ex) {
-            return false;
-        } finally {
-        	if (socket != null) {
+			ss = new ServerSocket(port);
+			ss.setReuseAddress(true);
+			ds = new DatagramSocket(port);
+			ds.setReuseAddress(true);
+			return true;
+		} catch (IOException e) {
+		} finally {
+			if (ds != null) {
+				ds.close();
+			}
+			if (ss != null) {
 				try {
-					socket.close();
+					ss.close();
 				} catch (IOException e) {
 					/* should not be thrown */
 				}
 			}
-        }
+		}
+		return false;
 	}
 	
 	public Set<Integer> getTakenPorts() {
