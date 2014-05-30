@@ -3,8 +3,8 @@ package org.fogbowcloud.manager.core.ssh;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.DatagramSocket;
-import java.net.ServerSocket;
+import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
@@ -70,28 +70,23 @@ public class DefaultSSHTunnel implements SSHTunnel {
 	}
 	
 	private static boolean available(int port) {
-		ServerSocket ss = null;
-		DatagramSocket ds = null;
+		Socket socket = null;
 		try {
-			ss = new ServerSocket(port);
-			ss.setReuseAddress(true);
-			ds = new DatagramSocket(port);
-			ds.setReuseAddress(true);
-			return true;
-		} catch (IOException e) {
-		} finally {
-			if (ds != null) {
-				ds.close();
-			}
-			if (ss != null) {
+            socket = new Socket();
+            socket.connect(new InetSocketAddress(port), 200);
+            socket.close();
+            return true;
+        } catch (Exception ex) {
+            return false;
+        } finally {
+        	if (socket != null) {
 				try {
-					ss.close();
+					socket.close();
 				} catch (IOException e) {
 					/* should not be thrown */
 				}
 			}
-		}
-		return false;
+        }
 	}
 	
 	public Set<Integer> getTakenPorts() {
