@@ -1,28 +1,32 @@
 package org.fogbowcloud.manager.core;
 
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 public class ManagerTimer {
 
-	private Timer timer;
-	private boolean scheduled;
+	private ScheduledExecutorService executor;
+	private ScheduledFuture<?> future;
 
-	public void scheduleAtFixedRate(TimerTask task, long delay, long period) {
-		timer = new Timer();
-		timer.scheduleAtFixedRate(task, delay, period);
-		scheduled = true;
+	public ManagerTimer(ScheduledExecutorService executor) {
+		this.executor = executor;
+	}
+
+	public void scheduleAtFixedRate(Runnable task, long delay, long period) {
+		this.future = executor.scheduleWithFixedDelay(task, delay, 
+				period, TimeUnit.MILLISECONDS);
 	}
 
 	public void cancel() {
-		if (timer != null) {
-			timer.cancel();
+		if (future != null) {
+			future.cancel(false);
 		}
-		scheduled = false;
+		future = null;
 	}
 
 	public boolean isScheduled() {
-		return scheduled;
+		return future != null && !future.isCancelled();
 	}
 
 }

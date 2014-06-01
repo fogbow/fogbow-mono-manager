@@ -8,6 +8,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.TimerTask;
 import java.util.UUID;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 import org.apache.http.HttpStatus;
 import org.apache.log4j.Logger;
@@ -41,9 +43,11 @@ public class ManagerController {
 	private static final long DEFAULT_INSTANCE_MONITORING_PERIOD = 120000; // 2
 																			// minutes
 
-	private ManagerTimer requestSchedulerTimer = new ManagerTimer();
-	private ManagerTimer tokenUpdaterTimer = new ManagerTimer();
-	private ManagerTimer instanceMonitoringTimer = new ManagerTimer();
+	private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(10);
+	
+	private ManagerTimer requestSchedulerTimer = new ManagerTimer(executor);
+	private ManagerTimer tokenUpdaterTimer = new ManagerTimer(executor);
+	private ManagerTimer instanceMonitoringTimer = new ManagerTimer(executor);
 
 	private Token federationUserToken;
 	private List<FederationMember> members = new LinkedList<FederationMember>();
