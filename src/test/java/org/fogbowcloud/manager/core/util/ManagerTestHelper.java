@@ -166,6 +166,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		managerXmppComponent.setDescription("Manager Component");
 		managerXmppComponent.setName("Manager");
 		managerXmppComponent.setRendezvousAddress(CLIENT_ADRESS + SMACK_ENDING);
+		managerXmppComponent.getManagerFacade().setSSHTunnel(Mockito.mock(SSHTunnel.class));
 		fakeServer.connect(managerXmppComponent);
 		managerXmppComponent.process();
 		if (init) {

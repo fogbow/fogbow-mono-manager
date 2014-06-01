@@ -168,14 +168,14 @@ public class ManagerController {
 					+ " is local, getting its information in the local cloud.");
 			instance = this.computePlugin.getInstance(request.getToken().getAccessId(),
 					request.getInstanceId());
+			String sshAddress = request.getAttValue(DefaultSSHTunnel.SSH_PUBLIC_ADDRESS_ATT);
+			if (sshAddress != null) {
+				instance.addAttribute(DefaultSSHTunnel.SSH_PUBLIC_ADDRESS_ATT, sshAddress);
+			}
 		} else {
 			LOGGER.debug(request.getInstanceId() + " is remote, going out to "
 					+ request.getMemberId() + " to get its information.");
 			instance = getRemoteInstance(request);
-		}
-		String sshAddress = request.getAttValue(DefaultSSHTunnel.SSH_PUBLIC_ADDRESS_ATT);
-		if (sshAddress != null) {
-			instance.addAttribute(DefaultSSHTunnel.SSH_PUBLIC_ADDRESS_ATT, sshAddress);
 		}
 		return instance;
 	}
@@ -211,7 +211,7 @@ public class ManagerController {
 	}
 
 	private void instanceRemoved(Request request) {
-		sshTunnel.release(request);
+		sshTunnel.release(request.getInstanceId());
 		request.setInstanceId(null);
 		request.setMemberId(null);
 		
@@ -278,7 +278,7 @@ public class ManagerController {
 
 	public String createInstanceForRemoteMember(String memberId, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
-
+		Integer sshPort = null;
 		FederationMember member = getFederationMember(memberId);
 		if (!validator.canDonateTo(member)) {
 			return null;
@@ -287,8 +287,21 @@ public class ManagerController {
 				+ xOCCIAtt + " for remote member.");
 		String federationTokenAccessId = getFederationUserToken().getAccessId();
 		try {
-			return computePlugin.requestInstance(federationTokenAccessId, categories, xOCCIAtt);
+			sshPort = sshTunnel.create(properties, new Request(null, null, categories, xOCCIAtt));
+		} catch (Exception e) {
+			LOGGER.warn("Exception while creating ssh tunnel.", e);
+			return null;
+		}
+		try {
+			String instanceId = computePlugin.requestInstance(federationTokenAccessId, categories, xOCCIAtt);
+			if (instanceId != null) {
+				sshTunnel.update(instanceId, sshPort);
+			} else {
+				sshTunnel.release(sshPort);
+			}
+			return instanceId;
 		} catch (OCCIException e) {
+			sshTunnel.release(sshPort);
 			if (e.getStatus().getCode() == HttpStatus.SC_BAD_REQUEST) {
 				return null;
 			}
@@ -319,7 +332,12 @@ public class ManagerController {
 		LOGGER.info("Getting instance " + instanceId + " for remote member.");
 		String federationTokenAccessId = getFederationUserToken().getAccessId();
 		try {
-			return computePlugin.getInstance(federationTokenAccessId, instanceId);
+			Instance instance = computePlugin.getInstance(federationTokenAccessId, instanceId);
+			String sshAddress = sshTunnel.getPublicAddress(properties, instanceId);
+			if (sshAddress != null) {
+				instance.addAttribute(DefaultSSHTunnel.SSH_PUBLIC_ADDRESS_ATT, sshAddress);
+			}
+			return instance;
 		} catch (OCCIException e) {
 			LOGGER.warn("Exception while getting instance " + instanceId + " for remote member.", e);
 			if (e.getStatus().getCode() == HttpStatus.SC_NOT_FOUND) {
@@ -333,6 +351,7 @@ public class ManagerController {
 		LOGGER.info("Removing instance " + instanceId + " for remote member.");
 		String federationTokenAccessId = getFederationUserToken().getAccessId();
 		computePlugin.removeInstance(federationTokenAccessId, instanceId);
+		sshTunnel.release(instanceId);
 	}
 
 	public List<Request> createRequests(String accessId, List<Category> categories,
@@ -350,12 +369,6 @@ public class ManagerController {
 			String requestId = String.valueOf(UUID.randomUUID());
 			Request request = new Request(requestId, userToken, 
 					new LinkedList<Category>(categories), new HashMap<String, String>(xOCCIAtt));
-			try {
-				sshTunnel.create(properties, request);
-			} catch (Exception e) {
-				LOGGER.warn("Exception while creating ssh tunnel.", e);
-				request.setState(RequestState.FAILED);
-			}
 			LOGGER.info("Created request: " + request);
 			currentRequests.add(request);
 			requests.addRequest(userToken.getUser(), request);
@@ -478,16 +491,29 @@ public class ManagerController {
 	private boolean createLocalInstance(Request request) {
 		request.setMemberId(null);
 		String instanceId = null;
+		Integer port = null;
 
 		LOGGER.info("Submiting local request " + request);
 
 		try {
+			try {
+				port = sshTunnel.create(properties, request);
+			} catch (Exception e) {
+				LOGGER.warn("Exception while creating ssh tunnel.", e);
+				request.setState(RequestState.FAILED);
+				return false;
+			}
 			instanceId = computePlugin.requestInstance(request.getToken().getAccessId(),
 					request.getCategories(), request.getxOCCIAtt());
 			if (instanceId == null) {
+				sshTunnel.release(port);
 				return false;
 			}
+			sshTunnel.update(instanceId, port);
 		} catch (OCCIException e) {
+			if (port != null) {
+				sshTunnel.release(port);
+			}
 			if (e.getStatus().getCode() == HttpStatus.SC_INSUFFICIENT_SPACE_ON_RESOURCE) {
 				LOGGER.warn("Request failed locally for quota exceeded.", e);
 				return false;
@@ -497,6 +523,7 @@ public class ManagerController {
 				LOGGER.warn("Request failed locally for an unknown reason.", e);
 				return true;
 			}
+			
 		}
 
 		request.setInstanceId(instanceId);

@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
@@ -21,7 +20,6 @@ import org.fogbowcloud.manager.occi.request.Request;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 public class TestDefaultSSHTunnel {
@@ -68,25 +66,49 @@ public class TestDefaultSSHTunnel {
 	}
 
 	@Test
-	public void release() {
+	public void releasePort() {
 		final int port = 50000;
 		final int port2 = 50001;
 		Set<Integer> takenPorts = new HashSet<Integer>();
 		takenPorts.add(port);
 		takenPorts.add(port2);
 		defaultSSHTunnel.setTakenPorts(takenPorts);
-		String sshAddressAtt = "10.0.0.1:50000";
-
-		Map<String, String> attribute = new HashMap<String, String>();
-		attribute.put(DefaultSSHTunnel.SSH_ADDRESS_ATT, sshAddressAtt);
-		Request request = new Request("id", new Token("accessId", "user", new Date(),
-				new HashMap<String, String>()), new ArrayList<Category>(), attribute);
 
 		Assert.assertEquals(2, defaultSSHTunnel.getTakenPorts().size());
 
-		defaultSSHTunnel.release(request);
+		defaultSSHTunnel.release(port);
 
 		Assert.assertEquals(1, defaultSSHTunnel.getTakenPorts().size());
+	}
+	
+	@Test
+	public void releaseInstanceId() throws FileNotFoundException, IOException {
+		final String privateHostIP = "10.0.0.1";
+		final String publicHostIP = "150.165.80.1";
+		final String user = "fogbow";
+		final String portRanger = "50000:59999";
+		final String port = "50000";
+
+		String sshTunnelCmd = getScriptFogbowInjectTunnel();
+		sshTunnelCmd = sshTunnelCmd.replace("#REMOTE_USER#", user);
+		sshTunnelCmd = sshTunnelCmd.replace("#REMOTE_HOST#", privateHostIP);
+		sshTunnelCmd = sshTunnelCmd.replace("#REMOTE_PORT#", port);
+
+		Properties properties = new Properties();
+		properties.put("ssh_tunnel_public_host", publicHostIP);
+		properties.put("ssh_tunnel_private_host", privateHostIP);
+		properties.put("ssh_tunnel_user", user);
+		properties.put("ssh_tunnel_port_range", portRanger);
+		Request request = new Request("is", new Token("accessId", "user", new Date(),
+				new HashMap<String, String>()), new ArrayList<Category>(),
+				new HashMap<String, String>());
+
+		defaultSSHTunnel.update("instanceId", 
+				defaultSSHTunnel.create(properties, request));
+		
+		defaultSSHTunnel.release("instanceId");
+		
+		Assert.assertTrue(defaultSSHTunnel.getTakenPorts().isEmpty());
 	}
 
 	@SuppressWarnings("resource")

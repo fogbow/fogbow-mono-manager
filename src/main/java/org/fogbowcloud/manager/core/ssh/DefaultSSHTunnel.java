@@ -5,7 +5,9 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.DatagramSocket;
 import java.net.ServerSocket;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
@@ -21,12 +23,23 @@ public class DefaultSSHTunnel implements SSHTunnel {
 	public static final String USER_DATA_ATT = "org.fogbowcloud.request.user-data";
 	public static final String SSH_ADDRESS_ATT = "org.fogbowcloud.request.ssh-address";
 	public static final String SSH_PUBLIC_ADDRESS_ATT = "org.fogbowcloud.request.ssh-public-address";
-	private Set<Integer> takenPorts = new HashSet<Integer>();
 	
-	public void create(Properties properties, Request request) throws FileNotFoundException, IOException {
+	private Set<Integer> takenPorts = new HashSet<Integer>();
+	private Map<String, Integer> instanceToPort = new HashMap<String, Integer>();
+	
+	public Integer create(Properties properties, Request request) throws FileNotFoundException, IOException {
 		
-		request.addCategory(new Category(RequestConstants.USER_DATA_TERM, 
-				RequestConstants.SCHEME, RequestConstants.MIXIN_CLASS));
+		boolean hasCategory = false;
+		for (Category category : request.getCategories()) {
+			if (category.getTerm().equals(RequestConstants.USER_DATA_TERM)) {
+				hasCategory = true;
+				break;
+			}
+		}
+		if (!hasCategory) {
+			request.addCategory(new Category(RequestConstants.USER_DATA_TERM, 
+					RequestConstants.SCHEME, RequestConstants.MIXIN_CLASS));
+		}
 		
 		String sshTunnelCmd = IOUtils.toString(new FileInputStream("bin/fogbow-inject-tunnel"));
 		String sshPrivateHostIP = properties.getProperty("ssh_tunnel_private_host");
@@ -57,16 +70,34 @@ public class DefaultSSHTunnel implements SSHTunnel {
 				sshTunnelCmd.getBytes(Charsets.UTF_8)));
 		request.putAttValue(SSH_ADDRESS_ATT, sshPrivateHostIP + ":" + sshPort);
 		request.putAttValue(SSH_PUBLIC_ADDRESS_ATT, sshPublicHostIP + ":" + sshPort);
+		
+		return sshPort;
 	}
 	
-	public void release(Request request) {
-		String sshAddress = request.getAttValue(SSH_ADDRESS_ATT);
-		if (sshAddress == null) {
+	public void update(String instanceId, Integer port) {
+		instanceToPort.put(instanceId, port);
+	}
+	
+	public void release(String instanceId) {
+		if (instanceId == null) {
 			return;
 		}
-		String[] sshAddressSplit = sshAddress.split(":");
-		int sshPort = Integer.parseInt(sshAddressSplit[1]);
-		takenPorts.remove(sshPort);
+		Integer port = instanceToPort.remove(instanceId);
+		release(port);
+	}
+
+	public void release(Integer port) {
+		if (port == null) {
+			return;
+		}
+		takenPorts.remove(port);
+	}
+	
+	@Override
+	public String getPublicAddress(Properties properties, String instanceId) {
+		String sshPublicHostIP = properties.getProperty("ssh_tunnel_public_host");
+		Integer port = instanceToPort.get(instanceId);
+		return sshPublicHostIP + ":" + port;
 	}
 	
 	private static boolean available(int port) {

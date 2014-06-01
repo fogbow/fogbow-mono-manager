@@ -6,8 +6,14 @@ import org.fogbowcloud.manager.occi.request.Request;
 
 public interface SSHTunnel {
 
-	public void create(Properties properties, Request request) throws Exception;
+	public Integer create(Properties properties, Request request) throws Exception;
 	
-	public void release(Request request);
+	public void update(String instanceId, Integer port);
+	
+	public void release(String instanceId);
+	
+	public void release(Integer port);
+	
+	public String getPublicAddress(Properties properties, String instanceId);
 	
 }
