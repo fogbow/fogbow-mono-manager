@@ -43,11 +43,9 @@ public class ManagerController {
 	private static final long DEFAULT_INSTANCE_MONITORING_PERIOD = 120000; // 2
 																			// minutes
 
-	private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(10);
-	
-	private ManagerTimer requestSchedulerTimer = new ManagerTimer(executor);
-	private ManagerTimer tokenUpdaterTimer = new ManagerTimer(executor);
-	private ManagerTimer instanceMonitoringTimer = new ManagerTimer(executor);
+	private final ManagerTimer requestSchedulerTimer;
+	private final ManagerTimer tokenUpdaterTimer;
+	private final ManagerTimer instanceMonitoringTimer;
 
 	private Token federationUserToken;
 	private List<FederationMember> members = new LinkedList<FederationMember>();
@@ -64,10 +62,17 @@ public class ManagerController {
 	private SSHTunnel sshTunnel = new DefaultSSHTunnel();
 
 	public ManagerController(Properties properties) {
-		this.properties = properties;
+		this(properties, Executors.newScheduledThreadPool(10));
+	}
+	
+	public ManagerController(Properties properties, ScheduledExecutorService executor) {
 		if (properties == null) {
 			throw new IllegalArgumentException();
 		}
+		this.properties = properties;
+		this.requestSchedulerTimer = new ManagerTimer(executor);
+		this.tokenUpdaterTimer = new ManagerTimer(executor);
+		this.instanceMonitoringTimer = new ManagerTimer(executor);
 	}
 
 	public void setSSHTunnel(SSHTunnel sshTunnel) {

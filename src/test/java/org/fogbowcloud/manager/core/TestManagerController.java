@@ -517,6 +517,7 @@ public class TestManagerController {
 		Assert.assertNull(requests.get(0).getMemberId());
 
 		// updating compute mock
+		Mockito.reset(managerTestHelper.getComputePlugin());
 		Mockito.when(
 				managerTestHelper.getComputePlugin().requestInstance(Mockito.anyString(),
 						Mockito.any(List.class), Mockito.any(Map.class))).thenThrow(
@@ -740,6 +741,8 @@ public class TestManagerController {
 		// waiting expiration time
 		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD + DefaultDataTestHelper.GRACE_TIME);
 
+		managerController.checkAndSubmitOpenRequests();
+		
 		// checking if request state was set to closed
 		requests = managerController.getRequestsFromUser(DefaultDataTestHelper.ACCESS_TOKEN_ID);
 		Assert.assertEquals(1, requests.size());
@@ -866,8 +869,8 @@ public class TestManagerController {
 	@Test
 	public void testOneTimeRequestValidityPeriodInFuture() throws InterruptedException {
 		long now = System.currentTimeMillis();
-		long startRequestTime = now + (DefaultDataTestHelper.SCHEDULER_PERIOD * 2);
-		long expirationRequestTime = now + (DefaultDataTestHelper.SCHEDULER_PERIOD * 3);
+		long startRequestTime = now + (DefaultDataTestHelper.SCHEDULER_PERIOD * 3);
+		long expirationRequestTime = now + (DefaultDataTestHelper.SCHEDULER_PERIOD * 6);
 
 		// setting request attributes
 		xOCCIAtt.put(RequestAttribute.TYPE.getValue(), RequestType.ONE_TIME.getValue());
@@ -882,9 +885,6 @@ public class TestManagerController {
 		managerController.createRequests(DefaultDataTestHelper.ACCESS_TOKEN_ID,
 				new ArrayList<Category>(), xOCCIAtt);
 
-		// waiting for a time and request is not valid yet
-		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD + DefaultDataTestHelper.GRACE_TIME);
-
 		// request is not in valid period yet
 		List<Request> requests = managerController
 				.getRequestsFromUser(DefaultDataTestHelper.ACCESS_TOKEN_ID);
@@ -896,8 +896,10 @@ public class TestManagerController {
 		Assert.assertNull(requests.get(0).getMemberId());
 
 		// sleeping for the scheduler period and submitting request
-		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD + DefaultDataTestHelper.GRACE_TIME);
+		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD * 3 + DefaultDataTestHelper.GRACE_TIME);
 
+		managerController.checkAndSubmitOpenRequests();
+		
 		// checking is request is fulfilled
 		requests = managerController.getRequestsFromUser(DefaultDataTestHelper.ACCESS_TOKEN_ID);
 		Assert.assertEquals(1, requests.size());
@@ -937,7 +939,7 @@ public class TestManagerController {
 	public void testPersistentRequestValidityPeriodInFuture() throws InterruptedException {
 		long now = System.currentTimeMillis();
 		long startRequestTime = now + (DefaultDataTestHelper.SCHEDULER_PERIOD * 2);
-		long expirationRequestTime = now + (DefaultDataTestHelper.SCHEDULER_PERIOD * 3);
+		long expirationRequestTime = now + (DefaultDataTestHelper.SCHEDULER_PERIOD * 4);
 
 		// setting request attributes
 		xOCCIAtt.put(RequestAttribute.TYPE.getValue(), RequestType.PERSISTENT.getValue());
@@ -952,9 +954,6 @@ public class TestManagerController {
 		managerController.createRequests(DefaultDataTestHelper.ACCESS_TOKEN_ID,
 				new ArrayList<Category>(), xOCCIAtt);
 
-		// waiting for a time and request is not valid yet
-		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD + DefaultDataTestHelper.GRACE_TIME);
-
 		// request is not in valid period yet
 		List<Request> requests = managerController
 				.getRequestsFromUser(DefaultDataTestHelper.ACCESS_TOKEN_ID);
@@ -966,7 +965,8 @@ public class TestManagerController {
 		Assert.assertNull(requests.get(0).getMemberId());
 
 		// waiting for a time and request is into valid period
-		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD + DefaultDataTestHelper.GRACE_TIME);
+		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD * 2 + DefaultDataTestHelper.GRACE_TIME);
+		managerController.checkAndSubmitOpenRequests();
 
 		// checking is request is fulfilled
 		requests = managerController.getRequestsFromUser(DefaultDataTestHelper.ACCESS_TOKEN_ID);
@@ -991,8 +991,10 @@ public class TestManagerController {
 				DefaultDataTestHelper.INSTANCE_ID);
 
 		// waiting for the scheduler period so that request is not into valid period anymore
-		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD + DefaultDataTestHelper.GRACE_TIME);
+		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD * 2 + DefaultDataTestHelper.GRACE_TIME);
 
+		managerController.checkAndSubmitOpenRequests();
+		
 		// checking if request is not in valid period anymore
 		requests = managerController.getRequestsFromUser(DefaultDataTestHelper.ACCESS_TOKEN_ID);
 		Assert.assertEquals(1, requests.size());

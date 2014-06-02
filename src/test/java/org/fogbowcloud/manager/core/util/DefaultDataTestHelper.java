@@ -21,7 +21,7 @@ public class DefaultDataTestHelper {
 	
 	//time data
 	public static final Long SCHEDULER_PERIOD = 500L;
-	public static final Long GRACE_TIME = 30L;
+	public static final Long GRACE_TIME = 250L;
 	public static final long LONG_TIME = 1 * 24 * 60 * 60 * 1000; //one day
 	public static final Date TOKEN_FUTURE_EXPIRATION = new Date(System.currentTimeMillis() + LONG_TIME);
 	

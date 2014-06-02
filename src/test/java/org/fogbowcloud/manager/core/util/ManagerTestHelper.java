@@ -11,6 +11,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.ScheduledExecutorService;
 
 import org.dom4j.Attribute;
 import org.dom4j.Element;
@@ -282,7 +283,8 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		properties.put("scheduler_period", DefaultDataTestHelper.SCHEDULER_PERIOD.toString());
 		properties
 				.put("instance_monitoring_period", Long.toString(DefaultDataTestHelper.LONG_TIME));
-		ManagerController managerController = new ManagerController(properties);
+		ManagerController managerController = new ManagerController(properties, 
+				Mockito.mock(ScheduledExecutorService.class));
 
 		// mocking compute
 		computePlugin = Mockito.mock(ComputePlugin.class);
