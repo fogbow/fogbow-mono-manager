@@ -27,20 +27,20 @@ public class ResourceRepository {
 				"Medium Flavor", "");
 		Resource fogbowLargeFlavor = new Resource(RequestConstants.LARGE_TERM,
 				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS,
-				new ArrayList<String>(), new ArrayList<String>(), FOGBOWCLOUD_ENDPOINT + "/small",
+				new ArrayList<String>(), new ArrayList<String>(), FOGBOWCLOUD_ENDPOINT + "/large",
 				"Large Flavor", "");
 		// image flavors
-		Resource fogbowUbuntu64Flavor = new Resource(RequestConstants.UBUNTU64_TERM,
+		Resource fogbowLinuxX86Flavor = new Resource(RequestConstants.LINUX_X86_TERM,
 				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS,
 				new ArrayList<String>(), new ArrayList<String>(), FOGBOWCLOUD_ENDPOINT + "/"
-						+ RequestConstants.UBUNTU64_TERM, "Ubuntu64 Image", "");
+						+ RequestConstants.LINUX_X86_TERM, "Linux-x86 Image", "");
 
 		List<Resource> resources = new ArrayList<Resource>();
 		resources.add(fogbowRequest);
 		resources.add(fogbowSmallFlavor);
 		resources.add(fogbowMediumFlavor);
 		resources.add(fogbowLargeFlavor);
-		resources.add(fogbowUbuntu64Flavor);
+		resources.add(fogbowLinuxX86Flavor);
 		return resources;
 	}
 

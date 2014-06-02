@@ -20,6 +20,8 @@ public class OCCIException extends ResourceException {
 			return HttpStatus.SC_NOT_FOUND;
 		case BAD_REQUEST:
 			return HttpStatus.SC_BAD_REQUEST;
+		case QUOTA_EXCEEDED:
+			return HttpStatus.SC_INSUFFICIENT_SPACE_ON_RESOURCE;
 		default:
 			break;
 		}
