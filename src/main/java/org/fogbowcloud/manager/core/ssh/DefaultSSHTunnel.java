@@ -20,9 +20,15 @@ import org.fogbowcloud.manager.occi.request.RequestConstants;
 
 public class DefaultSSHTunnel implements SSHTunnel {
 
+	protected static final String REMOTE_PORT_STR = "#REMOTE_PORT#";
+	protected static final String REMOTE_USER_STR = "#REMOTE_USER#";
+	protected static final String REMOTE_HOST_STR = "#REMOTE_HOST#";
+	protected static final String REMOTE_HOST_PORT_STR = "#REMOTE_HOST_PORT#";
+	
 	public static final String USER_DATA_ATT = "org.fogbowcloud.request.user-data";
 	public static final String SSH_ADDRESS_ATT = "org.fogbowcloud.request.ssh-address";
 	public static final String SSH_PUBLIC_ADDRESS_ATT = "org.fogbowcloud.request.ssh-public-address";
+	private static final String DEFAULT_SSH_HOST_PORT = "22";
 	
 	private Set<Integer> takenPorts = new HashSet<Integer>();
 	private Map<String, Integer> instanceToPort = new HashMap<String, Integer>();
@@ -44,9 +50,15 @@ public class DefaultSSHTunnel implements SSHTunnel {
 		String sshTunnelCmd = IOUtils.toString(new FileInputStream("bin/fogbow-inject-tunnel"));
 		String sshPrivateHostIP = properties.getProperty("ssh_tunnel_private_host");
 		String sshPublicHostIP = properties.getProperty("ssh_tunnel_public_host");
+		String sshRemoteHostPort = properties.getProperty("ssh_tunnel_host_port");
 		
-		sshTunnelCmd = sshTunnelCmd.replace("#REMOTE_USER#", properties.getProperty("ssh_tunnel_user"));
-		sshTunnelCmd = sshTunnelCmd.replace("#REMOTE_HOST#", sshPrivateHostIP);
+		if (sshRemoteHostPort == null) {
+			sshRemoteHostPort = DEFAULT_SSH_HOST_PORT;
+		}
+		
+		sshTunnelCmd = sshTunnelCmd.replace(REMOTE_USER_STR, properties.getProperty("ssh_tunnel_user"));
+		sshTunnelCmd = sshTunnelCmd.replace(REMOTE_HOST_STR, sshPrivateHostIP);
+		sshTunnelCmd = sshTunnelCmd.replace(REMOTE_HOST_PORT_STR, sshRemoteHostPort);
 		String[] portRange = properties.getProperty("ssh_tunnel_port_range").split(":");
 		
 		Integer portFloor = Integer.parseInt(portRange[0]);
@@ -65,7 +77,7 @@ public class DefaultSSHTunnel implements SSHTunnel {
 			throw new IllegalStateException("No SSH port available for reverse tunnelling");
 		}
 		
-		sshTunnelCmd = sshTunnelCmd.replace("#REMOTE_PORT#", sshPort.toString());
+		sshTunnelCmd = sshTunnelCmd.replace(REMOTE_PORT_STR, sshPort.toString());
 		request.putAttValue(USER_DATA_ATT, Base64.encodeBase64URLSafeString(
 				sshTunnelCmd.getBytes(Charsets.UTF_8)));
 		request.putAttValue(SSH_ADDRESS_ATT, sshPrivateHostIP + ":" + sshPort);
