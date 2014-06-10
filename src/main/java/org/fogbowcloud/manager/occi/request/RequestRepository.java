@@ -85,9 +85,16 @@ public class RequestRepository {
 		LOGGER.debug("Removing requestId " + requestId);
 
 		for (List<Request> userRequests : requests.values()) {
-			for (Request request : userRequests) {
+			Iterator<Request> iterator = userRequests.iterator();
+			while (iterator.hasNext()) {
+				Request request = (Request) iterator.next();
 				if (request.getId().equals(requestId)) {
-					request.setState(RequestState.DELETED);
+					if (request.getState().equals(RequestState.CLOSED)){
+						LOGGER.debug("Request " + requestId + " is already closed. Excluding request.");
+						iterator.remove();
+					} else {
+						request.setState(RequestState.DELETED);
+					}
 					return;
 				}
 			}
