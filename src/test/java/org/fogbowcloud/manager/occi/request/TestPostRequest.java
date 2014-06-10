@@ -1,4 +1,4 @@
-package org.fogbowcloud.manager.occi;
+package org.fogbowcloud.manager.occi.request;
 
 import java.io.IOException;
 import java.net.URISyntaxException;

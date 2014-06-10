@@ -59,12 +59,13 @@ public class ComputeServerResource extends ServerResource {
 	}
 
 	protected static String generateResponse(List<Instance> instances) {
-		String response = "";
+		if (instances == null || instances.isEmpty()) {
+			return "There are not instances.";
+		}
+		
+		String response = "";		
 		for (Instance intance : instances) {
 			response += intance.toOCCIMassageFormatLocation() + "\n";
-		}
-		if (response.equals("")) {
-			response = "Empty";
 		}
 		return response;
 	}

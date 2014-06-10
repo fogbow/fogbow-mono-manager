@@ -1,4 +1,4 @@
-package org.fogbowcloud.manager.occi;
+package org.fogbowcloud.manager.occi.request;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -29,6 +29,7 @@ import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
+import org.fogbowcloud.manager.occi.request.RequestServerResource;
 import org.fogbowcloud.manager.occi.request.RequestState;
 import org.fogbowcloud.manager.occi.util.ComputeApplication;
 import org.fogbowcloud.manager.occi.util.OCCITestHelper;
@@ -72,6 +73,19 @@ public class TestGetRequest {
 	}
 
 	@Test
+	public void testGetRequestContent() throws URISyntaxException, HttpException, IOException {
+		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_REQUEST);
+		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
+		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		HttpClient client = new DefaultHttpClient();
+		HttpResponse response = client.execute(get);
+
+		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(RequestServerResource.NO_REQUESTS_MESSAGE,
+				EntityUtils.toString(response.getEntity(), String.valueOf(Charsets.UTF_8)));
+	}
+	
+	@Test
 	public void testGetRequest() throws URISyntaxException, HttpException, IOException {
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_REQUEST);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
@@ -80,7 +94,7 @@ public class TestGetRequest {
 		HttpResponse response = client.execute(get);
 
 		Assert.assertEquals(0, OCCITestHelper.getRequestLocations(response).size());
-		Assert.assertEquals(HttpStatus.SC_NO_CONTENT, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 
 	@Test
@@ -92,7 +106,7 @@ public class TestGetRequest {
 		HttpResponse response = client.execute(get);
 
 		Assert.assertEquals(0, OCCITestHelper.getRequestLocations(response).size());
-		Assert.assertEquals(HttpStatus.SC_NO_CONTENT, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 
 	@Test

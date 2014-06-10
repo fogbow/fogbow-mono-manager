@@ -21,6 +21,7 @@ import org.restlet.resource.ServerResource;
 
 public class RequestServerResource extends ServerResource {
 
+	protected static final String NO_REQUESTS_MESSAGE = "There are not requests.";
 	private static final Logger LOGGER = Logger.getLogger(RequestServerResource.class);
 
 	@Get
@@ -117,6 +118,9 @@ public class RequestServerResource extends ServerResource {
 	}
 
 	protected static String generateResponse(List<Request> requests, HttpRequest req) {
+		if (requests == null || requests.isEmpty()) { 
+			return NO_REQUESTS_MESSAGE;
+		}
 		String requestEndpoint = req.getHostRef() + req.getHttpCall().getRequestUri();
 		String response = "";
 		for (Request request : requests) {
