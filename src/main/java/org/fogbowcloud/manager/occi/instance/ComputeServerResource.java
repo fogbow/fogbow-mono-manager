@@ -1,5 +1,6 @@
 package org.fogbowcloud.manager.occi.instance;
 
+import java.util.Iterator;
 import java.util.List;
 
 import org.apache.log4j.Logger;
@@ -14,6 +15,7 @@ import org.restlet.resource.ServerResource;
 
 public class ComputeServerResource extends ServerResource {
 
+	protected static final String NO_INSTANCES_MESSAGE = "There are not instances.";
 	private static final Logger LOGGER = Logger.getLogger(ComputeServerResource.class);
 
 	@Get
@@ -45,8 +47,7 @@ public class ComputeServerResource extends ServerResource {
 			LOGGER.info("Removing all instances of token :" + authToken);
 			application.removeInstances(authToken);
 			return ResponseConstants.OK;
-		}
-		
+		}		
 		LOGGER.info("Removing instance " + instanceId);
 		
 		application.removeInstance(authToken, instanceId);
@@ -60,12 +61,15 @@ public class ComputeServerResource extends ServerResource {
 
 	protected static String generateResponse(List<Instance> instances) {
 		if (instances == null || instances.isEmpty()) {
-			return "There are not instances.";
+			return NO_INSTANCES_MESSAGE;
 		}
-		
-		String response = "";		
-		for (Instance intance : instances) {
-			response += intance.toOCCIMassageFormatLocation() + "\n";
+		String response = "";
+		Iterator<Instance> instanceIt = instances.iterator();
+		while(instanceIt.hasNext()){
+			response += instanceIt.next().toOCCIMassageFormatLocation();
+			if (instanceIt.hasNext()){
+				response += "\n";
+			}
 		}
 		return response;
 	}

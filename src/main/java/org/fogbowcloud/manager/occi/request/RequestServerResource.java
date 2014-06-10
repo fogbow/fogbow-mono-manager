@@ -1,6 +1,7 @@
 package org.fogbowcloud.manager.occi.request;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -123,9 +124,12 @@ public class RequestServerResource extends ServerResource {
 		}
 		String requestEndpoint = req.getHostRef() + req.getHttpCall().getRequestUri();
 		String response = "";
-		for (Request request : requests) {
-			response += HeaderUtils.X_OCCI_LOCATION + requestEndpoint + "/" + request.getId()
-					+ "\n";
+		Iterator<Request> requestIt = requests.iterator();
+		while(requestIt.hasNext()){
+			response += HeaderUtils.X_OCCI_LOCATION + requestEndpoint + "/" + requestIt.next().getId();
+			if (requestIt.hasNext()){
+				response += "\n";
+			}
 		}
 		return response;
 	}
