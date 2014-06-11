@@ -17,6 +17,10 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
+import org.apache.log4j.FileAppender;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.apache.log4j.PatternLayout;
 import org.fogbowcloud.manager.core.plugins.openstack.OpenStackIdentityPlugin;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 
@@ -34,7 +38,17 @@ public class Main {
 	
 	private static HttpClient client = new DefaultHttpClient();
 	
-	public static void main(String[] args) throws Exception {
+	public static void main(String[] args) throws Exception {		
+		
+		FileAppender fa = new FileAppender();
+		fa.setName("log");
+		fa.setFile("mylog.log");
+		fa.setLayout(new PatternLayout("%d %-5p [%c{1}] %m%n"));
+		fa.setThreshold(Level.ALL);
+		fa.setAppend(true);
+		fa.activateOptions();
+		Logger.getRootLogger().addAppender(fa);
+		
 		JCommander jc = new JCommander();
 
 		MemberCommand member = new MemberCommand();
@@ -167,8 +181,15 @@ public class Main {
 			request.addHeader(header);
 		}
 		
+		//Testing time ...
+		//long start = System.currentTimeMillis();
 		HttpResponse response = client.execute(request);
-
+		//long end = System.currentTimeMillis();
+		//long mili = end - start;
+		//System.out.println(mili + "mili");
+		//double time = (end - start) / 1000;
+		//System.out.println("Tempo : " + time + "s");
+		
 		if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
 			System.out.println(EntityUtils.toString(response.getEntity()));
 		} else {
