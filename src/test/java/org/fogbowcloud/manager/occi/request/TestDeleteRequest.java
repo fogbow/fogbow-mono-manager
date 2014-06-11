@@ -97,7 +97,7 @@ public class TestDeleteRequest {
 		// Post
 		HttpPost post = new HttpPost(OCCITestHelper.URI_FOGBOW_REQUEST);
 		Category category = new Category(RequestConstants.TERM, RequestConstants.SCHEME,
-				OCCIHeaders.KIND_CLASS);
+				RequestConstants.KIND_CLASS);
 		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
 		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
@@ -132,7 +132,7 @@ public class TestDeleteRequest {
 		// Post
 		HttpPost post = new HttpPost(OCCITestHelper.URI_FOGBOW_REQUEST);
 		Category category = new Category(RequestConstants.TERM, RequestConstants.SCHEME,
-				OCCIHeaders.KIND_CLASS);
+				RequestConstants.KIND_CLASS);
 		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
 		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
@@ -173,7 +173,7 @@ public class TestDeleteRequest {
 		// Post
 		HttpPost post = new HttpPost(OCCITestHelper.URI_FOGBOW_REQUEST);
 		Category category = new Category(RequestConstants.TERM, RequestConstants.SCHEME,
-				OCCIHeaders.KIND_CLASS);
+				RequestConstants.KIND_CLASS);
 		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
 		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());

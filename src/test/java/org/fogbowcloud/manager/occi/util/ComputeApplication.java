@@ -36,6 +36,9 @@ public class ComputeApplication extends Application {
 	public static final String SMALL_FLAVOR_TERM = "m1-small";
 	public static final String MEDIUM_FLAVOR_TERM = "m1-medium";
 	public static final String LARGE_FLAVOR_TERM = "m1-large";
+	public static final String INSTANCE_SCHEME = "http://schemas.openstack.org/compute/instance#";
+	public static final String OS_SCHEME = "http://schemas.openstack.org/template/os#";
+	public static final String RESOURCE_SCHEME = "http://schemas.openstack.org/template/resource#";
 	
 	private Map<String, List<String>> userToInstanceId;
 	private Map<String, String> instanceIdToDetails;
@@ -155,7 +158,7 @@ public class ComputeApplication extends Application {
 	private void checkRules(List<Category> categories, Map<String, String> xOCCIAtt) {
 		boolean OSFound = false;
 		for (Category category : categories) {
-			if (category.getScheme().equals(OpenStackComputePlugin.OS_SCHEME)) {
+			if (category.getScheme().equals(OpenStackComputePlugin.getOSScheme())) {
 				OSFound = true;
 				break;
 			}

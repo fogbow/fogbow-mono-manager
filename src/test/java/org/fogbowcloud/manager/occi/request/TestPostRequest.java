@@ -57,7 +57,7 @@ public class TestPostRequest {
 	public void testPostRequest() throws URISyntaxException, HttpException, IOException {
 		HttpPost post = new HttpPost(OCCITestHelper.URI_FOGBOW_REQUEST);
 		Category category = new Category(RequestConstants.TERM,
-				RequestConstants.SCHEME, OCCIHeaders.KIND_CLASS);
+				RequestConstants.SCHEME, RequestConstants.KIND_CLASS);
 		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
 		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
@@ -73,7 +73,7 @@ public class TestPostRequest {
 	public void testPostRequestTwoInstances() throws URISyntaxException, HttpException, IOException {
 		HttpPost post = new HttpPost(OCCITestHelper.URI_FOGBOW_REQUEST);
 		Category category = new Category(RequestConstants.TERM,
-				RequestConstants.SCHEME, OCCIHeaders.KIND_CLASS);
+				RequestConstants.SCHEME, RequestConstants.KIND_CLASS);
 		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
 		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
@@ -92,7 +92,7 @@ public class TestPostRequest {
 			IOException {
 		HttpPost post = new HttpPost(OCCITestHelper.URI_FOGBOW_REQUEST);
 		Category category = new Category(RequestConstants.TERM,
-				RequestConstants.SCHEME, OCCIHeaders.KIND_CLASS);
+				RequestConstants.SCHEME, RequestConstants.KIND_CLASS);
 		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
 		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
@@ -111,7 +111,7 @@ public class TestPostRequest {
 			IOException {
 		HttpPost post = new HttpPost(OCCITestHelper.URI_FOGBOW_REQUEST);
 		Category category = new Category("wrong", RequestConstants.SCHEME,
-				OCCIHeaders.KIND_CLASS);
+				RequestConstants.KIND_CLASS);
 		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
 		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
@@ -126,7 +126,7 @@ public class TestPostRequest {
 			IOException {
 		HttpPost post = new HttpPost(OCCITestHelper.URI_FOGBOW_REQUEST);
 		Category category = new Category(RequestConstants.TERM,
-				"http://schemas.fogbowcloud.org/wrong#", OCCIHeaders.KIND_CLASS);
+				"http://schemas.fogbowcloud.org/wrong#", RequestConstants.KIND_CLASS);
 		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
 		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
@@ -156,7 +156,7 @@ public class TestPostRequest {
 			IOException {
 		HttpPost post = new HttpPost(OCCITestHelper.URI_FOGBOW_REQUEST);
 		Category category = new Category(RequestConstants.TERM,
-				RequestConstants.SCHEME, OCCIHeaders.KIND_CLASS);
+				RequestConstants.SCHEME, RequestConstants.KIND_CLASS);
 		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
 		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
@@ -173,7 +173,7 @@ public class TestPostRequest {
 			IOException {
 		HttpPost post = new HttpPost(OCCITestHelper.URI_FOGBOW_REQUEST);
 		Category category = new Category(RequestConstants.TERM,
-				RequestConstants.SCHEME, OCCIHeaders.KIND_CLASS);
+				RequestConstants.SCHEME, RequestConstants.KIND_CLASS);
 		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
 		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.INVALID_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
@@ -188,7 +188,7 @@ public class TestPostRequest {
 			IOException {
 		HttpPost post = new HttpPost(OCCITestHelper.URI_FOGBOW_REQUEST);
 		Category category = new Category(RequestConstants.TERM,
-				RequestConstants.SCHEME, OCCIHeaders.KIND_CLASS);
+				RequestConstants.SCHEME, RequestConstants.KIND_CLASS);
 		post.addHeader(OCCIHeaders.CONTENT_TYPE, "text/plain");
 		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
@@ -203,7 +203,7 @@ public class TestPostRequest {
 			HttpException, IOException {
 		HttpPost post = new HttpPost(OCCITestHelper.URI_FOGBOW_REQUEST);
 		Category category = new Category(RequestConstants.TERM,
-				RequestConstants.SCHEME, OCCIHeaders.KIND_CLASS);
+				RequestConstants.SCHEME, RequestConstants.KIND_CLASS);
 		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
 		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
@@ -220,7 +220,7 @@ public class TestPostRequest {
 			IOException {
 		HttpPost post = new HttpPost(OCCITestHelper.URI_FOGBOW_REQUEST);
 		Category category = new Category(RequestConstants.TERM,
-				RequestConstants.SCHEME, OCCIHeaders.KIND_CLASS);
+				RequestConstants.SCHEME, RequestConstants.KIND_CLASS);
 		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
 		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
@@ -237,7 +237,7 @@ public class TestPostRequest {
 			HttpException, IOException {
 		HttpPost post = new HttpPost(OCCITestHelper.URI_FOGBOW_REQUEST);
 		Category category = new Category(RequestConstants.TERM,
-				RequestConstants.SCHEME, OCCIHeaders.KIND_CLASS);
+				RequestConstants.SCHEME, RequestConstants.KIND_CLASS);
 		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
 		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
@@ -254,7 +254,7 @@ public class TestPostRequest {
 			HttpException, IOException {
 		HttpPost post = new HttpPost(OCCITestHelper.URI_FOGBOW_REQUEST);
 		Category category = new Category(RequestConstants.TERM,
-				RequestConstants.SCHEME, OCCIHeaders.KIND_CLASS);
+				RequestConstants.SCHEME, RequestConstants.KIND_CLASS);
 		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
 		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
@@ -271,7 +271,7 @@ public class TestPostRequest {
 			IOException {
 		HttpPost post = new HttpPost(OCCITestHelper.URI_FOGBOW_REQUEST);
 		Category category = new Category(RequestConstants.TERM,
-				RequestConstants.SCHEME, OCCIHeaders.KIND_CLASS);
+				RequestConstants.SCHEME, RequestConstants.KIND_CLASS);
 		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
 		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());

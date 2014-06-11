@@ -16,6 +16,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import org.dom4j.Attribute;
 import org.dom4j.Element;
 import org.fogbowcloud.manager.core.CertificateHandlerHelper;
+import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.DefaultMemberValidator;
 import org.fogbowcloud.manager.core.FederationMemberValidator;
 import org.fogbowcloud.manager.core.ManagerController;
@@ -145,10 +146,10 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		this.identityPlugin = Mockito.mock(IdentityPlugin.class);
 
 		Properties properties = new Properties();
-		properties.put("federation_user_name", "fogbow");
-		properties.put("federation_user_password", "fogbow");
-		properties.put("federation_user_tenant_name", "fogbow");
-		properties.put("xmpp_jid", "manager.test.com");
+		properties.put(ConfigurationConstants.FEDERATION_USER_NAME_KEY, "fogbow");
+		properties.put(ConfigurationConstants.FEDERATION_USER_PASS_KEY, "fogbow");
+		properties.put(ConfigurationConstants.FEDERATION_USER_TENANT_NAME_KEY, "fogbow");
+		properties.put(ConfigurationConstants.XMPP_JID_KEY, "manager.test.com");
 
 		ManagerController managerFacade = new ManagerController(properties);
 		managerFacade.setComputePlugin(computePlugin);
@@ -183,9 +184,9 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		this.identityPlugin = Mockito.mock(IdentityPlugin.class);
 
 		Properties properties = new Properties();
-		properties.put("federation_user_name", "fogbow");
-		properties.put("federation_user_password", "fogbow");
-		properties.put("xmpp_jid", "manager.test.com");
+		properties.put(ConfigurationConstants.FEDERATION_USER_NAME_KEY, "fogbow");
+		properties.put(ConfigurationConstants.FEDERATION_USER_PASS_KEY, "fogbow");
+		properties.put(ConfigurationConstants.XMPP_JID_KEY, "manager.test.com");
 
 		FederationMemberValidator validator = new DefaultMemberValidator();
 		ManagerController managerFacade = new ManagerController(properties);
@@ -276,14 +277,19 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 	@SuppressWarnings("unchecked")
 	public ManagerController createDefaultManagerController() {
 		Properties properties = new Properties();
-		properties.put("federation_user_name", DefaultDataTestHelper.MANAGER_COMPONENT_URL);
-		properties.put("federation_user_name", DefaultDataTestHelper.USER_NAME);
-		properties.put("federation_user_password", DefaultDataTestHelper.USER_PASS);
-		properties.put("federation_user_tenant_name", DefaultDataTestHelper.TENANT_NAME);
-		properties.put("scheduler_period", DefaultDataTestHelper.SCHEDULER_PERIOD.toString());
-		properties
-				.put("instance_monitoring_period", Long.toString(DefaultDataTestHelper.LONG_TIME));
-		ManagerController managerController = new ManagerController(properties, 
+		properties.put(ConfigurationConstants.XMPP_JID_KEY,
+				DefaultDataTestHelper.MANAGER_COMPONENT_URL);
+		properties.put(ConfigurationConstants.FEDERATION_USER_NAME_KEY,
+				DefaultDataTestHelper.USER_NAME);
+		properties.put(ConfigurationConstants.FEDERATION_USER_PASS_KEY,
+				DefaultDataTestHelper.USER_PASS);
+		properties.put(ConfigurationConstants.FEDERATION_USER_TENANT_NAME_KEY,
+				DefaultDataTestHelper.TENANT_NAME);
+		properties.put(ConfigurationConstants.SCHEDULER_PERIOD_KEY,
+				DefaultDataTestHelper.SCHEDULER_PERIOD.toString());
+		properties.put(ConfigurationConstants.INSTANCE_MONITORING_PERIOD_KEY,
+				Long.toString(DefaultDataTestHelper.LONG_TIME));
+		ManagerController managerController = new ManagerController(properties,
 				Mockito.mock(ScheduledExecutorService.class));
 
 		// mocking compute

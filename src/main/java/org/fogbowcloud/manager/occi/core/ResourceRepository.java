@@ -7,16 +7,24 @@ import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
 
 public class ResourceRepository {
-
+	
+	private static ResourceRepository instance;
 	private static final String FOGBOWCLOUD_ENDPOINT = "http://localhost:8182";
-
-	public static List<Resource> getAll() {
+	List<Resource> resources = new ArrayList<Resource>();
+	
+	public static ResourceRepository getInstance(){
+		if (instance == null) {
+			instance = new ResourceRepository();
+		}
+		return instance;
+	}
+	
+	private ResourceRepository(){
 		Resource fogbowRequest = new Resource(RequestConstants.TERM, RequestConstants.SCHEME,
-				RequestConstants.CLASS, RequestAttribute.getValues(), new ArrayList<String>(),
+				RequestConstants.KIND_CLASS, RequestAttribute.getValues(), new ArrayList<String>(),
 				FOGBOWCLOUD_ENDPOINT + "/request", "Request new Instances", "");
-
-		// size flavors
-		// TODO check actions
+		
+		//size flavors
 		Resource fogbowSmallFlavor = new Resource(RequestConstants.SMALL_TERM,
 				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS,
 				new ArrayList<String>(), new ArrayList<String>(), FOGBOWCLOUD_ENDPOINT + "/small",
@@ -29,22 +37,26 @@ public class ResourceRepository {
 				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS,
 				new ArrayList<String>(), new ArrayList<String>(), FOGBOWCLOUD_ENDPOINT + "/large",
 				"Large Flavor", "");
-		// image flavors
-		Resource fogbowLinuxX86Flavor = new Resource(RequestConstants.LINUX_X86_TERM,
-				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS,
-				new ArrayList<String>(), new ArrayList<String>(), FOGBOWCLOUD_ENDPOINT + "/"
-						+ RequestConstants.LINUX_X86_TERM, "Linux-x86 Image", "");
+		//TODO add actions	
 
-		List<Resource> resources = new ArrayList<Resource>();
 		resources.add(fogbowRequest);
 		resources.add(fogbowSmallFlavor);
 		resources.add(fogbowMediumFlavor);
 		resources.add(fogbowLargeFlavor);
-		resources.add(fogbowLinuxX86Flavor);
+	}
+		
+	public List<Resource> getAll() {
 		return resources;
 	}
+	
+	public void addImageResource(String imageName){
+		Resource imageResource = new Resource(imageName, RequestConstants.TEMPLATE_OS_SCHEME,
+				RequestConstants.MIXIN_CLASS, new ArrayList<String>(), new ArrayList<String>(),
+				FOGBOWCLOUD_ENDPOINT + "/" + imageName, imageName + " image", "");
+		resources.add(imageResource);
+	}
 
-	public static List<Resource> get(List<Category> categories) {
+	public List<Resource> get(List<Category> categories) {
 		List<Resource> allResources = getAll();
 		List<Resource> requestResources = new ArrayList<Resource>();
 		for (Category requestCategory : categories) {
@@ -58,7 +70,7 @@ public class ResourceRepository {
 		return requestResources;
 	}
 
-	public static Resource get(String term) {
+	public Resource get(String term) {
 		List<Resource> allResources = getAll();
 		for (Resource resource : allResources) {
 			if (resource.getCategory().getTerm().equals(term)) {
