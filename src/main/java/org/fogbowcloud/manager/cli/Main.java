@@ -17,10 +17,9 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
-import org.apache.log4j.FileAppender;
+import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.apache.log4j.PatternLayout;
 import org.fogbowcloud.manager.core.plugins.openstack.OpenStackIdentityPlugin;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 
@@ -29,7 +28,7 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 
 public class Main {
-
+	
 	protected static String DEFAULT_URL = "http://localhost:8182";
 	protected static int DEFAULT_INTANCE_COUNT = 1;
 	protected static final String DEFAULT_TYPE = "one-time";
@@ -39,16 +38,8 @@ public class Main {
 	private static HttpClient client = new DefaultHttpClient();
 	
 	public static void main(String[] args) throws Exception {		
-		
-		FileAppender fa = new FileAppender();
-		fa.setName("log");
-		fa.setFile("mylog.log");
-		fa.setLayout(new PatternLayout("%d %-5p [%c{1}] %m%n"));
-		fa.setThreshold(Level.ALL);
-		fa.setAppend(true);
-		fa.activateOptions();
-		Logger.getRootLogger().addAppender(fa);
-		
+		configureLog4j();
+				
 		JCommander jc = new JCommander();
 
 		MemberCommand member = new MemberCommand();
@@ -158,6 +149,13 @@ public class Main {
 		}
 	}
 
+	private static void configureLog4j() {
+		ConsoleAppender console = new ConsoleAppender(); 
+		console.setThreshold(Level.OFF);
+		console.activateOptions();
+		Logger.getRootLogger().addAppender(console);
+	}
+	
 	private static void doRequest(String method, String endpoint, String authToken)
 			throws URISyntaxException, HttpException, IOException {
 		doRequest(method, endpoint, authToken, new HashSet<Header>());
@@ -181,15 +179,8 @@ public class Main {
 			request.addHeader(header);
 		}
 		
-		//Testing time ...
-		//long start = System.currentTimeMillis();
 		HttpResponse response = client.execute(request);
-		//long end = System.currentTimeMillis();
-		//long mili = end - start;
-		//System.out.println(mili + "mili");
-		//double time = (end - start) / 1000;
-		//System.out.println("Tempo : " + time + "s");
-		
+
 		if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
 			System.out.println(EntityUtils.toString(response.getEntity()));
 		} else {
