@@ -11,8 +11,6 @@ public class OCCIHeaders {
 	public static final String CATEGORY = "Category";
 
 	// occi constants
-	public static final String KIND_CLASS = "kind";
-	public static final String MIXIN_CLASS = "mixin";
 	public static final String ACTION_CLASS = "action";
 	public static final String SCHEME_CATEGORY = "scheme";
 	public static final String CLASS_CATEGORY = "class";

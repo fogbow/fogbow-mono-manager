@@ -92,14 +92,14 @@ public class HeaderUtils {
 	}
 
 	public static void checkCategories(List<Category> categories, String mandatoryTerm) {
-		List<Resource> resources = ResourceRepository.get(categories);
+		List<Resource> resources = ResourceRepository.getInstance().get(categories);
 
 		if (resources.size() != categories.size()) {
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}
 		for (Category category : categories) {
 			if (category.getTerm().equals(mandatoryTerm)) {
-				Resource resource = ResourceRepository.get(mandatoryTerm);
+				Resource resource = ResourceRepository.getInstance().get(mandatoryTerm);
 				if (resource == null || !resource.matches(category)) {
 					throw new OCCIException(ErrorType.BAD_REQUEST,
 							ResponseConstants.IRREGULAR_SYNTAX);

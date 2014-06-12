@@ -1,4 +1,9 @@
 #!/bin/bash
 DIRNAME=`dirname $0`
+LOG4J=log4j.properties
 cd $DIRNAME/..
-java -Dlog4j.configuration=file:log4j.properties -cp target/manager-0.0.1-SNAPSHOT.jar:target/lib/* org.fogbowcloud.manager.Main manager.conf > /dev/null &
+if [ -f $LOG4J ]; then
+java -Dlog4j.configuration=file:$LOG4J -cp target/manager-0.0.1-SNAPSHOT.jar:target/lib/* org.fogbowcloud.manager.Main manager.conf > /dev/null &
+else
+java -cp target/manager-0.0.1-SNAPSHOT.jar:target/lib/* org.fogbowcloud.manager.Main manager.conf > /dev/null &
+fi

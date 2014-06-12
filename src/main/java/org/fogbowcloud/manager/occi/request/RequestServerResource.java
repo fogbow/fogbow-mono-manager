@@ -91,7 +91,7 @@ public class RequestServerResource extends ServerResource {
 		HeaderUtils.checkDateValue(defOCCIAtt.get(RequestAttribute.VALID_UNTIL.getValue()));
 		HeaderUtils.checkIntegerValue(defOCCIAtt.get(RequestAttribute.INSTANCE_COUNT.getValue()));
 
-		List<Resource> requestResources = ResourceRepository.getAll();
+		List<Resource> requestResources = ResourceRepository.getInstance().getAll();
 		for (String attributeName : xOCCIAtt.keySet()) {
 			boolean supportedAtt = false;
 			for (Resource resource : requestResources) {

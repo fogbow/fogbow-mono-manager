@@ -12,5 +12,6 @@ public class ResponseConstants {
 	public static final String INVALID_OS_TEMPLATE = "Please provide a valid OS Template.";
 	public static final String QUOTA_EXCEEDED_FOR_INSTANCES = "Quota exceeded";
 	public static final String INVALID_DATE_ATTRIBUTES = "Invalid valid from and valid until attributes.";
+	public static final String IMAGES_NOT_SPECIFIED = "There is not a image specified in configuration file.";
 
 }
