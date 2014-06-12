@@ -36,7 +36,7 @@ public class PluginHelper {
 	 * Getting a available port on range 60000:61000
 	 * @return
 	 */
-	private static int getAvailablePort() {		
+	public static int getAvailablePort() {		
 		for (int port = 60000; port < 61000; port++) {
 			ServerSocket ss = null;
 			DatagramSocket ds = null;

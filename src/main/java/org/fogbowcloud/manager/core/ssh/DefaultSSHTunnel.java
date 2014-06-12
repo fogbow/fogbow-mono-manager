@@ -14,6 +14,7 @@ import java.util.Set;
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
+import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
@@ -24,17 +25,18 @@ public class DefaultSSHTunnel implements SSHTunnel {
 	protected static final String REMOTE_USER_STR = "#REMOTE_USER#";
 	protected static final String REMOTE_HOST_STR = "#REMOTE_HOST#";
 	protected static final String REMOTE_HOST_PORT_STR = "#REMOTE_HOST_PORT#";
-	
+
 	public static final String USER_DATA_ATT = "org.fogbowcloud.request.user-data";
 	public static final String SSH_ADDRESS_ATT = "org.fogbowcloud.request.ssh-address";
 	public static final String SSH_PUBLIC_ADDRESS_ATT = "org.fogbowcloud.request.ssh-public-address";
 	private static final String DEFAULT_SSH_HOST_PORT = "22";
-	
+
 	private Set<Integer> takenPorts = new HashSet<Integer>();
 	private Map<String, Integer> instanceToPort = new HashMap<String, Integer>();
-	
-	public Integer create(Properties properties, Request request) throws FileNotFoundException, IOException {
-		
+
+	public Integer create(Properties properties, Request request) throws FileNotFoundException,
+			IOException {
+
 		boolean hasCategory = false;
 		for (Category category : request.getCategories()) {
 			if (category.getTerm().equals(RequestConstants.USER_DATA_TERM)) {
@@ -43,29 +45,32 @@ public class DefaultSSHTunnel implements SSHTunnel {
 			}
 		}
 		if (!hasCategory) {
-			request.addCategory(new Category(RequestConstants.USER_DATA_TERM, 
+			request.addCategory(new Category(RequestConstants.USER_DATA_TERM,
 					RequestConstants.SCHEME, RequestConstants.MIXIN_CLASS));
 		}
-		
+
 		String sshTunnelCmd = IOUtils.toString(new FileInputStream("bin/fogbow-inject-tunnel"));
-		String sshPrivateHostIP = properties.getProperty("ssh_tunnel_private_host");
-		String sshPublicHostIP = properties.getProperty("ssh_tunnel_public_host");
-		String sshRemoteHostPort = properties.getProperty("ssh_tunnel_host_port");
-		
+		String sshPrivateHostIP = properties
+				.getProperty(ConfigurationConstants.SSH_PRIVATE_HOST_KEY);
+		String sshPublicHostIP = properties.getProperty(ConfigurationConstants.SSH_PUBLIC_HOST_KEY);
+		String sshRemoteHostPort = properties.getProperty(ConfigurationConstants.SSH_HOST_PORT_KEY);
+
 		if (sshRemoteHostPort == null) {
 			sshRemoteHostPort = DEFAULT_SSH_HOST_PORT;
 		}
-		
-		sshTunnelCmd = sshTunnelCmd.replace(REMOTE_USER_STR, properties.getProperty("ssh_tunnel_user"));
+
+		sshTunnelCmd = sshTunnelCmd.replace(REMOTE_USER_STR,
+				properties.getProperty(ConfigurationConstants.SSH_USER_KEY));
 		sshTunnelCmd = sshTunnelCmd.replace(REMOTE_HOST_STR, sshPrivateHostIP);
 		sshTunnelCmd = sshTunnelCmd.replace(REMOTE_HOST_PORT_STR, sshRemoteHostPort);
-		String[] portRange = properties.getProperty("ssh_tunnel_port_range").split(":");
-		
+		String[] portRange = properties.getProperty(ConfigurationConstants.SSH_PORT_RANGE_KEY)
+				.split(":");
+
 		Integer portFloor = Integer.parseInt(portRange[0]);
 		Integer portCeiling = Integer.parseInt(portRange[1]);
-		
+
 		Integer sshPort = null;
-		
+
 		for (Integer i = portFloor; i <= portCeiling; i++) {
 			if (!takenPorts.contains(i) && available(i)) {
 				sshPort = i;
@@ -76,20 +81,20 @@ public class DefaultSSHTunnel implements SSHTunnel {
 		if (sshPort == null) {
 			throw new IllegalStateException("No SSH port available for reverse tunnelling");
 		}
-		
+
 		sshTunnelCmd = sshTunnelCmd.replace(REMOTE_PORT_STR, sshPort.toString());
-		request.putAttValue(USER_DATA_ATT, Base64.encodeBase64URLSafeString(
-				sshTunnelCmd.getBytes(Charsets.UTF_8)));
+		request.putAttValue(USER_DATA_ATT,
+				Base64.encodeBase64URLSafeString(sshTunnelCmd.getBytes(Charsets.UTF_8)));
 		request.putAttValue(SSH_ADDRESS_ATT, sshPrivateHostIP + ":" + sshPort);
 		request.putAttValue(SSH_PUBLIC_ADDRESS_ATT, sshPublicHostIP + ":" + sshPort);
-		
+
 		return sshPort;
 	}
-	
+
 	public void update(String instanceId, Integer port) {
 		instanceToPort.put(instanceId, port);
 	}
-	
+
 	public void release(String instanceId) {
 		if (instanceId == null) {
 			return;
@@ -104,14 +109,14 @@ public class DefaultSSHTunnel implements SSHTunnel {
 		}
 		takenPorts.remove(port);
 	}
-	
+
 	@Override
 	public String getPublicAddress(Properties properties, String instanceId) {
-		String sshPublicHostIP = properties.getProperty("ssh_tunnel_public_host");
+		String sshPublicHostIP = properties.getProperty(ConfigurationConstants.SSH_PUBLIC_HOST_KEY);
 		Integer port = instanceToPort.get(instanceId);
 		return sshPublicHostIP + ":" + port;
 	}
-	
+
 	private static boolean available(int port) {
 		ServerSocket ss = null;
 		DatagramSocket ds = null;
@@ -136,11 +141,11 @@ public class DefaultSSHTunnel implements SSHTunnel {
 		}
 		return false;
 	}
-	
+
 	public Set<Integer> getTakenPorts() {
 		return takenPorts;
 	}
-	
+
 	public void setTakenPorts(Set<Integer> takenPorts) {
 		this.takenPorts = takenPorts;
 	}
