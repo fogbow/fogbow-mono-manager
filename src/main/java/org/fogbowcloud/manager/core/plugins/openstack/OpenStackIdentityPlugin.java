@@ -232,7 +232,6 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 
 	private String getTenantNameFromJson(String responseStr) {
 		try {
-			System.out.println(responseStr);
 			JSONObject root = new JSONObject(responseStr);
 			JSONArray tenantsStone = root.getJSONArray(TENANTS_PROP);
 			JSONObject tenantStone = tenantsStone.getJSONObject(0); // getting

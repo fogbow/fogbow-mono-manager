@@ -18,8 +18,10 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.FileAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.apache.log4j.PatternLayout;
 import org.fogbowcloud.manager.core.plugins.openstack.OpenStackIdentityPlugin;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 
@@ -154,6 +156,13 @@ public class Main {
 		console.setThreshold(Level.OFF);
 		console.activateOptions();
 		Logger.getRootLogger().addAppender(console);
+		
+		FileAppender fileAppender = new FileAppender();
+		fileAppender.setFile("log.log");
+		fileAppender.setThreshold(Level.OFF);
+		fileAppender.setAppend(false);
+		fileAppender.activateOptions();
+		Logger.getRootLogger().addAppender(fileAppender);			
 	}
 	
 	private static void doRequest(String method, String endpoint, String authToken)
@@ -180,7 +189,7 @@ public class Main {
 		}
 		
 		HttpResponse response = client.execute(request);
-
+		
 		if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
 			System.out.println(EntityUtils.toString(response.getEntity()));
 		} else {
