@@ -2,6 +2,7 @@ package org.fogbowcloud.manager;
 
 import java.io.FileInputStream;
 import java.util.Properties;
+import java.util.logging.Level;
 
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
@@ -68,6 +69,7 @@ public class Main {
 		OCCIApplication application = new OCCIApplication(facade);
 
 		Component http = new Component();
+		http.getLogger().setLevel(Level.OFF);
 		http.getServers().add(Protocol.HTTP,
 				Integer.parseInt(properties.getProperty(ConfigurationConstants.HTTP_PORT_KEY)));
 		http.getDefaultHost().attach(application);
