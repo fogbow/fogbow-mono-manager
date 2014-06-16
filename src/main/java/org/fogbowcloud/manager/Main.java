@@ -89,6 +89,6 @@ public class Main {
 		ConsoleAppender console = new ConsoleAppender();
 		console.setThreshold(org.apache.log4j.Level.OFF);
 		console.activateOptions();
-		Logger.getRootLogger().addAppender(console);
+		Logger.getRootLogger().addAppender(console); 
 	}
 }
