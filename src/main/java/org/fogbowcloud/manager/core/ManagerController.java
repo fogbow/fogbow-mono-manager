@@ -153,7 +153,7 @@ public class ManagerController {
 				continue;
 			}
 			try {
-				instances.add(getInstance(request));
+				instances.add(new Instance(request.getInstanceId()));
 			} catch (Exception e) {
 				LOGGER.warn("Exception thown while getting instance " + instanceId + ".", e);
 			}
