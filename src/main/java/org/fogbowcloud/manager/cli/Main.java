@@ -9,6 +9,7 @@ import org.apache.http.Header;
 import org.apache.http.HttpException;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
+import org.apache.http.HttpVersion;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
@@ -16,6 +17,9 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
+import org.apache.http.params.BasicHttpParams;
+import org.apache.http.params.CoreProtocolPNames;
+import org.apache.http.params.HttpParams;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
@@ -35,11 +39,11 @@ public class Main {
 	protected static final String DEFAULT_FLAVOR = "fogbow-small";
 	protected static final String DEFAULT_IMAGE = "fogbow-linux-x86";
 
-	private static HttpClient client = new DefaultHttpClient();
+	private static HttpClient client;
 
 	public static void main(String[] args) throws Exception {
 		configureLog4j();
-
+		
 		JCommander jc = new JCommander();
 
 		MemberCommand member = new MemberCommand();
@@ -182,6 +186,11 @@ public class Main {
 			request.addHeader(header);
 		}
 
+		if (client == null) {
+			HttpParams params = new BasicHttpParams();
+			params.setParameter(CoreProtocolPNames.PROTOCOL_VERSION, HttpVersion.HTTP_1_1);
+			client = new DefaultHttpClient(params);
+		}
 		HttpResponse response = client.execute(request);
 
 		if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {

@@ -10,11 +10,14 @@ import java.util.Properties;
 import org.apache.commons.codec.Charsets;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
-import org.apache.http.client.HttpClient;
+import org.apache.http.HttpVersion;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.params.BasicHttpParams;
+import org.apache.http.params.CoreProtocolPNames;
+import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
@@ -63,6 +66,7 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 
 	private String v2TokensEndpoint;
 	private String v2TenantsEndpoint;
+	DefaultHttpClient client;
 
 	public OpenStackIdentityPlugin(Properties properties) {
 		String keystoneUrl = properties.getProperty("identity_openstack_url");
@@ -104,9 +108,13 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 			HttpPost request = new HttpPost(endpoint);
 			request.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.JSON_CONTENT_TYPE);
 			request.addHeader(OCCIHeaders.ACCEPT, OCCIHeaders.JSON_CONTENT_TYPE);
-
 			request.setEntity(new StringEntity(json.toString(), HTTP.UTF_8));
-			HttpClient client = new DefaultHttpClient();
+			
+			if (client == null) {
+				HttpParams params = new BasicHttpParams();
+				params.setParameter(CoreProtocolPNames.PROTOCOL_VERSION, HttpVersion.HTTP_1_1);
+				client = new DefaultHttpClient(params);							
+			}
 			response = client.execute(request);
 			responseStr = EntityUtils.toString(response.getEntity(), HTTP.UTF_8);
 		} catch (Exception e) {
@@ -213,13 +221,17 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 		HttpResponse response;
 		String responseStr = null;
 		try {
-			HttpClient httpCLient = new DefaultHttpClient();
 			HttpGet httpGet = new HttpGet(this.v2TenantsEndpoint);
 			httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, accessId);
 			httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.JSON_CONTENT_TYPE);
 			httpGet.addHeader(OCCIHeaders.ACCEPT, OCCIHeaders.JSON_CONTENT_TYPE);
 
-			response = httpCLient.execute(httpGet);
+			if (client == null) {
+				HttpParams params = new BasicHttpParams();
+				params.setParameter(CoreProtocolPNames.PROTOCOL_VERSION, HttpVersion.HTTP_1_1);
+				client = new DefaultHttpClient(params);							
+			}
+			response = client.execute(httpGet);
 			responseStr = EntityUtils
 					.toString(response.getEntity(), String.valueOf(Charsets.UTF_8));
 		} catch (Exception e) {
@@ -234,9 +246,7 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 		try {
 			JSONObject root = new JSONObject(responseStr);
 			JSONArray tenantsStone = root.getJSONArray(TENANTS_PROP);
-			JSONObject tenantStone = tenantsStone.getJSONObject(0); // getting
-																	// first
-																	// tenant
+			JSONObject tenantStone = tenantsStone.getJSONObject(0); // getting first tenant
 			return tenantStone.getString(NAME_PROP);
 		} catch (JSONException e) {
 			LOGGER.error(e);

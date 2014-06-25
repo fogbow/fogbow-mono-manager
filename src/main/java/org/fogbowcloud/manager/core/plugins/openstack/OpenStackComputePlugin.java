@@ -12,13 +12,16 @@ import org.apache.commons.codec.Charsets;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
-import org.apache.http.client.HttpClient;
+import org.apache.http.HttpVersion;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
+import org.apache.http.params.BasicHttpParams;
+import org.apache.http.params.CoreProtocolPNames;
+import org.apache.http.params.HttpParams;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
@@ -63,6 +66,7 @@ public class OpenStackComputePlugin implements ComputePlugin {
 	private String computeOCCIEndpoint;
 	private String computeV2APIEndpoint;
 	private Map<String, Category> fogTermToOpensStackCategory = new HashMap<String, Category>();
+	private DefaultHttpClient client;
 
 	private static final Logger LOGGER = Logger.getLogger(OpenStackComputePlugin.class);
 	
@@ -260,12 +264,15 @@ public class OpenStackComputePlugin implements ComputePlugin {
 
 			LOGGER.debug("AccessId=" + authToken + "; headers=" + additionalHeaders);
 			
-			HttpClient client = new DefaultHttpClient();
+			if (client == null) {
+				HttpParams params = new BasicHttpParams();
+				params.setParameter(CoreProtocolPNames.PROTOCOL_VERSION, HttpVersion.HTTP_1_1);
+				client = new DefaultHttpClient(params);
+			}
 			httpResponse = client.execute(request);
-
 			responseStr = EntityUtils.toString(httpResponse.getEntity(),
 					String.valueOf(Charsets.UTF_8));
-
+			
 		} catch (Exception e) {
 			LOGGER.error(e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
