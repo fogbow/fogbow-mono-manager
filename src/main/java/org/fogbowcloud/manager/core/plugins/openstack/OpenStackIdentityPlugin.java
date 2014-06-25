@@ -66,7 +66,7 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 
 	private String v2TokensEndpoint;
 	private String v2TenantsEndpoint;
-	DefaultHttpClient client;
+	private DefaultHttpClient client;
 
 	public OpenStackIdentityPlugin(Properties properties) {
 		String keystoneUrl = properties.getProperty("identity_openstack_url");
@@ -110,11 +110,7 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 			request.addHeader(OCCIHeaders.ACCEPT, OCCIHeaders.JSON_CONTENT_TYPE);
 			request.setEntity(new StringEntity(json.toString(), HTTP.UTF_8));
 			
-			if (client == null) {
-				HttpParams params = new BasicHttpParams();
-				params.setParameter(CoreProtocolPNames.PROTOCOL_VERSION, HttpVersion.HTTP_1_1);
-				client = new DefaultHttpClient(params);							
-			}
+			getClient();
 			response = client.execute(request);
 			responseStr = EntityUtils.toString(response.getEntity(), HTTP.UTF_8);
 		} catch (Exception e) {
@@ -124,6 +120,14 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 		checkStatusResponse(response);
 
 		return responseStr;
+	}
+
+	private void getClient() {
+		if (client == null) {
+			HttpParams params = new BasicHttpParams();
+			params.setParameter(CoreProtocolPNames.PROTOCOL_VERSION, HttpVersion.HTTP_1_1);
+			client = new DefaultHttpClient(params);							
+		}
 	}
 
 	@Override
@@ -226,11 +230,7 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 			httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.JSON_CONTENT_TYPE);
 			httpGet.addHeader(OCCIHeaders.ACCEPT, OCCIHeaders.JSON_CONTENT_TYPE);
 
-			if (client == null) {
-				HttpParams params = new BasicHttpParams();
-				params.setParameter(CoreProtocolPNames.PROTOCOL_VERSION, HttpVersion.HTTP_1_1);
-				client = new DefaultHttpClient(params);							
-			}
+			getClient();
 			response = client.execute(httpGet);
 			responseStr = EntityUtils
 					.toString(response.getEntity(), String.valueOf(Charsets.UTF_8));
