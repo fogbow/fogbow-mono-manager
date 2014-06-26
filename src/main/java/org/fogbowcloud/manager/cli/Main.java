@@ -16,6 +16,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.CoreProtocolPNames;
@@ -187,11 +188,15 @@ public class Main {
 		}
 
 		if (client == null) {
+			client = new DefaultHttpClient();
 			HttpParams params = new BasicHttpParams();
 			params.setParameter(CoreProtocolPNames.PROTOCOL_VERSION, HttpVersion.HTTP_1_1);
-			client = new DefaultHttpClient(params);
+			client = new DefaultHttpClient(new ThreadSafeClientConnManager(params, client
+					.getConnectionManager().getSchemeRegistry()), params);
 		}
-		HttpResponse response = client.execute(request);
+		HttpResponse response = null;
+	
+		response = client.execute(request);			
 
 		if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
 			System.out.println(EntityUtils.toString(response.getEntity()));

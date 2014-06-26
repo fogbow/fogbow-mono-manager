@@ -18,6 +18,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.CoreProtocolPNames;
@@ -263,17 +264,19 @@ public class OpenStackComputePlugin implements ComputePlugin {
 			}
 
 			LOGGER.debug("AccessId=" + authToken + "; headers=" + additionalHeaders);
-			
+
 			if (client == null) {
+				client = new DefaultHttpClient();
 				HttpParams params = new BasicHttpParams();
 				params.setParameter(CoreProtocolPNames.PROTOCOL_VERSION, HttpVersion.HTTP_1_1);
-				client = new DefaultHttpClient(params);
+				client = new DefaultHttpClient(new ThreadSafeClientConnManager(params, client
+						.getConnectionManager().getSchemeRegistry()), params);
 			}
 			httpResponse = client.execute(request);
 			responseStr = EntityUtils.toString(httpResponse.getEntity(),
-					String.valueOf(Charsets.UTF_8));
-			
+				String.valueOf(Charsets.UTF_8));	
 		} catch (Exception e) {
+			e.printStackTrace();
 			LOGGER.error(e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
 		}
