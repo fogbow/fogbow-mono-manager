@@ -9,6 +9,7 @@ public class OCCIHeaders {
 	public static final String X_OCCI_ATTRIBUTE = "X-OCCI-Attribute";
 	public static final String ACCEPT = "Accept";
 	public static final String CATEGORY = "Category";
+	public static final String LINK = "Link";
 
 	// occi constants
 	public static final String ACTION_CLASS = "action";

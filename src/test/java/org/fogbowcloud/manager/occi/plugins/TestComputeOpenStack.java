@@ -112,7 +112,7 @@ public class TestComputeOpenStack {
 			Assert.assertEquals(imageName + " image", imageResource.getTitle());			
 		}
 	}
-
+		
 	@Test
 	public void testRequestAValidInstance() {
 		List<Category> categories = new ArrayList<Category>();
@@ -138,7 +138,76 @@ public class TestComputeOpenStack {
 				getAttValueFromDetails(instance.toOCCIMassageFormatDetails(),
 						ComputeApplication.HOSTNAME_ATTRIBUTE_OCCI));
 	}
+	
+	@Test
+	public void testCreatPluginSpecifyingNetwork(){
+		Properties properties = new Properties();
+		properties.put(ConfigurationConstants.COMPUTE_OCCI_URL_KEY, URL);
+		properties.put(ConfigurationConstants.COMPUTE_OCCI_INSTANCE_SCHEME_KEY, ComputeApplication.INSTANCE_SCHEME);
+		properties.put(ConfigurationConstants.COMPUTE_OCCI_OS_SCHEME_KEY, ComputeApplication.OS_SCHEME);
+		properties.put(ConfigurationConstants.COMPUTE_OCCI_RESOURCE_SCHEME_KEY, ComputeApplication.RESOURCE_SCHEME);
+		properties.put(ConfigurationConstants.COMPUTE_OCCI_FLAVOR_SMALL_KEY, ComputeApplication.SMALL_FLAVOR_TERM);
+		properties.put(ConfigurationConstants.COMPUTE_OCCI_FLAVOR_MEDIUM_KEY, ComputeApplication.MEDIUM_FLAVOR_TERM);
+		properties.put(ConfigurationConstants.COMPUTE_OCCI_FLAVOR_LARGE_KEY, ComputeApplication.MEDIUM_FLAVOR_TERM);
+		properties.put(ConfigurationConstants.COMPUTE_OCCI_IMAGE_PREFIX + LINUX_X86_TERM, CIRROS_IMAGE_TERM);
+		properties.put(ConfigurationConstants.COMPUTE_OCCI_NETWORK_KEY, "net1");
 
+		computeOpenStack = new OpenStackComputePlugin(properties);
+
+		List<Category> categories = new ArrayList<Category>();
+		categories.add(new Category(RequestConstants.SMALL_TERM,
+				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
+		categories.add(new Category(LINUX_X86_TERM,
+				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
+		
+		Assert.assertEquals(FIRST_INSTANCE_ID, computeOpenStack.requestInstance(
+				PluginHelper.ACCESS_ID, categories, new HashMap<String, String>()));
+
+		Instance instance = computeOpenStack.getInstance(PluginHelper.ACCESS_ID, FIRST_INSTANCE_ID);
+
+		Assert.assertEquals(1, Integer.parseInt(getAttValueFromDetails(
+				instance.toOCCIMassageFormatDetails(), ComputeApplication.CORE_ATTRIBUTE_OCCI)));
+		Assert.assertEquals(2, Integer.parseInt(getAttValueFromDetails(
+				instance.toOCCIMassageFormatDetails(), ComputeApplication.MEMORY_ATTRIBUTE_OCCI)));
+		Assert.assertEquals(64, Integer.parseInt(getAttValueFromDetails(
+				instance.toOCCIMassageFormatDetails(),
+				ComputeApplication.ARCHITECTURE_ATTRIBUTE_OCCI)));
+		Assert.assertTrue(instance.toOCCIMassageFormatDetails().contains(
+				OCCIHeaders.LINK + ": </network/net1"));
+		Assert.assertEquals(
+				"server-" + FIRST_INSTANCE_ID,
+				getAttValueFromDetails(instance.toOCCIMassageFormatDetails(),
+						ComputeApplication.HOSTNAME_ATTRIBUTE_OCCI));
+	}
+	
+	@Test
+	public void testCreatePluginNotSpecifyingNetwork(){		
+		List<Category> categories = new ArrayList<Category>();
+		categories.add(new Category(RequestConstants.SMALL_TERM,
+				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
+		categories.add(new Category(LINUX_X86_TERM,
+				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
+		
+		Assert.assertEquals(FIRST_INSTANCE_ID, computeOpenStack.requestInstance(
+				PluginHelper.ACCESS_ID, categories, new HashMap<String, String>()));
+
+		Instance instance = computeOpenStack.getInstance(PluginHelper.ACCESS_ID, FIRST_INSTANCE_ID);
+
+		Assert.assertEquals(1, Integer.parseInt(getAttValueFromDetails(
+				instance.toOCCIMassageFormatDetails(), ComputeApplication.CORE_ATTRIBUTE_OCCI)));
+		Assert.assertEquals(2, Integer.parseInt(getAttValueFromDetails(
+				instance.toOCCIMassageFormatDetails(), ComputeApplication.MEMORY_ATTRIBUTE_OCCI)));
+		Assert.assertEquals(64, Integer.parseInt(getAttValueFromDetails(
+				instance.toOCCIMassageFormatDetails(),
+				ComputeApplication.ARCHITECTURE_ATTRIBUTE_OCCI)));
+		Assert.assertTrue(instance.toOCCIMassageFormatDetails().contains(
+				OCCIHeaders.LINK + ": </network/default"));
+		Assert.assertEquals(
+				"server-" + FIRST_INSTANCE_ID,
+				getAttValueFromDetails(instance.toOCCIMassageFormatDetails(),
+						ComputeApplication.HOSTNAME_ATTRIBUTE_OCCI));
+	}
+	
 	private String getAttValueFromDetails(String instanceDetails, String attName) {
 		StringTokenizer st = new StringTokenizer(instanceDetails, "\n");
 		while (st.hasMoreTokens()) {

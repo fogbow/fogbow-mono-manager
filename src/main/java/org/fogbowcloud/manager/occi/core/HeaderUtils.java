@@ -31,6 +31,10 @@ public class HeaderUtils {
 		return token;
 	}
 
+	public static String getLink(Series<Header> headers) {
+		return headers.getValues(OCCIHeaders.LINK);		
+	}
+	
 	public static Map<String, String> getXOCCIAtributes(Series<Header> headers) {
 		String[] valuesAttributes = headers.getValuesArray(normalize(OCCIHeaders.X_OCCI_ATTRIBUTE));
 		Map<String, String> mapAttributes = new HashMap<String, String>();
@@ -128,4 +132,5 @@ public class HeaderUtils {
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}
 	}
+
 }

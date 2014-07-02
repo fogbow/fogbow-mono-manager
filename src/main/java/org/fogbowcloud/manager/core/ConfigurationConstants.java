@@ -25,6 +25,9 @@ public class ConfigurationConstants {
 	//images prefix
 	public static final String COMPUTE_OCCI_IMAGE_PREFIX = "compute_occi_image_";
 	
+	//network
+	public static final String COMPUTE_OCCI_NETWORK_KEY = "compute_occi_network_id";
+	
 	//flavors
 	public static final String COMPUTE_OCCI_FLAVOR_SMALL_KEY = "compute_occi_flavor_small";
 	public static final String COMPUTE_OCCI_FLAVOR_MEDIUM_KEY = "compute_occi_flavor_medium";

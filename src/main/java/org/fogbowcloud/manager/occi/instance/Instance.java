@@ -165,8 +165,10 @@ public class Instance {
 					link.setName(blockValues[1].replace("\"", "").trim());
 				} else {
 					String[] blockValues = block.split("=");
-					itens.put(blockValues[0].replace("\"", "").trim(),
-							blockValues[1].replace("\"", "").trim());
+					if (blockValues.length == 2){
+						itens.put(blockValues[0].replace("\"", "").trim(),
+								blockValues[1].replace("\"", "").trim());
+					}
 				}
 			}
 			link.setAttributes(itens);

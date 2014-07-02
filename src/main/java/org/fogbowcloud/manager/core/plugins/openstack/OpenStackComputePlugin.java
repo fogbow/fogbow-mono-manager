@@ -68,6 +68,7 @@ public class OpenStackComputePlugin implements ComputePlugin {
 	private String computeV2APIEndpoint;
 	private Map<String, Category> fogTermToOpensStackCategory = new HashMap<String, Category>();
 	private DefaultHttpClient client;
+	private String networkId;
 
 	private static final Logger LOGGER = Logger.getLogger(OpenStackComputePlugin.class);
 	
@@ -81,6 +82,7 @@ public class OpenStackComputePlugin implements ComputePlugin {
 				.getProperty(ConfigurationConstants.COMPUTE_OCCI_INSTANCE_SCHEME_KEY);
 		osScheme = properties.getProperty(ConfigurationConstants.COMPUTE_OCCI_OS_SCHEME_KEY);
 		resourceScheme = properties.getProperty(ConfigurationConstants.COMPUTE_OCCI_RESOURCE_SCHEME_KEY);
+		networkId = properties.getProperty(ConfigurationConstants.COMPUTE_OCCI_NETWORK_KEY);	
 
 		Map<String, String> imageProperties = getImageProperties(properties);
 		
@@ -165,6 +167,15 @@ public class OpenStackComputePlugin implements ComputePlugin {
 		for (String attName : xOCCIAtt.keySet()) {
 			headers.add(new BasicHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, attName + "=" + "\""
 					+ xOCCIAtt.get(attName) + "\""));
+		}
+		
+		//specifying network using inline creation of link instance
+		if (networkId != null && !"".equals(networkId)){
+			headers.add(new BasicHeader(
+					OCCIHeaders.LINK,
+					"</network/"+ networkId	+ ">; "
+							+ "rel=\"http://schemas.ogf.org/occi/infrastructure#network\"; "
+							+ "category=\"http://schemas.ogf.org/occi/infrastructure#networkinterface\";"));
 		}
 
 		HttpResponse response = doRequest("post", computeOCCIEndpoint, authToken, headers)
