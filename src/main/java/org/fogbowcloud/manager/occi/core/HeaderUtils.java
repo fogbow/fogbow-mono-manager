@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.restlet.Response;
 import org.restlet.engine.header.Header;
 import org.restlet.util.Series;
 
@@ -15,6 +16,7 @@ public class HeaderUtils {
 
 	public static final String REQUEST_DATE_FORMAT = "yyyy-MM-dd";
 	public static final String X_OCCI_LOCATION = "X-OCCI-Location: ";
+	public static final String WWW_AUTHENTICATE = "WWW-Authenticate";
 
 	public static void checkOCCIContentType(Series<Header> headers) {
 		String contentType = headers.getValues(OCCIHeaders.CONTENT_TYPE);
@@ -23,9 +25,18 @@ public class HeaderUtils {
 		}
 	}
 
-	public static String getAuthToken(Series<Header> headers) {
+	public static String getAuthToken(Series<Header> headers, Response response) {
 		String token = headers.getValues(OCCIHeaders.X_AUTH_TOKEN);
 		if (token == null || token.equals("")) {
+			if (response != null) {
+				Series<Header> responseHeaders = (Series<Header>) response.getAttributes().get("org.restlet.http.headers");
+				if (responseHeaders == null) {
+					responseHeaders = new Series(Header.class);
+					response.getAttributes().put("org.restlet.http.headers", responseHeaders);
+				}
+				//FIXME keystone URI hard coded
+				responseHeaders.add(new Header(HeaderUtils.WWW_AUTHENTICATE, "Keystone uri='http://localhost:5000/'"));
+			}
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}
 		return token;

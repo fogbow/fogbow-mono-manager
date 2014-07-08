@@ -29,7 +29,7 @@ public class RequestServerResource extends ServerResource {
 	public String fetch() {
 		OCCIApplication application = (OCCIApplication) getApplication();
 		HttpRequest req = (HttpRequest) getRequest();
-		String accessId = HeaderUtils.getAuthToken(req.getHeaders());
+		String accessId = HeaderUtils.getAuthToken(req.getHeaders(), getResponse());
 		String requestId = (String) getRequestAttributes().get("requestId");
 
 		if (requestId == null) {
@@ -46,7 +46,7 @@ public class RequestServerResource extends ServerResource {
 	public String remove() {
 		OCCIApplication application = (OCCIApplication) getApplication();
 		HttpRequest req = (HttpRequest) getRequest();
-		String accessId = HeaderUtils.getAuthToken(req.getHeaders());
+		String accessId = HeaderUtils.getAuthToken(req.getHeaders(), getResponse());
 		String requestId = (String) getRequestAttributes().get("requestId");
 
 		if (requestId == null) {
@@ -72,7 +72,7 @@ public class RequestServerResource extends ServerResource {
 		Map<String, String> xOCCIAtt = HeaderUtils.getXOCCIAtributes(req.getHeaders());
 		xOCCIAtt = normalizeXOCCIAtt(xOCCIAtt);
 
-		String authToken = HeaderUtils.getAuthToken(req.getHeaders());
+		String authToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse());
 
 		List<Request> currentRequests = application.createRequests(authToken, categories, xOCCIAtt);
 		return generateResponse(currentRequests, req);

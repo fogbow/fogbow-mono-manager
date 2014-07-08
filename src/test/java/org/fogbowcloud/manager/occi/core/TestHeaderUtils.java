@@ -22,7 +22,7 @@ public class TestHeaderUtils {
 	@Test
 	public void testValidSyntaxToken() {
 		headers.add(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
-		String token = HeaderUtils.getAuthToken(headers);
+		String token = HeaderUtils.getAuthToken(headers, null);
 
 		Assert.assertEquals(OCCITestHelper.ACCESS_TOKEN, token);
 	}
@@ -30,7 +30,7 @@ public class TestHeaderUtils {
 	@Test(expected = OCCIException.class)
 	public void testEmptyToken() {
 		headers.add(OCCIHeaders.X_AUTH_TOKEN, "");
-		HeaderUtils.getAuthToken(headers);
+		HeaderUtils.getAuthToken(headers, null);
 	}
 
 	@Test

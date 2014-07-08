@@ -15,6 +15,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
+import org.fogbowcloud.manager.occi.core.HeaderUtils;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.Resource;
 import org.fogbowcloud.manager.occi.core.Token;
@@ -172,5 +173,17 @@ public class TestGetCompute {
 		HttpResponse response = client.execute(httpGet);
 
 		Assert.assertEquals(HttpStatus.SC_UNAUTHORIZED, response.getStatusLine().getStatusCode());
+		Assert.assertEquals("Keystone uri='http://localhost:5000/'", response.getFirstHeader(HeaderUtils.WWW_AUTHENTICATE).getValue());
+	}
+	
+	@Test
+	public void testWithoutAccessToken() throws Exception {
+		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE + INSTANCE_1_ID);
+		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
+		HttpClient client = new DefaultHttpClient();
+		HttpResponse response = client.execute(httpGet);
+
+		Assert.assertEquals(HttpStatus.SC_UNAUTHORIZED, response.getStatusLine().getStatusCode());
+		Assert.assertEquals("Keystone uri='http://localhost:5000/'", response.getFirstHeader(HeaderUtils.WWW_AUTHENTICATE).getValue());	
 	}
 }
