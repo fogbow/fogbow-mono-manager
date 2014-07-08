@@ -1,4 +1,4 @@
-package org.fogbowcloud.manager.occi.core.ssh;
+package org.fogbowcloud.manager.core.ssh;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -38,17 +38,20 @@ public class TestDefaultSSHTunnel {
 		final String user = "fogbow";
 		final String portRanger = "50000:59999";
 		final String port = "50000";
+		final String sshHostPort = "2222";
 
 		String sshTunnelCmd = getScriptFogbowInjectTunnel();
-		sshTunnelCmd = sshTunnelCmd.replace("#REMOTE_USER#", user);
-		sshTunnelCmd = sshTunnelCmd.replace("#REMOTE_HOST#", privateHostIP);
-		sshTunnelCmd = sshTunnelCmd.replace("#REMOTE_PORT#", port);
+		sshTunnelCmd = sshTunnelCmd.replace(DefaultSSHTunnel.REMOTE_USER_STR, user);
+		sshTunnelCmd = sshTunnelCmd.replace(DefaultSSHTunnel.REMOTE_HOST_STR, privateHostIP);
+		sshTunnelCmd = sshTunnelCmd.replace(DefaultSSHTunnel.REMOTE_PORT_STR, port);
+		sshTunnelCmd = sshTunnelCmd.replace(DefaultSSHTunnel.REMOTE_HOST_PORT_STR, sshHostPort);
 
 		Properties properties = new Properties();
 		properties.put("ssh_tunnel_public_host", publicHostIP);
 		properties.put("ssh_tunnel_private_host", privateHostIP);
 		properties.put("ssh_tunnel_user", user);
 		properties.put("ssh_tunnel_port_range", portRanger);
+		properties.put("ssh_tunnel_host_port", sshHostPort);
 		Request request = new Request("is", new Token("accessId", "user", new Date(),
 				new HashMap<String, String>()), new ArrayList<Category>(),
 				new HashMap<String, String>());

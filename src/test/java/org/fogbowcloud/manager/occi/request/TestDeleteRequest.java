@@ -1,4 +1,4 @@
-package org.fogbowcloud.manager.occi;
+package org.fogbowcloud.manager.occi.request;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -79,7 +79,7 @@ public class TestDeleteRequest {
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(get);
 		Assert.assertEquals(0, OCCITestHelper.getRequestLocations(response).size());
-		Assert.assertEquals(HttpStatus.SC_NO_CONTENT, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 		// Delete
 		HttpDelete delete = new HttpDelete(OCCITestHelper.URI_FOGBOW_REQUEST);
 		delete.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
@@ -89,7 +89,7 @@ public class TestDeleteRequest {
 		// Get
 		response = client.execute(get);
 		Assert.assertEquals(0, OCCITestHelper.getRequestLocations(response).size());
-		Assert.assertEquals(HttpStatus.SC_NO_CONTENT, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 
 	@Test
@@ -97,7 +97,7 @@ public class TestDeleteRequest {
 		// Post
 		HttpPost post = new HttpPost(OCCITestHelper.URI_FOGBOW_REQUEST);
 		Category category = new Category(RequestConstants.TERM, RequestConstants.SCHEME,
-				OCCIHeaders.KIND_CLASS);
+				RequestConstants.KIND_CLASS);
 		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
 		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
@@ -132,7 +132,7 @@ public class TestDeleteRequest {
 		// Post
 		HttpPost post = new HttpPost(OCCITestHelper.URI_FOGBOW_REQUEST);
 		Category category = new Category(RequestConstants.TERM, RequestConstants.SCHEME,
-				OCCIHeaders.KIND_CLASS);
+				RequestConstants.KIND_CLASS);
 		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
 		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
@@ -173,7 +173,7 @@ public class TestDeleteRequest {
 		// Post
 		HttpPost post = new HttpPost(OCCITestHelper.URI_FOGBOW_REQUEST);
 		Category category = new Category(RequestConstants.TERM, RequestConstants.SCHEME,
-				OCCIHeaders.KIND_CLASS);
+				RequestConstants.KIND_CLASS);
 		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
 		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());

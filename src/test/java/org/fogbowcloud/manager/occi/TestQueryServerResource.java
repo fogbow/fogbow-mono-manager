@@ -61,7 +61,7 @@ public class TestQueryServerResource {
 		String responseStr = EntityUtils.toString(response.getEntity(),
 				String.valueOf(Charsets.UTF_8));
 
-		for (Resource resource : ResourceRepository.getAll()) {
+		for (Resource resource : ResourceRepository.getInstance().getAll()) {
 			Assert.assertTrue(responseStr.contains(resource.toHeader()));
 		}
 

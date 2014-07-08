@@ -106,7 +106,7 @@ public class ManagerController {
 	public ResourcesInfo getResourcesInfo() {
 		Token token = getFederationUserToken();
 		ResourcesInfo resourcesInfo = computePlugin.getResourcesInfo(token);
-		resourcesInfo.setId(properties.getProperty("xmpp_jid"));
+		resourcesInfo.setId(properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
 		return resourcesInfo;
 	}
 
@@ -153,7 +153,7 @@ public class ManagerController {
 				continue;
 			}
 			try {
-				instances.add(getInstance(request));
+				instances.add(new Instance(request.getInstanceId()));
 			} catch (Exception e) {
 				LOGGER.warn("Exception thown while getting instance " + instanceId + ".", e);
 			}
@@ -275,7 +275,7 @@ public class ManagerController {
 				return member;
 			}
 		}
-		if (memberId.equals(properties.get("xmpp_jid"))) {
+		if (memberId.equals(properties.get(ConfigurationConstants.XMPP_JID_KEY))) {
 			return new FederationMember(getResourcesInfo());
 		}
 		return null;
@@ -322,9 +322,10 @@ public class ManagerController {
 
 		// TODO Think about getting token independent of OpenStackPlugin
 		Map<String, String> federationUserCredentials = new HashMap<String, String>();
-		String username = properties.getProperty("federation_user_name");
-		String password = properties.getProperty("federation_user_password");
-		String tenantName = properties.getProperty("federation_user_tenant_name");
+		String username = properties.getProperty(ConfigurationConstants.FEDERATION_USER_NAME_KEY);
+		String password = properties.getProperty(ConfigurationConstants.FEDERATION_USER_PASS_KEY);
+		String tenantName = properties
+				.getProperty(ConfigurationConstants.FEDERATION_USER_TENANT_NAME_KEY);
 		federationUserCredentials.put(OpenStackIdentityPlugin.USER_KEY, username);
 		federationUserCredentials.put(OpenStackIdentityPlugin.PASSWORD_KEY, password);
 		federationUserCredentials.put(OpenStackIdentityPlugin.TENANT_NAME_KEY, tenantName);
@@ -389,7 +390,7 @@ public class ManagerController {
 	}
 
 	protected void triggerInstancesMonitor() {
-		String instanceMonitoringPeriodStr = properties.getProperty("instance_monitoring_period");
+		String instanceMonitoringPeriodStr = properties.getProperty(ConfigurationConstants.INSTANCE_MONITORING_PERIOD_KEY);
 		final long instanceMonitoringPeriod = instanceMonitoringPeriodStr == null ? DEFAULT_INSTANCE_MONITORING_PERIOD
 				: Long.valueOf(instanceMonitoringPeriodStr);
 
@@ -425,7 +426,7 @@ public class ManagerController {
 	}
 
 	private void triggerTokenUpdater() {
-		String tokenUpdatePeriodStr = properties.getProperty("token_update_period");
+		String tokenUpdatePeriodStr = properties.getProperty(ConfigurationConstants.TOKEN_UPDATE_PERIOD_KEY);
 		final long tokenUpdatePeriod = tokenUpdatePeriodStr == null ? DEFAULT_TOKEN_UPDATE_PERIOD
 				: Long.valueOf(tokenUpdatePeriodStr);
 
@@ -541,7 +542,7 @@ public class ManagerController {
 	}
 
 	private void triggerRequestScheduler() {
-		String schedulerPeriodStr = properties.getProperty("scheduler_period");
+		String schedulerPeriodStr = properties.getProperty(ConfigurationConstants.SCHEDULER_PERIOD_KEY);
 		long schedulerPeriod = schedulerPeriodStr == null ? DEFAULT_SCHEDULER_PERIOD : Long
 				.valueOf(schedulerPeriodStr);
 
@@ -579,7 +580,7 @@ public class ManagerController {
 	}
 
 	private boolean createLocalInstanceWithFederationUser(Request request) {
-		request.setMemberId(properties.getProperty("xmpp_jid"));
+		request.setMemberId(properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
 
 		LOGGER.info("Submiting request " + request + " with federation user locally.");
 

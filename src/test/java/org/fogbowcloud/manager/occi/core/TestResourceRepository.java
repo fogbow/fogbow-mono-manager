@@ -21,21 +21,21 @@ public class TestResourceRepository {
 	@Test
 	public void testGetOneResource() {
 		Category category = new Category(RequestConstants.TERM, RequestConstants.SCHEME,
-				OCCIHeaders.KIND_CLASS);
+				RequestConstants.KIND_CLASS);
 		headers.add(HeaderUtils.normalize(OCCIHeaders.CATEGORY), category.toHeader());
 
 		List<Category> categories = HeaderUtils.getCategories(headers);
-		List<Resource> resources = ResourceRepository.get(categories);
+		List<Resource> resources = ResourceRepository.getInstance().get(categories);
 		Assert.assertEquals(1, resources.size());
 	}
 
 	@Test
 	public void testGetSpecificResource() {
 		Category category = new Category(RequestConstants.TERM, RequestConstants.SCHEME,
-				OCCIHeaders.KIND_CLASS);
+				RequestConstants.KIND_CLASS);
 		headers.add(HeaderUtils.normalize(OCCIHeaders.CATEGORY), category.toHeader());
 
-		Resource resourceEquals = ResourceRepository.get(RequestConstants.TERM);
+		Resource resourceEquals = ResourceRepository.getInstance().get(RequestConstants.TERM);
 
 		Assert.assertTrue(category.equals(resourceEquals.getCategory()));
 	}
@@ -43,10 +43,10 @@ public class TestResourceRepository {
 	@Test
 	public void testGetUnknownSpecificResource() {
 		Category category = new Category(RequestConstants.TERM, RequestConstants.SCHEME,
-				OCCIHeaders.KIND_CLASS);
+				RequestConstants.KIND_CLASS);
 		headers.add(HeaderUtils.normalize(OCCIHeaders.CATEGORY), category.toHeader());
 
-		Resource resourceEquals = ResourceRepository.get("unknown");
+		Resource resourceEquals = ResourceRepository.getInstance().get("unknown");
 
 		Assert.assertNull(resourceEquals);
 	}

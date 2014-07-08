@@ -1,5 +1,6 @@
 package org.fogbowcloud.manager.occi.instance;
 
+import java.util.Iterator;
 import java.util.List;
 
 import org.apache.log4j.Logger;
@@ -14,6 +15,7 @@ import org.restlet.resource.ServerResource;
 
 public class ComputeServerResource extends ServerResource {
 
+	protected static final String NO_INSTANCES_MESSAGE = "There are not instances.";
 	private static final Logger LOGGER = Logger.getLogger(ComputeServerResource.class);
 
 	@Get
@@ -21,17 +23,16 @@ public class ComputeServerResource extends ServerResource {
 		OCCIApplication application = (OCCIApplication) getApplication();
 		HttpRequest req = (HttpRequest) getRequest();
 		HeaderUtils.checkOCCIContentType(req.getHeaders());
-		String authToken = HeaderUtils.getAuthToken(req.getHeaders());
+		String authToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse());
 		String instanceId = (String) getRequestAttributes().get("instanceId");
-		
 		if (instanceId == null) {
 			LOGGER.info("Getting all instances of token :" + authToken);
 			return generateResponse(application.getInstances(authToken));
-		}	
-		
+		}
+
 		LOGGER.info("Getting instance " + instanceId);
-		
-		return application.getInstance(authToken, instanceId).toOCCIMassageFormatDetails();			
+
+		return application.getInstance(authToken, instanceId).toOCCIMassageFormatDetails();
 	}
 
 	@Delete
@@ -39,14 +40,13 @@ public class ComputeServerResource extends ServerResource {
 		OCCIApplication application = (OCCIApplication) getApplication();
 		HttpRequest req = (HttpRequest) getRequest();
 		HeaderUtils.checkOCCIContentType(req.getHeaders());
-		String authToken = HeaderUtils.getAuthToken(req.getHeaders());
+		String authToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse());
 		String instanceId = (String) getRequestAttributes().get("instanceId");
 		if (instanceId == null) {
 			LOGGER.info("Removing all instances of token :" + authToken);
 			application.removeInstances(authToken);
 			return ResponseConstants.OK;
-		}
-		
+		}		
 		LOGGER.info("Removing instance " + instanceId);
 		
 		application.removeInstance(authToken, instanceId);
@@ -59,12 +59,16 @@ public class ComputeServerResource extends ServerResource {
 	}
 
 	protected static String generateResponse(List<Instance> instances) {
-		String response = "";
-		for (Instance intance : instances) {
-			response += intance.toOCCIMassageFormatLocation() + "\n";
+		if (instances == null || instances.isEmpty()) {
+			return NO_INSTANCES_MESSAGE;
 		}
-		if (response.equals("")) {
-			response = "Empty";
+		String response = "";
+		Iterator<Instance> instanceIt = instances.iterator();
+		while(instanceIt.hasNext()){
+			response += instanceIt.next().toOCCIMassageFormatLocation();
+			if (instanceIt.hasNext()){
+				response += "\n";
+			}
 		}
 		return response;
 	}

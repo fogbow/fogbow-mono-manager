@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.restlet.Response;
 import org.restlet.engine.header.Header;
 import org.restlet.util.Series;
 
@@ -15,6 +16,7 @@ public class HeaderUtils {
 
 	public static final String REQUEST_DATE_FORMAT = "yyyy-MM-dd";
 	public static final String X_OCCI_LOCATION = "X-OCCI-Location: ";
+	public static final String WWW_AUTHENTICATE = "WWW-Authenticate";
 
 	public static void checkOCCIContentType(Series<Header> headers) {
 		String contentType = headers.getValues(OCCIHeaders.CONTENT_TYPE);
@@ -23,14 +25,27 @@ public class HeaderUtils {
 		}
 	}
 
-	public static String getAuthToken(Series<Header> headers) {
+	public static String getAuthToken(Series<Header> headers, Response response) {
 		String token = headers.getValues(OCCIHeaders.X_AUTH_TOKEN);
 		if (token == null || token.equals("")) {
+			if (response != null) {
+				Series<Header> responseHeaders = (Series<Header>) response.getAttributes().get("org.restlet.http.headers");
+				if (responseHeaders == null) {
+					responseHeaders = new Series(Header.class);
+					response.getAttributes().put("org.restlet.http.headers", responseHeaders);
+				}
+				//FIXME keystone URI hard coded
+				responseHeaders.add(new Header(HeaderUtils.WWW_AUTHENTICATE, "Keystone uri='http://localhost:5000/'"));
+			}
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}
 		return token;
 	}
 
+	public static String getLink(Series<Header> headers) {
+		return headers.getValues(OCCIHeaders.LINK);		
+	}
+	
 	public static Map<String, String> getXOCCIAtributes(Series<Header> headers) {
 		String[] valuesAttributes = headers.getValuesArray(normalize(OCCIHeaders.X_OCCI_ATTRIBUTE));
 		Map<String, String> mapAttributes = new HashMap<String, String>();
@@ -92,14 +107,14 @@ public class HeaderUtils {
 	}
 
 	public static void checkCategories(List<Category> categories, String mandatoryTerm) {
-		List<Resource> resources = ResourceRepository.get(categories);
+		List<Resource> resources = ResourceRepository.getInstance().get(categories);
 
 		if (resources.size() != categories.size()) {
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}
 		for (Category category : categories) {
 			if (category.getTerm().equals(mandatoryTerm)) {
-				Resource resource = ResourceRepository.get(mandatoryTerm);
+				Resource resource = ResourceRepository.getInstance().get(mandatoryTerm);
 				if (resource == null || !resource.matches(category)) {
 					throw new OCCIException(ErrorType.BAD_REQUEST,
 							ResponseConstants.IRREGULAR_SYNTAX);
@@ -128,4 +143,5 @@ public class HeaderUtils {
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}
 	}
+
 }

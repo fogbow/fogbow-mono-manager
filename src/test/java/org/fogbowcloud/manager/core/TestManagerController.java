@@ -37,7 +37,7 @@ import org.mockito.Mockito;
 
 public class TestManagerController {
 
-	public static final String ACCESS_TOKEN_ID_2 = "2222CVXV23T4TG42VVCV";
+	public static final String ACCESS_TOKEN_ID_2 = "secondAccessToken";
 
 	private ManagerController managerController;
 	private ManagerTestHelper managerTestHelper;
@@ -171,6 +171,43 @@ public class TestManagerController {
 						.getAccessId());
 			}
 		}
+	}
+	
+	@Test
+	public void testDeleteClosedRequest() throws InterruptedException {
+		// setting request repository
+		Request request1 = new Request("id1", managerTestHelper.getDefaultToken(), null, null);
+		request1.setState(RequestState.CLOSED);
+		Request request2 = new Request("id2", managerTestHelper.getDefaultToken(), null, null);
+		request2.setState(RequestState.CLOSED);
+
+		RequestRepository requestRepository = new RequestRepository();
+		requestRepository.addRequest(managerTestHelper.getDefaultToken().getUser(), request1);
+		requestRepository.addRequest(managerTestHelper.getDefaultToken().getUser(), request2);
+		managerController.setRequests(requestRepository);
+
+		// checking closed requests
+		List<Request> requestsFromUser = managerController.getRequestsFromUser(managerTestHelper
+				.getDefaultToken().getAccessId());
+		Assert.assertEquals(2, requestsFromUser.size());
+		Assert.assertEquals(RequestState.CLOSED, requestsFromUser.get(0).getState());
+		Assert.assertEquals(RequestState.CLOSED, requestsFromUser.get(1).getState());
+
+		managerController.removeRequest(managerTestHelper.getDefaultToken().getAccessId(), "id1");
+
+		// making sure one request was removed
+		requestsFromUser = managerController.getRequestsFromUser(managerTestHelper
+				.getDefaultToken().getAccessId());
+		Assert.assertEquals(1, requestsFromUser.size());
+		Assert.assertEquals(RequestState.CLOSED, requestsFromUser.get(0).getState());
+		Assert.assertEquals("id2", requestsFromUser.get(0).getId());
+		
+		managerController.removeRequest(managerTestHelper.getDefaultToken().getAccessId(), "id2");
+
+		// making sure the last request was removed
+		requestsFromUser = managerController.getRequestsFromUser(managerTestHelper
+				.getDefaultToken().getAccessId());
+		Assert.assertEquals(0, requestsFromUser.size());
 	}
 
 	@Test
@@ -360,7 +397,7 @@ public class TestManagerController {
 
 	@Test
 	public void testMonitorFulfilledRequestWithInstance() throws InterruptedException {
-		final String SECOND_INSTANCE_ID = "rt22e67-5fgt-457a-3rt6-gt78124fhj9p";
+		final String SECOND_INSTANCE_ID = "secondInstanceId";
 
 		// setting request repository
 		Request request1 = new Request("id1", managerTestHelper.getDefaultToken(), null, null);

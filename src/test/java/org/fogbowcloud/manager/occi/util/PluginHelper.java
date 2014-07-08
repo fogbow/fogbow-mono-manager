@@ -1,5 +1,8 @@
 package org.fogbowcloud.manager.occi.util;
 
+import java.io.IOException;
+import java.net.DatagramSocket;
+import java.net.ServerSocket;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,10 +26,41 @@ public class PluginHelper {
 	public static final String USERNAME = "admin";
 	public static final String USER_PASS = "reverse";
 
-	public static final int PORT_ENDPOINT = 8182;
+	public static final int PORT_ENDPOINT = getAvailablePort();
 
 	public PluginHelper() {
 		this.component = new Component();
+	}
+
+	/**
+	 * Getting a available port on range 60000:61000
+	 * @return
+	 */
+	public static int getAvailablePort() {		
+		for (int port = 60000; port < 61000; port++) {
+			ServerSocket ss = null;
+			DatagramSocket ds = null;
+			try {
+				ss = new ServerSocket(port);
+				ss.setReuseAddress(true);
+				ds = new DatagramSocket(port);
+				ds.setReuseAddress(true);
+				return port;
+			} catch (IOException e) {
+			} finally {
+				if (ds != null) {
+					ds.close();
+				}
+				if (ss != null) {
+					try {
+						ss.close();
+					} catch (IOException e) {
+						/* should not be thrown */
+					}
+				}
+			}
+		}		
+		return -1;
 	}
 
 	public void initializeKeystoneComponent() throws Exception {

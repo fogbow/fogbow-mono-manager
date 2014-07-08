@@ -22,7 +22,7 @@ public class TestHeaderUtils {
 	@Test
 	public void testValidSyntaxToken() {
 		headers.add(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
-		String token = HeaderUtils.getAuthToken(headers);
+		String token = HeaderUtils.getAuthToken(headers, null);
 
 		Assert.assertEquals(OCCITestHelper.ACCESS_TOKEN, token);
 	}
@@ -30,13 +30,13 @@ public class TestHeaderUtils {
 	@Test(expected = OCCIException.class)
 	public void testEmptyToken() {
 		headers.add(OCCIHeaders.X_AUTH_TOKEN, "");
-		HeaderUtils.getAuthToken(headers);
+		HeaderUtils.getAuthToken(headers, null);
 	}
 
 	@Test
 	public void testGetOneCategory() {
 		Category category = new Category(RequestConstants.TERM, RequestConstants.SCHEME,
-				OCCIHeaders.KIND_CLASS);
+				RequestConstants.KIND_CLASS);
 		headers.add(HeaderUtils.normalize(OCCIHeaders.CATEGORY), category.toHeader());
 		List<Category> listCAtegory = HeaderUtils.getCategories(headers);
 
@@ -46,9 +46,9 @@ public class TestHeaderUtils {
 	@Test
 	public void testGetManyCategory() {
 		Category category = new Category(RequestConstants.TERM, RequestConstants.SCHEME,
-				OCCIHeaders.KIND_CLASS);
-		Category category2 = new Category("m1-namo", "namo-teste", OCCIHeaders.MIXIN_CLASS);
-		Category category3 = new Category("stonage", "stonage", OCCIHeaders.MIXIN_CLASS);
+				RequestConstants.KIND_CLASS);
+		Category category2 = new Category("m1-namo", "namo-teste", RequestConstants.MIXIN_CLASS);
+		Category category3 = new Category("stonage", "stonage", RequestConstants.MIXIN_CLASS);
 		headers.add(HeaderUtils.normalize(OCCIHeaders.CATEGORY), category.toHeader());
 		headers.add(HeaderUtils.normalize(OCCIHeaders.CATEGORY), category2.toHeader());
 		headers.add(HeaderUtils.normalize(OCCIHeaders.CATEGORY), category3.toHeader());
@@ -128,7 +128,7 @@ public class TestHeaderUtils {
 	@Test
 	public void testValidCategoryFogbowRequest() {
 		Category category = new Category(RequestConstants.TERM, RequestConstants.SCHEME,
-				OCCIHeaders.KIND_CLASS);
+				RequestConstants.KIND_CLASS);
 		headers.add(HeaderUtils.normalize(OCCIHeaders.CATEGORY), category.toHeader());
 		List<Category> categories = HeaderUtils.getCategories(headers);
 		HeaderUtils.checkCategories(categories, RequestConstants.TERM);
@@ -137,7 +137,7 @@ public class TestHeaderUtils {
 	@Test(expected = OCCIException.class)
 	public void testInvalidCategoryFogbowRequest() {
 		Category category = new Category("fogbow-request-wrong", RequestConstants.SCHEME,
-				OCCIHeaders.KIND_CLASS);
+				RequestConstants.KIND_CLASS);
 		headers.add(HeaderUtils.normalize(OCCIHeaders.CATEGORY), category.toHeader());
 		List<Category> categories = HeaderUtils.getCategories(headers);
 		HeaderUtils.checkCategories(categories, RequestConstants.TERM);
@@ -151,7 +151,7 @@ public class TestHeaderUtils {
 	@Test(expected = OCCIException.class)
 	public void testCheckCategoriesWrongCategory() {
 		Category category = new Category("wrong-term", RequestConstants.SCHEME,
-				OCCIHeaders.KIND_CLASS);
+				RequestConstants.KIND_CLASS);
 		headers.add(HeaderUtils.normalize(OCCIHeaders.CATEGORY), category.toHeader());
 
 		List<Category> categories = HeaderUtils.getCategories(headers);

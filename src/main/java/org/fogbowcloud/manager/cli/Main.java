@@ -9,14 +9,22 @@ import org.apache.http.Header;
 import org.apache.http.HttpException;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
+import org.apache.http.HttpVersion;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
 import org.apache.http.message.BasicHeader;
+import org.apache.http.params.BasicHttpParams;
+import org.apache.http.params.CoreProtocolPNames;
+import org.apache.http.params.HttpParams;
 import org.apache.http.util.EntityUtils;
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.plugins.openstack.OpenStackIdentityPlugin;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 
@@ -31,10 +39,12 @@ public class Main {
 	protected static final String DEFAULT_TYPE = "one-time";
 	protected static final String DEFAULT_FLAVOR = "fogbow-small";
 	protected static final String DEFAULT_IMAGE = "fogbow-linux-x86";
-	
-	private static HttpClient client = new DefaultHttpClient();
-	
+
+	private static HttpClient client;
+
 	public static void main(String[] args) throws Exception {
+		configureLog4j();
+		
 		JCommander jc = new JCommander();
 
 		MemberCommand member = new MemberCommand();
@@ -51,8 +61,8 @@ public class Main {
 		jc.setProgramName("fogbow-cli");
 		jc.parse(args);
 
-		String parsedCommand = jc.getParsedCommand();		
-		
+		String parsedCommand = jc.getParsedCommand();
+
 		if (parsedCommand == null) {
 			jc.usage();
 			return;
@@ -84,24 +94,27 @@ public class Main {
 					jc.usage();
 					return;
 				}
-				
-				if (!request.type.equals("one-time")
-						&& !request.type.equals("persistent")) {
+
+				if (!request.type.equals("one-time") && !request.type.equals("persistent")) {
 					jc.usage();
 					return;
 				}
-				
+
 				Set<Header> headers = new HashSet<Header>();
-				headers.add(new BasicHeader("Category", 
+				headers.add(new BasicHeader("Category",
 						"fogbow-request; scheme=\"http://schemas.fogbowcloud.org/request#\"; class=\"kind\""));
-				headers.add(new BasicHeader("X-OCCI-Attribute", 
+				headers.add(new BasicHeader("X-OCCI-Attribute",
 						"org.fogbowcloud.request.instance-count=" + request.instanceCount));
-				headers.add(new BasicHeader("X-OCCI-Attribute", 
-						"org.fogbowcloud.request.type=" + request.type));
-				headers.add(new BasicHeader("Category", 
-						request.flavor + "; scheme=\"http://schemas.fogbowcloud.org/template/resource#\"; class=\"mixin\""));
-				headers.add(new BasicHeader("Category", 
-						request.image + "; scheme=\"http://schemas.fogbowcloud.org/template/os#\"; class=\"mixin\""));
+				headers.add(new BasicHeader("X-OCCI-Attribute", "org.fogbowcloud.request.type="
+						+ request.type));
+				headers.add(new BasicHeader(
+						"Category",
+						request.flavor
+								+ "; scheme=\"http://schemas.fogbowcloud.org/template/resource#\"; class=\"mixin\""));
+				headers.add(new BasicHeader(
+						"Category",
+						request.image
+								+ "; scheme=\"http://schemas.fogbowcloud.org/template/os#\"; class=\"mixin\""));
 				doRequest("post", url + "/request", request.authToken, headers);
 			}
 		} else if (parsedCommand.equals("instance")) {
@@ -125,12 +138,12 @@ public class Main {
 			}
 		} else if (parsedCommand.equals("token")) {
 			String url = token.url;
-			
-			if(token.password == null) {
+
+			if (token.password == null) {
 				System.out.print("Password:");
 				token.password = new String(JCommander.getConsole().readPassword(false));
 			}
-			
+
 			Set<Header> headers = new HashSet<Header>();
 			headers.add(new BasicHeader(OpenStackIdentityPlugin.USER_KEY, token.username));
 			headers.add(new BasicHeader(OpenStackIdentityPlugin.PASSWORD_KEY, token.password));
@@ -139,9 +152,16 @@ public class Main {
 			doRequest("get", url + "/token", null, headers);
 		} else if (parsedCommand.equals("resource")) {
 			String url = token.url;
-			
+
 			doRequest("get", url + "/-/", null);
 		}
+	}
+
+	private static void configureLog4j() {
+		ConsoleAppender console = new ConsoleAppender();
+		console.setThreshold(Level.OFF);
+		console.activateOptions();
+		Logger.getRootLogger().addAppender(console);
 	}
 
 	private static void doRequest(String method, String endpoint, String authToken)
@@ -166,8 +186,17 @@ public class Main {
 		for (Header header : additionalHeaders) {
 			request.addHeader(header);
 		}
-		
-		HttpResponse response = client.execute(request);
+
+		if (client == null) {
+			client = new DefaultHttpClient();
+			HttpParams params = new BasicHttpParams();
+			params.setParameter(CoreProtocolPNames.PROTOCOL_VERSION, HttpVersion.HTTP_1_1);
+			client = new DefaultHttpClient(new ThreadSafeClientConnManager(params, client
+					.getConnectionManager().getSchemeRegistry()), params);
+		}
+		HttpResponse response = null;
+	
+		response = client.execute(request);			
 
 		if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
 			System.out.println(EntityUtils.toString(response.getEntity()));
@@ -175,14 +204,15 @@ public class Main {
 			System.out.println(response.getStatusLine().toString());
 		}
 	}
-	
+
 	protected static void setClient(HttpClient client) {
 		Main.client = client;
 	}
-	
+
 	private static class Command {
 		@Parameter(names = "--url", description = "fogbow manager url")
-		String url = System.getenv("FOGBOW_URL") == null ?  Main.DEFAULT_URL : System.getenv("FOGBOW_URL");
+		String url = System.getenv("FOGBOW_URL") == null ? Main.DEFAULT_URL : System
+				.getenv("FOGBOW_URL");
 	}
 
 	private static class AuthedCommand extends Command {
@@ -218,7 +248,7 @@ public class Main {
 
 		@Parameter(names = "--flavor", description = "Instance flavor")
 		String flavor = Main.DEFAULT_FLAVOR;
-		
+
 		@Parameter(names = "--type", description = "Request type (one-time|persistent)")
 		String type = Main.DEFAULT_TYPE;
 	}
@@ -240,7 +270,7 @@ public class Main {
 		@Parameter(names = "--get", description = "Get token")
 		Boolean get = false;
 
-		@Parameter(names = "--password", required = false, description = "Password") 
+		@Parameter(names = "--password", required = false, description = "Password")
 		String password = null;
 
 		@Parameter(names = "--username", required = true, description = "Username")
@@ -249,7 +279,7 @@ public class Main {
 		@Parameter(names = "--tenantName", required = true, description = "TenantName")
 		String tenantName = null;
 	}
-	
+
 	@Parameters(separators = "=", commandDescription = "Resources Fogbow")
 	private static class ResourceCommand extends Command {
 		@Parameter(names = "--get", description = "Get all resources")

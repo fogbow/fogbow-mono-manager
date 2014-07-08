@@ -36,6 +36,9 @@ public class ComputeApplication extends Application {
 	public static final String SMALL_FLAVOR_TERM = "m1-small";
 	public static final String MEDIUM_FLAVOR_TERM = "m1-medium";
 	public static final String LARGE_FLAVOR_TERM = "m1-large";
+	public static final String INSTANCE_SCHEME = "http://schemas.openstack.org/compute/instance#";
+	public static final String OS_SCHEME = "http://schemas.openstack.org/template/os#";
+	public static final String RESOURCE_SCHEME = "http://schemas.openstack.org/template/resource#";
 	
 	private Map<String, List<String>> userToInstanceId;
 	private Map<String, String> instanceIdToDetails;
@@ -119,7 +122,7 @@ public class ComputeApplication extends Application {
 	}
 
 	public String newInstance(String authToken, List<Category> categories,
-			Map<String, String> xOCCIAtt) {
+			Map<String, String> xOCCIAtt, String link) {
 		checkUserToken(authToken);
 		String user = keystoneTokenToUser.get(authToken);
 		if (userToInstanceId.get(user) == null) {
@@ -146,7 +149,7 @@ public class ComputeApplication extends Application {
 		xOCCIAtt.put(ID_CORE_ATTRIBUTE_OCCI, instanceId);
 
 		userToInstanceId.get(user).add(instanceId);
-		String details = mountDetails(categories, xOCCIAtt);
+		String details = mountDetails(categories, xOCCIAtt, link);
 		instanceIdToDetails.put(instanceId, details);
 		
 		return instanceId;
@@ -155,7 +158,7 @@ public class ComputeApplication extends Application {
 	private void checkRules(List<Category> categories, Map<String, String> xOCCIAtt) {
 		boolean OSFound = false;
 		for (Category category : categories) {
-			if (category.getScheme().equals(OpenStackComputePlugin.OS_SCHEME)) {
+			if (category.getScheme().equals(OpenStackComputePlugin.getOSScheme())) {
 				OSFound = true;
 				break;
 			}
@@ -178,11 +181,20 @@ public class ComputeApplication extends Application {
 		}
 	}
 
-	private String mountDetails(List<Category> categories, Map<String, String> xOCCIAtt) {
+	private String mountDetails(List<Category> categories, Map<String, String> xOCCIAtt, String link) {
 		StringBuilder st = new StringBuilder();
 		for (Category category : categories) {
 			st.append(category.toHeader() + "\n");
 		}
+		
+		if (link != null && !"".equals(link)){
+			st.append(OCCIHeaders.LINK + ": " + link);
+		} else {
+			st.append(OCCIHeaders.LINK + ": " + "</network/default/>; "
+					+ "rel=\"http://schemas.ogf.org/occi/infrastructure#network\"; "
+					+ "category=\"http://schemas.ogf.org/occi/infrastructure#networkinterface\"; \n");
+		}
+		
 		for (String attName : xOCCIAtt.keySet()) {
 			st.append(OCCIHeaders.X_OCCI_ATTRIBUTE + ": " + attName + "=" + "\""
 					+ xOCCIAtt.get(attName) + "\"" + "\n");
@@ -257,10 +269,11 @@ public class ComputeApplication extends Application {
 			List<Category> categories = HeaderUtils.getCategories(req.getHeaders());
 			HeaderUtils.checkOCCIContentType(req.getHeaders());
 			Map<String, String> xOCCIAtt = HeaderUtils.getXOCCIAtributes(req.getHeaders());
-			String authToken = HeaderUtils.getAuthToken(req.getHeaders());
+			String authToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse());
+			String link = HeaderUtils.getLink(req.getHeaders());
 
 			String computeEndpoint = req.getHostRef() + req.getHttpCall().getRequestUri();
-			String instanceId = application.newInstance(authToken, categories, xOCCIAtt);
+			String instanceId = application.newInstance(authToken, categories, xOCCIAtt, link);
 			
 			getResponse().setLocationRef(computeEndpoint + instanceId);
 			return ResponseConstants.OK;
@@ -270,7 +283,7 @@ public class ComputeApplication extends Application {
 		public String remove() {
 			ComputeApplication computeApplication = (ComputeApplication) getApplication();
 			HttpRequest req = (HttpRequest) getRequest();
-			String userToken = HeaderUtils.getAuthToken(req.getHeaders());
+			String userToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse());
 			String instanceId = (String) getRequestAttributes().get("instanceid");
 
 			if (instanceId == null) {

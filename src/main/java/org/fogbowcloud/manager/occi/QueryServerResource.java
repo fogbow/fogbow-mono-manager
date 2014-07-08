@@ -16,7 +16,7 @@ public class QueryServerResource extends ServerResource {
 		HttpRequest req = (HttpRequest) getRequest();
 		HeaderUtils.checkOCCIContentType(req.getHeaders());
 
-		return generateResponse(ResourceRepository.getAll());
+		return generateResponse(ResourceRepository.getInstance().getAll());
 	}
 
 	public String generateResponse(List<Resource> allResources) {

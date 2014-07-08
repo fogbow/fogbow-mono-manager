@@ -12,9 +12,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
-import java.util.logging.Logger;
 
 import org.apache.http.HttpStatus;
+import org.apache.log4j.Logger;
 import org.dom4j.Attribute;
 import org.dom4j.Element;
 import org.fogbowcloud.manager.core.CertificateHandlerHelper;
@@ -52,7 +52,7 @@ public class ManagerPacketHelper {
 			iq.getElement().element("query").addElement("cert")
 					.setText(CertificateHandlerHelper.getBase64Certificate(properties));
 		} catch (Exception e) {
-			LOGGER.warning("Could not load certificate");
+			LOGGER.warn("Could not load certificate");
 		}
 
 		statusEl.addElement("cpu-idle").setText(resourcesInfo.getCpuIdle());
@@ -94,7 +94,7 @@ public class ManagerPacketHelper {
 			try {
 				cert = CertificateHandlerHelper.parseCertificate(itemEl.element("cert").getText());
 			} catch (Exception e) {
-				LOGGER.warning("Certificate could not be parsed.");
+				LOGGER.warn("Certificate could not be parsed.");
 			}
 
 			Element statusEl = itemEl.element("status");

@@ -1,6 +1,7 @@
 package org.fogbowcloud.manager.occi.request;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -21,13 +22,14 @@ import org.restlet.resource.ServerResource;
 
 public class RequestServerResource extends ServerResource {
 
+	protected static final String NO_REQUESTS_MESSAGE = "There are not requests.";
 	private static final Logger LOGGER = Logger.getLogger(RequestServerResource.class);
 
 	@Get
 	public String fetch() {
 		OCCIApplication application = (OCCIApplication) getApplication();
 		HttpRequest req = (HttpRequest) getRequest();
-		String accessId = HeaderUtils.getAuthToken(req.getHeaders());
+		String accessId = HeaderUtils.getAuthToken(req.getHeaders(), getResponse());
 		String requestId = (String) getRequestAttributes().get("requestId");
 
 		if (requestId == null) {
@@ -44,7 +46,7 @@ public class RequestServerResource extends ServerResource {
 	public String remove() {
 		OCCIApplication application = (OCCIApplication) getApplication();
 		HttpRequest req = (HttpRequest) getRequest();
-		String accessId = HeaderUtils.getAuthToken(req.getHeaders());
+		String accessId = HeaderUtils.getAuthToken(req.getHeaders(), getResponse());
 		String requestId = (String) getRequestAttributes().get("requestId");
 
 		if (requestId == null) {
@@ -70,7 +72,7 @@ public class RequestServerResource extends ServerResource {
 		Map<String, String> xOCCIAtt = HeaderUtils.getXOCCIAtributes(req.getHeaders());
 		xOCCIAtt = normalizeXOCCIAtt(xOCCIAtt);
 
-		String authToken = HeaderUtils.getAuthToken(req.getHeaders());
+		String authToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse());
 
 		List<Request> currentRequests = application.createRequests(authToken, categories, xOCCIAtt);
 		return generateResponse(currentRequests, req);
@@ -89,7 +91,7 @@ public class RequestServerResource extends ServerResource {
 		HeaderUtils.checkDateValue(defOCCIAtt.get(RequestAttribute.VALID_UNTIL.getValue()));
 		HeaderUtils.checkIntegerValue(defOCCIAtt.get(RequestAttribute.INSTANCE_COUNT.getValue()));
 
-		List<Resource> requestResources = ResourceRepository.getAll();
+		List<Resource> requestResources = ResourceRepository.getInstance().getAll();
 		for (String attributeName : xOCCIAtt.keySet()) {
 			boolean supportedAtt = false;
 			for (Resource resource : requestResources) {
@@ -117,11 +119,17 @@ public class RequestServerResource extends ServerResource {
 	}
 
 	protected static String generateResponse(List<Request> requests, HttpRequest req) {
+		if (requests == null || requests.isEmpty()) { 
+			return NO_REQUESTS_MESSAGE;
+		}
 		String requestEndpoint = req.getHostRef() + req.getHttpCall().getRequestUri();
 		String response = "";
-		for (Request request : requests) {
-			response += HeaderUtils.X_OCCI_LOCATION + requestEndpoint + "/" + request.getId()
-					+ "\n";
+		Iterator<Request> requestIt = requests.iterator();
+		while(requestIt.hasNext()){
+			response += HeaderUtils.X_OCCI_LOCATION + requestEndpoint + "/" + requestIt.next().getId();
+			if (requestIt.hasNext()){
+				response += "\n";
+			}
 		}
 		return response;
 	}

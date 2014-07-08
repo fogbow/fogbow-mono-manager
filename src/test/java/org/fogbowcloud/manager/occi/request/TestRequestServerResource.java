@@ -24,7 +24,7 @@ public class TestRequestServerResource {
 	@Test
 	public void testNormalizeXOCCIAtt() {
 		Category category = new Category(RequestConstants.TERM, RequestConstants.SCHEME,
-				OCCIHeaders.KIND_CLASS);
+				RequestConstants.KIND_CLASS);
 		headers.add(HeaderUtils.normalize(OCCIHeaders.CATEGORY), category.toHeader());
 		headers.add(HeaderUtils.normalize(OCCIHeaders.X_OCCI_ATTRIBUTE),
 				RequestAttribute.INSTANCE_COUNT.getValue() + "=10");
@@ -38,7 +38,7 @@ public class TestRequestServerResource {
 	@Test(expected = OCCIException.class)
 	public void testNormalizeXOCCIAttWrongNameAttribute() {
 		Category category = new Category(RequestConstants.TERM, RequestConstants.SCHEME,
-				OCCIHeaders.KIND_CLASS);
+				RequestConstants.KIND_CLASS);
 		headers.add(HeaderUtils.normalize(OCCIHeaders.CATEGORY), category.toHeader());
 		headers.add(HeaderUtils.normalize(OCCIHeaders.X_OCCI_ATTRIBUTE), "worng-attribute" + "=10");
 
