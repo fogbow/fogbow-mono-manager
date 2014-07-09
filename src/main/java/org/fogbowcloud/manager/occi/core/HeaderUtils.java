@@ -27,6 +27,10 @@ public class HeaderUtils {
 	}
 
 	public static String getAuthToken(Series<Header> headers, Response response) {
+		return getAuthToken(headers, response, false);
+	}
+	
+	public static String getAuthToken(Series<Header> headers, Response response, boolean head) {
 		String token = headers.getValues(OCCIHeaders.X_AUTH_TOKEN);
 		if (token == null || token.equals("")) {
 			if (response != null) {
@@ -37,10 +41,11 @@ public class HeaderUtils {
 				}
 				//FIXME keystone URI hard coded
 				responseHeaders.add(new Header(HeaderUtils.WWW_AUTHENTICATE, "Keystone uri='http://localhost:5000/'"));
-				final MediaType textPlainType = new MediaType("text/plain");
+				MediaType textPlainType = new MediaType("text/plain");				
 				response.setEntity(ResponseConstants.UNAUTHORIZED, textPlainType);
-			}
-			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
+			}			
+			throw new OCCIException(ErrorType.UNAUTHORIZED, 
+					head ? "" : ResponseConstants.UNAUTHORIZED);
 		}
 		return token;
 	}
