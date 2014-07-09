@@ -12,12 +12,14 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.util.EntityUtils;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.core.HeaderUtils;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.Resource;
+import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.instance.Instance.Link;
@@ -173,8 +175,14 @@ public class TestGetCompute {
 		HttpResponse response = client.execute(httpGet);
 
 		Assert.assertEquals(HttpStatus.SC_UNAUTHORIZED, response.getStatusLine().getStatusCode());
-		Assert.assertEquals("Keystone uri='http://localhost:5000/'", response.getFirstHeader(HeaderUtils.WWW_AUTHENTICATE).getValue());
+		Assert.assertEquals("Keystone uri='http://localhost:5000/'",
+				response.getFirstHeader(HeaderUtils.WWW_AUTHENTICATE).getValue());
+		Assert.assertTrue(response.getFirstHeader(OCCIHeaders.CONTENT_TYPE).getValue()
+				.startsWith("text/plain"));
+		Assert.assertEquals(ResponseConstants.UNAUTHORIZED,
+				EntityUtils.toString(response.getEntity()));
 	}
+
 	
 	@Test
 	public void testWithoutAccessToken() throws Exception {
@@ -184,6 +192,11 @@ public class TestGetCompute {
 		HttpResponse response = client.execute(httpGet);
 
 		Assert.assertEquals(HttpStatus.SC_UNAUTHORIZED, response.getStatusLine().getStatusCode());
-		Assert.assertEquals("Keystone uri='http://localhost:5000/'", response.getFirstHeader(HeaderUtils.WWW_AUTHENTICATE).getValue());	
+		Assert.assertEquals("Keystone uri='http://localhost:5000/'",
+				response.getFirstHeader(HeaderUtils.WWW_AUTHENTICATE).getValue());
+		Assert.assertTrue(response.getFirstHeader(OCCIHeaders.CONTENT_TYPE).getValue()
+				.startsWith("text/plain"));
+		Assert.assertEquals(ResponseConstants.UNAUTHORIZED,
+				EntityUtils.toString(response.getEntity()));
 	}
 }

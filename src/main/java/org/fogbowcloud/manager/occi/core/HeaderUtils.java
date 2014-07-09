@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.restlet.Response;
+import org.restlet.data.MediaType;
 import org.restlet.engine.header.Header;
 import org.restlet.util.Series;
 
@@ -36,6 +37,8 @@ public class HeaderUtils {
 				}
 				//FIXME keystone URI hard coded
 				responseHeaders.add(new Header(HeaderUtils.WWW_AUTHENTICATE, "Keystone uri='http://localhost:5000/'"));
+				final MediaType textPlainType = new MediaType("text/plain");
+				response.setEntity(ResponseConstants.UNAUTHORIZED, textPlainType);
 			}
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}
