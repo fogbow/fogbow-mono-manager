@@ -25,12 +25,8 @@ public class HeaderUtils {
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}
 	}
-
-	public static String getAuthToken(Series<Header> headers, Response response) {
-		return getAuthToken(headers, response, false);
-	}
 	
-	public static String getAuthToken(Series<Header> headers, Response response, boolean head) {
+	public static String getAuthToken(Series<Header> headers, Response response) {
 		String token = headers.getValues(OCCIHeaders.X_AUTH_TOKEN);
 		if (token == null || token.equals("")) {
 			if (response != null) {
@@ -43,9 +39,8 @@ public class HeaderUtils {
 				responseHeaders.add(new Header(HeaderUtils.WWW_AUTHENTICATE, "Keystone uri='http://localhost:5000/'"));
 				MediaType textPlainType = new MediaType("text/plain");				
 				response.setEntity(ResponseConstants.UNAUTHORIZED, textPlainType);
-			}			
-			throw new OCCIException(ErrorType.UNAUTHORIZED, 
-					head ? "" : ResponseConstants.UNAUTHORIZED);
+			}
+			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}
 		return token;
 	}

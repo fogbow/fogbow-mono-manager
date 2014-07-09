@@ -35,9 +35,10 @@ public class TestQueryServerResource {
 	public void setup() throws Exception {
 		this.computePlugin = Mockito.mock(ComputePlugin.class);
 		this.identityPlugin = Mockito.mock(IdentityPlugin.class);
-		Mockito.when(identityPlugin.getToken(OCCITestHelper.ACCESS_TOKEN)).thenReturn(
-				new Token("id", OCCITestHelper.USER_MOCK, new Date(),
-				new HashMap<String, String>()));
+		Mockito.when(identityPlugin.getToken(OCCITestHelper.ACCESS_TOKEN))
+				.thenReturn(
+						new Token("id", OCCITestHelper.USER_MOCK, new Date(),
+								new HashMap<String, String>()));
 		this.helper = new OCCITestHelper();
 	}
 
@@ -58,7 +59,7 @@ public class TestQueryServerResource {
 
 		Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusLine().getStatusCode());
 	}
-	
+
 	@Test
 	public void testGetQueryWithoutAccessToken() throws Exception {
 		this.helper.initializeComponent(computePlugin, identityPlugin);
@@ -92,7 +93,7 @@ public class TestQueryServerResource {
 
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
-	
+
 	@Test
 	public void testHeadQueryWithoutAccessToken() throws Exception {
 		this.helper.initializeComponent(computePlugin, identityPlugin);
@@ -105,5 +106,6 @@ public class TestQueryServerResource {
 		Assert.assertEquals(HttpStatus.SC_UNAUTHORIZED, response.getStatusLine().getStatusCode());
 		Assert.assertEquals("Keystone uri='http://localhost:5000/'",
 				response.getFirstHeader(HeaderUtils.WWW_AUTHENTICATE).getValue());
+		Assert.assertEquals("0", response.getFirstHeader("Content-length").getValue());
 	}
 }
