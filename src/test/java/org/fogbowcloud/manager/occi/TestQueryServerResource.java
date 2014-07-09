@@ -8,10 +8,12 @@ import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpHead;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
+import org.fogbowcloud.manager.occi.core.HeaderUtils;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.Resource;
 import org.fogbowcloud.manager.occi.core.ResourceRepository;
@@ -67,6 +69,8 @@ public class TestQueryServerResource {
 		HttpResponse response = client.execute(get);
 
 		Assert.assertEquals(HttpStatus.SC_UNAUTHORIZED, response.getStatusLine().getStatusCode());
+		Assert.assertEquals("Keystone uri='http://localhost:5000/'",
+				response.getFirstHeader(HeaderUtils.WWW_AUTHENTICATE).getValue());
 	}
 
 	@Test
@@ -87,5 +91,19 @@ public class TestQueryServerResource {
 		}
 
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+	}
+	
+	@Test
+	public void testHeadQueryWithoutAccessToken() throws Exception {
+		this.helper.initializeComponent(computePlugin, identityPlugin);
+
+		HttpHead head = new HttpHead(OCCITestHelper.URI_FOGBOW_QUERY);
+		head.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
+		HttpClient client = new DefaultHttpClient();
+		HttpResponse response = client.execute(head);
+
+		Assert.assertEquals(HttpStatus.SC_UNAUTHORIZED, response.getStatusLine().getStatusCode());
+		Assert.assertEquals("Keystone uri='http://localhost:5000/'",
+				response.getFirstHeader(HeaderUtils.WWW_AUTHENTICATE).getValue());
 	}
 }
