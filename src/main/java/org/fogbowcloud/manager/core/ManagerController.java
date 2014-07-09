@@ -24,6 +24,8 @@ import org.fogbowcloud.manager.core.ssh.SSHTunnel;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.OCCIException;
+import org.fogbowcloud.manager.occi.core.Resource;
+import org.fogbowcloud.manager.occi.core.ResourceRepository;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.instance.Instance;
@@ -630,5 +632,11 @@ public class ManagerController {
 
 	public void setValidator(FederationMemberValidator validator) {
 		this.validator = validator;
+	}
+
+	public List<Resource> getAllResouces(String accessId) {
+		Token userToken = identityPlugin.getToken(accessId);
+		LOGGER.debug("User Token: " + userToken);
+		return ResourceRepository.getInstance().getAll();
 	}
 }

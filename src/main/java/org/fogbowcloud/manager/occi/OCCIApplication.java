@@ -6,6 +6,7 @@ import java.util.Map;
 import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.occi.core.Category;
+import org.fogbowcloud.manager.occi.core.Resource;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.instance.ComputeServerResource;
 import org.fogbowcloud.manager.occi.instance.Instance;
@@ -81,5 +82,9 @@ public class OCCIApplication extends Application {
 
 	public void removeInstance(String authToken, String instanceId) {
 		managerFacade.removeInstance(authToken, instanceId);
+	}
+
+	public List<Resource> getAllResources(String authToken) {
+		return managerFacade.getAllResouces(authToken);
 	}
 }

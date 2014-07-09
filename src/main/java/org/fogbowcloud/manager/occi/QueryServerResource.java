@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.fogbowcloud.manager.occi.core.HeaderUtils;
 import org.fogbowcloud.manager.occi.core.Resource;
-import org.fogbowcloud.manager.occi.core.ResourceRepository;
 import org.restlet.engine.adapter.HttpRequest;
 import org.restlet.resource.Get;
 import org.restlet.resource.ServerResource;
@@ -13,10 +12,14 @@ public class QueryServerResource extends ServerResource {
 
 	@Get
 	public String fetch() {
+		
+		OCCIApplication application = (OCCIApplication) getApplication();
 		HttpRequest req = (HttpRequest) getRequest();
 		HeaderUtils.checkOCCIContentType(req.getHeaders());
-
-		return generateResponse(ResourceRepository.getInstance().getAll());
+		String authToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse());
+		
+		List<Resource> allResources = application.getAllResources(authToken);
+		return generateResponse(allResources);
 	}
 
 	public String generateResponse(List<Resource> allResources) {
