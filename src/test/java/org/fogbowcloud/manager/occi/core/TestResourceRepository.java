@@ -16,6 +16,7 @@ public class TestResourceRepository {
 	@Before
 	public void setup() throws Exception {
 		headers = new Series<Header>(Header.class);
+		ResourceRepository.getInstance().reset();
 	}
 
 	@Test
@@ -49,5 +50,14 @@ public class TestResourceRepository {
 		Resource resourceEquals = ResourceRepository.getInstance().get("unknown");
 
 		Assert.assertNull(resourceEquals);
+	}
+	
+	@Test
+	public void testAddImageToResources() {
+		int numberOfResources = ResourceRepository.getInstance().getAll().size();
+		ResourceRepository.getInstance().addImageResource("image1");		
+		List<Resource> resources = ResourceRepository.getInstance().getAll();
+		Assert.assertEquals(numberOfResources + 1, resources.size());
+		Assert.assertTrue(ResourceRepository.getInstance().get("image1") != null);
 	}
 }

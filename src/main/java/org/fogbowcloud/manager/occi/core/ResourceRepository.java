@@ -57,8 +57,10 @@ public class ResourceRepository {
 		Resource imageResource = new Resource(imageName, RequestConstants.TEMPLATE_OS_SCHEME,
 				RequestConstants.MIXIN_CLASS, new ArrayList<String>(), new ArrayList<String>(),
 				FOGBOWCLOUD_ENDPOINT + "/" + imageName, imageName + " image", OS_TPL_OCCI_SCHEME);
-		LOGGER.debug("Adding image resource: " + imageResource.toHeader());
-		resources.add(imageResource);
+		if (!resources.contains(imageResource)){
+			LOGGER.debug("Adding image resource: " + imageResource.toHeader());
+			resources.add(imageResource);
+		}
 	}
 
 	public List<Resource> get(List<Category> categories) {
@@ -83,5 +85,12 @@ public class ResourceRepository {
 			}
 		}
 		return null;
+	}
+	
+	/**
+	 * To be used only by tests
+	 */	
+	protected void reset(){
+		instance = null;
 	}
 }

@@ -45,7 +45,7 @@ public class QueryServerResource extends ServerResource {
 	}
 	
 	public String generateResponse(List<Resource> allResources) {
-		String response = "\n";
+		String response = "\n\n";
 		for (Resource resource : allResources) {
 			response += "Category: " + resource.toHeader() + "\n"; 
 		}

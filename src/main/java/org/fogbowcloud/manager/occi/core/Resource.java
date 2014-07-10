@@ -47,7 +47,6 @@ public class Resource {
 		if(getAttributes().size() != 0){
 			attributes = "\"; attributes=\"" + attributesToHeader();
 		}
-		 
 
 		return category.getTerm() + "; scheme=\"" + category.getScheme() + "\"; class=\""
 				+ category.getCatClass() + title + rel + location 
@@ -108,5 +107,18 @@ public class Resource {
 
 	public boolean supportAtt(String attributeName) {
 		return attributes.contains(attributeName);
+	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if (!(obj instanceof Resource)){
+			return false;
+		}
+		Resource otherRes = (Resource) obj;		
+		return getCategory().equals(otherRes.getCategory())
+				&& getTitle().equals(otherRes.getTitle()) && getRel().equals(otherRes.getRel())
+				&& getActions().equals(otherRes.getActions())
+				&& getAttributes().equals(otherRes.getAttributes())
+				&& getLocation().equals(otherRes.getLocation());
 	}
 }
