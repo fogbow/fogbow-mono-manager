@@ -42,11 +42,23 @@ public class ResourceRepository {
 				new ArrayList<String>(), new ArrayList<String>(), FOGBOWCLOUD_ENDPOINT + "/large/",
 				"Large Flavor", RESOURCE_TPL_OCCI_SCHEME);
 		//TODO add actions	
-
 		resources.add(fogbowRequest);
 		resources.add(fogbowSmallFlavor);
 		resources.add(fogbowMediumFlavor);
 		resources.add(fogbowLargeFlavor);
+
+		//FIXME Adding default OCCI kinds and mixin (just for test r-OCCI-cli)
+		Resource resourceTlp = new Resource("resource_tpl",
+				"http://schemas.ogf.org/occi/infrastructure#", RequestConstants.MIXIN_CLASS,
+				new ArrayList<String>(), new ArrayList<String>(), FOGBOWCLOUD_ENDPOINT + "/resource_tpl/",
+				"", "");
+		Resource osTlp = new Resource("os_tpl",
+				"http://schemas.ogf.org/occi/infrastructure#", RequestConstants.MIXIN_CLASS,
+				new ArrayList<String>(), new ArrayList<String>(), FOGBOWCLOUD_ENDPOINT + "/os_tpl/",
+				"", "");
+		
+		resources.add(resourceTlp);
+		resources.add(osTlp);
 	}
 		
 	public List<Resource> getAll() {
