@@ -26,7 +26,7 @@ public class ResourceRepository {
 	private ResourceRepository(){
 		Resource fogbowRequest = new Resource(RequestConstants.TERM, RequestConstants.SCHEME,
 				RequestConstants.KIND_CLASS, RequestAttribute.getValues(), new ArrayList<String>(),
-				FOGBOWCLOUD_ENDPOINT + "/request/", "Request new Instances", "");
+				FOGBOWCLOUD_ENDPOINT + "/request/", "Request new Instances", "http://schemas.ogf.org/occi/core#resource");
 		
 		//size flavors
 		Resource fogbowSmallFlavor = new Resource(RequestConstants.SMALL_TERM,

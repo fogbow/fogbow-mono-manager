@@ -3,7 +3,7 @@ package org.fogbowcloud.manager.occi.request;
 public class RequestConstants {
 
 	// request
-	public static final String TERM = "fogbow-request";
+	public static final String TERM = "request";
 	public static final String SCHEME = "http://schemas.fogbowcloud.org/request#";
 	public static final String KIND_CLASS = "kind";
 	public static final Integer DEFAULT_INSTANCE_COUNT = 1;
