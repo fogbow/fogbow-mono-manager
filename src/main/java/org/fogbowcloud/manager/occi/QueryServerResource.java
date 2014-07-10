@@ -43,7 +43,6 @@ public class QueryServerResource extends ServerResource {
 			LOGGER.debug("It is a GET method request");
 			OCCIApplication application = (OCCIApplication) getApplication();
 			HttpRequest req = (HttpRequest) getRequest();
-			HeaderUtils.checkOCCIContentType(req.getHeaders());
 			String authToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse());
 			LOGGER.debug("Auth Token = " + authToken);			
 			List<Resource> allResources = application.getAllResources(authToken);

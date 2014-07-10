@@ -48,16 +48,16 @@ public class TestQueryServerResource {
 	}
 
 	@Test
-	public void testGetQueryWrongContentType() throws Exception {
+	public void testGetQueryDifferentContentType() throws Exception {
 		this.helper.initializeComponent(computePlugin, identityPlugin);
 
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_QUERY);
-		get.addHeader(OCCIHeaders.CONTENT_TYPE, "wrong");
+		get.addHeader(OCCIHeaders.CONTENT_TYPE, "text/plain");
 		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(get);
 
-		Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 
 	@Test

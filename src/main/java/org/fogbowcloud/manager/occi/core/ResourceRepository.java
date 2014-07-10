@@ -26,20 +26,20 @@ public class ResourceRepository {
 	private ResourceRepository(){
 		Resource fogbowRequest = new Resource(RequestConstants.TERM, RequestConstants.SCHEME,
 				RequestConstants.KIND_CLASS, RequestAttribute.getValues(), new ArrayList<String>(),
-				FOGBOWCLOUD_ENDPOINT + "/request", "Request new Instances", "");
+				FOGBOWCLOUD_ENDPOINT + "/request/", "Request new Instances", "");
 		
 		//size flavors
 		Resource fogbowSmallFlavor = new Resource(RequestConstants.SMALL_TERM,
 				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS,
-				new ArrayList<String>(), new ArrayList<String>(), FOGBOWCLOUD_ENDPOINT + "/small",
+				new ArrayList<String>(), new ArrayList<String>(), FOGBOWCLOUD_ENDPOINT + "/small/",
 				"Small Flavor", RESOURCE_TPL_OCCI_SCHEME);
 		Resource fogbowMediumFlavor = new Resource(RequestConstants.MEDIUM_TERM,
 				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS,
-				new ArrayList<String>(), new ArrayList<String>(), FOGBOWCLOUD_ENDPOINT + "/medium",
+				new ArrayList<String>(), new ArrayList<String>(), FOGBOWCLOUD_ENDPOINT + "/medium/",
 				"Medium Flavor", RESOURCE_TPL_OCCI_SCHEME);
 		Resource fogbowLargeFlavor = new Resource(RequestConstants.LARGE_TERM,
 				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS,
-				new ArrayList<String>(), new ArrayList<String>(), FOGBOWCLOUD_ENDPOINT + "/large",
+				new ArrayList<String>(), new ArrayList<String>(), FOGBOWCLOUD_ENDPOINT + "/large/",
 				"Large Flavor", RESOURCE_TPL_OCCI_SCHEME);
 		//TODO add actions	
 
@@ -56,7 +56,7 @@ public class ResourceRepository {
 	public void addImageResource(String imageName){
 		Resource imageResource = new Resource(imageName, RequestConstants.TEMPLATE_OS_SCHEME,
 				RequestConstants.MIXIN_CLASS, new ArrayList<String>(), new ArrayList<String>(),
-				FOGBOWCLOUD_ENDPOINT + "/" + imageName, imageName + " image", OS_TPL_OCCI_SCHEME);
+				FOGBOWCLOUD_ENDPOINT + "/" + imageName + "/", imageName + " image", OS_TPL_OCCI_SCHEME);
 		if (!resources.contains(imageResource)){
 			LOGGER.debug("Adding image resource: " + imageResource.toHeader());
 			resources.add(imageResource);
