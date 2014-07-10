@@ -3,21 +3,14 @@ package org.fogbowcloud.manager.occi;
 import java.util.List;
 
 import org.apache.http.HttpStatus;
-import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.HeaderUtils;
-import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.Resource;
-import org.fogbowcloud.manager.occi.core.ResponseConstants;
-import org.restlet.data.MediaType;
 import org.restlet.data.Method;
 import org.restlet.data.Status;
 import org.restlet.engine.adapter.HttpRequest;
 import org.restlet.engine.header.Header;
-import org.restlet.representation.Representation;
-import org.restlet.representation.Variant;
 import org.restlet.resource.Get;
-import org.restlet.resource.ResourceException;
 import org.restlet.resource.ServerResource;
 import org.restlet.util.Series;
 
@@ -52,7 +45,7 @@ public class QueryServerResource extends ServerResource {
 	}
 	
 	public String generateResponse(List<Resource> allResources) {
-		String response = "";
+		String response = "\n";
 		for (Resource resource : allResources) {
 			response += "Category: " + resource.toHeader() + "\n"; 
 		}

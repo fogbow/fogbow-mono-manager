@@ -3,11 +3,15 @@ package org.fogbowcloud.manager.occi.core;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
 
 public class ResourceRepository {
 	
+	private static final Logger LOGGER = Logger.getLogger(ResourceRepository.class);
+	private static final String OS_TPL_OCCI_SCHEME = "http://schemas.ogf.org/occi/infrastructure#os_tpl";
+	private static final String RESOURCE_TPL_OCCI_SCHEME = "http://schemas.ogf.org/occi/infrastructure#resource_tpl";
 	private static ResourceRepository instance;
 	private static final String FOGBOWCLOUD_ENDPOINT = "http://localhost:8182";
 	List<Resource> resources = new ArrayList<Resource>();
@@ -28,15 +32,15 @@ public class ResourceRepository {
 		Resource fogbowSmallFlavor = new Resource(RequestConstants.SMALL_TERM,
 				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS,
 				new ArrayList<String>(), new ArrayList<String>(), FOGBOWCLOUD_ENDPOINT + "/small",
-				"Small Flavor", "");
+				"Small Flavor", RESOURCE_TPL_OCCI_SCHEME);
 		Resource fogbowMediumFlavor = new Resource(RequestConstants.MEDIUM_TERM,
 				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS,
 				new ArrayList<String>(), new ArrayList<String>(), FOGBOWCLOUD_ENDPOINT + "/medium",
-				"Medium Flavor", "");
+				"Medium Flavor", RESOURCE_TPL_OCCI_SCHEME);
 		Resource fogbowLargeFlavor = new Resource(RequestConstants.LARGE_TERM,
 				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS,
 				new ArrayList<String>(), new ArrayList<String>(), FOGBOWCLOUD_ENDPOINT + "/large",
-				"Large Flavor", "");
+				"Large Flavor", RESOURCE_TPL_OCCI_SCHEME);
 		//TODO add actions	
 
 		resources.add(fogbowRequest);
@@ -52,7 +56,8 @@ public class ResourceRepository {
 	public void addImageResource(String imageName){
 		Resource imageResource = new Resource(imageName, RequestConstants.TEMPLATE_OS_SCHEME,
 				RequestConstants.MIXIN_CLASS, new ArrayList<String>(), new ArrayList<String>(),
-				FOGBOWCLOUD_ENDPOINT + "/" + imageName, imageName + " image", "");
+				FOGBOWCLOUD_ENDPOINT + "/" + imageName, imageName + " image", OS_TPL_OCCI_SCHEME);
+		LOGGER.debug("Adding image resource: " + imageResource.toHeader());
 		resources.add(imageResource);
 	}
 

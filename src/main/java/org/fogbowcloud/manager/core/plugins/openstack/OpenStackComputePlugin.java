@@ -124,7 +124,8 @@ public class OpenStackComputePlugin implements ComputePlugin {
 						.substring(ConfigurationConstants.COMPUTE_OCCI_IMAGE_PREFIX.length()),
 						properties.getProperty(propNameStr));
 			}
-		}		
+		}
+		LOGGER.debug("Image properties: " + imageProperties);
 		return imageProperties;
 	}
 
