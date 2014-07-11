@@ -8,12 +8,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.occi.request.RequestServerResource;
 import org.restlet.Response;
 import org.restlet.data.MediaType;
 import org.restlet.engine.header.Header;
 import org.restlet.util.Series;
 
 public class HeaderUtils {
+
+	private static final Logger LOGGER = Logger.getLogger(HeaderUtils.class);
 
 	public static final String REQUEST_DATE_FORMAT = "yyyy-MM-dd";
 	public static final String X_OCCI_LOCATION = "X-OCCI-Location: ";
@@ -22,6 +26,7 @@ public class HeaderUtils {
 	public static void checkOCCIContentType(Series<Header> headers) {
 		String contentType = headers.getValues(OCCIHeaders.CONTENT_TYPE);
 		if (!contentType.equals(OCCIHeaders.OCCI_CONTENT_TYPE)) {
+			LOGGER.debug("Content-type " + contentType + "was not occi.");
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}
 	}
@@ -55,6 +60,7 @@ public class HeaderUtils {
 		for (int i = 0; i < valuesAttributes.length; i++) {
 			String[] tokensAttribute = valuesAttributes[i].split("=");
 			if (tokensAttribute.length != 2) {
+				LOGGER.debug("Attribute not supported or irregular expression. It will be thrown BAD REQUEST error type.");
 				throw new OCCIException(ErrorType.BAD_REQUEST,
 						ResponseConstants.UNSUPPORTED_ATTRIBUTES);
 			}
@@ -62,6 +68,7 @@ public class HeaderUtils {
 			String value = tokensAttribute[1].replace("\"", "").trim();
 			mapAttributes.put(name, value);
 		}
+		LOGGER.debug("OCCI Attributes received: " + mapAttributes);
 		return mapAttributes;
 	}
 
@@ -113,12 +120,15 @@ public class HeaderUtils {
 		List<Resource> resources = ResourceRepository.getInstance().get(categories);
 
 		if (resources.size() != categories.size()) {
+			LOGGER.debug("Some categories was not found in available resources! Resources "
+					+ resources.size() + " and categories " + categories.size());
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}
 		for (Category category : categories) {
 			if (category.getTerm().equals(mandatoryTerm)) {
 				Resource resource = ResourceRepository.getInstance().get(mandatoryTerm);
 				if (resource == null || !resource.matches(category)) {
+					LOGGER.debug("There was not a matched resource to term " + mandatoryTerm);
 					throw new OCCIException(ErrorType.BAD_REQUEST,
 							ResponseConstants.IRREGULAR_SYNTAX);
 				}

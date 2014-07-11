@@ -62,10 +62,12 @@ public class RequestServerResource extends ServerResource {
 
 	@Post
 	public String post() {
+		LOGGER.info("Posting a new request...");
 		OCCIApplication application = (OCCIApplication) getApplication();
 		HttpRequest req = (HttpRequest) getRequest();
 
 		List<Category> categories = HeaderUtils.getCategories(req.getHeaders());
+		LOGGER.debug("Categories: " + categories);
 		HeaderUtils.checkCategories(categories, RequestConstants.TERM);
 		HeaderUtils.checkOCCIContentType(req.getHeaders());
 
@@ -90,6 +92,8 @@ public class RequestServerResource extends ServerResource {
 		HeaderUtils.checkDateValue(defOCCIAtt.get(RequestAttribute.VALID_FROM.getValue()));
 		HeaderUtils.checkDateValue(defOCCIAtt.get(RequestAttribute.VALID_UNTIL.getValue()));
 		HeaderUtils.checkIntegerValue(defOCCIAtt.get(RequestAttribute.INSTANCE_COUNT.getValue()));
+		
+		LOGGER.debug("Checking if all attributes are supported. OCCI attributes: " + defOCCIAtt);
 
 		List<Resource> requestResources = ResourceRepository.getInstance().getAll();
 		for (String attributeName : xOCCIAtt.keySet()) {
@@ -101,6 +105,7 @@ public class RequestServerResource extends ServerResource {
 				}
 			}
 			if (!supportedAtt) {
+				LOGGER.debug("The attribute " + attributeName + " is not supported.");
 				throw new OCCIException(ErrorType.BAD_REQUEST,
 						ResponseConstants.UNSUPPORTED_ATTRIBUTES);
 			}
