@@ -60,7 +60,7 @@ public class HeaderUtils {
 		for (int i = 0; i < headerValues.length; i++) {
 			String[] eachHeaderValue = headerValues[i].split(",");			
 			for (int j = 0; j < eachHeaderValue.length; j++) {
-				String[] attTokens = eachHeaderValue[j].split("=");
+				String[] attTokens = eachHeaderValue[j].trim().split("=");
 				if (attTokens.length != 2) {
 					LOGGER.debug("Attribute not supported or irregular expression. It will be thrown BAD REQUEST error type.");
 					throw new OCCIException(ErrorType.BAD_REQUEST,
@@ -82,7 +82,7 @@ public class HeaderUtils {
 			String[] eachHeaderValue = headerValues[i].split(",");
 			for (int j = 0; j < eachHeaderValue.length; j++){	
 				try {
-					categories.add(new Category(eachHeaderValue[j]));
+					categories.add(new Category(eachHeaderValue[j].trim()));
 				} catch (IllegalArgumentException e) {
 					throw new OCCIException(ErrorType.BAD_REQUEST,
 							ResponseConstants.IRREGULAR_SYNTAX);

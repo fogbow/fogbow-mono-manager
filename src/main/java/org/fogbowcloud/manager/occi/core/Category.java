@@ -99,4 +99,8 @@ public class Category {
 		}
 		return false;
 	}
+	
+	public String toString() {	
+		return toHeader();
+	}
 }
