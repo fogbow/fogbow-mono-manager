@@ -53,7 +53,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 
 	public ManagerTestHelper() {
 		Map<String, String> tokenAttributes = new HashMap<String, String>();
-		tokenAttributes.put(OpenStackIdentityPlugin.TENANT_ID_KEY, "tenantId_r4fci3qhbcy3b");
+		tokenAttributes.put(Token.Constants.TENANT_ID_KEY.getValue(), "tenantId_r4fci3qhbcy3b");
 		this.defaultToken = new Token(ACCESS_TOKEN_ID, USER_NAME, TOKEN_FUTURE_EXPIRATION,
 				tokenAttributes);
 	}

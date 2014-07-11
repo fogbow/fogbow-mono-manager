@@ -64,16 +64,16 @@ public class TestManagerController {
 	@Test
 	public void testGetFederationMember() throws InterruptedException {
 		Map<String, String> tokenCredentials = new HashMap<String, String>();
-		tokenCredentials.put(OpenStackIdentityPlugin.USER_KEY, DefaultDataTestHelper.USER_NAME);
-		tokenCredentials.put(OpenStackIdentityPlugin.PASSWORD_KEY, DefaultDataTestHelper.USER_PASS);
-		tokenCredentials.put(OpenStackIdentityPlugin.TENANT_NAME_KEY,
+		tokenCredentials.put(Token.Constants.USER_KEY.getValue(), DefaultDataTestHelper.USER_NAME);
+		tokenCredentials.put(Token.Constants.PASSWORD_KEY.getValue(), DefaultDataTestHelper.USER_PASS);
+		tokenCredentials.put(Token.Constants.TENANT_NAME_KEY.getValue(),
 				DefaultDataTestHelper.TENANT_NAME);
 
 		long tokenExpirationTime = System.currentTimeMillis() + 500;
 
 		Map<String, String> attributesTokenReturn = new HashMap<String, String>();
-		attributesTokenReturn.put(OpenStackIdentityPlugin.TENANT_ID_KEY, "987654321");
-		attributesTokenReturn.put(OpenStackIdentityPlugin.TENANT_NAME_KEY,
+		attributesTokenReturn.put(Token.Constants.TENANT_ID_KEY.getValue(), "987654321");
+		attributesTokenReturn.put(Token.Constants.TENANT_NAME_KEY.getValue(),
 				DefaultDataTestHelper.TENANT_NAME);
 
 		Token firstToken = new Token(DefaultDataTestHelper.ACCESS_TOKEN_ID,

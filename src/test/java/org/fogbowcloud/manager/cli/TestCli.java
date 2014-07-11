@@ -15,6 +15,7 @@ import org.apache.http.message.BasicStatusLine;
 import org.fogbowcloud.manager.core.plugins.openstack.OpenStackIdentityPlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
+import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.junit.Before;
 import org.junit.Test;
@@ -52,9 +53,9 @@ public class TestCli {
 
 		HttpUriRequest request = new HttpGet(Main.DEFAULT_URL + "/token");
 		request.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		request.addHeader(OpenStackIdentityPlugin.USER_KEY, user);
-		request.addHeader(OpenStackIdentityPlugin.PASSWORD_KEY, password);
-		request.addHeader(OpenStackIdentityPlugin.TENANT_NAME_KEY, tenantName);
+		request.addHeader(Token.Constants.USER_KEY.getValue(), user);
+		request.addHeader(Token.Constants.PASSWORD_KEY.getValue(), password);
+		request.addHeader(Token.Constants.TENANT_NAME_KEY.getValue(), tenantName);
 		expectedRequest = new HttpUriRequestMatcher(request);
 
 		String command = "token --get --url " + Main.DEFAULT_URL + " --username " + user
@@ -74,9 +75,9 @@ public class TestCli {
 
 		HttpUriRequest request = new HttpGet(Main.DEFAULT_URL + "/token");
 		request.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		request.addHeader(OpenStackIdentityPlugin.USER_KEY, user);
-		request.addHeader(OpenStackIdentityPlugin.PASSWORD_KEY, password);
-		request.addHeader(OpenStackIdentityPlugin.TENANT_NAME_KEY, tenantName);
+		request.addHeader(Token.Constants.USER_KEY.getValue(), user);
+		request.addHeader(Token.Constants.PASSWORD_KEY.getValue(), password);
+		request.addHeader(Token.Constants.TENANT_NAME_KEY.getValue(), tenantName);
 		expectedRequest = new HttpUriRequestMatcher(request);
 
 		String command = "token --get --username " + user + "  --tenantName " + tenantName

@@ -235,8 +235,9 @@ public class OpenStackComputePlugin implements ComputePlugin {
 	public ResourcesInfo getResourcesInfo(Token token) {
 		String responseStr = doRequest(
 				"get",
-				computeV2APIEndpoint + token.getAttributes().get(OpenStackIdentityPlugin.TENANT_ID_KEY)
-						+ "/limits", token.getAccessId()).getResponseString();
+				computeV2APIEndpoint
+						+ token.getAttributes().get(Token.Constants.TENANT_ID_KEY.getValue())
+		+ "/limits", token.getAccessId()).getResponseString();
 
 		String maxCpu = getAttFromJson(MAX_TOTAL_CORES_ATT, responseStr);
 		String cpuInUse = getAttFromJson(TOTAL_CORES_USED_ATT, responseStr);

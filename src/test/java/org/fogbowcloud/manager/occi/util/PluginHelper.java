@@ -68,8 +68,8 @@ public class PluginHelper {
 		this.component.getServers().add(Protocol.HTTP, PORT_ENDPOINT);
 
 		Map<String, String> tokenAttributes = new HashMap<String, String>();
-		tokenAttributes.put(OpenStackIdentityPlugin.TENANT_ID_KEY, TENANT_ID);
-		tokenAttributes.put(OpenStackIdentityPlugin.TENANT_NAME_KEY, TENANT_NAME);
+		tokenAttributes.put(Token.Constants.TENANT_ID_KEY.getValue(), TENANT_ID);
+		tokenAttributes.put(Token.Constants.TENANT_NAME_KEY.getValue(), TENANT_NAME);
 		Token token = new Token(ACCESS_ID, USERNAME,
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, tokenAttributes);
 

@@ -27,6 +27,7 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.plugins.openstack.OpenStackIdentityPlugin;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
+import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
 
 import com.beust.jcommander.JCommander;
@@ -146,9 +147,9 @@ public class Main {
 			}
 
 			Set<Header> headers = new HashSet<Header>();
-			headers.add(new BasicHeader(OpenStackIdentityPlugin.USER_KEY, token.username));
-			headers.add(new BasicHeader(OpenStackIdentityPlugin.PASSWORD_KEY, token.password));
-			headers.add(new BasicHeader(OpenStackIdentityPlugin.TENANT_NAME_KEY, token.tenantName));
+			headers.add(new BasicHeader(Token.Constants.USER_KEY.getValue(), token.username));
+			headers.add(new BasicHeader(Token.Constants.PASSWORD_KEY.getValue(), token.password));
+			headers.add(new BasicHeader(Token.Constants.TENANT_NAME_KEY.getValue(), token.tenantName));
 
 			doRequest("get", url + "/token", null, headers);
 		} else if (parsedCommand.equals("resource")) {
