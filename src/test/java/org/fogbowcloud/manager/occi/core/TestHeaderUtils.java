@@ -1,6 +1,8 @@
 package org.fogbowcloud.manager.occi.core;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.fogbowcloud.manager.occi.util.OCCITestHelper;
@@ -52,9 +54,115 @@ public class TestHeaderUtils {
 		headers.add(HeaderUtils.normalize(OCCIHeaders.CATEGORY), category.toHeader());
 		headers.add(HeaderUtils.normalize(OCCIHeaders.CATEGORY), category2.toHeader());
 		headers.add(HeaderUtils.normalize(OCCIHeaders.CATEGORY), category3.toHeader());
-		List<Category> listCAtegory = HeaderUtils.getCategories(headers);
+		List<Category> categories = HeaderUtils.getCategories(headers);
 
-		Assert.assertEquals(3, listCAtegory.size());
+		Assert.assertEquals(3, categories.size());
+	}
+	
+	@Test
+	public void testGetManyCategoriesWithMoreAttributes() {
+		headers.add(HeaderUtils.normalize(OCCIHeaders.CATEGORY), "term1; scheme=\"scheme1\"; class=\"kind\"; location=\"location1\"; title=\"title1\"");
+		headers.add(HeaderUtils.normalize(OCCIHeaders.CATEGORY), "term2; scheme=\"scheme2\"; class=\"mixin\"; location=\"location2\"; title=\"title2\"");
+		headers.add(HeaderUtils.normalize(OCCIHeaders.CATEGORY), "term3; scheme=\"scheme3\"; class=\"mixin\"; location=\"location3\"; title=\"title3\"");
+		List<String> categoryTerms = new ArrayList<String>();
+		categoryTerms.add("term1");
+		categoryTerms.add("term2");
+		categoryTerms.add("term3");
+		List<Category> categories = HeaderUtils.getCategories(headers);
+		Assert.assertEquals(3, categories.size());
+		int categoriesOK = 0;
+		for (String term : categoryTerms) {
+			for (Category category : categories) {
+				if (category.getTerm().equals(term)){
+					categoriesOK++;
+					break;
+				}
+			}
+		}
+		Assert.assertEquals(3, categoriesOK);
+	}
+	
+	@Test
+	public void testGetManyCategoriesInTheSameHeader() {
+		String categoryValues = "term1; scheme=\"scheme1\"; class=\"kind\"; location=\"location1\"; title=\"title1\", "
+				+ "term2; scheme=\"scheme2\";class=\"mixin\"; location=\"location2\"; title=\"title2\", "
+				+ "term3; scheme=\"scheme3\";class=\"mixin\"; location=\"location3\"; title=\"title3\"";		
+		headers.add(HeaderUtils.normalize(OCCIHeaders.CATEGORY), categoryValues);		
+		List<String> categoryTerms = new ArrayList<String>();
+		categoryTerms.add("term1");
+		categoryTerms.add("term2");
+		categoryTerms.add("term3");
+		List<Category> categories = HeaderUtils.getCategories(headers);
+		Assert.assertEquals(3, categories.size());
+		int categoriesOK = 0;
+		for (String term : categoryTerms) {
+			for (Category category : categories) {
+				if (category.getTerm().equals(term)){
+					categoriesOK++;
+					break;
+				}
+			}
+		}
+		Assert.assertEquals(3, categoriesOK);
+	}
+	
+	@Test
+	public void testGetManyCategoriesWithMoreAttributesInTheSameHeader() {
+		String categoryValues = "term1; scheme=\"scheme1\"; class=\"kind\", term2; scheme=\"scheme2\";class=\"mixin\", "
+				+ "term3; scheme=\"scheme3\";class=\"mixin\"";		
+		headers.add(HeaderUtils.normalize(OCCIHeaders.CATEGORY), categoryValues);		
+		List<Category> categories = HeaderUtils.getCategories(headers);
+		List<String> categoryTerms = new ArrayList<String>();
+		categoryTerms.add("term1");
+		categoryTerms.add("term2");
+		categoryTerms.add("term3");
+		Assert.assertEquals(3, categories.size());
+		int categoriesOK = 0;
+		for (String term : categoryTerms) {
+			for (Category category : categories) {
+				if (category.getTerm().equals(term)){
+					categoriesOK++;
+					break;
+				}
+			}
+		}
+		Assert.assertEquals(3, categoriesOK);
+	}
+	
+	@Test
+	public void testGetXOCCIAttribute() {		
+		headers.add(HeaderUtils.normalize(OCCIHeaders.X_OCCI_ATTRIBUTE), "attribute.name=\"value\"");		
+		Map<String, String> occiAttributes = HeaderUtils.getXOCCIAtributes(headers);
+
+		Assert.assertEquals(1, occiAttributes.size());
+		Assert.assertTrue(occiAttributes.containsKey("attribute.name"));
+		Assert.assertTrue(occiAttributes.containsValue("value"));
+	}
+	
+	@Test
+	public void testGetXOCCIAttributes() {		
+		headers.add(HeaderUtils.normalize(OCCIHeaders.X_OCCI_ATTRIBUTE), "attribute.name1=\"value1\"");
+		headers.add(HeaderUtils.normalize(OCCIHeaders.X_OCCI_ATTRIBUTE), "attribute.name2=\"value2\"");
+		headers.add(HeaderUtils.normalize(OCCIHeaders.X_OCCI_ATTRIBUTE), "attribute.name3=\"value3\"");
+		Map<String, String> occiAttributes = HeaderUtils.getXOCCIAtributes(headers);
+
+		Assert.assertEquals(3, occiAttributes.size());
+		for (int i = 1; i <= 3; i++){
+			Assert.assertTrue(occiAttributes.containsKey("attribute.name" + i));
+			Assert.assertTrue(occiAttributes.containsValue("value" + i));
+		}
+	}
+	
+	@Test
+	public void testGetXOCCIAttributesInTheSameHeader() {		
+		headers.add(HeaderUtils.normalize(OCCIHeaders.X_OCCI_ATTRIBUTE), "attribute.name1=\"value1\", attribute.name2=\"value2\", attribute.name3=\"value3\"");		
+		Map<String, String> occiAttributes = HeaderUtils.getXOCCIAtributes(headers);
+
+		Assert.assertEquals(3, occiAttributes.size());
+		for (int i = 1; i <= 3; i++){
+			Assert.assertTrue(occiAttributes.containsKey("attribute.name" + i));
+			Assert.assertTrue(occiAttributes.containsValue("value" + i));
+		}
 	}
 
 	@Test(expected = OCCIException.class)

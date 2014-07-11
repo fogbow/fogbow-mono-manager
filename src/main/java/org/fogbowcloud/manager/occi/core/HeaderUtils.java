@@ -55,58 +55,41 @@ public class HeaderUtils {
 	}
 	
 	public static Map<String, String> getXOCCIAtributes(Series<Header> headers) {
-		String[] valuesAttributes = headers.getValuesArray(normalize(OCCIHeaders.X_OCCI_ATTRIBUTE));
+		String[] headerValues = headers.getValuesArray(normalize(OCCIHeaders.X_OCCI_ATTRIBUTE));		
 		Map<String, String> mapAttributes = new HashMap<String, String>();
-		for (int i = 0; i < valuesAttributes.length; i++) {
-			String[] tokensAttribute = valuesAttributes[i].split("=");
-			if (tokensAttribute.length != 2) {
-				LOGGER.debug("Attribute not supported or irregular expression. It will be thrown BAD REQUEST error type.");
-				throw new OCCIException(ErrorType.BAD_REQUEST,
-						ResponseConstants.UNSUPPORTED_ATTRIBUTES);
+		for (int i = 0; i < headerValues.length; i++) {
+			String[] eachHeaderValue = headerValues[i].split(",");			
+			for (int j = 0; j < eachHeaderValue.length; j++) {
+				String[] attTokens = eachHeaderValue[j].split("=");
+				if (attTokens.length != 2) {
+					LOGGER.debug("Attribute not supported or irregular expression. It will be thrown BAD REQUEST error type.");
+					throw new OCCIException(ErrorType.BAD_REQUEST,
+							ResponseConstants.UNSUPPORTED_ATTRIBUTES);
+				}
+				String attName = attTokens[0].trim();
+				String attValue = attTokens[1].replace("\"", "").trim();
+				mapAttributes.put(attName, attValue);
 			}
-			String name = tokensAttribute[0].trim();
-			String value = tokensAttribute[1].replace("\"", "").trim();
-			mapAttributes.put(name, value);
 		}
 		LOGGER.debug("OCCI Attributes received: " + mapAttributes);
 		return mapAttributes;
 	}
 
 	public static List<Category> getCategories(Series<Header> headers) {
-		List<Category> listCategory = new ArrayList<Category>();
-		String[] valuesCategory = headers.getValuesArray(normalize(OCCIHeaders.CATEGORY));
-		String term = "";
-		String scheme = "";
-		String catClass = "";
-		for (int i = 0; i < valuesCategory.length; i++) {
-			String[] tokenValuesCAtegory = valuesCategory[i].split(";");
-			if (tokenValuesCAtegory.length == 3) {
-				Category category = null;
-				for (int j = 0; j < tokenValuesCAtegory.length; j++) {
-					String[] nameValue = tokenValuesCAtegory[j].split("=");
-					if (j == 0 && nameValue.length == 1) {
-						term = nameValue[0].trim();
-					} else if (nameValue[0].trim().equals(OCCIHeaders.SCHEME_CATEGORY)) {
-						scheme = nameValue[1].replace("\"", "").trim();
-					} else if (nameValue[0].trim().equals(OCCIHeaders.CLASS_CATEGORY)) {
-						catClass = nameValue[1].replace("\"", "").trim();
-					} else {
-						throw new OCCIException(ErrorType.BAD_REQUEST,
-								ResponseConstants.IRREGULAR_SYNTAX);
-					}
-				}
+		List<Category> categories = new ArrayList<Category>();
+		String[] headerValues = headers.getValuesArray(normalize(OCCIHeaders.CATEGORY));
+		for (int i = 0; i < headerValues.length; i++) {
+			String[] eachHeaderValue = headerValues[i].split(",");
+			for (int j = 0; j < eachHeaderValue.length; j++){	
 				try {
-					category = new Category(term, scheme, catClass);
+					categories.add(new Category(eachHeaderValue[j]));
 				} catch (IllegalArgumentException e) {
 					throw new OCCIException(ErrorType.BAD_REQUEST,
 							ResponseConstants.IRREGULAR_SYNTAX);
-				}
-				listCategory.add(category);
-			} else {
-				throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
+				}				
 			}
 		}
-		return listCategory;
+		return categories;
 	}
 
 	public static String normalize(String headerName) {
