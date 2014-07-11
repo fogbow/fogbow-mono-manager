@@ -5,6 +5,8 @@ import java.util.List;
 
 public enum RequestAttribute {
 	
+	OCCI_CORE_TITLE("occi.core.title"),
+	OCCI_CORE_ID("occi.core.id"),
 	INSTANCE_COUNT("org.fogbowcloud.request.instance-count"), 
 	TYPE("org.fogbowcloud.request.type"),
 	VALID_UNTIL("org.fogbowcloud.request.valid-until"), 
