@@ -64,7 +64,8 @@ public class TestOCCIApplication {
 
 		SSHTunnel sshTunnel = Mockito.mock(SSHTunnel.class);
 
-		managerFacade.setIdentityPlugin(identityPlugin);
+		managerFacade.setLocalIdentityPlugin(identityPlugin);
+		managerFacade.setFederationIdentityPlugin(identityPlugin);
 		managerFacade.setComputePlugin(computePlugin);
 		managerFacade.setSSHTunnel(sshTunnel);
 	}

@@ -10,9 +10,11 @@ public class ConfigurationConstants {
 
 	public static final String RENDEZVOUS_JID_KEY = "rendezvous_jid";
 
-	
+	public static final String LOCAL_PREFIX = "local_";
+	public static final String FEDERATION_PREFIX = "federation_";
 	public static final String COMPUTE_CLASS_KEY = "compute_class";
 	public static final String IDENTITY_CLASS_KEY = "identity_class";
+	public static final String IDENTITY_URL = "identity_url";
 	public static final String MEMBER_VALIDATOR_KEY = "member_validator";
 	public static final String HTTP_PORT_KEY = "http_port";
 

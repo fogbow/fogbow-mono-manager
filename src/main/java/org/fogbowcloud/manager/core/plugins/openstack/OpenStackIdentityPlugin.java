@@ -1,8 +1,10 @@
 package org.fogbowcloud.manager.core.plugins.openstack;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
@@ -22,6 +24,7 @@ import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.OCCIException;
@@ -68,13 +71,19 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 	private String v2TokensEndpoint;
 	private String v2TenantsEndpoint;
 	private DefaultHttpClient client;
+	private Properties properties;
 
 	public OpenStackIdentityPlugin(Properties properties) {
-		String keystoneUrl = properties.getProperty("identity_openstack_url");
+		this.properties = properties;
+		String keystoneUrl = properties.getProperty(ConfigurationConstants.IDENTITY_URL);
 		this.v2TokensEndpoint = keystoneUrl + V2_TOKENS_ENDPOINT_PATH;
 		this.v2TenantsEndpoint = keystoneUrl + V2_TENANTS_ENDPOINT_PATH;
 	}
 
+	public void setProperties(Properties properties) {
+		this.properties = properties;
+	}
+	
 	@Override
 	public Token createToken(Map<String, String> credentials) {
 		JSONObject json;
@@ -284,5 +293,19 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 			LOGGER.error("Exception while parsing date.", e);
 			return null;
 		}
+	}
+
+	@Override
+	public Token createFederationUserToken() {
+		Map<String, String> federationUserCredentials = new HashMap<String, String>();
+		String username = properties.getProperty(ConfigurationConstants.FEDERATION_USER_NAME_KEY);
+		String password = properties.getProperty(ConfigurationConstants.FEDERATION_USER_PASS_KEY);
+		String tenantName = properties
+				.getProperty(ConfigurationConstants.FEDERATION_USER_TENANT_NAME_KEY);
+		federationUserCredentials.put(USER_KEY, username);
+		federationUserCredentials.put(PASSWORD_KEY, password);
+		federationUserCredentials.put(TENANT_NAME_KEY, tenantName);
+		
+		return createToken(federationUserCredentials);
 	}
 }

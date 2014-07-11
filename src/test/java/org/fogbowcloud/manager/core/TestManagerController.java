@@ -85,11 +85,13 @@ public class TestManagerController {
 		// mocking identity plugin
 		OpenStackIdentityPlugin openStackidentityPlugin = Mockito
 				.mock(OpenStackIdentityPlugin.class);
+		Mockito.when(openStackidentityPlugin.createFederationUserToken()).thenReturn(firstToken,
+				secondToken);
 		Mockito.when(openStackidentityPlugin.createToken(tokenCredentials)).thenReturn(firstToken,
 				secondToken);
 		Mockito.when(openStackidentityPlugin.isValid(DefaultDataTestHelper.ACCESS_TOKEN_ID))
 				.thenReturn(true, false);
-		managerController.setIdentityPlugin(openStackidentityPlugin);
+		managerController.setLocalIdentityPlugin(openStackidentityPlugin);
 
 		// Get new token
 		Token federationUserToken = managerController.getFederationUserToken();
@@ -1062,8 +1064,8 @@ public class TestManagerController {
 		Mockito.doReturn(null).when(token).getAccessId();
 
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
-		Mockito.when(identityPlugin.createToken(Mockito.anyMap())).thenReturn(token);
-		managerController.setIdentityPlugin(identityPlugin);
+		Mockito.when(identityPlugin.createFederationUserToken()).thenReturn(token);
+		managerController.setLocalIdentityPlugin(identityPlugin);
 
 		ComputePlugin plugin = Mockito.mock(OpenStackComputePlugin.class);
 		Mockito.doReturn("answer").when(plugin).requestInstance(null, null, null);

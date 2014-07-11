@@ -1,6 +1,8 @@
 package org.fogbowcloud.manager;
 
 import java.io.FileInputStream;
+import java.util.Collections;
+import java.util.Enumeration;
 import java.util.Properties;
 import java.util.logging.Level;
 
@@ -37,12 +39,22 @@ public class Main {
 		} catch (Exception e) {
 			LOGGER.warn("Compute Plugin not especified in the properties.");
 		}
-		IdentityPlugin identityPlugin = new OpenStackIdentityPlugin(properties);
+
+		IdentityPlugin localIdentityPlugin = null;
 		try {
-			identityPlugin = (IdentityPlugin) createInstance(
-					ConfigurationConstants.IDENTITY_CLASS_KEY, properties);
+			localIdentityPlugin = (IdentityPlugin) getIdentityPluginByPrefix(properties,
+					ConfigurationConstants.LOCAL_PREFIX);
 		} catch (Exception e) {
-			LOGGER.warn("Identity Plugin not especified in the properties.");
+			LOGGER.warn("Local Identity Plugin not especified in the properties.");
+			localIdentityPlugin = new OpenStackIdentityPlugin(properties);
+		}
+		IdentityPlugin federationIdentityPlugin = null;
+		try {
+			federationIdentityPlugin = (IdentityPlugin) getIdentityPluginByPrefix(properties,
+					ConfigurationConstants.FEDERATION_PREFIX);
+		} catch (Exception e) {
+			LOGGER.warn("Federation Identity Plugin not especified in the properties.");
+			federationIdentityPlugin = new OpenStackIdentityPlugin(properties);
 		}
 
 		FederationMemberValidator validator = new DefaultMemberValidator();
@@ -55,7 +67,8 @@ public class Main {
 
 		ManagerController facade = new ManagerController(properties);
 		facade.setComputePlugin(computePlugin);
-		facade.setIdentityPlugin(identityPlugin);
+		facade.setLocalIdentityPlugin(localIdentityPlugin);
+		facade.setFederationIdentityPlugin(federationIdentityPlugin);
 		facade.setValidator(validator);
 
 		ManagerXmppComponent xmpp = new ManagerXmppComponent(
@@ -80,6 +93,19 @@ public class Main {
 		http.start();
 	}
 
+	private static Object getIdentityPluginByPrefix(Properties properties, String prefix)
+			throws Exception {
+		Enumeration<Object> keys = properties.keys();
+		for (Object object : Collections.list(keys)) {
+			String key = object.toString();
+			if (key.contains(prefix)) {
+				String newKey = key.replace(prefix, "");
+				properties.put(newKey, properties.get(key));
+			}
+		}
+		return createInstance(prefix + ConfigurationConstants.IDENTITY_CLASS_KEY, properties);
+	}
+
 	private static Object createInstance(String propName, Properties properties) throws Exception {
 		return Class.forName(properties.getProperty(propName)).getConstructor(Properties.class)
 				.newInstance(properties);
@@ -89,6 +115,6 @@ public class Main {
 		ConsoleAppender console = new ConsoleAppender();
 		console.setThreshold(org.apache.log4j.Level.OFF);
 		console.activateOptions();
-		Logger.getRootLogger().addAppender(console); 
+		Logger.getRootLogger().addAppender(console);
 	}
 }

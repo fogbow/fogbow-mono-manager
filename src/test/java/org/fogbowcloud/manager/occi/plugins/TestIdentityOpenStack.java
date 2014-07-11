@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.openstack.OpenStackIdentityPlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.core.OCCIException;
@@ -25,7 +26,8 @@ public class TestIdentityOpenStack {
 	@Before
 	public void setUp() throws Exception {
 		Properties properties = new Properties();
-		properties.put("identity_openstack_url", KEYSTONE_URL);
+		properties.put(ConfigurationConstants.IDENTITY_URL, KEYSTONE_URL);
+		
 		this.identityOpenStack = new OpenStackIdentityPlugin(properties);
 		this.pluginHelper = new PluginHelper();
 		this.pluginHelper.initializeKeystoneComponent();

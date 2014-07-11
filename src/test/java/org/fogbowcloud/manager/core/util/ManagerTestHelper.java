@@ -153,7 +153,8 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 
 		ManagerController managerFacade = new ManagerController(properties);
 		managerFacade.setComputePlugin(computePlugin);
-		managerFacade.setIdentityPlugin(identityPlugin);
+		managerFacade.setLocalIdentityPlugin(identityPlugin);
+		managerFacade.setFederationIdentityPlugin(identityPlugin);
 		FederationMemberValidator validator = new DefaultMemberValidator();
 		managerFacade.setValidator(validator);
 
@@ -162,8 +163,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 
 		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class))).thenReturn(
 				getResources());
-
-		Mockito.when(identityPlugin.createToken(Mockito.anyMap())).thenReturn(defaultToken);
+		Mockito.when(identityPlugin.createFederationUserToken()).thenReturn(defaultToken);
 
 		managerXmppComponent.setDescription("Manager Component");
 		managerXmppComponent.setName("Manager");
@@ -191,7 +191,8 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		FederationMemberValidator validator = new DefaultMemberValidator();
 		ManagerController managerFacade = new ManagerController(properties);
 		managerFacade.setComputePlugin(computePlugin);
-		managerFacade.setIdentityPlugin(identityPlugin);
+		managerFacade.setLocalIdentityPlugin(identityPlugin);
+		managerFacade.setFederationIdentityPlugin(identityPlugin);
 		managerFacade.setValidator(validator);
 
 		managerXmppComponent = Mockito.spy(new ManagerXmppComponent(MANAGER_COMPONENT_URL,
@@ -199,8 +200,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 
 		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class))).thenReturn(
 				getResources());
-
-		Mockito.when(identityPlugin.createToken(Mockito.anyMap())).thenReturn(defaultToken);
+		Mockito.when(identityPlugin.createFederationUserToken()).thenReturn(defaultToken);
 		
 		managerXmppComponent.setDescription("Manager Component");
 		managerXmppComponent.setName("Manager");
@@ -308,7 +308,8 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		// mocking sshTunnel
 		SSHTunnel sshTunnel = Mockito.mock(SSHTunnel.class);
 
-		managerController.setIdentityPlugin(identityPlugin);
+		managerController.setLocalIdentityPlugin(identityPlugin);
+		managerController.setFederationIdentityPlugin(identityPlugin);
 		managerController.setComputePlugin(computePlugin);
 		managerController.setSSHTunnel(sshTunnel);
 

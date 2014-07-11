@@ -27,6 +27,7 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.plugins.openstack.OpenStackIdentityPlugin;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
+import org.fogbowcloud.manager.occi.request.RequestConstants;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
@@ -101,8 +102,8 @@ public class Main {
 				}
 
 				Set<Header> headers = new HashSet<Header>();
-				headers.add(new BasicHeader("Category",
-						"fogbow-request; scheme=\"http://schemas.fogbowcloud.org/request#\"; class=\"kind\""));
+				headers.add(new BasicHeader("Category", RequestConstants.TERM + 
+						"; scheme=\"http://schemas.fogbowcloud.org/request#\"; class=\"kind\""));
 				headers.add(new BasicHeader("X-OCCI-Attribute",
 						"org.fogbowcloud.request.instance-count=" + request.instanceCount));
 				headers.add(new BasicHeader("X-OCCI-Attribute", "org.fogbowcloud.request.type="
@@ -194,10 +195,8 @@ public class Main {
 			client = new DefaultHttpClient(new ThreadSafeClientConnManager(params, client
 					.getConnectionManager().getSchemeRegistry()), params);
 		}
-		HttpResponse response = null;
-	
-		response = client.execute(request);			
-
+		HttpResponse response = client.execute(request);			
+		
 		if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
 			System.out.println(EntityUtils.toString(response.getEntity()));
 		} else {
@@ -273,10 +272,10 @@ public class Main {
 		@Parameter(names = "--password", required = false, description = "Password")
 		String password = null;
 
-		@Parameter(names = "--username", required = true, description = "Username")
+		@Parameter(names = "--username", required = false, description = "Username")
 		String username = null;
 
-		@Parameter(names = "--tenantName", required = true, description = "TenantName")
+		@Parameter(names = "--tenantName", required = false, description = "TenantName")
 		String tenantName = null;
 	}
 

@@ -17,8 +17,11 @@ compute_occi_resource_scheme=http://schemas.openstack.org/template/resource#
 compute_occi_image_fogbow-linux-x86=cadf2e29-7216-4a5e-9364-cf6513d5f1fd
 compute_occi_network_id=ea51ed0c-0e8a-448d-8202-c79777109ffe
 
-identity_class=org.fogbowcloud.manager.core.plugins.openstack.OpenStackIdentityPlugin
-identity_openstack_url=http://localhost:5000
+local_identity_class=org.fogbowcloud.manager.core.plugins.openstack.OpenStackIdentityPlugin
+local_identity_openstack_url=http://localhost:5000
+
+federation_identity_class=org.fogbowcloud.manager.core.plugins.openstack.OpenStackIdentityPlugin
+federation_identity_openstack_url=http://localhost:5000
 
 federation_user_name=fogbow
 federation_user_password=fogbow

@@ -18,7 +18,6 @@ import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
-import org.fogbowcloud.manager.core.plugins.openstack.OpenStackIdentityPlugin;
 import org.fogbowcloud.manager.core.ssh.DefaultSSHTunnel;
 import org.fogbowcloud.manager.core.ssh.SSHTunnel;
 import org.fogbowcloud.manager.occi.core.Category;
@@ -55,7 +54,8 @@ public class ManagerController {
 	private FederationMemberPicker memberPicker = new RoundRobinMemberPicker();
 
 	private ComputePlugin computePlugin;
-	private IdentityPlugin identityPlugin;
+	private IdentityPlugin localIdentityPlugin;
+	private IdentityPlugin federationIdentityPlugin;
 	private Properties properties;
 	private PacketSender packetSender;
 	private FederationMemberValidator validator = new DefaultMemberValidator();
@@ -66,7 +66,7 @@ public class ManagerController {
 	public ManagerController(Properties properties) {
 		this(properties, Executors.newScheduledThreadPool(10));
 	}
-	
+
 	public ManagerController(Properties properties, ScheduledExecutorService executor) {
 		if (properties == null) {
 			throw new IllegalArgumentException();
@@ -85,8 +85,12 @@ public class ManagerController {
 		this.computePlugin = computePlugin;
 	}
 
-	public void setIdentityPlugin(IdentityPlugin identityPlugin) {
-		this.identityPlugin = identityPlugin;
+	public void setLocalIdentityPlugin(IdentityPlugin identityPlugin) {
+		this.localIdentityPlugin = identityPlugin;
+	}
+
+	public void setFederationIdentityPlugin(IdentityPlugin federationIdentityPlugin) {
+		this.federationIdentityPlugin = federationIdentityPlugin;
 	}
 
 	public void updateMembers(List<FederationMember> members) {
@@ -113,7 +117,7 @@ public class ManagerController {
 	}
 
 	public String getUser(String accessId) {
-		Token token = identityPlugin.getToken(accessId);
+		Token token = getTokenFromFederationIdP(accessId);
 		if (token == null) {
 			return null;
 		}
@@ -221,8 +225,8 @@ public class ManagerController {
 		sshTunnel.release(request.getInstanceId());
 		request.setInstanceId(null);
 		request.setMemberId(null);
-		
-		if (request.getState().equals(RequestState.DELETED)){
+
+		if (request.getState().equals(RequestState.DELETED)) {
 			requests.exclude(request.getId());
 		} else if (isPersistent(request)) {
 			LOGGER.debug("Request: " + request + ", setting state to " + RequestState.OPEN);
@@ -300,7 +304,8 @@ public class ManagerController {
 			return null;
 		}
 		try {
-			String instanceId = computePlugin.requestInstance(federationTokenAccessId, categories, xOCCIAtt);
+			String instanceId = computePlugin.requestInstance(federationTokenAccessId, categories,
+					xOCCIAtt);
 			if (instanceId != null) {
 				sshTunnel.update(instanceId, sshPort);
 			} else {
@@ -318,21 +323,11 @@ public class ManagerController {
 
 	protected Token getFederationUserToken() {
 		if (federationUserToken != null
-				&& identityPlugin.isValid(federationUserToken.getAccessId())) {
-			return this.federationUserToken;
+				&& localIdentityPlugin.isValid(federationUserToken.getAccessId())) {
+			return federationUserToken;
 		}
 
-		// TODO Think about getting token independent of OpenStackPlugin
-		Map<String, String> federationUserCredentials = new HashMap<String, String>();
-		String username = properties.getProperty(ConfigurationConstants.FEDERATION_USER_NAME_KEY);
-		String password = properties.getProperty(ConfigurationConstants.FEDERATION_USER_PASS_KEY);
-		String tenantName = properties
-				.getProperty(ConfigurationConstants.FEDERATION_USER_TENANT_NAME_KEY);
-		federationUserCredentials.put(OpenStackIdentityPlugin.USER_KEY, username);
-		federationUserCredentials.put(OpenStackIdentityPlugin.PASSWORD_KEY, password);
-		federationUserCredentials.put(OpenStackIdentityPlugin.TENANT_NAME_KEY, tenantName);
-
-		this.federationUserToken = identityPlugin.createToken(federationUserCredentials);
+		federationUserToken = localIdentityPlugin.createFederationUserToken();
 		return federationUserToken;
 	}
 
@@ -362,10 +357,14 @@ public class ManagerController {
 		sshTunnel.release(instanceId);
 	}
 
+	public Token getTokenFromFederationIdP(String accessId) {
+		return federationIdentityPlugin.getToken(accessId);
+	}
+
 	public List<Request> createRequests(String accessId, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
 
-		Token userToken = identityPlugin.getToken(accessId);
+		Token userToken = getTokenFromFederationIdP(accessId);
 		LOGGER.debug("User Token: " + userToken);
 
 		Integer instanceCount = Integer.valueOf(xOCCIAtt.get(RequestAttribute.INSTANCE_COUNT
@@ -375,7 +374,7 @@ public class ManagerController {
 		List<Request> currentRequests = new ArrayList<Request>();
 		for (int i = 0; i < instanceCount; i++) {
 			String requestId = String.valueOf(UUID.randomUUID());
-			Request request = new Request(requestId, userToken, 
+			Request request = new Request(requestId, userToken,
 					new LinkedList<Category>(categories), new HashMap<String, String>(xOCCIAtt));
 			LOGGER.info("Created request: " + request);
 			currentRequests.add(request);
@@ -392,7 +391,8 @@ public class ManagerController {
 	}
 
 	protected void triggerInstancesMonitor() {
-		String instanceMonitoringPeriodStr = properties.getProperty(ConfigurationConstants.INSTANCE_MONITORING_PERIOD_KEY);
+		String instanceMonitoringPeriodStr = properties
+				.getProperty(ConfigurationConstants.INSTANCE_MONITORING_PERIOD_KEY);
 		final long instanceMonitoringPeriod = instanceMonitoringPeriodStr == null ? DEFAULT_INSTANCE_MONITORING_PERIOD
 				: Long.valueOf(instanceMonitoringPeriodStr);
 
@@ -428,7 +428,8 @@ public class ManagerController {
 	}
 
 	private void triggerTokenUpdater() {
-		String tokenUpdatePeriodStr = properties.getProperty(ConfigurationConstants.TOKEN_UPDATE_PERIOD_KEY);
+		String tokenUpdatePeriodStr = properties
+				.getProperty(ConfigurationConstants.TOKEN_UPDATE_PERIOD_KEY);
 		final long tokenUpdatePeriod = tokenUpdatePeriodStr == null ? DEFAULT_TOKEN_UPDATE_PERIOD
 				: Long.valueOf(tokenUpdatePeriodStr);
 
@@ -455,7 +456,7 @@ public class ManagerController {
 					LOGGER.debug("Valid interval of requestId " + request.getId() + " is "
 							+ validInterval);
 					if (validInterval < 2 * tokenUpdatePeriod) {
-						Token newToken = identityPlugin.reIssueToken(request.getToken());
+						Token newToken = localIdentityPlugin.reIssueToken(request.getToken());
 						LOGGER.info("Setting new token " + newToken + " on request "
 								+ request.getId());
 						requests.get(request.getId()).setToken(newToken);
@@ -522,7 +523,9 @@ public class ManagerController {
 			if (port != null) {
 				sshTunnel.release(port);
 			}
-			if (e.getStatus().getCode() == HttpStatus.SC_INSUFFICIENT_SPACE_ON_RESOURCE) {
+			int statusCode = e.getStatus().getCode();
+			if (statusCode == HttpStatus.SC_INSUFFICIENT_SPACE_ON_RESOURCE
+					|| statusCode == HttpStatus.SC_UNAUTHORIZED) {
 				LOGGER.warn("Request failed locally for quota exceeded.", e);
 				return false;
 			} else {
@@ -531,7 +534,7 @@ public class ManagerController {
 				LOGGER.warn("Request failed locally for an unknown reason.", e);
 				return true;
 			}
-			
+
 		}
 
 		request.setInstanceId(instanceId);
@@ -544,7 +547,8 @@ public class ManagerController {
 	}
 
 	private void triggerRequestScheduler() {
-		String schedulerPeriodStr = properties.getProperty(ConfigurationConstants.SCHEDULER_PERIOD_KEY);
+		String schedulerPeriodStr = properties
+				.getProperty(ConfigurationConstants.SCHEDULER_PERIOD_KEY);
 		long schedulerPeriod = schedulerPeriodStr == null ? DEFAULT_SCHEDULER_PERIOD : Long
 				.valueOf(schedulerPeriodStr);
 
@@ -615,7 +619,7 @@ public class ManagerController {
 	}
 
 	public Token getToken(Map<String, String> attributesToken) {
-		return identityPlugin.createToken(attributesToken);
+		return localIdentityPlugin.createToken(attributesToken);
 	}
 
 	public Properties getProperties() {
@@ -635,7 +639,7 @@ public class ManagerController {
 	}
 
 	public List<Resource> getAllResouces(String accessId) {
-		Token userToken = identityPlugin.getToken(accessId);
+		Token userToken = getTokenFromFederationIdP(accessId);
 		LOGGER.debug("User Token: " + userToken);
 		return ResourceRepository.getInstance().getAll();
 	}

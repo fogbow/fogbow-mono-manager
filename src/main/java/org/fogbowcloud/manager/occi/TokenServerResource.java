@@ -3,9 +3,9 @@ package org.fogbowcloud.manager.occi;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.fogbowcloud.manager.core.plugins.openstack.OpenStackIdentityPlugin;
 import org.fogbowcloud.manager.occi.core.HeaderUtils;
 import org.fogbowcloud.manager.occi.core.Token;
+import org.fogbowcloud.manager.occi.core.Token.Constants;
 import org.restlet.engine.adapter.HttpRequest;
 import org.restlet.resource.Get;
 import org.restlet.resource.ServerResource;
@@ -18,15 +18,16 @@ public class TokenServerResource extends ServerResource {
 		HttpRequest req = (HttpRequest) getRequest();
 		HeaderUtils.checkOCCIContentType(req.getHeaders());
 
-		String username = req.getHeaders().getValues(OpenStackIdentityPlugin.USER_KEY);
-		String password = req.getHeaders().getValues(OpenStackIdentityPlugin.PASSWORD_KEY);
-		String tanantName = req.getHeaders().getValues(OpenStackIdentityPlugin.TENANT_NAME_KEY);
-
 		Map<String, String> attributesToken = new HashMap<String, String>();
-		attributesToken.put(OpenStackIdentityPlugin.USER_KEY, username);
-		attributesToken.put(OpenStackIdentityPlugin.PASSWORD_KEY, password);
-		attributesToken.put(OpenStackIdentityPlugin.TENANT_NAME_KEY, tanantName);
-
+		Constants[] tokenConstants = Token.Constants.values();
+		for (int i = 0; i < tokenConstants.length; i++) {
+			String tokenConstant = tokenConstants[i].getValue();
+			String value = req.getHeaders().getValues(tokenConstant);
+			if (value != null) {
+				attributesToken.put(tokenConstant, value);
+			}
+		}
+		
 		return generateResponse(application.getToken(attributesToken));
 	}
 

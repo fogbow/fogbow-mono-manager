@@ -48,7 +48,8 @@ public class OCCITestHelper {
 
 		ManagerController facade = new ManagerController(new Properties());
 		facade.setComputePlugin(computePlugin);
-		facade.setIdentityPlugin(identityPlugin);
+		facade.setLocalIdentityPlugin(identityPlugin);
+		facade.setFederationIdentityPlugin(identityPlugin);
 		facade.setSSHTunnel(Mockito.mock(SSHTunnel.class));
 
 		component.getDefaultHost().attach(new OCCIApplication(facade));
@@ -62,7 +63,8 @@ public class OCCITestHelper {
 
 		ManagerController facade = new ManagerController(new Properties());
 		facade.setComputePlugin(computePlugin);
-		facade.setIdentityPlugin(identityPlugin);
+		facade.setLocalIdentityPlugin(identityPlugin);
+		facade.setFederationIdentityPlugin(identityPlugin);
 		facade.setSSHTunnel(Mockito.mock(SSHTunnel.class));
 
 		requests = new RequestRepository();
@@ -83,7 +85,8 @@ public class OCCITestHelper {
 
 		ManagerController facade = new ManagerController(new Properties());
 		facade.setComputePlugin(computePlugin);
-		facade.setIdentityPlugin(identityPlugin);
+		facade.setLocalIdentityPlugin(identityPlugin);
+		facade.setFederationIdentityPlugin(identityPlugin);
 		facade.setMembers(federationMembers);
 
 		component.getDefaultHost().attach(new OCCIApplication(facade));

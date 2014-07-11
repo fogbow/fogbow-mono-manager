@@ -54,4 +54,21 @@ public class Token {
 	public String getUser() {
 		return this.user;
 	}
+	
+	public enum Constants {
+		
+		USER_KEY("X-Token-User"), PASSWORD_KEY("X-Token-Password"), TENANT_ID_KEY(
+				"X-Token-TenantId"), TENANT_NAME_KEY("X-Token-TenantName");
+
+		public String value;
+
+		private Constants(String value) {
+			this.value = value;
+		}			
+			
+		public String getValue() {
+			return value;
+		}
+		
+	}
 }

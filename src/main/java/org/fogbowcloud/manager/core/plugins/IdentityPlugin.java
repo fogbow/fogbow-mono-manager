@@ -13,4 +13,6 @@ public interface IdentityPlugin {
 	public Token getToken(String accessId);
 
 	public boolean isValid(String accessId);
+	
+	public Token createFederationUserToken();
 }

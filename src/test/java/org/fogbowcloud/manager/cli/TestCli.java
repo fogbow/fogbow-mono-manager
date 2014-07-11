@@ -15,6 +15,7 @@ import org.apache.http.message.BasicStatusLine;
 import org.fogbowcloud.manager.core.plugins.openstack.OpenStackIdentityPlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
+import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
@@ -25,7 +26,7 @@ import com.beust.jcommander.ParameterException;
 public class TestCli {
 
 	private final String REQUEST_ID = "234GD0-43254435-4543T4";
-	
+
 	private Main cli;
 	private HttpClient client;
 	private HttpUriRequestMatcher expectedRequest;
@@ -102,8 +103,8 @@ public class TestCli {
 
 		HttpUriRequest request = new HttpPost(Main.DEFAULT_URL + "/request");
 		request.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		request.addHeader("Category",
-				"fogbow-request; scheme=\"http://schemas.fogbowcloud.org/request#\"; class=\"kind\"");
+		request.addHeader("Category", RequestConstants.TERM
+				+ "; scheme=\"http://schemas.fogbowcloud.org/request#\"; class=\"kind\"");
 		request.addHeader("X-OCCI-Attribute", "org.fogbowcloud.request.instance-count="
 				+ intanceCount);
 		request.addHeader("X-OCCI-Attribute", "org.fogbowcloud.request.type=one-time");
@@ -127,8 +128,8 @@ public class TestCli {
 	public void commandPostRequestDefaultValues() throws Exception {
 		HttpUriRequest request = new HttpPost(Main.DEFAULT_URL + "/request");
 		request.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		request.addHeader("Category",
-				"fogbow-request; scheme=\"http://schemas.fogbowcloud.org/request#\"; class=\"kind\"");
+		request.addHeader("Category", RequestConstants.TERM
+				+ "; scheme=\"http://schemas.fogbowcloud.org/request#\"; class=\"kind\"");
 		request.addHeader("X-OCCI-Attribute", "org.fogbowcloud.request.instance-count="
 				+ Main.DEFAULT_INTANCE_COUNT);
 		request.addHeader("X-OCCI-Attribute", "org.fogbowcloud.request.type=one-time");
@@ -145,7 +146,7 @@ public class TestCli {
 
 		Mockito.verify(client).execute(Mockito.argThat(expectedRequest));
 	}
-	
+
 	@SuppressWarnings("static-access")
 	@Test
 	public void commandGetSpecificRequest() throws Exception {
@@ -160,8 +161,8 @@ public class TestCli {
 		cli.main(createArgs(command));
 
 		Mockito.verify(client).execute(Mockito.argThat(expectedRequest));
-	}	
-	
+	}
+
 	@SuppressWarnings("static-access")
 	@Test
 	public void commandGetRequest() throws Exception {
@@ -176,8 +177,8 @@ public class TestCli {
 		cli.main(createArgs(command));
 
 		Mockito.verify(client).execute(Mockito.argThat(expectedRequest));
-	}	
-	
+	}
+
 	@SuppressWarnings("static-access")
 	@Test
 	public void commandDeleteRequest() throws Exception {
@@ -192,7 +193,7 @@ public class TestCli {
 		cli.main(createArgs(command));
 
 		Mockito.verify(client).execute(Mockito.argThat(expectedRequest));
-	}	
+	}
 
 	@SuppressWarnings("static-access")
 	@Test
@@ -206,7 +207,7 @@ public class TestCli {
 
 		Mockito.verify(client).execute(Mockito.argThat(expectedRequest));
 	}
-	
+
 	@SuppressWarnings("static-access")
 	@Test
 	public void commandGetMember() throws Exception {
@@ -287,7 +288,7 @@ public class TestCli {
 			if (!this.request.getURI().equals(comparedRequest.getURI())) {
 				return false;
 			}
-			if (!checkHeaders(comparedRequest.getAllHeaders())) {				
+			if (!checkHeaders(comparedRequest.getAllHeaders())) {
 				return false;
 			}
 			if (!this.request.getMethod().equals(comparedRequest.getMethod())) {
