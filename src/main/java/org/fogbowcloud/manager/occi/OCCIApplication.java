@@ -11,6 +11,7 @@ import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.instance.ComputeServerResource;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.request.Request;
+import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.fogbowcloud.manager.occi.request.RequestServerResource;
 import org.restlet.Application;
 import org.restlet.Restlet;
@@ -27,9 +28,9 @@ public class OCCIApplication extends Application {
 	@Override
 	public Restlet createInboundRoot() {
 		Router router = new Router(getContext());
-		router.attach("/request", RequestServerResource.class);
-		router.attach("/request/", RequestServerResource.class);
-		router.attach("/request/{requestId}", RequestServerResource.class);
+		router.attach("/" + RequestConstants.TERM, RequestServerResource.class);
+		router.attach("/" + RequestConstants.TERM + "/", RequestServerResource.class);
+		router.attach("/" + RequestConstants.TERM + "/{requestId}", RequestServerResource.class);
 		router.attach("/compute", ComputeServerResource.class);
 		router.attach("/compute/", ComputeServerResource.class);
 		router.attach("/compute/{instanceId}", ComputeServerResource.class);
