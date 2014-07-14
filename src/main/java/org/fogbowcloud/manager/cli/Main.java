@@ -2,9 +2,9 @@ package org.fogbowcloud.manager.cli;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.http.Header;
@@ -32,6 +32,7 @@ import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.core.Token.Constants;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
 
+import com.beust.jcommander.DynamicParameter;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
@@ -50,9 +51,9 @@ public class Main {
 		configureLog4j();
 		
 		JCommander jc = new JCommander();
-
+		
 		MemberCommand member = new MemberCommand();
-		jc.addCommand("member", member);
+		jc.addCommand("member", member );
 		RequestCommand request = new RequestCommand();
 		jc.addCommand("request", request);
 		InstanceCommand instance = new InstanceCommand();
@@ -143,46 +144,36 @@ public class Main {
 		} else if (parsedCommand.equals("token")) {
 			String url = token.url;
 			
-			Set<Header> headers = getHeadersCredentials(args);
+			Set<Header> headers = getHeadersCredentials(token.credentials);		
 			
 			doRequest("get", url + "/token", null, headers);
 		} else if (parsedCommand.equals("resource")) {
-			String url = token.url;
+			String url = resource.url;
 
 			doRequest("get", url + "/-/", null);
 		}
 	}
-
-	private static Set<Header> getHeadersCredentials(String[] args) {
+	
+	private static Set<Header> getHeadersCredentials(Map<String, String> mapCredentials) {
 		Set<Header> headers = new HashSet<Header>();
-		final String variableSymbol = "--";
-		int nextArg = 1;
-
-		for (String arg : args) {
-			Constants[] tokenConstants = Token.Constants.values();
-			for (Constants constant : tokenConstants) {
-				String constantValue = constant.value;
-				if (arg.equals(variableSymbol + constantValue)) {
-					if (args[nextArg].contains(variableSymbol)) {
-						System.out.println("Valeu of " + arg + " is null");
-						continue;
-					}
-					if (constantValue.equals(Token.Constants.USER_KEY.getValue())) {
-						List<String> argsList = Arrays.asList(args);
-						if (!argsList.contains(variableSymbol
-								+ Token.Constants.PASSWORD_KEY.getValue())) {
-							System.out.print("Password: ");
-							String password = new String(JCommander.getConsole()
-									.readPassword(false));
-							headers.add(new BasicHeader(Token.Constants.PASSWORD_KEY.getValue(),
-									password));
-						}
-					}
-					headers.add(new BasicHeader(constant.value, args[nextArg]));
+		
+		Constants[] tokenConstants = Token.Constants.values();
+		for (Constants constant : tokenConstants) {			
+			if(constant.getValue().equals(Token.Constants.USER_KEY.getValue())) {
+				if(mapCredentials.get(Token.Constants.PASSWORD_KEY.getValue()) == null){					
+					System.out.print("Password: ");
+					String password = new String(JCommander.getConsole()
+							.readPassword(false));
+					headers.add(new BasicHeader(Token.Constants.PASSWORD_KEY.getValue(),
+							password));
 				}
 			}
-			nextArg++;
+			String value = mapCredentials.get(constant.getValue());
+			if(value != null){
+				headers.add(new BasicHeader(constant.getValue(), value));
+			}
 		}
+	
 		return headers;
 	}
 
@@ -297,14 +288,8 @@ public class Main {
 		@Parameter(names = "--get", description = "Get token")
 		Boolean get = false;
 
-		@Parameter(names = "--password", required = false, description = "Password")
-		String password = null;
-
-		@Parameter(names = "--username", required = false, description = "Username")
-		String username = null;
-
-		@Parameter(names = "--tenantName", required = false, description = "TenantName")
-		String tenantName = null;
+		@DynamicParameter(names = "-D", description = "Dynamic parameters")
+		private Map<String, String> credentials = new HashMap<String, String>();		
 	}
 
 	@Parameters(separators = "=", commandDescription = "Resources Fogbow")
