@@ -73,10 +73,6 @@ public class Request {
 		xOCCIAtt.put(attributeName, attributeValue);
 	}
 
-	public String toHttpMessageFormat() {
-		return "RequestId=" + id + "; State=" + state.getValue() + "; InstanceId=" + instanceId;
-	}
-
 	public Token getToken() {
 		return this.token;
 	}

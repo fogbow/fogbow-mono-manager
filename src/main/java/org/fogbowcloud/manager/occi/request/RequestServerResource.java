@@ -11,6 +11,7 @@ import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.HeaderUtils;
 import org.fogbowcloud.manager.occi.core.OCCIException;
+import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.Resource;
 import org.fogbowcloud.manager.occi.core.ResourceRepository;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
@@ -39,7 +40,18 @@ public class RequestServerResource extends ServerResource {
 
 		LOGGER.info("Getting request(" + requestId + ") of token :" + accessId);
 		Request request = application.getRequest(accessId, requestId);
-		return request.toHttpMessageFormat();
+		return generateResponseOneRequest(request);
+	}
+
+	private String generateResponseOneRequest(Request request) {
+		String requestOCCIFormat = "\n";
+		requestOCCIFormat += OCCIHeaders.X_OCCI_ATTRIBUTE + ": " + "request.id=\""
+				+ request.getId() + "\" \n";
+		requestOCCIFormat += OCCIHeaders.X_OCCI_ATTRIBUTE + ": " + "request.state=\""
+				+ request.getState().getValue() + "\" \n";
+		requestOCCIFormat += OCCIHeaders.X_OCCI_ATTRIBUTE + ": " + "request.instance.id=\""
+				+ request.getInstanceId() + "\"";
+		return requestOCCIFormat;
 	}
 
 	@Delete

@@ -122,18 +122,20 @@ public class OCCITestHelper {
 	}
 
 	public String getStateFromRequestDetails(String requestDetails) {
-		StringTokenizer st = new StringTokenizer(requestDetails, ";");
-		Map<String, String> attToValue = new HashMap<String, String>();
+		StringTokenizer st = new StringTokenizer(requestDetails, "\n");
+		Map<String, String> occiAttributes = new HashMap<String, String>();
 		while (st.hasMoreElements()) {
-			String element = st.nextToken().trim();
-			System.out.println("Element: " + element);
-			String[] attAndValue = element.split("=");
+			String occiAtt = st.nextToken().trim();
+			StringTokenizer st2 = new StringTokenizer(occiAtt, ":");
+			st2.nextToken(); //X-OCCI-Attribute
+			String attToValue = st2.nextToken().trim();
+			String[] attAndValue = attToValue.split("=");
 			if (attAndValue.length == 2) {
-				attToValue.put(attAndValue[0], attAndValue[1]);
+				occiAttributes.put(attAndValue[0], attAndValue[1].replaceAll("\"", ""));
 			} else {
-				attToValue.put(attAndValue[0], "");
+				occiAttributes.put(attAndValue[0], "");
 			}
 		}
-		return attToValue.get("State");
+		return occiAttributes.get("request.state");
 	}
 }
