@@ -48,7 +48,7 @@ public class RequestServerResource extends ServerResource {
 		
 		for (Category category : request.getCategories()) {
 			requestOCCIFormat += "Category: "
-					+ ResourceRepository.getInstance().get(category.getTerm()) + "\n";
+					+ ResourceRepository.getInstance().get(category.getTerm()).toHeader() + "\n";
 		}
 		requestOCCIFormat += OCCIHeaders.X_OCCI_ATTRIBUTE + ": " + "request.id=\""
 				+ request.getId() + "\" \n";
