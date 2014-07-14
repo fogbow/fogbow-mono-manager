@@ -44,11 +44,21 @@ public class RequestServerResource extends ServerResource {
 	}
 
 	private String generateResponseOneRequest(Request request) {
+		LOGGER.debug("Generating response to request: " + request);
 		String requestOCCIFormat = "\n";
-		
 		for (Category category : request.getCategories()) {
-			requestOCCIFormat += "Category: "
-					+ ResourceRepository.getInstance().get(category.getTerm()).toHeader() + "\n";
+			LOGGER.debug("Category of request: " + request);
+			LOGGER.debug("Resource exists? "
+					+ (ResourceRepository.getInstance().get(category.getTerm()) != null));
+			LOGGER.debug("Resource to header: "
+					+ ResourceRepository.getInstance().get(category.getTerm()).toHeader());
+			try {
+				requestOCCIFormat += "Category: "
+						+ ResourceRepository.getInstance().get(category.getTerm()).toHeader()
+						+ "\n";
+			} catch (Exception e) {
+				LOGGER.error(e);
+			}
 		}
 		requestOCCIFormat += OCCIHeaders.X_OCCI_ATTRIBUTE + ": " + "request.id=\""
 				+ request.getId() + "\" \n";
