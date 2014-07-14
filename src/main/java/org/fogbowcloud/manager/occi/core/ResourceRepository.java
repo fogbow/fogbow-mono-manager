@@ -26,21 +26,25 @@ public class ResourceRepository {
 	private ResourceRepository(){
 		Resource fogbowRequest = new Resource(RequestConstants.TERM, RequestConstants.SCHEME,
 				RequestConstants.KIND_CLASS, RequestAttribute.getValues(), new ArrayList<String>(),
-				FOGBOWCLOUD_ENDPOINT + "/request/", "Request new Instances", "http://schemas.ogf.org/occi/core#resource");
-		
-		//size flavors
+				FOGBOWCLOUD_ENDPOINT + "/" + RequestConstants.TERM + "/", "Request new Instances",
+				"http://schemas.ogf.org/occi/core#resource");
+
+		// size flavors
 		Resource fogbowSmallFlavor = new Resource(RequestConstants.SMALL_TERM,
 				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS,
-				new ArrayList<String>(), new ArrayList<String>(), FOGBOWCLOUD_ENDPOINT + "/small/",
-				"Small Flavor", RESOURCE_TPL_OCCI_SCHEME);
+				new ArrayList<String>(), new ArrayList<String>(), FOGBOWCLOUD_ENDPOINT + "/"
+						+ RequestConstants.SMALL_TERM + "/", "Small Flavor",
+				RESOURCE_TPL_OCCI_SCHEME);
 		Resource fogbowMediumFlavor = new Resource(RequestConstants.MEDIUM_TERM,
 				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS,
-				new ArrayList<String>(), new ArrayList<String>(), FOGBOWCLOUD_ENDPOINT + "/medium/",
-				"Medium Flavor", RESOURCE_TPL_OCCI_SCHEME);
+				new ArrayList<String>(), new ArrayList<String>(), FOGBOWCLOUD_ENDPOINT + "/"
+						+ RequestConstants.MEDIUM_TERM + "/", "Medium Flavor",
+				RESOURCE_TPL_OCCI_SCHEME);
 		Resource fogbowLargeFlavor = new Resource(RequestConstants.LARGE_TERM,
 				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS,
-				new ArrayList<String>(), new ArrayList<String>(), FOGBOWCLOUD_ENDPOINT + "/large/",
-				"Large Flavor", RESOURCE_TPL_OCCI_SCHEME);
+				new ArrayList<String>(), new ArrayList<String>(), FOGBOWCLOUD_ENDPOINT + "/"
+						+ RequestConstants.LARGE_TERM + "/", "Large Flavor",
+				RESOURCE_TPL_OCCI_SCHEME);
 		//TODO add actions	
 		resources.add(fogbowRequest);
 		resources.add(fogbowSmallFlavor);
