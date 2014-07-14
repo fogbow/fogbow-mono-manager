@@ -58,8 +58,8 @@ public class TestCli {
 		request.addHeader(Token.Constants.TENANT_NAME_KEY.getValue(), tenantName);
 		expectedRequest = new HttpUriRequestMatcher(request);
 
-		String command = "token --get --url " + Main.DEFAULT_URL + " --username " + user
-				+ "  --tenantName " + tenantName + " --password " + password;
+		String command = "token --get --url " + Main.DEFAULT_URL + " -Dusername=" + user
+				+ "  -DtenantName=" + tenantName + " -Dpassword=" + password;
 
 		cli.main(createArgs(command));
 
@@ -80,8 +80,8 @@ public class TestCli {
 		request.addHeader(Token.Constants.TENANT_NAME_KEY.getValue(), tenantName);
 		expectedRequest = new HttpUriRequestMatcher(request);
 
-		String command = "token --get --username " + user + "  --tenantName " + tenantName
-				+ " --password " + password;
+		String command = "token --get -Dusername=" + user + "  -DtenantName=" + tenantName
+				+ " -Dpassword=" + password;
 		cli.main(createArgs(command));
 
 		Mockito.verify(client).execute(Mockito.argThat(expectedRequest));
@@ -90,8 +90,8 @@ public class TestCli {
 	@SuppressWarnings("static-access")
 	@Test(expected = ParameterException.class)
 	public void commandWrongSyntax() throws Exception {
-		String command = "--get --url http://localhost:8182 --username admin"
-				+ "  --tenantName admin --password reverse";
+		String command = "--get --url http://localhost:8182 -Dusername=admin"
+				+ "  -DtenantName=admin -Dpassword=reverse";
 		cli.main(createArgs(command));
 	}
 
