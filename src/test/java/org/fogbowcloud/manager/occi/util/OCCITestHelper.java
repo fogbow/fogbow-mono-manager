@@ -19,6 +19,7 @@ import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.ssh.SSHTunnel;
 import org.fogbowcloud.manager.occi.OCCIApplication;
 import org.fogbowcloud.manager.occi.core.HeaderUtils;
+import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.fogbowcloud.manager.occi.request.RequestRepository;
@@ -125,15 +126,17 @@ public class OCCITestHelper {
 		StringTokenizer st = new StringTokenizer(requestDetails, "\n");
 		Map<String, String> occiAttributes = new HashMap<String, String>();
 		while (st.hasMoreElements()) {
-			String occiAtt = st.nextToken().trim();
-			StringTokenizer st2 = new StringTokenizer(occiAtt, ":");
-			st2.nextToken(); //X-OCCI-Attribute
-			String attToValue = st2.nextToken().trim();
-			String[] attAndValue = attToValue.split("=");
-			if (attAndValue.length == 2) {
-				occiAttributes.put(attAndValue[0], attAndValue[1].replaceAll("\"", ""));
-			} else {
-				occiAttributes.put(attAndValue[0], "");
+			String line = st.nextToken().trim();
+			if (line.contains(OCCIHeaders.X_OCCI_ATTRIBUTE)){
+				StringTokenizer st2 = new StringTokenizer(line, ":");
+				st2.nextToken(); //X-OCCI-Attribute
+				String attToValue = st2.nextToken().trim();
+				String[] attAndValue = attToValue.split("=");
+				if (attAndValue.length == 2) {
+					occiAttributes.put(attAndValue[0], attAndValue[1].replaceAll("\"", ""));
+				} else {
+					occiAttributes.put(attAndValue[0], "");
+				}
 			}
 		}
 		return occiAttributes.get("request.state");
