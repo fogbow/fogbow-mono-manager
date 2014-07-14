@@ -57,8 +57,8 @@ public class Token {
 	
 	public enum Constants {
 		
-		USER_KEY("X-Token-User"), PASSWORD_KEY("X-Token-Password"), TENANT_ID_KEY(
-				"X-Token-TenantId"), TENANT_NAME_KEY("X-Token-TenantName");
+		USER_KEY("username"), PASSWORD_KEY("password"), TENANT_ID_KEY(
+				"tenantId"), TENANT_NAME_KEY("tenantName");
 
 		public String value;
 

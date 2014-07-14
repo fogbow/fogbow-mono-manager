@@ -2,7 +2,9 @@ package org.fogbowcloud.manager.cli;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.http.Header;
@@ -25,9 +27,9 @@ import org.apache.http.util.EntityUtils;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.fogbowcloud.manager.core.plugins.openstack.OpenStackIdentityPlugin;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.Token;
+import org.fogbowcloud.manager.occi.core.Token.Constants;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
 
 import com.beust.jcommander.JCommander;
@@ -140,23 +142,48 @@ public class Main {
 			}
 		} else if (parsedCommand.equals("token")) {
 			String url = token.url;
-
-			if (token.password == null) {
-				System.out.print("Password:");
-				token.password = new String(JCommander.getConsole().readPassword(false));
-			}
-
-			Set<Header> headers = new HashSet<Header>();
-			headers.add(new BasicHeader(Token.Constants.USER_KEY.getValue(), token.username));
-			headers.add(new BasicHeader(Token.Constants.PASSWORD_KEY.getValue(), token.password));
-			headers.add(new BasicHeader(Token.Constants.TENANT_NAME_KEY.getValue(), token.tenantName));
-
+			
+			Set<Header> headers = getHeadersCredentials(args);
+			
 			doRequest("get", url + "/token", null, headers);
 		} else if (parsedCommand.equals("resource")) {
 			String url = token.url;
 
 			doRequest("get", url + "/-/", null);
 		}
+	}
+
+	private static Set<Header> getHeadersCredentials(String[] args) {
+		Set<Header> headers = new HashSet<Header>();
+		final String variableSymbol = "--";
+		int nextArg = 1;
+
+		for (String arg : args) {
+			Constants[] tokenConstants = Token.Constants.values();
+			for (Constants constant : tokenConstants) {
+				String constantValue = constant.value;
+				if (arg.equals(variableSymbol + constantValue)) {
+					if (args[nextArg].contains(variableSymbol)) {
+						System.out.println("Valeu of " + arg + " is null");
+						continue;
+					}
+					if (constantValue.equals(Token.Constants.USER_KEY.getValue())) {
+						List<String> argsList = Arrays.asList(args);
+						if (!argsList.contains(variableSymbol
+								+ Token.Constants.PASSWORD_KEY.getValue())) {
+							System.out.print("Password: ");
+							String password = new String(JCommander.getConsole()
+									.readPassword(false));
+							headers.add(new BasicHeader(Token.Constants.PASSWORD_KEY.getValue(),
+									password));
+						}
+					}
+					headers.add(new BasicHeader(constant.value, args[nextArg]));
+				}
+			}
+			nextArg++;
+		}
+		return headers;
 	}
 
 	private static void configureLog4j() {
