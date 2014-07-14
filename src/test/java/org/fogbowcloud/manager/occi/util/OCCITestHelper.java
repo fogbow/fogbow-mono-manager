@@ -31,7 +31,7 @@ public class OCCITestHelper {
 	public static final String ACCESS_TOKEN = "HgjhgYUDFTGBgrbelihBDFGB40uyrb";
 	public static final String INVALID_TOKEN = "invalid-token";
 	public static final String CONTENT_TYPE_OCCI = "text/occi";
-	public static final String URI_FOGBOW_REQUEST = "http://localhost:" + ENDPOINT_PORT + "/request";
+	public static final String URI_FOGBOW_REQUEST = "http://localhost:" + ENDPOINT_PORT + "/request/";
 	public static final String URI_FOGBOW_COMPUTE = "http://localhost:" + ENDPOINT_PORT + "/compute/";
 	public static final String URI_FOGBOW_MEMBER = "http://localhost:" + ENDPOINT_PORT + "/members";
 	public static final String URI_FOGBOW_TOKEN = "http://localhost:" + ENDPOINT_PORT + "/token";
