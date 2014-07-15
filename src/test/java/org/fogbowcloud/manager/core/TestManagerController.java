@@ -61,6 +61,78 @@ public class TestManagerController {
 				String.valueOf(RequestConstants.DEFAULT_INSTANCE_COUNT));
 	}
 
+	@SuppressWarnings("unchecked")
+	@Test
+	public void testSubmitLocalUserRequests() throws InterruptedException {
+		final String localUserAccessId = "Local-User-Access-Id";
+		final String localUser = "localUser";
+		Token localToken = new Token(localUserAccessId, localUser, new Date(),
+				new HashMap<String, String>());
+
+		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
+		Mockito.when(
+				computePlugin.requestInstance(Mockito.eq(localUserAccessId), Mockito.anyList(),
+						Mockito.anyMap())).thenReturn("newinstanceid");
+		managerController.setComputePlugin(computePlugin);
+
+		checkRequestPerUserToken(localToken);
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Test
+	public void testSubmitFederationUserRequests() throws InterruptedException {
+		final String federationUserAccessId = "Federation-User-Access-Id";
+		final String federationUser = "federationUser";
+		Token federationToken = new Token(federationUserAccessId, federationUser, new Date(),
+				new HashMap<String, String>());
+
+		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
+		Mockito.when(
+				computePlugin.requestInstance(Mockito.eq(federationUserAccessId),
+						Mockito.anyList(), Mockito.anyMap()))
+				.thenThrow(new OCCIException(ErrorType.UNAUTHORIZED, ""))
+				.thenReturn("newinstanceid")
+				.thenThrow(new OCCIException(ErrorType.UNAUTHORIZED, ""))
+				.thenReturn("newinstanceid");
+		managerController.setComputePlugin(computePlugin);
+
+		List<FederationMember> listMembers = new ArrayList<FederationMember>();
+		ResourcesInfo resourseInfo = new ResourcesInfo("", "", "", "", null, null);
+		resourseInfo.setId(DefaultDataTestHelper.MANAGER_COMPONENT_URL);
+		FederationMember federationMember = new FederationMember(resourseInfo);
+		listMembers.add(federationMember);
+		managerController.setMembers(listMembers);
+
+		checkRequestPerUserToken(federationToken);
+	}
+
+	private void checkRequestPerUserToken(Token token) {
+		IdentityPlugin identityPlugin = managerTestHelper.getIdentityPlugin();
+		IdentityPlugin federationIdentityPlugin = managerTestHelper.getFederationIdentityPlugin();
+		Mockito.when(federationIdentityPlugin.getToken(token.getAccessId())).thenReturn(token);
+		Mockito.when(identityPlugin.createFederationUserToken()).thenReturn(token);
+		managerController.setLocalIdentityPlugin(identityPlugin);
+		managerController.setFederationIdentityPlugin(federationIdentityPlugin);
+
+		Request request1 = new Request("id1", token, new ArrayList<Category>(),
+				new HashMap<String, String>());
+		request1.setState(RequestState.OPEN);
+		Request request2 = new Request("id2", token, new ArrayList<Category>(),
+				new HashMap<String, String>());
+		request2.setState(RequestState.OPEN);
+		RequestRepository requestRepository = new RequestRepository();
+		requestRepository.addRequest(token.getUser(), request1);
+		requestRepository.addRequest(token.getUser(), request2);
+		managerController.setRequests(requestRepository);
+
+		managerController.checkAndSubmitOpenRequests();
+
+		List<Request> requestsFromUser = managerController.getRequestsFromUser(token.getAccessId());
+		for (Request request : requestsFromUser) {
+			Assert.assertEquals(RequestState.FULFILLED, request.getState());
+		}
+	}
+	
 	@Test
 	public void testGetFederationMember() throws InterruptedException {
 		Map<String, String> tokenCredentials = new HashMap<String, String>();

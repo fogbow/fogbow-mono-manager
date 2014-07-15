@@ -48,6 +48,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 	private ManagerXmppComponent managerXmppComponent;
 	private ComputePlugin computePlugin;
 	private IdentityPlugin identityPlugin;
+	private IdentityPlugin federationIdentityPlugin;
 	private Token defaultToken;
 	private FakeXMPPServer fakeServer = new FakeXMPPServer();
 
@@ -137,6 +138,10 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 
 	public IdentityPlugin getIdentityPlugin() {
 		return identityPlugin;
+	}
+	
+	public IdentityPlugin getFederationIdentityPlugin() {
+		return federationIdentityPlugin;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -304,12 +309,16 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.getToken(DefaultDataTestHelper.ACCESS_TOKEN_ID)).thenReturn(
 				defaultToken);
+		
+		federationIdentityPlugin = Mockito.mock(IdentityPlugin.class);
+		Mockito.when(federationIdentityPlugin.getToken(DefaultDataTestHelper.ACCESS_TOKEN_ID))
+				.thenReturn(defaultToken);
 
 		// mocking sshTunnel
 		SSHTunnel sshTunnel = Mockito.mock(SSHTunnel.class);
 
 		managerController.setLocalIdentityPlugin(identityPlugin);
-		managerController.setFederationIdentityPlugin(identityPlugin);
+		managerController.setFederationIdentityPlugin(federationIdentityPlugin);
 		managerController.setComputePlugin(computePlugin);
 		managerController.setSSHTunnel(sshTunnel);
 
@@ -319,5 +328,4 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 	public Token getDefaultToken() {
 		return defaultToken;
 	}
-
 }
