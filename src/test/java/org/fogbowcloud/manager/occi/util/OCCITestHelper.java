@@ -21,6 +21,7 @@ import org.fogbowcloud.manager.occi.OCCIApplication;
 import org.fogbowcloud.manager.occi.core.HeaderUtils;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.request.Request;
+import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.fogbowcloud.manager.occi.request.RequestRepository;
 import org.mockito.Mockito;
@@ -140,6 +141,6 @@ public class OCCITestHelper {
 				}
 			}
 		}
-		return occiAttributes.get("request.state");
+		return occiAttributes.get(RequestAttribute.STATE.getValue());
 	}
 }

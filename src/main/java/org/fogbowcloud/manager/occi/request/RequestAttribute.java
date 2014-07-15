@@ -10,7 +10,9 @@ public enum RequestAttribute {
 	INSTANCE_COUNT("org.fogbowcloud.request.instance-count"), 
 	TYPE("org.fogbowcloud.request.type"),
 	VALID_UNTIL("org.fogbowcloud.request.valid-until"), 
-	VALID_FROM("org.fogbowcloud.request.valid-from");
+	VALID_FROM("org.fogbowcloud.request.valid-from"),
+	STATE("org.fogbowcloud.request.state"),
+	INSTANCE_ID("org.fogbowcloud.request.instance-id");
 	
 	private String value;
 	

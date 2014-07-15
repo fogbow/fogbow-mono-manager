@@ -60,12 +60,28 @@ public class RequestServerResource extends ServerResource {
 				LOGGER.error(e);
 			}
 		}
-		requestOCCIFormat += OCCIHeaders.X_OCCI_ATTRIBUTE + ": " + "request.id=\""
+
+		requestOCCIFormat += OCCIHeaders.X_OCCI_ATTRIBUTE + ": " + RequestAttribute.OCCI_CORE_ID.getValue() + "=\""
 				+ request.getId() + "\" \n";
-		requestOCCIFormat += OCCIHeaders.X_OCCI_ATTRIBUTE + ": " + "request.state=\""
-				+ request.getState().getValue() + "\" \n";
-		requestOCCIFormat += OCCIHeaders.X_OCCI_ATTRIBUTE + ": " + "request.instance.id=\""
+		requestOCCIFormat += OCCIHeaders.X_OCCI_ATTRIBUTE + ": " + RequestAttribute.STATE.getValue() + "=\""
+				+ request.getState().getValue() + "\"\n";
+		requestOCCIFormat += OCCIHeaders.X_OCCI_ATTRIBUTE + ": " + RequestAttribute.INSTANCE_ID.getValue() + "=\""
 				+ request.getInstanceId() + "\"";
+		requestOCCIFormat += OCCIHeaders.X_OCCI_ATTRIBUTE + ": " + RequestAttribute.VALID_FROM.getValue() + "=\""
+				+ (request.getAttValue(RequestAttribute.VALID_FROM.getValue()) == null ? "Not defined"
+						: request.getAttValue(RequestAttribute.VALID_FROM.getValue())) + "\"\n";
+		requestOCCIFormat += OCCIHeaders.X_OCCI_ATTRIBUTE + ": " + RequestAttribute.VALID_UNTIL.getValue() + "=\""
+				+ (request.getAttValue(RequestAttribute.VALID_UNTIL.getValue()) == null ? "Not defined"
+						: request.getAttValue(RequestAttribute.VALID_UNTIL.getValue())) + "\"\n";
+		requestOCCIFormat += OCCIHeaders.X_OCCI_ATTRIBUTE + ": " + RequestAttribute.INSTANCE_COUNT.getValue() + "=\""
+				+ (request.getAttValue(RequestAttribute.INSTANCE_COUNT.getValue()) == null ? "1"
+						: request.getAttValue(RequestAttribute.INSTANCE_COUNT.getValue())) + "\"\n";		
+		requestOCCIFormat += OCCIHeaders.X_OCCI_ATTRIBUTE + ": " + RequestAttribute.OCCI_CORE_TITLE.getValue() + "=\""
+				+ (request.getAttValue(RequestAttribute.OCCI_CORE_TITLE.getValue()) == null ? "Not defined"
+						: request.getAttValue(RequestAttribute.OCCI_CORE_TITLE.getValue())) + "\"\n";
+		requestOCCIFormat += OCCIHeaders.X_OCCI_ATTRIBUTE + ": " + RequestAttribute.TYPE.getValue() + "=\""
+				+ (request.getAttValue(RequestAttribute.TYPE.getValue()) == null ? RequestType.ONE_TIME.getValue()
+						: request.getAttValue(RequestAttribute.TYPE.getValue())) + "\"\n";
 		return requestOCCIFormat;
 	}
 
