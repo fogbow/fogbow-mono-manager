@@ -1,5 +1,6 @@
 package org.fogbowcloud.manager.occi.request;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -29,7 +30,7 @@ public class Request {
 	}
 
 	public List<Category> getCategories() {
-		return categories;
+		return new ArrayList<Category>(categories);
 	}
 
 	public void addCategory(Category category) {

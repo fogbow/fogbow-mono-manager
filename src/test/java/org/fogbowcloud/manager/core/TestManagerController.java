@@ -349,7 +349,7 @@ public class TestManagerController {
 		attributes.put(RequestAttribute.TYPE.getValue(), RequestType.PERSISTENT.getValue());
 
 		// setting request repository
-		Request request1 = new Request("id1", managerTestHelper.getDefaultToken(), null, attributes);
+		Request request1 = new Request("id1", managerTestHelper.getDefaultToken(), new ArrayList<Category>(), attributes);
 		request1.setState(RequestState.FULFILLED);
 
 		RequestRepository requestRepository = new RequestRepository();
