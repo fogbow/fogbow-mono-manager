@@ -124,7 +124,6 @@ public class OCCITestHelper {
 	}
 
 	public String getStateFromRequestDetails(String requestDetails) {
-		System.out.println(requestDetails);
 		StringTokenizer st = new StringTokenizer(requestDetails, "\n");
 		Map<String, String> occiAttributes = new HashMap<String, String>();
 		while (st.hasMoreElements()) {
