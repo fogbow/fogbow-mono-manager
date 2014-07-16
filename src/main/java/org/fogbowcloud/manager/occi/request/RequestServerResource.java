@@ -45,7 +45,6 @@ public class RequestServerResource extends ServerResource {
 		return generateResponseOneRequest(request);
 	}
 
-	//TODO Refactor it
 	private String generateResponseOneRequest(Request request) {
 		LOGGER.debug("Generating response to request: " + request);
 		String requestOCCIFormat = "\n";
@@ -62,35 +61,30 @@ public class RequestServerResource extends ServerResource {
 			} catch (Exception e) {
 				LOGGER.error(e);
 			}
-		}		
-		requestOCCIFormat += OCCIHeaders.X_OCCI_ATTRIBUTE + ": " + OCCI_CORE_ID + "=\""
-				+ request.getId() + "\" \n";
+		}	
 		
+		Map<String, String> attToOutput = new HashMap<String, String>();		
+		attToOutput.put(OCCI_CORE_ID, request.getId());
 		if (request.getAttValue(OCCI_CORE_TITLE) != null){
-			requestOCCIFormat += OCCIHeaders.X_OCCI_ATTRIBUTE + ": " + OCCI_CORE_TITLE + "=\""
-					+ request.getAttValue(OCCI_CORE_TITLE) + "\"\n";
+			attToOutput.put(OCCI_CORE_TITLE, request.getAttValue(OCCI_CORE_TITLE));	
+		}
+		for (String attributeName : RequestAttribute.getValues()) {
+			if (request.getAttValue(attributeName) == null){
+				attToOutput.put(attributeName, "Not defined");	
+			} else {
+				attToOutput.put(attributeName, request.getAttValue(attributeName));
+			}
 		}
 		
-		if (request.getAttValue(RequestAttribute.VALID_FROM.getValue()) == null){
-			requestOCCIFormat += OCCIHeaders.X_OCCI_ATTRIBUTE + ": " + RequestAttribute.VALID_FROM.getValue() + "=\"Not defined\"\n";
-		} else {
-			requestOCCIFormat += OCCIHeaders.X_OCCI_ATTRIBUTE + ": " + RequestAttribute.VALID_FROM.getValue() + "=\""
-					+ request.getAttValue(RequestAttribute.VALID_FROM.getValue()) + "\"\n";
+		attToOutput.put(RequestAttribute.STATE.getValue(), request.getState().getValue());
+		attToOutput.put(RequestAttribute.INSTANCE_ID.getValue(), request.getInstanceId());
+		
+		for (String attName : attToOutput.keySet()) {
+			requestOCCIFormat += OCCIHeaders.X_OCCI_ATTRIBUTE + ": " + attName + "=\""
+					+ attToOutput.get(attName) + "\" \n";	
 		}
-		
-		if (request.getAttValue(RequestAttribute.VALID_UNTIL.getValue()) == null){
-			requestOCCIFormat += OCCIHeaders.X_OCCI_ATTRIBUTE + ": " + RequestAttribute.VALID_UNTIL.getValue() + "=\"Not defined\"\n";
-		} else {
-			requestOCCIFormat += OCCIHeaders.X_OCCI_ATTRIBUTE + ": " + RequestAttribute.VALID_UNTIL.getValue() + "=\""
-					+ request.getAttValue(RequestAttribute.VALID_UNTIL.getValue()) + "\"\n";
-		}
-		
-		requestOCCIFormat += OCCIHeaders.X_OCCI_ATTRIBUTE + ": " + RequestAttribute.STATE.getValue() + "=\""
-				+ request.getState().getValue() + "\"\n";
-		requestOCCIFormat += OCCIHeaders.X_OCCI_ATTRIBUTE + ": " + RequestAttribute.INSTANCE_ID.getValue() + "=\""
-				+ request.getInstanceId() + "\"";
-		
-		return requestOCCIFormat;
+			
+		return "\n" + requestOCCIFormat.trim();
 	}
 
 	@Delete
