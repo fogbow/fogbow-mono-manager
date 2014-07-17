@@ -63,7 +63,7 @@ public class TestMemberServerResource {
 		this.helper.initializeComponentMember(computePlugin, identityPlugin, federationMembers);		
 		
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_MEMBER);
-		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
+		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(get);
 
@@ -84,7 +84,7 @@ public class TestMemberServerResource {
 		this.helper.initializeComponentMember(computePlugin, identityPlugin, federationMembers);
 		
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_MEMBER);
-		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
+		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(get);
 

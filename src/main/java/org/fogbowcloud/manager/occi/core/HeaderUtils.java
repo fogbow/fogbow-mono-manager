@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
-import org.fogbowcloud.manager.occi.request.RequestServerResource;
 import org.restlet.Response;
 import org.restlet.data.MediaType;
 import org.restlet.engine.header.Header;
@@ -26,7 +25,7 @@ public class HeaderUtils {
 	public static void checkOCCIContentType(Series<Header> headers) {
 		String contentType = headers.getValues(OCCIHeaders.CONTENT_TYPE);
 		if (!contentType.equals(OCCIHeaders.OCCI_CONTENT_TYPE)) {
-			LOGGER.debug("Content-type " + contentType + "was not occi.");
+			LOGGER.debug("Content-type " + contentType + " was not occi.");
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}
 	}
@@ -138,6 +137,32 @@ public class HeaderUtils {
 		} catch (Exception e) {
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}
+	}
+
+	public static List<String> getAccept(Series<Header> headers) {
+		String[] headerValues = headers.getValuesArray(normalize(OCCIHeaders.ACCEPT));		
+		List<String> acceptContents = new ArrayList<String>();
+		for (int i = 0; i < headerValues.length; i++) {
+			String[] eachHeaderValue = headerValues[i].split(",");			
+			for (int j = 0; j < eachHeaderValue.length; j++) {
+				acceptContents.add(eachHeaderValue[j].trim());			
+			}
+		}		
+		return acceptContents;
+	}
+	
+	public static void setResponseHeader(Response response, String header, String value) {
+		Series<Header> responseHeaders = (Series<Header>) response.getAttributes().get("org.restlet.http.headers");
+		if (responseHeaders == null) {
+			responseHeaders = new Series(Header.class);
+			response.getAttributes().put("org.restlet.http.headers", responseHeaders);
+		}
+		for (Header header2 : responseHeaders) {
+			System.out.println("name: " + header2.getName());
+			System.out.println("value: " + header2.getValue());
+		}
+		System.out.println(header);
+		responseHeaders.add(new Header(normalize(header), value));
 	}
 
 }

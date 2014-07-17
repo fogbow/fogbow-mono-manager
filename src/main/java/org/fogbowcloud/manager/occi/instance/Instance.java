@@ -97,11 +97,11 @@ public class Instance {
 		return new Instance(id, resources, attributes, link);
 	}
 
-	public String toOCCIMassageFormatLocation() {
+	public String toOCCIMessageFormatLocation() {
 		return PREFIX_DEFAULT_INSTANCE + this.id;
 	}
 
-	public String toOCCIMassageFormatDetails() {
+	public String toOCCIMessageFormatDetails() {
 		String messageFormat = "";
 		for (Resource resource : this.resources) {
 			messageFormat += CATEGORY + " " + resource.toHeader() + "\n";

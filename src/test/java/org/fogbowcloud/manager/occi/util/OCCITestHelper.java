@@ -1,6 +1,8 @@
 package org.fogbowcloud.manager.occi.util;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -33,7 +35,6 @@ public class OCCITestHelper {
 	public static final int ENDPOINT_PORT = PluginHelper.getAvailablePort();
 	public static final String ACCESS_TOKEN = "HgjhgYUDFTGBgrbelihBDFGB40uyrb";
 	public static final String INVALID_TOKEN = "invalid-token";
-	public static final String CONTENT_TYPE_OCCI = "text/occi";
 	public static final String URI_FOGBOW_REQUEST = "http://localhost:" + ENDPOINT_PORT + "/" + RequestConstants.TERM + "/";
 	public static final String URI_FOGBOW_COMPUTE = "http://localhost:" + ENDPOINT_PORT + "/compute/";
 	public static final String URI_FOGBOW_MEMBER = "http://localhost:" + ENDPOINT_PORT + "/members";
@@ -120,6 +121,7 @@ public class OCCITestHelper {
 				}
 			}
 		}
+		System.out.println("RequestIds: " + requestIds);
 		return requestIds;
 	}
 
@@ -141,5 +143,27 @@ public class OCCITestHelper {
 			}
 		}
 		return occiAttributes.get(RequestAttribute.STATE.getValue());
+	}
+
+	public static List<URI> getURIList(HttpResponse response) throws URISyntaxException {
+		String responseStr = "";
+		try {
+			responseStr = EntityUtils.toString(response.getEntity(),
+					String.valueOf(Charsets.UTF_8));			
+		} catch (Exception e) {
+			return new ArrayList<URI>();
+		}
+		
+		List<URI> requestURIs = new ArrayList<URI>();		
+		String[] tokens = responseStr.trim().split("\n");
+
+		for (int i = 0; i < tokens.length; i++) {
+			if (!tokens[i].equals("")) {
+				requestURIs.add(new URI(tokens[i].trim()));
+			}
+		}
+		
+		
+		return requestURIs;
 	}
 }

@@ -16,5 +16,7 @@ public class OCCIHeaders {
 	public static final String SCHEME_CATEGORY = "scheme";
 	public static final String CLASS_CATEGORY = "class";
 	public static final String OCCI_CONTENT_TYPE = "text/occi";
+	public static final String TEXT_URI_LIST_CONTENT_TYPE = "text/uri-list";
 	public static final String JSON_CONTENT_TYPE = "application/json";
+	public static final String TEXT_PLAIN_CONTENT_TYPE = "text/plain";
 }

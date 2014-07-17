@@ -130,6 +130,46 @@ public class TestHeaderUtils {
 	}
 	
 	@Test
+	public void testGetAccept() {
+		String acceptValue = "text/plain";		
+		headers.add(HeaderUtils.normalize(OCCIHeaders.ACCEPT), acceptValue);		
+		List<String> acceptContents = HeaderUtils.getAccept(headers);
+		Assert.assertEquals(1, acceptContents.size());
+		Assert.assertTrue(acceptContents.contains(acceptValue));
+	}
+	
+	@Test
+	public void testGetAcceptWithMoreInSameHeader() {
+		String acceptValues = "text/plain, text/occi";		
+		headers.add(HeaderUtils.normalize(OCCIHeaders.ACCEPT), acceptValues);		
+		List<String> parsedAccepts = new ArrayList<String>();
+		parsedAccepts.add("text/plain");
+		parsedAccepts.add("text/occi");
+		List<String> acceptContents = HeaderUtils.getAccept(headers);
+		Assert.assertEquals(2, acceptContents.size());
+		for (String accept : parsedAccepts) {
+			Assert.assertTrue(acceptContents.contains(accept));
+		}
+	}
+	
+	@Test
+	public void testGetAcceptWithMoreAtDifferentHeader() {
+		List<String> parsedAccepts = new ArrayList<String>();
+		parsedAccepts.add("text/plain");
+		parsedAccepts.add("text/occi");
+
+		for (String accept : parsedAccepts) {
+			headers.add(HeaderUtils.normalize(OCCIHeaders.ACCEPT), accept);		
+		}
+
+		List<String> acceptContents = HeaderUtils.getAccept(headers);
+		Assert.assertEquals(2, acceptContents.size());
+		for (String accept : parsedAccepts) {
+			Assert.assertTrue(acceptContents.contains(accept));
+		}
+	}
+	
+	@Test
 	public void testGetXOCCIAttribute() {		
 		headers.add(HeaderUtils.normalize(OCCIHeaders.X_OCCI_ATTRIBUTE), "attribute.name=\"value\"");		
 		Map<String, String> occiAttributes = HeaderUtils.getXOCCIAtributes(headers);
@@ -223,7 +263,7 @@ public class TestHeaderUtils {
 	@Test
 	public void testValidContentType() {
 		headers.add(HeaderUtils.normalize(OCCIHeaders.CONTENT_TYPE),
-				OCCITestHelper.CONTENT_TYPE_OCCI);
+				OCCIHeaders.OCCI_CONTENT_TYPE);
 		HeaderUtils.checkOCCIContentType(headers);
 	}
 

@@ -15,7 +15,9 @@ import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.Resource;
 import org.fogbowcloud.manager.occi.core.ResourceRepository;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
+import org.restlet.data.MediaType;
 import org.restlet.engine.adapter.HttpRequest;
+import org.restlet.representation.StringRepresentation;
 import org.restlet.resource.Delete;
 import org.restlet.resource.Get;
 import org.restlet.resource.Post;
@@ -27,25 +29,57 @@ public class RequestServerResource extends ServerResource {
 	private static final String OCCI_CORE_ID = "occi.core.id";
 	protected static final String NO_REQUESTS_MESSAGE = "There are not requests.";
 	private static final Logger LOGGER = Logger.getLogger(RequestServerResource.class);
-
+	
 	@Get
-	public String fetch() {
+	public StringRepresentation fetch() {
 		OCCIApplication application = (OCCIApplication) getApplication();
 		HttpRequest req = (HttpRequest) getRequest();
 		String accessId = HeaderUtils.getAuthToken(req.getHeaders(), getResponse());
 		String requestId = (String) getRequestAttributes().get("requestId");
+		List<String> acceptContent = HeaderUtils.getAccept(req.getHeaders());
 
 		if (requestId == null) {
 			LOGGER.info("Getting all requests of token :" + accessId);
-			return generateResponse(application.getRequestsFromUser(accessId), req);
+			if (acceptContent.size() == 0
+					|| acceptContent.contains(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE)) {
+				return new StringRepresentation(generateTextPlainResponse(
+						application.getRequestsFromUser(accessId), req), MediaType.TEXT_PLAIN);
+			} else if (acceptContent.contains(OCCIHeaders.TEXT_URI_LIST_CONTENT_TYPE)) {
+				return new StringRepresentation(generateURIListResponse(
+						application.getRequestsFromUser(accessId), req), MediaType.TEXT_URI_LIST);
+			} else {
+				throw new OCCIException(ErrorType.METHOD_NOT_ALLOWED,
+						ResponseConstants.METHOD_NOT_SUPPORTED);
+			}
 		}
-
+				
 		LOGGER.info("Getting request(" + requestId + ") of token :" + accessId);
-		Request request = application.getRequest(accessId, requestId);
-		return generateResponseOneRequest(request);
+		Request request = application.getRequest(accessId, requestId);		
+		if (acceptContent.size() == 0 || acceptContent.contains(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE)) {
+			return new StringRepresentation(generateTextPlainResponseOneRequest(request), MediaType.TEXT_PLAIN);				
+		}
+		throw new OCCIException(ErrorType.METHOD_NOT_ALLOWED,
+				ResponseConstants.METHOD_NOT_SUPPORTED);
+	}
+	
+	private String generateURIListResponse(List<Request> requests, HttpRequest req) {
+		if (requests == null || requests.isEmpty()) { 
+			return "\n";
+		}
+		String requestEndpoint = req.getHostRef() + req.getHttpCall().getRequestUri();
+		String result = "";
+		Iterator<Request> requestIt = requests.iterator();
+		while(requestIt.hasNext()){
+			if (requestEndpoint.endsWith("/")){
+				result += requestEndpoint + requestIt.next().getId() + "\n";
+			} else {
+				result += requestEndpoint + "/" + requestIt.next().getId() + "\n";
+			}
+		}
+		return "\n" + result.trim();
 	}
 
-	private String generateResponseOneRequest(Request request) {
+	private String generateTextPlainResponseOneRequest(Request request) {
 		LOGGER.debug("Generating response to request: " + request);
 		String requestOCCIFormat = "\n";
 		for (Category category : request.getCategories()) {
@@ -122,7 +156,7 @@ public class RequestServerResource extends ServerResource {
 		String authToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse());
 
 		List<Request> currentRequests = application.createRequests(authToken, categories, xOCCIAtt);
-		return generateResponse(currentRequests, req);
+		return generateTextPlainResponse(currentRequests, req);
 	}
 
 	public static Map<String, String> normalizeXOCCIAtt(Map<String, String> xOCCIAtt) {
@@ -171,7 +205,7 @@ public class RequestServerResource extends ServerResource {
 		throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 	}
 
-	protected static String generateResponse(List<Request> requests, HttpRequest req) {
+	protected static String generateTextPlainResponse(List<Request> requests, HttpRequest req) {
 		if (requests == null || requests.isEmpty()) { 
 			return NO_REQUESTS_MESSAGE;
 		}

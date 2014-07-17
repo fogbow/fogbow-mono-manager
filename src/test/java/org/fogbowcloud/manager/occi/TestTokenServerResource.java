@@ -66,7 +66,7 @@ public class TestTokenServerResource {
 		this.helper.initializeComponent(computePlugin, identityPlugin);
 
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_TOKEN);
-		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
+		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(get);
 
@@ -86,7 +86,7 @@ public class TestTokenServerResource {
 		this.helper.initializeComponent(computePlugin, identityPlugin);
 
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_TOKEN);
-		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
+		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(get);
 

@@ -42,7 +42,7 @@ public class TestInstance {
 		String textResponse = "X-OCCI-Location: http://localhost:8787/compute/c1490";
 		Instance instance = Instance.parseInstance(textResponse);
 
-		Assert.assertEquals(textResponse, instance.toOCCIMassageFormatLocation());
+		Assert.assertEquals(textResponse, instance.toOCCIMessageFormatLocation());
 	}
 
 	@Test
@@ -53,7 +53,7 @@ public class TestInstance {
 		textResponse += getFormatedAttributes();
 		Instance instance = Instance.parseInstance("id", textResponse);
 
-		Assert.assertEquals(textResponse, instance.toOCCIMassageFormatDetails());
+		Assert.assertEquals(textResponse, instance.toOCCIMessageFormatDetails());
 	}
 
 	@Test
@@ -61,7 +61,7 @@ public class TestInstance {
 		String textResponse = getFormatedAttributes();
 		Instance instance = Instance.parseInstance("id", textResponse);
 
-		Assert.assertEquals(textResponse, instance.toOCCIMassageFormatDetails());
+		Assert.assertEquals(textResponse, instance.toOCCIMessageFormatDetails());
 	}
 
 	@Test
@@ -69,7 +69,7 @@ public class TestInstance {
 		String textResponse = getFormatedResources();
 		Instance instance = Instance.parseInstance("id", textResponse);
 
-		Assert.assertEquals(textResponse, instance.toOCCIMassageFormatDetails());
+		Assert.assertEquals(textResponse, instance.toOCCIMessageFormatDetails());
 	}
 
 	@Test
