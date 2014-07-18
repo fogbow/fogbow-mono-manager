@@ -55,7 +55,6 @@ public class OpenStackComputePlugin implements ComputePlugin {
 	private static final String ABSOLUTE = "absolute";
 	private static final String LIMITS = "limits";
 	private static final String TERM_COMPUTE = "compute";
-	private static final String CLASS_COMPUTE = "kind";
 	private static final String COMPUTE_ENDPOINT = "/compute/";
 	private final String COMPUTE_V2_API_ENDPOINT = "/v2/";
 
@@ -143,7 +142,7 @@ public class OpenStackComputePlugin implements ComputePlugin {
 
 		List<Category> openStackCategories = new ArrayList<Category>();
 
-		Category categoryCompute = new Category(TERM_COMPUTE, SCHEME_COMPUTE, CLASS_COMPUTE);
+		Category categoryCompute = new Category(TERM_COMPUTE, SCHEME_COMPUTE, RequestConstants.KIND_CLASS);
 		openStackCategories.add(categoryCompute);
 
 		// removing fogbow-request category

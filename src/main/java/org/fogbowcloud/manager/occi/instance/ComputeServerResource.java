@@ -27,7 +27,6 @@ public class ComputeServerResource extends ServerResource {
 	public StringRepresentation fetch() {
 		OCCIApplication application = (OCCIApplication) getApplication();
 		HttpRequest req = (HttpRequest) getRequest();
-		HeaderUtils.checkOCCIContentType(req.getHeaders());
 		String authToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse());
 		String instanceId = (String) getRequestAttributes().get("instanceId");
 		List<String> acceptContent = HeaderUtils.getAccept(req.getHeaders());
@@ -36,15 +35,15 @@ public class ComputeServerResource extends ServerResource {
 			LOGGER.info("Getting all instances of token :" + authToken);
 			if (acceptContent.size() == 0
 					|| acceptContent.contains(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE)) {
-				return new StringRepresentation(generateResponse(application.getInstances(authToken)), MediaType.TEXT_PLAIN);				
-			} else if (acceptContent.contains(OCCIHeaders.TEXT_URI_LIST_CONTENT_TYPE)){
-				HeaderUtils.setResponseHeader(getResponse(), OCCIHeaders.CONTENT_TYPE,
-						OCCIHeaders.TEXT_URI_LIST_CONTENT_TYPE);
-				return new StringRepresentation(generateURIListResponse(application.getInstances(authToken), req), MediaType.TEXT_URI_LIST);
+				return new StringRepresentation(
+						generateResponse(application.getInstances(authToken)), MediaType.TEXT_PLAIN);
+			} else if (acceptContent.contains(OCCIHeaders.TEXT_URI_LIST_CONTENT_TYPE)) {
+				return new StringRepresentation(generateURIListResponse(
+						application.getInstances(authToken), req), MediaType.TEXT_URI_LIST);
 			} else {
 				throw new OCCIException(ErrorType.METHOD_NOT_ALLOWED,
 						ResponseConstants.METHOD_NOT_SUPPORTED);
-			}			
+			}
 		}
 
 		LOGGER.info("Getting instance " + instanceId);
@@ -66,7 +65,7 @@ public class ComputeServerResource extends ServerResource {
 				result += requestEndpoint + "/" + instanceIt.next().getId() + "\n";
 			}
 		}
-		return "\n" + result.trim();
+		return result.trim();
 	}
 
 	@Delete

@@ -161,14 +161,14 @@ public class TestGetCompute {
 	}
 
 	@Test
-	public void testWrongContentType() throws Exception {
+	public void testDifferentContentType() throws Exception {
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE);
-		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, "wrong");
+		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, "any");
 		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(httpGet);
 
-		Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 
 	@Test

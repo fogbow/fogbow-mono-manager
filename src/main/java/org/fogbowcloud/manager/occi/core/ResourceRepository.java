@@ -12,6 +12,7 @@ public class ResourceRepository {
 	private static final Logger LOGGER = Logger.getLogger(ResourceRepository.class);
 	private static final String OS_TPL_OCCI_SCHEME = "http://schemas.ogf.org/occi/infrastructure#os_tpl";
 	private static final String RESOURCE_TPL_OCCI_SCHEME = "http://schemas.ogf.org/occi/infrastructure#resource_tpl";
+	private static final String RESOURCE_OCCI_SCHEME = "http://schemas.ogf.org/occi/core#resource";
 	private static ResourceRepository instance;
 	private static final String FOGBOWCLOUD_ENDPOINT = "http://localhost:8182";
 	List<Resource> resources = new ArrayList<Resource>();
@@ -24,10 +25,30 @@ public class ResourceRepository {
 	}
 	
 	private ResourceRepository(){
+		//kind resources
 		Resource fogbowRequest = new Resource(RequestConstants.TERM, RequestConstants.SCHEME,
 				RequestConstants.KIND_CLASS, RequestAttribute.getValues(), new ArrayList<String>(),
 				FOGBOWCLOUD_ENDPOINT + "/" + RequestConstants.TERM + "/", "Request new Instances",
-				"http://schemas.ogf.org/occi/core#resource");
+				RESOURCE_OCCI_SCHEME);
+		
+		//TODO implement properties of attributes. For example, {immutable}
+		List<String> computeAttributes = new ArrayList<String>();
+		computeAttributes.add("occi.compute.architecture");
+		computeAttributes.add("occi.compute.state");
+		computeAttributes.add("occi.compute.speed");
+		computeAttributes.add("occi.compute.memory");
+		computeAttributes.add("occi.compute.cores");
+		computeAttributes.add("occi.compute.hostname");
+		
+		List<String> computeActions = new ArrayList<String>();
+		computeActions.add("http://schemas.ogf.org/occi/infrastructure/compute/action#start");
+		computeActions.add("http://schemas.ogf.org/occi/infrastructure/compute/action#stop");
+		computeActions.add("http://schemas.ogf.org/occi/infrastructure/compute/action#restart");
+		computeActions.add("http://schemas.ogf.org/occi/infrastructure/compute/action#suspend");
+
+		Resource compute = new Resource("compute", "http://schemas.ogf.org/occi/infrastructure#",
+				RequestConstants.KIND_CLASS, computeAttributes, computeActions, FOGBOWCLOUD_ENDPOINT + "/" + "compute/",
+				"Compute Resource", RESOURCE_OCCI_SCHEME);
 
 		// size flavors
 		Resource fogbowSmallFlavor = new Resource(RequestConstants.SMALL_TERM,
@@ -45,13 +66,15 @@ public class ResourceRepository {
 				new ArrayList<String>(), new ArrayList<String>(), FOGBOWCLOUD_ENDPOINT + "/"
 						+ RequestConstants.LARGE_TERM + "/", "Large Flavor",
 				RESOURCE_TPL_OCCI_SCHEME);
+		//userdata
 		Resource fogbowUserdata = new Resource(RequestConstants.USER_DATA_TERM,
 				RequestConstants.SCHEME, RequestConstants.MIXIN_CLASS,
 				new ArrayList<String>(), new ArrayList<String>(), FOGBOWCLOUD_ENDPOINT + "/"
 						+ RequestConstants.USER_DATA_TERM + "/", "", "");
-		
+						
 		//TODO add actions	
 		resources.add(fogbowRequest);
+		resources.add(compute);
 		resources.add(fogbowSmallFlavor);
 		resources.add(fogbowMediumFlavor);
 		resources.add(fogbowLargeFlavor);

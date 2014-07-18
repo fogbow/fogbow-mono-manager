@@ -64,7 +64,7 @@ public class RequestServerResource extends ServerResource {
 	
 	private String generateURIListResponse(List<Request> requests, HttpRequest req) {
 		if (requests == null || requests.isEmpty()) { 
-			return "\n";
+			return "";
 		}
 		String requestEndpoint = req.getHostRef() + req.getHttpCall().getRequestUri();
 		String result = "";
@@ -76,7 +76,7 @@ public class RequestServerResource extends ServerResource {
 				result += requestEndpoint + "/" + requestIt.next().getId() + "\n";
 			}
 		}
-		return "\n" + result.trim();
+		return result.trim();
 	}
 
 	private String generateTextPlainResponseOneRequest(Request request) {
