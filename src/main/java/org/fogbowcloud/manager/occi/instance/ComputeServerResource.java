@@ -57,7 +57,7 @@ public class ComputeServerResource extends ServerResource {
 	private String generateURIListResponse(List<Instance> instances, HttpRequest req) {
 		String requestEndpoint = req.getHostRef() + req.getHttpCall().getRequestUri();
 		Iterator<Instance> instanceIt = instances.iterator();
-		String result = "";
+		String result = "";		
 		while(instanceIt.hasNext()){
 			if (requestEndpoint.endsWith("/")){
 				result += requestEndpoint + instanceIt.next().getId() + "\n";
@@ -65,7 +65,7 @@ public class ComputeServerResource extends ServerResource {
 				result += requestEndpoint + "/" + instanceIt.next().getId() + "\n";
 			}
 		}
-		return result.trim();
+		return result.length() > 0 ? result.trim() : "\n";
 	}
 
 	@Delete

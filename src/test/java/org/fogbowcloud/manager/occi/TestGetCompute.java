@@ -37,6 +37,8 @@ public class TestGetCompute {
 	private static final String INSTANCE_2_ID = "test2";
 	private static final String INSTANCE_3_ID_WITHOUT_USER = "test3";
 
+	private ComputePlugin computePlugin;
+	private IdentityPlugin identityPlugin;
 	private OCCITestHelper helper;
 
 	@Before
@@ -49,7 +51,7 @@ public class TestGetCompute {
 		Link link = null;
 		Instance instance1 = new Instance(INSTANCE_1_ID, list, map, link);
 
-		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
+		computePlugin = Mockito.mock(ComputePlugin.class);
 		Mockito.when(computePlugin.getInstance(Mockito.anyString(), Mockito.eq(INSTANCE_1_ID)))
 				.thenReturn(instance1);
 		Mockito.when(computePlugin.getInstance(Mockito.anyString(), Mockito.eq(INSTANCE_2_ID)))
@@ -58,7 +60,7 @@ public class TestGetCompute {
 				computePlugin.getInstance(Mockito.anyString(),
 						Mockito.eq(INSTANCE_3_ID_WITHOUT_USER))).thenReturn(instance1);
 
-		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
+		identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.getToken(OCCITestHelper.ACCESS_TOKEN)).thenReturn(
 				new Token("id", OCCITestHelper.USER_MOCK, new Date(),
 				new HashMap<String, String>()));
@@ -109,6 +111,27 @@ public class TestGetCompute {
 		HttpResponse response = client.execute(httpGet);
 
 		Assert.assertEquals(3, OCCITestHelper.getURIList(response).size());
+		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+		Assert.assertTrue(response.getFirstHeader(OCCIHeaders.CONTENT_TYPE).getValue()
+				.startsWith(OCCIHeaders.TEXT_URI_LIST_CONTENT_TYPE));
+	}
+	
+	@Test
+	public void testEmptyGetComputeWithAcceptURIList() throws Exception {
+		//reseting component
+		helper.stopComponent();
+		List<Request> requests = new LinkedList<Request>();
+		helper.initializeComponentCompute(computePlugin, identityPlugin, requests);
+
+		//test
+		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE);
+		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
+		httpGet.addHeader(OCCIHeaders.ACCEPT, OCCIHeaders.TEXT_URI_LIST_CONTENT_TYPE);
+		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		HttpClient client = new DefaultHttpClient();
+		HttpResponse response = client.execute(httpGet);
+
+		Assert.assertEquals(0, OCCITestHelper.getURIList(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 		Assert.assertTrue(response.getFirstHeader(OCCIHeaders.CONTENT_TYPE).getValue()
 				.startsWith(OCCIHeaders.TEXT_URI_LIST_CONTENT_TYPE));

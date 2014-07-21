@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.http.HttpStatus;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.occi.OCCIApplication;
 import org.fogbowcloud.manager.occi.core.Category;
@@ -16,6 +17,7 @@ import org.fogbowcloud.manager.occi.core.Resource;
 import org.fogbowcloud.manager.occi.core.ResourceRepository;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.restlet.data.MediaType;
+import org.restlet.data.Status;
 import org.restlet.engine.adapter.HttpRequest;
 import org.restlet.representation.StringRepresentation;
 import org.restlet.resource.Delete;
@@ -45,6 +47,7 @@ public class RequestServerResource extends ServerResource {
 				return new StringRepresentation(generateTextPlainResponse(
 						application.getRequestsFromUser(accessId), req), MediaType.TEXT_PLAIN);
 			} else if (acceptContent.contains(OCCIHeaders.TEXT_URI_LIST_CONTENT_TYPE)) {
+				getResponse().setStatus(new Status(HttpStatus.SC_OK));
 				return new StringRepresentation(generateURIListResponse(
 						application.getRequestsFromUser(accessId), req), MediaType.TEXT_URI_LIST);
 			} else {
@@ -64,7 +67,7 @@ public class RequestServerResource extends ServerResource {
 	
 	private String generateURIListResponse(List<Request> requests, HttpRequest req) {
 		if (requests == null || requests.isEmpty()) { 
-			return "";
+			return "\n";
 		}
 		String requestEndpoint = req.getHostRef() + req.getHttpCall().getRequestUri();
 		String result = "";
@@ -76,7 +79,7 @@ public class RequestServerResource extends ServerResource {
 				result += requestEndpoint + "/" + requestIt.next().getId() + "\n";
 			}
 		}
-		return result.trim();
+		return result.length() > 0 ? result.trim() : "\n";
 	}
 
 	private String generateTextPlainResponseOneRequest(Request request) {
