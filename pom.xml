@@ -156,5 +156,10 @@
       <artifactId>commons-io</artifactId>
       <version>2.4</version>
     </dependency>
+    <dependency>
+	  <groupId>org.italiangrid</groupId>
+	  <artifactId>voms-api-java</artifactId>
+	  <version>3.0.0</version>
+	</dependency>
   </dependencies>
 </project>
