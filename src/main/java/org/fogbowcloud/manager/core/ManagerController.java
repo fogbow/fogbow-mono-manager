@@ -35,6 +35,7 @@ import org.fogbowcloud.manager.occi.request.RequestState;
 import org.fogbowcloud.manager.occi.request.RequestType;
 import org.fogbowcloud.manager.xmpp.ManagerPacketHelper;
 import org.jamppa.component.PacketSender;
+import org.restlet.Response;
 
 public class ManagerController {
 
@@ -642,5 +643,9 @@ public class ManagerController {
 		Token userToken = getTokenFromFederationIdP(accessId);
 		LOGGER.debug("User Token: " + userToken);
 		return ResourceRepository.getInstance().getAll();
+	}
+
+	public Response bypass(org.restlet.Request request) {
+		return computePlugin.bypass(request);
 	}
 }

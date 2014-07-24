@@ -128,8 +128,8 @@ public class ComputeApplication extends Application {
 		if (userToInstanceId.get(user) == null) {
 			userToInstanceId.put(user, new ArrayList<String>());
 		}
-		checkRules(categories, xOCCIAtt);
 
+		checkRules(categories, xOCCIAtt);
 		for (Category category : categories) {
 			Map<String, String> attributesPerTerm = termToAttributes.get(category.getTerm());
 			if (attributesPerTerm != null) {
@@ -151,7 +151,6 @@ public class ComputeApplication extends Application {
 		userToInstanceId.get(user).add(instanceId);
 		String details = mountDetails(categories, xOCCIAtt, link);
 		instanceIdToDetails.put(instanceId, details);
-		
 		return instanceId;
 	}
 
@@ -172,7 +171,6 @@ public class ComputeApplication extends Application {
 		imutableAtt.add(MEMORY_ATTRIBUTE_OCCI);
 		imutableAtt.add(ARCHITECTURE_ATTRIBUTE_OCCI);
 		imutableAtt.add(SPEED_ATTRIBUTE_OCCI);
-
 		for (String attName : xOCCIAtt.keySet()) {
 			if (imutableAtt.contains(attName)) {
 				throw new OCCIException(ErrorType.BAD_REQUEST,
@@ -249,16 +247,17 @@ public class ComputeApplication extends Application {
 		
 		private static String generateResponse(List<String> instances, HttpRequest req) {
 			String requestEndpoint = req.getHostRef() + req.getHttpCall().getRequestUri();
-			String response = "";
-			if(instances != null){
+			String result = "";
+			if(instances != null){				
 				for (String location : instances) {
-					response += HeaderUtils.X_OCCI_LOCATION + requestEndpoint + "/" + location + "\n";			
+					if (requestEndpoint.endsWith("/")){
+						result += HeaderUtils.X_OCCI_LOCATION + requestEndpoint + location + "\n";
+					} else {
+						result += HeaderUtils.X_OCCI_LOCATION + requestEndpoint + "/" + location + "\n";			
+					}
 				}
 			}
-			if (response.equals("")) {
-				response = "Empty";
-			}
-			return response;
+			return result.length() > 0 ? result.trim() : "\n";
 		}
 
 		@Post
@@ -274,7 +273,6 @@ public class ComputeApplication extends Application {
 
 			String computeEndpoint = req.getHostRef() + req.getHttpCall().getRequestUri();
 			String instanceId = application.newInstance(authToken, categories, xOCCIAtt, link);
-			
 			getResponse().setLocationRef(computeEndpoint + instanceId);
 			return ResponseConstants.OK;
 		}

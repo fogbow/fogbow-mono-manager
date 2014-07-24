@@ -121,7 +121,6 @@ public class OCCITestHelper {
 				}
 			}
 		}
-		System.out.println("RequestIds: " + requestIds);
 		return requestIds;
 	}
 

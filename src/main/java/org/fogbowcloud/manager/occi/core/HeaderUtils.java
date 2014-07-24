@@ -156,12 +156,7 @@ public class HeaderUtils {
 		if (responseHeaders == null) {
 			responseHeaders = new Series(Header.class);
 			response.getAttributes().put("org.restlet.http.headers", responseHeaders);
-		}
-		for (Header header2 : responseHeaders) {
-			System.out.println("name: " + header2.getName());
-			System.out.println("value: " + header2.getValue());
-		}
-		System.out.println(header);
+		}		
 		responseHeaders.add(new Header(normalize(header), value));
 	}
 

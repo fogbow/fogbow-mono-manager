@@ -14,5 +14,6 @@ public class ResponseConstants {
 	public static final String INVALID_DATE_ATTRIBUTES = "Invalid valid from and valid until attributes.";
 	public static final String IMAGES_NOT_SPECIFIED = "There is not a image specified in configuration file.";
 	public static final String METHOD_NOT_SUPPORTED = "Method not supported.";
+	public static final String CLOUD_NOT_SUPPORT_OCCI_INTERFACE = "The cloud does not support OCCI interface or OCCI endpoint was not informed for fogbow manager.";
 
 }

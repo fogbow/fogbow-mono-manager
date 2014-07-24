@@ -6,8 +6,8 @@ import java.net.ServerSocket;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
-import org.fogbowcloud.manager.core.plugins.openstack.OpenStackIdentityPlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.util.ComputeApplication.InstanceIdGenerator;
@@ -19,6 +19,11 @@ public class PluginHelper {
 
 	private Component component;
 
+	public static final int PORT_ENDPOINT = getAvailablePort();
+	public static final String CIRROS_IMAGE_TERM = "cadf2e29-7216-4a5e-9364-cf6513d5f1fd";
+	public static final String LINUX_X86_TERM = "linuxx86";
+	public static final String COMPUTE_OCCI_URL = "http://localhost:" + PORT_ENDPOINT;
+
 	public static final String ACCESS_ID = "HgfugGJHgJgHJGjGJgJg-857GHGYHjhHjH";
 	public static final String TENANT_ID = "fc394f2ab2df4114bde39905f800dc57";
 	public static final String TENANT_NAME = "admin";
@@ -26,7 +31,6 @@ public class PluginHelper {
 	public static final String USERNAME = "admin";
 	public static final String USER_PASS = "reverse";
 
-	public static final int PORT_ENDPOINT = getAvailablePort();
 
 	public PluginHelper() {
 		this.component = new Component();
@@ -37,7 +41,10 @@ public class PluginHelper {
 	 * @return
 	 */
 	public static int getAvailablePort() {		
-		for (int port = 60000; port < 61000; port++) {
+		int initialP = 60000;
+		int finalP = 61000;
+		for (int i = initialP; i < finalP; i++) {
+			int port = new Random().nextInt(finalP - initialP) + initialP;
 			ServerSocket ss = null;
 			DatagramSocket ds = null;
 			try {
@@ -94,7 +101,6 @@ public class PluginHelper {
 				expectedInstanceIds.get(4));
 		computeApplication.setIdGenerator(idGenerator);
 		computeApplication.putTokenAndUser(ACCESS_ID, USERNAME);
-
 		this.component.getDefaultHost().attach(computeApplication);
 		this.component.start();
 	}

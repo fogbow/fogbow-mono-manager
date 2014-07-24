@@ -3,6 +3,8 @@ package org.fogbowcloud.manager.occi;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.http.HttpRequest;
+import org.apache.http.HttpResponse;
 import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.occi.core.Category;
@@ -14,6 +16,7 @@ import org.fogbowcloud.manager.occi.request.Request;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.fogbowcloud.manager.occi.request.RequestServerResource;
 import org.restlet.Application;
+import org.restlet.Response;
 import org.restlet.Restlet;
 import org.restlet.routing.Router;
 
@@ -87,5 +90,9 @@ public class OCCIApplication extends Application {
 
 	public List<Resource> getAllResources(String authToken) {
 		return managerFacade.getAllResouces(authToken);
+	}
+
+	public Response bypass(org.restlet.Request request) {
+		return managerFacade.bypass(request);
 	}
 }

@@ -41,6 +41,11 @@ import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.restlet.Client;
+import org.restlet.Request;
+import org.restlet.data.Method;
+import org.restlet.data.Protocol;
+import org.restlet.util.Series;
 
 public class OpenStackComputePlugin implements ComputePlugin {
 
@@ -55,7 +60,7 @@ public class OpenStackComputePlugin implements ComputePlugin {
 	private static final String ABSOLUTE = "absolute";
 	private static final String LIMITS = "limits";
 	private static final String TERM_COMPUTE = "compute";
-	private static final String COMPUTE_ENDPOINT = "/compute/";
+	public static final String COMPUTE_ENDPOINT = "/compute/";
 	private final String COMPUTE_V2_API_ENDPOINT = "/v2/";
 
 	private static final String MAX_TOTAL_CORES_ATT = "maxTotalCores";
@@ -278,17 +283,12 @@ public class OpenStackComputePlugin implements ComputePlugin {
 			LOGGER.debug("AccessId=" + authToken + "; headers=" + additionalHeaders);
 
 			if (client == null) {
-				client = new DefaultHttpClient();
-				HttpParams params = new BasicHttpParams();
-				params.setParameter(CoreProtocolPNames.PROTOCOL_VERSION, HttpVersion.HTTP_1_1);
-				client = new DefaultHttpClient(new ThreadSafeClientConnManager(params, client
-						.getConnectionManager().getSchemeRegistry()), params);
+				initClient();
 			}
 			httpResponse = client.execute(request);
 			responseStr = EntityUtils.toString(httpResponse.getEntity(),
 				String.valueOf(Charsets.UTF_8));	
 		} catch (Exception e) {
-			e.printStackTrace();
 			LOGGER.error(e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
 		}
@@ -340,8 +340,49 @@ public class OpenStackComputePlugin implements ComputePlugin {
 
 	public static String getOSScheme() {
 		return osScheme;
-	}
+	}	
 	
+	@Override
+	public org.restlet.Response bypass(Request request) {
+		if (computeOCCIEndpoint == null || "".equals(computeOCCIEndpoint)) {
+			throw new OCCIException(ErrorType.BAD_REQUEST,
+					ResponseConstants.CLOUD_NOT_SUPPORT_OCCI_INTERFACE);
+		}
+		
+		String requestURI = request.getResourceRef().toString();
+		String uriExcludingCompute = requestURI.substring(requestURI.indexOf(COMPUTE_ENDPOINT)
+				+ COMPUTE_ENDPOINT.length());
+		String uriForCloudRequest = computeOCCIEndpoint + uriExcludingCompute;
+		LOGGER.debug("Request will be passed to " + uriForCloudRequest);
+
+		Client clienteForBypass = new Client(Protocol.HTTP);
+		Request reqForCloud = null;
+		
+		if (request.getMethod().equals(Method.GET)) {
+			reqForCloud = new Request(Method.GET, uriForCloudRequest);
+		} else if (request.getMethod().equals(Method.DELETE)) {
+			reqForCloud = new Request(Method.DELETE, uriForCloudRequest);
+		} else if (request.getMethod().equals(Method.POST)) {
+			reqForCloud = new Request(Method.POST, uriForCloudRequest);
+		}
+
+		// forwarding headers from cloud to response
+		Series<org.restlet.engine.header.Header> requestHeaders = (Series<org.restlet.engine.header.Header>) request
+				.getAttributes().get("org.restlet.http.headers");
+		reqForCloud.getAttributes().put("org.restlet.http.headers", requestHeaders);
+
+		return clienteForBypass.handle(reqForCloud);
+
+	}
+
+	private void initClient() {
+		client = new DefaultHttpClient();
+		HttpParams params = new BasicHttpParams();
+		params.setParameter(CoreProtocolPNames.PROTOCOL_VERSION, HttpVersion.HTTP_1_1);
+		client = new DefaultHttpClient(new ThreadSafeClientConnManager(params, client
+				.getConnectionManager().getSchemeRegistry()), params);
+	}
+
 	private class Response {
 
 		private HttpResponse httpResponse;
@@ -360,5 +401,6 @@ public class OpenStackComputePlugin implements ComputePlugin {
 			return responseString;
 		}
 	}
+
 
 }
