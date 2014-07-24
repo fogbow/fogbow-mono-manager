@@ -1,6 +1,7 @@
 package org.fogbowcloud.manager.occi.core;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.fogbowcloud.manager.core.model.DateUtils;
@@ -10,15 +11,14 @@ public class Token {
 	private Map<String, String> attributes;
 	private String accessId;
 	private String user;
-	private Date expirationDate;
 	private DateUtils dateUtils = new DateUtils();
 
 	// TODO Check invalid values
 	public Token(String accessId, String user, Date expirationTime, Map<String, String> attributes) {
 		this.accessId = accessId;
-		this.user = user;
-		this.expirationDate = expirationTime;
+		this.user = user;		
 		this.attributes = attributes;
+		setExpirationDate(expirationTime);
 	}
 
 	public String get(String attributeName) {
@@ -29,8 +29,21 @@ public class Token {
 		return this.accessId;
 	}
 
+	public void setExpirationDate(Date expirationDate) {		
+		if (attributes == null) {
+			attributes = new HashMap<String, String>();
+		}
+		attributes.put(Constants.DATE_EXPIRATION.getValue(),
+				String.valueOf(expirationDate.getTime()));
+	}
+	
 	public Date getExpirationDate() {
-		return this.expirationDate;
+		String dataExpiration = attributes.get(Constants.DATE_EXPIRATION.getValue());
+		if (dataExpiration  != null){
+			return new Date(Long.parseLong(dataExpiration));
+		}else {
+			return null;
+		}
 	}
 
 	public Map<String, String> getAttributes() {
@@ -47,8 +60,8 @@ public class Token {
 	}
 
 	public String toString() {
-		return "AccessId: " + accessId + ", User: " + user + ", expirationDate: " + expirationDate
-				+ ", attributes: " + attributes;
+		return "AccessId: " + accessId + ", User: " + user + ", expirationDate: "
+				+ getExpirationDate() + ", attributes: " + attributes;
 	}
 
 	public String getUser() {
@@ -57,8 +70,9 @@ public class Token {
 	
 	public enum Constants {
 		
-		USER_KEY("username"), PASSWORD_KEY("password"), TENANT_ID_KEY(
-				"tenantId"), TENANT_NAME_KEY("tenantName");
+		USER_KEY("username"), PASSWORD_KEY("password"), TENANT_ID_KEY("tenantId"), TENANT_NAME_KEY(
+				"tenantName"), DATE_EXPIRATION("dataExpiration"), VOMS_PASSWORD("vomsPassword"), VOMS_SERVER(
+				"vomsServer");
 
 		public String value;
 

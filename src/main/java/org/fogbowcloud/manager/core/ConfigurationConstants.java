@@ -42,6 +42,9 @@ public class ConfigurationConstants {
 	public static final String FEDERATION_USER_PASS_KEY = "federation_user_password";
 	public static final String FEDERATION_USER_TENANT_NAME_KEY = "federation_user_tenant_name";
 	
+	public static final String FEDERATION_USER_PASS_VOMS = "federation_user_pass_voms";
+	public static final String FEDERATION_USER_SERVER_VOMS = "federation_user_server_voms";
+	
 	//periods
 	public static final String SCHEDULER_PERIOD_KEY = "scheduler_period";
 	public static final String INSTANCE_MONITORING_PERIOD_KEY = "instance_monitoring_period";
@@ -54,4 +57,9 @@ public class ConfigurationConstants {
 	public static final String SSH_USER_KEY = "ssh_tunnel_user";
 	public static final String SSH_PORT_RANGE_KEY = "ssh_tunnel_port_range";
 
+	//voms
+	public static final String VOMS_PATH_VOMSES = "path_vomses";
+	public static final String VOMS_PATH_TRUST = "path_turst";
+	public static final String VOMS_PATH_VOMSDIR = "path_vomsdir";
+	
 }
