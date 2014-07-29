@@ -9,7 +9,7 @@ import java.util.Properties;
 
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.voms.VomsIdentityPlugin;
-import org.fogbowcloud.manager.core.plugins.voms.VomsIdentityPlugin.GenerateProxyCertificate;
+import org.fogbowcloud.manager.core.plugins.voms.VomsIdentityPlugin.GeneratorProxyCertificate;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.junit.Assert;
 import org.junit.Before;
@@ -24,9 +24,9 @@ public class TestIdentityVoms {
 
 	private static final int TWELVE_HOURS = 1000 * 60 * 60 * 12;
 	private final String VOMS_PASSWORD = "pass";
-	private final String VOMS_SERVER = "atlas";
+	private final String VOMS_SERVER = "test.vo";
 
-	private GenerateProxyCertificate generateProxyCertificate;
+	private GeneratorProxyCertificate generatorProxyCertificate;
 	private VomsIdentityPlugin vomsIdentityPlugin;
 	private Properties properties;
 
@@ -41,8 +41,8 @@ public class TestIdentityVoms {
 		properties.put(ConfigurationConstants.FEDERATION_USER_SERVER_VOMS, VOMS_SERVER);
 
 		vomsIdentityPlugin = new VomsIdentityPlugin(properties);
-		generateProxyCertificate = Mockito.mock(GenerateProxyCertificate.class);
-		vomsIdentityPlugin.setGenerateProxyCertificate(generateProxyCertificate);
+		generatorProxyCertificate = Mockito.mock(GeneratorProxyCertificate.class);
+		vomsIdentityPlugin.setGenerateProxyCertificate(generatorProxyCertificate);
 	}
 
 	@SuppressWarnings({ "unchecked", "deprecation" })
@@ -59,8 +59,8 @@ public class TestIdentityVoms {
 		credentials.put(Token.Constants.VOMS_PASSWORD.getValue(), VOMS_PASSWORD);
 		credentials.put(Token.Constants.VOMS_SERVER.getValue(), VOMS_SERVER);
 
-		Mockito.when(generateProxyCertificate.generate(Mockito.anyMap()))
-				.thenReturn(proxyCertificate);
+		Mockito.when(generatorProxyCertificate.generate(Mockito.anyMap())).thenReturn(
+				proxyCertificate);
 
 		Token myToken = new Token("", "", new Date(), credentials);
 		Token token = vomsIdentityPlugin.reIssueToken(myToken);
@@ -88,8 +88,7 @@ public class TestIdentityVoms {
 		credentials.put(Token.Constants.VOMS_PASSWORD.getValue(), VOMS_PASSWORD);
 		credentials.put(Token.Constants.VOMS_SERVER.getValue(), VOMS_SERVER);
 
-		Mockito.when(generateProxyCertificate.generate(credentials)).thenReturn(
-				proxyCertificate);
+		Mockito.when(generatorProxyCertificate.generate(credentials)).thenReturn(proxyCertificate);
 
 		Token token = vomsIdentityPlugin.createToken(credentials);
 
@@ -109,8 +108,7 @@ public class TestIdentityVoms {
 
 		ProxyCertificate proxy = Utils.getVOMSAA().createVOMSProxy(holder, Fixture.defaultVOFqans);
 
-		String accessId = vomsIdentityPlugin.generateAcessId(proxy
-				.getCertificateChain());
+		String accessId = vomsIdentityPlugin.generateAcessId(proxy.getCertificateChain());
 		Token token = vomsIdentityPlugin.getToken(accessId);
 
 		Assert.assertEquals("CN=test0, O=IGI, C=IT", token.getUser());

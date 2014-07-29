@@ -1,7 +1,10 @@
 package org.fogbowcloud.manager.core.plugins.voms;
 
 import java.io.ByteArrayInputStream;
+import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
+import java.security.Permission;
+import java.security.PermissionCollection;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.CertificateNotYetValidException;
@@ -43,34 +46,41 @@ public class VomsIdentityPlugin implements IdentityPlugin {
 	private static final int DEFAULT_LIFE_TIME = 10;
 	private static final String X_509 = "X.509";
 	private static final Logger LOGGER = Logger.getLogger(VomsIdentityPlugin.class);
-
+	
 	private Properties properties;
-	private GenerateProxyCertificate generateProxyCertificate;
+	private GeneratorProxyCertificate generatorProxyCertificate;
 
 	public VomsIdentityPlugin(Properties properties) {
-		this.generateProxyCertificate = new GenerateProxyCertificate();
+		this.generatorProxyCertificate = new GeneratorProxyCertificate();
+		new CryptographyRestrictions().removeCryptographyRestrictions();
 		this.properties = properties;
 	}
 
 	public void setProperties(Properties properties) {
 		this.properties = properties;
 	}
-	
-	public void setGenerateProxyCertificate(GenerateProxyCertificate generateProxyCertificate) {
-		this.generateProxyCertificate = generateProxyCertificate;
+
+	public void setGenerateProxyCertificate(GeneratorProxyCertificate generatorProxyCertificate) {
+		this.generatorProxyCertificate = generatorProxyCertificate;
 	}
 
 	@Override
 	public Token createToken(Map<String, String> userCredentials) {
-		ProxyCertificate proxyCert = generateProxyCertificate.generate(userCredentials);		
-		
+		ProxyCertificate proxyCert = null;
+		try {
+			proxyCert = generatorProxyCertificate.generate(userCredentials);
+		} catch (Exception e) {
+			LOGGER.error("Problems in the generation of the proxy certificate : " + e.getMessage());
+			e.printStackTrace();
+		}
+
 		String accessId = generateAcessId(proxyCert.getCertificateChain());
 		String user = proxyCert.getCredential().getCertificate().getIssuerDN().getName();
 		Date expirationTime = proxyCert.getCredential().getCertificate().getNotAfter();
-		
+
 		return new Token(accessId, user, expirationTime, new HashMap<String, String>());
 	}
-	
+
 	public String generateAcessId(X509Certificate[] certificateChain) {
 		StringBuilder base64Chain = new StringBuilder();
 
@@ -114,7 +124,7 @@ public class VomsIdentityPlugin implements IdentityPlugin {
 		}
 		String user = certificate.getIssuerDN().getName();
 		Date expirationTime = certificate.getNotAfter();
-		
+
 		return new Token(accessId, user, expirationTime, new HashMap<String, String>());
 	}
 
@@ -126,9 +136,9 @@ public class VomsIdentityPlugin implements IdentityPlugin {
 		CertificateFactory cf = null;
 		try {
 			cf = CertificateFactory.getInstance(X_509);
-			certificates = (Collection<X509Certificate>) cf.generateCertificates(
-					new ByteArrayInputStream(
-					accessId.getBytes(StandardCharsets.UTF_8)));
+			certificates = (Collection<X509Certificate>) cf
+					.generateCertificates(new ByteArrayInputStream(accessId
+							.getBytes(StandardCharsets.UTF_8)));
 		} catch (Exception e) {
 			LOGGER.error("Problems in the generation of the certificate");
 			e.printStackTrace();
@@ -146,8 +156,7 @@ public class VomsIdentityPlugin implements IdentityPlugin {
 			}
 		}
 
-		X509Certificate[] theChain = certificates.toArray(
-				new X509Certificate[]{});
+		X509Certificate[] theChain = certificates.toArray(new X509Certificate[] {});
 		VOMSACValidator validator = getVOMSValidator();
 		List<VOMSValidationResult> results = validator.validateWithResult(theChain);
 
@@ -164,7 +173,7 @@ public class VomsIdentityPlugin implements IdentityPlugin {
 		}
 		return false;
 	}
-	
+
 	@Override
 	public Token createFederationUserToken() {
 		Map<String, String> credentials = new HashMap<String, String>();
@@ -175,7 +184,7 @@ public class VomsIdentityPlugin implements IdentityPlugin {
 
 		return createToken(credentials);
 	}
-	
+
 	private VOMSACValidator getVOMSValidator() {
 		String trust = properties.getProperty(ConfigurationConstants.VOMS_PATH_TRUST);
 		String vomsdir = properties.getProperty(ConfigurationConstants.VOMS_PATH_VOMSDIR);
@@ -185,16 +194,16 @@ public class VomsIdentityPlugin implements IdentityPlugin {
 
 		return VOMSValidators.newValidator(VOMSTrustStore, validatorExt);
 	}
-	
-	public class GenerateProxyCertificate {
-		
-		public ProxyCertificate generate(Map<String, String> userCredentials) {
+
+	public class GeneratorProxyCertificate {
+
+		public ProxyCertificate generate(Map<String, String> userCredentials) throws Exception {
 			char[] keyPassword = userCredentials.get(Token.Constants.VOMS_PASSWORD.getValue())
 					.toCharArray();
 			String vomsServer = userCredentials.get(Token.Constants.VOMS_SERVER.getValue());
-			
+
 			X509Credential cred = UserCredentials.loadCredentials(keyPassword);
-			
+
 			String pathVomses = properties.getProperty(ConfigurationConstants.VOMS_PATH_VOMSES);
 			X509CertChainValidatorExt validatorExt = CertificateValidatorBuilder
 					.buildCertificateValidator(pathVomses, null, null, 0L,
@@ -203,24 +212,55 @@ public class VomsIdentityPlugin implements IdentityPlugin {
 							CertificateValidatorBuilder.DEFAULT_OCSP_CHECKS);
 
 			VOMSACService service = new DefaultVOMSACService.Builder(validatorExt).build();
-			
+
 			DefaultVOMSACRequest request = new DefaultVOMSACRequest.Builder(vomsServer).lifetime(
 					DEFAULT_LIFE_TIME).build();
 			AttributeCertificate attributeCertificate = service.getVOMSAttributeCertificate(cred,
 					request);
-			
+
 			ProxyCertificateOptions proxyOptions = new ProxyCertificateOptions(
 					cred.getCertificateChain());
-			proxyOptions.setAttributeCertificates(new AttributeCertificate[] { attributeCertificate });
-			
-			ProxyCertificate proxyCert = null;
-			try {
-				proxyCert = ProxyGenerator.generate(proxyOptions, cred.getKey());
-			} catch (Exception e) {
-				LOGGER.error("Problems in the generation of the proxy certificate");
-			}			
-			
-			return proxyCert;
+			proxyOptions
+					.setAttributeCertificates(new AttributeCertificate[] { attributeCertificate });
+
+			return ProxyGenerator.generate(proxyOptions, cred.getKey());
 		}
+	}
+	
+	private class CryptographyRestrictions{
+		
+		private void removeCryptographyRestrictions() {
+			if (!isRestrictedCryptography()) {
+				return;
+			}
+		    try {
+		        final Class<?> jceSecurity = Class.forName("javax.crypto.JceSecurity");
+		        final Class<?> cryptoPermissions = Class.forName("javax.crypto.CryptoPermissions");
+		        final Class<?> cryptoAllPermission = Class.forName("javax.crypto.CryptoAllPermission");
+
+		        final Field isRestrictedField = jceSecurity.getDeclaredField("isRestricted");
+		        isRestrictedField.setAccessible(true);
+		        isRestrictedField.set(null, false);
+
+		        final Field defaultPolicyField = jceSecurity.getDeclaredField("defaultPolicy");
+		        defaultPolicyField.setAccessible(true);
+		        final PermissionCollection defaultPolicy = (PermissionCollection) defaultPolicyField.get(null);
+
+		        final Field perms = cryptoPermissions.getDeclaredField("perms");
+		        perms.setAccessible(true);
+		        ((Map<?, ?>) perms.get(defaultPolicy)).clear();
+
+		        final Field instance = cryptoAllPermission.getDeclaredField("INSTANCE");
+		        instance.setAccessible(true);
+		        defaultPolicy.add((Permission) instance.get(null));
+
+		    } catch (final Exception e) {
+		    }
+		}
+
+		private boolean isRestrictedCryptography() {
+		    return "Java(TM) SE Runtime Environment".equals(System.getProperty("java.runtime.name"));
+		}		
+		
 	}
 }
