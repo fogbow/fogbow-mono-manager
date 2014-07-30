@@ -51,7 +51,7 @@ public class TestGetRequest {
 		Mockito.when(
 				computePlugin.requestInstance(Mockito.anyString(), Mockito.any(List.class),
 						Mockito.any(Map.class))).thenReturn(instanceLocation);
-
+		
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.getToken(OCCITestHelper.ACCESS_TOKEN))
 				.thenReturn(
@@ -325,7 +325,7 @@ public class TestGetRequest {
 	@Test
 	public void testGetRequestNotFound() throws URISyntaxException, ParseException, IOException,
 			HttpException {
-		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_REQUEST + "/" + "not_found");
+		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_REQUEST + "not_found");
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		HttpClient client = new DefaultHttpClient();

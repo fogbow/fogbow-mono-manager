@@ -24,5 +24,5 @@ public interface ComputePlugin {
 	
 	public ResourcesInfo getResourcesInfo(Token token);
 	
-	public Response bypass(Request request);
+	public void bypass(Request request, Response response);
 }

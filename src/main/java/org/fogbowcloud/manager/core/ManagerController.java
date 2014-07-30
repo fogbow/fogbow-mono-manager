@@ -645,7 +645,7 @@ public class ManagerController {
 		return ResourceRepository.getInstance().getAll();
 	}
 
-	public Response bypass(org.restlet.Request request) {
-		return computePlugin.bypass(request);
+	public void bypass(org.restlet.Request request, Response response) {
+		computePlugin.bypass(request, response);
 	}
 }

@@ -1,6 +1,5 @@
 package org.fogbowcloud.manager.occi.instance;
 
-import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 
@@ -11,15 +10,12 @@ import org.fogbowcloud.manager.occi.core.HeaderUtils;
 import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
-import org.restlet.Response;
 import org.restlet.data.MediaType;
 import org.restlet.engine.adapter.HttpRequest;
 import org.restlet.representation.StringRepresentation;
 import org.restlet.resource.Delete;
 import org.restlet.resource.Get;
-import org.restlet.resource.Post;
 import org.restlet.resource.ServerResource;
-import org.restlet.util.Series;
 
 public class ComputeServerResource extends ServerResource {
 
@@ -87,32 +83,6 @@ public class ComputeServerResource extends ServerResource {
 		
 		application.removeInstance(authToken, instanceId);
 		return ResponseConstants.OK;			
-	}
-
-	@Post
-	public StringRepresentation post() {
-		OCCIApplication application = (OCCIApplication) getApplication();
-		Response response = application.bypass(getRequest());
-		return configureResponse(response);
-	}
-
-	private StringRepresentation configureResponse(Response response) {
-		// setting headers to response
-		Series<org.restlet.engine.header.Header> responseHeaders = (Series<org.restlet.engine.header.Header>) response.getAttributes().get("org.restlet.http.headers");
-		if (responseHeaders != null) {
-			getResponseAttributes().put("org.restlet.http.headers", responseHeaders);
-		}
-
-		getResponse().setStatus(response.getStatus());
-		String content = "";
-		try {
-			content = response.getEntity().getText();
-		} catch (IOException e) {
-			LOGGER.error(e);
-			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
-		}
-		
-		return new StringRepresentation(content, response.getEntity().getMediaType());
 	}
 
 	protected static String generateResponse(List<Instance> instances) {

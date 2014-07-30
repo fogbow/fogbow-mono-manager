@@ -24,7 +24,7 @@ public class HeaderUtils {
 
 	public static void checkOCCIContentType(Series<Header> headers) {
 		String contentType = headers.getValues(OCCIHeaders.CONTENT_TYPE);
-		if (!contentType.equals(OCCIHeaders.OCCI_CONTENT_TYPE)) {
+		if (contentType == null || !contentType.equals(OCCIHeaders.OCCI_CONTENT_TYPE)) {
 			LOGGER.debug("Content-type " + contentType + " was not occi.");
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}

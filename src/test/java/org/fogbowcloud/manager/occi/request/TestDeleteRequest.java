@@ -35,6 +35,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.restlet.Response;
 
 public class TestDeleteRequest {
 
@@ -49,6 +50,10 @@ public class TestDeleteRequest {
 		Mockito.when(
 				computePlugin.requestInstance(Mockito.anyString(), Mockito.any(List.class),
 						Mockito.any(Map.class))).thenReturn("");
+		Mockito.doThrow(
+				new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX))
+				.when(computePlugin)
+				.bypass(Mockito.any(org.restlet.Request.class), Mockito.any(Response.class));
 
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.getToken(OCCITestHelper.ACCESS_TOKEN))
@@ -206,7 +211,7 @@ public class TestDeleteRequest {
 
 	@Test
 	public void testDeleteRequestNotFound() throws URISyntaxException, HttpException, IOException {
-		HttpDelete delete = new HttpDelete(OCCITestHelper.URI_FOGBOW_REQUEST + "/" + "not_found_id");
+		HttpDelete delete = new HttpDelete(OCCITestHelper.URI_FOGBOW_REQUEST + "not_found_id");
 		delete.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		delete.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		HttpClient client = new DefaultHttpClient();

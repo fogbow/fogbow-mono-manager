@@ -507,8 +507,9 @@ public class TestComputeOpenStack {
 		Request request = new Request(Method.GET, OCCITestHelper.URI_FOGBOW_COMPUTE);
 		request.setResourceRef(OCCITestHelper.URI_FOGBOW_COMPUTE);
 		Series<Header> requestHeaders = getRequestHeaders(request);
-		requestHeaders.add(new Header(HeaderUtils.normalize(OCCIHeaders.X_AUTH_TOKEN), PluginHelper.ACCESS_ID));		
-		Response response = computeOpenStack.bypass(request);
+		requestHeaders.add(new Header(HeaderUtils.normalize(OCCIHeaders.X_AUTH_TOKEN), PluginHelper.ACCESS_ID));
+		Response response = new Response(request);		
+		computeOpenStack.bypass(request, response);
 		
 		// checking response
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatus().getCode());
@@ -535,7 +536,8 @@ public class TestComputeOpenStack {
 		request.setResourceRef(OCCITestHelper.URI_FOGBOW_COMPUTE);
 		Series<Header> requestHeaders = getRequestHeaders(request);
 		requestHeaders.add(new Header(HeaderUtils.normalize(OCCIHeaders.X_AUTH_TOKEN), PluginHelper.ACCESS_ID));		
-		Response response = computeOpenStack.bypass(request);
+		Response response = new Response(request);		
+		computeOpenStack.bypass(request, response);
 		
 		// checking response
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatus().getCode());
@@ -550,7 +552,8 @@ public class TestComputeOpenStack {
 		request.setResourceRef(OCCITestHelper.URI_FOGBOW_COMPUTE + FIRST_INSTANCE_ID);
 		requestHeaders = getRequestHeaders(request);
 		requestHeaders.add(new Header(HeaderUtils.normalize(OCCIHeaders.X_AUTH_TOKEN), PluginHelper.ACCESS_ID));		
-		response = computeOpenStack.bypass(request);
+		response = new Response(request);		
+		computeOpenStack.bypass(request, response);
 		
 		// checking instance details
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatus().getCode());
@@ -594,7 +597,8 @@ public class TestComputeOpenStack {
 		request.setResourceRef(OCCITestHelper.URI_FOGBOW_COMPUTE + FIRST_INSTANCE_ID);
 		Series<Header> requestHeaders = getRequestHeaders(request);
 		requestHeaders.add(new Header(HeaderUtils.normalize(OCCIHeaders.X_AUTH_TOKEN), PluginHelper.ACCESS_ID));		
-		Response response = computeOpenStack.bypass(request);
+		Response response = new Response(request);		
+		computeOpenStack.bypass(request, response);
 		
 		// checking response
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatus().getCode());
@@ -633,7 +637,8 @@ public class TestComputeOpenStack {
 		request.setResourceRef(OCCITestHelper.URI_FOGBOW_COMPUTE);
 		Series<Header> requestHeaders = getRequestHeaders(request);
 		requestHeaders.add(new Header(HeaderUtils.normalize(OCCIHeaders.X_AUTH_TOKEN), PluginHelper.ACCESS_ID));		
-		Response response = computeOpenStack.bypass(request);
+		Response response = new Response(request);		
+		computeOpenStack.bypass(request, response);
 		
 		// checking response
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatus().getCode());
@@ -661,8 +666,9 @@ public class TestComputeOpenStack {
 		requestHeaders.add(new Header(HeaderUtils.normalize(OCCIHeaders.CONTENT_TYPE), OCCIHeaders.OCCI_CONTENT_TYPE));
 		requestHeaders.add(new Header(HeaderUtils.normalize(OCCIHeaders.CATEGORY), new Category(PluginHelper.LINUX_X86_TERM,
 				OpenStackComputePlugin.getOSScheme(), RequestConstants.MIXIN_CLASS).toHeader()));
-		Response response = computeOpenStack.bypass(request);
-
+		Response response = new Response(request);		
+		computeOpenStack.bypass(request, response);
+		
 		//checking response
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatus().getCode());
 		Series<Header> responseHeaders = (Series<Header>) response.getAttributes().get(RESTLET_HEADERS_ATT_KEY);

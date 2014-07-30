@@ -16,7 +16,9 @@ import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.restlet.Application;
 import org.restlet.Restlet;
+import org.restlet.data.MediaType;
 import org.restlet.engine.adapter.HttpRequest;
+import org.restlet.representation.StringRepresentation;
 import org.restlet.resource.Delete;
 import org.restlet.resource.Get;
 import org.restlet.resource.Post;
@@ -261,7 +263,7 @@ public class ComputeApplication extends Application {
 		}
 
 		@Post
-		public String post() {
+		public StringRepresentation post() {
 			ComputeApplication application = (ComputeApplication) getApplication();
 			HttpRequest req = (HttpRequest) getRequest();
 
@@ -274,7 +276,7 @@ public class ComputeApplication extends Application {
 			String computeEndpoint = req.getHostRef() + req.getHttpCall().getRequestUri();
 			String instanceId = application.newInstance(authToken, categories, xOCCIAtt, link);
 			getResponse().setLocationRef(computeEndpoint + instanceId);
-			return ResponseConstants.OK;
+			return new StringRepresentation(ResponseConstants.OK, MediaType.TEXT_PLAIN);
 		}
 
 		@Delete

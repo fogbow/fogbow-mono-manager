@@ -1,5 +1,7 @@
 package org.fogbowcloud.manager.core.plugins.openstack;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -43,7 +45,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.restlet.Client;
 import org.restlet.Request;
-import org.restlet.data.Method;
 import org.restlet.data.Protocol;
 import org.restlet.util.Series;
 
@@ -73,12 +74,13 @@ public class OpenStackComputePlugin implements ComputePlugin {
 	private Map<String, Category> fogTermToOpensStackCategory = new HashMap<String, Category>();
 	private DefaultHttpClient client;
 	private String networkId;
+	private String oCCIEndpoint;
 
 	private static final Logger LOGGER = Logger.getLogger(OpenStackComputePlugin.class);
 	
 	public OpenStackComputePlugin(Properties properties) {
-		this.computeOCCIEndpoint = properties.getProperty(ConfigurationConstants.COMPUTE_OCCI_URL_KEY)
-				+ COMPUTE_ENDPOINT;
+		this.oCCIEndpoint = properties.getProperty(ConfigurationConstants.COMPUTE_OCCI_URL_KEY);
+		this.computeOCCIEndpoint = oCCIEndpoint + COMPUTE_ENDPOINT;
 		this.computeV2APIEndpoint = properties.getProperty("compute_openstack_v2api_url")
 				+ COMPUTE_V2_API_ENDPOINT;
 		
@@ -343,36 +345,34 @@ public class OpenStackComputePlugin implements ComputePlugin {
 	}	
 	
 	@Override
-	public org.restlet.Response bypass(Request request) {
-		if (computeOCCIEndpoint == null || "".equals(computeOCCIEndpoint)) {
+	public void bypass(Request request, org.restlet.Response response) {
+		if (computeOCCIEndpoint == null || computeOCCIEndpoint.isEmpty()) {
 			throw new OCCIException(ErrorType.BAD_REQUEST,
 					ResponseConstants.CLOUD_NOT_SUPPORT_OCCI_INTERFACE);
 		}
 		
-		String requestURI = request.getResourceRef().toString();
-		String uriExcludingCompute = requestURI.substring(requestURI.indexOf(COMPUTE_ENDPOINT)
-				+ COMPUTE_ENDPOINT.length());
-		String uriForCloudRequest = computeOCCIEndpoint + uriExcludingCompute;
-		LOGGER.debug("Request will be passed to " + uriForCloudRequest);
-
-		Client clienteForBypass = new Client(Protocol.HTTP);
-		Request reqForCloud = null;
+		URI origRequestURI;
+		try {
+			origRequestURI = new URI(request.getResourceRef().toString());
+			URI occiURI = new URI(oCCIEndpoint);
+			URI newRequestURI = new URI(occiURI.getScheme(), occiURI.getUserInfo(),
+					occiURI.getHost(), occiURI.getPort(), origRequestURI.getPath(),
+					origRequestURI.getQuery(), origRequestURI.getFragment());
+			Client clienteForBypass = new Client(Protocol.HTTP);
+			Request proxiedRequest = new Request(request.getMethod(), newRequestURI.toString());
 		
-		if (request.getMethod().equals(Method.GET)) {
-			reqForCloud = new Request(Method.GET, uriForCloudRequest);
-		} else if (request.getMethod().equals(Method.DELETE)) {
-			reqForCloud = new Request(Method.DELETE, uriForCloudRequest);
-		} else if (request.getMethod().equals(Method.POST)) {
-			reqForCloud = new Request(Method.POST, uriForCloudRequest);
+			// forwarding headers from cloud to response
+			Series<org.restlet.engine.header.Header> requestHeaders = (Series<org.restlet.engine.header.Header>) request
+					.getAttributes().get("org.restlet.http.headers");
+			proxiedRequest.getAttributes().put("org.restlet.http.headers", requestHeaders);
+
+			clienteForBypass.handle(proxiedRequest, response);
+		} catch (URISyntaxException e) {
+			LOGGER.error(e);
+			throw new OCCIException(ErrorType.BAD_REQUEST,
+					e.getMessage());
+			
 		}
-
-		// forwarding headers from cloud to response
-		Series<org.restlet.engine.header.Header> requestHeaders = (Series<org.restlet.engine.header.Header>) request
-				.getAttributes().get("org.restlet.http.headers");
-		reqForCloud.getAttributes().put("org.restlet.http.headers", requestHeaders);
-
-		return clienteForBypass.handle(reqForCloud);
-
 	}
 
 	private void initClient() {

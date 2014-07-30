@@ -3,8 +3,7 @@ package org.fogbowcloud.manager.occi;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.http.HttpRequest;
-import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
 import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.occi.core.Category;
@@ -40,7 +39,22 @@ public class OCCIApplication extends Application {
 		router.attach("/members", MemberServerResource.class);
 		router.attach("/token", TokenServerResource.class);
 		router.attach("/-/", QueryServerResource.class);
+		router.attachDefault(new Restlet() {
+			@Override
+			public void handle(org.restlet.Request request, Response response) {
+				bypass(request, response);
+			}
+		});
 		return router;
+	}
+	
+	@Override
+	public void handle(org.restlet.Request request, Response response) {
+		super.handle(request, response);
+		
+		if (response.getStatus().getCode() == HttpStatus.SC_METHOD_NOT_ALLOWED){			
+			bypass(request, response);
+		}
 	}
 	
 	public Token getToken(Map<String, String> attributesToken) {
@@ -92,7 +106,7 @@ public class OCCIApplication extends Application {
 		return managerFacade.getAllResouces(authToken);
 	}
 
-	public Response bypass(org.restlet.Request request) {
-		return managerFacade.bypass(request);
+	public void bypass(org.restlet.Request request, Response response) {
+		managerFacade.bypass(request, response);
 	}
 }

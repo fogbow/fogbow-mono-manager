@@ -39,7 +39,8 @@ public class RequestServerResource extends ServerResource {
 		String accessId = HeaderUtils.getAuthToken(req.getHeaders(), getResponse());
 		String requestId = (String) getRequestAttributes().get("requestId");
 		List<String> acceptContent = HeaderUtils.getAccept(req.getHeaders());
-
+		LOGGER.debug("accept contents:" + acceptContent);
+		
 		if (requestId == null) {
 			LOGGER.info("Getting all requests of token :" + accessId);
 			if (acceptContent.size() == 0
@@ -55,7 +56,7 @@ public class RequestServerResource extends ServerResource {
 						ResponseConstants.METHOD_NOT_SUPPORTED);
 			}
 		}
-				
+
 		LOGGER.info("Getting request(" + requestId + ") of token :" + accessId);
 		Request request = application.getRequest(accessId, requestId);		
 		if (acceptContent.size() == 0 || acceptContent.contains(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE)) {
