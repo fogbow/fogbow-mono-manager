@@ -145,7 +145,13 @@ public class HeaderUtils {
 		for (int i = 0; i < headerValues.length; i++) {
 			String[] eachHeaderValue = headerValues[i].split(",");			
 			for (int j = 0; j < eachHeaderValue.length; j++) {
-				acceptContents.add(eachHeaderValue[j].trim());			
+				/*
+				 * This string represents any value, when any value we'll
+				 * consider that accept header was not specified
+				 */ 
+				if (!"*/*".equals(eachHeaderValue[j].trim())){
+					acceptContents.add(eachHeaderValue[j].trim());			
+				}
 			}
 		}		
 		return acceptContents;
