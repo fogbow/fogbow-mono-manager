@@ -22,7 +22,6 @@ import org.fogbowcloud.manager.occi.core.Resource;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.instance.Instance;
-import org.fogbowcloud.manager.occi.instance.Instance.Link;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.fogbowcloud.manager.occi.util.OCCITestHelper;
 import org.junit.After;
@@ -48,8 +47,7 @@ public class TestGetCompute {
 		List<Resource> list = new ArrayList<Resource>();
 		Map<String, String> map = new HashMap<String, String>();
 		map.put("test", "test");
-		Link link = null;
-		Instance instance1 = new Instance(INSTANCE_1_ID, list, map, link);
+		Instance instance1 = new Instance(INSTANCE_1_ID, list, map, null);
 
 		computePlugin = Mockito.mock(ComputePlugin.class);
 		Mockito.when(computePlugin.getInstance(Mockito.anyString(), Mockito.eq(INSTANCE_1_ID)))
