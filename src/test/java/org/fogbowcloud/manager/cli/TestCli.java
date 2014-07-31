@@ -102,7 +102,7 @@ public class TestCli {
 		final String image = "image";
 		final String flavor = "flavor";
 
-		HttpUriRequest request = new HttpPost(Main.DEFAULT_URL + "/request");
+		HttpUriRequest request = new HttpPost(Main.DEFAULT_URL + "/" + RequestConstants.TERM);
 		request.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		request.addHeader("Category", RequestConstants.TERM
 				+ "; scheme=\"http://schemas.fogbowcloud.org/request#\"; class=\"kind\"");
@@ -127,17 +127,19 @@ public class TestCli {
 	@SuppressWarnings("static-access")
 	@Test
 	public void commandPostRequestDefaultValues() throws Exception {
-		HttpUriRequest request = new HttpPost(Main.DEFAULT_URL + "/request");
+		HttpUriRequest request = new HttpPost(Main.DEFAULT_URL + "/" + RequestConstants.TERM);
 		request.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		request.addHeader("Category", RequestConstants.TERM
-				+ "; scheme=\"http://schemas.fogbowcloud.org/request#\"; class=\"kind\"");
+		request.addHeader("Category", RequestConstants.TERM + "; scheme=\""
+				+ RequestConstants.SCHEME + "\"; class=\"" + RequestConstants.KIND_CLASS + "\"");
 		request.addHeader("X-OCCI-Attribute", "org.fogbowcloud.request.instance-count="
 				+ Main.DEFAULT_INTANCE_COUNT);
 		request.addHeader("X-OCCI-Attribute", "org.fogbowcloud.request.type=one-time");
-		request.addHeader("Category", Main.DEFAULT_FLAVOR
-				+ "; scheme=\"http://schemas.fogbowcloud.org/template/resource#\"; class=\"mixin\"");
-		request.addHeader("Category", Main.DEFAULT_IMAGE
-				+ "; scheme=\"http://schemas.fogbowcloud.org/template/os#\"; class=\"mixin\"");
+		request.addHeader("Category", Main.DEFAULT_FLAVOR + "; scheme=\""
+				+ RequestConstants.TEMPLATE_RESOURCE_SCHEME + "\"; class=\""
+				+ RequestConstants.MIXIN_CLASS + "\"");
+		request.addHeader("Category", Main.DEFAULT_IMAGE + "; scheme=\""
+				+ RequestConstants.TEMPLATE_OS_SCHEME + "\"; class=\""
+				+ RequestConstants.MIXIN_CLASS + "\"");
 		request.addHeader(OCCIHeaders.X_AUTH_TOKEN, DefaultDataTestHelper.ACCESS_TOKEN_ID);
 		expectedRequest = new HttpUriRequestMatcher(request);
 
@@ -151,7 +153,8 @@ public class TestCli {
 	@SuppressWarnings("static-access")
 	@Test
 	public void commandGetSpecificRequest() throws Exception {
-		HttpUriRequest request = new HttpGet(Main.DEFAULT_URL + "/request/" + REQUEST_ID);
+		HttpUriRequest request = new HttpGet(Main.DEFAULT_URL + "/" + RequestConstants.TERM + "/"
+				+ REQUEST_ID);
 		request.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 
 		request.addHeader(OCCIHeaders.X_AUTH_TOKEN, DefaultDataTestHelper.ACCESS_TOKEN_ID);
@@ -167,7 +170,7 @@ public class TestCli {
 	@SuppressWarnings("static-access")
 	@Test
 	public void commandGetRequest() throws Exception {
-		HttpUriRequest request = new HttpGet(Main.DEFAULT_URL + "/request");
+		HttpUriRequest request = new HttpGet(Main.DEFAULT_URL + "/" + RequestConstants.TERM);
 		request.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 
 		request.addHeader(OCCIHeaders.X_AUTH_TOKEN, DefaultDataTestHelper.ACCESS_TOKEN_ID);
@@ -183,7 +186,8 @@ public class TestCli {
 	@SuppressWarnings("static-access")
 	@Test
 	public void commandDeleteRequest() throws Exception {
-		HttpUriRequest request = new HttpDelete(Main.DEFAULT_URL + "/request/" + REQUEST_ID);
+		HttpUriRequest request = new HttpDelete(Main.DEFAULT_URL + "/" + RequestConstants.TERM
+				+ "/" + REQUEST_ID);
 		request.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 
 		request.addHeader(OCCIHeaders.X_AUTH_TOKEN, DefaultDataTestHelper.ACCESS_TOKEN_ID);

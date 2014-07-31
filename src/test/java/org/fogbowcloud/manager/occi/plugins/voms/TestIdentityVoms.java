@@ -45,6 +45,28 @@ public class TestIdentityVoms {
 		vomsIdentityPlugin.setGenerateProxyCertificate(generatorProxyCertificate);
 	}
 
+//	@Test
+//	public void test() {
+//		
+//		properties = new Properties();
+//		properties.put(ConfigurationConstants.VOMS_PATH_TRUST,
+//				"src/test/resources/voms/trust-anchors");
+//		properties.put(ConfigurationConstants.VOMS_PATH_VOMSES, "src/test/resources/voms/vomses");
+//		properties.put(ConfigurationConstants.VOMS_PATH_VOMSDIR, "src/test/resources/voms/vomsdir");
+//		properties.put(ConfigurationConstants.FEDERATION_USER_PASS_VOMS, VOMS_PASSWORD);
+//		properties.put(ConfigurationConstants.FEDERATION_USER_SERVER_VOMS, VOMS_SERVER);
+//
+//		vomsIdentityPlugin = new VomsIdentityPlugin(properties);
+//		generatorProxyCertificate = vomsIdentityPlugin.new GeneratorProxyCertificate();
+//		vomsIdentityPlugin.setGenerateProxyCertificate(generatorProxyCertificate);
+//		
+//		Map<String, String> credentials = new HashMap<String, String>();
+//		credentials.put(Token.Constants.VOMS_PASSWORD.getValue(), VOMS_PASSWORD);
+//		credentials.put(Token.Constants.VOMS_SERVER.getValue(), VOMS_SERVER);
+//		
+//		vomsIdentityPlugin.createToken(credentials);
+//	}
+	
 	@SuppressWarnings({ "unchecked", "deprecation" })
 	@Test
 	public void testReIssueToken() throws Exception {
