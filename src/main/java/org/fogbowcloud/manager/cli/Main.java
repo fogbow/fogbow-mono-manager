@@ -31,6 +31,7 @@ import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.core.Token.Constants;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
+import org.fogbowcloud.manager.occi.request.RequestType;
 
 import com.beust.jcommander.DynamicParameter;
 import com.beust.jcommander.JCommander;
@@ -41,19 +42,19 @@ public class Main {
 
 	protected static String DEFAULT_URL = "http://localhost:8182";
 	protected static int DEFAULT_INTANCE_COUNT = 1;
-	protected static final String DEFAULT_TYPE = "one-time";
-	protected static final String DEFAULT_FLAVOR = "fogbow-small";
+	protected static final String DEFAULT_TYPE = RequestType.ONE_TIME.getValue();
+	protected static final String DEFAULT_FLAVOR = RequestConstants.SMALL_TERM;
 	protected static final String DEFAULT_IMAGE = "fogbow-linux-x86";
 
 	private static HttpClient client;
 
 	public static void main(String[] args) throws Exception {
 		configureLog4j();
-		
+
 		JCommander jc = new JCommander();
-		
+
 		MemberCommand member = new MemberCommand();
-		jc.addCommand("member", member );
+		jc.addCommand("member", member);
 		RequestCommand request = new RequestCommand();
 		jc.addCommand("request", request);
 		InstanceCommand instance = new InstanceCommand();
@@ -84,16 +85,18 @@ public class Main {
 					return;
 				}
 				if (request.requestId != null) {
-					doRequest("get", url + "/request/" + request.requestId, request.authToken);
+					doRequest("get", url + "/" + RequestConstants.TERM + "/" + request.requestId,
+							request.authToken);
 				} else {
-					doRequest("get", url + "/request", request.authToken);
+					doRequest("get", url + "/" + RequestConstants.TERM, request.authToken);
 				}
 			} else if (request.delete) {
 				if (request.create || request.get || request.requestId == null) {
 					jc.usage();
 					return;
 				}
-				doRequest("delete", url + "/request/" + request.requestId, request.authToken);
+				doRequest("delete", url + "/" + RequestConstants.TERM + "/" + request.requestId,
+						request.authToken);
 			} else if (request.create) {
 				if (request.delete || request.get || request.requestId != null) {
 					jc.usage();
@@ -106,21 +109,20 @@ public class Main {
 				}
 
 				Set<Header> headers = new HashSet<Header>();
-				headers.add(new BasicHeader("Category", RequestConstants.TERM + 
-						"; scheme=\"http://schemas.fogbowcloud.org/request#\"; class=\"kind\""));
+				headers.add(new BasicHeader("Category", RequestConstants.TERM + "; scheme=\""
+						+ RequestConstants.SCHEME + "\"; class=\"" + RequestConstants.KIND_CLASS
+						+ "\""));
 				headers.add(new BasicHeader("X-OCCI-Attribute",
 						"org.fogbowcloud.request.instance-count=" + request.instanceCount));
 				headers.add(new BasicHeader("X-OCCI-Attribute", "org.fogbowcloud.request.type="
 						+ request.type));
-				headers.add(new BasicHeader(
-						"Category",
-						request.flavor
-								+ "; scheme=\"http://schemas.fogbowcloud.org/template/resource#\"; class=\"mixin\""));
-				headers.add(new BasicHeader(
-						"Category",
-						request.image
-								+ "; scheme=\"http://schemas.fogbowcloud.org/template/os#\"; class=\"mixin\""));
-				doRequest("post", url + "/request", request.authToken, headers);
+				headers.add(new BasicHeader("Category", request.flavor + "; scheme=\""
+						+ RequestConstants.TEMPLATE_RESOURCE_SCHEME + "\"; class=\""
+						+ RequestConstants.MIXIN_CLASS + "\""));
+				headers.add(new BasicHeader("Category", request.image + "; scheme=\""
+						+ RequestConstants.TEMPLATE_OS_SCHEME + "\"; class=\""
+						+ RequestConstants.MIXIN_CLASS + "\""));
+				doRequest("post", url + "/" + RequestConstants.TERM, request.authToken, headers);
 			}
 		} else if (parsedCommand.equals("instance")) {
 			String url = instance.url;
@@ -143,9 +145,9 @@ public class Main {
 			}
 		} else if (parsedCommand.equals("token")) {
 			String url = token.url;
-			
-			Set<Header> headers = getHeadersCredentials(token.credentials);		
-			
+
+			Set<Header> headers = getHeadersCredentials(token.credentials);
+
 			doRequest("get", url + "/token", null, headers);
 		} else if (parsedCommand.equals("resource")) {
 			String url = resource.url;
@@ -153,27 +155,25 @@ public class Main {
 			doRequest("get", url + "/-/", null);
 		}
 	}
-	
+
 	private static Set<Header> getHeadersCredentials(Map<String, String> mapCredentials) {
 		Set<Header> headers = new HashSet<Header>();
-		
+
 		Constants[] tokenConstants = Token.Constants.values();
-		for (Constants constant : tokenConstants) {			
-			if(constant.getValue().equals(Token.Constants.USER_KEY.getValue())) {
-				if(mapCredentials.get(Token.Constants.PASSWORD_KEY.getValue()) == null){					
+		for (Constants constant : tokenConstants) {
+			if (constant.getValue().equals(Token.Constants.USER_KEY.getValue())) {
+				if (mapCredentials.get(Token.Constants.PASSWORD_KEY.getValue()) == null) {
 					System.out.print("Password: ");
-					String password = new String(JCommander.getConsole()
-							.readPassword(false));
-					headers.add(new BasicHeader(Token.Constants.PASSWORD_KEY.getValue(),
-							password));
+					String password = new String(JCommander.getConsole().readPassword(false));
+					headers.add(new BasicHeader(Token.Constants.PASSWORD_KEY.getValue(), password));
 				}
 			}
 			String value = mapCredentials.get(constant.getValue());
-			if(value != null){
+			if (value != null) {
 				headers.add(new BasicHeader(constant.getValue(), value));
 			}
 		}
-	
+
 		return headers;
 	}
 
@@ -214,8 +214,8 @@ public class Main {
 			client = new DefaultHttpClient(new ThreadSafeClientConnManager(params, client
 					.getConnectionManager().getSchemeRegistry()), params);
 		}
-		HttpResponse response = client.execute(request);			
-		
+		HttpResponse response = client.execute(request);
+
 		if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
 			System.out.println(EntityUtils.toString(response.getEntity()));
 		} else {
@@ -289,7 +289,7 @@ public class Main {
 		Boolean get = false;
 
 		@DynamicParameter(names = "-D", description = "Dynamic parameters")
-		private Map<String, String> credentials = new HashMap<String, String>();		
+		private Map<String, String> credentials = new HashMap<String, String>();
 	}
 
 	@Parameters(separators = "=", commandDescription = "Resources Fogbow")
