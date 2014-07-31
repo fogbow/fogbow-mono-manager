@@ -17,18 +17,18 @@ public class Instance {
 
 	private String id;
 	private List<Resource> resources;
-	private Link link;
+	private List<Link> links;
 	private Map<String, String> attributes;
 
 	public Instance(String id) {
 		this.id = id;
 	}
 
-	public Instance(String id, List<Resource> resources, Map<String, String> attributes, Link link) {
+	public Instance(String id, List<Resource> resources, Map<String, String> attributes, List<Link> links) {
 		this(id);
 		this.resources = resources;
 		this.attributes = attributes;
-		this.link = link;
+		this.links = links;
 	}
 
 	public static Instance parseInstance(String textResponse) {
@@ -38,7 +38,7 @@ public class Instance {
 	public static Instance parseInstance(String id, String textResponse) {
 		List<Resource> resources = new ArrayList<Resource>();
 		Map<String, String> attributes = new LinkedHashMap<String, String>();
-		Link link = null;
+		List<Link> links = new ArrayList<Link>();
 
 		String[] lines = textResponse.split("\n");
 		for (String line : lines) {
@@ -87,14 +87,14 @@ public class Instance {
 				resources.add(new Resource(category, attributesResource, actionsResource, location,
 						title, rel));
 			} else if (line.contains("Link")) {
-				link = Link.parseLink(line);
+				links.add(Link.parseLink(line));
 			} else if (line.contains("X-OCCI-Attribute: ")) {
 
 				String[] blockLine = line.replace(PREFIX_DEFAULT_ATTRIBUTE, "").split("=");
 				attributes.put(blockLine[0], blockLine[1].replace("\"", "").trim());
 			}
 		}
-		return new Instance(id, resources, attributes, link);
+		return new Instance(id, resources, attributes, links);
 	}
 
 	public String toOCCIMessageFormatLocation() {
@@ -106,8 +106,10 @@ public class Instance {
 		for (Resource resource : this.resources) {
 			messageFormat += CATEGORY + " " + resource.toHeader() + "\n";
 		}
-		if (link != null) {
-			messageFormat += this.link.toOCCIMessageFormatLink() + "\n";
+		if (links != null) {
+			for (Link link : links) {
+				messageFormat += link.toOCCIMessageFormatLink() + "\n";
+			}
 		}
 		for (String key : this.attributes.keySet()) {
 			messageFormat += PREFIX_DEFAULT_ATTRIBUTE + key + "=\"" + attributes.get(key) + "\"\n";
@@ -135,8 +137,8 @@ public class Instance {
 		return id;
 	}
 
-	public Link getLink() {
-		return link;
+	public List<Link> getLinks() {
+		return links;
 	}
 
 	public static class Link {
