@@ -218,9 +218,9 @@ public class RequestServerResource extends ServerResource {
 		Iterator<Request> requestIt = requests.iterator();
 		while(requestIt.hasNext()){
 			if (requestEndpoint.endsWith("/")){
-				response += HeaderUtils.X_OCCI_LOCATION + requestEndpoint + requestIt.next().getId();
+				response += HeaderUtils.X_OCCI_LOCATION_PREFIX + requestEndpoint + requestIt.next().getId();
 			} else {
-				response += HeaderUtils.X_OCCI_LOCATION + requestEndpoint + "/" + requestIt.next().getId();
+				response += HeaderUtils.X_OCCI_LOCATION_PREFIX + requestEndpoint + "/" + requestIt.next().getId();
 			}
 			if (requestIt.hasNext()){
 				response += "\n";

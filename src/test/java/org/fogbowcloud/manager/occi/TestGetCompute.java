@@ -29,6 +29,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.restlet.Response;
 
 public class TestGetCompute {
 
@@ -57,6 +58,8 @@ public class TestGetCompute {
 		Mockito.when(
 				computePlugin.getInstance(Mockito.anyString(),
 						Mockito.eq(INSTANCE_3_ID_WITHOUT_USER))).thenReturn(instance1);
+		Mockito.doNothing().when(computePlugin)
+				.bypass(Mockito.any(org.restlet.Request.class), Mockito.any(Response.class));
 
 		identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.getToken(OCCITestHelper.ACCESS_TOKEN)).thenReturn(
@@ -95,7 +98,7 @@ public class TestGetCompute {
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(httpGet);
 
-		Assert.assertEquals(3, OCCITestHelper.getRequestLocations(response).size());
+		Assert.assertEquals(3, OCCITestHelper.getRequestIds(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 	
@@ -242,7 +245,6 @@ public class TestGetCompute {
 		Assert.assertEquals(ResponseConstants.UNAUTHORIZED,
 				EntityUtils.toString(response.getEntity()));
 	}
-
 	
 	@Test
 	public void testWithoutAccessToken() throws Exception {

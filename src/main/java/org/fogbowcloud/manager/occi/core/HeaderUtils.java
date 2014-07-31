@@ -19,7 +19,7 @@ public class HeaderUtils {
 	private static final Logger LOGGER = Logger.getLogger(HeaderUtils.class);
 
 	public static final String REQUEST_DATE_FORMAT = "yyyy-MM-dd";
-	public static final String X_OCCI_LOCATION = "X-OCCI-Location: ";
+	public static final String X_OCCI_LOCATION_PREFIX = "X-OCCI-Location: ";
 	public static final String WWW_AUTHENTICATE = "WWW-Authenticate";
 
 	public static void checkOCCIContentType(Series<Header> headers) {

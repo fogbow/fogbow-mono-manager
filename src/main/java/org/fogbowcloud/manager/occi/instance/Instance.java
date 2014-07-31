@@ -103,16 +103,20 @@ public class Instance {
 
 	public String toOCCIMessageFormatDetails() {
 		String messageFormat = "";
-		for (Resource resource : this.resources) {
-			messageFormat += CATEGORY + " " + resource.toHeader() + "\n";
+		if (resources != null) {
+			for (Resource resource : this.resources) {
+				messageFormat += CATEGORY + " " + resource.toHeader() + "\n";
+			}
 		}
 		if (links != null) {
 			for (Link link : links) {
 				messageFormat += link.toOCCIMessageFormatLink() + "\n";
 			}
 		}
-		for (String key : this.attributes.keySet()) {
-			messageFormat += PREFIX_DEFAULT_ATTRIBUTE + key + "=\"" + attributes.get(key) + "\"\n";
+		if (attributes != null){
+			for (String key : this.attributes.keySet()) {
+				messageFormat += PREFIX_DEFAULT_ATTRIBUTE + key + "=\"" + attributes.get(key) + "\"\n";
+			}
 		}
 
 		return messageFormat.trim();
@@ -139,6 +143,15 @@ public class Instance {
 
 	public List<Link> getLinks() {
 		return links;
+	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof Instance){
+			Instance otherInst = (Instance) obj;
+			return getId().equals(otherInst.getId());
+		}
+		return false;
 	}
 
 	public static class Link {

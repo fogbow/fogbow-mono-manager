@@ -253,9 +253,9 @@ public class ComputeApplication extends Application {
 			if(instances != null){				
 				for (String location : instances) {
 					if (requestEndpoint.endsWith("/")){
-						result += HeaderUtils.X_OCCI_LOCATION + requestEndpoint + location + "\n";
+						result += HeaderUtils.X_OCCI_LOCATION_PREFIX + requestEndpoint + location + "\n";
 					} else {
-						result += HeaderUtils.X_OCCI_LOCATION + requestEndpoint + "/" + location + "\n";			
+						result += HeaderUtils.X_OCCI_LOCATION_PREFIX + requestEndpoint + "/" + location + "\n";			
 					}
 				}
 			}

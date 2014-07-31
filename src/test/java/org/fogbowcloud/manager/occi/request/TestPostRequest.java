@@ -63,7 +63,7 @@ public class TestPostRequest {
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
-		List<String> requestIDs = OCCITestHelper.getRequestLocations(response);
+		List<String> requestIDs = OCCITestHelper.getRequestIds(response);
 
 		Assert.assertEquals(1, requestIDs.size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
@@ -81,7 +81,7 @@ public class TestPostRequest {
 				RequestAttribute.INSTANCE_COUNT.getValue() + " = 2");
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
-		List<String> requestIDs = OCCITestHelper.getRequestLocations(response);
+		List<String> requestIDs = OCCITestHelper.getRequestIds(response);
 
 		Assert.assertEquals(2, requestIDs.size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
@@ -100,7 +100,7 @@ public class TestPostRequest {
 				RequestAttribute.INSTANCE_COUNT.getValue() + " = 200");
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
-		List<String> requestIDs = OCCITestHelper.getRequestLocations(response);
+		List<String> requestIDs = OCCITestHelper.getRequestIds(response);
 		
 		Assert.assertEquals(200, requestIDs.size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
@@ -286,7 +286,7 @@ public class TestPostRequest {
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
 
-		Assert.assertEquals(10, OCCITestHelper.getRequestLocations(response).size());
+		Assert.assertEquals(10, OCCITestHelper.getRequestIds(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 

@@ -7,8 +7,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.StringTokenizer;
 
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
+import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.util.ComputeApplication.InstanceIdGenerator;
 import org.mockito.Mockito;
@@ -107,5 +109,18 @@ public class PluginHelper {
 
 	public void disconnectComponent() throws Exception {
 		this.component.stop();
+	}
+
+	public String getAttValueFromInstanceDetails(String instanceDetails, String attName) {
+		StringTokenizer st = new StringTokenizer(instanceDetails, "\n");
+		while (st.hasMoreTokens()) {
+			String line = st.nextToken();
+			if (line.contains(OCCIHeaders.X_OCCI_ATTRIBUTE) && line.contains(attName)) {
+				StringTokenizer st2 = new StringTokenizer(line, "=");
+				st2.nextToken(); // attName
+				return st2.nextToken().replaceAll("\"", "");
+			}
+		}
+		return null;
 	}
 }

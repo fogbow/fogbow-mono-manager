@@ -38,7 +38,7 @@ import org.mockito.Mockito;
 public class TestGetRequest {
 
 	private OCCITestHelper requestHelper;
-	private String instanceLocation = HeaderUtils.X_OCCI_LOCATION + "http://localhost:"
+	private String instanceLocation = HeaderUtils.X_OCCI_LOCATION_PREFIX + "http://localhost:"
 			+ OCCITestHelper.ENDPOINT_PORT + ComputeApplication.TARGET
 			+ "/b122f3ad-503c-4abb-8a55-ba8d90cfce9f";
 
@@ -94,7 +94,7 @@ public class TestGetRequest {
 
 		Assert.assertTrue(response.getFirstHeader(OCCIHeaders.CONTENT_TYPE).getValue()
 				.startsWith(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE));
-		Assert.assertEquals(0, OCCITestHelper.getRequestLocations(response).size());
+		Assert.assertEquals(0, OCCITestHelper.getRequestIds(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 
@@ -108,7 +108,7 @@ public class TestGetRequest {
 
 		Assert.assertTrue(response.getFirstHeader(OCCIHeaders.CONTENT_TYPE).getValue()
 				.startsWith(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE));
-		Assert.assertEquals(0, OCCITestHelper.getRequestLocations(response).size());
+		Assert.assertEquals(0, OCCITestHelper.getRequestIds(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 	
@@ -121,7 +121,7 @@ public class TestGetRequest {
 
 		Assert.assertTrue(response.getFirstHeader(OCCIHeaders.CONTENT_TYPE).getValue()
 				.startsWith(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE));
-		Assert.assertEquals(0, OCCITestHelper.getRequestLocations(response).size());
+		Assert.assertEquals(0, OCCITestHelper.getRequestIds(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 	
@@ -187,7 +187,7 @@ public class TestGetRequest {
 		//Default accept is text/plain
 		Assert.assertTrue(response.getFirstHeader(OCCIHeaders.CONTENT_TYPE).getValue()
 				.startsWith(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE));
-		Assert.assertEquals(2, OCCITestHelper.getRequestLocations(response).size());
+		Assert.assertEquals(2, OCCITestHelper.getRequestIds(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 
@@ -242,7 +242,7 @@ public class TestGetRequest {
 		Assert.assertTrue(response.getFirstHeader(OCCIHeaders.CONTENT_TYPE).getValue()
 				.startsWith(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE));
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
-		Assert.assertEquals(200, OCCITestHelper.getRequestLocations(response).size());
+		Assert.assertEquals(200, OCCITestHelper.getRequestIds(response).size());
 	}
 	
 	@Test
@@ -287,7 +287,7 @@ public class TestGetRequest {
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
 		// Get
-		HttpGet get = new HttpGet(OCCITestHelper.getRequestLocations(response).get(0));
+		HttpGet get = new HttpGet(OCCITestHelper.getRequestIds(response).get(0));
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		response = client.execute(get);
@@ -313,7 +313,7 @@ public class TestGetRequest {
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
 		// Get
-		HttpGet get = new HttpGet(OCCITestHelper.getRequestLocations(response).get(0));
+		HttpGet get = new HttpGet(OCCITestHelper.getRequestIds(response).get(0));
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		get.addHeader(OCCIHeaders.ACCEPT, "invalid-accept");
 		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
@@ -349,7 +349,7 @@ public class TestGetRequest {
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
 		// Get
-		HttpGet get = new HttpGet(OCCITestHelper.getRequestLocations(response).get(0));
+		HttpGet get = new HttpGet(OCCITestHelper.getRequestIds(response).get(0));
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		response = client.execute(get);

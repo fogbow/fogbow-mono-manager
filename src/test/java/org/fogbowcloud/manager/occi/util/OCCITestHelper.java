@@ -101,7 +101,7 @@ public class OCCITestHelper {
 		component.stop();
 	}
 
-	public static List<String> getRequestLocations(HttpResponse response) throws ParseException,
+	public static List<String> getRequestIds(HttpResponse response) throws ParseException,
 			IOException {
 		String responseStr = "";
 		try {
@@ -112,8 +112,8 @@ public class OCCITestHelper {
 		}
 
 		List<String> requestIds = new ArrayList<String>();
-		if (responseStr.contains(HeaderUtils.X_OCCI_LOCATION)) {
-			String[] tokens = responseStr.split(HeaderUtils.X_OCCI_LOCATION);
+		if (responseStr.contains(HeaderUtils.X_OCCI_LOCATION_PREFIX)) {
+			String[] tokens = responseStr.split(HeaderUtils.X_OCCI_LOCATION_PREFIX);
 
 			for (int i = 0; i < tokens.length; i++) {
 				if (!tokens[i].equals("")) {
