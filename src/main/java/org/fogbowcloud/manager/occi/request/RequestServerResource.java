@@ -159,6 +159,7 @@ public class RequestServerResource extends ServerResource {
 
 		String authToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse());
 		authToken = authToken.replace("{-}", "\n");
+		authToken = authToken.replace("{--}", " ");
 		
 		List<Request> currentRequests = application.createRequests(authToken, categories, xOCCIAtt);
 		return generateTextPlainResponse(currentRequests, req);
