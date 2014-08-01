@@ -13,7 +13,9 @@ import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.HeaderUtils;
 import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
+import org.fogbowcloud.manager.occi.core.Resource;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
+import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.restlet.Application;
 import org.restlet.Restlet;
 import org.restlet.data.MediaType;
@@ -27,7 +29,8 @@ import org.restlet.routing.Router;
 
 public class ComputeApplication extends Application {
 
-	public static final String TARGET = "/compute/";
+	public static final String COMPUTE_TARGET = "/compute/";
+	public static final String QUERY_INTERFACE_TARGET = "/-/";
 	public static final String CORE_ATTRIBUTE_OCCI = "occi.compute.cores";
 	public static final String MEMORY_ATTRIBUTE_OCCI = "occi.compute.memory";
 	public static final String ARCHITECTURE_ATTRIBUTE_OCCI = "occi.compute.architecture";
@@ -46,6 +49,70 @@ public class ComputeApplication extends Application {
 	private Map<String, String> instanceIdToDetails;
 	private InstanceIdGenerator idGenerator;
 	private Map<String, String> keystoneTokenToUser;
+	private static List<Resource> resources;
+	
+	static{
+		//Faking compute resources
+		resources = new ArrayList<Resource>();
+		List<String> computeAttributes = new ArrayList<String>();
+		computeAttributes.add("occi.compute.architecture");
+		computeAttributes.add("occi.compute.state{immutable}");
+		computeAttributes.add("occi.compute.speed");
+		computeAttributes.add("occi.compute.memory");
+		computeAttributes.add("occi.compute.cores");
+		computeAttributes.add("occi.compute.hostname");
+		
+		List<String> computeActions = new ArrayList<String>();
+		computeActions.add("http://schemas.ogf.org/occi/infrastructure/compute/action#start");
+		computeActions.add("http://schemas.ogf.org/occi/infrastructure/compute/action#stop");
+		computeActions.add("http://schemas.ogf.org/occi/infrastructure/compute/action#restart");
+		computeActions.add("http://schemas.ogf.org/occi/infrastructure/compute/action#suspend");
+		
+		Resource compute = new Resource("compute", "http://schemas.ogf.org/occi/infrastructure#",
+				RequestConstants.KIND_CLASS, computeAttributes, computeActions, "http://localhost:8787/compute/",
+				"Compute Resource", "http://schemas.ogf.org/occi/core#resource");
+		resources.add(compute);
+		
+		resources.add(new Resource(SMALL_FLAVOR_TERM, RESOURCE_SCHEME,
+				RequestConstants.MIXIN_CLASS, new ArrayList<String>(), new ArrayList<String>(),
+				"http://localhost:8787/m1-small/", "Flavor: m1.small ",
+				"http://schemas.ogf.org/occi/infrastructure#resource_tpl"));
+
+		resources.add(new Resource(MEDIUM_FLAVOR_TERM, RESOURCE_SCHEME,
+				RequestConstants.MIXIN_CLASS, new ArrayList<String>(), new ArrayList<String>(),
+				"http://localhost:8787/m1-medium/", "Flavor: m1.medium ",
+				"http://schemas.ogf.org/occi/infrastructure#resource_tpl"));
+		
+		resources.add(new Resource(LARGE_FLAVOR_TERM, RESOURCE_SCHEME,
+				RequestConstants.MIXIN_CLASS, new ArrayList<String>(), new ArrayList<String>(),
+				"http://localhost:8787/m1-large/", "Flavor: m1.large ",
+				"http://schemas.ogf.org/occi/infrastructure#resource_tpl"));
+		
+		List<String> networkAttributes = new ArrayList<String>();
+		networkAttributes.add("occi.network.label");
+		networkAttributes.add("occi.network.state{immutable}");
+		networkAttributes.add("occi.network.vlan");
+				
+		List<String> networkActions = new ArrayList<String>();
+		networkActions.add("http://schemas.ogf.org/occi/infrastructure/network/action#up");
+		networkActions.add("http://schemas.ogf.org/occi/infrastructure/network/action#down");
+
+		Resource network = new Resource("netowrk", "http://schemas.ogf.org/occi/infrastructure#",
+				RequestConstants.KIND_CLASS, networkAttributes, networkActions, "http://localhost:8787/network/",
+				"Network Resource", "http://schemas.ogf.org/occi/core#resource");
+		resources.add(network);
+		
+		resources.add(new Resource("os_tpl", "http://schemas.ogf.org/occi/infrastructure#",
+				RequestConstants.MIXIN_CLASS, new ArrayList<String>(), new ArrayList<String>(),
+				"http://localhost:8787/os_tpl/", "", ""));
+
+		List<String> restartAttributes = new ArrayList<String>();
+		restartAttributes.add("method");
+		
+		resources.add(new Resource("restart", "http://schemas.ogf.org/occi/infrastructure/compute/action#",
+				"action", restartAttributes, new ArrayList<String>(),
+				"", "Restart a compute resource", ""));
+	}
 
 	private Map<String, Map<String, String>> termToAttributes;
 
@@ -55,8 +122,9 @@ public class ComputeApplication extends Application {
 		idGenerator = new InstanceIdGenerator();
 		keystoneTokenToUser = new HashMap<String, String>();
 		termToAttributes = new HashMap<String, Map<String, String>>();
-		
+				
 		normalizeDefaultAttributes();
+		
 	}
 
 	private void normalizeDefaultAttributes() {
@@ -86,8 +154,9 @@ public class ComputeApplication extends Application {
 	@Override
 	public Restlet createInboundRoot() {
 		Router router = new Router(getContext());
-		router.attach(TARGET, ComputeServer.class);
-		router.attach(TARGET + "{instanceid}", ComputeServer.class);
+		router.attach(COMPUTE_TARGET, ComputeServer.class);
+		router.attach(COMPUTE_TARGET + "{instanceid}", ComputeServer.class);
+		router.attach(QUERY_INTERFACE_TARGET, QueryServer.class);
 		return router;
 	}
 
@@ -226,6 +295,10 @@ public class ComputeApplication extends Application {
 		}
 	}
 
+	public static List<Resource> getResources() {
+		return resources;
+	}
+	
 	public static class ComputeServer extends ServerResource {
 
 		private static final Logger LOGGER = Logger.getLogger(ComputeServer.class);
@@ -297,7 +370,28 @@ public class ComputeApplication extends Application {
 			return ResponseConstants.OK;
 		}
 	}
+	
+	public static class QueryServer extends ServerResource {
+		
+		private static final Logger LOGGER = Logger.getLogger(QueryServer.class);
+		
+		@Get
+		public String fetch() {
+			HttpRequest req = (HttpRequest) getRequest();
+			String userToken = req.getHeaders().getValues(OCCIHeaders.X_AUTH_TOKEN);
+			LOGGER.info("Getting query resource with token :" + userToken);			
+			return generateQueryResonse(ComputeApplication.getResources());
+		}
 
+		private String generateQueryResonse(List<Resource> resources) {
+			String response = "";
+			for (Resource resource : resources) {
+				response += "Category: " + resource.toHeader() + "\n"; 
+			}
+			return "\n" + response.trim();
+		}
+	}
+	
 	public class InstanceIdGenerator {
 		public String generateId() {
 			return String.valueOf(UUID.randomUUID());

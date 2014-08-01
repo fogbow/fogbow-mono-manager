@@ -1,6 +1,10 @@
 package org.fogbowcloud.manager.occi.core;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.StringTokenizer;
 
 public class Resource {
 
@@ -24,6 +28,67 @@ public class Resource {
 	public Resource(String term, String scheme, String catClass, List<String> supportedAtt,
 			List<String> actions, String location, String title, String rel) {
 		this(new Category(term, scheme, catClass), supportedAtt, actions, location, title, rel);
+	}
+	
+	public Resource(String resourceStr) {
+		Map<String, String> resourceKeyAndValues = new HashMap<String, String>();
+		String[] categoryTokens = resourceStr.split(";");
+		if (categoryTokens.length < 3){
+			throw new IllegalArgumentException();
+		}
+		//first token
+		String[] nameValue = categoryTokens[0].split("=");
+		if (nameValue.length > 1) {
+			throw new IllegalArgumentException();
+		}
+		resourceKeyAndValues.put("term", nameValue[0].trim());
+		for (int k = 1; k < categoryTokens.length; k++) {
+			nameValue = categoryTokens[k].split("=");
+			if (nameValue.length != 2) {
+				throw new IllegalArgumentException();			
+			}			
+			resourceKeyAndValues.put(nameValue[0].trim().replace("\"", ""), nameValue[1].trim().replace("\"", ""));			 
+		}
+		
+		//TODO refactor it
+		category = new Category(resourceKeyAndValues.get("term"),
+				resourceKeyAndValues.get("scheme"), resourceKeyAndValues.get("class"));
+		
+		if (resourceKeyAndValues.get("location") != null) {
+			this.location = resourceKeyAndValues.get("location");
+		} else {
+			location = "";
+		}
+		
+		if (resourceKeyAndValues.get("title") != null) {
+			this.title = resourceKeyAndValues.get("title");
+		} else {
+			title = "";
+		}
+		
+		if (resourceKeyAndValues.get("rel") != null) {
+			this.rel = resourceKeyAndValues.get("rel");
+		} else {
+			rel = "";
+		}
+		
+		List<String> attributes = new ArrayList<String>();
+		if (resourceKeyAndValues.get("attributes") != null) {
+			StringTokenizer st = new StringTokenizer(resourceKeyAndValues.get("attributes"));
+			while (st.hasMoreTokens()){
+				attributes.add(st.nextToken().trim());
+			}
+		}
+		setAttributes(attributes);
+		
+		List<String> actions = new ArrayList<String>();
+		if (resourceKeyAndValues.get("actions") != null) {
+			StringTokenizer st = new StringTokenizer(resourceKeyAndValues.get("actions"));
+			while (st.hasMoreTokens()){
+				actions.add(st.nextToken().trim());
+			}
+		}
+		setActions(actions);
 	}
 
 	public String toHeader() {
@@ -51,6 +116,10 @@ public class Resource {
 		return category.getTerm() + "; scheme=\"" + category.getScheme() + "\"; class=\""
 				+ category.getCatClass() + title + rel + location 
 				+ attributes + actions + "\"";
+	}
+	
+	public String toString(){
+		return toHeader();
 	}
 
 	private String actionsToHeader() {
@@ -103,6 +172,13 @@ public class Resource {
 
 	public boolean matches(Category category) {
 		return getCategory().equals(category);
+	}
+	
+	public boolean matches(Resource resource) {
+		return getCategory().equals(resource.getCategory())
+				&& getTitle().equals(resource.getTitle())
+				&& getAttributes().equals(resource.getAttributes())
+				&& getActions().equals(resource.getActions()) && getRel().equals(resource.getRel());
 	}
 
 	public boolean supportAtt(String attributeName) {

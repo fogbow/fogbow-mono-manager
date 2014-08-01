@@ -32,6 +32,8 @@ public class PluginHelper {
 
 	public static final String USERNAME = "admin";
 	public static final String USER_PASS = "reverse";
+	
+	private ComputeApplication computeApplication;
 
 
 	public PluginHelper() {
@@ -94,7 +96,7 @@ public class PluginHelper {
 		this.component = new Component();
 		this.component.getServers().add(Protocol.HTTP, PORT_ENDPOINT);
 
-		ComputeApplication computeApplication = new ComputeApplication();
+		computeApplication = new ComputeApplication();
 
 		// mocking 5 first instance id generation
 		InstanceIdGenerator idGenerator = Mockito.mock(InstanceIdGenerator.class);
@@ -105,6 +107,10 @@ public class PluginHelper {
 		computeApplication.putTokenAndUser(ACCESS_ID, USERNAME);
 		this.component.getDefaultHost().attach(computeApplication);
 		this.component.start();
+	}
+	
+	public ComputeApplication getComputeApplication(){
+		return computeApplication;
 	}
 
 	public void disconnectComponent() throws Exception {

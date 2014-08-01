@@ -34,7 +34,7 @@ public class ResourceRepository {
 		//TODO implement properties of attributes. For example, {immutable}
 		List<String> computeAttributes = new ArrayList<String>();
 		computeAttributes.add("occi.compute.architecture");
-		computeAttributes.add("occi.compute.state");
+		computeAttributes.add("occi.compute.state{immutable}");
 		computeAttributes.add("occi.compute.speed");
 		computeAttributes.add("occi.compute.memory");
 		computeAttributes.add("occi.compute.cores");

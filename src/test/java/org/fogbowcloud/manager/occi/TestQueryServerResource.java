@@ -24,6 +24,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.restlet.Request;
+import org.restlet.Response;
 
 public class TestQueryServerResource {
 
@@ -34,6 +36,9 @@ public class TestQueryServerResource {
 	@Before
 	public void setup() throws Exception {
 		this.computePlugin = Mockito.mock(ComputePlugin.class);
+		Mockito.doNothing().when(computePlugin)
+				.bypass(Mockito.any(Request.class), Mockito.any(Response.class));
+		
 		this.identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.getToken(OCCITestHelper.ACCESS_TOKEN))
 				.thenReturn(

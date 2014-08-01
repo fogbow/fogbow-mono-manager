@@ -24,6 +24,8 @@ import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.HeaderUtils;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
+import org.fogbowcloud.manager.occi.core.Resource;
+import org.fogbowcloud.manager.occi.core.ResourceRepository;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.request.Request;
@@ -52,14 +54,10 @@ public class TestBypassCompute {
 	
 	@Before
 	public void setup() throws Exception{
-		setup(null);
+		setup(new ArrayList<Request>());
 	}
 	
-	private void setup(List<Request> requests) throws Exception {
-		if (requests == null) {
-			requests = new ArrayList<Request>();
-		}
-		
+	private void setup(List<Request> requests) throws Exception {		
 		Properties properties = new Properties();
 		properties.put(ConfigurationConstants.COMPUTE_OCCI_URL_KEY, PluginHelper.COMPUTE_OCCI_URL);
 		properties.put(ConfigurationConstants.COMPUTE_OCCI_INSTANCE_SCHEME_KEY, ComputeApplication.INSTANCE_SCHEME);
@@ -92,7 +90,6 @@ public class TestBypassCompute {
 		//initializing fogbow OCCI Application
 		helper = new OCCITestHelper();
 		helper.initializeComponentCompute(computePlugin, identityPlugin, requests);
-		
 	}
 	
 	@After
@@ -458,5 +455,44 @@ public class TestBypassCompute {
 
 		Assert.assertEquals(0, OCCITestHelper.getRequestIds(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+	}
+	
+	@Test
+	public void testBypassQueryInterface() throws URISyntaxException, HttpException, IOException {
+		// getting query interface
+		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_QUERY);
+		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE);
+		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, PluginHelper.ACCESS_ID);
+		HttpClient client = new DefaultHttpClient();
+		HttpResponse response = client.execute(get);
+
+		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+		String resourcesStr = EntityUtils.toString(response.getEntity());
+		List<Resource> availableResources = getResourcesFromStr(resourcesStr);
+		
+		List<Resource> fogResources = ResourceRepository.getInstance().getAll();
+		List<Resource> compResources = ComputeApplication.getResources();
+
+		for (Resource resource : availableResources) {
+			Assert.assertTrue(fogResources.contains(resource) || compResources.contains(resource));
+		}
+		
+		/*
+		 * expected is (fog + comp - 2) because there are two repeated resources
+		 * at both (compute and resource_tpl)
+		 */ 
+		Assert.assertEquals(fogResources.size() + compResources.size() - 2, availableResources.size());
+	}
+
+	//TODO duplicated code at QueryServerResource 
+	private List<Resource> getResourcesFromStr(String resourcesStr) {
+		String[] lines = resourcesStr.split("\n");
+		List<Resource> resources = new ArrayList<Resource>();
+		for (String line : lines) {
+			if (line.contains(OCCIHeaders.CATEGORY)){
+				resources.add(new Resource(line.substring(line.indexOf(":") + 1)));
+			}
+		}		
+		return resources;
 	}
 }

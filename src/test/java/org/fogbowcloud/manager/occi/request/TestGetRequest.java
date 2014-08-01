@@ -39,7 +39,7 @@ public class TestGetRequest {
 
 	private OCCITestHelper requestHelper;
 	private String instanceLocation = HeaderUtils.X_OCCI_LOCATION_PREFIX + "http://localhost:"
-			+ OCCITestHelper.ENDPOINT_PORT + ComputeApplication.TARGET
+			+ OCCITestHelper.ENDPOINT_PORT + ComputeApplication.COMPUTE_TARGET
 			+ "/b122f3ad-503c-4abb-8a55-ba8d90cfce9f";
 
 	@SuppressWarnings("unchecked")

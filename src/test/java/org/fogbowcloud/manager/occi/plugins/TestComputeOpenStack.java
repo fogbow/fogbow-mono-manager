@@ -352,7 +352,7 @@ public class TestComputeOpenStack {
 		instanceLocations = getInstanceLocations(computeOpenStack
 				.getInstances(PluginHelper.ACCESS_ID));
 		Assert.assertEquals(1, instanceLocations.size());
-		Assert.assertEquals(PluginHelper.COMPUTE_OCCI_URL + ComputeApplication.TARGET + FIRST_INSTANCE_ID,
+		Assert.assertEquals(PluginHelper.COMPUTE_OCCI_URL + ComputeApplication.COMPUTE_TARGET + FIRST_INSTANCE_ID,
 				instanceLocations.get(0));
 	}
 
@@ -377,7 +377,7 @@ public class TestComputeOpenStack {
 				.getInstances(PluginHelper.ACCESS_ID));
 		Assert.assertEquals(expectedInstanceIds.size(), instanceLocations.size());
 		for (String expectedId : expectedInstanceIds) {
-			Assert.assertTrue(instanceLocations.contains(PluginHelper.COMPUTE_OCCI_URL + ComputeApplication.TARGET + expectedId));
+			Assert.assertTrue(instanceLocations.contains(PluginHelper.COMPUTE_OCCI_URL + ComputeApplication.COMPUTE_TARGET + expectedId));
 		}
 	}
 

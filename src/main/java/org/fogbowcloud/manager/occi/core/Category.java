@@ -24,9 +24,9 @@ public class Category {
 		setCatClass(catClass);
 	}
 
-	public Category(String stringCategory) {
+	public Category(String categoryStr) {
 		Map<String, String> properties = new HashMap<String, String>();
-		String[] categoryTokens = stringCategory.split(";");
+		String[] categoryTokens = categoryStr.split(";");
 		if (categoryTokens.length < 3){
 			throw new IllegalArgumentException();
 		}
