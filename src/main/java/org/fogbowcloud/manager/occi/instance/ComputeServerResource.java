@@ -35,17 +35,7 @@ public class ComputeServerResource extends ServerResource {
 		
 		if (instanceId == null) {
 			LOGGER.info("Getting all instances of token :" + authToken);
-			//allInstances is initialized with all fogbow instances
-			List<Instance> allInstances = application.getInstances(authToken);
-
-			//Adding local cloud instances
-			Response response = new Response(getRequest());
-			application.bypass(getRequest(), response);
-			for (Instance instance : getLocalCloudInstances(response)) {
-				if (!allInstances.contains(instance)){
-					allInstances.add(instance);
-				}
-			}
+			List<Instance> allInstances = getInstances(application, authToken);
 			
 			if (acceptContent.size() == 0
 					|| acceptContent.contains(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE)) {
@@ -54,24 +44,26 @@ public class ComputeServerResource extends ServerResource {
 			} else if (acceptContent.contains(OCCIHeaders.TEXT_URI_LIST_CONTENT_TYPE)) {
 				return new StringRepresentation(generateURIListResponse(
 						allInstances, req), MediaType.TEXT_URI_LIST);
-			} else {
-				throw new OCCIException(ErrorType.METHOD_NOT_ALLOWED,
-						ResponseConstants.METHOD_NOT_SUPPORTED);
 			}
+			throw new OCCIException(ErrorType.METHOD_NOT_ALLOWED,
+				ResponseConstants.METHOD_NOT_SUPPORTED);
+			
 		}
 
 		LOGGER.info("Getting instance " + instanceId);
 		if (acceptContent.size() == 0 || acceptContent.contains(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE)) {
 			try {
 				Instance instance = application.getInstance(authToken, instanceId);
-				return new StringRepresentation(instance.toOCCIMessageFormatDetails(), MediaType.TEXT_PLAIN);				
+				return new StringRepresentation(instance.toOCCIMessageFormatDetails(),
+						MediaType.TEXT_PLAIN);
 			} catch (OCCIException e) {
 				Response response = new Response(getRequest());
 				application.bypass(getRequest(), response);
-				//if it is a local instance created outside fogbow
-				if (response.getStatus().getCode() == HttpStatus.SC_OK){
+				// if it is a local instance created out of fogbow
+				if (response.getStatus().getCode() == HttpStatus.SC_OK) {
 					try {
-						return new StringRepresentation(response.getEntity().getText(), MediaType.TEXT_PLAIN);
+						return new StringRepresentation(response.getEntity().getText(),
+								MediaType.TEXT_PLAIN);
 					} catch (Exception e1) { }
 				}
 				throw e;
@@ -81,7 +73,21 @@ public class ComputeServerResource extends ServerResource {
 				ResponseConstants.METHOD_NOT_SUPPORTED);
 	}
 
-	private List<Instance> getLocalCloudInstances(Response response) {
+	private List<Instance> getInstances(OCCIApplication application, String authToken) {
+		List<Instance> allInstances = application.getInstances(authToken);
+
+		//Adding local instances created out of fogbow
+		Response response = new Response(getRequest());
+		application.bypass(getRequest(), response);
+		for (Instance instance : getInstancesCreatedOutOfFogbow(response)) {
+			if (!allInstances.contains(instance)){
+				allInstances.add(instance);
+			}
+		}
+		return allInstances;
+	}
+
+	private List<Instance> getInstancesCreatedOutOfFogbow(Response response) {
 		List<Instance> localInstances = new ArrayList<Instance>();
 		if (response.getStatus().getCode() == HttpStatus.SC_OK){
 			try {
@@ -133,15 +139,41 @@ public class ComputeServerResource extends ServerResource {
 		HeaderUtils.checkOCCIContentType(req.getHeaders());
 		String authToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse());
 		String instanceId = (String) getRequestAttributes().get("instanceId");
+		
 		if (instanceId == null) {
 			LOGGER.info("Removing all instances of token :" + authToken);
-			application.removeInstances(authToken);
-			return ResponseConstants.OK;
+			return removeIntances(application, authToken);
 		}
-		LOGGER.info("Removing instance " + instanceId);
-		
-		application.removeInstance(authToken, instanceId);
-		return ResponseConstants.OK;			
+		LOGGER.info("Removing instance " + instanceId);		
+		return removeInstance(application, authToken, instanceId);
+	}
+
+	private String removeInstance(OCCIApplication application, String authToken, String instanceId) {
+		try {
+			application.removeInstance(authToken, instanceId);
+		} catch (OCCIException e) {
+			//The request will be bypassed only if the error was not found
+			if (e.getStatus().getCode() == HttpStatus.SC_NOT_FOUND){
+				Response response = new Response(getRequest());
+				application.bypass(getRequest(), response);
+				//if it is a local instance created outside fogbow
+				if (response.getStatus().getCode() == HttpStatus.SC_OK){
+					return ResponseConstants.OK;
+				}
+			}
+			throw e;
+		}
+		return ResponseConstants.OK;
+	}
+
+	private String removeIntances(OCCIApplication application, String authToken) {
+		application.removeInstances(authToken);
+		//Removing local cloud instances for the token
+		Response response = new Response(getRequest());
+		try {
+			application.bypass(getRequest(), response);
+		} catch (OCCIException e) { }
+		return ResponseConstants.OK;
 	}
 
 	protected static String generateResponse(List<Instance> instances) {
