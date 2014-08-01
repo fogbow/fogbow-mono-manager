@@ -158,7 +158,8 @@ public class RequestServerResource extends ServerResource {
 		xOCCIAtt = normalizeXOCCIAtt(xOCCIAtt);
 
 		String authToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse());
-
+		authToken = authToken.replace("{-}", "\n");
+		
 		List<Request> currentRequests = application.createRequests(authToken, categories, xOCCIAtt);
 		return generateTextPlainResponse(currentRequests, req);
 	}

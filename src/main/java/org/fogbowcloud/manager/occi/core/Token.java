@@ -71,8 +71,9 @@ public class Token {
 	public enum Constants {
 		
 		USER_KEY("username"), PASSWORD_KEY("password"), TENANT_ID_KEY("tenantId"), TENANT_NAME_KEY(
-				"tenantName"), DATE_EXPIRATION("dataExpiration"), VOMS_PASSWORD("vomsPassword"), VOMS_SERVER(
-				"vomsServer");
+				"tenantName"), DATE_EXPIRATION("dataExpiration"), VOMS_PASSWORD("vomsPassword"), VOMS_SERVER_NAME(
+				"vomsServerName"), VOMS_PATH_USERCRED("vomsUserCredPath"), VOMS_PATH_USERKEY(
+				"vomsUserKeyPath");
 
 		public String value;
 

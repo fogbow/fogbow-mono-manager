@@ -33,7 +33,7 @@ public class TestIdentityVoms {
 	@Before
 	public void setUp() {
 		properties = new Properties();
-		properties.put(ConfigurationConstants.VOMS_PATH_TRUST,
+		properties.put(ConfigurationConstants.VOMS_PATH_TRUST_ANCHORS,
 				"src/test/resources/voms/trust-anchors");
 		properties.put(ConfigurationConstants.VOMS_PATH_VOMSES, "src/test/resources/voms/vomses");
 		properties.put(ConfigurationConstants.VOMS_PATH_VOMSDIR, "src/test/resources/voms/vomsdir");
@@ -44,28 +44,6 @@ public class TestIdentityVoms {
 		generatorProxyCertificate = Mockito.mock(GeneratorProxyCertificate.class);
 		vomsIdentityPlugin.setGenerateProxyCertificate(generatorProxyCertificate);
 	}
-
-//	@Test
-//	public void test() {
-//		
-//		properties = new Properties();
-//		properties.put(ConfigurationConstants.VOMS_PATH_TRUST,
-//				"src/test/resources/voms/trust-anchors");
-//		properties.put(ConfigurationConstants.VOMS_PATH_VOMSES, "src/test/resources/voms/vomses");
-//		properties.put(ConfigurationConstants.VOMS_PATH_VOMSDIR, "src/test/resources/voms/vomsdir");
-//		properties.put(ConfigurationConstants.FEDERATION_USER_PASS_VOMS, VOMS_PASSWORD);
-//		properties.put(ConfigurationConstants.FEDERATION_USER_SERVER_VOMS, VOMS_SERVER);
-//
-//		vomsIdentityPlugin = new VomsIdentityPlugin(properties);
-//		generatorProxyCertificate = vomsIdentityPlugin.new GeneratorProxyCertificate();
-//		vomsIdentityPlugin.setGenerateProxyCertificate(generatorProxyCertificate);
-//		
-//		Map<String, String> credentials = new HashMap<String, String>();
-//		credentials.put(Token.Constants.VOMS_PASSWORD.getValue(), VOMS_PASSWORD);
-//		credentials.put(Token.Constants.VOMS_SERVER.getValue(), VOMS_SERVER);
-//		
-//		vomsIdentityPlugin.createToken(credentials);
-//	}
 	
 	@SuppressWarnings({ "unchecked", "deprecation" })
 	@Test
@@ -79,21 +57,21 @@ public class TestIdentityVoms {
 
 		Map<String, String> credentials = new HashMap<String, String>();
 		credentials.put(Token.Constants.VOMS_PASSWORD.getValue(), VOMS_PASSWORD);
-		credentials.put(Token.Constants.VOMS_SERVER.getValue(), VOMS_SERVER);
+		credentials.put(Token.Constants.VOMS_SERVER_NAME.getValue(), VOMS_SERVER);
 
 		Mockito.when(generatorProxyCertificate.generate(Mockito.anyMap())).thenReturn(
 				proxyCertificate);
 
 		Token myToken = new Token("", "", new Date(), credentials);
 		Token token = vomsIdentityPlugin.reIssueToken(myToken);
-
+		
 		Assert.assertEquals(vomsIdentityPlugin.generateAcessId(proxy.getCertificateChain()),
 				token.getAccessId());
 		Assert.assertEquals("CN=test0, O=IGI, C=IT", token.getUser());
 		Date dateExpiration = new Date(System.currentTimeMillis() + TWELVE_HOURS);
 		Assert.assertEquals(dateExpiration.getDay(), token.getExpirationDate().getDay());
 		Assert.assertEquals(dateExpiration.getHours(), token.getExpirationDate().getHours());
-		Assert.assertEquals(dateExpiration.getMinutes(), token.getExpirationDate().getMinutes());
+		Assert.assertEquals(dateExpiration.getMinutes(), token.getExpirationDate().getMinutes());		
 	}
 
 	@SuppressWarnings("deprecation")
@@ -108,7 +86,7 @@ public class TestIdentityVoms {
 
 		Map<String, String> credentials = new HashMap<String, String>();
 		credentials.put(Token.Constants.VOMS_PASSWORD.getValue(), VOMS_PASSWORD);
-		credentials.put(Token.Constants.VOMS_SERVER.getValue(), VOMS_SERVER);
+		credentials.put(Token.Constants.VOMS_SERVER_NAME.getValue(), VOMS_SERVER);
 
 		Mockito.when(generatorProxyCertificate.generate(credentials)).thenReturn(proxyCertificate);
 

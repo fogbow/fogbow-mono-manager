@@ -290,11 +290,17 @@ public class ManagerController {
 
 	public String createInstanceForRemoteMember(String memberId, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
+		LOGGER.error("Errou Aqui : " + 2 );
 		Integer sshPort = null;
-		FederationMember member = getFederationMember(memberId);
-		if (!validator.canDonateTo(member)) {
-			return null;
+		try {
+			FederationMember member = getFederationMember(memberId);
+			if (!validator.canDonateTo(member)) {
+				return null;
+			}			
+		} catch (Exception e) {
+			LOGGER.error("Errou Aqui : " + 2.1 + " _ " + e );
 		}
+		LOGGER.error("Errou Aqui : " + 3 );
 		LOGGER.info("Submiting request with categories: " + categories + " and xOCCIAtt: "
 				+ xOCCIAtt + " for remote member.");
 		String federationTokenAccessId = getFederationUserToken().getAccessId();
@@ -593,10 +599,11 @@ public class ManagerController {
 
 		String remoteInstanceId = null;
 		try {
+			LOGGER.error("Errou Aqui : " + 1 );
 			remoteInstanceId = createInstanceForRemoteMember(properties.getProperty("xmpp_jid"),
 					request.getCategories(), request.getxOCCIAtt());
 		} catch (Exception e) {
-			LOGGER.info("Could not create instance with federation user locally.");
+			LOGGER.info("Could not create instance with federation user locally." + e);
 		}
 
 		if (remoteInstanceId == null) {

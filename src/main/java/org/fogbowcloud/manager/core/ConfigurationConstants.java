@@ -59,7 +59,7 @@ public class ConfigurationConstants {
 
 	//voms
 	public static final String VOMS_PATH_VOMSES = "path_vomses";
-	public static final String VOMS_PATH_TRUST = "path_turst";
+	public static final String VOMS_PATH_TRUST_ANCHORS = "path_trust_anchors";
 	public static final String VOMS_PATH_VOMSDIR = "path_vomsdir";
 	
 }

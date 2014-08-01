@@ -107,6 +107,7 @@ public class Main {
 					jc.usage();
 					return;
 				}
+				request.authToken = request.authToken.replace("\n", "{-}");
 
 				Set<Header> headers = new HashSet<Header>();
 				headers.add(new BasicHeader("Category", RequestConstants.TERM + "; scheme=\""
@@ -141,6 +142,8 @@ public class Main {
 					jc.usage();
 					return;
 				}
+				
+				
 				doRequest("delete", url + "/compute/" + instance.instanceId, instance.authToken);
 			}
 		} else if (parsedCommand.equals("token")) {
@@ -206,7 +209,7 @@ public class Main {
 		for (Header header : additionalHeaders) {
 			request.addHeader(header);
 		}
-
+		
 		if (client == null) {
 			client = new DefaultHttpClient();
 			HttpParams params = new BasicHttpParams();
@@ -215,7 +218,7 @@ public class Main {
 					.getConnectionManager().getSchemeRegistry()), params);
 		}
 		HttpResponse response = client.execute(request);
-
+		
 		if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
 			System.out.println(EntityUtils.toString(response.getEntity()));
 		} else {
