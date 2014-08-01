@@ -23,6 +23,9 @@ import org.apache.log4j.Logger;
 import org.bouncycastle.asn1.x509.AttributeCertificate;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
+import org.fogbowcloud.manager.occi.core.ErrorType;
+import org.fogbowcloud.manager.occi.core.OCCIException;
+import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.italiangrid.voms.VOMSValidators;
 import org.italiangrid.voms.ac.VOMSACValidator;
@@ -119,6 +122,10 @@ public class VomsIdentityPlugin implements IdentityPlugin {
 
 	@Override
 	public Token getToken(String accessId) {
+		if (!isValid(accessId)) {
+			//TODO thing about Exception. OCCIExcpetion?
+			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
+		}
 		X509Certificate certificate = null;
 		CertificateFactory cf = null;
 		try {

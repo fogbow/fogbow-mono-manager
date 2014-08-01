@@ -107,7 +107,9 @@ public class Main {
 					jc.usage();
 					return;
 				}
+				//TODO Check
 				request.authToken = request.authToken.replace("\n", "{-}");
+				request.authToken = request.authToken.replace(" ", "{--}");
 
 				Set<Header> headers = new HashSet<Header>();
 				headers.add(new BasicHeader("Category", RequestConstants.TERM + "; scheme=\""
