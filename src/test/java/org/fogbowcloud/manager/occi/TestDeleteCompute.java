@@ -136,13 +136,13 @@ public class TestDeleteCompute {
 	}
 
 	@Test
-	public void testWrongContentType() throws Exception {
+	public void testAnyContentType() throws Exception {
 		HttpDelete get = new HttpDelete(OCCITestHelper.URI_FOGBOW_COMPUTE);
-		get.addHeader(OCCIHeaders.CONTENT_TYPE, "wrong");
+		get.addHeader(OCCIHeaders.CONTENT_TYPE, "any");
 		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(get);
 
-		Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 }
