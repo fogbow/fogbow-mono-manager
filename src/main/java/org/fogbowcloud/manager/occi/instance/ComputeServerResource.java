@@ -95,7 +95,7 @@ public class ComputeServerResource extends ServerResource {
 				LOGGER.debug("Cloud Instances Location: " + instanceLocations);
 				if (instanceLocations != null && !"".equals(instanceLocations)){
 					if (instanceLocations.contains(HeaderUtils.X_OCCI_LOCATION_PREFIX)) {
-						String[] tokens = instanceLocations.split(HeaderUtils.X_OCCI_LOCATION_PREFIX);
+						String[] tokens = instanceLocations.trim().split(HeaderUtils.X_OCCI_LOCATION_PREFIX);
 						for (int i = 0; i < tokens.length; i++) {
 							if (!tokens[i].equals("")) {
 								localInstances.add(new Instance(normalizeInstanceId(tokens[i].trim())));
