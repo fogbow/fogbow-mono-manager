@@ -53,11 +53,11 @@ public class OpenStackComputePlugin implements ComputePlugin {
 	// According to OCCI specification
 	private static final String SCHEME_COMPUTE = "http://schemas.ogf.org/occi/infrastructure#";
 	private static final int LAST_SUCCESSFUL_STATUS = 204;
-
+	
 	private static String osScheme;
 	private static String instanceScheme;
-	public static String resourceScheme;
-
+	public static String resourceScheme; 
+	
 	private static final String ABSOLUTE = "absolute";
 	private static final String LIMITS = "limits";
 	private static final String TERM_COMPUTE = "compute";
@@ -77,32 +77,32 @@ public class OpenStackComputePlugin implements ComputePlugin {
 	private String oCCIEndpoint;
 
 	private static final Logger LOGGER = Logger.getLogger(OpenStackComputePlugin.class);
-
+	
 	public OpenStackComputePlugin(Properties properties) {
 		this.oCCIEndpoint = properties.getProperty(ConfigurationConstants.COMPUTE_OCCI_URL_KEY);
 		this.computeOCCIEndpoint = oCCIEndpoint + COMPUTE_ENDPOINT;
 		this.computeV2APIEndpoint = properties.getProperty("compute_openstack_v2api_url")
 				+ COMPUTE_V2_API_ENDPOINT;
-
+		
 		instanceScheme = properties
 				.getProperty(ConfigurationConstants.COMPUTE_OCCI_INSTANCE_SCHEME_KEY);
 		osScheme = properties.getProperty(ConfigurationConstants.COMPUTE_OCCI_OS_SCHEME_KEY);
-		resourceScheme = properties
-				.getProperty(ConfigurationConstants.COMPUTE_OCCI_RESOURCE_SCHEME_KEY);
-		networkId = properties.getProperty(ConfigurationConstants.COMPUTE_OCCI_NETWORK_KEY);
+		resourceScheme = properties.getProperty(ConfigurationConstants.COMPUTE_OCCI_RESOURCE_SCHEME_KEY);
+		networkId = properties.getProperty(ConfigurationConstants.COMPUTE_OCCI_NETWORK_KEY);	
 
 		Map<String, String> imageProperties = getImageProperties(properties);
-
+		
 		if (imageProperties == null || imageProperties.isEmpty()) {
-			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IMAGES_NOT_SPECIFIED);
+			throw new OCCIException(ErrorType.BAD_REQUEST,
+					ResponseConstants.IMAGES_NOT_SPECIFIED);
 		}
-
+		
 		for (String imageName : imageProperties.keySet()) {
 			fogTermToOpensStackCategory.put(imageName, new Category(imageProperties.get(imageName),
 					osScheme, RequestConstants.MIXIN_CLASS));
 			ResourceRepository.getInstance().addImageResource(imageName);
 		}
-
+		
 		fogTermToOpensStackCategory.put(
 				RequestConstants.SMALL_TERM,
 				createFlavorCategory(ConfigurationConstants.COMPUTE_OCCI_FLAVOR_SMALL_KEY,
@@ -115,14 +115,14 @@ public class OpenStackComputePlugin implements ComputePlugin {
 				RequestConstants.LARGE_TERM,
 				createFlavorCategory(ConfigurationConstants.COMPUTE_OCCI_FLAVOR_LARGE_KEY,
 						properties));
-
-		fogTermToOpensStackCategory.put(RequestConstants.USER_DATA_TERM, new Category(
-				RequestConstants.USER_DATA_TERM, instanceScheme, RequestConstants.MIXIN_CLASS));
+		
+		fogTermToOpensStackCategory.put(RequestConstants.USER_DATA_TERM, new Category("user_data",
+				instanceScheme, RequestConstants.MIXIN_CLASS));
 	}
 
 	private static Map<String, String> getImageProperties(Properties properties) {
-		Map<String, String> imageProperties = new HashMap<String, String>();
-
+		Map<String, String> imageProperties = new HashMap<String, String>();		
+		
 		for (Object propName : properties.keySet()) {
 			String propNameStr = (String) propName;
 			if (propNameStr.startsWith(ConfigurationConstants.COMPUTE_OCCI_IMAGE_PREFIX)) {
@@ -136,21 +136,20 @@ public class OpenStackComputePlugin implements ComputePlugin {
 	}
 
 	private static Category createFlavorCategory(String flavorPropName, Properties properties) {
-		return new Category(properties.getProperty(flavorPropName), resourceScheme,
-				RequestConstants.MIXIN_CLASS);
+		return new Category(properties.getProperty(flavorPropName),
+				resourceScheme, RequestConstants.MIXIN_CLASS);
 	}
 
 	@Override
 	public String requestInstance(String authToken, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
-
+		
 		LOGGER.debug("Requesting instance with accessId=" + authToken + "; categories="
 				+ categories + "; xOCCIAtt=" + xOCCIAtt);
 
 		List<Category> openStackCategories = new ArrayList<Category>();
 
-		Category categoryCompute = new Category(TERM_COMPUTE, SCHEME_COMPUTE,
-				RequestConstants.KIND_CLASS);
+		Category categoryCompute = new Category(TERM_COMPUTE, SCHEME_COMPUTE, RequestConstants.KIND_CLASS);
 		openStackCategories.add(categoryCompute);
 
 		// removing fogbow-request category
@@ -176,12 +175,14 @@ public class OpenStackComputePlugin implements ComputePlugin {
 			headers.add(new BasicHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, attName + "=" + "\""
 					+ xOCCIAtt.get(attName) + "\""));
 		}
-
-		// specifying network using inline creation of link instance
-		if (networkId != null && !"".equals(networkId)) {
-			headers.add(new BasicHeader(OCCIHeaders.LINK, "</network/" + networkId + ">; "
-					+ "rel=\"http://schemas.ogf.org/occi/infrastructure#network\"; "
-					+ "category=\"http://schemas.ogf.org/occi/infrastructure#networkinterface\";"));
+		
+		//specifying network using inline creation of link instance
+		if (networkId != null && !"".equals(networkId)){
+			headers.add(new BasicHeader(
+					OCCIHeaders.LINK,
+					"</network/"+ networkId	+ ">; "
+							+ "rel=\"http://schemas.ogf.org/occi/infrastructure#network\"; "
+							+ "category=\"http://schemas.ogf.org/occi/infrastructure#networkinterface\";"));
 		}
 
 		HttpResponse response = doRequest("post", computeOCCIEndpoint, authToken, headers)
@@ -242,7 +243,7 @@ public class OpenStackComputePlugin implements ComputePlugin {
 				"get",
 				computeV2APIEndpoint
 						+ token.getAttributes().get(Token.Constants.TENANT_ID_KEY.getValue())
-						+ "/limits", token.getAccessId()).getResponseString();
+		+ "/limits", token.getAccessId()).getResponseString();
 
 		String maxCpu = getAttFromJson(MAX_TOTAL_CORES_ATT, responseStr);
 		String cpuInUse = getAttFromJson(TOTAL_CORES_USED_ATT, responseStr);
@@ -288,7 +289,7 @@ public class OpenStackComputePlugin implements ComputePlugin {
 			}
 			httpResponse = client.execute(request);
 			responseStr = EntityUtils.toString(httpResponse.getEntity(),
-					String.valueOf(Charsets.UTF_8));
+				String.valueOf(Charsets.UTF_8));	
 		} catch (Exception e) {
 			LOGGER.error(e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
@@ -341,15 +342,15 @@ public class OpenStackComputePlugin implements ComputePlugin {
 
 	public static String getOSScheme() {
 		return osScheme;
-	}
-
+	}	
+	
 	@Override
 	public void bypass(Request request, org.restlet.Response response) {
 		if (computeOCCIEndpoint == null || computeOCCIEndpoint.isEmpty()) {
 			throw new OCCIException(ErrorType.BAD_REQUEST,
 					ResponseConstants.CLOUD_NOT_SUPPORT_OCCI_INTERFACE);
 		}
-
+		
 		URI origRequestURI;
 		try {
 			origRequestURI = new URI(request.getResourceRef().toString());
@@ -359,7 +360,7 @@ public class OpenStackComputePlugin implements ComputePlugin {
 					origRequestURI.getQuery(), origRequestURI.getFragment());
 			Client clienteForBypass = new Client(Protocol.HTTP);
 			Request proxiedRequest = new Request(request.getMethod(), newRequestURI.toString());
-
+		
 			// forwarding headers from cloud to response
 			Series<org.restlet.engine.header.Header> requestHeaders = (Series<org.restlet.engine.header.Header>) request
 					.getAttributes().get("org.restlet.http.headers");
@@ -368,8 +369,9 @@ public class OpenStackComputePlugin implements ComputePlugin {
 			clienteForBypass.handle(proxiedRequest, response);
 		} catch (URISyntaxException e) {
 			LOGGER.error(e);
-			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
-
+			throw new OCCIException(ErrorType.BAD_REQUEST,
+					e.getMessage());
+			
 		}
 	}
 
@@ -399,5 +401,6 @@ public class OpenStackComputePlugin implements ComputePlugin {
 			return responseString;
 		}
 	}
+
 
 }
