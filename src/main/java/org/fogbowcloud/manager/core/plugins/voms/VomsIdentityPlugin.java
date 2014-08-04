@@ -21,9 +21,11 @@ import java.util.Properties;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.log4j.Logger;
 import org.bouncycastle.asn1.x509.AttributeCertificate;
+import org.fogbowcloud.manager.cli.Main;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.occi.core.ErrorType;
+import org.fogbowcloud.manager.occi.core.HeaderUtils;
 import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
@@ -83,10 +85,15 @@ public class VomsIdentityPlugin implements IdentityPlugin {
 			LOGGER.error("Problems in the generation of the proxy certificate : " + e.getMessage());
 			e.printStackTrace();
 		}
-
+		
 		String accessId = generateAcessId(proxyCert.getCertificateChain());
-		String user = proxyCert.getCredential().getCertificate().getIssuerDN().getName();
-		Date expirationTime = proxyCert.getCredential().getCertificate().getNotAfter();
+		String user = null;
+		Date expirationTime = null;
+		for (X509Certificate x509Certificate : proxyCert.getCertificateChain()) {
+			user = x509Certificate.getIssuerDN().getName();
+			expirationTime = x509Certificate.getNotAfter();
+			break;
+		}
 
 		return new Token(accessId, user, expirationTime, new HashMap<String, String>());
 	}
@@ -120,24 +127,33 @@ public class VomsIdentityPlugin implements IdentityPlugin {
 		return createToken(userCredentials);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public Token getToken(String accessId) {
+		accessId = normalizeToken(accessId);
 		if (!isValid(accessId)) {
 			//TODO thing about Exception. OCCIExcpetion?
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}
-		X509Certificate certificate = null;
+		Collection<X509Certificate> certificates = null;
 		CertificateFactory cf = null;
 		try {
 			cf = CertificateFactory.getInstance(X_509);
-			certificate = (X509Certificate) cf.generateCertificate(new ByteArrayInputStream(
-					accessId.getBytes(StandardCharsets.UTF_8)));
+			certificates = (Collection<X509Certificate>) cf
+					.generateCertificates(new ByteArrayInputStream(accessId
+					.getBytes(StandardCharsets.UTF_8)));
 		} catch (Exception e) {
 			LOGGER.error("Problems in the generation of the certificate");
 			e.printStackTrace();
 		}
-		String user = certificate.getIssuerDN().getName();
-		Date expirationTime = certificate.getNotAfter();
+		
+		String user = null;
+		Date expirationTime = null;
+		for (X509Certificate x509Certificate : certificates) {
+			user = x509Certificate.getIssuerDN().getName();
+			expirationTime = x509Certificate.getNotAfter();
+			break;
+		}
 
 		return new Token(accessId, user, expirationTime, new HashMap<String, String>());
 	}
@@ -145,6 +161,7 @@ public class VomsIdentityPlugin implements IdentityPlugin {
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean isValid(String accessId) {
+		accessId = normalizeToken(accessId);
 		Collection<X509Certificate> certificates = null;
 
 		CertificateFactory cf = null;
@@ -214,6 +231,14 @@ public class VomsIdentityPlugin implements IdentityPlugin {
 		DefaultVOMSTrustStore VOMSTrustStore = new DefaultVOMSTrustStore(Arrays.asList(vomsdir));
 		
 		return VOMSValidators.newValidator(VOMSTrustStore, validatorExt);
+	}
+	
+	private String normalizeToken(String token) {
+		if (token == null) {
+			return null;
+		}
+		return token.replace(Main.SUBSTITUTE_SPACE_REPLACE, Main.SPACE_REPLACE).replace(
+				Main.SUBSTITUTE_BREAK_LINE_REPLACE, Main.BREAK_LINE_REPLACE);
 	}
 
 	public class GeneratorProxyCertificate {

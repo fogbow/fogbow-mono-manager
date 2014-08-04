@@ -290,17 +290,17 @@ public class ManagerController {
 
 	public String createInstanceForRemoteMember(String memberId, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
-		LOGGER.error("Errou Aqui : " + 2 );
 		Integer sshPort = null;
+		
+		FederationMember member = null;
 		try {
-			FederationMember member = getFederationMember(memberId);
-			if (!validator.canDonateTo(member)) {
-				return null;
-			}			
+			member = getFederationMember(memberId);
 		} catch (Exception e) {
-			LOGGER.error("Errou Aqui : " + 2.1 + " _ " + e );
-		}
-		LOGGER.error("Errou Aqui : " + 3 );
+		}		
+		
+		if (!validator.canDonateTo(member)) {
+			return null;
+		}			
 		LOGGER.info("Submiting request with categories: " + categories + " and xOCCIAtt: "
 				+ xOCCIAtt + " for remote member.");
 		String federationTokenAccessId = getFederationUserToken().getAccessId();
@@ -373,7 +373,7 @@ public class ManagerController {
 
 		Token userToken = getTokenFromFederationIdP(accessId);
 		LOGGER.debug("User Token: " + userToken);
-
+		
 		Integer instanceCount = Integer.valueOf(xOCCIAtt.get(RequestAttribute.INSTANCE_COUNT
 				.getValue()));
 		LOGGER.info("Request " + instanceCount + " instances");
@@ -518,7 +518,8 @@ public class ManagerController {
 				LOGGER.warn("Exception while creating ssh tunnel.", e);
 				request.setState(RequestState.FAILED);
 				return false;
-			}
+			}		
+			
 			instanceId = computePlugin.requestInstance(request.getToken().getAccessId(),
 					request.getCategories(), request.getxOCCIAtt());
 			if (instanceId == null) {
@@ -599,7 +600,6 @@ public class ManagerController {
 
 		String remoteInstanceId = null;
 		try {
-			LOGGER.error("Errou Aqui : " + 1 );
 			remoteInstanceId = createInstanceForRemoteMember(properties.getProperty("xmpp_jid"),
 					request.getCategories(), request.getxOCCIAtt());
 		} catch (Exception e) {
