@@ -12,6 +12,7 @@ import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.DefaultMemberValidator;
 import org.fogbowcloud.manager.core.FederationMemberValidator;
 import org.fogbowcloud.manager.core.ManagerController;
+import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.openstack.OpenStackComputePlugin;
@@ -40,6 +41,14 @@ public class Main {
 			LOGGER.warn("Compute Plugin not especified in the properties.");
 		}
 
+		AuthorizationPlugin authorizationPlugin = null;
+		try {
+			authorizationPlugin = (AuthorizationPlugin) createInstance(
+					ConfigurationConstants.AUTHORIZATION_CLASS_KEY, properties);
+		} catch (Exception e) {
+			LOGGER.warn("Authorization Plugin not especified in the properties.");
+		}
+		
 		IdentityPlugin localIdentityPlugin = null;
 		try {
 			localIdentityPlugin = (IdentityPlugin) getIdentityPluginByPrefix(properties,
@@ -67,6 +76,7 @@ public class Main {
 
 		ManagerController facade = new ManagerController(properties);
 		facade.setComputePlugin(computePlugin);
+		facade.setAuthorizationPlugin(authorizationPlugin);
 		facade.setLocalIdentityPlugin(localIdentityPlugin);
 		facade.setFederationIdentityPlugin(federationIdentityPlugin);
 		facade.setValidator(validator);

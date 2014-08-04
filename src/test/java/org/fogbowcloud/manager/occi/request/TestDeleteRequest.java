@@ -18,6 +18,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
+import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.occi.core.Category;
@@ -62,7 +63,10 @@ public class TestDeleteRequest {
 								new HashMap<String, String>()));
 		Mockito.when(identityPlugin.getToken(OCCITestHelper.INVALID_TOKEN)).thenThrow(
 				new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED));
-		this.requestHelper.initializeComponent(computePlugin, identityPlugin);
+		
+		AuthorizationPlugin authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
+		Mockito.when(authorizationPlugin.isAutorized(Mockito.any(Token.class))).thenReturn(true);
+		this.requestHelper.initializeComponent(computePlugin, identityPlugin, authorizationPlugin);
 	}
 
 	@Test

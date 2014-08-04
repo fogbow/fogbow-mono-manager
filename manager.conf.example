@@ -20,6 +20,7 @@ compute_occi_network_id=ea51ed0c-0e8a-448d-8202-c79777109ffe
 local_identity_class=org.fogbowcloud.manager.core.plugins.openstack.OpenStackIdentityPlugin
 local_identity_url=http://localhost:5000
 
+federation_authorization_class=org.fogbowcloud.manager.core.plugins.openstack.OpenStackAuthorizationPlugin
 federation_identity_class=org.fogbowcloud.manager.core.plugins.openstack.OpenStackIdentityPlugin
 federation_identity_url=http://localhost:5000
 

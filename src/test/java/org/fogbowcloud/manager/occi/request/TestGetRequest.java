@@ -17,6 +17,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
+import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
@@ -66,7 +67,9 @@ public class TestGetRequest {
 
 		Mockito.when(identityPlugin.getToken(OCCITestHelper.ACCESS_TOKEN)).thenReturn(userToken);
 
-		requestHelper.initializeComponent(computePlugin, identityPlugin);
+		AuthorizationPlugin authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
+		Mockito.when(authorizationPlugin.isAutorized(Mockito.any(Token.class))).thenReturn(true);
+		this.requestHelper.initializeComponent(computePlugin, identityPlugin, authorizationPlugin);
 	}
 
 	@Test

@@ -16,6 +16,7 @@ import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
+import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.ssh.DefaultSSHTunnel;
@@ -30,6 +31,7 @@ import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.fogbowcloud.manager.occi.request.RequestAttribute;
+import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.fogbowcloud.manager.occi.request.RequestRepository;
 import org.fogbowcloud.manager.occi.request.RequestState;
 import org.fogbowcloud.manager.occi.request.RequestType;
@@ -54,6 +56,7 @@ public class ManagerController {
 	private RequestRepository requests = new RequestRepository();
 	private FederationMemberPicker memberPicker = new RoundRobinMemberPicker();
 
+	private AuthorizationPlugin authorizationPlugin;
 	private ComputePlugin computePlugin;
 	private IdentityPlugin localIdentityPlugin;
 	private IdentityPlugin federationIdentityPlugin;
@@ -82,6 +85,10 @@ public class ManagerController {
 		this.sshTunnel = sshTunnel;
 	}
 
+	public void setAuthorizationPlugin(AuthorizationPlugin authorizationPlugin) {
+		this.authorizationPlugin = authorizationPlugin;
+	}
+	
 	public void setComputePlugin(ComputePlugin computePlugin) {
 		this.computePlugin = computePlugin;
 	}
@@ -365,7 +372,11 @@ public class ManagerController {
 	}
 
 	public Token getTokenFromFederationIdP(String accessId) {
-		return federationIdentityPlugin.getToken(accessId);
+		Token token = federationIdentityPlugin.getToken(accessId);
+		if (!authorizationPlugin.isAutorized(token)) {
+			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED_USER);
+		}
+		return token;
 	}
 
 	public List<Request> createRequests(String accessId, List<Category> categories,

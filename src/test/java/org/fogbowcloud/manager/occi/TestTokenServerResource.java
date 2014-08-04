@@ -9,6 +9,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
+import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
@@ -30,11 +31,14 @@ public class TestTokenServerResource {
 	private OCCITestHelper helper;
 	private ComputePlugin computePlugin;
 	private IdentityPlugin identityPlugin;
+	private AuthorizationPlugin authorizationPlugin;
 
 	@Before
 	public void setup() throws Exception {
 		this.computePlugin = Mockito.mock(ComputePlugin.class);
 		this.identityPlugin = Mockito.mock(IdentityPlugin.class);
+		this.authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
+		
 		this.helper = new OCCITestHelper();
 	}
 
@@ -45,7 +49,7 @@ public class TestTokenServerResource {
 
 	@Test
 	public void testGetTokenWrongContentType() throws Exception {
-		this.helper.initializeComponent(computePlugin, identityPlugin);
+		this.helper.initializeComponent(computePlugin, identityPlugin, authorizationPlugin);
 
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_TOKEN);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, "wrong");
@@ -63,7 +67,7 @@ public class TestTokenServerResource {
 
 		Mockito.when(identityPlugin.createToken(Mockito.anyMap())).thenReturn(token);
 
-		this.helper.initializeComponent(computePlugin, identityPlugin);
+		this.helper.initializeComponent(computePlugin, identityPlugin, authorizationPlugin);
 
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_TOKEN);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
@@ -83,7 +87,7 @@ public class TestTokenServerResource {
 		Mockito.when(identityPlugin.createToken(Mockito.anyMap())).thenThrow(
 				new OCCIException(ErrorType.UNAUTHORIZED, ""));
 
-		this.helper.initializeComponent(computePlugin, identityPlugin);
+		this.helper.initializeComponent(computePlugin, identityPlugin, authorizationPlugin);
 
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_TOKEN);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);

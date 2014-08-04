@@ -12,6 +12,7 @@ import java.util.Map;
 import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
+import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.openstack.OpenStackComputePlugin;
@@ -61,6 +62,24 @@ public class TestManagerController {
 				String.valueOf(RequestConstants.DEFAULT_INSTANCE_COUNT));
 	}
 
+	@Test
+	public void testAuthorizedUser() {		
+		Token tokenFromFederationIdP = managerController
+				.getTokenFromFederationIdP(DefaultDataTestHelper.ACCESS_TOKEN_ID);
+		
+		Assert.assertEquals(managerTestHelper.getDefaultToken().getAccessId(),
+				tokenFromFederationIdP.getAccessId());
+	}
+	
+	@Test(expected=OCCIException.class)
+	public void testUnauthorizedUser() {
+		AuthorizationPlugin authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
+		Mockito.when(authorizationPlugin.isAutorized(Mockito.any(Token.class))).thenReturn(false);
+		managerController.setAuthorizationPlugin(authorizationPlugin);
+		
+		managerController.getTokenFromFederationIdP(DefaultDataTestHelper.ACCESS_TOKEN_ID);		
+	}
+	
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testSubmitLocalUserRequests() throws InterruptedException {

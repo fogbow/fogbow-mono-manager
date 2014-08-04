@@ -10,6 +10,7 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
@@ -61,7 +62,10 @@ public class TestDeleteCompute {
 		request2.setInstanceId(OTHER_INSTANCE_ID);
 		requests.add(request2);
 
-		this.helper.initializeComponentCompute(computePlugin, identityPlugin, requests);
+		AuthorizationPlugin authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
+		Mockito.when(authorizationPlugin.isAutorized(Mockito.any(Token.class))).thenReturn(true);
+		
+		this.helper.initializeComponentCompute(computePlugin, identityPlugin, authorizationPlugin, requests);
 	}
 
 	@After

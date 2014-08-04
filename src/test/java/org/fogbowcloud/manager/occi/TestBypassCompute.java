@@ -18,6 +18,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
+import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.openstack.OpenStackComputePlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
@@ -51,6 +52,7 @@ public class TestBypassCompute {
 	private OCCITestHelper helper;
 	private OpenStackComputePlugin computePlugin;
 	private IdentityPlugin identityPlugin;
+	private AuthorizationPlugin authorizationPlugin;
 	
 	@Before
 	public void setup() throws Exception{
@@ -87,9 +89,12 @@ public class TestBypassCompute {
 		//initializing fake Cloud Compute Application
 		pluginHelper.initializeComputeComponent(expectedInstanceIds);
 		
+		authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
+		Mockito.when(authorizationPlugin.isAutorized(Mockito.any(Token.class))).thenReturn(true);
+		
 		//initializing fogbow OCCI Application
 		helper = new OCCITestHelper();
-		helper.initializeComponentCompute(computePlugin, identityPlugin, requests);
+		helper.initializeComponentCompute(computePlugin, identityPlugin, authorizationPlugin, requests);
 	}
 	
 	@After

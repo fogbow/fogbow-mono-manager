@@ -11,6 +11,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
+import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.occi.core.HeaderUtils;
@@ -32,6 +33,7 @@ public class TestQueryServerResource {
 	private OCCITestHelper helper;
 	private ComputePlugin computePlugin;
 	private IdentityPlugin identityPlugin;
+	private AuthorizationPlugin authorizationPlugin;
 
 	@Before
 	public void setup() throws Exception {
@@ -44,7 +46,12 @@ public class TestQueryServerResource {
 				.thenReturn(
 						new Token("id", OCCITestHelper.USER_MOCK, new Date(),
 								new HashMap<String, String>()));
+		
+		this.authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
+		Mockito.when(authorizationPlugin.isAutorized(Mockito.any(Token.class))).thenReturn(true);
+		
 		this.helper = new OCCITestHelper();
+		this.helper.initializeComponent(computePlugin, identityPlugin, authorizationPlugin);
 	}
 
 	@After
@@ -54,7 +61,6 @@ public class TestQueryServerResource {
 
 	@Test
 	public void testGetQueryDifferentContentType() throws Exception {
-		this.helper.initializeComponent(computePlugin, identityPlugin);
 
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_QUERY);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, "text/plain");
@@ -67,7 +73,6 @@ public class TestQueryServerResource {
 
 	@Test
 	public void testGetQueryWithoutAccessToken() throws Exception {
-		this.helper.initializeComponent(computePlugin, identityPlugin);
 
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_QUERY);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
@@ -81,7 +86,6 @@ public class TestQueryServerResource {
 
 	@Test
 	public void testGetQuery() throws Exception {
-		this.helper.initializeComponent(computePlugin, identityPlugin);
 
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_QUERY);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
@@ -101,7 +105,6 @@ public class TestQueryServerResource {
 
 	@Test
 	public void testHeadQueryWithoutAccessToken() throws Exception {
-		this.helper.initializeComponent(computePlugin, identityPlugin);
 
 		HttpHead head = new HttpHead(OCCITestHelper.URI_FOGBOW_QUERY);
 		head.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
