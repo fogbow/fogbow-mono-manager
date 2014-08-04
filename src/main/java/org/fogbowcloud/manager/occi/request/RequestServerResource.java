@@ -7,6 +7,7 @@ import java.util.Map;
 
 import org.apache.http.HttpStatus;
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.cli.Main;
 import org.fogbowcloud.manager.occi.OCCIApplication;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
@@ -152,19 +153,25 @@ public class RequestServerResource extends ServerResource {
 		List<Category> categories = HeaderUtils.getCategories(req.getHeaders());
 		LOGGER.debug("Categories: " + categories);
 		HeaderUtils.checkCategories(categories, RequestConstants.TERM);
-		HeaderUtils.checkOCCIContentType(req.getHeaders());
-
+		HeaderUtils.checkOCCIContentType(req.getHeaders());		
+		
 		Map<String, String> xOCCIAtt = HeaderUtils.getXOCCIAtributes(req.getHeaders());
 		xOCCIAtt = normalizeXOCCIAtt(xOCCIAtt);
 
-		String authToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse());
-		authToken = authToken.replace("{-}", "\n");
-		authToken = authToken.replace("{--}", " ");
+		String authToken = normalizeToken(HeaderUtils.getAuthToken(req.getHeaders(), getResponse()));
 		
 		List<Request> currentRequests = application.createRequests(authToken, categories, xOCCIAtt);
 		return generateTextPlainResponse(currentRequests, req);
 	}
 
+	private String normalizeToken(String token) {
+		if (token == null) {
+			return null;
+		}
+		return token.replace(Main.SUBSTITUTE_SPACE_REPLACE, Main.SPACE_REPLACE).replace(
+				Main.SUBSTITUTE_BREAK_LINE_REPLACE, Main.BREAK_LINE_REPLACE);
+	}
+	
 	public static Map<String, String> normalizeXOCCIAtt(Map<String, String> xOCCIAtt) {
 		Map<String, String> defOCCIAtt = new HashMap<String, String>();
 		defOCCIAtt.put(RequestAttribute.TYPE.getValue(), RequestConstants.DEFAULT_TYPE);

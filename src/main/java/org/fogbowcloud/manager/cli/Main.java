@@ -40,8 +40,12 @@ import com.beust.jcommander.Parameters;
 
 public class Main {
 
-	protected static String DEFAULT_URL = "http://localhost:8182";
-	protected static int DEFAULT_INTANCE_COUNT = 1;
+	public static final String SUBSTITUTE_SPACE_REPLACE = "{!space}";
+	public static final String SPACE_REPLACE = " ";
+	public static final String SUBSTITUTE_BREAK_LINE_REPLACE = "{!breakline}";
+	public static final String BREAK_LINE_REPLACE = "\n";
+	protected static final String DEFAULT_URL = "http://localhost:8182";
+	protected static final int DEFAULT_INTANCE_COUNT = 1;
 	protected static final String DEFAULT_TYPE = RequestType.ONE_TIME.getValue();
 	protected static final String DEFAULT_FLAVOR = RequestConstants.SMALL_TERM;
 	protected static final String DEFAULT_IMAGE = "fogbow-linux-x86";
@@ -79,6 +83,7 @@ public class Main {
 			doRequest("get", url + "/members", null);
 		} else if (parsedCommand.equals("request")) {
 			String url = request.url;
+			request.authToken = normalizeToken(request.authToken);
 			if (request.get) {
 				if (request.create || request.delete) {
 					jc.usage();
@@ -107,10 +112,7 @@ public class Main {
 					jc.usage();
 					return;
 				}
-				//TODO Check
-				request.authToken = request.authToken.replace("\n", "{-}");
-				request.authToken = request.authToken.replace(" ", "{--}");
-
+				
 				Set<Header> headers = new HashSet<Header>();
 				headers.add(new BasicHeader("Category", RequestConstants.TERM + "; scheme=\""
 						+ RequestConstants.SCHEME + "\"; class=\"" + RequestConstants.KIND_CLASS
@@ -129,6 +131,7 @@ public class Main {
 			}
 		} else if (parsedCommand.equals("instance")) {
 			String url = instance.url;
+			request.authToken = normalizeToken(request.authToken);
 			if (instance.delete && instance.get) {
 				jc.usage();
 				return;
@@ -161,6 +164,14 @@ public class Main {
 		}
 	}
 
+	private static String normalizeToken(String token) {
+		if (token == null) {
+			return null;
+		}		
+		return token.replace(BREAK_LINE_REPLACE, SUBSTITUTE_BREAK_LINE_REPLACE).replace("\r", "")
+				.replace(SPACE_REPLACE, SUBSTITUTE_SPACE_REPLACE);
+	}
+	
 	private static Set<Header> getHeadersCredentials(Map<String, String> mapCredentials) {
 		Set<Header> headers = new HashSet<Header>();
 
