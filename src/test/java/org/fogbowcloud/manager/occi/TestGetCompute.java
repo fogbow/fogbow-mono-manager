@@ -16,7 +16,9 @@ import org.apache.http.util.EntityUtils;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
+import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.HeaderUtils;
+import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.Resource;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
@@ -58,9 +60,7 @@ public class TestGetCompute {
 		Mockito.when(
 				computePlugin.getInstance(Mockito.anyString(),
 						Mockito.eq(INSTANCE_3_ID_WITHOUT_USER))).thenReturn(instance1);
-		Mockito.doNothing().when(computePlugin)
-				.bypass(Mockito.any(org.restlet.Request.class), Mockito.any(Response.class));
-
+		
 		identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.getToken(OCCITestHelper.ACCESS_TOKEN)).thenReturn(
 				new Token("id", OCCITestHelper.USER_MOCK, new Date(),
@@ -92,6 +92,9 @@ public class TestGetCompute {
 
 	@Test
 	public void testGetComputeOk() throws Exception {
+		Mockito.doNothing().when(computePlugin)
+				.bypass(Mockito.any(org.restlet.Request.class), Mockito.any(Response.class));
+		
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE);
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
@@ -104,6 +107,9 @@ public class TestGetCompute {
 	
 	@Test
 	public void testGetComputeOkAcceptURIList() throws Exception {
+		Mockito.doNothing().when(computePlugin)
+				.bypass(Mockito.any(org.restlet.Request.class), Mockito.any(Response.class));
+		
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE);
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpGet.addHeader(OCCIHeaders.ACCEPT, OCCIHeaders.TEXT_URI_LIST_CONTENT_TYPE);
@@ -119,6 +125,9 @@ public class TestGetCompute {
 	
 	@Test
 	public void testEmptyGetComputeWithAcceptURIList() throws Exception {
+		Mockito.doNothing().when(computePlugin)
+				.bypass(Mockito.any(org.restlet.Request.class), Mockito.any(Response.class));
+		
 		//reseting component
 		helper.stopComponent();
 		List<Request> requests = new LinkedList<Request>();
@@ -140,6 +149,9 @@ public class TestGetCompute {
 
 	@Test
 	public void testGetSpecificInstanceFound() throws Exception {
+		Mockito.doNothing().when(computePlugin)
+				.bypass(Mockito.any(org.restlet.Request.class), Mockito.any(Response.class));
+		
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE + INSTANCE_1_ID);
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
@@ -151,6 +163,10 @@ public class TestGetCompute {
 	
 	@Test
 	public void testGetSpecificInstanceFoundWithWrongAccept() throws Exception {
+		Mockito.doThrow(new OCCIException(ErrorType.METHOD_NOT_ALLOWED,
+						ResponseConstants.METHOD_NOT_SUPPORTED)).when(computePlugin)
+				.bypass(Mockito.any(org.restlet.Request.class), Mockito.any(Response.class));
+		
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE + INSTANCE_1_ID);
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpGet.addHeader(OCCIHeaders.ACCEPT, OCCIHeaders.TEXT_URI_LIST_CONTENT_TYPE);
@@ -163,6 +179,10 @@ public class TestGetCompute {
 
 	@Test
 	public void testGetSpecificInstanceNotFound() throws Exception {
+		Mockito.doThrow(new OCCIException(ErrorType.NOT_FOUND,
+						ResponseConstants.NOT_FOUND)).when(computePlugin)
+				.bypass(Mockito.any(org.restlet.Request.class), Mockito.any(Response.class));
+		
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE + "wrong");
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
@@ -174,6 +194,9 @@ public class TestGetCompute {
 
 	@Test
 	public void testGetSpecificInstanceOtherUser() throws Exception {
+		Mockito.doNothing().when(computePlugin)
+				.bypass(Mockito.any(org.restlet.Request.class), Mockito.any(Response.class));
+		
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE
 				+ INSTANCE_3_ID_WITHOUT_USER);
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
@@ -186,6 +209,9 @@ public class TestGetCompute {
 
 	@Test
 	public void testDifferentContentType() throws Exception {
+		Mockito.doNothing().when(computePlugin)
+				.bypass(Mockito.any(org.restlet.Request.class), Mockito.any(Response.class));
+
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE);
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, "any");
 		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
@@ -197,6 +223,10 @@ public class TestGetCompute {
 
 	@Test
 	public void testNotAllowedAcceptContent() throws Exception {
+		Mockito.doThrow(new OCCIException(ErrorType.METHOD_NOT_ALLOWED,
+						ResponseConstants.METHOD_NOT_SUPPORTED)).when(computePlugin)
+				.bypass(Mockito.any(org.restlet.Request.class), Mockito.any(Response.class));
+		
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE);
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpGet.addHeader(OCCIHeaders.ACCEPT, "invalid-content");
@@ -209,6 +239,9 @@ public class TestGetCompute {
 	
 	@Test
 	public void testAccessToken() throws Exception {
+		Mockito.doNothing().when(computePlugin)
+				.bypass(Mockito.any(org.restlet.Request.class), Mockito.any(Response.class));
+
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE);
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
@@ -220,6 +253,10 @@ public class TestGetCompute {
 
 	@Test
 	public void testWrongAccessToken() throws Exception {
+		Mockito.doThrow(new OCCIException(ErrorType.UNAUTHORIZED,
+						ResponseConstants.UNAUTHORIZED)).when(computePlugin)
+					.bypass(Mockito.any(org.restlet.Request.class), Mockito.any(Response.class));
+		
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE + INSTANCE_1_ID);
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, "wrong");
@@ -231,6 +268,10 @@ public class TestGetCompute {
 
 	@Test
 	public void testEmptyAccessToken() throws Exception {
+		Mockito.doThrow(new OCCIException(ErrorType.UNAUTHORIZED,
+						ResponseConstants.UNAUTHORIZED)).when(computePlugin)
+				.bypass(Mockito.any(org.restlet.Request.class), Mockito.any(Response.class));
+		
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE);
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, "");
@@ -248,6 +289,10 @@ public class TestGetCompute {
 	
 	@Test
 	public void testWithoutAccessToken() throws Exception {
+		Mockito.doThrow(new OCCIException(ErrorType.UNAUTHORIZED,
+						ResponseConstants.UNAUTHORIZED)).when(computePlugin)
+				.bypass(Mockito.any(org.restlet.Request.class), Mockito.any(Response.class));	
+		
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE + INSTANCE_1_ID);
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		HttpClient client = new DefaultHttpClient();

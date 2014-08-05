@@ -112,8 +112,10 @@ public class TestBypassCompute {
 		HttpResponse response = client.execute(httpPost);
 		
 		Assert.assertEquals(PluginHelper.COMPUTE_OCCI_URL + OpenStackComputePlugin.COMPUTE_ENDPOINT
-				+ FIRST_INSTANCE_ID, response.getFirstHeader(HeaderUtils.normalize("Location")).getValue());		
+				+ FIRST_INSTANCE_ID, response.getFirstHeader(HeaderUtils.normalize("Location")).getValue());
+		Assert.assertEquals(1, response.getHeaders(HeaderUtils.normalize("Location")).length);
 		Assert.assertTrue(response.getEntity().getContentType().getValue().startsWith(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE));
+		Assert.assertEquals(1, response.getHeaders(HeaderUtils.normalize("Content-Type")).length);
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 		String message = EntityUtils.toString(response.getEntity(),
 				String.valueOf(Charsets.UTF_8));

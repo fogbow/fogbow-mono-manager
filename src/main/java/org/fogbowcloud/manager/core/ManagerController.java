@@ -653,6 +653,7 @@ public class ManagerController {
 	}
 
 	public void bypass(org.restlet.Request request, Response response) {
+		LOGGER.debug("Bypassing request: " + request);
 		computePlugin.bypass(request, response);
 	}
 }

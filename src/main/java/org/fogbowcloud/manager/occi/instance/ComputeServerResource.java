@@ -72,7 +72,7 @@ public class ComputeServerResource extends ServerResource {
 		throw new OCCIException(ErrorType.METHOD_NOT_ALLOWED,
 				ResponseConstants.METHOD_NOT_SUPPORTED);
 	}
-
+	
 	private List<Instance> getInstances(OCCIApplication application, String authToken) {
 		List<Instance> allInstances = application.getInstances(authToken);
 

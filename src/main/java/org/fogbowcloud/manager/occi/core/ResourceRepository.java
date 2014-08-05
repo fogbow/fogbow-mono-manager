@@ -80,7 +80,6 @@ public class ResourceRepository {
 		resources.add(fogbowLargeFlavor);
 		resources.add(fogbowUserdata);
 
-		//FIXME Adding default OCCI kinds and mixin (just for test r-OCCI-cli)
 		Resource resourceTlp = new Resource("resource_tpl",
 				"http://schemas.ogf.org/occi/infrastructure#", RequestConstants.MIXIN_CLASS,
 				new ArrayList<String>(), new ArrayList<String>(), FOGBOWCLOUD_ENDPOINT + "/resource_tpl/",
