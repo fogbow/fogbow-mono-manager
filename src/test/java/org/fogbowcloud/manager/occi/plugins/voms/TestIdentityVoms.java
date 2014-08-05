@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+import org.apache.log4j.chainsaw.Main;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.voms.VomsIdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.voms.VomsIdentityPlugin.GeneratorProxyCertificate;
@@ -64,9 +65,16 @@ public class TestIdentityVoms {
 
 		Token myToken = new Token("", "", new Date(), credentials);
 		Token token = vomsIdentityPlugin.reIssueToken(myToken);
-		
+			
 		Assert.assertEquals(vomsIdentityPlugin.generateAcessId(proxy.getCertificateChain()),
 				token.getAccessId());
+		String x = token.getAccessId()
+				.replace("\n", org.fogbowcloud.manager.cli.Main.SUBSTITUTE_BREAK_LINE_REPLACE)
+				.replace(" ", org.fogbowcloud.manager.cli.Main.SUBSTITUTE_SPACE_REPLACE);
+		System.out.println(x);
+		System.out.println("----");
+		System.out.println(token.getAccessId());
+		
 		Assert.assertEquals("CN=test0, O=IGI, C=IT", token.getUser());
 		Date dateExpiration = new Date(System.currentTimeMillis() + TWELVE_HOURS);
 		Assert.assertEquals(dateExpiration.getDay(), token.getExpirationDate().getDay());

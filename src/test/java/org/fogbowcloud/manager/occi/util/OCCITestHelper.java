@@ -16,6 +16,7 @@ import org.apache.http.ParseException;
 import org.apache.http.util.EntityUtils;
 import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.model.FederationMember;
+import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.ssh.SSHTunnel;
@@ -45,13 +46,14 @@ public class OCCITestHelper {
 	private Component component;
 	private RequestRepository requests;
 
-	public void initializeComponent(ComputePlugin computePlugin, IdentityPlugin identityPlugin)
+	public void initializeComponent(ComputePlugin computePlugin, IdentityPlugin identityPlugin, AuthorizationPlugin authorizationPlugin)
 			throws Exception {
 		component = new Component();
 		component.getServers().add(Protocol.HTTP, ENDPOINT_PORT);
 
 		ManagerController facade = new ManagerController(new Properties());
 		facade.setComputePlugin(computePlugin);
+		facade.setAuthorizationPlugin(authorizationPlugin);
 		facade.setLocalIdentityPlugin(identityPlugin);
 		facade.setFederationIdentityPlugin(identityPlugin);
 		facade.setSSHTunnel(Mockito.mock(SSHTunnel.class));
@@ -59,14 +61,16 @@ public class OCCITestHelper {
 		component.getDefaultHost().attach(new OCCIApplication(facade));
 		component.start();
 	}
-
+	
 	public void initializeComponentCompute(ComputePlugin computePlugin,
-			IdentityPlugin identityPlugin, List<Request> requestsToAdd) throws Exception {
+			IdentityPlugin identityPlugin, AuthorizationPlugin authorizationPlugin,
+			List<Request> requestsToAdd) throws Exception {
 		component = new Component();
 		component.getServers().add(Protocol.HTTP, ENDPOINT_PORT);
 
 		ManagerController facade = new ManagerController(new Properties());
 		facade.setComputePlugin(computePlugin);
+		facade.setAuthorizationPlugin(authorizationPlugin);
 		facade.setLocalIdentityPlugin(identityPlugin);
 		facade.setFederationIdentityPlugin(identityPlugin);
 		facade.setSSHTunnel(Mockito.mock(SSHTunnel.class));

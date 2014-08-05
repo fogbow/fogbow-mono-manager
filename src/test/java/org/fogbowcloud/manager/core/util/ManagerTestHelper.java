@@ -23,6 +23,7 @@ import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
+import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.openstack.OpenStackIdentityPlugin;
@@ -49,6 +50,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 	private ComputePlugin computePlugin;
 	private IdentityPlugin identityPlugin;
 	private IdentityPlugin federationIdentityPlugin;
+	private AuthorizationPlugin authorizationPlugin;
 	private Token defaultToken;
 	private FakeXMPPServer fakeServer = new FakeXMPPServer();
 
@@ -142,6 +144,10 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 	
 	public IdentityPlugin getFederationIdentityPlugin() {
 		return federationIdentityPlugin;
+	}
+	
+	public AuthorizationPlugin getAuthorizationPlugin() {
+		return authorizationPlugin;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -314,9 +320,13 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		Mockito.when(federationIdentityPlugin.getToken(DefaultDataTestHelper.ACCESS_TOKEN_ID))
 				.thenReturn(defaultToken);
 
+		authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
+		Mockito.when(authorizationPlugin.isAutorized(Mockito.any(Token.class))).thenReturn(true);
+		
 		// mocking sshTunnel
 		SSHTunnel sshTunnel = Mockito.mock(SSHTunnel.class);
 
+		managerController.setAuthorizationPlugin(authorizationPlugin);
 		managerController.setLocalIdentityPlugin(identityPlugin);
 		managerController.setFederationIdentityPlugin(federationIdentityPlugin);
 		managerController.setComputePlugin(computePlugin);

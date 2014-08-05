@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.fogbowcloud.manager.core.ManagerController;
+import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.ssh.SSHTunnel;
@@ -64,6 +65,10 @@ public class TestOCCIApplication {
 
 		SSHTunnel sshTunnel = Mockito.mock(SSHTunnel.class);
 
+		AuthorizationPlugin authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
+		Mockito.when(authorizationPlugin.isAutorized(Mockito.any(Token.class))).thenReturn(true);
+		
+		managerFacade.setAuthorizationPlugin(authorizationPlugin);
 		managerFacade.setLocalIdentityPlugin(identityPlugin);
 		managerFacade.setFederationIdentityPlugin(identityPlugin);
 		managerFacade.setComputePlugin(computePlugin);
