@@ -4,6 +4,6 @@ import org.fogbowcloud.manager.occi.core.Token;
 
 public interface AuthorizationPlugin {
 	
-	public boolean isAutorized(Token token);
+	public boolean isAuthorized(Token token);
 	
 }

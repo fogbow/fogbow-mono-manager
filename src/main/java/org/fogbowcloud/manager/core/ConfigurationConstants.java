@@ -39,12 +39,12 @@ public class ConfigurationConstants {
 	public static final String COMPUTE_OCCI_URL_KEY = "compute_occi_url";
 	
 	//federation user
-	public static final String FEDERATION_USER_NAME_KEY = "federation_user_name";
-	public static final String FEDERATION_USER_PASS_KEY = "federation_user_password";
-	public static final String FEDERATION_USER_TENANT_NAME_KEY = "federation_user_tenant_name";
+	public static final String FEDERATION_USER_NAME_KEY = "local_proxy_account_user_name";
+	public static final String FEDERATION_USER_PASS_KEY = "local_proxy_account_password";
+	public static final String FEDERATION_USER_TENANT_NAME_KEY = "local_proxy_account_tenant_name";
 	
-	public static final String FEDERATION_USER_PASS_VOMS = "federation_user_pass_voms";
-	public static final String FEDERATION_USER_SERVER_VOMS = "federation_user_server_voms";
+	public static final String FEDERATION_USER_PASS_VOMS = "local_proxy_account_pass_voms";
+	public static final String FEDERATION_USER_SERVER_VOMS = "local_proxy_account_server_voms";
 	
 	//periods
 	public static final String SCHEDULER_PERIOD_KEY = "scheduler_period";

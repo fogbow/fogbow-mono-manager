@@ -63,13 +63,13 @@ public class TestIdentityOpenStack {
 	@Test
 	public void testGetToken() {
 		Map<String, String> tokenAttributes = new HashMap<String, String>();
-		tokenAttributes.put(Token.Constants.USER_KEY.getValue(), PluginHelper.USERNAME);
-		tokenAttributes.put(Token.Constants.PASSWORD_KEY.getValue(), PluginHelper.USER_PASS);
-		tokenAttributes.put(Token.Constants.TENANT_NAME_KEY.getValue(), PluginHelper.TENANT_NAME);
+		tokenAttributes.put(OpenStackIdentityPlugin.USERNAME, PluginHelper.USERNAME);
+		tokenAttributes.put(OpenStackIdentityPlugin.PASSWORD, PluginHelper.USER_PASS);
+		tokenAttributes.put(OpenStackIdentityPlugin.TENANT_NAME, PluginHelper.TENANT_NAME);
 		Token token = this.identityOpenStack.createToken(tokenAttributes);
 		String authToken = token.getAccessId();
 		String user = token.getUser();
-		String tenantID = token.get(Token.Constants.TENANT_ID_KEY.getValue());
+		String tenantID = token.get(OpenStackIdentityPlugin.TENANT_ID);
 		Date expirationDate = token.getExpirationDate();
 		Assert.assertEquals(PluginHelper.ACCESS_ID, authToken);
 		Assert.assertEquals(PluginHelper.USERNAME, user);		
@@ -82,12 +82,12 @@ public class TestIdentityOpenStack {
 	@Test
 	public void testUpgradeToken() {
 		Map<String, String> tokenAttributes = new HashMap<String, String>();
-		tokenAttributes.put(Token.Constants.USER_KEY.getValue(), PluginHelper.USERNAME);
-		tokenAttributes.put(Token.Constants.PASSWORD_KEY.getValue(), PluginHelper.USER_PASS);
-		tokenAttributes.put(Token.Constants.TENANT_NAME_KEY.getValue(), PluginHelper.TENANT_NAME);
+		tokenAttributes.put(OpenStackIdentityPlugin.USERNAME, PluginHelper.USERNAME);
+		tokenAttributes.put(OpenStackIdentityPlugin.PASSWORD, PluginHelper.USER_PASS);
+		tokenAttributes.put(OpenStackIdentityPlugin.TENANT_NAME, PluginHelper.TENANT_NAME);
 		Token token = this.identityOpenStack.createToken(tokenAttributes);
 		String authToken = token.getAccessId();
-		String tenantID = token.get(Token.Constants.TENANT_ID_KEY.getValue());
+		String tenantID = token.get(OpenStackIdentityPlugin.TENANT_ID);
 		Date expirationDate = token.getExpirationDate();
 		Assert.assertEquals(PluginHelper.ACCESS_ID, authToken);
 		Assert.assertEquals(PluginHelper.TENANT_ID, tenantID);
@@ -97,7 +97,7 @@ public class TestIdentityOpenStack {
 		
 		Token token2 = this.identityOpenStack.reIssueToken(token);
 		authToken = token2.getAccessId();
-		tenantID = token2.get(Token.Constants.TENANT_ID_KEY.getValue());
+		tenantID = token2.get(OpenStackIdentityPlugin.TENANT_ID);
 		expirationDate = token2.getExpirationDate();
 		Assert.assertEquals(PluginHelper.ACCESS_ID, authToken);
 		Assert.assertEquals(PluginHelper.TENANT_ID, tenantID);
@@ -109,18 +109,18 @@ public class TestIdentityOpenStack {
 	@Test(expected = OCCIException.class)
 	public void testGetTokenWrongUsername() {
 		Map<String, String> tokenAttributes = new HashMap<String, String>();
-		tokenAttributes.put(Token.Constants.USER_KEY.getValue(), "wrong");
-		tokenAttributes.put(Token.Constants.PASSWORD_KEY.getValue(), PluginHelper.USER_PASS);
-		tokenAttributes.put(Token.Constants.TENANT_NAME_KEY.getValue(), "");
+		tokenAttributes.put(OpenStackIdentityPlugin.USERNAME, "wrong");
+		tokenAttributes.put(OpenStackIdentityPlugin.PASSWORD, PluginHelper.USER_PASS);
+		tokenAttributes.put(OpenStackIdentityPlugin.TENANT_NAME, "");
 		this.identityOpenStack.createToken(tokenAttributes);
 	}
 
 	@Test(expected = OCCIException.class)
 	public void testGetTokenWrongPassword() {
 		Map<String, String> tokenAttributes = new HashMap<String, String>();
-		tokenAttributes.put(Token.Constants.USER_KEY.getValue(), PluginHelper.USERNAME);
-		tokenAttributes.put(Token.Constants.PASSWORD_KEY.getValue(), "worng");
-		tokenAttributes.put(Token.Constants.TENANT_NAME_KEY.getValue(), "");
+		tokenAttributes.put(OpenStackIdentityPlugin.USERNAME, PluginHelper.USERNAME);
+		tokenAttributes.put(OpenStackIdentityPlugin.PASSWORD, "worng");
+		tokenAttributes.put(OpenStackIdentityPlugin.TENANT_NAME, "");
 		this.identityOpenStack.createToken(tokenAttributes);
 	}
 }

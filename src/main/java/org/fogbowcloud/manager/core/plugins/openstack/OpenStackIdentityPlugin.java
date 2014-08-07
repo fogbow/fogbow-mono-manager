@@ -53,6 +53,12 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 	public static final String EXPIRES_PROP = "expires";
 	public static final String USER_PROP = "user";
 	public static final String NAME_PROP = "name";
+	
+	public static final String USERNAME = "username";
+	public static final String PASSWORD = "password";
+	public static final String TENANT_NAME = "tenantName";
+	public static final String TENANT_ID = "tenantId";
+	
 
 	private static final int LAST_SUCCESSFUL_STATUS = 204;
 	private final static Logger LOGGER = Logger.getLogger(OpenStackIdentityPlugin.class);
@@ -95,11 +101,11 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 
 	private JSONObject mountJson(Map<String, String> credentials) throws JSONException {
 		JSONObject passwordCredentials = new JSONObject();
-		passwordCredentials.put(USERNAME_PROP, credentials.get(Token.Constants.USER_KEY.getValue()));
+		passwordCredentials.put(USERNAME_PROP, credentials.get(USERNAME));
 		passwordCredentials.put(PASSWORD_PROP,
-				credentials.get(Token.Constants.PASSWORD_KEY.getValue()));
+				credentials.get(PASSWORD));
 		JSONObject auth = new JSONObject();
-		auth.put(TENANT_NAME_PROP, credentials.get(Token.Constants.TENANT_NAME_KEY.getValue()));
+		auth.put(TENANT_NAME_PROP, credentials.get(TENANT_NAME));
 		auth.put(PASSWORD_CREDENTIALS_PROP, passwordCredentials);
 		JSONObject root = new JSONObject();
 		root.put(AUTH_PROP, auth);
@@ -155,7 +161,7 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 		JSONObject idToken = new JSONObject();
 		idToken.put(ID_PROP, token.getAccessId());
 		JSONObject auth = new JSONObject();
-		auth.put(TENANT_NAME_PROP, token.get(Token.Constants.TENANT_NAME_KEY.getValue()));
+		auth.put(TENANT_NAME_PROP, token.get(TENANT_NAME));
 		auth.put(TOKEN_PROP, idToken);
 		JSONObject root = new JSONObject();
 		root.put(AUTH_PROP, auth);
@@ -183,8 +189,8 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 			try {
 				tenantId = tokenKeyStone.getJSONObject(TENANT_PROP).getString(ID_PROP);
 				tenantName = tokenKeyStone.getJSONObject(TENANT_PROP).getString(NAME_PROP);
-				tokenAtt.put(Token.Constants.TENANT_ID_KEY.getValue(), tenantId);
-				tokenAtt.put(Token.Constants.TENANT_NAME_KEY.getValue(), tenantName);
+				tokenAtt.put(TENANT_ID, tenantId);
+				tokenAtt.put(TENANT_NAME, tenantName);
 			} catch (JSONException e) {
 				LOGGER.debug("There are not tenant properties on json.");
 			}
@@ -297,9 +303,9 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 		String password = properties.getProperty(ConfigurationConstants.FEDERATION_USER_PASS_KEY);
 		String tenantName = properties
 				.getProperty(ConfigurationConstants.FEDERATION_USER_TENANT_NAME_KEY);
-		federationUserCredentials.put(Token.Constants.USER_KEY.getValue(), username);
-		federationUserCredentials.put(Token.Constants.PASSWORD_KEY.getValue(), password);
-		federationUserCredentials.put(Token.Constants.TENANT_NAME_KEY.getValue(), tenantName);
+		federationUserCredentials.put(USERNAME, username);
+		federationUserCredentials.put(PASSWORD, password);
+		federationUserCredentials.put(TENANT_NAME, tenantName);
 		
 		return createToken(federationUserCredentials);
 	}

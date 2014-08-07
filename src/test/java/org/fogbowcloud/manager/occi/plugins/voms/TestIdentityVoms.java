@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import org.apache.log4j.chainsaw.Main;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.voms.VomsIdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.voms.VomsIdentityPlugin.GeneratorProxyCertificate;
@@ -23,14 +22,13 @@ import eu.emi.security.authn.x509.proxy.ProxyCertificate;
 
 public class TestIdentityVoms {
 
-	private static final int TWELVE_HOURS = 1000 * 60 * 60 * 12;
 	private final String VOMS_PASSWORD = "pass";
 	private final String VOMS_SERVER = "test.vo";
 
 	private GeneratorProxyCertificate generatorProxyCertificate;
 	private VomsIdentityPlugin vomsIdentityPlugin;
 	private Properties properties;
-
+	
 	@Before
 	public void setUp() {
 		properties = new Properties();
@@ -45,7 +43,7 @@ public class TestIdentityVoms {
 		generatorProxyCertificate = Mockito.mock(GeneratorProxyCertificate.class);
 		vomsIdentityPlugin.setGenerateProxyCertificate(generatorProxyCertificate);
 	}
-	
+
 	@SuppressWarnings({ "unchecked", "deprecation" })
 	@Test
 	public void testReIssueToken() throws Exception {
@@ -57,29 +55,24 @@ public class TestIdentityVoms {
 				proxyPrivateKey);
 
 		Map<String, String> credentials = new HashMap<String, String>();
-		credentials.put(Token.Constants.VOMS_PASSWORD.getValue(), VOMS_PASSWORD);
-		credentials.put(Token.Constants.VOMS_SERVER_NAME.getValue(), VOMS_SERVER);
+		credentials.put(VomsIdentityPlugin.PASSWORD, VOMS_PASSWORD);
+		credentials.put(VomsIdentityPlugin.SERVER_NAME, VOMS_SERVER);
 
 		Mockito.when(generatorProxyCertificate.generate(Mockito.anyMap())).thenReturn(
 				proxyCertificate);
 
 		Token myToken = new Token("", "", new Date(), credentials);
 		Token token = vomsIdentityPlugin.reIssueToken(myToken);
-			
+
 		Assert.assertEquals(vomsIdentityPlugin.generateAcessId(proxy.getCertificateChain()),
 				token.getAccessId());
-		String x = token.getAccessId()
-				.replace("\n", org.fogbowcloud.manager.cli.Main.SUBSTITUTE_BREAK_LINE_REPLACE)
-				.replace(" ", org.fogbowcloud.manager.cli.Main.SUBSTITUTE_SPACE_REPLACE);
-		System.out.println(x);
-		System.out.println("----");
 		System.out.println(token.getAccessId());
-		
+
 		Assert.assertEquals("CN=test0, O=IGI, C=IT", token.getUser());
-		Date dateExpiration = new Date(System.currentTimeMillis() + TWELVE_HOURS);
+		Date dateExpiration = new Date(System.currentTimeMillis() + VomsIdentityPlugin.TWELVE_HOURS);
 		Assert.assertEquals(dateExpiration.getDay(), token.getExpirationDate().getDay());
 		Assert.assertEquals(dateExpiration.getHours(), token.getExpirationDate().getHours());
-		Assert.assertEquals(dateExpiration.getMinutes(), token.getExpirationDate().getMinutes());		
+		Assert.assertEquals(dateExpiration.getMinutes(), token.getExpirationDate().getMinutes());
 	}
 
 	@SuppressWarnings("deprecation")
@@ -93,8 +86,8 @@ public class TestIdentityVoms {
 				proxyPrivateKey);
 
 		Map<String, String> credentials = new HashMap<String, String>();
-		credentials.put(Token.Constants.VOMS_PASSWORD.getValue(), VOMS_PASSWORD);
-		credentials.put(Token.Constants.VOMS_SERVER_NAME.getValue(), VOMS_SERVER);
+		credentials.put(VomsIdentityPlugin.PASSWORD, VOMS_PASSWORD);
+		credentials.put(VomsIdentityPlugin.SERVER_NAME, VOMS_SERVER);
 
 		Mockito.when(generatorProxyCertificate.generate(credentials)).thenReturn(proxyCertificate);
 
@@ -103,7 +96,7 @@ public class TestIdentityVoms {
 		Assert.assertEquals(vomsIdentityPlugin.generateAcessId(proxy.getCertificateChain()),
 				token.getAccessId());
 		Assert.assertEquals("CN=test0, O=IGI, C=IT", token.getUser());
-		Date dateExpiration = new Date(System.currentTimeMillis() + TWELVE_HOURS);
+		Date dateExpiration = new Date(System.currentTimeMillis() + VomsIdentityPlugin.TWELVE_HOURS);
 		Assert.assertEquals(dateExpiration.getDay(), token.getExpirationDate().getDay());
 		Assert.assertEquals(dateExpiration.getHours(), token.getExpirationDate().getHours());
 		Assert.assertEquals(dateExpiration.getMinutes(), token.getExpirationDate().getMinutes());
@@ -121,7 +114,7 @@ public class TestIdentityVoms {
 
 		Assert.assertEquals("CN=test0, O=IGI, C=IT", token.getUser());
 		Assert.assertEquals(accessId, token.getAccessId());
-		Date dateExpiration = new Date(System.currentTimeMillis() + TWELVE_HOURS);
+		Date dateExpiration = new Date(System.currentTimeMillis() + VomsIdentityPlugin.TWELVE_HOURS);
 		Assert.assertEquals(dateExpiration.getDay(), token.getExpirationDate().getDay());
 		Assert.assertEquals(dateExpiration.getHours(), token.getExpirationDate().getHours());
 		Assert.assertEquals(dateExpiration.getMinutes(), token.getExpirationDate().getMinutes());

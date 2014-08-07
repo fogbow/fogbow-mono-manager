@@ -48,7 +48,7 @@ public class TestQueryServerResource {
 								new HashMap<String, String>()));
 		
 		this.authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
-		Mockito.when(authorizationPlugin.isAutorized(Mockito.any(Token.class))).thenReturn(true);
+		Mockito.when(authorizationPlugin.isAuthorized(Mockito.any(Token.class))).thenReturn(true);
 		
 		this.helper = new OCCITestHelper();
 		this.helper.initializeComponent(computePlugin, identityPlugin, authorizationPlugin);

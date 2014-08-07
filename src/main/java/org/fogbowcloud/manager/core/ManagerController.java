@@ -373,7 +373,7 @@ public class ManagerController {
 
 	public Token getTokenFromFederationIdP(String accessId) {
 		Token token = federationIdentityPlugin.getToken(accessId);
-		if (!authorizationPlugin.isAutorized(token)) {
+		if (!authorizationPlugin.isAuthorized(token)) {
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED_USER);
 		}
 		return token;

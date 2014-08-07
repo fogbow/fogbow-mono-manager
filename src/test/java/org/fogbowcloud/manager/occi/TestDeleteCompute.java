@@ -63,7 +63,7 @@ public class TestDeleteCompute {
 		requests.add(request2);
 
 		AuthorizationPlugin authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
-		Mockito.when(authorizationPlugin.isAutorized(Mockito.any(Token.class))).thenReturn(true);
+		Mockito.when(authorizationPlugin.isAuthorized(Mockito.any(Token.class))).thenReturn(true);
 		
 		this.helper.initializeComponentCompute(computePlugin, identityPlugin, authorizationPlugin, requests);
 	}

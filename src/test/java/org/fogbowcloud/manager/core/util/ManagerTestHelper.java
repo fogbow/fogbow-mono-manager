@@ -56,7 +56,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 
 	public ManagerTestHelper() {
 		Map<String, String> tokenAttributes = new HashMap<String, String>();
-		tokenAttributes.put(Token.Constants.TENANT_ID_KEY.getValue(), "tenantId_r4fci3qhbcy3b");
+		tokenAttributes.put(OpenStackIdentityPlugin.TENANT_ID, "tenantId_r4fci3qhbcy3b");
 		this.defaultToken = new Token(ACCESS_TOKEN_ID, USER_NAME, TOKEN_FUTURE_EXPIRATION,
 				tokenAttributes);
 	}
@@ -321,7 +321,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 				.thenReturn(defaultToken);
 
 		authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
-		Mockito.when(authorizationPlugin.isAutorized(Mockito.any(Token.class))).thenReturn(true);
+		Mockito.when(authorizationPlugin.isAuthorized(Mockito.any(Token.class))).thenReturn(true);
 		
 		// mocking sshTunnel
 		SSHTunnel sshTunnel = Mockito.mock(SSHTunnel.class);

@@ -74,7 +74,7 @@ public class TestManagerController {
 	@Test(expected=OCCIException.class)
 	public void testUnauthorizedUser() {
 		AuthorizationPlugin authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
-		Mockito.when(authorizationPlugin.isAutorized(Mockito.any(Token.class))).thenReturn(false);
+		Mockito.when(authorizationPlugin.isAuthorized(Mockito.any(Token.class))).thenReturn(false);
 		managerController.setAuthorizationPlugin(authorizationPlugin);
 		
 		managerController.getTokenFromFederationIdP(DefaultDataTestHelper.ACCESS_TOKEN_ID);		
@@ -155,16 +155,16 @@ public class TestManagerController {
 	@Test
 	public void testGetFederationMember() throws InterruptedException {
 		Map<String, String> tokenCredentials = new HashMap<String, String>();
-		tokenCredentials.put(Token.Constants.USER_KEY.getValue(), DefaultDataTestHelper.USER_NAME);
-		tokenCredentials.put(Token.Constants.PASSWORD_KEY.getValue(), DefaultDataTestHelper.USER_PASS);
-		tokenCredentials.put(Token.Constants.TENANT_NAME_KEY.getValue(),
+		tokenCredentials.put(OpenStackIdentityPlugin.USERNAME, DefaultDataTestHelper.USER_NAME);
+		tokenCredentials.put(OpenStackIdentityPlugin.PASSWORD, DefaultDataTestHelper.USER_PASS);
+		tokenCredentials.put(OpenStackIdentityPlugin.TENANT_NAME,
 				DefaultDataTestHelper.TENANT_NAME);
 
 		long tokenExpirationTime = System.currentTimeMillis() + 500;
 
 		Map<String, String> attributesTokenReturn = new HashMap<String, String>();
-		attributesTokenReturn.put(Token.Constants.TENANT_ID_KEY.getValue(), "987654321");
-		attributesTokenReturn.put(Token.Constants.TENANT_NAME_KEY.getValue(),
+		attributesTokenReturn.put(OpenStackIdentityPlugin.TENANT_ID, "987654321");
+		attributesTokenReturn.put(OpenStackIdentityPlugin.TENANT_NAME,
 				DefaultDataTestHelper.TENANT_NAME);
 
 		Token firstToken = new Token(DefaultDataTestHelper.ACCESS_TOKEN_ID,

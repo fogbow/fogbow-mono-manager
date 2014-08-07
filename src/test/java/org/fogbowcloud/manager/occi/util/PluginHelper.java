@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.StringTokenizer;
 
+import org.fogbowcloud.manager.core.plugins.openstack.OpenStackIdentityPlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.Token;
@@ -79,8 +80,8 @@ public class PluginHelper {
 		this.component.getServers().add(Protocol.HTTP, PORT_ENDPOINT);
 
 		Map<String, String> tokenAttributes = new HashMap<String, String>();
-		tokenAttributes.put(Token.Constants.TENANT_ID_KEY.getValue(), TENANT_ID);
-		tokenAttributes.put(Token.Constants.TENANT_NAME_KEY.getValue(), TENANT_NAME);
+		tokenAttributes.put(OpenStackIdentityPlugin.TENANT_ID, TENANT_ID);
+		tokenAttributes.put(OpenStackIdentityPlugin.TENANT_NAME, TENANT_NAME);
 		Token token = new Token(ACCESS_ID, USERNAME,
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, tokenAttributes);
 

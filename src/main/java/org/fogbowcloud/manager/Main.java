@@ -1,8 +1,6 @@
 package org.fogbowcloud.manager;
 
 import java.io.FileInputStream;
-import java.util.Collections;
-import java.util.Enumeration;
 import java.util.Properties;
 import java.util.logging.Level;
 
@@ -15,6 +13,7 @@ import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
+import org.fogbowcloud.manager.core.plugins.common.AllowAllAuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.openstack.OpenStackComputePlugin;
 import org.fogbowcloud.manager.core.plugins.openstack.OpenStackIdentityPlugin;
 import org.fogbowcloud.manager.occi.OCCIApplication;
@@ -47,6 +46,7 @@ public class Main {
 					ConfigurationConstants.AUTHORIZATION_CLASS_KEY, properties);
 		} catch (Exception e) {
 			LOGGER.warn("Authorization Plugin not especified in the properties.");
+			authorizationPlugin = new AllowAllAuthorizationPlugin();
 		}
 		
 		IdentityPlugin localIdentityPlugin = null;
@@ -105,15 +105,16 @@ public class Main {
 
 	private static Object getIdentityPluginByPrefix(Properties properties, String prefix)
 			throws Exception {
-		Enumeration<Object> keys = properties.keys();
-		for (Object object : Collections.list(keys)) {
-			String key = object.toString();
+		Properties pluginProperties = new Properties();
+		for (Object keyObj : properties.keySet()) {
+			String key = keyObj.toString();
+			pluginProperties.put(key, properties.get(key));
 			if (key.contains(prefix)) {
 				String newKey = key.replace(prefix, "");
-				properties.put(newKey, properties.get(key));
+				pluginProperties.put(newKey, properties.get(key));
 			}
 		}
-		return createInstance(prefix + ConfigurationConstants.IDENTITY_CLASS_KEY, properties);
+		return createInstance(prefix + ConfigurationConstants.IDENTITY_CLASS_KEY, pluginProperties);
 	}
 
 	private static Object createInstance(String propName, Properties properties) throws Exception {

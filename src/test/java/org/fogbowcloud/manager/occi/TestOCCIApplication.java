@@ -66,7 +66,7 @@ public class TestOCCIApplication {
 		SSHTunnel sshTunnel = Mockito.mock(SSHTunnel.class);
 
 		AuthorizationPlugin authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
-		Mockito.when(authorizationPlugin.isAutorized(Mockito.any(Token.class))).thenReturn(true);
+		Mockito.when(authorizationPlugin.isAuthorized(Mockito.any(Token.class))).thenReturn(true);
 		
 		managerFacade.setAuthorizationPlugin(authorizationPlugin);
 		managerFacade.setLocalIdentityPlugin(identityPlugin);

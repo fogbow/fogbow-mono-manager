@@ -90,7 +90,7 @@ public class TestBypassCompute {
 		pluginHelper.initializeComputeComponent(expectedInstanceIds);
 		
 		authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
-		Mockito.when(authorizationPlugin.isAutorized(Mockito.any(Token.class))).thenReturn(true);
+		Mockito.when(authorizationPlugin.isAuthorized(Mockito.any(Token.class))).thenReturn(true);
 		
 		//initializing fogbow OCCI Application
 		helper = new OCCITestHelper();

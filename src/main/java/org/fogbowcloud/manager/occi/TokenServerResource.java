@@ -5,10 +5,11 @@ import java.util.Map;
 
 import org.fogbowcloud.manager.occi.core.HeaderUtils;
 import org.fogbowcloud.manager.occi.core.Token;
-import org.fogbowcloud.manager.occi.core.Token.Constants;
 import org.restlet.engine.adapter.HttpRequest;
+import org.restlet.engine.header.Header;
 import org.restlet.resource.Get;
 import org.restlet.resource.ServerResource;
+import org.restlet.util.Series;
 
 public class TokenServerResource extends ServerResource {
 
@@ -17,15 +18,11 @@ public class TokenServerResource extends ServerResource {
 		OCCIApplication application = (OCCIApplication) getApplication();
 		HttpRequest req = (HttpRequest) getRequest();
 		HeaderUtils.checkOCCIContentType(req.getHeaders());
-
+		
 		Map<String, String> attributesToken = new HashMap<String, String>();
-		Constants[] tokenConstants = Token.Constants.values();
-		for (int i = 0; i < tokenConstants.length; i++) {
-			String tokenConstant = tokenConstants[i].getValue();
-			String value = req.getHeaders().getValues(tokenConstant);
-			if (value != null) {
-				attributesToken.put(tokenConstant, value);
-			}
+		Series<Header> headers = req.getHeaders();
+		for (Header header : headers) {
+			attributesToken.put(header.getName(), new String(header.getValue()));
 		}
 		
 		return generateResponse(application.getToken(attributesToken));

@@ -8,6 +8,13 @@ import org.fogbowcloud.manager.core.model.DateUtils;
 
 public class Token {
 
+	public static final String SUBSTITUTE_SPACE_REPLACE = "{!space}";
+	public static final String SPACE_REPLACE = " ";
+	public static final String SUBSTITUTE_BREAK_LINE_REPLACE = "{}";
+	public static final String BREAK_LINE_REPLACE = "\n";
+
+	private static final String DATE_EXPIRATION = "dataExpiration";
+	 
 	private Map<String, String> attributes;
 	private String accessId;
 	private String user;
@@ -33,12 +40,12 @@ public class Token {
 		if (attributes == null) {
 			attributes = new HashMap<String, String>();
 		}
-		attributes.put(Constants.DATE_EXPIRATION.getValue(),
+		attributes.put(DATE_EXPIRATION,
 				String.valueOf(expirationDate.getTime()));
 	}
 	
 	public Date getExpirationDate() {
-		String dataExpiration = attributes.get(Constants.DATE_EXPIRATION.getValue());
+		String dataExpiration = attributes.get(DATE_EXPIRATION);
 		if (dataExpiration  != null){
 			return new Date(Long.parseLong(dataExpiration));
 		}else {
@@ -66,24 +73,5 @@ public class Token {
 
 	public String getUser() {
 		return this.user;
-	}
-	
-	public enum Constants {
-		
-		USER_KEY("username"), PASSWORD_KEY("password"), TENANT_ID_KEY("tenantId"), TENANT_NAME_KEY(
-				"tenantName"), DATE_EXPIRATION("dataExpiration"), VOMS_PASSWORD("vomsPassword"), VOMS_SERVER_NAME(
-				"vomsServerName"), VOMS_PATH_USERCRED("vomsUserCredPath"), VOMS_PATH_USERKEY(
-				"vomsUserKeyPath");
-
-		public String value;
-
-		private Constants(String value) {
-			this.value = value;
-		}			
-			
-		public String getValue() {
-			return value;
-		}
-		
 	}
 }

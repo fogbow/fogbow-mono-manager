@@ -21,11 +21,9 @@ import java.util.Properties;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.log4j.Logger;
 import org.bouncycastle.asn1.x509.AttributeCertificate;
-import org.fogbowcloud.manager.cli.Main;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.occi.core.ErrorType;
-import org.fogbowcloud.manager.occi.core.HeaderUtils;
 import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
@@ -52,8 +50,14 @@ public class VomsIdentityPlugin implements IdentityPlugin {
 
 	private static final String BEGIN_CERTIFICATE_SYNTAX = "-----BEGIN CERTIFICATE-----";
 	private static final String END_CERTIFICATE_SYNTAX = "-----END CERTIFICATE-----";
+	public static final int TWELVE_HOURS = 1000 * 60 * 60 * 12;
 	private static final int DEFAULT_LIFE_TIME = 10;
 	private static final String X_509 = "X.509";
+	public static final String PASSWORD = "password";
+	public static final String SERVER_NAME = "serverName";
+	public static final String PATH_USERCRED = "pathUserCred";
+	public static final String PATH_USERKEY = "pathUserKey";
+	
 	private static final Logger LOGGER = Logger.getLogger(VomsIdentityPlugin.class);
 
 	private Properties properties;
@@ -90,9 +94,9 @@ public class VomsIdentityPlugin implements IdentityPlugin {
 		String user = null;
 		Date expirationTime = null;
 		for (X509Certificate x509Certificate : proxyCert.getCertificateChain()) {
+			expirationTime = x509Certificate.getNotAfter();			
 			user = x509Certificate.getIssuerDN().getName();
-			expirationTime = x509Certificate.getNotAfter();
-			break;
+			break;	
 		}
 
 		return new Token(accessId, user, expirationTime, new HashMap<String, String>());
@@ -119,70 +123,68 @@ public class VomsIdentityPlugin implements IdentityPlugin {
 	@Override
 	public Token reIssueToken(Token token) {
 		Map<String, String> userCredentials = new HashMap<String, String>();
-		userCredentials.put(Token.Constants.VOMS_PASSWORD.getValue(),
-				token.get(Token.Constants.VOMS_PASSWORD.getValue()));
-		userCredentials.put(Token.Constants.VOMS_SERVER_NAME.getValue(),
-				token.get(Token.Constants.VOMS_SERVER_NAME.getValue()));
+		userCredentials.put(PASSWORD,
+				token.get(PASSWORD));
+		userCredentials.put(SERVER_NAME,
+				token.get(SERVER_NAME));
+		
+		if (token.get(PASSWORD) != null) {
+			userCredentials.put(PATH_USERCRED,
+					token.get(PATH_USERCRED));			
+		}
+		if (token.get(SERVER_NAME) != null) {
+			userCredentials.put(PATH_USERCRED,
+					token.get(PATH_USERCRED));			
+		}
 
 		return createToken(userCredentials);
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public Token getToken(String accessId) {
-		accessId = normalizeToken(accessId);
+		//test
+		accessId = accessId.replace(Token.SUBSTITUTE_BREAK_LINE_REPLACE, Token.BREAK_LINE_REPLACE);
 		if (!isValid(accessId)) {
-			//TODO thing about Exception. OCCIExcpetion?
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}
-		Collection<X509Certificate> certificates = null;
-		CertificateFactory cf = null;
+		
+		Collection<X509Certificate> certificates;
 		try {
-			cf = CertificateFactory.getInstance(X_509);
-			certificates = (Collection<X509Certificate>) cf
-					.generateCertificates(new ByteArrayInputStream(accessId
-					.getBytes(StandardCharsets.UTF_8)));
+			certificates = generateCertificates(accessId);
 		} catch (Exception e) {
-			LOGGER.error("Problems in the generation of the certificate");
-			e.printStackTrace();
+			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}
 		
 		String user = null;
 		Date expirationTime = null;
 		for (X509Certificate x509Certificate : certificates) {
+			expirationTime = x509Certificate.getNotAfter();						
 			user = x509Certificate.getIssuerDN().getName();
-			expirationTime = x509Certificate.getNotAfter();
-			break;
+			break;	
 		}
 
 		return new Token(accessId, user, expirationTime, new HashMap<String, String>());
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public boolean isValid(String accessId) {
-		accessId = normalizeToken(accessId);
-		Collection<X509Certificate> certificates = null;
-
-		CertificateFactory cf = null;
+		//test
+		accessId = accessId.replace(Token.SUBSTITUTE_BREAK_LINE_REPLACE, Token.BREAK_LINE_REPLACE);
+		Collection<X509Certificate> certificates;
 		try {
-			cf = CertificateFactory.getInstance(X_509);
-			certificates = (Collection<X509Certificate>) cf
-					.generateCertificates(new ByteArrayInputStream(accessId
-							.getBytes(StandardCharsets.UTF_8)));
+			certificates = generateCertificates(accessId);
 		} catch (Exception e) {
-			LOGGER.error("Problems in the generation of the certificate");
-			e.printStackTrace();
+			return false;
 		}
 
 		for (X509Certificate certificate : certificates) {
 			try {
 				certificate.checkValidity();
 			} catch (CertificateExpiredException e) {
-				LOGGER.error("Certificate Expired");
+				LOGGER.warn("Certificate expired.", e);
 				return false;
 			} catch (CertificateNotYetValidException e) {
-				LOGGER.error("Certificate not yet valid");
+				LOGGER.warn("Certificate not valid yet.", e);
 				return false;
 			}
 		}
@@ -194,7 +196,7 @@ public class VomsIdentityPlugin implements IdentityPlugin {
 		boolean validCertificate = true;
 		for (VOMSValidationResult r : results) {
 			if (!r.isValid()) {
-				LOGGER.error("Invalid voms result");
+				LOGGER.warn("Invalid VOMS result. Validation result: " + r.toString());
 				validCertificate = false;
 			}
 		}
@@ -205,12 +207,29 @@ public class VomsIdentityPlugin implements IdentityPlugin {
 		return false;
 	}
 
+	@SuppressWarnings("unchecked")
+	private Collection<X509Certificate> generateCertificates(String accessId) throws Exception {
+		Collection<X509Certificate> certificates = null;
+
+		CertificateFactory cf = null;
+		try {
+			cf = CertificateFactory.getInstance(X_509);
+			certificates = (Collection<X509Certificate>) cf
+					.generateCertificates(new ByteArrayInputStream(accessId
+					.getBytes(StandardCharsets.UTF_8)));
+		} catch (Exception e) {
+			LOGGER.warn("Problems on the generation of the certificate.", e);
+			throw new Exception();
+		}
+		return certificates;
+	}
+
 	@Override
 	public Token createFederationUserToken() {
 		Map<String, String> credentials = new HashMap<String, String>();
-		credentials.put(Token.Constants.VOMS_PASSWORD.getValue(),
+		credentials.put(PASSWORD,
 				properties.getProperty(ConfigurationConstants.FEDERATION_USER_PASS_VOMS));
-		credentials.put(Token.Constants.VOMS_SERVER_NAME.getValue(),
+		credentials.put(SERVER_NAME,
 				properties.getProperty(ConfigurationConstants.FEDERATION_USER_SERVER_VOMS));
 
 		return createToken(credentials);
@@ -232,42 +251,31 @@ public class VomsIdentityPlugin implements IdentityPlugin {
 		
 		return VOMSValidators.newValidator(VOMSTrustStore, validatorExt);
 	}
-	
-	private String normalizeToken(String token) {
-		if (token == null) {
-			return null;
-		}
-		return token.replace(Main.SUBSTITUTE_SPACE_REPLACE, Main.SPACE_REPLACE).replace(
-				Main.SUBSTITUTE_BREAK_LINE_REPLACE, Main.BREAK_LINE_REPLACE);
-	}
 
 	public class GeneratorProxyCertificate {
 
 		public ProxyCertificate generate(Map<String, String> userCredentials) throws Exception {
-			char[] keyPassword = userCredentials.get(Token.Constants.VOMS_PASSWORD.getValue())
+			char[] keyPassword = userCredentials.get(PASSWORD)
 					.toCharArray();
-			String vomsNameServer = userCredentials.get(Token.Constants.VOMS_SERVER_NAME.getValue());
+			String vomsNameServer = userCredentials.get(SERVER_NAME);
 
 			X509Credential cred;
-			if (userCredentials.containsKey(Token.Constants.VOMS_PATH_USERCRED.getValue())
-					&& userCredentials.containsKey(Token.Constants.VOMS_PATH_USERKEY.getValue())) {
-				
-				
-				String privateKeyPath = userCredentials.get(Token.Constants.VOMS_PATH_USERKEY
-						.getValue());
-				String certificatePath = userCredentials.get(Token.Constants.VOMS_PATH_USERCRED
-						.getValue());
+			if (userCredentials.containsKey(PATH_USERCRED)
+					&& userCredentials.containsKey(PATH_USERKEY)) {
+							
+				String privateKeyPath = userCredentials.get(PATH_USERKEY);
+				String certificatePath = userCredentials.get(PATH_USERKEY);
 				
 				FilePermissionHelper.checkPrivateKeyPermissions(privateKeyPath);				
 				cred = new PEMCredential(new FileInputStream(privateKeyPath), new FileInputStream(
 						certificatePath), keyPassword);
-			}else {
+			} else {
 				cred = UserCredentials.loadCredentials(keyPassword);				
 			}			
 			
 			X509CertChainValidatorExt validatorExt = null;
 			String pathVomses = properties.getProperty(ConfigurationConstants.VOMS_PATH_VOMSES);
-			if(pathVomses == null || pathVomses.equals("")) {
+			if (pathVomses == null || pathVomses.isEmpty()) {
 				validatorExt = CertificateValidatorBuilder.buildCertificateValidator();
 			} else {
 				validatorExt = CertificateValidatorBuilder.buildCertificateValidator(pathVomses,
@@ -324,6 +332,7 @@ public class VomsIdentityPlugin implements IdentityPlugin {
 				defaultPolicy.add((Permission) instance.get(null));
 
 			} catch (final Exception e) {
+				LOGGER.warn("Failure in removing cryptography restrictions.", e);
 			}
 		}
 

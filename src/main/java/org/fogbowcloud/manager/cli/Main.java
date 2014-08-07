@@ -29,7 +29,6 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.Token;
-import org.fogbowcloud.manager.occi.core.Token.Constants;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.fogbowcloud.manager.occi.request.RequestType;
 
@@ -40,10 +39,6 @@ import com.beust.jcommander.Parameters;
 
 public class Main {
 
-	public static final String SUBSTITUTE_SPACE_REPLACE = "{!space}";
-	public static final String SPACE_REPLACE = " ";
-	public static final String SUBSTITUTE_BREAK_LINE_REPLACE = "{!breakline}";
-	public static final String BREAK_LINE_REPLACE = "\n";
 	protected static final String DEFAULT_URL = "http://localhost:8182";
 	protected static final int DEFAULT_INTANCE_COUNT = 1;
 	protected static final String DEFAULT_TYPE = RequestType.ONE_TIME.getValue();
@@ -154,7 +149,7 @@ public class Main {
 		} else if (parsedCommand.equals("token")) {
 			String url = token.url;
 
-			Set<Header> headers = getHeadersCredentials(token.credentials);
+			Set<Header> headers = getCredentialHeaders(token.credentials);
 
 			doRequest("get", url + "/token", null, headers);
 		} else if (parsedCommand.equals("resource")) {
@@ -168,26 +163,14 @@ public class Main {
 		if (token == null) {
 			return null;
 		}		
-		return token.replace(BREAK_LINE_REPLACE, SUBSTITUTE_BREAK_LINE_REPLACE).replace("\r", "")
-				.replace(SPACE_REPLACE, SUBSTITUTE_SPACE_REPLACE);
+		return token.replace(Token.BREAK_LINE_REPLACE, Token.SUBSTITUTE_BREAK_LINE_REPLACE);
 	}
 	
-	private static Set<Header> getHeadersCredentials(Map<String, String> mapCredentials) {
+	private static Set<Header> getCredentialHeaders(Map<String, String> mapCredentials) {
 		Set<Header> headers = new HashSet<Header>();
-
-		Constants[] tokenConstants = Token.Constants.values();
-		for (Constants constant : tokenConstants) {
-			if (constant.getValue().equals(Token.Constants.USER_KEY.getValue())) {
-				if (mapCredentials.get(Token.Constants.PASSWORD_KEY.getValue()) == null) {
-					System.out.print("Password: ");
-					String password = new String(JCommander.getConsole().readPassword(false));
-					headers.add(new BasicHeader(Token.Constants.PASSWORD_KEY.getValue(), password));
-				}
-			}
-			String value = mapCredentials.get(constant.getValue());
-			if (value != null) {
-				headers.add(new BasicHeader(constant.getValue(), value));
-			}
+		
+		for (String keyMapCredentials : mapCredentials.keySet()) {
+			headers.add(new BasicHeader(keyMapCredentials, mapCredentials.get(keyMapCredentials)));
 		}
 
 		return headers;
@@ -230,7 +213,13 @@ public class Main {
 			client = new DefaultHttpClient(new ThreadSafeClientConnManager(params, client
 					.getConnectionManager().getSchemeRegistry()), params);
 		}
-		HttpResponse response = client.execute(request);
+		
+		HttpResponse response = null;
+		try {
+			response = client.execute(request);			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		
 		if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
 			System.out.println(EntityUtils.toString(response.getEntity()));

@@ -67,7 +67,7 @@ public class KeystoneApplication extends Application {
 		if (!defaultToken.getAccessId().equals(accessId)) {
 			throw new ResourceException(HttpStatus.SC_UNAUTHORIZED);
 		} else if (tenantName != null
-				&& !defaultToken.get(Token.Constants.TENANT_NAME_KEY.getValue()).equals(tenantName)) {
+				&& !defaultToken.get(OpenStackIdentityPlugin.TENANT_NAME).equals(tenantName)) {
 			throw new ResourceException(HttpStatus.SC_UNAUTHORIZED);
 		}
 	}
@@ -76,7 +76,7 @@ public class KeystoneApplication extends Application {
 		if (!defaultToken.getUser().equals(username) || !this.userPassword.equals(password)) {
 			throw new ResourceException(HttpStatus.SC_UNAUTHORIZED);
 		} else if (tenantName != null
-				&& !defaultToken.get(Token.Constants.TENANT_NAME_KEY.getValue()).equals(tenantName)) {
+				&& !defaultToken.get(OpenStackIdentityPlugin.TENANT_NAME).equals(tenantName)) {
 			throw new ResourceException(HttpStatus.SC_UNAUTHORIZED);
 		}
 	}
@@ -107,9 +107,9 @@ public class KeystoneApplication extends Application {
 			JSONObject rootTenant = new JSONObject();
 			try {
 				rootTenant.put(OpenStackIdentityPlugin.ID_PROP,
-						token.get(Token.Constants.TENANT_ID_KEY.getValue()));
+						token.get(OpenStackIdentityPlugin.TENANT_ID));
 				rootTenant.put(OpenStackIdentityPlugin.NAME_PROP,
-						token.get(Token.Constants.TENANT_NAME_KEY.getValue()));
+						token.get(OpenStackIdentityPlugin.TENANT_NAME));
 
 				JSONArray tenants = new JSONArray();
 				tenants.put(rootTenant);
@@ -153,8 +153,8 @@ public class KeystoneApplication extends Application {
 		private String createAuthenticationJSONResponse(Token token) {
 			try {
 				String tokenAccessId = token.getAccessId();
-				String tenantId = token.get(Token.Constants.TENANT_ID_KEY.getValue());
-				String tenantName = token.get(Token.Constants.TENANT_NAME_KEY.getValue());
+				String tenantId = token.get(OpenStackIdentityPlugin.TENANT_ID);
+				String tenantName = token.get(OpenStackIdentityPlugin.TENANT_NAME);
 
 				String expirationDate = OpenStackIdentityPlugin.getDateOpenStackFormat(token
 						.getExpirationDate());

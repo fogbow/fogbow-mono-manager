@@ -68,6 +68,8 @@ public class OpenStackComputePlugin implements ComputePlugin {
 	private static final String TOTAL_CORES_USED_ATT = "totalCoresUsed";
 	private static final String MAX_TOTAL_RAM_SIZE_ATT = "maxTotalRAMSize";
 	private static final String TOTAL_RAM_USED_ATT = "totalRAMUsed";
+	
+	private static final String TENANT_ID = "tenantId";
 
 	private String computeOCCIEndpoint;
 	private String computeV2APIEndpoint;
@@ -242,7 +244,7 @@ public class OpenStackComputePlugin implements ComputePlugin {
 		String responseStr = doRequest(
 				"get",
 				computeV2APIEndpoint
-						+ token.getAttributes().get(Token.Constants.TENANT_ID_KEY.getValue())
+						+ token.getAttributes().get(TENANT_ID)
 		+ "/limits", token.getAccessId()).getResponseString();
 
 		String maxCpu = getAttFromJson(MAX_TOTAL_CORES_ATT, responseStr);
