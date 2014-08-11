@@ -163,7 +163,7 @@ public class Main {
 		if (token == null) {
 			return null;
 		}		
-		return token.replace(Token.BREAK_LINE_REPLACE, Token.SUBSTITUTE_BREAK_LINE_REPLACE);
+		return token.replace(Token.BREAK_LINE_REPLACE, "");
 	}
 	
 	private static Set<Header> getCredentialHeaders(Map<String, String> mapCredentials) {

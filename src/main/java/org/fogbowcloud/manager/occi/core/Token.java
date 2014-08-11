@@ -8,9 +8,6 @@ import org.fogbowcloud.manager.core.model.DateUtils;
 
 public class Token {
 
-	public static final String SUBSTITUTE_SPACE_REPLACE = "{!space}";
-	public static final String SPACE_REPLACE = " ";
-	public static final String SUBSTITUTE_BREAK_LINE_REPLACE = "{}";
 	public static final String BREAK_LINE_REPLACE = "\n";
 
 	private static final String DATE_EXPIRATION = "dataExpiration";

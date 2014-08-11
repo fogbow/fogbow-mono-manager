@@ -142,8 +142,7 @@ public class VomsIdentityPlugin implements IdentityPlugin {
 
 	@Override
 	public Token getToken(String accessId) {
-		//test
-		accessId = accessId.replace(Token.SUBSTITUTE_BREAK_LINE_REPLACE, Token.BREAK_LINE_REPLACE);
+		accessId = normalizeAccessId(accessId);
 		if (!isValid(accessId)) {
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}
@@ -168,8 +167,7 @@ public class VomsIdentityPlugin implements IdentityPlugin {
 
 	@Override
 	public boolean isValid(String accessId) {
-		//test
-		accessId = accessId.replace(Token.SUBSTITUTE_BREAK_LINE_REPLACE, Token.BREAK_LINE_REPLACE);
+		accessId = normalizeAccessId(accessId);
 		Collection<X509Certificate> certificates;
 		try {
 			certificates = generateCertificates(accessId);
@@ -211,6 +209,8 @@ public class VomsIdentityPlugin implements IdentityPlugin {
 	private Collection<X509Certificate> generateCertificates(String accessId) throws Exception {
 		Collection<X509Certificate> certificates = null;
 
+		accessId = normalizeAccessId(accessId);
+		
 		CertificateFactory cf = null;
 		try {
 			cf = CertificateFactory.getInstance(X_509);
@@ -222,6 +222,27 @@ public class VomsIdentityPlugin implements IdentityPlugin {
 			throw new Exception();
 		}
 		return certificates;
+	}
+	
+	public static String normalizeAccessId(String accessId) {
+		accessId = accessId.replace(Token.BREAK_LINE_REPLACE, "");
+		
+		String accessIdNormalized = "";
+		String[] beginSyntax = accessId.split(BEGIN_CERTIFICATE_SYNTAX);
+		for (String beginToken : beginSyntax) {
+			if (!beginToken.isEmpty()) {
+				accessIdNormalized += BEGIN_CERTIFICATE_SYNTAX;
+				String[] endToken = beginToken.split(END_CERTIFICATE_SYNTAX);
+				if (!endToken[0].contains(Token.BREAK_LINE_REPLACE)) {
+					accessIdNormalized += Token.BREAK_LINE_REPLACE + endToken[0];
+				}
+				if (endToken.length == 1) {
+					accessIdNormalized += Token.BREAK_LINE_REPLACE;
+				}
+				accessIdNormalized += END_CERTIFICATE_SYNTAX + Token.BREAK_LINE_REPLACE;				
+			}
+		}
+		return accessIdNormalized.trim();
 	}
 
 	@Override
