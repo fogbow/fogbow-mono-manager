@@ -2,6 +2,7 @@ package org.fogbowcloud.manager.occi.core;
 
 public class ResponseConstants {
 
+	public static final String INVALID_USER_OR_PASSWORD = "Invalid user or password.";
 	public static final String UNAUTHORIZED = "Authentication required.";
 	public static final String UNAUTHORIZED_USER = "Unauthorized user.";
 	public static final String NOT_FOUND = "Resource not found.";

@@ -1,0 +1,39 @@
+<USER_POOL>
+   <USER>
+      <ID>0</ID>
+      <GID>0</GID>
+      <GROUPS>
+         <ID>0</ID>
+      </GROUPS>
+      <GNAME>#USERNAME#</GNAME>
+      <NAME>#USERNAME#</NAME>
+      <PASSWORD>409b48db0c7aa178485bed5a01d41e8096682b18</PASSWORD>
+      <AUTH_DRIVER>core</AUTH_DRIVER>
+      <ENABLED>1</ENABLED>
+      <TEMPLATE>
+         <TOKEN_PASSWORD><![CDATA[dfdd02fd03a6f71f3e73f96dca6e265c1bfbe5d2]]></TOKEN_PASSWORD>
+      </TEMPLATE>
+   </USER>
+   <QUOTAS>
+      <ID>0</ID>
+      <DATASTORE_QUOTA />
+      <NETWORK_QUOTA />
+      <VM_QUOTA />
+      <IMAGE_QUOTA />
+   </QUOTAS>
+   <USER>
+      <ID>2</ID>
+      <GID>100</GID>
+      <GROUPS>
+         <ID>100</ID>
+      </GROUPS>
+      <GNAME>#FED_USERNAME#</GNAME>
+      <NAME>#FED_USERNAME#</NAME>
+      <PASSWORD>51f7c76b48e35ad9250eeae417cbd842e9ae3324</PASSWORD>
+      <AUTH_DRIVER>core</AUTH_DRIVER>
+      <ENABLED>1</ENABLED>
+      <TEMPLATE>
+         <TOKEN_PASSWORD><![CDATA[dda74616d914c738c289319067942d8805b76415]]></TOKEN_PASSWORD>
+      </TEMPLATE>
+   </USER>
+</USER_POOL>

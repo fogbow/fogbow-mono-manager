@@ -33,6 +33,9 @@ public class PluginHelper {
 
 	public static final String USERNAME = "admin";
 	public static final String USER_PASS = "reverse";
+
+	public static final String FED_USERNAME = "federation_user";
+	public static final String FED_USER_PASS = "federation_user_pass";
 	
 	private ComputeApplication computeApplication;
 

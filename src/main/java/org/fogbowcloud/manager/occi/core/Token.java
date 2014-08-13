@@ -33,7 +33,10 @@ public class Token {
 		return this.accessId;
 	}
 
-	public void setExpirationDate(Date expirationDate) {		
+	public void setExpirationDate(Date expirationDate) {
+		if (expirationDate == null){
+			return;
+		}
 		if (attributes == null) {
 			attributes = new HashMap<String, String>();
 		}
