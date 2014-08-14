@@ -1,13 +1,10 @@
-# Define the root logger with appender file
-log4j.rootLogger = ALL, FILE
+# Root logger option
+log4j.rootLogger=DEBUG, file
 
-# Define the file appender
-log4j.appender.FILE=org.apache.log4j.RollingFileAppender
-log4j.appender.FILE.File=/var/log/fogbow-manager/fogbow-manager.log
-
-# Define the layout for file appender
-log4j.appender.FILE.DatePattern='.'yyyy-MM-dd
-log4j.appender.FILE.layout=org.apache.log4j.PatternLayout
-log4j.appender.FILE.layout.ConversionPattern=[%t] %d %-5p %c{1} %l - %m%n
-log4j.appender.FILE.MaxFileSize=50MB
-log4j.appender.FILE.MaxBackupIndex=3
+# Direct log messages to a log file
+log4j.appender.file=org.apache.log4j.RollingFileAppender
+log4j.appender.file.File=/var/log/fogbow-manager/fogbow-manager.log
+log4j.appender.file.MaxFileSize=10MB
+log4j.appender.file.MaxBackupIndex=10
+log4j.appender.file.layout=org.apache.log4j.PatternLayout
+log4j.appender.file.layout.ConversionPattern=%d{yyyy-MM-dd HH:mm:ss} %-5p %c{1}:%L - %m%n
