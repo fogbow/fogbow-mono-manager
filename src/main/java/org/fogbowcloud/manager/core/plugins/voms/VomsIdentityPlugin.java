@@ -3,7 +3,6 @@ package org.fogbowcloud.manager.core.plugins.voms;
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.lang.reflect.Field;
-import java.nio.charset.StandardCharsets;
 import java.security.Permission;
 import java.security.PermissionCollection;
 import java.security.cert.CertificateExpiredException;
@@ -48,6 +47,7 @@ import eu.emi.security.authn.x509.proxy.ProxyGenerator;
 
 public class VomsIdentityPlugin implements IdentityPlugin {
 
+	private String UTF_8 = "UTF-8";
 	private static final String BEGIN_CERTIFICATE_SYNTAX = "-----BEGIN CERTIFICATE-----";
 	private static final String END_CERTIFICATE_SYNTAX = "-----END CERTIFICATE-----";
 	public static final int TWELVE_HOURS = 1000 * 60 * 60 * 12;
@@ -216,7 +216,7 @@ public class VomsIdentityPlugin implements IdentityPlugin {
 			cf = CertificateFactory.getInstance(X_509);
 			certificates = (Collection<X509Certificate>) cf
 					.generateCertificates(new ByteArrayInputStream(accessId
-					.getBytes(StandardCharsets.UTF_8)));
+					.getBytes(UTF_8)));
 		} catch (Exception e) {
 			LOGGER.warn("Problems on the generation of the certificate.", e);
 			throw new Exception();
