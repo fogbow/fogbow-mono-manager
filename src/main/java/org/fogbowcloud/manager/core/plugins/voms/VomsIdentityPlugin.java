@@ -258,11 +258,11 @@ public class VomsIdentityPlugin implements IdentityPlugin {
 
 	private VOMSACValidator getVOMSValidator() {		
 		String trust = properties.getProperty(ConfigurationConstants.VOMS_PATH_TRUST_ANCHORS);
-		if (trust.isEmpty()) {
+		if (trust == null || trust.isEmpty()) {
 			trust = DefaultVOMSValidator.DEFAULT_TRUST_ANCHORS_DIR.toString();
 		}		
 		String vomsdir = properties.getProperty(ConfigurationConstants.VOMS_PATH_VOMSDIR);
-		if (vomsdir.isEmpty()) {
+		if (vomsdir == null || vomsdir.isEmpty()) {
 			vomsdir = DefaultVOMSTrustStore.DEFAULT_VOMS_DIR.toString();
 		}			
 		
