@@ -1,7 +1,5 @@
 package org.fogbowcloud.manager.occi.plugins.opennebula;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -38,26 +36,9 @@ public class TestIdentityOpenNebula {
 		properties.put(ConfigurationConstants.FEDERATION_USER_NAME_KEY, PluginHelper.FED_USERNAME);
 		properties.put(ConfigurationConstants.FEDERATION_USER_PASS_KEY, PluginHelper.FED_USER_PASS);
 		
-		USER_POOL_DEFAULT_RESPONSE = getContentFile(
+		USER_POOL_DEFAULT_RESPONSE = PluginHelper.getContentFile(
 				"src/test/resources/opennebula/userpool.response").replaceAll("#USERNAME#",
 				PluginHelper.USERNAME).replaceAll("#FED_USERNAME#", PluginHelper.FED_USERNAME);
-	}
-
-	private static String getContentFile(String filePath) throws IOException {
-		BufferedReader br = new BufferedReader(new FileReader(filePath));
-	    try {
-	        StringBuilder sb = new StringBuilder();
-	        String line = br.readLine();
-
-	        while (line != null) {
-	            sb.append(line);
-	            sb.append(System.lineSeparator());
-	            line = br.readLine();
-	        }
-	        return sb.toString();
-	    } finally {
-	        br.close();
-	    }
 	}
 
 	@Test
