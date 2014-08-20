@@ -9,7 +9,7 @@ import java.util.Properties;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
-import org.fogbowcloud.manager.core.plugins.util.CredentialsInterface;
+import org.fogbowcloud.manager.core.plugins.util.Credential;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
@@ -116,41 +116,9 @@ public class OpenNebulaIdentityPlugin implements IdentityPlugin {
 		return createToken(federationUserCredentials);
 	}
 
-	@SuppressWarnings("rawtypes")
 	@Override
-	public List<? extends Enum> getCredentials() {
-		return Arrays.asList(Credentials.values());
-	}
-	
- 	private enum Credentials implements CredentialsInterface{
-		USERNAME("username", CredentialsInterface.REQUIRED_FEATURE, null),
-		USER_PASSWORD("password", CredentialsInterface.REQUIRED_FEATURE, null), 
-		AUTH_URL("authUrl", CredentialsInterface.REQUIRED_FEATURE, null);
- 		
- 		private String name;
- 		private String valueDefault;
- 		private String feature;
- 		
- 		private Credentials(String name, String feature, String valueDefault) {
- 			this.name = name;
- 			this.valueDefault = valueDefault;
- 			this.feature = feature;
-		} 		
-
-		@Override
-		public String getName() {
-			return this.name;
-		}
-
-		@Override
-		public String getValueDefault() {
-			return this.valueDefault;
-		}
-
-		@Override
-		public String getFeature() {
-			return this.feature;
-		}
- 	}
-
+	public Credential[] getCredentials() {
+		return new Credential[] { new Credential("username", true, null),
+				new Credential("password", true, null), new Credential("authUrl", true, null) };
+	}	
 }

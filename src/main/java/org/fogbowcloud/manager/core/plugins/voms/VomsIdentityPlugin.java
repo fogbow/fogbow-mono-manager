@@ -18,11 +18,12 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.http.auth.Credentials;
 import org.apache.log4j.Logger;
 import org.bouncycastle.asn1.x509.AttributeCertificate;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
-import org.fogbowcloud.manager.core.plugins.util.CredentialsInterface;
+import org.fogbowcloud.manager.core.plugins.util.Credential;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
@@ -364,41 +365,12 @@ public class VomsIdentityPlugin implements IdentityPlugin {
 
 	}
 
-	@SuppressWarnings("rawtypes")
 	@Override
-	public List<? extends Enum> getCredentials() {
-		return Arrays.asList(Credentials.values());
-	}
-	
-	private enum Credentials implements CredentialsInterface{
- 		PASSWORD("password", CredentialsInterface.REQUIRED_FEATURE, null),
- 		SERVER_NAME("serverName", CredentialsInterface.REQUIRED_FEATURE, null),
- 		PATH_USERCRED("pathUserCred", CredentialsInterface.OPTIONAL_FEATURE, "$HOME/.globus"),
- 		PATH_USERKEY("pathUserKey", CredentialsInterface.OPTIONAL_FEATURE, "$HOME/.globus"); 		
- 		
- 		private String name;
- 		private String valueDefault;
- 		private String feature;
- 		
- 		private Credentials(String name, String feature, String valueDefault) {
- 			this.name = name;
- 			this.valueDefault = valueDefault;
- 			this.feature = feature;
-		} 		
+	public Credential[] getCredentials() {
+		return new Credential[] { new Credential("password", true, null),
+				new Credential("serverName", true, null),
+				new Credential("pathUserCred", false, "$HOME/.globus"),
+				new Credential("pathUserKey", false, "$HOME/.globus") };
+	} 	
 
-		@Override
-		public String getName() {
-			return this.name;
-		}
-
-		@Override
-		public String getValueDefault() {
-			return this.valueDefault;
-		}
-
-		@Override
-		public String getFeature() {
-			return this.feature;
-		}
- 	}	
 }

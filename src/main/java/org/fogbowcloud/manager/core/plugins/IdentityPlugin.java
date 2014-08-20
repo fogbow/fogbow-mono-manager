@@ -1,8 +1,8 @@
 package org.fogbowcloud.manager.core.plugins;
 
-import java.util.List;
 import java.util.Map;
 
+import org.fogbowcloud.manager.core.plugins.util.Credential;
 import org.fogbowcloud.manager.occi.core.Token;
 
 public interface IdentityPlugin {
@@ -17,5 +17,5 @@ public interface IdentityPlugin {
 	
 	public Token createFederationUserToken();
 	
-	public List<? extends Enum> getCredentials();
+	public Credential[] getCredentials();
 }
