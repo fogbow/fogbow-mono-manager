@@ -1,12 +1,15 @@
 package org.fogbowcloud.manager.core.plugins.opennebula;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
+import org.fogbowcloud.manager.core.plugins.util.CredentialsInterface;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
@@ -21,6 +24,7 @@ public class OpenNebulaIdentityPlugin implements IdentityPlugin {
 	
 	public static final String USERNAME = "username";
 	public static final String USER_PASSWORD = "password";
+	public static final String AUTH_URL = "authUrl";
 	
 	private Properties properties;
 	private String openNebulaEndpoint;
@@ -51,7 +55,11 @@ public class OpenNebulaIdentityPlugin implements IdentityPlugin {
 		LOGGER.debug("Creating token with credentials: " + userCredentials);
 		String username = userCredentials.get(USERNAME);
 		String userPass = userCredentials.get(USER_PASSWORD);
+		String authUrl = userCredentials.get(AUTH_URL);
 		String accessId = username + ":" + userPass;
+		if (authUrl != null && !authUrl.isEmpty()) {
+			return getToken(accessId, authUrl);
+		}
 		return getToken(accessId);
 	}
 
@@ -73,8 +81,11 @@ public class OpenNebulaIdentityPlugin implements IdentityPlugin {
 	@Override
 	public Token getToken(String accessId) {
 		LOGGER.debug("Getting token with accessId: " + accessId);
+		return getToken(accessId, this.openNebulaEndpoint);
+	}
+	
+	public Token getToken(String accessId, String openNebulaEndpoint) {
 		try {
-
 			Client oneClient = clientFactory.createClient(accessId, openNebulaEndpoint);
 
 			UserPool userPool = new UserPool(oneClient);
@@ -112,4 +123,42 @@ public class OpenNebulaIdentityPlugin implements IdentityPlugin {
 		federationUserCredentials.put(USER_PASSWORD, password);		
 		return createToken(federationUserCredentials);
 	}
+
+	@SuppressWarnings("rawtypes")
+	@Override
+	public List<? extends Enum> getCredentials() {
+		return Arrays.asList(Credentials.values());
+	}
+	
+ 	private enum Credentials implements CredentialsInterface{
+		USERNAME("username", CredentialsInterface.REQUIRED_FEATURE, null),
+		USER_PASSWORD("password", CredentialsInterface.REQUIRED_FEATURE, null), 
+		AUTH_URL("authUrl", CredentialsInterface.REQUIRED_FEATURE, null);
+ 		
+ 		private String name;
+ 		private String valueDefault;
+ 		private String feature;
+ 		
+ 		private Credentials(String name, String feature, String valueDefault) {
+ 			this.name = name;
+ 			this.valueDefault = valueDefault;
+ 			this.feature = feature;
+		} 		
+
+		@Override
+		public String getName() {
+			return this.name;
+		}
+
+		@Override
+		public String getValueDefault() {
+			return this.valueDefault;
+		}
+
+		@Override
+		public String getFeature() {
+			return this.feature;
+		}
+ 	}
+
 }

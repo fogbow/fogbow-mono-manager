@@ -1,8 +1,10 @@
 package org.fogbowcloud.manager.core.plugins.openstack;
 
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
@@ -24,6 +26,7 @@ import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
+import org.fogbowcloud.manager.core.plugins.util.CredentialsInterface;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
@@ -52,11 +55,11 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 	public static final String USER_PROP = "user";
 	public static final String NAME_PROP = "name";
 	
+	public static final String AUTH_URL = "authUrl";
 	public static final String USERNAME = "username";
 	public static final String PASSWORD = "password";
 	public static final String TENANT_NAME = "tenantName";
-	public static final String TENANT_ID = "tenantId";
-	
+	public static final String TENANT_ID = "tenantId";	
 
 	private static final int LAST_SUCCESSFUL_STATUS = 204;
 	private final static Logger LOGGER = Logger.getLogger(OpenStackIdentityPlugin.class);
@@ -93,10 +96,15 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}
 
+		String authUrl = credentials.get(AUTH_URL); 
+		if (authUrl != null && !authUrl.isEmpty()) {
+			v2TokensEndpoint = authUrl + V2_TOKENS_ENDPOINT_PATH;
+		}
+		
 		String responseStr = doPostRequest(v2TokensEndpoint, json);
 		return getTokenFromJson(responseStr);
 	}
-
+	
 	private JSONObject mountJson(Map<String, String> credentials) throws JSONException {
 		JSONObject passwordCredentials = new JSONObject();
 		passwordCredentials.put(USERNAME_PROP, credentials.get(USERNAME));
@@ -307,4 +315,42 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 		
 		return createToken(federationUserCredentials);
 	}
+
+	@SuppressWarnings("rawtypes")
+	@Override
+	public List<? extends Enum> getCredentials() {		
+		return Arrays.asList(Credentials.values());
+	}
+	
+ 	private enum Credentials implements CredentialsInterface{
+		USERNAME("username", CredentialsInterface.REQUIRED_FEATURE, null),
+		PASSWORD("password", CredentialsInterface.REQUIRED_FEATURE, null), 
+		TENANT_NAME("tenantName", CredentialsInterface.REQUIRED_FEATURE, null), 
+		AUTH_URL("authUrl", CredentialsInterface.REQUIRED_FEATURE, null);
+ 		
+ 		private String name;
+ 		private String valueDefault;
+ 		private String feature;
+ 		
+ 		private Credentials(String name, String feature, String valueDefault) {
+ 			this.name = name;
+ 			this.valueDefault = valueDefault;
+ 			this.feature = feature;
+		} 		
+
+		@Override
+		public String getName() {
+			return this.name;
+		}
+
+		@Override
+		public String getValueDefault() {
+			return this.valueDefault;
+		}
+
+		@Override
+		public String getFeature() {
+			return this.feature;
+		}
+ 	}
 }
