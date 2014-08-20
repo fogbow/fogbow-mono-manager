@@ -73,7 +73,7 @@ public class OpenStackComputePlugin implements ComputePlugin {
 
 	private String computeOCCIEndpoint;
 	private String computeV2APIEndpoint;
-	private Map<String, Category> fogTermToOpensStackCategory = new HashMap<String, Category>();
+	private Map<String, Category> fogTermToOpenStackCategory = new HashMap<String, Category>();
 	private DefaultHttpClient client;
 	private String networkId;
 	private String oCCIEndpoint;
@@ -100,25 +100,25 @@ public class OpenStackComputePlugin implements ComputePlugin {
 		}
 		
 		for (String imageName : imageProperties.keySet()) {
-			fogTermToOpensStackCategory.put(imageName, new Category(imageProperties.get(imageName),
+			fogTermToOpenStackCategory.put(imageName, new Category(imageProperties.get(imageName),
 					osScheme, RequestConstants.MIXIN_CLASS));
 			ResourceRepository.getInstance().addImageResource(imageName);
 		}
 		
-		fogTermToOpensStackCategory.put(
+		fogTermToOpenStackCategory.put(
 				RequestConstants.SMALL_TERM,
 				createFlavorCategory(ConfigurationConstants.COMPUTE_OCCI_FLAVOR_SMALL_KEY,
 						properties));
-		fogTermToOpensStackCategory.put(
+		fogTermToOpenStackCategory.put(
 				RequestConstants.MEDIUM_TERM,
 				createFlavorCategory(ConfigurationConstants.COMPUTE_OCCI_FLAVOR_MEDIUM_KEY,
 						properties));
-		fogTermToOpensStackCategory.put(
+		fogTermToOpenStackCategory.put(
 				RequestConstants.LARGE_TERM,
 				createFlavorCategory(ConfigurationConstants.COMPUTE_OCCI_FLAVOR_LARGE_KEY,
 						properties));
 		
-		fogTermToOpensStackCategory.put(RequestConstants.USER_DATA_TERM, new Category("user_data",
+		fogTermToOpenStackCategory.put(RequestConstants.USER_DATA_TERM, new Category("user_data",
 				instanceScheme, RequestConstants.MIXIN_CLASS));
 	}
 
@@ -159,11 +159,11 @@ public class OpenStackComputePlugin implements ComputePlugin {
 				RequestConstants.KIND_CLASS));
 
 		for (Category category : categories) {
-			if (fogTermToOpensStackCategory.get(category.getTerm()) == null) {
+			if (fogTermToOpenStackCategory.get(category.getTerm()) == null) {
 				throw new OCCIException(ErrorType.BAD_REQUEST,
 						ResponseConstants.CLOUD_NOT_SUPPORT_CATEGORY + category.getTerm());
 			}
-			openStackCategories.add(fogTermToOpensStackCategory.get(category.getTerm()));
+			openStackCategories.add(fogTermToOpenStackCategory.get(category.getTerm()));
 		}
 
 		xOCCIAtt.put("org.openstack.compute.user_data",

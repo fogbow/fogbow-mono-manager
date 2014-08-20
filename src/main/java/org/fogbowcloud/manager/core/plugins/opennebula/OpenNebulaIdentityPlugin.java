@@ -33,17 +33,9 @@ public class OpenNebulaIdentityPlugin implements IdentityPlugin {
 	private final static Logger LOGGER = Logger.getLogger(OpenNebulaIdentityPlugin.class);
 
 	public OpenNebulaIdentityPlugin(Properties properties) {
-		this.properties = properties;
-		this.openNebulaEndpoint = properties.getProperty(ConfigurationConstants.IDENTITY_URL);
-		this.clientFactory = new OpenNebulaClientFactory();
+		this(properties, new OpenNebulaClientFactory());
 	}
-	
-	/**
-	 * This constructor must be used only for run tests
-	 * 
-	 * @param properties
-	 * @param oneClient
-	 */
+		
 	public OpenNebulaIdentityPlugin(Properties properties, OpenNebulaClientFactory clientFactory) {
 		this.properties = properties;
 		this.openNebulaEndpoint = properties.getProperty(ConfigurationConstants.IDENTITY_URL);
@@ -89,10 +81,10 @@ public class OpenNebulaIdentityPlugin implements IdentityPlugin {
 			Client oneClient = clientFactory.createClient(accessId, openNebulaEndpoint);
 
 			UserPool userPool = new UserPool(oneClient);
-			OneResponse rc = userPool.info();
-			if (rc.isError()) {
-				LOGGER.error(rc.getErrorMessage());
-				throw new OCCIException(ErrorType.UNAUTHORIZED, rc.getErrorMessage());
+			OneResponse response = userPool.info();
+			if (response.isError()) {
+				LOGGER.error(response.getErrorMessage());
+				throw new OCCIException(ErrorType.UNAUTHORIZED, response.getErrorMessage());
 			}
 			String username = accessId.split(":")[0];
 			checkUserExists(username, userPool);

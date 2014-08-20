@@ -16,6 +16,10 @@
       <name>Contrail repository</name>
       <url>http://contrail.ow2.org/repositories/thirdparty</url>
     </repository>
+    <repository>
+	  <id>local</id>
+	  <url>file://${basedir}/.m2</url>
+	</repository>
   </repositories>
 
   <build>
@@ -134,7 +138,7 @@
     <dependency>
       <groupId>org.opennebula</groupId>
   	  <artifactId>client</artifactId>
-   	  <version>3.6</version>
+   	  <version>4.8</version>
     </dependency>
     <dependency>
       <groupId>org.mockito</groupId>
