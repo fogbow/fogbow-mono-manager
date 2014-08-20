@@ -18,7 +18,6 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.apache.commons.codec.binary.Base64;
-import org.apache.http.auth.Credentials;
 import org.apache.log4j.Logger;
 import org.bouncycastle.asn1.x509.AttributeCertificate;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
@@ -367,10 +366,10 @@ public class VomsIdentityPlugin implements IdentityPlugin {
 
 	@Override
 	public Credential[] getCredentials() {
-		return new Credential[] { new Credential("password", true, null),
-				new Credential("serverName", true, null),
-				new Credential("pathUserCred", false, "$HOME/.globus"),
-				new Credential("pathUserKey", false, "$HOME/.globus") };
-	} 	
+		return new Credential[] { new Credential(PASSWORD, true, null),
+				new Credential(SERVER_NAME, true, null),
+				new Credential(PATH_USERCRED, false, "$HOME/.globus"),
+				new Credential(PATH_USERKEY, false, "$HOME/.globus") };
+	}
 
 }

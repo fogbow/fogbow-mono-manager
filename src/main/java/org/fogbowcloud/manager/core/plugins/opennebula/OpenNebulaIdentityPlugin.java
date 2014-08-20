@@ -1,8 +1,6 @@
 package org.fogbowcloud.manager.core.plugins.opennebula;
 
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -118,7 +116,8 @@ public class OpenNebulaIdentityPlugin implements IdentityPlugin {
 
 	@Override
 	public Credential[] getCredentials() {
-		return new Credential[] { new Credential("username", true, null),
-				new Credential("password", true, null), new Credential("authUrl", true, null) };
-	}	
+		return new Credential[] { new Credential(USERNAME, true, null),
+				new Credential(USER_PASSWORD, true, null), new Credential(AUTH_URL, true, null) };
+	}
+
 }
