@@ -1,0 +1,13 @@
+<TEMPLATE>
+   <CONTEXT>
+      <USERDATA>#USERDATA#</USERDATA>
+   </CONTEXT>
+   <CPU>#CPU#</CPU>
+   <DISK>
+      <IMAGE_ID>#IMAGE_ID#</IMAGE_ID>
+   </DISK>
+   <MEMORY>#MEM#</MEMORY>
+   <NIC>
+      <NETWORK_ID>#NET_ID#</NETWORK_ID>
+   </NIC>
+</TEMPLATE>

@@ -13,7 +13,6 @@ import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.opennebula.client.Client;
-import org.opennebula.client.ClientConfigurationException;
 import org.opennebula.client.OneResponse;
 import org.opennebula.client.user.User;
 import org.opennebula.client.user.UserPool;
@@ -75,22 +74,17 @@ public class OpenNebulaIdentityPlugin implements IdentityPlugin {
 	}
 	
 	public Token getToken(String accessId, String openNebulaEndpoint) {
-		try {
-			Client oneClient = clientFactory.createClient(accessId, openNebulaEndpoint);
+		Client oneClient = clientFactory.createClient(accessId, openNebulaEndpoint);
 
-			UserPool userPool = new UserPool(oneClient);
-			OneResponse response = userPool.info();
-			if (response.isError()) {
-				LOGGER.error(response.getErrorMessage());
-				throw new OCCIException(ErrorType.UNAUTHORIZED, response.getErrorMessage());
-			}
-			String username = accessId.split(":")[0];
-			checkUserExists(username, userPool);
-			return new Token(accessId, username, null, new HashMap<String, String>());
-		} catch (ClientConfigurationException e) {
-			LOGGER.error(e);
-			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
+		UserPool userPool = new UserPool(oneClient);
+		OneResponse response = userPool.info();
+		if (response.isError()) {
+			LOGGER.error(response.getErrorMessage());
+			throw new OCCIException(ErrorType.UNAUTHORIZED, response.getErrorMessage());
 		}
+		String username = accessId.split(":")[0];
+		checkUserExists(username, userPool);
+		return new Token(accessId, username, null, new HashMap<String, String>());
 	}
 
 	@Override

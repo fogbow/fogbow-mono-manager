@@ -5,6 +5,14 @@ xmpp_port=5347
 
 rendezvous_jid=rendezvous.test.com
 
+compute_class=org.fogbowcloud.manager.core.plugins.opennebula.OpenNebulaComputePlugin
+compute_one_url=http://localhost:2633/RPC2
+compute_one_flavor_small={mem=128, cpu=1}
+compute_one_flavor_medium={mem=256, cpu=2}
+compute_one_flavor_large={mem=512, cpu=4}
+compute_one_network_id=1
+compute_one_image_cirros0.3.2=0
+
 compute_class=org.fogbowcloud.manager.core.plugins.openstack.OpenStackComputePlugin
 compute_openstack_v2api_url=http://localhost:8182
 compute_occi_url=http://localhost:8182
