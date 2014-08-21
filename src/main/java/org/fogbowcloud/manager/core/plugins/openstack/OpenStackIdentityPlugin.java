@@ -68,6 +68,7 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 	public static String V2_TOKENS_ENDPOINT_PATH = "/v2.0/tokens";
 	public static String V2_TENANTS_ENDPOINT_PATH = "/v2.0/tenants";
 
+	private String keystoneUrl; 
 	private String v2TokensEndpoint;
 	private String v2TenantsEndpoint;
 	private DefaultHttpClient client;
@@ -75,7 +76,7 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 
 	public OpenStackIdentityPlugin(Properties properties) {
 		this.properties = properties;
-		String keystoneUrl = properties.getProperty(ConfigurationConstants.IDENTITY_URL);
+		this.keystoneUrl = properties.getProperty(ConfigurationConstants.IDENTITY_URL);
 		this.v2TokensEndpoint = keystoneUrl + V2_TOKENS_ENDPOINT_PATH;
 		this.v2TenantsEndpoint = keystoneUrl + V2_TENANTS_ENDPOINT_PATH;
 	}
@@ -320,5 +321,9 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 				new Credential(PASSWORD, true, null), new Credential(TENANT_NAME, true, null),
 				new Credential(AUTH_URL, true, null) };
 	}
-	
+
+	@Override
+	public String getAuthenticationURI() {
+		return "Keystone uri='" + keystoneUrl +"'";
+	}	
  }

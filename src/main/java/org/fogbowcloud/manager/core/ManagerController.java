@@ -666,4 +666,8 @@ public class ManagerController {
 		LOGGER.debug("Bypassing request: " + request);
 		computePlugin.bypass(request, response);
 	}
+
+	public String getAuthenticationURI() {
+		return localIdentityPlugin.getAuthenticationURI();
+	}
 }

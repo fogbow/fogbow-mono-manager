@@ -37,7 +37,8 @@ public class QueryServerResource extends ServerResource {
 			LOGGER.debug("It is a GET method request");
 			OCCIApplication application = (OCCIApplication) getApplication();
 			HttpRequest req = (HttpRequest) getRequest();
-			String authToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse());
+			String authToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse(),
+					application.getAuthenticationURI());
 			LOGGER.debug("Auth Token = " + authToken);
 			List<Resource> allResources = application.getAllResources(authToken);
 			LOGGER.debug("Fogbow resources = " + allResources);

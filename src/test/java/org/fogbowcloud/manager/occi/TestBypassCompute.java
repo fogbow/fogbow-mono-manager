@@ -77,6 +77,7 @@ public class TestBypassCompute {
 		Mockito.when(identityPlugin.getToken(PluginHelper.ACCESS_ID)).thenReturn(
 				new Token(PluginHelper.ACCESS_ID, PluginHelper.USERNAME, DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
 						new HashMap<String, String>()));
+		Mockito.when(identityPlugin.getAuthenticationURI()).thenReturn("Keystone uri='http://localhost:5000/'");
 		
 		// three first generated instance ids
 		List<String> expectedInstanceIds = new ArrayList<String>();

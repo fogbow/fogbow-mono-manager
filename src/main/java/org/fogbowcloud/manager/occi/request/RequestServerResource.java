@@ -36,7 +36,8 @@ public class RequestServerResource extends ServerResource {
 	public StringRepresentation fetch() {
 		OCCIApplication application = (OCCIApplication) getApplication();
 		HttpRequest req = (HttpRequest) getRequest();
-		String accessId = HeaderUtils.getAuthToken(req.getHeaders(), getResponse());
+		String accessId = HeaderUtils.getAuthToken(req.getHeaders(), getResponse(),
+				application.getAuthenticationURI());
 		String requestId = (String) getRequestAttributes().get("requestId");
 		List<String> acceptContent = HeaderUtils.getAccept(req.getHeaders());
 		LOGGER.debug("accept contents:" + acceptContent);
@@ -129,7 +130,8 @@ public class RequestServerResource extends ServerResource {
 	public String remove() {
 		OCCIApplication application = (OCCIApplication) getApplication();
 		HttpRequest req = (HttpRequest) getRequest();
-		String accessId = HeaderUtils.getAuthToken(req.getHeaders(), getResponse());
+		String accessId = HeaderUtils.getAuthToken(req.getHeaders(), getResponse(),
+				application.getAuthenticationURI());
 		String requestId = (String) getRequestAttributes().get("requestId");
 
 		if (requestId == null) {
@@ -157,7 +159,8 @@ public class RequestServerResource extends ServerResource {
 		Map<String, String> xOCCIAtt = HeaderUtils.getXOCCIAtributes(req.getHeaders());
 		xOCCIAtt = normalizeXOCCIAtt(xOCCIAtt);
 
-		String authToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse());
+		String authToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse(),
+				application.getAuthenticationURI());
 		
 		List<Request> currentRequests = application.createRequests(authToken, categories, xOCCIAtt);
 		return generateTextPlainResponse(currentRequests, req);

@@ -372,4 +372,9 @@ public class VomsIdentityPlugin implements IdentityPlugin {
 				new Credential(PATH_USERKEY, false, "$HOME/.globus") };
 	}
 
+	@Override
+	public String getAuthenticationURI() {
+		return null;
+	}
+
 }

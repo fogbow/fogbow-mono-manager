@@ -29,7 +29,7 @@ public class ComputeServerResource extends ServerResource {
 	public StringRepresentation fetch() {
 		OCCIApplication application = (OCCIApplication) getApplication();
 		HttpRequest req = (HttpRequest) getRequest();
-		String authToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse());
+		String authToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse(), application.getAuthenticationURI());
 		String instanceId = (String) getRequestAttributes().get("instanceId");
 		List<String> acceptContent = HeaderUtils.getAccept(req.getHeaders());
 		
@@ -136,7 +136,7 @@ public class ComputeServerResource extends ServerResource {
 	public String remove() {
 		OCCIApplication application = (OCCIApplication) getApplication();
 		HttpRequest req = (HttpRequest) getRequest();
-		String authToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse());
+		String authToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse(), application.getAuthenticationURI());
 		String instanceId = (String) getRequestAttributes().get("instanceId");
 		
 		if (instanceId == null) {

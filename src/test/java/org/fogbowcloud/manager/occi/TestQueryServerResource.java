@@ -46,6 +46,7 @@ public class TestQueryServerResource {
 				.thenReturn(
 						new Token("id", OCCITestHelper.USER_MOCK, new Date(),
 								new HashMap<String, String>()));
+		Mockito.when(identityPlugin.getAuthenticationURI()).thenReturn("Keystone uri='http://localhost:5000/'");
 		
 		this.authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
 		Mockito.when(authorizationPlugin.isAuthorized(Mockito.any(Token.class))).thenReturn(true);

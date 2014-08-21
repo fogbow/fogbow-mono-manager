@@ -18,4 +18,6 @@ public interface IdentityPlugin {
 	public Token createFederationUserToken();
 	
 	public Credential[] getCredentials();
+
+	public String getAuthenticationURI();
 }

@@ -24,7 +24,8 @@ public class TestHeaderUtils {
 	@Test
 	public void testValidSyntaxToken() {
 		headers.add(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
-		String token = HeaderUtils.getAuthToken(headers, null);
+		String token = HeaderUtils.getAuthToken(headers, null,
+				"Keystone uri=' http://localhost:5000'");
 
 		Assert.assertEquals(OCCITestHelper.ACCESS_TOKEN, token);
 	}
@@ -32,7 +33,7 @@ public class TestHeaderUtils {
 	@Test(expected = OCCIException.class)
 	public void testEmptyToken() {
 		headers.add(OCCIHeaders.X_AUTH_TOKEN, "");
-		HeaderUtils.getAuthToken(headers, null);
+		HeaderUtils.getAuthToken(headers, null, "Keystone uri=' http://localhost:5000'");
 	}
 
 	@Test

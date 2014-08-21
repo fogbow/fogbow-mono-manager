@@ -136,4 +136,8 @@ public class OCCIApplication extends Application {
 	public void bypass(org.restlet.Request request, Response response) {
 		managerFacade.bypass(request, response);
 	}
+
+	public String getAuthenticationURI() {
+		return managerFacade.getAuthenticationURI();
+	}
 }

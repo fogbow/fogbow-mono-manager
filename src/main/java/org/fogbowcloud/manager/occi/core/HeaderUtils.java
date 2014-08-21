@@ -30,17 +30,16 @@ public class HeaderUtils {
 		}
 	}
 	
-	public static String getAuthToken(Series<Header> headers, Response response) {
+	public static String getAuthToken(Series<Header> headers, Response response, String authenticationURI) {
 		String token = headers.getValues(OCCIHeaders.X_AUTH_TOKEN);
 		if (token == null || token.equals("")) {
-			if (response != null) {
+			if (response != null && authenticationURI != null) {
 				Series<Header> responseHeaders = (Series<Header>) response.getAttributes().get("org.restlet.http.headers");
 				if (responseHeaders == null) {
 					responseHeaders = new Series(Header.class);
 					response.getAttributes().put("org.restlet.http.headers", responseHeaders);
 				}
-				//FIXME keystone URI hard coded
-				responseHeaders.add(new Header(HeaderUtils.WWW_AUTHENTICATE, "Keystone uri='http://localhost:5000/'"));
+				responseHeaders.add(new Header(HeaderUtils.WWW_AUTHENTICATE, authenticationURI));
 				MediaType textPlainType = new MediaType("text/plain");				
 				response.setEntity(ResponseConstants.UNAUTHORIZED, textPlainType);
 			}
