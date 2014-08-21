@@ -17,6 +17,8 @@ import org.fogbowcloud.manager.core.ssh.DefaultSSHTunnel;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.OCCIException;
+import org.fogbowcloud.manager.occi.core.Resource;
+import org.fogbowcloud.manager.occi.core.ResourceRepository;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.instance.Instance;
@@ -39,9 +41,9 @@ public class TestComputeOpenNebula {
 
 	private static final String OPEN_NEBULA_URL = "http://localhost:2633/RPC2";
 	private static final String INSTANCE_ID = "0";
-	private static final String SMALL_FLAVOR_DATA = "{mem=128, cpu=1}";
-	private static final String MEDIUM_FLAVOR_DATA = "{mem=256, cpu=2}";
-	private static final String LARGE_FLAVOR_DATA = "{mem=512, cpu=4}";
+	private static final String SMALL_FLAVOR_DATA = "{mem=128.0, cpu=1.0}";
+	private static final String MEDIUM_FLAVOR_DATA = "{mem=256.0, cpu=2.0}";
+	private static final String LARGE_FLAVOR_DATA = "{mem=512.0, cpu=4.0}";
 	private static final String IMAGE1_ID = "1";
 	private static final String IMAGE1_NAME = "image1";
 	private static final int NETWORK_ID = 0;
@@ -72,7 +74,7 @@ public class TestComputeOpenNebula {
 				.replaceAll("#NET_ID#", "" + NETWORK_ID).replaceAll("#IMAGE_ID#", IMAGE1_ID)
 				.replaceAll("#USERDATA#", "userdata").replaceAll("\n", "").replaceAll(" ", "");
 	
-		SMALL_TEMPLATE = DEFAULT_TEMPLATE.replace("#MEM#", "128").replace("#CPU#", "1");
+		SMALL_TEMPLATE = DEFAULT_TEMPLATE.replace("#MEM#", "128.0").replace("#CPU#", "1.0");
 	}
 	
 	@Test(expected=OCCIException.class)
@@ -94,7 +96,7 @@ public class TestComputeOpenNebula {
 				.thenReturn(oneClient);
 		Mockito.when(clientFactory.allocateVirtualMachine(oneClient, SMALL_TEMPLATE))
 				.thenReturn(INSTANCE_ID);
-						
+		
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
 		
 		// requesting an instance
@@ -259,12 +261,18 @@ public class TestComputeOpenNebula {
 	}
 	
 	@Test
-	public void testGetInstance() throws ClientConfigurationException{
+	public void testGetInstanceDefaultArch() throws ClientConfigurationException{
 		// mocking opennebula structures
 		Client oneClient = Mockito.mock(Client.class);
 
 		VirtualMachine vm = Mockito.mock(VirtualMachine.class);
 		Mockito.when(vm.getId()).thenReturn(INSTANCE_ID);
+		Mockito.when(vm.getName()).thenReturn("one-instance");
+		Mockito.when(vm.lcmStateStr()).thenReturn("Running");
+		Mockito.when(vm.xpath("TEMPLATE/MEMORY")).thenReturn("128.0");
+		Mockito.when(vm.xpath("TEMPLATE/CPU")).thenReturn("1.0");
+		Mockito.when(vm.xpath("TEMPLATE/DISK/IMAGE")).thenReturn(IMAGE1_NAME);
+		Mockito.when(vm.xpath("TEMPLATE/OS/ARCH")).thenReturn("");
 
 		// mocking clientFactory
 		String accessId = PluginHelper.USERNAME + ":" + PluginHelper.USER_PASS;
@@ -289,8 +297,77 @@ public class TestComputeOpenNebula {
 		// getting specific instance
 		Instance instance = computeOpenNebula.getInstance(accessId, INSTANCE_ID);
 		Assert.assertEquals(INSTANCE_ID, instance.getId());
+		Assert.assertEquals("x86", instance.getAttributes().get("occi.compute.architecture"));
+		Assert.assertEquals("active", instance.getAttributes().get("occi.compute.state"));
+		Assert.assertEquals("Not defined", instance.getAttributes().get("occi.compute.speed"));
+		Assert.assertEquals(String.valueOf(128d/1024d), instance.getAttributes().get("occi.compute.memory"));
+		Assert.assertEquals("1.0", instance.getAttributes().get("occi.compute.cores"));
+		Assert.assertEquals("one-instance", instance.getAttributes().get("occi.compute.hostname"));
+		Assert.assertEquals(INSTANCE_ID, instance.getAttributes().get("occi.core.id"));
 		
-		//TODO add asserts
+		List<Resource> resources = new ArrayList<Resource>();
+		resources.add(ResourceRepository.getInstance().get("compute"));
+		resources.add(ResourceRepository.getInstance().get("os_tpl"));
+		resources.add(ResourceRepository.getInstance().get(IMAGE1_NAME));
+		resources.add(ResourceRepository.getInstance().get(RequestConstants.SMALL_TERM));
+		
+		Assert.assertEquals(resources, instance.getResources());		
+		Assert.assertTrue(instance.getLinks().isEmpty());
+	}
+	
+	@Test
+	public void testGetInstance() throws ClientConfigurationException{
+		// mocking opennebula structures
+		Client oneClient = Mockito.mock(Client.class);
+
+		VirtualMachine vm = Mockito.mock(VirtualMachine.class);
+		Mockito.when(vm.getId()).thenReturn(INSTANCE_ID);
+		Mockito.when(vm.getName()).thenReturn("one-instance");
+		Mockito.when(vm.lcmStateStr()).thenReturn("Running");
+		Mockito.when(vm.xpath("TEMPLATE/MEMORY")).thenReturn("128.0");
+		Mockito.when(vm.xpath("TEMPLATE/CPU")).thenReturn("1.0");
+		Mockito.when(vm.xpath("TEMPLATE/DISK/IMAGE")).thenReturn(IMAGE1_NAME);
+		Mockito.when(vm.xpath("TEMPLATE/OS/ARCH")).thenReturn("x64");
+
+		// mocking clientFactory
+		String accessId = PluginHelper.USERNAME + ":" + PluginHelper.USER_PASS;
+		OpenNebulaClientFactory clientFactory = Mockito.mock(OpenNebulaClientFactory.class);
+		Mockito.when(clientFactory.createClient(accessId, OPEN_NEBULA_URL))
+				.thenReturn(oneClient);
+		Mockito.when(clientFactory.allocateVirtualMachine(oneClient, SMALL_TEMPLATE))
+				.thenReturn(INSTANCE_ID);
+		Mockito.when(clientFactory.createVirtualMachine(oneClient, INSTANCE_ID)).thenReturn(vm);
+				
+		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
+		
+		// requesting an instance
+		List<Category> categories = new ArrayList<Category>();
+		categories.add(new Category(RequestConstants.SMALL_TERM,
+				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
+		categories.add(new Category(IMAGE1_NAME,
+				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
+		Assert.assertEquals(INSTANCE_ID, computeOpenNebula.requestInstance(accessId,
+				categories, xOCCIAtt));
+		
+		// getting specific instance
+		Instance instance = computeOpenNebula.getInstance(accessId, INSTANCE_ID);
+		Assert.assertEquals(INSTANCE_ID, instance.getId());
+		Assert.assertEquals("x64", instance.getAttributes().get("occi.compute.architecture"));
+		Assert.assertEquals("active", instance.getAttributes().get("occi.compute.state"));
+		Assert.assertEquals("Not defined", instance.getAttributes().get("occi.compute.speed"));
+		Assert.assertEquals(String.valueOf(128d/1024d), instance.getAttributes().get("occi.compute.memory"));
+		Assert.assertEquals("1.0", instance.getAttributes().get("occi.compute.cores"));
+		Assert.assertEquals("one-instance", instance.getAttributes().get("occi.compute.hostname"));
+		Assert.assertEquals(INSTANCE_ID, instance.getAttributes().get("occi.core.id"));
+		
+		List<Resource> resources = new ArrayList<Resource>();
+		resources.add(ResourceRepository.getInstance().get("compute"));
+		resources.add(ResourceRepository.getInstance().get("os_tpl"));
+		resources.add(ResourceRepository.getInstance().get(IMAGE1_NAME));
+		resources.add(ResourceRepository.getInstance().get(RequestConstants.SMALL_TERM));
+		
+		Assert.assertEquals(resources, instance.getResources());		
+		Assert.assertTrue(instance.getLinks().isEmpty());
 	}
 	
 	@Test(expected=OCCIException.class)
@@ -339,6 +416,12 @@ public class TestComputeOpenNebula {
 		
 		VirtualMachine vm = Mockito.mock(VirtualMachine.class);
 		Mockito.when(vm.getId()).thenReturn(INSTANCE_ID);
+		Mockito.when(vm.getName()).thenReturn("one-instance");
+		Mockito.when(vm.lcmStateStr()).thenReturn("Running");
+		Mockito.when(vm.xpath("TEMPLATE/MEMORY")).thenReturn("128.0");
+		Mockito.when(vm.xpath("TEMPLATE/CPU")).thenReturn("1.0");
+		Mockito.when(vm.xpath("TEMPLATE/DISK/IMAGE")).thenReturn(IMAGE1_NAME);
+		Mockito.when(vm.xpath("TEMPLATE/OS/ARCH")).thenReturn("");
 		
 		@SuppressWarnings("unchecked")
 		Iterator<VirtualMachine> mockIterator = Mockito.mock(Iterator.class);
@@ -419,16 +502,16 @@ public class TestComputeOpenNebula {
 		ResourcesInfo resourcesInfo = computeOpenNebula.getResourcesInfo(token);
 
 		// checking resourcesInfo
-		Assert.assertEquals("10", resourcesInfo.getCpuIdle());
-		Assert.assertEquals("0", resourcesInfo.getCpuInUse());
-		Assert.assertEquals("5120", resourcesInfo.getMemIdle());
-		Assert.assertEquals("0", resourcesInfo.getMemInUse());
+		Assert.assertEquals("10.0", resourcesInfo.getCpuIdle());
+		Assert.assertEquals("0.0", resourcesInfo.getCpuInUse());
+		Assert.assertEquals("5120.0", resourcesInfo.getMemIdle());
+		Assert.assertEquals("0.0", resourcesInfo.getMemInUse());
 		Assert.assertNull(resourcesInfo.getCert());
 		List<Flavor> flavors = new ArrayList<Flavor>();
-		flavors.add(new Flavor(RequestConstants.SMALL_TERM, "1", "128", 10));
-		flavors.add(new Flavor(RequestConstants.MEDIUM_TERM, "2", "256", 5));
-		flavors.add(new Flavor(RequestConstants.LARGE_TERM, "4", "512", 2));
-		Assert.assertEquals(flavors, resourcesInfo.getFlavours());
+		flavors.add(new Flavor(RequestConstants.SMALL_TERM, "1.0", "128.0", 10));
+		flavors.add(new Flavor(RequestConstants.MEDIUM_TERM, "2.0", "256.0", 5));
+		flavors.add(new Flavor(RequestConstants.LARGE_TERM, "4.0", "512.0", 2));
+		Assert.assertEquals(flavors, resourcesInfo.getFlavors());
 	}
 	
 	@Test
@@ -455,16 +538,16 @@ public class TestComputeOpenNebula {
 		ResourcesInfo resourcesInfo = computeOpenNebula.getResourcesInfo(token);
 
 		// checking resourcesInfo
-		Assert.assertEquals("8", resourcesInfo.getCpuIdle());
-		Assert.assertEquals("2", resourcesInfo.getCpuInUse());
-		Assert.assertEquals("4864", resourcesInfo.getMemIdle());
-		Assert.assertEquals("256", resourcesInfo.getMemInUse());
+		Assert.assertEquals("8.0", resourcesInfo.getCpuIdle());
+		Assert.assertEquals("2.0", resourcesInfo.getCpuInUse());
+		Assert.assertEquals("4864.0", resourcesInfo.getMemIdle());
+		Assert.assertEquals("256.0", resourcesInfo.getMemInUse());
 		Assert.assertNull(resourcesInfo.getCert());
 		List<Flavor> flavors = new ArrayList<Flavor>();
-		flavors.add(new Flavor(RequestConstants.SMALL_TERM, "1", "128", 8));
-		flavors.add(new Flavor(RequestConstants.MEDIUM_TERM, "2", "256", 4));
-		flavors.add(new Flavor(RequestConstants.LARGE_TERM, "4", "512", 2));
-		Assert.assertEquals(flavors, resourcesInfo.getFlavours());
+		flavors.add(new Flavor(RequestConstants.SMALL_TERM, "1.0", "128.0", 8));
+		flavors.add(new Flavor(RequestConstants.MEDIUM_TERM, "2.0", "256.0", 4));
+		flavors.add(new Flavor(RequestConstants.LARGE_TERM, "4.0", "512.0", 2));
+		Assert.assertEquals(flavors, resourcesInfo.getFlavors());
 	}
 	
 	@Test
@@ -491,15 +574,15 @@ public class TestComputeOpenNebula {
 		ResourcesInfo resourcesInfo = computeOpenNebula.getResourcesInfo(token);
 
 		// checking resourcesInfo with default values
-		Assert.assertEquals("100", resourcesInfo.getCpuIdle());
-		Assert.assertEquals("0", resourcesInfo.getCpuInUse());
-		Assert.assertEquals("20480", resourcesInfo.getMemIdle());
-		Assert.assertEquals("0", resourcesInfo.getMemInUse());
+		Assert.assertEquals("100.0", resourcesInfo.getCpuIdle());
+		Assert.assertEquals("0.0", resourcesInfo.getCpuInUse());
+		Assert.assertEquals("20480.0", resourcesInfo.getMemIdle());
+		Assert.assertEquals("0.0", resourcesInfo.getMemInUse());
 		Assert.assertNull(resourcesInfo.getCert());
 		List<Flavor> flavors = new ArrayList<Flavor>();
-		flavors.add(new Flavor(RequestConstants.SMALL_TERM, "1", "128", 100));
-		flavors.add(new Flavor(RequestConstants.MEDIUM_TERM, "2", "256", 50));
-		flavors.add(new Flavor(RequestConstants.LARGE_TERM, "4", "512", 25));
-		Assert.assertEquals(flavors, resourcesInfo.getFlavours());
+		flavors.add(new Flavor(RequestConstants.SMALL_TERM, "1.0", "128.0", 100));
+		flavors.add(new Flavor(RequestConstants.MEDIUM_TERM, "2.0", "256.0", 50));
+		flavors.add(new Flavor(RequestConstants.LARGE_TERM, "4.0", "512.0", 25));
+		Assert.assertEquals(flavors, resourcesInfo.getFlavors());
 	}
 }

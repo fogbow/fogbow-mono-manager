@@ -93,9 +93,9 @@ public class TestWhoIsAlive {
 		Assert.assertEquals(1, managerXmppComponent.getManagerFacade()
 				.getMembers().size());
 		Assert.assertEquals(2, managerXmppComponent.getManagerFacade()
-				.getMembers().get(0).getResourcesInfo().getFlavours().size());
+				.getMembers().get(0).getResourcesInfo().getFlavors().size());
 		Assert.assertEquals("small", managerXmppComponent.getManagerFacade()
-				.getMembers().get(0).getResourcesInfo().getFlavours().get(0)
+				.getMembers().get(0).getResourcesInfo().getFlavors().get(0)
 				.getName());
 		xmppClient.disconnect();
 	}
@@ -151,7 +151,7 @@ public class TestWhoIsAlive {
 		Assert.assertEquals(1, managerXmppComponent.getManagerFacade()
 				.getMembers().size());
 		Assert.assertEquals("small", managerXmppComponent.getManagerFacade()
-				.getMembers().get(0).getResourcesInfo().getFlavours().get(0)
+				.getMembers().get(0).getResourcesInfo().getFlavors().get(0)
 				.getName());
 		Assert.assertEquals(managerTestHelper.getCertificate(),
 				managerXmppComponent.getManagerFacade().getMembers().get(0)

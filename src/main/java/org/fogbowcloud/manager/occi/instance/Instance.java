@@ -35,6 +35,7 @@ public class Instance {
 		return new Instance(textResponse.replace(PREFIX_DEFAULT_INSTANCE, "").trim());
 	}
 
+	//TODO refactor it
 	public static Instance parseInstance(String id, String textResponse) {
 		List<Resource> resources = new ArrayList<Resource>();
 		Map<String, String> attributes = new LinkedHashMap<String, String>();

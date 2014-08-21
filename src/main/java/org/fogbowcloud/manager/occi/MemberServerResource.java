@@ -39,8 +39,8 @@ public class MemberServerResource extends ServerResource {
 			String memInUse = federationMember.getResourcesInfo().getMemInUse();
 			response.append("memInUse=").append(memInUse).append(";");
 			
-			if (federationMember.getResourcesInfo().getFlavours() != null) {
-				for (Flavor flavor : federationMember.getResourcesInfo().getFlavours()) {
+			if (federationMember.getResourcesInfo().getFlavors() != null) {
+				for (Flavor flavor : federationMember.getResourcesInfo().getFlavors()) {
 					String nameFlavor = flavor.getName();
 					Integer capacityFlavor = flavor.getCapacity();
 					response.append("flavor: '").append(nameFlavor).append(", capacity=\"")

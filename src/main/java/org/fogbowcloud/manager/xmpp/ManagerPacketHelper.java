@@ -59,7 +59,7 @@ public class ManagerPacketHelper {
 		statusEl.addElement("cpu-inuse").setText(resourcesInfo.getCpuInUse());
 		statusEl.addElement("mem-idle").setText(resourcesInfo.getMemIdle());
 		statusEl.addElement("mem-inuse").setText(resourcesInfo.getMemInUse());
-		List<Flavor> flavours = resourcesInfo.getFlavours();
+		List<Flavor> flavours = resourcesInfo.getFlavors();
 		for (Flavor f : flavours) {
 			Element flavorElement = statusEl.addElement("flavor");
 			flavorElement.addElement("name").setText(f.getName());
