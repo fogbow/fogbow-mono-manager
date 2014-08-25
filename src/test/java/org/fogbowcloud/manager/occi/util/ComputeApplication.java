@@ -343,7 +343,8 @@ public class ComputeApplication extends Application {
 			List<Category> categories = HeaderUtils.getCategories(req.getHeaders());
 			HeaderUtils.checkOCCIContentType(req.getHeaders());
 			Map<String, String> xOCCIAtt = HeaderUtils.getXOCCIAtributes(req.getHeaders());
-			String authToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse());
+			String authToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse(),
+					"Keystone uri=' http://localhost:5000'");
 			String link = HeaderUtils.getLink(req.getHeaders());
 
 			String computeEndpoint = req.getHostRef() + req.getHttpCall().getRequestUri();
@@ -356,7 +357,8 @@ public class ComputeApplication extends Application {
 		public String remove() {
 			ComputeApplication computeApplication = (ComputeApplication) getApplication();
 			HttpRequest req = (HttpRequest) getRequest();
-			String userToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse());
+			String userToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse(),
+					"Keystone uri=' http://localhost:5000'");
 			String instanceId = (String) getRequestAttributes().get("instanceid");
 
 			if (instanceId == null) {

@@ -87,7 +87,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 			statusEl.addElement("mem-inuse").setText(
 					rendezvousItem.getResourcesInfo().getMemInUse());
 
-			List<Flavor> flavours = rendezvousItem.getResourcesInfo().getFlavours();
+			List<Flavor> flavours = rendezvousItem.getResourcesInfo().getFlavors();
 			for (Flavor f : flavours) {
 				Element flavorElement = statusEl.addElement("flavor");
 				flavorElement.addElement("name").setText(f.getName());

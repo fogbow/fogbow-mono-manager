@@ -114,4 +114,9 @@ public class OpenNebulaIdentityPlugin implements IdentityPlugin {
 				new Credential(USER_PASSWORD, true, null), new Credential(AUTH_URL, true, null) };
 	}
 
+	@Override
+	public String getAuthenticationURI() {
+		return "Opennebula uri='" + openNebulaEndpoint +"'";
+	}
+
 }

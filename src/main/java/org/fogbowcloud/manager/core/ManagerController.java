@@ -31,7 +31,6 @@ import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.fogbowcloud.manager.occi.request.RequestAttribute;
-import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.fogbowcloud.manager.occi.request.RequestRepository;
 import org.fogbowcloud.manager.occi.request.RequestState;
 import org.fogbowcloud.manager.occi.request.RequestType;
@@ -666,5 +665,9 @@ public class ManagerController {
 	public void bypass(org.restlet.Request request, Response response) {
 		LOGGER.debug("Bypassing request: " + request);
 		computePlugin.bypass(request, response);
+	}
+
+	public String getAuthenticationURI() {
+		return localIdentityPlugin.getAuthenticationURI();
 	}
 }

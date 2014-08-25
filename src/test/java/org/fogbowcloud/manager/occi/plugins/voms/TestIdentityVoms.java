@@ -112,6 +112,8 @@ public class TestIdentityVoms {
 		String accessId = vomsIdentityPlugin.generateAcessId(proxy.getCertificateChain());
 		Token token = vomsIdentityPlugin.getToken(accessId);
 
+		System.out.println(token.getAccessId());
+		
 		Assert.assertEquals("CN=test0, O=IGI, C=IT", token.getUser());
 		Assert.assertEquals(accessId, token.getAccessId());
 		Date dateExpiration = new Date(System.currentTimeMillis() + VomsIdentityPlugin.TWELVE_HOURS);
