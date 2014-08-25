@@ -40,6 +40,7 @@ import org.fogbowcloud.manager.occi.core.ResourceRepository;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.instance.Instance;
+import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -68,6 +69,12 @@ public class OpenStackComputePlugin implements ComputePlugin {
 	private static final String TOTAL_CORES_USED_ATT = "totalCoresUsed";
 	private static final String MAX_TOTAL_RAM_SIZE_ATT = "maxTotalRAMSize";
 	private static final String TOTAL_RAM_USED_ATT = "totalRAMUsed";
+	
+	private static final String PUBLIC_KEY_TERM = "public_key";
+	private static final String PUBLIC_KEY_SCHEME = "http://schemas.openstack.org/instance/credentials#";
+	private static final String NAME_PUBLIC_KEY_ATTRIBUTE = "org.openstack.credentials.publickey.name";
+	private static final String DATA_PUBLIC_KEY_ATTRIBUTE = "org.openstack.credentials.publickey.data";
+	private static final String NAME_PUBLIC_KEY_DEFAULT = "fogbow_keypair";
 	
 	private static final String TENANT_ID = "tenantId";
 
@@ -116,7 +123,10 @@ public class OpenStackComputePlugin implements ComputePlugin {
 		fogTermToOpenStackCategory.put(
 				RequestConstants.LARGE_TERM,
 				createFlavorCategory(ConfigurationConstants.COMPUTE_OCCI_FLAVOR_LARGE_KEY,
-						properties));
+						properties));		
+		
+		fogTermToOpenStackCategory.put(RequestConstants.PUBLIC_KEY_TERM, new Category(
+				PUBLIC_KEY_TERM, PUBLIC_KEY_SCHEME, RequestConstants.MIXIN_CLASS));
 		
 		fogTermToOpenStackCategory.put(RequestConstants.USER_DATA_TERM, new Category("user_data",
 				instanceScheme, RequestConstants.MIXIN_CLASS));
@@ -164,6 +174,12 @@ public class OpenStackComputePlugin implements ComputePlugin {
 						ResponseConstants.CLOUD_NOT_SUPPORT_CATEGORY + category.getTerm());
 			}
 			openStackCategories.add(fogTermToOpenStackCategory.get(category.getTerm()));
+			
+			if (category.getTerm().equals(RequestConstants.PUBLIC_KEY_TERM)) {		
+				xOCCIAtt.put(NAME_PUBLIC_KEY_ATTRIBUTE, NAME_PUBLIC_KEY_DEFAULT);
+				xOCCIAtt.put(DATA_PUBLIC_KEY_ATTRIBUTE, xOCCIAtt.get(RequestAttribute.DATA_PUBLIC_KEY.getValue()));
+				xOCCIAtt.remove(RequestAttribute.DATA_PUBLIC_KEY.getValue());
+			}
 		}
 
 		xOCCIAtt.put("org.openstack.compute.user_data",
