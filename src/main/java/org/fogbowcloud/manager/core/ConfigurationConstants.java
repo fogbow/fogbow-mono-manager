@@ -46,6 +46,8 @@ public class ConfigurationConstants {
 	public static final String FEDERATION_USER_PASS_VOMS = "local_proxy_account_pass_voms";
 	public static final String FEDERATION_USER_SERVER_VOMS = "local_proxy_account_server_voms";
 	
+	public static final String FEDERATION_USER_X509_CERTIFICATE_PATH_KEY = "local_proxy_account_x509_certificate_path";
+		
 	//periods
 	public static final String SCHEDULER_PERIOD_KEY = "scheduler_period";
 	public static final String INSTANCE_MONITORING_PERIOD_KEY = "instance_monitoring_period";
@@ -63,4 +65,7 @@ public class ConfigurationConstants {
 	public static final String VOMS_PATH_TRUST_ANCHORS = "path_trust_anchors";
 	public static final String VOMS_PATH_VOMSDIR = "path_vomsdir";
 	
+	//x509
+	public static final String X509_CERTIFICATE_PATH_KEY = "x509_certificate_path";
+	public static final String X509_CA_DIR_PATH_KEY = "x509_ca_dir_path";	
 }

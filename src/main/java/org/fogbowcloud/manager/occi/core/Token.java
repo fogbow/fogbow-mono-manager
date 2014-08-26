@@ -10,7 +10,7 @@ public class Token {
 
 	public static final String BREAK_LINE_REPLACE = "\n";
 
-	private static final String DATE_EXPIRATION = "dataExpiration";
+	private static final String DATE_EXPIRATION = "dateExpiration";
 	 
 	private Map<String, String> attributes;
 	private String accessId;
