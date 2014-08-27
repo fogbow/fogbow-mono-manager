@@ -11,7 +11,14 @@ import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
+import org.apache.commons.codec.Charsets;
+import org.apache.commons.codec.binary.Base64;
+import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.core.model.FederationMember;
@@ -20,7 +27,6 @@ import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.ssh.DefaultSSHTunnel;
-import org.fogbowcloud.manager.core.ssh.SSHTunnel;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.OCCIException;
@@ -62,9 +68,9 @@ public class ManagerController {
 	private Properties properties;
 	private PacketSender packetSender;
 	private FederationMemberValidator validator = new DefaultMemberValidator();
+	private Map<String, String> instanceTokens = new HashMap<String, String>();
 
 	private DateUtils dateUtils = new DateUtils();
-	private SSHTunnel sshTunnel = new DefaultSSHTunnel();
 
 	public ManagerController(Properties properties) {
 		this(properties, Executors.newScheduledThreadPool(10));
@@ -80,14 +86,10 @@ public class ManagerController {
 		this.instanceMonitoringTimer = new ManagerTimer(executor);
 	}
 
-	public void setSSHTunnel(SSHTunnel sshTunnel) {
-		this.sshTunnel = sshTunnel;
-	}
-
 	public void setAuthorizationPlugin(AuthorizationPlugin authorizationPlugin) {
 		this.authorizationPlugin = authorizationPlugin;
 	}
-	
+
 	public void setComputePlugin(ComputePlugin computePlugin) {
 		this.computePlugin = computePlugin;
 	}
@@ -186,16 +188,41 @@ public class ManagerController {
 					+ " is local, getting its information in the local cloud.");
 			instance = this.computePlugin.getInstance(request.getToken().getAccessId(),
 					request.getInstanceId());
-			String sshAddress = request.getAttValue(DefaultSSHTunnel.SSH_PUBLIC_ADDRESS_ATT);
-			if (sshAddress != null) {
-				instance.addAttribute(DefaultSSHTunnel.SSH_PUBLIC_ADDRESS_ATT, sshAddress);
+
+			String sshPublicAdd = getSSHPublicAddress(request.getId());
+			if (sshPublicAdd != null) {
+				instance.addAttribute(DefaultSSHTunnel.SSH_PUBLIC_ADDRESS_ATT, sshPublicAdd);
 			}
+
 		} else {
 			LOGGER.debug(request.getInstanceId() + " is remote, going out to "
 					+ request.getMemberId() + " to get its information.");
 			instance = getRemoteInstance(request);
 		}
 		return instance;
+	}
+
+	private String getSSHPublicAddress(String tokenId) {
+		if (tokenId == null || tokenId.isEmpty()){
+			return null;
+		}
+		
+		try {
+			HttpGet httpGet = new HttpGet(
+					properties.getProperty(ConfigurationConstants.SSH_PRIVATE_HOST_KEY + "/token/"
+							+ tokenId));
+			HttpClient client = new DefaultHttpClient();
+			HttpResponse response = client.execute(httpGet);
+			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+				String sshPort = EntityUtils.toString(response.getEntity());
+				String sshPublicHostIP = properties
+						.getProperty(ConfigurationConstants.SSH_PUBLIC_HOST_KEY);
+				return sshPublicHostIP + ":" + sshPort;
+			}
+		} catch (Exception e) {
+			LOGGER.warn("", e);
+		}
+		return null;
 	}
 
 	private Instance getRemoteInstance(Request request) {
@@ -229,7 +256,6 @@ public class ManagerController {
 	}
 
 	private void instanceRemoved(Request request) {
-		sshTunnel.release(request.getInstanceId());
 		request.setInstanceId(null);
 		request.setMemberId(null);
 
@@ -296,37 +322,37 @@ public class ManagerController {
 
 	public String createInstanceForRemoteMember(String memberId, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
-		Integer sshPort = null;
-		
 		FederationMember member = null;
 		try {
 			member = getFederationMember(memberId);
 		} catch (Exception e) {
-		}		
-		
+		}
+
 		if (!validator.canDonateTo(member)) {
 			return null;
-		}			
+		}
 		LOGGER.info("Submiting request with categories: " + categories + " and xOCCIAtt: "
 				+ xOCCIAtt + " for remote member.");
 		String federationTokenAccessId = getFederationUserToken().getAccessId();
+		String instanceToken = String.valueOf(UUID.randomUUID());
 		try {
-			sshPort = sshTunnel.create(properties, new Request(null, null, categories, xOCCIAtt));
+			String command = UserdataUtils.createCommand(instanceToken, 
+					properties.getProperty(ConfigurationConstants.SSH_PRIVATE_HOST_KEY),
+					properties.getProperty(ConfigurationConstants.SSH_HOST_PORT_KEY));
+			xOCCIAtt.put(RequestAttribute.USER_DATA_ATT.getValue(),
+					Base64.encodeBase64URLSafeString(command.getBytes(Charsets.UTF_8)));
 		} catch (Exception e) {
 			LOGGER.warn("Exception while creating ssh tunnel.", e);
 			return null;
 		}
-		try {
+		
+		try {			
 			String instanceId = computePlugin.requestInstance(federationTokenAccessId, categories,
-					xOCCIAtt);
-			if (instanceId != null) {
-				sshTunnel.update(instanceId, sshPort);
-			} else {
-				sshTunnel.release(sshPort);
-			}
+					xOCCIAtt);			
+			instanceTokens.put(instanceId, instanceToken);
+
 			return instanceId;
 		} catch (OCCIException e) {
-			sshTunnel.release(sshPort);
 			if (e.getStatus().getCode() == HttpStatus.SC_BAD_REQUEST) {
 				return null;
 			}
@@ -349,9 +375,10 @@ public class ManagerController {
 		String federationTokenAccessId = getFederationUserToken().getAccessId();
 		try {
 			Instance instance = computePlugin.getInstance(federationTokenAccessId, instanceId);
-			String sshAddress = sshTunnel.getPublicAddress(properties, instanceId);
-			if (sshAddress != null) {
-				instance.addAttribute(DefaultSSHTunnel.SSH_PUBLIC_ADDRESS_ATT, sshAddress);
+			
+			String sshPublicAddress = getSSHPublicAddress(instanceTokens.get(instanceId));			
+			if (sshPublicAddress != null) {
+				instance.addAttribute(DefaultSSHTunnel.SSH_PUBLIC_ADDRESS_ATT, sshPublicAddress);
 			}
 			return instance;
 		} catch (OCCIException e) {
@@ -367,7 +394,7 @@ public class ManagerController {
 		LOGGER.info("Removing instance " + instanceId + " for remote member.");
 		String federationTokenAccessId = getFederationUserToken().getAccessId();
 		computePlugin.removeInstance(federationTokenAccessId, instanceId);
-		sshTunnel.release(instanceId);
+		instanceTokens.remove(instanceId);
 	}
 
 	public Token getTokenFromFederationIdP(String accessId) {
@@ -380,10 +407,9 @@ public class ManagerController {
 
 	public List<Request> createRequests(String accessId, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
-
 		Token userToken = getTokenFromFederationIdP(accessId);
 		LOGGER.debug("User Token: " + userToken);
-		
+
 		Integer instanceCount = Integer.valueOf(xOCCIAtt.get(RequestAttribute.INSTANCE_COUNT
 				.getValue()));
 		LOGGER.info("Request " + instanceCount + " instances");
@@ -517,30 +543,24 @@ public class ManagerController {
 	private boolean createLocalInstance(Request request) {
 		request.setMemberId(null);
 		String instanceId = null;
-		Integer port = null;
-
 		LOGGER.info("Submiting local request " + request);
-
-		try {
+		
+		try {			
 			try {
-				port = sshTunnel.create(properties, request);
+				String command = UserdataUtils.createCommand(request.getId(), 
+						properties.getProperty(ConfigurationConstants.SSH_PRIVATE_HOST_KEY),
+						properties.getProperty(ConfigurationConstants.SSH_HOST_PORT_KEY));
+				request.putAttValue(RequestAttribute.USER_DATA_ATT.getValue(),
+						Base64.encodeBase64URLSafeString(command.getBytes(Charsets.UTF_8)));
 			} catch (Exception e) {
-				LOGGER.warn("Exception while creating ssh tunnel.", e);
+				LOGGER.warn("Exception while creating userdata.", e);
 				request.setState(RequestState.FAILED);
 				return false;
-			}		
+			}	
 			
 			instanceId = computePlugin.requestInstance(request.getToken().getAccessId(),
 					request.getCategories(), request.getxOCCIAtt());
-			if (instanceId == null) {
-				sshTunnel.release(port);
-				return false;
-			}
-			sshTunnel.update(instanceId, port);
 		} catch (OCCIException e) {
-			if (port != null) {
-				sshTunnel.release(port);
-			}
 			int statusCode = e.getStatus().getCode();
 			if (statusCode == HttpStatus.SC_INSUFFICIENT_SPACE_ON_RESOURCE
 					|| statusCode == HttpStatus.SC_UNAUTHORIZED) {

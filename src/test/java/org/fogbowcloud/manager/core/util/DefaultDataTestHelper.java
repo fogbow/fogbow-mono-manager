@@ -7,10 +7,10 @@ public class DefaultDataTestHelper {
 	//xmpp data
 	protected static final int SERVER_CLIENT_PORT = 5222;
 	protected static final int SERVER_COMPONENT_PORT = 5347;
-	protected static final String SERVER_HOST = "localhost";
 	protected static final String CLIENT_ADRESS = "client@test.com";
 	protected static final String CLIENT_PASS = "password";
 	protected static final String SMACK_ENDING = "/Smack";
+	public static final String SERVER_HOST = "localhost";
 	public static final String MANAGER_COMPONENT_URL = "manager.test.com";
 	public static final String MANAGER_COMPONENT_PASS = "password";
 	public static final String WHOISALIVE_NAMESPACE = "http://fogbowcloud.org/rendezvous/whoisalive";

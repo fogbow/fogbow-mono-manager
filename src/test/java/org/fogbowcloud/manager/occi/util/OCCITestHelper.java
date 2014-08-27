@@ -14,12 +14,14 @@ import org.apache.commons.codec.Charsets;
 import org.apache.http.HttpResponse;
 import org.apache.http.ParseException;
 import org.apache.http.util.EntityUtils;
+import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.ManagerController;
+import org.fogbowcloud.manager.core.UserdataUtils;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
-import org.fogbowcloud.manager.core.ssh.SSHTunnel;
+import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.OCCIApplication;
 import org.fogbowcloud.manager.occi.core.HeaderUtils;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
@@ -51,12 +53,14 @@ public class OCCITestHelper {
 		component = new Component();
 		component.getServers().add(Protocol.HTTP, ENDPOINT_PORT);
 
-		ManagerController facade = new ManagerController(new Properties());
+		Properties properties = new Properties();
+		properties.put(ConfigurationConstants.SSH_PRIVATE_HOST_KEY,
+				DefaultDataTestHelper.SERVER_HOST);
+		ManagerController facade = new ManagerController(properties);
 		facade.setComputePlugin(computePlugin);
 		facade.setAuthorizationPlugin(authorizationPlugin);
 		facade.setLocalIdentityPlugin(identityPlugin);
 		facade.setFederationIdentityPlugin(identityPlugin);
-		facade.setSSHTunnel(Mockito.mock(SSHTunnel.class));
 
 		component.getDefaultHost().attach(new OCCIApplication(facade));
 		component.start();
@@ -68,12 +72,14 @@ public class OCCITestHelper {
 		component = new Component();
 		component.getServers().add(Protocol.HTTP, ENDPOINT_PORT);
 
-		ManagerController facade = new ManagerController(new Properties());
+		Properties properties = new Properties();
+		properties.put(ConfigurationConstants.SSH_PRIVATE_HOST_KEY,
+				DefaultDataTestHelper.SERVER_HOST);
+		ManagerController facade = new ManagerController(properties);
 		facade.setComputePlugin(computePlugin);
 		facade.setAuthorizationPlugin(authorizationPlugin);
 		facade.setLocalIdentityPlugin(identityPlugin);
 		facade.setFederationIdentityPlugin(identityPlugin);
-		facade.setSSHTunnel(Mockito.mock(SSHTunnel.class));
 
 		requests = new RequestRepository();
 		facade.setRequests(requests);

@@ -11,7 +11,8 @@ public enum RequestAttribute {
 	VALID_FROM("org.fogbowcloud.request.valid-from"),
 	STATE("org.fogbowcloud.request.state"),
 	INSTANCE_ID("org.fogbowcloud.request.instance-id"),
-	DATA_PUBLIC_KEY("org.fogbowclound.credentials.publickey.data");
+	DATA_PUBLIC_KEY("org.fogbowcloud.credentials.publickey.data"),
+	USER_DATA_ATT("org.fogbowcloud.request.user-data");
 	
 	private String value;
 	

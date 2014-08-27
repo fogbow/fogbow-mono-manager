@@ -1135,7 +1135,6 @@ public class TestManagerController {
 		Assert.assertNull(requests.get(0).getMemberId());
 	}
 
-	@SuppressWarnings("unchecked")
 	@Test
 	public void testSubmitRequestForRemoteMemberValidation() {
 		ResourcesInfo resources = Mockito.mock(ResourcesInfo.class);
@@ -1159,15 +1158,16 @@ public class TestManagerController {
 		managerController.setLocalIdentityPlugin(identityPlugin);
 
 		ComputePlugin plugin = Mockito.mock(OpenStackComputePlugin.class);
-		Mockito.doReturn("answer").when(plugin).requestInstance(null, null, null);
+		Map<String, String> xOCCIAtt = new HashMap<String, String>();
+		Mockito.doReturn("answer").when(plugin).requestInstance(null, null, xOCCIAtt);
 
 		managerController.setComputePlugin(plugin);
 		Assert.assertEquals("answer",
-				managerController.createInstanceForRemoteMember("abc", null, null));
+				managerController.createInstanceForRemoteMember("abc", null, xOCCIAtt));
 
 		Mockito.doReturn(false).when(validatorMock).canDonateTo(member);
 		managerController.setValidator(validatorMock);
 		Assert.assertEquals(null,
-				managerController.createInstanceForRemoteMember("abc", null, null));
+				managerController.createInstanceForRemoteMember("abc", null, xOCCIAtt));
 	}
 }

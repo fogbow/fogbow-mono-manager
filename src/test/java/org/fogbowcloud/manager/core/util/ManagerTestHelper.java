@@ -20,6 +20,7 @@ import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.DefaultMemberValidator;
 import org.fogbowcloud.manager.core.FederationMemberValidator;
 import org.fogbowcloud.manager.core.ManagerController;
+import org.fogbowcloud.manager.core.UserdataUtils;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
@@ -27,7 +28,6 @@ import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.openstack.OpenStackIdentityPlugin;
-import org.fogbowcloud.manager.core.ssh.SSHTunnel;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
@@ -150,7 +150,6 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		return authorizationPlugin;
 	}
 
-	@SuppressWarnings("unchecked")
 	public ManagerXmppComponent initializeXMPPManagerComponent(boolean init) throws Exception {
 
 		this.computePlugin = Mockito.mock(ComputePlugin.class);
@@ -161,7 +160,9 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		properties.put(ConfigurationConstants.FEDERATION_USER_PASS_KEY, "fogbow");
 		properties.put(ConfigurationConstants.FEDERATION_USER_TENANT_NAME_KEY, "fogbow");
 		properties.put(ConfigurationConstants.XMPP_JID_KEY, "manager.test.com");
-
+		properties.put(ConfigurationConstants.SSH_PRIVATE_HOST_KEY,
+				DefaultDataTestHelper.SERVER_HOST);
+		
 		ManagerController managerFacade = new ManagerController(properties);
 		managerFacade.setComputePlugin(computePlugin);
 		managerFacade.setLocalIdentityPlugin(identityPlugin);
@@ -179,7 +180,6 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		managerXmppComponent.setDescription("Manager Component");
 		managerXmppComponent.setName("Manager");
 		managerXmppComponent.setRendezvousAddress(CLIENT_ADRESS + SMACK_ENDING);
-		managerXmppComponent.getManagerFacade().setSSHTunnel(Mockito.mock(SSHTunnel.class));
 		fakeServer.connect(managerXmppComponent);
 		managerXmppComponent.process();
 		if (init) {
@@ -188,7 +188,6 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		return managerXmppComponent;
 	}
 
-	@SuppressWarnings("unchecked")
 	public ManagerXmppComponent initializeLocalXMPPManagerComponent() throws Exception {
 
 		this.computePlugin = Mockito.mock(ComputePlugin.class);
@@ -300,6 +299,8 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 				DefaultDataTestHelper.SCHEDULER_PERIOD.toString());
 		properties.put(ConfigurationConstants.INSTANCE_MONITORING_PERIOD_KEY,
 				Long.toString(DefaultDataTestHelper.LONG_TIME));
+		properties.put(ConfigurationConstants.SSH_PRIVATE_HOST_KEY,
+				DefaultDataTestHelper.SERVER_HOST);
 		ManagerController managerController = new ManagerController(properties,
 				Mockito.mock(ScheduledExecutorService.class));
 
@@ -323,14 +324,10 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
 		Mockito.when(authorizationPlugin.isAuthorized(Mockito.any(Token.class))).thenReturn(true);
 		
-		// mocking sshTunnel
-		SSHTunnel sshTunnel = Mockito.mock(SSHTunnel.class);
-
 		managerController.setAuthorizationPlugin(authorizationPlugin);
 		managerController.setLocalIdentityPlugin(identityPlugin);
 		managerController.setFederationIdentityPlugin(federationIdentityPlugin);
 		managerController.setComputePlugin(computePlugin);
-		managerController.setSSHTunnel(sshTunnel);
 
 		return managerController;
 	}

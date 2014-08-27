@@ -70,6 +70,8 @@ public class TestBypassCompute {
 		properties.put(ConfigurationConstants.COMPUTE_OCCI_FLAVOR_LARGE_KEY, ComputeApplication.MEDIUM_FLAVOR_TERM);
 		properties.put(ConfigurationConstants.COMPUTE_OCCI_IMAGE_PREFIX + PluginHelper.LINUX_X86_TERM, PluginHelper.CIRROS_IMAGE_TERM);
 		properties.put(ConfigurationConstants.SCHEDULER_PERIOD_KEY, LITTLE_SCHEDULE_TIME);
+		properties.put(ConfigurationConstants.SSH_PRIVATE_HOST_KEY,
+				DefaultDataTestHelper.SERVER_HOST);
 		
 		computePlugin = new OpenStackComputePlugin(properties);
 		
