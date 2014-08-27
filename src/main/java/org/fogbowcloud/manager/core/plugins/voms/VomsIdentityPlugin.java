@@ -52,6 +52,7 @@ import eu.emi.security.authn.x509.proxy.ProxyGenerator;
 
 public class VomsIdentityPlugin implements IdentityPlugin {
 
+	public static final String CREDENTIALS_PATH_DEFAULT = "$HOME/.globus";
 	private static final int DEFAULT_LIFE_TIME = 10;
 	public static final String PASSWORD = "password";
 	public static final String SERVER_NAME = "serverName";
@@ -304,8 +305,8 @@ public class VomsIdentityPlugin implements IdentityPlugin {
 	public Credential[] getCredentials() {
 		return new Credential[] { new Credential(PASSWORD, true, null),
 				new Credential(SERVER_NAME, true, null),
-				new Credential(PATH_USERCRED, false, "$HOME/.globus"),
-				new Credential(PATH_USERKEY, false, "$HOME/.globus") };
+				new Credential(PATH_USERCRED, false, CREDENTIALS_PATH_DEFAULT),
+				new Credential(PATH_USERKEY, false, CREDENTIALS_PATH_DEFAULT) };
 	}
 
 	@Override

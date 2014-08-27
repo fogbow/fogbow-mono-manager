@@ -10,6 +10,7 @@ import java.util.Properties;
 
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.CertificateUtils;
+import org.fogbowcloud.manager.core.plugins.util.Credential;
 import org.fogbowcloud.manager.core.plugins.voms.VomsIdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.voms.VomsIdentityPlugin.GeneratorProxyCertificate;
 import org.fogbowcloud.manager.occi.core.Token;
@@ -25,6 +26,7 @@ import eu.emi.security.authn.x509.proxy.ProxyCertificate;
 public class TestIdentityVoms {
 
 	private static final long TWELVE_HOURS = 1000 * 60 * 60 * 12;
+	private static final long ONE_MINUTE = 1000 * 60;
 	private final String VOMS_PASSWORD = "pass";
 	private final String VOMS_SERVER = "test.vo";
 
@@ -55,7 +57,7 @@ public class TestIdentityVoms {
 
 	@Test
 	public void testCreateToken() throws Exception {
-		Date before = new Date(System.currentTimeMillis() + TWELVE_HOURS);
+		Date before = new Date(System.currentTimeMillis() + TWELVE_HOURS - ONE_MINUTE);
 
 		PEMCredential holder = Utils.getTestUserCredential();
 		ProxyCertificate proxy = Utils.getVOMSAA().createVOMSProxy(holder, Fixture.defaultVOFqans);
@@ -83,7 +85,7 @@ public class TestIdentityVoms {
 
 	@Test
 	public void testGetToken() throws Exception {
-		Date before = new Date(System.currentTimeMillis() + TWELVE_HOURS);
+		Date before = new Date(System.currentTimeMillis() + TWELVE_HOURS - ONE_MINUTE);
 		PEMCredential holder = Utils.getTestUserCredential();
 
 		ProxyCertificate proxy = Utils.getVOMSAA().createVOMSProxy(holder, Fixture.defaultVOFqans);
@@ -115,5 +117,18 @@ public class TestIdentityVoms {
 		ProxyCertificate proxy = Utils.getVOMSAA().createVOMSProxy(holder, Fixture.defaultVOFqans);
 		Assert.assertFalse(vomsIdentityPlugin.isValid(CertificateUtils.generateAcessId(Arrays
 				.asList(proxy.getCertificateChain()))));
+	}
+
+	@Test
+	public void testGetCredential() {
+		Credential[] credentials = vomsIdentityPlugin.getCredentials();
+		Assert.assertEquals(4, credentials.length);
+		Assert.assertEquals(new Credential(VomsIdentityPlugin.PASSWORD, true, null), credentials[0]);
+		Assert.assertEquals(new Credential(VomsIdentityPlugin.SERVER_NAME, true, null),
+				credentials[1]);
+		Assert.assertEquals(new Credential(VomsIdentityPlugin.PATH_USERCRED, false,
+				VomsIdentityPlugin.CREDENTIALS_PATH_DEFAULT), credentials[2]);
+		Assert.assertEquals(new Credential(VomsIdentityPlugin.PATH_USERKEY, false,
+				VomsIdentityPlugin.CREDENTIALS_PATH_DEFAULT), credentials[3]);
 	}
 }
