@@ -20,6 +20,7 @@ public class ResponseConstants {
 	public static final String NETWORK_NOT_SPECIFIED = "There is not a network specified in configuration file.";
 	public static final String INVALID_FLAVOR_SPECIFIED = "Invalid flavor specified.";
 	public static final String INVALID_X509_CERTIFICATE_PATH = "Invalid x509 certificate file path.";
-	public static final String INVALID_TRUST_ANCHOR_DIR = "Invalid trust anchor directory path.";
+	public static final String INVALID_CA_DIR = "Invalid Certificate Authority directory path.";
+	public static final String INVALID_PRIVATE_KEY_PATH = "Invalid private key path.";
 
 }

@@ -1,12 +1,16 @@
 package org.fogbowcloud.manager.core.plugins.voms;
 
-import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.lang.reflect.Field;
+import java.security.InvalidKeyException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.security.Permission;
 import java.security.PermissionCollection;
+import java.security.SignatureException;
+import java.security.cert.CertificateException;
 import java.security.cert.CertificateExpiredException;
-import java.security.cert.CertificateFactory;
 import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
@@ -17,10 +21,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import org.apache.commons.codec.binary.Base64;
 import org.apache.log4j.Logger;
 import org.bouncycastle.asn1.x509.AttributeCertificate;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
+import org.fogbowcloud.manager.core.plugins.CertificateUtils;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.util.Credential;
 import org.fogbowcloud.manager.occi.core.ErrorType;
@@ -48,17 +52,12 @@ import eu.emi.security.authn.x509.proxy.ProxyGenerator;
 
 public class VomsIdentityPlugin implements IdentityPlugin {
 
-	private String UTF_8 = "UTF-8";
-	private static final String BEGIN_CERTIFICATE_SYNTAX = "-----BEGIN CERTIFICATE-----";
-	private static final String END_CERTIFICATE_SYNTAX = "-----END CERTIFICATE-----";
-	public static final int TWELVE_HOURS = 1000 * 60 * 60 * 12;
 	private static final int DEFAULT_LIFE_TIME = 10;
-	private static final String X_509 = "X.509";
 	public static final String PASSWORD = "password";
 	public static final String SERVER_NAME = "serverName";
 	public static final String PATH_USERCRED = "pathUserCred";
 	public static final String PATH_USERKEY = "pathUserKey";
-	
+
 	private static final Logger LOGGER = Logger.getLogger(VomsIdentityPlugin.class);
 
 	private Properties properties;
@@ -84,83 +83,60 @@ public class VomsIdentityPlugin implements IdentityPlugin {
 	@Override
 	public Token createToken(Map<String, String> userCredentials) {
 		ProxyCertificate proxyCert = null;
+		
 		try {
 			proxyCert = generatorProxyCertificate.generate(userCredentials);
+		} catch (IOException e) {
+			LOGGER.error("", e);
+			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		} catch (Exception e) {
-			LOGGER.error("Problems in the generation of the proxy certificate : " + e.getMessage());
-			e.printStackTrace();
+			LOGGER.error("", e);
+			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);			
 		}
-		
-		String accessId = generateAcessId(proxyCert.getCertificateChain());
+		 
+
+		String accessId = CertificateUtils.generateAcessId(Arrays.asList(proxyCert
+				.getCertificateChain()));
 		String user = null;
 		Date expirationTime = null;
 		for (X509Certificate x509Certificate : proxyCert.getCertificateChain()) {
-			expirationTime = x509Certificate.getNotAfter();			
+			expirationTime = x509Certificate.getNotAfter();
 			user = x509Certificate.getIssuerDN().getName();
-			break;	
+			break;
 		}
 
 		return new Token(accessId, user, expirationTime, new HashMap<String, String>());
 	}
 
-	public String generateAcessId(X509Certificate[] certificateChain) {
-		StringBuilder base64Chain = new StringBuilder();
-
-		X509Certificate[] chain = certificateChain;
-		try {
-			for (X509Certificate x509Certificate : chain) {
-				base64Chain.append(BEGIN_CERTIFICATE_SYNTAX + "\n");
-				String certString = Base64.encodeBase64String(x509Certificate.getEncoded());
-				base64Chain.append(certString);
-				base64Chain.append("\n" + END_CERTIFICATE_SYNTAX + "\n");
-			}
-			return base64Chain.toString().trim();
-		} catch (Exception e) {
-			LOGGER.error("Problems in converting certificate to string");
-		}
-		return null;
-	}
-
 	@Override
 	public Token reIssueToken(Token token) {
-		Map<String, String> userCredentials = new HashMap<String, String>();
-		userCredentials.put(PASSWORD,
-				token.get(PASSWORD));
-		userCredentials.put(SERVER_NAME,
-				token.get(SERVER_NAME));
-		
-		if (token.get(PASSWORD) != null) {
-			userCredentials.put(PATH_USERCRED,
-					token.get(PATH_USERCRED));			
-		}
-		if (token.get(SERVER_NAME) != null) {
-			userCredentials.put(PATH_USERCRED,
-					token.get(PATH_USERCRED));			
-		}
-
-		return createToken(userCredentials);
+		/*
+		 * It is not possible to make a token reissue with available
+		 * information.
+		 */
+		return token;
 	}
 
 	@Override
 	public Token getToken(String accessId) {
-		accessId = normalizeAccessId(accessId);
+		accessId = CertificateUtils.toCertificateFormat(accessId);
 		if (!isValid(accessId)) {
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}
-		
+
 		Collection<X509Certificate> certificates;
 		try {
-			certificates = generateCertificates(accessId);
+			certificates = CertificateUtils.getCertificateChain(accessId);
 		} catch (Exception e) {
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}
-		
+
 		String user = null;
 		Date expirationTime = null;
 		for (X509Certificate x509Certificate : certificates) {
-			expirationTime = x509Certificate.getNotAfter();						
+			expirationTime = x509Certificate.getNotAfter();
 			user = x509Certificate.getIssuerDN().getName();
-			break;	
+			break;
 		}
 
 		return new Token(accessId, user, expirationTime, new HashMap<String, String>());
@@ -168,11 +144,12 @@ public class VomsIdentityPlugin implements IdentityPlugin {
 
 	@Override
 	public boolean isValid(String accessId) {
-		accessId = normalizeAccessId(accessId);
+		accessId = CertificateUtils.toCertificateFormat(accessId);
 		Collection<X509Certificate> certificates;
 		try {
-			certificates = generateCertificates(accessId);
+			certificates = CertificateUtils.getCertificateChain(accessId);
 		} catch (Exception e) {
+			LOGGER.warn("Exception while getting certificate chain from " + accessId);
 			return false;
 		}
 
@@ -206,46 +183,6 @@ public class VomsIdentityPlugin implements IdentityPlugin {
 		return false;
 	}
 
-	@SuppressWarnings("unchecked")
-	private Collection<X509Certificate> generateCertificates(String accessId) throws Exception {
-		Collection<X509Certificate> certificates = null;
-
-		accessId = normalizeAccessId(accessId);
-		
-		CertificateFactory cf = null;
-		try {
-			cf = CertificateFactory.getInstance(X_509);
-			certificates = (Collection<X509Certificate>) cf
-					.generateCertificates(new ByteArrayInputStream(accessId
-					.getBytes(UTF_8)));
-		} catch (Exception e) {
-			LOGGER.warn("Problems on the generation of the certificate.", e);
-			throw new Exception();
-		}
-		return certificates;
-	}
-	
-	public static String normalizeAccessId(String accessId) {
-		accessId = accessId.replace(Token.BREAK_LINE_REPLACE, "");
-		
-		String accessIdNormalized = "";
-		String[] beginSyntax = accessId.split(BEGIN_CERTIFICATE_SYNTAX);
-		for (String beginToken : beginSyntax) {
-			if (!beginToken.isEmpty()) {
-				accessIdNormalized += BEGIN_CERTIFICATE_SYNTAX;
-				String[] endToken = beginToken.split(END_CERTIFICATE_SYNTAX);
-				if (!endToken[0].contains(Token.BREAK_LINE_REPLACE)) {
-					accessIdNormalized += Token.BREAK_LINE_REPLACE + endToken[0];
-				}
-				if (endToken.length == 1) {
-					accessIdNormalized += Token.BREAK_LINE_REPLACE;
-				}
-				accessIdNormalized += END_CERTIFICATE_SYNTAX + Token.BREAK_LINE_REPLACE;				
-			}
-		}
-		return accessIdNormalized.trim();
-	}
-
 	@Override
 	public Token createFederationUserToken() {
 		Map<String, String> credentials = new HashMap<String, String>();
@@ -257,44 +194,43 @@ public class VomsIdentityPlugin implements IdentityPlugin {
 		return createToken(credentials);
 	}
 
-	private VOMSACValidator getVOMSValidator() {		
+	private VOMSACValidator getVOMSValidator() {
 		String trust = properties.getProperty(ConfigurationConstants.VOMS_PATH_TRUST_ANCHORS);
 		if (trust == null || trust.isEmpty()) {
 			trust = DefaultVOMSValidator.DEFAULT_TRUST_ANCHORS_DIR.toString();
-		}		
+		}
 		String vomsdir = properties.getProperty(ConfigurationConstants.VOMS_PATH_VOMSDIR);
 		if (vomsdir == null || vomsdir.isEmpty()) {
 			vomsdir = DefaultVOMSTrustStore.DEFAULT_VOMS_DIR.toString();
-		}			
-		
+		}
+
 		X509CertChainValidatorExt validatorExt = CertificateValidatorBuilder
 				.buildCertificateValidator(trust);
 		DefaultVOMSTrustStore VOMSTrustStore = new DefaultVOMSTrustStore(Arrays.asList(vomsdir));
-		
+
 		return VOMSValidators.newValidator(VOMSTrustStore, validatorExt);
 	}
 
 	public class GeneratorProxyCertificate {
 
-		public ProxyCertificate generate(Map<String, String> userCredentials) throws Exception {
-			char[] keyPassword = userCredentials.get(PASSWORD)
-					.toCharArray();
+		public ProxyCertificate generate(Map<String, String> userCredentials) throws KeyStoreException, CertificateException, InvalidKeyException, SignatureException, NoSuchAlgorithmException, IOException {
+			char[] keyPassword = userCredentials.get(PASSWORD).toCharArray();
 			String vomsNameServer = userCredentials.get(SERVER_NAME);
 
 			X509Credential cred;
 			if (userCredentials.containsKey(PATH_USERCRED)
 					&& userCredentials.containsKey(PATH_USERKEY)) {
-							
+
 				String privateKeyPath = userCredentials.get(PATH_USERKEY);
 				String certificatePath = userCredentials.get(PATH_USERKEY);
-				
-				FilePermissionHelper.checkPrivateKeyPermissions(privateKeyPath);				
+
+				FilePermissionHelper.checkPrivateKeyPermissions(privateKeyPath);
 				cred = new PEMCredential(new FileInputStream(privateKeyPath), new FileInputStream(
 						certificatePath), keyPassword);
 			} else {
-				cred = UserCredentials.loadCredentials(keyPassword);				
-			}			
-			
+				cred = UserCredentials.loadCredentials(keyPassword);
+			}
+
 			X509CertChainValidatorExt validatorExt = null;
 			String pathVomses = properties.getProperty(ConfigurationConstants.VOMS_PATH_VOMSES);
 			if (pathVomses == null || pathVomses.isEmpty()) {
@@ -305,7 +241,7 @@ public class VomsIdentityPlugin implements IdentityPlugin {
 						CertificateValidatorBuilder.DEFAULT_CRL_CHECKS,
 						CertificateValidatorBuilder.DEFAULT_OCSP_CHECKS);
 			}
-			
+
 			VOMSACService service = new DefaultVOMSACService.Builder(validatorExt).build();
 
 			DefaultVOMSACRequest request = new DefaultVOMSACRequest.Builder(vomsNameServer)

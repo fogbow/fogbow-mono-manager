@@ -23,4 +23,17 @@ public class Credential {
 	public boolean isRequired() {
 		return required;
 	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof Credential) {
+			Credential otherCredential = (Credential) obj;			 
+			return getName().equals(otherCredential.getName())
+					&& (isRequired() == otherCredential.isRequired())
+					&& ((getValueDefault() != null && otherCredential.getValueDefault() != null && getValueDefault()
+							.equals(otherCredential.getValueDefault())) || (getValueDefault() == null && otherCredential
+							.getValueDefault() == null)); 
+		}
+		return false;
+	}
 }

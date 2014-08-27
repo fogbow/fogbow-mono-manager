@@ -2,12 +2,14 @@ package org.fogbowcloud.manager.occi.plugins.voms;
 
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
 import org.fogbowcloud.manager.core.ConfigurationConstants;
+import org.fogbowcloud.manager.core.plugins.CertificateUtils;
 import org.fogbowcloud.manager.core.plugins.voms.VomsIdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.voms.VomsIdentityPlugin.GeneratorProxyCertificate;
 import org.fogbowcloud.manager.occi.core.Token;
@@ -22,13 +24,14 @@ import eu.emi.security.authn.x509.proxy.ProxyCertificate;
 
 public class TestIdentityVoms {
 
+	private static final long TWELVE_HOURS = 1000 * 60 * 60 * 12;
 	private final String VOMS_PASSWORD = "pass";
 	private final String VOMS_SERVER = "test.vo";
 
 	private GeneratorProxyCertificate generatorProxyCertificate;
 	private VomsIdentityPlugin vomsIdentityPlugin;
 	private Properties properties;
-	
+
 	@Before
 	public void setUp() {
 		properties = new Properties();
@@ -44,40 +47,16 @@ public class TestIdentityVoms {
 		vomsIdentityPlugin.setGenerateProxyCertificate(generatorProxyCertificate);
 	}
 
-	@SuppressWarnings({ "unchecked", "deprecation" })
 	@Test
 	public void testReIssueToken() throws Exception {
-		PEMCredential holder = Utils.getTestUserCredential();
-		ProxyCertificate proxy = Utils.getVOMSAA().createVOMSProxy(holder, Fixture.defaultVOFqans);
-		X509Certificate[] extendedChain = proxy.getCertificateChain();
-		PrivateKey proxyPrivateKey = proxy.getPrivateKey();
-		ProxyCertificateImpl proxyCertificate = new ProxyCertificateImpl(extendedChain,
-				proxyPrivateKey);
-
-		Map<String, String> credentials = new HashMap<String, String>();
-		credentials.put(VomsIdentityPlugin.PASSWORD, VOMS_PASSWORD);
-		credentials.put(VomsIdentityPlugin.SERVER_NAME, VOMS_SERVER);
-
-		Mockito.when(generatorProxyCertificate.generate(Mockito.anyMap())).thenReturn(
-				proxyCertificate);
-
-		Token myToken = new Token("", "", new Date(), credentials);
-		Token token = vomsIdentityPlugin.reIssueToken(myToken);
-
-		Assert.assertEquals(vomsIdentityPlugin.generateAcessId(proxy.getCertificateChain()),
-				token.getAccessId());
-		System.out.println(token.getAccessId());
-
-		Assert.assertEquals("CN=test0, O=IGI, C=IT", token.getUser());
-		Date dateExpiration = new Date(System.currentTimeMillis() + VomsIdentityPlugin.TWELVE_HOURS);
-		Assert.assertEquals(dateExpiration.getDay(), token.getExpirationDate().getDay());
-		Assert.assertEquals(dateExpiration.getHours(), token.getExpirationDate().getHours());
-		Assert.assertEquals(dateExpiration.getMinutes(), token.getExpirationDate().getMinutes());
+		Token token = new Token("accessId", "user", new Date(), new HashMap<String, String>());
+		Assert.assertEquals(token, vomsIdentityPlugin.reIssueToken(token));
 	}
 
-	@SuppressWarnings("deprecation")
 	@Test
 	public void testCreateToken() throws Exception {
+		Date before = new Date(System.currentTimeMillis() + TWELVE_HOURS);
+
 		PEMCredential holder = Utils.getTestUserCredential();
 		ProxyCertificate proxy = Utils.getVOMSAA().createVOMSProxy(holder, Fixture.defaultVOFqans);
 		X509Certificate[] extendedChain = proxy.getCertificateChain();
@@ -90,36 +69,34 @@ public class TestIdentityVoms {
 		credentials.put(VomsIdentityPlugin.SERVER_NAME, VOMS_SERVER);
 
 		Mockito.when(generatorProxyCertificate.generate(credentials)).thenReturn(proxyCertificate);
-
 		Token token = vomsIdentityPlugin.createToken(credentials);
 
-		Assert.assertEquals(vomsIdentityPlugin.generateAcessId(proxy.getCertificateChain()),
+		Date after = new Date(System.currentTimeMillis() + TWELVE_HOURS);
+
+		Assert.assertEquals(
+				CertificateUtils.generateAcessId(Arrays.asList(proxy.getCertificateChain())),
 				token.getAccessId());
 		Assert.assertEquals("CN=test0, O=IGI, C=IT", token.getUser());
-		Date dateExpiration = new Date(System.currentTimeMillis() + VomsIdentityPlugin.TWELVE_HOURS);
-		Assert.assertEquals(dateExpiration.getDay(), token.getExpirationDate().getDay());
-		Assert.assertEquals(dateExpiration.getHours(), token.getExpirationDate().getHours());
-		Assert.assertEquals(dateExpiration.getMinutes(), token.getExpirationDate().getMinutes());
+		Assert.assertTrue(token.getExpirationDate().after(before));
+		Assert.assertTrue(token.getExpirationDate().before(after));
 	}
 
-	@SuppressWarnings("deprecation")
 	@Test
 	public void testGetToken() throws Exception {
+		Date before = new Date(System.currentTimeMillis() + TWELVE_HOURS);
 		PEMCredential holder = Utils.getTestUserCredential();
 
 		ProxyCertificate proxy = Utils.getVOMSAA().createVOMSProxy(holder, Fixture.defaultVOFqans);
 
-		String accessId = vomsIdentityPlugin.generateAcessId(proxy.getCertificateChain());
+		String accessId = CertificateUtils.generateAcessId(Arrays.asList(proxy
+				.getCertificateChain()));
 		Token token = vomsIdentityPlugin.getToken(accessId);
+		Date after = new Date(System.currentTimeMillis() + TWELVE_HOURS);
 
-		System.out.println(token.getAccessId());
-		
 		Assert.assertEquals("CN=test0, O=IGI, C=IT", token.getUser());
 		Assert.assertEquals(accessId, token.getAccessId());
-		Date dateExpiration = new Date(System.currentTimeMillis() + VomsIdentityPlugin.TWELVE_HOURS);
-		Assert.assertEquals(dateExpiration.getDay(), token.getExpirationDate().getDay());
-		Assert.assertEquals(dateExpiration.getHours(), token.getExpirationDate().getHours());
-		Assert.assertEquals(dateExpiration.getMinutes(), token.getExpirationDate().getMinutes());
+		Assert.assertTrue(token.getExpirationDate().after(before));
+		Assert.assertTrue(token.getExpirationDate().before(after));
 	}
 
 	@Test
@@ -127,9 +104,8 @@ public class TestIdentityVoms {
 		PEMCredential holder = Utils.getTestUserCredential();
 
 		ProxyCertificate proxy = Utils.getVOMSAA().createVOMSProxy(holder, Fixture.defaultVOFqans);
-
-		Assert.assertTrue(vomsIdentityPlugin.isValid(vomsIdentityPlugin.generateAcessId(proxy
-				.getCertificateChain())));
+		Assert.assertTrue(vomsIdentityPlugin.isValid(CertificateUtils.generateAcessId(Arrays
+				.asList(proxy.getCertificateChain()))));
 	}
 
 	@Test
@@ -137,8 +113,7 @@ public class TestIdentityVoms {
 		PEMCredential holder = Utils.getExpiredCredential();
 
 		ProxyCertificate proxy = Utils.getVOMSAA().createVOMSProxy(holder, Fixture.defaultVOFqans);
-
-		Assert.assertFalse(vomsIdentityPlugin.isValid(vomsIdentityPlugin.generateAcessId(proxy
-				.getCertificateChain())));
+		Assert.assertFalse(vomsIdentityPlugin.isValid(CertificateUtils.generateAcessId(Arrays
+				.asList(proxy.getCertificateChain()))));
 	}
 }

@@ -5,6 +5,9 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.net.DatagramSocket;
 import java.net.ServerSocket;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -151,5 +154,10 @@ public class PluginHelper {
 		} finally {
 			br.close();
 		}
+	}
+	
+	public static Date formatExpirationDate(String format, Token token) throws ParseException {
+		SimpleDateFormat sdf = new SimpleDateFormat(format);
+		return sdf.parse(sdf.format(token.getExpirationDate()));
 	}
 }

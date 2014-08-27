@@ -23,7 +23,6 @@ import java.security.SignatureException;
 import java.security.cert.CertificateParsingException;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.EnumSet;
 import java.util.List;
 
 import org.bouncycastle.asn1.x509.AttributeCertificate;
