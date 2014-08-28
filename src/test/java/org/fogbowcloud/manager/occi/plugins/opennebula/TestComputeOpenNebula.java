@@ -13,7 +13,6 @@ import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.opennebula.OneConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.opennebula.OpenNebulaClientFactory;
 import org.fogbowcloud.manager.core.plugins.opennebula.OpenNebulaComputePlugin;
-import org.fogbowcloud.manager.core.ssh.DefaultSSHTunnel;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.OCCIException;
@@ -67,7 +66,7 @@ public class TestComputeOpenNebula {
 
 		// default userdata
 		xOCCIAtt = new HashMap<String, String>();
-		xOCCIAtt.put(DefaultSSHTunnel.USER_DATA_ATT, "userdata");
+		xOCCIAtt.put(org.fogbowcloud.manager.occi.instance.Instance.USER_DATA_ATT, "userdata");
 		
 		DEFAULT_TEMPLATE = PluginHelper
 				.getContentFile("src/test/resources/opennebula/default.template")

@@ -22,7 +22,6 @@ import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
-import org.fogbowcloud.manager.core.ssh.DefaultSSHTunnel;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.OCCIException;
@@ -188,7 +187,7 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		
 		templateProperties.put("mem", String.valueOf(getAttValue("mem", choosenFlavor)));
 		templateProperties.put("cpu", String.valueOf(getAttValue("cpu", choosenFlavor)));
-		templateProperties.put("userdata", xOCCIAtt.get(DefaultSSHTunnel.USER_DATA_ATT));
+		templateProperties.put("userdata", xOCCIAtt.get(org.fogbowcloud.manager.occi.instance.Instance.USER_DATA_ATT));
 		templateProperties.put("image-id", choosenImage);
 
 		Client oneClient = clientFactory.createClient(accessId, openNebulaEndpoint);

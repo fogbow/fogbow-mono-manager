@@ -26,7 +26,6 @@ import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
-import org.fogbowcloud.manager.core.ssh.DefaultSSHTunnel;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.OCCIException;
@@ -71,7 +70,6 @@ public class ManagerController {
 	private Map<String, String> instanceTokens = new HashMap<String, String>();
 
 	private DateUtils dateUtils = new DateUtils();
-
 	public ManagerController(Properties properties) {
 		this(properties, Executors.newScheduledThreadPool(10));
 	}
@@ -191,7 +189,7 @@ public class ManagerController {
 
 			String sshPublicAdd = getSSHPublicAddress(request.getId());
 			if (sshPublicAdd != null) {
-				instance.addAttribute(DefaultSSHTunnel.SSH_PUBLIC_ADDRESS_ATT, sshPublicAdd);
+				instance.addAttribute(Instance.SSH_PUBLIC_ADDRESS_ATT, sshPublicAdd);
 			}
 
 		} else {
@@ -378,7 +376,7 @@ public class ManagerController {
 			
 			String sshPublicAddress = getSSHPublicAddress(instanceTokens.get(instanceId));			
 			if (sshPublicAddress != null) {
-				instance.addAttribute(DefaultSSHTunnel.SSH_PUBLIC_ADDRESS_ATT, sshPublicAddress);
+				instance.addAttribute(Instance.SSH_PUBLIC_ADDRESS_ATT, sshPublicAddress);
 			}
 			return instance;
 		} catch (OCCIException e) {

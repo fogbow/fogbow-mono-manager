@@ -20,7 +20,7 @@ public class Request {
 	private RequestState state;
 	private List<Category> categories;
 	private Map<String, String> xOCCIAtt;
-
+	
 	public Request(String id, Token token, List<Category> categories, Map<String, String> xOCCIAtt) {
 		this.id = id;
 		this.token = token;

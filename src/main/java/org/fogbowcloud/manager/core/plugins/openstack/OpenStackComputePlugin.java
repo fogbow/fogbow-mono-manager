@@ -31,7 +31,6 @@ import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
-import org.fogbowcloud.manager.core.ssh.DefaultSSHTunnel;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.OCCIException;
@@ -184,7 +183,7 @@ public class OpenStackComputePlugin implements ComputePlugin {
 		}
 
 		xOCCIAtt.put("org.openstack.compute.user_data",
-				xOCCIAtt.remove(DefaultSSHTunnel.USER_DATA_ATT));
+				xOCCIAtt.remove(org.fogbowcloud.manager.occi.instance.Instance.USER_DATA_ATT));
 
 		Set<Header> headers = new HashSet<Header>();
 		for (Category category : openStackCategories) {
