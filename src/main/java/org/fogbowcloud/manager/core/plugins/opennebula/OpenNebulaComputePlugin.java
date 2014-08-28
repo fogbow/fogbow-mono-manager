@@ -32,6 +32,7 @@ import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.instance.Instance.Link;
+import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.json.JSONObject;
 import org.opennebula.client.Client;
@@ -98,6 +99,9 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		
 		// userdata
 		fogbowTermToOpenNebula.put(RequestConstants.USER_DATA_TERM, "user_data");
+		
+		//ssh public key
+		fogbowTermToOpenNebula.put(RequestConstants.PUBLIC_KEY_TERM, "ssh-public-key");
 	}
 
 	/*
@@ -170,6 +174,9 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 							ResponseConstants.IRREGULAR_SYNTAX);					
 				}
 				choosenImage = fogbowTermToOpenNebula.get(category.getTerm());
+			} else if (category.getTerm().equals(RequestConstants.PUBLIC_KEY_TERM)) {
+				templateProperties.put("ssh-public-key",
+						xOCCIAtt.get(RequestAttribute.DATA_PUBLIC_KEY.getValue()));
 			}
 		}
 		
@@ -203,6 +210,13 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 			// context elements
 			Element contextElement = doc.createElement("CONTEXT");
 			templateElement.appendChild(contextElement);
+			// ssh public key
+			if (templateProperties.get("ssh-public-key") != null) {
+				Element sshPublicKeyElement = doc.createElement("SSH_PUBLIC_KEY");
+				sshPublicKeyElement.appendChild(doc.createTextNode(templateProperties
+						.get("ssh-public-key")));
+				contextElement.appendChild(sshPublicKeyElement);
+			}
 			// userdata
 			Element userdataElement = doc.createElement("USERDATA");
 			userdataElement.appendChild(doc.createTextNode(templateProperties.get("userdata")));

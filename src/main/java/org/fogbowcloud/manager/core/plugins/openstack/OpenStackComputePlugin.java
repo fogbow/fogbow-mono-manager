@@ -175,6 +175,7 @@ public class OpenStackComputePlugin implements ComputePlugin {
 			}
 			openStackCategories.add(fogTermToOpenStackCategory.get(category.getTerm()));
 			
+			// adding ssh public key
 			if (category.getTerm().equals(RequestConstants.PUBLIC_KEY_TERM)) {		
 				xOCCIAtt.put(NAME_PUBLIC_KEY_ATTRIBUTE, NAME_PUBLIC_KEY_DEFAULT);
 				xOCCIAtt.put(DATA_PUBLIC_KEY_ATTRIBUTE, xOCCIAtt.get(RequestAttribute.DATA_PUBLIC_KEY.getValue()));
