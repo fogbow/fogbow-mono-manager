@@ -32,12 +32,13 @@ public class Main {
 		FileInputStream input = new FileInputStream(args[0]);
 		properties.load(input);
 
-		ComputePlugin computePlugin = new OpenStackComputePlugin(properties);
+		ComputePlugin computePlugin;
 		try {
 			computePlugin = (ComputePlugin) createInstance(
 					ConfigurationConstants.COMPUTE_CLASS_KEY, properties);
 		} catch (Exception e) {
 			LOGGER.warn("Compute Plugin not especified in the properties.");
+			computePlugin = new OpenStackComputePlugin(properties);
 		}
 
 		AuthorizationPlugin authorizationPlugin = null;
