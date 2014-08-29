@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import org.apache.http.HttpStatus;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.opennebula.OneConfigurationConstants;
@@ -76,11 +77,16 @@ public class TestComputeOpenNebula {
 		SMALL_TEMPLATE = DEFAULT_TEMPLATE.replace("#MEM#", "128.0").replace("#CPU#", "1.0");
 	}
 	
-	@Test(expected=OCCIException.class)
+	@Test
 	public void testBypassDoesNotWork() {
 		computeOpenNebula = new OpenNebulaComputePlugin(properties);
 		Request req = new Request();
-		computeOpenNebula.bypass(req, new Response(req));
+		Response response = new Response(req);
+		computeOpenNebula.bypass(req, response);
+		System.out.println(response);
+		Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatus().getCode());
+		Assert.assertEquals(ResponseConstants.CLOUD_NOT_SUPPORT_OCCI_INTERFACE, response
+				.getStatus().getDescription());
 	}
 	
 	@Test

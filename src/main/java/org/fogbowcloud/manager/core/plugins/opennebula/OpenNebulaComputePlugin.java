@@ -18,6 +18,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import org.apache.http.HttpStatus;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
@@ -41,6 +42,8 @@ import org.opennebula.client.vm.VirtualMachine;
 import org.opennebula.client.vm.VirtualMachinePool;
 import org.restlet.Request;
 import org.restlet.Response;
+import org.restlet.data.MediaType;
+import org.restlet.data.Status;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -442,7 +445,7 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 
 	@Override
 	public void bypass(Request request, Response response) {
-		throw new OCCIException(ErrorType.BAD_REQUEST,
+		response.setStatus(new Status(HttpStatus.SC_BAD_REQUEST),
 				ResponseConstants.CLOUD_NOT_SUPPORT_OCCI_INTERFACE);
 	}
 
