@@ -64,46 +64,6 @@ public class TestIdentityOpenNebula {
 		Assert.assertEquals(accessId, userToken.getAccessId());
 	}
 
-	@Test(expected = OCCIException.class)
-	public void testCreateTokenInvalidUsername() throws ClientConfigurationException {
-		// mocking client and factory
-		Client oneClient = Mockito.mock(Client.class);
-		Mockito.when(oneClient.call("userpool.info")).thenReturn(
-				new OneResponse(false, USER_POOL_ERROR_AUTH_MESSAGE));
-
-		OpenNebulaClientFactory clientFactory = Mockito.mock(OpenNebulaClientFactory.class);
-		Mockito.when(clientFactory.createClient("invalid:" + PluginHelper.USER_PASS, OPEN_NEBULA_URL))
-				.thenReturn(oneClient);
-
-		identityOpenNebula = new OpenNebulaIdentityPlugin(properties, clientFactory);
-
-		// creating token
-		Map<String, String> userCredentials = new HashMap<String, String>();
-		userCredentials.put(OpenNebulaIdentityPlugin.USERNAME, "invalid");
-		userCredentials.put(OpenNebulaIdentityPlugin.USER_PASSWORD, PluginHelper.USER_PASS);
-		identityOpenNebula.createToken(userCredentials);
-	}
-
-	@Test(expected = OCCIException.class)
-	public void testCreateTokenInvalidPassword() throws ClientConfigurationException {
-		// mocking client and factory
-		Client oneClient = Mockito.mock(Client.class);
-		Mockito.when(oneClient.call("userpool.info")).thenReturn(
-				new OneResponse(false, USER_POOL_ERROR_AUTH_MESSAGE));
-		
-		OpenNebulaClientFactory clientFactory = Mockito.mock(OpenNebulaClientFactory.class);
-		Mockito.when(clientFactory.createClient(PluginHelper.USERNAME + ":invalid", OPEN_NEBULA_URL))
-				.thenReturn(oneClient);
-		
-		identityOpenNebula = new OpenNebulaIdentityPlugin(properties, clientFactory);
-
-		// creating token
-		Map<String, String> userCredentials = new HashMap<String, String>();
-		userCredentials.put(OpenNebulaIdentityPlugin.USERNAME, PluginHelper.USERNAME);
-		userCredentials.put(OpenNebulaIdentityPlugin.USER_PASSWORD, "invalid");
-		identityOpenNebula.createToken(userCredentials);
-	}
-
 	@Test
 	public void testReissueToken() throws ClientConfigurationException {
 		// mocking client and factory

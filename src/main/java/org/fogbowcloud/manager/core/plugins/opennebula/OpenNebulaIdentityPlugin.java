@@ -21,7 +21,6 @@ public class OpenNebulaIdentityPlugin implements IdentityPlugin {
 	
 	public static final String USERNAME = "username";
 	public static final String USER_PASSWORD = "password";
-	public static final String AUTH_URL = "authUrl";
 	
 	private Properties properties;
 	private String openNebulaEndpoint;
@@ -44,12 +43,8 @@ public class OpenNebulaIdentityPlugin implements IdentityPlugin {
 		LOGGER.debug("Creating token with credentials: " + userCredentials);
 		String username = userCredentials.get(USERNAME);
 		String userPass = userCredentials.get(USER_PASSWORD);
-		String authUrl = userCredentials.get(AUTH_URL);
 		String accessId = username + ":" + userPass;
-		if (authUrl != null && !authUrl.isEmpty()) {
-			return getToken(accessId, authUrl);
-		}
-		return getToken(accessId);
+		return new Token(accessId, username, null, new HashMap<String, String>());
 	}
 
 	private void checkUserExists(String username, UserPool userPool) {
@@ -111,7 +106,7 @@ public class OpenNebulaIdentityPlugin implements IdentityPlugin {
 	@Override
 	public Credential[] getCredentials() {
 		return new Credential[] { new Credential(USERNAME, true, null),
-				new Credential(USER_PASSWORD, true, null), new Credential(AUTH_URL, true, null) };
+				new Credential(USER_PASSWORD, true, null) };
 	}
 
 	@Override
