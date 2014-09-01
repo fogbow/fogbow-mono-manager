@@ -42,9 +42,9 @@ public class TestComputeOpenNebula {
 
 	private static final String OPEN_NEBULA_URL = "http://localhost:2633/RPC2";
 	private static final String INSTANCE_ID = "0";
-	private static final String SMALL_FLAVOR_DATA = "{mem=128.0, cpu=1.0}";
-	private static final String MEDIUM_FLAVOR_DATA = "{mem=256.0, cpu=2.0}";
-	private static final String LARGE_FLAVOR_DATA = "{mem=512.0, cpu=4.0}";
+	private static final String SMALL_FLAVOR_DATA = "{mem=128, cpu=1.0}";
+	private static final String MEDIUM_FLAVOR_DATA = "{mem=256, cpu=2.0}";
+	private static final String LARGE_FLAVOR_DATA = "{mem=512, cpu=4.0}";
 	private static final String IMAGE1_ID = "1";
 	private static final String IMAGE1_NAME = "image1";
 	private static final int NETWORK_ID = 0;
@@ -75,7 +75,7 @@ public class TestComputeOpenNebula {
 				.replaceAll("#NET_ID#", "" + NETWORK_ID).replaceAll("#IMAGE_ID#", IMAGE1_ID)
 				.replaceAll("#USERDATA#", "userdata").replaceAll("\n", "").replaceAll(" ", "");
 	
-		SMALL_TEMPLATE = DEFAULT_TEMPLATE.replace("#MEM#", "128.0").replace("#CPU#", "1.0");
+		SMALL_TEMPLATE = DEFAULT_TEMPLATE.replace("#MEM#", "128").replace("#CPU#", "1.0");
 	}
 	
 	@Test

@@ -193,9 +193,9 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		
 		String userdata = xOCCIAtt.get(RequestAttribute.USER_DATA_ATT.getValue());
 		if (userdata != null){
-			userdata = userdata.replaceAll("\n", "\\n");
+			userdata = userdata.replaceAll("\n", "\\\\n");
 		}
-		templateProperties.put("mem", String.valueOf(getAttValue("mem", choosenFlavor)));
+		templateProperties.put("mem", String.valueOf((int)getAttValue("mem", choosenFlavor)));
 		templateProperties.put("cpu", String.valueOf(getAttValue("cpu", choosenFlavor)));
 		templateProperties.put("userdata", userdata);
 		templateProperties.put("image-id", choosenImage);
