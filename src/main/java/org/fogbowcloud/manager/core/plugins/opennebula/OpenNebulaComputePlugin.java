@@ -42,7 +42,6 @@ import org.opennebula.client.vm.VirtualMachine;
 import org.opennebula.client.vm.VirtualMachinePool;
 import org.restlet.Request;
 import org.restlet.Response;
-import org.restlet.data.MediaType;
 import org.restlet.data.Status;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -155,6 +154,10 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		String choosenFlavor = null;
 		String choosenImage = null;
 		
+		// removing fogbow-request category
+		categories.remove(new Category(RequestConstants.TERM, RequestConstants.SCHEME,
+				RequestConstants.KIND_CLASS));
+		
 		// checking categories are valid	
 		for (Category category : categories) {
 			if (fogbowTermToOpenNebula.get(category.getTerm()) == null) {
@@ -188,9 +191,13 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 					ResponseConstants.IRREGULAR_SYNTAX);
 		}
 		
+		String userdata = xOCCIAtt.get(RequestAttribute.USER_DATA_ATT.getValue());
+		if (userdata != null){
+			userdata = userdata.replaceAll("\n", "\\n");
+		}
 		templateProperties.put("mem", String.valueOf(getAttValue("mem", choosenFlavor)));
 		templateProperties.put("cpu", String.valueOf(getAttValue("cpu", choosenFlavor)));
-		templateProperties.put("userdata", xOCCIAtt.get(RequestAttribute.USER_DATA_ATT.getValue()));
+		templateProperties.put("userdata", userdata);
 		templateProperties.put("image-id", choosenImage);
 
 		Client oneClient = clientFactory.createClient(accessId, openNebulaEndpoint);
