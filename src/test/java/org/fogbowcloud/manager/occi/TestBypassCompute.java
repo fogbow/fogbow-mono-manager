@@ -72,6 +72,8 @@ public class TestBypassCompute {
 		properties.put(ConfigurationConstants.SCHEDULER_PERIOD_KEY, LITTLE_SCHEDULE_TIME);
 		properties.put(ConfigurationConstants.SSH_PRIVATE_HOST_KEY,
 				DefaultDataTestHelper.SERVER_HOST);
+		properties.put(ConfigurationConstants.SSH_HOST_HTTP_PORT_KEY,
+				String.valueOf(DefaultDataTestHelper.TOKEN_SERVER_HTTP_PORT));
 		
 		computePlugin = new OpenStackComputePlugin(properties);
 		

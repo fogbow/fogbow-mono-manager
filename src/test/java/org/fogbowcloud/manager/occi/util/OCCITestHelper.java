@@ -16,7 +16,6 @@ import org.apache.http.ParseException;
 import org.apache.http.util.EntityUtils;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.ManagerController;
-import org.fogbowcloud.manager.core.UserdataUtils;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
@@ -29,7 +28,6 @@ import org.fogbowcloud.manager.occi.request.Request;
 import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.fogbowcloud.manager.occi.request.RequestRepository;
-import org.mockito.Mockito;
 import org.restlet.Component;
 import org.restlet.data.Protocol;
 
@@ -56,6 +54,8 @@ public class OCCITestHelper {
 		Properties properties = new Properties();
 		properties.put(ConfigurationConstants.SSH_PRIVATE_HOST_KEY,
 				DefaultDataTestHelper.SERVER_HOST);
+		properties.put(ConfigurationConstants.SSH_HOST_HTTP_PORT_KEY,
+				String.valueOf(DefaultDataTestHelper.TOKEN_SERVER_HTTP_PORT));
 		ManagerController facade = new ManagerController(properties);
 		facade.setComputePlugin(computePlugin);
 		facade.setAuthorizationPlugin(authorizationPlugin);
@@ -75,6 +75,8 @@ public class OCCITestHelper {
 		Properties properties = new Properties();
 		properties.put(ConfigurationConstants.SSH_PRIVATE_HOST_KEY,
 				DefaultDataTestHelper.SERVER_HOST);
+		properties.put(ConfigurationConstants.SSH_HOST_HTTP_PORT_KEY,
+				String.valueOf(DefaultDataTestHelper.TOKEN_SERVER_HTTP_PORT));
 		ManagerController facade = new ManagerController(properties);
 		facade.setComputePlugin(computePlugin);
 		facade.setAuthorizationPlugin(authorizationPlugin);

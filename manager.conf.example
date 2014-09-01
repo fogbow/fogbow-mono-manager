@@ -47,6 +47,7 @@ instance_monitoring_period=120000
 
 ssh_tunnel_public_host=150.165.80.1
 ssh_tunnel_private_host=10.0.0.1
-ssh_tunnel_host_port=22
+ssh_tunnel_host_http_port=2223
+ssh_tunnel_host_port=2222
 
 http_port = 8182

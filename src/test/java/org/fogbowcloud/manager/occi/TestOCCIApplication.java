@@ -43,6 +43,8 @@ public class TestOCCIApplication {
 		properties.put("scheduler_period", SCHEDULER_PERIOD.toString());
 		properties.put(ConfigurationConstants.SSH_PRIVATE_HOST_KEY,
 				DefaultDataTestHelper.SERVER_HOST);
+		properties.put(ConfigurationConstants.SSH_HOST_HTTP_PORT_KEY,
+				String.valueOf(DefaultDataTestHelper.TOKEN_SERVER_HTTP_PORT));
 		
 		managerFacade = new ManagerController(properties);
 		occiApplication = new OCCIApplication(managerFacade);

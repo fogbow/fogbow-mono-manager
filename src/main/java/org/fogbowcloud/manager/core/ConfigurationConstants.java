@@ -53,12 +53,11 @@ public class ConfigurationConstants {
 	public static final String INSTANCE_MONITORING_PERIOD_KEY = "instance_monitoring_period";
 	public static final String TOKEN_UPDATE_PERIOD_KEY = "token_update_period";
 	
-	//ssh properties
+	//ssh properties TODO change these properties names to TOKEN_HOST_...
 	public static final String SSH_PRIVATE_HOST_KEY = "ssh_tunnel_private_host";
 	public static final String SSH_PUBLIC_HOST_KEY = "ssh_tunnel_public_host";
 	public static final String SSH_HOST_PORT_KEY = "ssh_tunnel_host_port";
-	public static final String SSH_USER_KEY = "ssh_tunnel_user";
-	public static final String SSH_PORT_RANGE_KEY = "ssh_tunnel_port_range";
+	public static final String SSH_HOST_HTTP_PORT_KEY = "ssh_tunnel_host_http_port";
 
 	//voms
 	public static final String VOMS_PATH_VOMSES = "path_vomses";

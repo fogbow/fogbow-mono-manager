@@ -9,12 +9,13 @@ import org.apache.commons.io.IOUtils;
 public class UserdataUtils {
 
 	protected static final String TOKEN_ID_STR = "#TOKEN_ID#";
-	protected static final String REMOTE_HOST_STR = "#REMOTE_HOST#";
-	protected static final String REMOTE_HOST_PORT_STR = "#REMOTE_HOST_PORT#";
+	protected static final String TOKEN_HOST_STR = "#TOKEN_HOST#";
+	protected static final String TOKEN_HOST_HTTP_PORT_STR = "#TOKEN_HOST_HTTP_PORT#";
+	protected static final String TOKEN_HOST_SSH_PORT_STR = "#TOKEN_HOST_SSH_PORT#";
 	private static final String DEFAULT_SSH_HOST_PORT = "22";
 	
 	public static String createCommand(String tokenId, String sshPrivateHostIP,
-			String sshRemoteHostPort) throws FileNotFoundException, IOException {
+			String sshRemoteHostPort, String sshRemoteHostHttpPort) throws FileNotFoundException, IOException {
 		
 		String sshTunnelCmd = IOUtils.toString(new FileInputStream(
 				"bin/fogbow-create-reverse-tunnel"));
@@ -23,8 +24,9 @@ public class UserdataUtils {
 			sshRemoteHostPort = DEFAULT_SSH_HOST_PORT;
 		}
 		sshTunnelCmd = sshTunnelCmd.replace(TOKEN_ID_STR, tokenId);
-		sshTunnelCmd = sshTunnelCmd.replace(REMOTE_HOST_STR, sshPrivateHostIP);
-		sshTunnelCmd = sshTunnelCmd.replace(REMOTE_HOST_PORT_STR, sshRemoteHostPort);
+		sshTunnelCmd = sshTunnelCmd.replace(TOKEN_HOST_STR, sshPrivateHostIP);
+		sshTunnelCmd = sshTunnelCmd.replace(TOKEN_HOST_SSH_PORT_STR, sshRemoteHostPort);
+		sshTunnelCmd = sshTunnelCmd.replace(TOKEN_HOST_HTTP_PORT_STR, sshRemoteHostHttpPort);
 
 		return sshTunnelCmd;
 	}

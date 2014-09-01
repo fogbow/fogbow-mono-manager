@@ -162,6 +162,8 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		properties.put(ConfigurationConstants.XMPP_JID_KEY, "manager.test.com");
 		properties.put(ConfigurationConstants.SSH_PRIVATE_HOST_KEY,
 				DefaultDataTestHelper.SERVER_HOST);
+		properties.put(ConfigurationConstants.SSH_HOST_HTTP_PORT_KEY,
+				String.valueOf(DefaultDataTestHelper.TOKEN_SERVER_HTTP_PORT));
 		
 		ManagerController managerFacade = new ManagerController(properties);
 		managerFacade.setComputePlugin(computePlugin);
@@ -301,6 +303,8 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 				Long.toString(DefaultDataTestHelper.LONG_TIME));
 		properties.put(ConfigurationConstants.SSH_PRIVATE_HOST_KEY,
 				DefaultDataTestHelper.SERVER_HOST);
+		properties.put(ConfigurationConstants.SSH_HOST_HTTP_PORT_KEY,
+				String.valueOf(DefaultDataTestHelper.TOKEN_SERVER_HTTP_PORT));
 		ManagerController managerController = new ManagerController(properties,
 				Mockito.mock(ScheduledExecutorService.class));
 

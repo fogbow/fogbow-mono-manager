@@ -336,7 +336,8 @@ public class ManagerController {
 		try {
 			String command = UserdataUtils.createCommand(instanceToken, 
 					properties.getProperty(ConfigurationConstants.SSH_PRIVATE_HOST_KEY),
-					properties.getProperty(ConfigurationConstants.SSH_HOST_PORT_KEY));
+					properties.getProperty(ConfigurationConstants.SSH_HOST_PORT_KEY),
+					properties.getProperty(ConfigurationConstants.SSH_HOST_HTTP_PORT_KEY));
 			xOCCIAtt.put(RequestAttribute.USER_DATA_ATT.getValue(),
 					Base64.encodeBase64URLSafeString(command.getBytes(Charsets.UTF_8)));
 		} catch (Exception e) {
@@ -547,7 +548,8 @@ public class ManagerController {
 			try {
 				String command = UserdataUtils.createCommand(request.getId(), 
 						properties.getProperty(ConfigurationConstants.SSH_PRIVATE_HOST_KEY),
-						properties.getProperty(ConfigurationConstants.SSH_HOST_PORT_KEY));
+						properties.getProperty(ConfigurationConstants.SSH_HOST_PORT_KEY),
+						properties.getProperty(ConfigurationConstants.SSH_HOST_HTTP_PORT_KEY));
 				request.putAttValue(RequestAttribute.USER_DATA_ATT.getValue(), command);
 			} catch (Exception e) {
 				LOGGER.warn("Exception while creating userdata.", e);

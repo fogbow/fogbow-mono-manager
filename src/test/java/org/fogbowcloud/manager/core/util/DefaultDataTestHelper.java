@@ -7,6 +7,7 @@ public class DefaultDataTestHelper {
 	//xmpp data
 	protected static final int SERVER_CLIENT_PORT = 5222;
 	protected static final int SERVER_COMPONENT_PORT = 5347;
+	public static final int TOKEN_SERVER_HTTP_PORT = 2223;
 	protected static final String CLIENT_ADRESS = "client@test.com";
 	protected static final String CLIENT_PASS = "password";
 	protected static final String SMACK_ENDING = "/Smack";
