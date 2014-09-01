@@ -190,7 +190,7 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		
 		templateProperties.put("mem", String.valueOf(getAttValue("mem", choosenFlavor)));
 		templateProperties.put("cpu", String.valueOf(getAttValue("cpu", choosenFlavor)));
-		templateProperties.put("userdata", xOCCIAtt.get(org.fogbowcloud.manager.occi.instance.Instance.USER_DATA_ATT));
+		templateProperties.put("userdata", xOCCIAtt.get(RequestAttribute.USER_DATA_ATT.getValue()));
 		templateProperties.put("image-id", choosenImage);
 
 		Client oneClient = clientFactory.createClient(accessId, openNebulaEndpoint);

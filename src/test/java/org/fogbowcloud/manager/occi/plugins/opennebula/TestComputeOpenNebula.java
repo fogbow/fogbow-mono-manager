@@ -22,6 +22,7 @@ import org.fogbowcloud.manager.occi.core.ResourceRepository;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.instance.Instance;
+import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.fogbowcloud.manager.occi.util.PluginHelper;
 import org.junit.Assert;
@@ -67,7 +68,7 @@ public class TestComputeOpenNebula {
 
 		// default userdata
 		xOCCIAtt = new HashMap<String, String>();
-		xOCCIAtt.put(org.fogbowcloud.manager.occi.instance.Instance.USER_DATA_ATT, "userdata");
+		xOCCIAtt.put(RequestAttribute.USER_DATA_ATT.getValue(), "userdata");
 		
 		DEFAULT_TEMPLATE = PluginHelper
 				.getContentFile("src/test/resources/opennebula/default.template")
@@ -83,7 +84,6 @@ public class TestComputeOpenNebula {
 		Request req = new Request();
 		Response response = new Response(req);
 		computeOpenNebula.bypass(req, response);
-		System.out.println(response);
 		Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatus().getCode());
 		Assert.assertEquals(ResponseConstants.CLOUD_NOT_SUPPORT_OCCI_INTERFACE, response
 				.getStatus().getDescription());

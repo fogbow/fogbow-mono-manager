@@ -257,7 +257,7 @@ public class ComputeApplication extends Application {
 		}
 		
 		if (link != null && !"".equals(link)){
-			st.append(OCCIHeaders.LINK + ": " + link);
+			st.append(OCCIHeaders.LINK + ": " + link  + "\n");
 		} else {
 			st.append(OCCIHeaders.LINK + ": " + "</network/default/>; "
 					+ "rel=\"http://schemas.ogf.org/occi/infrastructure#network\"; "
@@ -346,7 +346,7 @@ public class ComputeApplication extends Application {
 			String authToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse(),
 					"Keystone uri=' http://localhost:5000'");
 			String link = HeaderUtils.getLink(req.getHeaders());
-
+			
 			String computeEndpoint = req.getHostRef() + req.getHttpCall().getRequestUri();
 			String instanceId = application.newInstance(authToken, categories, xOCCIAtt, link);
 			getResponse().setLocationRef(computeEndpoint + instanceId);

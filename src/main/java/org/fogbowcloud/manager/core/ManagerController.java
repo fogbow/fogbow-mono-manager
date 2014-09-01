@@ -548,8 +548,7 @@ public class ManagerController {
 				String command = UserdataUtils.createCommand(request.getId(), 
 						properties.getProperty(ConfigurationConstants.SSH_PRIVATE_HOST_KEY),
 						properties.getProperty(ConfigurationConstants.SSH_HOST_PORT_KEY));
-				request.putAttValue(RequestAttribute.USER_DATA_ATT.getValue(),
-						Base64.encodeBase64URLSafeString(command.getBytes(Charsets.UTF_8)));
+				request.putAttValue(RequestAttribute.USER_DATA_ATT.getValue(), command);
 			} catch (Exception e) {
 				LOGGER.warn("Exception while creating userdata.", e);
 				request.setState(RequestState.FAILED);

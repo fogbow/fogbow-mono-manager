@@ -20,7 +20,6 @@ public class Instance {
 	private List<Link> links;
 	private Map<String, String> attributes;
 	public static final String SSH_PUBLIC_ADDRESS_ATT = "org.fogbowcloud.request.ssh-public-address";
-	public static final String USER_DATA_ATT = "org.fogbowcloud.request.user-data";
 
 	public Instance(String id) {
 		this.id = id;
