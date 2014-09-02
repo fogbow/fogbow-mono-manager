@@ -18,6 +18,8 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import org.apache.commons.codec.Charsets;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpStatus;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.model.Flavor;
@@ -227,9 +229,17 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 				contextElement.appendChild(sshPublicKeyElement);
 			}
 			// userdata
-			Element userdataElement = doc.createElement("USERDATA");
-			userdataElement.appendChild(doc.createTextNode(templateProperties.get("userdata")));
-			contextElement.appendChild(userdataElement);
+			String userdata = templateProperties.get("userdata");
+			if (userdata != null) {
+				Element userdataEncodingEl = doc.createElement("USERDATA_ENCODING");
+				userdataEncodingEl.appendChild(doc.createTextNode("base64"));
+				contextElement.appendChild(userdataEncodingEl);
+				Element userdataElement = doc.createElement("USERDATA");
+				userdataElement.appendChild(doc.createTextNode(Base64
+						.encodeBase64URLSafeString(userdata.getBytes(
+								Charsets.UTF_8))));
+				contextElement.appendChild(userdataElement);
+			}
 			// cpu
 			Element cpuElement = doc.createElement("CPU");
 			cpuElement.appendChild(doc.createTextNode(templateProperties.get("cpu")));

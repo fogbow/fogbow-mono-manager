@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import org.apache.commons.codec.Charsets;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpStatus;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
@@ -72,8 +74,11 @@ public class TestComputeOpenNebula {
 		
 		DEFAULT_TEMPLATE = PluginHelper
 				.getContentFile("src/test/resources/opennebula/default.template")
-				.replaceAll("#NET_ID#", "" + NETWORK_ID).replaceAll("#IMAGE_ID#", IMAGE1_ID)
-				.replaceAll("#USERDATA#", "userdata").replaceAll("\n", "").replaceAll(" ", "");
+				.replaceAll("#NET_ID#", "" + NETWORK_ID)
+				.replaceAll("#IMAGE_ID#", IMAGE1_ID)
+				.replaceAll("#USERDATA#",
+						Base64.encodeBase64URLSafeString("userdata".getBytes(Charsets.UTF_8)))
+				.replaceAll("\n", "").replaceAll(" ", "");
 	
 		SMALL_TEMPLATE = DEFAULT_TEMPLATE.replace("#MEM#", "128").replace("#CPU#", "1.0");
 	}
@@ -101,7 +106,7 @@ public class TestComputeOpenNebula {
 				.thenReturn(oneClient);
 		Mockito.when(clientFactory.allocateVirtualMachine(oneClient, SMALL_TEMPLATE))
 				.thenReturn(INSTANCE_ID);
-		
+
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
 		
 		// requesting an instance
