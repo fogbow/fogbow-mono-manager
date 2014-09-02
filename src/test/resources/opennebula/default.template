@@ -4,6 +4,10 @@
       <USERDATA>#USERDATA#</USERDATA>
    </CONTEXT>
    <CPU>#CPU#</CPU>
+   <GRAPHICS>
+       <LISTEN>0.0.0.0</LISTEN>
+       <TYPE>vnc</TYPE>
+   </GRAPHICS>
    <DISK>
       <IMAGE_ID>#IMAGE_ID#</IMAGE_ID>
    </DISK>

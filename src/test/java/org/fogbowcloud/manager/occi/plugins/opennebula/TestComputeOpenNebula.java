@@ -107,6 +107,7 @@ public class TestComputeOpenNebula {
 		Mockito.when(clientFactory.allocateVirtualMachine(oneClient, SMALL_TEMPLATE))
 				.thenReturn(INSTANCE_ID);
 
+		System.out.println(SMALL_TEMPLATE);
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
 		
 		// requesting an instance

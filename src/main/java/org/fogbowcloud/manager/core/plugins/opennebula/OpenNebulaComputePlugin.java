@@ -204,7 +204,7 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 
 		Client oneClient = clientFactory.createClient(accessId, openNebulaEndpoint);
 		String vmTemplate = generateTemplate(templateProperties);
-		
+
 		LOGGER.debug("The instance will be allocated according to template: " + vmTemplate);
 		return clientFactory.allocateVirtualMachine(oneClient, vmTemplate);
 	}
@@ -244,6 +244,15 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 			Element cpuElement = doc.createElement("CPU");
 			cpuElement.appendChild(doc.createTextNode(templateProperties.get("cpu")));
 			templateElement.appendChild(cpuElement);
+			//graphics
+			Element graphicsElement = doc.createElement("GRAPHICS");
+			Element listenElement = doc.createElement("LISTEN");
+			listenElement.appendChild(doc.createTextNode("0.0.0.0"));
+			Element typeElement = doc.createElement("TYPE");
+			typeElement.appendChild(doc.createTextNode("vnc"));
+			graphicsElement.appendChild(listenElement);
+			graphicsElement.appendChild(typeElement);
+			templateElement.appendChild(graphicsElement);
 			// disk
 			Element diskElement = doc.createElement("DISK");
 			templateElement.appendChild(diskElement);
