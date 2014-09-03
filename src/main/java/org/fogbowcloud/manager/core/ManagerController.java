@@ -36,6 +36,7 @@ import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.fogbowcloud.manager.occi.request.RequestAttribute;
+import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.fogbowcloud.manager.occi.request.RequestRepository;
 import org.fogbowcloud.manager.occi.request.RequestState;
 import org.fogbowcloud.manager.occi.request.RequestType;
@@ -346,6 +347,8 @@ public class ManagerController {
 					properties.getProperty(ConfigurationConstants.SSH_HOST_HTTP_PORT_KEY));
 			xOCCIAtt.put(RequestAttribute.USER_DATA_ATT.getValue(),
 					Base64.encodeBase64URLSafeString(command.getBytes(Charsets.UTF_8)));
+			categories.add(new Category(RequestConstants.USER_DATA_TERM,
+					RequestConstants.SCHEME, RequestConstants.MIXIN_CLASS));
 		} catch (Exception e) {
 			LOGGER.warn("Exception while creating ssh tunnel.", e);
 			return null;
@@ -552,11 +555,13 @@ public class ManagerController {
 		
 		try {			
 			try {
-				String command = UserdataUtils.createCommand(request.getId(), 
+				String command = UserdataUtils.createCommand(request.getId(),
 						properties.getProperty(ConfigurationConstants.SSH_PRIVATE_HOST_KEY),
 						properties.getProperty(ConfigurationConstants.SSH_HOST_PORT_KEY),
 						properties.getProperty(ConfigurationConstants.SSH_HOST_HTTP_PORT_KEY));
 				request.putAttValue(RequestAttribute.USER_DATA_ATT.getValue(), command);
+				request.addCategory(new Category(RequestConstants.USER_DATA_TERM,
+						RequestConstants.SCHEME, RequestConstants.MIXIN_CLASS));
 			} catch (Exception e) {
 				LOGGER.warn("Exception while creating userdata.", e);
 				request.setState(RequestState.FAILED);

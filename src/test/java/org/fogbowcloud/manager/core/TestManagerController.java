@@ -1159,11 +1159,14 @@ public class TestManagerController {
 
 		ComputePlugin plugin = Mockito.mock(OpenStackComputePlugin.class);
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
-		Mockito.doReturn("answer").when(plugin).requestInstance(null, null, xOCCIAtt);
+		List<Category> categories = new ArrayList<Category>();
+		categories.add(new Category(RequestConstants.USER_DATA_TERM,
+						RequestConstants.SCHEME, RequestConstants.MIXIN_CLASS));
+		Mockito.doReturn("answer").when(plugin).requestInstance(null, categories, xOCCIAtt);
 
 		managerController.setComputePlugin(plugin);
 		Assert.assertEquals("answer",
-				managerController.createInstanceForRemoteMember("abc", null, xOCCIAtt));
+				managerController.createInstanceForRemoteMember("abc", new ArrayList<Category>(), xOCCIAtt));
 
 		Mockito.doReturn(false).when(validatorMock).canDonateTo(member);
 		managerController.setValidator(validatorMock);

@@ -294,6 +294,8 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 
 	@Override
 	public List<Instance> getInstances(String accessId) {
+		LOGGER.debug("Getting instances of token: " + accessId);
+
 		List<Instance> instances = new ArrayList<Instance>();
 		Client oneClient = clientFactory.createClient(accessId, openNebulaEndpoint);
 		VirtualMachinePool vmPool = clientFactory.createVirtualMachinePool(oneClient);
@@ -305,16 +307,22 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 
 	@Override
 	public Instance getInstance(String accessId, String instanceId) {
+		LOGGER.debug("Getting instance " + instanceId + " of token: " + accessId);
+
 		Client oneClient = clientFactory.createClient(accessId, openNebulaEndpoint);
 		VirtualMachine vm = clientFactory.createVirtualMachine(oneClient, instanceId);
 		return mountInstance(vm);
 	}
 
 	private Instance mountInstance(VirtualMachine vm) {
+		LOGGER.debug("Mounting instance structure of instanceId: " + vm.getId());
+
 		String mem = vm.xpath("TEMPLATE/MEMORY");
 		String cpu = vm.xpath("TEMPLATE/CPU");
 		String image = vm.xpath("TEMPLATE/DISK/IMAGE");
 		String arch = vm.xpath("TEMPLATE/OS/ARCH");
+		
+		LOGGER.debug("mem=" + mem + ", cpu=" + cpu + ", image=" + image + ", arch=" + arch);
 
 		// TODO To get information about network when it'll be necessary
 		// vm.xpath("TEMPLATE/NIC/NETWORK");

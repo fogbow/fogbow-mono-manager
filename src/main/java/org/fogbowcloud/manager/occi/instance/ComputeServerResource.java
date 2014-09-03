@@ -54,6 +54,7 @@ public class ComputeServerResource extends ServerResource {
 		if (acceptContent.size() == 0 || acceptContent.contains(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE)) {
 			try {
 				Instance instance = application.getInstance(authToken, instanceId);
+				LOGGER.info("Instance " + instanceId);		
 				return new StringRepresentation(instance.toOCCIMessageFormatDetails(),
 						MediaType.TEXT_PLAIN);
 			} catch (OCCIException e) {
