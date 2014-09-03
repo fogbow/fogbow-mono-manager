@@ -147,7 +147,7 @@ public class PluginHelper {
 
 			while (line != null) {
 				sb.append(line);
-				sb.append(System.lineSeparator());
+				sb.append("\n");
 				line = br.readLine();
 			}
 			return sb.toString();
