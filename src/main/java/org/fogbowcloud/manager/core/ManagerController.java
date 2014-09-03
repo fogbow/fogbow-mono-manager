@@ -206,6 +206,10 @@ public class ManagerController {
 		}
 		
 		try {
+			LOGGER.debug("ssh private host: " + properties.getProperty(ConfigurationConstants.SSH_PRIVATE_HOST_KEY));
+			LOGGER.debug("tokenId: " + tokenId);
+			LOGGER.debug("get port address: " + properties.getProperty(ConfigurationConstants.SSH_PRIVATE_HOST_KEY) + "/token/"
+					+ tokenId);
 			HttpGet httpGet = new HttpGet(
 					properties.getProperty(ConfigurationConstants.SSH_PRIVATE_HOST_KEY) + "/token/"
 							+ tokenId);
