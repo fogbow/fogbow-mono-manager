@@ -211,8 +211,10 @@ public class ManagerController {
 			LOGGER.debug("private host: " + hostAddr);
 			LOGGER.debug("private host HTTP port: " + httpHostPort);
 			LOGGER.debug("tokenId: " + tokenId);
-			LOGGER.debug("token address: " + hostAddr + ":" + httpHostPort + "/token/" + tokenId);
-			HttpGet httpGet = new HttpGet(hostAddr + ":" + httpHostPort + "/token/" + tokenId);
+			LOGGER.debug("token address: http://" + hostAddr + ":" + httpHostPort + "/token/"
+					+ tokenId);
+			HttpGet httpGet = new HttpGet("http://" + hostAddr + ":" + httpHostPort + "/token/"
+					+ tokenId);
 			HttpClient client = new DefaultHttpClient();
 			HttpResponse response = client.execute(httpGet);
 			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
