@@ -206,13 +206,13 @@ public class ManagerController {
 		}
 		
 		try {
-			LOGGER.debug("ssh private host: " + properties.getProperty(ConfigurationConstants.SSH_PRIVATE_HOST_KEY));
+			String hostAddr = properties.getProperty(ConfigurationConstants.SSH_PRIVATE_HOST_KEY);
+			String httpHostPort = properties.getProperty(ConfigurationConstants.SSH_HOST_HTTP_PORT_KEY);
+			LOGGER.debug("private host: " + hostAddr);
+			LOGGER.debug("private host HTTP port: " + httpHostPort);
 			LOGGER.debug("tokenId: " + tokenId);
-			LOGGER.debug("get port address: " + properties.getProperty(ConfigurationConstants.SSH_PRIVATE_HOST_KEY) + "/token/"
-					+ tokenId);
-			HttpGet httpGet = new HttpGet(
-					properties.getProperty(ConfigurationConstants.SSH_PRIVATE_HOST_KEY) + "/token/"
-							+ tokenId);
+			LOGGER.debug("token address: " + hostAddr + ":" + httpHostPort + "/token/" + tokenId);
+			HttpGet httpGet = new HttpGet(hostAddr + ":" + httpHostPort + "/token/" + tokenId);
 			HttpClient client = new DefaultHttpClient();
 			HttpResponse response = client.execute(httpGet);
 			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
@@ -221,7 +221,7 @@ public class ManagerController {
 						.getProperty(ConfigurationConstants.SSH_PUBLIC_HOST_KEY);
 				return sshPublicHostIP + ":" + sshPort;
 			}
-		} catch (Exception e) {
+		} catch (Throwable e) {
 			LOGGER.warn("", e);
 		}
 		return null;
