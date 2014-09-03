@@ -107,7 +107,6 @@ public class TestComputeOpenNebula {
 		Mockito.when(clientFactory.allocateVirtualMachine(oneClient, SMALL_TEMPLATE))
 				.thenReturn(INSTANCE_ID);
 
-		System.out.println(SMALL_TEMPLATE);
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
 		
 		// requesting an instance
@@ -322,7 +321,9 @@ public class TestComputeOpenNebula {
 		resources.add(ResourceRepository.getInstance().get(IMAGE1_NAME));
 		resources.add(ResourceRepository.getInstance().get(RequestConstants.SMALL_TERM));
 		
-		Assert.assertEquals(resources, instance.getResources());		
+		for (Resource resource : resources) {
+			Assert.assertTrue(instance.getResources().contains(resource));		
+		}
 		Assert.assertTrue(instance.getLinks().isEmpty());
 	}
 	
@@ -377,7 +378,9 @@ public class TestComputeOpenNebula {
 		resources.add(ResourceRepository.getInstance().get(IMAGE1_NAME));
 		resources.add(ResourceRepository.getInstance().get(RequestConstants.SMALL_TERM));
 		
-		Assert.assertEquals(resources, instance.getResources());		
+		for (Resource resource : resources) {
+			Assert.assertTrue(instance.getResources().contains(resource));		
+		}
 		Assert.assertTrue(instance.getLinks().isEmpty());
 	}
 	
