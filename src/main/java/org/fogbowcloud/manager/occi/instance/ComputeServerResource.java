@@ -54,12 +54,16 @@ public class ComputeServerResource extends ServerResource {
 		if (acceptContent.size() == 0 || acceptContent.contains(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE)) {
 			try {
 				Instance instance = application.getInstance(authToken, instanceId);
-				LOGGER.info("Instance " + instance);
-				LOGGER.debug("Instance id: " + instance.getId());
-				LOGGER.debug("Instance attributes: " + instance.getAttributes());
-				LOGGER.debug("Instance links: " + instance.getLinks());
-				LOGGER.debug("Instance resources: " + instance.getResources());
-				LOGGER.debug("Instance OCCI format " + instance.toOCCIMessageFormatDetails());
+				try {
+					LOGGER.info("Instance " + instance);
+					LOGGER.debug("Instance id: " + instance.getId());
+					LOGGER.debug("Instance attributes: " + instance.getAttributes());
+					LOGGER.debug("Instance links: " + instance.getLinks());
+					LOGGER.debug("Instance resources: " + instance.getResources());
+					LOGGER.debug("Instance OCCI format " + instance.toOCCIMessageFormatDetails());
+				} catch (Throwable e) {
+					LOGGER.warn("", e);
+				}
 				
 				return new StringRepresentation(instance.toOCCIMessageFormatDetails(),
 						MediaType.TEXT_PLAIN);
