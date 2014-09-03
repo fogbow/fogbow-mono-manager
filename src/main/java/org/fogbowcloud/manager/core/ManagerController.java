@@ -207,8 +207,8 @@ public class ManagerController {
 		
 		try {
 			HttpGet httpGet = new HttpGet(
-					properties.getProperty(ConfigurationConstants.SSH_PRIVATE_HOST_KEY + "/token/"
-							+ tokenId));
+					properties.getProperty(ConfigurationConstants.SSH_PRIVATE_HOST_KEY) + "/token/"
+							+ tokenId);
 			HttpClient client = new DefaultHttpClient();
 			HttpResponse response = client.execute(httpGet);
 			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
