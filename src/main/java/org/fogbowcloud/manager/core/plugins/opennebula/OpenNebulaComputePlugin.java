@@ -235,9 +235,7 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 				userdataEncodingEl.appendChild(doc.createTextNode("base64"));
 				contextElement.appendChild(userdataEncodingEl);
 				Element userdataElement = doc.createElement("USERDATA");
-				userdataElement.appendChild(doc.createTextNode(Base64
-						.encodeBase64URLSafeString(userdata.getBytes(
-								Charsets.UTF_8))));
+				userdataElement.appendChild(doc.createTextNode(userdata));
 				contextElement.appendChild(userdataElement);
 			}
 			// cpu

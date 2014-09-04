@@ -4,6 +4,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
+import org.apache.commons.codec.Charsets;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
 
 public class UserdataUtils {
@@ -14,7 +16,7 @@ public class UserdataUtils {
 	protected static final String TOKEN_HOST_SSH_PORT_STR = "#TOKEN_HOST_SSH_PORT#";
 	private static final String DEFAULT_SSH_HOST_PORT = "22";
 	
-	public static String createCommand(String tokenId, String sshPrivateHostIP,
+	public static String createBase64EncondedCommand(String tokenId, String sshPrivateHostIP,
 			String sshRemoteHostPort, String sshRemoteHostHttpPort) throws FileNotFoundException, IOException {
 		
 		String sshTunnelCmd = IOUtils.toString(new FileInputStream(
@@ -28,7 +30,7 @@ public class UserdataUtils {
 		sshTunnelCmd = sshTunnelCmd.replace(TOKEN_HOST_SSH_PORT_STR, sshRemoteHostPort);
 		sshTunnelCmd = sshTunnelCmd.replace(TOKEN_HOST_HTTP_PORT_STR, sshRemoteHostHttpPort);
 
-		return sshTunnelCmd;
+		return Base64.encodeBase64URLSafeString(sshTunnelCmd.getBytes(Charsets.UTF_8));
 	}
 
 }

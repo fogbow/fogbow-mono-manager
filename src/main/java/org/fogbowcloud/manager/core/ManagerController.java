@@ -11,8 +11,6 @@ import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
-import org.apache.commons.codec.Charsets;
-import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
@@ -341,12 +339,11 @@ public class ManagerController {
 		String federationTokenAccessId = getFederationUserToken().getAccessId();
 		String instanceToken = String.valueOf(UUID.randomUUID());
 		try {
-			String command = UserdataUtils.createCommand(instanceToken, 
+			String base64Encodedcommand = UserdataUtils.createBase64EncondedCommand(instanceToken, 
 					properties.getProperty(ConfigurationConstants.SSH_PRIVATE_HOST_KEY),
 					properties.getProperty(ConfigurationConstants.SSH_HOST_PORT_KEY),
 					properties.getProperty(ConfigurationConstants.SSH_HOST_HTTP_PORT_KEY));
-			xOCCIAtt.put(RequestAttribute.USER_DATA_ATT.getValue(),
-					Base64.encodeBase64URLSafeString(command.getBytes(Charsets.UTF_8)));
+			xOCCIAtt.put(RequestAttribute.USER_DATA_ATT.getValue(), base64Encodedcommand);
 			categories.add(new Category(RequestConstants.USER_DATA_TERM,
 					RequestConstants.SCHEME, RequestConstants.MIXIN_CLASS));
 		} catch (Exception e) {
@@ -555,7 +552,7 @@ public class ManagerController {
 		
 		try {			
 			try {
-				String command = UserdataUtils.createCommand(request.getId(),
+				String command = UserdataUtils.createBase64EncondedCommand(request.getId(),
 						properties.getProperty(ConfigurationConstants.SSH_PRIVATE_HOST_KEY),
 						properties.getProperty(ConfigurationConstants.SSH_HOST_PORT_KEY),
 						properties.getProperty(ConfigurationConstants.SSH_HOST_HTTP_PORT_KEY));

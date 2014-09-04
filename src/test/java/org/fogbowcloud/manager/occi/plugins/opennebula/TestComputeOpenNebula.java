@@ -74,10 +74,8 @@ public class TestComputeOpenNebula {
 		
 		DEFAULT_TEMPLATE = PluginHelper
 				.getContentFile("src/test/resources/opennebula/default.template")
-				.replaceAll("#NET_ID#", "" + NETWORK_ID)
-				.replaceAll("#IMAGE_ID#", IMAGE1_ID)
-				.replaceAll("#USERDATA#",
-						Base64.encodeBase64URLSafeString("userdata".getBytes(Charsets.UTF_8)))
+				.replaceAll("#NET_ID#", "" + NETWORK_ID).replaceAll("#IMAGE_ID#", IMAGE1_ID)
+				.replaceAll("#USERDATA#", "userdata")
 				.replaceAll("\n", "").replaceAll(" ", "");
 	
 		SMALL_TEMPLATE = DEFAULT_TEMPLATE.replace("#MEM#", "128").replace("#CPU#", "1.0");
@@ -107,6 +105,7 @@ public class TestComputeOpenNebula {
 		Mockito.when(clientFactory.allocateVirtualMachine(oneClient, SMALL_TEMPLATE))
 				.thenReturn(INSTANCE_ID);
 
+		System.out.println(SMALL_TEMPLATE);
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
 		
 		// requesting an instance
