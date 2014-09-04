@@ -339,11 +339,11 @@ public class ManagerController {
 		String federationTokenAccessId = getFederationUserToken().getAccessId();
 		String instanceToken = String.valueOf(UUID.randomUUID());
 		try {
-			String base64Encodedcommand = UserdataUtils.createBase64EncondedCommand(instanceToken, 
+			String command = UserdataUtils.createCommand(instanceToken, 
 					properties.getProperty(ConfigurationConstants.SSH_PRIVATE_HOST_KEY),
 					properties.getProperty(ConfigurationConstants.SSH_HOST_PORT_KEY),
 					properties.getProperty(ConfigurationConstants.SSH_HOST_HTTP_PORT_KEY));
-			xOCCIAtt.put(RequestAttribute.USER_DATA_ATT.getValue(), base64Encodedcommand);
+			xOCCIAtt.put(RequestAttribute.USER_DATA_ATT.getValue(), command);
 			categories.add(new Category(RequestConstants.USER_DATA_TERM,
 					RequestConstants.SCHEME, RequestConstants.MIXIN_CLASS));
 		} catch (Exception e) {
@@ -552,7 +552,7 @@ public class ManagerController {
 		
 		try {			
 			try {
-				String command = UserdataUtils.createBase64EncondedCommand(request.getId(),
+				String command = UserdataUtils.createCommand(request.getId(),
 						properties.getProperty(ConfigurationConstants.SSH_PRIVATE_HOST_KEY),
 						properties.getProperty(ConfigurationConstants.SSH_HOST_PORT_KEY),
 						properties.getProperty(ConfigurationConstants.SSH_HOST_HTTP_PORT_KEY));

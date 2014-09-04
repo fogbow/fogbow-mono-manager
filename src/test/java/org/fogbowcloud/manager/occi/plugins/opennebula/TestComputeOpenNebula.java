@@ -75,7 +75,8 @@ public class TestComputeOpenNebula {
 		DEFAULT_TEMPLATE = PluginHelper
 				.getContentFile("src/test/resources/opennebula/default.template")
 				.replaceAll("#NET_ID#", "" + NETWORK_ID).replaceAll("#IMAGE_ID#", IMAGE1_ID)
-				.replaceAll("#USERDATA#", "userdata")
+				.replaceAll("#USERDATA#",
+						Base64.encodeBase64URLSafeString("userdata".getBytes(Charsets.UTF_8)))
 				.replaceAll("\n", "").replaceAll(" ", "");
 	
 		SMALL_TEMPLATE = DEFAULT_TEMPLATE.replace("#MEM#", "128").replace("#CPU#", "1.0");

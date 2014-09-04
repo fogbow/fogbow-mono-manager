@@ -11,6 +11,7 @@ import java.util.Properties;
 import java.util.Set;
 
 import org.apache.commons.codec.Charsets;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -185,7 +186,8 @@ public class OpenStackComputePlugin implements ComputePlugin {
 		String userdata = xOCCIAtt.remove(RequestAttribute.USER_DATA_ATT.getValue());
 		
 		if (userdata != null) {
-			xOCCIAtt.put("org.openstack.compute.user_data", userdata);
+			xOCCIAtt.put("org.openstack.compute.user_data",
+					Base64.encodeBase64URLSafeString(userdata.getBytes(Charsets.UTF_8)));
 		}
 
 		Set<Header> headers = new HashSet<Header>();
