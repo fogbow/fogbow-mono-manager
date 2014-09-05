@@ -186,8 +186,11 @@ public class OpenStackComputePlugin implements ComputePlugin {
 		String userdata = xOCCIAtt.remove(RequestAttribute.USER_DATA_ATT.getValue());
 		
 		if (userdata != null) {
-			xOCCIAtt.put("org.openstack.compute.user_data",
-					Base64.encodeBase64URLSafeString(userdata.getBytes(Charsets.UTF_8)));
+			xOCCIAtt.put(
+					"org.openstack.compute.user_data",
+					new String(Base64.encodeBase64(
+							userdata.getBytes(Charsets.UTF_8), false, false),
+							Charsets.UTF_8));
 		}
 
 		Set<Header> headers = new HashSet<Header>();
@@ -367,6 +370,7 @@ public class OpenStackComputePlugin implements ComputePlugin {
 		return osScheme;
 	}	
 	
+	@SuppressWarnings("unchecked")
 	@Override
 	public void bypass(Request request, org.restlet.Response response) {
 		if (computeOCCIEndpoint == null || computeOCCIEndpoint.isEmpty()) {

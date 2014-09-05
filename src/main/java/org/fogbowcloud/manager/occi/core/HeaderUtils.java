@@ -30,6 +30,7 @@ public class HeaderUtils {
 		}
 	}
 	
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public static String getAuthToken(Series<Header> headers, Response response, String authenticationURI) {
 		String token = headers.getValues(OCCIHeaders.X_AUTH_TOKEN);
 		if (token == null || token.equals("")) {
@@ -156,6 +157,7 @@ public class HeaderUtils {
 		return acceptContents;
 	}
 	
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public static void setResponseHeader(Response response, String header, String value) {
 		Series<Header> responseHeaders = (Series<Header>) response.getAttributes().get("org.restlet.http.headers");
 		if (responseHeaders == null) {

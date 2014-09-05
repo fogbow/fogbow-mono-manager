@@ -51,6 +51,7 @@ public class OCCIApplication extends Application {
 		return router;
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
 	public void handle(org.restlet.Request request, Response response) {
 		super.handle(request, response);

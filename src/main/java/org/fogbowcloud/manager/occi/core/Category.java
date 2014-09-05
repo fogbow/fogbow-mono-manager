@@ -10,6 +10,8 @@ public class Category {
 	private String term;
 	private String scheme;
 	private String catClass;
+	
+	@SuppressWarnings("serial")
 	private List<String> avaiableProperties = new ArrayList<String>() {{
 	    add("scheme");
 	    add("class");
