@@ -1,3 +1,16 @@
 #!/bin/sh
-REMOTE_PORT=$(curl -X POST #TOKEN_HOST#:#TOKEN_HOST_HTTP_PORT#/token/#TOKEN_ID#)
-/usr/bin/ssh -y -N -f -R #TOKEN_HOST#:$REMOTE_PORT:localhost:22 #TOKEN_ID#@#TOKEN_HOST# -p #TOKEN_HOST_SSH_PORT#
+IS_OPENSSH=$(ssh -ver 2>&1 | grep OpenSSH)
+IS_DROPBEAR=$(ssh -ver 2>&1 | grep Dropbear)
+if [ -n "$IS_OPENSSH" ]; then
+  DISABLE_STRICT_CHECK="-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
+elif [ -n "$IS_DROPBEAR" ]; then
+  DISABLE_STRICT_CHECK="-y"
+fi
+function autossh {
+  REMOTE_PORT=$(curl -X POST #TOKEN_HOST#:#TOKEN_HOST_HTTP_PORT#/token/#TOKEN_ID#)
+  while true; do 
+    ssh $DISABLE_STRICT_CHECK -N -R #TOKEN_HOST#:$REMOTE_PORT:localhost:22 #TOKEN_ID#@#TOKEN_HOST# -p #TOKEN_HOST_SSH_PORT#
+    sleep 5
+  done
+}
+autossh &
