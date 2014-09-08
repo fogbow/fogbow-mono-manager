@@ -90,7 +90,8 @@ public class TestWhoIsAlive {
 		Assert.assertEquals(element.getNamespaceURI(),
 				DefaultDataTestHelper.WHOISALIVE_NAMESPACE);
 
-		Assert.assertEquals(1, managerXmppComponent.getManagerFacade()
+		// The other member and the manager itself
+		Assert.assertEquals(2, managerXmppComponent.getManagerFacade()
 				.getMembers().size());
 		Assert.assertEquals(2, managerXmppComponent.getManagerFacade()
 				.getMembers().get(0).getResourcesInfo().getFlavors().size());
@@ -148,7 +149,8 @@ public class TestWhoIsAlive {
 		managerXmppComponent = managerTestHelper
 				.initializeXMPPManagerComponent(true);
 		Assert.assertTrue(semaphore.tryAcquire(20000, TimeUnit.MILLISECONDS));
-		Assert.assertEquals(1, managerXmppComponent.getManagerFacade()
+		// The other member and the manager itself
+		Assert.assertEquals(2, managerXmppComponent.getManagerFacade()
 				.getMembers().size());
 		Assert.assertEquals("small", managerXmppComponent.getManagerFacade()
 				.getMembers().get(0).getResourcesInfo().getFlavors().get(0)

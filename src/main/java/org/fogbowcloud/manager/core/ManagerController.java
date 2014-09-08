@@ -107,11 +107,19 @@ public class ManagerController {
 	}
 
 	public List<FederationMember> getMembers() {
-		return members;
-	}
-
-	public void setMembers(List<FederationMember> members) {
-		this.members = members;
+		List<FederationMember> membersCopy = new LinkedList<FederationMember>(members);
+		boolean containsThis = false;
+		for (FederationMember member : membersCopy) {
+			if (member.getResourcesInfo().getId().equals(
+					properties.getProperty(ConfigurationConstants.XMPP_JID_KEY))) {
+				containsThis = true;
+				break;
+			}
+		}
+		if (!containsThis) {
+			membersCopy.add(new FederationMember(getResourcesInfo()));
+		}
+		return membersCopy;
 	}
 
 	public ResourcesInfo getResourcesInfo() {

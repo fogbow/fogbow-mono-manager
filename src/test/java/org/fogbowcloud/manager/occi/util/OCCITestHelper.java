@@ -99,11 +99,14 @@ public class OCCITestHelper {
 		component = new Component();
 		component.getServers().add(Protocol.HTTP, ENDPOINT_PORT);
 
-		ManagerController facade = new ManagerController(new Properties());
+		Properties properties = new Properties();
+		properties.put(ConfigurationConstants.XMPP_JID_KEY,
+				DefaultDataTestHelper.MANAGER_COMPONENT_URL);
+		ManagerController facade = new ManagerController(properties);
 		facade.setComputePlugin(computePlugin);
 		facade.setLocalIdentityPlugin(identityPlugin);
 		facade.setFederationIdentityPlugin(identityPlugin);
-		facade.setMembers(federationMembers);
+		facade.updateMembers(federationMembers);
 
 		component.getDefaultHost().attach(new OCCIApplication(facade));
 		component.start();

@@ -315,7 +315,10 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 						Mockito.any(Map.class))).thenThrow(
 				new OCCIException(ErrorType.QUOTA_EXCEEDED,
 						ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES));
-
+		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class))).thenReturn(
+				new ResourcesInfo(DefaultDataTestHelper.MANAGER_COMPONENT_URL, 
+						"", "", "", "", new LinkedList<Flavor>(), null));
+		
 		// mocking identity
 		identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.getToken(DefaultDataTestHelper.ACCESS_TOKEN_ID)).thenReturn(

@@ -36,4 +36,13 @@ public class FederationMember {
 	public void setLastTime(long lastTime) {
 		this.lastTime = lastTime;
 	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if (!(obj instanceof FederationMember)) {
+			return false;
+		}
+		FederationMember otherMember = (FederationMember) obj;
+		return getResourcesInfo().getId().equals(otherMember.getResourcesInfo().getId());
+	}
 }

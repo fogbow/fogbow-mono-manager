@@ -120,7 +120,7 @@ public class TestManagerController {
 		resourseInfo.setId(DefaultDataTestHelper.MANAGER_COMPONENT_URL);
 		FederationMember federationMember = new FederationMember(resourseInfo);
 		listMembers.add(federationMember);
-		managerController.setMembers(listMembers);
+		managerController.updateMembers(listMembers);
 
 		checkRequestPerUserToken(federationToken);
 	}
@@ -540,7 +540,8 @@ public class TestManagerController {
 	@Test
 	public void testGet0ItemsFromIQ() {
 		managerController.updateMembers(new LinkedList<FederationMember>());
-		Assert.assertEquals(0, managerController.getMembers().size());
+		// There is a single member which is the manager itself
+		Assert.assertEquals(1, managerController.getMembers().size());
 	}
 
 	@Test
@@ -551,9 +552,10 @@ public class TestManagerController {
 		managerController.updateMembers(items);
 
 		List<FederationMember> members = managerController.getMembers();
-		Assert.assertEquals(1, members.size());
+		Assert.assertEquals(2, members.size());
 		Assert.assertEquals("abc", members.get(0).getResourcesInfo().getId());
-		Assert.assertEquals(1, managerController.getMembers().size());
+		Assert.assertEquals(DefaultDataTestHelper.MANAGER_COMPONENT_URL, 
+				members.get(1).getResourcesInfo().getId());
 	}
 
 	@Test
@@ -565,11 +567,12 @@ public class TestManagerController {
 		managerController.updateMembers(items);
 
 		List<FederationMember> members = managerController.getMembers();
-		Assert.assertEquals(10, members.size());
+		Assert.assertEquals(11, members.size());
 		for (int i = 0; i < 10; i++) {
 			Assert.assertEquals("abc", members.get(0).getResourcesInfo().getId());
 		}
-		Assert.assertEquals(10, managerController.getMembers().size());
+		Assert.assertEquals(DefaultDataTestHelper.MANAGER_COMPONENT_URL, 
+				members.get(10).getResourcesInfo().getId());
 	}
 
 	@Test
@@ -1144,7 +1147,7 @@ public class TestManagerController {
 		Mockito.doReturn(resources).when(member).getResourcesInfo();
 		List<FederationMember> list = new LinkedList<FederationMember>();
 		list.add(member);
-		managerController.setMembers(list);
+		managerController.updateMembers(list);
 
 		RestrictCAsMemberValidator validatorMock = Mockito.mock(RestrictCAsMemberValidator.class);
 		Mockito.doReturn(true).when(validatorMock).canDonateTo(member);

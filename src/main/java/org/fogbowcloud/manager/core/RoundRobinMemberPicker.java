@@ -19,7 +19,7 @@ public class RoundRobinMemberPicker implements FederationMemberPicker {
 		for (int i = 0; i < members.size(); i++) {
 			FederationMember currentMember = members.get(current);
 
-			String myJid = facade.getProperties().getProperty("xmpp_jid");
+			String myJid = facade.getProperties().getProperty(ConfigurationConstants.XMPP_JID_KEY);
 			if (currentMember.getResourcesInfo().getId().equals(myJid)
 					|| !facade.getValidator().canReceiveFrom(currentMember)) {
 				current = (current + 1) % members.size();

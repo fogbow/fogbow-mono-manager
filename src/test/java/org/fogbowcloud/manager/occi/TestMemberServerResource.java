@@ -1,6 +1,7 @@
 package org.fogbowcloud.manager.occi;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.commons.codec.Charsets;
@@ -15,7 +16,9 @@ import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
+import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
+import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.util.OCCITestHelper;
 import org.junit.After;
 import org.junit.Assert;
@@ -37,6 +40,9 @@ public class TestMemberServerResource {
 	@Before
 	public void setup() throws Exception {
 		this.computePlugin = Mockito.mock(ComputePlugin.class);
+		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class))).thenReturn(
+				new ResourcesInfo(DefaultDataTestHelper.MANAGER_COMPONENT_URL, 
+						"", "", "", "", new LinkedList<Flavor>(), null));
 		this.identityPlugin = Mockito.mock(IdentityPlugin.class);
 		this.helper = new OCCITestHelper();
 	}
@@ -75,11 +81,12 @@ public class TestMemberServerResource {
 		Assert.assertTrue(responseStr.contains(FLAVOUR_2));
 		Assert.assertTrue(responseStr.contains(ID_RESOURCEINFO1));
 		Assert.assertTrue(responseStr.contains(ID_RESOURCEINFO2));
+		Assert.assertTrue(responseStr.contains(DefaultDataTestHelper.MANAGER_COMPONENT_URL));
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 
 	@Test
-	public void testGetMemberEmpty() throws Exception {
+	public void testGetMemberOnlyMe() throws Exception {
 		List<FederationMember> federationMembers = new ArrayList<FederationMember>();
 		this.helper.initializeComponentMember(computePlugin, identityPlugin, federationMembers);
 		
@@ -88,12 +95,16 @@ public class TestMemberServerResource {
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(get);
 
-		Assert.assertEquals(HttpStatus.SC_NO_CONTENT, response.getStatusLine().getStatusCode());
+		// Should come with a single member (the manager itself)
+		String responseStr = EntityUtils.toString(response.getEntity(),
+				String.valueOf(Charsets.UTF_8));
+		Assert.assertTrue(responseStr.contains(DefaultDataTestHelper.MANAGER_COMPONENT_URL));
+		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 	
 	@Test
 	public void testGetMemberWrongContentType() throws Exception {
-		this.helper.initializeComponentMember(computePlugin, identityPlugin, null);
+		this.helper.initializeComponentMember(computePlugin, identityPlugin, new LinkedList<FederationMember>());
 		
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_MEMBER);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, "wrong");
