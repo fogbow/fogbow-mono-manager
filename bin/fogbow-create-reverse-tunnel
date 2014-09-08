@@ -2,15 +2,21 @@
 IS_OPENSSH=$(ssh -ver 2>&1 | grep OpenSSH)
 IS_DROPBEAR=$(ssh -ver 2>&1 | grep Dropbear)
 if [ -n "$IS_OPENSSH" ]; then
-  DISABLE_STRICT_CHECK="-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
+  SSH_OPTIONS="-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=30"
 elif [ -n "$IS_DROPBEAR" ]; then
-  DISABLE_STRICT_CHECK="-y"
+  SSH_OPTIONS="-y -K 30"
 fi
-function autossh {
-  REMOTE_PORT=$(curl -X POST #TOKEN_HOST#:#TOKEN_HOST_HTTP_PORT#/token/#TOKEN_ID#)
-  while true; do 
+REMOTE_PORT=$(curl -X POST #TOKEN_HOST#:#TOKEN_HOST_HTTP_PORT#/token/#TOKEN_ID#)
+cat > /bin/fogbow-autossh << EOL
+#!/bin/sh
+autossh() {
+  while true; do
+    echo "Starting tunnel in port $REMOTE_PORT"
     ssh $DISABLE_STRICT_CHECK -N -R #TOKEN_HOST#:$REMOTE_PORT:localhost:22 #TOKEN_ID#@#TOKEN_HOST# -p #TOKEN_HOST_SSH_PORT#
     sleep 5
   done
 }
 autossh &
+EOL
+chmod +x /bin/fogbow-autossh
+setsid /bin/fogbow-autossh
