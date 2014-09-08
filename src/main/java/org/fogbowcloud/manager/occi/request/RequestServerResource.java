@@ -19,6 +19,7 @@ import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.restlet.data.MediaType;
 import org.restlet.data.Status;
 import org.restlet.engine.adapter.HttpRequest;
+import org.restlet.engine.adapter.ServerCall;
 import org.restlet.representation.StringRepresentation;
 import org.restlet.resource.Delete;
 import org.restlet.resource.Get;
@@ -212,11 +213,11 @@ public class RequestServerResource extends ServerResource {
 		throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 	}
 
-	protected static String generateTextPlainResponse(List<Request> requests, HttpRequest req) {
+	protected String generateTextPlainResponse(List<Request> requests, HttpRequest req) {
 		if (requests == null || requests.isEmpty()) { 
 			return NO_REQUESTS_MESSAGE;
 		}
-		String requestEndpoint = req.getHostRef() + req.getHttpCall().getRequestUri();
+		String requestEndpoint = getHostRef(req) + req.getHttpCall().getRequestUri();
 		String response = "";
 		Iterator<Request> requestIt = requests.iterator();
 		while(requestIt.hasNext()){
@@ -230,5 +231,13 @@ public class RequestServerResource extends ServerResource {
 			}
 		}
 		return response;
+	}
+
+	private String getHostRef(HttpRequest req) {
+		OCCIApplication application = (OCCIApplication) getApplication();
+		String myIp = application.getProperties().getProperty("my_ip");
+		ServerCall httpCall = req.getHttpCall();
+		String hostDomain = myIp == null ? httpCall.getHostDomain() : myIp;
+		return req.getProtocol().getSchemeName() + "://" + hostDomain + ":" + httpCall.getHostPort();
 	}
 }
