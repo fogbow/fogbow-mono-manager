@@ -59,14 +59,16 @@ public class HeaderUtils {
 		for (int i = 0; i < headerValues.length; i++) {
 			String[] eachHeaderValue = headerValues[i].split(",");			
 			for (int j = 0; j < eachHeaderValue.length; j++) {
-				String[] attTokens = eachHeaderValue[j].trim().split("=");
-				if (attTokens.length != 2) {
+				System.out.println(eachHeaderValue[j].trim());				
+				String line = eachHeaderValue[j].trim();
+				if (!line.contains("=")){
 					LOGGER.debug("Attribute not supported or irregular expression. It will be thrown BAD REQUEST error type.");
 					throw new OCCIException(ErrorType.BAD_REQUEST,
 							ResponseConstants.UNSUPPORTED_ATTRIBUTES);
 				}
-				String attName = attTokens[0].trim();
-				String attValue = attTokens[1].replace("\"", "").trim();
+				
+				String attName = line.substring(0, line.indexOf("=")).trim();
+				String attValue = line.substring(line.indexOf("=") + 1).replace("\"", "").trim();
 				mapAttributes.put(attName, attValue);
 			}
 		}
