@@ -506,7 +506,7 @@ public class TestComputeOpenNebula {
 		String accessId = PluginHelper.USERNAME + ":" + PluginHelper.USER_PASS;
 		OpenNebulaClientFactory clientFactory = Mockito.mock(OpenNebulaClientFactory.class);
 		Mockito.when(clientFactory.createClient(accessId, OPEN_NEBULA_URL)).thenReturn(oneClient);
-		Mockito.when(clientFactory.createUser(oneClient)).thenReturn(user);
+		Mockito.when(clientFactory.createUser(oneClient, PluginHelper.USERNAME)).thenReturn(user);
 
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
 
@@ -542,7 +542,7 @@ public class TestComputeOpenNebula {
 		String accessId = PluginHelper.USERNAME + ":" + PluginHelper.USER_PASS;
 		OpenNebulaClientFactory clientFactory = Mockito.mock(OpenNebulaClientFactory.class);
 		Mockito.when(clientFactory.createClient(accessId, OPEN_NEBULA_URL)).thenReturn(oneClient);
-		Mockito.when(clientFactory.createUser(oneClient)).thenReturn(user);
+		Mockito.when(clientFactory.createUser(oneClient, PluginHelper.USERNAME)).thenReturn(user);
 
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
 
@@ -578,7 +578,7 @@ public class TestComputeOpenNebula {
 		String accessId = PluginHelper.USERNAME + ":" + PluginHelper.USER_PASS;
 		OpenNebulaClientFactory clientFactory = Mockito.mock(OpenNebulaClientFactory.class);
 		Mockito.when(clientFactory.createClient(accessId, OPEN_NEBULA_URL)).thenReturn(oneClient);
-		Mockito.when(clientFactory.createUser(oneClient)).thenReturn(user);
+		Mockito.when(clientFactory.createUser(oneClient, PluginHelper.USERNAME)).thenReturn(user);
 
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
 

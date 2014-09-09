@@ -410,7 +410,7 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 	@Override
 	public ResourcesInfo getResourcesInfo(Token token) {
 		Client oneClient = clientFactory.createClient(token.getAccessId(), openNebulaEndpoint);				
-		User user = clientFactory.createUser(oneClient);
+		User user = clientFactory.createUser(oneClient, token.getUser());
 
 		String maxCpuStr = user.xpath("VM_QUOTA/VM/CPU");
 		String cpuInUseStr = user.xpath("VM_QUOTA/VM/CPU_USED");

@@ -85,8 +85,7 @@ public class OpenNebulaClientFactory {
 		return response.getMessage();
 	}
 
-	public User createUser(Client oneClient) {
-		String username ="";
+	public User createUser(Client oneClient, String username) {
 		UserPool userpool = new UserPool(oneClient);
 		userpool.info();
 		String userId = "";
