@@ -69,7 +69,7 @@ public class ManagerController {
 
 	private DateUtils dateUtils = new DateUtils();
 	public ManagerController(Properties properties) {
-		this(properties, Executors.newScheduledThreadPool(10));
+		this(properties, null);
 	}
 
 	public ManagerController(Properties properties, ScheduledExecutorService executor) {
@@ -77,9 +77,15 @@ public class ManagerController {
 			throw new IllegalArgumentException();
 		}
 		this.properties = properties;
-		this.requestSchedulerTimer = new ManagerTimer(executor);
-		this.tokenUpdaterTimer = new ManagerTimer(executor);
-		this.instanceMonitoringTimer = new ManagerTimer(executor);
+		if (executor == null) {
+			this.requestSchedulerTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
+			this.tokenUpdaterTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
+			this.instanceMonitoringTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));			
+		} else {
+			this.requestSchedulerTimer = new ManagerTimer(executor);
+			this.tokenUpdaterTimer = new ManagerTimer(executor);
+			this.instanceMonitoringTimer = new ManagerTimer(executor);			
+		}
 	}
 
 	public void setAuthorizationPlugin(AuthorizationPlugin authorizationPlugin) {
@@ -436,7 +442,7 @@ public class ManagerController {
 			requests.addRequest(userToken.getUser(), request);
 		}
 		if (!requestSchedulerTimer.isScheduled()) {
-			triggerRequestScheduler();
+			triggerRequestScheduler();			
 		}
 		if (!tokenUpdaterTimer.isScheduled()) {
 			triggerTokenUpdater();
@@ -603,7 +609,6 @@ public class ManagerController {
 				.getProperty(ConfigurationConstants.SCHEDULER_PERIOD_KEY);
 		long schedulerPeriod = schedulerPeriodStr == null ? DEFAULT_SCHEDULER_PERIOD : Long
 				.valueOf(schedulerPeriodStr);
-
 		requestSchedulerTimer.scheduleAtFixedRate(new TimerTask() {
 			@Override
 			public void run() {
