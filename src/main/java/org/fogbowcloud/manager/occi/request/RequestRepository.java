@@ -89,7 +89,7 @@ public class RequestRepository {
 			while (iterator.hasNext()) {
 				Request request = (Request) iterator.next();
 				if (request.getId().equals(requestId)) {
-					if (request.getState().equals(RequestState.CLOSED) || request.getInstanceId() == null) { 
+					if (request.getState().equals(RequestState.CLOSED)) { 
 						LOGGER.debug("Request " + requestId + " does not have an instance. Excluding request.");
 						iterator.remove();
 					} else {
