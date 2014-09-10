@@ -639,7 +639,6 @@ public class ManagerController {
 		}
 		if (allFulfilled) {
 			LOGGER.info("All request fulfilled.");
-			requestSchedulerTimer.cancel();
 		}
 	}
 
