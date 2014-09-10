@@ -24,7 +24,7 @@ public class ManagerTimer {
 				try {
 					task.run();
 				} catch (Throwable e) {
-					LOGGER.error("Failed while executing time", e);
+					LOGGER.error("Failed while executing timer task", e);
 				}
 			}
 		}, delay, period, TimeUnit.MILLISECONDS);
