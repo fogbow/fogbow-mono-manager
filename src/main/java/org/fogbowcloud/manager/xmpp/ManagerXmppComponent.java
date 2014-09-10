@@ -8,6 +8,7 @@ import java.util.TimerTask;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.ManagerController;
 import org.jamppa.component.XMPPComponent;
+import org.xmpp.packet.IQ;
 import org.xmpp.packet.Packet;
 
 public class ManagerXmppComponent extends XMPPComponent {
@@ -41,13 +42,18 @@ public class ManagerXmppComponent extends XMPPComponent {
 		ManagerPacketHelper.iAmAlive(managerFacade.getResourcesInfo(),
 				rendezvousAddress, managerFacade.getProperties(), this);
 	}
-
+	
 	@Override
 	protected void send(Packet packet) {
 		packet.setFrom(getJID());
 		super.send(packet);
 	}
 
+	@Override
+	protected void handleIQError(IQ iq) {
+		super.handleIQResult(iq);
+	}
+	
 	public void whoIsalive() throws CertificateException {
 		managerFacade.updateMembers(ManagerPacketHelper.whoIsalive(
 				rendezvousAddress, this));
