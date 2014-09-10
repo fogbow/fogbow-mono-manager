@@ -165,10 +165,11 @@ public class ManagerPacketHelper {
 		}
 
 		IQ response = (IQ) packetSender.syncSendPacket(iq);
+		if (response == null) {
+			throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
+		}
+		
 		if (response.getError() != null) {
-			if (response.getError().getCondition().equals(Condition.item_not_found)) {
-				return null;
-			}
 			raiseException(response.getError());
 		}
 

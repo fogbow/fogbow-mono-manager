@@ -47,7 +47,7 @@ public class TestDeleteRequest {
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		Mockito.when(
 				computePlugin.requestInstance(Mockito.anyString(), Mockito.any(List.class),
-						Mockito.any(Map.class))).thenReturn("");
+						Mockito.any(Map.class))).thenReturn("instanceid");
 		Mockito.doThrow(
 				new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX))
 				.when(computePlugin)
@@ -132,7 +132,7 @@ public class TestDeleteRequest {
 
 	@Test
 	public void testDeleteManyRequestsIndividually() throws URISyntaxException, HttpException,
-			IOException {
+			IOException, InterruptedException {
 		final int defaultAmount = 5;
 
 		// Post
@@ -166,7 +166,6 @@ public class TestDeleteRequest {
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		response = client.execute(get);
-
 
 		Assert.assertEquals(defaultAmount, deletedInstancesCounter(response));
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
