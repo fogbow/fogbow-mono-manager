@@ -622,6 +622,7 @@ public class ManagerController {
 		LOGGER.debug("Checking and submiting requests.");
 
 		for (Request request : requests.get(RequestState.OPEN)) {
+			LOGGER.debug(request.getId() + " considering for scheduling.");
 			Map<String, String> xOCCIAtt = request.getxOCCIAtt();
 			if (request.isIntoValidPeriod()) {
 				for (String keyAttributes : RequestAttribute.getValues()) {
