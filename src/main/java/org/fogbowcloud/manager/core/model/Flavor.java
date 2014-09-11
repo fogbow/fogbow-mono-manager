@@ -45,4 +45,20 @@ public class Flavor {
 	public void setMem(String mem) {
 		this.mem = mem;
 	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof Flavor) {
+			Flavor otherFlavor = (Flavor) obj;
+			return otherFlavor.getName().equals(getName()) && otherFlavor.getCpu().equals(getCpu())
+					&& otherFlavor.getMem().equals(getMem())
+					&& otherFlavor.getCapacity().equals(getCapacity());
+		}
+		return false;
+	}
+	
+	@Override
+	public String toString() {
+		return "Name: " + getName() + ", cpu: " + cpu + ", mem: " + mem + ", capacity: " + capacity;
+	}
 }

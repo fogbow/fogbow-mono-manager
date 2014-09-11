@@ -1,5 +1,7 @@
 package org.fogbowcloud.manager.core.plugins.openstack;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -9,6 +11,7 @@ import java.util.Properties;
 import java.util.Set;
 
 import org.apache.commons.codec.Charsets;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -29,7 +32,6 @@ import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
-import org.fogbowcloud.manager.core.ssh.DefaultSSHTunnel;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.OCCIException;
@@ -38,9 +40,14 @@ import org.fogbowcloud.manager.occi.core.ResourceRepository;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.instance.Instance;
+import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.restlet.Client;
+import org.restlet.Request;
+import org.restlet.data.Protocol;
+import org.restlet.util.Series;
 
 public class OpenStackComputePlugin implements ComputePlugin {
 
@@ -55,26 +62,34 @@ public class OpenStackComputePlugin implements ComputePlugin {
 	private static final String ABSOLUTE = "absolute";
 	private static final String LIMITS = "limits";
 	private static final String TERM_COMPUTE = "compute";
-	private static final String CLASS_COMPUTE = "kind";
-	private static final String COMPUTE_ENDPOINT = "/compute/";
+	public static final String COMPUTE_ENDPOINT = "/compute/";
 	private final String COMPUTE_V2_API_ENDPOINT = "/v2/";
 
 	private static final String MAX_TOTAL_CORES_ATT = "maxTotalCores";
 	private static final String TOTAL_CORES_USED_ATT = "totalCoresUsed";
 	private static final String MAX_TOTAL_RAM_SIZE_ATT = "maxTotalRAMSize";
 	private static final String TOTAL_RAM_USED_ATT = "totalRAMUsed";
+	
+	private static final String PUBLIC_KEY_TERM = "public_key";
+	private static final String PUBLIC_KEY_SCHEME = "http://schemas.openstack.org/instance/credentials#";
+	private static final String NAME_PUBLIC_KEY_ATTRIBUTE = "org.openstack.credentials.publickey.name";
+	private static final String DATA_PUBLIC_KEY_ATTRIBUTE = "org.openstack.credentials.publickey.data";
+	private static final String NAME_PUBLIC_KEY_DEFAULT = "fogbow_keypair";
+	
+	private static final String TENANT_ID = "tenantId";
 
 	private String computeOCCIEndpoint;
 	private String computeV2APIEndpoint;
-	private Map<String, Category> fogTermToOpensStackCategory = new HashMap<String, Category>();
+	private Map<String, Category> fogTermToOpenStackCategory = new HashMap<String, Category>();
 	private DefaultHttpClient client;
 	private String networkId;
+	private String oCCIEndpoint;
 
 	private static final Logger LOGGER = Logger.getLogger(OpenStackComputePlugin.class);
 	
 	public OpenStackComputePlugin(Properties properties) {
-		this.computeOCCIEndpoint = properties.getProperty(ConfigurationConstants.COMPUTE_OCCI_URL_KEY)
-				+ COMPUTE_ENDPOINT;
+		this.oCCIEndpoint = properties.getProperty(ConfigurationConstants.COMPUTE_OCCI_URL_KEY);
+		this.computeOCCIEndpoint = oCCIEndpoint + COMPUTE_ENDPOINT;
 		this.computeV2APIEndpoint = properties.getProperty("compute_openstack_v2api_url")
 				+ COMPUTE_V2_API_ENDPOINT;
 		
@@ -92,25 +107,28 @@ public class OpenStackComputePlugin implements ComputePlugin {
 		}
 		
 		for (String imageName : imageProperties.keySet()) {
-			fogTermToOpensStackCategory.put(imageName, new Category(imageProperties.get(imageName),
+			fogTermToOpenStackCategory.put(imageName, new Category(imageProperties.get(imageName),
 					osScheme, RequestConstants.MIXIN_CLASS));
 			ResourceRepository.getInstance().addImageResource(imageName);
 		}
 		
-		fogTermToOpensStackCategory.put(
+		fogTermToOpenStackCategory.put(
 				RequestConstants.SMALL_TERM,
 				createFlavorCategory(ConfigurationConstants.COMPUTE_OCCI_FLAVOR_SMALL_KEY,
 						properties));
-		fogTermToOpensStackCategory.put(
+		fogTermToOpenStackCategory.put(
 				RequestConstants.MEDIUM_TERM,
 				createFlavorCategory(ConfigurationConstants.COMPUTE_OCCI_FLAVOR_MEDIUM_KEY,
 						properties));
-		fogTermToOpensStackCategory.put(
+		fogTermToOpenStackCategory.put(
 				RequestConstants.LARGE_TERM,
 				createFlavorCategory(ConfigurationConstants.COMPUTE_OCCI_FLAVOR_LARGE_KEY,
-						properties));
+						properties));		
 		
-		fogTermToOpensStackCategory.put(RequestConstants.USER_DATA_TERM, new Category("user_data",
+		fogTermToOpenStackCategory.put(RequestConstants.PUBLIC_KEY_TERM, new Category(
+				PUBLIC_KEY_TERM, PUBLIC_KEY_SCHEME, RequestConstants.MIXIN_CLASS));
+		
+		fogTermToOpenStackCategory.put(RequestConstants.USER_DATA_TERM, new Category("user_data",
 				instanceScheme, RequestConstants.MIXIN_CLASS));
 	}
 
@@ -124,7 +142,8 @@ public class OpenStackComputePlugin implements ComputePlugin {
 						.substring(ConfigurationConstants.COMPUTE_OCCI_IMAGE_PREFIX.length()),
 						properties.getProperty(propNameStr));
 			}
-		}		
+		}
+		LOGGER.debug("Image properties: " + imageProperties);
 		return imageProperties;
 	}
 
@@ -142,7 +161,7 @@ public class OpenStackComputePlugin implements ComputePlugin {
 
 		List<Category> openStackCategories = new ArrayList<Category>();
 
-		Category categoryCompute = new Category(TERM_COMPUTE, SCHEME_COMPUTE, CLASS_COMPUTE);
+		Category categoryCompute = new Category(TERM_COMPUTE, SCHEME_COMPUTE, RequestConstants.KIND_CLASS);
 		openStackCategories.add(categoryCompute);
 
 		// removing fogbow-request category
@@ -150,15 +169,29 @@ public class OpenStackComputePlugin implements ComputePlugin {
 				RequestConstants.KIND_CLASS));
 
 		for (Category category : categories) {
-			if (fogTermToOpensStackCategory.get(category.getTerm()) == null) {
+			if (fogTermToOpenStackCategory.get(category.getTerm()) == null) {
 				throw new OCCIException(ErrorType.BAD_REQUEST,
 						ResponseConstants.CLOUD_NOT_SUPPORT_CATEGORY + category.getTerm());
 			}
-			openStackCategories.add(fogTermToOpensStackCategory.get(category.getTerm()));
+			openStackCategories.add(fogTermToOpenStackCategory.get(category.getTerm()));
+			
+			// adding ssh public key
+			if (category.getTerm().equals(RequestConstants.PUBLIC_KEY_TERM)) {		
+				xOCCIAtt.put(NAME_PUBLIC_KEY_ATTRIBUTE, NAME_PUBLIC_KEY_DEFAULT);
+				xOCCIAtt.put(DATA_PUBLIC_KEY_ATTRIBUTE, xOCCIAtt.get(RequestAttribute.DATA_PUBLIC_KEY.getValue()));
+				xOCCIAtt.remove(RequestAttribute.DATA_PUBLIC_KEY.getValue());
+			}
 		}
 
-		xOCCIAtt.put("org.openstack.compute.user_data",
-				xOCCIAtt.remove(DefaultSSHTunnel.USER_DATA_ATT));
+		String userdata = xOCCIAtt.remove(RequestAttribute.USER_DATA_ATT.getValue());
+		
+		if (userdata != null) {
+			xOCCIAtt.put(
+					"org.openstack.compute.user_data",
+					new String(Base64.encodeBase64(
+							userdata.getBytes(Charsets.UTF_8), false, false),
+							Charsets.UTF_8));
+		}
 
 		Set<Header> headers = new HashSet<Header>();
 		for (Category category : openStackCategories) {
@@ -234,8 +267,9 @@ public class OpenStackComputePlugin implements ComputePlugin {
 	public ResourcesInfo getResourcesInfo(Token token) {
 		String responseStr = doRequest(
 				"get",
-				computeV2APIEndpoint + token.getAttributes().get(OpenStackIdentityPlugin.TENANT_ID_KEY)
-						+ "/limits", token.getAccessId()).getResponseString();
+				computeV2APIEndpoint
+						+ token.getAttributes().get(TENANT_ID)
+		+ "/limits", token.getAccessId()).getResponseString();
 
 		String maxCpu = getAttFromJson(MAX_TOTAL_CORES_ATT, responseStr);
 		String cpuInUse = getAttFromJson(TOTAL_CORES_USED_ATT, responseStr);
@@ -277,17 +311,12 @@ public class OpenStackComputePlugin implements ComputePlugin {
 			LOGGER.debug("AccessId=" + authToken + "; headers=" + additionalHeaders);
 
 			if (client == null) {
-				client = new DefaultHttpClient();
-				HttpParams params = new BasicHttpParams();
-				params.setParameter(CoreProtocolPNames.PROTOCOL_VERSION, HttpVersion.HTTP_1_1);
-				client = new DefaultHttpClient(new ThreadSafeClientConnManager(params, client
-						.getConnectionManager().getSchemeRegistry()), params);
+				initClient();
 			}
 			httpResponse = client.execute(request);
 			responseStr = EntityUtils.toString(httpResponse.getEntity(),
 				String.valueOf(Charsets.UTF_8));	
 		} catch (Exception e) {
-			e.printStackTrace();
 			LOGGER.error(e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
 		}
@@ -339,8 +368,48 @@ public class OpenStackComputePlugin implements ComputePlugin {
 
 	public static String getOSScheme() {
 		return osScheme;
-	}
+	}	
 	
+	@SuppressWarnings("unchecked")
+	@Override
+	public void bypass(Request request, org.restlet.Response response) {
+		if (computeOCCIEndpoint == null || computeOCCIEndpoint.isEmpty()) {
+			throw new OCCIException(ErrorType.BAD_REQUEST,
+					ResponseConstants.CLOUD_NOT_SUPPORT_OCCI_INTERFACE);
+		}
+		
+		URI origRequestURI;
+		try {
+			origRequestURI = new URI(request.getResourceRef().toString());
+			URI occiURI = new URI(oCCIEndpoint);
+			URI newRequestURI = new URI(occiURI.getScheme(), occiURI.getUserInfo(),
+					occiURI.getHost(), occiURI.getPort(), origRequestURI.getPath(),
+					origRequestURI.getQuery(), origRequestURI.getFragment());
+			Client clienteForBypass = new Client(Protocol.HTTP);
+			Request proxiedRequest = new Request(request.getMethod(), newRequestURI.toString());
+		
+			// forwarding headers from cloud to response
+			Series<org.restlet.engine.header.Header> requestHeaders = (Series<org.restlet.engine.header.Header>) request
+					.getAttributes().get("org.restlet.http.headers");
+			proxiedRequest.getAttributes().put("org.restlet.http.headers", requestHeaders);
+
+			clienteForBypass.handle(proxiedRequest, response);
+		} catch (URISyntaxException e) {
+			LOGGER.error(e);
+			throw new OCCIException(ErrorType.BAD_REQUEST,
+					e.getMessage());
+			
+		}
+	}
+
+	private void initClient() {
+		client = new DefaultHttpClient();
+		HttpParams params = new BasicHttpParams();
+		params.setParameter(CoreProtocolPNames.PROTOCOL_VERSION, HttpVersion.HTTP_1_1);
+		client = new DefaultHttpClient(new ThreadSafeClientConnManager(params, client
+				.getConnectionManager().getSchemeRegistry()), params);
+	}
+
 	private class Response {
 
 		private HttpResponse httpResponse;
@@ -359,5 +428,6 @@ public class OpenStackComputePlugin implements ComputePlugin {
 			return responseString;
 		}
 	}
+
 
 }

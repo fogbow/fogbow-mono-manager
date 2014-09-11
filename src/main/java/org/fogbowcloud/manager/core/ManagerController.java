@@ -11,29 +11,36 @@ import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
+import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
+import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
-import org.fogbowcloud.manager.core.plugins.openstack.OpenStackIdentityPlugin;
-import org.fogbowcloud.manager.core.ssh.DefaultSSHTunnel;
-import org.fogbowcloud.manager.core.ssh.SSHTunnel;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.OCCIException;
+import org.fogbowcloud.manager.occi.core.Resource;
+import org.fogbowcloud.manager.occi.core.ResourceRepository;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.fogbowcloud.manager.occi.request.RequestAttribute;
+import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.fogbowcloud.manager.occi.request.RequestRepository;
 import org.fogbowcloud.manager.occi.request.RequestState;
 import org.fogbowcloud.manager.occi.request.RequestType;
 import org.fogbowcloud.manager.xmpp.ManagerPacketHelper;
 import org.jamppa.component.PacketSender;
+import org.restlet.Response;
 
 public class ManagerController {
 
@@ -42,7 +49,6 @@ public class ManagerController {
 	private static final long DEFAULT_TOKEN_UPDATE_PERIOD = 300000; // 5 minutes
 	private static final long DEFAULT_INSTANCE_MONITORING_PERIOD = 120000; // 2
 																			// minutes
-
 	private final ManagerTimer requestSchedulerTimer;
 	private final ManagerTimer tokenUpdaterTimer;
 	private final ManagerTimer instanceMonitoringTimer;
@@ -52,39 +58,50 @@ public class ManagerController {
 	private RequestRepository requests = new RequestRepository();
 	private FederationMemberPicker memberPicker = new RoundRobinMemberPicker();
 
+	private AuthorizationPlugin authorizationPlugin;
 	private ComputePlugin computePlugin;
-	private IdentityPlugin identityPlugin;
+	private IdentityPlugin localIdentityPlugin;
+	private IdentityPlugin federationIdentityPlugin;
 	private Properties properties;
 	private PacketSender packetSender;
 	private FederationMemberValidator validator = new DefaultMemberValidator();
+	private Map<String, String> instanceTokens = new HashMap<String, String>();
 
 	private DateUtils dateUtils = new DateUtils();
-	private SSHTunnel sshTunnel = new DefaultSSHTunnel();
-
 	public ManagerController(Properties properties) {
-		this(properties, Executors.newScheduledThreadPool(10));
+		this(properties, null);
 	}
-	
+
 	public ManagerController(Properties properties, ScheduledExecutorService executor) {
 		if (properties == null) {
 			throw new IllegalArgumentException();
 		}
 		this.properties = properties;
-		this.requestSchedulerTimer = new ManagerTimer(executor);
-		this.tokenUpdaterTimer = new ManagerTimer(executor);
-		this.instanceMonitoringTimer = new ManagerTimer(executor);
+		if (executor == null) {
+			this.requestSchedulerTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
+			this.tokenUpdaterTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
+			this.instanceMonitoringTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));			
+		} else {
+			this.requestSchedulerTimer = new ManagerTimer(executor);
+			this.tokenUpdaterTimer = new ManagerTimer(executor);
+			this.instanceMonitoringTimer = new ManagerTimer(executor);			
+		}
 	}
 
-	public void setSSHTunnel(SSHTunnel sshTunnel) {
-		this.sshTunnel = sshTunnel;
+	public void setAuthorizationPlugin(AuthorizationPlugin authorizationPlugin) {
+		this.authorizationPlugin = authorizationPlugin;
 	}
 
 	public void setComputePlugin(ComputePlugin computePlugin) {
 		this.computePlugin = computePlugin;
 	}
 
-	public void setIdentityPlugin(IdentityPlugin identityPlugin) {
-		this.identityPlugin = identityPlugin;
+	public void setLocalIdentityPlugin(IdentityPlugin identityPlugin) {
+		this.localIdentityPlugin = identityPlugin;
+	}
+
+	public void setFederationIdentityPlugin(IdentityPlugin federationIdentityPlugin) {
+		this.federationIdentityPlugin = federationIdentityPlugin;
 	}
 
 	public void updateMembers(List<FederationMember> members) {
@@ -96,11 +113,19 @@ public class ManagerController {
 	}
 
 	public List<FederationMember> getMembers() {
-		return members;
-	}
-
-	public void setMembers(List<FederationMember> members) {
-		this.members = members;
+		List<FederationMember> membersCopy = new LinkedList<FederationMember>(members);
+		boolean containsThis = false;
+		for (FederationMember member : membersCopy) {
+			if (member.getResourcesInfo().getId().equals(
+					properties.getProperty(ConfigurationConstants.XMPP_JID_KEY))) {
+				containsThis = true;
+				break;
+			}
+		}
+		if (!containsThis) {
+			membersCopy.add(new FederationMember(getResourcesInfo()));
+		}
+		return membersCopy;
 	}
 
 	public ResourcesInfo getResourcesInfo() {
@@ -111,7 +136,7 @@ public class ManagerController {
 	}
 
 	public String getUser(String accessId) {
-		Token token = identityPlugin.getToken(accessId);
+		Token token = getTokenFromFederationIdP(accessId);
 		if (token == null) {
 			return null;
 		}
@@ -173,16 +198,47 @@ public class ManagerController {
 					+ " is local, getting its information in the local cloud.");
 			instance = this.computePlugin.getInstance(request.getToken().getAccessId(),
 					request.getInstanceId());
-			String sshAddress = request.getAttValue(DefaultSSHTunnel.SSH_PUBLIC_ADDRESS_ATT);
-			if (sshAddress != null) {
-				instance.addAttribute(DefaultSSHTunnel.SSH_PUBLIC_ADDRESS_ATT, sshAddress);
+
+			String sshPublicAdd = getSSHPublicAddress(request.getId());
+			if (sshPublicAdd != null) {
+				instance.addAttribute(Instance.SSH_PUBLIC_ADDRESS_ATT, sshPublicAdd);
 			}
+
 		} else {
 			LOGGER.debug(request.getInstanceId() + " is remote, going out to "
 					+ request.getMemberId() + " to get its information.");
 			instance = getRemoteInstance(request);
 		}
 		return instance;
+	}
+
+	private String getSSHPublicAddress(String tokenId) {
+		if (tokenId == null || tokenId.isEmpty()){
+			return null;
+		}
+		
+		try {
+			String hostAddr = properties.getProperty(ConfigurationConstants.SSH_PRIVATE_HOST_KEY);
+			String httpHostPort = properties.getProperty(ConfigurationConstants.SSH_HOST_HTTP_PORT_KEY);
+			LOGGER.debug("private host: " + hostAddr);
+			LOGGER.debug("private host HTTP port: " + httpHostPort);
+			LOGGER.debug("tokenId: " + tokenId);
+			LOGGER.debug("token address: http://" + hostAddr + ":" + httpHostPort + "/token/"
+					+ tokenId);
+			HttpGet httpGet = new HttpGet("http://" + hostAddr + ":" + httpHostPort + "/token/"
+					+ tokenId);
+			HttpClient client = new DefaultHttpClient();
+			HttpResponse response = client.execute(httpGet);
+			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+				String sshPort = EntityUtils.toString(response.getEntity());
+				String sshPublicHostIP = properties
+						.getProperty(ConfigurationConstants.SSH_PUBLIC_HOST_KEY);
+				return sshPublicHostIP + ":" + sshPort;
+			}
+		} catch (Throwable e) {
+			LOGGER.warn("", e);
+		}
+		return null;
 	}
 
 	private Instance getRemoteInstance(Request request) {
@@ -216,11 +272,10 @@ public class ManagerController {
 	}
 
 	private void instanceRemoved(Request request) {
-		sshTunnel.release(request.getInstanceId());
 		request.setInstanceId(null);
 		request.setMemberId(null);
-		
-		if (request.getState().equals(RequestState.DELETED)){
+
+		if (request.getState().equals(RequestState.DELETED)) {
 			requests.exclude(request.getId());
 		} else if (isPersistent(request)) {
 			LOGGER.debug("Request: " + request + ", setting state to " + RequestState.OPEN);
@@ -283,30 +338,39 @@ public class ManagerController {
 
 	public String createInstanceForRemoteMember(String memberId, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
-		Integer sshPort = null;
-		FederationMember member = getFederationMember(memberId);
+		FederationMember member = null;
+		try {
+			member = getFederationMember(memberId);
+		} catch (Exception e) {
+		}
+
 		if (!validator.canDonateTo(member)) {
 			return null;
 		}
 		LOGGER.info("Submiting request with categories: " + categories + " and xOCCIAtt: "
 				+ xOCCIAtt + " for remote member.");
 		String federationTokenAccessId = getFederationUserToken().getAccessId();
+		String instanceToken = String.valueOf(UUID.randomUUID());
 		try {
-			sshPort = sshTunnel.create(properties, new Request(null, null, categories, xOCCIAtt));
+			String command = UserdataUtils.createCommand(instanceToken, 
+					properties.getProperty(ConfigurationConstants.SSH_PRIVATE_HOST_KEY),
+					properties.getProperty(ConfigurationConstants.SSH_HOST_PORT_KEY),
+					properties.getProperty(ConfigurationConstants.SSH_HOST_HTTP_PORT_KEY));
+			xOCCIAtt.put(RequestAttribute.USER_DATA_ATT.getValue(), command);
+			categories.add(new Category(RequestConstants.USER_DATA_TERM,
+					RequestConstants.SCHEME, RequestConstants.MIXIN_CLASS));
 		} catch (Exception e) {
 			LOGGER.warn("Exception while creating ssh tunnel.", e);
 			return null;
 		}
-		try {
-			String instanceId = computePlugin.requestInstance(federationTokenAccessId, categories, xOCCIAtt);
-			if (instanceId != null) {
-				sshTunnel.update(instanceId, sshPort);
-			} else {
-				sshTunnel.release(sshPort);
-			}
+		
+		try {			
+			String instanceId = computePlugin.requestInstance(federationTokenAccessId, categories,
+					xOCCIAtt);			
+			instanceTokens.put(instanceId, instanceToken);
+
 			return instanceId;
 		} catch (OCCIException e) {
-			sshTunnel.release(sshPort);
 			if (e.getStatus().getCode() == HttpStatus.SC_BAD_REQUEST) {
 				return null;
 			}
@@ -316,21 +380,11 @@ public class ManagerController {
 
 	protected Token getFederationUserToken() {
 		if (federationUserToken != null
-				&& identityPlugin.isValid(federationUserToken.getAccessId())) {
-			return this.federationUserToken;
+				&& localIdentityPlugin.isValid(federationUserToken.getAccessId())) {
+			return federationUserToken;
 		}
 
-		// TODO Think about getting token independent of OpenStackPlugin
-		Map<String, String> federationUserCredentials = new HashMap<String, String>();
-		String username = properties.getProperty(ConfigurationConstants.FEDERATION_USER_NAME_KEY);
-		String password = properties.getProperty(ConfigurationConstants.FEDERATION_USER_PASS_KEY);
-		String tenantName = properties
-				.getProperty(ConfigurationConstants.FEDERATION_USER_TENANT_NAME_KEY);
-		federationUserCredentials.put(OpenStackIdentityPlugin.USER_KEY, username);
-		federationUserCredentials.put(OpenStackIdentityPlugin.PASSWORD_KEY, password);
-		federationUserCredentials.put(OpenStackIdentityPlugin.TENANT_NAME_KEY, tenantName);
-
-		this.federationUserToken = identityPlugin.createToken(federationUserCredentials);
+		federationUserToken = localIdentityPlugin.createFederationUserToken();
 		return federationUserToken;
 	}
 
@@ -339,9 +393,10 @@ public class ManagerController {
 		String federationTokenAccessId = getFederationUserToken().getAccessId();
 		try {
 			Instance instance = computePlugin.getInstance(federationTokenAccessId, instanceId);
-			String sshAddress = sshTunnel.getPublicAddress(properties, instanceId);
-			if (sshAddress != null) {
-				instance.addAttribute(DefaultSSHTunnel.SSH_PUBLIC_ADDRESS_ATT, sshAddress);
+			
+			String sshPublicAddress = getSSHPublicAddress(instanceTokens.get(instanceId));			
+			if (sshPublicAddress != null) {
+				instance.addAttribute(Instance.SSH_PUBLIC_ADDRESS_ATT, sshPublicAddress);
 			}
 			return instance;
 		} catch (OCCIException e) {
@@ -357,13 +412,20 @@ public class ManagerController {
 		LOGGER.info("Removing instance " + instanceId + " for remote member.");
 		String federationTokenAccessId = getFederationUserToken().getAccessId();
 		computePlugin.removeInstance(federationTokenAccessId, instanceId);
-		sshTunnel.release(instanceId);
+		instanceTokens.remove(instanceId);
+	}
+
+	public Token getTokenFromFederationIdP(String accessId) {
+		Token token = federationIdentityPlugin.getToken(accessId);
+		if (!authorizationPlugin.isAuthorized(token)) {
+			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED_USER);
+		}
+		return token;
 	}
 
 	public List<Request> createRequests(String accessId, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
-
-		Token userToken = identityPlugin.getToken(accessId);
+		Token userToken = getTokenFromFederationIdP(accessId);
 		LOGGER.debug("User Token: " + userToken);
 
 		Integer instanceCount = Integer.valueOf(xOCCIAtt.get(RequestAttribute.INSTANCE_COUNT
@@ -373,14 +435,14 @@ public class ManagerController {
 		List<Request> currentRequests = new ArrayList<Request>();
 		for (int i = 0; i < instanceCount; i++) {
 			String requestId = String.valueOf(UUID.randomUUID());
-			Request request = new Request(requestId, userToken, 
+			Request request = new Request(requestId, userToken,
 					new LinkedList<Category>(categories), new HashMap<String, String>(xOCCIAtt));
 			LOGGER.info("Created request: " + request);
 			currentRequests.add(request);
 			requests.addRequest(userToken.getUser(), request);
 		}
 		if (!requestSchedulerTimer.isScheduled()) {
-			triggerRequestScheduler();
+			triggerRequestScheduler();			
 		}
 		if (!tokenUpdaterTimer.isScheduled()) {
 			triggerTokenUpdater();
@@ -390,7 +452,8 @@ public class ManagerController {
 	}
 
 	protected void triggerInstancesMonitor() {
-		String instanceMonitoringPeriodStr = properties.getProperty(ConfigurationConstants.INSTANCE_MONITORING_PERIOD_KEY);
+		String instanceMonitoringPeriodStr = properties
+				.getProperty(ConfigurationConstants.INSTANCE_MONITORING_PERIOD_KEY);
 		final long instanceMonitoringPeriod = instanceMonitoringPeriodStr == null ? DEFAULT_INSTANCE_MONITORING_PERIOD
 				: Long.valueOf(instanceMonitoringPeriodStr);
 
@@ -426,7 +489,8 @@ public class ManagerController {
 	}
 
 	private void triggerTokenUpdater() {
-		String tokenUpdatePeriodStr = properties.getProperty(ConfigurationConstants.TOKEN_UPDATE_PERIOD_KEY);
+		String tokenUpdatePeriodStr = properties
+				.getProperty(ConfigurationConstants.TOKEN_UPDATE_PERIOD_KEY);
 		final long tokenUpdatePeriod = tokenUpdatePeriodStr == null ? DEFAULT_TOKEN_UPDATE_PERIOD
 				: Long.valueOf(tokenUpdatePeriodStr);
 
@@ -453,7 +517,7 @@ public class ManagerController {
 					LOGGER.debug("Valid interval of requestId " + request.getId() + " is "
 							+ validInterval);
 					if (validInterval < 2 * tokenUpdatePeriod) {
-						Token newToken = identityPlugin.reIssueToken(request.getToken());
+						Token newToken = localIdentityPlugin.reIssueToken(request.getToken());
 						LOGGER.info("Setting new token " + newToken + " on request "
 								+ request.getId());
 						requests.get(request.getId()).setToken(newToken);
@@ -497,30 +561,29 @@ public class ManagerController {
 	private boolean createLocalInstance(Request request) {
 		request.setMemberId(null);
 		String instanceId = null;
-		Integer port = null;
-
 		LOGGER.info("Submiting local request " + request);
-
-		try {
+		
+		try {			
 			try {
-				port = sshTunnel.create(properties, request);
+				String command = UserdataUtils.createCommand(request.getId(),
+						properties.getProperty(ConfigurationConstants.SSH_PRIVATE_HOST_KEY),
+						properties.getProperty(ConfigurationConstants.SSH_HOST_PORT_KEY),
+						properties.getProperty(ConfigurationConstants.SSH_HOST_HTTP_PORT_KEY));
+				request.putAttValue(RequestAttribute.USER_DATA_ATT.getValue(), command);
+				request.addCategory(new Category(RequestConstants.USER_DATA_TERM,
+						RequestConstants.SCHEME, RequestConstants.MIXIN_CLASS));
 			} catch (Exception e) {
-				LOGGER.warn("Exception while creating ssh tunnel.", e);
+				LOGGER.warn("Exception while creating userdata.", e);
 				request.setState(RequestState.FAILED);
 				return false;
-			}
+			}	
+			
 			instanceId = computePlugin.requestInstance(request.getToken().getAccessId(),
 					request.getCategories(), request.getxOCCIAtt());
-			if (instanceId == null) {
-				sshTunnel.release(port);
-				return false;
-			}
-			sshTunnel.update(instanceId, port);
 		} catch (OCCIException e) {
-			if (port != null) {
-				sshTunnel.release(port);
-			}
-			if (e.getStatus().getCode() == HttpStatus.SC_INSUFFICIENT_SPACE_ON_RESOURCE) {
+			int statusCode = e.getStatus().getCode();
+			if (statusCode == HttpStatus.SC_INSUFFICIENT_SPACE_ON_RESOURCE
+					|| statusCode == HttpStatus.SC_UNAUTHORIZED) {
 				LOGGER.warn("Request failed locally for quota exceeded.", e);
 				return false;
 			} else {
@@ -529,7 +592,7 @@ public class ManagerController {
 				LOGGER.warn("Request failed locally for an unknown reason.", e);
 				return true;
 			}
-			
+
 		}
 
 		request.setInstanceId(instanceId);
@@ -542,10 +605,10 @@ public class ManagerController {
 	}
 
 	private void triggerRequestScheduler() {
-		String schedulerPeriodStr = properties.getProperty(ConfigurationConstants.SCHEDULER_PERIOD_KEY);
+		String schedulerPeriodStr = properties
+				.getProperty(ConfigurationConstants.SCHEDULER_PERIOD_KEY);
 		long schedulerPeriod = schedulerPeriodStr == null ? DEFAULT_SCHEDULER_PERIOD : Long
 				.valueOf(schedulerPeriodStr);
-
 		requestSchedulerTimer.scheduleAtFixedRate(new TimerTask() {
 			@Override
 			public void run() {
@@ -559,6 +622,7 @@ public class ManagerController {
 		LOGGER.debug("Checking and submiting requests.");
 
 		for (Request request : requests.get(RequestState.OPEN)) {
+			LOGGER.debug(request.getId() + " considering for scheduling.");
 			Map<String, String> xOCCIAtt = request.getxOCCIAtt();
 			if (request.isIntoValidPeriod()) {
 				for (String keyAttributes : RequestAttribute.getValues()) {
@@ -575,7 +639,6 @@ public class ManagerController {
 		}
 		if (allFulfilled) {
 			LOGGER.info("All request fulfilled.");
-			requestSchedulerTimer.cancel();
 		}
 	}
 
@@ -589,7 +652,7 @@ public class ManagerController {
 			remoteInstanceId = createInstanceForRemoteMember(properties.getProperty("xmpp_jid"),
 					request.getCategories(), request.getxOCCIAtt());
 		} catch (Exception e) {
-			LOGGER.info("Could not create instance with federation user locally.");
+			LOGGER.info("Could not create instance with federation user locally." + e);
 		}
 
 		if (remoteInstanceId == null) {
@@ -613,7 +676,7 @@ public class ManagerController {
 	}
 
 	public Token getToken(Map<String, String> attributesToken) {
-		return identityPlugin.createToken(attributesToken);
+		return localIdentityPlugin.createToken(attributesToken);
 	}
 
 	public Properties getProperties() {
@@ -630,5 +693,20 @@ public class ManagerController {
 
 	public void setValidator(FederationMemberValidator validator) {
 		this.validator = validator;
+	}
+
+	public List<Resource> getAllResouces(String accessId) {
+		Token userToken = getTokenFromFederationIdP(accessId);
+		LOGGER.debug("User Token: " + userToken);
+		return ResourceRepository.getInstance().getAll();
+	}
+
+	public void bypass(org.restlet.Request request, Response response) {
+		LOGGER.debug("Bypassing request: " + request);
+		computePlugin.bypass(request, response);
+	}
+
+	public String getAuthenticationURI() {
+		return localIdentityPlugin.getAuthenticationURI();
 	}
 }

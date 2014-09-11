@@ -8,34 +8,41 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
 import org.restlet.Response;
+import org.restlet.data.MediaType;
 import org.restlet.engine.header.Header;
 import org.restlet.util.Series;
 
 public class HeaderUtils {
 
+	private static final Logger LOGGER = Logger.getLogger(HeaderUtils.class);
+
 	public static final String REQUEST_DATE_FORMAT = "yyyy-MM-dd";
-	public static final String X_OCCI_LOCATION = "X-OCCI-Location: ";
+	public static final String X_OCCI_LOCATION_PREFIX = "X-OCCI-Location: ";
 	public static final String WWW_AUTHENTICATE = "WWW-Authenticate";
 
 	public static void checkOCCIContentType(Series<Header> headers) {
 		String contentType = headers.getValues(OCCIHeaders.CONTENT_TYPE);
-		if (!contentType.equals(OCCIHeaders.OCCI_CONTENT_TYPE)) {
+		if (contentType == null || !contentType.equals(OCCIHeaders.OCCI_CONTENT_TYPE)) {
+			LOGGER.debug("Content-type " + contentType + " was not occi.");
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}
 	}
-
-	public static String getAuthToken(Series<Header> headers, Response response) {
+	
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public static String getAuthToken(Series<Header> headers, Response response, String authenticationURI) {
 		String token = headers.getValues(OCCIHeaders.X_AUTH_TOKEN);
 		if (token == null || token.equals("")) {
-			if (response != null) {
+			if (response != null && authenticationURI != null) {
 				Series<Header> responseHeaders = (Series<Header>) response.getAttributes().get("org.restlet.http.headers");
 				if (responseHeaders == null) {
 					responseHeaders = new Series(Header.class);
 					response.getAttributes().put("org.restlet.http.headers", responseHeaders);
 				}
-				//FIXME keystone URI hard coded
-				responseHeaders.add(new Header(HeaderUtils.WWW_AUTHENTICATE, "Keystone uri='http://localhost:5000/'"));
+				responseHeaders.add(new Header(HeaderUtils.WWW_AUTHENTICATE, authenticationURI));
+				MediaType textPlainType = new MediaType("text/plain");				
+				response.setEntity(ResponseConstants.UNAUTHORIZED, textPlainType);
 			}
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}
@@ -47,56 +54,43 @@ public class HeaderUtils {
 	}
 	
 	public static Map<String, String> getXOCCIAtributes(Series<Header> headers) {
-		String[] valuesAttributes = headers.getValuesArray(normalize(OCCIHeaders.X_OCCI_ATTRIBUTE));
+		String[] headerValues = headers.getValuesArray(normalize(OCCIHeaders.X_OCCI_ATTRIBUTE));		
 		Map<String, String> mapAttributes = new HashMap<String, String>();
-		for (int i = 0; i < valuesAttributes.length; i++) {
-			String[] tokensAttribute = valuesAttributes[i].split("=");
-			if (tokensAttribute.length != 2) {
-				throw new OCCIException(ErrorType.BAD_REQUEST,
-						ResponseConstants.UNSUPPORTED_ATTRIBUTES);
+		for (int i = 0; i < headerValues.length; i++) {
+			String[] eachHeaderValue = headerValues[i].split(",");			
+			for (int j = 0; j < eachHeaderValue.length; j++) {
+				System.out.println(eachHeaderValue[j].trim());				
+				String line = eachHeaderValue[j].trim();
+				if (!line.contains("=")){
+					LOGGER.debug("Attribute not supported or irregular expression. It will be thrown BAD REQUEST error type.");
+					throw new OCCIException(ErrorType.BAD_REQUEST,
+							ResponseConstants.UNSUPPORTED_ATTRIBUTES);
+				}
+				
+				String attName = line.substring(0, line.indexOf("=")).trim();
+				String attValue = line.substring(line.indexOf("=") + 1).replace("\"", "").trim();
+				mapAttributes.put(attName, attValue);
 			}
-			String name = tokensAttribute[0].trim();
-			String value = tokensAttribute[1].replace("\"", "").trim();
-			mapAttributes.put(name, value);
 		}
+		LOGGER.debug("OCCI Attributes received: " + mapAttributes);
 		return mapAttributes;
 	}
 
 	public static List<Category> getCategories(Series<Header> headers) {
-		List<Category> listCategory = new ArrayList<Category>();
-		String[] valuesCategory = headers.getValuesArray(normalize(OCCIHeaders.CATEGORY));
-		String term = "";
-		String scheme = "";
-		String catClass = "";
-		for (int i = 0; i < valuesCategory.length; i++) {
-			String[] tokenValuesCAtegory = valuesCategory[i].split(";");
-			if (tokenValuesCAtegory.length == 3) {
-				Category category = null;
-				for (int j = 0; j < tokenValuesCAtegory.length; j++) {
-					String[] nameValue = tokenValuesCAtegory[j].split("=");
-					if (j == 0 && nameValue.length == 1) {
-						term = nameValue[0].trim();
-					} else if (nameValue[0].trim().equals(OCCIHeaders.SCHEME_CATEGORY)) {
-						scheme = nameValue[1].replace("\"", "").trim();
-					} else if (nameValue[0].trim().equals(OCCIHeaders.CLASS_CATEGORY)) {
-						catClass = nameValue[1].replace("\"", "").trim();
-					} else {
-						throw new OCCIException(ErrorType.BAD_REQUEST,
-								ResponseConstants.IRREGULAR_SYNTAX);
-					}
-				}
+		List<Category> categories = new ArrayList<Category>();
+		String[] headerValues = headers.getValuesArray(normalize(OCCIHeaders.CATEGORY));
+		for (int i = 0; i < headerValues.length; i++) {
+			String[] eachHeaderValue = headerValues[i].split(",");
+			for (int j = 0; j < eachHeaderValue.length; j++){	
 				try {
-					category = new Category(term, scheme, catClass);
+					categories.add(new Category(eachHeaderValue[j].trim()));
 				} catch (IllegalArgumentException e) {
 					throw new OCCIException(ErrorType.BAD_REQUEST,
 							ResponseConstants.IRREGULAR_SYNTAX);
-				}
-				listCategory.add(category);
-			} else {
-				throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
+				}				
 			}
 		}
-		return listCategory;
+		return categories;
 	}
 
 	public static String normalize(String headerName) {
@@ -110,12 +104,15 @@ public class HeaderUtils {
 		List<Resource> resources = ResourceRepository.getInstance().get(categories);
 
 		if (resources.size() != categories.size()) {
+			LOGGER.debug("Some categories was not found in available resources! Resources "
+					+ resources.size() + " and categories " + categories.size());
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}
 		for (Category category : categories) {
 			if (category.getTerm().equals(mandatoryTerm)) {
 				Resource resource = ResourceRepository.getInstance().get(mandatoryTerm);
 				if (resource == null || !resource.matches(category)) {
+					LOGGER.debug("There was not a matched resource to term " + mandatoryTerm);
 					throw new OCCIException(ErrorType.BAD_REQUEST,
 							ResponseConstants.IRREGULAR_SYNTAX);
 				}
@@ -142,6 +139,34 @@ public class HeaderUtils {
 		} catch (Exception e) {
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}
+	}
+
+	public static List<String> getAccept(Series<Header> headers) {
+		String[] headerValues = headers.getValuesArray(normalize(OCCIHeaders.ACCEPT));		
+		List<String> acceptContents = new ArrayList<String>();
+		for (int i = 0; i < headerValues.length; i++) {
+			String[] eachHeaderValue = headerValues[i].split(",");			
+			for (int j = 0; j < eachHeaderValue.length; j++) {
+				/*
+				 * This string represents any value, when any value we'll
+				 * consider that accept header was not specified
+				 */ 
+				if (!"*/*".equals(eachHeaderValue[j].trim())){
+					acceptContents.add(eachHeaderValue[j].trim());			
+				}
+			}
+		}		
+		return acceptContents;
+	}
+	
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public static void setResponseHeader(Response response, String header, String value) {
+		Series<Header> responseHeaders = (Series<Header>) response.getAttributes().get("org.restlet.http.headers");
+		if (responseHeaders == null) {
+			responseHeaders = new Series(Header.class);
+			response.getAttributes().put("org.restlet.http.headers", responseHeaders);
+		}		
+		responseHeaders.add(new Header(normalize(header), value));
 	}
 
 }

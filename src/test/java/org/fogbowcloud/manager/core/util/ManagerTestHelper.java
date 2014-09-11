@@ -20,13 +20,14 @@ import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.DefaultMemberValidator;
 import org.fogbowcloud.manager.core.FederationMemberValidator;
 import org.fogbowcloud.manager.core.ManagerController;
+import org.fogbowcloud.manager.core.UserdataUtils;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
+import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.openstack.OpenStackIdentityPlugin;
-import org.fogbowcloud.manager.core.ssh.SSHTunnel;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
@@ -48,12 +49,14 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 	private ManagerXmppComponent managerXmppComponent;
 	private ComputePlugin computePlugin;
 	private IdentityPlugin identityPlugin;
+	private IdentityPlugin federationIdentityPlugin;
+	private AuthorizationPlugin authorizationPlugin;
 	private Token defaultToken;
 	private FakeXMPPServer fakeServer = new FakeXMPPServer();
 
 	public ManagerTestHelper() {
 		Map<String, String> tokenAttributes = new HashMap<String, String>();
-		tokenAttributes.put(OpenStackIdentityPlugin.TENANT_ID_KEY, "tenantId_r4fci3qhbcy3b");
+		tokenAttributes.put(OpenStackIdentityPlugin.TENANT_ID, "tenantId_r4fci3qhbcy3b");
 		this.defaultToken = new Token(ACCESS_TOKEN_ID, USER_NAME, TOKEN_FUTURE_EXPIRATION,
 				tokenAttributes);
 	}
@@ -84,7 +87,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 			statusEl.addElement("mem-inuse").setText(
 					rendezvousItem.getResourcesInfo().getMemInUse());
 
-			List<Flavor> flavours = rendezvousItem.getResourcesInfo().getFlavours();
+			List<Flavor> flavours = rendezvousItem.getResourcesInfo().getFlavors();
 			for (Flavor f : flavours) {
 				Element flavorElement = statusEl.addElement("flavor");
 				flavorElement.addElement("name").setText(f.getName());
@@ -138,8 +141,15 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 	public IdentityPlugin getIdentityPlugin() {
 		return identityPlugin;
 	}
+	
+	public IdentityPlugin getFederationIdentityPlugin() {
+		return federationIdentityPlugin;
+	}
+	
+	public AuthorizationPlugin getAuthorizationPlugin() {
+		return authorizationPlugin;
+	}
 
-	@SuppressWarnings("unchecked")
 	public ManagerXmppComponent initializeXMPPManagerComponent(boolean init) throws Exception {
 
 		this.computePlugin = Mockito.mock(ComputePlugin.class);
@@ -150,10 +160,15 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		properties.put(ConfigurationConstants.FEDERATION_USER_PASS_KEY, "fogbow");
 		properties.put(ConfigurationConstants.FEDERATION_USER_TENANT_NAME_KEY, "fogbow");
 		properties.put(ConfigurationConstants.XMPP_JID_KEY, "manager.test.com");
-
+		properties.put(ConfigurationConstants.SSH_PRIVATE_HOST_KEY,
+				DefaultDataTestHelper.SERVER_HOST);
+		properties.put(ConfigurationConstants.SSH_HOST_HTTP_PORT_KEY,
+				String.valueOf(DefaultDataTestHelper.TOKEN_SERVER_HTTP_PORT));
+		
 		ManagerController managerFacade = new ManagerController(properties);
 		managerFacade.setComputePlugin(computePlugin);
-		managerFacade.setIdentityPlugin(identityPlugin);
+		managerFacade.setLocalIdentityPlugin(identityPlugin);
+		managerFacade.setFederationIdentityPlugin(identityPlugin);
 		FederationMemberValidator validator = new DefaultMemberValidator();
 		managerFacade.setValidator(validator);
 
@@ -162,13 +177,11 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 
 		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class))).thenReturn(
 				getResources());
-
-		Mockito.when(identityPlugin.createToken(Mockito.anyMap())).thenReturn(defaultToken);
+		Mockito.when(identityPlugin.createFederationUserToken()).thenReturn(defaultToken);
 
 		managerXmppComponent.setDescription("Manager Component");
 		managerXmppComponent.setName("Manager");
 		managerXmppComponent.setRendezvousAddress(CLIENT_ADRESS + SMACK_ENDING);
-		managerXmppComponent.getManagerFacade().setSSHTunnel(Mockito.mock(SSHTunnel.class));
 		fakeServer.connect(managerXmppComponent);
 		managerXmppComponent.process();
 		if (init) {
@@ -177,7 +190,6 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		return managerXmppComponent;
 	}
 
-	@SuppressWarnings("unchecked")
 	public ManagerXmppComponent initializeLocalXMPPManagerComponent() throws Exception {
 
 		this.computePlugin = Mockito.mock(ComputePlugin.class);
@@ -191,7 +203,8 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		FederationMemberValidator validator = new DefaultMemberValidator();
 		ManagerController managerFacade = new ManagerController(properties);
 		managerFacade.setComputePlugin(computePlugin);
-		managerFacade.setIdentityPlugin(identityPlugin);
+		managerFacade.setLocalIdentityPlugin(identityPlugin);
+		managerFacade.setFederationIdentityPlugin(identityPlugin);
 		managerFacade.setValidator(validator);
 
 		managerXmppComponent = Mockito.spy(new ManagerXmppComponent(MANAGER_COMPONENT_URL,
@@ -199,8 +212,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 
 		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class))).thenReturn(
 				getResources());
-
-		Mockito.when(identityPlugin.createToken(Mockito.anyMap())).thenReturn(defaultToken);
+		Mockito.when(identityPlugin.createFederationUserToken()).thenReturn(defaultToken);
 		
 		managerXmppComponent.setDescription("Manager Component");
 		managerXmppComponent.setName("Manager");
@@ -289,6 +301,10 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 				DefaultDataTestHelper.SCHEDULER_PERIOD.toString());
 		properties.put(ConfigurationConstants.INSTANCE_MONITORING_PERIOD_KEY,
 				Long.toString(DefaultDataTestHelper.LONG_TIME));
+		properties.put(ConfigurationConstants.SSH_PRIVATE_HOST_KEY,
+				DefaultDataTestHelper.SERVER_HOST);
+		properties.put(ConfigurationConstants.SSH_HOST_HTTP_PORT_KEY,
+				String.valueOf(DefaultDataTestHelper.TOKEN_SERVER_HTTP_PORT));
 		ManagerController managerController = new ManagerController(properties,
 				Mockito.mock(ScheduledExecutorService.class));
 
@@ -299,18 +315,26 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 						Mockito.any(Map.class))).thenThrow(
 				new OCCIException(ErrorType.QUOTA_EXCEEDED,
 						ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES));
-
+		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class))).thenReturn(
+				new ResourcesInfo(DefaultDataTestHelper.MANAGER_COMPONENT_URL, 
+						"", "", "", "", new LinkedList<Flavor>(), null));
+		
 		// mocking identity
 		identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.getToken(DefaultDataTestHelper.ACCESS_TOKEN_ID)).thenReturn(
 				defaultToken);
+		
+		federationIdentityPlugin = Mockito.mock(IdentityPlugin.class);
+		Mockito.when(federationIdentityPlugin.getToken(DefaultDataTestHelper.ACCESS_TOKEN_ID))
+				.thenReturn(defaultToken);
 
-		// mocking sshTunnel
-		SSHTunnel sshTunnel = Mockito.mock(SSHTunnel.class);
-
-		managerController.setIdentityPlugin(identityPlugin);
+		authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
+		Mockito.when(authorizationPlugin.isAuthorized(Mockito.any(Token.class))).thenReturn(true);
+		
+		managerController.setAuthorizationPlugin(authorizationPlugin);
+		managerController.setLocalIdentityPlugin(identityPlugin);
+		managerController.setFederationIdentityPlugin(federationIdentityPlugin);
 		managerController.setComputePlugin(computePlugin);
-		managerController.setSSHTunnel(sshTunnel);
 
 		return managerController;
 	}
@@ -318,5 +342,4 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 	public Token getDefaultToken() {
 		return defaultToken;
 	}
-
 }

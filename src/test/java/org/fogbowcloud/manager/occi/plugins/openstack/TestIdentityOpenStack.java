@@ -1,10 +1,11 @@
-package org.fogbowcloud.manager.occi.plugins;
+package org.fogbowcloud.manager.occi.plugins.openstack;
 
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.openstack.OpenStackIdentityPlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.core.OCCIException;
@@ -25,7 +26,8 @@ public class TestIdentityOpenStack {
 	@Before
 	public void setUp() throws Exception {
 		Properties properties = new Properties();
-		properties.put("identity_openstack_url", KEYSTONE_URL);
+		properties.put(ConfigurationConstants.IDENTITY_URL, KEYSTONE_URL);
+		
 		this.identityOpenStack = new OpenStackIdentityPlugin(properties);
 		this.pluginHelper = new PluginHelper();
 		this.pluginHelper.initializeKeystoneComponent();
@@ -61,13 +63,13 @@ public class TestIdentityOpenStack {
 	@Test
 	public void testGetToken() {
 		Map<String, String> tokenAttributes = new HashMap<String, String>();
-		tokenAttributes.put(OpenStackIdentityPlugin.USER_KEY, PluginHelper.USERNAME);
-		tokenAttributes.put(OpenStackIdentityPlugin.PASSWORD_KEY, PluginHelper.USER_PASS);
-		tokenAttributes.put(OpenStackIdentityPlugin.TENANT_NAME_KEY, PluginHelper.TENANT_NAME);
+		tokenAttributes.put(OpenStackIdentityPlugin.USERNAME, PluginHelper.USERNAME);
+		tokenAttributes.put(OpenStackIdentityPlugin.PASSWORD, PluginHelper.USER_PASS);
+		tokenAttributes.put(OpenStackIdentityPlugin.TENANT_NAME, PluginHelper.TENANT_NAME);
 		Token token = this.identityOpenStack.createToken(tokenAttributes);
 		String authToken = token.getAccessId();
 		String user = token.getUser();
-		String tenantID = token.get(OpenStackIdentityPlugin.TENANT_ID_KEY);
+		String tenantID = token.get(OpenStackIdentityPlugin.TENANT_ID);
 		Date expirationDate = token.getExpirationDate();
 		Assert.assertEquals(PluginHelper.ACCESS_ID, authToken);
 		Assert.assertEquals(PluginHelper.USERNAME, user);		
@@ -80,12 +82,12 @@ public class TestIdentityOpenStack {
 	@Test
 	public void testUpgradeToken() {
 		Map<String, String> tokenAttributes = new HashMap<String, String>();
-		tokenAttributes.put(OpenStackIdentityPlugin.USER_KEY, PluginHelper.USERNAME);
-		tokenAttributes.put(OpenStackIdentityPlugin.PASSWORD_KEY, PluginHelper.USER_PASS);
-		tokenAttributes.put(OpenStackIdentityPlugin.TENANT_NAME_KEY, PluginHelper.TENANT_NAME);
+		tokenAttributes.put(OpenStackIdentityPlugin.USERNAME, PluginHelper.USERNAME);
+		tokenAttributes.put(OpenStackIdentityPlugin.PASSWORD, PluginHelper.USER_PASS);
+		tokenAttributes.put(OpenStackIdentityPlugin.TENANT_NAME, PluginHelper.TENANT_NAME);
 		Token token = this.identityOpenStack.createToken(tokenAttributes);
 		String authToken = token.getAccessId();
-		String tenantID = token.get(OpenStackIdentityPlugin.TENANT_ID_KEY);
+		String tenantID = token.get(OpenStackIdentityPlugin.TENANT_ID);
 		Date expirationDate = token.getExpirationDate();
 		Assert.assertEquals(PluginHelper.ACCESS_ID, authToken);
 		Assert.assertEquals(PluginHelper.TENANT_ID, tenantID);
@@ -95,7 +97,7 @@ public class TestIdentityOpenStack {
 		
 		Token token2 = this.identityOpenStack.reIssueToken(token);
 		authToken = token2.getAccessId();
-		tenantID = token2.get(OpenStackIdentityPlugin.TENANT_ID_KEY);
+		tenantID = token2.get(OpenStackIdentityPlugin.TENANT_ID);
 		expirationDate = token2.getExpirationDate();
 		Assert.assertEquals(PluginHelper.ACCESS_ID, authToken);
 		Assert.assertEquals(PluginHelper.TENANT_ID, tenantID);
@@ -107,18 +109,18 @@ public class TestIdentityOpenStack {
 	@Test(expected = OCCIException.class)
 	public void testGetTokenWrongUsername() {
 		Map<String, String> tokenAttributes = new HashMap<String, String>();
-		tokenAttributes.put(OpenStackIdentityPlugin.USER_KEY, "wrong");
-		tokenAttributes.put(OpenStackIdentityPlugin.PASSWORD_KEY, PluginHelper.USER_PASS);
-		tokenAttributes.put(OpenStackIdentityPlugin.TENANT_NAME_KEY, "");
+		tokenAttributes.put(OpenStackIdentityPlugin.USERNAME, "wrong");
+		tokenAttributes.put(OpenStackIdentityPlugin.PASSWORD, PluginHelper.USER_PASS);
+		tokenAttributes.put(OpenStackIdentityPlugin.TENANT_NAME, "");
 		this.identityOpenStack.createToken(tokenAttributes);
 	}
 
 	@Test(expected = OCCIException.class)
 	public void testGetTokenWrongPassword() {
 		Map<String, String> tokenAttributes = new HashMap<String, String>();
-		tokenAttributes.put(OpenStackIdentityPlugin.USER_KEY, PluginHelper.USERNAME);
-		tokenAttributes.put(OpenStackIdentityPlugin.PASSWORD_KEY, "worng");
-		tokenAttributes.put(OpenStackIdentityPlugin.TENANT_NAME_KEY, "");
+		tokenAttributes.put(OpenStackIdentityPlugin.USERNAME, PluginHelper.USERNAME);
+		tokenAttributes.put(OpenStackIdentityPlugin.PASSWORD, "worng");
+		tokenAttributes.put(OpenStackIdentityPlugin.TENANT_NAME, "");
 		this.identityOpenStack.createToken(tokenAttributes);
 	}
 }

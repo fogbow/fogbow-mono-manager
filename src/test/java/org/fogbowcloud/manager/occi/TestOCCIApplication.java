@@ -6,10 +6,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.ManagerController;
+import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
-import org.fogbowcloud.manager.core.ssh.SSHTunnel;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
@@ -40,6 +41,11 @@ public class TestOCCIApplication {
 	public void setUp() {
 		Properties properties = new Properties();
 		properties.put("scheduler_period", SCHEDULER_PERIOD.toString());
+		properties.put(ConfigurationConstants.SSH_PRIVATE_HOST_KEY,
+				DefaultDataTestHelper.SERVER_HOST);
+		properties.put(ConfigurationConstants.SSH_HOST_HTTP_PORT_KEY,
+				String.valueOf(DefaultDataTestHelper.TOKEN_SERVER_HTTP_PORT));
+		
 		managerFacade = new ManagerController(properties);
 		occiApplication = new OCCIApplication(managerFacade);
 
@@ -62,11 +68,13 @@ public class TestOCCIApplication {
 
 		Mockito.when(identityPlugin.getToken(Mockito.anyString())).thenReturn(userToken);
 
-		SSHTunnel sshTunnel = Mockito.mock(SSHTunnel.class);
-
-		managerFacade.setIdentityPlugin(identityPlugin);
+		AuthorizationPlugin authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
+		Mockito.when(authorizationPlugin.isAuthorized(Mockito.any(Token.class))).thenReturn(true);
+		
+		managerFacade.setAuthorizationPlugin(authorizationPlugin);
+		managerFacade.setLocalIdentityPlugin(identityPlugin);
+		managerFacade.setFederationIdentityPlugin(identityPlugin);
 		managerFacade.setComputePlugin(computePlugin);
-		managerFacade.setSSHTunnel(sshTunnel);
 	}
 
 	@Test

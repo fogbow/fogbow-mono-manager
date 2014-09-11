@@ -42,7 +42,7 @@ public class TestInstance {
 		String textResponse = "X-OCCI-Location: http://localhost:8787/compute/c1490";
 		Instance instance = Instance.parseInstance(textResponse);
 
-		Assert.assertEquals(textResponse, instance.toOCCIMassageFormatLocation());
+		Assert.assertEquals(textResponse, instance.toOCCIMessageFormatLocation());
 	}
 
 	@Test
@@ -53,7 +53,7 @@ public class TestInstance {
 		textResponse += getFormatedAttributes();
 		Instance instance = Instance.parseInstance("id", textResponse);
 
-		Assert.assertEquals(textResponse, instance.toOCCIMassageFormatDetails());
+		Assert.assertEquals(textResponse, instance.toOCCIMessageFormatDetails());
 	}
 
 	@Test
@@ -61,7 +61,7 @@ public class TestInstance {
 		String textResponse = getFormatedAttributes();
 		Instance instance = Instance.parseInstance("id", textResponse);
 
-		Assert.assertEquals(textResponse, instance.toOCCIMassageFormatDetails());
+		Assert.assertEquals(textResponse, instance.toOCCIMessageFormatDetails());
 	}
 
 	@Test
@@ -69,7 +69,7 @@ public class TestInstance {
 		String textResponse = getFormatedResources();
 		Instance instance = Instance.parseInstance("id", textResponse);
 
-		Assert.assertEquals(textResponse, instance.toOCCIMassageFormatDetails());
+		Assert.assertEquals(textResponse, instance.toOCCIMessageFormatDetails());
 	}
 
 	@Test
@@ -79,6 +79,28 @@ public class TestInstance {
 		instance.addAttribute("key2", "value2");
 		Assert.assertEquals(2, instance.getAttributes().size());
 	}
+	
+	@Test
+	public void testOCCIDetails() {
+		String id = "101";
+		Map<String, String> attributes = new HashMap<String, String>();
+		attributes.put("key1", "value1");
+		attributes.put("key2", "value2");
+		List<Resource> resources = new ArrayList<Resource>();
+		resources
+				.add(new Resource(
+						"os_tpl; scheme=\"http://schemas.ogf.org/occi/infrastructure#\"; class=\"mixin\"; location=\"http://localhost:8182/os_tpl/\", null"));
+		List<Link> links = new ArrayList<Link>();
+
+		Instance instance = new Instance(id, resources, attributes, links);
+		Assert.assertEquals("101", instance.getId());
+		Assert.assertEquals(2, instance.getAttributes().size());
+		Assert.assertEquals(0, instance.getLinks().size());
+		Assert.assertEquals(1, instance.getResources().size());
+	}
+	
+	
+	
 
 	private String getFormatedResources() {
 		String textResponse = "";

@@ -2,18 +2,26 @@ package org.fogbowcloud.manager.occi;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
+import org.apache.http.HttpStatus;
 import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.occi.core.Category;
+import org.fogbowcloud.manager.occi.core.HeaderUtils;
+import org.fogbowcloud.manager.occi.core.Resource;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.instance.ComputeServerResource;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.request.Request;
+import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.fogbowcloud.manager.occi.request.RequestServerResource;
 import org.restlet.Application;
+import org.restlet.Response;
 import org.restlet.Restlet;
+import org.restlet.engine.header.HeaderConstants;
 import org.restlet.routing.Router;
+import org.restlet.util.Series;
 
 public class OCCIApplication extends Application {
 
@@ -26,16 +34,56 @@ public class OCCIApplication extends Application {
 	@Override
 	public Restlet createInboundRoot() {
 		Router router = new Router(getContext());
-		router.attach("/request", RequestServerResource.class);
-		router.attach("/request/", RequestServerResource.class);
-		router.attach("/request/{requestId}", RequestServerResource.class);
+		router.attach("/" + RequestConstants.TERM, RequestServerResource.class);
+		router.attach("/" + RequestConstants.TERM + "/", RequestServerResource.class);
+		router.attach("/" + RequestConstants.TERM + "/{requestId}", RequestServerResource.class);
 		router.attach("/compute", ComputeServerResource.class);
 		router.attach("/compute/", ComputeServerResource.class);
 		router.attach("/compute/{instanceId}", ComputeServerResource.class);
 		router.attach("/members", MemberServerResource.class);
 		router.attach("/token", TokenServerResource.class);
 		router.attach("/-/", QueryServerResource.class);
+		router.attachDefault(new Restlet() {
+			@Override
+			public void handle(org.restlet.Request request, Response response) {
+				bypass(request, new Response(request));				
+			}
+		});
 		return router;
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public void handle(org.restlet.Request request, Response response) {
+		super.handle(request, response);
+		
+		/*
+		 * The request will be bypassed only if response status was
+		 * Method_NOT_ALLOWED and request path is not fogbow_request. Local
+		 * private cloud does not treat fogbow_request requests.
+		 */
+		if (response.getStatus().getCode() == HttpStatus.SC_METHOD_NOT_ALLOWED
+				&& !request.getOriginalRef().getPath().startsWith("/" + RequestConstants.TERM)) {
+		
+			Response newResponse = new Response(request);
+			bypass(request, newResponse);
+
+			Series<org.restlet.engine.header.Header> responseHeaders = (Series<org.restlet.engine.header.Header>) newResponse
+					.getAttributes().get("org.restlet.http.headers");
+			if (responseHeaders != null){
+				//removing restlet default headers that will be added automatically
+				responseHeaders.removeAll(HeaderUtils.normalize(HeaderConstants.HEADER_CONTENT_LENGTH));
+				responseHeaders.removeAll(HeaderUtils.normalize(HeaderConstants.HEADER_CONTENT_TYPE));
+				responseHeaders.removeAll(HeaderUtils.normalize(HeaderConstants.HEADER_DATE));
+				responseHeaders.removeAll(HeaderUtils.normalize(HeaderConstants.HEADER_SERVER));
+				responseHeaders.removeAll(HeaderUtils.normalize(HeaderConstants.HEADER_VARY));
+				responseHeaders.removeAll(HeaderUtils.normalize(HeaderConstants.HEADER_ACCEPT_RANGES));
+				newResponse.getAttributes().put("org.restlet.http.headers", responseHeaders);
+			} 
+			response.setEntity(newResponse.getEntity());
+			response.setStatus(newResponse.getStatus());
+			response.setAttributes(newResponse.getAttributes());
+		}		
 	}
 	
 	public Token getToken(Map<String, String> attributesToken) {
@@ -81,5 +129,21 @@ public class OCCIApplication extends Application {
 
 	public void removeInstance(String authToken, String instanceId) {
 		managerFacade.removeInstance(authToken, instanceId);
+	}
+
+	public List<Resource> getAllResources(String authToken) {
+		return managerFacade.getAllResouces(authToken);
+	}
+
+	public void bypass(org.restlet.Request request, Response response) {
+		managerFacade.bypass(request, response);
+	}
+
+	public String getAuthenticationURI() {
+		return managerFacade.getAuthenticationURI();
+	}
+	
+	public Properties getProperties() {
+		return managerFacade.getProperties();
 	}
 }

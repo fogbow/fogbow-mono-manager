@@ -60,6 +60,45 @@ public class TestResource {
 				+ "attributes=\"attribute1 attribute2\"; actions=\"action1 action2\"";
 		Assert.assertEquals(testString, resource.toHeader());
 	}
+	
+	@Test
+	public void testConstructorResourceStr(){
+		String resourceStr = "compute; scheme=\"http://schemas.ogf.org/occi/infrastructure#\"; class=\"kind\"; "
+				+ "title=\"Compute Resource\"; rel=\"http://schemas.ogf.org/occi/core#resource\"; "
+				+ "location=\"http://localhost:8787/compute/\"; attributes=\"occi.compute.architecture occi.compute.state{immutable} "
+				+ "occi.compute.speed occi.compute.memory occi.compute.cores occi.compute.hostname\"; "
+				+ "actions=\"http://schemas.ogf.org/occi/infrastructure/compute/action#start "
+				+ "http://schemas.ogf.org/occi/infrastructure/compute/action#stop "
+				+ "http://schemas.ogf.org/occi/infrastructure/compute/action#restart "
+				+ "http://schemas.ogf.org/occi/infrastructure/compute/action#suspend";
+		Resource resource = new Resource(resourceStr);
+		
+		Assert.assertEquals(new Category("compute", "http://schemas.ogf.org/occi/infrastructure#",
+				"kind"), resource.getCategory());
+		Assert.assertEquals("Compute Resource", resource.getTitle());
+		Assert.assertEquals("http://localhost:8787/compute/", resource.getLocation());
+		Assert.assertEquals("http://schemas.ogf.org/occi/core#resource", resource.getRel());
+		
+		List<String> attributes = new ArrayList<String>();
+		attributes.add("occi.compute.architecture");
+		attributes.add("occi.compute.state{immutable}");
+		attributes.add("occi.compute.speed");
+		attributes.add("occi.compute.memory");
+		attributes.add("occi.compute.cores");
+		attributes.add("occi.compute.hostname");
+		for (String attribute : attributes) {
+			Assert.assertTrue(resource.getAttributes().contains(attribute));
+		}
+		
+		List<String> actions = new ArrayList<String>();
+		actions.add("http://schemas.ogf.org/occi/infrastructure/compute/action#start");
+		actions.add("http://schemas.ogf.org/occi/infrastructure/compute/action#stop");
+		actions.add("http://schemas.ogf.org/occi/infrastructure/compute/action#restart");
+		actions.add("http://schemas.ogf.org/occi/infrastructure/compute/action#suspend");
+		for (String action : actions) {
+			Assert.assertTrue(resource.getActions().contains(action));
+		}
+	}
 
 	@Test
 	public void testContainsAttribute() {

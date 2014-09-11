@@ -1,0 +1,3 @@
+"atlas" "lcg-voms.cern.ch" "15001" "/DC=ch/DC=cern/OU=computers/CN=lcg-voms.cern.ch" "atlas" "24"
+"atlas" "voms.cern.ch" "15001" "/DC=ch/DC=cern/OU=computers/CN=voms.cern.ch" "atlas" "24"
+"atlas" "vo.racf.bnl.gov" "15003" "/DC=org/DC=doegrids/OU=Services/CN=vo.racf.bnl.gov" "atlas" "24"

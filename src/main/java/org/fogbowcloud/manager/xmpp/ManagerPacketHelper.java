@@ -59,7 +59,7 @@ public class ManagerPacketHelper {
 		statusEl.addElement("cpu-inuse").setText(resourcesInfo.getCpuInUse());
 		statusEl.addElement("mem-idle").setText(resourcesInfo.getMemIdle());
 		statusEl.addElement("mem-inuse").setText(resourcesInfo.getMemInUse());
-		List<Flavor> flavours = resourcesInfo.getFlavours();
+		List<Flavor> flavours = resourcesInfo.getFlavors();
 		for (Flavor f : flavours) {
 			Element flavorElement = statusEl.addElement("flavor");
 			flavorElement.addElement("name").setText(f.getName());
@@ -165,10 +165,11 @@ public class ManagerPacketHelper {
 		}
 
 		IQ response = (IQ) packetSender.syncSendPacket(iq);
+		if (response == null) {
+			throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
+		}
+		
 		if (response.getError() != null) {
-			if (response.getError().getCondition().equals(Condition.item_not_found)) {
-				return null;
-			}
 			raiseException(response.getError());
 		}
 
@@ -205,19 +206,25 @@ public class ManagerPacketHelper {
 	private static Instance parseInstance(Element instanceEl) {
 		String id = instanceEl.element("id").getText();
 
-		Element linkEl = instanceEl.element("link");
-		String linkName = linkEl.element("link").getText();
-		Iterator<Element> linkAttributeIterator = linkEl.elementIterator("attribute");
+		Iterator<Element> linkIterator = instanceEl.elementIterator("link");
+		List<Link> links = new ArrayList<Link>();
+		
+		while (linkIterator.hasNext()) {
+			Element linkEl = (Element) linkIterator.next();
+			String linkName = linkEl.element("link").getText();
+			Iterator<Element> linkAttributeIterator = linkEl.elementIterator("attribute");
 
-		Map<String, String> attributesLink = new HashMap<String, String>();
-		while (linkAttributeIterator.hasNext()) {
-			Element itemAttributeEl = (Element) linkAttributeIterator.next();
-			String key = itemAttributeEl.attributeValue("val");
-			String value = itemAttributeEl.getText();
-			attributesLink.put(key, value);
+			Map<String, String> attributesLink = new HashMap<String, String>();
+			while (linkAttributeIterator.hasNext()) {
+				Element itemAttributeEl = (Element) linkAttributeIterator.next();
+				String key = itemAttributeEl.attributeValue("val");
+				String value = itemAttributeEl.getText();
+				attributesLink.put(key, value);
+			}
+			Link link = new Link(linkName, attributesLink);
+			links.add(link);
 		}
-		Link link = new Link(linkName, attributesLink);
-
+		
 		Iterator<Element> resourceIterator = instanceEl.elementIterator("resource");
 		List<Resource> resources = new ArrayList<Resource>();
 		while (resourceIterator.hasNext()) {
@@ -261,7 +268,7 @@ public class ManagerPacketHelper {
 			attributes.put(key, value);
 		}
 
-		return new Instance(id, resources, attributes, link);
+		return new Instance(id, resources, attributes, links);
 	}
 
 	public static Condition getCondition(OCCIException e) {

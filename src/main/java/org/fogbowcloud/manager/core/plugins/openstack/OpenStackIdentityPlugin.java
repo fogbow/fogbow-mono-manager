@@ -22,7 +22,9 @@ import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
+import org.fogbowcloud.manager.core.plugins.util.Credential;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
@@ -35,11 +37,6 @@ import org.json.JSONObject;
 public class OpenStackIdentityPlugin implements IdentityPlugin {
 
 	public static final String OPEN_STACK_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss'Z'";
-	// keys for attributes map
-	public static final String USER_KEY = "X-Token-User";
-	public static final String PASSWORD_KEY = "X-Token-Password";
-	public static final String TENANT_ID_KEY = "X-Token-TenantId";
-	public static final String TENANT_NAME_KEY = "X-Token-TenantName";
 
 	// keystone json data
 	public static final String TENANT_NAME_PROP = "tenantName";
@@ -55,6 +52,12 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 	public static final String EXPIRES_PROP = "expires";
 	public static final String USER_PROP = "user";
 	public static final String NAME_PROP = "name";
+	
+	public static final String AUTH_URL = "authUrl";
+	public static final String USERNAME = "username";
+	public static final String PASSWORD = "password";
+	public static final String TENANT_NAME = "tenantName";
+	public static final String TENANT_ID = "tenantId";	
 
 	private static final int LAST_SUCCESSFUL_STATUS = 204;
 	private final static Logger LOGGER = Logger.getLogger(OpenStackIdentityPlugin.class);
@@ -65,16 +68,23 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 	public static String V2_TOKENS_ENDPOINT_PATH = "/v2.0/tokens";
 	public static String V2_TENANTS_ENDPOINT_PATH = "/v2.0/tenants";
 
+	private String keystoneUrl; 
 	private String v2TokensEndpoint;
 	private String v2TenantsEndpoint;
 	private DefaultHttpClient client;
+	private Properties properties;
 
 	public OpenStackIdentityPlugin(Properties properties) {
-		String keystoneUrl = properties.getProperty("identity_openstack_url");
+		this.properties = properties;
+		this.keystoneUrl = properties.getProperty(ConfigurationConstants.IDENTITY_URL);
 		this.v2TokensEndpoint = keystoneUrl + V2_TOKENS_ENDPOINT_PATH;
 		this.v2TenantsEndpoint = keystoneUrl + V2_TENANTS_ENDPOINT_PATH;
 	}
 
+	public void setProperties(Properties properties) {
+		this.properties = properties;
+	}
+	
 	@Override
 	public Token createToken(Map<String, String> credentials) {
 		JSONObject json;
@@ -85,17 +95,22 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}
 
+		String authUrl = credentials.get(AUTH_URL); 
+		if (authUrl != null && !authUrl.isEmpty()) {
+			v2TokensEndpoint = authUrl + V2_TOKENS_ENDPOINT_PATH;
+		}
+		
 		String responseStr = doPostRequest(v2TokensEndpoint, json);
 		return getTokenFromJson(responseStr);
 	}
-
+	
 	private JSONObject mountJson(Map<String, String> credentials) throws JSONException {
 		JSONObject passwordCredentials = new JSONObject();
-		passwordCredentials.put(USERNAME_PROP, credentials.get(OpenStackIdentityPlugin.USER_KEY));
+		passwordCredentials.put(USERNAME_PROP, credentials.get(USERNAME));
 		passwordCredentials.put(PASSWORD_PROP,
-				credentials.get(OpenStackIdentityPlugin.PASSWORD_KEY));
+				credentials.get(PASSWORD));
 		JSONObject auth = new JSONObject();
-		auth.put(TENANT_NAME_PROP, credentials.get(TENANT_NAME_KEY));
+		auth.put(TENANT_NAME_PROP, credentials.get(TENANT_NAME));
 		auth.put(PASSWORD_CREDENTIALS_PROP, passwordCredentials);
 		JSONObject root = new JSONObject();
 		root.put(AUTH_PROP, auth);
@@ -151,7 +166,7 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 		JSONObject idToken = new JSONObject();
 		idToken.put(ID_PROP, token.getAccessId());
 		JSONObject auth = new JSONObject();
-		auth.put(TENANT_NAME_PROP, token.get(TENANT_NAME_KEY));
+		auth.put(TENANT_NAME_PROP, token.get(TENANT_NAME));
 		auth.put(TOKEN_PROP, idToken);
 		JSONObject root = new JSONObject();
 		root.put(AUTH_PROP, auth);
@@ -179,8 +194,8 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 			try {
 				tenantId = tokenKeyStone.getJSONObject(TENANT_PROP).getString(ID_PROP);
 				tenantName = tokenKeyStone.getJSONObject(TENANT_PROP).getString(NAME_PROP);
-				tokenAtt.put(TENANT_ID_KEY, tenantId);
-				tokenAtt.put(TENANT_NAME_KEY, tenantName);
+				tokenAtt.put(TENANT_ID, tenantId);
+				tokenAtt.put(TENANT_NAME, tenantName);
 			} catch (JSONException e) {
 				LOGGER.debug("There are not tenant properties on json.");
 			}
@@ -285,4 +300,30 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 			return null;
 		}
 	}
-}
+
+	@Override
+	public Token createFederationUserToken() {
+		Map<String, String> federationUserCredentials = new HashMap<String, String>();
+		String username = properties.getProperty(ConfigurationConstants.FEDERATION_USER_NAME_KEY);
+		String password = properties.getProperty(ConfigurationConstants.FEDERATION_USER_PASS_KEY);
+		String tenantName = properties
+				.getProperty(ConfigurationConstants.FEDERATION_USER_TENANT_NAME_KEY);
+		federationUserCredentials.put(USERNAME, username);
+		federationUserCredentials.put(PASSWORD, password);
+		federationUserCredentials.put(TENANT_NAME, tenantName);
+		
+		return createToken(federationUserCredentials);
+	}
+
+	@Override
+	public Credential[] getCredentials() {
+		return new Credential[] { new Credential(USERNAME, true, null),
+				new Credential(PASSWORD, true, null), new Credential(TENANT_NAME, true, null),
+				new Credential(AUTH_URL, true, null) };
+	}
+
+	@Override
+	public String getAuthenticationURI() {
+		return "Keystone uri='" + keystoneUrl +"'";
+	}	
+ }

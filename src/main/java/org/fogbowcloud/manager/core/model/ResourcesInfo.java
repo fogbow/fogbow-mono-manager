@@ -10,7 +10,7 @@ public class ResourcesInfo {
 	private String cpuInUse;
 	private String memIdle;
 	private String memInUse;
-	private List<Flavor> flavours;
+	private List<Flavor> flavors;
 	private X509Certificate cert;
 	
 	public ResourcesInfo(String id, String cpuIdle, String cpuInUse,
@@ -85,12 +85,12 @@ public class ResourcesInfo {
 		this.memInUse = memInUse;
 	}
 
-	public List<Flavor> getFlavours() {
-		return flavours;
+	public List<Flavor> getFlavors() {
+		return flavors;
 	}
 
-	public void setFlavours(List<Flavor> flavours) {
-		this.flavours = flavours;
+	public void setFlavours(List<Flavor> flavors) {
+		this.flavors = flavors;
 	}
 
 	public X509Certificate getCert() {

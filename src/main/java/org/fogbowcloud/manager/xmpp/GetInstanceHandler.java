@@ -48,13 +48,15 @@ public class GetInstanceHandler extends AbstractQueryHandler {
 		Element instanceEl = queryEl.addElement("instance");
 		instanceEl.addElement("id").setText(instanceId);
 		
-		Element linkEl = instanceEl.addElement("link");
-		Link link = instance.getLink();
-		linkEl.addElement("link").setText(link.getName());
-		for (Entry<String, String> linkAtt : link.getAttributes().entrySet()) {
-			Element attributeEl = linkEl.addElement("attribute");
-			attributeEl.addAttribute("val", linkAtt.getKey());
-			attributeEl.setText(linkAtt.getValue());
+		List<Link> links = instance.getLinks();
+		for (Link link : links) {
+			Element linkEl = instanceEl.addElement("link");
+			linkEl.addElement("link").setText(link.getName());
+			for (Entry<String, String> linkAtt : link.getAttributes().entrySet()) {
+				Element attributeEl = linkEl.addElement("attribute");
+				attributeEl.addAttribute("val", linkAtt.getKey());
+				attributeEl.setText(linkAtt.getValue());
+			}
 		}
 		
 		List<Resource> resources = instance.getResources();

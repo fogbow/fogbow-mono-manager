@@ -12,6 +12,7 @@ import java.util.Map;
 import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
+import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.openstack.OpenStackComputePlugin;
@@ -62,18 +63,108 @@ public class TestManagerController {
 	}
 
 	@Test
+	public void testAuthorizedUser() {		
+		Token tokenFromFederationIdP = managerController
+				.getTokenFromFederationIdP(DefaultDataTestHelper.ACCESS_TOKEN_ID);
+		
+		Assert.assertEquals(managerTestHelper.getDefaultToken().getAccessId(),
+				tokenFromFederationIdP.getAccessId());
+	}
+	
+	@Test(expected=OCCIException.class)
+	public void testUnauthorizedUser() {
+		AuthorizationPlugin authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
+		Mockito.when(authorizationPlugin.isAuthorized(Mockito.any(Token.class))).thenReturn(false);
+		managerController.setAuthorizationPlugin(authorizationPlugin);
+		
+		managerController.getTokenFromFederationIdP(DefaultDataTestHelper.ACCESS_TOKEN_ID);		
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Test
+	public void testSubmitLocalUserRequests() throws InterruptedException {
+		final String localUserAccessId = "Local-User-Access-Id";
+		final String localUser = "localUser";
+		Token localToken = new Token(localUserAccessId, localUser, new Date(),
+				new HashMap<String, String>());
+
+		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
+		Mockito.when(
+				computePlugin.requestInstance(Mockito.eq(localUserAccessId), Mockito.anyList(),
+						Mockito.anyMap())).thenReturn("newinstanceid");
+		managerController.setComputePlugin(computePlugin);
+
+		checkRequestPerUserToken(localToken);
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Test
+	public void testSubmitFederationUserRequests() throws InterruptedException {
+		final String federationUserAccessId = "Federation-User-Access-Id";
+		final String federationUser = "federationUser";
+		Token federationToken = new Token(federationUserAccessId, federationUser, new Date(),
+				new HashMap<String, String>());
+
+		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
+		Mockito.when(
+				computePlugin.requestInstance(Mockito.eq(federationUserAccessId),
+						Mockito.anyList(), Mockito.anyMap()))
+				.thenThrow(new OCCIException(ErrorType.UNAUTHORIZED, ""))
+				.thenReturn("newinstanceid")
+				.thenThrow(new OCCIException(ErrorType.UNAUTHORIZED, ""))
+				.thenReturn("newinstanceid");
+		managerController.setComputePlugin(computePlugin);
+
+		List<FederationMember> listMembers = new ArrayList<FederationMember>();
+		ResourcesInfo resourseInfo = new ResourcesInfo("", "", "", "", null, null);
+		resourseInfo.setId(DefaultDataTestHelper.MANAGER_COMPONENT_URL);
+		FederationMember federationMember = new FederationMember(resourseInfo);
+		listMembers.add(federationMember);
+		managerController.updateMembers(listMembers);
+
+		checkRequestPerUserToken(federationToken);
+	}
+
+	private void checkRequestPerUserToken(Token token) {
+		IdentityPlugin identityPlugin = managerTestHelper.getIdentityPlugin();
+		IdentityPlugin federationIdentityPlugin = managerTestHelper.getFederationIdentityPlugin();
+		Mockito.when(federationIdentityPlugin.getToken(token.getAccessId())).thenReturn(token);
+		Mockito.when(identityPlugin.createFederationUserToken()).thenReturn(token);
+		managerController.setLocalIdentityPlugin(identityPlugin);
+		managerController.setFederationIdentityPlugin(federationIdentityPlugin);
+
+		Request request1 = new Request("id1", token, new ArrayList<Category>(),
+				new HashMap<String, String>());
+		request1.setState(RequestState.OPEN);
+		Request request2 = new Request("id2", token, new ArrayList<Category>(),
+				new HashMap<String, String>());
+		request2.setState(RequestState.OPEN);
+		RequestRepository requestRepository = new RequestRepository();
+		requestRepository.addRequest(token.getUser(), request1);
+		requestRepository.addRequest(token.getUser(), request2);
+		managerController.setRequests(requestRepository);
+
+		managerController.checkAndSubmitOpenRequests();
+
+		List<Request> requestsFromUser = managerController.getRequestsFromUser(token.getAccessId());
+		for (Request request : requestsFromUser) {
+			Assert.assertEquals(RequestState.FULFILLED, request.getState());
+		}
+	}
+	
+	@Test
 	public void testGetFederationMember() throws InterruptedException {
 		Map<String, String> tokenCredentials = new HashMap<String, String>();
-		tokenCredentials.put(OpenStackIdentityPlugin.USER_KEY, DefaultDataTestHelper.USER_NAME);
-		tokenCredentials.put(OpenStackIdentityPlugin.PASSWORD_KEY, DefaultDataTestHelper.USER_PASS);
-		tokenCredentials.put(OpenStackIdentityPlugin.TENANT_NAME_KEY,
+		tokenCredentials.put(OpenStackIdentityPlugin.USERNAME, DefaultDataTestHelper.USER_NAME);
+		tokenCredentials.put(OpenStackIdentityPlugin.PASSWORD, DefaultDataTestHelper.USER_PASS);
+		tokenCredentials.put(OpenStackIdentityPlugin.TENANT_NAME,
 				DefaultDataTestHelper.TENANT_NAME);
 
 		long tokenExpirationTime = System.currentTimeMillis() + 500;
 
 		Map<String, String> attributesTokenReturn = new HashMap<String, String>();
-		attributesTokenReturn.put(OpenStackIdentityPlugin.TENANT_ID_KEY, "987654321");
-		attributesTokenReturn.put(OpenStackIdentityPlugin.TENANT_NAME_KEY,
+		attributesTokenReturn.put(OpenStackIdentityPlugin.TENANT_ID, "987654321");
+		attributesTokenReturn.put(OpenStackIdentityPlugin.TENANT_NAME,
 				DefaultDataTestHelper.TENANT_NAME);
 
 		Token firstToken = new Token(DefaultDataTestHelper.ACCESS_TOKEN_ID,
@@ -85,11 +176,13 @@ public class TestManagerController {
 		// mocking identity plugin
 		OpenStackIdentityPlugin openStackidentityPlugin = Mockito
 				.mock(OpenStackIdentityPlugin.class);
+		Mockito.when(openStackidentityPlugin.createFederationUserToken()).thenReturn(firstToken,
+				secondToken);
 		Mockito.when(openStackidentityPlugin.createToken(tokenCredentials)).thenReturn(firstToken,
 				secondToken);
 		Mockito.when(openStackidentityPlugin.isValid(DefaultDataTestHelper.ACCESS_TOKEN_ID))
 				.thenReturn(true, false);
-		managerController.setIdentityPlugin(openStackidentityPlugin);
+		managerController.setLocalIdentityPlugin(openStackidentityPlugin);
 
 		// Get new token
 		Token federationUserToken = managerController.getFederationUserToken();
@@ -347,7 +440,7 @@ public class TestManagerController {
 		attributes.put(RequestAttribute.TYPE.getValue(), RequestType.PERSISTENT.getValue());
 
 		// setting request repository
-		Request request1 = new Request("id1", managerTestHelper.getDefaultToken(), null, attributes);
+		Request request1 = new Request("id1", managerTestHelper.getDefaultToken(), new ArrayList<Category>(), attributes);
 		request1.setState(RequestState.FULFILLED);
 
 		RequestRepository requestRepository = new RequestRepository();
@@ -447,7 +540,8 @@ public class TestManagerController {
 	@Test
 	public void testGet0ItemsFromIQ() {
 		managerController.updateMembers(new LinkedList<FederationMember>());
-		Assert.assertEquals(0, managerController.getMembers().size());
+		// There is a single member which is the manager itself
+		Assert.assertEquals(1, managerController.getMembers().size());
 	}
 
 	@Test
@@ -458,9 +552,10 @@ public class TestManagerController {
 		managerController.updateMembers(items);
 
 		List<FederationMember> members = managerController.getMembers();
-		Assert.assertEquals(1, members.size());
+		Assert.assertEquals(2, members.size());
 		Assert.assertEquals("abc", members.get(0).getResourcesInfo().getId());
-		Assert.assertEquals(1, managerController.getMembers().size());
+		Assert.assertEquals(DefaultDataTestHelper.MANAGER_COMPONENT_URL, 
+				members.get(1).getResourcesInfo().getId());
 	}
 
 	@Test
@@ -472,11 +567,12 @@ public class TestManagerController {
 		managerController.updateMembers(items);
 
 		List<FederationMember> members = managerController.getMembers();
-		Assert.assertEquals(10, members.size());
+		Assert.assertEquals(11, members.size());
 		for (int i = 0; i < 10; i++) {
 			Assert.assertEquals("abc", members.get(0).getResourcesInfo().getId());
 		}
-		Assert.assertEquals(10, managerController.getMembers().size());
+		Assert.assertEquals(DefaultDataTestHelper.MANAGER_COMPONENT_URL, 
+				members.get(10).getResourcesInfo().getId());
 	}
 
 	@Test
@@ -1042,7 +1138,6 @@ public class TestManagerController {
 		Assert.assertNull(requests.get(0).getMemberId());
 	}
 
-	@SuppressWarnings("unchecked")
 	@Test
 	public void testSubmitRequestForRemoteMemberValidation() {
 		ResourcesInfo resources = Mockito.mock(ResourcesInfo.class);
@@ -1052,7 +1147,7 @@ public class TestManagerController {
 		Mockito.doReturn(resources).when(member).getResourcesInfo();
 		List<FederationMember> list = new LinkedList<FederationMember>();
 		list.add(member);
-		managerController.setMembers(list);
+		managerController.updateMembers(list);
 
 		RestrictCAsMemberValidator validatorMock = Mockito.mock(RestrictCAsMemberValidator.class);
 		Mockito.doReturn(true).when(validatorMock).canDonateTo(member);
@@ -1062,19 +1157,23 @@ public class TestManagerController {
 		Mockito.doReturn(null).when(token).getAccessId();
 
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
-		Mockito.when(identityPlugin.createToken(Mockito.anyMap())).thenReturn(token);
-		managerController.setIdentityPlugin(identityPlugin);
+		Mockito.when(identityPlugin.createFederationUserToken()).thenReturn(token);
+		managerController.setLocalIdentityPlugin(identityPlugin);
 
 		ComputePlugin plugin = Mockito.mock(OpenStackComputePlugin.class);
-		Mockito.doReturn("answer").when(plugin).requestInstance(null, null, null);
+		Map<String, String> xOCCIAtt = new HashMap<String, String>();
+		List<Category> categories = new ArrayList<Category>();
+		categories.add(new Category(RequestConstants.USER_DATA_TERM,
+						RequestConstants.SCHEME, RequestConstants.MIXIN_CLASS));
+		Mockito.doReturn("answer").when(plugin).requestInstance(null, categories, xOCCIAtt);
 
 		managerController.setComputePlugin(plugin);
 		Assert.assertEquals("answer",
-				managerController.createInstanceForRemoteMember("abc", null, null));
+				managerController.createInstanceForRemoteMember("abc", new ArrayList<Category>(), xOCCIAtt));
 
 		Mockito.doReturn(false).when(validatorMock).canDonateTo(member);
 		managerController.setValidator(validatorMock);
 		Assert.assertEquals(null,
-				managerController.createInstanceForRemoteMember("abc", null, null));
+				managerController.createInstanceForRemoteMember("abc", null, xOCCIAtt));
 	}
 }

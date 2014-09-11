@@ -89,8 +89,8 @@ public class RequestRepository {
 			while (iterator.hasNext()) {
 				Request request = (Request) iterator.next();
 				if (request.getId().equals(requestId)) {
-					if (request.getState().equals(RequestState.CLOSED)){
-						LOGGER.debug("Request " + requestId + " is already closed. Excluding request.");
+					if (request.getState().equals(RequestState.CLOSED)) { 
+						LOGGER.debug("Request " + requestId + " does not have an instance. Excluding request.");
 						iterator.remove();
 					} else {
 						request.setState(RequestState.DELETED);

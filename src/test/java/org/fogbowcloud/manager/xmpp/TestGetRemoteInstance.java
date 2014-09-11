@@ -57,8 +57,10 @@ public class TestGetRemoteInstance {
 		attributes.put("key", "value");
 
 		Link link = new Link("linkname", attributes);
+		List<Link> links = new ArrayList<Link>();
+		links.add(link);
 
-		return new Instance(DefaultDataTestHelper.INSTANCE_ID, resources, attributes, link);
+		return new Instance(DefaultDataTestHelper.INSTANCE_ID, resources, attributes, links);
 	}
 
 	@Test
@@ -88,10 +90,10 @@ public class TestGetRemoteInstance {
 		Assert.assertEquals(instance.getAttributes(), remoteInstance.getAttributes());
 		Assert.assertEquals(instance.getResources().get(0).toHeader(), remoteInstance
 				.getResources().get(0).toHeader());
-		Assert.assertEquals(instance.getLink().getName(), remoteInstance.getLink().getName());
+		Assert.assertEquals(instance.getLinks().get(0).getName(), remoteInstance.getLinks().get(0).getName());
 	}
 
-	@Test
+	@Test(expected=OCCIException.class)
 	public void testGetRemoteInstaceNotFound() throws Exception {
 		Request request = new Request("anyvalue", new Token(WRONG_TOKEN, OCCITestHelper.USER_MOCK,
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), null, null);
@@ -104,8 +106,7 @@ public class TestGetRemoteInstance {
 				.when(this.managerTestHelper.getComputePlugin())
 				.getInstance(Mockito.anyString(), Mockito.anyString());
 
-		Assert.assertNull(ManagerPacketHelper.getRemoteInstance(request,
-				managerTestHelper.createPacketSender()));
+		ManagerPacketHelper.getRemoteInstance(request, managerTestHelper.createPacketSender());
 	}
 
 	@Test(expected = OCCIException.class)

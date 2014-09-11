@@ -12,15 +12,19 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.util.EntityUtils;
+import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
+import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.HeaderUtils;
+import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.Resource;
+import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.instance.Instance;
-import org.fogbowcloud.manager.occi.instance.Instance.Link;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.fogbowcloud.manager.occi.util.OCCITestHelper;
 import org.junit.After;
@@ -28,6 +32,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.restlet.Response;
 
 public class TestGetCompute {
 
@@ -35,6 +40,9 @@ public class TestGetCompute {
 	private static final String INSTANCE_2_ID = "test2";
 	private static final String INSTANCE_3_ID_WITHOUT_USER = "test3";
 
+	private ComputePlugin computePlugin;
+	private IdentityPlugin identityPlugin;
+	private AuthorizationPlugin authorizationPlugin;
 	private OCCITestHelper helper;
 
 	@Before
@@ -44,10 +52,9 @@ public class TestGetCompute {
 		List<Resource> list = new ArrayList<Resource>();
 		Map<String, String> map = new HashMap<String, String>();
 		map.put("test", "test");
-		Link link = null;
-		Instance instance1 = new Instance(INSTANCE_1_ID, list, map, link);
+		Instance instance1 = new Instance(INSTANCE_1_ID, list, map, null);
 
-		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
+		computePlugin = Mockito.mock(ComputePlugin.class);
 		Mockito.when(computePlugin.getInstance(Mockito.anyString(), Mockito.eq(INSTANCE_1_ID)))
 				.thenReturn(instance1);
 		Mockito.when(computePlugin.getInstance(Mockito.anyString(), Mockito.eq(INSTANCE_2_ID)))
@@ -55,11 +62,12 @@ public class TestGetCompute {
 		Mockito.when(
 				computePlugin.getInstance(Mockito.anyString(),
 						Mockito.eq(INSTANCE_3_ID_WITHOUT_USER))).thenReturn(instance1);
-
-		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
+		
+		identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.getToken(OCCITestHelper.ACCESS_TOKEN)).thenReturn(
 				new Token("id", OCCITestHelper.USER_MOCK, new Date(),
 				new HashMap<String, String>()));
+		Mockito.when(identityPlugin.getAuthenticationURI()).thenReturn("Keystone uri='http://localhost:5000/'");
 
 		List<Request> requests = new LinkedList<Request>();
 		Request request1 = new Request("1", new Token(OCCITestHelper.ACCESS_TOKEN,
@@ -77,7 +85,10 @@ public class TestGetCompute {
 		request3.setInstanceId(INSTANCE_3_ID_WITHOUT_USER);
 		requests.add(request3);
 
-		this.helper.initializeComponentCompute(computePlugin, identityPlugin, requests);
+		authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
+		Mockito.when(authorizationPlugin.isAuthorized(Mockito.any(Token.class))).thenReturn(true);
+		
+		this.helper.initializeComponentCompute(computePlugin, identityPlugin ,authorizationPlugin , requests);
 	}
 
 	@After
@@ -87,31 +98,99 @@ public class TestGetCompute {
 
 	@Test
 	public void testGetComputeOk() throws Exception {
+		Mockito.doNothing().when(computePlugin)
+				.bypass(Mockito.any(org.restlet.Request.class), Mockito.any(Response.class));
+		
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE);
-		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
+		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(httpGet);
 
-		Assert.assertEquals(3, OCCITestHelper.getRequestLocations(response).size());
+		Assert.assertEquals(3, OCCITestHelper.getRequestIds(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+	}
+	
+	@Test
+	public void testGetComputeOkAcceptURIList() throws Exception {
+		Mockito.doNothing().when(computePlugin)
+				.bypass(Mockito.any(org.restlet.Request.class), Mockito.any(Response.class));
+		
+		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE);
+		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
+		httpGet.addHeader(OCCIHeaders.ACCEPT, OCCIHeaders.TEXT_URI_LIST_CONTENT_TYPE);
+		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		HttpClient client = new DefaultHttpClient();
+		HttpResponse response = client.execute(httpGet);
+
+		Assert.assertEquals(3, OCCITestHelper.getURIList(response).size());
+		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+		Assert.assertTrue(response.getFirstHeader(OCCIHeaders.CONTENT_TYPE).getValue()
+				.startsWith(OCCIHeaders.TEXT_URI_LIST_CONTENT_TYPE));
+	}
+	
+	@Test
+	public void testEmptyGetComputeWithAcceptURIList() throws Exception {
+		Mockito.doNothing().when(computePlugin)
+				.bypass(Mockito.any(org.restlet.Request.class), Mockito.any(Response.class));
+		
+		//reseting component
+		helper.stopComponent();
+		List<Request> requests = new LinkedList<Request>();
+		helper.initializeComponentCompute(computePlugin, identityPlugin, authorizationPlugin, requests);
+
+		//test
+		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE);
+		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
+		httpGet.addHeader(OCCIHeaders.ACCEPT, OCCIHeaders.TEXT_URI_LIST_CONTENT_TYPE);
+		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		HttpClient client = new DefaultHttpClient();
+		HttpResponse response = client.execute(httpGet);
+
+		Assert.assertEquals(0, OCCITestHelper.getURIList(response).size());
+		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+		Assert.assertTrue(response.getFirstHeader(OCCIHeaders.CONTENT_TYPE).getValue()
+				.startsWith(OCCIHeaders.TEXT_URI_LIST_CONTENT_TYPE));
 	}
 
 	@Test
 	public void testGetSpecificInstanceFound() throws Exception {
+		Mockito.doNothing().when(computePlugin)
+				.bypass(Mockito.any(org.restlet.Request.class), Mockito.any(Response.class));
+		
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE + INSTANCE_1_ID);
-		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
+		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(httpGet);
 
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
+	
+	@Test
+	public void testGetSpecificInstanceFoundWithWrongAccept() throws Exception {
+		Mockito.doThrow(new OCCIException(ErrorType.METHOD_NOT_ALLOWED,
+						ResponseConstants.METHOD_NOT_SUPPORTED)).when(computePlugin)
+				.bypass(Mockito.any(org.restlet.Request.class), Mockito.any(Response.class));
+		
+		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE + INSTANCE_1_ID);
+		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
+		httpGet.addHeader(OCCIHeaders.ACCEPT, OCCIHeaders.TEXT_URI_LIST_CONTENT_TYPE);
+		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		HttpClient client = new DefaultHttpClient();
+		HttpResponse response = client.execute(httpGet);
+
+		Assert.assertEquals(HttpStatus.SC_METHOD_NOT_ALLOWED, response.getStatusLine().getStatusCode());
+	}
 
 	@Test
 	public void testGetSpecificInstanceNotFound() throws Exception {
+		Mockito.doThrow(new OCCIException(ErrorType.NOT_FOUND,
+						ResponseConstants.NOT_FOUND)).when(computePlugin)
+				.bypass(Mockito.any(org.restlet.Request.class), Mockito.any(Response.class));
+		
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE + "wrong");
-		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
+		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(httpGet);
@@ -121,9 +200,12 @@ public class TestGetCompute {
 
 	@Test
 	public void testGetSpecificInstanceOtherUser() throws Exception {
+		Mockito.doNothing().when(computePlugin)
+				.bypass(Mockito.any(org.restlet.Request.class), Mockito.any(Response.class));
+		
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE
 				+ INSTANCE_3_ID_WITHOUT_USER);
-		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
+		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(httpGet);
@@ -132,20 +214,42 @@ public class TestGetCompute {
 	}
 
 	@Test
-	public void testWrongContentType() throws Exception {
+	public void testDifferentContentType() throws Exception {
+		Mockito.doNothing().when(computePlugin)
+				.bypass(Mockito.any(org.restlet.Request.class), Mockito.any(Response.class));
+
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE);
-		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, "wrong");
+		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, "any");
 		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(httpGet);
 
-		Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 
 	@Test
-	public void testAccessToken() throws Exception {
+	public void testNotAllowedAcceptContent() throws Exception {
+		Mockito.doThrow(new OCCIException(ErrorType.METHOD_NOT_ALLOWED,
+						ResponseConstants.METHOD_NOT_SUPPORTED)).when(computePlugin)
+				.bypass(Mockito.any(org.restlet.Request.class), Mockito.any(Response.class));
+		
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE);
-		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
+		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
+		httpGet.addHeader(OCCIHeaders.ACCEPT, "invalid-content");
+		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		HttpClient client = new DefaultHttpClient();
+		HttpResponse response = client.execute(httpGet);
+
+		Assert.assertEquals(HttpStatus.SC_METHOD_NOT_ALLOWED, response.getStatusLine().getStatusCode());
+	}
+	
+	@Test
+	public void testAccessToken() throws Exception {
+		Mockito.doNothing().when(computePlugin)
+				.bypass(Mockito.any(org.restlet.Request.class), Mockito.any(Response.class));
+
+		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE);
+		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(httpGet);
@@ -155,8 +259,12 @@ public class TestGetCompute {
 
 	@Test
 	public void testWrongAccessToken() throws Exception {
+		Mockito.doThrow(new OCCIException(ErrorType.UNAUTHORIZED,
+						ResponseConstants.UNAUTHORIZED)).when(computePlugin)
+					.bypass(Mockito.any(org.restlet.Request.class), Mockito.any(Response.class));
+		
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE + INSTANCE_1_ID);
-		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
+		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, "wrong");
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(httpGet);
@@ -166,24 +274,42 @@ public class TestGetCompute {
 
 	@Test
 	public void testEmptyAccessToken() throws Exception {
+		Mockito.doThrow(new OCCIException(ErrorType.UNAUTHORIZED,
+						ResponseConstants.UNAUTHORIZED)).when(computePlugin)
+				.bypass(Mockito.any(org.restlet.Request.class), Mockito.any(Response.class));
+		
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE);
-		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
+		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, "");
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(httpGet);
 
 		Assert.assertEquals(HttpStatus.SC_UNAUTHORIZED, response.getStatusLine().getStatusCode());
-		Assert.assertEquals("Keystone uri='http://localhost:5000/'", response.getFirstHeader(HeaderUtils.WWW_AUTHENTICATE).getValue());
+		Assert.assertEquals("Keystone uri='http://localhost:5000/'",
+				response.getFirstHeader(HeaderUtils.WWW_AUTHENTICATE).getValue());
+		Assert.assertTrue(response.getFirstHeader(OCCIHeaders.CONTENT_TYPE).getValue()
+				.startsWith(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE));
+		Assert.assertEquals(ResponseConstants.UNAUTHORIZED,
+				EntityUtils.toString(response.getEntity()));
 	}
 	
 	@Test
 	public void testWithoutAccessToken() throws Exception {
+		Mockito.doThrow(new OCCIException(ErrorType.UNAUTHORIZED,
+						ResponseConstants.UNAUTHORIZED)).when(computePlugin)
+				.bypass(Mockito.any(org.restlet.Request.class), Mockito.any(Response.class));	
+		
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE + INSTANCE_1_ID);
-		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
+		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(httpGet);
 
 		Assert.assertEquals(HttpStatus.SC_UNAUTHORIZED, response.getStatusLine().getStatusCode());
-		Assert.assertEquals("Keystone uri='http://localhost:5000/'", response.getFirstHeader(HeaderUtils.WWW_AUTHENTICATE).getValue());	
+		Assert.assertEquals("Keystone uri='http://localhost:5000/'",
+				response.getFirstHeader(HeaderUtils.WWW_AUTHENTICATE).getValue());
+		Assert.assertTrue(response.getFirstHeader(OCCIHeaders.CONTENT_TYPE).getValue()
+				.startsWith("text/plain"));
+		Assert.assertEquals(ResponseConstants.UNAUTHORIZED,
+				EntityUtils.toString(response.getEntity()));
 	}
 }

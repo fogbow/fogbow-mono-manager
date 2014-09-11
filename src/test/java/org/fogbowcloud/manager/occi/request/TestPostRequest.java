@@ -13,6 +13,7 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.occi.core.Category;
@@ -21,8 +22,6 @@ import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
-import org.fogbowcloud.manager.occi.request.RequestAttribute;
-import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.fogbowcloud.manager.occi.util.OCCITestHelper;
 import org.junit.After;
 import org.junit.Assert;
@@ -50,7 +49,9 @@ public class TestPostRequest {
 		Mockito.when(identityPlugin.getToken(OCCITestHelper.INVALID_TOKEN)).thenThrow(
 				new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED));
 
-		this.requestHelper.initializeComponent(computePlugin, identityPlugin);
+		AuthorizationPlugin authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
+		Mockito.when(authorizationPlugin.isAuthorized(Mockito.any(Token.class))).thenReturn(true);
+		this.requestHelper.initializeComponent(computePlugin, identityPlugin, authorizationPlugin);
 	}
 
 	@Test
@@ -58,12 +59,12 @@ public class TestPostRequest {
 		HttpPost post = new HttpPost(OCCITestHelper.URI_FOGBOW_REQUEST);
 		Category category = new Category(RequestConstants.TERM,
 				RequestConstants.SCHEME, RequestConstants.KIND_CLASS);
-		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
+		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
-		List<String> requestIDs = OCCITestHelper.getRequestLocations(response);
+		List<String> requestIDs = OCCITestHelper.getRequestIds(response);
 
 		Assert.assertEquals(1, requestIDs.size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
@@ -74,14 +75,14 @@ public class TestPostRequest {
 		HttpPost post = new HttpPost(OCCITestHelper.URI_FOGBOW_REQUEST);
 		Category category = new Category(RequestConstants.TERM,
 				RequestConstants.SCHEME, RequestConstants.KIND_CLASS);
-		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
+		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
 		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE,
 				RequestAttribute.INSTANCE_COUNT.getValue() + " = 2");
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
-		List<String> requestIDs = OCCITestHelper.getRequestLocations(response);
+		List<String> requestIDs = OCCITestHelper.getRequestIds(response);
 
 		Assert.assertEquals(2, requestIDs.size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
@@ -93,14 +94,14 @@ public class TestPostRequest {
 		HttpPost post = new HttpPost(OCCITestHelper.URI_FOGBOW_REQUEST);
 		Category category = new Category(RequestConstants.TERM,
 				RequestConstants.SCHEME, RequestConstants.KIND_CLASS);
-		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
+		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
 		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE,
 				RequestAttribute.INSTANCE_COUNT.getValue() + " = 200");
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
-		List<String> requestIDs = OCCITestHelper.getRequestLocations(response);
+		List<String> requestIDs = OCCITestHelper.getRequestIds(response);
 		
 		Assert.assertEquals(200, requestIDs.size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
@@ -112,7 +113,7 @@ public class TestPostRequest {
 		HttpPost post = new HttpPost(OCCITestHelper.URI_FOGBOW_REQUEST);
 		Category category = new Category("wrong", RequestConstants.SCHEME,
 				RequestConstants.KIND_CLASS);
-		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
+		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
 		HttpClient client = new DefaultHttpClient();
@@ -127,7 +128,7 @@ public class TestPostRequest {
 		HttpPost post = new HttpPost(OCCITestHelper.URI_FOGBOW_REQUEST);
 		Category category = new Category(RequestConstants.TERM,
 				"http://schemas.fogbowcloud.org/wrong#", RequestConstants.KIND_CLASS);
-		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
+		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
 		HttpClient client = new DefaultHttpClient();
@@ -142,7 +143,7 @@ public class TestPostRequest {
 		HttpPost post = new HttpPost(OCCITestHelper.URI_FOGBOW_REQUEST);
 		Category category = new Category(RequestConstants.TERM,
 				RequestConstants.SCHEME, "mixin");
-		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
+		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
 		HttpClient client = new DefaultHttpClient();
@@ -157,7 +158,7 @@ public class TestPostRequest {
 		HttpPost post = new HttpPost(OCCITestHelper.URI_FOGBOW_REQUEST);
 		Category category = new Category(RequestConstants.TERM,
 				RequestConstants.SCHEME, RequestConstants.KIND_CLASS);
-		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
+		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
 		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE,
@@ -174,7 +175,7 @@ public class TestPostRequest {
 		HttpPost post = new HttpPost(OCCITestHelper.URI_FOGBOW_REQUEST);
 		Category category = new Category(RequestConstants.TERM,
 				RequestConstants.SCHEME, RequestConstants.KIND_CLASS);
-		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
+		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.INVALID_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
 		HttpClient client = new DefaultHttpClient();
@@ -204,7 +205,7 @@ public class TestPostRequest {
 		HttpPost post = new HttpPost(OCCITestHelper.URI_FOGBOW_REQUEST);
 		Category category = new Category(RequestConstants.TERM,
 				RequestConstants.SCHEME, RequestConstants.KIND_CLASS);
-		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
+		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
 		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE,
@@ -221,7 +222,7 @@ public class TestPostRequest {
 		HttpPost post = new HttpPost(OCCITestHelper.URI_FOGBOW_REQUEST);
 		Category category = new Category(RequestConstants.TERM,
 				RequestConstants.SCHEME, RequestConstants.KIND_CLASS);
-		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
+		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
 		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE,
@@ -238,7 +239,7 @@ public class TestPostRequest {
 		HttpPost post = new HttpPost(OCCITestHelper.URI_FOGBOW_REQUEST);
 		Category category = new Category(RequestConstants.TERM,
 				RequestConstants.SCHEME, RequestConstants.KIND_CLASS);
-		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
+		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
 		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE,
@@ -255,7 +256,7 @@ public class TestPostRequest {
 		HttpPost post = new HttpPost(OCCITestHelper.URI_FOGBOW_REQUEST);
 		Category category = new Category(RequestConstants.TERM,
 				RequestConstants.SCHEME, RequestConstants.KIND_CLASS);
-		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
+		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
 		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE,
@@ -272,7 +273,7 @@ public class TestPostRequest {
 		HttpPost post = new HttpPost(OCCITestHelper.URI_FOGBOW_REQUEST);
 		Category category = new Category(RequestConstants.TERM,
 				RequestConstants.SCHEME, RequestConstants.KIND_CLASS);
-		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCITestHelper.CONTENT_TYPE_OCCI);
+		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
 		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE,
@@ -286,7 +287,7 @@ public class TestPostRequest {
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
 
-		Assert.assertEquals(10, OCCITestHelper.getRequestLocations(response).size());
+		Assert.assertEquals(10, OCCITestHelper.getRequestIds(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 
