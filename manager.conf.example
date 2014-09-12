@@ -50,4 +50,6 @@ ssh_tunnel_private_host=10.0.0.1
 ssh_tunnel_host_http_port=2223
 ssh_tunnel_host_port=2222
 
+my_ip=127.0.0.1
+
 http_port = 8182
