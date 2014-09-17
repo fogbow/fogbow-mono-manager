@@ -53,6 +53,7 @@ public class TestBypassCompute {
 	private OpenStackOCCIComputePlugin computePlugin;
 	private IdentityPlugin identityPlugin;
 	private AuthorizationPlugin authorizationPlugin;
+	private Token defaultToken;
 	
 	@Before
 	public void setup() throws Exception{
@@ -75,12 +76,13 @@ public class TestBypassCompute {
 		properties.put(ConfigurationConstants.SSH_HOST_HTTP_PORT_KEY,
 				String.valueOf(DefaultDataTestHelper.TOKEN_SERVER_HTTP_PORT));
 		
-		computePlugin = new OpenStackOCCIComputePlugin(properties);
+		defaultToken = new Token(PluginHelper.ACCESS_ID, PluginHelper.USERNAME,
+				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>());
 		
+		computePlugin = new OpenStackOCCIComputePlugin(properties);
+				
 		identityPlugin = Mockito.mock(IdentityPlugin.class);
-		Mockito.when(identityPlugin.getToken(PluginHelper.ACCESS_ID)).thenReturn(
-				new Token(PluginHelper.ACCESS_ID, PluginHelper.USERNAME, DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
-						new HashMap<String, String>()));
+		Mockito.when(identityPlugin.getToken(PluginHelper.ACCESS_ID)).thenReturn(defaultToken);
 		Mockito.when(identityPlugin.getAuthenticationURI()).thenReturn("Keystone uri='http://localhost:5000/'");
 		
 		// three first generated instance ids
@@ -168,14 +170,14 @@ public class TestBypassCompute {
 		categories.add(new Category(PluginHelper.LINUX_X86_TERM,
 				OpenStackOCCIComputePlugin.getOSScheme(), RequestConstants.MIXIN_CLASS));
 		Assert.assertEquals(FIRST_INSTANCE_ID, computePlugin.requestInstance(
-				PluginHelper.ACCESS_ID, categories, new HashMap<String, String>()));
+				defaultToken, categories, new HashMap<String, String>()));
 		Assert.assertEquals(SECOND_INSTANCE_ID, computePlugin.requestInstance(
-				PluginHelper.ACCESS_ID, categories, new HashMap<String, String>()));
+				defaultToken, categories, new HashMap<String, String>()));
 		Assert.assertEquals(THIRD_INSTANCE_ID, computePlugin.requestInstance(
-				PluginHelper.ACCESS_ID, categories, new HashMap<String, String>()));
+				defaultToken, categories, new HashMap<String, String>()));
 
 		//checking if machines were added
-		Assert.assertEquals(3, computePlugin.getInstances(PluginHelper.ACCESS_ID).size());
+		Assert.assertEquals(3, computePlugin.getInstances(defaultToken).size());
 		
 		//getting instances through fogbow endpoint		
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE);
@@ -213,12 +215,12 @@ public class TestBypassCompute {
 		categories.add(new Category(PluginHelper.LINUX_X86_TERM,
 				OpenStackOCCIComputePlugin.getOSScheme(), RequestConstants.MIXIN_CLASS));
 		Assert.assertEquals(SECOND_INSTANCE_ID, computePlugin.requestInstance(
-				PluginHelper.ACCESS_ID, categories, new HashMap<String, String>()));
+				defaultToken, categories, new HashMap<String, String>()));
 		Assert.assertEquals(THIRD_INSTANCE_ID, computePlugin.requestInstance(
-				PluginHelper.ACCESS_ID, categories, new HashMap<String, String>()));
+				defaultToken, categories, new HashMap<String, String>()));
 		
 		//checking if machines were added
-		Assert.assertEquals(3, computePlugin.getInstances(PluginHelper.ACCESS_ID).size());
+		Assert.assertEquals(3, computePlugin.getInstances(defaultToken).size());
 		
 		//getting instances through fogbow endpoint		
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE);
@@ -239,10 +241,10 @@ public class TestBypassCompute {
 		categories.add(new Category(PluginHelper.LINUX_X86_TERM,
 				OpenStackOCCIComputePlugin.getOSScheme(), RequestConstants.MIXIN_CLASS));
 		Assert.assertEquals(FIRST_INSTANCE_ID, computePlugin.requestInstance(
-				PluginHelper.ACCESS_ID, categories, new HashMap<String, String>()));
+				defaultToken, categories, new HashMap<String, String>()));
 		
 		//checking if machine was added
-		Assert.assertEquals(1, computePlugin.getInstances(PluginHelper.ACCESS_ID).size());
+		Assert.assertEquals(1, computePlugin.getInstances(defaultToken).size());
 		
 		//getting specific instance through fogbow endpoint		
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE + FIRST_INSTANCE_ID);
@@ -304,14 +306,14 @@ public class TestBypassCompute {
 		categories.add(new Category(PluginHelper.LINUX_X86_TERM,
 				OpenStackOCCIComputePlugin.getOSScheme(), RequestConstants.MIXIN_CLASS));
 		Assert.assertEquals(FIRST_INSTANCE_ID, computePlugin.requestInstance(
-				PluginHelper.ACCESS_ID, categories, new HashMap<String, String>()));
+				defaultToken, categories, new HashMap<String, String>()));
 		Assert.assertEquals(SECOND_INSTANCE_ID, computePlugin.requestInstance(
-				PluginHelper.ACCESS_ID, categories, new HashMap<String, String>()));
+				defaultToken, categories, new HashMap<String, String>()));
 		Assert.assertEquals(THIRD_INSTANCE_ID, computePlugin.requestInstance(
-				PluginHelper.ACCESS_ID, categories, new HashMap<String, String>()));
+				defaultToken, categories, new HashMap<String, String>()));
 		
 		//checking if instances were added
-		Assert.assertEquals(3, computePlugin.getInstances(PluginHelper.ACCESS_ID).size());
+		Assert.assertEquals(3, computePlugin.getInstances(defaultToken).size());
 		
 		//removing instances through fogbow endpoint
 		HttpDelete httpDelete = new HttpDelete(OCCITestHelper.URI_FOGBOW_COMPUTE);
@@ -324,7 +326,7 @@ public class TestBypassCompute {
 		Assert.assertEquals(ResponseConstants.OK, EntityUtils.toString(response.getEntity()));
 	
 		//checking through compute endpoint 
-		Assert.assertEquals(0, computePlugin.getInstances(PluginHelper.ACCESS_ID).size());
+		Assert.assertEquals(0, computePlugin.getInstances(defaultToken).size());
 		
 		//checking through fogbow endpoint
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE);
@@ -362,12 +364,12 @@ public class TestBypassCompute {
 		categories.add(new Category(PluginHelper.LINUX_X86_TERM,
 				OpenStackOCCIComputePlugin.getOSScheme(), RequestConstants.MIXIN_CLASS));
 		Assert.assertEquals(SECOND_INSTANCE_ID, computePlugin.requestInstance(
-				PluginHelper.ACCESS_ID, categories, new HashMap<String, String>()));
+				defaultToken, categories, new HashMap<String, String>()));
 		Assert.assertEquals(THIRD_INSTANCE_ID, computePlugin.requestInstance(
-				PluginHelper.ACCESS_ID, categories, new HashMap<String, String>()));
+				defaultToken, categories, new HashMap<String, String>()));
 		
 		//checking if instance were added
-		Assert.assertEquals(3, computePlugin.getInstances(PluginHelper.ACCESS_ID).size());
+		Assert.assertEquals(3, computePlugin.getInstances(defaultToken).size());
 		
 		//removing instances through fogbow endpoint
 		HttpDelete httpDelete = new HttpDelete(OCCITestHelper.URI_FOGBOW_COMPUTE);
@@ -380,7 +382,7 @@ public class TestBypassCompute {
 		Assert.assertEquals(ResponseConstants.OK, EntityUtils.toString(response.getEntity()));
 	
 		//checking through compute endpoint 
-		Assert.assertEquals(0, computePlugin.getInstances(PluginHelper.ACCESS_ID).size());
+		Assert.assertEquals(0, computePlugin.getInstances(defaultToken).size());
 		
 		//checking through fogbow endpoint
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE);
@@ -400,14 +402,14 @@ public class TestBypassCompute {
 		categories.add(new Category(PluginHelper.LINUX_X86_TERM,
 				OpenStackOCCIComputePlugin.getOSScheme(), RequestConstants.MIXIN_CLASS));
 		Assert.assertEquals(FIRST_INSTANCE_ID, computePlugin.requestInstance(
-				PluginHelper.ACCESS_ID, categories, new HashMap<String, String>()));
+				defaultToken, categories, new HashMap<String, String>()));
 		Assert.assertEquals(SECOND_INSTANCE_ID, computePlugin.requestInstance(
-				PluginHelper.ACCESS_ID, categories, new HashMap<String, String>()));
+				defaultToken, categories, new HashMap<String, String>()));
 		Assert.assertEquals(THIRD_INSTANCE_ID, computePlugin.requestInstance(
-				PluginHelper.ACCESS_ID, categories, new HashMap<String, String>()));
+				defaultToken, categories, new HashMap<String, String>()));
 		
 		//checking if instances were added
-		Assert.assertEquals(3, computePlugin.getInstances(PluginHelper.ACCESS_ID).size());
+		Assert.assertEquals(3, computePlugin.getInstances(defaultToken).size());
 		
 		//removing first instance through fogbow endpoint
 		HttpDelete httpDelete = new HttpDelete(OCCITestHelper.URI_FOGBOW_COMPUTE + FIRST_INSTANCE_ID);
@@ -420,7 +422,7 @@ public class TestBypassCompute {
 		Assert.assertEquals(ResponseConstants.OK, EntityUtils.toString(response.getEntity()));
 	
 		//checking through compute endpoint 
-		Assert.assertEquals(2, computePlugin.getInstances(PluginHelper.ACCESS_ID).size());
+		Assert.assertEquals(2, computePlugin.getInstances(defaultToken).size());
 		
 		//checking through fogbow endpoint
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE);
@@ -440,10 +442,10 @@ public class TestBypassCompute {
 		categories.add(new Category(PluginHelper.LINUX_X86_TERM,
 				OpenStackOCCIComputePlugin.getOSScheme(), RequestConstants.MIXIN_CLASS));
 		Assert.assertEquals(FIRST_INSTANCE_ID, computePlugin.requestInstance(
-				PluginHelper.ACCESS_ID, categories, new HashMap<String, String>()));
+				defaultToken, categories, new HashMap<String, String>()));
 				
 		//checking if instances were added
-		Assert.assertEquals(1, computePlugin.getInstances(PluginHelper.ACCESS_ID).size());
+		Assert.assertEquals(1, computePlugin.getInstances(defaultToken).size());
 		
 		//removing first instance through fogbow endpoint
 		HttpDelete httpDelete = new HttpDelete(OCCITestHelper.URI_FOGBOW_COMPUTE + FIRST_INSTANCE_ID);
@@ -456,7 +458,7 @@ public class TestBypassCompute {
 		Assert.assertEquals(ResponseConstants.OK, EntityUtils.toString(response.getEntity()));
 	
 		//checking through compute endpoint 
-		Assert.assertEquals(0, computePlugin.getInstances(PluginHelper.ACCESS_ID).size());
+		Assert.assertEquals(0, computePlugin.getInstances(defaultToken).size());
 		
 		//checking through fogbow endpoint
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE);

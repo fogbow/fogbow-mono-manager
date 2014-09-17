@@ -146,10 +146,10 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 	}
 	
 	@Override
-	public String requestInstance(String accessId, List<Category> categories,
+	public String requestInstance(Token token, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
 		
-		LOGGER.debug("Requesting instance with accessId=" + accessId + "; categories="
+		LOGGER.debug("Requesting instance with token=" + token + "; categories="
 				+ categories + "; xOCCIAtt=" + xOCCIAtt);
 		
 		Map<String, String> templateProperties = new HashMap<String, String>();
@@ -202,7 +202,7 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		templateProperties.put("userdata", userdata);
 		templateProperties.put("image-id", choosenImage);
 
-		Client oneClient = clientFactory.createClient(accessId, openNebulaEndpoint);
+		Client oneClient = clientFactory.createClient(token.getAccessId(), openNebulaEndpoint);
 		String vmTemplate = generateTemplate(templateProperties);
 
 		LOGGER.debug("The instance will be allocated according to template: " + vmTemplate);
@@ -292,11 +292,11 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 	}
 
 	@Override
-	public List<Instance> getInstances(String accessId) {
-		LOGGER.debug("Getting instances of token: " + accessId);
+	public List<Instance> getInstances(Token token) {
+		LOGGER.debug("Getting instances of token: " + token);
 
 		List<Instance> instances = new ArrayList<Instance>();
-		Client oneClient = clientFactory.createClient(accessId, openNebulaEndpoint);
+		Client oneClient = clientFactory.createClient(token.getAccessId(), openNebulaEndpoint);
 		VirtualMachinePool vmPool = clientFactory.createVirtualMachinePool(oneClient);
 		for (VirtualMachine virtualMachine : vmPool) {
 			instances.add(mountInstance(virtualMachine));
@@ -305,10 +305,10 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 	}
 
 	@Override
-	public Instance getInstance(String accessId, String instanceId) {
-		LOGGER.debug("Getting instance " + instanceId + " of token: " + accessId);
+	public Instance getInstance(Token token, String instanceId) {
+		LOGGER.debug("Getting instance " + instanceId + " of token: " + token);
 
-		Client oneClient = clientFactory.createClient(accessId, openNebulaEndpoint);
+		Client oneClient = clientFactory.createClient(token.getAccessId(), openNebulaEndpoint);
 		VirtualMachine vm = clientFactory.createVirtualMachine(oneClient, instanceId);
 		return mountInstance(vm);
 	}
@@ -385,9 +385,9 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 	}
 
 	@Override
-	public void removeInstance(String accessId, String instanceId) {
-		LOGGER.debug("Removing instanceId " + instanceId + " with accessId " + accessId);
-		Client oneClient = clientFactory.createClient(accessId, openNebulaEndpoint);
+	public void removeInstance(Token token, String instanceId) {
+		LOGGER.debug("Removing instanceId " + instanceId + " with token " + token);
+		Client oneClient = clientFactory.createClient(token.getAccessId(), openNebulaEndpoint);
 		VirtualMachine vm = clientFactory.createVirtualMachine(oneClient, instanceId);
 		OneResponse response = vm.delete();
 		if (response.isError()) {			
@@ -396,8 +396,8 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 	}
 
 	@Override
-	public void removeInstances(String accessId) {
-		Client oneClient = clientFactory.createClient(accessId, openNebulaEndpoint);
+	public void removeInstances(Token token) {
+		Client oneClient = clientFactory.createClient(token.getAccessId(), openNebulaEndpoint);
 		VirtualMachinePool vmPool = clientFactory.createVirtualMachinePool(oneClient);
 		for (VirtualMachine virtualMachine : vmPool) {
 			OneResponse response = virtualMachine.delete();

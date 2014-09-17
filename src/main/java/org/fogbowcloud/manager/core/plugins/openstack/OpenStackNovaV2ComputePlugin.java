@@ -11,6 +11,7 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.HttpVersion;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -108,10 +109,10 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 	}
 	
 	@Override
-	public String requestInstance(String authToken, List<Category> categories,
+	public String requestInstance(Token token, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
 
-		LOGGER.debug("Requesting instance with accessId=" + authToken + "; categories="
+		LOGGER.debug("Requesting instance with token=" + token + "; categories="
 				+ categories + "; xOCCIAtt=" + xOCCIAtt);
 
 		// removing fogbow-request category
@@ -149,9 +150,9 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		JSONObject json;
 		try {
 			json = generateRequestJson(imageRef, flavorRef, userdata, publicKey);
-			String tenantId = ""; //TODO How to get this info? Using token?
+			String tenantId = getTenantIdFromToken(token); //TODO How to get this info? Using token?
 			String requestEndpoint = computeV2APIEndpoint + tenantId + "/servers";
-			String jsonResponse = doPostRequest(requestEndpoint, authToken, json);
+			String jsonResponse = doPostRequest(requestEndpoint, token.getAccessId(), json);
 			return getAttFromJson("id", jsonResponse);
 		} catch (JSONException e) {
 			throw new OCCIException(ErrorType.BAD_REQUEST,
@@ -159,6 +160,11 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		}
 	}
 	
+	private String getTenantIdFromToken(Token token) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 	private String getAttFromJson(String attName, String jsonStr) throws JSONException {
 		JSONObject root = new JSONObject(jsonStr);
 		return root.getJSONObject("server").getString(attName);
@@ -241,10 +247,10 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 	}
 
 	@Override
-	public List<Instance> getInstances(String authToken) {
+	public List<Instance> getInstances(Token token) {
 		String tenantId = ""; // TODO How to get this info?
 		String requestEndpoint = computeV2APIEndpoint + tenantId + "/servers";
-		String jsonResponse = doGetRequest(requestEndpoint, authToken);
+		String jsonResponse = doGetRequest(requestEndpoint, token.getAccessId());
 		return getInstancesFromJson(jsonResponse);
 	}
 	
@@ -266,10 +272,10 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 	}
 
 	@Override
-	public Instance getInstance(String authToken, String instanceId) {		
+	public Instance getInstance(Token token, String instanceId) {		
 		String tenantId = ""; // TODO How to get this info?
 		String requestEndpoint = computeV2APIEndpoint + tenantId + "/servers/" + instanceId; 
-		String jsonResponse = doGetRequest(requestEndpoint, authToken);
+		String jsonResponse = doGetRequest(requestEndpoint, token.getAccessId());
 		return getInstanceFromJson(jsonResponse);
 	}
 	
@@ -282,7 +288,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		HttpResponse response;
 		String responseStr = null;
 		try {
-			HttpPost request = new HttpPost(endpoint);			
+			HttpGet request = new HttpGet(endpoint);			
 			request.addHeader(OCCIHeaders.X_AUTH_TOKEN, authToken);
 			request.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.JSON_CONTENT_TYPE);
 			request.addHeader(OCCIHeaders.ACCEPT, OCCIHeaders.JSON_CONTENT_TYPE);
@@ -301,13 +307,13 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 	}
 
 	@Override
-	public void removeInstance(String authToken, String instanceId) {
+	public void removeInstance(Token token, String instanceId) {
 		// TODO Auto-generated method stub
 
 	}
 
 	@Override
-	public void removeInstances(String authToken) {
+	public void removeInstances(Token token) {
 		// TODO Auto-generated method stub
 
 	}

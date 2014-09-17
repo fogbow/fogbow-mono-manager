@@ -46,7 +46,7 @@ public class TestDeleteRequest {
 
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		Mockito.when(
-				computePlugin.requestInstance(Mockito.anyString(), Mockito.any(List.class),
+				computePlugin.requestInstance(Mockito.any(Token.class), Mockito.any(List.class),
 						Mockito.any(Map.class))).thenReturn("instanceid");
 		Mockito.doThrow(
 				new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX))

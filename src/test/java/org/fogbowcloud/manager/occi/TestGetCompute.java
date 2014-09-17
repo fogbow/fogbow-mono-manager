@@ -55,12 +55,12 @@ public class TestGetCompute {
 		Instance instance1 = new Instance(INSTANCE_1_ID, list, map, null);
 
 		computePlugin = Mockito.mock(ComputePlugin.class);
-		Mockito.when(computePlugin.getInstance(Mockito.anyString(), Mockito.eq(INSTANCE_1_ID)))
+		Mockito.when(computePlugin.getInstance(Mockito.any(Token.class), Mockito.eq(INSTANCE_1_ID)))
 				.thenReturn(instance1);
-		Mockito.when(computePlugin.getInstance(Mockito.anyString(), Mockito.eq(INSTANCE_2_ID)))
+		Mockito.when(computePlugin.getInstance(Mockito.any(Token.class), Mockito.eq(INSTANCE_2_ID)))
 				.thenReturn(new Instance(INSTANCE_2_ID));
 		Mockito.when(
-				computePlugin.getInstance(Mockito.anyString(),
+				computePlugin.getInstance(Mockito.any(Token.class),
 						Mockito.eq(INSTANCE_3_ID_WITHOUT_USER))).thenReturn(instance1);
 		
 		identityPlugin = Mockito.mock(IdentityPlugin.class);
@@ -70,14 +70,13 @@ public class TestGetCompute {
 		Mockito.when(identityPlugin.getAuthenticationURI()).thenReturn("Keystone uri='http://localhost:5000/'");
 
 		List<Request> requests = new LinkedList<Request>();
-		Request request1 = new Request("1", new Token(OCCITestHelper.ACCESS_TOKEN,
+		Token token = new Token(OCCITestHelper.ACCESS_TOKEN,
 				OCCITestHelper.USER_MOCK, DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
-				new HashMap<String, String>()), null, null);
+				new HashMap<String, String>());
+		Request request1 = new Request("1", token, null, null);
 		request1.setInstanceId(INSTANCE_1_ID);
 		requests.add(request1);
-		Request request2 = new Request("2", new Token(OCCITestHelper.ACCESS_TOKEN,
-				OCCITestHelper.USER_MOCK, DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
-				new HashMap<String, String>()), null, null);
+		Request request2 = new Request("2", token, null, null);
 		request2.setInstanceId(INSTANCE_2_ID);
 		requests.add(request2);
 		Request request3 = new Request("3", new Token("token", "user",

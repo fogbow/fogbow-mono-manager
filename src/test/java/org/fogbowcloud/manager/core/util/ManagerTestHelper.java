@@ -20,7 +20,6 @@ import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.DefaultMemberValidator;
 import org.fogbowcloud.manager.core.FederationMemberValidator;
 import org.fogbowcloud.manager.core.ManagerController;
-import org.fogbowcloud.manager.core.UserdataUtils;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
@@ -311,7 +310,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		// mocking compute
 		computePlugin = Mockito.mock(ComputePlugin.class);
 		Mockito.when(
-				computePlugin.requestInstance(Mockito.anyString(), Mockito.any(List.class),
+				computePlugin.requestInstance(Mockito.any(Token.class), Mockito.any(List.class),
 						Mockito.any(Map.class))).thenThrow(
 				new OCCIException(ErrorType.QUOTA_EXCEEDED,
 						ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES));

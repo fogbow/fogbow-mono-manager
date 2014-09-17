@@ -56,7 +56,7 @@ public class TestOCCIApplication {
 
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		Mockito.when(
-				computePlugin.requestInstance(Mockito.anyString(), Mockito.any(List.class),
+				computePlugin.requestInstance(Mockito.any(Token.class), Mockito.any(List.class),
 						Mockito.any(Map.class))).thenThrow(
 				new OCCIException(ErrorType.QUOTA_EXCEEDED,
 						ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES));
@@ -97,7 +97,7 @@ public class TestOCCIApplication {
 	public void testGetRequestDetailsAfterPeriod() throws InterruptedException {
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		Mockito.when(
-				computePlugin.requestInstance(Mockito.anyString(), Mockito.any(List.class),
+				computePlugin.requestInstance(Mockito.any(Token.class), Mockito.any(List.class),
 						Mockito.any(Map.class))).thenReturn(INSTANCE_ID);
 
 		managerFacade.setComputePlugin(computePlugin);

@@ -70,11 +70,12 @@ public class TestGetRemoteInstance {
 
 		Mockito.when(
 				managerTestHelper.getComputePlugin().getInstance(
-						Mockito.eq(DefaultDataTestHelper.ACCESS_TOKEN_ID),
+						Mockito.any(Token.class),
 						Mockito.eq(DefaultDataTestHelper.INSTANCE_ID))).thenReturn(instance);
 
-		Request request = new Request("anyvalue", new Token("anyvalue", OCCITestHelper.USER_MOCK,
-				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), null, null);
+		Token token = new Token("anyvalue", OCCITestHelper.USER_MOCK,
+				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>());
+		Request request = new Request("anyvalue", token, null, null);
 		request.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
 		request.setMemberId(DefaultDataTestHelper.MANAGER_COMPONENT_URL);
 
@@ -104,15 +105,16 @@ public class TestGetRemoteInstance {
 
 		Mockito.doThrow(new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND))
 				.when(this.managerTestHelper.getComputePlugin())
-				.getInstance(Mockito.anyString(), Mockito.anyString());
+				.getInstance(Mockito.any(Token.class), Mockito.anyString());
 
 		ManagerPacketHelper.getRemoteInstance(request, managerTestHelper.createPacketSender());
 	}
 
 	@Test(expected = OCCIException.class)
 	public void testGetRemoteInstanceUnauthorized() throws Exception {
-		Request request = new Request("anyvalue", new Token(WRONG_TOKEN, OCCITestHelper.USER_MOCK,
-				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), null, null);
+		Token token = new Token(WRONG_TOKEN, OCCITestHelper.USER_MOCK,
+				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>());
+		Request request = new Request("anyvalue", token, null, null);
 		request.setInstanceId(INSTANCE_OTHER_USER);
 		request.setMemberId(DefaultDataTestHelper.MANAGER_COMPONENT_URL);
 
@@ -120,7 +122,7 @@ public class TestGetRemoteInstance {
 
 		Mockito.doThrow(new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED))
 				.when(this.managerTestHelper.getComputePlugin())
-				.getInstance(Mockito.eq(DefaultDataTestHelper.ACCESS_TOKEN_ID),
+				.getInstance(Mockito.eq(token),
 						Mockito.eq(INSTANCE_OTHER_USER));
 
 		ManagerPacketHelper.getRemoteInstance(request, managerTestHelper.createPacketSender());

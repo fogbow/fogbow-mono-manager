@@ -148,10 +148,10 @@ public class OpenStackOCCIComputePlugin implements ComputePlugin {
 	}
 
 	@Override
-	public String requestInstance(String authToken, List<Category> categories,
+	public String requestInstance(Token token, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
 		
-		LOGGER.debug("Requesting instance with accessId=" + authToken + "; categories="
+		LOGGER.debug("Requesting instance with token=" + token + "; categories="
 				+ categories + "; xOCCIAtt=" + xOCCIAtt);
 
 		List<Category> openStackCategories = new ArrayList<Category>();
@@ -206,7 +206,7 @@ public class OpenStackOCCIComputePlugin implements ComputePlugin {
 							+ "category=\"http://schemas.ogf.org/occi/infrastructure#networkinterface\";"));
 		}
 
-		HttpResponse response = doRequest("post", computeOCCIEndpoint, authToken, headers)
+		HttpResponse response = doRequest("post", computeOCCIEndpoint, token.getAccessId(), headers)
 				.getHttpResponse();
 
 		Header locationHeader = response.getFirstHeader("Location");
@@ -224,16 +224,16 @@ public class OpenStackOCCIComputePlugin implements ComputePlugin {
 		return splitInstanceId[splitInstanceId.length - 1];
 	}
 
-	public Instance getInstance(String authToken, String instanceId) {
+	public Instance getInstance(Token token, String instanceId) {
 
-		String responseStr = doRequest("get", computeOCCIEndpoint + instanceId, authToken)
+		String responseStr = doRequest("get", computeOCCIEndpoint + instanceId, token.getAccessId())
 				.getResponseString();
 
 		return Instance.parseInstance(instanceId, responseStr);
 	}
 
-	public List<Instance> getInstances(String authToken) {
-		String responseStr = doRequest("get", computeOCCIEndpoint, authToken).getResponseString();
+	public List<Instance> getInstances(Token token) {
+		String responseStr = doRequest("get", computeOCCIEndpoint, token.getAccessId()).getResponseString();
 
 		return parseInstances(responseStr);
 	}
@@ -249,13 +249,13 @@ public class OpenStackOCCIComputePlugin implements ComputePlugin {
 		return instances;
 	}
 
-	public void removeInstances(String authToken) {
-		doRequest("delete", computeOCCIEndpoint, authToken);
+	public void removeInstances(Token token) {
+		doRequest("delete", computeOCCIEndpoint, token.getAccessId());
 	}
 
 	@Override
-	public void removeInstance(String authToken, String instanceId) {
-		doRequest("delete", computeOCCIEndpoint + instanceId, authToken);
+	public void removeInstance(Token token, String instanceId) {
+		doRequest("delete", computeOCCIEndpoint + instanceId, token.getAccessId());
 	}
 
 	@Override
