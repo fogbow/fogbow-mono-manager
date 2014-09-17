@@ -49,7 +49,7 @@ import org.restlet.Request;
 import org.restlet.data.Protocol;
 import org.restlet.util.Series;
 
-public class OpenStackComputePlugin implements ComputePlugin {
+public class OpenStackOCCIComputePlugin implements ComputePlugin {
 
 	// According to OCCI specification
 	private static final String SCHEME_COMPUTE = "http://schemas.ogf.org/occi/infrastructure#";
@@ -65,11 +65,6 @@ public class OpenStackComputePlugin implements ComputePlugin {
 	public static final String COMPUTE_ENDPOINT = "/compute/";
 	private final String COMPUTE_V2_API_ENDPOINT = "/v2/";
 
-	private static final String MAX_TOTAL_CORES_ATT = "maxTotalCores";
-	private static final String TOTAL_CORES_USED_ATT = "totalCoresUsed";
-	private static final String MAX_TOTAL_RAM_SIZE_ATT = "maxTotalRAMSize";
-	private static final String TOTAL_RAM_USED_ATT = "totalRAMUsed";
-	
 	private static final String PUBLIC_KEY_TERM = "public_key";
 	private static final String PUBLIC_KEY_SCHEME = "http://schemas.openstack.org/instance/credentials#";
 	private static final String NAME_PUBLIC_KEY_ATTRIBUTE = "org.openstack.credentials.publickey.name";
@@ -85,9 +80,9 @@ public class OpenStackComputePlugin implements ComputePlugin {
 	private String networkId;
 	private String oCCIEndpoint;
 
-	private static final Logger LOGGER = Logger.getLogger(OpenStackComputePlugin.class);
+	private static final Logger LOGGER = Logger.getLogger(OpenStackOCCIComputePlugin.class);
 	
-	public OpenStackComputePlugin(Properties properties) {
+	public OpenStackOCCIComputePlugin(Properties properties) {
 		this.oCCIEndpoint = properties.getProperty(ConfigurationConstants.COMPUTE_OCCI_URL_KEY);
 		this.computeOCCIEndpoint = oCCIEndpoint + COMPUTE_ENDPOINT;
 		this.computeV2APIEndpoint = properties.getProperty("compute_openstack_v2api_url")
@@ -271,10 +266,14 @@ public class OpenStackComputePlugin implements ComputePlugin {
 						+ token.getAttributes().get(TENANT_ID)
 		+ "/limits", token.getAccessId()).getResponseString();
 
-		String maxCpu = getAttFromJson(MAX_TOTAL_CORES_ATT, responseStr);
-		String cpuInUse = getAttFromJson(TOTAL_CORES_USED_ATT, responseStr);
-		String maxMem = getAttFromJson(MAX_TOTAL_RAM_SIZE_ATT, responseStr);
-		String memInUse = getAttFromJson(TOTAL_RAM_USED_ATT, responseStr);
+		String maxCpu = getAttFromJson(OpenStackConfigurationConstants.MAX_TOTAL_CORES_ATT,
+				responseStr);
+		String cpuInUse = getAttFromJson(OpenStackConfigurationConstants.TOTAL_CORES_USED_ATT,
+				responseStr);
+		String maxMem = getAttFromJson(OpenStackConfigurationConstants.MAX_TOTAL_RAM_SIZE_ATT,
+				responseStr);
+		String memInUse = getAttFromJson(OpenStackConfigurationConstants.TOTAL_RAM_USED_ATT,
+				responseStr);
 
 		int cpuIdle = Integer.parseInt(maxCpu) - Integer.parseInt(cpuInUse);
 		int memIdle = Integer.parseInt(maxMem) - Integer.parseInt(memInUse);

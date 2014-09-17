@@ -12,7 +12,7 @@ import org.apache.http.HttpException;
 import org.apache.http.HttpStatus;
 import org.apache.http.ParseException;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
-import org.fogbowcloud.manager.core.plugins.openstack.OpenStackComputePlugin;
+import org.fogbowcloud.manager.core.plugins.openstack.OpenStackOCCIComputePlugin;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.HeaderUtils;
 import org.fogbowcloud.manager.occi.core.OCCIException;
@@ -22,7 +22,7 @@ import org.fogbowcloud.manager.occi.core.ResourceRepository;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
-import org.fogbowcloud.manager.occi.util.ComputeApplication;
+import org.fogbowcloud.manager.occi.util.OCCIComputeApplication;
 import org.fogbowcloud.manager.occi.util.OCCITestHelper;
 import org.fogbowcloud.manager.occi.util.PluginHelper;
 import org.junit.After;
@@ -35,7 +35,7 @@ import org.restlet.data.Method;
 import org.restlet.engine.header.Header;
 import org.restlet.util.Series;
 
-public class TestComputeOpenStack {
+public class TestOCCIComputeOpenStack {
 
 	private static final String RESTLET_HEADERS_ATT_KEY = "org.restlet.http.headers";
 	private static final String FIRST_INSTANCE_ID = "b122f3ad-503c-4abb-8a55-ba8d90cfce9f";
@@ -44,7 +44,7 @@ public class TestComputeOpenStack {
 	private static final String THIRD_INSTANCE_ID = "cg2563ee-503c-6abr-54gl-ba8d12hf0pof";
 	private static final String SECOND_INSTANCE_ID = "at62f3ad-67ac-56gb-8a55-adbm98cdee9f";
 
-	private OpenStackComputePlugin computeOpenStack;
+	private OpenStackOCCIComputePlugin computeOpenStack;
 	private PluginHelper pluginHelper;
 	List<String> expectedInstanceIds;
 
@@ -52,15 +52,15 @@ public class TestComputeOpenStack {
 	public void setUp() throws Exception {
 		Properties properties = new Properties();
 		properties.put(ConfigurationConstants.COMPUTE_OCCI_URL_KEY, PluginHelper.COMPUTE_OCCI_URL);
-		properties.put(ConfigurationConstants.COMPUTE_OCCI_INSTANCE_SCHEME_KEY, ComputeApplication.INSTANCE_SCHEME);
-		properties.put(ConfigurationConstants.COMPUTE_OCCI_OS_SCHEME_KEY, ComputeApplication.OS_SCHEME);
-		properties.put(ConfigurationConstants.COMPUTE_OCCI_RESOURCE_SCHEME_KEY, ComputeApplication.RESOURCE_SCHEME);
-		properties.put(ConfigurationConstants.COMPUTE_OCCI_FLAVOR_SMALL_KEY, ComputeApplication.SMALL_FLAVOR_TERM);
-		properties.put(ConfigurationConstants.COMPUTE_OCCI_FLAVOR_MEDIUM_KEY, ComputeApplication.MEDIUM_FLAVOR_TERM);
-		properties.put(ConfigurationConstants.COMPUTE_OCCI_FLAVOR_LARGE_KEY, ComputeApplication.MEDIUM_FLAVOR_TERM);
+		properties.put(ConfigurationConstants.COMPUTE_OCCI_INSTANCE_SCHEME_KEY, OCCIComputeApplication.INSTANCE_SCHEME);
+		properties.put(ConfigurationConstants.COMPUTE_OCCI_OS_SCHEME_KEY, OCCIComputeApplication.OS_SCHEME);
+		properties.put(ConfigurationConstants.COMPUTE_OCCI_RESOURCE_SCHEME_KEY, OCCIComputeApplication.RESOURCE_SCHEME);
+		properties.put(ConfigurationConstants.COMPUTE_OCCI_FLAVOR_SMALL_KEY, OCCIComputeApplication.SMALL_FLAVOR_TERM);
+		properties.put(ConfigurationConstants.COMPUTE_OCCI_FLAVOR_MEDIUM_KEY, OCCIComputeApplication.MEDIUM_FLAVOR_TERM);
+		properties.put(ConfigurationConstants.COMPUTE_OCCI_FLAVOR_LARGE_KEY, OCCIComputeApplication.MEDIUM_FLAVOR_TERM);
 		properties.put(ConfigurationConstants.COMPUTE_OCCI_IMAGE_PREFIX + PluginHelper.LINUX_X86_TERM, PluginHelper.CIRROS_IMAGE_TERM);
 
-		computeOpenStack = new OpenStackComputePlugin(properties);
+		computeOpenStack = new OpenStackOCCIComputePlugin(properties);
 
 		// five first generated instance ids
 		expectedInstanceIds = new ArrayList<String>();
@@ -94,12 +94,12 @@ public class TestComputeOpenStack {
 	public void testCreatePluginWithMoreThanOneImage(){
 		Properties properties = new Properties();
 		properties.put(ConfigurationConstants.COMPUTE_OCCI_URL_KEY, PluginHelper.COMPUTE_OCCI_URL);
-		properties.put(ConfigurationConstants.COMPUTE_OCCI_INSTANCE_SCHEME_KEY, ComputeApplication.INSTANCE_SCHEME);
-		properties.put(ConfigurationConstants.COMPUTE_OCCI_OS_SCHEME_KEY, ComputeApplication.OS_SCHEME);
-		properties.put(ConfigurationConstants.COMPUTE_OCCI_RESOURCE_SCHEME_KEY, ComputeApplication.RESOURCE_SCHEME);
-		properties.put(ConfigurationConstants.COMPUTE_OCCI_FLAVOR_SMALL_KEY, ComputeApplication.SMALL_FLAVOR_TERM);
-		properties.put(ConfigurationConstants.COMPUTE_OCCI_FLAVOR_MEDIUM_KEY, ComputeApplication.MEDIUM_FLAVOR_TERM);
-		properties.put(ConfigurationConstants.COMPUTE_OCCI_FLAVOR_LARGE_KEY, ComputeApplication.MEDIUM_FLAVOR_TERM);
+		properties.put(ConfigurationConstants.COMPUTE_OCCI_INSTANCE_SCHEME_KEY, OCCIComputeApplication.INSTANCE_SCHEME);
+		properties.put(ConfigurationConstants.COMPUTE_OCCI_OS_SCHEME_KEY, OCCIComputeApplication.OS_SCHEME);
+		properties.put(ConfigurationConstants.COMPUTE_OCCI_RESOURCE_SCHEME_KEY, OCCIComputeApplication.RESOURCE_SCHEME);
+		properties.put(ConfigurationConstants.COMPUTE_OCCI_FLAVOR_SMALL_KEY, OCCIComputeApplication.SMALL_FLAVOR_TERM);
+		properties.put(ConfigurationConstants.COMPUTE_OCCI_FLAVOR_MEDIUM_KEY, OCCIComputeApplication.MEDIUM_FLAVOR_TERM);
+		properties.put(ConfigurationConstants.COMPUTE_OCCI_FLAVOR_LARGE_KEY, OCCIComputeApplication.MEDIUM_FLAVOR_TERM);
 		//specifying 5 images
 		properties.put(ConfigurationConstants.COMPUTE_OCCI_IMAGE_PREFIX + "image1", "image1");
 		properties.put(ConfigurationConstants.COMPUTE_OCCI_IMAGE_PREFIX + "image2", "image2");
@@ -107,7 +107,7 @@ public class TestComputeOpenStack {
 		properties.put(ConfigurationConstants.COMPUTE_OCCI_IMAGE_PREFIX + "image4", "image4");
 		properties.put(ConfigurationConstants.COMPUTE_OCCI_IMAGE_PREFIX + "image5", "image5");
 
-		computeOpenStack = new OpenStackComputePlugin(properties);
+		computeOpenStack = new OpenStackOCCIComputePlugin(properties);
 
 		//checking if 5 images were added
 		for (int i = 1; i < 6; i++) {
@@ -136,32 +136,32 @@ public class TestComputeOpenStack {
 		Instance instance = computeOpenStack.getInstance(PluginHelper.ACCESS_ID, FIRST_INSTANCE_ID);
 
 		Assert.assertEquals(1, Integer.parseInt(pluginHelper.getAttValueFromInstanceDetails(
-				instance.toOCCIMessageFormatDetails(), ComputeApplication.CORE_ATTRIBUTE_OCCI)));
+				instance.toOCCIMessageFormatDetails(), OCCIComputeApplication.CORE_ATTRIBUTE_OCCI)));
 		Assert.assertEquals(2, Integer.parseInt(pluginHelper.getAttValueFromInstanceDetails(
-				instance.toOCCIMessageFormatDetails(), ComputeApplication.MEMORY_ATTRIBUTE_OCCI)));
+				instance.toOCCIMessageFormatDetails(), OCCIComputeApplication.MEMORY_ATTRIBUTE_OCCI)));
 		Assert.assertEquals(64, Integer.parseInt(pluginHelper.getAttValueFromInstanceDetails(
 				instance.toOCCIMessageFormatDetails(),
-				ComputeApplication.ARCHITECTURE_ATTRIBUTE_OCCI)));
+				OCCIComputeApplication.ARCHITECTURE_ATTRIBUTE_OCCI)));
 		Assert.assertEquals(
 				"server-" + FIRST_INSTANCE_ID,
 				pluginHelper.getAttValueFromInstanceDetails(instance.toOCCIMessageFormatDetails(),
-						ComputeApplication.HOSTNAME_ATTRIBUTE_OCCI));
+						OCCIComputeApplication.HOSTNAME_ATTRIBUTE_OCCI));
 	}
 	
 	@Test
 	public void testCreatePluginSpecifyingNetwork(){
 		Properties properties = new Properties();
 		properties.put(ConfigurationConstants.COMPUTE_OCCI_URL_KEY, PluginHelper.COMPUTE_OCCI_URL);
-		properties.put(ConfigurationConstants.COMPUTE_OCCI_INSTANCE_SCHEME_KEY, ComputeApplication.INSTANCE_SCHEME);
-		properties.put(ConfigurationConstants.COMPUTE_OCCI_OS_SCHEME_KEY, ComputeApplication.OS_SCHEME);
-		properties.put(ConfigurationConstants.COMPUTE_OCCI_RESOURCE_SCHEME_KEY, ComputeApplication.RESOURCE_SCHEME);
-		properties.put(ConfigurationConstants.COMPUTE_OCCI_FLAVOR_SMALL_KEY, ComputeApplication.SMALL_FLAVOR_TERM);
-		properties.put(ConfigurationConstants.COMPUTE_OCCI_FLAVOR_MEDIUM_KEY, ComputeApplication.MEDIUM_FLAVOR_TERM);
-		properties.put(ConfigurationConstants.COMPUTE_OCCI_FLAVOR_LARGE_KEY, ComputeApplication.MEDIUM_FLAVOR_TERM);
+		properties.put(ConfigurationConstants.COMPUTE_OCCI_INSTANCE_SCHEME_KEY, OCCIComputeApplication.INSTANCE_SCHEME);
+		properties.put(ConfigurationConstants.COMPUTE_OCCI_OS_SCHEME_KEY, OCCIComputeApplication.OS_SCHEME);
+		properties.put(ConfigurationConstants.COMPUTE_OCCI_RESOURCE_SCHEME_KEY, OCCIComputeApplication.RESOURCE_SCHEME);
+		properties.put(ConfigurationConstants.COMPUTE_OCCI_FLAVOR_SMALL_KEY, OCCIComputeApplication.SMALL_FLAVOR_TERM);
+		properties.put(ConfigurationConstants.COMPUTE_OCCI_FLAVOR_MEDIUM_KEY, OCCIComputeApplication.MEDIUM_FLAVOR_TERM);
+		properties.put(ConfigurationConstants.COMPUTE_OCCI_FLAVOR_LARGE_KEY, OCCIComputeApplication.MEDIUM_FLAVOR_TERM);
 		properties.put(ConfigurationConstants.COMPUTE_OCCI_IMAGE_PREFIX + PluginHelper.LINUX_X86_TERM, PluginHelper.CIRROS_IMAGE_TERM);
 		properties.put(ConfigurationConstants.COMPUTE_OCCI_NETWORK_KEY, "net1");
 
-		computeOpenStack = new OpenStackComputePlugin(properties);
+		computeOpenStack = new OpenStackOCCIComputePlugin(properties);
 
 		List<Category> categories = new ArrayList<Category>();
 		categories.add(new Category(RequestConstants.SMALL_TERM,
@@ -175,18 +175,18 @@ public class TestComputeOpenStack {
 		Instance instance = computeOpenStack.getInstance(PluginHelper.ACCESS_ID, FIRST_INSTANCE_ID);
 
 		Assert.assertEquals(1, Integer.parseInt(pluginHelper.getAttValueFromInstanceDetails(
-				instance.toOCCIMessageFormatDetails(), ComputeApplication.CORE_ATTRIBUTE_OCCI)));
+				instance.toOCCIMessageFormatDetails(), OCCIComputeApplication.CORE_ATTRIBUTE_OCCI)));
 		Assert.assertEquals(2, Integer.parseInt(pluginHelper.getAttValueFromInstanceDetails(
-				instance.toOCCIMessageFormatDetails(), ComputeApplication.MEMORY_ATTRIBUTE_OCCI)));
+				instance.toOCCIMessageFormatDetails(), OCCIComputeApplication.MEMORY_ATTRIBUTE_OCCI)));
 		Assert.assertEquals(64, Integer.parseInt(pluginHelper.getAttValueFromInstanceDetails(
 				instance.toOCCIMessageFormatDetails(),
-				ComputeApplication.ARCHITECTURE_ATTRIBUTE_OCCI)));
+				OCCIComputeApplication.ARCHITECTURE_ATTRIBUTE_OCCI)));
 		Assert.assertTrue(instance.toOCCIMessageFormatDetails().contains(
 				OCCIHeaders.LINK + ": </network/net1"));
 		Assert.assertEquals(
 				"server-" + FIRST_INSTANCE_ID,
 				pluginHelper.getAttValueFromInstanceDetails(instance.toOCCIMessageFormatDetails(),
-						ComputeApplication.HOSTNAME_ATTRIBUTE_OCCI));
+						OCCIComputeApplication.HOSTNAME_ATTRIBUTE_OCCI));
 	}
 	
 	@Test
@@ -203,18 +203,18 @@ public class TestComputeOpenStack {
 		Instance instance = computeOpenStack.getInstance(PluginHelper.ACCESS_ID, FIRST_INSTANCE_ID);
 
 		Assert.assertEquals(1, Integer.parseInt(pluginHelper.getAttValueFromInstanceDetails(
-				instance.toOCCIMessageFormatDetails(), ComputeApplication.CORE_ATTRIBUTE_OCCI)));
+				instance.toOCCIMessageFormatDetails(), OCCIComputeApplication.CORE_ATTRIBUTE_OCCI)));
 		Assert.assertEquals(2, Integer.parseInt(pluginHelper.getAttValueFromInstanceDetails(
-				instance.toOCCIMessageFormatDetails(), ComputeApplication.MEMORY_ATTRIBUTE_OCCI)));
+				instance.toOCCIMessageFormatDetails(), OCCIComputeApplication.MEMORY_ATTRIBUTE_OCCI)));
 		Assert.assertEquals(64, Integer.parseInt(pluginHelper.getAttValueFromInstanceDetails(
 				instance.toOCCIMessageFormatDetails(),
-				ComputeApplication.ARCHITECTURE_ATTRIBUTE_OCCI)));
+				OCCIComputeApplication.ARCHITECTURE_ATTRIBUTE_OCCI)));
 		Assert.assertTrue(instance.toOCCIMessageFormatDetails().contains(
 				OCCIHeaders.LINK + ": </network/default"));
 		Assert.assertEquals(
 				"server-" + FIRST_INSTANCE_ID,
 				pluginHelper.getAttValueFromInstanceDetails(instance.toOCCIMessageFormatDetails(),
-						ComputeApplication.HOSTNAME_ATTRIBUTE_OCCI));
+						OCCIComputeApplication.HOSTNAME_ATTRIBUTE_OCCI));
 	}
 	
 	@Test(expected = OCCIException.class)
@@ -245,7 +245,7 @@ public class TestComputeOpenStack {
 				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
-		xOCCIAtt.put(ComputeApplication.CORE_ATTRIBUTE_OCCI, "3");
+		xOCCIAtt.put(OCCIComputeApplication.CORE_ATTRIBUTE_OCCI, "3");
 
 		computeOpenStack.requestInstance(PluginHelper.ACCESS_ID, categories, xOCCIAtt);
 	}
@@ -259,7 +259,7 @@ public class TestComputeOpenStack {
 				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
-		xOCCIAtt.put(ComputeApplication.MEMORY_ATTRIBUTE_OCCI, "5");
+		xOCCIAtt.put(OCCIComputeApplication.MEMORY_ATTRIBUTE_OCCI, "5");
 
 		computeOpenStack.requestInstance(PluginHelper.ACCESS_ID, categories, xOCCIAtt);
 	}
@@ -273,7 +273,7 @@ public class TestComputeOpenStack {
 				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
-		xOCCIAtt.put(ComputeApplication.ARCHITECTURE_ATTRIBUTE_OCCI, "x86");
+		xOCCIAtt.put(OCCIComputeApplication.ARCHITECTURE_ATTRIBUTE_OCCI, "x86");
 
 		computeOpenStack.requestInstance(PluginHelper.ACCESS_ID, categories, xOCCIAtt);
 	}
@@ -287,7 +287,7 @@ public class TestComputeOpenStack {
 				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
-		xOCCIAtt.put(ComputeApplication.SPEED_ATTRIBUTE_OCCI, "2");
+		xOCCIAtt.put(OCCIComputeApplication.SPEED_ATTRIBUTE_OCCI, "2");
 
 		computeOpenStack.requestInstance(PluginHelper.ACCESS_ID, categories, xOCCIAtt);
 	}
@@ -301,7 +301,7 @@ public class TestComputeOpenStack {
 				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
-		xOCCIAtt.put(ComputeApplication.HOSTNAME_ATTRIBUTE_OCCI, "server-test");
+		xOCCIAtt.put(OCCIComputeApplication.HOSTNAME_ATTRIBUTE_OCCI, "server-test");
 
 		Assert.assertEquals(FIRST_INSTANCE_ID,
 				computeOpenStack.requestInstance(PluginHelper.ACCESS_ID, categories, xOCCIAtt));
@@ -309,7 +309,7 @@ public class TestComputeOpenStack {
 		String instanceDetails = computeOpenStack.getInstance(PluginHelper.ACCESS_ID,
 				FIRST_INSTANCE_ID).toOCCIMessageFormatDetails();
 		Assert.assertEquals("server-test",
-				pluginHelper.getAttValueFromInstanceDetails(instanceDetails, ComputeApplication.HOSTNAME_ATTRIBUTE_OCCI));
+				pluginHelper.getAttValueFromInstanceDetails(instanceDetails, OCCIComputeApplication.HOSTNAME_ATTRIBUTE_OCCI));
 	}
 
 	@Test
@@ -321,7 +321,7 @@ public class TestComputeOpenStack {
 				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
-		xOCCIAtt.put(ComputeApplication.HOSTNAME_ATTRIBUTE_OCCI, "server-test");
+		xOCCIAtt.put(OCCIComputeApplication.HOSTNAME_ATTRIBUTE_OCCI, "server-test");
 		xOCCIAtt.put("occi.compute.state", "inactive");
 
 		Assert.assertEquals(FIRST_INSTANCE_ID,
@@ -330,7 +330,7 @@ public class TestComputeOpenStack {
 		String instanceDetails = computeOpenStack.getInstance(PluginHelper.ACCESS_ID,
 				FIRST_INSTANCE_ID).toOCCIMessageFormatDetails();
 		Assert.assertEquals("server-test",
-				pluginHelper.getAttValueFromInstanceDetails(instanceDetails, ComputeApplication.HOSTNAME_ATTRIBUTE_OCCI));
+				pluginHelper.getAttValueFromInstanceDetails(instanceDetails, OCCIComputeApplication.HOSTNAME_ATTRIBUTE_OCCI));
 		Assert.assertEquals("inactive",
 				pluginHelper.getAttValueFromInstanceDetails(instanceDetails, "occi.compute.state"));
 	}
@@ -352,7 +352,7 @@ public class TestComputeOpenStack {
 		instanceLocations = getInstanceLocations(computeOpenStack
 				.getInstances(PluginHelper.ACCESS_ID));
 		Assert.assertEquals(1, instanceLocations.size());
-		Assert.assertEquals(PluginHelper.COMPUTE_OCCI_URL + ComputeApplication.COMPUTE_TARGET + FIRST_INSTANCE_ID,
+		Assert.assertEquals(PluginHelper.COMPUTE_OCCI_URL + OCCIComputeApplication.COMPUTE_TARGET + FIRST_INSTANCE_ID,
 				instanceLocations.get(0));
 	}
 
@@ -377,7 +377,7 @@ public class TestComputeOpenStack {
 				.getInstances(PluginHelper.ACCESS_ID));
 		Assert.assertEquals(expectedInstanceIds.size(), instanceLocations.size());
 		for (String expectedId : expectedInstanceIds) {
-			Assert.assertTrue(instanceLocations.contains(PluginHelper.COMPUTE_OCCI_URL + ComputeApplication.COMPUTE_TARGET + expectedId));
+			Assert.assertTrue(instanceLocations.contains(PluginHelper.COMPUTE_OCCI_URL + OCCIComputeApplication.COMPUTE_TARGET + expectedId));
 		}
 	}
 
@@ -411,15 +411,15 @@ public class TestComputeOpenStack {
 		String instanceDetails = computeOpenStack.getInstance(PluginHelper.ACCESS_ID,
 				FIRST_INSTANCE_ID).toOCCIMessageFormatDetails();
 		Assert.assertEquals(FIRST_INSTANCE_ID,
-				pluginHelper.getAttValueFromInstanceDetails(instanceDetails, ComputeApplication.ID_CORE_ATTRIBUTE_OCCI));
+				pluginHelper.getAttValueFromInstanceDetails(instanceDetails, OCCIComputeApplication.ID_CORE_ATTRIBUTE_OCCI));
 		Assert.assertEquals(1, Integer.parseInt(pluginHelper.getAttValueFromInstanceDetails(instanceDetails,
-				ComputeApplication.CORE_ATTRIBUTE_OCCI)));
+				OCCIComputeApplication.CORE_ATTRIBUTE_OCCI)));
 		Assert.assertEquals(2, Integer.parseInt(pluginHelper.getAttValueFromInstanceDetails(instanceDetails,
-				ComputeApplication.MEMORY_ATTRIBUTE_OCCI)));
+				OCCIComputeApplication.MEMORY_ATTRIBUTE_OCCI)));
 		Assert.assertEquals(64, Integer.parseInt(pluginHelper.getAttValueFromInstanceDetails(instanceDetails,
-				ComputeApplication.ARCHITECTURE_ATTRIBUTE_OCCI)));
+				OCCIComputeApplication.ARCHITECTURE_ATTRIBUTE_OCCI)));
 		Assert.assertEquals("server-" + FIRST_INSTANCE_ID,
-				pluginHelper.getAttValueFromInstanceDetails(instanceDetails, ComputeApplication.HOSTNAME_ATTRIBUTE_OCCI));
+				pluginHelper.getAttValueFromInstanceDetails(instanceDetails, OCCIComputeApplication.HOSTNAME_ATTRIBUTE_OCCI));
 	}
 
 	@Test
@@ -530,7 +530,7 @@ public class TestComputeOpenStack {
 		Assert.assertTrue(response.getEntity().getMediaType().toString()
 				.startsWith(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE));
 		Assert.assertEquals(HeaderUtils.X_OCCI_LOCATION_PREFIX + PluginHelper.COMPUTE_OCCI_URL
-				+ OpenStackComputePlugin.COMPUTE_ENDPOINT + FIRST_INSTANCE_ID, response.getEntity()
+				+ OpenStackOCCIComputePlugin.COMPUTE_ENDPOINT + FIRST_INSTANCE_ID, response.getEntity()
 				.getText());
 		
 		// getting instance details
@@ -547,15 +547,15 @@ public class TestComputeOpenStack {
 
 		String instanceDetails = response.getEntity().getText();
 		Assert.assertEquals(FIRST_INSTANCE_ID,
-				pluginHelper.getAttValueFromInstanceDetails(instanceDetails, ComputeApplication.ID_CORE_ATTRIBUTE_OCCI));
+				pluginHelper.getAttValueFromInstanceDetails(instanceDetails, OCCIComputeApplication.ID_CORE_ATTRIBUTE_OCCI));
 		Assert.assertEquals(1, Integer.parseInt(pluginHelper.getAttValueFromInstanceDetails(instanceDetails,
-				ComputeApplication.CORE_ATTRIBUTE_OCCI)));
+				OCCIComputeApplication.CORE_ATTRIBUTE_OCCI)));
 		Assert.assertEquals(2, Integer.parseInt(pluginHelper.getAttValueFromInstanceDetails(instanceDetails,
-				ComputeApplication.MEMORY_ATTRIBUTE_OCCI)));
+				OCCIComputeApplication.MEMORY_ATTRIBUTE_OCCI)));
 		Assert.assertEquals(64, Integer.parseInt(pluginHelper.getAttValueFromInstanceDetails(instanceDetails,
-				ComputeApplication.ARCHITECTURE_ATTRIBUTE_OCCI)));
+				OCCIComputeApplication.ARCHITECTURE_ATTRIBUTE_OCCI)));
 		Assert.assertEquals("server-" + FIRST_INSTANCE_ID,
-				pluginHelper.getAttValueFromInstanceDetails(instanceDetails, ComputeApplication.HOSTNAME_ATTRIBUTE_OCCI));
+				pluginHelper.getAttValueFromInstanceDetails(instanceDetails, OCCIComputeApplication.HOSTNAME_ATTRIBUTE_OCCI));
 	}
 	
 	@Test
@@ -651,7 +651,7 @@ public class TestComputeOpenStack {
 		requestHeaders.add(new Header(HeaderUtils.normalize(OCCIHeaders.X_AUTH_TOKEN), PluginHelper.ACCESS_ID));
 		requestHeaders.add(new Header(HeaderUtils.normalize(OCCIHeaders.CONTENT_TYPE), OCCIHeaders.OCCI_CONTENT_TYPE));
 		requestHeaders.add(new Header(HeaderUtils.normalize(OCCIHeaders.CATEGORY), new Category(PluginHelper.LINUX_X86_TERM,
-				OpenStackComputePlugin.getOSScheme(), RequestConstants.MIXIN_CLASS).toHeader()));
+				OpenStackOCCIComputePlugin.getOSScheme(), RequestConstants.MIXIN_CLASS).toHeader()));
 		Response response = new Response(request);		
 		computeOpenStack.bypass(request, response);
 		
@@ -659,7 +659,7 @@ public class TestComputeOpenStack {
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatus().getCode());
 		Series<Header> responseHeaders = (Series<Header>) response.getAttributes().get(RESTLET_HEADERS_ATT_KEY);
 		Assert.assertNotNull(requestHeaders);
-		Assert.assertEquals(PluginHelper.COMPUTE_OCCI_URL + OpenStackComputePlugin.COMPUTE_ENDPOINT
+		Assert.assertEquals(PluginHelper.COMPUTE_OCCI_URL + OpenStackOCCIComputePlugin.COMPUTE_ENDPOINT
 				+ FIRST_INSTANCE_ID, responseHeaders.getFirstValue(HeaderUtils.normalize("Location")));		
 		Assert.assertTrue(response.getEntity().getMediaType().toString().startsWith(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE));
 		String message = response.getEntity().getText();

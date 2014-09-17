@@ -15,8 +15,8 @@ import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
-import org.fogbowcloud.manager.core.plugins.openstack.OpenStackComputePlugin;
-import org.fogbowcloud.manager.core.plugins.openstack.OpenStackIdentityPlugin;
+import org.fogbowcloud.manager.core.plugins.openstack.KeystoneIdentityPlugin;
+import org.fogbowcloud.manager.core.plugins.openstack.OpenStackOCCIComputePlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.core.util.ManagerTestHelper;
 import org.fogbowcloud.manager.occi.core.Category;
@@ -155,16 +155,16 @@ public class TestManagerController {
 	@Test
 	public void testGetFederationMember() throws InterruptedException {
 		Map<String, String> tokenCredentials = new HashMap<String, String>();
-		tokenCredentials.put(OpenStackIdentityPlugin.USERNAME, DefaultDataTestHelper.USER_NAME);
-		tokenCredentials.put(OpenStackIdentityPlugin.PASSWORD, DefaultDataTestHelper.USER_PASS);
-		tokenCredentials.put(OpenStackIdentityPlugin.TENANT_NAME,
+		tokenCredentials.put(KeystoneIdentityPlugin.USERNAME, DefaultDataTestHelper.USER_NAME);
+		tokenCredentials.put(KeystoneIdentityPlugin.PASSWORD, DefaultDataTestHelper.USER_PASS);
+		tokenCredentials.put(KeystoneIdentityPlugin.TENANT_NAME,
 				DefaultDataTestHelper.TENANT_NAME);
 
 		long tokenExpirationTime = System.currentTimeMillis() + 500;
 
 		Map<String, String> attributesTokenReturn = new HashMap<String, String>();
-		attributesTokenReturn.put(OpenStackIdentityPlugin.TENANT_ID, "987654321");
-		attributesTokenReturn.put(OpenStackIdentityPlugin.TENANT_NAME,
+		attributesTokenReturn.put(KeystoneIdentityPlugin.TENANT_ID, "987654321");
+		attributesTokenReturn.put(KeystoneIdentityPlugin.TENANT_NAME,
 				DefaultDataTestHelper.TENANT_NAME);
 
 		Token firstToken = new Token(DefaultDataTestHelper.ACCESS_TOKEN_ID,
@@ -174,8 +174,8 @@ public class TestManagerController {
 				tokenExpirationTime + DefaultDataTestHelper.LONG_TIME), attributesTokenReturn);
 
 		// mocking identity plugin
-		OpenStackIdentityPlugin openStackidentityPlugin = Mockito
-				.mock(OpenStackIdentityPlugin.class);
+		KeystoneIdentityPlugin openStackidentityPlugin = Mockito
+				.mock(KeystoneIdentityPlugin.class);
 		Mockito.when(openStackidentityPlugin.createFederationUserToken()).thenReturn(firstToken,
 				secondToken);
 		Mockito.when(openStackidentityPlugin.createToken(tokenCredentials)).thenReturn(firstToken,
@@ -1160,7 +1160,7 @@ public class TestManagerController {
 		Mockito.when(identityPlugin.createFederationUserToken()).thenReturn(token);
 		managerController.setLocalIdentityPlugin(identityPlugin);
 
-		ComputePlugin plugin = Mockito.mock(OpenStackComputePlugin.class);
+		ComputePlugin plugin = Mockito.mock(OpenStackOCCIComputePlugin.class);
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
 		List<Category> categories = new ArrayList<Category>();
 		categories.add(new Category(RequestConstants.USER_DATA_TERM,

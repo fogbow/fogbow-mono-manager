@@ -14,11 +14,11 @@ import java.util.Map;
 import java.util.Random;
 import java.util.StringTokenizer;
 
-import org.fogbowcloud.manager.core.plugins.openstack.OpenStackIdentityPlugin;
+import org.fogbowcloud.manager.core.plugins.openstack.KeystoneIdentityPlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.Token;
-import org.fogbowcloud.manager.occi.util.ComputeApplication.InstanceIdGenerator;
+import org.fogbowcloud.manager.occi.util.OCCIComputeApplication.InstanceIdGenerator;
 import org.mockito.Mockito;
 import org.restlet.Component;
 import org.restlet.data.Protocol;
@@ -42,7 +42,7 @@ public class PluginHelper {
 	public static final String FED_USERNAME = "federation_user";
 	public static final String FED_USER_PASS = "federation_user_pass";
 	
-	private ComputeApplication computeApplication;
+	private OCCIComputeApplication computeApplication;
 
 
 	public PluginHelper() {
@@ -88,8 +88,8 @@ public class PluginHelper {
 		this.component.getServers().add(Protocol.HTTP, PORT_ENDPOINT);
 
 		Map<String, String> tokenAttributes = new HashMap<String, String>();
-		tokenAttributes.put(OpenStackIdentityPlugin.TENANT_ID, TENANT_ID);
-		tokenAttributes.put(OpenStackIdentityPlugin.TENANT_NAME, TENANT_NAME);
+		tokenAttributes.put(KeystoneIdentityPlugin.TENANT_ID, TENANT_ID);
+		tokenAttributes.put(KeystoneIdentityPlugin.TENANT_NAME, TENANT_NAME);
 		Token token = new Token(ACCESS_ID, USERNAME,
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, tokenAttributes);
 
@@ -105,7 +105,7 @@ public class PluginHelper {
 		this.component = new Component();
 		this.component.getServers().add(Protocol.HTTP, PORT_ENDPOINT);
 
-		computeApplication = new ComputeApplication();
+		computeApplication = new OCCIComputeApplication();
 
 		// mocking 5 first instance id generation
 		InstanceIdGenerator idGenerator = Mockito.mock(InstanceIdGenerator.class);
@@ -118,7 +118,7 @@ public class PluginHelper {
 		this.component.start();
 	}
 	
-	public ComputeApplication getComputeApplication(){
+	public OCCIComputeApplication getComputeApplication(){
 		return computeApplication;
 	}
 

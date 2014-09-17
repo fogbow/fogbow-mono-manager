@@ -34,7 +34,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class OpenStackIdentityPlugin implements IdentityPlugin {
+public class KeystoneIdentityPlugin implements IdentityPlugin {
 
 	public static final String OPEN_STACK_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss'Z'";
 
@@ -60,7 +60,7 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 	public static final String TENANT_ID = "tenantId";	
 
 	private static final int LAST_SUCCESSFUL_STATUS = 204;
-	private final static Logger LOGGER = Logger.getLogger(OpenStackIdentityPlugin.class);
+	private final static Logger LOGGER = Logger.getLogger(KeystoneIdentityPlugin.class);
 	/*
 	 * The json response format can be seen in the following link:
 	 * http://developer.openstack.org/api-ref-identity-v2.html
@@ -74,7 +74,7 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 	private DefaultHttpClient client;
 	private Properties properties;
 
-	public OpenStackIdentityPlugin(Properties properties) {
+	public KeystoneIdentityPlugin(Properties properties) {
 		this.properties = properties;
 		this.keystoneUrl = properties.getProperty(ConfigurationConstants.IDENTITY_URL);
 		this.v2TokensEndpoint = keystoneUrl + V2_TOKENS_ENDPOINT_PATH;
@@ -193,11 +193,15 @@ public class OpenStackIdentityPlugin implements IdentityPlugin {
 			Map<String, String> tokenAtt = new HashMap<String, String>();
 			try {
 				tenantId = tokenKeyStone.getJSONObject(TENANT_PROP).getString(ID_PROP);
-				tenantName = tokenKeyStone.getJSONObject(TENANT_PROP).getString(NAME_PROP);
 				tokenAtt.put(TENANT_ID, tenantId);
+			} catch (JSONException e) {
+				LOGGER.debug("There is not tenantId properties on json.");
+			}
+			try {
+				tenantName = tokenKeyStone.getJSONObject(TENANT_PROP).getString(NAME_PROP);
 				tokenAtt.put(TENANT_NAME, tenantName);
 			} catch (JSONException e) {
-				LOGGER.debug("There are not tenant properties on json.");
+				LOGGER.debug("There is not tenantName properties on json.");
 			}
 			String expirationDateToken = tokenKeyStone.getString(EXPIRES_PROP);
 			String user = root.getJSONObject(ACCESS_PROP).getJSONObject(USER_PROP)

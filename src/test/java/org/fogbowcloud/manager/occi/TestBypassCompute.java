@@ -20,7 +20,7 @@ import org.apache.http.util.EntityUtils;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
-import org.fogbowcloud.manager.core.plugins.openstack.OpenStackComputePlugin;
+import org.fogbowcloud.manager.core.plugins.openstack.OpenStackOCCIComputePlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.HeaderUtils;
@@ -31,7 +31,7 @@ import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
-import org.fogbowcloud.manager.occi.util.ComputeApplication;
+import org.fogbowcloud.manager.occi.util.OCCIComputeApplication;
 import org.fogbowcloud.manager.occi.util.OCCITestHelper;
 import org.fogbowcloud.manager.occi.util.PluginHelper;
 import org.junit.After;
@@ -50,7 +50,7 @@ public class TestBypassCompute {
 	private static final String FIFTH_INSTANCE_ID = "fifth-instance";
 	private PluginHelper pluginHelper = new PluginHelper();
 	private OCCITestHelper helper;
-	private OpenStackComputePlugin computePlugin;
+	private OpenStackOCCIComputePlugin computePlugin;
 	private IdentityPlugin identityPlugin;
 	private AuthorizationPlugin authorizationPlugin;
 	
@@ -62,12 +62,12 @@ public class TestBypassCompute {
 	private void setup(List<Request> requests) throws Exception {		
 		Properties properties = new Properties();
 		properties.put(ConfigurationConstants.COMPUTE_OCCI_URL_KEY, PluginHelper.COMPUTE_OCCI_URL);
-		properties.put(ConfigurationConstants.COMPUTE_OCCI_INSTANCE_SCHEME_KEY, ComputeApplication.INSTANCE_SCHEME);
-		properties.put(ConfigurationConstants.COMPUTE_OCCI_OS_SCHEME_KEY, ComputeApplication.OS_SCHEME);
-		properties.put(ConfigurationConstants.COMPUTE_OCCI_RESOURCE_SCHEME_KEY, ComputeApplication.RESOURCE_SCHEME);
-		properties.put(ConfigurationConstants.COMPUTE_OCCI_FLAVOR_SMALL_KEY, ComputeApplication.SMALL_FLAVOR_TERM);
-		properties.put(ConfigurationConstants.COMPUTE_OCCI_FLAVOR_MEDIUM_KEY, ComputeApplication.MEDIUM_FLAVOR_TERM);
-		properties.put(ConfigurationConstants.COMPUTE_OCCI_FLAVOR_LARGE_KEY, ComputeApplication.MEDIUM_FLAVOR_TERM);
+		properties.put(ConfigurationConstants.COMPUTE_OCCI_INSTANCE_SCHEME_KEY, OCCIComputeApplication.INSTANCE_SCHEME);
+		properties.put(ConfigurationConstants.COMPUTE_OCCI_OS_SCHEME_KEY, OCCIComputeApplication.OS_SCHEME);
+		properties.put(ConfigurationConstants.COMPUTE_OCCI_RESOURCE_SCHEME_KEY, OCCIComputeApplication.RESOURCE_SCHEME);
+		properties.put(ConfigurationConstants.COMPUTE_OCCI_FLAVOR_SMALL_KEY, OCCIComputeApplication.SMALL_FLAVOR_TERM);
+		properties.put(ConfigurationConstants.COMPUTE_OCCI_FLAVOR_MEDIUM_KEY, OCCIComputeApplication.MEDIUM_FLAVOR_TERM);
+		properties.put(ConfigurationConstants.COMPUTE_OCCI_FLAVOR_LARGE_KEY, OCCIComputeApplication.MEDIUM_FLAVOR_TERM);
 		properties.put(ConfigurationConstants.COMPUTE_OCCI_IMAGE_PREFIX + PluginHelper.LINUX_X86_TERM, PluginHelper.CIRROS_IMAGE_TERM);
 		properties.put(ConfigurationConstants.SCHEDULER_PERIOD_KEY, LITTLE_SCHEDULE_TIME);
 		properties.put(ConfigurationConstants.SSH_PRIVATE_HOST_KEY,
@@ -75,7 +75,7 @@ public class TestBypassCompute {
 		properties.put(ConfigurationConstants.SSH_HOST_HTTP_PORT_KEY,
 				String.valueOf(DefaultDataTestHelper.TOKEN_SERVER_HTTP_PORT));
 		
-		computePlugin = new OpenStackComputePlugin(properties);
+		computePlugin = new OpenStackOCCIComputePlugin(properties);
 		
 		identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.getToken(PluginHelper.ACCESS_ID)).thenReturn(
@@ -116,12 +116,12 @@ public class TestBypassCompute {
 		httpPost.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpPost.addHeader(OCCIHeaders.X_AUTH_TOKEN, PluginHelper.ACCESS_ID);
 		httpPost.addHeader(OCCIHeaders.CATEGORY, new Category(PluginHelper.LINUX_X86_TERM,
-				OpenStackComputePlugin.getOSScheme(), RequestConstants.MIXIN_CLASS).toHeader());
+				OpenStackOCCIComputePlugin.getOSScheme(), RequestConstants.MIXIN_CLASS).toHeader());
 		
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(httpPost);
 		
-		Assert.assertEquals(PluginHelper.COMPUTE_OCCI_URL + OpenStackComputePlugin.COMPUTE_ENDPOINT
+		Assert.assertEquals(PluginHelper.COMPUTE_OCCI_URL + OpenStackOCCIComputePlugin.COMPUTE_ENDPOINT
 				+ FIRST_INSTANCE_ID, response.getFirstHeader(HeaderUtils.normalize("Location")).getValue());
 		Assert.assertEquals(1, response.getHeaders(HeaderUtils.normalize("Location")).length);
 		Assert.assertTrue(response.getEntity().getContentType().getValue().startsWith(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE));
@@ -139,7 +139,7 @@ public class TestBypassCompute {
 		httpPost.addHeader(OCCIHeaders.CONTENT_TYPE, "invalid-type");
 		httpPost.addHeader(OCCIHeaders.X_AUTH_TOKEN, PluginHelper.ACCESS_ID);
 		httpPost.addHeader(OCCIHeaders.CATEGORY, new Category(PluginHelper.LINUX_X86_TERM,
-				OpenStackComputePlugin.getOSScheme(), RequestConstants.MIXIN_CLASS).toHeader());
+				OpenStackOCCIComputePlugin.getOSScheme(), RequestConstants.MIXIN_CLASS).toHeader());
 		
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(httpPost);
@@ -153,7 +153,7 @@ public class TestBypassCompute {
 		HttpPost httpPost = new HttpPost(OCCITestHelper.URI_FOGBOW_COMPUTE);
 		httpPost.addHeader(OCCIHeaders.X_AUTH_TOKEN, PluginHelper.ACCESS_ID);
 		httpPost.addHeader(OCCIHeaders.CATEGORY, new Category(PluginHelper.LINUX_X86_TERM,
-				OpenStackComputePlugin.getOSScheme(), RequestConstants.MIXIN_CLASS).toHeader());
+				OpenStackOCCIComputePlugin.getOSScheme(), RequestConstants.MIXIN_CLASS).toHeader());
 		
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(httpPost);
@@ -166,7 +166,7 @@ public class TestBypassCompute {
 		//adding instances directly on compute endpoint
 		List<Category> categories = new ArrayList<Category>();		
 		categories.add(new Category(PluginHelper.LINUX_X86_TERM,
-				OpenStackComputePlugin.getOSScheme(), RequestConstants.MIXIN_CLASS));
+				OpenStackOCCIComputePlugin.getOSScheme(), RequestConstants.MIXIN_CLASS));
 		Assert.assertEquals(FIRST_INSTANCE_ID, computePlugin.requestInstance(
 				PluginHelper.ACCESS_ID, categories, new HashMap<String, String>()));
 		Assert.assertEquals(SECOND_INSTANCE_ID, computePlugin.requestInstance(
@@ -211,7 +211,7 @@ public class TestBypassCompute {
 		//adding instances directly on compute endpoint
 		List<Category> categories = new ArrayList<Category>();		
 		categories.add(new Category(PluginHelper.LINUX_X86_TERM,
-				OpenStackComputePlugin.getOSScheme(), RequestConstants.MIXIN_CLASS));
+				OpenStackOCCIComputePlugin.getOSScheme(), RequestConstants.MIXIN_CLASS));
 		Assert.assertEquals(SECOND_INSTANCE_ID, computePlugin.requestInstance(
 				PluginHelper.ACCESS_ID, categories, new HashMap<String, String>()));
 		Assert.assertEquals(THIRD_INSTANCE_ID, computePlugin.requestInstance(
@@ -237,7 +237,7 @@ public class TestBypassCompute {
 		//adding instances directly on compute endpoint
 		List<Category> categories = new ArrayList<Category>();		
 		categories.add(new Category(PluginHelper.LINUX_X86_TERM,
-				OpenStackComputePlugin.getOSScheme(), RequestConstants.MIXIN_CLASS));
+				OpenStackOCCIComputePlugin.getOSScheme(), RequestConstants.MIXIN_CLASS));
 		Assert.assertEquals(FIRST_INSTANCE_ID, computePlugin.requestInstance(
 				PluginHelper.ACCESS_ID, categories, new HashMap<String, String>()));
 		
@@ -255,15 +255,15 @@ public class TestBypassCompute {
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());		
 		String instanceDetails = EntityUtils.toString(response.getEntity());
 		Assert.assertEquals(FIRST_INSTANCE_ID,
-				pluginHelper.getAttValueFromInstanceDetails(instanceDetails, ComputeApplication.ID_CORE_ATTRIBUTE_OCCI));
+				pluginHelper.getAttValueFromInstanceDetails(instanceDetails, OCCIComputeApplication.ID_CORE_ATTRIBUTE_OCCI));
 		Assert.assertEquals(1, Integer.parseInt(pluginHelper.getAttValueFromInstanceDetails(instanceDetails,
-				ComputeApplication.CORE_ATTRIBUTE_OCCI)));
+				OCCIComputeApplication.CORE_ATTRIBUTE_OCCI)));
 		Assert.assertEquals(2, Integer.parseInt(pluginHelper.getAttValueFromInstanceDetails(instanceDetails,
-				ComputeApplication.MEMORY_ATTRIBUTE_OCCI)));
+				OCCIComputeApplication.MEMORY_ATTRIBUTE_OCCI)));
 		Assert.assertEquals(64, Integer.parseInt(pluginHelper.getAttValueFromInstanceDetails(instanceDetails,
-				ComputeApplication.ARCHITECTURE_ATTRIBUTE_OCCI)));
+				OCCIComputeApplication.ARCHITECTURE_ATTRIBUTE_OCCI)));
 		Assert.assertEquals("server-" + FIRST_INSTANCE_ID,
-				pluginHelper.getAttValueFromInstanceDetails(instanceDetails, ComputeApplication.HOSTNAME_ATTRIBUTE_OCCI));
+				pluginHelper.getAttValueFromInstanceDetails(instanceDetails, OCCIComputeApplication.HOSTNAME_ATTRIBUTE_OCCI));
 	}
 	
 	@Test
@@ -302,7 +302,7 @@ public class TestBypassCompute {
 		//adding instances directly on compute endpoint
 		List<Category> categories = new ArrayList<Category>();		
 		categories.add(new Category(PluginHelper.LINUX_X86_TERM,
-				OpenStackComputePlugin.getOSScheme(), RequestConstants.MIXIN_CLASS));
+				OpenStackOCCIComputePlugin.getOSScheme(), RequestConstants.MIXIN_CLASS));
 		Assert.assertEquals(FIRST_INSTANCE_ID, computePlugin.requestInstance(
 				PluginHelper.ACCESS_ID, categories, new HashMap<String, String>()));
 		Assert.assertEquals(SECOND_INSTANCE_ID, computePlugin.requestInstance(
@@ -360,7 +360,7 @@ public class TestBypassCompute {
 		//adding two instances directly on compute endpoint
 		List<Category> categories = new ArrayList<Category>();
 		categories.add(new Category(PluginHelper.LINUX_X86_TERM,
-				OpenStackComputePlugin.getOSScheme(), RequestConstants.MIXIN_CLASS));
+				OpenStackOCCIComputePlugin.getOSScheme(), RequestConstants.MIXIN_CLASS));
 		Assert.assertEquals(SECOND_INSTANCE_ID, computePlugin.requestInstance(
 				PluginHelper.ACCESS_ID, categories, new HashMap<String, String>()));
 		Assert.assertEquals(THIRD_INSTANCE_ID, computePlugin.requestInstance(
@@ -398,7 +398,7 @@ public class TestBypassCompute {
 		//adding instances directly on compute endpoint
 		List<Category> categories = new ArrayList<Category>();		
 		categories.add(new Category(PluginHelper.LINUX_X86_TERM,
-				OpenStackComputePlugin.getOSScheme(), RequestConstants.MIXIN_CLASS));
+				OpenStackOCCIComputePlugin.getOSScheme(), RequestConstants.MIXIN_CLASS));
 		Assert.assertEquals(FIRST_INSTANCE_ID, computePlugin.requestInstance(
 				PluginHelper.ACCESS_ID, categories, new HashMap<String, String>()));
 		Assert.assertEquals(SECOND_INSTANCE_ID, computePlugin.requestInstance(
@@ -438,7 +438,7 @@ public class TestBypassCompute {
 		//adding instances directly on compute endpoint
 		List<Category> categories = new ArrayList<Category>();		
 		categories.add(new Category(PluginHelper.LINUX_X86_TERM,
-				OpenStackComputePlugin.getOSScheme(), RequestConstants.MIXIN_CLASS));
+				OpenStackOCCIComputePlugin.getOSScheme(), RequestConstants.MIXIN_CLASS));
 		Assert.assertEquals(FIRST_INSTANCE_ID, computePlugin.requestInstance(
 				PluginHelper.ACCESS_ID, categories, new HashMap<String, String>()));
 				
@@ -483,7 +483,7 @@ public class TestBypassCompute {
 		List<Resource> availableResources = getResourcesFromStr(resourcesStr);
 		
 		List<Resource> fogResources = ResourceRepository.getInstance().getAll();
-		List<Resource> compResources = ComputeApplication.getResources();
+		List<Resource> compResources = OCCIComputeApplication.getResources();
 
 		for (Resource resource : availableResources) {
 			Assert.assertTrue(fogResources.contains(resource) || compResources.contains(resource));

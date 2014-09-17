@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.http.HttpStatus;
-import org.fogbowcloud.manager.core.plugins.openstack.OpenStackIdentityPlugin;
+import org.fogbowcloud.manager.core.plugins.openstack.KeystoneIdentityPlugin;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.json.JSONArray;
@@ -43,8 +43,8 @@ public class KeystoneApplication extends Application {
 	@Override
 	public Restlet createInboundRoot() {
 		Router router = new Router(getContext());
-		router.attach(OpenStackIdentityPlugin.V2_TOKENS_ENDPOINT_PATH, KeystoneServer.class);
-		router.attach(OpenStackIdentityPlugin.V2_TENANTS_ENDPOINT_PATH, KeystoneServer.class);
+		router.attach(KeystoneIdentityPlugin.V2_TOKENS_ENDPOINT_PATH, KeystoneServer.class);
+		router.attach(KeystoneIdentityPlugin.V2_TENANTS_ENDPOINT_PATH, KeystoneServer.class);
 		return router;
 	}
 
@@ -67,7 +67,7 @@ public class KeystoneApplication extends Application {
 		if (!defaultToken.getAccessId().equals(accessId)) {
 			throw new ResourceException(HttpStatus.SC_UNAUTHORIZED);
 		} else if (tenantName != null
-				&& !defaultToken.get(OpenStackIdentityPlugin.TENANT_NAME).equals(tenantName)) {
+				&& !defaultToken.get(KeystoneIdentityPlugin.TENANT_NAME).equals(tenantName)) {
 			throw new ResourceException(HttpStatus.SC_UNAUTHORIZED);
 		}
 	}
@@ -76,7 +76,7 @@ public class KeystoneApplication extends Application {
 		if (!defaultToken.getUser().equals(username) || !this.userPassword.equals(password)) {
 			throw new ResourceException(HttpStatus.SC_UNAUTHORIZED);
 		} else if (tenantName != null
-				&& !defaultToken.get(OpenStackIdentityPlugin.TENANT_NAME).equals(tenantName)) {
+				&& !defaultToken.get(KeystoneIdentityPlugin.TENANT_NAME).equals(tenantName)) {
 			throw new ResourceException(HttpStatus.SC_UNAUTHORIZED);
 		}
 	}
@@ -94,7 +94,7 @@ public class KeystoneApplication extends Application {
 			String token = req.getHeaders().getValues(OCCIHeaders.X_AUTH_TOKEN);
 			keyStoneApplication.checkUserByAccessId(token);
 			if (getRequest().getResourceRef().toString()
-					.endsWith(OpenStackIdentityPlugin.V2_TOKENS_ENDPOINT_PATH)) {
+					.endsWith(KeystoneIdentityPlugin.V2_TOKENS_ENDPOINT_PATH)) {
 				String user = keyStoneApplication.getUserFromToken(token);
 				return createUserTokenJSONResponse(token, user);
 			} else {
@@ -106,15 +106,15 @@ public class KeystoneApplication extends Application {
 		private String createTenantJSONResponse(Token token) {
 			JSONObject rootTenant = new JSONObject();
 			try {
-				rootTenant.put(OpenStackIdentityPlugin.ID_PROP,
-						token.get(OpenStackIdentityPlugin.TENANT_ID));
-				rootTenant.put(OpenStackIdentityPlugin.NAME_PROP,
-						token.get(OpenStackIdentityPlugin.TENANT_NAME));
+				rootTenant.put(KeystoneIdentityPlugin.ID_PROP,
+						token.get(KeystoneIdentityPlugin.TENANT_ID));
+				rootTenant.put(KeystoneIdentityPlugin.NAME_PROP,
+						token.get(KeystoneIdentityPlugin.TENANT_NAME));
 
 				JSONArray tenants = new JSONArray();
 				tenants.put(rootTenant);
 				JSONObject root = new JSONObject();
-				return root.put(OpenStackIdentityPlugin.TENANTS_PROP, tenants).toString();
+				return root.put(KeystoneIdentityPlugin.TENANTS_PROP, tenants).toString();
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}
@@ -138,9 +138,9 @@ public class KeystoneApplication extends Application {
 				keyStoneApplication.authenticationCheckToken(idToken, tenantName);
 			} else {
 				String username = getUserFeatureCredentials(jsonCredentials,
-						OpenStackIdentityPlugin.USERNAME_PROP);
+						KeystoneIdentityPlugin.USERNAME_PROP);
 				String password = getUserFeatureCredentials(jsonCredentials,
-						OpenStackIdentityPlugin.PASSWORD_PROP);
+						KeystoneIdentityPlugin.PASSWORD_PROP);
 
 				keyStoneApplication.checkAuthenticationCredentials(username, password, tenantName);
 			}
@@ -153,27 +153,27 @@ public class KeystoneApplication extends Application {
 		private String createAuthenticationJSONResponse(Token token) {
 			try {
 				String tokenAccessId = token.getAccessId();
-				String tenantId = token.get(OpenStackIdentityPlugin.TENANT_ID);
-				String tenantName = token.get(OpenStackIdentityPlugin.TENANT_NAME);
+				String tenantId = token.get(KeystoneIdentityPlugin.TENANT_ID);
+				String tenantName = token.get(KeystoneIdentityPlugin.TENANT_NAME);
 
-				String expirationDate = OpenStackIdentityPlugin.getDateOpenStackFormat(token
+				String expirationDate = KeystoneIdentityPlugin.getDateOpenStackFormat(token
 						.getExpirationDate());
 
 				JSONObject rootIdToken = new JSONObject();
 
 				JSONObject rootTenant = new JSONObject();
-				rootTenant.put(OpenStackIdentityPlugin.ID_PROP, tenantId);
-				rootTenant.put(OpenStackIdentityPlugin.NAME_PROP, tenantName);
-				rootIdToken.put(OpenStackIdentityPlugin.ID_PROP, tokenAccessId);
-				rootIdToken.put(OpenStackIdentityPlugin.EXPIRES_PROP, expirationDate);
-				rootIdToken.put(OpenStackIdentityPlugin.TENANT_PROP, rootTenant);
+				rootTenant.put(KeystoneIdentityPlugin.ID_PROP, tenantId);
+				rootTenant.put(KeystoneIdentityPlugin.NAME_PROP, tenantName);
+				rootIdToken.put(KeystoneIdentityPlugin.ID_PROP, tokenAccessId);
+				rootIdToken.put(KeystoneIdentityPlugin.EXPIRES_PROP, expirationDate);
+				rootIdToken.put(KeystoneIdentityPlugin.TENANT_PROP, rootTenant);
 				JSONObject rootAccess = new JSONObject();
-				rootAccess.put(OpenStackIdentityPlugin.TOKEN_PROP, rootIdToken);
+				rootAccess.put(KeystoneIdentityPlugin.TOKEN_PROP, rootIdToken);
 				JSONObject rootUserName = new JSONObject();
-				rootUserName.put(OpenStackIdentityPlugin.NAME_PROP, token.getUser());
-				rootAccess.put(OpenStackIdentityPlugin.USER_PROP, rootUserName);
+				rootUserName.put(KeystoneIdentityPlugin.NAME_PROP, token.getUser());
+				rootAccess.put(KeystoneIdentityPlugin.USER_PROP, rootUserName);
 				JSONObject rootMain = new JSONObject();
-				rootMain.put(OpenStackIdentityPlugin.ACCESS_PROP, rootAccess);
+				rootMain.put(KeystoneIdentityPlugin.ACCESS_PROP, rootAccess);
 				return rootMain.toString();
 			} catch (JSONException e) {
 				e.printStackTrace();
@@ -184,9 +184,9 @@ public class KeystoneApplication extends Application {
 		private String getTokenAccessId(String jsonCredentials) {
 			try {
 				JSONObject root = new JSONObject(jsonCredentials);
-				return root.getJSONObject(OpenStackIdentityPlugin.AUTH_PROP)
-						.getJSONObject(OpenStackIdentityPlugin.TOKEN_PROP)
-						.getString(OpenStackIdentityPlugin.ID_PROP).toString();
+				return root.getJSONObject(KeystoneIdentityPlugin.AUTH_PROP)
+						.getJSONObject(KeystoneIdentityPlugin.TOKEN_PROP)
+						.getString(KeystoneIdentityPlugin.ID_PROP).toString();
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}
@@ -196,8 +196,8 @@ public class KeystoneApplication extends Application {
 		private String getTenantName(String jsonCredentials) {
 			try {
 				JSONObject root = new JSONObject(jsonCredentials);
-				return root.getJSONObject(OpenStackIdentityPlugin.AUTH_PROP)
-						.getString(OpenStackIdentityPlugin.TENANT_NAME_PROP).toString();
+				return root.getJSONObject(KeystoneIdentityPlugin.AUTH_PROP)
+						.getString(KeystoneIdentityPlugin.TENANT_NAME_PROP).toString();
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}
@@ -207,8 +207,8 @@ public class KeystoneApplication extends Application {
 		private String getUserFeatureCredentials(String jsonCredentials, String feature) {
 			try {
 				JSONObject root = new JSONObject(jsonCredentials);
-				return root.getJSONObject(OpenStackIdentityPlugin.AUTH_PROP)
-						.getJSONObject(OpenStackIdentityPlugin.PASSWORD_CREDENTIALS_PROP)
+				return root.getJSONObject(KeystoneIdentityPlugin.AUTH_PROP)
+						.getJSONObject(KeystoneIdentityPlugin.PASSWORD_CREDENTIALS_PROP)
 						.getString(feature).toString();
 			} catch (JSONException e) {
 				return null;
@@ -218,11 +218,11 @@ public class KeystoneApplication extends Application {
 		private String createUserTokenJSONResponse(String accessId, String user) {
 			try {
 				JSONObject usernameObject = new JSONObject();
-				usernameObject.put(OpenStackIdentityPlugin.NAME_PROP, user);
+				usernameObject.put(KeystoneIdentityPlugin.NAME_PROP, user);
 				JSONObject userObject = new JSONObject();
-				userObject.put(OpenStackIdentityPlugin.USER_PROP, usernameObject);
+				userObject.put(KeystoneIdentityPlugin.USER_PROP, usernameObject);
 				JSONObject accessObject = new JSONObject();
-				accessObject.put(OpenStackIdentityPlugin.ACCESS_PROP, userObject);
+				accessObject.put(KeystoneIdentityPlugin.ACCESS_PROP, userObject);
 				return accessObject.toString();
 			} catch (JSONException e) {
 				e.printStackTrace();

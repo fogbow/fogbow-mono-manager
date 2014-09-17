@@ -28,7 +28,7 @@ import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
-import org.fogbowcloud.manager.occi.util.ComputeApplication;
+import org.fogbowcloud.manager.occi.util.OCCIComputeApplication;
 import org.fogbowcloud.manager.occi.util.OCCITestHelper;
 import org.junit.After;
 import org.junit.Assert;
@@ -40,7 +40,7 @@ public class TestGetRequest {
 
 	private OCCITestHelper requestHelper;
 	private String instanceLocation = HeaderUtils.X_OCCI_LOCATION_PREFIX + "http://localhost:"
-			+ OCCITestHelper.ENDPOINT_PORT + ComputeApplication.COMPUTE_TARGET
+			+ OCCITestHelper.ENDPOINT_PORT + OCCIComputeApplication.COMPUTE_TARGET
 			+ "/b122f3ad-503c-4abb-8a55-ba8d90cfce9f";
 
 	@SuppressWarnings("unchecked")

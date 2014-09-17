@@ -14,8 +14,8 @@ import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.common.AllowAllAuthorizationPlugin;
-import org.fogbowcloud.manager.core.plugins.openstack.OpenStackComputePlugin;
-import org.fogbowcloud.manager.core.plugins.openstack.OpenStackIdentityPlugin;
+import org.fogbowcloud.manager.core.plugins.openstack.KeystoneIdentityPlugin;
+import org.fogbowcloud.manager.core.plugins.openstack.OpenStackOCCIComputePlugin;
 import org.fogbowcloud.manager.occi.OCCIApplication;
 import org.fogbowcloud.manager.xmpp.ManagerXmppComponent;
 import org.restlet.Component;
@@ -38,7 +38,7 @@ public class Main {
 					ConfigurationConstants.COMPUTE_CLASS_KEY, properties);
 		} catch (Exception e) {
 			LOGGER.warn("Compute Plugin not especified in the properties.");
-			computePlugin = new OpenStackComputePlugin(properties);
+			computePlugin = new OpenStackOCCIComputePlugin(properties);
 		}
 
 		AuthorizationPlugin authorizationPlugin = null;
@@ -56,7 +56,7 @@ public class Main {
 					ConfigurationConstants.LOCAL_PREFIX);
 		} catch (Exception e) {
 			LOGGER.warn("Local Identity Plugin not especified in the properties.");
-			localIdentityPlugin = new OpenStackIdentityPlugin(properties);
+			localIdentityPlugin = new KeystoneIdentityPlugin(properties);
 		}
 		IdentityPlugin federationIdentityPlugin = null;
 		try {
@@ -64,7 +64,7 @@ public class Main {
 					ConfigurationConstants.FEDERATION_PREFIX);
 		} catch (Exception e) {
 			LOGGER.warn("Federation Identity Plugin not especified in the properties.");
-			federationIdentityPlugin = new OpenStackIdentityPlugin(properties);
+			federationIdentityPlugin = new KeystoneIdentityPlugin(properties);
 		}
 
 		FederationMemberValidator validator = new DefaultMemberValidator();
