@@ -18,25 +18,6 @@ public class ConfigurationConstants {
 	public static final String IDENTITY_URL = "identity_url";
 	public static final String MEMBER_VALIDATOR_KEY = "member_validator";
 	public static final String HTTP_PORT_KEY = "http_port";
-
-	
-	//schemes
-	public static final String COMPUTE_OCCI_OS_SCHEME_KEY = "compute_occi_os_scheme";
-	public static final String COMPUTE_OCCI_INSTANCE_SCHEME_KEY = "compute_occi_instance_scheme";
-	public static final String COMPUTE_OCCI_RESOURCE_SCHEME_KEY = "compute_occi_resource_scheme";
-
-	//images prefix
-	public static final String COMPUTE_OCCI_IMAGE_PREFIX = "compute_occi_image_";
-	
-	//network
-	public static final String COMPUTE_OCCI_NETWORK_KEY = "compute_occi_network_id";
-	
-	//flavors
-	public static final String COMPUTE_OCCI_FLAVOR_SMALL_KEY = "compute_occi_flavor_small";
-	public static final String COMPUTE_OCCI_FLAVOR_MEDIUM_KEY = "compute_occi_flavor_medium";
-	public static final String COMPUTE_OCCI_FLAVOR_LARGE_KEY = "compute_occi_flavor_large";
-
-	public static final String COMPUTE_OCCI_URL_KEY = "compute_occi_url";
 	
 	//federation user
 	public static final String FEDERATION_USER_NAME_KEY = "local_proxy_account_user_name";

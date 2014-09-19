@@ -28,7 +28,6 @@ import org.apache.http.params.CoreProtocolPNames;
 import org.apache.http.params.HttpParams;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
-import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
@@ -83,16 +82,16 @@ public class OpenStackOCCIComputePlugin implements ComputePlugin {
 	private static final Logger LOGGER = Logger.getLogger(OpenStackOCCIComputePlugin.class);
 	
 	public OpenStackOCCIComputePlugin(Properties properties) {
-		this.oCCIEndpoint = properties.getProperty(ConfigurationConstants.COMPUTE_OCCI_URL_KEY);
+		this.oCCIEndpoint = properties.getProperty(OpenStackConfigurationConstants.COMPUTE_OCCI_URL_KEY);
 		this.computeOCCIEndpoint = oCCIEndpoint + COMPUTE_ENDPOINT;
 		this.computeV2APIEndpoint = properties.getProperty("compute_openstack_v2api_url")
 				+ COMPUTE_V2_API_ENDPOINT;
 		
 		instanceScheme = properties
-				.getProperty(ConfigurationConstants.COMPUTE_OCCI_INSTANCE_SCHEME_KEY);
-		osScheme = properties.getProperty(ConfigurationConstants.COMPUTE_OCCI_OS_SCHEME_KEY);
-		resourceScheme = properties.getProperty(ConfigurationConstants.COMPUTE_OCCI_RESOURCE_SCHEME_KEY);
-		networkId = properties.getProperty(ConfigurationConstants.COMPUTE_OCCI_NETWORK_KEY);	
+				.getProperty(OpenStackConfigurationConstants.COMPUTE_OCCI_INSTANCE_SCHEME_KEY);
+		osScheme = properties.getProperty(OpenStackConfigurationConstants.COMPUTE_OCCI_OS_SCHEME_KEY);
+		resourceScheme = properties.getProperty(OpenStackConfigurationConstants.COMPUTE_OCCI_RESOURCE_SCHEME_KEY);
+		networkId = properties.getProperty(OpenStackConfigurationConstants.COMPUTE_OCCI_NETWORK_KEY);	
 
 		Map<String, String> imageProperties = getImageProperties(properties);
 		
@@ -109,15 +108,15 @@ public class OpenStackOCCIComputePlugin implements ComputePlugin {
 		
 		fogTermToOpenStackCategory.put(
 				RequestConstants.SMALL_TERM,
-				createFlavorCategory(ConfigurationConstants.COMPUTE_OCCI_FLAVOR_SMALL_KEY,
+				createFlavorCategory(OpenStackConfigurationConstants.COMPUTE_OCCI_FLAVOR_SMALL_KEY,
 						properties));
 		fogTermToOpenStackCategory.put(
 				RequestConstants.MEDIUM_TERM,
-				createFlavorCategory(ConfigurationConstants.COMPUTE_OCCI_FLAVOR_MEDIUM_KEY,
+				createFlavorCategory(OpenStackConfigurationConstants.COMPUTE_OCCI_FLAVOR_MEDIUM_KEY,
 						properties));
 		fogTermToOpenStackCategory.put(
 				RequestConstants.LARGE_TERM,
-				createFlavorCategory(ConfigurationConstants.COMPUTE_OCCI_FLAVOR_LARGE_KEY,
+				createFlavorCategory(OpenStackConfigurationConstants.COMPUTE_OCCI_FLAVOR_LARGE_KEY,
 						properties));		
 		
 		fogTermToOpenStackCategory.put(RequestConstants.PUBLIC_KEY_TERM, new Category(
@@ -132,9 +131,9 @@ public class OpenStackOCCIComputePlugin implements ComputePlugin {
 		
 		for (Object propName : properties.keySet()) {
 			String propNameStr = (String) propName;
-			if (propNameStr.startsWith(ConfigurationConstants.COMPUTE_OCCI_IMAGE_PREFIX)) {
+			if (propNameStr.startsWith(OpenStackConfigurationConstants.COMPUTE_OCCI_IMAGE_PREFIX)) {
 				imageProperties.put(propNameStr
-						.substring(ConfigurationConstants.COMPUTE_OCCI_IMAGE_PREFIX.length()),
+						.substring(OpenStackConfigurationConstants.COMPUTE_OCCI_IMAGE_PREFIX.length()),
 						properties.getProperty(propNameStr));
 			}
 		}

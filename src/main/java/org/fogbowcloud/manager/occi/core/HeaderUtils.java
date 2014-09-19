@@ -30,6 +30,14 @@ public class HeaderUtils {
 		}
 	}
 	
+	public static void checkJsonContentType(Series<Header> headers) {
+		String contentType = headers.getValues(OCCIHeaders.CONTENT_TYPE);
+		if (contentType == null || !contentType.equals(OCCIHeaders.JSON_CONTENT_TYPE)) {
+			LOGGER.debug("Content-type " + contentType + " was not json.");
+			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
+		}
+	}
+	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public static String getAuthToken(Series<Header> headers, Response response, String authenticationURI) {
 		String token = headers.getValues(OCCIHeaders.X_AUTH_TOKEN);

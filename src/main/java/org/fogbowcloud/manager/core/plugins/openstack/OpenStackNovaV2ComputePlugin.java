@@ -11,6 +11,7 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.HttpVersion;
+import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
@@ -25,11 +26,11 @@ import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
-import org.fogbowcloud.manager.core.plugins.opennebula.OneConfigurationConstants;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
+import org.fogbowcloud.manager.occi.core.Resource;
 import org.fogbowcloud.manager.occi.core.ResourceRepository;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
@@ -51,18 +52,18 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 	private String computeV2APIEndpoint;
 	private String networkId;
 	private Map<String, String> fogbowTermToOpenStack = new HashMap<String, String>();
-	private List<String> idleImages = new ArrayList<String>();
+	private Map<String, String> imagesOpenStackToFogbow = new HashMap<String, String>();
 	DefaultHttpClient client;
 
 	private static final Logger LOGGER = Logger.getLogger(OpenStackNovaV2ComputePlugin.class);
 	
 	public OpenStackNovaV2ComputePlugin(Properties properties){
 		computeV2APIEndpoint = properties
-				.getProperty(OpenStackConfigurationConstants.COMPUTE_OPENSTACK_V2_URL_KEY)
+				.getProperty(OpenStackConfigurationConstants.COMPUTE_NOVAV2_URL_KEY)
 				+ COMPUTE_V2_API_ENDPOINT;
 
 		networkId = properties
-				.getProperty(OpenStackConfigurationConstants.COMPUTE_OPENSTACK_V2_URL_KEY);
+				.getProperty(OpenStackConfigurationConstants.COMPUTE_NOVAV2_NETWORK_KEY);
 
 		// images
 		Map<String, String> imageProperties = getImageProperties(properties);
@@ -73,16 +74,16 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 
 		for (String imageName : imageProperties.keySet()) {
 			fogbowTermToOpenStack.put(imageName, imageProperties.get(imageName));
+			imagesOpenStackToFogbow.put(imageProperties.get(imageName), imageName);
 			ResourceRepository.getInstance().addImageResource(imageName);
 		}
-		idleImages.addAll(imageProperties.keySet());
 		
 		fogbowTermToOpenStack.put(RequestConstants.SMALL_TERM,
-				properties.getProperty(OneConfigurationConstants.COMPUTE_ONE_SMALL_KEY));
+				properties.getProperty(OpenStackConfigurationConstants.COMPUTE_NOVAV2_FLAVOR_SMALL_KEY));
 		fogbowTermToOpenStack.put(RequestConstants.MEDIUM_TERM,
-				properties.getProperty(OneConfigurationConstants.COMPUTE_ONE_MEDIUM_KEY));
+				properties.getProperty(OpenStackConfigurationConstants.COMPUTE_NOVAV2_FLAVOR_MEDIUM_KEY));
 		fogbowTermToOpenStack.put(RequestConstants.LARGE_TERM,
-				properties.getProperty(OneConfigurationConstants.COMPUTE_ONE_LARGE_KEY));
+				properties.getProperty(OpenStackConfigurationConstants.COMPUTE_NOVAV2_FLAVOR_LARGE_KEY));
 		
 		// userdata
 		fogbowTermToOpenStack.put(RequestConstants.USER_DATA_TERM, "user_data");
@@ -97,10 +98,10 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		for (Object propName : properties.keySet()) {
 			String propNameStr = (String) propName;
 			if (propNameStr
-					.startsWith(OpenStackConfigurationConstants.COMPUTE_OPENSTACK_V2_IMAGE_PREFIX_KEY)) {
+					.startsWith(OpenStackConfigurationConstants.COMPUTE_NOVAV2_IMAGE_PREFIX_KEY)) {
 				imageProperties
 						.put(propNameStr
-								.substring(OpenStackConfigurationConstants.COMPUTE_OPENSTACK_V2_IMAGE_PREFIX_KEY
+								.substring(OpenStackConfigurationConstants.COMPUTE_NOVAV2_IMAGE_PREFIX_KEY
 										.length()), properties.getProperty(propNameStr));
 			}
 		}
@@ -135,7 +136,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 							ResponseConstants.IRREGULAR_SYNTAX);					
 				}
 				flavorRef = fogbowTermToOpenStack.get(category.getTerm());
-			} else if (idleImages.contains(category.getTerm())){
+			} else if (imagesOpenStackToFogbow.values().contains(category.getTerm())){
 				// There are more than one image category
 				if (imageRef != null) {
 					throw new OCCIException(ErrorType.BAD_REQUEST,
@@ -150,19 +151,14 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		JSONObject json;
 		try {
 			json = generateRequestJson(imageRef, flavorRef, userdata, publicKey);
-			String tenantId = getTenantIdFromToken(token); //TODO How to get this info? Using token?
-			String requestEndpoint = computeV2APIEndpoint + tenantId + "/servers";
+			String requestEndpoint = computeV2APIEndpoint + token.getAttributes().get(TENANT_ID)
+					+ "/servers";
 			String jsonResponse = doPostRequest(requestEndpoint, token.getAccessId(), json);
 			return getAttFromJson("id", jsonResponse);
 		} catch (JSONException e) {
 			throw new OCCIException(ErrorType.BAD_REQUEST,
 					ResponseConstants.IRREGULAR_SYNTAX);
 		}
-	}
-	
-	private String getTenantIdFromToken(Token token) {
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 	private String getAttFromJson(String attName, String jsonStr) throws JSONException {
@@ -248,8 +244,8 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 
 	@Override
 	public List<Instance> getInstances(Token token) {
-		String tenantId = ""; // TODO How to get this info?
-		String requestEndpoint = computeV2APIEndpoint + tenantId + "/servers";
+		String requestEndpoint = computeV2APIEndpoint + token.getAttributes().get(TENANT_ID)
+				+ "/servers";
 		String jsonResponse = doGetRequest(requestEndpoint, token.getAccessId());
 		return getInstancesFromJson(jsonResponse);
 	}
@@ -272,16 +268,91 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 	}
 
 	@Override
-	public Instance getInstance(Token token, String instanceId) {		
-		String tenantId = ""; // TODO How to get this info?
-		String requestEndpoint = computeV2APIEndpoint + tenantId + "/servers/" + instanceId; 
+	public Instance getInstance(Token token, String instanceId) {
+		LOGGER.info("Getting instance " + instanceId + " with token " + token);
+
+		String requestEndpoint = computeV2APIEndpoint + token.getAttributes().get(TENANT_ID)
+				+ "/servers/" + instanceId;
 		String jsonResponse = doGetRequest(requestEndpoint, token.getAccessId());
-		return getInstanceFromJson(jsonResponse);
+		LOGGER.debug("Getting instance from json: " + jsonResponse);
+		return getInstanceFromJson(jsonResponse, token);
 	}
 	
-	private Instance getInstanceFromJson(String json) {
-		// TODO Auto-generated method stub
+	private Instance getInstanceFromJson(String json, Token token) {
+		try {
+			JSONObject rootServer = new JSONObject(json);
+			String id = rootServer.getJSONObject("server").getString("id");
+
+			Map<String, String> attributes = new HashMap<String, String>();
+			// CPU Architecture of the instance
+			attributes.put("occi.compute.state", getOCCIState(rootServer.getJSONObject("server")
+					.getString("status")));
+			// // CPU Clock frequency (speed) in gigahertz
+			// TODO How to get speed?
+			attributes.put("occi.compute.speed", "Not defined");
+			// TODO How to get Arch?
+			attributes.put("occi.compute.architecture", "Not defined"); 
+
+			// getting info from flavor
+			String flavorId = rootServer.getJSONObject("server").getJSONObject("flavor")
+					.getString("id");
+			String requestEndpoint = computeV2APIEndpoint + token.getAttributes().get(TENANT_ID)
+					+ "/flavors/" + flavorId;
+			String jsonFlavor = doGetRequest(requestEndpoint, token.getAccessId());
+			JSONObject rootFlavor = new JSONObject(jsonFlavor);
+			double mem = Double.parseDouble(rootFlavor.getJSONObject("flavor").getString("ram"));
+			attributes.put("occi.compute.memory", String.valueOf(mem / 1024)); // Gb
+			attributes.put("occi.compute.cores",
+					rootFlavor.getJSONObject("flavor").getString("vcpus"));
+
+			attributes.put("occi.compute.hostname",
+					rootServer.getJSONObject("server").getString("name"));
+			attributes.put("occi.core.id", id);
+
+			List<Resource> resources = new ArrayList<Resource>();
+			resources.add(ResourceRepository.getInstance().get("compute"));
+			resources.add(ResourceRepository.getInstance().get("os_tpl"));
+			resources.add(ResourceRepository.getInstance().get(getUsedFlavor(flavorId)));
+
+			String imageId = rootServer.getJSONObject("server").getJSONObject("image")
+					.getString("id");
+
+			LOGGER.debug("OpenStack imageId: " + imageId + " is related to fogbow image "
+					+ imagesOpenStackToFogbow.get(imageId));
+
+			// valid image
+			if (imagesOpenStackToFogbow.get(imageId) != null) {
+				resources.add(ResourceRepository.getInstance().get(
+						imagesOpenStackToFogbow.get(imageId)));
+			}
+			LOGGER.debug("Instance resources: " + resources);
+
+			return new Instance(id, resources, attributes, new ArrayList<Instance.Link>());
+		} catch (JSONException e) {
+			LOGGER.warn("There was an exception while getting instances from json.", e);
+		}
 		return null;
+
+	}
+
+	private String getUsedFlavor(String flavorId) {
+		if (fogbowTermToOpenStack.get(RequestConstants.SMALL_TERM).equals(flavorId)) {
+			return RequestConstants.SMALL_TERM;
+		} else if (fogbowTermToOpenStack.get(RequestConstants.MEDIUM_TERM).equals(flavorId)) {
+			return RequestConstants.MEDIUM_TERM;
+		} else if (fogbowTermToOpenStack.get(RequestConstants.LARGE_TERM).equals(flavorId)) {
+			return RequestConstants.LARGE_TERM;
+		}
+		return null;
+	}
+
+	private String getOCCIState(String instanceStatus) {
+		if ("suspended".equalsIgnoreCase(instanceStatus)){
+			return "suspended";
+		} else if ("active".equalsIgnoreCase(instanceStatus)){
+			return "active";
+		}
+		return "inactive";
 	}
 
 	private String doGetRequest(String endpoint, String authToken) {
@@ -292,7 +363,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 			request.addHeader(OCCIHeaders.X_AUTH_TOKEN, authToken);
 			request.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.JSON_CONTENT_TYPE);
 			request.addHeader(OCCIHeaders.ACCEPT, OCCIHeaders.JSON_CONTENT_TYPE);
-						
+
 			if (client == null) {
 				initClient();
 			}
@@ -308,14 +379,35 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 
 	@Override
 	public void removeInstance(Token token, String instanceId) {
-		// TODO Auto-generated method stub
+		String requestEndpoint = computeV2APIEndpoint + token.getAttributes().get(TENANT_ID)
+				+ "/servers/" + instanceId;
+		doDeleteRequest(requestEndpoint, token.getAccessId());
+	}
 
+	private void doDeleteRequest(String endpoint, String authToken) {
+		HttpResponse response;
+		try {
+			HttpDelete request = new HttpDelete(endpoint);
+			request.addHeader(OCCIHeaders.X_AUTH_TOKEN, authToken);			
+
+			if (client == null) {
+				initClient();
+			}
+			response = client.execute(request);
+		} catch (Exception e) {
+			LOGGER.error(e);
+			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
+		}
+		// delete message does not have message
+		checkStatusResponse(response, "");
 	}
 
 	@Override
 	public void removeInstances(Token token) {
-		// TODO Auto-generated method stub
-
+		List<Instance> allInstances = getInstances(token);
+		for (Instance instance : allInstances) {
+			removeInstance(token, instance.getId());
+		}
 	}
 
 	@Override

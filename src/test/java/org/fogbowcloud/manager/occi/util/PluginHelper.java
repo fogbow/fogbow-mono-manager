@@ -31,6 +31,7 @@ public class PluginHelper {
 	public static final String CIRROS_IMAGE_TERM = "cadf2e29-7216-4a5e-9364-cf6513d5f1fd";
 	public static final String LINUX_X86_TERM = "linuxx86";
 	public static final String COMPUTE_OCCI_URL = "http://localhost:" + PORT_ENDPOINT;
+	public static final String COMPUTE_NOVAV2_URL = "http://localhost:" + PORT_ENDPOINT;
 
 	public static final String ACCESS_ID = "HgfugGJHgJgHJGjGJgJg-857GHGYHjhHjH";
 	public static final String TENANT_ID = "fc394f2ab2df4114bde39905f800dc57";
@@ -42,9 +43,6 @@ public class PluginHelper {
 	public static final String FED_USERNAME = "federation_user";
 	public static final String FED_USER_PASS = "federation_user_pass";
 	
-	private OCCIComputeApplication computeApplication;
-
-
 	public PluginHelper() {
 		this.component = new Component();
 	}
@@ -101,25 +99,36 @@ public class PluginHelper {
 		this.component.start();
 	}
 
-	public void initializeComputeComponent(List<String> expectedInstanceIds) throws Exception {
+	public void initializeOCCIComputeComponent(List<String> expectedInstanceIds) throws Exception {
 		this.component = new Component();
 		this.component.getServers().add(Protocol.HTTP, PORT_ENDPOINT);
 
-		computeApplication = new OCCIComputeApplication();
+		OCCIComputeApplication occiComputeApplication = new OCCIComputeApplication();
 
 		// mocking 5 first instance id generation
 		InstanceIdGenerator idGenerator = Mockito.mock(InstanceIdGenerator.class);
 		Mockito.when(idGenerator.generateId()).thenReturn(expectedInstanceIds.get(0),
 				expectedInstanceIds.get(1), expectedInstanceIds.get(2), expectedInstanceIds.get(3),
 				expectedInstanceIds.get(4));
-		computeApplication.setIdGenerator(idGenerator);
-		computeApplication.putTokenAndUser(ACCESS_ID, USERNAME);
-		this.component.getDefaultHost().attach(computeApplication);
+		occiComputeApplication.setIdGenerator(idGenerator);
+		occiComputeApplication.putTokenAndUser(ACCESS_ID, USERNAME);
+		this.component.getDefaultHost().attach(occiComputeApplication);
 		this.component.start();
 	}
 	
-	public OCCIComputeApplication getComputeApplication(){
-		return computeApplication;
+	public void initializeNovaV2ComputeComponent(String testDirPath) throws Exception {
+		this.component = new Component();
+		this.component.getServers().add(Protocol.HTTP, PORT_ENDPOINT);
+
+		System.out.println("PORT_ENDPOINT: " + PORT_ENDPOINT);
+		
+		NovaV2ComputeApplication novaV2ComputeApplication = new NovaV2ComputeApplication();
+		novaV2ComputeApplication.putTokenAndUser(ACCESS_ID, USERNAME);
+		novaV2ComputeApplication.setTestDirPath(testDirPath);
+		this.component.getDefaultHost().attach(novaV2ComputeApplication);
+		this.component.start();
+
+		
 	}
 
 	public void disconnectComponent() throws Exception {
