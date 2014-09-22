@@ -120,15 +120,11 @@ public class PluginHelper {
 		this.component = new Component();
 		this.component.getServers().add(Protocol.HTTP, PORT_ENDPOINT);
 
-		System.out.println("PORT_ENDPOINT: " + PORT_ENDPOINT);
-		
 		NovaV2ComputeApplication novaV2ComputeApplication = new NovaV2ComputeApplication();
 		novaV2ComputeApplication.putTokenAndUser(ACCESS_ID, USERNAME);
 		novaV2ComputeApplication.setTestDirPath(testDirPath);
 		this.component.getDefaultHost().attach(novaV2ComputeApplication);
 		this.component.start();
-
-		
 	}
 
 	public void disconnectComponent() throws Exception {

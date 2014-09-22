@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.UUID;
 
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.codec.binary.Base64;
@@ -147,18 +148,54 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		}
 
 		String publicKey = xOCCIAtt.get(RequestAttribute.DATA_PUBLIC_KEY.getValue());
+		String keyName = getKeyname(token, publicKey);
+				
 		String userdata = xOCCIAtt.get(RequestAttribute.USER_DATA_ATT.getValue());		
 		JSONObject json;
 		try {
-			json = generateRequestJson(imageRef, flavorRef, userdata, publicKey);
+			json = generateJsonRequest(imageRef, flavorRef, userdata, keyName);
 			String requestEndpoint = computeV2APIEndpoint + token.getAttributes().get(TENANT_ID)
 					+ "/servers";
 			String jsonResponse = doPostRequest(requestEndpoint, token.getAccessId(), json);
+			
+			if (keyName != null) {
+				deleteKeyName(token, keyName);
+			}
+			
 			return getAttFromJson("id", jsonResponse);
 		} catch (JSONException e) {
+			LOGGER.error(e);
 			throw new OCCIException(ErrorType.BAD_REQUEST,
 					ResponseConstants.IRREGULAR_SYNTAX);
 		}
+	}
+
+	private void deleteKeyName(Token token, String keyName) {
+		String keynameEndpoint = computeV2APIEndpoint + token.getAttributes().get(TENANT_ID)
+				+ "/os-keypairs/" + keyName;
+		doDeleteRequest(keynameEndpoint, token.getAccessId());
+	}
+
+	private String getKeyname(Token token, String publicKey) {
+		String keyname = null;
+		if (publicKey != null && !publicKey.isEmpty()) {
+			String osKeypairsEndpoint = computeV2APIEndpoint + token.getAttributes().get(TENANT_ID)
+					+ "/os-keypairs";
+
+			keyname = UUID.randomUUID().toString();
+			JSONObject keypair = new JSONObject();
+			try {
+				keypair.put("name", keyname);
+				keypair.put("public_key", publicKey);
+				JSONObject root = new JSONObject();
+				root.put("keypair", keypair);
+				doPostRequest(osKeypairsEndpoint, token.getAccessId(), root);
+			} catch (JSONException e) {
+				LOGGER.error(e);
+				throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
+			}
+		}
+		return keyname;
 	}
 
 	private String getAttFromJson(String attName, String jsonStr) throws JSONException {
@@ -180,6 +217,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 				initClient();
 			}
 			response = client.execute(request);
+			
 			responseStr = EntityUtils.toString(response.getEntity(), HTTP.UTF_8);
 		} catch (Exception e) {
 			LOGGER.error(e);
@@ -214,11 +252,11 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		}
 	}
 
-	private JSONObject generateRequestJson(String imageRef, String flavorRef, String userdata,
-			String publicKey) throws JSONException {
+	private JSONObject generateJsonRequest(String imageRef, String flavorRef, String userdata,
+			String keyName) throws JSONException {
 
 		JSONObject server = new JSONObject();
-		server.put("name", "fogbow-instance");
+		server.put("name", "fogbow-instance-" + UUID.randomUUID().toString());
 		server.put("imageRef", imageRef);
 		server.put("flavorRef", flavorRef);
 		if (userdata != null) {
@@ -227,15 +265,17 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 							Charsets.UTF_8));
 		}
 
-		if (networkId != null && !"".equals(networkId)) {
+		if (networkId != null && !networkId.isEmpty()) {
 			ArrayList<JSONObject> nets = new ArrayList<JSONObject>();
 			JSONObject net = new JSONObject();
 			net.put("uuid", networkId);
 			nets.add(net);
 			server.put("networks", nets);
 		}
-
-		// TODO how to inject public key?
+		
+		if (keyName != null && !keyName.isEmpty()){
+			server.put("key_name", keyName);
+		}
 
 		JSONObject root = new JSONObject();
 		root.put("server", server);

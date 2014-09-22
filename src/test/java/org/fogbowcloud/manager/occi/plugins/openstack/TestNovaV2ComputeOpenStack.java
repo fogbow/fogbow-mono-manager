@@ -15,6 +15,7 @@ import org.fogbowcloud.manager.occi.core.Resource;
 import org.fogbowcloud.manager.occi.core.ResourceRepository;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.instance.Instance;
+import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.fogbowcloud.manager.occi.util.NovaV2ComputeApplication;
 import org.fogbowcloud.manager.occi.util.PluginHelper;
@@ -74,6 +75,25 @@ public class TestNovaV2ComputeOpenStack {
 		
 		Assert.assertEquals(FIRST_INSTANCE_ID, novaV2ComputeOpenStack.requestInstance(
 				defaultToken, categories, new HashMap<String, String>()));
+		
+		Assert.assertEquals(1, novaV2ComputeOpenStack.getInstances(defaultToken).size());
+	}
+	
+	@Test
+	public void testRequestOneInstanceWithPublicKey(){
+		Assert.assertEquals(0, novaV2ComputeOpenStack.getInstances(defaultToken).size());
+		
+		//requesting one default instance
+		List<Category> categories = new ArrayList<Category>();
+		categories.add(new Category(PluginHelper.LINUX_X86_TERM,
+				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
+		categories.add(new Category(RequestConstants.SMALL_TERM,
+				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
+		
+		HashMap<String, String> xOCCIAtt = new HashMap<String, String>();
+		xOCCIAtt.put(RequestAttribute.DATA_PUBLIC_KEY.getValue(), "public key data");
+		Assert.assertEquals(FIRST_INSTANCE_ID, novaV2ComputeOpenStack.requestInstance(
+				defaultToken, categories, xOCCIAtt));
 		
 		Assert.assertEquals(1, novaV2ComputeOpenStack.getInstances(defaultToken).size());
 	}

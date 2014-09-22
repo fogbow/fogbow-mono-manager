@@ -13,6 +13,8 @@ import org.fogbowcloud.manager.occi.core.HeaderUtils;
 import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.restlet.Application;
 import org.restlet.Restlet;
 import org.restlet.data.MediaType;
@@ -33,10 +35,12 @@ public class NovaV2ComputeApplication extends Application {
 	
 	private final String SERVERS_V2_TARGET = "/v2/tenantid/servers";
 	private final String FLAVORS_V2_TARGET = "/v2/tenantid/flavors";
+	private final String OS_KEYPAIRS_V2_TARGET = "/v2/tenantid/os-keypairs";
 	private String testDirPath;
 	private int numberOfInstances;
 	private Map<String, String> keystoneAccessIdToUser;
 	private Map<String, List<String>> userToInstanceId;
+	private Map<String, List<String>> userToKeyname;
 
 	private static final Logger LOGGER = Logger.getLogger(NovaV2ComputeApplication.class);
 
@@ -44,6 +48,7 @@ public class NovaV2ComputeApplication extends Application {
 		numberOfInstances = 0;
 		keystoneAccessIdToUser= new HashMap<String, String>();
 		userToInstanceId = new HashMap<String, List<String>>();
+		userToKeyname = new HashMap<String, List<String>>();
 	}
 		
 	@Override
@@ -52,6 +57,8 @@ public class NovaV2ComputeApplication extends Application {
 		router.attach(SERVERS_V2_TARGET, NovaV2ComputeServer.class);
 		router.attach(SERVERS_V2_TARGET + "/{serverid}", NovaV2ComputeServer.class);
 		router.attach(FLAVORS_V2_TARGET + "/{flavorid}", FlavorServer.class);
+		router.attach(OS_KEYPAIRS_V2_TARGET + "/{keyname}", OSKeypairServer.class);
+		router.attach(OS_KEYPAIRS_V2_TARGET, OSKeypairServer.class);
 		return router;
 	}
 	
@@ -143,6 +150,38 @@ public class NovaV2ComputeApplication extends Application {
 		}
 	}
 	
+	public String addKeyname(String authToken, String jsonStr) {
+		checkUserToken(authToken);
+		String user = keystoneAccessIdToUser.get(authToken);
+		if (userToKeyname.get(user) == null) {
+			userToKeyname.put(user, new ArrayList<String>());
+		}
+		try {
+			JSONObject json = new JSONObject(jsonStr);
+			String keyname = json.getJSONObject("keypair").getString("name");
+			String publicKey = json.getJSONObject("keypair").getString("public_key");
+			String jsonResponse = PluginHelper
+					.getContentFile(testDirPath + "/response.postoskeypairs")
+					.replace("#KEYNAME#", keyname).replace("#PUBLIC_KEY#", publicKey);
+			
+			userToKeyname.get(user).add(keyname);
+			return jsonResponse;
+		} catch (IOException e) {
+			LOGGER.warn("Error while creating a new instance", e);
+		} catch (JSONException e) {
+			LOGGER.warn("Error while creating a new instance", e);
+		}
+		return null;
+	}
+	
+	public void removekeyname(String authToken, String keyname) {
+		checkUserToken(authToken);
+		String user = keystoneAccessIdToUser.get(authToken);
+		if (userToKeyname.get(user) != null) {
+			userToKeyname.get(user).remove(keyname);
+		}
+	}
+	
 	public static class NovaV2ComputeServer extends ServerResource {
 		
 		private static final Logger LOGGER = Logger.getLogger(NovaV2ComputeServer.class);
@@ -231,6 +270,50 @@ public class NovaV2ComputeApplication extends Application {
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}
 		
+	}
+	
+	public static class OSKeypairServer extends ServerResource {
+
+		private static final Logger LOGGER = Logger.getLogger(OSKeypairServer.class);
+
+		@Post
+		public StringRepresentation post(Representation entity) {
+			if (entity.getMediaType().isCompatible(MediaType.APPLICATION_JSON)) {
+				NovaV2ComputeApplication computeApplication = (NovaV2ComputeApplication) getApplication();
+				HttpRequest req = (HttpRequest) getRequest();
+				String authToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse(),
+						"Keystone uri=' http://localhost:5000'");
+				String json;
+				try {
+					json = req.getEntity().getText();
+					HeaderUtils.checkJsonContentType(req.getHeaders());
+					return new StringRepresentation(computeApplication.addKeyname(authToken, json),
+							MediaType.APPLICATION_JSON);
+				} catch (IOException e) {
+					LOGGER.error("Error while post instance.", e);
+				}
+
+			}
+			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
+		}
+
+		@Delete
+		public String remove() {
+			NovaV2ComputeApplication computeApplication = (NovaV2ComputeApplication) getApplication();
+			HttpRequest req = (HttpRequest) getRequest();
+			String authToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse(),
+					"Keystone uri=' http://localhost:5000'");
+			String keyname = (String) getRequestAttributes().get("keyname");
+
+			if (keyname == null) {
+				LOGGER.error("There was not specified any keyname.");
+				throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
+			}
+
+			LOGGER.info("Removing keyname(" + keyname + ") of token :" + authToken);
+			computeApplication.removekeyname(authToken, keyname);
+			return "";
+		}
 	}
 
 }
