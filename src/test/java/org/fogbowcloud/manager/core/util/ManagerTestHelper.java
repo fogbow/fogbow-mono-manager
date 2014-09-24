@@ -45,6 +45,7 @@ import org.xmpp.packet.Packet;
 
 public class ManagerTestHelper extends DefaultDataTestHelper {
 
+	public static final int MAX_WHOISALIVE_MANAGER_COUNT = 100;
 	private ManagerXmppComponent managerXmppComponent;
 	private ComputePlugin computePlugin;
 	private IdentityPlugin identityPlugin;
@@ -163,6 +164,8 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 				DefaultDataTestHelper.SERVER_HOST);
 		properties.put(ConfigurationConstants.SSH_HOST_HTTP_PORT_KEY,
 				String.valueOf(DefaultDataTestHelper.TOKEN_SERVER_HTTP_PORT));
+		properties.put(ConfigurationConstants.MAX_WHOISALIVE_MANAGER_COUNT,
+				MAX_WHOISALIVE_MANAGER_COUNT);
 		
 		ManagerController managerFacade = new ManagerController(properties);
 		managerFacade.setComputePlugin(computePlugin);

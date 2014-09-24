@@ -71,15 +71,29 @@ public class ManagerPacketHelper {
 	}
 
 	public static List<FederationMember> whoIsalive(String rendezvousAddress,
-			PacketSender packetSender) throws CertificateException {
+			PacketSender packetSender, int maxWhoIsAliveManagerCount,
+			String after) throws CertificateException {
 		IQ iq = new IQ(Type.get);
 		iq.setTo(rendezvousAddress);
-		iq.getElement().addElement("query", ManagerXmppComponent.WHOISALIVE_NAMESPACE);
+		Element queryEl = iq.getElement().addElement("query",
+				ManagerXmppComponent.WHOISALIVE_NAMESPACE);
+		Element setEl = queryEl.addElement("set");
+		setEl.addElement("max").setText(Integer.toString(maxWhoIsAliveManagerCount));
+		if (after != null) {
+			setEl.addElement("after").setText(after);
+		}
 		IQ response = (IQ) packetSender.syncSendPacket(iq);
 		ArrayList<FederationMember> members = getMembersFromIQ(response);
 		return members;
 	}
-
+	
+	public static List<FederationMember> whoIsalive(String rendezvousAddress,
+			PacketSender packetSender, int maxWhoIsAliveManagerCount)
+			throws CertificateException {
+		return whoIsalive(rendezvousAddress, packetSender,
+				maxWhoIsAliveManagerCount, null);
+	}
+	
 	@SuppressWarnings("unchecked")
 	private static ArrayList<FederationMember> getMembersFromIQ(IQ responseFromWhoIsAliveIQ) {
 		Element queryElement = responseFromWhoIsAliveIQ.getElement().element("query");

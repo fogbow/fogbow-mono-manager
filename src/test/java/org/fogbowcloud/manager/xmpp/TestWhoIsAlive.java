@@ -160,7 +160,106 @@ public class TestWhoIsAlive {
 						.getResourcesInfo().getCert());
 		xmppClient.disconnect();
 	}
+	
+	@Test
+	public void testWhoIsAlivePagination() throws Exception {
+		managerXmppComponent = managerTestHelper
+				.initializeXMPPManagerComponent(false);
+		final XMPPClient xmppClient = managerTestHelper.createXMPPClient();
+		final Semaphore semaphore = new Semaphore(0);
 
+		final PacketListener callback = new PacketListener() {
+			public void processPacket(Packet packet) {
+				Element queryEl = ((IQ) packet).getElement().element("query");
+				Element setEl = queryEl.element("set");
+				String maxEl = setEl.element("max").getText();
+				if (Integer.parseInt(maxEl) == ManagerTestHelper.MAX_WHOISALIVE_MANAGER_COUNT) {
+					semaphore.release();
+				}
+
+				// also respond
+				ArrayList<FederationMember> aliveIds = new ArrayList<FederationMember>();
+				try {
+					aliveIds.add(new FederationMember(managerTestHelper
+							.getResources()));
+				} catch (Exception e) {
+				}
+				IQ iq = null;
+				try {
+					iq = managerTestHelper.createWhoIsAliveResponse(
+							 aliveIds, (IQ) packet);
+				} catch (Exception e) {
+				} 
+				
+				xmppClient.send(iq);
+			}
+		};
+
+		xmppClient.on(new PacketFilter() {
+			@Override
+			public boolean accept(Packet packet) {
+				if (packet.getFrom() == null) {
+					return false;
+				}
+				return packet.getFrom().toBareJID()
+						.equals(DefaultDataTestHelper.MANAGER_COMPONENT_URL);
+			}
+		}, callback);
+		managerXmppComponent.whoIsalive();
+		Assert.assertTrue(semaphore.tryAcquire());
+	}
+	
+	@Test
+	public void testWhoIsAliveRequestSecondPage() throws Exception {
+		managerXmppComponent = managerTestHelper
+				.initializeXMPPManagerComponent(false);
+		final XMPPClient xmppClient = managerTestHelper.createXMPPClient();
+		final Semaphore semaphore = new Semaphore(0);
+
+		final PacketListener callback = new PacketListener() {
+			public void processPacket(Packet packet) {
+				Element queryEl = ((IQ) packet).getElement().element("query");
+				Element setEl = queryEl.element("set");
+				String maxEl = setEl.element("max").getText();
+				if (Integer.parseInt(maxEl) == ManagerTestHelper.MAX_WHOISALIVE_MANAGER_COUNT) {
+					semaphore.release();
+				}
+				String afterEl = setEl.element("after").getText();
+				if(afterEl.equals("after")) {
+					semaphore.release();
+				}
+				// also respond
+				ArrayList<FederationMember> aliveIds = new ArrayList<FederationMember>();
+				try {
+					aliveIds.add(new FederationMember(managerTestHelper
+							.getResources()));
+				} catch (Exception e) {
+				}
+				IQ iq = null;
+				try {
+					iq = managerTestHelper.createWhoIsAliveResponse(
+							 aliveIds, (IQ) packet);
+				} catch (Exception e) {
+				} 
+				
+				xmppClient.send(iq);
+			}
+		};
+
+		xmppClient.on(new PacketFilter() {
+			@Override
+			public boolean accept(Packet packet) {
+				if (packet.getFrom() == null) {
+					return false;
+				}
+				return packet.getFrom().toBareJID()
+						.equals(DefaultDataTestHelper.MANAGER_COMPONENT_URL);
+			}
+		}, callback);
+		managerXmppComponent.whoIsalive("after");
+		Assert.assertTrue(semaphore.tryAcquire(2));
+	}
+	
 	@After
 	public void tearDown() throws ComponentException {
 		managerTestHelper.shutdown();
