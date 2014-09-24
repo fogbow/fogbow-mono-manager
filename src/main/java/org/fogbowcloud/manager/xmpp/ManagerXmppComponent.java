@@ -2,11 +2,13 @@ package org.fogbowcloud.manager.xmpp;
 
 import java.io.IOException;
 import java.security.cert.CertificateException;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.ManagerController;
+import org.fogbowcloud.manager.core.model.FederationMember;
 import org.jamppa.component.XMPPComponent;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.Packet;
@@ -24,11 +26,15 @@ public class ManagerXmppComponent extends XMPPComponent {
 	private ManagerController managerFacade;
 	private final Timer timer = new Timer();
 	private String rendezvousAddress;
+	private int maxWhoIsAliveManagerCount = 100;
 
 	public ManagerXmppComponent(String jid, String password, String server,
 			int port, ManagerController managerFacade) {
 		super(jid, password, server, port);
 		this.managerFacade = managerFacade;
+		if (managerFacade.getMaxWhoIsAliveManagerCount() != null) {
+			this.maxWhoIsAliveManagerCount = managerFacade.getMaxWhoIsAliveManagerCount();
+		}
 		addGetHandler(new GetInstanceHandler(managerFacade));
 		addSetHandler(new RemoveInstanceHandler(managerFacade));
 		addSetHandler(new RequestInstanceHandler(managerFacade));
@@ -56,9 +62,18 @@ public class ManagerXmppComponent extends XMPPComponent {
 	
 	public void whoIsalive() throws CertificateException {
 		managerFacade.updateMembers(ManagerPacketHelper.whoIsalive(
-				rendezvousAddress, this));
+				rendezvousAddress, this, maxWhoIsAliveManagerCount));
 	}
-
+	
+	public List<FederationMember> whoIsalive(String after)
+			throws CertificateException {
+		List<FederationMember> whoIsaliveResponse = ManagerPacketHelper
+				.whoIsalive(rendezvousAddress, this, maxWhoIsAliveManagerCount,
+						after);
+		managerFacade.updateMembers(whoIsaliveResponse);
+		return whoIsaliveResponse;
+	}
+	
 	private void scheduleIamAlive() {
 		timer.schedule(new TimerTask() {
 			@Override

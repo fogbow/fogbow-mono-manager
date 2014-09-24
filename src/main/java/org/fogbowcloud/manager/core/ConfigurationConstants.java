@@ -46,5 +46,9 @@ public class ConfigurationConstants {
 	public static final String VOMS_PATH_VOMSDIR = "path_vomsdir";
 	
 	//x509
-	public static final String X509_CA_DIR_PATH_KEY = "x509_ca_dir_path";	
+	public static final String X509_CA_DIR_PATH_KEY = "x509_ca_dir_path";
+	
+	//pagination
+	public static final String MAX_WHOISALIVE_MANAGER_COUNT = "max_whoisalive_manager_count";
+	
 }

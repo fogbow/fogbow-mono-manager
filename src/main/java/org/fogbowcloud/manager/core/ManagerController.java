@@ -43,7 +43,8 @@ import org.jamppa.component.PacketSender;
 import org.restlet.Response;
 
 public class ManagerController {
-
+	
+	private static final String PROP_MAX_WHOISALIVE_MANAGER_COUNT = "max_whoisalive_manager_count";
 	private static final Logger LOGGER = Logger.getLogger(ManagerController.class);
 	public static final long DEFAULT_SCHEDULER_PERIOD = 30000; // 30 seconds
 	private static final long DEFAULT_TOKEN_UPDATE_PERIOD = 300000; // 5 minutes
@@ -710,5 +711,13 @@ public class ManagerController {
 
 	public String getAuthenticationURI() {
 		return localIdentityPlugin.getAuthenticationURI();
+	}
+	
+	public Integer getMaxWhoIsAliveManagerCount() {
+		String max = properties.getProperty(PROP_MAX_WHOISALIVE_MANAGER_COUNT);
+		if (max == null) {
+			return (Integer) null;
+		}
+		return Integer.parseInt(max);
 	}
 }
