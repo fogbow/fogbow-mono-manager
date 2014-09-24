@@ -177,14 +177,11 @@ public class OpenStackOCCIComputePlugin implements ComputePlugin {
 			}
 		}
 
-		String userdata = xOCCIAtt.remove(RequestAttribute.USER_DATA_ATT.getValue());
+		String userdataBase64 = xOCCIAtt.remove(RequestAttribute.USER_DATA_ATT.getValue());
 		
-		if (userdata != null) {
-			xOCCIAtt.put(
-					"org.openstack.compute.user_data",
-					new String(Base64.encodeBase64(
-							userdata.getBytes(Charsets.UTF_8), false, false),
-							Charsets.UTF_8));
+		if (userdataBase64 != null) {
+			xOCCIAtt.put("org.openstack.compute.user_data", userdataBase64);
+					
 		}
 
 		Set<Header> headers = new HashSet<Header>();

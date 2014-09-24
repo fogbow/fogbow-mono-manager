@@ -75,7 +75,8 @@ public class TestComputeOpenNebula {
 		
 		// default userdata
 		xOCCIAtt = new HashMap<String, String>();
-		xOCCIAtt.put(RequestAttribute.USER_DATA_ATT.getValue(), "userdata");
+		xOCCIAtt.put(RequestAttribute.USER_DATA_ATT.getValue(),
+				Base64.encodeBase64URLSafeString("userdata".getBytes(Charsets.UTF_8)));
 		
 		DEFAULT_TEMPLATE = PluginHelper
 				.getContentFile("src/test/resources/opennebula/default.template")

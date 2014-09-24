@@ -356,7 +356,7 @@ public class ManagerController {
 				+ xOCCIAtt + " for remote member.");
 		String instanceToken = String.valueOf(UUID.randomUUID());
 		try {
-			String command = UserdataUtils.createCommand(instanceToken, 
+			String command = UserdataUtils.createBase64Command(instanceToken, 
 					properties.getProperty(ConfigurationConstants.SSH_PRIVATE_HOST_KEY),
 					properties.getProperty(ConfigurationConstants.SSH_HOST_PORT_KEY),
 					properties.getProperty(ConfigurationConstants.SSH_HOST_HTTP_PORT_KEY));
@@ -567,7 +567,7 @@ public class ManagerController {
 		
 		try {			
 			try {
-				String command = UserdataUtils.createCommand(request.getId(),
+				String command = UserdataUtils.createBase64Command(request.getId(),
 						properties.getProperty(ConfigurationConstants.SSH_PRIVATE_HOST_KEY),
 						properties.getProperty(ConfigurationConstants.SSH_HOST_PORT_KEY),
 						properties.getProperty(ConfigurationConstants.SSH_HOST_HTTP_PORT_KEY));

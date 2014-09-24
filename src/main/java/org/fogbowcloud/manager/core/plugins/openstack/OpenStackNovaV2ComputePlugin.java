@@ -260,9 +260,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		server.put("imageRef", imageRef);
 		server.put("flavorRef", flavorRef);
 		if (userdata != null) {
-			server.put("user_data",
-					new String( Base64.encodeBase64(userdata.getBytes(Charsets.UTF_8), false, false),
-							Charsets.UTF_8));
+			server.put("user_data", userdata);
 		}
 
 		if (networkId != null && !networkId.isEmpty()) {
