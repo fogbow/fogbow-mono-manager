@@ -243,11 +243,12 @@ public class RequestServerResource extends ServerResource {
 				prefixOCCILocation += HeaderUtils.X_OCCI_LOCATION_PREFIX + requestEndpoint + "/";
 			}
 			if (verbose) {
-				response += prefixOCCILocation + request.getId() + "; " + "State="
-						+ request.getState() + "; " + RequestAttribute.TYPE.getValue() + "="
+				response += prefixOCCILocation + request.getId() + "; "
+						+ RequestAttribute.STATE.getValue() + "=" + request.getState() + "; "
+						+ RequestAttribute.TYPE.getValue() + "="
 						+ request.getAttValue(RequestAttribute.TYPE.getValue()) + "; "
-						+ RequestAttribute.INSTANCE_ID.getValue() + "="
-						+ request.getInstanceId() + "\n";
+						+ RequestAttribute.INSTANCE_ID.getValue() + "=" + request.getInstanceId()
+						+ "\n";
 			}else {			
 				response += prefixOCCILocation + request.getId() + "\n";
 			}
