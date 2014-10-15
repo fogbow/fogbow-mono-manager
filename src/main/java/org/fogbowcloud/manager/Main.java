@@ -2,7 +2,6 @@ package org.fogbowcloud.manager;
 
 import java.io.FileInputStream;
 import java.util.Properties;
-import java.util.logging.Level;
 
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Logger;
@@ -20,6 +19,8 @@ import org.fogbowcloud.manager.occi.OCCIApplication;
 import org.fogbowcloud.manager.xmpp.ManagerXmppComponent;
 import org.restlet.Component;
 import org.restlet.data.Protocol;
+import org.restlet.engine.Engine;
+import org.restlet.ext.slf4j.Slf4jLoggerFacade;
 
 public class Main {
 
@@ -96,8 +97,10 @@ public class Main {
 
 		OCCIApplication application = new OCCIApplication(facade);
 
+		Slf4jLoggerFacade loggerFacade = new Slf4jLoggerFacade();
+		Engine.getInstance().setLoggerFacade(loggerFacade);
+		
 		Component http = new Component();
-		http.getLogger().setLevel(Level.OFF);
 		http.getServers().add(Protocol.HTTP,
 				Integer.parseInt(properties.getProperty(ConfigurationConstants.HTTP_PORT_KEY)));
 		http.getDefaultHost().attach(application);
