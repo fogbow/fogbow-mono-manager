@@ -33,11 +33,11 @@ compute_novav2_flavor_large=3
 compute_novav2_image_fogbow-linux-x86=cadf2e29-7216-4a5e-9364-cf6513d5f1fd
 compute_novav2_network_id=ea51ed0c-0e8a-448d-8202-c79777109ffe
 
-local_identity_class=org.fogbowcloud.manager.core.plugins.openstack.OpenStackIdentityPlugin
+local_identity_class=org.fogbowcloud.manager.core.plugins.openstack.KeystoneIdentityPlugin
 local_identity_url=http://localhost:5000
 
-federation_authorization_class=org.fogbowcloud.manager.core.plugins.openstack.AllowAllAuthorizationPlugin
-federation_identity_class=org.fogbowcloud.manager.core.plugins.openstack.OpenStackIdentityPlugin
+federation_authorization_class=org.fogbowcloud.manager.core.plugins.common.AllowAllAuthorizationPlugin
+federation_identity_class=org.fogbowcloud.manager.core.plugins.openstack.KeystoneIdentityPlugin
 federation_identity_url=http://localhost:5000
 
 local_proxy_account_user_name=fogbow
