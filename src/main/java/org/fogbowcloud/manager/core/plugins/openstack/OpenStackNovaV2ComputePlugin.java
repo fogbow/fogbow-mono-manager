@@ -7,8 +7,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 
-import org.apache.commons.codec.Charsets;
-import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.HttpVersion;
@@ -90,7 +88,9 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		fogbowTermToOpenStack.put(RequestConstants.USER_DATA_TERM, "user_data");
 		
 		//ssh public key
-		fogbowTermToOpenStack.put(RequestConstants.PUBLIC_KEY_TERM, "ssh-public-key");		
+		fogbowTermToOpenStack.put(RequestConstants.PUBLIC_KEY_TERM, "ssh-public-key");
+		
+		initClient();
 	}
 	
 	private static Map<String, String> getImageProperties(Properties properties) {
@@ -203,31 +203,6 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		return root.getJSONObject("server").getString(attName);
 	}
 
-	private String doPostRequest(String endpoint, String authToken, JSONObject json) {
-		HttpResponse response;
-		String responseStr = null;
-		try {
-			HttpPost request = new HttpPost(endpoint);
-			request.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.JSON_CONTENT_TYPE);
-			request.addHeader(OCCIHeaders.ACCEPT, OCCIHeaders.JSON_CONTENT_TYPE);
-			request.addHeader(OCCIHeaders.X_AUTH_TOKEN, authToken);
-			request.setEntity(new StringEntity(json.toString(), HTTP.UTF_8));
-			
-			if (client == null) {
-				initClient();
-			}
-			response = client.execute(request);
-			
-			responseStr = EntityUtils.toString(response.getEntity(), HTTP.UTF_8);
-		} catch (Exception e) {
-			LOGGER.error(e);
-			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
-		}
-		checkStatusResponse(response, responseStr);
-		return responseStr;
-	}
-	
-	
 	private void initClient() {
 		client = new DefaultHttpClient();
 		HttpParams params = new BasicHttpParams();
@@ -393,51 +368,11 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		return "inactive";
 	}
 
-	private String doGetRequest(String endpoint, String authToken) {
-		HttpResponse response;
-		String responseStr = null;
-		try {
-			HttpGet request = new HttpGet(endpoint);			
-			request.addHeader(OCCIHeaders.X_AUTH_TOKEN, authToken);
-			request.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.JSON_CONTENT_TYPE);
-			request.addHeader(OCCIHeaders.ACCEPT, OCCIHeaders.JSON_CONTENT_TYPE);
-
-			if (client == null) {
-				initClient();
-			}
-			response = client.execute(request);
-			responseStr = EntityUtils.toString(response.getEntity(), HTTP.UTF_8);
-		} catch (Exception e) {
-			LOGGER.error(e);
-			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
-		}
-		checkStatusResponse(response, responseStr);
-		return responseStr;
-	}
-
 	@Override
 	public void removeInstance(Token token, String instanceId) {
 		String requestEndpoint = computeV2APIEndpoint + token.getAttributes().get(TENANT_ID)
 				+ "/servers/" + instanceId;
 		doDeleteRequest(requestEndpoint, token.getAccessId());
-	}
-
-	private void doDeleteRequest(String endpoint, String authToken) {
-		HttpResponse response;
-		try {
-			HttpDelete request = new HttpDelete(endpoint);
-			request.addHeader(OCCIHeaders.X_AUTH_TOKEN, authToken);			
-
-			if (client == null) {
-				initClient();
-			}
-			response = client.execute(request);
-		} catch (Exception e) {
-			LOGGER.error(e);
-			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
-		}
-		// delete message does not have message
-		checkStatusResponse(response, "");
 	}
 
 	@Override
@@ -499,5 +434,74 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 	public void bypass(Request request, Response response) {
 		response.setStatus(new Status(HttpStatus.SC_BAD_REQUEST),
 				ResponseConstants.CLOUD_NOT_SUPPORT_OCCI_INTERFACE);
+	}
+	
+	private String doGetRequest(String endpoint, String authToken) {
+		HttpResponse response = null;
+		String responseStr = null;
+		try {
+			HttpGet request = new HttpGet(endpoint);			
+			request.addHeader(OCCIHeaders.X_AUTH_TOKEN, authToken);
+			request.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.JSON_CONTENT_TYPE);
+			request.addHeader(OCCIHeaders.ACCEPT, OCCIHeaders.JSON_CONTENT_TYPE);
+			response = client.execute(request);
+			responseStr = EntityUtils.toString(response.getEntity(), HTTP.UTF_8);
+		} catch (Exception e) {
+			LOGGER.error(e);
+			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
+		} finally {
+			try {
+				response.getEntity().consumeContent();
+			} catch (Throwable t) {
+				// Do nothing
+			}
+		}
+		checkStatusResponse(response, responseStr);
+		return responseStr;
+	}
+	
+	private String doPostRequest(String endpoint, String authToken, JSONObject json) {
+		HttpResponse response = null;
+		String responseStr = null;
+		try {
+			HttpPost request = new HttpPost(endpoint);
+			request.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.JSON_CONTENT_TYPE);
+			request.addHeader(OCCIHeaders.ACCEPT, OCCIHeaders.JSON_CONTENT_TYPE);
+			request.addHeader(OCCIHeaders.X_AUTH_TOKEN, authToken);
+			request.setEntity(new StringEntity(json.toString(), HTTP.UTF_8));
+			response = client.execute(request);
+			responseStr = EntityUtils.toString(response.getEntity(), HTTP.UTF_8);
+		} catch (Exception e) {
+			LOGGER.error(e);
+			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
+		} finally {
+			try {
+				response.getEntity().consumeContent();
+			} catch (Throwable t) {
+				// Do nothing
+			}
+		}
+		checkStatusResponse(response, responseStr);
+		return responseStr;
+	}
+	
+	private void doDeleteRequest(String endpoint, String authToken) {
+		HttpResponse response = null;
+		try {
+			HttpDelete request = new HttpDelete(endpoint);
+			request.addHeader(OCCIHeaders.X_AUTH_TOKEN, authToken);			
+			response = client.execute(request);
+		} catch (Exception e) {
+			LOGGER.error(e);
+			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
+		} finally {
+			try {
+				response.getEntity().consumeContent();
+			} catch (Throwable t) {
+				// Do nothing
+			}
+		}
+		// delete message does not have message
+		checkStatusResponse(response, "");
 	}
 }
