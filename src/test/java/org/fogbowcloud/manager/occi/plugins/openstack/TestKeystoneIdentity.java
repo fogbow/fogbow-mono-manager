@@ -9,6 +9,7 @@ import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.openstack.KeystoneIdentityPlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.core.OCCIException;
+import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.util.PluginHelper;
 import org.junit.After;
@@ -122,5 +123,28 @@ public class TestKeystoneIdentity {
 		tokenAttributes.put(KeystoneIdentityPlugin.PASSWORD, "worng");
 		tokenAttributes.put(KeystoneIdentityPlugin.TENANT_NAME, "");
 		this.keystoneIdentity.createToken(tokenAttributes);
+	}
+	
+	@Test
+	public void testGetTokenFederationUserUsingADifferentURL() {
+		Properties properties = new Properties();
+		properties.put(ConfigurationConstants.IDENTITY_URL, "http://wrong:8080");
+		properties.put(ConfigurationConstants.FEDERATION_USER_NAME_KEY, PluginHelper.USERNAME);
+		properties.put(ConfigurationConstants.FEDERATION_USER_PASS_KEY, PluginHelper.USER_PASS);
+		this.keystoneIdentity = new KeystoneIdentityPlugin(properties);
+		
+		Map<String, String> tokenAttributes = new HashMap<String, String>();
+		tokenAttributes.put(KeystoneIdentityPlugin.USERNAME, PluginHelper.USERNAME);
+		tokenAttributes.put(KeystoneIdentityPlugin.PASSWORD, PluginHelper.USER_PASS);
+		tokenAttributes.put(KeystoneIdentityPlugin.AUTH_URL, KEYSTONE_URL);
+		tokenAttributes.put(KeystoneIdentityPlugin.TENANT_NAME, PluginHelper.TENANT_NAME);
+		this.keystoneIdentity.createToken(tokenAttributes);
+		
+		try {
+			this.keystoneIdentity.createFederationUserToken();
+			Assert.fail();
+		} catch (OCCIException e) {
+			Assert.assertEquals(ResponseConstants.UNKNOWN_HOST, e.getStatus().getDescription());
+		}
 	}
 }

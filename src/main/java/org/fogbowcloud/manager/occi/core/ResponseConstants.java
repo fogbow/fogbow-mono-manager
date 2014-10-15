@@ -22,5 +22,6 @@ public class ResponseConstants {
 	public static final String INVALID_X509_CERTIFICATE_PATH = "Invalid x509 certificate file path.";
 	public static final String INVALID_CA_DIR = "Invalid Certificate Authority directory path.";
 	public static final String INVALID_PRIVATE_KEY_PATH = "Invalid private key path.";
+	public static final String UNKNOWN_HOST = "Unknown host.";
 
 }

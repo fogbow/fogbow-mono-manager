@@ -1,5 +1,6 @@
 package org.fogbowcloud.manager.core.plugins.openstack;
 
+import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -95,12 +96,13 @@ public class KeystoneIdentityPlugin implements IdentityPlugin {
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}
 
-		String authUrl = credentials.get(AUTH_URL); 
+		String authUrl = credentials.get(AUTH_URL);
+		String currentTokenEndpoint = v2TokensEndpoint;
 		if (authUrl != null && !authUrl.isEmpty()) {
-			v2TokensEndpoint = authUrl + V2_TOKENS_ENDPOINT_PATH;
+			currentTokenEndpoint = authUrl + V2_TOKENS_ENDPOINT_PATH;
 		}
 		
-		String responseStr = doPostRequest(v2TokensEndpoint, json);
+		String responseStr = doPostRequest(currentTokenEndpoint, json);
 		return getTokenFromJson(responseStr);
 	}
 	
@@ -129,10 +131,14 @@ public class KeystoneIdentityPlugin implements IdentityPlugin {
 			getClient();
 			response = client.execute(request);
 			responseStr = EntityUtils.toString(response.getEntity(), HTTP.UTF_8);
+		} catch (UnknownHostException e) {
+			LOGGER.error(e);
+			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.UNKNOWN_HOST);
 		} catch (Exception e) {
 			LOGGER.error(e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}
+		
 		checkStatusResponse(response);
 
 		return responseStr;
