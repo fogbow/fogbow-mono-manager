@@ -113,7 +113,7 @@ public class Main {
 		for (Object keyObj : properties.keySet()) {
 			String key = keyObj.toString();
 			pluginProperties.put(key, properties.get(key));
-			if (key.contains(prefix)) {
+			if (key.startsWith(prefix)) {
 				String newKey = key.replace(prefix, "");
 				pluginProperties.put(newKey, properties.get(key));
 			}
