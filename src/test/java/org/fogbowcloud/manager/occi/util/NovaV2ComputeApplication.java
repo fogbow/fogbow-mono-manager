@@ -18,6 +18,7 @@ import org.json.JSONObject;
 import org.restlet.Application;
 import org.restlet.Restlet;
 import org.restlet.data.MediaType;
+import org.restlet.data.Status;
 import org.restlet.engine.adapter.HttpRequest;
 import org.restlet.representation.Representation;
 import org.restlet.representation.StringRepresentation;
@@ -33,11 +34,14 @@ public class NovaV2ComputeApplication extends Application {
 	public static final String MEDIUM_FLAVOR = "2";
 	public static final String LARGE_FLAVOR = "3";
 	
+	public static final int MAX_INSTANCE_COUNT = 2;
+	
 	private final String SERVERS_V2_TARGET = "/v2/tenantid/servers";
 	private final String FLAVORS_V2_TARGET = "/v2/tenantid/flavors";
 	private final String OS_KEYPAIRS_V2_TARGET = "/v2/tenantid/os-keypairs";
 	private String testDirPath;
 	private int numberOfInstances;
+	
 	private Map<String, String> keystoneAccessIdToUser;
 	private Map<String, List<String>> userToInstanceId;
 	private Map<String, List<String>> userToKeyname;
@@ -77,6 +81,10 @@ public class NovaV2ComputeApplication extends Application {
 			LOGGER.warn("Error while creating a new instance", e);
 		}
 		return null;
+	}
+	
+	public boolean isQuotaFull() {
+		return numberOfInstances >= MAX_INSTANCE_COUNT;
 	}
 	
 	public void putTokenAndUser(String accessId, String username) {
@@ -208,6 +216,11 @@ public class NovaV2ComputeApplication extends Application {
 				NovaV2ComputeApplication computeApplication = (NovaV2ComputeApplication) getApplication();
 				HttpRequest req = (HttpRequest) getRequest();
 
+				if (computeApplication.isQuotaFull()) {
+					setStatus(new Status(413));
+					return new StringRepresentation("Quota exceeded.");
+				}
+				
 				String json;
 				try {
 					json = req.getEntity().getText();

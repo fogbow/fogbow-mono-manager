@@ -125,7 +125,8 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		String imageRef = null;
 		
 		for (Category category : categories) {
-			if (fogbowTermToOpenStack.get(category.getTerm()) == null) {
+			String openstackRef = fogbowTermToOpenStack.get(category.getTerm());
+			if (openstackRef == null) {
 				throw new OCCIException(ErrorType.BAD_REQUEST,
 						ResponseConstants.CLOUD_NOT_SUPPORT_CATEGORY + category.getTerm());
 			} else if (category.getTerm().equals(RequestConstants.SMALL_TERM)
@@ -136,14 +137,14 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 					throw new OCCIException(ErrorType.BAD_REQUEST,
 							ResponseConstants.IRREGULAR_SYNTAX);					
 				}
-				flavorRef = fogbowTermToOpenStack.get(category.getTerm());
+				flavorRef = openstackRef;
 			} else if (imagesOpenStackToFogbow.values().contains(category.getTerm())){
 				// There are more than one image category
 				if (imageRef != null) {
 					throw new OCCIException(ErrorType.BAD_REQUEST,
 							ResponseConstants.IRREGULAR_SYNTAX);					
 				}
-				imageRef = fogbowTermToOpenStack.get(category.getTerm());
+				imageRef = openstackRef;
 			}
 		}
 
@@ -165,8 +166,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 			return getAttFromJson("id", jsonResponse);
 		} catch (JSONException e) {
 			LOGGER.error(e);
-			throw new OCCIException(ErrorType.BAD_REQUEST,
-					ResponseConstants.IRREGULAR_SYNTAX);
+			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}
 	}
 
@@ -217,6 +217,8 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		} else if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_FOUND) {
 			throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
 		} else if (response.getStatusLine().getStatusCode() == HttpStatus.SC_BAD_REQUEST) {
+			throw new OCCIException(ErrorType.BAD_REQUEST, message);
+		} else if (response.getStatusLine().getStatusCode() == HttpStatus.SC_REQUEST_TOO_LONG) {
 			if (message.contains(ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES)) {
 				throw new OCCIException(ErrorType.QUOTA_EXCEEDED,
 						ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES);

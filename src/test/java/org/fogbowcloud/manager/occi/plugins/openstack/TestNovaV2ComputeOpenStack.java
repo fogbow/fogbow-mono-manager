@@ -2,15 +2,18 @@ package org.fogbowcloud.manager.occi.plugins.openstack;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import org.apache.http.HttpStatus;
 import org.fogbowcloud.manager.core.plugins.openstack.KeystoneIdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.openstack.OpenStackConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.openstack.OpenStackNovaV2ComputePlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.core.Category;
+import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.Resource;
 import org.fogbowcloud.manager.occi.core.ResourceRepository;
 import org.fogbowcloud.manager.occi.core.Token;
@@ -77,6 +80,31 @@ public class TestNovaV2ComputeOpenStack {
 				defaultToken, categories, new HashMap<String, String>()));
 		
 		Assert.assertEquals(1, novaV2ComputeOpenStack.getInstances(defaultToken).size());
+	}
+	
+	@Test
+	public void testRequestExceedQuota(){
+		Assert.assertEquals(0, novaV2ComputeOpenStack.getInstances(defaultToken).size());
+		
+		//requesting one default instance
+		List<Category> categories = new ArrayList<Category>();
+		categories.add(new Category(PluginHelper.LINUX_X86_TERM,
+				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
+		categories.add(new Category(RequestConstants.SMALL_TERM,
+				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
+		
+		for (int i = 0; i < NovaV2ComputeApplication.MAX_INSTANCE_COUNT; i++) {
+			novaV2ComputeOpenStack.requestInstance(
+					defaultToken, new LinkedList<Category>(categories), new HashMap<String, String>());
+		}
+		
+		try {
+			novaV2ComputeOpenStack.requestInstance(
+					defaultToken, new LinkedList<Category>(categories), new HashMap<String, String>());
+			Assert.fail();
+		} catch (OCCIException e) {
+			Assert.assertEquals(HttpStatus.SC_INSUFFICIENT_SPACE_ON_RESOURCE, e.getStatus().getCode());
+		}
 	}
 	
 	@Test
