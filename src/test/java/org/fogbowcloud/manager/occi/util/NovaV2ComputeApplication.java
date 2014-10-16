@@ -66,6 +66,10 @@ public class NovaV2ComputeApplication extends Application {
 		return router;
 	}
 	
+	public Map<String, List<String>> getPublicKeys() {
+		return userToKeyname;
+	}
+	
 	public String newInstance(String authToken, String json) {
 		checkUserToken(authToken);
 		String user = keystoneAccessIdToUser.get(authToken);
@@ -187,6 +191,9 @@ public class NovaV2ComputeApplication extends Application {
 		String user = keystoneAccessIdToUser.get(authToken);
 		if (userToKeyname.get(user) != null) {
 			userToKeyname.get(user).remove(keyname);
+			if (userToKeyname.get(user).isEmpty()) {
+				userToKeyname.remove(user);
+			}
 		}
 	}
 	

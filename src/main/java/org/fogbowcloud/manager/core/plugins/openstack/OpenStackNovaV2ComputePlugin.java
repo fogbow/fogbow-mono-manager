@@ -152,21 +152,23 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		String keyName = getKeyname(token, publicKey);
 				
 		String userdata = xOCCIAtt.get(RequestAttribute.USER_DATA_ATT.getValue());		
-		JSONObject json;
 		try {
-			json = generateJsonRequest(imageRef, flavorRef, userdata, keyName);
+			JSONObject json = generateJsonRequest(imageRef, flavorRef, userdata, keyName);
 			String requestEndpoint = computeV2APIEndpoint + token.getAttributes().get(TENANT_ID)
 					+ "/servers";
 			String jsonResponse = doPostRequest(requestEndpoint, token.getAccessId(), json);
-			
-			if (keyName != null) {
-				deleteKeyName(token, keyName);
-			}
-			
 			return getAttFromJson("id", jsonResponse);
 		} catch (JSONException e) {
 			LOGGER.error(e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
+		} finally {
+			if (keyName != null) {
+				try {
+					deleteKeyName(token, keyName);
+				} catch (Throwable t) {
+					LOGGER.warn("Could not delete key.", t);
+				}
+			}
 		}
 	}
 

@@ -116,7 +116,7 @@ public class PluginHelper {
 		this.component.start();
 	}
 	
-	public void initializeNovaV2ComputeComponent(String testDirPath) throws Exception {
+	public NovaV2ComputeApplication initializeNovaV2ComputeComponent(String testDirPath) throws Exception {
 		this.component = new Component();
 		this.component.getServers().add(Protocol.HTTP, PORT_ENDPOINT);
 
@@ -125,6 +125,7 @@ public class PluginHelper {
 		novaV2ComputeApplication.setTestDirPath(testDirPath);
 		this.component.getDefaultHost().attach(novaV2ComputeApplication);
 		this.component.start();
+		return novaV2ComputeApplication;
 	}
 
 	public void disconnectComponent() throws Exception {

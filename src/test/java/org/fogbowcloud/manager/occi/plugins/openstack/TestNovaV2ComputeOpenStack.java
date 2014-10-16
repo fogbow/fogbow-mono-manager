@@ -34,6 +34,7 @@ public class TestNovaV2ComputeOpenStack {
 	private PluginHelper pluginHelper;
 	private OpenStackNovaV2ComputePlugin novaV2ComputeOpenStack;
 	private Token defaultToken;
+	private NovaV2ComputeApplication novaV2Server;
 	
 	@Before
 	public void setUp() throws Exception {
@@ -57,7 +58,7 @@ public class TestNovaV2ComputeOpenStack {
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, tokenAtt);
 	
 		pluginHelper = new PluginHelper();	
-		pluginHelper.initializeNovaV2ComputeComponent("src/test/resources/openstack");
+		novaV2Server = pluginHelper.initializeNovaV2ComputeComponent("src/test/resources/openstack");
 	}
 	
 	@After
@@ -105,6 +106,32 @@ public class TestNovaV2ComputeOpenStack {
 		} catch (OCCIException e) {
 			Assert.assertEquals(HttpStatus.SC_INSUFFICIENT_SPACE_ON_RESOURCE, e.getStatus().getCode());
 		}
+	}
+	
+	@Test
+	public void testRequestFailsKeyPairDeleted() {
+		Assert.assertEquals(0, novaV2ComputeOpenStack.getInstances(defaultToken).size());
+		
+		//requesting one default instance
+		List<Category> categories = new ArrayList<Category>();
+		categories.add(new Category(PluginHelper.LINUX_X86_TERM,
+				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
+		categories.add(new Category(RequestConstants.SMALL_TERM,
+				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
+		
+		try {
+			//Last request will fail
+			for (int i = 0; i < NovaV2ComputeApplication.MAX_INSTANCE_COUNT + 1; i++) {
+				HashMap<String, String> xOCCIAtt = new HashMap<String, String>();
+				xOCCIAtt.put(RequestAttribute.DATA_PUBLIC_KEY.getValue(), "public key data");
+				novaV2ComputeOpenStack.requestInstance(
+						defaultToken, new LinkedList<Category>(categories), xOCCIAtt);
+			}
+		} catch (Exception e) {
+			// A failure is actually expected
+		}
+		
+		Assert.assertEquals(0, novaV2Server.getPublicKeys().size());
 	}
 	
 	@Test
