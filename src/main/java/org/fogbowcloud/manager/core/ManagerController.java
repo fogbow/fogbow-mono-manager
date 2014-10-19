@@ -478,7 +478,7 @@ public class ManagerController {
 				try {
 					LOGGER.debug("Monitoring instance of request: " + request);
 					getInstance(request);
-				} catch (OCCIException e) {
+				} catch (Throwable e) {
 					LOGGER.debug("Error while getInstance of " + request.getInstanceId(), e);
 					instanceRemoved(requests.get(request.getId()));
 				}
@@ -486,7 +486,7 @@ public class ManagerController {
 		}
 
 		if (turnOffTimer) {
-			LOGGER.info("There are not requests.");
+			LOGGER.info("There are no requests.");
 			instanceMonitoringTimer.cancel();
 		}
 	}
@@ -532,7 +532,7 @@ public class ManagerController {
 		}
 
 		if (turnOffTimer) {
-			LOGGER.info("There are not requests.");
+			LOGGER.info("There are no requests.");
 			tokenUpdaterTimer.cancel();
 		}
 	}

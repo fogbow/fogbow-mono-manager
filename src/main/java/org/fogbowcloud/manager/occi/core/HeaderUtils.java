@@ -67,7 +67,6 @@ public class HeaderUtils {
 		for (int i = 0; i < headerValues.length; i++) {
 			String[] eachHeaderValue = headerValues[i].split(",");			
 			for (int j = 0; j < eachHeaderValue.length; j++) {
-				System.out.println(eachHeaderValue[j].trim());				
 				String line = eachHeaderValue[j].trim();
 				if (!line.contains("=")){
 					LOGGER.debug("Attribute not supported or irregular expression. It will be thrown BAD REQUEST error type.");

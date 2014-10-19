@@ -531,6 +531,25 @@ public class TestManagerController {
 			Assert.assertTrue(request.getState().equals(RequestState.FULFILLED));
 		}
 	}
+	
+	@Test
+	public void testMonitorWontRethrowException() throws InterruptedException {
+		// setting request repository
+		Request request1 = new Request("id1", managerTestHelper.getDefaultToken(), null, null);
+		request1.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
+		request1.setState(RequestState.FULFILLED);
+
+		RequestRepository requestRepository = new RequestRepository();
+		requestRepository.addRequest(managerTestHelper.getDefaultToken().getUser(), request1);
+		managerController.setRequests(requestRepository);
+
+		// updating compute mock
+		Mockito.when(
+				managerTestHelper.getComputePlugin().getInstance(Mockito.any(Token.class),
+						Mockito.anyString())).thenThrow(new RuntimeException());
+
+		managerController.monitorInstances();
+	}
 
 	@Test(expected = IllegalArgumentException.class)
 	public void testConstructorException() throws Exception {
