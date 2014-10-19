@@ -37,7 +37,9 @@ public class Request {
 		if (categories == null) {
 			categories = new LinkedList<Category>();
 		}
-		categories.add(category);
+		if (!categories.contains(category)) {
+			categories.add(category);
+		}
 	}
 
 	public String getInstanceId() {
