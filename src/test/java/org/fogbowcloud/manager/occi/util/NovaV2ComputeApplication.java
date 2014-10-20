@@ -39,6 +39,7 @@ public class NovaV2ComputeApplication extends Application {
 	private final String SERVERS_V2_TARGET = "/v2/tenantid/servers";
 	private final String FLAVORS_V2_TARGET = "/v2/tenantid/flavors";
 	private final String OS_KEYPAIRS_V2_TARGET = "/v2/tenantid/os-keypairs";
+	private final String LIMITS_V2_TARGET = "/v2/tenantid/limits";
 	private String testDirPath;
 	private int numberOfInstances;
 	
@@ -63,6 +64,7 @@ public class NovaV2ComputeApplication extends Application {
 		router.attach(FLAVORS_V2_TARGET + "/{flavorid}", FlavorServer.class);
 		router.attach(OS_KEYPAIRS_V2_TARGET + "/{keyname}", OSKeypairServer.class);
 		router.attach(OS_KEYPAIRS_V2_TARGET, OSKeypairServer.class);
+		router.attach(LIMITS_V2_TARGET, LimitsServer.class);
 		return router;
 	}
 	
@@ -290,6 +292,19 @@ public class NovaV2ComputeApplication extends Application {
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}
 		
+	}
+	
+	public static class LimitsServer extends ServerResource {
+		@Get
+		public String fetch() {
+			NovaV2ComputeApplication computeApplication = (NovaV2ComputeApplication) getApplication();
+			String testDirPath = computeApplication.getTestDirPath();
+			try {
+				return PluginHelper.getContentFile(testDirPath + "/response.getlimits");
+			} catch (IOException e) {
+				throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
+			}
+		}
 	}
 	
 	public static class OSKeypairServer extends ServerResource {

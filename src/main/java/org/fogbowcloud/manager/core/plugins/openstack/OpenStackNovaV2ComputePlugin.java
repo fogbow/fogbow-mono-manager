@@ -393,20 +393,28 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 				+ "/limits";
 
 		String jsonResponse = doGetRequest(requestEndpoint, token.getAccessId());
+		
 		String maxCpu = getAttFromLimitsJson(OpenStackConfigurationConstants.MAX_TOTAL_CORES_ATT,
 				jsonResponse);
 		String cpuInUse = getAttFromLimitsJson(
 				OpenStackConfigurationConstants.TOTAL_CORES_USED_ATT, jsonResponse);
+		
 		String maxMem = getAttFromLimitsJson(
 				OpenStackConfigurationConstants.MAX_TOTAL_RAM_SIZE_ATT, jsonResponse);
 		String memInUse = getAttFromLimitsJson(OpenStackConfigurationConstants.TOTAL_RAM_USED_ATT,
 				jsonResponse);
+		
+		String maxInstances = getAttFromLimitsJson(
+				OpenStackConfigurationConstants.MAX_TOTAL_INSTANCES_ATT, jsonResponse);
+		String instancesInUse = getAttFromLimitsJson(
+				OpenStackConfigurationConstants.TOTAL_INSTANCES_USED_ATT, jsonResponse);
 
 		int cpuIdle = Integer.parseInt(maxCpu) - Integer.parseInt(cpuInUse);
 		int memIdle = Integer.parseInt(maxMem) - Integer.parseInt(memInUse);
+		int instancesIdle = Integer.parseInt(maxInstances) - Integer.parseInt(instancesInUse);
 
 		return new ResourcesInfo(String.valueOf(cpuIdle), cpuInUse, String.valueOf(memIdle),
-				memInUse, getFlavors(cpuIdle, memIdle), null);
+				memInUse, getFlavors(cpuIdle, memIdle, instancesIdle), null);
 	}
 	
 	private String getAttFromLimitsJson(String attName, String responseStr) {
@@ -419,18 +427,21 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		}
 	}
 
-	private List<Flavor> getFlavors(int cpuIdle, int memIdle) {
+	private List<Flavor> getFlavors(int cpuIdle, int memIdle, int instancesIdle) {
 		List<Flavor> flavors = new ArrayList<Flavor>();
+		
 		// flavors
-		int capacity = Math.min(cpuIdle / 1, memIdle / 2048);
-		Flavor smallFlavor = new Flavor(RequestConstants.SMALL_TERM, "1", "2048", capacity);
-		capacity = Math.min(cpuIdle / 2, memIdle / 4096);
-		Flavor mediumFlavor = new Flavor(RequestConstants.MEDIUM_TERM, "2", "4096", capacity);
-		capacity = Math.min(cpuIdle / 4, memIdle / 8192);
-		Flavor largeFlavor = new Flavor(RequestConstants.LARGE_TERM, "4", "8192", capacity);
+		int capacitySmall = Math.min(instancesIdle, Math.min(cpuIdle / 1, memIdle / 2048));
+		Flavor smallFlavor = new Flavor(RequestConstants.SMALL_TERM, "1", "2048", capacitySmall);
+		int capacityMedium = Math.min(instancesIdle, Math.min(cpuIdle / 2, memIdle / 4096));
+		Flavor mediumFlavor = new Flavor(RequestConstants.MEDIUM_TERM, "2", "4096", capacityMedium);
+		int capacityLarge = Math.min(instancesIdle, Math.min(cpuIdle / 4, memIdle / 8192));
+		Flavor largeFlavor = new Flavor(RequestConstants.LARGE_TERM, "4", "8192", capacityLarge);
+		
 		flavors.add(smallFlavor);
 		flavors.add(mediumFlavor);
 		flavors.add(largeFlavor);
+		
 		return flavors;
 	}
 

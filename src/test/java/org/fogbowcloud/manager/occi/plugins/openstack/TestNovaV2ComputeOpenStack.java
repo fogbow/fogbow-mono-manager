@@ -8,6 +8,8 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.apache.http.HttpStatus;
+import org.fogbowcloud.manager.core.model.Flavor;
+import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.openstack.KeystoneIdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.openstack.OpenStackConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.openstack.OpenStackNovaV2ComputePlugin;
@@ -283,5 +285,14 @@ public class TestNovaV2ComputeOpenStack {
 		Assert.assertEquals(0, novaV2ComputeOpenStack.getInstances(defaultToken).size());		
 	}
 	
+	@Test
+	public void testCapacity(){
+		ResourcesInfo resourcesInfo = novaV2ComputeOpenStack.getResourcesInfo(defaultToken);
+		List<Flavor> flavors = resourcesInfo.getFlavors();
+		// Limited by instance count
+		Assert.assertEquals(2, (int) flavors.get(0).getCapacity());
+		Assert.assertEquals(2, (int) flavors.get(1).getCapacity());
+		Assert.assertEquals(2, (int) flavors.get(2).getCapacity());
+	}
 	
 }
