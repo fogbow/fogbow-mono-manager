@@ -431,12 +431,12 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		List<Flavor> flavors = new ArrayList<Flavor>();
 		
 		// flavors
-		int capacitySmall = Math.min(instancesIdle, Math.min(cpuIdle / 1, memIdle / 2048));
-		Flavor smallFlavor = new Flavor(RequestConstants.SMALL_TERM, "1", "2048", capacitySmall);
-		int capacityMedium = Math.min(instancesIdle, Math.min(cpuIdle / 2, memIdle / 4096));
-		Flavor mediumFlavor = new Flavor(RequestConstants.MEDIUM_TERM, "2", "4096", capacityMedium);
-		int capacityLarge = Math.min(instancesIdle, Math.min(cpuIdle / 4, memIdle / 8192));
-		Flavor largeFlavor = new Flavor(RequestConstants.LARGE_TERM, "4", "8192", capacityLarge);
+		int capacitySmall = Math.min(instancesIdle, Math.min(cpuIdle / 1, memIdle / 128));
+		Flavor smallFlavor = new Flavor(RequestConstants.SMALL_TERM, "1", "128", capacitySmall);
+		int capacityMedium = Math.min(instancesIdle, Math.min(cpuIdle / 2, memIdle / 512));
+		Flavor mediumFlavor = new Flavor(RequestConstants.MEDIUM_TERM, "2", "512", capacityMedium);
+		int capacityLarge = Math.min(instancesIdle, Math.min(cpuIdle / 4, memIdle / 1024));
+		Flavor largeFlavor = new Flavor(RequestConstants.LARGE_TERM, "4", "1024", capacityLarge);
 		
 		flavors.add(smallFlavor);
 		flavors.add(mediumFlavor);
