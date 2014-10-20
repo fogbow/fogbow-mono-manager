@@ -153,12 +153,18 @@ public class ManagerController {
 		String user = getUser(accessId);
 		LOGGER.debug("Removing all requests of user: " + user);
 		requests.removeByUser(user);
+		if (!instanceMonitoringTimer.isScheduled()) {
+			triggerInstancesMonitor();
+		}
 	}
 
 	public void removeRequest(String accessId, String requestId) {
 		LOGGER.debug("Removing requestId: " + requestId);
 		checkRequestId(accessId, requestId);
 		requests.remove(requestId);
+		if (!instanceMonitoringTimer.isScheduled()) {
+			triggerInstancesMonitor();
+		}
 	}
 
 	private void checkRequestId(String accessId, String requestId) {

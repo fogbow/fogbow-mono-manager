@@ -54,8 +54,8 @@ public class TestManagerController {
 		 *  identityPlugin.getToken(AccessId) always returns DefaultDataTestHelper.ACCESS_TOKEN_ID
 		 *  schedulerPeriod and monitoringPeriod are long enough (a day) to avoid reeschudeling
 		 */
-		managerController = managerTestHelper.createDefaultManagerController();
 
+		managerController = managerTestHelper.createDefaultManagerController();
 		// default instance count value is 1
 		xOCCIAtt = new HashMap<String, String>();
 		xOCCIAtt.put(RequestAttribute.INSTANCE_COUNT.getValue(),
@@ -1195,5 +1195,94 @@ public class TestManagerController {
 		managerController.setValidator(validatorMock);
 		Assert.assertEquals(null,
 				managerController.createInstanceForRemoteMember("abc", null, xOCCIAtt));
+	}
+	
+	@Test
+	public void testRemoveAllOpenRequests() {
+		
+		managerTestHelper.useSameThreadExecutor();
+		
+		// setting request repository
+		Request request1 = new Request("id1", managerTestHelper.getDefaultToken(), null, null);
+		request1.setState(RequestState.OPEN);
+		Request request2 = new Request("id2", managerTestHelper.getDefaultToken(), null, null);
+		request2.setState(RequestState.OPEN);
+
+		RequestRepository requestRepository = new RequestRepository();
+		requestRepository.addRequest(managerTestHelper.getDefaultToken().getUser(), request1);
+		requestRepository.addRequest(managerTestHelper.getDefaultToken().getUser(), request2);
+		managerController.setRequests(requestRepository);
+
+		// checking open requests
+		List<Request> requestsFromUser = managerController.getRequestsFromUser(managerTestHelper
+				.getDefaultToken().getAccessId());
+		Assert.assertEquals(2, requestsFromUser.size());
+		Assert.assertEquals(RequestState.OPEN, requestsFromUser.get(0).getState());
+		Assert.assertEquals(RequestState.OPEN, requestsFromUser.get(1).getState());
+
+		Mockito.when(
+				managerTestHelper.getComputePlugin().getInstance(Mockito.any(Token.class),
+						Mockito.anyString())).thenThrow(new OCCIException(ErrorType.BAD_REQUEST, ""));
+		
+		// removing all requests
+		managerController.removeAllRequests(managerTestHelper.getDefaultToken().getAccessId());
+		
+		requestsFromUser = managerController.getRequestsFromUser(managerTestHelper
+				.getDefaultToken().getAccessId());
+		
+		Assert.assertEquals(0, requestsFromUser.size());
+	}
+	
+	@Test
+	public void testRemoveOneOpenRequestAndAfterThatRemoveAllOpenRequests() {
+		
+		managerTestHelper.useSameThreadExecutor();
+		
+		// setting request repository
+		String id1 = "id1";
+		String id2 = "id2";
+		String id3 = "id3";
+		Request request1 = new Request(id1, managerTestHelper.getDefaultToken(), null, null);
+		request1.setState(RequestState.OPEN);
+		Request request2 = new Request(id2, managerTestHelper.getDefaultToken(), null, null);
+		request2.setState(RequestState.OPEN);
+		Request request3 = new Request(id3, managerTestHelper.getDefaultToken(), null, null);
+		request3.setState(RequestState.OPEN);
+
+		RequestRepository requestRepository = new RequestRepository();
+		requestRepository.addRequest(managerTestHelper.getDefaultToken().getUser(), request1);
+		requestRepository.addRequest(managerTestHelper.getDefaultToken().getUser(), request2);
+		requestRepository.addRequest(managerTestHelper.getDefaultToken().getUser(), request3);
+		managerController.setRequests(requestRepository);
+
+		// checking open requests
+		List<Request> requestsFromUser = managerController.getRequestsFromUser(managerTestHelper
+				.getDefaultToken().getAccessId());
+		Assert.assertEquals(3, requestsFromUser.size());
+		Assert.assertEquals(RequestState.OPEN, requestsFromUser.get(0).getState());
+		Assert.assertEquals(RequestState.OPEN, requestsFromUser.get(1).getState());
+		Assert.assertEquals(RequestState.OPEN, requestsFromUser.get(2).getState());
+
+		Mockito.when(
+				managerTestHelper.getComputePlugin().getInstance(Mockito.any(Token.class),
+						Mockito.anyString())).thenThrow(new OCCIException(ErrorType.BAD_REQUEST, ""));
+		
+		// removing one request 
+		managerController.removeRequest(managerTestHelper.getDefaultToken().getAccessId(), id1);
+
+		requestsFromUser = managerController.getRequestsFromUser(managerTestHelper
+				.getDefaultToken().getAccessId());
+		Assert.assertEquals(2, requestsFromUser.size());
+		Assert.assertEquals(RequestState.OPEN, requestsFromUser.get(0).getState());
+		Assert.assertEquals(RequestState.OPEN, requestsFromUser.get(1).getState());
+	
+		// removing the rest of requests
+		managerController.removeRequest(managerTestHelper.getDefaultToken().getAccessId(), id2);
+		managerController.removeRequest(managerTestHelper.getDefaultToken().getAccessId(), id3);
+		
+		requestsFromUser = managerController.getRequestsFromUser(managerTestHelper
+				.getDefaultToken().getAccessId());
+		
+		Assert.assertEquals(0, requestsFromUser.size());
 	}
 }

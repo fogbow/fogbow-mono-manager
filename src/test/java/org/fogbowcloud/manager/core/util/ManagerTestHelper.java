@@ -11,7 +11,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import org.dom4j.Attribute;
 import org.dom4j.Element;
@@ -39,6 +41,8 @@ import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.filter.PacketFilter;
 import org.jivesoftware.smack.filter.PacketIDFilter;
 import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.xmpp.component.ComponentException;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.Packet;
@@ -53,6 +57,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 	private AuthorizationPlugin authorizationPlugin;
 	private Token defaultToken;
 	private FakeXMPPServer fakeServer = new FakeXMPPServer();
+	private ScheduledExecutorService executorService;
 
 	public ManagerTestHelper() {
 		Map<String, String> tokenAttributes = new HashMap<String, String>();
@@ -307,8 +312,9 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 				DefaultDataTestHelper.SERVER_HOST);
 		properties.put(ConfigurationConstants.SSH_HOST_HTTP_PORT_KEY,
 				String.valueOf(DefaultDataTestHelper.TOKEN_SERVER_HTTP_PORT));
+		this.executorService = Mockito.mock(ScheduledExecutorService.class);
 		ManagerController managerController = new ManagerController(properties,
-				Mockito.mock(ScheduledExecutorService.class));
+				executorService);
 
 		// mocking compute
 		computePlugin = Mockito.mock(ComputePlugin.class);
@@ -341,6 +347,20 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		return managerController;
 	}
 
+	public void useSameThreadExecutor() {
+		Mockito.when(executorService.scheduleWithFixedDelay(
+				Mockito.any(Runnable.class), Mockito.anyLong(), 
+				Mockito.anyLong(), Mockito.any(TimeUnit.class))).thenAnswer(new Answer<Future<?>>() {
+			@Override
+			public Future<?> answer(InvocationOnMock invocation)
+					throws Throwable {
+				Runnable runnable = (Runnable) invocation.getArguments()[0];
+				runnable.run();
+				return null;
+			}
+		});
+	}
+	
 	public Token getDefaultToken() {
 		return defaultToken;
 	}
