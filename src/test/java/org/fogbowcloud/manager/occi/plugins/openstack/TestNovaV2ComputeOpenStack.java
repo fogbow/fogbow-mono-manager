@@ -233,7 +233,6 @@ public class TestNovaV2ComputeOpenStack {
 		resources.add(ResourceRepository.getInstance().get(RequestConstants.SMALL_TERM));
 		
 		for (Resource resource : resources) {
-			System.out.println("resource: " + resource);
 			Assert.assertTrue(instance.getResources().contains(resource));		
 		}
 	}
