@@ -21,6 +21,7 @@ import org.restlet.Component;
 import org.restlet.data.Protocol;
 import org.restlet.engine.Engine;
 import org.restlet.ext.slf4j.Slf4jLoggerFacade;
+import org.xmpp.component.ComponentException;
 
 public class Main {
 
@@ -90,7 +91,12 @@ public class Main {
 				Integer.parseInt(properties.getProperty(ConfigurationConstants.XMPP_PORT_KEY)),
 				facade);
 		xmpp.setRendezvousAddress(properties.getProperty(ConfigurationConstants.RENDEZVOUS_JID_KEY));
-		xmpp.connect();
+		try {
+			xmpp.connect();			
+		} catch (ComponentException e) {
+			LOGGER.error("Conflict in the initialization of xmpp component.", e);
+			return;
+		}
 		xmpp.process(false);
 		xmpp.init();
 		facade.setPacketSender(xmpp);
