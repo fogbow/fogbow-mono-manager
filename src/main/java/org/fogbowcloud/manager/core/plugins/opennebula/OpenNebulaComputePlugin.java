@@ -50,6 +50,10 @@ import org.w3c.dom.Element;
 
 public class OpenNebulaComputePlugin implements ComputePlugin {
 
+	public static final int VALUE_DEFAULT_QUOTA_OPENNEBULA = -1;
+	public static final int VALUE_UNLIMITED_QUOTA_OPENNEBULA = -2;
+	public static final int VALUE_DEFAULT_MEM = 20480; // 20 GB
+	public static final int VALUE_DEFAULT_CPU = 100;
 	private OpenNebulaClientFactory clientFactory;
 	private String openNebulaEndpoint;
 	private Map<String, String> fogbowTermToOpenNebula; 
@@ -417,25 +421,37 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		String memInUseStr = user.xpath("VM_QUOTA/VM/MEMORY_USED");
 		
 		// default values is used when quota is not specified
-		double maxCpu = 100;
+		double maxCpu = VALUE_DEFAULT_CPU;
 		double cpuInUse = 0;
-		double maxMem = 20480; //20Gb
+		double maxMem = VALUE_DEFAULT_MEM;
 		double memInUse = 0;
-		
+
 		// getting quota values
 		if (isValidDouble(maxCpuStr)) {
 			maxCpu = Integer.parseInt(maxCpuStr);
-		}		
+		}
 		if (isValidDouble(cpuInUseStr)) {
 			cpuInUse = Integer.parseInt(cpuInUseStr);
-		}		
+		}
 		if (isValidDouble(maxMemStr)) {
 			maxMem = Integer.parseInt(maxMemStr);
 		}
 		if (isValidDouble(memInUseStr)) {
 			memInUse = Integer.parseInt(memInUseStr);
 		}
-		
+
+		if (maxMem == VALUE_DEFAULT_QUOTA_OPENNEBULA) {
+			maxMem = VALUE_DEFAULT_MEM;
+		} else if (maxMem == VALUE_UNLIMITED_QUOTA_OPENNEBULA) {
+			maxMem = Integer.MAX_VALUE;
+		}
+
+		if (maxCpu == VALUE_DEFAULT_QUOTA_OPENNEBULA) {
+			maxCpu = VALUE_DEFAULT_CPU;
+		} else if (maxCpu == VALUE_UNLIMITED_QUOTA_OPENNEBULA) {
+			maxCpu = Integer.MAX_VALUE;
+		}
+
 		double cpuIdle = maxCpu - cpuInUse;
 		double memIdle = maxMem - memInUse;
 	
@@ -457,7 +473,7 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		List<Flavor> flavors = new ArrayList<Flavor>();
 		// small		
 		double memFlavor = getAttValue("mem", fogbowTermToOpenNebula.get(RequestConstants.SMALL_TERM));
-		double cpuFlavor = getAttValue("cpu", fogbowTermToOpenNebula.get(RequestConstants.SMALL_TERM));		
+		double cpuFlavor = getAttValue("cpu", fogbowTermToOpenNebula.get(RequestConstants.SMALL_TERM));
 		int capacity = (int) Math.min(cpuIdle / cpuFlavor, memIdle / memFlavor);
 		Flavor smallFlavor = new Flavor(RequestConstants.SMALL_TERM, String.valueOf(cpuFlavor),
 				String.valueOf(memFlavor), capacity);

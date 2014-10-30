@@ -525,6 +525,122 @@ public class TestComputeOpenNebula {
 	}
 	
 	@Test
+	public void testGetResourcesInfoWithValueDefaultOfQuota() {
+		String cpuUsed = "8";
+		String memUsed = "1024";
+		// mocking opennebula structures
+		Client oneClient = Mockito.mock(Client.class);
+		User user = Mockito.mock(User.class);
+		Mockito.when(user.xpath("VM_QUOTA/VM/CPU")).thenReturn(
+				String.valueOf(OpenNebulaComputePlugin.VALUE_DEFAULT_QUOTA_OPENNEBULA));
+		Mockito.when(user.xpath("VM_QUOTA/VM/CPU_USED")).thenReturn(cpuUsed);
+		Mockito.when(user.xpath("VM_QUOTA/VM/MEMORY")).thenReturn(
+				String.valueOf(OpenNebulaComputePlugin.VALUE_DEFAULT_QUOTA_OPENNEBULA));
+		Mockito.when(user.xpath("VM_QUOTA/VM/MEMORY_USED")).thenReturn(memUsed);
+
+		// mocking clientFactory
+		String accessId = PluginHelper.USERNAME + ":" + PluginHelper.USER_PASS;
+		OpenNebulaClientFactory clientFactory = Mockito.mock(OpenNebulaClientFactory.class);
+		Mockito.when(clientFactory.createClient(accessId, OPEN_NEBULA_URL)).thenReturn(oneClient);
+		Mockito.when(clientFactory.createUser(oneClient, PluginHelper.USERNAME)).thenReturn(user);
+
+		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
+
+		// getting resources info
+		Token token = new Token(accessId, PluginHelper.USERNAME, null,
+				new HashMap<String, String>());
+		ResourcesInfo resourcesInfo = computeOpenNebula.getResourcesInfo(token);
+
+		// checking resourcesInfo
+		double cpuIdle = OpenNebulaComputePlugin.VALUE_DEFAULT_CPU - Double.parseDouble(cpuUsed);
+		String cpuIdleStr = String.valueOf(cpuIdle);
+		Assert.assertEquals(cpuIdleStr, resourcesInfo.getCpuIdle());
+		Assert.assertEquals(representTheDoubleValue(cpuUsed), resourcesInfo.getCpuInUse());
+		double memIdle = OpenNebulaComputePlugin.VALUE_DEFAULT_MEM - Double.parseDouble(memUsed);
+		String memIdleStr = String.valueOf(memIdle);		
+		Assert.assertEquals(memIdleStr, resourcesInfo.getMemIdle());
+		Assert.assertEquals(representTheDoubleValue(memUsed), resourcesInfo.getMemInUse());
+		Assert.assertNull(resourcesInfo.getCert());
+		List<Flavor> flavors = new ArrayList<Flavor>();
+		String smallCpu = "1.0";
+		String smallMem = "128.0";
+		flavors.add(new Flavor(RequestConstants.SMALL_TERM, smallCpu, smallMem, calculateCapacity(
+				cpuIdle, memIdle, smallCpu, smallMem)));
+		String mediumCpu = "2.0";
+		String mediumMem = "256.0";
+		flavors.add(new Flavor(RequestConstants.MEDIUM_TERM, mediumCpu, mediumMem,
+				calculateCapacity(cpuIdle, memIdle, mediumCpu, mediumMem)));
+		String largeCpu = "4.0";
+		String largeMem = "512.0";
+		flavors.add(new Flavor(RequestConstants.LARGE_TERM, largeCpu, largeMem, calculateCapacity(
+				cpuIdle, memIdle, largeCpu, largeMem)));
+
+		Assert.assertEquals(flavors, resourcesInfo.getFlavors());
+	}
+	
+	@Test
+	public void testGetResourcesInfoWithValueUnlimitedOfQuota() {
+		String cpuUsed = "8";
+		String memUsed = "1024";
+		// mocking opennebula structures
+		Client oneClient = Mockito.mock(Client.class);
+		User user = Mockito.mock(User.class);
+		Mockito.when(user.xpath("VM_QUOTA/VM/CPU")).thenReturn(
+				String.valueOf(OpenNebulaComputePlugin.VALUE_UNLIMITED_QUOTA_OPENNEBULA));
+		Mockito.when(user.xpath("VM_QUOTA/VM/CPU_USED")).thenReturn(cpuUsed);
+		Mockito.when(user.xpath("VM_QUOTA/VM/MEMORY")).thenReturn(
+				String.valueOf(OpenNebulaComputePlugin.VALUE_UNLIMITED_QUOTA_OPENNEBULA));
+		Mockito.when(user.xpath("VM_QUOTA/VM/MEMORY_USED")).thenReturn(memUsed);
+
+		// mocking clientFactory
+		String accessId = PluginHelper.USERNAME + ":" + PluginHelper.USER_PASS;
+		OpenNebulaClientFactory clientFactory = Mockito.mock(OpenNebulaClientFactory.class);
+		Mockito.when(clientFactory.createClient(accessId, OPEN_NEBULA_URL)).thenReturn(oneClient);
+		Mockito.when(clientFactory.createUser(oneClient, PluginHelper.USERNAME)).thenReturn(user);
+
+		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
+
+		// getting resources info
+		Token token = new Token(accessId, PluginHelper.USERNAME, null,
+				new HashMap<String, String>());
+		ResourcesInfo resourcesInfo = computeOpenNebula.getResourcesInfo(token);
+
+		// checking resourcesInfo
+		double cpuIdle = Integer.MAX_VALUE - Double.parseDouble(cpuUsed);
+		String cpuIdleStr = String.valueOf(cpuIdle);
+		Assert.assertEquals(cpuIdleStr, resourcesInfo.getCpuIdle());
+		Assert.assertEquals(representTheDoubleValue(cpuUsed), resourcesInfo.getCpuInUse());
+		double memIdle = Integer.MAX_VALUE - Double.parseDouble(memUsed);
+		String memIdleStr = String.valueOf(memIdle);		
+		Assert.assertEquals(memIdleStr, resourcesInfo.getMemIdle());
+		Assert.assertEquals(representTheDoubleValue(memUsed), resourcesInfo.getMemInUse());
+		Assert.assertNull(resourcesInfo.getCert());
+		List<Flavor> flavors = new ArrayList<Flavor>();
+		String smallCpu = "1.0";
+		String smallMem = "128.0";
+		flavors.add(new Flavor(RequestConstants.SMALL_TERM, smallCpu, smallMem, calculateCapacity(
+				cpuIdle, memIdle, smallCpu, smallMem)));
+		String mediumCpu = "2.0";
+		String mediumMem = "256.0";
+		flavors.add(new Flavor(RequestConstants.MEDIUM_TERM, mediumCpu, mediumMem,
+				calculateCapacity(cpuIdle, memIdle, mediumCpu, mediumMem)));
+		String largeCpu = "4.0";
+		String largeMem = "512.0";
+		flavors.add(new Flavor(RequestConstants.LARGE_TERM, largeCpu, largeMem, calculateCapacity(
+				cpuIdle, memIdle, largeCpu, largeMem)));
+
+		Assert.assertEquals(flavors, resourcesInfo.getFlavors());
+	}			
+	
+	private String representTheDoubleValue(String intStr) {
+		return String.valueOf((double)Integer.parseInt(intStr));
+	}
+	
+	private int calculateCapacity(double cpuIdle, double memIdle, String cpuFlavor, String memFlavor) {
+		return (int) (Math.min((cpuIdle) / Double.parseDouble(cpuFlavor), memIdle / Double.parseDouble(memFlavor)));
+	}
+	
+	@Test
 	public void testGetResourcesInfoWithUsed(){
 		// mocking opennebula structures
 		Client oneClient = Mockito.mock(Client.class);
