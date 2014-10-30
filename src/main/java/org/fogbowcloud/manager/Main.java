@@ -40,7 +40,7 @@ public class Main {
 					ConfigurationConstants.COMPUTE_CLASS_KEY, properties);
 		} catch (Exception e) {
 			LOGGER.warn("Compute Plugin not especified in the properties.");
-			computePlugin = new OpenStackOCCIComputePlugin(properties);
+			return;
 		}
 
 		AuthorizationPlugin authorizationPlugin = null;
@@ -49,7 +49,7 @@ public class Main {
 					ConfigurationConstants.AUTHORIZATION_CLASS_KEY, properties);
 		} catch (Exception e) {
 			LOGGER.warn("Authorization Plugin not especified in the properties.");
-			authorizationPlugin = new AllowAllAuthorizationPlugin();
+			return;
 		}
 		
 		IdentityPlugin localIdentityPlugin = null;
@@ -58,7 +58,7 @@ public class Main {
 					ConfigurationConstants.LOCAL_PREFIX);
 		} catch (Exception e) {
 			LOGGER.warn("Local Identity Plugin not especified in the properties.");
-			localIdentityPlugin = new KeystoneIdentityPlugin(properties);
+			return;
 		}
 		IdentityPlugin federationIdentityPlugin = null;
 		try {
@@ -66,7 +66,7 @@ public class Main {
 					ConfigurationConstants.FEDERATION_PREFIX);
 		} catch (Exception e) {
 			LOGGER.warn("Federation Identity Plugin not especified in the properties.");
-			federationIdentityPlugin = new KeystoneIdentityPlugin(properties);
+			return;
 		}
 
 		FederationMemberValidator validator = new DefaultMemberValidator();
