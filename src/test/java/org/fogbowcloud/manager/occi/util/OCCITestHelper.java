@@ -47,6 +47,8 @@ public class OCCITestHelper {
 	public static final String URI_FOGBOW_MEMBER = "http://localhost:" + ENDPOINT_PORT + "/members";
 	public static final String URI_FOGBOW_TOKEN = "http://localhost:" + ENDPOINT_PORT + "/token";
 	public static final String URI_FOGBOW_QUERY = "http://localhost:" + ENDPOINT_PORT + "/-/";
+	public static final String URI_FOGBOW_QUERY_TYPE_TWO = "http://localhost:" + ENDPOINT_PORT
+			+ "/.well-known/org/ogf/occi/-/";	
 	public static final String USER_MOCK = "user_mock";
 
 	private Component component;

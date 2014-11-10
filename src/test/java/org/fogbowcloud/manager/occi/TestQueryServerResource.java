@@ -103,6 +103,25 @@ public class TestQueryServerResource {
 
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
+	
+	@Test
+	public void testGetQueryWithTypeTwo() throws Exception {
+
+		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_QUERY_TYPE_TWO);
+		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
+		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		HttpClient client = new DefaultHttpClient();
+		HttpResponse response = client.execute(get);
+
+		String responseStr = EntityUtils.toString(response.getEntity(),
+				String.valueOf(Charsets.UTF_8));
+
+		for (Resource resource : ResourceRepository.getInstance().getAll()) {
+			Assert.assertTrue(responseStr.contains(resource.toHeader()));
+		}
+
+		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+	}	
 
 	@Test
 	public void testHeadQueryWithoutAccessToken() throws Exception {
