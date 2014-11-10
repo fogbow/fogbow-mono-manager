@@ -142,7 +142,7 @@ public class RequestServerResource extends ServerResource {
 	}
 
 	@Delete
-	public String remove() {
+	public String remove() {		
 		OCCIApplication application = (OCCIApplication) getApplication();
 		HttpRequest req = (HttpRequest) getRequest();
 		String accessId = HeaderUtils.getAuthToken(req.getHeaders(), getResponse(),
@@ -177,7 +177,7 @@ public class RequestServerResource extends ServerResource {
 		String authToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse(),
 				application.getAuthenticationURI());
 		
-		List<Request> currentRequests = application.createRequests(authToken, categories, xOCCIAtt);
+		List<Request> currentRequests = application.createRequests(authToken, categories, xOCCIAtt);		
 		return generateTextPlainResponse(currentRequests, req, false);
 	}
 	
@@ -231,6 +231,7 @@ public class RequestServerResource extends ServerResource {
 		if (requests == null || requests.isEmpty()) { 
 			return NO_REQUESTS_MESSAGE;
 		}
+		setStatus(Status.SUCCESS_CREATED);
 		String requestEndpoint = getHostRef(req) + req.getHttpCall().getRequestUri();
 		String response = "";
 		Iterator<Request> requestIt = requests.iterator();

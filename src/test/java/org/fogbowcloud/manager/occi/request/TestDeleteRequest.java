@@ -112,7 +112,7 @@ public class TestDeleteRequest {
 		List<String> requestLocations = OCCITestHelper.getRequestIds(response);
 
 		Assert.assertEquals(1, requestLocations.size());
-		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HttpStatus.SC_CREATED, response.getStatusLine().getStatusCode());
 		// Delete
 		HttpDelete delete = new HttpDelete(requestLocations.get(0));
 		delete.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
@@ -127,7 +127,7 @@ public class TestDeleteRequest {
 		response = client.execute(get);
 
 		Assert.assertEquals(deletedRequestAmount, deletedInstancesCounter(response));
-		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HttpStatus.SC_CREATED, response.getStatusLine().getStatusCode());
 	}
 
 	@Test
@@ -149,7 +149,7 @@ public class TestDeleteRequest {
 		List<String> requestLocations = OCCITestHelper.getRequestIds(response);
 
 		Assert.assertEquals(defaultAmount, requestLocations.size());
-		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HttpStatus.SC_CREATED, response.getStatusLine().getStatusCode());
 
 		// Delete all requests individually
 		HttpDelete delete;
@@ -167,7 +167,7 @@ public class TestDeleteRequest {
 		response = client.execute(get);
 		
 		Assert.assertEquals(defaultAmount, deletedInstancesCounter(response));
-		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HttpStatus.SC_CREATED, response.getStatusLine().getStatusCode());
 	}
 
 	@Test
@@ -188,7 +188,7 @@ public class TestDeleteRequest {
 		List<String> requestIDs = OCCITestHelper.getRequestIds(response);
 
 		Assert.assertEquals(createdMount, requestIDs.size());
-		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HttpStatus.SC_CREATED, response.getStatusLine().getStatusCode());
 
 		// Delete
 		HttpDelete delete = new HttpDelete(OCCITestHelper.URI_FOGBOW_REQUEST);
@@ -205,7 +205,7 @@ public class TestDeleteRequest {
 		response = client.execute(get);
 
 		Assert.assertEquals(createdMount, deletedInstancesCounter(response));
-		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HttpStatus.SC_CREATED, response.getStatusLine().getStatusCode());
 	}
 
 	@Test

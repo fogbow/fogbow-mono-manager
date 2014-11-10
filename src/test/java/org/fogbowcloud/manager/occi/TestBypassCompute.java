@@ -207,7 +207,7 @@ public class TestBypassCompute {
 		List<String> requestIDs = OCCITestHelper.getRequestIds(response);
 
 		Assert.assertEquals(1, requestIDs.size());
-		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HttpStatus.SC_CREATED, response.getStatusLine().getStatusCode());
 		
 		Thread.sleep(LITTLE_SCHEDULE_TIME + 15);
 		
@@ -356,7 +356,7 @@ public class TestBypassCompute {
 		List<String> requestIDs = OCCITestHelper.getRequestIds(response);
 
 		Assert.assertEquals(1, requestIDs.size());
-		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HttpStatus.SC_CREATED, response.getStatusLine().getStatusCode());
 		
 		Thread.sleep(LITTLE_SCHEDULE_TIME + 15);
 		

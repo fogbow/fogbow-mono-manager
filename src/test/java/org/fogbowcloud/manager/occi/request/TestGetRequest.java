@@ -191,7 +191,7 @@ public class TestGetRequest {
 		Assert.assertTrue(response.getFirstHeader(OCCIHeaders.CONTENT_TYPE).getValue()
 				.startsWith(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE));
 		Assert.assertEquals(2, OCCITestHelper.getRequestIds(response).size());
-		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HttpStatus.SC_CREATED, response.getStatusLine().getStatusCode());
 	}
 
 	@Test
@@ -244,7 +244,7 @@ public class TestGetRequest {
 		//Default accept is text/plain
 		Assert.assertTrue(response.getFirstHeader(OCCIHeaders.CONTENT_TYPE).getValue()
 				.startsWith(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE));
-		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HttpStatus.SC_CREATED, response.getStatusLine().getStatusCode());
 		Assert.assertEquals(50, OCCITestHelper.getRequestIds(response).size());
 	}
 	
