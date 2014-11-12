@@ -127,7 +127,7 @@ public class TestDeleteRequest {
 		response = client.execute(get);
 
 		Assert.assertEquals(deletedRequestAmount, deletedInstancesCounter(response));
-		Assert.assertEquals(HttpStatus.SC_CREATED, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 
 	@Test
@@ -167,7 +167,7 @@ public class TestDeleteRequest {
 		response = client.execute(get);
 		
 		Assert.assertEquals(defaultAmount, deletedInstancesCounter(response));
-		Assert.assertEquals(HttpStatus.SC_CREATED, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 
 	@Test
@@ -205,7 +205,7 @@ public class TestDeleteRequest {
 		response = client.execute(get);
 
 		Assert.assertEquals(createdMount, deletedInstancesCounter(response));
-		Assert.assertEquals(HttpStatus.SC_CREATED, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 
 	@Test
