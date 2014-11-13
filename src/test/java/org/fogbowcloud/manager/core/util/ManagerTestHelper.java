@@ -11,7 +11,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import org.dom4j.Attribute;
 import org.dom4j.Element;
@@ -20,14 +22,13 @@ import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.DefaultMemberValidator;
 import org.fogbowcloud.manager.core.FederationMemberValidator;
 import org.fogbowcloud.manager.core.ManagerController;
-import org.fogbowcloud.manager.core.UserdataUtils;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
-import org.fogbowcloud.manager.core.plugins.openstack.OpenStackIdentityPlugin;
+import org.fogbowcloud.manager.core.plugins.openstack.KeystoneIdentityPlugin;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
@@ -40,12 +41,15 @@ import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.filter.PacketFilter;
 import org.jivesoftware.smack.filter.PacketIDFilter;
 import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.xmpp.component.ComponentException;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.Packet;
 
 public class ManagerTestHelper extends DefaultDataTestHelper {
 
+	public static final int MAX_WHOISALIVE_MANAGER_COUNT = 100;
 	private ManagerXmppComponent managerXmppComponent;
 	private ComputePlugin computePlugin;
 	private IdentityPlugin identityPlugin;
@@ -53,10 +57,11 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 	private AuthorizationPlugin authorizationPlugin;
 	private Token defaultToken;
 	private FakeXMPPServer fakeServer = new FakeXMPPServer();
+	private ScheduledExecutorService executorService;
 
 	public ManagerTestHelper() {
 		Map<String, String> tokenAttributes = new HashMap<String, String>();
-		tokenAttributes.put(OpenStackIdentityPlugin.TENANT_ID, "tenantId_r4fci3qhbcy3b");
+		tokenAttributes.put(KeystoneIdentityPlugin.TENANT_ID, "tenantId_r4fci3qhbcy3b");
 		this.defaultToken = new Token(ACCESS_TOKEN_ID, USER_NAME, TOKEN_FUTURE_EXPIRATION,
 				tokenAttributes);
 	}
@@ -164,6 +169,8 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 				DefaultDataTestHelper.SERVER_HOST);
 		properties.put(ConfigurationConstants.SSH_HOST_HTTP_PORT_KEY,
 				String.valueOf(DefaultDataTestHelper.TOKEN_SERVER_HTTP_PORT));
+		properties.put(ConfigurationConstants.MAX_WHOISALIVE_MANAGER_COUNT,
+				MAX_WHOISALIVE_MANAGER_COUNT);
 		
 		ManagerController managerFacade = new ManagerController(properties);
 		managerFacade.setComputePlugin(computePlugin);
@@ -305,13 +312,14 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 				DefaultDataTestHelper.SERVER_HOST);
 		properties.put(ConfigurationConstants.SSH_HOST_HTTP_PORT_KEY,
 				String.valueOf(DefaultDataTestHelper.TOKEN_SERVER_HTTP_PORT));
+		this.executorService = Mockito.mock(ScheduledExecutorService.class);
 		ManagerController managerController = new ManagerController(properties,
-				Mockito.mock(ScheduledExecutorService.class));
+				executorService);
 
 		// mocking compute
 		computePlugin = Mockito.mock(ComputePlugin.class);
 		Mockito.when(
-				computePlugin.requestInstance(Mockito.anyString(), Mockito.any(List.class),
+				computePlugin.requestInstance(Mockito.any(Token.class), Mockito.any(List.class),
 						Mockito.any(Map.class))).thenThrow(
 				new OCCIException(ErrorType.QUOTA_EXCEEDED,
 						ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES));
@@ -339,6 +347,20 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		return managerController;
 	}
 
+	public void useSameThreadExecutor() {
+		Mockito.when(executorService.scheduleWithFixedDelay(
+				Mockito.any(Runnable.class), Mockito.anyLong(), 
+				Mockito.anyLong(), Mockito.any(TimeUnit.class))).thenAnswer(new Answer<Future<?>>() {
+			@Override
+			public Future<?> answer(InvocationOnMock invocation)
+					throws Throwable {
+				Runnable runnable = (Runnable) invocation.getArguments()[0];
+				runnable.run();
+				return null;
+			}
+		});
+	}
+	
 	public Token getDefaultToken() {
 		return defaultToken;
 	}

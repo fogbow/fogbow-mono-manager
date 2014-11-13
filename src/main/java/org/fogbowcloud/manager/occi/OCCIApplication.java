@@ -43,6 +43,7 @@ public class OCCIApplication extends Application {
 		router.attach("/members", MemberServerResource.class);
 		router.attach("/token", TokenServerResource.class);
 		router.attach("/-/", QueryServerResource.class);
+		router.attach("/.well-known/org/ogf/occi/-/", QueryServerResource.class);
 		router.attachDefault(new Restlet() {
 			@Override
 			public void handle(org.restlet.Request request, Response response) {

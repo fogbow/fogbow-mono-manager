@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.apache.log4j.Logger;
-import org.fogbowcloud.manager.core.plugins.openstack.OpenStackComputePlugin;
+import org.fogbowcloud.manager.core.plugins.openstack.OpenStackOCCIComputePlugin;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.HeaderUtils;
@@ -27,7 +27,7 @@ import org.restlet.resource.Post;
 import org.restlet.resource.ServerResource;
 import org.restlet.routing.Router;
 
-public class ComputeApplication extends Application {
+public class OCCIComputeApplication extends Application {
 
 	public static final String COMPUTE_TARGET = "/compute/";
 	public static final String QUERY_INTERFACE_TARGET = "/-/";
@@ -116,7 +116,7 @@ public class ComputeApplication extends Application {
 
 	private Map<String, Map<String, String>> termToAttributes;
 
-	public ComputeApplication() {
+	public OCCIComputeApplication() {
 		userToInstanceId = new HashMap<String, List<String>>();
 		instanceIdToDetails = new HashMap<String, String>();
 		idGenerator = new InstanceIdGenerator();
@@ -228,7 +228,7 @@ public class ComputeApplication extends Application {
 	private void checkRules(List<Category> categories, Map<String, String> xOCCIAtt) {
 		boolean OSFound = false;
 		for (Category category : categories) {
-			if (category.getScheme().equals(OpenStackComputePlugin.getOSScheme())) {
+			if (category.getScheme().equals(OpenStackOCCIComputePlugin.getOSScheme())) {
 				OSFound = true;
 				break;
 			}
@@ -305,7 +305,7 @@ public class ComputeApplication extends Application {
 
 		@Get
 		public String fetch() {
-			ComputeApplication computeApplication = (ComputeApplication) getApplication();
+			OCCIComputeApplication computeApplication = (OCCIComputeApplication) getApplication();
 			HttpRequest req = (HttpRequest) getRequest();
 			String userToken = req.getHeaders().getValues(OCCIHeaders.X_AUTH_TOKEN);
 
@@ -337,7 +337,7 @@ public class ComputeApplication extends Application {
 
 		@Post
 		public StringRepresentation post() {
-			ComputeApplication application = (ComputeApplication) getApplication();
+			OCCIComputeApplication application = (OCCIComputeApplication) getApplication();
 			HttpRequest req = (HttpRequest) getRequest();
 
 			List<Category> categories = HeaderUtils.getCategories(req.getHeaders());
@@ -355,7 +355,7 @@ public class ComputeApplication extends Application {
 
 		@Delete
 		public String remove() {
-			ComputeApplication computeApplication = (ComputeApplication) getApplication();
+			OCCIComputeApplication computeApplication = (OCCIComputeApplication) getApplication();
 			HttpRequest req = (HttpRequest) getRequest();
 			String userToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse(),
 					"Keystone uri=' http://localhost:5000'");
@@ -382,7 +382,7 @@ public class ComputeApplication extends Application {
 			HttpRequest req = (HttpRequest) getRequest();
 			String userToken = req.getHeaders().getValues(OCCIHeaders.X_AUTH_TOKEN);
 			LOGGER.info("Getting query resource with token :" + userToken);			
-			return generateQueryResonse(ComputeApplication.getResources());
+			return generateQueryResonse(OCCIComputeApplication.getResources());
 		}
 
 		private String generateQueryResonse(List<Resource> resources) {

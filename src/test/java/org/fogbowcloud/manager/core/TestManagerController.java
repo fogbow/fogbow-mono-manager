@@ -15,8 +15,8 @@ import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
-import org.fogbowcloud.manager.core.plugins.openstack.OpenStackComputePlugin;
-import org.fogbowcloud.manager.core.plugins.openstack.OpenStackIdentityPlugin;
+import org.fogbowcloud.manager.core.plugins.openstack.KeystoneIdentityPlugin;
+import org.fogbowcloud.manager.core.plugins.openstack.OpenStackOCCIComputePlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.core.util.ManagerTestHelper;
 import org.fogbowcloud.manager.occi.core.Category;
@@ -54,8 +54,8 @@ public class TestManagerController {
 		 *  identityPlugin.getToken(AccessId) always returns DefaultDataTestHelper.ACCESS_TOKEN_ID
 		 *  schedulerPeriod and monitoringPeriod are long enough (a day) to avoid reeschudeling
 		 */
-		managerController = managerTestHelper.createDefaultManagerController();
 
+		managerController = managerTestHelper.createDefaultManagerController();
 		// default instance count value is 1
 		xOCCIAtt = new HashMap<String, String>();
 		xOCCIAtt.put(RequestAttribute.INSTANCE_COUNT.getValue(),
@@ -90,7 +90,7 @@ public class TestManagerController {
 
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		Mockito.when(
-				computePlugin.requestInstance(Mockito.eq(localUserAccessId), Mockito.anyList(),
+				computePlugin.requestInstance(Mockito.any(Token.class), Mockito.anyList(),
 						Mockito.anyMap())).thenReturn("newinstanceid");
 		managerController.setComputePlugin(computePlugin);
 
@@ -107,7 +107,7 @@ public class TestManagerController {
 
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		Mockito.when(
-				computePlugin.requestInstance(Mockito.eq(federationUserAccessId),
+				computePlugin.requestInstance(Mockito.any(Token.class),
 						Mockito.anyList(), Mockito.anyMap()))
 				.thenThrow(new OCCIException(ErrorType.UNAUTHORIZED, ""))
 				.thenReturn("newinstanceid")
@@ -155,16 +155,16 @@ public class TestManagerController {
 	@Test
 	public void testGetFederationMember() throws InterruptedException {
 		Map<String, String> tokenCredentials = new HashMap<String, String>();
-		tokenCredentials.put(OpenStackIdentityPlugin.USERNAME, DefaultDataTestHelper.USER_NAME);
-		tokenCredentials.put(OpenStackIdentityPlugin.PASSWORD, DefaultDataTestHelper.USER_PASS);
-		tokenCredentials.put(OpenStackIdentityPlugin.TENANT_NAME,
+		tokenCredentials.put(KeystoneIdentityPlugin.USERNAME, DefaultDataTestHelper.USER_NAME);
+		tokenCredentials.put(KeystoneIdentityPlugin.PASSWORD, DefaultDataTestHelper.USER_PASS);
+		tokenCredentials.put(KeystoneIdentityPlugin.TENANT_NAME,
 				DefaultDataTestHelper.TENANT_NAME);
 
 		long tokenExpirationTime = System.currentTimeMillis() + 500;
 
 		Map<String, String> attributesTokenReturn = new HashMap<String, String>();
-		attributesTokenReturn.put(OpenStackIdentityPlugin.TENANT_ID, "987654321");
-		attributesTokenReturn.put(OpenStackIdentityPlugin.TENANT_NAME,
+		attributesTokenReturn.put(KeystoneIdentityPlugin.TENANT_ID, "987654321");
+		attributesTokenReturn.put(KeystoneIdentityPlugin.TENANT_NAME,
 				DefaultDataTestHelper.TENANT_NAME);
 
 		Token firstToken = new Token(DefaultDataTestHelper.ACCESS_TOKEN_ID,
@@ -174,8 +174,8 @@ public class TestManagerController {
 				tokenExpirationTime + DefaultDataTestHelper.LONG_TIME), attributesTokenReturn);
 
 		// mocking identity plugin
-		OpenStackIdentityPlugin openStackidentityPlugin = Mockito
-				.mock(OpenStackIdentityPlugin.class);
+		KeystoneIdentityPlugin openStackidentityPlugin = Mockito
+				.mock(KeystoneIdentityPlugin.class);
 		Mockito.when(openStackidentityPlugin.createFederationUserToken()).thenReturn(firstToken,
 				secondToken);
 		Mockito.when(openStackidentityPlugin.createToken(tokenCredentials)).thenReturn(firstToken,
@@ -320,7 +320,7 @@ public class TestManagerController {
 
 		// updating compute mock
 		Mockito.when(
-				managerTestHelper.getComputePlugin().getInstance(Mockito.anyString(),
+				managerTestHelper.getComputePlugin().getInstance(Mockito.any(Token.class),
 						Mockito.anyString())).thenReturn(
 				new Instance(DefaultDataTestHelper.INSTANCE_ID));
 
@@ -359,7 +359,7 @@ public class TestManagerController {
 
 		// updating compute mock
 		Mockito.when(
-				managerTestHelper.getComputePlugin().getInstance(Mockito.anyString(),
+				managerTestHelper.getComputePlugin().getInstance(Mockito.any(Token.class),
 						Mockito.anyString())).thenThrow(
 				new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND));
 
@@ -410,7 +410,7 @@ public class TestManagerController {
 
 		// updating compute mock
 		Mockito.when(
-				managerTestHelper.getComputePlugin().getInstance(Mockito.anyString(),
+				managerTestHelper.getComputePlugin().getInstance(Mockito.any(Token.class),
 						Mockito.anyString())).thenThrow(
 				new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND));
 
@@ -449,7 +449,7 @@ public class TestManagerController {
 
 		// updating compute mock
 		Mockito.when(
-				managerTestHelper.getComputePlugin().getInstance(Mockito.anyString(),
+				managerTestHelper.getComputePlugin().getInstance(Mockito.any(Token.class),
 						Mockito.anyString())).thenThrow(
 				new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND));
 
@@ -470,11 +470,11 @@ public class TestManagerController {
 		// updating compute mock
 		Mockito.reset(managerTestHelper.getComputePlugin());
 		Mockito.when(
-				managerTestHelper.getComputePlugin().requestInstance(Mockito.anyString(),
+				managerTestHelper.getComputePlugin().requestInstance(Mockito.any(Token.class),
 						Mockito.any(List.class), Mockito.any(Map.class))).thenReturn(
 				DefaultDataTestHelper.INSTANCE_ID);
 		Mockito.when(
-				managerTestHelper.getComputePlugin().getInstance(Mockito.anyString(),
+				managerTestHelper.getComputePlugin().getInstance(Mockito.any(Token.class),
 						Mockito.eq(DefaultDataTestHelper.INSTANCE_ID))).thenReturn(
 				new Instance(DefaultDataTestHelper.INSTANCE_ID));
 
@@ -507,7 +507,7 @@ public class TestManagerController {
 
 		// updating compute mock
 		Mockito.when(
-				managerTestHelper.getComputePlugin().getInstance(Mockito.anyString(),
+				managerTestHelper.getComputePlugin().getInstance(Mockito.any(Token.class),
 						Mockito.anyString())).thenReturn(
 				new Instance(DefaultDataTestHelper.INSTANCE_ID));
 
@@ -530,6 +530,25 @@ public class TestManagerController {
 		for (Request request : requestsFromUser) {
 			Assert.assertTrue(request.getState().equals(RequestState.FULFILLED));
 		}
+	}
+	
+	@Test
+	public void testMonitorWontRethrowException() throws InterruptedException {
+		// setting request repository
+		Request request1 = new Request("id1", managerTestHelper.getDefaultToken(), null, null);
+		request1.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
+		request1.setState(RequestState.FULFILLED);
+
+		RequestRepository requestRepository = new RequestRepository();
+		requestRepository.addRequest(managerTestHelper.getDefaultToken().getUser(), request1);
+		managerController.setRequests(requestRepository);
+
+		// updating compute mock
+		Mockito.when(
+				managerTestHelper.getComputePlugin().getInstance(Mockito.any(Token.class),
+						Mockito.anyString())).thenThrow(new RuntimeException());
+
+		managerController.monitorInstances();
 	}
 
 	@Test(expected = IllegalArgumentException.class)
@@ -614,7 +633,7 @@ public class TestManagerController {
 
 		// updating compute mock
 		Mockito.doNothing().when(managerTestHelper.getComputePlugin()).removeInstance(
-				DefaultDataTestHelper.ACCESS_TOKEN_ID, DefaultDataTestHelper.INSTANCE_ID);
+				managerTestHelper.getDefaultToken(), DefaultDataTestHelper.INSTANCE_ID);
 
 		// removing instance
 		managerController.removeInstance(DefaultDataTestHelper.ACCESS_TOKEN_ID,
@@ -652,12 +671,12 @@ public class TestManagerController {
 		// updating compute mock
 		Mockito.reset(managerTestHelper.getComputePlugin());
 		Mockito.when(
-				managerTestHelper.getComputePlugin().requestInstance(Mockito.anyString(),
+				managerTestHelper.getComputePlugin().requestInstance(Mockito.any(Token.class),
 						Mockito.any(List.class), Mockito.any(Map.class))).thenThrow(
 				new OCCIException(ErrorType.QUOTA_EXCEEDED,
 						ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES));
 		Mockito.doNothing().when(managerTestHelper.getComputePlugin()).removeInstance(
-				DefaultDataTestHelper.ACCESS_TOKEN_ID, DefaultDataTestHelper.INSTANCE_ID);
+				managerTestHelper.getDefaultToken(), DefaultDataTestHelper.INSTANCE_ID);
 
 		// removing instance
 		managerController.removeInstance(DefaultDataTestHelper.ACCESS_TOKEN_ID,
@@ -701,12 +720,12 @@ public class TestManagerController {
 		// updating compute mock
 		Mockito.reset(managerTestHelper.getComputePlugin());
 		Mockito.when(
-				managerTestHelper.getComputePlugin().requestInstance(Mockito.anyString(),
+				managerTestHelper.getComputePlugin().requestInstance(Mockito.any(Token.class),
 						Mockito.any(List.class), Mockito.any(Map.class))).thenThrow(
 				new OCCIException(ErrorType.QUOTA_EXCEEDED,
 						ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES));
 		Mockito.doNothing().when(managerTestHelper.getComputePlugin()).removeInstance(
-				DefaultDataTestHelper.ACCESS_TOKEN_ID, DefaultDataTestHelper.INSTANCE_ID);
+				managerTestHelper.getDefaultToken(), DefaultDataTestHelper.INSTANCE_ID);
 		
 		// removing instance
 		managerController.removeInstance(DefaultDataTestHelper.ACCESS_TOKEN_ID,
@@ -724,7 +743,7 @@ public class TestManagerController {
 		// updating compute mock
 		Mockito.reset(managerTestHelper.getComputePlugin());
 		Mockito.when(
-				managerTestHelper.getComputePlugin().requestInstance(Mockito.anyString(),
+				managerTestHelper.getComputePlugin().requestInstance(Mockito.any(Token.class),
 						Mockito.any(List.class), Mockito.any(Map.class))).thenReturn(
 				SECOND_INSTANCE_ID);
 
@@ -816,12 +835,12 @@ public class TestManagerController {
 		// updating compute mock
 		Mockito.reset(managerTestHelper.getComputePlugin());
 		Mockito.when(
-				managerTestHelper.getComputePlugin().requestInstance(Mockito.anyString(),
+				managerTestHelper.getComputePlugin().requestInstance(Mockito.any(Token.class),
 						Mockito.any(List.class), Mockito.any(Map.class))).thenThrow(
 				new OCCIException(ErrorType.QUOTA_EXCEEDED,
 						ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES));
 		Mockito.doNothing().when(managerTestHelper.getComputePlugin()).removeInstance(
-				DefaultDataTestHelper.ACCESS_TOKEN_ID, DefaultDataTestHelper.INSTANCE_ID);
+				managerTestHelper.getDefaultToken(), DefaultDataTestHelper.INSTANCE_ID);
 
 		// removing instance
 		managerController.removeInstance(DefaultDataTestHelper.ACCESS_TOKEN_ID,
@@ -842,7 +861,7 @@ public class TestManagerController {
 	private void mockRequestInstance() {
 		Mockito.reset(managerTestHelper.getComputePlugin());
 		Mockito.when(
-				managerTestHelper.getComputePlugin().requestInstance(Mockito.anyString(),
+				managerTestHelper.getComputePlugin().requestInstance(Mockito.any(Token.class),
 						Mockito.any(List.class), Mockito.any(Map.class))).thenReturn(
 				DefaultDataTestHelper.INSTANCE_ID);
 	}
@@ -1044,12 +1063,12 @@ public class TestManagerController {
 
 		// updating compute mock
 		Mockito.when(
-				managerTestHelper.getComputePlugin().requestInstance(Mockito.anyString(),
+				managerTestHelper.getComputePlugin().requestInstance(Mockito.any(Token.class),
 						Mockito.any(List.class), Mockito.any(Map.class))).thenThrow(
 				new OCCIException(ErrorType.QUOTA_EXCEEDED,
 						ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES));
 		Mockito.doNothing().when(managerTestHelper.getComputePlugin()).removeInstance(
-				DefaultDataTestHelper.ACCESS_TOKEN_ID, DefaultDataTestHelper.INSTANCE_ID);
+				managerTestHelper.getDefaultToken(), DefaultDataTestHelper.INSTANCE_ID);
 
 		// removing instance
 		managerController.removeInstance(DefaultDataTestHelper.ACCESS_TOKEN_ID,
@@ -1112,12 +1131,12 @@ public class TestManagerController {
 
 		// updating compute mock
 		Mockito.when(
-				managerTestHelper.getComputePlugin().requestInstance(Mockito.anyString(),
+				managerTestHelper.getComputePlugin().requestInstance(Mockito.any(Token.class),
 						Mockito.any(List.class), Mockito.any(Map.class))).thenThrow(
 				new OCCIException(ErrorType.QUOTA_EXCEEDED,
 						ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES));
 		Mockito.doNothing().when(managerTestHelper.getComputePlugin()).removeInstance(
-				DefaultDataTestHelper.ACCESS_TOKEN_ID, DefaultDataTestHelper.INSTANCE_ID);
+				managerTestHelper.getDefaultToken(), DefaultDataTestHelper.INSTANCE_ID);
 
 		// removing instance
 		managerController.removeInstance(DefaultDataTestHelper.ACCESS_TOKEN_ID,
@@ -1160,12 +1179,13 @@ public class TestManagerController {
 		Mockito.when(identityPlugin.createFederationUserToken()).thenReturn(token);
 		managerController.setLocalIdentityPlugin(identityPlugin);
 
-		ComputePlugin plugin = Mockito.mock(OpenStackComputePlugin.class);
+		ComputePlugin plugin = Mockito.mock(OpenStackOCCIComputePlugin.class);
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
 		List<Category> categories = new ArrayList<Category>();
 		categories.add(new Category(RequestConstants.USER_DATA_TERM,
 						RequestConstants.SCHEME, RequestConstants.MIXIN_CLASS));
-		Mockito.doReturn("answer").when(plugin).requestInstance(null, categories, xOCCIAtt);
+		Mockito.doReturn("answer").when(plugin)
+				.requestInstance(token, categories, xOCCIAtt);
 
 		managerController.setComputePlugin(plugin);
 		Assert.assertEquals("answer",
@@ -1175,5 +1195,94 @@ public class TestManagerController {
 		managerController.setValidator(validatorMock);
 		Assert.assertEquals(null,
 				managerController.createInstanceForRemoteMember("abc", null, xOCCIAtt));
+	}
+	
+	@Test
+	public void testRemoveAllOpenRequests() {
+		
+		managerTestHelper.useSameThreadExecutor();
+		
+		// setting request repository
+		Request request1 = new Request("id1", managerTestHelper.getDefaultToken(), null, null);
+		request1.setState(RequestState.OPEN);
+		Request request2 = new Request("id2", managerTestHelper.getDefaultToken(), null, null);
+		request2.setState(RequestState.OPEN);
+
+		RequestRepository requestRepository = new RequestRepository();
+		requestRepository.addRequest(managerTestHelper.getDefaultToken().getUser(), request1);
+		requestRepository.addRequest(managerTestHelper.getDefaultToken().getUser(), request2);
+		managerController.setRequests(requestRepository);
+
+		// checking open requests
+		List<Request> requestsFromUser = managerController.getRequestsFromUser(managerTestHelper
+				.getDefaultToken().getAccessId());
+		Assert.assertEquals(2, requestsFromUser.size());
+		Assert.assertEquals(RequestState.OPEN, requestsFromUser.get(0).getState());
+		Assert.assertEquals(RequestState.OPEN, requestsFromUser.get(1).getState());
+
+		Mockito.when(
+				managerTestHelper.getComputePlugin().getInstance(Mockito.any(Token.class),
+						Mockito.anyString())).thenThrow(new OCCIException(ErrorType.BAD_REQUEST, ""));
+		
+		// removing all requests
+		managerController.removeAllRequests(managerTestHelper.getDefaultToken().getAccessId());
+		
+		requestsFromUser = managerController.getRequestsFromUser(managerTestHelper
+				.getDefaultToken().getAccessId());
+		
+		Assert.assertEquals(0, requestsFromUser.size());
+	}
+	
+	@Test
+	public void testRemoveOneOpenRequestAndAfterThatRemoveAllOpenRequests() {
+		
+		managerTestHelper.useSameThreadExecutor();
+		
+		// setting request repository
+		String id1 = "id1";
+		String id2 = "id2";
+		String id3 = "id3";
+		Request request1 = new Request(id1, managerTestHelper.getDefaultToken(), null, null);
+		request1.setState(RequestState.OPEN);
+		Request request2 = new Request(id2, managerTestHelper.getDefaultToken(), null, null);
+		request2.setState(RequestState.OPEN);
+		Request request3 = new Request(id3, managerTestHelper.getDefaultToken(), null, null);
+		request3.setState(RequestState.OPEN);
+
+		RequestRepository requestRepository = new RequestRepository();
+		requestRepository.addRequest(managerTestHelper.getDefaultToken().getUser(), request1);
+		requestRepository.addRequest(managerTestHelper.getDefaultToken().getUser(), request2);
+		requestRepository.addRequest(managerTestHelper.getDefaultToken().getUser(), request3);
+		managerController.setRequests(requestRepository);
+
+		// checking open requests
+		List<Request> requestsFromUser = managerController.getRequestsFromUser(managerTestHelper
+				.getDefaultToken().getAccessId());
+		Assert.assertEquals(3, requestsFromUser.size());
+		Assert.assertEquals(RequestState.OPEN, requestsFromUser.get(0).getState());
+		Assert.assertEquals(RequestState.OPEN, requestsFromUser.get(1).getState());
+		Assert.assertEquals(RequestState.OPEN, requestsFromUser.get(2).getState());
+
+		Mockito.when(
+				managerTestHelper.getComputePlugin().getInstance(Mockito.any(Token.class),
+						Mockito.anyString())).thenThrow(new OCCIException(ErrorType.BAD_REQUEST, ""));
+		
+		// removing one request 
+		managerController.removeRequest(managerTestHelper.getDefaultToken().getAccessId(), id1);
+
+		requestsFromUser = managerController.getRequestsFromUser(managerTestHelper
+				.getDefaultToken().getAccessId());
+		Assert.assertEquals(2, requestsFromUser.size());
+		Assert.assertEquals(RequestState.OPEN, requestsFromUser.get(0).getState());
+		Assert.assertEquals(RequestState.OPEN, requestsFromUser.get(1).getState());
+	
+		// removing the rest of requests
+		managerController.removeRequest(managerTestHelper.getDefaultToken().getAccessId(), id2);
+		managerController.removeRequest(managerTestHelper.getDefaultToken().getAccessId(), id3);
+		
+		requestsFromUser = managerController.getRequestsFromUser(managerTestHelper
+				.getDefaultToken().getAccessId());
+		
+		Assert.assertEquals(0, requestsFromUser.size());
 	}
 }

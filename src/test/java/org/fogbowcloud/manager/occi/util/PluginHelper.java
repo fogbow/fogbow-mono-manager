@@ -14,11 +14,11 @@ import java.util.Map;
 import java.util.Random;
 import java.util.StringTokenizer;
 
-import org.fogbowcloud.manager.core.plugins.openstack.OpenStackIdentityPlugin;
+import org.fogbowcloud.manager.core.plugins.openstack.KeystoneIdentityPlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.Token;
-import org.fogbowcloud.manager.occi.util.ComputeApplication.InstanceIdGenerator;
+import org.fogbowcloud.manager.occi.util.OCCIComputeApplication.InstanceIdGenerator;
 import org.mockito.Mockito;
 import org.restlet.Component;
 import org.restlet.data.Protocol;
@@ -31,6 +31,7 @@ public class PluginHelper {
 	public static final String CIRROS_IMAGE_TERM = "cadf2e29-7216-4a5e-9364-cf6513d5f1fd";
 	public static final String LINUX_X86_TERM = "linuxx86";
 	public static final String COMPUTE_OCCI_URL = "http://localhost:" + PORT_ENDPOINT;
+	public static final String COMPUTE_NOVAV2_URL = "http://localhost:" + PORT_ENDPOINT;
 
 	public static final String ACCESS_ID = "HgfugGJHgJgHJGjGJgJg-857GHGYHjhHjH";
 	public static final String TENANT_ID = "fc394f2ab2df4114bde39905f800dc57";
@@ -42,9 +43,6 @@ public class PluginHelper {
 	public static final String FED_USERNAME = "federation_user";
 	public static final String FED_USER_PASS = "federation_user_pass";
 	
-	private ComputeApplication computeApplication;
-
-
 	public PluginHelper() {
 		this.component = new Component();
 	}
@@ -88,8 +86,8 @@ public class PluginHelper {
 		this.component.getServers().add(Protocol.HTTP, PORT_ENDPOINT);
 
 		Map<String, String> tokenAttributes = new HashMap<String, String>();
-		tokenAttributes.put(OpenStackIdentityPlugin.TENANT_ID, TENANT_ID);
-		tokenAttributes.put(OpenStackIdentityPlugin.TENANT_NAME, TENANT_NAME);
+		tokenAttributes.put(KeystoneIdentityPlugin.TENANT_ID, TENANT_ID);
+		tokenAttributes.put(KeystoneIdentityPlugin.TENANT_NAME, TENANT_NAME);
 		Token token = new Token(ACCESS_ID, USERNAME,
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, tokenAttributes);
 
@@ -101,25 +99,33 @@ public class PluginHelper {
 		this.component.start();
 	}
 
-	public void initializeComputeComponent(List<String> expectedInstanceIds) throws Exception {
+	public void initializeOCCIComputeComponent(List<String> expectedInstanceIds) throws Exception {
 		this.component = new Component();
 		this.component.getServers().add(Protocol.HTTP, PORT_ENDPOINT);
 
-		computeApplication = new ComputeApplication();
+		OCCIComputeApplication occiComputeApplication = new OCCIComputeApplication();
 
 		// mocking 5 first instance id generation
 		InstanceIdGenerator idGenerator = Mockito.mock(InstanceIdGenerator.class);
 		Mockito.when(idGenerator.generateId()).thenReturn(expectedInstanceIds.get(0),
 				expectedInstanceIds.get(1), expectedInstanceIds.get(2), expectedInstanceIds.get(3),
 				expectedInstanceIds.get(4));
-		computeApplication.setIdGenerator(idGenerator);
-		computeApplication.putTokenAndUser(ACCESS_ID, USERNAME);
-		this.component.getDefaultHost().attach(computeApplication);
+		occiComputeApplication.setIdGenerator(idGenerator);
+		occiComputeApplication.putTokenAndUser(ACCESS_ID, USERNAME);
+		this.component.getDefaultHost().attach(occiComputeApplication);
 		this.component.start();
 	}
 	
-	public ComputeApplication getComputeApplication(){
-		return computeApplication;
+	public NovaV2ComputeApplication initializeNovaV2ComputeComponent(String testDirPath) throws Exception {
+		this.component = new Component();
+		this.component.getServers().add(Protocol.HTTP, PORT_ENDPOINT);
+
+		NovaV2ComputeApplication novaV2ComputeApplication = new NovaV2ComputeApplication();
+		novaV2ComputeApplication.putTokenAndUser(ACCESS_ID, USERNAME);
+		novaV2ComputeApplication.setTestDirPath(testDirPath);
+		this.component.getDefaultHost().attach(novaV2ComputeApplication);
+		this.component.start();
+		return novaV2ComputeApplication;
 	}
 
 	public void disconnectComponent() throws Exception {

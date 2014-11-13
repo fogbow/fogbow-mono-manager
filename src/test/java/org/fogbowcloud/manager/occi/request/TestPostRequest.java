@@ -39,7 +39,7 @@ public class TestPostRequest {
 		this.requestHelper = new OCCITestHelper();
 
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
-		Mockito.when(computePlugin.requestInstance(Mockito.anyString(), Mockito.any(List.class), Mockito.any(Map.class)))
+		Mockito.when(computePlugin.requestInstance(Mockito.any(Token.class), Mockito.any(List.class), Mockito.any(Map.class)))
 				.thenReturn("");
 
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
@@ -67,7 +67,7 @@ public class TestPostRequest {
 		List<String> requestIDs = OCCITestHelper.getRequestIds(response);
 
 		Assert.assertEquals(1, requestIDs.size());
-		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HttpStatus.SC_CREATED, response.getStatusLine().getStatusCode());
 	}
 
 	@Test
@@ -85,7 +85,7 @@ public class TestPostRequest {
 		List<String> requestIDs = OCCITestHelper.getRequestIds(response);
 
 		Assert.assertEquals(2, requestIDs.size());
-		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HttpStatus.SC_CREATED, response.getStatusLine().getStatusCode());
 	}
 
 	@Test
@@ -104,7 +104,7 @@ public class TestPostRequest {
 		List<String> requestIDs = OCCITestHelper.getRequestIds(response);
 		
 		Assert.assertEquals(200, requestIDs.size());
-		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HttpStatus.SC_CREATED, response.getStatusLine().getStatusCode());
 	}
 
 	@Test
@@ -288,7 +288,7 @@ public class TestPostRequest {
 		HttpResponse response = client.execute(post);
 
 		Assert.assertEquals(10, OCCITestHelper.getRequestIds(response).size());
-		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HttpStatus.SC_CREATED, response.getStatusLine().getStatusCode());
 	}
 
 	@After

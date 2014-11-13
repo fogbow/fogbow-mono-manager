@@ -38,11 +38,14 @@ public class TestDeleteCompute {
 	@Before
 	public void setup() throws Exception {
 		this.helper = new OCCITestHelper();
-
+		Token token = new Token(OCCITestHelper.ACCESS_TOKEN,
+				OCCITestHelper.USER_MOCK, DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
+				new HashMap<String, String>());
+		
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
-		Mockito.doNothing().when(computePlugin).removeInstances(OCCITestHelper.ACCESS_TOKEN);
+		Mockito.doNothing().when(computePlugin).removeInstances(token);
 		Mockito.doNothing().when(computePlugin)
-				.removeInstance(OCCITestHelper.ACCESS_TOKEN, INSTANCE_ID);
+				.removeInstance(token, INSTANCE_ID);
 		Mockito.doThrow(new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND))
 				.when(computePlugin).bypass(Mockito.any(org.restlet.Request.class), Mockito.any(Response.class));
 		

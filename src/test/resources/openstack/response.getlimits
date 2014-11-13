@@ -1,0 +1,12 @@
+{
+    "limits": {
+        "absolute": {
+            "maxTotalCores": 20,
+            "totalCoresUsed": 10,
+            "maxTotalInstances": 10,
+            "totalInstancesUsed": 8,
+            "maxTotalRAMSize": 51200,
+            "totalRAMUsed": 512
+        }
+    }
+}

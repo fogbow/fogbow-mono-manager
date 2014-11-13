@@ -11,9 +11,9 @@ compute_one_flavor_small={mem=128, cpu=1}
 compute_one_flavor_medium={mem=256, cpu=2}
 compute_one_flavor_large={mem=512, cpu=4}
 compute_one_network_id=1
-compute_one_image_cirros0.3.2=0
+compute_one_image_fogbow-linux-x86=0
 
-compute_class=org.fogbowcloud.manager.core.plugins.openstack.OpenStackComputePlugin
+compute_class=org.fogbowcloud.manager.core.plugins.openstack.OpenStackOCCIComputePlugin
 compute_openstack_v2api_url=http://localhost:8182
 compute_occi_url=http://localhost:8182
 compute_occi_flavor_small=m1-small
@@ -25,11 +25,19 @@ compute_occi_resource_scheme=http://schemas.openstack.org/template/resource#
 compute_occi_image_fogbow-linux-x86=cadf2e29-7216-4a5e-9364-cf6513d5f1fd
 compute_occi_network_id=ea51ed0c-0e8a-448d-8202-c79777109ffe
 
-local_identity_class=org.fogbowcloud.manager.core.plugins.openstack.OpenStackIdentityPlugin
+compute_class=org.fogbowcloud.manager.core.plugins.openstack.OpenStackNovaV2ComputePlugin
+compute_novav2_url=http://localhost:8774
+compute_novav2_flavor_small=1
+compute_novav2_flavor_medium=2
+compute_novav2_flavor_large=3
+compute_novav2_image_fogbow-linux-x86=cadf2e29-7216-4a5e-9364-cf6513d5f1fd
+compute_novav2_network_id=ea51ed0c-0e8a-448d-8202-c79777109ffe
+
+local_identity_class=org.fogbowcloud.manager.core.plugins.openstack.KeystoneIdentityPlugin
 local_identity_url=http://localhost:5000
 
-federation_authorization_class=org.fogbowcloud.manager.core.plugins.openstack.AllowAllAuthorizationPlugin
-federation_identity_class=org.fogbowcloud.manager.core.plugins.openstack.OpenStackIdentityPlugin
+federation_authorization_class=org.fogbowcloud.manager.core.plugins.common.AllowAllAuthorizationPlugin
+federation_identity_class=org.fogbowcloud.manager.core.plugins.openstack.KeystoneIdentityPlugin
 federation_identity_url=http://localhost:5000
 
 local_proxy_account_user_name=fogbow
@@ -50,4 +58,8 @@ ssh_tunnel_private_host=10.0.0.1
 ssh_tunnel_host_http_port=2223
 ssh_tunnel_host_port=2222
 
+my_ip=127.0.0.1
+
 http_port = 8182
+
+max_whoisalive_manager_count=100

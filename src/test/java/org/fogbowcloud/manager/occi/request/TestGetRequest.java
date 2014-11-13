@@ -28,7 +28,7 @@ import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
-import org.fogbowcloud.manager.occi.util.ComputeApplication;
+import org.fogbowcloud.manager.occi.util.OCCIComputeApplication;
 import org.fogbowcloud.manager.occi.util.OCCITestHelper;
 import org.junit.After;
 import org.junit.Assert;
@@ -40,7 +40,7 @@ public class TestGetRequest {
 
 	private OCCITestHelper requestHelper;
 	private String instanceLocation = HeaderUtils.X_OCCI_LOCATION_PREFIX + "http://localhost:"
-			+ OCCITestHelper.ENDPOINT_PORT + ComputeApplication.COMPUTE_TARGET
+			+ OCCITestHelper.ENDPOINT_PORT + OCCIComputeApplication.COMPUTE_TARGET
 			+ "/b122f3ad-503c-4abb-8a55-ba8d90cfce9f";
 
 	@SuppressWarnings("unchecked")
@@ -50,7 +50,7 @@ public class TestGetRequest {
 
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		Mockito.when(
-				computePlugin.requestInstance(Mockito.anyString(), Mockito.any(List.class),
+				computePlugin.requestInstance(Mockito.any(Token.class), Mockito.any(List.class),
 						Mockito.any(Map.class))).thenReturn(instanceLocation);
 		
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
@@ -69,7 +69,7 @@ public class TestGetRequest {
 
 		AuthorizationPlugin authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
 		Mockito.when(authorizationPlugin.isAuthorized(Mockito.any(Token.class))).thenReturn(true);
-		this.requestHelper.initializeComponent(computePlugin, identityPlugin, authorizationPlugin);
+		this.requestHelper.initializeComponentExecutorSameThread(computePlugin, identityPlugin, authorizationPlugin);
 	}
 
 	@Test
@@ -232,7 +232,7 @@ public class TestGetRequest {
 		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
 		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, RequestAttribute.INSTANCE_COUNT.getValue()
-				+ " = 200");
+				+ " = 50");
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
 		// Get
@@ -245,7 +245,7 @@ public class TestGetRequest {
 		Assert.assertTrue(response.getFirstHeader(OCCIHeaders.CONTENT_TYPE).getValue()
 				.startsWith(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE));
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
-		Assert.assertEquals(200, OCCITestHelper.getRequestIds(response).size());
+		Assert.assertEquals(50, OCCITestHelper.getRequestIds(response).size());
 	}
 	
 	@Test
@@ -258,7 +258,7 @@ public class TestGetRequest {
 		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
 		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, RequestAttribute.INSTANCE_COUNT.getValue()
-				+ " = 200");
+				+ " = 50");
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
 		// Get
@@ -270,7 +270,7 @@ public class TestGetRequest {
 		response = client.execute(get);
 
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
-		Assert.assertEquals(200, OCCITestHelper.getURIList(response).size());
+		Assert.assertEquals(50, OCCITestHelper.getURIList(response).size());
 		Assert.assertTrue(response.getFirstHeader(OCCIHeaders.CONTENT_TYPE).getValue()
 				.startsWith(OCCIHeaders.TEXT_URI_LIST_CONTENT_TYPE));
 	}

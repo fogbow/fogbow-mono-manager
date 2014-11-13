@@ -12,15 +12,15 @@ import org.restlet.Response;
 
 public interface ComputePlugin {
 
-	public String requestInstance(String authToken,List<Category> categories, Map<String, String> xOCCIAtt);
+	public String requestInstance(Token token,List<Category> categories, Map<String, String> xOCCIAtt);
 
-	public List<Instance> getInstances(String authToken);
+	public List<Instance> getInstances(Token token);
 	
-	public Instance getInstance(String authToken, String instanceId); 
+	public Instance getInstance(Token token, String instanceId); 
 	
-	public void removeInstance(String authToken, String instanceId);
+	public void removeInstance(Token token, String instanceId);
 	
-	public void removeInstances(String authToken);
+	public void removeInstances(Token token);
 	
 	public ResourcesInfo getResourcesInfo(Token token);
 	

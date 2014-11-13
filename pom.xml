@@ -151,6 +151,11 @@
       <version>2.2.0</version>
     </dependency>
     <dependency>
+      <groupId>org.restlet.jee</groupId>
+      <artifactId>org.restlet.ext.slf4j</artifactId>
+      <version>2.2.0</version>
+    </dependency>
+    <dependency>
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>httpclient</artifactId>
       <version>4.0-alpha4</version>
@@ -191,4 +196,5 @@
 	  <version>1.0.2</version>
 	</dependency>		
   </dependencies>
+  
 </project>

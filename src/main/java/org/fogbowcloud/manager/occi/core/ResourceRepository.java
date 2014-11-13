@@ -75,7 +75,6 @@ public class ResourceRepository {
 		//public-key
 		List<String> publicKeyAttributes = new ArrayList<String>();
 		publicKeyAttributes.add(RequestAttribute.DATA_PUBLIC_KEY.getValue());
-		publicKeyAttributes.add(RequestAttribute.DATA_PUBLIC_KEY.getValue());
 		Resource fogbowPublicKey = new Resource(RequestConstants.PUBLIC_KEY_TERM,
 				RequestConstants.CREDENTIALS_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS,
 				publicKeyAttributes, new ArrayList<String>(), FOGBOWCLOUD_ENDPOINT + "/"

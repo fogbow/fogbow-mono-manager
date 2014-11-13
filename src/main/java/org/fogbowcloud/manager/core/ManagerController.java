@@ -43,7 +43,8 @@ import org.jamppa.component.PacketSender;
 import org.restlet.Response;
 
 public class ManagerController {
-
+	
+	private static final String PROP_MAX_WHOISALIVE_MANAGER_COUNT = "max_whoisalive_manager_count";
 	private static final Logger LOGGER = Logger.getLogger(ManagerController.class);
 	public static final long DEFAULT_SCHEDULER_PERIOD = 30000; // 30 seconds
 	private static final long DEFAULT_TOKEN_UPDATE_PERIOD = 300000; // 5 minutes
@@ -152,12 +153,18 @@ public class ManagerController {
 		String user = getUser(accessId);
 		LOGGER.debug("Removing all requests of user: " + user);
 		requests.removeByUser(user);
+		if (!instanceMonitoringTimer.isScheduled()) {
+			triggerInstancesMonitor();
+		}
 	}
 
 	public void removeRequest(String accessId, String requestId) {
 		LOGGER.debug("Removing requestId: " + requestId);
 		checkRequestId(accessId, requestId);
 		requests.remove(requestId);
+		if (!instanceMonitoringTimer.isScheduled()) {
+			triggerInstancesMonitor();
+		}
 	}
 
 	private void checkRequestId(String accessId, String requestId) {
@@ -196,7 +203,7 @@ public class ManagerController {
 		if (isLocal(request)) {
 			LOGGER.debug(request.getInstanceId()
 					+ " is local, getting its information in the local cloud.");
-			instance = this.computePlugin.getInstance(request.getToken().getAccessId(),
+			instance = this.computePlugin.getInstance(request.getToken(),
 					request.getInstanceId());
 
 			String sshPublicAdd = getSSHPublicAddress(request.getId());
@@ -264,7 +271,12 @@ public class ManagerController {
 
 	private void removeInstance(String accessId, String instanceId, Request request) {
 		if (isLocal(request)) {
-			this.computePlugin.removeInstance(accessId, instanceId);
+			if (accessId.equals(request.getToken().getAccessId())) {
+				this.computePlugin.removeInstance(request.getToken(), instanceId);
+			} else {
+				this.computePlugin.removeInstance(localIdentityPlugin.getToken(accessId),
+						instanceId);
+			}
 		} else {
 			removeRemoteInstance(request);
 		}
@@ -349,10 +361,9 @@ public class ManagerController {
 		}
 		LOGGER.info("Submiting request with categories: " + categories + " and xOCCIAtt: "
 				+ xOCCIAtt + " for remote member.");
-		String federationTokenAccessId = getFederationUserToken().getAccessId();
 		String instanceToken = String.valueOf(UUID.randomUUID());
 		try {
-			String command = UserdataUtils.createCommand(instanceToken, 
+			String command = UserdataUtils.createBase64Command(instanceToken, 
 					properties.getProperty(ConfigurationConstants.SSH_PRIVATE_HOST_KEY),
 					properties.getProperty(ConfigurationConstants.SSH_HOST_PORT_KEY),
 					properties.getProperty(ConfigurationConstants.SSH_HOST_HTTP_PORT_KEY));
@@ -365,7 +376,7 @@ public class ManagerController {
 		}
 		
 		try {			
-			String instanceId = computePlugin.requestInstance(federationTokenAccessId, categories,
+			String instanceId = computePlugin.requestInstance(getFederationUserToken(), categories,
 					xOCCIAtt);			
 			instanceTokens.put(instanceId, instanceToken);
 
@@ -390,9 +401,8 @@ public class ManagerController {
 
 	public Instance getInstanceForRemoteMember(String instanceId) {
 		LOGGER.info("Getting instance " + instanceId + " for remote member.");
-		String federationTokenAccessId = getFederationUserToken().getAccessId();
 		try {
-			Instance instance = computePlugin.getInstance(federationTokenAccessId, instanceId);
+			Instance instance = computePlugin.getInstance(getFederationUserToken(), instanceId);
 			
 			String sshPublicAddress = getSSHPublicAddress(instanceTokens.get(instanceId));			
 			if (sshPublicAddress != null) {
@@ -410,8 +420,7 @@ public class ManagerController {
 
 	public void removeInstanceForRemoteMember(String instanceId) {
 		LOGGER.info("Removing instance " + instanceId + " for remote member.");
-		String federationTokenAccessId = getFederationUserToken().getAccessId();
-		computePlugin.removeInstance(federationTokenAccessId, instanceId);
+		computePlugin.removeInstance(getFederationUserToken(), instanceId);
 		instanceTokens.remove(instanceId);
 	}
 
@@ -475,7 +484,7 @@ public class ManagerController {
 				try {
 					LOGGER.debug("Monitoring instance of request: " + request);
 					getInstance(request);
-				} catch (OCCIException e) {
+				} catch (Throwable e) {
 					LOGGER.debug("Error while getInstance of " + request.getInstanceId(), e);
 					instanceRemoved(requests.get(request.getId()));
 				}
@@ -483,7 +492,7 @@ public class ManagerController {
 		}
 
 		if (turnOffTimer) {
-			LOGGER.info("There are not requests.");
+			LOGGER.info("There are no requests.");
 			instanceMonitoringTimer.cancel();
 		}
 	}
@@ -529,7 +538,7 @@ public class ManagerController {
 		}
 
 		if (turnOffTimer) {
-			LOGGER.info("There are not requests.");
+			LOGGER.info("There are no requests.");
 			tokenUpdaterTimer.cancel();
 		}
 	}
@@ -565,7 +574,7 @@ public class ManagerController {
 		
 		try {			
 			try {
-				String command = UserdataUtils.createCommand(request.getId(),
+				String command = UserdataUtils.createBase64Command(request.getId(),
 						properties.getProperty(ConfigurationConstants.SSH_PRIVATE_HOST_KEY),
 						properties.getProperty(ConfigurationConstants.SSH_HOST_PORT_KEY),
 						properties.getProperty(ConfigurationConstants.SSH_HOST_HTTP_PORT_KEY));
@@ -578,7 +587,7 @@ public class ManagerController {
 				return false;
 			}	
 			
-			instanceId = computePlugin.requestInstance(request.getToken().getAccessId(),
+			instanceId = computePlugin.requestInstance(request.getToken(),
 					request.getCategories(), request.getxOCCIAtt());
 		} catch (OCCIException e) {
 			int statusCode = e.getStatus().getCode();
@@ -708,5 +717,13 @@ public class ManagerController {
 
 	public String getAuthenticationURI() {
 		return localIdentityPlugin.getAuthenticationURI();
+	}
+	
+	public Integer getMaxWhoIsAliveManagerCount() {
+		String max = properties.getProperty(PROP_MAX_WHOISALIVE_MANAGER_COUNT);
+		if (max == null) {
+			return (Integer) null;
+		}
+		return Integer.parseInt(max);
 	}
 }

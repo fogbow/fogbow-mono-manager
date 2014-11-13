@@ -30,6 +30,14 @@ public class HeaderUtils {
 		}
 	}
 	
+	public static void checkJsonContentType(Series<Header> headers) {
+		String contentType = headers.getValues(OCCIHeaders.CONTENT_TYPE);
+		if (contentType == null || !contentType.equals(OCCIHeaders.JSON_CONTENT_TYPE)) {
+			LOGGER.debug("Content-type " + contentType + " was not json.");
+			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
+		}
+	}
+	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public static String getAuthToken(Series<Header> headers, Response response, String authenticationURI) {
 		String token = headers.getValues(OCCIHeaders.X_AUTH_TOKEN);
@@ -59,7 +67,6 @@ public class HeaderUtils {
 		for (int i = 0; i < headerValues.length; i++) {
 			String[] eachHeaderValue = headerValues[i].split(",");			
 			for (int j = 0; j < eachHeaderValue.length; j++) {
-				System.out.println(eachHeaderValue[j].trim());				
 				String line = eachHeaderValue[j].trim();
 				if (!line.contains("=")){
 					LOGGER.debug("Attribute not supported or irregular expression. It will be thrown BAD REQUEST error type.");

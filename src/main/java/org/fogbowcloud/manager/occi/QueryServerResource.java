@@ -22,20 +22,20 @@ public class QueryServerResource extends ServerResource {
 	@Get
 	public String fetch() {
 		LOGGER.debug("Executing the query interface fetch method");
+		OCCIApplication application = (OCCIApplication) getApplication();
 		if (getRequest().getMethod().equals(Method.HEAD)){
 			LOGGER.debug("It is a HEAD method request");
 			HttpRequest req = (HttpRequest) getRequest();
 			String token = req.getHeaders().getValues(OCCIHeaders.X_AUTH_TOKEN);
 			LOGGER.debug("Auth Token = " + token);
 			if (token == null || token.equals("")) {
-				//FIXME keystone URI hard coded
-				HeaderUtils.setResponseHeader(getResponse(), HeaderUtils.WWW_AUTHENTICATE, "Keystone uri='http://localhost:5000/'");
+				HeaderUtils.setResponseHeader(getResponse(), HeaderUtils.WWW_AUTHENTICATE,
+						application.getAuthenticationURI());
 				getResponse().setStatus(new Status(HttpStatus.SC_UNAUTHORIZED));
 			}
 			return "";
 		} else {
 			LOGGER.debug("It is a GET method request");
-			OCCIApplication application = (OCCIApplication) getApplication();
 			HttpRequest req = (HttpRequest) getRequest();
 			String authToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse(),
 					application.getAuthenticationURI());

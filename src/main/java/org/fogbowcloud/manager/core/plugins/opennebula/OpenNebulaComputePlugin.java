@@ -50,6 +50,10 @@ import org.w3c.dom.Element;
 
 public class OpenNebulaComputePlugin implements ComputePlugin {
 
+	public static final int VALUE_DEFAULT_QUOTA_OPENNEBULA = -1;
+	public static final int VALUE_UNLIMITED_QUOTA_OPENNEBULA = -2;
+	public static final int VALUE_DEFAULT_MEM = 20480; // 20 GB
+	public static final int VALUE_DEFAULT_CPU = 100;
 	private OpenNebulaClientFactory clientFactory;
 	private String openNebulaEndpoint;
 	private Map<String, String> fogbowTermToOpenNebula; 
@@ -146,10 +150,10 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 	}
 	
 	@Override
-	public String requestInstance(String accessId, List<Category> categories,
+	public String requestInstance(Token token, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
 		
-		LOGGER.debug("Requesting instance with accessId=" + accessId + "; categories="
+		LOGGER.debug("Requesting instance with token=" + token + "; categories="
 				+ categories + "; xOCCIAtt=" + xOCCIAtt);
 		
 		Map<String, String> templateProperties = new HashMap<String, String>();
@@ -202,7 +206,7 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		templateProperties.put("userdata", userdata);
 		templateProperties.put("image-id", choosenImage);
 
-		Client oneClient = clientFactory.createClient(accessId, openNebulaEndpoint);
+		Client oneClient = clientFactory.createClient(token.getAccessId(), openNebulaEndpoint);
 		String vmTemplate = generateTemplate(templateProperties);
 
 		LOGGER.debug("The instance will be allocated according to template: " + vmTemplate);
@@ -235,8 +239,7 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 				userdataEncodingEl.appendChild(doc.createTextNode("base64"));
 				contextElement.appendChild(userdataEncodingEl);
 				Element userdataElement = doc.createElement("USERDATA");
-				userdataElement.appendChild(doc.createTextNode(Base64
-						.encodeBase64URLSafeString(userdata.getBytes(Charsets.UTF_8))));
+				userdataElement.appendChild(doc.createTextNode(userdata));
 				contextElement.appendChild(userdataElement);
 			}
 			// cpu
@@ -292,11 +295,11 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 	}
 
 	@Override
-	public List<Instance> getInstances(String accessId) {
-		LOGGER.debug("Getting instances of token: " + accessId);
+	public List<Instance> getInstances(Token token) {
+		LOGGER.debug("Getting instances of token: " + token);
 
 		List<Instance> instances = new ArrayList<Instance>();
-		Client oneClient = clientFactory.createClient(accessId, openNebulaEndpoint);
+		Client oneClient = clientFactory.createClient(token.getAccessId(), openNebulaEndpoint);
 		VirtualMachinePool vmPool = clientFactory.createVirtualMachinePool(oneClient);
 		for (VirtualMachine virtualMachine : vmPool) {
 			instances.add(mountInstance(virtualMachine));
@@ -305,10 +308,10 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 	}
 
 	@Override
-	public Instance getInstance(String accessId, String instanceId) {
-		LOGGER.debug("Getting instance " + instanceId + " of token: " + accessId);
+	public Instance getInstance(Token token, String instanceId) {
+		LOGGER.debug("Getting instance " + instanceId + " of token: " + token);
 
-		Client oneClient = clientFactory.createClient(accessId, openNebulaEndpoint);
+		Client oneClient = clientFactory.createClient(token.getAccessId(), openNebulaEndpoint);
 		VirtualMachine vm = clientFactory.createVirtualMachine(oneClient, instanceId);
 		return mountInstance(vm);
 	}
@@ -385,9 +388,9 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 	}
 
 	@Override
-	public void removeInstance(String accessId, String instanceId) {
-		LOGGER.debug("Removing instanceId " + instanceId + " with accessId " + accessId);
-		Client oneClient = clientFactory.createClient(accessId, openNebulaEndpoint);
+	public void removeInstance(Token token, String instanceId) {
+		LOGGER.debug("Removing instanceId " + instanceId + " with token " + token);
+		Client oneClient = clientFactory.createClient(token.getAccessId(), openNebulaEndpoint);
 		VirtualMachine vm = clientFactory.createVirtualMachine(oneClient, instanceId);
 		OneResponse response = vm.delete();
 		if (response.isError()) {			
@@ -396,8 +399,8 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 	}
 
 	@Override
-	public void removeInstances(String accessId) {
-		Client oneClient = clientFactory.createClient(accessId, openNebulaEndpoint);
+	public void removeInstances(Token token) {
+		Client oneClient = clientFactory.createClient(token.getAccessId(), openNebulaEndpoint);
 		VirtualMachinePool vmPool = clientFactory.createVirtualMachinePool(oneClient);
 		for (VirtualMachine virtualMachine : vmPool) {
 			OneResponse response = virtualMachine.delete();
@@ -418,25 +421,37 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		String memInUseStr = user.xpath("VM_QUOTA/VM/MEMORY_USED");
 		
 		// default values is used when quota is not specified
-		double maxCpu = 100;
+		double maxCpu = VALUE_DEFAULT_CPU;
 		double cpuInUse = 0;
-		double maxMem = 20480; //20Gb
+		double maxMem = VALUE_DEFAULT_MEM;
 		double memInUse = 0;
-		
+
 		// getting quota values
 		if (isValidDouble(maxCpuStr)) {
 			maxCpu = Integer.parseInt(maxCpuStr);
-		}		
+		}
 		if (isValidDouble(cpuInUseStr)) {
 			cpuInUse = Integer.parseInt(cpuInUseStr);
-		}		
+		}
 		if (isValidDouble(maxMemStr)) {
 			maxMem = Integer.parseInt(maxMemStr);
 		}
 		if (isValidDouble(memInUseStr)) {
 			memInUse = Integer.parseInt(memInUseStr);
 		}
-		
+
+		if (maxMem == VALUE_DEFAULT_QUOTA_OPENNEBULA) {
+			maxMem = VALUE_DEFAULT_MEM;
+		} else if (maxMem == VALUE_UNLIMITED_QUOTA_OPENNEBULA) {
+			maxMem = Integer.MAX_VALUE;
+		}
+
+		if (maxCpu == VALUE_DEFAULT_QUOTA_OPENNEBULA) {
+			maxCpu = VALUE_DEFAULT_CPU;
+		} else if (maxCpu == VALUE_UNLIMITED_QUOTA_OPENNEBULA) {
+			maxCpu = Integer.MAX_VALUE;
+		}
+
 		double cpuIdle = maxCpu - cpuInUse;
 		double memIdle = maxMem - memInUse;
 	
@@ -458,7 +473,7 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		List<Flavor> flavors = new ArrayList<Flavor>();
 		// small		
 		double memFlavor = getAttValue("mem", fogbowTermToOpenNebula.get(RequestConstants.SMALL_TERM));
-		double cpuFlavor = getAttValue("cpu", fogbowTermToOpenNebula.get(RequestConstants.SMALL_TERM));		
+		double cpuFlavor = getAttValue("cpu", fogbowTermToOpenNebula.get(RequestConstants.SMALL_TERM));
 		int capacity = (int) Math.min(cpuIdle / cpuFlavor, memIdle / memFlavor);
 		Flavor smallFlavor = new Flavor(RequestConstants.SMALL_TERM, String.valueOf(cpuFlavor),
 				String.valueOf(memFlavor), capacity);

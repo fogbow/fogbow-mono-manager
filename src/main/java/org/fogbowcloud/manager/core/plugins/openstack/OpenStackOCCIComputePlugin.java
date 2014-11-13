@@ -28,7 +28,6 @@ import org.apache.http.params.CoreProtocolPNames;
 import org.apache.http.params.HttpParams;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
-import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
@@ -49,7 +48,7 @@ import org.restlet.Request;
 import org.restlet.data.Protocol;
 import org.restlet.util.Series;
 
-public class OpenStackComputePlugin implements ComputePlugin {
+public class OpenStackOCCIComputePlugin implements ComputePlugin {
 
 	// According to OCCI specification
 	private static final String SCHEME_COMPUTE = "http://schemas.ogf.org/occi/infrastructure#";
@@ -65,11 +64,6 @@ public class OpenStackComputePlugin implements ComputePlugin {
 	public static final String COMPUTE_ENDPOINT = "/compute/";
 	private final String COMPUTE_V2_API_ENDPOINT = "/v2/";
 
-	private static final String MAX_TOTAL_CORES_ATT = "maxTotalCores";
-	private static final String TOTAL_CORES_USED_ATT = "totalCoresUsed";
-	private static final String MAX_TOTAL_RAM_SIZE_ATT = "maxTotalRAMSize";
-	private static final String TOTAL_RAM_USED_ATT = "totalRAMUsed";
-	
 	private static final String PUBLIC_KEY_TERM = "public_key";
 	private static final String PUBLIC_KEY_SCHEME = "http://schemas.openstack.org/instance/credentials#";
 	private static final String NAME_PUBLIC_KEY_ATTRIBUTE = "org.openstack.credentials.publickey.name";
@@ -85,19 +79,19 @@ public class OpenStackComputePlugin implements ComputePlugin {
 	private String networkId;
 	private String oCCIEndpoint;
 
-	private static final Logger LOGGER = Logger.getLogger(OpenStackComputePlugin.class);
+	private static final Logger LOGGER = Logger.getLogger(OpenStackOCCIComputePlugin.class);
 	
-	public OpenStackComputePlugin(Properties properties) {
-		this.oCCIEndpoint = properties.getProperty(ConfigurationConstants.COMPUTE_OCCI_URL_KEY);
+	public OpenStackOCCIComputePlugin(Properties properties) {
+		this.oCCIEndpoint = properties.getProperty(OpenStackConfigurationConstants.COMPUTE_OCCI_URL_KEY);
 		this.computeOCCIEndpoint = oCCIEndpoint + COMPUTE_ENDPOINT;
 		this.computeV2APIEndpoint = properties.getProperty("compute_openstack_v2api_url")
 				+ COMPUTE_V2_API_ENDPOINT;
 		
 		instanceScheme = properties
-				.getProperty(ConfigurationConstants.COMPUTE_OCCI_INSTANCE_SCHEME_KEY);
-		osScheme = properties.getProperty(ConfigurationConstants.COMPUTE_OCCI_OS_SCHEME_KEY);
-		resourceScheme = properties.getProperty(ConfigurationConstants.COMPUTE_OCCI_RESOURCE_SCHEME_KEY);
-		networkId = properties.getProperty(ConfigurationConstants.COMPUTE_OCCI_NETWORK_KEY);	
+				.getProperty(OpenStackConfigurationConstants.COMPUTE_OCCI_INSTANCE_SCHEME_KEY);
+		osScheme = properties.getProperty(OpenStackConfigurationConstants.COMPUTE_OCCI_OS_SCHEME_KEY);
+		resourceScheme = properties.getProperty(OpenStackConfigurationConstants.COMPUTE_OCCI_RESOURCE_SCHEME_KEY);
+		networkId = properties.getProperty(OpenStackConfigurationConstants.COMPUTE_OCCI_NETWORK_KEY);	
 
 		Map<String, String> imageProperties = getImageProperties(properties);
 		
@@ -114,15 +108,15 @@ public class OpenStackComputePlugin implements ComputePlugin {
 		
 		fogTermToOpenStackCategory.put(
 				RequestConstants.SMALL_TERM,
-				createFlavorCategory(ConfigurationConstants.COMPUTE_OCCI_FLAVOR_SMALL_KEY,
+				createFlavorCategory(OpenStackConfigurationConstants.COMPUTE_OCCI_FLAVOR_SMALL_KEY,
 						properties));
 		fogTermToOpenStackCategory.put(
 				RequestConstants.MEDIUM_TERM,
-				createFlavorCategory(ConfigurationConstants.COMPUTE_OCCI_FLAVOR_MEDIUM_KEY,
+				createFlavorCategory(OpenStackConfigurationConstants.COMPUTE_OCCI_FLAVOR_MEDIUM_KEY,
 						properties));
 		fogTermToOpenStackCategory.put(
 				RequestConstants.LARGE_TERM,
-				createFlavorCategory(ConfigurationConstants.COMPUTE_OCCI_FLAVOR_LARGE_KEY,
+				createFlavorCategory(OpenStackConfigurationConstants.COMPUTE_OCCI_FLAVOR_LARGE_KEY,
 						properties));		
 		
 		fogTermToOpenStackCategory.put(RequestConstants.PUBLIC_KEY_TERM, new Category(
@@ -137,9 +131,9 @@ public class OpenStackComputePlugin implements ComputePlugin {
 		
 		for (Object propName : properties.keySet()) {
 			String propNameStr = (String) propName;
-			if (propNameStr.startsWith(ConfigurationConstants.COMPUTE_OCCI_IMAGE_PREFIX)) {
+			if (propNameStr.startsWith(OpenStackConfigurationConstants.COMPUTE_OCCI_IMAGE_PREFIX)) {
 				imageProperties.put(propNameStr
-						.substring(ConfigurationConstants.COMPUTE_OCCI_IMAGE_PREFIX.length()),
+						.substring(OpenStackConfigurationConstants.COMPUTE_OCCI_IMAGE_PREFIX.length()),
 						properties.getProperty(propNameStr));
 			}
 		}
@@ -153,10 +147,10 @@ public class OpenStackComputePlugin implements ComputePlugin {
 	}
 
 	@Override
-	public String requestInstance(String authToken, List<Category> categories,
+	public String requestInstance(Token token, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
 		
-		LOGGER.debug("Requesting instance with accessId=" + authToken + "; categories="
+		LOGGER.debug("Requesting instance with token=" + token + "; categories="
 				+ categories + "; xOCCIAtt=" + xOCCIAtt);
 
 		List<Category> openStackCategories = new ArrayList<Category>();
@@ -183,14 +177,11 @@ public class OpenStackComputePlugin implements ComputePlugin {
 			}
 		}
 
-		String userdata = xOCCIAtt.remove(RequestAttribute.USER_DATA_ATT.getValue());
+		String userdataBase64 = xOCCIAtt.remove(RequestAttribute.USER_DATA_ATT.getValue());
 		
-		if (userdata != null) {
-			xOCCIAtt.put(
-					"org.openstack.compute.user_data",
-					new String(Base64.encodeBase64(
-							userdata.getBytes(Charsets.UTF_8), false, false),
-							Charsets.UTF_8));
+		if (userdataBase64 != null) {
+			xOCCIAtt.put("org.openstack.compute.user_data", userdataBase64);
+					
 		}
 
 		Set<Header> headers = new HashSet<Header>();
@@ -211,7 +202,7 @@ public class OpenStackComputePlugin implements ComputePlugin {
 							+ "category=\"http://schemas.ogf.org/occi/infrastructure#networkinterface\";"));
 		}
 
-		HttpResponse response = doRequest("post", computeOCCIEndpoint, authToken, headers)
+		HttpResponse response = doRequest("post", computeOCCIEndpoint, token.getAccessId(), headers)
 				.getHttpResponse();
 
 		Header locationHeader = response.getFirstHeader("Location");
@@ -229,16 +220,16 @@ public class OpenStackComputePlugin implements ComputePlugin {
 		return splitInstanceId[splitInstanceId.length - 1];
 	}
 
-	public Instance getInstance(String authToken, String instanceId) {
+	public Instance getInstance(Token token, String instanceId) {
 
-		String responseStr = doRequest("get", computeOCCIEndpoint + instanceId, authToken)
+		String responseStr = doRequest("get", computeOCCIEndpoint + instanceId, token.getAccessId())
 				.getResponseString();
 
 		return Instance.parseInstance(instanceId, responseStr);
 	}
 
-	public List<Instance> getInstances(String authToken) {
-		String responseStr = doRequest("get", computeOCCIEndpoint, authToken).getResponseString();
+	public List<Instance> getInstances(Token token) {
+		String responseStr = doRequest("get", computeOCCIEndpoint, token.getAccessId()).getResponseString();
 
 		return parseInstances(responseStr);
 	}
@@ -254,13 +245,13 @@ public class OpenStackComputePlugin implements ComputePlugin {
 		return instances;
 	}
 
-	public void removeInstances(String authToken) {
-		doRequest("delete", computeOCCIEndpoint, authToken);
+	public void removeInstances(Token token) {
+		doRequest("delete", computeOCCIEndpoint, token.getAccessId());
 	}
 
 	@Override
-	public void removeInstance(String authToken, String instanceId) {
-		doRequest("delete", computeOCCIEndpoint + instanceId, authToken);
+	public void removeInstance(Token token, String instanceId) {
+		doRequest("delete", computeOCCIEndpoint + instanceId, token.getAccessId());
 	}
 
 	@Override
@@ -271,10 +262,14 @@ public class OpenStackComputePlugin implements ComputePlugin {
 						+ token.getAttributes().get(TENANT_ID)
 		+ "/limits", token.getAccessId()).getResponseString();
 
-		String maxCpu = getAttFromJson(MAX_TOTAL_CORES_ATT, responseStr);
-		String cpuInUse = getAttFromJson(TOTAL_CORES_USED_ATT, responseStr);
-		String maxMem = getAttFromJson(MAX_TOTAL_RAM_SIZE_ATT, responseStr);
-		String memInUse = getAttFromJson(TOTAL_RAM_USED_ATT, responseStr);
+		String maxCpu = getAttFromJson(OpenStackConfigurationConstants.MAX_TOTAL_CORES_ATT,
+				responseStr);
+		String cpuInUse = getAttFromJson(OpenStackConfigurationConstants.TOTAL_CORES_USED_ATT,
+				responseStr);
+		String maxMem = getAttFromJson(OpenStackConfigurationConstants.MAX_TOTAL_RAM_SIZE_ATT,
+				responseStr);
+		String memInUse = getAttFromJson(OpenStackConfigurationConstants.TOTAL_RAM_USED_ATT,
+				responseStr);
 
 		int cpuIdle = Integer.parseInt(maxCpu) - Integer.parseInt(cpuInUse);
 		int memIdle = Integer.parseInt(maxMem) - Integer.parseInt(memInUse);

@@ -45,4 +45,9 @@ public class FederationMember {
 		FederationMember otherMember = (FederationMember) obj;
 		return getResourcesInfo().getId().equals(otherMember.getResourcesInfo().getId());
 	}
+	
+	@Override
+	public String toString() {
+		return this.resourcesInfo.getId();
+	}
 }

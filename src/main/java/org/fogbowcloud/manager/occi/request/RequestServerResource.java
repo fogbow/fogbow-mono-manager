@@ -45,14 +45,20 @@ public class RequestServerResource extends ServerResource {
 		
 		if (requestId == null) {
 			LOGGER.info("Getting all requests of token :" + accessId);
+			boolean verbose = false;
+			try {
+				verbose = Boolean.parseBoolean(getQuery().getValues("verbose"));
+			} catch (Exception e) {}
 			if (acceptContent.size() == 0
 					|| acceptContent.contains(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE)) {
 				return new StringRepresentation(generateTextPlainResponse(
-						application.getRequestsFromUser(accessId), req), MediaType.TEXT_PLAIN);
+						application.getRequestsFromUser(accessId), req, verbose),
+						MediaType.TEXT_PLAIN);
 			} else if (acceptContent.contains(OCCIHeaders.TEXT_URI_LIST_CONTENT_TYPE)) {
 				getResponse().setStatus(new Status(HttpStatus.SC_OK));
 				return new StringRepresentation(generateURIListResponse(
-						application.getRequestsFromUser(accessId), req), MediaType.TEXT_URI_LIST);
+						application.getRequestsFromUser(accessId), req, verbose),
+						MediaType.TEXT_URI_LIST);
 			} else {
 				throw new OCCIException(ErrorType.METHOD_NOT_ALLOWED,
 						ResponseConstants.METHOD_NOT_SUPPORTED);
@@ -68,7 +74,7 @@ public class RequestServerResource extends ServerResource {
 				ResponseConstants.METHOD_NOT_SUPPORTED);
 	}
 	
-	private String generateURIListResponse(List<Request> requests, HttpRequest req) {
+	private String generateURIListResponse(List<Request> requests, HttpRequest req, boolean verbose) {
 		if (requests == null || requests.isEmpty()) { 
 			return "\n";
 		}
@@ -76,15 +82,23 @@ public class RequestServerResource extends ServerResource {
 		String result = "";
 		Iterator<Request> requestIt = requests.iterator();
 		while(requestIt.hasNext()){
-			if (requestEndpoint.endsWith("/")){
-				result += requestEndpoint + requestIt.next().getId() + "\n";
-			} else {
-				result += requestEndpoint + "/" + requestIt.next().getId() + "\n";
+			Request request = requestIt.next();
+			if (!requestEndpoint.endsWith("/")){
+				requestEndpoint += requestEndpoint + "/";
+			}
+			if (verbose) {
+				result += requestEndpoint + request.getId() + "; " + "State="
+						+ request.getState() + "; " + RequestAttribute.TYPE.getValue() + "="
+						+ request.getAttValue(RequestAttribute.TYPE.getValue()) + "; "
+						+ RequestAttribute.INSTANCE_ID.getValue() + "="
+						+ request.getInstanceId() + "\n";
+			}else {			
+				result += requestEndpoint + request.getId() + "\n";
 			}
 		}
 		return result.length() > 0 ? result.trim() : "\n";
 	}
-
+	
 	private String generateTextPlainResponseOneRequest(Request request) {
 		LOGGER.debug("Generating response to request: " + request);
 		String requestOCCIFormat = "\n";
@@ -128,7 +142,7 @@ public class RequestServerResource extends ServerResource {
 	}
 
 	@Delete
-	public String remove() {
+	public String remove() {		
 		OCCIApplication application = (OCCIApplication) getApplication();
 		HttpRequest req = (HttpRequest) getRequest();
 		String accessId = HeaderUtils.getAuthToken(req.getHeaders(), getResponse(),
@@ -146,8 +160,9 @@ public class RequestServerResource extends ServerResource {
 		return ResponseConstants.OK;
 	}
 
+	@SuppressWarnings("null")
 	@Post
-	public String post() {
+	public StringRepresentation post() {
 		LOGGER.info("Posting a new request...");
 		OCCIApplication application = (OCCIApplication) getApplication();
 		HttpRequest req = (HttpRequest) getRequest();
@@ -164,7 +179,10 @@ public class RequestServerResource extends ServerResource {
 				application.getAuthenticationURI());
 		
 		List<Request> currentRequests = application.createRequests(authToken, categories, xOCCIAtt);
-		return generateTextPlainResponse(currentRequests, req);
+		if (currentRequests != null || !currentRequests.isEmpty()) {
+			setStatus(Status.SUCCESS_CREATED);
+		}
+		return new StringRepresentation(generateTextPlainResponse(currentRequests, req, false));
 	}
 	
 	public static Map<String, String> normalizeXOCCIAtt(Map<String, String> xOCCIAtt) {
@@ -213,24 +231,33 @@ public class RequestServerResource extends ServerResource {
 		throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 	}
 
-	protected String generateTextPlainResponse(List<Request> requests, HttpRequest req) {
+	protected String generateTextPlainResponse(List<Request> requests, HttpRequest req, boolean verbose) {
 		if (requests == null || requests.isEmpty()) { 
 			return NO_REQUESTS_MESSAGE;
 		}
 		String requestEndpoint = getHostRef(req) + req.getHttpCall().getRequestUri();
 		String response = "";
 		Iterator<Request> requestIt = requests.iterator();
-		while(requestIt.hasNext()){
+		while(requestIt.hasNext()){			
+			Request request = requestIt.next();
+			String prefixOCCILocation = "";
 			if (requestEndpoint.endsWith("/")){
-				response += HeaderUtils.X_OCCI_LOCATION_PREFIX + requestEndpoint + requestIt.next().getId();
-			} else {
-				response += HeaderUtils.X_OCCI_LOCATION_PREFIX + requestEndpoint + "/" + requestIt.next().getId();
+				prefixOCCILocation += HeaderUtils.X_OCCI_LOCATION_PREFIX + requestEndpoint;
+			}else {
+				prefixOCCILocation += HeaderUtils.X_OCCI_LOCATION_PREFIX + requestEndpoint + "/";
 			}
-			if (requestIt.hasNext()){
-				response += "\n";
+			if (verbose) {
+				response += prefixOCCILocation + request.getId() + "; "
+						+ RequestAttribute.STATE.getValue() + "=" + request.getState() + "; "
+						+ RequestAttribute.TYPE.getValue() + "="
+						+ request.getAttValue(RequestAttribute.TYPE.getValue()) + "; "
+						+ RequestAttribute.INSTANCE_ID.getValue() + "=" + request.getInstanceId()
+						+ "\n";
+			}else {			
+				response += prefixOCCILocation + request.getId() + "\n";
 			}
 		}
-		return response;
+		return response.length() > 0 ? response.trim() : "\n";
 	}
 
 	private String getHostRef(HttpRequest req) {
@@ -239,5 +266,5 @@ public class RequestServerResource extends ServerResource {
 		ServerCall httpCall = req.getHttpCall();
 		String hostDomain = myIp == null ? httpCall.getHostDomain() : myIp;
 		return req.getProtocol().getSchemeName() + "://" + hostDomain + ":" + httpCall.getHostPort();
-	}
+	}	
 }

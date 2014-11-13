@@ -55,7 +55,7 @@ public class TestDeleteRemoteInstance {
 
 		Mockito.doThrow(new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND))
 				.when(this.managerTestHelper.getComputePlugin())
-				.removeInstance(Mockito.anyString(), Mockito.anyString());
+				.removeInstance(Mockito.any(Token.class), Mockito.anyString());
 
 		ManagerPacketHelper.deleteRemoteInstace(request, managerTestHelper.createPacketSender());
 	}
@@ -71,7 +71,7 @@ public class TestDeleteRemoteInstance {
 
 		Mockito.doThrow(new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED))
 				.when(this.managerTestHelper.getComputePlugin())
-				.removeInstance(Mockito.eq(DefaultDataTestHelper.ACCESS_TOKEN_ID), Mockito.eq(INSTANCE_OTHER_USER));
+				.removeInstance(Mockito.any(Token.class), Mockito.eq(INSTANCE_OTHER_USER));
 
 		ManagerPacketHelper.deleteRemoteInstace(request, managerTestHelper.createPacketSender());
 	}

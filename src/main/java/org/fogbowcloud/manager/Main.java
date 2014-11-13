@@ -2,7 +2,6 @@ package org.fogbowcloud.manager;
 
 import java.io.FileInputStream;
 import java.util.Properties;
-import java.util.logging.Level;
 
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Logger;
@@ -14,12 +13,15 @@ import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.common.AllowAllAuthorizationPlugin;
-import org.fogbowcloud.manager.core.plugins.openstack.OpenStackComputePlugin;
-import org.fogbowcloud.manager.core.plugins.openstack.OpenStackIdentityPlugin;
+import org.fogbowcloud.manager.core.plugins.openstack.KeystoneIdentityPlugin;
+import org.fogbowcloud.manager.core.plugins.openstack.OpenStackOCCIComputePlugin;
 import org.fogbowcloud.manager.occi.OCCIApplication;
 import org.fogbowcloud.manager.xmpp.ManagerXmppComponent;
 import org.restlet.Component;
 import org.restlet.data.Protocol;
+import org.restlet.engine.Engine;
+import org.restlet.ext.slf4j.Slf4jLoggerFacade;
+import org.xmpp.component.ComponentException;
 
 public class Main {
 
@@ -38,7 +40,7 @@ public class Main {
 					ConfigurationConstants.COMPUTE_CLASS_KEY, properties);
 		} catch (Exception e) {
 			LOGGER.warn("Compute Plugin not especified in the properties.");
-			computePlugin = new OpenStackComputePlugin(properties);
+			return;
 		}
 
 		AuthorizationPlugin authorizationPlugin = null;
@@ -47,7 +49,7 @@ public class Main {
 					ConfigurationConstants.AUTHORIZATION_CLASS_KEY, properties);
 		} catch (Exception e) {
 			LOGGER.warn("Authorization Plugin not especified in the properties.");
-			authorizationPlugin = new AllowAllAuthorizationPlugin();
+			return;
 		}
 		
 		IdentityPlugin localIdentityPlugin = null;
@@ -56,7 +58,7 @@ public class Main {
 					ConfigurationConstants.LOCAL_PREFIX);
 		} catch (Exception e) {
 			LOGGER.warn("Local Identity Plugin not especified in the properties.");
-			localIdentityPlugin = new OpenStackIdentityPlugin(properties);
+			return;
 		}
 		IdentityPlugin federationIdentityPlugin = null;
 		try {
@@ -64,7 +66,7 @@ public class Main {
 					ConfigurationConstants.FEDERATION_PREFIX);
 		} catch (Exception e) {
 			LOGGER.warn("Federation Identity Plugin not especified in the properties.");
-			federationIdentityPlugin = new OpenStackIdentityPlugin(properties);
+			return;
 		}
 
 		FederationMemberValidator validator = new DefaultMemberValidator();
@@ -89,15 +91,22 @@ public class Main {
 				Integer.parseInt(properties.getProperty(ConfigurationConstants.XMPP_PORT_KEY)),
 				facade);
 		xmpp.setRendezvousAddress(properties.getProperty(ConfigurationConstants.RENDEZVOUS_JID_KEY));
-		xmpp.connect();
+		try {
+			xmpp.connect();			
+		} catch (ComponentException e) {
+			LOGGER.error("Conflict in the initialization of xmpp component.", e);
+			return;
+		}
 		xmpp.process(false);
 		xmpp.init();
 		facade.setPacketSender(xmpp);
 
 		OCCIApplication application = new OCCIApplication(facade);
 
+		Slf4jLoggerFacade loggerFacade = new Slf4jLoggerFacade();
+		Engine.getInstance().setLoggerFacade(loggerFacade);
+		
 		Component http = new Component();
-		http.getLogger().setLevel(Level.OFF);
 		http.getServers().add(Protocol.HTTP,
 				Integer.parseInt(properties.getProperty(ConfigurationConstants.HTTP_PORT_KEY)));
 		http.getDefaultHost().attach(application);
@@ -110,7 +119,7 @@ public class Main {
 		for (Object keyObj : properties.keySet()) {
 			String key = keyObj.toString();
 			pluginProperties.put(key, properties.get(key));
-			if (key.contains(prefix)) {
+			if (key.startsWith(prefix)) {
 				String newKey = key.replace(prefix, "");
 				pluginProperties.put(newKey, properties.get(key));
 			}
