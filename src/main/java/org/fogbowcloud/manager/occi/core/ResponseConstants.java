@@ -23,5 +23,6 @@ public class ResponseConstants {
 	public static final String INVALID_CA_DIR = "Invalid Certificate Authority directory path.";
 	public static final String INVALID_PRIVATE_KEY_PATH = "Invalid private key path.";
 	public static final String UNKNOWN_HOST = "Unknown host.";
+	public static final String ACCEPT_NOT_ACCEPTABLE = "Accept not acceptable.";
 
 }

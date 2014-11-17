@@ -5,10 +5,14 @@ import java.util.List;
 
 import org.apache.http.HttpStatus;
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.HeaderUtils;
+import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.Resource;
+import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.restlet.Response;
+import org.restlet.data.MediaType;
 import org.restlet.data.Method;
 import org.restlet.data.Status;
 import org.restlet.engine.adapter.HttpRequest;
@@ -23,9 +27,10 @@ public class QueryServerResource extends ServerResource {
 	public String fetch() {
 		LOGGER.debug("Executing the query interface fetch method");
 		OCCIApplication application = (OCCIApplication) getApplication();
+		HttpRequest req = (HttpRequest) getRequest();
+		checkValidAccept(HeaderUtils.getAccept(req.getHeaders()));
 		if (getRequest().getMethod().equals(Method.HEAD)){
 			LOGGER.debug("It is a HEAD method request");
-			HttpRequest req = (HttpRequest) getRequest();
 			String token = req.getHeaders().getValues(OCCIHeaders.X_AUTH_TOKEN);
 			LOGGER.debug("Auth Token = " + token);
 			if (token == null || token.equals("")) {
@@ -36,7 +41,7 @@ public class QueryServerResource extends ServerResource {
 			return "";
 		} else {
 			LOGGER.debug("It is a GET method request");
-			HttpRequest req = (HttpRequest) getRequest();
+			req = (HttpRequest) getRequest();
 			String authToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse(),
 					application.getAuthenticationURI());
 			LOGGER.debug("Auth Token = " + authToken);
@@ -57,6 +62,13 @@ public class QueryServerResource extends ServerResource {
 			return generateResponse(allResources, "");
 		}
 		
+	}
+
+	private void checkValidAccept(List<String> listAccept) {
+		if (listAccept.size() > 0 && !listAccept.contains(MediaType.TEXT_PLAIN.toString())) {
+			throw new OCCIException(ErrorType.NOT_ACCEPTABLE,
+					ResponseConstants.ACCEPT_NOT_ACCEPTABLE);
+		}
 	}
 
 	private String generateResponse(List<Resource> fogbowResources, String localCloudResources) {

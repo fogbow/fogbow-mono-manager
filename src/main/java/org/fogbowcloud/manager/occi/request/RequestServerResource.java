@@ -61,7 +61,7 @@ public class RequestServerResource extends ServerResource {
 						MediaType.TEXT_URI_LIST);
 			} else {
 				throw new OCCIException(ErrorType.METHOD_NOT_ALLOWED,
-						ResponseConstants.METHOD_NOT_SUPPORTED);
+						ResponseConstants.METHOD_NOT_SUPPORTED);				
 			}
 		}
 
@@ -166,7 +166,8 @@ public class RequestServerResource extends ServerResource {
 		LOGGER.info("Posting a new request...");
 		OCCIApplication application = (OCCIApplication) getApplication();
 		HttpRequest req = (HttpRequest) getRequest();
-
+		checkValidAccept(HeaderUtils.getAccept(req.getHeaders()));
+		
 		List<Category> categories = HeaderUtils.getCategories(req.getHeaders());
 		LOGGER.debug("Categories: " + categories);
 		HeaderUtils.checkCategories(categories, RequestConstants.TERM);
@@ -183,6 +184,15 @@ public class RequestServerResource extends ServerResource {
 			setStatus(Status.SUCCESS_CREATED);
 		}
 		return new StringRepresentation(generateTextPlainResponse(currentRequests, req, false));
+	}
+
+	private void checkValidAccept(List<String> listAccept) {
+		if (listAccept.size() > 0
+				&& (!listAccept.contains(MediaType.TEXT_PLAIN.toString()) && !listAccept
+						.contains(OCCIHeaders.TEXT_URI_LIST_CONTENT_TYPE))) {
+			throw new OCCIException(ErrorType.NOT_ACCEPTABLE,
+					ResponseConstants.ACCEPT_NOT_ACCEPTABLE);
+		}
 	}
 	
 	public static Map<String, String> normalizeXOCCIAtt(Map<String, String> xOCCIAtt) {

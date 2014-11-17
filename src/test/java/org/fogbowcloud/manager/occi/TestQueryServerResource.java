@@ -15,6 +15,7 @@ import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.occi.core.HeaderUtils;
+import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.Resource;
 import org.fogbowcloud.manager.occi.core.ResourceRepository;
@@ -27,6 +28,8 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import org.restlet.Request;
 import org.restlet.Response;
+import org.restlet.data.MediaType;
+import org.restlet.engine.header.HeaderConstants;
 
 public class TestQueryServerResource {
 
@@ -85,6 +88,44 @@ public class TestQueryServerResource {
 				response.getFirstHeader(HeaderUtils.WWW_AUTHENTICATE).getValue());
 	}
 
+	@Test
+	public void testGetQueryWithOutAccept() throws Exception {
+
+		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_QUERY);
+		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
+		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		HttpClient client = new DefaultHttpClient();
+		HttpResponse response = client.execute(get);
+
+		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+	}
+	
+	@Test
+	public void testGetQueryValidAccept() throws Exception {
+
+		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_QUERY);
+		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
+		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		get.addHeader(OCCIHeaders.ACCEPT, MediaType.TEXT_PLAIN.toString());
+		HttpClient client = new DefaultHttpClient();
+		HttpResponse response = client.execute(get);
+
+		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+	}
+	
+	@Test
+	public void testGetQueryInvalidAccept() throws Exception {
+
+		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_QUERY);
+		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
+		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		get.addHeader(OCCIHeaders.ACCEPT, OCCIHeaders.OCCI_ACCEPT);
+		HttpClient client = new DefaultHttpClient();
+		HttpResponse response = client.execute(get);
+
+		Assert.assertEquals(HttpStatus.SC_NOT_ACCEPTABLE, response.getStatusLine().getStatusCode());
+	}
+	
 	@Test
 	public void testGetQuery() throws Exception {
 

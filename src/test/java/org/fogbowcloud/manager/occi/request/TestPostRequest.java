@@ -28,6 +28,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.restlet.data.MediaType;
+import org.restlet.engine.header.HeaderConstants;
 
 public class TestPostRequest {
 
@@ -61,6 +63,7 @@ public class TestPostRequest {
 				RequestConstants.SCHEME, RequestConstants.KIND_CLASS);
 		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		post.addHeader(OCCIHeaders.ACCEPT, MediaType.TEXT_PLAIN.toString());
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
@@ -291,6 +294,21 @@ public class TestPostRequest {
 		Assert.assertEquals(HttpStatus.SC_CREATED, response.getStatusLine().getStatusCode());
 	}
 
+	@Test
+	public void testPostRequestInvalidAccept() throws URISyntaxException, HttpException, IOException {
+		HttpPost post = new HttpPost(OCCITestHelper.URI_FOGBOW_REQUEST);
+		Category category = new Category(RequestConstants.TERM,
+				RequestConstants.SCHEME, RequestConstants.KIND_CLASS);
+		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
+		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		post.addHeader(OCCIHeaders.ACCEPT, OCCIHeaders.OCCI_ACCEPT);
+		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
+		HttpClient client = new DefaultHttpClient();
+		HttpResponse response = client.execute(post);
+
+		Assert.assertEquals(HttpStatus.SC_NOT_ACCEPTABLE, response.getStatusLine().getStatusCode());
+	}
+	
 	@After
 	public void tearDown() throws Exception {
 		this.requestHelper.stopComponent();
