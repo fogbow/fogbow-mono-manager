@@ -45,8 +45,8 @@ public class ComputeServerResource extends ServerResource {
 				return new StringRepresentation(generateURIListResponse(
 						allInstances, req), MediaType.TEXT_URI_LIST);
 			}
-			throw new OCCIException(ErrorType.METHOD_NOT_ALLOWED,
-				ResponseConstants.METHOD_NOT_SUPPORTED);
+			throw new OCCIException(ErrorType.NOT_ACCEPTABLE,
+					ResponseConstants.ACCEPT_NOT_ACCEPTABLE);
 			
 		}
 
@@ -80,8 +80,8 @@ public class ComputeServerResource extends ServerResource {
 				throw e;
 			}
 		}
-		throw new OCCIException(ErrorType.METHOD_NOT_ALLOWED,
-				ResponseConstants.METHOD_NOT_SUPPORTED);
+		throw new OCCIException(ErrorType.NOT_ACCEPTABLE,
+				ResponseConstants.ACCEPT_NOT_ACCEPTABLE);
 	}
 	
 	private List<Instance> getInstances(OCCIApplication application, String authToken) {

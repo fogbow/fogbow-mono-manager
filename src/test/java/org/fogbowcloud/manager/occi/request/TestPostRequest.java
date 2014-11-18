@@ -301,7 +301,7 @@ public class TestPostRequest {
 				RequestConstants.SCHEME, RequestConstants.KIND_CLASS);
 		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
-		post.addHeader(OCCIHeaders.ACCEPT, OCCIHeaders.OCCI_ACCEPT);
+		post.addHeader(OCCIHeaders.ACCEPT, "invalid");
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);

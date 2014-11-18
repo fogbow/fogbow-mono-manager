@@ -179,7 +179,7 @@ public class TestGetCompute {
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(httpGet);
 
-		Assert.assertEquals(HttpStatus.SC_METHOD_NOT_ALLOWED, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HttpStatus.SC_NOT_ACCEPTABLE, response.getStatusLine().getStatusCode());
 	}
 
 	@Test
@@ -228,8 +228,8 @@ public class TestGetCompute {
 
 	@Test
 	public void testNotAllowedAcceptContent() throws Exception {
-		Mockito.doThrow(new OCCIException(ErrorType.METHOD_NOT_ALLOWED,
-						ResponseConstants.METHOD_NOT_SUPPORTED)).when(computePlugin)
+		Mockito.doThrow(new OCCIException(ErrorType.NOT_ACCEPTABLE,
+						ResponseConstants.ACCEPT_NOT_ACCEPTABLE)).when(computePlugin)
 				.bypass(Mockito.any(org.restlet.Request.class), Mockito.any(Response.class));
 		
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE);
@@ -239,7 +239,7 @@ public class TestGetCompute {
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(httpGet);
 
-		Assert.assertEquals(HttpStatus.SC_METHOD_NOT_ALLOWED, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HttpStatus.SC_NOT_ACCEPTABLE, response.getStatusLine().getStatusCode());
 	}
 	
 	@Test

@@ -60,8 +60,8 @@ public class RequestServerResource extends ServerResource {
 						application.getRequestsFromUser(accessId), req, verbose),
 						MediaType.TEXT_URI_LIST);
 			} else {
-				throw new OCCIException(ErrorType.METHOD_NOT_ALLOWED,
-						ResponseConstants.METHOD_NOT_SUPPORTED);				
+				throw new OCCIException(ErrorType.NOT_ACCEPTABLE,
+						ResponseConstants.ACCEPT_NOT_ACCEPTABLE);				
 			}
 		}
 
@@ -70,8 +70,8 @@ public class RequestServerResource extends ServerResource {
 		if (acceptContent.size() == 0 || acceptContent.contains(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE)) {
 			return new StringRepresentation(generateTextPlainResponseOneRequest(request), MediaType.TEXT_PLAIN);				
 		}
-		throw new OCCIException(ErrorType.METHOD_NOT_ALLOWED,
-				ResponseConstants.METHOD_NOT_SUPPORTED);
+		throw new OCCIException(ErrorType.NOT_ACCEPTABLE,
+				ResponseConstants.ACCEPT_NOT_ACCEPTABLE);
 	}
 	
 	private String generateURIListResponse(List<Request> requests, HttpRequest req, boolean verbose) {
@@ -188,8 +188,7 @@ public class RequestServerResource extends ServerResource {
 
 	private void checkValidAccept(List<String> listAccept) {
 		if (listAccept.size() > 0
-				&& (!listAccept.contains(MediaType.TEXT_PLAIN.toString()) && !listAccept
-						.contains(OCCIHeaders.TEXT_URI_LIST_CONTENT_TYPE))) {
+				&& !listAccept.contains(MediaType.TEXT_PLAIN.toString())) {
 			throw new OCCIException(ErrorType.NOT_ACCEPTABLE,
 					ResponseConstants.ACCEPT_NOT_ACCEPTABLE);
 		}
