@@ -73,12 +73,12 @@ public class OCCIApplication extends Application {
 					.getAttributes().get("org.restlet.http.headers");
 			if (responseHeaders != null){
 				//removing restlet default headers that will be added automatically
-				responseHeaders.removeAll(HeaderUtils.normalize(HeaderConstants.HEADER_CONTENT_LENGTH));
-				responseHeaders.removeAll(HeaderUtils.normalize(HeaderConstants.HEADER_CONTENT_TYPE));
-				responseHeaders.removeAll(HeaderUtils.normalize(HeaderConstants.HEADER_DATE));
-				responseHeaders.removeAll(HeaderUtils.normalize(HeaderConstants.HEADER_SERVER));
-				responseHeaders.removeAll(HeaderUtils.normalize(HeaderConstants.HEADER_VARY));
-				responseHeaders.removeAll(HeaderUtils.normalize(HeaderConstants.HEADER_ACCEPT_RANGES));
+				responseHeaders.removeAll(HeaderConstants.HEADER_CONTENT_LENGTH);
+				responseHeaders.removeAll(HeaderConstants.HEADER_CONTENT_TYPE);
+				responseHeaders.removeAll(HeaderConstants.HEADER_DATE);
+				responseHeaders.removeAll(HeaderConstants.HEADER_SERVER);
+				responseHeaders.removeAll(HeaderConstants.HEADER_VARY);
+				responseHeaders.removeAll(HeaderConstants.HEADER_ACCEPT_RANGES);
 				newResponse.getAttributes().put("org.restlet.http.headers", responseHeaders);
 			} 
 			response.setEntity(newResponse.getEntity());
