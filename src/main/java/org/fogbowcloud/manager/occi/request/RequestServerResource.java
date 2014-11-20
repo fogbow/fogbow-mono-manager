@@ -20,11 +20,13 @@ import org.restlet.data.MediaType;
 import org.restlet.data.Status;
 import org.restlet.engine.adapter.HttpRequest;
 import org.restlet.engine.adapter.ServerCall;
+import org.restlet.engine.header.Header;
 import org.restlet.representation.StringRepresentation;
 import org.restlet.resource.Delete;
 import org.restlet.resource.Get;
 import org.restlet.resource.Post;
 import org.restlet.resource.ServerResource;
+import org.restlet.util.Series;
 
 public class RequestServerResource extends ServerResource {
 
@@ -72,7 +74,7 @@ public class RequestServerResource extends ServerResource {
 		}
 		throw new OCCIException(ErrorType.NOT_ACCEPTABLE,
 				ResponseConstants.ACCEPT_NOT_ACCEPTABLE);
-	}
+	}	
 	
 	private String generateURIListResponse(List<Request> requests, HttpRequest req, boolean verbose) {
 		if (requests == null || requests.isEmpty()) { 
@@ -182,10 +184,40 @@ public class RequestServerResource extends ServerResource {
 		List<Request> currentRequests = application.createRequests(authToken, categories, xOCCIAtt);
 		if (currentRequests != null || !currentRequests.isEmpty()) {
 			setStatus(Status.SUCCESS_CREATED);
-		}
-		return new StringRepresentation(generateTextPlainResponse(currentRequests, req, false));
+		}		
+		setLocationHeader(currentRequests, req);
+		
+		return new StringRepresentation(ResponseConstants.OK);
 	}
 
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	private void setLocationHeader(List<Request> requests, HttpRequest req) {
+		String requestEndpoint = getHostRef(req) + req.getHttpCall().getRequestUri();
+		Series<Header> responseHeaders = (Series<Header>) getResponse().getAttributes().get(
+				"org.restlet.http.headers");
+		if (responseHeaders == null) {
+			responseHeaders = new Series(Header.class);
+			getResponse().getAttributes().put("org.restlet.http.headers", responseHeaders);
+		}
+
+		responseHeaders.add(new Header("Location",
+				generateLocationHeader(requests, requestEndpoint)));
+	}
+
+	protected String generateLocationHeader(List<Request> requests, String requestEndpoint) {
+		String response = "";
+		for (Request request : requests) {
+			String prefix = requestEndpoint;
+			if (!prefix.endsWith("/")){
+				prefix += "/";
+			}			
+			String locationHeader = prefix + request.getId();		
+			
+			response += locationHeader + ",";
+		}
+		return response.substring(0, response.length() - 1);
+	}	
+	
 	private void checkValidAccept(List<String> listAccept) {
 		if (listAccept.size() > 0
 				&& !listAccept.contains(MediaType.TEXT_PLAIN.toString())) {

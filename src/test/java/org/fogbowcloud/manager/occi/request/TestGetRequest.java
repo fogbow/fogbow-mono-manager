@@ -290,7 +290,7 @@ public class TestGetRequest {
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
 		// Get
-		HttpGet get = new HttpGet(OCCITestHelper.getRequestIds(response).get(0));
+		HttpGet get = new HttpGet(OCCITestHelper.getRequestIdsPerLocationHeader(response).get(0));
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		response = client.execute(get);
@@ -316,7 +316,7 @@ public class TestGetRequest {
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
 		// Get
-		HttpGet get = new HttpGet(OCCITestHelper.getRequestIds(response).get(0));
+		HttpGet get = new HttpGet(OCCITestHelper.getRequestIdsPerLocationHeader(response).get(0));
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		get.addHeader(OCCIHeaders.ACCEPT, "invalid-accept");
 		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
@@ -352,7 +352,7 @@ public class TestGetRequest {
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
 		// Get
-		HttpGet get = new HttpGet(OCCITestHelper.getRequestIds(response).get(0));
+		HttpGet get = new HttpGet(OCCITestHelper.getRequestIdsPerLocationHeader(response).get(0));
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		response = client.execute(get);

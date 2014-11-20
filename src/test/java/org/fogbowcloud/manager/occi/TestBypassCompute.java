@@ -204,7 +204,7 @@ public class TestBypassCompute {
 				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS).toHeader());
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
-		List<String> requestIDs = OCCITestHelper.getRequestIds(response);
+		List<String> requestIDs = OCCITestHelper.getRequestIdsPerLocationHeader(response);
 
 		Assert.assertEquals(1, requestIDs.size());
 		Assert.assertEquals(HttpStatus.SC_CREATED, response.getStatusLine().getStatusCode());
@@ -353,7 +353,7 @@ public class TestBypassCompute {
 				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS).toHeader());
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
-		List<String> requestIDs = OCCITestHelper.getRequestIds(response);
+		List<String> requestIDs = OCCITestHelper.getRequestIdsPerLocationHeader(response);
 
 		Assert.assertEquals(1, requestIDs.size());
 		Assert.assertEquals(HttpStatus.SC_CREATED, response.getStatusLine().getStatusCode());

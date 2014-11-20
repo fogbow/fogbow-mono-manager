@@ -109,7 +109,7 @@ public class TestDeleteRequest {
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
-		List<String> requestLocations = OCCITestHelper.getRequestIds(response);
+		List<String> requestLocations = OCCITestHelper.getRequestIdsPerLocationHeader(response);
 
 		Assert.assertEquals(1, requestLocations.size());
 		Assert.assertEquals(HttpStatus.SC_CREATED, response.getStatusLine().getStatusCode());
@@ -146,7 +146,7 @@ public class TestDeleteRequest {
 				+ " = " + defaultAmount);
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
-		List<String> requestLocations = OCCITestHelper.getRequestIds(response);
+		List<String> requestLocations = OCCITestHelper.getRequestIdsPerLocationHeader(response);
 
 		Assert.assertEquals(defaultAmount, requestLocations.size());
 		Assert.assertEquals(HttpStatus.SC_CREATED, response.getStatusLine().getStatusCode());
@@ -185,7 +185,7 @@ public class TestDeleteRequest {
 				+ " = " + createdMount);
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
-		List<String> requestIDs = OCCITestHelper.getRequestIds(response);
+		List<String> requestIDs = OCCITestHelper.getRequestIdsPerLocationHeader(response);
 
 		Assert.assertEquals(createdMount, requestIDs.size());
 		Assert.assertEquals(HttpStatus.SC_CREATED, response.getStatusLine().getStatusCode());

@@ -14,6 +14,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.codec.Charsets;
+import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.ParseException;
 import org.apache.http.util.EntityUtils;
@@ -163,8 +164,8 @@ public class OCCITestHelper {
 			IOException {
 		String responseStr = "";
 		try {
-			responseStr = EntityUtils.toString(response.getEntity(),
-					String.valueOf(Charsets.UTF_8));			
+			responseStr = EntityUtils
+					.toString(response.getEntity(), String.valueOf(Charsets.UTF_8));
 		} catch (Exception e) {
 			return new ArrayList<String>();
 		}
@@ -173,6 +174,28 @@ public class OCCITestHelper {
 		if (responseStr.contains(HeaderUtils.X_OCCI_LOCATION_PREFIX)) {
 			String[] tokens = responseStr.split(HeaderUtils.X_OCCI_LOCATION_PREFIX);
 
+			for (int i = 0; i < tokens.length; i++) {
+				if (!tokens[i].equals("")) {
+					requestIds.add(tokens[i].trim());
+				}
+			}
+		}
+		return requestIds;
+	}
+
+	public static List<String> getRequestIdsPerLocationHeader(HttpResponse response)
+			throws ParseException, IOException {
+		String locationHeaderValue = "";
+		Header[] allHeaders = response.getAllHeaders();
+		for (Header header : allHeaders) {
+			if (header.getName().equals("Location")) {
+				locationHeaderValue = header.getValue();
+			}
+		}
+
+		List<String> requestIds = new ArrayList<String>();
+		if (locationHeaderValue.contains(RequestConstants.TERM)) {
+			String[] tokens = locationHeaderValue.split(",");
 			for (int i = 0; i < tokens.length; i++) {
 				if (!tokens[i].equals("")) {
 					requestIds.add(tokens[i].trim());
