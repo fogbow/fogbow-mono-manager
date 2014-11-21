@@ -101,6 +101,28 @@ public class ResourceRepository {
 				new ArrayList<String>(), new ArrayList<String>(), FOGBOWCLOUD_ENDPOINT + "/os_tpl/",
 				"", "");
 		
+		Resource resource = new Resource("resource", "http://schemas.ogf.org/occi/core#",
+				RequestConstants.KIND_CLASS, new ArrayList<String>(), new ArrayList<String>(), "",
+				"Resource", "http://schemas.ogf.org/occi/core#entity");
+		
+		List<String> entityAtt = new ArrayList<String>();
+		entityAtt.add("occi.core.id");
+		entityAtt.add("occi.core.title");
+		Resource entity = new Resource("entity", "http://schemas.ogf.org/occi/core#",
+				RequestConstants.KIND_CLASS, entityAtt, new ArrayList<String>(), "",
+				"Entity", "");
+
+		List<String> linkAtt = new ArrayList<String>();
+		linkAtt.add("occi.core.source");
+		linkAtt.add(" occi.core.target");
+		Resource link = new Resource("link", "http://schemas.ogf.org/occi/core#",
+				RequestConstants.KIND_CLASS, linkAtt, new ArrayList<String>(), "", "Link",
+				"http://schemas.ogf.org/occi/core#entity");
+		
+		resources.add(resource);
+		resources.add(entity);
+		resources.add(link);
+		
 		resources.add(resourceTlp);
 		resources.add(osTlp);
 	}
