@@ -177,4 +177,67 @@ public class TestQueryServerResource {
 				response.getFirstHeader(HeaderUtils.WWW_AUTHENTICATE).getValue());
 		Assert.assertEquals("0", response.getFirstHeader("Content-length").getValue());
 	}
+	
+	@Test
+	public void testGetQueryFiltrated() throws Exception {
+
+		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_QUERY);
+		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
+		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		get.addHeader(OCCIHeaders.CATEGORY, "fogbow_small; " + 
+				"scheme=\"http://schemas.fogbowcloud.org/template/resource#\"; class=\"mixin\";");
+		HttpClient client = new DefaultHttpClient();
+		HttpResponse response = client.execute(get);
+		
+		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+	}
+
+	@Test
+	public void testGetQueryFiltratedTwoCategories() throws Exception {
+		String categorySmall = "fogbow_small; " + 
+				"scheme=\"http://schemas.fogbowcloud.org/template/resource#\"; class=\"mixin\";";
+		String categoryFogboeRequest = "fogbow_request; " + 
+				"scheme=\"http://schemas.fogbowcloud.org/request#\"; class=\"kind\";";
+
+		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_QUERY);
+		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
+		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		get.addHeader(OCCIHeaders.CATEGORY, categorySmall);
+		get.addHeader(OCCIHeaders.CATEGORY, categoryFogboeRequest);		
+		HttpClient client = new DefaultHttpClient();
+		HttpResponse response = client.execute(get);
+		
+		String responseStr = EntityUtils.toString(response.getEntity());	
+		
+		Assert.assertTrue(responseStr.contains(categorySmall));
+		Assert.assertTrue(responseStr.contains(categoryFogboeRequest));
+		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+	}	
+	
+	@Test
+	public void testGetQueryFiltratedWrongCategory() throws Exception {
+
+		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_QUERY);
+		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
+		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		get.addHeader(OCCIHeaders.CATEGORY, "wrong category");
+		HttpClient client = new DefaultHttpClient();
+		HttpResponse response = client.execute(get);
+		
+		Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusLine().getStatusCode());
+	}
+	
+	@Test
+	public void testGetQueryFiltratedWrongCategoryWithoutSemicolon() throws Exception {
+
+		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_QUERY);
+		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
+		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		get.addHeader(OCCIHeaders.CATEGORY, "fogbow_small " + 
+				"scheme=\"http://schemas.fogbowcloud.org/template/resource#\" class=\"mixin\"");
+		HttpClient client = new DefaultHttpClient();
+		HttpResponse response = client.execute(get);
+		
+		Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusLine().getStatusCode());
+	}		
 }

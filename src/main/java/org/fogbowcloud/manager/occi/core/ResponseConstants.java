@@ -24,5 +24,6 @@ public class ResponseConstants {
 	public static final String INVALID_PRIVATE_KEY_PATH = "Invalid private key path.";
 	public static final String UNKNOWN_HOST = "Unknown host.";
 	public static final String ACCEPT_NOT_ACCEPTABLE = "Accept not acceptable.";
+	public static final String CATEGORY_IS_NOT_REGISTERED = "The following category is not registered.";	
 
 }

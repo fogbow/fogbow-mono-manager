@@ -9,6 +9,9 @@ import org.fogbowcloud.manager.occi.request.RequestConstants;
 
 public class ResourceRepository {
 	
+	protected static final String OS_TPL = "os_tpl";
+	protected static final String SCHEMAS_OCCI_INFRASTRUCTURE = "http://schemas.ogf.org/occi/infrastructure#";
+	protected static final String RESOURCE_TPL = "resource_tpl";
 	private static final Logger LOGGER = Logger.getLogger(ResourceRepository.class);
 	private static final String OS_TPL_OCCI_SCHEME = "http://schemas.ogf.org/occi/infrastructure#os_tpl";
 	private static final String RESOURCE_TPL_OCCI_SCHEME = "http://schemas.ogf.org/occi/infrastructure#resource_tpl";
@@ -46,7 +49,7 @@ public class ResourceRepository {
 		computeActions.add("http://schemas.ogf.org/occi/infrastructure/compute/action#restart");
 		computeActions.add("http://schemas.ogf.org/occi/infrastructure/compute/action#suspend");
 
-		Resource compute = new Resource("compute", "http://schemas.ogf.org/occi/infrastructure#",
+		Resource compute = new Resource("compute", SCHEMAS_OCCI_INFRASTRUCTURE,
 				RequestConstants.KIND_CLASS, computeAttributes, computeActions, FOGBOWCLOUD_ENDPOINT + "/" + "compute/",
 				"Compute Resource", RESOURCE_OCCI_SCHEME);
 
@@ -89,12 +92,12 @@ public class ResourceRepository {
 		resources.add(fogbowLargeFlavor);
 		resources.add(fogbowUserdata);
 
-		Resource resourceTlp = new Resource("resource_tpl",
-				"http://schemas.ogf.org/occi/infrastructure#", RequestConstants.MIXIN_CLASS,
+		Resource resourceTlp = new Resource(RESOURCE_TPL,
+				SCHEMAS_OCCI_INFRASTRUCTURE, RequestConstants.MIXIN_CLASS,
 				new ArrayList<String>(), new ArrayList<String>(), FOGBOWCLOUD_ENDPOINT + "/resource_tpl/",
 				"", "");
-		Resource osTlp = new Resource("os_tpl",
-				"http://schemas.ogf.org/occi/infrastructure#", RequestConstants.MIXIN_CLASS,
+		Resource osTlp = new Resource(OS_TPL,
+				SCHEMAS_OCCI_INFRASTRUCTURE, RequestConstants.MIXIN_CLASS,
 				new ArrayList<String>(), new ArrayList<String>(), FOGBOWCLOUD_ENDPOINT + "/os_tpl/",
 				"", "");
 		
