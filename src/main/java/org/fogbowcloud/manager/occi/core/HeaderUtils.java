@@ -176,4 +176,13 @@ public class HeaderUtils {
 		responseHeaders.add(new Header(normalize(header), value));
 	}
 
+	public static List<String> getValueHeaderPerName(String nameHeader,Series<Header> series) {
+		List<String> listValuesHeaders = new ArrayList<String>();
+		for (Header header : series) {
+			if (header.getName().equals(HeaderUtils.normalize(nameHeader))) {
+				listValuesHeaders.add(header.getValue());
+			}
+		}
+		return listValuesHeaders;
+	}	
 }

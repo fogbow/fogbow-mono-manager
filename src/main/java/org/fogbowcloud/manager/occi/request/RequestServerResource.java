@@ -1,5 +1,6 @@
 package org.fogbowcloud.manager.occi.request;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -51,15 +52,26 @@ public class RequestServerResource extends ServerResource {
 			try {
 				verbose = Boolean.parseBoolean(getQuery().getValues("verbose"));
 			} catch (Exception e) {}
+			List<Request> requestsFromUser = application.getRequestsFromUser(accessId);
+			
+			List<String> filterCategory = HeaderUtils.getValueHeaderPerName(OCCIHeaders.CATEGORY,
+					req.getHeaders());
+			List<String> filterAttribute = HeaderUtils.getValueHeaderPerName(
+					OCCIHeaders.X_OCCI_ATTRIBUTE, req.getHeaders());
+			
+			if (filterCategory.size() != 0 || filterAttribute.size() != 0) {
+				requestsFromUser = filterRequests(requestsFromUser, filterCategory, filterAttribute);
+			}
+			
 			if (acceptContent.size() == 0
 					|| acceptContent.contains(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE)) {
 				return new StringRepresentation(generateTextPlainResponse(
-						application.getRequestsFromUser(accessId), req, verbose),
+						requestsFromUser, req, verbose),
 						MediaType.TEXT_PLAIN);
 			} else if (acceptContent.contains(OCCIHeaders.TEXT_URI_LIST_CONTENT_TYPE)) {
 				getResponse().setStatus(new Status(HttpStatus.SC_OK));
 				return new StringRepresentation(generateURIListResponse(
-						application.getRequestsFromUser(accessId), req, verbose),
+						requestsFromUser, req, verbose),
 						MediaType.TEXT_URI_LIST);
 			} else {
 				throw new OCCIException(ErrorType.NOT_ACCEPTABLE,
@@ -74,7 +86,33 @@ public class RequestServerResource extends ServerResource {
 		}
 		throw new OCCIException(ErrorType.NOT_ACCEPTABLE,
 				ResponseConstants.ACCEPT_NOT_ACCEPTABLE);
-	}	
+	}
+
+	private List<Request> filterRequests(List<Request> requestsFromUser, List<String> filterCategory,
+			List<String> filterAttribute) {
+		List<Request> requestsFiltrated = new ArrayList<Request>();
+		for (Request request : requestsFromUser) {
+			if (filterCategory.size() != 0) {
+				for (String valueCategoryFilter : filterCategory) {
+					for (Category category : request.getCategories()) {
+						if (valueCategoryFilter.contains(category.getTerm())) {
+							requestsFiltrated.add(request);
+						}
+					}
+				}				
+			}
+			if(filterAttribute.size() != 0) {
+				for (String valueAttributeFilter : filterAttribute) {
+					for (String attribute : request.getxOCCIAtt().values()) {	
+						if (valueAttributeFilter.contains(attribute.trim())) {
+							requestsFiltrated.add(request);
+						}
+					}				
+				}	
+			}
+		}
+		return requestsFiltrated;
+	}
 	
 	private String generateURIListResponse(List<Request> requests, HttpRequest req, boolean verbose) {
 		if (requests == null || requests.isEmpty()) { 

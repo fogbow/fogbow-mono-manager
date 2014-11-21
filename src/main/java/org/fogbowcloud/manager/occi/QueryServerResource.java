@@ -51,7 +51,8 @@ public class QueryServerResource extends ServerResource {
 			List<Resource> allResources = application.getAllResources(authToken);
 			LOGGER.debug("Fogbow resources = " + allResources);
 									
-			List<String> filterCategory = getCategoryFiltersStr(req.getHeaders());
+			List<String> filterCategory = HeaderUtils.getValueHeaderPerName(OCCIHeaders.CATEGORY,
+					req.getHeaders());
 			Response response = new Response(getRequest());
 			application.bypass(getRequest(), response);			
 			if (response.getStatus().getCode() == HttpStatus.SC_OK){
@@ -66,16 +67,6 @@ public class QueryServerResource extends ServerResource {
 
 			return generateResponse(allResources, "", filterCategory);
 		}		
-	}
-
-	public List<String> getCategoryFiltersStr(Series<Header> series) {
-		List<String> listCategory = new ArrayList<String>();
-		for (Header header : series) {
-			if (header.getName().equals("Category")) {
-				listCategory.add(header.getValue());
-			}
-		}
-		return listCategory;
 	}
 	
 	private void checkValidAccept(List<String> listAccept) {
