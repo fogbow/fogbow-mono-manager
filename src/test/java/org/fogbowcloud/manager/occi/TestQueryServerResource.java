@@ -2,6 +2,7 @@ package org.fogbowcloud.manager.occi;
 
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 
 import org.apache.commons.codec.Charsets;
 import org.apache.http.HttpResponse;
@@ -15,7 +16,6 @@ import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.occi.core.HeaderUtils;
-import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.Resource;
 import org.fogbowcloud.manager.occi.core.ResourceRepository;
@@ -29,7 +29,6 @@ import org.mockito.Mockito;
 import org.restlet.Request;
 import org.restlet.Response;
 import org.restlet.data.MediaType;
-import org.restlet.engine.header.HeaderConstants;
 
 public class TestQueryServerResource {
 
@@ -207,10 +206,37 @@ public class TestQueryServerResource {
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(get);
 		
-		String responseStr = EntityUtils.toString(response.getEntity());	
+		String responseStr = EntityUtils.toString(response.getEntity());			
 		
 		Assert.assertTrue(responseStr.contains(categorySmall));
 		Assert.assertTrue(responseStr.contains(categoryFogboeRequest));
+		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+	}
+	
+	@Test
+	public void testGetQueryFiltratedRelatedToCategory() throws Exception {
+
+		String termCategory = "resource_tpl";
+		String schemeCategory = "http://schemas.ogf.org/occi/infrastructure#";
+		
+		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_QUERY);
+		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
+		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		get.addHeader(OCCIHeaders.CATEGORY, "Category: " + termCategory + "; " + 
+				" scheme=\"" + schemeCategory  + "\"; class=\"mixin\";");
+		HttpClient client = new DefaultHttpClient();
+		HttpResponse response = client.execute(get);
+		
+		String responseStr = EntityUtils.toString(response.getEntity());
+		
+		String relReference = schemeCategory + termCategory;
+		List<Resource> allResources = ResourceRepository.getInstance().getAll();
+		for (Resource resource : allResources) {
+			if (resource.getRel().equals(relReference)) {
+				Assert.assertTrue(responseStr.contains(resource.toHeader()));
+			}
+		}
+		
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}	
 	

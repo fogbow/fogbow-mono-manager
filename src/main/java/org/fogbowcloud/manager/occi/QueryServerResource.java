@@ -5,7 +5,6 @@ import java.util.List;
 
 import org.apache.http.HttpStatus;
 import org.apache.log4j.Logger;
-import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.HeaderUtils;
 import org.fogbowcloud.manager.occi.core.OCCIException;
@@ -17,10 +16,8 @@ import org.restlet.data.MediaType;
 import org.restlet.data.Method;
 import org.restlet.data.Status;
 import org.restlet.engine.adapter.HttpRequest;
-import org.restlet.engine.header.Header;
 import org.restlet.resource.Get;
 import org.restlet.resource.ServerResource;
-import org.restlet.util.Series;
 
 public class QueryServerResource extends ServerResource {
 
@@ -108,15 +105,21 @@ public class QueryServerResource extends ServerResource {
 	private String filterQuery(List<String> filterCategories, String response) {
 		String[] allResources = response.split("\n");
 		String newResponse = "";
-		for (String category : filterCategories) {
+		for (String filterCategory : filterCategories) {
 			boolean notFoundCategory = true;
 			for (String resource : allResources) {
-				String[] featuresCategory = category.split(";");
+				String[] featuresFilterCategory = filterCategory.split(";");
 				String resourceTerm = resource.split(";")[0];
-				if (featuresCategory.length != 0 && resourceTerm.contains(featuresCategory[0])) {
+				if (featuresFilterCategory.length != 0
+						&& resourceTerm.contains(featuresFilterCategory[0])) {
 					notFoundCategory = false;
-					checkSintaxCategory(resource, featuresCategory);
+					checkSchemeAndClass(resource, featuresFilterCategory);
 					newResponse += resource + "\n";
+				} else {
+					String referenceFilterCategory = normalizeRelFilterCategory(featuresFilterCategory);
+					if (resource.contains(referenceFilterCategory)) {
+						newResponse += resource + "\n";
+					}
 				}
 			}
 			if (notFoundCategory == true) {
@@ -127,11 +130,29 @@ public class QueryServerResource extends ServerResource {
 		return newResponse;
 	}
 
-	private void checkSintaxCategory(String resource, String[] featuresCategory) {
+	private String normalizeRelFilterCategory(String[] featuresFilterCategory) {
+		try {			
+			String[] partsOfTerm = featuresFilterCategory[0].trim().split(":");
+			String scheme = featuresFilterCategory[1].trim().split("=")[1].replace("\"", "");
+			String term;
+			if (partsOfTerm.length > 1) {
+				term = partsOfTerm[1].trim();
+			} else {
+				term = partsOfTerm[0].trim();
+			}
+			return (scheme + term).trim();		
+		} catch (Exception e) {
+			throw new OCCIException(ErrorType.BAD_REQUEST,
+					ResponseConstants.CATEGORY_IS_NOT_REGISTERED);
+		}
+	}
+
+	private void checkSchemeAndClass(String resource, String[] featuresCategory) {
 		for (String feature : featuresCategory) {
+			feature = feature.trim();
 			if ((feature.contains(OCCIHeaders.SCHEME_CATEGORY) && !resource
 					.contains(feature))
-					&& ((feature.contains(OCCIHeaders.CLASS_CATEGORY) && !resource
+					|| ((feature.contains(OCCIHeaders.CLASS_CATEGORY) && !resource
 							.contains(feature)))) {
 				throw new OCCIException(ErrorType.BAD_REQUEST,
 						ResponseConstants.CATEGORY_IS_NOT_REGISTERED);
