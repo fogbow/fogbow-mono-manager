@@ -123,6 +123,10 @@ public class OCCIApplication extends Application {
 	public List<Instance> getInstances(String authToken) {
 		return managerFacade.getInstances(authToken);
 	}
+	
+	public List<Instance> getFullInstances(String authToken) {
+		return managerFacade.getFullInstances(authToken);
+	}
 
 	public Instance getInstance(String authToken, String instanceId) {
 		return managerFacade.getInstance(authToken, instanceId);
@@ -151,4 +155,5 @@ public class OCCIApplication extends Application {
 	public Properties getProperties() {
 		return managerFacade.getProperties();
 	}
+
 }

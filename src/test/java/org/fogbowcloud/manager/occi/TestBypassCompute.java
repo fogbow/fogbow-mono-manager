@@ -473,7 +473,6 @@ public class TestBypassCompute {
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 	
-	@Ignore
 	@Test
 	public void testBypassQueryInterface() throws URISyntaxException, HttpException, IOException {
 		// getting query interface
@@ -485,10 +484,10 @@ public class TestBypassCompute {
 
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 		String resourcesStr = EntityUtils.toString(response.getEntity());
-		List<Resource> availableResources = getResourcesFromStr(resourcesStr);
+		List<Resource> availableResources = getResourcesFromStr(resourcesStr);		
 		
 		List<Resource> fogResources = ResourceRepository.getInstance().getAll();
-		List<Resource> compResources = OCCIComputeApplication.getResources();
+		List<Resource> compResources = OCCIComputeApplication.getResources();	
 		
 		for (Resource resource : availableResources) {
 			Assert.assertTrue(fogResources.contains(resource) || compResources.contains(resource));

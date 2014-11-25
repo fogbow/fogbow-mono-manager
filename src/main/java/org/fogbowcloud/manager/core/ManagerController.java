@@ -726,4 +726,30 @@ public class ManagerController {
 		}
 		return Integer.parseInt(max);
 	}
+
+	public List<Instance> getFullInstances(String authToken) {		
+		List<Request> requestsFromUser = getRequestsFromUser(authToken);
+		List<Instance> allFullInstances = new ArrayList<Instance>();
+		LOGGER.debug("Getting all instances and your information.");
+		for (Request request : requestsFromUser) {
+			Instance instance = null;
+			if (isLocal(request)) {
+				LOGGER.debug(request.getInstanceId()
+						+ " is local, getting its information in the local cloud.");
+				instance = this.computePlugin.getInstance(request.getToken(),
+						request.getInstanceId());
+
+				String sshPublicAdd = getSSHPublicAddress(request.getId());
+				if (sshPublicAdd != null) {
+					instance.addAttribute(Instance.SSH_PUBLIC_ADDRESS_ATT, sshPublicAdd);
+				}
+			} else {
+				LOGGER.debug(request.getInstanceId() + " is remote, going out to "
+						+ request.getMemberId() + " to get its information.");
+				instance = getRemoteInstance(request);
+			}
+			allFullInstances.add(instance);
+		}
+		return allFullInstances;
+	}
 }

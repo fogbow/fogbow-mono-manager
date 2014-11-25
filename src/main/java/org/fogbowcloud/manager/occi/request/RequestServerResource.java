@@ -91,16 +91,18 @@ public class RequestServerResource extends ServerResource {
 	private List<Request> filterRequests(List<Request> requestsFromUser, List<String> filterCategory,
 			List<String> filterAttribute) {
 		List<Request> requestsFiltrated = new ArrayList<Request>();
-		for (Request request : requestsFromUser) {
+		boolean thereIsntCategory = true;
+		for (Request request : requestsFromUser) {	
 			if (filterCategory.size() != 0) {
 				for (String valueCategoryFilter : filterCategory) {
 					for (Category category : request.getCategories()) {
 						if (valueCategoryFilter.contains(category.getTerm())) {
 							requestsFiltrated.add(request);
+							thereIsntCategory = false;
 						}
 					}
 				}				
-			}
+			}			
 			if(filterAttribute.size() != 0) {
 				for (String valueAttributeFilter : filterAttribute) {
 					for (String attribute : request.getxOCCIAtt().values()) {	
@@ -110,7 +112,11 @@ public class RequestServerResource extends ServerResource {
 					}				
 				}	
 			}
-		}
+		}		
+		if (filterCategory.size() != 0 &&thereIsntCategory) {
+			throw new OCCIException(ErrorType.BAD_REQUEST,
+					ResponseConstants.CATEGORY_IS_NOT_REGISTERED);
+		}	
 		return requestsFiltrated;
 	}
 	

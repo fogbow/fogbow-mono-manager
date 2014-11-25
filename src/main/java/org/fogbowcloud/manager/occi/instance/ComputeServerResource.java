@@ -3,15 +3,19 @@ package org.fogbowcloud.manager.occi.instance;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.http.HttpStatus;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.occi.OCCIApplication;
+import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.HeaderUtils;
 import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
+import org.fogbowcloud.manager.occi.core.Resource;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
+import org.fogbowcloud.manager.occi.request.Request;
 import org.restlet.Response;
 import org.restlet.data.MediaType;
 import org.restlet.engine.adapter.HttpRequest;
@@ -29,13 +33,26 @@ public class ComputeServerResource extends ServerResource {
 	public StringRepresentation fetch() {
 		OCCIApplication application = (OCCIApplication) getApplication();
 		HttpRequest req = (HttpRequest) getRequest();
-		String authToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse(), application.getAuthenticationURI());
+		String authToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse(),
+				application.getAuthenticationURI());
 		String instanceId = (String) getRequestAttributes().get("instanceId");
 		List<String> acceptContent = HeaderUtils.getAccept(req.getHeaders());
 		
 		if (instanceId == null) {
 			LOGGER.info("Getting all instances of token :" + authToken);
-			List<Instance> allInstances = getInstances(application, authToken);
+			
+			List<String> filterCategory = HeaderUtils.getValueHeaderPerName(OCCIHeaders.CATEGORY,
+					req.getHeaders());
+			List<String> filterAttribute = HeaderUtils.getValueHeaderPerName(
+					OCCIHeaders.X_OCCI_ATTRIBUTE, req.getHeaders());
+			
+			List<Instance> allInstances = new ArrayList<Instance>();
+			if (filterCategory.size() != 0 || filterAttribute.size() != 0) {
+				allInstances = filterInstances(getInstancesFiltrated(application, authToken),
+						filterCategory, filterAttribute);
+			} else {
+				allInstances = getInstances(application, authToken);			
+			}
 			
 			if (acceptContent.size() == 0
 					|| acceptContent.contains(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE)) {
@@ -84,6 +101,52 @@ public class ComputeServerResource extends ServerResource {
 				ResponseConstants.ACCEPT_NOT_ACCEPTABLE);
 	}
 	
+	private List<Instance> filterInstances(List<Instance> allInstances,
+			List<String> filterCategory, List<String> filterAttribute) {
+		List<Instance> instancesFiltrated = new ArrayList<Instance>();
+		boolean thereIsntCategory = true;
+		for (Instance instance: allInstances) {
+			if (filterCategory.size() != 0) {
+				for (String valueCategoryFilter : filterCategory) {
+					for (Resource resource : instance.getResources()) {
+						if (valueCategoryFilter.contains(resource.getCategory().getTerm())
+								&& valueCategoryFilter.contains(resource.getCategory().getScheme())) {
+							instancesFiltrated.add(instance);
+							thereIsntCategory = false;
+						}
+					}
+				}
+			}
+			if (filterAttribute.size() != 0) {
+				for (String valueAttributeFilter : filterAttribute) {
+					Map<String, String> mapAttributes = instance.getAttributes();
+					for (String keyAttribute : mapAttributes.keySet()) {
+						if (valueAttributeFilter.contains(keyAttribute)
+								&& valueAttributeFilter
+										.endsWith(normalizeValueAttributeFilter(mapAttributes.
+										get(keyAttribute).trim()))) {
+							instancesFiltrated.add(instance);
+						}
+					}
+				}
+			}
+		}
+		if (filterCategory.size() != 0 && thereIsntCategory) {
+			throw new OCCIException(ErrorType.BAD_REQUEST,
+					ResponseConstants.CATEGORY_IS_NOT_REGISTERED);
+		}
+		return instancesFiltrated;
+	}
+
+	private String normalizeValueAttributeFilter(String value) {
+		return "\"" + value + "\"";
+	}
+
+	private List<Instance> getInstancesFiltrated(OCCIApplication application, String authToken) {
+		List<Instance> allInstances = application.getFullInstances(authToken);		
+		return allInstances;
+	}
+
 	private List<Instance> getInstances(OCCIApplication application, String authToken) {
 		List<Instance> allInstances = application.getInstances(authToken);
 

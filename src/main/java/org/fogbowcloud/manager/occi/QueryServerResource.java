@@ -16,8 +16,10 @@ import org.restlet.data.MediaType;
 import org.restlet.data.Method;
 import org.restlet.data.Status;
 import org.restlet.engine.adapter.HttpRequest;
+import org.restlet.engine.header.Header;
 import org.restlet.resource.Get;
 import org.restlet.resource.ServerResource;
+import org.restlet.util.Series;
 
 public class QueryServerResource extends ServerResource {
 
@@ -28,10 +30,11 @@ public class QueryServerResource extends ServerResource {
 		LOGGER.debug("Executing the query interface fetch method");
 		OCCIApplication application = (OCCIApplication) getApplication();
 		HttpRequest req = (HttpRequest) getRequest();
-		checkValidAccept(HeaderUtils.getAccept(req.getHeaders()));
+		Series<Header> headers = req.getHeaders();
+		checkValidAccept(HeaderUtils.getAccept(headers));
 		if (getRequest().getMethod().equals(Method.HEAD)){
 			LOGGER.debug("It is a HEAD method request");
-			String token = req.getHeaders().getValues(OCCIHeaders.X_AUTH_TOKEN);
+			String token = headers.getValues(OCCIHeaders.X_AUTH_TOKEN);
 			LOGGER.debug("Auth Token = " + token);
 			if (token == null || token.equals("")) {
 				HeaderUtils.setResponseHeader(getResponse(), HeaderUtils.WWW_AUTHENTICATE,
@@ -42,16 +45,19 @@ public class QueryServerResource extends ServerResource {
 		} else {
 			LOGGER.debug("It is a GET method request");
 			req = (HttpRequest) getRequest();
-			String authToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse(),
+			String authToken = HeaderUtils.getAuthToken(headers, getResponse(),
 					application.getAuthenticationURI());
 			LOGGER.debug("Auth Token = " + authToken);
 			List<Resource> allResources = application.getAllResources(authToken);
 			LOGGER.debug("Fogbow resources = " + allResources);
 									
 			List<String> filterCategory = HeaderUtils.getValueHeaderPerName(OCCIHeaders.CATEGORY,
-					req.getHeaders());
+					headers);
+			headers.removeAll(OCCIHeaders.CATEGORY);
+			
 			Response response = new Response(getRequest());
-			application.bypass(getRequest(), response);			
+			application.bypass(getRequest(), response);
+			
 			if (response.getStatus().getCode() == HttpStatus.SC_OK){
 				try {
 					String localCloudResources = response.getEntity().getText();
@@ -93,39 +99,48 @@ public class QueryServerResource extends ServerResource {
 			if (!alreadyExists) {
 				response += "Category: " + localResource.toHeader() + "\n";
 			}
-		}		
-		
+		}
+				
 		if (filterCategories != null && filterCategories.size() != 0) {
-			response = filterQuery(filterCategories, response);
+			response = filterQuery(filterCategories, response, true);				
 		}
 		
 		return "\n" + response.trim();
 	}
 
-	private String filterQuery(List<String> filterCategories, String response) {
-		String[] allResources = response.split("\n");
+	private String filterQuery(List<String> filterCategories, String response,
+			boolean addResourceFiltrated) {
+		String[] allResourcesStr = response.split("\n");
 		String newResponse = "";
+		List<String> listFindCategoryRelatedTo = new ArrayList<String>();
 		for (String filterCategory : filterCategories) {
-			boolean notFoundCategory = true;
-			for (String resource : allResources) {
+			for (String resourceStr : allResourcesStr) {
 				String[] featuresFilterCategory = filterCategory.split(";");
-				String resourceTerm = resource.split(";")[0];
+				String resourceTerm = resourceStr.split(";")[0];
 				if (featuresFilterCategory.length != 0
-						&& resourceTerm.contains(featuresFilterCategory[0])) {
-					notFoundCategory = false;
-					checkSchemeAndClass(resource, featuresFilterCategory);
-					newResponse += resource + "\n";
+						&& resourceTerm.endsWith(featuresFilterCategory[0]) && addResourceFiltrated) {
+					checkSchemeAndClass(resourceStr, featuresFilterCategory);
+					newResponse += resourceStr + "\n";
 				} else {
 					String referenceFilterCategory = normalizeRelFilterCategory(featuresFilterCategory);
-					if (resource.contains(referenceFilterCategory)) {
-						newResponse += resource + "\n";
+					String[] featuresResource = resourceStr.split(";");
+					for (String feature : featuresResource) {
+						if (feature.contains("rel=") && feature.contains(referenceFilterCategory)) {
+							newResponse += resourceStr + "\n";
+							listFindCategoryRelatedTo.add(resourceStr);
+						}
 					}
 				}
 			}
-			if (notFoundCategory == true) {
-				throw new OCCIException(ErrorType.BAD_REQUEST,
-						ResponseConstants.CATEGORY_IS_NOT_REGISTERED);
+		}
+		try {
+			if (listFindCategoryRelatedTo.size() != 0) {
+				newResponse += filterQuery(listFindCategoryRelatedTo, response, false);
 			}
+		} catch (Exception e) {}
+		if (newResponse.isEmpty()) {
+			throw new OCCIException(ErrorType.BAD_REQUEST,
+					ResponseConstants.CATEGORY_IS_NOT_REGISTERED);
 		}
 		return newResponse;
 	}
@@ -154,6 +169,12 @@ public class QueryServerResource extends ServerResource {
 					.contains(feature))
 					|| ((feature.contains(OCCIHeaders.CLASS_CATEGORY) && !resource
 							.contains(feature)))) {
+				System.out.println(resource);
+				System.out.println(feature);
+				System.out.println((feature.contains(OCCIHeaders.SCHEME_CATEGORY)));
+				System.out.println(resource.contains(feature));
+				System.out.println((feature.contains(OCCIHeaders.CLASS_CATEGORY)));
+				System.out.println(resource.contains(feature));
 				throw new OCCIException(ErrorType.BAD_REQUEST,
 						ResponseConstants.CATEGORY_IS_NOT_REGISTERED);
 			}

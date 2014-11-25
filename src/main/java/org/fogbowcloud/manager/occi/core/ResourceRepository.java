@@ -114,7 +114,7 @@ public class ResourceRepository {
 
 		List<String> linkAtt = new ArrayList<String>();
 		linkAtt.add("occi.core.source");
-		linkAtt.add(" occi.core.target");
+		linkAtt.add("occi.core.target");
 		Resource link = new Resource("link", "http://schemas.ogf.org/occi/core#",
 				RequestConstants.KIND_CLASS, linkAtt, new ArrayList<String>(), "", "Link",
 				"http://schemas.ogf.org/occi/core#entity");

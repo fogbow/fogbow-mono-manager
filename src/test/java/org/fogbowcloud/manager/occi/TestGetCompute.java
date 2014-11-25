@@ -17,6 +17,7 @@ import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
+import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.HeaderUtils;
 import org.fogbowcloud.manager.occi.core.OCCIException;
@@ -109,6 +110,135 @@ public class TestGetCompute {
 		Assert.assertEquals(3, OCCITestHelper.getRequestIds(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
+	
+	@Test
+	public void testGetComputeFiltratedWithAttributes() throws Exception {
+		Mockito.doNothing().when(computePlugin)
+				.bypass(Mockito.any(org.restlet.Request.class), Mockito.any(Response.class));
+		List<Resource> resources = new ArrayList<Resource>();
+		Map<String, String> attributesOne = new HashMap<String, String>();
+		attributesOne.put("occi.compute.cores", "1");
+		Map<String, String> attributesTwo = new HashMap<String, String>();
+		attributesTwo.put("occi.compute.cores", "2");
+		Instance instanceOne = new Instance("One", resources, attributesOne,
+				new ArrayList<Instance.Link>());
+		Instance instanceTwo = new Instance("Two", resources, attributesTwo,
+				new ArrayList<Instance.Link>());
+		Instance instanceThree = new Instance("Three", resources, attributesTwo,
+				new ArrayList<Instance.Link>());
+		Mockito.when(computePlugin.getInstance(Mockito.any(Token.class), Mockito.anyString()))
+				.thenReturn(instanceOne, instanceTwo, instanceThree);		
+		
+		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE);
+		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
+		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);		
+		httpGet.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, "occi.compute.cores=\"2\"");
+		HttpClient client = new DefaultHttpClient();
+		HttpResponse response = client.execute(httpGet);
+
+		Assert.assertEquals(2, OCCITestHelper.getRequestIds(response).size());
+		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+	}	
+	
+	@Test
+	public void testGetComputeFiltratedWithNotFoundAttributes() throws Exception {
+		Mockito.doNothing().when(computePlugin)
+				.bypass(Mockito.any(org.restlet.Request.class), Mockito.any(Response.class));
+		List<Resource> resources = new ArrayList<Resource>();
+		Map<String, String> attributesOne = new HashMap<String, String>();
+		attributesOne.put("occi.compute.cores", "1");
+		Map<String, String> attributesTwo = new HashMap<String, String>();
+		attributesTwo.put("occi.compute.cores", "2");
+		Instance instanceOne = new Instance("One", resources, attributesOne,
+				new ArrayList<Instance.Link>());
+		Instance instanceTwo = new Instance("Two", resources, attributesTwo,
+				new ArrayList<Instance.Link>());
+		Instance instanceThree = new Instance("Three", resources, attributesTwo,
+				new ArrayList<Instance.Link>());
+		Mockito.when(computePlugin.getInstance(Mockito.any(Token.class), Mockito.anyString()))
+				.thenReturn(instanceOne, instanceTwo, instanceThree);		
+		
+		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE);
+		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
+		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);		
+		httpGet.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, "occi.compute.cores=\"2000000\"");
+		HttpClient client = new DefaultHttpClient();
+		HttpResponse response = client.execute(httpGet);
+
+		Assert.assertEquals(0, OCCITestHelper.getRequestIds(response).size());
+		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+	}		
+
+	@Test
+	public void testGetComputeFiltratedWithCategory() throws Exception {
+		Mockito.doNothing().when(computePlugin)
+				.bypass(Mockito.any(org.restlet.Request.class), Mockito.any(Response.class));
+		List<Resource> resources = new ArrayList<Resource>();
+		Category category = new Category("m1-small",
+				"http://schemas.openstack.org/template/resource#", "mixin");
+		resources.add(new Resource(category, new ArrayList<String>(), new ArrayList<String>(), "",
+				"", ""));
+		List<Resource> resourcesTwo = new ArrayList<Resource>();
+		Category categoryTwo = new Category("termwrong", "schemwrong", "classwrong");
+		resourcesTwo.add(new Resource(categoryTwo, new ArrayList<String>(), new ArrayList<String>(), "",
+				"", ""));
+		Map<String, String> attributesOne = new HashMap<String, String>();
+		Instance instanceOne = new Instance("One", resourcesTwo, attributesOne,
+				new ArrayList<Instance.Link>());
+		Instance instanceTwo = new Instance("Two", resources, attributesOne,
+				new ArrayList<Instance.Link>());
+		Instance instanceThree = new Instance("Three", resources, attributesOne,
+				new ArrayList<Instance.Link>());		
+		Mockito.when(computePlugin.getInstance(Mockito.any(Token.class), Mockito.anyString()))
+				.thenReturn(instanceOne, instanceTwo, instanceThree);		
+		
+		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE);
+		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
+		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);		
+		httpGet.addHeader(OCCIHeaders.CATEGORY,
+				"m1-small; scheme=\"http://schemas.openstack.org/template/resource#\"; class=\"mixin\"");
+		
+		HttpClient client = new DefaultHttpClient();
+		HttpResponse response = client.execute(httpGet);
+
+		Assert.assertEquals(2, OCCITestHelper.getRequestIds(response).size());
+		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+	}	
+	
+	@Test
+	public void testGetComputeFiltratedWithWrongCategory() throws Exception {
+		Mockito.doNothing().when(computePlugin)
+				.bypass(Mockito.any(org.restlet.Request.class), Mockito.any(Response.class));
+		List<Resource> resources = new ArrayList<Resource>();
+		Category category = new Category("m1-small",
+				"http://schemas.openstack.org/template/resource#", "mixin");
+		resources.add(new Resource(category, new ArrayList<String>(), new ArrayList<String>(), "",
+				"", ""));
+		List<Resource> resourcesTwo = new ArrayList<Resource>();
+		Category categoryTwo = new Category("termwrong", "schemwrong", "classwrong");
+		resourcesTwo.add(new Resource(categoryTwo, new ArrayList<String>(), new ArrayList<String>(), "",
+				"", ""));
+		Map<String, String> attributesOne = new HashMap<String, String>();
+		Instance instanceOne = new Instance("One", resourcesTwo, attributesOne,
+				new ArrayList<Instance.Link>());
+		Instance instanceTwo = new Instance("Two", resources, attributesOne,
+				new ArrayList<Instance.Link>());
+		Instance instanceThree = new Instance("Three", resources, attributesOne,
+				new ArrayList<Instance.Link>());		
+		Mockito.when(computePlugin.getInstance(Mockito.any(Token.class), Mockito.anyString()))
+				.thenReturn(instanceOne, instanceTwo, instanceThree);		
+		
+		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE);
+		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
+		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);		
+		httpGet.addHeader(OCCIHeaders.CATEGORY,
+				"wrong; scheme=\"http://schemas.openstack.org/template/resource#\"; class=\"mixin\"");
+		
+		HttpClient client = new DefaultHttpClient();
+		HttpResponse response = client.execute(httpGet);
+
+		Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusLine().getStatusCode());
+	}		
 	
 	@Test
 	public void testGetComputeOkAcceptURIList() throws Exception {
