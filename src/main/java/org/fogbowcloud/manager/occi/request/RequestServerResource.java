@@ -88,11 +88,11 @@ public class RequestServerResource extends ServerResource {
 				ResponseConstants.ACCEPT_NOT_ACCEPTABLE);
 	}
 
-	private List<Request> filterRequests(List<Request> requestsFromUser, List<String> filterCategory,
-			List<String> filterAttribute) {
+	private List<Request> filterRequests(List<Request> requestsFromUser,
+			List<String> filterCategory, List<String> filterAttribute) {
 		List<Request> requestsFiltrated = new ArrayList<Request>();
 		boolean thereIsntCategory = true;
-		for (Request request : requestsFromUser) {	
+		for (Request request : requestsFromUser) {
 			if (filterCategory.size() != 0) {
 				for (String valueCategoryFilter : filterCategory) {
 					for (Category category : request.getCategories()) {
@@ -101,22 +101,26 @@ public class RequestServerResource extends ServerResource {
 							thereIsntCategory = false;
 						}
 					}
-				}				
-			}			
-			if(filterAttribute.size() != 0) {
+				}
+			}
+			if (filterAttribute.size() != 0) {
 				for (String valueAttributeFilter : filterAttribute) {
-					for (String attribute : request.getxOCCIAtt().values()) {	
-						if (valueAttributeFilter.contains(attribute.trim())) {
+					Map<String, String> mapAttributes = request.getxOCCIAtt();
+					for (String keyAttribute : mapAttributes.keySet()) {
+						if (valueAttributeFilter.contains(keyAttribute)
+								&& valueAttributeFilter.endsWith(HeaderUtils
+								.normalizeValueAttributeFilter(mapAttributes
+								.get(keyAttribute.trim())))) {
 							requestsFiltrated.add(request);
 						}
-					}				
-				}	
+					}
+				}
 			}
-		}		
-		if (filterCategory.size() != 0 &&thereIsntCategory) {
+		}
+		if (filterCategory.size() != 0 && thereIsntCategory) {
 			throw new OCCIException(ErrorType.BAD_REQUEST,
 					ResponseConstants.CATEGORY_IS_NOT_REGISTERED);
-		}	
+		}
 		return requestsFiltrated;
 	}
 	

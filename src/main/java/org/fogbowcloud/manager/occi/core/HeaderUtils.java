@@ -185,4 +185,8 @@ public class HeaderUtils {
 		}
 		return listValuesHeaders;
 	}	
+	
+	public static String normalizeValueAttributeFilter(String value) {
+		return "\"" + value + "\"";
+	}	
 }

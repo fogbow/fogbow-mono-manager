@@ -122,9 +122,9 @@ public class ComputeServerResource extends ServerResource {
 					Map<String, String> mapAttributes = instance.getAttributes();
 					for (String keyAttribute : mapAttributes.keySet()) {
 						if (valueAttributeFilter.contains(keyAttribute)
-								&& valueAttributeFilter
-										.endsWith(normalizeValueAttributeFilter(mapAttributes.
-										get(keyAttribute).trim()))) {
+								&& valueAttributeFilter.endsWith(HeaderUtils
+								.normalizeValueAttributeFilter(mapAttributes.get(
+								keyAttribute).trim()))) {
 							instancesFiltrated.add(instance);
 						}
 					}
@@ -136,10 +136,6 @@ public class ComputeServerResource extends ServerResource {
 					ResponseConstants.CATEGORY_IS_NOT_REGISTERED);
 		}
 		return instancesFiltrated;
-	}
-
-	private String normalizeValueAttributeFilter(String value) {
-		return "\"" + value + "\"";
 	}
 
 	private List<Instance> getInstancesFiltrated(OCCIApplication application, String authToken) {
