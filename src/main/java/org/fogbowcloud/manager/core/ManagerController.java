@@ -1,6 +1,7 @@
 package org.fogbowcloud.manager.core;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -55,7 +56,7 @@ public class ManagerController {
 	private final ManagerTimer instanceMonitoringTimer;
 
 	private Token federationUserToken;
-	private List<FederationMember> members = new LinkedList<FederationMember>();
+	private final List<FederationMember> members = Collections.synchronizedList(new LinkedList<FederationMember>());
 	private RequestRepository requests = new RequestRepository();
 	private FederationMemberPicker memberPicker = new RoundRobinMemberPicker();
 
@@ -110,11 +111,25 @@ public class ManagerController {
 		if (members == null) {
 			throw new IllegalArgumentException();
 		}
-		this.members = members;
+		FederationMember myself = new FederationMember(getResourcesInfo());
+		synchronized (this.members) {
+			this.members.clear();
+			for (FederationMember member : members) {
+				if (member.getResourcesInfo().getId().equals(
+						properties.getProperty(ConfigurationConstants.XMPP_JID_KEY))) {
+					this.members.add(myself);
+				} else {
+					this.members.add(member);
+				}
+			}
+		}
 	}
 
 	public List<FederationMember> getMembers() {
-		List<FederationMember> membersCopy = new LinkedList<FederationMember>(members);
+		List<FederationMember> membersCopy = null;
+		synchronized (this.members) {
+			membersCopy = new LinkedList<FederationMember>(members);
+		}
 		boolean containsThis = false;
 		for (FederationMember member : membersCopy) {
 			if (member.getResourcesInfo().getId().equals(
