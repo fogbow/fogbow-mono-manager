@@ -105,6 +105,9 @@ public class TestManagerController {
 		Token federationToken = new Token(federationUserAccessId, federationUser, new Date(),
 				new HashMap<String, String>());
 
+		ResourcesInfo resourcesInfo = new ResourcesInfo("", "", "", "", null, null);
+		resourcesInfo.setId(DefaultDataTestHelper.MANAGER_COMPONENT_URL);
+		
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		Mockito.when(
 				computePlugin.requestInstance(Mockito.any(Token.class),
@@ -113,12 +116,12 @@ public class TestManagerController {
 				.thenReturn("newinstanceid")
 				.thenThrow(new OCCIException(ErrorType.UNAUTHORIZED, ""))
 				.thenReturn("newinstanceid");
+		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class)))
+				.thenReturn(resourcesInfo);
 		managerController.setComputePlugin(computePlugin);
 
 		List<FederationMember> listMembers = new ArrayList<FederationMember>();
-		ResourcesInfo resourseInfo = new ResourcesInfo("", "", "", "", null, null);
-		resourseInfo.setId(DefaultDataTestHelper.MANAGER_COMPONENT_URL);
-		FederationMember federationMember = new FederationMember(resourseInfo);
+		FederationMember federationMember = new FederationMember(resourcesInfo);
 		listMembers.add(federationMember);
 		managerController.updateMembers(listMembers);
 
