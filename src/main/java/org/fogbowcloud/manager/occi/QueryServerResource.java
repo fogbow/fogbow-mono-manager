@@ -17,6 +17,7 @@ import org.restlet.data.Method;
 import org.restlet.data.Status;
 import org.restlet.engine.adapter.HttpRequest;
 import org.restlet.engine.header.Header;
+import org.restlet.representation.StringRepresentation;
 import org.restlet.resource.Get;
 import org.restlet.resource.ServerResource;
 import org.restlet.util.Series;
@@ -26,12 +27,14 @@ public class QueryServerResource extends ServerResource {
 	private static final Logger LOGGER = Logger.getLogger(QueryServerResource.class);
 
 	@Get
-	public String fetch() {
+	public StringRepresentation fetch() {
 		LOGGER.debug("Executing the query interface fetch method");
 		OCCIApplication application = (OCCIApplication) getApplication();
 		HttpRequest req = (HttpRequest) getRequest();
 		Series<Header> headers = req.getHeaders();
-		checkValidAccept(HeaderUtils.getAccept(headers));
+		List<String> listAccept = HeaderUtils.getAccept(headers);
+		String acceptType = getAccept(listAccept);
+		
 		if (getRequest().getMethod().equals(Method.HEAD)){
 			LOGGER.debug("It is a HEAD method request");
 			String token = headers.getValues(OCCIHeaders.X_AUTH_TOKEN);
@@ -41,7 +44,7 @@ public class QueryServerResource extends ServerResource {
 						application.getAuthenticationURI());
 				getResponse().setStatus(new Status(HttpStatus.SC_UNAUTHORIZED));
 			}
-			return "";
+			return new StringRepresentation("");
 		} else {
 			LOGGER.debug("It is a GET method request");
 			req = (HttpRequest) getRequest();
@@ -62,25 +65,34 @@ public class QueryServerResource extends ServerResource {
 				try {
 					String localCloudResources = response.getEntity().getText();
 					LOGGER.debug("Local cloud resources: " + localCloudResources);
-					return generateResponse(allResources, localCloudResources, filterCategory);
+					return generateResponse(allResources, localCloudResources, filterCategory,
+							acceptType);
 				} catch (Exception e) {
 					LOGGER.error("Exception while reading local cloud resources ...", e);
 				}
 			}				
 
-			return generateResponse(allResources, "", filterCategory);
+			return generateResponse(allResources, "", filterCategory, acceptType);
 		}		
 	}
 	
-	private void checkValidAccept(List<String> listAccept) {
-		if (listAccept.size() > 0 && !listAccept.contains(MediaType.TEXT_PLAIN.toString())) {
-			throw new OCCIException(ErrorType.NOT_ACCEPTABLE,
-					ResponseConstants.ACCEPT_NOT_ACCEPTABLE);
+	private String getAccept(List<String> listAccept) {
+		if (listAccept.size() > 0) {
+			if (listAccept.get(0).contains(MediaType.TEXT_PLAIN.toString())) {
+				return MediaType.TEXT_PLAIN.toString();
+			} else if (listAccept.get(0).contains(OCCIHeaders.OCCI_CONTENT_TYPE)) {
+				return OCCIHeaders.OCCI_CONTENT_TYPE;
+			} else {
+				throw new OCCIException(ErrorType.NOT_ACCEPTABLE,
+						ResponseConstants.ACCEPT_NOT_ACCEPTABLE);
+			}
+		} else {
+			return "";
 		}
 	}
-
-	private String generateResponse(List<Resource> fogbowResources, String localCloudResources,
-			List<String> filterCategories) {		
+	
+	private StringRepresentation generateResponse(List<Resource> fogbowResources, String localCloudResources,
+			List<String> filterCategories, String acceptType) {		
 		
 		String response = "";
 		for (Resource resource : fogbowResources) {
@@ -105,7 +117,13 @@ public class QueryServerResource extends ServerResource {
 			response = filterQuery(filterCategories, response, true);				
 		}
 		
-		return "\n" + response.trim();
+		if (acceptType.equals(OCCIHeaders.OCCI_ACCEPT)) {
+			setLocationHeader(response.trim().replace("\n", ", ").replace("Category: ", ""));
+			return new StringRepresentation(ResponseConstants.OK, new MediaType(
+					OCCIHeaders.OCCI_ACCEPT));
+		}				
+		
+		return new StringRepresentation("\n" + response.trim()); 
 	}
 
 	private String filterQuery(List<String> filterCategories, String response,
@@ -169,17 +187,23 @@ public class QueryServerResource extends ServerResource {
 					.contains(feature))
 					|| ((feature.contains(OCCIHeaders.CLASS_CATEGORY) && !resource
 							.contains(feature)))) {
-				System.out.println(resource);
-				System.out.println(feature);
-				System.out.println((feature.contains(OCCIHeaders.SCHEME_CATEGORY)));
-				System.out.println(resource.contains(feature));
-				System.out.println((feature.contains(OCCIHeaders.CLASS_CATEGORY)));
-				System.out.println(resource.contains(feature));
 				throw new OCCIException(ErrorType.BAD_REQUEST,
 						ResponseConstants.CATEGORY_IS_NOT_REGISTERED);
 			}
 		}
 	}
+	
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	private void setLocationHeader(String response) {
+		Series<Header> responseHeaders = (Series<Header>) getResponse().getAttributes().get(
+				"org.restlet.http.headers");
+		if (responseHeaders == null) {
+			responseHeaders = new Series(Header.class);
+			getResponse().getAttributes().put("org.restlet.http.headers", responseHeaders);
+		}		
+		
+		responseHeaders.add(new Header("Category", response));
+	}	
 	
 	private List<Resource> getResourcesFromStr(String resourcesStr) {
 		String[] lines = resourcesStr.split("\n");

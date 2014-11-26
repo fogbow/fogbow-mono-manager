@@ -216,7 +216,7 @@ public class RequestServerResource extends ServerResource {
 		LOGGER.info("Posting a new request...");
 		OCCIApplication application = (OCCIApplication) getApplication();
 		HttpRequest req = (HttpRequest) getRequest();
-		checkValidAccept(HeaderUtils.getAccept(req.getHeaders()));
+		String acceptType = getAccept(HeaderUtils.getAccept(req.getHeaders()));
 		
 		List<Category> categories = HeaderUtils.getCategories(req.getHeaders());
 		LOGGER.debug("Categories: " + categories);
@@ -235,6 +235,10 @@ public class RequestServerResource extends ServerResource {
 		}		
 		setLocationHeader(currentRequests, req);
 		
+		if (acceptType.equals(OCCIHeaders.OCCI_ACCEPT)) {
+			return new StringRepresentation(ResponseConstants.OK, new MediaType(
+					OCCIHeaders.OCCI_ACCEPT));	
+		}
 		return new StringRepresentation(ResponseConstants.OK);
 	}
 
@@ -271,6 +275,23 @@ public class RequestServerResource extends ServerResource {
 				&& !listAccept.contains(MediaType.TEXT_PLAIN.toString())) {
 			throw new OCCIException(ErrorType.NOT_ACCEPTABLE,
 					ResponseConstants.ACCEPT_NOT_ACCEPTABLE);
+		}
+		
+		
+	}
+
+	private String getAccept(List<String> listAccept) {
+		if (listAccept.size() > 0 ) {
+			if (listAccept.get(0).contains(MediaType.TEXT_PLAIN.toString())) {
+				return MediaType.TEXT_PLAIN.toString();			
+			} else if (listAccept.get(0).contains(OCCIHeaders.OCCI_CONTENT_TYPE)) {
+				return OCCIHeaders.OCCI_CONTENT_TYPE;				
+			} else {
+				throw new OCCIException(ErrorType.NOT_ACCEPTABLE,
+						ResponseConstants.ACCEPT_NOT_ACCEPTABLE);				
+			}
+		} else {
+			return "";
 		}
 	}
 	

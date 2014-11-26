@@ -24,6 +24,7 @@ import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
+import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.OCCIException;
@@ -59,6 +60,7 @@ public class ManagerController {
 	private RequestRepository requests = new RequestRepository();
 	private FederationMemberPicker memberPicker = new RoundRobinMemberPicker();
 
+	private ImageStoragePlugin imageStoragePlugin;
 	private AuthorizationPlugin authorizationPlugin;
 	private ComputePlugin computePlugin;
 	private IdentityPlugin localIdentityPlugin;
@@ -93,6 +95,10 @@ public class ManagerController {
 		this.authorizationPlugin = authorizationPlugin;
 	}
 
+	public void setImageStoragePlugin(ImageStoragePlugin imageStoragePlugin) {
+		this.imageStoragePlugin = imageStoragePlugin;
+	}
+	
 	public void setComputePlugin(ComputePlugin computePlugin) {
 		this.computePlugin = computePlugin;
 	}
@@ -570,7 +576,7 @@ public class ManagerController {
 	private boolean createLocalInstance(Request request) {
 		request.setMemberId(null);
 		String instanceId = null;
-		LOGGER.info("Submiting local request " + request);
+		LOGGER.info("Submiting local request " + request);		
 		
 		try {			
 			try {
