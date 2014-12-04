@@ -389,10 +389,11 @@ public class OpenStackOCCIComputePlugin implements ComputePlugin {
 			Series<org.restlet.engine.header.Header> requestHeaders = (Series<org.restlet.engine.header.Header>) request
 					.getAttributes().get("org.restlet.http.headers");			
 
+			
 			boolean convertToOcci = false;
 			for (org.restlet.engine.header.Header header : requestHeaders) {
 				if (header.getName().contains("Content-type")
-						&& !header.getValue().contains(OCCIHeaders.OCCI_CONTENT_TYPE)
+						&& !header.getValue().equals(OCCIHeaders.OCCI_CONTENT_TYPE)
 						&& request.getMethod().getName()
 								.equals(org.restlet.data.Method.POST.getName())) {
 					convertToOcci = true;
@@ -412,10 +413,10 @@ public class OpenStackOCCIComputePlugin implements ComputePlugin {
 			if (convertToOcci) {
 				convertRequestToOcci(request, requestHeaders);				
 			}
-						
+			
 			proxiedRequest.getAttributes().put("org.restlet.http.headers", requestHeaders);
 			
-			clienteForBypass.handle(proxiedRequest, response);			
+			clienteForBypass.handle(proxiedRequest, response);									
 			
 			// Removing Body of response
 			if (origRequestURI.toASCIIString().contains("?action=")) {	

@@ -47,7 +47,6 @@ public class QueryServerResource extends ServerResource {
 			return new StringRepresentation("");
 		} else {
 			LOGGER.debug("It is a GET method request");
-			req = (HttpRequest) getRequest();
 			String authToken = HeaderUtils.getAuthToken(headers, getResponse(),
 					application.getAuthenticationURI());
 			LOGGER.debug("Auth Token = " + authToken);
@@ -57,11 +56,13 @@ public class QueryServerResource extends ServerResource {
 			List<String> filterCategory = HeaderUtils.getValueHeaderPerName(OCCIHeaders.CATEGORY,
 					headers);
 			headers.removeAll(OCCIHeaders.CATEGORY);
-			
+
 			Response response = new Response(getRequest());
+
+			normalizeRequest();
 			application.bypass(getRequest(), response);
-			
-			if (response.getStatus().getCode() == HttpStatus.SC_OK){
+
+			if (response.getStatus().getCode() == HttpStatus.SC_OK) {
 				try {
 					String localCloudResources = response.getEntity().getText();
 					LOGGER.debug("Local cloud resources: " + localCloudResources);
@@ -70,10 +71,18 @@ public class QueryServerResource extends ServerResource {
 				} catch (Exception e) {
 					LOGGER.error("Exception while reading local cloud resources ...", e);
 				}
-			}				
+			}		
 
 			return generateResponse(allResources, "", filterCategory, acceptType);
 		}		
+	}
+	
+	@SuppressWarnings("unchecked")
+	private void normalizeRequest() {
+		Series<org.restlet.engine.header.Header> requestHeaders = (Series<org.restlet.engine.header.Header>) getRequest()
+				.getAttributes().get("org.restlet.http.headers");
+		requestHeaders.removeAll("Accept");
+		requestHeaders.add(new Header("Accept", "text/plain"));
 	}
 	
 	private String getAccept(List<String> listAccept) {
