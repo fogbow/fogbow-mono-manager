@@ -11,7 +11,6 @@ import java.util.Properties;
 import java.util.Set;
 
 import org.apache.commons.codec.Charsets;
-import org.apache.commons.codec.binary.Base64;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -45,6 +44,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.restlet.Client;
 import org.restlet.Request;
+import org.restlet.data.ClientInfo;
+import org.restlet.data.MediaType;
 import org.restlet.data.Protocol;
 import org.restlet.util.Series;
 
@@ -191,6 +192,7 @@ public class OpenStackOCCIComputePlugin implements ComputePlugin {
 		for (String attName : xOCCIAtt.keySet()) {
 			headers.add(new BasicHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, attName + "=" + "\""
 					+ xOCCIAtt.get(attName) + "\""));
+			
 		}
 		
 		//specifying network using inline creation of link instance
@@ -375,7 +377,7 @@ public class OpenStackOCCIComputePlugin implements ComputePlugin {
 		
 		URI origRequestURI;
 		try {
-			origRequestURI = new URI(request.getResourceRef().toString());
+			origRequestURI = new URI(request.getResourceRef().toString());						
 			URI occiURI = new URI(oCCIEndpoint);
 			URI newRequestURI = new URI(occiURI.getScheme(), occiURI.getUserInfo(),
 					occiURI.getHost(), occiURI.getPort(), origRequestURI.getPath(),
@@ -385,16 +387,77 @@ public class OpenStackOCCIComputePlugin implements ComputePlugin {
 		
 			// forwarding headers from cloud to response
 			Series<org.restlet.engine.header.Header> requestHeaders = (Series<org.restlet.engine.header.Header>) request
-					.getAttributes().get("org.restlet.http.headers");
-			proxiedRequest.getAttributes().put("org.restlet.http.headers", requestHeaders);
+					.getAttributes().get("org.restlet.http.headers");			
 
-			clienteForBypass.handle(proxiedRequest, response);
+			boolean convertToOcci = false;
+			for (org.restlet.engine.header.Header header : requestHeaders) {
+				if (header.getName().contains("Content-type")
+						&& !header.getValue().contains(OCCIHeaders.OCCI_CONTENT_TYPE)
+						&& request.getMethod().getName()
+								.equals(org.restlet.data.Method.POST.getName())) {
+					convertToOcci = true;
+				} else if (header.getName().contains(OCCIHeaders.ACCEPT)) {
+					try {
+						String headerAccept = header.getValue();
+						ClientInfo clientInfo = null;
+						if (headerAccept.contains(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE)) {
+							clientInfo = new ClientInfo(MediaType.TEXT_PLAIN);
+						} else {
+							clientInfo = new ClientInfo(new MediaType(headerAccept));
+						}
+						proxiedRequest.setClientInfo(clientInfo);
+					} catch (Exception e) {}
+				}
+			}
+			if (convertToOcci) {
+				convertRequestToOcci(request, requestHeaders);				
+			}
+						
+			proxiedRequest.getAttributes().put("org.restlet.http.headers", requestHeaders);
+			
+			clienteForBypass.handle(proxiedRequest, response);			
+			
+			// Removing Body of response
+			if (origRequestURI.toASCIIString().contains("?action=")) {	
+				response.setEntity(" ", MediaType.TEXT_PLAIN);
+			}			
 		} catch (URISyntaxException e) {
 			LOGGER.error(e);
 			throw new OCCIException(ErrorType.BAD_REQUEST,
 					e.getMessage());
 			
 		}
+	}
+
+	private void convertRequestToOcci(Request request, Series<org.restlet.engine.header.Header> requestHeaders) {
+		try {
+			String entityAsText = request.getEntityAsText();
+			if (!entityAsText.contains(OCCIHeaders.CATEGORY)
+					&& !entityAsText.contains(OCCIHeaders.X_OCCI_ATTRIBUTE)) {
+				return;
+			}
+			requestHeaders.removeAll(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE);
+			requestHeaders.removeAll("Content-type");
+			requestHeaders.add(OCCIHeaders.ACCEPT, OCCIHeaders.OCCI_ACCEPT);
+			requestHeaders.add("Content-type", OCCIHeaders.OCCI_CONTENT_TYPE);
+			
+			String category = "";
+			String attribute = "";
+			String[] linesBody = entityAsText.split("\n");
+			for (String line : linesBody) {
+				if (line.contains(OCCIHeaders.CATEGORY + ":")) {
+					category += line.replace(OCCIHeaders.CATEGORY + ":", "").trim() + "\n";
+				} else if (line.contains(OCCIHeaders.X_OCCI_ATTRIBUTE + ":")) {
+					attribute += line.replace(OCCIHeaders.X_OCCI_ATTRIBUTE + ":", "")
+							.trim() + "\n";
+				}
+			}
+			requestHeaders.add(new org.restlet.engine.header.Header(OCCIHeaders.CATEGORY,
+					category.trim().replace("\n", ",")));
+			requestHeaders.add(new org.restlet.engine.header.Header("X-occi-attribute",
+					attribute.trim().replace("\n", ",")));
+			request.setEntity("", MediaType.TEXT_PLAIN);			
+		} catch (Exception e) {}
 	}
 
 	private void initClient() {

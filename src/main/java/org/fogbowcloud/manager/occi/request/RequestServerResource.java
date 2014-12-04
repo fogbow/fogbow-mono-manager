@@ -269,16 +269,6 @@ public class RequestServerResource extends ServerResource {
 		}
 		return response.substring(0, response.length() - 1);
 	}	
-	
-	private void checkValidAccept(List<String> listAccept) {
-		if (listAccept.size() > 0
-				&& !listAccept.contains(MediaType.TEXT_PLAIN.toString())) {
-			throw new OCCIException(ErrorType.NOT_ACCEPTABLE,
-					ResponseConstants.ACCEPT_NOT_ACCEPTABLE);
-		}
-		
-		
-	}
 
 	private String getAccept(List<String> listAccept) {
 		if (listAccept.size() > 0 ) {
