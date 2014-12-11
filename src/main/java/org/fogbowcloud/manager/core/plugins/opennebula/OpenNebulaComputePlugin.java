@@ -54,6 +54,7 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 	public static final int VALUE_UNLIMITED_QUOTA_OPENNEBULA = -2;
 	public static final int VALUE_DEFAULT_MEM = 20480; // 20 GB
 	public static final int VALUE_DEFAULT_CPU = 100;
+	public static final int VALUE_DEFAULT_VMS = 100;
 	private OpenNebulaClientFactory clientFactory;
 	private String openNebulaEndpoint;
 	private Map<String, String> fogbowTermToOpenNebula; 
@@ -427,12 +428,16 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		String cpuInUseStr = user.xpath("VM_QUOTA/VM/CPU_USED");
 		String maxMemStr = user.xpath("VM_QUOTA/VM/MEMORY");
 		String memInUseStr = user.xpath("VM_QUOTA/VM/MEMORY_USED");
+		String maxVMsStr = user.xpath("VM_QUOTA/VM/VMS");
+		String vmsInUseStr = user.xpath("VM_QUOTA/VM/VMS_USED");
 		
 		// default values is used when quota is not specified
 		double maxCpu = VALUE_DEFAULT_CPU;
 		double cpuInUse = 0;
 		double maxMem = VALUE_DEFAULT_MEM;
 		double memInUse = 0;
+		double maxVMs = VALUE_DEFAULT_VMS;
+		double vmsInUse = 0;
 
 		// getting quota values
 		if (isValidDouble(maxCpuStr)) {
@@ -447,6 +452,12 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		if (isValidDouble(memInUseStr)) {
 			memInUse = Integer.parseInt(memInUseStr);
 		}
+		if (isValidDouble(maxVMsStr)) {
+			maxVMs = Integer.parseInt(maxVMsStr);
+		}
+		if (isValidDouble(vmsInUseStr)) {
+			vmsInUse = Integer.parseInt(vmsInUseStr);
+		}
 
 		if (maxMem == VALUE_DEFAULT_QUOTA_OPENNEBULA) {
 			maxMem = VALUE_DEFAULT_MEM;
@@ -459,12 +470,19 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		} else if (maxCpu == VALUE_UNLIMITED_QUOTA_OPENNEBULA) {
 			maxCpu = Integer.MAX_VALUE;
 		}
+		
+		if (maxVMs == VALUE_DEFAULT_QUOTA_OPENNEBULA) {
+			maxVMs = VALUE_DEFAULT_CPU;
+		} else if (maxCpu == VALUE_UNLIMITED_QUOTA_OPENNEBULA) {
+			maxVMs = Integer.MAX_VALUE;
+		}
 
 		double cpuIdle = maxCpu - cpuInUse;
 		double memIdle = maxMem - memInUse;
+		double instancesIdle = maxVMs - vmsInUse;
 	
 		return new ResourcesInfo(String.valueOf(cpuIdle), String.valueOf(cpuInUse),
-				String.valueOf(memIdle), String.valueOf(memInUse), getFlavors(cpuIdle, memIdle),
+				String.valueOf(memIdle), String.valueOf(memInUse), getFlavors(cpuIdle, memIdle, instancesIdle),
 				null);
 	}
 	
@@ -477,24 +495,24 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		return true;
 	}
 
-	private List<Flavor> getFlavors(double cpuIdle, double memIdle) {
+	private List<Flavor> getFlavors(double cpuIdle, double memIdle, double instancesIdle) {
 		List<Flavor> flavors = new ArrayList<Flavor>();
 		// small		
 		double memFlavor = getAttValue("mem", fogbowTermToOpenNebula.get(RequestConstants.SMALL_TERM));
 		double cpuFlavor = getAttValue("cpu", fogbowTermToOpenNebula.get(RequestConstants.SMALL_TERM));
-		int capacity = (int) Math.min(cpuIdle / cpuFlavor, memIdle / memFlavor);
+		int capacity = Math.min((int) Math.min(cpuIdle / cpuFlavor, memIdle / memFlavor), (int) instancesIdle);
 		Flavor smallFlavor = new Flavor(RequestConstants.SMALL_TERM, String.valueOf(cpuFlavor),
 				String.valueOf(memFlavor), capacity);
 		// medium
 		memFlavor = getAttValue("mem", fogbowTermToOpenNebula.get(RequestConstants.MEDIUM_TERM));
 		cpuFlavor = getAttValue("cpu", fogbowTermToOpenNebula.get(RequestConstants.MEDIUM_TERM));
-		capacity = (int) Math.min(cpuIdle / cpuFlavor, memIdle / memFlavor);
+		capacity = Math.min((int) Math.min(cpuIdle / cpuFlavor, memIdle / memFlavor), (int) instancesIdle);
 		Flavor mediumFlavor = new Flavor(RequestConstants.MEDIUM_TERM, String.valueOf(cpuFlavor),
 				String.valueOf(memFlavor), capacity);
 		// large
 		memFlavor = getAttValue("mem", fogbowTermToOpenNebula.get(RequestConstants.LARGE_TERM));
 		cpuFlavor = getAttValue("cpu", fogbowTermToOpenNebula.get(RequestConstants.LARGE_TERM));
-		capacity = (int) Math.min(cpuIdle / cpuFlavor, memIdle / memFlavor);
+		capacity = Math.min((int) Math.min(cpuIdle / cpuFlavor, memIdle / memFlavor), (int) instancesIdle);
 		Flavor largeFlavor = new Flavor(RequestConstants.LARGE_TERM, String.valueOf(cpuFlavor),
 				String.valueOf(memFlavor), capacity);
 		flavors.add(smallFlavor);
@@ -508,5 +526,4 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		response.setStatus(new Status(HttpStatus.SC_BAD_REQUEST),
 				ResponseConstants.CLOUD_NOT_SUPPORT_OCCI_INTERFACE);
 	}
-
 }
