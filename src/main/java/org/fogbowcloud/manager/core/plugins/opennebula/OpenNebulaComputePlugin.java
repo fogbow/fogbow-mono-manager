@@ -199,7 +199,7 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		
 		String userdata = xOCCIAtt.get(RequestAttribute.USER_DATA_ATT.getValue());
 		if (userdata != null){
-			userdata = userdata.replaceAll("\n", "\\\\n");
+			userdata = normalizeUserdata(userdata);
 		}
 		templateProperties.put("mem", String.valueOf((int)getAttValue("mem", choosenFlavor)));
 		templateProperties.put("cpu", String.valueOf(getAttValue("cpu", choosenFlavor)));
@@ -211,6 +211,14 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 
 		LOGGER.debug("The instance will be allocated according to template: " + vmTemplate);
 		return clientFactory.allocateVirtualMachine(oneClient, vmTemplate);
+	}
+
+	private String normalizeUserdata(String userdata) {
+		userdata = new String(Base64.decodeBase64(userdata), Charsets.UTF_8);
+		userdata = userdata.replaceAll("\n", "\\\\n");
+		userdata = new String(Base64.encodeBase64(userdata.getBytes(Charsets.UTF_8), false, false),
+				Charsets.UTF_8);
+		return userdata;
 	}
 	
 	private String generateTemplate(Map<String, String> templateProperties) {
