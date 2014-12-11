@@ -80,9 +80,11 @@ public class TestComputeOpenNebula {
 		
 		DEFAULT_TEMPLATE = PluginHelper
 				.getContentFile("src/test/resources/opennebula/default.template")
-				.replaceAll("#NET_ID#", "" + NETWORK_ID).replaceAll("#IMAGE_ID#", IMAGE1_ID)
+				.replaceAll("#NET_ID#", "" + NETWORK_ID)
+				.replaceAll("#IMAGE_ID#", IMAGE1_ID)
 				.replaceAll("#USERDATA#",
-						Base64.encodeBase64URLSafeString("userdata".getBytes(Charsets.UTF_8)))
+						OpenNebulaComputePlugin.normalizeUserdata(Base64
+								.encodeBase64URLSafeString("userdata".getBytes(Charsets.UTF_8))))
 				.replaceAll("\n", "").replaceAll(" ", "");
 	
 		SMALL_TEMPLATE = DEFAULT_TEMPLATE.replace("#MEM#", "128").replace("#CPU#", "1.0");
@@ -526,6 +528,7 @@ public class TestComputeOpenNebula {
 	
 	@Test
 	public void testGetResourcesInfoWithValueDefaultOfQuota() {
+		String vmsUsed = "8";
 		String cpuUsed = "8";
 		String memUsed = "1024";
 		// mocking opennebula structures
@@ -534,6 +537,9 @@ public class TestComputeOpenNebula {
 		Mockito.when(user.xpath("VM_QUOTA/VM/CPU")).thenReturn(
 				String.valueOf(OpenNebulaComputePlugin.VALUE_DEFAULT_QUOTA_OPENNEBULA));
 		Mockito.when(user.xpath("VM_QUOTA/VM/CPU_USED")).thenReturn(cpuUsed);
+		Mockito.when(user.xpath("VM_QUOTA/VM/VMS")).thenReturn(
+				String.valueOf(OpenNebulaComputePlugin.VALUE_DEFAULT_QUOTA_OPENNEBULA));
+		Mockito.when(user.xpath("VM_QUOTA/VM/VMS_USED")).thenReturn(vmsUsed);			
 		Mockito.when(user.xpath("VM_QUOTA/VM/MEMORY")).thenReturn(
 				String.valueOf(OpenNebulaComputePlugin.VALUE_DEFAULT_QUOTA_OPENNEBULA));
 		Mockito.when(user.xpath("VM_QUOTA/VM/MEMORY_USED")).thenReturn(memUsed);
@@ -552,6 +558,7 @@ public class TestComputeOpenNebula {
 		ResourcesInfo resourcesInfo = computeOpenNebula.getResourcesInfo(token);
 
 		// checking resourcesInfo
+		int instanceIdle = OpenNebulaComputePlugin.VALUE_DEFAULT_VMS - Integer.parseInt(vmsUsed);
 		double cpuIdle = OpenNebulaComputePlugin.VALUE_DEFAULT_CPU - Double.parseDouble(cpuUsed);
 		String cpuIdleStr = String.valueOf(cpuIdle);
 		Assert.assertEquals(cpuIdleStr, resourcesInfo.getCpuIdle());
@@ -565,21 +572,22 @@ public class TestComputeOpenNebula {
 		String smallCpu = "1.0";
 		String smallMem = "128.0";
 		flavors.add(new Flavor(RequestConstants.SMALL_TERM, smallCpu, smallMem, calculateCapacity(
-				cpuIdle, memIdle, smallCpu, smallMem)));
+				cpuIdle, memIdle, smallCpu, smallMem, instanceIdle)));
 		String mediumCpu = "2.0";
 		String mediumMem = "256.0";
 		flavors.add(new Flavor(RequestConstants.MEDIUM_TERM, mediumCpu, mediumMem,
-				calculateCapacity(cpuIdle, memIdle, mediumCpu, mediumMem)));
+				calculateCapacity(cpuIdle, memIdle, mediumCpu, mediumMem, instanceIdle)));
 		String largeCpu = "4.0";
 		String largeMem = "512.0";
 		flavors.add(new Flavor(RequestConstants.LARGE_TERM, largeCpu, largeMem, calculateCapacity(
-				cpuIdle, memIdle, largeCpu, largeMem)));
+				cpuIdle, memIdle, largeCpu, largeMem, instanceIdle)));
 
 		Assert.assertEquals(flavors, resourcesInfo.getFlavors());
 	}
 	
 	@Test
 	public void testGetResourcesInfoWithValueUnlimitedOfQuota() {
+		String vmsUsed = "8";
 		String cpuUsed = "8";
 		String memUsed = "1024";
 		// mocking opennebula structures
@@ -588,6 +596,9 @@ public class TestComputeOpenNebula {
 		Mockito.when(user.xpath("VM_QUOTA/VM/CPU")).thenReturn(
 				String.valueOf(OpenNebulaComputePlugin.VALUE_UNLIMITED_QUOTA_OPENNEBULA));
 		Mockito.when(user.xpath("VM_QUOTA/VM/CPU_USED")).thenReturn(cpuUsed);
+		Mockito.when(user.xpath("VM_QUOTA/VM/VMS")).thenReturn(
+				String.valueOf(OpenNebulaComputePlugin.VALUE_UNLIMITED_QUOTA_OPENNEBULA));
+		Mockito.when(user.xpath("VM_QUOTA/VM/VMS_USED")).thenReturn(vmsUsed);		
 		Mockito.when(user.xpath("VM_QUOTA/VM/MEMORY")).thenReturn(
 				String.valueOf(OpenNebulaComputePlugin.VALUE_UNLIMITED_QUOTA_OPENNEBULA));
 		Mockito.when(user.xpath("VM_QUOTA/VM/MEMORY_USED")).thenReturn(memUsed);
@@ -606,6 +617,7 @@ public class TestComputeOpenNebula {
 		ResourcesInfo resourcesInfo = computeOpenNebula.getResourcesInfo(token);
 
 		// checking resourcesInfo
+		int instanceIdle = Integer.MAX_VALUE - Integer.parseInt(vmsUsed);
 		double cpuIdle = Integer.MAX_VALUE - Double.parseDouble(cpuUsed);
 		String cpuIdleStr = String.valueOf(cpuIdle);
 		Assert.assertEquals(cpuIdleStr, resourcesInfo.getCpuIdle());
@@ -619,15 +631,15 @@ public class TestComputeOpenNebula {
 		String smallCpu = "1.0";
 		String smallMem = "128.0";
 		flavors.add(new Flavor(RequestConstants.SMALL_TERM, smallCpu, smallMem, calculateCapacity(
-				cpuIdle, memIdle, smallCpu, smallMem)));
+				cpuIdle, memIdle, smallCpu, smallMem, instanceIdle)));
 		String mediumCpu = "2.0";
 		String mediumMem = "256.0";
 		flavors.add(new Flavor(RequestConstants.MEDIUM_TERM, mediumCpu, mediumMem,
-				calculateCapacity(cpuIdle, memIdle, mediumCpu, mediumMem)));
+				calculateCapacity(cpuIdle, memIdle, mediumCpu, mediumMem, instanceIdle)));
 		String largeCpu = "4.0";
 		String largeMem = "512.0";
 		flavors.add(new Flavor(RequestConstants.LARGE_TERM, largeCpu, largeMem, calculateCapacity(
-				cpuIdle, memIdle, largeCpu, largeMem)));
+				cpuIdle, memIdle, largeCpu, largeMem, instanceIdle)));
 
 		Assert.assertEquals(flavors, resourcesInfo.getFlavors());
 	}			
@@ -636,8 +648,9 @@ public class TestComputeOpenNebula {
 		return String.valueOf((double)Integer.parseInt(intStr));
 	}
 	
-	private int calculateCapacity(double cpuIdle, double memIdle, String cpuFlavor, String memFlavor) {
-		return (int) (Math.min((cpuIdle) / Double.parseDouble(cpuFlavor), memIdle / Double.parseDouble(memFlavor)));
+	private int calculateCapacity(double cpuIdle, double memIdle, String cpuFlavor, String memFlavor, int instancesIdle) {
+		return Math.min((int) Math.min(cpuIdle / Double.parseDouble(cpuFlavor), memIdle / Double.parseDouble(memFlavor)), (int) instancesIdle);
+//		return (int) (Math.min((cpuIdle) / Double.parseDouble(cpuFlavor), memIdle / Double.parseDouble(memFlavor)));
 	}
 	
 	@Test
