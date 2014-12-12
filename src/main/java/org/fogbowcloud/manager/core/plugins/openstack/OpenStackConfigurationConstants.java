@@ -9,6 +9,7 @@ public class OpenStackConfigurationConstants {
 	public static final String COMPUTE_OCCI_URL_KEY = "compute_occi_url";
 
 	// schemes
+	public static final String COMPUTE_OCCI_TEMPLATE_SCHEME_KEY = "compute_occi_template_scheme"; 
 	public static final String COMPUTE_OCCI_OS_SCHEME_KEY = "compute_occi_os_scheme";
 	public static final String COMPUTE_OCCI_INSTANCE_SCHEME_KEY = "compute_occi_instance_scheme";
 	public static final String COMPUTE_OCCI_RESOURCE_SCHEME_KEY = "compute_occi_resource_scheme";

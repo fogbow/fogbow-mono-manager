@@ -215,7 +215,7 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		return clientFactory.allocateVirtualMachine(oneClient, vmTemplate);
 	}
 
-	private String normalizeUserdata(String userdata) {
+	public static String normalizeUserdata(String userdata) {
 		userdata = new String(Base64.decodeBase64(userdata), Charsets.UTF_8);
 		userdata = userdata.replaceAll("\n", "\\\\n");
 		userdata = new String(Base64.encodeBase64(userdata.getBytes(Charsets.UTF_8), false, false),
@@ -476,7 +476,7 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		
 		if (maxVMs == VALUE_DEFAULT_QUOTA_OPENNEBULA) {
 			maxVMs = VALUE_DEFAULT_CPU;
-		} else if (maxCpu == VALUE_UNLIMITED_QUOTA_OPENNEBULA) {
+		} else if (maxVMs == VALUE_UNLIMITED_QUOTA_OPENNEBULA) {
 			maxVMs = Integer.MAX_VALUE;
 		}
 

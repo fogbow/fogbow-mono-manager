@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.http.HttpStatus;
+import org.apache.http.message.BasicHeader;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.HeaderUtils;
@@ -32,49 +33,55 @@ public class QueryServerResource extends ServerResource {
 		OCCIApplication application = (OCCIApplication) getApplication();
 		HttpRequest req = (HttpRequest) getRequest();
 		Series<Header> headers = req.getHeaders();
-		List<String> listAccept = HeaderUtils.getAccept(headers);
-		String acceptType = getAccept(listAccept);
 		
-		if (getRequest().getMethod().equals(Method.HEAD)){
-			LOGGER.debug("It is a HEAD method request");
+		if (req.getMethod().equals(Method.HEAD)){
 			String token = headers.getValues(OCCIHeaders.X_AUTH_TOKEN);
-			LOGGER.debug("Auth Token = " + token);
 			if (token == null || token.equals("")) {
 				HeaderUtils.setResponseHeader(getResponse(), HeaderUtils.WWW_AUTHENTICATE,
 						application.getAuthenticationURI());
-				getResponse().setStatus(new Status(HttpStatus.SC_UNAUTHORIZED));
+				if (application.getAuthenticationURI() == null) {
+					getResponse().setStatus(new Status(HttpStatus.SC_OK));				
+				} else {
+					getResponse().setStatus(new Status(HttpStatus.SC_UNAUTHORIZED));
+				}
 			}
 			return new StringRepresentation("");
-		} else {
-			LOGGER.debug("It is a GET method request");
-			String authToken = HeaderUtils.getAuthToken(headers, getResponse(),
-					application.getAuthenticationURI());
-			LOGGER.debug("Auth Token = " + authToken);
-			List<Resource> allResources = application.getAllResources(authToken);
-			LOGGER.debug("Fogbow resources = " + allResources);
-									
-			List<String> filterCategory = HeaderUtils.getValueHeaderPerName(OCCIHeaders.CATEGORY,
-					headers);
-			headers.removeAll(OCCIHeaders.CATEGORY);
+		} 
+		
+		List<String> listAccept = HeaderUtils.getAccept(headers);
+		String acceptType = getAccept(listAccept);
+		
+		String authToken = HeaderUtils.getAuthToken(headers, getResponse(),
+				application.getAuthenticationURI());
+		List<Resource> allResources = application.getAllResources(authToken);
+		LOGGER.debug("Fogbow resources = " + allResources);
+								
+		List<String> filterCategory = HeaderUtils.getValueHeaderPerName(OCCIHeaders.CATEGORY,
+				headers);
+		headers.removeAll(OCCIHeaders.CATEGORY);
 
-			Response response = new Response(getRequest());
+		Response response = new Response(req);
 
-			normalizeRequest();
-			application.bypass(getRequest(), response);
+		normalizeRequest();
+		if (req.getHeaders().getFirst(OCCIHeaders.X_AUTH_TOKEN) == null
+				|| req.getHeaders().getFirst(HeaderUtils.normalize(OCCIHeaders.X_AUTH_TOKEN)) == null) {
+			req.getHeaders().add(new Header(OCCIHeaders.X_AUTH_TOKEN, authToken));
+		}
+		getRequestAttributes().put(OCCIHeaders.X_AUTH_TOKEN, authToken);
+		application.bypass(req, response);			
 
-			if (response.getStatus().getCode() == HttpStatus.SC_OK) {
-				try {
-					String localCloudResources = response.getEntity().getText();
-					LOGGER.debug("Local cloud resources: " + localCloudResources);
-					return generateResponse(allResources, localCloudResources, filterCategory,
-							acceptType);
-				} catch (Exception e) {
-					LOGGER.error("Exception while reading local cloud resources ...", e);
-				}
-			}		
-
-			return generateResponse(allResources, "", filterCategory, acceptType);
+		if (response.getStatus().getCode() == HttpStatus.SC_OK) {
+			try {
+				String localCloudResources = response.getEntity().getText();
+				LOGGER.debug("Local cloud resources: " + localCloudResources);
+				return generateResponse(allResources, localCloudResources, filterCategory,
+						acceptType);
+			} catch (Exception e) {
+				LOGGER.error("Exception while reading local cloud resources ...", e);
+			}
 		}		
+
+		return generateResponse(allResources, "", filterCategory, acceptType);
 	}
 	
 	@SuppressWarnings("unchecked")
