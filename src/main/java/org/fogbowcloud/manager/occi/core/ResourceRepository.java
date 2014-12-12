@@ -141,6 +141,17 @@ public class ResourceRepository {
 			resources.add(imageResource);
 		}
 	}
+	
+	
+	public void addTemplateResource(String imageName){
+		Resource imageResource = new Resource(imageName, RequestConstants.TEMPLATE_OS_SCHEME,
+				RequestConstants.MIXIN_CLASS, new ArrayList<String>(), new ArrayList<String>(),
+				FOGBOWCLOUD_ENDPOINT + "/" + imageName + "/", imageName + " image", OS_TPL_OCCI_SCHEME);
+		if (!resources.contains(imageResource)){
+			LOGGER.debug("Adding image resource: " + imageResource.toHeader());
+			resources.add(imageResource);
+		}
+	}	
 
 	public List<Resource> get(List<Category> categories) {
 		List<Resource> allResources = getAll();

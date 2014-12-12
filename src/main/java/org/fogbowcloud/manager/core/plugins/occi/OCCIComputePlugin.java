@@ -15,6 +15,7 @@ import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.HttpVersion;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -48,20 +49,23 @@ import org.restlet.util.Series;
 
 public class OCCIComputePlugin implements ComputePlugin {
 
-	private static final String SCHEME_COMPUTE = "http://schemas.ogf.org/occi/infrastructure#";
+	protected static final String SCHEME_COMPUTE = "http://schemas.ogf.org/occi/infrastructure#";
 	private static final int LAST_SUCCESSFUL_STATUS = 204;
-	private static final String TERM_COMPUTE = "compute";
+	protected static final String TERM_COMPUTE = "compute";
 
 	private static String osScheme;
 	private String instanceScheme;
 	private String resourceScheme;
 	private String networkId;
+	private String templateScheme;
 
 	protected Map<String, Category> fogTermToCategory = new HashMap<String, Category>();
 	public static final String COMPUTE_ENDPOINT = "/compute/";
 	protected String oCCIEndpoint;
 	protected String computeOCCIEndpoint;
-	private DefaultHttpClient client;
+//	private DefaultHttpClient client;
+	private HttpClient client;
+	private final static String COMPUTE_OCCI_TEMPLATE_PREFIX = "compute_occi_template_name_";
 
 	protected static final Logger LOGGER = Logger.getLogger(OCCIComputePlugin.class);
 
@@ -77,7 +81,10 @@ public class OCCIComputePlugin implements ComputePlugin {
 				.getProperty(OpenStackConfigurationConstants.COMPUTE_OCCI_RESOURCE_SCHEME_KEY);
 		networkId = properties
 				.getProperty(OpenStackConfigurationConstants.COMPUTE_OCCI_NETWORK_KEY);
+		templateScheme = properties
+				.getProperty(OpenStackConfigurationConstants.COMPUTE_OCCI_TEMPLATE_SCHEME_KEY);
 
+		
 		Map<String, String> imageProperties = getImageProperties(properties);
 
 		if (imageProperties == null || imageProperties.isEmpty()) {
@@ -89,7 +96,17 @@ public class OCCIComputePlugin implements ComputePlugin {
 					RequestConstants.MIXIN_CLASS));
 			ResourceRepository.getInstance().addImageResource(imageName);
 		}
-
+						
+		try {
+			Map<String, String> templateProperties = getTemplateProperties(properties);
+			
+			for (String templateName : templateProperties.keySet()) {
+				fogTermToCategory.put(templateName, new Category(templateProperties.get(templateName),
+						templateScheme, RequestConstants.MIXIN_CLASS));
+				ResourceRepository.getInstance().addImageResource(templateName);
+			}					
+		} catch (Exception e) {}
+		
 		fogTermToCategory.put(
 				RequestConstants.SMALL_TERM,
 				createFlavorCategory(OpenStackConfigurationConstants.COMPUTE_OCCI_FLAVOR_SMALL_KEY,
@@ -221,7 +238,21 @@ public class OCCIComputePlugin implements ComputePlugin {
 		return imageProperties;
 	}
 
-	private Category createFlavorCategory(String flavorPropName, Properties properties) {
+	private static Map<String, String> getTemplateProperties(Properties properties) {
+		Map<String, String> templateProperties = new HashMap<String, String>();
+
+		for (Object propName : properties.keySet()) {
+			String propNameStr = (String) propName;
+			if (propNameStr.startsWith(COMPUTE_OCCI_TEMPLATE_PREFIX)) {
+				templateProperties.put(propNameStr.substring(COMPUTE_OCCI_TEMPLATE_PREFIX.length()),
+						properties.getProperty(propNameStr));
+			}
+		}
+		LOGGER.debug("Image properties: " + templateProperties);
+		return templateProperties;
+	}
+	
+	protected Category createFlavorCategory(String flavorPropName, Properties properties) {
 		return new Category(properties.getProperty(flavorPropName), resourceScheme,
 				RequestConstants.MIXIN_CLASS);
 	}
@@ -268,7 +299,7 @@ public class OCCIComputePlugin implements ComputePlugin {
 
 		return new Response(httpResponse, responseStr);
 	}
-
+	
 	private void checkStatusResponse(HttpResponse response, String errorMessage) {
 		if (response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
@@ -293,7 +324,7 @@ public class OCCIComputePlugin implements ComputePlugin {
 				.getConnectionManager().getSchemeRegistry()), params);
 	}
 
-	private String normalizeInstanceId(String instanceId) {
+	protected String normalizeInstanceId(String instanceId) {
 		if (!instanceId.contains("/")) {
 			return instanceId;
 		}
@@ -351,6 +382,10 @@ public class OCCIComputePlugin implements ComputePlugin {
 	public static String getOSScheme() {
 		return osScheme;
 	}	
+	
+	public void setClient(HttpClient client) {
+		this.client = client;
+	}
 	
 	protected class Response {
 

@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+import org.apache.commons.codec.binary.Base64;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
@@ -69,6 +70,10 @@ public class OpenNebulaIdentityPlugin implements IdentityPlugin {
 	}
 	
 	public Token getToken(String accessId, String openNebulaEndpoint) {
+		if (accessId.contains("Basic ")) {
+			accessId = new String(Base64.decodeBase64(accessId.replace("Basic ", "")));			
+		}
+		
 		Client oneClient = clientFactory.createClient(accessId, openNebulaEndpoint);
 
 		UserPool userPool = new UserPool(oneClient);
@@ -111,7 +116,7 @@ public class OpenNebulaIdentityPlugin implements IdentityPlugin {
 
 	@Override
 	public String getAuthenticationURI() {
-		return "Opennebula uri='" + openNebulaEndpoint +"'";
+		return null;
 	}
 
 }

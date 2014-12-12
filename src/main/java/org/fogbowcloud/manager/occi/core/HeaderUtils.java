@@ -21,6 +21,8 @@ public class HeaderUtils {
 	public static final String REQUEST_DATE_FORMAT = "yyyy-MM-dd";
 	public static final String X_OCCI_LOCATION_PREFIX = "X-OCCI-Location: ";
 	public static final String WWW_AUTHENTICATE = "WWW-Authenticate";
+	private static final String AUTHORIZATION = "Authorization"; 
+
 
 	public static void checkOCCIContentType(Series<Header> headers) {
 		String contentType = headers.getValues(OCCIHeaders.CONTENT_TYPE);
@@ -42,17 +44,25 @@ public class HeaderUtils {
 	public static String getAuthToken(Series<Header> headers, Response response, String authenticationURI) {
 		String token = headers.getValues(OCCIHeaders.X_AUTH_TOKEN);
 		if (token == null || token.equals("")) {
-			if (response != null && authenticationURI != null) {
-				Series<Header> responseHeaders = (Series<Header>) response.getAttributes().get("org.restlet.http.headers");
-				if (responseHeaders == null) {
-					responseHeaders = new Series(Header.class);
-					response.getAttributes().put("org.restlet.http.headers", responseHeaders);
+			if (authenticationURI != null) {
+				if (response != null) {
+					Series<Header> responseHeaders = (Series<Header>) response.getAttributes().get("org.restlet.http.headers");
+					if (responseHeaders == null) {
+						responseHeaders = new Series(Header.class);
+						response.getAttributes().put("org.restlet.http.headers", responseHeaders);
+					}
+					responseHeaders.add(new Header(HeaderUtils.WWW_AUTHENTICATE, authenticationURI));
+					MediaType textPlainType = new MediaType("text/plain");				
+					response.setEntity(ResponseConstants.UNAUTHORIZED, textPlainType);
 				}
-				responseHeaders.add(new Header(HeaderUtils.WWW_AUTHENTICATE, authenticationURI));
-				MediaType textPlainType = new MediaType("text/plain");				
-				response.setEntity(ResponseConstants.UNAUTHORIZED, textPlainType);
+				throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
+			} else {
+				String authorizationHeader = headers.getValues(HeaderUtils.AUTHORIZATION);
+				if (authorizationHeader == null) {
+					throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
+				}
+				token = authorizationHeader;
 			}
-			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}
 		return token;
 	}
@@ -172,7 +182,10 @@ public class HeaderUtils {
 		if (responseHeaders == null) {
 			responseHeaders = new Series(Header.class);
 			response.getAttributes().put("org.restlet.http.headers", responseHeaders);
-		}		
+		}
+		if (value == null) {
+			value = " ";
+		}
 		responseHeaders.add(new Header(normalize(header), value));
 	}
 
