@@ -529,5 +529,18 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		response.setStatus(new Status(HttpStatus.SC_BAD_REQUEST),
 				ResponseConstants.CLOUD_NOT_SUPPORT_OCCI_INTERFACE);
 	}
+
+	@Override
+	public void uploadImage(Token token, String imagePath, String imageName,
+			Map<String, String> tags) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public String searchImage(Token token, Map<String, String> tags) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 	
 }
