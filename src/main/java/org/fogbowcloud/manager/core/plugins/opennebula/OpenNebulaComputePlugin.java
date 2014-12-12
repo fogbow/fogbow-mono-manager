@@ -39,6 +39,7 @@ import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.json.JSONObject;
 import org.opennebula.client.Client;
 import org.opennebula.client.OneResponse;
+import org.opennebula.client.group.Group;
 import org.opennebula.client.user.User;
 import org.opennebula.client.vm.VirtualMachine;
 import org.opennebula.client.vm.VirtualMachinePool;
@@ -423,13 +424,15 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 	public ResourcesInfo getResourcesInfo(Token token) {
 		Client oneClient = clientFactory.createClient(token.getAccessId(), openNebulaEndpoint);				
 		User user = clientFactory.createUser(oneClient, token.getUser());
+		String groupId = user.xpath("GROUPS/ID");
+		Group group = clientFactory.createGroup(oneClient, Integer.parseInt(groupId));
 
-		String maxCpuStr = user.xpath("VM_QUOTA/VM/CPU");
-		String cpuInUseStr = user.xpath("VM_QUOTA/VM/CPU_USED");
-		String maxMemStr = user.xpath("VM_QUOTA/VM/MEMORY");
-		String memInUseStr = user.xpath("VM_QUOTA/VM/MEMORY_USED");
-		String maxVMsStr = user.xpath("VM_QUOTA/VM/VMS");
-		String vmsInUseStr = user.xpath("VM_QUOTA/VM/VMS_USED");
+		String maxCpuStr = group.xpath("VM_QUOTA/VM/CPU");
+		String cpuInUseStr = group.xpath("VM_QUOTA/VM/CPU_USED");
+		String maxMemStr = group.xpath("VM_QUOTA/VM/MEMORY");
+		String memInUseStr = group.xpath("VM_QUOTA/VM/MEMORY_USED");
+		String maxVMsStr = group.xpath("VM_QUOTA/VM/VMS");
+		String vmsInUseStr = group.xpath("VM_QUOTA/VM/VMS_USED");
 		
 		// default values is used when quota is not specified
 		double maxCpu = VALUE_DEFAULT_CPU;
@@ -526,4 +529,5 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		response.setStatus(new Status(HttpStatus.SC_BAD_REQUEST),
 				ResponseConstants.CLOUD_NOT_SUPPORT_OCCI_INTERFACE);
 	}
+	
 }
