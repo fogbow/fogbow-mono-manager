@@ -538,21 +538,24 @@ public class TestComputeOpenNebula {
 		// mocking opennebula structures
 		Client oneClient = Mockito.mock(Client.class);
 		User user = Mockito.mock(User.class);
-		Mockito.when(user.xpath("VM_QUOTA/VM/CPU")).thenReturn(
+		Group group = Mockito.mock(Group.class);
+		Mockito.when(user.xpath("GROUPS/ID")).thenReturn("5");
+		Mockito.when(group.xpath("VM_QUOTA/VM/CPU")).thenReturn(
 				String.valueOf(OpenNebulaComputePlugin.VALUE_DEFAULT_QUOTA_OPENNEBULA));
-		Mockito.when(user.xpath("VM_QUOTA/VM/CPU_USED")).thenReturn(cpuUsed);
-		Mockito.when(user.xpath("VM_QUOTA/VM/VMS")).thenReturn(
+		Mockito.when(group.xpath("VM_QUOTA/VM/CPU_USED")).thenReturn(cpuUsed);
+		Mockito.when(group.xpath("VM_QUOTA/VM/VMS")).thenReturn(
 				String.valueOf(OpenNebulaComputePlugin.VALUE_DEFAULT_QUOTA_OPENNEBULA));
-		Mockito.when(user.xpath("VM_QUOTA/VM/VMS_USED")).thenReturn(vmsUsed);			
-		Mockito.when(user.xpath("VM_QUOTA/VM/MEMORY")).thenReturn(
+		Mockito.when(group.xpath("VM_QUOTA/VM/VMS_USED")).thenReturn(vmsUsed);			
+		Mockito.when(group.xpath("VM_QUOTA/VM/MEMORY")).thenReturn(
 				String.valueOf(OpenNebulaComputePlugin.VALUE_DEFAULT_QUOTA_OPENNEBULA));
-		Mockito.when(user.xpath("VM_QUOTA/VM/MEMORY_USED")).thenReturn(memUsed);
+		Mockito.when(group.xpath("VM_QUOTA/VM/MEMORY_USED")).thenReturn(memUsed);
 
 		// mocking clientFactory
 		String accessId = PluginHelper.USERNAME + ":" + PluginHelper.USER_PASS;
 		OpenNebulaClientFactory clientFactory = Mockito.mock(OpenNebulaClientFactory.class);
 		Mockito.when(clientFactory.createClient(accessId, OPEN_NEBULA_URL)).thenReturn(oneClient);
 		Mockito.when(clientFactory.createUser(oneClient, PluginHelper.USERNAME)).thenReturn(user);
+		Mockito.when(clientFactory.createGroup(Mockito.any(Client.class), Mockito.anyInt())).thenReturn(group);
 
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
 
@@ -597,21 +600,24 @@ public class TestComputeOpenNebula {
 		// mocking opennebula structures
 		Client oneClient = Mockito.mock(Client.class);
 		User user = Mockito.mock(User.class);
-		Mockito.when(user.xpath("VM_QUOTA/VM/CPU")).thenReturn(
+		Group group = Mockito.mock(Group.class);
+		Mockito.when(user.xpath("GROUPS/ID")).thenReturn("5");
+		Mockito.when(group.xpath("VM_QUOTA/VM/CPU")).thenReturn(
 				String.valueOf(OpenNebulaComputePlugin.VALUE_UNLIMITED_QUOTA_OPENNEBULA));
-		Mockito.when(user.xpath("VM_QUOTA/VM/CPU_USED")).thenReturn(cpuUsed);
-		Mockito.when(user.xpath("VM_QUOTA/VM/VMS")).thenReturn(
+		Mockito.when(group.xpath("VM_QUOTA/VM/CPU_USED")).thenReturn(cpuUsed);
+		Mockito.when(group.xpath("VM_QUOTA/VM/VMS")).thenReturn(
 				String.valueOf(OpenNebulaComputePlugin.VALUE_UNLIMITED_QUOTA_OPENNEBULA));
-		Mockito.when(user.xpath("VM_QUOTA/VM/VMS_USED")).thenReturn(vmsUsed);		
-		Mockito.when(user.xpath("VM_QUOTA/VM/MEMORY")).thenReturn(
+		Mockito.when(group.xpath("VM_QUOTA/VM/VMS_USED")).thenReturn(vmsUsed);		
+		Mockito.when(group.xpath("VM_QUOTA/VM/MEMORY")).thenReturn(
 				String.valueOf(OpenNebulaComputePlugin.VALUE_UNLIMITED_QUOTA_OPENNEBULA));
-		Mockito.when(user.xpath("VM_QUOTA/VM/MEMORY_USED")).thenReturn(memUsed);
+		Mockito.when(group.xpath("VM_QUOTA/VM/MEMORY_USED")).thenReturn(memUsed);
 
 		// mocking clientFactory
 		String accessId = PluginHelper.USERNAME + ":" + PluginHelper.USER_PASS;
 		OpenNebulaClientFactory clientFactory = Mockito.mock(OpenNebulaClientFactory.class);
 		Mockito.when(clientFactory.createClient(accessId, OPEN_NEBULA_URL)).thenReturn(oneClient);
 		Mockito.when(clientFactory.createUser(oneClient, PluginHelper.USERNAME)).thenReturn(user);
+		Mockito.when(clientFactory.createGroup(Mockito.any(Client.class), Mockito.anyInt())).thenReturn(group);
 
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
 
@@ -701,16 +707,19 @@ public class TestComputeOpenNebula {
 		// mocking opennebula structures
 		Client oneClient = Mockito.mock(Client.class);
 		User user = Mockito.mock(User.class);
-		Mockito.when(user.xpath("VM_QUOTA/VM/CPU")).thenReturn("");
-		Mockito.when(user.xpath("VM_QUOTA/VM/CPU_USED")).thenReturn("");
-		Mockito.when(user.xpath("VM_QUOTA/VM/MEMORY")).thenReturn("");
-		Mockito.when(user.xpath("VM_QUOTA/VM/MEMORY_USED")).thenReturn("");
+		Group group = Mockito.mock(Group.class);
+		Mockito.when(user.xpath("GROUPS/ID")).thenReturn("5");
+		Mockito.when(group.xpath("VM_QUOTA/VM/CPU")).thenReturn("");
+		Mockito.when(group.xpath("VM_QUOTA/VM/CPU_USED")).thenReturn("");
+		Mockito.when(group.xpath("VM_QUOTA/VM/MEMORY")).thenReturn("");
+		Mockito.when(group.xpath("VM_QUOTA/VM/MEMORY_USED")).thenReturn("");
 
 		// mocking clientFactory
 		String accessId = PluginHelper.USERNAME + ":" + PluginHelper.USER_PASS;
 		OpenNebulaClientFactory clientFactory = Mockito.mock(OpenNebulaClientFactory.class);
 		Mockito.when(clientFactory.createClient(accessId, OPEN_NEBULA_URL)).thenReturn(oneClient);
 		Mockito.when(clientFactory.createUser(oneClient, PluginHelper.USERNAME)).thenReturn(user);
+		Mockito.when(clientFactory.createGroup(Mockito.any(Client.class), Mockito.anyInt())).thenReturn(group);
 
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
 
