@@ -86,24 +86,26 @@ public class OCCIComputePlugin implements ComputePlugin {
 		Map<String, String> imageProperties = getImageProperties(properties);
 
 		if (imageProperties == null || imageProperties.isEmpty()) {
-			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IMAGES_NOT_SPECIFIED);
+			LOGGER.warn(ResponseConstants.IMAGES_NOT_SPECIFIED);
 		}
-
+	
 		for (String imageName : imageProperties.keySet()) {
 			fogTermToCategory.put(imageName, new Category(imageProperties.get(imageName), osScheme,
 					RequestConstants.MIXIN_CLASS));
 			ResourceRepository.getInstance().addImageResource(imageName);
-		}
+		}		
 						
-		try {
-			Map<String, String> templateProperties = getTemplateProperties(properties);
-			
-			for (String templateName : templateProperties.keySet()) {
-				fogTermToCategory.put(templateName, new Category(templateProperties.get(templateName),
-						templateScheme, RequestConstants.MIXIN_CLASS));
-				ResourceRepository.getInstance().addImageResource(templateName);
-			}					
-		} catch (Exception e) {}
+		Map<String, String> templateProperties = getTemplateProperties(properties);
+		
+		if (templateProperties == null || templateProperties.isEmpty()) {
+			LOGGER.warn(ResponseConstants.TEMPLATE_NOT_SPECIFIED);
+		}
+		
+		for (String templateName : templateProperties.keySet()) {
+			fogTermToCategory.put(templateName, new Category(templateProperties.get(templateName),
+					templateScheme, RequestConstants.MIXIN_CLASS));
+			ResourceRepository.getInstance().addImageResource(templateName);
+		}					
 		
 		fogTermToCategory.put(
 				RequestConstants.SMALL_TERM,
@@ -381,14 +383,9 @@ public class OCCIComputePlugin implements ComputePlugin {
 		return osScheme;
 	}	
 	
-//	public void setClient(DefaultHttpClient client) {
 	public void setClient(HttpClient client) {
 		this.client = client;
-	}
-	
-//	public void setClient(HttpClient client) {
-//		
-//	}
+	} 
 	
 	protected class Response {
 
