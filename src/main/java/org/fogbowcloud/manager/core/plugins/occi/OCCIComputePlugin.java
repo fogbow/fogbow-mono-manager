@@ -63,9 +63,7 @@ public class OCCIComputePlugin implements ComputePlugin {
 	public static final String COMPUTE_ENDPOINT = "/compute/";
 	protected String oCCIEndpoint;
 	protected String computeOCCIEndpoint;
-//	private DefaultHttpClient client;
-	private HttpClient client;
-	private final static String COMPUTE_OCCI_TEMPLATE_PREFIX = "compute_occi_template_name_";
+	private HttpClient client;	
 
 	protected static final Logger LOGGER = Logger.getLogger(OCCIComputePlugin.class);
 
@@ -243,8 +241,8 @@ public class OCCIComputePlugin implements ComputePlugin {
 
 		for (Object propName : properties.keySet()) {
 			String propNameStr = (String) propName;
-			if (propNameStr.startsWith(COMPUTE_OCCI_TEMPLATE_PREFIX)) {
-				templateProperties.put(propNameStr.substring(COMPUTE_OCCI_TEMPLATE_PREFIX.length()),
+			if (propNameStr.startsWith(OpenStackConfigurationConstants.COMPUTE_OCCI_TEMPLATE_PREFIX)) {
+				templateProperties.put(propNameStr.substring(OpenStackConfigurationConstants.COMPUTE_OCCI_TEMPLATE_PREFIX.length()),
 						properties.getProperty(propNameStr));
 			}
 		}
@@ -383,9 +381,14 @@ public class OCCIComputePlugin implements ComputePlugin {
 		return osScheme;
 	}	
 	
+//	public void setClient(DefaultHttpClient client) {
 	public void setClient(HttpClient client) {
 		this.client = client;
 	}
+	
+//	public void setClient(HttpClient client) {
+//		
+//	}
 	
 	protected class Response {
 

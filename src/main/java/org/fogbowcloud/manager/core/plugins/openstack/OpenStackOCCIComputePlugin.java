@@ -136,7 +136,11 @@ public class OpenStackOCCIComputePlugin extends OCCIComputePlugin{
 			if (convertToOcci) {
 				convertRequestToOcci(request, requestHeaders);				
 			}
-			
+					
+			if (requestHeaders.getValuesArray("X-auth-token").length == 1
+					&& requestHeaders.getValuesArray("X-Auth-Token").length == 1) {
+				requestHeaders.removeFirst("X-Auth-Token");
+			}
 			proxiedRequest.getAttributes().put("org.restlet.http.headers", requestHeaders);
 			
 			clienteForBypass.handle(proxiedRequest, response);									

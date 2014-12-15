@@ -67,7 +67,7 @@ public class QueryServerResource extends ServerResource {
 				|| req.getHeaders().getFirst(HeaderUtils.normalize(OCCIHeaders.X_AUTH_TOKEN)) == null) {
 			req.getHeaders().add(new Header(OCCIHeaders.X_AUTH_TOKEN, authToken));
 		}
-		getRequestAttributes().put(OCCIHeaders.X_AUTH_TOKEN, authToken);
+
 		application.bypass(req, response);			
 
 		if (response.getStatus().getCode() == HttpStatus.SC_OK) {
