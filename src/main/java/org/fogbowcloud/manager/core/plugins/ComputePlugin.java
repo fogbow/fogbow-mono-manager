@@ -25,4 +25,9 @@ public interface ComputePlugin {
 	public ResourcesInfo getResourcesInfo(Token token);
 	
 	public void bypass(Request request, Response response);
+
+	public void uploadImage(Token token, String imagePath, String imageName, Map<String, String> tags);
+	
+	public String searchImage(Token token, Map<String, String> tags);
+	
 }

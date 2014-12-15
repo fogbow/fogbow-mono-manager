@@ -519,4 +519,17 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		// delete message does not have message
 		checkStatusResponse(response, "");
 	}
+
+	@Override
+	public void uploadImage(Token token, String imagePath, String imageName,
+			Map<String, String> tags) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public String searchImage(Token token, Map<String, String> tags) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }
