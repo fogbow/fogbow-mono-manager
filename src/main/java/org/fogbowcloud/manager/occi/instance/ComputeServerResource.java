@@ -8,15 +8,15 @@ import java.util.Map;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpStatus;
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.occi.OCCIApplication;
-import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.HeaderUtils;
 import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.Resource;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
-import org.fogbowcloud.manager.occi.request.Request;
+import org.restlet.Request;
 import org.restlet.Response;
 import org.restlet.data.MediaType;
 import org.restlet.engine.adapter.HttpRequest;
@@ -66,7 +66,7 @@ public class ComputeServerResource extends ServerResource {
 			throw new OCCIException(ErrorType.NOT_ACCEPTABLE,
 					ResponseConstants.ACCEPT_NOT_ACCEPTABLE);
 			
-		}
+		}		
 
 		LOGGER.info("Getting instance " + instanceId);
 		if (acceptContent.size() == 0 || acceptContent.contains(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE)) {
@@ -86,8 +86,12 @@ public class ComputeServerResource extends ServerResource {
 				return new StringRepresentation(instance.toOCCIMessageFormatDetails(),
 						MediaType.TEXT_PLAIN);
 			} catch (OCCIException e) {
-				Response response = new Response(getRequest());
-				application.bypass(getRequest(), response);
+				Response response = new Response(getRequest());			
+				
+				normilizeURIForBypass(req);
+				
+				application.bypass(req, response); 			
+				
 				// if it is a local instance created out of fogbow
 				if (response.getStatus().getCode() == HttpStatus.SC_OK) {
 					try {
@@ -100,6 +104,15 @@ public class ComputeServerResource extends ServerResource {
 		}
 		throw new OCCIException(ErrorType.NOT_ACCEPTABLE,
 				ResponseConstants.ACCEPT_NOT_ACCEPTABLE);
+	}
+
+	public static void normilizeURIForBypass(HttpRequest req) {
+		String path = req.getResourceRef().getPath();
+		if (path != null && path.contains(org.fogbowcloud.manager.occi.request.Request.SEPARATOR_GLOBAL_ID)) {
+			String[] partOfInstanceId = path.split(org.fogbowcloud.manager.occi.request.Request.SEPARATOR_GLOBAL_ID);
+			path = partOfInstanceId[0];
+		}		
+		req.getResourceRef().setPath(path);
 	}
 	
 	private List<Instance> filterInstances(List<Instance> allInstances,
@@ -145,15 +158,13 @@ public class ComputeServerResource extends ServerResource {
 	}
 
 	private List<Instance> getInstances(OCCIApplication application, String authToken) {
-		if (authToken.contains("Basic ")) {
-			authToken = new String(Base64.decodeBase64(authToken.replace("Basic ", "")));			
-		}
+		authToken = normalizeAuthToken(authToken);
 		List<Instance> allInstances = application.getInstances(authToken);
 
 		//Adding local instances created out of fogbow
 		Response response = new Response(getRequest());
 		application.bypass(getRequest(), response);
-		for (Instance instance : getInstancesCreatedOutOfFogbow(response)) {
+		for (Instance instance : getInstancesCreatedOutOfFogbow(response, application)) {
 			if (!allInstances.contains(instance)){
 				allInstances.add(instance);
 			}
@@ -161,7 +172,15 @@ public class ComputeServerResource extends ServerResource {
 		return allInstances;
 	}
 
-	private List<Instance> getInstancesCreatedOutOfFogbow(Response response) {
+	private String normalizeAuthToken(String authToken) {
+		if (authToken.contains("Basic ")) {
+			authToken = new String(Base64.decodeBase64(authToken.replace("Basic ", "")));			
+		}
+		return authToken;
+	}
+
+	private List<Instance> getInstancesCreatedOutOfFogbow(Response response,
+			OCCIApplication application) {
 		List<Instance> localInstances = new ArrayList<Instance>();
 		if (response.getStatus().getCode() == HttpStatus.SC_OK){
 			try {
@@ -172,7 +191,10 @@ public class ComputeServerResource extends ServerResource {
 						String[] tokens = instanceLocations.trim().split(HeaderUtils.X_OCCI_LOCATION_PREFIX);
 						for (int i = 0; i < tokens.length; i++) {
 							if (!tokens[i].equals("")) {
-								localInstances.add(new Instance(normalizeInstanceId(tokens[i].trim())));
+//								localInstances.add(new Instance(normalizeInstanceId(tokens[i].trim())));
+								localInstances.add(new Instance(normalizeInstanceId(tokens[i].trim()
+								+ org.fogbowcloud.manager.occi.request.Request.SEPARATOR_GLOBAL_ID
+								+ application.getProperties().getProperty(ConfigurationConstants.XMPP_JID_KEY))));
 							}
 						}
 					}
@@ -217,6 +239,7 @@ public class ComputeServerResource extends ServerResource {
 			LOGGER.info("Removing all instances of token :" + authToken);
 			return removeIntances(application, authToken);
 		}
+		
 		LOGGER.info("Removing instance " + instanceId);		
 		return removeInstance(application, authToken, instanceId);
 	}
@@ -227,8 +250,12 @@ public class ComputeServerResource extends ServerResource {
 		} catch (OCCIException e) {
 			//The request will be bypassed only if the error was not found
 			if (e.getStatus().getCode() == HttpStatus.SC_NOT_FOUND){
-				Response response = new Response(getRequest());
-				application.bypass(getRequest(), response);
+				HttpRequest req = (HttpRequest) getRequest();
+				Response response = new Response(req);
+				
+				ComputeServerResource.normilizeURIForBypass(req);
+				
+				application.bypass(req, response);
 				//if it is a local instance created outside fogbow
 				if (response.getStatus().getCode() == HttpStatus.SC_OK){
 					return ResponseConstants.OK;

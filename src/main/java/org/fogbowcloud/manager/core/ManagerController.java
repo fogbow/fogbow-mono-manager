@@ -207,13 +207,20 @@ public class ManagerController {
 			if (instanceId == null) {
 				continue;
 			}
-			try {
-				instances.add(new Instance(request.getInstanceId()));
+			try {			
+				instances.add(generateInstanceWithGlobalId(request.getInstanceId(), request.getMemberId()));
 			} catch (Exception e) {
 				LOGGER.warn("Exception thown while getting instance " + instanceId + ".", e);
 			}
 		}
 		return instances;
+	}
+	
+	public Instance generateInstanceWithGlobalId(String instanceId, String memberId) {
+		if (memberId == null) {
+			memberId = this.properties.get(ConfigurationConstants.XMPP_JID_KEY).toString();
+		}
+		return new Instance(instanceId + Request.SEPARATOR_GLOBAL_ID + memberId);
 	}
 
 	public Instance getInstance(String accessId, String instanceId) {
@@ -283,8 +290,16 @@ public class ManagerController {
 			if (instanceId == null) {
 				continue;
 			}
-			removeInstance(accessId, instanceId, request);
+	        removeInstance(accessId, normalizeInstanceId(instanceId), request);
 		}
+	}
+	
+	public String normalizeInstanceId(String instanceId) {
+		if (instanceId.contains(Request.SEPARATOR_GLOBAL_ID)) {
+			String[] partsInstanceId = instanceId.split(Request.SEPARATOR_GLOBAL_ID);
+			instanceId = partsInstanceId[0];
+		}
+		return instanceId;
 	}
 
 	public void removeInstance(String accessId, String instanceId) {
@@ -339,7 +354,8 @@ public class ManagerController {
 		LOGGER.debug("Getting instance " + instanceId + " of user " + user);
 		List<Request> userRequests = requests.getAll();
 		for (Request request : userRequests) {
-			if (instanceId.equals(request.getInstanceId())) {
+            if (instanceId.startsWith(request.getInstanceId())
+                    && instanceId.endsWith(request.getMemberId())) {
 				if (!request.getToken().getUser().equals(user)) {
 					throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 				}
@@ -350,7 +366,11 @@ public class ManagerController {
 	}
 
 	private boolean isLocal(Request request) {
-		return request.getMemberId() == null;
+		if (request.getMemberId() != null
+				&& request.getMemberId().equals(properties.get(ConfigurationConstants.XMPP_JID_KEY))) {
+			return true;
+		}
+		return false;
 	}
 
 	public Request getRequest(String accessId, String requestId) {
@@ -634,7 +654,7 @@ public class ManagerController {
 	}
 
 	private boolean createLocalInstance(Request request) {
-		request.setMemberId(null);
+		request.setMemberId(this.properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
 		String instanceId = null;
 		LOGGER.info("Submiting local request " + request);		
 		

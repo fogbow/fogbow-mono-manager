@@ -560,9 +560,11 @@ public class TestManagerController {
 		Request request1 = new Request("id1", managerTestHelper.getDefaultToken(), null, null);
 		request1.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
 		request1.setState(RequestState.DELETED);
+		request1.setMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		Request request2 = new Request("id2", managerTestHelper.getDefaultToken(), null, null);
 		request2.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
 		request2.setState(RequestState.DELETED);
+		request2.setMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 
 		RequestRepository requestRepository = new RequestRepository();
 		requestRepository.addRequest(managerTestHelper.getDefaultToken().getUser(), request1);
@@ -747,9 +749,11 @@ public class TestManagerController {
 		Request request1 = new Request("id1", managerTestHelper.getDefaultToken(), null, null);
 		request1.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
 		request1.setState(RequestState.FULFILLED);
+		request1.setMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		Request request2 = new Request("id2", managerTestHelper.getDefaultToken(), null, null);
 		request2.setInstanceId(SECOND_INSTANCE_ID);
 		request2.setState(RequestState.FULFILLED);
+		request2.setMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 
 		RequestRepository requestRepository = new RequestRepository();
 		requestRepository.addRequest(managerTestHelper.getDefaultToken().getUser(), request1);
@@ -862,7 +866,7 @@ public class TestManagerController {
 		Assert.assertEquals(DefaultDataTestHelper.USER_NAME, requests.get(0).getToken().getUser());
 		Assert.assertEquals(DefaultDataTestHelper.INSTANCE_ID, requests.get(0).getInstanceId());
 		Assert.assertEquals(RequestState.FULFILLED, requests.get(0).getState());
-		Assert.assertNull(requests.get(0).getMemberId());
+		Assert.assertNotNull(requests.get(0).getMemberId());
 	}
 
 	@Test
@@ -880,7 +884,7 @@ public class TestManagerController {
 		Assert.assertEquals(1, requests.size());
 		Assert.assertEquals(DefaultDataTestHelper.INSTANCE_ID, requests.get(0).getInstanceId());
 		Assert.assertEquals(RequestState.FULFILLED, requests.get(0).getState());
-		Assert.assertNull(requests.get(0).getMemberId());
+		Assert.assertNotNull(requests.get(0).getMemberId());
 
 		// updating compute mock
 		Mockito.doNothing().when(managerTestHelper.getComputePlugin()).removeInstance(
@@ -917,7 +921,7 @@ public class TestManagerController {
 		Assert.assertEquals(RequestType.PERSISTENT.getValue(),
 				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
 		Assert.assertEquals(RequestState.FULFILLED, requests.get(0).getState());
-		Assert.assertNull(requests.get(0).getMemberId());
+		Assert.assertNotNull(requests.get(0).getMemberId());
 
 		// updating compute mock
 		Mockito.reset(managerTestHelper.getComputePlugin());
@@ -966,7 +970,7 @@ public class TestManagerController {
 		Assert.assertEquals(RequestType.PERSISTENT.getValue(),
 				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
 		Assert.assertEquals(RequestState.FULFILLED, requests.get(0).getState());
-		Assert.assertNull(requests.get(0).getMemberId());
+		Assert.assertNotNull(requests.get(0).getMemberId());
 
 		// updating compute mock
 		Mockito.reset(managerTestHelper.getComputePlugin());
@@ -1008,7 +1012,7 @@ public class TestManagerController {
 		Assert.assertEquals(RequestType.PERSISTENT.getValue(),
 				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
 		Assert.assertEquals(RequestState.FULFILLED, requests.get(0).getState());
-		Assert.assertNull(requests.get(0).getMemberId());
+		Assert.assertNotNull(requests.get(0).getMemberId());
 	}
 
 	@Test
@@ -1078,7 +1082,7 @@ public class TestManagerController {
 		Assert.assertEquals(RequestType.PERSISTENT.getValue(),
 				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
 		Assert.assertEquals(RequestState.FULFILLED, requests.get(0).getState());
-		Assert.assertNull(requests.get(0).getMemberId());
+		Assert.assertNotNull(requests.get(0).getMemberId());
 
 		// waiting expiration time
 		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD);
@@ -1210,7 +1214,7 @@ public class TestManagerController {
 				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
 		Assert.assertEquals(RequestState.FULFILLED, requests.get(0).getState());
 		Assert.assertEquals(DefaultDataTestHelper.INSTANCE_ID, requests.get(0).getInstanceId());
-		Assert.assertNull(requests.get(0).getMemberId());
+		Assert.assertNotNull(requests.get(0).getMemberId());
 	}
 
 	@Test
@@ -1266,7 +1270,7 @@ public class TestManagerController {
 				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
 		Assert.assertEquals(RequestState.FULFILLED, requests.get(0).getState());
 		Assert.assertEquals(DefaultDataTestHelper.INSTANCE_ID, requests.get(0).getInstanceId());
-		Assert.assertNull(requests.get(0).getMemberId());
+		Assert.assertNotNull(requests.get(0).getMemberId());
 	}
 
 	@Test
@@ -1310,7 +1314,7 @@ public class TestManagerController {
 				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
 		Assert.assertEquals(RequestState.FULFILLED, requests.get(0).getState());
 		Assert.assertEquals(DefaultDataTestHelper.INSTANCE_ID, requests.get(0).getInstanceId());
-		Assert.assertNull(requests.get(0).getMemberId());
+		Assert.assertNotNull(requests.get(0).getMemberId());
 
 		// updating compute mock
 		Mockito.when(
@@ -1378,7 +1382,7 @@ public class TestManagerController {
 				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
 		Assert.assertEquals(RequestState.FULFILLED, requests.get(0).getState());
 		Assert.assertEquals(DefaultDataTestHelper.INSTANCE_ID, requests.get(0).getInstanceId());
-		Assert.assertNull(requests.get(0).getMemberId());
+		Assert.assertNotNull(requests.get(0).getMemberId());
 
 		// updating compute mock
 		Mockito.when(

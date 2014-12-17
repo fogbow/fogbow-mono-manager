@@ -141,7 +141,9 @@ public class RequestServerResource extends ServerResource {
 						+ request.getState() + "; " + RequestAttribute.TYPE.getValue() + "="
 						+ request.getAttValue(RequestAttribute.TYPE.getValue()) + "; "
 						+ RequestAttribute.INSTANCE_ID.getValue() + "="
-						+ request.getInstanceId() + "\n";
+//						+ request.getInstanceId() + "\n";
+						+ request.getInstanceGlobalId() + "\n";
+						
 			}else {			
 				result += requestEndpoint + request.getId() + "\n";
 			}
@@ -181,7 +183,9 @@ public class RequestServerResource extends ServerResource {
 		}
 		
 		attToOutput.put(RequestAttribute.STATE.getValue(), request.getState().getValue());
-		attToOutput.put(RequestAttribute.INSTANCE_ID.getValue(), request.getInstanceId());
+//		attToOutput.put(RequestAttribute.INSTANCE_ID.getValue(), request.getInstanceId());
+		attToOutput.put(RequestAttribute.INSTANCE_ID.getValue(), request.getInstanceGlobalId());
+		
 		
 		for (String attName : attToOutput.keySet()) {
 			requestOCCIFormat += OCCIHeaders.X_OCCI_ATTRIBUTE + ": " + attName + "=\""
@@ -351,7 +355,8 @@ public class RequestServerResource extends ServerResource {
 						+ RequestAttribute.STATE.getValue() + "=" + request.getState() + "; "
 						+ RequestAttribute.TYPE.getValue() + "="
 						+ request.getAttValue(RequestAttribute.TYPE.getValue()) + "; "
-						+ RequestAttribute.INSTANCE_ID.getValue() + "=" + request.getInstanceId()
+//						+ RequestAttribute.INSTANCE_ID.getValue() + "=" + request.getInstanceId()
+						+ RequestAttribute.INSTANCE_ID.getValue() + "=" + request.getInstanceGlobalId()
 						+ "\n";
 			}else {			
 				response += prefixOCCILocation + request.getId() + "\n";

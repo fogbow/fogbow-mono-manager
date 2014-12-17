@@ -37,9 +37,9 @@ import org.restlet.Response;
 
 public class TestGetCompute {
 
-	private static final String INSTANCE_1_ID = "test1";
-	private static final String INSTANCE_2_ID = "test2";
-	private static final String INSTANCE_3_ID_WITHOUT_USER = "test3";
+	private static final String INSTANCE_1_ID = "test1" + "@" + OCCITestHelper.MEMBER_ID;
+	private static final String INSTANCE_2_ID = "test2" + "@" + OCCITestHelper.MEMBER_ID;
+	private static final String INSTANCE_3_ID_WITHOUT_USER = "test3" + "@" + OCCITestHelper.MEMBER_ID;
 
 	private ComputePlugin computePlugin;
 	private IdentityPlugin identityPlugin;
@@ -76,13 +76,16 @@ public class TestGetCompute {
 				new HashMap<String, String>());
 		Request request1 = new Request("1", token, null, null);
 		request1.setInstanceId(INSTANCE_1_ID);
+		request1.setMemberId(OCCITestHelper.MEMBER_ID);
 		requests.add(request1);
 		Request request2 = new Request("2", token, null, null);
 		request2.setInstanceId(INSTANCE_2_ID);
+		request2.setMemberId(OCCITestHelper.MEMBER_ID);
 		requests.add(request2);
 		Request request3 = new Request("3", new Token("token", "user",
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), null, null);
 		request3.setInstanceId(INSTANCE_3_ID_WITHOUT_USER);
+		request3.setMemberId(OCCITestHelper.MEMBER_ID);
 		requests.add(request3);
 
 		authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);

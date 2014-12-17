@@ -13,6 +13,8 @@ import org.fogbowcloud.manager.occi.core.Token;
 
 public class Request {
 
+	public static String SEPARATOR_GLOBAL_ID = "@";
+	
 	private String id;
 	private Token token;
 	private String instanceId;
@@ -43,6 +45,13 @@ public class Request {
 	}
 
 	public String getInstanceId() {
+		return instanceId;
+	}
+	
+	public String getInstanceGlobalId() {
+		if (instanceId != null) {
+			return instanceId + SEPARATOR_GLOBAL_ID + memberId;
+		}
 		return instanceId;
 	}
 

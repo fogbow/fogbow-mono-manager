@@ -40,6 +40,7 @@ import org.restlet.data.Protocol;
 
 public class OCCITestHelper {
 
+	public static final String MEMBER_ID = "memberId";
 	public static final int ENDPOINT_PORT = PluginHelper.getAvailablePort();
 	public static final String ACCESS_TOKEN = "HgjhgYUDFTGBgrbelihBDFGB40uyrb";
 	public static final String INVALID_TOKEN = "invalid-token";
@@ -62,6 +63,7 @@ public class OCCITestHelper {
 		component.getServers().add(Protocol.HTTP, ENDPOINT_PORT);
 
 		Properties properties = new Properties();
+		properties.put(ConfigurationConstants.XMPP_JID_KEY, MEMBER_ID);
 		properties.put(ConfigurationConstants.SSH_PRIVATE_HOST_KEY,
 				DefaultDataTestHelper.SERVER_HOST);
 		properties.put(ConfigurationConstants.SSH_HOST_HTTP_PORT_KEY,
@@ -117,6 +119,7 @@ public class OCCITestHelper {
 		component.getServers().add(Protocol.HTTP, ENDPOINT_PORT);
 
 		Properties properties = new Properties();
+		properties.put(ConfigurationConstants.XMPP_JID_KEY, MEMBER_ID);
 		properties.put(ConfigurationConstants.SSH_PRIVATE_HOST_KEY,
 				DefaultDataTestHelper.SERVER_HOST);
 		properties.put(ConfigurationConstants.SSH_HOST_HTTP_PORT_KEY,

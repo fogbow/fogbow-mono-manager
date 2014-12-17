@@ -34,13 +34,15 @@ public class TestOCCIApplication {
 
 	private OCCIApplication occiApplication;
 	private Map<String, String> xOCCIAtt;
-	ManagerController managerFacade;
+	private ManagerController managerFacade;
 
 	@SuppressWarnings("unchecked")
 	@Before
 	public void setUp() {
 		Properties properties = new Properties();
 		properties.put("scheduler_period", SCHEDULER_PERIOD.toString());
+		properties.put(ConfigurationConstants.XMPP_JID_KEY,
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		properties.put(ConfigurationConstants.SSH_PRIVATE_HOST_KEY,
 				DefaultDataTestHelper.SERVER_HOST);
 		properties.put(ConfigurationConstants.SSH_HOST_HTTP_PORT_KEY,

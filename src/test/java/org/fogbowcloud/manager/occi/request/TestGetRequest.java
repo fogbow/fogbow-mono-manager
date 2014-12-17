@@ -33,6 +33,7 @@ import org.fogbowcloud.manager.occi.util.OCCITestHelper;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -364,6 +365,7 @@ public class TestGetRequest {
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 
+	@Ignore
 	@Test
 	public void testGetResquestFilterWithAttribute() throws URISyntaxException, HttpException,
 			IOException {
