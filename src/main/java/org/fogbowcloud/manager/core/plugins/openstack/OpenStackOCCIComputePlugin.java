@@ -111,7 +111,6 @@ public class OpenStackOCCIComputePlugin extends OCCIComputePlugin{
 			// forwarding headers from cloud to response
 			Series<org.restlet.engine.header.Header> requestHeaders = (Series<org.restlet.engine.header.Header>) request
 					.getAttributes().get("org.restlet.http.headers");			
-
 			
 			boolean convertToOcci = false;
 			for (org.restlet.engine.header.Header header : requestHeaders) {
@@ -126,6 +125,8 @@ public class OpenStackOCCIComputePlugin extends OCCIComputePlugin{
 						ClientInfo clientInfo = null;
 						if (headerAccept.contains(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE)) {
 							clientInfo = new ClientInfo(MediaType.TEXT_PLAIN);
+						} else if (headerAccept.contains(OCCIHeaders.TEXT_URI_LIST_CONTENT_TYPE)) {
+							clientInfo = new ClientInfo(MediaType.TEXT_PLAIN);
 						} else {
 							clientInfo = new ClientInfo(new MediaType(headerAccept));
 						}
@@ -137,6 +138,10 @@ public class OpenStackOCCIComputePlugin extends OCCIComputePlugin{
 				convertRequestToOcci(request, requestHeaders);				
 			}
 			
+			if (requestHeaders.getValuesArray(normalizeInstanceId(OCCIHeaders.X_AUTH_TOKEN)).length == 1
+					&& requestHeaders.getValuesArray(OCCIHeaders.X_AUTH_TOKEN).length == 1) {
+				requestHeaders.removeFirst(OCCIHeaders.X_AUTH_TOKEN);
+			}
 			proxiedRequest.getAttributes().put("org.restlet.http.headers", requestHeaders);
 			
 			clienteForBypass.handle(proxiedRequest, response);									

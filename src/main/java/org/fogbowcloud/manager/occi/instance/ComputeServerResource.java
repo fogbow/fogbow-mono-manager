@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpStatus;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.occi.OCCIApplication;
@@ -144,6 +145,9 @@ public class ComputeServerResource extends ServerResource {
 	}
 
 	private List<Instance> getInstances(OCCIApplication application, String authToken) {
+		if (authToken.contains("Basic ")) {
+			authToken = new String(Base64.decodeBase64(authToken.replace("Basic ", "")));			
+		}
 		List<Instance> allInstances = application.getInstances(authToken);
 
 		//Adding local instances created out of fogbow

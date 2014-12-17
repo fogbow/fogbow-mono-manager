@@ -15,7 +15,9 @@ public class OpenStackConfigurationConstants {
 	public static final String COMPUTE_OCCI_RESOURCE_SCHEME_KEY = "compute_occi_resource_scheme";
 
 	// images prefix
-	public static final String COMPUTE_OCCI_IMAGE_PREFIX = "compute_occi_image_";
+	public static final String COMPUTE_OCCI_IMAGE_PREFIX = "compute_occi_image_";	
+	// template prefix
+	public final static String COMPUTE_OCCI_TEMPLATE_PREFIX = "compute_occi_template_name_";
 
 	// network
 	public static final String COMPUTE_OCCI_NETWORK_KEY = "compute_occi_network_id";

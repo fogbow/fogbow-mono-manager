@@ -22,6 +22,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.DefaultHttpResponseFactory;
 import org.apache.http.message.BasicStatusLine;
+import org.fogbowcloud.manager.core.plugins.opennebula.OneConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.opennebula.OpenNebulaOCCIComputePlugin;
 import org.fogbowcloud.manager.core.plugins.openstack.OpenStackConfigurationConstants;
 import org.fogbowcloud.manager.occi.core.Category;
@@ -38,6 +39,7 @@ import org.mockito.Mockito;
 
 public class TestComputeOpenNebulaOCCI {
 
+	private static final String FOGBOW_LINUX_X86 = "fogbow-linux-x86-tlp";
 	private static final String PUBLIC_KEY = "public-key";
 	private static final String UUID_CIRROS0_3_2_1 = "uuid_cirros0_3_2_1";
 	private static final String DEFAULT_URL = "http://localhost:01234/";
@@ -46,27 +48,37 @@ public class TestComputeOpenNebulaOCCI {
 	private OpenNebulaOCCIComputePlugin openNebulaOCCIComputePlugin;
 	private HttpUriRequestMatcher expectedRequest;
 	private HttpClient httpClient;
-	
+
 	@Before
 	public void setUp() throws HttpException, IOException {
 		Properties properties = new Properties();
-		properties.put(OpenStackConfigurationConstants.COMPUTE_OCCI_INSTANCE_SCHEME_KEY, OCCIComputeApplication.INSTANCE_SCHEME);
-		properties.put(OpenStackConfigurationConstants.COMPUTE_OCCI_OS_SCHEME_KEY, OCCIComputeApplication.OS_SCHEME);
-		properties.put(OpenStackConfigurationConstants.COMPUTE_OCCI_RESOURCE_SCHEME_KEY, OCCIComputeApplication.RESOURCE_SCHEME);
-		properties.put(OpenStackConfigurationConstants.COMPUTE_OCCI_FLAVOR_SMALL_KEY, OCCIComputeApplication.SMALL_FLAVOR_TERM);
-		properties.put(OpenStackConfigurationConstants.COMPUTE_OCCI_FLAVOR_MEDIUM_KEY, OCCIComputeApplication.MEDIUM_FLAVOR_TERM);
-		properties.put(OpenStackConfigurationConstants.COMPUTE_OCCI_FLAVOR_LARGE_KEY, OCCIComputeApplication.MEDIUM_FLAVOR_TERM);
-		properties.put(OpenStackConfigurationConstants.COMPUTE_OCCI_IMAGE_PREFIX + PluginHelper.LINUX_X86_TERM, PluginHelper.CIRROS_IMAGE_TERM);
-		properties.put(OpenStackConfigurationConstants.COMPUTE_OCCI_IMAGE_PREFIX + PluginHelper.LINUX_X86_TERM, PluginHelper.CIRROS_IMAGE_TERM);
-		properties.put("compute_one_network_id", "5");
-		properties.put("compute_one_image_123", "123");
-		properties.put("compute_one_flavor_small", "{mem=128, cpu=1}");
-		properties.put("compute_one_flavor_medium", "{mem=128, cpu=1}");
-		properties.put("compute_one_flavor_large", "{mem=128, cpu=1}");
-		properties.put("compute_occi_url", DEFAULT_URL);
-		properties.put("compute_occi_template_scheme", "http://occi.localhost/occi/infrastructure/os_tpl#");
-		properties.put("compute_occi_template_name_fogbow-linux-x86", UUID_CIRROS0_3_2_1);
-		
+		properties.put(OpenStackConfigurationConstants.COMPUTE_OCCI_INSTANCE_SCHEME_KEY,
+				OCCIComputeApplication.INSTANCE_SCHEME);
+		properties.put(OpenStackConfigurationConstants.COMPUTE_OCCI_OS_SCHEME_KEY,
+				OCCIComputeApplication.OS_SCHEME);
+		properties.put(OpenStackConfigurationConstants.COMPUTE_OCCI_RESOURCE_SCHEME_KEY,
+				OCCIComputeApplication.RESOURCE_SCHEME);
+		properties.put(OpenStackConfigurationConstants.COMPUTE_OCCI_FLAVOR_SMALL_KEY,
+				OCCIComputeApplication.SMALL_FLAVOR_TERM);
+		properties.put(OpenStackConfigurationConstants.COMPUTE_OCCI_FLAVOR_MEDIUM_KEY,
+				OCCIComputeApplication.MEDIUM_FLAVOR_TERM);
+		properties.put(OpenStackConfigurationConstants.COMPUTE_OCCI_FLAVOR_LARGE_KEY,
+				OCCIComputeApplication.MEDIUM_FLAVOR_TERM);
+		properties.put(OpenStackConfigurationConstants.COMPUTE_OCCI_IMAGE_PREFIX
+				+ PluginHelper.LINUX_X86_TERM, PluginHelper.CIRROS_IMAGE_TERM);
+		properties.put(OpenStackConfigurationConstants.COMPUTE_OCCI_TEMPLATE_SCHEME_KEY,
+				"http://occi.localhost/occi/infrastructure/os_tpl#");
+		properties.put(OpenStackConfigurationConstants.COMPUTE_OCCI_URL_KEY, DEFAULT_URL);
+
+		properties.put(OneConfigurationConstants.COMPUTE_ONE_URL, DEFAULT_URL);
+		properties.put(OneConfigurationConstants.COMPUTE_ONE_SMALL_KEY, "{mem=128, cpu=1}");
+		properties.put(OneConfigurationConstants.COMPUTE_ONE_MEDIUM_KEY, "{mem=128, cpu=1}");
+		properties.put(OneConfigurationConstants.COMPUTE_ONE_LARGE_KEY, "{mem=128, cpu=1}");
+		properties.put(OneConfigurationConstants.COMPUTE_ONE_NETWORK_KEY, "5");
+		properties.put(OneConfigurationConstants.COMPUTE_ONE_IMAGE_PREFIX_KEY + "image1", "image1");
+		properties.put(OpenStackConfigurationConstants.COMPUTE_OCCI_TEMPLATE_PREFIX
+				+ FOGBOW_LINUX_X86, UUID_CIRROS0_3_2_1);
+
 		openNebulaOCCIComputePlugin = new OpenNebulaOCCIComputePlugin(properties);
 		httpClient = Mockito.mock(HttpClient.class);
 		HttpResponseFactory factory = new DefaultHttpResponseFactory();
@@ -77,129 +89,176 @@ public class TestComputeOpenNebulaOCCI {
 
 		openNebulaOCCIComputePlugin.setClient(httpClient);
 	}
-	
+
 	@Test
-	public void testRequestInstance() throws HttpException, IOException, URISyntaxException {		
-		List<Category> requestCategories = new ArrayList<Category>();
-		requestCategories.add(new Category("fogbow_small", RequestConstants.TEMPLATE_RESOURCE_SCHEME, "mixin"));
-		requestCategories.add(new Category("fogbow-linux-x86", RequestConstants.TEMPLATE_OS_SCHEME, "mixin"));
-		Map<String, String> xOCCIAtt = new HashMap<String, String>();
-		
+	public void testRequestInstance() throws HttpException, IOException, URISyntaxException {
 		HttpUriRequest request = new HttpPost(DEFAULT_URL + "/" + COMPUTE_TERM);
-		request.addHeader("Authorization",
+		request.addHeader(OCCIHeaders.AUTHORIZATION,
 				openNebulaOCCIComputePlugin.getAuthorization(ACCESS_TOKEN_ID));
 		request.addHeader(OCCIHeaders.X_AUTH_TOKEN, ACCESS_TOKEN_ID);
-		request.addHeader("Category", UUID_CIRROS0_3_2_1);
-		request.addHeader("X-OCCI-Attribute", OpenNebulaOCCIComputePlugin.DEFAULT_CORE_ID);
-		request.addHeader("X-OCCI-Attribute", OpenNebulaOCCIComputePlugin.DEFAULT_FOGBOW_NAME);
-		
-		expectedRequest = new HttpUriRequestMatcher(request);		
-		
+		request.addHeader(OCCIHeaders.CATEGORY, UUID_CIRROS0_3_2_1);
+		request.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, OpenNebulaOCCIComputePlugin.DEFAULT_CORE_ID);
+		request.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE,
+				OpenNebulaOCCIComputePlugin.DEFAULT_FOGBOW_NAME);
+		expectedRequest = new HttpUriRequestMatcher(request);
+
+		List<Category> requestCategories = new ArrayList<Category>();
+		requestCategories.add(new Category("fogbow_small",
+				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
+		requestCategories.add(new Category(FOGBOW_LINUX_X86, RequestConstants.TEMPLATE_OS_SCHEME,
+				RequestConstants.MIXIN_CLASS));
+		Map<String, String> xOCCIAtt = new HashMap<String, String>();
+
 		Token token = new Token(ACCESS_TOKEN_ID, "user", new Date(), new HashMap<String, String>());
 		try {
-			openNebulaOCCIComputePlugin.requestInstance(token, requestCategories, xOCCIAtt);			
-		} catch (Exception e) {}
-		
-		Mockito.verify(httpClient).execute(Mockito.argThat(expectedRequest));			
+			openNebulaOCCIComputePlugin.requestInstance(token, requestCategories, xOCCIAtt);
+		} catch (Exception e) {
+		}
+
+		Mockito.verify(httpClient).execute(Mockito.argThat(expectedRequest));
 	}
-	
+
 	@Test
-	public void testRequestInstanceWithinPublicKey() throws HttpException, IOException, URISyntaxException {		
+	public void testRequestInstanceWithPublicKeyAndUserData() throws HttpException, IOException,
+			URISyntaxException {
+		String publicKey = "publicKey";
+		HttpUriRequest request = new HttpPost(DEFAULT_URL + "/" + COMPUTE_TERM);
+		request.addHeader(OCCIHeaders.AUTHORIZATION,
+				openNebulaOCCIComputePlugin.getAuthorization(ACCESS_TOKEN_ID));
+		request.addHeader(OCCIHeaders.X_AUTH_TOKEN, ACCESS_TOKEN_ID);
+		request.addHeader(OCCIHeaders.CATEGORY, UUID_CIRROS0_3_2_1);
+		request.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, OpenNebulaOCCIComputePlugin.DEFAULT_CORE_ID);
+		request.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE,
+				OpenNebulaOCCIComputePlugin.DEFAULT_FOGBOW_NAME);
+		request.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, publicKey);
+		request.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, publicKey);
+		expectedRequest = new HttpUriRequestMatcher(request);
+
 		List<Category> requestCategories = new ArrayList<Category>();
-		requestCategories.add(new Category("fogbow_small", RequestConstants.TEMPLATE_RESOURCE_SCHEME, "mixin"));
-		requestCategories.add(new Category("fogbow-linux-x86", RequestConstants.TEMPLATE_OS_SCHEME, "mixin"));
-		requestCategories.add(new Category(RequestConstants.PUBLIC_KEY_TERM
-				+ "; scheme=\"" + RequestConstants.CREDENTIALS_RESOURCE_SCHEME
-				+ "\"; class=\"" + RequestConstants.MIXIN_CLASS + "\""));
+		requestCategories.add(new Category("fogbow_small",
+				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
+		requestCategories.add(new Category(FOGBOW_LINUX_X86, RequestConstants.TEMPLATE_OS_SCHEME,
+				RequestConstants.MIXIN_CLASS));
+		requestCategories.add(new Category(RequestConstants.PUBLIC_KEY_TERM,
+				RequestConstants.CREDENTIALS_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
+		Map<String, String> xOCCIAtt = new HashMap<String, String>();
+		xOCCIAtt.put(RequestAttribute.DATA_PUBLIC_KEY.getValue(), publicKey);
+
+		Token token = new Token(ACCESS_TOKEN_ID, "user", new Date(), new HashMap<String, String>());
+		try {
+			openNebulaOCCIComputePlugin.requestInstance(token, requestCategories, xOCCIAtt);
+		} catch (Exception e) {
+		}
+
+		Mockito.verify(httpClient).execute(Mockito.argThat(expectedRequest));
+	}
+
+	@Test
+	public void testRequestInstanceWithinPublicKey() throws HttpException, IOException,
+			URISyntaxException {
+		List<Category> requestCategories = new ArrayList<Category>();
+		requestCategories.add(new Category("fogbow_small",
+				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
+		requestCategories.add(new Category(FOGBOW_LINUX_X86, RequestConstants.TEMPLATE_OS_SCHEME,
+				RequestConstants.MIXIN_CLASS));
+		requestCategories.add(new Category(RequestConstants.PUBLIC_KEY_TERM + "; scheme=\""
+				+ RequestConstants.CREDENTIALS_RESOURCE_SCHEME + "\"; class=\""
+				+ RequestConstants.MIXIN_CLASS + "\""));
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
 		xOCCIAtt.put(RequestAttribute.DATA_PUBLIC_KEY.getValue(), "=" + PUBLIC_KEY);
-		
+
 		HttpUriRequest request = new HttpPost(DEFAULT_URL + "/" + COMPUTE_TERM);
-		request.addHeader("Authorization",
+		request.addHeader(OCCIHeaders.AUTHORIZATION,
 				openNebulaOCCIComputePlugin.getAuthorization(ACCESS_TOKEN_ID));
 		request.addHeader(OCCIHeaders.X_AUTH_TOKEN, ACCESS_TOKEN_ID);
-		request.addHeader("Category", UUID_CIRROS0_3_2_1);
-		request.addHeader("Category", "public_key");
-		request.addHeader("X-OCCI-Attribute", OpenNebulaOCCIComputePlugin.DEFAULT_CORE_ID);
-		request.addHeader("X-OCCI-Attribute", OpenNebulaOCCIComputePlugin.DEFAULT_FOGBOW_NAME);
-		request.addHeader("X-OCCI-Attribute", PUBLIC_KEY);
-		
-		expectedRequest = new HttpUriRequestMatcher(request);		
-		
+		request.addHeader(OCCIHeaders.CATEGORY, UUID_CIRROS0_3_2_1);
+		request.addHeader(OCCIHeaders.CATEGORY, "public_key");
+		request.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, OpenNebulaOCCIComputePlugin.DEFAULT_CORE_ID);
+		request.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE,
+				OpenNebulaOCCIComputePlugin.DEFAULT_FOGBOW_NAME);
+		request.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, PUBLIC_KEY);
+
+		expectedRequest = new HttpUriRequestMatcher(request);
+
 		Token token = new Token(ACCESS_TOKEN_ID, "user", new Date(), new HashMap<String, String>());
 		try {
-			openNebulaOCCIComputePlugin.requestInstance(token, requestCategories, xOCCIAtt);			
-		} catch (Exception e) {}
-		
-		Mockito.verify(httpClient).execute(Mockito.argThat(expectedRequest));			
-	}	
-	
+			openNebulaOCCIComputePlugin.requestInstance(token, requestCategories, xOCCIAtt);
+		} catch (Exception e) {
+		}
+
+		Mockito.verify(httpClient).execute(Mockito.argThat(expectedRequest));
+	}
+
 	@Test
-	public void testGetInstance() throws HttpException, IOException, URISyntaxException {		
+	public void testGetInstance() throws HttpException, IOException, URISyntaxException {
 		String instanceId = "instanceid";
 		HttpUriRequest request = new HttpGet(DEFAULT_URL + "/" + COMPUTE_TERM + instanceId);
-		request.addHeader("Authorization",
+		request.addHeader(OCCIHeaders.AUTHORIZATION,
 				openNebulaOCCIComputePlugin.getAuthorization(ACCESS_TOKEN_ID));
 		request.addHeader(OCCIHeaders.X_AUTH_TOKEN, ACCESS_TOKEN_ID);
-		expectedRequest = new HttpUriRequestMatcher(request);		
-		
+		expectedRequest = new HttpUriRequestMatcher(request);
+
 		Token token = new Token(ACCESS_TOKEN_ID, "user", new Date(), new HashMap<String, String>());
 		try {
-			openNebulaOCCIComputePlugin.getInstance(token, instanceId);			
-		} catch (Exception e) {}
-		
-		Mockito.verify(httpClient).execute(Mockito.argThat(expectedRequest));			
+			openNebulaOCCIComputePlugin.getInstance(token, instanceId);
+		} catch (Exception e) {
+		}
+
+		Mockito.verify(httpClient).execute(Mockito.argThat(expectedRequest));
 	}
-	
+
 	@Test
-	public void testRemoveInstances() throws HttpException, IOException, URISyntaxException {		
+	public void testRemoveInstances() throws HttpException, IOException, URISyntaxException {
 		HttpUriRequest request = new HttpDelete(DEFAULT_URL + "/" + COMPUTE_TERM);
-		request.addHeader("Authorization",
+		request.addHeader(OCCIHeaders.AUTHORIZATION,
 				openNebulaOCCIComputePlugin.getAuthorization(ACCESS_TOKEN_ID));
 		request.addHeader(OCCIHeaders.X_AUTH_TOKEN, ACCESS_TOKEN_ID);
-		expectedRequest = new HttpUriRequestMatcher(request);		
-		
+		expectedRequest = new HttpUriRequestMatcher(request);
+
 		Token token = new Token(ACCESS_TOKEN_ID, "user", new Date(), new HashMap<String, String>());
 		try {
-			openNebulaOCCIComputePlugin.removeInstances(token);			
-		} catch (Exception e) {}
-		
-		Mockito.verify(httpClient).execute(Mockito.argThat(expectedRequest));			
-	}	
-	
+			openNebulaOCCIComputePlugin.removeInstances(token);
+		} catch (Exception e) {
+		}
+
+		Mockito.verify(httpClient).execute(Mockito.argThat(expectedRequest));
+	}
+
 	@Test
-	public void testRemoveInstance() throws HttpException, IOException, URISyntaxException {		
+	public void testRemoveInstance() throws HttpException, IOException, URISyntaxException {
 		String instanceId = "instanceid";
 		HttpUriRequest request = new HttpDelete(DEFAULT_URL + "/" + COMPUTE_TERM + instanceId);
-		request.addHeader("Authorization",
+		request.addHeader(OCCIHeaders.AUTHORIZATION,
 				openNebulaOCCIComputePlugin.getAuthorization(ACCESS_TOKEN_ID));
 		request.addHeader(OCCIHeaders.X_AUTH_TOKEN, ACCESS_TOKEN_ID);
-		expectedRequest = new HttpUriRequestMatcher(request);		
-		
+		expectedRequest = new HttpUriRequestMatcher(request);
+
 		Token token = new Token(ACCESS_TOKEN_ID, "user", new Date(), new HashMap<String, String>());
 		try {
-			openNebulaOCCIComputePlugin.removeInstance(token, instanceId);			
-		} catch (Exception e) {}
-		
-		Mockito.verify(httpClient).execute(Mockito.argThat(expectedRequest));			
-	}	
-	
+			openNebulaOCCIComputePlugin.removeInstance(token, instanceId);
+		} catch (Exception e) {
+		}
+
+		Mockito.verify(httpClient).execute(Mockito.argThat(expectedRequest));
+	}
+
 	@Test
-	public void testGetInstances() throws HttpException, IOException, URISyntaxException {		
+	public void testGetInstances() throws HttpException, IOException, URISyntaxException {
 		HttpUriRequest request = new HttpGet(DEFAULT_URL + "/" + COMPUTE_TERM);
-		request.addHeader("Authorization",
+		request.addHeader(OCCIHeaders.AUTHORIZATION,
 				openNebulaOCCIComputePlugin.getAuthorization(ACCESS_TOKEN_ID));
 		request.addHeader(OCCIHeaders.X_AUTH_TOKEN, ACCESS_TOKEN_ID);
-		expectedRequest = new HttpUriRequestMatcher(request);		
-		
+		expectedRequest = new HttpUriRequestMatcher(request);
+
 		Token token = new Token(ACCESS_TOKEN_ID, "user", new Date(), new HashMap<String, String>());
 		try {
-			openNebulaOCCIComputePlugin.getInstances(token);			
-		} catch (Exception e) {}
-		
-		Mockito.verify(httpClient).execute(Mockito.argThat(expectedRequest));			
-	}	
-	
+			openNebulaOCCIComputePlugin.getInstances(token);
+		} catch (Exception e) {
+		}
+
+		Mockito.verify(httpClient).execute(Mockito.argThat(expectedRequest));
+	}
+
 	private class HttpUriRequestMatcher extends ArgumentMatcher<HttpUriRequest> {
 
 		private HttpUriRequest request;
@@ -217,25 +276,24 @@ public class TestComputeOpenNebulaOCCI {
 				return false;
 			}
 			if (!this.request.getMethod().equals(comparedRequest.getMethod())) {
-				System.out.println(this.request.getMethod());
 				return false;
 			}
 			return true;
 		}
-		
+
 		public boolean checkHeaders(Header[] comparedHeaders) {
 			boolean headerEquals = true;
 			for (Header headerComp : comparedHeaders) {
-				if (headerComp.getName().equals("Category")) {
+				if (headerComp.getName().equals(OCCIHeaders.CATEGORY)) {
 					for (Header header : this.request.getAllHeaders()) {
-						if (header.getName().equals("Category")
+						if (header.getName().equals(OCCIHeaders.CATEGORY)
 								&& !headerComp.getValue().contains(header.getValue())) {
 							headerEquals = false;
 						}
 					}
-				} else if (headerComp.getName().equals("X-OCCI-Attribute")) {
+				} else if (headerComp.getName().equals(OCCIHeaders.X_OCCI_ATTRIBUTE)) {
 					for (Header header : this.request.getAllHeaders()) {
-						if (header.getName().equals("X-OCCI-Attribute")
+						if (header.getName().equals(OCCIHeaders.X_OCCI_ATTRIBUTE)
 								&& !headerComp.getValue().contains(header.getValue())) {
 							headerEquals = false;
 						}
@@ -243,13 +301,13 @@ public class TestComputeOpenNebulaOCCI {
 				} else {
 					for (Header header : this.request.getAllHeaders()) {
 						if (headerComp.getName().equals(header.getName())
-								&& !headerComp.getValue().equals(header.getValue())){
+								&& !headerComp.getValue().equals(header.getValue())) {
 							headerEquals = false;
 						}
-					}					
+					}
 				}
 			}
-					
+
 			return headerEquals;
 		}
 	}

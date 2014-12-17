@@ -63,9 +63,7 @@ public class OCCIComputePlugin implements ComputePlugin {
 	public static final String COMPUTE_ENDPOINT = "/compute/";
 	protected String oCCIEndpoint;
 	protected String computeOCCIEndpoint;
-//	private DefaultHttpClient client;
-	private HttpClient client;
-	private final static String COMPUTE_OCCI_TEMPLATE_PREFIX = "compute_occi_template_name_";
+	private HttpClient client;	
 
 	protected static final Logger LOGGER = Logger.getLogger(OCCIComputePlugin.class);
 
@@ -88,24 +86,26 @@ public class OCCIComputePlugin implements ComputePlugin {
 		Map<String, String> imageProperties = getImageProperties(properties);
 
 		if (imageProperties == null || imageProperties.isEmpty()) {
-			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IMAGES_NOT_SPECIFIED);
+			LOGGER.warn(ResponseConstants.IMAGES_NOT_SPECIFIED);
 		}
-
+	
 		for (String imageName : imageProperties.keySet()) {
 			fogTermToCategory.put(imageName, new Category(imageProperties.get(imageName), osScheme,
 					RequestConstants.MIXIN_CLASS));
 			ResourceRepository.getInstance().addImageResource(imageName);
-		}
+		}		
 						
-		try {
-			Map<String, String> templateProperties = getTemplateProperties(properties);
-			
-			for (String templateName : templateProperties.keySet()) {
-				fogTermToCategory.put(templateName, new Category(templateProperties.get(templateName),
-						templateScheme, RequestConstants.MIXIN_CLASS));
-				ResourceRepository.getInstance().addImageResource(templateName);
-			}					
-		} catch (Exception e) {}
+		Map<String, String> templateProperties = getTemplateProperties(properties);
+		
+		if (templateProperties == null || templateProperties.isEmpty()) {
+			LOGGER.warn(ResponseConstants.TEMPLATE_NOT_SPECIFIED);
+		}
+		
+		for (String templateName : templateProperties.keySet()) {
+			fogTermToCategory.put(templateName, new Category(templateProperties.get(templateName),
+					templateScheme, RequestConstants.MIXIN_CLASS));
+			ResourceRepository.getInstance().addImageResource(templateName);
+		}					
 		
 		fogTermToCategory.put(
 				RequestConstants.SMALL_TERM,
@@ -243,8 +243,8 @@ public class OCCIComputePlugin implements ComputePlugin {
 
 		for (Object propName : properties.keySet()) {
 			String propNameStr = (String) propName;
-			if (propNameStr.startsWith(COMPUTE_OCCI_TEMPLATE_PREFIX)) {
-				templateProperties.put(propNameStr.substring(COMPUTE_OCCI_TEMPLATE_PREFIX.length()),
+			if (propNameStr.startsWith(OpenStackConfigurationConstants.COMPUTE_OCCI_TEMPLATE_PREFIX)) {
+				templateProperties.put(propNameStr.substring(OpenStackConfigurationConstants.COMPUTE_OCCI_TEMPLATE_PREFIX.length()),
 						properties.getProperty(propNameStr));
 			}
 		}
@@ -385,7 +385,7 @@ public class OCCIComputePlugin implements ComputePlugin {
 	
 	public void setClient(HttpClient client) {
 		this.client = client;
-	}
+	} 
 	
 	protected class Response {
 

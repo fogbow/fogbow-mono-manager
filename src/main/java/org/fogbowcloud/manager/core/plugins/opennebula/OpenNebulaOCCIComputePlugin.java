@@ -35,12 +35,11 @@ import org.restlet.util.Series;
 public class OpenNebulaOCCIComputePlugin extends OCCIComputePlugin {
 
 	public static final String DEFAULT_FOGBOW_NAME = "Fogbow-One";
-	public static final String DEFAULT_CORE_ID = "fogbow_id";
+	public static final String DEFAULT_CORE_ID = "fogbow_core_id";
 	private static final String PUBLIC_KEY_TERM = "public_key";
 	private static final String PUBLIC_KEY_SCHEME = "http://schemas.openstack.org/instance/credentials#";
 	private static final String NAME_PUBLIC_KEY_ATTRIBUTE = "org.openstack.credentials.publickey.name";
-	private static final String DATA_PUBLIC_KEY_ATTRIBUTE = "org.openstack.credentials.publickey.data";
-	
+	private static final String DATA_PUBLIC_KEY_ATTRIBUTE = "org.openstack.credentials.publickey.data";	
 	private OpenNebulaComputePlugin openNebulaComputePlugin;
 	
 	public OpenNebulaOCCIComputePlugin(Properties properties) {
@@ -53,7 +52,6 @@ public class OpenNebulaOCCIComputePlugin extends OCCIComputePlugin {
 	@Override
 	public String requestInstance(Token token, List<Category> requestCategories,
 			Map<String, String> xOCCIAtt) {
-
 		LOGGER.debug("Requesting instance with token=" + token + "; categories="
 				+ requestCategories + "; xOCCIAtt=" + xOCCIAtt);
 
@@ -74,22 +72,23 @@ public class OpenNebulaOCCIComputePlugin extends OCCIComputePlugin {
 						ResponseConstants.CLOUD_NOT_SUPPORT_CATEGORY + category.getTerm());
 			}
 			occiCategories.add(super.fogTermToCategory.get(category.getTerm()));
-			
+
 			// adding ssh public key
 			if (category.getTerm().equals(RequestConstants.PUBLIC_KEY_TERM)) {
-				headerShhPublic += NAME_PUBLIC_KEY_ATTRIBUTE + "=" + "\"default\",";
-				headerShhPublic += DATA_PUBLIC_KEY_ATTRIBUTE + "=\"" + xOCCIAtt.get(RequestAttribute.DATA_PUBLIC_KEY.getValue()) + "\""; 
+				headerShhPublic += NAME_PUBLIC_KEY_ATTRIBUTE + "=" + "\"public_key_one\",";
+				headerShhPublic += DATA_PUBLIC_KEY_ATTRIBUTE + "=\""
+						+ xOCCIAtt.get(RequestAttribute.DATA_PUBLIC_KEY.getValue()) + "\"";
 			}
 		}		
 
 		String headerCategoryStr = "";
 		for (Category category : occiCategories) {
-			headerCategoryStr += category.toHeader() + ",";
+			headerCategoryStr += category.toHeader() + ",";		
 		}		
 		
 		Set<Header> headers = new HashSet<Header>();
 		headers.add(new BasicHeader(OCCIHeaders.CATEGORY, headerCategoryStr.substring(0,
-				headerCategoryStr.length())));
+				headerCategoryStr.length() - 1)));
 		
 		String headerAttribute = "occi.core.id=\"" + DEFAULT_CORE_ID + "\""
 				+ ",occi.core.title=\"" + DEFAULT_FOGBOW_NAME + "\","
@@ -102,23 +101,22 @@ public class OpenNebulaOCCIComputePlugin extends OCCIComputePlugin {
 			userdataBase64 = OpenNebulaComputePlugin.normalizeUserdata(userdataBase64);
 			headerAttribute += ",org.openstack.compute.user_data=\"" + userdataBase64 + "\"";					
 		}
-//		System.out.println(headerAttribute.substring(0,
-//				headerAttribute.length()));
+
 		headers.add(new BasicHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, headerAttribute.substring(0,
 				headerAttribute.length())));
 
-		headers.add(new BasicHeader("Authorization",
+		headers.add(new BasicHeader(OCCIHeaders.AUTHORIZATION,
 				getAuthorization(token.getAccessId())));
-				
-//		System.out.println(headers);
+
+		headers.add(new BasicHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE));
+		headers.add(new BasicHeader(OCCIHeaders.ACCEPT, OCCIHeaders.OCCI_ACCEPT));
 		
 		HttpResponse response = null;
 
-		response = doRequest("post", computeOCCIEndpoint, token.getAccessId(),
-				headers).getHttpResponse(); 			
-		System.out.println("_" + response.getStatusLine().getStatusCode());		
-		
-		Header locationHeader = response.getFirstHeader("Location");		
+		response = doRequest("post", computeOCCIEndpoint, token.getAccessId(), headers)
+				.getHttpResponse();
+
+		Header locationHeader = response.getFirstHeader("Location");
 		if (locationHeader != null) {
 			return normalizeInstanceId(locationHeader.getValue());
 		}
@@ -127,8 +125,10 @@ public class OpenNebulaOCCIComputePlugin extends OCCIComputePlugin {
 
 	public Instance getInstance(Token token, String instanceId) {
 		Set<Header> addicionalHeaders = new HashSet<Header>();
-		addicionalHeaders.add(new BasicHeader("Authorization",
+		addicionalHeaders.add(new BasicHeader(OCCIHeaders.AUTHORIZATION,
 				getAuthorization(token.getAccessId())));
+		addicionalHeaders.add(new BasicHeader(OCCIHeaders.ACCEPT,
+				OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE));
 		String responseStr = doRequest("get", computeOCCIEndpoint + instanceId,
 				token.getAccessId(), addicionalHeaders).getResponseString();
 
@@ -137,8 +137,10 @@ public class OpenNebulaOCCIComputePlugin extends OCCIComputePlugin {
 
 	public List<Instance> getInstances(Token token) {
 		Set<Header> addicionalHeaders = new HashSet<Header>();
-		addicionalHeaders.add(new BasicHeader("Authorization",
+		addicionalHeaders.add(new BasicHeader(OCCIHeaders.AUTHORIZATION,
 				getAuthorization(token.getAccessId())));
+		addicionalHeaders.add(new BasicHeader(OCCIHeaders.ACCEPT,
+				OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE));
 		String responseStr = doRequest("get", computeOCCIEndpoint, token.getAccessId(),
 				addicionalHeaders).getResponseString();
 
@@ -158,16 +160,20 @@ public class OpenNebulaOCCIComputePlugin extends OCCIComputePlugin {
 
 	public void removeInstances(Token token) {
 		Set<Header> addicionalHeaders = new HashSet<Header>();
-		addicionalHeaders.add(new BasicHeader("Authorization",
+		addicionalHeaders.add(new BasicHeader(OCCIHeaders.AUTHORIZATION,
 				getAuthorization(token.getAccessId())));
-		doRequest("delete", computeOCCIEndpoint, token.getAccessId());
+		addicionalHeaders.add(new BasicHeader(OCCIHeaders.ACCEPT,
+				OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE));
+		doRequest("delete", computeOCCIEndpoint, token.getAccessId(), addicionalHeaders);
 	}
 
 	@Override
 	public void removeInstance(Token token, String instanceId) {
 		Set<Header> addicionalHeaders = new HashSet<Header>();
-		addicionalHeaders.add(new BasicHeader("Authorization",
+		addicionalHeaders.add(new BasicHeader(OCCIHeaders.AUTHORIZATION,
 				getAuthorization(token.getAccessId())));
+		addicionalHeaders.add(new BasicHeader(OCCIHeaders.ACCEPT,
+				OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE));
 		doRequest("delete", computeOCCIEndpoint + instanceId, token.getAccessId(),
 				addicionalHeaders);
 	}
@@ -210,6 +216,11 @@ public class OpenNebulaOCCIComputePlugin extends OCCIComputePlugin {
 						ClientInfo clientInfo = null;
 						if (headerAccept.contains(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE)) {
 							clientInfo = new ClientInfo(MediaType.TEXT_PLAIN);
+						} else if ((headerAccept.contains(OCCIHeaders.TEXT_URI_LIST_CONTENT_TYPE))) {
+							requestHeaders.removeAll(OCCIHeaders.ACCEPT);
+							requestHeaders.add(new org.restlet.engine.header.Header(
+									OCCIHeaders.ACCEPT, OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE));
+							clientInfo = new ClientInfo(MediaType.TEXT_PLAIN);
 						} else {
 							clientInfo = new ClientInfo(new MediaType(headerAccept));
 						}
@@ -219,26 +230,33 @@ public class OpenNebulaOCCIComputePlugin extends OCCIComputePlugin {
 				} else if (header.getName().contains(
 						HeaderUtils.normalize(OCCIHeaders.X_AUTH_TOKEN))
 						|| header.getName().contains(OCCIHeaders.X_AUTH_TOKEN)) {
-					token = header.getValue();			
+					token = header.getValue();
 				}
 			}
 
-			if (requestHeaders.getFirst("Authorization") != null
+			if (requestHeaders.getFirst(OCCIHeaders.AUTHORIZATION) != null
 					&& !requestHeaders.getFirstValue("Authorization").contains("Basic ")) {
-				requestHeaders.removeAll("Authorization");
-				requestHeaders.add(new org.restlet.engine.header.Header("Authorization",
+				requestHeaders.removeAll(OCCIHeaders.AUTHORIZATION);
+				requestHeaders.add(new org.restlet.engine.header.Header(OCCIHeaders.AUTHORIZATION,
 						getAuthorization(token)));
-				requestHeaders.removeAll(HeaderUtils.normalize(OCCIHeaders.X_AUTH_TOKEN));								
+				requestHeaders.removeAll(HeaderUtils.normalize(OCCIHeaders.X_AUTH_TOKEN));
+			} else if (requestHeaders.getFirst("X-auth-token") != null
+					|| requestHeaders.getFirst("X-Auth-Token") != null) {
+				requestHeaders.add(new org.restlet.engine.header.Header(OCCIHeaders.AUTHORIZATION,
+						getAuthorization(token)));
+				requestHeaders.removeAll(HeaderUtils.normalize(OCCIHeaders.X_AUTH_TOKEN));
 			}
-			
+
+			if (requestHeaders.getFirst(HeaderUtils.normalize(OCCIHeaders.CONTENT_TYPE)) == null) {
+				requestHeaders.add(new org.restlet.engine.header.Header(HeaderUtils
+						.normalize(OCCIHeaders.CONTENT_TYPE), OCCIHeaders.OCCI_CONTENT_TYPE));
+				requestHeaders.add(new org.restlet.engine.header.Header(OCCIHeaders.CONTENT_TYPE,
+						OCCIHeaders.OCCI_CONTENT_TYPE));
+			}
+
 			proxiedRequest.getAttributes().put("org.restlet.http.headers", requestHeaders);
 			clienteForBypass.handle(proxiedRequest, response);
-			
-			Series<org.restlet.engine.header.Header> responseHeaders = (Series<org.restlet.engine.header.Header>) response
-					.getAttributes().get("org.restlet.http.headers");		
-			
 		} catch (URISyntaxException e) {
-			e.printStackTrace();
 			LOGGER.error(e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
 		}
