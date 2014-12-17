@@ -41,7 +41,7 @@ public class TestMemberServerResource {
 	public void setup() throws Exception {
 		this.computePlugin = Mockito.mock(ComputePlugin.class);
 		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class))).thenReturn(
-				new ResourcesInfo(DefaultDataTestHelper.MANAGER_COMPONENT_URL, 
+				new ResourcesInfo(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, 
 						"", "", "", "", new LinkedList<Flavor>(), null));
 		this.identityPlugin = Mockito.mock(IdentityPlugin.class);
 		this.helper = new OCCITestHelper();
@@ -81,7 +81,7 @@ public class TestMemberServerResource {
 		Assert.assertTrue(responseStr.contains(FLAVOUR_2));
 		Assert.assertTrue(responseStr.contains(ID_RESOURCEINFO1));
 		Assert.assertTrue(responseStr.contains(ID_RESOURCEINFO2));
-		Assert.assertTrue(responseStr.contains(DefaultDataTestHelper.MANAGER_COMPONENT_URL));
+		Assert.assertTrue(responseStr.contains(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL));
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 
@@ -98,7 +98,7 @@ public class TestMemberServerResource {
 		// Should come with a single member (the manager itself)
 		String responseStr = EntityUtils.toString(response.getEntity(),
 				String.valueOf(Charsets.UTF_8));
-		Assert.assertTrue(responseStr.contains(DefaultDataTestHelper.MANAGER_COMPONENT_URL));
+		Assert.assertTrue(responseStr.contains(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL));
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 	

@@ -145,7 +145,7 @@ public class OCCITestHelper {
 
 		Properties properties = new Properties();
 		properties.put(ConfigurationConstants.XMPP_JID_KEY,
-				DefaultDataTestHelper.MANAGER_COMPONENT_URL);
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		ManagerController facade = new ManagerController(properties);
 		facade.setComputePlugin(computePlugin);
 		facade.setLocalIdentityPlugin(identityPlugin);

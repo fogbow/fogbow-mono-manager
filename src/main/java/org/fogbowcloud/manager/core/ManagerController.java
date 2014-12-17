@@ -40,8 +40,8 @@ import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.fogbowcloud.manager.occi.request.RequestRepository;
 import org.fogbowcloud.manager.occi.request.RequestState;
 import org.fogbowcloud.manager.occi.request.RequestType;
+import org.fogbowcloud.manager.xmpp.AsyncPacketSender;
 import org.fogbowcloud.manager.xmpp.ManagerPacketHelper;
-import org.jamppa.component.PacketSender;
 import org.restlet.Response;
 
 public class ManagerController {
@@ -67,9 +67,10 @@ public class ManagerController {
 	private IdentityPlugin localIdentityPlugin;
 	private IdentityPlugin federationIdentityPlugin;
 	private Properties properties;
-	private PacketSender packetSender;
+	private AsyncPacketSender packetSender;
 	private FederationMemberValidator validator = new DefaultMemberValidator();
 	private Map<String, String> instanceTokens = new HashMap<String, String>();
+	private Map<String, Request> asynchronousRequests = new HashMap<String, Request>();
 
 	private DateUtils dateUtils = new DateUtils();
 	public ManagerController(Properties properties) {
@@ -564,6 +565,49 @@ public class ManagerController {
 		}
 	}
 
+	private void createAsynchronousRemoteInstance(final Request request) {
+		FederationMember member = memberPicker.pick(this);
+		if (member == null) {
+			return;
+		}
+		final String memberAddress = member.getResourcesInfo().getId();
+		request.setMemberId(memberAddress);
+
+		LOGGER.info("Submiting request " + request + " to member " + memberAddress);
+		
+		asynchronousRequests.put(request.getId(), request);
+		ManagerPacketHelper.asynchronousRemoteRequest(request, memberAddress,
+				packetSender, new AsynchronousRequestCallback() {
+					
+					@Override
+					public void success(String instanceId) {
+						asynchronousRequests.remove(request.getId());
+						if (instanceId == null) {
+							return;
+						}
+						request.setState(RequestState.FULFILLED);
+						request.setInstanceId(instanceId);
+						if (!instanceMonitoringTimer.isScheduled()) {
+							triggerInstancesMonitor();
+						}
+					}
+					
+					@Override
+					public void error(Throwable t) {
+						asynchronousRequests.remove(request.getId());
+					}
+				});
+			
+	}
+	
+	protected boolean isRequestForwardedtoRemoteMember(String requestId) {
+		return asynchronousRequests.containsKey(requestId);
+	}
+	
+	protected Request getRequestForwardedCallback(String requestId) {
+		return asynchronousRequests.get(requestId);
+	}
+	
 	private boolean createRemoteInstance(Request request) {
 		FederationMember member = memberPicker.pick(this);
 		if (member == null) {
@@ -651,16 +695,24 @@ public class ManagerController {
 		boolean allFulfilled = true;
 		LOGGER.debug("Checking and submiting requests.");
 
-		for (Request request : requests.get(RequestState.OPEN)) {
+		List<Request> openRequests = requests.get(RequestState.OPEN);
+		for (Request request : openRequests) {
+			if (isRequestForwardedtoRemoteMember(request.getId())) {
+				continue;
+			}
 			LOGGER.debug(request.getId() + " considering for scheduling.");
 			Map<String, String> xOCCIAtt = request.getxOCCIAtt();
 			if (request.isIntoValidPeriod()) {
 				for (String keyAttributes : RequestAttribute.getValues()) {
 					xOCCIAtt.remove(keyAttributes);
 				}
-				allFulfilled &= createLocalInstance(request)
-						|| createLocalInstanceWithFederationUser(request)
-						|| createRemoteInstance(request);
+				boolean isFulfilled = createLocalInstance(request)
+						|| createLocalInstanceWithFederationUser(request);
+				if (!isFulfilled) {
+					createAsynchronousRemoteInstance(request);
+				}
+				allFulfilled &= isFulfilled;
+				
 			} else if (request.isExpired()) {
 				request.setState(RequestState.CLOSED);
 			} else {
@@ -697,7 +749,7 @@ public class ManagerController {
 		return true;
 	}
 
-	public void setPacketSender(PacketSender packetSender) {
+	public void setPacketSender(AsyncPacketSender packetSender) {
 		this.packetSender = packetSender;
 	}
 
