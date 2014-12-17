@@ -43,8 +43,12 @@ public class ManagerPacketHelper {
 	private final static Logger LOGGER = Logger.getLogger(ManagerPacketHelper.class.getName());
 
 	public static void iAmAlive(ResourcesInfo resourcesInfo, String rendezvousAddress,
-			Properties properties, PacketSender packetSender) throws IOException {
+			Properties properties, PacketSender packetSender) throws Exception {
 		IQ iq = new IQ(Type.get);
+		if (rendezvousAddress == null) {
+			LOGGER.warn("Rendezvous not especified.");
+			throw new Exception();
+		}
 		iq.setTo(rendezvousAddress);
 		Element statusEl = iq.getElement()
 				.addElement("query", ManagerXmppComponent.IAMALIVE_NAMESPACE).addElement("status");
@@ -70,13 +74,18 @@ public class ManagerPacketHelper {
 			flavorElement.addElement("mem").setText(f.getMem());
 			flavorElement.addElement("capacity").setText(f.getCapacity().toString());
 		}
-		packetSender.syncSendPacket(iq);
+		
+		packetSender.syncSendPacket(iq);		
 	}
 
 	public static List<FederationMember> whoIsalive(String rendezvousAddress,
 			PacketSender packetSender, int maxWhoIsAliveManagerCount,
-			String after) throws CertificateException {
+			String after) throws Exception {
 		IQ iq = new IQ(Type.get);
+		if (rendezvousAddress == null) {
+			LOGGER.warn("Rendezvous not especified.");
+			throw new Exception();
+		}
 		iq.setTo(rendezvousAddress);
 		Element queryEl = iq.getElement().addElement("query",
 				ManagerXmppComponent.WHOISALIVE_NAMESPACE);
@@ -86,13 +95,20 @@ public class ManagerPacketHelper {
 			setEl.addElement("after").setText(after);
 		}
 		IQ response = (IQ) packetSender.syncSendPacket(iq);
+		
+		if (response == null || (response.toString().contains("error")
+				&& response.toString().contains("remote-server-not-found"))) {
+			LOGGER.warn("Remote server (Rendezvous) not found.");
+			throw new Exception();
+		}		
+		
 		ArrayList<FederationMember> members = getMembersFromIQ(response);
 		return members;
 	}
 	
 	public static List<FederationMember> whoIsalive(String rendezvousAddress,
 			PacketSender packetSender, int maxWhoIsAliveManagerCount)
-			throws CertificateException {
+			throws Exception {
 		return whoIsalive(rendezvousAddress, packetSender,
 				maxWhoIsAliveManagerCount, null);
 	}

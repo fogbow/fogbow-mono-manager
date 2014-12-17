@@ -12,9 +12,6 @@ import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
-import org.fogbowcloud.manager.core.plugins.common.AllowAllAuthorizationPlugin;
-import org.fogbowcloud.manager.core.plugins.openstack.KeystoneIdentityPlugin;
-import org.fogbowcloud.manager.core.plugins.openstack.OpenStackOCCIComputePlugin;
 import org.fogbowcloud.manager.occi.OCCIApplication;
 import org.fogbowcloud.manager.xmpp.ManagerXmppComponent;
 import org.restlet.Component;
@@ -60,6 +57,7 @@ public class Main {
 			LOGGER.warn("Local Identity Plugin not especified in the properties.");
 			return;
 		}
+		
 		IdentityPlugin federationIdentityPlugin = null;
 		try {
 			federationIdentityPlugin = (IdentityPlugin) getIdentityPluginByPrefix(properties,
@@ -75,6 +73,12 @@ public class Main {
 					ConfigurationConstants.MEMBER_VALIDATOR_KEY, properties);
 		} catch (Exception e) {
 			LOGGER.warn("Member Validator not especified in the properties.");
+		}
+		
+		if (properties.get(ConfigurationConstants.RENDEZVOUS_JID_KEY) == null
+				|| properties.get(ConfigurationConstants.RENDEZVOUS_JID_KEY).toString().isEmpty()) {
+			LOGGER.warn("Rendezvous (" + ConfigurationConstants.RENDEZVOUS_JID_KEY
+					+ ") not especified in the properties.");
 		}
 
 		ManagerController facade = new ManagerController(properties);

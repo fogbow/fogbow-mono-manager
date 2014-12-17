@@ -49,7 +49,7 @@ public class ManagerXmppComponent extends XMPPComponent implements AsyncPacketSe
 		scheduleIamAlive();
 	}
 
-	public void iAmAlive() throws CertificateException, IOException {
+	public void iAmAlive() throws CertificateException, Exception {
 		ManagerPacketHelper.iAmAlive(managerFacade.getResourcesInfo(),
 				rendezvousAddress, managerFacade.getProperties(), this);
 	}
@@ -78,13 +78,13 @@ public class ManagerXmppComponent extends XMPPComponent implements AsyncPacketSe
         super.handleIQResult(iq);
 	}
 	
-	public void whoIsalive() throws CertificateException {
+	public void whoIsalive() throws Exception {
 		managerFacade.updateMembers(ManagerPacketHelper.whoIsalive(
 				rendezvousAddress, this, maxWhoIsAliveManagerCount));
 	}
 	
 	public List<FederationMember> whoIsalive(String after)
-			throws CertificateException {
+			throws Exception {
 		List<FederationMember> whoIsaliveResponse = ManagerPacketHelper
 				.whoIsalive(rendezvousAddress, this, maxWhoIsAliveManagerCount,
 						after);
@@ -99,12 +99,12 @@ public class ManagerXmppComponent extends XMPPComponent implements AsyncPacketSe
 				try {
 					iAmAlive();
 				} catch (Exception e) {
-					LOGGER.error("Failure during IAmAlive()", e);
+					LOGGER.error("Failure during IAmAlive().");
 				}
 				try {
 					whoIsalive();
 				} catch (Exception e) {
-					LOGGER.error("Failure during whoIsAlive()", e);
+					LOGGER.error("Failure during whoIsAlive()."); 
 				}
 			}
 		}, 0, PERIOD);
