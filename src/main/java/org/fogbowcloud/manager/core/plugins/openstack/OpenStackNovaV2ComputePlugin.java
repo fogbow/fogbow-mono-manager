@@ -1,5 +1,6 @@
 package org.fogbowcloud.manager.core.plugins.openstack;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -12,7 +13,10 @@ import org.apache.http.HttpStatus;
 import org.apache.http.HttpVersion;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.entity.FileEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
@@ -45,9 +49,12 @@ import org.restlet.data.Status;
 
 public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 
+	private static final String V2_IMAGES_FILE = "/file";
+	private static final String V2_IMAGES = "/v2/images";
 	private final String COMPUTE_V2_API_ENDPOINT = "/v2/";
 	private static final String TENANT_ID = "tenantId";
 
+	private String glanceV2APIEndpoint;
 	private String computeV2APIEndpoint;
 	private String networkId;
 	private Map<String, String> fogbowTermToOpenStack = new HashMap<String, String>();
@@ -56,6 +63,9 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 	private static final Logger LOGGER = Logger.getLogger(OpenStackNovaV2ComputePlugin.class);
 	
 	public OpenStackNovaV2ComputePlugin(Properties properties){
+		glanceV2APIEndpoint = properties
+				.getProperty(OpenStackConfigurationConstants.COMPUTE_GLANCEV2_URL_KEY);
+		
 		computeV2APIEndpoint = properties
 				.getProperty(OpenStackConfigurationConstants.COMPUTE_NOVAV2_URL_KEY)
 				+ COMPUTE_V2_API_ENDPOINT;
@@ -478,15 +488,129 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 
 	@Override
 	public void uploadImage(Token token, String imagePath, String imageName) {
-		
+        JSONObject json = new JSONObject();
+        try {
+            json.put("name", imageName);
+            json.put("visibility", "public");
+        } catch (JSONException e) {
+        	return;
+        }
+        
+        String responseStrCreateImage = doPostRequest(glanceV2APIEndpoint + V2_IMAGES,
+                token.getAccessId(), json);       
+        
+        String id = "";
+        try {
+            JSONObject featuresImage = new JSONObject(responseStrCreateImage);
+            id = featuresImage.getString("id");
+        } catch (JSONException e) {
+        	return;
+        }        
+        
+        ArrayList<JSONObject> nets = new ArrayList<JSONObject>();
+        
+        try {
+            JSONObject net = new JSONObject();
+            JSONObject net2 = new JSONObject();
+            net.put("op", "replace");
+            net.put("path", "/disk_format");
+            net.put("value", "qcow2");
+            nets.add(net);
+            net2.put("op", "replace");
+            net2.put("path", "/container_format");
+            net2.put("value", "bare");
+            nets.add(net2);            
+        } catch (JSONException e) {
+        	return;
+        }
+        
+        doPatchRequest(glanceV2APIEndpoint + V2_IMAGES + "/" + id,
+                token.getAccessId(), nets.toString());              
+        
+        doPutRequest(glanceV2APIEndpoint + V2_IMAGES + "/" + id + V2_IMAGES_FILE,
+                token.getAccessId(), imagePath);        
 	}
 
 	@Override
 	public String getImageId(Token token, String imageName) {
-		return null;
+        String responseJsonImages = doGetRequest(glanceV2APIEndpoint + V2_IMAGES,
+                token.getAccessId());       
+        
+        String id = null;
+        try {
+            JSONArray arrayImages = new JSONObject(responseJsonImages).getJSONArray("images");
+            for (int i = 0; i < arrayImages.length(); i++) {
+                if (arrayImages.getJSONObject(i).getString("name").equals(imageName)) {
+                	id = arrayImages.getJSONObject(i).getString("id");
+                }
+            }
+        } catch (JSONException e) {}
+    
+		return id;
 	}
 	
 	public String getImageName(Token token, String imageId) {
-		return null;
+        String responseJsonImages = doGetRequest(glanceV2APIEndpoint + V2_IMAGES,
+                token.getAccessId());
+        
+        String name = null;
+        try {
+            JSONArray arrayImages = new JSONObject(responseJsonImages).getJSONArray("images");
+            for (int i = 0; i < arrayImages.length(); i++) {
+                if (arrayImages.getJSONObject(i).getString("id").equals(imageId)) {
+                	name = arrayImages.getJSONObject(i).getString("name");
+                }
+            }
+        } catch (JSONException e) {}
+    
+		return name;
 	}
+	
+    private String doPatchRequest(String endpoint, String authToken, String json) {
+        HttpResponse response = null;
+        String responseStr = null;
+        try {
+            HttpPatch request = new HttpPatch(endpoint);
+            request.addHeader(OCCIHeaders.CONTENT_TYPE, "application/openstack-images-v2.1-json-patch");
+            request.addHeader(OCCIHeaders.ACCEPT, OCCIHeaders.JSON_CONTENT_TYPE);
+            request.addHeader(OCCIHeaders.X_AUTH_TOKEN, authToken);
+            request.setEntity(new StringEntity(json, HTTP.UTF_8));
+            response = client.execute(request);
+            responseStr = EntityUtils.toString(response.getEntity(), HTTP.UTF_8);
+        } catch (Exception e) {
+            LOGGER.error(e);
+            throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
+        } finally {
+            try {
+                response.getEntity().consumeContent();
+            } catch (Throwable t) {
+                // Do nothing
+            }
+        }
+        checkStatusResponse(response, responseStr);
+        return responseStr;
+    }    
+    
+    private String doPutRequest(String endpoint, String authToken, String path) {
+        HttpResponse response = null;
+        String responseStr = null;
+        try {
+            HttpPut request = new HttpPut(endpoint);
+            request.addHeader(OCCIHeaders.CONTENT_TYPE, "application/octet-stream");
+            request.addHeader(OCCIHeaders.X_AUTH_TOKEN, authToken);                   
+            request.setEntity(new FileEntity(new File(path)));
+            response = client.execute(request);
+        } catch (Exception e) {
+            LOGGER.error(e);
+            throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
+        } finally {
+            try {
+                response.getEntity().consumeContent();
+            } catch (Throwable t) {
+                // Do nothing
+            }
+        }
+        checkStatusResponse(response, responseStr);
+        return responseStr;
+    }
 }
