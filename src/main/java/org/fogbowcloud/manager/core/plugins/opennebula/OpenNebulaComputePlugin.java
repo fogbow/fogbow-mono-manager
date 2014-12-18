@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.UUID;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -66,7 +67,8 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 	private String sshHost;
 	private int sshPort;
 	private String sshUsername;
-	private String sshPassword;
+	private String sshKeyFile;
+	private String sshTargetTempFolder;
 	private int dataStoreId;
 	
 	private static final Logger LOGGER = Logger.getLogger(OpenNebulaComputePlugin.class);
@@ -89,7 +91,8 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		sshHost = String.valueOf(properties.get(OneConfigurationConstants.COMPUTE_ONE_SSH_HOST));
 		sshPort = Integer.valueOf(String.valueOf(properties.get(OneConfigurationConstants.COMPUTE_ONE_SSH_PORT)));
 		sshUsername = String.valueOf(properties.get(OneConfigurationConstants.COMPUTE_ONE_SSH_USERNAME));
-		sshPassword = String.valueOf(properties.get(OneConfigurationConstants.COMPUTE_ONE_SSH_PASSWORD));
+		sshKeyFile = String.valueOf(properties.get(OneConfigurationConstants.COMPUTE_ONE_SSH_KEY_FILE));
+		sshTargetTempFolder = String.valueOf(properties.get(OneConfigurationConstants.COMPUTE_ONE_SSH_TARGET_TEMP_FOLDER));
 		dataStoreId = Integer.valueOf(String.valueOf(properties.get(OneConfigurationConstants.COMPUTE_ONE_DATASTORE_ID)));
 		
 		// flavors
@@ -501,23 +504,28 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 
 	@Override
 	public void uploadImage(Token token, String imagePath, String imageName) {
-		// TODO Auto-generated method stub
 		Client oneClient = clientFactory.createClient(token.getAccessId(), openNebulaEndpoint);
-		Map<String, String> templateProperties = new HashMap<String, String>();
-		String destinationImageName = "marcos";
-		templateProperties.put("image_name", destinationImageName);
-		String destinationImagePath = "/tmp/mytempimage.img";
-		templateProperties.put("image_path", destinationImagePath);
+		String remoteFilePath = sshTargetTempFolder + "/" + UUID.randomUUID();
 		
 		OpenNebulaSshClientWrapper sshClientWrapper = new OpenNebulaSshClientWrapper();
 		try {
-			sshClientWrapper.connect(sshHost, sshPort, sshUsername, sshPassword);
+			sshClientWrapper.connect(sshHost, sshPort, sshUsername, sshKeyFile);
+			sshClientWrapper.doScpUpload(imagePath, remoteFilePath);
 		} catch (IOException e) {
-			e.printStackTrace();
+			throw new RuntimeException(e);
+		} finally {
+			try {
+				sshClientWrapper.disconnect();
+			} catch (IOException e) {
+			}
 		}
 		
-		OneResponse response = Image.allocate(oneClient, generateImageTemplate(templateProperties), dataStoreId);
-		System.out.println(response.getMessage());
+		Map<String, String> templateProperties = new HashMap<String, String>();
+		templateProperties.put("image_name", imageName);
+		templateProperties.put("image_path", remoteFilePath);
+		Long imageSize = (long) Math.ceil(((double) new File(imagePath).length()) / (1024d * 1024d));
+		templateProperties.put("image_size", imageSize.toString());
+		Image.allocate(oneClient, generateImageTemplate(templateProperties), dataStoreId);
 	}
 	
 	private String generateImageTemplate(Map<String, String> templateProperties) {
@@ -537,6 +545,14 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 			pathElement.appendChild(doc.createTextNode(templateProperties.get("image_path")));
 			rootElement.appendChild(pathElement);
 			
+			Element sizeElement = doc.createElement("SIZE");
+			sizeElement.appendChild(doc.createTextNode(templateProperties.get("image_size")));
+			rootElement.appendChild(sizeElement);
+			
+			Element driverElement = doc.createElement("DRIVER");
+			driverElement.appendChild(doc.createTextNode("qcow2"));
+			rootElement.appendChild(driverElement);
+			
 			TransformerFactory transformerFactory = TransformerFactory.newInstance();
 			Transformer transformer = transformerFactory.newTransformer();
 			
@@ -547,20 +563,13 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 			transformer.transform(source, result);
 			
 			return stringWriter.toString();
-		} catch (ParserConfigurationException e) {
-			e.printStackTrace();
-		} catch (TransformerException e) {
-			e.printStackTrace();
+		} catch (Exception e) {
+			throw new RuntimeException(e);
 		}
-		return "";
 	}
 
 	@Override
 	public String getImageId(Token token, String imageName) {
-		return null;
-	}
-	
-	public String getImageName(Token token, String imageId) {
 		return null;
 	}
 	
