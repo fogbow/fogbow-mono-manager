@@ -111,7 +111,7 @@ public class TestComputeOpenNebulaOCCI {
 
 		Token token = new Token(ACCESS_TOKEN_ID, "user", new Date(), new HashMap<String, String>());
 		try {
-			openNebulaOCCIComputePlugin.requestInstance(token, requestCategories, xOCCIAtt);
+			openNebulaOCCIComputePlugin.requestInstance(token, requestCategories, xOCCIAtt, null);
 		} catch (Exception e) {
 		}
 
@@ -146,7 +146,7 @@ public class TestComputeOpenNebulaOCCI {
 
 		Token token = new Token(ACCESS_TOKEN_ID, "user", new Date(), new HashMap<String, String>());
 		try {
-			openNebulaOCCIComputePlugin.requestInstance(token, requestCategories, xOCCIAtt);
+			openNebulaOCCIComputePlugin.requestInstance(token, requestCategories, xOCCIAtt, null);
 		} catch (Exception e) {
 		}
 
@@ -182,7 +182,7 @@ public class TestComputeOpenNebulaOCCI {
 
 		Token token = new Token(ACCESS_TOKEN_ID, "user", new Date(), new HashMap<String, String>());
 		try {
-			openNebulaOCCIComputePlugin.requestInstance(token, requestCategories, xOCCIAtt);
+			openNebulaOCCIComputePlugin.requestInstance(token, requestCategories, xOCCIAtt, null);
 		} catch (Exception e) {
 		}
 

@@ -25,12 +25,14 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
+import org.fogbowcloud.manager.occi.core.ResourceRepository;
 import org.fogbowcloud.manager.occi.core.Token;
 
 public class EgiImageStoragePlugin implements ImageStoragePlugin {
 
+	private static final String PROP_STATIC_IMAGE_PREFIX = "image_storage_static_";
+	
 	private static final String IMAGE_EXTENSION = ".img";
-	private static final String GLOBAL_ID_TAG = "GLOBAL_ID";
 	private static final String DEFAULT_IMAGE_VERSION = "1.0";
 	
 	private static final Logger LOGGER = Logger.getLogger(ImageStoragePlugin.class);
@@ -39,38 +41,47 @@ public class EgiImageStoragePlugin implements ImageStoragePlugin {
 	private ComputePlugin computePlugin;
 	private Set<String> pendingImageUploads = Collections.newSetFromMap(
 			new ConcurrentHashMap<String, Boolean>());
+	private Map<String, String> globalToLocalIds = new HashMap<String, String>();
 	
 	private final String marketPlaceBaseURL;
 	private final String keystorePath;
 	private final String tmpStorage;
 	private final String keystorePassword;
 	
-	public EgiImageStoragePlugin(Properties properties) {
+	public EgiImageStoragePlugin(Properties properties, ComputePlugin computePlugin) {
+		this.computePlugin = computePlugin;
 		this.marketPlaceBaseURL = properties.getProperty("image_storage_egi_base_url");
 		this.keystorePath = properties.getProperty("image_storage_egi_keystore_path");
 		this.keystorePassword = properties.getProperty("image_storage_egi_keystore_password");
 		this.tmpStorage = properties.getProperty("image_storage_egi_tmp_storage");
+		fillStaticStorage(properties);
 	}
 	
-	public EgiImageStoragePlugin(Properties properties, ComputePlugin computePlugin) {
-		this(properties);
-		this.computePlugin = computePlugin;
+	private void fillStaticStorage(Properties properties) {
+		for (Object propName : properties.keySet()) {
+			String propNameStr = (String) propName;
+			if (propNameStr.startsWith(PROP_STATIC_IMAGE_PREFIX)) {
+				globalToLocalIds.put(
+						propNameStr.substring(PROP_STATIC_IMAGE_PREFIX.length()), 
+						properties.getProperty(propNameStr));
+			}
+			ResourceRepository.getInstance().addImageResource(
+					properties.getProperty(propNameStr));
+		}
 	}
 	
 	@Override
-	public String getImage(Token token, String globalId) {
-		Map<String, String> tags = tags(globalId);
-		String image = computePlugin.searchImage(token, tags);
-		if (image == null) {
-			scheduleImageDownload(token, globalId);
+	public String getLocalId(Token token, String globalId) {
+		String localId = globalToLocalIds.get(globalId);
+		if (localId != null) {
+			return localId;
 		}
-		return image;
-	}
-
-	private static Map<String, String> tags(String globalId) {
-		Map<String, String> tags = new HashMap<String, String>();
-		tags.put(GLOBAL_ID_TAG, globalId);
-		return tags;
+		localId = computePlugin.getImageId(token, globalId);
+		if (localId != null) {
+			return localId;
+		}
+		scheduleImageDownload(token, globalId);
+		return null;
 	}
 
 	private void scheduleImageDownload(final Token token, final String globalId) {
@@ -85,7 +96,7 @@ public class EgiImageStoragePlugin implements ImageStoragePlugin {
 				if (downloadTempFile != null) {
 					computePlugin.uploadImage(token, 
 							downloadTempFile.getAbsolutePath(), 
-							globalId, tags(globalId));
+							globalId);
 				}
 				pendingImageUploads.remove(globalId);
 			}
@@ -150,4 +161,5 @@ public class EgiImageStoragePlugin implements ImageStoragePlugin {
 		return marketPlaceBaseURL + "/" + imageName + "/" + 
 			version + "/" + imageName + IMAGE_EXTENSION;
 	}
+
 }

@@ -100,7 +100,7 @@ public class TestManagerController {
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		Mockito.when(
 				computePlugin.requestInstance(Mockito.any(Token.class), Mockito.anyList(),
-						Mockito.anyMap())).thenReturn("newinstanceid");
+						Mockito.anyMap(), Mockito.anyString())).thenReturn("newinstanceid");
 		managerController.setComputePlugin(computePlugin);
 
 		checkRequestPerUserToken(localToken);
@@ -120,7 +120,7 @@ public class TestManagerController {
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		Mockito.when(
 				computePlugin.requestInstance(Mockito.any(Token.class),
-						Mockito.anyList(), Mockito.anyMap()))
+						Mockito.anyList(), Mockito.anyMap(), Mockito.anyString()))
 				.thenThrow(new OCCIException(ErrorType.UNAUTHORIZED, ""))
 				.thenReturn("newinstanceid")
 				.thenThrow(new OCCIException(ErrorType.UNAUTHORIZED, ""))
@@ -193,7 +193,8 @@ public class TestManagerController {
 		
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		Mockito.when(
-				computePlugin.requestInstance(Mockito.any(Token.class), Mockito.anyList(), Mockito.anyMap()))
+				computePlugin.requestInstance(Mockito.any(Token.class), Mockito.anyList(), 
+						Mockito.anyMap(), Mockito.anyString()))
 				.thenThrow(new OCCIException(ErrorType.UNAUTHORIZED, ""));
 				
 		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class)))
@@ -272,7 +273,8 @@ public class TestManagerController {
 		
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		Mockito.when(
-				computePlugin.requestInstance(Mockito.any(Token.class), Mockito.anyList(), Mockito.anyMap()))
+				computePlugin.requestInstance(Mockito.any(Token.class), Mockito.anyList(), 
+						Mockito.anyMap(), Mockito.anyString()))
 				.thenThrow(new OCCIException(ErrorType.UNAUTHORIZED, ""));
 				
 		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class)))
@@ -352,7 +354,8 @@ public class TestManagerController {
 		
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		Mockito.when(
-				computePlugin.requestInstance(Mockito.any(Token.class), Mockito.anyList(), Mockito.anyMap()))
+				computePlugin.requestInstance(Mockito.any(Token.class), Mockito.anyList(), 
+						Mockito.anyMap(), Mockito.anyString()))
 				.thenThrow(new OCCIException(ErrorType.UNAUTHORIZED, ""));
 				
 		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class)))
@@ -724,7 +727,7 @@ public class TestManagerController {
 		Mockito.reset(managerTestHelper.getComputePlugin());
 		Mockito.when(
 				managerTestHelper.getComputePlugin().requestInstance(Mockito.any(Token.class),
-						Mockito.any(List.class), Mockito.any(Map.class))).thenReturn(
+						Mockito.any(List.class), Mockito.any(Map.class), Mockito.anyString())).thenReturn(
 				DefaultDataTestHelper.INSTANCE_ID);
 		Mockito.when(
 				managerTestHelper.getComputePlugin().getInstance(Mockito.any(Token.class),
@@ -927,7 +930,7 @@ public class TestManagerController {
 		Mockito.reset(managerTestHelper.getComputePlugin());
 		Mockito.when(
 				managerTestHelper.getComputePlugin().requestInstance(Mockito.any(Token.class),
-						Mockito.any(List.class), Mockito.any(Map.class))).thenThrow(
+						Mockito.any(List.class), Mockito.any(Map.class), Mockito.anyString())).thenThrow(
 				new OCCIException(ErrorType.QUOTA_EXCEEDED,
 						ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES));
 		Mockito.doNothing().when(managerTestHelper.getComputePlugin()).removeInstance(
@@ -976,7 +979,7 @@ public class TestManagerController {
 		Mockito.reset(managerTestHelper.getComputePlugin());
 		Mockito.when(
 				managerTestHelper.getComputePlugin().requestInstance(Mockito.any(Token.class),
-						Mockito.any(List.class), Mockito.any(Map.class))).thenThrow(
+						Mockito.any(List.class), Mockito.any(Map.class), Mockito.anyString())).thenThrow(
 				new OCCIException(ErrorType.QUOTA_EXCEEDED,
 						ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES));
 		Mockito.doNothing().when(managerTestHelper.getComputePlugin()).removeInstance(
@@ -999,7 +1002,7 @@ public class TestManagerController {
 		Mockito.reset(managerTestHelper.getComputePlugin());
 		Mockito.when(
 				managerTestHelper.getComputePlugin().requestInstance(Mockito.any(Token.class),
-						Mockito.any(List.class), Mockito.any(Map.class))).thenReturn(
+						Mockito.any(List.class), Mockito.any(Map.class), Mockito.anyString())).thenReturn(
 				SECOND_INSTANCE_ID);
 
 		// getting second instance
@@ -1091,7 +1094,7 @@ public class TestManagerController {
 		Mockito.reset(managerTestHelper.getComputePlugin());
 		Mockito.when(
 				managerTestHelper.getComputePlugin().requestInstance(Mockito.any(Token.class),
-						Mockito.any(List.class), Mockito.any(Map.class))).thenThrow(
+						Mockito.any(List.class), Mockito.any(Map.class), Mockito.anyString())).thenThrow(
 				new OCCIException(ErrorType.QUOTA_EXCEEDED,
 						ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES));
 		Mockito.doNothing().when(managerTestHelper.getComputePlugin()).removeInstance(
@@ -1117,7 +1120,7 @@ public class TestManagerController {
 		Mockito.reset(managerTestHelper.getComputePlugin());
 		Mockito.when(
 				managerTestHelper.getComputePlugin().requestInstance(Mockito.any(Token.class),
-						Mockito.any(List.class), Mockito.any(Map.class))).thenReturn(
+						Mockito.any(List.class), Mockito.any(Map.class), Mockito.anyString())).thenReturn(
 				DefaultDataTestHelper.INSTANCE_ID);
 	}
 
@@ -1319,7 +1322,7 @@ public class TestManagerController {
 		// updating compute mock
 		Mockito.when(
 				managerTestHelper.getComputePlugin().requestInstance(Mockito.any(Token.class),
-						Mockito.any(List.class), Mockito.any(Map.class))).thenThrow(
+						Mockito.any(List.class), Mockito.any(Map.class), Mockito.anyString())).thenThrow(
 				new OCCIException(ErrorType.QUOTA_EXCEEDED,
 						ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES));
 		Mockito.doNothing().when(managerTestHelper.getComputePlugin()).removeInstance(
@@ -1387,7 +1390,7 @@ public class TestManagerController {
 		// updating compute mock
 		Mockito.when(
 				managerTestHelper.getComputePlugin().requestInstance(Mockito.any(Token.class),
-						Mockito.any(List.class), Mockito.any(Map.class))).thenThrow(
+						Mockito.any(List.class), Mockito.any(Map.class), Mockito.anyString())).thenThrow(
 				new OCCIException(ErrorType.QUOTA_EXCEEDED,
 						ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES));
 		Mockito.doNothing().when(managerTestHelper.getComputePlugin()).removeInstance(
@@ -1440,7 +1443,7 @@ public class TestManagerController {
 		categories.add(new Category(RequestConstants.USER_DATA_TERM,
 						RequestConstants.SCHEME, RequestConstants.MIXIN_CLASS));
 		Mockito.doReturn("answer").when(plugin)
-				.requestInstance(token, categories, xOCCIAtt);
+				.requestInstance(token, categories, xOCCIAtt, "imageId");
 
 		managerController.setComputePlugin(plugin);
 		Assert.assertEquals("answer",

@@ -37,9 +37,9 @@ import org.restlet.Response;
 
 public class TestGetCompute {
 
-	private static final String INSTANCE_1_ID = "test1" + "@" + OCCITestHelper.MEMBER_ID;
-	private static final String INSTANCE_2_ID = "test2" + "@" + OCCITestHelper.MEMBER_ID;
-	private static final String INSTANCE_3_ID_WITHOUT_USER = "test3" + "@" + OCCITestHelper.MEMBER_ID;
+	private static final String INSTANCE_1_ID = "test1";
+	private static final String INSTANCE_2_ID = "test2";
+	private static final String INSTANCE_3_ID_WITHOUT_USER = "test3";
 
 	private ComputePlugin computePlugin;
 	private IdentityPlugin identityPlugin;
@@ -290,7 +290,8 @@ public class TestGetCompute {
 		Mockito.doNothing().when(computePlugin)
 				.bypass(Mockito.any(org.restlet.Request.class), Mockito.any(Response.class));
 		
-		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE + INSTANCE_1_ID);
+		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE + 
+				INSTANCE_1_ID + "@" + OCCITestHelper.MEMBER_ID);
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		HttpClient client = new DefaultHttpClient();
@@ -305,7 +306,8 @@ public class TestGetCompute {
 						ResponseConstants.METHOD_NOT_SUPPORTED)).when(computePlugin)
 				.bypass(Mockito.any(org.restlet.Request.class), Mockito.any(Response.class));
 		
-		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE + INSTANCE_1_ID);
+		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE + 
+				INSTANCE_1_ID + "@" + OCCITestHelper.MEMBER_ID);
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpGet.addHeader(OCCIHeaders.ACCEPT, OCCIHeaders.TEXT_URI_LIST_CONTENT_TYPE);
 		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
@@ -321,7 +323,7 @@ public class TestGetCompute {
 						ResponseConstants.NOT_FOUND)).when(computePlugin)
 				.bypass(Mockito.any(org.restlet.Request.class), Mockito.any(Response.class));
 		
-		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE + "wrong");
+		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE + "wrong@member");
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		HttpClient client = new DefaultHttpClient();
@@ -336,7 +338,7 @@ public class TestGetCompute {
 				.bypass(Mockito.any(org.restlet.Request.class), Mockito.any(Response.class));
 		
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE
-				+ INSTANCE_3_ID_WITHOUT_USER);
+				+ INSTANCE_3_ID_WITHOUT_USER + "@" + OCCITestHelper.MEMBER_ID);
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		HttpClient client = new DefaultHttpClient();

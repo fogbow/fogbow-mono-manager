@@ -29,7 +29,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.restlet.data.MediaType;
-import org.restlet.engine.header.HeaderConstants;
 
 public class TestPostRequest {
 
@@ -41,7 +40,8 @@ public class TestPostRequest {
 		this.requestHelper = new OCCITestHelper();
 
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
-		Mockito.when(computePlugin.requestInstance(Mockito.any(Token.class), Mockito.any(List.class), Mockito.any(Map.class)))
+		Mockito.when(computePlugin.requestInstance(Mockito.any(Token.class), 
+				Mockito.any(List.class), Mockito.any(Map.class), Mockito.anyString()))
 				.thenReturn("");
 
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);

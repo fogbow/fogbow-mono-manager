@@ -32,6 +32,9 @@ public class Request {
 	}
 
 	public List<Category> getCategories() {
+		if (categories == null) {
+			return null;
+		}
 		return new ArrayList<Category>(categories);
 	}
 

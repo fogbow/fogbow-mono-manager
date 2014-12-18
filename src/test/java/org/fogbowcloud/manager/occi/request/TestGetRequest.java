@@ -52,7 +52,7 @@ public class TestGetRequest {
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		Mockito.when(
 				computePlugin.requestInstance(Mockito.any(Token.class), Mockito.any(List.class),
-						Mockito.any(Map.class))).thenReturn(instanceLocation);
+						Mockito.any(Map.class), Mockito.anyString())).thenReturn(instanceLocation);
 		
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.getToken(OCCITestHelper.ACCESS_TOKEN))

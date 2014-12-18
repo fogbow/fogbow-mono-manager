@@ -1,5 +1,6 @@
 package org.fogbowcloud.manager.occi.core;
 
+
 public class OCCIHeaders {
 
 	// header constants
@@ -21,4 +22,5 @@ public class OCCIHeaders {
 	public static final String TEXT_URI_LIST_CONTENT_TYPE = "text/uri-list";
 	public static final String JSON_CONTENT_TYPE = "application/json";
 	public static final String TEXT_PLAIN_CONTENT_TYPE = "text/plain";
+	
 }

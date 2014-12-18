@@ -127,7 +127,7 @@ public class OCCIComputePlugin implements ComputePlugin {
 
 	@Override
 	public String requestInstance(Token token, List<Category> requestCategories,
-			Map<String, String> xOCCIAtt) {
+			Map<String, String> xOCCIAtt, String localImageId) {
 
 		LOGGER.debug("Requesting instance with token=" + token + "; categories="
 				+ requestCategories + "; xOCCIAtt=" + xOCCIAtt);
@@ -406,16 +406,10 @@ public class OCCIComputePlugin implements ComputePlugin {
 		}
 	}
 
-	@Override
-	public void uploadImage(Token token, String imagePath, String imageName,
-			Map<String, String> tags) {
-		// TODO Auto-generated method stub
-		
+	public void uploadImage(Token token, String imagePath, String imageName) {
 	}
-
-	@Override
-	public String searchImage(Token token, Map<String, String> tags) {
-		// TODO Auto-generated method stub
+	
+	public String getImageId(Token token, String imageName) {
 		return null;
 	}
 
