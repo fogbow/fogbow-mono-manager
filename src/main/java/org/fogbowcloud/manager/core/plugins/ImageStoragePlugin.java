@@ -4,6 +4,6 @@ import org.fogbowcloud.manager.occi.core.Token;
 
 public interface ImageStoragePlugin {
 
-	public String getImage(Token token, String globalId);	
+	public String getLocalId(Token token, String globalId);
 	
 }

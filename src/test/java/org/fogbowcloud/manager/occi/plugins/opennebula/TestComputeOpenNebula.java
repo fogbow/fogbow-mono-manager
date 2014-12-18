@@ -119,11 +119,9 @@ public class TestComputeOpenNebula {
 		// requesting an instance
 		List<Category> categories = new ArrayList<Category>();
 		categories.add(new Category(RequestConstants.SMALL_TERM,
-				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
-		categories.add(new Category(IMAGE1_NAME,
 				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 		Assert.assertEquals(INSTANCE_ID, computeOpenNebula.requestInstance(defaultToken,
-				categories, xOCCIAtt));
+				categories, xOCCIAtt, IMAGE1_ID));
 	}
 	
 	@Test(expected=OCCIException.class)
@@ -137,7 +135,7 @@ public class TestComputeOpenNebula {
 		List<Category> categories = new ArrayList<Category>();
 		categories.add(new Category(RequestConstants.SMALL_TERM,
 				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
-		computeOpenNebula.requestInstance(defaultToken,	categories, xOCCIAtt);
+		computeOpenNebula.requestInstance(defaultToken,	categories, xOCCIAtt, null);
 	}
 	
 	@Test(expected=OCCIException.class)
@@ -149,9 +147,7 @@ public class TestComputeOpenNebula {
 		
 		// requesting an instance
 		List<Category> categories = new ArrayList<Category>();
-		categories.add(new Category(IMAGE1_NAME,
-				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
-		computeOpenNebula.requestInstance(defaultToken, categories, xOCCIAtt);
+		computeOpenNebula.requestInstance(defaultToken, categories, xOCCIAtt, IMAGE1_NAME);
 	}
 		
 	@Test
@@ -177,10 +173,8 @@ public class TestComputeOpenNebula {
 		List<Category> categories = new ArrayList<Category>();
 		categories.add(new Category(RequestConstants.SMALL_TERM,
 				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
-		categories.add(new Category(IMAGE1_NAME,
-				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 		Assert.assertEquals(INSTANCE_ID, computeOpenNebula.requestInstance(defaultToken,
-				categories, xOCCIAtt));
+				categories, xOCCIAtt, IMAGE1_ID));
 		
 		// removing the instance
 		computeOpenNebula.removeInstance(defaultToken, INSTANCE_ID);
@@ -260,10 +254,8 @@ public class TestComputeOpenNebula {
 		List<Category> categories = new ArrayList<Category>();
 		categories.add(new Category(RequestConstants.SMALL_TERM,
 				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
-		categories.add(new Category(IMAGE1_NAME, RequestConstants.TEMPLATE_OS_SCHEME,
-				RequestConstants.MIXIN_CLASS));
 		Assert.assertEquals(INSTANCE_ID,
-				computeOpenNebula.requestInstance(defaultToken, categories, xOCCIAtt));
+				computeOpenNebula.requestInstance(defaultToken, categories, xOCCIAtt, IMAGE1_ID));
 
 		// removing instances
 		computeOpenNebula.removeInstances(defaultToken);
@@ -301,10 +293,8 @@ public class TestComputeOpenNebula {
 		List<Category> categories = new ArrayList<Category>();
 		categories.add(new Category(RequestConstants.SMALL_TERM,
 				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
-		categories.add(new Category(IMAGE1_NAME,
-				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 		Assert.assertEquals(INSTANCE_ID, computeOpenNebula.requestInstance(defaultToken,
-				categories, xOCCIAtt));
+				categories, xOCCIAtt, IMAGE1_ID));
 		
 		// getting specific instance
 		Instance instance = computeOpenNebula.getInstance(defaultToken, INSTANCE_ID);
@@ -320,7 +310,6 @@ public class TestComputeOpenNebula {
 		List<Resource> resources = new ArrayList<Resource>();
 		resources.add(ResourceRepository.getInstance().get("compute"));
 		resources.add(ResourceRepository.getInstance().get("os_tpl"));
-		resources.add(ResourceRepository.getInstance().get(IMAGE1_NAME));
 		resources.add(ResourceRepository.getInstance().get(RequestConstants.SMALL_TERM));
 		
 		for (Resource resource : resources) {
@@ -357,10 +346,8 @@ public class TestComputeOpenNebula {
 		List<Category> categories = new ArrayList<Category>();
 		categories.add(new Category(RequestConstants.SMALL_TERM,
 				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
-		categories.add(new Category(IMAGE1_NAME,
-				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 		Assert.assertEquals(INSTANCE_ID, computeOpenNebula.requestInstance(defaultToken,
-				categories, xOCCIAtt));
+				categories, xOCCIAtt, IMAGE1_ID));
 		
 		// getting specific instance
 		Instance instance = computeOpenNebula.getInstance(defaultToken, INSTANCE_ID);
@@ -376,7 +363,6 @@ public class TestComputeOpenNebula {
 		List<Resource> resources = new ArrayList<Resource>();
 		resources.add(ResourceRepository.getInstance().get("compute"));
 		resources.add(ResourceRepository.getInstance().get("os_tpl"));
-		resources.add(ResourceRepository.getInstance().get(IMAGE1_NAME));
 		resources.add(ResourceRepository.getInstance().get(RequestConstants.SMALL_TERM));
 		
 		for (Resource resource : resources) {
@@ -456,10 +442,8 @@ public class TestComputeOpenNebula {
 		List<Category> categories = new ArrayList<Category>();
 		categories.add(new Category(RequestConstants.SMALL_TERM,
 				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
-		categories.add(new Category(IMAGE1_NAME,
-				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 		Assert.assertEquals(INSTANCE_ID, computeOpenNebula.requestInstance(defaultToken,
-				categories, xOCCIAtt));
+				categories, xOCCIAtt, IMAGE1_ID));
 
 		// getting all instances
 		List<Instance> instances = computeOpenNebula.getInstances(defaultToken);

@@ -68,7 +68,6 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 	private String sshUsername;
 	private String sshPassword;
 	private int dataStoreId;
-	List<String> idleImages;
 	
 	private static final Logger LOGGER = Logger.getLogger(OpenNebulaComputePlugin.class);
 
@@ -92,20 +91,6 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		sshUsername = String.valueOf(properties.get(OneConfigurationConstants.COMPUTE_ONE_SSH_USERNAME));
 		sshPassword = String.valueOf(properties.get(OneConfigurationConstants.COMPUTE_ONE_SSH_PASSWORD));
 		dataStoreId = Integer.valueOf(String.valueOf(properties.get(OneConfigurationConstants.COMPUTE_ONE_DATASTORE_ID)));
-		
-		// images
-		Map<String, String> imageProperties = getImageProperties(properties);
-		if (imageProperties == null || imageProperties.isEmpty()) {
-			throw new OCCIException(ErrorType.BAD_REQUEST,
-					ResponseConstants.IMAGES_NOT_SPECIFIED);
-		}
-				
-		for (String imageName : imageProperties.keySet()) {
-			fogbowTermToOpenNebula.put(imageName, imageProperties.get(imageName));
-			ResourceRepository.getInstance().addImageResource(imageName);
-		}
-		idleImages = new ArrayList<String>(); 
-		idleImages.addAll(imageProperties.keySet());
 		
 		// flavors
 		checkFlavor(String.valueOf(properties.get(OneConfigurationConstants.COMPUTE_ONE_SMALL_KEY)));
@@ -148,32 +133,15 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		}
 	}
 
-	private static Map<String, String> getImageProperties(Properties properties) {
-		Map<String, String> imageProperties = new HashMap<String, String>();
-
-		for (Object propName : properties.keySet()) {
-			String propNameStr = (String) propName;
-			if (propNameStr.startsWith(OneConfigurationConstants.COMPUTE_ONE_IMAGE_PREFIX_KEY)) {
-				imageProperties.put(
-						propNameStr
-								.substring(OneConfigurationConstants.COMPUTE_ONE_IMAGE_PREFIX_KEY
-										.length()), properties.getProperty(propNameStr));
-			}
-		}
-		LOGGER.debug("Image properties: " + imageProperties);
-		return imageProperties;
-	}
-	
 	@Override
 	public String requestInstance(Token token, List<Category> categories,
-			Map<String, String> xOCCIAtt) {
+			Map<String, String> xOCCIAtt, String localImageId) {
 		
 		LOGGER.debug("Requesting instance with token=" + token + "; categories="
 				+ categories + "; xOCCIAtt=" + xOCCIAtt);
 		
 		Map<String, String> templateProperties = new HashMap<String, String>();
 		String choosenFlavor = null;
-		String choosenImage = null;
 		
 		// removing fogbow-request category
 		categories.remove(new Category(RequestConstants.TERM, RequestConstants.SCHEME,
@@ -193,13 +161,6 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 							ResponseConstants.IRREGULAR_SYNTAX);					
 				}
 				choosenFlavor = fogbowTermToOpenNebula.get(category.getTerm());
-			} else if (idleImages.contains(category.getTerm())){
-				// There are more than one image category
-				if (choosenImage != null) {
-					throw new OCCIException(ErrorType.BAD_REQUEST,
-							ResponseConstants.IRREGULAR_SYNTAX);					
-				}
-				choosenImage = fogbowTermToOpenNebula.get(category.getTerm());
 			} else if (category.getTerm().equals(RequestConstants.PUBLIC_KEY_TERM)) {
 				templateProperties.put("ssh-public-key",
 						xOCCIAtt.get(RequestAttribute.DATA_PUBLIC_KEY.getValue()));
@@ -207,7 +168,7 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		}
 		
 		// image or flavor was not specified
-		if (choosenFlavor == null || choosenImage == null){
+		if (choosenFlavor == null || localImageId == null){
 			throw new OCCIException(ErrorType.BAD_REQUEST,
 					ResponseConstants.IRREGULAR_SYNTAX);
 		}
@@ -219,7 +180,7 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		templateProperties.put("mem", String.valueOf((int)getAttValue("mem", choosenFlavor)));
 		templateProperties.put("cpu", String.valueOf(getAttValue("cpu", choosenFlavor)));
 		templateProperties.put("userdata", userdata);
-		templateProperties.put("image-id", choosenImage);
+		templateProperties.put("image-id", localImageId);
 
 		Client oneClient = clientFactory.createClient(token.getAccessId(), openNebulaEndpoint);
 		String vmTemplate = generateTemplate(templateProperties);
@@ -369,11 +330,6 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		resources.add(ResourceRepository.getInstance().get("os_tpl"));
 		resources.add(ResourceRepository.getInstance().get(
 				getUsedFlavor(Double.parseDouble(cpu), Double.parseDouble(mem))));
-		
-		// valid image
-		if (ResourceRepository.getInstance().get(image) != null) {
-			resources.add(ResourceRepository.getInstance().get(image));
-		}
 		
 		return new Instance(vm.getId(), resources, attributes, new ArrayList<Link>());
 	}
@@ -544,8 +500,7 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 	}
 
 	@Override
-	public void uploadImage(Token token, String imagePath, String imageName,
-			Map<String, String> tags) {
+	public void uploadImage(Token token, String imagePath, String imageName) {
 		// TODO Auto-generated method stub
 		Client oneClient = clientFactory.createClient(token.getAccessId(), openNebulaEndpoint);
 		Map<String, String> templateProperties = new HashMap<String, String>();
@@ -601,8 +556,11 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 	}
 
 	@Override
-	public String searchImage(Token token, Map<String, String> tags) {
-		// TODO Auto-generated method stub
+	public String getImageId(Token token, String imageName) {
+		return null;
+	}
+	
+	public String getImageName(Token token, String imageId) {
 		return null;
 	}
 	

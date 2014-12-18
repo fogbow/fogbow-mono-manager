@@ -340,7 +340,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		computePlugin = Mockito.mock(ComputePlugin.class);
 		Mockito.when(
 				computePlugin.requestInstance(Mockito.any(Token.class), Mockito.any(List.class),
-						Mockito.any(Map.class))).thenThrow(
+						Mockito.any(Map.class), Mockito.anyString())).thenThrow(
 				new OCCIException(ErrorType.QUOTA_EXCEEDED,
 						ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES));
 		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class))).thenReturn(

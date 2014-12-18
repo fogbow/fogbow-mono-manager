@@ -12,7 +12,6 @@ import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
-import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
@@ -22,6 +21,7 @@ import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.core.model.FederationMember;
+import org.fogbowcloud.manager.core.model.RemoteRequest;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
@@ -70,7 +70,7 @@ public class ManagerController {
 	private Properties properties;
 	private AsyncPacketSender packetSender;
 	private FederationMemberValidator validator = new DefaultMemberValidator();
-	private Map<String, String> instanceTokens = new HashMap<String, String>();
+	private Map<String, RemoteRequest> instancesForRemoteMembers = new HashMap<String, RemoteRequest>();
 	private Map<String, Request> asynchronousRequests = new HashMap<String, Request>();
 
 	private DateUtils dateUtils = new DateUtils();
@@ -240,6 +240,11 @@ public class ManagerController {
 			if (sshPublicAdd != null) {
 				instance.addAttribute(Instance.SSH_PUBLIC_ADDRESS_ATT, sshPublicAdd);
 			}
+			Category osCategory = getImageCategory(request.getCategories());
+			if (osCategory != null) {
+				instance.addResource(
+						ResourceRepository.createImageResource(osCategory.getTerm()));
+			}
 
 		} else {
 			LOGGER.debug(request.getInstanceId() + " is remote, going out to "
@@ -249,7 +254,22 @@ public class ManagerController {
 		return instance;
 	}
 
+	private static Category getImageCategory(List<Category> categories) {
+		if (categories == null) {
+			return null;
+		}
+		Category osCategory = null;
+		for (Category category : categories) {
+			if (category.getScheme().equals(RequestConstants.TEMPLATE_OS_SCHEME)) {
+				osCategory = category;
+				break;
+			}
+		}
+		return osCategory;
+	}
+
 	private String getSSHPublicAddress(String tokenId) {
+		
 		if (tokenId == null || tokenId.isEmpty()){
 			return null;
 		}
@@ -354,6 +374,7 @@ public class ManagerController {
 		String user = getUser(accessId);
 		LOGGER.debug("Getting instance " + instanceId + " of user " + user);
 		List<Request> userRequests = requests.getAll();
+		
 		for (Request request : userRequests) {
 			if (instanceId.equals(request.getInstanceId() + Request.SEPARATOR_GLOBAL_ID
 					+ request.getMemberId())) {
@@ -419,10 +440,14 @@ public class ManagerController {
 			return null;
 		}
 		
+		Token federationUserToken = getFederationUserToken();
+		String localImageId = getLocalImageId(categories, federationUserToken);
+		
 		try {			
-			String instanceId = computePlugin.requestInstance(getFederationUserToken(), categories,
-					xOCCIAtt);			
-			instanceTokens.put(instanceId, instanceToken);
+			String instanceId = computePlugin.requestInstance(federationUserToken, categories,
+					xOCCIAtt, localImageId);
+			instancesForRemoteMembers.put(instanceId, 
+					new RemoteRequest(instanceToken, memberId, categories, xOCCIAtt));
 
 			return instanceId;
 		} catch (OCCIException e) {
@@ -431,6 +456,17 @@ public class ManagerController {
 			}
 			throw e;
 		}
+	}
+
+	private String getLocalImageId(List<Category> categories,
+			Token federationUserToken) {
+		Category osCategory = getImageCategory(categories);
+		String localImageId = null;
+		if (osCategory != null) {
+			String globalImageId = osCategory.getTerm();
+			localImageId = imageStoragePlugin.getLocalId(federationUserToken, globalImageId);
+		}
+		return localImageId;
 	}
 
 	protected Token getFederationUserToken() {
@@ -447,10 +483,17 @@ public class ManagerController {
 		LOGGER.info("Getting instance " + instanceId + " for remote member.");
 		try {
 			Instance instance = computePlugin.getInstance(getFederationUserToken(), instanceId);
-			
-			String sshPublicAddress = getSSHPublicAddress(instanceTokens.get(instanceId));			
-			if (sshPublicAddress != null) {
-				instance.addAttribute(Instance.SSH_PUBLIC_ADDRESS_ATT, sshPublicAddress);
+			RemoteRequest remoteRequest = instancesForRemoteMembers.get(instanceId);
+			if (remoteRequest != null) {
+				String sshPublicAddress = getSSHPublicAddress(remoteRequest.getId());			
+				if (sshPublicAddress != null) {
+					instance.addAttribute(Instance.SSH_PUBLIC_ADDRESS_ATT, sshPublicAddress);
+				}
+				Category osCategory = getImageCategory(remoteRequest.getCategories());
+				if (osCategory != null) {
+					instance.addResource(
+							ResourceRepository.createImageResource(osCategory.getTerm()));
+				}
 			}
 			return instance;
 		} catch (OCCIException e) {
@@ -465,7 +508,7 @@ public class ManagerController {
 	public void removeInstanceForRemoteMember(String instanceId) {
 		LOGGER.info("Removing instance " + instanceId + " for remote member.");
 		computePlugin.removeInstance(getFederationUserToken(), instanceId);
-		instanceTokens.remove(instanceId);
+		instancesForRemoteMembers.remove(instanceId);
 	}
 
 	public Token getTokenFromFederationIdP(String accessId) {
@@ -674,8 +717,10 @@ public class ManagerController {
 				return false;
 			}	
 			
+			String localImageId = getLocalImageId(request.getCategories(), request.getToken());
+			
 			instanceId = computePlugin.requestInstance(request.getToken(),
-					request.getCategories(), request.getxOCCIAtt());
+					request.getCategories(), request.getxOCCIAtt(), localImageId);
 		} catch (OCCIException e) {
 			int statusCode = e.getStatus().getCode();
 			if (statusCode == HttpStatus.SC_INSUFFICIENT_SPACE_ON_RESOURCE

@@ -16,6 +16,7 @@ import org.apache.http.util.EntityUtils;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
+import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
@@ -45,6 +46,7 @@ public class TestGetCompute {
 	private IdentityPlugin identityPlugin;
 	private AuthorizationPlugin authorizationPlugin;
 	private OCCITestHelper helper;
+	private ImageStoragePlugin imageStoragePlugin;
 
 	@Before
 	public void setup() throws Exception {
@@ -91,7 +93,10 @@ public class TestGetCompute {
 		authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
 		Mockito.when(authorizationPlugin.isAuthorized(Mockito.any(Token.class))).thenReturn(true);
 		
-		this.helper.initializeComponentCompute(computePlugin, identityPlugin ,authorizationPlugin , requests);
+		imageStoragePlugin = Mockito.mock(ImageStoragePlugin.class);
+		
+		this.helper.initializeComponentCompute(computePlugin, identityPlugin, 
+				authorizationPlugin, imageStoragePlugin, requests);
 	}
 
 	@After
@@ -269,7 +274,8 @@ public class TestGetCompute {
 		//reseting component
 		helper.stopComponent();
 		List<Request> requests = new LinkedList<Request>();
-		helper.initializeComponentCompute(computePlugin, identityPlugin, authorizationPlugin, requests);
+		helper.initializeComponentCompute(computePlugin, identityPlugin, 
+				authorizationPlugin, imageStoragePlugin, requests);
 
 		//test
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE);
@@ -323,7 +329,7 @@ public class TestGetCompute {
 						ResponseConstants.NOT_FOUND)).when(computePlugin)
 				.bypass(Mockito.any(org.restlet.Request.class), Mockito.any(Response.class));
 		
-		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE + "wrong");
+		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE + "wrong@member");
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		HttpClient client = new DefaultHttpClient();

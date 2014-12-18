@@ -13,6 +13,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
+import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.OCCIException;
@@ -34,6 +35,7 @@ public class TestDeleteCompute {
 	public static String OTHER_INSTANCE_ID = "otherInstanceId";
 
 	private OCCITestHelper helper;
+	private ImageStoragePlugin imageStoragePlugin;
 
 	@Before
 	public void setup() throws Exception {
@@ -70,7 +72,10 @@ public class TestDeleteCompute {
 		AuthorizationPlugin authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
 		Mockito.when(authorizationPlugin.isAuthorized(Mockito.any(Token.class))).thenReturn(true);
 		
-		this.helper.initializeComponentCompute(computePlugin, identityPlugin, authorizationPlugin, requests);
+		imageStoragePlugin = Mockito.mock(ImageStoragePlugin.class);
+		
+		this.helper.initializeComponentCompute(computePlugin, identityPlugin, 
+				authorizationPlugin, imageStoragePlugin, requests);
 	}
 
 	@After

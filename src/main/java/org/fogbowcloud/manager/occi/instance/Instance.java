@@ -127,6 +127,10 @@ public class Instance {
 	public List<Resource> getResources() {
 		return resources;
 	}
+	
+	public void addResource(Resource resource) {
+		resources.add(resource);
+	}
 
 	public Map<String, String> getAttributes() {
 		return attributes;
@@ -221,4 +225,5 @@ public class Instance {
 			return attributes;
 		}
 	}
+
 }

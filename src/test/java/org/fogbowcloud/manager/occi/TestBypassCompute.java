@@ -20,6 +20,7 @@ import org.apache.http.util.EntityUtils;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
+import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
 import org.fogbowcloud.manager.core.plugins.openstack.OpenStackConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.openstack.OpenStackOCCIComputePlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
@@ -38,7 +39,6 @@ import org.fogbowcloud.manager.occi.util.PluginHelper;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -56,6 +56,7 @@ public class TestBypassCompute {
 	private IdentityPlugin identityPlugin;
 	private AuthorizationPlugin authorizationPlugin;
 	private Token defaultToken;
+	private ImageStoragePlugin imageStoragePlugin;
 	
 	@Before
 	public void setup() throws Exception{
@@ -101,9 +102,12 @@ public class TestBypassCompute {
 		authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
 		Mockito.when(authorizationPlugin.isAuthorized(Mockito.any(Token.class))).thenReturn(true);
 		
+		imageStoragePlugin = Mockito.mock(ImageStoragePlugin.class);
+		
 		//initializing fogbow OCCI Application
 		helper = new OCCITestHelper();
-		helper.initializeComponentCompute(computePlugin, identityPlugin, authorizationPlugin, requests);
+		helper.initializeComponentCompute(computePlugin, identityPlugin, 
+				authorizationPlugin, imageStoragePlugin, requests);
 	}
 	
 	@After
@@ -172,11 +176,11 @@ public class TestBypassCompute {
 		categories.add(new Category(PluginHelper.LINUX_X86_TERM,
 				OpenStackOCCIComputePlugin.getOSScheme(), RequestConstants.MIXIN_CLASS));
 		Assert.assertEquals(FIRST_INSTANCE_ID, computePlugin.requestInstance(
-				defaultToken, categories, new HashMap<String, String>()));
+				defaultToken, categories, new HashMap<String, String>(), null));
 		Assert.assertEquals(SECOND_INSTANCE_ID, computePlugin.requestInstance(
-				defaultToken, categories, new HashMap<String, String>()));
+				defaultToken, categories, new HashMap<String, String>(), null));
 		Assert.assertEquals(THIRD_INSTANCE_ID, computePlugin.requestInstance(
-				defaultToken, categories, new HashMap<String, String>()));
+				defaultToken, categories, new HashMap<String, String>(), null));
 
 		//checking if machines were added
 		Assert.assertEquals(3, computePlugin.getInstances(defaultToken).size());
@@ -217,9 +221,9 @@ public class TestBypassCompute {
 		categories.add(new Category(PluginHelper.LINUX_X86_TERM,
 				OpenStackOCCIComputePlugin.getOSScheme(), RequestConstants.MIXIN_CLASS));
 		Assert.assertEquals(SECOND_INSTANCE_ID, computePlugin.requestInstance(
-				defaultToken, categories, new HashMap<String, String>()));
+				defaultToken, categories, new HashMap<String, String>(), null));
 		Assert.assertEquals(THIRD_INSTANCE_ID, computePlugin.requestInstance(
-				defaultToken, categories, new HashMap<String, String>()));
+				defaultToken, categories, new HashMap<String, String>(), null));
 		
 		//checking if machines were added
 		Assert.assertEquals(3, computePlugin.getInstances(defaultToken).size());
@@ -243,7 +247,7 @@ public class TestBypassCompute {
 		categories.add(new Category(PluginHelper.LINUX_X86_TERM,
 				OpenStackOCCIComputePlugin.getOSScheme(), RequestConstants.MIXIN_CLASS));
 		Assert.assertEquals(FIRST_INSTANCE_ID, computePlugin.requestInstance(
-				defaultToken, categories, new HashMap<String, String>()));
+				defaultToken, categories, new HashMap<String, String>(), null));
 		
 		//checking if machine was added
 		Assert.assertEquals(1, computePlugin.getInstances(defaultToken).size());
@@ -308,11 +312,11 @@ public class TestBypassCompute {
 		categories.add(new Category(PluginHelper.LINUX_X86_TERM,
 				OpenStackOCCIComputePlugin.getOSScheme(), RequestConstants.MIXIN_CLASS));
 		Assert.assertEquals(FIRST_INSTANCE_ID, computePlugin.requestInstance(
-				defaultToken, categories, new HashMap<String, String>()));
+				defaultToken, categories, new HashMap<String, String>(), null));
 		Assert.assertEquals(SECOND_INSTANCE_ID, computePlugin.requestInstance(
-				defaultToken, categories, new HashMap<String, String>()));
+				defaultToken, categories, new HashMap<String, String>(), null));
 		Assert.assertEquals(THIRD_INSTANCE_ID, computePlugin.requestInstance(
-				defaultToken, categories, new HashMap<String, String>()));
+				defaultToken, categories, new HashMap<String, String>(), null));
 		
 		//checking if instances were added
 		Assert.assertEquals(3, computePlugin.getInstances(defaultToken).size());
@@ -366,9 +370,9 @@ public class TestBypassCompute {
 		categories.add(new Category(PluginHelper.LINUX_X86_TERM,
 				OpenStackOCCIComputePlugin.getOSScheme(), RequestConstants.MIXIN_CLASS));
 		Assert.assertEquals(SECOND_INSTANCE_ID, computePlugin.requestInstance(
-				defaultToken, categories, new HashMap<String, String>()));
+				defaultToken, categories, new HashMap<String, String>(), null));
 		Assert.assertEquals(THIRD_INSTANCE_ID, computePlugin.requestInstance(
-				defaultToken, categories, new HashMap<String, String>()));
+				defaultToken, categories, new HashMap<String, String>(), null));
 		
 		//checking if instance were added
 		Assert.assertEquals(3, computePlugin.getInstances(defaultToken).size());
@@ -404,11 +408,11 @@ public class TestBypassCompute {
 		categories.add(new Category(PluginHelper.LINUX_X86_TERM,
 				OpenStackOCCIComputePlugin.getOSScheme(), RequestConstants.MIXIN_CLASS));
 		Assert.assertEquals(FIRST_INSTANCE_ID, computePlugin.requestInstance(
-				defaultToken, categories, new HashMap<String, String>()));
+				defaultToken, categories, new HashMap<String, String>(), null));
 		Assert.assertEquals(SECOND_INSTANCE_ID, computePlugin.requestInstance(
-				defaultToken, categories, new HashMap<String, String>()));
+				defaultToken, categories, new HashMap<String, String>(), null));
 		Assert.assertEquals(THIRD_INSTANCE_ID, computePlugin.requestInstance(
-				defaultToken, categories, new HashMap<String, String>()));
+				defaultToken, categories, new HashMap<String, String>(), null));
 		
 		//checking if instances were added
 		Assert.assertEquals(3, computePlugin.getInstances(defaultToken).size());
@@ -444,7 +448,7 @@ public class TestBypassCompute {
 		categories.add(new Category(PluginHelper.LINUX_X86_TERM,
 				OpenStackOCCIComputePlugin.getOSScheme(), RequestConstants.MIXIN_CLASS));
 		Assert.assertEquals(FIRST_INSTANCE_ID, computePlugin.requestInstance(
-				defaultToken, categories, new HashMap<String, String>()));
+				defaultToken, categories, new HashMap<String, String>(), null));
 				
 		//checking if instances were added
 		Assert.assertEquals(1, computePlugin.getInstances(defaultToken).size());

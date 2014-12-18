@@ -51,7 +51,6 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 	private String computeV2APIEndpoint;
 	private String networkId;
 	private Map<String, String> fogbowTermToOpenStack = new HashMap<String, String>();
-	private Map<String, String> imagesOpenStackToFogbow = new HashMap<String, String>();
 	DefaultHttpClient client;
 
 	private static final Logger LOGGER = Logger.getLogger(OpenStackNovaV2ComputePlugin.class);
@@ -64,19 +63,6 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		networkId = properties
 				.getProperty(OpenStackConfigurationConstants.COMPUTE_NOVAV2_NETWORK_KEY);
 
-		// images
-		Map<String, String> imageProperties = getImageProperties(properties);
-		if (imageProperties == null || imageProperties.isEmpty()) {
-			throw new OCCIException(ErrorType.BAD_REQUEST,
-					ResponseConstants.IMAGES_NOT_SPECIFIED);
-		}
-
-		for (String imageName : imageProperties.keySet()) {
-			fogbowTermToOpenStack.put(imageName, imageProperties.get(imageName));
-			imagesOpenStackToFogbow.put(imageProperties.get(imageName), imageName);
-			ResourceRepository.getInstance().addImageResource(imageName);
-		}
-		
 		fogbowTermToOpenStack.put(RequestConstants.SMALL_TERM,
 				properties.getProperty(OpenStackConfigurationConstants.COMPUTE_NOVAV2_FLAVOR_SMALL_KEY));
 		fogbowTermToOpenStack.put(RequestConstants.MEDIUM_TERM,
@@ -93,40 +79,28 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		initClient();
 	}
 	
-	private static Map<String, String> getImageProperties(Properties properties) {
-		Map<String, String> imageProperties = new HashMap<String, String>();
-
-		for (Object propName : properties.keySet()) {
-			String propNameStr = (String) propName;
-			if (propNameStr
-					.startsWith(OpenStackConfigurationConstants.COMPUTE_NOVAV2_IMAGE_PREFIX_KEY)) {
-				imageProperties
-						.put(propNameStr
-								.substring(OpenStackConfigurationConstants.COMPUTE_NOVAV2_IMAGE_PREFIX_KEY
-										.length()), properties.getProperty(propNameStr));
-			}
-		}
-		LOGGER.debug("Image properties: " + imageProperties);
-		return imageProperties;
-	}
-	
 	@Override
 	public String requestInstance(Token token, List<Category> categories,
-			Map<String, String> xOCCIAtt) {
+			Map<String, String> xOCCIAtt, String imageRef) {
 
 		LOGGER.debug("Requesting instance with token=" + token + "; categories="
 				+ categories + "; xOCCIAtt=" + xOCCIAtt);
 
+		if (imageRef == null) {
+			throw new OCCIException(ErrorType.BAD_REQUEST,
+					ResponseConstants.IRREGULAR_SYNTAX);
+		}
+		
 		// removing fogbow-request category
 		categories.remove(new Category(RequestConstants.TERM, RequestConstants.SCHEME,
 				RequestConstants.KIND_CLASS));
 
 		String flavorRef = null;
-		String imageRef = null;
 		
 		for (Category category : categories) {
 			String openstackRef = fogbowTermToOpenStack.get(category.getTerm());
-			if (openstackRef == null) {
+			if (openstackRef == null && !category.getScheme().equals(
+					RequestConstants.TEMPLATE_OS_SCHEME)) {
 				throw new OCCIException(ErrorType.BAD_REQUEST,
 						ResponseConstants.CLOUD_NOT_SUPPORT_CATEGORY + category.getTerm());
 			} else if (category.getTerm().equals(RequestConstants.SMALL_TERM)
@@ -138,13 +112,6 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 							ResponseConstants.IRREGULAR_SYNTAX);					
 				}
 				flavorRef = openstackRef;
-			} else if (imagesOpenStackToFogbow.values().contains(category.getTerm())){
-				// There are more than one image category
-				if (imageRef != null) {
-					throw new OCCIException(ErrorType.BAD_REQUEST,
-							ResponseConstants.IRREGULAR_SYNTAX);					
-				}
-				imageRef = openstackRef;
 			}
 		}
 
@@ -331,17 +298,6 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 			resources.add(ResourceRepository.getInstance().get("os_tpl"));
 			resources.add(ResourceRepository.getInstance().get(getUsedFlavor(flavorId)));
 
-			String imageId = rootServer.getJSONObject("server").getJSONObject("image")
-					.getString("id");
-
-			LOGGER.debug("OpenStack imageId: " + imageId + " is related to fogbow image "
-					+ imagesOpenStackToFogbow.get(imageId));
-
-			// valid image
-			if (imagesOpenStackToFogbow.get(imageId) != null) {
-				resources.add(ResourceRepository.getInstance().get(
-						imagesOpenStackToFogbow.get(imageId)));
-			}
 			LOGGER.debug("Instance resources: " + resources);
 
 			return new Instance(id, resources, attributes, new ArrayList<Instance.Link>());
@@ -521,15 +477,16 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 	}
 
 	@Override
-	public void uploadImage(Token token, String imagePath, String imageName,
-			Map<String, String> tags) {
-		// TODO Auto-generated method stub
+	public void uploadImage(Token token, String imagePath, String imageName) {
 		
 	}
 
 	@Override
-	public String searchImage(Token token, Map<String, String> tags) {
-		// TODO Auto-generated method stub
+	public String getImageId(Token token, String imageName) {
+		return null;
+	}
+	
+	public String getImageName(Token token, String imageId) {
 		return null;
 	}
 }

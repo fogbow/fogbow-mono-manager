@@ -133,20 +133,23 @@ public class ResourceRepository {
 	}
 	
 	public void addImageResource(String imageName){
-		Resource imageResource = new Resource(imageName, RequestConstants.TEMPLATE_OS_SCHEME,
-				RequestConstants.MIXIN_CLASS, new ArrayList<String>(), new ArrayList<String>(),
-				FOGBOWCLOUD_ENDPOINT + "/" + imageName + "/", imageName + " image", OS_TPL_OCCI_SCHEME);
+		Resource imageResource = createImageResource(imageName);
 		if (!resources.contains(imageResource)){
 			LOGGER.debug("Adding image resource: " + imageResource.toHeader());
 			resources.add(imageResource);
 		}
 	}
-	
-	
-	public void addTemplateResource(String imageName){
+
+	public static Resource createImageResource(String imageName) {
 		Resource imageResource = new Resource(imageName, RequestConstants.TEMPLATE_OS_SCHEME,
 				RequestConstants.MIXIN_CLASS, new ArrayList<String>(), new ArrayList<String>(),
 				FOGBOWCLOUD_ENDPOINT + "/" + imageName + "/", imageName + " image", OS_TPL_OCCI_SCHEME);
+		return imageResource;
+	}
+	
+	
+	public void addTemplateResource(String imageName){
+		Resource imageResource = createImageResource(imageName);
 		if (!resources.contains(imageResource)){
 			LOGGER.debug("Adding image resource: " + imageResource.toHeader());
 			resources.add(imageResource);

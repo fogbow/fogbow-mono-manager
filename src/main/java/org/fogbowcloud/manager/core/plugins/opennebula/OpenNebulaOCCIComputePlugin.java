@@ -51,7 +51,7 @@ public class OpenNebulaOCCIComputePlugin extends OCCIComputePlugin {
 
 	@Override
 	public String requestInstance(Token token, List<Category> requestCategories,
-			Map<String, String> xOCCIAtt) {
+			Map<String, String> xOCCIAtt, String localImageId) {
 		LOGGER.debug("Requesting instance with token=" + token + "; categories="
 				+ requestCategories + "; xOCCIAtt=" + xOCCIAtt);
 
