@@ -895,7 +895,8 @@ public class TestManagerController {
 
 		// removing instance
 		managerController.removeInstance(DefaultDataTestHelper.ACCESS_TOKEN_ID,
-				DefaultDataTestHelper.INSTANCE_ID);
+				DefaultDataTestHelper.INSTANCE_ID  + Request.SEPARATOR_GLOBAL_ID
+	            + DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 
 		requests = managerController.getRequestsFromUser(DefaultDataTestHelper.ACCESS_TOKEN_ID);
 
@@ -938,7 +939,8 @@ public class TestManagerController {
 
 		// removing instance
 		managerController.removeInstance(DefaultDataTestHelper.ACCESS_TOKEN_ID,
-				DefaultDataTestHelper.INSTANCE_ID);
+				DefaultDataTestHelper.INSTANCE_ID + Request.SEPARATOR_GLOBAL_ID
+	            + DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 
 		// checking request state was set to open
 		requests = managerController.getRequestsFromUser(DefaultDataTestHelper.ACCESS_TOKEN_ID);
@@ -987,7 +989,8 @@ public class TestManagerController {
 		
 		// removing instance
 		managerController.removeInstance(DefaultDataTestHelper.ACCESS_TOKEN_ID,
-				DefaultDataTestHelper.INSTANCE_ID);
+				DefaultDataTestHelper.INSTANCE_ID  + Request.SEPARATOR_GLOBAL_ID
+	            + DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 
 		// checking if request state was set to open
 		requests = managerController.getRequestsFromUser(DefaultDataTestHelper.ACCESS_TOKEN_ID);
@@ -1102,7 +1105,8 @@ public class TestManagerController {
 
 		// removing instance
 		managerController.removeInstance(DefaultDataTestHelper.ACCESS_TOKEN_ID,
-				DefaultDataTestHelper.INSTANCE_ID);
+				DefaultDataTestHelper.INSTANCE_ID  + Request.SEPARATOR_GLOBAL_ID
+	            + DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		managerController.checkAndSubmitOpenRequests();
 
 		// checking if request state was set to closed
@@ -1330,7 +1334,8 @@ public class TestManagerController {
 
 		// removing instance
 		managerController.removeInstance(DefaultDataTestHelper.ACCESS_TOKEN_ID,
-				DefaultDataTestHelper.INSTANCE_ID);
+				DefaultDataTestHelper.INSTANCE_ID  + Request.SEPARATOR_GLOBAL_ID
+	            + DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 
 		// waiting for a time and request is not into valid period anymore
 		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD + DefaultDataTestHelper.GRACE_TIME);
@@ -1393,12 +1398,17 @@ public class TestManagerController {
 						Mockito.any(List.class), Mockito.any(Map.class), Mockito.anyString())).thenThrow(
 				new OCCIException(ErrorType.QUOTA_EXCEEDED,
 						ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES));
-		Mockito.doNothing().when(managerTestHelper.getComputePlugin()).removeInstance(
-				managerTestHelper.getDefaultToken(), DefaultDataTestHelper.INSTANCE_ID);
+		Mockito.doNothing()
+				.when(managerTestHelper.getComputePlugin())
+				.removeInstance(
+						managerTestHelper.getDefaultToken(),
+						DefaultDataTestHelper.INSTANCE_ID + Request.SEPARATOR_GLOBAL_ID
+								+ DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 
 		// removing instance
 		managerController.removeInstance(DefaultDataTestHelper.ACCESS_TOKEN_ID,
-				DefaultDataTestHelper.INSTANCE_ID);
+				DefaultDataTestHelper.INSTANCE_ID  + Request.SEPARATOR_GLOBAL_ID
+	            + DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 
 		// waiting for the scheduler period so that request is not into valid period anymore
 		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD * 2 + DefaultDataTestHelper.GRACE_TIME);
@@ -1443,7 +1453,7 @@ public class TestManagerController {
 		categories.add(new Category(RequestConstants.USER_DATA_TERM,
 						RequestConstants.SCHEME, RequestConstants.MIXIN_CLASS));
 		Mockito.doReturn("answer").when(plugin)
-				.requestInstance(token, categories, xOCCIAtt, "imageId");
+				.requestInstance(token, categories, xOCCIAtt, null);
 
 		managerController.setComputePlugin(plugin);
 		Assert.assertEquals("answer",

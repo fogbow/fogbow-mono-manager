@@ -324,6 +324,7 @@ public class ManagerController {
 
 	public void removeInstance(String accessId, String instanceId) {
 		Request request = getRequestForInstance(accessId, instanceId);
+		instanceId = normalizeInstanceId(instanceId);
 		removeInstance(accessId, instanceId, request);
 	}
 
@@ -374,16 +375,9 @@ public class ManagerController {
 		LOGGER.debug("Getting instance " + instanceId + " of user " + user);
 		List<Request> userRequests = requests.getAll();
 		
-		String[] instanceIdSplitted = instanceId.split("@");
-		if (instanceIdSplitted.length != 2) {
-			throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
-		}
-		String localInstanceId = instanceIdSplitted[0];
-		String memberId = instanceIdSplitted[1];
-		
 		for (Request request : userRequests) {
-            if (localInstanceId.equals(request.getInstanceId())
-                    && memberId.equals(request.getMemberId())) {
+			if (instanceId.equals(request.getInstanceId() + Request.SEPARATOR_GLOBAL_ID
+					+ request.getMemberId())) {
 				if (!request.getToken().getUser().equals(user)) {
 					throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 				}
