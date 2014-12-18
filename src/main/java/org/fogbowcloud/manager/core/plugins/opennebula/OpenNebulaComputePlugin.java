@@ -1,5 +1,7 @@
 package org.fogbowcloud.manager.core.plugins.opennebula;
 
+import java.io.File;
+import java.io.IOException;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -40,6 +42,7 @@ import org.json.JSONObject;
 import org.opennebula.client.Client;
 import org.opennebula.client.OneResponse;
 import org.opennebula.client.group.Group;
+import org.opennebula.client.image.Image;
 import org.opennebula.client.user.User;
 import org.opennebula.client.vm.VirtualMachine;
 import org.opennebula.client.vm.VirtualMachinePool;
@@ -60,6 +63,11 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 	private String openNebulaEndpoint;
 	private Map<String, String> fogbowTermToOpenNebula; 
 	private String networkId;
+	private String sshHost;
+	private int sshPort;
+	private String sshUsername;
+	private String sshPassword;
+	private int dataStoreId;
 	List<String> idleImages;
 	
 	private static final Logger LOGGER = Logger.getLogger(OpenNebulaComputePlugin.class);
@@ -78,7 +86,12 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 			throw new OCCIException(ErrorType.BAD_REQUEST,
 					ResponseConstants.NETWORK_NOT_SPECIFIED);			
 		}		
-		networkId = String.valueOf(properties.get(OneConfigurationConstants.COMPUTE_ONE_NETWORK_KEY));	
+		networkId = String.valueOf(properties.get(OneConfigurationConstants.COMPUTE_ONE_NETWORK_KEY));
+		sshHost = String.valueOf(properties.get(OneConfigurationConstants.COMPUTE_ONE_SSH_HOST));
+		sshPort = Integer.valueOf(String.valueOf(properties.get(OneConfigurationConstants.COMPUTE_ONE_SSH_PORT)));
+		sshUsername = String.valueOf(properties.get(OneConfigurationConstants.COMPUTE_ONE_SSH_USERNAME));
+		sshPassword = String.valueOf(properties.get(OneConfigurationConstants.COMPUTE_ONE_SSH_PASSWORD));
+		dataStoreId = Integer.valueOf(String.valueOf(properties.get(OneConfigurationConstants.COMPUTE_ONE_DATASTORE_ID)));
 		
 		// images
 		Map<String, String> imageProperties = getImageProperties(properties);
@@ -534,7 +547,57 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 	public void uploadImage(Token token, String imagePath, String imageName,
 			Map<String, String> tags) {
 		// TODO Auto-generated method stub
+		Client oneClient = clientFactory.createClient(token.getAccessId(), openNebulaEndpoint);
+		Map<String, String> templateProperties = new HashMap<String, String>();
+		String destinationImageName = "marcos";
+		templateProperties.put("image_name", destinationImageName);
+		String destinationImagePath = "/tmp/mytempimage.img";
+		templateProperties.put("image_path", destinationImagePath);
 		
+		OpenNebulaSshClientWrapper sshClientWrapper = new OpenNebulaSshClientWrapper();
+		try {
+			sshClientWrapper.connect(sshHost, sshPort, sshUsername, sshPassword);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		OneResponse response = Image.allocate(oneClient, generateImageTemplate(templateProperties), dataStoreId);
+		System.out.println(response.getMessage());
+	}
+	
+	private String generateImageTemplate(Map<String, String> templateProperties) {
+		DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+		DocumentBuilder docBuilder;
+		try {
+			docBuilder = docFactory.newDocumentBuilder();
+			Document doc = docBuilder.newDocument();
+			Element rootElement = doc.createElement("IMAGE");
+			doc.appendChild(rootElement);
+			
+			Element nameElement = doc.createElement("NAME");
+			nameElement.appendChild(doc.createTextNode(templateProperties.get("image_name")));
+			rootElement.appendChild(nameElement);
+			
+			Element pathElement = doc.createElement("PATH");
+			pathElement.appendChild(doc.createTextNode(templateProperties.get("image_path")));
+			rootElement.appendChild(pathElement);
+			
+			TransformerFactory transformerFactory = TransformerFactory.newInstance();
+			Transformer transformer = transformerFactory.newTransformer();
+			
+			DOMSource source = new DOMSource(doc);
+			StringWriter stringWriter = new StringWriter();
+			StreamResult result = new StreamResult(stringWriter);
+			
+			transformer.transform(source, result);
+			
+			return stringWriter.toString();
+		} catch (ParserConfigurationException e) {
+			e.printStackTrace();
+		} catch (TransformerException e) {
+			e.printStackTrace();
+		}
+		return "";
 	}
 
 	@Override
