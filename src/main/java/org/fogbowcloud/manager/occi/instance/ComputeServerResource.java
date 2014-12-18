@@ -191,7 +191,6 @@ public class ComputeServerResource extends ServerResource {
 						String[] tokens = instanceLocations.trim().split(HeaderUtils.X_OCCI_LOCATION_PREFIX);
 						for (int i = 0; i < tokens.length; i++) {
 							if (!tokens[i].equals("")) {
-//								localInstances.add(new Instance(normalizeInstanceId(tokens[i].trim())));
 								localInstances.add(new Instance(normalizeInstanceId(tokens[i].trim()
 								+ org.fogbowcloud.manager.occi.request.Request.SEPARATOR_GLOBAL_ID
 								+ application.getProperties().getProperty(ConfigurationConstants.XMPP_JID_KEY))));

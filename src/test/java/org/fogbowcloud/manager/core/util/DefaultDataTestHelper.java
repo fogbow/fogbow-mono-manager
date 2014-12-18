@@ -32,6 +32,5 @@ public class DefaultDataTestHelper {
 	public static final String USER_PASS = "password";
 	public static final String ACCESS_TOKEN_ID = "accesstoken";
 	public static final String TENANT_NAME = "tenantName";
-    public static final String INSTANCE_ID = "instanceid" + "@"
-            + DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL;
+    public static final String INSTANCE_ID = "instanceid";
 }
