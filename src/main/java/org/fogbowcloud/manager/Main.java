@@ -12,6 +12,8 @@ import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
+import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
+import org.fogbowcloud.manager.core.plugins.egi.EgiImageStoragePlugin;
 import org.fogbowcloud.manager.occi.OCCIApplication;
 import org.fogbowcloud.manager.xmpp.ManagerXmppComponent;
 import org.restlet.Component;
@@ -80,12 +82,22 @@ public class Main {
 			LOGGER.warn("Rendezvous (" + ConfigurationConstants.RENDEZVOUS_JID_KEY
 					+ ") not especified in the properties.");
 		}
+		
+		ImageStoragePlugin imageStoragePlugin = null;
+		try {
+			imageStoragePlugin = (ImageStoragePlugin) createInstanceWithComputePlugin(
+					ConfigurationConstants.IMAGE_STORAGE_PLUGIN_CLASS, properties, computePlugin);
+		} catch (Exception e) {
+			imageStoragePlugin = new EgiImageStoragePlugin(properties, computePlugin);
+			LOGGER.warn("Image Storage plugin not specified in properties. Using the default one.");
+		}
 
 		ManagerController facade = new ManagerController(properties);
 		facade.setComputePlugin(computePlugin);
 		facade.setAuthorizationPlugin(authorizationPlugin);
 		facade.setLocalIdentityPlugin(localIdentityPlugin);
 		facade.setFederationIdentityPlugin(federationIdentityPlugin);
+		facade.setImageStoragePlugin(imageStoragePlugin);
 		facade.setValidator(validator);
 
 		ManagerXmppComponent xmpp = new ManagerXmppComponent(
@@ -134,6 +146,12 @@ public class Main {
 	private static Object createInstance(String propName, Properties properties) throws Exception {
 		return Class.forName(properties.getProperty(propName)).getConstructor(Properties.class)
 				.newInstance(properties);
+	}
+	
+	private static Object createInstanceWithComputePlugin(String propName, 
+			Properties properties, ComputePlugin computePlugin) throws Exception {
+		return Class.forName(properties.getProperty(propName)).getConstructor(Properties.class, ComputePlugin.class)
+				.newInstance(properties, computePlugin);
 	}
 
 	private static void configureLog4j() {

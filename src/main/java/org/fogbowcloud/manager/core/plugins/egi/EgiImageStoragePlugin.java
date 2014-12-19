@@ -129,7 +129,6 @@ public class EgiImageStoragePlugin implements ImageStoragePlugin {
 				InputStream instream = entity.getContent();
 				FileUtils.copyInputStreamToFile(instream, tempFile);;
 				instream.close();
-				httpclient.getConnectionManager().shutdown();
 				return tempFile;
 			}
 		} catch (Exception e) {

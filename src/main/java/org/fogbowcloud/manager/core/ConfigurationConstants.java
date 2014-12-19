@@ -50,5 +50,6 @@ public class ConfigurationConstants {
 	
 	//pagination
 	public static final String MAX_WHOISALIVE_MANAGER_COUNT = "max_whoisalive_manager_count";
+	public static final String IMAGE_STORAGE_PLUGIN_CLASS = "image_storage_class";
 	
 }
