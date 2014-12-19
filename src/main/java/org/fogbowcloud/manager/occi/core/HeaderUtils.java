@@ -5,10 +5,12 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.restlet.Response;
 import org.restlet.data.MediaType;
 import org.restlet.engine.header.Header;
@@ -118,14 +120,23 @@ public class HeaderUtils {
 	}
 
 	public static void checkCategories(List<Category> categories, String mandatoryTerm) {
-		List<Resource> resources = ResourceRepository.getInstance().get(categories);
+		List<Category> categoriesCopy = new LinkedList<Category>();
+		for (Category category : categories) {
+			if (category.getScheme().equals(
+					RequestConstants.TEMPLATE_OS_SCHEME)) {
+				continue;
+			}
+			categoriesCopy.add(category);
+		}
+		
+		List<Resource> resources = ResourceRepository.getInstance().get(categoriesCopy);
 
-		if (resources.size() != categories.size()) {
+		if (resources.size() != categoriesCopy.size()) {
 			LOGGER.debug("Some categories was not found in available resources! Resources "
-					+ resources.size() + " and categories " + categories.size());
+					+ resources.size() + " and categories " + categoriesCopy.size());
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}
-		for (Category category : categories) {
+		for (Category category : categoriesCopy) {
 			if (category.getTerm().equals(mandatoryTerm)) {
 				Resource resource = ResourceRepository.getInstance().get(mandatoryTerm);
 				if (resource == null || !resource.matches(category)) {

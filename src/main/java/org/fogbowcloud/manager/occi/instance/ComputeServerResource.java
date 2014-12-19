@@ -49,7 +49,7 @@ public class ComputeServerResource extends ServerResource {
 			
 			List<Instance> allInstances = new ArrayList<Instance>();
 			if (filterCategory.size() != 0 || filterAttribute.size() != 0) {
-				allInstances = filterInstances(getInstancesFiltrated(application, authToken),
+				allInstances = filterInstances(getInstancesFiltered(application, authToken),
 						filterCategory, filterAttribute);
 			} else {
 				allInstances = getInstances(application, authToken);			
@@ -152,8 +152,8 @@ public class ComputeServerResource extends ServerResource {
 		return instancesFiltrated;
 	}
 
-	private List<Instance> getInstancesFiltrated(OCCIApplication application, String authToken) {
-		List<Instance> allInstances = application.getFullInstances(authToken);		
+	private List<Instance> getInstancesFiltered(OCCIApplication application, String authToken) {
+		List<Instance> allInstances = application.getInstancesFullInfo(authToken);		
 		return allInstances;
 	}
 

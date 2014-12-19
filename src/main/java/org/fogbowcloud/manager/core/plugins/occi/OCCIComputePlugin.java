@@ -82,19 +82,6 @@ public class OCCIComputePlugin implements ComputePlugin {
 		templateScheme = properties
 				.getProperty(OpenStackConfigurationConstants.COMPUTE_OCCI_TEMPLATE_SCHEME_KEY);
 
-		
-		Map<String, String> imageProperties = getImageProperties(properties);
-
-		if (imageProperties == null || imageProperties.isEmpty()) {
-			LOGGER.warn(ResponseConstants.IMAGES_NOT_SPECIFIED);
-		}
-	
-		for (String imageName : imageProperties.keySet()) {
-			fogTermToCategory.put(imageName, new Category(imageProperties.get(imageName), osScheme,
-					RequestConstants.MIXIN_CLASS));
-			ResourceRepository.getInstance().addImageResource(imageName);
-		}		
-						
 		Map<String, String> templateProperties = getTemplateProperties(properties);
 		
 		if (templateProperties == null || templateProperties.isEmpty()) {
@@ -142,6 +129,13 @@ public class OCCIComputePlugin implements ComputePlugin {
 		requestCategories.remove(new Category(RequestConstants.TERM, RequestConstants.SCHEME,
 				RequestConstants.KIND_CLASS));
 
+		if (localImageId == null) {
+			throw new OCCIException(ErrorType.BAD_REQUEST, 
+					ResponseConstants.IRREGULAR_SYNTAX);
+		}
+		occiCategories.add(new Category(localImageId, osScheme,
+				RequestConstants.MIXIN_CLASS));
+		
 		for (Category category : requestCategories) {
 			if (fogTermToCategory.get(category.getTerm()) == null) {
 				throw new OCCIException(ErrorType.BAD_REQUEST,
@@ -149,7 +143,7 @@ public class OCCIComputePlugin implements ComputePlugin {
 			}
 			occiCategories.add(fogTermToCategory.get(category.getTerm()));
 		}
-
+		
 		Set<Header> headers = new HashSet<Header>();
 		for (Category category : occiCategories) {
 			headers.add(new BasicHeader(OCCIHeaders.CATEGORY, category.toHeader()));
@@ -221,21 +215,6 @@ public class OCCIComputePlugin implements ComputePlugin {
 	@Override
 	public ResourcesInfo getResourcesInfo(Token token) {
 		return null;
-	}
-
-	private static Map<String, String> getImageProperties(Properties properties) {
-		Map<String, String> imageProperties = new HashMap<String, String>();
-
-		for (Object propName : properties.keySet()) {
-			String propNameStr = (String) propName;
-			if (propNameStr.startsWith(OpenStackConfigurationConstants.COMPUTE_OCCI_IMAGE_PREFIX)) {
-				imageProperties.put(propNameStr
-						.substring(OpenStackConfigurationConstants.COMPUTE_OCCI_IMAGE_PREFIX
-								.length()), properties.getProperty(propNameStr));
-			}
-		}
-		LOGGER.debug("Image properties: " + imageProperties);
-		return imageProperties;
 	}
 
 	private static Map<String, String> getTemplateProperties(Properties properties) {

@@ -294,6 +294,7 @@ public class TestGetRequest {
 		HttpGet get = new HttpGet(OCCITestHelper.getRequestIdsPerLocationHeader(response).get(0));
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		client = new DefaultHttpClient();
 		response = client.execute(get);
 
 		Assert.assertTrue(response.getFirstHeader(OCCIHeaders.CONTENT_TYPE).getValue()
@@ -321,6 +322,7 @@ public class TestGetRequest {
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		get.addHeader(OCCIHeaders.ACCEPT, "invalid-accept");
 		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		client = new DefaultHttpClient();
 		response = client.execute(get);
 
 		Assert.assertEquals(HttpStatus.SC_NOT_ACCEPTABLE, response.getStatusLine().getStatusCode());
@@ -356,6 +358,7 @@ public class TestGetRequest {
 		HttpGet get = new HttpGet(OCCITestHelper.getRequestIdsPerLocationHeader(response).get(0));
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		client = new DefaultHttpClient();
 		response = client.execute(get);
 
 		String requestDetails = EntityUtils.toString(response.getEntity(),
@@ -453,6 +456,7 @@ public class TestGetRequest {
 		get.addHeader(OCCIHeaders.CATEGORY,
 				"fogbow_small; scheme=\"http://schemas.fogbowcloud.org/template/resource#\"; class=\"mixin\";");
 		
+		client = new DefaultHttpClient();
 		response = client.execute(get);
 		
 		Assert.assertEquals(2, OCCITestHelper.getRequestIds(response).size());

@@ -93,6 +93,7 @@ public class TestDeleteRequest {
 		response = client.execute(delete);
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 		// Get
+		client = new DefaultHttpClient();
 		response = client.execute(get);
 		Assert.assertEquals(0, OCCITestHelper.getRequestIds(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
@@ -116,6 +117,7 @@ public class TestDeleteRequest {
 		// Delete
 		HttpDelete delete = new HttpDelete(requestLocations.get(0));
 		delete.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		client = new DefaultHttpClient();
 		response = client.execute(delete);
 		final int deletedRequestAmount = 1;
 
@@ -124,6 +126,7 @@ public class TestDeleteRequest {
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_REQUEST);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		client = new DefaultHttpClient();
 		response = client.execute(get);
 
 		Assert.assertEquals(deletedRequestAmount, deletedInstancesCounter(response));
@@ -157,6 +160,7 @@ public class TestDeleteRequest {
 			delete = new HttpDelete(requestLocation);
 			delete.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 			delete.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+			client = new DefaultHttpClient();
 			response = client.execute(delete);
 			Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 		}
@@ -164,6 +168,7 @@ public class TestDeleteRequest {
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_REQUEST);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		client = new DefaultHttpClient();
 		response = client.execute(get);
 		
 		Assert.assertEquals(defaultAmount, deletedInstancesCounter(response));
@@ -194,12 +199,14 @@ public class TestDeleteRequest {
 		HttpDelete delete = new HttpDelete(OCCITestHelper.URI_FOGBOW_REQUEST);
 		delete.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		delete.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		client = new DefaultHttpClient();
 		response = client.execute(delete);
 
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 
 		// Get
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_REQUEST);
+		client = new DefaultHttpClient();
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		response = client.execute(get);

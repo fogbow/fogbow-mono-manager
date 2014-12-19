@@ -76,11 +76,17 @@ public class EgiImageStoragePlugin implements ImageStoragePlugin {
 		if (localId != null) {
 			return localId;
 		}
-		localId = computePlugin.getImageId(token, globalId);
+		try {
+			localId = computePlugin.getImageId(token, globalId);
+		} catch (Throwable e) {
+			LOGGER.error("Couldn't get local image id from Compute plugin.", e);
+		}
 		if (localId != null) {
 			return localId;
 		}
-		scheduleImageDownload(token, globalId);
+		if (marketPlaceBaseURL != null) {
+			scheduleImageDownload(token, globalId);
+		}
 		return null;
 	}
 
@@ -98,7 +104,7 @@ public class EgiImageStoragePlugin implements ImageStoragePlugin {
 						computePlugin.uploadImage(token, 
 								downloadTempFile.getAbsolutePath(), 
 								globalId);
-					} catch (Exception e) {
+					} catch (Throwable e) {
 						LOGGER.error("Couldn't upload image.", e);
 					}
 				}
