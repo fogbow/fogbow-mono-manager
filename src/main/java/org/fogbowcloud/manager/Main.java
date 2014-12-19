@@ -38,7 +38,7 @@ public class Main {
 			computePlugin = (ComputePlugin) createInstance(
 					ConfigurationConstants.COMPUTE_CLASS_KEY, properties);
 		} catch (Exception e) {
-			LOGGER.warn("Compute Plugin not especified in the properties.");
+			LOGGER.warn("Compute Plugin not especified in the properties.", e);
 			return;
 		}
 
@@ -47,7 +47,7 @@ public class Main {
 			authorizationPlugin = (AuthorizationPlugin) createInstance(
 					ConfigurationConstants.AUTHORIZATION_CLASS_KEY, properties);
 		} catch (Exception e) {
-			LOGGER.warn("Authorization Plugin not especified in the properties.");
+			LOGGER.warn("Authorization Plugin not especified in the properties.", e);
 			return;
 		}
 		
@@ -56,7 +56,7 @@ public class Main {
 			localIdentityPlugin = (IdentityPlugin) getIdentityPluginByPrefix(properties,
 					ConfigurationConstants.LOCAL_PREFIX);
 		} catch (Exception e) {
-			LOGGER.warn("Local Identity Plugin not especified in the properties.");
+			LOGGER.warn("Local Identity Plugin not especified in the properties.", e);
 			return;
 		}
 		
@@ -65,7 +65,7 @@ public class Main {
 			federationIdentityPlugin = (IdentityPlugin) getIdentityPluginByPrefix(properties,
 					ConfigurationConstants.FEDERATION_PREFIX);
 		} catch (Exception e) {
-			LOGGER.warn("Federation Identity Plugin not especified in the properties.");
+			LOGGER.warn("Federation Identity Plugin not especified in the properties.", e);
 			return;
 		}
 
@@ -89,7 +89,7 @@ public class Main {
 					ConfigurationConstants.IMAGE_STORAGE_PLUGIN_CLASS, properties, computePlugin);
 		} catch (Exception e) {
 			imageStoragePlugin = new EgiImageStoragePlugin(properties, computePlugin);
-			LOGGER.warn("Image Storage plugin not specified in properties. Using the default one.");
+			LOGGER.warn("Image Storage plugin not specified in properties. Using the default one.", e);
 		}
 
 		ManagerController facade = new ManagerController(properties);
