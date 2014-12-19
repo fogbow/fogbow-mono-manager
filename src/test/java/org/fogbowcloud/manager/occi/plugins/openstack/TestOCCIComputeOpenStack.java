@@ -18,8 +18,6 @@ import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.HeaderUtils;
 import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
-import org.fogbowcloud.manager.occi.core.Resource;
-import org.fogbowcloud.manager.occi.core.ResourceRepository;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.instance.Instance;
@@ -83,60 +81,15 @@ public class TestOCCIComputeOpenStack {
 	public void tearDown() throws Exception {
 		pluginHelper.disconnectComponent();
 	}
-	
-	@Test
-	public void testIfImageResourceWasAdded(){		
-		Resource imageResource = ResourceRepository.getInstance().get(PluginHelper.LINUX_X86_TERM);
-		Assert.assertNotNull(imageResource);
-		Assert.assertEquals(PluginHelper.LINUX_X86_TERM, imageResource.getCategory().getTerm());
-		Assert.assertEquals(RequestConstants.TEMPLATE_OS_SCHEME, imageResource.getCategory().getScheme());
-		Assert.assertEquals(RequestConstants.MIXIN_CLASS, imageResource.getCategory().getCatClass());
-		Assert.assertTrue(imageResource.getAttributes().isEmpty());
-		Assert.assertEquals(PluginHelper.LINUX_X86_TERM + " image", imageResource.getTitle());
-	}
-	
-	@Test
-	public void testCreatePluginWithMoreThanOneImage(){
-		Properties properties = new Properties();
-		properties.put(OpenStackConfigurationConstants.COMPUTE_OCCI_URL_KEY, PluginHelper.COMPUTE_OCCI_URL);
-		properties.put(OpenStackConfigurationConstants.COMPUTE_OCCI_INSTANCE_SCHEME_KEY, OCCIComputeApplication.INSTANCE_SCHEME);
-		properties.put(OpenStackConfigurationConstants.COMPUTE_OCCI_OS_SCHEME_KEY, OCCIComputeApplication.OS_SCHEME);
-		properties.put(OpenStackConfigurationConstants.COMPUTE_OCCI_RESOURCE_SCHEME_KEY, OCCIComputeApplication.RESOURCE_SCHEME);
-		properties.put(OpenStackConfigurationConstants.COMPUTE_OCCI_FLAVOR_SMALL_KEY, OCCIComputeApplication.SMALL_FLAVOR_TERM);
-		properties.put(OpenStackConfigurationConstants.COMPUTE_OCCI_FLAVOR_MEDIUM_KEY, OCCIComputeApplication.MEDIUM_FLAVOR_TERM);
-		properties.put(OpenStackConfigurationConstants.COMPUTE_OCCI_FLAVOR_LARGE_KEY, OCCIComputeApplication.MEDIUM_FLAVOR_TERM);
-		//specifying 5 images
-		properties.put(OpenStackConfigurationConstants.COMPUTE_OCCI_IMAGE_PREFIX + "image1", "image1");
-		properties.put(OpenStackConfigurationConstants.COMPUTE_OCCI_IMAGE_PREFIX + "image2", "image2");
-		properties.put(OpenStackConfigurationConstants.COMPUTE_OCCI_IMAGE_PREFIX + "image3", "image3");
-		properties.put(OpenStackConfigurationConstants.COMPUTE_OCCI_IMAGE_PREFIX + "image4", "image4");
-		properties.put(OpenStackConfigurationConstants.COMPUTE_OCCI_IMAGE_PREFIX + "image5", "image5");
-
-		occiComputeOpenStack = new OpenStackOCCIComputePlugin(properties);
-
-		//checking if 5 images were added
-		for (int i = 1; i < 6; i++) {
-			String imageName = "image" + i;
-			Resource imageResource = ResourceRepository.getInstance().get(imageName);
-			Assert.assertNotNull(imageResource);
-			Assert.assertEquals(imageName, imageResource.getCategory().getTerm());
-			Assert.assertEquals(RequestConstants.TEMPLATE_OS_SCHEME, imageResource.getCategory().getScheme());
-			Assert.assertEquals(RequestConstants.MIXIN_CLASS, imageResource.getCategory().getCatClass());
-			Assert.assertTrue(imageResource.getAttributes().isEmpty());
-			Assert.assertEquals(imageName + " image", imageResource.getTitle());			
-		}
-	}
 
 	@Test
 	public void testRequestAValidInstance() {
 		List<Category> categories = new ArrayList<Category>();
 		categories.add(new Category(RequestConstants.SMALL_TERM,
 				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
-		categories.add(new Category(PluginHelper.LINUX_X86_TERM,
-				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 
 		Assert.assertEquals(FIRST_INSTANCE_ID, occiComputeOpenStack.requestInstance(
-				defaultToken, categories, new HashMap<String, String>(), PluginHelper.LINUX_X86_TERM));
+				defaultToken, categories, new HashMap<String, String>(), PluginHelper.CIRROS_IMAGE_TERM));
 
 		Instance instance = occiComputeOpenStack.getInstance(defaultToken, FIRST_INSTANCE_ID);
 
@@ -171,11 +124,9 @@ public class TestOCCIComputeOpenStack {
 		List<Category> categories = new ArrayList<Category>();
 		categories.add(new Category(RequestConstants.SMALL_TERM,
 				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
-		categories.add(new Category(PluginHelper.LINUX_X86_TERM,
-				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 		
 		Assert.assertEquals(FIRST_INSTANCE_ID, occiComputeOpenStack.requestInstance(
-				defaultToken, categories, new HashMap<String, String>(), PluginHelper.LINUX_X86_TERM));
+				defaultToken, categories, new HashMap<String, String>(), PluginHelper.CIRROS_IMAGE_TERM));
 
 		Instance instance = occiComputeOpenStack.getInstance(defaultToken, FIRST_INSTANCE_ID);
 
@@ -199,11 +150,9 @@ public class TestOCCIComputeOpenStack {
 		List<Category> categories = new ArrayList<Category>();
 		categories.add(new Category(RequestConstants.SMALL_TERM,
 				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
-		categories.add(new Category(PluginHelper.LINUX_X86_TERM,
-				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 		
 		Assert.assertEquals(FIRST_INSTANCE_ID, occiComputeOpenStack.requestInstance(
-				defaultToken, categories, new HashMap<String, String>(), PluginHelper.LINUX_X86_TERM));
+				defaultToken, categories, new HashMap<String, String>(), PluginHelper.CIRROS_IMAGE_TERM));
 
 		Instance instance = occiComputeOpenStack.getInstance(defaultToken, FIRST_INSTANCE_ID);
 
@@ -228,15 +177,12 @@ public class TestOCCIComputeOpenStack {
 		categories.add(new Category(RequestConstants.SMALL_TERM,
 				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
 		occiComputeOpenStack.requestInstance(defaultToken, categories,
-				new HashMap<String, String>(), PluginHelper.LINUX_X86_TERM);
+				new HashMap<String, String>(), null);
 	}
 
 	@Test
 	public void testRequestWithoutFlavorCateory() {
 		List<Category> categories = new ArrayList<Category>();
-		categories.add(new Category(PluginHelper.LINUX_X86_TERM,
-				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
-
 		Assert.assertEquals(FIRST_INSTANCE_ID, occiComputeOpenStack.requestInstance(
 				defaultToken, categories, new HashMap<String, String>(), PluginHelper.LINUX_X86_TERM));
 	}
@@ -302,8 +248,6 @@ public class TestOCCIComputeOpenStack {
 		List<Category> categories = new ArrayList<Category>();
 		categories.add(new Category(RequestConstants.SMALL_TERM,
 				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
-		categories.add(new Category(PluginHelper.LINUX_X86_TERM,
-				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
 		xOCCIAtt.put(OCCIComputeApplication.HOSTNAME_ATTRIBUTE_OCCI, "server-test");
@@ -322,8 +266,6 @@ public class TestOCCIComputeOpenStack {
 		List<Category> categories = new ArrayList<Category>();
 		categories.add(new Category(RequestConstants.SMALL_TERM,
 				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
-		categories.add(new Category(PluginHelper.LINUX_X86_TERM,
-				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
 		xOCCIAtt.put(OCCIComputeApplication.HOSTNAME_ATTRIBUTE_OCCI, "server-test");
@@ -348,8 +290,6 @@ public class TestOCCIComputeOpenStack {
 
 		// requesting one default instance
 		List<Category> categories = new ArrayList<Category>();
-		categories.add(new Category(PluginHelper.LINUX_X86_TERM,
-				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 		Assert.assertEquals(FIRST_INSTANCE_ID, occiComputeOpenStack.requestInstance(
 				defaultToken, categories, new HashMap<String, String>(), PluginHelper.LINUX_X86_TERM));
 
@@ -369,8 +309,6 @@ public class TestOCCIComputeOpenStack {
 
 		// requesting default instance
 		List<Category> categories = new ArrayList<Category>();
-		categories.add(new Category(PluginHelper.LINUX_X86_TERM,
-				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 
 		for (String instanceId : expectedInstanceIds) {
 			Assert.assertEquals(instanceId, occiComputeOpenStack.requestInstance(
@@ -404,10 +342,8 @@ public class TestOCCIComputeOpenStack {
 
 		// requesting one default instance
 		List<Category> categories = new ArrayList<Category>();
-		categories.add(new Category(PluginHelper.LINUX_X86_TERM,
-				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 		Assert.assertEquals(FIRST_INSTANCE_ID, occiComputeOpenStack.requestInstance(
-				defaultToken, categories, new HashMap<String, String>(), PluginHelper.LINUX_X86_TERM));
+				defaultToken, categories, new HashMap<String, String>(), PluginHelper.CIRROS_IMAGE_TERM));
 
 		// check instance details
 		instanceLocations = getInstanceLocations(occiComputeOpenStack
@@ -447,8 +383,6 @@ public class TestOCCIComputeOpenStack {
 
 		// requesting default instances
 		List<Category> categories = new ArrayList<Category>();
-		categories.add(new Category(PluginHelper.LINUX_X86_TERM,
-				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 		for (String instanceId : expectedInstanceIds) {
 			Assert.assertEquals(instanceId, occiComputeOpenStack.requestInstance(
 					defaultToken, categories, new HashMap<String, String>(), PluginHelper.LINUX_X86_TERM));
@@ -474,8 +408,6 @@ public class TestOCCIComputeOpenStack {
 
 		// requesting default instances
 		List<Category> categories = new ArrayList<Category>();
-		categories.add(new Category(PluginHelper.LINUX_X86_TERM,
-				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 		for (String instanceId : expectedInstanceIds) {
 			Assert.assertEquals(instanceId, occiComputeOpenStack.requestInstance(
 					defaultToken, categories, new HashMap<String, String>(), PluginHelper.LINUX_X86_TERM));
@@ -517,10 +449,8 @@ public class TestOCCIComputeOpenStack {
 		
 		// requesting one default instance
 		List<Category> categories = new ArrayList<Category>();
-		categories.add(new Category(PluginHelper.LINUX_X86_TERM,
-				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 		Assert.assertEquals(FIRST_INSTANCE_ID, occiComputeOpenStack.requestInstance(
-				defaultToken, categories, new HashMap<String, String>(), PluginHelper.LINUX_X86_TERM));
+				defaultToken, categories, new HashMap<String, String>(), PluginHelper.CIRROS_IMAGE_TERM));
 
 		// checking if there is one instance		
 		Request request = new Request(Method.GET, OCCITestHelper.URI_FOGBOW_COMPUTE);
@@ -571,8 +501,6 @@ public class TestOCCIComputeOpenStack {
 
 		// requesting default instances
 		List<Category> categories = new ArrayList<Category>();
-		categories.add(new Category(PluginHelper.LINUX_X86_TERM,
-				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 		for (String instanceId : expectedInstanceIds) {
 			Assert.assertEquals(instanceId, occiComputeOpenStack.requestInstance(
 					defaultToken, categories, new HashMap<String, String>(), PluginHelper.LINUX_X86_TERM));
@@ -611,8 +539,6 @@ public class TestOCCIComputeOpenStack {
 
 		// requesting default instances
 		List<Category> categories = new ArrayList<Category>();
-		categories.add(new Category(PluginHelper.LINUX_X86_TERM,
-				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 		for (String instanceId : expectedInstanceIds) {
 			Assert.assertEquals(instanceId, occiComputeOpenStack.requestInstance(
 					defaultToken, categories, new HashMap<String, String>(), PluginHelper.LINUX_X86_TERM));

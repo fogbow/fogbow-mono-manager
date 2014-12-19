@@ -443,8 +443,17 @@ public class ManagerController {
 		Token federationUserToken = getFederationUserToken();
 		String localImageId = getLocalImageId(categories, federationUserToken);
 		
+		List<Category> categoriesWithoutImage = new LinkedList<Category>();
+		for (Category category : categories) {
+			if (category.getScheme().equals(
+					RequestConstants.TEMPLATE_OS_SCHEME)) {
+				continue;
+			}
+			categoriesWithoutImage.add(category);
+		}
+		
 		try {			
-			String instanceId = computePlugin.requestInstance(federationUserToken, categories,
+			String instanceId = computePlugin.requestInstance(federationUserToken, categoriesWithoutImage,
 					xOCCIAtt, localImageId);
 			instancesForRemoteMembers.put(instanceId, 
 					new RemoteRequest(instanceToken, memberId, categories, xOCCIAtt));
@@ -460,6 +469,9 @@ public class ManagerController {
 
 	private String getLocalImageId(List<Category> categories,
 			Token federationUserToken) {
+		if (imageStoragePlugin == null) {
+			return null;
+		}
 		Category osCategory = getImageCategory(categories);
 		String localImageId = null;
 		if (osCategory != null) {
@@ -717,10 +729,19 @@ public class ManagerController {
 				return false;
 			}	
 			
-			String localImageId = getLocalImageId(request.getCategories(), request.getToken());
+			String localImageId = getLocalImageId(request.getCategories(), 
+					request.getToken());
+			List<Category> categories = new LinkedList<Category>();
+			for (Category category : request.getCategories()) {
+				if (category.getScheme().equals(
+						RequestConstants.TEMPLATE_OS_SCHEME)) {
+					continue;
+				}
+				categories.add(category);
+			}
 			
 			instanceId = computePlugin.requestInstance(request.getToken(),
-					request.getCategories(), request.getxOCCIAtt(), localImageId);
+					categories, request.getxOCCIAtt(), localImageId);
 		} catch (OCCIException e) {
 			int statusCode = e.getStatus().getCode();
 			if (statusCode == HttpStatus.SC_INSUFFICIENT_SPACE_ON_RESOURCE
@@ -867,7 +888,7 @@ public class ManagerController {
 		return Integer.parseInt(max);
 	}
 
-	public List<Instance> getFullInstances(String authToken) {		
+	public List<Instance> getInstancesFullInfo(String authToken) {		
 		List<Request> requestsFromUser = getRequestsFromUser(authToken);
 		List<Instance> allFullInstances = new ArrayList<Instance>();
 		LOGGER.debug("Getting all instances and your information.");
@@ -882,6 +903,11 @@ public class ManagerController {
 				String sshPublicAdd = getSSHPublicAddress(request.getId());
 				if (sshPublicAdd != null) {
 					instance.addAttribute(Instance.SSH_PUBLIC_ADDRESS_ATT, sshPublicAdd);
+				}
+				Category osCategory = getImageCategory(request.getCategories());
+				if (osCategory != null) {
+					instance.addResource(
+							ResourceRepository.createImageResource(osCategory.getTerm()));
 				}
 			} else {
 				LOGGER.debug(request.getInstanceId() + " is remote, going out to "

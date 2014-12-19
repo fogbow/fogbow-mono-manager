@@ -65,12 +65,13 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 	private String openNebulaEndpoint;
 	private Map<String, String> fogbowTermToOpenNebula; 
 	private String networkId;
+	
 	private String sshHost;
-	private int sshPort;
+	private Integer sshPort;
 	private String sshUsername;
 	private String sshKeyFile;
 	private String sshTargetTempFolder;
-	private int dataStoreId;
+	private Integer dataStoreId;
 	
 	private static final Logger LOGGER = Logger.getLogger(OpenNebulaComputePlugin.class);
 
@@ -89,12 +90,17 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 					ResponseConstants.NETWORK_NOT_SPECIFIED);			
 		}		
 		networkId = String.valueOf(properties.get(OneConfigurationConstants.COMPUTE_ONE_NETWORK_KEY));
-		sshHost = String.valueOf(properties.get(OneConfigurationConstants.COMPUTE_ONE_SSH_HOST));
-		sshPort = Integer.valueOf(String.valueOf(properties.get(OneConfigurationConstants.COMPUTE_ONE_SSH_PORT)));
-		sshUsername = String.valueOf(properties.get(OneConfigurationConstants.COMPUTE_ONE_SSH_USERNAME));
-		sshKeyFile = String.valueOf(properties.get(OneConfigurationConstants.COMPUTE_ONE_SSH_KEY_FILE));
-		sshTargetTempFolder = String.valueOf(properties.get(OneConfigurationConstants.COMPUTE_ONE_SSH_TARGET_TEMP_FOLDER));
-		dataStoreId = Integer.valueOf(String.valueOf(properties.get(OneConfigurationConstants.COMPUTE_ONE_DATASTORE_ID)));
+		
+		sshHost = properties.getProperty(OneConfigurationConstants.COMPUTE_ONE_SSH_HOST);
+		String sshPortStr = properties.getProperty(OneConfigurationConstants.COMPUTE_ONE_SSH_PORT);
+		sshPort = sshPortStr == null ? null : Integer.valueOf(sshPortStr);
+		
+		sshUsername = properties.getProperty(OneConfigurationConstants.COMPUTE_ONE_SSH_USERNAME);
+		sshKeyFile = properties.getProperty(OneConfigurationConstants.COMPUTE_ONE_SSH_KEY_FILE);
+		sshTargetTempFolder = properties.getProperty(OneConfigurationConstants.COMPUTE_ONE_SSH_TARGET_TEMP_FOLDER);
+		
+		String dataStoreIdStr = properties.getProperty(OneConfigurationConstants.COMPUTE_ONE_DATASTORE_ID);
+		dataStoreId = dataStoreIdStr == null ? null: Integer.valueOf(dataStoreIdStr);
 		
 		// flavors
 		checkFlavor(String.valueOf(properties.get(OneConfigurationConstants.COMPUTE_ONE_SMALL_KEY)));

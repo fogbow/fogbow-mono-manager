@@ -124,8 +124,8 @@ public class OCCIApplication extends Application {
 		return managerFacade.getInstances(authToken);
 	}
 	
-	public List<Instance> getFullInstances(String authToken) {
-		return managerFacade.getFullInstances(authToken);
+	public List<Instance> getInstancesFullInfo(String authToken) {
+		return managerFacade.getInstancesFullInfo(authToken);
 	}
 
 	public Instance getInstance(String authToken, String instanceId) {
