@@ -554,38 +554,19 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		String responseJsonImages = doGetRequest(glanceV2APIEndpoint + V2_IMAGES,
 				token.getAccessId());
 
-		String id = null;
 		try {
 			JSONArray arrayImages = new JSONObject(responseJsonImages)
 					.getJSONArray(IMAGES_JSON_FIELD);
 			for (int i = 0; i < arrayImages.length(); i++) {
 				if (arrayImages.getJSONObject(i).getString(NAME_JSON_FIELD).equals(imageName)) {
-					id = arrayImages.getJSONObject(i).getString(ID_JSON_FIELD);
+					return arrayImages.getJSONObject(i).getString(ID_JSON_FIELD);
 				}
 			}
 		} catch (JSONException e) {}
 
-		return id;
+		return null;
 	}
 
-	public String getImageName(Token token, String imageId) {
-		String responseJsonImages = doGetRequest(glanceV2APIEndpoint + V2_IMAGES,
-				token.getAccessId());
-
-		String name = null;
-		try {
-			JSONArray arrayImages = new JSONObject(responseJsonImages)
-					.getJSONArray(IMAGES_JSON_FIELD);
-			for (int i = 0; i < arrayImages.length(); i++) {
-				if (arrayImages.getJSONObject(i).getString(ID_JSON_FIELD).equals(imageId)) {
-					name = arrayImages.getJSONObject(i).getString(NAME_JSON_FIELD);
-				}
-			}
-		} catch (JSONException e) {}
-
-		return name;
-	}
-	
     private String doPatchRequest(String endpoint, String authToken, String json) {
         HttpResponse response = null;
         String responseStr = null;

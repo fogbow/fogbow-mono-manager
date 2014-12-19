@@ -744,15 +744,20 @@ public class ManagerController {
 					categories, request.getxOCCIAtt(), localImageId);
 		} catch (OCCIException e) {
 			int statusCode = e.getStatus().getCode();
-			if (statusCode == HttpStatus.SC_INSUFFICIENT_SPACE_ON_RESOURCE
-					|| statusCode == HttpStatus.SC_UNAUTHORIZED) {
+			if (statusCode == HttpStatus.SC_INSUFFICIENT_SPACE_ON_RESOURCE) {
 				LOGGER.warn("Request failed locally for quota exceeded.", e);
+				return false;
+			} else if (statusCode == HttpStatus.SC_UNAUTHORIZED) {
+				LOGGER.warn("Request failed locally for user unauthorized.", e);
+				return false;
+			} else if (statusCode == HttpStatus.SC_BAD_REQUEST) {
+				LOGGER.warn("Request failed locally for image not found.", e);
 				return false;
 			} else {
 				// TODO Think this through...
 				request.setState(RequestState.FAILED);
 				LOGGER.warn("Request failed locally for an unknown reason.", e);
-				return true;
+				return true;				
 			}
 
 		}

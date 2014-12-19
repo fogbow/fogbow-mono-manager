@@ -156,14 +156,17 @@ public class RequestServerResource extends ServerResource {
 		String requestOCCIFormat = "\n";
 		for (Category category : request.getCategories()) {
 			LOGGER.debug("Category of request: " + request);
-			LOGGER.debug("Resource exists? "
-					+ (ResourceRepository.getInstance().get(category.getTerm()) != null));
-			LOGGER.debug("Resource to header: "
-					+ ResourceRepository.getInstance().get(category.getTerm()).toHeader());
+			Resource resource = ResourceRepository.getInstance().get(category.getTerm());
+			if (resource == null && category.getScheme().equals(RequestConstants.TEMPLATE_OS_SCHEME)) {
+				resource = ResourceRepository.createImageResource(category.getTerm());
+			}
+			LOGGER.debug("Resource exists? " + (resource != null));
+			if (resource == null) {
+				continue;
+			}
+			LOGGER.debug("Resource to header: " + resource.toHeader());
 			try {
-				requestOCCIFormat += "Category: "
-						+ ResourceRepository.getInstance().get(category.getTerm()).toHeader()
-						+ "\n";
+				requestOCCIFormat += "Category: " + resource.toHeader() + "\n";
 			} catch (Exception e) {
 				LOGGER.error(e);
 			}

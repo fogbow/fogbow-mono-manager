@@ -61,12 +61,10 @@ public class EgiImageStoragePlugin implements ImageStoragePlugin {
 		for (Object propName : properties.keySet()) {
 			String propNameStr = (String) propName;
 			if (propNameStr.startsWith(PROP_STATIC_IMAGE_PREFIX)) {
-				globalToLocalIds.put(
-						propNameStr.substring(PROP_STATIC_IMAGE_PREFIX.length()), 
-						properties.getProperty(propNameStr));
+				String globalImageId = propNameStr.substring(PROP_STATIC_IMAGE_PREFIX.length());
+				globalToLocalIds.put(globalImageId, properties.getProperty(propNameStr));
+				ResourceRepository.getInstance().addImageResource(globalImageId);
 			}
-			ResourceRepository.getInstance().addImageResource(
-					properties.getProperty(propNameStr));
 		}
 	}
 	
