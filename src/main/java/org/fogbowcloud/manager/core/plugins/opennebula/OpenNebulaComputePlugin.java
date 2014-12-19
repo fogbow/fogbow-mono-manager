@@ -44,6 +44,7 @@ import org.opennebula.client.Client;
 import org.opennebula.client.OneResponse;
 import org.opennebula.client.group.Group;
 import org.opennebula.client.image.Image;
+import org.opennebula.client.image.ImagePool;
 import org.opennebula.client.user.User;
 import org.opennebula.client.vm.VirtualMachine;
 import org.opennebula.client.vm.VirtualMachinePool;
@@ -576,7 +577,19 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 
 	@Override
 	public String getImageId(Token token, String imageName) {
+		Client oneClient = clientFactory.createClient(token.getAccessId(), openNebulaEndpoint);
+		ImagePool imagePool = new ImagePool(oneClient); 
+		OneResponse response = imagePool.info();
+		
+		if (response.isError()) {
+			throw new OCCIException(ErrorType.BAD_REQUEST, response.getErrorMessage());
+		}
+		
+		for (Image image : imagePool) {
+			if (image.getName().equals(imageName)) {
+				return image.getId();
+			}
+		}
 		return null;
-	}
-	
+	}	
 }
