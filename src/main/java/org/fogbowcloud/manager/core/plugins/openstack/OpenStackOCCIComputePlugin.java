@@ -44,9 +44,11 @@ public class OpenStackOCCIComputePlugin extends OCCIComputePlugin{
 	private String computeV2APIEndpoint;
 	private static final String TENANT_ID = "tenantId";
 	private final String COMPUTE_V2_API_ENDPOINT = "/v2/";
+	private OpenStackNovaV2ComputePlugin openStackNovaV2ComputePlugin;
 	
 	public OpenStackOCCIComputePlugin(Properties properties) {
 		super(properties);
+		openStackNovaV2ComputePlugin = new OpenStackNovaV2ComputePlugin(properties);
 		this.computeV2APIEndpoint = properties.getProperty("compute_openstack_v2api_url")
 				+ COMPUTE_V2_API_ENDPOINT;
 		super.fogTermToCategory.put(RequestConstants.PUBLIC_KEY_TERM, new Category(
@@ -235,5 +237,13 @@ public class OpenStackOCCIComputePlugin extends OCCIComputePlugin{
 		flavors.add(mediumFlavor);
 		flavors.add(largeFlavor);
 		return flavors;
+	}
+	
+	public void uploadImage(Token token, String imagePath, String imageName) {
+		openStackNovaV2ComputePlugin.uploadImage(token, imagePath, imageName);		
+	}
+	
+	public String getImageId(Token token, String imageName) {
+		return openStackNovaV2ComputePlugin.getImageId(token, imageName);
 	}
 }
