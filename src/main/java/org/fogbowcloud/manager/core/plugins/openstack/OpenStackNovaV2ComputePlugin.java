@@ -49,8 +49,22 @@ import org.restlet.data.Status;
 
 public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 
+	private static final String IMAGES_JSON_FIELD = "images";
+	private static final String ID_JSON_FIELD = "id";
+	private static final String BARE = "bare";
+	private static final String CONTAINER_FORMAT = "/container_format";
+	private static final String QCOW2 = "qcow2";
+	private static final String VISIBILITY_JSON_FIELD = "visibility";
+	private static final String PUBLIC = "public";
+	private static final String NAME_JSON_FIELD = "name";
+	private static final String DISK_FORMAT = "/disk_format";
+	private static final String VALUE_JSON_FIELD = "value";
+	private static final String PATH_JSON_FIELD = "path";
+	private static final String REPLACE_VALUE_UPLOAD_IMAGE = "replace";
+	private static final String OP_JSON_FIELD = "op";
 	private static final String V2_IMAGES_FILE = "/file";
 	private static final String V2_IMAGES = "/v2/images";
+	
 	private final String COMPUTE_V2_API_ENDPOINT = "/v2/";
 	private static final String TENANT_ID = "tenantId";
 
@@ -58,7 +72,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 	private String computeV2APIEndpoint;
 	private String networkId;
 	private Map<String, String> fogbowTermToOpenStack = new HashMap<String, String>();
-	DefaultHttpClient client;
+	private DefaultHttpClient client;
 
 	private static final Logger LOGGER = Logger.getLogger(OpenStackNovaV2ComputePlugin.class);
 	
@@ -134,7 +148,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 			String requestEndpoint = computeV2APIEndpoint + token.getAttributes().get(TENANT_ID)
 					+ "/servers";
 			String jsonResponse = doPostRequest(requestEndpoint, token.getAccessId(), json);
-			return getAttFromJson("id", jsonResponse);
+			return getAttFromJson(ID_JSON_FIELD, jsonResponse);
 		} catch (JSONException e) {
 			LOGGER.error(e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
@@ -164,7 +178,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 			keyname = UUID.randomUUID().toString();
 			JSONObject keypair = new JSONObject();
 			try {
-				keypair.put("name", keyname);
+				keypair.put(NAME_JSON_FIELD, keyname);
 				keypair.put("public_key", publicKey);
 				JSONObject root = new JSONObject();
 				root.put("keypair", keypair);
@@ -190,6 +204,10 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 				.getConnectionManager().getSchemeRegistry()), params);
 	}
 	
+	public void setClient(DefaultHttpClient client) {
+		this.client = client;
+	}
+	
 	private void checkStatusResponse(HttpResponse response, String message) {
 		if (response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
@@ -212,7 +230,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 			String keyName) throws JSONException {
 
 		JSONObject server = new JSONObject();
-		server.put("name", "fogbow-instance-" + UUID.randomUUID().toString());
+		server.put(NAME_JSON_FIELD, "fogbow-instance-" + UUID.randomUUID().toString());
 		server.put("imageRef", imageRef);
 		server.put("flavorRef", flavorRef);
 		if (userdata != null) {
@@ -253,7 +271,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 			JSONArray servers = root.getJSONArray("servers");
 			for (int i = 0; i < servers.length(); i++) {
 				JSONObject currentServer = servers.getJSONObject(i);
-				instances.add(new Instance(currentServer.getString("id")));
+				instances.add(new Instance(currentServer.getString(ID_JSON_FIELD)));
 			}
 		} catch (JSONException e) {
 			LOGGER.warn("There was an exception while getting instances from json.", e);
@@ -275,7 +293,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 	private Instance getInstanceFromJson(String json, Token token) {
 		try {
 			JSONObject rootServer = new JSONObject(json);
-			String id = rootServer.getJSONObject("server").getString("id");
+			String id = rootServer.getJSONObject("server").getString(ID_JSON_FIELD);
 
 			Map<String, String> attributes = new HashMap<String, String>();
 			// CPU Architecture of the instance
@@ -289,7 +307,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 
 			// getting info from flavor
 			String flavorId = rootServer.getJSONObject("server").getJSONObject("flavor")
-					.getString("id");
+					.getString(ID_JSON_FIELD);
 			String requestEndpoint = computeV2APIEndpoint + token.getAttributes().get(TENANT_ID)
 					+ "/flavors/" + flavorId;
 			String jsonFlavor = doGetRequest(requestEndpoint, token.getAccessId());
@@ -300,7 +318,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 					rootFlavor.getJSONObject("flavor").getString("vcpus"));
 
 			attributes.put("occi.compute.hostname",
-					rootServer.getJSONObject("server").getString("name"));
+					rootServer.getJSONObject("server").getString(NAME_JSON_FIELD));
 			attributes.put("occi.core.id", id);
 
 			List<Resource> resources = new ArrayList<Resource>();
@@ -470,7 +488,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		HttpResponse response = null;
 		try {
 			HttpDelete request = new HttpDelete(endpoint);
-			request.addHeader(OCCIHeaders.X_AUTH_TOKEN, authToken);			
+			request.addHeader(OCCIHeaders.X_AUTH_TOKEN, authToken);
 			response = client.execute(request);
 		} catch (Exception e) {
 			LOGGER.error(e);
@@ -488,81 +506,83 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 
 	@Override
 	public void uploadImage(Token token, String imagePath, String imageName) {
-        JSONObject json = new JSONObject();
-        try {
-            json.put("name", imageName);
-            json.put("visibility", "public");
-        } catch (JSONException e) {
-        	return;
-        }
-        
-        String responseStrCreateImage = doPostRequest(glanceV2APIEndpoint + V2_IMAGES,
-                token.getAccessId(), json);       
-        
-        String id = "";
-        try {
-            JSONObject featuresImage = new JSONObject(responseStrCreateImage);
-            id = featuresImage.getString("id");
-        } catch (JSONException e) {
-        	return;
-        }        
-        
-        ArrayList<JSONObject> nets = new ArrayList<JSONObject>();
-        
-        try {
-            JSONObject net = new JSONObject();
-            JSONObject net2 = new JSONObject();
-            net.put("op", "replace");
-            net.put("path", "/disk_format");
-            net.put("value", "qcow2");
-            nets.add(net);
-            net2.put("op", "replace");
-            net2.put("path", "/container_format");
-            net2.put("value", "bare");
-            nets.add(net2);            
-        } catch (JSONException e) {
-        	return;
-        }
-        
-        doPatchRequest(glanceV2APIEndpoint + V2_IMAGES + "/" + id,
-                token.getAccessId(), nets.toString());              
-        
-        doPutRequest(glanceV2APIEndpoint + V2_IMAGES + "/" + id + V2_IMAGES_FILE,
-                token.getAccessId(), imagePath);        
+		if (imageName == null || imageName.isEmpty()) {
+			throw new OCCIException(ErrorType.BAD_REQUEST, "Image empty.");
+		}
+		
+		JSONObject json = new JSONObject();		
+		try {
+			json.put(NAME_JSON_FIELD, imageName);
+			json.put(VISIBILITY_JSON_FIELD, PUBLIC);
+		} catch (JSONException e) {}
+
+		String responseStrCreateImage = doPostRequest(glanceV2APIEndpoint + V2_IMAGES,
+				token.getAccessId(), json);
+		
+		String id = null;
+		try {
+			JSONObject featuresImage = new JSONObject(responseStrCreateImage);
+			id = featuresImage.getString(ID_JSON_FIELD);
+		} catch (JSONException e) {}
+		
+		try {			
+			ArrayList<JSONObject> nets = new ArrayList<JSONObject>();
+			JSONObject replace_disck_format = new JSONObject();
+			replace_disck_format.put(OP_JSON_FIELD, REPLACE_VALUE_UPLOAD_IMAGE);
+			replace_disck_format.put(PATH_JSON_FIELD, DISK_FORMAT);
+			replace_disck_format.put(VALUE_JSON_FIELD, QCOW2);
+			nets.add(replace_disck_format);
+			JSONObject replace_container_format = new JSONObject();
+			replace_container_format.put(OP_JSON_FIELD, REPLACE_VALUE_UPLOAD_IMAGE);
+			replace_container_format.put(PATH_JSON_FIELD, CONTAINER_FORMAT);
+			replace_container_format.put(VALUE_JSON_FIELD, BARE);
+			nets.add(replace_container_format);
+			
+			doPatchRequest(glanceV2APIEndpoint + V2_IMAGES + "/" + id, token.getAccessId(),
+					nets.toString());
+			
+			doPutRequest(glanceV2APIEndpoint + V2_IMAGES + "/" + id + V2_IMAGES_FILE,
+					token.getAccessId(), imagePath);			
+		} catch (Exception e) {
+			doDeleteRequest(glanceV2APIEndpoint + V2_IMAGES + "/" + id, token.getAccessId());
+			throw new OCCIException(ErrorType.BAD_REQUEST, "Upload failed.");
+		}
 	}
 
 	@Override
 	public String getImageId(Token token, String imageName) {
-        String responseJsonImages = doGetRequest(glanceV2APIEndpoint + V2_IMAGES,
-                token.getAccessId());       
-        
-        String id = null;
-        try {
-            JSONArray arrayImages = new JSONObject(responseJsonImages).getJSONArray("images");
-            for (int i = 0; i < arrayImages.length(); i++) {
-                if (arrayImages.getJSONObject(i).getString("name").equals(imageName)) {
-                	id = arrayImages.getJSONObject(i).getString("id");
-                }
-            }
-        } catch (JSONException e) {}
-    
+		String responseJsonImages = doGetRequest(glanceV2APIEndpoint + V2_IMAGES,
+				token.getAccessId());
+
+		String id = null;
+		try {
+			JSONArray arrayImages = new JSONObject(responseJsonImages)
+					.getJSONArray(IMAGES_JSON_FIELD);
+			for (int i = 0; i < arrayImages.length(); i++) {
+				if (arrayImages.getJSONObject(i).getString(NAME_JSON_FIELD).equals(imageName)) {
+					id = arrayImages.getJSONObject(i).getString(ID_JSON_FIELD);
+				}
+			}
+		} catch (JSONException e) {}
+
 		return id;
 	}
-	
+
 	public String getImageName(Token token, String imageId) {
-        String responseJsonImages = doGetRequest(glanceV2APIEndpoint + V2_IMAGES,
-                token.getAccessId());
-        
-        String name = null;
-        try {
-            JSONArray arrayImages = new JSONObject(responseJsonImages).getJSONArray("images");
-            for (int i = 0; i < arrayImages.length(); i++) {
-                if (arrayImages.getJSONObject(i).getString("id").equals(imageId)) {
-                	name = arrayImages.getJSONObject(i).getString("name");
-                }
-            }
-        } catch (JSONException e) {}
-    
+		String responseJsonImages = doGetRequest(glanceV2APIEndpoint + V2_IMAGES,
+				token.getAccessId());
+
+		String name = null;
+		try {
+			JSONArray arrayImages = new JSONObject(responseJsonImages)
+					.getJSONArray(IMAGES_JSON_FIELD);
+			for (int i = 0; i < arrayImages.length(); i++) {
+				if (arrayImages.getJSONObject(i).getString(ID_JSON_FIELD).equals(imageId)) {
+					name = arrayImages.getJSONObject(i).getString(NAME_JSON_FIELD);
+				}
+			}
+		} catch (JSONException e) {}
+
 		return name;
 	}
 	

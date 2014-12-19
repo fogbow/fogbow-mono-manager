@@ -532,7 +532,13 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		templateProperties.put("image_path", remoteFilePath);
 		Long imageSize = (long) Math.ceil(((double) new File(imagePath).length()) / (1024d * 1024d));
 		templateProperties.put("image_size", imageSize.toString());
-		Image.allocate(oneClient, generateImageTemplate(templateProperties), dataStoreId);
+		OneResponse response = Image.allocate(oneClient, generateImageTemplate(templateProperties), dataStoreId);
+		
+		if (response.isError()) {
+			throw new OCCIException(ErrorType.BAD_REQUEST, response.getErrorMessage());
+		}
+		
+		Image.chmod(oneClient, response.getIntMessage(), 744);
 	}
 	
 	private String generateImageTemplate(Map<String, String> templateProperties) {
@@ -591,5 +597,5 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 			}
 		}
 		return null;
-	}	
+	}
 }
