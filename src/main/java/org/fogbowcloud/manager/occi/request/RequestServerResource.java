@@ -1,5 +1,6 @@
 package org.fogbowcloud.manager.occi.request;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -20,11 +21,13 @@ import org.restlet.data.MediaType;
 import org.restlet.data.Status;
 import org.restlet.engine.adapter.HttpRequest;
 import org.restlet.engine.adapter.ServerCall;
+import org.restlet.engine.header.Header;
 import org.restlet.representation.StringRepresentation;
 import org.restlet.resource.Delete;
 import org.restlet.resource.Get;
 import org.restlet.resource.Post;
 import org.restlet.resource.ServerResource;
+import org.restlet.util.Series;
 
 public class RequestServerResource extends ServerResource {
 
@@ -49,19 +52,30 @@ public class RequestServerResource extends ServerResource {
 			try {
 				verbose = Boolean.parseBoolean(getQuery().getValues("verbose"));
 			} catch (Exception e) {}
+			List<Request> requestsFromUser = application.getRequestsFromUser(accessId);
+			
+			List<String> filterCategory = HeaderUtils.getValueHeaderPerName(OCCIHeaders.CATEGORY,
+					req.getHeaders());
+			List<String> filterAttribute = HeaderUtils.getValueHeaderPerName(
+					OCCIHeaders.X_OCCI_ATTRIBUTE, req.getHeaders());
+			
+			if (filterCategory.size() != 0 || filterAttribute.size() != 0) {
+				requestsFromUser = filterRequests(requestsFromUser, filterCategory, filterAttribute);
+			}
+			
 			if (acceptContent.size() == 0
 					|| acceptContent.contains(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE)) {
 				return new StringRepresentation(generateTextPlainResponse(
-						application.getRequestsFromUser(accessId), req, verbose),
+						requestsFromUser, req, verbose),
 						MediaType.TEXT_PLAIN);
 			} else if (acceptContent.contains(OCCIHeaders.TEXT_URI_LIST_CONTENT_TYPE)) {
 				getResponse().setStatus(new Status(HttpStatus.SC_OK));
 				return new StringRepresentation(generateURIListResponse(
-						application.getRequestsFromUser(accessId), req, verbose),
+						requestsFromUser, req, verbose),
 						MediaType.TEXT_URI_LIST);
 			} else {
-				throw new OCCIException(ErrorType.METHOD_NOT_ALLOWED,
-						ResponseConstants.METHOD_NOT_SUPPORTED);
+				throw new OCCIException(ErrorType.NOT_ACCEPTABLE,
+						ResponseConstants.ACCEPT_NOT_ACCEPTABLE);				
 			}
 		}
 
@@ -70,8 +84,44 @@ public class RequestServerResource extends ServerResource {
 		if (acceptContent.size() == 0 || acceptContent.contains(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE)) {
 			return new StringRepresentation(generateTextPlainResponseOneRequest(request), MediaType.TEXT_PLAIN);				
 		}
-		throw new OCCIException(ErrorType.METHOD_NOT_ALLOWED,
-				ResponseConstants.METHOD_NOT_SUPPORTED);
+		throw new OCCIException(ErrorType.NOT_ACCEPTABLE,
+				ResponseConstants.ACCEPT_NOT_ACCEPTABLE);
+	}
+
+	private List<Request> filterRequests(List<Request> requestsFromUser,
+			List<String> filterCategory, List<String> filterAttribute) {
+		List<Request> requestsFiltrated = new ArrayList<Request>();
+		boolean thereIsntCategory = true;
+		for (Request request : requestsFromUser) {
+			if (filterCategory.size() != 0) {
+				for (String valueCategoryFilter : filterCategory) {
+					for (Category category : request.getCategories()) {
+						if (valueCategoryFilter.contains(category.getTerm())) {
+							requestsFiltrated.add(request);
+							thereIsntCategory = false;
+						}
+					}
+				}
+			}
+			if (filterAttribute.size() != 0) {
+				for (String valueAttributeFilter : filterAttribute) {
+					Map<String, String> mapAttributes = request.getxOCCIAtt();
+					for (String keyAttribute : mapAttributes.keySet()) {
+						if (valueAttributeFilter.contains(keyAttribute)
+								&& valueAttributeFilter.endsWith(HeaderUtils
+								.normalizeValueAttributeFilter(mapAttributes
+								.get(keyAttribute.trim())))) {
+							requestsFiltrated.add(request);
+						}
+					}
+				}
+			}
+		}
+		if (filterCategory.size() != 0 && thereIsntCategory) {
+			throw new OCCIException(ErrorType.BAD_REQUEST,
+					ResponseConstants.CATEGORY_IS_NOT_REGISTERED);
+		}
+		return requestsFiltrated;
 	}
 	
 	private String generateURIListResponse(List<Request> requests, HttpRequest req, boolean verbose) {
@@ -91,7 +141,9 @@ public class RequestServerResource extends ServerResource {
 						+ request.getState() + "; " + RequestAttribute.TYPE.getValue() + "="
 						+ request.getAttValue(RequestAttribute.TYPE.getValue()) + "; "
 						+ RequestAttribute.INSTANCE_ID.getValue() + "="
-						+ request.getInstanceId() + "\n";
+//						+ request.getInstanceId() + "\n";
+						+ request.getInstanceGlobalId() + "\n";
+						
 			}else {			
 				result += requestEndpoint + request.getId() + "\n";
 			}
@@ -104,14 +156,17 @@ public class RequestServerResource extends ServerResource {
 		String requestOCCIFormat = "\n";
 		for (Category category : request.getCategories()) {
 			LOGGER.debug("Category of request: " + request);
-			LOGGER.debug("Resource exists? "
-					+ (ResourceRepository.getInstance().get(category.getTerm()) != null));
-			LOGGER.debug("Resource to header: "
-					+ ResourceRepository.getInstance().get(category.getTerm()).toHeader());
+			Resource resource = ResourceRepository.getInstance().get(category.getTerm());
+			if (resource == null && category.getScheme().equals(RequestConstants.TEMPLATE_OS_SCHEME)) {
+				resource = ResourceRepository.createImageResource(category.getTerm());
+			}
+			LOGGER.debug("Resource exists? " + (resource != null));
+			if (resource == null) {
+				continue;
+			}
+			LOGGER.debug("Resource to header: " + resource.toHeader());
 			try {
-				requestOCCIFormat += "Category: "
-						+ ResourceRepository.getInstance().get(category.getTerm()).toHeader()
-						+ "\n";
+				requestOCCIFormat += "Category: " + resource.toHeader() + "\n";
 			} catch (Exception e) {
 				LOGGER.error(e);
 			}
@@ -131,7 +186,9 @@ public class RequestServerResource extends ServerResource {
 		}
 		
 		attToOutput.put(RequestAttribute.STATE.getValue(), request.getState().getValue());
-		attToOutput.put(RequestAttribute.INSTANCE_ID.getValue(), request.getInstanceId());
+//		attToOutput.put(RequestAttribute.INSTANCE_ID.getValue(), request.getInstanceId());
+		attToOutput.put(RequestAttribute.INSTANCE_ID.getValue(), request.getInstanceGlobalId());
+		
 		
 		for (String attName : attToOutput.keySet()) {
 			requestOCCIFormat += OCCIHeaders.X_OCCI_ATTRIBUTE + ": " + attName + "=\""
@@ -166,7 +223,8 @@ public class RequestServerResource extends ServerResource {
 		LOGGER.info("Posting a new request...");
 		OCCIApplication application = (OCCIApplication) getApplication();
 		HttpRequest req = (HttpRequest) getRequest();
-
+		String acceptType = getAccept(HeaderUtils.getAccept(req.getHeaders()));
+		
 		List<Category> categories = HeaderUtils.getCategories(req.getHeaders());
 		LOGGER.debug("Categories: " + categories);
 		HeaderUtils.checkCategories(categories, RequestConstants.TERM);
@@ -181,8 +239,57 @@ public class RequestServerResource extends ServerResource {
 		List<Request> currentRequests = application.createRequests(authToken, categories, xOCCIAtt);
 		if (currentRequests != null || !currentRequests.isEmpty()) {
 			setStatus(Status.SUCCESS_CREATED);
+		}		
+		setLocationHeader(currentRequests, req);
+		
+		if (acceptType.equals(OCCIHeaders.OCCI_ACCEPT)) {
+			return new StringRepresentation(ResponseConstants.OK, new MediaType(
+					OCCIHeaders.OCCI_ACCEPT));	
 		}
-		return new StringRepresentation(generateTextPlainResponse(currentRequests, req, false));
+		return new StringRepresentation(ResponseConstants.OK);
+	}
+
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	private void setLocationHeader(List<Request> requests, HttpRequest req) {
+		String requestEndpoint = getHostRef(req) + req.getHttpCall().getRequestUri();
+		Series<Header> responseHeaders = (Series<Header>) getResponse().getAttributes().get(
+				"org.restlet.http.headers");
+		if (responseHeaders == null) {
+			responseHeaders = new Series(Header.class);
+			getResponse().getAttributes().put("org.restlet.http.headers", responseHeaders);
+		}
+
+		responseHeaders.add(new Header("Location",
+				generateLocationHeader(requests, requestEndpoint)));
+	}
+
+	protected String generateLocationHeader(List<Request> requests, String requestEndpoint) {
+		String response = "";
+		for (Request request : requests) {
+			String prefix = requestEndpoint;
+			if (!prefix.endsWith("/")){
+				prefix += "/";
+			}			
+			String locationHeader = prefix + request.getId();		
+			
+			response += locationHeader + ",";
+		}
+		return response.substring(0, response.length() - 1);
+	}	
+
+	private String getAccept(List<String> listAccept) {
+		if (listAccept.size() > 0 ) {
+			if (listAccept.get(0).contains(MediaType.TEXT_PLAIN.toString())) {
+				return MediaType.TEXT_PLAIN.toString();			
+			} else if (listAccept.get(0).contains(OCCIHeaders.OCCI_CONTENT_TYPE)) {
+				return OCCIHeaders.OCCI_CONTENT_TYPE;				
+			} else {
+				throw new OCCIException(ErrorType.NOT_ACCEPTABLE,
+						ResponseConstants.ACCEPT_NOT_ACCEPTABLE);				
+			}
+		} else {
+			return "";
+		}
 	}
 	
 	public static Map<String, String> normalizeXOCCIAtt(Map<String, String> xOCCIAtt) {
@@ -251,7 +358,8 @@ public class RequestServerResource extends ServerResource {
 						+ RequestAttribute.STATE.getValue() + "=" + request.getState() + "; "
 						+ RequestAttribute.TYPE.getValue() + "="
 						+ request.getAttValue(RequestAttribute.TYPE.getValue()) + "; "
-						+ RequestAttribute.INSTANCE_ID.getValue() + "=" + request.getInstanceId()
+//						+ RequestAttribute.INSTANCE_ID.getValue() + "=" + request.getInstanceId()
+						+ RequestAttribute.INSTANCE_ID.getValue() + "=" + request.getInstanceGlobalId()
 						+ "\n";
 			}else {			
 				response += prefixOCCILocation + request.getId() + "\n";

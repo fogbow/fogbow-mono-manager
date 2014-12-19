@@ -12,9 +12,8 @@ import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
-import org.fogbowcloud.manager.core.plugins.common.AllowAllAuthorizationPlugin;
-import org.fogbowcloud.manager.core.plugins.openstack.KeystoneIdentityPlugin;
-import org.fogbowcloud.manager.core.plugins.openstack.OpenStackOCCIComputePlugin;
+import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
+import org.fogbowcloud.manager.core.plugins.egi.EgiImageStoragePlugin;
 import org.fogbowcloud.manager.occi.OCCIApplication;
 import org.fogbowcloud.manager.xmpp.ManagerXmppComponent;
 import org.restlet.Component;
@@ -39,7 +38,7 @@ public class Main {
 			computePlugin = (ComputePlugin) createInstance(
 					ConfigurationConstants.COMPUTE_CLASS_KEY, properties);
 		} catch (Exception e) {
-			LOGGER.warn("Compute Plugin not especified in the properties.");
+			LOGGER.warn("Compute Plugin not especified in the properties.", e);
 			return;
 		}
 
@@ -48,7 +47,7 @@ public class Main {
 			authorizationPlugin = (AuthorizationPlugin) createInstance(
 					ConfigurationConstants.AUTHORIZATION_CLASS_KEY, properties);
 		} catch (Exception e) {
-			LOGGER.warn("Authorization Plugin not especified in the properties.");
+			LOGGER.warn("Authorization Plugin not especified in the properties.", e);
 			return;
 		}
 		
@@ -57,15 +56,16 @@ public class Main {
 			localIdentityPlugin = (IdentityPlugin) getIdentityPluginByPrefix(properties,
 					ConfigurationConstants.LOCAL_PREFIX);
 		} catch (Exception e) {
-			LOGGER.warn("Local Identity Plugin not especified in the properties.");
+			LOGGER.warn("Local Identity Plugin not especified in the properties.", e);
 			return;
 		}
+		
 		IdentityPlugin federationIdentityPlugin = null;
 		try {
 			federationIdentityPlugin = (IdentityPlugin) getIdentityPluginByPrefix(properties,
 					ConfigurationConstants.FEDERATION_PREFIX);
 		} catch (Exception e) {
-			LOGGER.warn("Federation Identity Plugin not especified in the properties.");
+			LOGGER.warn("Federation Identity Plugin not especified in the properties.", e);
 			return;
 		}
 
@@ -76,12 +76,28 @@ public class Main {
 		} catch (Exception e) {
 			LOGGER.warn("Member Validator not especified in the properties.");
 		}
+		
+		if (properties.get(ConfigurationConstants.RENDEZVOUS_JID_KEY) == null
+				|| properties.get(ConfigurationConstants.RENDEZVOUS_JID_KEY).toString().isEmpty()) {
+			LOGGER.warn("Rendezvous (" + ConfigurationConstants.RENDEZVOUS_JID_KEY
+					+ ") not especified in the properties.");
+		}
+		
+		ImageStoragePlugin imageStoragePlugin = null;
+		try {
+			imageStoragePlugin = (ImageStoragePlugin) createInstanceWithComputePlugin(
+					ConfigurationConstants.IMAGE_STORAGE_PLUGIN_CLASS, properties, computePlugin);
+		} catch (Exception e) {
+			imageStoragePlugin = new EgiImageStoragePlugin(properties, computePlugin);
+			LOGGER.warn("Image Storage plugin not specified in properties. Using the default one.", e);
+		}
 
 		ManagerController facade = new ManagerController(properties);
 		facade.setComputePlugin(computePlugin);
 		facade.setAuthorizationPlugin(authorizationPlugin);
 		facade.setLocalIdentityPlugin(localIdentityPlugin);
 		facade.setFederationIdentityPlugin(federationIdentityPlugin);
+		facade.setImageStoragePlugin(imageStoragePlugin);
 		facade.setValidator(validator);
 
 		ManagerXmppComponent xmpp = new ManagerXmppComponent(
@@ -130,6 +146,12 @@ public class Main {
 	private static Object createInstance(String propName, Properties properties) throws Exception {
 		return Class.forName(properties.getProperty(propName)).getConstructor(Properties.class)
 				.newInstance(properties);
+	}
+	
+	private static Object createInstanceWithComputePlugin(String propName, 
+			Properties properties, ComputePlugin computePlugin) throws Exception {
+		return Class.forName(properties.getProperty(propName)).getConstructor(Properties.class, ComputePlugin.class)
+				.newInstance(properties, computePlugin);
 	}
 
 	private static void configureLog4j() {

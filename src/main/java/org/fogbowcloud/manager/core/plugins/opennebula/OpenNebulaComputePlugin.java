@@ -1,11 +1,14 @@
 package org.fogbowcloud.manager.core.plugins.opennebula;
 
+import java.io.File;
+import java.io.IOException;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.UUID;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -39,6 +42,9 @@ import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.json.JSONObject;
 import org.opennebula.client.Client;
 import org.opennebula.client.OneResponse;
+import org.opennebula.client.group.Group;
+import org.opennebula.client.image.Image;
+import org.opennebula.client.image.ImagePool;
 import org.opennebula.client.user.User;
 import org.opennebula.client.vm.VirtualMachine;
 import org.opennebula.client.vm.VirtualMachinePool;
@@ -54,11 +60,18 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 	public static final int VALUE_UNLIMITED_QUOTA_OPENNEBULA = -2;
 	public static final int VALUE_DEFAULT_MEM = 20480; // 20 GB
 	public static final int VALUE_DEFAULT_CPU = 100;
+	public static final int VALUE_DEFAULT_VMS = 100;
 	private OpenNebulaClientFactory clientFactory;
 	private String openNebulaEndpoint;
 	private Map<String, String> fogbowTermToOpenNebula; 
 	private String networkId;
-	List<String> idleImages;
+	
+	private String sshHost;
+	private Integer sshPort;
+	private String sshUsername;
+	private String sshKeyFile;
+	private String sshTargetTempFolder;
+	private Integer dataStoreId;
 	
 	private static final Logger LOGGER = Logger.getLogger(OpenNebulaComputePlugin.class);
 
@@ -76,21 +89,18 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 			throw new OCCIException(ErrorType.BAD_REQUEST,
 					ResponseConstants.NETWORK_NOT_SPECIFIED);			
 		}		
-		networkId = String.valueOf(properties.get(OneConfigurationConstants.COMPUTE_ONE_NETWORK_KEY));	
+		networkId = String.valueOf(properties.get(OneConfigurationConstants.COMPUTE_ONE_NETWORK_KEY));
 		
-		// images
-		Map<String, String> imageProperties = getImageProperties(properties);
-		if (imageProperties == null || imageProperties.isEmpty()) {
-			throw new OCCIException(ErrorType.BAD_REQUEST,
-					ResponseConstants.IMAGES_NOT_SPECIFIED);
-		}
-				
-		for (String imageName : imageProperties.keySet()) {
-			fogbowTermToOpenNebula.put(imageName, imageProperties.get(imageName));
-			ResourceRepository.getInstance().addImageResource(imageName);
-		}
-		idleImages = new ArrayList<String>(); 
-		idleImages.addAll(imageProperties.keySet());
+		sshHost = properties.getProperty(OneConfigurationConstants.COMPUTE_ONE_SSH_HOST);
+		String sshPortStr = properties.getProperty(OneConfigurationConstants.COMPUTE_ONE_SSH_PORT);
+		sshPort = sshPortStr == null ? null : Integer.valueOf(sshPortStr);
+		
+		sshUsername = properties.getProperty(OneConfigurationConstants.COMPUTE_ONE_SSH_USERNAME);
+		sshKeyFile = properties.getProperty(OneConfigurationConstants.COMPUTE_ONE_SSH_KEY_FILE);
+		sshTargetTempFolder = properties.getProperty(OneConfigurationConstants.COMPUTE_ONE_SSH_TARGET_TEMP_FOLDER);
+		
+		String dataStoreIdStr = properties.getProperty(OneConfigurationConstants.COMPUTE_ONE_DATASTORE_ID);
+		dataStoreId = dataStoreIdStr == null ? null: Integer.valueOf(dataStoreIdStr);
 		
 		// flavors
 		checkFlavor(String.valueOf(properties.get(OneConfigurationConstants.COMPUTE_ONE_SMALL_KEY)));
@@ -133,32 +143,15 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		}
 	}
 
-	private static Map<String, String> getImageProperties(Properties properties) {
-		Map<String, String> imageProperties = new HashMap<String, String>();
-
-		for (Object propName : properties.keySet()) {
-			String propNameStr = (String) propName;
-			if (propNameStr.startsWith(OneConfigurationConstants.COMPUTE_ONE_IMAGE_PREFIX_KEY)) {
-				imageProperties.put(
-						propNameStr
-								.substring(OneConfigurationConstants.COMPUTE_ONE_IMAGE_PREFIX_KEY
-										.length()), properties.getProperty(propNameStr));
-			}
-		}
-		LOGGER.debug("Image properties: " + imageProperties);
-		return imageProperties;
-	}
-	
 	@Override
 	public String requestInstance(Token token, List<Category> categories,
-			Map<String, String> xOCCIAtt) {
+			Map<String, String> xOCCIAtt, String localImageId) {
 		
 		LOGGER.debug("Requesting instance with token=" + token + "; categories="
 				+ categories + "; xOCCIAtt=" + xOCCIAtt);
 		
 		Map<String, String> templateProperties = new HashMap<String, String>();
 		String choosenFlavor = null;
-		String choosenImage = null;
 		
 		// removing fogbow-request category
 		categories.remove(new Category(RequestConstants.TERM, RequestConstants.SCHEME,
@@ -178,13 +171,6 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 							ResponseConstants.IRREGULAR_SYNTAX);					
 				}
 				choosenFlavor = fogbowTermToOpenNebula.get(category.getTerm());
-			} else if (idleImages.contains(category.getTerm())){
-				// There are more than one image category
-				if (choosenImage != null) {
-					throw new OCCIException(ErrorType.BAD_REQUEST,
-							ResponseConstants.IRREGULAR_SYNTAX);					
-				}
-				choosenImage = fogbowTermToOpenNebula.get(category.getTerm());
 			} else if (category.getTerm().equals(RequestConstants.PUBLIC_KEY_TERM)) {
 				templateProperties.put("ssh-public-key",
 						xOCCIAtt.get(RequestAttribute.DATA_PUBLIC_KEY.getValue()));
@@ -192,25 +178,33 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		}
 		
 		// image or flavor was not specified
-		if (choosenFlavor == null || choosenImage == null){
+		if (choosenFlavor == null || localImageId == null){
 			throw new OCCIException(ErrorType.BAD_REQUEST,
 					ResponseConstants.IRREGULAR_SYNTAX);
 		}
 		
 		String userdata = xOCCIAtt.get(RequestAttribute.USER_DATA_ATT.getValue());
 		if (userdata != null){
-			userdata = userdata.replaceAll("\n", "\\\\n");
+			userdata = normalizeUserdata(userdata);
 		}
 		templateProperties.put("mem", String.valueOf((int)getAttValue("mem", choosenFlavor)));
 		templateProperties.put("cpu", String.valueOf(getAttValue("cpu", choosenFlavor)));
 		templateProperties.put("userdata", userdata);
-		templateProperties.put("image-id", choosenImage);
+		templateProperties.put("image-id", localImageId);
 
 		Client oneClient = clientFactory.createClient(token.getAccessId(), openNebulaEndpoint);
 		String vmTemplate = generateTemplate(templateProperties);
 
 		LOGGER.debug("The instance will be allocated according to template: " + vmTemplate);
 		return clientFactory.allocateVirtualMachine(oneClient, vmTemplate);
+	}
+
+	public static String normalizeUserdata(String userdata) {
+		userdata = new String(Base64.decodeBase64(userdata), Charsets.UTF_8);
+		userdata = userdata.replaceAll("\n", "\\\\n");
+		userdata = new String(Base64.encodeBase64(userdata.getBytes(Charsets.UTF_8), false, false),
+				Charsets.UTF_8);
+		return userdata;
 	}
 	
 	private String generateTemplate(Map<String, String> templateProperties) {
@@ -347,11 +341,6 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		resources.add(ResourceRepository.getInstance().get(
 				getUsedFlavor(Double.parseDouble(cpu), Double.parseDouble(mem))));
 		
-		// valid image
-		if (ResourceRepository.getInstance().get(image) != null) {
-			resources.add(ResourceRepository.getInstance().get(image));
-		}
-		
 		return new Instance(vm.getId(), resources, attributes, new ArrayList<Link>());
 	}
 
@@ -414,17 +403,23 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 	public ResourcesInfo getResourcesInfo(Token token) {
 		Client oneClient = clientFactory.createClient(token.getAccessId(), openNebulaEndpoint);				
 		User user = clientFactory.createUser(oneClient, token.getUser());
+		String groupId = user.xpath("GROUPS/ID");
+		Group group = clientFactory.createGroup(oneClient, Integer.parseInt(groupId));
 
-		String maxCpuStr = user.xpath("VM_QUOTA/VM/CPU");
-		String cpuInUseStr = user.xpath("VM_QUOTA/VM/CPU_USED");
-		String maxMemStr = user.xpath("VM_QUOTA/VM/MEMORY");
-		String memInUseStr = user.xpath("VM_QUOTA/VM/MEMORY_USED");
+		String maxCpuStr = group.xpath("VM_QUOTA/VM/CPU");
+		String cpuInUseStr = group.xpath("VM_QUOTA/VM/CPU_USED");
+		String maxMemStr = group.xpath("VM_QUOTA/VM/MEMORY");
+		String memInUseStr = group.xpath("VM_QUOTA/VM/MEMORY_USED");
+		String maxVMsStr = group.xpath("VM_QUOTA/VM/VMS");
+		String vmsInUseStr = group.xpath("VM_QUOTA/VM/VMS_USED");
 		
 		// default values is used when quota is not specified
 		double maxCpu = VALUE_DEFAULT_CPU;
 		double cpuInUse = 0;
 		double maxMem = VALUE_DEFAULT_MEM;
 		double memInUse = 0;
+		double maxVMs = VALUE_DEFAULT_VMS;
+		double vmsInUse = 0;
 
 		// getting quota values
 		if (isValidDouble(maxCpuStr)) {
@@ -439,6 +434,12 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		if (isValidDouble(memInUseStr)) {
 			memInUse = Integer.parseInt(memInUseStr);
 		}
+		if (isValidDouble(maxVMsStr)) {
+			maxVMs = Integer.parseInt(maxVMsStr);
+		}
+		if (isValidDouble(vmsInUseStr)) {
+			vmsInUse = Integer.parseInt(vmsInUseStr);
+		}
 
 		if (maxMem == VALUE_DEFAULT_QUOTA_OPENNEBULA) {
 			maxMem = VALUE_DEFAULT_MEM;
@@ -451,12 +452,19 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		} else if (maxCpu == VALUE_UNLIMITED_QUOTA_OPENNEBULA) {
 			maxCpu = Integer.MAX_VALUE;
 		}
+		
+		if (maxVMs == VALUE_DEFAULT_QUOTA_OPENNEBULA) {
+			maxVMs = VALUE_DEFAULT_CPU;
+		} else if (maxVMs == VALUE_UNLIMITED_QUOTA_OPENNEBULA) {
+			maxVMs = Integer.MAX_VALUE;
+		}
 
 		double cpuIdle = maxCpu - cpuInUse;
 		double memIdle = maxMem - memInUse;
+		double instancesIdle = maxVMs - vmsInUse;
 	
 		return new ResourcesInfo(String.valueOf(cpuIdle), String.valueOf(cpuInUse),
-				String.valueOf(memIdle), String.valueOf(memInUse), getFlavors(cpuIdle, memIdle),
+				String.valueOf(memIdle), String.valueOf(memInUse), getFlavors(cpuIdle, memIdle, instancesIdle),
 				null);
 	}
 	
@@ -469,24 +477,24 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		return true;
 	}
 
-	private List<Flavor> getFlavors(double cpuIdle, double memIdle) {
+	private List<Flavor> getFlavors(double cpuIdle, double memIdle, double instancesIdle) {
 		List<Flavor> flavors = new ArrayList<Flavor>();
 		// small		
 		double memFlavor = getAttValue("mem", fogbowTermToOpenNebula.get(RequestConstants.SMALL_TERM));
 		double cpuFlavor = getAttValue("cpu", fogbowTermToOpenNebula.get(RequestConstants.SMALL_TERM));
-		int capacity = (int) Math.min(cpuIdle / cpuFlavor, memIdle / memFlavor);
+		int capacity = Math.min((int) Math.min(cpuIdle / cpuFlavor, memIdle / memFlavor), (int) instancesIdle);
 		Flavor smallFlavor = new Flavor(RequestConstants.SMALL_TERM, String.valueOf(cpuFlavor),
 				String.valueOf(memFlavor), capacity);
 		// medium
 		memFlavor = getAttValue("mem", fogbowTermToOpenNebula.get(RequestConstants.MEDIUM_TERM));
 		cpuFlavor = getAttValue("cpu", fogbowTermToOpenNebula.get(RequestConstants.MEDIUM_TERM));
-		capacity = (int) Math.min(cpuIdle / cpuFlavor, memIdle / memFlavor);
+		capacity = Math.min((int) Math.min(cpuIdle / cpuFlavor, memIdle / memFlavor), (int) instancesIdle);
 		Flavor mediumFlavor = new Flavor(RequestConstants.MEDIUM_TERM, String.valueOf(cpuFlavor),
 				String.valueOf(memFlavor), capacity);
 		// large
 		memFlavor = getAttValue("mem", fogbowTermToOpenNebula.get(RequestConstants.LARGE_TERM));
 		cpuFlavor = getAttValue("cpu", fogbowTermToOpenNebula.get(RequestConstants.LARGE_TERM));
-		capacity = (int) Math.min(cpuIdle / cpuFlavor, memIdle / memFlavor);
+		capacity = Math.min((int) Math.min(cpuIdle / cpuFlavor, memIdle / memFlavor), (int) instancesIdle);
 		Flavor largeFlavor = new Flavor(RequestConstants.LARGE_TERM, String.valueOf(cpuFlavor),
 				String.valueOf(memFlavor), capacity);
 		flavors.add(smallFlavor);
@@ -501,4 +509,93 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 				ResponseConstants.CLOUD_NOT_SUPPORT_OCCI_INTERFACE);
 	}
 
+	@Override
+	public void uploadImage(Token token, String imagePath, String imageName) {
+		Client oneClient = clientFactory.createClient(token.getAccessId(), openNebulaEndpoint);
+		String remoteFilePath = sshTargetTempFolder + "/" + UUID.randomUUID();
+		
+		OpenNebulaSshClientWrapper sshClientWrapper = new OpenNebulaSshClientWrapper();
+		try {
+			sshClientWrapper.connect(sshHost, sshPort, sshUsername, sshKeyFile);
+			sshClientWrapper.doScpUpload(imagePath, remoteFilePath);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		} finally {
+			try {
+				sshClientWrapper.disconnect();
+			} catch (IOException e) {
+			}
+		}
+		
+		Map<String, String> templateProperties = new HashMap<String, String>();
+		templateProperties.put("image_name", imageName);
+		templateProperties.put("image_path", remoteFilePath);
+		Long imageSize = (long) Math.ceil(((double) new File(imagePath).length()) / (1024d * 1024d));
+		templateProperties.put("image_size", imageSize.toString());
+		OneResponse response = Image.allocate(oneClient, generateImageTemplate(templateProperties), dataStoreId);
+		
+		if (response.isError()) {
+			throw new OCCIException(ErrorType.BAD_REQUEST, response.getErrorMessage());
+		}
+		
+		Image.chmod(oneClient, response.getIntMessage(), 744);
+	}
+	
+	private String generateImageTemplate(Map<String, String> templateProperties) {
+		DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+		DocumentBuilder docBuilder;
+		try {
+			docBuilder = docFactory.newDocumentBuilder();
+			Document doc = docBuilder.newDocument();
+			Element rootElement = doc.createElement("IMAGE");
+			doc.appendChild(rootElement);
+			
+			Element nameElement = doc.createElement("NAME");
+			nameElement.appendChild(doc.createTextNode(templateProperties.get("image_name")));
+			rootElement.appendChild(nameElement);
+			
+			Element pathElement = doc.createElement("PATH");
+			pathElement.appendChild(doc.createTextNode(templateProperties.get("image_path")));
+			rootElement.appendChild(pathElement);
+			
+			Element sizeElement = doc.createElement("SIZE");
+			sizeElement.appendChild(doc.createTextNode(templateProperties.get("image_size")));
+			rootElement.appendChild(sizeElement);
+			
+			Element driverElement = doc.createElement("DRIVER");
+			driverElement.appendChild(doc.createTextNode("qcow2"));
+			rootElement.appendChild(driverElement);
+			
+			TransformerFactory transformerFactory = TransformerFactory.newInstance();
+			Transformer transformer = transformerFactory.newTransformer();
+			
+			DOMSource source = new DOMSource(doc);
+			StringWriter stringWriter = new StringWriter();
+			StreamResult result = new StreamResult(stringWriter);
+			
+			transformer.transform(source, result);
+			
+			return stringWriter.toString();
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@Override
+	public String getImageId(Token token, String imageName) {
+		Client oneClient = clientFactory.createClient(token.getAccessId(), openNebulaEndpoint);
+		ImagePool imagePool = new ImagePool(oneClient); 
+		OneResponse response = imagePool.info();
+		
+		if (response.isError()) {
+			throw new OCCIException(ErrorType.BAD_REQUEST, response.getErrorMessage());
+		}
+		
+		for (Image image : imagePool) {
+			if (image.getName().equals(imageName)) {
+				return image.getId();
+			}
+		}
+		return null;
+	}
 }

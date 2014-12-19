@@ -1,5 +1,6 @@
 package org.fogbowcloud.manager.occi.plugins.voms;
 
+import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
@@ -7,6 +8,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+
+import javax.crypto.Cipher;
 
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.CertificateUtils;
@@ -49,6 +52,14 @@ public class TestIdentityVoms {
 		vomsIdentityPlugin.setGenerateProxyCertificate(generatorProxyCertificate);
 	}
 
+	private static boolean checkUnlimitedStrengthPolicy() {
+		try {
+			return Cipher.getMaxAllowedKeyLength("AES") > 128;
+		} catch (NoSuchAlgorithmException e) {
+			return false;
+		}
+	}
+	
 	@Test
 	public void testReIssueToken() throws Exception {
 		Token token = new Token("accessId", "user", new Date(), new HashMap<String, String>());
@@ -57,6 +68,9 @@ public class TestIdentityVoms {
 
 	@Test
 	public void testCreateToken() throws Exception {
+		if (!checkUnlimitedStrengthPolicy()) {
+			return;
+		}
 		Date before = new Date(System.currentTimeMillis() + TWELVE_HOURS - ONE_MINUTE);
 
 		PEMCredential holder = Utils.getTestUserCredential();
@@ -85,6 +99,9 @@ public class TestIdentityVoms {
 
 	@Test
 	public void testGetToken() throws Exception {
+		if (!checkUnlimitedStrengthPolicy()) {
+			return;
+		}
 		Date before = new Date(System.currentTimeMillis() + TWELVE_HOURS - ONE_MINUTE);
 		PEMCredential holder = Utils.getTestUserCredential();
 
@@ -102,7 +119,10 @@ public class TestIdentityVoms {
 	}
 
 	@Test
-	public void testValidCetificate() throws Exception {
+	public void testValidCertificate() throws Exception {
+		if (!checkUnlimitedStrengthPolicy()) {
+			return;
+		}
 		PEMCredential holder = Utils.getTestUserCredential();
 
 		ProxyCertificate proxy = Utils.getVOMSAA().createVOMSProxy(holder, Fixture.defaultVOFqans);
@@ -112,6 +132,9 @@ public class TestIdentityVoms {
 
 	@Test
 	public void testExpiredCertificate() throws Exception {
+		if (!checkUnlimitedStrengthPolicy()) {
+			return;
+		}
 		PEMCredential holder = Utils.getExpiredCredential();
 
 		ProxyCertificate proxy = Utils.getVOMSAA().createVOMSProxy(holder, Fixture.defaultVOFqans);

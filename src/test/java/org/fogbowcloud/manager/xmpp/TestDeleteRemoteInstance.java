@@ -38,7 +38,7 @@ public class TestDeleteRemoteInstance {
 		Request request = new Request("anyvalue", new Token("anyvalue", OCCITestHelper.USER_MOCK,
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), null, null);
 		request.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
-		request.setMemberId(DefaultDataTestHelper.MANAGER_COMPONENT_URL);
+		request.setMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 
 		managerTestHelper.initializeXMPPManagerComponent(false);
 		ManagerPacketHelper.deleteRemoteInstace(request, managerTestHelper.createPacketSender());
@@ -49,7 +49,7 @@ public class TestDeleteRemoteInstance {
 		Request request = new Request("anyvalue", new Token(WRONG_TOKEN, OCCITestHelper.USER_MOCK,
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), null, null);
 		request.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
-		request.setMemberId(DefaultDataTestHelper.MANAGER_COMPONENT_URL);
+		request.setMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 
 		managerTestHelper.initializeXMPPManagerComponent(false);
 
@@ -65,7 +65,7 @@ public class TestDeleteRemoteInstance {
 		Request request = new Request("anyvalue", new Token(WRONG_TOKEN, OCCITestHelper.USER_MOCK,
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), null, null);
 		request.setInstanceId(INSTANCE_OTHER_USER);
-		request.setMemberId(DefaultDataTestHelper.MANAGER_COMPONENT_URL);
+		request.setMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 
 		managerTestHelper.initializeXMPPManagerComponent(false);
 

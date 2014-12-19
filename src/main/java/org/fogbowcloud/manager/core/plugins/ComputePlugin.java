@@ -12,7 +12,8 @@ import org.restlet.Response;
 
 public interface ComputePlugin {
 
-	public String requestInstance(Token token,List<Category> categories, Map<String, String> xOCCIAtt);
+	public String requestInstance(Token token,List<Category> categories, 
+			Map<String, String> xOCCIAtt, String imageId);
 
 	public List<Instance> getInstances(Token token);
 	
@@ -25,4 +26,9 @@ public interface ComputePlugin {
 	public ResourcesInfo getResourcesInfo(Token token);
 	
 	public void bypass(Request request, Response response);
+
+	public void uploadImage(Token token, String imagePath, String imageName);
+	
+	public String getImageId(Token token, String imageName);
+	
 }

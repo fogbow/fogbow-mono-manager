@@ -7,6 +7,8 @@ import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.opennebula.client.Client;
 import org.opennebula.client.ClientConfigurationException;
 import org.opennebula.client.OneResponse;
+import org.opennebula.client.group.Group;
+import org.opennebula.client.group.GroupPool;
 import org.opennebula.client.template.TemplatePool;
 import org.opennebula.client.user.User;
 import org.opennebula.client.user.UserPool;
@@ -102,5 +104,16 @@ public class OpenNebulaClientFactory {
 		User user = userpool.getById(Integer.parseInt(userId));
 		user.info();		
 		return user;
+	}
+	
+	public Group createGroup(Client oneClient, int groupId) {
+		GroupPool groupPool = new GroupPool(oneClient);
+		groupPool.info();
+		Group group = groupPool.getById(groupId);
+		if (group == null){
+			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
+		}
+		group.info();		
+		return group;
 	}
 }

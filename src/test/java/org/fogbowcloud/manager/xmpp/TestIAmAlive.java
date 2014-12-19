@@ -62,7 +62,7 @@ public class TestIAmAlive {
 					return false;
 				}
 				return packet.getFrom().toBareJID()
-						.equals(DefaultDataTestHelper.MANAGER_COMPONENT_URL);
+						.equals(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 			}
 		}, callback);
 		

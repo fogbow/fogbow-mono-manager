@@ -1,5 +1,6 @@
 package org.fogbowcloud.manager.core.plugins.openstack;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -13,6 +14,8 @@ import org.apache.http.HttpVersion;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.entity.FileEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
@@ -25,6 +28,7 @@ import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
+import org.fogbowcloud.manager.core.plugins.util.HttpPatch;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.OCCIException;
@@ -45,18 +49,37 @@ import org.restlet.data.Status;
 
 public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 
+	private static final String IMAGES_JSON_FIELD = "images";
+	private static final String ID_JSON_FIELD = "id";
+	private static final String BARE = "bare";
+	private static final String CONTAINER_FORMAT = "/container_format";
+	private static final String QCOW2 = "qcow2";
+	private static final String VISIBILITY_JSON_FIELD = "visibility";
+	private static final String PUBLIC = "public";
+	private static final String NAME_JSON_FIELD = "name";
+	private static final String DISK_FORMAT = "/disk_format";
+	private static final String VALUE_JSON_FIELD = "value";
+	private static final String PATH_JSON_FIELD = "path";
+	private static final String REPLACE_VALUE_UPLOAD_IMAGE = "replace";
+	private static final String OP_JSON_FIELD = "op";
+	private static final String V2_IMAGES_FILE = "/file";
+	private static final String V2_IMAGES = "/v2/images";
+	
 	private final String COMPUTE_V2_API_ENDPOINT = "/v2/";
 	private static final String TENANT_ID = "tenantId";
 
+	private String glanceV2APIEndpoint;
 	private String computeV2APIEndpoint;
 	private String networkId;
 	private Map<String, String> fogbowTermToOpenStack = new HashMap<String, String>();
-	private Map<String, String> imagesOpenStackToFogbow = new HashMap<String, String>();
-	DefaultHttpClient client;
+	private DefaultHttpClient client;
 
 	private static final Logger LOGGER = Logger.getLogger(OpenStackNovaV2ComputePlugin.class);
 	
 	public OpenStackNovaV2ComputePlugin(Properties properties){
+		glanceV2APIEndpoint = properties
+				.getProperty(OpenStackConfigurationConstants.COMPUTE_GLANCEV2_URL_KEY);
+		
 		computeV2APIEndpoint = properties
 				.getProperty(OpenStackConfigurationConstants.COMPUTE_NOVAV2_URL_KEY)
 				+ COMPUTE_V2_API_ENDPOINT;
@@ -64,19 +87,6 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		networkId = properties
 				.getProperty(OpenStackConfigurationConstants.COMPUTE_NOVAV2_NETWORK_KEY);
 
-		// images
-		Map<String, String> imageProperties = getImageProperties(properties);
-		if (imageProperties == null || imageProperties.isEmpty()) {
-			throw new OCCIException(ErrorType.BAD_REQUEST,
-					ResponseConstants.IMAGES_NOT_SPECIFIED);
-		}
-
-		for (String imageName : imageProperties.keySet()) {
-			fogbowTermToOpenStack.put(imageName, imageProperties.get(imageName));
-			imagesOpenStackToFogbow.put(imageProperties.get(imageName), imageName);
-			ResourceRepository.getInstance().addImageResource(imageName);
-		}
-		
 		fogbowTermToOpenStack.put(RequestConstants.SMALL_TERM,
 				properties.getProperty(OpenStackConfigurationConstants.COMPUTE_NOVAV2_FLAVOR_SMALL_KEY));
 		fogbowTermToOpenStack.put(RequestConstants.MEDIUM_TERM,
@@ -93,40 +103,28 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		initClient();
 	}
 	
-	private static Map<String, String> getImageProperties(Properties properties) {
-		Map<String, String> imageProperties = new HashMap<String, String>();
-
-		for (Object propName : properties.keySet()) {
-			String propNameStr = (String) propName;
-			if (propNameStr
-					.startsWith(OpenStackConfigurationConstants.COMPUTE_NOVAV2_IMAGE_PREFIX_KEY)) {
-				imageProperties
-						.put(propNameStr
-								.substring(OpenStackConfigurationConstants.COMPUTE_NOVAV2_IMAGE_PREFIX_KEY
-										.length()), properties.getProperty(propNameStr));
-			}
-		}
-		LOGGER.debug("Image properties: " + imageProperties);
-		return imageProperties;
-	}
-	
 	@Override
 	public String requestInstance(Token token, List<Category> categories,
-			Map<String, String> xOCCIAtt) {
+			Map<String, String> xOCCIAtt, String imageRef) {
 
 		LOGGER.debug("Requesting instance with token=" + token + "; categories="
 				+ categories + "; xOCCIAtt=" + xOCCIAtt);
 
+		if (imageRef == null) {
+			throw new OCCIException(ErrorType.BAD_REQUEST,
+					ResponseConstants.IRREGULAR_SYNTAX);
+		}
+		
 		// removing fogbow-request category
 		categories.remove(new Category(RequestConstants.TERM, RequestConstants.SCHEME,
 				RequestConstants.KIND_CLASS));
 
 		String flavorRef = null;
-		String imageRef = null;
 		
 		for (Category category : categories) {
 			String openstackRef = fogbowTermToOpenStack.get(category.getTerm());
-			if (openstackRef == null) {
+			if (openstackRef == null && !category.getScheme().equals(
+					RequestConstants.TEMPLATE_OS_SCHEME)) {
 				throw new OCCIException(ErrorType.BAD_REQUEST,
 						ResponseConstants.CLOUD_NOT_SUPPORT_CATEGORY + category.getTerm());
 			} else if (category.getTerm().equals(RequestConstants.SMALL_TERM)
@@ -138,13 +136,6 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 							ResponseConstants.IRREGULAR_SYNTAX);					
 				}
 				flavorRef = openstackRef;
-			} else if (imagesOpenStackToFogbow.values().contains(category.getTerm())){
-				// There are more than one image category
-				if (imageRef != null) {
-					throw new OCCIException(ErrorType.BAD_REQUEST,
-							ResponseConstants.IRREGULAR_SYNTAX);					
-				}
-				imageRef = openstackRef;
 			}
 		}
 
@@ -157,7 +148,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 			String requestEndpoint = computeV2APIEndpoint + token.getAttributes().get(TENANT_ID)
 					+ "/servers";
 			String jsonResponse = doPostRequest(requestEndpoint, token.getAccessId(), json);
-			return getAttFromJson("id", jsonResponse);
+			return getAttFromJson(ID_JSON_FIELD, jsonResponse);
 		} catch (JSONException e) {
 			LOGGER.error(e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
@@ -187,7 +178,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 			keyname = UUID.randomUUID().toString();
 			JSONObject keypair = new JSONObject();
 			try {
-				keypair.put("name", keyname);
+				keypair.put(NAME_JSON_FIELD, keyname);
 				keypair.put("public_key", publicKey);
 				JSONObject root = new JSONObject();
 				root.put("keypair", keypair);
@@ -213,6 +204,10 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 				.getConnectionManager().getSchemeRegistry()), params);
 	}
 	
+	public void setClient(DefaultHttpClient client) {
+		this.client = client;
+	}
+	
 	private void checkStatusResponse(HttpResponse response, String message) {
 		if (response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
@@ -235,7 +230,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 			String keyName) throws JSONException {
 
 		JSONObject server = new JSONObject();
-		server.put("name", "fogbow-instance-" + UUID.randomUUID().toString());
+		server.put(NAME_JSON_FIELD, "fogbow-instance-" + UUID.randomUUID().toString());
 		server.put("imageRef", imageRef);
 		server.put("flavorRef", flavorRef);
 		if (userdata != null) {
@@ -276,7 +271,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 			JSONArray servers = root.getJSONArray("servers");
 			for (int i = 0; i < servers.length(); i++) {
 				JSONObject currentServer = servers.getJSONObject(i);
-				instances.add(new Instance(currentServer.getString("id")));
+				instances.add(new Instance(currentServer.getString(ID_JSON_FIELD)));
 			}
 		} catch (JSONException e) {
 			LOGGER.warn("There was an exception while getting instances from json.", e);
@@ -298,7 +293,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 	private Instance getInstanceFromJson(String json, Token token) {
 		try {
 			JSONObject rootServer = new JSONObject(json);
-			String id = rootServer.getJSONObject("server").getString("id");
+			String id = rootServer.getJSONObject("server").getString(ID_JSON_FIELD);
 
 			Map<String, String> attributes = new HashMap<String, String>();
 			// CPU Architecture of the instance
@@ -312,7 +307,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 
 			// getting info from flavor
 			String flavorId = rootServer.getJSONObject("server").getJSONObject("flavor")
-					.getString("id");
+					.getString(ID_JSON_FIELD);
 			String requestEndpoint = computeV2APIEndpoint + token.getAttributes().get(TENANT_ID)
 					+ "/flavors/" + flavorId;
 			String jsonFlavor = doGetRequest(requestEndpoint, token.getAccessId());
@@ -323,7 +318,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 					rootFlavor.getJSONObject("flavor").getString("vcpus"));
 
 			attributes.put("occi.compute.hostname",
-					rootServer.getJSONObject("server").getString("name"));
+					rootServer.getJSONObject("server").getString(NAME_JSON_FIELD));
 			attributes.put("occi.core.id", id);
 
 			List<Resource> resources = new ArrayList<Resource>();
@@ -331,17 +326,6 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 			resources.add(ResourceRepository.getInstance().get("os_tpl"));
 			resources.add(ResourceRepository.getInstance().get(getUsedFlavor(flavorId)));
 
-			String imageId = rootServer.getJSONObject("server").getJSONObject("image")
-					.getString("id");
-
-			LOGGER.debug("OpenStack imageId: " + imageId + " is related to fogbow image "
-					+ imagesOpenStackToFogbow.get(imageId));
-
-			// valid image
-			if (imagesOpenStackToFogbow.get(imageId) != null) {
-				resources.add(ResourceRepository.getInstance().get(
-						imagesOpenStackToFogbow.get(imageId)));
-			}
 			LOGGER.debug("Instance resources: " + resources);
 
 			return new Instance(id, resources, attributes, new ArrayList<Instance.Link>());
@@ -504,7 +488,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		HttpResponse response = null;
 		try {
 			HttpDelete request = new HttpDelete(endpoint);
-			request.addHeader(OCCIHeaders.X_AUTH_TOKEN, authToken);			
+			request.addHeader(OCCIHeaders.X_AUTH_TOKEN, authToken);
 			response = client.execute(request);
 		} catch (Exception e) {
 			LOGGER.error(e);
@@ -519,4 +503,115 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		// delete message does not have message
 		checkStatusResponse(response, "");
 	}
+
+	@Override
+	public void uploadImage(Token token, String imagePath, String imageName) {
+		if (imageName == null || imageName.isEmpty()) {
+			throw new OCCIException(ErrorType.BAD_REQUEST, "Image empty.");
+		}
+		
+		JSONObject json = new JSONObject();		
+		try {
+			json.put(NAME_JSON_FIELD, imageName);
+			json.put(VISIBILITY_JSON_FIELD, PUBLIC);
+		} catch (JSONException e) {}
+
+		String responseStrCreateImage = doPostRequest(glanceV2APIEndpoint + V2_IMAGES,
+				token.getAccessId(), json);
+		
+		String id = null;
+		try {
+			JSONObject featuresImage = new JSONObject(responseStrCreateImage);
+			id = featuresImage.getString(ID_JSON_FIELD);
+		} catch (JSONException e) {}
+		
+		try {			
+			ArrayList<JSONObject> nets = new ArrayList<JSONObject>();
+			JSONObject replace_disck_format = new JSONObject();
+			replace_disck_format.put(OP_JSON_FIELD, REPLACE_VALUE_UPLOAD_IMAGE);
+			replace_disck_format.put(PATH_JSON_FIELD, DISK_FORMAT);
+			replace_disck_format.put(VALUE_JSON_FIELD, QCOW2);
+			nets.add(replace_disck_format);
+			JSONObject replace_container_format = new JSONObject();
+			replace_container_format.put(OP_JSON_FIELD, REPLACE_VALUE_UPLOAD_IMAGE);
+			replace_container_format.put(PATH_JSON_FIELD, CONTAINER_FORMAT);
+			replace_container_format.put(VALUE_JSON_FIELD, BARE);
+			nets.add(replace_container_format);
+			
+			doPatchRequest(glanceV2APIEndpoint + V2_IMAGES + "/" + id, token.getAccessId(),
+					nets.toString());
+			
+			doPutRequest(glanceV2APIEndpoint + V2_IMAGES + "/" + id + V2_IMAGES_FILE,
+					token.getAccessId(), imagePath);			
+		} catch (Exception e) {
+			doDeleteRequest(glanceV2APIEndpoint + V2_IMAGES + "/" + id, token.getAccessId());
+			throw new OCCIException(ErrorType.BAD_REQUEST, "Upload failed.");
+		}
+	}
+
+	@Override
+	public String getImageId(Token token, String imageName) {
+		String responseJsonImages = doGetRequest(glanceV2APIEndpoint + V2_IMAGES,
+				token.getAccessId());
+
+		try {
+			JSONArray arrayImages = new JSONObject(responseJsonImages)
+					.getJSONArray(IMAGES_JSON_FIELD);
+			for (int i = 0; i < arrayImages.length(); i++) {
+				if (arrayImages.getJSONObject(i).getString(NAME_JSON_FIELD).equals(imageName)) {
+					return arrayImages.getJSONObject(i).getString(ID_JSON_FIELD);
+				}
+			}
+		} catch (JSONException e) {}
+
+		return null;
+	}
+
+    private String doPatchRequest(String endpoint, String authToken, String json) {
+        HttpResponse response = null;
+        String responseStr = null;
+        try {
+            HttpPatch request = new HttpPatch(endpoint);
+            request.addHeader(OCCIHeaders.CONTENT_TYPE, "application/openstack-images-v2.1-json-patch");
+            request.addHeader(OCCIHeaders.ACCEPT, OCCIHeaders.JSON_CONTENT_TYPE);
+            request.addHeader(OCCIHeaders.X_AUTH_TOKEN, authToken);
+            request.setEntity(new StringEntity(json, HTTP.UTF_8));
+            response = client.execute(request);
+            responseStr = EntityUtils.toString(response.getEntity(), HTTP.UTF_8);
+        } catch (Exception e) {
+            LOGGER.error(e);
+            throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
+        } finally {
+            try {
+                response.getEntity().consumeContent();
+            } catch (Throwable t) {
+                // Do nothing
+            }
+        }
+        checkStatusResponse(response, responseStr);
+        return responseStr;
+    }    
+    
+    private String doPutRequest(String endpoint, String authToken, String path) {
+        HttpResponse response = null;
+        String responseStr = null;
+        try {
+            HttpPut request = new HttpPut(endpoint);
+            request.addHeader(OCCIHeaders.CONTENT_TYPE, "application/octet-stream");
+            request.addHeader(OCCIHeaders.X_AUTH_TOKEN, authToken);                   
+            request.setEntity(new FileEntity(new File(path), "application/octet-stream"));
+            response = client.execute(request);
+        } catch (Exception e) {
+            LOGGER.error(e);
+            throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
+        } finally {
+            try {
+                response.getEntity().consumeContent();
+            } catch (Throwable t) {
+                // Do nothing
+            }
+        }
+        checkStatusResponse(response, responseStr);
+        return responseStr;
+    }
 }

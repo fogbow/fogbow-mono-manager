@@ -9,12 +9,15 @@ public class OpenStackConfigurationConstants {
 	public static final String COMPUTE_OCCI_URL_KEY = "compute_occi_url";
 
 	// schemes
+	public static final String COMPUTE_OCCI_TEMPLATE_SCHEME_KEY = "compute_occi_template_scheme"; 
 	public static final String COMPUTE_OCCI_OS_SCHEME_KEY = "compute_occi_os_scheme";
 	public static final String COMPUTE_OCCI_INSTANCE_SCHEME_KEY = "compute_occi_instance_scheme";
 	public static final String COMPUTE_OCCI_RESOURCE_SCHEME_KEY = "compute_occi_resource_scheme";
 
 	// images prefix
-	public static final String COMPUTE_OCCI_IMAGE_PREFIX = "compute_occi_image_";
+	public static final String COMPUTE_OCCI_IMAGE_PREFIX = "compute_occi_image_";	
+	// template prefix
+	public final static String COMPUTE_OCCI_TEMPLATE_PREFIX = "compute_occi_template_name_";
 
 	// network
 	public static final String COMPUTE_OCCI_NETWORK_KEY = "compute_occi_network_id";
@@ -30,6 +33,7 @@ public class OpenStackConfigurationConstants {
 
 	// url
 	public static final String COMPUTE_NOVAV2_URL_KEY = "compute_novav2_url";
+	public static final String COMPUTE_GLANCEV2_URL_KEY = "compute_glancev2_url";	
 
 	// images prefix
 	public static final String COMPUTE_NOVAV2_IMAGE_PREFIX_KEY = "compute_novav2_image_";

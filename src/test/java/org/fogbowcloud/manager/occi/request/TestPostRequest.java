@@ -28,6 +28,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.restlet.data.MediaType;
 
 public class TestPostRequest {
 
@@ -39,7 +40,8 @@ public class TestPostRequest {
 		this.requestHelper = new OCCITestHelper();
 
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
-		Mockito.when(computePlugin.requestInstance(Mockito.any(Token.class), Mockito.any(List.class), Mockito.any(Map.class)))
+		Mockito.when(computePlugin.requestInstance(Mockito.any(Token.class), 
+				Mockito.any(List.class), Mockito.any(Map.class), Mockito.anyString()))
 				.thenReturn("");
 
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
@@ -61,10 +63,11 @@ public class TestPostRequest {
 				RequestConstants.SCHEME, RequestConstants.KIND_CLASS);
 		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		post.addHeader(OCCIHeaders.ACCEPT, MediaType.TEXT_PLAIN.toString());
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
-		List<String> requestIDs = OCCITestHelper.getRequestIds(response);
+		List<String> requestIDs = OCCITestHelper.getRequestIdsPerLocationHeader(response);
 
 		Assert.assertEquals(1, requestIDs.size());
 		Assert.assertEquals(HttpStatus.SC_CREATED, response.getStatusLine().getStatusCode());
@@ -82,7 +85,7 @@ public class TestPostRequest {
 				RequestAttribute.INSTANCE_COUNT.getValue() + " = 2");
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
-		List<String> requestIDs = OCCITestHelper.getRequestIds(response);
+		List<String> requestIDs = OCCITestHelper.getRequestIdsPerLocationHeader(response);
 
 		Assert.assertEquals(2, requestIDs.size());
 		Assert.assertEquals(HttpStatus.SC_CREATED, response.getStatusLine().getStatusCode());
@@ -101,7 +104,7 @@ public class TestPostRequest {
 				RequestAttribute.INSTANCE_COUNT.getValue() + " = 200");
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
-		List<String> requestIDs = OCCITestHelper.getRequestIds(response);
+		List<String> requestIDs = OCCITestHelper.getRequestIdsPerLocationHeader(response);
 		
 		Assert.assertEquals(200, requestIDs.size());
 		Assert.assertEquals(HttpStatus.SC_CREATED, response.getStatusLine().getStatusCode());
@@ -287,10 +290,25 @@ public class TestPostRequest {
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
 
-		Assert.assertEquals(10, OCCITestHelper.getRequestIds(response).size());
+		Assert.assertEquals(10, OCCITestHelper.getRequestIdsPerLocationHeader(response).size());
 		Assert.assertEquals(HttpStatus.SC_CREATED, response.getStatusLine().getStatusCode());
 	}
 
+	@Test
+	public void testPostRequestInvalidAccept() throws URISyntaxException, HttpException, IOException {
+		HttpPost post = new HttpPost(OCCITestHelper.URI_FOGBOW_REQUEST);
+		Category category = new Category(RequestConstants.TERM,
+				RequestConstants.SCHEME, RequestConstants.KIND_CLASS);
+		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
+		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		post.addHeader(OCCIHeaders.ACCEPT, "invalid");
+		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
+		HttpClient client = new DefaultHttpClient();
+		HttpResponse response = client.execute(post);
+
+		Assert.assertEquals(HttpStatus.SC_NOT_ACCEPTABLE, response.getStatusLine().getStatusCode());
+	}
+	
 	@After
 	public void tearDown() throws Exception {
 		this.requestHelper.stopComponent();

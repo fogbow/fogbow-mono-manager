@@ -4,7 +4,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
+import org.fogbowcloud.manager.core.AsynchronousRequestCallback;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.core.util.ManagerTestHelper;
 import org.fogbowcloud.manager.occi.core.Category;
@@ -49,12 +53,43 @@ public class TestRequestRemoteInstance {
 		Request request = createRequest();
 		Mockito.when(
 				managerTestHelper.getComputePlugin().requestInstance(Mockito.any(Token.class),
-						Mockito.any(List.class), Mockito.any(Map.class))).thenReturn(
+						Mockito.any(List.class), Mockito.any(Map.class), Mockito.anyString())).thenReturn(
 				INSTANCE_DEFAULT);
 
 		String instanceId = ManagerPacketHelper.remoteRequest(request, MANAGER_COMPONENT_URL,
 				managerTestHelper.createPacketSender());
 
+		Assert.assertEquals(INSTANCE_DEFAULT, instanceId);
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Test
+	public void testRequestRemoteInstanceAsynchronously() throws Exception {
+		managerTestHelper.initializeXMPPManagerComponent(false);
+		Request request = createRequest();
+
+		Mockito.when(
+				managerTestHelper.getComputePlugin().requestInstance(Mockito.any(Token.class),
+						Mockito.any(List.class), Mockito.any(Map.class), Mockito.anyString())).thenReturn(
+				INSTANCE_DEFAULT);
+
+		final BlockingQueue<String> bq = new LinkedBlockingQueue<String>();
+		ManagerPacketHelper.asynchronousRemoteRequest(request, 
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, 
+				managerTestHelper.createPacketSender(), new AsynchronousRequestCallback() {
+					
+					@Override
+					public void success(String instanceId) {
+						bq.add(instanceId);
+					}
+					
+					@Override
+					public void error(Throwable t) {
+						// TODO Auto-generated method stub
+						
+					}
+				});
+		String instanceId = bq.poll(5, TimeUnit.SECONDS);
 		Assert.assertEquals(INSTANCE_DEFAULT, instanceId);
 	}
 
@@ -81,7 +116,8 @@ public class TestRequestRemoteInstance {
 				new OCCIException(ErrorType.BAD_REQUEST,
 						ResponseConstants.CLOUD_NOT_SUPPORT_CATEGORY))
 				.when(this.managerTestHelper.getComputePlugin())
-				.requestInstance(Mockito.any(Token.class), Mockito.anyList(), Mockito.anyMap());
+				.requestInstance(Mockito.any(Token.class), Mockito.anyList(), 
+						Mockito.anyMap(), Mockito.anyString());
 
 		String remoteRequest = ManagerPacketHelper.remoteRequest(request, MANAGER_COMPONENT_URL,
 				managerTestHelper.createPacketSender());
@@ -96,7 +132,8 @@ public class TestRequestRemoteInstance {
 		Request request = createRequest();
 		Mockito.doThrow(new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND))
 				.when(this.managerTestHelper.getComputePlugin())
-				.requestInstance(Mockito.any(Token.class), Mockito.anyList(), Mockito.anyMap());
+				.requestInstance(Mockito.any(Token.class), Mockito.anyList(), 
+						Mockito.anyMap(), Mockito.anyString());
 
 		String remoteRequest = ManagerPacketHelper.remoteRequest(request, MANAGER_COMPONENT_URL,
 				managerTestHelper.createPacketSender());
@@ -111,7 +148,8 @@ public class TestRequestRemoteInstance {
 		Request request = createRequest();
 		Mockito.doThrow(new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED))
 				.when(this.managerTestHelper.getComputePlugin())
-				.requestInstance(Mockito.any(Token.class), Mockito.anyList(), Mockito.anyMap());
+				.requestInstance(Mockito.any(Token.class), Mockito.anyList(), 
+						Mockito.anyMap(), Mockito.anyString());
 
 		String remoteRequest = ManagerPacketHelper.remoteRequest(request, MANAGER_COMPONENT_URL,
 				managerTestHelper.createPacketSender());

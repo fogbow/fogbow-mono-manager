@@ -33,10 +33,12 @@ import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
+import org.fogbowcloud.manager.xmpp.AsyncPacketSender;
 import org.fogbowcloud.manager.xmpp.ManagerXmppComponent;
 import org.jamppa.client.XMPPClient;
-import org.jamppa.component.PacketSender;
+import org.jamppa.component.PacketCallback;
 import org.jivesoftware.smack.PacketCollector;
+import org.jivesoftware.smack.PacketListener;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.filter.PacketFilter;
 import org.jivesoftware.smack.filter.PacketIDFilter;
@@ -117,9 +119,9 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		return xmppClient;
 	}
 
-	public PacketSender createPacketSender() throws XMPPException {
+	public AsyncPacketSender createPacketSender() throws XMPPException {
 		final XMPPClient xmppClient = createXMPPClient();
-		PacketSender sender = new PacketSender() {
+		AsyncPacketSender sender = new AsyncPacketSender() {
 			@Override
 			public Packet syncSendPacket(Packet packet) {
 				PacketFilter responseFilter = new PacketIDFilter(packet.getID());
@@ -134,6 +136,24 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 			@Override
 			public void sendPacket(Packet packet) {
 				xmppClient.send(packet);
+			}
+
+			@Override
+			public void addPacketCallback(final Packet request,
+					final PacketCallback packetCallback) {
+				xmppClient.getConnection().addPacketListener(new PacketListener() {
+					
+					@Override
+					public void processPacket(Packet packet) {
+						packetCallback.handle(packet);
+					}
+				}, new PacketFilter() {
+					
+					@Override
+					public boolean accept(Packet reply) {
+						return request.getID().equals(reply.getID());
+					}
+				});
 			}
 		};
 		return sender;
@@ -179,7 +199,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		FederationMemberValidator validator = new DefaultMemberValidator();
 		managerFacade.setValidator(validator);
 
-		managerXmppComponent = Mockito.spy(new ManagerXmppComponent(MANAGER_COMPONENT_URL,
+		managerXmppComponent = Mockito.spy(new ManagerXmppComponent(LOCAL_MANAGER_COMPONENT_URL,
 				MANAGER_COMPONENT_PASS, SERVER_HOST, SERVER_COMPONENT_PORT, managerFacade));
 
 		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class))).thenReturn(
@@ -214,7 +234,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		managerFacade.setFederationIdentityPlugin(identityPlugin);
 		managerFacade.setValidator(validator);
 
-		managerXmppComponent = Mockito.spy(new ManagerXmppComponent(MANAGER_COMPONENT_URL,
+		managerXmppComponent = Mockito.spy(new ManagerXmppComponent(LOCAL_MANAGER_COMPONENT_URL,
 				MANAGER_COMPONENT_PASS, SERVER_HOST, SERVER_COMPONENT_PORT, managerFacade));
 
 		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class))).thenReturn(
@@ -297,7 +317,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 	public ManagerController createDefaultManagerController() {
 		Properties properties = new Properties();
 		properties.put(ConfigurationConstants.XMPP_JID_KEY,
-				DefaultDataTestHelper.MANAGER_COMPONENT_URL);
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		properties.put(ConfigurationConstants.FEDERATION_USER_NAME_KEY,
 				DefaultDataTestHelper.USER_NAME);
 		properties.put(ConfigurationConstants.FEDERATION_USER_PASS_KEY,
@@ -320,11 +340,11 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		computePlugin = Mockito.mock(ComputePlugin.class);
 		Mockito.when(
 				computePlugin.requestInstance(Mockito.any(Token.class), Mockito.any(List.class),
-						Mockito.any(Map.class))).thenThrow(
+						Mockito.any(Map.class), Mockito.anyString())).thenThrow(
 				new OCCIException(ErrorType.QUOTA_EXCEEDED,
 						ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES));
 		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class))).thenReturn(
-				new ResourcesInfo(DefaultDataTestHelper.MANAGER_COMPONENT_URL, 
+				new ResourcesInfo(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, 
 						"", "", "", "", new LinkedList<Flavor>(), null));
 		
 		// mocking identity

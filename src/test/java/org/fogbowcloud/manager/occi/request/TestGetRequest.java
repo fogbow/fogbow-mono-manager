@@ -33,6 +33,7 @@ import org.fogbowcloud.manager.occi.util.OCCITestHelper;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -51,7 +52,7 @@ public class TestGetRequest {
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		Mockito.when(
 				computePlugin.requestInstance(Mockito.any(Token.class), Mockito.any(List.class),
-						Mockito.any(Map.class))).thenReturn(instanceLocation);
+						Mockito.any(Map.class), Mockito.anyString())).thenReturn(instanceLocation);
 		
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.getToken(OCCITestHelper.ACCESS_TOKEN))
@@ -137,7 +138,7 @@ public class TestGetRequest {
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(get);
 		
-		Assert.assertEquals(HttpStatus.SC_METHOD_NOT_ALLOWED, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HttpStatus.SC_NOT_ACCEPTABLE, response.getStatusLine().getStatusCode());
 	}
 
 	@Test
@@ -290,9 +291,10 @@ public class TestGetRequest {
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
 		// Get
-		HttpGet get = new HttpGet(OCCITestHelper.getRequestIds(response).get(0));
+		HttpGet get = new HttpGet(OCCITestHelper.getRequestIdsPerLocationHeader(response).get(0));
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		client = new DefaultHttpClient();
 		response = client.execute(get);
 
 		Assert.assertTrue(response.getFirstHeader(OCCIHeaders.CONTENT_TYPE).getValue()
@@ -316,13 +318,14 @@ public class TestGetRequest {
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
 		// Get
-		HttpGet get = new HttpGet(OCCITestHelper.getRequestIds(response).get(0));
+		HttpGet get = new HttpGet(OCCITestHelper.getRequestIdsPerLocationHeader(response).get(0));
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		get.addHeader(OCCIHeaders.ACCEPT, "invalid-accept");
 		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		client = new DefaultHttpClient();
 		response = client.execute(get);
 
-		Assert.assertEquals(HttpStatus.SC_METHOD_NOT_ALLOWED, response.getStatusLine().getStatusCode());
+		Assert.assertEquals(HttpStatus.SC_NOT_ACCEPTABLE, response.getStatusLine().getStatusCode());
 	}
 	
 	@Test
@@ -352,9 +355,10 @@ public class TestGetRequest {
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
 		// Get
-		HttpGet get = new HttpGet(OCCITestHelper.getRequestIds(response).get(0));
+		HttpGet get = new HttpGet(OCCITestHelper.getRequestIdsPerLocationHeader(response).get(0));
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		client = new DefaultHttpClient();
 		response = client.execute(get);
 
 		String requestDetails = EntityUtils.toString(response.getEntity(),
@@ -364,6 +368,111 @@ public class TestGetRequest {
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 
+	@Ignore
+	@Test
+	public void testGetResquestFilterWithAttribute() throws URISyntaxException, HttpException,
+			IOException {
+		// Post
+		HttpPost post = new HttpPost(OCCITestHelper.URI_FOGBOW_REQUEST);
+		Category category = new Category(RequestConstants.TERM, RequestConstants.SCHEME,
+				RequestConstants.KIND_CLASS);
+		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
+		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
+		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, RequestAttribute.INSTANCE_COUNT.getValue()
+				+ " = 2");
+				
+		HttpClient client = new DefaultHttpClient();
+		HttpResponse response = client.execute(post);
+		// Get		
+		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_REQUEST);
+		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
+		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		response = client.execute(get);
+
+		Assert.assertEquals(2, OCCITestHelper.getRequestIds(response).size());
+		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+		
+		// Post
+		HttpPost postTwo = new HttpPost(OCCITestHelper.URI_FOGBOW_REQUEST);
+		category = new Category(RequestConstants.TERM, RequestConstants.SCHEME,
+				RequestConstants.KIND_CLASS);
+		postTwo.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
+		postTwo.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		postTwo.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
+		postTwo.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, RequestAttribute.INSTANCE_COUNT.getValue()
+				+ " = 2");
+		postTwo.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, RequestAttribute.TYPE.getValue()
+				+ " = persistent");
+				
+		client = new DefaultHttpClient();
+		response = client.execute(postTwo);
+		
+		// Get
+		get = new HttpGet(OCCITestHelper.URI_FOGBOW_REQUEST);
+		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
+		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		get.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, "org.fogbowcloud.request.type=\"one-time\"");
+		client = new DefaultHttpClient();
+		response = client.execute(get);
+
+		Assert.assertEquals(2, OCCITestHelper.getRequestIds(response).size());
+		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());	
+		
+		// Get 
+		get = new HttpGet(OCCITestHelper.URI_FOGBOW_REQUEST);
+		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
+		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		get.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, "org.fogbowcloud.request.type=\"notfound\"");
+		client = new DefaultHttpClient();
+		response = client.execute(get);
+		
+		Assert.assertEquals(0, OCCITestHelper.getRequestIds(response).size());
+		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());	
+	}
+	
+	@Test
+	public void testGetResquestFilterWithCategory() throws URISyntaxException, HttpException,
+			IOException {
+		// Post
+		HttpPost post = new HttpPost(OCCITestHelper.URI_FOGBOW_REQUEST);
+		Category category = new Category(RequestConstants.TERM, RequestConstants.SCHEME,
+			RequestConstants.KIND_CLASS);
+		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
+		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
+		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, RequestAttribute.INSTANCE_COUNT.getValue()
+				+ " = 2");
+		Category categoryFilter = new Category("fogbow_small", 
+				"http://schemas.fogbowcloud.org/template/resource#", "mixin");		
+		post.addHeader(OCCIHeaders.CATEGORY, categoryFilter.toHeader());
+				
+		HttpClient client = new DefaultHttpClient();
+		HttpResponse response = client.execute(post);
+		// Get		
+		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_REQUEST);
+		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
+		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		get.addHeader(OCCIHeaders.CATEGORY,
+				"fogbow_small; scheme=\"http://schemas.fogbowcloud.org/template/resource#\"; class=\"mixin\";");
+		
+		client = new DefaultHttpClient();
+		response = client.execute(get);
+		
+		Assert.assertEquals(2, OCCITestHelper.getRequestIds(response).size());
+		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+		
+		get = new HttpGet(OCCITestHelper.URI_FOGBOW_REQUEST);
+		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
+		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		get.addHeader(OCCIHeaders.CATEGORY,
+				"wrong; scheme=\"http://schemas.fogbowcloud.org/template/resource#\"; class=\"mixin\";");
+		
+		response = client.execute(get);
+		
+		Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusLine().getStatusCode());
+	}	
+	
 	@After
 	public void tearDown() throws Exception {
 		this.requestHelper.stopComponent();

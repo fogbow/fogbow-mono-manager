@@ -2,18 +2,21 @@ package org.fogbowcloud.manager.xmpp;
 
 import java.io.IOException;
 import java.security.cert.CertificateException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.model.FederationMember;
+import org.jamppa.component.PacketCallback;
 import org.jamppa.component.XMPPComponent;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.Packet;
 
-public class ManagerXmppComponent extends XMPPComponent {
+public class ManagerXmppComponent extends XMPPComponent implements AsyncPacketSender {
 
 	public static final String WHOISALIVE_NAMESPACE = "http://fogbowcloud.org/rendezvous/whoisalive";
 	public static final String IAMALIVE_NAMESPACE = "http://fogbowcloud.org/rendezvous/iamalive";
@@ -27,6 +30,8 @@ public class ManagerXmppComponent extends XMPPComponent {
 	private final Timer timer = new Timer();
 	private String rendezvousAddress;
 	private int maxWhoIsAliveManagerCount = 100;
+	
+	private Map<String, PacketCallback> packetCallbacks = new HashMap<String, PacketCallback>();
 
 	public ManagerXmppComponent(String jid, String password, String server,
 			int port, ManagerController managerFacade) {
@@ -44,7 +49,7 @@ public class ManagerXmppComponent extends XMPPComponent {
 		scheduleIamAlive();
 	}
 
-	public void iAmAlive() throws CertificateException, IOException {
+	public void iAmAlive() throws CertificateException, Exception {
 		ManagerPacketHelper.iAmAlive(managerFacade.getResourcesInfo(),
 				rendezvousAddress, managerFacade.getProperties(), this);
 	}
@@ -57,16 +62,29 @@ public class ManagerXmppComponent extends XMPPComponent {
 
 	@Override
 	protected void handleIQError(IQ iq) {
-		super.handleIQResult(iq);
+		handleIQResult(iq);
 	}
 	
-	public void whoIsalive() throws CertificateException {
+	@Override
+	protected void handleIQResult(IQ iq) {
+		String packetCallbackId = iq.getID() + "@"
+                + iq.getFrom().toBareJID();
+		PacketCallback callback = packetCallbacks.get(packetCallbackId);
+        if (callback != null) {
+            callback.handle(iq);
+            packetCallbacks.remove(packetCallbackId);
+            return;
+        }
+        super.handleIQResult(iq);
+	}
+	
+	public void whoIsalive() throws Exception {
 		managerFacade.updateMembers(ManagerPacketHelper.whoIsalive(
 				rendezvousAddress, this, maxWhoIsAliveManagerCount));
 	}
 	
 	public List<FederationMember> whoIsalive(String after)
-			throws CertificateException {
+			throws Exception {
 		List<FederationMember> whoIsaliveResponse = ManagerPacketHelper
 				.whoIsalive(rendezvousAddress, this, maxWhoIsAliveManagerCount,
 						after);
@@ -81,12 +99,12 @@ public class ManagerXmppComponent extends XMPPComponent {
 				try {
 					iAmAlive();
 				} catch (Exception e) {
-					LOGGER.error("Failure during IAmAlive()", e);
+					LOGGER.error("Failure during IAmAlive().");
 				}
 				try {
 					whoIsalive();
 				} catch (Exception e) {
-					LOGGER.error("Failure during whoIsAlive()", e);
+					LOGGER.error("Failure during whoIsAlive()."); 
 				}
 			}
 		}, 0, PERIOD);
@@ -98,6 +116,12 @@ public class ManagerXmppComponent extends XMPPComponent {
 
 	public ManagerController getManagerFacade() {
 		return managerFacade;
+	}
+	
+	@Override
+	public void addPacketCallback(Packet packet, PacketCallback packetCallback) {
+		packetCallbacks.put(packet.getID() + "@" + packet.getTo().toBareJID(),
+				packetCallback);
 	}
 
 }

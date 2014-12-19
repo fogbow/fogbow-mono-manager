@@ -35,6 +35,7 @@ import org.mockito.Mockito;
 import org.opennebula.client.Client;
 import org.opennebula.client.ClientConfigurationException;
 import org.opennebula.client.OneResponse;
+import org.opennebula.client.group.Group;
 import org.opennebula.client.user.User;
 import org.opennebula.client.vm.VirtualMachine;
 import org.opennebula.client.vm.VirtualMachinePool;
@@ -80,9 +81,11 @@ public class TestComputeOpenNebula {
 		
 		DEFAULT_TEMPLATE = PluginHelper
 				.getContentFile("src/test/resources/opennebula/default.template")
-				.replaceAll("#NET_ID#", "" + NETWORK_ID).replaceAll("#IMAGE_ID#", IMAGE1_ID)
+				.replaceAll("#NET_ID#", "" + NETWORK_ID)
+				.replaceAll("#IMAGE_ID#", IMAGE1_ID)
 				.replaceAll("#USERDATA#",
-						Base64.encodeBase64URLSafeString("userdata".getBytes(Charsets.UTF_8)))
+						OpenNebulaComputePlugin.normalizeUserdata(Base64
+								.encodeBase64URLSafeString("userdata".getBytes(Charsets.UTF_8))))
 				.replaceAll("\n", "").replaceAll(" ", "");
 	
 		SMALL_TEMPLATE = DEFAULT_TEMPLATE.replace("#MEM#", "128").replace("#CPU#", "1.0");
@@ -116,11 +119,9 @@ public class TestComputeOpenNebula {
 		// requesting an instance
 		List<Category> categories = new ArrayList<Category>();
 		categories.add(new Category(RequestConstants.SMALL_TERM,
-				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
-		categories.add(new Category(IMAGE1_NAME,
 				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 		Assert.assertEquals(INSTANCE_ID, computeOpenNebula.requestInstance(defaultToken,
-				categories, xOCCIAtt));
+				categories, xOCCIAtt, IMAGE1_ID));
 	}
 	
 	@Test(expected=OCCIException.class)
@@ -134,7 +135,7 @@ public class TestComputeOpenNebula {
 		List<Category> categories = new ArrayList<Category>();
 		categories.add(new Category(RequestConstants.SMALL_TERM,
 				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
-		computeOpenNebula.requestInstance(defaultToken,	categories, xOCCIAtt);
+		computeOpenNebula.requestInstance(defaultToken,	categories, xOCCIAtt, null);
 	}
 	
 	@Test(expected=OCCIException.class)
@@ -146,9 +147,7 @@ public class TestComputeOpenNebula {
 		
 		// requesting an instance
 		List<Category> categories = new ArrayList<Category>();
-		categories.add(new Category(IMAGE1_NAME,
-				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
-		computeOpenNebula.requestInstance(defaultToken, categories, xOCCIAtt);
+		computeOpenNebula.requestInstance(defaultToken, categories, xOCCIAtt, IMAGE1_NAME);
 	}
 		
 	@Test
@@ -174,10 +173,8 @@ public class TestComputeOpenNebula {
 		List<Category> categories = new ArrayList<Category>();
 		categories.add(new Category(RequestConstants.SMALL_TERM,
 				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
-		categories.add(new Category(IMAGE1_NAME,
-				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 		Assert.assertEquals(INSTANCE_ID, computeOpenNebula.requestInstance(defaultToken,
-				categories, xOCCIAtt));
+				categories, xOCCIAtt, IMAGE1_ID));
 		
 		// removing the instance
 		computeOpenNebula.removeInstance(defaultToken, INSTANCE_ID);
@@ -257,10 +254,8 @@ public class TestComputeOpenNebula {
 		List<Category> categories = new ArrayList<Category>();
 		categories.add(new Category(RequestConstants.SMALL_TERM,
 				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
-		categories.add(new Category(IMAGE1_NAME, RequestConstants.TEMPLATE_OS_SCHEME,
-				RequestConstants.MIXIN_CLASS));
 		Assert.assertEquals(INSTANCE_ID,
-				computeOpenNebula.requestInstance(defaultToken, categories, xOCCIAtt));
+				computeOpenNebula.requestInstance(defaultToken, categories, xOCCIAtt, IMAGE1_ID));
 
 		// removing instances
 		computeOpenNebula.removeInstances(defaultToken);
@@ -298,10 +293,8 @@ public class TestComputeOpenNebula {
 		List<Category> categories = new ArrayList<Category>();
 		categories.add(new Category(RequestConstants.SMALL_TERM,
 				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
-		categories.add(new Category(IMAGE1_NAME,
-				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 		Assert.assertEquals(INSTANCE_ID, computeOpenNebula.requestInstance(defaultToken,
-				categories, xOCCIAtt));
+				categories, xOCCIAtt, IMAGE1_ID));
 		
 		// getting specific instance
 		Instance instance = computeOpenNebula.getInstance(defaultToken, INSTANCE_ID);
@@ -317,7 +310,6 @@ public class TestComputeOpenNebula {
 		List<Resource> resources = new ArrayList<Resource>();
 		resources.add(ResourceRepository.getInstance().get("compute"));
 		resources.add(ResourceRepository.getInstance().get("os_tpl"));
-		resources.add(ResourceRepository.getInstance().get(IMAGE1_NAME));
 		resources.add(ResourceRepository.getInstance().get(RequestConstants.SMALL_TERM));
 		
 		for (Resource resource : resources) {
@@ -354,10 +346,8 @@ public class TestComputeOpenNebula {
 		List<Category> categories = new ArrayList<Category>();
 		categories.add(new Category(RequestConstants.SMALL_TERM,
 				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
-		categories.add(new Category(IMAGE1_NAME,
-				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 		Assert.assertEquals(INSTANCE_ID, computeOpenNebula.requestInstance(defaultToken,
-				categories, xOCCIAtt));
+				categories, xOCCIAtt, IMAGE1_ID));
 		
 		// getting specific instance
 		Instance instance = computeOpenNebula.getInstance(defaultToken, INSTANCE_ID);
@@ -373,7 +363,6 @@ public class TestComputeOpenNebula {
 		List<Resource> resources = new ArrayList<Resource>();
 		resources.add(ResourceRepository.getInstance().get("compute"));
 		resources.add(ResourceRepository.getInstance().get("os_tpl"));
-		resources.add(ResourceRepository.getInstance().get(IMAGE1_NAME));
 		resources.add(ResourceRepository.getInstance().get(RequestConstants.SMALL_TERM));
 		
 		for (Resource resource : resources) {
@@ -453,10 +442,8 @@ public class TestComputeOpenNebula {
 		List<Category> categories = new ArrayList<Category>();
 		categories.add(new Category(RequestConstants.SMALL_TERM,
 				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
-		categories.add(new Category(IMAGE1_NAME,
-				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 		Assert.assertEquals(INSTANCE_ID, computeOpenNebula.requestInstance(defaultToken,
-				categories, xOCCIAtt));
+				categories, xOCCIAtt, IMAGE1_ID));
 
 		// getting all instances
 		List<Instance> instances = computeOpenNebula.getInstances(defaultToken);
@@ -493,16 +480,19 @@ public class TestComputeOpenNebula {
 		// mocking opennebula structures
 		Client oneClient = Mockito.mock(Client.class);
 		User user = Mockito.mock(User.class);
-		Mockito.when(user.xpath("VM_QUOTA/VM/CPU")).thenReturn("10");
-		Mockito.when(user.xpath("VM_QUOTA/VM/CPU_USED")).thenReturn("0");
-		Mockito.when(user.xpath("VM_QUOTA/VM/MEMORY")).thenReturn("5120");
-		Mockito.when(user.xpath("VM_QUOTA/VM/MEMORY_USED")).thenReturn("0");
+		Group group = Mockito.mock(Group.class);
+		Mockito.when(user.xpath("GROUPS/ID")).thenReturn("5");
+		Mockito.when(group.xpath("VM_QUOTA/VM/CPU")).thenReturn("10");
+		Mockito.when(group.xpath("VM_QUOTA/VM/CPU_USED")).thenReturn("0");
+		Mockito.when(group.xpath("VM_QUOTA/VM/MEMORY")).thenReturn("5120");
+		Mockito.when(group.xpath("VM_QUOTA/VM/MEMORY_USED")).thenReturn("0");
 
 		// mocking clientFactory
 		String accessId = PluginHelper.USERNAME + ":" + PluginHelper.USER_PASS;
 		OpenNebulaClientFactory clientFactory = Mockito.mock(OpenNebulaClientFactory.class);
 		Mockito.when(clientFactory.createClient(accessId, OPEN_NEBULA_URL)).thenReturn(oneClient);
 		Mockito.when(clientFactory.createUser(oneClient, PluginHelper.USERNAME)).thenReturn(user);
+		Mockito.when(clientFactory.createGroup(Mockito.any(Client.class), Mockito.anyInt())).thenReturn(group);
 
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
 
@@ -526,23 +516,30 @@ public class TestComputeOpenNebula {
 	
 	@Test
 	public void testGetResourcesInfoWithValueDefaultOfQuota() {
+		String vmsUsed = "8";
 		String cpuUsed = "8";
 		String memUsed = "1024";
 		// mocking opennebula structures
 		Client oneClient = Mockito.mock(Client.class);
 		User user = Mockito.mock(User.class);
-		Mockito.when(user.xpath("VM_QUOTA/VM/CPU")).thenReturn(
+		Group group = Mockito.mock(Group.class);
+		Mockito.when(user.xpath("GROUPS/ID")).thenReturn("5");
+		Mockito.when(group.xpath("VM_QUOTA/VM/CPU")).thenReturn(
 				String.valueOf(OpenNebulaComputePlugin.VALUE_DEFAULT_QUOTA_OPENNEBULA));
-		Mockito.when(user.xpath("VM_QUOTA/VM/CPU_USED")).thenReturn(cpuUsed);
-		Mockito.when(user.xpath("VM_QUOTA/VM/MEMORY")).thenReturn(
+		Mockito.when(group.xpath("VM_QUOTA/VM/CPU_USED")).thenReturn(cpuUsed);
+		Mockito.when(group.xpath("VM_QUOTA/VM/VMS")).thenReturn(
 				String.valueOf(OpenNebulaComputePlugin.VALUE_DEFAULT_QUOTA_OPENNEBULA));
-		Mockito.when(user.xpath("VM_QUOTA/VM/MEMORY_USED")).thenReturn(memUsed);
+		Mockito.when(group.xpath("VM_QUOTA/VM/VMS_USED")).thenReturn(vmsUsed);			
+		Mockito.when(group.xpath("VM_QUOTA/VM/MEMORY")).thenReturn(
+				String.valueOf(OpenNebulaComputePlugin.VALUE_DEFAULT_QUOTA_OPENNEBULA));
+		Mockito.when(group.xpath("VM_QUOTA/VM/MEMORY_USED")).thenReturn(memUsed);
 
 		// mocking clientFactory
 		String accessId = PluginHelper.USERNAME + ":" + PluginHelper.USER_PASS;
 		OpenNebulaClientFactory clientFactory = Mockito.mock(OpenNebulaClientFactory.class);
 		Mockito.when(clientFactory.createClient(accessId, OPEN_NEBULA_URL)).thenReturn(oneClient);
 		Mockito.when(clientFactory.createUser(oneClient, PluginHelper.USERNAME)).thenReturn(user);
+		Mockito.when(clientFactory.createGroup(Mockito.any(Client.class), Mockito.anyInt())).thenReturn(group);
 
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
 
@@ -552,6 +549,7 @@ public class TestComputeOpenNebula {
 		ResourcesInfo resourcesInfo = computeOpenNebula.getResourcesInfo(token);
 
 		// checking resourcesInfo
+		int instanceIdle = OpenNebulaComputePlugin.VALUE_DEFAULT_VMS - Integer.parseInt(vmsUsed);
 		double cpuIdle = OpenNebulaComputePlugin.VALUE_DEFAULT_CPU - Double.parseDouble(cpuUsed);
 		String cpuIdleStr = String.valueOf(cpuIdle);
 		Assert.assertEquals(cpuIdleStr, resourcesInfo.getCpuIdle());
@@ -565,38 +563,45 @@ public class TestComputeOpenNebula {
 		String smallCpu = "1.0";
 		String smallMem = "128.0";
 		flavors.add(new Flavor(RequestConstants.SMALL_TERM, smallCpu, smallMem, calculateCapacity(
-				cpuIdle, memIdle, smallCpu, smallMem)));
+				cpuIdle, memIdle, smallCpu, smallMem, instanceIdle)));
 		String mediumCpu = "2.0";
 		String mediumMem = "256.0";
 		flavors.add(new Flavor(RequestConstants.MEDIUM_TERM, mediumCpu, mediumMem,
-				calculateCapacity(cpuIdle, memIdle, mediumCpu, mediumMem)));
+				calculateCapacity(cpuIdle, memIdle, mediumCpu, mediumMem, instanceIdle)));
 		String largeCpu = "4.0";
 		String largeMem = "512.0";
 		flavors.add(new Flavor(RequestConstants.LARGE_TERM, largeCpu, largeMem, calculateCapacity(
-				cpuIdle, memIdle, largeCpu, largeMem)));
+				cpuIdle, memIdle, largeCpu, largeMem, instanceIdle)));
 
 		Assert.assertEquals(flavors, resourcesInfo.getFlavors());
 	}
 	
 	@Test
 	public void testGetResourcesInfoWithValueUnlimitedOfQuota() {
+		String vmsUsed = "8";
 		String cpuUsed = "8";
 		String memUsed = "1024";
 		// mocking opennebula structures
 		Client oneClient = Mockito.mock(Client.class);
 		User user = Mockito.mock(User.class);
-		Mockito.when(user.xpath("VM_QUOTA/VM/CPU")).thenReturn(
+		Group group = Mockito.mock(Group.class);
+		Mockito.when(user.xpath("GROUPS/ID")).thenReturn("5");
+		Mockito.when(group.xpath("VM_QUOTA/VM/CPU")).thenReturn(
 				String.valueOf(OpenNebulaComputePlugin.VALUE_UNLIMITED_QUOTA_OPENNEBULA));
-		Mockito.when(user.xpath("VM_QUOTA/VM/CPU_USED")).thenReturn(cpuUsed);
-		Mockito.when(user.xpath("VM_QUOTA/VM/MEMORY")).thenReturn(
+		Mockito.when(group.xpath("VM_QUOTA/VM/CPU_USED")).thenReturn(cpuUsed);
+		Mockito.when(group.xpath("VM_QUOTA/VM/VMS")).thenReturn(
 				String.valueOf(OpenNebulaComputePlugin.VALUE_UNLIMITED_QUOTA_OPENNEBULA));
-		Mockito.when(user.xpath("VM_QUOTA/VM/MEMORY_USED")).thenReturn(memUsed);
+		Mockito.when(group.xpath("VM_QUOTA/VM/VMS_USED")).thenReturn(vmsUsed);		
+		Mockito.when(group.xpath("VM_QUOTA/VM/MEMORY")).thenReturn(
+				String.valueOf(OpenNebulaComputePlugin.VALUE_UNLIMITED_QUOTA_OPENNEBULA));
+		Mockito.when(group.xpath("VM_QUOTA/VM/MEMORY_USED")).thenReturn(memUsed);
 
 		// mocking clientFactory
 		String accessId = PluginHelper.USERNAME + ":" + PluginHelper.USER_PASS;
 		OpenNebulaClientFactory clientFactory = Mockito.mock(OpenNebulaClientFactory.class);
 		Mockito.when(clientFactory.createClient(accessId, OPEN_NEBULA_URL)).thenReturn(oneClient);
 		Mockito.when(clientFactory.createUser(oneClient, PluginHelper.USERNAME)).thenReturn(user);
+		Mockito.when(clientFactory.createGroup(Mockito.any(Client.class), Mockito.anyInt())).thenReturn(group);
 
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
 
@@ -606,6 +611,7 @@ public class TestComputeOpenNebula {
 		ResourcesInfo resourcesInfo = computeOpenNebula.getResourcesInfo(token);
 
 		// checking resourcesInfo
+		int instanceIdle = Integer.MAX_VALUE - Integer.parseInt(vmsUsed);
 		double cpuIdle = Integer.MAX_VALUE - Double.parseDouble(cpuUsed);
 		String cpuIdleStr = String.valueOf(cpuIdle);
 		Assert.assertEquals(cpuIdleStr, resourcesInfo.getCpuIdle());
@@ -619,15 +625,15 @@ public class TestComputeOpenNebula {
 		String smallCpu = "1.0";
 		String smallMem = "128.0";
 		flavors.add(new Flavor(RequestConstants.SMALL_TERM, smallCpu, smallMem, calculateCapacity(
-				cpuIdle, memIdle, smallCpu, smallMem)));
+				cpuIdle, memIdle, smallCpu, smallMem, instanceIdle)));
 		String mediumCpu = "2.0";
 		String mediumMem = "256.0";
 		flavors.add(new Flavor(RequestConstants.MEDIUM_TERM, mediumCpu, mediumMem,
-				calculateCapacity(cpuIdle, memIdle, mediumCpu, mediumMem)));
+				calculateCapacity(cpuIdle, memIdle, mediumCpu, mediumMem, instanceIdle)));
 		String largeCpu = "4.0";
 		String largeMem = "512.0";
 		flavors.add(new Flavor(RequestConstants.LARGE_TERM, largeCpu, largeMem, calculateCapacity(
-				cpuIdle, memIdle, largeCpu, largeMem)));
+				cpuIdle, memIdle, largeCpu, largeMem, instanceIdle)));
 
 		Assert.assertEquals(flavors, resourcesInfo.getFlavors());
 	}			
@@ -636,8 +642,9 @@ public class TestComputeOpenNebula {
 		return String.valueOf((double)Integer.parseInt(intStr));
 	}
 	
-	private int calculateCapacity(double cpuIdle, double memIdle, String cpuFlavor, String memFlavor) {
-		return (int) (Math.min((cpuIdle) / Double.parseDouble(cpuFlavor), memIdle / Double.parseDouble(memFlavor)));
+	private int calculateCapacity(double cpuIdle, double memIdle, String cpuFlavor, String memFlavor, int instancesIdle) {
+		return Math.min((int) Math.min(cpuIdle / Double.parseDouble(cpuFlavor), memIdle / Double.parseDouble(memFlavor)), (int) instancesIdle);
+//		return (int) (Math.min((cpuIdle) / Double.parseDouble(cpuFlavor), memIdle / Double.parseDouble(memFlavor)));
 	}
 	
 	@Test
@@ -645,16 +652,19 @@ public class TestComputeOpenNebula {
 		// mocking opennebula structures
 		Client oneClient = Mockito.mock(Client.class);
 		User user = Mockito.mock(User.class);
-		Mockito.when(user.xpath("VM_QUOTA/VM/CPU")).thenReturn("10");
-		Mockito.when(user.xpath("VM_QUOTA/VM/CPU_USED")).thenReturn("2");
-		Mockito.when(user.xpath("VM_QUOTA/VM/MEMORY")).thenReturn("5120");
-		Mockito.when(user.xpath("VM_QUOTA/VM/MEMORY_USED")).thenReturn("256");
+		Group group = Mockito.mock(Group.class);
+		Mockito.when(user.xpath("GROUPS/ID")).thenReturn("5");
+		Mockito.when(group.xpath("VM_QUOTA/VM/CPU")).thenReturn("10");
+		Mockito.when(group.xpath("VM_QUOTA/VM/CPU_USED")).thenReturn("2");
+		Mockito.when(group.xpath("VM_QUOTA/VM/MEMORY")).thenReturn("5120");
+		Mockito.when(group.xpath("VM_QUOTA/VM/MEMORY_USED")).thenReturn("256");
 
 		// mocking clientFactory
 		String accessId = PluginHelper.USERNAME + ":" + PluginHelper.USER_PASS;
 		OpenNebulaClientFactory clientFactory = Mockito.mock(OpenNebulaClientFactory.class);
 		Mockito.when(clientFactory.createClient(accessId, OPEN_NEBULA_URL)).thenReturn(oneClient);
 		Mockito.when(clientFactory.createUser(oneClient, PluginHelper.USERNAME)).thenReturn(user);
+		Mockito.when(clientFactory.createGroup(Mockito.any(Client.class), Mockito.anyInt())).thenReturn(group);
 
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
 
@@ -681,16 +691,19 @@ public class TestComputeOpenNebula {
 		// mocking opennebula structures
 		Client oneClient = Mockito.mock(Client.class);
 		User user = Mockito.mock(User.class);
-		Mockito.when(user.xpath("VM_QUOTA/VM/CPU")).thenReturn("");
-		Mockito.when(user.xpath("VM_QUOTA/VM/CPU_USED")).thenReturn("");
-		Mockito.when(user.xpath("VM_QUOTA/VM/MEMORY")).thenReturn("");
-		Mockito.when(user.xpath("VM_QUOTA/VM/MEMORY_USED")).thenReturn("");
+		Group group = Mockito.mock(Group.class);
+		Mockito.when(user.xpath("GROUPS/ID")).thenReturn("5");
+		Mockito.when(group.xpath("VM_QUOTA/VM/CPU")).thenReturn("");
+		Mockito.when(group.xpath("VM_QUOTA/VM/CPU_USED")).thenReturn("");
+		Mockito.when(group.xpath("VM_QUOTA/VM/MEMORY")).thenReturn("");
+		Mockito.when(group.xpath("VM_QUOTA/VM/MEMORY_USED")).thenReturn("");
 
 		// mocking clientFactory
 		String accessId = PluginHelper.USERNAME + ":" + PluginHelper.USER_PASS;
 		OpenNebulaClientFactory clientFactory = Mockito.mock(OpenNebulaClientFactory.class);
 		Mockito.when(clientFactory.createClient(accessId, OPEN_NEBULA_URL)).thenReturn(oneClient);
 		Mockito.when(clientFactory.createUser(oneClient, PluginHelper.USERNAME)).thenReturn(user);
+		Mockito.when(clientFactory.createGroup(Mockito.any(Client.class), Mockito.anyInt())).thenReturn(group);
 
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
 

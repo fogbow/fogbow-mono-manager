@@ -14,6 +14,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.codec.Charsets;
+import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.ParseException;
 import org.apache.http.util.EntityUtils;
@@ -23,6 +24,7 @@ import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
+import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.OCCIApplication;
 import org.fogbowcloud.manager.occi.core.HeaderUtils;
@@ -39,6 +41,7 @@ import org.restlet.data.Protocol;
 
 public class OCCITestHelper {
 
+	public static final String MEMBER_ID = "memberId";
 	public static final int ENDPOINT_PORT = PluginHelper.getAvailablePort();
 	public static final String ACCESS_TOKEN = "HgjhgYUDFTGBgrbelihBDFGB40uyrb";
 	public static final String INVALID_TOKEN = "invalid-token";
@@ -61,6 +64,7 @@ public class OCCITestHelper {
 		component.getServers().add(Protocol.HTTP, ENDPOINT_PORT);
 
 		Properties properties = new Properties();
+		properties.put(ConfigurationConstants.XMPP_JID_KEY, MEMBER_ID);
 		properties.put(ConfigurationConstants.SSH_PRIVATE_HOST_KEY,
 				DefaultDataTestHelper.SERVER_HOST);
 		properties.put(ConfigurationConstants.SSH_HOST_HTTP_PORT_KEY,
@@ -111,11 +115,13 @@ public class OCCITestHelper {
 	
 	public void initializeComponentCompute(ComputePlugin computePlugin,
 			IdentityPlugin identityPlugin, AuthorizationPlugin authorizationPlugin,
+			ImageStoragePlugin imageStoragePlugin,
 			List<Request> requestsToAdd) throws Exception {
 		component = new Component();
 		component.getServers().add(Protocol.HTTP, ENDPOINT_PORT);
 
 		Properties properties = new Properties();
+		properties.put(ConfigurationConstants.XMPP_JID_KEY, MEMBER_ID);
 		properties.put(ConfigurationConstants.SSH_PRIVATE_HOST_KEY,
 				DefaultDataTestHelper.SERVER_HOST);
 		properties.put(ConfigurationConstants.SSH_HOST_HTTP_PORT_KEY,
@@ -125,6 +131,7 @@ public class OCCITestHelper {
 		facade.setAuthorizationPlugin(authorizationPlugin);
 		facade.setLocalIdentityPlugin(identityPlugin);
 		facade.setFederationIdentityPlugin(identityPlugin);
+		facade.setImageStoragePlugin(imageStoragePlugin);
 
 		requests = new RequestRepository();
 		facade.setRequests(requests);
@@ -144,7 +151,7 @@ public class OCCITestHelper {
 
 		Properties properties = new Properties();
 		properties.put(ConfigurationConstants.XMPP_JID_KEY,
-				DefaultDataTestHelper.MANAGER_COMPONENT_URL);
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		ManagerController facade = new ManagerController(properties);
 		facade.setComputePlugin(computePlugin);
 		facade.setLocalIdentityPlugin(identityPlugin);
@@ -163,8 +170,8 @@ public class OCCITestHelper {
 			IOException {
 		String responseStr = "";
 		try {
-			responseStr = EntityUtils.toString(response.getEntity(),
-					String.valueOf(Charsets.UTF_8));			
+			responseStr = EntityUtils
+					.toString(response.getEntity(), String.valueOf(Charsets.UTF_8));
 		} catch (Exception e) {
 			return new ArrayList<String>();
 		}
@@ -173,6 +180,28 @@ public class OCCITestHelper {
 		if (responseStr.contains(HeaderUtils.X_OCCI_LOCATION_PREFIX)) {
 			String[] tokens = responseStr.split(HeaderUtils.X_OCCI_LOCATION_PREFIX);
 
+			for (int i = 0; i < tokens.length; i++) {
+				if (!tokens[i].equals("")) {
+					requestIds.add(tokens[i].trim());
+				}
+			}
+		}
+		return requestIds;
+	}
+
+	public static List<String> getRequestIdsPerLocationHeader(HttpResponse response)
+			throws ParseException, IOException {
+		String locationHeaderValue = "";
+		Header[] allHeaders = response.getAllHeaders();
+		for (Header header : allHeaders) {
+			if (header.getName().equals("Location")) {
+				locationHeaderValue = header.getValue();
+			}
+		}
+
+		List<String> requestIds = new ArrayList<String>();
+		if (locationHeaderValue.contains(RequestConstants.TERM)) {
+			String[] tokens = locationHeaderValue.split(",");
 			for (int i = 0; i < tokens.length; i++) {
 				if (!tokens[i].equals("")) {
 					requestIds.add(tokens[i].trim());

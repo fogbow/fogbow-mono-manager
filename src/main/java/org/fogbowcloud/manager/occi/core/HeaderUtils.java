@@ -5,10 +5,12 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.restlet.Response;
 import org.restlet.data.MediaType;
 import org.restlet.engine.header.Header;
@@ -21,6 +23,8 @@ public class HeaderUtils {
 	public static final String REQUEST_DATE_FORMAT = "yyyy-MM-dd";
 	public static final String X_OCCI_LOCATION_PREFIX = "X-OCCI-Location: ";
 	public static final String WWW_AUTHENTICATE = "WWW-Authenticate";
+	private static final String AUTHORIZATION = "Authorization"; 
+
 
 	public static void checkOCCIContentType(Series<Header> headers) {
 		String contentType = headers.getValues(OCCIHeaders.CONTENT_TYPE);
@@ -42,17 +46,25 @@ public class HeaderUtils {
 	public static String getAuthToken(Series<Header> headers, Response response, String authenticationURI) {
 		String token = headers.getValues(OCCIHeaders.X_AUTH_TOKEN);
 		if (token == null || token.equals("")) {
-			if (response != null && authenticationURI != null) {
-				Series<Header> responseHeaders = (Series<Header>) response.getAttributes().get("org.restlet.http.headers");
-				if (responseHeaders == null) {
-					responseHeaders = new Series(Header.class);
-					response.getAttributes().put("org.restlet.http.headers", responseHeaders);
+			if (authenticationURI != null) {
+				if (response != null) {
+					Series<Header> responseHeaders = (Series<Header>) response.getAttributes().get("org.restlet.http.headers");
+					if (responseHeaders == null) {
+						responseHeaders = new Series(Header.class);
+						response.getAttributes().put("org.restlet.http.headers", responseHeaders);
+					}
+					responseHeaders.add(new Header(HeaderUtils.WWW_AUTHENTICATE, authenticationURI));
+					MediaType textPlainType = new MediaType("text/plain");				
+					response.setEntity(ResponseConstants.UNAUTHORIZED, textPlainType);
 				}
-				responseHeaders.add(new Header(HeaderUtils.WWW_AUTHENTICATE, authenticationURI));
-				MediaType textPlainType = new MediaType("text/plain");				
-				response.setEntity(ResponseConstants.UNAUTHORIZED, textPlainType);
+				throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
+			} else {
+				String authorizationHeader = headers.getValues(HeaderUtils.AUTHORIZATION);
+				if (authorizationHeader == null) {
+					throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
+				}
+				token = authorizationHeader;
 			}
-			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}
 		return token;
 	}
@@ -108,14 +120,23 @@ public class HeaderUtils {
 	}
 
 	public static void checkCategories(List<Category> categories, String mandatoryTerm) {
-		List<Resource> resources = ResourceRepository.getInstance().get(categories);
+		List<Category> categoriesCopy = new LinkedList<Category>();
+		for (Category category : categories) {
+			if (category.getScheme().equals(
+					RequestConstants.TEMPLATE_OS_SCHEME)) {
+				continue;
+			}
+			categoriesCopy.add(category);
+		}
+		
+		List<Resource> resources = ResourceRepository.getInstance().get(categoriesCopy);
 
-		if (resources.size() != categories.size()) {
+		if (resources.size() != categoriesCopy.size()) {
 			LOGGER.debug("Some categories was not found in available resources! Resources "
-					+ resources.size() + " and categories " + categories.size());
+					+ resources.size() + " and categories " + categoriesCopy.size());
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}
-		for (Category category : categories) {
+		for (Category category : categoriesCopy) {
 			if (category.getTerm().equals(mandatoryTerm)) {
 				Resource resource = ResourceRepository.getInstance().get(mandatoryTerm);
 				if (resource == null || !resource.matches(category)) {
@@ -172,8 +193,24 @@ public class HeaderUtils {
 		if (responseHeaders == null) {
 			responseHeaders = new Series(Header.class);
 			response.getAttributes().put("org.restlet.http.headers", responseHeaders);
-		}		
+		}
+		if (value == null) {
+			value = " ";
+		}
 		responseHeaders.add(new Header(normalize(header), value));
 	}
 
+	public static List<String> getValueHeaderPerName(String nameHeader,Series<Header> headers) {
+		List<String> listValuesHeaders = new ArrayList<String>();
+		for (Header header : headers) {
+			if (header.getName().equals(HeaderUtils.normalize(nameHeader))) {
+				listValuesHeaders.add(header.getValue());
+			}
+		}
+		return listValuesHeaders;
+	}	
+	
+	public static String normalizeValueAttributeFilter(String value) {
+		return "\"" + value + "\"";
+	}	
 }

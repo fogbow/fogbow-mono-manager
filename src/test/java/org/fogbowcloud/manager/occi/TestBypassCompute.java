@@ -20,6 +20,7 @@ import org.apache.http.util.EntityUtils;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
+import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
 import org.fogbowcloud.manager.core.plugins.openstack.OpenStackConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.openstack.OpenStackOCCIComputePlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
@@ -55,6 +56,7 @@ public class TestBypassCompute {
 	private IdentityPlugin identityPlugin;
 	private AuthorizationPlugin authorizationPlugin;
 	private Token defaultToken;
+	private ImageStoragePlugin imageStoragePlugin;
 	
 	@Before
 	public void setup() throws Exception{
@@ -100,9 +102,14 @@ public class TestBypassCompute {
 		authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
 		Mockito.when(authorizationPlugin.isAuthorized(Mockito.any(Token.class))).thenReturn(true);
 		
+		imageStoragePlugin = Mockito.mock(ImageStoragePlugin.class);
+		Mockito.when(imageStoragePlugin.getLocalId(Mockito.any(
+				Token.class), Mockito.anyString())).thenReturn(PluginHelper.CIRROS_IMAGE_TERM);
+		
 		//initializing fogbow OCCI Application
 		helper = new OCCITestHelper();
-		helper.initializeComponentCompute(computePlugin, identityPlugin, authorizationPlugin, requests);
+		helper.initializeComponentCompute(computePlugin, identityPlugin, 
+				authorizationPlugin, imageStoragePlugin, requests);
 	}
 	
 	@After
@@ -168,14 +175,12 @@ public class TestBypassCompute {
 	public void testBypassGetComputeOK() throws URISyntaxException, HttpException, IOException {
 		//adding instances directly on compute endpoint
 		List<Category> categories = new ArrayList<Category>();		
-		categories.add(new Category(PluginHelper.LINUX_X86_TERM,
-				OpenStackOCCIComputePlugin.getOSScheme(), RequestConstants.MIXIN_CLASS));
 		Assert.assertEquals(FIRST_INSTANCE_ID, computePlugin.requestInstance(
-				defaultToken, categories, new HashMap<String, String>()));
+				defaultToken, categories, new HashMap<String, String>(), PluginHelper.CIRROS_IMAGE_TERM));
 		Assert.assertEquals(SECOND_INSTANCE_ID, computePlugin.requestInstance(
-				defaultToken, categories, new HashMap<String, String>()));
+				defaultToken, categories, new HashMap<String, String>(), PluginHelper.CIRROS_IMAGE_TERM));
 		Assert.assertEquals(THIRD_INSTANCE_ID, computePlugin.requestInstance(
-				defaultToken, categories, new HashMap<String, String>()));
+				defaultToken, categories, new HashMap<String, String>(), PluginHelper.CIRROS_IMAGE_TERM));
 
 		//checking if machines were added
 		Assert.assertEquals(3, computePlugin.getInstances(defaultToken).size());
@@ -204,7 +209,7 @@ public class TestBypassCompute {
 				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS).toHeader());
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
-		List<String> requestIDs = OCCITestHelper.getRequestIds(response);
+		List<String> requestIDs = OCCITestHelper.getRequestIdsPerLocationHeader(response);
 
 		Assert.assertEquals(1, requestIDs.size());
 		Assert.assertEquals(HttpStatus.SC_CREATED, response.getStatusLine().getStatusCode());
@@ -213,12 +218,10 @@ public class TestBypassCompute {
 		
 		//adding instances directly on compute endpoint
 		List<Category> categories = new ArrayList<Category>();		
-		categories.add(new Category(PluginHelper.LINUX_X86_TERM,
-				OpenStackOCCIComputePlugin.getOSScheme(), RequestConstants.MIXIN_CLASS));
 		Assert.assertEquals(SECOND_INSTANCE_ID, computePlugin.requestInstance(
-				defaultToken, categories, new HashMap<String, String>()));
+				defaultToken, categories, new HashMap<String, String>(), PluginHelper.CIRROS_IMAGE_TERM));
 		Assert.assertEquals(THIRD_INSTANCE_ID, computePlugin.requestInstance(
-				defaultToken, categories, new HashMap<String, String>()));
+				defaultToken, categories, new HashMap<String, String>(), PluginHelper.CIRROS_IMAGE_TERM));
 		
 		//checking if machines were added
 		Assert.assertEquals(3, computePlugin.getInstances(defaultToken).size());
@@ -239,10 +242,8 @@ public class TestBypassCompute {
 	public void testBypassGetSpecificComputeOK() throws URISyntaxException, HttpException, IOException {
 		//adding instances directly on compute endpoint
 		List<Category> categories = new ArrayList<Category>();		
-		categories.add(new Category(PluginHelper.LINUX_X86_TERM,
-				OpenStackOCCIComputePlugin.getOSScheme(), RequestConstants.MIXIN_CLASS));
 		Assert.assertEquals(FIRST_INSTANCE_ID, computePlugin.requestInstance(
-				defaultToken, categories, new HashMap<String, String>()));
+				defaultToken, categories, new HashMap<String, String>(), PluginHelper.CIRROS_IMAGE_TERM));
 		
 		//checking if machine was added
 		Assert.assertEquals(1, computePlugin.getInstances(defaultToken).size());
@@ -304,14 +305,12 @@ public class TestBypassCompute {
 	public void testBypassDeleteComputeNotCreatedThroughFogbow() throws URISyntaxException, HttpException, IOException {
 		//adding instances directly on compute endpoint
 		List<Category> categories = new ArrayList<Category>();		
-		categories.add(new Category(PluginHelper.LINUX_X86_TERM,
-				OpenStackOCCIComputePlugin.getOSScheme(), RequestConstants.MIXIN_CLASS));
 		Assert.assertEquals(FIRST_INSTANCE_ID, computePlugin.requestInstance(
-				defaultToken, categories, new HashMap<String, String>()));
+				defaultToken, categories, new HashMap<String, String>(), PluginHelper.CIRROS_IMAGE_TERM));
 		Assert.assertEquals(SECOND_INSTANCE_ID, computePlugin.requestInstance(
-				defaultToken, categories, new HashMap<String, String>()));
+				defaultToken, categories, new HashMap<String, String>(), PluginHelper.CIRROS_IMAGE_TERM));
 		Assert.assertEquals(THIRD_INSTANCE_ID, computePlugin.requestInstance(
-				defaultToken, categories, new HashMap<String, String>()));
+				defaultToken, categories, new HashMap<String, String>(), PluginHelper.CIRROS_IMAGE_TERM));
 		
 		//checking if instances were added
 		Assert.assertEquals(3, computePlugin.getInstances(defaultToken).size());
@@ -353,7 +352,7 @@ public class TestBypassCompute {
 				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS).toHeader());
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
-		List<String> requestIDs = OCCITestHelper.getRequestIds(response);
+		List<String> requestIDs = OCCITestHelper.getRequestIdsPerLocationHeader(response);
 
 		Assert.assertEquals(1, requestIDs.size());
 		Assert.assertEquals(HttpStatus.SC_CREATED, response.getStatusLine().getStatusCode());
@@ -362,12 +361,10 @@ public class TestBypassCompute {
 		
 		//adding two instances directly on compute endpoint
 		List<Category> categories = new ArrayList<Category>();
-		categories.add(new Category(PluginHelper.LINUX_X86_TERM,
-				OpenStackOCCIComputePlugin.getOSScheme(), RequestConstants.MIXIN_CLASS));
 		Assert.assertEquals(SECOND_INSTANCE_ID, computePlugin.requestInstance(
-				defaultToken, categories, new HashMap<String, String>()));
+				defaultToken, categories, new HashMap<String, String>(), PluginHelper.CIRROS_IMAGE_TERM));
 		Assert.assertEquals(THIRD_INSTANCE_ID, computePlugin.requestInstance(
-				defaultToken, categories, new HashMap<String, String>()));
+				defaultToken, categories, new HashMap<String, String>(), PluginHelper.CIRROS_IMAGE_TERM));
 		
 		//checking if instance were added
 		Assert.assertEquals(3, computePlugin.getInstances(defaultToken).size());
@@ -400,14 +397,12 @@ public class TestBypassCompute {
 	public void testBypassDeleteSpecificComputeNotCreatedThroughFogbow() throws URISyntaxException, HttpException, IOException {
 		//adding instances directly on compute endpoint
 		List<Category> categories = new ArrayList<Category>();		
-		categories.add(new Category(PluginHelper.LINUX_X86_TERM,
-				OpenStackOCCIComputePlugin.getOSScheme(), RequestConstants.MIXIN_CLASS));
 		Assert.assertEquals(FIRST_INSTANCE_ID, computePlugin.requestInstance(
-				defaultToken, categories, new HashMap<String, String>()));
+				defaultToken, categories, new HashMap<String, String>(), PluginHelper.CIRROS_IMAGE_TERM));
 		Assert.assertEquals(SECOND_INSTANCE_ID, computePlugin.requestInstance(
-				defaultToken, categories, new HashMap<String, String>()));
+				defaultToken, categories, new HashMap<String, String>(), PluginHelper.CIRROS_IMAGE_TERM));
 		Assert.assertEquals(THIRD_INSTANCE_ID, computePlugin.requestInstance(
-				defaultToken, categories, new HashMap<String, String>()));
+				defaultToken, categories, new HashMap<String, String>(), PluginHelper.CIRROS_IMAGE_TERM));
 		
 		//checking if instances were added
 		Assert.assertEquals(3, computePlugin.getInstances(defaultToken).size());
@@ -440,10 +435,8 @@ public class TestBypassCompute {
 	public void testBypassDeleteLastComputeNotCreatedThroughFogbow() throws URISyntaxException, HttpException, IOException {
 		//adding instances directly on compute endpoint
 		List<Category> categories = new ArrayList<Category>();		
-		categories.add(new Category(PluginHelper.LINUX_X86_TERM,
-				OpenStackOCCIComputePlugin.getOSScheme(), RequestConstants.MIXIN_CLASS));
 		Assert.assertEquals(FIRST_INSTANCE_ID, computePlugin.requestInstance(
-				defaultToken, categories, new HashMap<String, String>()));
+				defaultToken, categories, new HashMap<String, String>(), PluginHelper.CIRROS_IMAGE_TERM));
 				
 		//checking if instances were added
 		Assert.assertEquals(1, computePlugin.getInstances(defaultToken).size());
@@ -483,11 +476,11 @@ public class TestBypassCompute {
 
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 		String resourcesStr = EntityUtils.toString(response.getEntity());
-		List<Resource> availableResources = getResourcesFromStr(resourcesStr);
+		List<Resource> availableResources = getResourcesFromStr(resourcesStr);		
 		
 		List<Resource> fogResources = ResourceRepository.getInstance().getAll();
-		List<Resource> compResources = OCCIComputeApplication.getResources();
-
+		List<Resource> compResources = OCCIComputeApplication.getResources();	
+		
 		for (Resource resource : availableResources) {
 			Assert.assertTrue(fogResources.contains(resource) || compResources.contains(resource));
 		}

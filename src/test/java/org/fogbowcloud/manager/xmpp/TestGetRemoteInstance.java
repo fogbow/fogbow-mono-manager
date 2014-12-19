@@ -77,7 +77,7 @@ public class TestGetRemoteInstance {
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>());
 		Request request = new Request("anyvalue", token, null, null);
 		request.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
-		request.setMemberId(DefaultDataTestHelper.MANAGER_COMPONENT_URL);
+		request.setMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 
 		Instance remoteInstance = null;
 		try {
@@ -93,13 +93,13 @@ public class TestGetRemoteInstance {
 				.getResources().get(0).toHeader());
 		Assert.assertEquals(instance.getLinks().get(0).getName(), remoteInstance.getLinks().get(0).getName());
 	}
-
+	
 	@Test(expected=OCCIException.class)
 	public void testGetRemoteInstaceNotFound() throws Exception {
 		Request request = new Request("anyvalue", new Token(WRONG_TOKEN, OCCITestHelper.USER_MOCK,
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), null, null);
 		request.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
-		request.setMemberId(DefaultDataTestHelper.MANAGER_COMPONENT_URL);
+		request.setMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 
 		managerTestHelper.initializeXMPPManagerComponent(false);
 
@@ -116,7 +116,7 @@ public class TestGetRemoteInstance {
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>());
 		Request request = new Request("anyvalue", token, null, null);
 		request.setInstanceId(INSTANCE_OTHER_USER);
-		request.setMemberId(DefaultDataTestHelper.MANAGER_COMPONENT_URL);
+		request.setMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 
 		managerTestHelper.initializeXMPPManagerComponent(false);
 

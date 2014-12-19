@@ -17,6 +17,7 @@ import org.apache.http.HttpStatus;
 import org.apache.log4j.Logger;
 import org.dom4j.Attribute;
 import org.dom4j.Element;
+import org.fogbowcloud.manager.core.AsynchronousRequestCallback;
 import org.fogbowcloud.manager.core.CertificateHandlerHelper;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.Flavor;
@@ -29,8 +30,10 @@ import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.instance.Instance.Link;
 import org.fogbowcloud.manager.occi.request.Request;
+import org.jamppa.component.PacketCallback;
 import org.jamppa.component.PacketSender;
 import org.xmpp.packet.IQ;
+import org.xmpp.packet.Packet;
 import org.xmpp.packet.IQ.Type;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.PacketError.Condition;
@@ -40,8 +43,12 @@ public class ManagerPacketHelper {
 	private final static Logger LOGGER = Logger.getLogger(ManagerPacketHelper.class.getName());
 
 	public static void iAmAlive(ResourcesInfo resourcesInfo, String rendezvousAddress,
-			Properties properties, PacketSender packetSender) throws IOException {
+			Properties properties, PacketSender packetSender) throws Exception {
 		IQ iq = new IQ(Type.get);
+		if (rendezvousAddress == null) {
+			LOGGER.warn("Rendezvous not especified.");
+			throw new Exception();
+		}
 		iq.setTo(rendezvousAddress);
 		Element statusEl = iq.getElement()
 				.addElement("query", ManagerXmppComponent.IAMALIVE_NAMESPACE).addElement("status");
@@ -67,13 +74,18 @@ public class ManagerPacketHelper {
 			flavorElement.addElement("mem").setText(f.getMem());
 			flavorElement.addElement("capacity").setText(f.getCapacity().toString());
 		}
-		packetSender.syncSendPacket(iq);
+		
+		packetSender.syncSendPacket(iq);		
 	}
 
 	public static List<FederationMember> whoIsalive(String rendezvousAddress,
 			PacketSender packetSender, int maxWhoIsAliveManagerCount,
-			String after) throws CertificateException {
+			String after) throws Exception {
 		IQ iq = new IQ(Type.get);
+		if (rendezvousAddress == null) {
+			LOGGER.warn("Rendezvous not especified.");
+			throw new Exception();
+		}
 		iq.setTo(rendezvousAddress);
 		Element queryEl = iq.getElement().addElement("query",
 				ManagerXmppComponent.WHOISALIVE_NAMESPACE);
@@ -83,13 +95,20 @@ public class ManagerPacketHelper {
 			setEl.addElement("after").setText(after);
 		}
 		IQ response = (IQ) packetSender.syncSendPacket(iq);
+		
+		if (response == null || (response.toString().contains("error")
+				&& response.toString().contains("remote-server-not-found"))) {
+			LOGGER.warn("Remote server (Rendezvous) not found.");
+			throw new Exception();
+		}		
+		
 		ArrayList<FederationMember> members = getMembersFromIQ(response);
 		return members;
 	}
 	
 	public static List<FederationMember> whoIsalive(String rendezvousAddress,
 			PacketSender packetSender, int maxWhoIsAliveManagerCount)
-			throws CertificateException {
+			throws Exception {
 		return whoIsalive(rendezvousAddress, packetSender,
 				maxWhoIsAliveManagerCount, null);
 	}
@@ -164,6 +183,43 @@ public class ManagerPacketHelper {
 		}
 		return response.getElement().element("query").element("instance").elementText("id");
 	}
+	
+	public static void asynchronousRemoteRequest(Request request, String memberAddress,
+			AsyncPacketSender packetSender, final AsynchronousRequestCallback callback) {
+		IQ iq = new IQ();
+		iq.setTo(memberAddress);
+		iq.setType(Type.set);
+		Element queryEl = iq.getElement().addElement("query",
+				ManagerXmppComponent.REQUEST_NAMESPACE);
+		for (Category category : request.getCategories()) {
+			Element categoryEl = queryEl.addElement("category");
+			categoryEl.addElement("class").setText(category.getCatClass());
+			categoryEl.addElement("term").setText(category.getTerm());
+			categoryEl.addElement("scheme").setText(category.getScheme());
+		}
+		for (Entry<String, String> xOCCIEntry : request.getxOCCIAtt().entrySet()) {
+			Element attributeEl = queryEl.addElement("attribute");
+			attributeEl.addAttribute("var", xOCCIEntry.getKey());
+			attributeEl.addElement("value").setText(xOCCIEntry.getValue());
+		}
+		packetSender.addPacketCallback(iq, new PacketCallback() {
+			
+			@Override
+			public void handle(Packet response) {
+				if (response.getError() != null) {
+					if (response.getError().getCondition().equals(Condition.item_not_found)) {
+						callback.success(null);
+					} else {
+						callback.error(createException(response.getError()));
+					}
+				} else {
+					callback.success(response.getElement().element("query")
+							.element("instance").elementText("id"));
+				}
+			}
+		});
+		packetSender.sendPacket(iq);
+	}
 
 	public static Instance getRemoteInstance(Request request, PacketSender packetSender) {
 		IQ iq = new IQ();
@@ -206,14 +262,18 @@ public class ManagerPacketHelper {
 	}
 
 	private static void raiseException(PacketError error) {
+		throw createException(error);
+	}
+	
+	private static OCCIException createException(PacketError error) {
 		Condition condition = error.getCondition();
 		if (condition.equals(Condition.item_not_found)) {
-			throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
+			return new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
 		}
 		if (condition.equals(Condition.not_authorized)) {
-			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
+			return new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}
-		throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
+		return new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 	}
 
 	@SuppressWarnings("unchecked")
