@@ -13,7 +13,6 @@ import org.apache.http.HttpStatus;
 import org.apache.http.HttpVersion;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.FileEntity;
@@ -29,6 +28,7 @@ import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
+import org.fogbowcloud.manager.core.plugins.util.HttpPatch;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.OCCIException;
@@ -599,7 +599,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
             HttpPut request = new HttpPut(endpoint);
             request.addHeader(OCCIHeaders.CONTENT_TYPE, "application/octet-stream");
             request.addHeader(OCCIHeaders.X_AUTH_TOKEN, authToken);                   
-            request.setEntity(new FileEntity(new File(path)));
+            request.setEntity(new FileEntity(new File(path), "application/octet-stream"));
             response = client.execute(request);
         } catch (Exception e) {
             LOGGER.error(e);
