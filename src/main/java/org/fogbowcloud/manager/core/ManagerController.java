@@ -685,30 +685,6 @@ public class ManagerController {
 		return asynchronousRequests.get(requestId);
 	}
 	
-	private boolean createRemoteInstance(Request request) {
-		FederationMember member = memberPicker.pick(this);
-		if (member == null) {
-			return false;
-		}
-		String memberAddress = member.getResourcesInfo().getId();
-		request.setMemberId(memberAddress);
-
-		LOGGER.info("Submiting request " + request + " to member " + memberAddress);
-
-		String remoteInstanceId = ManagerPacketHelper.remoteRequest(request, memberAddress,
-				packetSender);
-		if (remoteInstanceId == null) {
-			return false;
-		}
-
-		request.setState(RequestState.FULFILLED);
-		request.setInstanceId(remoteInstanceId);
-		if (!instanceMonitoringTimer.isScheduled()) {
-			triggerInstancesMonitor();
-		}
-		return true;
-	}
-
 	private boolean createLocalInstance(Request request) {
 		request.setMemberId(this.properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
 		String instanceId = null;
@@ -813,7 +789,7 @@ public class ManagerController {
 			}
 		}
 		if (allFulfilled) {
-			LOGGER.info("All request fulfilled.");
+			LOGGER.info("All requests fulfilled.");
 		}
 	}
 

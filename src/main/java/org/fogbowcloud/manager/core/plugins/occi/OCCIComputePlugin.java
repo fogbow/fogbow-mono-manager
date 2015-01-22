@@ -35,7 +35,6 @@ import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
-import org.fogbowcloud.manager.occi.core.ResourceRepository;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.instance.Instance;
@@ -57,7 +56,6 @@ public class OCCIComputePlugin implements ComputePlugin {
 	private String instanceScheme;
 	private String resourceScheme;
 	private String networkId;
-//	private String templateScheme;
 
 	protected Map<String, Category> fogTermToCategory = new HashMap<String, Category>();
 	public static final String COMPUTE_ENDPOINT = "/compute/";
@@ -79,20 +77,6 @@ public class OCCIComputePlugin implements ComputePlugin {
 				.getProperty(OpenStackConfigurationConstants.COMPUTE_OCCI_RESOURCE_SCHEME_KEY);
 		networkId = properties
 				.getProperty(OpenStackConfigurationConstants.COMPUTE_OCCI_NETWORK_KEY);
-//		templateScheme = properties
-//				.getProperty(OpenStackConfigurationConstants.COMPUTE_OCCI_TEMPLATE_SCHEME_KEY);
-
-//		Map<String, String> templateProperties = getTemplateProperties(properties);
-		
-//		if (templateProperties == null || templateProperties.isEmpty()) {
-//			LOGGER.warn(ResponseConstants.TEMPLATE_NOT_SPECIFIED);
-//		}
-//		
-//		for (String templateName : templateProperties.keySet()) {
-//			fogTermToCategory.put(templateName, new Category(templateProperties.get(templateName),
-//					templateScheme, RequestConstants.MIXIN_CLASS));
-//			ResourceRepository.getInstance().addImageResource(templateName);
-//		}					
 		
 		fogTermToCategory.put(
 				RequestConstants.SMALL_TERM,
@@ -235,20 +219,6 @@ public class OCCIComputePlugin implements ComputePlugin {
 		return null;
 	}
 
-	private static Map<String, String> getTemplateProperties(Properties properties) {
-		Map<String, String> templateProperties = new HashMap<String, String>();
-
-		for (Object propName : properties.keySet()) {
-			String propNameStr = (String) propName;
-			if (propNameStr.startsWith(OpenStackConfigurationConstants.COMPUTE_OCCI_TEMPLATE_PREFIX)) {
-				templateProperties.put(propNameStr.substring(OpenStackConfigurationConstants.COMPUTE_OCCI_TEMPLATE_PREFIX.length()),
-						properties.getProperty(propNameStr));
-			}
-		}
-		LOGGER.debug("Image properties: " + templateProperties);
-		return templateProperties;
-	}
-	
 	protected Category createFlavorCategory(String flavorPropName, Properties properties) {
 		return new Category(properties.getProperty(flavorPropName), resourceScheme,
 				RequestConstants.MIXIN_CLASS);
