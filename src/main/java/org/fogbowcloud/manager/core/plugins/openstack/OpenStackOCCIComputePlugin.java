@@ -56,7 +56,8 @@ public class OpenStackOCCIComputePlugin extends OCCIComputePlugin{
 	}
 	
 	@Override
-	public Set<Header> getExtraHeaders(List<Category> requestCategories, Map<String, String> xOCCIAtt) {
+	public Set<Header> getExtraHeaders(List<Category> requestCategories,
+			Map<String, String> xOCCIAtt, Token token) {
 		List<Category> openStackCategories = new ArrayList<Category>();
 		
 		for (Category category : requestCategories) {
@@ -77,8 +78,7 @@ public class OpenStackOCCIComputePlugin extends OCCIComputePlugin{
 		String userdataBase64 = xOCCIAtt.remove(RequestAttribute.USER_DATA_ATT.getValue());
 		
 		if (userdataBase64 != null) {
-			xOCCIAtt.put("org.openstack.compute.user_data", userdataBase64);
-					
+			xOCCIAtt.put("org.openstack.compute.user_data", userdataBase64);				
 		}
 		
 		Set<Header> headers = new HashSet<Header>();
@@ -87,9 +87,8 @@ public class OpenStackOCCIComputePlugin extends OCCIComputePlugin{
 		}
 		for (String attName : xOCCIAtt.keySet()) {
 			headers.add(new BasicHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, attName + "=" + "\""
-					+ xOCCIAtt.get(attName) + "\""));
-			
-		}		
+					+ xOCCIAtt.get(attName) + "\""));			
+		}
 		return headers;
 	}
 	

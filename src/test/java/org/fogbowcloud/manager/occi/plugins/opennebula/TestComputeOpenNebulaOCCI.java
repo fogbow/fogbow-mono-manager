@@ -105,13 +105,12 @@ public class TestComputeOpenNebulaOCCI {
 		List<Category> requestCategories = new ArrayList<Category>();
 		requestCategories.add(new Category("fogbow_small",
 				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
-		requestCategories.add(new Category(FOGBOW_LINUX_X86, RequestConstants.TEMPLATE_OS_SCHEME,
-				RequestConstants.MIXIN_CLASS));
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
 
 		Token token = new Token(ACCESS_TOKEN_ID, "user", new Date(), new HashMap<String, String>());
 		try {
-			openNebulaOCCIComputePlugin.requestInstance(token, requestCategories, xOCCIAtt, null);
+			openNebulaOCCIComputePlugin.requestInstance(token, requestCategories, xOCCIAtt,
+					UUID_CIRROS0_3_2_1);
 		} catch (Exception e) {
 		}
 
@@ -137,8 +136,6 @@ public class TestComputeOpenNebulaOCCI {
 		List<Category> requestCategories = new ArrayList<Category>();
 		requestCategories.add(new Category("fogbow_small",
 				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
-		requestCategories.add(new Category(FOGBOW_LINUX_X86, RequestConstants.TEMPLATE_OS_SCHEME,
-				RequestConstants.MIXIN_CLASS));
 		requestCategories.add(new Category(RequestConstants.PUBLIC_KEY_TERM,
 				RequestConstants.CREDENTIALS_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
@@ -146,7 +143,8 @@ public class TestComputeOpenNebulaOCCI {
 
 		Token token = new Token(ACCESS_TOKEN_ID, "user", new Date(), new HashMap<String, String>());
 		try {
-			openNebulaOCCIComputePlugin.requestInstance(token, requestCategories, xOCCIAtt, null);
+			openNebulaOCCIComputePlugin.requestInstance(token, requestCategories, xOCCIAtt,
+					UUID_CIRROS0_3_2_1);
 		} catch (Exception e) {
 		}
 
@@ -159,8 +157,6 @@ public class TestComputeOpenNebulaOCCI {
 		List<Category> requestCategories = new ArrayList<Category>();
 		requestCategories.add(new Category("fogbow_small",
 				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
-		requestCategories.add(new Category(FOGBOW_LINUX_X86, RequestConstants.TEMPLATE_OS_SCHEME,
-				RequestConstants.MIXIN_CLASS));
 		requestCategories.add(new Category(RequestConstants.PUBLIC_KEY_TERM + "; scheme=\""
 				+ RequestConstants.CREDENTIALS_RESOURCE_SCHEME + "\"; class=\""
 				+ RequestConstants.MIXIN_CLASS + "\""));
@@ -171,7 +167,7 @@ public class TestComputeOpenNebulaOCCI {
 		request.addHeader(OCCIHeaders.AUTHORIZATION,
 				openNebulaOCCIComputePlugin.getAuthorization(ACCESS_TOKEN_ID));
 		request.addHeader(OCCIHeaders.X_AUTH_TOKEN, ACCESS_TOKEN_ID);
-		request.addHeader(OCCIHeaders.CATEGORY, UUID_CIRROS0_3_2_1);
+		request.addHeader(OCCIHeaders.CATEGORY, UUID_CIRROS0_3_2_1);		
 		request.addHeader(OCCIHeaders.CATEGORY, "public_key");
 		request.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, OpenNebulaOCCIComputePlugin.DEFAULT_CORE_ID);
 		request.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE,
@@ -182,7 +178,8 @@ public class TestComputeOpenNebulaOCCI {
 
 		Token token = new Token(ACCESS_TOKEN_ID, "user", new Date(), new HashMap<String, String>());
 		try {
-			openNebulaOCCIComputePlugin.requestInstance(token, requestCategories, xOCCIAtt, null);
+			openNebulaOCCIComputePlugin.requestInstance(token, requestCategories, xOCCIAtt,
+					UUID_CIRROS0_3_2_1);
 		} catch (Exception e) {
 		}
 

@@ -11,7 +11,6 @@ import java.util.Set;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.Header;
-import org.apache.http.HttpResponse;
 import org.apache.http.message.BasicHeader;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.occi.OCCIComputePlugin;
@@ -49,22 +48,12 @@ public class OpenNebulaOCCIComputePlugin extends OCCIComputePlugin {
 				PUBLIC_KEY_SCHEME, RequestConstants.MIXIN_CLASS));
 	}
 
-	@Override
-	public String requestInstance(Token token, List<Category> requestCategories,
-			Map<String, String> xOCCIAtt, String localImageId) {
-		LOGGER.debug("Requesting instance with token=" + token + "; categories="
-				+ requestCategories + "; xOCCIAtt=" + xOCCIAtt);
-
+	protected Set<Header> getExtraHeaders(List<Category> requestCategories,
+			Map<String, String> xOCCIAtt, Token token) {
+		
+		HashSet<Header> headers = new HashSet<Header>();
 		List<Category> occiCategories = new ArrayList<Category>();
-
-		Category categoryCompute = new Category(TERM_COMPUTE, SCHEME_COMPUTE,
-				RequestConstants.KIND_CLASS);
-		occiCategories.add(categoryCompute);
-
-		// removing fogbow-request category
-		requestCategories.remove(new Category(RequestConstants.TERM, RequestConstants.SCHEME,
-				RequestConstants.KIND_CLASS));
-
+		
 		String headerShhPublic = "";
 		for (Category category : requestCategories) {
 			if (super.fogTermToCategory.get(category.getTerm()) == null) {
@@ -72,57 +61,39 @@ public class OpenNebulaOCCIComputePlugin extends OCCIComputePlugin {
 						ResponseConstants.CLOUD_NOT_SUPPORT_CATEGORY + category.getTerm());
 			}
 			occiCategories.add(super.fogTermToCategory.get(category.getTerm()));
-
+		
 			// adding ssh public key
 			if (category.getTerm().equals(RequestConstants.PUBLIC_KEY_TERM)) {
 				headerShhPublic += NAME_PUBLIC_KEY_ATTRIBUTE + "=" + "\"public_key_one\",";
 				headerShhPublic += DATA_PUBLIC_KEY_ATTRIBUTE + "=\""
 						+ xOCCIAtt.get(RequestAttribute.DATA_PUBLIC_KEY.getValue()) + "\"";
 			}
-		}		
-
-		String headerCategoryStr = "";
-		for (Category category : occiCategories) {
-			headerCategoryStr += category.toHeader() + ",";		
-		}		
+		}
 		
-		Set<Header> headers = new HashSet<Header>();
-		headers.add(new BasicHeader(OCCIHeaders.CATEGORY, headerCategoryStr.substring(0,
-				headerCategoryStr.length() - 1)));
+		String headerAttribute = "occi.core.id=\"" + DEFAULT_CORE_ID + "\"" + ",occi.core.title=\""
+				+ DEFAULT_FOGBOW_NAME + "\"," + "occi.compute.hostname=\"" + DEFAULT_FOGBOW_NAME
+				+ "\"";
 		
-		String headerAttribute = "occi.core.id=\"" + DEFAULT_CORE_ID + "\""
-				+ ",occi.core.title=\"" + DEFAULT_FOGBOW_NAME + "\","
-				+ "occi.compute.hostname=\"" + DEFAULT_FOGBOW_NAME + "\"";
 		if (!headerShhPublic.isEmpty()) {
 			headerAttribute += "," + headerShhPublic;
 		}
+		
 		String userdataBase64 = xOCCIAtt.get(RequestAttribute.USER_DATA_ATT.getValue());		
 		if (userdataBase64 != null) {
 			userdataBase64 = OpenNebulaComputePlugin.normalizeUserdata(userdataBase64);
 			headerAttribute += ",org.openstack.compute.user_data=\"" + userdataBase64 + "\"";					
 		}
-
-		headers.add(new BasicHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, headerAttribute.substring(0,
-				headerAttribute.length())));
-
+		
 		headers.add(new BasicHeader(OCCIHeaders.AUTHORIZATION,
-				getAuthorization(token.getAccessId())));
-
+				getAuthorization(token.getAccessId())));		
+		headers.add(new BasicHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, headerAttribute.substring(0,
+				headerAttribute.length())));		
 		headers.add(new BasicHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE));
 		headers.add(new BasicHeader(OCCIHeaders.ACCEPT, OCCIHeaders.OCCI_ACCEPT));
 		
-		HttpResponse response = null;
-
-		response = doRequest("post", computeOCCIEndpoint, token.getAccessId(), headers)
-				.getHttpResponse();
-
-		Header locationHeader = response.getFirstHeader("Location");
-		if (locationHeader != null) {
-			return normalizeInstanceId(locationHeader.getValue());
-		}
-		return null;
+		return headers;
 	}
-
+	
 	public Instance getInstance(Token token, String instanceId) {
 		Set<Header> addicionalHeaders = new HashSet<Header>();
 		addicionalHeaders.add(new BasicHeader(OCCIHeaders.AUTHORIZATION,
