@@ -368,7 +368,6 @@ public class TestGetRequest {
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 
-	@Ignore
 	@Test
 	public void testGetResquestFilterWithAttribute() throws URISyntaxException, HttpException,
 			IOException {
