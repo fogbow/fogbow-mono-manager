@@ -478,6 +478,7 @@ public class ManagerController {
 			String globalImageId = osCategory.getTerm();
 			localImageId = imageStoragePlugin.getLocalId(federationUserToken, globalImageId);
 		}
+		LOGGER.debug("The " + osCategory.getTerm() + " is related to this localImageId=" + localImageId);
 		return localImageId;
 	}
 

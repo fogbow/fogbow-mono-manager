@@ -148,7 +148,7 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 			Map<String, String> xOCCIAtt, String localImageId) {
 		
 		LOGGER.debug("Requesting instance with token=" + token + "; categories="
-				+ categories + "; xOCCIAtt=" + xOCCIAtt);
+				+ categories + "; xOCCIAtt=" + xOCCIAtt + "; localImageId=" + localImageId);
 		
 		Map<String, String> templateProperties = new HashMap<String, String>();
 		String choosenFlavor = null;
