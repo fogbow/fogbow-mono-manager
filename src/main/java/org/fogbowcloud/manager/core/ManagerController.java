@@ -425,7 +425,7 @@ public class ManagerController {
 			return null;
 		}
 		LOGGER.info("Submiting request with categories: " + categories + " and xOCCIAtt: "
-				+ xOCCIAtt + " for remote member.");
+				+ xOCCIAtt + " for remote member: " + memberId);
 		String instanceToken = String.valueOf(UUID.randomUUID());
 		try {
 			String command = UserdataUtils.createBase64Command(instanceToken, 
@@ -659,6 +659,8 @@ public class ManagerController {
 					
 					@Override
 					public void success(String instanceId) {
+						LOGGER.debug("The request " + request + " forwarded to " + memberAddress
+								+ " gets instance " + instanceId);
 						asynchronousRequests.remove(request.getId());
 						if (instanceId == null) {
 							return;
@@ -672,6 +674,8 @@ public class ManagerController {
 					
 					@Override
 					public void error(Throwable t) {
+						LOGGER.debug("The request " + request + " forwarded to " + memberAddress
+								+ " gets error " + t.getStackTrace());
 						asynchronousRequests.remove(request.getId());
 					}
 				});
@@ -768,6 +772,8 @@ public class ManagerController {
 		List<Request> openRequests = requests.get(RequestState.OPEN);
 		for (Request request : openRequests) {
 			if (isRequestForwardedtoRemoteMember(request.getId())) {
+				LOGGER.debug("The request " + request.getId()
+						+ " was forwarded to remote member and is not fulfilled yet.");
 				continue;
 			}
 			LOGGER.debug(request.getId() + " considering for scheduling.");
