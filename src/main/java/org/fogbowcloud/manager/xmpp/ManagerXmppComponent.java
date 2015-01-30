@@ -1,6 +1,5 @@
 package org.fogbowcloud.manager.xmpp;
 
-import java.io.IOException;
 import java.security.cert.CertificateException;
 import java.util.HashMap;
 import java.util.List;
@@ -57,6 +56,8 @@ public class ManagerXmppComponent extends XMPPComponent implements AsyncPacketSe
 	@Override
 	protected void send(Packet packet) {
 		packet.setFrom(getJID());
+		LOGGER.debug("(sending IQ to " + packet.getTo() + ", packetId " + packet.getID() + ", XML "
+				+ packet.toXML());
 		super.send(packet);
 	}
 
