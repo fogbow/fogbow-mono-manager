@@ -8,6 +8,7 @@ import java.util.Map;
 
 import org.apache.http.HttpStatus;
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.core.model.RequirementsHelper;
 import org.fogbowcloud.manager.occi.OCCIApplication;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
@@ -232,7 +233,7 @@ public class RequestServerResource extends ServerResource {
 		
 		Map<String, String> xOCCIAtt = HeaderUtils.getXOCCIAtributes(req.getHeaders());
 		xOCCIAtt = normalizeXOCCIAtt(xOCCIAtt);
-
+		
 		String authToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse(),
 				application.getAuthenticationURI());
 		
@@ -305,6 +306,19 @@ public class RequestServerResource extends ServerResource {
 		HeaderUtils.checkDateValue(defOCCIAtt.get(RequestAttribute.VALID_UNTIL.getValue()));
 		HeaderUtils.checkIntegerValue(defOCCIAtt.get(RequestAttribute.INSTANCE_COUNT.getValue()));
 		
+		String requirementsAttr = RequestAttribute.INSTANCE_COUNT.getValue();
+		if (!RequirementsHelper.checkRequirements(defOCCIAtt.get(requirementsAttr))) {
+			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.UNSUPPORTED_ATTRIBUTES);
+		}
+		String requirementsStr = defOCCIAtt.get(requirementsAttr);
+		String location = RequirementsHelper.getLocationRequirements(requirementsStr);
+		if (location != null) {
+			defOCCIAtt.put(RequirementsHelper.GLUE_LOCATION_TERM, location);			
+		}
+		
+		defOCCIAtt.put(requirementsAttr,
+				RequirementsHelper.normalizeRequirements(requirementsStr));
+
 		LOGGER.debug("Checking if all attributes are supported. OCCI attributes: " + defOCCIAtt);
 
 		List<Resource> requestResources = ResourceRepository.getInstance().getAll();
