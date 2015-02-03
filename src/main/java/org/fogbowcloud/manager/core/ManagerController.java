@@ -1,7 +1,10 @@
 package org.fogbowcloud.manager.core;
 
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -71,7 +74,7 @@ public class ManagerController {
 	private AsyncPacketSender packetSender;
 	private FederationMemberValidator validator = new DefaultMemberValidator();
 	private Map<String, RemoteRequest> instancesForRemoteMembers = new HashMap<String, RemoteRequest>();
-	private Map<String, Request> asynchronousRequests = new HashMap<String, Request>();
+	private Map<String, ForwardedRequest> asynchronousRequests = new HashMap<String, ForwardedRequest>();
 
 	private DateUtils dateUtils = new DateUtils();
 	public ManagerController(Properties properties) {
@@ -369,6 +372,10 @@ public class ManagerController {
 	private void removeRemoteInstance(Request request) {
 		ManagerPacketHelper.deleteRemoteInstace(request, packetSender);
 	}
+	
+	private void removeRemoteInstance(String memberAddress, String instanceId) {
+		ManagerPacketHelper.deleteRemoteInstace(memberAddress, instanceId, packetSender);		
+	}
 
 	public Request getRequestForInstance(String accessId, String instanceId) {
 		String user = getUser(accessId);
@@ -653,7 +660,8 @@ public class ManagerController {
 
 		LOGGER.info("Submiting request " + request + " to member " + memberAddress);
 		
-		asynchronousRequests.put(request.getId(), request);
+		asynchronousRequests.put(request.getId(),
+				new ForwardedRequest(request, dateUtils.currentTimeMillis()));
 		ManagerPacketHelper.asynchronousRemoteRequest(request, memberAddress,
 				packetSender, new AsynchronousRequestCallback() {
 					
@@ -661,10 +669,14 @@ public class ManagerController {
 					public void success(String instanceId) {
 						LOGGER.debug("The request " + request + " forwarded to " + memberAddress
 								+ " gets instance " + instanceId);
-						asynchronousRequests.remove(request.getId());
+						if (asynchronousRequests.remove(request.getId()) == null) {
+							removeRemoteInstance(memberAddress, instanceId);
+							return;
+						}
 						if (instanceId == null) {
 							return;
 						}
+						
 						request.setState(RequestState.FULFILLED);
 						request.setInstanceId(instanceId);
 						if (!instanceMonitoringTimer.isScheduled()) {
@@ -675,7 +687,7 @@ public class ManagerController {
 					@Override
 					public void error(Throwable t) {
 						LOGGER.debug("The request " + request + " forwarded to " + memberAddress
-								+ " gets error " + t.getStackTrace());
+								+ " gets error ", t);
 						asynchronousRequests.remove(request.getId());
 					}
 				});
@@ -684,10 +696,6 @@ public class ManagerController {
 	
 	protected boolean isRequestForwardedtoRemoteMember(String requestId) {
 		return asynchronousRequests.containsKey(requestId);
-	}
-	
-	protected Request getRequestForwardedCallback(String requestId) {
-		return asynchronousRequests.get(requestId);
 	}
 	
 	private boolean createLocalInstance(Request request) {
@@ -769,6 +777,9 @@ public class ManagerController {
 		boolean allFulfilled = true;
 		LOGGER.debug("Checking and submiting requests.");
 
+		//checking time stamp of forwarded requests
+		removeAsyncRequestReachedTimeout();
+		
 		List<Request> openRequests = requests.get(RequestState.OPEN);
 		for (Request request : openRequests) {
 			if (isRequestForwardedtoRemoteMember(request.getId())) {
@@ -798,6 +809,25 @@ public class ManagerController {
 		if (allFulfilled) {
 			LOGGER.info("All requests fulfilled.");
 		}
+	}
+
+	protected void removeAsyncRequestReachedTimeout() {
+		Collection<ForwardedRequest> forwardedRequests = asynchronousRequests.values();
+		for (ForwardedRequest forwardedRequest : forwardedRequests) {
+			if (timoutReached(forwardedRequest)){
+				asynchronousRequests.remove(forwardedRequest.getRequest().getId());
+			}
+		}
+	}
+
+	private boolean timoutReached(ForwardedRequest forwardedRequest) {
+		long nowMilli = dateUtils.currentTimeMillis();
+		Date now = new Date(nowMilli);
+		
+		Calendar c = Calendar.getInstance();
+		c.setTime(new Date(forwardedRequest.getTimeStamp())); 
+		c.add(Calendar.MILLISECOND, (int) DEFAULT_SCHEDULER_PERIOD); 
+		return now.after(c.getTime());
 	}
 
 	private boolean createLocalInstanceWithFederationUser(Request request) {
@@ -905,5 +935,24 @@ public class ManagerController {
 			allFullInstances.add(instance);
 		}
 		return allFullInstances;
+	}
+}
+
+class ForwardedRequest {
+	
+	private Request request;
+	private long timeStamp;
+	
+	public ForwardedRequest(Request request, long timeStamp) {
+		this.request = request;
+		this.timeStamp = timeStamp;
+	}
+	
+	public Request getRequest() {
+		return request;
+	}
+	
+	public long getTimeStamp() {
+		return timeStamp;
 	}
 }

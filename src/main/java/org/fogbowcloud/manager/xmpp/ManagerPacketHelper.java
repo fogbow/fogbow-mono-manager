@@ -1,8 +1,6 @@
 package org.fogbowcloud.manager.xmpp;
 
 import java.io.FileInputStream;
-import java.io.IOException;
-import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -33,8 +31,8 @@ import org.fogbowcloud.manager.occi.request.Request;
 import org.jamppa.component.PacketCallback;
 import org.jamppa.component.PacketSender;
 import org.xmpp.packet.IQ;
-import org.xmpp.packet.Packet;
 import org.xmpp.packet.IQ.Type;
+import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.PacketError.Condition;
 
@@ -247,13 +245,17 @@ public class ManagerPacketHelper {
 	}
 
 	public static void deleteRemoteInstace(Request request, PacketSender packetSender) {
+		deleteRemoteInstace(request.getMemberId(), request.getInstanceId(), packetSender);
+	}
+	
+	public static void deleteRemoteInstace(String memberAddress, String instanceId, PacketSender packetSender) {
 		IQ iq = new IQ();
-		iq.setTo(request.getMemberId());
+		iq.setTo(memberAddress);
 		iq.setType(Type.set);
 		Element queryEl = iq.getElement().addElement("query",
 				ManagerXmppComponent.REMOVEINSTANCE_NAMESPACE);
 		Element instanceEl = queryEl.addElement("instance");
-		instanceEl.addElement("id").setText(request.getInstanceId());
+		instanceEl.addElement("id").setText(instanceId);
 
 		IQ response = (IQ) packetSender.syncSendPacket(iq);
 		if (response.getError() != null) {

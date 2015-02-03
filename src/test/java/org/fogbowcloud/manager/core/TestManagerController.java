@@ -244,6 +244,82 @@ public class TestManagerController {
 		}
 	}
 	
+	@Test
+	public void testRemoveForwardedRequestAfterTimeout() throws InterruptedException {
+		final String federationUserAccessId = "Federation-User-Access-Id";
+		final String federationUser = "federationUser";
+		Token federationToken = new Token(federationUserAccessId, federationUser, new Date(),
+				new HashMap<String, String>());
+		
+		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);
+		managerController.setPacketSender(packetSender);
+		
+		ResourcesInfo localResourcesInfo = new ResourcesInfo("", "", "", "", null, null);
+		localResourcesInfo.setId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		
+		ResourcesInfo remoteResourcesInfo = new ResourcesInfo("", "", "", "", null, null);
+		remoteResourcesInfo.setId(DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL);
+		
+		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
+		Mockito.when(
+				computePlugin.requestInstance(Mockito.any(Token.class), Mockito.anyList(), 
+						Mockito.anyMap(), Mockito.anyString()))
+				.thenThrow(new OCCIException(ErrorType.UNAUTHORIZED, ""));
+				
+		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class)))
+				.thenReturn(localResourcesInfo);
+		managerController.setComputePlugin(computePlugin);
+
+		List<FederationMember> listMembers = new ArrayList<FederationMember>();
+		listMembers.add(new FederationMember(localResourcesInfo));
+		listMembers.add(new FederationMember(remoteResourcesInfo));
+		managerController.updateMembers(listMembers);
+
+		IdentityPlugin identityPlugin = managerTestHelper.getIdentityPlugin();
+		IdentityPlugin federationIdentityPlugin = managerTestHelper.getFederationIdentityPlugin();
+		Mockito.when(federationIdentityPlugin.getToken(
+				federationToken.getAccessId())).thenReturn(federationToken);
+		Mockito.when(identityPlugin.createFederationUserToken()).thenReturn(federationToken);
+		managerController.setLocalIdentityPlugin(identityPlugin);
+		managerController.setFederationIdentityPlugin(federationIdentityPlugin);
+
+		Request request1 = new Request("id1", federationToken, new ArrayList<Category>(),
+				new HashMap<String, String>());
+		request1.setState(RequestState.OPEN);
+		RequestRepository requestRepository = new RequestRepository();
+		requestRepository.addRequest(federationToken.getUser(), request1);
+		managerController.setRequests(requestRepository);
+
+		// mocking date
+		long now = System.currentTimeMillis();
+		DateUtils dateUtils = Mockito.mock(DateUtils.class);
+		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
+		managerController.setDateUtils(dateUtils);
+
+		managerController.checkAndSubmitOpenRequests();
+
+		List<Request> requestsFromUser = managerController.getRequestsFromUser(
+				federationToken.getAccessId());
+		for (Request request : requestsFromUser) {
+			Assert.assertEquals(RequestState.OPEN, request.getState());
+		}
+		Assert.assertTrue(managerController.isRequestForwardedtoRemoteMember(
+				request1.getId()));
+		
+		//updating time
+		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now + ManagerController.DEFAULT_SCHEDULER_PERIOD + 100);
+		
+		managerController.removeAsyncRequestReachedTimeout();
+		
+		Assert.assertFalse(managerController.isRequestForwardedtoRemoteMember(
+				request1.getId()));
+		
+		for (Request request : requestsFromUser) {
+			Assert.assertEquals(RequestState.OPEN, request.getState());
+			Assert.assertFalse(managerController.isRequestForwardedtoRemoteMember(request.getId()));
+		}
+	}
+		
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testSubmitRequestToRemoteMemberReturningNotFound() throws InterruptedException {
