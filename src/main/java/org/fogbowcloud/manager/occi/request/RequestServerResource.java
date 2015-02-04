@@ -8,7 +8,7 @@ import java.util.Map;
 
 import org.apache.http.HttpStatus;
 import org.apache.log4j.Logger;
-import org.fogbowcloud.manager.core.model.RequirementsHelper;
+import org.fogbowcloud.manager.core.RequirementsHelper;
 import org.fogbowcloud.manager.occi.OCCIApplication;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
@@ -142,7 +142,6 @@ public class RequestServerResource extends ServerResource {
 						+ request.getState() + "; " + RequestAttribute.TYPE.getValue() + "="
 						+ request.getAttValue(RequestAttribute.TYPE.getValue()) + "; "
 						+ RequestAttribute.INSTANCE_ID.getValue() + "="
-//						+ request.getInstanceId() + "\n";
 						+ request.getInstanceGlobalId() + "\n";
 						
 			}else {			
@@ -187,7 +186,6 @@ public class RequestServerResource extends ServerResource {
 		}
 		
 		attToOutput.put(RequestAttribute.STATE.getValue(), request.getState().getValue());
-//		attToOutput.put(RequestAttribute.INSTANCE_ID.getValue(), request.getInstanceId());
 		attToOutput.put(RequestAttribute.INSTANCE_ID.getValue(), request.getInstanceGlobalId());
 		
 		
@@ -306,18 +304,19 @@ public class RequestServerResource extends ServerResource {
 		HeaderUtils.checkDateValue(defOCCIAtt.get(RequestAttribute.VALID_UNTIL.getValue()));
 		HeaderUtils.checkIntegerValue(defOCCIAtt.get(RequestAttribute.INSTANCE_COUNT.getValue()));
 		
-		String requirementsAttr = RequestAttribute.INSTANCE_COUNT.getValue();
-		if (!RequirementsHelper.checkRequirements(defOCCIAtt.get(requirementsAttr))) {
-			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.UNSUPPORTED_ATTRIBUTES);
+		String requirementsAttr = defOCCIAtt.get(RequestAttribute.REQUIREMENTS.getValue());
+		if (requirementsAttr != null) {
+			if (!RequirementsHelper.checkRequirements(requirementsAttr)) {
+				throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.UNSUPPORTED_ATTRIBUTES);
+			}
+			String location = RequirementsHelper.getLocationRequirements(requirementsAttr);
+			if (location != null) {
+				defOCCIAtt.put(RequirementsHelper.GLUE_LOCATION_TERM, location);			
+			}
+			
+			defOCCIAtt.put(RequestAttribute.REQUIREMENTS.getValue(),
+					RequirementsHelper.normalizeRequirements(requirementsAttr));
 		}
-		String requirementsStr = defOCCIAtt.get(requirementsAttr);
-		String location = RequirementsHelper.getLocationRequirements(requirementsStr);
-		if (location != null) {
-			defOCCIAtt.put(RequirementsHelper.GLUE_LOCATION_TERM, location);			
-		}
-		
-		defOCCIAtt.put(requirementsAttr,
-				RequirementsHelper.normalizeRequirements(requirementsStr));
 
 		LOGGER.debug("Checking if all attributes are supported. OCCI attributes: " + defOCCIAtt);
 
@@ -372,7 +371,6 @@ public class RequestServerResource extends ServerResource {
 						+ RequestAttribute.STATE.getValue() + "=" + request.getState() + "; "
 						+ RequestAttribute.TYPE.getValue() + "="
 						+ request.getAttValue(RequestAttribute.TYPE.getValue()) + "; "
-//						+ RequestAttribute.INSTANCE_ID.getValue() + "=" + request.getInstanceId()
 						+ RequestAttribute.INSTANCE_ID.getValue() + "=" + request.getInstanceGlobalId()
 						+ "\n";
 			}else {			

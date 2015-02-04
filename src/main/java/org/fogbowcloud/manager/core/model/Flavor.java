@@ -6,12 +6,28 @@ public class Flavor {
 	private String name;
 	private String cpu;
 	private String mem;
+	private String disk;
 
 	public Flavor(String name, String cpu, String mem, Integer capacity) {
 		this.setName(name);
 		this.setCpu(cpu);
 		this.setMem(mem);
 		this.setCapacity(capacity);
+	}
+	
+	public Flavor(String name, String cpu, String mem, String disk) {
+		this.setName(name);
+		this.setCpu(cpu);
+		this.setMem(mem);
+		this.setDisk(disk);
+	}
+	
+	public String getDisk() {
+		return disk;
+	}
+	
+	public void setDisk(String disk) {
+		this.disk = disk;
 	}
 
 	public Integer getCapacity() {

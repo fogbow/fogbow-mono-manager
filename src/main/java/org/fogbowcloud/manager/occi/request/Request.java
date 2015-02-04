@@ -7,6 +7,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import org.fogbowcloud.manager.core.RequirementsHelper;
 import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.Token;
@@ -106,6 +107,10 @@ public class Request {
 
 	public void setMemberId(String memberId) {
 		this.memberId = memberId;
+	}
+	
+	public String getSiteDestiny() {		
+		return xOCCIAtt.get(RequirementsHelper.GLUE_LOCATION_TERM);
 	}
 
 	public String toString() {

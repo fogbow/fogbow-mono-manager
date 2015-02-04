@@ -643,11 +643,15 @@ public class ManagerController {
 	}
 
 	private void createAsynchronousRemoteInstance(final Request request) {
-		FederationMember member = memberPicker.pick(this);
-		if (member == null) {
-			return;
+		String memberAddress = request.getSiteDestiny();
+		if (memberAddress == null) {
+			FederationMember member = memberPicker.pick(this);
+			if (member == null) {
+				return;
+			}
+			memberAddress = member.getResourcesInfo().getId();
 		}
-		final String memberAddress = member.getResourcesInfo().getId();
+
 		request.setMemberId(memberAddress);
 
 		LOGGER.info("Submiting request " + request + " to member " + memberAddress);
