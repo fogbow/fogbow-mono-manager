@@ -25,6 +25,7 @@ import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.core.RequirementsHelper;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
@@ -87,12 +88,12 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		networkId = properties
 				.getProperty(OpenStackConfigurationConstants.COMPUTE_NOVAV2_NETWORK_KEY);
 
-		fogbowTermToOpenStack.put(RequestConstants.SMALL_TERM,
-				properties.getProperty(OpenStackConfigurationConstants.COMPUTE_NOVAV2_FLAVOR_SMALL_KEY));
-		fogbowTermToOpenStack.put(RequestConstants.MEDIUM_TERM,
-				properties.getProperty(OpenStackConfigurationConstants.COMPUTE_NOVAV2_FLAVOR_MEDIUM_KEY));
-		fogbowTermToOpenStack.put(RequestConstants.LARGE_TERM,
-				properties.getProperty(OpenStackConfigurationConstants.COMPUTE_NOVAV2_FLAVOR_LARGE_KEY));
+//		fogbowTermToOpenStack.put(RequestConstants.SMALL_TERM,
+//				properties.getProperty(OpenStackConfigurationConstants.COMPUTE_NOVAV2_FLAVOR_SMALL_KEY));
+//		fogbowTermToOpenStack.put(RequestConstants.MEDIUM_TERM,
+//				properties.getProperty(OpenStackConfigurationConstants.COMPUTE_NOVAV2_FLAVOR_MEDIUM_KEY));
+//		fogbowTermToOpenStack.put(RequestConstants.LARGE_TERM,
+//				properties.getProperty(OpenStackConfigurationConstants.COMPUTE_NOVAV2_FLAVOR_LARGE_KEY));
 		
 		// userdata
 		fogbowTermToOpenStack.put(RequestConstants.USER_DATA_TERM, "user_data");
@@ -121,22 +122,27 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 
 		String flavorRef = null;
 		
+		// Finding flavor
+		flavorRef = RequirementsHelper.findFlavor(getFlavors(),
+				xOCCIAtt.get(RequestAttribute.REQUIREMENTS.getValue()));	
+		
 		for (Category category : categories) {
 			String openstackRef = fogbowTermToOpenStack.get(category.getTerm());
 			if (openstackRef == null && !category.getScheme().equals(
 					RequestConstants.TEMPLATE_OS_SCHEME)) {
 				throw new OCCIException(ErrorType.BAD_REQUEST,
 						ResponseConstants.CLOUD_NOT_SUPPORT_CATEGORY + category.getTerm());
-			} else if (category.getTerm().equals(RequestConstants.SMALL_TERM)
-					|| category.getTerm().equals(RequestConstants.MEDIUM_TERM)
-					|| category.getTerm().equals(RequestConstants.LARGE_TERM)) {				
-				// There are more than one flavor category
-				if (flavorRef != null) {
-					throw new OCCIException(ErrorType.BAD_REQUEST,
-							ResponseConstants.IRREGULAR_SYNTAX);					
-				}
-				flavorRef = openstackRef;
 			}
+//			else if (category.getTerm().equals(RequestConstants.SMALL_TERM)
+//					|| category.getTerm().equals(RequestConstants.MEDIUM_TERM)
+//					|| category.getTerm().equals(RequestConstants.LARGE_TERM)) {				
+//				// There are more than one flavor category
+//				if (flavorRef != null) {
+//					throw new OCCIException(ErrorType.BAD_REQUEST,
+//							ResponseConstants.IRREGULAR_SYNTAX);					
+//				}
+//				flavorRef = openstackRef;
+//			}
 		}
 
 		String publicKey = xOCCIAtt.get(RequestAttribute.DATA_PUBLIC_KEY.getValue());
@@ -614,4 +620,10 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
         checkStatusResponse(response, responseStr);
         return responseStr;
     }
+
+	@Override
+	public List<Flavor> getFlavors() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

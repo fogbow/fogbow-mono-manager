@@ -48,6 +48,10 @@ public class Request {
 		}
 	}
 
+	public String getRequirements() {
+		return xOCCIAtt.get(RequestAttribute.REQUIREMENTS.getValue());
+	}
+	
 	public String getInstanceId() {
 		return instanceId;
 	}
@@ -107,10 +111,6 @@ public class Request {
 
 	public void setMemberId(String memberId) {
 		this.memberId = memberId;
-	}
-	
-	public String getSiteDestiny() {		
-		return xOCCIAtt.get(RequirementsHelper.GLUE_LOCATION_TERM);
 	}
 
 	public String toString() {

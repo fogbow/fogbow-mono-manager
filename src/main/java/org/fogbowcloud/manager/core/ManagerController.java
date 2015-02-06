@@ -7,6 +7,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Random;
 import java.util.TimerTask;
 import java.util.UUID;
 import java.util.concurrent.Executors;
@@ -97,7 +98,7 @@ public class ManagerController {
 	public void setAuthorizationPlugin(AuthorizationPlugin authorizationPlugin) {
 		this.authorizationPlugin = authorizationPlugin;
 	}
-
+	
 	public void setImageStoragePlugin(ImageStoragePlugin imageStoragePlugin) {
 		this.imageStoragePlugin = imageStoragePlugin;
 	}
@@ -643,7 +644,8 @@ public class ManagerController {
 	}
 
 	private void createAsynchronousRemoteInstance(final Request request) {
-		String memberAddress = request.getSiteDestiny();
+		String memberAddress = chooseMemberAddressByTheRequirements(request.getRequirements());
+		
 		if (memberAddress == null) {
 			FederationMember member = memberPicker.pick(this);
 			if (member == null) {
@@ -679,6 +681,21 @@ public class ManagerController {
 					}
 				});
 			
+	}
+
+	protected String chooseMemberAddressByTheRequirements(String requirements) {
+		List<FederationMember> federationMembers = new ArrayList<FederationMember>();
+		for (FederationMember member : members) {
+			if (RequirementsHelper.checkLocation(requirements, member.getResourcesInfo().getId())) {
+				federationMembers.add(member);
+			}
+		}
+
+		if (federationMembers.size() > 0) {
+			int randomNum = new Random().nextInt(((federationMembers.size() - 1) - 0) + 1) + 0;
+			return federationMembers.get(randomNum).getResourcesInfo().getId();
+		}
+		return null;
 	}
 	
 	protected boolean isRequestForwardedtoRemoteMember(String requestId) {

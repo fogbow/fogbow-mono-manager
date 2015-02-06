@@ -12,6 +12,7 @@ import java.util.Map;
 import org.dom4j.Element;
 import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.core.model.FederationMember;
+import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
@@ -1552,5 +1553,37 @@ public class TestManagerController {
 				.getDefaultToken().getAccessId());
 		
 		Assert.assertEquals(0, requestsFromUser.size());
+	}
+			
+	@Test
+	public void testChooseFederationAddressBytheRequirements() throws InterruptedException {
+		String federationMember = "federationMemberOne";
+		String federationMemberTwo = "federationMemberTwo";
+		String federationMemberThree = "federationMemberThree";
+		String federationMemberFour = "federationMemberFour";
+		ResourcesInfo resourceInfo = new ResourcesInfo(federationMember, "", "", "", "",
+				new ArrayList<Flavor>(), null);
+		ResourcesInfo resourceInfoTwo = new ResourcesInfo(federationMemberTwo, "", "", "", "",
+				new ArrayList<Flavor>(), null);
+		ResourcesInfo resourceInfoThree = new ResourcesInfo(federationMemberThree, "", "", "", "",
+				new ArrayList<Flavor>(), null);
+		ResourcesInfo resourceInfoFour = new ResourcesInfo(federationMemberFour, "", "", "", "",
+				new ArrayList<Flavor>(), null);
+		List<FederationMember> federationMembers = new ArrayList<FederationMember>();
+		federationMembers.add(new FederationMember(resourceInfo));
+		federationMembers.add(new FederationMember(resourceInfoTwo));
+		federationMembers.add(new FederationMember(resourceInfoThree));
+		federationMembers.add(new FederationMember(resourceInfoFour));
+		managerController.updateMembers(federationMembers);
+
+		String requirements = RequirementsHelper.GLUE_LOCATION_TERM + "==\"" + federationMember
+				+ "\"" + "||" + RequirementsHelper.GLUE_LOCATION_TERM + "==\""
+				+ federationMemberThree + "\"";
+		String memberAddress = managerController.chooseMemberAddressByTheRequirements(requirements);
+		
+		if (!memberAddress.equals(federationMember)
+				&& !memberAddress.equals(federationMemberThree)) {
+			Assert.fail();
+		}
 	}
 }

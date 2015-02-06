@@ -28,6 +28,8 @@ import org.apache.http.params.CoreProtocolPNames;
 import org.apache.http.params.HttpParams;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.core.RequirementsHelper;
+import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.openstack.OpenStackConfigurationConstants;
@@ -38,6 +40,7 @@ import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.instance.Instance;
+import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.restlet.Client;
 import org.restlet.Request;
@@ -78,19 +81,19 @@ public class OCCIComputePlugin implements ComputePlugin {
 		networkId = properties
 				.getProperty(OpenStackConfigurationConstants.COMPUTE_OCCI_NETWORK_KEY);
 		
-		fogTermToCategory.put(
-				RequestConstants.SMALL_TERM,
-				createFlavorCategory(OpenStackConfigurationConstants.COMPUTE_OCCI_FLAVOR_SMALL_KEY,
-						properties));
-		fogTermToCategory
-				.put(RequestConstants.MEDIUM_TERM,
-						createFlavorCategory(
-								OpenStackConfigurationConstants.COMPUTE_OCCI_FLAVOR_MEDIUM_KEY,
-								properties));
-		fogTermToCategory.put(
-				RequestConstants.LARGE_TERM,
-				createFlavorCategory(OpenStackConfigurationConstants.COMPUTE_OCCI_FLAVOR_LARGE_KEY,
-						properties));
+//		fogTermToCategory.put(
+//				RequestConstants.SMALL_TERM,
+//				createFlavorCategory(OpenStackConfigurationConstants.COMPUTE_OCCI_FLAVOR_SMALL_KEY,
+//						properties));
+//		fogTermToCategory
+//				.put(RequestConstants.MEDIUM_TERM,
+//						createFlavorCategory(
+//								OpenStackConfigurationConstants.COMPUTE_OCCI_FLAVOR_MEDIUM_KEY,
+//								properties));
+//		fogTermToCategory.put(
+//				RequestConstants.LARGE_TERM,
+//				createFlavorCategory(OpenStackConfigurationConstants.COMPUTE_OCCI_FLAVOR_LARGE_KEY,
+//						properties));
 
 		fogTermToCategory.put(RequestConstants.USER_DATA_TERM, new Category("user_data",
 				instanceScheme, RequestConstants.MIXIN_CLASS));
@@ -117,6 +120,11 @@ public class OCCIComputePlugin implements ComputePlugin {
 					ResponseConstants.IRREGULAR_SYNTAX);
 		}
 		occiCategories.add(new Category(localImageId, osScheme, RequestConstants.MIXIN_CLASS));
+				
+		// Finding and adding flavor
+		String flavorRef = RequirementsHelper.findFlavor(getFlavors(),
+				xOCCIAtt.get(RequestAttribute.REQUIREMENTS.getValue()));
+		occiCategories.add(new Category(flavorRef, resourceScheme, RequestConstants.MIXIN_CLASS));
 		
 		for (Category category : requestCategories) {
 			if (fogTermToCategory.get(category.getTerm()) == null) {
@@ -377,6 +385,12 @@ public class OCCIComputePlugin implements ComputePlugin {
 	}
 	
 	public String getImageId(Token token, String imageName) {
+		return null;
+	}
+
+	@Override
+	public List<Flavor> getFlavors() {
+		// TODO Auto-generated method stub
 		return null;
 	}
 

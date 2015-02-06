@@ -33,39 +33,56 @@ public class TestRequirementsHelper {
 
 	@SuppressWarnings("static-access")
 	@Test
-	public void TestNormalizeRequirements() {
-		String sufix = "&&" + RequirementsHelper.GLUE_LOCATION_TERM + "==\"x\"";
-		String prefix = "X == 1 && Y >=0 ";
-
-		String requirementsStr = prefix + sufix;
-		String normalizedRequirements = requirementsHelper.normalizeRequirements(requirementsStr);
-		Assert.assertEquals(prefix, normalizedRequirements);
+	public void TestNormalizeAttrForCheck() {
+		String value = "teste";
+		String valueExpected = "\"" + value + "\"";
+		Assert.assertEquals(valueExpected, requirementsHelper.normalizeLocationToCheck(value));
+		Assert.assertEquals(valueExpected,
+				requirementsHelper.normalizeLocationToCheck(valueExpected));
+		Assert.assertNull(requirementsHelper.normalizeLocationToCheck(null));
 	}
 
 	@SuppressWarnings("static-access")
 	@Test
-	public void TestGetLocationRequirements() {
-		String valueLocation = "default";
-		String requirementsStr = "X == 1 && Y >=0 && " + RequirementsHelper.GLUE_LOCATION_TERM
-				+ " == \"" + valueLocation + "\"";
-		String locationRequirements = requirementsHelper.getLocationRequirements(requirementsStr);
-		Assert.assertEquals(valueLocation, locationRequirements);
+	public void TestCheckLocation() {
+		String value = "\"valueCorrect\"";
+		String requirementsStr = "x==1 && " + RequirementsHelper.GLUE_LOCATION_TERM + "==" + value;
+		Assert.assertTrue(requirementsHelper.checkLocation(requirementsStr, value));
+
+		value = "valueCorrect";
+		requirementsStr = RequirementsHelper.GLUE_LOCATION_TERM + "==" + "\"" + value + "\"";
+		Assert.assertTrue(requirementsHelper.checkLocation(requirementsStr, value));
+	}
+
+	@Test
+	public void TestGetOneLocation() {
+		String value = "local1";
+		String requirementsStr = "x==1 && " + RequirementsHelper.GLUE_LOCATION_TERM + "==" + value;
+		Assert.assertEquals(1, RequirementsHelper.getLocationsInRequiremets(requirementsStr).size());
+
+		requirementsStr = RequirementsHelper.GLUE_LOCATION_TERM + "==" + value;
+		Assert.assertEquals(1, RequirementsHelper.getLocationsInRequiremets(requirementsStr).size());
+	}
+
+	@Test
+	public void TestGetTwoLocation() {
+		String value = "local1";
+		String valueTwo = "local2";
+		String requirementsStr = "x==1 && " + RequirementsHelper.GLUE_LOCATION_TERM + "==" + value
+				+ "&&" + RequirementsHelper.GLUE_LOCATION_TERM + "==" + valueTwo;
+		Assert.assertEquals(2, RequirementsHelper.getLocationsInRequiremets(requirementsStr).size());
+	}
+
+	@Test
+	public void TestGetOneLocationWithTwoValues() {
+		String value = "local1";
+		String valueTwo = "local2";
+		String requirementsStr = "x==1 && " + RequirementsHelper.GLUE_LOCATION_TERM + "==" + value
+				+ "&&" + RequirementsHelper.GLUE_LOCATION_TERM + "!=" + valueTwo;
+		Assert.assertEquals(1, RequirementsHelper.getLocationsInRequiremets(requirementsStr).size());
 	}
 
 	@SuppressWarnings("static-access")
-	@Test
-	public void TestGetNullLocationRequirements() {
-		String requirementsStr = "X == 1 && Y >=0 && ";
-		String requirementsStrTwo = "X == 1 && Y >=0 && " + RequirementsHelper.GLUE_LOCATION_TERM
-				+ " >= \"" + "x" + "\"";
-		String requirementsStrThree = "X == 1 && Y >=0 & " + RequirementsHelper.GLUE_LOCATION_TERM
-				+ " >= \"" + "x" + "\"";
-
-		Assert.assertNull(requirementsHelper.getLocationRequirements(requirementsStr));
-		Assert.assertNull(requirementsHelper.getLocationRequirements(requirementsStrTwo));
-		Assert.assertNull(requirementsHelper.getLocationRequirements(requirementsStrThree));
-	}
-
 	@Test
 	public void TestCheckFlavor() {
 		Flavor flavor = new Flavor("test", "12", "400", "11");
@@ -76,6 +93,7 @@ public class TestRequirementsHelper {
 		Assert.assertTrue(requirementsHelper.checkFlavorPerRequirements(flavor, requirementsStr));
 	}
 
+	@SuppressWarnings("static-access")
 	@Test
 	public void TestCheckInvalidFlavor() {
 		Flavor flavor = new Flavor("test", "12", "400", "9");
@@ -86,6 +104,7 @@ public class TestRequirementsHelper {
 		Assert.assertFalse(requirementsHelper.checkFlavorPerRequirements(flavor, requirementsStr));
 	}
 
+	@SuppressWarnings("static-access")
 	@Test
 	public void TestFindFlavor() {
 		String firstValue = "One";
@@ -102,7 +121,7 @@ public class TestRequirementsHelper {
 		String mem = RequirementsHelper.GLUE_MEM_RAM_TERM;
 		String vCpu = RequirementsHelper.GLUE_VCPU_TERM;
 		String requirementsStr = disk + " > 5 && " + mem + " > 50 && " + vCpu + " > 0";
-		
+
 		Assert.assertEquals(firstValue, requirementsHelper.findFlavor(flavors, requirementsStr));
 	}
 }

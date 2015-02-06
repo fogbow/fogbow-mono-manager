@@ -25,6 +25,7 @@ import org.apache.commons.codec.Charsets;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpStatus;
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.core.RequirementsHelper;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
@@ -107,12 +108,12 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		checkFlavor(String.valueOf(properties.get(OneConfigurationConstants.COMPUTE_ONE_MEDIUM_KEY)));
 		checkFlavor(String.valueOf(properties.get(OneConfigurationConstants.COMPUTE_ONE_LARGE_KEY)));
 		
-		fogbowTermToOpenNebula.put(RequestConstants.SMALL_TERM,
-				String.valueOf(properties.get(OneConfigurationConstants.COMPUTE_ONE_SMALL_KEY)));
-		fogbowTermToOpenNebula.put(RequestConstants.MEDIUM_TERM,
-				String.valueOf(properties.get(OneConfigurationConstants.COMPUTE_ONE_MEDIUM_KEY)));
-		fogbowTermToOpenNebula.put(RequestConstants.LARGE_TERM,
-				String.valueOf(properties.get(OneConfigurationConstants.COMPUTE_ONE_LARGE_KEY)));
+//		fogbowTermToOpenNebula.put(RequestConstants.SMALL_TERM,
+//				String.valueOf(properties.get(OneConfigurationConstants.COMPUTE_ONE_SMALL_KEY)));
+//		fogbowTermToOpenNebula.put(RequestConstants.MEDIUM_TERM,
+//				String.valueOf(properties.get(OneConfigurationConstants.COMPUTE_ONE_MEDIUM_KEY)));
+//		fogbowTermToOpenNebula.put(RequestConstants.LARGE_TERM,
+//				String.valueOf(properties.get(OneConfigurationConstants.COMPUTE_ONE_LARGE_KEY)));
 		
 		// userdata
 		fogbowTermToOpenNebula.put(RequestConstants.USER_DATA_TERM, "user_data");
@@ -156,21 +157,22 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		// removing fogbow-request category
 		categories.remove(new Category(RequestConstants.TERM, RequestConstants.SCHEME,
 				RequestConstants.KIND_CLASS));
-		
+				
 		// checking categories are valid	
 		for (Category category : categories) {
 			if (fogbowTermToOpenNebula.get(category.getTerm()) == null) {
 				throw new OCCIException(ErrorType.BAD_REQUEST,
 						ResponseConstants.CLOUD_NOT_SUPPORT_CATEGORY + category.getTerm());
-			} else if (category.getTerm().equals(RequestConstants.SMALL_TERM)
-					|| category.getTerm().equals(RequestConstants.MEDIUM_TERM)
-					|| category.getTerm().equals(RequestConstants.LARGE_TERM)) {				
-				// There are more than one flavor category
-				if (choosenFlavor != null) {
-					throw new OCCIException(ErrorType.BAD_REQUEST,
-							ResponseConstants.IRREGULAR_SYNTAX);					
-				}
-				choosenFlavor = fogbowTermToOpenNebula.get(category.getTerm());
+//			} 
+//			else if (category.getTerm().equals(RequestConstants.SMALL_TERM)
+//					|| category.getTerm().equals(RequestConstants.MEDIUM_TERM)
+//					|| category.getTerm().equals(RequestConstants.LARGE_TERM)) {				
+//				// There are more than one flavor category
+//				if (choosenFlavor != null) {
+//					throw new OCCIException(ErrorType.BAD_REQUEST,
+//							ResponseConstants.IRREGULAR_SYNTAX);					
+//				}
+//				choosenFlavor = fogbowTermToOpenNebula.get(category.getTerm());
 			} else if (category.getTerm().equals(RequestConstants.PUBLIC_KEY_TERM)) {
 				templateProperties.put("ssh-public-key",
 						xOCCIAtt.get(RequestAttribute.DATA_PUBLIC_KEY.getValue()));
@@ -596,6 +598,12 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 				return image.getId();
 			}
 		}
+		return null;
+	}
+
+	@Override
+	public List<Flavor> getFlavors() {
+		// TODO Auto-generated method stub
 		return null;
 	}
 }

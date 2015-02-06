@@ -308,14 +308,8 @@ public class RequestServerResource extends ServerResource {
 		if (requirementsAttr != null) {
 			if (!RequirementsHelper.checkRequirements(requirementsAttr)) {
 				throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.UNSUPPORTED_ATTRIBUTES);
-			}
-			String location = RequirementsHelper.getLocationRequirements(requirementsAttr);
-			if (location != null) {
-				defOCCIAtt.put(RequirementsHelper.GLUE_LOCATION_TERM, location);			
-			}
-			
-			defOCCIAtt.put(RequestAttribute.REQUIREMENTS.getValue(),
-					RequirementsHelper.normalizeRequirements(requirementsAttr));
+			}			
+			defOCCIAtt.put(RequestAttribute.REQUIREMENTS.getValue(), requirementsAttr);
 		}
 
 		LOGGER.debug("Checking if all attributes are supported. OCCI attributes: " + defOCCIAtt);
