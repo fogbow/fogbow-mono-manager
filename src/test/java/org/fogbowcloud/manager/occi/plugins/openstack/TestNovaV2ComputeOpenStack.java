@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.apache.http.HttpStatus;
+import org.fogbowcloud.manager.core.RequirementsHelper;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.openstack.KeystoneIdentityPlugin;
@@ -42,16 +43,18 @@ public class TestNovaV2ComputeOpenStack {
 	public void setUp() throws Exception {
 		Properties properties = new Properties();
 		properties.put(OpenStackConfigurationConstants.COMPUTE_NOVAV2_URL_KEY, PluginHelper.COMPUTE_NOVAV2_URL);
-		properties.put(OpenStackConfigurationConstants.COMPUTE_NOVAV2_FLAVOR_SMALL_KEY,
-				NovaV2ComputeApplication.SMALL_FLAVOR);
-		properties.put(OpenStackConfigurationConstants.COMPUTE_NOVAV2_FLAVOR_MEDIUM_KEY,
-				NovaV2ComputeApplication.MEDIUM_FLAVOR);
-		properties.put(OpenStackConfigurationConstants.COMPUTE_NOVAV2_FLAVOR_LARGE_KEY,
-				NovaV2ComputeApplication.MEDIUM_FLAVOR);
 		properties.put(OpenStackConfigurationConstants.COMPUTE_NOVAV2_IMAGE_PREFIX_KEY
 				+ PluginHelper.LINUX_X86_TERM, "imageid");
-
+		
 		novaV2ComputeOpenStack = new OpenStackNovaV2ComputePlugin(properties);
+		
+		List<Flavor> flavors = new ArrayList<Flavor>();
+		Flavor flavorSmall = new Flavor(RequestConstants.SMALL_TERM, "1", "1000", "10");
+		flavorSmall.setId("1");
+		flavors.add(flavorSmall); 
+		flavors.add(new Flavor("medium", "2", "2000", "20"));
+		flavors.add(new Flavor("big", "4", "4000", "40"));
+		novaV2ComputeOpenStack.setFlavors(flavors );
 		
 		HashMap<String, String> tokenAtt = new HashMap<String, String>();
 		tokenAtt.put(KeystoneIdentityPlugin.TENANT_ID, "tenantid");
@@ -72,13 +75,8 @@ public class TestNovaV2ComputeOpenStack {
 	public void testRequestOneInstance(){
 		Assert.assertEquals(0, novaV2ComputeOpenStack.getInstances(defaultToken).size());
 		
-		//requesting one default instance
-		List<Category> categories = new ArrayList<Category>();
-		categories.add(new Category(RequestConstants.SMALL_TERM,
-				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
-		
 		Assert.assertEquals(FIRST_INSTANCE_ID, novaV2ComputeOpenStack.requestInstance(
-				defaultToken, categories, new HashMap<String, String>(), PluginHelper.LINUX_X86_TERM));
+				defaultToken, new ArrayList<Category>(), new HashMap<String, String>(), PluginHelper.LINUX_X86_TERM));
 		
 		Assert.assertEquals(1, novaV2ComputeOpenStack.getInstances(defaultToken).size());
 	}
@@ -89,8 +87,6 @@ public class TestNovaV2ComputeOpenStack {
 		
 		//requesting one default instance
 		List<Category> categories = new ArrayList<Category>();
-		categories.add(new Category(RequestConstants.SMALL_TERM,
-				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
 		
 		for (int i = 0; i < NovaV2ComputeApplication.MAX_INSTANCE_COUNT; i++) {
 			novaV2ComputeOpenStack.requestInstance(
@@ -137,30 +133,20 @@ public class TestNovaV2ComputeOpenStack {
 	public void testRequestOneInstanceWithPublicKey(){
 		Assert.assertEquals(0, novaV2ComputeOpenStack.getInstances(defaultToken).size());
 		
-		//requesting one default instance
-		List<Category> categories = new ArrayList<Category>();
-		categories.add(new Category(RequestConstants.SMALL_TERM,
-				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
-		
 		HashMap<String, String> xOCCIAtt = new HashMap<String, String>();
 		xOCCIAtt.put(RequestAttribute.DATA_PUBLIC_KEY.getValue(), "public key data");
 		Assert.assertEquals(FIRST_INSTANCE_ID, novaV2ComputeOpenStack.requestInstance(
-				defaultToken, categories, xOCCIAtt, PluginHelper.LINUX_X86_TERM));
+				defaultToken, new ArrayList<Category>(), xOCCIAtt, PluginHelper.LINUX_X86_TERM));
 		
 		Assert.assertEquals(1, novaV2ComputeOpenStack.getInstances(defaultToken).size());
 	}
 	
 	@Test
 	public void testGetInstances(){
-		Assert.assertEquals(0, novaV2ComputeOpenStack.getInstances(defaultToken).size());
-		
-		//requesting one default instance
-		List<Category> categories = new ArrayList<Category>();
-		categories.add(new Category(RequestConstants.SMALL_TERM,
-				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
+		Assert.assertEquals(0, novaV2ComputeOpenStack.getInstances(defaultToken).size());	
 		
 		Assert.assertEquals(FIRST_INSTANCE_ID, novaV2ComputeOpenStack.requestInstance(
-				defaultToken, categories, new HashMap<String, String>(), 
+				defaultToken, new ArrayList<Category>(), new HashMap<String, String>(), 
 				PluginHelper.LINUX_X86_TERM));
 
 		// check getting all instance ids
@@ -173,18 +159,20 @@ public class TestNovaV2ComputeOpenStack {
 	public void testGetInstances2(){
 		Assert.assertEquals(0, novaV2ComputeOpenStack.getInstances(defaultToken).size());
 		
-		//requesting one default instance
-		List<Category> categories = new ArrayList<Category>();
-		categories.add(new Category(RequestConstants.SMALL_TERM,
-				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
+		Map<String, String> mapAttr = new HashMap<String, String>();
+		String disk = RequirementsHelper.GLUE_DISK_TERM;
+		String mem = RequirementsHelper.GLUE_MEM_RAM_TERM;
+		String vCpu = RequirementsHelper.GLUE_VCPU_TERM;
+		String requirementsStr = disk + " >= 10 && " + mem + " > 500 && " + vCpu + " > 0";
+		mapAttr.put(RequestAttribute.REQUIREMENTS.getValue(), requirementsStr);
 		
 		Assert.assertEquals(FIRST_INSTANCE_ID, novaV2ComputeOpenStack.requestInstance(
-				defaultToken, categories, new HashMap<String, String>(), PluginHelper.LINUX_X86_TERM));
+				defaultToken, new ArrayList<Category>(), mapAttr, PluginHelper.LINUX_X86_TERM));
 		Assert.assertEquals(SECOND_INSTANCE_ID, novaV2ComputeOpenStack.requestInstance(
-				defaultToken, categories, new HashMap<String, String>(), PluginHelper.LINUX_X86_TERM));
+				defaultToken, new ArrayList<Category>(), mapAttr, PluginHelper.LINUX_X86_TERM));
 
 		// check getting all instance ids
-		List<Instance> instances =novaV2ComputeOpenStack.getInstances(defaultToken); 
+		List<Instance> instances = novaV2ComputeOpenStack.getInstances(defaultToken); 
 		Assert.assertEquals(2, instances.size());
 		for (Instance instance : instances) {
 			Assert.assertTrue(FIRST_INSTANCE_ID.equals(instance.getId())
@@ -194,15 +182,10 @@ public class TestNovaV2ComputeOpenStack {
 	
 	@Test
 	public void testGetInstance(){
-		Assert.assertEquals(0, novaV2ComputeOpenStack.getInstances(defaultToken).size());
-		
-		//requesting one default instance
-		List<Category> categories = new ArrayList<Category>();
-		categories.add(new Category(RequestConstants.SMALL_TERM,
-				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
+		Assert.assertEquals(0, novaV2ComputeOpenStack.getInstances(defaultToken).size());		
 		
 		Assert.assertEquals(FIRST_INSTANCE_ID, novaV2ComputeOpenStack.requestInstance(
-				defaultToken, categories, new HashMap<String, String>(), PluginHelper.LINUX_X86_TERM));
+				defaultToken, new ArrayList<Category>(), new HashMap<String, String>(), PluginHelper.LINUX_X86_TERM));
 
 		// check getting all instance ids
 		Instance instance = novaV2ComputeOpenStack.getInstance(defaultToken, FIRST_INSTANCE_ID); 
@@ -230,13 +213,8 @@ public class TestNovaV2ComputeOpenStack {
 	public void testRemoveInstance(){
 		Assert.assertEquals(0, novaV2ComputeOpenStack.getInstances(defaultToken).size());
 		
-		//requesting one default instance
-		List<Category> categories = new ArrayList<Category>();
-		categories.add(new Category(RequestConstants.SMALL_TERM,
-				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
-		
 		Assert.assertEquals(FIRST_INSTANCE_ID, novaV2ComputeOpenStack.requestInstance(
-				defaultToken, categories, new HashMap<String, String>(), PluginHelper.LINUX_X86_TERM));
+				defaultToken, new ArrayList<Category>(), new HashMap<String, String>(), PluginHelper.LINUX_X86_TERM));
 		Assert.assertEquals(1, novaV2ComputeOpenStack.getInstances(defaultToken).size());
 		
 		// removing one instance
@@ -254,8 +232,6 @@ public class TestNovaV2ComputeOpenStack {
 		List<Category> categories = new ArrayList<Category>();
 		categories.add(new Category(PluginHelper.LINUX_X86_TERM,
 				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
-		categories.add(new Category(RequestConstants.SMALL_TERM,
-				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
 		
 		Assert.assertEquals(FIRST_INSTANCE_ID, novaV2ComputeOpenStack.requestInstance(
 				defaultToken, categories, new HashMap<String, String>(), PluginHelper.LINUX_X86_TERM));

@@ -4,6 +4,7 @@ public class Flavor {
 
 	private Integer capacity;
 	private String name;
+	private String id;
 	private String cpu;
 	private String mem;
 	private String disk;
@@ -60,6 +61,14 @@ public class Flavor {
 
 	public void setMem(String mem) {
 		this.mem = mem;
+	}
+	
+	public String getId() {
+		return id;
+	}
+	
+	public void setId(String id) {
+		this.id = id;
 	}
 	
 	@Override

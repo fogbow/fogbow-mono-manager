@@ -36,34 +36,38 @@ public class RequirementsHelper {
 	}
 
 	public static boolean checkFlavorPerRequirements(Flavor flavor, String requirementsStr) {
-		ClassAdParser classAdParser = new ClassAdParser(requirementsStr);
-		Op expr = (Op) classAdParser.parse();
-
-		List<String> listSearchAttr = new ArrayList<String>();
-		listSearchAttr.add(RequirementsHelper.GLUE_DISK_TERM);
-		listSearchAttr.add(RequirementsHelper.GLUE_MEM_RAM_TERM);
-		listSearchAttr.add(RequirementsHelper.GLUE_VCPU_TERM);
-
-		Env env = new Env();
-		String value = null;
-		for (String attr : listSearchAttr) {
-			List<ValueAndOperator> findValuesInRequiremets = findValuesInRequiremets(expr, attr);
-			if (findValuesInRequiremets.size() > 0) {
-				if (attr.equals(RequirementsHelper.GLUE_DISK_TERM)) {
-					value = flavor.getDisk();
-				} else if (attr.equals(RequirementsHelper.GLUE_MEM_RAM_TERM)) {
-					value = flavor.getMem();
-				} else if (attr.equals(RequirementsHelper.GLUE_VCPU_TERM)) {
-					value = flavor.getCpu();
+		try {
+			ClassAdParser classAdParser = new ClassAdParser(requirementsStr);		
+			Op expr = (Op) classAdParser.parse();
+			
+			List<String> listSearchAttr = new ArrayList<String>();
+			listSearchAttr.add(RequirementsHelper.GLUE_DISK_TERM);
+			listSearchAttr.add(RequirementsHelper.GLUE_MEM_RAM_TERM);
+			listSearchAttr.add(RequirementsHelper.GLUE_VCPU_TERM);
+			
+			Env env = new Env();
+			String value = null;
+			for (String attr : listSearchAttr) {
+				List<ValueAndOperator> findValuesInRequiremets = findValuesInRequiremets(expr, attr);
+				if (findValuesInRequiremets.size() > 0) {
+					if (attr.equals(RequirementsHelper.GLUE_DISK_TERM)) {
+						value = flavor.getDisk();
+					} else if (attr.equals(RequirementsHelper.GLUE_MEM_RAM_TERM)) {
+						value = flavor.getMem();
+					} else if (attr.equals(RequirementsHelper.GLUE_VCPU_TERM)) {
+						value = flavor.getCpu();
+					}
+					env.push((RecordExpr) new ClassAdParser("[" + attr + " = " + value + "]").parse());
 				}
-				env.push((RecordExpr) new ClassAdParser("[" + attr + " = " + value + "]").parse());
 			}
+			
+			classAdParser = new ClassAdParser(requirementsStr);
+			expr = (Op) classAdParser.parse();
+			
+			return expr.eval(env).isTrue();
+		} catch (Exception e) {
+			return false;
 		}
-
-		classAdParser = new ClassAdParser(requirementsStr);
-		expr = (Op) classAdParser.parse();
-
-		return expr.eval(env).isTrue();
 	}	
 	
 	public static String findFlavor(List<Flavor> flavors, String requirementsStr) {

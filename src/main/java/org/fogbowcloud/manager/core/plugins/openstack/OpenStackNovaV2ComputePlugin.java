@@ -74,6 +74,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 	private String networkId;
 	private Map<String, String> fogbowTermToOpenStack = new HashMap<String, String>();
 	private DefaultHttpClient client;
+	private List<Flavor> flavors;
 
 	private static final Logger LOGGER = Logger.getLogger(OpenStackNovaV2ComputePlugin.class);
 	
@@ -292,6 +293,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		String requestEndpoint = computeV2APIEndpoint + token.getAttributes().get(TENANT_ID)
 				+ "/servers/" + instanceId;
 		String jsonResponse = doGetRequest(requestEndpoint, token.getAccessId());
+		System.out.println(jsonResponse);
 		LOGGER.debug("Getting instance from json: " + jsonResponse);
 		return getInstanceFromJson(jsonResponse, token);
 	}
@@ -330,6 +332,9 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 			List<Resource> resources = new ArrayList<Resource>();
 			resources.add(ResourceRepository.getInstance().get("compute"));
 			resources.add(ResourceRepository.getInstance().get("os_tpl"));
+			
+			//TODO check this line
+//			resources.add(ResourceRepository.getInstance().get(flavorId));
 			resources.add(ResourceRepository.getInstance().get(getUsedFlavor(flavorId)));
 
 			LOGGER.debug("Instance resources: " + resources);
@@ -343,14 +348,21 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 	}
 
 	private String getUsedFlavor(String flavorId) {
-		if (fogbowTermToOpenStack.get(RequestConstants.SMALL_TERM).equals(flavorId)) {
-			return RequestConstants.SMALL_TERM;
-		} else if (fogbowTermToOpenStack.get(RequestConstants.MEDIUM_TERM).equals(flavorId)) {
-			return RequestConstants.MEDIUM_TERM;
-		} else if (fogbowTermToOpenStack.get(RequestConstants.LARGE_TERM).equals(flavorId)) {
-			return RequestConstants.LARGE_TERM;
+		for (Flavor flavor : getFlavors()) {
+			if (flavor.getId().equals(flavorId)) {
+				return flavor.getName();
+			}
 		}
 		return null;
+		
+//		if (fogbowTermToOpenStack.get(RequestConstants.SMALL_TERM).equals(flavorId)) {
+//			return RequestConstants.SMALL_TERM;
+//		} else if (fogbowTermToOpenStack.get(RequestConstants.MEDIUM_TERM).equals(flavorId)) {
+//			return RequestConstants.MEDIUM_TERM;
+//		} else if (fogbowTermToOpenStack.get(RequestConstants.LARGE_TERM).equals(flavorId)) {
+//			return RequestConstants.LARGE_TERM;
+//		}
+//		return null;
 	}
 
 	private String getOCCIState(String instanceStatus) {
@@ -623,7 +635,10 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 
 	@Override
 	public List<Flavor> getFlavors() {
-		// TODO Auto-generated method stub
-		return null;
+		return this.flavors;
+	}
+	
+	public void setFlavors(List<Flavor> flavors) {
+		this.flavors = flavors;
 	}
 }

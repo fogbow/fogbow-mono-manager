@@ -103,6 +103,14 @@ public class TestRequirementsHelper {
 		String requirementsStr = disk + " > 10 && " + mem + " < 500 && " + vCpu + " >= 10";
 		Assert.assertFalse(requirementsHelper.checkFlavorPerRequirements(flavor, requirementsStr));
 	}
+	
+	@SuppressWarnings("static-access")
+	@Test
+	public void TestCheckFlavorWithNullRequirements() {
+		Flavor flavor = new Flavor("test", "12", "400", "9");
+		String requirementsStr = null;
+		Assert.assertFalse(requirementsHelper.checkFlavorPerRequirements(flavor, requirementsStr));
+	}	
 
 	@SuppressWarnings("static-access")
 	@Test
@@ -124,4 +132,5 @@ public class TestRequirementsHelper {
 
 		Assert.assertEquals(firstValue, requirementsHelper.findFlavor(flavors, requirementsStr));
 	}
+	
 }
