@@ -645,7 +645,6 @@ public class ManagerController {
 
 	private void createAsynchronousRemoteInstance(final Request request) {
 		String memberAddress = chooseMemberAddressByTheRequirements(request.getRequirements());
-		
 		if (memberAddress == null) {
 			FederationMember member = memberPicker.pick(this);
 			if (member == null) {

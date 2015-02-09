@@ -966,7 +966,7 @@ public class TestManagerController {
 		// creating requests
 		managerController.createRequests(DefaultDataTestHelper.ACCESS_TOKEN_ID,
 				new ArrayList<Category>(), xOCCIAtt);
-		managerController.checkAndSubmitOpenRequests();
+ 		managerController.checkAndSubmitOpenRequests();
 
 		// checking if request was fulfilled with instanceID
 		List<Request> requests = managerController

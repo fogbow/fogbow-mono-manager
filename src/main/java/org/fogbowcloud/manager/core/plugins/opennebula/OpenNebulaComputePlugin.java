@@ -108,12 +108,12 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		checkFlavor(String.valueOf(properties.get(OneConfigurationConstants.COMPUTE_ONE_MEDIUM_KEY)));
 		checkFlavor(String.valueOf(properties.get(OneConfigurationConstants.COMPUTE_ONE_LARGE_KEY)));
 		
-//		fogbowTermToOpenNebula.put(RequestConstants.SMALL_TERM,
-//				String.valueOf(properties.get(OneConfigurationConstants.COMPUTE_ONE_SMALL_KEY)));
-//		fogbowTermToOpenNebula.put(RequestConstants.MEDIUM_TERM,
-//				String.valueOf(properties.get(OneConfigurationConstants.COMPUTE_ONE_MEDIUM_KEY)));
-//		fogbowTermToOpenNebula.put(RequestConstants.LARGE_TERM,
-//				String.valueOf(properties.get(OneConfigurationConstants.COMPUTE_ONE_LARGE_KEY)));
+		fogbowTermToOpenNebula.put(RequestConstants.SMALL_TERM,
+				String.valueOf(properties.get(OneConfigurationConstants.COMPUTE_ONE_SMALL_KEY)));
+		fogbowTermToOpenNebula.put(RequestConstants.MEDIUM_TERM,
+				String.valueOf(properties.get(OneConfigurationConstants.COMPUTE_ONE_MEDIUM_KEY)));
+		fogbowTermToOpenNebula.put(RequestConstants.LARGE_TERM,
+				String.valueOf(properties.get(OneConfigurationConstants.COMPUTE_ONE_LARGE_KEY)));
 		
 		// userdata
 		fogbowTermToOpenNebula.put(RequestConstants.USER_DATA_TERM, "user_data");
@@ -163,16 +163,16 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 			if (fogbowTermToOpenNebula.get(category.getTerm()) == null) {
 				throw new OCCIException(ErrorType.BAD_REQUEST,
 						ResponseConstants.CLOUD_NOT_SUPPORT_CATEGORY + category.getTerm());
-//			} 
-//			else if (category.getTerm().equals(RequestConstants.SMALL_TERM)
-//					|| category.getTerm().equals(RequestConstants.MEDIUM_TERM)
-//					|| category.getTerm().equals(RequestConstants.LARGE_TERM)) {				
-//				// There are more than one flavor category
-//				if (choosenFlavor != null) {
-//					throw new OCCIException(ErrorType.BAD_REQUEST,
-//							ResponseConstants.IRREGULAR_SYNTAX);					
-//				}
-//				choosenFlavor = fogbowTermToOpenNebula.get(category.getTerm());
+			} 
+			else if (category.getTerm().equals(RequestConstants.SMALL_TERM)
+					|| category.getTerm().equals(RequestConstants.MEDIUM_TERM)
+					|| category.getTerm().equals(RequestConstants.LARGE_TERM)) {				
+				// There are more than one flavor category
+				if (choosenFlavor != null) {
+					throw new OCCIException(ErrorType.BAD_REQUEST,
+							ResponseConstants.IRREGULAR_SYNTAX);					
+				}
+				choosenFlavor = fogbowTermToOpenNebula.get(category.getTerm());
 			} else if (category.getTerm().equals(RequestConstants.PUBLIC_KEY_TERM)) {
 				templateProperties.put("ssh-public-key",
 						xOCCIAtt.get(RequestAttribute.DATA_PUBLIC_KEY.getValue()));

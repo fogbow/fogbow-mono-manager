@@ -89,6 +89,8 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		networkId = properties
 				.getProperty(OpenStackConfigurationConstants.COMPUTE_NOVAV2_NETWORK_KEY);
 
+		flavors = new ArrayList<Flavor>();
+		
 //		fogbowTermToOpenStack.put(RequestConstants.SMALL_TERM,
 //				properties.getProperty(OpenStackConfigurationConstants.COMPUTE_NOVAV2_FLAVOR_SMALL_KEY));
 //		fogbowTermToOpenStack.put(RequestConstants.MEDIUM_TERM,

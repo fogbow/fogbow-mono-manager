@@ -363,7 +363,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		managerController.setLocalIdentityPlugin(identityPlugin);
 		managerController.setFederationIdentityPlugin(federationIdentityPlugin);
 		managerController.setComputePlugin(computePlugin);
-
+		
 		return managerController;
 	}
 

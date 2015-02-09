@@ -65,12 +65,15 @@ public class OCCIComputePlugin implements ComputePlugin {
 	protected String oCCIEndpoint;
 	protected String computeOCCIEndpoint;
 	private HttpClient client;	
+	private List<Flavor> flavors;
 
 	protected static final Logger LOGGER = Logger.getLogger(OCCIComputePlugin.class);
 
 	public OCCIComputePlugin(Properties properties) {
 		this.oCCIEndpoint = properties.getProperty("compute_occi_url");
 		this.computeOCCIEndpoint = oCCIEndpoint + COMPUTE_ENDPOINT;
+		
+		flavors = new ArrayList<Flavor>();
 
 		instanceScheme = properties
 				.getProperty(OpenStackConfigurationConstants.COMPUTE_OCCI_INSTANCE_SCHEME_KEY);
@@ -80,20 +83,6 @@ public class OCCIComputePlugin implements ComputePlugin {
 				.getProperty(OpenStackConfigurationConstants.COMPUTE_OCCI_RESOURCE_SCHEME_KEY);
 		networkId = properties
 				.getProperty(OpenStackConfigurationConstants.COMPUTE_OCCI_NETWORK_KEY);
-		
-//		fogTermToCategory.put(
-//				RequestConstants.SMALL_TERM,
-//				createFlavorCategory(OpenStackConfigurationConstants.COMPUTE_OCCI_FLAVOR_SMALL_KEY,
-//						properties));
-//		fogTermToCategory
-//				.put(RequestConstants.MEDIUM_TERM,
-//						createFlavorCategory(
-//								OpenStackConfigurationConstants.COMPUTE_OCCI_FLAVOR_MEDIUM_KEY,
-//								properties));
-//		fogTermToCategory.put(
-//				RequestConstants.LARGE_TERM,
-//				createFlavorCategory(OpenStackConfigurationConstants.COMPUTE_OCCI_FLAVOR_LARGE_KEY,
-//						properties));
 
 		fogTermToCategory.put(RequestConstants.USER_DATA_TERM, new Category("user_data",
 				instanceScheme, RequestConstants.MIXIN_CLASS));
@@ -390,8 +379,10 @@ public class OCCIComputePlugin implements ComputePlugin {
 
 	@Override
 	public List<Flavor> getFlavors() {
-		// TODO Auto-generated method stub
-		return null;
+		return flavors;
 	}
 
+	public void setFlavors(List<Flavor> flavors) {
+		this.flavors = flavors;
+	}
 }

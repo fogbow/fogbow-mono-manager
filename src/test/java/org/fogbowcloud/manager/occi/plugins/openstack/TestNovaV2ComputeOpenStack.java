@@ -50,7 +50,7 @@ public class TestNovaV2ComputeOpenStack {
 		
 		List<Flavor> flavors = new ArrayList<Flavor>();
 		Flavor flavorSmall = new Flavor(RequestConstants.SMALL_TERM, "1", "1000", "10");
-		flavorSmall.setId("1");
+		flavorSmall.setId(SECOND_INSTANCE_ID);
 		flavors.add(flavorSmall); 
 		flavors.add(new Flavor("medium", "2", "2000", "20"));
 		flavors.add(new Flavor("big", "4", "4000", "40"));

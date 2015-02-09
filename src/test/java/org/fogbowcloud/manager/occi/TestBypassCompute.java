@@ -5,6 +5,7 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import org.apache.commons.codec.Charsets;
@@ -18,6 +19,8 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
+import org.fogbowcloud.manager.core.RequirementsHelper;
+import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
@@ -32,6 +35,7 @@ import org.fogbowcloud.manager.occi.core.ResourceRepository;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.request.Request;
+import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.fogbowcloud.manager.occi.util.OCCIComputeApplication;
 import org.fogbowcloud.manager.occi.util.OCCITestHelper;
@@ -83,6 +87,14 @@ public class TestBypassCompute {
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>());
 		
 		computePlugin = new OpenStackOCCIComputePlugin(properties);
+		
+		List<Flavor> flavors = new ArrayList<Flavor>();
+		Flavor flavorSmall = new Flavor(RequestConstants.SMALL_TERM, "1", "1000", "10");
+		flavorSmall.setId(SECOND_INSTANCE_ID);
+		flavors.add(flavorSmall); 
+		flavors.add(new Flavor("medium", "2", "2000", "20"));
+		flavors.add(new Flavor("big", "4", "4000", "40"));
+		computePlugin.setFlavors(flavors );
 				
 		identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.getToken(PluginHelper.ACCESS_ID)).thenReturn(defaultToken);
@@ -174,13 +186,20 @@ public class TestBypassCompute {
 	@Test
 	public void testBypassGetComputeOK() throws URISyntaxException, HttpException, IOException {
 		//adding instances directly on compute endpoint
-		List<Category> categories = new ArrayList<Category>();		
+		List<Category> categories = new ArrayList<Category>();	
+		
+		Map<String, String> xOCCIAttr = new HashMap<String, String>();
+		String requirementsStr = RequirementsHelper.GLUE_DISK_TERM + " >= 10 && "
+				+ RequirementsHelper.GLUE_MEM_RAM_TERM + " > 500 && "
+				+ RequirementsHelper.GLUE_VCPU_TERM + " > 0";
+		xOCCIAttr.put(RequestAttribute.REQUIREMENTS.getValue(), requirementsStr);
+		
 		Assert.assertEquals(FIRST_INSTANCE_ID, computePlugin.requestInstance(
-				defaultToken, categories, new HashMap<String, String>(), PluginHelper.CIRROS_IMAGE_TERM));
+				defaultToken, categories, xOCCIAttr, PluginHelper.CIRROS_IMAGE_TERM));
 		Assert.assertEquals(SECOND_INSTANCE_ID, computePlugin.requestInstance(
-				defaultToken, categories, new HashMap<String, String>(), PluginHelper.CIRROS_IMAGE_TERM));
+				defaultToken, categories, xOCCIAttr, PluginHelper.CIRROS_IMAGE_TERM));
 		Assert.assertEquals(THIRD_INSTANCE_ID, computePlugin.requestInstance(
-				defaultToken, categories, new HashMap<String, String>(), PluginHelper.CIRROS_IMAGE_TERM));
+				defaultToken, categories, xOCCIAttr, PluginHelper.CIRROS_IMAGE_TERM));
 
 		//checking if machines were added
 		Assert.assertEquals(3, computePlugin.getInstances(defaultToken).size());
@@ -207,6 +226,11 @@ public class TestBypassCompute {
 				RequestConstants.SCHEME, RequestConstants.KIND_CLASS).toHeader());
 		post.addHeader(OCCIHeaders.CATEGORY, new Category(PluginHelper.LINUX_X86_TERM,
 				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS).toHeader());
+		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, RequestAttribute.REQUIREMENTS.getValue() + "="
+				+ RequirementsHelper.GLUE_DISK_TERM + " >= 10 && "
+				+ RequirementsHelper.GLUE_MEM_RAM_TERM + " > 500 && "
+				+ RequirementsHelper.GLUE_VCPU_TERM + " > 0");
+		
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
 		List<String> requestIDs = OCCITestHelper.getRequestIdsPerLocationHeader(response);
@@ -214,14 +238,20 @@ public class TestBypassCompute {
 		Assert.assertEquals(1, requestIDs.size());
 		Assert.assertEquals(HttpStatus.SC_CREATED, response.getStatusLine().getStatusCode());
 		
+		Map<String, String> xOCCIAttr = new HashMap<String, String>();
+		String requirementsStr = RequirementsHelper.GLUE_DISK_TERM + " >= 10 && "
+				+ RequirementsHelper.GLUE_MEM_RAM_TERM + " > 500 && "
+				+ RequirementsHelper.GLUE_VCPU_TERM + " > 0";
+		xOCCIAttr.put(RequestAttribute.REQUIREMENTS.getValue(), requirementsStr);
+		
 		Thread.sleep(LITTLE_SCHEDULE_TIME + 15);
 		
 		//adding instances directly on compute endpoint
 		List<Category> categories = new ArrayList<Category>();		
 		Assert.assertEquals(SECOND_INSTANCE_ID, computePlugin.requestInstance(
-				defaultToken, categories, new HashMap<String, String>(), PluginHelper.CIRROS_IMAGE_TERM));
+				defaultToken, categories, xOCCIAttr, PluginHelper.CIRROS_IMAGE_TERM));
 		Assert.assertEquals(THIRD_INSTANCE_ID, computePlugin.requestInstance(
-				defaultToken, categories, new HashMap<String, String>(), PluginHelper.CIRROS_IMAGE_TERM));
+				defaultToken, categories, xOCCIAttr, PluginHelper.CIRROS_IMAGE_TERM));
 		
 		//checking if machines were added
 		Assert.assertEquals(3, computePlugin.getInstances(defaultToken).size());
@@ -242,8 +272,15 @@ public class TestBypassCompute {
 	public void testBypassGetSpecificComputeOK() throws URISyntaxException, HttpException, IOException {
 		//adding instances directly on compute endpoint
 		List<Category> categories = new ArrayList<Category>();		
+		
+		Map<String, String> xOCCIAttr = new HashMap<String, String>();
+		String requirementsStr = RequirementsHelper.GLUE_DISK_TERM + " >= 10 && "
+				+ RequirementsHelper.GLUE_MEM_RAM_TERM + " > 500 && "
+				+ RequirementsHelper.GLUE_VCPU_TERM + " > 0";
+		xOCCIAttr.put(RequestAttribute.REQUIREMENTS.getValue(), requirementsStr);
+		
 		Assert.assertEquals(FIRST_INSTANCE_ID, computePlugin.requestInstance(
-				defaultToken, categories, new HashMap<String, String>(), PluginHelper.CIRROS_IMAGE_TERM));
+				defaultToken, categories, xOCCIAttr, PluginHelper.CIRROS_IMAGE_TERM));
 		
 		//checking if machine was added
 		Assert.assertEquals(1, computePlugin.getInstances(defaultToken).size());
@@ -304,13 +341,19 @@ public class TestBypassCompute {
 	@Test
 	public void testBypassDeleteComputeNotCreatedThroughFogbow() throws URISyntaxException, HttpException, IOException {
 		//adding instances directly on compute endpoint
-		List<Category> categories = new ArrayList<Category>();		
+		List<Category> categories = new ArrayList<Category>();	
+		Map<String, String> xOCCIAttr = new HashMap<String, String>();
+		String requirementsStr = RequirementsHelper.GLUE_DISK_TERM + " >= 10 && "
+				+ RequirementsHelper.GLUE_MEM_RAM_TERM + " > 500 && "
+				+ RequirementsHelper.GLUE_VCPU_TERM + " > 0";
+		xOCCIAttr.put(RequestAttribute.REQUIREMENTS.getValue(), requirementsStr);
+		
 		Assert.assertEquals(FIRST_INSTANCE_ID, computePlugin.requestInstance(
-				defaultToken, categories, new HashMap<String, String>(), PluginHelper.CIRROS_IMAGE_TERM));
+				defaultToken, categories, xOCCIAttr, PluginHelper.CIRROS_IMAGE_TERM));
 		Assert.assertEquals(SECOND_INSTANCE_ID, computePlugin.requestInstance(
-				defaultToken, categories, new HashMap<String, String>(), PluginHelper.CIRROS_IMAGE_TERM));
+				defaultToken, categories, xOCCIAttr, PluginHelper.CIRROS_IMAGE_TERM));
 		Assert.assertEquals(THIRD_INSTANCE_ID, computePlugin.requestInstance(
-				defaultToken, categories, new HashMap<String, String>(), PluginHelper.CIRROS_IMAGE_TERM));
+				defaultToken, categories, xOCCIAttr, PluginHelper.CIRROS_IMAGE_TERM));
 		
 		//checking if instances were added
 		Assert.assertEquals(3, computePlugin.getInstances(defaultToken).size());
@@ -350,6 +393,10 @@ public class TestBypassCompute {
 				RequestConstants.SCHEME, RequestConstants.KIND_CLASS).toHeader());
 		post.addHeader(OCCIHeaders.CATEGORY, new Category(PluginHelper.LINUX_X86_TERM,
 				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS).toHeader());
+		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, RequestAttribute.REQUIREMENTS.getValue() + "="
+				+ RequirementsHelper.GLUE_DISK_TERM + " >= 10 && "
+				+ RequirementsHelper.GLUE_MEM_RAM_TERM + " > 500 && "
+				+ RequirementsHelper.GLUE_VCPU_TERM + " > 0");
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
 		List<String> requestIDs = OCCITestHelper.getRequestIdsPerLocationHeader(response);
@@ -361,10 +408,15 @@ public class TestBypassCompute {
 		
 		//adding two instances directly on compute endpoint
 		List<Category> categories = new ArrayList<Category>();
+		Map<String, String> xOCCIAttr = new HashMap<String, String>();
+		String requirementsStr = RequirementsHelper.GLUE_DISK_TERM + " >= 10 && "
+				+ RequirementsHelper.GLUE_MEM_RAM_TERM + " > 500 && "
+				+ RequirementsHelper.GLUE_VCPU_TERM + " > 0";
+		xOCCIAttr.put(RequestAttribute.REQUIREMENTS.getValue(), requirementsStr);		
 		Assert.assertEquals(SECOND_INSTANCE_ID, computePlugin.requestInstance(
-				defaultToken, categories, new HashMap<String, String>(), PluginHelper.CIRROS_IMAGE_TERM));
+				defaultToken, categories, xOCCIAttr, PluginHelper.CIRROS_IMAGE_TERM));
 		Assert.assertEquals(THIRD_INSTANCE_ID, computePlugin.requestInstance(
-				defaultToken, categories, new HashMap<String, String>(), PluginHelper.CIRROS_IMAGE_TERM));
+				defaultToken, categories, xOCCIAttr, PluginHelper.CIRROS_IMAGE_TERM));
 		
 		//checking if instance were added
 		Assert.assertEquals(3, computePlugin.getInstances(defaultToken).size());
@@ -397,12 +449,19 @@ public class TestBypassCompute {
 	public void testBypassDeleteSpecificComputeNotCreatedThroughFogbow() throws URISyntaxException, HttpException, IOException {
 		//adding instances directly on compute endpoint
 		List<Category> categories = new ArrayList<Category>();		
+		
+		Map<String, String> xOCCIAttr = new HashMap<String, String>();
+		String requirementsStr = RequirementsHelper.GLUE_DISK_TERM + " >= 10 && "
+				+ RequirementsHelper.GLUE_MEM_RAM_TERM + " > 500 && "
+				+ RequirementsHelper.GLUE_VCPU_TERM + " > 0";
+		xOCCIAttr.put(RequestAttribute.REQUIREMENTS.getValue(), requirementsStr);
+		
 		Assert.assertEquals(FIRST_INSTANCE_ID, computePlugin.requestInstance(
-				defaultToken, categories, new HashMap<String, String>(), PluginHelper.CIRROS_IMAGE_TERM));
+				defaultToken, categories, xOCCIAttr, PluginHelper.CIRROS_IMAGE_TERM));
 		Assert.assertEquals(SECOND_INSTANCE_ID, computePlugin.requestInstance(
-				defaultToken, categories, new HashMap<String, String>(), PluginHelper.CIRROS_IMAGE_TERM));
+				defaultToken, categories, xOCCIAttr, PluginHelper.CIRROS_IMAGE_TERM));
 		Assert.assertEquals(THIRD_INSTANCE_ID, computePlugin.requestInstance(
-				defaultToken, categories, new HashMap<String, String>(), PluginHelper.CIRROS_IMAGE_TERM));
+				defaultToken, categories, xOCCIAttr, PluginHelper.CIRROS_IMAGE_TERM));
 		
 		//checking if instances were added
 		Assert.assertEquals(3, computePlugin.getInstances(defaultToken).size());
@@ -434,9 +493,16 @@ public class TestBypassCompute {
 	@Test
 	public void testBypassDeleteLastComputeNotCreatedThroughFogbow() throws URISyntaxException, HttpException, IOException {
 		//adding instances directly on compute endpoint
-		List<Category> categories = new ArrayList<Category>();		
+		List<Category> categories = new ArrayList<Category>();	
+		
+		Map<String, String> xOCCIAttr = new HashMap<String, String>();
+		String requirementsStr = RequirementsHelper.GLUE_DISK_TERM + " >= 10 && "
+				+ RequirementsHelper.GLUE_MEM_RAM_TERM + " > 500 && "
+				+ RequirementsHelper.GLUE_VCPU_TERM + " > 0";
+		xOCCIAttr.put(RequestAttribute.REQUIREMENTS.getValue(), requirementsStr);
+		
 		Assert.assertEquals(FIRST_INSTANCE_ID, computePlugin.requestInstance(
-				defaultToken, categories, new HashMap<String, String>(), PluginHelper.CIRROS_IMAGE_TERM));
+				defaultToken, categories, xOCCIAttr, PluginHelper.CIRROS_IMAGE_TERM));
 				
 		//checking if instances were added
 		Assert.assertEquals(1, computePlugin.getInstances(defaultToken).size());
