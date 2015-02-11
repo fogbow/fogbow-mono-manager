@@ -43,6 +43,7 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.Packet;
+import org.xmpp.packet.IQ.Type;
 import org.xmpp.packet.PacketError.Condition;
 
 public class TestManagerController {
@@ -309,7 +310,7 @@ public class TestManagerController {
 		//updating time
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now + ManagerController.DEFAULT_SCHEDULER_PERIOD + 100);
 		
-		managerController.removeAsyncRequestReachedTimeout();
+		managerController.removeRequestsThatReachTimeout();
 		
 		Assert.assertFalse(managerController.isRequestForwardedtoRemoteMember(
 				request1.getId()));
@@ -1628,5 +1629,112 @@ public class TestManagerController {
 				.getDefaultToken().getAccessId());
 		
 		Assert.assertEquals(0, requestsFromUser.size());
+	}
+	
+	@Test
+	public void testInstanceIsBeenUsedByFulfilledRequest(){
+		// setting request repository
+		Request request1 = new Request("id1", managerTestHelper.getDefaultToken(), null, null);
+		request1.setState(RequestState.FULFILLED);
+		request1.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
+		request1.setMemberId("remote-manager.test.com");
+		
+		RequestRepository requestRepository = new RequestRepository();
+		requestRepository.addRequest(managerTestHelper.getDefaultToken().getUser(), request1);
+		managerController.setRequests(requestRepository);
+		
+		Assert.assertTrue(managerController.isInstanceBeenUsed(DefaultDataTestHelper.INSTANCE_ID
+				+ Request.SEPARATOR_GLOBAL_ID + "remote-manager.test.com"));
+		Assert.assertFalse(managerController.isInstanceBeenUsed("any_value"
+				+ Request.SEPARATOR_GLOBAL_ID + "remote-manager.test.com"));
+	}
+	
+	@Test
+	public void testInstanceIsBeenUsedByDeletedRequest(){
+		// setting request repository
+		Request request1 = new Request("id1", managerTestHelper.getDefaultToken(), null, null);
+		request1.setState(RequestState.DELETED);
+		request1.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
+		request1.setMemberId("remote-manager.test.com");
+		
+		RequestRepository requestRepository = new RequestRepository();
+		requestRepository.addRequest(managerTestHelper.getDefaultToken().getUser(), request1);
+		managerController.setRequests(requestRepository);
+				
+		Assert.assertTrue(managerController.isInstanceBeenUsed(DefaultDataTestHelper.INSTANCE_ID
+				+ Request.SEPARATOR_GLOBAL_ID + "remote-manager.test.com"));
+		Assert.assertFalse(managerController.isInstanceBeenUsed("any_value"
+				+ Request.SEPARATOR_GLOBAL_ID + "remote-manager.test.com"));
+	}
+	
+	@Test
+	public void testInstanceIsNotBeenUsed(){
+		// setting request repository
+		Request request1 = new Request("id1", managerTestHelper.getDefaultToken(), null, null);
+		request1.setState(RequestState.OPEN);
+		
+		RequestRepository requestRepository = new RequestRepository();
+		requestRepository.addRequest(managerTestHelper.getDefaultToken().getUser(), request1);
+		managerController.setRequests(requestRepository);
+		
+		Assert.assertFalse(managerController.isInstanceBeenUsed("instanceId"));
+	}
+	
+	@Test
+	public void testMonitorServedRequestRemovingRequest() throws InterruptedException{
+		// checking there is not served request
+		Assert.assertEquals(0, managerController.getInstancesForRemoteMember().size());
+		
+		mockRequestInstance();		
+		managerController.createInstanceForRemoteMember("manager1-test.com", new ArrayList<Category>(), xOCCIAtt);
+		
+		// checking there is one served request
+		Assert.assertEquals(1, managerController.getInstancesForRemoteMember().size());
+		Assert.assertEquals("manager1-test.com", managerController.getInstancesForRemoteMember()
+				.get(DefaultDataTestHelper.INSTANCE_ID).getMemberId());
+
+		// monitoring served requests
+		managerController.monitorServedRequests();
+	
+		// checking there is not served request		
+		Assert.assertEquals(0, managerController.getInstancesForRemoteMember().size());		
+	}
+	
+	@Test
+	public void testMonitorServedRequestKeepingRequest() throws InterruptedException{
+		// checking there is not served request
+		Assert.assertEquals(0, managerController.getInstancesForRemoteMember().size());
+		
+		mockRequestInstance();
+		
+		// mocking packet sender
+		IQ iq = new IQ();
+		iq.setTo("manager1-test.com");
+		iq.setType(Type.get);
+		Element queryEl = iq.getElement().addElement("query",
+				ManagerXmppComponent.ISINSTANCEBEENUSED_NAMESPACE);
+		Element instanceEl = queryEl.addElement("instance");
+		instanceEl.addElement("id").setText(DefaultDataTestHelper.INSTANCE_ID);
+
+		IQ response = IQ.createResultIQ(iq);
+		
+		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);
+		Mockito.when(packetSender.syncSendPacket(Mockito.any(IQ.class))).thenReturn(response);
+		managerController.setPacketSender(packetSender);
+		
+		managerController.createInstanceForRemoteMember("manager1-test.com", new ArrayList<Category>(), xOCCIAtt);
+		
+		// checking there is one served request
+		Assert.assertEquals(1, managerController.getInstancesForRemoteMember().size());
+		Assert.assertEquals("manager1-test.com", managerController.getInstancesForRemoteMember()
+				.get(DefaultDataTestHelper.INSTANCE_ID).getMemberId());
+
+		// monitoring served requests
+		managerController.monitorServedRequests();
+	
+		// checking there is not served request		
+		Assert.assertEquals(1, managerController.getInstancesForRemoteMember().size());
+		Assert.assertEquals("manager1-test.com", managerController.getInstancesForRemoteMember()
+				.get(DefaultDataTestHelper.INSTANCE_ID).getMemberId());		
 	}
 }

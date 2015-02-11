@@ -245,24 +245,20 @@ public class ManagerPacketHelper {
 	}
 
 	public static void deleteRemoteInstace(Request request, PacketSender packetSender) {
-		deleteRemoteInstace(request.getMemberId(), request.getInstanceId(), packetSender);
-	}
-	
-	public static void deleteRemoteInstace(String memberAddress, String instanceId, PacketSender packetSender) {
 		IQ iq = new IQ();
-		iq.setTo(memberAddress);
+		iq.setTo(request.getMemberId());
 		iq.setType(Type.set);
 		Element queryEl = iq.getElement().addElement("query",
 				ManagerXmppComponent.REMOVEINSTANCE_NAMESPACE);
 		Element instanceEl = queryEl.addElement("instance");
-		instanceEl.addElement("id").setText(instanceId);
+		instanceEl.addElement("id").setText(request.getInstanceId());
 
 		IQ response = (IQ) packetSender.syncSendPacket(iq);
 		if (response.getError() != null) {
 			raiseException(response.getError());
 		}
 	}
-
+	
 	private static void raiseException(PacketError error) {
 		throw createException(error);
 	}
@@ -360,4 +356,21 @@ public class ManagerPacketHelper {
 			return Condition.internal_server_error;
 		}
 	}
+
+	public static void isInstanceBeenUsedByRemoteMember(String instanceId, String memberAddress,
+			PacketSender packetSender) {
+		IQ iq = new IQ();
+		iq.setTo(memberAddress);
+		iq.setType(Type.get);
+		Element queryEl = iq.getElement().addElement("query",
+				ManagerXmppComponent.ISINSTANCEBEENUSED_NAMESPACE);
+		Element instanceEl = queryEl.addElement("instance");
+		instanceEl.addElement("id").setText(instanceId);
+		
+		IQ response = (IQ) packetSender.syncSendPacket(iq);
+
+		if (response.getError() != null) {
+			raiseException(response.getError());
+		}		
+	}	
 }

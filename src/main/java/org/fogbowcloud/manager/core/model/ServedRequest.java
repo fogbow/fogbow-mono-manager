@@ -5,23 +5,23 @@ import java.util.Map;
 
 import org.fogbowcloud.manager.occi.core.Category;
 
-public class RemoteRequest {
+public class ServedRequest {
 
-	private final String id;
+	private final String instanceToken;
 	private final String memberId; 
 	private final List<Category> categories;
 	private final Map<String, String> xOCCIAtt;
-	
-	public RemoteRequest(String id, String memberId, List<Category> categories,
+			
+	public ServedRequest(String instanceToken, String memberId, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
-		this.id = id;
+		this.instanceToken = instanceToken;
 		this.memberId = memberId;
 		this.categories = categories;
 		this.xOCCIAtt = xOCCIAtt;
 	}
 	
-	public String getId() {
-		return id;
+	public String getInstanceToken() {
+		return instanceToken;
 	}
 	
 	public String getMemberId() {

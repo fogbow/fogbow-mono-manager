@@ -177,9 +177,6 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 
 	public ManagerXmppComponent initializeXMPPManagerComponent(boolean init) throws Exception {
 
-		this.computePlugin = Mockito.mock(ComputePlugin.class);
-		this.identityPlugin = Mockito.mock(IdentityPlugin.class);
-
 		Properties properties = new Properties();
 		properties.put(ConfigurationConstants.FEDERATION_USER_NAME_KEY, "fogbow");
 		properties.put(ConfigurationConstants.FEDERATION_USER_PASS_KEY, "fogbow");
@@ -193,19 +190,26 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 				MAX_WHOISALIVE_MANAGER_COUNT);
 		
 		ManagerController managerFacade = new ManagerController(properties);
+		return initializeXMPPManagerComponent(init, managerFacade);
+	}
+	
+	public ManagerXmppComponent initializeXMPPManagerComponent(boolean init, ManagerController managerFacade) throws Exception {
+				
+		this.computePlugin = Mockito.mock(ComputePlugin.class);
+		this.identityPlugin = Mockito.mock(IdentityPlugin.class);
 		managerFacade.setComputePlugin(computePlugin);
 		managerFacade.setLocalIdentityPlugin(identityPlugin);
 		managerFacade.setFederationIdentityPlugin(identityPlugin);
 		FederationMemberValidator validator = new DefaultMemberValidator();
 		managerFacade.setValidator(validator);
-
+		
 		managerXmppComponent = Mockito.spy(new ManagerXmppComponent(LOCAL_MANAGER_COMPONENT_URL,
 				MANAGER_COMPONENT_PASS, SERVER_HOST, SERVER_COMPONENT_PORT, managerFacade));
-
+		
 		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class))).thenReturn(
 				getResources());
 		Mockito.when(identityPlugin.createFederationUserToken()).thenReturn(defaultToken);
-
+		
 		managerXmppComponent.setDescription("Manager Component");
 		managerXmppComponent.setName("Manager");
 		managerXmppComponent.setRendezvousAddress(CLIENT_ADRESS + SMACK_ENDING);
@@ -332,6 +336,8 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 				DefaultDataTestHelper.SERVER_HOST);
 		properties.put(ConfigurationConstants.SSH_HOST_HTTP_PORT_KEY,
 				String.valueOf(DefaultDataTestHelper.TOKEN_SERVER_HTTP_PORT));
+		properties.put(ConfigurationConstants.SERVED_REQUEST_MONITORING_PERIOD_KEY,
+				String.valueOf(DefaultDataTestHelper.SERVED_REQUEST_MONITORING_PERIOD));
 		this.executorService = Mockito.mock(ScheduledExecutorService.class);
 		ManagerController managerController = new ManagerController(properties,
 				executorService);
