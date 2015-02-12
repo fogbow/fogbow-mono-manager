@@ -34,4 +34,8 @@ public class DefaultDataTestHelper {
 	public static final String ACCESS_TOKEN_ID = "accesstoken";
 	public static final String TENANT_NAME = "tenantName";
     public static final String INSTANCE_ID = "instanceid";
+    
+    public static final String FED_USER_NAME = "fed_user";
+	public static final String FED_USER_PASS = "fed_password";
+	public static final String FED_ACCESS_TOKEN_ID = "fed_accesstoken";
 }

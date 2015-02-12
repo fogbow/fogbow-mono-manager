@@ -110,11 +110,6 @@ public class TestManagerController {
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testSubmitFederationUserRequests() throws InterruptedException {
-		final String federationUserAccessId = "Federation-User-Access-Id";
-		final String federationUser = "federationUser";
-		Token federationToken = new Token(federationUserAccessId, federationUser, new Date(),
-				new HashMap<String, String>());
-
 		ResourcesInfo resourcesInfo = new ResourcesInfo("", "", "", "", null, null);
 		resourcesInfo.setId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		
@@ -135,17 +130,10 @@ public class TestManagerController {
 		listMembers.add(federationMember);
 		managerController.updateMembers(listMembers);
 
-		checkRequestPerUserToken(federationToken);
+		checkRequestPerUserToken(managerTestHelper.getFederationDefaultToken());
 	}
 	
 	private void checkRequestPerUserToken(Token token) {
-		IdentityPlugin identityPlugin = managerTestHelper.getIdentityPlugin();
-		IdentityPlugin federationIdentityPlugin = managerTestHelper.getFederationIdentityPlugin();
-		Mockito.when(federationIdentityPlugin.getToken(token.getAccessId())).thenReturn(token);
-		Mockito.when(identityPlugin.createFederationUserToken()).thenReturn(token);
-		managerController.setLocalIdentityPlugin(identityPlugin);
-		managerController.setFederationIdentityPlugin(federationIdentityPlugin);
-
 		Request request1 = new Request("id1", token, new ArrayList<Category>(),
 				new HashMap<String, String>());
 		request1.setState(RequestState.OPEN);
@@ -168,11 +156,6 @@ public class TestManagerController {
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testSubmitRequestToRemoteMember() throws InterruptedException {
-		final String federationUserAccessId = "Federation-User-Access-Id";
-		final String federationUser = "federationUser";
-		Token federationToken = new Token(federationUserAccessId, federationUser, new Date(),
-				new HashMap<String, String>());
-		
 		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);
 		managerController.setPacketSender(packetSender);
 
@@ -194,12 +177,12 @@ public class TestManagerController {
 		
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		Mockito.when(
-				computePlugin.requestInstance(Mockito.any(Token.class), Mockito.anyList(), 
-						Mockito.anyMap(), Mockito.anyString()))
-				.thenThrow(new OCCIException(ErrorType.UNAUTHORIZED, ""));
-				
-		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class)))
-				.thenReturn(localResourcesInfo);
+				computePlugin.requestInstance(Mockito.any(Token.class), Mockito.anyList(),
+						Mockito.anyMap(), Mockito.anyString())).thenThrow(
+				new OCCIException(ErrorType.UNAUTHORIZED, ""));
+
+		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class))).thenReturn(
+				localResourcesInfo);
 		managerController.setComputePlugin(computePlugin);
 
 		List<FederationMember> listMembers = new ArrayList<FederationMember>();
@@ -207,38 +190,30 @@ public class TestManagerController {
 		listMembers.add(new FederationMember(remoteResourcesInfo));
 		managerController.updateMembers(listMembers);
 
-		IdentityPlugin identityPlugin = managerTestHelper.getIdentityPlugin();
-		IdentityPlugin federationIdentityPlugin = managerTestHelper.getFederationIdentityPlugin();
-		Mockito.when(federationIdentityPlugin.getToken(
-				federationToken.getAccessId())).thenReturn(federationToken);
-		Mockito.when(identityPlugin.createFederationUserToken()).thenReturn(federationToken);
-		managerController.setLocalIdentityPlugin(identityPlugin);
-		managerController.setFederationIdentityPlugin(federationIdentityPlugin);
-
-		Request request1 = new Request("id1", federationToken, new ArrayList<Category>(),
-				new HashMap<String, String>());
+		Request request1 = new Request("id1", managerTestHelper.getFederationDefaultToken(),
+				new ArrayList<Category>(), new HashMap<String, String>());
 		request1.setState(RequestState.OPEN);
 		RequestRepository requestRepository = new RequestRepository();
-		requestRepository.addRequest(federationToken.getUser(), request1);
+		requestRepository.addRequest(managerTestHelper.getFederationDefaultToken().getUser(),
+				request1);
 		managerController.setRequests(requestRepository);
 
 		managerController.checkAndSubmitOpenRequests();
 
-		List<Request> requestsFromUser = managerController.getRequestsFromUser(
-				federationToken.getAccessId());
+		List<Request> requestsFromUser = managerController.getRequestsFromUser(managerTestHelper
+				.getFederationDefaultToken().getAccessId());
 		for (Request request : requestsFromUser) {
 			Assert.assertEquals(RequestState.OPEN, request.getState());
 		}
-		Assert.assertTrue(managerController.isRequestForwardedtoRemoteMember(
-				request1.getId()));
-		
+		Assert.assertTrue(managerController.isRequestForwardedtoRemoteMember(request1.getId()));
+
 		IQ iq = new IQ();
 		Element queryEl = iq.getElement().addElement("query",
 				ManagerXmppComponent.REQUEST_NAMESPACE);
 		Element instanceEl = queryEl.addElement("instance");
 		instanceEl.addElement("id").setText("newinstanceid");
 		callbacks.get(0).handle(iq);
-		
+
 		for (Request request : requestsFromUser) {
 			Assert.assertEquals(RequestState.FULFILLED, request.getState());
 			Assert.assertFalse(managerController.isRequestForwardedtoRemoteMember(request.getId()));
@@ -247,11 +222,6 @@ public class TestManagerController {
 	
 	@Test
 	public void testRemoveForwardedRequestAfterTimeout() throws InterruptedException {
-		final String federationUserAccessId = "Federation-User-Access-Id";
-		final String federationUser = "federationUser";
-		Token federationToken = new Token(federationUserAccessId, federationUser, new Date(),
-				new HashMap<String, String>());
-		
 		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);
 		managerController.setPacketSender(packetSender);
 		
@@ -276,19 +246,11 @@ public class TestManagerController {
 		listMembers.add(new FederationMember(remoteResourcesInfo));
 		managerController.updateMembers(listMembers);
 
-		IdentityPlugin identityPlugin = managerTestHelper.getIdentityPlugin();
-		IdentityPlugin federationIdentityPlugin = managerTestHelper.getFederationIdentityPlugin();
-		Mockito.when(federationIdentityPlugin.getToken(
-				federationToken.getAccessId())).thenReturn(federationToken);
-		Mockito.when(identityPlugin.createFederationUserToken()).thenReturn(federationToken);
-		managerController.setLocalIdentityPlugin(identityPlugin);
-		managerController.setFederationIdentityPlugin(federationIdentityPlugin);
-
-		Request request1 = new Request("id1", federationToken, new ArrayList<Category>(),
+		Request request1 = new Request("id1", managerTestHelper.getFederationDefaultToken(), new ArrayList<Category>(),
 				new HashMap<String, String>());
 		request1.setState(RequestState.OPEN);
 		RequestRepository requestRepository = new RequestRepository();
-		requestRepository.addRequest(federationToken.getUser(), request1);
+		requestRepository.addRequest(managerTestHelper.getFederationDefaultToken().getUser(), request1);
 		managerController.setRequests(requestRepository);
 
 		// mocking date
@@ -300,7 +262,7 @@ public class TestManagerController {
 		managerController.checkAndSubmitOpenRequests();
 
 		List<Request> requestsFromUser = managerController.getRequestsFromUser(
-				federationToken.getAccessId());
+				managerTestHelper.getFederationDefaultToken().getAccessId());
 		for (Request request : requestsFromUser) {
 			Assert.assertEquals(RequestState.OPEN, request.getState());
 		}
@@ -324,11 +286,6 @@ public class TestManagerController {
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testSubmitRequestToRemoteMemberReturningNotFound() throws InterruptedException {
-		final String federationUserAccessId = "Federation-User-Access-Id";
-		final String federationUser = "federationUser";
-		Token federationToken = new Token(federationUserAccessId, federationUser, new Date(),
-				new HashMap<String, String>());
-		
 		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);
 		managerController.setPacketSender(packetSender);
 
@@ -347,15 +304,15 @@ public class TestManagerController {
 		
 		ResourcesInfo remoteResourcesInfo = new ResourcesInfo("", "", "", "", null, null);
 		remoteResourcesInfo.setId(DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL);
-		
+
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		Mockito.when(
-				computePlugin.requestInstance(Mockito.any(Token.class), Mockito.anyList(), 
-						Mockito.anyMap(), Mockito.anyString()))
-				.thenThrow(new OCCIException(ErrorType.UNAUTHORIZED, ""));
-				
-		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class)))
-				.thenReturn(localResourcesInfo);
+				computePlugin.requestInstance(Mockito.any(Token.class), Mockito.anyList(),
+						Mockito.anyMap(), Mockito.anyString())).thenThrow(
+				new OCCIException(ErrorType.UNAUTHORIZED, ""));
+
+		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class))).thenReturn(
+				localResourcesInfo);
 		managerController.setComputePlugin(computePlugin);
 
 		List<FederationMember> listMembers = new ArrayList<FederationMember>();
@@ -363,25 +320,18 @@ public class TestManagerController {
 		listMembers.add(new FederationMember(remoteResourcesInfo));
 		managerController.updateMembers(listMembers);
 
-		IdentityPlugin identityPlugin = managerTestHelper.getIdentityPlugin();
-		IdentityPlugin federationIdentityPlugin = managerTestHelper.getFederationIdentityPlugin();
-		Mockito.when(federationIdentityPlugin.getToken(
-				federationToken.getAccessId())).thenReturn(federationToken);
-		Mockito.when(identityPlugin.createFederationUserToken()).thenReturn(federationToken);
-		managerController.setLocalIdentityPlugin(identityPlugin);
-		managerController.setFederationIdentityPlugin(federationIdentityPlugin);
-
-		Request request1 = new Request("id1", federationToken, new ArrayList<Category>(),
-				new HashMap<String, String>());
+		Request request1 = new Request("id1", managerTestHelper.getFederationDefaultToken(),
+				new ArrayList<Category>(), new HashMap<String, String>());
 		request1.setState(RequestState.OPEN);
 		RequestRepository requestRepository = new RequestRepository();
-		requestRepository.addRequest(federationToken.getUser(), request1);
+		requestRepository.addRequest(managerTestHelper.getFederationDefaultToken().getUser(),
+				request1);
 		managerController.setRequests(requestRepository);
 
 		managerController.checkAndSubmitOpenRequests();
 
-		List<Request> requestsFromUser = managerController.getRequestsFromUser(
-				federationToken.getAccessId());
+		List<Request> requestsFromUser = managerController.getRequestsFromUser(managerTestHelper
+				.getFederationDefaultToken().getAccessId());
 		for (Request request : requestsFromUser) {
 			Assert.assertEquals(RequestState.OPEN, request.getState());
 		}
@@ -405,11 +355,6 @@ public class TestManagerController {
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testSubmitRequestToRemoteMemberReturningException() throws InterruptedException {
-		final String federationUserAccessId = "Federation-User-Access-Id";
-		final String federationUser = "federationUser";
-		Token federationToken = new Token(federationUserAccessId, federationUser, new Date(),
-				new HashMap<String, String>());
-		
 		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);
 		managerController.setPacketSender(packetSender);
 
@@ -445,24 +390,26 @@ public class TestManagerController {
 		managerController.updateMembers(listMembers);
 
 		IdentityPlugin identityPlugin = managerTestHelper.getIdentityPlugin();
-		IdentityPlugin federationIdentityPlugin = managerTestHelper.getFederationIdentityPlugin();
-		Mockito.when(federationIdentityPlugin.getToken(
-				federationToken.getAccessId())).thenReturn(federationToken);
-		Mockito.when(identityPlugin.createFederationUserToken()).thenReturn(federationToken);
+		IdentityPlugin federationIdentityPlugin = Mockito.mock(IdentityPlugin.class);
+		Mockito.when(
+				federationIdentityPlugin.getToken(managerTestHelper.getFederationDefaultToken()
+						.getAccessId())).thenReturn(managerTestHelper.getFederationDefaultToken());
+		Mockito.when(identityPlugin.createFederationUserToken()).thenReturn(
+				managerTestHelper.getFederationDefaultToken());
 		managerController.setLocalIdentityPlugin(identityPlugin);
 		managerController.setFederationIdentityPlugin(federationIdentityPlugin);
 
-		Request request1 = new Request("id1", federationToken, new ArrayList<Category>(),
+		Request request1 = new Request("id1", managerTestHelper.getFederationDefaultToken(), new ArrayList<Category>(),
 				new HashMap<String, String>());
 		request1.setState(RequestState.OPEN);
 		RequestRepository requestRepository = new RequestRepository();
-		requestRepository.addRequest(federationToken.getUser(), request1);
+		requestRepository.addRequest(managerTestHelper.getFederationDefaultToken().getUser(), request1);
 		managerController.setRequests(requestRepository);
 
 		managerController.checkAndSubmitOpenRequests();
 
 		List<Request> requestsFromUser = managerController.getRequestsFromUser(
-				federationToken.getAccessId());
+				managerTestHelper.getFederationDefaultToken().getAccessId());
 		for (Request request : requestsFromUser) {
 			Assert.assertEquals(RequestState.OPEN, request.getState());
 		}
@@ -1736,5 +1683,142 @@ public class TestManagerController {
 		Assert.assertEquals(1, managerController.getInstancesForRemoteMember().size());
 		Assert.assertEquals("manager1-test.com", managerController.getInstancesForRemoteMember()
 				.get(DefaultDataTestHelper.INSTANCE_ID).getMemberId());		
+	}
+	
+	@Test
+	public void testGarbageCollector(){
+		// setting request repository
+		Token federationToken = new Token(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
+				DefaultDataTestHelper.FED_USER_NAME, new Date(), new HashMap<String, String>());
+		
+		Request request1 = new Request("id1", federationToken, null, null);
+		request1.setState(RequestState.FULFILLED);
+		request1.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
+		
+		RequestRepository requestRepository = new RequestRepository();
+		requestRepository.addRequest(federationToken.getUser(), request1);
+		managerController.setRequests(requestRepository);
+
+		// mocking getInstances
+		Mockito.reset(managerTestHelper.getComputePlugin());
+		List<Instance> federationInstances = new ArrayList<Instance>();
+		federationInstances.add(new Instance(DefaultDataTestHelper.INSTANCE_ID));
+		Mockito.when(
+				managerTestHelper.getComputePlugin().getInstances(
+						managerTestHelper.getFederationDefaultToken())).thenReturn(
+				federationInstances);
+		
+		// checking if there is one instance for federation token 
+		Assert.assertEquals(1, managerController.getInstances(federationToken.getAccessId()).size());
+		Assert.assertEquals(DefaultDataTestHelper.INSTANCE_ID + Request.SEPARATOR_GLOBAL_ID
+				+ DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, managerController
+				.getInstances(federationToken.getAccessId()).get(0).getId());
+
+		managerController.garbageCollector();
+		
+		// checking if garbage collector does not remove the instance 
+		Assert.assertEquals(1, managerController.getInstances(federationToken.getAccessId()).size());
+		Assert.assertEquals(DefaultDataTestHelper.INSTANCE_ID + Request.SEPARATOR_GLOBAL_ID
+				+ DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, managerController
+				.getInstances(federationToken.getAccessId()).get(0).getId());
+	}
+	
+	@Test
+	public void testGarbageCollectorRemovingInstance(){
+		// setting request repository
+		Token federationToken = new Token(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
+				DefaultDataTestHelper.FED_USER_NAME, new Date(), new HashMap<String, String>());
+		
+		Request request1 = new Request("id1", federationToken, null, null);
+		request1.setState(RequestState.FULFILLED);
+		request1.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
+		
+		RequestRepository requestRepository = new RequestRepository();
+		requestRepository.addRequest(federationToken.getUser(), request1);
+		managerController.setRequests(requestRepository);
+
+		// mocking getInstances
+		Mockito.reset(managerTestHelper.getComputePlugin());
+		List<Instance> twoInstances = new ArrayList<Instance>();
+		twoInstances.add(new Instance(DefaultDataTestHelper.INSTANCE_ID));
+		twoInstances.add(new Instance("instance2"));
+		
+		List<Instance> oneInstance = new ArrayList<Instance>();
+		oneInstance.add(new Instance(DefaultDataTestHelper.INSTANCE_ID));
+		Mockito.when(
+				managerTestHelper.getComputePlugin().getInstances(
+						managerTestHelper.getFederationDefaultToken()))
+						.thenReturn(twoInstances, twoInstances, oneInstance);
+		// updating compute mock
+		Mockito.doNothing().when(managerTestHelper.getComputePlugin()).removeInstance(
+				managerTestHelper.getFederationDefaultToken(), "instance2");
+		
+		// checking if there is one instance for federation token
+		List<Instance> resultInstances = managerTestHelper.getComputePlugin().getInstances(managerTestHelper.getFederationDefaultToken()); 
+		Assert.assertEquals(2, resultInstances.size());
+		for (Instance instance : twoInstances) {
+			Assert.assertTrue(resultInstances.contains(instance));
+		}
+
+		managerController.garbageCollector();
+		
+		// checking if garbage collector does not remove the instance
+		resultInstances = managerTestHelper.getComputePlugin().getInstances(managerTestHelper.getFederationDefaultToken());
+		Assert.assertEquals(1, resultInstances.size());
+		Assert.assertEquals(DefaultDataTestHelper.INSTANCE_ID, resultInstances.get(0).getId());
+	}
+	
+
+	@Test
+	public void testGarbageCollectorWithServedRequest(){
+		// checking there is not served request
+		Assert.assertEquals(0, managerController.getInstancesForRemoteMember().size());
+		
+		// mocking getInstances
+		Mockito.reset(managerTestHelper.getComputePlugin());
+		List<Instance> twoInstances = new ArrayList<Instance>();
+		twoInstances.add(new Instance(DefaultDataTestHelper.INSTANCE_ID));
+		twoInstances.add(new Instance("instance2"));
+		
+		List<Instance> oneInstance = new ArrayList<Instance>();
+		oneInstance.add(new Instance(DefaultDataTestHelper.INSTANCE_ID));
+		Mockito.when(
+				managerTestHelper.getComputePlugin().requestInstance(Mockito.any(Token.class),
+						Mockito.any(List.class), Mockito.any(Map.class), Mockito.anyString())).thenReturn(
+				DefaultDataTestHelper.INSTANCE_ID);
+		Mockito.when(
+				managerTestHelper.getComputePlugin().getInstances(
+						managerTestHelper.getFederationDefaultToken()))
+						.thenReturn(twoInstances, twoInstances, oneInstance);
+		
+		// creating instance for remote member 
+		managerController.createInstanceForRemoteMember("manager1-test.com", new ArrayList<Category>(), xOCCIAtt);
+		
+		// checking there is one served request
+		Assert.assertEquals(1, managerController.getInstancesForRemoteMember().size());
+		Assert.assertEquals("manager1-test.com", managerController.getInstancesForRemoteMember()
+				.get(DefaultDataTestHelper.INSTANCE_ID).getMemberId());
+				
+		// updating compute mock
+		Mockito.doNothing().when(managerTestHelper.getComputePlugin()).removeInstance(
+				managerTestHelper.getFederationDefaultToken(), "instance2");
+	
+		// checking if there is one instance for federation token
+		List<Instance> resultInstances = managerTestHelper.getComputePlugin().getInstances(managerTestHelper.getFederationDefaultToken()); 
+		Assert.assertEquals(2, resultInstances.size());
+		for (Instance instance : twoInstances) {
+			Assert.assertTrue(resultInstances.contains(instance));
+		}
+
+		managerController.garbageCollector();
+		
+		// checking if garbage collector does not remove the instance
+		resultInstances = managerTestHelper.getComputePlugin().getInstances(managerTestHelper.getFederationDefaultToken());
+		Assert.assertEquals(1, resultInstances.size());
+		Assert.assertEquals(DefaultDataTestHelper.INSTANCE_ID, resultInstances.get(0).getId());
+		// checking there is one served request
+		Assert.assertEquals(1, managerController.getInstancesForRemoteMember().size());
+		Assert.assertEquals("manager1-test.com", managerController.getInstancesForRemoteMember()
+				.get(DefaultDataTestHelper.INSTANCE_ID).getMemberId());
 	}
 }

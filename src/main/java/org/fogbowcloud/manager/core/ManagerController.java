@@ -44,6 +44,7 @@ import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.fogbowcloud.manager.occi.request.RequestRepository;
 import org.fogbowcloud.manager.occi.request.RequestState;
 import org.fogbowcloud.manager.occi.request.RequestType;
+import org.fogbowcloud.manager.occi.util.OCCIComputeApplication.InstanceIdGenerator;
 import org.fogbowcloud.manager.xmpp.AsyncPacketSender;
 import org.fogbowcloud.manager.xmpp.ManagerPacketHelper;
 import org.restlet.Response;
@@ -56,11 +57,13 @@ public class ManagerController {
 	private static final long DEFAULT_TOKEN_UPDATE_PERIOD = 300000; // 5 minutes
 	private static final long DEFAULT_INSTANCE_MONITORING_PERIOD = 120000; // 2 minutes
 	private static final long DEFAULT_SERVED_REQUEST_MONITORING_PERIOD = 120000; // 2 minutes
+	private static final long DEFAULT_GARBAGE_COLLECTOR_PERIOD = 240000; // 4 minutes
 																			
 	private final ManagerTimer requestSchedulerTimer;
 	private final ManagerTimer tokenUpdaterTimer;
 	private final ManagerTimer instanceMonitoringTimer;
 	private final ManagerTimer servedRequestMonitoringTimer;
+	private final ManagerTimer garbageCollectorTimer;
 
 	private Token federationUserToken;
 	private final List<FederationMember> members = Collections.synchronizedList(new LinkedList<FederationMember>());
@@ -92,12 +95,14 @@ public class ManagerController {
 			this.requestSchedulerTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
 			this.tokenUpdaterTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
 			this.instanceMonitoringTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
-			this.servedRequestMonitoringTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));	
+			this.servedRequestMonitoringTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
+			this.garbageCollectorTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
 		} else {
 			this.requestSchedulerTimer = new ManagerTimer(executor);
 			this.tokenUpdaterTimer = new ManagerTimer(executor);
 			this.instanceMonitoringTimer = new ManagerTimer(executor);
 			this.servedRequestMonitoringTimer = new ManagerTimer(executor);
+			this.garbageCollectorTimer = new ManagerTimer(executor);
 		}
 	}
 
@@ -111,6 +116,10 @@ public class ManagerController {
 	
 	public void setComputePlugin(ComputePlugin computePlugin) {
 		this.computePlugin = computePlugin;
+		// garbage collector may starting only after set compute plugin
+		if (!garbageCollectorTimer.isScheduled()) {
+			triggerGarbageCollector();
+		}
 	}
 
 	public void setLocalIdentityPlugin(IdentityPlugin identityPlugin) {
@@ -119,6 +128,36 @@ public class ManagerController {
 
 	public void setFederationIdentityPlugin(IdentityPlugin federationIdentityPlugin) {
 		this.federationIdentityPlugin = federationIdentityPlugin;
+	}
+	
+	private void triggerGarbageCollector() {
+		String garbageCollectorPeriodStr = properties
+				.getProperty(ConfigurationConstants.GARBAGE_COLLECTOR_PERIOD_KEY);
+		final long garbageCollectorPeriod = garbageCollectorPeriodStr == null ? DEFAULT_GARBAGE_COLLECTOR_PERIOD
+				: Long.valueOf(garbageCollectorPeriodStr);
+		
+		garbageCollectorTimer.scheduleAtFixedRate(new TimerTask() {
+			@Override
+			public void run() {	
+				garbageCollector();
+			}
+		}, 0, garbageCollectorPeriod);	
+	}
+	
+	protected void garbageCollector() {
+		if (computePlugin != null) {
+			Token federationUserToken = getFederationUserToken();
+			List<Instance> federationInstances = computePlugin.getInstances(federationUserToken);
+			LOGGER.debug("Federation instances=" + federationInstances);
+			for (Instance instance : federationInstances) {
+				if (!isInstanceBeenUsed(generateGlobalId(instance.getId(), null))
+						&& !instancesForRemoteMembers.containsKey(instance.getId())) {
+					// this is an orphan instance
+					LOGGER.debug("Removing the orphan instance " + instance.getId());
+					this.computePlugin.removeInstance(federationUserToken, instance.getId());
+				}
+			}
+		}
 	}
 
 	public void updateMembers(List<FederationMember> members) {
@@ -773,7 +812,6 @@ public class ManagerController {
 				LOGGER.warn("Request failed locally for an unknown reason.", e);
 				return true;				
 			}
-
 		}
 
 		request.setInstanceId(instanceId);
