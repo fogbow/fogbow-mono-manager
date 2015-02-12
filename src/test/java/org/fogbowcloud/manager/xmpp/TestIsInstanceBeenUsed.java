@@ -48,7 +48,7 @@ public class TestIsInstanceBeenUsed {
 		managerController.setRequests(requestRepository);
 		
 		// checking if instance is been used
-		ManagerPacketHelper.isInstanceBeenUsedByRemoteMember(INSTANCE_DEFAULT
+		ManagerPacketHelper.checkIfInstanceIsBeenUsedByRemoteMember(INSTANCE_DEFAULT
 				+ Request.SEPARATOR_GLOBAL_ID + DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
 				MANAGER_COMPONENT_URL, managerTestHelper.createPacketSender());
 	}
@@ -69,7 +69,7 @@ public class TestIsInstanceBeenUsed {
 		managerController.setRequests(requestRepository);
 		
 		// checking if instance is been used
-		ManagerPacketHelper.isInstanceBeenUsedByRemoteMember(INSTANCE_DEFAULT
+		ManagerPacketHelper.checkIfInstanceIsBeenUsedByRemoteMember(INSTANCE_DEFAULT
 				+ Request.SEPARATOR_GLOBAL_ID + DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
 				MANAGER_COMPONENT_URL, managerTestHelper.createPacketSender());
 	}
@@ -89,7 +89,7 @@ public class TestIsInstanceBeenUsed {
 		managerController.setRequests(requestRepository);
 		
 		// checking if instance is been used
-		ManagerPacketHelper.isInstanceBeenUsedByRemoteMember(INSTANCE_DEFAULT, MANAGER_COMPONENT_URL,
+		ManagerPacketHelper.checkIfInstanceIsBeenUsedByRemoteMember(INSTANCE_DEFAULT, MANAGER_COMPONENT_URL,
 				managerTestHelper.createPacketSender());
 	}
 
@@ -100,7 +100,7 @@ public class TestIsInstanceBeenUsed {
 		managerTestHelper.initializeXMPPManagerComponent(false, managerController);
 		
 		// checking if instance is been used
-		ManagerPacketHelper.isInstanceBeenUsedByRemoteMember("anyvalue", MANAGER_COMPONENT_URL,
+		ManagerPacketHelper.checkIfInstanceIsBeenUsedByRemoteMember("anyvalue", MANAGER_COMPONENT_URL,
 				managerTestHelper.createPacketSender());
 	}
 	

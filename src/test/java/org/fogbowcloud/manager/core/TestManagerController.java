@@ -1632,7 +1632,24 @@ public class TestManagerController {
 		// checking there is not served request
 		Assert.assertEquals(0, managerController.getInstancesForRemoteMember().size());
 		
-		mockRequestInstance();		
+		mockRequestInstance();
+		
+		// mocking packet sender
+		IQ iq = new IQ();
+		iq.setTo("manager1-test.com");
+		iq.setType(Type.get);
+		Element queryEl = iq.getElement().addElement("query",
+				ManagerXmppComponent.ISINSTANCEBEENUSED_NAMESPACE);
+		Element instanceEl = queryEl.addElement("instance");
+		instanceEl.addElement("id").setText(DefaultDataTestHelper.INSTANCE_ID);
+
+		IQ response = IQ.createResultIQ(iq);
+		response.setError(Condition.item_not_found);
+		
+		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);
+		Mockito.when(packetSender.syncSendPacket(Mockito.any(IQ.class))).thenReturn(response);
+		managerController.setPacketSender(packetSender);
+				
 		managerController.createInstanceForRemoteMember("manager1-test.com", new ArrayList<Category>(), xOCCIAtt);
 		
 		// checking there is one served request

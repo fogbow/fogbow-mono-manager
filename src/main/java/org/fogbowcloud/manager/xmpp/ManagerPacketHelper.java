@@ -357,7 +357,7 @@ public class ManagerPacketHelper {
 		}
 	}
 
-	public static void isInstanceBeenUsedByRemoteMember(String instanceId, String memberAddress,
+	public static void checkIfInstanceIsBeenUsedByRemoteMember(String instanceId, String memberAddress,
 			PacketSender packetSender) {
 		IQ iq = new IQ();
 		iq.setTo(memberAddress);
@@ -367,6 +367,7 @@ public class ManagerPacketHelper {
 		Element instanceEl = queryEl.addElement("instance");
 		instanceEl.addElement("id").setText(instanceId);
 		
+		System.out.println("packet=" + packetSender);
 		IQ response = (IQ) packetSender.syncSendPacket(iq);
 
 		if (response.getError() != null) {

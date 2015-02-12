@@ -10,6 +10,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.TimerTask;
 import java.util.UUID;
 import java.util.concurrent.Executors;
@@ -876,9 +877,12 @@ public class ManagerController {
 	protected void monitorServedRequests() {
 		LOGGER.info("Monitoring served requests.");
 		LOGGER.debug("Current served requests=" + instancesForRemoteMembers);
-		
-		for (String instanceId : instancesForRemoteMembers.keySet()) {
+				
+		Set<String> instanceIds = instancesForRemoteMembers.keySet();
+		for (String instanceId : instanceIds) {
 			ServedRequest servedRequest = instancesForRemoteMembers.get(instanceId);
+			System.out.println("instanceId= " + instanceId);
+			System.out.println("servedRequest= " + servedRequest);
 			if (!isInstanceBeenUsedByRemoteMember(instanceId, servedRequest)){
 				LOGGER.debug("The instance " + instanceId + " is not been used anymore by "
 						+ servedRequest.getMemberId() + " and will be removed.");
@@ -889,11 +893,10 @@ public class ManagerController {
 
 	private boolean isInstanceBeenUsedByRemoteMember(String instanceId, ServedRequest servedRequest) {
 		try{
-			//TODO refactor return of this method?
-			ManagerPacketHelper.isInstanceBeenUsedByRemoteMember(
+			ManagerPacketHelper.checkIfInstanceIsBeenUsedByRemoteMember(
 					generateGlobalId(instanceId, null), servedRequest.getMemberId(), packetSender);
 			return true;
-		} catch (Exception e) {
+		} catch (OCCIException e) {
 			return false;
 		}
 	}
