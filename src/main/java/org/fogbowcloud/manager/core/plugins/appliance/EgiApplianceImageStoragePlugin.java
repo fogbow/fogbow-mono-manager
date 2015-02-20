@@ -122,7 +122,6 @@ public class EgiApplianceImageStoragePlugin implements ImageStoragePlugin {
 				}
 				pendingImageUploads.remove(imageURL);
 			}
-
 		});
 	}
 	
@@ -142,7 +141,7 @@ public class EgiApplianceImageStoragePlugin implements ImageStoragePlugin {
 			HttpResponse response = httpclient.execute(httpget);
 			entity = response.getEntity();
 			if (entity != null) {				
-				String extension = imageURL.substring(imageURL.lastIndexOf(".") + 1);
+				String extension = imageURL.substring(imageURL.lastIndexOf("."));
 				String imageName = imageURL.substring(0, imageURL.lastIndexOf(".")).replaceAll("/", ".");
 				File tempFile = File.createTempFile(imageName, 
 						extension, new File(tmpStorage));

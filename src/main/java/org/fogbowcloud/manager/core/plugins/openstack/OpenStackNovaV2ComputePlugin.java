@@ -506,6 +506,10 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 
 	@Override
 	public void uploadImage(Token token, String imagePath, String imageName) {
+		LOGGER.info("Uploading image... ");
+		LOGGER.info("Token=" + token.getAccessId() + "; imagePath=" + imagePath + "; imageName="
+				+ imageName);
+		
 		if (imageName == null || imageName.isEmpty()) {
 			throw new OCCIException(ErrorType.BAD_REQUEST, "Image empty.");
 		}
