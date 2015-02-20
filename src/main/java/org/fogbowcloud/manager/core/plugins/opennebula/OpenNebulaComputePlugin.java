@@ -58,9 +58,8 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 
 	public static final int VALUE_DEFAULT_QUOTA_OPENNEBULA = -1;
 	public static final int VALUE_UNLIMITED_QUOTA_OPENNEBULA = -2;
-	public static final int VALUE_DEFAULT_MEM = 20480; // 20 GB
-	public static final int VALUE_DEFAULT_CPU = 100;
-	public static final int VALUE_DEFAULT_VMS = 100;
+	
+	public static final int DEFAULT_RESOURCE_MAX_VALUE = Integer.MAX_VALUE;
 	private OpenNebulaClientFactory clientFactory;
 	private String openNebulaEndpoint;
 	private Map<String, String> fogbowTermToOpenNebula; 
@@ -403,61 +402,35 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 	public ResourcesInfo getResourcesInfo(Token token) {
 		Client oneClient = clientFactory.createClient(token.getAccessId(), openNebulaEndpoint);				
 		User user = clientFactory.createUser(oneClient, token.getUser());
+		
+		String maxUserCpuStr = user.xpath("VM_QUOTA/VM/CPU");
+		String cpuUserInUseStr = user.xpath("VM_QUOTA/VM/CPU_USED");
+		String maxUserMemStr = user.xpath("VM_QUOTA/VM/MEMORY");
+		String memUserInUseStr = user.xpath("VM_QUOTA/VM/MEMORY_USED");
+		String maxUserVMsStr = user.xpath("VM_QUOTA/VM/VMS");
+		String vmsUserInUseStr = user.xpath("VM_QUOTA/VM/VMS_USED");
+		
 		String groupId = user.xpath("GROUPS/ID");
 		Group group = clientFactory.createGroup(oneClient, Integer.parseInt(groupId));
 
-		String maxCpuStr = group.xpath("VM_QUOTA/VM/CPU");
-		String cpuInUseStr = group.xpath("VM_QUOTA/VM/CPU_USED");
-		String maxMemStr = group.xpath("VM_QUOTA/VM/MEMORY");
-		String memInUseStr = group.xpath("VM_QUOTA/VM/MEMORY_USED");
-		String maxVMsStr = group.xpath("VM_QUOTA/VM/VMS");
-		String vmsInUseStr = group.xpath("VM_QUOTA/VM/VMS_USED");
+		String maxGroupCpuStr = group.xpath("VM_QUOTA/VM/CPU");
+		String cpuGroupInUseStr = group.xpath("VM_QUOTA/VM/CPU_USED");
+		String maxGroupMemStr = group.xpath("VM_QUOTA/VM/MEMORY");
+		String memGroupInUseStr = group.xpath("VM_QUOTA/VM/MEMORY_USED");
+		String maxGroupVMsStr = group.xpath("VM_QUOTA/VM/VMS");
+		String vmsGroupInUseStr = group.xpath("VM_QUOTA/VM/VMS_USED");
 		
-		// default values is used when quota is not specified
-		double maxCpu = VALUE_DEFAULT_CPU;
-		double cpuInUse = 0;
-		double maxMem = VALUE_DEFAULT_MEM;
-		double memInUse = 0;
-		double maxVMs = VALUE_DEFAULT_VMS;
-		double vmsInUse = 0;
-
-		// getting quota values
-		if (isValidDouble(maxCpuStr)) {
-			maxCpu = Integer.parseInt(maxCpuStr);
-		}
-		if (isValidDouble(cpuInUseStr)) {
-			cpuInUse = Integer.parseInt(cpuInUseStr);
-		}
-		if (isValidDouble(maxMemStr)) {
-			maxMem = Integer.parseInt(maxMemStr);
-		}
-		if (isValidDouble(memInUseStr)) {
-			memInUse = Integer.parseInt(memInUseStr);
-		}
-		if (isValidDouble(maxVMsStr)) {
-			maxVMs = Integer.parseInt(maxVMsStr);
-		}
-		if (isValidDouble(vmsInUseStr)) {
-			vmsInUse = Integer.parseInt(vmsInUseStr);
-		}
-
-		if (maxMem == VALUE_DEFAULT_QUOTA_OPENNEBULA) {
-			maxMem = VALUE_DEFAULT_MEM;
-		} else if (maxMem == VALUE_UNLIMITED_QUOTA_OPENNEBULA) {
-			maxMem = Integer.MAX_VALUE;
-		}
-
-		if (maxCpu == VALUE_DEFAULT_QUOTA_OPENNEBULA) {
-			maxCpu = VALUE_DEFAULT_CPU;
-		} else if (maxCpu == VALUE_UNLIMITED_QUOTA_OPENNEBULA) {
-			maxCpu = Integer.MAX_VALUE;
-		}
+		ResourceQuota resourceQuota = getQuota(maxUserCpuStr, cpuUserInUseStr, maxGroupCpuStr, cpuGroupInUseStr);
+		double maxCpu = resourceQuota.getMax();
+		double cpuInUse = resourceQuota.getInUse();
+	
+		resourceQuota = getQuota(maxUserMemStr, memUserInUseStr, maxGroupMemStr, memGroupInUseStr);
+		double maxMem = resourceQuota.getMax();
+		double memInUse = resourceQuota.getInUse();
 		
-		if (maxVMs == VALUE_DEFAULT_QUOTA_OPENNEBULA) {
-			maxVMs = VALUE_DEFAULT_CPU;
-		} else if (maxVMs == VALUE_UNLIMITED_QUOTA_OPENNEBULA) {
-			maxVMs = Integer.MAX_VALUE;
-		}
+		resourceQuota = getQuota(maxUserVMsStr, vmsUserInUseStr, maxGroupVMsStr, vmsGroupInUseStr);
+		double maxVMs = resourceQuota.getMax();
+		double vmsInUse = resourceQuota.getInUse();
 
 		double cpuIdle = maxCpu - cpuInUse;
 		double memIdle = maxMem - memInUse;
@@ -468,7 +441,53 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 				null);
 	}
 	
-	private boolean isValidDouble(String number) {
+	private ResourceQuota getQuota(String maxUserResource, String resourceUserInUse, String maxGroupResource, String resourceGroupInUse) {
+		if (isValidNumber(maxUserResource) && isValidNumber(maxGroupResource)) {	
+			if (isUnlimitedOrDefaultQuota(maxUserResource)){
+				maxUserResource = String.valueOf(DEFAULT_RESOURCE_MAX_VALUE);
+			}
+			
+			if (isUnlimitedOrDefaultQuota(maxGroupResource)){
+				maxGroupResource = String.valueOf(DEFAULT_RESOURCE_MAX_VALUE);
+			}
+			
+			if (isUserSmallerQuota(maxUserResource, maxGroupResource)) {
+				return new ResourceQuota(maxUserResource, resourceUserInUse);
+			} else {
+				return new ResourceQuota(maxGroupResource, resourceGroupInUse);
+			}
+		} else if (isValidNumber(maxUserResource)) {
+			if (isUnlimitedOrDefaultQuota(maxUserResource)){
+				maxUserResource = String.valueOf(DEFAULT_RESOURCE_MAX_VALUE);
+			}
+			return new ResourceQuota(maxUserResource, resourceUserInUse);
+		} else if (isValidNumber(maxGroupResource)) {
+			if (isUnlimitedOrDefaultQuota(maxGroupResource)){
+				maxGroupResource = String.valueOf(DEFAULT_RESOURCE_MAX_VALUE);
+			}
+			return new ResourceQuota(maxGroupResource, resourceGroupInUse);
+		} else {
+			return new ResourceQuota(String.valueOf(DEFAULT_RESOURCE_MAX_VALUE),
+					String.valueOf(getBiggerValue(resourceUserInUse, resourceGroupInUse)));
+		}		
+	}
+
+	private boolean isUnlimitedOrDefaultQuota(String maxResourceStr) {
+		int maxResource = Integer.parseInt(maxResourceStr);
+		return maxResource == VALUE_DEFAULT_QUOTA_OPENNEBULA
+				|| maxResource == VALUE_UNLIMITED_QUOTA_OPENNEBULA;
+	}
+
+	private int getBiggerValue(String resourceUserInUse, String resourceGroupInUse) {
+		return Math.max(Integer.parseInt(resourceUserInUse), Integer.parseInt(resourceGroupInUse));
+	}
+
+	private boolean isUserSmallerQuota(String maxUserStr, String maxGroupStr) {		
+		return Integer.parseInt(maxUserStr) < Integer.parseInt(maxGroupStr) ? true : false;
+		
+	}
+
+	private boolean isValidNumber(String number) {
 		try {
 			Double.parseDouble(number);
 		} catch (Exception e) {
@@ -597,5 +616,24 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 			}
 		}
 		return null;
+	}
+}
+
+class ResourceQuota {
+	
+	double maxResource;
+	double resourceInUse;
+	
+	public ResourceQuota(String maxResource, String resourceInUse) {
+		this.maxResource = Double.parseDouble(maxResource);
+		this.resourceInUse = Double.parseDouble(resourceInUse);
+	}
+
+	public double getInUse() {	
+		return resourceInUse;
+	}
+
+	public double getMax() {
+		return maxResource;
 	}
 }
