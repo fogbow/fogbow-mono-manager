@@ -544,11 +544,13 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 			sshClientWrapper.connect(sshHost, sshPort, sshUsername, sshKeyFile);
 			sshClientWrapper.doScpUpload(imagePath, remoteFilePath);
 		} catch (IOException e) {
+			LOGGER.error("Error whilen SCP.", e);
 			throw new RuntimeException(e);
 		} finally {
 			try {
 				sshClientWrapper.disconnect();
 			} catch (IOException e) {
+				LOGGER.error("Error whilen disconnecting SCP client.", e);
 			}
 		}
 		
