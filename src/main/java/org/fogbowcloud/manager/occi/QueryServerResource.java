@@ -35,7 +35,7 @@ public class QueryServerResource extends ServerResource {
 		Series<Header> headers = req.getHeaders();
 		
 		if (req.getMethod().equals(Method.HEAD)){
-			String token = headers.getValues(OCCIHeaders.X_AUTH_TOKEN);
+			String token = headers.getValues(OCCIHeaders.X_FEDERATION_AUTH_TOKEN);
 			if (token == null || token.equals("")) {
 				HeaderUtils.setResponseHeader(getResponse(), HeaderUtils.WWW_AUTHENTICATE,
 						application.getAuthenticationURI());
@@ -63,9 +63,9 @@ public class QueryServerResource extends ServerResource {
 		Response response = new Response(req);
 
 		normalizeRequest();
-		if (req.getHeaders().getFirst(OCCIHeaders.X_AUTH_TOKEN) == null
-				|| req.getHeaders().getFirst(HeaderUtils.normalize(OCCIHeaders.X_AUTH_TOKEN)) == null) {
-			req.getHeaders().add(new Header(OCCIHeaders.X_AUTH_TOKEN, authToken));
+		if (req.getHeaders().getFirst(OCCIHeaders.X_FEDERATION_AUTH_TOKEN) == null
+				|| req.getHeaders().getFirst(HeaderUtils.normalize(OCCIHeaders.X_FEDERATION_AUTH_TOKEN)) == null) {
+			req.getHeaders().add(new Header(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, authToken));
 		}
 
 		application.bypass(req, response);			

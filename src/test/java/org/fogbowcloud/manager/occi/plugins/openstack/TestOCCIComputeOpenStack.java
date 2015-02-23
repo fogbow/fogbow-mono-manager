@@ -430,7 +430,7 @@ public class TestOCCIComputeOpenStack {
 		Request request = new Request(Method.GET, OCCITestHelper.URI_FOGBOW_COMPUTE);
 		request.setResourceRef(OCCITestHelper.URI_FOGBOW_COMPUTE);
 		Series<Header> requestHeaders = getRequestHeaders(request);
-		requestHeaders.add(new Header(HeaderUtils.normalize(OCCIHeaders.X_AUTH_TOKEN), PluginHelper.ACCESS_ID));
+		requestHeaders.add(new Header(HeaderUtils.normalize(OCCIHeaders.X_FEDERATION_AUTH_TOKEN), PluginHelper.ACCESS_ID));
 		Response response = new Response(request);		
 		occiComputeOpenStack.bypass(request, response);
 		
@@ -456,7 +456,7 @@ public class TestOCCIComputeOpenStack {
 		Request request = new Request(Method.GET, OCCITestHelper.URI_FOGBOW_COMPUTE);
 		request.setResourceRef(OCCITestHelper.URI_FOGBOW_COMPUTE);
 		Series<Header> requestHeaders = getRequestHeaders(request);
-		requestHeaders.add(new Header(HeaderUtils.normalize(OCCIHeaders.X_AUTH_TOKEN), PluginHelper.ACCESS_ID));		
+		requestHeaders.add(new Header(HeaderUtils.normalize(OCCIHeaders.X_FEDERATION_AUTH_TOKEN), PluginHelper.ACCESS_ID));		
 		Response response = new Response(request);		
 		occiComputeOpenStack.bypass(request, response);
 		
@@ -472,7 +472,7 @@ public class TestOCCIComputeOpenStack {
 		request = new Request(Method.GET, OCCITestHelper.URI_FOGBOW_COMPUTE + FIRST_INSTANCE_ID);
 		request.setResourceRef(OCCITestHelper.URI_FOGBOW_COMPUTE + FIRST_INSTANCE_ID);
 		requestHeaders = getRequestHeaders(request);
-		requestHeaders.add(new Header(HeaderUtils.normalize(OCCIHeaders.X_AUTH_TOKEN), PluginHelper.ACCESS_ID));		
+		requestHeaders.add(new Header(HeaderUtils.normalize(OCCIHeaders.X_FEDERATION_AUTH_TOKEN), PluginHelper.ACCESS_ID));		
 		response = new Response(request);		
 		occiComputeOpenStack.bypass(request, response);
 		
@@ -515,7 +515,7 @@ public class TestOCCIComputeOpenStack {
 		Request request = new Request(Method.DELETE, OCCITestHelper.URI_FOGBOW_COMPUTE + FIRST_INSTANCE_ID);
 		request.setResourceRef(OCCITestHelper.URI_FOGBOW_COMPUTE + FIRST_INSTANCE_ID);
 		Series<Header> requestHeaders = getRequestHeaders(request);
-		requestHeaders.add(new Header(HeaderUtils.normalize(OCCIHeaders.X_AUTH_TOKEN), PluginHelper.ACCESS_ID));		
+		requestHeaders.add(new Header(HeaderUtils.normalize(OCCIHeaders.X_FEDERATION_AUTH_TOKEN), PluginHelper.ACCESS_ID));		
 		Response response = new Response(request);		
 		occiComputeOpenStack.bypass(request, response);
 		
@@ -553,7 +553,7 @@ public class TestOCCIComputeOpenStack {
 		Request request = new Request(Method.DELETE, OCCITestHelper.URI_FOGBOW_COMPUTE);
 		request.setResourceRef(OCCITestHelper.URI_FOGBOW_COMPUTE);
 		Series<Header> requestHeaders = getRequestHeaders(request);
-		requestHeaders.add(new Header(HeaderUtils.normalize(OCCIHeaders.X_AUTH_TOKEN), PluginHelper.ACCESS_ID));		
+		requestHeaders.add(new Header(HeaderUtils.normalize(OCCIHeaders.X_FEDERATION_AUTH_TOKEN), PluginHelper.ACCESS_ID));		
 		Response response = new Response(request);		
 		occiComputeOpenStack.bypass(request, response);
 		
@@ -579,7 +579,7 @@ public class TestOCCIComputeOpenStack {
 		Request request = new Request(Method.POST, OCCITestHelper.URI_FOGBOW_COMPUTE);
 		request.setResourceRef(OCCITestHelper.URI_FOGBOW_COMPUTE);
 		Series<Header> requestHeaders = getRequestHeaders(request);
-		requestHeaders.add(new Header(HeaderUtils.normalize(OCCIHeaders.X_AUTH_TOKEN), PluginHelper.ACCESS_ID));
+		requestHeaders.add(new Header(HeaderUtils.normalize(OCCIHeaders.X_FEDERATION_AUTH_TOKEN), PluginHelper.ACCESS_ID));
 		requestHeaders.add(new Header(HeaderUtils.normalize(OCCIHeaders.CONTENT_TYPE), OCCIHeaders.OCCI_CONTENT_TYPE));
 		requestHeaders.add(new Header(HeaderUtils.normalize(OCCIHeaders.CATEGORY), new Category(PluginHelper.LINUX_X86_TERM,
 				OpenStackOCCIComputePlugin.getOSScheme(), RequestConstants.MIXIN_CLASS).toHeader()));

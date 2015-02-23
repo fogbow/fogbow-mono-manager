@@ -440,7 +440,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		String responseStr = null;
 		try {
 			HttpGet request = new HttpGet(endpoint);			
-			request.addHeader(OCCIHeaders.X_AUTH_TOKEN, authToken);
+			request.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, authToken);
 			request.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.JSON_CONTENT_TYPE);
 			request.addHeader(OCCIHeaders.ACCEPT, OCCIHeaders.JSON_CONTENT_TYPE);
 			response = client.execute(request);
@@ -466,7 +466,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 			HttpPost request = new HttpPost(endpoint);
 			request.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.JSON_CONTENT_TYPE);
 			request.addHeader(OCCIHeaders.ACCEPT, OCCIHeaders.JSON_CONTENT_TYPE);
-			request.addHeader(OCCIHeaders.X_AUTH_TOKEN, authToken);
+			request.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, authToken);
 			request.setEntity(new StringEntity(json.toString(), HTTP.UTF_8));
 			response = client.execute(request);
 			responseStr = EntityUtils.toString(response.getEntity(), HTTP.UTF_8);
@@ -488,7 +488,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		HttpResponse response = null;
 		try {
 			HttpDelete request = new HttpDelete(endpoint);
-			request.addHeader(OCCIHeaders.X_AUTH_TOKEN, authToken);
+			request.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, authToken);
 			response = client.execute(request);
 		} catch (Exception e) {
 			LOGGER.error(e);
@@ -578,7 +578,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
             HttpPatch request = new HttpPatch(endpoint);
             request.addHeader(OCCIHeaders.CONTENT_TYPE, "application/openstack-images-v2.1-json-patch");
             request.addHeader(OCCIHeaders.ACCEPT, OCCIHeaders.JSON_CONTENT_TYPE);
-            request.addHeader(OCCIHeaders.X_AUTH_TOKEN, authToken);
+            request.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, authToken);
             request.setEntity(new StringEntity(json, HTTP.UTF_8));
             response = client.execute(request);
             responseStr = EntityUtils.toString(response.getEntity(), HTTP.UTF_8);
@@ -602,7 +602,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
         try {
             HttpPut request = new HttpPut(endpoint);
             request.addHeader(OCCIHeaders.CONTENT_TYPE, "application/octet-stream");
-            request.addHeader(OCCIHeaders.X_AUTH_TOKEN, authToken);                   
+            request.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, authToken);                   
             request.setEntity(new FileEntity(new File(path), "application/octet-stream"));
             response = client.execute(request);
         } catch (Exception e) {
