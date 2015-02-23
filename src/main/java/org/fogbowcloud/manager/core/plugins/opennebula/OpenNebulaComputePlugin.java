@@ -537,6 +537,8 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		Client oneClient = clientFactory.createClient(token.getAccessId(), openNebulaEndpoint);
 		String remoteFilePath = sshTargetTempFolder + "/" + UUID.randomUUID();
 		
+		LOGGER.info("Remote File path = " + remoteFilePath);
+		
 		OpenNebulaSshClientWrapper sshClientWrapper = new OpenNebulaSshClientWrapper();
 		try {
 			sshClientWrapper.connect(sshHost, sshPort, sshUsername, sshKeyFile);
@@ -555,6 +557,8 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		templateProperties.put("image_path", remoteFilePath);
 		Long imageSize = (long) Math.ceil(((double) new File(imagePath).length()) / (1024d * 1024d));
 		templateProperties.put("image_size", imageSize.toString());
+		
+		LOGGER.info("Template properties = " + templateProperties);
 		OneResponse response = Image.allocate(oneClient, generateImageTemplate(templateProperties), dataStoreId);
 		
 		if (response.isError()) {
