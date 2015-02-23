@@ -78,7 +78,10 @@ public class EgiApplianceImageStoragePlugin implements ImageStoragePlugin {
 		
 		if (marketPlaceBaseURL != null) {
 			try {
-				localId = computePlugin.getImageId(token, normalizeImageName(createURL(globalId)));
+				String normalizedImageName = normalizeImageName(removeHTTPPrefix(createURL(globalId)));
+				LOGGER.debug("Getting local id for normalized image name = " + normalizedImageName);
+				localId = computePlugin.getImageId(token,
+						normalizedImageName);
 			} catch (Throwable e) {
 				LOGGER.error("Couldn't get local image id from Compute plugin.", e);
 			}
@@ -88,8 +91,10 @@ public class EgiApplianceImageStoragePlugin implements ImageStoragePlugin {
 			scheduleImageDownload(token, createURL(globalId));
 		} else {
 			try {
+				String normalizedImageName = normalizeImageName(removeHTTPPrefix(globalId));
+				LOGGER.debug("Getting local id for normalized image name = " + normalizedImageName);
 				localId = computePlugin.getImageId(token,
-						normalizeImageName(removeHTTPPrefix(globalId)));
+						normalizedImageName);
 			} catch (Throwable e) {
 				LOGGER.error("Couldn't get local image id from Compute plugin.", e);
 			}
@@ -143,8 +148,8 @@ public class EgiApplianceImageStoragePlugin implements ImageStoragePlugin {
 			entity = response.getEntity();
 			if (entity != null) {				
 				String extension = imageURL.substring(imageURL.lastIndexOf("."));
-				String imageName = removeHTTPPrefix(imageURL.substring(0, imageURL.lastIndexOf("."))
-						.replaceAll("/", "."));
+				String imageName = removeHTTPPrefix(imageURL.substring(0, imageURL.lastIndexOf(".")))
+						.replaceAll("/", ".");
 				File tempFile = File.createTempFile(imageName, 
 						extension, new File(tmpStorage));
 
