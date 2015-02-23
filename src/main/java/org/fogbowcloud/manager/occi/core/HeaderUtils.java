@@ -44,7 +44,7 @@ public class HeaderUtils {
 	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public static String getAuthToken(Series<Header> headers, Response response, String authenticationURI) {
-		String token = headers.getValues(OCCIHeaders.X_AUTH_TOKEN);
+		String token = headers.getValues(OCCIHeaders.X_FEDERATION_AUTH_TOKEN);
 		if (token == null || token.equals("")) {
 			if (authenticationURI != null) {
 				if (response != null) {

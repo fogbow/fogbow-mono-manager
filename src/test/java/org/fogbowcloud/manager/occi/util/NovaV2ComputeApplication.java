@@ -207,7 +207,7 @@ public class NovaV2ComputeApplication extends Application {
 		public String fetch() {
 			NovaV2ComputeApplication computeApplication = (NovaV2ComputeApplication) getApplication();
 			HttpRequest req = (HttpRequest) getRequest();
-			String authToken = req.getHeaders().getValues(OCCIHeaders.X_AUTH_TOKEN);
+			String authToken = req.getHeaders().getValues(OCCIHeaders.X_FEDERATION_AUTH_TOKEN);
 
 			String instanceId = (String) getRequestAttributes().get("serverid");
 

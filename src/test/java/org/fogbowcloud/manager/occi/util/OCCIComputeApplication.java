@@ -307,7 +307,7 @@ public class OCCIComputeApplication extends Application {
 		public String fetch() {
 			OCCIComputeApplication computeApplication = (OCCIComputeApplication) getApplication();
 			HttpRequest req = (HttpRequest) getRequest();
-			String userToken = req.getHeaders().getValues(OCCIHeaders.X_AUTH_TOKEN);
+			String userToken = req.getHeaders().getValues(OCCIHeaders.X_FEDERATION_AUTH_TOKEN);
 
 			String instanceId = (String) getRequestAttributes().get("instanceid");
 
@@ -380,7 +380,7 @@ public class OCCIComputeApplication extends Application {
 		@Get
 		public String fetch() {
 			HttpRequest req = (HttpRequest) getRequest();
-			String userToken = req.getHeaders().getValues(OCCIHeaders.X_AUTH_TOKEN);
+			String userToken = req.getHeaders().getValues(OCCIHeaders.X_FEDERATION_AUTH_TOKEN);
 			LOGGER.info("Getting query resource with token :" + userToken);			
 			return generateQueryResonse(OCCIComputeApplication.getResources());
 		}

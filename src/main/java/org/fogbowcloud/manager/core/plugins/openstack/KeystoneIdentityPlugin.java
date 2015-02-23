@@ -254,7 +254,7 @@ public class KeystoneIdentityPlugin implements IdentityPlugin {
 		String responseStr = null;
 		try {
 			HttpGet httpGet = new HttpGet(this.v2TenantsEndpoint);
-			httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, accessId);
+			httpGet.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, accessId);
 			httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.JSON_CONTENT_TYPE);
 			httpGet.addHeader(OCCIHeaders.ACCEPT, OCCIHeaders.JSON_CONTENT_TYPE);
 
