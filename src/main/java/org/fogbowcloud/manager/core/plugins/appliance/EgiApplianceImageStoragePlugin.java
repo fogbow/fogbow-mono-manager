@@ -88,7 +88,8 @@ public class EgiApplianceImageStoragePlugin implements ImageStoragePlugin {
 			scheduleImageDownload(token, createURL(globalId));
 		} else {
 			try {
-				localId = computePlugin.getImageId(token, normalizeImageName(globalId));
+				localId = computePlugin.getImageId(token,
+						normalizeImageName(removeHTTPPrefix(globalId)));
 			} catch (Throwable e) {
 				LOGGER.error("Couldn't get local image id from Compute plugin.", e);
 			}
@@ -115,7 +116,7 @@ public class EgiApplianceImageStoragePlugin implements ImageStoragePlugin {
 					try {
 						computePlugin.uploadImage(token, 
 								downloadTempFile.getAbsolutePath(), 
-								normalizeImageName(imageURL));
+								normalizeImageName(removeHTTPPrefix(imageURL)));
 					} catch (Throwable e) {
 						LOGGER.error("Couldn't upload image.", e);
 					}
@@ -142,7 +143,8 @@ public class EgiApplianceImageStoragePlugin implements ImageStoragePlugin {
 			entity = response.getEntity();
 			if (entity != null) {				
 				String extension = imageURL.substring(imageURL.lastIndexOf("."));
-				String imageName = imageURL.substring(0, imageURL.lastIndexOf(".")).replaceAll("/", ".");
+				String imageName = removeHTTPPrefix(imageURL.substring(0, imageURL.lastIndexOf("."))
+						.replaceAll("/", "."));
 				File tempFile = File.createTempFile(imageName, 
 						extension, new File(tmpStorage));
 
@@ -166,6 +168,10 @@ public class EgiApplianceImageStoragePlugin implements ImageStoragePlugin {
 			}
 		}
 		return null;
+	}
+
+	private String removeHTTPPrefix(String imageURL) {
+		return imageURL.replaceFirst("http://", "");
 	}
 
 	private void injectKeystore(HttpClient httpclient)
