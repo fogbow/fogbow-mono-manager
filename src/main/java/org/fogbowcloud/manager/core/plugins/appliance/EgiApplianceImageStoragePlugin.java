@@ -129,7 +129,7 @@ public class EgiApplianceImageStoragePlugin implements ImageStoragePlugin {
 				File downloadTempFile = downloadTempFile(imageURL);
 				LOGGER.debug("Download of image " + imageURL + " was done.");				
 				if (downloadTempFile != null) {
-					String extension = getExtension(downloadTempFile.getAbsolutePath());
+					String extension = getExtension(imageURL);
 					String diskFormat = null;
 					if (extension.equalsIgnoreCase(OVA)) {
 						//TODO unpack image from this file
