@@ -38,6 +38,7 @@ import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
 import org.fogbowcloud.manager.occi.core.ResourceRepository;
 import org.fogbowcloud.manager.occi.core.Token;
+import org.mockito.internal.stubbing.answers.ThrowsException;
 
 public class EgiApplianceImageStoragePlugin implements ImageStoragePlugin {
 
@@ -129,21 +130,23 @@ public class EgiApplianceImageStoragePlugin implements ImageStoragePlugin {
 				File downloadTempFile = downloadTempFile(imageURL);
 				LOGGER.debug("Download of image " + imageURL + " was done.");				
 				if (downloadTempFile != null) {
-					String extension = getExtension(imageURL);
-					String diskFormat = null;
-					if (extension.equalsIgnoreCase(OVA)) {
-						//TODO unpack image from this file
+					String imageExtension = getExtension(imageURL);
+					LOGGER.debug("Image extension = " + imageExtension);
+					if (imageExtension.equalsIgnoreCase(OVA)) {
+						LOGGER.debug("Image is OVA extension");	
 						File outputDir = new File(tmpStorage + "/" + UUID.randomUUID());
+						LOGGER.debug("Creating output directory = " + outputDir.getAbsolutePath());
 						outputDir.mkdirs();
 						try {
 							List<File> files = unTar(downloadTempFile, outputDir);
 							for (File file : files) {
-								String ovaExtDisk = getExtension(file.getAbsolutePath());
-								if (isValidDiskFormat(ovaExtDisk)) {									
+								String diskFormatFromOVA = getExtension(file.getAbsolutePath());
+								if (isValidDiskFormat(diskFormatFromOVA)) {
+									LOGGER.debug("Disk format from OVA = " + diskFormatFromOVA);
 									try {
 										computePlugin.uploadImage(token, 
 												file.getAbsolutePath(), 
-												normalizeImageName(removeHTTPPrefix(imageURL)), ovaExtDisk);
+												normalizeImageName(removeHTTPPrefix(imageURL)), diskFormatFromOVA);
 									} catch (Throwable e) {
 										LOGGER.error("Couldn't upload image.", e);
 									}
@@ -151,31 +154,25 @@ public class EgiApplianceImageStoragePlugin implements ImageStoragePlugin {
 								}								
 							}
 							
-							//deleting otputDir
+							// deleting otputDir
 							for (File file : outputDir.listFiles()) {
 								file.delete();																
 							}
-							outputDir.delete();
-							
-						} catch (FileNotFoundException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						} catch (IOException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						} catch (ArchiveException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
+							outputDir.delete();							
+						} catch (Throwable e) {
+							LOGGER.error("Couldn't untar OVA image.", e);
 						} 
 						return;
 					} 
 					
-					if (extension.equalsIgnoreCase(QCOW2) || extension.equalsIgnoreCase(IMG)) {
+					String diskFormat = null;
+					if (imageExtension.equalsIgnoreCase(QCOW2) || imageExtension.equalsIgnoreCase(IMG)) {
+						LOGGER.debug("Image extension is QCOW2 or IMG.");
 						diskFormat = QCOW2;
-					} else if (extension.equalsIgnoreCase(VMDK) || extension.equalsIgnoreCase(VDI)
-							|| extension.equalsIgnoreCase(ISO) || extension.equalsIgnoreCase(RAW)
-							|| extension.equalsIgnoreCase(VHD)) {
-						diskFormat = extension.toLowerCase();
+					} else if (imageExtension.equalsIgnoreCase(VMDK) || imageExtension.equalsIgnoreCase(VDI)
+							|| imageExtension.equalsIgnoreCase(ISO) || imageExtension.equalsIgnoreCase(RAW)
+							|| imageExtension.equalsIgnoreCase(VHD)) {
+						diskFormat = imageExtension.toLowerCase();
 					} 
 					try {
 						computePlugin.uploadImage(token, 
@@ -216,7 +213,7 @@ public class EgiApplianceImageStoragePlugin implements ImageStoragePlugin {
 				String imageName = removeHTTPPrefix(imageURL.substring(0, imageURL.lastIndexOf(".")))
 						.replaceAll("/", ".");
 				File tempFile = File.createTempFile(imageName, 
-						extension, new File(tmpStorage));
+						"." + extension, new File(tmpStorage));
 
 				InputStream instream = entity.getContent();
 				FileUtils.copyInputStreamToFile(instream, tempFile);;
@@ -241,7 +238,8 @@ public class EgiApplianceImageStoragePlugin implements ImageStoragePlugin {
 	}
 
 	private String getExtension(final String imageName) {
-		return imageName.substring(imageName.lastIndexOf("."));
+		LOGGER.debug("Getting extension of name " + imageName);
+		return imageName.substring(imageName.lastIndexOf(".") + 1);
 	}
 
 	private String removeHTTPPrefix(String imageURL) {
@@ -250,7 +248,7 @@ public class EgiApplianceImageStoragePlugin implements ImageStoragePlugin {
 	
 	private static List<File> unTar(final File inputFile, final File outputDir) throws FileNotFoundException, IOException, ArchiveException {
 
-	    System.out.println(String.format("Untaring %s to dir %s.", inputFile.getAbsolutePath(), outputDir.getAbsolutePath()));
+	    LOGGER.debug(String.format("Untaring %s to dir %s.", inputFile.getAbsolutePath(), outputDir.getAbsolutePath()));
 
 	    final List<File> untaredFiles = new LinkedList<File>();
 	    final InputStream is = new FileInputStream(inputFile); 
@@ -259,15 +257,15 @@ public class EgiApplianceImageStoragePlugin implements ImageStoragePlugin {
 	    while ((entry = (TarArchiveEntry)debInputStream.getNextEntry()) != null) {
 	        final File outputFile = new File(outputDir, entry.getName());
 	        if (entry.isDirectory()) {
-	            System.out.println(String.format("Attempting to write output directory %s.", outputFile.getAbsolutePath()));
+	        	LOGGER.debug(String.format("Attempting to write output directory %s.", outputFile.getAbsolutePath()));
 	            if (!outputFile.exists()) {
-	                System.out.println(String.format("Attempting to create output directory %s.", outputFile.getAbsolutePath()));
+	            	LOGGER.debug(String.format("Attempting to create output directory %s.", outputFile.getAbsolutePath()));
 	                if (!outputFile.mkdirs()) {
 	                    throw new IllegalStateException(String.format("Couldn't create directory %s.", outputFile.getAbsolutePath()));
 	                }
 	            }
 	        } else {
-	            System.out.println(String.format("Creating output file %s.", outputFile.getAbsolutePath()));
+	        	LOGGER.debug(String.format("Creating output file %s.", outputFile.getAbsolutePath()));
 	            final OutputStream outputFileStream = new FileOutputStream(outputFile); 
 	            IOUtils.copy(debInputStream, outputFileStream);
 	            outputFileStream.close();
