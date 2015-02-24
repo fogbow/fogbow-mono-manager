@@ -27,7 +27,7 @@ public interface ComputePlugin {
 	
 	public void bypass(Request request, Response response);
 
-	public void uploadImage(Token token, String imagePath, String imageName);
+	public void uploadImage(Token token, String imagePath, String imageName, String diskFormat);
 	
 	public String getImageId(Token token, String imageName);
 	

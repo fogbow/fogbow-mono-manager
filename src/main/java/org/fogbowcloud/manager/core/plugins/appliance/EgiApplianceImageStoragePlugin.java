@@ -2,19 +2,30 @@ package org.fogbowcloud.manager.core.plugins.appliance;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.security.KeyStore;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
+import org.apache.commons.compress.archivers.ArchiveException;
+import org.apache.commons.compress.archivers.ArchiveStreamFactory;
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -116,17 +127,71 @@ public class EgiApplianceImageStoragePlugin implements ImageStoragePlugin {
 			@Override
 			public void run() {
 				File downloadTempFile = downloadTempFile(imageURL);
-				LOGGER.debug("Download of image " + imageURL + " was done.");
+				LOGGER.debug("Download of image " + imageURL + " was done.");				
 				if (downloadTempFile != null) {
+					String extension = getExtension(downloadTempFile.getAbsolutePath());
+					String diskFormat = null;
+					if (extension.equalsIgnoreCase(OVA)) {
+						//TODO unpack image from this file
+						File outputDir = new File(tmpStorage + "/" + UUID.randomUUID());
+						outputDir.mkdirs();
+						try {
+							List<File> files = unTar(downloadTempFile, outputDir);
+							for (File file : files) {
+								String ovaExtDisk = getExtension(file.getAbsolutePath());
+								if (isValidDiskFormat(ovaExtDisk)) {									
+									try {
+										computePlugin.uploadImage(token, 
+												file.getAbsolutePath(), 
+												normalizeImageName(removeHTTPPrefix(imageURL)), ovaExtDisk);
+									} catch (Throwable e) {
+										LOGGER.error("Couldn't upload image.", e);
+									}
+									break;
+								}								
+							}
+							
+							//deleting otputDir
+							for (File file : outputDir.listFiles()) {
+								file.delete();																
+							}
+							outputDir.delete();
+							
+						} catch (FileNotFoundException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						} catch (ArchiveException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						} 
+						return;
+					} 
+					
+					if (extension.equalsIgnoreCase(QCOW2) || extension.equalsIgnoreCase(IMG)) {
+						diskFormat = QCOW2;
+					} else if (extension.equalsIgnoreCase(VMDK) || extension.equalsIgnoreCase(VDI)
+							|| extension.equalsIgnoreCase(ISO) || extension.equalsIgnoreCase(RAW)
+							|| extension.equalsIgnoreCase(VHD)) {
+						diskFormat = extension.toLowerCase();
+					} 
 					try {
 						computePlugin.uploadImage(token, 
 								downloadTempFile.getAbsolutePath(), 
-								normalizeImageName(removeHTTPPrefix(imageURL)));
+								normalizeImageName(removeHTTPPrefix(imageURL)), diskFormat);
 					} catch (Throwable e) {
 						LOGGER.error("Couldn't upload image.", e);
 					}
 				}
 				pendingImageUploads.remove(imageURL);
+			}
+
+			private boolean isValidDiskFormat(String extension) {
+				return (extension.equalsIgnoreCase(VMDK) || extension.equalsIgnoreCase(VDI)
+						|| extension.equalsIgnoreCase(ISO) || extension.equalsIgnoreCase(RAW)
+						|| extension.equalsIgnoreCase(VHD));
 			}
 		});
 	}
@@ -147,7 +212,7 @@ public class EgiApplianceImageStoragePlugin implements ImageStoragePlugin {
 			HttpResponse response = httpclient.execute(httpget);
 			entity = response.getEntity();
 			if (entity != null) {				
-				String extension = imageURL.substring(imageURL.lastIndexOf("."));
+				String extension = getExtension(imageURL);
 				String imageName = removeHTTPPrefix(imageURL.substring(0, imageURL.lastIndexOf(".")))
 						.replaceAll("/", ".");
 				File tempFile = File.createTempFile(imageName, 
@@ -175,8 +240,43 @@ public class EgiApplianceImageStoragePlugin implements ImageStoragePlugin {
 		return null;
 	}
 
+	private String getExtension(final String imageName) {
+		return imageName.substring(imageName.lastIndexOf("."));
+	}
+
 	private String removeHTTPPrefix(String imageURL) {
 		return imageURL.replaceFirst("http://", "");
+	}
+	
+	private static List<File> unTar(final File inputFile, final File outputDir) throws FileNotFoundException, IOException, ArchiveException {
+
+	    System.out.println(String.format("Untaring %s to dir %s.", inputFile.getAbsolutePath(), outputDir.getAbsolutePath()));
+
+	    final List<File> untaredFiles = new LinkedList<File>();
+	    final InputStream is = new FileInputStream(inputFile); 
+	    final TarArchiveInputStream debInputStream = (TarArchiveInputStream) new ArchiveStreamFactory().createArchiveInputStream("tar", is);
+	    TarArchiveEntry entry = null; 
+	    while ((entry = (TarArchiveEntry)debInputStream.getNextEntry()) != null) {
+	        final File outputFile = new File(outputDir, entry.getName());
+	        if (entry.isDirectory()) {
+	            System.out.println(String.format("Attempting to write output directory %s.", outputFile.getAbsolutePath()));
+	            if (!outputFile.exists()) {
+	                System.out.println(String.format("Attempting to create output directory %s.", outputFile.getAbsolutePath()));
+	                if (!outputFile.mkdirs()) {
+	                    throw new IllegalStateException(String.format("Couldn't create directory %s.", outputFile.getAbsolutePath()));
+	                }
+	            }
+	        } else {
+	            System.out.println(String.format("Creating output file %s.", outputFile.getAbsolutePath()));
+	            final OutputStream outputFileStream = new FileOutputStream(outputFile); 
+	            IOUtils.copy(debInputStream, outputFileStream);
+	            outputFileStream.close();
+	        }
+	        untaredFiles.add(outputFile);
+	    }
+	    debInputStream.close(); 
+
+	    return untaredFiles;
 	}
 
 	private void injectKeystore(HttpClient httpclient)

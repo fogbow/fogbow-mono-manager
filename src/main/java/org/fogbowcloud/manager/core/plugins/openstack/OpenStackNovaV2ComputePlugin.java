@@ -28,6 +28,7 @@ import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
+import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
 import org.fogbowcloud.manager.core.plugins.util.HttpPatch;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
@@ -53,7 +54,6 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 	private static final String ID_JSON_FIELD = "id";
 	private static final String BARE = "bare";
 	private static final String CONTAINER_FORMAT = "/container_format";
-	private static final String QCOW2 = "qcow2";
 	private static final String VISIBILITY_JSON_FIELD = "visibility";
 	private static final String PUBLIC = "public";
 	private static final String NAME_JSON_FIELD = "name";
@@ -64,7 +64,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 	private static final String OP_JSON_FIELD = "op";
 	private static final String V2_IMAGES_FILE = "/file";
 	private static final String V2_IMAGES = "/v2/images";
-	
+
 	private final String COMPUTE_V2_API_ENDPOINT = "/v2/";
 	private static final String TENANT_ID = "tenantId";
 
@@ -505,7 +505,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 	}
 
 	@Override
-	public void uploadImage(Token token, String imagePath, String imageName) {
+	public void uploadImage(Token token, String imagePath, String imageName, String diskFormat) {
 		LOGGER.info("Uploading image... ");
 		LOGGER.info("Token=" + token.getAccessId() + "; imagePath=" + imagePath + "; imageName="
 				+ imageName);
@@ -534,7 +534,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 			JSONObject replace_disck_format = new JSONObject();
 			replace_disck_format.put(OP_JSON_FIELD, REPLACE_VALUE_UPLOAD_IMAGE);
 			replace_disck_format.put(PATH_JSON_FIELD, DISK_FORMAT);
-			replace_disck_format.put(VALUE_JSON_FIELD, QCOW2);
+			replace_disck_format.put(VALUE_JSON_FIELD, diskFormat);
 			nets.add(replace_disck_format);
 			JSONObject replace_container_format = new JSONObject();
 			replace_container_format.put(OP_JSON_FIELD, REPLACE_VALUE_UPLOAD_IMAGE);

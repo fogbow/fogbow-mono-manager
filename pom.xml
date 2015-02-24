@@ -131,6 +131,11 @@
 
   <dependencies>
     <dependency>
+	  <groupId>org.apache.commons</groupId>
+	  <artifactId>commons-compress</artifactId>
+	  <version>1.9</version>
+	</dependency>  
+    <dependency>
       <groupId>org.jamppa</groupId>
       <artifactId>jamppa</artifactId>
       <version>0.1.1</version>

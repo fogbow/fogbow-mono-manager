@@ -529,7 +529,7 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 	}
 
 	@Override
-	public void uploadImage(Token token, String imagePath, String imageName) {
+	public void uploadImage(Token token, String imagePath, String imageName, String diskFormat) {
 		LOGGER.info("Uploading image... ");
 		LOGGER.info("Token=" + token.getAccessId() + "; imagePath=" + imagePath + "; imageName="
 				+ imageName);
@@ -564,6 +564,7 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		Map<String, String> templateProperties = new HashMap<String, String>();
 		templateProperties.put("image_name", imageName);
 		templateProperties.put("image_path", imageSourcePath);
+		templateProperties.put("image_disk_format", diskFormat);
 		Long imageSize = (long) Math.ceil(((double) new File(imagePath).length()) / (1024d * 1024d));
 		templateProperties.put("image_size", imageSize.toString());
 		
@@ -589,23 +590,24 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 			Document doc = docBuilder.newDocument();
 			Element rootElement = doc.createElement("IMAGE");
 			doc.appendChild(rootElement);
-			
+
 			Element nameElement = doc.createElement("NAME");
 			nameElement.appendChild(doc.createTextNode(templateProperties.get("image_name")));
 			rootElement.appendChild(nameElement);
-			
+
 			Element pathElement = doc.createElement("PATH");
 			pathElement.appendChild(doc.createTextNode(templateProperties.get("image_path")));
 			rootElement.appendChild(pathElement);
-			
+
 			Element sizeElement = doc.createElement("SIZE");
 			sizeElement.appendChild(doc.createTextNode(templateProperties.get("image_size")));
 			rootElement.appendChild(sizeElement);
-			
+
 			Element driverElement = doc.createElement("DRIVER");
-			driverElement.appendChild(doc.createTextNode("qcow2"));
+			driverElement.appendChild(doc.createTextNode(templateProperties
+					.get("image_disk_format")));
 			rootElement.appendChild(driverElement);
-			
+
 			TransformerFactory transformerFactory = TransformerFactory.newInstance();
 			Transformer transformer = transformerFactory.newTransformer();
 			

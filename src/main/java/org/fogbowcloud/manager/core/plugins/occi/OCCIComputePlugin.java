@@ -373,7 +373,7 @@ public class OCCIComputePlugin implements ComputePlugin {
 		}
 	}
 
-	public void uploadImage(Token token, String imagePath, String imageName) {
+	public void uploadImage(Token token, String imagePath, String imageName, String diskFormat) {
 	}
 	
 	public String getImageId(Token token, String imageName) {

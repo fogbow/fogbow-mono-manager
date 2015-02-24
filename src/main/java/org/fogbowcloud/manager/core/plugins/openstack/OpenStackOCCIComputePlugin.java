@@ -185,8 +185,8 @@ public class OpenStackOCCIComputePlugin extends OCCIComputePlugin{
 		} catch (Exception e) {}
 	}
 	
-	public void uploadImage(Token token, String imagePath, String imageName) {
-		openStackNovaV2ComputePlugin.uploadImage(token, imagePath, imageName);		
+	public void uploadImage(Token token, String imagePath, String imageName, String diskFormat) {
+		openStackNovaV2ComputePlugin.uploadImage(token, imagePath, imageName, null);		
 	}
 	
 	public String getImageId(Token token, String imageName) {
