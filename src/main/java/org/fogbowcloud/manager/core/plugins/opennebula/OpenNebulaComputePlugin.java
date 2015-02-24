@@ -537,26 +537,27 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		Client oneClient = clientFactory.createClient(token.getAccessId(), openNebulaEndpoint);
 		String remoteFilePath = sshTargetTempFolder + "/" + UUID.randomUUID();
 		
-		LOGGER.info("Remote File path = " + remoteFilePath);
-		
-		OpenNebulaSshClientWrapper sshClientWrapper = new OpenNebulaSshClientWrapper();
-		try {
-			sshClientWrapper.connect(sshHost, sshPort, sshUsername, sshKeyFile);
-			sshClientWrapper.doScpUpload(imagePath, remoteFilePath);
-		} catch (IOException e) {
-			LOGGER.error("Error whilen SCP.", e);
-			throw new RuntimeException(e);
-		} finally {
-			try {
-				sshClientWrapper.disconnect();
-			} catch (IOException e) {
-				LOGGER.error("Error whilen disconnecting SCP client.", e);
-			}
-		}
+//		LOGGER.info("Remote File path = " + remoteFilePath);
+//		
+//		OpenNebulaSshClientWrapper sshClientWrapper = new OpenNebulaSshClientWrapper();
+//		try {
+//			sshClientWrapper.connect(sshHost, sshPort, sshUsername, sshKeyFile);
+//			sshClientWrapper.doScpUpload(imagePath, remoteFilePath);
+//		} catch (IOException e) {
+//			LOGGER.error("Error whilen SCP.", e);
+//			throw new RuntimeException(e);
+//		} finally {
+//			try {
+//				sshClientWrapper.disconnect();
+//			} catch (IOException e) {
+//				LOGGER.error("Error whilen disconnecting SCP client.", e);
+//			}
+//		}
 		
 		Map<String, String> templateProperties = new HashMap<String, String>();
 		templateProperties.put("image_name", imageName);
-		templateProperties.put("image_path", remoteFilePath);
+//		templateProperties.put("image_path", remoteFilePath);
+		templateProperties.put("image_path", imagePath);
 		Long imageSize = (long) Math.ceil(((double) new File(imagePath).length()) / (1024d * 1024d));
 		templateProperties.put("image_size", imageSize.toString());
 		
