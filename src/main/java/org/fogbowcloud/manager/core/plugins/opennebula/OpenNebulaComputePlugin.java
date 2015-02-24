@@ -530,34 +530,40 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 
 	@Override
 	public void uploadImage(Token token, String imagePath, String imageName) {
-		
 		LOGGER.info("Uploading image... ");
 		LOGGER.info("Token=" + token.getAccessId() + "; imagePath=" + imagePath + "; imageName="
 				+ imageName);
-		Client oneClient = clientFactory.createClient(token.getAccessId(), openNebulaEndpoint);
-		String remoteFilePath = sshTargetTempFolder + "/" + UUID.randomUUID();
+		Client oneClient = clientFactory.createClient(token.getAccessId(), openNebulaEndpoint);		
 		
-//		LOGGER.info("Remote File path = " + remoteFilePath);
-//		
-//		OpenNebulaSshClientWrapper sshClientWrapper = new OpenNebulaSshClientWrapper();
-//		try {
-//			sshClientWrapper.connect(sshHost, sshPort, sshUsername, sshKeyFile);
-//			sshClientWrapper.doScpUpload(imagePath, remoteFilePath);
-//		} catch (IOException e) {
-//			LOGGER.error("Error whilen SCP.", e);
-//			throw new RuntimeException(e);
-//		} finally {
-//			try {
-//				sshClientWrapper.disconnect();
-//			} catch (IOException e) {
-//				LOGGER.error("Error whilen disconnecting SCP client.", e);
-//			}
-//		}
+		String imageSourcePath;
+		if (isRemoteCloudManager()){
+			LOGGER.info("Cloud Manager is Remote. Doing SCP to cloud manager machine.");
+			String remoteFilePath = sshTargetTempFolder + "/" + UUID.randomUUID();
+			LOGGER.info("Remote File Path=" + remoteFilePath);			
+			imageSourcePath = remoteFilePath;
+			OpenNebulaSshClientWrapper sshClientWrapper = new OpenNebulaSshClientWrapper();
+			try {
+				sshClientWrapper.connect(sshHost, sshPort, sshUsername, sshKeyFile);
+				sshClientWrapper.doScpUpload(imagePath, remoteFilePath);
+			} catch (IOException e) {
+				LOGGER.error("Error whilen SCP.", e);
+				throw new RuntimeException(e);
+			} finally {
+				try {
+					sshClientWrapper.disconnect();
+				} catch (IOException e) {
+					LOGGER.error("Error whilen disconnecting SCP client.", e);
+				}
+			}			
+		} else {
+			LOGGER.info("Cloud Manager is Local. Manager is running in the same machine that cloud manager.");
+			imageSourcePath = imagePath;
+		}
 		
+		LOGGER.debug("Image Source Path = " + imageSourcePath);
 		Map<String, String> templateProperties = new HashMap<String, String>();
 		templateProperties.put("image_name", imageName);
-//		templateProperties.put("image_path", remoteFilePath);
-		templateProperties.put("image_path", imagePath);
+		templateProperties.put("image_path", imageSourcePath);
 		Long imageSize = (long) Math.ceil(((double) new File(imagePath).length()) / (1024d * 1024d));
 		templateProperties.put("image_size", imageSize.toString());
 		
@@ -571,6 +577,10 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		Image.chmod(oneClient, response.getIntMessage(), 744);
 	}
 	
+	private boolean isRemoteCloudManager() {
+		return sshHost != null && !sshHost.isEmpty();
+	}
+
 	private String generateImageTemplate(Map<String, String> templateProperties) {
 		DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder docBuilder;
