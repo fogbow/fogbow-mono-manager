@@ -39,12 +39,12 @@ public class TestIsInstanceBeenUsed {
 		managerTestHelper.initializeXMPPManagerComponent(false, managerController);
 		
 		// setting request repository
-		Request request1 = new Request("id1", managerTestHelper.getDefaultToken(), null, null);
+		Request request1 = new Request("id1", managerTestHelper.getDefaultLocalToken(), null, null, null);
 		request1.setState(RequestState.FULFILLED);
 		request1.setInstanceId(INSTANCE_DEFAULT);
 		
 		RequestRepository requestRepository = new RequestRepository();
-		requestRepository.addRequest(managerTestHelper.getDefaultToken().getUser(), request1);
+		requestRepository.addRequest(managerTestHelper.getDefaultLocalToken().getUser(), request1);
 		managerController.setRequests(requestRepository);
 		
 		// checking if instance is been used
@@ -60,12 +60,12 @@ public class TestIsInstanceBeenUsed {
 		managerTestHelper.initializeXMPPManagerComponent(false, managerController);
 		
 		// setting request repository
-		Request request1 = new Request("id1", managerTestHelper.getDefaultToken(), null, null);
+		Request request1 = new Request("id1", managerTestHelper.getDefaultLocalToken(), null, null, null);
 		request1.setState(RequestState.DELETED);
 		request1.setInstanceId(INSTANCE_DEFAULT);
 		
 		RequestRepository requestRepository = new RequestRepository();
-		requestRepository.addRequest(managerTestHelper.getDefaultToken().getUser(), request1);
+		requestRepository.addRequest(managerTestHelper.getDefaultLocalToken().getUser(), request1);
 		managerController.setRequests(requestRepository);
 		
 		// checking if instance is been used
@@ -81,11 +81,11 @@ public class TestIsInstanceBeenUsed {
 		managerTestHelper.initializeXMPPManagerComponent(false, managerController);
 		
 		// setting request repository
-		Request request1 = new Request("id1", managerTestHelper.getDefaultToken(), null, null);
+		Request request1 = new Request("id1", managerTestHelper.getDefaultLocalToken(), null, null, null);
 		request1.setState(RequestState.OPEN);
 		
 		RequestRepository requestRepository = new RequestRepository();
-		requestRepository.addRequest(managerTestHelper.getDefaultToken().getUser(), request1);
+		requestRepository.addRequest(managerTestHelper.getDefaultLocalToken().getUser(), request1);
 		managerController.setRequests(requestRepository);
 		
 		// checking if instance is been used

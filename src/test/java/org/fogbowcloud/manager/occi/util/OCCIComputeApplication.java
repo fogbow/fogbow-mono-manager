@@ -307,7 +307,7 @@ public class OCCIComputeApplication extends Application {
 		public String fetch() {
 			OCCIComputeApplication computeApplication = (OCCIComputeApplication) getApplication();
 			HttpRequest req = (HttpRequest) getRequest();
-			String userToken = req.getHeaders().getValues(OCCIHeaders.X_FEDERATION_AUTH_TOKEN);
+			String userToken = req.getHeaders().getValues(OCCIHeaders.X_AUTH_TOKEN);
 
 			String instanceId = (String) getRequestAttributes().get("instanceid");
 
@@ -343,8 +343,7 @@ public class OCCIComputeApplication extends Application {
 			List<Category> categories = HeaderUtils.getCategories(req.getHeaders());
 			HeaderUtils.checkOCCIContentType(req.getHeaders());
 			Map<String, String> xOCCIAtt = HeaderUtils.getXOCCIAtributes(req.getHeaders());
-			String authToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse(),
-					"Keystone uri=' http://localhost:5000'");
+			String authToken = getAuthToken(req);
 			String link = HeaderUtils.getLink(req.getHeaders());
 			
 			String computeEndpoint = req.getHostRef() + req.getHttpCall().getRequestUri();
@@ -352,13 +351,17 @@ public class OCCIComputeApplication extends Application {
 			getResponse().setLocationRef(computeEndpoint + instanceId);
 			return new StringRepresentation(ResponseConstants.OK, MediaType.TEXT_PLAIN);
 		}
+		
+		private static String getAuthToken(HttpRequest req){
+			return req.getHeaders().getValues(OCCIHeaders.X_AUTH_TOKEN);
+		}
+	
 
 		@Delete
 		public String remove() {
 			OCCIComputeApplication computeApplication = (OCCIComputeApplication) getApplication();
 			HttpRequest req = (HttpRequest) getRequest();
-			String userToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse(),
-					"Keystone uri=' http://localhost:5000'");
+			String userToken = getAuthToken(req);
 			String instanceId = (String) getRequestAttributes().get("instanceid");
 
 			if (instanceId == null) {
@@ -380,7 +383,7 @@ public class OCCIComputeApplication extends Application {
 		@Get
 		public String fetch() {
 			HttpRequest req = (HttpRequest) getRequest();
-			String userToken = req.getHeaders().getValues(OCCIHeaders.X_FEDERATION_AUTH_TOKEN);
+			String userToken = req.getHeaders().getValues(OCCIHeaders.X_AUTH_TOKEN);
 			LOGGER.info("Getting query resource with token :" + userToken);			
 			return generateQueryResonse(OCCIComputeApplication.getResources());
 		}

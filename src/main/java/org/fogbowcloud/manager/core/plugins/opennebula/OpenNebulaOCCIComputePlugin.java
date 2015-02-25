@@ -199,8 +199,8 @@ public class OpenNebulaOCCIComputePlugin extends OCCIComputePlugin {
 					} catch (Exception e) {
 					}
 				} else if (header.getName().contains(
-						HeaderUtils.normalize(OCCIHeaders.X_FEDERATION_AUTH_TOKEN))
-						|| header.getName().contains(OCCIHeaders.X_FEDERATION_AUTH_TOKEN)) {
+						HeaderUtils.normalize(OCCIHeaders.X_AUTH_TOKEN))
+						|| header.getName().contains(OCCIHeaders.X_AUTH_TOKEN)) {
 					token = header.getValue();
 				}
 			}
@@ -210,12 +210,12 @@ public class OpenNebulaOCCIComputePlugin extends OCCIComputePlugin {
 				requestHeaders.removeAll(OCCIHeaders.AUTHORIZATION);
 				requestHeaders.add(new org.restlet.engine.header.Header(OCCIHeaders.AUTHORIZATION,
 						getAuthorization(token)));
-				requestHeaders.removeAll(HeaderUtils.normalize(OCCIHeaders.X_FEDERATION_AUTH_TOKEN));
+				requestHeaders.removeAll(HeaderUtils.normalize(OCCIHeaders.X_AUTH_TOKEN));
 			} else if (requestHeaders.getFirst("X-auth-token") != null
 					|| requestHeaders.getFirst("X-Auth-Token") != null) {
 				requestHeaders.add(new org.restlet.engine.header.Header(OCCIHeaders.AUTHORIZATION,
 						getAuthorization(token)));
-				requestHeaders.removeAll(HeaderUtils.normalize(OCCIHeaders.X_FEDERATION_AUTH_TOKEN));
+				requestHeaders.removeAll(HeaderUtils.normalize(OCCIHeaders.X_AUTH_TOKEN));
 			}
 
 			if (requestHeaders.getFirst(HeaderUtils.normalize(OCCIHeaders.CONTENT_TYPE)) == null) {

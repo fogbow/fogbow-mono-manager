@@ -91,7 +91,7 @@ public class KeystoneApplication extends Application {
 		public String fetch() {
 			KeystoneApplication keyStoneApplication = (KeystoneApplication) getApplication();
 			HttpRequest req = (HttpRequest) getRequest();
-			String token = req.getHeaders().getValues(OCCIHeaders.X_FEDERATION_AUTH_TOKEN);
+			String token = req.getHeaders().getValues(OCCIHeaders.X_AUTH_TOKEN);
 			keyStoneApplication.checkUserByAccessId(token);
 			if (getRequest().getResourceRef().toString()
 					.endsWith(KeystoneIdentityPlugin.V2_TOKENS_ENDPOINT_PATH)) {

@@ -16,7 +16,6 @@ import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.Resource;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
-import org.restlet.Request;
 import org.restlet.Response;
 import org.restlet.data.MediaType;
 import org.restlet.engine.adapter.HttpRequest;
@@ -34,7 +33,7 @@ public class ComputeServerResource extends ServerResource {
 	public StringRepresentation fetch() {
 		OCCIApplication application = (OCCIApplication) getApplication();
 		HttpRequest req = (HttpRequest) getRequest();
-		String authToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse(),
+		String authToken = HeaderUtils.getFederationAuthToken(req.getHeaders(), getResponse(),
 				application.getAuthenticationURI());
 		String instanceId = (String) getRequestAttributes().get("instanceId");
 		List<String> acceptContent = HeaderUtils.getAccept(req.getHeaders());
@@ -88,7 +87,8 @@ public class ComputeServerResource extends ServerResource {
 			} catch (OCCIException e) {
 				Response response = new Response(getRequest());			
 				
-				normilizeURIForBypass(req);
+				normalizeURIForBypass(req);
+				normalizeHeadersForBypass(req);
 				
 				application.bypass(req, response); 			
 				
@@ -106,13 +106,23 @@ public class ComputeServerResource extends ServerResource {
 				ResponseConstants.ACCEPT_NOT_ACCEPTABLE);
 	}
 
-	public static void normilizeURIForBypass(HttpRequest req) {
+	public static void normalizeURIForBypass(HttpRequest req) {
 		String path = req.getResourceRef().getPath();
 		if (path != null && path.contains(org.fogbowcloud.manager.occi.request.Request.SEPARATOR_GLOBAL_ID)) {
 			String[] partOfInstanceId = path.split(org.fogbowcloud.manager.occi.request.Request.SEPARATOR_GLOBAL_ID);
 			path = partOfInstanceId[0];
-		}		
+		}
 		req.getResourceRef().setPath(path);
+	}
+	
+	private static void normalizeHeadersForBypass(HttpRequest req) {
+		String localAuthToken = req.getHeaders().getFirstValue(OCCIHeaders.X_LOCAL_AUTH_TOKEN);
+		if (localAuthToken == null) {
+			return;
+		}
+		req.getHeaders().removeFirst(OCCIHeaders.X_FEDERATION_AUTH_TOKEN);
+		req.getHeaders().removeFirst(OCCIHeaders.X_LOCAL_AUTH_TOKEN);
+		req.getHeaders().add(OCCIHeaders.X_AUTH_TOKEN, localAuthToken);
 	}
 	
 	private List<Instance> filterInstances(List<Instance> allInstances,
@@ -162,8 +172,10 @@ public class ComputeServerResource extends ServerResource {
 		List<Instance> allInstances = application.getInstances(authToken);
 
 		//Adding local instances created out of fogbow
-		Response response = new Response(getRequest());
-		application.bypass(getRequest(), response);
+		HttpRequest req = (HttpRequest) getRequest();
+		Response response = new Response(req);
+		normalizeHeadersForBypass(req);
+		application.bypass(req, response);
 		for (Instance instance : getInstancesCreatedOutOfFogbow(response, application)) {
 			if (!allInstances.contains(instance)){
 				allInstances.add(instance);
@@ -231,7 +243,7 @@ public class ComputeServerResource extends ServerResource {
 	public String remove() {
 		OCCIApplication application = (OCCIApplication) getApplication();
 		HttpRequest req = (HttpRequest) getRequest();
-		String authToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse(), application.getAuthenticationURI());
+		String authToken = HeaderUtils.getFederationAuthToken(req.getHeaders(), getResponse(), application.getAuthenticationURI());
 		String instanceId = (String) getRequestAttributes().get("instanceId");
 		
 		if (instanceId == null) {
@@ -252,7 +264,8 @@ public class ComputeServerResource extends ServerResource {
 				HttpRequest req = (HttpRequest) getRequest();
 				Response response = new Response(req);
 				
-				ComputeServerResource.normilizeURIForBypass(req);
+				normalizeURIForBypass(req);
+				normalizeHeadersForBypass(req);
 				
 				application.bypass(req, response);
 				//if it is a local instance created outside fogbow
@@ -268,9 +281,11 @@ public class ComputeServerResource extends ServerResource {
 	private String removeIntances(OCCIApplication application, String authToken) {
 		application.removeInstances(authToken);
 		//Removing local cloud instances for the token
-		Response response = new Response(getRequest());
+		HttpRequest req = (HttpRequest) getRequest();
+		Response response = new Response(req);
+		normalizeHeadersForBypass(req);
 		try {
-			application.bypass(getRequest(), response);
+			application.bypass(req, response);
 		} catch (OCCIException e) { }
 		return ResponseConstants.OK;
 	}

@@ -207,7 +207,7 @@ public class NovaV2ComputeApplication extends Application {
 		public String fetch() {
 			NovaV2ComputeApplication computeApplication = (NovaV2ComputeApplication) getApplication();
 			HttpRequest req = (HttpRequest) getRequest();
-			String authToken = req.getHeaders().getValues(OCCIHeaders.X_FEDERATION_AUTH_TOKEN);
+			String authToken = req.getHeaders().getValues(OCCIHeaders.X_AUTH_TOKEN);
 
 			String instanceId = (String) getRequestAttributes().get("serverid");
 
@@ -234,8 +234,7 @@ public class NovaV2ComputeApplication extends Application {
 				try {
 					json = req.getEntity().getText();
 					HeaderUtils.checkJsonContentType(req.getHeaders());
-					String authToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse(),
-							"Keystone uri=' http://localhost:5000'");
+					String authToken = req.getHeaders().getValues(OCCIHeaders.X_AUTH_TOKEN);
 					return new StringRepresentation(
 							computeApplication.newInstance(authToken, json),
 							MediaType.APPLICATION_JSON);
@@ -250,8 +249,7 @@ public class NovaV2ComputeApplication extends Application {
 		public String remove() {
 			NovaV2ComputeApplication computeApplication = (NovaV2ComputeApplication) getApplication();
 			HttpRequest req = (HttpRequest) getRequest();
-			String authToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse(),
-					"Keystone uri=' http://localhost:5000'");
+			String authToken = req.getHeaders().getValues(OCCIHeaders.X_AUTH_TOKEN);
 			String instanceId = (String) getRequestAttributes().get("serverid");
 
 			if (instanceId == null) {
@@ -316,8 +314,7 @@ public class NovaV2ComputeApplication extends Application {
 			if (entity.getMediaType().isCompatible(MediaType.APPLICATION_JSON)) {
 				NovaV2ComputeApplication computeApplication = (NovaV2ComputeApplication) getApplication();
 				HttpRequest req = (HttpRequest) getRequest();
-				String authToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse(),
-						"Keystone uri=' http://localhost:5000'");
+				String authToken = req.getHeaders().getValues(OCCIHeaders.X_AUTH_TOKEN);;
 				String json;
 				try {
 					json = req.getEntity().getText();
@@ -336,8 +333,7 @@ public class NovaV2ComputeApplication extends Application {
 		public String remove() {
 			NovaV2ComputeApplication computeApplication = (NovaV2ComputeApplication) getApplication();
 			HttpRequest req = (HttpRequest) getRequest();
-			String authToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse(),
-					"Keystone uri=' http://localhost:5000'");
+			String authToken = req.getHeaders().getValues(OCCIHeaders.X_AUTH_TOKEN);;
 			String keyname = (String) getRequestAttributes().get("keyname");
 
 			if (keyname == null) {

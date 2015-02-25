@@ -40,19 +40,20 @@ public class RequestServerResource extends ServerResource {
 	public StringRepresentation fetch() {
 		OCCIApplication application = (OCCIApplication) getApplication();
 		HttpRequest req = (HttpRequest) getRequest();
-		String accessId = HeaderUtils.getAuthToken(req.getHeaders(), getResponse(),
+		String federationAccessToken = HeaderUtils.getFederationAuthToken(
+				req.getHeaders(), getResponse(),
 				application.getAuthenticationURI());
 		String requestId = (String) getRequestAttributes().get("requestId");
 		List<String> acceptContent = HeaderUtils.getAccept(req.getHeaders());
 		LOGGER.debug("accept contents:" + acceptContent);
 		
 		if (requestId == null) {
-			LOGGER.info("Getting all requests of token :" + accessId);
+			LOGGER.info("Getting all requests of token :" + federationAccessToken);
 			boolean verbose = false;
 			try {
 				verbose = Boolean.parseBoolean(getQuery().getValues("verbose"));
 			} catch (Exception e) {}
-			List<Request> requestsFromUser = application.getRequestsFromUser(accessId);
+			List<Request> requestsFromUser = application.getRequestsFromUser(federationAccessToken);
 			
 			List<String> filterCategory = HeaderUtils.getValueHeaderPerName(OCCIHeaders.CATEGORY,
 					req.getHeaders());
@@ -79,8 +80,8 @@ public class RequestServerResource extends ServerResource {
 			}
 		}
 
-		LOGGER.info("Getting request(" + requestId + ") of token :" + accessId);
-		Request request = application.getRequest(accessId, requestId);		
+		LOGGER.info("Getting request(" + requestId + ") of token :" + federationAccessToken);
+		Request request = application.getRequest(federationAccessToken, requestId);		
 		if (acceptContent.size() == 0 || acceptContent.contains(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE)) {
 			return new StringRepresentation(generateTextPlainResponseOneRequest(request), MediaType.TEXT_PLAIN);				
 		}
@@ -202,18 +203,18 @@ public class RequestServerResource extends ServerResource {
 	public String remove() {		
 		OCCIApplication application = (OCCIApplication) getApplication();
 		HttpRequest req = (HttpRequest) getRequest();
-		String accessId = HeaderUtils.getAuthToken(req.getHeaders(), getResponse(),
+		String federationAccessToken = HeaderUtils.getFederationAuthToken(req.getHeaders(), getResponse(),
 				application.getAuthenticationURI());
 		String requestId = (String) getRequestAttributes().get("requestId");
 
 		if (requestId == null) {
-			LOGGER.info("Removing all requests of token :" + accessId);
-			application.removeAllRequests(accessId);
+			LOGGER.info("Removing all requests of token :" + federationAccessToken);
+			application.removeAllRequests(federationAccessToken);
 			return ResponseConstants.OK;
 		}
 
-		LOGGER.info("Removing request(" + requestId + ") of token :" + accessId);
-		application.removeRequest(accessId, requestId);
+		LOGGER.info("Removing request(" + requestId + ") of token :" + federationAccessToken);
+		application.removeRequest(federationAccessToken, requestId);
 		return ResponseConstants.OK;
 	}
 
@@ -233,10 +234,12 @@ public class RequestServerResource extends ServerResource {
 		Map<String, String> xOCCIAtt = HeaderUtils.getXOCCIAtributes(req.getHeaders());
 		xOCCIAtt = normalizeXOCCIAtt(xOCCIAtt);
 
-		String authToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse(),
-				application.getAuthenticationURI());
+		String federationAuthToken = HeaderUtils.getFederationAuthToken(
+				req.getHeaders(), getResponse(), application.getAuthenticationURI());
+		String localAuthToken = HeaderUtils.getLocalAuthToken(req.getHeaders());
 		
-		List<Request> currentRequests = application.createRequests(authToken, categories, xOCCIAtt);
+		List<Request> currentRequests = application.createRequests(federationAuthToken, 
+				localAuthToken, categories, xOCCIAtt);
 		if (currentRequests != null || !currentRequests.isEmpty()) {
 			setStatus(Status.SUCCESS_CREATED);
 		}		

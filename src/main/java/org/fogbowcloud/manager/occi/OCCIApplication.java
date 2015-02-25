@@ -71,6 +71,9 @@ public class OCCIApplication extends Application {
 	@SuppressWarnings("unchecked")
 	private void normalizeBypass(org.restlet.Request request, Response response) {
 		Response newResponse = new Response(request);
+		
+		
+		
 		bypass(request, newResponse);
 
 		Series<org.restlet.engine.header.Header> responseHeaders = (Series<org.restlet.engine.header.Header>) newResponse
@@ -103,9 +106,9 @@ public class OCCIApplication extends Application {
 		return managerFacade.getRequest(authToken, requestId);
 	}
 
-	public List<Request> createRequests(String authToken, List<Category> categories,
+	public List<Request> createRequests(String federationAuthToken, String localAuthToken, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
-		return managerFacade.createRequests(authToken, categories, xOCCIAtt);
+		return managerFacade.createRequests(federationAuthToken, localAuthToken, categories, xOCCIAtt);
 	}
 
 	public List<Request> getRequestsFromUser(String authToken) {

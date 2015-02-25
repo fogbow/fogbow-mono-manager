@@ -213,8 +213,8 @@ public class ManagerController {
 		return token.getUser();
 	}
 
-	public List<Request> getRequestsFromUser(String accessId) {
-		String user = getUser(accessId);
+	public List<Request> getRequestsFromUser(String federationAccessToken) {
+		String user = getUser(federationAccessToken);
 		return requests.getByUser(user);
 	}
 
@@ -283,7 +283,7 @@ public class ManagerController {
 		if (isLocal(request)) {
 			LOGGER.debug(request.getInstanceId()
 					+ " is local, getting its information in the local cloud.");
-			instance = this.computePlugin.getInstance(request.getToken(),
+			instance = this.computePlugin.getInstance(request.getLocalToken(),
 					request.getInstanceId());
 
 			String sshPublicAdd = getSSHPublicAddress(request.getId());
@@ -372,19 +372,19 @@ public class ManagerController {
 		return instanceId;
 	}
 
-	public void removeInstance(String accessId, String instanceId) {
-		Request request = getRequestForInstance(accessId, instanceId);
+	public void removeInstance(String federationToken, String instanceId) {
+		Request request = getRequestForInstance(federationToken, instanceId);
 		instanceId = normalizeInstanceId(instanceId);
-		removeInstance(accessId, instanceId, request);
+		removeInstance(federationToken, instanceId, request);
 	}
 
-	private void removeInstance(String accessId, String instanceId, Request request) {
+	private void removeInstance(String federationToken, String instanceId, Request request) {
 		if (isLocal(request)) {
-			if (accessId.equals(request.getToken().getAccessId())) {
-				this.computePlugin.removeInstance(request.getToken(), instanceId);
+			if (federationToken.equals(request.getFederationToken().getAccessId())) {
+				this.computePlugin.removeInstance(request.getLocalToken(), instanceId);
 			} else {
-				this.computePlugin.removeInstance(localIdentityPlugin.getToken(accessId),
-						instanceId);
+				// If this is a token of the fogbow user 
+				this.computePlugin.removeInstance(getTokenFromLocalIdP(federationToken), instanceId);
 			}
 		} else {
 			removeRemoteInstance(request);
@@ -420,15 +420,15 @@ public class ManagerController {
 		ManagerPacketHelper.deleteRemoteInstace(request, packetSender);
 	}
 	
-	public Request getRequestForInstance(String accessId, String instanceId) {
-		String user = getUser(accessId);
+	public Request getRequestForInstance(String federationToken, String instanceId) {
+		String user = getUser(federationToken);
 		LOGGER.debug("Getting instance " + instanceId + " of user " + user);
 		List<Request> userRequests = requests.getAll();
 		
 		for (Request request : userRequests) {
 			if (instanceId.equals(request.getInstanceId() + Request.SEPARATOR_GLOBAL_ID
 					+ request.getMemberId())) {
-				if (!request.getToken().getUser().equals(user)) {
+				if (!request.getFederationToken().getUser().equals(user)) {
 					throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 				}
 				return request;
@@ -604,10 +604,13 @@ public class ManagerController {
 		return token;
 	}
 
-	public List<Request> createRequests(String accessId, List<Category> categories,
+	public List<Request> createRequests(String federationAccessTokenStr, 
+			String localAccessTokenStr, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
-		Token userToken = getTokenFromFederationIdP(accessId);
-		LOGGER.debug("User Token: " + userToken);
+		Token federationToken = getTokenFromFederationIdP(federationAccessTokenStr);
+		Token localToken = getTokenFromLocalIdP(localAccessTokenStr);
+		
+		LOGGER.debug("User Token: " + federationToken);
 
 		Integer instanceCount = Integer.valueOf(xOCCIAtt.get(RequestAttribute.INSTANCE_COUNT
 				.getValue()));
@@ -616,11 +619,11 @@ public class ManagerController {
 		List<Request> currentRequests = new ArrayList<Request>();
 		for (int i = 0; i < instanceCount; i++) {
 			String requestId = String.valueOf(UUID.randomUUID());
-			Request request = new Request(requestId, userToken,
+			Request request = new Request(requestId, federationToken, localToken,
 					new LinkedList<Category>(categories), new HashMap<String, String>(xOCCIAtt));
 			LOGGER.info("Created request: " + request);
 			currentRequests.add(request);
-			requests.addRequest(userToken.getUser(), request);
+			requests.addRequest(federationToken.getUser(), request);
 		}
 		if (!requestSchedulerTimer.isScheduled()) {
 			triggerRequestScheduler();			
@@ -630,6 +633,10 @@ public class ManagerController {
 		}
 
 		return currentRequests;
+	}
+
+	private Token getTokenFromLocalIdP(String localAccessTokenStr) {
+		return localIdentityPlugin.getToken(localAccessTokenStr);
 	}
 
 	protected void triggerInstancesMonitor() {
@@ -692,16 +699,17 @@ public class ManagerController {
 		for (Request request : allRequests) {
 			try {
 				if (request.getState().notIn(RequestState.CLOSED, RequestState.FAILED)) {
+					// TODO Close requests that have an expired federation token
 					turnOffTimer = false;
-					long validInterval = request.getToken().getExpirationDate().getTime()
+					long validInterval = request.getLocalToken().getExpirationDate().getTime()
 							- dateUtils.currentTimeMillis();
 					LOGGER.debug("Valid interval of requestId " + request.getId() + " is "
 							+ validInterval);
 					if (validInterval < 2 * tokenUpdatePeriod) {
-						Token newToken = localIdentityPlugin.reIssueToken(request.getToken());
+						Token newToken = localIdentityPlugin.reIssueToken(request.getLocalToken());
 						LOGGER.info("Setting new token " + newToken + " on request "
 								+ request.getId());
-						requests.get(request.getId()).setToken(newToken);
+						requests.get(request.getId()).setLocalToken(newToken);
 					}
 				}
 			} catch (Exception e) {
@@ -783,7 +791,7 @@ public class ManagerController {
 			}	
 			
 			String localImageId = getLocalImageId(request.getCategories(), 
-					request.getToken());
+					request.getLocalToken());
 			List<Category> categories = new LinkedList<Category>();
 			for (Category category : request.getCategories()) {
 				if (category.getScheme().equals(
@@ -793,7 +801,7 @@ public class ManagerController {
 				categories.add(category);
 			}
 			
-			instanceId = computePlugin.requestInstance(request.getToken(),
+			instanceId = computePlugin.requestInstance(request.getLocalToken(),
 					categories, request.getxOCCIAtt(), localImageId);
 		} catch (OCCIException e) {
 			int statusCode = e.getStatus().getCode();
@@ -1011,7 +1019,7 @@ public class ManagerController {
 			if (isLocal(request)) {
 				LOGGER.debug(request.getInstanceId()
 						+ " is local, getting its information in the local cloud.");
-				instance = this.computePlugin.getInstance(request.getToken(),
+				instance = this.computePlugin.getInstance(request.getLocalToken(),
 						request.getInstanceId());
 
 				String sshPublicAdd = getSSHPublicAddress(request.getId());

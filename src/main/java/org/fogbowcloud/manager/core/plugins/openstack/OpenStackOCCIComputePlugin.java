@@ -129,9 +129,9 @@ public class OpenStackOCCIComputePlugin extends OCCIComputePlugin{
 				convertRequestToOcci(request, requestHeaders);				
 			}
 			
-			if (requestHeaders.getValuesArray(normalizeInstanceId(OCCIHeaders.X_FEDERATION_AUTH_TOKEN)).length == 1
-					&& requestHeaders.getValuesArray(OCCIHeaders.X_FEDERATION_AUTH_TOKEN).length == 1) {
-				requestHeaders.removeFirst(OCCIHeaders.X_FEDERATION_AUTH_TOKEN);
+			if (requestHeaders.getValuesArray(normalizeInstanceId(OCCIHeaders.X_AUTH_TOKEN)).length == 1
+					&& requestHeaders.getValuesArray(OCCIHeaders.X_AUTH_TOKEN).length == 1) {
+				requestHeaders.removeFirst(OCCIHeaders.X_AUTH_TOKEN);
 			}
 			proxiedRequest.getAttributes().put("org.restlet.http.headers", requestHeaders);
 			

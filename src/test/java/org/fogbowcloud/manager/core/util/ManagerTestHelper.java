@@ -67,7 +67,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 	public ManagerTestHelper() {
 		Map<String, String> tokenAttributes = new HashMap<String, String>();
 		tokenAttributes.put(KeystoneIdentityPlugin.TENANT_ID, "tenantId_r4fci3qhbcy3b");
-		this.defaultUserToken = new Token(ACCESS_TOKEN_ID, USER_NAME, TOKEN_FUTURE_EXPIRATION,
+		this.defaultUserToken = new Token(LOCAL_ACCESS_TOKEN_ID, USER_NAME, TOKEN_FUTURE_EXPIRATION,
 				tokenAttributes);
 		
 		this.defaultFederationToken = new Token(FED_ACCESS_TOKEN_ID, FED_USER_NAME, new Date(),
@@ -368,7 +368,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		// mocking identity
 		identityPlugin = Mockito.mock(IdentityPlugin.class);
 		federationIdentityPlugin = Mockito.mock(IdentityPlugin.class);
-		Mockito.when(federationIdentityPlugin.getToken(ACCESS_TOKEN_ID)).thenReturn(
+		Mockito.when(federationIdentityPlugin.getToken(LOCAL_ACCESS_TOKEN_ID)).thenReturn(
 				defaultUserToken);
 		Mockito.when(federationIdentityPlugin.getToken(FED_ACCESS_TOKEN_ID)).thenReturn(
 				defaultFederationToken);
@@ -401,11 +401,11 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		});
 	}
 	
-	public Token getDefaultToken() {
+	public Token getDefaultLocalToken() {
 		return defaultUserToken;
 	}
 
-	public Token getFederationDefaultToken() {
+	public Token getDefaultFederationToken() {
 		return defaultFederationToken;
 	}
 }
