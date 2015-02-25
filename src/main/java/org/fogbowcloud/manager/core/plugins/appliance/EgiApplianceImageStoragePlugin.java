@@ -38,7 +38,6 @@ import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
 import org.fogbowcloud.manager.occi.core.ResourceRepository;
 import org.fogbowcloud.manager.occi.core.Token;
-import org.mockito.internal.stubbing.answers.ThrowsException;
 
 public class EgiApplianceImageStoragePlugin implements ImageStoragePlugin {
 
@@ -133,25 +132,42 @@ public class EgiApplianceImageStoragePlugin implements ImageStoragePlugin {
 					String imageExtension = getExtension(imageURL);
 					LOGGER.debug("Image extension = " + imageExtension);
 					if (imageExtension.equalsIgnoreCase(OVA)) {
-						LOGGER.debug("Image is OVA extension");	
+						LOGGER.debug("Image is tar file");	
 						File outputDir = new File(tmpStorage + "/" + UUID.randomUUID());
 						LOGGER.debug("Creating output directory = " + outputDir.getAbsolutePath());
 						outputDir.mkdirs();
 						try {
 							List<File> files = unTar(downloadTempFile, outputDir);
 							for (File file : files) {
-								String diskFormatFromOVA = getExtension(file.getAbsolutePath());
-								if (isValidDiskFormat(diskFormatFromOVA)) {
-									LOGGER.debug("Disk format from OVA = " + diskFormatFromOVA);
-									try {
-										computePlugin.uploadImage(token, 
-												file.getAbsolutePath(), 
-												normalizeImageName(removeHTTPPrefix(imageURL)), diskFormatFromOVA);
-									} catch (Throwable e) {
-										LOGGER.error("Couldn't upload image.", e);
+								String diskFormat = "disk1." + getExtension(file.getAbsolutePath());
+								if (isValidDiskForConversion(diskFormat)) {
+									LOGGER.debug("Disk format into tar file = " + diskFormat);
+									if (executeCommand("qemu-img", "info", file.getAbsolutePath()) == 0) {
+										String convertedDiskFileName = file.getAbsolutePath()
+												+ ".qcow2";
+										int conversionResultCode = executeCommand("qemu-img",
+												"convert", "-O", "qcow2", file.getAbsolutePath(),
+												convertedDiskFileName);
+										if (conversionResultCode == 0) {
+											try {
+												computePlugin
+														.uploadImage(
+																token,
+																convertedDiskFileName,
+																normalizeImageName(removeHTTPPrefix(imageURL)),
+																QCOW2);
+											} catch (Throwable e) {
+												LOGGER.error("Couldn't upload image.", e);
+											}
+										} else {
+											LOGGER.warn("Couldn't convert image. qemu-img conversion result code: "
+													+ conversionResultCode);
+										}
+									} else {
+										LOGGER.warn("Couldn't convert image. qemu-img isn't installed.");
 									}
 									break;
-								}								
+								}
 							}
 							
 							// deleting otputDir
@@ -164,6 +180,7 @@ public class EgiApplianceImageStoragePlugin implements ImageStoragePlugin {
 						} 
 						return;
 					} 
+					
 					
 					String diskFormat = null;
 					if (imageExtension.equalsIgnoreCase(QCOW2) || imageExtension.equalsIgnoreCase(IMG)) {
@@ -185,10 +202,25 @@ public class EgiApplianceImageStoragePlugin implements ImageStoragePlugin {
 				pendingImageUploads.remove(imageURL);
 			}
 
-			private boolean isValidDiskFormat(String extension) {
-				return (extension.equalsIgnoreCase(VMDK) || extension.equalsIgnoreCase(VDI)
-						|| extension.equalsIgnoreCase(ISO) || extension.equalsIgnoreCase(RAW)
-						|| extension.equalsIgnoreCase(VHD));
+			private int executeCommand(String... cmd) {
+				ProcessBuilder processBuilder = new ProcessBuilder(cmd);
+				try {
+					Process process = processBuilder.start();
+					int resultCode = process.waitFor();
+					if (resultCode != 0) {
+						LOGGER.error("Process error stream: "
+								+ IOUtils.toString(process.getErrorStream()));
+					}
+					return resultCode;
+				} catch (Exception e) {
+					LOGGER.error("Error while executing command.", e);
+				}
+				return 1;
+			}
+
+			private boolean isValidDiskForConversion(String extension) {
+				return (extension.equalsIgnoreCase("disk1." + VMDK) || extension.equalsIgnoreCase("disk1." + VDI)
+						|| extension.equalsIgnoreCase("disk1." + IMG));
 			}
 		});
 	}
