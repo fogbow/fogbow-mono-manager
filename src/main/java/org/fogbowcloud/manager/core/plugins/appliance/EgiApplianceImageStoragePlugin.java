@@ -169,12 +169,6 @@ public class EgiApplianceImageStoragePlugin implements ImageStoragePlugin {
 									break;
 								}
 							}
-							
-							// deleting otputDir
-							for (File file : outputDir.listFiles()) {
-								file.delete();																
-							}
-							outputDir.delete();							
 						} catch (Throwable e) {
 							LOGGER.error("Couldn't untar OVA image.", e);
 						} 
