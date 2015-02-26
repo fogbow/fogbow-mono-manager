@@ -33,13 +33,13 @@ public class ComputeServerResource extends ServerResource {
 	public StringRepresentation fetch() {
 		OCCIApplication application = (OCCIApplication) getApplication();
 		HttpRequest req = (HttpRequest) getRequest();
-		String authToken = HeaderUtils.getFederationAuthToken(req.getHeaders(), getResponse(),
+		String federationAuthToken = HeaderUtils.getFederationAuthToken(req.getHeaders(), getResponse(),
 				application.getAuthenticationURI());
 		String instanceId = (String) getRequestAttributes().get("instanceId");
 		List<String> acceptContent = HeaderUtils.getAccept(req.getHeaders());
 		
 		if (instanceId == null) {
-			LOGGER.info("Getting all instances of token :" + authToken);
+			LOGGER.info("Getting all instances of token :" + federationAuthToken);
 			
 			List<String> filterCategory = HeaderUtils.getValueHeaderPerName(OCCIHeaders.CATEGORY,
 					req.getHeaders());
@@ -48,10 +48,10 @@ public class ComputeServerResource extends ServerResource {
 			
 			List<Instance> allInstances = new ArrayList<Instance>();
 			if (filterCategory.size() != 0 || filterAttribute.size() != 0) {
-				allInstances = filterInstances(getInstancesFiltered(application, authToken),
+				allInstances = filterInstances(getInstancesFiltered(application, federationAuthToken),
 						filterCategory, filterAttribute);
 			} else {
-				allInstances = getInstances(application, authToken);			
+				allInstances = getInstances(application, federationAuthToken);			
 			}
 			
 			if (acceptContent.size() == 0
@@ -70,7 +70,7 @@ public class ComputeServerResource extends ServerResource {
 		LOGGER.info("Getting instance " + instanceId);
 		if (acceptContent.size() == 0 || acceptContent.contains(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE)) {
 			try {
-				Instance instance = application.getInstance(authToken, instanceId);
+				Instance instance = application.getInstance(federationAuthToken, instanceId);
 				try {
 					LOGGER.info("Instance " + instance);
 					LOGGER.debug("Instance id: " + instance.getId());
@@ -116,12 +116,13 @@ public class ComputeServerResource extends ServerResource {
 	}
 	
 	private static void normalizeHeadersForBypass(HttpRequest req) {
-		String localAuthToken = req.getHeaders().getFirstValue(OCCIHeaders.X_LOCAL_AUTH_TOKEN);
+		String localAuthToken = req.getHeaders().getFirstValue(HeaderUtils.normalize(OCCIHeaders.X_LOCAL_AUTH_TOKEN));
+		LOGGER.debug("Local Auth Token = " + localAuthToken);
 		if (localAuthToken == null) {
 			return;
 		}
-		req.getHeaders().removeFirst(OCCIHeaders.X_FEDERATION_AUTH_TOKEN);
-		req.getHeaders().removeFirst(OCCIHeaders.X_LOCAL_AUTH_TOKEN);
+		req.getHeaders().removeFirst(HeaderUtils.normalize(OCCIHeaders.X_FEDERATION_AUTH_TOKEN));
+		req.getHeaders().removeFirst(HeaderUtils.normalize(OCCIHeaders.X_LOCAL_AUTH_TOKEN));
 		req.getHeaders().add(OCCIHeaders.X_AUTH_TOKEN, localAuthToken);
 	}
 	

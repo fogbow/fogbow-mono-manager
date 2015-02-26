@@ -65,7 +65,7 @@ public class QueryServerResource extends ServerResource {
 		if (req.getHeaders().getFirst(OCCIHeaders.X_AUTH_TOKEN) == null
 				|| req.getHeaders().getFirst(HeaderUtils.normalize(OCCIHeaders.X_AUTH_TOKEN)) == null) {
 			req.getHeaders().add(new Header(OCCIHeaders.X_AUTH_TOKEN, 
-					req.getHeaders().getFirstValue(OCCIHeaders.X_LOCAL_AUTH_TOKEN)));
+					req.getHeaders().getFirstValue(HeaderUtils.normalize(OCCIHeaders.X_LOCAL_AUTH_TOKEN))));
 		}
 
 		application.bypass(req, response);			

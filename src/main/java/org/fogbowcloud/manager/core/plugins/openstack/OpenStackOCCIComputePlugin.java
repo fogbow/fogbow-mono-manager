@@ -15,6 +15,7 @@ import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.occi.OCCIComputePlugin;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
+import org.fogbowcloud.manager.occi.core.HeaderUtils;
 import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
@@ -129,7 +130,8 @@ public class OpenStackOCCIComputePlugin extends OCCIComputePlugin{
 				convertRequestToOcci(request, requestHeaders);				
 			}
 			
-			if (requestHeaders.getValuesArray(normalizeInstanceId(OCCIHeaders.X_AUTH_TOKEN)).length == 1
+			// Removing one header if request has more than one (one normalized and other not normalized)
+			if (requestHeaders.getValuesArray(HeaderUtils.normalize(OCCIHeaders.X_AUTH_TOKEN)).length == 1
 					&& requestHeaders.getValuesArray(OCCIHeaders.X_AUTH_TOKEN).length == 1) {
 				requestHeaders.removeFirst(OCCIHeaders.X_AUTH_TOKEN);
 			}
