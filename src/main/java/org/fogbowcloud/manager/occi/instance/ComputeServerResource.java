@@ -244,21 +244,21 @@ public class ComputeServerResource extends ServerResource {
 	public String remove() {
 		OCCIApplication application = (OCCIApplication) getApplication();
 		HttpRequest req = (HttpRequest) getRequest();
-		String authToken = HeaderUtils.getFederationAuthToken(req.getHeaders(), getResponse(), application.getAuthenticationURI());
+		String federationAuthToken = HeaderUtils.getFederationAuthToken(req.getHeaders(), getResponse(), application.getAuthenticationURI());
 		String instanceId = (String) getRequestAttributes().get("instanceId");
 		
 		if (instanceId == null) {
-			LOGGER.info("Removing all instances of token :" + authToken);
-			return removeIntances(application, authToken);
+			LOGGER.info("Removing all instances of token :" + federationAuthToken);
+			return removeIntances(application, federationAuthToken);
 		}
 		
 		LOGGER.info("Removing instance " + instanceId);		
-		return removeInstance(application, authToken, instanceId);
+		return removeInstance(application, federationAuthToken, instanceId);
 	}
 
-	private String removeInstance(OCCIApplication application, String authToken, String instanceId) {
+	private String removeInstance(OCCIApplication application, String federationAuthToken, String instanceId) {
 		try {
-			application.removeInstance(authToken, instanceId);
+			application.removeInstance(federationAuthToken, instanceId);
 		} catch (OCCIException e) {
 			//The request will be bypassed only if the error was not found
 			if (e.getStatus().getCode() == HttpStatus.SC_NOT_FOUND){

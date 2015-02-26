@@ -120,14 +120,14 @@ public class VomsIdentityPlugin implements IdentityPlugin {
 
 	@Override
 	public Token getToken(String accessId) {
-		accessId = CertificateUtils.toCertificateFormat(accessId);
-		if (!isValid(accessId)) {
+		String formatedAccessId = CertificateUtils.toCertificateFormat(accessId);
+		if (!isValid(formatedAccessId)) {
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}
 
 		Collection<X509Certificate> certificates;
 		try {
-			certificates = CertificateUtils.getCertificateChain(accessId);
+			certificates = CertificateUtils.getCertificateChain(formatedAccessId);
 		} catch (Exception e) {
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}
