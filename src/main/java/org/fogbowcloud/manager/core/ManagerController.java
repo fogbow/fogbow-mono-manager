@@ -811,7 +811,7 @@ public class ManagerController {
 			}	
 			
 			String localImageId = getLocalImageId(request.getCategories(), 
-					request.getLocalToken());
+					getFederationUserToken());
 			List<Category> categories = new LinkedList<Category>();
 			for (Category category : request.getCategories()) {
 				if (category.getScheme().equals(
