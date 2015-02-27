@@ -21,8 +21,6 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
-import org.apache.commons.codec.Charsets;
-import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpStatus;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.model.Flavor;
@@ -73,7 +71,6 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 	private Integer dataStoreId;
 	
 	private static final Logger LOGGER = Logger.getLogger(OpenNebulaComputePlugin.class);
-
 
 	public OpenNebulaComputePlugin(Properties properties){
 		this(properties, new OpenNebulaClientFactory());
@@ -183,9 +180,6 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		}
 		
 		String userdata = xOCCIAtt.get(RequestAttribute.USER_DATA_ATT.getValue());
-		if (userdata != null){
-			userdata = normalizeUserdata(userdata);
-		}
 		templateProperties.put("mem", String.valueOf((int)getAttValue("mem", choosenFlavor)));
 		templateProperties.put("cpu", String.valueOf(getAttValue("cpu", choosenFlavor)));
 		templateProperties.put("userdata", userdata);
@@ -198,14 +192,6 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		return clientFactory.allocateVirtualMachine(oneClient, vmTemplate);
 	}
 
-	public static String normalizeUserdata(String userdata) {
-		userdata = new String(Base64.decodeBase64(userdata), Charsets.UTF_8);
-		userdata = userdata.replaceAll("\n", "\\\\n");
-		userdata = new String(Base64.encodeBase64(userdata.getBytes(Charsets.UTF_8), false, false),
-				Charsets.UTF_8);
-		return userdata;
-	}
-	
 	private String generateTemplate(Map<String, String> templateProperties) {
 		DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder docBuilder;

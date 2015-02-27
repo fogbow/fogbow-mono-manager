@@ -1,7 +1,8 @@
 #!/bin/sh
 IS_OPENSSH=$(ssh -ver 2>&1 | grep OpenSSH)
+IS_NEW_OPENSSH=$(ssh -V 2>&1 | grep OpenSSH)
 IS_DROPBEAR=$(ssh -ver 2>&1 | grep Dropbear)
-if [ -n "$IS_OPENSSH" ]; then
+if [ -n "$IS_OPENSSH" ] || [ -n "$IS_NEW_OPENSSH" ]; then
   SSH_OPTIONS="-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=30"
 elif [ -n "$IS_DROPBEAR" ]; then
   SSH_OPTIONS="-y -K 30"
@@ -12,6 +13,7 @@ cat > /bin/fogbow-autossh << EOL
 autossh() {
   while true; do
     echo "Starting tunnel in port $REMOTE_PORT"
+    echo "Command: ssh $SSH_OPTIONS -N -R 0.0.0.0:$REMOTE_PORT:localhost:22 #TOKEN_ID#@#TOKEN_HOST# -p #TOKEN_HOST_SSH_PORT#"
     ssh $SSH_OPTIONS -N -R 0.0.0.0:$REMOTE_PORT:localhost:22 #TOKEN_ID#@#TOKEN_HOST# -p #TOKEN_HOST_SSH_PORT#
     sleep 5
   done
