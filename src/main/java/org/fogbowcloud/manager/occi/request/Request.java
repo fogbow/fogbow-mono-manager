@@ -20,6 +20,7 @@ public class Request {
 	private Token localToken;
 	private String instanceId;
 	private String memberId;
+	private boolean fulfilledByFederationUser;
 	private RequestState state;
 	private List<Category> categories;
 	private Map<String, String> xOCCIAtt;
@@ -31,6 +32,7 @@ public class Request {
 		this.localToken = localToken;
 		this.categories = categories;
 		this.xOCCIAtt = xOCCIAtt;
+		this.fulfilledByFederationUser = false;
 		setState(RequestState.OPEN);
 	}
 
@@ -54,6 +56,14 @@ public class Request {
 		return instanceId;
 	}
 	
+	public boolean isFulfilledByFederationUser() {
+		return fulfilledByFederationUser;
+	}
+
+	public void setFulfilledByFederationUser(boolean fulfilledByFederationUser) {
+		this.fulfilledByFederationUser = fulfilledByFederationUser;
+	}
+
 	public String getInstanceGlobalId() {
 		if (instanceId != null) {
 			return instanceId + SEPARATOR_GLOBAL_ID + memberId;

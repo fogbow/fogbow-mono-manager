@@ -283,8 +283,14 @@ public class ManagerController {
 		if (isLocal(request)) {
 			LOGGER.debug(request.getInstanceId()
 					+ " is local, getting its information in the local cloud.");
-			instance = this.computePlugin.getInstance(request.getLocalToken(),
-					request.getInstanceId());
+			
+			if (request.isFulfilledByFederationUser()) {
+				instance = this.computePlugin.getInstance(getFederationUserToken(),
+						request.getInstanceId());
+			} else {
+				instance = this.computePlugin.getInstance(request.getLocalToken(),
+						request.getInstanceId());
+			}
 
 			String sshPublicAdd = getSSHPublicAddress(request.getId());
 			if (sshPublicAdd != null) {
@@ -381,7 +387,11 @@ public class ManagerController {
 	private void removeInstance(String federationToken, String instanceId, Request request) {
 		if (isLocal(request)) {
 			if (federationToken.equals(request.getFederationToken().getAccessId())) {
-				this.computePlugin.removeInstance(request.getLocalToken(), instanceId);
+				if (request.isFulfilledByFederationUser()) {
+					this.computePlugin.removeInstance(getFederationUserToken(), instanceId);
+				} else {
+					this.computePlugin.removeInstance(request.getLocalToken(), instanceId);
+				}
 			} else {
 				// If this is a token of the fogbow user 
 				this.computePlugin.removeInstance(getTokenFromLocalIdP(federationToken), instanceId);
@@ -395,6 +405,7 @@ public class ManagerController {
 	private void instanceRemoved(Request request) {
 		request.setInstanceId(null);
 		request.setMemberId(null);
+		request.setFulfilledByFederationUser(false);		
 
 		if (request.getState().equals(RequestState.DELETED)) {
 			requests.exclude(request.getId());
@@ -463,7 +474,7 @@ public class ManagerController {
 		return null;
 	}
 
-	public String createInstanceForRemoteMember(String memberId, List<Category> categories,
+	public String createInstanceWithFederationUser(String memberId, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
 		FederationMember member = null;
 		try {
@@ -505,12 +516,14 @@ public class ManagerController {
 		try {
 			String instanceId = computePlugin.requestInstance(federationUserToken, categoriesWithoutImage,
 					xOCCIAtt, localImageId);
-			instancesForRemoteMembers.put(instanceId, new ServedRequest(instanceToken, memberId,
-					categories, xOCCIAtt));
-						
-			if (!servedRequestMonitoringTimer.isScheduled()) {
-				triggerServedRequestMonitoring();
-			}
+			
+			if (!properties.getProperty("xmpp_jid").equals(memberId)) {
+				instancesForRemoteMembers.put(instanceId, new ServedRequest(instanceToken,
+						memberId, categories, xOCCIAtt));
+				if (!servedRequestMonitoringTimer.isScheduled()) {
+					triggerServedRequestMonitoring();
+				}
+			}						
 			return instanceId;
 		} catch (OCCIException e) {
 			if (e.getStatus().getCode() == HttpStatus.SC_BAD_REQUEST) {
@@ -608,9 +621,16 @@ public class ManagerController {
 			String localAccessTokenStr, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
 		Token federationToken = getTokenFromFederationIdP(federationAccessTokenStr);
-		Token localToken = getTokenFromLocalIdP(localAccessTokenStr);
-		
-		LOGGER.debug("User Token: " + federationToken);
+		Token localToken;
+		try {
+			localToken = getTokenFromLocalIdP(localAccessTokenStr);			
+		} catch (Throwable e) {
+			LOGGER.warn("Local Access Token \"" + localAccessTokenStr + "\" is not valid.", e);
+			LOGGER.debug("Making local access token equals to federation access token.");
+			localToken = federationToken;
+		}
+		LOGGER.debug("Federation User Token: " + federationToken);
+		LOGGER.debug("Local User Token: " + localToken);
 
 		Integer instanceCount = Integer.valueOf(xOCCIAtt.get(RequestAttribute.INSTANCE_COUNT
 				.getValue()));
@@ -937,7 +957,7 @@ public class ManagerController {
 
 		String remoteInstanceId = null;
 		try {
-			remoteInstanceId = createInstanceForRemoteMember(properties.getProperty("xmpp_jid"),
+			remoteInstanceId = createInstanceWithFederationUser(properties.getProperty("xmpp_jid"),
 					request.getCategories(), request.getxOCCIAtt());
 		} catch (Exception e) {
 			LOGGER.info("Could not create instance with federation user locally." + e);
@@ -949,6 +969,7 @@ public class ManagerController {
 
 		request.setState(RequestState.FULFILLED);
 		request.setInstanceId(remoteInstanceId);
+		request.setFulfilledByFederationUser(true);
 		if (!instanceMonitoringTimer.isScheduled()) {
 			triggerInstancesMonitor();
 		}
@@ -1019,8 +1040,13 @@ public class ManagerController {
 			if (isLocal(request)) {
 				LOGGER.debug(request.getInstanceId()
 						+ " is local, getting its information in the local cloud.");
-				instance = this.computePlugin.getInstance(request.getLocalToken(),
-						request.getInstanceId());
+				if (request.isFulfilledByFederationUser()) {
+					instance = this.computePlugin.getInstance(getFederationUserToken(),
+							request.getInstanceId());
+				} else {
+					instance = this.computePlugin.getInstance(request.getLocalToken(),
+							request.getInstanceId());
+				}
 
 				String sshPublicAdd = getSSHPublicAddress(request.getId());
 				if (sshPublicAdd != null) {
