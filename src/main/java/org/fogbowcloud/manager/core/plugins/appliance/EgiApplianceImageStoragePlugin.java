@@ -7,6 +7,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.KeyStore;
 import java.util.Collections;
 import java.util.HashMap;
@@ -81,13 +83,12 @@ public class EgiApplianceImageStoragePlugin implements ImageStoragePlugin {
 	@Override
 	public String getLocalId(Token token, String globalId) {
 		LOGGER.debug("Getting local id for globalImageId = " + globalId);
-		//TODO what to do with marketplace?		
 		String localId = globalToLocalIds.get(globalId);
 		if (localId != null) {
 			return localId;
 		}
 		
-		if (marketPlaceBaseURL != null) {
+		if (marketPlaceBaseURL != null && !isAbsoluteURL(globalId)) {
 			try {
 				String normalizedImageName = normalizeImageName(removeHTTPPrefix(createURL(globalId)));
 				LOGGER.debug("Getting local id for normalized image name = " + normalizedImageName);
@@ -115,6 +116,13 @@ public class EgiApplianceImageStoragePlugin implements ImageStoragePlugin {
 			scheduleImageDownload(token, globalId);
 		}
 		return null;
+	}
+
+	private boolean isAbsoluteURL(String uriStr) {
+		try {
+			return new URI(uriStr).isAbsolute();
+		} catch (URISyntaxException e) { }
+		return false;
 	}
 
 	private void scheduleImageDownload(final Token token, final String imageURL) {
