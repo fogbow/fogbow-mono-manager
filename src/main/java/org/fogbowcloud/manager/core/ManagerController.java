@@ -386,15 +386,10 @@ public class ManagerController {
 
 	private void removeInstance(String federationToken, String instanceId, Request request) {
 		if (isLocal(request)) {
-			if (federationToken.equals(request.getFederationToken().getAccessId())) {
-				if (request.isFulfilledByFederationUser()) {
-					this.computePlugin.removeInstance(getFederationUserToken(), instanceId);
-				} else {
-					this.computePlugin.removeInstance(request.getLocalToken(), instanceId);
-				}
+			if (request.isFulfilledByFederationUser()) {
+				this.computePlugin.removeInstance(getFederationUserToken(), instanceId);
 			} else {
-				// If this is a token of the fogbow user 
-				this.computePlugin.removeInstance(getTokenFromLocalIdP(federationToken), instanceId);
+				this.computePlugin.removeInstance(request.getLocalToken(), instanceId);
 			}
 		} else {
 			removeRemoteInstance(request);
