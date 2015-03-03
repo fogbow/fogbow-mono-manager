@@ -30,6 +30,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.conn.scheme.Scheme;
@@ -144,73 +145,86 @@ public class EgiApplianceImageStoragePlugin implements ImageStoragePlugin {
 			@Override
 			public void run() {
 				File downloadTempFile = downloadTempFile(imageURL);
-				LOGGER.debug("Download of image " + imageURL + " was done.");				
-				if (downloadTempFile != null) {
-					String imageExtension = getExtension(imageURL);
-					LOGGER.debug("Image extension = " + imageExtension);
-					if (imageExtension.equalsIgnoreCase(OVA)) {
-						LOGGER.debug("Image is tar file");	
-						File outputDir = new File(tmpStorage + "/" + UUID.randomUUID());
-						LOGGER.debug("Creating output directory = " + outputDir.getAbsolutePath());
-						outputDir.mkdirs();
-						try {
-							List<File> files = unTar(downloadTempFile, outputDir);
-							for (File file : files) {
-								String diskFormat = "disk1." + getExtension(file.getAbsolutePath());
-								if (isValidDiskForConversion(diskFormat)) {
-									LOGGER.debug("Disk format into tar file = " + diskFormat);
-									if (executeCommand("qemu-img", "info", file.getAbsolutePath()) == 0) {
-										String convertedDiskFileName = file.getAbsolutePath()
-												+ ".qcow2";
-										int conversionResultCode = executeCommand("qemu-img",
-												"convert", "-O", "qcow2", file.getAbsolutePath(),
-												convertedDiskFileName);
-										if (conversionResultCode == 0) {
-											try {
-												computePlugin
-														.uploadImage(
-																token,
-																convertedDiskFileName,
-																normalizeImageName(removeHTTPPrefix(imageURL)),
-																QCOW2);
-											} catch (Throwable e) {
-												LOGGER.error("Couldn't upload image.", e);
-											}
-										} else {
-											LOGGER.warn("Couldn't convert image. qemu-img conversion result code: "
-													+ conversionResultCode);
-										}
-									} else {
-										LOGGER.warn("Couldn't convert image. qemu-img isn't installed.");
-									}
-									break;
-								}
-							}
-						} catch (Throwable e) {
-							LOGGER.error("Couldn't untar OVA image.", e);
-						} 
-						return;
-					} 
-					
-					
-					String diskFormat = null;
-					if (imageExtension.equalsIgnoreCase(QCOW2) || imageExtension.equalsIgnoreCase(IMG)) {
-						LOGGER.debug("Image extension is QCOW2 or IMG.");
-						diskFormat = QCOW2;
-					} else if (imageExtension.equalsIgnoreCase(VMDK) || imageExtension.equalsIgnoreCase(VDI)
-							|| imageExtension.equalsIgnoreCase(ISO) || imageExtension.equalsIgnoreCase(RAW)
-							|| imageExtension.equalsIgnoreCase(VHD)) {
-						diskFormat = imageExtension.toLowerCase();
-					} 
-					try {
-						computePlugin.uploadImage(token, 
-								downloadTempFile.getAbsolutePath(), 
-								normalizeImageName(removeHTTPPrefix(imageURL)), diskFormat);
-					} catch (Throwable e) {
-						LOGGER.error("Couldn't upload image.", e);
-					}
+				if (downloadTempFile == null) {
+					LOGGER.debug("Download of image " + imageURL + " failed.");
+					return;
 				}
+				LOGGER.debug("Download of image " + imageURL + " was done.");
+
+				String imagePath = downloadTempFile.getAbsolutePath();
+				String imageName = normalizeImageName(removeHTTPPrefix(imageURL));
+
+				String imageExtension = getExtension(imageURL);
+				LOGGER.debug("Image extension = " + imageExtension);
+				String diskFormat = imageExtension.toLowerCase();
+
+				if (imageExtension.equalsIgnoreCase(OVA)) {
+					LOGGER.debug("Image is tar file");
+					File outputDir = new File(tmpStorage + "/" + UUID.randomUUID());
+					LOGGER.debug("Creating output directory = " + outputDir.getAbsolutePath());
+					outputDir.mkdirs();
+					try {
+						List<File> files = unTar(downloadTempFile, outputDir);
+						for (File file : files) {
+							String innerDiskFormat = "disk1."
+									+ getExtension(file.getAbsolutePath());
+							if (isValidDiskForConversion(innerDiskFormat)) {
+								imagePath = convertToQcow2Format(token, imageURL, file,
+										innerDiskFormat);
+								diskFormat = QCOW2;
+								break;
+							}
+						}
+
+						if (imagePath == null) {
+							LOGGER.error("Couldn't find valid disk image inside OVA.");
+							return;
+						}
+					} catch (Throwable e) {
+						LOGGER.error("Couldn't untar OVA image.", e);
+						return;
+					}
+				} else if (imageExtension.equalsIgnoreCase(IMG)) {
+					LOGGER.debug("Image extension is IMG.");
+					diskFormat = QCOW2;
+				}
+				try {
+					computePlugin.uploadImage(token, imagePath, imageName, diskFormat);
+				} catch (Throwable e) {
+					LOGGER.error("Couldn't upload image.", e);
+				}
+
 				pendingImageUploads.remove(imageURL);
+			}
+
+			private String convertToQcow2Format(final Token token, final String imageURL, File file,
+					String innerDiskFormat) {
+				LOGGER.debug("Disk format into tar file = " + innerDiskFormat);				
+				if (executeCommand("qemu-img", "info", file.getAbsolutePath()) != 0) {
+					LOGGER.warn("Couldn't convert image. qemu-img isn't installed.");
+					return null;
+				}
+				String convertedDiskFileName = file.getAbsolutePath() + ".qcow2";
+				int conversionResultCode = executeCommand("qemu-img", "convert", "-O", "qcow2",
+						file.getAbsolutePath(), convertedDiskFileName);
+				if (conversionResultCode != 0) {
+					LOGGER.warn("Couldn't convert image. qemu-img conversion result code: "
+							+ conversionResultCode);
+					return null;
+				}
+				return convertedDiskFileName;
+				
+			}
+
+			private void uploadImage(final Token token, final String imageURL,
+					String convertedDiskFileName) {
+				try {
+					computePlugin.uploadImage(token, convertedDiskFileName,
+							normalizeImageName(removeHTTPPrefix(imageURL)),
+							QCOW2);
+				} catch (Throwable e) {
+					LOGGER.error("Couldn't upload image.", e);
+				}
 			}
 
 			private int executeCommand(String... cmd) {
@@ -250,6 +264,11 @@ public class EgiApplianceImageStoragePlugin implements ImageStoragePlugin {
 			injectKeystore(httpclient);
 			HttpGet httpget = new HttpGet(imageURL);
 			HttpResponse response = httpclient.execute(httpget);
+			
+			if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+				return null;
+			}
+			
 			entity = response.getEntity();
 			if (entity != null) {				
 				String extension = getExtension(imageURL);
