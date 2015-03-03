@@ -104,7 +104,6 @@ public class OCCIApplication extends Application {
 	private static void normalizeHeadersForBypass(org.restlet.Request request) {
 		Series<Header> requestHeaders = (Series<Header>) request.getAttributes().get("org.restlet.http.headers");
 		String localAuthToken = requestHeaders.getFirstValue(HeaderUtils.normalize(OCCIHeaders.X_LOCAL_AUTH_TOKEN));
-		System.out.println("Local Auth Token = " + localAuthToken);
 		if (localAuthToken == null) {
 			return;
 		}

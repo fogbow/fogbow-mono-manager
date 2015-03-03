@@ -470,7 +470,7 @@ public class ManagerController {
 	}
 
 	public String createInstanceWithFederationUser(String memberId, List<Category> categories,
-			Map<String, String> xOCCIAtt) {
+			Map<String, String> xOCCIAtt, String instanceToken) {
 		FederationMember member = null;
 		try {
 			member = getFederationMember(memberId);
@@ -482,7 +482,9 @@ public class ManagerController {
 		}
 		LOGGER.info("Submiting request with categories: " + categories + " and xOCCIAtt: "
 				+ xOCCIAtt + " for remote member: " + memberId);
-		String instanceToken = String.valueOf(UUID.randomUUID());
+		if (instanceToken == null) {
+			instanceToken = String.valueOf(UUID.randomUUID());
+		}
 		try {
 			String command = UserdataUtils.createBase64Command(instanceToken, 
 					properties.getProperty(ConfigurationConstants.SSH_PRIVATE_HOST_KEY),
@@ -904,8 +906,6 @@ public class ManagerController {
 		Set<String> instanceIds = instancesForRemoteMembers.keySet();
 		for (String instanceId : instanceIds) {
 			ServedRequest servedRequest = instancesForRemoteMembers.get(instanceId);
-			System.out.println("instanceId= " + instanceId);
-			System.out.println("servedRequest= " + servedRequest);
 			if (!isInstanceBeenUsedByRemoteMember(instanceId, servedRequest)){
 				LOGGER.debug("The instance " + instanceId + " is not been used anymore by "
 						+ servedRequest.getMemberId() + " and will be removed.");
@@ -953,7 +953,7 @@ public class ManagerController {
 		String remoteInstanceId = null;
 		try {
 			remoteInstanceId = createInstanceWithFederationUser(properties.getProperty("xmpp_jid"),
-					request.getCategories(), request.getxOCCIAtt());
+					request.getCategories(), request.getxOCCIAtt(), request.getId());
 		} catch (Exception e) {
 			LOGGER.info("Could not create instance with federation user locally." + e);
 		}

@@ -366,10 +366,7 @@ public class ManagerPacketHelper {
 				ManagerXmppComponent.ISINSTANCEBEENUSED_NAMESPACE);
 		Element instanceEl = queryEl.addElement("instance");
 		instanceEl.addElement("id").setText(instanceId);
-		
-		System.out.println("packet=" + packetSender);
 		IQ response = (IQ) packetSender.syncSendPacket(iq);
-
 		if (response.getError() != null) {
 			raiseException(response.getError());
 		}		
