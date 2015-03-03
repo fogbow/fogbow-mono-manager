@@ -102,7 +102,6 @@ public class KeystoneIdentityPlugin implements IdentityPlugin {
 			currentTokenEndpoint = authUrl + V2_TOKENS_ENDPOINT_PATH;
 		}
 		
-		
 		String responseStr = doPostRequest(currentTokenEndpoint, json);
 		Token token = getTokenFromJson(responseStr);
 			
@@ -112,9 +111,9 @@ public class KeystoneIdentityPlugin implements IdentityPlugin {
 	private JSONObject mountJson(Map<String, String> credentials) throws JSONException {
 		JSONObject passwordCredentials = new JSONObject();
 		passwordCredentials.put(USERNAME_PROP, credentials.get(USERNAME));
-		passwordCredentials.put(PASSWORD_PROP,
-				credentials.get(PASSWORD));
+		passwordCredentials.put(PASSWORD_PROP, credentials.get(PASSWORD));
 		JSONObject auth = new JSONObject();
+		auth.put(TENANT_NAME_PROP, credentials.get(TENANT_NAME));
 		auth.put(PASSWORD_CREDENTIALS_PROP, passwordCredentials);
 		JSONObject root = new JSONObject();
 		root.put(AUTH_PROP, auth);
