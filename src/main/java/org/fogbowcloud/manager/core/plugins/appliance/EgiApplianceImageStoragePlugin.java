@@ -83,7 +83,14 @@ public class EgiApplianceImageStoragePlugin implements ImageStoragePlugin {
 	@Override
 	public String getLocalId(Token token, String globalId) {
 		LOGGER.debug("Getting local id for globalImageId = " + globalId);
+		// check if image was statically configured
 		String localId = globalToLocalIds.get(globalId);
+		if (localId != null) {
+			return localId;
+		}
+		
+		// check if image exists in local cloud with this name 
+		localId = computePlugin.getImageId(token, globalId);
 		if (localId != null) {
 			return localId;
 		}
@@ -92,6 +99,7 @@ public class EgiApplianceImageStoragePlugin implements ImageStoragePlugin {
 			try {
 				String normalizedImageName = normalizeImageName(removeHTTPPrefix(createURL(globalId)));
 				LOGGER.debug("Getting local id for normalized image name = " + normalizedImageName);
+				// check if image exists in local cloud with normalized name from marketplace				
 				localId = computePlugin.getImageId(token,
 						normalizedImageName);
 			} catch (Throwable e) {
@@ -105,6 +113,7 @@ public class EgiApplianceImageStoragePlugin implements ImageStoragePlugin {
 			try {
 				String normalizedImageName = normalizeImageName(removeHTTPPrefix(globalId));
 				LOGGER.debug("Getting local id for normalized image name = " + normalizedImageName);
+				// check if image exists in local cloud with normalized name from URL
 				localId = computePlugin.getImageId(token,
 						normalizedImageName);
 			} catch (Throwable e) {
@@ -228,7 +237,7 @@ public class EgiApplianceImageStoragePlugin implements ImageStoragePlugin {
 	}
 	
 	private String normalizeImageName(final String imageURL) {
-		return imageURL.replaceAll("/", ".").replaceAll(":", ".");
+		return imageURL.replaceAll("/", "_").replaceAll(":", "_");
 	}
 	
 	private File downloadTempFile(final String imageURL) {
