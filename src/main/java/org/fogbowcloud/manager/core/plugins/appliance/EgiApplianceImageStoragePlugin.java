@@ -158,7 +158,7 @@ public class EgiApplianceImageStoragePlugin implements ImageStoragePlugin {
 				LOGGER.debug("Image extension = " + imageExtension);
 				String diskFormat = imageExtension.toLowerCase();
 
-				if (imageExtension.equalsIgnoreCase(OVA)) {
+				if (imageExtension.equalsIgnoreCase(Extensions.ova.name())) {
 					LOGGER.debug("Image is tar file");
 					File outputDir = new File(tmpStorage + "/" + UUID.randomUUID());
 					LOGGER.debug("Creating output directory = " + outputDir.getAbsolutePath());
@@ -171,7 +171,7 @@ public class EgiApplianceImageStoragePlugin implements ImageStoragePlugin {
 							if (isValidDiskForConversion(innerDiskFormat)) {
 								imagePath = convertToQcow2Format(token, imageURL, file,
 										innerDiskFormat);
-								diskFormat = QCOW2;
+								diskFormat = Extensions.qcow2.name();
 								break;
 							}
 						}
@@ -184,9 +184,9 @@ public class EgiApplianceImageStoragePlugin implements ImageStoragePlugin {
 						LOGGER.error("Couldn't untar OVA image.", e);
 						return;
 					}
-				} else if (imageExtension.equalsIgnoreCase(IMG)) {
+				} else if (imageExtension.equalsIgnoreCase(Extensions.img.name())) {
 					LOGGER.debug("Image extension is IMG.");
-					diskFormat = QCOW2;
+					diskFormat = Extensions.qcow2.name();
 				}
 				try {
 					computePlugin.uploadImage(token, imagePath, imageName, diskFormat);
@@ -216,17 +216,6 @@ public class EgiApplianceImageStoragePlugin implements ImageStoragePlugin {
 				
 			}
 
-			private void uploadImage(final Token token, final String imageURL,
-					String convertedDiskFileName) {
-				try {
-					computePlugin.uploadImage(token, convertedDiskFileName,
-							normalizeImageName(removeHTTPPrefix(imageURL)),
-							QCOW2);
-				} catch (Throwable e) {
-					LOGGER.error("Couldn't upload image.", e);
-				}
-			}
-
 			private int executeCommand(String... cmd) {
 				ProcessBuilder processBuilder = new ProcessBuilder(cmd);
 				try {
@@ -244,14 +233,14 @@ public class EgiApplianceImageStoragePlugin implements ImageStoragePlugin {
 			}
 
 			private boolean isValidDiskForConversion(String extension) {
-				return (extension.equalsIgnoreCase("disk1." + VMDK) || extension.equalsIgnoreCase("disk1." + VDI)
-						|| extension.equalsIgnoreCase("disk1." + IMG));
+				return (extension.equalsIgnoreCase("disk1." + Extensions.vmdk.name()) || extension.equalsIgnoreCase("disk1." + Extensions.vdi.name())
+						|| extension.equalsIgnoreCase("disk1." + Extensions.img.name()));
 			}
 		});
 	}
 	
 	private String normalizeImageName(final String imageURL) {
-		return imageURL.replaceAll("/", "_").replaceAll(":", "_");
+		return imageURL.replaceAll("/", "_").replaceAll(":", "_").replaceAll("~", "");
 	}
 	
 	private File downloadTempFile(final String imageURL) {
@@ -301,7 +290,11 @@ public class EgiApplianceImageStoragePlugin implements ImageStoragePlugin {
 
 	private String getExtension(final String imageName) {
 		LOGGER.debug("Getting extension of name " + imageName);
-		return imageName.substring(imageName.lastIndexOf(".") + 1);
+		String extension = imageName.substring(imageName.lastIndexOf(".") + 1);
+		if (!Extensions.in(extension)) {
+			return Extensions.img.name();
+		}
+		return extension;
 	}
 
 	private String removeHTTPPrefix(String imageURL) {
