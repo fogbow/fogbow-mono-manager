@@ -269,7 +269,13 @@ public class EgiApplianceImageStoragePlugin implements ImageStoragePlugin {
 	}
 	
 	private String normalizeImageName(final String imageURL) {
-		return imageURL.replaceAll("/", "_").replaceAll(":", "_").replaceAll("~", "");
+		StringBuilder strBuilder = new StringBuilder();
+		for (Character c : imageURL.toCharArray()) {
+			if (Character.isLetterOrDigit(c)) {
+				strBuilder.append(c);
+			}
+		}
+		return strBuilder.toString();
 	}
 	
 	private File downloadTempFile(final String imageURL) {
