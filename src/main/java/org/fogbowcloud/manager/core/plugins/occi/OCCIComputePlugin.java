@@ -28,6 +28,7 @@ import org.apache.http.params.CoreProtocolPNames;
 import org.apache.http.params.HttpParams;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.core.model.ImageState;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.openstack.OpenStackConfigurationConstants;
@@ -377,6 +378,10 @@ public class OCCIComputePlugin implements ComputePlugin {
 	}
 	
 	public String getImageId(Token token, String imageName) {
+		return null;
+	}
+
+	public ImageState getImageState(Token token, String imageName) {
 		return null;
 	}
 

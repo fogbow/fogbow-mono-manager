@@ -26,6 +26,7 @@ import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.model.Flavor;
+import org.fogbowcloud.manager.core.model.ImageState;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
@@ -50,6 +51,7 @@ import org.restlet.data.Status;
 
 public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 
+	private static final String STATUS_JSON_FIELD = "status";
 	private static final String IMAGES_JSON_FIELD = "images";
 	private static final String ID_JSON_FIELD = "id";
 	private static final String BARE = "bare";
@@ -298,7 +300,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 			Map<String, String> attributes = new HashMap<String, String>();
 			// CPU Architecture of the instance
 			attributes.put("occi.compute.state", getOCCIState(rootServer.getJSONObject("server")
-					.getString("status")));
+					.getString(STATUS_JSON_FIELD)));
 			// // CPU Clock frequency (speed) in gigahertz
 			// TODO How to get speed?
 			attributes.put("occi.compute.speed", "Not defined");
@@ -618,4 +620,32 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
         checkStatusResponse(response, responseStr);
         return responseStr;
     }
+
+	@Override
+	public ImageState getImageState(Token token, String imageName) {		
+		String responseJsonImages = doGetRequest(glanceV2APIEndpoint + V2_IMAGES,
+				token.getAccessId());
+		try {
+			JSONArray arrayImages = new JSONObject(responseJsonImages)
+					.getJSONArray(IMAGES_JSON_FIELD);
+			for (int i = 0; i < arrayImages.length(); i++) {
+				if (arrayImages.getJSONObject(i).getString(NAME_JSON_FIELD).equals(imageName)) {
+					/*
+					 * Possible OpenStack image status described on 
+					 * http://docs.openstack.org/developer/glance/statuses.html
+					 */
+					String imageStatus = arrayImages.getJSONObject(i).getString(STATUS_JSON_FIELD);
+					if ("active".equalsIgnoreCase(imageStatus)) {
+						return ImageState.ACTIVE;
+					} else if ("queued".equalsIgnoreCase(imageStatus)
+							|| "saving".equalsIgnoreCase(imageStatus)) {
+						return ImageState.PENDING;
+					}
+					return ImageState.FAILED;
+				}
+			}
+		} catch (JSONException e) {
+		}
+		return null;	
+	}
 }
