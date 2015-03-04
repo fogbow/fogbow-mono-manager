@@ -622,7 +622,8 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
     }
 
 	@Override
-	public ImageState getImageState(Token token, String imageName) {		
+	public ImageState getImageState(Token token, String imageName) {
+		LOGGER.debug("Getting image status from image " + imageName + " with token " + token);
 		String responseJsonImages = doGetRequest(glanceV2APIEndpoint + V2_IMAGES,
 				token.getAccessId());
 		try {

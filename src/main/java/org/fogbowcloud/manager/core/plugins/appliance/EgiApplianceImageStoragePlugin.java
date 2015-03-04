@@ -222,6 +222,7 @@ public class EgiApplianceImageStoragePlugin implements ImageStoragePlugin {
 						Thread.sleep(5000);
 					} else {
 						removeImageFiles(downloadTempFile, outputDir);
+						return;
 					}
 				}
 			}
