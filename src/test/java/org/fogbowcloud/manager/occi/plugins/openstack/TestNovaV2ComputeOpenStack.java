@@ -1,5 +1,6 @@
 package org.fogbowcloud.manager.occi.plugins.openstack;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -7,7 +8,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import org.apache.http.HttpException;
+import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
+import org.apache.http.ProtocolVersion;
+import org.apache.http.StatusLine;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.entity.ByteArrayEntity;
+import org.apache.http.message.BasicStatusLine;
 import org.fogbowcloud.manager.core.RequirementsHelper;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
@@ -29,6 +38,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 public class TestNovaV2ComputeOpenStack {
 
@@ -150,7 +160,7 @@ public class TestNovaV2ComputeOpenStack {
 				PluginHelper.LINUX_X86_TERM));
 
 		// check getting all instance ids
-		List<Instance> instances =novaV2ComputeOpenStack.getInstances(defaultToken); 
+		List<Instance> instances = novaV2ComputeOpenStack.getInstances(defaultToken); 
 		Assert.assertEquals(1, instances.size());
 		Assert.assertEquals(FIRST_INSTANCE_ID, instances.get(0).getId());
 	}
@@ -248,7 +258,7 @@ public class TestNovaV2ComputeOpenStack {
 	}
 	
 	@Test
-	public void testCapacity(){
+	public void testCapacity() {
 		ResourcesInfo resourcesInfo = novaV2ComputeOpenStack.getResourcesInfo(defaultToken);
 		List<Flavor> flavors = resourcesInfo.getFlavors();
 		// Limited by instance count
@@ -257,4 +267,51 @@ public class TestNovaV2ComputeOpenStack {
 		Assert.assertEquals(2, (int) flavors.get(2).getCapacity());
 	}
 	
+	@Test
+	public void testUpdateFlavor() throws HttpException, IOException {
+		HttpClient client = Mockito.mock(HttpClient.class);
+		String nameOne = "nameOne";
+		String nameTwo = "nameTwo";
+		String idTwo = "idTwo";
+		String jsonAllFlavors = "{\"flavors\": [{\"id\": \"1\", \"name\": \"" + nameOne
+				+ "\"} , {\"id\": \"" + idTwo + "\", \"name\": \"" + nameTwo + "\"}]}";
+		ByteArrayEntity entityAllFlavors = new ByteArrayEntity(jsonAllFlavors.getBytes());
+		String jsonFlavorTwo = "{\"flavor\": {\"name\": \"" + nameTwo  + "\", \"ram\": 512, \"vcpus\": 1, \"disk\": 1, \"id\": \"1\"}}";
+		ProtocolVersion protocolVersion = new ProtocolVersion("", 0, 1);
+		StatusLine statusLine = new BasicStatusLine(protocolVersion, 200, "");
+		HttpResponse responseAllFlavors = Mockito.mock(HttpResponse.class);
+		Mockito.when(responseAllFlavors.getEntity()).thenReturn(entityAllFlavors);
+		Mockito.when(responseAllFlavors.getStatusLine()).thenReturn(statusLine);
+
+		ByteArrayEntity entityFlavorTwo = new ByteArrayEntity(jsonFlavorTwo.getBytes());
+		HttpResponse responseFlavorTwo = Mockito.mock(HttpResponse.class);
+		Mockito.when(responseFlavorTwo.getEntity()).thenReturn(entityFlavorTwo);
+		Mockito.when(responseFlavorTwo.getStatusLine()).thenReturn(statusLine);
+
+		Mockito.when(client.execute(Mockito.any(HttpUriRequest.class))).thenReturn(
+				responseAllFlavors, responseFlavorTwo, responseAllFlavors);
+
+		List<Flavor> flavors = new ArrayList<Flavor>();
+		flavors.add(new Flavor(nameOne, "1", "1", "1"));
+		novaV2ComputeOpenStack.setFlavors(flavors);
+		novaV2ComputeOpenStack.setClient(client);
+
+		Assert.assertEquals(1, novaV2ComputeOpenStack.getFlavors().size());
+
+		// Updating Flavor List
+		novaV2ComputeOpenStack.updateFlavors(defaultToken);
+
+		Assert.assertEquals(2, novaV2ComputeOpenStack.getFlavors().size());
+		
+		// Adding Flavors that does not exists in the cloud
+		novaV2ComputeOpenStack.getFlavors().add(new Flavor("C", "", "", "", 0));
+		novaV2ComputeOpenStack.getFlavors().add(new Flavor("D", "", "", "", 0));
+		
+		Assert.assertEquals(4, novaV2ComputeOpenStack.getFlavors().size());
+		
+		// Removing Flavors that does not exists in the cloud
+		novaV2ComputeOpenStack.updateFlavors(defaultToken);
+		
+		Assert.assertEquals(2, novaV2ComputeOpenStack.getFlavors().size());
+	}
 }

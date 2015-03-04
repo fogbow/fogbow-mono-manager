@@ -2,6 +2,7 @@ package org.fogbowcloud.manager.occi.plugins.opennebula;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -11,6 +12,7 @@ import java.util.Properties;
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpStatus;
+import org.fogbowcloud.manager.core.RequirementsHelper;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.opennebula.OneConfigurationConstants;
@@ -30,6 +32,7 @@ import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.fogbowcloud.manager.occi.util.PluginHelper;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.opennebula.client.Client;
@@ -78,7 +81,13 @@ public class TestComputeOpenNebula {
 		xOCCIAtt = new HashMap<String, String>();
 		xOCCIAtt.put(RequestAttribute.USER_DATA_ATT.getValue(),
 				Base64.encodeBase64URLSafeString("userdata".getBytes(Charsets.UTF_8)));
-		
+		Map<String, String> mapAttr = new HashMap<String, String>();
+		String disk = RequirementsHelper.GLUE_DISK_TERM;
+		String mem = RequirementsHelper.GLUE_MEM_RAM_TERM;
+		String vCpu = RequirementsHelper.GLUE_VCPU_TERM;
+		String requirementsStr = disk + " >= 10 && " + mem + " > 500 && " + vCpu + " > 0";
+		xOCCIAtt.put(RequestAttribute.REQUIREMENTS.getValue(), requirementsStr);
+
 		DEFAULT_TEMPLATE = PluginHelper
 				.getContentFile("src/test/resources/opennebula/default.template")
 				.replaceAll("#NET_ID#", "" + NETWORK_ID)
@@ -88,7 +97,8 @@ public class TestComputeOpenNebula {
 								.encodeBase64URLSafeString("userdata".getBytes(Charsets.UTF_8))))
 				.replaceAll("\n", "").replaceAll(" ", "");
 	
-		SMALL_TEMPLATE = DEFAULT_TEMPLATE.replace("#MEM#", "128").replace("#CPU#", "1.0");
+//		SMALL_TEMPLATE = DEFAULT_TEMPLATE.replace("#MEM#", "128").replace("#CPU#", "1.0");
+		SMALL_TEMPLATE = DEFAULT_TEMPLATE.replace("#MEM#", "1000").replace("#CPU#", "1");
 	}
 	
 	@Test
@@ -111,15 +121,19 @@ public class TestComputeOpenNebula {
 		OpenNebulaClientFactory clientFactory = Mockito.mock(OpenNebulaClientFactory.class);
 		Mockito.when(clientFactory.createClient(defaultToken.getAccessId(), OPEN_NEBULA_URL))
 				.thenReturn(oneClient);
-		Mockito.when(clientFactory.allocateVirtualMachine(oneClient, SMALL_TEMPLATE))
-				.thenReturn(INSTANCE_ID);
-
+		Mockito.when(clientFactory.allocateVirtualMachine(oneClient, SMALL_TEMPLATE)).thenReturn(
+				INSTANCE_ID);
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
+		
+		List<Flavor> flavors = new ArrayList<Flavor>();
+		Flavor flavorSmall = new Flavor(RequestConstants.SMALL_TERM, "1", "1000", "10");
+		flavors.add(flavorSmall); 
+		flavors.add(new Flavor("medium", "2", "2000", "20"));
+		flavors.add(new Flavor("big", "4", "4000", "40"));
+		computeOpenNebula.setFlavors(flavors );
 		
 		// requesting an instance
 		List<Category> categories = new ArrayList<Category>();
-		categories.add(new Category(RequestConstants.SMALL_TERM,
-				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 		Assert.assertEquals(INSTANCE_ID, computeOpenNebula.requestInstance(defaultToken,
 				categories, xOCCIAtt, IMAGE1_ID));
 	}
@@ -169,10 +183,15 @@ public class TestComputeOpenNebula {
 						
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
 		
+		List<Flavor> flavors = new ArrayList<Flavor>();
+		Flavor flavorSmall = new Flavor(RequestConstants.SMALL_TERM, "1", "1000", "10");
+		flavors.add(flavorSmall); 
+		flavors.add(new Flavor("medium", "2", "2000", "20"));
+		flavors.add(new Flavor("big", "4", "4000", "40"));
+		computeOpenNebula.setFlavors(flavors );
+		
 		// requesting an instance
 		List<Category> categories = new ArrayList<Category>();
-		categories.add(new Category(RequestConstants.SMALL_TERM,
-				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
 		Assert.assertEquals(INSTANCE_ID, computeOpenNebula.requestInstance(defaultToken,
 				categories, xOCCIAtt, IMAGE1_ID));
 		
@@ -250,10 +269,15 @@ public class TestComputeOpenNebula {
 
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
 
+		List<Flavor> flavors = new ArrayList<Flavor>();
+		Flavor flavorSmall = new Flavor(RequestConstants.SMALL_TERM, "1", "1000", "10");
+		flavors.add(flavorSmall); 
+		flavors.add(new Flavor("medium", "2", "2000", "20"));
+		flavors.add(new Flavor("big", "4", "4000", "40"));
+		computeOpenNebula.setFlavors(flavors );
+		
 		// requesting an instance
 		List<Category> categories = new ArrayList<Category>();
-		categories.add(new Category(RequestConstants.SMALL_TERM,
-				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
 		Assert.assertEquals(INSTANCE_ID,
 				computeOpenNebula.requestInstance(defaultToken, categories, xOCCIAtt, IMAGE1_ID));
 
@@ -274,8 +298,8 @@ public class TestComputeOpenNebula {
 		Mockito.when(vm.getId()).thenReturn(INSTANCE_ID);
 		Mockito.when(vm.getName()).thenReturn("one-instance");
 		Mockito.when(vm.lcmStateStr()).thenReturn("Running");
-		Mockito.when(vm.xpath("TEMPLATE/MEMORY")).thenReturn("128.0");
-		Mockito.when(vm.xpath("TEMPLATE/CPU")).thenReturn("1.0");
+		Mockito.when(vm.xpath("TEMPLATE/MEMORY")).thenReturn("1000");
+		Mockito.when(vm.xpath("TEMPLATE/CPU")).thenReturn("1");
 		Mockito.when(vm.xpath("TEMPLATE/DISK/IMAGE")).thenReturn(IMAGE1_NAME);
 		Mockito.when(vm.xpath("TEMPLATE/OS/ARCH")).thenReturn("");
 
@@ -289,10 +313,15 @@ public class TestComputeOpenNebula {
 				
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
 		
+		List<Flavor> flavors = new ArrayList<Flavor>();
+		Flavor flavorSmall = new Flavor(RequestConstants.SMALL_TERM, "1", "1000", "10");
+		flavors.add(flavorSmall); 
+		flavors.add(new Flavor("medium", "2", "2000", "20"));
+		flavors.add(new Flavor("big", "4", "4000", "40"));
+		computeOpenNebula.setFlavors(flavors );
+		
 		// requesting an instance
 		List<Category> categories = new ArrayList<Category>();
-		categories.add(new Category(RequestConstants.SMALL_TERM,
-				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
 		Assert.assertEquals(INSTANCE_ID, computeOpenNebula.requestInstance(defaultToken,
 				categories, xOCCIAtt, IMAGE1_ID));
 		
@@ -302,8 +331,8 @@ public class TestComputeOpenNebula {
 		Assert.assertEquals("x86", instance.getAttributes().get("occi.compute.architecture"));
 		Assert.assertEquals("active", instance.getAttributes().get("occi.compute.state"));
 		Assert.assertEquals("Not defined", instance.getAttributes().get("occi.compute.speed"));
-		Assert.assertEquals(String.valueOf(128d/1024d), instance.getAttributes().get("occi.compute.memory"));
-		Assert.assertEquals("1.0", instance.getAttributes().get("occi.compute.cores"));
+		Assert.assertEquals(String.valueOf(1000d/1024d), instance.getAttributes().get("occi.compute.memory"));
+		Assert.assertEquals("1", instance.getAttributes().get("occi.compute.cores"));
 		Assert.assertEquals("one-instance", instance.getAttributes().get("occi.compute.hostname"));
 		Assert.assertEquals(INSTANCE_ID, instance.getAttributes().get("occi.core.id"));
 		
@@ -327,7 +356,7 @@ public class TestComputeOpenNebula {
 		Mockito.when(vm.getId()).thenReturn(INSTANCE_ID);
 		Mockito.when(vm.getName()).thenReturn("one-instance");
 		Mockito.when(vm.lcmStateStr()).thenReturn("Running");
-		Mockito.when(vm.xpath("TEMPLATE/MEMORY")).thenReturn("128.0");
+		Mockito.when(vm.xpath("TEMPLATE/MEMORY")).thenReturn("1000.0");
 		Mockito.when(vm.xpath("TEMPLATE/CPU")).thenReturn("1.0");
 		Mockito.when(vm.xpath("TEMPLATE/DISK/IMAGE")).thenReturn(IMAGE1_NAME);
 		Mockito.when(vm.xpath("TEMPLATE/OS/ARCH")).thenReturn("x64");
@@ -342,10 +371,15 @@ public class TestComputeOpenNebula {
 				
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
 		
+		List<Flavor> flavors = new ArrayList<Flavor>();
+		Flavor flavorSmall = new Flavor(RequestConstants.SMALL_TERM, "1", "1000", "10");
+		flavors.add(flavorSmall); 
+		flavors.add(new Flavor("medium", "2", "2000", "20"));
+		flavors.add(new Flavor("big", "4", "4000", "40"));
+		computeOpenNebula.setFlavors(flavors );
+		
 		// requesting an instance
 		List<Category> categories = new ArrayList<Category>();
-		categories.add(new Category(RequestConstants.SMALL_TERM,
-				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
 		Assert.assertEquals(INSTANCE_ID, computeOpenNebula.requestInstance(defaultToken,
 				categories, xOCCIAtt, IMAGE1_ID));
 		
@@ -355,7 +389,7 @@ public class TestComputeOpenNebula {
 		Assert.assertEquals("x64", instance.getAttributes().get("occi.compute.architecture"));
 		Assert.assertEquals("active", instance.getAttributes().get("occi.compute.state"));
 		Assert.assertEquals("Not defined", instance.getAttributes().get("occi.compute.speed"));
-		Assert.assertEquals(String.valueOf(128d/1024d), instance.getAttributes().get("occi.compute.memory"));
+		Assert.assertEquals(String.valueOf(1000d/1024d), instance.getAttributes().get("occi.compute.memory"));
 		Assert.assertEquals("1.0", instance.getAttributes().get("occi.compute.cores"));
 		Assert.assertEquals("one-instance", instance.getAttributes().get("occi.compute.hostname"));
 		Assert.assertEquals(INSTANCE_ID, instance.getAttributes().get("occi.core.id"));
@@ -438,10 +472,15 @@ public class TestComputeOpenNebula {
 		
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
 
+		List<Flavor> flavors = new ArrayList<Flavor>();
+		Flavor flavorSmall = new Flavor(RequestConstants.SMALL_TERM, "1", "1000", "10");
+		flavors.add(flavorSmall); 
+		flavors.add(new Flavor("medium", "2", "2000", "20"));
+		flavors.add(new Flavor("big", "4", "4000", "40"));
+		computeOpenNebula.setFlavors(flavors );
+		
 		// requesting an instance
 		List<Category> categories = new ArrayList<Category>();
-		categories.add(new Category(RequestConstants.SMALL_TERM,
-				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
 		Assert.assertEquals(INSTANCE_ID, computeOpenNebula.requestInstance(defaultToken,
 				categories, xOCCIAtt, IMAGE1_ID));
 
@@ -496,6 +535,12 @@ public class TestComputeOpenNebula {
 
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
 
+		List<Flavor> flavorsComputeOpennebula = new ArrayList<Flavor>();
+		flavorsComputeOpennebula.add(new Flavor(RequestConstants.SMALL_TERM, "1.0", "128.0", 0));
+		flavorsComputeOpennebula.add(new Flavor(RequestConstants.MEDIUM_TERM, "2.0", "256.0", 0));
+		flavorsComputeOpennebula.add(new Flavor(RequestConstants.LARGE_TERM, "4.0", "512.0", 0));
+		computeOpenNebula.setFlavors(flavorsComputeOpennebula);
+		
 		// getting resources info
 		Token token = new Token(accessId, PluginHelper.USERNAME, null,
 				new HashMap<String, String>());
@@ -543,6 +588,18 @@ public class TestComputeOpenNebula {
 
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
 
+		List<Flavor> flavorsComputeOpennebula = new ArrayList<Flavor>();
+		String smallCpu = "1.0";
+		String smallMem = "128.0";
+		flavorsComputeOpennebula.add(new Flavor(RequestConstants.SMALL_TERM, smallCpu, smallMem, 0));
+		String mediumCpu = "2.0";
+		String mediumMem = "256.0";
+		flavorsComputeOpennebula.add(new Flavor(RequestConstants.MEDIUM_TERM, mediumCpu, mediumMem, 0));
+		String largeCpu = "4.0";
+		String largeMem = "512.0";
+		flavorsComputeOpennebula.add(new Flavor(RequestConstants.LARGE_TERM, largeCpu, largeMem, 0));		
+		computeOpenNebula.setFlavors(flavorsComputeOpennebula);
+		
 		// getting resources info
 		Token token = new Token(accessId, PluginHelper.USERNAME, null,
 				new HashMap<String, String>());
@@ -560,16 +617,10 @@ public class TestComputeOpenNebula {
 		Assert.assertEquals(representTheDoubleValue(memUsed), resourcesInfo.getMemInUse());
 		Assert.assertNull(resourcesInfo.getCert());
 		List<Flavor> flavors = new ArrayList<Flavor>();
-		String smallCpu = "1.0";
-		String smallMem = "128.0";
 		flavors.add(new Flavor(RequestConstants.SMALL_TERM, smallCpu, smallMem, calculateCapacity(
 				cpuIdle, memIdle, smallCpu, smallMem, instanceIdle)));
-		String mediumCpu = "2.0";
-		String mediumMem = "256.0";
 		flavors.add(new Flavor(RequestConstants.MEDIUM_TERM, mediumCpu, mediumMem,
 				calculateCapacity(cpuIdle, memIdle, mediumCpu, mediumMem, instanceIdle)));
-		String largeCpu = "4.0";
-		String largeMem = "512.0";
 		flavors.add(new Flavor(RequestConstants.LARGE_TERM, largeCpu, largeMem, calculateCapacity(
 				cpuIdle, memIdle, largeCpu, largeMem, instanceIdle)));
 
@@ -605,6 +656,18 @@ public class TestComputeOpenNebula {
 
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
 
+		List<Flavor> flavorsComputeOpennebula = new ArrayList<Flavor>();
+		String smallCpu = "1.0";
+		String smallMem = "128.0";
+		flavorsComputeOpennebula.add(new Flavor(RequestConstants.SMALL_TERM, smallCpu, smallMem, 0));
+		String mediumCpu = "2.0";
+		String mediumMem = "256.0";
+		flavorsComputeOpennebula.add(new Flavor(RequestConstants.MEDIUM_TERM, mediumCpu, mediumMem, 0));
+		String largeCpu = "4.0";
+		String largeMem = "512.0";
+		flavorsComputeOpennebula.add(new Flavor(RequestConstants.LARGE_TERM, largeCpu, largeMem, 0));		
+		computeOpenNebula.setFlavors(flavorsComputeOpennebula);
+		
 		// getting resources info
 		Token token = new Token(accessId, PluginHelper.USERNAME, null,
 				new HashMap<String, String>());
@@ -622,16 +685,10 @@ public class TestComputeOpenNebula {
 		Assert.assertEquals(representTheDoubleValue(memUsed), resourcesInfo.getMemInUse());
 		Assert.assertNull(resourcesInfo.getCert());
 		List<Flavor> flavors = new ArrayList<Flavor>();
-		String smallCpu = "1.0";
-		String smallMem = "128.0";
 		flavors.add(new Flavor(RequestConstants.SMALL_TERM, smallCpu, smallMem, calculateCapacity(
 				cpuIdle, memIdle, smallCpu, smallMem, instanceIdle)));
-		String mediumCpu = "2.0";
-		String mediumMem = "256.0";
 		flavors.add(new Flavor(RequestConstants.MEDIUM_TERM, mediumCpu, mediumMem,
 				calculateCapacity(cpuIdle, memIdle, mediumCpu, mediumMem, instanceIdle)));
-		String largeCpu = "4.0";
-		String largeMem = "512.0";
 		flavors.add(new Flavor(RequestConstants.LARGE_TERM, largeCpu, largeMem, calculateCapacity(
 				cpuIdle, memIdle, largeCpu, largeMem, instanceIdle)));
 
@@ -667,7 +724,13 @@ public class TestComputeOpenNebula {
 		Mockito.when(clientFactory.createGroup(Mockito.any(Client.class), Mockito.anyInt())).thenReturn(group);
 
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
-
+		
+		List<Flavor> flavorsComputeOpennebula = new ArrayList<Flavor>();
+		flavorsComputeOpennebula.add(new Flavor(RequestConstants.SMALL_TERM, "1.0", "128.0", 0));
+		flavorsComputeOpennebula.add(new Flavor(RequestConstants.MEDIUM_TERM, "2.0", "256.0", 0));
+		flavorsComputeOpennebula.add(new Flavor(RequestConstants.LARGE_TERM, "4.0", "512.0", 0));
+		computeOpenNebula.setFlavors(flavorsComputeOpennebula );
+		
 		// getting resources info
 		Token token = new Token(accessId, PluginHelper.USERNAME, null,
 				new HashMap<String, String>());
@@ -707,6 +770,12 @@ public class TestComputeOpenNebula {
 
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
 
+		List<Flavor> flavorsComputeOpennebula = new ArrayList<Flavor>();
+		flavorsComputeOpennebula.add(new Flavor(RequestConstants.SMALL_TERM, "1.0", "128.0", 0));
+		flavorsComputeOpennebula.add(new Flavor(RequestConstants.MEDIUM_TERM, "2.0", "256.0", 0));
+		flavorsComputeOpennebula.add(new Flavor(RequestConstants.LARGE_TERM, "4.0", "512.0", 0));
+		computeOpenNebula.setFlavors(flavorsComputeOpennebula);
+		
 		// getting resources info
 		Token token = new Token(accessId, PluginHelper.USERNAME, null,
 				new HashMap<String, String>());
@@ -723,5 +792,43 @@ public class TestComputeOpenNebula {
 		flavors.add(new Flavor(RequestConstants.MEDIUM_TERM, "2.0", "256.0", 50));
 		flavors.add(new Flavor(RequestConstants.LARGE_TERM, "4.0", "512.0", 25));
 		Assert.assertEquals(flavors, resourcesInfo.getFlavors());
+	}
+	
+	@Test
+	public void TestRemoveInvalidFlavors() {
+		List<Flavor> flavors = new ArrayList<Flavor>();
+		Flavor flavorOne = new Flavor("1", "1", "100", 0);
+		flavors.add(flavorOne);
+		Flavor flavorTwo = new Flavor("2", "1", "100", 0);
+		flavors.add(flavorTwo);
+		Flavor flavorThree = new Flavor("3", "1", "100", 0);
+		flavors.add(flavorThree);
+		
+		computeOpenNebula = new OpenNebulaComputePlugin(properties);
+		computeOpenNebula.setFlavors(flavors);
+		Assert.assertEquals(flavors.size(), computeOpenNebula.getFlavors().size());
+		
+		List<Flavor> newFlavors = new ArrayList<Flavor>();
+		newFlavors.add(flavorOne);
+		newFlavors.add(flavorTwo);
+		computeOpenNebula.removeInvalidFlavors(newFlavors);
+		
+		computeOpenNebula.setFlavors(flavors);
+		Assert.assertEquals(newFlavors.size(), computeOpenNebula.getFlavors().size());
+	}
+	
+	//TODO remove. 
+	@Ignore
+	@Test
+	public void Test2() {
+		Properties properties2 = new Properties();
+		properties2.put("compute_one_url", "http://150.165.85.80:2633/RPC2");
+		properties2.put("compute_one_network_id", "123");
+		properties2.put("fogbow_small", "123");
+		
+		Token token = new Token("***REMOVED***", "", new Date(), new HashMap<String, String>());
+		OpenNebulaComputePlugin openNebulaComputePlugin = new OpenNebulaComputePlugin(properties2);
+		
+		openNebulaComputePlugin.updateFlavors(token);		
 	}
 }

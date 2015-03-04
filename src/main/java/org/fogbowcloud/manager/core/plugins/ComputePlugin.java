@@ -33,5 +33,7 @@ public interface ComputePlugin {
 	public String getImageId(Token token, String imageName);
 	
 	public List<Flavor> getFlavors();
+
+	public void updateFlavors(Token token);
 	
 }

@@ -4,9 +4,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.fogbowcloud.manager.core.model.Flavor;
+import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+
+import condor.classad.ClassAdParser;
+import condor.classad.Op;
 
 public class TestRequirementsHelper {
 
@@ -40,6 +44,19 @@ public class TestRequirementsHelper {
 		Assert.assertEquals(valueExpected,
 				requirementsHelper.normalizeLocationToCheck(valueExpected));
 		Assert.assertNull(requirementsHelper.normalizeLocationToCheck(null));
+	}
+	
+	@SuppressWarnings("static-access")
+	@Test
+	public void TestNormalizeOp() {
+		String requirementsStr = "Glue2CloudComputeInstanceTypevCPU >= 0 && Glue2CloudComputeInstanceTypeDisk >= 1 && Glue2CloudComputeInstanceTypeRAM >= 100 && Glue2CloudComputeInstanceTypeLocation == \"manager-taioba-test.lsd.ufcg.edu.br\"";
+		
+		ClassAdParser classAdParser = new ClassAdParser(requirementsStr);
+		Op expr = (Op) classAdParser.parse();
+		Op normalizeOP = requirementsHelper.normalizeOPToCheckWithoutLocation(expr);
+		
+		System.out.println(expr);
+		System.out.println(normalizeOP);
 	}
 
 	@SuppressWarnings("static-access")
@@ -115,10 +132,10 @@ public class TestRequirementsHelper {
 	@SuppressWarnings("static-access")
 	@Test
 	public void TestFindFlavor() {
-		String firstValue = "One";
-		Flavor flavorOne = new Flavor(firstValue, "1", "100", "10");
-		Flavor flavorTwo = new Flavor("Two", "2", "200", "20");
-		Flavor flavorThree = new Flavor("Three", "30", "300", "30");
+		String firstValue = "1";
+		Flavor flavorOne = new Flavor("One", firstValue, "1", "100", "10");
+		Flavor flavorTwo = new Flavor("Two", "2", "2", "200", "20");
+		Flavor flavorThree = new Flavor("Three", "3", "30", "300", "30");
 
 		List<Flavor> flavors = new ArrayList<Flavor>();
 		flavors.add(flavorThree);
@@ -130,7 +147,8 @@ public class TestRequirementsHelper {
 		String vCpu = RequirementsHelper.GLUE_VCPU_TERM;
 		String requirementsStr = disk + " > 5 && " + mem + " > 50 && " + vCpu + " > 0";
 
-		Assert.assertEquals(firstValue, requirementsHelper.findFlavor(flavors, requirementsStr));
+		Assert.assertEquals(firstValue, requirementsHelper.findFlavor(flavors, requirementsStr)
+				.getId());
 	}
 	
 }

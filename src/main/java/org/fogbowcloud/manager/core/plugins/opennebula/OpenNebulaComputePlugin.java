@@ -43,9 +43,13 @@ import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.json.JSONObject;
 import org.opennebula.client.Client;
 import org.opennebula.client.OneResponse;
+import org.opennebula.client.datastore.Datastore;
+import org.opennebula.client.datastore.DatastorePool;
 import org.opennebula.client.group.Group;
 import org.opennebula.client.image.Image;
 import org.opennebula.client.image.ImagePool;
+import org.opennebula.client.template.Template;
+import org.opennebula.client.template.TemplatePool;
 import org.opennebula.client.user.User;
 import org.opennebula.client.vm.VirtualMachine;
 import org.opennebula.client.vm.VirtualMachinePool;
@@ -73,6 +77,7 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 	private String sshKeyFile;
 	private String sshTargetTempFolder;
 	private Integer dataStoreId;
+	private List<Flavor> flavors;
 	
 	private static final Logger LOGGER = Logger.getLogger(OpenNebulaComputePlugin.class);
 
@@ -103,17 +108,19 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		String dataStoreIdStr = properties.getProperty(OneConfigurationConstants.COMPUTE_ONE_DATASTORE_ID);
 		dataStoreId = dataStoreIdStr == null ? null: Integer.valueOf(dataStoreIdStr);
 		
-		// flavors
-		checkFlavor(String.valueOf(properties.get(OneConfigurationConstants.COMPUTE_ONE_SMALL_KEY)));
-		checkFlavor(String.valueOf(properties.get(OneConfigurationConstants.COMPUTE_ONE_MEDIUM_KEY)));
-		checkFlavor(String.valueOf(properties.get(OneConfigurationConstants.COMPUTE_ONE_LARGE_KEY)));
+//		// flavors
+//		checkFlavor(String.valueOf(properties.get(OneConfigurationConstants.COMPUTE_ONE_SMALL_KEY)));
+//		checkFlavor(String.valueOf(properties.get(OneConfigurationConstants.COMPUTE_ONE_MEDIUM_KEY)));
+//		checkFlavor(String.valueOf(properties.get(OneConfigurationConstants.COMPUTE_ONE_LARGE_KEY)));
 		
-		fogbowTermToOpenNebula.put(RequestConstants.SMALL_TERM,
-				String.valueOf(properties.get(OneConfigurationConstants.COMPUTE_ONE_SMALL_KEY)));
-		fogbowTermToOpenNebula.put(RequestConstants.MEDIUM_TERM,
-				String.valueOf(properties.get(OneConfigurationConstants.COMPUTE_ONE_MEDIUM_KEY)));
-		fogbowTermToOpenNebula.put(RequestConstants.LARGE_TERM,
-				String.valueOf(properties.get(OneConfigurationConstants.COMPUTE_ONE_LARGE_KEY)));
+//		fogbowTermToOpenNebula.put(RequestConstants.SMALL_TERM,
+//				String.valueOf(properties.get(OneConfigurationConstants.COMPUTE_ONE_SMALL_KEY)));
+//		fogbowTermToOpenNebula.put(RequestConstants.MEDIUM_TERM,
+//				String.valueOf(properties.get(OneConfigurationConstants.COMPUTE_ONE_MEDIUM_KEY)));
+//		fogbowTermToOpenNebula.put(RequestConstants.LARGE_TERM,
+//				String.valueOf(properties.get(OneConfigurationConstants.COMPUTE_ONE_LARGE_KEY)));
+		
+		flavors = new ArrayList<Flavor>();
 		
 		// userdata
 		fogbowTermToOpenNebula.put(RequestConstants.USER_DATA_TERM, "user_data");
@@ -152,32 +159,38 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 				+ categories + "; xOCCIAtt=" + xOCCIAtt);
 		
 		Map<String, String> templateProperties = new HashMap<String, String>();
-		String choosenFlavor = null;
+		Flavor choosenFlavor = null;
 		
 		// removing fogbow-request category
 		categories.remove(new Category(RequestConstants.TERM, RequestConstants.SCHEME,
 				RequestConstants.KIND_CLASS));
 				
+		updateFlavors(token);
+		// Finding flavor
+		choosenFlavor = RequirementsHelper.findFlavor(getFlavors(),
+				xOCCIAtt.get(RequestAttribute.REQUIREMENTS.getValue()));
+		
 		// checking categories are valid	
 		for (Category category : categories) {
 			if (fogbowTermToOpenNebula.get(category.getTerm()) == null) {
 				throw new OCCIException(ErrorType.BAD_REQUEST,
 						ResponseConstants.CLOUD_NOT_SUPPORT_CATEGORY + category.getTerm());
 			} 
-			else if (category.getTerm().equals(RequestConstants.SMALL_TERM)
-					|| category.getTerm().equals(RequestConstants.MEDIUM_TERM)
-					|| category.getTerm().equals(RequestConstants.LARGE_TERM)) {				
-				// There are more than one flavor category
-				if (choosenFlavor != null) {
-					throw new OCCIException(ErrorType.BAD_REQUEST,
-							ResponseConstants.IRREGULAR_SYNTAX);					
-				}
-				choosenFlavor = fogbowTermToOpenNebula.get(category.getTerm());
-			} else if (category.getTerm().equals(RequestConstants.PUBLIC_KEY_TERM)) {
+//			else if (category.getTerm().equals(RequestConstants.SMALL_TERM)
+//					|| category.getTerm().equals(RequestConstants.MEDIUM_TERM)
+//					|| category.getTerm().equals(RequestConstants.LARGE_TERM)) {				
+//				// There are more than one flavor category
+//				if (choosenFlavor != null) {
+//					throw new OCCIException(ErrorType.BAD_REQUEST,
+//							ResponseConstants.IRREGULAR_SYNTAX);					
+//				}
+//				choosenFlavor = fogbowTermToOpenNebula.get(category.getTerm());
+//			} 
+			else if (category.getTerm().equals(RequestConstants.PUBLIC_KEY_TERM)) {
 				templateProperties.put("ssh-public-key",
 						xOCCIAtt.get(RequestAttribute.DATA_PUBLIC_KEY.getValue()));
 			}
-		}
+		}		
 		
 		// image or flavor was not specified
 		if (choosenFlavor == null || localImageId == null){
@@ -189,8 +202,10 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		if (userdata != null){
 			userdata = normalizeUserdata(userdata);
 		}
-		templateProperties.put("mem", String.valueOf((int)getAttValue("mem", choosenFlavor)));
-		templateProperties.put("cpu", String.valueOf(getAttValue("cpu", choosenFlavor)));
+//		templateProperties.put("mem", String.valueOf((int)getAttValue("mem", choosenFlavor)));
+//		templateProperties.put("cpu", String.valueOf(getAttValue("cpu", choosenFlavor)));
+		templateProperties.put("mem", String.valueOf(choosenFlavor.getMem()));
+		templateProperties.put("cpu", String.valueOf(choosenFlavor.getCpu()));
 		templateProperties.put("userdata", userdata);
 		templateProperties.put("image-id", localImageId);
 
@@ -361,21 +376,28 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 	}
 
 	private String getUsedFlavor(double cpu, double mem) {
-		double flavorMem = getAttValue("mem",
-				fogbowTermToOpenNebula.get(RequestConstants.SMALL_TERM));
-		double flavorCpu = getAttValue("cpu",
-				fogbowTermToOpenNebula.get(RequestConstants.SMALL_TERM));		
-		if ((Math.abs(cpu - flavorCpu) < 0.1) && (Math.abs(mem - flavorMem) < 0.1)) {
-			return RequestConstants.SMALL_TERM;
-		}		
-		flavorMem = getAttValue("mem",
-				fogbowTermToOpenNebula.get(RequestConstants.MEDIUM_TERM));
-		flavorCpu = getAttValue("cpu",
-				fogbowTermToOpenNebula.get(RequestConstants.MEDIUM_TERM));
-		if ((Math.abs(cpu - flavorCpu) < 0.1) && (Math.abs(mem - flavorMem) < 0.1)) {
-			return RequestConstants.MEDIUM_TERM;
-		}		
-		return RequestConstants.LARGE_TERM;
+		for (Flavor flavor : flavors) {
+			if (Double.parseDouble(flavor.getCpu()) == cpu && Double.parseDouble(flavor.getMem()) == mem) {
+				return flavor.getName();
+			}
+		}
+		return null;
+		
+//		double flavorMem = getAttValue("mem",
+//				fogbowTermToOpenNebula.get(RequestConstants.SMALL_TERM));
+//		double flavorCpu = getAttValue("cpu",
+//				fogbowTermToOpenNebula.get(RequestConstants.SMALL_TERM));		
+//		if ((Math.abs(cpu - flavorCpu) < 0.1) && (Math.abs(mem - flavorMem) < 0.1)) {
+//			return RequestConstants.SMALL_TERM;
+//		}		
+//		flavorMem = getAttValue("mem",
+//				fogbowTermToOpenNebula.get(RequestConstants.MEDIUM_TERM));
+//		flavorCpu = getAttValue("cpu",
+//				fogbowTermToOpenNebula.get(RequestConstants.MEDIUM_TERM));
+//		if ((Math.abs(cpu - flavorCpu) < 0.1) && (Math.abs(mem - flavorMem) < 0.1)) {
+//			return RequestConstants.MEDIUM_TERM;
+//		}		
+//		return RequestConstants.LARGE_TERM;
 	}
 
 	@Override
@@ -480,29 +502,49 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 	}
 
 	private List<Flavor> getFlavors(double cpuIdle, double memIdle, double instancesIdle) {
-		List<Flavor> flavors = new ArrayList<Flavor>();
-		// small		
-		double memFlavor = getAttValue("mem", fogbowTermToOpenNebula.get(RequestConstants.SMALL_TERM));
-		double cpuFlavor = getAttValue("cpu", fogbowTermToOpenNebula.get(RequestConstants.SMALL_TERM));
-		int capacity = Math.min((int) Math.min(cpuIdle / cpuFlavor, memIdle / memFlavor), (int) instancesIdle);
-		Flavor smallFlavor = new Flavor(RequestConstants.SMALL_TERM, String.valueOf(cpuFlavor),
-				String.valueOf(memFlavor), capacity);
-		// medium
-		memFlavor = getAttValue("mem", fogbowTermToOpenNebula.get(RequestConstants.MEDIUM_TERM));
-		cpuFlavor = getAttValue("cpu", fogbowTermToOpenNebula.get(RequestConstants.MEDIUM_TERM));
-		capacity = Math.min((int) Math.min(cpuIdle / cpuFlavor, memIdle / memFlavor), (int) instancesIdle);
-		Flavor mediumFlavor = new Flavor(RequestConstants.MEDIUM_TERM, String.valueOf(cpuFlavor),
-				String.valueOf(memFlavor), capacity);
-		// large
-		memFlavor = getAttValue("mem", fogbowTermToOpenNebula.get(RequestConstants.LARGE_TERM));
-		cpuFlavor = getAttValue("cpu", fogbowTermToOpenNebula.get(RequestConstants.LARGE_TERM));
-		capacity = Math.min((int) Math.min(cpuIdle / cpuFlavor, memIdle / memFlavor), (int) instancesIdle);
-		Flavor largeFlavor = new Flavor(RequestConstants.LARGE_TERM, String.valueOf(cpuFlavor),
-				String.valueOf(memFlavor), capacity);
-		flavors.add(smallFlavor);
-		flavors.add(mediumFlavor);
-		flavors.add(largeFlavor);
-		return flavors;
+		
+		List<Flavor> newFlavorsList = new ArrayList<Flavor>();
+		for (Flavor flavor : this.flavors) {
+			int capacity = 0;
+			try {
+				double memFlavor = Double.parseDouble(flavor.getMem());
+				double cpuFlavor = Double.parseDouble(flavor.getCpu());
+				capacity = Math.min((int) Math.min(cpuIdle / cpuFlavor, memIdle / memFlavor),
+						(int) instancesIdle);
+			} catch (Exception e) {
+				LOGGER.error("", e);
+				throw new OCCIException(ErrorType.BAD_REQUEST,
+						ResponseConstants.INVALID_FLAVOR_SPECIFIED);
+			}
+			flavor.setCapacity(capacity);
+			newFlavorsList.add(flavor);
+		}
+		
+//		List<Flavor> flavors = new ArrayList<Flavor>();
+		
+//		// small		
+//		double memFlavor = getAttValue("mem", fogbowTermToOpenNebula.get(RequestConstants.SMALL_TERM));
+//		double cpuFlavor = getAttValue("cpu", fogbowTermToOpenNebula.get(RequestConstants.SMALL_TERM));
+//		int capacity = Math.min((int) Math.min(cpuIdle / cpuFlavor, memIdle / memFlavor), (int) instancesIdle);
+//		Flavor smallFlavor = new Flavor(RequestConstants.SMALL_TERM, String.valueOf(cpuFlavor),
+//				String.valueOf(memFlavor), capacity);
+//		// medium
+//		memFlavor = getAttValue("mem", fogbowTermToOpenNebula.get(RequestConstants.MEDIUM_TERM));
+//		cpuFlavor = getAttValue("cpu", fogbowTermToOpenNebula.get(RequestConstants.MEDIUM_TERM));
+//		capacity = Math.min((int) Math.min(cpuIdle / cpuFlavor, memIdle / memFlavor), (int) instancesIdle);
+//		Flavor mediumFlavor = new Flavor(RequestConstants.MEDIUM_TERM, String.valueOf(cpuFlavor),
+//				String.valueOf(memFlavor), capacity);
+//		// large
+//		memFlavor = getAttValue("mem", fogbowTermToOpenNebula.get(RequestConstants.LARGE_TERM));
+//		cpuFlavor = getAttValue("cpu", fogbowTermToOpenNebula.get(RequestConstants.LARGE_TERM));
+//		capacity = Math.min((int) Math.min(cpuIdle / cpuFlavor, memIdle / memFlavor), (int) instancesIdle);
+//		Flavor largeFlavor = new Flavor(RequestConstants.LARGE_TERM, String.valueOf(cpuFlavor),
+//				String.valueOf(memFlavor), capacity);
+//		flavors.add(smallFlavor);
+//		flavors.add(mediumFlavor);
+//		flavors.add(largeFlavor);
+		
+		return newFlavorsList;
 	}
 
 	@Override
@@ -603,7 +645,76 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 
 	@Override
 	public List<Flavor> getFlavors() {
-		// TODO Auto-generated method stub
-		return null;
+		return this.flavors;
+	}
+
+	@Override
+	public void updateFlavors(Token token) {
+		OpenNebulaClientFactory openNebulaClientFactory = new OpenNebulaClientFactory();
+		Client oneClient = openNebulaClientFactory.createClient(token.getAccessId(),
+				openNebulaEndpoint);
+		List<Flavor> newFlavors = new ArrayList<Flavor>();
+
+		Map<String, String> mapImageToId = new HashMap<String, String>();
+		ImagePool imagePool = new ImagePool(oneClient);
+		imagePool.info();
+		for (Image image : imagePool) {
+			mapImageToId.put(image.getName(), image.getId());
+		}
+
+		TemplatePool templatePool = new TemplatePool(oneClient);
+		templatePool.info();
+		for (Template template : templatePool) {
+			String name = template.xpath("NAME");
+			String memory = template.xpath("TEMPLATE/MEMORY");
+			String vcpu = template.xpath("TEMPLATE/VCPU");
+			String imageStr = template.xpath("TEMPLATE/DISK/IMAGE");
+			String disk = null;
+
+			DatastorePool datastorePool = new DatastorePool(oneClient);
+			datastorePool.info();
+			for (Datastore datastore : datastorePool) {
+				if (datastore.xpath("IMAGES/ID[0]") != null) {
+					int cont = 0;
+					do {
+						String id = datastore.xpath("IMAGES/ID[" + cont + "]");
+						if (id.equals(mapImageToId.get(imageStr))) {
+							disk = datastore.xpath("TOTAL_MB");
+							break;
+						}
+						cont++;
+					} while (!datastore.xpath("IMAGES/ID[" + (cont + 1) + "]").isEmpty());
+				}
+
+			}
+			newFlavors.add(new Flavor(name, vcpu, memory, disk, 0));
+		}
+		if (newFlavors != null) {
+			this.flavors.addAll(newFlavors);			
+		}
+		removeInvalidFlavors(newFlavors);
+	}
+	
+	public void removeInvalidFlavors(List<Flavor> flavors) {
+		ArrayList<Flavor> copyFlavors = new ArrayList<Flavor>(this.flavors);
+		for (Flavor flavor : copyFlavors) {
+			boolean containsFlavor = false;
+			for (Flavor flavorName : flavors) {
+				if (flavorName.getName().equals(flavor.getName())) {
+					containsFlavor = true;
+					continue;
+				}
+			}
+			if (!containsFlavor && copyFlavors.size() != 0) {
+				try {
+					this.flavors.remove(flavor);					
+				} catch (Exception e) {
+				}
+			}
+		}
+	}	
+	
+	public void setFlavors(List<Flavor> flavors) {
+		this.flavors = flavors;
 	}
 }
