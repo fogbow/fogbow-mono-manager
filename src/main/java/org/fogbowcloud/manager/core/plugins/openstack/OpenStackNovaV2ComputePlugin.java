@@ -29,7 +29,6 @@ import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ImageState;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
-import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
 import org.fogbowcloud.manager.core.plugins.util.HttpPatch;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
@@ -568,7 +567,9 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 					return arrayImages.getJSONObject(i).getString(ID_JSON_FIELD);
 				}
 			}
-		} catch (JSONException e) {}
+		} catch (JSONException e) {
+			LOGGER.error("Error while parsing JSONObject for image state.", e);
+		}
 
 		return null;
 	}
@@ -646,6 +647,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 				}
 			}
 		} catch (JSONException e) {
+			LOGGER.error("Error while parsing JSONObject for image state.", e);
 		}
 		return null;	
 	}

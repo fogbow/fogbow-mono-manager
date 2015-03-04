@@ -45,6 +45,8 @@ import org.fogbowcloud.manager.occi.core.Token;
 
 public class EgiApplianceImageStoragePlugin implements ImageStoragePlugin {
 
+	private static final int IMAGE_UPLOAD_RETRY_INTERVAL = 15000;
+
 	private static final String PROP_STATIC_IMAGE_PREFIX = "image_storage_static_";
 	
 	private static final Logger LOGGER = Logger.getLogger(EgiApplianceImageStoragePlugin.class);
@@ -166,6 +168,7 @@ public class EgiApplianceImageStoragePlugin implements ImageStoragePlugin {
 					outputDir.mkdirs();
 					try {
 						List<File> files = unTar(downloadTempFile, outputDir);
+						boolean foundValidImage = false;
 						for (File file : files) {
 							String innerDiskFormat = "disk1."
 									+ getExtension(file.getAbsolutePath());
@@ -173,12 +176,12 @@ public class EgiApplianceImageStoragePlugin implements ImageStoragePlugin {
 								imagePath = convertToQcow2Format(token, imageURL, file,
 										innerDiskFormat);
 								diskFormat = Extensions.qcow2.name();
+								foundValidImage = true;
 								break;
 							}
 						}
 
-						// if imagePath was not updated
-						if (imagePath.equals(downloadTempFile.getAbsolutePath())) {
+						if (!foundValidImage) {
 							LOGGER.error("Couldn't find valid disk image inside OVA.");
 							removeImageFiles(downloadTempFile, outputDir);
 							return;
@@ -216,10 +219,16 @@ public class EgiApplianceImageStoragePlugin implements ImageStoragePlugin {
 			private void waitUploadAndDeleteFiles(final Token token, File downloadTempFile,
 					String imageName, File outputDir) throws InterruptedException {
 				while (true) {
-					ImageState imageState = computePlugin.getImageState(token, imageName);
+					ImageState imageState = null;
+					
+					try {
+						imageState = computePlugin.getImageState(token, imageName);
+					} catch (Exception e) {
+						LOGGER.error("Error while getting image state.", e);
+					}
 					
 					if (imageState != null && imageState.in(ImageState.PENDING)) {
-						Thread.sleep(5000);
+						Thread.sleep(IMAGE_UPLOAD_RETRY_INTERVAL);
 					} else {
 						removeImageFiles(downloadTempFile, outputDir);
 						return;
