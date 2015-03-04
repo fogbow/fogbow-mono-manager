@@ -110,10 +110,11 @@ public class OCCIComputePlugin implements ComputePlugin {
 		}
 		occiCategories.add(new Category(localImageId, osScheme, RequestConstants.MIXIN_CLASS));
 				
+//		updateFlavors(token);
 		// Finding and adding flavor
-		String flavorRef = RequirementsHelper.findFlavor(getFlavors(),
-				xOCCIAtt.get(RequestAttribute.REQUIREMENTS.getValue()));
-		occiCategories.add(new Category(flavorRef, resourceScheme, RequestConstants.MIXIN_CLASS));
+//		String flavorRef = RequirementsHelper.findFlavor(getFlavors(),
+//				xOCCIAtt.get(RequestAttribute.REQUIREMENTS.getValue()));
+//		occiCategories.add(new Category(flavorRef, resourceScheme, RequestConstants.MIXIN_CLASS));
 		
 		for (Category category : requestCategories) {
 			if (fogTermToCategory.get(category.getTerm()) == null) {
@@ -384,5 +385,10 @@ public class OCCIComputePlugin implements ComputePlugin {
 
 	public void setFlavors(List<Flavor> flavors) {
 		this.flavors = flavors;
+	}
+
+	@Override
+	public void updateFlavors(Token token) {
+		// TODO Auto-generated method stub		
 	}
 }

@@ -23,6 +23,22 @@ public class Flavor {
 		this.setDisk(disk);
 	}
 	
+	public Flavor(String name, String id, String cpu, String mem, String disk) {
+		this.setName(name);
+		this.setCpu(cpu);
+		this.setMem(mem);
+		this.setDisk(disk);
+		this.setId(id);
+	}
+	
+	public Flavor(String name, String cpu, String mem, String disk, Integer capacity) {		
+		this.setCapacity(capacity);
+		this.setName(name);
+		this.setCpu(cpu);
+		this.setMem(mem);
+		this.setDisk(disk);
+	}
+
 	public String getDisk() {
 		return disk;
 	}

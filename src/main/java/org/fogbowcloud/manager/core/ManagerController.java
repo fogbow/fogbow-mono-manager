@@ -643,8 +643,8 @@ public class ManagerController {
 		}
 	}
 
-	private void createAsynchronousRemoteInstance(final Request request) {
-		String memberAddress = chooseMemberAddressByTheRequirements(request.getRequirements());
+	private void createAsynchronousRemoteInstance(final Request request, String memberAddress) {
+//		String memberAddress = chooseMemberAddressByTheRequirements(request.getRequirements());
 		if (memberAddress == null) {
 			FederationMember member = memberPicker.pick(this);
 			if (member == null) {
@@ -684,6 +684,7 @@ public class ManagerController {
 
 	protected String chooseMemberAddressByTheRequirements(String requirements) {
 		List<FederationMember> federationMembers = new ArrayList<FederationMember>();
+		List<FederationMember> members = new ArrayList<FederationMember>(this.members);
 		for (FederationMember member : members) {
 			if (RequirementsHelper.checkLocation(requirements, member.getResourcesInfo().getId())) {
 				federationMembers.add(member);
@@ -795,10 +796,14 @@ public class ManagerController {
 				for (String keyAttributes : RequestAttribute.getValues()) {
 					xOCCIAtt.remove(keyAttributes);
 				}
-				boolean isFulfilled = createLocalInstance(request)
-						|| createLocalInstanceWithFederationUser(request);
+				String memberAddress = chooseMemberAddressByTheRequirements(request.getRequirements());
+				boolean isFulfilled = false;
+				if (memberAddress == null) {
+					isFulfilled = createLocalInstance(request)
+							|| createLocalInstanceWithFederationUser(request);
+				}
 				if (!isFulfilled) {
-					createAsynchronousRemoteInstance(request);
+					createAsynchronousRemoteInstance(request, memberAddress);
 				}
 				allFulfilled &= isFulfilled;
 				

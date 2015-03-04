@@ -6,6 +6,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import org.fogbowcloud.manager.core.model.Flavor;
+import org.fogbowcloud.manager.occi.request.RequestAttribute;
 
 import condor.classad.AttrRef;
 import condor.classad.ClassAdParser;
@@ -39,6 +40,7 @@ public class RequirementsHelper {
 		try {
 			ClassAdParser classAdParser = new ClassAdParser(requirementsStr);		
 			Op expr = (Op) classAdParser.parse();
+//			expr = RequirementsHelper.normalizeOP(expr, RequestAttribute.REQUIREMENTS.getValue());			
 			
 			List<String> listSearchAttr = new ArrayList<String>();
 			listSearchAttr.add(RequirementsHelper.GLUE_DISK_TERM);
@@ -70,7 +72,24 @@ public class RequirementsHelper {
 		}
 	}	
 	
-	public static String findFlavor(List<Flavor> flavors, String requirementsStr) {
+//	public static String findFlavor(List<Flavor> flavors, String requirementsStr) {
+//		List<Flavor> listFlavor = new ArrayList<Flavor>();
+//		for (Flavor flavor : flavors) {
+//			if (checkFlavorPerRequirements(flavor, requirementsStr)) {
+//				listFlavor.add(flavor);
+//			}
+//		}
+//
+//		if (listFlavor.size() == 0) {
+//			return null;
+//		}
+//
+//		Collections.sort(listFlavor, new FlavorComparator());
+//
+//		return listFlavor.get(0).getId();
+//	}
+	
+	public static Flavor findFlavor(List<Flavor> flavors, String requirementsStr) {
 		List<Flavor> listFlavor = new ArrayList<Flavor>();
 		for (Flavor flavor : flavors) {
 			if (checkFlavorPerRequirements(flavor, requirementsStr)) {
@@ -84,8 +103,8 @@ public class RequirementsHelper {
 
 		Collections.sort(listFlavor, new FlavorComparator());
 
-		return listFlavor.get(0).getName();
-	}
+		return listFlavor.get(0);
+	}	
 
 	public static Op normalizeOP(Op expr, String attName) {
 		if (expr.arg1 instanceof AttrRef) {
@@ -105,6 +124,25 @@ public class RequirementsHelper {
 		}
 		return new Op(expr.op, left, right);
 	}
+	
+	public static Op normalizeOPToCheckWithoutLocation(Op expr) {
+		if (expr.arg1 instanceof AttrRef) {
+			AttrRef attr = (AttrRef) expr.arg1;
+			if (!attr.name.rawString().equals(RequestAttribute.REQUIREMENTS.getValue())) {
+				return new Op(Op.EQUAL, Constant.TRUE, Constant.TRUE);
+			}
+			return expr;
+		}
+		Expr left = expr.arg1;
+		if (left instanceof Op) {
+			left = normalizeOPToCheckWithoutLocation((Op) expr.arg1);
+		}
+		Expr right = expr.arg2;
+		if (right instanceof Op) {
+			right = normalizeOPToCheckWithoutLocation((Op) expr.arg2);
+		}
+		return new Op(expr.op, left, right);
+	}	
 
 	protected static String normalizeLocationToCheck(String location) {
 		if (location == null) {
@@ -131,7 +169,7 @@ public class RequirementsHelper {
 		env.push((RecordExpr) new ClassAdParser("[" + GLUE_LOCATION_TERM + " = " + valueLocation
 				+ "]").parse());
 
-		Op opForAtt = normalizeOP(expr, GLUE_LOCATION_TERM);	
+		Op opForAtt = normalizeOP(expr, GLUE_LOCATION_TERM);
 
 		return opForAtt.eval(env).isTrue();
 	}
