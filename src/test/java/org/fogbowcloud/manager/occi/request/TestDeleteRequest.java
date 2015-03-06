@@ -54,7 +54,7 @@ public class TestDeleteRequest {
 				.bypass(Mockito.any(org.restlet.Request.class), Mockito.any(Response.class));
 
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
-		Mockito.when(identityPlugin.getToken(OCCITestHelper.ACCESS_TOKEN))
+		Mockito.when(identityPlugin.getToken(OCCITestHelper.FED_ACCESS_TOKEN))
 				.thenReturn(
 						new Token("id", OCCITestHelper.USER_MOCK, new Date(),
 								new HashMap<String, String>()));
@@ -69,7 +69,7 @@ public class TestDeleteRequest {
 	@Test
 	public void testRequest() throws URISyntaxException, HttpException, IOException {
 		HttpDelete delete = new HttpDelete(OCCITestHelper.URI_FOGBOW_REQUEST);
-		delete.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		delete.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(delete);
 
@@ -81,14 +81,14 @@ public class TestDeleteRequest {
 		// Get
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_REQUEST);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		get.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(get);
 		Assert.assertEquals(0, OCCITestHelper.getRequestIds(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 		// Delete
 		HttpDelete delete = new HttpDelete(OCCITestHelper.URI_FOGBOW_REQUEST);
-		delete.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		delete.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
 		client = new DefaultHttpClient();
 		response = client.execute(delete);
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
@@ -106,7 +106,7 @@ public class TestDeleteRequest {
 		Category category = new Category(RequestConstants.TERM, RequestConstants.SCHEME,
 				RequestConstants.KIND_CLASS);
 		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		post.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
@@ -116,7 +116,7 @@ public class TestDeleteRequest {
 		Assert.assertEquals(HttpStatus.SC_CREATED, response.getStatusLine().getStatusCode());
 		// Delete
 		HttpDelete delete = new HttpDelete(requestLocations.get(0));
-		delete.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		delete.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
 		client = new DefaultHttpClient();
 		response = client.execute(delete);
 		final int deletedRequestAmount = 1;
@@ -125,7 +125,7 @@ public class TestDeleteRequest {
 		// Get
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_REQUEST);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		get.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
 		client = new DefaultHttpClient();
 		response = client.execute(get);
 
@@ -143,7 +143,7 @@ public class TestDeleteRequest {
 		Category category = new Category(RequestConstants.TERM, RequestConstants.SCHEME,
 				RequestConstants.KIND_CLASS);
 		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		post.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
 		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, RequestAttribute.INSTANCE_COUNT.getValue()
 				+ " = " + defaultAmount);
@@ -159,7 +159,7 @@ public class TestDeleteRequest {
 		for (String requestLocation : requestLocations) {
 			delete = new HttpDelete(requestLocation);
 			delete.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-			delete.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+			delete.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
 			client = new DefaultHttpClient();
 			response = client.execute(delete);
 			Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
@@ -167,7 +167,7 @@ public class TestDeleteRequest {
 		// Get
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_REQUEST);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		get.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
 		client = new DefaultHttpClient();
 		response = client.execute(get);
 		
@@ -184,7 +184,7 @@ public class TestDeleteRequest {
 		Category category = new Category(RequestConstants.TERM, RequestConstants.SCHEME,
 				RequestConstants.KIND_CLASS);
 		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		post.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
 		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, RequestAttribute.INSTANCE_COUNT.getValue()
 				+ " = " + createdMount);
@@ -198,7 +198,7 @@ public class TestDeleteRequest {
 		// Delete
 		HttpDelete delete = new HttpDelete(OCCITestHelper.URI_FOGBOW_REQUEST);
 		delete.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		delete.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		delete.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
 		client = new DefaultHttpClient();
 		response = client.execute(delete);
 
@@ -208,7 +208,7 @@ public class TestDeleteRequest {
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_REQUEST);
 		client = new DefaultHttpClient();
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		get.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
 		response = client.execute(get);
 
 		Assert.assertEquals(createdMount, deletedInstancesCounter(response));
@@ -219,7 +219,7 @@ public class TestDeleteRequest {
 	public void testDeleteRequestNotFound() throws URISyntaxException, HttpException, IOException {
 		HttpDelete delete = new HttpDelete(OCCITestHelper.URI_FOGBOW_REQUEST + "not_found_id");
 		delete.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		delete.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		delete.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(delete);
 
@@ -230,7 +230,7 @@ public class TestDeleteRequest {
 	public void testDeleteWithInvalidToken() throws URISyntaxException, HttpException, IOException {
 		HttpDelete delete = new HttpDelete(OCCITestHelper.URI_FOGBOW_REQUEST);
 		delete.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		delete.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.INVALID_TOKEN);
+		delete.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.INVALID_TOKEN);
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(delete);
 
@@ -245,7 +245,7 @@ public class TestDeleteRequest {
 		for (String requestLocation : requestLocations2) {
 			HttpGet getSpecific = new HttpGet(requestLocation);
 			getSpecific.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-			getSpecific.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+			getSpecific.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
 			response = client.execute(getSpecific);
 			String responseStr = EntityUtils.toString(response.getEntity(),
 					String.valueOf(Charsets.UTF_8));

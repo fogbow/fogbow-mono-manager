@@ -1,12 +1,16 @@
 package org.fogbowcloud.manager.core;
 
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.TimerTask;
 import java.util.UUID;
 import java.util.concurrent.Executors;
@@ -21,8 +25,8 @@ import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.core.model.FederationMember;
-import org.fogbowcloud.manager.core.model.RemoteRequest;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
+import org.fogbowcloud.manager.core.model.ServedRequest;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
@@ -51,11 +55,15 @@ public class ManagerController {
 	private static final Logger LOGGER = Logger.getLogger(ManagerController.class);
 	public static final long DEFAULT_SCHEDULER_PERIOD = 30000; // 30 seconds
 	private static final long DEFAULT_TOKEN_UPDATE_PERIOD = 300000; // 5 minutes
-	private static final long DEFAULT_INSTANCE_MONITORING_PERIOD = 120000; // 2
-																			// minutes
+	private static final long DEFAULT_INSTANCE_MONITORING_PERIOD = 120000; // 2 minutes
+	private static final long DEFAULT_SERVED_REQUEST_MONITORING_PERIOD = 120000; // 2 minutes
+	private static final long DEFAULT_GARBAGE_COLLECTOR_PERIOD = 240000; // 4 minutes
+																			
 	private final ManagerTimer requestSchedulerTimer;
 	private final ManagerTimer tokenUpdaterTimer;
 	private final ManagerTimer instanceMonitoringTimer;
+	private final ManagerTimer servedRequestMonitoringTimer;
+	private final ManagerTimer garbageCollectorTimer;
 
 	private Token federationUserToken;
 	private final List<FederationMember> members = Collections.synchronizedList(new LinkedList<FederationMember>());
@@ -70,8 +78,8 @@ public class ManagerController {
 	private Properties properties;
 	private AsyncPacketSender packetSender;
 	private FederationMemberValidator validator = new DefaultMemberValidator();
-	private Map<String, RemoteRequest> instancesForRemoteMembers = new HashMap<String, RemoteRequest>();
-	private Map<String, Request> asynchronousRequests = new HashMap<String, Request>();
+	private Map<String, ServedRequest> instancesForRemoteMembers = new HashMap<String, ServedRequest>();
+	private Map<String, ForwardedRequest> asynchronousRequests = new HashMap<String, ForwardedRequest>();
 
 	private DateUtils dateUtils = new DateUtils();
 	public ManagerController(Properties properties) {
@@ -86,11 +94,15 @@ public class ManagerController {
 		if (executor == null) {
 			this.requestSchedulerTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
 			this.tokenUpdaterTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
-			this.instanceMonitoringTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));			
+			this.instanceMonitoringTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
+			this.servedRequestMonitoringTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
+			this.garbageCollectorTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
 		} else {
 			this.requestSchedulerTimer = new ManagerTimer(executor);
 			this.tokenUpdaterTimer = new ManagerTimer(executor);
-			this.instanceMonitoringTimer = new ManagerTimer(executor);			
+			this.instanceMonitoringTimer = new ManagerTimer(executor);
+			this.servedRequestMonitoringTimer = new ManagerTimer(executor);
+			this.garbageCollectorTimer = new ManagerTimer(executor);
 		}
 	}
 
@@ -104,6 +116,10 @@ public class ManagerController {
 	
 	public void setComputePlugin(ComputePlugin computePlugin) {
 		this.computePlugin = computePlugin;
+		// garbage collector may starting only after set compute plugin
+		if (!garbageCollectorTimer.isScheduled()) {
+			triggerGarbageCollector();
+		}
 	}
 
 	public void setLocalIdentityPlugin(IdentityPlugin identityPlugin) {
@@ -112,6 +128,36 @@ public class ManagerController {
 
 	public void setFederationIdentityPlugin(IdentityPlugin federationIdentityPlugin) {
 		this.federationIdentityPlugin = federationIdentityPlugin;
+	}
+	
+	private void triggerGarbageCollector() {
+		String garbageCollectorPeriodStr = properties
+				.getProperty(ConfigurationConstants.GARBAGE_COLLECTOR_PERIOD_KEY);
+		final long garbageCollectorPeriod = garbageCollectorPeriodStr == null ? DEFAULT_GARBAGE_COLLECTOR_PERIOD
+				: Long.valueOf(garbageCollectorPeriodStr);
+		
+		garbageCollectorTimer.scheduleAtFixedRate(new TimerTask() {
+			@Override
+			public void run() {	
+				garbageCollector();
+			}
+		}, 0, garbageCollectorPeriod);	
+	}
+	
+	protected void garbageCollector() {
+		if (computePlugin != null) {
+			Token federationUserToken = getFederationUserToken();
+			List<Instance> federationInstances = computePlugin.getInstances(federationUserToken);
+			LOGGER.debug("Federation instances=" + federationInstances);
+			for (Instance instance : federationInstances) {
+				if (!isInstanceBeenUsed(generateGlobalId(instance.getId(), null))
+						&& !instancesForRemoteMembers.containsKey(instance.getId())) {
+					// this is an orphan instance
+					LOGGER.debug("Removing the orphan instance " + instance.getId());
+					this.computePlugin.removeInstance(federationUserToken, instance.getId());
+				}
+			}
+		}
 	}
 
 	public void updateMembers(List<FederationMember> members) {
@@ -167,8 +213,8 @@ public class ManagerController {
 		return token.getUser();
 	}
 
-	public List<Request> getRequestsFromUser(String accessId) {
-		String user = getUser(accessId);
+	public List<Request> getRequestsFromUser(String federationAccessToken) {
+		String user = getUser(federationAccessToken);
 		return requests.getByUser(user);
 	}
 
@@ -217,10 +263,14 @@ public class ManagerController {
 	}
 	
 	public Instance generateInstanceWithGlobalId(String instanceId, String memberId) {
+		return new Instance(generateGlobalId(instanceId, memberId));
+	}
+
+	private String generateGlobalId(String instanceId, String memberId) {
 		if (memberId == null) {
 			memberId = this.properties.get(ConfigurationConstants.XMPP_JID_KEY).toString();
 		}
-		return new Instance(instanceId + Request.SEPARATOR_GLOBAL_ID + memberId);
+		return instanceId + Request.SEPARATOR_GLOBAL_ID + memberId;
 	}
 
 	public Instance getInstance(String accessId, String instanceId) {
@@ -233,8 +283,14 @@ public class ManagerController {
 		if (isLocal(request)) {
 			LOGGER.debug(request.getInstanceId()
 					+ " is local, getting its information in the local cloud.");
-			instance = this.computePlugin.getInstance(request.getToken(),
-					request.getInstanceId());
+			
+			if (request.isFulfilledByFederationUser()) {
+				instance = this.computePlugin.getInstance(getFederationUserToken(),
+						request.getInstanceId());
+			} else {
+				instance = this.computePlugin.getInstance(request.getLocalToken(),
+						request.getInstanceId());
+			}
 
 			String sshPublicAdd = getSSHPublicAddress(request.getId());
 			if (sshPublicAdd != null) {
@@ -322,19 +378,18 @@ public class ManagerController {
 		return instanceId;
 	}
 
-	public void removeInstance(String accessId, String instanceId) {
-		Request request = getRequestForInstance(accessId, instanceId);
+	public void removeInstance(String federationToken, String instanceId) {
+		Request request = getRequestForInstance(federationToken, instanceId);
 		instanceId = normalizeInstanceId(instanceId);
-		removeInstance(accessId, instanceId, request);
+		removeInstance(federationToken, instanceId, request);
 	}
 
-	private void removeInstance(String accessId, String instanceId, Request request) {
+	private void removeInstance(String federationToken, String instanceId, Request request) {
 		if (isLocal(request)) {
-			if (accessId.equals(request.getToken().getAccessId())) {
-				this.computePlugin.removeInstance(request.getToken(), instanceId);
+			if (request.isFulfilledByFederationUser()) {
+				this.computePlugin.removeInstance(getFederationUserToken(), instanceId);
 			} else {
-				this.computePlugin.removeInstance(localIdentityPlugin.getToken(accessId),
-						instanceId);
+				this.computePlugin.removeInstance(request.getLocalToken(), instanceId);
 			}
 		} else {
 			removeRemoteInstance(request);
@@ -345,6 +400,7 @@ public class ManagerController {
 	private void instanceRemoved(Request request) {
 		request.setInstanceId(null);
 		request.setMemberId(null);
+		request.setFulfilledByFederationUser(false);		
 
 		if (request.getState().equals(RequestState.DELETED)) {
 			requests.exclude(request.getId());
@@ -369,16 +425,16 @@ public class ManagerController {
 	private void removeRemoteInstance(Request request) {
 		ManagerPacketHelper.deleteRemoteInstace(request, packetSender);
 	}
-
-	public Request getRequestForInstance(String accessId, String instanceId) {
-		String user = getUser(accessId);
+	
+	public Request getRequestForInstance(String federationToken, String instanceId) {
+		String user = getUser(federationToken);
 		LOGGER.debug("Getting instance " + instanceId + " of user " + user);
 		List<Request> userRequests = requests.getAll();
 		
 		for (Request request : userRequests) {
 			if (instanceId.equals(request.getInstanceId() + Request.SEPARATOR_GLOBAL_ID
 					+ request.getMemberId())) {
-				if (!request.getToken().getUser().equals(user)) {
+				if (!request.getFederationToken().getUser().equals(user)) {
 					throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 				}
 				return request;
@@ -413,8 +469,8 @@ public class ManagerController {
 		return null;
 	}
 
-	public String createInstanceForRemoteMember(String memberId, List<Category> categories,
-			Map<String, String> xOCCIAtt) {
+	public String createInstanceWithFederationUser(String memberId, List<Category> categories,
+			Map<String, String> xOCCIAtt, String instanceToken) {
 		FederationMember member = null;
 		try {
 			member = getFederationMember(memberId);
@@ -425,8 +481,10 @@ public class ManagerController {
 			return null;
 		}
 		LOGGER.info("Submiting request with categories: " + categories + " and xOCCIAtt: "
-				+ xOCCIAtt + " for remote member.");
-		String instanceToken = String.valueOf(UUID.randomUUID());
+				+ xOCCIAtt + " for remote member: " + memberId);
+		if (instanceToken == null) {
+			instanceToken = String.valueOf(UUID.randomUUID());
+		}
 		try {
 			String command = UserdataUtils.createBase64Command(instanceToken, 
 					properties.getProperty(ConfigurationConstants.SSH_PRIVATE_HOST_KEY),
@@ -452,12 +510,17 @@ public class ManagerController {
 			categoriesWithoutImage.add(category);
 		}
 		
-		try {			
+		try {
 			String instanceId = computePlugin.requestInstance(federationUserToken, categoriesWithoutImage,
 					xOCCIAtt, localImageId);
-			instancesForRemoteMembers.put(instanceId, 
-					new RemoteRequest(instanceToken, memberId, categories, xOCCIAtt));
-
+			
+			if (!properties.getProperty("xmpp_jid").equals(memberId)) {
+				instancesForRemoteMembers.put(instanceId, new ServedRequest(instanceToken,
+						memberId, categories, xOCCIAtt));
+				if (!servedRequestMonitoringTimer.isScheduled()) {
+					triggerServedRequestMonitoring();
+				}
+			}						
 			return instanceId;
 		} catch (OCCIException e) {
 			if (e.getStatus().getCode() == HttpStatus.SC_BAD_REQUEST) {
@@ -465,6 +528,20 @@ public class ManagerController {
 			}
 			throw e;
 		}
+	}
+
+	private void triggerServedRequestMonitoring() {
+		String servedRequestMonitoringPeriodStr = properties
+				.getProperty(ConfigurationConstants.SERVED_REQUEST_MONITORING_PERIOD_KEY);
+		final long servedRequestMonitoringPeriod = servedRequestMonitoringPeriodStr == null ? DEFAULT_SERVED_REQUEST_MONITORING_PERIOD
+				: Long.valueOf(servedRequestMonitoringPeriodStr);
+
+		servedRequestMonitoringTimer.scheduleAtFixedRate(new TimerTask() {
+			@Override
+			public void run() {	
+				monitorServedRequests();
+			}
+		}, 0, servedRequestMonitoringPeriod);		
 	}
 
 	private String getLocalImageId(List<Category> categories,
@@ -478,6 +555,7 @@ public class ManagerController {
 			String globalImageId = osCategory.getTerm();
 			localImageId = imageStoragePlugin.getLocalId(federationUserToken, globalImageId);
 		}
+		LOGGER.debug("The " + osCategory.getTerm() + " is related to this localImageId=" + localImageId);
 		return localImageId;
 	}
 
@@ -495,13 +573,13 @@ public class ManagerController {
 		LOGGER.info("Getting instance " + instanceId + " for remote member.");
 		try {
 			Instance instance = computePlugin.getInstance(getFederationUserToken(), instanceId);
-			RemoteRequest remoteRequest = instancesForRemoteMembers.get(instanceId);
-			if (remoteRequest != null) {
-				String sshPublicAddress = getSSHPublicAddress(remoteRequest.getId());			
+			ServedRequest servedRequest = instancesForRemoteMembers.get(instanceId);
+			if (servedRequest != null) {
+				String sshPublicAddress = getSSHPublicAddress(servedRequest.getInstanceToken());			
 				if (sshPublicAddress != null) {
 					instance.addAttribute(Instance.SSH_PUBLIC_ADDRESS_ATT, sshPublicAddress);
 				}
-				Category osCategory = getImageCategory(remoteRequest.getCategories());
+				Category osCategory = getImageCategory(servedRequest.getCategories());
 				if (osCategory != null) {
 					instance.addResource(
 							ResourceRepository.createImageResource(osCategory.getTerm()));
@@ -521,6 +599,11 @@ public class ManagerController {
 		LOGGER.info("Removing instance " + instanceId + " for remote member.");
 		computePlugin.removeInstance(getFederationUserToken(), instanceId);
 		instancesForRemoteMembers.remove(instanceId);
+		
+		if (instancesForRemoteMembers.isEmpty()) {
+			LOGGER.info("There are no served requests. Canceling served request monitoring.");
+			servedRequestMonitoringTimer.cancel();
+		}
 	}
 
 	public Token getTokenFromFederationIdP(String accessId) {
@@ -531,10 +614,20 @@ public class ManagerController {
 		return token;
 	}
 
-	public List<Request> createRequests(String accessId, List<Category> categories,
+	public List<Request> createRequests(String federationAccessTokenStr, 
+			String localAccessTokenStr, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
-		Token userToken = getTokenFromFederationIdP(accessId);
-		LOGGER.debug("User Token: " + userToken);
+		Token federationToken = getTokenFromFederationIdP(federationAccessTokenStr);
+		Token localToken;
+		try {
+			localToken = getTokenFromLocalIdP(localAccessTokenStr);			
+		} catch (Throwable e) {
+			LOGGER.warn("Local Access Token \"" + localAccessTokenStr + "\" is not valid.", e);
+			LOGGER.debug("Making local access token equals to federation access token.");
+			localToken = federationToken;
+		}
+		LOGGER.debug("Federation User Token: " + federationToken);
+		LOGGER.debug("Local User Token: " + localToken);
 
 		Integer instanceCount = Integer.valueOf(xOCCIAtt.get(RequestAttribute.INSTANCE_COUNT
 				.getValue()));
@@ -543,11 +636,11 @@ public class ManagerController {
 		List<Request> currentRequests = new ArrayList<Request>();
 		for (int i = 0; i < instanceCount; i++) {
 			String requestId = String.valueOf(UUID.randomUUID());
-			Request request = new Request(requestId, userToken,
+			Request request = new Request(requestId, federationToken, localToken,
 					new LinkedList<Category>(categories), new HashMap<String, String>(xOCCIAtt));
 			LOGGER.info("Created request: " + request);
 			currentRequests.add(request);
-			requests.addRequest(userToken.getUser(), request);
+			requests.addRequest(federationToken.getUser(), request);
 		}
 		if (!requestSchedulerTimer.isScheduled()) {
 			triggerRequestScheduler();			
@@ -557,6 +650,10 @@ public class ManagerController {
 		}
 
 		return currentRequests;
+	}
+
+	private Token getTokenFromLocalIdP(String localAccessTokenStr) {
+		return localIdentityPlugin.getToken(localAccessTokenStr);
 	}
 
 	protected void triggerInstancesMonitor() {
@@ -619,16 +716,17 @@ public class ManagerController {
 		for (Request request : allRequests) {
 			try {
 				if (request.getState().notIn(RequestState.CLOSED, RequestState.FAILED)) {
+					// TODO Close requests that have an expired federation token
 					turnOffTimer = false;
-					long validInterval = request.getToken().getExpirationDate().getTime()
+					long validInterval = request.getLocalToken().getExpirationDate().getTime()
 							- dateUtils.currentTimeMillis();
 					LOGGER.debug("Valid interval of requestId " + request.getId() + " is "
 							+ validInterval);
 					if (validInterval < 2 * tokenUpdatePeriod) {
-						Token newToken = localIdentityPlugin.reIssueToken(request.getToken());
+						Token newToken = localIdentityPlugin.reIssueToken(request.getLocalToken());
 						LOGGER.info("Setting new token " + newToken + " on request "
 								+ request.getId());
-						requests.get(request.getId()).setToken(newToken);
+						requests.get(request.getId()).setLocalToken(newToken);
 					}
 				}
 			} catch (Exception e) {
@@ -652,16 +750,22 @@ public class ManagerController {
 
 		LOGGER.info("Submiting request " + request + " to member " + memberAddress);
 		
-		asynchronousRequests.put(request.getId(), request);
+		asynchronousRequests.put(request.getId(),
+				new ForwardedRequest(request, dateUtils.currentTimeMillis()));
 		ManagerPacketHelper.asynchronousRemoteRequest(request, memberAddress,
 				packetSender, new AsynchronousRequestCallback() {
 					
 					@Override
 					public void success(String instanceId) {
-						asynchronousRequests.remove(request.getId());
+						LOGGER.debug("The request " + request + " forwarded to " + memberAddress
+								+ " gets instance " + instanceId);
+						if (asynchronousRequests.remove(request.getId()) == null) {
+							return;
+						}
 						if (instanceId == null) {
 							return;
 						}
+						
 						request.setState(RequestState.FULFILLED);
 						request.setInstanceId(instanceId);
 						if (!instanceMonitoringTimer.isScheduled()) {
@@ -671,6 +775,8 @@ public class ManagerController {
 					
 					@Override
 					public void error(Throwable t) {
+						LOGGER.debug("The request " + request + " forwarded to " + memberAddress
+								+ " gets error ", t);
 						asynchronousRequests.remove(request.getId());
 					}
 				});
@@ -681,34 +787,6 @@ public class ManagerController {
 		return asynchronousRequests.containsKey(requestId);
 	}
 	
-	protected Request getRequestForwardedCallback(String requestId) {
-		return asynchronousRequests.get(requestId);
-	}
-	
-	private boolean createRemoteInstance(Request request) {
-		FederationMember member = memberPicker.pick(this);
-		if (member == null) {
-			return false;
-		}
-		String memberAddress = member.getResourcesInfo().getId();
-		request.setMemberId(memberAddress);
-
-		LOGGER.info("Submiting request " + request + " to member " + memberAddress);
-
-		String remoteInstanceId = ManagerPacketHelper.remoteRequest(request, memberAddress,
-				packetSender);
-		if (remoteInstanceId == null) {
-			return false;
-		}
-
-		request.setState(RequestState.FULFILLED);
-		request.setInstanceId(remoteInstanceId);
-		if (!instanceMonitoringTimer.isScheduled()) {
-			triggerInstancesMonitor();
-		}
-		return true;
-	}
-
 	private boolean createLocalInstance(Request request) {
 		request.setMemberId(this.properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
 		String instanceId = null;
@@ -730,7 +808,7 @@ public class ManagerController {
 			}	
 			
 			String localImageId = getLocalImageId(request.getCategories(), 
-					request.getToken());
+					getFederationUserToken());
 			List<Category> categories = new LinkedList<Category>();
 			for (Category category : request.getCategories()) {
 				if (category.getScheme().equals(
@@ -740,7 +818,7 @@ public class ManagerController {
 				categories.add(category);
 			}
 			
-			instanceId = computePlugin.requestInstance(request.getToken(),
+			instanceId = computePlugin.requestInstance(request.getLocalToken(),
 					categories, request.getxOCCIAtt(), localImageId);
 		} catch (OCCIException e) {
 			int statusCode = e.getStatus().getCode();
@@ -759,7 +837,6 @@ public class ManagerController {
 				LOGGER.warn("Request failed locally for an unknown reason.", e);
 				return true;				
 			}
-
 		}
 
 		request.setInstanceId(instanceId);
@@ -788,9 +865,14 @@ public class ManagerController {
 		boolean allFulfilled = true;
 		LOGGER.debug("Checking and submiting requests.");
 
+		// removing requests that reach timeout
+		removeRequestsThatReachTimeout();
+		
 		List<Request> openRequests = requests.get(RequestState.OPEN);
 		for (Request request : openRequests) {
 			if (isRequestForwardedtoRemoteMember(request.getId())) {
+				LOGGER.debug("The request " + request.getId()
+						+ " was forwarded to remote member and is not fulfilled yet.");
 				continue;
 			}
 			LOGGER.debug(request.getId() + " considering for scheduling.");
@@ -813,8 +895,54 @@ public class ManagerController {
 			}
 		}
 		if (allFulfilled) {
-			LOGGER.info("All request fulfilled.");
+			LOGGER.info("All requests fulfilled.");
 		}
+	}
+
+	protected void monitorServedRequests() {
+		LOGGER.info("Monitoring served requests.");
+		LOGGER.debug("Current served requests=" + instancesForRemoteMembers);
+				
+		Set<String> instanceIds = instancesForRemoteMembers.keySet();
+		for (String instanceId : instanceIds) {
+			ServedRequest servedRequest = instancesForRemoteMembers.get(instanceId);
+			if (!isInstanceBeenUsedByRemoteMember(instanceId, servedRequest)){
+				LOGGER.debug("The instance " + instanceId + " is not been used anymore by "
+						+ servedRequest.getMemberId() + " and will be removed.");
+				removeInstanceForRemoteMember(instanceId);
+			}
+		}
+	}
+
+	private boolean isInstanceBeenUsedByRemoteMember(String instanceId, ServedRequest servedRequest) {
+		try{
+			ManagerPacketHelper.checkIfInstanceIsBeenUsedByRemoteMember(
+					generateGlobalId(instanceId, null), servedRequest.getMemberId(), packetSender);
+			return true;
+		} catch (OCCIException e) {
+			return false;
+		}
+	}
+
+	protected void removeRequestsThatReachTimeout() {
+		Collection<ForwardedRequest> forwardedRequests = asynchronousRequests.values();
+		for (ForwardedRequest forwardedRequest : forwardedRequests) {
+			if (timoutReached(forwardedRequest.getTimeStamp())){
+				LOGGER.debug("The forwarded request " + forwardedRequest.getRequest().getId()
+						+ " reached timeout and is been removed from asynchronousRequests list.");
+				asynchronousRequests.remove(forwardedRequest.getRequest().getId());
+			}
+		}
+	}
+
+	private boolean timoutReached(long timeStamp) {
+		long nowMilli = dateUtils.currentTimeMillis();
+		Date now = new Date(nowMilli);
+		
+		Calendar c = Calendar.getInstance();
+		c.setTime(new Date(timeStamp)); 
+		c.add(Calendar.MILLISECOND, (int) DEFAULT_SCHEDULER_PERIOD); 
+		return now.after(c.getTime());
 	}
 
 	private boolean createLocalInstanceWithFederationUser(Request request) {
@@ -824,8 +952,8 @@ public class ManagerController {
 
 		String remoteInstanceId = null;
 		try {
-			remoteInstanceId = createInstanceForRemoteMember(properties.getProperty("xmpp_jid"),
-					request.getCategories(), request.getxOCCIAtt());
+			remoteInstanceId = createInstanceWithFederationUser(properties.getProperty("xmpp_jid"),
+					request.getCategories(), request.getxOCCIAtt(), request.getId());
 		} catch (Exception e) {
 			LOGGER.info("Could not create instance with federation user locally." + e);
 		}
@@ -836,6 +964,7 @@ public class ManagerController {
 
 		request.setState(RequestState.FULFILLED);
 		request.setInstanceId(remoteInstanceId);
+		request.setFulfilledByFederationUser(true);
 		if (!instanceMonitoringTimer.isScheduled()) {
 			triggerInstancesMonitor();
 		}
@@ -870,6 +999,10 @@ public class ManagerController {
 		this.validator = validator;
 	}
 
+	protected Map<String, ServedRequest> getInstancesForRemoteMember() {
+		return instancesForRemoteMembers;
+	}
+	
 	public List<Resource> getAllResouces(String accessId) {
 		Token userToken = getTokenFromFederationIdP(accessId);
 		LOGGER.debug("User Token: " + userToken);
@@ -902,8 +1035,13 @@ public class ManagerController {
 			if (isLocal(request)) {
 				LOGGER.debug(request.getInstanceId()
 						+ " is local, getting its information in the local cloud.");
-				instance = this.computePlugin.getInstance(request.getToken(),
-						request.getInstanceId());
+				if (request.isFulfilledByFederationUser()) {
+					instance = this.computePlugin.getInstance(getFederationUserToken(),
+							request.getInstanceId());
+				} else {
+					instance = this.computePlugin.getInstance(request.getLocalToken(),
+							request.getInstanceId());
+				}
 
 				String sshPublicAdd = getSSHPublicAddress(request.getId());
 				if (sshPublicAdd != null) {
@@ -922,5 +1060,37 @@ public class ManagerController {
 			allFullInstances.add(instance);
 		}
 		return allFullInstances;
+	}
+
+	public boolean isInstanceBeenUsed(String instanceId) {
+		LOGGER.debug("Checking if instance " + instanceId + " is been used yet.");
+		for (Request request : requests.getAll()) {
+			if (request.getState().in(RequestState.FULFILLED, RequestState.DELETED)) {
+				String reqInstanceId = generateGlobalId(request.getInstanceId(), request.getMemberId());
+				if (reqInstanceId != null && reqInstanceId.equals(instanceId)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+}
+
+class ForwardedRequest {
+	
+	private Request request;
+	private long timeStamp;
+	
+	public ForwardedRequest(Request request, long timeStamp) {
+		this.request = request;
+		this.timeStamp = timeStamp;
+	}
+	
+	public Request getRequest() {
+		return request;
+	}
+	
+	public long getTimeStamp() {
+		return timeStamp;
 	}
 }

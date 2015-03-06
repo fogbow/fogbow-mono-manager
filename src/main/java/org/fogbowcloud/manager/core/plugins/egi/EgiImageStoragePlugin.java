@@ -101,7 +101,7 @@ public class EgiImageStoragePlugin implements ImageStoragePlugin {
 					try {
 						computePlugin.uploadImage(token, 
 								downloadTempFile.getAbsolutePath(), 
-								globalId);
+								globalId, null);
 					} catch (Throwable e) {
 						LOGGER.error("Couldn't upload image.", e);
 					}

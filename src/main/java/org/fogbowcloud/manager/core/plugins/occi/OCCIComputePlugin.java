@@ -28,6 +28,7 @@ import org.apache.http.params.CoreProtocolPNames;
 import org.apache.http.params.HttpParams;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.core.model.ImageState;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.openstack.OpenStackConfigurationConstants;
@@ -35,7 +36,6 @@ import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
-import org.fogbowcloud.manager.occi.core.ResourceRepository;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.instance.Instance;
@@ -57,7 +57,6 @@ public class OCCIComputePlugin implements ComputePlugin {
 	private String instanceScheme;
 	private String resourceScheme;
 	private String networkId;
-	private String templateScheme;
 
 	protected Map<String, Category> fogTermToCategory = new HashMap<String, Category>();
 	public static final String COMPUTE_ENDPOINT = "/compute/";
@@ -79,20 +78,6 @@ public class OCCIComputePlugin implements ComputePlugin {
 				.getProperty(OpenStackConfigurationConstants.COMPUTE_OCCI_RESOURCE_SCHEME_KEY);
 		networkId = properties
 				.getProperty(OpenStackConfigurationConstants.COMPUTE_OCCI_NETWORK_KEY);
-		templateScheme = properties
-				.getProperty(OpenStackConfigurationConstants.COMPUTE_OCCI_TEMPLATE_SCHEME_KEY);
-
-		Map<String, String> templateProperties = getTemplateProperties(properties);
-		
-		if (templateProperties == null || templateProperties.isEmpty()) {
-			LOGGER.warn(ResponseConstants.TEMPLATE_NOT_SPECIFIED);
-		}
-		
-		for (String templateName : templateProperties.keySet()) {
-			fogTermToCategory.put(templateName, new Category(templateProperties.get(templateName),
-					templateScheme, RequestConstants.MIXIN_CLASS));
-			ResourceRepository.getInstance().addImageResource(templateName);
-		}					
 		
 		fogTermToCategory.put(
 				RequestConstants.SMALL_TERM,
@@ -115,7 +100,6 @@ public class OCCIComputePlugin implements ComputePlugin {
 	@Override
 	public String requestInstance(Token token, List<Category> requestCategories,
 			Map<String, String> xOCCIAtt, String localImageId) {
-
 		LOGGER.debug("Requesting instance with token=" + token + "; categories="
 				+ requestCategories + "; xOCCIAtt=" + xOCCIAtt);
 
@@ -133,8 +117,7 @@ public class OCCIComputePlugin implements ComputePlugin {
 			throw new OCCIException(ErrorType.BAD_REQUEST, 
 					ResponseConstants.IRREGULAR_SYNTAX);
 		}
-		occiCategories.add(new Category(localImageId, osScheme,
-				RequestConstants.MIXIN_CLASS));
+		occiCategories.add(new Category(localImageId, osScheme, RequestConstants.MIXIN_CLASS));
 		
 		for (Category category : requestCategories) {
 			if (fogTermToCategory.get(category.getTerm()) == null) {
@@ -149,11 +132,13 @@ public class OCCIComputePlugin implements ComputePlugin {
 			headers.add(new BasicHeader(OCCIHeaders.CATEGORY, category.toHeader()));
 		}
 		for (String attName : xOCCIAtt.keySet()) {
-			headers.add(new BasicHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, attName + "=" + "\""
-					+ xOCCIAtt.get(attName) + "\""));
+			if (!attName.contains("org.fogbowcloud")) {
+				headers.add(new BasicHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, attName + "=" + "\""
+						+ xOCCIAtt.get(attName) + "\""));				
+			}
 		}
 
-		headers.addAll(getExtraHeaders(requestCategories, xOCCIAtt));
+		headers.addAll(getExtraHeaders(requestCategories, xOCCIAtt, token));
 
 		// specifying network using inline creation of link instance
 		if (networkId != null && !"".equals(networkId)) {
@@ -162,9 +147,9 @@ public class OCCIComputePlugin implements ComputePlugin {
 					+ "category=\"http://schemas.ogf.org/occi/infrastructure#networkinterface\";"));
 		}
 
-		HttpResponse response = doRequest("post", computeOCCIEndpoint, token.getAccessId(), headers)
-				.getHttpResponse();
-
+		HttpResponse response = doRequest("post", computeOCCIEndpoint, token.getAccessId(),
+				normalizeHeaders(headers)).getHttpResponse();
+		
 		Header locationHeader = response.getFirstHeader("Location");
 		if (locationHeader != null) {
 			return normalizeInstanceId(locationHeader.getValue());
@@ -172,8 +157,26 @@ public class OCCIComputePlugin implements ComputePlugin {
 		return null;
 	}
 
+	private Set<Header> normalizeHeaders(Set<Header> headers) {
+		Set<Header> newHeaders = new HashSet<Header>();
+		Map<String, String> mapUniqueHeaders = new HashMap<String, String>();
+		for (Header header : headers) {			
+			String name = header.getName();
+			String valueMap = mapUniqueHeaders.get(name);
+			if (valueMap != null) {
+				mapUniqueHeaders.put(name, valueMap + "," + header.getValue());			
+			} else {
+				mapUniqueHeaders.put(name, header.getValue());
+			}			
+		}		
+		for (String key : mapUniqueHeaders.keySet()) {
+			newHeaders.add(new BasicHeader(key, mapUniqueHeaders.get(key)));
+		}
+		return newHeaders;
+	}
+
 	protected Set<Header> getExtraHeaders(List<Category> requestCategories,
-			Map<String, String> xOCCIAtt) {
+			Map<String, String> xOCCIAtt, Token token) {
 		return new HashSet<Header>();
 	}
 
@@ -217,20 +220,6 @@ public class OCCIComputePlugin implements ComputePlugin {
 		return null;
 	}
 
-	private static Map<String, String> getTemplateProperties(Properties properties) {
-		Map<String, String> templateProperties = new HashMap<String, String>();
-
-		for (Object propName : properties.keySet()) {
-			String propNameStr = (String) propName;
-			if (propNameStr.startsWith(OpenStackConfigurationConstants.COMPUTE_OCCI_TEMPLATE_PREFIX)) {
-				templateProperties.put(propNameStr.substring(OpenStackConfigurationConstants.COMPUTE_OCCI_TEMPLATE_PREFIX.length()),
-						properties.getProperty(propNameStr));
-			}
-		}
-		LOGGER.debug("Image properties: " + templateProperties);
-		return templateProperties;
-	}
-	
 	protected Category createFlavorCategory(String flavorPropName, Properties properties) {
 		return new Category(properties.getProperty(flavorPropName), resourceScheme,
 				RequestConstants.MIXIN_CLASS);
@@ -385,10 +374,14 @@ public class OCCIComputePlugin implements ComputePlugin {
 		}
 	}
 
-	public void uploadImage(Token token, String imagePath, String imageName) {
+	public void uploadImage(Token token, String imagePath, String imageName, String diskFormat) {
 	}
 	
 	public String getImageId(Token token, String imageName) {
+		return null;
+	}
+
+	public ImageState getImageState(Token token, String imageName) {
 		return null;
 	}
 

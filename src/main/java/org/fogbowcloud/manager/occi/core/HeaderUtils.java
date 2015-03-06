@@ -43,8 +43,9 @@ public class HeaderUtils {
 	}
 	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public static String getAuthToken(Series<Header> headers, Response response, String authenticationURI) {
-		String token = headers.getValues(OCCIHeaders.X_AUTH_TOKEN);
+	public static String getFederationAuthToken(Series<Header> headers, Response response, String authenticationURI) {
+		String token = headers.getValues(OCCIHeaders.X_FEDERATION_AUTH_TOKEN);
+		LOGGER.debug("federation-auth-token=" + token);
 		if (token == null || token.equals("")) {
 			if (authenticationURI != null) {
 				if (response != null) {
@@ -60,6 +61,7 @@ public class HeaderUtils {
 				throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 			} else {
 				String authorizationHeader = headers.getValues(HeaderUtils.AUTHORIZATION);
+				LOGGER.debug("authorization-header=" + authorizationHeader);
 				if (authorizationHeader == null) {
 					throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 				}
@@ -67,6 +69,10 @@ public class HeaderUtils {
 			}
 		}
 		return token;
+	}
+	
+	public static String getLocalAuthToken(Series<Header> headers) {
+		return headers.getValues(OCCIHeaders.X_LOCAL_AUTH_TOKEN);
 	}
 
 	public static String getLink(Series<Header> headers) {

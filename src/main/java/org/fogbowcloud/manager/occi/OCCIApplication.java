@@ -5,10 +5,12 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.apache.http.HttpStatus;
+import org.apache.http.message.BasicHeader;
 import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.HeaderUtils;
+import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.Resource;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.instance.ComputeServerResource;
@@ -19,6 +21,8 @@ import org.fogbowcloud.manager.occi.request.RequestServerResource;
 import org.restlet.Application;
 import org.restlet.Response;
 import org.restlet.Restlet;
+import org.restlet.engine.adapter.HttpRequest;
+import org.restlet.engine.header.Header;
 import org.restlet.engine.header.HeaderConstants;
 import org.restlet.routing.Router;
 import org.restlet.util.Series;
@@ -70,7 +74,9 @@ public class OCCIApplication extends Application {
 
 	@SuppressWarnings("unchecked")
 	private void normalizeBypass(org.restlet.Request request, Response response) {
-		Response newResponse = new Response(request);
+		Response newResponse = new Response(request);		
+		normalizeHeadersForBypass(request);	
+		
 		bypass(request, newResponse);
 
 		Series<org.restlet.engine.header.Header> responseHeaders = (Series<org.restlet.engine.header.Header>) newResponse
@@ -95,6 +101,17 @@ public class OCCIApplication extends Application {
 		return managerFacade.getToken(attributesToken);
 	}
 	
+	private static void normalizeHeadersForBypass(org.restlet.Request request) {
+		Series<Header> requestHeaders = (Series<Header>) request.getAttributes().get("org.restlet.http.headers");
+		String localAuthToken = requestHeaders.getFirstValue(HeaderUtils.normalize(OCCIHeaders.X_LOCAL_AUTH_TOKEN));
+		if (localAuthToken == null) {
+			return;
+		}
+		requestHeaders.removeFirst(HeaderUtils.normalize(OCCIHeaders.X_FEDERATION_AUTH_TOKEN));
+		requestHeaders.removeFirst(HeaderUtils.normalize(OCCIHeaders.X_LOCAL_AUTH_TOKEN));
+		requestHeaders.add(new Header(OCCIHeaders.X_AUTH_TOKEN, localAuthToken));
+	}
+	
 	public List<FederationMember> getFederationMembers() {		
 		return managerFacade.getMembers();
 	}
@@ -103,9 +120,9 @@ public class OCCIApplication extends Application {
 		return managerFacade.getRequest(authToken, requestId);
 	}
 
-	public List<Request> createRequests(String authToken, List<Category> categories,
+	public List<Request> createRequests(String federationAuthToken, String localAuthToken, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
-		return managerFacade.createRequests(authToken, categories, xOCCIAtt);
+		return managerFacade.createRequests(federationAuthToken, localAuthToken, categories, xOCCIAtt);
 	}
 
 	public List<Request> getRequestsFromUser(String authToken) {

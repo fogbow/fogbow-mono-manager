@@ -65,7 +65,7 @@ public class TestOCCIApplication {
 
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		HashMap<String, String> tokenAttr = new HashMap<String, String>();
-		Token userToken = new Token(OCCITestHelper.ACCESS_TOKEN, OCCITestHelper.USER_MOCK,
+		Token userToken = new Token(OCCITestHelper.FED_ACCESS_TOKEN, OCCITestHelper.USER_MOCK,
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, tokenAttr);
 
 		Mockito.when(identityPlugin.getToken(Mockito.anyString())).thenReturn(userToken);
@@ -81,12 +81,12 @@ public class TestOCCIApplication {
 
 	@Test
 	public void testGetRequestDetails() throws InterruptedException {
-		occiApplication.createRequests(OCCITestHelper.ACCESS_TOKEN, new ArrayList<Category>(),
+		occiApplication.createRequests(OCCITestHelper.FED_ACCESS_TOKEN, OCCITestHelper.LOCAL_ACCESS_TOKEN, new ArrayList<Category>(),
 				xOCCIAtt);
-		List<Request> requests = occiApplication.getRequestsFromUser(OCCITestHelper.ACCESS_TOKEN);
+		List<Request> requests = occiApplication.getRequestsFromUser(OCCITestHelper.FED_ACCESS_TOKEN);
 		Assert.assertEquals(1, requests.size());
 		String requestId = requests.get(0).getId();
-		Request requestDetails = occiApplication.getRequest(OCCITestHelper.ACCESS_TOKEN, requestId);
+		Request requestDetails = occiApplication.getRequest(OCCITestHelper.FED_ACCESS_TOKEN, requestId);
 
 		Thread.sleep(100);
 		Assert.assertEquals(requestId, requestDetails.getId());
@@ -103,12 +103,13 @@ public class TestOCCIApplication {
 						Mockito.any(Map.class), Mockito.anyString())).thenReturn(INSTANCE_ID);
 
 		managerFacade.setComputePlugin(computePlugin);
-		occiApplication.createRequests(OCCITestHelper.ACCESS_TOKEN, new ArrayList<Category>(),
+		occiApplication.createRequests(OCCITestHelper.FED_ACCESS_TOKEN,
+				OCCITestHelper.LOCAL_ACCESS_TOKEN, new ArrayList<Category>(),
 				xOCCIAtt);
-		List<Request> requests = occiApplication.getRequestsFromUser(OCCITestHelper.ACCESS_TOKEN);
+		List<Request> requests = occiApplication.getRequestsFromUser(OCCITestHelper.FED_ACCESS_TOKEN);
 		Assert.assertEquals(1, requests.size());
 		String requestId = requests.get(0).getId();
-		Request requestDetails = occiApplication.getRequest(OCCITestHelper.ACCESS_TOKEN, requestId);
+		Request requestDetails = occiApplication.getRequest(OCCITestHelper.FED_ACCESS_TOKEN, requestId);
 
 		Thread.sleep(SCHEDULER_PERIOD * 2);
 
@@ -119,10 +120,10 @@ public class TestOCCIApplication {
 
 	@Test
 	public void testResquestUser() {
-		this.occiApplication.createRequests(OCCITestHelper.ACCESS_TOKEN, new ArrayList<Category>(),
+		this.occiApplication.createRequests(OCCITestHelper.FED_ACCESS_TOKEN, OCCITestHelper.LOCAL_ACCESS_TOKEN, new ArrayList<Category>(),
 				xOCCIAtt);
 		List<Request> requestsFromUser = occiApplication
-				.getRequestsFromUser(OCCITestHelper.ACCESS_TOKEN);
+				.getRequestsFromUser(OCCITestHelper.FED_ACCESS_TOKEN);
 
 		Assert.assertEquals(1, requestsFromUser.size());
 	}
@@ -131,10 +132,10 @@ public class TestOCCIApplication {
 	public void testManyResquestUser() {
 		int numberOfInstances = 10;
 		xOCCIAtt.put(RequestAttribute.INSTANCE_COUNT.getValue(), String.valueOf(numberOfInstances));
-		this.occiApplication.createRequests(OCCITestHelper.ACCESS_TOKEN, new ArrayList<Category>(),
+		this.occiApplication.createRequests(OCCITestHelper.FED_ACCESS_TOKEN, OCCITestHelper.LOCAL_ACCESS_TOKEN, new ArrayList<Category>(),
 				xOCCIAtt);
 		List<Request> requestsFromUser = occiApplication
-				.getRequestsFromUser(OCCITestHelper.ACCESS_TOKEN);
+				.getRequestsFromUser(OCCITestHelper.FED_ACCESS_TOKEN);
 
 		Assert.assertEquals(numberOfInstances, requestsFromUser.size());
 	}
@@ -143,16 +144,16 @@ public class TestOCCIApplication {
 	public void testRemoveAllRequest() {
 		int numberOfInstances = 10;
 		xOCCIAtt.put(RequestAttribute.INSTANCE_COUNT.getValue(), String.valueOf(numberOfInstances));
-		occiApplication.createRequests(OCCITestHelper.ACCESS_TOKEN, new ArrayList<Category>(),
+		occiApplication.createRequests(OCCITestHelper.FED_ACCESS_TOKEN, OCCITestHelper.LOCAL_ACCESS_TOKEN, new ArrayList<Category>(),
 				xOCCIAtt);
 
 		List<Request> requestsFromUser = occiApplication
-				.getRequestsFromUser(OCCITestHelper.ACCESS_TOKEN);
+				.getRequestsFromUser(OCCITestHelper.FED_ACCESS_TOKEN);
 
 		Assert.assertEquals(numberOfInstances, requestsFromUser.size());
 
-		occiApplication.removeAllRequests(OCCITestHelper.ACCESS_TOKEN);
-		requestsFromUser = occiApplication.getRequestsFromUser(OCCITestHelper.ACCESS_TOKEN);
+		occiApplication.removeAllRequests(OCCITestHelper.FED_ACCESS_TOKEN);
+		requestsFromUser = occiApplication.getRequestsFromUser(OCCITestHelper.FED_ACCESS_TOKEN);
 
 		Assert.assertEquals(numberOfInstances, counterDeletedRequests(requestsFromUser));
 	}
@@ -161,16 +162,16 @@ public class TestOCCIApplication {
 	public void testRemoveSpecificRequest() {
 		int numberOfInstances = 10;
 		xOCCIAtt.put(RequestAttribute.INSTANCE_COUNT.getValue(), String.valueOf(numberOfInstances));
-		occiApplication.createRequests(OCCITestHelper.ACCESS_TOKEN, new ArrayList<Category>(),
+		occiApplication.createRequests(OCCITestHelper.FED_ACCESS_TOKEN, OCCITestHelper.LOCAL_ACCESS_TOKEN, new ArrayList<Category>(),
 				xOCCIAtt);
 
 		List<Request> requestsFromUser = occiApplication
-				.getRequestsFromUser(OCCITestHelper.ACCESS_TOKEN);
+				.getRequestsFromUser(OCCITestHelper.FED_ACCESS_TOKEN);
 
 		Assert.assertEquals(numberOfInstances, requestsFromUser.size());
 
-		occiApplication.removeRequest(OCCITestHelper.ACCESS_TOKEN, requestsFromUser.get(1).getId());
-		requestsFromUser = occiApplication.getRequestsFromUser(OCCITestHelper.ACCESS_TOKEN);
+		occiApplication.removeRequest(OCCITestHelper.FED_ACCESS_TOKEN, requestsFromUser.get(1).getId());
+		requestsFromUser = occiApplication.getRequestsFromUser(OCCITestHelper.FED_ACCESS_TOKEN);
 
 		Assert.assertEquals(1, counterDeletedRequests(requestsFromUser));
 	}

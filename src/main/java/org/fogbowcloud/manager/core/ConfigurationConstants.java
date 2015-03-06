@@ -33,6 +33,8 @@ public class ConfigurationConstants {
 	public static final String SCHEDULER_PERIOD_KEY = "scheduler_period";
 	public static final String INSTANCE_MONITORING_PERIOD_KEY = "instance_monitoring_period";
 	public static final String TOKEN_UPDATE_PERIOD_KEY = "token_update_period";
+	public static final String SERVED_REQUEST_MONITORING_PERIOD_KEY = "served_request_monitoring_period";
+	public static final String GARBAGE_COLLECTOR_PERIOD_KEY = "garbage_collector_period";
 	
 	//ssh properties TODO change these properties names to TOKEN_HOST_...
 	public static final String SSH_PRIVATE_HOST_KEY = "ssh_tunnel_private_host";

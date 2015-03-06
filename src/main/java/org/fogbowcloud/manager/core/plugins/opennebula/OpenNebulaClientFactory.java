@@ -52,6 +52,9 @@ public class OpenNebulaClientFactory {
 			}
 			//Error getting virtual machine
 			throw new OCCIException(ErrorType.NOT_FOUND, errorMessage);
+		} else if ("DONE".equals(vm.stateStr())){
+			//The instance is not active anymore
+			throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
 		}
 		return vm;
 	}

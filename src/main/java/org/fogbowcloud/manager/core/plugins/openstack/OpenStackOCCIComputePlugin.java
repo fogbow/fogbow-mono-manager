@@ -11,19 +11,17 @@ import java.util.Set;
 
 import org.apache.http.Header;
 import org.apache.http.message.BasicHeader;
-import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.occi.OCCIComputePlugin;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
+import org.fogbowcloud.manager.occi.core.HeaderUtils;
 import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.restlet.Client;
 import org.restlet.Request;
 import org.restlet.data.ClientInfo;
@@ -39,24 +37,18 @@ public class OpenStackOCCIComputePlugin extends OCCIComputePlugin{
 	private static final String DATA_PUBLIC_KEY_ATTRIBUTE = "org.openstack.credentials.publickey.data";
 	private static final String NAME_PUBLIC_KEY_DEFAULT = "fogbow_keypair";
 	
-	private static final String ABSOLUTE = "absolute";
-	private static final String LIMITS = "limits";
-	private String computeV2APIEndpoint;
-	private static final String TENANT_ID = "tenantId";
-	private final String COMPUTE_V2_API_ENDPOINT = "/v2/";
 	private OpenStackNovaV2ComputePlugin openStackNovaV2ComputePlugin;
 	
 	public OpenStackOCCIComputePlugin(Properties properties) {
 		super(properties);
 		openStackNovaV2ComputePlugin = new OpenStackNovaV2ComputePlugin(properties);
-		this.computeV2APIEndpoint = properties.getProperty("compute_openstack_v2api_url")
-				+ COMPUTE_V2_API_ENDPOINT;
 		super.fogTermToCategory.put(RequestConstants.PUBLIC_KEY_TERM, new Category(
 				PUBLIC_KEY_TERM, PUBLIC_KEY_SCHEME, RequestConstants.MIXIN_CLASS));
 	}
 	
 	@Override
-	public Set<Header> getExtraHeaders(List<Category> requestCategories, Map<String, String> xOCCIAtt) {
+	public Set<Header> getExtraHeaders(List<Category> requestCategories,
+			Map<String, String> xOCCIAtt, Token token) {
 		List<Category> openStackCategories = new ArrayList<Category>();
 		
 		for (Category category : requestCategories) {
@@ -77,8 +69,7 @@ public class OpenStackOCCIComputePlugin extends OCCIComputePlugin{
 		String userdataBase64 = xOCCIAtt.remove(RequestAttribute.USER_DATA_ATT.getValue());
 		
 		if (userdataBase64 != null) {
-			xOCCIAtt.put("org.openstack.compute.user_data", userdataBase64);
-					
+			xOCCIAtt.put("org.openstack.compute.user_data", userdataBase64);				
 		}
 		
 		Set<Header> headers = new HashSet<Header>();
@@ -87,9 +78,8 @@ public class OpenStackOCCIComputePlugin extends OCCIComputePlugin{
 		}
 		for (String attName : xOCCIAtt.keySet()) {
 			headers.add(new BasicHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, attName + "=" + "\""
-					+ xOCCIAtt.get(attName) + "\""));
-			
-		}		
+					+ xOCCIAtt.get(attName) + "\""));			
+		}
 		return headers;
 	}
 	
@@ -140,7 +130,8 @@ public class OpenStackOCCIComputePlugin extends OCCIComputePlugin{
 				convertRequestToOcci(request, requestHeaders);				
 			}
 			
-			if (requestHeaders.getValuesArray(normalizeInstanceId(OCCIHeaders.X_AUTH_TOKEN)).length == 1
+			// Removing one header if request has more than one (one normalized and other not normalized)
+			if (requestHeaders.getValuesArray(HeaderUtils.normalize(OCCIHeaders.X_AUTH_TOKEN)).length == 1
 					&& requestHeaders.getValuesArray(OCCIHeaders.X_AUTH_TOKEN).length == 1) {
 				requestHeaders.removeFirst(OCCIHeaders.X_AUTH_TOKEN);
 			}
@@ -162,26 +153,7 @@ public class OpenStackOCCIComputePlugin extends OCCIComputePlugin{
 	
 	@Override
 	public ResourcesInfo getResourcesInfo(Token token) {
-		String responseStr = doRequest(
-				"get",
-				computeV2APIEndpoint
-						+ token.getAttributes().get(TENANT_ID)
-		+ "/limits", token.getAccessId()).getResponseString();
-
-		String maxCpu = getAttFromJson(OpenStackConfigurationConstants.MAX_TOTAL_CORES_ATT,
-				responseStr);
-		String cpuInUse = getAttFromJson(OpenStackConfigurationConstants.TOTAL_CORES_USED_ATT,
-				responseStr);
-		String maxMem = getAttFromJson(OpenStackConfigurationConstants.MAX_TOTAL_RAM_SIZE_ATT,
-				responseStr);
-		String memInUse = getAttFromJson(OpenStackConfigurationConstants.TOTAL_RAM_USED_ATT,
-				responseStr);
-
-		int cpuIdle = Integer.parseInt(maxCpu) - Integer.parseInt(cpuInUse);
-		int memIdle = Integer.parseInt(maxMem) - Integer.parseInt(memInUse);
-
-		return new ResourcesInfo(String.valueOf(cpuIdle), cpuInUse, String.valueOf(memIdle),
-				memInUse, getFlavors(cpuIdle, memIdle), null);
+		return openStackNovaV2ComputePlugin.getResourcesInfo(token);
 	}	
 
 	private void convertRequestToOcci(Request request, Series<org.restlet.engine.header.Header> requestHeaders) {
@@ -215,32 +187,8 @@ public class OpenStackOCCIComputePlugin extends OCCIComputePlugin{
 		} catch (Exception e) {}
 	}
 	
-	private String getAttFromJson(String attName, String responseStr) {
-		try {
-			JSONObject root = new JSONObject(responseStr);
-			return root.getJSONObject(LIMITS).getJSONObject(ABSOLUTE).getString(attName).toString();
-		} catch (JSONException e) {
-			return null;
-		}
-	}
-	
-	private List<Flavor> getFlavors(int cpuIdle, int memIdle) {
-		List<Flavor> flavors = new ArrayList<Flavor>();
-		// flavors
-		int capacity = Math.min(cpuIdle / 1, memIdle / 2048);
-		Flavor smallFlavor = new Flavor(RequestConstants.SMALL_TERM, "1", "2048", capacity);
-		capacity = Math.min(cpuIdle / 2, memIdle / 4096);
-		Flavor mediumFlavor = new Flavor(RequestConstants.MEDIUM_TERM, "2", "4096", capacity);
-		capacity = Math.min(cpuIdle / 4, memIdle / 8192);
-		Flavor largeFlavor = new Flavor(RequestConstants.LARGE_TERM, "4", "8192", capacity);
-		flavors.add(smallFlavor);
-		flavors.add(mediumFlavor);
-		flavors.add(largeFlavor);
-		return flavors;
-	}
-	
-	public void uploadImage(Token token, String imagePath, String imageName) {
-		openStackNovaV2ComputePlugin.uploadImage(token, imagePath, imageName);		
+	public void uploadImage(Token token, String imagePath, String imageName, String diskFormat) {
+		openStackNovaV2ComputePlugin.uploadImage(token, imagePath, imageName, null);		
 	}
 	
 	public String getImageId(Token token, String imageName) {

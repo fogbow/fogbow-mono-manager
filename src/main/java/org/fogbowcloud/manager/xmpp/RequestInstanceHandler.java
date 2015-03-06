@@ -43,8 +43,8 @@ public class RequestInstanceHandler extends AbstractQueryHandler {
 
 		IQ response = IQ.createResultIQ(query);
 		try {
-			String instanceId = facade.createInstanceForRemoteMember(query
-					.getFrom().toBareJID(), categories, xOCCIAtt);
+			String instanceId = facade.createInstanceWithFederationUser(query
+					.getFrom().toBareJID(), categories, xOCCIAtt, null);
 			if (instanceId == null) {
 				response.setError(Condition.item_not_found);
 			} else {

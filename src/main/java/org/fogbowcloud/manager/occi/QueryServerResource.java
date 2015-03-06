@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.http.HttpStatus;
-import org.apache.http.message.BasicHeader;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.HeaderUtils;
@@ -35,7 +34,7 @@ public class QueryServerResource extends ServerResource {
 		Series<Header> headers = req.getHeaders();
 		
 		if (req.getMethod().equals(Method.HEAD)){
-			String token = headers.getValues(OCCIHeaders.X_AUTH_TOKEN);
+			String token = headers.getValues(OCCIHeaders.X_FEDERATION_AUTH_TOKEN);
 			if (token == null || token.equals("")) {
 				HeaderUtils.setResponseHeader(getResponse(), HeaderUtils.WWW_AUTHENTICATE,
 						application.getAuthenticationURI());
@@ -51,7 +50,7 @@ public class QueryServerResource extends ServerResource {
 		List<String> listAccept = HeaderUtils.getAccept(headers);
 		String acceptType = getAccept(listAccept);
 		
-		String authToken = HeaderUtils.getAuthToken(headers, getResponse(),
+		String authToken = HeaderUtils.getFederationAuthToken(headers, getResponse(),
 				application.getAuthenticationURI());
 		List<Resource> allResources = application.getAllResources(authToken);
 		LOGGER.debug("Fogbow resources = " + allResources);
@@ -65,7 +64,8 @@ public class QueryServerResource extends ServerResource {
 		normalizeRequest();
 		if (req.getHeaders().getFirst(OCCIHeaders.X_AUTH_TOKEN) == null
 				|| req.getHeaders().getFirst(HeaderUtils.normalize(OCCIHeaders.X_AUTH_TOKEN)) == null) {
-			req.getHeaders().add(new Header(OCCIHeaders.X_AUTH_TOKEN, authToken));
+			req.getHeaders().add(new Header(OCCIHeaders.X_AUTH_TOKEN, 
+					req.getHeaders().getFirstValue(HeaderUtils.normalize(OCCIHeaders.X_LOCAL_AUTH_TOKEN))));
 		}
 
 		application.bypass(req, response);			

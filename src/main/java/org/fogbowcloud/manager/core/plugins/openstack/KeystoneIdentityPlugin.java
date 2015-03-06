@@ -103,14 +103,15 @@ public class KeystoneIdentityPlugin implements IdentityPlugin {
 		}
 		
 		String responseStr = doPostRequest(currentTokenEndpoint, json);
-		return getTokenFromJson(responseStr);
+		Token token = getTokenFromJson(responseStr);
+			
+		return token;
 	}
 	
 	private JSONObject mountJson(Map<String, String> credentials) throws JSONException {
 		JSONObject passwordCredentials = new JSONObject();
 		passwordCredentials.put(USERNAME_PROP, credentials.get(USERNAME));
-		passwordCredentials.put(PASSWORD_PROP,
-				credentials.get(PASSWORD));
+		passwordCredentials.put(PASSWORD_PROP, credentials.get(PASSWORD));
 		JSONObject auth = new JSONObject();
 		auth.put(TENANT_NAME_PROP, credentials.get(TENANT_NAME));
 		auth.put(PASSWORD_CREDENTIALS_PROP, passwordCredentials);
@@ -274,8 +275,16 @@ public class KeystoneIdentityPlugin implements IdentityPlugin {
 		try {
 			JSONObject root = new JSONObject(responseStr);
 			JSONArray tenantsStone = root.getJSONArray(TENANTS_PROP);
-			JSONObject tenantStone = tenantsStone.getJSONObject(0); // getting first tenant
-			return tenantStone.getString(NAME_PROP);
+			for (int i = 0; i < tenantsStone.length(); i++) {
+				String currentTenantName = tenantsStone.getJSONObject(i).getString(NAME_PROP);
+				// if tenantName is not the same of fogbow tenant
+				if (currentTenantName != null && !currentTenantName.equals(properties
+						.getProperty(ConfigurationConstants.FEDERATION_USER_TENANT_NAME_KEY))){
+					return currentTenantName;
+				}
+				
+			}
+			return tenantsStone.getJSONObject(0).getString(NAME_PROP); // getting first tenant
 		} catch (JSONException e) {
 			LOGGER.error(e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);

@@ -11,7 +11,20 @@ compute_one_flavor_small={mem=128, cpu=1}
 compute_one_flavor_medium={mem=256, cpu=2}
 compute_one_flavor_large={mem=512, cpu=4}
 compute_one_network_id=1
-compute_one_image_fogbow-linux-x86=0
+
+# Settings used by ONE compute plugin to register new images in the cloud
+# ID of datastore to register the image
+compute_one_datastore_id=1
+# To register a new image, the image file needs to be in the some machine where ONE is running
+# If the fogbow manager is running in a different machine, set the SSH properties to transfer the image
+# Or if the fogbow manager is in the same machine, leave it blank
+compute_one_ssh_host=127.0.0.1
+compute_one_ssh_port=22
+compute_one_ssh_username=fogbow
+# The SSH try to access using private key, set the path to ssh id_rsa file
+compute_one_ssh_key_file=/home/fogbow/.ssh/id_rsa
+# Set the directory to copy images in remote host
+compute_one_ssh_target_temp_folder=/tmp/images
 
 compute_class=org.fogbowcloud.manager.core.plugins.openstack.OpenStackOCCIComputePlugin
 compute_openstack_v2api_url=http://localhost:8182
@@ -36,7 +49,6 @@ compute_glancev2_url=http://localhost:9292
 compute_novav2_flavor_small=1
 compute_novav2_flavor_medium=2
 compute_novav2_flavor_large=3
-compute_novav2_image_fogbow-linux-x86=cadf2e29-7216-4a5e-9364-cf6513d5f1fd
 compute_novav2_network_id=ea51ed0c-0e8a-448d-8202-c79777109ffe
 
 local_identity_class=org.fogbowcloud.manager.core.plugins.openstack.KeystoneIdentityPlugin
@@ -58,6 +70,8 @@ cert_path=
 scheduler_period=30000
 token_update_period=300000
 instance_monitoring_period=120000
+served_request_monitoring_period=120000
+garbage_collector_period=240000
 
 ssh_tunnel_public_host=150.165.80.1
 ssh_tunnel_private_host=10.0.0.1

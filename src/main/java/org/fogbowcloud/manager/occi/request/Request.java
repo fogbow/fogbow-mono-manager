@@ -16,18 +16,23 @@ public class Request {
 	public static String SEPARATOR_GLOBAL_ID = "@";
 	
 	private String id;
-	private Token token;
+	private Token federationToken;
+	private Token localToken;
 	private String instanceId;
 	private String memberId;
+	private boolean fulfilledByFederationUser;
 	private RequestState state;
 	private List<Category> categories;
 	private Map<String, String> xOCCIAtt;
 	
-	public Request(String id, Token token, List<Category> categories, Map<String, String> xOCCIAtt) {
+	public Request(String id, Token federationToken, Token localToken, 
+			List<Category> categories, Map<String, String> xOCCIAtt) {
 		this.id = id;
-		this.token = token;
+		this.federationToken = federationToken;
+		this.localToken = localToken;
 		this.categories = categories;
 		this.xOCCIAtt = xOCCIAtt;
+		this.fulfilledByFederationUser = false;
 		setState(RequestState.OPEN);
 	}
 
@@ -51,6 +56,14 @@ public class Request {
 		return instanceId;
 	}
 	
+	public boolean isFulfilledByFederationUser() {
+		return fulfilledByFederationUser;
+	}
+
+	public void setFulfilledByFederationUser(boolean fulfilledByFederationUser) {
+		this.fulfilledByFederationUser = fulfilledByFederationUser;
+	}
+
 	public String getInstanceGlobalId() {
 		if (instanceId != null) {
 			return instanceId + SEPARATOR_GLOBAL_ID + memberId;
@@ -88,12 +101,20 @@ public class Request {
 		xOCCIAtt.put(attributeName, attributeValue);
 	}
 
-	public Token getToken() {
-		return this.token;
+	public Token getFederationToken() {
+		return this.federationToken;
 	}
 
-	public void setToken(Token token) {
-		this.token = token;
+	public void setFederationToken(Token token) {
+		this.federationToken = token;
+	}
+	
+	public Token getLocalToken() {
+		return localToken;
+	}
+
+	public void setLocalToken(Token localToken) {
+		this.localToken = localToken;
 	}
 
 	public Map<String, String> getxOCCIAtt() {
@@ -109,7 +130,7 @@ public class Request {
 	}
 
 	public String toString() {
-		return "id: " + id + ", token: " + token + ", instanceId: " + instanceId + ", memberId: "
+		return "id: " + id + ", token: " + federationToken + ", instanceId: " + instanceId + ", memberId: "
 				+ memberId + ", state: " + state + ", categories: " + categories + ", xOCCIAtt: "
 				+ xOCCIAtt;
 	}

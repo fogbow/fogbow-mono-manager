@@ -5,9 +5,13 @@ public class OCCIHeaders {
 
 	// header constants
 	public static final String CONTENT_TYPE = "Content-Type";
+	public static final String X_FEDERATION_AUTH_TOKEN = "X-Federation-Auth-Token";
+	public static final String X_LOCAL_AUTH_TOKEN = "X-Local-Auth-Token";
 	public static final String X_AUTH_TOKEN = "X-Auth-Token";
+	
 	public static final String X_SUBJECT_TOKEN = "X-Subject-Token";
 	public static final String X_OCCI_ATTRIBUTE = "X-OCCI-Attribute";
+	
 	public static final String ACCEPT = "Accept";
 	public static final String CATEGORY = "Category";
 	public static final String AUTHORIZATION = "Authorization";
