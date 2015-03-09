@@ -27,6 +27,7 @@ import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
+import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.openstack.KeystoneIdentityPlugin;
@@ -59,6 +60,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 	private IdentityPlugin identityPlugin;
 	private IdentityPlugin federationIdentityPlugin;
 	private AuthorizationPlugin authorizationPlugin;
+	private BenchmarkingPlugin benchmarkingPlugin;
 	private Token defaultUserToken;
 	private Token defaultFederationToken;
 	private FakeXMPPServer fakeServer = new FakeXMPPServer();
@@ -203,6 +205,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 				
 		this.computePlugin = Mockito.mock(ComputePlugin.class);
 		this.identityPlugin = Mockito.mock(IdentityPlugin.class);
+		this.benchmarkingPlugin = Mockito.mock(BenchmarkingPlugin.class);
 		Mockito.when(computePlugin.getInstances(Mockito.any(Token.class))).thenReturn(
 				new ArrayList<Instance>());
 		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class))).thenReturn(
@@ -212,6 +215,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		managerFacade.setComputePlugin(computePlugin);
 		managerFacade.setLocalIdentityPlugin(identityPlugin);
 		managerFacade.setFederationIdentityPlugin(identityPlugin);
+		managerFacade.setBenchmarkingPlugin(benchmarkingPlugin);
 		FederationMemberValidator validator = new DefaultMemberValidator();
 		managerFacade.setValidator(validator);
 		
@@ -379,11 +383,14 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
 		Mockito.when(authorizationPlugin.isAuthorized(Mockito.any(Token.class))).thenReturn(true);
 		
+		benchmarkingPlugin = Mockito.mock(BenchmarkingPlugin.class);
+		
 		managerController.setAuthorizationPlugin(authorizationPlugin);
 		managerController.setLocalIdentityPlugin(identityPlugin);
 		managerController.setFederationIdentityPlugin(federationIdentityPlugin);
 		managerController.setComputePlugin(computePlugin);
-
+		managerController.setBenchmarkingPlugin(benchmarkingPlugin);
+		
 		return managerController;
 	}
 

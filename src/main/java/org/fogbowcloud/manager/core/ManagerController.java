@@ -28,6 +28,7 @@ import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.model.ServedRequest;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
+import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
@@ -70,6 +71,7 @@ public class ManagerController {
 	private RequestRepository requests = new RequestRepository();
 	private FederationMemberPicker memberPicker = new RoundRobinMemberPicker();
 
+	private BenchmarkingPlugin benchmarkingPlugin;
 	private ImageStoragePlugin imageStoragePlugin;
 	private AuthorizationPlugin authorizationPlugin;
 	private ComputePlugin computePlugin;
@@ -106,6 +108,10 @@ public class ManagerController {
 		}
 	}
 
+	public void setBenchmarkingPlugin(BenchmarkingPlugin benchmarkingPlugin) {
+		this.benchmarkingPlugin = benchmarkingPlugin;
+	}
+	
 	public void setAuthorizationPlugin(AuthorizationPlugin authorizationPlugin) {
 		this.authorizationPlugin = authorizationPlugin;
 	}
@@ -513,14 +519,17 @@ public class ManagerController {
 		try {
 			String instanceId = computePlugin.requestInstance(federationUserToken, categoriesWithoutImage,
 					xOCCIAtt, localImageId);
-			
-			if (!properties.getProperty("xmpp_jid").equals(memberId)) {
+		
+			if (!properties.getProperty("xmpp_jid").equals(memberId)) {				
+				Instance instance = computePlugin.getInstance(federationUserToken, instanceId);
+				benchmarkingPlugin.run(instance);
+				
 				instancesForRemoteMembers.put(instanceId, new ServedRequest(instanceToken,
 						memberId, categories, xOCCIAtt));
 				if (!servedRequestMonitoringTimer.isScheduled()) {
 					triggerServedRequestMonitoring();
 				}
-			}						
+			}
 			return instanceId;
 		} catch (OCCIException e) {
 			if (e.getStatus().getCode() == HttpStatus.SC_BAD_REQUEST) {
@@ -819,7 +828,7 @@ public class ManagerController {
 			}
 			
 			instanceId = computePlugin.requestInstance(request.getLocalToken(),
-					categories, request.getxOCCIAtt(), localImageId);
+					categories, request.getxOCCIAtt(), localImageId);						
 		} catch (OCCIException e) {
 			int statusCode = e.getStatus().getCode();
 			if (statusCode == HttpStatus.SC_INSUFFICIENT_SPACE_ON_RESOURCE) {
