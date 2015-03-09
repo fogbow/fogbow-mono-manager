@@ -20,6 +20,7 @@ public class Request {
 	private Token localToken;
 	private String instanceId;
 	private String memberId;
+	private long fulfilledTime = 0;
 	private boolean fulfilledByFederationUser;
 	private RequestState state;
 	private List<Category> categories;
@@ -80,6 +81,11 @@ public class Request {
 	}
 
 	public void setState(RequestState state) {
+		if (state.in(RequestState.FULFILLED)) {
+			fulfilledTime = System.currentTimeMillis();
+		} else if (state.in(RequestState.OPEN)) {
+			fulfilledTime = 0;
+		}
 		this.state = state;
 	}
 
@@ -109,6 +115,10 @@ public class Request {
 		this.federationToken = token;
 	}
 	
+	public long getFulfilledTime() {
+		return fulfilledTime;
+	}
+
 	public Token getLocalToken() {
 		return localToken;
 	}

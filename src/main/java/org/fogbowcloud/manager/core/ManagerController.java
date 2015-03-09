@@ -524,7 +524,7 @@ public class ManagerController {
 				Instance instance = computePlugin.getInstance(federationUserToken, instanceId);
 				benchmarkingPlugin.run(instance);
 				
-				instancesForRemoteMembers.put(instanceId, new ServedRequest(instanceToken,
+				instancesForRemoteMembers.put(instanceId, new ServedRequest(instanceToken, instanceId, 
 						memberId, categories, xOCCIAtt));
 				if (!servedRequestMonitoringTimer.isScheduled()) {
 					triggerServedRequestMonitoring();
