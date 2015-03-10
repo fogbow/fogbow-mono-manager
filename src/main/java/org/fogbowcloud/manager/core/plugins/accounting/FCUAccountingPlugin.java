@@ -24,7 +24,7 @@ public class FCUAccountingPlugin implements AccountingPlugin {
 	private DateUtils dateUtils;
 	private static final Logger LOGGER = Logger.getLogger(FCUAccountingPlugin.class);
 	
-	private Database database;
+	private DataStorage database;
 
 	public FCUAccountingPlugin(Properties properties, BenchmarkingPlugin benchmarkingPlugin){		
 		this(properties, benchmarkingPlugin, new DateUtils());

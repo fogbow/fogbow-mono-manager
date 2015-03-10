@@ -12,34 +12,37 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 
-public class Database {
+import org.h2.jdbcx.JdbcConnectionPool;
 
-	private static final String DATABASE_TABLE_NAME = "reputationTable";
+public class DataStorage {
+
+	private static final String DATA_STORAGE_TABLE_NAME = "reputationTable";
 	
-	private static final String DATABASE_PATH = "database_path";	
-	private static final String DATABASE_FIELD_MEMBER_ID = "member_id";
-	private static final String DATABASE_FIELD_CONSUMED = "consumed";
-	private static final String DATABASE_FIELD_DONATED = "donated";
+	private static final String DATA_STORAGE_PATH = "data_storage_path";	
+	private static final String DATA_STORAGE_FIELD_MEMBER_ID = "member_id";
+	private static final String DATA_STORAGE_FIELD_CONSUMED = "consumed";
+	private static final String DATA_STORAGE_FIELD_DONATED = "donated";
 
-	private String databasePath;
-	private String databaseTableName;
+	private String dataStoragePath;
+	private String dataStorageTableName;
 	private Connection connection;
 
-	public Database(Properties properties) {
-		this.databasePath = properties.getProperty(DATABASE_PATH);
-		this.databaseTableName = Database.DATABASE_TABLE_NAME;
+	public DataStorage(Properties properties) {
+		this.dataStoragePath = properties.getProperty(DATA_STORAGE_PATH);
+		this.dataStorageTableName = DataStorage.DATA_STORAGE_TABLE_NAME;
 
 		try {
+			
 			Class.forName("org.h2.Driver");
-			this.connection = DriverManager.getConnection("jdbc:h2:"
-					+ this.databasePath, "sa", "");
+			JdbcConnectionPool cp = JdbcConnectionPool.create("jdbc:h2:"+ this.dataStoragePath, "sa", "");
+			this.connection = cp.getConnection();
 
 			Statement stat = this.connection.createStatement();
-			stat.execute("create table if not exists " + this.databaseTableName
-					+ "(" + Database.DATABASE_FIELD_MEMBER_ID
+			stat.execute("create table if not exists " + this.dataStorageTableName
+					+ "(" + DataStorage.DATA_STORAGE_FIELD_MEMBER_ID
 					+ " varchar(255) primary key, "
-					+ Database.DATABASE_FIELD_CONSUMED + " double, "
-					+ Database.DATABASE_FIELD_DONATED + " double)");
+					+ DataStorage.DATA_STORAGE_FIELD_CONSUMED + " double, "
+					+ DataStorage.DATA_STORAGE_FIELD_DONATED + " double)");
 			stat.close();
 
 		} catch (ClassNotFoundException e) {
@@ -51,29 +54,10 @@ public class Database {
 		}
 	}
 
-	public void open() {
-		try {
-			this.connection = DriverManager.getConnection("jdbc:h2:"
-					+ this.databasePath, "sa", "");
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-
-	public void close() {
-		try {
-			this.connection.close();
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-
 	public void insertNewMember(String memberId, double consumed, double donated) throws SQLException{
 		
 		Statement stat = this.connection.createStatement();
-		stat.execute("insert into " + this.databaseTableName + " values('"
+		stat.execute("insert into " + this.dataStorageTableName + " values('"
 				+ memberId + "', " + consumed + ", " + donated + ")");
 		stat.close();
 		
@@ -90,12 +74,12 @@ public class Database {
 	        String memberId = (String) pair.getKey();
 	        ResourceUsage resourceUsage = (ResourceUsage) pair.getValue();
 	        
-	        String sql = "update " + this.databaseTableName + " set "
-					+ Database.DATABASE_FIELD_CONSUMED + "="
-					+ Database.DATABASE_FIELD_CONSUMED + "+'" + resourceUsage.getConsumed()
-					+ "', " + Database.DATABASE_FIELD_DONATED + "="
-					+ Database.DATABASE_FIELD_DONATED + "+'" + resourceUsage.getDonated()
-					+ "' where " + Database.DATABASE_FIELD_MEMBER_ID + "='"
+	        String sql = "update " + this.dataStorageTableName + " set "
+					+ DataStorage.DATA_STORAGE_FIELD_CONSUMED + "="
+					+ DataStorage.DATA_STORAGE_FIELD_CONSUMED + "+'" + resourceUsage.getConsumed()
+					+ "', " + DataStorage.DATA_STORAGE_FIELD_DONATED + "="
+					+ DataStorage.DATA_STORAGE_FIELD_DONATED + "+'" + resourceUsage.getDonated()
+					+ "' where " + DataStorage.DATA_STORAGE_FIELD_MEMBER_ID + "='"
 					+ memberId + "'";
 	        statement.addBatch(sql);
 	        
@@ -114,10 +98,10 @@ public class Database {
 		
 		Statement statement = this.connection.createStatement();
 		
-		String sql = "select * from " + this.databaseTableName + " where ";
+		String sql = "select * from " + this.dataStorageTableName + " where ";
 		
 		for(int i = 0; i < memberIds.size(); i++){
-			sql += Database.DATABASE_FIELD_MEMBER_ID
+			sql += DataStorage.DATA_STORAGE_FIELD_MEMBER_ID
 					+ "='" + memberIds.get(i) + "'";
 			if(i < memberIds.size()-1)
 				sql += " or ";
@@ -128,9 +112,9 @@ public class Database {
 		
 		HashMap<String, ResourceUsage> map = new HashMap<String, ResourceUsage>();
 		while(rs.next()){
-			double donated = rs.getDouble(Database.DATABASE_FIELD_DONATED);
-			double consumed = rs.getDouble(Database.DATABASE_FIELD_CONSUMED);
-			String memberId = rs.getString(Database.DATABASE_FIELD_MEMBER_ID);
+			double donated = rs.getDouble(DataStorage.DATA_STORAGE_FIELD_DONATED);
+			double consumed = rs.getDouble(DataStorage.DATA_STORAGE_FIELD_CONSUMED);
+			String memberId = rs.getString(DataStorage.DATA_STORAGE_FIELD_MEMBER_ID);
 			ResourceUsage resourceUsage = new ResourceUsage(memberId);
 			resourceUsage.addConsumption(consumed);
 			resourceUsage.addDonation(donated);
@@ -153,31 +137,31 @@ public class Database {
 	}
 
 	/**
-	 * @return the databaseFieldMemberId
+	 * @return the dataStorageFieldMemberId
 	 */
 	public static String getDatabaseFieldMemberId() {
-		return DATABASE_FIELD_MEMBER_ID;
+		return DATA_STORAGE_FIELD_MEMBER_ID;
 	}
 
 	/**
-	 * @return the databaseFieldConsumed
+	 * @return the dataStorageFieldConsumed
 	 */
 	public static String getDatabaseFieldConsumed() {
-		return DATABASE_FIELD_CONSUMED;
+		return DATA_STORAGE_FIELD_CONSUMED;
 	}
 
 	/**
-	 * @return the databaseFieldDonated
+	 * @return the dataStorageFieldDonated
 	 */
 	public static String getDatabaseFieldDonated() {
-		return DATABASE_FIELD_DONATED;
+		return DATA_STORAGE_FIELD_DONATED;
 	}
 
 	/**
-	 * @return the databaseTableName
+	 * @return the dataStorageTableName
 	 */
 	public String getDatabaseTableName() {
-		return databaseTableName;
+		return dataStorageTableName;
 	}
 
 	/**

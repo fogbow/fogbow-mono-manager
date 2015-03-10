@@ -11,16 +11,16 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.junit.Assert;
-import org.fogbowcloud.manager.core.plugins.accounting.Database;
+import org.fogbowcloud.manager.core.plugins.accounting.DataStorage;
 import org.fogbowcloud.manager.core.plugins.accounting.ResourceUsage;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
 
-public class DatabaseTest {
+public class DataStorageTest {
 	
 	Properties properties = null;
-	Database db = null; 
+	DataStorage db = null; 
 	
 	@Before
 	public void initialize() {
@@ -28,10 +28,9 @@ public class DatabaseTest {
 		System.out.println("creating table");
 		
 		properties = new Properties();
-		properties.put("database_path", System.getProperty("user.dir")+"/reputations");
-		properties.put("database_table_name", "reputationTable");		
+		properties.put("data_storage_path", System.getProperty("user.dir")+"/reputations");	
 		
-		db = new Database(properties);
+		db = new DataStorage(properties);
 	}
 	
 	@AfterClass
@@ -47,40 +46,32 @@ public class DatabaseTest {
 	@Test
 	public void testInsert() throws SQLException {
 		
-		db.open();
-		
 		String memberId = "m1";
 		double consumed = 0, donated = 0;
 		db.insertNewMember(memberId, consumed, donated);
 		
 		
-		String sql = "select * from " + db.getDatabaseTableName()+ " where " + Database.getDatabaseFieldMemberId()+ "='" + memberId + "'";
+		String sql = "select * from " + db.getDatabaseTableName()+ " where " + DataStorage.getDatabaseFieldMemberId()+ "='" + memberId + "'";
 		Statement statement = db.getConnection().createStatement();
 		ResultSet rs = db.query(statement, sql);
 		rs.next();
-		Assert.assertTrue(consumed == rs.getDouble(Database.getDatabaseFieldConsumed()));
+		Assert.assertTrue(consumed == rs.getDouble(DataStorage.getDatabaseFieldConsumed()));
 				
 		statement.close();
-		db.close();
 	}
 	
 	@Test(expected=SQLException.class)
 	public void testInsertSQLException() throws SQLException {
 		
-		db.open();
-		
 		String memberId = "m2";
 		db.insertNewMember(memberId, 0, 0);
 		
 		db.insertNewMember(memberId, 10, 10);
-		
-		db.close();		
+				
 	}	
 	
 	@Test
 	public void testUpdateMembers() throws SQLException{
-		
-		db.open();
 		
 		String memberId = "m3";
 		double consumed = 2, donated = 2;
@@ -94,25 +85,20 @@ public class DatabaseTest {
 		
 		db.updateMembers(members);
 		
-		String sql = "select * from " + db.getDatabaseTableName()+ " where " + Database.getDatabaseFieldMemberId()+ "='" + memberId + "'";
+		String sql = "select * from " + db.getDatabaseTableName()+ " where " + DataStorage.getDatabaseFieldMemberId()+ "='" + memberId + "'";
 		Statement statement = db.getConnection().createStatement();
 		ResultSet rs = db.query(statement, sql);
 		rs.next();
-		Assert.assertTrue(12== rs.getDouble(Database.getDatabaseFieldConsumed()));
-		Assert.assertTrue(12== rs.getDouble(Database.getDatabaseFieldDonated()));
+		Assert.assertTrue(12== rs.getDouble(DataStorage.getDatabaseFieldConsumed()));
+		Assert.assertTrue(12== rs.getDouble(DataStorage.getDatabaseFieldDonated()));
 		
 		statement.close();
-		db.close();
 		
 	}
 	
 	
 	@Test(expected=SQLException.class)
 	public void testUpdateMembersSQLException() throws SQLException{		
-		
-		System.out.println("testUpdateMembersSQLException");
-		
-		db.open();		
 		
 		Map<String, ResourceUsage> members = new HashMap<String, ResourceUsage>();
 		ResourceUsage resourceUsage = new ResourceUsage("m5");
@@ -121,8 +107,6 @@ public class DatabaseTest {
 		members.put("m5", resourceUsage);
 		
 		db.updateMembers(members);
-		
-		db.close();
 	}
 	
 	
@@ -132,9 +116,7 @@ public class DatabaseTest {
 		List <String> memberIds = new ArrayList<String>();
 		memberIds.add("m6");
 		memberIds.add("m7");
-		
-		db.open();
-		
+				
 		String memberId1 = "m6";
 		double consumed1 = 2, donated1 = 2;
 		db.insertNewMember(memberId1, consumed1, donated1);
@@ -157,8 +139,6 @@ public class DatabaseTest {
 		
 		map = db.getUsage(memberIds);
 		Assert.assertTrue(map.isEmpty());
-		
-		db.close();
 		
 	}
 
