@@ -26,6 +26,8 @@ public class Request {
 	private List<Category> categories;
 	private Map<String, String> xOCCIAtt;
 	
+	private DateUtils dateUtils = new DateUtils();
+	
 	public Request(String id, Token federationToken, Token localToken, 
 			List<Category> categories, Map<String, String> xOCCIAtt) {
 		this.id = id;
@@ -75,6 +77,10 @@ public class Request {
 	public void setInstanceId(String instanceId) {
 		this.instanceId = instanceId;
 	}
+	
+	public void setDateUtils(DateUtils dateUtils) {
+		this.dateUtils = dateUtils;
+	}
 
 	public RequestState getState() {
 		return state;
@@ -82,7 +88,7 @@ public class Request {
 
 	public void setState(RequestState state) {
 		if (state.in(RequestState.FULFILLED)) {
-			fulfilledTime = System.currentTimeMillis();
+			fulfilledTime = dateUtils.currentTimeMillis();
 		} else if (state.in(RequestState.OPEN)) {
 			fulfilledTime = 0;
 		}

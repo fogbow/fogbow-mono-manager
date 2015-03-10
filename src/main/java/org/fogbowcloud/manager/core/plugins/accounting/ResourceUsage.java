@@ -12,4 +12,16 @@ public class ResourceUsage {
 	public void addConsumption(double consumption) {
 		this.consumption += consumption;
 	}
+
+	public double getConsumption() {
+		return consumption;
+	}
+
+	public double getDonation() {
+		return donation;
+	}
+	
+	public String toString() {
+		return "consumption:" + consumption + ", donation:" + donation;
+	}
 }
