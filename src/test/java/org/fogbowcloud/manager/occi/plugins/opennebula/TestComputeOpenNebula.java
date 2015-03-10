@@ -39,6 +39,8 @@ import org.opennebula.client.Client;
 import org.opennebula.client.ClientConfigurationException;
 import org.opennebula.client.OneResponse;
 import org.opennebula.client.group.Group;
+import org.opennebula.client.image.ImagePool;
+import org.opennebula.client.template.TemplatePool;
 import org.opennebula.client.user.User;
 import org.opennebula.client.vm.VirtualMachine;
 import org.opennebula.client.vm.VirtualMachinePool;
@@ -123,6 +125,8 @@ public class TestComputeOpenNebula {
 				.thenReturn(oneClient);
 		Mockito.when(clientFactory.allocateVirtualMachine(oneClient, SMALL_TEMPLATE)).thenReturn(
 				INSTANCE_ID);
+		Mockito.when(clientFactory.createImagePool(oneClient)).thenReturn(new ImagePool(oneClient));
+		Mockito.when(clientFactory.createTemplatePool(oneClient)).thenReturn(new TemplatePool(oneClient));
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
 		
 		List<Flavor> flavors = new ArrayList<Flavor>();
@@ -140,8 +144,16 @@ public class TestComputeOpenNebula {
 	
 	@Test(expected=OCCIException.class)
 	public void testRequestInstanceWithoutImageCategory() throws ClientConfigurationException{
+		// mocking opennebula structures
+		Client oneClient = Mockito.mock(Client.class);
+		
 		// mocking clientFactory
 		OpenNebulaClientFactory clientFactory = Mockito.mock(OpenNebulaClientFactory.class);
+		Mockito.when(clientFactory.createClient(defaultToken.getAccessId(), OPEN_NEBULA_URL))
+		.thenReturn(oneClient);
+		
+		Mockito.when(clientFactory.createImagePool(oneClient)).thenReturn(new ImagePool(oneClient));
+		Mockito.when(clientFactory.createTemplatePool(oneClient)).thenReturn(new TemplatePool(oneClient));
 						
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
 		
@@ -154,9 +166,16 @@ public class TestComputeOpenNebula {
 	
 	@Test(expected=OCCIException.class)
 	public void testRequestInstanceWithoutFlavor() throws ClientConfigurationException{
+		// mocking opennebula structures
+		Client oneClient = Mockito.mock(Client.class);
+		
 		// mocking clientFactory
 		OpenNebulaClientFactory clientFactory = Mockito.mock(OpenNebulaClientFactory.class);
-						
+		Mockito.when(clientFactory.createClient(defaultToken.getAccessId(), OPEN_NEBULA_URL))
+		.thenReturn(oneClient);
+		
+		Mockito.when(clientFactory.createImagePool(oneClient)).thenReturn(new ImagePool(oneClient));
+		Mockito.when(clientFactory.createTemplatePool(oneClient)).thenReturn(new TemplatePool(oneClient));
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
 		
 		// requesting an instance
@@ -180,7 +199,9 @@ public class TestComputeOpenNebula {
 		Mockito.when(clientFactory.allocateVirtualMachine(oneClient, SMALL_TEMPLATE)).thenReturn(
 				INSTANCE_ID);
 		Mockito.when(clientFactory.createVirtualMachine(oneClient, INSTANCE_ID)).thenReturn(vm);
-						
+		Mockito.when(clientFactory.createImagePool(oneClient)).thenReturn(new ImagePool(oneClient));
+		Mockito.when(clientFactory.createTemplatePool(oneClient)).thenReturn(new TemplatePool(oneClient));		
+		
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
 		
 		List<Flavor> flavors = new ArrayList<Flavor>();
@@ -266,7 +287,9 @@ public class TestComputeOpenNebula {
 				INSTANCE_ID);
 		Mockito.when(clientFactory.createVirtualMachinePool(oneClient)).thenReturn(firstVMPool,
 				secondVMPool);
-
+		Mockito.when(clientFactory.createImagePool(oneClient)).thenReturn(new ImagePool(oneClient));
+		Mockito.when(clientFactory.createTemplatePool(oneClient)).thenReturn(new TemplatePool(oneClient));
+		
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
 
 		List<Flavor> flavors = new ArrayList<Flavor>();
@@ -311,6 +334,9 @@ public class TestComputeOpenNebula {
 				.thenReturn(INSTANCE_ID);
 		Mockito.when(clientFactory.createVirtualMachine(oneClient, INSTANCE_ID)).thenReturn(vm);
 				
+		Mockito.when(clientFactory.createImagePool(oneClient)).thenReturn(new ImagePool(oneClient));
+		Mockito.when(clientFactory.createTemplatePool(oneClient)).thenReturn(new TemplatePool(oneClient));
+		
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
 		
 		List<Flavor> flavors = new ArrayList<Flavor>();
@@ -368,7 +394,9 @@ public class TestComputeOpenNebula {
 		Mockito.when(clientFactory.allocateVirtualMachine(oneClient, SMALL_TEMPLATE))
 				.thenReturn(INSTANCE_ID);
 		Mockito.when(clientFactory.createVirtualMachine(oneClient, INSTANCE_ID)).thenReturn(vm);
-				
+		Mockito.when(clientFactory.createImagePool(oneClient)).thenReturn(new ImagePool(oneClient));
+		Mockito.when(clientFactory.createTemplatePool(oneClient)).thenReturn(new TemplatePool(oneClient));
+		
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
 		
 		List<Flavor> flavors = new ArrayList<Flavor>();
@@ -469,6 +497,9 @@ public class TestComputeOpenNebula {
 		Mockito.when(clientFactory.allocateVirtualMachine(oneClient, SMALL_TEMPLATE)).thenReturn(
 				INSTANCE_ID);
 		Mockito.when(clientFactory.createVirtualMachinePool(oneClient)).thenReturn(vmPool);
+		
+		Mockito.when(clientFactory.createImagePool(oneClient)).thenReturn(new ImagePool(oneClient));
+		Mockito.when(clientFactory.createTemplatePool(oneClient)).thenReturn(new TemplatePool(oneClient));
 		
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
 
@@ -817,18 +848,4 @@ public class TestComputeOpenNebula {
 		Assert.assertEquals(newFlavors.size(), computeOpenNebula.getFlavors().size());
 	}
 	
-	//TODO remove. 
-	@Ignore
-	@Test
-	public void Test2() {
-		Properties properties2 = new Properties();
-		properties2.put("compute_one_url", "http://150.165.85.80:2633/RPC2");
-		properties2.put("compute_one_network_id", "123");
-		properties2.put("fogbow_small", "123");
-		
-		Token token = new Token("***REMOVED***", "", new Date(), new HashMap<String, String>());
-		OpenNebulaComputePlugin openNebulaComputePlugin = new OpenNebulaComputePlugin(properties2);
-		
-		openNebulaComputePlugin.updateFlavors(token);		
-	}
 }

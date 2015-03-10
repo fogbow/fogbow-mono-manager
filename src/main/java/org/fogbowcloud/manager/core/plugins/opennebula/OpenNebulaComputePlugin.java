@@ -159,16 +159,18 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 				+ categories + "; xOCCIAtt=" + xOCCIAtt);
 		
 		Map<String, String> templateProperties = new HashMap<String, String>();
-		Flavor choosenFlavor = null;
+		Flavor foundFlavor = null;
 		
 		// removing fogbow-request category
 		categories.remove(new Category(RequestConstants.TERM, RequestConstants.SCHEME,
 				RequestConstants.KIND_CLASS));
 				
-		updateFlavors(token);
-		// Finding flavor
-		choosenFlavor = RequirementsHelper.findFlavor(getFlavors(),
-				xOCCIAtt.get(RequestAttribute.REQUIREMENTS.getValue()));
+//		updateFlavors(token);
+//		// Finding flavor
+//		foundFlavor = RequirementsHelper.findFlavor(getFlavors(),
+//				xOCCIAtt.get(RequestAttribute.REQUIREMENTS.getValue()));
+		
+		foundFlavor = getFlavor(token, xOCCIAtt.get(RequestAttribute.REQUIREMENTS.getValue()));
 		
 		// checking categories are valid	
 		for (Category category : categories) {
@@ -193,7 +195,7 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		}		
 		
 		// image or flavor was not specified
-		if (choosenFlavor == null || localImageId == null){
+		if (foundFlavor == null || localImageId == null){
 			throw new OCCIException(ErrorType.BAD_REQUEST,
 					ResponseConstants.IRREGULAR_SYNTAX);
 		}
@@ -204,8 +206,8 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		}
 //		templateProperties.put("mem", String.valueOf((int)getAttValue("mem", choosenFlavor)));
 //		templateProperties.put("cpu", String.valueOf(getAttValue("cpu", choosenFlavor)));
-		templateProperties.put("mem", String.valueOf(choosenFlavor.getMem()));
-		templateProperties.put("cpu", String.valueOf(choosenFlavor.getCpu()));
+		templateProperties.put("mem", String.valueOf(foundFlavor.getMem()));
+		templateProperties.put("cpu", String.valueOf(foundFlavor.getCpu()));
 		templateProperties.put("userdata", userdata);
 		templateProperties.put("image-id", localImageId);
 
@@ -643,51 +645,49 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		return null;
 	}
 
-	@Override
 	public List<Flavor> getFlavors() {
 		return this.flavors;
 	}
 
-	@Override
 	public void updateFlavors(Token token) {
-		OpenNebulaClientFactory openNebulaClientFactory = new OpenNebulaClientFactory();
-		Client oneClient = openNebulaClientFactory.createClient(token.getAccessId(),
+		Client oneClient = this.clientFactory.createClient(token.getAccessId(),
 				openNebulaEndpoint);
 		List<Flavor> newFlavors = new ArrayList<Flavor>();
 
-		Map<String, String> mapImageToId = new HashMap<String, String>();
-		ImagePool imagePool = new ImagePool(oneClient);
-		imagePool.info();
+		Map<String, String> mapImageToSize = new HashMap<String, String>();
+		ImagePool imagePool = this.clientFactory.createImagePool(oneClient);		
 		for (Image image : imagePool) {
-			mapImageToId.put(image.getName(), image.getId());
-		}
+			mapImageToSize.put(image.getName(), image.xpath("SIZE"));
+		}		
 
-		TemplatePool templatePool = new TemplatePool(oneClient);
-		templatePool.info();
+		TemplatePool templatePool = this.clientFactory.createTemplatePool(oneClient);
 		for (Template template : templatePool) {
 			String name = template.xpath("NAME");
 			String memory = template.xpath("TEMPLATE/MEMORY");
 			String vcpu = template.xpath("TEMPLATE/VCPU");
-			String imageStr = template.xpath("TEMPLATE/DISK/IMAGE");
-			String disk = null;
-
-			DatastorePool datastorePool = new DatastorePool(oneClient);
-			datastorePool.info();
-			for (Datastore datastore : datastorePool) {
-				if (datastore.xpath("IMAGES/ID[0]") != null) {
-					int cont = 0;
-					do {
-						String id = datastore.xpath("IMAGES/ID[" + cont + "]");
-						if (id.equals(mapImageToId.get(imageStr))) {
-							disk = datastore.xpath("TOTAL_MB");
-							break;
-						}
-						cont++;
-					} while (!datastore.xpath("IMAGES/ID[" + (cont + 1) + "]").isEmpty());
+			
+			int cont = 1;
+			int diskSize = 0;
+			String templateDisk = null;
+			do {
+				String templateNameDisk = template.xpath("TEMPLATE/DISK[" + cont + "]/IMAGE");
+				String templateDiskVolateSize = template.xpath("TEMPLATE/DISK[" + cont + "]/SIZE");
+				if (templateDiskVolateSize != null && !templateDiskVolateSize.isEmpty()) {
+					try {
+						diskSize += Integer.parseInt(templateDiskVolateSize);
+					} catch (Exception e) {
+					}
+				} else if (templateNameDisk != null && !templateNameDisk.isEmpty()){
+					try {
+						diskSize += Integer.parseInt(mapImageToSize.get(templateNameDisk));
+					} catch (Exception e) {
+					}
 				}
+				cont += 1;
+				templateDisk = template.xpath("TEMPLATE/DISK[" + cont + "]");				
+			} while (templateDisk != null && !templateDisk.isEmpty());
 
-			}
-			newFlavors.add(new Flavor(name, vcpu, memory, disk, 0));
+			newFlavors.add(new Flavor(name, vcpu, memory, String.valueOf(diskSize), 0));
 		}
 		if (newFlavors != null) {
 			this.flavors.addAll(newFlavors);			
@@ -716,5 +716,11 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 	
 	public void setFlavors(List<Flavor> flavors) {
 		this.flavors = flavors;
+	}
+
+	@Override
+	public Flavor getFlavor(Token token, String requirements) {
+		updateFlavors(token);
+		return RequirementsHelper.findFlavor(getFlavors(),requirements);
 	}
 }

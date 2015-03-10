@@ -118,9 +118,11 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		categories.remove(new Category(RequestConstants.TERM, RequestConstants.SCHEME,
 				RequestConstants.KIND_CLASS));
 		
-		updateFlavors(token);
-		// Finding flavor
-		Flavor foundFlavor = RequirementsHelper.findFlavor(getFlavors(),
+//		updateFlavors(token);
+//		// Finding flavor
+//		Flavor foundFlavor = RequirementsHelper.findFlavor(getFlavors(),
+//				xOCCIAtt.get(RequestAttribute.REQUIREMENTS.getValue()));
+		Flavor foundFlavor = getFlavor(token,
 				xOCCIAtt.get(RequestAttribute.REQUIREMENTS.getValue()));
 		String flavorId = null;
 		if (foundFlavor != null) {
@@ -698,12 +700,18 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
         return responseStr;
     }
 
-	@Override
 	public List<Flavor> getFlavors() {
 		return this.flavors;
 	}
 	
 	public void setFlavors(List<Flavor> flavors) {
 		this.flavors = flavors;
+	}
+
+	@Override
+	public Flavor getFlavor(Token token, String requirements) {
+		updateFlavors(token);
+		// Finding flavor
+		return RequirementsHelper.findFlavor(getFlavors(), requirements);
 	}
 }

@@ -378,7 +378,6 @@ public class OCCIComputePlugin implements ComputePlugin {
 		return null;
 	}
 
-	@Override
 	public List<Flavor> getFlavors() {
 		return flavors;
 	}
@@ -387,8 +386,13 @@ public class OCCIComputePlugin implements ComputePlugin {
 		this.flavors = flavors;
 	}
 
-	@Override
 	public void updateFlavors(Token token) {
 		// TODO Auto-generated method stub		
+	}
+
+	@Override
+	public Flavor getFlavor(Token token, String requirements) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }
