@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.fogbowcloud.manager.core.model.Flavor;
-import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -53,10 +52,7 @@ public class TestRequirementsHelper {
 		
 		ClassAdParser classAdParser = new ClassAdParser(requirementsStr);
 		Op expr = (Op) classAdParser.parse();
-		Op normalizeOP = requirementsHelper.normalizeOPToCheckWithoutLocation(expr);
-		
-		System.out.println(expr);
-		System.out.println(normalizeOP);
+		requirementsHelper.normalizeOPToCheckWithoutLocation(expr);		
 	}
 
 	@SuppressWarnings("static-access")
@@ -69,6 +65,10 @@ public class TestRequirementsHelper {
 		value = "valueCorrect";
 		requirementsStr = RequirementsHelper.GLUE_LOCATION_TERM + "==" + "\"" + value + "\"";
 		Assert.assertTrue(requirementsHelper.checkLocation(requirementsStr, value));
+		
+		value = "valueCorrect";
+		requirementsStr = RequirementsHelper.GLUE_LOCATION_TERM + "!=" + "\"" + value + "\"";
+		Assert.assertFalse(requirementsHelper.checkLocation(requirementsStr, value));
 	}
 
 	@Test
@@ -150,5 +150,24 @@ public class TestRequirementsHelper {
 		Assert.assertEquals(firstValue, requirementsHelper.findFlavor(flavors, requirementsStr)
 				.getId());
 	}
-	
+
+	@SuppressWarnings("static-access")
+	@Test
+	public void TestFindFlavorSameMenAndCore() {
+		String firstValue = "1";
+		Flavor flavorOne = new Flavor("One", firstValue, "1", "100", "10");
+		Flavor flavorTwo = new Flavor("Two", "2", "1", "100", "20");
+
+		List<Flavor> flavors = new ArrayList<Flavor>();
+		flavors.add(flavorTwo);
+		flavors.add(flavorOne);
+
+		String disk = RequirementsHelper.GLUE_DISK_TERM;
+		String mem = RequirementsHelper.GLUE_MEM_RAM_TERM;
+		String vCpu = RequirementsHelper.GLUE_VCPU_TERM;
+		String requirementsStr = disk + " > 5 && " + mem + " > 50 && " + vCpu + " > 0";
+
+		Assert.assertEquals(firstValue, requirementsHelper.findFlavor(flavors, requirementsStr)
+				.getId());
+	}	
 }

@@ -70,24 +70,7 @@ public class RequirementsHelper {
 		} catch (Exception e) {
 			return false;
 		}
-	}	
-	
-//	public static String findFlavor(List<Flavor> flavors, String requirementsStr) {
-//		List<Flavor> listFlavor = new ArrayList<Flavor>();
-//		for (Flavor flavor : flavors) {
-//			if (checkFlavorPerRequirements(flavor, requirementsStr)) {
-//				listFlavor.add(flavor);
-//			}
-//		}
-//
-//		if (listFlavor.size() == 0) {
-//			return null;
-//		}
-//
-//		Collections.sort(listFlavor, new FlavorComparator());
-//
-//		return listFlavor.get(0).getId();
-//	}
+	}
 	
 	public static Flavor findFlavor(List<Flavor> flavors, String requirementsStr) {
 		List<Flavor> listFlavor = new ArrayList<Flavor>();
@@ -249,7 +232,6 @@ public class RequirementsHelper {
 	}
 
 	public static class FlavorComparator implements Comparator<Flavor> {
-		private final int DISK_VALUE_RELEVANCE = 1;
 		private final int MEM_VALUE_RELEVANCE = 1;
 		private final int VCPU_VALUE_RELEVANCE = 1;
 
@@ -261,6 +243,16 @@ public class RequirementsHelper {
 			if (calculateRelevance(flavorOne, flavorTwo) < calculateRelevance(flavorTwo, flavorOne)) {
 				return -1;
 			}
+			if (calculateRelevance(flavorOne, flavorTwo) == calculateRelevance(flavorTwo, flavorOne)) {
+				try {
+					if (Double.parseDouble(flavorOne.getDisk()) > Double.parseDouble(flavorTwo.getDisk())) {
+						return 1;
+					} else {
+						return -1;
+					}
+				} catch (Exception e) {
+				}
+			}
 			return 0;
 		}
 
@@ -269,12 +261,9 @@ public class RequirementsHelper {
 			double cpuTwo = Double.parseDouble(flavorTwo.getCpu());
 			double memOne = Double.parseDouble(flavorOne.getMem());
 			double memTwo = Double.parseDouble(flavorTwo.getMem());
-			double diskOne = Double.parseDouble(flavorOne.getDisk());
-			double diskTwo = Double.parseDouble(flavorTwo.getDisk());
 
 			return ((cpuOne / cpuTwo) * 1 / VCPU_VALUE_RELEVANCE)
-					+ ((memOne / memTwo) * 1 / MEM_VALUE_RELEVANCE)
-					+ ((diskOne / diskTwo) * 1 / DISK_VALUE_RELEVANCE);
+					+ ((memOne / memTwo) * 1 / MEM_VALUE_RELEVANCE);
 		}
 	}
 }
