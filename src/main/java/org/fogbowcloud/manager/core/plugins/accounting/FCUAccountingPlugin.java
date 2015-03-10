@@ -3,6 +3,7 @@ package org.fogbowcloud.manager.core.plugins.accounting;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.model.DateUtils;
@@ -16,7 +17,8 @@ public class FCUAccountingPlugin implements AccountingPlugin {
 	long lastUpdate;
 
 	private BenchmarkingPlugin benchmarkingPlugin;
-	private Map<String, ResourceUsage> memberIdToConsumption = new HashMap<String, ResourceUsage>();
+	//TODO this map should be removed from code and getting directly from BD
+	private Map<String, ResourceUsage> memberUsage = new HashMap<String, ResourceUsage>();
 	private DateUtils dateUtils;
 	private static final Logger LOGGER = Logger.getLogger(FCUAccountingPlugin.class);
 
@@ -32,69 +34,69 @@ public class FCUAccountingPlugin implements AccountingPlugin {
 	
 	@Override
 	public void update(List<Request> fulfilledRequests, List<ServedRequest> servedRequests) {
+		//TODO getting memberUsage map from BD here
 		LOGGER.debug("Updating account with fulfilledRequests=" + fulfilledRequests
 				+ ", and servedRequests=" + servedRequests);		
 		long now = dateUtils.currentTimeMillis();		
-		long updateInterval = (now - lastUpdate) / 1000 * 60; //(in minutes)
-		LOGGER.debug("update interval=" + updateInterval);
+		long updatingInterval = TimeUnit.MILLISECONDS.toMinutes(now - lastUpdate);
+		LOGGER.debug("updating interval=" + updatingInterval);
 		
-		// donating		
+		// donating	
 		for (ServedRequest servedRequest : servedRequests) {
 			double instancePower = benchmarkingPlugin.getPower(servedRequest.getInstanceId());
-			long donationInterval = (now - servedRequest
-					.getCreationTime()) / 1000 * 60; // (in minutes)
+			long donationInterval = TimeUnit.MILLISECONDS.toMinutes(now
+					- servedRequest.getCreationTime());
 			
-			LOGGER.debug("donation interval=" + updateInterval);
+			LOGGER.debug("donation interval=" + donationInterval);
 			
-			if (!memberIdToConsumption.containsKey(servedRequest.getMemberId())) {
-				memberIdToConsumption.put(servedRequest.getMemberId(), new ResourceUsage());
+			String memberId = servedRequest.getMemberId();
+			if (!memberUsage.containsKey(memberId)) {
+				memberUsage.put(memberId, new ResourceUsage(memberId));
 			}
 			
-			if (donationInterval < updateInterval) {
-				memberIdToConsumption.get(servedRequest.getMemberId()).addDonation(donationInterval * instancePower);
+			if (donationInterval < updatingInterval) {
+				memberUsage.get(memberId).addDonation(donationInterval * instancePower);
 			} else {
-				memberIdToConsumption.get(servedRequest.getMemberId()).addDonation(updateInterval * instancePower);
+				memberUsage.get(memberId).addDonation(updatingInterval * instancePower);
 			}
 		}
 
 		// consumption
 		for (Request request : fulfilledRequests) {
-			if (request.getMemberId() != null) {
-				if (!memberIdToConsumption.containsKey(request.getMemberId())) {
-					memberIdToConsumption.put(request.getMemberId(), new ResourceUsage());
+			String memberId = request.getMemberId();
+			if (memberId != null) {
+				if (!memberUsage.containsKey(memberId)) {
+					memberUsage.put(memberId, new ResourceUsage(memberId));
 				}
 
 				double instancePower = benchmarkingPlugin.getPower(request.getInstanceId());
-				long consumptionInterval = (now - request.getFulfilledTime()) / 1000 * 60; // (in minutes)
+				long consumptionInterval = TimeUnit.MILLISECONDS.toMinutes(now - request.getFulfilledTime());
 				LOGGER.debug("consumption interval=" + consumptionInterval);
 
-				if (consumptionInterval < updateInterval) {
-					memberIdToConsumption.get(request.getMemberId()).addConsumption(
+				if (consumptionInterval < updatingInterval) {
+					memberUsage.get(memberId).addConsumption(
 							consumptionInterval * instancePower);
 				} else {
-					memberIdToConsumption.get(request.getMemberId()).addConsumption(
-							updateInterval * instancePower);
+					memberUsage.get(memberId).addConsumption(
+							updatingInterval * instancePower);
 				}
 			}
 		}
 	
-		LOGGER.debug("current usage of members=" + memberIdToConsumption);
+		LOGGER.debug("current usage of members=" + memberUsage);
+		//TODO persist updated memberUsage map into BD here
 		this.lastUpdate = now;
 	}
 
 	@Override
-	public double getConsumption(String memberId) {
-		if (memberIdToConsumption.get(memberId) == null) {
-			return -1;
+	public Map<String, ResourceUsage> getUsage(List<String> members) {
+		//TODO getting memberUsage map from BD here
+		Map<String, ResourceUsage> toReturn = new HashMap<String, ResourceUsage>();
+		for (String memberId : members) {
+			if (memberUsage.containsKey(memberId)) {
+				toReturn.put(memberId, memberUsage.get(memberId));
+			}
 		}
-		return memberIdToConsumption.get(memberId).getConsumption();
-	}
-
-	@Override
-	public double getDonation(String memberId) {
-		if (memberIdToConsumption.get(memberId) == null) {
-			return -1;
-		}
-		return memberIdToConsumption.get(memberId).getDonation();
+		return toReturn;
 	}
 }

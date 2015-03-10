@@ -2,26 +2,35 @@ package org.fogbowcloud.manager.core.plugins.accounting;
 
 public class ResourceUsage {
 	
-	double consumption = 0;
-	double donation = 0;
-		
+	String memberId;
+	double consumed = 0;
+	double donated = 0;
+	
+	public ResourceUsage(String memberId) {
+		this.memberId = memberId;
+	}
+				
 	public void addDonation(double donation) {
-		this.donation += donation;
+		this.donated += donation;
 	}
 	
 	public void addConsumption(double consumption) {
-		this.consumption += consumption;
+		this.consumed += consumption;
 	}
 
-	public double getConsumption() {
-		return consumption;
+	public double getConsumed() {
+		return consumed;
 	}
 
-	public double getDonation() {
-		return donation;
+	public double getDonated() {
+		return donated;
 	}
-	
+		
+	public String getMemberId() {
+		return memberId;
+	}
+
 	public String toString() {
-		return "consumption:" + consumption + ", donation:" + donation;
+		return "consumed:" + consumed + ", donated:" + donated;
 	}
 }
