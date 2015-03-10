@@ -1,8 +1,10 @@
 package org.fogbowcloud.manager.core.plugins.accounting;
 
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
@@ -21,20 +23,25 @@ public class FCUAccountingPlugin implements AccountingPlugin {
 	private Map<String, ResourceUsage> memberUsage = new HashMap<String, ResourceUsage>();
 	private DateUtils dateUtils;
 	private static final Logger LOGGER = Logger.getLogger(FCUAccountingPlugin.class);
+	
+	private Database database;
 
-	public FCUAccountingPlugin(BenchmarkingPlugin benchmarkingPlugin) {
-		this(benchmarkingPlugin, new DateUtils());
+	public FCUAccountingPlugin(Properties properties, BenchmarkingPlugin benchmarkingPlugin){		
+		this(properties, benchmarkingPlugin, new DateUtils());
 	}
 	
-	public FCUAccountingPlugin(BenchmarkingPlugin benchmarkingPlugin, DateUtils dateUtils) {
+	public FCUAccountingPlugin(Properties properties, BenchmarkingPlugin benchmarkingPlugin, DateUtils dateUtils) {
 		this.benchmarkingPlugin = benchmarkingPlugin;
 		this.dateUtils = dateUtils;
 		this.lastUpdate = dateUtils.currentTimeMillis();
+		
+//		database = new Database(properties);
 	}
 	
 	@Override
 	public void update(List<Request> fulfilledRequests, List<ServedRequest> servedRequests) {
-		//TODO getting memberUsage map from BD here
+		
+//		Map<String, ResourceUsage> memberUsage = new HashMap<String, ResourceUsage>();
 		LOGGER.debug("Updating account with fulfilledRequests=" + fulfilledRequests
 				+ ", and servedRequests=" + servedRequests);		
 		long now = dateUtils.currentTimeMillis();		
@@ -84,7 +91,13 @@ public class FCUAccountingPlugin implements AccountingPlugin {
 		}
 	
 		LOGGER.debug("current usage of members=" + memberUsage);
-		//TODO persist updated memberUsage map into BD here
+//		try {
+//			database.updateMembers(memberUsage);
+//		} catch (SQLException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+		
 		this.lastUpdate = now;
 	}
 

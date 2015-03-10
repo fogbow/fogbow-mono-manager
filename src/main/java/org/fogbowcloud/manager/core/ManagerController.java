@@ -27,6 +27,7 @@ import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.model.ServedRequest;
+import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
@@ -72,6 +73,7 @@ public class ManagerController {
 	private FederationMemberPicker memberPicker = new RoundRobinMemberPicker();
 
 	private BenchmarkingPlugin benchmarkingPlugin;
+	private AccountingPlugin accountingPlugin;
 	private ImageStoragePlugin imageStoragePlugin;
 	private AuthorizationPlugin authorizationPlugin;
 	private ComputePlugin computePlugin;
@@ -110,6 +112,10 @@ public class ManagerController {
 
 	public void setBenchmarkingPlugin(BenchmarkingPlugin benchmarkingPlugin) {
 		this.benchmarkingPlugin = benchmarkingPlugin;
+	}
+	
+	public void setAccountingPlugin(AccountingPlugin accountingPlugin) {
+		this.accountingPlugin = accountingPlugin;
 	}
 	
 	public void setAuthorizationPlugin(AuthorizationPlugin authorizationPlugin) {

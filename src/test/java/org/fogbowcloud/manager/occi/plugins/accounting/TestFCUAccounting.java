@@ -27,7 +27,7 @@ public class TestFCUAccounting {
 
 	@Test
 	public void testEmptyRequests() {
-		FCUAccountingPlugin accountingPlugin = new FCUAccountingPlugin(benchmarkingPlugin);
+		FCUAccountingPlugin accountingPlugin = new FCUAccountingPlugin(null, benchmarkingPlugin);
 
 		accountingPlugin.update(new ArrayList<Request>(), new ArrayList<ServedRequest>());
 				
@@ -45,7 +45,7 @@ public class TestFCUAccounting {
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 		Mockito.when(benchmarkingPlugin.getPower("instanceId")).thenReturn(2d);
 
-		FCUAccountingPlugin accountingPlugin = new FCUAccountingPlugin(benchmarkingPlugin,
+		FCUAccountingPlugin accountingPlugin = new FCUAccountingPlugin(null, benchmarkingPlugin,
 				dateUtils);
 
 		Request request1 = new Request("id1", null, null, null, null);
@@ -86,7 +86,7 @@ public class TestFCUAccounting {
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 		Mockito.when(benchmarkingPlugin.getPower("instanceId")).thenReturn(2d);
 
-		FCUAccountingPlugin accountingPlugin = new FCUAccountingPlugin(benchmarkingPlugin,
+		FCUAccountingPlugin accountingPlugin = new FCUAccountingPlugin(null, benchmarkingPlugin,
 				dateUtils);
 
 		ServedRequest servedRequest = new ServedRequest("instanceToken", "instanceId", "memberId",
@@ -124,7 +124,7 @@ public class TestFCUAccounting {
 		Mockito.when(benchmarkingPlugin.getPower("instanceId1")).thenReturn(2d);
 		Mockito.when(benchmarkingPlugin.getPower("instanceId2")).thenReturn(2d);
 
-		FCUAccountingPlugin accountingPlugin = new FCUAccountingPlugin(benchmarkingPlugin,
+		FCUAccountingPlugin accountingPlugin = new FCUAccountingPlugin(null, benchmarkingPlugin,
 				dateUtils);
 
 		Request request1 = new Request("id1", null, null, null, null);
@@ -172,7 +172,7 @@ public class TestFCUAccounting {
 		Mockito.when(benchmarkingPlugin.getPower("instanceId1")).thenReturn(4d);
 		Mockito.when(benchmarkingPlugin.getPower("instanceId2")).thenReturn(2d);
 
-		FCUAccountingPlugin accountingPlugin = new FCUAccountingPlugin(benchmarkingPlugin,
+		FCUAccountingPlugin accountingPlugin = new FCUAccountingPlugin(null, benchmarkingPlugin,
 				dateUtils);
 
 		Request request1 = new Request("id1", null, null, null, null);
@@ -226,7 +226,7 @@ public class TestFCUAccounting {
 		Mockito.when(benchmarkingPlugin.getPower("instanceId1")).thenReturn(2d);
 		Mockito.when(benchmarkingPlugin.getPower("instanceId2")).thenReturn(2d);
 
-		FCUAccountingPlugin accountingPlugin = new FCUAccountingPlugin(benchmarkingPlugin,
+		FCUAccountingPlugin accountingPlugin = new FCUAccountingPlugin(null, benchmarkingPlugin,
 				dateUtils);
 
 		Request request1 = new Request("id1", null, null, null, null);

@@ -81,6 +81,7 @@ public class Database {
 	
 	public void updateMembers(Map<String, ResourceUsage> members) throws SQLException {
 		
+		
 		Statement statement = this.connection.createStatement();
 		
 		Iterator<Entry<String, ResourceUsage>> it = members.entrySet().iterator();

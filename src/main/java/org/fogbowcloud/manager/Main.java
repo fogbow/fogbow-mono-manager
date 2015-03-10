@@ -1,6 +1,7 @@
 package org.fogbowcloud.manager;
 
 import java.io.FileInputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Properties;
 
 import org.apache.log4j.ConsoleAppender;
@@ -9,10 +10,15 @@ import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.DefaultMemberValidator;
 import org.fogbowcloud.manager.core.FederationMemberValidator;
 import org.fogbowcloud.manager.core.ManagerController;
+import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
+import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
+import org.fogbowcloud.manager.core.plugins.accounting.Database;
+import org.fogbowcloud.manager.core.plugins.accounting.FCUAccountingPlugin;
+import org.fogbowcloud.manager.core.plugins.benchmarking.FCUStaticBenchmarkingPlugin;
 import org.fogbowcloud.manager.core.plugins.egi.EgiImageStoragePlugin;
 import org.fogbowcloud.manager.occi.OCCIApplication;
 import org.fogbowcloud.manager.xmpp.ManagerXmppComponent;
@@ -91,6 +97,26 @@ public class Main {
 			imageStoragePlugin = new EgiImageStoragePlugin(properties, computePlugin);
 			LOGGER.warn("Image Storage plugin not specified in properties. Using the default one.", e);
 		}
+		
+		
+		BenchmarkingPlugin benchmarkingPlugin = null;
+		try {
+			benchmarkingPlugin = (BenchmarkingPlugin) createInstance(
+					ConfigurationConstants.BENCHMARKING_PLUGIN_CLASS, properties);
+		} catch (Exception e) {
+			benchmarkingPlugin = new FCUStaticBenchmarkingPlugin(properties);
+			LOGGER.warn("Benchmarking plugin not specified in properties. Using the default one.", e);
+		}
+		
+		
+		AccountingPlugin accountingPlugin = null;
+		try {
+			accountingPlugin = (AccountingPlugin) createInstanceWithBenchmarkingPlugin(
+					ConfigurationConstants.ACCOUNTING_PLUGIN_CLASS, properties, benchmarkingPlugin);
+		} catch (Exception e) {
+			accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin);
+			LOGGER.warn("Accounting plugin not specified in properties. Using the default one.", e);
+		}
 
 		ManagerController facade = new ManagerController(properties);
 		facade.setComputePlugin(computePlugin);
@@ -99,6 +125,9 @@ public class Main {
 		facade.setFederationIdentityPlugin(federationIdentityPlugin);
 		facade.setImageStoragePlugin(imageStoragePlugin);
 		facade.setValidator(validator);
+		facade.setBenchmarkingPlugin(benchmarkingPlugin);
+		facade.setAccountingPlugin(accountingPlugin);
+		
 
 		ManagerXmppComponent xmpp = new ManagerXmppComponent(
 				properties.getProperty(ConfigurationConstants.XMPP_JID_KEY),
@@ -152,6 +181,13 @@ public class Main {
 			Properties properties, ComputePlugin computePlugin) throws Exception {
 		return Class.forName(properties.getProperty(propName)).getConstructor(Properties.class, ComputePlugin.class)
 				.newInstance(properties, computePlugin);
+	}
+	
+	private static Object createInstanceWithBenchmarkingPlugin(
+			String propName, Properties properties,
+			BenchmarkingPlugin benchmarkingPlugin) throws Exception {
+		return Class.forName(properties.getProperty(propName)).getConstructor(Properties.class, BenchmarkingPlugin.class)
+				.newInstance(properties, benchmarkingPlugin);
 	}
 
 	private static void configureLog4j() {

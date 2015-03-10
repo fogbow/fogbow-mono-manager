@@ -54,4 +54,10 @@ public class ConfigurationConstants {
 	public static final String MAX_WHOISALIVE_MANAGER_COUNT = "max_whoisalive_manager_count";
 	public static final String IMAGE_STORAGE_PLUGIN_CLASS = "image_storage_class";
 	
+	//benchmarking
+	public static final String BENCHMARKING_PLUGIN_CLASS = "benchmarking_class";
+	
+	//accounting
+	public static final String ACCOUNTING_PLUGIN_CLASS = "accounting_class";
+	
 }

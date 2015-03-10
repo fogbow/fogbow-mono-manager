@@ -23,7 +23,7 @@ public class TestFCUStaticBenchmarking {
 		instanceAttributes = new HashMap<String, String>();
 		instanceAttributes.put("occi.compute.memory", "2");
 		instanceAttributes.put("occi.compute.core", "2");		
-		benchmarking = new FCUStaticBenchmarkingPlugin();
+		benchmarking = new FCUStaticBenchmarkingPlugin(null);
 	}
 
 	@Test

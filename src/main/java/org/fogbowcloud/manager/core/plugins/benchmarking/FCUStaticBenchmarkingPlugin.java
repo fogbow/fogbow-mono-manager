@@ -2,6 +2,7 @@ package org.fogbowcloud.manager.core.plugins.benchmarking;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
@@ -12,6 +13,9 @@ public class FCUStaticBenchmarkingPlugin implements BenchmarkingPlugin {
 	Map<String, Double> instanceToPower = new HashMap<String, Double>();
 	
 	private static final Logger LOGGER = Logger.getLogger(FCUStaticBenchmarkingPlugin.class);
+	
+	public FCUStaticBenchmarkingPlugin(Properties properties) {
+	}
 
 	@Override
 	public void run(Instance instance) {
