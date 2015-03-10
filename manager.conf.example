@@ -83,3 +83,5 @@ my_ip=127.0.0.1
 http_port=8182
 
 max_whoisalive_manager_count=100
+
+database_path=~/database/reputations
