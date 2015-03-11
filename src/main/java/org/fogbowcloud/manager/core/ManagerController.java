@@ -787,6 +787,10 @@ public class ManagerController {
 		return asynchronousRequests.containsKey(requestId);
 	}
 	
+	private void wakeUpSleepingHosts(Request request) {
+		
+	}
+	
 	private boolean createLocalInstance(Request request) {
 		request.setMemberId(this.properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
 		String instanceId = null;
@@ -821,15 +825,20 @@ public class ManagerController {
 			instanceId = computePlugin.requestInstance(request.getLocalToken(),
 					categories, request.getxOCCIAtt(), localImageId);
 		} catch (OCCIException e) {
-			int statusCode = e.getStatus().getCode();
-			if (statusCode == HttpStatus.SC_INSUFFICIENT_SPACE_ON_RESOURCE) {
+			ErrorType errorType = e.getType();
+			if (errorType == ErrorType.QUOTA_EXCEEDED) {
 				LOGGER.warn("Request failed locally for quota exceeded.", e);
 				return false;
-			} else if (statusCode == HttpStatus.SC_UNAUTHORIZED) {
+			} else if (errorType == ErrorType.UNAUTHORIZED) {
 				LOGGER.warn("Request failed locally for user unauthorized.", e);
 				return false;
-			} else if (statusCode == HttpStatus.SC_BAD_REQUEST) {
+			} else if (errorType == ErrorType.BAD_REQUEST) {
 				LOGGER.warn("Request failed locally for image not found.", e);
+				return false;
+			} else if (errorType == ErrorType.NO_VALID_HOST_FOUND) {
+				LOGGER.warn("Request failed because no valid host was found,"
+						+ " we will try to wake up a sleeping host.", e);
+				wakeUpSleepingHosts(request);
 				return false;
 			} else {
 				// TODO Think this through...

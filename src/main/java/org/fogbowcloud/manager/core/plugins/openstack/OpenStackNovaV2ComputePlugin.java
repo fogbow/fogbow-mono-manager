@@ -50,6 +50,7 @@ import org.restlet.data.Status;
 
 public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 
+	private static final String NO_VALID_HOST_WAS_FOUND = "No valid host was found";
 	private static final String STATUS_JSON_FIELD = "status";
 	private static final String IMAGES_JSON_FIELD = "images";
 	private static final String ID_JSON_FIELD = "id";
@@ -222,7 +223,11 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 						ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES);
 			}
 			throw new OCCIException(ErrorType.BAD_REQUEST, message);
-		} else if (response.getStatusLine().getStatusCode() > 204) {
+		} else if ((response.getStatusLine().getStatusCode() == HttpStatus.SC_INTERNAL_SERVER_ERROR) &&
+				(message.contains(NO_VALID_HOST_WAS_FOUND))){
+			throw new OCCIException(ErrorType.NO_VALID_HOST_FOUND, ResponseConstants.NO_VALID_HOST_FOUND);
+		}
+		else if (response.getStatusLine().getStatusCode() > 204) {
 			throw new OCCIException(ErrorType.BAD_REQUEST, response.getStatusLine().toString());
 		}
 	}
