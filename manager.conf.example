@@ -84,4 +84,4 @@ http_port=8182
 
 max_whoisalive_manager_count=100
 
-data_storage_path=~/database/reputations
+accounting_datastore_path=~/database/reputations

@@ -59,5 +59,6 @@ public class ConfigurationConstants {
 	
 	//accounting
 	public static final String ACCOUNTING_PLUGIN_CLASS = "accounting_class";
+	public static final String ACCOUNTING_DATASTORE_PATH = "accounting_datastore_path";
 	
 }
