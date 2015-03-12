@@ -44,4 +44,9 @@ public class FCUStaticBenchmarkingPlugin implements BenchmarkingPlugin {
 		}
 		return instanceToPower.get(instanceId);
 	}
+
+	@Override
+	public void remove(String instanceId) {
+		instanceToPower.remove(instanceId);		
+	}
 }

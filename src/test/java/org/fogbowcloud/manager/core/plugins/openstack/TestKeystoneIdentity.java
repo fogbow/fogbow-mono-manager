@@ -1,4 +1,4 @@
-package org.fogbowcloud.manager.occi.plugins.openstack;
+package org.fogbowcloud.manager.core.plugins.openstack;
 
 import java.util.Date;
 import java.util.HashMap;

@@ -9,8 +9,6 @@ import org.fogbowcloud.manager.occi.request.Request;
 
 public interface AccountingPlugin {
 	
-	public static final double UNDEFINED = -1;
-
 	public void update(List<Request> requests, List<ServedRequest> servedRequest);
 
 	public Map<String, ResourceUsage> getUsage(List<String> members);

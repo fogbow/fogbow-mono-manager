@@ -1,6 +1,5 @@
 package org.fogbowcloud.manager.core.plugins.accounting;
 
-import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,16 +15,13 @@ import org.fogbowcloud.manager.occi.request.Request;
 
 public class FCUAccountingPlugin implements AccountingPlugin {
 	
-	long lastUpdate;
-
+	private long lastUpdate;
 	private BenchmarkingPlugin benchmarkingPlugin;
-	//TODO this map should be removed from code and getting directly from BD
-	private Map<String, ResourceUsage> memberUsage = new HashMap<String, ResourceUsage>();
 	private DateUtils dateUtils;
+	private DataStore db;
+	
 	private static final Logger LOGGER = Logger.getLogger(FCUAccountingPlugin.class);
 	
-	private DataStore database;
-
 	public FCUAccountingPlugin(Properties properties, BenchmarkingPlugin benchmarkingPlugin){		
 		this(properties, benchmarkingPlugin, new DateUtils());
 	}
@@ -35,19 +31,18 @@ public class FCUAccountingPlugin implements AccountingPlugin {
 		this.dateUtils = dateUtils;
 		this.lastUpdate = dateUtils.currentTimeMillis();
 		
-//		database = new Database(properties);
+		db = new DataStore(properties);
 	}
 	
 	@Override
-	public void update(List<Request> fulfilledRequests, List<ServedRequest> servedRequests) {
-		
-//		Map<String, ResourceUsage> memberUsage = new HashMap<String, ResourceUsage>();
-		LOGGER.debug("Updating account with fulfilledRequests=" + fulfilledRequests
-				+ ", and servedRequests=" + servedRequests);		
+	public void update(List<Request> requests, List<ServedRequest> servedRequests) {
+		LOGGER.debug("Updating account with requests=" + requests + ", and servedRequests="
+				+ servedRequests);		
 		long now = dateUtils.currentTimeMillis();		
 		long updatingInterval = TimeUnit.MILLISECONDS.toMinutes(now - lastUpdate);
 		LOGGER.debug("updating interval=" + updatingInterval);
 		
+		Map<String, ResourceUsage> usageOfMembers = new HashMap<String, ResourceUsage>();
 		// donating	
 		for (ServedRequest servedRequest : servedRequests) {
 			double instancePower = benchmarkingPlugin.getPower(servedRequest.getInstanceId());
@@ -57,23 +52,23 @@ public class FCUAccountingPlugin implements AccountingPlugin {
 			LOGGER.debug("donation interval=" + donationInterval);
 			
 			String memberId = servedRequest.getMemberId();
-			if (!memberUsage.containsKey(memberId)) {
-				memberUsage.put(memberId, new ResourceUsage(memberId));
+			if (!usageOfMembers.containsKey(memberId)) {
+				usageOfMembers.put(memberId, new ResourceUsage(memberId));
 			}
 			
 			if (donationInterval < updatingInterval) {
-				memberUsage.get(memberId).addDonation(donationInterval * instancePower);
+				usageOfMembers.get(memberId).addDonation(donationInterval * instancePower);
 			} else {
-				memberUsage.get(memberId).addDonation(updatingInterval * instancePower);
+				usageOfMembers.get(memberId).addDonation(updatingInterval * instancePower);
 			}
 		}
 
 		// consumption
-		for (Request request : fulfilledRequests) {
+		for (Request request : requests) {
 			String memberId = request.getMemberId();
 			if (memberId != null) {
-				if (!memberUsage.containsKey(memberId)) {
-					memberUsage.put(memberId, new ResourceUsage(memberId));
+				if (!usageOfMembers.containsKey(memberId)) {
+					usageOfMembers.put(memberId, new ResourceUsage(memberId));
 				}
 
 				double instancePower = benchmarkingPlugin.getPower(request.getInstanceId());
@@ -81,35 +76,29 @@ public class FCUAccountingPlugin implements AccountingPlugin {
 				LOGGER.debug("consumption interval=" + consumptionInterval);
 
 				if (consumptionInterval < updatingInterval) {
-					memberUsage.get(memberId).addConsumption(
+					usageOfMembers.get(memberId).addConsumption(
 							consumptionInterval * instancePower);
 				} else {
-					memberUsage.get(memberId).addConsumption(
+					usageOfMembers.get(memberId).addConsumption(
 							updatingInterval * instancePower);
 				}
 			}
 		}
 	
-		LOGGER.debug("current usage of members=" + memberUsage);
-//		try {
-//			database.updateMembers(memberUsage);
-//		} catch (SQLException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-		
-		this.lastUpdate = now;
+		LOGGER.debug("current usage of members=" + usageOfMembers);
+
+		if (usageOfMembers.isEmpty() || db.updateMembers(usageOfMembers)) {
+			this.lastUpdate = now;
+			LOGGER.debug("Updating lastUpdate to " + this.lastUpdate);
+		}
 	}
 
 	@Override
 	public Map<String, ResourceUsage> getUsage(List<String> members) {
-		//TODO getting memberUsage map from BD here
-		Map<String, ResourceUsage> toReturn = new HashMap<String, ResourceUsage>();
-		for (String memberId : members) {
-			if (memberUsage.containsKey(memberId)) {
-				toReturn.put(memberId, memberUsage.get(memberId));
-			}
-		}
-		return toReturn;
+		return db.getUsage(members);
+	}
+	
+	public DataStore getDatabase(){
+		return db;
 	}
 }

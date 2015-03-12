@@ -1,4 +1,4 @@
-package org.fogbowcloud.manager.occi.plugins.voms;
+package org.fogbowcloud.manager.core.plugins.voms;
 
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;

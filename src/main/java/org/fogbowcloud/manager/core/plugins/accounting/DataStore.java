@@ -17,27 +17,28 @@ import org.h2.jdbcx.JdbcConnectionPool;
 
 public class DataStore {
 
-	private static final String TABLE_NAME = "usage";
-	private static final String MEMBER_ID = "member_id";
-	private static final String CONSUMED = "consumed";
-	private static final String DONATED = "donated";
+	protected static final String TABLE_NAME = "usage";
+	protected static final String MEMBER_ID = "member_id";
+	protected static final String CONSUMED = "consumed";
+	protected static final String DONATED = "donated";
 
 	private static final Logger LOGGER = Logger.getLogger(DataStore.class);
 
-	private String dataStorePath;
+	private String dataStoreURL;
 	private JdbcConnectionPool cp;
 
 	public DataStore(Properties properties) {
-		this.dataStorePath = properties
-				.getProperty(ConfigurationConstants.ACCOUNTING_DATASTORE_PATH);
-
+		this.dataStoreURL = properties
+				.getProperty(ConfigurationConstants.ACCOUNTING_DATASTORE_URL_KEY);
+		
 		Statement statement = null;
 		Connection connection = null;
-		try {
+		try {			
+			LOGGER.debug("DatastoreURL: " + dataStoreURL);
+			
 			Class.forName("org.h2.Driver");
-			this.cp = JdbcConnectionPool.create(
-					"jdbc:h2:" + this.dataStorePath, "sa", "");
-
+			this.cp = JdbcConnectionPool.create(dataStoreURL, "sa", "");
+			
 			connection = getConnection();
 			statement = connection.createStatement();
 			statement.execute("CREATE TABLE IF NOT EXISTS " + TABLE_NAME + "("
@@ -55,12 +56,12 @@ public class DataStore {
 	private static final String UPDATE_USAGE_SQL = "UPDATE usage SET consumed = consumed + ?, donated = donated + ? WHERE member_id = ?";
 	private static final String INSERT_USAGE_SQL = "INSERT INTO usage VALUES(?, ?, ?)";
 
-	public boolean updateMembers(Map<String, ResourceUsage> members) {
-
+	public boolean updateMembers(Map<String, ResourceUsage> members) {		
+		LOGGER.debug("Updating members usage into database. members=" + members);
+		
 		PreparedStatement updateStatement = null;
 		PreparedStatement insertStatement = null;
 		Connection connection = null;
-
 		try {
 			connection = getConnection();
 			connection.setAutoCommit(false);
@@ -99,7 +100,9 @@ public class DataStore {
 		} catch (SQLException e) {
 			LOGGER.error("Couldn't account members' usage.", e);
 			try {
-				connection.rollback();
+				if (connection != null) {
+					connection.rollback();
+				}
 			} catch (SQLException e1) {
 				LOGGER.error("Couldn't rollback transaction.", e1);
 			}
@@ -120,6 +123,7 @@ public class DataStore {
 	}
 
 	public Map<String, ResourceUsage> getUsage(List<String> memberIds) {
+		LOGGER.debug("Getting usage of members: " + memberIds);
 		if (memberIds == null || memberIds.isEmpty()) {
 			return new HashMap<String, ResourceUsage>();
 		}
@@ -147,6 +151,7 @@ public class DataStore {
 				resourceUsage.addDonation(rs.getDouble(DONATED));
 				map.put(rs.getString(MEMBER_ID), resourceUsage);
 			}
+			LOGGER.debug("Map toReturn: " + map);
 			return map;
 		} catch (SQLException e) {
 			LOGGER.error("Couldn't get members' usage.", e);
@@ -193,32 +198,8 @@ public class DataStore {
 		}
 	}
 
-	/**
-	 * @return the dataStorageFieldMemberId
-	 */
-	public static String getDatabaseFieldMemberId() {
-		return MEMBER_ID;
-	}
-
-	/**
-	 * @return the dataStorageFieldConsumed
-	 */
-	public static String getDatabaseFieldConsumed() {
-		return CONSUMED;
-	}
-
-	/**
-	 * @return the dataStorageFieldDonated
-	 */
-	public static String getDatabaseFieldDonated() {
-		return DONATED;
-	}
-
-	/**
-	 * @return the dataStorageTableName
-	 */
-	public String getDatabaseTableName() {
-		return TABLE_NAME;
+	public void dispose(){
+		cp.dispose();
 	}
 
 }

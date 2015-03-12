@@ -1,6 +1,7 @@
-package org.fogbowcloud.manager.occi.plugins.accounting;
+package org.fogbowcloud.manager.core.plugins.accounting;
 
 import java.io.File;
+import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -9,7 +10,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.accounting.DataStore;
 import org.fogbowcloud.manager.core.plugins.accounting.ResourceUsage;
 import org.junit.After;
@@ -21,7 +24,8 @@ public class TestDataStore {
 	
 	private static final Logger LOGGER = Logger.getLogger(TestDataStore.class);
 	
-	private final double acceptedError = 0.01; 
+	private final double ACCEPTABLE_ERROR = 0.01; 
+	private final String DATASTORE_PATH = "src/test/resources/accounting/";
 	
 	Properties properties = null;
 	DataStore db = null; 
@@ -30,16 +34,15 @@ public class TestDataStore {
 	public void initialize() {		
 		LOGGER.debug("Creating data store.");
 		properties = new Properties();
-		properties.put("accounting_datastore_path", System.getProperty("user.dir")+"/reputations");
+		properties.put(ConfigurationConstants.ACCOUNTING_DATASTORE_URL_KEY, "jdbc:h2:mem:"
+				+ new File(DATASTORE_PATH).getAbsolutePath() + "usage");
+
 		db = new DataStore(properties);
 	}
 	
 	@After
-	public void tearDown(){
-		File file = new File(System.getProperty("user.dir")+"/reputations.mv.db");		
-		if(file.delete()){
-			LOGGER.debug("Data store is removed.");
-		}
+	public void tearDown() throws IOException{
+		FileUtils.cleanDirectory(new File (DATASTORE_PATH));
 	}
 	
 	@Test
@@ -55,11 +58,11 @@ public class TestDataStore {
 		
 		Assert.assertTrue(db.updateMembers(members));
 		
-		String sql = "select * from " + db.getDatabaseTableName()+ " where " + DataStore.getDatabaseFieldMemberId()+ "='" + memberIdM3 + "'";
+		String sql = "select * from " + DataStore.TABLE_NAME + " where " + DataStore.MEMBER_ID+ "='" + memberIdM3 + "'";
 		ResultSet rs = db.getConnection().createStatement().executeQuery(sql);
 		rs.next();
-		Assert.assertEquals(10, rs.getDouble(DataStore.getDatabaseFieldConsumed()), acceptedError);	
-		Assert.assertEquals(10, rs.getDouble(DataStore.getDatabaseFieldDonated()), acceptedError);
+		Assert.assertEquals(10, rs.getDouble(DataStore.CONSUMED), ACCEPTABLE_ERROR);	
+		Assert.assertEquals(10, rs.getDouble(DataStore.DONATED), ACCEPTABLE_ERROR);
 	}
 	
 	@Test
@@ -78,11 +81,11 @@ public class TestDataStore {
 		members.put(memberIdM5, resourceUsageM5);		
 		Assert.assertTrue(db.updateMembers(members));
 		
-		String sql = "select * from " + db.getDatabaseTableName()+ " where " + DataStore.getDatabaseFieldMemberId()+ "='" + memberIdM5 + "'";
+		String sql = "select * from " + DataStore.TABLE_NAME + " where " + DataStore.MEMBER_ID + "='" + memberIdM5 + "'";
 		ResultSet rs = db.getConnection().createStatement().executeQuery(sql);
 		rs.next();
-		Assert.assertEquals(5, rs.getDouble(DataStore.getDatabaseFieldConsumed()), acceptedError);	
-		Assert.assertEquals(5, rs.getDouble(DataStore.getDatabaseFieldDonated()), acceptedError); 
+		Assert.assertEquals(5, rs.getDouble(DataStore.CONSUMED), ACCEPTABLE_ERROR);	
+		Assert.assertEquals(5, rs.getDouble(DataStore.DONATED), ACCEPTABLE_ERROR); 
 	}
 	
 	@Test
@@ -114,10 +117,10 @@ public class TestDataStore {
 		memberIds.add(memberIdM7);		
 		
 		members = db.getUsage(memberIds);
-		Assert.assertEquals(5, members.get(memberIdM6).getConsumed(), acceptedError);
-		Assert.assertEquals(5, members.get(memberIdM6).getDonated(), acceptedError);
-		Assert.assertEquals(10, members.get(memberIdM7).getConsumed(), acceptedError);
-		Assert.assertEquals(10, members.get(memberIdM7).getDonated(), acceptedError);
+		Assert.assertEquals(5, members.get(memberIdM6).getConsumed(), ACCEPTABLE_ERROR);
+		Assert.assertEquals(5, members.get(memberIdM6).getDonated(), ACCEPTABLE_ERROR);
+		Assert.assertEquals(10, members.get(memberIdM7).getConsumed(), ACCEPTABLE_ERROR);
+		Assert.assertEquals(10, members.get(memberIdM7).getDonated(), ACCEPTABLE_ERROR);
 	}
 
 }

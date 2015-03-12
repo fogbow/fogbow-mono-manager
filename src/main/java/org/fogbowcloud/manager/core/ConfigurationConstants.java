@@ -55,10 +55,10 @@ public class ConfigurationConstants {
 	public static final String IMAGE_STORAGE_PLUGIN_CLASS = "image_storage_class";
 	
 	//benchmarking
-	public static final String BENCHMARKING_PLUGIN_CLASS = "benchmarking_class";
+	public static final String BENCHMARKING_PLUGIN_CLASS_KEY = "benchmarking_class";
 	
 	//accounting
-	public static final String ACCOUNTING_PLUGIN_CLASS = "accounting_class";
-	public static final String ACCOUNTING_DATASTORE_PATH = "accounting_datastore_path";
-	
+	public static final String ACCOUNTING_PLUGIN_CLASS_KEY = "accounting_class";
+	public static final String ACCOUNTING_DATASTORE_URL_KEY = "accounting_datastore_url";
+	public static final String ACCOUNTING_UPDATE_PERIOD_KEY = "accounting_update_period";	
 }

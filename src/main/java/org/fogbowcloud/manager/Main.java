@@ -1,7 +1,6 @@
 package org.fogbowcloud.manager;
 
 import java.io.FileInputStream;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Properties;
 
 import org.apache.log4j.ConsoleAppender;
@@ -16,7 +15,6 @@ import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
-import org.fogbowcloud.manager.core.plugins.accounting.DataStore;
 import org.fogbowcloud.manager.core.plugins.accounting.FCUAccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.benchmarking.FCUStaticBenchmarkingPlugin;
 import org.fogbowcloud.manager.core.plugins.egi.EgiImageStoragePlugin;
@@ -97,22 +95,20 @@ public class Main {
 			imageStoragePlugin = new EgiImageStoragePlugin(properties, computePlugin);
 			LOGGER.warn("Image Storage plugin not specified in properties. Using the default one.", e);
 		}
-		
-		
+				
 		BenchmarkingPlugin benchmarkingPlugin = null;
 		try {
 			benchmarkingPlugin = (BenchmarkingPlugin) createInstance(
-					ConfigurationConstants.BENCHMARKING_PLUGIN_CLASS, properties);
+					ConfigurationConstants.BENCHMARKING_PLUGIN_CLASS_KEY, properties);
 		} catch (Exception e) {
 			benchmarkingPlugin = new FCUStaticBenchmarkingPlugin(properties);
 			LOGGER.warn("Benchmarking plugin not specified in properties. Using the default one.", e);
 		}
-		
-		
+				
 		AccountingPlugin accountingPlugin = null;
 		try {
 			accountingPlugin = (AccountingPlugin) createInstanceWithBenchmarkingPlugin(
-					ConfigurationConstants.ACCOUNTING_PLUGIN_CLASS, properties, benchmarkingPlugin);
+					ConfigurationConstants.ACCOUNTING_PLUGIN_CLASS_KEY, properties, benchmarkingPlugin);
 		} catch (Exception e) {
 			accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin);
 			LOGGER.warn("Accounting plugin not specified in properties. Using the default one.", e);
@@ -128,7 +124,6 @@ public class Main {
 		facade.setBenchmarkingPlugin(benchmarkingPlugin);
 		facade.setAccountingPlugin(accountingPlugin);
 		
-
 		ManagerXmppComponent xmpp = new ManagerXmppComponent(
 				properties.getProperty(ConfigurationConstants.XMPP_JID_KEY),
 				properties.getProperty(ConfigurationConstants.XMPP_PASS_KEY),

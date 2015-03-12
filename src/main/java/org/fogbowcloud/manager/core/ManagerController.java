@@ -60,12 +60,14 @@ public class ManagerController {
 	private static final long DEFAULT_INSTANCE_MONITORING_PERIOD = 120000; // 2 minutes
 	private static final long DEFAULT_SERVED_REQUEST_MONITORING_PERIOD = 120000; // 2 minutes
 	private static final long DEFAULT_GARBAGE_COLLECTOR_PERIOD = 240000; // 4 minutes
+	private static final long DEFAULT_ACCOUNTING_UPDATE_PERIOD = 300000; // 5 minutes
 																			
 	private final ManagerTimer requestSchedulerTimer;
 	private final ManagerTimer tokenUpdaterTimer;
 	private final ManagerTimer instanceMonitoringTimer;
 	private final ManagerTimer servedRequestMonitoringTimer;
 	private final ManagerTimer garbageCollectorTimer;
+	private final ManagerTimer accountingUpdaterTimer;
 
 	private Token federationUserToken;
 	private final List<FederationMember> members = Collections.synchronizedList(new LinkedList<FederationMember>());
@@ -101,12 +103,14 @@ public class ManagerController {
 			this.instanceMonitoringTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
 			this.servedRequestMonitoringTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
 			this.garbageCollectorTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
+			this.accountingUpdaterTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
 		} else {
 			this.requestSchedulerTimer = new ManagerTimer(executor);
 			this.tokenUpdaterTimer = new ManagerTimer(executor);
 			this.instanceMonitoringTimer = new ManagerTimer(executor);
 			this.servedRequestMonitoringTimer = new ManagerTimer(executor);
 			this.garbageCollectorTimer = new ManagerTimer(executor);
+			this.accountingUpdaterTimer = new ManagerTimer(executor);
 		}
 	}
 
@@ -116,8 +120,37 @@ public class ManagerController {
 	
 	public void setAccountingPlugin(AccountingPlugin accountingPlugin) {
 		this.accountingPlugin = accountingPlugin;
+		// accounging updater may starting only after set accounting plugin
+		if (!accountingUpdaterTimer.isScheduled()) {
+			triggerAccountingUpdater();
+		}
 	}
 	
+	private void triggerAccountingUpdater() {
+		String accountingUpdaterPeriodStr = properties
+				.getProperty(ConfigurationConstants.ACCOUNTING_UPDATE_PERIOD_KEY);
+		final long accountingUpdaterPeriod = accountingUpdaterPeriodStr == null ? DEFAULT_ACCOUNTING_UPDATE_PERIOD
+				: Long.valueOf(accountingUpdaterPeriodStr);
+		
+		accountingUpdaterTimer.scheduleAtFixedRate(new TimerTask() {
+			@Override
+			public void run() {
+				updateAccounting();
+			}
+		}, 0, accountingUpdaterPeriod);
+	}
+	
+	private void updateAccounting() {
+		LOGGER.info("Updating accounting.");
+		List<Request> requestsWithInstances = requests.get(RequestState.FULFILLED);
+		requestsWithInstances.addAll(requests.get(RequestState.DELETED));		
+		ArrayList<ServedRequest> servedRequests = new ArrayList<ServedRequest>(
+				instancesForRemoteMembers.values());
+		
+		LOGGER.debug("requests=" + requestsWithInstances + ", servedRequests=" + servedRequests);
+		accountingPlugin.update(requestsWithInstances, servedRequests);
+	}
+
 	public void setAuthorizationPlugin(AuthorizationPlugin authorizationPlugin) {
 		this.authorizationPlugin = authorizationPlugin;
 	}
@@ -410,6 +443,10 @@ public class ManagerController {
 	}
 
 	private void instanceRemoved(Request request) {
+		if (!isLocal(request)) {
+			updateAccounting();
+			benchmarkingPlugin.remove(request.getInstanceId());
+		}
 		request.setInstanceId(null);
 		request.setMemberId(null);
 		request.setFulfilledByFederationUser(false);		
@@ -613,6 +650,9 @@ public class ManagerController {
 	public void removeInstanceForRemoteMember(String instanceId) {
 		LOGGER.info("Removing instance " + instanceId + " for remote member.");
 		computePlugin.removeInstance(getFederationUserToken(), instanceId);
+		
+		updateAccounting();
+		benchmarkingPlugin.remove(instanceId);
 		instancesForRemoteMembers.remove(instanceId);
 		
 		if (instancesForRemoteMembers.isEmpty()) {
