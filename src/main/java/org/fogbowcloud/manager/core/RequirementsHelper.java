@@ -187,7 +187,7 @@ public class RequirementsHelper {
 		env.push((RecordExpr) new ClassAdParser("[" + GLUE_LOCATION_TERM + " = " + valueLocation
 				+ "]").parse());
 
-		Op opForAtt = normalizeOP(expr, GLUE_LOCATION_TERM);
+		Op opForAtt = normalizeOPTypeTwo(expr, GLUE_LOCATION_TERM);
 		
 		return opForAtt.eval(env).isTrue();
 	}

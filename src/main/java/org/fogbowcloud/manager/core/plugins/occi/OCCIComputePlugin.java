@@ -28,7 +28,6 @@ import org.apache.http.params.CoreProtocolPNames;
 import org.apache.http.params.HttpParams;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
-import org.fogbowcloud.manager.core.RequirementsHelper;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
@@ -110,11 +109,12 @@ public class OCCIComputePlugin implements ComputePlugin {
 		}
 		occiCategories.add(new Category(localImageId, osScheme, RequestConstants.MIXIN_CLASS));
 				
-//		updateFlavors(token);
 		// Finding and adding flavor
-//		String flavorRef = RequirementsHelper.findFlavor(getFlavors(),
-//				xOCCIAtt.get(RequestAttribute.REQUIREMENTS.getValue()));
-//		occiCategories.add(new Category(flavorRef, resourceScheme, RequestConstants.MIXIN_CLASS));
+		
+		Flavor flavorRef = getFlavor(token, xOCCIAtt.get(RequestAttribute.REQUIREMENTS.getValue()));
+		if (flavorRef != null) {
+			occiCategories.add(new Category(flavorRef.getId(), resourceScheme, RequestConstants.MIXIN_CLASS));						
+		}
 		
 		for (Category category : requestCategories) {
 			if (fogTermToCategory.get(category.getTerm()) == null) {

@@ -14,6 +14,7 @@ import org.apache.http.ParseException;
 import org.fogbowcloud.manager.core.RequirementsHelper;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.plugins.openstack.OpenStackConfigurationConstants;
+import org.fogbowcloud.manager.core.plugins.openstack.OpenStackNovaV2ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.openstack.OpenStackOCCIComputePlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.core.Category;
@@ -32,6 +33,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.restlet.Request;
 import org.restlet.Response;
 import org.restlet.data.Method;
@@ -697,6 +699,54 @@ public class TestOCCIComputeOpenStack {
 		Assert.assertEquals(1, instanceLocations.size());
 	}
 
+	@Test
+	public void testUpdateFlavor() {
+		Properties properties = new Properties();
+		properties.put(OpenStackConfigurationConstants.COMPUTE_NOVAV2_URL_KEY,
+				PluginHelper.COMPUTE_NOVAV2_URL);
+		properties.put(OpenStackConfigurationConstants.COMPUTE_NOVAV2_IMAGE_PREFIX_KEY
+				+ PluginHelper.LINUX_X86_TERM, "imageid");
+		properties.put(OpenStackConfigurationConstants.COMPUTE_OCCI_URL_KEY,
+				PluginHelper.COMPUTE_OCCI_URL);
+		properties.put(OpenStackConfigurationConstants.COMPUTE_OCCI_INSTANCE_SCHEME_KEY,
+				OCCIComputeApplication.INSTANCE_SCHEME);
+		properties.put(OpenStackConfigurationConstants.COMPUTE_OCCI_OS_SCHEME_KEY,
+				OCCIComputeApplication.OS_SCHEME);
+		properties.put(OpenStackConfigurationConstants.COMPUTE_OCCI_RESOURCE_SCHEME_KEY,
+				OCCIComputeApplication.RESOURCE_SCHEME);
+		properties.put(OpenStackConfigurationConstants.COMPUTE_OCCI_FLAVOR_SMALL_KEY,
+				OCCIComputeApplication.SMALL_FLAVOR_TERM);
+		properties.put(OpenStackConfigurationConstants.COMPUTE_OCCI_FLAVOR_MEDIUM_KEY,
+				OCCIComputeApplication.MEDIUM_FLAVOR_TERM);
+		properties.put(OpenStackConfigurationConstants.COMPUTE_OCCI_FLAVOR_LARGE_KEY,
+				OCCIComputeApplication.MEDIUM_FLAVOR_TERM);
+		properties.put(OpenStackConfigurationConstants.COMPUTE_OCCI_IMAGE_PREFIX
+				+ PluginHelper.LINUX_X86_TERM, PluginHelper.CIRROS_IMAGE_TERM);
+		OpenStackOCCIComputePlugin openStackOCCIComputePlugin = new OpenStackOCCIComputePlugin(
+				properties);
+		OpenStackNovaV2ComputePlugin openStackNovaV2ComputePlugin = Mockito
+				.mock(OpenStackNovaV2ComputePlugin.class);
+		List<Flavor> flavors = new ArrayList<Flavor>();
+		openStackOCCIComputePlugin.updateFlavors(defaultToken);
+		Assert.assertEquals(0, openStackOCCIComputePlugin.getFlavors().size());		
+		
+		// Updating Flavor
+		flavors.add(new Flavor("1", "", "", ""));
+		flavors.add(new Flavor("2", "", "", ""));
+		flavors.add(new Flavor("3", "", "", ""));
+		Mockito.when(openStackNovaV2ComputePlugin.getFlavors()).thenReturn(flavors);
+		openStackOCCIComputePlugin.setOpenStackNovaV2ComputePlugin(openStackNovaV2ComputePlugin);
+		openStackOCCIComputePlugin.updateFlavors(defaultToken);
+		Assert.assertEquals(flavors.size(), openStackOCCIComputePlugin.getFlavors().size());
+		
+		// Flavors null
+		Mockito.when(openStackNovaV2ComputePlugin.getFlavors()).thenReturn(null);
+		openStackOCCIComputePlugin.setOpenStackNovaV2ComputePlugin(openStackNovaV2ComputePlugin);
+		openStackOCCIComputePlugin.updateFlavors(defaultToken);
+		Assert.assertEquals(3, openStackOCCIComputePlugin.getFlavors().size());
+	}
+	
+	@SuppressWarnings("unchecked")
 	private Series<Header> getRequestHeaders(Request request) {
 		Series<Header> requestHeaders = (Series<Header>) request.getAttributes().get(
 				RESTLET_HEADERS_ATT_KEY);

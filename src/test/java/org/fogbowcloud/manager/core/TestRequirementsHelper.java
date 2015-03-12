@@ -44,16 +44,6 @@ public class TestRequirementsHelper {
 				requirementsHelper.normalizeLocationToCheck(valueExpected));
 		Assert.assertNull(requirementsHelper.normalizeLocationToCheck(null));
 	}
-	
-//	@SuppressWarnings("static-access")
-//	@Test
-//	public void TestNormalizeOp() {
-//		String requirementsStr = "Glue2CloudComputeInstanceTypevCPU >= 0 && Glue2CloudComputeInstanceTypeDisk >= 1 && Glue2CloudComputeInstanceTypeRAM >= 100 && Glue2CloudComputeInstanceTypeLocation == \"manager-taioba-test.lsd.ufcg.edu.br\"";
-//		
-//		ClassAdParser classAdParser = new ClassAdParser(requirementsStr);
-//		Op expr = (Op) classAdParser.parse();
-//		System.out.println(requirementsHelper.normalizeOPToCheckWithoutLocation(expr));	
-//	}
 
 	@SuppressWarnings("static-access")
 	@Test
@@ -69,6 +59,10 @@ public class TestRequirementsHelper {
 		value = "valueCorrect";
 		requirementsStr = RequirementsHelper.GLUE_LOCATION_TERM + "!=" + "\"" + value + "\"";
 		Assert.assertFalse(requirementsHelper.checkLocation(requirementsStr, value));
+		
+		value = "valueCorrect";
+		requirementsStr = "(" + RequirementsHelper.GLUE_LOCATION_TERM + "!=" + "\"" + value + "\")" + "||X==1";
+		Assert.assertFalse(requirementsHelper.checkLocation(requirementsStr, value));		
 	}
 
 	@Test
@@ -197,5 +191,18 @@ public class TestRequirementsHelper {
 		requirementsStr = attrName + "<0&&" + attrName + "<=10";
 		Assert.assertEquals("-1",
 				RequirementsHelper.getValueSmallerPerAttribute(requirementsStr, attrName));
+	}
+	
+	// Review
+	@Test
+	public void testNormalizeOp() {		
+		String requirementsStr = "(((X>1) && (Y==1)) || Y<10) && Y==10 && X>10";
+		Op normalizeOPTypeTwo = RequirementsHelper.normalizeOPTypeTwo(toOp(requirementsStr), "X");
+		Assert.assertEquals("((X>1)&&(X>10))", normalizeOPTypeTwo.toString());
+	}
+	
+	private Op toOp(String requirementsStr) {
+		ClassAdParser classAdParser = new ClassAdParser(requirementsStr);
+		return (Op) classAdParser.parse();		 
 	}
 }

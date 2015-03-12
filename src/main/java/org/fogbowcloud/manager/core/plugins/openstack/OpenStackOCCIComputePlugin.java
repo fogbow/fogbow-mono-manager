@@ -11,6 +11,8 @@ import java.util.Set;
 
 import org.apache.http.Header;
 import org.apache.http.message.BasicHeader;
+import org.fogbowcloud.manager.core.RequirementsHelper;
+import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.occi.OCCIComputePlugin;
 import org.fogbowcloud.manager.occi.core.Category;
@@ -43,6 +45,11 @@ public class OpenStackOCCIComputePlugin extends OCCIComputePlugin{
 		openStackNovaV2ComputePlugin = new OpenStackNovaV2ComputePlugin(properties);
 		super.fogTermToCategory.put(RequestConstants.PUBLIC_KEY_TERM, new Category(
 				PUBLIC_KEY_TERM, PUBLIC_KEY_SCHEME, RequestConstants.MIXIN_CLASS));
+	}
+	
+	public void setOpenStackNovaV2ComputePlugin(
+			OpenStackNovaV2ComputePlugin openStackNovaV2ComputePlugin) {
+		this.openStackNovaV2ComputePlugin = openStackNovaV2ComputePlugin;
 	}
 	
 	@Override
@@ -191,5 +198,19 @@ public class OpenStackOCCIComputePlugin extends OCCIComputePlugin{
 	
 	public String getImageId(Token token, String imageName) {
 		return openStackNovaV2ComputePlugin.getImageId(token, imageName);
+	}
+	
+	public void updateFlavors(Token token) {
+		openStackNovaV2ComputePlugin.updateFlavors(token);
+		List<Flavor> flavors = openStackNovaV2ComputePlugin.getFlavors();
+		if (flavors != null) {
+			setFlavors(flavors);			
+		}
+	}
+
+	@Override
+	public Flavor getFlavor(Token token, String requirements) {
+		updateFlavors(token);		
+		return RequirementsHelper.findFlavor(getFlavors(), requirements);
 	}
 }
