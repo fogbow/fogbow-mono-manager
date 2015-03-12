@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Random;
+import java.util.Set;
 import java.util.TimerTask;
 import java.util.UUID;
 import java.util.concurrent.Executors;
@@ -22,6 +23,7 @@ import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.core.model.FederationMember;
+import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.RemoteRequest;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
@@ -44,6 +46,7 @@ import org.fogbowcloud.manager.occi.request.RequestState;
 import org.fogbowcloud.manager.occi.request.RequestType;
 import org.fogbowcloud.manager.xmpp.AsyncPacketSender;
 import org.fogbowcloud.manager.xmpp.ManagerPacketHelper;
+import org.json.JSONObject;
 import org.restlet.Response;
 
 public class ManagerController {
@@ -923,5 +926,29 @@ public class ManagerController {
 			allFullInstances.add(instance);
 		}
 		return allFullInstances;
+	}
+
+	public List<Flavor> getFlavors() {		
+		List<Flavor> flavors = new ArrayList<Flavor>();
+		for (Object objectKey: this.properties.keySet()) {
+			String key = objectKey.toString();
+			if (key.startsWith(ConfigurationConstants.PREFIX_FLAVORS)) {
+				String value = (String) this.properties.get(key);
+				String cpu = getAttValue("cpu", value);
+				String mem = getAttValue("mem", value);				
+				flavors.add(new Flavor(key.replace(ConfigurationConstants.PREFIX_FLAVORS, ""), cpu, mem, "0"));
+			}			
+		}
+		return flavors;
+	}
+	
+	protected static String getAttValue(String attName, String flavorSpec) {
+		JSONObject root;
+		try {
+			root = new JSONObject(flavorSpec);
+			return root.getString(attName);
+		} catch (Exception e) {
+			return null;
+		}
 	}
 }

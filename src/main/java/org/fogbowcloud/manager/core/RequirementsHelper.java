@@ -6,7 +6,6 @@ import java.util.Comparator;
 import java.util.List;
 
 import org.fogbowcloud.manager.core.model.Flavor;
-import org.fogbowcloud.manager.occi.request.RequestAttribute;
 
 import condor.classad.AttrRef;
 import condor.classad.ClassAdParser;
@@ -16,8 +15,8 @@ import condor.classad.Expr;
 import condor.classad.Op;
 import condor.classad.RecordExpr;
 
-public class RequirementsHelper {
 
+public class RequirementsHelper {
 	public static final String GLUE_LOCATION_TERM = "Glue2CloudComputeInstanceTypeLocation";
 	public static final String GLUE_VCPU_TERM = "Glue2CloudComputeInstanceTypevCPU";
 	public static final String GLUE_DISK_TERM = "Glue2CloudComputeInstanceTypeDisk";
@@ -36,11 +35,42 @@ public class RequirementsHelper {
 		}
 	}
 
+	public static String getValueSmallerPerAttribute(String requirementsStr, String attrName) {
+		ClassAdParser classAdParser = new ClassAdParser(requirementsStr);		
+		Op expr = (Op) classAdParser.parse();		
+		Op opForAtt = normalizeOPTypeTwo(expr, attrName);
+		
+		List<Integer> values = new ArrayList<Integer>();
+		List<ValueAndOperator> findValuesInRequiremets = findValuesInRequiremets(expr, attrName);
+		for (ValueAndOperator valueAndOperator : findValuesInRequiremets) {
+			int value = Integer.parseInt(valueAndOperator.getValue());
+			if (checkValue(opForAtt, attrName, String.valueOf(value - 1))) {
+				values.add(value - 1);
+			} else if (checkValue(opForAtt, attrName, String.valueOf(value))) {
+				values.add(value);
+			} else if (checkValue(opForAtt, attrName, String.valueOf(value + 1))) {
+				values.add(value + 1);
+			}
+		}
+		
+		Collections.sort(values);
+		
+		if (values.size() > 0) {
+			return String.valueOf(values.get(0));			
+		}
+		return null;
+	}
+	
+	private static boolean checkValue(Op op, String attrName, String value) {
+		Env env = new Env();
+		env.push((RecordExpr) new ClassAdParser("[" + attrName + " = " + value + "]").parse());
+		return op.eval(env).isTrue();		
+	}
+	
 	public static boolean checkFlavorPerRequirements(Flavor flavor, String requirementsStr) {
 		try {
 			ClassAdParser classAdParser = new ClassAdParser(requirementsStr);		
 			Op expr = (Op) classAdParser.parse();
-//			expr = RequirementsHelper.normalizeOP(expr, RequestAttribute.REQUIREMENTS.getValue());			
 			
 			List<String> listSearchAttr = new ArrayList<String>();
 			listSearchAttr.add(RequirementsHelper.GLUE_DISK_TERM);
@@ -108,24 +138,29 @@ public class RequirementsHelper {
 		return new Op(expr.op, left, right);
 	}
 	
-	public static Op normalizeOPToCheckWithoutLocation(Op expr) {
+	public static Op normalizeOPTypeTwo(Op expr, String attName) {
 		if (expr.arg1 instanceof AttrRef) {
 			AttrRef attr = (AttrRef) expr.arg1;
-			if (!attr.name.rawString().equals(RequestAttribute.REQUIREMENTS.getValue())) {
-				return new Op(Op.EQUAL, Constant.TRUE, Constant.TRUE);
+			if (!attr.name.rawString().equals(attName)) {
+				return null;
 			}
 			return expr;
 		}
 		Expr left = expr.arg1;
 		if (left instanceof Op) {
-			left = normalizeOPToCheckWithoutLocation((Op) expr.arg1);
+			left = normalizeOPTypeTwo((Op) expr.arg1, attName);
 		}
 		Expr right = expr.arg2;
 		if (right instanceof Op) {
-			right = normalizeOPToCheckWithoutLocation((Op) expr.arg2);
+			right = normalizeOPTypeTwo((Op) expr.arg2, attName);
+		}
+		if (left == null) {
+			return (Op) right;
+		} else if (right == null) {
+			return (Op) left;
 		}
 		return new Op(expr.op, left, right);
-	}	
+	}
 
 	protected static String normalizeLocationToCheck(String location) {
 		if (location == null) {
@@ -153,7 +188,7 @@ public class RequirementsHelper {
 				+ "]").parse());
 
 		Op opForAtt = normalizeOP(expr, GLUE_LOCATION_TERM);
-
+		
 		return opForAtt.eval(env).isTrue();
 	}
 
@@ -181,22 +216,6 @@ public class RequirementsHelper {
 			}
 		}
 		return valuesAndOperator;
-	}
-
-	// TODO Review ! 
-	public static String getAttrValuesByTheName(String requirementsStr, String attrName) {
-		ClassAdParser classAdParser = new ClassAdParser(requirementsStr);
-		Op expr = (Op) classAdParser.parse();
-		List<ValueAndOperator> findValuesInRequiremets = findValuesInRequiremets(expr, attrName);
-
-		String value = null;
-		for (ValueAndOperator valueAndOperator : findValuesInRequiremets) {
-			if (valueAndOperator.getOperator() == RecordExpr.GREATER) {
-				return null;
-			}
-		}
-		
-		return null;
 	}
 
 	public static List<String> getLocationsInRequiremets(String requirementsStr) {

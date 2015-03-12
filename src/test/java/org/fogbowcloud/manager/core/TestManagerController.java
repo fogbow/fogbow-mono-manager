@@ -1586,4 +1586,33 @@ public class TestManagerController {
 			Assert.fail();
 		}
 	}
+	
+	@Test
+	public void testGetFlavors() {
+		List<Flavor> flavors = managerController.getFlavors();
+		String[] verifyFlavors = new String[] { ManagerTestHelper.VALUE_FLAVOR_SMALL,
+				ManagerTestHelper.VALUE_FLAVOR_MEDIUM, ManagerTestHelper.VALUE_FLAVOR_LARGE};
+		for (Flavor flavor : flavors) {
+			boolean thereIs = false;
+			for (String valueFlavor : verifyFlavors) {
+				if (flavor.getMem().equals(ManagerController.getAttValue("mem", valueFlavor))
+						&& flavor.getCpu()
+								.equals(ManagerController.getAttValue("cpu", valueFlavor))) {
+					thereIs = true;
+				}
+			}
+			if (!thereIs) {
+				Assert.fail();
+			}
+		}
+	}
+	
+	@Test
+	public void testGetAttValue() {
+		String cpuValue = "2";
+		String memValue = "10";
+		String flavorSpec = "{cpu=" + cpuValue + ",mem=" + memValue + "}";
+		Assert.assertEquals(cpuValue, ManagerController.getAttValue("cpu", flavorSpec));
+		Assert.assertEquals(memValue, ManagerController.getAttValue("mem", flavorSpec));		
+	}
 }

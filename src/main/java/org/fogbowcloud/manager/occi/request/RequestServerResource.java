@@ -9,6 +9,7 @@ import java.util.Map;
 import org.apache.http.HttpStatus;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.RequirementsHelper;
+import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.occi.OCCIApplication;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
@@ -232,6 +233,8 @@ public class RequestServerResource extends ServerResource {
 		Map<String, String> xOCCIAtt = HeaderUtils.getXOCCIAtributes(req.getHeaders());
 		xOCCIAtt = normalizeXOCCIAtt(xOCCIAtt);
 		
+		xOCCIAtt = normalizeRequirements(categories, xOCCIAtt, application.getFlavors());
+		
 		String authToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse(),
 				application.getAuthenticationURI());
 		
@@ -246,6 +249,49 @@ public class RequestServerResource extends ServerResource {
 					OCCIHeaders.OCCI_ACCEPT));	
 		}
 		return new StringRepresentation(ResponseConstants.OK);
+	}
+
+	static protected Map<String, String> normalizeRequirements(List<Category> categories, Map<String, String> xOCCIAtt, List<Flavor> listFlavorsFogbow) {
+		String requirementsAttr = xOCCIAtt.get(RequestAttribute.REQUIREMENTS.getValue());
+		if (requirementsAttr != null) {
+			if (!RequirementsHelper.checkRequirements(requirementsAttr)) {
+				throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.UNSUPPORTED_ATTRIBUTES);
+			}			
+		}				
+
+		String flavorTerm = null;
+		for (Category category : categories) {
+			if (category.getScheme().equals(RequestConstants.TEMPLATE_RESOURCE_SCHEME)) {
+				flavorTerm = category.getTerm();
+			}
+		}
+		
+		String newRequirements = null;
+		if (flavorTerm != null && !flavorTerm.isEmpty()) {
+			boolean thereIsFlavor = false;
+			for (Flavor flavor : listFlavorsFogbow) {
+				if (flavor.getName().equals(flavorTerm)) {
+					newRequirements = RequirementsHelper.GLUE_MEM_RAM_TERM + ">=" + flavor.getMem()
+							+ "&&" + RequirementsHelper.GLUE_VCPU_TERM + ">=" + flavor.getCpu();
+					thereIsFlavor = true;
+				}
+			}
+			if (!thereIsFlavor) {
+				throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.UNSUPPORTED_ATTRIBUTES);			
+			}
+		}
+		
+		if (requirementsAttr != null && newRequirements != null) {
+			requirementsAttr = "(" + requirementsAttr + ")&&(" + newRequirements + ")";
+		} else if (newRequirements != null) {
+			requirementsAttr = newRequirements;
+		}
+		
+		if (requirementsAttr != null) {
+			xOCCIAtt.put(RequestAttribute.REQUIREMENTS.getValue(), requirementsAttr);			
+		}
+		
+		return xOCCIAtt;
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
@@ -303,14 +349,6 @@ public class RequestServerResource extends ServerResource {
 		HeaderUtils.checkDateValue(defOCCIAtt.get(RequestAttribute.VALID_FROM.getValue()));
 		HeaderUtils.checkDateValue(defOCCIAtt.get(RequestAttribute.VALID_UNTIL.getValue()));
 		HeaderUtils.checkIntegerValue(defOCCIAtt.get(RequestAttribute.INSTANCE_COUNT.getValue()));
-		
-		String requirementsAttr = defOCCIAtt.get(RequestAttribute.REQUIREMENTS.getValue());
-		if (requirementsAttr != null) {
-			if (!RequirementsHelper.checkRequirements(requirementsAttr)) {
-				throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.UNSUPPORTED_ATTRIBUTES);
-			}			
-			defOCCIAtt.put(RequestAttribute.REQUIREMENTS.getValue(), requirementsAttr);
-		}
 
 		LOGGER.debug("Checking if all attributes are supported. OCCI attributes: " + defOCCIAtt);
 

@@ -45,15 +45,15 @@ public class TestRequirementsHelper {
 		Assert.assertNull(requirementsHelper.normalizeLocationToCheck(null));
 	}
 	
-	@SuppressWarnings("static-access")
-	@Test
-	public void TestNormalizeOp() {
-		String requirementsStr = "Glue2CloudComputeInstanceTypevCPU >= 0 && Glue2CloudComputeInstanceTypeDisk >= 1 && Glue2CloudComputeInstanceTypeRAM >= 100 && Glue2CloudComputeInstanceTypeLocation == \"manager-taioba-test.lsd.ufcg.edu.br\"";
-		
-		ClassAdParser classAdParser = new ClassAdParser(requirementsStr);
-		Op expr = (Op) classAdParser.parse();
-		requirementsHelper.normalizeOPToCheckWithoutLocation(expr);		
-	}
+//	@SuppressWarnings("static-access")
+//	@Test
+//	public void TestNormalizeOp() {
+//		String requirementsStr = "Glue2CloudComputeInstanceTypevCPU >= 0 && Glue2CloudComputeInstanceTypeDisk >= 1 && Glue2CloudComputeInstanceTypeRAM >= 100 && Glue2CloudComputeInstanceTypeLocation == \"manager-taioba-test.lsd.ufcg.edu.br\"";
+//		
+//		ClassAdParser classAdParser = new ClassAdParser(requirementsStr);
+//		Op expr = (Op) classAdParser.parse();
+//		System.out.println(requirementsHelper.normalizeOPToCheckWithoutLocation(expr));	
+//	}
 
 	@SuppressWarnings("static-access")
 	@Test
@@ -170,4 +170,32 @@ public class TestRequirementsHelper {
 		Assert.assertEquals(firstValue, requirementsHelper.findFlavor(flavors, requirementsStr)
 				.getId());
 	}	
+	
+	@Test
+	public void testGetValueSmaller() {
+		String attrName = "X";
+		String requirementsStr = attrName + ">1&&" + attrName + ">=10";
+		Assert.assertEquals("10",
+				RequirementsHelper.getValueSmallerPerAttribute(requirementsStr, attrName));
+
+		requirementsStr = attrName + ">1&&" + attrName + ">=10||" + attrName + ">=5";
+		Assert.assertEquals("5",
+				RequirementsHelper.getValueSmallerPerAttribute(requirementsStr, attrName));
+
+		requirementsStr = attrName + ">1&&" + attrName + ">=10 && Y>=12 || (A==\"Test\")";
+		Assert.assertEquals("10",
+				RequirementsHelper.getValueSmallerPerAttribute(requirementsStr, attrName));
+
+		requirementsStr = "(" + attrName + ">1&&" + attrName + ">=10 && Y>=12 || (A==\"Test\")) || D>=10 ";
+		Assert.assertEquals("10",
+				RequirementsHelper.getValueSmallerPerAttribute(requirementsStr, attrName));
+
+		requirementsStr = attrName + "<1&&" + attrName + "<=10";
+		Assert.assertEquals("0",
+				RequirementsHelper.getValueSmallerPerAttribute(requirementsStr, attrName));
+
+		requirementsStr = attrName + "<0&&" + attrName + "<=10";
+		Assert.assertEquals("-1",
+				RequirementsHelper.getValueSmallerPerAttribute(requirementsStr, attrName));
+	}
 }
