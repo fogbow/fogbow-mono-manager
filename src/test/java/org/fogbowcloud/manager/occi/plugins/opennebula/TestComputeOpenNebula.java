@@ -129,8 +129,8 @@ public class TestComputeOpenNebula {
 				INSTANCE_ID);
 		Mockito.when(clientFactory.createImagePool(oneClient)).thenReturn(new ImagePool(oneClient));
 		Mockito.when(clientFactory.createTemplatePool(oneClient)).thenReturn(new TemplatePool(oneClient));
-		properties.put(ConfigurationConstants.OPENNEBULA_TEMPLATES_TYPE,
-				ConfigurationConstants.OPENNEBULA_TEMPLATES_TYPE_ALL);
+		properties.put(OneConfigurationConstants.OPENNEBULA_TEMPLATES_TYPE,
+				OneConfigurationConstants.OPENNEBULA_TEMPLATES_TYPE_ALL);
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
 		
 		List<Flavor> flavors = new ArrayList<Flavor>();
@@ -180,8 +180,8 @@ public class TestComputeOpenNebula {
 		
 		Mockito.when(clientFactory.createImagePool(oneClient)).thenReturn(new ImagePool(oneClient));
 		Mockito.when(clientFactory.createTemplatePool(oneClient)).thenReturn(new TemplatePool(oneClient));
-		properties.put(ConfigurationConstants.OPENNEBULA_TEMPLATES_TYPE,
-				ConfigurationConstants.OPENNEBULA_TEMPLATES_TYPE_ALL);
+		properties.put(OneConfigurationConstants.OPENNEBULA_TEMPLATES_TYPE,
+				OneConfigurationConstants.OPENNEBULA_TEMPLATES_TYPE_ALL);
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
 		
 		// requesting an instance
@@ -208,8 +208,8 @@ public class TestComputeOpenNebula {
 		Mockito.when(clientFactory.createImagePool(oneClient)).thenReturn(new ImagePool(oneClient));
 		Mockito.when(clientFactory.createTemplatePool(oneClient)).thenReturn(new TemplatePool(oneClient));		
 		
-		properties.put(ConfigurationConstants.OPENNEBULA_TEMPLATES_TYPE,
-				ConfigurationConstants.OPENNEBULA_TEMPLATES_TYPE_ALL);
+		properties.put(OneConfigurationConstants.OPENNEBULA_TEMPLATES_TYPE,
+				OneConfigurationConstants.OPENNEBULA_TEMPLATES_TYPE_ALL);
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
 		
 		List<Flavor> flavors = new ArrayList<Flavor>();
@@ -298,8 +298,8 @@ public class TestComputeOpenNebula {
 		Mockito.when(clientFactory.createImagePool(oneClient)).thenReturn(new ImagePool(oneClient));
 		Mockito.when(clientFactory.createTemplatePool(oneClient)).thenReturn(new TemplatePool(oneClient));
 		
-		properties.put(ConfigurationConstants.OPENNEBULA_TEMPLATES_TYPE,
-				ConfigurationConstants.OPENNEBULA_TEMPLATES_TYPE_ALL);
+		properties.put(OneConfigurationConstants.OPENNEBULA_TEMPLATES_TYPE,
+				OneConfigurationConstants.OPENNEBULA_TEMPLATES_TYPE_ALL);
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
 
 		List<Flavor> flavors = new ArrayList<Flavor>();
@@ -347,8 +347,8 @@ public class TestComputeOpenNebula {
 		Mockito.when(clientFactory.createImagePool(oneClient)).thenReturn(new ImagePool(oneClient));
 		Mockito.when(clientFactory.createTemplatePool(oneClient)).thenReturn(new TemplatePool(oneClient));
 		
-		properties.put(ConfigurationConstants.OPENNEBULA_TEMPLATES_TYPE,
-				ConfigurationConstants.OPENNEBULA_TEMPLATES_TYPE_ALL);
+		properties.put(OneConfigurationConstants.OPENNEBULA_TEMPLATES_TYPE,
+				OneConfigurationConstants.OPENNEBULA_TEMPLATES_TYPE_ALL);
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
 		
 		List<Flavor> flavors = new ArrayList<Flavor>();
@@ -409,8 +409,8 @@ public class TestComputeOpenNebula {
 		Mockito.when(clientFactory.createImagePool(oneClient)).thenReturn(new ImagePool(oneClient));
 		Mockito.when(clientFactory.createTemplatePool(oneClient)).thenReturn(new TemplatePool(oneClient));
 		
-		properties.put(ConfigurationConstants.OPENNEBULA_TEMPLATES_TYPE,
-				ConfigurationConstants.OPENNEBULA_TEMPLATES_TYPE_ALL);
+		properties.put(OneConfigurationConstants.OPENNEBULA_TEMPLATES_TYPE,
+				OneConfigurationConstants.OPENNEBULA_TEMPLATES_TYPE_ALL);
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
 		
 		List<Flavor> flavors = new ArrayList<Flavor>();
@@ -515,8 +515,8 @@ public class TestComputeOpenNebula {
 		Mockito.when(clientFactory.createImagePool(oneClient)).thenReturn(new ImagePool(oneClient));
 		Mockito.when(clientFactory.createTemplatePool(oneClient)).thenReturn(new TemplatePool(oneClient));
 		
-		properties.put(ConfigurationConstants.OPENNEBULA_TEMPLATES_TYPE,
-				ConfigurationConstants.OPENNEBULA_TEMPLATES_TYPE_ALL);
+		properties.put(OneConfigurationConstants.OPENNEBULA_TEMPLATES_TYPE,
+				OneConfigurationConstants.OPENNEBULA_TEMPLATES_TYPE_ALL);
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
 
 		List<Flavor> flavors = new ArrayList<Flavor>();
@@ -867,7 +867,7 @@ public class TestComputeOpenNebula {
 	@Test
 	public void testGetTemplatesInProperties() {
 		String valuesTemplate = "value1, value2, value3";
-		this.properties.put(ConfigurationConstants.OPENNEBULA_LIST_VALID_TEMPLATES,
+		this.properties.put(OneConfigurationConstants.OPENNEBULA_LIST_VALID_TEMPLATES,
 				valuesTemplate);
 		computeOpenNebula = new OpenNebulaComputePlugin(properties);
 		List<String> templatesInProperties = computeOpenNebula.getTemplatesInProperties(properties);
@@ -894,8 +894,8 @@ public class TestComputeOpenNebula {
 	@Test
 	public void testGetFlavorTemplateTypeTemplatesWithoutTamplate() {
 		OpenNebulaClientFactory clientFactory = Mockito.mock(OpenNebulaClientFactory.class);
-		properties.put(ConfigurationConstants.OPENNEBULA_TEMPLATES_TYPE,
-				ConfigurationConstants.OPENNEBULA_TEMPLATES_TYPE_TEMPLATES);
+		properties.put(OneConfigurationConstants.OPENNEBULA_TEMPLATES_TYPE,
+				OneConfigurationConstants.OPENNEBULA_TEMPLATES_TYPE_TEMPLATES);
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
 
 		Token token = new Token("", "", new Date(), new HashMap<String, String>());
@@ -954,8 +954,8 @@ public class TestComputeOpenNebula {
 		Mockito.when(templateMockIterator.next()).thenReturn(template, template);
 		Mockito.when(templatePool.iterator()).thenReturn(templateMockIterator);
 
-		properties.put(ConfigurationConstants.OPENNEBULA_TEMPLATES_TYPE,
-				ConfigurationConstants.OPENNEBULA_TEMPLATES_TYPE_ALL);
+		properties.put(OneConfigurationConstants.OPENNEBULA_TEMPLATES_TYPE,
+				OneConfigurationConstants.OPENNEBULA_TEMPLATES_TYPE_ALL);
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
 
 		Token token = new Token(accessId, "", new Date(), new HashMap<String, String>());
@@ -1022,9 +1022,9 @@ public class TestComputeOpenNebula {
 		Mockito.when(templateMockIterator.next()).thenReturn(templateOne, templateTwo, templateThree);
 		Mockito.when(templatePool.iterator()).thenReturn(templateMockIterator);
 
-		properties.put(ConfigurationConstants.OPENNEBULA_TEMPLATES_TYPE,
-				ConfigurationConstants.OPENNEBULA_TEMPLATES_TYPE_TEMPLATES);
-		properties.put(ConfigurationConstants.OPENNEBULA_LIST_VALID_TEMPLATES, nameTamplateTwo + "," + nameTamplateThree);
+		properties.put(OneConfigurationConstants.OPENNEBULA_TEMPLATES_TYPE,
+				OneConfigurationConstants.OPENNEBULA_TEMPLATES_TYPE_TEMPLATES);
+		properties.put(OneConfigurationConstants.OPENNEBULA_LIST_VALID_TEMPLATES, nameTamplateTwo + "," + nameTamplateThree);
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
 
 		Token token = new Token(accessId, "", new Date(), new HashMap<String, String>());

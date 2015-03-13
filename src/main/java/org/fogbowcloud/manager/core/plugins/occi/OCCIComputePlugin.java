@@ -113,7 +113,7 @@ public class OCCIComputePlugin implements ComputePlugin {
 		
 		Flavor flavorRef = getFlavor(token, xOCCIAtt.get(RequestAttribute.REQUIREMENTS.getValue()));
 		if (flavorRef != null) {
-			occiCategories.add(new Category(flavorRef.getId(), resourceScheme, RequestConstants.MIXIN_CLASS));						
+			occiCategories.add(new Category(flavorRef.getName(), resourceScheme, RequestConstants.MIXIN_CLASS));						
 		}
 		
 		for (Category category : requestCategories) {

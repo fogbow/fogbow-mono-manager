@@ -707,7 +707,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 	public void setFlavors(List<Flavor> flavors) {
 		this.flavors = flavors;
 	}
-
+	
 	@Override
 	public Flavor getFlavor(Token token, String requirements) {
 		updateFlavors(token);

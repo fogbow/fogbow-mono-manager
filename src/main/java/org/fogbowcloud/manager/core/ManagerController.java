@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Random;
-import java.util.Set;
 import java.util.TimerTask;
 import java.util.UUID;
 import java.util.concurrent.Executors;
@@ -942,7 +941,7 @@ public class ManagerController {
 		return flavors;
 	}
 	
-	protected static String getAttValue(String attName, String flavorSpec) {
+	public static String getAttValue(String attName, String flavorSpec) {
 		JSONObject root;
 		try {
 			root = new JSONObject(flavorSpec);

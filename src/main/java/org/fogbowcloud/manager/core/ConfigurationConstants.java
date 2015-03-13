@@ -21,10 +21,11 @@ public class ConfigurationConstants {
 	
 	public static final String PREFIX_FLAVORS = "flavor_";
 	
-	public static final String OPENNEBULA_TEMPLATES_TYPE = "opennebula_template_type";
-	public static final String OPENNEBULA_TEMPLATES_TYPE_ALL = "all";
-	public static final String OPENNEBULA_TEMPLATES_TYPE_TEMPLATES = "templates";
-	public static final String OPENNEBULA_LIST_VALID_TEMPLATES = "opennebula_list_template";
+	// opennebula
+//	public static final String OPENNEBULA_TEMPLATES_TYPE = "opennebula_template_type";
+//	public static final String OPENNEBULA_TEMPLATES_TYPE_ALL = "all";
+//	public static final String OPENNEBULA_TEMPLATES_TYPE_TEMPLATES = "templates";
+//	public static final String OPENNEBULA_LIST_VALID_TEMPLATES = "opennebula_list_template";	
 	
 	//federation user
 	public static final String FEDERATION_USER_NAME_KEY = "local_proxy_account_user_name";
