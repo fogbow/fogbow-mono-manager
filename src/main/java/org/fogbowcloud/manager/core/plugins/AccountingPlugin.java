@@ -11,5 +11,7 @@ public interface AccountingPlugin {
 	
 	public void update(List<Request> requests, List<ServedRequest> servedRequest);
 
-	public Map<String, ResourceUsage> getUsage(List<String> members);
+	public Map<String, ResourceUsage> getMemberUsage(List<String> members);
+	
+	public Map<String, Double> getUserUsage();
 }

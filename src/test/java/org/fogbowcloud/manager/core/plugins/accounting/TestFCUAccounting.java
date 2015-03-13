@@ -54,8 +54,8 @@ public class TestFCUAccounting {
 		ArrayList<String> memberIds = new ArrayList<String>();
 		memberIds.add("memberId");
 
-		Assert.assertNotNull(accountingPlugin.getUsage(memberIds));
-		Assert.assertEquals(0, accountingPlugin.getUsage(memberIds).size());
+		Assert.assertNotNull(accountingPlugin.getMemberUsage(memberIds));
+		Assert.assertEquals(0, accountingPlugin.getMemberUsage(memberIds).size());
 	}
 
 	@Test
@@ -90,11 +90,11 @@ public class TestFCUAccounting {
 		ArrayList<String> memberIds = new ArrayList<String>();
 		memberIds.add("memberId");
 
-		Assert.assertEquals(1, accountingPlugin.getUsage(memberIds).size());
-		Assert.assertTrue(accountingPlugin.getUsage(memberIds).containsKey("memberId"));
+		Assert.assertEquals(1, accountingPlugin.getMemberUsage(memberIds).size());
+		Assert.assertTrue(accountingPlugin.getMemberUsage(memberIds).containsKey("memberId"));
 		Assert.assertEquals(expectedConsumption,
-				accountingPlugin.getUsage(memberIds).get("memberId").getConsumed(), ACCEPTABLE_ERROR);
-		Assert.assertEquals(0, accountingPlugin.getUsage(memberIds).get("memberId").getDonated(),
+				accountingPlugin.getMemberUsage(memberIds).get("memberId").getConsumed(), ACCEPTABLE_ERROR);
+		Assert.assertEquals(0, accountingPlugin.getMemberUsage(memberIds).get("memberId").getDonated(),
 				ACCEPTABLE_ERROR);
 	}
 
@@ -126,11 +126,11 @@ public class TestFCUAccounting {
 		ArrayList<String> memberIds = new ArrayList<String>();
 		memberIds.add("memberId");
 
-		Assert.assertEquals(1, accountingPlugin.getUsage(memberIds).size());
-		Assert.assertTrue(accountingPlugin.getUsage(memberIds).containsKey("memberId"));
-		Assert.assertEquals(0, accountingPlugin.getUsage(memberIds).get("memberId").getConsumed(),
+		Assert.assertEquals(1, accountingPlugin.getMemberUsage(memberIds).size());
+		Assert.assertTrue(accountingPlugin.getMemberUsage(memberIds).containsKey("memberId"));
+		Assert.assertEquals(0, accountingPlugin.getMemberUsage(memberIds).get("memberId").getConsumed(),
 				ACCEPTABLE_ERROR);
-		Assert.assertEquals(expectedDonation, accountingPlugin.getUsage(memberIds).get("memberId")
+		Assert.assertEquals(expectedDonation, accountingPlugin.getMemberUsage(memberIds).get("memberId")
 				.getDonated(), ACCEPTABLE_ERROR);
 	}
 
@@ -173,11 +173,11 @@ public class TestFCUAccounting {
 		ArrayList<String> memberIds = new ArrayList<String>();
 		memberIds.add("memberId");
 
-		Assert.assertEquals(1, accountingPlugin.getUsage(memberIds).size());
-		Assert.assertTrue(accountingPlugin.getUsage(memberIds).containsKey("memberId"));
+		Assert.assertEquals(1, accountingPlugin.getMemberUsage(memberIds).size());
+		Assert.assertTrue(accountingPlugin.getMemberUsage(memberIds).containsKey("memberId"));
 		Assert.assertEquals(expectedConsumption,
-				accountingPlugin.getUsage(memberIds).get("memberId").getConsumed(), ACCEPTABLE_ERROR);
-		Assert.assertEquals(expectedDonation, accountingPlugin.getUsage(memberIds).get("memberId")
+				accountingPlugin.getMemberUsage(memberIds).get("memberId").getConsumed(), ACCEPTABLE_ERROR);
+		Assert.assertEquals(expectedDonation, accountingPlugin.getMemberUsage(memberIds).get("memberId")
 				.getDonated(), ACCEPTABLE_ERROR);
 	}
 
@@ -221,17 +221,17 @@ public class TestFCUAccounting {
 		memberIds.add("memberId1");
 		memberIds.add("memberId2");
 
-		Assert.assertEquals(2, accountingPlugin.getUsage(memberIds).size());
-		Assert.assertTrue(accountingPlugin.getUsage(memberIds).containsKey("memberId1"));
-		Assert.assertTrue(accountingPlugin.getUsage(memberIds).containsKey("memberId2"));
-		Assert.assertEquals(expectedConsumptionFromMember1, accountingPlugin.getUsage(memberIds)
+		Assert.assertEquals(2, accountingPlugin.getMemberUsage(memberIds).size());
+		Assert.assertTrue(accountingPlugin.getMemberUsage(memberIds).containsKey("memberId1"));
+		Assert.assertTrue(accountingPlugin.getMemberUsage(memberIds).containsKey("memberId2"));
+		Assert.assertEquals(expectedConsumptionFromMember1, accountingPlugin.getMemberUsage(memberIds)
 				.get("memberId1").getConsumed(), ACCEPTABLE_ERROR);
-		Assert.assertEquals(0, accountingPlugin.getUsage(memberIds).get("memberId1").getDonated(),
+		Assert.assertEquals(0, accountingPlugin.getMemberUsage(memberIds).get("memberId1").getDonated(),
 				ACCEPTABLE_ERROR);
-		Assert.assertEquals(0, accountingPlugin.getUsage(memberIds).get("memberId2").getConsumed(),
+		Assert.assertEquals(0, accountingPlugin.getMemberUsage(memberIds).get("memberId2").getConsumed(),
 				ACCEPTABLE_ERROR);
 		Assert.assertEquals(expectedDonationForMember2,
-				accountingPlugin.getUsage(memberIds).get("memberId2").getDonated(), ACCEPTABLE_ERROR);
+				accountingPlugin.getMemberUsage(memberIds).get("memberId2").getDonated(), ACCEPTABLE_ERROR);
 	}
 
 	@Test
@@ -279,11 +279,11 @@ public class TestFCUAccounting {
 		ArrayList<String> memberIds = new ArrayList<String>();
 		memberIds.add("memberId");
 
-		Assert.assertEquals(1, accountingPlugin.getUsage(memberIds).size());
-		Assert.assertTrue(accountingPlugin.getUsage(memberIds).containsKey("memberId"));
+		Assert.assertEquals(1, accountingPlugin.getMemberUsage(memberIds).size());
+		Assert.assertTrue(accountingPlugin.getMemberUsage(memberIds).containsKey("memberId"));
 		Assert.assertEquals(expectedConsumption,
-				accountingPlugin.getUsage(memberIds).get("memberId").getConsumed(), ACCEPTABLE_ERROR);
-		Assert.assertEquals(expectedDonation, accountingPlugin.getUsage(memberIds).get("memberId")
+				accountingPlugin.getMemberUsage(memberIds).get("memberId").getConsumed(), ACCEPTABLE_ERROR);
+		Assert.assertEquals(expectedDonation, accountingPlugin.getMemberUsage(memberIds).get("memberId")
 				.getDonated(), ACCEPTABLE_ERROR);
 	}
 

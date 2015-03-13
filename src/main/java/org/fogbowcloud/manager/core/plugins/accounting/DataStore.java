@@ -17,7 +17,8 @@ import org.h2.jdbcx.JdbcConnectionPool;
 
 public class DataStore {
 
-	protected static final String TABLE_NAME = "usage";
+	protected static final String MEMBER_TABLE_NAME = "member_usage";
+	protected static final String USER_TABLE_NAME = "local_user_usage";
 	protected static final String MEMBER_ID = "member_id";
 	protected static final String CONSUMED = "consumed";
 	protected static final String DONATED = "donated";
@@ -41,7 +42,7 @@ public class DataStore {
 			
 			connection = getConnection();
 			statement = connection.createStatement();
-			statement.execute("CREATE TABLE IF NOT EXISTS " + TABLE_NAME + "("
+			statement.execute("CREATE TABLE IF NOT EXISTS " + MEMBER_TABLE_NAME + "("
 					+ MEMBER_ID + " VARCHAR(255) PRIMARY KEY, " + CONSUMED
 					+ " DOUBLE, " + DONATED + " DOUBLE)");
 			statement.close();
@@ -53,8 +54,8 @@ public class DataStore {
 		}
 	}
 
-	private static final String UPDATE_USAGE_SQL = "UPDATE usage SET consumed = consumed + ?, donated = donated + ? WHERE member_id = ?";
-	private static final String INSERT_USAGE_SQL = "INSERT INTO usage VALUES(?, ?, ?)";
+	private static final String UPDATE_MEMBER_USAGE_SQL = "UPDATE member_usage SET consumed = consumed + ?, donated = donated + ? WHERE member_id = ?";
+	private static final String INSERT_MEMBER_USAGE_SQL = "INSERT INTO member_usage VALUES(?, ?, ?)";
 
 	public boolean updateMembers(Map<String, ResourceUsage> members) {		
 		LOGGER.debug("Updating members usage into database. members=" + members);
@@ -68,10 +69,10 @@ public class DataStore {
 
 			List<String> memberIds = new ArrayList<String>();
 			memberIds.addAll(members.keySet());
-			Map<String, ResourceUsage> membersOnStore = getUsage(memberIds);
+			Map<String, ResourceUsage> membersOnStore = getMemberUsage(memberIds);
 
-			insertStatement = connection.prepareStatement(INSERT_USAGE_SQL);
-			updateStatement = connection.prepareStatement(UPDATE_USAGE_SQL);
+			insertStatement = connection.prepareStatement(INSERT_MEMBER_USAGE_SQL);
+			updateStatement = connection.prepareStatement(UPDATE_MEMBER_USAGE_SQL);
 
 			for (String memberId : memberIds) {
 				if (!membersOnStore.keySet().contains(memberId)) {
@@ -122,7 +123,7 @@ public class DataStore {
 		return false;
 	}
 
-	public Map<String, ResourceUsage> getUsage(List<String> memberIds) {
+	public Map<String, ResourceUsage> getMemberUsage(List<String> memberIds) {
 		LOGGER.debug("Getting usage of members: " + memberIds);
 		if (memberIds == null || memberIds.isEmpty()) {
 			return new HashMap<String, ResourceUsage>();
@@ -134,7 +135,7 @@ public class DataStore {
 			conn = getConnection();
 			statement = conn.createStatement();
 
-			String sql = "select * from " + TABLE_NAME + " where ";
+			String sql = "select * from " + MEMBER_TABLE_NAME + " where ";
 
 			for (int i = 0; i < memberIds.size(); i++) {
 				sql += MEMBER_ID + "='" + memberIds.get(i) + "'";
@@ -159,6 +160,11 @@ public class DataStore {
 		} finally {
 			close(statement, conn);
 		}
+	}
+	
+	public Map<String, Double> getUserUsage() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	/**

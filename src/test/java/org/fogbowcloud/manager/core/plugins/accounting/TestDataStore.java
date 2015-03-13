@@ -58,7 +58,7 @@ public class TestDataStore {
 		
 		Assert.assertTrue(db.updateMembers(members));
 		
-		String sql = "select * from " + DataStore.TABLE_NAME + " where " + DataStore.MEMBER_ID+ "='" + memberIdM3 + "'";
+		String sql = "select * from " + DataStore.MEMBER_TABLE_NAME + " where " + DataStore.MEMBER_ID+ "='" + memberIdM3 + "'";
 		ResultSet rs = db.getConnection().createStatement().executeQuery(sql);
 		rs.next();
 		Assert.assertEquals(10, rs.getDouble(DataStore.CONSUMED), ACCEPTABLE_ERROR);	
@@ -81,7 +81,7 @@ public class TestDataStore {
 		members.put(memberIdM5, resourceUsageM5);		
 		Assert.assertTrue(db.updateMembers(members));
 		
-		String sql = "select * from " + DataStore.TABLE_NAME + " where " + DataStore.MEMBER_ID + "='" + memberIdM5 + "'";
+		String sql = "select * from " + DataStore.MEMBER_TABLE_NAME + " where " + DataStore.MEMBER_ID + "='" + memberIdM5 + "'";
 		ResultSet rs = db.getConnection().createStatement().executeQuery(sql);
 		rs.next();
 		Assert.assertEquals(5, rs.getDouble(DataStore.CONSUMED), ACCEPTABLE_ERROR);	
@@ -91,7 +91,7 @@ public class TestDataStore {
 	@Test
 	public void testGetUsageEmptyList() throws SQLException{
 		List <String> memberIds = new ArrayList<String>();
-		Assert.assertTrue(db.getUsage(memberIds).isEmpty());
+		Assert.assertTrue(db.getMemberUsage(memberIds).isEmpty());
 	}
 	
 	@Test
@@ -116,7 +116,7 @@ public class TestDataStore {
 		memberIds.add(memberIdM6);
 		memberIds.add(memberIdM7);		
 		
-		members = db.getUsage(memberIds);
+		members = db.getMemberUsage(memberIds);
 		Assert.assertEquals(5, members.get(memberIdM6).getConsumed(), ACCEPTABLE_ERROR);
 		Assert.assertEquals(5, members.get(memberIdM6).getDonated(), ACCEPTABLE_ERROR);
 		Assert.assertEquals(10, members.get(memberIdM7).getConsumed(), ACCEPTABLE_ERROR);
