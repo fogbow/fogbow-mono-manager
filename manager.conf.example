@@ -4,6 +4,7 @@ xmpp_host=127.0.0.1
 xmpp_port=5347
 
 rendezvous_jid=rendezvous.test.com
+greensitter_jid=greensitter.test.com
 
 compute_class=org.fogbowcloud.manager.core.plugins.opennebula.OpenNebulaComputePlugin
 compute_one_url=http://localhost:2633/RPC2

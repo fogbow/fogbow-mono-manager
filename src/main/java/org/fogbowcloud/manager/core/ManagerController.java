@@ -788,7 +788,13 @@ public class ManagerController {
 	}
 	
 	private void wakeUpSleepingHosts(Request request) {
+		String greenSitterJID = properties.getProperty("greensitter_jid");
 		
+		//The "1, 1" will be changed by request.getCPU and request.getRAM
+		if (greenSitterJID != null) {
+			ManagerPacketHelper.wakeUpSleepingHost(1, 1024, greenSitterJID,
+					packetSender);
+		}
 	}
 	
 	private boolean createLocalInstance(Request request) {

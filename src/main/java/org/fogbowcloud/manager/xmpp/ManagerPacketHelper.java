@@ -75,6 +75,16 @@ public class ManagerPacketHelper {
 		
 		packetSender.syncSendPacket(iq);		
 	}
+	
+	public static void wakeUpSleepingHost(int minCPU, int minRAM, 
+			String greenAddress, PacketSender packetSender) {
+		IQ iq = new IQ(Type.set);
+		iq.setTo(greenAddress);
+		Element query = iq.getElement().addElement("query");
+        query.addElement("minCPU").setText(Integer.toString(minCPU));
+        query.addElement("minRAM").setText(Integer.toString(minRAM));
+        packetSender.sendPacket(iq);
+	}
 
 	public static List<FederationMember> whoIsalive(String rendezvousAddress,
 			PacketSender packetSender, int maxWhoIsAliveManagerCount,
