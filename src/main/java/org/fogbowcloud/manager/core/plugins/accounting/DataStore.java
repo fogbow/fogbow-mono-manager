@@ -18,8 +18,9 @@ import org.h2.jdbcx.JdbcConnectionPool;
 public class DataStore {
 
 	protected static final String MEMBER_TABLE_NAME = "member_usage";
-	protected static final String USER_TABLE_NAME = "local_user_usage";
+	protected static final String USER_TABLE_NAME = "user_usage";
 	protected static final String MEMBER_ID = "member_id";
+	protected static final String USER_ID = "user_id";
 	protected static final String CONSUMED = "consumed";
 	protected static final String DONATED = "donated";
 
@@ -45,6 +46,9 @@ public class DataStore {
 			statement.execute("CREATE TABLE IF NOT EXISTS " + MEMBER_TABLE_NAME + "("
 					+ MEMBER_ID + " VARCHAR(255) PRIMARY KEY, " + CONSUMED
 					+ " DOUBLE, " + DONATED + " DOUBLE)");
+			statement.execute("CREATE TABLE IF NOT EXISTS " + USER_TABLE_NAME + "("
+					+ USER_ID + " VARCHAR(255) PRIMARY KEY, " + CONSUMED
+					+ " DOUBLE)");
 			statement.close();
 
 		} catch (Exception e) {
@@ -54,44 +58,43 @@ public class DataStore {
 		}
 	}
 
-	private static final String UPDATE_MEMBER_USAGE_SQL = "UPDATE member_usage SET consumed = consumed + ?, donated = donated + ? WHERE member_id = ?";
-	private static final String INSERT_MEMBER_USAGE_SQL = "INSERT INTO member_usage VALUES(?, ?, ?)";
+	private static final String UPDATE_MEMBER_USAGE_SQL = "UPDATE " + MEMBER_TABLE_NAME	+ " SET consumed = consumed + ?, donated = donated + ? WHERE member_id = ?";
+	private static final String INSERT_MEMBER_USAGE_SQL = "INSERT INTO " + MEMBER_TABLE_NAME + " VALUES(?, ?, ?)";
 
-	public boolean updateMembers(Map<String, ResourceUsage> members) {		
-		LOGGER.debug("Updating members usage into database. members=" + members);
+	private static final String INSERT_USER_USAGE_SQL = "INSERT INTO " + USER_TABLE_NAME + " VALUES(?, ?)";
+	private static final String UPDATE_USER_USAGE_SQL = "UPDATE " + USER_TABLE_NAME	+ " SET consumed = consumed + ? WHERE user_id = ?";
+	
+	public boolean update(Map<String, ResourceUsage> members, Map<String, Double> users) {
+		LOGGER.debug("Updating members usage into database.");
+		LOGGER.debug("members=" + members + " users=" + users);
 		
-		PreparedStatement updateStatement = null;
-		PreparedStatement insertStatement = null;
+		if (members == null || users == null) {
+			LOGGER.warn("Members and users must not be null.");	
+			return false;
+		}
+		
+		PreparedStatement updateMemberStatement = null;
+		PreparedStatement insertMemberStatement = null;
+		PreparedStatement insertUserStatement = null;
+		PreparedStatement updateUserStatement = null;		
 		Connection connection = null;
+		
 		try {
 			connection = getConnection();
 			connection.setAutoCommit(false);
 
-			List<String> memberIds = new ArrayList<String>();
-			memberIds.addAll(members.keySet());
-			Map<String, ResourceUsage> membersOnStore = getMemberUsage(memberIds);
+			insertMemberStatement = connection.prepareStatement(INSERT_MEMBER_USAGE_SQL);
+			updateMemberStatement = connection.prepareStatement(UPDATE_MEMBER_USAGE_SQL);			
+			insertUserStatement = connection.prepareStatement(INSERT_USER_USAGE_SQL);
+			updateUserStatement = connection.prepareStatement(UPDATE_USER_USAGE_SQL);
 
-			insertStatement = connection.prepareStatement(INSERT_MEMBER_USAGE_SQL);
-			updateStatement = connection.prepareStatement(UPDATE_MEMBER_USAGE_SQL);
+			addMemberStatements(members, updateMemberStatement, insertMemberStatement);			
+			addUserStatements(users, insertUserStatement, updateUserStatement);
 
-			for (String memberId : memberIds) {
-				if (!membersOnStore.keySet().contains(memberId)) {
-					ResourceUsage resourceUsage = members.get(memberId);
-					insertStatement.setString(1, resourceUsage.getMemberId());
-					insertStatement.setDouble(2, resourceUsage.getConsumed());
-					insertStatement.setDouble(3, resourceUsage.getDonated());
-					insertStatement.addBatch();
-				} else {
-					ResourceUsage resourceUsage = members.get(memberId);
-					updateStatement.setDouble(1, resourceUsage.getConsumed());
-					updateStatement.setDouble(2, resourceUsage.getDonated());
-					updateStatement.setString(3, resourceUsage.getMemberId());
-					updateStatement.addBatch();
-				}
-			}
-
-			if (hasBatchExecutionError(insertStatement.executeBatch())
-					| hasBatchExecutionError(updateStatement.executeBatch())) {
+			if (hasBatchExecutionError(insertMemberStatement.executeBatch())
+					| hasBatchExecutionError(updateMemberStatement.executeBatch())
+					| hasBatchExecutionError(insertUserStatement.executeBatch())
+					| hasBatchExecutionError(updateUserStatement.executeBatch())) {
 				connection.rollback();
 				return false;
 			}
@@ -109,8 +112,55 @@ public class DataStore {
 			}
 			return false;
 		} finally {
-			close(updateStatement, connection);
+			close(updateMemberStatement, connection);
+			close(insertMemberStatement, connection);
+			close(insertUserStatement, connection);
+			close(updateUserStatement, connection);
+		}
+	}
 
+	private void addUserStatements(Map<String, Double> users,
+			PreparedStatement insertUserStatement, PreparedStatement updateUserStatement)
+			throws SQLException {
+		
+		List<String> userIds = new ArrayList<String>();
+		userIds.addAll(users.keySet());
+		Map<String, Double> usersOnStore = getUserUsage();
+		
+		for (String userId : userIds) {
+			if (!usersOnStore.keySet().contains(userId)) {
+				insertUserStatement.setString(1, userId);
+				insertUserStatement.setDouble(2, users.get(userId));
+				insertUserStatement.addBatch();
+			} else {
+				updateUserStatement.setDouble(1, users.get(userId));
+				updateUserStatement.setString(2, userId);
+				updateUserStatement.addBatch();
+			}
+		}
+	}
+
+	private void addMemberStatements(Map<String, ResourceUsage> members,
+			PreparedStatement updateMemberStatement, PreparedStatement insertMemberStatement) throws SQLException {
+		
+		List<String> memberIds = new ArrayList<String>();
+		memberIds.addAll(members.keySet());
+		Map<String, ResourceUsage> membersOnStore = getMemberUsage(memberIds);
+		
+		for (String memberId : memberIds) {
+			if (!membersOnStore.keySet().contains(memberId)) {
+				ResourceUsage resourceUsage = members.get(memberId);
+				insertMemberStatement.setString(1, resourceUsage.getMemberId());
+				insertMemberStatement.setDouble(2, resourceUsage.getConsumed());
+				insertMemberStatement.setDouble(3, resourceUsage.getDonated());
+				insertMemberStatement.addBatch();
+			} else {
+				ResourceUsage resourceUsage = members.get(memberId);
+				updateMemberStatement.setDouble(1, resourceUsage.getConsumed());
+				updateMemberStatement.setDouble(2, resourceUsage.getDonated());
+				updateMemberStatement.setString(3, resourceUsage.getMemberId());
+				updateMemberStatement.addBatch();
+			}
 		}
 	}
 
@@ -162,9 +212,31 @@ public class DataStore {
 		}
 	}
 	
-	public Map<String, Double> getUserUsage() {
-		// TODO Auto-generated method stub
-		return null;
+	public Map<String, Double> getUserUsage() {		
+		LOGGER.debug("Getting usage of users.");
+		
+		Statement statement = null;
+		Connection conn = null;
+		try {
+			conn = getConnection();
+			statement = conn.createStatement();
+
+			String sql = "select * from " + USER_TABLE_NAME;
+			
+			statement.execute(sql);
+			ResultSet rs = statement.getResultSet();
+			HashMap<String, Double> map = new HashMap<String, Double>();
+			while (rs.next()) {
+				map.put(rs.getString(USER_ID), rs.getDouble(CONSUMED));
+			}
+			LOGGER.debug("Map toReturn: " + map);
+			return map;
+		} catch (SQLException e) {
+			LOGGER.error("Couldn't get users' usage.", e);
+			return null;
+		} finally {
+			close(statement, conn);
+		}
 	}
 
 	/**

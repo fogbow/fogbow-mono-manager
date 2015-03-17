@@ -45,6 +45,8 @@ public class FCUAccountingPlugin implements AccountingPlugin {
 		LOGGER.debug("updating interval=" + updatingInterval);
 		
 		Map<String, ResourceUsage> usageOfMembers = new HashMap<String, ResourceUsage>();
+		Map<String, Double> usageOfUsers = new HashMap<String, Double>();
+
 		// donating	
 		for (ServedRequest servedRequest : servedRequests) {
 			double instancePower = benchmarkingPlugin.getPower(servedRequest.getInstanceId());
@@ -55,47 +57,59 @@ public class FCUAccountingPlugin implements AccountingPlugin {
 			LOGGER.debug("donation interval=" + donationInterval);
 			
 			String memberId = servedRequest.getMemberId();
-			if (!memberId.equals(localMemberId)){
-				if (!usageOfMembers.containsKey(memberId)) {
-					usageOfMembers.put(memberId, new ResourceUsage(memberId));
-				}
-				
-				if (donationInterval < updatingInterval) {
-					usageOfMembers.get(memberId).addDonation(donationInterval * instancePower);
-				} else {
-					usageOfMembers.get(memberId).addDonation(updatingInterval * instancePower);
-				}
+			if (!usageOfMembers.containsKey(memberId)) {
+				usageOfMembers.put(memberId, new ResourceUsage(memberId));
 			}
+			
+			double donated = calcPower(donationInterval, updatingInterval, instancePower);
+			usageOfMembers.get(memberId).addDonation(donated);
 		}
 
 		// consumption
 		for (Request request : requests) {
 			String memberId = request.getMemberId();
-			if (memberId != null) {
+
+			double instancePower = benchmarkingPlugin.getPower(request.getInstanceId());
+			double consumptionInterval = ((double) TimeUnit.MILLISECONDS.toSeconds(now - request.getFulfilledTime()) / 60);
+
+			LOGGER.debug("consumption interval=" + consumptionInterval);
+			LOGGER.debug("instance power=" + instancePower);
+			
+			if (memberId != null && !memberId.equals(localMemberId)) {
 				if (!usageOfMembers.containsKey(memberId)) {
 					usageOfMembers.put(memberId, new ResourceUsage(memberId));
 				}
 
-				double instancePower = benchmarkingPlugin.getPower(request.getInstanceId());
-				long consumptionInterval = TimeUnit.MILLISECONDS.toMinutes(now - request.getFulfilledTime());
-				LOGGER.debug("consumption interval=" + consumptionInterval);
-				LOGGER.debug("instance power=" + instancePower);
-
-				if (consumptionInterval < updatingInterval) {
-					usageOfMembers.get(memberId).addConsumption(
-							consumptionInterval * instancePower);
-				} else {
-					usageOfMembers.get(memberId).addConsumption(
-							updatingInterval * instancePower);
+				double consumed = calcPower(consumptionInterval, updatingInterval, instancePower);
+				usageOfMembers.get(memberId).addConsumption(consumed);
+			} else {				
+				String userId = request.getFederationToken().getUser();
+				if (!usageOfUsers.containsKey(userId)){
+					usageOfUsers.put(userId, 0d);
 				}
+
+				double consumed = calcPower(consumptionInterval, updatingInterval,
+						instancePower);
+				usageOfUsers.put(userId, usageOfUsers.get(userId) + consumed);
 			}
 		}
 	
 		LOGGER.debug("current usage of members=" + usageOfMembers);
+		LOGGER.debug("current usage of users=" + usageOfUsers);
 
-		if (usageOfMembers.isEmpty() || db.updateMembers(usageOfMembers)) {
+		if ((usageOfMembers.isEmpty() && usageOfUsers.isEmpty())
+				|| db.update(usageOfMembers, usageOfUsers)) {
 			this.lastUpdate = now;
 			LOGGER.debug("Updating lastUpdate to " + this.lastUpdate);
+		}
+	}
+
+	private double calcPower(double startingInterval, double updatingInterval,
+			double instancePower) {
+		if (startingInterval < updatingInterval) {
+			return startingInterval * instancePower;
+		} else {
+			return updatingInterval * instancePower;
 		}
 	}
 

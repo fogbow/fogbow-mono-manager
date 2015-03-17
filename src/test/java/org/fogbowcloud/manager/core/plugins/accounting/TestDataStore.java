@@ -43,6 +43,7 @@ public class TestDataStore {
 	@After
 	public void tearDown() throws IOException{
 		FileUtils.cleanDirectory(new File (DATASTORE_PATH));
+		db.dispose();
 	}
 	
 	@Test
@@ -56,7 +57,7 @@ public class TestDataStore {
 		Map<String, ResourceUsage> members = new HashMap<String, ResourceUsage>();
 		members.put(memberIdM3, resourceUsageM3);
 		
-		Assert.assertTrue(db.updateMembers(members));
+		Assert.assertTrue(db.update(members, new HashMap<String, Double>()));
 		
 		String sql = "select * from " + DataStore.MEMBER_TABLE_NAME + " where " + DataStore.MEMBER_ID+ "='" + memberIdM3 + "'";
 		ResultSet rs = db.getConnection().createStatement().executeQuery(sql);
@@ -74,12 +75,12 @@ public class TestDataStore {
 		resourceUsageM5.addConsumption(0);
 		resourceUsageM5.addDonation(0);
 		members.put(memberIdM5, resourceUsageM5);		
-		Assert.assertTrue(db.updateMembers(members));
+		Assert.assertTrue(db.update(members, new HashMap<String, Double>()));
 		
 		resourceUsageM5.addConsumption(5);
 		resourceUsageM5.addDonation(5);
 		members.put(memberIdM5, resourceUsageM5);		
-		Assert.assertTrue(db.updateMembers(members));
+		Assert.assertTrue(db.update(members, new HashMap<String, Double>()));
 		
 		String sql = "select * from " + DataStore.MEMBER_TABLE_NAME + " where " + DataStore.MEMBER_ID + "='" + memberIdM5 + "'";
 		ResultSet rs = db.getConnection().createStatement().executeQuery(sql);
@@ -89,13 +90,82 @@ public class TestDataStore {
 	}
 	
 	@Test
-	public void testGetUsageEmptyList() throws SQLException{
+	public void testUpdateUsersInsertCase() throws SQLException{		
+		Map<String, Double> users = new HashMap<String, Double>();
+		String userId = "userId";		
+		users.put(userId, 5.0);		
+		Assert.assertTrue(db.update(new HashMap<String, ResourceUsage>(), users));
+
+		// checking if consumed is 5
+		String sql = "select * from " + DataStore.USER_TABLE_NAME + " where " + DataStore.USER_ID + "='" + userId + "'";
+		ResultSet rs = db.getConnection().createStatement().executeQuery(sql);
+
+		Map<String, Double> userIdToConsumed = new HashMap<String, Double>();
+		while (rs.next()) {
+			userIdToConsumed.put(rs.getString(DataStore.USER_ID),rs.getDouble(DataStore.CONSUMED));
+		}
+
+		Assert.assertEquals(5, userIdToConsumed.get(userId), ACCEPTABLE_ERROR);
+		Assert.assertNull(userIdToConsumed.get("userId2"));
+		
+		// updating user consumed 
+		users.put(userId, 10.0);
+		users.put("userId2", 20.0);
+		Assert.assertTrue(db.update(new HashMap<String, ResourceUsage>(), users));
+		
+		// checking if consumed was updated and userId2 was added
+		sql = "select * from " + DataStore.USER_TABLE_NAME + " where " + DataStore.USER_ID + "='" + userId + "' or " + DataStore.USER_ID + "='userId2'";
+		rs = db.getConnection().createStatement().executeQuery(sql);
+		
+		userIdToConsumed = new HashMap<String, Double>();
+
+		while (rs.next()) {
+			userIdToConsumed.put(rs.getString(DataStore.USER_ID),rs.getDouble(DataStore.CONSUMED));
+		}
+
+		Assert.assertEquals(2, userIdToConsumed.size());
+		Assert.assertEquals(15, userIdToConsumed.get(userId), ACCEPTABLE_ERROR);
+		Assert.assertEquals(20, userIdToConsumed.get("userId2"), ACCEPTABLE_ERROR);
+	}
+	
+	@Test
+	public void testUpdateUsersNormalCase() throws SQLException{		
+		Map<String, Double> users = new HashMap<String, Double>();
+		String userId = "user";		
+		users.put(userId, 5.0);		
+		Assert.assertTrue(db.update(new HashMap<String, ResourceUsage>(), users));
+
+		// checking if consumed is 5
+		String sql = "select * from " + DataStore.USER_TABLE_NAME + " where " + DataStore.USER_ID + "='" + userId + "'";
+		ResultSet rs = db.getConnection().createStatement().executeQuery(sql);
+		rs.next();
+		
+		Assert.assertEquals(5, rs.getDouble(DataStore.CONSUMED), ACCEPTABLE_ERROR);	
+		
+		// updating user consumed 
+		users.put(userId, 10.0);		
+		Assert.assertTrue(db.update(new HashMap<String, ResourceUsage>(), users));
+		
+		// checking if consumed is 15 (value must be previous + current = 5 + 10)
+		sql = "select * from " + DataStore.USER_TABLE_NAME + " where " + DataStore.USER_ID + "='" + userId + "'";
+		rs = db.getConnection().createStatement().executeQuery(sql);
+		rs.next();
+		Assert.assertEquals(15, rs.getDouble(DataStore.CONSUMED), ACCEPTABLE_ERROR); 
+	}
+	
+	@Test
+	public void testGetMemberUsageEmptyList() throws SQLException{
 		List <String> memberIds = new ArrayList<String>();
 		Assert.assertTrue(db.getMemberUsage(memberIds).isEmpty());
 	}
 	
 	@Test
-	public void testGetUsage() throws SQLException{
+	public void testGetUserUsageEmptyList() throws SQLException{
+		Assert.assertTrue(db.getUserUsage().isEmpty());
+	}
+	
+	@Test
+	public void testGetMemberUsage() throws SQLException{
 		
 		String memberIdM6 = "m6";
 		ResourceUsage resourceUsageM6 = new ResourceUsage(memberIdM6);
@@ -110,7 +180,7 @@ public class TestDataStore {
 		members.put(memberIdM6, resourceUsageM6);
 		members.put(memberIdM7, resourceUsageM7);
 		
-		Assert.assertTrue(db.updateMembers(members));
+		Assert.assertTrue(db.update(members, new HashMap<String, Double>()));
 		
 		List <String> memberIds = new ArrayList<String>();
 		memberIds.add(memberIdM6);
