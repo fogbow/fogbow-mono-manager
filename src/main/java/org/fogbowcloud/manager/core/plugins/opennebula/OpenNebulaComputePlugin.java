@@ -24,6 +24,7 @@ import javax.xml.transform.stream.StreamResult;
 import org.apache.http.HttpStatus;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.model.Flavor;
+import org.fogbowcloud.manager.core.model.ImageState;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.occi.core.Category;
@@ -629,6 +630,36 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		for (Image image : imagePool) {
 			if (image.getName().equals(imageName)) {
 				return image.getId();
+			}
+		}
+		return null;
+	}
+
+	@Override
+	public ImageState getImageState(Token token, String imageName) {
+		LOGGER.debug("Getting image status from image " + imageName + " with token " + token);
+		Client oneClient = clientFactory.createClient(token.getAccessId(), openNebulaEndpoint);
+		ImagePool imagePool = new ImagePool(oneClient); 
+		OneResponse response = imagePool.info();
+		
+		if (response.isError()) {
+			throw new OCCIException(ErrorType.BAD_REQUEST, response.getErrorMessage());
+		}
+		
+		for (Image image : imagePool) {
+			if (image.getName().equals(imageName)) {
+				/*
+				 * Possible one image state described on
+				 * http://archives.opennebula.org/documentation:rel4.4:img_guide
+				 */
+				String imageState = image.stateString();
+				if ("LOCKED".equals(imageState)) {
+					return ImageState.PENDING;
+				} else if ("READY".equals(imageState) || "USED".equals(imageState)
+						|| "USED_PERS".equals(imageState)) {
+					return ImageState.ACTIVE;
+				}
+				return ImageState.FAILED;
 			}
 		}
 		return null;

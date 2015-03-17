@@ -26,6 +26,7 @@ import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.model.Flavor;
+import org.fogbowcloud.manager.core.model.ImageState;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.util.HttpPatch;
@@ -50,6 +51,8 @@ import org.restlet.data.Status;
 
 public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 
+	private static final String NO_VALID_HOST_WAS_FOUND = "No valid host was found";
+	private static final String STATUS_JSON_FIELD = "status";
 	private static final String IMAGES_JSON_FIELD = "images";
 	private static final String ID_JSON_FIELD = "id";
 	private static final String BARE = "bare";
@@ -221,7 +224,11 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 						ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES);
 			}
 			throw new OCCIException(ErrorType.BAD_REQUEST, message);
-		} else if (response.getStatusLine().getStatusCode() > 204) {
+		} else if ((response.getStatusLine().getStatusCode() == HttpStatus.SC_INTERNAL_SERVER_ERROR) &&
+				(message.contains(NO_VALID_HOST_WAS_FOUND))){
+			throw new OCCIException(ErrorType.NO_VALID_HOST_FOUND, ResponseConstants.NO_VALID_HOST_FOUND);
+		}
+		else if (response.getStatusLine().getStatusCode() > 204) {
 			throw new OCCIException(ErrorType.BAD_REQUEST, response.getStatusLine().toString());
 		}
 	}
@@ -297,7 +304,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 
 			Map<String, String> attributes = new HashMap<String, String>();
 			InstanceState state = getInstanceState(rootServer.getJSONObject("server")
-					.getString("status"));
+					.getString(STATUS_JSON_FIELD));
 			// CPU Architecture of the instance
 			attributes.put("occi.compute.state", state.getOcciState());
 			// // CPU Clock frequency (speed) in gigahertz
@@ -571,7 +578,9 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 					return arrayImages.getJSONObject(i).getString(ID_JSON_FIELD);
 				}
 			}
-		} catch (JSONException e) {}
+		} catch (JSONException e) {
+			LOGGER.error("Error while parsing JSONObject for image state.", e);
+		}
 
 		return null;
 	}
@@ -623,4 +632,34 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
         checkStatusResponse(response, responseStr);
         return responseStr;
     }
+
+	@Override
+	public ImageState getImageState(Token token, String imageName) {
+		LOGGER.debug("Getting image status from image " + imageName + " with token " + token);
+		String responseJsonImages = doGetRequest(glanceV2APIEndpoint + V2_IMAGES,
+				token.getAccessId());
+		try {
+			JSONArray arrayImages = new JSONObject(responseJsonImages)
+					.getJSONArray(IMAGES_JSON_FIELD);
+			for (int i = 0; i < arrayImages.length(); i++) {
+				if (arrayImages.getJSONObject(i).getString(NAME_JSON_FIELD).equals(imageName)) {
+					/*
+					 * Possible OpenStack image status described on 
+					 * http://docs.openstack.org/developer/glance/statuses.html
+					 */
+					String imageStatus = arrayImages.getJSONObject(i).getString(STATUS_JSON_FIELD);
+					if ("active".equalsIgnoreCase(imageStatus)) {
+						return ImageState.ACTIVE;
+					} else if ("queued".equalsIgnoreCase(imageStatus)
+							|| "saving".equalsIgnoreCase(imageStatus)) {
+						return ImageState.PENDING;
+					}
+					return ImageState.FAILED;
+				}
+			}
+		} catch (JSONException e) {
+			LOGGER.error("Error while parsing JSONObject for image state.", e);
+		}
+		return null;	
+	}
 }

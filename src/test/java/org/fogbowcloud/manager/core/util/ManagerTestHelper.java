@@ -348,6 +348,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 				String.valueOf(DefaultDataTestHelper.TOKEN_SERVER_HTTP_PORT));
 		properties.put(ConfigurationConstants.SERVED_REQUEST_MONITORING_PERIOD_KEY,
 				String.valueOf(DefaultDataTestHelper.SERVED_REQUEST_MONITORING_PERIOD));
+		properties.put(ConfigurationConstants.GREEN_SITTER_JID, DefaultDataTestHelper.GREEN_SITTER_JID);
 		this.executorService = Mockito.mock(ScheduledExecutorService.class);
 		ManagerController managerController = new ManagerController(properties,
 				executorService);

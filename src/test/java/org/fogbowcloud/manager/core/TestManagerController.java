@@ -38,6 +38,7 @@ import org.jamppa.component.PacketCallback;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -151,6 +152,58 @@ public class TestManagerController {
 		for (Request request : requestsFromUser) {
 			Assert.assertEquals(RequestState.FULFILLED, request.getState());
 		}
+	}
+	
+	@Test
+	public void testSubmitToGreenSitter() {
+		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);
+		managerController.setPacketSender(packetSender);
+
+		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
+
+		ResourcesInfo localResourcesInfo = new ResourcesInfo("", "", "", "", null, null);
+		localResourcesInfo.setId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		
+		Mockito.when(
+				computePlugin.requestInstance(Mockito.any(Token.class), Mockito.anyList(),
+						Mockito.anyMap(), Mockito.anyString())).thenThrow(
+				new OCCIException(ErrorType.NO_VALID_HOST_FOUND, ""));
+		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class))).thenReturn(
+				localResourcesInfo);
+		
+		managerController.setComputePlugin(computePlugin);
+
+		List<FederationMember> listMembers = new ArrayList<FederationMember>();
+		listMembers.add(new FederationMember(localResourcesInfo));
+		managerController.updateMembers(listMembers);
+		
+		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), new ArrayList<Category>(),
+				new HashMap<String, String>());
+		request1.setState(RequestState.OPEN);
+		RequestRepository requestRepository = new RequestRepository();
+		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(), request1);
+		managerController.setRequests(requestRepository);
+		managerController.checkAndSubmitOpenRequests();
+		
+        
+		Mockito.verify(packetSender).sendPacket(Mockito.argThat(new ArgumentMatcher<IQ>() {
+			@Override
+			public boolean matches(Object argument) {
+				IQ iq = (IQ) argument;
+				Element queryEl = iq.getElement().element("query");
+				if (queryEl == null) {
+					return false;
+				}
+				String minCPU = queryEl.elementText("minCPU");
+				String minRAM = queryEl.elementText("minRAM");
+				
+				if ((!minCPU.equals("1")) || (!minRAM.equals("1024"))){
+					return false;
+				}
+				return iq.getTo().toBareJID().equals("green.server.com");
+			}
+		}));
+		
 	}
 	
 	@SuppressWarnings("unchecked")

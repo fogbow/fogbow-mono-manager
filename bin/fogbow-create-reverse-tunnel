@@ -1,4 +1,5 @@
 #!/bin/sh
+ifconfig eth0 mtu 1420 | true
 IS_OPENSSH=$(ssh -ver 2>&1 | grep OpenSSH)
 IS_NEW_OPENSSH=$(ssh -V 2>&1 | grep OpenSSH)
 IS_DROPBEAR=$(ssh -ver 2>&1 | grep Dropbear)

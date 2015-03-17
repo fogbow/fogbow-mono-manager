@@ -37,12 +37,15 @@ import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.core.model.ImageState;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
 import org.fogbowcloud.manager.occi.core.ResourceRepository;
 import org.fogbowcloud.manager.occi.core.Token;
 
 public class EgiApplianceImageStoragePlugin implements ImageStoragePlugin {
+
+	private static final int IMAGE_UPLOAD_RETRY_INTERVAL = 15000;
 
 	private static final String PROP_STATIC_IMAGE_PREFIX = "image_storage_static_";
 	
@@ -157,14 +160,15 @@ public class EgiApplianceImageStoragePlugin implements ImageStoragePlugin {
 				String imageExtension = getExtension(imageURL);
 				LOGGER.debug("Image extension = " + imageExtension);
 				String diskFormat = imageExtension.toLowerCase();
+				File outputDir = new File(tmpStorage + "/" + UUID.randomUUID());
 
 				if (imageExtension.equalsIgnoreCase(Extensions.ova.name())) {
 					LOGGER.debug("Image is tar file");
-					File outputDir = new File(tmpStorage + "/" + UUID.randomUUID());
 					LOGGER.debug("Creating output directory = " + outputDir.getAbsolutePath());
 					outputDir.mkdirs();
 					try {
 						List<File> files = unTar(downloadTempFile, outputDir);
+						boolean foundValidImage = false;
 						for (File file : files) {
 							String innerDiskFormat = "disk1."
 									+ getExtension(file.getAbsolutePath());
@@ -172,16 +176,19 @@ public class EgiApplianceImageStoragePlugin implements ImageStoragePlugin {
 								imagePath = convertToQcow2Format(token, imageURL, file,
 										innerDiskFormat);
 								diskFormat = Extensions.qcow2.name();
+								foundValidImage = true;
 								break;
 							}
 						}
 
-						if (imagePath == null) {
+						if (!foundValidImage) {
 							LOGGER.error("Couldn't find valid disk image inside OVA.");
+							removeImageFiles(downloadTempFile, outputDir);
 							return;
 						}
 					} catch (Throwable e) {
 						LOGGER.error("Couldn't untar OVA image.", e);
+						removeImageFiles(downloadTempFile, outputDir);
 						return;
 					}
 				} else if (imageExtension.equalsIgnoreCase(Extensions.img.name())) {
@@ -190,11 +197,43 @@ public class EgiApplianceImageStoragePlugin implements ImageStoragePlugin {
 				}
 				try {
 					computePlugin.uploadImage(token, imagePath, imageName, diskFormat);
+					waitUploadAndDeleteFiles(token, downloadTempFile, imageName, outputDir);
 				} catch (Throwable e) {
 					LOGGER.error("Couldn't upload image.", e);
+					removeImageFiles(downloadTempFile, outputDir);
 				}
 
 				pendingImageUploads.remove(imageURL);
+			}
+
+			private void removeImageFiles(File imageFile, File imageOutputDir) {
+				imageFile.delete();
+				try {
+					FileUtils.deleteDirectory(imageOutputDir);
+				} catch (IOException e) {
+					LOGGER.error(
+							"Error while removing directory " + imageOutputDir.getAbsolutePath(), e);
+				}
+			}
+
+			private void waitUploadAndDeleteFiles(final Token token, File downloadTempFile,
+					String imageName, File outputDir) throws InterruptedException {
+				while (true) {
+					ImageState imageState = null;
+					
+					try {
+						imageState = computePlugin.getImageState(token, imageName);
+					} catch (Exception e) {
+						LOGGER.error("Error while getting image state.", e);
+					}
+					
+					if (imageState != null && imageState.in(ImageState.PENDING)) {
+						Thread.sleep(IMAGE_UPLOAD_RETRY_INTERVAL);
+					} else {
+						removeImageFiles(downloadTempFile, outputDir);
+						return;
+					}
+				}
 			}
 
 			private String convertToQcow2Format(final Token token, final String imageURL, File file,
@@ -211,7 +250,7 @@ public class EgiApplianceImageStoragePlugin implements ImageStoragePlugin {
 					LOGGER.warn("Couldn't convert image. qemu-img conversion result code: "
 							+ conversionResultCode);
 					return null;
-				}
+				}				
 				return convertedDiskFileName;
 				
 			}
@@ -254,6 +293,7 @@ public class EgiApplianceImageStoragePlugin implements ImageStoragePlugin {
 		
 		HttpClient httpclient = null;
 		HttpEntity entity = null;
+		File tempFile = null;
 		try {
 			httpclient = new DefaultHttpClient();
 			injectKeystore(httpclient);
@@ -265,13 +305,8 @@ public class EgiApplianceImageStoragePlugin implements ImageStoragePlugin {
 			}
 			
 			entity = response.getEntity();
-			if (entity != null) {				
-				String extension = getExtension(imageURL);
-				String imageName = removeHTTPPrefix(imageURL.substring(0, imageURL.lastIndexOf(".")))
-						.replaceAll("/", ".");
-				File tempFile = File.createTempFile(imageName, 
-						"." + extension, new File(tmpStorage));
-
+			if (entity != null) {
+				tempFile = getTemFile(imageURL);
 				InputStream instream = entity.getContent();
 				FileUtils.copyInputStreamToFile(instream, tempFile);;
 				instream.close();
@@ -279,6 +314,10 @@ public class EgiApplianceImageStoragePlugin implements ImageStoragePlugin {
 			}
 		} catch (Exception e) {
 			LOGGER.error("Couldn't download image file", e);
+			// checking if file exists
+			if (tempFile != null && tempFile.exists()) {
+				tempFile.delete();
+			}			
 		} finally {
 			if (entity != null) {
 				try {
@@ -292,6 +331,15 @@ public class EgiApplianceImageStoragePlugin implements ImageStoragePlugin {
 			}
 		}
 		return null;
+	}
+
+	private File getTemFile(final String imageURL) throws IOException {
+		String extension = getExtension(imageURL);
+		String imageName = removeHTTPPrefix(imageURL.substring(0, imageURL.lastIndexOf(".")))
+				.replaceAll("/", ".");
+		File tempFile = File.createTempFile(imageName, 
+				"." + extension, new File(tmpStorage));
+		return tempFile;
 	}
 
 	private String getExtension(final String imageName) {

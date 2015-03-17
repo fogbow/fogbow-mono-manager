@@ -3,6 +3,7 @@ package org.fogbowcloud.manager.core.plugins;
 import java.util.List;
 import java.util.Map;
 
+import org.fogbowcloud.manager.core.model.ImageState;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.Token;
@@ -30,5 +31,7 @@ public interface ComputePlugin {
 	public void uploadImage(Token token, String imagePath, String imageName, String diskFormat);
 	
 	public String getImageId(Token token, String imageName);
+	
+	public ImageState getImageState(Token token, String imageName);
 	
 }
