@@ -118,10 +118,6 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		categories.remove(new Category(RequestConstants.TERM, RequestConstants.SCHEME,
 				RequestConstants.KIND_CLASS));
 		
-//		updateFlavors(token);
-//		// Finding flavor
-//		Flavor foundFlavor = RequirementsHelper.findFlavor(getFlavors(),
-//				xOCCIAtt.get(RequestAttribute.REQUIREMENTS.getValue()));
 		Flavor foundFlavor = getFlavor(token,
 				xOCCIAtt.get(RequestAttribute.REQUIREMENTS.getValue()));
 		String flavorId = null;

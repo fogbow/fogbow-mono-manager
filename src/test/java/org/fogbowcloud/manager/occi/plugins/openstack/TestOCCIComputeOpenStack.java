@@ -746,7 +746,12 @@ public class TestOCCIComputeOpenStack {
 		Assert.assertEquals(3, openStackOCCIComputePlugin.getFlavors().size());
 	}
 	
-	@SuppressWarnings("unchecked")
+//	@Test
+//	public void testNormalize() {
+//		occiComputeOpenStack.
+//	}
+	
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private Series<Header> getRequestHeaders(Request request) {
 		Series<Header> requestHeaders = (Series<Header>) request.getAttributes().get(
 				RESTLET_HEADERS_ATT_KEY);

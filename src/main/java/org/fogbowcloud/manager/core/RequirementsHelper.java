@@ -72,29 +72,37 @@ public class RequirementsHelper {
 			ClassAdParser classAdParser = new ClassAdParser(requirementsStr);		
 			Op expr = (Op) classAdParser.parse();
 			
-			List<String> listSearchAttr = new ArrayList<String>();
-			listSearchAttr.add(RequirementsHelper.GLUE_DISK_TERM);
-			listSearchAttr.add(RequirementsHelper.GLUE_MEM_RAM_TERM);
-			listSearchAttr.add(RequirementsHelper.GLUE_VCPU_TERM);
+			List<String> listAttrSearched = new ArrayList<String>();
+			List<String> listAttrProvided = new ArrayList<String>();
+			listAttrProvided.add(RequirementsHelper.GLUE_DISK_TERM);
+			listAttrProvided.add(RequirementsHelper.GLUE_MEM_RAM_TERM);
+			listAttrProvided.add(RequirementsHelper.GLUE_VCPU_TERM);
 			
 			Env env = new Env();
 			String value = null;
-			for (String attr : listSearchAttr) {
+			for (String attr : listAttrProvided) {
 				List<ValueAndOperator> findValuesInRequiremets = findValuesInRequiremets(expr, attr);
 				if (findValuesInRequiremets.size() > 0) {
 					if (attr.equals(RequirementsHelper.GLUE_DISK_TERM)) {
 						value = flavor.getDisk();
+						if (value != null && !value.equals("0") ) {
+							listAttrSearched.add(attr);							
+						}
 					} else if (attr.equals(RequirementsHelper.GLUE_MEM_RAM_TERM)) {
+						listAttrSearched.add(attr);
 						value = flavor.getMem();
 					} else if (attr.equals(RequirementsHelper.GLUE_VCPU_TERM)) {
+						listAttrSearched.add(attr);
 						value = flavor.getCpu();
 					}
 					env.push((RecordExpr) new ClassAdParser("[" + attr + " = " + value + "]").parse());
 				}
 			}
 			
+			
 			classAdParser = new ClassAdParser(requirementsStr);
 			expr = (Op) classAdParser.parse();
+			expr = normalizeOPTypeTwo(expr, listAttrSearched);
 			
 			return expr.eval(env).isTrue();
 		} catch (Exception e) {
@@ -154,10 +162,48 @@ public class RequirementsHelper {
 		if (right instanceof Op) {
 			right = normalizeOPTypeTwo((Op) expr.arg2, attName);
 		}
-		if (left == null) {
-			return (Op) right;
-		} else if (right == null) {
-			return (Op) left;
+		try {
+			if (left == null) {
+				return (Op) right;
+			} else if (right == null) {
+				return (Op) left;
+			}			
+		} catch (Exception e) {	
+			return null;
+		}
+		return new Op(expr.op, left, right);
+	}
+	
+	public static Op normalizeOPTypeTwo(Op expr, List<String> listAttName) {
+		if (expr.arg1 instanceof AttrRef) {
+			AttrRef attr = (AttrRef) expr.arg1;
+			boolean thereIs = false;
+			for (String attName : listAttName) {
+				if (attr.name.rawString().equals(attName)) {
+					thereIs = true;
+				}
+			}
+			if (thereIs) {
+				return expr;				
+			}
+			return null;
+		}
+		Expr left = expr.arg1;
+		if (left instanceof Op) {
+			left = normalizeOPTypeTwo((Op) expr.arg1, listAttName);
+		}
+		Expr right = expr.arg2;
+		if (right instanceof Op) {
+			right = normalizeOPTypeTwo((Op) expr.arg2, listAttName);
+		}
+		try {
+			if (left == null) {
+				return (Op) right;
+			} else if (right == null) {
+				return (Op) left;
+			}			
+		} catch (Exception e) {
+			return null;
 		}
 		return new Op(expr.op, left, right);
 	}
@@ -189,7 +235,10 @@ public class RequirementsHelper {
 
 		Op opForAtt = normalizeOPTypeTwo(expr, GLUE_LOCATION_TERM);
 		
-		return opForAtt.eval(env).isTrue();
+		if (opForAtt == null) {
+			return false;
+		}
+		return opForAtt.eval(env).isTrue(); 
 	}
 
 	public static List<ValueAndOperator> findValuesInRequiremets(Op expr, String attName) {

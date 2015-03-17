@@ -210,7 +210,15 @@ public class OpenStackOCCIComputePlugin extends OCCIComputePlugin{
 
 	@Override
 	public Flavor getFlavor(Token token, String requirements) {
-		updateFlavors(token);		
-		return RequirementsHelper.findFlavor(getFlavors(), requirements);
+		updateFlavors(token);
+		Flavor flavorFound = RequirementsHelper.findFlavor(getFlavors(), requirements);
+		normalizeNameFlavorOCCI(flavorFound);
+		return flavorFound;
+	}
+	
+	protected void normalizeNameFlavorOCCI(Flavor flavor) {
+		if (flavor != null) {
+			flavor.setName(flavor.getName().replace(".", "-"));			
+		}
 	}
 }

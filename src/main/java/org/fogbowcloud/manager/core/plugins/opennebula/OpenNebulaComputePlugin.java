@@ -172,10 +172,11 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		templateProperties.put("cpu", String.valueOf(foundFlavor.getCpu()));
 		templateProperties.put("userdata", userdata);
 		templateProperties.put("image-id", localImageId);
+		templateProperties.put("size-disk", String.valueOf(foundFlavor.getDisk()));
 
 		Client oneClient = clientFactory.createClient(token.getAccessId(), openNebulaEndpoint);
-		String vmTemplate = generateTemplate(templateProperties);
-
+		String vmTemplate = generateTemplate(templateProperties);	
+		
 		LOGGER.debug("The instance will be allocated according to template: " + vmTemplate);
 		return clientFactory.allocateVirtualMachine(oneClient, vmTemplate);
 	}
@@ -237,6 +238,22 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 			Element imageElement = doc.createElement("IMAGE_ID");
 			imageElement.appendChild(doc.createTextNode(templateProperties.get("image-id")));
 			diskElement.appendChild(imageElement);
+			
+			String sizeDisk = templateProperties.get("size-disk");
+			if (!sizeDisk.equals("0")) {
+				// disk volatile
+				Element diskVolatileElement = doc.createElement("DISK");
+				templateElement.appendChild(diskVolatileElement);
+				// size
+				Element sizeElement = doc.createElement("SIZE");
+				sizeElement.appendChild(doc.createTextNode(sizeDisk));
+				diskVolatileElement.appendChild(sizeElement);
+				// type 
+				Element typeElementDisk = doc.createElement("TYPE");
+				typeElementDisk.appendChild(doc.createTextNode("fs"));
+				diskVolatileElement.appendChild(typeElementDisk);
+			}
+			
 			// memory
 			Element memoryElement = doc.createElement("MEMORY");
 			memoryElement.appendChild(doc.createTextNode(templateProperties.get("mem")));
@@ -577,16 +594,18 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		List<Flavor> newFlavors = new ArrayList<Flavor>();		
 		
 		Map<String, String> mapImageToSize = new HashMap<String, String>();
-		ImagePool imagePool = this.clientFactory.createImagePool(oneClient);		
+		ImagePool imagePool = this.clientFactory.createImagePool(oneClient);
+		//System.out.println(imagePool.infoAll().getMessage());
 		for (Image image : imagePool) {
 			mapImageToSize.put(image.getName(), image.xpath("SIZE"));
 		}				
 		
 		TemplatePool templatePool = this.clientFactory.createTemplatePool(oneClient);
+		//System.out.println(templatePool.infoAll().getMessage());
 		for (Template template : templatePool) {
 			String name = template.xpath("NAME");
 			String memory = template.xpath("TEMPLATE/MEMORY");
-			String vcpu = template.xpath("TEMPLATE/VCPU");
+			String vcpu = template.xpath("TEMPLATE/CPU");
 			
 			if (templateType.equals(OneConfigurationConstants.OPENNEBULA_TEMPLATES_TYPE_TEMPLATES)) {
 				boolean thereIsTemplate = false;

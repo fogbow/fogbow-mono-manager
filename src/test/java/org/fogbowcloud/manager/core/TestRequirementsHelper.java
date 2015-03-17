@@ -64,6 +64,22 @@ public class TestRequirementsHelper {
 		requirementsStr = "(" + RequirementsHelper.GLUE_LOCATION_TERM + "!=" + "\"" + value + "\")" + "||X==1";
 		Assert.assertFalse(requirementsHelper.checkLocation(requirementsStr, value));		
 	}
+	
+	@SuppressWarnings("static-access")
+	@Test
+	public void TestCheckLocationNull() {
+		String value = "\"valueCorrect\"";
+		String requirementsStr = "x==1 && x>9";
+		Assert.assertFalse(requirementsHelper.checkLocation(requirementsStr, value));
+	}
+	
+	@SuppressWarnings("static-access")
+	@Test
+	public void TestCheckLocationWrongExpression() {
+		String value = "\"valueCorrect\"";
+		String requirementsStr = "x==1 && " + RequirementsHelper.GLUE_LOCATION_TERM + "=\"\"";
+		Assert.assertFalse(requirementsHelper.checkLocation(requirementsStr, value));
+	}	
 
 	@Test
 	public void TestGetOneLocation() {
@@ -101,6 +117,33 @@ public class TestRequirementsHelper {
 		String mem = RequirementsHelper.GLUE_MEM_RAM_TERM;
 		String vCpu = RequirementsHelper.GLUE_VCPU_TERM;
 		String requirementsStr = disk + " > 10 && " + mem + " < 500 && " + vCpu + " >= 10";
+		Assert.assertTrue(requirementsHelper.checkFlavorPerRequirements(flavor, requirementsStr));
+	}
+	
+	@SuppressWarnings("static-access")
+	@Test
+	public void TestCheckFlavorWithDiskEmpty() {
+		Flavor flavor = new Flavor("test", "12", "400", "0");
+		String disk = RequirementsHelper.GLUE_DISK_TERM;
+		String mem = RequirementsHelper.GLUE_MEM_RAM_TERM;
+		String vCpu = RequirementsHelper.GLUE_VCPU_TERM;
+		String requirementsStr = disk + " > 10 && " + mem + " < 500 && " + vCpu + " >= 10";
+		Assert.assertTrue(requirementsHelper.checkFlavorPerRequirements(flavor, requirementsStr));
+		
+		flavor = new Flavor("test", "12", "400", "");
+		flavor.setDisk(null);
+		Assert.assertTrue(requirementsHelper.checkFlavorPerRequirements(flavor, requirementsStr));
+	}	
+	
+	@SuppressWarnings("static-access")
+	@Test
+	public void TestCheckFlavorWithLocation() {
+		Flavor flavor = new Flavor("test", "12", "400", "11");
+		String disk = RequirementsHelper.GLUE_DISK_TERM;
+		String mem = RequirementsHelper.GLUE_MEM_RAM_TERM;
+		String vCpu = RequirementsHelper.GLUE_VCPU_TERM;
+		String location = RequirementsHelper.GLUE_LOCATION_TERM;
+		String requirementsStr = disk + " > 10 && " + mem + " < 500 && " + vCpu + " >= 10 && " + location + "==\"location\"";
 		Assert.assertTrue(requirementsHelper.checkFlavorPerRequirements(flavor, requirementsStr));
 	}
 
@@ -144,6 +187,31 @@ public class TestRequirementsHelper {
 		Assert.assertEquals(firstValue, requirementsHelper.findFlavor(flavors, requirementsStr)
 				.getId());
 	}
+	
+	@SuppressWarnings("static-access")
+	@Test
+	public void TestFindFlavorWithOutDisk() {
+		String firstValue = "1";
+		Flavor flavorOne = new Flavor("One", firstValue, "1", "100", "10");
+		flavorOne.setDisk(null);
+		Flavor flavorTwo = new Flavor("Two", "2", "2", "200", "20");
+		flavorTwo.setDisk(null);
+		Flavor flavorThree = new Flavor("Three", "3", "30", "300", "30");
+		flavorThree.setDisk(null);
+
+		List<Flavor> flavors = new ArrayList<Flavor>();
+		flavors.add(flavorThree);
+		flavors.add(flavorOne);
+		flavors.add(flavorTwo);
+
+		String disk = RequirementsHelper.GLUE_DISK_TERM;
+		String mem = RequirementsHelper.GLUE_MEM_RAM_TERM;
+		String vCpu = RequirementsHelper.GLUE_VCPU_TERM;
+		String requirementsStr = disk + " > 5 && " + mem + " > 50 && " + vCpu + " > 0";
+
+		Assert.assertEquals(firstValue, requirementsHelper.findFlavor(flavors, requirementsStr)
+				.getId());
+	}	
 
 	@SuppressWarnings("static-access")
 	@Test
@@ -193,16 +261,45 @@ public class TestRequirementsHelper {
 				RequirementsHelper.getValueSmallerPerAttribute(requirementsStr, attrName));
 	}
 	
-	// Review
 	@Test
 	public void testNormalizeOp() {		
 		String requirementsStr = "(((X>1) && (Y==1)) || Y<10) && Y==10 && X>10";
 		Op normalizeOPTypeTwo = RequirementsHelper.normalizeOPTypeTwo(toOp(requirementsStr), "X");
 		Assert.assertEquals("((X>1)&&(X>10))", normalizeOPTypeTwo.toString());
+		
+		requirementsStr = "((X>1) && (Y==1))";
+		normalizeOPTypeTwo = RequirementsHelper.normalizeOPTypeTwo(toOp(requirementsStr), "X");
+		Assert.assertEquals("(X>1)", normalizeOPTypeTwo.toString());
+		
+		requirementsStr = "((X>1) && (Y==1))";
+		normalizeOPTypeTwo = RequirementsHelper.normalizeOPTypeTwo(toOp(requirementsStr), "X");
+		Assert.assertEquals("(X>1)", normalizeOPTypeTwo.toString());
+		
+		requirementsStr = "((X>1) && (Y==1) && (X>1) && (Y==1))";
+		normalizeOPTypeTwo = RequirementsHelper.normalizeOPTypeTwo(toOp(requirementsStr), "X");
+		Assert.assertEquals("((X>1)&&(X>1))", normalizeOPTypeTwo.toString());
 	}
+	
+	@Test
+	public void testNormalizeOpList() {
+		List<String> listAtt = new ArrayList<String>();
+		listAtt.add("X");
+		listAtt.add("Y");
+		String requirementsStr = "(((X>1) && (Y==1)) || Y<10) && Y==10 && X>10";
+		Op normalizeOPTypeTwo = RequirementsHelper.normalizeOPTypeTwo(toOp(requirementsStr), listAtt);
+		Assert.assertEquals("(((((X>1)&&(Y==1))||(Y<10))&&(Y==10))&&(X>10))", normalizeOPTypeTwo.toString());
+
+		requirementsStr = "W>=0 && ((((X>1) && (Y==1)) || Y<10) && Y==10 && X>10)";
+		normalizeOPTypeTwo = RequirementsHelper.normalizeOPTypeTwo(toOp(requirementsStr), listAtt);
+		Assert.assertEquals("(((((X>1)&&(Y==1))||(Y<10))&&(Y==10))&&(X>10))", normalizeOPTypeTwo.toString());
+		
+		requirementsStr = "(W>=0 || X<=1) && ((((X>1) && (Y==1)) || Y<10) && Y==10 && X>10)";
+		normalizeOPTypeTwo = RequirementsHelper.normalizeOPTypeTwo(toOp(requirementsStr), listAtt);
+		Assert.assertEquals("((X<=1)&&(((((X>1)&&(Y==1))||(Y<10))&&(Y==10))&&(X>10)))", normalizeOPTypeTwo.toString());
+	}	
 	
 	private Op toOp(String requirementsStr) {
 		ClassAdParser classAdParser = new ClassAdParser(requirementsStr);
-		return (Op) classAdParser.parse();		 
+		return (Op) classAdParser.parse();	 
 	}
 }

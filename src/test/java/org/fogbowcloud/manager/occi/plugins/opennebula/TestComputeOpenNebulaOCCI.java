@@ -23,6 +23,7 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.DefaultHttpResponseFactory;
 import org.apache.http.message.BasicStatusLine;
 import org.fogbowcloud.manager.core.RequirementsHelper;
+import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.plugins.opennebula.OneConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.opennebula.OpenNebulaOCCIComputePlugin;
 import org.fogbowcloud.manager.core.plugins.openstack.OpenStackConfigurationConstants;
@@ -181,6 +182,7 @@ public class TestComputeOpenNebulaOCCI {
 	@Test
 	public void testRequestInstanceWithinPublicKey() throws HttpException, IOException,
 			URISyntaxException {
+
 		List<Category> requestCategories = new ArrayList<Category>();
 		requestCategories.add(new Category(RequestConstants.PUBLIC_KEY_TERM + "; scheme=\""
 				+ RequestConstants.CREDENTIALS_RESOURCE_SCHEME + "\"; class=\""
@@ -318,10 +320,13 @@ public class TestComputeOpenNebulaOCCI {
 		public boolean checkHeaders(Header[] comparedHeaders) {
 			boolean headerEquals = true;
 			for (Header headerComp : comparedHeaders) {
+				//System.out.println(headerComp);
 				if (headerComp.getName().equals(OCCIHeaders.CATEGORY)) {
 					for (Header header : this.request.getAllHeaders()) {
 						if (header.getName().equals(OCCIHeaders.CATEGORY)
 								&& !headerComp.getValue().contains(header.getValue())) {
+							System.out.println(headerComp.getValue());
+							System.out.println(header.getValue());
 							headerEquals = false;
 						}
 					}

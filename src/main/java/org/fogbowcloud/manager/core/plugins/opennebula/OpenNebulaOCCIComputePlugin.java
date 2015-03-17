@@ -13,7 +13,6 @@ import java.util.Set;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.Header;
 import org.apache.http.message.BasicHeader;
-import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.RequirementsHelper;
 import org.fogbowcloud.manager.core.model.Flavor;
@@ -271,7 +270,7 @@ public class OpenNebulaOCCIComputePlugin extends OCCIComputePlugin {
 			String cpu = ManagerController.getAttValue("cpu", value);
 			String mem = ManagerController.getAttValue("mem", value);
 			String disk = ManagerController.getAttValue("disk", value);
-			flavors.add(new Flavor(key, cpu, mem, disk));
+			flavors.add(new Flavor(key, key, cpu, mem, disk));
 		}
 		if (flavors != null) {
 			setFlavors(flavors);			

@@ -12,7 +12,6 @@ import java.util.Properties;
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpStatus;
-import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.RequirementsHelper;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
@@ -85,7 +84,6 @@ public class TestComputeOpenNebula {
 		xOCCIAtt = new HashMap<String, String>();
 		xOCCIAtt.put(RequestAttribute.USER_DATA_ATT.getValue(),
 				Base64.encodeBase64URLSafeString("userdata".getBytes(Charsets.UTF_8)));
-		Map<String, String> mapAttr = new HashMap<String, String>();
 		String disk = RequirementsHelper.GLUE_DISK_TERM;
 		String mem = RequirementsHelper.GLUE_MEM_RAM_TERM;
 		String vCpu = RequirementsHelper.GLUE_VCPU_TERM;
@@ -101,8 +99,7 @@ public class TestComputeOpenNebula {
 								.encodeBase64URLSafeString("userdata".getBytes(Charsets.UTF_8))))
 				.replaceAll("\n", "").replaceAll(" ", "");
 	
-//		SMALL_TEMPLATE = DEFAULT_TEMPLATE.replace("#MEM#", "128").replace("#CPU#", "1.0");
-		SMALL_TEMPLATE = DEFAULT_TEMPLATE.replace("#MEM#", "1000").replace("#CPU#", "1");
+		SMALL_TEMPLATE = DEFAULT_TEMPLATE.replace("#MEM#", "1000").replace("#CPU#", "1").replace("#DISK_VOLALITE#", "<DISK><SIZE>10</SIZE><TYPE>fs</TYPE></DISK>");
 	}
 	
 	@Test
@@ -935,7 +932,7 @@ public class TestComputeOpenNebula {
 		Template template = Mockito.mock(Template.class);
 		Mockito.when(template.xpath("NAME")).thenReturn("");
 		Mockito.when(template.xpath("TEMPLATE/MEMORY")).thenReturn("2000");
-		Mockito.when(template.xpath("TEMPLATE/VCPU")).thenReturn("2");
+		Mockito.when(template.xpath("TEMPLATE/CPU")).thenReturn("2");
 		Mockito.when(template.xpath("TEMPLATE/DISK[1]/IMAGE")).thenReturn(imageOne);
 		Mockito.when(template.xpath("TEMPLATE/DISK[2]/SIZE")).thenReturn("100");
 		Mockito.when(template.xpath("TEMPLATE/DISK[2]")).thenReturn("NotNull");		
@@ -943,7 +940,7 @@ public class TestComputeOpenNebula {
 		Template templateTwo = Mockito.mock(Template.class);
 		Mockito.when(templateTwo.xpath("NAME")).thenReturn("");
 		Mockito.when(templateTwo.xpath("TEMPLATE/MEMORY")).thenReturn("4000");
-		Mockito.when(templateTwo.xpath("TEMPLATE/VCPU")).thenReturn("4");
+		Mockito.when(templateTwo.xpath("TEMPLATE/CPU")).thenReturn("4");
 		Mockito.when(templateTwo.xpath("TEMPLATE/DISK[1]/IMAGE")).thenReturn("200");
 		Mockito.when(templateTwo.xpath("TEMPLATE/DISK[1]/SIZE")).thenReturn("200");
 				
@@ -993,7 +990,7 @@ public class TestComputeOpenNebula {
 		String nameTamplateOne = "templateOne";
 		Mockito.when(templateOne.xpath("NAME")).thenReturn(nameTamplateOne);
 		Mockito.when(templateOne.xpath("TEMPLATE/MEMORY")).thenReturn("2000");
-		Mockito.when(templateOne.xpath("TEMPLATE/VCPU")).thenReturn("2");
+		Mockito.when(templateOne.xpath("TEMPLATE/CPU")).thenReturn("2");
 		Mockito.when(templateOne.xpath("TEMPLATE/DISK[1]/IMAGE")).thenReturn(imageOne);
 		Mockito.when(templateOne.xpath("TEMPLATE/DISK[2]/SIZE")).thenReturn("100");
 		Mockito.when(templateOne.xpath("TEMPLATE/DISK[2]")).thenReturn("NotNull");		
@@ -1002,7 +999,7 @@ public class TestComputeOpenNebula {
 		String nameTamplateTwo = "templateTwo";
 		Mockito.when(templateTwo.xpath("NAME")).thenReturn(nameTamplateTwo);
 		Mockito.when(templateTwo.xpath("TEMPLATE/MEMORY")).thenReturn("4000");
-		Mockito.when(templateTwo.xpath("TEMPLATE/VCPU")).thenReturn("4");
+		Mockito.when(templateTwo.xpath("TEMPLATE/CPU")).thenReturn("4");
 		Mockito.when(templateTwo.xpath("TEMPLATE/DISK[1]/IMAGE")).thenReturn(imageOne);
 		Mockito.when(templateTwo.xpath("TEMPLATE/DISK[2]/SIZE")).thenReturn("200");
 		Mockito.when(templateTwo.xpath("TEMPLATE/DISK[2]")).thenReturn("NotNull");		
@@ -1011,7 +1008,7 @@ public class TestComputeOpenNebula {
 		String nameTamplateThree = "templateThree";
 		Mockito.when(templateThree.xpath("NAME")).thenReturn(nameTamplateThree);
 		Mockito.when(templateThree.xpath("TEMPLATE/MEMORY")).thenReturn("8000");
-		Mockito.when(templateThree.xpath("TEMPLATE/VCPU")).thenReturn("8");
+		Mockito.when(templateThree.xpath("TEMPLATE/CPU")).thenReturn("8");
 		Mockito.when(templateThree.xpath("TEMPLATE/DISK[1]/IMAGE")).thenReturn("400");
 		Mockito.when(templateThree.xpath("TEMPLATE/DISK[1]/SIZE")).thenReturn("400");		
 		
