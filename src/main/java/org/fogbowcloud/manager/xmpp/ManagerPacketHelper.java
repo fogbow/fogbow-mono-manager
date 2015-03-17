@@ -27,6 +27,7 @@ import org.fogbowcloud.manager.occi.core.Resource;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.instance.Instance.Link;
+import org.fogbowcloud.manager.occi.instance.InstanceState;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.jamppa.component.PacketCallback;
 import org.jamppa.component.PacketSender;
@@ -278,6 +279,8 @@ public class ManagerPacketHelper {
 	private static Instance parseInstance(Element instanceEl) {
 		String id = instanceEl.element("id").getText();
 
+		InstanceState state = InstanceState.valueOf(instanceEl.elementText("state"));
+		
 		Iterator<Element> linkIterator = instanceEl.elementIterator("link");
 		List<Link> links = new ArrayList<Link>();
 		
@@ -340,7 +343,7 @@ public class ManagerPacketHelper {
 			attributes.put(key, value);
 		}
 
-		return new Instance(id, resources, attributes, links);
+		return new Instance(id, resources, attributes, links, state);
 	}
 
 	public static Condition getCondition(OCCIException e) {

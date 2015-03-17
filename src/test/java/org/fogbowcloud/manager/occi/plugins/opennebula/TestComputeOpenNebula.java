@@ -25,6 +25,7 @@ import org.fogbowcloud.manager.occi.core.ResourceRepository;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.instance.Instance;
+import org.fogbowcloud.manager.occi.instance.InstanceState;
 import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.fogbowcloud.manager.occi.util.PluginHelper;
@@ -954,5 +955,51 @@ public class TestComputeOpenNebula {
 		flavors.add(new Flavor(RequestConstants.LARGE_TERM, "4.0", "512.0",
 				OpenNebulaComputePlugin.DEFAULT_RESOURCE_MAX_VALUE / 512));
 		Assert.assertEquals(flavors, resourcesInfo.getFlavors());
+	}
+	
+	@Test
+	public void tesGettInstanceState() {
+		// mocking opennebula structures
+		Client oneClient = Mockito.mock(Client.class);
+
+		VirtualMachine vm = Mockito.mock(VirtualMachine.class);
+		Mockito.when(vm.getId()).thenReturn(INSTANCE_ID);
+		Mockito.when(vm.getName()).thenReturn("one-instance");
+		Mockito.when(vm.xpath("TEMPLATE/MEMORY")).thenReturn("128.0");
+		Mockito.when(vm.xpath("TEMPLATE/CPU")).thenReturn("1.0");
+		Mockito.when(vm.xpath("TEMPLATE/DISK/IMAGE")).thenReturn(IMAGE1_NAME);
+		Mockito.when(vm.xpath("TEMPLATE/OS/ARCH")).thenReturn("");
+
+		// mocking clientFactory
+		OpenNebulaClientFactory clientFactory = Mockito.mock(OpenNebulaClientFactory.class);
+		Mockito.when(clientFactory.createClient(defaultToken.getAccessId(), OPEN_NEBULA_URL))
+				.thenReturn(oneClient);
+		Mockito.when(clientFactory.allocateVirtualMachine(oneClient, SMALL_TEMPLATE)).thenReturn(
+				INSTANCE_ID);
+		Mockito.when(clientFactory.createVirtualMachine(oneClient, INSTANCE_ID)).thenReturn(vm);
+
+		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
+
+		// requesting an instance
+		List<Category> categories = new ArrayList<Category>();
+		categories.add(new Category(RequestConstants.SMALL_TERM,
+				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
+		Assert.assertEquals(INSTANCE_ID,
+				computeOpenNebula.requestInstance(defaultToken, categories, xOCCIAtt, IMAGE1_ID));
+
+		// getting specific instance
+		Mockito.when(vm.lcmStateStr()).thenReturn("Running");
+		Assert.assertEquals(InstanceState.RUNNING, 
+				computeOpenNebula.getInstance(defaultToken, INSTANCE_ID).getState());
+		Mockito.when(vm.lcmStateStr()).thenReturn("Failure");
+		Assert.assertEquals(InstanceState.FAILED, 
+				computeOpenNebula.getInstance(defaultToken, INSTANCE_ID).getState());
+		Mockito.when(vm.lcmStateStr()).thenReturn("Prolog");
+		Assert.assertEquals(InstanceState.PENDING, 
+				computeOpenNebula.getInstance(defaultToken, INSTANCE_ID).getState());
+		Mockito.when(vm.lcmStateStr()).thenReturn("Suspended");
+		Assert.assertEquals(InstanceState.SUSPENDED, 
+				computeOpenNebula.getInstance(defaultToken, INSTANCE_ID).getState());
+
 	}
 }

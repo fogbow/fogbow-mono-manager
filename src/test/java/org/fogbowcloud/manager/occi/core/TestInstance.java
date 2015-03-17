@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.fogbowcloud.manager.occi.instance.Instance;
+import org.fogbowcloud.manager.occi.instance.InstanceState;
 import org.fogbowcloud.manager.occi.instance.Instance.Link;
 import org.junit.Assert;
 import org.junit.Before;
@@ -88,20 +89,47 @@ public class TestInstance {
 		attributes.put("key2", "value2");
 		List<Resource> resources = new ArrayList<Resource>();
 		resources
-				.add(new Resource(
-						"os_tpl; scheme=\"http://schemas.ogf.org/occi/infrastructure#\"; class=\"mixin\"; location=\"http://localhost:8182/os_tpl/\", null"));
+				.add(new Resource("os_tpl; scheme=\"http://schemas.ogf.org/occi/infrastructure#\"; "
+						+ "class=\"mixin\"; location=\"http://localhost:8182/os_tpl/\", null"));
 		List<Link> links = new ArrayList<Link>();
 
-		Instance instance = new Instance(id, resources, attributes, links);
+		Instance instance = new Instance(id, resources, attributes, links, InstanceState.PENDING);
 		Assert.assertEquals("101", instance.getId());
 		Assert.assertEquals(2, instance.getAttributes().size());
 		Assert.assertEquals(0, instance.getLinks().size());
 		Assert.assertEquals(1, instance.getResources().size());
 	}
 	
-	
-	
+	@Test
+	public void testNoStatusAttribute() {
+		String textResponse = getFormatedResources();
+		textResponse += "\n";
+		textResponse += link.toOCCIMessageFormatLink() + "\n";
+		textResponse += getFormatedAttributes();
+		Instance instance = Instance.parseInstance("id", textResponse);
 
+		Assert.assertEquals(InstanceState.PENDING, instance.getState());
+	}
+	
+	@Test
+	public void testStatusAttribute() {
+		Map<String, String> attributesCopy = new HashMap<String, String>();
+		attributesCopy.put("occi.compute.state", "active");
+		Instance instanceActive = Instance.parseInstance("id", getFormatedResources() + 
+				"\n" + getFormatedAttributes(attributesCopy));
+		Assert.assertEquals(InstanceState.RUNNING, instanceActive.getState());
+		
+		attributesCopy.put("occi.compute.state", "inactive");
+		Instance instanceInactive = Instance.parseInstance("id", getFormatedResources() + 
+				"\n" + getFormatedAttributes(attributesCopy));
+		Assert.assertEquals(InstanceState.PENDING, instanceInactive.getState());
+		
+		attributesCopy.put("occi.compute.state", "suspended");
+		Instance instanceSuspended = Instance.parseInstance("id", getFormatedResources() + 
+				"\n" + getFormatedAttributes(attributesCopy));
+		Assert.assertEquals(InstanceState.SUSPENDED, instanceSuspended.getState());
+	}
+	
 	private String getFormatedResources() {
 		String textResponse = "";
 		for (Resource resource : resources) {
@@ -111,6 +139,10 @@ public class TestInstance {
 	}
 
 	private String getFormatedAttributes() {
+		return getFormatedAttributes(this.attributes);
+	}
+	
+	private String getFormatedAttributes(Map<String, String> attributes) {
 		String textResponse = "";
 		for (String key : attributes.keySet()) {
 			textResponse += "X-OCCI-Attribute: " + key + "=\"" + attributes.get(key) + "\"\n";

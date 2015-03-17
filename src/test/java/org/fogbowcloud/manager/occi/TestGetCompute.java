@@ -27,6 +27,7 @@ import org.fogbowcloud.manager.occi.core.Resource;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.instance.Instance;
+import org.fogbowcloud.manager.occi.instance.InstanceState;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.fogbowcloud.manager.occi.util.OCCITestHelper;
 import org.junit.After;
@@ -55,7 +56,7 @@ public class TestGetCompute {
 		List<Resource> list = new ArrayList<Resource>();
 		Map<String, String> map = new HashMap<String, String>();
 		map.put("test", "test");
-		Instance instance1 = new Instance(INSTANCE_1_ID, list, map, null);
+		Instance instance1 = new Instance(INSTANCE_1_ID, list, map, null, InstanceState.PENDING);
 
 		computePlugin = Mockito.mock(ComputePlugin.class);
 		Mockito.when(computePlugin.getInstance(Mockito.any(Token.class), Mockito.eq(INSTANCE_1_ID)))
@@ -129,11 +130,11 @@ public class TestGetCompute {
 		Map<String, String> attributesTwo = new HashMap<String, String>();
 		attributesTwo.put("occi.compute.cores", "2");
 		Instance instanceOne = new Instance("One", resources, attributesOne,
-				new ArrayList<Instance.Link>());
+				new ArrayList<Instance.Link>(), InstanceState.PENDING);
 		Instance instanceTwo = new Instance("Two", resources, attributesTwo,
-				new ArrayList<Instance.Link>());
+				new ArrayList<Instance.Link>(), InstanceState.PENDING);
 		Instance instanceThree = new Instance("Three", resources, attributesTwo,
-				new ArrayList<Instance.Link>());
+				new ArrayList<Instance.Link>(), InstanceState.PENDING);
 		Mockito.when(computePlugin.getInstance(Mockito.any(Token.class), Mockito.anyString()))
 				.thenReturn(instanceOne, instanceTwo, instanceThree);		
 		
@@ -158,11 +159,11 @@ public class TestGetCompute {
 		Map<String, String> attributesTwo = new HashMap<String, String>();
 		attributesTwo.put("occi.compute.cores", "2");
 		Instance instanceOne = new Instance("One", resources, attributesOne,
-				new ArrayList<Instance.Link>());
+				new ArrayList<Instance.Link>(), InstanceState.PENDING);
 		Instance instanceTwo = new Instance("Two", resources, attributesTwo,
-				new ArrayList<Instance.Link>());
+				new ArrayList<Instance.Link>(), InstanceState.PENDING);
 		Instance instanceThree = new Instance("Three", resources, attributesTwo,
-				new ArrayList<Instance.Link>());
+				new ArrayList<Instance.Link>(), InstanceState.PENDING);
 		Mockito.when(computePlugin.getInstance(Mockito.any(Token.class), Mockito.anyString()))
 				.thenReturn(instanceOne, instanceTwo, instanceThree);		
 		
@@ -192,11 +193,11 @@ public class TestGetCompute {
 				"", ""));
 		Map<String, String> attributesOne = new HashMap<String, String>();
 		Instance instanceOne = new Instance("One", resourcesTwo, attributesOne,
-				new ArrayList<Instance.Link>());
+				new ArrayList<Instance.Link>(), InstanceState.PENDING);
 		Instance instanceTwo = new Instance("Two", resources, attributesOne,
-				new ArrayList<Instance.Link>());
+				new ArrayList<Instance.Link>(), InstanceState.PENDING);
 		Instance instanceThree = new Instance("Three", resources, attributesOne,
-				new ArrayList<Instance.Link>());		
+				new ArrayList<Instance.Link>(), InstanceState.PENDING);		
 		Mockito.when(computePlugin.getInstance(Mockito.any(Token.class), Mockito.anyString()))
 				.thenReturn(instanceOne, instanceTwo, instanceThree);		
 		
@@ -228,11 +229,11 @@ public class TestGetCompute {
 				"", ""));
 		Map<String, String> attributesOne = new HashMap<String, String>();
 		Instance instanceOne = new Instance("One", resourcesTwo, attributesOne,
-				new ArrayList<Instance.Link>());
+				new ArrayList<Instance.Link>(), InstanceState.PENDING);
 		Instance instanceTwo = new Instance("Two", resources, attributesOne,
-				new ArrayList<Instance.Link>());
+				new ArrayList<Instance.Link>(), InstanceState.PENDING);
 		Instance instanceThree = new Instance("Three", resources, attributesOne,
-				new ArrayList<Instance.Link>());		
+				new ArrayList<Instance.Link>(), InstanceState.PENDING);		
 		Mockito.when(computePlugin.getInstance(Mockito.any(Token.class), Mockito.anyString()))
 				.thenReturn(instanceOne, instanceTwo, instanceThree);		
 		
