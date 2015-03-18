@@ -39,6 +39,7 @@ import org.fogbowcloud.manager.occi.core.ResourceRepository;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.instance.Instance;
+import org.fogbowcloud.manager.occi.instance.InstanceState;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
@@ -370,7 +371,7 @@ public class ManagerController {
 		}
 	}
 	
-	public String normalizeInstanceId(String instanceId) {
+	private static String normalizeInstanceId(String instanceId) {
 		if (instanceId.contains(Request.SEPARATOR_GLOBAL_ID)) {
 			String[] partsInstanceId = instanceId.split(Request.SEPARATOR_GLOBAL_ID);
 			instanceId = partsInstanceId[0];
@@ -679,7 +680,7 @@ public class ManagerController {
 				turnOffTimer = false;
 				try {
 					LOGGER.debug("Monitoring instance of request: " + request);
-					getInstance(request);
+					removeFailedInstance(request, getInstance(request));
 				} catch (Throwable e) {
 					LOGGER.debug("Error while getInstance of " + request.getInstanceId(), e);
 					instanceRemoved(requests.get(request.getId()));
@@ -690,6 +691,21 @@ public class ManagerController {
 		if (turnOffTimer) {
 			LOGGER.info("There are no requests.");
 			instanceMonitoringTimer.cancel();
+		}
+	}
+
+	private void removeFailedInstance(Request request, Instance instance) {
+		if (instance == null) {
+			return;
+		}
+		if (InstanceState.FAILED.equals(instance.getState())) {
+			try {
+				removeInstance(request.getFederationToken().getAccessId(), 
+						instance.getId(), request);
+			} catch (Throwable t) {
+				// Best effort
+				LOGGER.warn("Error while removing stale instance.", t);
+			}
 		}
 	}
 

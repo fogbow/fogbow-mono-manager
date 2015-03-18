@@ -23,9 +23,12 @@ import org.fogbowcloud.manager.core.util.ManagerTestHelper;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.OCCIException;
+import org.fogbowcloud.manager.occi.core.Resource;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.instance.Instance;
+import org.fogbowcloud.manager.occi.instance.Instance.Link;
+import org.fogbowcloud.manager.occi.instance.InstanceState;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
@@ -43,8 +46,8 @@ import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.xmpp.packet.IQ;
-import org.xmpp.packet.Packet;
 import org.xmpp.packet.IQ.Type;
+import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError.Condition;
 
 public class TestManagerController {
@@ -892,6 +895,39 @@ public class TestManagerController {
 						Mockito.anyString())).thenThrow(new RuntimeException());
 
 		managerController.monitorInstances();
+	}
+	
+	@Test
+	public void testMonitorWillRemoveLocalFailedInstance() throws InterruptedException {
+		// setting request repository
+		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null);
+		request1.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
+		request1.setState(RequestState.FULFILLED);
+		request1.setMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+
+		RequestRepository requestRepository = new RequestRepository();
+		requestRepository.addRequest(managerTestHelper.getDefaultLocalToken().getUser(), request1);
+		managerController.setRequests(requestRepository);
+
+		// updating compute mock
+		Instance expectedInstance = new Instance(DefaultDataTestHelper.INSTANCE_ID, new LinkedList<Resource>(), 
+				new HashMap<String, String>(), new LinkedList<Link>(), InstanceState.FAILED);
+		Mockito.when(managerTestHelper.getComputePlugin().getInstance(Mockito.any(Token.class),
+						Mockito.anyString())).thenReturn(expectedInstance);
+
+		managerController.monitorInstances();
+		
+		// checking if instance was properly removed
+		Mockito.verify(managerTestHelper.getComputePlugin()).removeInstance(
+				Mockito.any(Token.class), Mockito.eq(DefaultDataTestHelper.INSTANCE_ID));
+		
+		// checking if request is closed
+		List<Request> requestsFromUser = managerController
+				.getRequestsFromUser(DefaultDataTestHelper.LOCAL_ACCESS_TOKEN_ID);
+		Assert.assertEquals(1, requestsFromUser.size());
+		for (Request request : requestsFromUser) {
+			Assert.assertTrue(request.getState().equals(RequestState.CLOSED));
+		}
 	}
 
 	@Test(expected = IllegalArgumentException.class)
