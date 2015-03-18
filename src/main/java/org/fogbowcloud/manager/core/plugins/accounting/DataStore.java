@@ -17,12 +17,12 @@ import org.h2.jdbcx.JdbcConnectionPool;
 
 public class DataStore {
 
-	protected static final String MEMBER_TABLE_NAME = "member_usage";
-	protected static final String USER_TABLE_NAME = "user_usage";
-	protected static final String MEMBER_ID = "member_id";
-	protected static final String USER_ID = "user_id";
-	protected static final String CONSUMED = "consumed";
-	protected static final String DONATED = "donated";
+	public static final String MEMBER_TABLE_NAME = "member_usage";
+	public static final String USER_TABLE_NAME = "user_usage";
+	public static final String MEMBER_ID = "member_id";
+	public static final String USER_ID = "user_id";
+	public static final String CONSUMED = "consumed";
+	public static final String DONATED = "donated";
 
 	private static final Logger LOGGER = Logger.getLogger(DataStore.class);
 

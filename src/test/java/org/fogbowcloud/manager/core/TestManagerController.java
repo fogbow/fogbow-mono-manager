@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.dom4j.Element;
 import org.fogbowcloud.manager.core.model.DateUtils;
@@ -23,9 +24,11 @@ import org.fogbowcloud.manager.core.util.ManagerTestHelper;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.OCCIException;
+import org.fogbowcloud.manager.occi.core.Resource;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.instance.Instance;
+import org.fogbowcloud.manager.occi.instance.Instance.Link;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
@@ -159,6 +162,16 @@ public class TestManagerController {
 		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);
 		managerController.setPacketSender(packetSender);
 
+		// mocking getRemoteInstance for running benchmarking
+		IQ response = new IQ(); 
+		response.setType(Type.result);
+		Element queryEl = response.getElement().addElement("query", 
+				ManagerXmppComponent.GETINSTANCE_NAMESPACE);
+		Element instanceEl = queryEl.addElement("instance");
+		instanceEl.addElement("id").setText("newinstanceid");
+		
+		Mockito.when(packetSender.syncSendPacket(Mockito.any(IQ.class))).thenReturn(response);
+
 		final List<PacketCallback> callbacks = new LinkedList<PacketCallback>();
 		
 		Mockito.doAnswer(new Answer<Void>() {
@@ -190,6 +203,7 @@ public class TestManagerController {
 		listMembers.add(new FederationMember(remoteResourcesInfo));
 		managerController.updateMembers(listMembers);
 
+
 		Request request1 = new Request("id1",
 				managerTestHelper.getDefaultFederationToken(),
 				managerTestHelper.getDefaultLocalToken(),
@@ -210,9 +224,9 @@ public class TestManagerController {
 		Assert.assertTrue(managerController.isRequestForwardedtoRemoteMember(request1.getId()));
 
 		IQ iq = new IQ();
-		Element queryEl = iq.getElement().addElement("query",
+		queryEl = iq.getElement().addElement("query",
 				ManagerXmppComponent.REQUEST_NAMESPACE);
-		Element instanceEl = queryEl.addElement("instance");
+		instanceEl = queryEl.addElement("instance");
 		instanceEl.addElement("id").setText("newinstanceid");
 		callbacks.get(0).handle(iq);
 

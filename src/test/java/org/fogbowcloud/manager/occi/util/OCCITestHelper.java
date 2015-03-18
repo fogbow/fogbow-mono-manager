@@ -21,6 +21,7 @@ import org.apache.http.util.EntityUtils;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.model.FederationMember;
+import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
@@ -118,8 +119,8 @@ public class OCCITestHelper {
 	
 	public void initializeComponentCompute(ComputePlugin computePlugin,
 			IdentityPlugin identityPlugin, AuthorizationPlugin authorizationPlugin,
-			ImageStoragePlugin imageStoragePlugin,
-			List<Request> requestsToAdd) throws Exception {
+			ImageStoragePlugin imageStoragePlugin, AccountingPlugin accountingPlugin,
+			BenchmarkingPlugin benchmarkingPlugin, List<Request> requestsToAdd) throws Exception {
 		component = new Component();
 		component.getServers().add(Protocol.HTTP, ENDPOINT_PORT);
 
@@ -135,6 +136,8 @@ public class OCCITestHelper {
 		facade.setLocalIdentityPlugin(identityPlugin);
 		facade.setFederationIdentityPlugin(identityPlugin);
 		facade.setImageStoragePlugin(imageStoragePlugin);
+		facade.setAccountingPlugin(accountingPlugin);
+		facade.setBenchmarkingPlugin(benchmarkingPlugin);
 
 		requests = new RequestRepository();
 		facade.setRequests(requests);

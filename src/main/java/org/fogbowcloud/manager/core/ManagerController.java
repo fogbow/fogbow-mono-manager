@@ -147,7 +147,7 @@ public class ManagerController {
 		ArrayList<ServedRequest> servedRequests = new ArrayList<ServedRequest>(
 				instancesForRemoteMembers.values());
 		
-		LOGGER.debug("requests=" + requestsWithInstances + ", servedRequests=" + servedRequests);
+		LOGGER.debug("requests=" + requestsWithInstances + ", servedRequests=" + servedRequests);		
 		accountingPlugin.update(requestsWithInstances, servedRequests);
 	}
 
@@ -443,10 +443,9 @@ public class ManagerController {
 	}
 
 	private void instanceRemoved(Request request) {
-		if (!isLocal(request)) {
-			updateAccounting();
-			benchmarkingPlugin.remove(request.getInstanceId());
-		}
+		updateAccounting();
+		benchmarkingPlugin.remove(request.getInstanceId());
+
 		request.setInstanceId(null);
 		request.setMemberId(null);
 		request.setFulfilledByFederationUser(false);		
@@ -562,11 +561,11 @@ public class ManagerController {
 		try {
 			String instanceId = computePlugin.requestInstance(federationUserToken, categoriesWithoutImage,
 					xOCCIAtt, localImageId);
+			
+			Instance instance = computePlugin.getInstance(federationUserToken, instanceId);
+			benchmarkingPlugin.run(instance);
 		
 			if (!properties.getProperty("xmpp_jid").equals(memberId)) {				
-				Instance instance = computePlugin.getInstance(federationUserToken, instanceId);
-				benchmarkingPlugin.run(instance);
-				
 				instancesForRemoteMembers.put(instanceId, new ServedRequest(instanceToken, instanceId, 
 						memberId, categories, xOCCIAtt));
 				if (!servedRequestMonitoringTimer.isScheduled()) {
@@ -819,10 +818,12 @@ public class ManagerController {
 						}
 						if (instanceId == null) {
 							return;
-						}
-						
+						}						
 						request.setState(RequestState.FULFILLED);
 						request.setInstanceId(instanceId);
+						
+						benchmarkingPlugin.run(getRemoteInstance(request));
+						
 						if (!instanceMonitoringTimer.isScheduled()) {
 							triggerInstancesMonitor();
 						}
@@ -874,7 +875,10 @@ public class ManagerController {
 			}
 			
 			instanceId = computePlugin.requestInstance(request.getLocalToken(),
-					categories, request.getxOCCIAtt(), localImageId);						
+					categories, request.getxOCCIAtt(), localImageId);
+
+			Instance instance = computePlugin.getInstance(request.getLocalToken(), instanceId);
+			benchmarkingPlugin.run(instance);
 		} catch (OCCIException e) {
 			int statusCode = e.getStatus().getCode();
 			if (statusCode == HttpStatus.SC_INSUFFICIENT_SPACE_ON_RESOURCE) {

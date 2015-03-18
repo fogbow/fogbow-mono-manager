@@ -19,19 +19,22 @@ public class FCUStaticBenchmarkingPlugin implements BenchmarkingPlugin {
 
 	@Override
 	public void run(Instance instance) {
-		LOGGER.info("Running benchmarking on instance: " + instance);
 		if (instance == null) {
 			throw new IllegalArgumentException("Instance must not be null.");
 		}
+		LOGGER.info("Running benchmarking on instance: " + instance.getId());
 
 		double power = UNDEFINED_POWER;
 		try {
-			double vcpu = Double.parseDouble(instance.getAttributes().get("occi.compute.core"));
-			double memory = Double.parseDouble(instance.getAttributes().get("occi.compute.memory"));
+			String vcpuStr = instance.getAttributes().get("occi.compute.core");
+			String memStr = instance.getAttributes().get("occi.compute.memory");
 
-			LOGGER.debug("Instance " + instance.getId() + " has " + vcpu + " vcpu and " + memory
+			LOGGER.debug("Instance " + instance.getId() + " has " + vcpuStr + " vcpu and " + memStr
 					+ " Gb of memrory.");
-			power = ((vcpu / 8d) + (memory / 16d)) / 2;
+			
+			double vcpu = Double.parseDouble(vcpuStr.replaceAll("\"", ""));
+			double mem = Double.parseDouble(memStr.replaceAll("\"", ""));
+			power = ((vcpu / 8d) + (mem / 16d)) / 2;
 		} catch (Exception e) {
 			LOGGER.error("Error while parsing attribute values to double.", e);
 		}
