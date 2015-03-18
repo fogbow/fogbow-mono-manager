@@ -23,7 +23,7 @@ public class TestFCUStaticBenchmarking {
 	public void setUp(){
 		instanceAttributes = new HashMap<String, String>();
 		instanceAttributes.put("occi.compute.memory", "2");
-		instanceAttributes.put("occi.compute.core", "2");		
+		instanceAttributes.put("occi.compute.cores", "2");		
 		benchmarking = new FCUStaticBenchmarkingPlugin(null);
 	}
 
@@ -72,7 +72,7 @@ public class TestFCUStaticBenchmarking {
  		// updating instance attributes (4 vcpus and 8 Gb mem)
 		Map<String, String> attributes = new HashMap<String, String>();
 		attributes.put("occi.compute.memory", "8");
-		attributes.put("occi.compute.core", "4");
+		attributes.put("occi.compute.cores", "4");
 		Instance instance2 = new Instance("instanceId2", new ArrayList<Resource>(),
 				attributes, new ArrayList<Link>());
 		double instancePower2 = ((4 / 8d) + (8 / 16d)) / 2;
@@ -100,7 +100,7 @@ public class TestFCUStaticBenchmarking {
  		// updating instance attributes (4 vcpus and 8 Gb mem)
 		Map<String, String> attributes = new HashMap<String, String>();
 		attributes.put("occi.compute.memory", "8");
-		attributes.put("occi.compute.core", "4");
+		attributes.put("occi.compute.cores", "4");
 		Instance instance2 = new Instance("instanceId2", new ArrayList<Resource>(),
 				attributes, new ArrayList<Link>());
 		double instancePower2 = ((4 / 8d) + (8 / 16d)) / 2;

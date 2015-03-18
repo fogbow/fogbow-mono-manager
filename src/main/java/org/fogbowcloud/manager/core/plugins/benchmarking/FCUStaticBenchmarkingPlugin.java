@@ -26,7 +26,7 @@ public class FCUStaticBenchmarkingPlugin implements BenchmarkingPlugin {
 
 		double power = UNDEFINED_POWER;
 		try {
-			String vcpuStr = instance.getAttributes().get("occi.compute.core");
+			String vcpuStr = instance.getAttributes().get("occi.compute.cores");
 			String memStr = instance.getAttributes().get("occi.compute.memory");
 
 			LOGGER.debug("Instance " + instance.getId() + " has " + vcpuStr + " vcpu and " + memStr
