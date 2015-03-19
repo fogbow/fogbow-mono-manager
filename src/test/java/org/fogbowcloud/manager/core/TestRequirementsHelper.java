@@ -3,6 +3,7 @@ package org.fogbowcloud.manager.core;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.fogbowcloud.manager.core.RequirementsHelper.ValueAndOperator;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.junit.Assert;
 import org.junit.Before;
@@ -50,19 +51,27 @@ public class TestRequirementsHelper {
 	public void TestCheckLocation() {
 		String value = "\"valueCorrect\"";
 		String requirementsStr = "x==1 && " + RequirementsHelper.GLUE_LOCATION_TERM + "==" + value;
-		Assert.assertTrue(requirementsHelper.checkLocation(requirementsStr, value));
+		Assert.assertTrue(requirementsHelper.matchLocation(requirementsStr, value));
 
 		value = "valueCorrect";
 		requirementsStr = RequirementsHelper.GLUE_LOCATION_TERM + "==" + "\"" + value + "\"";
-		Assert.assertTrue(requirementsHelper.checkLocation(requirementsStr, value));
+		Assert.assertTrue(requirementsHelper.matchLocation(requirementsStr, value));
 		
 		value = "valueCorrect";
 		requirementsStr = RequirementsHelper.GLUE_LOCATION_TERM + "!=" + "\"" + value + "\"";
-		Assert.assertFalse(requirementsHelper.checkLocation(requirementsStr, value));
+		Assert.assertFalse(requirementsHelper.matchLocation(requirementsStr, value));
 		
 		value = "valueCorrect";
 		requirementsStr = "(" + RequirementsHelper.GLUE_LOCATION_TERM + "!=" + "\"" + value + "\")" + "||X==1";
-		Assert.assertFalse(requirementsHelper.checkLocation(requirementsStr, value));		
+		Assert.assertFalse(requirementsHelper.matchLocation(requirementsStr, value));		
+	}
+	
+	@SuppressWarnings("static-access")
+	@Test
+	public void TestCheckLocationSameValue() {
+		String value = "\"valueCorrect\"";
+		String requirementsStr = RequirementsHelper.GLUE_LOCATION_TERM + "==" + value + " && " + RequirementsHelper.GLUE_LOCATION_TERM + "==" + value;
+		Assert.assertTrue(requirementsHelper.matchLocation(requirementsStr, value));		
 	}
 	
 	@SuppressWarnings("static-access")
@@ -70,7 +79,7 @@ public class TestRequirementsHelper {
 	public void TestCheckLocationNull() {
 		String value = "\"valueCorrect\"";
 		String requirementsStr = "x==1 && x>9";
-		Assert.assertFalse(requirementsHelper.checkLocation(requirementsStr, value));
+		Assert.assertFalse(requirementsHelper.matchLocation(requirementsStr, value));
 	}
 	
 	@SuppressWarnings("static-access")
@@ -78,7 +87,7 @@ public class TestRequirementsHelper {
 	public void TestCheckLocationWrongExpression() {
 		String value = "\"valueCorrect\"";
 		String requirementsStr = "x==1 && " + RequirementsHelper.GLUE_LOCATION_TERM + "=\"\"";
-		Assert.assertFalse(requirementsHelper.checkLocation(requirementsStr, value));
+		Assert.assertFalse(requirementsHelper.matchLocation(requirementsStr, value));
 	}	
 
 	@Test
@@ -107,6 +116,22 @@ public class TestRequirementsHelper {
 		String requirementsStr = "x==1 && " + RequirementsHelper.GLUE_LOCATION_TERM + "==" + value
 				+ "&&" + RequirementsHelper.GLUE_LOCATION_TERM + "!=" + valueTwo;
 		Assert.assertEquals(1, RequirementsHelper.getLocationsInRequiremets(requirementsStr).size());
+	}
+	
+	@Test
+	public void TestExistsLocation() {
+		String value = "local1";
+		String requirementsStr = "x==1 && " + RequirementsHelper.GLUE_LOCATION_TERM + "==" + value;
+		Assert.assertTrue(RequirementsHelper.existsLocation(requirementsStr));
+
+		requirementsStr = RequirementsHelper.GLUE_LOCATION_TERM + "==" + value;
+		Assert.assertTrue(RequirementsHelper.existsLocation(requirementsStr));
+		
+		requirementsStr =  "X ==" + value;
+		Assert.assertFalse(RequirementsHelper.existsLocation(requirementsStr));
+		
+		requirementsStr = RequirementsHelper.GLUE_LOCATION_TERM + "==" + value + "|| X==" + value;
+		Assert.assertTrue(RequirementsHelper.existsLocation(requirementsStr));
 	}
 
 	@SuppressWarnings("static-access")
@@ -297,6 +322,19 @@ public class TestRequirementsHelper {
 		normalizeOPTypeTwo = RequirementsHelper.normalizeOPTypeTwo(toOp(requirementsStr), listAtt);
 		Assert.assertEquals("((X<=1)&&(((((X>1)&&(Y==1))||(Y<10))&&(Y==10))&&(X>10)))", normalizeOPTypeTwo.toString());
 	}	
+	
+	@Test
+	public void testFindValuesInRequiremets() {
+		String requirements = "X==\"id1\" || X==\"id2\"";
+		String attName = "X";
+		List<ValueAndOperator> findValuesInRequiremets = RequirementsHelper.findValuesInRequiremets(toOp(requirements), attName);
+		Assert.assertEquals(2, findValuesInRequiremets.size());
+		
+		requirements = "X==\"id1\" || X==\"id2\" || X==\"id3\"";
+		attName = "X";
+		findValuesInRequiremets = RequirementsHelper.findValuesInRequiremets(toOp(requirements), attName);
+		Assert.assertEquals(3, findValuesInRequiremets.size());
+	}
 	
 	private Op toOp(String requirementsStr) {
 		ClassAdParser classAdParser = new ClassAdParser(requirementsStr);

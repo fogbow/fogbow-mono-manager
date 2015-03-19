@@ -7,7 +7,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Random;
 import java.util.TimerTask;
 import java.util.UUID;
 import java.util.concurrent.Executors;
@@ -64,6 +63,7 @@ public class ManagerController {
 	private final List<FederationMember> members = Collections.synchronizedList(new LinkedList<FederationMember>());
 	private RequestRepository requests = new RequestRepository();
 	private FederationMemberPicker memberPicker = new RoundRobinMemberPicker();
+	private List<Flavor> flavorsProvided;
 
 	private ImageStoragePlugin imageStoragePlugin;
 	private AuthorizationPlugin authorizationPlugin;
@@ -86,6 +86,7 @@ public class ManagerController {
 			throw new IllegalArgumentException();
 		}
 		this.properties = properties;
+		populateStaticFlavors();
 		if (executor == null) {
 			this.requestSchedulerTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
 			this.tokenUpdaterTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
@@ -645,15 +646,13 @@ public class ManagerController {
 		}
 	}
 
-	private void createAsynchronousRemoteInstance(final Request request, String memberAddress) {
-		if (memberAddress == null) {
-			FederationMember member = memberPicker.pick(this);
-			if (member == null) {
-				return;
-			}
-			memberAddress = member.getResourcesInfo().getId();
+	private void createAsynchronousRemoteInstance(final Request request, List<FederationMember> allowedMembers) {
+		FederationMember member = memberPicker.pick(allowedMembers);
+		if (member == null) {
+			return;
 		}
 
+		String memberAddress = member.getResourcesInfo().getId();
 		request.setMemberId(memberAddress);
 
 		LOGGER.info("Submiting request " + request + " to member " + memberAddress);
@@ -681,22 +680,6 @@ public class ManagerController {
 					}
 				});
 			
-	}
-
-	protected String chooseMemberAddressByTheRequirements(String requirements) {
-		List<FederationMember> federationMembers = new ArrayList<FederationMember>();
-		List<FederationMember> members = new ArrayList<FederationMember>(this.members);
-		for (FederationMember member : members) {
-			if (RequirementsHelper.checkLocation(requirements, member.getResourcesInfo().getId())) {
-				federationMembers.add(member);
-			}
-		}
-
-		if (federationMembers.size() > 0) {
-			int randomNum = new Random().nextInt(((federationMembers.size() - 1) - 0) + 1) + 0;
-			return federationMembers.get(randomNum).getResourcesInfo().getId();
-		}
-		return null;
 	}
 	
 	protected boolean isRequestForwardedtoRemoteMember(String requestId) {
@@ -797,14 +780,19 @@ public class ManagerController {
 				for (String keyAttributes : RequestAttribute.getValues()) {
 					xOCCIAtt.remove(keyAttributes);
 				}
-				String memberAddress = chooseMemberAddressByTheRequirements(request.getRequirements());
+				
+				String requirements = request.getRequirements();
+				List<FederationMember> allowedFederationMembers = getAllowedFederationMembers(requirements);
+
 				boolean isFulfilled = false;
-				if (memberAddress == null) {
+				if (!RequirementsHelper.existsLocation(requirements)
+						|| (RequirementsHelper.existsLocation(requirements) && allowedFederationMembers
+								.isEmpty())) {
 					isFulfilled = createLocalInstance(request)
 							|| createLocalInstanceWithFederationUser(request);
-				}
-				if (!isFulfilled) {
-					createAsynchronousRemoteInstance(request, memberAddress);
+					if (!isFulfilled) {
+						createAsynchronousRemoteInstance(request, allowedFederationMembers);
+					}
 				}
 				allFulfilled &= isFulfilled;
 				
@@ -817,6 +805,22 @@ public class ManagerController {
 		if (allFulfilled) {
 			LOGGER.info("All requests fulfilled.");
 		}
+	}
+
+	protected List<FederationMember> getAllowedFederationMembers(String requirements) {
+		List<FederationMember> federationMembers = new ArrayList<FederationMember>(members);
+		List<FederationMember> allowedFederationMembers = new ArrayList<FederationMember>();
+		for (FederationMember federationMember : federationMembers) {
+			String myJid = getProperties().getProperty(ConfigurationConstants.XMPP_JID_KEY);
+			if ((!federationMember.getResourcesInfo().getId().equals(myJid) && getValidator()
+					.canReceiveFrom(federationMember))
+					&& (!RequirementsHelper.existsLocation(requirements) || (RequirementsHelper
+							.existsLocation(requirements) && RequirementsHelper.matchLocation(
+							requirements, federationMember.getResourcesInfo().getId())))) {
+				allowedFederationMembers.add(federationMember);
+			}
+		}
+		return allowedFederationMembers;
 	}
 
 	private boolean createLocalInstanceWithFederationUser(Request request) {
@@ -926,7 +930,11 @@ public class ManagerController {
 		return allFullInstances;
 	}
 
-	public List<Flavor> getFlavors() {		
+	public List<Flavor> getFlavorsProvided() {		
+		return this.flavorsProvided;
+	}
+	
+	private void populateStaticFlavors() {
 		List<Flavor> flavors = new ArrayList<Flavor>();
 		for (Object objectKey: this.properties.keySet()) {
 			String key = objectKey.toString();
@@ -937,13 +945,12 @@ public class ManagerController {
 				flavors.add(new Flavor(key.replace(ConfigurationConstants.PREFIX_FLAVORS, ""), cpu, mem, "0"));
 			}			
 		}
-		return flavors;
+		flavorsProvided = flavors;
 	}
 	
-	public static String getAttValue(String attName, String flavorSpec) {
-		JSONObject root;
+	public static String getAttValue(String attName, String flavorSpec) {		
 		try {
-			root = new JSONObject(flavorSpec);
+			JSONObject root = new JSONObject(flavorSpec);
 			return root.getString(attName);
 		} catch (Exception e) {
 			return null;

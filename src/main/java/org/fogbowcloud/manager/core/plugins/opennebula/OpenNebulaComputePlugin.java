@@ -138,13 +138,12 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 				+ categories + "; xOCCIAtt=" + xOCCIAtt);
 		
 		Map<String, String> templateProperties = new HashMap<String, String>();
-		Flavor foundFlavor = null;
 		
 		// removing fogbow-request category
 		categories.remove(new Category(RequestConstants.TERM, RequestConstants.SCHEME,
 				RequestConstants.KIND_CLASS));			
 		
-		foundFlavor = getFlavor(token, xOCCIAtt.get(RequestAttribute.REQUIREMENTS.getValue()));
+		Flavor foundFlavor = getFlavor(token, xOCCIAtt.get(RequestAttribute.REQUIREMENTS.getValue()));
 		
 		// checking categories are valid	
 		for (Category category : categories) {
@@ -172,7 +171,7 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		templateProperties.put("cpu", String.valueOf(foundFlavor.getCpu()));
 		templateProperties.put("userdata", userdata);
 		templateProperties.put("image-id", localImageId);
-		templateProperties.put("size-disk", String.valueOf(foundFlavor.getDisk()));
+		templateProperties.put("disk-size", String.valueOf(foundFlavor.getDisk()));
 
 		Client oneClient = clientFactory.createClient(token.getAccessId(), openNebulaEndpoint);
 		String vmTemplate = generateTemplate(templateProperties);	
@@ -239,14 +238,14 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 			imageElement.appendChild(doc.createTextNode(templateProperties.get("image-id")));
 			diskElement.appendChild(imageElement);
 			
-			String sizeDisk = templateProperties.get("size-disk");
-			if (!sizeDisk.equals("0")) {
+			String diskSize = templateProperties.get("disk-size");
+			if (!diskSize.equals("0")) {
 				// disk volatile
 				Element diskVolatileElement = doc.createElement("DISK");
 				templateElement.appendChild(diskVolatileElement);
 				// size
 				Element sizeElement = doc.createElement("SIZE");
-				sizeElement.appendChild(doc.createTextNode(sizeDisk));
+				sizeElement.appendChild(doc.createTextNode(diskSize));
 				diskVolatileElement.appendChild(sizeElement);
 				// type 
 				Element typeElementDisk = doc.createElement("TYPE");
@@ -671,17 +670,15 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		this.flavors = flavors;
 	}
 
-	@Override
 	public Flavor getFlavor(Token token, String requirements) {
-		if (templateType == null || (templateType == OneConfigurationConstants.OPENNEBULA_TEMPLATES_TYPE_TEMPLATES && validTemplates.size() == 0)) {
+		if (templateType == null || (templateType.equals(OneConfigurationConstants.OPENNEBULA_TEMPLATES_TYPE_TEMPLATES) && validTemplates.size() == 0)) {
 			String cpu = RequirementsHelper.getValueSmallerPerAttribute(requirements, RequirementsHelper.GLUE_VCPU_TERM);
 			String mem = RequirementsHelper.getValueSmallerPerAttribute(requirements, RequirementsHelper.GLUE_MEM_RAM_TERM);
 			String disk = RequirementsHelper.getValueSmallerPerAttribute(requirements, RequirementsHelper.GLUE_DISK_TERM);
 			return new Flavor("flavor", cpu, mem, disk);
-		} else {
-			updateFlavors(token);
-			return RequirementsHelper.findFlavor(getFlavors(),requirements);			
-		}
+		} 
+		updateFlavors(token);
+		return RequirementsHelper.findFlavor(getFlavors(),requirements);			
 	}
 	
 	public List<String> getTemplatesInProperties(Properties properties) {

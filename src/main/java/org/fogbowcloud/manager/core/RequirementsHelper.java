@@ -58,7 +58,7 @@ public class RequirementsHelper {
 		if (values.size() > 0) {
 			return String.valueOf(values.get(0));			
 		}
-		return null;
+		return "0";
 	}
 	
 	private static boolean checkValue(Op op, String attrName, String value) {
@@ -118,7 +118,7 @@ public class RequirementsHelper {
 			}
 		}
 
-		if (listFlavor.size() == 0) {
+		if (listFlavor.isEmpty()) {
 			return null;
 		}
 
@@ -221,7 +221,7 @@ public class RequirementsHelper {
 		return location;
 	}
 	
-	public static boolean checkLocation(String requirementsStr, String valueLocation) {
+	public static boolean matchLocation(String requirementsStr, String valueLocation) {
 		if (requirementsStr == null) {
 			return false;
 		}		
@@ -268,17 +268,28 @@ public class RequirementsHelper {
 	}
 
 	public static List<String> getLocationsInRequiremets(String requirementsStr) {
+		List<String> locations = new ArrayList<String>();
+		if (requirementsStr == null || requirementsStr.isEmpty()) {
+			return locations;
+		}
 		ClassAdParser classAdParser = new ClassAdParser(requirementsStr);
 		Op expr = (Op) classAdParser.parse();
 		List<ValueAndOperator> findValuesInRequiremets = findValuesInRequiremets(expr,
 				GLUE_LOCATION_TERM);
-		List<String> locations = new ArrayList<String>();
 		for (ValueAndOperator valueAndOperator : findValuesInRequiremets) {
 			if (valueAndOperator.getOperator() == RecordExpr.EQUAL) {
 				locations.add(valueAndOperator.getValue());
 			}
 		}
 		return locations;
+	}
+	
+	public static boolean existsLocation(String requirementsStr) {
+		List<String> locationsInRequiremets = getLocationsInRequiremets(requirementsStr);
+		if (locationsInRequiremets.isEmpty()) {
+			return false;
+		}
+		return true;
 	}
 
 	public static class ValueAndOperator {
@@ -305,23 +316,18 @@ public class RequirementsHelper {
 
 		@Override
 		public int compare(Flavor flavorOne, Flavor flavorTwo) {
-			if (calculateRelevance(flavorOne, flavorTwo) > calculateRelevance(flavorTwo, flavorOne)) {
-				return 1;
+			try {
+				Double oneRelevance = calculateRelevance(flavorOne, flavorTwo);
+				Double twoRelevance = calculateRelevance(flavorTwo, flavorOne);
+				if (oneRelevance.doubleValue() != twoRelevance.doubleValue()) {
+					return oneRelevance.compareTo(twoRelevance);
+				}	
+				Double oneDisk = Double.parseDouble(flavorOne.getDisk());
+				Double twoDisk = Double.parseDouble(flavorTwo.getDisk());
+				return oneDisk.compareTo(twoDisk);
+			} catch (Exception e) {
+				return 0;
 			}
-			if (calculateRelevance(flavorOne, flavorTwo) < calculateRelevance(flavorTwo, flavorOne)) {
-				return -1;
-			}
-			if (calculateRelevance(flavorOne, flavorTwo) == calculateRelevance(flavorTwo, flavorOne)) {
-				try {
-					if (Double.parseDouble(flavorOne.getDisk()) > Double.parseDouble(flavorTwo.getDisk())) {
-						return 1;
-					} else {
-						return -1;
-					}
-				} catch (Exception e) {
-				}
-			}
-			return 0;
 		}
 
 		public double calculateRelevance(Flavor flavorOne, Flavor flavorTwo) {

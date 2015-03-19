@@ -157,8 +157,8 @@ public class OCCIApplication extends Application {
 		return managerFacade.getProperties();
 	}
 	
-	public List<Flavor> getFlavors(){
-		return managerFacade.getFlavors();
+	public List<Flavor> getFlavorsProvided(){
+		return managerFacade.getFlavorsProvided();
 	}
 
 }

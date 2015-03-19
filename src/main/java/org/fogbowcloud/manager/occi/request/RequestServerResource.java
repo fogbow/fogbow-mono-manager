@@ -233,7 +233,7 @@ public class RequestServerResource extends ServerResource {
 		Map<String, String> xOCCIAtt = HeaderUtils.getXOCCIAtributes(req.getHeaders());
 		xOCCIAtt = normalizeXOCCIAtt(xOCCIAtt);
 		
-		xOCCIAtt = normalizeRequirements(categories, xOCCIAtt, application.getFlavors());
+		xOCCIAtt = normalizeRequirements(categories, xOCCIAtt, application.getFlavorsProvided());
 		
 		String authToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse(),
 				application.getAuthenticationURI());
@@ -266,12 +266,12 @@ public class RequestServerResource extends ServerResource {
 			}
 		}
 		
-		String newRequirements = null;
+		String flavorRequirements = null;
 		if (flavorTerm != null && !flavorTerm.isEmpty()) {
 			boolean thereIsFlavor = false;
 			for (Flavor flavor : listFlavorsFogbow) {
 				if (flavor.getName().equals(flavorTerm)) {
-					newRequirements = RequirementsHelper.GLUE_MEM_RAM_TERM + ">=" + flavor.getMem()
+					flavorRequirements = RequirementsHelper.GLUE_MEM_RAM_TERM + ">=" + flavor.getMem()
 							+ "&&" + RequirementsHelper.GLUE_VCPU_TERM + ">=" + flavor.getCpu();
 					thereIsFlavor = true;
 				}
@@ -281,10 +281,10 @@ public class RequestServerResource extends ServerResource {
 			}
 		}
 		
-		if (requirementsAttr != null && newRequirements != null) {
-			requirementsAttr = "(" + requirementsAttr + ")&&(" + newRequirements + ")";
-		} else if (newRequirements != null) {
-			requirementsAttr = newRequirements;
+		if (requirementsAttr != null && flavorRequirements != null) {
+			requirementsAttr = "(" + requirementsAttr + ")&&(" + flavorRequirements + ")";
+		} else if (flavorRequirements != null) {
+			requirementsAttr = flavorRequirements;
 		}
 		
 		if (requirementsAttr != null) {

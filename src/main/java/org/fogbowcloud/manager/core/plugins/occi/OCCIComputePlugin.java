@@ -390,7 +390,6 @@ public class OCCIComputePlugin implements ComputePlugin {
 		// TODO Auto-generated method stub		
 	}
 
-	@Override
 	public Flavor getFlavor(Token token, String requirements) {
 		// TODO Auto-generated method stub
 		return null;

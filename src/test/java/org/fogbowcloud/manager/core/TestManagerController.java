@@ -1554,42 +1554,10 @@ public class TestManagerController {
 		
 		Assert.assertEquals(0, requestsFromUser.size());
 	}
-			
-	@Test
-	public void testChooseFederationAddressBytheRequirements() throws InterruptedException {
-		String federationMember = "federationMemberOne";
-		String federationMemberTwo = "federationMemberTwo";
-		String federationMemberThree = "federationMemberThree";
-		String federationMemberFour = "federationMemberFour";
-		ResourcesInfo resourceInfo = new ResourcesInfo(federationMember, "", "", "", "",
-				new ArrayList<Flavor>(), null);
-		ResourcesInfo resourceInfoTwo = new ResourcesInfo(federationMemberTwo, "", "", "", "",
-				new ArrayList<Flavor>(), null);
-		ResourcesInfo resourceInfoThree = new ResourcesInfo(federationMemberThree, "", "", "", "",
-				new ArrayList<Flavor>(), null);
-		ResourcesInfo resourceInfoFour = new ResourcesInfo(federationMemberFour, "", "", "", "",
-				new ArrayList<Flavor>(), null);
-		List<FederationMember> federationMembers = new ArrayList<FederationMember>();
-		federationMembers.add(new FederationMember(resourceInfo));
-		federationMembers.add(new FederationMember(resourceInfoTwo));
-		federationMembers.add(new FederationMember(resourceInfoThree));
-		federationMembers.add(new FederationMember(resourceInfoFour));
-		managerController.updateMembers(federationMembers);
-
-		String requirements = RequirementsHelper.GLUE_LOCATION_TERM + "==\"" + federationMember
-				+ "\"" + "||" + RequirementsHelper.GLUE_LOCATION_TERM + "==\""
-				+ federationMemberThree + "\"";
-		String memberAddress = managerController.chooseMemberAddressByTheRequirements(requirements);
-		
-		if (!memberAddress.equals(federationMember)
-				&& !memberAddress.equals(federationMemberThree)) {
-			Assert.fail();
-		}
-	}
 	
 	@Test
 	public void testGetFlavors() {
-		List<Flavor> flavors = managerController.getFlavors();
+		List<Flavor> flavors = managerController.getFlavorsProvided();
 		String[] verifyFlavors = new String[] { ManagerTestHelper.VALUE_FLAVOR_SMALL,
 				ManagerTestHelper.VALUE_FLAVOR_MEDIUM, ManagerTestHelper.VALUE_FLAVOR_LARGE};
 		for (Flavor flavor : flavors) {
@@ -1615,4 +1583,42 @@ public class TestManagerController {
 		Assert.assertEquals(cpuValue, ManagerController.getAttValue("cpu", flavorSpec));
 		Assert.assertEquals(memValue, ManagerController.getAttValue("mem", flavorSpec));		
 	}
+	
+	@Test
+	public void testGetAllowedFederationMembers() {
+		ResourcesInfo resourcesInfoOne = new ResourcesInfo("id1","", "", "", "", null, null);		
+		ResourcesInfo resourcesInfoTwo = new ResourcesInfo("id2","", "", "", "", null, null);		
+		ResourcesInfo resourcesInfoThree = new ResourcesInfo("id3","", "", "", "", null, null);
+
+		List<FederationMember> listMembers = new ArrayList<FederationMember>();
+		listMembers.add(new FederationMember(resourcesInfoOne));
+		listMembers.add(new FederationMember(resourcesInfoTwo));
+		listMembers.add(new FederationMember(resourcesInfoThree));
+		managerController.updateMembers(listMembers);
+		
+		String requirements = null;
+		List<FederationMember> allowedFederationMembers = managerController.getAllowedFederationMembers(requirements);
+		Assert.assertEquals(3, allowedFederationMembers.size());				
+	}
+	
+	@Test
+	public void testGetAllowedFederationMembersWithRequirements() {
+		ResourcesInfo resourcesInfoOne = new ResourcesInfo("id1","", "", "", "", null, null);		
+		ResourcesInfo resourcesInfoTwo = new ResourcesInfo("id2","", "", "", "", null, null);		
+		ResourcesInfo resourcesInfoThree = new ResourcesInfo("id3","", "", "", "", null, null);
+
+		List<FederationMember> listMembers = new ArrayList<FederationMember>();
+		listMembers.add(new FederationMember(resourcesInfoOne));
+		listMembers.add(new FederationMember(resourcesInfoTwo));
+		listMembers.add(new FederationMember(resourcesInfoThree));
+		managerController.updateMembers(listMembers);
+		
+		String requirements = RequirementsHelper.GLUE_LOCATION_TERM + "==\"id1\"";
+		List<FederationMember> allowedFederationMembers = managerController.getAllowedFederationMembers(requirements);
+		Assert.assertEquals(1, allowedFederationMembers.size());
+		
+		requirements = RequirementsHelper.GLUE_LOCATION_TERM + " == \"id1\" || " + RequirementsHelper.GLUE_LOCATION_TERM + " == \"id2\"";
+		allowedFederationMembers = managerController.getAllowedFederationMembers(requirements);
+		Assert.assertEquals(2, allowedFederationMembers.size());	
+	}	
 }
