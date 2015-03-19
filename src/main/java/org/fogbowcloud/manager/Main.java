@@ -25,7 +25,8 @@ import org.xmpp.component.ComponentException;
 public class Main {
 
 	private static final Logger LOGGER = Logger.getLogger(Main.class);
-
+	private static final int EXIT_ERROR_CODE = 128;
+	
 	public static void main(String[] args) throws Exception {
 		configureLog4j();
 
@@ -33,13 +34,13 @@ public class Main {
 		FileInputStream input = new FileInputStream(args[0]);
 		properties.load(input);
 
-		ComputePlugin computePlugin;
+		ComputePlugin computePlugin = null;
 		try {
 			computePlugin = (ComputePlugin) createInstance(
 					ConfigurationConstants.COMPUTE_CLASS_KEY, properties);
 		} catch (Exception e) {
 			LOGGER.warn("Compute Plugin not especified in the properties.", e);
-			return;
+			System.exit(EXIT_ERROR_CODE);
 		}
 
 		AuthorizationPlugin authorizationPlugin = null;
@@ -48,7 +49,7 @@ public class Main {
 					ConfigurationConstants.AUTHORIZATION_CLASS_KEY, properties);
 		} catch (Exception e) {
 			LOGGER.warn("Authorization Plugin not especified in the properties.", e);
-			return;
+			System.exit(EXIT_ERROR_CODE);
 		}
 		
 		IdentityPlugin localIdentityPlugin = null;
@@ -57,7 +58,7 @@ public class Main {
 					ConfigurationConstants.LOCAL_PREFIX);
 		} catch (Exception e) {
 			LOGGER.warn("Local Identity Plugin not especified in the properties.", e);
-			return;
+			System.exit(EXIT_ERROR_CODE);
 		}
 		
 		IdentityPlugin federationIdentityPlugin = null;
@@ -66,7 +67,7 @@ public class Main {
 					ConfigurationConstants.FEDERATION_PREFIX);
 		} catch (Exception e) {
 			LOGGER.warn("Federation Identity Plugin not especified in the properties.", e);
-			return;
+			System.exit(EXIT_ERROR_CODE);
 		}
 
 		FederationMemberValidator validator = new DefaultMemberValidator();
@@ -75,6 +76,7 @@ public class Main {
 					ConfigurationConstants.MEMBER_VALIDATOR_KEY, properties);
 		} catch (Exception e) {
 			LOGGER.warn("Member Validator not especified in the properties.");
+			System.exit(EXIT_ERROR_CODE);
 		}
 		
 		if (properties.get(ConfigurationConstants.RENDEZVOUS_JID_KEY) == null
@@ -111,7 +113,7 @@ public class Main {
 			xmpp.connect();			
 		} catch (ComponentException e) {
 			LOGGER.error("Conflict in the initialization of xmpp component.", e);
-			return;
+			System.exit(EXIT_ERROR_CODE);
 		}
 		xmpp.process(false);
 		xmpp.init();
@@ -122,11 +124,16 @@ public class Main {
 		Slf4jLoggerFacade loggerFacade = new Slf4jLoggerFacade();
 		Engine.getInstance().setLoggerFacade(loggerFacade);
 		
-		Component http = new Component();
-		http.getServers().add(Protocol.HTTP,
-				Integer.parseInt(properties.getProperty(ConfigurationConstants.HTTP_PORT_KEY)));
-		http.getDefaultHost().attach(application);
-		http.start();
+		try {
+			Component http = new Component();
+			http.getServers().add(Protocol.HTTP,
+					Integer.parseInt(properties.getProperty(ConfigurationConstants.HTTP_PORT_KEY)));
+			http.getDefaultHost().attach(application);
+			http.start();
+		} catch (Exception e) {
+			LOGGER.error("Conflict in the initialization of the HTTP component.", e);
+			System.exit(EXIT_ERROR_CODE);
+		}
 	}
 
 	private static Object getIdentityPluginByPrefix(Properties properties, String prefix)
