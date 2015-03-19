@@ -5,7 +5,6 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.apache.http.HttpStatus;
-import org.apache.http.message.BasicHeader;
 import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.occi.core.Category;
@@ -21,7 +20,6 @@ import org.fogbowcloud.manager.occi.request.RequestServerResource;
 import org.restlet.Application;
 import org.restlet.Response;
 import org.restlet.Restlet;
-import org.restlet.engine.adapter.HttpRequest;
 import org.restlet.engine.header.Header;
 import org.restlet.engine.header.HeaderConstants;
 import org.restlet.routing.Router;
@@ -101,6 +99,7 @@ public class OCCIApplication extends Application {
 		return managerFacade.getToken(attributesToken);
 	}
 	
+	@SuppressWarnings("unchecked")
 	private static void normalizeHeadersForBypass(org.restlet.Request request) {
 		Series<Header> requestHeaders = (Series<Header>) request.getAttributes().get("org.restlet.http.headers");
 		String localAuthToken = requestHeaders.getFirstValue(HeaderUtils.normalize(OCCIHeaders.X_LOCAL_AUTH_TOKEN));

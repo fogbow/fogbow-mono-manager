@@ -157,6 +157,7 @@ public class TestManagerController {
 		}
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testSubmitToGreenSitter() {
 		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);
@@ -278,6 +279,7 @@ public class TestManagerController {
 		}
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testRemoveForwardedRequestAfterTimeout() throws InterruptedException {
 		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);
@@ -1027,6 +1029,7 @@ public class TestManagerController {
 		Assert.assertNull(requests.get(0).getMemberId());
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testPersistentRequestSetFulfilledAndOpen() throws InterruptedException {
 		mockRequestInstance();
@@ -1181,6 +1184,7 @@ public class TestManagerController {
 		Assert.assertNull(requests.get(0).getMemberId());
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testPersistentRequestSetFulfilledAndClosed() throws InterruptedException {
 		long expirationRequestTime = System.currentTimeMillis()
@@ -1401,6 +1405,7 @@ public class TestManagerController {
 		Assert.assertNotNull(requests.get(0).getMemberId());
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testOneTimeRequestValidityPeriodInFuture() throws InterruptedException {
 		long now = System.currentTimeMillis();
@@ -1471,6 +1476,7 @@ public class TestManagerController {
 		Assert.assertNull(requests.get(0).getMemberId());
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testPersistentRequestValidityPeriodInFuture() throws InterruptedException {
 		long now = System.currentTimeMillis();
@@ -1842,6 +1848,7 @@ public class TestManagerController {
 				.getInstances(federationToken.getAccessId()).get(0).getId());
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testGarbageCollectorRemovingInstance(){
 		// setting request repository
@@ -1888,6 +1895,7 @@ public class TestManagerController {
 	}
 	
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testGarbageCollectorWithServedRequest(){
 		// checking there is not served request
