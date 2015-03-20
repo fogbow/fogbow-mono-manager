@@ -33,6 +33,7 @@ import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
+import org.fogbowcloud.manager.core.plugins.accounting.ResourceUsage;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.OCCIException;
@@ -1132,6 +1133,30 @@ public class ManagerController {
 			}
 		}
 		return false;
+	}
+
+	public List<ResourceUsage> getMembersUsage(String federationAccessId) {
+		checkFederationAccessId(federationAccessId);
+		
+		List<String> memberIds = new ArrayList<String>();
+		for (FederationMember member : getMembers()) {
+			memberIds.add(member.getResourcesInfo().getId());			
+		}
+		System.out.println("memberIds="+memberIds);
+		return new ArrayList<ResourceUsage>(accountingPlugin.getMembersUsage(memberIds).values());
+	}
+
+	private void checkFederationAccessId(String federationAccessId) {
+		Token federationToken = getTokenFromFederationIdP(federationAccessId);
+		if (federationToken == null) {
+			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
+		}
+	}
+
+	public Map<String, Double> getUsersUsage(String federationAccessId) {
+		checkFederationAccessId(federationAccessId);
+				
+		return accountingPlugin.getUsersUsage();
 	}
 }
 

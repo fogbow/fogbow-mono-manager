@@ -1,5 +1,7 @@
 package org.fogbowcloud.manager.core.plugins.accounting;
 
+import java.util.StringTokenizer;
+
 public class ResourceUsage {
 	
 	String memberId;
@@ -31,6 +33,27 @@ public class ResourceUsage {
 	}
 
 	public String toString() {
-		return "consumed:" + consumed + ", donated:" + donated;
+		return "memberId=" + memberId + ", consumed=" + consumed + ", donated=" + donated;
+	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof ResourceUsage) {
+			ResourceUsage other = (ResourceUsage) obj;
+			return other.getMemberId().equals(getMemberId()) && other.getDonated() == getDonated()
+					&& other.getConsumed() == getConsumed();
+		}
+		return false;
+	}
+
+	public static ResourceUsage parse(String line) {
+		StringTokenizer st = new StringTokenizer(line.trim(), ",");
+		String memberId = st.nextToken().trim().replace("memberId=", "");
+		Double consumed = Double.parseDouble(st.nextToken().trim().replace("consumed=", ""));
+		Double donated = Double.parseDouble(st.nextToken().trim().replace("donated=", ""));
+		ResourceUsage toReturn = new ResourceUsage(memberId);
+		toReturn.addConsumption(consumed);
+		toReturn.addDonation(donated);		
+		return toReturn;
 	}
 }
