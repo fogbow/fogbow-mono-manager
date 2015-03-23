@@ -25,6 +25,7 @@ import org.apache.commons.codec.Charsets;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpStatus;
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.RequirementsHelper;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
@@ -108,17 +109,11 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		dataStoreId = dataStoreIdStr == null ? null: Integer.valueOf(dataStoreIdStr);
 		
 		validTemplates = new ArrayList<String>();
-		templateType = (String) properties.get(OneConfigurationConstants.OPENNEBULA_TEMPLATES_TYPE);
-		if (templateType != null) {
-			if (!templateType.equals(OneConfigurationConstants.OPENNEBULA_TEMPLATES_TYPE_ALL)
-					&& !templateType
-							.equals(OneConfigurationConstants.OPENNEBULA_TEMPLATES_TYPE_TEMPLATES)) {
-				throw new OCCIException(ErrorType.BAD_REQUEST,
-						ResponseConstants.NETWORK_NOT_SPECIFIED);
-			} else if (templateType
-					.equals(OneConfigurationConstants.OPENNEBULA_TEMPLATES_TYPE_TEMPLATES)) {
-				validTemplates = getTemplatesInProperties(properties);
-			}
+
+		templateType = properties.getProperty(OneConfigurationConstants.OPENNEBULA_TEMPLATES);
+		if (templateType != null
+				&& !templateType.equals(OneConfigurationConstants.OPENNEBULA_TEMPLATES_TYPE_ALL)) {
+			validTemplates = getTemplatesInProperties(properties);
 		}
 		
 		flavors = new ArrayList<Flavor>();
@@ -594,19 +589,17 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		
 		Map<String, String> mapImageToSize = new HashMap<String, String>();
 		ImagePool imagePool = this.clientFactory.createImagePool(oneClient);
-		//System.out.println(imagePool.infoAll().getMessage());
 		for (Image image : imagePool) {
 			mapImageToSize.put(image.getName(), image.xpath("SIZE"));
 		}				
 		
 		TemplatePool templatePool = this.clientFactory.createTemplatePool(oneClient);
-		//System.out.println(templatePool.infoAll().getMessage());
 		for (Template template : templatePool) {
 			String name = template.xpath("NAME");
 			String memory = template.xpath("TEMPLATE/MEMORY");
 			String vcpu = template.xpath("TEMPLATE/CPU");
-			
-			if (templateType.equals(OneConfigurationConstants.OPENNEBULA_TEMPLATES_TYPE_TEMPLATES)) {
+						
+			if (!validTemplates.isEmpty()) {
 				boolean thereIsTemplate = false;
 				for (String templateName : validTemplates) {
 					if (templateName.equals(name)) {
@@ -615,8 +608,8 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 				}
 				if (!thereIsTemplate) {
 					continue;
-				}
-			} 
+				}						
+			}
 			
 			int cont = 1;
 			int diskSize = 0;
@@ -671,7 +664,7 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 	}
 
 	public Flavor getFlavor(Token token, String requirements) {
-		if (templateType == null || (templateType.equals(OneConfigurationConstants.OPENNEBULA_TEMPLATES_TYPE_TEMPLATES) && validTemplates.size() == 0)) {
+		if (templateType == null || (!templateType.equals(OneConfigurationConstants.OPENNEBULA_TEMPLATES_TYPE_ALL) && validTemplates.isEmpty())) {
 			String cpu = RequirementsHelper.getValueSmallerPerAttribute(requirements, RequirementsHelper.GLUE_VCPU_TERM);
 			String mem = RequirementsHelper.getValueSmallerPerAttribute(requirements, RequirementsHelper.GLUE_MEM_RAM_TERM);
 			String disk = RequirementsHelper.getValueSmallerPerAttribute(requirements, RequirementsHelper.GLUE_DISK_TERM);
@@ -683,7 +676,7 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 	
 	public List<String> getTemplatesInProperties(Properties properties) {
 		List<String> listTemplate = new ArrayList<String>();
-		String propertiesTample = (String) properties.get(OneConfigurationConstants.OPENNEBULA_LIST_VALID_TEMPLATES);
+		String propertiesTample = (String) properties.get(OneConfigurationConstants.OPENNEBULA_TEMPLATES);
 		if (propertiesTample != null) {
 			String[] templates = propertiesTample.split(",");
 			for (String template : templates) {

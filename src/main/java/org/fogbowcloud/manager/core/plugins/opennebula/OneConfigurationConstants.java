@@ -23,10 +23,8 @@ public class OneConfigurationConstants {
 	public static final String COMPUTE_ONE_SSH_KEY_FILE = "compute_one_ssh_key_file";
 	public static final String COMPUTE_ONE_SSH_TARGET_TEMP_FOLDER = "computer_one_ssh_target_temp_folder";
 	
-	public static final String OPENNEBULA_TEMPLATES_TYPE = "opennebula_template_type";
-	public static final String OPENNEBULA_TEMPLATES_TYPE_ALL = "all";
-	public static final String OPENNEBULA_TEMPLATES_TYPE_TEMPLATES = "templates";
-	public static final String OPENNEBULA_LIST_VALID_TEMPLATES = "opennebula_list_template";	
+	public static final String OPENNEBULA_TEMPLATES = "opennebula_templates";
+	public static final String OPENNEBULA_TEMPLATES_TYPE_ALL = "all";	
 	
 	// occi
 	public static final String PREFIX_OCCI_OPENNEBULA_FLAVORS_PROVIDED = "occi_opennebula_flavor_";
