@@ -52,4 +52,10 @@ public class ServedRequest {
 	public Map<String, String> getxOCCIAtt() {
 		return xOCCIAtt;
 	}
+	
+	public String toString() {
+		return "instanceToken: " + instanceToken + ", instanceId: " + instanceId + ", memberId: "
+				+ memberId + ", categories: " + categories + ", xOCCIAtt: " + xOCCIAtt
+				+ ", creationTime: " + creationTime;
+	}
 }

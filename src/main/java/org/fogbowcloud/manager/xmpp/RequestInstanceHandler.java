@@ -40,11 +40,13 @@ public class RequestInstanceHandler extends AbstractQueryHandler {
 			xOCCIAtt.put(attributeEl.attributeValue("var"), attributeEl
 					.element("value").getText());
 		}
-
+		
+		String requestId = queryEl.element("request").element("id").getText();
+		
 		IQ response = IQ.createResultIQ(query);
 		try {
 			String instanceId = facade.createInstanceWithFederationUser(query
-					.getFrom().toBareJID(), categories, xOCCIAtt, null);
+					.getFrom().toBareJID(), categories, xOCCIAtt, requestId);
 			if (instanceId == null) {
 				response.setError(Condition.item_not_found);
 			} else {

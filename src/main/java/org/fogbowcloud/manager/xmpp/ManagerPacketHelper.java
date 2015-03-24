@@ -20,6 +20,7 @@ import org.fogbowcloud.manager.core.CertificateHandlerHelper;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
+import org.fogbowcloud.manager.core.model.ServedRequest;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.OCCIException;
@@ -171,7 +172,10 @@ public class ManagerPacketHelper {
 			Element attributeEl = queryEl.addElement("attribute");
 			attributeEl.addAttribute("var", xOCCIEntry.getKey());
 			attributeEl.addElement("value").setText(xOCCIEntry.getValue());
-		}
+		}		
+		Element requestEl = queryEl.addElement("request");
+		requestEl.addElement("id").setText(request.getId());
+		
 		IQ response = (IQ) packetSender.syncSendPacket(iq);
 		if (response.getError() != null) {
 			if (response.getError().getCondition().equals(Condition.item_not_found)) {
@@ -200,6 +204,9 @@ public class ManagerPacketHelper {
 			attributeEl.addAttribute("var", xOCCIEntry.getKey());
 			attributeEl.addElement("value").setText(xOCCIEntry.getValue());
 		}
+		Element requestEl = queryEl.addElement("request");
+		requestEl.addElement("id").setText(request.getId());
+		
 		packetSender.addPacketCallback(iq, new PacketCallback() {
 			
 			@Override
@@ -357,18 +364,20 @@ public class ManagerPacketHelper {
 		}
 	}
 
-	public static void checkIfInstanceIsBeenUsedByRemoteMember(String instanceId, String memberAddress,
-			PacketSender packetSender) {
+	public static void checkIfInstanceIsBeingUsedByRemoteMember(String instanceId,
+			ServedRequest servedRequest, PacketSender packetSender) {
 		IQ iq = new IQ();
-		iq.setTo(memberAddress);
+		iq.setTo(servedRequest.getMemberId());
 		iq.setType(Type.get);
 		Element queryEl = iq.getElement().addElement("query",
-				ManagerXmppComponent.ISINSTANCEBEENUSED_NAMESPACE);
+				ManagerXmppComponent.INSTANCEBEINGUSED_NAMESPACE);
+		Element requestEl = queryEl.addElement("request");
+		requestEl.addElement("id").setText(servedRequest.getInstanceToken());
 		Element instanceEl = queryEl.addElement("instance");
 		instanceEl.addElement("id").setText(instanceId);
 		IQ response = (IQ) packetSender.syncSendPacket(iq);
 		if (response.getError() != null) {
 			raiseException(response.getError());
-		}		
+		}	
 	}	
 }

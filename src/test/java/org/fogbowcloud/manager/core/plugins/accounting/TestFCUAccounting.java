@@ -34,10 +34,12 @@ public class TestFCUAccounting {
 	@Before
 	public void setUp() throws IOException {
 		benchmarkingPlugin = Mockito.mock(BenchmarkingPlugin.class);
-
 		properties = new Properties();
 		properties.put(ConfigurationConstants.ACCOUNTING_DATASTORE_URL_KEY, "jdbc:h2:mem:"
 				+ new File(DATASTORE_PATH).getAbsolutePath() + "usage");
+
+		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin);
+		accountingPlugin.getDatabase().dispose();
 	}
 
 	@After

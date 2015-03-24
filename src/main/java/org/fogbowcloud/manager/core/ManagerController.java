@@ -196,7 +196,7 @@ public class ManagerController {
 			List<Instance> federationInstances = computePlugin.getInstances(federationUserToken);
 			LOGGER.debug("Federation instances=" + federationInstances);
 			for (Instance instance : federationInstances) {
-				if (!isInstanceBeenUsed(generateGlobalId(instance.getId(), null))
+				if (!instanceHasRequestRelatedTo(null, generateGlobalId(instance.getId(), null))
 						&& !instancesForRemoteMembers.containsKey(instance.getId())) {
 					// this is an orphan instance
 					LOGGER.debug("Removing the orphan instance " + instance.getId());
@@ -205,7 +205,43 @@ public class ManagerController {
 			}
 		}
 	}
+		
+	public boolean instanceHasRequestRelatedTo(String requestId, String instanceId) {
+		LOGGER.debug("Checking if instance " + instanceId + " is related to request " + requestId);
+		// checking federation local user instances for local users
+		if (requestId == null) {
+			for (Request request : requests.getAll()) {
+				if (request.getState().in(RequestState.FULFILLED, RequestState.DELETED)) {
+					String reqInstanceId = generateGlobalId(request.getInstanceId(),
+							request.getMemberId());
+					if (reqInstanceId != null && reqInstanceId.equals(instanceId)) {
+						return true;
+					}
+				}
+			}
+		} else {
+			// checking federation local users instances for remote members
+			Request request = requests.get(requestId);
+			if (request == null) {
+				return false;
+			}
 
+			// it is possible that the asynchronous request has not received
+			// instanceId yet
+			if (request.getState().in(RequestState.OPEN)
+					&& asynchronousRequests.containsKey(requestId)) {
+				return true;
+			} else if (request.getState().in(RequestState.FULFILLED, RequestState.DELETED)) {
+				String reqInstanceId = generateGlobalId(request.getInstanceId(),
+						request.getMemberId());
+				if (reqInstanceId != null && reqInstanceId.equals(instanceId)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	
 	public void updateMembers(List<FederationMember> members) {
 		LOGGER.debug("Updating members: " + members);
 		if (members == null) {
@@ -565,7 +601,7 @@ public class ManagerController {
 			
 			Instance instance = computePlugin.getInstance(federationUserToken, instanceId);
 			benchmarkingPlugin.run(instance);
-		
+			
 			if (!properties.getProperty("xmpp_jid").equals(memberId)) {				
 				instancesForRemoteMembers.put(instanceId, new ServedRequest(instanceToken, instanceId, 
 						memberId, categories, xOCCIAtt));
@@ -649,8 +685,7 @@ public class ManagerController {
 
 	public void removeInstanceForRemoteMember(String instanceId) {
 		LOGGER.info("Removing instance " + instanceId + " for remote member.");
-		computePlugin.removeInstance(getFederationUserToken(), instanceId);
-		
+
 		updateAccounting();
 		benchmarkingPlugin.remove(instanceId);
 		instancesForRemoteMembers.remove(instanceId);
@@ -659,6 +694,8 @@ public class ManagerController {
 			LOGGER.info("There are no served requests. Canceling served request monitoring.");
 			servedRequestMonitoringTimer.cancel();
 		}
+		
+		computePlugin.removeInstance(getFederationUserToken(), instanceId);
 	}
 
 	public Token getTokenFromFederationIdP(String accessId) {
@@ -820,10 +857,11 @@ public class ManagerController {
 						if (instanceId == null) {
 							return;
 						}						
-						request.setState(RequestState.FULFILLED);
-						request.setInstanceId(instanceId);
 						
 						benchmarkingPlugin.run(getRemoteInstance(request));
+						
+						request.setState(RequestState.FULFILLED);
+						request.setInstanceId(instanceId);
 						
 						if (!instanceMonitoringTimer.isScheduled()) {
 							triggerInstancesMonitor();
@@ -962,22 +1000,22 @@ public class ManagerController {
 	protected void monitorServedRequests() {
 		LOGGER.info("Monitoring served requests.");
 		LOGGER.debug("Current served requests=" + instancesForRemoteMembers);
-				
+
 		Set<String> instanceIds = instancesForRemoteMembers.keySet();
 		for (String instanceId : instanceIds) {
 			ServedRequest servedRequest = instancesForRemoteMembers.get(instanceId);
-			if (!isInstanceBeenUsedByRemoteMember(instanceId, servedRequest)){
-				LOGGER.debug("The instance " + instanceId + " is not been used anymore by "
+			if (!isInstanceBeingUsedByRemoteMember(instanceId, servedRequest)){
+				LOGGER.debug("The instance " + instanceId + " is not being used anymore by "
 						+ servedRequest.getMemberId() + " and will be removed.");
 				removeInstanceForRemoteMember(instanceId);
 			}
 		}
 	}
 
-	private boolean isInstanceBeenUsedByRemoteMember(String instanceId, ServedRequest servedRequest) {
+	private boolean isInstanceBeingUsedByRemoteMember(String instanceId, ServedRequest servedRequest) {
 		try{
-			ManagerPacketHelper.checkIfInstanceIsBeenUsedByRemoteMember(
-					generateGlobalId(instanceId, null), servedRequest.getMemberId(), packetSender);
+			ManagerPacketHelper.checkIfInstanceIsBeingUsedByRemoteMember(
+					generateGlobalId(instanceId, null), servedRequest, packetSender);
 			return true;
 		} catch (OCCIException e) {
 			return false;
@@ -1122,18 +1160,6 @@ public class ManagerController {
 		return allFullInstances;
 	}
 
-	public boolean isInstanceBeenUsed(String instanceId) {
-		LOGGER.debug("Checking if instance " + instanceId + " is been used yet.");
-		for (Request request : requests.getAll()) {
-			if (request.getState().in(RequestState.FULFILLED, RequestState.DELETED)) {
-				String reqInstanceId = generateGlobalId(request.getInstanceId(), request.getMemberId());
-				if (reqInstanceId != null && reqInstanceId.equals(instanceId)) {
-					return true;
-				}
-			}
-		}
-		return false;
-	}
 
 	public List<ResourceUsage> getMembersUsage(String federationAccessId) {
 		checkFederationAccessId(federationAccessId);
@@ -1142,7 +1168,6 @@ public class ManagerController {
 		for (FederationMember member : getMembers()) {
 			memberIds.add(member.getResourcesInfo().getId());			
 		}
-		System.out.println("memberIds="+memberIds);
 		return new ArrayList<ResourceUsage>(accountingPlugin.getMembersUsage(memberIds).values());
 	}
 
