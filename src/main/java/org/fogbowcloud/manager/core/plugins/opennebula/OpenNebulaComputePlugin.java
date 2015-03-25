@@ -431,8 +431,7 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		double instancesIdle = maxVMs - vmsInUse;
 	
 		return new ResourcesInfo(String.valueOf(cpuIdle), String.valueOf(cpuInUse),
-				String.valueOf(memIdle), String.valueOf(memInUse), getFlavors(cpuIdle, memIdle, instancesIdle),
-				null);
+				String.valueOf(memIdle), String.valueOf(memInUse), getFlavors(cpuIdle, memIdle, instancesIdle));
 	}
 	
 	private ResourceQuota getQuota(String maxUserResource, String resourceUserInUse, String maxGroupResource, String resourceGroupInUse) {

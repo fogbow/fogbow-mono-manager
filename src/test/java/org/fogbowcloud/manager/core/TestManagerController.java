@@ -114,7 +114,7 @@ public class TestManagerController {
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testSubmitFederationUserRequests() throws InterruptedException {
-		ResourcesInfo resourcesInfo = new ResourcesInfo("", "", "", "", null, null);
+		ResourcesInfo resourcesInfo = new ResourcesInfo("", "", "", "", null);
 		resourcesInfo.setId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
@@ -165,7 +165,7 @@ public class TestManagerController {
 
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 
-		ResourcesInfo localResourcesInfo = new ResourcesInfo("", "", "", "", null, null);
+		ResourcesInfo localResourcesInfo = new ResourcesInfo("", "", "", "", null);
 		localResourcesInfo.setId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		
 		Mockito.when(
@@ -226,10 +226,10 @@ public class TestManagerController {
 			}
 		}).when(packetSender).addPacketCallback(Mockito.any(Packet.class), Mockito.any(PacketCallback.class));
 		
-		ResourcesInfo localResourcesInfo = new ResourcesInfo("", "", "", "", null, null);
+		ResourcesInfo localResourcesInfo = new ResourcesInfo("", "", "", "", null);
 		localResourcesInfo.setId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		
-		ResourcesInfo remoteResourcesInfo = new ResourcesInfo("", "", "", "", null, null);
+		ResourcesInfo remoteResourcesInfo = new ResourcesInfo("", "", "", "", null);
 		remoteResourcesInfo.setId(DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL);
 		
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
@@ -285,10 +285,10 @@ public class TestManagerController {
 		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);
 		managerController.setPacketSender(packetSender);
 		
-		ResourcesInfo localResourcesInfo = new ResourcesInfo("", "", "", "", null, null);
+		ResourcesInfo localResourcesInfo = new ResourcesInfo("", "", "", "", null);
 		localResourcesInfo.setId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		
-		ResourcesInfo remoteResourcesInfo = new ResourcesInfo("", "", "", "", null, null);
+		ResourcesInfo remoteResourcesInfo = new ResourcesInfo("", "", "", "", null);
 		remoteResourcesInfo.setId(DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL);
 		
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
@@ -359,10 +359,10 @@ public class TestManagerController {
 			}
 		}).when(packetSender).addPacketCallback(Mockito.any(Packet.class), Mockito.any(PacketCallback.class));
 		
-		ResourcesInfo localResourcesInfo = new ResourcesInfo("", "", "", "", null, null);
+		ResourcesInfo localResourcesInfo = new ResourcesInfo("", "", "", "", null);
 		localResourcesInfo.setId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		
-		ResourcesInfo remoteResourcesInfo = new ResourcesInfo("", "", "", "", null, null);
+		ResourcesInfo remoteResourcesInfo = new ResourcesInfo("", "", "", "", null);
 		remoteResourcesInfo.setId(DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL);
 
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
@@ -428,10 +428,10 @@ public class TestManagerController {
 			}
 		}).when(packetSender).addPacketCallback(Mockito.any(Packet.class), Mockito.any(PacketCallback.class));
 		
-		ResourcesInfo localResourcesInfo = new ResourcesInfo("", "", "", "", null, null);
+		ResourcesInfo localResourcesInfo = new ResourcesInfo("", "", "", "", null);
 		localResourcesInfo.setId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		
-		ResourcesInfo remoteResourcesInfo = new ResourcesInfo("", "", "", "", null, null);
+		ResourcesInfo remoteResourcesInfo = new ResourcesInfo("", "", "", "", null);
 		remoteResourcesInfo.setId(DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL);
 		
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
@@ -1563,7 +1563,7 @@ public class TestManagerController {
 		list.add(member);
 		managerController.updateMembers(list);
 
-		RestrictCAsMemberValidator validatorMock = Mockito.mock(RestrictCAsMemberValidator.class);
+		FederationMemberValidator validatorMock = Mockito.mock(FederationMemberValidator.class);
 		Mockito.doReturn(true).when(validatorMock).canDonateTo(member);
 		managerController.setValidator(validatorMock);
 

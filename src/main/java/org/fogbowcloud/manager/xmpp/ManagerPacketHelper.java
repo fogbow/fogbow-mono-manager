@@ -1,7 +1,5 @@
 package org.fogbowcloud.manager.xmpp;
 
-import java.io.FileInputStream;
-import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -16,7 +14,6 @@ import org.apache.log4j.Logger;
 import org.dom4j.Attribute;
 import org.dom4j.Element;
 import org.fogbowcloud.manager.core.AsynchronousRequestCallback;
-import org.fogbowcloud.manager.core.CertificateHandlerHelper;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
@@ -45,21 +42,12 @@ public class ManagerPacketHelper {
 			Properties properties, PacketSender packetSender) throws Exception {
 		IQ iq = new IQ(Type.get);
 		if (rendezvousAddress == null) {
-			LOGGER.warn("Rendezvous not especified.");
-			throw new Exception();
+			LOGGER.warn("Rendezvous not specified.");
+			throw new IllegalArgumentException("Rendezvous address has not been specified.");
 		}
 		iq.setTo(rendezvousAddress);
 		Element statusEl = iq.getElement()
 				.addElement("query", ManagerXmppComponent.IAMALIVE_NAMESPACE).addElement("status");
-
-		try {
-			FileInputStream input = new FileInputStream(properties.getProperty("cert_path"));
-			properties.load(input);
-			iq.getElement().element("query").addElement("cert")
-					.setText(CertificateHandlerHelper.getBase64Certificate(properties));
-		} catch (Exception e) {
-			LOGGER.warn("Could not load certificate");
-		}
 
 		statusEl.addElement("cpu-idle").setText(resourcesInfo.getCpuIdle());
 		statusEl.addElement("cpu-inuse").setText(resourcesInfo.getCpuInUse());
@@ -131,13 +119,6 @@ public class ManagerPacketHelper {
 		while (itemIterator.hasNext()) {
 			Element itemEl = (Element) itemIterator.next();
 			Attribute id = itemEl.attribute("id");
-			X509Certificate cert = null;
-
-			try {
-				cert = CertificateHandlerHelper.parseCertificate(itemEl.element("cert").getText());
-			} catch (Exception e) {
-				LOGGER.warn("Certificate could not be parsed.");
-			}
 
 			Element statusEl = itemEl.element("status");
 			String cpuIdle = statusEl.element("cpu-idle").getText();
@@ -158,7 +139,7 @@ public class ManagerPacketHelper {
 			}
 
 			ResourcesInfo resources = new ResourcesInfo(id.getValue(), cpuIdle, cpuInUse, memIdle,
-					memInUse, flavoursList, cert);
+					memInUse, flavoursList);
 			FederationMember item = new FederationMember(resources);
 			aliveItems.add(item);
 		}

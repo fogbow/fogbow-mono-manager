@@ -35,25 +35,25 @@ public class TestFederationMember {
 	@Test(expected = IllegalArgumentException.class)
 	public void testNullResourcesCpuIdle() throws CertificateException, IOException {
 		new ResourcesInfo("id", null,
-				"cpuInUse", "memIdle", "memInUse", new LinkedList<Flavor>(), managerTestHelper.getCertificate());
+				"cpuInUse", "memIdle", "memInUse", new LinkedList<Flavor>());
 	}
 	
 	@Test(expected = IllegalArgumentException.class)
 	public void testNullResourcesCpuInUse() throws CertificateException, IOException {
 		new ResourcesInfo("id", "CpuIdle",
-				null, "memIdle", "memInUse", new LinkedList<Flavor>(), managerTestHelper.getCertificate());
+				null, "memIdle", "memInUse", new LinkedList<Flavor>());
 	}
 	
 	@Test(expected = IllegalArgumentException.class)
 	public void testNullResourcesMemIdle() throws CertificateException, IOException {
 		new ResourcesInfo("id", "CpuIdle",
-				"cpuInUse", null, "memInUse", new LinkedList<Flavor>(), managerTestHelper.getCertificate());
+				"cpuInUse", null, "memInUse", new LinkedList<Flavor>());
 	}
 	
 	@Test(expected = IllegalArgumentException.class)
 	public void testNullResourcesMemInUse() throws CertificateException, IOException {
 		new ResourcesInfo("id", "CpuIdle",
-				"cpuInUse", "memIdle", null, new LinkedList<Flavor>(), managerTestHelper.getCertificate());
+				"cpuInUse", "memIdle", null, new LinkedList<Flavor>());
 	}
 	
 	@Test

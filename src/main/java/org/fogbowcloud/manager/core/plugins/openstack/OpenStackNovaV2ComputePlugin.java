@@ -410,7 +410,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		int instancesIdle = Integer.parseInt(maxInstances) - Integer.parseInt(instancesInUse);
 
 		return new ResourcesInfo(String.valueOf(cpuIdle), cpuInUse, String.valueOf(memIdle),
-				memInUse, getFlavors(cpuIdle, memIdle, instancesIdle), null);
+				memInUse, getFlavors(cpuIdle, memIdle, instancesIdle));
 	}
 	
 	private String getAttFromLimitsJson(String attName, String responseStr) {

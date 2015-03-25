@@ -3,7 +3,6 @@ package org.fogbowcloud.manager.core.util;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -18,7 +17,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.dom4j.Attribute;
 import org.dom4j.Element;
-import org.fogbowcloud.manager.core.CertificateHandlerHelper;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.DefaultMemberValidator;
 import org.fogbowcloud.manager.core.FederationMemberValidator;
@@ -79,7 +77,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		flavours.add(new Flavor("small", "cpu", "mem", 2));
 		flavours.add(new Flavor("small", "cpu", "mem", 3));
 		ResourcesInfo resources = new ResourcesInfo("abc", "value1", "value2", "value3", "value4",
-				flavours, getCertificate());
+				flavours);
 		return resources;
 	}
 
@@ -90,8 +88,6 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		for (FederationMember rendezvousItem : aliveIds) {
 			Element itemEl = queryElement.addElement("item");
 			itemEl.addAttribute("id", rendezvousItem.getResourcesInfo().getId());
-			itemEl.addElement("cert").setText(
-					CertificateHandlerHelper.getBase64Certificate(getProperties()));
 			Element statusEl = itemEl.addElement("status");
 			statusEl.addElement("cpu-idle").setText(rendezvousItem.getResourcesInfo().getCpuIdle());
 			statusEl.addElement("cpu-inuse").setText(
@@ -283,8 +279,6 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 			Element itemEl = itemIterator.next();
 			Attribute id = itemEl.attribute("id");
 			Element statusEl = itemEl.element("status");
-			X509Certificate cert = CertificateHandlerHelper.parseCertificate(itemEl.element("cert")
-					.getText());
 			String cpuIdle = statusEl.element("cpu-idle").getText();
 			String cpuInUse = statusEl.element("cpu-inuse").getText();
 			String memIdle = statusEl.element("mem-idle").getText();
@@ -302,7 +296,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 			}
 
 			ResourcesInfo resources = new ResourcesInfo(id.getValue(), cpuIdle, cpuInUse, memIdle,
-					memInUse, flavoursList, cert);
+					memInUse, flavoursList);
 			FederationMember item = new FederationMember(resources);
 			aliveItems.add(item);
 		}
@@ -321,10 +315,6 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		FileInputStream input = new FileInputStream(path);
 		properties.load(input);
 		return properties;
-	}
-
-	public X509Certificate getCertificate() throws CertificateException, IOException {
-		return CertificateHandlerHelper.getCertificate(getProperties());
 	}
 
 	@SuppressWarnings("unchecked")
@@ -362,7 +352,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 						ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES));
 		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class))).thenReturn(
 				new ResourcesInfo(LOCAL_MANAGER_COMPONENT_URL, 
-						"", "", "", "", new LinkedList<Flavor>(), null));
+						"", "", "", "", new LinkedList<Flavor>()));
 		Mockito.when(computePlugin.getInstances(Mockito.any(Token.class))).thenReturn(
 				new ArrayList<Instance>());
 		
