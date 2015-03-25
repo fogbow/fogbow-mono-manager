@@ -54,6 +54,7 @@ public class FCUStaticBenchmarkingPlugin implements BenchmarkingPlugin {
 
 	@Override
 	public void remove(String instanceId) {
+		LOGGER.debug("Removing instance: " + instanceId + " from benchmarking map.");
 		instanceToPower.remove(instanceId);		
 	}
 }

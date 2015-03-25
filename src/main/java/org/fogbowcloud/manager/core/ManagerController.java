@@ -10,9 +10,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 import java.util.TimerTask;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -85,7 +85,7 @@ public class ManagerController {
 	private Properties properties;
 	private AsyncPacketSender packetSender;
 	private FederationMemberValidator validator = new DefaultMemberValidator();
-	private Map<String, ServedRequest> instancesForRemoteMembers = new HashMap<String, ServedRequest>();
+	private Map<String, ServedRequest> instancesForRemoteMembers = new ConcurrentHashMap<String, ServedRequest>();
 	private Map<String, ForwardedRequest> asynchronousRequests = new HashMap<String, ForwardedRequest>();
 
 	private DateUtils dateUtils = new DateUtils();
@@ -437,7 +437,11 @@ public class ManagerController {
 	}
 
 	private Instance getRemoteInstance(Request request) {
-		return ManagerPacketHelper.getRemoteInstance(request, packetSender);
+		return getRemoteInstance(request.getMemberId(), request.getInstanceId());
+	}
+	
+	private Instance getRemoteInstance(String memberId, String instanceId) {
+		return ManagerPacketHelper.getRemoteInstance(memberId, instanceId, packetSender);
 	}
 
 	public void removeInstances(String accessId) {
@@ -856,9 +860,18 @@ public class ManagerController {
 						}
 						if (instanceId == null) {
 							return;
-						}						
+						}
 						
-						benchmarkingPlugin.run(getRemoteInstance(request));
+						Instance remoteInstance;
+						try {
+							remoteInstance = getRemoteInstance(memberAddress, instanceId);
+						} catch (Throwable e) {
+							LOGGER.error("Error while getting remote instance " + instanceId
+									+ " at member " + memberAddress + ".", e);
+							return;
+						}
+						
+						benchmarkingPlugin.run(remoteInstance);
 						
 						request.setState(RequestState.FULFILLED);
 						request.setInstanceId(instanceId);
@@ -873,6 +886,7 @@ public class ManagerController {
 						LOGGER.debug("The request " + request + " forwarded to " + memberAddress
 								+ " gets error ", t);
 						asynchronousRequests.remove(request.getId());
+						request.setMemberId(null);
 					}
 				});
 			
@@ -1001,7 +1015,7 @@ public class ManagerController {
 		LOGGER.info("Monitoring served requests.");
 		LOGGER.debug("Current served requests=" + instancesForRemoteMembers);
 
-		Set<String> instanceIds = instancesForRemoteMembers.keySet();
+		List<String> instanceIds = new ArrayList<String>(instancesForRemoteMembers.keySet());
 		for (String instanceId : instanceIds) {
 			ServedRequest servedRequest = instancesForRemoteMembers.get(instanceId);
 			if (!isInstanceBeingUsedByRemoteMember(instanceId, servedRequest)){

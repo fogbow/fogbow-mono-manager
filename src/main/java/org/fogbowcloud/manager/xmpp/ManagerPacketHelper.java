@@ -226,15 +226,20 @@ public class ManagerPacketHelper {
 		packetSender.sendPacket(iq);
 	}
 
-	public static Instance getRemoteInstance(Request request, PacketSender packetSender) {
+	protected static Instance getRemoteInstance(Request request, PacketSender packetSender) {
+		return getRemoteInstance(request.getMemberId(), request.getInstanceId(), packetSender);
+	}
+	
+	public static Instance getRemoteInstance(String memberId, String instanceId,
+			PacketSender packetSender) {
 		IQ iq = new IQ();
-		iq.setTo(request.getMemberId());
+		iq.setTo(memberId);
 		iq.setType(Type.get);
 		Element queryEl = iq.getElement().addElement("query",
 				ManagerXmppComponent.GETINSTANCE_NAMESPACE);
 		Element instanceEl = queryEl.addElement("instance");
 		try {
-			instanceEl.addElement("id").setText(request.getInstanceId());
+			instanceEl.addElement("id").setText(instanceId);
 		} catch (Exception e) {
 			// TODO: handle exception
 		}
@@ -243,7 +248,7 @@ public class ManagerPacketHelper {
 		if (response == null) {
 			throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
 		}
-		
+
 		if (response.getError() != null) {
 			raiseException(response.getError());
 		}
