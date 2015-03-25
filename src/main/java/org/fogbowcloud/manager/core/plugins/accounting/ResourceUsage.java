@@ -1,5 +1,8 @@
 package org.fogbowcloud.manager.core.plugins.accounting;
 
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.util.Locale;
 import java.util.StringTokenizer;
 
 public class ResourceUsage {
@@ -33,7 +36,8 @@ public class ResourceUsage {
 	}
 
 	public String toString() {
-		return "memberId=" + memberId + ", consumed=" + consumed + ", donated=" + donated;
+		return "memberId=" + memberId + ", consumed=" + formatDouble(consumed) + ", donated="
+				+ formatDouble(donated);
 	}
 	
 	@Override
@@ -56,4 +60,11 @@ public class ResourceUsage {
 		toReturn.addDonation(donated);		
 		return toReturn;
 	}
+	
+	public static double formatDouble(double doubleValue) {
+		DecimalFormatSymbols formatSymbols = new DecimalFormatSymbols(Locale.US);
+		formatSymbols.setDecimalSeparator('.');
+		DecimalFormat df = new DecimalFormat("0.000000", formatSymbols);
+		return Double.valueOf(df.format(doubleValue));
+	}	
 }

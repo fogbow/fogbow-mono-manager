@@ -12,9 +12,6 @@ import java.util.Properties;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
-import org.fogbowcloud.manager.core.ConfigurationConstants;
-import org.fogbowcloud.manager.core.plugins.accounting.DataStore;
-import org.fogbowcloud.manager.core.plugins.accounting.ResourceUsage;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -34,7 +31,7 @@ public class TestDataStore {
 	public void initialize() {		
 		LOGGER.debug("Creating data store.");
 		properties = new Properties();
-		properties.put(ConfigurationConstants.ACCOUNTING_DATASTORE_URL_KEY, "jdbc:h2:mem:"
+		properties.put("accounting_datastore_url", "jdbc:h2:mem:"
 				+ new File(DATASTORE_PATH).getAbsolutePath() + "usage");
 
 		db = new DataStore(properties);

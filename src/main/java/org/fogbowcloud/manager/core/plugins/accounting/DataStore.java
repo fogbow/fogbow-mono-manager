@@ -12,7 +12,6 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.apache.log4j.Logger;
-import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.h2.jdbcx.JdbcConnectionPool;
 
 public class DataStore {
@@ -31,7 +30,7 @@ public class DataStore {
 
 	public DataStore(Properties properties) {
 		this.dataStoreURL = properties
-				.getProperty(ConfigurationConstants.ACCOUNTING_DATASTORE_URL_KEY);
+				.getProperty("accounting_datastore_url");
 		
 		Statement statement = null;
 		Connection connection = null;

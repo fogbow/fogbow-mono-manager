@@ -1,10 +1,7 @@
 package org.fogbowcloud.manager.core.plugins.accounting;
 
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
@@ -110,19 +107,12 @@ public class FCUAccountingPlugin implements AccountingPlugin {
 	private double calcPower(double startingInterval, double updatingInterval,
 			double instancePower) {
 		if (startingInterval < updatingInterval) {
-			return formatDouble(startingInterval * instancePower);
+			return startingInterval * instancePower;
 		} else {
-			return formatDouble(updatingInterval * instancePower);
+			return updatingInterval * instancePower;
 		}
 	}
 	
-	public static double formatDouble(double doubleValue) {
-		DecimalFormatSymbols formatSymbols = new DecimalFormatSymbols(Locale.US);
-		formatSymbols.setDecimalSeparator('.');
-		DecimalFormat df = new DecimalFormat("0.000", formatSymbols);
-		return Double.valueOf(df.format(doubleValue));
-	}
-
 	@Override
 	public Map<String, ResourceUsage> getMembersUsage(List<String> members) {
 		return db.getMemberUsage(members);

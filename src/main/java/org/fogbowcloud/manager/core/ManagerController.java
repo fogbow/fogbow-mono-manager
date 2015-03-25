@@ -50,7 +50,6 @@ import org.fogbowcloud.manager.occi.request.RequestState;
 import org.fogbowcloud.manager.occi.request.RequestType;
 import org.fogbowcloud.manager.xmpp.AsyncPacketSender;
 import org.fogbowcloud.manager.xmpp.ManagerPacketHelper;
-import org.h2.mvstore.DataUtils;
 import org.restlet.Response;
 
 public class ManagerController {
@@ -810,7 +809,6 @@ public class ManagerController {
 		boolean turnOffTimer = true;
 
 		LOGGER.info("Checking and updating request token.");
-
 		for (Request request : allRequests) {
 			try {
 				if (request.getState().notIn(RequestState.CLOSED, RequestState.FAILED)) {
