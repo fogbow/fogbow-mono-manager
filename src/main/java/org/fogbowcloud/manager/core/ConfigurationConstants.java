@@ -35,6 +35,7 @@ public class ConfigurationConstants {
 	public static final String TOKEN_UPDATE_PERIOD_KEY = "token_update_period";
 	public static final String SERVED_REQUEST_MONITORING_PERIOD_KEY = "served_request_monitoring_period";
 	public static final String GARBAGE_COLLECTOR_PERIOD_KEY = "garbage_collector_period";
+	public static final String ASYNC_REQUEST_WAITING_INTERVAL_KEY = "asyn_request_waiting_interval";
 	
 	//ssh properties TODO change these properties names to TOKEN_HOST_...
 	public static final String SSH_PRIVATE_HOST_KEY = "ssh_tunnel_private_host";

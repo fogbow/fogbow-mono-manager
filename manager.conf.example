@@ -72,6 +72,7 @@ token_update_period=300000
 instance_monitoring_period=120000
 served_request_monitoring_period=120000
 garbage_collector_period=240000
+asyn_request_waiting_interval=300000
 
 ssh_tunnel_public_host=150.165.80.1
 ssh_tunnel_private_host=10.0.0.1

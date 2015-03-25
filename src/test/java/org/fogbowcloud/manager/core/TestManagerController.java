@@ -283,7 +283,7 @@ public class TestManagerController {
 				request1.getId()));
 		
 		//updating time
-		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now + ManagerController.DEFAULT_SCHEDULER_PERIOD + 100);
+		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now + ManagerController.DEFAULT_ASYNC_REQUEST_WAITING_INTERVAL + 100);
 		
 		managerController.removeRequestsThatReachTimeout();
 		

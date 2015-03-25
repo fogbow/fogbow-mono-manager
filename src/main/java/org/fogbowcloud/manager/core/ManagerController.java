@@ -50,6 +50,7 @@ import org.fogbowcloud.manager.occi.request.RequestState;
 import org.fogbowcloud.manager.occi.request.RequestType;
 import org.fogbowcloud.manager.xmpp.AsyncPacketSender;
 import org.fogbowcloud.manager.xmpp.ManagerPacketHelper;
+import org.h2.mvstore.DataUtils;
 import org.restlet.Response;
 
 public class ManagerController {
@@ -58,6 +59,7 @@ public class ManagerController {
 	private static final Logger LOGGER = Logger.getLogger(ManagerController.class);
 	public static final long DEFAULT_SCHEDULER_PERIOD = 30000; // 30 seconds
 	private static final long DEFAULT_TOKEN_UPDATE_PERIOD = 300000; // 5 minutes
+	protected static final int DEFAULT_ASYNC_REQUEST_WAITING_INTERVAL = 300000; // 5 minutes
 	private static final long DEFAULT_INSTANCE_MONITORING_PERIOD = 120000; // 2 minutes
 	private static final long DEFAULT_SERVED_REQUEST_MONITORING_PERIOD = 120000; // 2 minutes
 	private static final long DEFAULT_GARBAGE_COLLECTOR_PERIOD = 240000; // 4 minutes
@@ -86,7 +88,7 @@ public class ManagerController {
 	private AsyncPacketSender packetSender;
 	private FederationMemberValidator validator = new DefaultMemberValidator();
 	private Map<String, ServedRequest> instancesForRemoteMembers = new ConcurrentHashMap<String, ServedRequest>();
-	private Map<String, ForwardedRequest> asynchronousRequests = new HashMap<String, ForwardedRequest>();
+	private Map<String, ForwardedRequest> asynchronousRequests = new ConcurrentHashMap<String, ForwardedRequest>();
 
 	private DateUtils dateUtils = new DateUtils();
 	public ManagerController(Properties properties) {
@@ -855,12 +857,17 @@ public class ManagerController {
 					public void success(String instanceId) {
 						LOGGER.debug("The request " + request + " forwarded to " + memberAddress
 								+ " gets instance " + instanceId);
-						if (asynchronousRequests.remove(request.getId()) == null) {
+						if (asynchronousRequests.get(request.getId()) == null) {
 							return;
 						}
 						if (instanceId == null) {
+							asynchronousRequests.remove(request.getId());
 							return;
 						}
+						
+						// reseting time stamp
+						asynchronousRequests.get(request.getId()).setTimeStamp(
+								dateUtils.currentTimeMillis());
 						
 						Instance remoteInstance;
 						try {
@@ -868,6 +875,7 @@ public class ManagerController {
 						} catch (Throwable e) {
 							LOGGER.error("Error while getting remote instance " + instanceId
 									+ " at member " + memberAddress + ".", e);
+							asynchronousRequests.remove(request.getId());
 							return;
 						}
 						
@@ -875,6 +883,8 @@ public class ManagerController {
 						
 						request.setState(RequestState.FULFILLED);
 						request.setInstanceId(instanceId);
+						
+						asynchronousRequests.remove(request.getId()); 
 						
 						if (!instanceMonitoringTimer.isScheduled()) {
 							triggerInstancesMonitor();
@@ -1051,9 +1061,14 @@ public class ManagerController {
 		long nowMilli = dateUtils.currentTimeMillis();
 		Date now = new Date(nowMilli);
 		
+		String asyncRequestWaitingIntervalStr = properties
+				.getProperty(ConfigurationConstants.ASYNC_REQUEST_WAITING_INTERVAL_KEY);
+		final int asyncRequestWaitingInterval = asyncRequestWaitingIntervalStr == null ? DEFAULT_ASYNC_REQUEST_WAITING_INTERVAL
+				: Integer.valueOf(asyncRequestWaitingIntervalStr);
+		
 		Calendar c = Calendar.getInstance();
-		c.setTime(new Date(timeStamp)); 
-		c.add(Calendar.MILLISECOND, (int) DEFAULT_SCHEDULER_PERIOD); 
+		c.setTime(new Date(timeStamp));		
+		c.add(Calendar.MILLISECOND, asyncRequestWaitingInterval); 
 		return now.after(c.getTime());
 	}
 
@@ -1209,6 +1224,10 @@ class ForwardedRequest {
 		this.timeStamp = timeStamp;
 	}
 	
+	public void setTimeStamp(long timeStamp) {
+		this.timeStamp = timeStamp;		
+	}
+
 	public Request getRequest() {
 		return request;
 	}
