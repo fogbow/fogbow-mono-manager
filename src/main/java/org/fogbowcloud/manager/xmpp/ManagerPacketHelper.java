@@ -22,6 +22,7 @@ import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.Resource;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
+import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.instance.Instance.Link;
 import org.fogbowcloud.manager.occi.instance.InstanceState;
@@ -175,7 +176,7 @@ public class ManagerPacketHelper {
 	}
 	
 	public static void asynchronousRemoteRequest(Request request, String memberAddress,
-			AsyncPacketSender packetSender, final AsynchronousRequestCallback callback) {
+			Token userFederationToken, AsyncPacketSender packetSender, final AsynchronousRequestCallback callback) {
 		IQ iq = new IQ();
 		iq.setTo(memberAddress);
 		iq.setType(Type.set);
@@ -192,6 +193,12 @@ public class ManagerPacketHelper {
 			attributeEl.addAttribute("var", xOCCIEntry.getKey());
 			attributeEl.addElement("value").setText(xOCCIEntry.getValue());
 		}
+		if (userFederationToken != null) {
+			Element tokenEl = queryEl.addElement("token");
+			tokenEl.addElement("accessId").setText(userFederationToken.getAccessId());
+			tokenEl.addElement("user").setText(userFederationToken.getUser());
+		}
+		
 		packetSender.addPacketCallback(iq, new PacketCallback() {
 			
 			@Override

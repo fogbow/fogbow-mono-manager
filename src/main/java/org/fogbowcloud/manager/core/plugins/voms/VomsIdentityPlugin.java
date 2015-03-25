@@ -64,14 +64,14 @@ public class VomsIdentityPlugin implements IdentityPlugin {
 	private static final Logger LOGGER = Logger.getLogger(VomsIdentityPlugin.class);
 
 	private Properties properties;
-	private ProxyCertificateGeneratro generatorProxyCertificate;
+	private ProxyCertificateGenerator generatorProxyCertificate;
 
 	static {
 		CryptographyRestrictions.removeCryptographyRestrictions();
 	}
 
 	public VomsIdentityPlugin(Properties properties) {
-		this.generatorProxyCertificate = new ProxyCertificateGeneratro();
+		this.generatorProxyCertificate = new ProxyCertificateGenerator();
 		this.properties = properties;
 	}
 
@@ -79,7 +79,7 @@ public class VomsIdentityPlugin implements IdentityPlugin {
 		this.properties = properties;
 	}
 
-	public void setGenerateProxyCertificate(ProxyCertificateGeneratro generatorProxyCertificate) {
+	public void setGenerateProxyCertificate(ProxyCertificateGenerator generatorProxyCertificate) {
 		this.generatorProxyCertificate = generatorProxyCertificate;
 	}
 
@@ -145,6 +145,10 @@ public class VomsIdentityPlugin implements IdentityPlugin {
 
 	@Override
 	public boolean isValid(String accessId) {
+		return isValid(accessId, true);
+	}
+	
+	public boolean isValid(String accessId, boolean checkPrivateKey) {
 		List<PemObject> chain = null;
 		try {
 			chain = CertificateUtils.parseChain(accessId);
@@ -152,7 +156,7 @@ public class VomsIdentityPlugin implements IdentityPlugin {
 			LOGGER.warn("Exception while parsing PEM chain from " + accessId);
 			return false;
 		}
-		return isValid(chain, true);
+		return isValid(chain, checkPrivateKey);
 	}
 
 	private boolean isValid(List<PemObject> chain, boolean checkPrivateKey) {
@@ -169,6 +173,9 @@ public class VomsIdentityPlugin implements IdentityPlugin {
 		if (checkPrivateKey) {
 			try {
 				privKey = CertificateUtils.extractPrivateKey(chain);
+				if (privKey == null) {
+					return false;
+				}
 			} catch (IOException e) {
 				LOGGER.warn("Couldn't extract private key from chain.", e);
 				return false;
@@ -241,7 +248,7 @@ public class VomsIdentityPlugin implements IdentityPlugin {
 		return VOMSValidators.newValidator(VOMSTrustStore, validatorExt);
 	}
 
-	public class ProxyCertificateGeneratro {
+	public class ProxyCertificateGenerator {
 
 		public ProxyCertificate generate(Map<String, String> userCredentials) throws KeyStoreException, 
 				CertificateException, InvalidKeyException, SignatureException, NoSuchAlgorithmException, IOException {

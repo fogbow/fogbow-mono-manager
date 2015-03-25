@@ -78,7 +78,7 @@ public class ManagerController {
 	private IdentityPlugin federationIdentityPlugin;
 	private Properties properties;
 	private AsyncPacketSender packetSender;
-	private FederationMemberValidator validator = new DefaultMemberValidator();
+	private FederationMemberValidator validator;
 	private Map<String, ServedRequest> instancesForRemoteMembers = new HashMap<String, ServedRequest>();
 	private Map<String, ForwardedRequest> asynchronousRequests = new HashMap<String, ForwardedRequest>();
 
@@ -471,14 +471,15 @@ public class ManagerController {
 	}
 
 	public String createInstanceWithFederationUser(String memberId, List<Category> categories,
-			Map<String, String> xOCCIAtt, String instanceToken) {
+			Map<String, String> xOCCIAtt, String instanceToken, Token requestingUserToken) {
 		FederationMember member = null;
 		try {
 			member = getFederationMember(memberId);
 		} catch (Exception e) {
 		}
 
-		if (!validator.canDonateTo(member)) {
+		if (!properties.getProperty("xmpp_jid").equals(memberId) && 
+				!validator.canDonateTo(member, requestingUserToken)) {
 			return null;
 		}
 		LOGGER.info("Submiting request with categories: " + categories + " and xOCCIAtt: "
@@ -768,7 +769,8 @@ public class ManagerController {
 		
 		asynchronousRequests.put(request.getId(),
 				new ForwardedRequest(request, dateUtils.currentTimeMillis()));
-		ManagerPacketHelper.asynchronousRemoteRequest(request, memberAddress,
+		ManagerPacketHelper.asynchronousRemoteRequest(request, memberAddress, 
+				federationIdentityPlugin.getForwardableToken(request.getFederationToken()), 
 				packetSender, new AsynchronousRequestCallback() {
 					
 					@Override
@@ -984,7 +986,7 @@ public class ManagerController {
 		String remoteInstanceId = null;
 		try {
 			remoteInstanceId = createInstanceWithFederationUser(properties.getProperty("xmpp_jid"),
-					request.getCategories(), request.getxOCCIAtt(), request.getId());
+					request.getCategories(), request.getxOCCIAtt(), request.getId(), null);
 		} catch (Exception e) {
 			LOGGER.info("Could not create instance with federation user locally." + e);
 		}

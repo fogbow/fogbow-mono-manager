@@ -1,6 +1,5 @@
 package org.fogbowcloud.manager.occi.plugins.voms;
 
-import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
@@ -11,14 +10,14 @@ import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.crypto.Cipher;
-
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.CertificateUtils;
 import org.fogbowcloud.manager.core.plugins.util.Credential;
 import org.fogbowcloud.manager.core.plugins.voms.VomsIdentityPlugin;
-import org.fogbowcloud.manager.core.plugins.voms.VomsIdentityPlugin.ProxyCertificateGeneratro;
+import org.fogbowcloud.manager.core.plugins.voms.VomsIdentityPlugin.ProxyCertificateGenerator;
 import org.fogbowcloud.manager.occi.core.Token;
+import org.fogbowcloud.manager.occi.plugins.validators.VOMSTestHelper;
+import org.fogbowcloud.manager.occi.util.SecurityRestrictionHelper;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -35,7 +34,7 @@ public class TestIdentityVoms {
 	private final String VOMS_PASSWORD = "pass";
 	private final String VOMS_SERVER = "test.vo";
 
-	private ProxyCertificateGeneratro generatorProxyCertificate;
+	private ProxyCertificateGenerator generatorProxyCertificate;
 	private VomsIdentityPlugin vomsIdentityPlugin;
 	private Properties properties;
 
@@ -50,18 +49,10 @@ public class TestIdentityVoms {
 		properties.put(ConfigurationConstants.FEDERATION_USER_SERVER_VOMS, VOMS_SERVER);
 
 		vomsIdentityPlugin = new VomsIdentityPlugin(properties);
-		generatorProxyCertificate = Mockito.mock(ProxyCertificateGeneratro.class);
+		generatorProxyCertificate = Mockito.mock(ProxyCertificateGenerator.class);
 		vomsIdentityPlugin.setGenerateProxyCertificate(generatorProxyCertificate);
 	}
 
-	private static boolean checkUnlimitedStrengthPolicy() {
-		try {
-			return Cipher.getMaxAllowedKeyLength("AES") > 128;
-		} catch (NoSuchAlgorithmException e) {
-			return false;
-		}
-	}
-	
 	@Test
 	public void testReIssueToken() throws Exception {
 		Token token = new Token("accessId", "user", new Date(), new HashMap<String, String>());
@@ -70,7 +61,7 @@ public class TestIdentityVoms {
 
 	@Test
 	public void testCreateToken() throws Exception {
-		if (!checkUnlimitedStrengthPolicy()) {
+		if (!SecurityRestrictionHelper.checkUnlimitedStrengthPolicy()) {
 			return;
 		}
 		Date before = new Date(System.currentTimeMillis() + TWELVE_HOURS - ONE_MINUTE);
@@ -87,7 +78,7 @@ public class TestIdentityVoms {
 		credentials.put(VomsIdentityPlugin.SERVER_NAME, VOMS_SERVER);
 
 		Mockito.when(generatorProxyCertificate.generate(credentials)).thenReturn(proxyCertificate);
-		Token token = vomsIdentityPlugin.createToken(credentials);
+		Token token = VOMSTestHelper.createToken();
 
 		Date after = new Date(System.currentTimeMillis() + TWELVE_HOURS);
 
@@ -102,7 +93,7 @@ public class TestIdentityVoms {
 
 	@Test
 	public void testGetToken() throws Exception {
-		if (!checkUnlimitedStrengthPolicy()) {
+		if (!SecurityRestrictionHelper.checkUnlimitedStrengthPolicy()) {
 			return;
 		}
 		Date before = new Date(System.currentTimeMillis() + TWELVE_HOURS - ONE_MINUTE);
@@ -124,7 +115,7 @@ public class TestIdentityVoms {
 
 	@Test
 	public void testValidCertificate() throws Exception {
-		if (!checkUnlimitedStrengthPolicy()) {
+		if (!SecurityRestrictionHelper.checkUnlimitedStrengthPolicy()) {
 			return;
 		}
 		PEMCredential holder = Utils.getTestUserCredential();
@@ -137,7 +128,7 @@ public class TestIdentityVoms {
 
 	@Test
 	public void testExpiredCertificate() throws Exception {
-		if (!checkUnlimitedStrengthPolicy()) {
+		if (!SecurityRestrictionHelper.checkUnlimitedStrengthPolicy()) {
 			return;
 		}
 		PEMCredential holder = Utils.getExpiredCredential();
@@ -166,7 +157,7 @@ public class TestIdentityVoms {
 	
 	@Test
 	public void testGetForwardableTokenAsAWhole() throws Exception {
-		if (!checkUnlimitedStrengthPolicy()) {
+		if (!SecurityRestrictionHelper.checkUnlimitedStrengthPolicy()) {
 			return;
 		}
 		
@@ -190,7 +181,7 @@ public class TestIdentityVoms {
 	
 	@Test
 	public void testGetForwardableTokenWithNoPrivateKey() throws Exception {
-		if (!checkUnlimitedStrengthPolicy()) {
+		if (!SecurityRestrictionHelper.checkUnlimitedStrengthPolicy()) {
 			return;
 		}
 		

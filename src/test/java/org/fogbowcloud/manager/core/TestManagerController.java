@@ -1564,7 +1564,7 @@ public class TestManagerController {
 		managerController.updateMembers(list);
 
 		FederationMemberValidator validatorMock = Mockito.mock(FederationMemberValidator.class);
-		Mockito.doReturn(true).when(validatorMock).canDonateTo(member);
+		Mockito.doReturn(true).when(validatorMock).canDonateTo(Mockito.eq(member), Mockito.any(Token.class));
 		managerController.setValidator(validatorMock);
 
 		Token token = Mockito.mock(Token.class);
@@ -1585,12 +1585,12 @@ public class TestManagerController {
 		managerController.setComputePlugin(plugin);
 		Assert.assertEquals("answer",
 				managerController.createInstanceWithFederationUser("abc", new ArrayList<Category>(), 
-						xOCCIAtt, null));
+						xOCCIAtt, null, null));
 
-		Mockito.doReturn(false).when(validatorMock).canDonateTo(member);
+		Mockito.doReturn(false).when(validatorMock).canDonateTo(Mockito.eq(member), Mockito.any(Token.class));
 		managerController.setValidator(validatorMock);
 		Assert.assertEquals(null,
-				managerController.createInstanceWithFederationUser("abc", null, xOCCIAtt, null));
+				managerController.createInstanceWithFederationUser("abc", null, xOCCIAtt, null, null));
 	}
 	
 	@Test
@@ -1757,7 +1757,7 @@ public class TestManagerController {
 		managerController.setPacketSender(packetSender);
 				
 		managerController.createInstanceWithFederationUser("manager1-test.com", 
-				new ArrayList<Category>(), xOCCIAtt, null);
+				new ArrayList<Category>(), xOCCIAtt, null, null);
 		
 		// checking there is one served request
 		Assert.assertEquals(1, managerController.getInstancesForRemoteMember().size());
@@ -1794,7 +1794,7 @@ public class TestManagerController {
 		managerController.setPacketSender(packetSender);
 		
 		managerController.createInstanceWithFederationUser("manager1-test.com", 
-				new ArrayList<Category>(), xOCCIAtt, null);
+				new ArrayList<Category>(), xOCCIAtt, null, null);
 		
 		// checking there is one served request
 		Assert.assertEquals(1, managerController.getInstancesForRemoteMember().size());
@@ -1920,7 +1920,7 @@ public class TestManagerController {
 		
 		// creating instance for remote member 
 		managerController.createInstanceWithFederationUser("manager1-test.com", 
-				new ArrayList<Category>(), xOCCIAtt, null);
+				new ArrayList<Category>(), xOCCIAtt, null, null);
 		
 		// checking there is one served request
 		Assert.assertEquals(1, managerController.getInstancesForRemoteMember().size());

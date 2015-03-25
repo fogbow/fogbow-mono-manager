@@ -19,7 +19,6 @@ import org.dom4j.Attribute;
 import org.dom4j.Element;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.DefaultMemberValidator;
-import org.fogbowcloud.manager.core.FederationMemberValidator;
 import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.Flavor;
@@ -208,8 +207,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		managerFacade.setComputePlugin(computePlugin);
 		managerFacade.setLocalIdentityPlugin(identityPlugin);
 		managerFacade.setFederationIdentityPlugin(identityPlugin);
-		FederationMemberValidator validator = new DefaultMemberValidator();
-		managerFacade.setValidator(validator);
+		managerFacade.setValidator(new DefaultMemberValidator(null));
 		
 		managerXmppComponent = Mockito.spy(new ManagerXmppComponent(LOCAL_MANAGER_COMPONENT_URL,
 				MANAGER_COMPONENT_PASS, SERVER_HOST, SERVER_COMPONENT_PORT, managerFacade));
@@ -241,12 +239,11 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 				getResources());
 		Mockito.when(identityPlugin.createFederationUserToken()).thenReturn(defaultUserToken);
 
-		FederationMemberValidator validator = new DefaultMemberValidator();
 		ManagerController managerFacade = new ManagerController(properties);
 		managerFacade.setComputePlugin(computePlugin);
 		managerFacade.setLocalIdentityPlugin(identityPlugin);
 		managerFacade.setFederationIdentityPlugin(identityPlugin);
-		managerFacade.setValidator(validator);
+		managerFacade.setValidator(new DefaultMemberValidator(null));
 
 		managerXmppComponent = Mockito.spy(new ManagerXmppComponent(LOCAL_MANAGER_COMPONENT_URL,
 				MANAGER_COMPONENT_PASS, SERVER_HOST, SERVER_COMPONENT_PORT, managerFacade));
@@ -374,6 +371,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		managerController.setLocalIdentityPlugin(identityPlugin);
 		managerController.setFederationIdentityPlugin(federationIdentityPlugin);
 		managerController.setComputePlugin(computePlugin);
+		managerController.setValidator(new DefaultMemberValidator(null));
 
 		return managerController;
 	}

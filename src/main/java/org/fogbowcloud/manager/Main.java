@@ -70,7 +70,7 @@ public class Main {
 			System.exit(EXIT_ERROR_CODE);
 		}
 
-		FederationMemberValidator validator = new DefaultMemberValidator();
+		FederationMemberValidator validator = new DefaultMemberValidator(properties);
 		try {
 			validator = (FederationMemberValidator) createInstance(
 					ConfigurationConstants.MEMBER_VALIDATOR_KEY, properties);
