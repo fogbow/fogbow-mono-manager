@@ -20,6 +20,7 @@ import java.util.Properties;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
+import org.bouncycastle.util.io.pem.PemObject;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.CertificateUtils;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
@@ -29,6 +30,7 @@ import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
 
+@Deprecated
 public class X509IdentityPlugin implements IdentityPlugin {
 
 	Properties properties;
@@ -42,7 +44,7 @@ public class X509IdentityPlugin implements IdentityPlugin {
 	@Override
 	public Token createToken(Map<String, String> userCredentials) {
 		Collection<X509Certificate> certificateChain = generateCertificateChain(userCredentials);
-		String accessId = CertificateUtils.generateAcessId(certificateChain);
+		String accessId = CertificateUtils.generateAccessId(certificateChain);
 		String user = null;
 		Date expirationTime = null;
 		for (X509Certificate x509Certificate : certificateChain) {
@@ -75,40 +77,50 @@ public class X509IdentityPlugin implements IdentityPlugin {
 
 	@Override
 	public Token getToken(String accessId) {
-		accessId = CertificateUtils.toCertificateFormat(accessId);
-		if (!isValid(accessId)) {
+		List<PemObject> chain = null;
+		try {
+			chain = CertificateUtils.parseChain(accessId);
+		} catch (Exception e) {
+			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
+		}
+		
+		if (!isValid(chain)) {
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}
 
 		Collection<X509Certificate> certificates;
 		try {
-			certificates = CertificateUtils.getCertificateChain(accessId);
+			certificates = CertificateUtils.extractCertificates(chain);
 		} catch (Exception e) {
 			LOGGER.error("", e);
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}
 
-		String user = null;
-		Date expirationTime = null;
-		for (X509Certificate x509Certificate : certificates) {
-			expirationTime = x509Certificate.getNotAfter();
-			user = x509Certificate.getIssuerDN().getName();
-			break;
-		}
+		X509Certificate x509Certificate = certificates.iterator().next();
+		String user = x509Certificate.getIssuerDN().getName();
+		Date expirationTime = x509Certificate.getNotAfter();
 
 		return new Token(accessId, user, expirationTime, new HashMap<String, String>());
 	}
 
+	
 	@Override
 	public boolean isValid(String accessId) {
-		// check expired
-		accessId = CertificateUtils.toCertificateFormat(accessId);
-		Collection<X509Certificate> certificateChain;
-
+		List<PemObject> chain = null;
+		try {
+			chain = CertificateUtils.parseChain(accessId);
+		} catch (Exception e1) {
+			LOGGER.warn("Exception while parsing PEM chain from " + accessId);
+			return false;
+		}
+		return isValid(chain);
+	}
+	
+	private boolean isValid(List<PemObject> chain) {
 		try {
 			CertificateFactory certFactory = CertificateFactory.getInstance(CertificateUtils.X_509);
 			List<X509Certificate> certificates = new ArrayList<X509Certificate>();
-			certificateChain = CertificateUtils.getCertificateChain(accessId);
+			Collection<X509Certificate> certificateChain = CertificateUtils.extractCertificates(chain);
 			for (X509Certificate certificate : certificateChain) {
 				try {
 					certificate.checkValidity();
@@ -181,6 +193,11 @@ public class X509IdentityPlugin implements IdentityPlugin {
 
 	@Override
 	public String getAuthenticationURI() {
+		return null;
+	}
+
+	@Override
+	public Token getForwardableToken(Token originalToken) {
 		return null;
 	}
 }
