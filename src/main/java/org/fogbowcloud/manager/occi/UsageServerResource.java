@@ -1,8 +1,11 @@
 package org.fogbowcloud.manager.occi;
 
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.StringTokenizer;
 
@@ -22,7 +25,14 @@ import org.restlet.util.Series;
 public class UsageServerResource extends ServerResource {
 
 	private static final Logger LOGGER = Logger.getLogger(UsageServerResource.class);
-
+	public static final DecimalFormat USAGE_FORMAT;
+	
+	static {
+		DecimalFormatSymbols formatSymbols = new DecimalFormatSymbols(Locale.US);
+		formatSymbols.setDecimalSeparator('.');
+		USAGE_FORMAT = new DecimalFormat("0.000000", formatSymbols);
+	}
+	
 	@Get
 	public String fetch() {
 		LOGGER.debug("Executing the query interface fetch method");
@@ -32,46 +42,45 @@ public class UsageServerResource extends ServerResource {
 		
 		String federationAccessToken = HeaderUtils.getFederationAuthToken(headers, getResponse(),
 				application.getAuthenticationURI());
-
 		String option = (String) getRequestAttributes().get("option");
+
+		if (option != null && !"members".equals(option) && !"users".equals(option)) {
+			throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
+		}
 		
-		StringBuilder builder = new StringBuilder("\n");
+		StringBuilder builder = new StringBuilder();
 		
-		if (option == null) {
+		if (option == null || "members".equals(option)) {
 			List<ResourceUsage> membersUsage = application.getMembersUsage(federationAccessToken);
+			builder.append(generateMembersUsage(membersUsage));
+		}
+		if (option == null || "users".equals(option)) {
 			Map<String, Double> usersUsage = application.getUsersUsage(federationAccessToken);
-			
-			builder.append(generateMembersUsage(membersUsage));
-			builder.append(generateUsersOutput(usersUsage));			
-			return builder.toString();
-		} else if ("members".equals(option)) {
-			List<ResourceUsage> membersUsage = application.getMembersUsage(federationAccessToken);
-			builder.append(generateMembersUsage(membersUsage));
-			return builder.toString();
-		} else if ("users".equals(option)) {
-			Map<String, Double> usersUsage = application.getUsersUsage(federationAccessToken);			
 			builder.append(generateUsersOutput(usersUsage));
-			return builder.toString();
-		}		
-		throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
+		}
+		return builder.length() == 0 ? "\n" : builder.toString().trim();
 	}
 
 	private String generateMembersUsage(List<ResourceUsage> membersUsage) {
 		StringBuilder builder = new StringBuilder();
 		for (ResourceUsage resourceUsage : membersUsage) {
 			builder.append(resourceUsage.toString() + "\n");
-		}			
+		}
 		return builder.toString();
 	}
 
 	private String generateUsersOutput(Map<String, Double> usersUsage) {
 		StringBuilder builder = new StringBuilder();
 		for (String userId : usersUsage.keySet()) {
-			builder.append("userId=" + userId + ", consumed=" + usersUsage.get(userId) + "\n");
+			builder.append("userId=" + userId + ", consumed=" + formatDouble(usersUsage.get(userId)) + "\n");
 		}
-		return builder.toString();
+		return builder.toString().trim();
 	}
 
+	public static double formatDouble(double doubleValue) {
+		return Double.valueOf(USAGE_FORMAT.format(doubleValue));
+	}	
+	
 	public static Map<String, Double> getUsersUsage(String responseStr) {
 		HashMap<String, Double> usersUsage = new HashMap<String, Double>();
 		StringTokenizer st = new StringTokenizer(responseStr, "\n");

@@ -144,8 +144,14 @@ public class ManagerController {
 	
 	private void updateAccounting() {
 		LOGGER.info("Updating accounting.");
-		List<Request> requestsWithInstances = requests.get(RequestState.FULFILLED);
-		requestsWithInstances.addAll(requests.get(RequestState.DELETED));		
+		List<Request> requestsWithInstances = new ArrayList<Request>();
+		
+		for (Request request : requests.get(RequestState.FULFILLED, RequestState.DELETED)) {
+			if (request.getInstanceId() != null) {
+				requestsWithInstances.add(request);
+			}
+		}
+		
 		ArrayList<ServedRequest> servedRequests = new ArrayList<ServedRequest>(
 				instancesForRemoteMembers.values());
 		
@@ -605,7 +611,7 @@ public class ManagerController {
 					xOCCIAtt, localImageId);
 			
 			Instance instance = computePlugin.getInstance(federationUserToken, instanceId);
-			benchmarkingPlugin.run(instance);
+			benchmarkingPlugin.run(generateGlobalId(instanceId, memberId), instance);
 			
 			if (!properties.getProperty("xmpp_jid").equals(memberId)) {				
 				instancesForRemoteMembers.put(instanceId, new ServedRequest(instanceToken, instanceId, 
@@ -877,7 +883,7 @@ public class ManagerController {
 							return;
 						}
 						
-						benchmarkingPlugin.run(remoteInstance);
+						benchmarkingPlugin.run(generateGlobalId(instanceId, memberAddress), remoteInstance);
 						
 						request.setState(RequestState.FULFILLED);
 						request.setInstanceId(instanceId);
@@ -939,7 +945,7 @@ public class ManagerController {
 					categories, request.getxOCCIAtt(), localImageId);
 
 			Instance instance = computePlugin.getInstance(request.getLocalToken(), instanceId);
-			benchmarkingPlugin.run(instance);
+			benchmarkingPlugin.run(generateGlobalId(instanceId, null), instance);
 		} catch (OCCIException e) {
 			int statusCode = e.getStatus().getCode();
 			if (statusCode == HttpStatus.SC_INSUFFICIENT_SPACE_ON_RESOURCE) {
@@ -1207,7 +1213,7 @@ public class ManagerController {
 
 	public Map<String, Double> getUsersUsage(String federationAccessId) {
 		checkFederationAccessId(federationAccessId);
-				
+
 		return accountingPlugin.getUsersUsage();
 	}
 }

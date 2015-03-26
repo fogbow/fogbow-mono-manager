@@ -1,4 +1,4 @@
-package org.fogbowcloud.manager.core.plugins.openstack;
+package org.fogbowcloud.manager.occi.plugins.openstack;
 
 import java.io.IOException;
 import java.net.URISyntaxException;

@@ -67,7 +67,7 @@ public class Request {
 		this.fulfilledByFederationUser = fulfilledByFederationUser;
 	}
 
-	public String getInstanceGlobalId() {
+	public String getGlobalInstanceId() {
 		if (instanceId != null) {
 			return instanceId + SEPARATOR_GLOBAL_ID + memberId;
 		}

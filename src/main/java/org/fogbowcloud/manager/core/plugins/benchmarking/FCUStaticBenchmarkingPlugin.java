@@ -18,43 +18,49 @@ public class FCUStaticBenchmarkingPlugin implements BenchmarkingPlugin {
 	}
 
 	@Override
-	public void run(Instance instance) {
+	public void run(String globalInstanceId, Instance instance) {
 		if (instance == null) {
 			throw new IllegalArgumentException("Instance must not be null.");
 		}
-		LOGGER.info("Running benchmarking on instance: " + instance.getId());
+		LOGGER.info("Running benchmarking on instance: " + globalInstanceId);
 
 		double power = UNDEFINED_POWER;
 		try {
 			String vcpuStr = instance.getAttributes().get("occi.compute.cores");
 			String memStr = instance.getAttributes().get("occi.compute.memory");
 
-			LOGGER.debug("Instance " + instance.getId() + " has " + vcpuStr + " vcpu and " + memStr
-					+ " Gb of memrory.");
+			LOGGER.debug("Instance " + globalInstanceId + " has " + vcpuStr + " vCPU and " + memStr
+					+ " GB of RAM.");
 			
-			double vcpu = Double.parseDouble(vcpuStr.replaceAll("\"", ""));
-			double mem = Double.parseDouble(memStr.replaceAll("\"", ""));
+			double vcpu = parseDouble(vcpuStr);
+			double mem = parseDouble(memStr);
+			
 			power = ((vcpu / 8d) + (mem / 16d)) / 2;
 		} catch (Exception e) {
 			LOGGER.error("Error while parsing attribute values to double.", e);
 		}
-		LOGGER.debug("Putting instanceId " + instance.getId() + " and power " + power);
-		instanceToPower.put(instance.getId(), power);
+		
+		LOGGER.debug("Putting instanceId " + globalInstanceId + " and power " + power);
+		instanceToPower.put(globalInstanceId, power);
+	}
+
+	private double parseDouble(String str) {
+		return Double.parseDouble(str.replaceAll("\"", ""));
 	}
 
 	@Override
-	public double getPower(String instanceId) {
-		LOGGER.debug("Getting power of instance " + instanceId);
+	public double getPower(String globalInstanceId) {
+		LOGGER.debug("Getting power of instance " + globalInstanceId);
 		LOGGER.debug("Current instanceToPower=" + instanceToPower);
-		if (instanceToPower.get(instanceId) == null) {
+		if (instanceToPower.get(globalInstanceId) == null) {
 			return UNDEFINED_POWER;
 		}
-		return instanceToPower.get(instanceId);
+		return instanceToPower.get(globalInstanceId);
 	}
 
 	@Override
-	public void remove(String instanceId) {
-		LOGGER.debug("Removing instance: " + instanceId + " from benchmarking map.");
-		instanceToPower.remove(instanceId);		
+	public void remove(String globalInstanceId) {
+		LOGGER.debug("Removing instance: " + globalInstanceId + " from benchmarking map.");
+		instanceToPower.remove(globalInstanceId);		
 	}
 }

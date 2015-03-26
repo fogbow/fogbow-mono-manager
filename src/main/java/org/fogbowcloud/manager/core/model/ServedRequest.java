@@ -58,4 +58,8 @@ public class ServedRequest {
 				+ memberId + ", categories: " + categories + ", xOCCIAtt: " + xOCCIAtt
 				+ ", creationTime: " + creationTime;
 	}
+
+	public String getGlobalInstanceId() {		
+		return instanceId + "@" + memberId;
+	}
 }

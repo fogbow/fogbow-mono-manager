@@ -1,4 +1,4 @@
-package org.fogbowcloud.manager.core.plugins.opennebula;
+package org.fogbowcloud.manager.occi.plugins.opennebula;
 
 import java.io.IOException;
 import java.net.URISyntaxException;

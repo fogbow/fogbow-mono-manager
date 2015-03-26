@@ -6,9 +6,9 @@ public interface BenchmarkingPlugin {
 
 	public static double UNDEFINED_POWER = 1;
 
-	public void run(Instance instance);
+	public void run(String globalInstanceId, Instance instance);
 
-	public double getPower(String instanceId);
+	public double getPower(String globalInstanceId);
 	
-	public void remove(String instanceId);
+	public void remove(String globalInstanceId);
 }

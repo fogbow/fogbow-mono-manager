@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Properties;
 
 import org.apache.commons.io.FileUtils;
+import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.core.model.ServedRequest;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
@@ -35,6 +36,7 @@ public class TestFCUAccounting {
 		properties = new Properties();
 		properties.put("accounting_datastore_url", "jdbc:h2:mem:"
 				+ new File(DATASTORE_PATH).getAbsolutePath() + "usage");
+		properties.put(ConfigurationConstants.XMPP_JID_KEY, "localMemberId");
 
 		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin);
 		accountingPlugin.getDatabase().dispose();
@@ -69,7 +71,8 @@ public class TestFCUAccounting {
 
 		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin, dateUtils);
 
-		Request request1 = new Request("id1", null, null, null, null);
+		Request request1 = new Request("id1", new Token("accessId", "userId", null,
+				new HashMap<String, String>()), null, null, null);
 		request1.setDateUtils(dateUtils);
 		request1.setState(RequestState.FULFILLED);
 		request1.setMemberId("memberId");
@@ -86,7 +89,7 @@ public class TestFCUAccounting {
 		accountingPlugin.update(requests, new ArrayList<ServedRequest>());
 
 		// checking usage
-		double expectedConsumption = benchmarkingPlugin.getPower("instanceId") * 2;
+		double expectedConsumption = benchmarkingPlugin.getPower("instanceId@memberId") * 2;
 
 		ArrayList<String> memberIds = new ArrayList<String>();
 		memberIds.add("memberId");
@@ -105,7 +108,7 @@ public class TestFCUAccounting {
 
 		DateUtils dateUtils = Mockito.mock(DateUtils.class);
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
-		Mockito.when(benchmarkingPlugin.getPower("instanceId")).thenReturn(2d);
+		Mockito.when(benchmarkingPlugin.getPower("instanceId@localMemberId")).thenReturn(2d);
 
 		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin, dateUtils);
 
@@ -114,6 +117,7 @@ public class TestFCUAccounting {
 		request1.setDateUtils(dateUtils);
 		request1.setState(RequestState.FULFILLED);
 		request1.setInstanceId("instanceId");
+		request1.setMemberId("localMemberId");
 
 		List<Request> requests = new ArrayList<Request>();
 		requests.add(request1);
@@ -126,7 +130,7 @@ public class TestFCUAccounting {
 		accountingPlugin.update(requests, new ArrayList<ServedRequest>());
 
 		// checking usage
-		double expectedConsumption = benchmarkingPlugin.getPower("instanceId") * 2;
+		double expectedConsumption = benchmarkingPlugin.getPower("instanceId@localMemberId") * 2;
 
 		ArrayList<String> memberIds = new ArrayList<String>();
 		memberIds.add("memberId");
@@ -145,8 +149,8 @@ public class TestFCUAccounting {
 
 		DateUtils dateUtils = Mockito.mock(DateUtils.class);
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
-		Mockito.when(benchmarkingPlugin.getPower("instanceId1")).thenReturn(2d);
-		Mockito.when(benchmarkingPlugin.getPower("instanceId2")).thenReturn(4d);
+		Mockito.when(benchmarkingPlugin.getPower("instanceId1@localMemberId")).thenReturn(2d);
+		Mockito.when(benchmarkingPlugin.getPower("instanceId2@localMemberId")).thenReturn(4d);
 
 		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin, dateUtils);
 
@@ -155,12 +159,14 @@ public class TestFCUAccounting {
 		request1.setDateUtils(dateUtils);
 		request1.setState(RequestState.FULFILLED);
 		request1.setInstanceId("instanceId1");
+		request1.setMemberId("localMemberId");
 		
 		Request request2 = new Request("id2", new Token("accessId", "userId2", null,
 				new HashMap<String, String>()), null, null, null);
 		request2.setDateUtils(dateUtils);
 		request2.setState(RequestState.FULFILLED);
 		request2.setInstanceId("instanceId2");
+		request2.setMemberId("localMemberId");
 
 		List<Request> requests = new ArrayList<Request>();
 		requests.add(request1);
@@ -174,8 +180,8 @@ public class TestFCUAccounting {
 		accountingPlugin.update(requests, new ArrayList<ServedRequest>());
 
 		// checking usage
-		double expectedConsumptionForUser1 = benchmarkingPlugin.getPower("instanceId1") * 2;
-		double expectedConsumptionForUser2 = benchmarkingPlugin.getPower("instanceId2") * 2;
+		double expectedConsumptionForUser1 = benchmarkingPlugin.getPower("instanceId1@localMemberId") * 2;
+		double expectedConsumptionForUser2 = benchmarkingPlugin.getPower("instanceId2@localMemberId") * 2;
 
 		ArrayList<String> memberIds = new ArrayList<String>();
 		memberIds.add("memberId");
@@ -196,7 +202,7 @@ public class TestFCUAccounting {
 
 		DateUtils dateUtils = Mockito.mock(DateUtils.class);
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
-		Mockito.when(benchmarkingPlugin.getPower("instanceId")).thenReturn(2d);
+		Mockito.when(benchmarkingPlugin.getPower("instanceId@memberId")).thenReturn(2d);
 
 		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin, dateUtils);
 
@@ -213,7 +219,7 @@ public class TestFCUAccounting {
 		accountingPlugin.update(new ArrayList<Request>(), servedRequests);
 
 		// checking usage
-		double expectedDonation = benchmarkingPlugin.getPower("instanceId") * 2;
+		double expectedDonation = benchmarkingPlugin.getPower("instanceId@memberId") * 2;
 
 		ArrayList<String> memberIds = new ArrayList<String>();
 		memberIds.add("memberId");
@@ -232,12 +238,13 @@ public class TestFCUAccounting {
 
 		DateUtils dateUtils = Mockito.mock(DateUtils.class);
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
-		Mockito.when(benchmarkingPlugin.getPower("instanceId1")).thenReturn(2d);
-		Mockito.when(benchmarkingPlugin.getPower("instanceId2")).thenReturn(2d);
+		Mockito.when(benchmarkingPlugin.getPower("instanceId1@memberId")).thenReturn(2d);
+		Mockito.when(benchmarkingPlugin.getPower("instanceId2@memberId")).thenReturn(2d);
 
 		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin, dateUtils);
 
-		Request request1 = new Request("id1", null, null, null, null);
+		Request request1 = new Request("id1", new Token("accessId", "userId", null,
+				new HashMap<String, String>()), null, null, null);
 		request1.setDateUtils(dateUtils);
 		request1.setState(RequestState.FULFILLED);
 		request1.setMemberId("memberId");
@@ -259,8 +266,8 @@ public class TestFCUAccounting {
 		accountingPlugin.update(requests, servedRequests);
 
 		// checking usage
-		double expectedConsumption = benchmarkingPlugin.getPower("instanceId1") * 2;
-		double expectedDonation = benchmarkingPlugin.getPower("instanceId2") * 2;
+		double expectedConsumption = benchmarkingPlugin.getPower("instanceId1@memberId") * 2;
+		double expectedDonation = benchmarkingPlugin.getPower("instanceId2@memberId") * 2;
 
 		ArrayList<String> memberIds = new ArrayList<String>();
 		memberIds.add("memberId");
@@ -279,8 +286,8 @@ public class TestFCUAccounting {
 
 		DateUtils dateUtils = Mockito.mock(DateUtils.class);
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
-		Mockito.when(benchmarkingPlugin.getPower("instanceId1")).thenReturn(2d);
-		Mockito.when(benchmarkingPlugin.getPower("instanceId2")).thenReturn(2d);
+		Mockito.when(benchmarkingPlugin.getPower("instanceId1@localMemberId")).thenReturn(2d);
+		Mockito.when(benchmarkingPlugin.getPower("instanceId2@memberId")).thenReturn(2d);
 
 		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin, dateUtils);
 
@@ -289,6 +296,7 @@ public class TestFCUAccounting {
 		request1.setDateUtils(dateUtils);
 		request1.setState(RequestState.FULFILLED);
 		request1.setInstanceId("instanceId1");
+		request1.setMemberId("localMemberId");
 
 		List<Request> requests = new ArrayList<Request>();
 		requests.add(request1);
@@ -306,8 +314,8 @@ public class TestFCUAccounting {
 		accountingPlugin.update(requests, servedRequests);
 
 		// checking usage
-		double expectedConsumption = benchmarkingPlugin.getPower("instanceId1") * 2;
-		double expectedDonation = benchmarkingPlugin.getPower("instanceId2") * 2;
+		double expectedConsumption = benchmarkingPlugin.getPower("instanceId1@localMemberId") * 2;
+		double expectedDonation = benchmarkingPlugin.getPower("instanceId2@memberId") * 2;
 
 		ArrayList<String> memberIds = new ArrayList<String>();
 		memberIds.add("memberId");
@@ -328,12 +336,13 @@ public class TestFCUAccounting {
 
 		DateUtils dateUtils = Mockito.mock(DateUtils.class);
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
-		Mockito.when(benchmarkingPlugin.getPower("instanceId1")).thenReturn(4d);
-		Mockito.when(benchmarkingPlugin.getPower("instanceId2")).thenReturn(2d);
+		Mockito.when(benchmarkingPlugin.getPower("instanceId1@memberId1")).thenReturn(4d);
+		Mockito.when(benchmarkingPlugin.getPower("instanceId2@memberId2")).thenReturn(2d);
 
 		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin, dateUtils);
 
-		Request request1 = new Request("id1", null, null, null, null);
+		Request request1 = new Request("id1", new Token("accessId", "userId", null,
+				new HashMap<String, String>()), null, null, null);
 		request1.setDateUtils(dateUtils);
 		request1.setState(RequestState.FULFILLED);
 		request1.setMemberId("memberId1");
@@ -355,8 +364,8 @@ public class TestFCUAccounting {
 		accountingPlugin.update(requests, servedRequests);
 
 		// checking usage
-		double expectedConsumptionFromMember1 = benchmarkingPlugin.getPower("instanceId1") * 2;
-		double expectedDonationForMember2 = benchmarkingPlugin.getPower("instanceId2") * 2;
+		double expectedConsumptionFromMember1 = benchmarkingPlugin.getPower("instanceId1@memberId1") * 2;
+		double expectedDonationForMember2 = benchmarkingPlugin.getPower("instanceId2@memberId2") * 2;
 
 		ArrayList<String> memberIds = new ArrayList<String>();
 		memberIds.add("memberId1");
@@ -381,8 +390,8 @@ public class TestFCUAccounting {
 
 		DateUtils dateUtils = Mockito.mock(DateUtils.class);
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
-		Mockito.when(benchmarkingPlugin.getPower("instanceId1")).thenReturn(4d);
-		Mockito.when(benchmarkingPlugin.getPower("instanceId2")).thenReturn(2d);
+		Mockito.when(benchmarkingPlugin.getPower("instanceId1@localMemberId")).thenReturn(4d);
+		Mockito.when(benchmarkingPlugin.getPower("instanceId2@memberId2")).thenReturn(2d);
 
 		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin, dateUtils);
 
@@ -391,6 +400,7 @@ public class TestFCUAccounting {
 		request1.setDateUtils(dateUtils);
 		request1.setState(RequestState.FULFILLED);
 		request1.setInstanceId("instanceId1");
+		request1.setMemberId("localMemberId");
 
 		List<Request> requests = new ArrayList<Request>();
 		requests.add(request1);
@@ -408,8 +418,8 @@ public class TestFCUAccounting {
 		accountingPlugin.update(requests, servedRequests);
 
 		// checking usage
-		double expectedConsumptionForUserId = benchmarkingPlugin.getPower("instanceId1") * 2;
-		double expectedDonationForMember2 = benchmarkingPlugin.getPower("instanceId2") * 2;
+		double expectedConsumptionForUserId = benchmarkingPlugin.getPower("instanceId1@localMemberId") * 2;
+		double expectedDonationForMember2 = benchmarkingPlugin.getPower("instanceId2@memberId2") * 2;
 
 		ArrayList<String> memberIds = new ArrayList<String>();
 		memberIds.add("memberId1");
@@ -434,12 +444,13 @@ public class TestFCUAccounting {
 
 		DateUtils dateUtils = Mockito.mock(DateUtils.class);
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
-		Mockito.when(benchmarkingPlugin.getPower("instanceId1")).thenReturn(2d);
-		Mockito.when(benchmarkingPlugin.getPower("instanceId2")).thenReturn(2d);
+		Mockito.when(benchmarkingPlugin.getPower("instanceId1@memberId")).thenReturn(2d);
+		Mockito.when(benchmarkingPlugin.getPower("instanceId2@memberId")).thenReturn(2d);
 
 		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin, dateUtils);
 
-		Request request1 = new Request("id1", null, null, null, null);
+		Request request1 = new Request("id1", new Token("accessId", "userId", null,
+				new HashMap<String, String>()), null, null, null);
 		request1.setDateUtils(dateUtils);
 		request1.setState(RequestState.FULFILLED);
 		request1.setMemberId("memberId");
@@ -467,8 +478,8 @@ public class TestFCUAccounting {
 		accountingPlugin.update(requests, servedRequests);
 
 		// checking usage is considering 7 minutes
-		double expectedConsumption = benchmarkingPlugin.getPower("instanceId1") * 7;
-		double expectedDonation = benchmarkingPlugin.getPower("instanceId2") * 7;
+		double expectedConsumption = benchmarkingPlugin.getPower("instanceId1@memberId") * 7;
+		double expectedDonation = benchmarkingPlugin.getPower("instanceId2@memberId") * 7;
 
 		ArrayList<String> memberIds = new ArrayList<String>();
 		memberIds.add("memberId");
@@ -487,13 +498,14 @@ public class TestFCUAccounting {
 
 		DateUtils dateUtils = Mockito.mock(DateUtils.class);
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
-		Mockito.when(benchmarkingPlugin.getPower("instanceId1")).thenReturn(2d);
-		Mockito.when(benchmarkingPlugin.getPower("instanceId2")).thenReturn(4d);
-		Mockito.when(benchmarkingPlugin.getPower("instanceId3")).thenReturn(5d);
+		Mockito.when(benchmarkingPlugin.getPower("instanceId1@memberId")).thenReturn(2d);
+		Mockito.when(benchmarkingPlugin.getPower("instanceId2@memberId")).thenReturn(4d);
+		Mockito.when(benchmarkingPlugin.getPower("instanceId3@localMemberId")).thenReturn(5d);
 
 		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin, dateUtils);
 
-		Request request1 = new Request("id1", null, null, null, null);
+		Request request1 = new Request("id1", new Token("accessId", "userId", null,
+				new HashMap<String, String>()), null, null, null);
 		request1.setDateUtils(dateUtils);
 		request1.setState(RequestState.FULFILLED);
 		request1.setMemberId("memberId");
@@ -504,6 +516,7 @@ public class TestFCUAccounting {
 		request2.setDateUtils(dateUtils);
 		request2.setState(RequestState.FULFILLED);
 		request2.setInstanceId("instanceId3");
+		request2.setMemberId("localMemberId");
 
 		List<Request> requests = new ArrayList<Request>();
 		requests.add(request1);
@@ -528,9 +541,9 @@ public class TestFCUAccounting {
 		accountingPlugin.update(requests, servedRequests);
 
 		// checking usage is considering 7 minutes
-		double expectedConsumptionForMember = benchmarkingPlugin.getPower("instanceId1") * 7;
-		double expectedDonationForMember = benchmarkingPlugin.getPower("instanceId2") * 7;
-		double expectedDonationForUser = benchmarkingPlugin.getPower("instanceId3") * 7;
+		double expectedConsumptionForMember = benchmarkingPlugin.getPower("instanceId1@memberId") * 7;
+		double expectedDonationForMember = benchmarkingPlugin.getPower("instanceId2@memberId") * 7;
+		double expectedDonationForUser = benchmarkingPlugin.getPower("instanceId3@localMemberId") * 7;
 
 		ArrayList<String> memberIds = new ArrayList<String>();
 		memberIds.add("memberId");
@@ -553,8 +566,8 @@ public class TestFCUAccounting {
 
 		DateUtils dateUtils = Mockito.mock(DateUtils.class);
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
-		Mockito.when(benchmarkingPlugin.getPower("instanceId1")).thenReturn(2d);
-		Mockito.when(benchmarkingPlugin.getPower("instanceId2")).thenReturn(2d);
+		Mockito.when(benchmarkingPlugin.getPower("instanceId1@localMemberId")).thenReturn(2d);
+		Mockito.when(benchmarkingPlugin.getPower("instanceId2@memberId")).thenReturn(2d);
 
 		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin, dateUtils);
 
@@ -563,6 +576,7 @@ public class TestFCUAccounting {
 		request1.setDateUtils(dateUtils);
 		request1.setState(RequestState.FULFILLED);
 		request1.setInstanceId("instanceId1");
+		request1.setMemberId("localMemberId");
 
 		List<Request> requests = new ArrayList<Request>();
 		requests.add(request1);
@@ -586,8 +600,8 @@ public class TestFCUAccounting {
 		accountingPlugin.update(requests, servedRequests);
 
 		// checking usage is considering 7 minutes
-		double expectedConsumption = benchmarkingPlugin.getPower("instanceId1") * 7;
-		double expectedDonation = benchmarkingPlugin.getPower("instanceId2") * 7;
+		double expectedConsumption = benchmarkingPlugin.getPower("instanceId1@localMemberId") * 7;
+		double expectedDonation = benchmarkingPlugin.getPower("instanceId2@memberId") * 7;
 
 		ArrayList<String> memberIds = new ArrayList<String>();
 		memberIds.add("memberId");

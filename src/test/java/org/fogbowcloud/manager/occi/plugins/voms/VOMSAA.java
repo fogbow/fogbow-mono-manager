@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.fogbowcloud.manager.core.plugins.voms;
+package org.fogbowcloud.manager.occi.plugins.voms;
 
 import java.io.IOException;
 import java.math.BigInteger;

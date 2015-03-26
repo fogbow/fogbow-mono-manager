@@ -32,7 +32,7 @@ public class TestFCUStaticBenchmarking {
 		Instance instance = new Instance("instanceId", new ArrayList<Resource>(),
 				new HashMap<String, String>(), new ArrayList<Link>());
 
-		benchmarking.run(instance);
+		benchmarking.run("instanceId@memberId", instance);
 		Assert.assertEquals(BenchmarkingPlugin.UNDEFINED_POWER,
 				benchmarking.getPower("invalidId"), ACCEPTABLE_ERROR);
 	}
@@ -42,14 +42,14 @@ public class TestFCUStaticBenchmarking {
 		Instance instance = new Instance("instanceId", new ArrayList<Resource>(),
 				new HashMap<String, String>(), new ArrayList<Link>());
 
-		benchmarking.run(instance);
+		benchmarking.run("instanceId@memberId", instance);
 		Assert.assertEquals(BenchmarkingPlugin.UNDEFINED_POWER,
-				benchmarking.getPower(instance.getId()), ACCEPTABLE_ERROR);
+				benchmarking.getPower("instanceId@memberId"), ACCEPTABLE_ERROR);
 	}
 	
 	@Test(expected=IllegalArgumentException.class)
 	public void testRunNullInstance() {
-		benchmarking.run(null);
+		benchmarking.run(null, null);
 	}
 	
 	@Test
@@ -57,8 +57,8 @@ public class TestFCUStaticBenchmarking {
 		Instance instance = new Instance("instanceId", new ArrayList<Resource>(),
 				instanceAttributes, new ArrayList<Link>());
 
-		benchmarking.run(instance);
-		Assert.assertEquals(((2 / 8d) + (2 / 16d)) / 2, benchmarking.getPower(instance.getId()),
+		benchmarking.run("instanceId@memberId", instance);
+		Assert.assertEquals(((2 / 8d) + (2 / 16d)) / 2, benchmarking.getPower("instanceId@memberId"),
 				ACCEPTABLE_ERROR);
 	}
 	
@@ -78,16 +78,16 @@ public class TestFCUStaticBenchmarking {
 		double instancePower2 = ((4 / 8d) + (8 / 16d)) / 2;
 
 		// running benchmarking
-		benchmarking.run(instance1);
-		benchmarking.run(instance2);
+		benchmarking.run("instanceId1@memberId", instance1);
+		benchmarking.run("instanceId2@memberId", instance2);
 		
 		// checking instance powers
-		Assert.assertEquals(instancePower1, benchmarking.getPower(instance1.getId()),
+		Assert.assertEquals(instancePower1, benchmarking.getPower("instanceId1@memberId"),
 				ACCEPTABLE_ERROR);
-		Assert.assertEquals(instancePower2, benchmarking.getPower(instance2.getId()),
+		Assert.assertEquals(instancePower2, benchmarking.getPower("instanceId2@memberId"),
 				ACCEPTABLE_ERROR);
 		Assert.assertTrue(benchmarking.getPower(instance2.getId()) > benchmarking
-				.getPower(instance1.getId()));
+				.getPower("instanceId1@memberId"));
 	}
 	
 	@Test
@@ -106,33 +106,33 @@ public class TestFCUStaticBenchmarking {
 		double instancePower2 = ((4 / 8d) + (8 / 16d)) / 2;
 
 		// running benchmarking
-		benchmarking.run(instance1);
-		benchmarking.run(instance2);
+		benchmarking.run("instanceId1@memberId", instance1);
+		benchmarking.run("instanceId2@memberId", instance2);
 		
 		// checking instance powers
-		Assert.assertEquals(instancePower1, benchmarking.getPower(instance1.getId()),
+		Assert.assertEquals(instancePower1, benchmarking.getPower("instanceId1@memberId"),
 				ACCEPTABLE_ERROR);
-		Assert.assertEquals(instancePower2, benchmarking.getPower(instance2.getId()),
+		Assert.assertEquals(instancePower2, benchmarking.getPower("instanceId2@memberId"),
 				ACCEPTABLE_ERROR);
-		Assert.assertTrue(benchmarking.getPower(instance2.getId()) > benchmarking
-				.getPower(instance1.getId()));
+		Assert.assertTrue(benchmarking.getPower("instanceId2@memberId") > benchmarking
+				.getPower("instanceId1@memberId"));
 
 		// removing instance1
-		benchmarking.remove(instance1.getId());
+		benchmarking.remove("instanceId1@memberId");
 		
 		// checking instance powers
-		Assert.assertEquals(BenchmarkingPlugin.UNDEFINED_POWER, benchmarking.getPower(instance1.getId()),
+		Assert.assertEquals(BenchmarkingPlugin.UNDEFINED_POWER, benchmarking.getPower("instanceId1@memberId"),
 				ACCEPTABLE_ERROR);
-		Assert.assertEquals(instancePower2, benchmarking.getPower(instance2.getId()),
+		Assert.assertEquals(instancePower2, benchmarking.getPower("instanceId2@memberId"),
 				ACCEPTABLE_ERROR);
 		
 		// removing instance2
-		benchmarking.remove(instance2.getId());
+		benchmarking.remove("instanceId2@memberId");
 		
 		// checking instance powers
-		Assert.assertEquals(BenchmarkingPlugin.UNDEFINED_POWER, benchmarking.getPower(instance1.getId()),
+		Assert.assertEquals(BenchmarkingPlugin.UNDEFINED_POWER, benchmarking.getPower("instanceId1@memberId"),
 				ACCEPTABLE_ERROR);
-		Assert.assertEquals(BenchmarkingPlugin.UNDEFINED_POWER, benchmarking.getPower(instance2.getId()),
+		Assert.assertEquals(BenchmarkingPlugin.UNDEFINED_POWER, benchmarking.getPower("instanceId2@memberId"),
 				ACCEPTABLE_ERROR);
 
 	}

@@ -1,4 +1,4 @@
-package org.fogbowcloud.manager.core.plugins.x509;
+package org.fogbowcloud.manager.occi.plugins.x509;
 
 import java.io.IOException;
 import java.security.cert.CertificateException;
