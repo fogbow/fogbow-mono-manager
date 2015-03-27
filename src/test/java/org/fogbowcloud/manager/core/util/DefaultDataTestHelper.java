@@ -38,4 +38,7 @@ public class DefaultDataTestHelper {
     public static final String FED_USER_NAME = "fed_user";
 	public static final String FED_USER_PASS = "fed_password";
 	public static final String FED_ACCESS_TOKEN_ID = "fed_accesstoken";
+	
+	//Green Sitter
+	public static final String GREEN_SITTER_JID = "green.server.com";
 }

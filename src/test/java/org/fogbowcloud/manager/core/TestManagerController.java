@@ -23,9 +23,12 @@ import org.fogbowcloud.manager.core.util.ManagerTestHelper;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.OCCIException;
+import org.fogbowcloud.manager.occi.core.Resource;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.instance.Instance;
+import org.fogbowcloud.manager.occi.instance.Instance.Link;
+import org.fogbowcloud.manager.occi.instance.InstanceState;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
@@ -38,6 +41,7 @@ import org.jamppa.component.PacketCallback;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -110,7 +114,7 @@ public class TestManagerController {
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testSubmitFederationUserRequests() throws InterruptedException {
-		ResourcesInfo resourcesInfo = new ResourcesInfo("", "", "", "", null, null);
+		ResourcesInfo resourcesInfo = new ResourcesInfo("", "", "", "", null);
 		resourcesInfo.setId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
@@ -155,6 +159,59 @@ public class TestManagerController {
 	
 	@SuppressWarnings("unchecked")
 	@Test
+	public void testSubmitToGreenSitter() {
+		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);
+		managerController.setPacketSender(packetSender);
+
+		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
+
+		ResourcesInfo localResourcesInfo = new ResourcesInfo("", "", "", "", null);
+		localResourcesInfo.setId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		
+		Mockito.when(
+				computePlugin.requestInstance(Mockito.any(Token.class), Mockito.anyList(),
+						Mockito.anyMap(), Mockito.anyString())).thenThrow(
+				new OCCIException(ErrorType.NO_VALID_HOST_FOUND, ""));
+		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class))).thenReturn(
+				localResourcesInfo);
+		
+		managerController.setComputePlugin(computePlugin);
+
+		List<FederationMember> listMembers = new ArrayList<FederationMember>();
+		listMembers.add(new FederationMember(localResourcesInfo));
+		managerController.updateMembers(listMembers);
+		
+		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), new ArrayList<Category>(),
+				new HashMap<String, String>());
+		request1.setState(RequestState.OPEN);
+		RequestRepository requestRepository = new RequestRepository();
+		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(), request1);
+		managerController.setRequests(requestRepository);
+		managerController.checkAndSubmitOpenRequests();
+		
+        
+		Mockito.verify(packetSender).sendPacket(Mockito.argThat(new ArgumentMatcher<IQ>() {
+			@Override
+			public boolean matches(Object argument) {
+				IQ iq = (IQ) argument;
+				Element queryEl = iq.getElement().element("query");
+				if (queryEl == null) {
+					return false;
+				}
+				String minCPU = queryEl.elementText("minCPU");
+				String minRAM = queryEl.elementText("minRAM");
+				
+				if ((!minCPU.equals("1")) || (!minRAM.equals("1024"))){
+					return false;
+				}
+				return iq.getTo().toBareJID().equals("green.server.com");
+			}
+		}));
+		
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Test
 	public void testSubmitRequestToRemoteMember() throws InterruptedException {
 		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);
 		managerController.setPacketSender(packetSender);
@@ -166,6 +223,7 @@ public class TestManagerController {
 				ManagerXmppComponent.GETINSTANCE_NAMESPACE);
 		Element instanceEl = queryEl.addElement("instance");
 		instanceEl.addElement("id").setText("newinstanceid");
+		instanceEl.addElement("state").setText(InstanceState.RUNNING.toString());
 		
 		Mockito.when(packetSender.syncSendPacket(Mockito.any(IQ.class))).thenReturn(response);
 
@@ -179,10 +237,10 @@ public class TestManagerController {
 			}
 		}).when(packetSender).addPacketCallback(Mockito.any(Packet.class), Mockito.any(PacketCallback.class));
 		
-		ResourcesInfo localResourcesInfo = new ResourcesInfo("", "", "", "", null, null);
+		ResourcesInfo localResourcesInfo = new ResourcesInfo("", "", "", "", null);
 		localResourcesInfo.setId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		
-		ResourcesInfo remoteResourcesInfo = new ResourcesInfo("", "", "", "", null, null);
+		ResourcesInfo remoteResourcesInfo = new ResourcesInfo("", "", "", "", null);
 		remoteResourcesInfo.setId(DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL);
 		
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
@@ -199,7 +257,6 @@ public class TestManagerController {
 		listMembers.add(new FederationMember(localResourcesInfo));
 		listMembers.add(new FederationMember(remoteResourcesInfo));
 		managerController.updateMembers(listMembers);
-
 
 		Request request1 = new Request("id1",
 				managerTestHelper.getDefaultFederationToken(),
@@ -233,15 +290,16 @@ public class TestManagerController {
 		}
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testRemoveForwardedRequestAfterTimeout() throws InterruptedException {
 		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);
 		managerController.setPacketSender(packetSender);
 		
-		ResourcesInfo localResourcesInfo = new ResourcesInfo("", "", "", "", null, null);
+		ResourcesInfo localResourcesInfo = new ResourcesInfo("", "", "", "", null);
 		localResourcesInfo.setId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		
-		ResourcesInfo remoteResourcesInfo = new ResourcesInfo("", "", "", "", null, null);
+		ResourcesInfo remoteResourcesInfo = new ResourcesInfo("", "", "", "", null);
 		remoteResourcesInfo.setId(DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL);
 		
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
@@ -312,10 +370,10 @@ public class TestManagerController {
 			}
 		}).when(packetSender).addPacketCallback(Mockito.any(Packet.class), Mockito.any(PacketCallback.class));
 		
-		ResourcesInfo localResourcesInfo = new ResourcesInfo("", "", "", "", null, null);
+		ResourcesInfo localResourcesInfo = new ResourcesInfo("", "", "", "", null);
 		localResourcesInfo.setId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		
-		ResourcesInfo remoteResourcesInfo = new ResourcesInfo("", "", "", "", null, null);
+		ResourcesInfo remoteResourcesInfo = new ResourcesInfo("", "", "", "", null);
 		remoteResourcesInfo.setId(DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL);
 
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
@@ -381,10 +439,10 @@ public class TestManagerController {
 			}
 		}).when(packetSender).addPacketCallback(Mockito.any(Packet.class), Mockito.any(PacketCallback.class));
 		
-		ResourcesInfo localResourcesInfo = new ResourcesInfo("", "", "", "", null, null);
+		ResourcesInfo localResourcesInfo = new ResourcesInfo("", "", "", "", null);
 		localResourcesInfo.setId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		
-		ResourcesInfo remoteResourcesInfo = new ResourcesInfo("", "", "", "", null, null);
+		ResourcesInfo remoteResourcesInfo = new ResourcesInfo("", "", "", "", null);
 		remoteResourcesInfo.setId(DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL);
 		
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
@@ -851,6 +909,39 @@ public class TestManagerController {
 
 		managerController.monitorInstances();
 	}
+	
+	@Test
+	public void testMonitorWillRemoveLocalFailedInstance() throws InterruptedException {
+		// setting request repository
+		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null);
+		request1.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
+		request1.setState(RequestState.FULFILLED);
+		request1.setMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+
+		RequestRepository requestRepository = new RequestRepository();
+		requestRepository.addRequest(managerTestHelper.getDefaultLocalToken().getUser(), request1);
+		managerController.setRequests(requestRepository);
+
+		// updating compute mock
+		Instance expectedInstance = new Instance(DefaultDataTestHelper.INSTANCE_ID, new LinkedList<Resource>(), 
+				new HashMap<String, String>(), new LinkedList<Link>(), InstanceState.FAILED);
+		Mockito.when(managerTestHelper.getComputePlugin().getInstance(Mockito.any(Token.class),
+						Mockito.anyString())).thenReturn(expectedInstance);
+
+		managerController.monitorInstances();
+		
+		// checking if instance was properly removed
+		Mockito.verify(managerTestHelper.getComputePlugin()).removeInstance(
+				Mockito.any(Token.class), Mockito.eq(DefaultDataTestHelper.INSTANCE_ID));
+		
+		// checking if request is closed
+		List<Request> requestsFromUser = managerController
+				.getRequestsFromUser(DefaultDataTestHelper.LOCAL_ACCESS_TOKEN_ID);
+		Assert.assertEquals(1, requestsFromUser.size());
+		for (Request request : requestsFromUser) {
+			Assert.assertTrue(request.getState().equals(RequestState.CLOSED));
+		}
+	}
 
 	@Test(expected = IllegalArgumentException.class)
 	public void testConstructorException() throws Exception {
@@ -949,6 +1040,7 @@ public class TestManagerController {
 		Assert.assertNull(requests.get(0).getMemberId());
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testPersistentRequestSetFulfilledAndOpen() throws InterruptedException {
 		mockRequestInstance();
@@ -1103,6 +1195,7 @@ public class TestManagerController {
 		Assert.assertNull(requests.get(0).getMemberId());
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testPersistentRequestSetFulfilledAndClosed() throws InterruptedException {
 		long expirationRequestTime = System.currentTimeMillis()
@@ -1323,6 +1416,7 @@ public class TestManagerController {
 		Assert.assertNotNull(requests.get(0).getMemberId());
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testOneTimeRequestValidityPeriodInFuture() throws InterruptedException {
 		long now = System.currentTimeMillis();
@@ -1393,6 +1487,7 @@ public class TestManagerController {
 		Assert.assertNull(requests.get(0).getMemberId());
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testPersistentRequestValidityPeriodInFuture() throws InterruptedException {
 		long now = System.currentTimeMillis();
@@ -1479,8 +1574,8 @@ public class TestManagerController {
 		list.add(member);
 		managerController.updateMembers(list);
 
-		RestrictCAsMemberValidator validatorMock = Mockito.mock(RestrictCAsMemberValidator.class);
-		Mockito.doReturn(true).when(validatorMock).canDonateTo(member);
+		FederationMemberValidator validatorMock = Mockito.mock(FederationMemberValidator.class);
+		Mockito.doReturn(true).when(validatorMock).canDonateTo(Mockito.eq(member), Mockito.any(Token.class));
 		managerController.setValidator(validatorMock);
 
 		Token token = Mockito.mock(Token.class);
@@ -1501,12 +1596,12 @@ public class TestManagerController {
 		managerController.setComputePlugin(plugin);
 		Assert.assertEquals("answer",
 				managerController.createInstanceWithFederationUser("abc", new ArrayList<Category>(), 
-						xOCCIAtt, null));
+						xOCCIAtt, null, null));
 
-		Mockito.doReturn(false).when(validatorMock).canDonateTo(member);
+		Mockito.doReturn(false).when(validatorMock).canDonateTo(Mockito.eq(member), Mockito.any(Token.class));
 		managerController.setValidator(validatorMock);
 		Assert.assertEquals(null,
-				managerController.createInstanceWithFederationUser("abc", null, xOCCIAtt, null));
+				managerController.createInstanceWithFederationUser("abc", null, xOCCIAtt, null, null));
 	}
 	
 	@Test
@@ -1639,10 +1734,10 @@ public class TestManagerController {
 		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);
 		managerController.setPacketSender(packetSender);
 		
-		ResourcesInfo localResourcesInfo = new ResourcesInfo("", "", "", "", null, null);
+		ResourcesInfo localResourcesInfo = new ResourcesInfo("", "", "", "", null);
 		localResourcesInfo.setId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		
-		ResourcesInfo remoteResourcesInfo = new ResourcesInfo("", "", "", "", null, null);
+		ResourcesInfo remoteResourcesInfo = new ResourcesInfo("", "", "", "", null);
 		remoteResourcesInfo.setId(DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL);
 		
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
@@ -1734,7 +1829,7 @@ public class TestManagerController {
 		managerController.setPacketSender(packetSender);
 				
 		managerController.createInstanceWithFederationUser("manager1-test.com", 
-				new ArrayList<Category>(), xOCCIAtt, null);
+				new ArrayList<Category>(), xOCCIAtt, null, null);
 		
 		// checking there is one served request
 		Assert.assertEquals(1, managerController.getInstancesForRemoteMember().size());
@@ -1771,7 +1866,7 @@ public class TestManagerController {
 		managerController.setPacketSender(packetSender);
 		
 		managerController.createInstanceWithFederationUser("manager1-test.com", 
-				new ArrayList<Category>(), xOCCIAtt, null);
+				new ArrayList<Category>(), xOCCIAtt, null, null);
 		
 		// checking there is one served request
 		Assert.assertEquals(1, managerController.getInstancesForRemoteMember().size());
@@ -1825,6 +1920,7 @@ public class TestManagerController {
 				.getInstances(federationToken.getAccessId()).get(0).getId());
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testGarbageCollectorRemovingInstance(){
 		// setting request repository
@@ -1871,6 +1967,7 @@ public class TestManagerController {
 	}
 	
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testGarbageCollectorWithServedRequest(){
 		// checking there is not served request
@@ -1895,7 +1992,7 @@ public class TestManagerController {
 		
 		// creating instance for remote member 
 		managerController.createInstanceWithFederationUser("manager1-test.com", 
-				new ArrayList<Category>(), xOCCIAtt, null);
+				new ArrayList<Category>(), xOCCIAtt, null, null);
 		
 		// checking there is one served request
 		Assert.assertEquals(1, managerController.getInstancesForRemoteMember().size());

@@ -155,9 +155,6 @@ public class TestWhoIsAlive {
 		Assert.assertEquals("small", managerXmppComponent.getManagerFacade()
 				.getMembers().get(0).getResourcesInfo().getFlavors().get(0)
 				.getName());
-		Assert.assertEquals(managerTestHelper.getCertificate(),
-				managerXmppComponent.getManagerFacade().getMembers().get(0)
-						.getResourcesInfo().getCert());
 		xmppClient.disconnect();
 	}
 	

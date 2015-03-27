@@ -344,5 +344,10 @@ public class KeystoneIdentityPlugin implements IdentityPlugin {
 	@Override
 	public String getAuthenticationURI() {
 		return "Keystone uri='" + keystoneUrl +"'";
+	}
+
+	@Override
+	public Token getForwardableToken(Token originalToken) {
+		return null;
 	}	
  }

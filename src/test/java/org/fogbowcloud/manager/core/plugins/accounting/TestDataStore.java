@@ -4,9 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -152,13 +150,12 @@ public class TestDataStore {
 	
 	@Test
 	public void testGetMemberUsageEmptyList() throws SQLException{
-		List <String> memberIds = new ArrayList<String>();
-		Assert.assertTrue(db.getMemberUsage(memberIds).isEmpty());
+		Assert.assertTrue(db.getMembersUsage().isEmpty());
 	}
 	
 	@Test
 	public void testGetUserUsageEmptyList() throws SQLException{
-		Assert.assertTrue(db.getUserUsage().isEmpty());
+		Assert.assertTrue(db.getUsersUsage().isEmpty());
 	}
 	
 	@Test
@@ -179,11 +176,7 @@ public class TestDataStore {
 		
 		Assert.assertTrue(db.update(members, new HashMap<String, Double>()));
 		
-		List <String> memberIds = new ArrayList<String>();
-		memberIds.add(memberIdM6);
-		memberIds.add(memberIdM7);		
-		
-		members = db.getMemberUsage(memberIds);
+		members = db.getMembersUsage();
 		Assert.assertEquals(5, members.get(memberIdM6).getConsumed(), ACCEPTABLE_ERROR);
 		Assert.assertEquals(5, members.get(memberIdM6).getDonated(), ACCEPTABLE_ERROR);
 		Assert.assertEquals(10, members.get(memberIdM7).getConsumed(), ACCEPTABLE_ERROR);

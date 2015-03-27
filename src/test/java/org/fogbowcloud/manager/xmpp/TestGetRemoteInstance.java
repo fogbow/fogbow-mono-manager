@@ -14,6 +14,7 @@ import org.fogbowcloud.manager.occi.core.Resource;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.instance.Instance;
+import org.fogbowcloud.manager.occi.instance.InstanceState;
 import org.fogbowcloud.manager.occi.instance.Instance.Link;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.fogbowcloud.manager.occi.util.OCCITestHelper;
@@ -60,7 +61,8 @@ public class TestGetRemoteInstance {
 		List<Link> links = new ArrayList<Link>();
 		links.add(link);
 
-		return new Instance(DefaultDataTestHelper.INSTANCE_ID, resources, attributes, links);
+		return new Instance(DefaultDataTestHelper.INSTANCE_ID, resources, 
+				attributes, links, InstanceState.RUNNING);
 	}
 
 	@Test
@@ -87,6 +89,7 @@ public class TestGetRemoteInstance {
 			e.printStackTrace();
 		}
 
+		Assert.assertEquals(InstanceState.RUNNING, remoteInstance.getState());
 		Assert.assertEquals(instance.getId(), remoteInstance.getId());
 		Assert.assertEquals(instance.getAttributes(), remoteInstance.getAttributes());
 		Assert.assertEquals(instance.getResources().get(0).toHeader(), remoteInstance

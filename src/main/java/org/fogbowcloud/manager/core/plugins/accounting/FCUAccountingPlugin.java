@@ -112,8 +112,8 @@ public class FCUAccountingPlugin implements AccountingPlugin {
 	}
 
 	@Override
-	public Map<String, ResourceUsage> getMembersUsage(List<String> members) {
-		return db.getMemberUsage(members);
+	public Map<String, ResourceUsage> getMembersUsage() {
+		return db.getMembersUsage();
 	}
 
 	public DataStore getDatabase() {
@@ -122,6 +122,6 @@ public class FCUAccountingPlugin implements AccountingPlugin {
 
 	@Override
 	public Map<String, Double> getUsersUsage() {
-		return db.getUserUsage();
+		return db.getUsersUsage();
 	}
 }

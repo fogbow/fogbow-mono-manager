@@ -48,6 +48,7 @@ public class ConfigurationConstants {
 	public static final String VOMS_PATH_VOMSES = "path_vomses";
 	public static final String VOMS_PATH_TRUST_ANCHORS = "path_trust_anchors";
 	public static final String VOMS_PATH_VOMSDIR = "path_vomsdir";
+	public static final String VOMS_SHOULD_FORWARD_PRIVATE_KEY = "should_forward_private_key";
 	
 	//x509
 	public static final String X509_CA_DIR_PATH_KEY = "x509_ca_dir_path";
@@ -61,4 +62,7 @@ public class ConfigurationConstants {
 	
 	//accounting
 	public static final String ACCOUNTING_PLUGIN_CLASS_KEY = "accounting_class";
+
+	//Green
+	public static final String GREEN_SITTER_JID = "greensitter_jid";
 }

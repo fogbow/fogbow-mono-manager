@@ -36,6 +36,7 @@ import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.instance.Instance.Link;
+import org.fogbowcloud.manager.occi.instance.InstanceState;
 import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.json.JSONObject;
@@ -313,7 +314,8 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		Map<String, String> attributes = new HashMap<String, String>();
 		// CPU Architecture of the instance
 		attributes.put("occi.compute.architecture", getArch(arch));
-		attributes.put("occi.compute.state", getOCCIState(vm.lcmStateStr()));
+		InstanceState state = getInstanceState(vm.lcmStateStr());
+		attributes.put("occi.compute.state", state.getOcciState());
 		// CPU Clock frequency (speed) in gigahertz
 		attributes.put("occi.compute.speed", "Not defined");
 		attributes.put("occi.compute.memory", String.valueOf(Double.parseDouble(mem) / 1024)); // Gb
@@ -327,7 +329,7 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		resources.add(ResourceRepository.getInstance().get(
 				getUsedFlavor(Double.parseDouble(cpu), Double.parseDouble(mem))));
 		
-		return new Instance(vm.getId(), resources, attributes, new ArrayList<Link>());
+		return new Instance(vm.getId(), resources, attributes, new ArrayList<Link>(), state);
 	}
 
 	private String getArch(String arch) {		
@@ -335,14 +337,19 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		return !arch.isEmpty() ? arch : "x86";
 	}
 
-	private String getOCCIState(String oneVMState) {
+	private InstanceState getInstanceState(String oneVMState) {
 		if ("Running".equalsIgnoreCase(oneVMState)) {
-			return "active";
-		} else if ("Suspended".equalsIgnoreCase(oneVMState)){
-			return "suspended";
+			return InstanceState.RUNNING;
 		}
-		return "inactive";
+		if ("Suspended".equalsIgnoreCase(oneVMState)) {
+			return InstanceState.SUSPENDED;
+		}
+		if ("Failure".equalsIgnoreCase(oneVMState)) {
+			return InstanceState.FAILED;
+		}
+		return InstanceState.PENDING;
 	}
+
 
 	private String getUsedFlavor(double cpu, double mem) {
 		double flavorMem = getAttValue("mem",
@@ -424,8 +431,7 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		double instancesIdle = maxVMs - vmsInUse;
 	
 		return new ResourcesInfo(String.valueOf(cpuIdle), String.valueOf(cpuInUse),
-				String.valueOf(memIdle), String.valueOf(memInUse), getFlavors(cpuIdle, memIdle, instancesIdle),
-				null);
+				String.valueOf(memIdle), String.valueOf(memInUse), getFlavors(cpuIdle, memIdle, instancesIdle));
 	}
 	
 	private ResourceQuota getQuota(String maxUserResource, String resourceUserInUse, String maxGroupResource, String resourceGroupInUse) {

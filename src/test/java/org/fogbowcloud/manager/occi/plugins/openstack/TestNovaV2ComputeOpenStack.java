@@ -20,6 +20,7 @@ import org.fogbowcloud.manager.occi.core.Resource;
 import org.fogbowcloud.manager.occi.core.ResourceRepository;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.instance.Instance;
+import org.fogbowcloud.manager.occi.instance.InstanceState;
 import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.fogbowcloud.manager.occi.util.NovaV2ComputeApplication;
@@ -279,6 +280,18 @@ public class TestNovaV2ComputeOpenStack {
 		Assert.assertEquals(2, (int) flavors.get(0).getCapacity());
 		Assert.assertEquals(2, (int) flavors.get(1).getCapacity());
 		Assert.assertEquals(2, (int) flavors.get(2).getCapacity());
+	}
+	
+	@Test
+	public void tesGettInstanceState() {
+		Assert.assertEquals(InstanceState.RUNNING, 
+				novaV2ComputeOpenStack.getInstance(defaultToken, "active").getState());
+		Assert.assertEquals(InstanceState.FAILED, 
+				novaV2ComputeOpenStack.getInstance(defaultToken, "error").getState());
+		Assert.assertEquals(InstanceState.PENDING, 
+				novaV2ComputeOpenStack.getInstance(defaultToken, "initialized").getState());
+		Assert.assertEquals(InstanceState.SUSPENDED, 
+				novaV2ComputeOpenStack.getInstance(defaultToken, "suspended").getState());
 	}
 	
 }

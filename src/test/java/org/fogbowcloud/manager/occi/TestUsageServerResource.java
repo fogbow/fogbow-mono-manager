@@ -50,15 +50,15 @@ public class TestUsageServerResource {
 		this.computePlugin = Mockito.mock(ComputePlugin.class);
 		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class))).thenReturn(
 				new ResourcesInfo(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, 
-						"", "", "", "", new LinkedList<Flavor>(), null));
+						"", "", "", "", new LinkedList<Flavor>()));
 		this.identityPlugin = Mockito.mock(IdentityPlugin.class);
 		this.accountingPlugin = Mockito.mock(AccountingPlugin.class);
 		this.authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
 		
 		ResourcesInfo resourcesInfo = new ResourcesInfo(ID_RESOURCEINFO1, "", "", "", "",
-				new ArrayList<Flavor>(), null);
+				new ArrayList<Flavor>());
 		ResourcesInfo resourcesInfo2 = new ResourcesInfo(ID_RESOURCEINFO2, "", "", "", "",
-				new ArrayList<Flavor>(), null);
+				new ArrayList<Flavor>());
 		federationMembers.add(new FederationMember(resourcesInfo));
 		federationMembers.add(new FederationMember(resourcesInfo2));
 
@@ -75,7 +75,7 @@ public class TestUsageServerResource {
 		// mocking
 		Mockito.when(identityPlugin.getToken(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID))
 				.thenReturn(defaultToken);
-		Mockito.when(accountingPlugin.getMembersUsage(Mockito.anyList())).thenReturn(
+		Mockito.when(accountingPlugin.getMembersUsage()).thenReturn(
 				new HashMap<String, ResourceUsage>());
 		Mockito.when(accountingPlugin.getUsersUsage()).thenReturn(new HashMap<String, Double>());
 		Mockito.when(authorizationPlugin.isAuthorized(defaultToken)).thenReturn(true);
@@ -106,7 +106,7 @@ public class TestUsageServerResource {
 		// mocking
 		Mockito.when(identityPlugin.getToken(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID))
 				.thenReturn(defaultToken);
-		Mockito.when(accountingPlugin.getMembersUsage(Mockito.anyList())).thenReturn(
+		Mockito.when(accountingPlugin.getMembersUsage()).thenReturn(
 				new HashMap<String, ResourceUsage>());
 		HashMap<String, Double> expectedUsersUsage = new HashMap<String, Double>();
 		expectedUsersUsage.put("user1", 1.5);
@@ -144,7 +144,7 @@ public class TestUsageServerResource {
 		// mocking
 		Mockito.when(identityPlugin.getToken(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID))
 				.thenReturn(defaultToken);
-		Mockito.when(accountingPlugin.getMembersUsage(Mockito.anyList())).thenReturn(
+		Mockito.when(accountingPlugin.getMembersUsage()).thenReturn(
 				new HashMap<String, ResourceUsage>());
 		HashMap<String, Double> expectedUsersUsage = new HashMap<String, Double>();
 		expectedUsersUsage.put("user1", 1.5);
@@ -188,7 +188,7 @@ public class TestUsageServerResource {
 		ResourceUsage resourceUsage2 = new ResourceUsage(ID_RESOURCEINFO2);
 		expectedMembersUsage.put(ID_RESOURCEINFO1, resourceUsage1);
 		expectedMembersUsage.put(ID_RESOURCEINFO2, resourceUsage2);		
-		Mockito.when(accountingPlugin.getMembersUsage(Mockito.anyList())).thenReturn(
+		Mockito.when(accountingPlugin.getMembersUsage()).thenReturn(
 				expectedMembersUsage);
 		Mockito.when(accountingPlugin.getUsersUsage()).thenReturn(new HashMap<String, Double>());
 		Mockito.when(authorizationPlugin.isAuthorized(defaultToken)).thenReturn(true);
@@ -226,7 +226,7 @@ public class TestUsageServerResource {
 		ResourceUsage resourceUsage2 = new ResourceUsage(ID_RESOURCEINFO2);
 		expectedMembersUsage.put(ID_RESOURCEINFO1, resourceUsage1);
 		expectedMembersUsage.put(ID_RESOURCEINFO2, resourceUsage2);		
-		Mockito.when(accountingPlugin.getMembersUsage(Mockito.anyList())).thenReturn(
+		Mockito.when(accountingPlugin.getMembersUsage()).thenReturn(
 				expectedMembersUsage);
 		HashMap<String, Double> expectedUsersUsage = new HashMap<String, Double>();
 		expectedUsersUsage.put("user1", 1.5);

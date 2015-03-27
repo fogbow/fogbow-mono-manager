@@ -46,6 +46,7 @@ public class GetInstanceHandler extends AbstractQueryHandler {
 		Element queryEl = response.getElement().addElement("query", 
 				ManagerXmppComponent.GETINSTANCE_NAMESPACE);
 		Element instanceEl = queryEl.addElement("instance");
+		instanceEl.addElement("state").setText(instance.getState().toString());
 		instanceEl.addElement("id").setText(instanceId);
 		
 		List<Link> links = instance.getLinks();

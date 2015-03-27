@@ -9,6 +9,7 @@ import org.dom4j.Element;
 import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.OCCIException;
+import org.fogbowcloud.manager.occi.core.Token;
 import org.jamppa.component.handler.AbstractQueryHandler;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.PacketError.Condition;
@@ -43,10 +44,19 @@ public class RequestInstanceHandler extends AbstractQueryHandler {
 		
 		String requestId = queryEl.element("request").element("id").getText();
 		
+		Element tokenEl = queryEl.element("token");
+		Token userToken = null;
+		if (tokenEl != null) {
+			userToken = new Token(tokenEl.elementText("accessId"), 
+					tokenEl.elementText("user"), 
+					null, new HashMap<String, String>());
+		}
+
 		IQ response = IQ.createResultIQ(query);
 		try {
 			String instanceId = facade.createInstanceWithFederationUser(query
-					.getFrom().toBareJID(), categories, xOCCIAtt, requestId);
+					.getFrom().toBareJID(), categories, xOCCIAtt, requestId, userToken);
+
 			if (instanceId == null) {
 				response.setError(Condition.item_not_found);
 			} else {

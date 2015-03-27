@@ -39,6 +39,7 @@ import org.fogbowcloud.manager.occi.core.ResourceRepository;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.instance.Instance;
+import org.fogbowcloud.manager.occi.instance.InstanceState;
 import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.json.JSONArray;
@@ -50,6 +51,7 @@ import org.restlet.data.Status;
 
 public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 
+	private static final String NO_VALID_HOST_WAS_FOUND = "No valid host was found";
 	private static final String STATUS_JSON_FIELD = "status";
 	private static final String IMAGES_JSON_FIELD = "images";
 	private static final String ID_JSON_FIELD = "id";
@@ -222,7 +224,11 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 						ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES);
 			}
 			throw new OCCIException(ErrorType.BAD_REQUEST, message);
-		} else if (response.getStatusLine().getStatusCode() > 204) {
+		} else if ((response.getStatusLine().getStatusCode() == HttpStatus.SC_INTERNAL_SERVER_ERROR) &&
+				(message.contains(NO_VALID_HOST_WAS_FOUND))){
+			throw new OCCIException(ErrorType.NO_VALID_HOST_FOUND, ResponseConstants.NO_VALID_HOST_FOUND);
+		}
+		else if (response.getStatusLine().getStatusCode() > 204) {
 			throw new OCCIException(ErrorType.BAD_REQUEST, response.getStatusLine().toString());
 		}
 	}
@@ -297,9 +303,10 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 			String id = rootServer.getJSONObject("server").getString(ID_JSON_FIELD);
 
 			Map<String, String> attributes = new HashMap<String, String>();
+			InstanceState state = getInstanceState(rootServer.getJSONObject("server")
+					.getString(STATUS_JSON_FIELD));
 			// CPU Architecture of the instance
-			attributes.put("occi.compute.state", getOCCIState(rootServer.getJSONObject("server")
-					.getString(STATUS_JSON_FIELD)));
+			attributes.put("occi.compute.state", state.getOcciState());
 			// // CPU Clock frequency (speed) in gigahertz
 			// TODO How to get speed?
 			attributes.put("occi.compute.speed", "Not defined");
@@ -329,7 +336,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 
 			LOGGER.debug("Instance resources: " + resources);
 
-			return new Instance(id, resources, attributes, new ArrayList<Instance.Link>());
+			return new Instance(id, resources, attributes, new ArrayList<Instance.Link>(), state);
 		} catch (JSONException e) {
 			LOGGER.warn("There was an exception while getting instances from json.", e);
 		}
@@ -347,14 +354,18 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		}
 		return null;
 	}
-
-	private String getOCCIState(String instanceStatus) {
-		if ("suspended".equalsIgnoreCase(instanceStatus)){
-			return "suspended";
-		} else if ("active".equalsIgnoreCase(instanceStatus)){
-			return "active";
+	
+	private InstanceState getInstanceState(String instanceStatus) {
+		if ("active".equalsIgnoreCase(instanceStatus)) {
+			return InstanceState.RUNNING;
 		}
-		return "inactive";
+		if ("suspended".equalsIgnoreCase(instanceStatus)) {
+			return InstanceState.SUSPENDED;
+		}
+		if ("error".equalsIgnoreCase(instanceStatus)) {
+			return InstanceState.FAILED;
+		}
+		return InstanceState.PENDING;
 	}
 
 	@Override
@@ -399,7 +410,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		int instancesIdle = Integer.parseInt(maxInstances) - Integer.parseInt(instancesInUse);
 
 		return new ResourcesInfo(String.valueOf(cpuIdle), cpuInUse, String.valueOf(memIdle),
-				memInUse, getFlavors(cpuIdle, memIdle, instancesIdle), null);
+				memInUse, getFlavors(cpuIdle, memIdle, instancesIdle));
 	}
 	
 	private String getAttFromLimitsJson(String attName, String responseStr) {

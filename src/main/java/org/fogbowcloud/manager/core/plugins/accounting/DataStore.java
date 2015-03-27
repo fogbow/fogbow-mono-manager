@@ -29,25 +29,24 @@ public class DataStore {
 	private JdbcConnectionPool cp;
 
 	public DataStore(Properties properties) {
-		this.dataStoreURL = properties
-				.getProperty("accounting_datastore_url");
-		
+		this.dataStoreURL = properties.getProperty("accounting_datastore_url");
+
 		Statement statement = null;
 		Connection connection = null;
-		try {			
+		try {
 			LOGGER.debug("DatastoreURL: " + dataStoreURL);
-			
+
 			Class.forName("org.h2.Driver");
 			this.cp = JdbcConnectionPool.create(dataStoreURL, "sa", "");
-			
+
 			connection = getConnection();
 			statement = connection.createStatement();
-			statement.execute("CREATE TABLE IF NOT EXISTS " + MEMBER_TABLE_NAME + "("
-					+ MEMBER_ID + " VARCHAR(255) PRIMARY KEY, " + CONSUMED
-					+ " DOUBLE, " + DONATED + " DOUBLE)");
-			statement.execute("CREATE TABLE IF NOT EXISTS " + USER_TABLE_NAME + "("
-					+ USER_ID + " VARCHAR(255) PRIMARY KEY, " + CONSUMED
-					+ " DOUBLE)");
+			statement
+					.execute("CREATE TABLE IF NOT EXISTS " + MEMBER_TABLE_NAME + "(" + MEMBER_ID
+							+ " VARCHAR(255) PRIMARY KEY, " + CONSUMED + " DOUBLE, " + DONATED
+							+ " DOUBLE)");
+			statement.execute("CREATE TABLE IF NOT EXISTS " + USER_TABLE_NAME + "(" + USER_ID
+					+ " VARCHAR(255) PRIMARY KEY, " + CONSUMED + " DOUBLE)");
 			statement.close();
 
 		} catch (Exception e) {
@@ -57,37 +56,41 @@ public class DataStore {
 		}
 	}
 
-	private static final String UPDATE_MEMBER_USAGE_SQL = "UPDATE " + MEMBER_TABLE_NAME	+ " SET consumed = consumed + ?, donated = donated + ? WHERE member_id = ?";
-	private static final String INSERT_MEMBER_USAGE_SQL = "INSERT INTO " + MEMBER_TABLE_NAME + " VALUES(?, ?, ?)";
+	private static final String UPDATE_MEMBER_USAGE_SQL = "UPDATE " + MEMBER_TABLE_NAME
+			+ " SET consumed = consumed + ?, donated = donated + ? WHERE member_id = ?";
+	private static final String INSERT_MEMBER_USAGE_SQL = "INSERT INTO " + MEMBER_TABLE_NAME
+			+ " VALUES(?, ?, ?)";
 
-	private static final String INSERT_USER_USAGE_SQL = "INSERT INTO " + USER_TABLE_NAME + " VALUES(?, ?)";
-	private static final String UPDATE_USER_USAGE_SQL = "UPDATE " + USER_TABLE_NAME	+ " SET consumed = consumed + ? WHERE user_id = ?";
-	
+	private static final String INSERT_USER_USAGE_SQL = "INSERT INTO " + USER_TABLE_NAME
+			+ " VALUES(?, ?)";
+	private static final String UPDATE_USER_USAGE_SQL = "UPDATE " + USER_TABLE_NAME
+			+ " SET consumed = consumed + ? WHERE user_id = ?";
+
 	public boolean update(Map<String, ResourceUsage> members, Map<String, Double> users) {
 		LOGGER.debug("Updating members usage into database.");
 		LOGGER.debug("members=" + members + " users=" + users);
-		
+
 		if (members == null || users == null) {
-			LOGGER.warn("Members and users must not be null.");	
+			LOGGER.warn("Members and users must not be null.");
 			return false;
 		}
-		
+
 		PreparedStatement updateMemberStatement = null;
 		PreparedStatement insertMemberStatement = null;
 		PreparedStatement insertUserStatement = null;
-		PreparedStatement updateUserStatement = null;		
+		PreparedStatement updateUserStatement = null;
 		Connection connection = null;
-		
+
 		try {
 			connection = getConnection();
 			connection.setAutoCommit(false);
 
 			insertMemberStatement = connection.prepareStatement(INSERT_MEMBER_USAGE_SQL);
-			updateMemberStatement = connection.prepareStatement(UPDATE_MEMBER_USAGE_SQL);			
+			updateMemberStatement = connection.prepareStatement(UPDATE_MEMBER_USAGE_SQL);
 			insertUserStatement = connection.prepareStatement(INSERT_USER_USAGE_SQL);
 			updateUserStatement = connection.prepareStatement(UPDATE_USER_USAGE_SQL);
 
-			addMemberStatements(members, updateMemberStatement, insertMemberStatement);			
+			addMemberStatements(members, updateMemberStatement, insertMemberStatement);
 			addUserStatements(users, insertUserStatement, updateUserStatement);
 
 			if (hasBatchExecutionError(insertMemberStatement.executeBatch())
@@ -121,11 +124,11 @@ public class DataStore {
 	private void addUserStatements(Map<String, Double> users,
 			PreparedStatement insertUserStatement, PreparedStatement updateUserStatement)
 			throws SQLException {
-		
+
 		List<String> userIds = new ArrayList<String>();
 		userIds.addAll(users.keySet());
-		Map<String, Double> usersOnStore = getUserUsage();
-		
+		Map<String, Double> usersOnStore = getUsersUsage();
+
 		for (String userId : userIds) {
 			if (!usersOnStore.keySet().contains(userId)) {
 				insertUserStatement.setString(1, userId);
@@ -140,12 +143,13 @@ public class DataStore {
 	}
 
 	private void addMemberStatements(Map<String, ResourceUsage> members,
-			PreparedStatement updateMemberStatement, PreparedStatement insertMemberStatement) throws SQLException {
-		
+			PreparedStatement updateMemberStatement, PreparedStatement insertMemberStatement)
+			throws SQLException {
+
 		List<String> memberIds = new ArrayList<String>();
 		memberIds.addAll(members.keySet());
-		Map<String, ResourceUsage> membersOnStore = getMemberUsage(memberIds);
-		
+		Map<String, ResourceUsage> membersOnStore = getMembersUsage();
+
 		for (String memberId : memberIds) {
 			if (!membersOnStore.keySet().contains(memberId)) {
 				ResourceUsage resourceUsage = members.get(memberId);
@@ -172,11 +176,10 @@ public class DataStore {
 		return false;
 	}
 
-	public Map<String, ResourceUsage> getMemberUsage(List<String> memberIds) {
-		LOGGER.debug("Getting usage of members: " + memberIds);
-		if (memberIds == null || memberIds.isEmpty()) {
-			return new HashMap<String, ResourceUsage>();
-		}
+	private static final String SELECT_MEMBERS_USAGE_SQL = "SELECT * FROM " + MEMBER_TABLE_NAME;
+
+	public Map<String, ResourceUsage> getMembersUsage() {
+		LOGGER.debug("Getting usage of members.");
 
 		Statement statement = null;
 		Connection conn = null;
@@ -184,25 +187,17 @@ public class DataStore {
 			conn = getConnection();
 			statement = conn.createStatement();
 
-			String sql = "select * from " + MEMBER_TABLE_NAME + " where ";
-
-			for (int i = 0; i < memberIds.size(); i++) {
-				sql += MEMBER_ID + "='" + memberIds.get(i) + "'";
-				if (i < memberIds.size() - 1)
-					sql += " or ";
-			}
-			statement.execute(sql);
+			statement.execute(SELECT_MEMBERS_USAGE_SQL);
 			ResultSet rs = statement.getResultSet();
-			HashMap<String, ResourceUsage> map = new HashMap<String, ResourceUsage>();
+			HashMap<String, ResourceUsage> membersUsageOnStore = new HashMap<String, ResourceUsage>();
 			while (rs.next()) {
-				ResourceUsage resourceUsage = new ResourceUsage(
-						rs.getString(MEMBER_ID));
+				ResourceUsage resourceUsage = new ResourceUsage(rs.getString(MEMBER_ID));
 				resourceUsage.addConsumption(rs.getDouble(CONSUMED));
 				resourceUsage.addDonation(rs.getDouble(DONATED));
-				map.put(rs.getString(MEMBER_ID), resourceUsage);
+				membersUsageOnStore.put(rs.getString(MEMBER_ID), resourceUsage);
 			}
-			LOGGER.debug("Map toReturn: " + map);
-			return map;
+			LOGGER.debug("Current members usage on data base: " + membersUsageOnStore);
+			return membersUsageOnStore;
 		} catch (SQLException e) {
 			LOGGER.error("Couldn't get members' usage.", e);
 			return null;
@@ -210,26 +205,26 @@ public class DataStore {
 			close(statement, conn);
 		}
 	}
-	
-	public Map<String, Double> getUserUsage() {		
+
+	private static final String SELECT_USERS_USAGE_SQL = "SELECT * FROM " + USER_TABLE_NAME;
+
+	public Map<String, Double> getUsersUsage() {
 		LOGGER.debug("Getting usage of users.");
-		
+
 		Statement statement = null;
 		Connection conn = null;
 		try {
 			conn = getConnection();
 			statement = conn.createStatement();
 
-			String sql = "select * from " + USER_TABLE_NAME;
-			
-			statement.execute(sql);
+			statement.execute(SELECT_USERS_USAGE_SQL);
 			ResultSet rs = statement.getResultSet();
-			HashMap<String, Double> map = new HashMap<String, Double>();
+			HashMap<String, Double> usersUsageOnStore = new HashMap<String, Double>();
 			while (rs.next()) {
-				map.put(rs.getString(USER_ID), rs.getDouble(CONSUMED));
+				usersUsageOnStore.put(rs.getString(USER_ID), rs.getDouble(CONSUMED));
 			}
-			LOGGER.debug("Map toReturn: " + map);
-			return map;
+			LOGGER.debug("Current users usage on data base: " + usersUsageOnStore);
+			return usersUsageOnStore;
 		} catch (SQLException e) {
 			LOGGER.error("Couldn't get users' usage.", e);
 			return null;
@@ -246,9 +241,7 @@ public class DataStore {
 		try {
 			return cp.getConnection();
 		} catch (SQLException e) {
-			LOGGER.error(
-					"Error while getting a new connection from the connection pool.",
-					e);
+			LOGGER.error("Error while getting a new connection from the connection pool.", e);
 			throw e;
 		}
 	}
@@ -275,7 +268,7 @@ public class DataStore {
 		}
 	}
 
-	public void dispose(){
+	public void dispose() {
 		cp.dispose();
 	}
 

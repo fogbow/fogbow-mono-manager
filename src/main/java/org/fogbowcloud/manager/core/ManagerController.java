@@ -42,6 +42,7 @@ import org.fogbowcloud.manager.occi.core.ResourceRepository;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.instance.Instance;
+import org.fogbowcloud.manager.occi.instance.InstanceState;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
@@ -85,7 +86,7 @@ public class ManagerController {
 	private IdentityPlugin federationIdentityPlugin;
 	private Properties properties;
 	private AsyncPacketSender packetSender;
-	private FederationMemberValidator validator = new DefaultMemberValidator();
+	private FederationMemberValidator validator;
 	private Map<String, ServedRequest> instancesForRemoteMembers = new ConcurrentHashMap<String, ServedRequest>();
 	private Map<String, ForwardedRequest> asynchronousRequests = new ConcurrentHashMap<String, ForwardedRequest>();
 
@@ -463,7 +464,7 @@ public class ManagerController {
 		}
 	}
 	
-	public String normalizeInstanceId(String instanceId) {
+	private static String normalizeInstanceId(String instanceId) {
 		if (instanceId.contains(Request.SEPARATOR_GLOBAL_ID)) {
 			String[] partsInstanceId = instanceId.split(Request.SEPARATOR_GLOBAL_ID);
 			instanceId = partsInstanceId[0];
@@ -566,14 +567,15 @@ public class ManagerController {
 	}
 
 	public String createInstanceWithFederationUser(String memberId, List<Category> categories,
-			Map<String, String> xOCCIAtt, String instanceToken) {
+			Map<String, String> xOCCIAtt, String instanceToken, Token requestingUserToken) {
 		FederationMember member = null;
 		try {
 			member = getFederationMember(memberId);
 		} catch (Exception e) {
 		}
 
-		if (!validator.canDonateTo(member)) {
+		if (!properties.getProperty("xmpp_jid").equals(memberId) && 
+				!validator.canDonateTo(member, requestingUserToken)) {
 			return null;
 		}
 		LOGGER.info("Submiting request with categories: " + categories + " and xOCCIAtt: "
@@ -782,7 +784,7 @@ public class ManagerController {
 				turnOffTimer = false;
 				try {
 					LOGGER.debug("Monitoring instance of request: " + request);
-					getInstance(request);
+					removeFailedInstance(request, getInstance(request));
 				} catch (Throwable e) {
 					LOGGER.debug("Error while getInstance of " + request.getInstanceId(), e);
 					instanceRemoved(requests.get(request.getId()));
@@ -793,6 +795,21 @@ public class ManagerController {
 		if (turnOffTimer) {
 			LOGGER.info("There are no requests.");
 			instanceMonitoringTimer.cancel();
+		}
+	}
+
+	private void removeFailedInstance(Request request, Instance instance) {
+		if (instance == null) {
+			return;
+		}
+		if (InstanceState.FAILED.equals(instance.getState())) {
+			try {
+				removeInstance(request.getFederationToken().getAccessId(), 
+						instance.getId(), request);
+			} catch (Throwable t) {
+				// Best effort
+				LOGGER.warn("Error while removing stale instance.", t);
+			}
 		}
 	}
 
@@ -854,7 +871,8 @@ public class ManagerController {
 		
 		asynchronousRequests.put(request.getId(),
 				new ForwardedRequest(request, dateUtils.currentTimeMillis()));
-		ManagerPacketHelper.asynchronousRemoteRequest(request, memberAddress,
+		ManagerPacketHelper.asynchronousRemoteRequest(request, memberAddress, 
+				federationIdentityPlugin.getForwardableToken(request.getFederationToken()), 
 				packetSender, new AsynchronousRequestCallback() {
 					
 					@Override
@@ -910,6 +928,16 @@ public class ManagerController {
 		return asynchronousRequests.containsKey(requestId);
 	}
 	
+	private void wakeUpSleepingHosts(Request request) {
+		String greenSitterJID = properties.getProperty("greensitter_jid");
+		
+		//The "1, 1" will be changed by request.getCPU and request.getRAM
+		if (greenSitterJID != null) {
+			ManagerPacketHelper.wakeUpSleepingHost(1, 1024, greenSitterJID,
+					packetSender);
+		}
+	}
+	
 	private boolean createLocalInstance(Request request) {
 		request.setMemberId(this.properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
 		String instanceId = null;
@@ -947,15 +975,20 @@ public class ManagerController {
 			Instance instance = computePlugin.getInstance(request.getLocalToken(), instanceId);
 			benchmarkingPlugin.run(generateGlobalId(instanceId, null), instance);
 		} catch (OCCIException e) {
-			int statusCode = e.getStatus().getCode();
-			if (statusCode == HttpStatus.SC_INSUFFICIENT_SPACE_ON_RESOURCE) {
+			ErrorType errorType = e.getType();
+			if (errorType == ErrorType.QUOTA_EXCEEDED) {
 				LOGGER.warn("Request failed locally for quota exceeded.", e);
 				return false;
-			} else if (statusCode == HttpStatus.SC_UNAUTHORIZED) {
+			} else if (errorType == ErrorType.UNAUTHORIZED) {
 				LOGGER.warn("Request failed locally for user unauthorized.", e);
 				return false;
-			} else if (statusCode == HttpStatus.SC_BAD_REQUEST) {
+			} else if (errorType == ErrorType.BAD_REQUEST) {
 				LOGGER.warn("Request failed locally for image not found.", e);
+				return false;
+			} else if (errorType == ErrorType.NO_VALID_HOST_FOUND) {
+				LOGGER.warn("Request failed because no valid host was found,"
+						+ " we will try to wake up a sleeping host.", e);
+				wakeUpSleepingHosts(request);
 				return false;
 			} else {
 				// TODO Think this through...
@@ -1084,7 +1117,7 @@ public class ManagerController {
 		String remoteInstanceId = null;
 		try {
 			remoteInstanceId = createInstanceWithFederationUser(properties.getProperty("xmpp_jid"),
-					request.getCategories(), request.getxOCCIAtt(), request.getId());
+					request.getCategories(), request.getxOCCIAtt(), request.getId(), null);
 		} catch (Exception e) {
 			LOGGER.info("Could not create instance with federation user locally." + e);
 		}
@@ -1195,13 +1228,8 @@ public class ManagerController {
 
 
 	public List<ResourceUsage> getMembersUsage(String federationAccessId) {
-		checkFederationAccessId(federationAccessId);
-		
-		List<String> memberIds = new ArrayList<String>();
-		for (FederationMember member : getMembers()) {
-			memberIds.add(member.getResourcesInfo().getId());			
-		}
-		return new ArrayList<ResourceUsage>(accountingPlugin.getMembersUsage(memberIds).values());
+		checkFederationAccessId(federationAccessId);		
+		return new ArrayList<ResourceUsage>(accountingPlugin.getMembersUsage().values());
 	}
 
 	private void checkFederationAccessId(String federationAccessId) {
