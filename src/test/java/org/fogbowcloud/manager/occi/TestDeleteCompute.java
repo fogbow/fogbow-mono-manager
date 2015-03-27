@@ -10,7 +10,9 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
+import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
@@ -74,8 +76,11 @@ public class TestDeleteCompute {
 		
 		imageStoragePlugin = Mockito.mock(ImageStoragePlugin.class);
 		
+		AccountingPlugin accountingPlugin = Mockito.mock(AccountingPlugin.class);
+		BenchmarkingPlugin benchmarkingPlugin = Mockito.mock(BenchmarkingPlugin.class);
+		
 		this.helper.initializeComponentCompute(computePlugin, identityPlugin, 
-				authorizationPlugin, imageStoragePlugin, requests);
+				authorizationPlugin, imageStoragePlugin, accountingPlugin, benchmarkingPlugin, requests);
 	}
 
 	@After

@@ -216,6 +216,17 @@ public class TestManagerController {
 		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);
 		managerController.setPacketSender(packetSender);
 
+		// mocking getRemoteInstance for running benchmarking
+		IQ response = new IQ(); 
+		response.setType(Type.result);
+		Element queryEl = response.getElement().addElement("query", 
+				ManagerXmppComponent.GETINSTANCE_NAMESPACE);
+		Element instanceEl = queryEl.addElement("instance");
+		instanceEl.addElement("id").setText("newinstanceid");
+		instanceEl.addElement("state").setText(InstanceState.RUNNING.toString());
+		
+		Mockito.when(packetSender.syncSendPacket(Mockito.any(IQ.class))).thenReturn(response);
+
 		final List<PacketCallback> callbacks = new LinkedList<PacketCallback>();
 		
 		Mockito.doAnswer(new Answer<Void>() {
@@ -267,9 +278,9 @@ public class TestManagerController {
 		Assert.assertTrue(managerController.isRequestForwardedtoRemoteMember(request1.getId()));
 
 		IQ iq = new IQ();
-		Element queryEl = iq.getElement().addElement("query",
+		queryEl = iq.getElement().addElement("query",
 				ManagerXmppComponent.REQUEST_NAMESPACE);
-		Element instanceEl = queryEl.addElement("instance");
+		instanceEl = queryEl.addElement("instance");
 		instanceEl.addElement("id").setText("newinstanceid");
 		callbacks.get(0).handle(iq);
 
@@ -330,7 +341,7 @@ public class TestManagerController {
 				request1.getId()));
 		
 		//updating time
-		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now + ManagerController.DEFAULT_SCHEDULER_PERIOD + 100);
+		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now + ManagerController.DEFAULT_ASYNC_REQUEST_WAITING_INTERVAL + 100);
 		
 		managerController.removeRequestsThatReachTimeout();
 		
@@ -1683,7 +1694,7 @@ public class TestManagerController {
 	}
 	
 	@Test
-	public void testInstanceIsBeenUsedByFulfilledRequest(){
+	public void testInstanceIsBeingUsedByFulfilledRequest(){
 		// setting request repository
 		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null);
 		request1.setState(RequestState.FULFILLED);
@@ -1694,14 +1705,14 @@ public class TestManagerController {
 		requestRepository.addRequest(managerTestHelper.getDefaultLocalToken().getUser(), request1);
 		managerController.setRequests(requestRepository);
 		
-		Assert.assertTrue(managerController.isInstanceBeenUsed(DefaultDataTestHelper.INSTANCE_ID
+		Assert.assertTrue(managerController.instanceHasRequestRelatedTo(request1.getId(), DefaultDataTestHelper.INSTANCE_ID
 				+ Request.SEPARATOR_GLOBAL_ID + "remote-manager.test.com"));
-		Assert.assertFalse(managerController.isInstanceBeenUsed("any_value"
+		Assert.assertFalse(managerController.instanceHasRequestRelatedTo(request1.getId(), "any_value"
 				+ Request.SEPARATOR_GLOBAL_ID + "remote-manager.test.com"));
 	}
 	
 	@Test
-	public void testInstanceIsBeenUsedByDeletedRequest(){
+	public void testInstanceIsBeingUsedByDeletedRequest(){
 		// setting request repository
 		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null);
 		request1.setState(RequestState.DELETED);
@@ -1712,14 +1723,75 @@ public class TestManagerController {
 		requestRepository.addRequest(managerTestHelper.getDefaultLocalToken().getUser(), request1);
 		managerController.setRequests(requestRepository);
 				
-		Assert.assertTrue(managerController.isInstanceBeenUsed(DefaultDataTestHelper.INSTANCE_ID
+		Assert.assertTrue(managerController.instanceHasRequestRelatedTo(request1.getId(), DefaultDataTestHelper.INSTANCE_ID
 				+ Request.SEPARATOR_GLOBAL_ID + "remote-manager.test.com"));
-		Assert.assertFalse(managerController.isInstanceBeenUsed("any_value"
+		Assert.assertFalse(managerController.instanceHasRequestRelatedTo(request1.getId(), "any_value"
 				+ Request.SEPARATOR_GLOBAL_ID + "remote-manager.test.com"));
 	}
 	
 	@Test
-	public void testInstanceIsNotBeenUsed(){
+	public void testInstanceIsNotBeingUsedButRequestWasForwarded(){
+		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);
+		managerController.setPacketSender(packetSender);
+		
+		ResourcesInfo localResourcesInfo = new ResourcesInfo("", "", "", "", null);
+		localResourcesInfo.setId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		
+		ResourcesInfo remoteResourcesInfo = new ResourcesInfo("", "", "", "", null);
+		remoteResourcesInfo.setId(DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL);
+		
+		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
+		Mockito.when(
+				computePlugin.requestInstance(Mockito.any(Token.class), Mockito.anyList(), 
+						Mockito.anyMap(), Mockito.anyString()))
+				.thenThrow(new OCCIException(ErrorType.UNAUTHORIZED, ""));
+				
+		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class)))
+				.thenReturn(localResourcesInfo);
+		managerController.setComputePlugin(computePlugin);
+
+		List<FederationMember> listMembers = new ArrayList<FederationMember>();
+		listMembers.add(new FederationMember(localResourcesInfo));
+		listMembers.add(new FederationMember(remoteResourcesInfo));
+		managerController.updateMembers(listMembers);
+
+		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), new ArrayList<Category>(),
+				new HashMap<String, String>());
+		request1.setState(RequestState.OPEN);
+		RequestRepository requestRepository = new RequestRepository();
+		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(), request1);
+		managerController.setRequests(requestRepository);
+
+		// mocking date
+		long now = System.currentTimeMillis();
+		DateUtils dateUtils = Mockito.mock(DateUtils.class);
+		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
+		managerController.setDateUtils(dateUtils);
+
+		// submiting requests
+		managerController.checkAndSubmitOpenRequests();
+
+		// checking if request was forwarded to remote member
+		List<Request> requestsFromUser = managerController.getRequestsFromUser(
+				managerTestHelper.getDefaultFederationToken().getAccessId());
+		for (Request request : requestsFromUser) {
+			Assert.assertEquals(RequestState.OPEN, request.getState());
+		}
+		Assert.assertTrue(managerController.isRequestForwardedtoRemoteMember(
+				request1.getId()));
+		
+		// checking if forwarded request is being considered while checking if
+		// instance is being used
+		Assert.assertTrue(managerController.instanceHasRequestRelatedTo(request1.getId(),
+				DefaultDataTestHelper.INSTANCE_ID + Request.SEPARATOR_GLOBAL_ID
+						+ DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL));
+		Assert.assertTrue(managerController.instanceHasRequestRelatedTo(request1.getId(),
+				"any_value" + Request.SEPARATOR_GLOBAL_ID
+						+ DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL));
+	}
+	
+	@Test
+	public void testInstanceIsNotBeingUsed(){
 		// setting request repository
 		Request request1 = new Request("id1",
 				managerTestHelper.getDefaultFederationToken(),
@@ -1730,7 +1802,7 @@ public class TestManagerController {
 		requestRepository.addRequest(managerTestHelper.getDefaultLocalToken().getUser(), request1);
 		managerController.setRequests(requestRepository);
 		
-		Assert.assertFalse(managerController.isInstanceBeenUsed("instanceId"));
+		Assert.assertFalse(managerController.instanceHasRequestRelatedTo(request1.getId(), "instanceId"));
 	}
 	
 	@Test
@@ -1745,7 +1817,7 @@ public class TestManagerController {
 		iq.setTo("manager1-test.com");
 		iq.setType(Type.get);
 		Element queryEl = iq.getElement().addElement("query",
-				ManagerXmppComponent.ISINSTANCEBEENUSED_NAMESPACE);
+				ManagerXmppComponent.INSTANCEBEINGUSED_NAMESPACE);
 		Element instanceEl = queryEl.addElement("instance");
 		instanceEl.addElement("id").setText(DefaultDataTestHelper.INSTANCE_ID);
 
@@ -1783,7 +1855,7 @@ public class TestManagerController {
 		iq.setTo("manager1-test.com");
 		iq.setType(Type.get);
 		Element queryEl = iq.getElement().addElement("query",
-				ManagerXmppComponent.ISINSTANCEBEENUSED_NAMESPACE);
+				ManagerXmppComponent.INSTANCEBEINGUSED_NAMESPACE);
 		Element instanceEl = queryEl.addElement("instance");
 		instanceEl.addElement("id").setText(DefaultDataTestHelper.INSTANCE_ID);
 

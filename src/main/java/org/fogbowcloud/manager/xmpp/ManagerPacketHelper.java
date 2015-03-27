@@ -17,6 +17,7 @@ import org.fogbowcloud.manager.core.AsynchronousRequestCallback;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
+import org.fogbowcloud.manager.core.model.ServedRequest;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.OCCIException;
@@ -164,7 +165,10 @@ public class ManagerPacketHelper {
 			Element attributeEl = queryEl.addElement("attribute");
 			attributeEl.addAttribute("var", xOCCIEntry.getKey());
 			attributeEl.addElement("value").setText(xOCCIEntry.getValue());
-		}
+		}		
+		Element requestEl = queryEl.addElement("request");
+		requestEl.addElement("id").setText(request.getId());
+		
 		IQ response = (IQ) packetSender.syncSendPacket(iq);
 		if (response.getError() != null) {
 			if (response.getError().getCondition().equals(Condition.item_not_found)) {
@@ -193,6 +197,9 @@ public class ManagerPacketHelper {
 			attributeEl.addAttribute("var", xOCCIEntry.getKey());
 			attributeEl.addElement("value").setText(xOCCIEntry.getValue());
 		}
+		Element requestEl = queryEl.addElement("request");
+		requestEl.addElement("id").setText(request.getId());
+
 		if (userFederationToken != null) {
 			Element tokenEl = queryEl.addElement("token");
 			tokenEl.addElement("accessId").setText(userFederationToken.getAccessId());
@@ -218,15 +225,20 @@ public class ManagerPacketHelper {
 		packetSender.sendPacket(iq);
 	}
 
-	public static Instance getRemoteInstance(Request request, PacketSender packetSender) {
+	protected static Instance getRemoteInstance(Request request, PacketSender packetSender) {
+		return getRemoteInstance(request.getMemberId(), request.getInstanceId(), packetSender);
+	}
+	
+	public static Instance getRemoteInstance(String memberId, String instanceId,
+			PacketSender packetSender) {
 		IQ iq = new IQ();
-		iq.setTo(request.getMemberId());
+		iq.setTo(memberId);
 		iq.setType(Type.get);
 		Element queryEl = iq.getElement().addElement("query",
 				ManagerXmppComponent.GETINSTANCE_NAMESPACE);
 		Element instanceEl = queryEl.addElement("instance");
 		try {
-			instanceEl.addElement("id").setText(request.getInstanceId());
+			instanceEl.addElement("id").setText(instanceId);
 		} catch (Exception e) {
 			// TODO: handle exception
 		}
@@ -235,7 +247,7 @@ public class ManagerPacketHelper {
 		if (response == null) {
 			throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
 		}
-		
+
 		if (response.getError() != null) {
 			raiseException(response.getError());
 		}
@@ -358,18 +370,20 @@ public class ManagerPacketHelper {
 		}
 	}
 
-	public static void checkIfInstanceIsBeenUsedByRemoteMember(String instanceId, String memberAddress,
-			PacketSender packetSender) {
+	public static void checkIfInstanceIsBeingUsedByRemoteMember(String instanceId,
+			ServedRequest servedRequest, PacketSender packetSender) {
 		IQ iq = new IQ();
-		iq.setTo(memberAddress);
+		iq.setTo(servedRequest.getMemberId());
 		iq.setType(Type.get);
 		Element queryEl = iq.getElement().addElement("query",
-				ManagerXmppComponent.ISINSTANCEBEENUSED_NAMESPACE);
+				ManagerXmppComponent.INSTANCEBEINGUSED_NAMESPACE);
+		Element requestEl = queryEl.addElement("request");
+		requestEl.addElement("id").setText(servedRequest.getInstanceToken());
 		Element instanceEl = queryEl.addElement("instance");
 		instanceEl.addElement("id").setText(instanceId);
 		IQ response = (IQ) packetSender.syncSendPacket(iq);
 		if (response.getError() != null) {
 			raiseException(response.getError());
-		}		
+		}	
 	}	
 }

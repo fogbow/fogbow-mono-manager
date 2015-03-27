@@ -16,7 +16,6 @@ import org.fogbowcloud.manager.core.plugins.util.Credential;
 import org.fogbowcloud.manager.core.plugins.voms.VomsIdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.voms.VomsIdentityPlugin.ProxyCertificateGenerator;
 import org.fogbowcloud.manager.occi.core.Token;
-import org.fogbowcloud.manager.occi.plugins.validators.VOMSTestHelper;
 import org.fogbowcloud.manager.occi.util.SecurityRestrictionHelper;
 import org.junit.Assert;
 import org.junit.Before;
@@ -78,7 +77,7 @@ public class TestIdentityVoms {
 		credentials.put(VomsIdentityPlugin.SERVER_NAME, VOMS_SERVER);
 
 		Mockito.when(generatorProxyCertificate.generate(credentials)).thenReturn(proxyCertificate);
-		Token token = VOMSTestHelper.createToken();
+		Token token = vomsIdentityPlugin.createToken(credentials);
 
 		Date after = new Date(System.currentTimeMillis() + TWELVE_HOURS);
 
