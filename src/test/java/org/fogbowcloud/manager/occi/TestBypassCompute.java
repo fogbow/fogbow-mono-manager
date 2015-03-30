@@ -408,11 +408,7 @@ public class TestBypassCompute {
 		
 		//adding two instances directly on compute endpoint
 		List<Category> categories = new ArrayList<Category>();
-		Map<String, String> xOCCIAttr = new HashMap<String, String>();
-		String requirementsStr = RequirementsHelper.GLUE_DISK_TERM + " >= 10 && "
-				+ RequirementsHelper.GLUE_MEM_RAM_TERM + " > 500 && "
-				+ RequirementsHelper.GLUE_VCPU_TERM + " > 0";
-		xOCCIAttr.put(RequestAttribute.REQUIREMENTS.getValue(), requirementsStr);		
+		Map<String, String> xOCCIAttr = new HashMap<String, String>();	
 		Assert.assertEquals(SECOND_INSTANCE_ID, computePlugin.requestInstance(
 				defaultToken, categories, xOCCIAttr, PluginHelper.CIRROS_IMAGE_TERM));
 		Assert.assertEquals(THIRD_INSTANCE_ID, computePlugin.requestInstance(

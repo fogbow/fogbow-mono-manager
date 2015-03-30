@@ -260,9 +260,11 @@ public class RequestServerResource extends ServerResource {
 		}				
 
 		String flavorTerm = null;
-		for (Category category : categories) {
+		List<Category> copyListCategory = new ArrayList<Category>(categories);
+		for (Category category : copyListCategory) {
 			if (category.getScheme().equals(RequestConstants.TEMPLATE_RESOURCE_SCHEME)) {
 				flavorTerm = category.getTerm();
+				break;
 			}
 		}
 		
@@ -277,7 +279,7 @@ public class RequestServerResource extends ServerResource {
 				}
 			}
 			if (!thereIsFlavor) {
-				throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.UNSUPPORTED_ATTRIBUTES);			
+				throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.STATIC_FLAVORS_NOT_SPECIFIED);			
 			}
 		}
 		

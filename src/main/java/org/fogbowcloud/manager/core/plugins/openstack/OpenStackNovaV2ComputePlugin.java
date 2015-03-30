@@ -125,14 +125,19 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 			flavorId = foundFlavor.getId();
 		}
 		
+		// TODO Think about ! Is necessary ?
 		for (Category category : categories) {
+			if (category.getScheme().equals(RequestConstants.TEMPLATE_RESOURCE_SCHEME)) {
+				continue;
+			}		
 			String openstackRef = fogbowTermToOpenStack.get(category.getTerm());
-			if (openstackRef == null && !category.getScheme().equals(
-					RequestConstants.TEMPLATE_OS_SCHEME)) {
+			if (openstackRef == null
+					&& !category.getScheme().equals(RequestConstants.TEMPLATE_OS_SCHEME)
+					&& !category.getScheme().equals(RequestConstants.TEMPLATE_RESOURCE_SCHEME)) {
 				throw new OCCIException(ErrorType.BAD_REQUEST,
 						ResponseConstants.CLOUD_NOT_SUPPORT_CATEGORY + category.getTerm());
 			}
-		}
+		}		
 
 		String publicKey = xOCCIAtt.get(RequestAttribute.DATA_PUBLIC_KEY.getValue());
 		String keyName = getKeyname(token, publicKey);

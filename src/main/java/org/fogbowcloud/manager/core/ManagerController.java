@@ -785,14 +785,12 @@ public class ManagerController {
 				List<FederationMember> allowedFederationMembers = getAllowedFederationMembers(requirements);
 
 				boolean isFulfilled = false;
-				if (!RequirementsHelper.existsLocation(requirements)
-						|| (RequirementsHelper.existsLocation(requirements) && allowedFederationMembers
-								.isEmpty())) {
+				if (!RequirementsHelper.existsLocation(requirements)) {				
 					isFulfilled = createLocalInstance(request)
 							|| createLocalInstanceWithFederationUser(request);
-					if (!isFulfilled) {
-						createAsynchronousRemoteInstance(request, allowedFederationMembers);
-					}
+				}
+				if (!isFulfilled) {
+					createAsynchronousRemoteInstance(request, allowedFederationMembers);
 				}
 				allFulfilled &= isFulfilled;
 				
@@ -811,9 +809,9 @@ public class ManagerController {
 		List<FederationMember> federationMembers = new ArrayList<FederationMember>(members);
 		List<FederationMember> allowedFederationMembers = new ArrayList<FederationMember>();
 		for (FederationMember federationMember : federationMembers) {
-			String myJid = getProperties().getProperty(ConfigurationConstants.XMPP_JID_KEY);
-			if ((!federationMember.getResourcesInfo().getId().equals(myJid) && getValidator()
-					.canReceiveFrom(federationMember))
+//			String myJid = getProperties().getProperty(ConfigurationConstants.XMPP_JID_KEY);
+//			!federationMember.getResourcesInfo().getId().equals(myJid) &&
+			if ((getValidator().canReceiveFrom(federationMember))
 					&& (!RequirementsHelper.existsLocation(requirements) || (RequirementsHelper
 							.existsLocation(requirements) && RequirementsHelper.matchLocation(
 							requirements, federationMember.getResourcesInfo().getId())))) {

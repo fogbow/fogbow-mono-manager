@@ -3,7 +3,6 @@ package org.fogbowcloud.manager.core.plugins;
 import java.util.List;
 import java.util.Map;
 
-import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.Token;

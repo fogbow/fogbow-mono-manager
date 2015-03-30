@@ -58,10 +58,6 @@ public class OpenStackOCCIComputePlugin extends OCCIComputePlugin{
 		List<Category> openStackCategories = new ArrayList<Category>();
 		
 		for (Category category : requestCategories) {
-			if (super.fogTermToCategory.get(category.getTerm()) == null) {
-				throw new OCCIException(ErrorType.BAD_REQUEST,
-						ResponseConstants.CLOUD_NOT_SUPPORT_CATEGORY + category.getTerm());
-			}
 			openStackCategories.add(super.fogTermToCategory.get(category.getTerm()));
 			
 			// adding ssh public key

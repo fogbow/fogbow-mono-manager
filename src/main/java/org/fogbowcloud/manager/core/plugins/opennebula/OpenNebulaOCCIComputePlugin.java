@@ -64,11 +64,7 @@ public class OpenNebulaOCCIComputePlugin extends OCCIComputePlugin {
 		List<Category> occiCategories = new ArrayList<Category>();
 		
 		String headerShhPublic = "";
-		for (Category category : requestCategories) {
-			if (super.fogTermToCategory.get(category.getTerm()) == null) {
-				throw new OCCIException(ErrorType.BAD_REQUEST,
-						ResponseConstants.CLOUD_NOT_SUPPORT_CATEGORY + category.getTerm());
-			}
+		for (Category category : requestCategories) {			
 			occiCategories.add(super.fogTermToCategory.get(category.getTerm()));
 		
 			// adding ssh public key

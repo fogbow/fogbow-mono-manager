@@ -116,15 +116,23 @@ public class OCCIComputePlugin implements ComputePlugin {
 			occiCategories.add(new Category(flavorRef.getName(), resourceScheme, RequestConstants.MIXIN_CLASS));						
 		}
 		
-		for (Category category : requestCategories) {
+		Set<Header> headers = new HashSet<Header>();
+		
+		for (Category category : new ArrayList<Category>(requestCategories)) {
+			if (category.getScheme().equals(RequestConstants.TEMPLATE_RESOURCE_SCHEME)) {
+				requestCategories.remove(category);
+				continue;
+			}			
 			if (fogTermToCategory.get(category.getTerm()) == null) {
 				throw new OCCIException(ErrorType.BAD_REQUEST,
 						ResponseConstants.CLOUD_NOT_SUPPORT_CATEGORY + category.getTerm());
-			}
+			}			 
 			occiCategories.add(fogTermToCategory.get(category.getTerm()));
 		}
 		
-		Set<Header> headers = new HashSet<Header>();
+		headers.addAll(getExtraHeaders(requestCategories, xOCCIAtt, token));
+		
+			
 		for (Category category : occiCategories) {
 			headers.add(new BasicHeader(OCCIHeaders.CATEGORY, category.toHeader()));
 		}
@@ -135,15 +143,13 @@ public class OCCIComputePlugin implements ComputePlugin {
 			}
 		}
 
-		headers.addAll(getExtraHeaders(requestCategories, xOCCIAtt, token));
-
 		// specifying network using inline creation of link instance
 		if (networkId != null && !"".equals(networkId)) {
 			headers.add(new BasicHeader(OCCIHeaders.LINK, "</network/" + networkId + ">; "
 					+ "rel=\"http://schemas.ogf.org/occi/infrastructure#network\"; "
 					+ "category=\"http://schemas.ogf.org/occi/infrastructure#networkinterface\";"));
-		}
-
+		}	
+		
 		HttpResponse response = doRequest("post", computeOCCIEndpoint, token.getAccessId(),
 				normalizeHeaders(headers)).getHttpResponse();
 		
@@ -153,7 +159,7 @@ public class OCCIComputePlugin implements ComputePlugin {
 		}
 		return null;
 	}
-
+	
 	private Set<Header> normalizeHeaders(Set<Header> headers) {
 		Set<Header> newHeaders = new HashSet<Header>();
 		Map<String, String> mapUniqueHeaders = new HashMap<String, String>();
