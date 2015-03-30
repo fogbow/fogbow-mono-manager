@@ -25,6 +25,7 @@ public class TestNoFMemberPicker {
 		properties = new Properties();
 		properties.put(ConfigurationConstants.XMPP_JID_KEY,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		properties.put("nof_trustworthy", "false");
 		
 		accoutingPlugin = Mockito.mock(AccountingPlugin.class);
 		
@@ -40,6 +41,7 @@ public class TestNoFMemberPicker {
 		
 		NoFMemberPicker nofPicker = new NoFMemberPicker(properties, accoutingPlugin);
 		Assert.assertNull(nofPicker.pick(facade));
+		Assert.assertFalse(nofPicker.getTrustworthy());
 	}
 
 	@Test
@@ -56,6 +58,7 @@ public class TestNoFMemberPicker {
 		
 		NoFMemberPicker nofPicker = new NoFMemberPicker(properties, accoutingPlugin);
 		Assert.assertNull(nofPicker.pick(facade));
+		Assert.assertFalse(nofPicker.getTrustworthy());
 	}
 	
 	@Test
@@ -81,5 +84,39 @@ public class TestNoFMemberPicker {
 		
 		NoFMemberPicker nofPicker = new NoFMemberPicker(properties, accoutingPlugin);
 		Assert.assertEquals(remoteMember, nofPicker.pick(facade));
+		Assert.assertFalse(nofPicker.getTrustworthy());
+	}
+	
+	@Test
+	public void testTwoRemoteMembers() {
+		// mocking facade
+		FederationMember localMember = new FederationMember(new ResourcesInfo(
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, "", "", "", "", null));
+		FederationMember remoteMember1 = new FederationMember(new ResourcesInfo(
+				DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL + "1", "", "", "", "", null));
+		FederationMember remoteMember2 = new FederationMember(new ResourcesInfo(
+				DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL + "2", "", "", "", "", null));
+		ArrayList<FederationMember> membersToReturn = new ArrayList<FederationMember>();
+		membersToReturn.add(localMember);
+		membersToReturn.add(remoteMember1);
+		membersToReturn.add(remoteMember2);
+		Mockito.when(facade.getMembers()).thenReturn(membersToReturn);
+		
+		// mocking accounting		
+		HashMap<String, ResourceUsage> membersUsageToReturn = new HashMap<String, ResourceUsage>();
+		ResourceUsage resUsage1 = new ResourceUsage(DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL + "1");
+		resUsage1.addConsumption(4);
+		resUsage1.addDonation(16);
+		membersUsageToReturn.put(DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL + "1", resUsage1);		
+		ResourceUsage resUsage2 = new ResourceUsage(DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL + "2");
+		resUsage2.addConsumption(10);
+		resUsage2.addDonation(16);
+		membersUsageToReturn.put(DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL + "2", resUsage2);		
+		Mockito.when(accoutingPlugin.getMembersUsage()).thenReturn(
+				membersUsageToReturn);
+		
+		NoFMemberPicker nofPicker = new NoFMemberPicker(properties, accoutingPlugin);
+		Assert.assertEquals(remoteMember1, nofPicker.pick(facade));
+		Assert.assertFalse(nofPicker.getTrustworthy());
 	}
 }

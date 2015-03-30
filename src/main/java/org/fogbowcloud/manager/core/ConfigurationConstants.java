@@ -65,4 +65,7 @@ public class ConfigurationConstants {
 
 	//Green
 	public static final String GREEN_SITTER_JID = "greensitter_jid";
+
+	//member picker
+	public static final String MEMBER_PICKER_PLUGIN_CLASS_KEY = "member_picker_class";
 }

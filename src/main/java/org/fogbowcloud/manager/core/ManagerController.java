@@ -75,7 +75,7 @@ public class ManagerController {
 	private Token federationUserToken;
 	private final List<FederationMember> members = Collections.synchronizedList(new LinkedList<FederationMember>());
 	private RequestRepository requests = new RequestRepository();
-	private FederationMemberPicker memberPicker = new RoundRobinMemberPicker();
+	private FederationMemberPicker memberPicker;
 
 	private BenchmarkingPlugin benchmarkingPlugin;
 	private AccountingPlugin accountingPlugin;
@@ -115,6 +115,10 @@ public class ManagerController {
 			this.garbageCollectorTimer = new ManagerTimer(executor);
 			this.accountingUpdaterTimer = new ManagerTimer(executor);
 		}
+	}
+	
+	public void setMemberPickerPlugin(FederationMemberPicker memberPicker) {
+		this.memberPicker = memberPicker;
 	}
 
 	public void setBenchmarkingPlugin(BenchmarkingPlugin benchmarkingPlugin) {

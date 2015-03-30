@@ -7,8 +7,10 @@ import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.DefaultMemberValidator;
+import org.fogbowcloud.manager.core.FederationMemberPicker;
 import org.fogbowcloud.manager.core.FederationMemberValidator;
 import org.fogbowcloud.manager.core.ManagerController;
+import org.fogbowcloud.manager.core.RoundRobinMemberPicker;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
@@ -115,6 +117,16 @@ public class Main {
 			accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin);
 			LOGGER.warn("Accounting plugin not specified in properties. Using the default one.", e);
 		}
+		
+		FederationMemberPicker memberPickerPlugin = null;
+		try {
+			memberPickerPlugin = (FederationMemberPicker) createInstanceWithAccoutingPlugin(
+					ConfigurationConstants.MEMBER_PICKER_PLUGIN_CLASS_KEY, properties,
+					accountingPlugin);
+		} catch (Exception e) {
+			memberPickerPlugin = new RoundRobinMemberPicker(properties, accountingPlugin);
+			LOGGER.warn("Member picker plugin not specified in properties. Using the default one.", e);
+		}
 
 		ManagerController facade = new ManagerController(properties);
 		facade.setComputePlugin(computePlugin);
@@ -125,6 +137,7 @@ public class Main {
 		facade.setValidator(validator);
 		facade.setBenchmarkingPlugin(benchmarkingPlugin);
 		facade.setAccountingPlugin(accountingPlugin);
+		facade.setMemberPickerPlugin(memberPickerPlugin);
 		
 		ManagerXmppComponent xmpp = new ManagerXmppComponent(
 				properties.getProperty(ConfigurationConstants.XMPP_JID_KEY),
@@ -190,6 +203,13 @@ public class Main {
 			BenchmarkingPlugin benchmarkingPlugin) throws Exception {
 		return Class.forName(properties.getProperty(propName)).getConstructor(Properties.class, BenchmarkingPlugin.class)
 				.newInstance(properties, benchmarkingPlugin);
+	}
+	
+	private static Object createInstanceWithAccoutingPlugin(
+			String propName, Properties properties,
+			AccountingPlugin accoutingPlugin) throws Exception {
+		return Class.forName(properties.getProperty(propName)).getConstructor(Properties.class, AccountingPlugin.class)
+				.newInstance(properties, accoutingPlugin);
 	}
 
 	private static void configureLog4j() {

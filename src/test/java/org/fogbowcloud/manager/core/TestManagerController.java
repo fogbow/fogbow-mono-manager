@@ -162,7 +162,12 @@ public class TestManagerController {
 	public void testSubmitToGreenSitter() {
 		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);
 		managerController.setPacketSender(packetSender);
-
+		
+		FederationMemberPicker memberPickerPlugin = Mockito.mock(FederationMemberPicker.class);
+		Mockito.when(memberPickerPlugin.pick(Mockito.any(ManagerController.class)))
+				.thenReturn(null);
+		managerController.setMemberPickerPlugin(memberPickerPlugin);
+		
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 
 		ResourcesInfo localResourcesInfo = new ResourcesInfo("", "", "", "", null);
@@ -1729,6 +1734,7 @@ public class TestManagerController {
 				+ Request.SEPARATOR_GLOBAL_ID + "remote-manager.test.com"));
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testInstanceIsNotBeingUsedButRequestWasForwarded(){
 		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);

@@ -19,6 +19,7 @@ import org.dom4j.Attribute;
 import org.dom4j.Element;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.DefaultMemberValidator;
+import org.fogbowcloud.manager.core.FederationMemberPicker;
 import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.Flavor;
@@ -60,6 +61,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 	private AuthorizationPlugin authorizationPlugin;
 	private BenchmarkingPlugin benchmarkingPlugin;
 	private AccountingPlugin accountingPlugin;
+	private FederationMemberPicker memberPickerPlugin;
 	private Token defaultUserToken;
 	private Token defaultFederationToken;
 	private FakeXMPPServer fakeServer = new FakeXMPPServer();
@@ -380,6 +382,11 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		
 		accountingPlugin = Mockito.mock(AccountingPlugin.class);
 		
+		memberPickerPlugin = Mockito.mock(FederationMemberPicker.class);
+		Mockito.when(memberPickerPlugin.pick(Mockito.any(ManagerController.class))).thenReturn(
+				new FederationMember(new ResourcesInfo(
+						DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL, "", "", "", null)));
+		
 		managerController.setAuthorizationPlugin(authorizationPlugin);
 		managerController.setLocalIdentityPlugin(identityPlugin);
 		managerController.setFederationIdentityPlugin(federationIdentityPlugin);
@@ -387,6 +394,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		managerController.setBenchmarkingPlugin(benchmarkingPlugin);
 		managerController.setAccountingPlugin(accountingPlugin);
 		managerController.setValidator(new DefaultMemberValidator(null));
+		managerController.setMemberPickerPlugin(memberPickerPlugin);
 		return managerController;
 	}
 

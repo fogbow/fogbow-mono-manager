@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.accounting.ResourceUsage;
@@ -15,10 +16,18 @@ public class NoFMemberPicker implements FederationMemberPicker {
 		
 	private AccountingPlugin accoutingPlugin;
 	private String localMemberId;
+	private boolean trustworthy = false;
 
+	private static final Logger LOGGER = Logger.getLogger(NoFMemberPicker.class);
+	
 	public NoFMemberPicker(Properties properties, AccountingPlugin accoutingPlugin) {
 		this.accoutingPlugin = accoutingPlugin;
 		this.localMemberId = properties.getProperty(ConfigurationConstants.XMPP_JID_KEY);
+		try {
+			this.trustworthy = Boolean.valueOf(properties.getProperty("nof_trustworthy"));			
+		} catch (Exception e) {
+			LOGGER.error("Error while getting boolean valued from ", e);
+		}
 	}
 	
 	@Override
@@ -33,38 +42,41 @@ public class NoFMemberPicker implements FederationMemberPicker {
 				continue;
 			}
 			
-			double reputation = 0d;
+			double debt = 0d;
 			if (membersUsage.containsKey(memberId)) {
-				reputation = membersUsage.get(memberId).getConsumed()
-						- membersUsage.get(memberId).getDonated()
-						+ Math.sqrt(membersUsage.get(memberId).getDonated());
+				debt = membersUsage.get(memberId).getConsumed()
+						- membersUsage.get(memberId).getDonated();
+				if (!trustworthy) {
+					debt = Math.max(0,
+							debt + Math.sqrt(membersUsage.get(memberId).getDonated()));
+				}
 			}
-			reputableMembers.add(new ReputableFederationMember(currentMember, reputation));
+			reputableMembers.add(new ReputableFederationMember(currentMember, debt));
 		}
 		
 		if (reputableMembers.isEmpty()) {
 			return null;
 		}
 		Collections.sort(reputableMembers, new ReputableFederationMemberComparator());
-		return reputableMembers.getLast().getMember();
+		return reputableMembers.getFirst().getMember();
 	}
 
 	class ReputableFederationMember {
 
 		private FederationMember member;
-		private double reputation;
+		private double debt;
 
-		public ReputableFederationMember(FederationMember member, double reputation) {
+		public ReputableFederationMember(FederationMember member, double debt) {
 			this.member = member;
-			this.reputation = reputation;
+			this.debt = debt;
 		}
 
 		public FederationMember getMember() {
 			return member;
 		}
 
-		public double getReputation() {
-			return reputation;
+		public double getDebt() {
+			return debt;
 		}
 	}
 	
@@ -73,9 +85,13 @@ public class NoFMemberPicker implements FederationMemberPicker {
 		public int compare(ReputableFederationMember firstReputableMember,
 				ReputableFederationMember secondReputableMember) {
 
-			return new Double(firstReputableMember.getReputation()).compareTo(new Double(
-					secondReputableMember.getReputation()));
+			return new Double(firstReputableMember.getDebt()).compareTo(new Double(
+					secondReputableMember.getDebt()));
 		}
+	}
+
+	public boolean getTrustworthy() {
+		return trustworthy;
 	}
 }
 
