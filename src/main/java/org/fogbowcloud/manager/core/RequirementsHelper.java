@@ -15,10 +15,10 @@ import condor.classad.Op;
 import condor.classad.RecordExpr;
 
 public class RequirementsHelper {
-	public static final String GLUE_LOCATION_TERM = "Glue2.CloudComputeManager.ID";
-	public static final String GLUE_VCPU_TERM = "Glue2.vCPU";
-	public static final String GLUE_DISK_TERM = "Glue2.Disk";
-	public static final String GLUE_MEM_RAM_TERM = "Glue2.RAM";
+	public static final String GLUE_LOCATION_TERM = "Glue2CloudComputeManagerID";
+	public static final String GLUE_VCPU_TERM = "Glue2vCPU";
+	public static final String GLUE_DISK_TERM = "Glue2Disk";
+	public static final String GLUE_MEM_RAM_TERM = "Glue2RAM";
 
 	public static boolean checkRequirements(String requirementsString) {
 		try {

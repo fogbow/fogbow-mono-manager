@@ -588,7 +588,7 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		return this.flavors;
 	}
 
-	public synchronized void updateFlavors(Token token) {
+	public void updateFlavors(Token token) {
 		Client oneClient = this.clientFactory.createClient(token.getAccessId(),
 				openNebulaEndpoint);
 		List<Flavor> newFlavors = new ArrayList<Flavor>();		
@@ -626,7 +626,8 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 					}
 				}
 				diskIndex++;
-				if (template.xpath("TEMPLATE/DISK[" + diskIndex + "]") == null) {
+				if (template.xpath("TEMPLATE/DISK[" + diskIndex + "]") == null
+						|| template.xpath("TEMPLATE/DISK[" + diskIndex + "]").isEmpty()) {
 					break;
 				}
 			}

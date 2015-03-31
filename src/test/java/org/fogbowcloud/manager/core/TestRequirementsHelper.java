@@ -336,6 +336,11 @@ public class TestRequirementsHelper {
 		attName = "X";
 		findValuesInRequiremets = RequirementsHelper.findValuesInRequiremets(toOp(requirements), attName);
 		Assert.assertEquals(3, findValuesInRequiremets.size());
+		
+		requirements = "X==\"id1\" || (X==\"id2\" && X==\"id3\") || X == \"\"";
+		attName = "X";
+		findValuesInRequiremets = RequirementsHelper.findValuesInRequiremets(toOp(requirements), attName);
+		Assert.assertEquals(4, findValuesInRequiremets.size());
 	}
 	
 	private Op toOp(String requirementsStr) {
