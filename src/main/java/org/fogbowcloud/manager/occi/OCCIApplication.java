@@ -7,6 +7,7 @@ import java.util.Properties;
 import org.apache.http.HttpStatus;
 import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.model.FederationMember;
+import org.fogbowcloud.manager.core.plugins.accounting.ResourceUsage;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.HeaderUtils;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
@@ -46,6 +47,8 @@ public class OCCIApplication extends Application {
 		router.attach("/token", TokenServerResource.class);
 		router.attach("/-/", QueryServerResource.class);
 		router.attach("/.well-known/org/ogf/occi/-/", QueryServerResource.class);
+		router.attach("/usage", UsageServerResource.class);
+		router.attach("/usage/{option}", UsageServerResource.class);
 		router.attachDefault(new Restlet() {
 			@Override
 			public void handle(org.restlet.Request request, Response response) {
@@ -170,6 +173,14 @@ public class OCCIApplication extends Application {
 	
 	public Properties getProperties() {
 		return managerFacade.getProperties();
+	}
+
+	public List<ResourceUsage> getMembersUsage(String authToken) {
+		return managerFacade.getMembersUsage(authToken);
+	}
+
+	public Map<String, Double> getUsersUsage(String authToken) {		
+		return managerFacade.getUsersUsage(authToken);
 	}
 
 }

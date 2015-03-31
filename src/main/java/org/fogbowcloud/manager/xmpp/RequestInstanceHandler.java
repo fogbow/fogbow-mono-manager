@@ -41,6 +41,9 @@ public class RequestInstanceHandler extends AbstractQueryHandler {
 			xOCCIAtt.put(attributeEl.attributeValue("var"), attributeEl
 					.element("value").getText());
 		}
+		
+		String requestId = queryEl.element("request").element("id").getText();
+		
 		Element tokenEl = queryEl.element("token");
 		Token userToken = null;
 		if (tokenEl != null) {
@@ -52,7 +55,8 @@ public class RequestInstanceHandler extends AbstractQueryHandler {
 		IQ response = IQ.createResultIQ(query);
 		try {
 			String instanceId = facade.createInstanceWithFederationUser(query
-					.getFrom().toBareJID(), categories, xOCCIAtt, null, userToken);
+					.getFrom().toBareJID(), categories, xOCCIAtt, requestId, userToken);
+
 			if (instanceId == null) {
 				response.setError(Condition.item_not_found);
 			} else {

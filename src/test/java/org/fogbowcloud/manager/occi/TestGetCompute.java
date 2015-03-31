@@ -13,7 +13,9 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
+import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
+import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
@@ -96,8 +98,9 @@ public class TestGetCompute {
 		
 		imageStoragePlugin = Mockito.mock(ImageStoragePlugin.class);
 		
-		this.helper.initializeComponentCompute(computePlugin, identityPlugin, 
-				authorizationPlugin, imageStoragePlugin, requests);
+		this.helper.initializeComponentCompute(computePlugin, identityPlugin, authorizationPlugin,
+				imageStoragePlugin, Mockito.mock(AccountingPlugin.class),
+				Mockito.mock(BenchmarkingPlugin.class), requests);
 	}
 
 	@After
@@ -275,8 +278,9 @@ public class TestGetCompute {
 		//reseting component
 		helper.stopComponent();
 		List<Request> requests = new LinkedList<Request>();
-		helper.initializeComponentCompute(computePlugin, identityPlugin, 
-				authorizationPlugin, imageStoragePlugin, requests);
+		helper.initializeComponentCompute(computePlugin, identityPlugin, authorizationPlugin,
+				imageStoragePlugin, Mockito.mock(AccountingPlugin.class),
+				Mockito.mock(BenchmarkingPlugin.class), requests);
 
 		//test
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE);
