@@ -1,12 +1,17 @@
 package org.fogbowcloud.manager.core;
 
 import java.util.List;
+import java.util.Properties;
 
 import org.fogbowcloud.manager.core.model.FederationMember;
+import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 
 public class RoundRobinMemberPicker implements FederationMemberPicker {
 
 	private int current = -1;
+
+	public RoundRobinMemberPicker(Properties properties, AccountingPlugin accountingPlugin) {
+	}
 
 	@Override
 	public FederationMember pick(ManagerController facade) {

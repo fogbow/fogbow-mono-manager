@@ -18,7 +18,9 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
+import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
+import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
 import org.fogbowcloud.manager.core.plugins.openstack.OpenStackConfigurationConstants;
@@ -39,7 +41,6 @@ import org.fogbowcloud.manager.occi.util.PluginHelper;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -109,8 +110,9 @@ public class TestBypassCompute {
 		
 		//initializing fogbow OCCI Application
 		helper = new OCCITestHelper();
-		helper.initializeComponentCompute(computePlugin, identityPlugin, 
-				authorizationPlugin, imageStoragePlugin, requests);
+		helper.initializeComponentCompute(computePlugin, identityPlugin, authorizationPlugin,
+				imageStoragePlugin, Mockito.mock(AccountingPlugin.class),
+				Mockito.mock(BenchmarkingPlugin.class), requests);
 	}
 	
 	@After

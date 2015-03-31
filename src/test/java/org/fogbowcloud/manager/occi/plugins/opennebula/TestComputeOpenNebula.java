@@ -25,6 +25,7 @@ import org.fogbowcloud.manager.occi.core.ResourceRepository;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.instance.Instance;
+import org.fogbowcloud.manager.occi.instance.InstanceState;
 import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.fogbowcloud.manager.occi.util.PluginHelper;
@@ -519,7 +520,6 @@ public class TestComputeOpenNebula {
 		Assert.assertEquals("0.0", resourcesInfo.getCpuInUse());
 		Assert.assertEquals("5120.0", resourcesInfo.getMemIdle());
 		Assert.assertEquals("0.0", resourcesInfo.getMemInUse());
-		Assert.assertNull(resourcesInfo.getCert());
 		List<Flavor> flavors = new ArrayList<Flavor>();
 		flavors.add(new Flavor(RequestConstants.SMALL_TERM, "1.0", "128.0", 10));
 		flavors.add(new Flavor(RequestConstants.MEDIUM_TERM, "2.0", "256.0", 5));
@@ -568,7 +568,6 @@ public class TestComputeOpenNebula {
 		Assert.assertEquals("0.0", resourcesInfo.getCpuInUse());
 		Assert.assertEquals("4096.0", resourcesInfo.getMemIdle());
 		Assert.assertEquals("0.0", resourcesInfo.getMemInUse());
-		Assert.assertNull(resourcesInfo.getCert());
 		List<Flavor> flavors = new ArrayList<Flavor>();
 		flavors.add(new Flavor(RequestConstants.SMALL_TERM, "1.0", "128.0", 5 / 1));
 		flavors.add(new Flavor(RequestConstants.MEDIUM_TERM, "2.0", "256.0", 5 / 2));
@@ -617,7 +616,6 @@ public class TestComputeOpenNebula {
 		Assert.assertEquals("0.0", resourcesInfo.getCpuInUse());
 		Assert.assertEquals("4096.0", resourcesInfo.getMemIdle());
 		Assert.assertEquals("0.0", resourcesInfo.getMemInUse());
-		Assert.assertNull(resourcesInfo.getCert());
 		List<Flavor> flavors = new ArrayList<Flavor>();
 		flavors.add(new Flavor(RequestConstants.SMALL_TERM, "1.0", "128.0", 5 / 1));
 		flavors.add(new Flavor(RequestConstants.MEDIUM_TERM, "2.0", "256.0", 5 / 2));
@@ -666,7 +664,6 @@ public class TestComputeOpenNebula {
 		Assert.assertEquals("0.0", resourcesInfo.getCpuInUse());
 		Assert.assertEquals("4096.0", resourcesInfo.getMemIdle());
 		Assert.assertEquals("0.0", resourcesInfo.getMemInUse());
-		Assert.assertNull(resourcesInfo.getCert());
 		List<Flavor> flavors = new ArrayList<Flavor>();
 		flavors.add(new Flavor(RequestConstants.SMALL_TERM, "1.0", "128.0", 5 / 1));
 		flavors.add(new Flavor(RequestConstants.MEDIUM_TERM, "2.0", "256.0", 5 / 2));
@@ -716,7 +713,6 @@ public class TestComputeOpenNebula {
 		Assert.assertEquals("2944.0", resourcesInfo.getMemIdle()); // 4096 -
 																	// 1152
 		Assert.assertEquals("1152.0", resourcesInfo.getMemInUse());
-		Assert.assertNull(resourcesInfo.getCert());
 		List<Flavor> flavors = new ArrayList<Flavor>();
 		flavors.add(new Flavor(RequestConstants.SMALL_TERM, "1.0", "128.0", 3 / 1));
 		flavors.add(new Flavor(RequestConstants.MEDIUM_TERM, "2.0", "256.0", 3 / 2));
@@ -772,7 +768,6 @@ public class TestComputeOpenNebula {
 		String memIdleStr = String.valueOf(memIdle);
 		Assert.assertEquals(memIdleStr, resourcesInfo.getMemIdle());
 		Assert.assertEquals("1024.0", resourcesInfo.getMemInUse());
-		Assert.assertNull(resourcesInfo.getCert());
 		List<Flavor> flavors = new ArrayList<Flavor>();
 		String smallCpu = "1.0";
 		String smallMem = "128.0";
@@ -835,7 +830,6 @@ public class TestComputeOpenNebula {
 		String memIdleStr = String.valueOf(memIdle);
 		Assert.assertEquals(memIdleStr, resourcesInfo.getMemIdle());
 		Assert.assertEquals("1024.0", resourcesInfo.getMemInUse());
-		Assert.assertNull(resourcesInfo.getCert());
 		List<Flavor> flavors = new ArrayList<Flavor>();
 		String smallCpu = "1.0";
 		String smallMem = "128.0";
@@ -894,7 +888,6 @@ public class TestComputeOpenNebula {
 		Assert.assertEquals("2.0", resourcesInfo.getCpuInUse());
 		Assert.assertEquals("4864.0", resourcesInfo.getMemIdle());
 		Assert.assertEquals("256.0", resourcesInfo.getMemInUse());
-		Assert.assertNull(resourcesInfo.getCert());
 		List<Flavor> flavors = new ArrayList<Flavor>();
 		flavors.add(new Flavor(RequestConstants.SMALL_TERM, "1.0", "128.0", 8));
 		flavors.add(new Flavor(RequestConstants.MEDIUM_TERM, "2.0", "256.0", 4));
@@ -945,7 +938,6 @@ public class TestComputeOpenNebula {
 		Assert.assertEquals(OpenNebulaComputePlugin.DEFAULT_RESOURCE_MAX_VALUE,
 				Double.parseDouble(resourcesInfo.getMemIdle()), 0.0001);
 		Assert.assertEquals("0.0", resourcesInfo.getMemInUse());
-		Assert.assertNull(resourcesInfo.getCert());
 		List<Flavor> flavors = new ArrayList<Flavor>();
 		flavors.add(new Flavor(RequestConstants.SMALL_TERM, "1.0", "128.0",
 				OpenNebulaComputePlugin.DEFAULT_RESOURCE_MAX_VALUE / 128));
@@ -954,5 +946,51 @@ public class TestComputeOpenNebula {
 		flavors.add(new Flavor(RequestConstants.LARGE_TERM, "4.0", "512.0",
 				OpenNebulaComputePlugin.DEFAULT_RESOURCE_MAX_VALUE / 512));
 		Assert.assertEquals(flavors, resourcesInfo.getFlavors());
+	}
+	
+	@Test
+	public void tesGettInstanceState() {
+		// mocking opennebula structures
+		Client oneClient = Mockito.mock(Client.class);
+
+		VirtualMachine vm = Mockito.mock(VirtualMachine.class);
+		Mockito.when(vm.getId()).thenReturn(INSTANCE_ID);
+		Mockito.when(vm.getName()).thenReturn("one-instance");
+		Mockito.when(vm.xpath("TEMPLATE/MEMORY")).thenReturn("128.0");
+		Mockito.when(vm.xpath("TEMPLATE/CPU")).thenReturn("1.0");
+		Mockito.when(vm.xpath("TEMPLATE/DISK/IMAGE")).thenReturn(IMAGE1_NAME);
+		Mockito.when(vm.xpath("TEMPLATE/OS/ARCH")).thenReturn("");
+
+		// mocking clientFactory
+		OpenNebulaClientFactory clientFactory = Mockito.mock(OpenNebulaClientFactory.class);
+		Mockito.when(clientFactory.createClient(defaultToken.getAccessId(), OPEN_NEBULA_URL))
+				.thenReturn(oneClient);
+		Mockito.when(clientFactory.allocateVirtualMachine(oneClient, SMALL_TEMPLATE)).thenReturn(
+				INSTANCE_ID);
+		Mockito.when(clientFactory.createVirtualMachine(oneClient, INSTANCE_ID)).thenReturn(vm);
+
+		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
+
+		// requesting an instance
+		List<Category> categories = new ArrayList<Category>();
+		categories.add(new Category(RequestConstants.SMALL_TERM,
+				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
+		Assert.assertEquals(INSTANCE_ID,
+				computeOpenNebula.requestInstance(defaultToken, categories, xOCCIAtt, IMAGE1_ID));
+
+		// getting specific instance
+		Mockito.when(vm.lcmStateStr()).thenReturn("Running");
+		Assert.assertEquals(InstanceState.RUNNING, 
+				computeOpenNebula.getInstance(defaultToken, INSTANCE_ID).getState());
+		Mockito.when(vm.lcmStateStr()).thenReturn("Failure");
+		Assert.assertEquals(InstanceState.FAILED, 
+				computeOpenNebula.getInstance(defaultToken, INSTANCE_ID).getState());
+		Mockito.when(vm.lcmStateStr()).thenReturn("Prolog");
+		Assert.assertEquals(InstanceState.PENDING, 
+				computeOpenNebula.getInstance(defaultToken, INSTANCE_ID).getState());
+		Mockito.when(vm.lcmStateStr()).thenReturn("Suspended");
+		Assert.assertEquals(InstanceState.SUSPENDED, 
+				computeOpenNebula.getInstance(defaultToken, INSTANCE_ID).getState());
+
 	}
 }

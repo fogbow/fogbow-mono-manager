@@ -5,9 +5,9 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.apache.http.HttpStatus;
-import org.apache.http.message.BasicHeader;
 import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.model.FederationMember;
+import org.fogbowcloud.manager.core.plugins.accounting.ResourceUsage;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.HeaderUtils;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
@@ -21,7 +21,6 @@ import org.fogbowcloud.manager.occi.request.RequestServerResource;
 import org.restlet.Application;
 import org.restlet.Response;
 import org.restlet.Restlet;
-import org.restlet.engine.adapter.HttpRequest;
 import org.restlet.engine.header.Header;
 import org.restlet.engine.header.HeaderConstants;
 import org.restlet.routing.Router;
@@ -48,6 +47,8 @@ public class OCCIApplication extends Application {
 		router.attach("/token", TokenServerResource.class);
 		router.attach("/-/", QueryServerResource.class);
 		router.attach("/.well-known/org/ogf/occi/-/", QueryServerResource.class);
+		router.attach("/usage", UsageServerResource.class);
+		router.attach("/usage/{option}", UsageServerResource.class);
 		router.attachDefault(new Restlet() {
 			@Override
 			public void handle(org.restlet.Request request, Response response) {
@@ -101,6 +102,7 @@ public class OCCIApplication extends Application {
 		return managerFacade.getToken(attributesToken);
 	}
 	
+	@SuppressWarnings("unchecked")
 	private static void normalizeHeadersForBypass(org.restlet.Request request) {
 		Series<Header> requestHeaders = (Series<Header>) request.getAttributes().get("org.restlet.http.headers");
 		String localAuthToken = requestHeaders.getFirstValue(HeaderUtils.normalize(OCCIHeaders.X_LOCAL_AUTH_TOKEN));
@@ -171,6 +173,14 @@ public class OCCIApplication extends Application {
 	
 	public Properties getProperties() {
 		return managerFacade.getProperties();
+	}
+
+	public List<ResourceUsage> getMembersUsage(String authToken) {
+		return managerFacade.getMembersUsage(authToken);
+	}
+
+	public Map<String, Double> getUsersUsage(String authToken) {		
+		return managerFacade.getUsersUsage(authToken);
 	}
 
 }

@@ -20,10 +20,13 @@ public class Request {
 	private Token localToken;
 	private String instanceId;
 	private String memberId;
+	private long fulfilledTime = 0;
 	private boolean fulfilledByFederationUser;
 	private RequestState state;
 	private List<Category> categories;
 	private Map<String, String> xOCCIAtt;
+	
+	private DateUtils dateUtils = new DateUtils();
 	
 	public Request(String id, Token federationToken, Token localToken, 
 			List<Category> categories, Map<String, String> xOCCIAtt) {
@@ -64,7 +67,7 @@ public class Request {
 		this.fulfilledByFederationUser = fulfilledByFederationUser;
 	}
 
-	public String getInstanceGlobalId() {
+	public String getGlobalInstanceId() {
 		if (instanceId != null) {
 			return instanceId + SEPARATOR_GLOBAL_ID + memberId;
 		}
@@ -74,12 +77,21 @@ public class Request {
 	public void setInstanceId(String instanceId) {
 		this.instanceId = instanceId;
 	}
+	
+	public void setDateUtils(DateUtils dateUtils) {
+		this.dateUtils = dateUtils;
+	}
 
 	public RequestState getState() {
 		return state;
 	}
 
 	public void setState(RequestState state) {
+		if (state.in(RequestState.FULFILLED)) {
+			fulfilledTime = dateUtils.currentTimeMillis();
+		} else if (state.in(RequestState.OPEN)) {
+			fulfilledTime = 0;
+		}
 		this.state = state;
 	}
 
@@ -109,6 +121,10 @@ public class Request {
 		this.federationToken = token;
 	}
 	
+	public long getFulfilledTime() {
+		return fulfilledTime;
+	}
+
 	public Token getLocalToken() {
 		return localToken;
 	}

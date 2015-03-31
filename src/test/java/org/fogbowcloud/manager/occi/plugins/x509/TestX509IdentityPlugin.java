@@ -20,6 +20,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+@Deprecated
 public class TestX509IdentityPlugin {
 
 	private static final String CERTIFICATE_PATH = "src/test/resources/x509/cert.pem";
@@ -35,7 +36,7 @@ public class TestX509IdentityPlugin {
 	@Before
 	public void setup() throws CertificateException, IOException, ParseException {
 		properties = new Properties();
-		CERTIFICATE_ACCESS_ID = CertificateUtils.generateAcessId(CertificateUtils
+		CERTIFICATE_ACCESS_ID = CertificateUtils.generateAccessId(CertificateUtils
 				.getCertificateChainFromFile(CERTIFICATE_PATH));
 		SimpleDateFormat sdf = new SimpleDateFormat(dateFormat);
 		CERTIFICATE_EXPIRATION_DATE = sdf.parse("2015-08-26");

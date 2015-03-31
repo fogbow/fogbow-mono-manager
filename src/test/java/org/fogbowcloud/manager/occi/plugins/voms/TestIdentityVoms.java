@@ -1,6 +1,5 @@
 package org.fogbowcloud.manager.occi.plugins.voms;
 
-import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
@@ -8,15 +7,16 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
-
-import javax.crypto.Cipher;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.CertificateUtils;
 import org.fogbowcloud.manager.core.plugins.util.Credential;
 import org.fogbowcloud.manager.core.plugins.voms.VomsIdentityPlugin;
-import org.fogbowcloud.manager.core.plugins.voms.VomsIdentityPlugin.GeneratorProxyCertificate;
+import org.fogbowcloud.manager.core.plugins.voms.VomsIdentityPlugin.ProxyCertificateGenerator;
 import org.fogbowcloud.manager.occi.core.Token;
+import org.fogbowcloud.manager.occi.util.SecurityRestrictionHelper;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -33,7 +33,7 @@ public class TestIdentityVoms {
 	private final String VOMS_PASSWORD = "pass";
 	private final String VOMS_SERVER = "test.vo";
 
-	private GeneratorProxyCertificate generatorProxyCertificate;
+	private ProxyCertificateGenerator generatorProxyCertificate;
 	private VomsIdentityPlugin vomsIdentityPlugin;
 	private Properties properties;
 
@@ -48,18 +48,10 @@ public class TestIdentityVoms {
 		properties.put(ConfigurationConstants.FEDERATION_USER_SERVER_VOMS, VOMS_SERVER);
 
 		vomsIdentityPlugin = new VomsIdentityPlugin(properties);
-		generatorProxyCertificate = Mockito.mock(GeneratorProxyCertificate.class);
+		generatorProxyCertificate = Mockito.mock(ProxyCertificateGenerator.class);
 		vomsIdentityPlugin.setGenerateProxyCertificate(generatorProxyCertificate);
 	}
 
-	private static boolean checkUnlimitedStrengthPolicy() {
-		try {
-			return Cipher.getMaxAllowedKeyLength("AES") > 128;
-		} catch (NoSuchAlgorithmException e) {
-			return false;
-		}
-	}
-	
 	@Test
 	public void testReIssueToken() throws Exception {
 		Token token = new Token("accessId", "user", new Date(), new HashMap<String, String>());
@@ -68,7 +60,7 @@ public class TestIdentityVoms {
 
 	@Test
 	public void testCreateToken() throws Exception {
-		if (!checkUnlimitedStrengthPolicy()) {
+		if (!SecurityRestrictionHelper.checkUnlimitedStrengthPolicy()) {
 			return;
 		}
 		Date before = new Date(System.currentTimeMillis() + TWELVE_HOURS - ONE_MINUTE);
@@ -90,7 +82,8 @@ public class TestIdentityVoms {
 		Date after = new Date(System.currentTimeMillis() + TWELVE_HOURS);
 
 		Assert.assertEquals(
-				CertificateUtils.generateAcessId(Arrays.asList(proxy.getCertificateChain())),
+				CertificateUtils.generateAccessId(
+						Arrays.asList(proxy.getCertificateChain()), proxy.getCredential()),
 				token.getAccessId());
 		Assert.assertEquals("CN=test0, O=IGI, C=IT", token.getUser());
 		Assert.assertTrue(token.getExpirationDate().after(before));
@@ -99,7 +92,7 @@ public class TestIdentityVoms {
 
 	@Test
 	public void testGetToken() throws Exception {
-		if (!checkUnlimitedStrengthPolicy()) {
+		if (!SecurityRestrictionHelper.checkUnlimitedStrengthPolicy()) {
 			return;
 		}
 		Date before = new Date(System.currentTimeMillis() + TWELVE_HOURS - ONE_MINUTE);
@@ -107,8 +100,9 @@ public class TestIdentityVoms {
 
 		ProxyCertificate proxy = Utils.getVOMSAA().createVOMSProxy(holder, Fixture.defaultVOFqans);
 
-		String accessId = CertificateUtils.generateAcessId(Arrays.asList(proxy
-				.getCertificateChain()));
+		String accessId = CertificateUtils.generateAccessId(Arrays.asList(proxy
+				.getCertificateChain()), proxy.getCredential());
+		
 		Token token = vomsIdentityPlugin.getToken(accessId);
 		Date after = new Date(System.currentTimeMillis() + TWELVE_HOURS);
 
@@ -120,26 +114,28 @@ public class TestIdentityVoms {
 
 	@Test
 	public void testValidCertificate() throws Exception {
-		if (!checkUnlimitedStrengthPolicy()) {
+		if (!SecurityRestrictionHelper.checkUnlimitedStrengthPolicy()) {
 			return;
 		}
 		PEMCredential holder = Utils.getTestUserCredential();
 
 		ProxyCertificate proxy = Utils.getVOMSAA().createVOMSProxy(holder, Fixture.defaultVOFqans);
-		Assert.assertTrue(vomsIdentityPlugin.isValid(CertificateUtils.generateAcessId(Arrays
-				.asList(proxy.getCertificateChain()))));
+		Assert.assertTrue(vomsIdentityPlugin.isValid(CertificateUtils.generateAccessId(
+				Arrays.asList(proxy.getCertificateChain()), 
+				proxy.getCredential())));
 	}
 
 	@Test
 	public void testExpiredCertificate() throws Exception {
-		if (!checkUnlimitedStrengthPolicy()) {
+		if (!SecurityRestrictionHelper.checkUnlimitedStrengthPolicy()) {
 			return;
 		}
 		PEMCredential holder = Utils.getExpiredCredential();
 
 		ProxyCertificate proxy = Utils.getVOMSAA().createVOMSProxy(holder, Fixture.defaultVOFqans);
-		Assert.assertFalse(vomsIdentityPlugin.isValid(CertificateUtils.generateAcessId(Arrays
-				.asList(proxy.getCertificateChain()))));
+		Assert.assertFalse(vomsIdentityPlugin.isValid(CertificateUtils.generateAccessId(
+				Arrays.asList(proxy.getCertificateChain()), 
+				proxy.getCredential())));
 	}
 
 	@Test
@@ -153,5 +149,53 @@ public class TestIdentityVoms {
 				VomsIdentityPlugin.CREDENTIALS_PATH_DEFAULT), credentials[2]);
 		Assert.assertEquals(new Credential(VomsIdentityPlugin.PATH_USERKEY, false,
 				VomsIdentityPlugin.CREDENTIALS_PATH_DEFAULT), credentials[3]);
+	}
+	
+	private static final String PRIVATE_KEY_REGEX = 
+			"(-----BEGIN [A-Z\\s]* PRIVATE KEY-----)([^\\-]*)(-----END [A-Z\\s]* PRIVATE KEY-----)";
+	
+	@Test
+	public void testGetForwardableTokenAsAWhole() throws Exception {
+		if (!SecurityRestrictionHelper.checkUnlimitedStrengthPolicy()) {
+			return;
+		}
+		
+		properties.put(ConfigurationConstants.VOMS_SHOULD_FORWARD_PRIVATE_KEY, "true");
+		
+		PEMCredential holder = Utils.getTestUserCredential();
+
+		ProxyCertificate proxy = Utils.getVOMSAA().createVOMSProxy(holder, Fixture.defaultVOFqans);
+		String accessId = CertificateUtils.generateAccessId(Arrays.asList(proxy
+				.getCertificateChain()), proxy.getCredential());
+		Token token = vomsIdentityPlugin.getToken(accessId);
+		
+		
+		Pattern pattern = Pattern.compile(PRIVATE_KEY_REGEX);
+		String forwardableToken = vomsIdentityPlugin.getForwardableToken(token).getAccessId();
+		Matcher matcher = pattern.matcher(forwardableToken);
+		
+		Assert.assertTrue(matcher.find());
+		Assert.assertEquals(token.getAccessId(), forwardableToken);
+	}
+	
+	@Test
+	public void testGetForwardableTokenWithNoPrivateKey() throws Exception {
+		if (!SecurityRestrictionHelper.checkUnlimitedStrengthPolicy()) {
+			return;
+		}
+		
+		properties.put(ConfigurationConstants.VOMS_SHOULD_FORWARD_PRIVATE_KEY, "false");
+		
+		PEMCredential holder = Utils.getTestUserCredential();
+
+		ProxyCertificate proxy = Utils.getVOMSAA().createVOMSProxy(holder, Fixture.defaultVOFqans);
+		String accessId = CertificateUtils.generateAccessId(Arrays.asList(proxy
+				.getCertificateChain()), proxy.getCredential());
+		Token token = vomsIdentityPlugin.getToken(accessId);
+		
+		Pattern pattern = Pattern.compile(PRIVATE_KEY_REGEX);
+		Matcher matcher = pattern.matcher(vomsIdentityPlugin.getForwardableToken(token).getAccessId());
+		
+		Assert.assertFalse(matcher.find());
 	}
 }

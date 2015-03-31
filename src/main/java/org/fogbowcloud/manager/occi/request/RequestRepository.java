@@ -24,11 +24,11 @@ public class RequestRepository {
 		userRequests.add(request);
 	}
 
-	public List<Request> get(RequestState state) {
+	public List<Request> get(RequestState... states) {
 		List<Request> requestInState = new LinkedList<Request>();
 		for (List<Request> userRequests : requests.values()) {
 			for (Request request : userRequests) {
-				if (request.getState().equals(state)) {
+				if (request.getState().in(states)) {
 					requestInState.add(request);
 				}
 			}
