@@ -3,7 +3,6 @@ package org.fogbowcloud.manager.core.plugins.opennebula;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -13,9 +12,6 @@ import java.util.Set;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.Header;
 import org.apache.http.message.BasicHeader;
-import org.fogbowcloud.manager.core.ManagerController;
-import org.fogbowcloud.manager.core.RequirementsHelper;
-import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.occi.OCCIComputePlugin;
 import org.fogbowcloud.manager.occi.core.Category;
@@ -45,12 +41,9 @@ public class OpenNebulaOCCIComputePlugin extends OCCIComputePlugin {
 	private static final String DATA_PUBLIC_KEY_ATTRIBUTE = "org.openstack.credentials.publickey.data";	
 	private OpenNebulaComputePlugin openNebulaComputePlugin;
 	
-	private Map<String, String> mapFlavorProvided;
-	
 	public OpenNebulaOCCIComputePlugin(Properties properties) {
-		super(properties);
+		super(properties);		
 		setFlavorsProvided(properties);
-		updateFlavors(null);
 
 		this.openNebulaComputePlugin = new OpenNebulaComputePlugin(properties);
 		super.fogTermToCategory.put(RequestConstants.PUBLIC_KEY_TERM, new Category(PUBLIC_KEY_TERM,
@@ -242,40 +235,4 @@ public class OpenNebulaOCCIComputePlugin extends OCCIComputePlugin {
 	public ResourcesInfo getResourcesInfo(Token token) {
 		return openNebulaComputePlugin.getResourcesInfo(token);
 	}
-	
-	protected void setFlavorsProvided(Properties properties) {
-		mapFlavorProvided = new HashMap<String, String>();
-		for (final Object keyPropertie : properties.keySet()) {
-			final String key = (String) keyPropertie;
-			if (key.startsWith(OneConfigurationConstants.PREFIX_OCCI_OPENNEBULA_FLAVORS_PROVIDED)) {
-				mapFlavorProvided.put(key.replace(
-						OneConfigurationConstants.PREFIX_OCCI_OPENNEBULA_FLAVORS_PROVIDED, ""),
-						properties.getProperty(key));
-			}
-		}
-		if (mapFlavorProvided.size() <= 0) {
-			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.FLAVORS_NOT_SPECIFIED);
-		}
-	}
-
-	public void updateFlavors(Token token) {
-		List<Flavor> flavors = new ArrayList<Flavor>();
-		Set<String> keySet = mapFlavorProvided.keySet();
-		for (String key : keySet) {
-			String value = mapFlavorProvided.get(key);
-			String cpu = ManagerController.getAttValue("cpu", value);
-			String mem = ManagerController.getAttValue("mem", value);
-			String disk = ManagerController.getAttValue("disk", value);
-			flavors.add(new Flavor(key, key, cpu, mem, disk));
-		}
-		if (flavors != null) {
-			setFlavors(flavors);			
-		}
-	}
-	
-	@Override
-	public Flavor getFlavor(Token token, String requirements) {
-		return RequirementsHelper.findFlavor(getFlavors(), requirements);
-	}	
-	
 }

@@ -163,7 +163,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		}
 	}
 
-	public void updateFlavors(Token token) {
+	public synchronized void updateFlavors(Token token) {
 		try {
 			String endpoint = computeV2APIEndpoint + token.getAttributes().get(TENANT_ID)
 					+ SUFIX_ENDPOINT_FLAVORS;
@@ -171,69 +171,69 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 
 			String jsonResponseFlavors = doGetRequest(endpoint, authToken);
 
-			Map<String, String> nameToIdFlavor = new HashMap<String, String>();
+			Map<String, String> nameToFlavorId = new HashMap<String, String>();
 
 			JSONArray jsonArrayFlavors = new JSONObject(jsonResponseFlavors)
 					.getJSONArray("flavors");
 			for (int i = 0; i < jsonArrayFlavors.length(); i++) {
 				JSONObject itemFlavor = jsonArrayFlavors.getJSONObject(i);
-				nameToIdFlavor.put(itemFlavor.getString("name"), itemFlavor.getString("id"));
+				nameToFlavorId.put(itemFlavor.getString("name"), itemFlavor.getString("id"));
 			}
 
-			List<Flavor> newFlavors = getNewFlavors(endpoint, authToken, nameToIdFlavor);
+			List<Flavor> newFlavors = detailFlavors(endpoint, authToken, nameToFlavorId);
 			if (newFlavors != null) {
 				this.flavors.addAll(newFlavors);			
 			}
-			removeInvalidFlavors(nameToIdFlavor);
+			removeInvalidFlavors(nameToFlavorId);
 
 		} catch (Exception e) {
-			// Do Nothing
+			LOGGER.warn("Error while updating flavors.", e);
 		}
 	}
 
-	private List<Flavor> getNewFlavors(String endpoint, String authToken,
+	private List<Flavor> detailFlavors(String endpoint, String authToken,
 			Map<String, String> nameToIdFlavor) throws JSONException {
 		List<Flavor> newFlavors = new ArrayList<Flavor>();
-		List<Flavor> copyFlavors = new ArrayList<Flavor>(flavors);
+		List<Flavor> flavorsCopy = new ArrayList<Flavor>(flavors);
 		for (String flavorName : nameToIdFlavor.keySet()) {
 			boolean containsFlavor = false;
-			for (Flavor flavor : copyFlavors) {
+			for (Flavor flavor : flavorsCopy) {
 				if (flavor.getName().equals(flavorName)) {
 					containsFlavor = true;
+					break;
 				}
 			}
-			if (!containsFlavor) {
-				String newEndpoint = endpoint + "/" + nameToIdFlavor.get(flavorName);
-				String jsonResponseSpecificFlavor = doGetRequest(newEndpoint, authToken);
-
-				JSONObject specificFlavor = new JSONObject(jsonResponseSpecificFlavor)
-						.getJSONObject("flavor");
-
-				String id = specificFlavor.getString("id");
-				String name = specificFlavor.getString("name");
-				String disk = specificFlavor.getString("disk");
-				String ram = specificFlavor.getString("ram");
-				String vcpus = specificFlavor.getString("vcpus");
-
-				newFlavors.add(new Flavor(name, id, vcpus, ram, disk));
+			if (containsFlavor) {
+				continue;
 			}
+			String newEndpoint = endpoint + "/" + nameToIdFlavor.get(flavorName);
+			String jsonResponseSpecificFlavor = doGetRequest(newEndpoint, authToken);
+
+			JSONObject specificFlavor = new JSONObject(jsonResponseSpecificFlavor)
+					.getJSONObject("flavor");
+
+			String id = specificFlavor.getString("id");
+			String name = specificFlavor.getString("name");
+			String disk = specificFlavor.getString("disk");
+			String ram = specificFlavor.getString("ram");
+			String vcpus = specificFlavor.getString("vcpus");
+
+			newFlavors.add(new Flavor(name, id, vcpus, ram, disk));		
 		}
 		return newFlavors;
 	}
 
 	private void removeInvalidFlavors(Map<String, String> nameToIdFlavor) {
-		ArrayList<Flavor> copyFlavors = new ArrayList<Flavor>(flavors);
-		if (copyFlavors.size() > nameToIdFlavor.size()) {
-			for (Flavor flavor : copyFlavors) {
-				boolean containsFlavor = false;
-				for (String flavorName : nameToIdFlavor.keySet()) {
-					if (flavorName.equals(flavor.getName())) {
-						containsFlavor = true;
-					}
+		ArrayList<Flavor> copyFlavors = new ArrayList<Flavor>(flavors);		
+		for (Flavor flavor : copyFlavors) {
+			boolean containsFlavor = false;
+			for (String flavorName : nameToIdFlavor.keySet()) {
+				if (flavorName.equals(flavor.getName())) {
+					containsFlavor = true;
 				}
-				if (!containsFlavor) {
-					this.flavors.remove(flavor);
-				}
+			}
+			if (!containsFlavor) {
+				this.flavors.remove(flavor);
 			}
 		}
 	}

@@ -48,7 +48,7 @@ public class TestRequirementsHelper {
 
 	@SuppressWarnings("static-access")
 	@Test
-	public void TestCheckLocation() {
+	public void TestMatchLocation() {
 		String value = "\"valueCorrect\"";
 		String requirementsStr = "x==1 && " + RequirementsHelper.GLUE_LOCATION_TERM + "==" + value;
 		Assert.assertTrue(requirementsHelper.matchLocation(requirementsStr, value));
@@ -57,18 +57,20 @@ public class TestRequirementsHelper {
 		requirementsStr = RequirementsHelper.GLUE_LOCATION_TERM + "==" + "\"" + value + "\"";
 		Assert.assertTrue(requirementsHelper.matchLocation(requirementsStr, value));
 		
+		// ignored location with "!="
 		value = "valueCorrect";
 		requirementsStr = RequirementsHelper.GLUE_LOCATION_TERM + "!=" + "\"" + value + "\"";
-		Assert.assertFalse(requirementsHelper.matchLocation(requirementsStr, value));
-		
+		Assert.assertTrue(requirementsHelper.matchLocation(requirementsStr, value));
+
+		// ignored location with "!="
 		value = "valueCorrect";
 		requirementsStr = "(" + RequirementsHelper.GLUE_LOCATION_TERM + "!=" + "\"" + value + "\")" + "||X==1";
-		Assert.assertFalse(requirementsHelper.matchLocation(requirementsStr, value));		
+		Assert.assertTrue(requirementsHelper.matchLocation(requirementsStr, value));		
 	}
 	
 	@SuppressWarnings("static-access")
 	@Test
-	public void TestCheckLocationSameValue() {
+	public void TestMatchLocationSameValue() {
 		String value = "\"valueCorrect\"";
 		String requirementsStr = RequirementsHelper.GLUE_LOCATION_TERM + "==" + value + " && " + RequirementsHelper.GLUE_LOCATION_TERM + "==" + value;
 		Assert.assertTrue(requirementsHelper.matchLocation(requirementsStr, value));		
@@ -76,18 +78,18 @@ public class TestRequirementsHelper {
 	
 	@SuppressWarnings("static-access")
 	@Test
-	public void TestCheckLocationNull() {
+	public void TestMatchLocationNull() {
 		String value = "\"valueCorrect\"";
 		String requirementsStr = "x==1 && x>9";
-		Assert.assertFalse(requirementsHelper.matchLocation(requirementsStr, value));
+		Assert.assertTrue(requirementsHelper.matchLocation(requirementsStr, value));
 	}
 	
 	@SuppressWarnings("static-access")
 	@Test
-	public void TestCheckLocationWrongExpression() {
+	public void TestMatchLocationWrongExpression() {
 		String value = "\"valueCorrect\"";
 		String requirementsStr = "x==1 && " + RequirementsHelper.GLUE_LOCATION_TERM + "=\"\"";
-		Assert.assertFalse(requirementsHelper.matchLocation(requirementsStr, value));
+		Assert.assertTrue(requirementsHelper.matchLocation(requirementsStr, value));
 	}	
 
 	@Test
@@ -289,19 +291,19 @@ public class TestRequirementsHelper {
 	@Test
 	public void testNormalizeOp() {		
 		String requirementsStr = "(((X>1) && (Y==1)) || Y<10) && Y==10 && X>10";
-		Op normalizeOPTypeTwo = RequirementsHelper.normalizeOPTypeTwo(toOp(requirementsStr), "X");
+		Op normalizeOPTypeTwo = RequirementsHelper.normalizeOP(toOp(requirementsStr), "X");
 		Assert.assertEquals("((X>1)&&(X>10))", normalizeOPTypeTwo.toString());
 		
 		requirementsStr = "((X>1) && (Y==1))";
-		normalizeOPTypeTwo = RequirementsHelper.normalizeOPTypeTwo(toOp(requirementsStr), "X");
+		normalizeOPTypeTwo = RequirementsHelper.normalizeOP(toOp(requirementsStr), "X");
 		Assert.assertEquals("(X>1)", normalizeOPTypeTwo.toString());
 		
 		requirementsStr = "((X>1) && (Y==1))";
-		normalizeOPTypeTwo = RequirementsHelper.normalizeOPTypeTwo(toOp(requirementsStr), "X");
+		normalizeOPTypeTwo = RequirementsHelper.normalizeOP(toOp(requirementsStr), "X");
 		Assert.assertEquals("(X>1)", normalizeOPTypeTwo.toString());
 		
 		requirementsStr = "((X>1) && (Y==1) && (X>1) && (Y==1))";
-		normalizeOPTypeTwo = RequirementsHelper.normalizeOPTypeTwo(toOp(requirementsStr), "X");
+		normalizeOPTypeTwo = RequirementsHelper.normalizeOP(toOp(requirementsStr), "X");
 		Assert.assertEquals("((X>1)&&(X>1))", normalizeOPTypeTwo.toString());
 	}
 	
@@ -311,15 +313,15 @@ public class TestRequirementsHelper {
 		listAtt.add("X");
 		listAtt.add("Y");
 		String requirementsStr = "(((X>1) && (Y==1)) || Y<10) && Y==10 && X>10";
-		Op normalizeOPTypeTwo = RequirementsHelper.normalizeOPTypeTwo(toOp(requirementsStr), listAtt);
+		Op normalizeOPTypeTwo = RequirementsHelper.normalizeOP(toOp(requirementsStr), listAtt);
 		Assert.assertEquals("(((((X>1)&&(Y==1))||(Y<10))&&(Y==10))&&(X>10))", normalizeOPTypeTwo.toString());
 
 		requirementsStr = "W>=0 && ((((X>1) && (Y==1)) || Y<10) && Y==10 && X>10)";
-		normalizeOPTypeTwo = RequirementsHelper.normalizeOPTypeTwo(toOp(requirementsStr), listAtt);
+		normalizeOPTypeTwo = RequirementsHelper.normalizeOP(toOp(requirementsStr), listAtt);
 		Assert.assertEquals("(((((X>1)&&(Y==1))||(Y<10))&&(Y==10))&&(X>10))", normalizeOPTypeTwo.toString());
 		
 		requirementsStr = "(W>=0 || X<=1) && ((((X>1) && (Y==1)) || Y<10) && Y==10 && X>10)";
-		normalizeOPTypeTwo = RequirementsHelper.normalizeOPTypeTwo(toOp(requirementsStr), listAtt);
+		normalizeOPTypeTwo = RequirementsHelper.normalizeOP(toOp(requirementsStr), listAtt);
 		Assert.assertEquals("((X<=1)&&(((((X>1)&&(Y==1))||(Y<10))&&(Y==10))&&(X>10)))", normalizeOPTypeTwo.toString());
 	}	
 	

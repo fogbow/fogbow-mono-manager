@@ -11,7 +11,6 @@ import java.util.Set;
 
 import org.apache.http.Header;
 import org.apache.http.message.BasicHeader;
-import org.fogbowcloud.manager.core.RequirementsHelper;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.occi.OCCIComputePlugin;
@@ -195,19 +194,9 @@ public class OpenStackOCCIComputePlugin extends OCCIComputePlugin{
 	public String getImageId(Token token, String imageName) {
 		return openStackNovaV2ComputePlugin.getImageId(token, imageName);
 	}
-	
-	public void updateFlavors(Token token) {
-		openStackNovaV2ComputePlugin.updateFlavors(token);
-		List<Flavor> flavors = openStackNovaV2ComputePlugin.getFlavors();
-		if (flavors != null) {
-			setFlavors(flavors);			
-		}
-	}
 
-	@Override
 	public Flavor getFlavor(Token token, String requirements) {
-		updateFlavors(token);
-		Flavor flavorFound = RequirementsHelper.findFlavor(getFlavors(), requirements);
+		Flavor flavorFound = openStackNovaV2ComputePlugin.getFlavor(token, requirements);
 		normalizeNameFlavorOCCI(flavorFound);
 		return flavorFound;
 	}
@@ -216,5 +205,8 @@ public class OpenStackOCCIComputePlugin extends OCCIComputePlugin{
 		if (flavor != null) {
 			flavor.setName(flavor.getName().replace(".", "-"));			
 		}
+	}
+	
+	protected void setFlavorsProvided(Properties properties) {		
 	}
 }

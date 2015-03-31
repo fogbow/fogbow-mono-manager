@@ -23,7 +23,7 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.DefaultHttpResponseFactory;
 import org.apache.http.message.BasicStatusLine;
 import org.fogbowcloud.manager.core.RequirementsHelper;
-import org.fogbowcloud.manager.core.model.Flavor;
+import org.fogbowcloud.manager.core.plugins.occi.OCCIComputePlugin;
 import org.fogbowcloud.manager.core.plugins.opennebula.OneConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.opennebula.OpenNebulaOCCIComputePlugin;
 import org.fogbowcloud.manager.core.plugins.openstack.OpenStackConfigurationConstants;
@@ -35,7 +35,6 @@ import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.fogbowcloud.manager.occi.util.OCCIComputeApplication;
 import org.fogbowcloud.manager.occi.util.PluginHelper;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
@@ -75,11 +74,11 @@ public class TestComputeOpenNebulaOCCI {
 				OCCIComputeApplication.OS_SCHEME);
 		properties.put(OpenStackConfigurationConstants.COMPUTE_OCCI_RESOURCE_SCHEME_KEY,
 				OCCIComputeApplication.RESOURCE_SCHEME);
-		properties.put(OneConfigurationConstants.PREFIX_OCCI_OPENNEBULA_FLAVORS_PROVIDED +
+		properties.put(OCCIComputePlugin.PREFIX_OCCI_FLAVORS_PROVIDED +
 				OCCIComputeApplication.SMALL_FLAVOR_TERM, "{cpu=1,mem=1000,disk=10}");
-		properties.put(OneConfigurationConstants.PREFIX_OCCI_OPENNEBULA_FLAVORS_PROVIDED +
+		properties.put(OCCIComputePlugin.PREFIX_OCCI_FLAVORS_PROVIDED +
 				OCCIComputeApplication.MEDIUM_FLAVOR_TERM, "{cpu=2,mem=2000,disk=20}");
-		properties.put(OneConfigurationConstants.PREFIX_OCCI_OPENNEBULA_FLAVORS_PROVIDED +
+		properties.put(OCCIComputePlugin.PREFIX_OCCI_FLAVORS_PROVIDED +
 				OCCIComputeApplication.LARGE_FLAVOR_TERM, "{cpu=4,mem=4000,disk=30}");
 		properties.put(OpenStackConfigurationConstants.COMPUTE_OCCI_IMAGE_PREFIX
 				+ PluginHelper.LINUX_X86_TERM, PluginHelper.CIRROS_IMAGE_TERM);
@@ -99,15 +98,8 @@ public class TestComputeOpenNebulaOCCI {
 	}
 
 	@Test(expected=OCCIException.class)
-	public void testThereIsNotFlavorSpecified() {		
-		Properties properties = getProperties();
-		properties.remove(OneConfigurationConstants.PREFIX_OCCI_OPENNEBULA_FLAVORS_PROVIDED
-				+ OCCIComputeApplication.SMALL_FLAVOR_TERM);
-		properties.remove(OneConfigurationConstants.PREFIX_OCCI_OPENNEBULA_FLAVORS_PROVIDED
-				+ OCCIComputeApplication.MEDIUM_FLAVOR_TERM);
-		properties.remove(OneConfigurationConstants.PREFIX_OCCI_OPENNEBULA_FLAVORS_PROVIDED
-				+ OCCIComputeApplication.LARGE_FLAVOR_TERM);		
-		
+	public void testThereIsNotFlavorSpecified() {
+		Properties properties = new Properties();			
 		new OpenNebulaOCCIComputePlugin(properties);			
 	}
 	
@@ -289,12 +281,6 @@ public class TestComputeOpenNebulaOCCI {
 		Mockito.verify(httpClient).execute(Mockito.argThat(expectedRequest));
 	}
 	
-	@Test
-	public void testUploadImage() {
-		openNebulaOCCIComputePlugin.updateFlavors(null);
-		Assert.assertEquals(3, openNebulaOCCIComputePlugin.getFlavors().size());
-	}
-	
 	private class HttpUriRequestMatcher extends ArgumentMatcher<HttpUriRequest> {
 
 		private HttpUriRequest request;
@@ -320,7 +306,6 @@ public class TestComputeOpenNebulaOCCI {
 		public boolean checkHeaders(Header[] comparedHeaders) {
 			boolean headerEquals = true;
 			for (Header headerComp : comparedHeaders) {
-				//System.out.println(headerComp);
 				if (headerComp.getName().equals(OCCIHeaders.CATEGORY)) {
 					for (Header header : this.request.getAllHeaders()) {
 						if (header.getName().equals(OCCIHeaders.CATEGORY)

@@ -17,35 +17,35 @@ public class RoundRobinMemberPicker implements FederationMemberPicker {
 		if (members == null) {
 			return null;
 		}
-		ArrayList<FederationMember> listMembers = new ArrayList<FederationMember>(members);
+		ArrayList<FederationMember> membersListCopy = new ArrayList<FederationMember>(members);
 
 		boolean containsInList = false;
 		if (lastMember != null) {
-			for (FederationMember federationMember : listMembers) {
+			for (FederationMember federationMember : membersListCopy) {
 				if (federationMember.getResourcesInfo().getId().equals(lastMember)) {
 					containsInList = true;
+					break;
 				}
 			}
 			if (!containsInList) {
-				listMembers.add(new FederationMember(new ResourcesInfo(lastMember, "", "", "", "",
+				membersListCopy.add(new FederationMember(new ResourcesInfo(lastMember, "", "", "", "",
 						null, null)));
 			}
 		}
 
-		Collections.sort(listMembers, new FederationMemberComparator());
+		Collections.sort(membersListCopy, new FederationMemberComparator());
 
-		for (int i = 0; i < listMembers.size(); i++) {
-			FederationMember federationMember = listMembers.get(i);
+		if (lastMember == null && !membersListCopy.isEmpty()) {
+			FederationMember federationMember = membersListCopy.get(0);
+			lastMember = federationMember.getResourcesInfo().getId();
+			return federationMember;
+		}
+		
+		for (int i = 0; i < membersListCopy.size(); i++) {
+			FederationMember federationMember = membersListCopy.get(i);
 			String memberName = federationMember.getResourcesInfo().getId();
-			if (lastMember == null) {
-				lastMember = memberName;
-				return federationMember;
-			}
-			if (i == listMembers.size() - 1) {
-				i = -1;
-			}
 			if (memberName.equals(lastMember)) {
-				FederationMember nextMember = listMembers.get(i + 1);
+				FederationMember nextMember = membersListCopy.get((i + 1) % membersListCopy.size());
 				lastMember = nextMember.getResourcesInfo().getId();
 				return nextMember;
 			}

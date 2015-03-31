@@ -28,6 +28,8 @@ import org.apache.http.params.CoreProtocolPNames;
 import org.apache.http.params.HttpParams;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.core.ManagerController;
+import org.fogbowcloud.manager.core.RequirementsHelper;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
@@ -53,6 +55,7 @@ public class OCCIComputePlugin implements ComputePlugin {
 	protected static final String SCHEME_COMPUTE = "http://schemas.ogf.org/occi/infrastructure#";
 	private static final int LAST_SUCCESSFUL_STATUS = 204;
 	protected static final String TERM_COMPUTE = "compute";
+	public static final String OCCI_FLAVORS_NOT_SPECIFIED = "There is not a OCCI flavor specified in configuration file.";
 
 	private static String osScheme;
 	private String instanceScheme;
@@ -64,15 +67,16 @@ public class OCCIComputePlugin implements ComputePlugin {
 	protected String oCCIEndpoint;
 	protected String computeOCCIEndpoint;
 	private HttpClient client;	
-	private List<Flavor> flavors;
+	private List<Flavor> flavors = new ArrayList<Flavor>();
 
 	protected static final Logger LOGGER = Logger.getLogger(OCCIComputePlugin.class);
+	public static final String PREFIX_OCCI_FLAVORS_PROVIDED = "occi_flavors_";
 
 	public OCCIComputePlugin(Properties properties) {
 		this.oCCIEndpoint = properties.getProperty("compute_occi_url");
 		this.computeOCCIEndpoint = oCCIEndpoint + COMPUTE_ENDPOINT;
 		
-		flavors = new ArrayList<Flavor>();
+		setFlavorsProvided(properties);
 
 		instanceScheme = properties
 				.getProperty(OpenStackConfigurationConstants.COMPUTE_OCCI_INSTANCE_SCHEME_KEY);
@@ -392,12 +396,26 @@ public class OCCIComputePlugin implements ComputePlugin {
 		this.flavors = flavors;
 	}
 
-	public void updateFlavors(Token token) {
-		// TODO Auto-generated method stub		
-	}
-
 	public Flavor getFlavor(Token token, String requirements) {
-		// TODO Auto-generated method stub
-		return null;
+		return RequirementsHelper.findFlavor(getFlavors(), requirements);
+	}
+	
+	protected void setFlavorsProvided(Properties properties) {		
+		for (final Object keyPropertie : properties.keySet()) {
+			final String key = (String) keyPropertie;
+			if (key.startsWith(PREFIX_OCCI_FLAVORS_PROVIDED)) {
+				String value = properties.getProperty(key);
+				String cpu = ManagerController.getAttValue("cpu", value);
+				String mem = ManagerController.getAttValue("mem", value);
+				String disk = ManagerController.getAttValue("disk", value);
+				
+				String flavorCorrect = key.replace(PREFIX_OCCI_FLAVORS_PROVIDED, "");
+				
+				flavors.add(new Flavor(flavorCorrect, flavorCorrect, cpu, mem, disk));
+			}
+		}
+		if (flavors.size() == 0) {
+			throw new OCCIException(ErrorType.BAD_REQUEST, OCCI_FLAVORS_NOT_SPECIFIED);
+		}
 	}
 }

@@ -9,12 +9,10 @@ import org.fogbowcloud.manager.core.model.Flavor;
 
 import condor.classad.AttrRef;
 import condor.classad.ClassAdParser;
-import condor.classad.Constant;
 import condor.classad.Env;
 import condor.classad.Expr;
 import condor.classad.Op;
 import condor.classad.RecordExpr;
-
 
 public class RequirementsHelper {
 	public static final String GLUE_LOCATION_TERM = "Glue2CloudComputeInstanceTypeLocation";
@@ -38,7 +36,7 @@ public class RequirementsHelper {
 	public static String getValueSmallerPerAttribute(String requirementsStr, String attrName) {
 		ClassAdParser classAdParser = new ClassAdParser(requirementsStr);		
 		Op expr = (Op) classAdParser.parse();		
-		Op opForAtt = normalizeOPTypeTwo(expr, attrName);
+		Op opForAtt = normalizeOP(expr, attrName);
 		
 		List<Integer> values = new ArrayList<Integer>();
 		List<ValueAndOperator> findValuesInRequiremets = findValuesInRequiremets(expr, attrName);
@@ -102,7 +100,7 @@ public class RequirementsHelper {
 			
 			classAdParser = new ClassAdParser(requirementsStr);
 			expr = (Op) classAdParser.parse();
-			expr = normalizeOPTypeTwo(expr, listAttrSearched);
+			expr = normalizeOP(expr, listAttrSearched);
 			
 			return expr.eval(env).isTrue();
 		} catch (Exception e) {
@@ -126,12 +124,12 @@ public class RequirementsHelper {
 
 		return listFlavor.get(0);
 	}	
-
+	
 	public static Op normalizeOP(Op expr, String attName) {
 		if (expr.arg1 instanceof AttrRef) {
 			AttrRef attr = (AttrRef) expr.arg1;
 			if (!attr.name.rawString().equals(attName)) {
-				return new Op(Op.EQUAL, Constant.TRUE, Constant.TRUE);
+				return null;
 			}
 			return expr;
 		}
@@ -142,25 +140,6 @@ public class RequirementsHelper {
 		Expr right = expr.arg2;
 		if (right instanceof Op) {
 			right = normalizeOP((Op) expr.arg2, attName);
-		}
-		return new Op(expr.op, left, right);
-	}
-	
-	public static Op normalizeOPTypeTwo(Op expr, String attName) {
-		if (expr.arg1 instanceof AttrRef) {
-			AttrRef attr = (AttrRef) expr.arg1;
-			if (!attr.name.rawString().equals(attName)) {
-				return null;
-			}
-			return expr;
-		}
-		Expr left = expr.arg1;
-		if (left instanceof Op) {
-			left = normalizeOPTypeTwo((Op) expr.arg1, attName);
-		}
-		Expr right = expr.arg2;
-		if (right instanceof Op) {
-			right = normalizeOPTypeTwo((Op) expr.arg2, attName);
 		}
 		try {
 			if (left == null) {
@@ -174,7 +153,7 @@ public class RequirementsHelper {
 		return new Op(expr.op, left, right);
 	}
 	
-	public static Op normalizeOPTypeTwo(Op expr, List<String> listAttName) {
+	public static Op normalizeOP(Op expr, List<String> listAttName) {
 		if (expr.arg1 instanceof AttrRef) {
 			AttrRef attr = (AttrRef) expr.arg1;
 			boolean thereIs = false;
@@ -190,11 +169,11 @@ public class RequirementsHelper {
 		}
 		Expr left = expr.arg1;
 		if (left instanceof Op) {
-			left = normalizeOPTypeTwo((Op) expr.arg1, listAttName);
+			left = normalizeOP((Op) expr.arg1, listAttName);
 		}
 		Expr right = expr.arg2;
 		if (right instanceof Op) {
-			right = normalizeOPTypeTwo((Op) expr.arg2, listAttName);
+			right = normalizeOP((Op) expr.arg2, listAttName);
 		}
 		try {
 			if (left == null) {
@@ -222,9 +201,10 @@ public class RequirementsHelper {
 	}
 	
 	public static boolean matchLocation(String requirementsStr, String valueLocation) {
-		if (requirementsStr == null) {
-			return false;
-		}		
+		if (!RequirementsHelper.existsLocation(requirementsStr)) {
+			return true;
+		}
+		
 		ClassAdParser classAdParser = new ClassAdParser(requirementsStr);
 		Op expr = (Op) classAdParser.parse();
 
@@ -233,7 +213,7 @@ public class RequirementsHelper {
 		env.push((RecordExpr) new ClassAdParser("[" + GLUE_LOCATION_TERM + " = " + valueLocation
 				+ "]").parse());
 
-		Op opForAtt = normalizeOPTypeTwo(expr, GLUE_LOCATION_TERM);
+		Op opForAtt = normalizeOP(expr, GLUE_LOCATION_TERM);
 		
 		if (opForAtt == null) {
 			return false;
