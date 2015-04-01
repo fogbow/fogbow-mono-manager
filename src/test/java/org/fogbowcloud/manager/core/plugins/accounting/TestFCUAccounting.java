@@ -32,6 +32,7 @@ public class TestFCUAccounting {
 
 	@Before
 	public void setUp() throws IOException {
+		new File(DATASTORE_PATH).mkdir();
 		benchmarkingPlugin = Mockito.mock(BenchmarkingPlugin.class);
 		properties = new Properties();
 		properties.put("accounting_datastore_url", "jdbc:h2:mem:"

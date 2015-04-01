@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.apache.commons.codec.Charsets;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.HttpVersion;
@@ -103,8 +104,8 @@ public class KeystoneIdentityPlugin implements IdentityPlugin {
 		}
 		
 		String responseStr = doPostRequest(currentTokenEndpoint, json);
-		Token token = getTokenFromJson(responseStr);
-			
+		Token token = getTokenFromJson(responseStr, true);
+		
 		return token;
 	}
 	
@@ -166,14 +167,18 @@ public class KeystoneIdentityPlugin implements IdentityPlugin {
 		}
 
 		String responseStr = doPostRequest(v2TokensEndpoint, json);
-		return getTokenFromJson(responseStr);
+		return getTokenFromJson(responseStr, false);
 	}
 
-	private JSONObject mountJson(Token token) throws JSONException {
+	private static JSONObject mountJson(Token token) throws JSONException {
+		return mountJson(token.getAccessId(), token.get(TENANT_NAME));
+	}
+	
+	private static JSONObject mountJson(String accessId, String tenantName) throws JSONException {
 		JSONObject idToken = new JSONObject();
-		idToken.put(ID_PROP, token.getAccessId());
+		idToken.put(ID_PROP, accessId);
 		JSONObject auth = new JSONObject();
-		auth.put(TENANT_NAME_PROP, token.get(TENANT_NAME));
+		auth.put(TENANT_NAME_PROP, tenantName);
 		auth.put(TOKEN_PROP, idToken);
 		JSONObject root = new JSONObject();
 		root.put(AUTH_PROP, auth);
@@ -190,35 +195,51 @@ public class KeystoneIdentityPlugin implements IdentityPlugin {
 		}
 	}
 
-	private Token getTokenFromJson(String responseStr) {
+	private Token getTokenFromJson(String responseStr, boolean encodeJSON) {
 		try {
 			JSONObject root = new JSONObject(responseStr);
 			JSONObject tokenKeyStone = root.getJSONObject(ACCESS_PROP).getJSONObject(TOKEN_PROP);
-			String token = tokenKeyStone.getString(ID_PROP);
-			String tenantId = "";
-			String tenantName = "";
+			String accessId = tokenKeyStone.getString(ID_PROP);
+			
 			Map<String, String> tokenAtt = new HashMap<String, String>();
+			String tenantId = null;
+			String tenantName = null;
 			try {
 				tenantId = tokenKeyStone.getJSONObject(TENANT_PROP).getString(ID_PROP);
 				tokenAtt.put(TENANT_ID, tenantId);
 			} catch (JSONException e) {
-				LOGGER.debug("There is not tenantId properties on json.");
+				LOGGER.debug("There is no tenantId inside json response.");
 			}
 			try {
 				tenantName = tokenKeyStone.getJSONObject(TENANT_PROP).getString(NAME_PROP);
 				tokenAtt.put(TENANT_NAME, tenantName);
 			} catch (JSONException e) {
-				LOGGER.debug("There is not tenantName properties on json.");
+				LOGGER.debug("There is no tenantName inside json response.");
 			}
+			
 			String expirationDateToken = tokenKeyStone.getString(EXPIRES_PROP);
-			String user = root.getJSONObject(ACCESS_PROP).getJSONObject(USER_PROP)
-					.getString(NAME_PROP);
+			String user = root.getJSONObject(ACCESS_PROP).getJSONObject(
+					USER_PROP).getString(NAME_PROP);
 
-			LOGGER.debug("json token: " + token);
+			LOGGER.debug("json token: " + accessId);
 			LOGGER.debug("json user: " + user);
 			LOGGER.debug("json expirationDate: " + expirationDateToken);
 			LOGGER.debug("json attributes: " + tokenAtt);
-			return new Token(token, user, getDateFromOpenStackFormat(expirationDateToken), tokenAtt);
+			
+			if (encodeJSON && (tenantId != null || tenantName != null)) {
+				JSONObject jsonAccess = new JSONObject();
+				jsonAccess.put(ACCESS_PROP, accessId);
+				if (tenantId != null) {
+					jsonAccess.put(TENANT_ID, tenantId);
+				}
+				if (tenantName != null) {
+					jsonAccess.put(TENANT_NAME, tenantName);
+				}
+				accessId = new String(Base64.encodeBase64(jsonAccess.toString().getBytes(Charsets.UTF_8), 
+						false, false), Charsets.UTF_8);
+			}
+			
+			return new Token(accessId, user, getDateFromOpenStackFormat(expirationDateToken), tokenAtt);
 		} catch (Exception e) {
 			LOGGER.error("Exception while getting token from json.", e);
 			return null;
@@ -227,27 +248,27 @@ public class KeystoneIdentityPlugin implements IdentityPlugin {
 
 	@Override
 	public Token getToken(String accessId) {
-		String responseStr;
-		String tenantName = getTenantName(accessId);
+		
+		String tenantName = null;
+		try {
+			JSONObject decodedAccessId = new JSONObject(new String(Base64.decodeBase64(
+					accessId.getBytes(Charsets.UTF_8)), Charsets.UTF_8));
+			accessId = decodedAccessId.optString(ACCESS_PROP);
+			tenantName = decodedAccessId.optString(TENANT_NAME);
+		} catch (Exception e) {
+			tenantName = getTenantName(accessId);
+		}
 
 		JSONObject root;
 		try {
-			JSONObject idToken = new JSONObject();
-			idToken.put(ID_PROP, accessId);
-
-			JSONObject auth = new JSONObject();
-			auth.put(TOKEN_PROP, idToken);
-			auth.put(TENANT_NAME_PROP, tenantName);
-
-			root = new JSONObject();
-			root.put(AUTH_PROP, auth);
+			root = mountJson(accessId, tenantName);
 		} catch (JSONException e) {
 			LOGGER.error(e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}
 
-		responseStr = doPostRequest(v2TokensEndpoint, root);
-		return getTokenFromJson(responseStr);
+		String responseStr = doPostRequest(v2TokensEndpoint, root);
+		return getTokenFromJson(responseStr, false);
 	}
 
 	private String getTenantName(String accessId) {

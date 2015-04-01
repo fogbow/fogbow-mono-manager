@@ -90,10 +90,10 @@ public class VomsIdentityPlugin implements IdentityPlugin {
 		try {
 			proxyCert = generatorProxyCertificate.generate(userCredentials);
 		} catch (IOException e) {
-			LOGGER.error("", e);
+			LOGGER.error("Error while generating proxy certificate", e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		} catch (Exception e) {
-			LOGGER.error("", e);
+			LOGGER.error("Error while generating proxy certificate", e);
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);			
 		}
 		 

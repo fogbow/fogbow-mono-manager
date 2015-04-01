@@ -28,6 +28,7 @@ public class TestDataStore {
 	@Before
 	public void initialize() {		
 		LOGGER.debug("Creating data store.");
+		new File(DATASTORE_PATH).mkdir();
 		properties = new Properties();
 		properties.put("accounting_datastore_url", "jdbc:h2:mem:"
 				+ new File(DATASTORE_PATH).getAbsolutePath() + "usage");
