@@ -4,14 +4,47 @@ public class Flavor {
 
 	private Integer capacity;
 	private String name;
+	private String id;
 	private String cpu;
 	private String mem;
+	private String disk;
 
+	public Flavor(String name, String cpu, String mem, String disk) {
+		this.setName(name);
+		this.setCpu(cpu);
+		this.setMem(mem);
+		this.setDisk(disk);
+	}
+	
 	public Flavor(String name, String cpu, String mem, Integer capacity) {
 		this.setName(name);
 		this.setCpu(cpu);
 		this.setMem(mem);
 		this.setCapacity(capacity);
+	}
+	
+	public Flavor(String name, String id, String cpu, String mem, String disk) {
+		this.setName(name);
+		this.setCpu(cpu);
+		this.setMem(mem);
+		this.setDisk(disk);
+		this.setId(id);
+	}
+	
+	public Flavor(String name, String cpu, String mem, String disk, Integer capacity) {		
+		this.setCapacity(capacity);
+		this.setName(name);
+		this.setCpu(cpu);
+		this.setMem(mem);
+		this.setDisk(disk);
+	}
+
+	public String getDisk() {
+		return disk;
+	}
+	
+	public void setDisk(String disk) {
+		this.disk = disk;
 	}
 
 	public Integer getCapacity() {
@@ -44,6 +77,14 @@ public class Flavor {
 
 	public void setMem(String mem) {
 		this.mem = mem;
+	}
+	
+	public String getId() {
+		return id;
+	}
+	
+	public void setId(String id) {
+		this.id = id;
 	}
 	
 	@Override

@@ -19,6 +19,8 @@ public class ConfigurationConstants {
 	public static final String MEMBER_VALIDATOR_KEY = "member_validator";
 	public static final String HTTP_PORT_KEY = "http_port";
 	
+	public static final String PREFIX_FLAVORS = "flavor_";
+
 	//federation user
 	public static final String FEDERATION_USER_NAME_KEY = "local_proxy_account_user_name";
 	public static final String FEDERATION_USER_PASS_KEY = "local_proxy_account_password";

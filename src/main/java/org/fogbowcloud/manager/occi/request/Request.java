@@ -7,6 +7,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import org.fogbowcloud.manager.core.RequirementsHelper;
 import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.Token;
@@ -55,6 +56,10 @@ public class Request {
 		}
 	}
 
+	public String getRequirements() {
+		return xOCCIAtt.get(RequestAttribute.REQUIREMENTS.getValue());
+	}
+	
 	public String getInstanceId() {
 		return instanceId;
 	}

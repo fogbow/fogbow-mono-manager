@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.restlet.Response;
 import org.restlet.data.MediaType;
@@ -93,7 +94,10 @@ public class HeaderUtils {
 				}
 				
 				String attName = line.substring(0, line.indexOf("=")).trim();
-				String attValue = line.substring(line.indexOf("=") + 1).replace("\"", "").trim();
+				String attValue = line.substring(line.indexOf("=") + 1);
+				if (!RequestAttribute.REQUIREMENTS.getValue().equals(attName)) {
+					attValue = attValue.replace("\"", "").trim();					
+				}
 				mapAttributes.put(attName, attValue);
 			}
 		}

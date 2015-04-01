@@ -9,6 +9,7 @@ import org.opennebula.client.ClientConfigurationException;
 import org.opennebula.client.OneResponse;
 import org.opennebula.client.group.Group;
 import org.opennebula.client.group.GroupPool;
+import org.opennebula.client.image.ImagePool;
 import org.opennebula.client.template.TemplatePool;
 import org.opennebula.client.user.User;
 import org.opennebula.client.user.UserPool;
@@ -69,7 +70,7 @@ public class OpenNebulaClientFactory {
 	public TemplatePool createTemplatePool(Client oneClient) {
 		TemplatePool templatePool = new TemplatePool(oneClient);
 
-		OneResponse response = templatePool.info();
+		OneResponse response = templatePool.infoAll();
 		if (response.isError()) {
 			LOGGER.error("Error while getting info about templates: "
 					+ response.getErrorMessage());
@@ -77,6 +78,19 @@ public class OpenNebulaClientFactory {
 		}
 		LOGGER.debug("Template pool length: " + templatePool.getLength());
 		return templatePool;
+	}
+	
+	public ImagePool createImagePool(Client oneClient) {
+		ImagePool imagePool = new ImagePool(oneClient);
+
+		OneResponse response = imagePool.infoAll();
+		if (response.isError()) {
+			LOGGER.error("Error while getting info about templates: "
+					+ response.getErrorMessage());
+			throw new OCCIException(ErrorType.BAD_REQUEST, response.getErrorMessage());
+		}
+		LOGGER.debug("Template pool length: " + imagePool.getLength());
+		return imagePool;
 	}
 
 	public String allocateVirtualMachine(Client oneClient, String vmTemplate) {

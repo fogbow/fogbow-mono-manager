@@ -31,12 +31,11 @@ public class NoFMemberPicker implements FederationMemberPicker {
 	}
 	
 	@Override
-	public FederationMember pick(ManagerController facade) {
-		List<FederationMember> onlineMembers = facade.getMembers();
+	public FederationMember pick(List<FederationMember> members) {
 		Map<String, ResourceUsage> membersUsage = accoutingPlugin.getMembersUsage();
 		LinkedList<ReputableFederationMember> reputableMembers = new LinkedList<ReputableFederationMember>();
 
-		for (FederationMember currentMember : onlineMembers) {			
+		for (FederationMember currentMember : members) {			
 			String memberId = currentMember.getResourcesInfo().getId();			
 			if (localMemberId.equals(memberId)) {
 				continue;

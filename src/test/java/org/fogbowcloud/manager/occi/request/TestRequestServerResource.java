@@ -1,7 +1,12 @@
 package org.fogbowcloud.manager.occi.request;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import org.fogbowcloud.manager.core.RequirementsHelper;
+import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.HeaderUtils;
 import org.fogbowcloud.manager.occi.core.OCCIException;
@@ -134,4 +139,101 @@ public class TestRequestServerResource {
 
 		RequestServerResource.normalizeXOCCIAtt(xOCCIAtt);
 	}
+	
+	@Test
+	public void testNormalizeRequirementsNull() {
+		Assert.assertNull(RequestServerResource.normalizeRequirements(new ArrayList<Category>(),
+				new HashMap<String, String>(), new ArrayList<Flavor>()).get(
+				RequestAttribute.REQUIREMENTS.getValue()));
+	}
+	
+	@Test(expected=OCCIException.class)
+	public void testNormalizeRequirementsWithAttributeRequirement() {
+		Map<String, String> xOCCIAtt = new HashMap<String, String>();
+		String requirements = RequirementsHelper.GLUE_VCPU_TERM + ">=1";
+		xOCCIAtt.put(RequestAttribute.REQUIREMENTS.getValue(), requirements);
+		Map<String, String> normalizeRequirements = RequestServerResource.normalizeRequirements(
+				new ArrayList<Category>(), xOCCIAtt, new ArrayList<Flavor>());
+		Assert.assertEquals(requirements,
+				normalizeRequirements.get(RequestAttribute.REQUIREMENTS.getValue()));
+		
+		// Wrong requirements
+		xOCCIAtt.put(RequestAttribute.REQUIREMENTS.getValue(), "/wrongrequirements/");
+		normalizeRequirements = RequestServerResource.normalizeRequirements(
+				new ArrayList<Category>(), xOCCIAtt, new ArrayList<Flavor>());
+	}
+
+	@Test(expected=OCCIException.class)
+	public void testNormalizeRequirementsWithCategoryRequirement() {
+		List<Category> categories = new ArrayList<Category>();
+		String mediumFlavor = "medium";
+		categories.add(new Category(mediumFlavor, RequestConstants.TEMPLATE_RESOURCE_SCHEME,
+				RequestConstants.MIXIN_CLASS));
+		List<Flavor> listFlavorsFogbow = new ArrayList<Flavor>();
+		listFlavorsFogbow.add(new Flavor("small", "1", "1", "0"));
+		String cpuMedium = "2";
+		String memMedium = "4";
+		listFlavorsFogbow.add(new Flavor(mediumFlavor, cpuMedium, memMedium, "0"));
+		listFlavorsFogbow.add(new Flavor("large", "4", "8", "0"));
+		Map<String, String> normalizeRequirements = RequestServerResource.normalizeRequirements(
+				categories, new HashMap<String, String>(), listFlavorsFogbow);
+		Assert.assertEquals(RequirementsHelper.GLUE_MEM_RAM_TERM + ">=" + memMedium + "&&"
+				+ RequirementsHelper.GLUE_VCPU_TERM + ">=" + cpuMedium,
+				normalizeRequirements.get(RequestAttribute.REQUIREMENTS.getValue()));
+		
+		// Wrong flavor name
+		categories = new ArrayList<Category>();
+		categories.add(new Category("WrongFlavor", RequestConstants.TEMPLATE_RESOURCE_SCHEME,
+				RequestConstants.MIXIN_CLASS));
+		RequestServerResource.normalizeRequirements(categories, new HashMap<String, String>(),
+				listFlavorsFogbow).get(RequestAttribute.REQUIREMENTS.getValue());
+	}
+	
+	@Test
+	public void testNormalizeRequirementsWithAttributeAndCategoryRequirement() {
+		List<Category> categories = new ArrayList<Category>();
+		String mediumFlavor = "medium";
+		categories.add(new Category(mediumFlavor, RequestConstants.TEMPLATE_RESOURCE_SCHEME,
+				RequestConstants.MIXIN_CLASS));
+		Map<String, String> xOCCIAtt = new HashMap<String, String>();
+		String requeriments = RequirementsHelper.GLUE_VCPU_TERM + ">=1";
+		xOCCIAtt.put(RequestAttribute.REQUIREMENTS.getValue(), requeriments);
+		List<Flavor> listFlavorsFogbow = new ArrayList<Flavor>();
+		listFlavorsFogbow.add(new Flavor("small", "1", "1", "0"));
+		String cpuMedium = "2";
+		String memMedium = "4";
+		listFlavorsFogbow.add(new Flavor(mediumFlavor, cpuMedium, memMedium, "0"));
+		listFlavorsFogbow.add(new Flavor("large", "4", "8", "0"));
+		Map<String, String> normalizeRequirements = RequestServerResource.normalizeRequirements(
+				categories, xOCCIAtt, listFlavorsFogbow);
+		Assert.assertEquals("(" + requeriments + ")&&(" + RequirementsHelper.GLUE_MEM_RAM_TERM
+				+ ">=" + memMedium + "&&" + RequirementsHelper.GLUE_VCPU_TERM + ">=" + cpuMedium
+				+ ")", normalizeRequirements.get(RequestAttribute.REQUIREMENTS.getValue())); 
+	}	
+	
+	@Test(expected=OCCIException.class)
+	public void testNormalizeRequirementsWithoutAttributeRequirementAndWithCategory() {
+		List<Category> categories = new ArrayList<Category>();
+		String mediumFlavor = "medium";
+		categories.add(new Category(mediumFlavor, RequestConstants.TEMPLATE_RESOURCE_SCHEME,
+				RequestConstants.MIXIN_CLASS));
+		List<Flavor> listFlavorsFogbow = new ArrayList<Flavor>();
+		listFlavorsFogbow.add(new Flavor("small", "1", "1", "0"));
+		String cpuMedium = "2";
+		String memMedium = "4";
+		listFlavorsFogbow.add(new Flavor(mediumFlavor, cpuMedium, memMedium, "0"));
+		listFlavorsFogbow.add(new Flavor("large", "4", "8", "0"));
+		Map<String, String> normalizeRequirements = RequestServerResource.normalizeRequirements(
+				categories, new HashMap<String, String>(), listFlavorsFogbow);
+		Assert.assertEquals(RequirementsHelper.GLUE_MEM_RAM_TERM + ">=" + memMedium + "&&"
+				+ RequirementsHelper.GLUE_VCPU_TERM + ">=" + cpuMedium,
+				normalizeRequirements.get(RequestAttribute.REQUIREMENTS.getValue()));
+		
+		// Wrong flavor name
+		categories = new ArrayList<Category>();
+		categories.add(new Category("WrongFlavor", RequestConstants.TEMPLATE_RESOURCE_SCHEME,
+				RequestConstants.MIXIN_CLASS));
+		RequestServerResource.normalizeRequirements(categories, new HashMap<String, String>(),
+				listFlavorsFogbow).get(RequestAttribute.REQUIREMENTS.getValue());
+	}	
 }
