@@ -666,6 +666,7 @@ public class TestOCCIComputeOpenStack {
 		Assert.assertEquals(0, instanceLocations.size());
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testBypassPostInstance() throws URISyntaxException, ParseException, IOException {
 		List<String> instanceLocations = getInstanceLocations(occiComputeOpenStack
@@ -698,7 +699,7 @@ public class TestOCCIComputeOpenStack {
 				.getInstances(defaultToken));
 		Assert.assertEquals(1, instanceLocations.size());
 	}
-	
+
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private Series<Header> getRequestHeaders(Request request) {
 		Series<Header> requestHeaders = (Series<Header>) request.getAttributes().get(

@@ -1,6 +1,5 @@
 package org.fogbowcloud.manager.xmpp;
 
-import java.io.IOException;
 import java.security.cert.CertificateException;
 import java.util.HashMap;
 import java.util.List;
@@ -23,6 +22,7 @@ public class ManagerXmppComponent extends XMPPComponent implements AsyncPacketSe
 	public static final String REQUEST_NAMESPACE = "http://fogbowcloud.org/manager/request";
 	public static final String GETINSTANCE_NAMESPACE = "http://fogbowcloud.org/manager/getinstance";
 	public static final String REMOVEINSTANCE_NAMESPACE = "http://fogbowcloud.org/manager/removeinstance";
+	public static final String INSTANCEBEINGUSED_NAMESPACE = "http://fogbowcloud.org/manager/instancebeingused";
 
 	private static long PERIOD = 30000;
 	private static Logger LOGGER = Logger.getLogger(ManagerXmppComponent.class);
@@ -43,6 +43,7 @@ public class ManagerXmppComponent extends XMPPComponent implements AsyncPacketSe
 		addGetHandler(new GetInstanceHandler(managerFacade));
 		addSetHandler(new RemoveInstanceHandler(managerFacade));
 		addSetHandler(new RequestInstanceHandler(managerFacade));
+		addGetHandler(new InstanceBeingUsedHandler(managerFacade));
 	}
 
 	public void init() {
@@ -57,6 +58,8 @@ public class ManagerXmppComponent extends XMPPComponent implements AsyncPacketSe
 	@Override
 	protected void send(Packet packet) {
 		packet.setFrom(getJID());
+		LOGGER.debug("(sending IQ to " + packet.getTo() + ", packetId " + packet.getID() + ", XML "
+				+ packet.toXML());
 		super.send(packet);
 	}
 

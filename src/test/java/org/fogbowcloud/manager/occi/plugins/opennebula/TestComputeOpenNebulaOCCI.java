@@ -108,7 +108,7 @@ public class TestComputeOpenNebulaOCCI {
 		HttpUriRequest request = new HttpPost(DEFAULT_URL + "/" + COMPUTE_TERM);
 		request.addHeader(OCCIHeaders.AUTHORIZATION,
 				openNebulaOCCIComputePlugin.getAuthorization(ACCESS_TOKEN_ID));
-		request.addHeader(OCCIHeaders.X_AUTH_TOKEN, ACCESS_TOKEN_ID);
+		request.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, ACCESS_TOKEN_ID);
 		request.addHeader(OCCIHeaders.CATEGORY, UUID_CIRROS0_3_2_1);
 		request.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, OpenNebulaOCCIComputePlugin.DEFAULT_CORE_ID);
 		request.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE,
@@ -141,7 +141,7 @@ public class TestComputeOpenNebulaOCCI {
 		HttpUriRequest request = new HttpPost(DEFAULT_URL + "/" + COMPUTE_TERM);
 		request.addHeader(OCCIHeaders.AUTHORIZATION,
 				openNebulaOCCIComputePlugin.getAuthorization(ACCESS_TOKEN_ID));
-		request.addHeader(OCCIHeaders.X_AUTH_TOKEN, ACCESS_TOKEN_ID);
+		request.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, ACCESS_TOKEN_ID);
 		request.addHeader(OCCIHeaders.CATEGORY, UUID_CIRROS0_3_2_1);
 		request.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, OpenNebulaOCCIComputePlugin.DEFAULT_CORE_ID);
 		request.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE,
@@ -189,7 +189,7 @@ public class TestComputeOpenNebulaOCCI {
 		HttpUriRequest request = new HttpPost(DEFAULT_URL + "/" + COMPUTE_TERM);
 		request.addHeader(OCCIHeaders.AUTHORIZATION,
 				openNebulaOCCIComputePlugin.getAuthorization(ACCESS_TOKEN_ID));
-		request.addHeader(OCCIHeaders.X_AUTH_TOKEN, ACCESS_TOKEN_ID);
+		request.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, ACCESS_TOKEN_ID);
 		request.addHeader(OCCIHeaders.CATEGORY, UUID_CIRROS0_3_2_1);		
 		request.addHeader(OCCIHeaders.CATEGORY, "public_key");
 		request.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, OpenNebulaOCCIComputePlugin.DEFAULT_CORE_ID);
@@ -217,7 +217,7 @@ public class TestComputeOpenNebulaOCCI {
 		HttpUriRequest request = new HttpGet(DEFAULT_URL + "/" + COMPUTE_TERM + instanceId);
 		request.addHeader(OCCIHeaders.AUTHORIZATION,
 				openNebulaOCCIComputePlugin.getAuthorization(ACCESS_TOKEN_ID));
-		request.addHeader(OCCIHeaders.X_AUTH_TOKEN, ACCESS_TOKEN_ID);
+		request.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, ACCESS_TOKEN_ID);
 		expectedRequest = new HttpUriRequestMatcher(request);
 
 		Token token = new Token(ACCESS_TOKEN_ID, "user", new Date(), new HashMap<String, String>());
@@ -234,7 +234,7 @@ public class TestComputeOpenNebulaOCCI {
 		HttpUriRequest request = new HttpDelete(DEFAULT_URL + "/" + COMPUTE_TERM);
 		request.addHeader(OCCIHeaders.AUTHORIZATION,
 				openNebulaOCCIComputePlugin.getAuthorization(ACCESS_TOKEN_ID));
-		request.addHeader(OCCIHeaders.X_AUTH_TOKEN, ACCESS_TOKEN_ID);
+		request.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, ACCESS_TOKEN_ID);
 		expectedRequest = new HttpUriRequestMatcher(request);
 
 		Token token = new Token(ACCESS_TOKEN_ID, "user", new Date(), new HashMap<String, String>());
@@ -252,7 +252,7 @@ public class TestComputeOpenNebulaOCCI {
 		HttpUriRequest request = new HttpDelete(DEFAULT_URL + "/" + COMPUTE_TERM + instanceId);
 		request.addHeader(OCCIHeaders.AUTHORIZATION,
 				openNebulaOCCIComputePlugin.getAuthorization(ACCESS_TOKEN_ID));
-		request.addHeader(OCCIHeaders.X_AUTH_TOKEN, ACCESS_TOKEN_ID);
+		request.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, ACCESS_TOKEN_ID);
 		expectedRequest = new HttpUriRequestMatcher(request);
 
 		Token token = new Token(ACCESS_TOKEN_ID, "user", new Date(), new HashMap<String, String>());
@@ -269,7 +269,7 @@ public class TestComputeOpenNebulaOCCI {
 		HttpUriRequest request = new HttpGet(DEFAULT_URL + "/" + COMPUTE_TERM);
 		request.addHeader(OCCIHeaders.AUTHORIZATION,
 				openNebulaOCCIComputePlugin.getAuthorization(ACCESS_TOKEN_ID));
-		request.addHeader(OCCIHeaders.X_AUTH_TOKEN, ACCESS_TOKEN_ID);
+		request.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, ACCESS_TOKEN_ID);
 		expectedRequest = new HttpUriRequestMatcher(request);
 
 		Token token = new Token(ACCESS_TOKEN_ID, "user", new Date(), new HashMap<String, String>());

@@ -24,13 +24,21 @@ public class DefaultDataTestHelper {
 	//time data
 	public static final Long SCHEDULER_PERIOD = 500L;
 	public static final Long GRACE_TIME = 250L;
+	public static final Long SERVED_REQUEST_MONITORING_PERIOD = 300L;
 	public static final long LONG_TIME = 1 * 24 * 60 * 60 * 1000; //one day
 	public static final Date TOKEN_FUTURE_EXPIRATION = new Date(System.currentTimeMillis() + LONG_TIME);
 	
 	//test default values
 	public static final String USER_NAME = "user";
 	public static final String USER_PASS = "password";
-	public static final String ACCESS_TOKEN_ID = "accesstoken";
+	public static final String LOCAL_ACCESS_TOKEN_ID = "accesstoken";
 	public static final String TENANT_NAME = "tenantName";
     public static final String INSTANCE_ID = "instanceid";
+    
+    public static final String FED_USER_NAME = "fed_user";
+	public static final String FED_USER_PASS = "fed_password";
+	public static final String FED_ACCESS_TOKEN_ID = "fed_accesstoken";
+	
+	//Green Sitter
+	public static final String GREEN_SITTER_JID = "green.server.com";
 }

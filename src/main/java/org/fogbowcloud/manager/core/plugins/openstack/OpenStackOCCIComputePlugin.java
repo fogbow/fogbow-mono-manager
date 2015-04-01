@@ -16,6 +16,7 @@ import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.occi.OCCIComputePlugin;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
+import org.fogbowcloud.manager.occi.core.HeaderUtils;
 import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
@@ -131,7 +132,8 @@ public class OpenStackOCCIComputePlugin extends OCCIComputePlugin{
 				convertRequestToOcci(request, requestHeaders);				
 			}
 			
-			if (requestHeaders.getValuesArray(normalizeInstanceId(OCCIHeaders.X_AUTH_TOKEN)).length == 1
+			// Removing one header if request has more than one (one normalized and other not normalized)
+			if (requestHeaders.getValuesArray(HeaderUtils.normalize(OCCIHeaders.X_AUTH_TOKEN)).length == 1
 					&& requestHeaders.getValuesArray(OCCIHeaders.X_AUTH_TOKEN).length == 1) {
 				requestHeaders.removeFirst(OCCIHeaders.X_AUTH_TOKEN);
 			}
@@ -187,8 +189,8 @@ public class OpenStackOCCIComputePlugin extends OCCIComputePlugin{
 		} catch (Exception e) {}
 	}
 	
-	public void uploadImage(Token token, String imagePath, String imageName) {
-		openStackNovaV2ComputePlugin.uploadImage(token, imagePath, imageName);		
+	public void uploadImage(Token token, String imagePath, String imageName, String diskFormat) {
+		openStackNovaV2ComputePlugin.uploadImage(token, imagePath, imageName, null);		
 	}
 	
 	public String getImageId(Token token, String imageName) {

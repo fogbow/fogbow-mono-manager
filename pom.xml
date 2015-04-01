@@ -131,6 +131,11 @@
 
   <dependencies>
     <dependency>
+	  <groupId>org.apache.commons</groupId>
+	  <artifactId>commons-compress</artifactId>
+	  <version>1.9</version>
+	</dependency>  
+    <dependency>
       <groupId>org.jamppa</groupId>
       <artifactId>jamppa</artifactId>
       <version>0.1.1</version>
@@ -205,6 +210,12 @@
 		<artifactId>sshj</artifactId>
 		<version>0.8.1</version>
 	</dependency>
+	<dependency>
+		<groupId>com.h2database</groupId>
+		<artifactId>h2</artifactId>
+		<version>1.4.186</version>
+	</dependency>
+	
   </dependencies>
   
 </project>

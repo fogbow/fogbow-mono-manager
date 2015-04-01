@@ -11,25 +11,34 @@ import org.fogbowcloud.manager.occi.core.Resource;
 
 public class Instance {
 
-	public static String PREFIX_DEFAULT_INSTANCE = "X-OCCI-Location: ";
-	private static String PREFIX_DEFAULT_ATTRIBUTE = "X-OCCI-Attribute: ";
-	private static String CATEGORY = "Category:";
+	public static final String PREFIX_DEFAULT_INSTANCE = "X-OCCI-Location: ";
+	public static final String SSH_PUBLIC_ADDRESS_ATT = "org.fogbowcloud.request.ssh-public-address";
+	
+	private static final String PREFIX_DEFAULT_ATTRIBUTE = "X-OCCI-Attribute: ";
+	private static final String CATEGORY = "Category:";
 
 	private String id;
 	private List<Resource> resources;
 	private List<Link> links;
+	private InstanceState state = InstanceState.PENDING;
 	private Map<String, String> attributes;
-	public static final String SSH_PUBLIC_ADDRESS_ATT = "org.fogbowcloud.request.ssh-public-address";
 
 	public Instance(String id) {
 		this.id = id;
 	}
 
-	public Instance(String id, List<Resource> resources, Map<String, String> attributes, List<Link> links) {
+	public Instance(String id, List<Resource> resources, 
+			Map<String, String> attributes, List<Link> links, 
+			InstanceState instanceState) {
 		this(id);
 		this.resources = resources;
 		this.attributes = attributes;
 		this.links = links;
+		this.state = instanceState;
+	}
+	
+	public InstanceState getState() {
+		return state;
 	}
 
 	public static Instance parseInstance(String textResponse) {
@@ -46,57 +55,56 @@ public class Instance {
 		for (String line : lines) {
 			if (line.contains("Category:")) {
 				String[] blockLine = line.split(";");
-				String[] blockValues;
-				String term = "";
-				String scheme = "";
-				String catClass = "";
-				String title = "";
-				String rel = "";
-				String location = "";
-				List<String> attributesResource = new ArrayList<String>();
-				List<String> actionsResource = new ArrayList<String>();
-
+				Map<String, String> blocks = new HashMap<String, String>();
+				
 				for (String block : blockLine) {
 					if (block.contains(CATEGORY)) {
-						blockValues = block.split(":");
-						term = blockValues[1].trim();
+						String[] blockValues = block.split(":");
+						blocks.put("term", blockValues[1].trim());
 					} else {
-						blockValues = block.split("=");
-						if (blockValues[0].contains("scheme")) {
-							scheme = blockValues[1].replace("\"", "").trim();
-						} else if (blockValues[0].contains("class")) {
-							catClass = blockValues[1].replace("\"", "").trim();
-						} else if (blockValues[0].contains("title")) {
-							title = blockValues[1].replace("\"", "").trim();
-						} else if (blockValues[0].contains("rel")) {
-							rel = blockValues[1].replace("\"", "").trim();
-						} else if (blockValues[0].contains("location")) {
-							location = blockValues[1].replace("\"", "").trim();
-						} else if (blockValues[0].contains("attributes")) {
-							String[] attributesValues = blockValues[1].replace("\"", "").split(" ");
-							for (String attribute : attributesValues) {
-								attributesResource.add(attribute);
-							}
-						} else if (blockValues[0].contains("actions")) {
-							String[] actionsValues = blockValues[1].replace("\"", "").split(" ");
-							for (String action : actionsValues) {
-								actionsResource.add(action);
-							}
-						}
+						String[] blockValues = block.split("=");
+						blocks.put(blockValues[0].trim(), blockValues[1].replace("\"", "").trim());
 					}
 				}
+				List<String> attributesResource = new ArrayList<String>();
+				List<String> actionsResource = new ArrayList<String>();
+				String scheme = emptyIfNull(blocks.get("scheme"));
+				String catClass = emptyIfNull(blocks.get("class"));
+				String title = emptyIfNull(blocks.get("title"));
+				String rel = emptyIfNull(blocks.get("rel"));
+				String location = emptyIfNull(blocks.get("location"));
+				String term = emptyIfNull(blocks.get("term"));
+				
+				String attributeBlocks = blocks.get("attributes");
+				if (attributeBlocks != null) {
+					for (String attribute : attributeBlocks.split(" ")) {
+						attributesResource.add(attribute);
+					}
+				}
+				
+				String actionBlocks = blocks.get("actions");
+				if (actionBlocks != null) {
+					for (String action : actionBlocks.split(" ")) {
+						actionsResource.add(action);
+					}
+				}
+				
 				Category category = new Category(term, scheme, catClass);
 				resources.add(new Resource(category, attributesResource, actionsResource, location,
 						title, rel));
 			} else if (line.contains("Link")) {
 				links.add(Link.parseLink(line));
 			} else if (line.contains("X-OCCI-Attribute: ")) {
-
 				String[] blockLine = line.replace(PREFIX_DEFAULT_ATTRIBUTE, "").split("=");
 				attributes.put(blockLine[0], blockLine[1].replace("\"", "").trim());
 			}
 		}
-		return new Instance(id, resources, attributes, links);
+		return new Instance(id, resources, attributes, links, 
+				InstanceState.fromOCCIState(attributes.get("occi.compute.state")));
+	}
+	
+	private static String emptyIfNull(String input) {
+		return input == null ? new String() : input;
 	}
 
 	public String toOCCIMessageFormatLocation() {

@@ -13,7 +13,9 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
+import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
+import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
@@ -27,6 +29,7 @@ import org.fogbowcloud.manager.occi.core.Resource;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.instance.Instance;
+import org.fogbowcloud.manager.occi.instance.InstanceState;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.fogbowcloud.manager.occi.util.OCCITestHelper;
 import org.junit.After;
@@ -55,7 +58,7 @@ public class TestGetCompute {
 		List<Resource> list = new ArrayList<Resource>();
 		Map<String, String> map = new HashMap<String, String>();
 		map.put("test", "test");
-		Instance instance1 = new Instance(INSTANCE_1_ID, list, map, null);
+		Instance instance1 = new Instance(INSTANCE_1_ID, list, map, null, InstanceState.PENDING);
 
 		computePlugin = Mockito.mock(ComputePlugin.class);
 		Mockito.when(computePlugin.getInstance(Mockito.any(Token.class), Mockito.eq(INSTANCE_1_ID)))
@@ -67,25 +70,25 @@ public class TestGetCompute {
 						Mockito.eq(INSTANCE_3_ID_WITHOUT_USER))).thenReturn(instance1);
 		
 		identityPlugin = Mockito.mock(IdentityPlugin.class);
-		Mockito.when(identityPlugin.getToken(OCCITestHelper.ACCESS_TOKEN)).thenReturn(
+		Mockito.when(identityPlugin.getToken(OCCITestHelper.FED_ACCESS_TOKEN)).thenReturn(
 				new Token("id", OCCITestHelper.USER_MOCK, new Date(),
 				new HashMap<String, String>()));
 		Mockito.when(identityPlugin.getAuthenticationURI()).thenReturn("Keystone uri='http://localhost:5000/'");
 
 		List<Request> requests = new LinkedList<Request>();
-		Token token = new Token(OCCITestHelper.ACCESS_TOKEN,
+		Token token = new Token(OCCITestHelper.FED_ACCESS_TOKEN,
 				OCCITestHelper.USER_MOCK, DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
 				new HashMap<String, String>());
-		Request request1 = new Request("1", token, null, null);
+		Request request1 = new Request("1", token, null, null, null);
 		request1.setInstanceId(INSTANCE_1_ID);
 		request1.setMemberId(OCCITestHelper.MEMBER_ID);
 		requests.add(request1);
-		Request request2 = new Request("2", token, null, null);
+		Request request2 = new Request("2", token, null, null, null);
 		request2.setInstanceId(INSTANCE_2_ID);
 		request2.setMemberId(OCCITestHelper.MEMBER_ID);
 		requests.add(request2);
 		Request request3 = new Request("3", new Token("token", "user",
-				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), null, null);
+				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), null, null, null);
 		request3.setInstanceId(INSTANCE_3_ID_WITHOUT_USER);
 		request3.setMemberId(OCCITestHelper.MEMBER_ID);
 		requests.add(request3);
@@ -95,8 +98,9 @@ public class TestGetCompute {
 		
 		imageStoragePlugin = Mockito.mock(ImageStoragePlugin.class);
 		
-		this.helper.initializeComponentCompute(computePlugin, identityPlugin, 
-				authorizationPlugin, imageStoragePlugin, requests);
+		this.helper.initializeComponentCompute(computePlugin, identityPlugin, authorizationPlugin,
+				imageStoragePlugin, Mockito.mock(AccountingPlugin.class),
+				Mockito.mock(BenchmarkingPlugin.class), requests);
 	}
 
 	@After
@@ -111,7 +115,7 @@ public class TestGetCompute {
 		
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE);
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		httpGet.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(httpGet);
 
@@ -129,17 +133,17 @@ public class TestGetCompute {
 		Map<String, String> attributesTwo = new HashMap<String, String>();
 		attributesTwo.put("occi.compute.cores", "2");
 		Instance instanceOne = new Instance("One", resources, attributesOne,
-				new ArrayList<Instance.Link>());
+				new ArrayList<Instance.Link>(), InstanceState.PENDING);
 		Instance instanceTwo = new Instance("Two", resources, attributesTwo,
-				new ArrayList<Instance.Link>());
+				new ArrayList<Instance.Link>(), InstanceState.PENDING);
 		Instance instanceThree = new Instance("Three", resources, attributesTwo,
-				new ArrayList<Instance.Link>());
+				new ArrayList<Instance.Link>(), InstanceState.PENDING);
 		Mockito.when(computePlugin.getInstance(Mockito.any(Token.class), Mockito.anyString()))
 				.thenReturn(instanceOne, instanceTwo, instanceThree);		
 		
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE);
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);		
+		httpGet.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);		
 		httpGet.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, "occi.compute.cores=\"2\"");
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(httpGet);
@@ -158,17 +162,17 @@ public class TestGetCompute {
 		Map<String, String> attributesTwo = new HashMap<String, String>();
 		attributesTwo.put("occi.compute.cores", "2");
 		Instance instanceOne = new Instance("One", resources, attributesOne,
-				new ArrayList<Instance.Link>());
+				new ArrayList<Instance.Link>(), InstanceState.PENDING);
 		Instance instanceTwo = new Instance("Two", resources, attributesTwo,
-				new ArrayList<Instance.Link>());
+				new ArrayList<Instance.Link>(), InstanceState.PENDING);
 		Instance instanceThree = new Instance("Three", resources, attributesTwo,
-				new ArrayList<Instance.Link>());
+				new ArrayList<Instance.Link>(), InstanceState.PENDING);
 		Mockito.when(computePlugin.getInstance(Mockito.any(Token.class), Mockito.anyString()))
 				.thenReturn(instanceOne, instanceTwo, instanceThree);		
 		
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE);
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);		
+		httpGet.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);		
 		httpGet.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, "occi.compute.cores=\"2000000\"");
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(httpGet);
@@ -192,17 +196,17 @@ public class TestGetCompute {
 				"", ""));
 		Map<String, String> attributesOne = new HashMap<String, String>();
 		Instance instanceOne = new Instance("One", resourcesTwo, attributesOne,
-				new ArrayList<Instance.Link>());
+				new ArrayList<Instance.Link>(), InstanceState.PENDING);
 		Instance instanceTwo = new Instance("Two", resources, attributesOne,
-				new ArrayList<Instance.Link>());
+				new ArrayList<Instance.Link>(), InstanceState.PENDING);
 		Instance instanceThree = new Instance("Three", resources, attributesOne,
-				new ArrayList<Instance.Link>());		
+				new ArrayList<Instance.Link>(), InstanceState.PENDING);		
 		Mockito.when(computePlugin.getInstance(Mockito.any(Token.class), Mockito.anyString()))
 				.thenReturn(instanceOne, instanceTwo, instanceThree);		
 		
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE);
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);		
+		httpGet.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);		
 		httpGet.addHeader(OCCIHeaders.CATEGORY,
 				"m1-small; scheme=\"http://schemas.openstack.org/template/resource#\"; class=\"mixin\"");
 		
@@ -228,17 +232,17 @@ public class TestGetCompute {
 				"", ""));
 		Map<String, String> attributesOne = new HashMap<String, String>();
 		Instance instanceOne = new Instance("One", resourcesTwo, attributesOne,
-				new ArrayList<Instance.Link>());
+				new ArrayList<Instance.Link>(), InstanceState.PENDING);
 		Instance instanceTwo = new Instance("Two", resources, attributesOne,
-				new ArrayList<Instance.Link>());
+				new ArrayList<Instance.Link>(), InstanceState.PENDING);
 		Instance instanceThree = new Instance("Three", resources, attributesOne,
-				new ArrayList<Instance.Link>());		
+				new ArrayList<Instance.Link>(), InstanceState.PENDING);		
 		Mockito.when(computePlugin.getInstance(Mockito.any(Token.class), Mockito.anyString()))
 				.thenReturn(instanceOne, instanceTwo, instanceThree);		
 		
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE);
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);		
+		httpGet.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);		
 		httpGet.addHeader(OCCIHeaders.CATEGORY,
 				"wrong; scheme=\"http://schemas.openstack.org/template/resource#\"; class=\"mixin\"");
 		
@@ -256,7 +260,7 @@ public class TestGetCompute {
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE);
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpGet.addHeader(OCCIHeaders.ACCEPT, OCCIHeaders.TEXT_URI_LIST_CONTENT_TYPE);
-		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		httpGet.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(httpGet);
 
@@ -274,14 +278,15 @@ public class TestGetCompute {
 		//reseting component
 		helper.stopComponent();
 		List<Request> requests = new LinkedList<Request>();
-		helper.initializeComponentCompute(computePlugin, identityPlugin, 
-				authorizationPlugin, imageStoragePlugin, requests);
+		helper.initializeComponentCompute(computePlugin, identityPlugin, authorizationPlugin,
+				imageStoragePlugin, Mockito.mock(AccountingPlugin.class),
+				Mockito.mock(BenchmarkingPlugin.class), requests);
 
 		//test
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE);
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpGet.addHeader(OCCIHeaders.ACCEPT, OCCIHeaders.TEXT_URI_LIST_CONTENT_TYPE);
-		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		httpGet.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(httpGet);
 
@@ -299,7 +304,7 @@ public class TestGetCompute {
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE + INSTANCE_1_ID
 				+ Request.SEPARATOR_GLOBAL_ID + OCCITestHelper.MEMBER_ID);
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		httpGet.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(httpGet);
 
@@ -316,7 +321,7 @@ public class TestGetCompute {
 				+ Request.SEPARATOR_GLOBAL_ID + OCCITestHelper.MEMBER_ID);
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpGet.addHeader(OCCIHeaders.ACCEPT, OCCIHeaders.TEXT_URI_LIST_CONTENT_TYPE);
-		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		httpGet.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(httpGet);
 
@@ -331,7 +336,7 @@ public class TestGetCompute {
 		
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE + "wrong@member");
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		httpGet.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(httpGet);
 
@@ -347,7 +352,7 @@ public class TestGetCompute {
 				+ INSTANCE_3_ID_WITHOUT_USER + Request.SEPARATOR_GLOBAL_ID
 				+ OCCITestHelper.MEMBER_ID);
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		httpGet.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(httpGet);
 
@@ -361,7 +366,7 @@ public class TestGetCompute {
 
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE);
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, "any");
-		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		httpGet.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(httpGet);
 
@@ -377,7 +382,7 @@ public class TestGetCompute {
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE);
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpGet.addHeader(OCCIHeaders.ACCEPT, "invalid-content");
-		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		httpGet.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(httpGet);
 
@@ -391,7 +396,7 @@ public class TestGetCompute {
 
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE);
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		httpGet.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(httpGet);
 
@@ -406,7 +411,7 @@ public class TestGetCompute {
 		
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE + INSTANCE_1_ID);
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, "wrong");
+		httpGet.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, "wrong");
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(httpGet);
 
@@ -421,7 +426,7 @@ public class TestGetCompute {
 		
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE);
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, "");
+		httpGet.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, "");
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(httpGet);
 

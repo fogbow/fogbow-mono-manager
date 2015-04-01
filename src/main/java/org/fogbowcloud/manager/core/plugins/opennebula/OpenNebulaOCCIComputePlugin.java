@@ -78,7 +78,6 @@ public class OpenNebulaOCCIComputePlugin extends OCCIComputePlugin {
 		
 		String userdataBase64 = xOCCIAtt.get(RequestAttribute.USER_DATA_ATT.getValue());		
 		if (userdataBase64 != null) {
-			userdataBase64 = OpenNebulaComputePlugin.normalizeUserdata(userdataBase64);
 			headerAttribute += ",org.openstack.compute.user_data=\"" + userdataBase64 + "\"";					
 		}
 		

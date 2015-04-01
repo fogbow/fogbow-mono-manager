@@ -20,4 +20,6 @@ public interface IdentityPlugin {
 	public Credential[] getCredentials();
 
 	public String getAuthenticationURI();
+	
+	public Token getForwardableToken(Token originalToken);
 }

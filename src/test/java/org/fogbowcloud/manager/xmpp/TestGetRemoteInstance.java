@@ -14,6 +14,7 @@ import org.fogbowcloud.manager.occi.core.Resource;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.instance.Instance;
+import org.fogbowcloud.manager.occi.instance.InstanceState;
 import org.fogbowcloud.manager.occi.instance.Instance.Link;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.fogbowcloud.manager.occi.util.OCCITestHelper;
@@ -60,7 +61,8 @@ public class TestGetRemoteInstance {
 		List<Link> links = new ArrayList<Link>();
 		links.add(link);
 
-		return new Instance(DefaultDataTestHelper.INSTANCE_ID, resources, attributes, links);
+		return new Instance(DefaultDataTestHelper.INSTANCE_ID, resources, 
+				attributes, links, InstanceState.RUNNING);
 	}
 
 	@Test
@@ -75,7 +77,7 @@ public class TestGetRemoteInstance {
 
 		Token token = new Token("anyvalue", OCCITestHelper.USER_MOCK,
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>());
-		Request request = new Request("anyvalue", token, null, null);
+		Request request = new Request("anyvalue", token, null, null, null);
 		request.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
 		request.setMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 
@@ -87,6 +89,7 @@ public class TestGetRemoteInstance {
 			e.printStackTrace();
 		}
 
+		Assert.assertEquals(InstanceState.RUNNING, remoteInstance.getState());
 		Assert.assertEquals(instance.getId(), remoteInstance.getId());
 		Assert.assertEquals(instance.getAttributes(), remoteInstance.getAttributes());
 		Assert.assertEquals(instance.getResources().get(0).toHeader(), remoteInstance
@@ -97,7 +100,7 @@ public class TestGetRemoteInstance {
 	@Test(expected=OCCIException.class)
 	public void testGetRemoteInstaceNotFound() throws Exception {
 		Request request = new Request("anyvalue", new Token(WRONG_TOKEN, OCCITestHelper.USER_MOCK,
-				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), null, null);
+				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), null, null, null);
 		request.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
 		request.setMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 
@@ -114,7 +117,7 @@ public class TestGetRemoteInstance {
 	public void testGetRemoteInstanceUnauthorized() throws Exception {
 		Token token = new Token(WRONG_TOKEN, OCCITestHelper.USER_MOCK,
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>());
-		Request request = new Request("anyvalue", token, null, null);
+		Request request = new Request("anyvalue", token, null, null, null);
 		request.setInstanceId(INSTANCE_OTHER_USER);
 		request.setMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 

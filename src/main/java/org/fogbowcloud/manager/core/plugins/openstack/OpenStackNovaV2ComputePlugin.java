@@ -28,6 +28,7 @@ import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.RequirementsHelper;
 import org.fogbowcloud.manager.core.model.Flavor;
+import org.fogbowcloud.manager.core.model.ImageState;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.util.HttpPatch;
@@ -40,6 +41,7 @@ import org.fogbowcloud.manager.occi.core.ResourceRepository;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.instance.Instance;
+import org.fogbowcloud.manager.occi.instance.InstanceState;
 import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.json.JSONArray;
@@ -52,11 +54,12 @@ import org.restlet.data.Status;
 public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 
 	private static final String SUFIX_ENDPOINT_FLAVORS = "/flavors";
+	private static final String NO_VALID_HOST_WAS_FOUND = "No valid host was found";
+	private static final String STATUS_JSON_FIELD = "status";
 	private static final String IMAGES_JSON_FIELD = "images";
 	private static final String ID_JSON_FIELD = "id";
 	private static final String BARE = "bare";
 	private static final String CONTAINER_FORMAT = "/container_format";
-	private static final String QCOW2 = "qcow2";
 	private static final String VISIBILITY_JSON_FIELD = "visibility";
 	private static final String PUBLIC = "public";
 	private static final String NAME_JSON_FIELD = "name";
@@ -67,7 +70,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 	private static final String OP_JSON_FIELD = "op";
 	private static final String V2_IMAGES_FILE = "/file";
 	private static final String V2_IMAGES = "/v2/images";
-	
+
 	private final String COMPUTE_V2_API_ENDPOINT = "/v2/";
 	private static final String TENANT_ID = "tenantId";
 
@@ -296,7 +299,11 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 						ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES);
 			}
 			throw new OCCIException(ErrorType.BAD_REQUEST, message);
-		} else if (response.getStatusLine().getStatusCode() > 204) {
+		} else if ((response.getStatusLine().getStatusCode() == HttpStatus.SC_INTERNAL_SERVER_ERROR) &&
+				(message.contains(NO_VALID_HOST_WAS_FOUND))){
+			throw new OCCIException(ErrorType.NO_VALID_HOST_FOUND, ResponseConstants.NO_VALID_HOST_FOUND);
+		}
+		else if (response.getStatusLine().getStatusCode() > 204) {
 			throw new OCCIException(ErrorType.BAD_REQUEST, response.getStatusLine().toString());
 		}
 	}
@@ -372,9 +379,10 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 			String id = rootServer.getJSONObject("server").getString(ID_JSON_FIELD);
 
 			Map<String, String> attributes = new HashMap<String, String>();
+			InstanceState state = getInstanceState(rootServer.getJSONObject("server")
+					.getString(STATUS_JSON_FIELD));
 			// CPU Architecture of the instance
-			attributes.put("occi.compute.state", getOCCIState(rootServer.getJSONObject("server")
-					.getString("status")));
+			attributes.put("occi.compute.state", state.getOcciState());
 			// // CPU Clock frequency (speed) in gigahertz
 			// TODO How to get speed?
 			attributes.put("occi.compute.speed", "Not defined");
@@ -407,7 +415,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 
 			LOGGER.debug("Instance resources: " + resources);
 
-			return new Instance(id, resources, attributes, new ArrayList<Instance.Link>());
+			return new Instance(id, resources, attributes, new ArrayList<Instance.Link>(), state);
 		} catch (JSONException e) {
 			LOGGER.warn("There was an exception while getting instances from json.", e);
 		}
@@ -432,14 +440,18 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 //		}
 //		return null;
 	}
-
-	private String getOCCIState(String instanceStatus) {
-		if ("suspended".equalsIgnoreCase(instanceStatus)){
-			return "suspended";
-		} else if ("active".equalsIgnoreCase(instanceStatus)){
-			return "active";
+	
+	private InstanceState getInstanceState(String instanceStatus) {
+		if ("active".equalsIgnoreCase(instanceStatus)) {
+			return InstanceState.RUNNING;
 		}
-		return "inactive";
+		if ("suspended".equalsIgnoreCase(instanceStatus)) {
+			return InstanceState.SUSPENDED;
+		}
+		if ("error".equalsIgnoreCase(instanceStatus)) {
+			return InstanceState.FAILED;
+		}
+		return InstanceState.PENDING;
 	}
 
 	@Override
@@ -484,7 +496,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		int instancesIdle = Integer.parseInt(maxInstances) - Integer.parseInt(instancesInUse);
 
 		return new ResourcesInfo(String.valueOf(cpuIdle), cpuInUse, String.valueOf(memIdle),
-				memInUse, getFlavors(cpuIdle, memIdle, instancesIdle), null);
+				memInUse, getFlavors(cpuIdle, memIdle, instancesIdle));
 	}
 	
 	private String getAttFromLimitsJson(String attName, String responseStr) {
@@ -591,7 +603,11 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 	}
 
 	@Override
-	public void uploadImage(Token token, String imagePath, String imageName) {
+	public void uploadImage(Token token, String imagePath, String imageName, String diskFormat) {
+		LOGGER.info("Uploading image... ");
+		LOGGER.info("Token=" + token.getAccessId() + "; imagePath=" + imagePath + "; imageName="
+				+ imageName);
+		
 		if (imageName == null || imageName.isEmpty()) {
 			throw new OCCIException(ErrorType.BAD_REQUEST, "Image empty.");
 		}
@@ -616,7 +632,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 			JSONObject replace_disck_format = new JSONObject();
 			replace_disck_format.put(OP_JSON_FIELD, REPLACE_VALUE_UPLOAD_IMAGE);
 			replace_disck_format.put(PATH_JSON_FIELD, DISK_FORMAT);
-			replace_disck_format.put(VALUE_JSON_FIELD, QCOW2);
+			replace_disck_format.put(VALUE_JSON_FIELD, diskFormat);
 			nets.add(replace_disck_format);
 			JSONObject replace_container_format = new JSONObject();
 			replace_container_format.put(OP_JSON_FIELD, REPLACE_VALUE_UPLOAD_IMAGE);
@@ -648,7 +664,9 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 					return arrayImages.getJSONObject(i).getString(ID_JSON_FIELD);
 				}
 			}
-		} catch (JSONException e) {}
+		} catch (JSONException e) {
+			LOGGER.error("Error while parsing JSONObject for image state.", e);
+		}
 
 		return null;
 	}
@@ -713,5 +731,35 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		updateFlavors(token);
 		// Finding flavor
 		return RequirementsHelper.findFlavor(getFlavors(), requirements);
+	}
+	
+	@Override
+	public ImageState getImageState(Token token, String imageName) {
+		LOGGER.debug("Getting image status from image " + imageName + " with token " + token);
+		String responseJsonImages = doGetRequest(glanceV2APIEndpoint + V2_IMAGES,
+				token.getAccessId());
+		try {
+			JSONArray arrayImages = new JSONObject(responseJsonImages)
+					.getJSONArray(IMAGES_JSON_FIELD);
+			for (int i = 0; i < arrayImages.length(); i++) {
+				if (arrayImages.getJSONObject(i).getString(NAME_JSON_FIELD).equals(imageName)) {
+					/*
+					 * Possible OpenStack image status described on 
+					 * http://docs.openstack.org/developer/glance/statuses.html
+					 */
+					String imageStatus = arrayImages.getJSONObject(i).getString(STATUS_JSON_FIELD);
+					if ("active".equalsIgnoreCase(imageStatus)) {
+						return ImageState.ACTIVE;
+					} else if ("queued".equalsIgnoreCase(imageStatus)
+							|| "saving".equalsIgnoreCase(imageStatus)) {
+						return ImageState.PENDING;
+					}
+					return ImageState.FAILED;
+				}
+			}
+		} catch (JSONException e) {
+			LOGGER.error("Error while parsing JSONObject for image state.", e);
+		}
+		return null;	
 	}
 }

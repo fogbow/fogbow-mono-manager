@@ -21,12 +21,11 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
-import org.apache.commons.codec.Charsets;
-import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpStatus;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.RequirementsHelper;
 import org.fogbowcloud.manager.core.model.Flavor;
+import org.fogbowcloud.manager.core.model.ImageState;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.occi.core.Category;
@@ -38,6 +37,7 @@ import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.instance.Instance.Link;
+import org.fogbowcloud.manager.occi.instance.InstanceState;
 import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.opennebula.client.Client;
@@ -62,9 +62,8 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 	public static final String OPENNEBULA_TEMPLATES_TYPE_ALL = "all";	
 	public static final int VALUE_DEFAULT_QUOTA_OPENNEBULA = -1;
 	public static final int VALUE_UNLIMITED_QUOTA_OPENNEBULA = -2;
-	public static final int VALUE_DEFAULT_MEM = 20480; // 20 GB
-	public static final int VALUE_DEFAULT_CPU = 100;
-	public static final int VALUE_DEFAULT_VMS = 100;
+	
+	public static final int DEFAULT_RESOURCE_MAX_VALUE = Integer.MAX_VALUE;
 	private OpenNebulaClientFactory clientFactory;
 	private String openNebulaEndpoint;
 	private Map<String, String> fogbowTermToOpenNebula; 
@@ -81,7 +80,6 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 	private List<String> validTemplates;
 	
 	private static final Logger LOGGER = Logger.getLogger(OpenNebulaComputePlugin.class);
-
 
 	public OpenNebulaComputePlugin(Properties properties){
 		this(properties, new OpenNebulaClientFactory());
@@ -131,7 +129,7 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 			Map<String, String> xOCCIAtt, String localImageId) {
 		
 		LOGGER.debug("Requesting instance with token=" + token + "; categories="
-				+ categories + "; xOCCIAtt=" + xOCCIAtt);
+				+ categories + "; xOCCIAtt=" + xOCCIAtt + "; localImageId=" + localImageId);
 		
 		Map<String, String> templateProperties = new HashMap<String, String>();
 		
@@ -165,9 +163,7 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		}
 		
 		String userdata = xOCCIAtt.get(RequestAttribute.USER_DATA_ATT.getValue());
-		if (userdata != null){
-			userdata = normalizeUserdata(userdata);
-		}
+
 		templateProperties.put("mem", String.valueOf(foundFlavor.getMem()));
 		templateProperties.put("cpu", String.valueOf(foundFlavor.getCpu()));
 		templateProperties.put("userdata", userdata);
@@ -181,14 +177,6 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		return clientFactory.allocateVirtualMachine(oneClient, vmTemplate);
 	}
 
-	public static String normalizeUserdata(String userdata) {
-		userdata = new String(Base64.decodeBase64(userdata), Charsets.UTF_8);
-		userdata = userdata.replaceAll("\n", "\\\\n");
-		userdata = new String(Base64.encodeBase64(userdata.getBytes(Charsets.UTF_8), false, false),
-				Charsets.UTF_8);
-		return userdata;
-	}
-	
 	private String generateTemplate(Map<String, String> templateProperties) {
 		DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder docBuilder;
@@ -325,7 +313,8 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		Map<String, String> attributes = new HashMap<String, String>();
 		// CPU Architecture of the instance
 		attributes.put("occi.compute.architecture", getArch(arch));
-		attributes.put("occi.compute.state", getOCCIState(vm.lcmStateStr()));
+		InstanceState state = getInstanceState(vm.lcmStateStr());
+		attributes.put("occi.compute.state", state.getOcciState());
 		// CPU Clock frequency (speed) in gigahertz
 		attributes.put("occi.compute.speed", "Not defined");
 		attributes.put("occi.compute.memory", String.valueOf(Double.parseDouble(mem) / 1024)); // Gb
@@ -339,7 +328,7 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		resources.add(ResourceRepository.getInstance().get(
 				getUsedFlavor(Double.parseDouble(cpu), Double.parseDouble(mem))));
 		
-		return new Instance(vm.getId(), resources, attributes, new ArrayList<Link>());
+		return new Instance(vm.getId(), resources, attributes, new ArrayList<Link>(), state);
 	}
 
 	private String getArch(String arch) {		
@@ -347,14 +336,19 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		return !arch.isEmpty() ? arch : "x86";
 	}
 
-	private String getOCCIState(String oneVMState) {
+	private InstanceState getInstanceState(String oneVMState) {
 		if ("Running".equalsIgnoreCase(oneVMState)) {
-			return "active";
-		} else if ("Suspended".equalsIgnoreCase(oneVMState)){
-			return "suspended";
+			return InstanceState.RUNNING;
 		}
-		return "inactive";
+		if ("Suspended".equalsIgnoreCase(oneVMState)) {
+			return InstanceState.SUSPENDED;
+		}
+		if ("Failure".equalsIgnoreCase(oneVMState)) {
+			return InstanceState.FAILED;
+		}
+		return InstanceState.PENDING;
 	}
+
 
 	private String getUsedFlavor(double cpu, double mem) {
 		for (Flavor flavor : flavors) {
@@ -392,72 +386,91 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 	public ResourcesInfo getResourcesInfo(Token token) {
 		Client oneClient = clientFactory.createClient(token.getAccessId(), openNebulaEndpoint);				
 		User user = clientFactory.createUser(oneClient, token.getUser());
+		
+		String maxUserCpuStr = user.xpath("VM_QUOTA/VM/CPU");
+		String cpuUserInUseStr = user.xpath("VM_QUOTA/VM/CPU_USED");
+		String maxUserMemStr = user.xpath("VM_QUOTA/VM/MEMORY");
+		String memUserInUseStr = user.xpath("VM_QUOTA/VM/MEMORY_USED");
+		String maxUserVMsStr = user.xpath("VM_QUOTA/VM/VMS");
+		String vmsUserInUseStr = user.xpath("VM_QUOTA/VM/VMS_USED");
+		
 		String groupId = user.xpath("GROUPS/ID");
 		Group group = clientFactory.createGroup(oneClient, Integer.parseInt(groupId));
 
-		String maxCpuStr = group.xpath("VM_QUOTA/VM/CPU");
-		String cpuInUseStr = group.xpath("VM_QUOTA/VM/CPU_USED");
-		String maxMemStr = group.xpath("VM_QUOTA/VM/MEMORY");
-		String memInUseStr = group.xpath("VM_QUOTA/VM/MEMORY_USED");
-		String maxVMsStr = group.xpath("VM_QUOTA/VM/VMS");
-		String vmsInUseStr = group.xpath("VM_QUOTA/VM/VMS_USED");
+		String maxGroupCpuStr = group.xpath("VM_QUOTA/VM/CPU");
+		String cpuGroupInUseStr = group.xpath("VM_QUOTA/VM/CPU_USED");
+		String maxGroupMemStr = group.xpath("VM_QUOTA/VM/MEMORY");
+		String memGroupInUseStr = group.xpath("VM_QUOTA/VM/MEMORY_USED");
+		String maxGroupVMsStr = group.xpath("VM_QUOTA/VM/VMS");
+		String vmsGroupInUseStr = group.xpath("VM_QUOTA/VM/VMS_USED");
 		
-		// default values is used when quota is not specified
-		double maxCpu = VALUE_DEFAULT_CPU;
-		double cpuInUse = 0;
-		double maxMem = VALUE_DEFAULT_MEM;
-		double memInUse = 0;
-		double maxVMs = VALUE_DEFAULT_VMS;
-		double vmsInUse = 0;
-
-		// getting quota values
-		if (isValidDouble(maxCpuStr)) {
-			maxCpu = Integer.parseInt(maxCpuStr);
-		}
-		if (isValidDouble(cpuInUseStr)) {
-			cpuInUse = Integer.parseInt(cpuInUseStr);
-		}
-		if (isValidDouble(maxMemStr)) {
-			maxMem = Integer.parseInt(maxMemStr);
-		}
-		if (isValidDouble(memInUseStr)) {
-			memInUse = Integer.parseInt(memInUseStr);
-		}
-		if (isValidDouble(maxVMsStr)) {
-			maxVMs = Integer.parseInt(maxVMsStr);
-		}
-		if (isValidDouble(vmsInUseStr)) {
-			vmsInUse = Integer.parseInt(vmsInUseStr);
-		}
-
-		if (maxMem == VALUE_DEFAULT_QUOTA_OPENNEBULA) {
-			maxMem = VALUE_DEFAULT_MEM;
-		} else if (maxMem == VALUE_UNLIMITED_QUOTA_OPENNEBULA) {
-			maxMem = Integer.MAX_VALUE;
-		}
-
-		if (maxCpu == VALUE_DEFAULT_QUOTA_OPENNEBULA) {
-			maxCpu = VALUE_DEFAULT_CPU;
-		} else if (maxCpu == VALUE_UNLIMITED_QUOTA_OPENNEBULA) {
-			maxCpu = Integer.MAX_VALUE;
-		}
+		ResourceQuota resourceQuota = getQuota(maxUserCpuStr, cpuUserInUseStr, maxGroupCpuStr, cpuGroupInUseStr);
+		double maxCpu = resourceQuota.getMax();
+		double cpuInUse = resourceQuota.getInUse();
+	
+		resourceQuota = getQuota(maxUserMemStr, memUserInUseStr, maxGroupMemStr, memGroupInUseStr);
+		double maxMem = resourceQuota.getMax();
+		double memInUse = resourceQuota.getInUse();
 		
-		if (maxVMs == VALUE_DEFAULT_QUOTA_OPENNEBULA) {
-			maxVMs = VALUE_DEFAULT_CPU;
-		} else if (maxVMs == VALUE_UNLIMITED_QUOTA_OPENNEBULA) {
-			maxVMs = Integer.MAX_VALUE;
-		}
+		resourceQuota = getQuota(maxUserVMsStr, vmsUserInUseStr, maxGroupVMsStr, vmsGroupInUseStr);
+		double maxVMs = resourceQuota.getMax();
+		double vmsInUse = resourceQuota.getInUse();
 
 		double cpuIdle = maxCpu - cpuInUse;
 		double memIdle = maxMem - memInUse;
 		double instancesIdle = maxVMs - vmsInUse;
 	
 		return new ResourcesInfo(String.valueOf(cpuIdle), String.valueOf(cpuInUse),
-				String.valueOf(memIdle), String.valueOf(memInUse), getFlavors(cpuIdle, memIdle, instancesIdle),
-				null);
+				String.valueOf(memIdle), String.valueOf(memInUse), getFlavors(cpuIdle, memIdle, instancesIdle));
 	}
 	
-	private boolean isValidDouble(String number) {
+	private ResourceQuota getQuota(String maxUserResource, String resourceUserInUse, String maxGroupResource, String resourceGroupInUse) {
+		if (isValidNumber(maxUserResource) && isValidNumber(maxGroupResource)) {	
+			if (isUnlimitedOrDefaultQuota(maxUserResource)){
+				maxUserResource = String.valueOf(DEFAULT_RESOURCE_MAX_VALUE);
+			}
+			
+			if (isUnlimitedOrDefaultQuota(maxGroupResource)){
+				maxGroupResource = String.valueOf(DEFAULT_RESOURCE_MAX_VALUE);
+			}
+			
+			if (isUserSmallerQuota(maxUserResource, maxGroupResource)) {
+				return new ResourceQuota(maxUserResource, resourceUserInUse);
+			} else {
+				return new ResourceQuota(maxGroupResource, resourceGroupInUse);
+			}
+		} else if (isValidNumber(maxUserResource)) {
+			if (isUnlimitedOrDefaultQuota(maxUserResource)){
+				maxUserResource = String.valueOf(DEFAULT_RESOURCE_MAX_VALUE);
+			}
+			return new ResourceQuota(maxUserResource, resourceUserInUse);
+		} else if (isValidNumber(maxGroupResource)) {
+			if (isUnlimitedOrDefaultQuota(maxGroupResource)){
+				maxGroupResource = String.valueOf(DEFAULT_RESOURCE_MAX_VALUE);
+			}
+			return new ResourceQuota(maxGroupResource, resourceGroupInUse);
+		} else {
+			return new ResourceQuota(String.valueOf(DEFAULT_RESOURCE_MAX_VALUE),
+					String.valueOf(getBiggerValue(resourceUserInUse, resourceGroupInUse)));
+		}		
+	}
+
+	private boolean isUnlimitedOrDefaultQuota(String maxResourceStr) {
+		int maxResource = Integer.parseInt(maxResourceStr);
+		return maxResource == VALUE_DEFAULT_QUOTA_OPENNEBULA
+				|| maxResource == VALUE_UNLIMITED_QUOTA_OPENNEBULA;
+	}
+
+	private int getBiggerValue(String resourceUserInUse, String resourceGroupInUse) {
+		return Math.max(Integer.parseInt(resourceUserInUse), Integer.parseInt(resourceGroupInUse));
+	}
+
+	private boolean isUserSmallerQuota(String maxUserStr, String maxGroupStr) {		
+		return Integer.parseInt(maxUserStr) < Integer.parseInt(maxGroupStr) ? true : false;
+		
+	}
+
+	private boolean isValidNumber(String number) {
 		try {
 			Double.parseDouble(number);
 		} catch (Exception e) {
@@ -495,28 +508,46 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 	}
 
 	@Override
-	public void uploadImage(Token token, String imagePath, String imageName) {
-		Client oneClient = clientFactory.createClient(token.getAccessId(), openNebulaEndpoint);
-		String remoteFilePath = sshTargetTempFolder + "/" + UUID.randomUUID();
+	public void uploadImage(Token token, String imagePath, String imageName, String diskFormat) {
+		LOGGER.info("Uploading image... ");
+		LOGGER.info("Token=" + token.getAccessId() + "; imagePath=" + imagePath + "; imageName="
+				+ imageName);
+		Client oneClient = clientFactory.createClient(token.getAccessId(), openNebulaEndpoint);		
 		
-		OpenNebulaSshClientWrapper sshClientWrapper = new OpenNebulaSshClientWrapper();
-		try {
-			sshClientWrapper.connect(sshHost, sshPort, sshUsername, sshKeyFile);
-			sshClientWrapper.doScpUpload(imagePath, remoteFilePath);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		} finally {
+		String imageSourcePath;
+		if (isRemoteCloudManager()){
+			LOGGER.info("Cloud Manager is Remote. Doing SCP to cloud manager machine.");
+			String remoteFilePath = sshTargetTempFolder + "/" + UUID.randomUUID();
+			LOGGER.info("Remote File Path=" + remoteFilePath);			
+			imageSourcePath = remoteFilePath;
+			OpenNebulaSshClientWrapper sshClientWrapper = new OpenNebulaSshClientWrapper();
 			try {
-				sshClientWrapper.disconnect();
+				sshClientWrapper.connect(sshHost, sshPort, sshUsername, sshKeyFile);
+				sshClientWrapper.doScpUpload(imagePath, remoteFilePath);
 			} catch (IOException e) {
-			}
+				LOGGER.error("Error whilen SCP.", e);
+				throw new RuntimeException(e);
+			} finally {
+				try {
+					sshClientWrapper.disconnect();
+				} catch (IOException e) {
+					LOGGER.error("Error whilen disconnecting SCP client.", e);
+				}
+			}			
+		} else {
+			LOGGER.info("Cloud Manager is Local. Manager is running in the same machine that cloud manager.");
+			imageSourcePath = imagePath;
 		}
 		
+		LOGGER.debug("Image Source Path = " + imageSourcePath);
 		Map<String, String> templateProperties = new HashMap<String, String>();
 		templateProperties.put("image_name", imageName);
-		templateProperties.put("image_path", remoteFilePath);
+		templateProperties.put("image_path", imageSourcePath);
+		templateProperties.put("image_disk_format", diskFormat);
 		Long imageSize = (long) Math.ceil(((double) new File(imagePath).length()) / (1024d * 1024d));
 		templateProperties.put("image_size", imageSize.toString());
+		
+		LOGGER.info("Template properties = " + templateProperties);
 		OneResponse response = Image.allocate(oneClient, generateImageTemplate(templateProperties), dataStoreId);
 		
 		if (response.isError()) {
@@ -526,6 +557,10 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		Image.chmod(oneClient, response.getIntMessage(), 744);
 	}
 	
+	private boolean isRemoteCloudManager() {
+		return sshHost != null && !sshHost.isEmpty();
+	}
+
 	private String generateImageTemplate(Map<String, String> templateProperties) {
 		DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder docBuilder;
@@ -534,23 +569,24 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 			Document doc = docBuilder.newDocument();
 			Element rootElement = doc.createElement("IMAGE");
 			doc.appendChild(rootElement);
-			
+
 			Element nameElement = doc.createElement("NAME");
 			nameElement.appendChild(doc.createTextNode(templateProperties.get("image_name")));
 			rootElement.appendChild(nameElement);
-			
+
 			Element pathElement = doc.createElement("PATH");
 			pathElement.appendChild(doc.createTextNode(templateProperties.get("image_path")));
 			rootElement.appendChild(pathElement);
-			
+
 			Element sizeElement = doc.createElement("SIZE");
 			sizeElement.appendChild(doc.createTextNode(templateProperties.get("image_size")));
 			rootElement.appendChild(sizeElement);
-			
+
 			Element driverElement = doc.createElement("DRIVER");
-			driverElement.appendChild(doc.createTextNode("qcow2"));
+			driverElement.appendChild(doc.createTextNode(templateProperties
+					.get("image_disk_format")));
 			rootElement.appendChild(driverElement);
-			
+
 			TransformerFactory transformerFactory = TransformerFactory.newInstance();
 			Transformer transformer = transformerFactory.newTransformer();
 			
@@ -684,5 +720,54 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 			}
 		}
 		return listTemplate;
+	}
+	
+	@Override
+	public ImageState getImageState(Token token, String imageName) {
+		LOGGER.debug("Getting image status from image " + imageName + " with token " + token);
+		Client oneClient = clientFactory.createClient(token.getAccessId(), openNebulaEndpoint);
+		ImagePool imagePool = new ImagePool(oneClient); 
+		OneResponse response = imagePool.info();
+		
+		if (response.isError()) {
+			throw new OCCIException(ErrorType.BAD_REQUEST, response.getErrorMessage());
+		}
+		
+		for (Image image : imagePool) {
+			if (image.getName().equals(imageName)) {
+				/*
+				 * Possible one image state described on
+				 * http://archives.opennebula.org/documentation:rel4.4:img_guide
+				 */
+				String imageState = image.stateString();
+				if ("LOCKED".equals(imageState)) {
+					return ImageState.PENDING;
+				} else if ("READY".equals(imageState) || "USED".equals(imageState)
+						|| "USED_PERS".equals(imageState)) {
+					return ImageState.ACTIVE;
+				}
+				return ImageState.FAILED;
+			}
+		}
+		return null;
+	}
+}
+
+class ResourceQuota {
+	
+	double maxResource;
+	double resourceInUse;
+	
+	public ResourceQuota(String maxResource, String resourceInUse) {
+		this.maxResource = Double.parseDouble(maxResource);
+		this.resourceInUse = Double.parseDouble(resourceInUse);
+	}
+
+	public double getInUse() {	
+		return resourceInUse;
+	}
+
+	public double getMax() {
+		return maxResource;
 	}
 }

@@ -12,20 +12,20 @@ public class TestRoundRobinMemberPicker {
 
 	@Test
 	public void testListMembersNull() {
-		RoundRobinMemberPicker roundRobinMemberPicker = new RoundRobinMemberPicker();
+		RoundRobinMemberPicker roundRobinMemberPicker = new RoundRobinMemberPicker(null, null);
 		Assert.assertNull(roundRobinMemberPicker.pick(null));
 		
 	}
 	
 	@Test
 	public void testPick() {
-		RoundRobinMemberPicker roundRobinMemberPicker = new RoundRobinMemberPicker();
+		RoundRobinMemberPicker roundRobinMemberPicker = new RoundRobinMemberPicker(null, null);
 		List<FederationMember> members = new ArrayList<FederationMember>();
-		ResourcesInfo resourcesInfoD = new ResourcesInfo("d", "", "", "", "", null, null);
-		ResourcesInfo resourcesInfoA = new ResourcesInfo("a", "", "", "", "", null, null);
-		ResourcesInfo resourcesInfoCA = new ResourcesInfo("ca", "", "", "", "", null, null);
-		ResourcesInfo resourcesInfoCB = new ResourcesInfo("cb", "", "", "", "", null, null);
-		ResourcesInfo resourcesInfoB = new ResourcesInfo("b", "", "", "", "", null, null);
+		ResourcesInfo resourcesInfoD = new ResourcesInfo("d", "", "", "", "", null);
+		ResourcesInfo resourcesInfoA = new ResourcesInfo("a", "", "", "", "", null);
+		ResourcesInfo resourcesInfoCA = new ResourcesInfo("ca", "", "", "", "", null);
+		ResourcesInfo resourcesInfoCB = new ResourcesInfo("cb", "", "", "", "", null);
+		ResourcesInfo resourcesInfoB = new ResourcesInfo("b", "", "", "", "", null);
 		members.add(new FederationMember(resourcesInfoA));
 		members.add(new FederationMember(resourcesInfoCB));
 		members.add(new FederationMember(resourcesInfoCA));
@@ -70,13 +70,13 @@ public class TestRoundRobinMemberPicker {
 
 	@Test
 	public void testPickListMemberWithoutLastMember() {
-		RoundRobinMemberPicker roundRobinMemberPicker = new RoundRobinMemberPicker();
+		RoundRobinMemberPicker roundRobinMemberPicker = new RoundRobinMemberPicker(null, null);
 		List<FederationMember> members = new ArrayList<FederationMember>();
-		ResourcesInfo resourcesInfoD = new ResourcesInfo("d", "", "", "", "", null, null);
-		ResourcesInfo resourcesInfoA = new ResourcesInfo("a", "", "", "", "", null, null);
-		ResourcesInfo resourcesInfoCA = new ResourcesInfo("ca", "", "", "", "", null, null);
-		ResourcesInfo resourcesInfoCB = new ResourcesInfo("cb", "", "", "", "", null, null);
-		ResourcesInfo resourcesInfoB = new ResourcesInfo("b", "", "", "", "", null, null);
+		ResourcesInfo resourcesInfoD = new ResourcesInfo("d", "", "", "", "", null);
+		ResourcesInfo resourcesInfoA = new ResourcesInfo("a", "", "", "", "", null);
+		ResourcesInfo resourcesInfoCA = new ResourcesInfo("ca", "", "", "", "", null);
+		ResourcesInfo resourcesInfoCB = new ResourcesInfo("cb", "", "", "", "", null);
+		ResourcesInfo resourcesInfoB = new ResourcesInfo("b", "", "", "", "", null);
 		members.add(new FederationMember(resourcesInfoA));
 		members.add(new FederationMember(resourcesInfoCB));
 		members.add(new FederationMember(resourcesInfoCA));

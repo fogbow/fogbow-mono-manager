@@ -119,4 +119,9 @@ public class OpenNebulaIdentityPlugin implements IdentityPlugin {
 		return null;
 	}
 
+	@Override
+	public Token getForwardableToken(Token originalToken) {
+		return null;
+	}
+
 }

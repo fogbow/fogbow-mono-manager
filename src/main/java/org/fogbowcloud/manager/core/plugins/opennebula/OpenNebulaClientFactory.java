@@ -40,8 +40,15 @@ public class OpenNebulaClientFactory {
 		return vmPool;
 	}
 
-	public VirtualMachine createVirtualMachine(Client oneClient, String instanceId) {
-		VirtualMachine vm = new VirtualMachine(Integer.parseInt(instanceId), oneClient);
+	public VirtualMachine createVirtualMachine(Client oneClient, String instanceIdStr) {
+		int instanceId;
+		try {
+			instanceId = Integer.parseInt(instanceIdStr);
+		} catch (Exception e) {
+			LOGGER.error("Error while converting instanceid " + instanceIdStr + " to integer.");
+			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
+		}
+		VirtualMachine vm = new VirtualMachine(instanceId, oneClient);
 		OneResponse response = vm.info();
 		
 		if (response.isError()){
@@ -53,6 +60,9 @@ public class OpenNebulaClientFactory {
 			}
 			//Error getting virtual machine
 			throw new OCCIException(ErrorType.NOT_FOUND, errorMessage);
+		} else if ("DONE".equals(vm.stateStr())){
+			//The instance is not active anymore
+			throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
 		}
 		return vm;
 	}

@@ -4,13 +4,18 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Properties;
 
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
+import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 
 public class RoundRobinMemberPicker implements FederationMemberPicker {
 
 	private String lastMember = null;
+
+	public RoundRobinMemberPicker(Properties properties, AccountingPlugin accountingPlugin) {
+	}
 
 	@Override
 	public FederationMember pick(List<FederationMember> members) {
@@ -28,8 +33,8 @@ public class RoundRobinMemberPicker implements FederationMemberPicker {
 				}
 			}
 			if (!containsInList) {
-				membersListCopy.add(new FederationMember(new ResourcesInfo(lastMember, "", "", "", "",
-						null, null)));
+				membersListCopy.add(new FederationMember(new ResourcesInfo(lastMember, "", "", "",
+						"", null)));
 			}
 		}
 

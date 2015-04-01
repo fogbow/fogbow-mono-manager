@@ -3,25 +3,21 @@ package org.fogbowcloud.manager.core;
 import java.util.Properties;
 
 import org.fogbowcloud.manager.core.model.FederationMember;
+import org.fogbowcloud.manager.occi.core.Token;
 
 public class DefaultMemberValidator implements FederationMemberValidator {
 
-	//TODO review the real need of these constructor
-	public DefaultMemberValidator(){
-		
-	}
-
 	public DefaultMemberValidator(Properties properties){
-		
 	}
 	
 	@Override
-	public boolean canDonateTo(FederationMember member) {
+	public boolean canReceiveFrom(FederationMember member) {
 		return true;
 	}
 
 	@Override
-	public boolean canReceiveFrom(FederationMember member) {
+	public boolean canDonateTo(FederationMember member,
+			Token requestingUserToken) {
 		return true;
 	}
 

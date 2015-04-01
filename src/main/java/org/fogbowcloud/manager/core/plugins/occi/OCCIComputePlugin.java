@@ -31,6 +31,7 @@ import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.RequirementsHelper;
 import org.fogbowcloud.manager.core.model.Flavor;
+import org.fogbowcloud.manager.core.model.ImageState;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.openstack.OpenStackConfigurationConstants;
@@ -381,7 +382,7 @@ public class OCCIComputePlugin implements ComputePlugin {
 		}
 	}
 
-	public void uploadImage(Token token, String imagePath, String imageName) {
+	public void uploadImage(Token token, String imagePath, String imageName, String diskFormat) {
 	}
 	
 	public String getImageId(Token token, String imageName) {
@@ -418,4 +419,9 @@ public class OCCIComputePlugin implements ComputePlugin {
 			throw new OCCIException(ErrorType.BAD_REQUEST, OCCI_FLAVORS_NOT_SPECIFIED);
 		}
 	}
+	
+	public ImageState getImageState(Token token, String imageName) {
+		return null;
+	}
+
 }
