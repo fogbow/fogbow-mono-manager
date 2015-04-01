@@ -127,4 +127,28 @@ public class RequestRepository {
 		}
 		return allLocalRequests;
 	}
+	
+	public List<Request> getAllRemoteRequests() {
+		List<Request> allRemoteRequests = new LinkedList<Request>();
+		for (List<Request> userRequests : requests.values()) {
+			for (Request request : userRequests) {
+				if (!request.isLocal()){
+					allRemoteRequests.add(request);
+				}
+			}
+		}
+		return allRemoteRequests;
+	}
+	
+	public Request getRequestByInstance(String instanceId) {
+		for (List<Request> userRequests : requests.values()) {
+			for (Request request : userRequests) {
+				if (request.getState().in(RequestState.FULFILLED, RequestState.DELETED)
+						&& instanceId.equals(request.getInstanceId())) {
+					return request;
+				}
+			}
+		}
+		return null;
+	}
 }

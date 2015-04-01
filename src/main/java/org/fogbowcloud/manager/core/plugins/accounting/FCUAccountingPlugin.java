@@ -8,7 +8,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.model.DateUtils;
-import org.fogbowcloud.manager.core.model.ServedRequest;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
 import org.fogbowcloud.manager.occi.request.Request;
@@ -38,7 +37,7 @@ public class FCUAccountingPlugin implements AccountingPlugin {
 	}
 
 	@Override
-	public void update(List<Request> requests, List<ServedRequest> servedRequests) {
+	public void update(List<Request> requests, List<Request> servedRequests) {
 		LOGGER.debug("Updating account with requests=" + requests + ", and servedRequests="
 				+ servedRequests);
 		long now = dateUtils.currentTimeMillis();
@@ -49,13 +48,13 @@ public class FCUAccountingPlugin implements AccountingPlugin {
 		Map<String, Double> usageOfUsers = new HashMap<String, Double>();
 
 		// donating
-		for (ServedRequest servedRequest : servedRequests) {
+		for (Request servedRequest : servedRequests) {
 			double donationInterval = ((double) TimeUnit.MILLISECONDS.toSeconds(now
-					- servedRequest.getCreationTime()) / 60);
+					- servedRequest.getFulfilledTime()) / 60);
 
 			updateUsage(servedRequest.getGlobalInstanceId(),
 					Math.min(donationInterval, updatingInterval), true,
-					servedRequest.getMemberId(), null, usageOfMembers, usageOfUsers);
+					servedRequest.getRequestingMemberId(), null, usageOfMembers, usageOfUsers);
 		}
 
 		// consumption
@@ -64,7 +63,7 @@ public class FCUAccountingPlugin implements AccountingPlugin {
 					- request.getFulfilledTime()) / 60);
 
 			updateUsage(request.getGlobalInstanceId(),
-					Math.min(consumptionInterval, updatingInterval), false, request.getMemberId(),
+					Math.min(consumptionInterval, updatingInterval), false, request.getProvidingMemberId(),
 					request.getFederationToken().getUser(), usageOfMembers, usageOfUsers);
 		}
 
@@ -84,7 +83,6 @@ public class FCUAccountingPlugin implements AccountingPlugin {
 		
 		double instancePower = benchmarkingPlugin.getPower(globalInstanceId);
 		double instanceUsage = instancePower * usageInterval;
-
 
 		ResourceUsage memberUsage = usageOfMembers.get(memberId);
 		if (memberUsage == null && !isLocalMember(memberId)) {

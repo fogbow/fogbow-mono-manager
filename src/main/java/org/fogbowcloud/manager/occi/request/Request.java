@@ -7,7 +7,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.fogbowcloud.manager.core.RequirementsHelper;
 import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.Token;
@@ -20,7 +19,8 @@ public class Request {
 	private Token federationToken;
 	private Token localToken;
 	private String instanceId;
-	private String memberId;
+	private String providingMemberId;
+	private final String requestingMemberId;
 	private long fulfilledTime = 0;
 	private boolean fulfilledByFederationUser;
 	private final boolean isLocal;
@@ -31,7 +31,12 @@ public class Request {
 	private DateUtils dateUtils = new DateUtils();
 	
 	public Request(String id, Token federationToken, Token localToken, 
-			List<Category> categories, Map<String, String> xOCCIAtt, boolean isLocal) {
+			List<Category> categories, Map<String, String> xOCCIAtt, boolean isLocal, String requestingMemberId) {
+		this(id, federationToken, localToken, categories, xOCCIAtt, isLocal, requestingMemberId, new DateUtils());
+	}
+	
+	public Request(String id, Token federationToken, Token localToken, 
+			List<Category> categories, Map<String, String> xOCCIAtt, boolean isLocal, String requestingMemberId, DateUtils dateUtils) {
 		this.id = id;
 		this.federationToken = federationToken;
 		this.localToken = localToken;
@@ -39,6 +44,8 @@ public class Request {
 		this.xOCCIAtt = xOCCIAtt;
 		this.fulfilledByFederationUser = false;
 		this.isLocal = isLocal;
+		this.requestingMemberId = requestingMemberId;
+		this.dateUtils = dateUtils;
 		setState(RequestState.OPEN);		
 	}
 
@@ -76,7 +83,7 @@ public class Request {
 
 	public String getGlobalInstanceId() {
 		if (instanceId != null) {
-			return instanceId + SEPARATOR_GLOBAL_ID + memberId;
+			return instanceId + SEPARATOR_GLOBAL_ID + providingMemberId;
 		}
 		return instanceId;
 	}
@@ -147,18 +154,23 @@ public class Request {
 	public Map<String, String> getxOCCIAtt() {
 		return new HashMap<String, String>(xOCCIAtt);
 	}
-
-	public String getMemberId() {
-		return memberId;
+	
+	public String getRequestingMemberId(){
+		return requestingMemberId;
 	}
 
-	public void setMemberId(String memberId) {
-		this.memberId = memberId;
+	public String getProvidingMemberId() {
+		return providingMemberId;
+	}
+
+	public void setProvidingMemberId(String providingMemberId) {
+		this.providingMemberId = providingMemberId;
 	}
 
 	public String toString() {
 		return "id: " + id + ", token: " + federationToken + ", instanceId: " + instanceId
-				+ ", memberId: " + memberId + ", state: " + state + ", isLocal " + isLocal
+				+ ", providingMemberId: " + providingMemberId + ", requestingMemberId: "
+				+ requestingMemberId + ", state: " + state + ", isLocal " + isLocal
 				+ ", categories: " + categories + ", xOCCIAtt: " + xOCCIAtt;
 	}
 

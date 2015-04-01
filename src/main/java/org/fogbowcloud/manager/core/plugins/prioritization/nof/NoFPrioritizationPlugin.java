@@ -34,7 +34,7 @@ public class NoFPrioritizationPlugin implements PrioritizationPlugin {
 	}
 	
 	@Override
-	public Request takeFrom(String requestingMemberId, List<Request> requestsWithInstance, List<ServedRequest> servedRequests) {
+	public Request takeFrom(String requestingMemberId, List<Request> requestsWithInstance, List<Request> servedRequests) {
 		LOGGER.debug("Choosing request to take instance from requestsWithInstance="
 				+ requestsWithInstance + " or servedRequests=" + servedRequests
 				+ " for requestMember=" + requestingMemberId);
@@ -58,7 +58,7 @@ public class NoFPrioritizationPlugin implements PrioritizationPlugin {
 		FederationMemberDebt firstMember = reputableMembers.getFirst();
 		if (firstMember.getDebt() < requestingMemberDebt) {
 			String memberId = firstMember.getMember().getResourcesInfo().getId();
-			List<ServedRequest> memberRequests = filterRequests(memberId, servedRequests);
+			List<Request> memberRequests = filterRequests(memberId, servedRequests);
 			return getMostRecentRequest(memberRequests);
 		}
 		return null;
@@ -77,11 +77,11 @@ public class NoFPrioritizationPlugin implements PrioritizationPlugin {
 		return reputableMembers;
 	}
 
-	private List<String> getRemoteMembers(List<ServedRequest> servedRequests) {
+	private List<String> getRemoteMembers(List<Request> remoteRequests) {
 		List<String> members = new LinkedList<String>();
-		for (ServedRequest servedRequest : servedRequests) {
-			if (!members.contains(servedRequest.getMemberId())) {
-				members.add(servedRequest.getMemberId());
+		for (Request remoteRequest : remoteRequests) {
+			if (!members.contains(remoteRequest.getRequestingMemberId())) {
+				members.add(remoteRequest.getRequestingMemberId());
 			}
 		}
 		return members;
@@ -100,27 +100,26 @@ public class NoFPrioritizationPlugin implements PrioritizationPlugin {
 		return debt;
 	}
 
-	private Request getMostRecentRequest(List<ServedRequest> memberRequests) {
+	private Request getMostRecentRequest(List<Request> memberRequests) {
 		if (memberRequests.isEmpty()) {
 			return null;
 		}
-		ServedRequest lastRequest = memberRequests.get(0);
-		for (ServedRequest currentRequest : memberRequests) {
-			if (new Date(lastRequest.getCreationTime()).compareTo(new Date(currentRequest.getCreationTime())) < 0) {
+		Request lastRequest = memberRequests.get(0);
+		for (Request currentRequest : memberRequests) {
+			if (new Date(lastRequest.getFulfilledTime()).compareTo(new Date(currentRequest.getFulfilledTime())) < 0) {
 				lastRequest = currentRequest;
 			}
 		}
 		return null;
 	}
 
-	private List<ServedRequest> filterRequests(String memberId, List<ServedRequest> requests) {
-		List<ServedRequest> filteredRequests = new LinkedList<ServedRequest>();
-		for (ServedRequest currentRequest : requests) {
-			if (currentRequest.getMemberId().equals(memberId)){
+	private List<Request> filterRequests(String memberId, List<Request> requests) {
+		List<Request> filteredRequests = new LinkedList<Request>();
+		for (Request currentRequest : requests) {
+			if (currentRequest.getRequestingMemberId().equals(memberId)){
 				filteredRequests.add(currentRequest);
 			}
 		}
 		return filteredRequests;
 	}
-
 }

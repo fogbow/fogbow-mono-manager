@@ -140,10 +140,10 @@ public class TestManagerController {
 	
 	private void checkRequestPerUserToken(Token token) {
 		Request request1 = new Request("id1", token, token, new ArrayList<Category>(),
-				new HashMap<String, String>(), true);
+				new HashMap<String, String>(), true, "");
 		request1.setState(RequestState.OPEN);
 		Request request2 = new Request("id2", token, token, new ArrayList<Category>(),
-				new HashMap<String, String>(), true);
+				new HashMap<String, String>(), true, "");
 		request2.setState(RequestState.OPEN);
 		RequestRepository requestRepository = new RequestRepository();
 		requestRepository.addRequest(token.getUser(), request1);
@@ -188,7 +188,7 @@ public class TestManagerController {
 		managerController.updateMembers(listMembers);
 		
 		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), new ArrayList<Category>(),
-				new HashMap<String, String>(), true);
+				new HashMap<String, String>(), true, "");
 		request1.setState(RequestState.OPEN);
 		RequestRepository requestRepository = new RequestRepository();
 		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(), request1);
@@ -267,7 +267,7 @@ public class TestManagerController {
 		Request request1 = new Request("id1",
 				managerTestHelper.getDefaultFederationToken(),
 				managerTestHelper.getDefaultLocalToken(),
-				new ArrayList<Category>(), new HashMap<String, String>(), true);
+				new ArrayList<Category>(), new HashMap<String, String>(), true, "");
 		request1.setState(RequestState.OPEN);
 		RequestRepository requestRepository = new RequestRepository();
 		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(),
@@ -324,7 +324,7 @@ public class TestManagerController {
 		managerController.updateMembers(listMembers);
 
 		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), new ArrayList<Category>(),
-				new HashMap<String, String>(), true);
+				new HashMap<String, String>(), true, "");
 		request1.setState(RequestState.OPEN);
 		RequestRepository requestRepository = new RequestRepository();
 		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(), request1);
@@ -398,7 +398,7 @@ public class TestManagerController {
 		managerController.updateMembers(listMembers);
 
 		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(),
-				new ArrayList<Category>(), new HashMap<String, String>(), true);
+				new ArrayList<Category>(), new HashMap<String, String>(), true, "");
 		request1.setState(RequestState.OPEN);
 		RequestRepository requestRepository = new RequestRepository();
 		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(),
@@ -477,7 +477,7 @@ public class TestManagerController {
 		managerController.setFederationIdentityPlugin(federationIdentityPlugin);
 
 		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(),managerTestHelper.getDefaultLocalToken(),
-				new ArrayList<Category>(), new HashMap<String, String>(), true);
+				new ArrayList<Category>(), new HashMap<String, String>(), true, "");
 		request1.setState(RequestState.OPEN);
 		RequestRepository requestRepository = new RequestRepository();
 		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(), request1);
@@ -572,7 +572,7 @@ public class TestManagerController {
 		RequestRepository requestRepository = new RequestRepository();
 		for (int i = 0; i < 5; i++) {
 			requestRepository.addRequest(DefaultDataTestHelper.USER_NAME, new Request("id" + i,
-					firstToken, null, null, null, true));
+					firstToken, null, null, null, true, ""));
 		}
 		managerController.setRequests(requestRepository);
 
@@ -624,9 +624,9 @@ public class TestManagerController {
 	@Test
 	public void testDeleteClosedRequest() throws InterruptedException {
 		// setting request repository
-		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null, true);
+		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null, true, "");
 		request1.setState(RequestState.CLOSED);
-		Request request2 = new Request("id2", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null, true);
+		Request request2 = new Request("id2", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null, true, "");
 		request2.setState(RequestState.CLOSED);
 
 		RequestRepository requestRepository = new RequestRepository();
@@ -661,14 +661,14 @@ public class TestManagerController {
 	@Test
 	public void testMonitorDeletedRequestWithInstance() throws InterruptedException {
 		// setting request repository
-		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null, true);
+		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null, true, "");
 		request1.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
 		request1.setState(RequestState.DELETED);
-		request1.setMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
-		Request request2 = new Request("id2", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null, true);
+		request1.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		Request request2 = new Request("id2", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null, true, "");
 		request2.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
 		request2.setState(RequestState.DELETED);
-		request2.setMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		request2.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 
 		RequestRepository requestRepository = new RequestRepository();
 		requestRepository.addRequest(managerTestHelper.getDefaultLocalToken().getUser(), request1);
@@ -703,15 +703,15 @@ public class TestManagerController {
 		// setting request repository
 		Request request1 = new Request("id1",
 				managerTestHelper.getDefaultFederationToken(),
-				managerTestHelper.getDefaultLocalToken(), null, null, true);
+				managerTestHelper.getDefaultLocalToken(), null, null, true, "");
 		request1.setState(RequestState.DELETED);
 		Request request2 = new Request("id2",
 				managerTestHelper.getDefaultFederationToken(),
-				managerTestHelper.getDefaultLocalToken(), null, null, true);
+				managerTestHelper.getDefaultLocalToken(), null, null, true, "");
 		request2.setState(RequestState.DELETED);
 		Request request3 = new Request("id3",
 				managerTestHelper.getDefaultFederationToken(),
-				managerTestHelper.getDefaultLocalToken(), null, null, true);
+				managerTestHelper.getDefaultLocalToken(), null, null, true, "");
 		request3.setState(RequestState.OPEN);
 
 		RequestRepository requestRepository = new RequestRepository();
@@ -761,9 +761,9 @@ public class TestManagerController {
 	@Test
 	public void testMonitorFulfilledRequestWithoutInstance() throws InterruptedException {
 		// setting request repository
-		Request request1 = new Request("id1", managerTestHelper.getDefaultLocalToken(), null, null, null, true);
+		Request request1 = new Request("id1", managerTestHelper.getDefaultLocalToken(), null, null, null, true, "");
 		request1.setState(RequestState.FULFILLED);
-		Request request2 = new Request("id2", managerTestHelper.getDefaultLocalToken(), null, null, null, true);
+		Request request2 = new Request("id2", managerTestHelper.getDefaultLocalToken(), null, null, null, true, "");
 		request2.setState(RequestState.FULFILLED);
 
 		RequestRepository requestRepository = new RequestRepository();
@@ -803,7 +803,7 @@ public class TestManagerController {
 		attributes.put(RequestAttribute.TYPE.getValue(), RequestType.PERSISTENT.getValue());
 
 		// setting request repository
-		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), new ArrayList<Category>(), attributes, true);
+		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), new ArrayList<Category>(), attributes, true, "");
 		request1.setState(RequestState.FULFILLED);
 
 		RequestRepository requestRepository = new RequestRepository();
@@ -856,14 +856,14 @@ public class TestManagerController {
 		final String SECOND_INSTANCE_ID = "secondInstanceId";
 
 		// setting request repository
-		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null, true);
+		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null, true, "");
 		request1.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
 		request1.setState(RequestState.FULFILLED);
-		request1.setMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
-		Request request2 = new Request("id2", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null, true);
+		request1.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		Request request2 = new Request("id2", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null, true, "");
 		request2.setInstanceId(SECOND_INSTANCE_ID);
 		request2.setState(RequestState.FULFILLED);
-		request2.setMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		request2.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 
 		RequestRepository requestRepository = new RequestRepository();
 		requestRepository.addRequest(managerTestHelper.getDefaultLocalToken().getUser(), request1);
@@ -900,7 +900,7 @@ public class TestManagerController {
 	@Test
 	public void testMonitorWontRethrowException() throws InterruptedException {
 		// setting request repository
-		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null, true);
+		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null, true, "");
 		request1.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
 		request1.setState(RequestState.FULFILLED);
 
@@ -919,10 +919,10 @@ public class TestManagerController {
 	@Test
 	public void testMonitorWillRemoveLocalFailedInstance() throws InterruptedException {
 		// setting request repository
-		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null, true);
+		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null, true, "");
 		request1.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
 		request1.setState(RequestState.FULFILLED);
-		request1.setMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		request1.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 
 		RequestRepository requestRepository = new RequestRepository();
 		requestRepository.addRequest(managerTestHelper.getDefaultLocalToken().getUser(), request1);
@@ -1009,7 +1009,7 @@ public class TestManagerController {
 		Assert.assertEquals(DefaultDataTestHelper.FED_USER_NAME, requests.get(0).getFederationToken().getUser());
 		Assert.assertEquals(DefaultDataTestHelper.INSTANCE_ID, requests.get(0).getInstanceId());
 		Assert.assertEquals(RequestState.FULFILLED, requests.get(0).getState());
-		Assert.assertNotNull(requests.get(0).getMemberId());
+		Assert.assertNotNull(requests.get(0).getProvidingMemberId());
 	}
 
 	@Test
@@ -1027,7 +1027,7 @@ public class TestManagerController {
 		Assert.assertEquals(1, requests.size());
 		Assert.assertEquals(DefaultDataTestHelper.INSTANCE_ID, requests.get(0).getInstanceId());
 		Assert.assertEquals(RequestState.FULFILLED, requests.get(0).getState());
-		Assert.assertNotNull(requests.get(0).getMemberId());
+		Assert.assertNotNull(requests.get(0).getProvidingMemberId());
 
 		// updating compute mock
 		Mockito.doNothing().when(managerTestHelper.getComputePlugin()).removeInstance(
@@ -1043,7 +1043,7 @@ public class TestManagerController {
 		Assert.assertEquals(1, requests.size());
 		Assert.assertEquals(RequestState.CLOSED, requests.get(0).getState());
 		Assert.assertNull(requests.get(0).getInstanceId());
-		Assert.assertNull(requests.get(0).getMemberId());
+		Assert.assertNull(requests.get(0).getProvidingMemberId());
 	}
 
 	@SuppressWarnings("unchecked")
@@ -1066,7 +1066,7 @@ public class TestManagerController {
 		Assert.assertEquals(RequestType.PERSISTENT.getValue(),
 				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
 		Assert.assertEquals(RequestState.FULFILLED, requests.get(0).getState());
-		Assert.assertNotNull(requests.get(0).getMemberId());
+		Assert.assertNotNull(requests.get(0).getProvidingMemberId());
 
 		// updating compute mock
 		Mockito.reset(managerTestHelper.getComputePlugin());
@@ -1090,7 +1090,7 @@ public class TestManagerController {
 				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
 		Assert.assertEquals(RequestState.OPEN, requests.get(0).getState());
 		Assert.assertNull(requests.get(0).getInstanceId());
-		Assert.assertNull(requests.get(0).getMemberId());
+		Assert.assertNull(requests.get(0).getProvidingMemberId());
 	}
 
 	@SuppressWarnings("unchecked")
@@ -1116,7 +1116,7 @@ public class TestManagerController {
 		Assert.assertEquals(RequestType.PERSISTENT.getValue(),
 				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
 		Assert.assertEquals(RequestState.FULFILLED, requests.get(0).getState());
-		Assert.assertNotNull(requests.get(0).getMemberId());
+		Assert.assertNotNull(requests.get(0).getProvidingMemberId());
 
 		// updating compute mock
 		Mockito.reset(managerTestHelper.getComputePlugin());
@@ -1140,7 +1140,7 @@ public class TestManagerController {
 				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
 		Assert.assertEquals(RequestState.OPEN, requests.get(0).getState());
 		Assert.assertNull(requests.get(0).getInstanceId());
-		Assert.assertNull(requests.get(0).getMemberId());
+		Assert.assertNull(requests.get(0).getProvidingMemberId());
 
 		// updating compute mock
 		Mockito.reset(managerTestHelper.getComputePlugin());
@@ -1159,7 +1159,7 @@ public class TestManagerController {
 		Assert.assertEquals(RequestType.PERSISTENT.getValue(),
 				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
 		Assert.assertEquals(RequestState.FULFILLED, requests.get(0).getState());
-		Assert.assertNotNull(requests.get(0).getMemberId());
+		Assert.assertNotNull(requests.get(0).getProvidingMemberId());
 	}
 
 	@Test
@@ -1185,7 +1185,7 @@ public class TestManagerController {
 				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
 		Assert.assertEquals(RequestState.OPEN, requests.get(0).getState());
 		Assert.assertNull(requests.get(0).getInstanceId());
-		Assert.assertNull(requests.get(0).getMemberId());
+		Assert.assertNull(requests.get(0).getProvidingMemberId());
 
 		// waiting expiration time
 		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD + DefaultDataTestHelper.GRACE_TIME);
@@ -1198,7 +1198,7 @@ public class TestManagerController {
 				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
 		Assert.assertEquals(RequestState.CLOSED, requests.get(0).getState());
 		Assert.assertNull(requests.get(0).getInstanceId());
-		Assert.assertNull(requests.get(0).getMemberId());
+		Assert.assertNull(requests.get(0).getProvidingMemberId());
 	}
 
 	@SuppressWarnings("unchecked")
@@ -1230,7 +1230,7 @@ public class TestManagerController {
 		Assert.assertEquals(RequestType.PERSISTENT.getValue(),
 				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
 		Assert.assertEquals(RequestState.FULFILLED, requests.get(0).getState());
-		Assert.assertNotNull(requests.get(0).getMemberId());
+		Assert.assertNotNull(requests.get(0).getProvidingMemberId());
 
 		// waiting expiration time
 		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD);
@@ -1258,7 +1258,7 @@ public class TestManagerController {
 				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
 		Assert.assertEquals(RequestState.CLOSED, requests.get(0).getState());
 		Assert.assertNull(requests.get(0).getInstanceId());
-		Assert.assertNull(requests.get(0).getMemberId());
+		Assert.assertNull(requests.get(0).getProvidingMemberId());
 	}
 
 	@SuppressWarnings("unchecked")
@@ -1292,7 +1292,7 @@ public class TestManagerController {
 				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
 		Assert.assertEquals(RequestState.OPEN, requests.get(0).getState());
 		Assert.assertNull(requests.get(0).getInstanceId());
-		Assert.assertNull(requests.get(0).getMemberId());
+		Assert.assertNull(requests.get(0).getProvidingMemberId());
 
 		// waiting expiration time
 		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD + DefaultDataTestHelper.GRACE_TIME);
@@ -1306,7 +1306,7 @@ public class TestManagerController {
 				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
 		Assert.assertEquals(RequestState.CLOSED, requests.get(0).getState());
 		Assert.assertNull(requests.get(0).getInstanceId());
-		Assert.assertNull(requests.get(0).getMemberId());
+		Assert.assertNull(requests.get(0).getProvidingMemberId());
 	}
 
 	@Test
@@ -1337,7 +1337,7 @@ public class TestManagerController {
 				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
 		Assert.assertEquals(RequestState.OPEN, requests.get(0).getState());
 		Assert.assertNull(requests.get(0).getInstanceId());
-		Assert.assertNull(requests.get(0).getMemberId());
+		Assert.assertNull(requests.get(0).getProvidingMemberId());
 
 		// sleeping for a time and request not valid yet
 		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD + DefaultDataTestHelper.GRACE_TIME);
@@ -1350,7 +1350,7 @@ public class TestManagerController {
 				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
 		Assert.assertEquals(RequestState.OPEN, requests.get(0).getState());
 		Assert.assertNull(requests.get(0).getInstanceId());
-		Assert.assertNull(requests.get(0).getMemberId());
+		Assert.assertNull(requests.get(0).getProvidingMemberId());
 
 		// sleeping for the scheduler period and submitting request
 		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD + DefaultDataTestHelper.GRACE_TIME);
@@ -1363,7 +1363,7 @@ public class TestManagerController {
 				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
 		Assert.assertEquals(RequestState.FULFILLED, requests.get(0).getState());
 		Assert.assertEquals(DefaultDataTestHelper.INSTANCE_ID, requests.get(0).getInstanceId());
-		Assert.assertNotNull(requests.get(0).getMemberId());
+		Assert.assertNotNull(requests.get(0).getProvidingMemberId());
 	}
 
 	@Test
@@ -1393,7 +1393,7 @@ public class TestManagerController {
 				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
 		Assert.assertEquals(RequestState.OPEN, requests.get(0).getState());
 		Assert.assertNull(requests.get(0).getInstanceId());
-		Assert.assertNull(requests.get(0).getMemberId());
+		Assert.assertNull(requests.get(0).getProvidingMemberId());
 
 		// sleeping for a time and request not valid yet
 		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD + DefaultDataTestHelper.GRACE_TIME);
@@ -1406,7 +1406,7 @@ public class TestManagerController {
 				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
 		Assert.assertEquals(RequestState.OPEN, requests.get(0).getState());
 		Assert.assertNull(requests.get(0).getInstanceId());
-		Assert.assertNull(requests.get(0).getMemberId());
+		Assert.assertNull(requests.get(0).getProvidingMemberId());
 
 		// sleeping for the scheduler period and submitting request
 		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD + DefaultDataTestHelper.GRACE_TIME);
@@ -1419,7 +1419,7 @@ public class TestManagerController {
 				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
 		Assert.assertEquals(RequestState.FULFILLED, requests.get(0).getState());
 		Assert.assertEquals(DefaultDataTestHelper.INSTANCE_ID, requests.get(0).getInstanceId());
-		Assert.assertNotNull(requests.get(0).getMemberId());
+		Assert.assertNotNull(requests.get(0).getProvidingMemberId());
 	}
 
 	@SuppressWarnings("unchecked")
@@ -1450,7 +1450,7 @@ public class TestManagerController {
 				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
 		Assert.assertEquals(RequestState.OPEN, requests.get(0).getState());
 		Assert.assertNull(requests.get(0).getInstanceId());
-		Assert.assertNull(requests.get(0).getMemberId());
+		Assert.assertNull(requests.get(0).getProvidingMemberId());
 
 		// sleeping for the scheduler period and submitting request
 		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD * 3 + DefaultDataTestHelper.GRACE_TIME);
@@ -1464,7 +1464,7 @@ public class TestManagerController {
 				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
 		Assert.assertEquals(RequestState.FULFILLED, requests.get(0).getState());
 		Assert.assertEquals(DefaultDataTestHelper.INSTANCE_ID, requests.get(0).getInstanceId());
-		Assert.assertNotNull(requests.get(0).getMemberId());
+		Assert.assertNotNull(requests.get(0).getProvidingMemberId());
 
 		// updating compute mock
 		Mockito.when(
@@ -1490,7 +1490,7 @@ public class TestManagerController {
 				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
 		Assert.assertEquals(RequestState.CLOSED, requests.get(0).getState());
 		Assert.assertNull(requests.get(0).getInstanceId());
-		Assert.assertNull(requests.get(0).getMemberId());
+		Assert.assertNull(requests.get(0).getProvidingMemberId());
 	}
 
 	@SuppressWarnings("unchecked")
@@ -1521,7 +1521,7 @@ public class TestManagerController {
 				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
 		Assert.assertEquals(RequestState.OPEN, requests.get(0).getState());
 		Assert.assertNull(requests.get(0).getInstanceId());
-		Assert.assertNull(requests.get(0).getMemberId());
+		Assert.assertNull(requests.get(0).getProvidingMemberId());
 
 		// waiting for a time and request is into valid period
 		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD * 2 + DefaultDataTestHelper.GRACE_TIME);
@@ -1534,7 +1534,7 @@ public class TestManagerController {
 				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
 		Assert.assertEquals(RequestState.FULFILLED, requests.get(0).getState());
 		Assert.assertEquals(DefaultDataTestHelper.INSTANCE_ID, requests.get(0).getInstanceId());
-		Assert.assertNotNull(requests.get(0).getMemberId());
+		Assert.assertNotNull(requests.get(0).getProvidingMemberId());
 
 		// updating compute mock
 		Mockito.when(
@@ -1566,7 +1566,7 @@ public class TestManagerController {
 				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
 		Assert.assertEquals(RequestState.CLOSED, requests.get(0).getState());
 		Assert.assertNull(requests.get(0).getInstanceId());
-		Assert.assertNull(requests.get(0).getMemberId());
+		Assert.assertNull(requests.get(0).getProvidingMemberId());
 	}
 
 	@Test
@@ -1602,7 +1602,7 @@ public class TestManagerController {
 		managerController.setComputePlugin(plugin);
 		Assert.assertEquals("answer",
 				managerController.createInstanceWithFederationUser("abc", new ArrayList<Category>(), 
-						xOCCIAtt, null, null));
+						xOCCIAtt, null, managerTestHelper.getDefaultFederationToken()));
 
 		Mockito.doReturn(false).when(validatorMock).canDonateTo(Mockito.eq(member), Mockito.any(Token.class));
 		managerController.setValidator(validatorMock);
@@ -1616,9 +1616,9 @@ public class TestManagerController {
 		managerTestHelper.useSameThreadExecutor();
 		
 		// setting request repository
-		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null, true);
+		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null, true, "");
 		request1.setState(RequestState.OPEN);
-		Request request2 = new Request("id2", managerTestHelper.getDefaultFederationToken(),  managerTestHelper.getDefaultLocalToken(), null, null, true);
+		Request request2 = new Request("id2", managerTestHelper.getDefaultFederationToken(),  managerTestHelper.getDefaultLocalToken(), null, null, true, "");
 		request2.setState(RequestState.OPEN);
 
 		RequestRepository requestRepository = new RequestRepository();
@@ -1655,11 +1655,11 @@ public class TestManagerController {
 		String id1 = "id1";
 		String id2 = "id2";
 		String id3 = "id3";
-		Request request1 = new Request(id1, managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null, true);
+		Request request1 = new Request(id1, managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null, true, "");
 		request1.setState(RequestState.OPEN);
-		Request request2 = new Request(id2, managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null, true);
+		Request request2 = new Request(id2, managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null, true, "");
 		request2.setState(RequestState.OPEN);
-		Request request3 = new Request(id3, managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null, true);
+		Request request3 = new Request(id3, managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null, true, "");
 		request3.setState(RequestState.OPEN);
 
 		RequestRepository requestRepository = new RequestRepository();
@@ -1768,10 +1768,10 @@ public class TestManagerController {
 	
 	public void testInstanceIsBeingUsedByFulfilledRequest(){
 		// setting request repository
-		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null, true);
+		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null, true, "");
 		request1.setState(RequestState.FULFILLED);
 		request1.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
-		request1.setMemberId("remote-manager.test.com");
+		request1.setProvidingMemberId("remote-manager.test.com");
 		
 		RequestRepository requestRepository = new RequestRepository();
 		requestRepository.addRequest(managerTestHelper.getDefaultLocalToken().getUser(), request1);
@@ -1786,10 +1786,10 @@ public class TestManagerController {
 	@Test
 	public void testInstanceIsBeingUsedByDeletedRequest(){
 		// setting request repository
-		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null, true);
+		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null, true, "");
 		request1.setState(RequestState.DELETED);
 		request1.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
-		request1.setMemberId("remote-manager.test.com");
+		request1.setProvidingMemberId("remote-manager.test.com");
 		
 		RequestRepository requestRepository = new RequestRepository();
 		requestRepository.addRequest(managerTestHelper.getDefaultLocalToken().getUser(), request1);
@@ -1829,7 +1829,7 @@ public class TestManagerController {
 		managerController.updateMembers(listMembers);
 
 		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), new ArrayList<Category>(),
-				new HashMap<String, String>(), true);
+				new HashMap<String, String>(), true, "");
 		request1.setState(RequestState.OPEN);
 		RequestRepository requestRepository = new RequestRepository();
 		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(), request1);
@@ -1868,7 +1868,7 @@ public class TestManagerController {
 		// setting request repository
 		Request request1 = new Request("id1",
 				managerTestHelper.getDefaultFederationToken(),
-				managerTestHelper.getDefaultLocalToken(), null, null, true);
+				managerTestHelper.getDefaultLocalToken(), null, null, true, "");
 		request1.setState(RequestState.OPEN);
 		
 		RequestRepository requestRepository = new RequestRepository();
@@ -1881,7 +1881,7 @@ public class TestManagerController {
 	@Test
 	public void testMonitorServedRequestRemovingRequest() throws InterruptedException{
 		// checking there is not served request
-		Assert.assertEquals(0, managerController.getInstancesForRemoteMember().size());
+		Assert.assertEquals(0, managerController.getRemoteRequests().size());
 		
 		mockRequestInstance();
 		
@@ -1902,24 +1902,25 @@ public class TestManagerController {
 		managerController.setPacketSender(packetSender);
 				
 		managerController.createInstanceWithFederationUser("manager1-test.com", 
-				new ArrayList<Category>(), xOCCIAtt, null, null);
+				new ArrayList<Category>(), xOCCIAtt, null, managerTestHelper.getDefaultFederationToken());
 		
 		// checking there is one served request
-		Assert.assertEquals(1, managerController.getInstancesForRemoteMember().size());
-		Assert.assertEquals("manager1-test.com", managerController.getInstancesForRemoteMember()
-				.get(DefaultDataTestHelper.INSTANCE_ID).getMemberId());
+		Assert.assertEquals(1, managerController.getRemoteRequests().size());
+		Assert.assertEquals("manager1-test.com",
+				getRequestByInstanceId(managerController.getRemoteRequests(),
+						DefaultDataTestHelper.INSTANCE_ID).getProvidingMemberId());
 
 		// monitoring served requests
 		managerController.monitorServedRequests();
 	
 		// checking there is not served request		
-		Assert.assertEquals(0, managerController.getInstancesForRemoteMember().size());		
+		Assert.assertEquals(0, managerController.getRemoteRequests().size());		
 	}
 	
 	@Test
 	public void testMonitorServedRequestKeepingRequest() throws InterruptedException{
 		// checking there is not served request
-		Assert.assertEquals(0, managerController.getInstancesForRemoteMember().size());
+		Assert.assertEquals(0, managerController.getRemoteRequests().size());
 		
 		mockRequestInstance();
 		
@@ -1939,29 +1940,41 @@ public class TestManagerController {
 		managerController.setPacketSender(packetSender);
 		
 		managerController.createInstanceWithFederationUser("manager1-test.com", 
-				new ArrayList<Category>(), xOCCIAtt, null, null);
+				new ArrayList<Category>(), xOCCIAtt, null, managerTestHelper.getDefaultFederationToken());
 		
 		// checking there is one served request
-		Assert.assertEquals(1, managerController.getInstancesForRemoteMember().size());
-		Assert.assertEquals("manager1-test.com", managerController.getInstancesForRemoteMember()
-				.get(DefaultDataTestHelper.INSTANCE_ID).getMemberId());
+		System.out.println(managerController.getRemoteRequests());
+		Assert.assertEquals(1, managerController.getRemoteRequests().size());
+		Assert.assertEquals("manager1-test.com",
+				getRequestByInstanceId(managerController.getRemoteRequests(),
+						DefaultDataTestHelper.INSTANCE_ID).getProvidingMemberId());
 
 		// monitoring served requests
 		managerController.monitorServedRequests();
 	
 		// checking there is not served request		
-		Assert.assertEquals(1, managerController.getInstancesForRemoteMember().size());
-		Assert.assertEquals("manager1-test.com", managerController.getInstancesForRemoteMember()
-				.get(DefaultDataTestHelper.INSTANCE_ID).getMemberId());		
+		Assert.assertEquals(1, managerController.getRemoteRequests().size());
+		Assert.assertEquals("manager1-test.com",
+				getRequestByInstanceId(managerController.getRemoteRequests(),
+						DefaultDataTestHelper.INSTANCE_ID).getProvidingMemberId());
 	}
 	
+	private Request getRequestByInstanceId(List<Request> remoteRequests, String instanceId) {
+		for (Request request : remoteRequests) {
+			if (instanceId.equals(request.getInstanceId())){
+				return request;
+			}
+		}
+		return null;
+	}
+
 	@Test
 	public void testGarbageCollector(){
 		// setting request repository
 		Token federationToken = new Token(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
 				DefaultDataTestHelper.FED_USER_NAME, new Date(), new HashMap<String, String>());
 		
-		Request request1 = new Request("id1", federationToken, managerTestHelper.getDefaultLocalToken(),  null, null, true);
+		Request request1 = new Request("id1", federationToken, managerTestHelper.getDefaultLocalToken(),  null, null, true, "");
 		request1.setState(RequestState.FULFILLED);
 		request1.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
 		
@@ -2000,7 +2013,7 @@ public class TestManagerController {
 		Token federationToken = new Token(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
 				DefaultDataTestHelper.FED_USER_NAME, new Date(), new HashMap<String, String>());
 		
-		Request request1 = new Request("id1", federationToken, managerTestHelper.getDefaultLocalToken(), null, null, true);
+		Request request1 = new Request("id1", federationToken, managerTestHelper.getDefaultLocalToken(), null, null, true, "");
 		request1.setState(RequestState.FULFILLED);
 		request1.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
 		
@@ -2043,7 +2056,7 @@ public class TestManagerController {
 	@Test
 	public void testGarbageCollectorWithServedRequest() {
 		// checking there is not served request
-		Assert.assertEquals(0, managerController.getInstancesForRemoteMember().size());
+		Assert.assertEquals(0, managerController.getRemoteRequests().size());
 		
 		// mocking getInstances
 		Mockito.reset(managerTestHelper.getComputePlugin());
@@ -2064,12 +2077,13 @@ public class TestManagerController {
 		
 		// creating instance for remote member 
 		managerController.createInstanceWithFederationUser("manager1-test.com", 
-				new ArrayList<Category>(), xOCCIAtt, null, null);
+				new ArrayList<Category>(), xOCCIAtt, null, managerTestHelper.getDefaultFederationToken());
 		
 		// checking there is one served request
-		Assert.assertEquals(1, managerController.getInstancesForRemoteMember().size());
-		Assert.assertEquals("manager1-test.com", managerController.getInstancesForRemoteMember()
-				.get(DefaultDataTestHelper.INSTANCE_ID).getMemberId());
+		Assert.assertEquals(1, managerController.getRemoteRequests().size());
+		Assert.assertEquals("manager1-test.com",
+				getRequestByInstanceId(managerController.getRemoteRequests(),
+						DefaultDataTestHelper.INSTANCE_ID).getProvidingMemberId());
 				
 		// updating compute mock
 		Mockito.doNothing().when(managerTestHelper.getComputePlugin()).removeInstance(
@@ -2089,8 +2103,9 @@ public class TestManagerController {
 		Assert.assertEquals(1, resultInstances.size());
 		Assert.assertEquals(DefaultDataTestHelper.INSTANCE_ID, resultInstances.get(0).getId());
 		// checking there is one served request
-		Assert.assertEquals(1, managerController.getInstancesForRemoteMember().size());
-		Assert.assertEquals("manager1-test.com", managerController.getInstancesForRemoteMember()
-				.get(DefaultDataTestHelper.INSTANCE_ID).getMemberId());
+		Assert.assertEquals(1, managerController.getRemoteRequests().size());
+		Assert.assertEquals("manager1-test.com",
+				getRequestByInstanceId(managerController.getRemoteRequests(),
+						DefaultDataTestHelper.INSTANCE_ID).getProvidingMemberId());
 	}
 }

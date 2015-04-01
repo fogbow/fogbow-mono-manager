@@ -11,6 +11,9 @@ import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.accounting.ResourceUsage;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.core.Category;
+import org.fogbowcloud.manager.occi.core.Token;
+import org.fogbowcloud.manager.occi.request.Request;
+import org.fogbowcloud.manager.occi.request.RequestState;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -49,7 +52,7 @@ public class TestNoFPrioritizationPlugin {
 				new HashMap<String, ResourceUsage>());
 		
 		NoFPrioritizationPlugin nofPlugin = new NoFPrioritizationPlugin(properties, accountingPlugin);
-		Assert.assertNull(nofPlugin.takeFrom("memberId", null, new ArrayList<ServedRequest>()));
+		Assert.assertNull(nofPlugin.takeFrom("memberId", null, new ArrayList<Request>()));
 	}
 	
 	@Test
@@ -72,11 +75,15 @@ public class TestNoFPrioritizationPlugin {
 		
 		NoFPrioritizationPlugin nofPlugin = new NoFPrioritizationPlugin(properties, accountingPlugin);
 		
-		ServedRequest request = new ServedRequest("token", "instanceId", "member1",
-				new ArrayList<Category>(), new HashMap<String, String>());		
-		List<ServedRequest> requests = new ArrayList<ServedRequest>();
-		requests.add(request);
+		Request servedRequest = new Request("instanceToken", new Token("accessId", "remoteUserId", null,
+				new HashMap<String, String>()), null, null, null, false, "remoteMemberId");
+		servedRequest.setInstanceId("instanceId");
+		servedRequest.setState(RequestState.FULFILLED);
+		servedRequest.setProvidingMemberId("localMemberId");
 		
-		Assert.assertEquals(request, nofPlugin.takeFrom("member2", null, requests));
+		List<Request> requests = new ArrayList<Request>();
+		requests.add(servedRequest);
+		
+		Assert.assertEquals(servedRequest, nofPlugin.takeFrom("member2", null, requests));
 	}
 }

@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Properties;
 
 import org.apache.log4j.Logger;
-import org.fogbowcloud.manager.core.model.ServedRequest;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.PrioritizationPlugin;
 import org.fogbowcloud.manager.occi.request.Request;
@@ -44,7 +43,7 @@ public class TwoFoldPrioritizationPlugin implements PrioritizationPlugin {
 	}
 
 	@Override
-	public Request takeFrom(String requestingMemberId, List<Request> requestsWithInstance, List<ServedRequest> servedRequests) {
+	public Request takeFrom(String requestingMemberId, List<Request> requestsWithInstance, List<Request> servedRequests) {
 		Request localPreemption = localPrioritizationPlugin.takeFrom(requestingMemberId, requestsWithInstance, null);
 		return (localPreemption != null) ? localPreemption : 
 			remotePrioritizationPlugin.takeFrom(requestingMemberId, null, servedRequests);

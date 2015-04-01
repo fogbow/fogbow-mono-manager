@@ -17,7 +17,6 @@ import org.fogbowcloud.manager.core.AsynchronousRequestCallback;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
-import org.fogbowcloud.manager.core.model.ServedRequest;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.OCCIException;
@@ -169,6 +168,12 @@ public class ManagerPacketHelper {
 		Element requestEl = queryEl.addElement("request");
 		requestEl.addElement("id").setText(request.getId());
 		
+		if (request.getFederationToken() != null) {
+			Element tokenEl = queryEl.addElement("token");
+			tokenEl.addElement("accessId").setText(request.getFederationToken().getAccessId());
+			tokenEl.addElement("user").setText(request.getFederationToken().getUser());
+		}
+		
 		IQ response = (IQ) packetSender.syncSendPacket(iq);
 		if (response.getError() != null) {
 			if (response.getError().getCondition().equals(Condition.item_not_found)) {
@@ -226,7 +231,7 @@ public class ManagerPacketHelper {
 	}
 
 	protected static Instance getRemoteInstance(Request request, PacketSender packetSender) {
-		return getRemoteInstance(request.getMemberId(), request.getInstanceId(), packetSender);
+		return getRemoteInstance(request.getProvidingMemberId(), request.getInstanceId(), packetSender);
 	}
 	
 	public static Instance getRemoteInstance(String memberId, String instanceId,
@@ -257,7 +262,7 @@ public class ManagerPacketHelper {
 
 	public static void deleteRemoteInstace(Request request, PacketSender packetSender) {
 		IQ iq = new IQ();
-		iq.setTo(request.getMemberId());
+		iq.setTo(request.getProvidingMemberId());
 		iq.setType(Type.set);
 		Element queryEl = iq.getElement().addElement("query",
 				ManagerXmppComponent.REMOVEINSTANCE_NAMESPACE);
@@ -371,14 +376,14 @@ public class ManagerPacketHelper {
 	}
 
 	public static void checkIfInstanceIsBeingUsedByRemoteMember(String instanceId,
-			ServedRequest servedRequest, PacketSender packetSender) {
+			Request servedRequest, PacketSender packetSender) {
 		IQ iq = new IQ();
-		iq.setTo(servedRequest.getMemberId());
+		iq.setTo(servedRequest.getRequestingMemberId());
 		iq.setType(Type.get);
 		Element queryEl = iq.getElement().addElement("query",
 				ManagerXmppComponent.INSTANCEBEINGUSED_NAMESPACE);
 		Element requestEl = queryEl.addElement("request");
-		requestEl.addElement("id").setText(servedRequest.getInstanceToken());
+		requestEl.addElement("id").setText(servedRequest.getId());
 		Element instanceEl = queryEl.addElement("instance");
 		instanceEl.addElement("id").setText(instanceId);
 		IQ response = (IQ) packetSender.syncSendPacket(iq);

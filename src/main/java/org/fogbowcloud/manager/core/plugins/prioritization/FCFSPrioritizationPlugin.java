@@ -3,7 +3,6 @@ package org.fogbowcloud.manager.core.plugins.prioritization;
 import java.util.List;
 import java.util.Properties;
 
-import org.fogbowcloud.manager.core.model.ServedRequest;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.PrioritizationPlugin;
 import org.fogbowcloud.manager.occi.request.Request;
@@ -14,7 +13,7 @@ public class FCFSPrioritizationPlugin implements PrioritizationPlugin {
 	}
 
 	@Override
-	public Request takeFrom(String requestingMemberId, List<Request> requestsWithInstance, List<ServedRequest> servedRequests) {
+	public Request takeFrom(String requestingMemberId, List<Request> requestsWithInstance, List<Request> servedRequests) {
 		return null;
 	}
 }
