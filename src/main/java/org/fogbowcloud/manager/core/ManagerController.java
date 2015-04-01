@@ -157,7 +157,7 @@ public class ManagerController {
 		LOGGER.info("Updating accounting.");
 		List<Request> requestsWithInstances = new ArrayList<Request>();
 		
-		for (Request request : requests.get(RequestState.FULFILLED, RequestState.DELETED)) {
+		for (Request request : requests.getLocalRequestIn(RequestState.FULFILLED, RequestState.DELETED)) {
 			if (request.getInstanceId() != null) {
 				requestsWithInstances.add(request);
 			}
@@ -625,7 +625,13 @@ public class ManagerController {
 			Instance instance = computePlugin.getInstance(federationUserToken, instanceId);
 			benchmarkingPlugin.run(generateGlobalId(instanceId, memberId), instance);
 			
-			if (!properties.getProperty("xmpp_jid").equals(memberId)) {				
+			if (!properties.getProperty("xmpp_jid").equals(memberId)) {	
+				Request request = new Request(instanceToken, federationUserToken,
+						federationUserToken, categoriesWithoutImage, xOCCIAtt, false);
+				request.setInstanceId(instanceId);
+				request.setState(RequestState.FULFILLED);
+//				request.setMemberId(memberId);
+				
 				instancesForRemoteMembers.put(instanceId, new ServedRequest(instanceToken, instanceId, 
 						memberId, categories, xOCCIAtt));
 				if (!servedRequestMonitoringTimer.isScheduled()) {
@@ -636,7 +642,7 @@ public class ManagerController {
 		} catch (OCCIException e) {
 			if (e.getType() == ErrorType.QUOTA_EXCEEDED) {
 				Request requestToPreemption = prioritizationPlugin.takeFrom(memberId,
-						new ArrayList<Request>(requests.get(RequestState.FULFILLED, RequestState.DELETED)), 
+						new ArrayList<Request>(requests.getLocalRequestIn(RequestState.FULFILLED, RequestState.DELETED)), 
 						new ArrayList<ServedRequest>(instancesForRemoteMembers.values()));
 
 				if (requestToPreemption == null) {
@@ -1055,7 +1061,7 @@ public class ManagerController {
 		// removing requests that reach timeout
 		removeRequestsThatReachTimeout();
 		
-		List<Request> openRequests = requests.get(RequestState.OPEN);
+		List<Request> openRequests = requests.getLocalRequestIn(RequestState.OPEN);
 		for (Request request : openRequests) {
 			if (isRequestForwardedtoRemoteMember(request.getId())) {
 				LOGGER.debug("The request " + request.getId()

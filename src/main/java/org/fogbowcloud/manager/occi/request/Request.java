@@ -152,9 +152,9 @@ public class Request {
 	}
 
 	public String toString() {
-		return "id: " + id + ", token: " + federationToken + ", instanceId: " + instanceId + ", memberId: "
-				+ memberId + ", state: " + state + ", categories: " + categories + ", xOCCIAtt: "
-				+ xOCCIAtt;
+		return "id: " + id + ", token: " + federationToken + ", instanceId: " + instanceId
+				+ ", memberId: " + memberId + ", state: " + state + ", isLocal " + isLocal
+				+ ", categories: " + categories + ", xOCCIAtt: " + xOCCIAtt;
 	}
 
 	public boolean isIntoValidPeriod() {
