@@ -43,6 +43,7 @@ import org.restlet.data.Protocol;
 
 public class OCCITestHelper {
 
+	public static final String FOGBOW_SMALL_IMAGE = "fogbow_small";
 	public static final String MEMBER_ID = "memberId";
 	public static final int ENDPOINT_PORT = PluginHelper.getAvailablePort();
 	public static final String FED_ACCESS_TOKEN = "HgjhgYUDFTGBgrbelihBDFGB40uyrb";
@@ -73,6 +74,7 @@ public class OCCITestHelper {
 				DefaultDataTestHelper.SERVER_HOST);
 		properties.put(ConfigurationConstants.SSH_HOST_HTTP_PORT_KEY,
 				String.valueOf(DefaultDataTestHelper.TOKEN_SERVER_HTTP_PORT));
+		properties.put(ConfigurationConstants.PREFIX_FLAVORS + FOGBOW_SMALL_IMAGE, "{cpu=1,mem=100}");
 		
 		ScheduledExecutorService executor = Mockito.mock(ScheduledExecutorService.class);
 		Mockito.when(executor.scheduleWithFixedDelay(Mockito.any(Runnable.class), Mockito.anyLong(), 

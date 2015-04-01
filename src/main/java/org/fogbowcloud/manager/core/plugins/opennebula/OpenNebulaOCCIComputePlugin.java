@@ -42,7 +42,9 @@ public class OpenNebulaOCCIComputePlugin extends OCCIComputePlugin {
 	private OpenNebulaComputePlugin openNebulaComputePlugin;
 	
 	public OpenNebulaOCCIComputePlugin(Properties properties) {
-		super(properties);
+		super(properties);		
+		setFlavorsProvided(properties);
+
 		this.openNebulaComputePlugin = new OpenNebulaComputePlugin(properties);
 		super.fogTermToCategory.put(RequestConstants.PUBLIC_KEY_TERM, new Category(PUBLIC_KEY_TERM,
 				PUBLIC_KEY_SCHEME, RequestConstants.MIXIN_CLASS));
@@ -55,11 +57,7 @@ public class OpenNebulaOCCIComputePlugin extends OCCIComputePlugin {
 		List<Category> occiCategories = new ArrayList<Category>();
 		
 		String headerShhPublic = "";
-		for (Category category : requestCategories) {
-			if (super.fogTermToCategory.get(category.getTerm()) == null) {
-				throw new OCCIException(ErrorType.BAD_REQUEST,
-						ResponseConstants.CLOUD_NOT_SUPPORT_CATEGORY + category.getTerm());
-			}
+		for (Category category : requestCategories) {			
 			occiCategories.add(super.fogTermToCategory.get(category.getTerm()));
 		
 			// adding ssh public key
@@ -236,5 +234,4 @@ public class OpenNebulaOCCIComputePlugin extends OCCIComputePlugin {
 	public ResourcesInfo getResourcesInfo(Token token) {
 		return openNebulaComputePlugin.getResourcesInfo(token);
 	}
-
 }

@@ -7,6 +7,7 @@ import java.util.Properties;
 import org.apache.http.HttpStatus;
 import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.model.FederationMember;
+import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.plugins.accounting.ResourceUsage;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.HeaderUtils;
@@ -173,6 +174,10 @@ public class OCCIApplication extends Application {
 	
 	public Properties getProperties() {
 		return managerFacade.getProperties();
+	}
+	
+	public List<Flavor> getFlavorsProvided(){
+		return managerFacade.getFlavorsProvided();
 	}
 
 	public List<ResourceUsage> getMembersUsage(String authToken) {

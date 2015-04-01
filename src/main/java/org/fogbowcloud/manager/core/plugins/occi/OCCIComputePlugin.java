@@ -28,6 +28,9 @@ import org.apache.http.params.CoreProtocolPNames;
 import org.apache.http.params.HttpParams;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.core.ManagerController;
+import org.fogbowcloud.manager.core.RequirementsHelper;
+import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ImageState;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
@@ -39,6 +42,7 @@ import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.instance.Instance;
+import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.restlet.Client;
 import org.restlet.Request;
@@ -52,6 +56,7 @@ public class OCCIComputePlugin implements ComputePlugin {
 	protected static final String SCHEME_COMPUTE = "http://schemas.ogf.org/occi/infrastructure#";
 	private static final int LAST_SUCCESSFUL_STATUS = 204;
 	protected static final String TERM_COMPUTE = "compute";
+	public static final String OCCI_FLAVORS_NOT_SPECIFIED = "There is not a OCCI flavor specified in configuration file.";
 
 	private static String osScheme;
 	private String instanceScheme;
@@ -63,12 +68,16 @@ public class OCCIComputePlugin implements ComputePlugin {
 	protected String oCCIEndpoint;
 	protected String computeOCCIEndpoint;
 	private HttpClient client;	
+	private List<Flavor> flavors = new ArrayList<Flavor>();
 
 	protected static final Logger LOGGER = Logger.getLogger(OCCIComputePlugin.class);
+	public static final String PREFIX_OCCI_FLAVORS_PROVIDED = "occi_flavors_";
 
 	public OCCIComputePlugin(Properties properties) {
 		this.oCCIEndpoint = properties.getProperty("compute_occi_url");
 		this.computeOCCIEndpoint = oCCIEndpoint + COMPUTE_ENDPOINT;
+		
+		setFlavorsProvided(properties);
 
 		instanceScheme = properties
 				.getProperty(OpenStackConfigurationConstants.COMPUTE_OCCI_INSTANCE_SCHEME_KEY);
@@ -78,20 +87,6 @@ public class OCCIComputePlugin implements ComputePlugin {
 				.getProperty(OpenStackConfigurationConstants.COMPUTE_OCCI_RESOURCE_SCHEME_KEY);
 		networkId = properties
 				.getProperty(OpenStackConfigurationConstants.COMPUTE_OCCI_NETWORK_KEY);
-		
-		fogTermToCategory.put(
-				RequestConstants.SMALL_TERM,
-				createFlavorCategory(OpenStackConfigurationConstants.COMPUTE_OCCI_FLAVOR_SMALL_KEY,
-						properties));
-		fogTermToCategory
-				.put(RequestConstants.MEDIUM_TERM,
-						createFlavorCategory(
-								OpenStackConfigurationConstants.COMPUTE_OCCI_FLAVOR_MEDIUM_KEY,
-								properties));
-		fogTermToCategory.put(
-				RequestConstants.LARGE_TERM,
-				createFlavorCategory(OpenStackConfigurationConstants.COMPUTE_OCCI_FLAVOR_LARGE_KEY,
-						properties));
 
 		fogTermToCategory.put(RequestConstants.USER_DATA_TERM, new Category("user_data",
 				instanceScheme, RequestConstants.MIXIN_CLASS));
@@ -118,16 +113,31 @@ public class OCCIComputePlugin implements ComputePlugin {
 					ResponseConstants.IRREGULAR_SYNTAX);
 		}
 		occiCategories.add(new Category(localImageId, osScheme, RequestConstants.MIXIN_CLASS));
+				
+		// Finding and adding flavor
 		
-		for (Category category : requestCategories) {
-			if (fogTermToCategory.get(category.getTerm()) == null) {
-				throw new OCCIException(ErrorType.BAD_REQUEST,
-						ResponseConstants.CLOUD_NOT_SUPPORT_CATEGORY + category.getTerm());
-			}
-			occiCategories.add(fogTermToCategory.get(category.getTerm()));
+		Flavor flavorRef = getFlavor(token, xOCCIAtt.get(RequestAttribute.REQUIREMENTS.getValue()));
+		if (flavorRef != null) {
+			occiCategories.add(new Category(flavorRef.getName(), resourceScheme, RequestConstants.MIXIN_CLASS));						
 		}
 		
 		Set<Header> headers = new HashSet<Header>();
+		
+		for (Category category : new ArrayList<Category>(requestCategories)) {
+			if (category.getScheme().equals(RequestConstants.TEMPLATE_RESOURCE_SCHEME)) {
+				requestCategories.remove(category);
+				continue;
+			}			
+			if (fogTermToCategory.get(category.getTerm()) == null) {
+				throw new OCCIException(ErrorType.BAD_REQUEST,
+						ResponseConstants.CLOUD_NOT_SUPPORT_CATEGORY + category.getTerm());
+			}			 
+			occiCategories.add(fogTermToCategory.get(category.getTerm()));
+		}
+		
+		headers.addAll(getExtraHeaders(requestCategories, xOCCIAtt, token));
+		
+			
 		for (Category category : occiCategories) {
 			headers.add(new BasicHeader(OCCIHeaders.CATEGORY, category.toHeader()));
 		}
@@ -138,15 +148,13 @@ public class OCCIComputePlugin implements ComputePlugin {
 			}
 		}
 
-		headers.addAll(getExtraHeaders(requestCategories, xOCCIAtt, token));
-
 		// specifying network using inline creation of link instance
 		if (networkId != null && !"".equals(networkId)) {
 			headers.add(new BasicHeader(OCCIHeaders.LINK, "</network/" + networkId + ">; "
 					+ "rel=\"http://schemas.ogf.org/occi/infrastructure#network\"; "
 					+ "category=\"http://schemas.ogf.org/occi/infrastructure#networkinterface\";"));
-		}
-
+		}	
+		
 		HttpResponse response = doRequest("post", computeOCCIEndpoint, token.getAccessId(),
 				normalizeHeaders(headers)).getHttpResponse();
 		
@@ -156,7 +164,7 @@ public class OCCIComputePlugin implements ComputePlugin {
 		}
 		return null;
 	}
-
+	
 	private Set<Header> normalizeHeaders(Set<Header> headers) {
 		Set<Header> newHeaders = new HashSet<Header>();
 		Map<String, String> mapUniqueHeaders = new HashMap<String, String>();
@@ -381,6 +389,37 @@ public class OCCIComputePlugin implements ComputePlugin {
 		return null;
 	}
 
+	public List<Flavor> getFlavors() {
+		return flavors;
+	}
+
+	public void setFlavors(List<Flavor> flavors) {
+		this.flavors = flavors;
+	}
+
+	public Flavor getFlavor(Token token, String requirements) {
+		return RequirementsHelper.findFlavor(getFlavors(), requirements);
+	}
+	
+	protected void setFlavorsProvided(Properties properties) {		
+		for (final Object keyPropertie : properties.keySet()) {
+			final String key = (String) keyPropertie;
+			if (key.startsWith(PREFIX_OCCI_FLAVORS_PROVIDED)) {
+				String value = properties.getProperty(key);
+				String cpu = ManagerController.getAttValue("cpu", value);
+				String mem = ManagerController.getAttValue("mem", value);
+				String disk = ManagerController.getAttValue("disk", value);
+				
+				String flavorCorrect = key.replace(PREFIX_OCCI_FLAVORS_PROVIDED, "");
+				
+				flavors.add(new Flavor(flavorCorrect, flavorCorrect, cpu, mem, disk));
+			}
+		}
+		if (flavors.size() == 0) {
+			throw new OCCIException(ErrorType.BAD_REQUEST, OCCI_FLAVORS_NOT_SPECIFIED);
+		}
+	}
+	
 	public ImageState getImageState(Token token, String imageName) {
 		return null;
 	}

@@ -25,6 +25,7 @@ import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.core.model.FederationMember;
+import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.model.ServedRequest;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
@@ -52,6 +53,7 @@ import org.fogbowcloud.manager.occi.request.RequestState;
 import org.fogbowcloud.manager.occi.request.RequestType;
 import org.fogbowcloud.manager.xmpp.AsyncPacketSender;
 import org.fogbowcloud.manager.xmpp.ManagerPacketHelper;
+import org.json.JSONObject;
 import org.restlet.Response;
 
 public class ManagerController {
@@ -76,8 +78,8 @@ public class ManagerController {
 	private Token federationUserToken;
 	private final List<FederationMember> members = Collections.synchronizedList(new LinkedList<FederationMember>());
 	private RequestRepository requests = new RequestRepository();
-	
 	private FederationMemberPicker memberPickerPlugin;
+	private List<Flavor> flavorsProvided;
 	private BenchmarkingPlugin benchmarkingPlugin;
 	private AccountingPlugin accountingPlugin;
 	private ImageStoragePlugin imageStoragePlugin;
@@ -102,6 +104,7 @@ public class ManagerController {
 			throw new IllegalArgumentException();
 		}
 		this.properties = properties;
+		populateStaticFlavors();
 		if (executor == null) {
 			this.requestSchedulerTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
 			this.tokenUpdaterTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
@@ -173,7 +176,7 @@ public class ManagerController {
 	public void setAuthorizationPlugin(AuthorizationPlugin authorizationPlugin) {
 		this.authorizationPlugin = authorizationPlugin;
 	}
-
+	
 	public void setImageStoragePlugin(ImageStoragePlugin imageStoragePlugin) {
 		this.imageStoragePlugin = imageStoragePlugin;
 	}
@@ -893,11 +896,13 @@ public class ManagerController {
 		}
 	}
 
-	private void createAsynchronousRemoteInstance(final Request request) {
-		FederationMember member = memberPickerPlugin.pick(this);
+	private void createAsynchronousRemoteInstance(final Request request, List<FederationMember> allowedMembers) {
+		FederationMember member = memberPickerPlugin.pick(allowedMembers);
+
 		if (member == null) {
 			return;
 		}
+
 		final String memberAddress = member.getResourcesInfo().getId();
 		request.setMemberId(memberAddress);
 
@@ -1074,10 +1079,18 @@ public class ManagerController {
 				for (String keyAttributes : RequestAttribute.getValues()) {
 					xOCCIAtt.remove(keyAttributes);
 				}
-				boolean isFulfilled = createLocalInstance(request)
-						|| createLocalInstanceWithFederationUser(request);
+				
+				String requirements = request.getRequirements();
+				List<FederationMember> allowedFederationMembers = getAllowedFederationMembers(requirements);
+
+				boolean isFulfilled = false;
+				if (RequirementsHelper.matchLocation(requirements,
+						properties.getProperty(ConfigurationConstants.XMPP_JID_KEY))) {				
+					isFulfilled = createLocalInstance(request)
+							|| createLocalInstanceWithFederationUser(request);
+				}
 				if (!isFulfilled) {
-					createAsynchronousRemoteInstance(request);
+					createAsynchronousRemoteInstance(request, allowedFederationMembers);
 				}
 				allFulfilled &= isFulfilled;
 				
@@ -1092,6 +1105,18 @@ public class ManagerController {
 		}
 	}
 
+	protected List<FederationMember> getAllowedFederationMembers(String requirements) {
+		List<FederationMember> federationMembers = new ArrayList<FederationMember>(members);
+		List<FederationMember> allowedFederationMembers = new ArrayList<FederationMember>();
+		for (FederationMember federationMember : federationMembers) {
+			if ((getValidator().canReceiveFrom(federationMember)) &&   
+					RequirementsHelper.matchLocation(requirements, federationMember.getResourcesInfo().getId())) {
+				allowedFederationMembers.add(federationMember);
+			}
+		}
+		return allowedFederationMembers;
+	}
+	
 	protected void monitorServedRequests() {
 		LOGGER.info("Monitoring served requests.");
 		LOGGER.debug("Current served requests=" + instancesForRemoteMembers);
@@ -1260,6 +1285,32 @@ public class ManagerController {
 		return allFullInstances;
 	}
 
+	public List<Flavor> getFlavorsProvided() {		
+		return this.flavorsProvided;
+	}
+	
+	private void populateStaticFlavors() {
+		List<Flavor> flavors = new ArrayList<Flavor>();
+		for (Object objectKey: this.properties.keySet()) {
+			String key = objectKey.toString();
+			if (key.startsWith(ConfigurationConstants.PREFIX_FLAVORS)) {
+				String value = (String) this.properties.get(key);
+				String cpu = getAttValue("cpu", value);
+				String mem = getAttValue("mem", value);				
+				flavors.add(new Flavor(key.replace(ConfigurationConstants.PREFIX_FLAVORS, ""), cpu, mem, "0"));
+			}			
+		}
+		flavorsProvided = flavors;
+	}
+	
+	public static String getAttValue(String attName, String flavorSpec) {		
+		try {
+			JSONObject root = new JSONObject(flavorSpec);
+			return root.getString(attName);
+		} catch (Exception e) {
+			return null;
+		}
+	}
 
 	public List<ResourceUsage> getMembersUsage(String federationAccessId) {
 		checkFederationAccessId(federationAccessId);		

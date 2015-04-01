@@ -53,6 +53,9 @@ import org.xmpp.packet.Packet;
 
 public class ManagerTestHelper extends DefaultDataTestHelper {
 
+	public static final String VALUE_FLAVOR_LARGE = "{cpu=4,mem=8}";
+	public  static final String VALUE_FLAVOR_MEDIUM = "{cpu=2,mem=4}";
+	public static final String VALUE_FLAVOR_SMALL = "{cpu=1,mem=1}";
 	public static final int MAX_WHOISALIVE_MANAGER_COUNT = 100;
 	private ManagerXmppComponent managerXmppComponent;
 	private ComputePlugin computePlugin;
@@ -344,6 +347,9 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 				DefaultDataTestHelper.SERVER_HOST);
 		properties.put(ConfigurationConstants.SSH_HOST_HTTP_PORT_KEY,
 				String.valueOf(DefaultDataTestHelper.TOKEN_SERVER_HTTP_PORT));
+		properties.put(ConfigurationConstants.PREFIX_FLAVORS + "small", VALUE_FLAVOR_SMALL);
+		properties.put(ConfigurationConstants.PREFIX_FLAVORS + "medium", VALUE_FLAVOR_MEDIUM);
+		properties.put(ConfigurationConstants.PREFIX_FLAVORS + "large", VALUE_FLAVOR_LARGE);
 		properties.put(ConfigurationConstants.SERVED_REQUEST_MONITORING_PERIOD_KEY,
 				String.valueOf(DefaultDataTestHelper.SERVED_REQUEST_MONITORING_PERIOD));
 		properties.put(ConfigurationConstants.GREEN_SITTER_JID, DefaultDataTestHelper.GREEN_SITTER_JID);
@@ -383,7 +389,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		accountingPlugin = Mockito.mock(AccountingPlugin.class);
 		
 		memberPickerPlugin = Mockito.mock(FederationMemberPicker.class);
-		Mockito.when(memberPickerPlugin.pick(Mockito.any(ManagerController.class))).thenReturn(
+		Mockito.when(memberPickerPlugin.pick(Mockito.any(List.class))).thenReturn(
 				new FederationMember(new ResourcesInfo(
 						DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL, "", "", "", null)));
 		
@@ -395,6 +401,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		managerController.setAccountingPlugin(accountingPlugin);
 		managerController.setValidator(new DefaultMemberValidator(null));
 		managerController.setMemberPickerPlugin(memberPickerPlugin);
+		
 		return managerController;
 	}
 

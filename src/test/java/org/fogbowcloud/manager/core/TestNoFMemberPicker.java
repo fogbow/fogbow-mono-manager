@@ -40,7 +40,7 @@ public class TestNoFMemberPicker {
 				new HashMap<String, ResourceUsage>());
 		
 		NoFMemberPicker nofPicker = new NoFMemberPicker(properties, accountingPlugin);
-		Assert.assertNull(nofPicker.pick(facade));
+		Assert.assertNull(nofPicker.pick(facade.getMembers()));
 		Assert.assertFalse(nofPicker.getTrustworthy());
 	}
 
@@ -57,7 +57,7 @@ public class TestNoFMemberPicker {
 				new HashMap<String, ResourceUsage>());
 		
 		NoFMemberPicker nofPicker = new NoFMemberPicker(properties, accountingPlugin);
-		Assert.assertNull(nofPicker.pick(facade));
+		Assert.assertNull(nofPicker.pick(facade.getMembers()));
 		Assert.assertFalse(nofPicker.getTrustworthy());
 	}
 	
@@ -83,7 +83,7 @@ public class TestNoFMemberPicker {
 				membersUsageToReturn);
 		
 		NoFMemberPicker nofPicker = new NoFMemberPicker(properties, accountingPlugin);
-		Assert.assertEquals(remoteMember, nofPicker.pick(facade));
+		Assert.assertEquals(remoteMember, nofPicker.pick(facade.getMembers()));
 		Assert.assertFalse(nofPicker.getTrustworthy());
 	}
 	
@@ -116,7 +116,7 @@ public class TestNoFMemberPicker {
 				membersUsageToReturn);
 		
 		NoFMemberPicker nofPicker = new NoFMemberPicker(properties, accountingPlugin);
-		Assert.assertEquals(remoteMember1, nofPicker.pick(facade));
+		Assert.assertEquals(remoteMember1, nofPicker.pick(facade.getMembers()));
 		Assert.assertFalse(nofPicker.getTrustworthy());
 	}
 }

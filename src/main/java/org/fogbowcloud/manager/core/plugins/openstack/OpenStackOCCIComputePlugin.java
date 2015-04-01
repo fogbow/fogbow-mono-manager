@@ -11,6 +11,7 @@ import java.util.Set;
 
 import org.apache.http.Header;
 import org.apache.http.message.BasicHeader;
+import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.occi.OCCIComputePlugin;
 import org.fogbowcloud.manager.occi.core.Category;
@@ -46,16 +47,17 @@ public class OpenStackOCCIComputePlugin extends OCCIComputePlugin{
 				PUBLIC_KEY_TERM, PUBLIC_KEY_SCHEME, RequestConstants.MIXIN_CLASS));
 	}
 	
+	public void setOpenStackNovaV2ComputePlugin(
+			OpenStackNovaV2ComputePlugin openStackNovaV2ComputePlugin) {
+		this.openStackNovaV2ComputePlugin = openStackNovaV2ComputePlugin;
+	}
+	
 	@Override
 	public Set<Header> getExtraHeaders(List<Category> requestCategories,
 			Map<String, String> xOCCIAtt, Token token) {
 		List<Category> openStackCategories = new ArrayList<Category>();
 		
 		for (Category category : requestCategories) {
-			if (super.fogTermToCategory.get(category.getTerm()) == null) {
-				throw new OCCIException(ErrorType.BAD_REQUEST,
-						ResponseConstants.CLOUD_NOT_SUPPORT_CATEGORY + category.getTerm());
-			}
 			openStackCategories.add(super.fogTermToCategory.get(category.getTerm()));
 			
 			// adding ssh public key
@@ -193,5 +195,20 @@ public class OpenStackOCCIComputePlugin extends OCCIComputePlugin{
 	
 	public String getImageId(Token token, String imageName) {
 		return openStackNovaV2ComputePlugin.getImageId(token, imageName);
+	}
+
+	public Flavor getFlavor(Token token, String requirements) {
+		Flavor flavorFound = openStackNovaV2ComputePlugin.getFlavor(token, requirements);
+		normalizeNameFlavorOCCI(flavorFound);
+		return flavorFound;
+	}
+	
+	protected void normalizeNameFlavorOCCI(Flavor flavor) {
+		if (flavor != null) {
+			flavor.setName(flavor.getName().replace(".", "-"));			
+		}
+	}
+	
+	protected void setFlavorsProvided(Properties properties) {		
 	}
 }

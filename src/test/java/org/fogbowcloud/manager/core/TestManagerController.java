@@ -12,6 +12,7 @@ import java.util.Map;
 import org.dom4j.Element;
 import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.core.model.FederationMember;
+import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
@@ -164,7 +165,7 @@ public class TestManagerController {
 		managerController.setPacketSender(packetSender);
 		
 		FederationMemberPicker memberPickerPlugin = Mockito.mock(FederationMemberPicker.class);
-		Mockito.when(memberPickerPlugin.pick(Mockito.any(ManagerController.class)))
+		Mockito.when(memberPickerPlugin.pick(Mockito.any(List.class)))
 				.thenReturn(null);
 		managerController.setMemberPickerPlugin(memberPickerPlugin);
 		
@@ -1105,7 +1106,7 @@ public class TestManagerController {
 		// creating requests
 		managerController.createRequests(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID, DefaultDataTestHelper.LOCAL_ACCESS_TOKEN_ID,
 				new ArrayList<Category>(), xOCCIAtt);
-		managerController.checkAndSubmitOpenRequests();
+ 		managerController.checkAndSubmitOpenRequests();
 
 		// checking if request was fulfilled with instanceID
 		List<Request> requests = managerController
@@ -1699,6 +1700,72 @@ public class TestManagerController {
 	}
 	
 	@Test
+	public void testGetFlavors() {
+		List<Flavor> flavors = managerController.getFlavorsProvided();
+		String[] verifyFlavors = new String[] { ManagerTestHelper.VALUE_FLAVOR_SMALL,
+				ManagerTestHelper.VALUE_FLAVOR_MEDIUM, ManagerTestHelper.VALUE_FLAVOR_LARGE};
+		for (Flavor flavor : flavors) {
+			boolean thereIs = false;
+			for (String valueFlavor : verifyFlavors) {
+				if (flavor.getMem().equals(ManagerController.getAttValue("mem", valueFlavor))
+						&& flavor.getCpu()
+								.equals(ManagerController.getAttValue("cpu", valueFlavor))) {
+					thereIs = true;
+				}
+			}
+			if (!thereIs) {
+				Assert.fail();
+			}
+		}
+	}
+	
+	@Test
+	public void testGetAttValue() {
+		String cpuValue = "2";
+		String memValue = "10";
+		String flavorSpec = "{cpu=" + cpuValue + ",mem=" + memValue + "}";
+		Assert.assertEquals(cpuValue, ManagerController.getAttValue("cpu", flavorSpec));
+		Assert.assertEquals(memValue, ManagerController.getAttValue("mem", flavorSpec));		
+	}
+	
+	@Test
+	public void testGetAllowedFederationMembers() {
+		ResourcesInfo resourcesInfoOne = new ResourcesInfo("id1","", "", "", "", null);		
+		ResourcesInfo resourcesInfoTwo = new ResourcesInfo("id2","", "", "", "", null);		
+		ResourcesInfo resourcesInfoThree = new ResourcesInfo("id3","", "", "", "", null);
+
+		List<FederationMember> listMembers = new ArrayList<FederationMember>();
+		listMembers.add(new FederationMember(resourcesInfoOne));
+		listMembers.add(new FederationMember(resourcesInfoTwo));
+		listMembers.add(new FederationMember(resourcesInfoThree));
+		managerController.updateMembers(listMembers);
+		
+		String requirements = null;
+		List<FederationMember> allowedFederationMembers = managerController.getAllowedFederationMembers(requirements);
+		Assert.assertEquals(3, allowedFederationMembers.size());				
+	}
+	
+	@Test
+	public void testGetAllowedFederationMembersWithRequirements() {
+		ResourcesInfo resourcesInfoOne = new ResourcesInfo("id1","", "", "", "", null);		
+		ResourcesInfo resourcesInfoTwo = new ResourcesInfo("id2","", "", "", "", null);		
+		ResourcesInfo resourcesInfoThree = new ResourcesInfo("id3","", "", "", "", null);
+
+		List<FederationMember> listMembers = new ArrayList<FederationMember>();
+		listMembers.add(new FederationMember(resourcesInfoOne));
+		listMembers.add(new FederationMember(resourcesInfoTwo));
+		listMembers.add(new FederationMember(resourcesInfoThree));
+		managerController.updateMembers(listMembers);
+		
+		String requirements = RequirementsHelper.GLUE_LOCATION_TERM + "==\"id1\"";
+		List<FederationMember> allowedFederationMembers = managerController.getAllowedFederationMembers(requirements);
+		Assert.assertEquals(1, allowedFederationMembers.size());
+		
+		requirements = RequirementsHelper.GLUE_LOCATION_TERM + " == \"id1\" || " + RequirementsHelper.GLUE_LOCATION_TERM + " == \"id2\"";
+		allowedFederationMembers = managerController.getAllowedFederationMembers(requirements);
+		Assert.assertEquals(2, allowedFederationMembers.size());	
+	}	
+	
 	public void testInstanceIsBeingUsedByFulfilledRequest(){
 		// setting request repository
 		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null, true);
@@ -1972,10 +2039,9 @@ public class TestManagerController {
 		Assert.assertEquals(DefaultDataTestHelper.INSTANCE_ID, resultInstances.get(0).getId());
 	}
 	
-
 	@SuppressWarnings("unchecked")
 	@Test
-	public void testGarbageCollectorWithServedRequest(){
+	public void testGarbageCollectorWithServedRequest() {
 		// checking there is not served request
 		Assert.assertEquals(0, managerController.getInstancesForRemoteMember().size());
 		
