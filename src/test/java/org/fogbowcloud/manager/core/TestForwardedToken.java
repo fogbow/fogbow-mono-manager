@@ -59,7 +59,7 @@ public class TestForwardedToken {
 		
 		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), 
 				managerTestHelper.getDefaultLocalToken(), new ArrayList<Category>(),
-				new HashMap<String, String>());
+				new HashMap<String, String>(), true);
 		request1.setState(RequestState.OPEN);
         
 		ManagerPacketHelper.asynchronousRemoteRequest(request1, "member1", null, packetSender, null);
