@@ -33,6 +33,7 @@ import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
+import org.fogbowcloud.manager.core.plugins.PrioritizationPlugin;
 import org.fogbowcloud.manager.core.plugins.accounting.ResourceUsage;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
@@ -75,8 +76,8 @@ public class ManagerController {
 	private Token federationUserToken;
 	private final List<FederationMember> members = Collections.synchronizedList(new LinkedList<FederationMember>());
 	private RequestRepository requests = new RequestRepository();
-	private FederationMemberPicker memberPicker;
-
+	
+	private FederationMemberPicker memberPickerPlugin;
 	private BenchmarkingPlugin benchmarkingPlugin;
 	private AccountingPlugin accountingPlugin;
 	private ImageStoragePlugin imageStoragePlugin;
@@ -84,6 +85,7 @@ public class ManagerController {
 	private ComputePlugin computePlugin;
 	private IdentityPlugin localIdentityPlugin;
 	private IdentityPlugin federationIdentityPlugin;
+	private PrioritizationPlugin prioritizationPlugin;
 	private Properties properties;
 	private AsyncPacketSender packetSender;
 	private FederationMemberValidator validator;
@@ -117,8 +119,12 @@ public class ManagerController {
 		}
 	}
 	
+	public void setPrioritizationPlugin(PrioritizationPlugin prioritizationPlugin){
+		this.prioritizationPlugin = prioritizationPlugin;
+	}
+	
 	public void setMemberPickerPlugin(FederationMemberPicker memberPicker) {
-		this.memberPicker = memberPicker;
+		this.memberPickerPlugin = memberPicker;
 	}
 
 	public void setBenchmarkingPlugin(BenchmarkingPlugin benchmarkingPlugin) {
@@ -222,7 +228,7 @@ public class ManagerController {
 		LOGGER.debug("Checking if instance " + instanceId + " is related to request " + requestId);
 		// checking federation local user instances for local users
 		if (requestId == null) {
-			for (Request request : requests.getAll()) {
+			for (Request request : requests.getAllLocalRequests()) {
 				if (request.getState().in(RequestState.FULFILLED, RequestState.DELETED)) {
 					String reqInstanceId = generateGlobalId(request.getInstanceId(),
 							request.getMemberId());
@@ -374,7 +380,7 @@ public class ManagerController {
 
 	private Instance getInstance(Request request) {
 		Instance instance = null;
-		if (isLocal(request)) {
+		if (request.isLocal()) {
 			LOGGER.debug(request.getInstanceId()
 					+ " is local, getting its information in the local cloud.");
 			
@@ -483,7 +489,7 @@ public class ManagerController {
 	}
 
 	private void removeInstance(String federationToken, String instanceId, Request request) {
-		if (isLocal(request)) {
+		if (request.isLocal()) {
 			if (request.isFulfilledByFederationUser()) {
 				this.computePlugin.removeInstance(getFederationUserToken(), instanceId);
 			} else {
@@ -530,7 +536,7 @@ public class ManagerController {
 	public Request getRequestForInstance(String federationToken, String instanceId) {
 		String user = getUser(federationToken);
 		LOGGER.debug("Getting instance " + instanceId + " of user " + user);
-		List<Request> userRequests = requests.getAll();
+		List<Request> userRequests = requests.getAllLocalRequests();
 		
 		for (Request request : userRequests) {
 			if (instanceId.equals(request.getInstanceId() + Request.SEPARATOR_GLOBAL_ID
@@ -544,13 +550,13 @@ public class ManagerController {
 		throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
 	}
 
-	private boolean isLocal(Request request) {
-		if (request.getMemberId() != null
-				&& request.getMemberId().equals(properties.get(ConfigurationConstants.XMPP_JID_KEY))) {
-			return true;
-		}
-		return false;
-	}
+//	private boolean isLocal(Request request) {
+//		if (request.getMemberId() != null
+//				&& request.getMemberId().equals(properties.get(ConfigurationConstants.XMPP_JID_KEY))) {
+//			return true;
+//		}
+//		return false;
+//	}
 
 	public Request getRequest(String accessId, String requestId) {
 		LOGGER.debug("Getting requestId " + requestId);
@@ -628,11 +634,29 @@ public class ManagerController {
 			}
 			return instanceId;
 		} catch (OCCIException e) {
+			if (e.getType() == ErrorType.QUOTA_EXCEEDED) {
+				Request requestToPreemption = prioritizationPlugin.takeFrom(memberId,
+						new ArrayList<Request>(requests.get(RequestState.FULFILLED, RequestState.DELETED)), 
+						new ArrayList<ServedRequest>(instancesForRemoteMembers.values()));
+
+				if (requestToPreemption == null) {
+					throw e;
+				}
+				preemption(requestToPreemption);
+				return createInstanceWithFederationUser(memberId, categoriesWithoutImage, xOCCIAtt,
+						instanceToken, requestingUserToken);
+			}
+
 			if (e.getStatus().getCode() == HttpStatus.SC_BAD_REQUEST) {
 				return null;
 			}
 			throw e;
 		}
+	}
+
+	private void preemption(Request requestToPreemption) {
+		// TODO Auto-generated method stub
+		
 	}
 
 	private void triggerServedRequestMonitoring() {
@@ -746,8 +770,8 @@ public class ManagerController {
 		for (int i = 0; i < instanceCount; i++) {
 			String requestId = String.valueOf(UUID.randomUUID());
 			Request request = new Request(requestId, federationToken, localToken,
-					new LinkedList<Category>(categories), new HashMap<String, String>(xOCCIAtt));
-			LOGGER.info("Created request: " + request);
+					new LinkedList<Category>(categories), new HashMap<String, String>(xOCCIAtt), true);
+			LOGGER.info("Created request: " + request);			
 			currentRequests.add(request);
 			requests.addRequest(federationToken.getUser(), request);
 		}
@@ -783,7 +807,7 @@ public class ManagerController {
 		boolean turnOffTimer = true;
 		LOGGER.info("Monitoring instances.");
 
-		for (Request request : requests.getAll()) {
+		for (Request request : requests.getAllLocalRequests()) {
 			if (request.getState().in(RequestState.FULFILLED, RequestState.DELETED)) {
 				turnOffTimer = false;
 				try {
@@ -832,7 +856,7 @@ public class ManagerController {
 	}
 
 	protected void checkAndUpdateRequestToken(long tokenUpdatePeriod) {
-		List<Request> allRequests = requests.getAll();
+		List<Request> allRequests = requests.getAllLocalRequests();
 		boolean turnOffTimer = true;
 
 		LOGGER.info("Checking and updating request token.");
@@ -864,7 +888,7 @@ public class ManagerController {
 	}
 
 	private void createAsynchronousRemoteInstance(final Request request) {
-		FederationMember member = memberPicker.pick(this);
+		FederationMember member = memberPickerPlugin.pick(this);
 		if (member == null) {
 			return;
 		}
@@ -909,7 +933,7 @@ public class ManagerController {
 						
 						request.setState(RequestState.FULFILLED);
 						request.setInstanceId(instanceId);
-						
+												
 						asynchronousRequests.remove(request.getId()); 
 						
 						if (!instanceMonitoringTimer.isScheduled()) {
@@ -1200,7 +1224,7 @@ public class ManagerController {
 		LOGGER.debug("Getting all instances and your information.");
 		for (Request request : requestsFromUser) {
 			Instance instance = null;
-			if (isLocal(request)) {
+			if (request.isLocal()) {
 				LOGGER.debug(request.getInstanceId()
 						+ " is local, getting its information in the local cloud.");
 				if (request.isFulfilledByFederationUser()) {

@@ -69,7 +69,7 @@ public class TestFCUAccounting {
 		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin, dateUtils);
 
 		Request request1 = new Request("id1", new Token("accessId", "userId", null,
-				new HashMap<String, String>()), null, null, null);
+				new HashMap<String, String>()), null, null, null, true);
 		request1.setDateUtils(dateUtils);
 		request1.setState(RequestState.FULFILLED);
 		request1.setMemberId("memberId");
@@ -107,7 +107,7 @@ public class TestFCUAccounting {
 		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin, dateUtils);
 
 		Request request1 = new Request("id1", new Token("accessId", "userId", null,
-				new HashMap<String, String>()), null, null, null);
+				new HashMap<String, String>()), null, null, null, true);
 		request1.setDateUtils(dateUtils);
 		request1.setState(RequestState.FULFILLED);
 		request1.setInstanceId("instanceId");
@@ -146,14 +146,14 @@ public class TestFCUAccounting {
 		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin, dateUtils);
 
 		Request request1 = new Request("id1", new Token("accessId", "userId1", null,
-				new HashMap<String, String>()), null, null, null);
+				new HashMap<String, String>()), null, null, null, true);
 		request1.setDateUtils(dateUtils);
 		request1.setState(RequestState.FULFILLED);
 		request1.setInstanceId("instanceId1");
 		request1.setMemberId("localMemberId");
 		
 		Request request2 = new Request("id2", new Token("accessId", "userId2", null,
-				new HashMap<String, String>()), null, null, null);
+				new HashMap<String, String>()), null, null, null, true);
 		request2.setDateUtils(dateUtils);
 		request2.setState(RequestState.FULFILLED);
 		request2.setInstanceId("instanceId2");
@@ -229,7 +229,7 @@ public class TestFCUAccounting {
 		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin, dateUtils);
 
 		Request request1 = new Request("id1", new Token("accessId", "userId", null,
-				new HashMap<String, String>()), null, null, null);
+				new HashMap<String, String>()), null, null, null, true);
 		request1.setDateUtils(dateUtils);
 		request1.setState(RequestState.FULFILLED);
 		request1.setMemberId("memberId");
@@ -274,7 +274,7 @@ public class TestFCUAccounting {
 		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin, dateUtils);
 
 		Request request1 = new Request("id1", new Token("accessId", "userId", null,
-				new HashMap<String, String>()), null, null, null);
+				new HashMap<String, String>()), null, null, null, true);
 		request1.setDateUtils(dateUtils);
 		request1.setState(RequestState.FULFILLED);
 		request1.setInstanceId("instanceId1");
@@ -321,7 +321,7 @@ public class TestFCUAccounting {
 		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin, dateUtils);
 
 		Request request1 = new Request("id1", new Token("accessId", "userId", null,
-				new HashMap<String, String>()), null, null, null);
+				new HashMap<String, String>()), null, null, null, true);
 		request1.setDateUtils(dateUtils);
 		request1.setState(RequestState.FULFILLED);
 		request1.setMemberId("memberId1");
@@ -371,7 +371,7 @@ public class TestFCUAccounting {
 		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin, dateUtils);
 
 		Request request1 = new Request("id1", new Token("accessId", "userId", null,
-				new HashMap<String, String>()), null, null, null);
+				new HashMap<String, String>()), null, null, null, true);
 		request1.setDateUtils(dateUtils);
 		request1.setState(RequestState.FULFILLED);
 		request1.setInstanceId("instanceId1");
@@ -421,7 +421,7 @@ public class TestFCUAccounting {
 		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin, dateUtils);
 
 		Request request1 = new Request("id1", new Token("accessId", "userId", null,
-				new HashMap<String, String>()), null, null, null);
+				new HashMap<String, String>()), null, null, null, true);
 		request1.setDateUtils(dateUtils);
 		request1.setState(RequestState.FULFILLED);
 		request1.setMemberId("memberId");
@@ -473,14 +473,14 @@ public class TestFCUAccounting {
 		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin, dateUtils);
 
 		Request request1 = new Request("id1", new Token("accessId", "userId", null,
-				new HashMap<String, String>()), null, null, null);
+				new HashMap<String, String>()), null, null, null, true);
 		request1.setDateUtils(dateUtils);
 		request1.setState(RequestState.FULFILLED);
 		request1.setMemberId("memberId");
 		request1.setInstanceId("instanceId1");
 		
 		Request request2 = new Request("id2", new Token("accessId", "userId", null,
-				new HashMap<String, String>()), null, null, null);
+				new HashMap<String, String>()), null, null, null, true);
 		request2.setDateUtils(dateUtils);
 		request2.setState(RequestState.FULFILLED);
 		request2.setInstanceId("instanceId3");
@@ -537,7 +537,7 @@ public class TestFCUAccounting {
 		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin, dateUtils);
 
 		Request request1 = new Request("id1", new Token("accessId", "userId", null,
-				new HashMap<String, String>()), null, null, null);
+				new HashMap<String, String>()), null, null, null, true);
 		request1.setDateUtils(dateUtils);
 		request1.setState(RequestState.FULFILLED);
 		request1.setInstanceId("instanceId1");

@@ -61,12 +61,12 @@ public class TestDeleteCompute {
 		List<Request> requests = new LinkedList<Request>();
 		Request request1 = new Request("1", new Token(OCCITestHelper.FED_ACCESS_TOKEN,
 				OCCITestHelper.USER_MOCK, DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
-				new HashMap<String, String>()), null, null, null);
+				new HashMap<String, String>()), null, null, null, true);
 		request1.setInstanceId(INSTANCE_ID);
 		request1.setMemberId(OCCITestHelper.MEMBER_ID);
 		requests.add(request1);
 		Request request2 = new Request("2", new Token("otherToken", "otherUser",
-				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), null, null, null);
+				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), null, null, null, true);
 		request2.setInstanceId(OTHER_INSTANCE_ID);
 		request2.setMemberId(OCCITestHelper.MEMBER_ID);
 		requests.add(request2);

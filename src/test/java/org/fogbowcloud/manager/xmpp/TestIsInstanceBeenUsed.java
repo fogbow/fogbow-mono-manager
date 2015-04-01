@@ -40,7 +40,7 @@ public class TestIsInstanceBeenUsed {
 		managerTestHelper.initializeXMPPManagerComponent(false, managerController);
 		
 		// setting request repository
-		Request request1 = new Request("id1", managerTestHelper.getDefaultLocalToken(), null, null, null);
+		Request request1 = new Request("id1", managerTestHelper.getDefaultLocalToken(), null, null, null, true);
 		request1.setState(RequestState.FULFILLED);
 		request1.setInstanceId(INSTANCE_DEFAULT);
 		
@@ -64,7 +64,7 @@ public class TestIsInstanceBeenUsed {
 		managerTestHelper.initializeXMPPManagerComponent(false, managerController);
 		
 		// setting request repository
-		Request request1 = new Request("id1", managerTestHelper.getDefaultLocalToken(), null, null, null);
+		Request request1 = new Request("id1", managerTestHelper.getDefaultLocalToken(), null, null, null, true);
 		request1.setState(RequestState.DELETED);
 		request1.setInstanceId(INSTANCE_DEFAULT);
 		
@@ -88,7 +88,7 @@ public class TestIsInstanceBeenUsed {
 		managerTestHelper.initializeXMPPManagerComponent(false, managerController);
 		
 		// setting request repository
-		Request request1 = new Request("id1", managerTestHelper.getDefaultLocalToken(), null, null, null);
+		Request request1 = new Request("id1", managerTestHelper.getDefaultLocalToken(), null, null, null, true);
 		request1.setState(RequestState.OPEN);
 		
 		RequestRepository requestRepository = new RequestRepository();

@@ -1,7 +1,6 @@
 package org.fogbowcloud.manager.core;
 
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +10,8 @@ import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.accounting.ResourceUsage;
+import org.fogbowcloud.manager.core.plugins.prioritization.nof.FederationMemberDebt;
+import org.fogbowcloud.manager.core.plugins.prioritization.nof.FederationMemberDebtComparator;
 
 public class NoFMemberPicker implements FederationMemberPicker {
 		
@@ -26,7 +27,7 @@ public class NoFMemberPicker implements FederationMemberPicker {
 		try {
 			this.trustworthy = Boolean.valueOf(properties.getProperty("nof_trustworthy"));			
 		} catch (Exception e) {
-			LOGGER.error("Error while getting boolean valued from ", e);
+			LOGGER.error("Error while getting boolean value for nof_trustworhty. The default value is false.", e);
 		}
 	}
 	
@@ -34,7 +35,7 @@ public class NoFMemberPicker implements FederationMemberPicker {
 	public FederationMember pick(ManagerController facade) {
 		List<FederationMember> onlineMembers = facade.getMembers();
 		Map<String, ResourceUsage> membersUsage = accoutingPlugin.getMembersUsage();
-		LinkedList<ReputableFederationMember> reputableMembers = new LinkedList<ReputableFederationMember>();
+		LinkedList<FederationMemberDebt> reputableMembers = new LinkedList<FederationMemberDebt>();
 
 		for (FederationMember currentMember : onlineMembers) {			
 			String memberId = currentMember.getResourcesInfo().getId();			
@@ -51,45 +52,16 @@ public class NoFMemberPicker implements FederationMemberPicker {
 							debt + Math.sqrt(membersUsage.get(memberId).getDonated()));
 				}
 			}
-			reputableMembers.add(new ReputableFederationMember(currentMember, debt));
+			reputableMembers.add(new FederationMemberDebt(currentMember, debt));
 		}
 		
 		if (reputableMembers.isEmpty()) {
 			return null;
 		}
-		Collections.sort(reputableMembers, new ReputableFederationMemberComparator());
+		Collections.sort(reputableMembers, new FederationMemberDebtComparator());
 		return reputableMembers.getFirst().getMember();
 	}
-
-	class ReputableFederationMember {
-
-		private FederationMember member;
-		private double debt;
-
-		public ReputableFederationMember(FederationMember member, double debt) {
-			this.member = member;
-			this.debt = debt;
-		}
-
-		public FederationMember getMember() {
-			return member;
-		}
-
-		public double getDebt() {
-			return debt;
-		}
-	}
 	
-	class ReputableFederationMemberComparator implements Comparator<ReputableFederationMember> {
-		@Override
-		public int compare(ReputableFederationMember firstReputableMember,
-				ReputableFederationMember secondReputableMember) {
-
-			return new Double(firstReputableMember.getDebt()).compareTo(new Double(
-					secondReputableMember.getDebt()));
-		}
-	}
-
 	public boolean getTrustworthy() {
 		return trustworthy;
 	}

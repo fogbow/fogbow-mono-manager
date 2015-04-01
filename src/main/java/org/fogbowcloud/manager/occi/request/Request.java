@@ -22,6 +22,7 @@ public class Request {
 	private String memberId;
 	private long fulfilledTime = 0;
 	private boolean fulfilledByFederationUser;
+	private final boolean isLocal;
 	private RequestState state;
 	private List<Category> categories;
 	private Map<String, String> xOCCIAtt;
@@ -29,14 +30,15 @@ public class Request {
 	private DateUtils dateUtils = new DateUtils();
 	
 	public Request(String id, Token federationToken, Token localToken, 
-			List<Category> categories, Map<String, String> xOCCIAtt) {
+			List<Category> categories, Map<String, String> xOCCIAtt, boolean isLocal) {
 		this.id = id;
 		this.federationToken = federationToken;
 		this.localToken = localToken;
 		this.categories = categories;
 		this.xOCCIAtt = xOCCIAtt;
 		this.fulfilledByFederationUser = false;
-		setState(RequestState.OPEN);
+		this.isLocal = isLocal;
+		setState(RequestState.OPEN);		
 	}
 
 	public List<Category> getCategories() {
@@ -80,6 +82,10 @@ public class Request {
 	
 	public void setDateUtils(DateUtils dateUtils) {
 		this.dateUtils = dateUtils;
+	}
+	
+	public boolean isLocal(){
+		return isLocal;
 	}
 
 	public RequestState getState() {

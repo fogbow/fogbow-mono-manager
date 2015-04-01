@@ -139,10 +139,10 @@ public class TestManagerController {
 	
 	private void checkRequestPerUserToken(Token token) {
 		Request request1 = new Request("id1", token, token, new ArrayList<Category>(),
-				new HashMap<String, String>());
+				new HashMap<String, String>(), true);
 		request1.setState(RequestState.OPEN);
 		Request request2 = new Request("id2", token, token, new ArrayList<Category>(),
-				new HashMap<String, String>());
+				new HashMap<String, String>(), true);
 		request2.setState(RequestState.OPEN);
 		RequestRepository requestRepository = new RequestRepository();
 		requestRepository.addRequest(token.getUser(), request1);
@@ -187,7 +187,7 @@ public class TestManagerController {
 		managerController.updateMembers(listMembers);
 		
 		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), new ArrayList<Category>(),
-				new HashMap<String, String>());
+				new HashMap<String, String>(), true);
 		request1.setState(RequestState.OPEN);
 		RequestRepository requestRepository = new RequestRepository();
 		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(), request1);
@@ -266,7 +266,7 @@ public class TestManagerController {
 		Request request1 = new Request("id1",
 				managerTestHelper.getDefaultFederationToken(),
 				managerTestHelper.getDefaultLocalToken(),
-				new ArrayList<Category>(), new HashMap<String, String>());
+				new ArrayList<Category>(), new HashMap<String, String>(), true);
 		request1.setState(RequestState.OPEN);
 		RequestRepository requestRepository = new RequestRepository();
 		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(),
@@ -323,7 +323,7 @@ public class TestManagerController {
 		managerController.updateMembers(listMembers);
 
 		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), new ArrayList<Category>(),
-				new HashMap<String, String>());
+				new HashMap<String, String>(), true);
 		request1.setState(RequestState.OPEN);
 		RequestRepository requestRepository = new RequestRepository();
 		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(), request1);
@@ -397,7 +397,7 @@ public class TestManagerController {
 		managerController.updateMembers(listMembers);
 
 		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(),
-				new ArrayList<Category>(), new HashMap<String, String>());
+				new ArrayList<Category>(), new HashMap<String, String>(), true);
 		request1.setState(RequestState.OPEN);
 		RequestRepository requestRepository = new RequestRepository();
 		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(),
@@ -476,7 +476,7 @@ public class TestManagerController {
 		managerController.setFederationIdentityPlugin(federationIdentityPlugin);
 
 		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(),managerTestHelper.getDefaultLocalToken(),
-				new ArrayList<Category>(), new HashMap<String, String>());
+				new ArrayList<Category>(), new HashMap<String, String>(), true);
 		request1.setState(RequestState.OPEN);
 		RequestRepository requestRepository = new RequestRepository();
 		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(), request1);
@@ -571,7 +571,7 @@ public class TestManagerController {
 		RequestRepository requestRepository = new RequestRepository();
 		for (int i = 0; i < 5; i++) {
 			requestRepository.addRequest(DefaultDataTestHelper.USER_NAME, new Request("id" + i,
-					firstToken, null, null, null));
+					firstToken, null, null, null, true));
 		}
 		managerController.setRequests(requestRepository);
 
@@ -623,9 +623,9 @@ public class TestManagerController {
 	@Test
 	public void testDeleteClosedRequest() throws InterruptedException {
 		// setting request repository
-		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null);
+		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null, true);
 		request1.setState(RequestState.CLOSED);
-		Request request2 = new Request("id2", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null);
+		Request request2 = new Request("id2", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null, true);
 		request2.setState(RequestState.CLOSED);
 
 		RequestRepository requestRepository = new RequestRepository();
@@ -660,11 +660,11 @@ public class TestManagerController {
 	@Test
 	public void testMonitorDeletedRequestWithInstance() throws InterruptedException {
 		// setting request repository
-		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null);
+		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null, true);
 		request1.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
 		request1.setState(RequestState.DELETED);
 		request1.setMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
-		Request request2 = new Request("id2", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null);
+		Request request2 = new Request("id2", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null, true);
 		request2.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
 		request2.setState(RequestState.DELETED);
 		request2.setMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
@@ -702,15 +702,15 @@ public class TestManagerController {
 		// setting request repository
 		Request request1 = new Request("id1",
 				managerTestHelper.getDefaultFederationToken(),
-				managerTestHelper.getDefaultLocalToken(), null, null);
+				managerTestHelper.getDefaultLocalToken(), null, null, true);
 		request1.setState(RequestState.DELETED);
 		Request request2 = new Request("id2",
 				managerTestHelper.getDefaultFederationToken(),
-				managerTestHelper.getDefaultLocalToken(), null, null);
+				managerTestHelper.getDefaultLocalToken(), null, null, true);
 		request2.setState(RequestState.DELETED);
 		Request request3 = new Request("id3",
 				managerTestHelper.getDefaultFederationToken(),
-				managerTestHelper.getDefaultLocalToken(), null, null);
+				managerTestHelper.getDefaultLocalToken(), null, null, true);
 		request3.setState(RequestState.OPEN);
 
 		RequestRepository requestRepository = new RequestRepository();
@@ -760,9 +760,9 @@ public class TestManagerController {
 	@Test
 	public void testMonitorFulfilledRequestWithoutInstance() throws InterruptedException {
 		// setting request repository
-		Request request1 = new Request("id1", managerTestHelper.getDefaultLocalToken(), null, null, null);
+		Request request1 = new Request("id1", managerTestHelper.getDefaultLocalToken(), null, null, null, true);
 		request1.setState(RequestState.FULFILLED);
-		Request request2 = new Request("id2", managerTestHelper.getDefaultLocalToken(), null, null, null);
+		Request request2 = new Request("id2", managerTestHelper.getDefaultLocalToken(), null, null, null, true);
 		request2.setState(RequestState.FULFILLED);
 
 		RequestRepository requestRepository = new RequestRepository();
@@ -802,7 +802,7 @@ public class TestManagerController {
 		attributes.put(RequestAttribute.TYPE.getValue(), RequestType.PERSISTENT.getValue());
 
 		// setting request repository
-		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), new ArrayList<Category>(), attributes);
+		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), new ArrayList<Category>(), attributes, true);
 		request1.setState(RequestState.FULFILLED);
 
 		RequestRepository requestRepository = new RequestRepository();
@@ -855,11 +855,11 @@ public class TestManagerController {
 		final String SECOND_INSTANCE_ID = "secondInstanceId";
 
 		// setting request repository
-		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null);
+		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null, true);
 		request1.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
 		request1.setState(RequestState.FULFILLED);
 		request1.setMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
-		Request request2 = new Request("id2", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null);
+		Request request2 = new Request("id2", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null, true);
 		request2.setInstanceId(SECOND_INSTANCE_ID);
 		request2.setState(RequestState.FULFILLED);
 		request2.setMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
@@ -899,7 +899,7 @@ public class TestManagerController {
 	@Test
 	public void testMonitorWontRethrowException() throws InterruptedException {
 		// setting request repository
-		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null);
+		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null, true);
 		request1.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
 		request1.setState(RequestState.FULFILLED);
 
@@ -918,7 +918,7 @@ public class TestManagerController {
 	@Test
 	public void testMonitorWillRemoveLocalFailedInstance() throws InterruptedException {
 		// setting request repository
-		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null);
+		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null, true);
 		request1.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
 		request1.setState(RequestState.FULFILLED);
 		request1.setMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
@@ -1615,9 +1615,9 @@ public class TestManagerController {
 		managerTestHelper.useSameThreadExecutor();
 		
 		// setting request repository
-		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null);
+		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null, true);
 		request1.setState(RequestState.OPEN);
-		Request request2 = new Request("id2", managerTestHelper.getDefaultFederationToken(),  managerTestHelper.getDefaultLocalToken(), null, null);
+		Request request2 = new Request("id2", managerTestHelper.getDefaultFederationToken(),  managerTestHelper.getDefaultLocalToken(), null, null, true);
 		request2.setState(RequestState.OPEN);
 
 		RequestRepository requestRepository = new RequestRepository();
@@ -1654,11 +1654,11 @@ public class TestManagerController {
 		String id1 = "id1";
 		String id2 = "id2";
 		String id3 = "id3";
-		Request request1 = new Request(id1, managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null);
+		Request request1 = new Request(id1, managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null, true);
 		request1.setState(RequestState.OPEN);
-		Request request2 = new Request(id2, managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null);
+		Request request2 = new Request(id2, managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null, true);
 		request2.setState(RequestState.OPEN);
-		Request request3 = new Request(id3, managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null);
+		Request request3 = new Request(id3, managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null, true);
 		request3.setState(RequestState.OPEN);
 
 		RequestRepository requestRepository = new RequestRepository();
@@ -1701,7 +1701,7 @@ public class TestManagerController {
 	@Test
 	public void testInstanceIsBeingUsedByFulfilledRequest(){
 		// setting request repository
-		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null);
+		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null, true);
 		request1.setState(RequestState.FULFILLED);
 		request1.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
 		request1.setMemberId("remote-manager.test.com");
@@ -1719,7 +1719,7 @@ public class TestManagerController {
 	@Test
 	public void testInstanceIsBeingUsedByDeletedRequest(){
 		// setting request repository
-		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null);
+		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), null, null, true);
 		request1.setState(RequestState.DELETED);
 		request1.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
 		request1.setMemberId("remote-manager.test.com");
@@ -1762,7 +1762,7 @@ public class TestManagerController {
 		managerController.updateMembers(listMembers);
 
 		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), new ArrayList<Category>(),
-				new HashMap<String, String>());
+				new HashMap<String, String>(), true);
 		request1.setState(RequestState.OPEN);
 		RequestRepository requestRepository = new RequestRepository();
 		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(), request1);
@@ -1801,7 +1801,7 @@ public class TestManagerController {
 		// setting request repository
 		Request request1 = new Request("id1",
 				managerTestHelper.getDefaultFederationToken(),
-				managerTestHelper.getDefaultLocalToken(), null, null);
+				managerTestHelper.getDefaultLocalToken(), null, null, true);
 		request1.setState(RequestState.OPEN);
 		
 		RequestRepository requestRepository = new RequestRepository();
@@ -1894,7 +1894,7 @@ public class TestManagerController {
 		Token federationToken = new Token(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
 				DefaultDataTestHelper.FED_USER_NAME, new Date(), new HashMap<String, String>());
 		
-		Request request1 = new Request("id1", federationToken, managerTestHelper.getDefaultLocalToken(),  null, null);
+		Request request1 = new Request("id1", federationToken, managerTestHelper.getDefaultLocalToken(),  null, null, true);
 		request1.setState(RequestState.FULFILLED);
 		request1.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
 		
@@ -1933,7 +1933,7 @@ public class TestManagerController {
 		Token federationToken = new Token(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
 				DefaultDataTestHelper.FED_USER_NAME, new Date(), new HashMap<String, String>());
 		
-		Request request1 = new Request("id1", federationToken, managerTestHelper.getDefaultLocalToken(), null, null);
+		Request request1 = new Request("id1", federationToken, managerTestHelper.getDefaultLocalToken(), null, null, true);
 		request1.setState(RequestState.FULFILLED);
 		request1.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
 		

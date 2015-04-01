@@ -105,7 +105,7 @@ public class TestRequestRemoteInstance {
 				new HashMap<String, String>()), new Token("anyvalue",
 				OCCITestHelper.USER_MOCK,
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
-				new HashMap<String, String>()), categories, attributes);
+				new HashMap<String, String>()), categories, attributes, true);
 		request.setInstanceId(INSTANCE_DEFAULT);
 		return request;
 	}
