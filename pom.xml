@@ -205,6 +205,16 @@
 		<artifactId>sshj</artifactId>
 		<version>0.8.1</version>
 	</dependency>
+	<dependency>
+		<groupId>javax.mail</groupId>
+		<artifactId>mail</artifactId>
+		<version>1.4</version>
+	</dependency>
+	<dependency>
+		<groupId>com.google.guava</groupId>
+		<artifactId>guava</artifactId>
+		<version>r09</version>
+	</dependency>
   </dependencies>
   
 </project>

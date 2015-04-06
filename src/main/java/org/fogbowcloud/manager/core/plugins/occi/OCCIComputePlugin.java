@@ -62,7 +62,7 @@ public class OCCIComputePlugin implements ComputePlugin {
 	public static final String COMPUTE_ENDPOINT = "/compute/";
 	protected String oCCIEndpoint;
 	protected String computeOCCIEndpoint;
-	private HttpClient client;	
+	private HttpClient client;
 
 	protected static final Logger LOGGER = Logger.getLogger(OCCIComputePlugin.class);
 

@@ -110,9 +110,9 @@ public class TestIsInstanceBeenUsed {
 		properties.put(ConfigurationConstants.FEDERATION_USER_PASS_KEY, "fogbow");
 		properties.put(ConfigurationConstants.FEDERATION_USER_TENANT_NAME_KEY, "fogbow");
 		properties.put(ConfigurationConstants.XMPP_JID_KEY, "manager.test.com");
-		properties.put(ConfigurationConstants.SSH_PRIVATE_HOST_KEY,
+		properties.put(ConfigurationConstants.TUNNEL_SSH_PRIVATE_HOST_KEY,
 				DefaultDataTestHelper.SERVER_HOST);
-		properties.put(ConfigurationConstants.SSH_HOST_HTTP_PORT_KEY,
+		properties.put(ConfigurationConstants.TUNNEL_SSH_HOST_HTTP_PORT_KEY,
 				String.valueOf(DefaultDataTestHelper.TOKEN_SERVER_HTTP_PORT));
 		properties.put(ConfigurationConstants.MAX_WHOISALIVE_MANAGER_COUNT,
 				ManagerTestHelper.MAX_WHOISALIVE_MANAGER_COUNT);

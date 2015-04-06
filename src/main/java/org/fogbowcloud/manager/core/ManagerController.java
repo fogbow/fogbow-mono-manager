@@ -1,5 +1,8 @@
 package org.fogbowcloud.manager.core;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
@@ -16,6 +19,9 @@ import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
+import net.schmizz.sshj.connection.channel.direct.Session.Command;
+
+import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
@@ -31,6 +37,7 @@ import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
+import org.fogbowcloud.manager.core.plugins.util.SshHelper;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.OCCIException;
@@ -53,11 +60,15 @@ public class ManagerController {
 	
 	private static final String PROP_MAX_WHOISALIVE_MANAGER_COUNT = "max_whoisalive_manager_count";
 	private static final Logger LOGGER = Logger.getLogger(ManagerController.class);
+	
 	public static final long DEFAULT_SCHEDULER_PERIOD = 30000; // 30 seconds
 	private static final long DEFAULT_TOKEN_UPDATE_PERIOD = 300000; // 5 minutes
 	private static final long DEFAULT_INSTANCE_MONITORING_PERIOD = 120000; // 2 minutes
 	private static final long DEFAULT_SERVED_REQUEST_MONITORING_PERIOD = 120000; // 2 minutes
 	private static final long DEFAULT_GARBAGE_COLLECTOR_PERIOD = 240000; // 4 minutes
+	private static final long DEFAULT_INSTANCE_IP_MONITORING_PERIOD = 30000; // 30 seconds
+	private static final int DEFAULT_MAX_IP_MONITORING_TRIES = 5; // 30 seconds
+	private static final String MANAGER_BENCHMARKING_SSH_USER = "fogbow";
 																			
 	private final ManagerTimer requestSchedulerTimer;
 	private final ManagerTimer tokenUpdaterTimer;
@@ -331,8 +342,8 @@ public class ManagerController {
 		}
 		
 		try {
-			String hostAddr = properties.getProperty(ConfigurationConstants.SSH_PRIVATE_HOST_KEY);
-			String httpHostPort = properties.getProperty(ConfigurationConstants.SSH_HOST_HTTP_PORT_KEY);
+			String hostAddr = properties.getProperty(ConfigurationConstants.TUNNEL_SSH_PRIVATE_HOST_KEY);
+			String httpHostPort = properties.getProperty(ConfigurationConstants.TUNNEL_SSH_HOST_HTTP_PORT_KEY);
 			LOGGER.debug("private host: " + hostAddr);
 			LOGGER.debug("private host HTTP port: " + httpHostPort);
 			LOGGER.debug("tokenId: " + tokenId);
@@ -345,7 +356,7 @@ public class ManagerController {
 			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
 				String sshPort = EntityUtils.toString(response.getEntity());
 				String sshPublicHostIP = properties
-						.getProperty(ConfigurationConstants.SSH_PUBLIC_HOST_KEY);
+						.getProperty(ConfigurationConstants.TUNNEL_SSH_PUBLIC_HOST_KEY);
 				return sshPublicHostIP + ":" + sshPort;
 			}
 		} catch (Throwable e) {
@@ -353,7 +364,7 @@ public class ManagerController {
 		}
 		return null;
 	}
-
+	
 	private Instance getRemoteInstance(Request request) {
 		return ManagerPacketHelper.getRemoteInstance(request, packetSender);
 	}
@@ -487,9 +498,10 @@ public class ManagerController {
 		}
 		try {
 			String command = UserdataUtils.createBase64Command(instanceToken, 
-					properties.getProperty(ConfigurationConstants.SSH_PRIVATE_HOST_KEY),
-					properties.getProperty(ConfigurationConstants.SSH_HOST_PORT_KEY),
-					properties.getProperty(ConfigurationConstants.SSH_HOST_HTTP_PORT_KEY));
+					properties.getProperty(ConfigurationConstants.TUNNEL_SSH_PRIVATE_HOST_KEY),
+					properties.getProperty(ConfigurationConstants.TUNNEL_SSH_HOST_PORT_KEY),
+					properties.getProperty(ConfigurationConstants.TUNNEL_SSH_HOST_HTTP_PORT_KEY),
+					getManagerSSHPublicKeyFilePath());
 			xOCCIAtt.put(RequestAttribute.USER_DATA_ATT.getValue(), command);
 			categories.add(new Category(RequestConstants.USER_DATA_TERM,
 					RequestConstants.SCHEME, RequestConstants.MIXIN_CLASS));
@@ -511,15 +523,40 @@ public class ManagerController {
 		}
 		
 		try {
+			boolean isRemoteDonation = !properties.getProperty("xmpp_jid").equals(memberId);
+			Map<String, String> xOCCIAttCopy = new HashMap<String, String>(xOCCIAtt);
+			if (isRemoteDonation) {
+				populateWithManagerPublicKey(xOCCIAttCopy, categoriesWithoutImage);
+			}
 			String instanceId = computePlugin.requestInstance(federationUserToken, categoriesWithoutImage,
-					xOCCIAtt, localImageId);
+					xOCCIAttCopy, localImageId);
 			
-			if (!properties.getProperty("xmpp_jid").equals(memberId)) {
+			if (isRemoteDonation) {
 				instancesForRemoteMembers.put(instanceId, new ServedRequest(instanceToken,
 						memberId, categories, xOCCIAtt));
 				if (!servedRequestMonitoringTimer.isScheduled()) {
 					triggerServedRequestMonitoring();
 				}
+				
+				if (getManagerSSHPublicKey() != null) {
+					String sshPublicAddress = waitForSSHPublicAddress(instanceToken);
+					if (sshPublicAddress != null) {
+						String[] sshAddressAndPort = sshPublicAddress.split(":");
+						SshHelper sshHelper = new SshHelper();
+						try {
+							sshHelper.connect(sshAddressAndPort[0], Integer.parseInt(sshAddressAndPort[1]), 
+									MANAGER_BENCHMARKING_SSH_USER, getManagerSSHPrivateKeyFilePath());
+							Command sshOutput = sshHelper.doSshExecution("ls ~/");
+							if (sshOutput.getExitStatus() == 0) {
+								String cmdOutput = IOUtils.toString(sshOutput.getInputStream());
+								System.out.println(cmdOutput);
+							}
+						} catch (Exception e) {
+							LOGGER.debug("Could not connect to instance to run benchmarking", e);
+						}
+					}
+				}
+				
 			}						
 			return instanceId;
 		} catch (OCCIException e) {
@@ -528,6 +565,90 @@ public class ManagerController {
 			}
 			throw e;
 		}
+	}
+
+	protected String waitForSSHPublicAddress(String instanceToken) {
+		int remainingTries = DEFAULT_MAX_IP_MONITORING_TRIES;
+		while (remainingTries > 0) {
+			String sshPublicAddress = getSSHPublicAddress(instanceToken);
+			remainingTries--;
+			if (sshPublicAddress != null) {
+				return sshPublicAddress;
+			}
+			try {
+				Thread.sleep(DEFAULT_INSTANCE_IP_MONITORING_PERIOD);
+			} catch (InterruptedException e) {
+				//do nothing
+			}
+		}
+		return null;
+	}
+	
+	private String getManagerSSHPublicKey() {
+		String publicSSHKeyFilePath = properties.getProperty(ConfigurationConstants.SSH_PUBLIC_KEY_PATH);
+		if (publicSSHKeyFilePath == null || publicSSHKeyFilePath.isEmpty()) {
+			return null;
+		}
+		File managerPublicKeyFile = new File(publicSSHKeyFilePath);
+		if (!managerPublicKeyFile.exists()) {
+			return null;
+		}
+		try {
+			return IOUtils.toString(new FileInputStream(managerPublicKeyFile));
+		} catch (IOException e) {
+			LOGGER.warn("Could not read manager public key file", e);
+			return null;
+		}
+	}
+	
+	private String getManagerSSHPublicKeyFilePath() {
+		String publicKeyFilePath = properties.getProperty(ConfigurationConstants.SSH_PUBLIC_KEY_PATH);
+		if (publicKeyFilePath == null || publicKeyFilePath.isEmpty()) {
+			return null;
+		}
+		return publicKeyFilePath;
+	}
+	
+	private String getManagerSSHPrivateKey() {
+		String privateSSHKeyFilePath = properties.getProperty(ConfigurationConstants.SSH_PRIVATE_KEY_PATH);
+		if (privateSSHKeyFilePath == null || privateSSHKeyFilePath.isEmpty()) {
+			return null;
+		}
+		File managerPrivateKeyFile = new File(privateSSHKeyFilePath);
+		if (!managerPrivateKeyFile.exists()) {
+			return null;
+		}
+		try {
+			return IOUtils.toString(new FileInputStream(managerPrivateKeyFile));
+		} catch (IOException e) {
+			LOGGER.warn("Could not read manager private key file", e);
+			return null;
+		}
+	}
+	
+	private String getManagerSSHPrivateKeyFilePath() {
+		String publicKeyFilePath = properties.getProperty(ConfigurationConstants.SSH_PRIVATE_KEY_PATH);
+		if (publicKeyFilePath == null || publicKeyFilePath.isEmpty()) {
+			return null;
+		}
+		return publicKeyFilePath;
+	}
+
+	private void populateWithManagerPublicKey(Map<String, String> xOCCIAtt, 
+			List<Category> categories) {
+		String publicKey = getManagerSSHPublicKey();
+		if (publicKey == null) {
+			return;
+		}
+		xOCCIAtt.put(RequestAttribute.DATA_PUBLIC_KEY.getValue(), publicKey);
+		for (Category category : categories) {
+			if (category.getTerm().equals(RequestConstants.PUBLIC_KEY_TERM)) {
+				return;
+			}
+		}
+		categories.add(new Category(RequestConstants.PUBLIC_KEY_TERM, 
+				RequestConstants.CREDENTIALS_RESOURCE_SCHEME, 
+				RequestConstants.MIXIN_CLASS));
 	}
 
 	private void triggerServedRequestMonitoring() {
@@ -747,12 +868,16 @@ public class ManagerController {
 		}
 		final String memberAddress = member.getResourcesInfo().getId();
 		request.setMemberId(memberAddress);
+		
+		Map<String, String> xOCCIAttCopy = new HashMap<String, String>(request.getxOCCIAtt());
+		List<Category> categoriesCopy = new LinkedList<Category>(request.getCategories());
+		populateWithManagerPublicKey(xOCCIAttCopy, categoriesCopy);
 
 		LOGGER.info("Submiting request " + request + " to member " + memberAddress);
 		
 		asynchronousRequests.put(request.getId(),
 				new ForwardedRequest(request, dateUtils.currentTimeMillis()));
-		ManagerPacketHelper.asynchronousRemoteRequest(request, memberAddress,
+		ManagerPacketHelper.asynchronousRemoteRequest(categoriesCopy, xOCCIAttCopy, memberAddress,
 				packetSender, new AsynchronousRequestCallback() {
 					
 					@Override
@@ -795,9 +920,10 @@ public class ManagerController {
 		try {			
 			try {
 				String command = UserdataUtils.createBase64Command(request.getId(),
-						properties.getProperty(ConfigurationConstants.SSH_PRIVATE_HOST_KEY),
-						properties.getProperty(ConfigurationConstants.SSH_HOST_PORT_KEY),
-						properties.getProperty(ConfigurationConstants.SSH_HOST_HTTP_PORT_KEY));
+						properties.getProperty(ConfigurationConstants.TUNNEL_SSH_PRIVATE_HOST_KEY),
+						properties.getProperty(ConfigurationConstants.TUNNEL_SSH_HOST_PORT_KEY),
+						properties.getProperty(ConfigurationConstants.TUNNEL_SSH_HOST_HTTP_PORT_KEY),
+						getManagerSSHPublicKeyFilePath());
 				request.putAttValue(RequestAttribute.USER_DATA_ATT.getValue(), command);
 				request.addCategory(new Category(RequestConstants.USER_DATA_TERM,
 						RequestConstants.SCHEME, RequestConstants.MIXIN_CLASS));
@@ -820,6 +946,25 @@ public class ManagerController {
 			
 			instanceId = computePlugin.requestInstance(request.getLocalToken(),
 					categories, request.getxOCCIAtt(), localImageId);
+			
+			if (getManagerSSHPublicKey() != null) {
+				String sshPublicAddress = waitForSSHPublicAddress(request.getId());
+				if (sshPublicAddress != null) {
+					String[] sshAddressAndPort = sshPublicAddress.split(":");
+					SshHelper sshHelper = new SshHelper();
+					try {
+						sshHelper.connect(sshAddressAndPort[0], Integer.parseInt(sshAddressAndPort[1]), 
+								MANAGER_BENCHMARKING_SSH_USER, getManagerSSHPrivateKeyFilePath());
+						Command sshOutput = sshHelper.doSshExecution("ls ~/");
+						if (sshOutput.getExitStatus() == 0) {
+							String cmdOutput = IOUtils.toString(sshOutput.getInputStream());
+							System.out.println(cmdOutput);
+						}
+					} catch (Exception e) {
+						LOGGER.debug("Could not connect to instance to run benchmarking", e);
+					}
+				}
+			}
 		} catch (OCCIException e) {
 			int statusCode = e.getStatus().getCode();
 			if (statusCode == HttpStatus.SC_INSUFFICIENT_SPACE_ON_RESOURCE) {

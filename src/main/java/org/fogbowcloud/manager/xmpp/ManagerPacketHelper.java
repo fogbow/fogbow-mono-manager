@@ -182,20 +182,20 @@ public class ManagerPacketHelper {
 		return response.getElement().element("query").element("instance").elementText("id");
 	}
 	
-	public static void asynchronousRemoteRequest(Request request, String memberAddress,
+	public static void asynchronousRemoteRequest(List<Category> categories, Map<String, String> xOCCIAttr, String memberAddress,
 			AsyncPacketSender packetSender, final AsynchronousRequestCallback callback) {
 		IQ iq = new IQ();
 		iq.setTo(memberAddress);
 		iq.setType(Type.set);
 		Element queryEl = iq.getElement().addElement("query",
 				ManagerXmppComponent.REQUEST_NAMESPACE);
-		for (Category category : request.getCategories()) {
+		for (Category category : categories) {
 			Element categoryEl = queryEl.addElement("category");
 			categoryEl.addElement("class").setText(category.getCatClass());
 			categoryEl.addElement("term").setText(category.getTerm());
 			categoryEl.addElement("scheme").setText(category.getScheme());
 		}
-		for (Entry<String, String> xOCCIEntry : request.getxOCCIAtt().entrySet()) {
+		for (Entry<String, String> xOCCIEntry : xOCCIAttr.entrySet()) {
 			Element attributeEl = queryEl.addElement("attribute");
 			attributeEl.addAttribute("var", xOCCIEntry.getKey());
 			attributeEl.addElement("value").setText(xOCCIEntry.getValue());

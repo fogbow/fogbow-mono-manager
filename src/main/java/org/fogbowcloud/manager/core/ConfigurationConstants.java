@@ -37,10 +37,10 @@ public class ConfigurationConstants {
 	public static final String GARBAGE_COLLECTOR_PERIOD_KEY = "garbage_collector_period";
 	
 	//ssh properties TODO change these properties names to TOKEN_HOST_...
-	public static final String SSH_PRIVATE_HOST_KEY = "ssh_tunnel_private_host";
-	public static final String SSH_PUBLIC_HOST_KEY = "ssh_tunnel_public_host";
-	public static final String SSH_HOST_PORT_KEY = "ssh_tunnel_host_port";
-	public static final String SSH_HOST_HTTP_PORT_KEY = "ssh_tunnel_host_http_port";
+	public static final String TUNNEL_SSH_PRIVATE_HOST_KEY = "ssh_tunnel_private_host";
+	public static final String TUNNEL_SSH_PUBLIC_HOST_KEY = "ssh_tunnel_public_host";
+	public static final String TUNNEL_SSH_HOST_PORT_KEY = "ssh_tunnel_host_port";
+	public static final String TUNNEL_SSH_HOST_HTTP_PORT_KEY = "ssh_tunnel_host_http_port";
 
 	//voms
 	public static final String VOMS_PATH_VOMSES = "path_vomses";
@@ -53,5 +53,8 @@ public class ConfigurationConstants {
 	//pagination
 	public static final String MAX_WHOISALIVE_MANAGER_COUNT = "max_whoisalive_manager_count";
 	public static final String IMAGE_STORAGE_PLUGIN_CLASS = "image_storage_class";
+	
+	public static final String SSH_PUBLIC_KEY_PATH = "ssh_public_key";
+	public static final String SSH_PRIVATE_KEY_PATH = "ssh_private_key";
 	
 }

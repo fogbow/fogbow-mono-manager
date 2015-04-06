@@ -1,5 +1,8 @@
 package org.fogbowcloud.manager.core;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
@@ -9,6 +12,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.io.IOUtils;
 import org.dom4j.Element;
 import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.core.model.FederationMember;
@@ -38,12 +42,13 @@ import org.jamppa.component.PacketCallback;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.xmpp.packet.IQ;
-import org.xmpp.packet.Packet;
 import org.xmpp.packet.IQ.Type;
+import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError.Condition;
 
 public class TestManagerController {
@@ -1851,5 +1856,117 @@ public class TestManagerController {
 		Assert.assertEquals(1, managerController.getInstancesForRemoteMember().size());
 		Assert.assertEquals("manager1-test.com", managerController.getInstancesForRemoteMember()
 				.get(DefaultDataTestHelper.INSTANCE_ID).getMemberId());
+	}
+	
+	@Test
+	@SuppressWarnings("unchecked")
+	public void testSSHKeyReplacementWhenOriginalRequestHasPublicKey() throws FileNotFoundException, IOException {
+		Map<String, String> extraProperties = new HashMap<String, String>();
+		extraProperties.put(ConfigurationConstants.SSH_PUBLIC_KEY_PATH, 
+				DefaultDataTestHelper.LOCAL_MANAGER_SSH_PUBLIC_KEY_PATH);
+		ManagerController localManagerController = 
+				managerTestHelper.createDefaultManagerController(extraProperties);
+		ManagerController managerControllerSpy = Mockito.spy(localManagerController);
+		String instanceToken = "instanceToken1";
+		Mockito.doReturn("127.0.0.1:10000").when(managerControllerSpy).waitForSSHPublicAddress(Mockito.eq(instanceToken));
+		
+		Map<String,String> newXOCCIAttr = new HashMap<String,String>(this.xOCCIAtt);
+		ArrayList<Category> categories = new ArrayList<Category>();
+		final Category publicKeyCategory = new Category(RequestConstants.PUBLIC_KEY_TERM, 
+				RequestConstants.CREDENTIALS_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS);
+		categories.add(publicKeyCategory);
+		newXOCCIAttr.put(RequestAttribute.DATA_PUBLIC_KEY.getValue(), "public-key");
+		
+		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
+		managerControllerSpy.setComputePlugin(computePlugin);
+		
+		managerControllerSpy.createInstanceWithFederationUser(DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL, 
+				categories, newXOCCIAttr, instanceToken);
+		
+		final String localManagerPublicKeyData = IOUtils.toString(new FileInputStream(
+				new File(DefaultDataTestHelper.LOCAL_MANAGER_SSH_PUBLIC_KEY_PATH)));
+		
+		Mockito.verify(computePlugin).requestInstance(Mockito.any(Token.class),
+				Mockito.argThat(new ArgumentMatcher<List<Category>>() {
+
+					@Override
+					public boolean matches(Object argument) {
+						List<Category> categories = (List<Category>) argument;
+						return categories.contains(publicKeyCategory);
+					}
+				}), Mockito.argThat(new ArgumentMatcher<Map<String, String>>() {
+
+					@Override
+					public boolean matches(Object argument) {
+						Map<String, String> xOCCIAttr = (Map<String, String>) argument;
+						String publicKeyValue = xOCCIAttr
+								.get(RequestAttribute.DATA_PUBLIC_KEY
+										.getValue());
+						return publicKeyValue != null
+								&& publicKeyValue
+										.equals(localManagerPublicKeyData);
+					}
+				}), Mockito.anyString());
+	}
+	
+	@Test
+	@SuppressWarnings("unchecked")
+	public void testSSHKeyReplacementWhenOriginalRequestHasNoPublicKey() throws FileNotFoundException, IOException {
+		Map<String, String> extraProperties = new HashMap<String, String>();
+		extraProperties.put(ConfigurationConstants.SSH_PUBLIC_KEY_PATH, 
+				DefaultDataTestHelper.LOCAL_MANAGER_SSH_PUBLIC_KEY_PATH);
+		ManagerController localManagerController = 
+				managerTestHelper.createDefaultManagerController(extraProperties);
+		ManagerController managerControllerSpy = Mockito.spy(localManagerController);
+		String instanceToken = "instanceToken1";
+		Mockito.doReturn("127.0.0.1:10000").when(managerControllerSpy).waitForSSHPublicAddress(Mockito.eq(instanceToken));
+		
+		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
+		managerControllerSpy.setComputePlugin(computePlugin);
+		
+		managerControllerSpy.createInstanceWithFederationUser(DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL, 
+				new ArrayList<Category>(), xOCCIAtt, instanceToken);
+		
+		final String localManagerPublicKeyData = IOUtils.toString(new FileInputStream(
+				new File(DefaultDataTestHelper.LOCAL_MANAGER_SSH_PUBLIC_KEY_PATH)));
+		
+		final Category publicKeyCategory = new Category(RequestConstants.PUBLIC_KEY_TERM, 
+				RequestConstants.CREDENTIALS_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS);
+		
+		Mockito.verify(computePlugin).requestInstance(Mockito.any(Token.class),
+				Mockito.argThat(new ArgumentMatcher<List<Category>>() {
+
+					@Override
+					public boolean matches(Object argument) {
+						List<Category> categories = (List<Category>) argument;
+						return categories.contains(publicKeyCategory);
+					}
+				}), Mockito.argThat(new ArgumentMatcher<Map<String, String>>() {
+
+					@Override
+					public boolean matches(Object argument) {
+						Map<String, String> xOCCIAttr = (Map<String, String>) argument;
+						String publicKeyValue = xOCCIAttr
+								.get(RequestAttribute.DATA_PUBLIC_KEY
+										.getValue());
+						return publicKeyValue != null
+								&& publicKeyValue
+										.equals(localManagerPublicKeyData);
+					}
+				}), Mockito.anyString());
+	}
+	
+	@Test
+	public void testSSHKeyReplacementWhenManagerKeyIsNotDefined() {
+		String instanceToken = "instance-token";
+		ManagerController managerControllerSpy = Mockito.spy(managerController);
+		
+		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
+		managerControllerSpy.setComputePlugin(computePlugin);
+		
+		managerControllerSpy.createInstanceWithFederationUser(DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL, 
+				new ArrayList<Category>(), xOCCIAtt, instanceToken);
+		
+		Mockito.verify(managerControllerSpy, Mockito.never()).waitForSSHPublicAddress(Mockito.eq(instanceToken));
 	}
 }
