@@ -8,7 +8,7 @@ import org.fogbowcloud.manager.occi.request.Request;
 
 public interface AccountingPlugin {
 	
-	public void update(List<Request> requests, List<Request> servedRequest);
+	public void update(List<Request> requestsWithInstance);
 
 	public Map<String, ResourceUsage> getMembersUsage();
 	

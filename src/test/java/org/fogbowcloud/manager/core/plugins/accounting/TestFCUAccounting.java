@@ -50,7 +50,7 @@ public class TestFCUAccounting {
 	@Test
 	public void testEmptyRequests() {
 		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin);
-		accountingPlugin.update(new ArrayList<Request>(), new ArrayList<Request>());
+		accountingPlugin.update(new ArrayList<Request>());
 
 		Assert.assertNotNull(accountingPlugin.getMembersUsage());
 		Assert.assertEquals(0, accountingPlugin.getMembersUsage().size());
@@ -82,7 +82,7 @@ public class TestFCUAccounting {
 		now += twoMinutesInMili;
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 
-		accountingPlugin.update(requests, new ArrayList<Request>());
+		accountingPlugin.update(requests);
 
 		// checking usage
 		double expectedConsumption = benchmarkingPlugin.getPower("instanceId@remoteMemberId") * 2;
@@ -120,7 +120,7 @@ public class TestFCUAccounting {
 		now += twoMinutesInMili;
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 
-		accountingPlugin.update(requests, new ArrayList<Request>());
+		accountingPlugin.update(requests);
 
 		// checking usage
 		double expectedConsumption = benchmarkingPlugin.getPower("instanceId@localMemberId") * 2;
@@ -167,7 +167,7 @@ public class TestFCUAccounting {
 		now += twoMinutesInMili;
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 
-		accountingPlugin.update(requests, new ArrayList<Request>());
+		accountingPlugin.update(requests);
 
 		// checking usage
 		double expectedConsumptionForUser1 = benchmarkingPlugin.getPower("instanceId1@localMemberId") * 2;
@@ -206,7 +206,7 @@ public class TestFCUAccounting {
 		now += twoMinutesInMili;
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 
-		accountingPlugin.update(new ArrayList<Request>(), servedRequests);
+		accountingPlugin.update(servedRequests);
 
 		// checking usage
 		double expectedDonation = benchmarkingPlugin.getPower("instanceId@localMemberId") * 2;
@@ -236,8 +236,8 @@ public class TestFCUAccounting {
 		request1.setProvidingMemberId("remoteMemberId");
 		request1.setInstanceId("instanceId1");
 		
-		List<Request> requests = new ArrayList<Request>();
-		requests.add(request1);
+		List<Request> requestsWithInstance = new ArrayList<Request>();
+		requestsWithInstance.add(request1);
 
 		Request servedRequest = new Request("instanceToken", new Token("accessId", "userId1", null,
 				new HashMap<String, String>()), null, null, null, false, "remoteMemberId", dateUtils);
@@ -245,15 +245,14 @@ public class TestFCUAccounting {
 		servedRequest.setState(RequestState.FULFILLED);
 		servedRequest.setProvidingMemberId("localMemberId");
 
-		List<Request> servedRequests = new ArrayList<Request>();
-		servedRequests.add(servedRequest);
+		requestsWithInstance.add(servedRequest);
 
 		// updating dateUtils
 		long twoMinutesInMilli = 1000 * 60 * 2;
 		now += twoMinutesInMilli;
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 
-		accountingPlugin.update(requests, servedRequests);
+		accountingPlugin.update(requestsWithInstance);
 
 		// checking usage
 		double expectedConsumption = benchmarkingPlugin.getPower("instanceId1@remoteMemberId") * 2;
@@ -285,8 +284,8 @@ public class TestFCUAccounting {
 		request1.setInstanceId("instanceId1");
 		request1.setProvidingMemberId("localMemberId");
 
-		List<Request> requests = new ArrayList<Request>();
-		requests.add(request1);
+		List<Request> requestsWithInstance = new ArrayList<Request>();
+		requestsWithInstance.add(request1);
 
 		Request servedRequest = new Request("instanceToken", new Token("accessId", "userId1", null,
 				new HashMap<String, String>()), null, null, null, false, "remoteMemberId", dateUtils);
@@ -294,15 +293,14 @@ public class TestFCUAccounting {
 		servedRequest.setState(RequestState.FULFILLED);
 		servedRequest.setProvidingMemberId("localMemberId");
 				
-		List<Request> servedRequests = new ArrayList<Request>();
-		servedRequests.add(servedRequest);
+		requestsWithInstance.add(servedRequest);
 
 		// updating dateUtils
 		long twoMinutesInMilli = 1000 * 60 * 2;
 		now += twoMinutesInMilli;
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 
-		accountingPlugin.update(requests, servedRequests);
+		accountingPlugin.update(requestsWithInstance);
 
 		// checking usage
 		double expectedConsumption = benchmarkingPlugin.getPower("instanceId1@localMemberId") * 2;
@@ -336,8 +334,8 @@ public class TestFCUAccounting {
 		request1.setProvidingMemberId("remoteMemberId1");
 		request1.setInstanceId("instanceId1");
 
-		List<Request> requests = new ArrayList<Request>();
-		requests.add(request1);
+		List<Request> requestsWithInstance = new ArrayList<Request>();
+		requestsWithInstance.add(request1);
 
 		Request servedRequest = new Request("instanceToken", new Token("accessId", "userId1", null,
 				new HashMap<String, String>()), null, null, null, false, "remoteMemberId2", dateUtils);
@@ -345,15 +343,14 @@ public class TestFCUAccounting {
 		servedRequest.setState(RequestState.FULFILLED);
 		servedRequest.setProvidingMemberId("localMemberId");
 		
-		List<Request> servedRequests = new ArrayList<Request>();
-		servedRequests.add(servedRequest);
+		requestsWithInstance.add(servedRequest);
 
 		// updating dateUtils
 		long twoMinutesInMilli = 1000 * 60 * 2;
 		now += twoMinutesInMilli;
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 
-		accountingPlugin.update(requests, servedRequests);
+		accountingPlugin.update(requestsWithInstance);
 
 		// checking usage
 		double expectedConsumptionFromMember1 = benchmarkingPlugin.getPower("instanceId1@remoteMemberId1") * 2;
@@ -390,8 +387,8 @@ public class TestFCUAccounting {
 		request1.setInstanceId("instanceId1");
 		request1.setProvidingMemberId("localMemberId");
 
-		List<Request> requests = new ArrayList<Request>();
-		requests.add(request1);
+		List<Request> requestsWithInstance = new ArrayList<Request>();
+		requestsWithInstance.add(request1);
 
 		Request servedRequest = new Request("instanceToken", new Token("accessId", "userId1", null,
 				new HashMap<String, String>()), null, null, null, false, "remoteMemberId", dateUtils);
@@ -399,15 +396,14 @@ public class TestFCUAccounting {
 		servedRequest.setState(RequestState.FULFILLED);
 		servedRequest.setProvidingMemberId("localMemberId");
 
-		List<Request> servedRequests = new ArrayList<Request>();
-		servedRequests.add(servedRequest);
+		requestsWithInstance.add(servedRequest);
 
 		// updating dateUtils
 		long twoMinutesInMilli = 1000 * 60 * 2;
 		now += twoMinutesInMilli;
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 
-		accountingPlugin.update(requests, servedRequests);
+		accountingPlugin.update(requestsWithInstance);
 
 		// checking usage
 		double expectedConsumptionForUserId = benchmarkingPlugin.getPower("instanceId1@localMemberId") * 2;
@@ -444,8 +440,8 @@ public class TestFCUAccounting {
 		request1.setProvidingMemberId("remoteMemberId");
 		request1.setInstanceId("instanceId1");
 
-		List<Request> requests = new ArrayList<Request>();
-		requests.add(request1);
+		List<Request> requestsWithInstance = new ArrayList<Request>();
+		requestsWithInstance.add(request1);
 		
 		Request servedRequest = new Request("instanceToken", new Token("accessId", "userId1", null,
 				new HashMap<String, String>()), null, null, null, false, "remoteMemberId", dateUtils);
@@ -453,21 +449,20 @@ public class TestFCUAccounting {
 		servedRequest.setState(RequestState.FULFILLED);
 		servedRequest.setProvidingMemberId("localMemberId");
 
-		List<Request> servedRequests = new ArrayList<Request>();
-		servedRequests.add(servedRequest);
+		requestsWithInstance.add(servedRequest);
 
 		// updating dateUtils
 		long twoMinutesInMilli = 1000 * 60 * 2;
 		now += twoMinutesInMilli;
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 
-		accountingPlugin.update(requests, servedRequests);
+		accountingPlugin.update(requestsWithInstance);
 
 		// updating dateUtils
 		now += 1000 * 60 * 5; // adding grain Time (5 min)
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 
-		accountingPlugin.update(requests, servedRequests);
+		accountingPlugin.update(requestsWithInstance);
 
 		// checking usage is considering 7 minutes
 		double expectedConsumption = benchmarkingPlugin.getPower("instanceId1@remoteMemberId") * 7;
@@ -507,9 +502,9 @@ public class TestFCUAccounting {
 		request2.setInstanceId("instanceId3");
 		request2.setProvidingMemberId("localMemberId");
 
-		List<Request> requests = new ArrayList<Request>();
-		requests.add(request1);
-		requests.add(request2);
+		List<Request> requestsWithInstance = new ArrayList<Request>();
+		requestsWithInstance.add(request1);
+		requestsWithInstance.add(request2);
 
 		Request servedRequest = new Request("instanceToken", new Token("accessId", "userId1", null,
 				new HashMap<String, String>()), null, null, null, false, "remoteMemberId", dateUtils);
@@ -517,21 +512,20 @@ public class TestFCUAccounting {
 		servedRequest.setState(RequestState.FULFILLED);
 		servedRequest.setProvidingMemberId("localMemberId");
 		
-		List<Request> servedRequests = new ArrayList<Request>();
-		servedRequests.add(servedRequest);
+		requestsWithInstance.add(servedRequest);
 
 		// updating dateUtils
 		long twoMinutesInMilli = 1000 * 60 * 2;
 		now += twoMinutesInMilli;
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 
-		accountingPlugin.update(requests, servedRequests);
+		accountingPlugin.update(requestsWithInstance);
 
 		// updating dateUtils
 		now += 1000 * 60 * 5; // adding grain Time (5 min)
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 
-		accountingPlugin.update(requests, servedRequests);
+		accountingPlugin.update(requestsWithInstance);
 
 		// checking usage is considering 7 minutes
 		double expectedConsumptionForMember = benchmarkingPlugin.getPower("instanceId1@remoteMemberId") * 7;
@@ -568,8 +562,8 @@ public class TestFCUAccounting {
 		request1.setInstanceId("instanceId1");
 		request1.setProvidingMemberId("localMemberId");
 
-		List<Request> requests = new ArrayList<Request>();
-		requests.add(request1);
+		List<Request> requestsWithInstance = new ArrayList<Request>();
+		requestsWithInstance.add(request1);
 
 		Request servedRequest = new Request("instanceToken", new Token("accessId", "userId1", null,
 				new HashMap<String, String>()), null, null, null, false, "remoteMemberId", dateUtils);
@@ -577,21 +571,20 @@ public class TestFCUAccounting {
 		servedRequest.setState(RequestState.FULFILLED);
 		servedRequest.setProvidingMemberId("localMemberId");
 		
-		List<Request> servedRequests = new ArrayList<Request>();
-		servedRequests.add(servedRequest);
+		requestsWithInstance.add(servedRequest);
 
 		// updating dateUtils
 		long twoMinutesInMilli = 1000 * 60 * 2;
 		now += twoMinutesInMilli;
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 
-		accountingPlugin.update(requests, servedRequests);
+		accountingPlugin.update(requestsWithInstance);
 
 		// updating dateUtils
 		now += 1000 * 60 * 5; // adding grain Time (5 min)
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 
-		accountingPlugin.update(requests, servedRequests);
+		accountingPlugin.update(requestsWithInstance);
 
 		// checking usage is considering 7 minutes
 		double expectedConsumption = benchmarkingPlugin.getPower("instanceId1@localMemberId") * 7;

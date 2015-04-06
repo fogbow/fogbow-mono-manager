@@ -156,17 +156,11 @@ public class ManagerController {
 	
 	private void updateAccounting() {
 		LOGGER.info("Updating accounting.");
-		List<Request> requestsWithInstances = new ArrayList<Request>();
+		List<Request> requestsWithInstances = new ArrayList<Request>(requests.getLocalRequestIn(RequestState.FULFILLED, RequestState.DELETED));
+		requestsWithInstances.addAll(requests.getAllRemoteRequests());
 		
-		for (Request request : requests.getLocalRequestIn(RequestState.FULFILLED, RequestState.DELETED)) {
-			if (request.getInstanceId() != null) {
-				requestsWithInstances.add(request);
-			}
-		}
-		List<Request> servedRequests = requests.getAllRemoteRequests();
-		
-		LOGGER.debug("requests=" + requestsWithInstances + ", remoteRequests=" + servedRequests);		
-		accountingPlugin.update(requestsWithInstances, servedRequests);
+		LOGGER.debug("requestsWithInstance=" + requestsWithInstances);		
+		accountingPlugin.update(requestsWithInstances);
 	}
 
 	public void setAuthorizationPlugin(AuthorizationPlugin authorizationPlugin) {

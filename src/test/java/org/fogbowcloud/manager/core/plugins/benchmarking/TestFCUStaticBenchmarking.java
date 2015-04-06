@@ -24,7 +24,7 @@ public class TestFCUStaticBenchmarking {
 	public void setUp(){
 		instanceAttributes = new HashMap<String, String>();
 		instanceAttributes.put("occi.compute.memory", "2");
-		instanceAttributes.put("occi.compute.cores", "2");		
+		instanceAttributes.put("occi.compute.cores", "2");
 		benchmarking = new FCUStaticBenchmarkingPlugin(null);
 	}
 
@@ -135,7 +135,6 @@ public class TestFCUStaticBenchmarking {
 				ACCEPTABLE_ERROR);
 		Assert.assertEquals(BenchmarkingPlugin.UNDEFINED_POWER, benchmarking.getPower("instanceId2@memberId"),
 				ACCEPTABLE_ERROR);
-
 	}
 
 }

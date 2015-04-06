@@ -37,9 +37,8 @@ public class FCUAccountingPlugin implements AccountingPlugin {
 	}
 
 	@Override
-	public void update(List<Request> requests, List<Request> servedRequests) {
-		LOGGER.debug("Updating account with requests=" + requests + ", and servedRequests="
-				+ servedRequests);
+	public void update(List<Request> requestsWithInstance) {
+		LOGGER.debug("Updating account with requests=" + requestsWithInstance);
 		long now = dateUtils.currentTimeMillis();
 		double updatingInterval = ((double) TimeUnit.MILLISECONDS.toSeconds(now - lastUpdate) / 60);
 		LOGGER.debug("updating interval=" + updatingInterval);
@@ -47,26 +46,26 @@ public class FCUAccountingPlugin implements AccountingPlugin {
 		Map<String, ResourceUsage> usageOfMembers = new HashMap<String, ResourceUsage>();
 		Map<String, Double> usageOfUsers = new HashMap<String, Double>();
 
-		// donating
-		for (Request servedRequest : servedRequests) {
-			double donationInterval = ((double) TimeUnit.MILLISECONDS.toSeconds(now
-					- servedRequest.getFulfilledTime()) / 60);
-
-			updateUsage(servedRequest.getGlobalInstanceId(),
-					Math.min(donationInterval, updatingInterval), true,
-					servedRequest.getRequestingMemberId(), null, usageOfMembers, usageOfUsers);
+		for (Request request : requestsWithInstance) {
+			//consumption
+			if (request.isLocal()) { 
+				double consumptionInterval = ((double) TimeUnit.MILLISECONDS.toSeconds(now
+						- request.getFulfilledTime()) / 60);
+				
+				updateUsage(request.getGlobalInstanceId(),
+						Math.min(consumptionInterval, updatingInterval), false, request.getProvidingMemberId(),
+						request.getFederationToken().getUser(), usageOfMembers, usageOfUsers);
+				
+			} else { //donation
+				double donationInterval = ((double) TimeUnit.MILLISECONDS.toSeconds(now
+						- request.getFulfilledTime()) / 60);
+				
+				updateUsage(request.getGlobalInstanceId(),
+						Math.min(donationInterval, updatingInterval), true,
+						request.getRequestingMemberId(), null, usageOfMembers, usageOfUsers);
+				
+			}			
 		}
-
-		// consumption
-		for (Request request : requests) {
-			double consumptionInterval = ((double) TimeUnit.MILLISECONDS.toSeconds(now
-					- request.getFulfilledTime()) / 60);
-
-			updateUsage(request.getGlobalInstanceId(),
-					Math.min(consumptionInterval, updatingInterval), false, request.getProvidingMemberId(),
-					request.getFederationToken().getUser(), usageOfMembers, usageOfUsers);
-		}
-
 		LOGGER.debug("current usage of members=" + usageOfMembers);
 		LOGGER.debug("current usage of users=" + usageOfUsers);
 
