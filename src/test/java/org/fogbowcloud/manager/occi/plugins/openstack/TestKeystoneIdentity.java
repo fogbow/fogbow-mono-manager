@@ -154,6 +154,18 @@ public class TestKeystoneIdentity {
 		}
 	}
 	
+	@Test(expected=JSONException.class)
+	public void testGetTokenFederationUserShallNotReturnEncodedJSON() throws JSONException {
+		Properties properties = new Properties();
+		properties.put(ConfigurationConstants.IDENTITY_URL, KEYSTONE_URL);
+		properties.put(ConfigurationConstants.FEDERATION_USER_NAME_KEY, PluginHelper.USERNAME);
+		properties.put(ConfigurationConstants.FEDERATION_USER_PASS_KEY, PluginHelper.USER_PASS);
+		this.keystoneIdentity = new KeystoneIdentityPlugin(properties);
+		
+		Token federationUserToken = this.keystoneIdentity.createFederationUserToken();
+		new JSONObject(federationUserToken.getAccessId());
+	}
+	
 	@Test
 	public void testGetTokenWithNoJson() throws JSONException {
 		Token token = this.keystoneIdentity.getToken(PluginHelper.ACCESS_ID);
