@@ -640,7 +640,19 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 			String name = template.xpath("NAME");
 			String memory = template.xpath("TEMPLATE/MEMORY");
 			String vcpu = template.xpath("TEMPLATE/CPU");
-						
+			
+			boolean containsFlavor = false;
+			List<Flavor> flavors = new ArrayList<Flavor>(this.flavors);
+			for (Flavor flavor : flavors) {
+				if (name.equals(flavor.getName())) {
+					containsFlavor = true;
+					break;
+				}
+			} 
+			if (containsFlavor) {
+				continue;
+			}
+			
 			if (!templateType.equals(OPENNEBULA_TEMPLATES_TYPE_ALL) && !validTemplates.contains(name)) {
 				continue;
 			}
@@ -720,6 +732,11 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 			}
 		}
 		return listTemplate;
+	}
+	
+	// TODO protected
+	public void setClientFactory(OpenNebulaClientFactory clientFactory) {
+		this.clientFactory = clientFactory;
 	}
 	
 	@Override

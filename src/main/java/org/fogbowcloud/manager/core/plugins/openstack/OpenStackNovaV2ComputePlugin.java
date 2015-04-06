@@ -431,14 +431,6 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		}
 		return null;
 		
-//		if (fogbowTermToOpenStack.get(RequestConstants.SMALL_TERM).equals(flavorId)) {
-//			return RequestConstants.SMALL_TERM;
-//		} else if (fogbowTermToOpenStack.get(RequestConstants.MEDIUM_TERM).equals(flavorId)) {
-//			return RequestConstants.MEDIUM_TERM;
-//		} else if (fogbowTermToOpenStack.get(RequestConstants.LARGE_TERM).equals(flavorId)) {
-//			return RequestConstants.LARGE_TERM;
-//		}
-//		return null;
 	}
 	
 	private InstanceState getInstanceState(String instanceStatus) {
