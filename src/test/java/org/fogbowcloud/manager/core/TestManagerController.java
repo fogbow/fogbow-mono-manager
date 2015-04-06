@@ -688,7 +688,7 @@ public class TestManagerController {
 		Assert.assertEquals(RequestState.DELETED, requestsFromUser.get(0).getState());
 		Assert.assertEquals(RequestState.DELETED, requestsFromUser.get(1).getState());
 
-		managerController.monitorInstances();
+		managerController.monitorInstancesForLocalRequests();
 
 		// making sure the requests were not removed
 		requestsFromUser = managerController.getRequestsFromUser(managerTestHelper
@@ -744,7 +744,7 @@ public class TestManagerController {
 				managerController.getRequest(managerTestHelper.getDefaultLocalToken().getAccessId(),
 						"id3").getState());
 
-		managerController.monitorInstances();
+		managerController.monitorInstancesForLocalRequests();
 
 		// checking if deleted requests were removed
 		Assert.assertEquals(
@@ -785,7 +785,7 @@ public class TestManagerController {
 			Assert.assertTrue(request.getState().equals(RequestState.FULFILLED));
 		}
 
-		managerController.monitorInstances();
+		managerController.monitorInstancesForLocalRequests();
 
 		// checking if requests were closed
 		requestsFromUser = managerController
@@ -822,7 +822,7 @@ public class TestManagerController {
 		Assert.assertEquals(1, requestsFromUser.size());
 		Assert.assertEquals(RequestState.FULFILLED, requestsFromUser.get(0).getState());
 
-		managerController.monitorInstances();
+		managerController.monitorInstancesForLocalRequests();
 
 		// checking if request has lost its instance
 		requestsFromUser = managerController
@@ -876,7 +876,7 @@ public class TestManagerController {
 						Mockito.anyString())).thenReturn(
 				new Instance(DefaultDataTestHelper.INSTANCE_ID));
 
-		managerController.monitorInstances();
+		managerController.monitorInstancesForLocalRequests();
 
 		// checking if requests are still fulfilled
 		List<Request> requestsFromUser = managerController
@@ -886,7 +886,7 @@ public class TestManagerController {
 			Assert.assertEquals(RequestState.FULFILLED, request.getState());
 		}
 
-		managerController.monitorInstances();
+		managerController.monitorInstancesForLocalRequests();
 
 		// checking if requests' state haven't been changed
 		requestsFromUser = managerController
@@ -913,7 +913,7 @@ public class TestManagerController {
 				managerTestHelper.getComputePlugin().getInstance(Mockito.any(Token.class),
 						Mockito.anyString())).thenThrow(new RuntimeException());
 
-		managerController.monitorInstances();
+		managerController.monitorInstancesForLocalRequests();
 	}
 	
 	@Test
@@ -934,7 +934,7 @@ public class TestManagerController {
 		Mockito.when(managerTestHelper.getComputePlugin().getInstance(Mockito.any(Token.class),
 						Mockito.anyString())).thenReturn(expectedInstance);
 
-		managerController.monitorInstances();
+		managerController.monitorInstancesForLocalRequests();
 		
 		// checking if instance was properly removed
 		Mockito.verify(managerTestHelper.getComputePlugin()).removeInstance(
@@ -1908,6 +1908,9 @@ public class TestManagerController {
 		Assert.assertEquals(1, managerController.getRemoteRequests().size());
 		Assert.assertEquals("manager1-test.com",
 				getRequestByInstanceId(managerController.getRemoteRequests(),
+						DefaultDataTestHelper.INSTANCE_ID).getRequestingMemberId());
+		Assert.assertEquals(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
+				getRequestByInstanceId(managerController.getRemoteRequests(),
 						DefaultDataTestHelper.INSTANCE_ID).getProvidingMemberId());
 
 		// monitoring served requests
@@ -1947,6 +1950,9 @@ public class TestManagerController {
 		Assert.assertEquals(1, managerController.getRemoteRequests().size());
 		Assert.assertEquals("manager1-test.com",
 				getRequestByInstanceId(managerController.getRemoteRequests(),
+						DefaultDataTestHelper.INSTANCE_ID).getRequestingMemberId());
+		Assert.assertEquals(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
+				getRequestByInstanceId(managerController.getRemoteRequests(),
 						DefaultDataTestHelper.INSTANCE_ID).getProvidingMemberId());
 
 		// monitoring served requests
@@ -1955,6 +1961,9 @@ public class TestManagerController {
 		// checking there is not served request		
 		Assert.assertEquals(1, managerController.getRemoteRequests().size());
 		Assert.assertEquals("manager1-test.com",
+				getRequestByInstanceId(managerController.getRemoteRequests(),
+						DefaultDataTestHelper.INSTANCE_ID).getRequestingMemberId());
+		Assert.assertEquals(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
 				getRequestByInstanceId(managerController.getRemoteRequests(),
 						DefaultDataTestHelper.INSTANCE_ID).getProvidingMemberId());
 	}
@@ -2083,6 +2092,9 @@ public class TestManagerController {
 		Assert.assertEquals(1, managerController.getRemoteRequests().size());
 		Assert.assertEquals("manager1-test.com",
 				getRequestByInstanceId(managerController.getRemoteRequests(),
+						DefaultDataTestHelper.INSTANCE_ID).getRequestingMemberId());
+		Assert.assertEquals(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
+				getRequestByInstanceId(managerController.getRemoteRequests(),
 						DefaultDataTestHelper.INSTANCE_ID).getProvidingMemberId());
 				
 		// updating compute mock
@@ -2106,6 +2118,11 @@ public class TestManagerController {
 		Assert.assertEquals(1, managerController.getRemoteRequests().size());
 		Assert.assertEquals("manager1-test.com",
 				getRequestByInstanceId(managerController.getRemoteRequests(),
+						DefaultDataTestHelper.INSTANCE_ID).getRequestingMemberId());
+		Assert.assertEquals(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
+				getRequestByInstanceId(managerController.getRemoteRequests(),
 						DefaultDataTestHelper.INSTANCE_ID).getProvidingMemberId());
 	}
+	
+	
 }

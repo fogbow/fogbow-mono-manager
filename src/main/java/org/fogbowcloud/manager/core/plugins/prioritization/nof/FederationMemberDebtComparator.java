@@ -4,10 +4,10 @@ import java.util.Comparator;
 
 public class FederationMemberDebtComparator implements Comparator<FederationMemberDebt> {
 	@Override
-	public int compare(FederationMemberDebt firstReputableMember,
-			FederationMemberDebt secondReputableMember) {
+	public int compare(FederationMemberDebt firstMemberDebt,
+			FederationMemberDebt secondMemberDebt) {
 		
-		return new Double(firstReputableMember.getDebt()).compareTo(new Double(
-				secondReputableMember.getDebt()));
+		return new Double(firstMemberDebt.getDebt()).compareTo(new Double(
+				secondMemberDebt.getDebt()));
 	}
 }

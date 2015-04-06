@@ -380,7 +380,7 @@ public class ManagerController {
 
 	private Instance getInstance(Request request) {
 		Instance instance = null;
-		if (request.isLocal()) {
+		if (isFulfilledByLocalMember(request)) {
 			LOGGER.debug(request.getInstanceId()
 					+ " is local, getting its information in the local cloud.");
 			
@@ -470,7 +470,7 @@ public class ManagerController {
 			if (instanceId == null) {
 				continue;
 			}
-	        removeInstance(accessId, normalizeInstanceId(instanceId), request);
+	        removeInstance(normalizeInstanceId(instanceId), request);
 		}
 	}
 	
@@ -485,11 +485,11 @@ public class ManagerController {
 	public void removeInstance(String federationToken, String instanceId) {
 		Request request = getRequestForInstance(federationToken, instanceId);
 		instanceId = normalizeInstanceId(instanceId);
-		removeInstance(federationToken, instanceId, request);
+		removeInstance(instanceId, request);
 	}
 
-	private void removeInstance(String federationToken, String instanceId, Request request) {
-		if (request.isLocal()) {
+	private void removeInstance(String instanceId, Request request) {
+		if (isFulfilledByLocalMember(request)) {
 			if (request.isFulfilledByFederationUser()) {
 				this.computePlugin.removeInstance(getFederationUserToken(), instanceId);
 			} else {
@@ -501,6 +501,15 @@ public class ManagerController {
 		instanceRemoved(request);
 	}
 
+	private boolean isFulfilledByLocalMember(Request request) {
+		if (request.getProvidingMemberId() != null
+				&& request.getProvidingMemberId()
+						.equals(properties.get(ConfigurationConstants.XMPP_JID_KEY))) {
+			return true;
+		}
+		return false;
+	}
+
 	private void instanceRemoved(Request request) {
 		updateAccounting();
 		benchmarkingPlugin.remove(request.getInstanceId());
@@ -509,7 +518,7 @@ public class ManagerController {
 		request.setProvidingMemberId(null);
 		request.setFulfilledByFederationUser(false);		
 
-		if (request.getState().equals(RequestState.DELETED)) {
+		if (request.getState().equals(RequestState.DELETED) || !request.isLocal()) {
 			requests.exclude(request.getId());
 		} else if (isPersistent(request)) {
 			LOGGER.debug("Request: " + request + ", setting state to " + RequestState.OPEN);
@@ -581,7 +590,7 @@ public class ManagerController {
 			return null;
 		}
 		LOGGER.info("Submiting request with categories: " + categories + " and xOCCIAtt: "
-				+ xOCCIAtt + " for remote member: " + requestingMemberId + " with requestingToken " + requestingUserToken);
+				+ xOCCIAtt + " for requesting member: " + requestingMemberId + " with requestingToken " + requestingUserToken);
 		if (instanceToken == null) {
 			instanceToken = String.valueOf(UUID.randomUUID());
 		}
@@ -615,7 +624,7 @@ public class ManagerController {
 					xOCCIAtt, localImageId);
 			
 			Instance instance = computePlugin.getInstance(federationUserToken, instanceId);
-			benchmarkingPlugin.run(generateGlobalId(instanceId, requestingMemberId), instance);
+			benchmarkingPlugin.run(generateGlobalId(instanceId, null), instance);
 			
 			if (!properties.getProperty("xmpp_jid").equals(requestingMemberId)) {	
 				Request request = new Request(instanceToken, requestingUserToken,
@@ -634,9 +643,10 @@ public class ManagerController {
 			return instanceId;
 		} catch (OCCIException e) {
 			if (e.getType() == ErrorType.QUOTA_EXCEEDED) {
-				Request requestToPreemption = prioritizationPlugin.takeFrom(requestingMemberId,
-						new ArrayList<Request>(requests.getLocalRequestIn(RequestState.FULFILLED, RequestState.DELETED)), 
-						requests.getAllRemoteRequests());
+				ArrayList<Request> requestsWithInstances = new ArrayList<Request>(
+						requests.getLocalRequestIn(RequestState.FULFILLED, RequestState.DELETED));
+				requestsWithInstances.addAll(requests.getAllRemoteRequests());
+				Request requestToPreemption = prioritizationPlugin.takeFrom(requestingMemberId,	requestsWithInstances);
 
 				if (requestToPreemption == null) {
 					throw e;
@@ -654,8 +664,7 @@ public class ManagerController {
 	}
 
 	private void preemption(Request requestToPreemption) {
-		// TODO Auto-generated method stub
-		
+		removeInstance(requestToPreemption.getInstanceId(), requestToPreemption);		
 	}
 
 	private void triggerServedRequestMonitoring() {
@@ -791,12 +800,12 @@ public class ManagerController {
 		instanceMonitoringTimer.scheduleAtFixedRate(new TimerTask() {
 			@Override
 			public void run() {
-				monitorInstances();
+				monitorInstancesForLocalRequests();
 			}
 		}, 0, instanceMonitoringPeriod);
 	}
 
-	protected void monitorInstances() {
+	protected void monitorInstancesForLocalRequests() {
 		boolean turnOffTimer = true;
 		LOGGER.info("Monitoring instances.");
 
@@ -825,8 +834,7 @@ public class ManagerController {
 		}
 		if (InstanceState.FAILED.equals(instance.getState())) {
 			try {
-				removeInstance(request.getFederationToken().getAccessId(), 
-						instance.getId(), request);
+				removeInstance(instance.getId(), request);
 			} catch (Throwable t) {
 				// Best effort
 				LOGGER.warn("Error while removing stale instance.", t);
@@ -1162,20 +1170,20 @@ public class ManagerController {
 
 		LOGGER.info("Submiting request " + request + " with federation user locally.");
 
-		String remoteInstanceId = null;
+		String instanceId = null;
 		try {
-			remoteInstanceId = createInstanceWithFederationUser(properties.getProperty("xmpp_jid"),
+			instanceId = createInstanceWithFederationUser(properties.getProperty("xmpp_jid"),
 					request.getCategories(), request.getxOCCIAtt(), request.getId(), null);
 		} catch (Exception e) {
 			LOGGER.info("Could not create instance with federation user locally." + e);
 		}
 
-		if (remoteInstanceId == null) {
+		if (instanceId == null) {
 			return false;
 		}
 
 		request.setState(RequestState.FULFILLED);
-		request.setInstanceId(remoteInstanceId);
+		request.setInstanceId(instanceId);
 		request.setFulfilledByFederationUser(true);
 		if (!instanceMonitoringTimer.isScheduled()) {
 			triggerInstancesMonitor();
@@ -1244,7 +1252,7 @@ public class ManagerController {
 		LOGGER.debug("Getting all instances and your information.");
 		for (Request request : requestsFromUser) {
 			Instance instance = null;
-			if (request.isLocal()) {
+			if (isFulfilledByLocalMember(request)) {
 				LOGGER.debug(request.getInstanceId()
 						+ " is local, getting its information in the local cloud.");
 				if (request.isFulfilledByFederationUser()) {

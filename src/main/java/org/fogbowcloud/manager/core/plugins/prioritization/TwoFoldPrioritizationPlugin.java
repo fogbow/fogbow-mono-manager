@@ -43,9 +43,9 @@ public class TwoFoldPrioritizationPlugin implements PrioritizationPlugin {
 	}
 
 	@Override
-	public Request takeFrom(String requestingMemberId, List<Request> requestsWithInstance, List<Request> servedRequests) {
-		Request localPreemption = localPrioritizationPlugin.takeFrom(requestingMemberId, requestsWithInstance, null);
+	public Request takeFrom(String requestingMemberId, List<Request> requestsWithInstance) {
+		Request localPreemption = localPrioritizationPlugin.takeFrom(requestingMemberId, requestsWithInstance);
 		return (localPreemption != null) ? localPreemption : 
-			remotePrioritizationPlugin.takeFrom(requestingMemberId, null, servedRequests);
+			remotePrioritizationPlugin.takeFrom(requestingMemberId, requestsWithInstance);
 	}
 }

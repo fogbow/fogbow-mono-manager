@@ -9,7 +9,6 @@ import java.util.Properties;
 
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
-import org.fogbowcloud.manager.core.model.ServedRequest;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.PrioritizationPlugin;
 import org.fogbowcloud.manager.core.plugins.accounting.ResourceUsage;
@@ -34,60 +33,61 @@ public class NoFPrioritizationPlugin implements PrioritizationPlugin {
 	}
 	
 	@Override
-	public Request takeFrom(String requestingMemberId, List<Request> requestsWithInstance, List<Request> servedRequests) {
+	public Request takeFrom(String requestingMemberId, List<Request> requestsWithInstance) {
 		LOGGER.debug("Choosing request to take instance from requestsWithInstance="
-				+ requestsWithInstance + " or servedRequests=" + servedRequests
-				+ " for requestMember=" + requestingMemberId);
-		if (localMemberId.equals(requestingMemberId) || servedRequests == null) {
+				+ requestsWithInstance + " for requestMember=" + requestingMemberId);
+		if (localMemberId.equals(requestingMemberId) || requestsWithInstance == null) {
 			return null;
 		}
 		
-		List<String> remoteMembers = getRemoteMembers(servedRequests);
+		List<String> servedMemberIds = getServedMemberIds(requestsWithInstance);
+		LOGGER.debug("Current servedMemberIds=" + servedMemberIds);
 		Map<String, ResourceUsage> membersUsage = accountingPlugin.getMembersUsage();
-		LOGGER.debug("Current membersUsage=" + membersUsage);
-		double requestingMemberDebt = calcDebt(membersUsage, requestingMemberId);
-		
-		LinkedList<FederationMemberDebt> reputableMembers = getReputableMembers(remoteMembers, membersUsage);	
-		if (reputableMembers.isEmpty()) {
+		LOGGER.debug("Current membersUsage=" + membersUsage);		
+		LinkedList<FederationMemberDebt> memberDebts = calctMemberDebts(servedMemberIds, membersUsage);
+		if (memberDebts.isEmpty()) {
+			LOGGER.debug("There are no member debts.");
 			return null;
 		}
 
-		Collections.sort(reputableMembers, new FederationMemberDebtComparator());
-		LOGGER.debug("reputablesMembers=" + reputableMembers);
+		Collections.sort(memberDebts, new FederationMemberDebtComparator());
+		LOGGER.debug("Current memberDebts=" + memberDebts);
 		
-		FederationMemberDebt firstMember = reputableMembers.getFirst();
+		double requestingMemberDebt = calcDebt(membersUsage, requestingMemberId);
+		FederationMemberDebt firstMember = memberDebts.getFirst();
 		if (firstMember.getDebt() < requestingMemberDebt) {
 			String memberId = firstMember.getMember().getResourcesInfo().getId();
-			List<Request> memberRequests = filterRequests(memberId, servedRequests);
+			List<Request> memberRequests = filterByRequestingMember(memberId, requestsWithInstance);
 			return getMostRecentRequest(memberRequests);
 		}
 		return null;
 	}
 
-	private LinkedList<FederationMemberDebt> getReputableMembers(List<String> remoteMembers,
+	private LinkedList<FederationMemberDebt> calctMemberDebts(List<String> servedMembers,
 			Map<String, ResourceUsage> membersUsage) {
-		LinkedList<FederationMemberDebt> reputableMembers = new LinkedList<FederationMemberDebt>();
-		for (String currentMemberId : remoteMembers) {
+		LinkedList<FederationMemberDebt> memberDebts = new LinkedList<FederationMemberDebt>();
+		for (String currentMemberId : servedMembers) {
 			if (localMemberId.equals(currentMemberId)) {
 				continue;
 			}
 			double debt = calcDebt(membersUsage, currentMemberId);
-			reputableMembers.add(new FederationMemberDebt(currentMemberId, debt));
+			memberDebts.add(new FederationMemberDebt(currentMemberId, debt));
 		}
-		return reputableMembers;
+		return memberDebts;
 	}
 
-	private List<String> getRemoteMembers(List<Request> remoteRequests) {
-		List<String> members = new LinkedList<String>();
-		for (Request remoteRequest : remoteRequests) {
-			if (!members.contains(remoteRequest.getRequestingMemberId())) {
-				members.add(remoteRequest.getRequestingMemberId());
+	private List<String> getServedMemberIds(List<Request> requests) {
+		List<String> servedMemberIds = new LinkedList<String>();
+		for (Request currentRequest : requests) {
+			if (!currentRequest.isLocal()
+					&& !servedMemberIds.contains(currentRequest.getRequestingMemberId())) {
+				servedMemberIds.add(currentRequest.getRequestingMemberId());
 			}
 		}
-		return members;
+		return servedMemberIds;
 	}
 
-	private double calcDebt(Map<String, ResourceUsage> membersUsage, String memberId) {
+	protected double calcDebt(Map<String, ResourceUsage> membersUsage, String memberId) {
 		double debt = 0;
 		if (membersUsage.containsKey(memberId)) {
 			debt = membersUsage.get(memberId).getConsumed()
@@ -104,19 +104,19 @@ public class NoFPrioritizationPlugin implements PrioritizationPlugin {
 		if (memberRequests.isEmpty()) {
 			return null;
 		}
-		Request lastRequest = memberRequests.get(0);
+		Request mostRecentRequest = memberRequests.get(0);
 		for (Request currentRequest : memberRequests) {
-			if (new Date(lastRequest.getFulfilledTime()).compareTo(new Date(currentRequest.getFulfilledTime())) < 0) {
-				lastRequest = currentRequest;
+			if (new Date(mostRecentRequest.getFulfilledTime()).compareTo(new Date(currentRequest.getFulfilledTime())) < 0) {
+				mostRecentRequest = currentRequest;
 			}
 		}
-		return null;
+		return mostRecentRequest;
 	}
 
-	private List<Request> filterRequests(String memberId, List<Request> requests) {
+	private List<Request> filterByRequestingMember(String requestingMemberId, List<Request> requests) {
 		List<Request> filteredRequests = new LinkedList<Request>();
 		for (Request currentRequest : requests) {
-			if (currentRequest.getRequestingMemberId().equals(memberId)){
+			if (currentRequest.getRequestingMemberId().equals(requestingMemberId)){
 				filteredRequests.add(currentRequest);
 			}
 		}

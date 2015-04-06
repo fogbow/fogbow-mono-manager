@@ -26,6 +26,6 @@ public class FederationMemberDebt {
 	}
 	
 	public String toString() {
-		return "member=" + member.getResourcesInfo().getId() + ", debt=" + debt;
+		return "memberId=" + member.getResourcesInfo().getId() + ", debt=" + debt;
 	}
 }
