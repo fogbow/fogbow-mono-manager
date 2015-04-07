@@ -52,9 +52,11 @@ image_storage_static_fogbow-linux-x86=55d938ef-57d1-44ea-8155-6036d170780a
 image_storage_static_fogbow-ubuntu-1204=81765250-a4e4-440d-a215-43c9c0849120
 
 member_picker_class=org.fogbowcloud.manager.core.RoundRobinMemberPicker
-#If you are using NoFMemberPicker class
+#If you are using NoFMemberPicker or NoFPrioritizationPlugin classes
 nof_trustworthy=false
 
+local_prioritization_plugin_class=org.fogbowcloud.manager.core.plugins.prioritization.FCFSPrioritizationPlugin
+remote_prioritization_plugin_class=org.fogbowcloud.manager.core.plugins.prioritization.nof.NoFPrioritizationPlugin
 
 compute_class=org.fogbowcloud.manager.core.plugins.openstack.OpenStackNovaV2ComputePlugin
 compute_novav2_url=http://localhost:8774

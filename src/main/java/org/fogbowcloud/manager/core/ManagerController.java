@@ -657,7 +657,7 @@ public class ManagerController {
 		}
 	}
 
-	private void preemption(Request requestToPreemption) {
+	protected void preemption(Request requestToPreemption) {
 		removeInstance(requestToPreemption.getInstanceId(), requestToPreemption);		
 	}
 

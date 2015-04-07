@@ -194,8 +194,7 @@ public class TestManagerController {
 		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(), request1);
 		managerController.setRequests(requestRepository);
 		managerController.checkAndSubmitOpenRequests();
-		
-        
+		        
 		Mockito.verify(packetSender).sendPacket(Mockito.argThat(new ArgumentMatcher<IQ>() {
 			@Override
 			public boolean matches(Object argument) {
@@ -2124,5 +2123,71 @@ public class TestManagerController {
 						DefaultDataTestHelper.INSTANCE_ID).getProvidingMemberId());
 	}
 	
-	
+	@Test
+	public void testPreemption(){
+		Request localRequest = new Request("id1", managerTestHelper.getDefaultFederationToken(),
+				managerTestHelper.getDefaultLocalToken(), new ArrayList<Category>(),
+				new HashMap<String, String>(), true,
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		localRequest.setState(RequestState.FULFILLED);
+		localRequest.setInstanceId("instance1");
+		localRequest.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		
+		Request servedRequest1 = new Request("id2", managerTestHelper.getDefaultFederationToken(),
+				managerTestHelper.getDefaultLocalToken(), new ArrayList<Category>(),
+				new HashMap<String, String>(), false,
+				DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL);
+		servedRequest1.setState(RequestState.FULFILLED);
+		servedRequest1.setInstanceId("instance2");
+		servedRequest1.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		
+		Request servedRequest2 = new Request("id3", managerTestHelper.getDefaultFederationToken(),
+				managerTestHelper.getDefaultLocalToken(), new ArrayList<Category>(),
+				new HashMap<String, String>(), false,
+				DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL);
+		servedRequest2.setState(RequestState.FULFILLED);
+		servedRequest2.setInstanceId("instance3");
+		servedRequest2.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		
+		RequestRepository requestRepository = new RequestRepository();
+		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(), localRequest);
+		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(), servedRequest1);
+		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(), servedRequest2);
+
+		// check requests
+		managerController.setRequests(requestRepository);
+		Assert.assertEquals(1, requestRepository.getAllLocalRequests().size());
+		Assert.assertTrue(requestRepository.getAllLocalRequests().contains(localRequest));
+		Assert.assertEquals(RequestState.FULFILLED, localRequest.getState());
+		Assert.assertEquals(2, requestRepository.getAllRemoteRequests().size());
+		Assert.assertTrue(requestRepository.getAllRemoteRequests().contains(servedRequest1));
+		Assert.assertTrue(requestRepository.getAllRemoteRequests().contains(servedRequest2));
+		
+		// preempt servedRequest1
+		managerController.preemption(servedRequest1);
+		Assert.assertEquals(1, requestRepository.getAllLocalRequests().size());
+		Assert.assertTrue(requestRepository.getAllLocalRequests().contains(localRequest));
+		Assert.assertEquals(RequestState.FULFILLED, localRequest.getState());
+		Assert.assertEquals(1, requestRepository.getAllRemoteRequests().size());
+		Assert.assertFalse(requestRepository.getAllRemoteRequests().contains(servedRequest1));
+		Assert.assertTrue(requestRepository.getAllRemoteRequests().contains(servedRequest2));
+
+		// preempt servedRequest2
+		managerController.preemption(servedRequest2);
+		Assert.assertEquals(1, requestRepository.getAllLocalRequests().size());
+		Assert.assertTrue(requestRepository.getAllLocalRequests().contains(localRequest));
+		Assert.assertEquals(RequestState.FULFILLED, localRequest.getState());
+		Assert.assertTrue(requestRepository.getAllRemoteRequests().isEmpty());
+		Assert.assertFalse(requestRepository.getAllRemoteRequests().contains(servedRequest1));
+		Assert.assertFalse(requestRepository.getAllRemoteRequests().contains(servedRequest2));
+		
+		// preempt localRequest
+		managerController.preemption(localRequest);
+		Assert.assertEquals(1, requestRepository.getAllLocalRequests().size());
+		Assert.assertTrue(requestRepository.getAllLocalRequests().contains(localRequest));
+		Assert.assertEquals(RequestState.CLOSED, localRequest.getState());
+		Assert.assertTrue(requestRepository.getAllRemoteRequests().isEmpty());
+		Assert.assertFalse(requestRepository.getAllRemoteRequests().contains(servedRequest1));
+		Assert.assertFalse(requestRepository.getAllRemoteRequests().contains(servedRequest2));
+	}	
 }
