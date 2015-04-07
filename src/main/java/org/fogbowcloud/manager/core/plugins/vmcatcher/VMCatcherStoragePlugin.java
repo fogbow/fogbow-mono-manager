@@ -5,7 +5,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.Properties;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 import javax.mail.MessagingException;
 import javax.mail.Session;
@@ -20,9 +23,15 @@ import org.fogbowcloud.manager.occi.core.Token;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+/**
+ * @see https://github.com/hepix-virtualisation/vmcatcher
+ * @see https://github.com/EGI-FCTF/glancepush
+ * @see https://github.com/grid-admin/vmcatcher_eventHndlExpl_ON
+ */
 public class VMCatcherStoragePlugin implements ImageStoragePlugin {
 
-	private static final Logger LOGGER = Logger.getLogger(ImageStoragePlugin.class); 
+	private static final Logger LOGGER = Logger.getLogger(ImageStoragePlugin.class);
+	private static final Executor IMAGE_DOWNLOADER = Executors.newFixedThreadPool(5);
 	
 	private static final String PROP_VMC_MAPPING_FILE = "vmcatcher_glancepush_vmcmapping_file";
 	private static final String PROP_VMC_PUSH_METHOD = "vmcatcher_push_method";
@@ -37,7 +46,6 @@ public class VMCatcherStoragePlugin implements ImageStoragePlugin {
 	
 	@Override
 	public String getLocalId(Token token, String globalId) {
-		
 		JSONObject imageInfo = null;
 		
 		try {
@@ -62,25 +70,39 @@ public class VMCatcherStoragePlugin implements ImageStoragePlugin {
 		}
 		
 		try {
-			ProcessBuilder builder = new ProcessBuilder("sudo", "vmcatcher_subscribe", 
+			executeShellCommand("sudo", "vmcatcher_subscribe", 
 					"--imagelist-newimage-subscribe", "--auto-endorse", "-s", globalId);
-			Process process = builder.start();
-			
-			int exitValue = process.waitFor();
-			String stdout = IOUtils.toString(process.getInputStream());
-			String stderr = IOUtils.toString(process.getErrorStream());
-			
-			LOGGER.debug("Command vmcatcher_subscribe has finished. "
-					+ "Exit: " + exitValue + "; Stdout: " + stdout + "; Stderr: " + stderr);
 		} catch (Exception e) {
 			LOGGER.warn("Couldn't add image.list to VMCatcher subscription list", e);
 		}
 		
-		// TODO Should it force vmcatcher_cache? 
-		// vmcatcher_subscribe -U
-		// vmcatcher_cache
+		IMAGE_DOWNLOADER.execute(new Runnable() {
+			
+			@Override
+			public void run() {
+				try {
+					executeShellCommand("sudo", "vmcatcher_subscribe", "-U");
+					executeShellCommand("sudo", "vmcatcher_cache");
+				} catch (Exception e) {
+					LOGGER.warn("Couldn't cache image via VMCatcher", e);
+				}
+			}
+		});
 		
 		return null;
+	}
+
+	private void executeShellCommand(String... command) throws IOException,
+			InterruptedException {
+		ProcessBuilder builder = new ProcessBuilder(command);
+		Process process = builder.start();
+		
+		int exitValue = process.waitFor();
+		String stdout = IOUtils.toString(process.getInputStream());
+		String stderr = IOUtils.toString(process.getErrorStream());
+		
+		LOGGER.debug("Command " + Arrays.asList(command) + " has finished. "
+				+ "Exit: " + exitValue + "; Stdout: " + stdout + "; Stderr: " + stderr);
 	}
 
 	private String getImageNameWithCESGAPush(JSONObject imageInfo) {
