@@ -1,4 +1,4 @@
-package org.fogbowcloud.manager.core.plugins.vmcatcher;
+package org.fogbowcloud.manager.core.plugins.imagestorage.vmcatcher;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -19,6 +19,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
+import org.fogbowcloud.manager.core.plugins.imagestorage.fixed.StaticImageStoragePlugin;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -28,26 +29,30 @@ import org.json.JSONObject;
  * @see https://github.com/EGI-FCTF/glancepush
  * @see https://github.com/grid-admin/vmcatcher_eventHndlExpl_ON
  */
-public class VMCatcherStoragePlugin implements ImageStoragePlugin {
+public class VMCatcherStoragePlugin extends StaticImageStoragePlugin {
 
 	private static final Logger LOGGER = Logger.getLogger(ImageStoragePlugin.class);
 	private static final Executor IMAGE_DOWNLOADER = Executors.newFixedThreadPool(5);
 	
-	private static final String PROP_VMC_MAPPING_FILE = "vmcatcher_glancepush_vmcmapping_file";
-	private static final String PROP_VMC_PUSH_METHOD = "vmcatcher_push_method";
+	private static final String PROP_VMC_MAPPING_FILE = "image_storage_vmcatcher_glancepush_vmcmapping_file";
+	private static final String PROP_VMC_PUSH_METHOD = "image_storage_vmcatcher_push_method";
 	
 	private Properties props;
 	private ComputePlugin computePlugin;
 	
-	public VMCatcherStoragePlugin(Properties props, ComputePlugin computePlugin) {
-		this.props = props;
+	public VMCatcherStoragePlugin(Properties properties, ComputePlugin computePlugin) {
+		super(properties, computePlugin);
+		this.props = properties;
 		this.computePlugin = computePlugin;
 	}
 	
 	@Override
 	public String getLocalId(Token token, String globalId) {
+		String localId = super.getLocalId(token, globalId);
+		if (localId != null) {
+			return localId;
+		}
 		JSONObject imageInfo = null;
-		
 		try {
 			imageInfo = retrieveImageListInfo(globalId);
 		} catch (Exception e) {
@@ -63,7 +68,7 @@ public class VMCatcherStoragePlugin implements ImageStoragePlugin {
 			imageTitleTranslated = getImageNameWithCESGAPush(imageInfo);
 		}
 		
-		String localId = imageTitleTranslated == null ? null : computePlugin
+		localId = imageTitleTranslated == null ? null : computePlugin
 				.getImageId(token, imageTitleTranslated);
 		if (localId != null) {
 			return localId;
@@ -77,7 +82,6 @@ public class VMCatcherStoragePlugin implements ImageStoragePlugin {
 		}
 		
 		IMAGE_DOWNLOADER.execute(new Runnable() {
-			
 			@Override
 			public void run() {
 				try {

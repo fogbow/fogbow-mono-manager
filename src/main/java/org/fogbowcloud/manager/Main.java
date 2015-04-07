@@ -19,7 +19,7 @@ import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
 import org.fogbowcloud.manager.core.plugins.accounting.FCUAccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.benchmarking.FCUStaticBenchmarkingPlugin;
-import org.fogbowcloud.manager.core.plugins.egi.EgiImageStoragePlugin;
+import org.fogbowcloud.manager.core.plugins.imagestorage.egi.EgiImageStoragePlugin;
 import org.fogbowcloud.manager.occi.OCCIApplication;
 import org.fogbowcloud.manager.xmpp.ManagerXmppComponent;
 import org.restlet.Component;
