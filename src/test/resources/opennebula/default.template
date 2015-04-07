@@ -10,7 +10,7 @@
    </GRAPHICS>
    <DISK>
       <IMAGE_ID>#IMAGE_ID#</IMAGE_ID>
-   </DISK>
+   </DISK>#DISK_VOLATILE#
    <MEMORY>#MEM#</MEMORY>
    <NIC>
       <NETWORK_ID>#NET_ID#</NETWORK_ID>

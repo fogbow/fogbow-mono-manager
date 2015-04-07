@@ -12,9 +12,10 @@ public class TestServedRequest {
 
 	@Test
 	public void testInitialization() {
-		ServedRequest servedRequest = new ServedRequest("id", "member", new ArrayList<Category>(),
+		ServedRequest servedRequest = new ServedRequest("instanceToken", "instanceId", "member", new ArrayList<Category>(),
 				new HashMap<String, String>());
-		Assert.assertEquals("id", servedRequest.getInstanceToken());
+		Assert.assertEquals("instanceToken", servedRequest.getInstanceToken());
+		Assert.assertEquals("instanceId", servedRequest.getInstanceId());
 		Assert.assertEquals("member", servedRequest.getMemberId());
 		Assert.assertEquals(0, servedRequest.getCategories().size());
 		Assert.assertEquals(0, servedRequest.getxOCCIAtt().size());

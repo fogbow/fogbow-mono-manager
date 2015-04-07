@@ -11,7 +11,10 @@ import java.util.Properties;
 import org.apache.http.HttpException;
 import org.apache.http.HttpStatus;
 import org.apache.http.ParseException;
+import org.fogbowcloud.manager.core.RequirementsHelper;
+import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.plugins.openstack.OpenStackConfigurationConstants;
+import org.fogbowcloud.manager.core.plugins.openstack.OpenStackNovaV2ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.openstack.OpenStackOCCIComputePlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.core.Category;
@@ -21,6 +24,7 @@ import org.fogbowcloud.manager.occi.core.OCCIHeaders;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.instance.Instance;
+import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.fogbowcloud.manager.occi.util.OCCIComputeApplication;
 import org.fogbowcloud.manager.occi.util.OCCITestHelper;
@@ -29,6 +33,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.restlet.Request;
 import org.restlet.Response;
 import org.restlet.data.Method;
@@ -46,8 +51,9 @@ public class TestOCCIComputeOpenStack {
 
 	private OpenStackOCCIComputePlugin occiComputeOpenStack;
 	private PluginHelper pluginHelper;
-	List<String> expectedInstanceIds;
-	Token defaultToken;
+	private List<String> expectedInstanceIds;
+	private Token defaultToken;
+	private List<Flavor> flavors;
 
 	@Before
 	public void setUp() throws Exception {
@@ -62,6 +68,15 @@ public class TestOCCIComputeOpenStack {
 		properties.put(OpenStackConfigurationConstants.COMPUTE_OCCI_IMAGE_PREFIX + PluginHelper.LINUX_X86_TERM, PluginHelper.CIRROS_IMAGE_TERM);
 
 		occiComputeOpenStack = new OpenStackOCCIComputePlugin(properties);
+		
+		flavors = new ArrayList<Flavor>();
+		Flavor flavorSmall = new Flavor(RequestConstants.SMALL_TERM, "1", "1000", "10");
+		flavorSmall.setId(SECOND_INSTANCE_ID);
+		flavors.add(flavorSmall); 
+		flavors.add(new Flavor("medium", "2", "2000", "20"));
+		flavors.add(new Flavor("big", "4", "4000", "40"));
+		occiComputeOpenStack.setFlavors(flavors );
+		
 		defaultToken = new Token(PluginHelper.ACCESS_ID, PluginHelper.USERNAME,
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>());
 		
@@ -85,11 +100,15 @@ public class TestOCCIComputeOpenStack {
 	@Test
 	public void testRequestAValidInstance() {
 		List<Category> categories = new ArrayList<Category>();
-		categories.add(new Category(RequestConstants.SMALL_TERM,
-				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
+		
+		String requirementsStr = RequirementsHelper.GLUE_DISK_TERM + " >= 10 && "
+				+ RequirementsHelper.GLUE_MEM_RAM_TERM + " > 500 && "
+				+ RequirementsHelper.GLUE_VCPU_TERM + " > 0";
+		Map<String, String> xOCCIAtt = new HashMap<String, String>();
+		xOCCIAtt.put(RequestAttribute.REQUIREMENTS.getValue(), requirementsStr);
 
 		Assert.assertEquals(FIRST_INSTANCE_ID, occiComputeOpenStack.requestInstance(
-				defaultToken, categories, new HashMap<String, String>(), PluginHelper.CIRROS_IMAGE_TERM));
+				defaultToken, categories, xOCCIAtt, PluginHelper.CIRROS_IMAGE_TERM));
 
 		Instance instance = occiComputeOpenStack.getInstance(defaultToken, FIRST_INSTANCE_ID);
 
@@ -120,13 +139,18 @@ public class TestOCCIComputeOpenStack {
 		properties.put(OpenStackConfigurationConstants.COMPUTE_OCCI_NETWORK_KEY, "net1");
 
 		occiComputeOpenStack = new OpenStackOCCIComputePlugin(properties);
-
+		occiComputeOpenStack.setFlavors(flavors);
+		
 		List<Category> categories = new ArrayList<Category>();
-		categories.add(new Category(RequestConstants.SMALL_TERM,
-				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
+
+		String requirementsStr = RequirementsHelper.GLUE_DISK_TERM + " >= 10 && "
+				+ RequirementsHelper.GLUE_MEM_RAM_TERM + " > 500 && "
+				+ RequirementsHelper.GLUE_VCPU_TERM + " > 0";
+		Map<String, String> xOCCIAtt = new HashMap<String, String>();
+		xOCCIAtt.put(RequestAttribute.REQUIREMENTS.getValue(), requirementsStr);
 		
 		Assert.assertEquals(FIRST_INSTANCE_ID, occiComputeOpenStack.requestInstance(
-				defaultToken, categories, new HashMap<String, String>(), PluginHelper.CIRROS_IMAGE_TERM));
+				defaultToken, categories, xOCCIAtt, PluginHelper.CIRROS_IMAGE_TERM));
 
 		Instance instance = occiComputeOpenStack.getInstance(defaultToken, FIRST_INSTANCE_ID);
 
@@ -148,11 +172,15 @@ public class TestOCCIComputeOpenStack {
 	@Test
 	public void testCreatePluginNotSpecifyingNetwork(){		
 		List<Category> categories = new ArrayList<Category>();
-		categories.add(new Category(RequestConstants.SMALL_TERM,
-				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
 		
-		Assert.assertEquals(FIRST_INSTANCE_ID, occiComputeOpenStack.requestInstance(
-				defaultToken, categories, new HashMap<String, String>(), PluginHelper.CIRROS_IMAGE_TERM));
+		String requirementsStr = RequirementsHelper.GLUE_DISK_TERM + " >= 10 && "
+				+ RequirementsHelper.GLUE_MEM_RAM_TERM + " > 500 && "
+				+ RequirementsHelper.GLUE_VCPU_TERM + " > 0";
+		Map<String, String> xOCCIAtt = new HashMap<String, String>();
+		xOCCIAtt.put(RequestAttribute.REQUIREMENTS.getValue(), requirementsStr);
+
+		Assert.assertEquals(FIRST_INSTANCE_ID, occiComputeOpenStack.requestInstance(defaultToken,
+				categories, xOCCIAtt, PluginHelper.CIRROS_IMAGE_TERM));
 
 		Instance instance = occiComputeOpenStack.getInstance(defaultToken, FIRST_INSTANCE_ID);
 
@@ -183,8 +211,15 @@ public class TestOCCIComputeOpenStack {
 	@Test
 	public void testRequestWithoutFlavorCateory() {
 		List<Category> categories = new ArrayList<Category>();
+		
+		String requirementsStr = RequirementsHelper.GLUE_DISK_TERM + " >= 10 && "
+				+ RequirementsHelper.GLUE_MEM_RAM_TERM + " > 500 && "
+				+ RequirementsHelper.GLUE_VCPU_TERM + " > 0";
+		Map<String, String> xOCCIAtt = new HashMap<String, String>();
+		xOCCIAtt.put(RequestAttribute.REQUIREMENTS.getValue(), requirementsStr);
+		
 		Assert.assertEquals(FIRST_INSTANCE_ID, occiComputeOpenStack.requestInstance(
-				defaultToken, categories, new HashMap<String, String>(), PluginHelper.LINUX_X86_TERM));
+				defaultToken, categories, xOCCIAtt, PluginHelper.LINUX_X86_TERM));
 	}
 
 	@Test(expected = OCCIException.class)
@@ -197,6 +232,10 @@ public class TestOCCIComputeOpenStack {
 
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
 		xOCCIAtt.put(OCCIComputeApplication.CORE_ATTRIBUTE_OCCI, "3");
+		String requirementsStr = RequirementsHelper.GLUE_DISK_TERM + " >= 10 && "
+				+ RequirementsHelper.GLUE_MEM_RAM_TERM + " > 500 && "
+				+ RequirementsHelper.GLUE_VCPU_TERM + " > 0";
+		xOCCIAtt.put(RequestAttribute.REQUIREMENTS.getValue(), requirementsStr);
 
 		occiComputeOpenStack.requestInstance(defaultToken, categories, xOCCIAtt, PluginHelper.LINUX_X86_TERM);
 	}
@@ -204,13 +243,15 @@ public class TestOCCIComputeOpenStack {
 	@Test(expected = OCCIException.class)
 	public void testNotSupportedOCCIMemAtt() {
 		List<Category> categories = new ArrayList<Category>();
-		categories.add(new Category(RequestConstants.SMALL_TERM,
-				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
 		categories.add(new Category(PluginHelper.LINUX_X86_TERM,
 				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
 		xOCCIAtt.put(OCCIComputeApplication.MEMORY_ATTRIBUTE_OCCI, "5");
+		String requirementsStr = RequirementsHelper.GLUE_DISK_TERM + " >= 10 && "
+				+ RequirementsHelper.GLUE_MEM_RAM_TERM + " > 500 && "
+				+ RequirementsHelper.GLUE_VCPU_TERM + " > 0";
+		xOCCIAtt.put(RequestAttribute.REQUIREMENTS.getValue(), requirementsStr);
 
 		occiComputeOpenStack.requestInstance(defaultToken, categories, xOCCIAtt, PluginHelper.LINUX_X86_TERM);
 	}
@@ -218,13 +259,15 @@ public class TestOCCIComputeOpenStack {
 	@Test(expected = OCCIException.class)
 	public void testNotSupportedOCCIArchAtt() {
 		List<Category> categories = new ArrayList<Category>();
-		categories.add(new Category(RequestConstants.SMALL_TERM,
-				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
 		categories.add(new Category(PluginHelper.LINUX_X86_TERM,
 				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
-
+		
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
 		xOCCIAtt.put(OCCIComputeApplication.ARCHITECTURE_ATTRIBUTE_OCCI, "x86");
+		String requirementsStr = RequirementsHelper.GLUE_DISK_TERM + " >= 10 && "
+				+ RequirementsHelper.GLUE_MEM_RAM_TERM + " > 500 && "
+				+ RequirementsHelper.GLUE_VCPU_TERM + " > 0";
+		xOCCIAtt.put(RequestAttribute.REQUIREMENTS.getValue(), requirementsStr);
 
 		occiComputeOpenStack.requestInstance(defaultToken, categories, xOCCIAtt, PluginHelper.LINUX_X86_TERM);
 	}
@@ -232,25 +275,29 @@ public class TestOCCIComputeOpenStack {
 	@Test(expected = OCCIException.class)
 	public void testNotSupportedOCCISpeedAtt() {
 		List<Category> categories = new ArrayList<Category>();
-		categories.add(new Category(RequestConstants.SMALL_TERM,
-				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
 		categories.add(new Category(PluginHelper.LINUX_X86_TERM,
 				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
 		xOCCIAtt.put(OCCIComputeApplication.SPEED_ATTRIBUTE_OCCI, "2");
-
+		String requirementsStr = RequirementsHelper.GLUE_DISK_TERM + " >= 10 && "
+				+ RequirementsHelper.GLUE_MEM_RAM_TERM + " > 500 && "
+				+ RequirementsHelper.GLUE_VCPU_TERM + " > 0";
+		xOCCIAtt.put(RequestAttribute.REQUIREMENTS.getValue(), requirementsStr);
+		
 		occiComputeOpenStack.requestInstance(defaultToken, categories, xOCCIAtt, PluginHelper.LINUX_X86_TERM);
 	}
 
 	@Test
 	public void testSupportedOCCIAtt() {
 		List<Category> categories = new ArrayList<Category>();
-		categories.add(new Category(RequestConstants.SMALL_TERM,
-				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
 
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
 		xOCCIAtt.put(OCCIComputeApplication.HOSTNAME_ATTRIBUTE_OCCI, "server-test");
+		String requirementsStr = RequirementsHelper.GLUE_DISK_TERM + " >= 10 && "
+				+ RequirementsHelper.GLUE_MEM_RAM_TERM + " > 500 && "
+				+ RequirementsHelper.GLUE_VCPU_TERM + " > 0";
+		xOCCIAtt.put(RequestAttribute.REQUIREMENTS.getValue(), requirementsStr);
 
 		Assert.assertEquals(FIRST_INSTANCE_ID,
 				occiComputeOpenStack.requestInstance(defaultToken, categories, xOCCIAtt, PluginHelper.LINUX_X86_TERM));
@@ -264,12 +311,14 @@ public class TestOCCIComputeOpenStack {
 	@Test
 	public void testMoreSupportedOCCIAtts() {
 		List<Category> categories = new ArrayList<Category>();
-		categories.add(new Category(RequestConstants.SMALL_TERM,
-				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
 
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
 		xOCCIAtt.put(OCCIComputeApplication.HOSTNAME_ATTRIBUTE_OCCI, "server-test");
 		xOCCIAtt.put("occi.compute.state", "inactive");
+		String requirementsStr = RequirementsHelper.GLUE_DISK_TERM + " >= 10 && "
+				+ RequirementsHelper.GLUE_MEM_RAM_TERM + " > 500 && "
+				+ RequirementsHelper.GLUE_VCPU_TERM + " > 0";
+		xOCCIAtt.put(RequestAttribute.REQUIREMENTS.getValue(), requirementsStr);
 
 		Assert.assertEquals(FIRST_INSTANCE_ID,
 				occiComputeOpenStack.requestInstance(defaultToken, categories, xOCCIAtt, PluginHelper.LINUX_X86_TERM));
@@ -288,10 +337,16 @@ public class TestOCCIComputeOpenStack {
 				.getInstances(defaultToken));
 		Assert.assertEquals(0, instanceLocations.size());
 
+		String requirementsStr = RequirementsHelper.GLUE_DISK_TERM + " >= 10 && "
+				+ RequirementsHelper.GLUE_MEM_RAM_TERM + " > 500 && "
+				+ RequirementsHelper.GLUE_VCPU_TERM + " > 0";
+		Map<String, String> xOCCIAtt = new HashMap<String, String>();
+		xOCCIAtt.put(RequestAttribute.REQUIREMENTS.getValue(), requirementsStr);
+		
 		// requesting one default instance
 		List<Category> categories = new ArrayList<Category>();
 		Assert.assertEquals(FIRST_INSTANCE_ID, occiComputeOpenStack.requestInstance(
-				defaultToken, categories, new HashMap<String, String>(), PluginHelper.LINUX_X86_TERM));
+				defaultToken, categories, xOCCIAtt, PluginHelper.LINUX_X86_TERM));
 
 		// check getting all instance ids
 		instanceLocations = getInstanceLocations(occiComputeOpenStack
@@ -310,9 +365,15 @@ public class TestOCCIComputeOpenStack {
 		// requesting default instance
 		List<Category> categories = new ArrayList<Category>();
 
+		String requirementsStr = RequirementsHelper.GLUE_DISK_TERM + " >= 10 && "
+				+ RequirementsHelper.GLUE_MEM_RAM_TERM + " > 500 && "
+				+ RequirementsHelper.GLUE_VCPU_TERM + " > 0";
+		Map<String, String> xOCCIAtt = new HashMap<String, String>();
+		xOCCIAtt.put(RequestAttribute.REQUIREMENTS.getValue(), requirementsStr);
+		
 		for (String instanceId : expectedInstanceIds) {
 			Assert.assertEquals(instanceId, occiComputeOpenStack.requestInstance(
-					defaultToken, categories, new HashMap<String, String>(), PluginHelper.LINUX_X86_TERM));
+					defaultToken, categories, xOCCIAtt, PluginHelper.LINUX_X86_TERM));
 		}
 
 		// check getting all instance ids
@@ -340,10 +401,16 @@ public class TestOCCIComputeOpenStack {
 				.getInstances(defaultToken));
 		Assert.assertEquals(0, instanceLocations.size());
 
+		String requirementsStr = RequirementsHelper.GLUE_DISK_TERM + " >= 10 && "
+				+ RequirementsHelper.GLUE_MEM_RAM_TERM + " > 500 && "
+				+ RequirementsHelper.GLUE_VCPU_TERM + " > 0";
+		Map<String, String> xOCCIAtt = new HashMap<String, String>();
+		xOCCIAtt.put(RequestAttribute.REQUIREMENTS.getValue(), requirementsStr);
+		
 		// requesting one default instance
 		List<Category> categories = new ArrayList<Category>();
 		Assert.assertEquals(FIRST_INSTANCE_ID, occiComputeOpenStack.requestInstance(
-				defaultToken, categories, new HashMap<String, String>(), PluginHelper.CIRROS_IMAGE_TERM));
+				defaultToken, categories, xOCCIAtt, PluginHelper.CIRROS_IMAGE_TERM));
 
 		// check instance details
 		instanceLocations = getInstanceLocations(occiComputeOpenStack
@@ -381,11 +448,17 @@ public class TestOCCIComputeOpenStack {
 				.getInstances(defaultToken));
 		Assert.assertEquals(0, instanceLocations.size());
 
+		String requirementsStr = RequirementsHelper.GLUE_DISK_TERM + " >= 10 && "
+				+ RequirementsHelper.GLUE_MEM_RAM_TERM + " > 500 && "
+				+ RequirementsHelper.GLUE_VCPU_TERM + " > 0";
+		Map<String, String> xOCCIAtt = new HashMap<String, String>();
+		xOCCIAtt.put(RequestAttribute.REQUIREMENTS.getValue(), requirementsStr);
+		
 		// requesting default instances
 		List<Category> categories = new ArrayList<Category>();
 		for (String instanceId : expectedInstanceIds) {
 			Assert.assertEquals(instanceId, occiComputeOpenStack.requestInstance(
-					defaultToken, categories, new HashMap<String, String>(), PluginHelper.LINUX_X86_TERM));
+					defaultToken, categories, xOCCIAtt, PluginHelper.LINUX_X86_TERM));
 		}
 
 		// check number of instances
@@ -406,11 +479,17 @@ public class TestOCCIComputeOpenStack {
 				.getInstances(defaultToken));
 		Assert.assertEquals(0, instanceLocations.size());
 
+		String requirementsStr = RequirementsHelper.GLUE_DISK_TERM + " >= 10 && "
+				+ RequirementsHelper.GLUE_MEM_RAM_TERM + " > 500 && "
+				+ RequirementsHelper.GLUE_VCPU_TERM + " > 0";
+		Map<String, String> xOCCIAtt = new HashMap<String, String>();
+		xOCCIAtt.put(RequestAttribute.REQUIREMENTS.getValue(), requirementsStr);
+		
 		// requesting default instances
 		List<Category> categories = new ArrayList<Category>();
 		for (String instanceId : expectedInstanceIds) {
 			Assert.assertEquals(instanceId, occiComputeOpenStack.requestInstance(
-					defaultToken, categories, new HashMap<String, String>(), PluginHelper.LINUX_X86_TERM));
+					defaultToken, categories, xOCCIAtt, PluginHelper.LINUX_X86_TERM));
 		}
 
 		// check number of instances
@@ -447,10 +526,16 @@ public class TestOCCIComputeOpenStack {
 				.getInstances(defaultToken));
 		Assert.assertEquals(0, instanceLocations.size());
 		
+		String requirementsStr = RequirementsHelper.GLUE_DISK_TERM + " >= 10 && "
+				+ RequirementsHelper.GLUE_MEM_RAM_TERM + " > 500 && "
+				+ RequirementsHelper.GLUE_VCPU_TERM + " > 0";
+		Map<String, String> xOCCIAtt = new HashMap<String, String>();
+		xOCCIAtt.put(RequestAttribute.REQUIREMENTS.getValue(), requirementsStr);
+		
 		// requesting one default instance
 		List<Category> categories = new ArrayList<Category>();
 		Assert.assertEquals(FIRST_INSTANCE_ID, occiComputeOpenStack.requestInstance(
-				defaultToken, categories, new HashMap<String, String>(), PluginHelper.CIRROS_IMAGE_TERM));
+				defaultToken, categories, xOCCIAtt, PluginHelper.CIRROS_IMAGE_TERM));
 
 		// checking if there is one instance		
 		Request request = new Request(Method.GET, OCCITestHelper.URI_FOGBOW_COMPUTE);
@@ -499,11 +584,17 @@ public class TestOCCIComputeOpenStack {
 				.getInstances(defaultToken));
 		Assert.assertEquals(0, instanceLocations.size());
 
+		String requirementsStr = RequirementsHelper.GLUE_DISK_TERM + " >= 10 && "
+				+ RequirementsHelper.GLUE_MEM_RAM_TERM + " > 500 && "
+				+ RequirementsHelper.GLUE_VCPU_TERM + " > 0";
+		Map<String, String> xOCCIAtt = new HashMap<String, String>();
+		xOCCIAtt.put(RequestAttribute.REQUIREMENTS.getValue(), requirementsStr);
+		
 		// requesting default instances
 		List<Category> categories = new ArrayList<Category>();
 		for (String instanceId : expectedInstanceIds) {
 			Assert.assertEquals(instanceId, occiComputeOpenStack.requestInstance(
-					defaultToken, categories, new HashMap<String, String>(), PluginHelper.LINUX_X86_TERM));
+					defaultToken, categories, xOCCIAtt, PluginHelper.LINUX_X86_TERM));
 		}
 
 		// check number of instances
@@ -537,11 +628,17 @@ public class TestOCCIComputeOpenStack {
 				.getInstances(defaultToken));
 		Assert.assertEquals(0, instanceLocations.size());
 
+		String requirementsStr = RequirementsHelper.GLUE_DISK_TERM + " >= 10 && "
+				+ RequirementsHelper.GLUE_MEM_RAM_TERM + " > 500 && "
+				+ RequirementsHelper.GLUE_VCPU_TERM + " > 0";
+		Map<String, String> xOCCIAtt = new HashMap<String, String>();
+		xOCCIAtt.put(RequestAttribute.REQUIREMENTS.getValue(), requirementsStr);
+		
 		// requesting default instances
 		List<Category> categories = new ArrayList<Category>();
 		for (String instanceId : expectedInstanceIds) {
 			Assert.assertEquals(instanceId, occiComputeOpenStack.requestInstance(
-					defaultToken, categories, new HashMap<String, String>(), PluginHelper.LINUX_X86_TERM));
+					defaultToken, categories, xOCCIAtt, PluginHelper.LINUX_X86_TERM));
 		}
 
 		// check number of instances
@@ -569,6 +666,7 @@ public class TestOCCIComputeOpenStack {
 		Assert.assertEquals(0, instanceLocations.size());
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testBypassPostInstance() throws URISyntaxException, ParseException, IOException {
 		List<String> instanceLocations = getInstanceLocations(occiComputeOpenStack
@@ -602,6 +700,7 @@ public class TestOCCIComputeOpenStack {
 		Assert.assertEquals(1, instanceLocations.size());
 	}
 
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private Series<Header> getRequestHeaders(Request request) {
 		Series<Header> requestHeaders = (Series<Header>) request.getAttributes().get(
 				RESTLET_HEADERS_ATT_KEY);

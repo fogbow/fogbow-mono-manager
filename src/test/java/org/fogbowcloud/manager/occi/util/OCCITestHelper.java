@@ -21,7 +21,9 @@ import org.apache.http.util.EntityUtils;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.model.FederationMember;
+import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
+import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
@@ -41,6 +43,7 @@ import org.restlet.data.Protocol;
 
 public class OCCITestHelper {
 
+	public static final String FOGBOW_SMALL_IMAGE = "fogbow_small";
 	public static final String MEMBER_ID = "memberId";
 	public static final int ENDPOINT_PORT = PluginHelper.getAvailablePort();
 	public static final String FED_ACCESS_TOKEN = "HgjhgYUDFTGBgrbelihBDFGB40uyrb";
@@ -49,6 +52,7 @@ public class OCCITestHelper {
 	public static final String URI_FOGBOW_REQUEST = "http://localhost:" + ENDPOINT_PORT + "/" + RequestConstants.TERM + "/";
 	public static final String URI_FOGBOW_COMPUTE = "http://localhost:" + ENDPOINT_PORT + "/compute/";
 	public static final String URI_FOGBOW_MEMBER = "http://localhost:" + ENDPOINT_PORT + "/members";
+	public static final String URI_FOGBOW_USAGE = "http://localhost:" + ENDPOINT_PORT + "/usage";
 	public static final String URI_FOGBOW_TOKEN = "http://localhost:" + ENDPOINT_PORT + "/token";
 	public static final String URI_FOGBOW_QUERY = "http://localhost:" + ENDPOINT_PORT + "/-/";
 	public static final String URI_FOGBOW_QUERY_TYPE_TWO = "http://localhost:" + ENDPOINT_PORT
@@ -58,9 +62,9 @@ public class OCCITestHelper {
 	private Component component;
 	private RequestRepository requests;
 
-	public void initializeComponentExecutorSameThread(
-			ComputePlugin computePlugin, IdentityPlugin identityPlugin, AuthorizationPlugin authorizationPlugin)
-			throws Exception {
+	public void initializeComponentExecutorSameThread(ComputePlugin computePlugin,
+			IdentityPlugin identityPlugin, AuthorizationPlugin authorizationPlugin,
+			BenchmarkingPlugin benchmarkingPlugin) throws Exception {
 		component = new Component();
 		component.getServers().add(Protocol.HTTP, ENDPOINT_PORT);
 
@@ -70,6 +74,7 @@ public class OCCITestHelper {
 				DefaultDataTestHelper.SERVER_HOST);
 		properties.put(ConfigurationConstants.TUNNEL_SSH_HOST_HTTP_PORT_KEY,
 				String.valueOf(DefaultDataTestHelper.TOKEN_SERVER_HTTP_PORT));
+		properties.put(ConfigurationConstants.PREFIX_FLAVORS + FOGBOW_SMALL_IMAGE, "{cpu=1,mem=100}");
 		
 		ScheduledExecutorService executor = Mockito.mock(ScheduledExecutorService.class);
 		Mockito.when(executor.scheduleWithFixedDelay(Mockito.any(Runnable.class), Mockito.anyLong(), 
@@ -88,6 +93,7 @@ public class OCCITestHelper {
 		facade.setAuthorizationPlugin(authorizationPlugin);
 		facade.setLocalIdentityPlugin(identityPlugin);
 		facade.setFederationIdentityPlugin(identityPlugin);
+		facade.setBenchmarkingPlugin(benchmarkingPlugin);
 
 		component.getDefaultHost().attach(new OCCIApplication(facade));
 		component.start();
@@ -116,8 +122,8 @@ public class OCCITestHelper {
 	
 	public void initializeComponentCompute(ComputePlugin computePlugin,
 			IdentityPlugin identityPlugin, AuthorizationPlugin authorizationPlugin,
-			ImageStoragePlugin imageStoragePlugin,
-			List<Request> requestsToAdd) throws Exception {
+			ImageStoragePlugin imageStoragePlugin, AccountingPlugin accountingPlugin,
+			BenchmarkingPlugin benchmarkingPlugin, List<Request> requestsToAdd) throws Exception {
 		component = new Component();
 		component.getServers().add(Protocol.HTTP, ENDPOINT_PORT);
 
@@ -133,6 +139,8 @@ public class OCCITestHelper {
 		facade.setLocalIdentityPlugin(identityPlugin);
 		facade.setFederationIdentityPlugin(identityPlugin);
 		facade.setImageStoragePlugin(imageStoragePlugin);
+		facade.setAccountingPlugin(accountingPlugin);
+		facade.setBenchmarkingPlugin(benchmarkingPlugin);
 
 		requests = new RequestRepository();
 		facade.setRequests(requests);
@@ -145,8 +153,8 @@ public class OCCITestHelper {
 	}
 
 	public void initializeComponentMember(ComputePlugin computePlugin,
-			IdentityPlugin identityPlugin, List<FederationMember> federationMembers)
-			throws Exception {
+			IdentityPlugin identityPlugin, AuthorizationPlugin authorizationPlugin, AccountingPlugin accountingPlugin,
+			List<FederationMember> federationMembers) throws Exception {
 		component = new Component();
 		component.getServers().add(Protocol.HTTP, ENDPOINT_PORT);
 
@@ -157,6 +165,8 @@ public class OCCITestHelper {
 		facade.setComputePlugin(computePlugin);
 		facade.setLocalIdentityPlugin(identityPlugin);
 		facade.setFederationIdentityPlugin(identityPlugin);
+		facade.setAuthorizationPlugin(authorizationPlugin);
+		facade.setAccountingPlugin(accountingPlugin);
 		facade.updateMembers(federationMembers);
 
 		component.getDefaultHost().attach(new OCCIApplication(facade));
@@ -164,6 +174,9 @@ public class OCCITestHelper {
 	}
 
 	public void stopComponent() throws Exception {
+		if (component == null) {
+			return;
+		}
 		component.stop();
 	}
 

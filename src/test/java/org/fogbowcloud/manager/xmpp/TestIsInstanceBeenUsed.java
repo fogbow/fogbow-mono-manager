@@ -4,6 +4,7 @@ import java.util.Properties;
 
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.ManagerController;
+import org.fogbowcloud.manager.core.model.ServedRequest;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.core.util.ManagerTestHelper;
 import org.fogbowcloud.manager.occi.core.OCCIException;
@@ -47,10 +48,13 @@ public class TestIsInstanceBeenUsed {
 		requestRepository.addRequest(managerTestHelper.getDefaultLocalToken().getUser(), request1);
 		managerController.setRequests(requestRepository);
 		
+		ServedRequest servedRequest = new ServedRequest(request1.getId(), INSTANCE_DEFAULT,
+				MANAGER_COMPONENT_URL, null, null);
+		
 		// checking if instance is been used
-		ManagerPacketHelper.checkIfInstanceIsBeenUsedByRemoteMember(INSTANCE_DEFAULT
+		ManagerPacketHelper.checkIfInstanceIsBeingUsedByRemoteMember(INSTANCE_DEFAULT
 				+ Request.SEPARATOR_GLOBAL_ID + DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
-				MANAGER_COMPONENT_URL, managerTestHelper.createPacketSender());
+				servedRequest, managerTestHelper.createPacketSender());
 	}
 	
 	@Test
@@ -68,10 +72,13 @@ public class TestIsInstanceBeenUsed {
 		requestRepository.addRequest(managerTestHelper.getDefaultLocalToken().getUser(), request1);
 		managerController.setRequests(requestRepository);
 		
+		ServedRequest servedRequest = new ServedRequest(request1.getId(), INSTANCE_DEFAULT,
+				MANAGER_COMPONENT_URL, null, null);
+		
 		// checking if instance is been used
-		ManagerPacketHelper.checkIfInstanceIsBeenUsedByRemoteMember(INSTANCE_DEFAULT
+		ManagerPacketHelper.checkIfInstanceIsBeingUsedByRemoteMember(INSTANCE_DEFAULT
 				+ Request.SEPARATOR_GLOBAL_ID + DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
-				MANAGER_COMPONENT_URL, managerTestHelper.createPacketSender());
+				servedRequest, managerTestHelper.createPacketSender());
 	}
 	
 	@Test(expected=OCCIException.class)
@@ -88,19 +95,25 @@ public class TestIsInstanceBeenUsed {
 		requestRepository.addRequest(managerTestHelper.getDefaultLocalToken().getUser(), request1);
 		managerController.setRequests(requestRepository);
 		
+		ServedRequest servedRequest = new ServedRequest(request1.getId(), INSTANCE_DEFAULT,
+				MANAGER_COMPONENT_URL, null, null);
+		
 		// checking if instance is been used
-		ManagerPacketHelper.checkIfInstanceIsBeenUsedByRemoteMember(INSTANCE_DEFAULT, MANAGER_COMPONENT_URL,
+		ManagerPacketHelper.checkIfInstanceIsBeingUsedByRemoteMember(INSTANCE_DEFAULT, servedRequest,
 				managerTestHelper.createPacketSender());
 	}
-
+	
 	@Test(expected = OCCIException.class)
 	public void testInstanceIsNotBeenUsedThereIsNotRequest() throws Exception {
 		ManagerController managerController = createManagerController();
 		
 		managerTestHelper.initializeXMPPManagerComponent(false, managerController);
 		
+		ServedRequest servedRequest = new ServedRequest("id1", INSTANCE_DEFAULT,
+				MANAGER_COMPONENT_URL, null, null);
+		
 		// checking if instance is been used
-		ManagerPacketHelper.checkIfInstanceIsBeenUsedByRemoteMember("anyvalue", MANAGER_COMPONENT_URL,
+		ManagerPacketHelper.checkIfInstanceIsBeingUsedByRemoteMember("anyvalue", servedRequest,
 				managerTestHelper.createPacketSender());
 	}
 	

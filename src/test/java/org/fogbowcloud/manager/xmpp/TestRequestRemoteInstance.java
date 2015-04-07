@@ -74,8 +74,9 @@ public class TestRequestRemoteInstance {
 				INSTANCE_DEFAULT);
 
 		final BlockingQueue<String> bq = new LinkedBlockingQueue<String>();
-		ManagerPacketHelper.asynchronousRemoteRequest(request.getCategories(), request.getxOCCIAtt(), 
-				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, 
+		ManagerPacketHelper.asynchronousRemoteRequest(request.getId(), 
+				request.getCategories(), request.getxOCCIAtt(), 
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, null,
 				managerTestHelper.createPacketSender(), new AsynchronousRequestCallback() {
 					
 					@Override
@@ -99,7 +100,7 @@ public class TestRequestRemoteInstance {
 		Map<String, String> attributes = new HashMap<String, String>();
 		attributes.put("key1", "value1");
 		attributes.put("key2", "value2");
-		Request request = new Request("anyvalue", new Token("anyvalue",
+		Request request = new Request("id", new Token("anyvalue",
 				OCCITestHelper.USER_MOCK,
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
 				new HashMap<String, String>()), new Token("anyvalue",
@@ -112,16 +113,16 @@ public class TestRequestRemoteInstance {
 
 	@SuppressWarnings("unchecked")
 	@Test
-	public void testRequestRemoteRequestCloundNotSupport() throws Exception {
+	public void testRequestRemoteRequestCloudDoesNotSupportCategory() throws Exception {
 		managerTestHelper.initializeXMPPManagerComponent(false);
 
 		Request request = createRequest();
-		Mockito.doThrow(
+		Mockito.when(
+				this.managerTestHelper.getComputePlugin().requestInstance(
+						Mockito.any(Token.class), Mockito.anyList(),
+						Mockito.anyMap(), Mockito.anyString())).thenThrow(
 				new OCCIException(ErrorType.BAD_REQUEST,
-						ResponseConstants.CLOUD_NOT_SUPPORT_CATEGORY))
-				.when(this.managerTestHelper.getComputePlugin())
-				.requestInstance(Mockito.any(Token.class), Mockito.anyList(), 
-						Mockito.anyMap(), Mockito.anyString());
+						ResponseConstants.CLOUD_NOT_SUPPORT_CATEGORY));
 
 		String remoteRequest = ManagerPacketHelper.remoteRequest(request, MANAGER_COMPONENT_URL,
 				managerTestHelper.createPacketSender());
@@ -134,10 +135,12 @@ public class TestRequestRemoteInstance {
 		managerTestHelper.initializeXMPPManagerComponent(false);
 
 		Request request = createRequest();
-		Mockito.doThrow(new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND))
-				.when(this.managerTestHelper.getComputePlugin())
-				.requestInstance(Mockito.any(Token.class), Mockito.anyList(), 
-						Mockito.anyMap(), Mockito.anyString());
+		Mockito.when(
+				this.managerTestHelper.getComputePlugin().requestInstance(
+						Mockito.any(Token.class), Mockito.anyList(),
+						Mockito.anyMap(), Mockito.anyString())).thenThrow(
+				new OCCIException(ErrorType.NOT_FOUND,
+						ResponseConstants.NOT_FOUND));
 
 		String remoteRequest = ManagerPacketHelper.remoteRequest(request, MANAGER_COMPONENT_URL,
 				managerTestHelper.createPacketSender());

@@ -8,6 +8,8 @@ import java.util.Map;
 
 import org.apache.http.HttpStatus;
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.core.RequirementsHelper;
+import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.occi.OCCIApplication;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
@@ -143,7 +145,7 @@ public class RequestServerResource extends ServerResource {
 						+ request.getAttValue(RequestAttribute.TYPE.getValue()) + "; "
 						+ RequestAttribute.INSTANCE_ID.getValue() + "="
 //						+ request.getInstanceId() + "\n";
-						+ request.getInstanceGlobalId() + "\n";
+						+ request.getGlobalInstanceId() + "\n";
 						
 			}else {			
 				result += requestEndpoint + request.getId() + "\n";
@@ -188,8 +190,7 @@ public class RequestServerResource extends ServerResource {
 		
 		attToOutput.put(RequestAttribute.STATE.getValue(), request.getState().getValue());
 //		attToOutput.put(RequestAttribute.INSTANCE_ID.getValue(), request.getInstanceId());
-		attToOutput.put(RequestAttribute.INSTANCE_ID.getValue(), request.getInstanceGlobalId());
-		
+		attToOutput.put(RequestAttribute.INSTANCE_ID.getValue(), request.getGlobalInstanceId());		
 		
 		for (String attName : attToOutput.keySet()) {
 			requestOCCIFormat += OCCIHeaders.X_OCCI_ATTRIBUTE + ": " + attName + "=\""
@@ -233,7 +234,9 @@ public class RequestServerResource extends ServerResource {
 		
 		Map<String, String> xOCCIAtt = HeaderUtils.getXOCCIAtributes(req.getHeaders());
 		xOCCIAtt = normalizeXOCCIAtt(xOCCIAtt);
-
+		
+		xOCCIAtt = normalizeRequirements(categories, xOCCIAtt, application.getFlavorsProvided());
+		
 		String federationAuthToken = HeaderUtils.getFederationAuthToken(
 				req.getHeaders(), getResponse(), application.getAuthenticationURI());
 		String localAuthToken = HeaderUtils.getLocalAuthToken(req.getHeaders());
@@ -250,6 +253,51 @@ public class RequestServerResource extends ServerResource {
 					OCCIHeaders.OCCI_ACCEPT));	
 		}
 		return new StringRepresentation(ResponseConstants.OK);
+	}
+
+	static protected Map<String, String> normalizeRequirements(List<Category> categories, Map<String, String> xOCCIAtt, List<Flavor> listFlavorsFogbow) {
+		String requirementsAttr = xOCCIAtt.get(RequestAttribute.REQUIREMENTS.getValue());
+		if (requirementsAttr != null) {
+			if (!RequirementsHelper.checkRequirements(requirementsAttr)) {
+				throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.UNSUPPORTED_ATTRIBUTES);
+			}			
+		}				
+
+		String flavorTerm = null;
+		List<Category> copyListCategory = new ArrayList<Category>(categories);
+		for (Category category : copyListCategory) {
+			if (category.getScheme().equals(RequestConstants.TEMPLATE_RESOURCE_SCHEME)) {
+				flavorTerm = category.getTerm();
+				break;
+			}
+		}
+		
+		String flavorRequirements = null;
+		if (flavorTerm != null && !flavorTerm.isEmpty()) {
+			boolean thereIsFlavor = false;
+			for (Flavor flavor : listFlavorsFogbow) {
+				if (flavor.getName().equals(flavorTerm)) {
+					flavorRequirements = RequirementsHelper.GLUE_MEM_RAM_TERM + ">=" + flavor.getMem()
+							+ "&&" + RequirementsHelper.GLUE_VCPU_TERM + ">=" + flavor.getCpu();
+					thereIsFlavor = true;
+				}
+			}
+			if (!thereIsFlavor) {
+				throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.STATIC_FLAVORS_NOT_SPECIFIED);			
+			}
+		}
+		
+		if (requirementsAttr != null && flavorRequirements != null) {
+			requirementsAttr = "(" + requirementsAttr + ")&&(" + flavorRequirements + ")";
+		} else if (flavorRequirements != null) {
+			requirementsAttr = flavorRequirements;
+		}
+		
+		if (requirementsAttr != null) {
+			xOCCIAtt.put(RequestAttribute.REQUIREMENTS.getValue(), requirementsAttr);			
+		}
+		
+		return xOCCIAtt;
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
@@ -307,7 +355,7 @@ public class RequestServerResource extends ServerResource {
 		HeaderUtils.checkDateValue(defOCCIAtt.get(RequestAttribute.VALID_FROM.getValue()));
 		HeaderUtils.checkDateValue(defOCCIAtt.get(RequestAttribute.VALID_UNTIL.getValue()));
 		HeaderUtils.checkIntegerValue(defOCCIAtt.get(RequestAttribute.INSTANCE_COUNT.getValue()));
-		
+
 		LOGGER.debug("Checking if all attributes are supported. OCCI attributes: " + defOCCIAtt);
 
 		List<Resource> requestResources = ResourceRepository.getInstance().getAll();
@@ -362,7 +410,7 @@ public class RequestServerResource extends ServerResource {
 						+ RequestAttribute.TYPE.getValue() + "="
 						+ request.getAttValue(RequestAttribute.TYPE.getValue()) + "; "
 //						+ RequestAttribute.INSTANCE_ID.getValue() + "=" + request.getInstanceId()
-						+ RequestAttribute.INSTANCE_ID.getValue() + "=" + request.getInstanceGlobalId()
+						+ RequestAttribute.INSTANCE_ID.getValue() + "=" + request.getGlobalInstanceId()
 						+ "\n";
 			}else {			
 				response += prefixOCCILocation + request.getId() + "\n";
