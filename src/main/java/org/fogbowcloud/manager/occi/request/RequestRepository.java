@@ -24,16 +24,16 @@ public class RequestRepository {
 		userRequests.add(request);
 	}
 
-	public List<Request> getLocalRequestIn(RequestState... states) {
-		List<Request> localRequestsInState = new LinkedList<Request>();
+	public List<Request> getRequestsIn(RequestState... states) {
+		List<Request> allRequestsInState = new LinkedList<Request>();
 		for (List<Request> userRequests : requests.values()) {
 			for (Request request : userRequests) {
-				if (request.isLocal() && request.getState().in(states)) {
-					localRequestsInState.add(request);
+				if (request.getState().in(states)) {
+					allRequestsInState.add(request);
 				}
 			}
 		}
-		return localRequestsInState;
+		return allRequestsInState;
 	}
 
 	public Request get(String requestId) {

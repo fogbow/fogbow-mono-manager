@@ -1900,8 +1900,9 @@ public class TestManagerController {
 		Mockito.when(packetSender.syncSendPacket(Mockito.any(IQ.class))).thenReturn(response);
 		managerController.setPacketSender(packetSender);
 				
-		managerController.createInstanceWithFederationUser("manager1-test.com", 
-				new ArrayList<Category>(), xOCCIAtt, null, managerTestHelper.getDefaultFederationToken());
+		managerController.queueServedRequest("manager1-test.com", new ArrayList<Category>(),
+				xOCCIAtt, "id1", managerTestHelper.getDefaultFederationToken());
+		managerController.checkAndSubmitOpenRequests();
 		
 		// checking there is one served request
 		Assert.assertEquals(1, managerController.getRemoteRequests().size());
@@ -1911,6 +1912,8 @@ public class TestManagerController {
 		Assert.assertEquals(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
 				getRequestByInstanceId(managerController.getRemoteRequests(),
 						DefaultDataTestHelper.INSTANCE_ID).getProvidingMemberId());
+		Assert.assertEquals("id1", getRequestByInstanceId(managerController.getRemoteRequests(),
+						DefaultDataTestHelper.INSTANCE_ID).getId());
 
 		// monitoring served requests
 		managerController.monitorServedRequests();
@@ -1941,9 +1944,10 @@ public class TestManagerController {
 		Mockito.when(packetSender.syncSendPacket(Mockito.any(IQ.class))).thenReturn(response);
 		managerController.setPacketSender(packetSender);
 		
-		managerController.createInstanceWithFederationUser("manager1-test.com", 
-				new ArrayList<Category>(), xOCCIAtt, null, managerTestHelper.getDefaultFederationToken());
-		
+		managerController.queueServedRequest("manager1-test.com", new ArrayList<Category>(),
+				xOCCIAtt, "id1", managerTestHelper.getDefaultFederationToken());		
+		managerController.checkAndSubmitOpenRequests();
+				
 		// checking there is one served request
 		System.out.println(managerController.getRemoteRequests());
 		Assert.assertEquals(1, managerController.getRemoteRequests().size());
@@ -1953,6 +1957,8 @@ public class TestManagerController {
 		Assert.assertEquals(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
 				getRequestByInstanceId(managerController.getRemoteRequests(),
 						DefaultDataTestHelper.INSTANCE_ID).getProvidingMemberId());
+		Assert.assertEquals("id1", getRequestByInstanceId(managerController.getRemoteRequests(),
+						DefaultDataTestHelper.INSTANCE_ID).getId());
 
 		// monitoring served requests
 		managerController.monitorServedRequests();
@@ -2084,9 +2090,10 @@ public class TestManagerController {
 						.thenReturn(twoInstances, twoInstances, oneInstance);
 		
 		// creating instance for remote member 
-		managerController.createInstanceWithFederationUser("manager1-test.com", 
-				new ArrayList<Category>(), xOCCIAtt, null, managerTestHelper.getDefaultFederationToken());
-		
+		managerController.queueServedRequest("manager1-test.com", new ArrayList<Category>(),
+				xOCCIAtt, "id1", managerTestHelper.getDefaultFederationToken());		
+		managerController.checkAndSubmitOpenRequests();
+				
 		// checking there is one served request
 		Assert.assertEquals(1, managerController.getRemoteRequests().size());
 		Assert.assertEquals("manager1-test.com",
@@ -2095,6 +2102,8 @@ public class TestManagerController {
 		Assert.assertEquals(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
 				getRequestByInstanceId(managerController.getRemoteRequests(),
 						DefaultDataTestHelper.INSTANCE_ID).getProvidingMemberId());
+		Assert.assertEquals("id1", getRequestByInstanceId(managerController.getRemoteRequests(),
+						DefaultDataTestHelper.INSTANCE_ID).getId());
 				
 		// updating compute mock
 		Mockito.doNothing().when(managerTestHelper.getComputePlugin()).removeInstance(

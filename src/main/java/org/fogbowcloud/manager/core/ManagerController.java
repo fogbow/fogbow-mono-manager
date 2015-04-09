@@ -156,9 +156,7 @@ public class ManagerController {
 	
 	private void updateAccounting() {
 		LOGGER.info("Updating accounting.");
-		List<Request> requestsWithInstances = new ArrayList<Request>(requests.getLocalRequestIn(RequestState.FULFILLED, RequestState.DELETED));
-		requestsWithInstances.addAll(requests.getAllRemoteRequests());
-		
+		List<Request> requestsWithInstances = new ArrayList<Request>(requests.getRequestsIn(RequestState.FULFILLED, RequestState.DELETED));
 		LOGGER.debug("requestsWithInstance=" + requestsWithInstances);		
 		accountingPlugin.update(requestsWithInstances);
 	}
@@ -570,6 +568,16 @@ public class ManagerController {
 		}
 		return null;
 	}
+	
+	public void queueServedRequest(String requestingMemberId, List<Category> categories,
+			Map<String, String> xOCCIAtt, String instanceToken, Token requestingUserToken){
+		
+		LOGGER.info("Queueing request with categories: " + categories + " and xOCCIAtt: "
+				+ xOCCIAtt + " for requesting member: " + requestingMemberId + " with requestingToken " + requestingUserToken);
+		Request request = new Request(instanceToken, requestingUserToken,
+				requestingUserToken, categories, xOCCIAtt, false, requestingMemberId);
+		requests.addRequest(requestingUserToken.getUser(), request);
+	}
 
 	public String createInstanceWithFederationUser(String requestingMemberId, List<Category> categories,
 			Map<String, String> xOCCIAtt, String instanceToken, Token requestingUserToken) {
@@ -619,27 +627,12 @@ public class ManagerController {
 			
 			Instance instance = computePlugin.getInstance(federationUserToken, instanceId);
 			benchmarkingPlugin.run(generateGlobalId(instanceId, null), instance);
-			
-			if (!properties.getProperty("xmpp_jid").equals(requestingMemberId)) {	
-				Request request = new Request(instanceToken, requestingUserToken,
-						requestingUserToken, categoriesWithoutImage, xOCCIAtt, false, requestingMemberId);
-				request.setState(RequestState.FULFILLED);
-				request.setInstanceId(instanceId);
-				request.setProvidingMemberId(properties.getProperty("xmpp_jid"));
-				request.setFulfilledByFederationUser(true);
-								
-				requests.addRequest(requestingUserToken.getUser(), request);
-				
-				if (!servedRequestMonitoringTimer.isScheduled()) {
-					triggerServedRequestMonitoring();
-				}
-			}
+
 			return instanceId;
 		} catch (OCCIException e) {
 			if (e.getType() == ErrorType.QUOTA_EXCEEDED) {
 				ArrayList<Request> requestsWithInstances = new ArrayList<Request>(
-						requests.getLocalRequestIn(RequestState.FULFILLED, RequestState.DELETED));
-				requestsWithInstances.addAll(requests.getAllRemoteRequests());
+						requests.getRequestsIn(RequestState.FULFILLED, RequestState.DELETED));
 				Request requestToPreemption = prioritizationPlugin.takeFrom(requestingMemberId,	requestsWithInstances);
 
 				if (requestToPreemption == null) {
@@ -948,7 +941,7 @@ public class ManagerController {
 				});
 			
 	}
-	
+
 	protected boolean isRequestForwardedtoRemoteMember(String requestId) {
 		return asynchronousRequests.containsKey(requestId);
 	}
@@ -964,7 +957,6 @@ public class ManagerController {
 	}
 	
 	private boolean createLocalInstance(Request request) {
-		request.setProvidingMemberId(this.properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
 		String instanceId = null;
 		LOGGER.info("Submiting local request " + request);		
 		
@@ -1025,6 +1017,7 @@ public class ManagerController {
 
 		request.setInstanceId(instanceId);
 		request.setState(RequestState.FULFILLED);
+		request.setProvidingMemberId(properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
 		LOGGER.debug("Fulfilled Request: " + request);
 		if (!instanceMonitoringTimer.isScheduled()) {
 			triggerInstancesMonitor();
@@ -1052,7 +1045,7 @@ public class ManagerController {
 		// removing requests that reach timeout
 		removeRequestsThatReachTimeout();
 		
-		List<Request> openRequests = requests.getLocalRequestIn(RequestState.OPEN);
+		List<Request> openRequests = requests.getRequestsIn(RequestState.OPEN);
 		for (Request request : openRequests) {
 			if (isRequestForwardedtoRemoteMember(request.getId())) {
 				LOGGER.debug("The request " + request.getId()
@@ -1062,24 +1055,29 @@ public class ManagerController {
 			LOGGER.debug(request.getId() + " considering for scheduling.");
 			Map<String, String> xOCCIAtt = request.getxOCCIAtt();
 			if (request.isIntoValidPeriod()) {
-				for (String keyAttributes : RequestAttribute.getValues()) {
-					xOCCIAtt.remove(keyAttributes);
+				if (request.isLocal()) {
+					for (String keyAttributes : RequestAttribute.getValues()) {
+						xOCCIAtt.remove(keyAttributes);
+					}
+					
+					String requirements = request.getRequirements();
+					List<FederationMember> allowedFederationMembers = getAllowedFederationMembers(requirements);
+					
+					boolean isFulfilled = false;
+					if (RequirementsHelper.matchLocation(requirements,
+							properties.getProperty(ConfigurationConstants.XMPP_JID_KEY))) {				
+						isFulfilled = createLocalInstance(request)
+								|| createLocalInstanceWithFederationUser(request);
+					}
+					if (!isFulfilled) {
+						createAsynchronousRemoteInstance(request, allowedFederationMembers);
+					}
+					allFulfilled &= isFulfilled;
+				} else { //it is served Request
+					boolean isFulfilled = false;
+					isFulfilled = createLocalInstanceWithFederationUser(request);
+					allFulfilled &= isFulfilled;
 				}
-				
-				String requirements = request.getRequirements();
-				List<FederationMember> allowedFederationMembers = getAllowedFederationMembers(requirements);
-
-				boolean isFulfilled = false;
-				if (RequirementsHelper.matchLocation(requirements,
-						properties.getProperty(ConfigurationConstants.XMPP_JID_KEY))) {				
-					isFulfilled = createLocalInstance(request)
-							|| createLocalInstanceWithFederationUser(request);
-				}
-				if (!isFulfilled) {
-					createAsynchronousRemoteInstance(request, allowedFederationMembers);
-				}
-				allFulfilled &= isFulfilled;
-				
 			} else if (request.isExpired()) {
 				request.setState(RequestState.CLOSED);
 			} else {
@@ -1160,13 +1158,11 @@ public class ManagerController {
 	}
 
 	private boolean createLocalInstanceWithFederationUser(Request request) {
-		request.setProvidingMemberId(properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
-
 		LOGGER.info("Submiting request " + request + " with federation user locally.");
 
 		String instanceId = null;
 		try {
-			instanceId = createInstanceWithFederationUser(properties.getProperty("xmpp_jid"),
+			instanceId = createInstanceWithFederationUser(request.getRequestingMemberId(),
 					request.getCategories(), request.getxOCCIAtt(), request.getId(), null);
 		} catch (Exception e) {
 			LOGGER.info("Could not create instance with federation user locally." + e);
@@ -1178,9 +1174,15 @@ public class ManagerController {
 
 		request.setState(RequestState.FULFILLED);
 		request.setInstanceId(instanceId);
-		request.setFulfilledByFederationUser(true);
-		if (!instanceMonitoringTimer.isScheduled()) {
+		request.setProvidingMemberId(properties.getProperty("xmpp_jid"));
+		request.setFulfilledByFederationUser(true);		
+		
+		if (request.isLocal() && !instanceMonitoringTimer.isScheduled()) {
 			triggerInstancesMonitor();
+		}
+		
+		if (!request.isLocal() && !servedRequestMonitoringTimer.isScheduled()) {
+			triggerServedRequestMonitoring();
 		}
 		return true;
 	}
