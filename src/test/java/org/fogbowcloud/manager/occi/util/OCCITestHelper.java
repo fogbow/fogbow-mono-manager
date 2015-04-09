@@ -31,6 +31,7 @@ import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.OCCIApplication;
 import org.fogbowcloud.manager.occi.core.HeaderUtils;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
+import org.fogbowcloud.manager.occi.core.ResourceRepository;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
@@ -88,6 +89,8 @@ public class OCCITestHelper {
 			}
 		});
 		
+		ResourceRepository.init(properties);
+		
 		ManagerController facade = new ManagerController(properties, executor);
 		facade.setComputePlugin(computePlugin);
 		facade.setAuthorizationPlugin(authorizationPlugin);
@@ -109,6 +112,11 @@ public class OCCITestHelper {
 				DefaultDataTestHelper.SERVER_HOST);
 		properties.put(ConfigurationConstants.SSH_HOST_HTTP_PORT_KEY,
 				String.valueOf(DefaultDataTestHelper.TOKEN_SERVER_HTTP_PORT));
+		properties.put(ConfigurationConstants.PREFIX_FLAVORS + FOGBOW_SMALL_IMAGE,
+				"{cpu=1,mem=100}");
+		
+		ResourceRepository.init(properties);
+		
 		ManagerController facade = new ManagerController(properties, 
 				Mockito.mock(ScheduledExecutorService.class));
 		facade.setComputePlugin(computePlugin);

@@ -325,8 +325,8 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		List<Resource> resources = new ArrayList<Resource>();
 		resources.add(ResourceRepository.getInstance().get("compute"));
 		resources.add(ResourceRepository.getInstance().get("os_tpl"));
-		resources.add(ResourceRepository.getInstance().get(
-				getUsedFlavor(Double.parseDouble(cpu), Double.parseDouble(mem))));
+		resources.add(ResourceRepository.generateFlavorResource(getUsedFlavor(
+				Double.parseDouble(cpu), Double.parseDouble(mem))));
 		
 		return new Instance(vm.getId(), resources, attributes, new ArrayList<Link>(), state);
 	}

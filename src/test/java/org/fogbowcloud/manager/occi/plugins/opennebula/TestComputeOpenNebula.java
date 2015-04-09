@@ -368,7 +368,7 @@ public class TestComputeOpenNebula {
 		List<Resource> resources = new ArrayList<Resource>();
 		resources.add(ResourceRepository.getInstance().get("compute"));
 		resources.add(ResourceRepository.getInstance().get("os_tpl"));
-		resources.add(ResourceRepository.getInstance().get(RequestConstants.SMALL_TERM));
+		resources.add(ResourceRepository.generateFlavorResource(RequestConstants.SMALL_TERM));
 
 		for (Resource resource : resources) {
 			Assert.assertTrue(instance.getResources().contains(resource));
@@ -430,7 +430,7 @@ public class TestComputeOpenNebula {
 		List<Resource> resources = new ArrayList<Resource>();
 		resources.add(ResourceRepository.getInstance().get("compute"));
 		resources.add(ResourceRepository.getInstance().get("os_tpl"));
-		resources.add(ResourceRepository.getInstance().get(RequestConstants.SMALL_TERM));
+		resources.add(ResourceRepository.generateFlavorResource(RequestConstants.SMALL_TERM));
 
 		for (Resource resource : resources) {
 			Assert.assertTrue(instance.getResources().contains(resource));
@@ -516,7 +516,7 @@ public class TestComputeOpenNebula {
 		flavors.add(flavorSmall); 
 		flavors.add(new Flavor("medium", "2", "2000", "20"));
 		flavors.add(new Flavor("big", "4", "4000", "40"));
-		computeOpenNebula.setFlavors(flavors );
+		computeOpenNebula.setFlavors(flavors);
 		
 		// requesting an instance
 		List<Category> categories = new ArrayList<Category>();

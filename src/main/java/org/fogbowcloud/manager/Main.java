@@ -21,6 +21,7 @@ import org.fogbowcloud.manager.core.plugins.accounting.FCUAccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.benchmarking.FCUStaticBenchmarkingPlugin;
 import org.fogbowcloud.manager.core.plugins.imagestorage.egi.EgiImageStoragePlugin;
 import org.fogbowcloud.manager.occi.OCCIApplication;
+import org.fogbowcloud.manager.occi.core.ResourceRepository;
 import org.fogbowcloud.manager.xmpp.ManagerXmppComponent;
 import org.restlet.Component;
 import org.restlet.data.Protocol;
@@ -39,7 +40,8 @@ public class Main {
 		Properties properties = new Properties();
 		FileInputStream input = new FileInputStream(args[0]);
 		properties.load(input);
-
+		ResourceRepository.init(properties);
+		
 		ComputePlugin computePlugin = null;
 		try {
 			computePlugin = (ComputePlugin) createInstance(

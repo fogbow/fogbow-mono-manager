@@ -25,6 +25,7 @@ import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.Resource;
+import org.fogbowcloud.manager.occi.core.ResourceRepository;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.instance.Instance;
@@ -1707,9 +1708,9 @@ public class TestManagerController {
 		for (Flavor flavor : flavors) {
 			boolean thereIs = false;
 			for (String valueFlavor : verifyFlavors) {
-				if (flavor.getMem().equals(ManagerController.getAttValue("mem", valueFlavor))
+				if (flavor.getMem().equals(ResourceRepository.getAttValue("mem", valueFlavor))
 						&& flavor.getCpu()
-								.equals(ManagerController.getAttValue("cpu", valueFlavor))) {
+								.equals(ResourceRepository.getAttValue("cpu", valueFlavor))) {
 					thereIs = true;
 				}
 			}
@@ -1717,15 +1718,6 @@ public class TestManagerController {
 				Assert.fail();
 			}
 		}
-	}
-	
-	@Test
-	public void testGetAttValue() {
-		String cpuValue = "2";
-		String memValue = "10";
-		String flavorSpec = "{cpu=" + cpuValue + ",mem=" + memValue + "}";
-		Assert.assertEquals(cpuValue, ManagerController.getAttValue("cpu", flavorSpec));
-		Assert.assertEquals(memValue, ManagerController.getAttValue("mem", flavorSpec));		
 	}
 	
 	@Test

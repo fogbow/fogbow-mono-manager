@@ -103,7 +103,7 @@ public class ManagerController {
 			throw new IllegalArgumentException();
 		}
 		this.properties = properties;
-		populateStaticFlavors();
+		setFlavorsProvided(ResourceRepository.getStaticFlavors(properties));
 		if (executor == null) {
 			this.requestSchedulerTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
 			this.tokenUpdaterTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
@@ -119,6 +119,10 @@ public class ManagerController {
 			this.garbageCollectorTimer = new ManagerTimer(executor);
 			this.accountingUpdaterTimer = new ManagerTimer(executor);
 		}
+	}
+	
+	public void setFlavorsProvided(List<Flavor> flavorsProvided) {
+		this.flavorsProvided = flavorsProvided;
 	}
 	
 	public void setMemberPickerPlugin(FederationMemberPicker memberPicker) {
@@ -1259,28 +1263,28 @@ public class ManagerController {
 		return this.flavorsProvided;
 	}
 	
-	private void populateStaticFlavors() {
-		List<Flavor> flavors = new ArrayList<Flavor>();
-		for (Object objectKey: this.properties.keySet()) {
-			String key = objectKey.toString();
-			if (key.startsWith(ConfigurationConstants.PREFIX_FLAVORS)) {
-				String value = (String) this.properties.get(key);
-				String cpu = getAttValue("cpu", value);
-				String mem = getAttValue("mem", value);				
-				flavors.add(new Flavor(key.replace(ConfigurationConstants.PREFIX_FLAVORS, ""), cpu, mem, "0"));
-			}			
-		}
-		flavorsProvided = flavors;
-	}
+//	private void populateStaticFlavors() {
+//		List<Flavor> flavors = new ArrayList<Flavor>();
+//		for (Object objectKey: this.properties.keySet()) {
+//			String key = objectKey.toString();
+//			if (key.startsWith(ConfigurationConstants.PREFIX_FLAVORS)) {
+//				String value = (String) this.properties.get(key);
+//				String cpu = getAttValue("cpu", value);
+//				String mem = getAttValue("mem", value);				
+//				flavors.add(new Flavor(key.replace(ConfigurationConstants.PREFIX_FLAVORS, ""), cpu, mem, "0"));
+//			}			
+//		}
+//		flavorsProvided = flavors;
+//	}
 	
-	public static String getAttValue(String attName, String flavorSpec) {		
-		try {
-			JSONObject root = new JSONObject(flavorSpec);
-			return root.getString(attName);
-		} catch (Exception e) {
-			return null;
-		}
-	}
+//	public static String getAttValue(String attName, String flavorSpec) {		
+//		try {
+//			JSONObject root = new JSONObject(flavorSpec);
+//			return root.getString(attName);
+//		} catch (Exception e) {
+//			return null;
+//		}
+//	}
 
 	public List<ResourceUsage> getMembersUsage(String federationAccessId) {
 		checkFederationAccessId(federationAccessId);		

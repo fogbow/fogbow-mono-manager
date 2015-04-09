@@ -28,7 +28,6 @@ import org.apache.http.params.CoreProtocolPNames;
 import org.apache.http.params.HttpParams;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
-import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.RequirementsHelper;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ImageState;
@@ -39,6 +38,7 @@ import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
+import org.fogbowcloud.manager.occi.core.ResourceRepository;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.instance.Instance;
@@ -406,9 +406,9 @@ public class OCCIComputePlugin implements ComputePlugin {
 			final String key = (String) keyPropertie;
 			if (key.startsWith(PREFIX_OCCI_FLAVORS_PROVIDED)) {
 				String value = properties.getProperty(key);
-				String cpu = ManagerController.getAttValue("cpu", value);
-				String mem = ManagerController.getAttValue("mem", value);
-				String disk = ManagerController.getAttValue("disk", value);
+				String cpu = ResourceRepository.getAttValue("cpu", value);
+				String mem = ResourceRepository.getAttValue("mem", value);
+				String disk = ResourceRepository.getAttValue("disk", value);
 				
 				String flavorCorrect = key.replace(PREFIX_OCCI_FLAVORS_PROVIDED, "");
 				
