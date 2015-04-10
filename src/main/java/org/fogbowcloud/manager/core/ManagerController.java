@@ -13,6 +13,7 @@ import java.util.Properties;
 import java.util.TimerTask;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -91,7 +92,8 @@ public class ManagerController {
 	private AsyncPacketSender packetSender;
 	private FederationMemberValidator validator;
 	private Map<String, ForwardedRequest> asynchronousRequests = new ConcurrentHashMap<String, ForwardedRequest>();
-
+	private final ExecutorService BENCHMARK_EXECUTOR = Executors.newScheduledThreadPool(10);
+	
 	private DateUtils dateUtils = new DateUtils();
 	public ManagerController(Properties properties) {
 		this(properties, null);
@@ -579,25 +581,24 @@ public class ManagerController {
 		requests.addRequest(requestingUserToken.getUser(), request);
 	}
 
-	public String createInstanceWithFederationUser(String requestingMemberId, List<Category> categories,
-			Map<String, String> xOCCIAtt, String instanceToken, Token requestingUserToken) {
+	public String createInstanceWithFederationUser(Request request) {
 		FederationMember member = null;
 		try {
-			member = getFederationMember(requestingMemberId);
+			member = getFederationMember(request.getRequestingMemberId());
 		} catch (Exception e) {
 		}
 
-		if (!properties.getProperty("xmpp_jid").equals(requestingMemberId) && 
-				!validator.canDonateTo(member, requestingUserToken)) {
+		if (!properties.getProperty("xmpp_jid").equals(request.getRequestingMemberId()) && 
+				!validator.canDonateTo(member, request.getFederationToken())) {
 			return null;
 		}
-		LOGGER.info("Submiting request with categories: " + categories + " and xOCCIAtt: "
-				+ xOCCIAtt + " for requesting member: " + requestingMemberId + " with requestingToken " + requestingUserToken);
-		if (instanceToken == null) {
-			instanceToken = String.valueOf(UUID.randomUUID());
-		}
+		List<Category> categories = request.getCategories();
+		Map<String, String> xOCCIAtt = request.getxOCCIAtt();
+		LOGGER.info("Submiting request with categories: " + categories  + " and xOCCIAtt: "
+				+ xOCCIAtt + " for requesting member: " + request.getRequestingMemberId() + " with requestingToken " + request.getRequestingMemberId());
+
 		try {
-			String command = UserdataUtils.createBase64Command(instanceToken, 
+			String command = UserdataUtils.createBase64Command(request.getId(), 
 					properties.getProperty(ConfigurationConstants.SSH_PRIVATE_HOST_KEY),
 					properties.getProperty(ConfigurationConstants.SSH_HOST_PORT_KEY),
 					properties.getProperty(ConfigurationConstants.SSH_HOST_HTTP_PORT_KEY));
@@ -625,22 +626,26 @@ public class ManagerController {
 			String instanceId = computePlugin.requestInstance(federationUserToken, categoriesWithoutImage,
 					xOCCIAtt, localImageId);
 			
-			Instance instance = computePlugin.getInstance(federationUserToken, instanceId);
-			benchmarkingPlugin.run(generateGlobalId(instanceId, null), instance);
-
+			request.setState(RequestState.SPAWNING);
+			
+			try {
+				execBenchmark(request, instanceId, properties.getProperty(ConfigurationConstants.XMPP_JID_KEY), true);
+			} catch (Throwable e) {
+				
+				request.setState(RequestState.OPEN);
+			}
 			return instanceId;
 		} catch (OCCIException e) {
 			if (e.getType() == ErrorType.QUOTA_EXCEEDED) {
 				ArrayList<Request> requestsWithInstances = new ArrayList<Request>(
 						requests.getRequestsIn(RequestState.FULFILLED, RequestState.DELETED));
-				Request requestToPreemption = prioritizationPlugin.takeFrom(requestingMemberId,	requestsWithInstances);
+				Request requestToPreemption = prioritizationPlugin.takeFrom(request.getRequestingMemberId(), requestsWithInstances);
 
 				if (requestToPreemption == null) {
 					throw e;
 				}
 				preemption(requestToPreemption);
-				return createInstanceWithFederationUser(requestingMemberId, categoriesWithoutImage, xOCCIAtt,
-						instanceToken, requestingUserToken);
+				return createInstanceWithFederationUser(request);
 			}
 
 			if (e.getStatus().getCode() == HttpStatus.SC_BAD_REQUEST) {
@@ -909,25 +914,13 @@ public class ManagerController {
 						asynchronousRequests.get(request.getId()).setTimeStamp(
 								dateUtils.currentTimeMillis());
 						
-						Instance remoteInstance;
 						try {
-							remoteInstance = getRemoteInstance(memberAddress, instanceId);
+							execBenchmark(request, instanceId, memberAddress, true);
 						} catch (Throwable e) {
-							LOGGER.error("Error while getting remote instance " + instanceId
-									+ " at member " + memberAddress + ".", e);
+							LOGGER.error("Error while executing the benchmark in " + instanceId
+									+ " from member " + memberAddress + ".", e);
 							asynchronousRequests.remove(request.getId());
 							return;
-						}
-						
-						benchmarkingPlugin.run(generateGlobalId(instanceId, memberAddress), remoteInstance);
-						
-						request.setState(RequestState.FULFILLED);
-						request.setInstanceId(instanceId);
-												
-						asynchronousRequests.remove(request.getId()); 
-						
-						if (!instanceMonitoringTimer.isScheduled()) {
-							triggerInstancesMonitor();
 						}
 					}
 					
@@ -957,10 +950,9 @@ public class ManagerController {
 	}
 	
 	private boolean createLocalInstance(Request request) {
-		String instanceId = null;
 		LOGGER.info("Submiting local request " + request);		
 		
-		try {			
+		try {
 			try {
 				String command = UserdataUtils.createBase64Command(request.getId(),
 						properties.getProperty(ConfigurationConstants.SSH_PRIVATE_HOST_KEY),
@@ -984,27 +976,30 @@ public class ManagerController {
 					continue;
 				}
 				categories.add(category);
-			}
+			}			
+			String instanceId = computePlugin.requestInstance(request.getLocalToken(),
+					categories, request.getxOCCIAtt(), localImageId);			
+			request.setState(RequestState.SPAWNING);
 			
-			instanceId = computePlugin.requestInstance(request.getLocalToken(),
-					categories, request.getxOCCIAtt(), localImageId);
-
-			Instance instance = computePlugin.getInstance(request.getLocalToken(), instanceId);
-			benchmarkingPlugin.run(generateGlobalId(instanceId, null), instance);
+			execBenchmark(request, instanceId, properties.getProperty(ConfigurationConstants.XMPP_JID_KEY), false);
 		} catch (OCCIException e) {
 			ErrorType errorType = e.getType();
 			if (errorType == ErrorType.QUOTA_EXCEEDED) {
 				LOGGER.warn("Request failed locally for quota exceeded.", e);
+				request.setState(RequestState.OPEN);
 				return false;
 			} else if (errorType == ErrorType.UNAUTHORIZED) {
 				LOGGER.warn("Request failed locally for user unauthorized.", e);
+				request.setState(RequestState.OPEN);
 				return false;
 			} else if (errorType == ErrorType.BAD_REQUEST) {
 				LOGGER.warn("Request failed locally for image not found.", e);
+				request.setState(RequestState.OPEN);
 				return false;
 			} else if (errorType == ErrorType.NO_VALID_HOST_FOUND) {
 				LOGGER.warn("Request failed because no valid host was found,"
 						+ " we will try to wake up a sleeping host.", e);
+				request.setState(RequestState.OPEN);
 				wakeUpSleepingHosts(request);
 				return false;
 			} else {
@@ -1013,16 +1008,41 @@ public class ManagerController {
 				LOGGER.warn("Request failed locally for an unknown reason.", e);
 				return true;				
 			}
-		}
-
-		request.setInstanceId(instanceId);
-		request.setState(RequestState.FULFILLED);
-		request.setProvidingMemberId(properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
-		LOGGER.debug("Fulfilled Request: " + request);
-		if (!instanceMonitoringTimer.isScheduled()) {
-			triggerInstancesMonitor();
-		}
+		}		
 		return true;
+	}
+
+	private void execBenchmark(final Request request, final String instanceId,
+			final String providingMemberAddress, final boolean fulfilledByFederationUser) {
+
+		BENCHMARK_EXECUTOR.execute(new Runnable() {
+			@Override
+			public void run() {
+				Instance instance = computePlugin.getInstance(request.getLocalToken(), instanceId);
+				benchmarkingPlugin.run(generateGlobalId(instanceId, providingMemberAddress),
+						instance);
+
+				request.setInstanceId(instanceId);
+				request.setState(RequestState.FULFILLED);
+				request.setProvidingMemberId(providingMemberAddress);
+				request.setFulfilledByFederationUser(fulfilledByFederationUser);
+
+				if (request.isLocal() && !isFulfilledByLocalMember(request)) {
+					asynchronousRequests.remove(request.getId());
+				}
+
+				LOGGER.debug("Fulfilled Request: " + request);
+
+				if (request.isLocal() && !instanceMonitoringTimer.isScheduled()) {
+					triggerInstancesMonitor();
+				}
+
+				if (!request.isLocal() && !servedRequestMonitoringTimer.isScheduled()) {
+					triggerServedRequestMonitoring();
+				}
+			}
+		});
+
 	}
 
 	private void triggerRequestScheduler() {
@@ -1162,27 +1182,13 @@ public class ManagerController {
 
 		String instanceId = null;
 		try {
-			instanceId = createInstanceWithFederationUser(request.getRequestingMemberId(),
-					request.getCategories(), request.getxOCCIAtt(), request.getId(), null);
+			instanceId = createInstanceWithFederationUser(request);
 		} catch (Exception e) {
 			LOGGER.info("Could not create instance with federation user locally." + e);
 		}
 
 		if (instanceId == null) {
 			return false;
-		}
-
-		request.setState(RequestState.FULFILLED);
-		request.setInstanceId(instanceId);
-		request.setProvidingMemberId(properties.getProperty("xmpp_jid"));
-		request.setFulfilledByFederationUser(true);		
-		
-		if (request.isLocal() && !instanceMonitoringTimer.isScheduled()) {
-			triggerInstancesMonitor();
-		}
-		
-		if (!request.isLocal() && !servedRequestMonitoringTimer.isScheduled()) {
-			triggerServedRequestMonitoring();
 		}
 		return true;
 	}

@@ -2,20 +2,17 @@ package org.fogbowcloud.manager.occi;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import org.apache.http.Header;
-import org.apache.http.message.BasicHeader;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
+import org.fogbowcloud.manager.core.FederationMemberPicker;
 import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
-import org.fogbowcloud.manager.core.plugins.occi.OCCIComputePlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
@@ -80,11 +77,14 @@ public class TestOCCIApplication {
 		
 		BenchmarkingPlugin benchmarkingPlugin = Mockito.mock(BenchmarkingPlugin.class);
 		
+		FederationMemberPicker memberPickerPlugin = Mockito.mock(FederationMemberPicker.class);
+		
 		managerFacade.setAuthorizationPlugin(authorizationPlugin);
 		managerFacade.setLocalIdentityPlugin(identityPlugin);
 		managerFacade.setFederationIdentityPlugin(identityPlugin);
 		managerFacade.setComputePlugin(computePlugin);
 		managerFacade.setBenchmarkingPlugin(benchmarkingPlugin);
+		managerFacade.setMemberPickerPlugin(memberPickerPlugin);
 	}
 
 	@Test
@@ -96,7 +96,6 @@ public class TestOCCIApplication {
 		String requestId = requests.get(0).getId();
 		Request requestDetails = occiApplication.getRequest(OCCITestHelper.FED_ACCESS_TOKEN, requestId);
 
-		Thread.sleep(100);
 		Assert.assertEquals(requestId, requestDetails.getId());
 		Assert.assertNull(requestDetails.getInstanceId());
 		Assert.assertEquals(RequestState.OPEN, requestDetails.getState());
@@ -149,7 +148,7 @@ public class TestOCCIApplication {
 	}
 
 	@Test
-	public void testRemoveAllRequest() {
+	public void testRemoveAllRequest() throws InterruptedException {
 		int numberOfInstances = 10;
 		xOCCIAtt.put(RequestAttribute.INSTANCE_COUNT.getValue(), String.valueOf(numberOfInstances));
 		occiApplication.createRequests(OCCITestHelper.FED_ACCESS_TOKEN, OCCITestHelper.LOCAL_ACCESS_TOKEN, new ArrayList<Category>(),
@@ -159,7 +158,6 @@ public class TestOCCIApplication {
 				.getRequestsFromUser(OCCITestHelper.FED_ACCESS_TOKEN);
 
 		Assert.assertEquals(numberOfInstances, requestsFromUser.size());
-
 		occiApplication.removeAllRequests(OCCITestHelper.FED_ACCESS_TOKEN);
 		requestsFromUser = occiApplication.getRequestsFromUser(OCCITestHelper.FED_ACCESS_TOKEN);
 

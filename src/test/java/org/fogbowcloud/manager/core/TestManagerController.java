@@ -151,6 +151,7 @@ public class TestManagerController {
 		managerController.setRequests(requestRepository);
 
 		managerController.checkAndSubmitOpenRequests();
+		waitBenchmarkExecutor();
 
 		List<Request> requestsFromUser = managerController.getRequestsFromUser(token.getAccessId());
 		for (Request request : requestsFromUser) {
@@ -263,10 +264,10 @@ public class TestManagerController {
 		listMembers.add(new FederationMember(remoteResourcesInfo));
 		managerController.updateMembers(listMembers);
 
-		Request request1 = new Request("id1",
-				managerTestHelper.getDefaultFederationToken(),
-				managerTestHelper.getDefaultLocalToken(),
-				new ArrayList<Category>(), new HashMap<String, String>(), true, "");
+		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(),
+				managerTestHelper.getDefaultLocalToken(), new ArrayList<Category>(),
+				new HashMap<String, String>(), true,
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		request1.setState(RequestState.OPEN);
 		RequestRepository requestRepository = new RequestRepository();
 		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(),
@@ -289,6 +290,8 @@ public class TestManagerController {
 		instanceEl.addElement("id").setText("newinstanceid");
 		callbacks.get(0).handle(iq);
 
+		waitBenchmarkExecutor();
+		
 		for (Request request : requestsFromUser) {
 			Assert.assertEquals(RequestState.FULFILLED, request.getState());
 			Assert.assertFalse(managerController.isRequestForwardedtoRemoteMember(request.getId()));
@@ -842,6 +845,7 @@ public class TestManagerController {
 
 		// getting instance for request
 		managerController.checkAndSubmitOpenRequests();
+		waitBenchmarkExecutor();
 
 		// checking if request has been fulfilled again
 		requestsFromUser = managerController
@@ -998,7 +1002,8 @@ public class TestManagerController {
 		// creating request
 		managerController.createRequests(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID, DefaultDataTestHelper.LOCAL_ACCESS_TOKEN_ID,
 				new ArrayList<Category>(), xOCCIAtt);
-		managerController.checkAndSubmitOpenRequests();
+		managerController.checkAndSubmitOpenRequests();		
+		waitBenchmarkExecutor();
 
 		List<Request> requests = managerController
 				.getRequestsFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
@@ -1011,6 +1016,14 @@ public class TestManagerController {
 		Assert.assertNotNull(requests.get(0).getProvidingMemberId());
 	}
 
+	private void waitBenchmarkExecutor() {
+		try {
+			Thread.sleep(DefaultDataTestHelper.GRACE_TIME);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}		
+	}
+
 	@Test
 	public void testOneTimeRequestSetFulfilledAndClosed() throws InterruptedException {
 		mockRequestInstance();
@@ -1019,7 +1032,8 @@ public class TestManagerController {
 		managerController.createRequests(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID, DefaultDataTestHelper.LOCAL_ACCESS_TOKEN_ID,
 				new ArrayList<Category>(), xOCCIAtt);
 		managerController.checkAndSubmitOpenRequests();
-
+		waitBenchmarkExecutor();
+		
 		// checking if request was properly created
 		List<Request> requests = managerController
 				.getRequestsFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
@@ -1056,6 +1070,7 @@ public class TestManagerController {
 		managerController.createRequests(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID, DefaultDataTestHelper.LOCAL_ACCESS_TOKEN_ID,
 				new ArrayList<Category>(), xOCCIAtt);
 		managerController.checkAndSubmitOpenRequests();
+		waitBenchmarkExecutor();
 
 		// checking if request was properly created
 		List<Request> requests = managerController
@@ -1106,6 +1121,7 @@ public class TestManagerController {
 		managerController.createRequests(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID, DefaultDataTestHelper.LOCAL_ACCESS_TOKEN_ID,
 				new ArrayList<Category>(), xOCCIAtt);
  		managerController.checkAndSubmitOpenRequests();
+ 		waitBenchmarkExecutor();
 
 		// checking if request was fulfilled with instanceID
 		List<Request> requests = managerController
@@ -1150,6 +1166,7 @@ public class TestManagerController {
 
 		// getting second instance
 		managerController.checkAndSubmitOpenRequests();
+		waitBenchmarkExecutor();
 
 		// checking if request was fulfilled with secondInstance
 		requests = managerController.getRequestsFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
@@ -1189,6 +1206,7 @@ public class TestManagerController {
 		// waiting expiration time
 		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD + DefaultDataTestHelper.GRACE_TIME);
 		managerController.checkAndSubmitOpenRequests();
+		waitBenchmarkExecutor();
 		requests = managerController.getRequestsFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
 
 		// checking if request was closed
@@ -1220,6 +1238,7 @@ public class TestManagerController {
 
 		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD);
 		managerController.checkAndSubmitOpenRequests();
+		waitBenchmarkExecutor();
 
 		// checking request is fulfilled
 		List<Request> requests = managerController
@@ -1249,6 +1268,7 @@ public class TestManagerController {
 				DefaultDataTestHelper.INSTANCE_ID  + Request.SEPARATOR_GLOBAL_ID
 	            + DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		managerController.checkAndSubmitOpenRequests();
+		waitBenchmarkExecutor();
 
 		// checking if request state was set to closed
 		requests = managerController.getRequestsFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
@@ -1354,6 +1374,7 @@ public class TestManagerController {
 		// sleeping for the scheduler period and submitting request
 		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD + DefaultDataTestHelper.GRACE_TIME);
 		managerController.checkAndSubmitOpenRequests();
+		waitBenchmarkExecutor();
 
 		// check if request is in valid period
 		requests = managerController.getRequestsFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
@@ -1410,6 +1431,7 @@ public class TestManagerController {
 		// sleeping for the scheduler period and submitting request
 		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD + DefaultDataTestHelper.GRACE_TIME);
 		managerController.checkAndSubmitOpenRequests();
+		waitBenchmarkExecutor();
 
 		// check if request is in valid period
 		requests = managerController.getRequestsFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
@@ -1455,6 +1477,7 @@ public class TestManagerController {
 		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD * 3 + DefaultDataTestHelper.GRACE_TIME);
 
 		managerController.checkAndSubmitOpenRequests();
+		waitBenchmarkExecutor();
 		
 		// checking is request is fulfilled
 		requests = managerController.getRequestsFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
@@ -1525,6 +1548,7 @@ public class TestManagerController {
 		// waiting for a time and request is into valid period
 		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD * 2 + DefaultDataTestHelper.GRACE_TIME);
 		managerController.checkAndSubmitOpenRequests();
+		waitBenchmarkExecutor();
 
 		// checking is request is fulfilled
 		requests = managerController.getRequestsFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
@@ -1583,30 +1607,23 @@ public class TestManagerController {
 		Mockito.doReturn(true).when(validatorMock).canDonateTo(Mockito.eq(member), Mockito.any(Token.class));
 		managerController.setValidator(validatorMock);
 
-		Token token = Mockito.mock(Token.class);
-		Mockito.doReturn(null).when(token).getAccessId();
+		ComputePlugin computePlugin = Mockito.mock(OpenStackOCCIComputePlugin.class);
+		Mockito.doReturn("answer").when(computePlugin)
+				.requestInstance(Mockito.any(Token.class), Mockito.anyList(), Mockito.anyMap(), Mockito.anyString());
 
-		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
-		Mockito.when(identityPlugin.createFederationUserToken()).thenReturn(token);
-		managerController.setLocalIdentityPlugin(identityPlugin);
+		managerController.setComputePlugin(computePlugin);
 
-		ComputePlugin plugin = Mockito.mock(OpenStackOCCIComputePlugin.class);
-		Map<String, String> xOCCIAtt = new HashMap<String, String>();
-		List<Category> categories = new ArrayList<Category>();
-		categories.add(new Category(RequestConstants.USER_DATA_TERM,
-						RequestConstants.SCHEME, RequestConstants.MIXIN_CLASS));
-		Mockito.doReturn("answer").when(plugin)
-				.requestInstance(token, categories, xOCCIAtt, null);
-
-		managerController.setComputePlugin(plugin);
+		Request request = new Request("id1", null,
+				null, new ArrayList<Category>(), xOCCIAtt,
+				false, "abc");
+		
 		Assert.assertEquals("answer",
-				managerController.createInstanceWithFederationUser("abc", new ArrayList<Category>(), 
-						xOCCIAtt, null, managerTestHelper.getDefaultFederationToken()));
+				managerController.createInstanceWithFederationUser(request));
 
 		Mockito.doReturn(false).when(validatorMock).canDonateTo(Mockito.eq(member), Mockito.any(Token.class));
 		managerController.setValidator(validatorMock);
-		Assert.assertEquals(null,
-				managerController.createInstanceWithFederationUser("abc", null, xOCCIAtt, null, null));
+		
+		Assert.assertNull(managerController.createInstanceWithFederationUser(request));
 	}
 	
 	@Test
@@ -1903,6 +1920,7 @@ public class TestManagerController {
 		managerController.queueServedRequest("manager1-test.com", new ArrayList<Category>(),
 				xOCCIAtt, "id1", managerTestHelper.getDefaultFederationToken());
 		managerController.checkAndSubmitOpenRequests();
+		waitBenchmarkExecutor();
 		
 		// checking there is one served request
 		Assert.assertEquals(1, managerController.getRemoteRequests().size());
@@ -1947,6 +1965,7 @@ public class TestManagerController {
 		managerController.queueServedRequest("manager1-test.com", new ArrayList<Category>(),
 				xOCCIAtt, "id1", managerTestHelper.getDefaultFederationToken());		
 		managerController.checkAndSubmitOpenRequests();
+		waitBenchmarkExecutor();
 				
 		// checking there is one served request
 		System.out.println(managerController.getRemoteRequests());
@@ -2093,6 +2112,7 @@ public class TestManagerController {
 		managerController.queueServedRequest("manager1-test.com", new ArrayList<Category>(),
 				xOCCIAtt, "id1", managerTestHelper.getDefaultFederationToken());		
 		managerController.checkAndSubmitOpenRequests();
+		waitBenchmarkExecutor();
 				
 		// checking there is one served request
 		Assert.assertEquals(1, managerController.getRemoteRequests().size());
