@@ -58,7 +58,7 @@ import org.w3c.dom.Element;
 
 public class OpenNebulaComputePlugin implements ComputePlugin {
 
-	public static final String OPENNEBULA_TEMPLATES = "opennebula_templates";
+	public static final String OPENNEBULA_TEMPLATES = "compute_one_templates";
 	public static final String OPENNEBULA_TEMPLATES_TYPE_ALL = "all";	
 	public static final int VALUE_DEFAULT_QUOTA_OPENNEBULA = -1;
 	public static final int VALUE_UNLIMITED_QUOTA_OPENNEBULA = -2;

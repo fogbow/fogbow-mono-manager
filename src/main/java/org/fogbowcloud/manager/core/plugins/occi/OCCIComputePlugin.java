@@ -71,7 +71,7 @@ public class OCCIComputePlugin implements ComputePlugin {
 	private List<Flavor> flavors = new ArrayList<Flavor>();
 
 	protected static final Logger LOGGER = Logger.getLogger(OCCIComputePlugin.class);
-	public static final String PREFIX_OCCI_FLAVORS_PROVIDED = "occi_flavors_";
+	public static final String PREFIX_OCCI_FLAVORS_PROVIDED = "compute_occi_flavors_";
 
 	public OCCIComputePlugin(Properties properties) {
 		this.oCCIEndpoint = properties.getProperty("compute_occi_url");
