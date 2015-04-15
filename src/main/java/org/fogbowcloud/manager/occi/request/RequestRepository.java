@@ -24,16 +24,16 @@ public class RequestRepository {
 		userRequests.add(request);
 	}
 
-	public List<Request> get(RequestState... states) {
-		List<Request> requestInState = new LinkedList<Request>();
+	public List<Request> getRequestsIn(RequestState... states) {
+		List<Request> allRequestsInState = new LinkedList<Request>();
 		for (List<Request> userRequests : requests.values()) {
 			for (Request request : userRequests) {
 				if (request.getState().in(states)) {
-					requestInState.add(request);
+					allRequestsInState.add(request);
 				}
 			}
 		}
-		return requestInState;
+		return allRequestsInState;
 	}
 
 	public Request get(String requestId) {
@@ -116,13 +116,39 @@ public class RequestRepository {
 		}
 	}
 
-	public List<Request> getAll() {
-		List<Request> allRequests = new LinkedList<Request>();
+	public List<Request> getAllLocalRequests() {
+		List<Request> allLocalRequests = new LinkedList<Request>();
 		for (List<Request> userRequests : requests.values()) {
 			for (Request request : userRequests) {
-				allRequests.add(request);
+				if (request.isLocal()){
+					allLocalRequests.add(request);
+				}
 			}
 		}
-		return allRequests;
+		return allLocalRequests;
+	}
+	
+	public List<Request> getAllRemoteRequests() {
+		List<Request> allRemoteRequests = new LinkedList<Request>();
+		for (List<Request> userRequests : requests.values()) {
+			for (Request request : userRequests) {
+				if (!request.isLocal()){
+					allRemoteRequests.add(request);
+				}
+			}
+		}
+		return allRemoteRequests;
+	}
+	
+	public Request getRequestByInstance(String instanceId) {
+		for (List<Request> userRequests : requests.values()) {
+			for (Request request : userRequests) {
+				if (request.getState().in(RequestState.FULFILLED, RequestState.DELETED)
+						&& instanceId.equals(request.getInstanceId())) {
+					return request;
+				}
+			}
+		}
+		return null;
 	}
 }

@@ -74,10 +74,11 @@ public class TestRequestRemoteInstance {
 				INSTANCE_DEFAULT);
 
 		final BlockingQueue<String> bq = new LinkedBlockingQueue<String>();
-		ManagerPacketHelper.asynchronousRemoteRequest(request.getId(), 
-				request.getCategories(), request.getxOCCIAtt(), 
-				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, null,
-				managerTestHelper.createPacketSender(), new AsynchronousRequestCallback() {
+
+		ManagerPacketHelper.asynchronousRemoteRequest(request.getId(), request.getCategories(), 
+				request.getxOCCIAtt(), DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, 
+				request.getFederationToken(), managerTestHelper.createPacketSender(), 
+				new AsynchronousRequestCallback() {
 					
 					@Override
 					public void success(String instanceId) {
@@ -106,7 +107,7 @@ public class TestRequestRemoteInstance {
 				new HashMap<String, String>()), new Token("anyvalue",
 				OCCITestHelper.USER_MOCK,
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
-				new HashMap<String, String>()), categories, attributes);
+				new HashMap<String, String>()), categories, attributes, true, DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		request.setInstanceId(INSTANCE_DEFAULT);
 		return request;
 	}

@@ -7,6 +7,8 @@ public enum RequestState {
 	 * 
 	 * Failed: The request failed because bad parameters were specified.
 	 * 
+	 * Spawning: The request received an instance but it is not ready to be used yet.
+	 * 
 	 * Fulfilled: The request is currently active (fulfilled) and has an
 	 * associated Instance.
 	 * 
@@ -16,7 +18,7 @@ public enum RequestState {
 	 * subsequently was interrupted or terminated), or was not fulfilled within
 	 * the period specified.
 	 */
-	OPEN("open"), FAILED("failed"), FULFILLED("fulfilled"), DELETED("deleted"), CLOSED("closed");
+	OPEN("open"), FAILED("failed"), SPAWNING("spawning"), FULFILLED("fulfilled"), DELETED("deleted"), CLOSED("closed");
 
 	private String value;
 

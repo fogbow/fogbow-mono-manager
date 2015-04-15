@@ -10,6 +10,7 @@ import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.Token;
+import org.fogbowcloud.manager.occi.request.Request;
 import org.jamppa.component.handler.AbstractQueryHandler;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.PacketError.Condition;
@@ -54,8 +55,10 @@ public class RequestInstanceHandler extends AbstractQueryHandler {
 
 		IQ response = IQ.createResultIQ(query);
 		try {
-			String instanceId = facade.createInstanceWithFederationUser(query
-					.getFrom().toBareJID(), categories, xOCCIAtt, requestId, userToken);
+			Request request = new Request(requestId, userToken, userToken, categories, xOCCIAtt,
+					false, query.getFrom().toBareJID());			
+			
+			String instanceId = facade.createInstanceWithFederationUser(request);
 
 			if (instanceId == null) {
 				response.setError(Condition.item_not_found);

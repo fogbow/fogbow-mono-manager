@@ -16,7 +16,7 @@ import org.mockito.Mockito;
 
 public class TestNoFMemberPicker {
 
-	private AccountingPlugin accoutingPlugin;
+	private AccountingPlugin accountingPlugin;
 	private Properties properties;
 	private ManagerController facade;
 
@@ -27,7 +27,7 @@ public class TestNoFMemberPicker {
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		properties.put("nof_trustworthy", "false");
 		
-		accoutingPlugin = Mockito.mock(AccountingPlugin.class);
+		accountingPlugin = Mockito.mock(AccountingPlugin.class);
 		
 		facade = Mockito.mock(ManagerController.class);		
 	}
@@ -36,10 +36,10 @@ public class TestNoFMemberPicker {
 	public void testEmptyMembers() {
 		// mocking
 		Mockito.when(facade.getMembers()).thenReturn(new ArrayList<FederationMember>());
-		Mockito.when(accoutingPlugin.getMembersUsage()).thenReturn(
+		Mockito.when(accountingPlugin.getMembersUsage()).thenReturn(
 				new HashMap<String, ResourceUsage>());
 		
-		NoFMemberPicker nofPicker = new NoFMemberPicker(properties, accoutingPlugin);
+		NoFMemberPicker nofPicker = new NoFMemberPicker(properties, accountingPlugin);
 		Assert.assertNull(nofPicker.pick(facade.getMembers()));
 		Assert.assertFalse(nofPicker.getTrustworthy());
 	}
@@ -53,10 +53,10 @@ public class TestNoFMemberPicker {
 		membersToReturn.add(localMember);
 		
 		Mockito.when(facade.getMembers()).thenReturn(membersToReturn);
-		Mockito.when(accoutingPlugin.getMembersUsage()).thenReturn(
+		Mockito.when(accountingPlugin.getMembersUsage()).thenReturn(
 				new HashMap<String, ResourceUsage>());
 		
-		NoFMemberPicker nofPicker = new NoFMemberPicker(properties, accoutingPlugin);
+		NoFMemberPicker nofPicker = new NoFMemberPicker(properties, accountingPlugin);
 		Assert.assertNull(nofPicker.pick(facade.getMembers()));
 		Assert.assertFalse(nofPicker.getTrustworthy());
 	}
@@ -79,10 +79,10 @@ public class TestNoFMemberPicker {
 		resUsage.addConsumption(4);
 		resUsage.addDonation(16);
 		membersUsageToReturn.put(DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL, resUsage);
-		Mockito.when(accoutingPlugin.getMembersUsage()).thenReturn(
+		Mockito.when(accountingPlugin.getMembersUsage()).thenReturn(
 				membersUsageToReturn);
 		
-		NoFMemberPicker nofPicker = new NoFMemberPicker(properties, accoutingPlugin);
+		NoFMemberPicker nofPicker = new NoFMemberPicker(properties, accountingPlugin);
 		Assert.assertEquals(remoteMember, nofPicker.pick(facade.getMembers()));
 		Assert.assertFalse(nofPicker.getTrustworthy());
 	}
@@ -112,10 +112,10 @@ public class TestNoFMemberPicker {
 		resUsage2.addConsumption(10);
 		resUsage2.addDonation(16);
 		membersUsageToReturn.put(DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL + "2", resUsage2);		
-		Mockito.when(accoutingPlugin.getMembersUsage()).thenReturn(
+		Mockito.when(accountingPlugin.getMembersUsage()).thenReturn(
 				membersUsageToReturn);
 		
-		NoFMemberPicker nofPicker = new NoFMemberPicker(properties, accoutingPlugin);
+		NoFMemberPicker nofPicker = new NoFMemberPicker(properties, accountingPlugin);
 		Assert.assertEquals(remoteMember1, nofPicker.pick(facade.getMembers()));
 		Assert.assertFalse(nofPicker.getTrustworthy());
 	}

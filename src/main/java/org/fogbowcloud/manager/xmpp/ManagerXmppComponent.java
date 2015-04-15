@@ -44,6 +44,7 @@ public class ManagerXmppComponent extends XMPPComponent implements AsyncPacketSe
 		addSetHandler(new RemoveInstanceHandler(managerFacade));
 		addSetHandler(new RequestInstanceHandler(managerFacade));
 		addGetHandler(new InstanceBeingUsedHandler(managerFacade));
+		
 	}
 
 	public void init() {

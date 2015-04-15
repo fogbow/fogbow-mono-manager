@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import org.dom4j.Element;
+import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.core.util.ManagerTestHelper;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.Token;
@@ -32,7 +33,7 @@ public class TestForwardedToken {
 		
 		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), 
 				managerTestHelper.getDefaultLocalToken(), new ArrayList<Category>(),
-				new HashMap<String, String>());
+				new HashMap<String, String>(), true, DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		request1.setState(RequestState.OPEN);
         
 		ManagerPacketHelper.asynchronousRemoteRequest(request1.getId(), request1.getCategories(), 
@@ -60,7 +61,7 @@ public class TestForwardedToken {
 		
 		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), 
 				managerTestHelper.getDefaultLocalToken(), new ArrayList<Category>(),
-				new HashMap<String, String>());
+				new HashMap<String, String>(), true, DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		request1.setState(RequestState.OPEN);
         
 		ManagerPacketHelper.asynchronousRemoteRequest(request1.getId(), request1.getCategories(), 
