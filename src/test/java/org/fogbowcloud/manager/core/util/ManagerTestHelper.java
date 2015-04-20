@@ -11,6 +11,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -18,6 +19,7 @@ import java.util.concurrent.TimeUnit;
 import org.dom4j.Attribute;
 import org.dom4j.Element;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
+import org.fogbowcloud.manager.core.CurrentThreadExecutorService;
 import org.fogbowcloud.manager.core.DefaultMemberValidator;
 import org.fogbowcloud.manager.core.FederationMemberPicker;
 import org.fogbowcloud.manager.core.ManagerController;
@@ -216,13 +218,17 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 				getResources());
 		Mockito.when(identityPlugin.createFederationUserToken()).thenReturn(defaultUserToken);
 
+		// mocking benchmark executor
+		ExecutorService benchmarkExecutor = new CurrentThreadExecutorService();
+				
 		managerFacade.setComputePlugin(computePlugin);
 		managerFacade.setLocalIdentityPlugin(identityPlugin);
 		managerFacade.setFederationIdentityPlugin(identityPlugin);
 		managerFacade.setBenchmarkingPlugin(benchmarkingPlugin);
 		managerFacade.setAccountingPlugin(accountingPlugin);
 		managerFacade.setValidator(new DefaultMemberValidator(null));
-		
+		managerFacade.setBenchmarkExecutor(benchmarkExecutor);
+				
 		managerXmppComponent = Mockito.spy(new ManagerXmppComponent(LOCAL_MANAGER_COMPONENT_URL,
 				MANAGER_COMPONENT_PASS, SERVER_HOST, SERVER_COMPONENT_PORT, managerFacade));
 				
@@ -234,6 +240,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		if (init) {
 			managerXmppComponent.init();
 		}
+		managerFacade.setPacketSender(managerXmppComponent);
 		return managerXmppComponent;
 	}
 
@@ -393,6 +400,9 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 				new FederationMember(new ResourcesInfo(
 						DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL, "", "", "", null)));
 		
+		// mocking benchmark executor
+		ExecutorService benchmarkExecutor = new CurrentThreadExecutorService();
+				
 		managerController.setAuthorizationPlugin(authorizationPlugin);
 		managerController.setLocalIdentityPlugin(identityPlugin);
 		managerController.setFederationIdentityPlugin(federationIdentityPlugin);
@@ -401,6 +411,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		managerController.setAccountingPlugin(accountingPlugin);
 		managerController.setValidator(new DefaultMemberValidator(null));
 		managerController.setMemberPickerPlugin(memberPickerPlugin);
+		managerController.setBenchmarkExecutor(benchmarkExecutor);
 		
 		return managerController;
 	}

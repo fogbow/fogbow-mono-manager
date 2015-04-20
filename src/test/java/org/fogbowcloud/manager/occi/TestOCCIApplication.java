@@ -2,20 +2,22 @@ package org.fogbowcloud.manager.occi;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
-import org.apache.http.Header;
-import org.apache.http.message.BasicHeader;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
+import org.fogbowcloud.manager.core.CurrentThreadExecutorService;
+import org.fogbowcloud.manager.core.FederationMemberPicker;
 import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
-import org.fogbowcloud.manager.core.plugins.occi.OCCIComputePlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
@@ -31,6 +33,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 public class TestOCCIApplication {
 
@@ -52,8 +56,20 @@ public class TestOCCIApplication {
 				DefaultDataTestHelper.SERVER_HOST);
 		properties.put(ConfigurationConstants.SSH_HOST_HTTP_PORT_KEY,
 				String.valueOf(DefaultDataTestHelper.TOKEN_SERVER_HTTP_PORT));
+				
+		ScheduledExecutorService executor = Mockito.mock(ScheduledExecutorService.class);
+		Mockito.when(executor.scheduleWithFixedDelay(Mockito.any(Runnable.class), Mockito.anyLong(), 
+				Mockito.anyLong(), Mockito.any(TimeUnit.class))).thenAnswer(new Answer<Future<?>>() {
+			@Override
+			public Future<?> answer(InvocationOnMock invocation)
+					throws Throwable {
+				Runnable runnable = (Runnable) invocation.getArguments()[0];
+				runnable.run();
+				return null;
+			}
+		});
 		
-		managerFacade = new ManagerController(properties);
+		managerFacade = new ManagerController(properties, executor);
 		occiApplication = new OCCIApplication(managerFacade);
 
 		// default instance count value is 1
@@ -80,11 +96,18 @@ public class TestOCCIApplication {
 		
 		BenchmarkingPlugin benchmarkingPlugin = Mockito.mock(BenchmarkingPlugin.class);
 		
+		FederationMemberPicker memberPickerPlugin = Mockito.mock(FederationMemberPicker.class);
+		
+		// mocking benchmark executor
+		ExecutorService benchmarkExecutor = new CurrentThreadExecutorService();
+		
 		managerFacade.setAuthorizationPlugin(authorizationPlugin);
 		managerFacade.setLocalIdentityPlugin(identityPlugin);
 		managerFacade.setFederationIdentityPlugin(identityPlugin);
 		managerFacade.setComputePlugin(computePlugin);
 		managerFacade.setBenchmarkingPlugin(benchmarkingPlugin);
+		managerFacade.setMemberPickerPlugin(memberPickerPlugin);
+		managerFacade.setBenchmarkExecutor(benchmarkExecutor);
 	}
 
 	@Test
@@ -96,7 +119,6 @@ public class TestOCCIApplication {
 		String requestId = requests.get(0).getId();
 		Request requestDetails = occiApplication.getRequest(OCCITestHelper.FED_ACCESS_TOKEN, requestId);
 
-		Thread.sleep(100);
 		Assert.assertEquals(requestId, requestDetails.getId());
 		Assert.assertNull(requestDetails.getInstanceId());
 		Assert.assertEquals(RequestState.OPEN, requestDetails.getState());
@@ -149,7 +171,7 @@ public class TestOCCIApplication {
 	}
 
 	@Test
-	public void testRemoveAllRequest() {
+	public void testRemoveAllRequest() throws InterruptedException {
 		int numberOfInstances = 10;
 		xOCCIAtt.put(RequestAttribute.INSTANCE_COUNT.getValue(), String.valueOf(numberOfInstances));
 		occiApplication.createRequests(OCCITestHelper.FED_ACCESS_TOKEN, OCCITestHelper.LOCAL_ACCESS_TOKEN, new ArrayList<Category>(),
@@ -159,7 +181,6 @@ public class TestOCCIApplication {
 				.getRequestsFromUser(OCCITestHelper.FED_ACCESS_TOKEN);
 
 		Assert.assertEquals(numberOfInstances, requestsFromUser.size());
-
 		occiApplication.removeAllRequests(OCCITestHelper.FED_ACCESS_TOKEN);
 		requestsFromUser = occiApplication.getRequestsFromUser(OCCITestHelper.FED_ACCESS_TOKEN);
 
