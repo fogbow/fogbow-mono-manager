@@ -576,11 +576,11 @@ public class ManagerController {
 	}
 	
 	public void queueServedRequest(String requestingMemberId, List<Category> categories,
-			Map<String, String> xOCCIAtt, String instanceToken, Token requestingUserToken){
+			Map<String, String> xOCCIAtt, String requestId, Token requestingUserToken){
 		
 		LOGGER.info("Queueing request with categories: " + categories + " and xOCCIAtt: "
 				+ xOCCIAtt + " for requesting member: " + requestingMemberId + " with requestingToken " + requestingUserToken);
-		Request request = new Request(instanceToken, requestingUserToken,
+		Request request = new Request(requestId, requestingUserToken,
 				requestingUserToken, categories, xOCCIAtt, false, requestingMemberId);
 		requests.addRequest(requestingUserToken.getUser(), request);
 		
@@ -634,14 +634,8 @@ public class ManagerController {
 			String instanceId = computePlugin.requestInstance(federationUserToken, categoriesWithoutImage,
 					xOCCIAtt, localImageId);
 			
-			request.setState(RequestState.SPAWNING);
-			
-			try {
-				execBenchmark(request, instanceId, properties.getProperty(ConfigurationConstants.XMPP_JID_KEY), true);
-			} catch (Throwable e) {
-				
-				request.setState(RequestState.OPEN);
-			}
+			request.setState(RequestState.SPAWNING);						
+			execBenchmark(request, instanceId, properties.getProperty(ConfigurationConstants.XMPP_JID_KEY), true);			
 			return instanceId;
 		} catch (OCCIException e) {
 			if (e.getType() == ErrorType.QUOTA_EXCEEDED) {
@@ -1025,7 +1019,12 @@ public class ManagerController {
 		benchmarkExecutor.execute(new Runnable() {
 			@Override
 			public void run() {
-				Instance instance = computePlugin.getInstance(request.getLocalToken(), instanceId);
+				Instance instance = null;
+				if (fulfilledByFederationUser) {
+					instance = computePlugin.getInstance(getFederationUserToken(), instanceId);
+				} else {
+					instance = computePlugin.getInstance(request.getLocalToken(), instanceId);
+				}
 				benchmarkingPlugin.run(generateGlobalId(instanceId, providingMemberAddress),
 						instance);
 
@@ -1036,6 +1035,10 @@ public class ManagerController {
 
 				if (request.isLocal() && !isFulfilledByLocalMember(request)) {
 					asynchronousRequests.remove(request.getId());
+				}
+
+				if (!request.isLocal()) {
+					ManagerPacketHelper.replyToServedRequest(request, packetSender);
 				}
 
 				LOGGER.debug("Fulfilled Request: " + request);
@@ -1191,7 +1194,8 @@ public class ManagerController {
 		try {
 			instanceId = createInstanceWithFederationUser(request);
 		} catch (Exception e) {
-			LOGGER.info("Could not create instance with federation user locally." + e);
+			e.printStackTrace();
+			LOGGER.info("Could not create instance with federation user locally. " + e);
 		}
 
 		if (instanceId == null) {

@@ -8,14 +8,11 @@ import java.util.Map;
 import org.dom4j.Element;
 import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.occi.core.Category;
-import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.Token;
-import org.fogbowcloud.manager.occi.request.Request;
-import org.jamppa.component.handler.AbstractQueryHandler;
+import org.jamppa.component.handler.AsyncQueryHandler;
 import org.xmpp.packet.IQ;
-import org.xmpp.packet.PacketError.Condition;
 
-public class RequestInstanceHandler extends AbstractQueryHandler {
+public class RequestInstanceHandler extends AsyncQueryHandler {
 
 	private ManagerController facade;
 
@@ -26,51 +23,30 @@ public class RequestInstanceHandler extends AbstractQueryHandler {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public IQ handle(IQ query) {
-		Element queryEl = query.getElement().element("query");
+	public void handleAsync(IQ iq) {
+		Element queryEl = iq.getElement().element("query");
 		List<Category> categories = new LinkedList<Category>();
 		List<Element> categoriesEl = queryEl.elements("category");
 		for (Element categoryEl : categoriesEl) {
 			Category category = new Category(categoryEl.elementText("term"),
-					categoryEl.elementText("scheme"),
-					categoryEl.elementText("class"));
+					categoryEl.elementText("scheme"), categoryEl.elementText("class"));
 			categories.add(category);
 		}
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
 		List<Element> attributesEl = queryEl.elements("attribute");
 		for (Element attributeEl : attributesEl) {
-			xOCCIAtt.put(attributeEl.attributeValue("var"), attributeEl
-					.element("value").getText());
+			xOCCIAtt.put(attributeEl.attributeValue("var"), attributeEl.element("value").getText());
 		}
-		
+
 		String requestId = queryEl.element("request").element("id").getText();
-		
+
 		Element tokenEl = queryEl.element("token");
 		Token userToken = null;
 		if (tokenEl != null) {
-			userToken = new Token(tokenEl.elementText("accessId"), 
-					tokenEl.elementText("user"), 
+			userToken = new Token(tokenEl.elementText("accessId"), tokenEl.elementText("user"),
 					null, new HashMap<String, String>());
 		}
-
-		IQ response = IQ.createResultIQ(query);
-		try {
-			Request request = new Request(requestId, userToken, userToken, categories, xOCCIAtt,
-					false, query.getFrom().toBareJID());			
-			
-			String instanceId = facade.createInstanceWithFederationUser(request);
-
-			if (instanceId == null) {
-				response.setError(Condition.item_not_found);
-			} else {
-				Element queryResponseEl = response.getElement().addElement(
-						"query", ManagerXmppComponent.REQUEST_NAMESPACE);
-				queryResponseEl.addElement("instance").addElement("id")
-						.setText(instanceId);
-			}
-		} catch (OCCIException e) {
-			response.setError(ManagerPacketHelper.getCondition(e));
-		}
-		return response;
+		facade.queueServedRequest(iq.getFrom().toBareJID(), categories, xOCCIAtt, requestId,
+				userToken);
 	}
 }

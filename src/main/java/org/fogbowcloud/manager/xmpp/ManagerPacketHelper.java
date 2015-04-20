@@ -146,47 +146,11 @@ public class ManagerPacketHelper {
 		}
 		return aliveItems;
 	}
-
-	public static String remoteRequest(Request request, String memberAddress,
-			PacketSender packetSender) {
-		IQ iq = new IQ();
-		iq.setTo(memberAddress);
-		iq.setType(Type.set);
-		Element queryEl = iq.getElement().addElement("query",
-				ManagerXmppComponent.REQUEST_NAMESPACE);
-		for (Category category : request.getCategories()) {
-			Element categoryEl = queryEl.addElement("category");
-			categoryEl.addElement("class").setText(category.getCatClass());
-			categoryEl.addElement("term").setText(category.getTerm());
-			categoryEl.addElement("scheme").setText(category.getScheme());
-		}
-		for (Entry<String, String> xOCCIEntry : request.getxOCCIAtt().entrySet()) {
-			Element attributeEl = queryEl.addElement("attribute");
-			attributeEl.addAttribute("var", xOCCIEntry.getKey());
-			attributeEl.addElement("value").setText(xOCCIEntry.getValue());
-		}		
-		Element requestEl = queryEl.addElement("request");
-		requestEl.addElement("id").setText(request.getId());
-		
-		if (request.getFederationToken() != null) {
-			Element tokenEl = queryEl.addElement("token");
-			tokenEl.addElement("accessId").setText(request.getFederationToken().getAccessId());
-			tokenEl.addElement("user").setText(request.getFederationToken().getUser());
-		}
-		
-		IQ response = (IQ) packetSender.syncSendPacket(iq);
-		if (response.getError() != null) {
-			if (response.getError().getCondition().equals(Condition.item_not_found)) {
-				return null;
-			}
-			raiseException(response.getError());
-		}
-		return response.getElement().element("query").element("instance").elementText("id");
-	}
 	
 	public static void asynchronousRemoteRequest(Request request, String memberAddress,
 			Token userFederationToken, AsyncPacketSender packetSender, final AsynchronousRequestCallback callback) {
 		IQ iq = new IQ();
+		iq.setID(request.getId());
 		iq.setTo(memberAddress);
 		iq.setType(Type.set);
 		Element queryEl = iq.getElement().addElement("query",
@@ -390,5 +354,21 @@ public class ManagerPacketHelper {
 		if (response.getError() != null) {
 			raiseException(response.getError());
 		}	
-	}	
+	}
+
+	public static void replyToServedRequest(Request request, PacketSender packetSender) {
+		IQ response = new IQ(Type.result, request.getId());
+		response.setFrom(request.getProvidingMemberId());
+		response.setTo(request.getRequestingMemberId());
+
+		if (request.getInstanceId() == null) {
+			response.setError(Condition.item_not_found);
+		} else {
+			Element queryResponseEl = response.getElement().addElement("query",
+					ManagerXmppComponent.REQUEST_NAMESPACE);
+			queryResponseEl.addElement("instance").addElement("id")
+					.setText(request.getInstanceId());
+		}
+		packetSender.sendPacket(response);		
+	}
 }

@@ -1,18 +1,14 @@
 package org.fogbowcloud.manager.xmpp;
 
 import java.security.cert.CertificateException;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.model.FederationMember;
-import org.jamppa.component.PacketCallback;
 import org.jamppa.component.XMPPComponent;
-import org.xmpp.packet.IQ;
 import org.xmpp.packet.Packet;
 
 public class ManagerXmppComponent extends XMPPComponent implements AsyncPacketSender {
@@ -31,8 +27,6 @@ public class ManagerXmppComponent extends XMPPComponent implements AsyncPacketSe
 	private String rendezvousAddress;
 	private int maxWhoIsAliveManagerCount = 100;
 	
-	private Map<String, PacketCallback> packetCallbacks = new HashMap<String, PacketCallback>();
-
 	public ManagerXmppComponent(String jid, String password, String server,
 			int port, ManagerController managerFacade) {
 		super(jid, password, server, port);
@@ -64,24 +58,6 @@ public class ManagerXmppComponent extends XMPPComponent implements AsyncPacketSe
 		super.send(packet);
 	}
 
-	@Override
-	protected void handleIQError(IQ iq) {
-		handleIQResult(iq);
-	}
-	
-	@Override
-	protected void handleIQResult(IQ iq) {
-		String packetCallbackId = iq.getID() + "@"
-                + iq.getFrom().toBareJID();
-		PacketCallback callback = packetCallbacks.get(packetCallbackId);
-        if (callback != null) {
-            callback.handle(iq);
-            packetCallbacks.remove(packetCallbackId);
-            return;
-        }
-        super.handleIQResult(iq);
-	}
-	
 	public void whoIsalive() throws Exception {
 		managerFacade.updateMembers(ManagerPacketHelper.whoIsalive(
 				rendezvousAddress, this, maxWhoIsAliveManagerCount));
@@ -121,11 +97,4 @@ public class ManagerXmppComponent extends XMPPComponent implements AsyncPacketSe
 	public ManagerController getManagerFacade() {
 		return managerFacade;
 	}
-	
-	@Override
-	public void addPacketCallback(Packet packet, PacketCallback packetCallback) {
-		packetCallbacks.put(packet.getID() + "@" + packet.getTo().toBareJID(),
-				packetCallback);
-	}
-
 }

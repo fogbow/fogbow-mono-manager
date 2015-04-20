@@ -218,13 +218,17 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 				getResources());
 		Mockito.when(identityPlugin.createFederationUserToken()).thenReturn(defaultUserToken);
 
+		// mocking benchmark executor
+		ExecutorService benchmarkExecutor = new CurrentThreadExecutorService();
+				
 		managerFacade.setComputePlugin(computePlugin);
 		managerFacade.setLocalIdentityPlugin(identityPlugin);
 		managerFacade.setFederationIdentityPlugin(identityPlugin);
 		managerFacade.setBenchmarkingPlugin(benchmarkingPlugin);
 		managerFacade.setAccountingPlugin(accountingPlugin);
 		managerFacade.setValidator(new DefaultMemberValidator(null));
-		
+		managerFacade.setBenchmarkExecutor(benchmarkExecutor);
+				
 		managerXmppComponent = Mockito.spy(new ManagerXmppComponent(LOCAL_MANAGER_COMPONENT_URL,
 				MANAGER_COMPONENT_PASS, SERVER_HOST, SERVER_COMPONENT_PORT, managerFacade));
 				
@@ -236,6 +240,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		if (init) {
 			managerXmppComponent.init();
 		}
+		managerFacade.setPacketSender(managerXmppComponent);
 		return managerXmppComponent;
 	}
 

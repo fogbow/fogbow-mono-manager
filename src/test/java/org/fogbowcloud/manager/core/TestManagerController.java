@@ -212,7 +212,6 @@ public class TestManagerController {
 				return iq.getTo().toBareJID().equals("green.server.com");
 			}
 		}));
-		
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -1590,6 +1589,9 @@ public class TestManagerController {
 
 		managerController.setComputePlugin(computePlugin);
 
+		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);
+		managerController.setPacketSender(packetSender);
+		
 		Request request = new Request("id1", null,
 				null, new ArrayList<Category>(), xOCCIAtt,
 				false, "abc");
@@ -1601,6 +1603,98 @@ public class TestManagerController {
 		managerController.setValidator(validatorMock);
 		
 		Assert.assertNull(managerController.createInstanceWithFederationUser(request));
+	}
+		
+	@Test
+	public void testReplyToServedRequestWithSuccess() {
+		ResourcesInfo resources = Mockito.mock(ResourcesInfo.class);
+		Mockito.doReturn("abc").when(resources).getId();
+
+		FederationMember member = Mockito.mock(FederationMember.class);
+		Mockito.doReturn(resources).when(member).getResourcesInfo();
+		List<FederationMember> list = new LinkedList<FederationMember>();
+		list.add(member);
+		managerController.updateMembers(list);
+
+		FederationMemberValidator validatorMock = Mockito.mock(FederationMemberValidator.class);
+		Mockito.doReturn(true).when(validatorMock).canDonateTo(Mockito.eq(member), Mockito.any(Token.class));
+		managerController.setValidator(validatorMock);
+
+		ComputePlugin computePlugin = Mockito.mock(OpenStackOCCIComputePlugin.class);
+		Mockito.doReturn("answer").when(computePlugin)
+				.requestInstance(Mockito.any(Token.class), Mockito.anyList(), Mockito.anyMap(), Mockito.anyString());
+
+		managerController.setComputePlugin(computePlugin);
+
+		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);
+		managerController.setPacketSender(packetSender);
+		
+		Request request = new Request("id1", null,
+				null, new ArrayList<Category>(), xOCCIAtt,
+				false, "abc");
+		
+		Assert.assertEquals("answer",
+				managerController.createInstanceWithFederationUser(request));
+
+		Mockito.verify(packetSender).sendPacket(Mockito.argThat(new ArgumentMatcher<IQ>() {
+			@Override
+			public boolean matches(Object argument) {
+				IQ iq = (IQ) argument;
+				if (!"id1".equals(iq.getID())) {
+					return false;
+				}				
+				String instanceId = iq.getElement().element("query").element("instance").elementText("id");
+				if (!"answer".equals(instanceId)){
+					return false;
+				}
+				return true;
+			}
+		}));		
+	}
+	
+	@Test
+	public void testReplyToServedRequestWithoutSuccess() {
+		ResourcesInfo resources = Mockito.mock(ResourcesInfo.class);
+		Mockito.doReturn("abc").when(resources).getId();
+
+		FederationMember member = Mockito.mock(FederationMember.class);
+		Mockito.doReturn(resources).when(member).getResourcesInfo();
+		List<FederationMember> list = new LinkedList<FederationMember>();
+		list.add(member);
+		managerController.updateMembers(list);
+
+		FederationMemberValidator validatorMock = Mockito.mock(FederationMemberValidator.class);
+		Mockito.doReturn(true).when(validatorMock).canDonateTo(Mockito.eq(member), Mockito.any(Token.class));
+		managerController.setValidator(validatorMock);
+
+		ComputePlugin computePlugin = Mockito.mock(OpenStackOCCIComputePlugin.class);
+		Mockito.doReturn(null).when(computePlugin)
+				.requestInstance(Mockito.any(Token.class), Mockito.anyList(), Mockito.anyMap(), Mockito.anyString());
+
+		managerController.setComputePlugin(computePlugin);
+
+		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);
+		managerController.setPacketSender(packetSender);
+		
+		Request request = new Request("id1", null,
+				null, new ArrayList<Category>(), xOCCIAtt,
+				false, "abc");
+		
+		Assert.assertNull(managerController.createInstanceWithFederationUser(request));
+
+		Mockito.verify(packetSender).sendPacket(Mockito.argThat(new ArgumentMatcher<IQ>() {
+			@Override
+			public boolean matches(Object argument) {
+				IQ iq = (IQ) argument;
+				if (!"id1".equals(iq.getID())) {
+					return false;
+				}				
+				if (!iq.getError().getCondition().equals(Condition.item_not_found)){
+					return false;
+				}				
+				return true;
+			}
+		}));		
 	}
 	
 	@Test
