@@ -92,7 +92,7 @@ public class ManagerController {
 	private AsyncPacketSender packetSender;
 	private FederationMemberValidator validator;
 	private Map<String, ForwardedRequest> asynchronousRequests = new ConcurrentHashMap<String, ForwardedRequest>();
-	private final ExecutorService BENCHMARK_EXECUTOR = Executors.newScheduledThreadPool(10);
+	private ExecutorService benchmarkExecutor = Executors.newScheduledThreadPool(10);
 	
 	private DateUtils dateUtils = new DateUtils();
 	public ManagerController(Properties properties) {
@@ -120,6 +120,10 @@ public class ManagerController {
 			this.garbageCollectorTimer = new ManagerTimer(executor);
 			this.accountingUpdaterTimer = new ManagerTimer(executor);
 		}
+	}
+	
+	public void setBenchmarkExecutor(ExecutorService benchmarkExecutor) {
+		this.benchmarkExecutor = benchmarkExecutor;
 	}
 	
 	public void setPrioritizationPlugin(PrioritizationPlugin prioritizationPlugin){
@@ -579,6 +583,10 @@ public class ManagerController {
 		Request request = new Request(instanceToken, requestingUserToken,
 				requestingUserToken, categories, xOCCIAtt, false, requestingMemberId);
 		requests.addRequest(requestingUserToken.getUser(), request);
+		
+		if (!requestSchedulerTimer.isScheduled()) {
+			triggerRequestScheduler();			
+		}
 	}
 
 	public String createInstanceWithFederationUser(Request request) {
@@ -932,7 +940,6 @@ public class ManagerController {
 						request.setProvidingMemberId(null);
 					}
 				});
-			
 	}
 
 	protected boolean isRequestForwardedtoRemoteMember(String requestId) {
@@ -1015,7 +1022,7 @@ public class ManagerController {
 	private void execBenchmark(final Request request, final String instanceId,
 			final String providingMemberAddress, final boolean fulfilledByFederationUser) {
 
-		BENCHMARK_EXECUTOR.execute(new Runnable() {
+		benchmarkExecutor.execute(new Runnable() {
 			@Override
 			public void run() {
 				Instance instance = computePlugin.getInstance(request.getLocalToken(), instanceId);
