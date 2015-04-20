@@ -410,8 +410,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 			resources.add(ResourceRepository.getInstance().get("os_tpl"));
 			
 			//TODO check this line
-//			resources.add(ResourceRepository.getInstance().get(flavorId));
-			resources.add(ResourceRepository.getInstance().get(getUsedFlavor(flavorId)));
+			resources.add(ResourceRepository.generateFlavorResource(getUsedFlavor(flavorId)));
 
 			LOGGER.debug("Instance resources: " + resources);
 
@@ -431,14 +430,6 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		}
 		return null;
 		
-//		if (fogbowTermToOpenStack.get(RequestConstants.SMALL_TERM).equals(flavorId)) {
-//			return RequestConstants.SMALL_TERM;
-//		} else if (fogbowTermToOpenStack.get(RequestConstants.MEDIUM_TERM).equals(flavorId)) {
-//			return RequestConstants.MEDIUM_TERM;
-//		} else if (fogbowTermToOpenStack.get(RequestConstants.LARGE_TERM).equals(flavorId)) {
-//			return RequestConstants.LARGE_TERM;
-//		}
-//		return null;
 	}
 	
 	private InstanceState getInstanceState(String instanceStatus) {

@@ -213,7 +213,7 @@ public class TestNovaV2ComputeOpenStack {
 		List<Resource> resources = new ArrayList<Resource>();
 		resources.add(ResourceRepository.getInstance().get("compute"));
 		resources.add(ResourceRepository.getInstance().get("os_tpl"));
-		resources.add(ResourceRepository.getInstance().get(RequestConstants.SMALL_TERM));
+		resources.add(ResourceRepository.generateFlavorResource(RequestConstants.SMALL_TERM));
 		
 		for (Resource resource : resources) {
 			Assert.assertTrue(instance.getResources().contains(resource));		

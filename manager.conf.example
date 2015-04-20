@@ -39,15 +39,22 @@ compute_occi_resource_scheme=http://schemas.openstack.org/template/resource#
 compute_occi_network_id=ea51ed0c-0e8a-448d-8202-c79777109ffe
 
 # If you are using the EgiImageStoragePlugin
-image_storage_class=org.fogbowcloud.manager.core.plugins.egi.EgiImageStoragePlugin
+image_storage_class=org.fogbowcloud.manager.core.plugins.imagestorage.egi.EgiImageStoragePlugin
 image_storage_egi_base_url=http://lsd.ufcg.edu.br/~user/vm/ 
 image_storage_egi_tmp_storage=/tmp/ 
 
 # If you are using the EgiApplianceImageStoragePlugin
-image_storage_class=org.fogbowcloud.manager.core.plugins.appliance.EgiApplianceImageStoragePlugin
+image_storage_class=org.fogbowcloud.manager.core.plugins.imagestorage.appliance.EgiApplianceImageStoragePlugin
 image_storage_appliance_base_url=http://appliance-repo.egi.eu/images
 image_storage_appliance_tmp_storage=/tmp/
 
+# If you are using the VMCatcherStoragePlugin
+image_storage_class=org.fogbowcloud.manager.core.plugins.imagestorage.vmcatcher.VMCatcherStoragePlugin
+image_storage_vmcatcher_glancepush_vmcmapping_file=/etc/vmcatcher/vmcmapping
+image_storage_vmcatcher_push_method=glancepush
+image_storage_vmcatcher_push_method=cesga
+
+# Applies to all image storage plugins
 image_storage_static_fogbow-linux-x86=55d938ef-57d1-44ea-8155-6036d170780a 
 image_storage_static_fogbow-ubuntu-1204=81765250-a4e4-440d-a215-43c9c0849120
 

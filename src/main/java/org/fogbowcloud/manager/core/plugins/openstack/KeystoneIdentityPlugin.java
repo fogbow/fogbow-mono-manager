@@ -89,6 +89,10 @@ public class KeystoneIdentityPlugin implements IdentityPlugin {
 	
 	@Override
 	public Token createToken(Map<String, String> credentials) {
+		return createToken(credentials, true);
+	}
+	
+	private Token createToken(Map<String, String> credentials, boolean encodeJSON) {
 		JSONObject json;
 		try {
 			json = mountJson(credentials);
@@ -104,7 +108,7 @@ public class KeystoneIdentityPlugin implements IdentityPlugin {
 		}
 		
 		String responseStr = doPostRequest(currentTokenEndpoint, json);
-		Token token = getTokenFromJson(responseStr, true);
+		Token token = getTokenFromJson(responseStr, encodeJSON);
 		
 		return token;
 	}
@@ -352,7 +356,7 @@ public class KeystoneIdentityPlugin implements IdentityPlugin {
 		federationUserCredentials.put(PASSWORD, password);
 		federationUserCredentials.put(TENANT_NAME, tenantName);
 		
-		return createToken(federationUserCredentials);
+		return createToken(federationUserCredentials, false);
 	}
 
 	@Override

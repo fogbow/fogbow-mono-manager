@@ -183,7 +183,7 @@ public class TestQueryServerResource {
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_QUERY);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		get.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
-		get.addHeader(OCCIHeaders.CATEGORY, "fogbow_small; " + 
+		get.addHeader(OCCIHeaders.CATEGORY, OCCITestHelper.FOGBOW_SMALL_IMAGE + "; " + 
 				"scheme=\"http://schemas.fogbowcloud.org/template/resource#\"; class=\"mixin\";");
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(get);
@@ -193,7 +193,7 @@ public class TestQueryServerResource {
 
 	@Test
 	public void testGetQueryFiltratedTwoCategories() throws Exception {
-		String categorySmall = "fogbow_small; " + 
+		String categorySmall = OCCITestHelper.FOGBOW_SMALL_IMAGE + "; " + 
 				"scheme=\"http://schemas.fogbowcloud.org/template/resource#\"; class=\"mixin\";";
 		String categoryFogboeRequest = "fogbow_request; " + 
 				"scheme=\"http://schemas.fogbowcloud.org/request#\"; class=\"kind\";";
