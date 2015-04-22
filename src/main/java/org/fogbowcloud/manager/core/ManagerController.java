@@ -76,8 +76,8 @@ public class ManagerController {
 	private static final long DEFAULT_GARBAGE_COLLECTOR_PERIOD = 240000; // 4 minutes
 	private static final long DEFAULT_INSTANCE_IP_MONITORING_PERIOD = 30000; // 30 seconds
 	private static final int DEFAULT_MAX_IP_MONITORING_TRIES = 30; // 30 tries
-	private static final String MANAGER_BENCHMARKING_SSH_USER = "fogbow";
 	private static final long DEFAULT_ACCOUNTING_UPDATE_PERIOD = 300000; // 5 minutes
+	public static final String MANAGER_BENCHMARKING_SSH_USER = "fogbow";
 																			
 	private final ManagerTimer requestSchedulerTimer;
 	private final ManagerTimer tokenUpdaterTimer;
@@ -1134,6 +1134,12 @@ public class ManagerController {
 				} else {
 					instance = computePlugin.getInstance(request.getLocalToken(), instanceId);
 				}
+				
+				//TODO check if this is really needed to have the SSH address in benchmarking
+				if (sshPublicAddress != null) {
+					instance.addAttribute(Instance.SSH_PUBLIC_ADDRESS_ATT, sshPublicAddress);
+				}
+				
 				benchmarkingPlugin.run(generateGlobalId(instanceId, providingMemberAddress),
 						instance);
 				

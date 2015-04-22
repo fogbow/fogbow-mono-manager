@@ -24,6 +24,7 @@ public class UserdataUtils {
 	protected static final String TOKEN_HOST_HTTP_PORT_STR = "#TOKEN_HOST_HTTP_PORT#";
 	protected static final String TOKEN_HOST_SSH_PORT_STR = "#TOKEN_HOST_SSH_PORT#";
 	protected static final String TOKEN_MANAGER_SSH_PUBLIC_KEY = "#TOKEN_MANAGER_SSH_PUBLIC_KEY#";
+	protected static final String TOKEN_MANAGER_SSH_USER = "#TOKEN_MANAGER_SSH_USER#";
 	private static final String DEFAULT_SSH_HOST_PORT = "22";
 	
 	public static String createBase64Command(String tokenId, String sshPrivateHostIP,
@@ -56,6 +57,8 @@ public class UserdataUtils {
 			String managerPublicKey = IOUtils.toString(new FileInputStream(
 					new File(managerPublicKeyFilePath)));
 			replacements.put(TOKEN_MANAGER_SSH_PUBLIC_KEY, managerPublicKey);
+			replacements.put(TOKEN_MANAGER_SSH_USER, 
+					ManagerController.MANAGER_BENCHMARKING_SSH_USER);
 		}
 		
 		for (Entry<String, String> entry : replacements.entrySet()) {
