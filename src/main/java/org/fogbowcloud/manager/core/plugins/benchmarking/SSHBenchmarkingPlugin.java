@@ -3,10 +3,10 @@ package org.fogbowcloud.manager.core.plugins.benchmarking;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 
 import net.schmizz.sshj.connection.channel.direct.Session.Command;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.ManagerController;
@@ -41,10 +41,12 @@ public class SSHBenchmarkingPlugin implements BenchmarkingPlugin {
 		String ipAndPort = instance.getAttributes().get(Instance.SSH_PUBLIC_ADDRESS_ATT);
 		if (ipAndPort != null) {
 			String[] sshAddressData = ipAndPort.split(":");
-			String output = sshBenchmarking(sshAddressData[0], sshAddressData[1], 
+			long startTimeInMillis = System.currentTimeMillis();
+			Command output = sshBenchmarking(sshAddressData[0], sshAddressData[1], 
 					ManagerController.MANAGER_BENCHMARKING_SSH_USER);
-			if (output != null) {
-				power = getFCUsFromOutput(output);
+			long endTimeInMillis = System.currentTimeMillis();
+			if (output != null && output.getExitStatus() == 0) {
+				power = getFCUsFromOutput(endTimeInMillis - startTimeInMillis);
 			}
 		}
 		
@@ -52,26 +54,19 @@ public class SSHBenchmarkingPlugin implements BenchmarkingPlugin {
 		instanceToPower.put(globalInstanceId, power);
 	}
 	
-	private String sshBenchmarking(String ip, String port, String user) {
+	private Command sshBenchmarking(String ip, String port, String user) {
 		SshHelper ssh = new SshHelper();
-		String output = null;
 		try {
 			ssh.connect(ip, Integer.parseInt(port), user,
 					this.managerPrivateKeyFilePath);
-			Command cmdOutput = ssh.doSshExecution("curl " + this.scriptUrl
+			String shellCmd = "curl " + this.scriptUrl
 					+ " -o script.sh -s && " + "chmod +x /home/" + user
 					+ "/script.sh &&" + "bash /home/" + user + "/script.sh &&"
-					+ "cat /home/" + user + "/benchTime.txt &&" + "rm /home/"
-					+ user + "/allTime.txt &&" + "rm /home/" + user
-					+ "/script.sh &&" + "rm /home/" + user + "/benchTime.txt &&"
-					+ "rm /home/" + user + "/bench");
-			output = IOUtils.toString(cmdOutput.getInputStream());
-			String stdErr = IOUtils.toString(cmdOutput.getErrorStream());
-			System.out.println(stdErr);
+					+ "rm /home/" + user + "/script.sh && rm /home/" + user + "/bench";
+			return ssh.doSshExecution(shellCmd);
 		} catch (Exception e) {
-			e.printStackTrace();
 		}
-		return output;
+		return null;
 	}
 	
 	/**
@@ -83,14 +78,10 @@ public class SSHBenchmarkingPlugin implements BenchmarkingPlugin {
 	 *            The output from benchmark in ssh.
 	 * @return The amount of FCUs benchmarked.
 	 */
-	protected double getFCUsFromOutput(String output) {
-		System.out.println(output);
+	protected double getFCUsFromOutput(long milliseconds) {
+		System.out.println(milliseconds + " milliseconds");
 
-		String time = output.replace("real", "").trim();
-		String[] timeArray = time.split("m");
-		double minutes = Double.parseDouble(timeArray[0]);
-		double seconds = Double.parseDouble(timeArray[1].replace("s", ""));
-		seconds += (minutes * 60.0);
+		double seconds = (double) TimeUnit.MILLISECONDS.toSeconds(milliseconds);
 		return (10.0 / seconds);
 
 	}
