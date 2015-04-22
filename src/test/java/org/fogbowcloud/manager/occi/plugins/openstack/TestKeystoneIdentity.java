@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.io.Charsets;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.openstack.KeystoneIdentityPlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
@@ -12,6 +14,8 @@ import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.util.PluginHelper;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -62,19 +66,27 @@ public class TestKeystoneIdentity {
 	}
 
 	@Test
-	public void testGetToken() {
+	public void testCreateToken() throws JSONException {
 		Map<String, String> tokenAttributes = new HashMap<String, String>();
 		tokenAttributes.put(KeystoneIdentityPlugin.USERNAME, PluginHelper.USERNAME);
 		tokenAttributes.put(KeystoneIdentityPlugin.PASSWORD, PluginHelper.USER_PASS);
 		tokenAttributes.put(KeystoneIdentityPlugin.TENANT_NAME, PluginHelper.TENANT_NAME);
 		Token token = this.keystoneIdentity.createToken(tokenAttributes);
-		String authToken = token.getAccessId();
+		
 		String user = token.getUser();
-		String tenantID = token.get(KeystoneIdentityPlugin.TENANT_ID);
 		Date expirationDate = token.getExpirationDate();
-		Assert.assertEquals(PluginHelper.ACCESS_ID, authToken);
+		
+		String plainJson = new String(Base64.decodeBase64(token.getAccessId()
+				.getBytes(Charsets.UTF_8)), Charsets.UTF_8);
+		JSONObject tokenJson = new JSONObject(plainJson);
+		
 		Assert.assertEquals(PluginHelper.USERNAME, user);		
-		Assert.assertEquals(PluginHelper.TENANT_ID, tenantID);
+		Assert.assertEquals(PluginHelper.ACCESS_ID, tokenJson.optString(KeystoneIdentityPlugin.ACCESS_PROP));
+		Assert.assertEquals(PluginHelper.TENANT_ID, token.get(KeystoneIdentityPlugin.TENANT_ID));
+		Assert.assertEquals(PluginHelper.TENANT_ID, tokenJson.optString(KeystoneIdentityPlugin.TENANT_ID));
+		Assert.assertEquals(PluginHelper.TENANT_NAME, token.get(KeystoneIdentityPlugin.TENANT_NAME));
+		Assert.assertEquals(PluginHelper.TENANT_NAME, tokenJson.optString(KeystoneIdentityPlugin.TENANT_NAME));
+		
 		Assert.assertEquals(KeystoneIdentityPlugin
 				.getDateOpenStackFormat(DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION),
 				KeystoneIdentityPlugin.getDateOpenStackFormat(expirationDate));
@@ -86,20 +98,14 @@ public class TestKeystoneIdentity {
 		tokenAttributes.put(KeystoneIdentityPlugin.USERNAME, PluginHelper.USERNAME);
 		tokenAttributes.put(KeystoneIdentityPlugin.PASSWORD, PluginHelper.USER_PASS);
 		tokenAttributes.put(KeystoneIdentityPlugin.TENANT_NAME, PluginHelper.TENANT_NAME);
-		Token token = this.keystoneIdentity.createToken(tokenAttributes);
-		String authToken = token.getAccessId();
-		String tenantID = token.get(KeystoneIdentityPlugin.TENANT_ID);
-		Date expirationDate = token.getExpirationDate();
-		Assert.assertEquals(PluginHelper.ACCESS_ID, authToken);
-		Assert.assertEquals(PluginHelper.TENANT_ID, tenantID);
-		Assert.assertEquals(KeystoneIdentityPlugin
-				.getDateOpenStackFormat(DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION),
-				KeystoneIdentityPlugin.getDateOpenStackFormat(expirationDate));
 		
-		Token token2 = this.keystoneIdentity.reIssueToken(token);
-		authToken = token2.getAccessId();
-		tenantID = token2.get(KeystoneIdentityPlugin.TENANT_ID);
-		expirationDate = token2.getExpirationDate();
+		Token token = this.keystoneIdentity.createToken(tokenAttributes);
+		Token token2 = this.keystoneIdentity.reIssueToken(
+				this.keystoneIdentity.getToken(token.getAccessId()));
+		
+		String authToken = token2.getAccessId();
+		String tenantID = token2.get(KeystoneIdentityPlugin.TENANT_ID);
+		Date expirationDate = token2.getExpirationDate();
 		Assert.assertEquals(PluginHelper.ACCESS_ID, authToken);
 		Assert.assertEquals(PluginHelper.TENANT_ID, tenantID);
 		Assert.assertEquals(KeystoneIdentityPlugin
@@ -146,5 +152,26 @@ public class TestKeystoneIdentity {
 		} catch (OCCIException e) {
 			Assert.assertEquals(ResponseConstants.UNKNOWN_HOST, e.getStatus().getDescription());
 		}
+	}
+	
+	@Test(expected=JSONException.class)
+	public void testGetTokenFederationUserShallNotReturnEncodedJSON() throws JSONException {
+		Properties properties = new Properties();
+		properties.put(ConfigurationConstants.IDENTITY_URL, KEYSTONE_URL);
+		properties.put(ConfigurationConstants.FEDERATION_USER_NAME_KEY, PluginHelper.USERNAME);
+		properties.put(ConfigurationConstants.FEDERATION_USER_PASS_KEY, PluginHelper.USER_PASS);
+		this.keystoneIdentity = new KeystoneIdentityPlugin(properties);
+		
+		Token federationUserToken = this.keystoneIdentity.createFederationUserToken();
+		new JSONObject(federationUserToken.getAccessId());
+	}
+	
+	@Test
+	public void testGetTokenWithNoJson() throws JSONException {
+		Token token = this.keystoneIdentity.getToken(PluginHelper.ACCESS_ID);
+		Assert.assertNotNull(token);
+		Assert.assertEquals(PluginHelper.USERNAME, token.getUser());		
+		Assert.assertEquals(PluginHelper.TENANT_ID, token.get(KeystoneIdentityPlugin.TENANT_ID));
+		Assert.assertEquals(PluginHelper.TENANT_NAME, token.get(KeystoneIdentityPlugin.TENANT_NAME));
 	}
 }

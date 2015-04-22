@@ -31,6 +31,7 @@ import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.OCCIApplication;
 import org.fogbowcloud.manager.occi.core.HeaderUtils;
 import org.fogbowcloud.manager.occi.core.OCCIHeaders;
+import org.fogbowcloud.manager.occi.core.ResourceRepository;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
@@ -43,6 +44,7 @@ import org.restlet.data.Protocol;
 
 public class OCCITestHelper {
 
+	public static final String FOGBOW_SMALL_IMAGE = "fogbow_small";
 	public static final String MEMBER_ID = "memberId";
 	public static final int ENDPOINT_PORT = PluginHelper.getAvailablePort();
 	public static final String FED_ACCESS_TOKEN = "HgjhgYUDFTGBgrbelihBDFGB40uyrb";
@@ -73,6 +75,7 @@ public class OCCITestHelper {
 				DefaultDataTestHelper.SERVER_HOST);
 		properties.put(ConfigurationConstants.SSH_HOST_HTTP_PORT_KEY,
 				String.valueOf(DefaultDataTestHelper.TOKEN_SERVER_HTTP_PORT));
+		properties.put(ConfigurationConstants.PREFIX_FLAVORS + FOGBOW_SMALL_IMAGE, "{cpu=1,mem=100}");
 		
 		ScheduledExecutorService executor = Mockito.mock(ScheduledExecutorService.class);
 		Mockito.when(executor.scheduleWithFixedDelay(Mockito.any(Runnable.class), Mockito.anyLong(), 
@@ -85,6 +88,8 @@ public class OCCITestHelper {
 				return null;
 			}
 		});
+		
+		ResourceRepository.init(properties);
 		
 		ManagerController facade = new ManagerController(properties, executor);
 		facade.setComputePlugin(computePlugin);
@@ -107,6 +112,11 @@ public class OCCITestHelper {
 				DefaultDataTestHelper.SERVER_HOST);
 		properties.put(ConfigurationConstants.SSH_HOST_HTTP_PORT_KEY,
 				String.valueOf(DefaultDataTestHelper.TOKEN_SERVER_HTTP_PORT));
+		properties.put(ConfigurationConstants.PREFIX_FLAVORS + FOGBOW_SMALL_IMAGE,
+				"{cpu=1,mem=100}");
+		
+		ResourceRepository.init(properties);
+		
 		ManagerController facade = new ManagerController(properties, 
 				Mockito.mock(ScheduledExecutorService.class));
 		facade.setComputePlugin(computePlugin);

@@ -44,23 +44,6 @@ public class TestRequestRemoteInstance {
 	public void tearDown() throws Exception {
 		this.managerTestHelper.shutdown();
 	}
-
-	@SuppressWarnings("unchecked")
-	@Test
-	public void testRequestRemote() throws Exception {
-		managerTestHelper.initializeXMPPManagerComponent(false);
-
-		Request request = createRequest();
-		Mockito.when(
-				managerTestHelper.getComputePlugin().requestInstance(Mockito.any(Token.class),
-						Mockito.any(List.class), Mockito.any(Map.class), Mockito.anyString())).thenReturn(
-				INSTANCE_DEFAULT);
-
-		String instanceId = ManagerPacketHelper.remoteRequest(request, MANAGER_COMPONENT_URL,
-				managerTestHelper.createPacketSender());
-
-		Assert.assertEquals(INSTANCE_DEFAULT, instanceId);
-	}
 	
 	@SuppressWarnings("unchecked")
 	@Test
@@ -75,7 +58,7 @@ public class TestRequestRemoteInstance {
 
 		final BlockingQueue<String> bq = new LinkedBlockingQueue<String>();
 		ManagerPacketHelper.asynchronousRemoteRequest(request, 
-				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, null,
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, request.getFederationToken(),
 				managerTestHelper.createPacketSender(), new AsynchronousRequestCallback() {
 					
 					@Override
@@ -105,60 +88,8 @@ public class TestRequestRemoteInstance {
 				new HashMap<String, String>()), new Token("anyvalue",
 				OCCITestHelper.USER_MOCK,
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
-				new HashMap<String, String>()), categories, attributes);
+				new HashMap<String, String>()), categories, attributes, true, DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		request.setInstanceId(INSTANCE_DEFAULT);
 		return request;
-	}
-
-	@SuppressWarnings("unchecked")
-	@Test
-	public void testRequestRemoteRequestCloudDoesNotSupportCategory() throws Exception {
-		managerTestHelper.initializeXMPPManagerComponent(false);
-
-		Request request = createRequest();
-		Mockito.when(
-				this.managerTestHelper.getComputePlugin().requestInstance(
-						Mockito.any(Token.class), Mockito.anyList(),
-						Mockito.anyMap(), Mockito.anyString())).thenThrow(
-				new OCCIException(ErrorType.BAD_REQUEST,
-						ResponseConstants.CLOUD_NOT_SUPPORT_CATEGORY));
-
-		String remoteRequest = ManagerPacketHelper.remoteRequest(request, MANAGER_COMPONENT_URL,
-				managerTestHelper.createPacketSender());
-		Assert.assertNull(remoteRequest);
-	}
-
-	@SuppressWarnings("unchecked")
-	@Test
-	public void testRequestRemoteRequestNotFound() throws Exception {
-		managerTestHelper.initializeXMPPManagerComponent(false);
-
-		Request request = createRequest();
-		Mockito.when(
-				this.managerTestHelper.getComputePlugin().requestInstance(
-						Mockito.any(Token.class), Mockito.anyList(),
-						Mockito.anyMap(), Mockito.anyString())).thenThrow(
-				new OCCIException(ErrorType.NOT_FOUND,
-						ResponseConstants.NOT_FOUND));
-
-		String remoteRequest = ManagerPacketHelper.remoteRequest(request, MANAGER_COMPONENT_URL,
-				managerTestHelper.createPacketSender());
-		Assert.assertNull(remoteRequest);
-	}
-
-	@SuppressWarnings("unchecked")
-	@Test(expected = OCCIException.class)
-	public void testRequestRemoteRequestUnauthorized() throws Exception {
-		managerTestHelper.initializeXMPPManagerComponent(false);
-
-		Request request = createRequest();
-		Mockito.doThrow(new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED))
-				.when(this.managerTestHelper.getComputePlugin())
-				.requestInstance(Mockito.any(Token.class), Mockito.anyList(), 
-						Mockito.anyMap(), Mockito.anyString());
-
-		String remoteRequest = ManagerPacketHelper.remoteRequest(request, MANAGER_COMPONENT_URL,
-				managerTestHelper.createPacketSender());
-		Assert.assertNull(remoteRequest);
 	}
 }

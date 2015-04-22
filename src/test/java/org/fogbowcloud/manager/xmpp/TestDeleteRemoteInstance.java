@@ -36,9 +36,9 @@ public class TestDeleteRemoteInstance {
 	@Test
 	public void testDeleteRemoteInstance() throws Exception {
 		Request request = new Request("anyvalue", new Token("anyvalue", OCCITestHelper.USER_MOCK,
-				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), null, null, null);
+				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), null, null, null, true, "");
 		request.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
-		request.setMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		request.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 
 		managerTestHelper.initializeXMPPManagerComponent(false);
 		ManagerPacketHelper.deleteRemoteInstace(request, managerTestHelper.createPacketSender());
@@ -47,9 +47,9 @@ public class TestDeleteRemoteInstance {
 	@Test(expected = OCCIException.class)
 	public void testDeleteRemoteInstaceNotFound() throws Exception {
 		Request request = new Request("anyvalue", new Token(WRONG_TOKEN, OCCITestHelper.USER_MOCK,
-				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), null, null, null);
+				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), null, null, null, true, "");
 		request.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
-		request.setMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		request.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 
 		managerTestHelper.initializeXMPPManagerComponent(false);
 
@@ -63,9 +63,9 @@ public class TestDeleteRemoteInstance {
 	@Test(expected = OCCIException.class)
 	public void testDeleteRemoteInstanceUnauthorized() throws Exception {
 		Request request = new Request("anyvalue", new Token(WRONG_TOKEN, OCCITestHelper.USER_MOCK,
-				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), null, null, null);
+				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), null, null, null, true, "");
 		request.setInstanceId(INSTANCE_OTHER_USER);
-		request.setMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		request.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 
 		managerTestHelper.initializeXMPPManagerComponent(false);
 

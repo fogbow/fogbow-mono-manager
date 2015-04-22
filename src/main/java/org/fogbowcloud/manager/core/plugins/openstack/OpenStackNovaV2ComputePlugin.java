@@ -11,6 +11,7 @@ import java.util.UUID;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.HttpVersion;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -25,6 +26,7 @@ import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.core.RequirementsHelper;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ImageState;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
@@ -51,6 +53,7 @@ import org.restlet.data.Status;
 
 public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 
+	private static final String SUFIX_ENDPOINT_FLAVORS = "/flavors";
 	private static final String NO_VALID_HOST_WAS_FOUND = "No valid host was found";
 	private static final String STATUS_JSON_FIELD = "status";
 	private static final String IMAGES_JSON_FIELD = "images";
@@ -75,7 +78,8 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 	private String computeV2APIEndpoint;
 	private String networkId;
 	private Map<String, String> fogbowTermToOpenStack = new HashMap<String, String>();
-	private DefaultHttpClient client;
+	private HttpClient client;
+	private List<Flavor> flavors;
 
 	private static final Logger LOGGER = Logger.getLogger(OpenStackNovaV2ComputePlugin.class);
 	
@@ -89,19 +93,14 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 
 		networkId = properties
 				.getProperty(OpenStackConfigurationConstants.COMPUTE_NOVAV2_NETWORK_KEY);
-
-		fogbowTermToOpenStack.put(RequestConstants.SMALL_TERM,
-				properties.getProperty(OpenStackConfigurationConstants.COMPUTE_NOVAV2_FLAVOR_SMALL_KEY));
-		fogbowTermToOpenStack.put(RequestConstants.MEDIUM_TERM,
-				properties.getProperty(OpenStackConfigurationConstants.COMPUTE_NOVAV2_FLAVOR_MEDIUM_KEY));
-		fogbowTermToOpenStack.put(RequestConstants.LARGE_TERM,
-				properties.getProperty(OpenStackConfigurationConstants.COMPUTE_NOVAV2_FLAVOR_LARGE_KEY));
 		
 		// userdata
 		fogbowTermToOpenStack.put(RequestConstants.USER_DATA_TERM, "user_data");
 		
 		//ssh public key
 		fogbowTermToOpenStack.put(RequestConstants.PUBLIC_KEY_TERM, "ssh-public-key");
+		
+		flavors = new ArrayList<Flavor>();	
 		
 		initClient();
 	}
@@ -121,33 +120,34 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		// removing fogbow-request category
 		categories.remove(new Category(RequestConstants.TERM, RequestConstants.SCHEME,
 				RequestConstants.KIND_CLASS));
-
-		String flavorRef = null;
 		
+		Flavor foundFlavor = getFlavor(token,
+				xOCCIAtt.get(RequestAttribute.REQUIREMENTS.getValue()));
+		String flavorId = null;
+		if (foundFlavor != null) {
+			flavorId = foundFlavor.getId();
+		}
+		
+		// TODO Think about ! Is necessary ?
 		for (Category category : categories) {
+			if (category.getScheme().equals(RequestConstants.TEMPLATE_RESOURCE_SCHEME)) {
+				continue;
+			}		
 			String openstackRef = fogbowTermToOpenStack.get(category.getTerm());
-			if (openstackRef == null && !category.getScheme().equals(
-					RequestConstants.TEMPLATE_OS_SCHEME)) {
+			if (openstackRef == null
+					&& !category.getScheme().equals(RequestConstants.TEMPLATE_OS_SCHEME)
+					&& !category.getScheme().equals(RequestConstants.TEMPLATE_RESOURCE_SCHEME)) {
 				throw new OCCIException(ErrorType.BAD_REQUEST,
 						ResponseConstants.CLOUD_NOT_SUPPORT_CATEGORY + category.getTerm());
-			} else if (category.getTerm().equals(RequestConstants.SMALL_TERM)
-					|| category.getTerm().equals(RequestConstants.MEDIUM_TERM)
-					|| category.getTerm().equals(RequestConstants.LARGE_TERM)) {				
-				// There are more than one flavor category
-				if (flavorRef != null) {
-					throw new OCCIException(ErrorType.BAD_REQUEST,
-							ResponseConstants.IRREGULAR_SYNTAX);					
-				}
-				flavorRef = openstackRef;
 			}
-		}
+		}		
 
 		String publicKey = xOCCIAtt.get(RequestAttribute.DATA_PUBLIC_KEY.getValue());
 		String keyName = getKeyname(token, publicKey);
 				
 		String userdata = xOCCIAtt.get(RequestAttribute.USER_DATA_ATT.getValue());		
 		try {
-			JSONObject json = generateJsonRequest(imageRef, flavorRef, userdata, keyName);
+			JSONObject json = generateJsonRequest(imageRef, flavorId, userdata, keyName);
 			String requestEndpoint = computeV2APIEndpoint + token.getAttributes().get(TENANT_ID)
 					+ "/servers";
 			String jsonResponse = doPostRequest(requestEndpoint, token.getAccessId(), json);
@@ -162,6 +162,81 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 				} catch (Throwable t) {
 					LOGGER.warn("Could not delete key.", t);
 				}
+			}
+		}
+	}
+
+	public synchronized void updateFlavors(Token token) {
+		try {
+			String endpoint = computeV2APIEndpoint + token.getAttributes().get(TENANT_ID)
+					+ SUFIX_ENDPOINT_FLAVORS;
+			String authToken = token.getAccessId();
+
+			String jsonResponseFlavors = doGetRequest(endpoint, authToken);
+
+			Map<String, String> nameToFlavorId = new HashMap<String, String>();
+
+			JSONArray jsonArrayFlavors = new JSONObject(jsonResponseFlavors)
+					.getJSONArray("flavors");
+			for (int i = 0; i < jsonArrayFlavors.length(); i++) {
+				JSONObject itemFlavor = jsonArrayFlavors.getJSONObject(i);
+				nameToFlavorId.put(itemFlavor.getString("name"), itemFlavor.getString("id"));
+			}
+
+			List<Flavor> newFlavors = detailFlavors(endpoint, authToken, nameToFlavorId);
+			if (newFlavors != null) {
+				this.flavors.addAll(newFlavors);			
+			}
+			removeInvalidFlavors(nameToFlavorId);
+
+		} catch (Exception e) {
+			LOGGER.warn("Error while updating flavors.", e);
+		}
+	}
+
+	private List<Flavor> detailFlavors(String endpoint, String authToken,
+			Map<String, String> nameToIdFlavor) throws JSONException {
+		List<Flavor> newFlavors = new ArrayList<Flavor>();
+		List<Flavor> flavorsCopy = new ArrayList<Flavor>(flavors);
+		for (String flavorName : nameToIdFlavor.keySet()) {
+			boolean containsFlavor = false;
+			for (Flavor flavor : flavorsCopy) {
+				if (flavor.getName().equals(flavorName)) {
+					containsFlavor = true;
+					break;
+				}
+			}
+			if (containsFlavor) {
+				continue;
+			}
+			String newEndpoint = endpoint + "/" + nameToIdFlavor.get(flavorName);
+			String jsonResponseSpecificFlavor = doGetRequest(newEndpoint, authToken);
+
+			JSONObject specificFlavor = new JSONObject(jsonResponseSpecificFlavor)
+					.getJSONObject("flavor");
+
+			String id = specificFlavor.getString("id");
+			String name = specificFlavor.getString("name");
+			String disk = specificFlavor.getString("disk");
+			String ram = specificFlavor.getString("ram");
+			String vcpus = specificFlavor.getString("vcpus");
+
+			newFlavors.add(new Flavor(name, id, vcpus, ram, disk));		
+		}
+		return newFlavors;
+	}
+
+	private void removeInvalidFlavors(Map<String, String> nameToIdFlavor) {
+		ArrayList<Flavor> copyFlavors = new ArrayList<Flavor>(flavors);		
+		for (Flavor flavor : copyFlavors) {
+			boolean containsFlavor = false;
+			for (String flavorName : nameToIdFlavor.keySet()) {
+				if (flavorName.equals(flavor.getName())) {
+					containsFlavor = true;
+				}
+			}
+			if (!containsFlavor) {
+				this.flavors.remove(flavor);
 			}
 		}
 	}
@@ -207,7 +282,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 				.getConnectionManager().getSchemeRegistry()), params);
 	}
 	
-	public void setClient(DefaultHttpClient client) {
+	public void setClient(HttpClient client) {
 		this.client = client;
 	}
 	
@@ -293,6 +368,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		String requestEndpoint = computeV2APIEndpoint + token.getAttributes().get(TENANT_ID)
 				+ "/servers/" + instanceId;
 		String jsonResponse = doGetRequest(requestEndpoint, token.getAccessId());
+		
 		LOGGER.debug("Getting instance from json: " + jsonResponse);
 		return getInstanceFromJson(jsonResponse, token);
 	}
@@ -332,7 +408,9 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 			List<Resource> resources = new ArrayList<Resource>();
 			resources.add(ResourceRepository.getInstance().get("compute"));
 			resources.add(ResourceRepository.getInstance().get("os_tpl"));
-			resources.add(ResourceRepository.getInstance().get(getUsedFlavor(flavorId)));
+			
+			//TODO check this line
+			resources.add(ResourceRepository.generateFlavorResource(getUsedFlavor(flavorId)));
 
 			LOGGER.debug("Instance resources: " + resources);
 
@@ -345,14 +423,13 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 	}
 
 	private String getUsedFlavor(String flavorId) {
-		if (fogbowTermToOpenStack.get(RequestConstants.SMALL_TERM).equals(flavorId)) {
-			return RequestConstants.SMALL_TERM;
-		} else if (fogbowTermToOpenStack.get(RequestConstants.MEDIUM_TERM).equals(flavorId)) {
-			return RequestConstants.MEDIUM_TERM;
-		} else if (fogbowTermToOpenStack.get(RequestConstants.LARGE_TERM).equals(flavorId)) {
-			return RequestConstants.LARGE_TERM;
+		for (Flavor flavor : getFlavors()) {
+			if (flavor.getId().equals(flavorId)) {
+				return flavor.getName();
+			}
 		}
 		return null;
+		
 	}
 	
 	private InstanceState getInstanceState(String instanceStatus) {
@@ -633,6 +710,20 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
         return responseStr;
     }
 
+	public List<Flavor> getFlavors() {
+		return this.flavors;
+	}
+	
+	public void setFlavors(List<Flavor> flavors) {
+		this.flavors = flavors;
+	}
+	
+	public Flavor getFlavor(Token token, String requirements) {
+		updateFlavors(token);
+		// Finding flavor
+		return RequirementsHelper.findFlavor(getFlavors(), requirements);
+	}
+	
 	@Override
 	public ImageState getImageState(Token token, String imageName) {
 		LOGGER.debug("Getting image status from image " + imageName + " with token " + token);

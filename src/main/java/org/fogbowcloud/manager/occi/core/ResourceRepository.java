@@ -2,10 +2,14 @@ package org.fogbowcloud.manager.occi.core;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.core.ConfigurationConstants;
+import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
+import org.json.JSONObject;
 
 public class ResourceRepository {
 	
@@ -18,16 +22,20 @@ public class ResourceRepository {
 	private static final String RESOURCE_OCCI_SCHEME = "http://schemas.ogf.org/occi/core#resource";
 	private static ResourceRepository instance;
 	private static final String FOGBOWCLOUD_ENDPOINT = "http://localhost:8182";
-	List<Resource> resources = new ArrayList<Resource>();
+	private List<Resource> resources = new ArrayList<Resource>();
 	
-	public static ResourceRepository getInstance(){
+	public static void init(Properties properties) {
+		instance = new ResourceRepository(properties);
+	}
+	
+	public static ResourceRepository getInstance() {
 		if (instance == null) {
-			instance = new ResourceRepository();
+			instance = new ResourceRepository(new Properties());
 		}
 		return instance;
 	}
 	
-	private ResourceRepository(){
+	private ResourceRepository(Properties properties){
 		//kind resources
 		Resource fogbowRequest = new Resource(RequestConstants.TERM, RequestConstants.SCHEME,
 				RequestConstants.KIND_CLASS, RequestAttribute.getValues(), new ArrayList<String>(),
@@ -52,23 +60,7 @@ public class ResourceRepository {
 		Resource compute = new Resource("compute", SCHEMAS_OCCI_INFRASTRUCTURE,
 				RequestConstants.KIND_CLASS, computeAttributes, computeActions, FOGBOWCLOUD_ENDPOINT + "/" + "compute/",
 				"Compute Resource", RESOURCE_OCCI_SCHEME);
-
-		// size flavors
-		Resource fogbowSmallFlavor = new Resource(RequestConstants.SMALL_TERM,
-				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS,
-				new ArrayList<String>(), new ArrayList<String>(), FOGBOWCLOUD_ENDPOINT + "/"
-						+ RequestConstants.SMALL_TERM + "/", "Small Flavor",
-				RESOURCE_TPL_OCCI_SCHEME);
-		Resource fogbowMediumFlavor = new Resource(RequestConstants.MEDIUM_TERM,
-				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS,
-				new ArrayList<String>(), new ArrayList<String>(), FOGBOWCLOUD_ENDPOINT + "/"
-						+ RequestConstants.MEDIUM_TERM + "/", "Medium Flavor",
-				RESOURCE_TPL_OCCI_SCHEME);
-		Resource fogbowLargeFlavor = new Resource(RequestConstants.LARGE_TERM,
-				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS,
-				new ArrayList<String>(), new ArrayList<String>(), FOGBOWCLOUD_ENDPOINT + "/"
-						+ RequestConstants.LARGE_TERM + "/", "Large Flavor",
-				RESOURCE_TPL_OCCI_SCHEME);
+		
 		//userdata
 		Resource fogbowUserdata = new Resource(RequestConstants.USER_DATA_TERM,
 				RequestConstants.SCHEME, RequestConstants.MIXIN_CLASS,
@@ -84,12 +76,23 @@ public class ResourceRepository {
 						+ RequestConstants.PUBLIC_KEY_TERM + "/", "", "");		
 		resources.add(fogbowPublicKey);
 		
+		// Flavors
+		
+		List<Resource> flavorsResources = new ArrayList<Resource>();
+		for (Flavor flavor : getStaticFlavors(properties)) {
+			flavorsResources.add(new Resource(flavor.getName(),
+					RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS,
+					new ArrayList<String>(), new ArrayList<String>(), FOGBOWCLOUD_ENDPOINT + "/"
+							+ flavor.getName() + "/", flavor.getName(), RESOURCE_TPL_OCCI_SCHEME));
+		}
+		
+		if (!flavorsResources.isEmpty()) {
+			resources.addAll(flavorsResources);			
+		}	
+		
 		//TODO add actions	
 		resources.add(fogbowRequest);
 		resources.add(compute);
-		resources.add(fogbowSmallFlavor);
-		resources.add(fogbowMediumFlavor);
-		resources.add(fogbowLargeFlavor);
 		resources.add(fogbowUserdata);
 
 		Resource resourceTlp = new Resource(RESOURCE_TPL,
@@ -130,6 +133,15 @@ public class ResourceRepository {
 		
 	public List<Resource> getAll() {
 		return resources;
+	}
+	
+	public static Resource generateFlavorResource(String flavorName) {
+		if (flavorName == null || flavorName.isEmpty()) {
+			return null;
+		}
+		return new Resource(flavorName, RequestConstants.TEMPLATE_RESOURCE_SCHEME,
+				RequestConstants.MIXIN_CLASS, new ArrayList<String>(), new ArrayList<String>(),
+				FOGBOWCLOUD_ENDPOINT + "/" + flavorName + "/", flavorName, RESOURCE_TPL_OCCI_SCHEME);
 	}
 	
 	public void addImageResource(String imageName){
@@ -178,6 +190,32 @@ public class ResourceRepository {
 			}
 		}
 		return null;
+	}
+	
+	public static List<Flavor> getStaticFlavors(Properties properties) {
+		List<Flavor> flavors = new ArrayList<Flavor>();
+		if (properties == null) {
+			return flavors;
+		}
+		for (Object objectKey: properties.keySet()) {
+			String key = objectKey.toString();
+			if (key.startsWith(ConfigurationConstants.PREFIX_FLAVORS)) {
+				String value = (String) properties.get(key);
+				String cpu = getAttValue("cpu", value);
+				String mem = getAttValue("mem", value);				
+				flavors.add(new Flavor(key.replace(ConfigurationConstants.PREFIX_FLAVORS, ""), cpu, mem, "0"));
+			}			
+		}
+		return flavors;
+	}
+	
+	public static String getAttValue(String attName, String flavorSpec) {		
+		try {
+			JSONObject root = new JSONObject(flavorSpec);
+			return root.getString(attName);
+		} catch (Exception e) {
+			return null;
+		}
 	}
 	
 	/**

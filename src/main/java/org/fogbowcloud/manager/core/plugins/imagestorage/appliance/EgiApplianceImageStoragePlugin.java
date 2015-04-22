@@ -1,4 +1,4 @@
-package org.fogbowcloud.manager.core.plugins.appliance;
+package org.fogbowcloud.manager.core.plugins.imagestorage.appliance;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -11,10 +11,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.KeyStore;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
@@ -39,23 +37,19 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.model.ImageState;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
-import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
-import org.fogbowcloud.manager.occi.core.ResourceRepository;
+import org.fogbowcloud.manager.core.plugins.imagestorage.fixed.StaticImageStoragePlugin;
 import org.fogbowcloud.manager.occi.core.Token;
 
-public class EgiApplianceImageStoragePlugin implements ImageStoragePlugin {
+public class EgiApplianceImageStoragePlugin extends StaticImageStoragePlugin {
 
 	private static final int IMAGE_UPLOAD_RETRY_INTERVAL = 15000;
 
-	private static final String PROP_STATIC_IMAGE_PREFIX = "image_storage_static_";
-	
 	private static final Logger LOGGER = Logger.getLogger(EgiApplianceImageStoragePlugin.class);
 	private static final Executor IMAGE_DOWNLOADER = Executors.newFixedThreadPool(5);
 	
 	private ComputePlugin computePlugin;
 	private Set<String> pendingImageUploads = Collections.newSetFromMap(
 			new ConcurrentHashMap<String, Boolean>());
-	private Map<String, String> globalToLocalIds = new HashMap<String, String>();
 	
 	private final String marketPlaceBaseURL;
 	private final String keystorePath;
@@ -63,32 +57,19 @@ public class EgiApplianceImageStoragePlugin implements ImageStoragePlugin {
 	private final String keystorePassword;
 	
 	public EgiApplianceImageStoragePlugin(Properties properties, ComputePlugin computePlugin) {
+		super(properties, computePlugin);
 		this.computePlugin = computePlugin;
 		this.marketPlaceBaseURL = properties.getProperty("image_storage_appliance_base_url");
 		this.keystorePath = properties.getProperty("image_storage_applicance_keystore_path");
 		this.keystorePassword = properties.getProperty("image_storage_appliance_keystore_password");
 		this.tmpStorage = properties.getProperty("image_storage_appliance_tmp_storage");
-		fillStaticStorage(properties);
-	}
-	
-	private void fillStaticStorage(Properties properties) {
-		LOGGER.info("Filling static storage...");
-		for (Object propName : properties.keySet()) {
-			String propNameStr = (String) propName;
-			if (propNameStr.startsWith(PROP_STATIC_IMAGE_PREFIX)) {
-				String globalImageId = propNameStr.substring(PROP_STATIC_IMAGE_PREFIX.length());
-				LOGGER.debug("Global image id = " + globalImageId);
-				globalToLocalIds.put(globalImageId, properties.getProperty(propNameStr));
-				ResourceRepository.getInstance().addImageResource(globalImageId);
-			}
-		}
 	}
 	
 	@Override
 	public String getLocalId(Token token, String globalId) {
 		LOGGER.debug("Getting local id for globalImageId = " + globalId);
 		// check if image was statically configured
-		String localId = globalToLocalIds.get(globalId);
+		String localId = super.getLocalId(token, globalId);
 		if (localId != null) {
 			return localId;
 		}

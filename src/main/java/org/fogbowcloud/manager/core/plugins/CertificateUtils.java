@@ -7,6 +7,7 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.security.KeyPair;
+import java.security.Security;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
@@ -31,6 +32,10 @@ public class CertificateUtils {
 	public static final String X_509 = "X.509";
 	private static final Logger LOGGER = Logger.getLogger(CertificateUtils.class);
 
+	static {
+		Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
+	}
+	
 	public static String generateAccessId(Collection<X509Certificate> certificateChain) {
 		return generateAccessId(certificateChain, null);
 	}

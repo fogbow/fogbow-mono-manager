@@ -17,10 +17,13 @@ import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
+import org.fogbowcloud.manager.core.plugins.PrioritizationPlugin;
 import org.fogbowcloud.manager.core.plugins.accounting.FCUAccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.benchmarking.FCUStaticBenchmarkingPlugin;
-import org.fogbowcloud.manager.core.plugins.egi.EgiImageStoragePlugin;
+import org.fogbowcloud.manager.core.plugins.prioritization.TwoFoldPrioritizationPlugin;
+import org.fogbowcloud.manager.core.plugins.imagestorage.egi.EgiImageStoragePlugin;
 import org.fogbowcloud.manager.occi.OCCIApplication;
+import org.fogbowcloud.manager.occi.core.ResourceRepository;
 import org.fogbowcloud.manager.xmpp.ManagerXmppComponent;
 import org.restlet.Component;
 import org.restlet.data.Protocol;
@@ -39,7 +42,8 @@ public class Main {
 		Properties properties = new Properties();
 		FileInputStream input = new FileInputStream(args[0]);
 		properties.load(input);
-
+		ResourceRepository.init(properties);
+		
 		ComputePlugin computePlugin = null;
 		try {
 			computePlugin = (ComputePlugin) createInstance(
@@ -127,6 +131,9 @@ public class Main {
 			memberPickerPlugin = new RoundRobinMemberPicker(properties, accountingPlugin);
 			LOGGER.warn("Member picker plugin not specified in properties. Using the default one.", e);
 		}
+		
+		PrioritizationPlugin prioritizationPlugin = new TwoFoldPrioritizationPlugin(properties,
+				accountingPlugin);
 
 		ManagerController facade = new ManagerController(properties);
 		facade.setComputePlugin(computePlugin);
@@ -138,6 +145,7 @@ public class Main {
 		facade.setBenchmarkingPlugin(benchmarkingPlugin);
 		facade.setAccountingPlugin(accountingPlugin);
 		facade.setMemberPickerPlugin(memberPickerPlugin);
+		facade.setPrioritizationPlugin(prioritizationPlugin);
 		
 		ManagerXmppComponent xmpp = new ManagerXmppComponent(
 				properties.getProperty(ConfigurationConstants.XMPP_JID_KEY),

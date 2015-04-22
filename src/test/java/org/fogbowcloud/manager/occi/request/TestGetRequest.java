@@ -432,48 +432,51 @@ public class TestGetRequest {
 		Assert.assertEquals(0, OCCITestHelper.getRequestIds(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());	
 	}
-	
+
 	@Test
 	public void testGetResquestFilterWithCategory() throws URISyntaxException, HttpException,
 			IOException {
 		// Post
 		HttpPost post = new HttpPost(OCCITestHelper.URI_FOGBOW_REQUEST);
 		Category category = new Category(RequestConstants.TERM, RequestConstants.SCHEME,
-			RequestConstants.KIND_CLASS);
+				RequestConstants.KIND_CLASS);
 		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		post.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
 		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, RequestAttribute.INSTANCE_COUNT.getValue()
 				+ " = 2");
-		Category categoryFilter = new Category("fogbow_small", 
-				"http://schemas.fogbowcloud.org/template/resource#", "mixin");		
+		Category categoryFilter = new Category(OCCITestHelper.FOGBOW_SMALL_IMAGE,
+				"http://schemas.fogbowcloud.org/template/resource#", "mixin");
 		post.addHeader(OCCIHeaders.CATEGORY, categoryFilter.toHeader());
-				
+
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
-		// Get		
+		// Get
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_REQUEST);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
+		get.addHeader(
+				OCCIHeaders.CATEGORY,
+				OCCITestHelper.FOGBOW_SMALL_IMAGE
+						+ "; scheme=\"http://schemas.fogbowcloud.org/template/resource#\"; class=\"mixin\";");
+
 		get.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
-		get.addHeader(OCCIHeaders.CATEGORY,
-				"fogbow_small; scheme=\"http://schemas.fogbowcloud.org/template/resource#\"; class=\"mixin\";");
-		
+
 		client = new DefaultHttpClient();
 		response = client.execute(get);
-		
+
 		Assert.assertEquals(2, OCCITestHelper.getRequestIds(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
-		
+
 		get = new HttpGet(OCCITestHelper.URI_FOGBOW_REQUEST);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		get.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
 		get.addHeader(OCCIHeaders.CATEGORY,
 				"wrong; scheme=\"http://schemas.fogbowcloud.org/template/resource#\"; class=\"mixin\";");
-		
+
 		response = client.execute(get);
-		
+
 		Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusLine().getStatusCode());
-	}	
+	}
 	
 	@After
 	public void tearDown() throws Exception {
