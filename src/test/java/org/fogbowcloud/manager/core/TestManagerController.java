@@ -12,6 +12,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import javax.mail.MessagingException;
+
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
 import org.dom4j.Element;
 import org.fogbowcloud.manager.core.model.DateUtils;
@@ -2159,7 +2162,8 @@ public class TestManagerController {
 	
 	@Test
 	@SuppressWarnings("unchecked")
-	public void testSSHKeyReplacementWhenOriginalRequestHasPublicKey() throws FileNotFoundException, IOException {
+	public void testSSHKeyReplacementWhenOriginalRequestHasPublicKey() 
+			throws FileNotFoundException, IOException, MessagingException {
 		Map<String, String> extraProperties = new HashMap<String, String>();
 		extraProperties.put(ConfigurationConstants.SSH_PUBLIC_KEY_PATH, 
 				DefaultDataTestHelper.LOCAL_MANAGER_SSH_PUBLIC_KEY_PATH);
@@ -2183,8 +2187,8 @@ public class TestManagerController {
 		managerControllerSpy.setComputePlugin(computePlugin);
 		
 		Request servedRequest = new Request(remoteRequestId, managerTestHelper.getDefaultFederationToken(),
-				managerTestHelper.getDefaultLocalToken(), new ArrayList<Category>(),
-				xOCCIAtt, true,
+				managerTestHelper.getDefaultLocalToken(), categories,
+				newXOCCIAttr, true,
 				DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL);
 		servedRequest.setState(RequestState.FULFILLED);
 		servedRequest.setInstanceId(newInstanceId);
@@ -2201,7 +2205,7 @@ public class TestManagerController {
 					@Override
 					public boolean matches(Object argument) {
 						List<Category> categories = (List<Category>) argument;
-						return categories.contains(publicKeyCategory);
+						return !categories.contains(publicKeyCategory);
 					}
 				}), Mockito.argThat(new ArgumentMatcher<Map<String, String>>() {
 
@@ -2211,16 +2215,19 @@ public class TestManagerController {
 						String publicKeyValue = xOCCIAttr
 								.get(RequestAttribute.DATA_PUBLIC_KEY
 										.getValue());
-						return publicKeyValue != null
-								&& publicKeyValue
-										.equals(localManagerPublicKeyData);
+						return publicKeyValue == null;
 					}
 				}), Mockito.anyString());
+		
+		String base64UserDataCmd = new String(Base64.decodeBase64(localManagerController
+				.createUserDataUtilsCommand(servedRequest)), "UTF-8");
+		Assert.assertTrue(base64UserDataCmd.contains(localManagerPublicKeyData));
 	}
 	
 	@Test
 	@SuppressWarnings("unchecked")
-	public void testSSHKeyReplacementWhenOriginalRequestHasNoPublicKey() throws FileNotFoundException, IOException {
+	public void testSSHKeyReplacementWhenOriginalRequestHasNoPublicKey() 
+			throws FileNotFoundException, IOException, MessagingException {
 		Map<String, String> extraProperties = new HashMap<String, String>();
 		extraProperties.put(ConfigurationConstants.SSH_PUBLIC_KEY_PATH, 
 				DefaultDataTestHelper.LOCAL_MANAGER_SSH_PUBLIC_KEY_PATH);
@@ -2258,7 +2265,7 @@ public class TestManagerController {
 					@Override
 					public boolean matches(Object argument) {
 						List<Category> categories = (List<Category>) argument;
-						return categories.contains(publicKeyCategory);
+						return !categories.contains(publicKeyCategory);
 					}
 				}), Mockito.argThat(new ArgumentMatcher<Map<String, String>>() {
 
@@ -2268,16 +2275,19 @@ public class TestManagerController {
 						String publicKeyValue = xOCCIAttr
 								.get(RequestAttribute.DATA_PUBLIC_KEY
 										.getValue());
-						return publicKeyValue != null
-								&& publicKeyValue
-										.equals(localManagerPublicKeyData);
+						return publicKeyValue == null;
 					}
 				}), Mockito.anyString());
+		
+		String base64UserDataCmd = new String(Base64.decodeBase64(localManagerController
+				.createUserDataUtilsCommand(servedRequest)), "UTF-8");
+		Assert.assertTrue(base64UserDataCmd.contains(localManagerPublicKeyData));
 	}
 	
 	@SuppressWarnings("unchecked")
 	@Test
-	public void testSSHKeyReplacementWhenManagerKeyIsNotDefined() {
+	public void testSSHKeyReplacementWhenManagerKeyIsNotDefined() 
+			throws FileNotFoundException, IOException, MessagingException {
 		ManagerController managerControllerSpy = Mockito.spy(managerController);
 		
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
@@ -2299,11 +2309,18 @@ public class TestManagerController {
 		managerControllerSpy.createInstanceWithFederationUser(servedRequest);
 		
 		Mockito.verify(managerControllerSpy, Mockito.never()).waitForSSHPublicAddress(Mockito.eq(servedRequestId));
+		
+		final String localManagerPublicKeyData = IOUtils.toString(new FileInputStream(
+				new File(DefaultDataTestHelper.LOCAL_MANAGER_SSH_PUBLIC_KEY_PATH)));
+		
+		String base64UserDataCmd = new String(Base64.decodeBase64(managerController
+				.createUserDataUtilsCommand(servedRequest)), "UTF-8");
+		Assert.assertFalse(base64UserDataCmd.contains(localManagerPublicKeyData));
 	}
 	
 	@Test
 	@SuppressWarnings("unchecked")
-	public void testSSHKeyReplacementLocallyWhenOriginalRequestHasPublicKey() throws FileNotFoundException, IOException {
+	public void testSSHKeyReplacementLocallyWhenOriginalRequestHasPublicKey() throws FileNotFoundException, IOException, MessagingException {
 		Map<String, String> extraProperties = new HashMap<String, String>();
 		extraProperties.put(ConfigurationConstants.SSH_PUBLIC_KEY_PATH, 
 				DefaultDataTestHelper.LOCAL_MANAGER_SSH_PUBLIC_KEY_PATH);
@@ -2327,8 +2344,8 @@ public class TestManagerController {
 		managerControllerSpy.setComputePlugin(computePlugin);
 		
 		Request localRequest = new Request(localRequestId, managerTestHelper.getDefaultFederationToken(),
-				managerTestHelper.getDefaultLocalToken(), new ArrayList<Category>(),
-				xOCCIAtt, true,
+				managerTestHelper.getDefaultLocalToken(), categories,
+				newXOCCIAttr, true,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		localRequest.setState(RequestState.FULFILLED);
 		localRequest.setInstanceId(newInstanceId);
@@ -2345,7 +2362,7 @@ public class TestManagerController {
 					@Override
 					public boolean matches(Object argument) {
 						List<Category> categories = (List<Category>) argument;
-						return categories.contains(publicKeyCategory);
+						return !categories.contains(publicKeyCategory);
 					}
 				}), Mockito.argThat(new ArgumentMatcher<Map<String, String>>() {
 
@@ -2355,16 +2372,19 @@ public class TestManagerController {
 						String publicKeyValue = xOCCIAttr
 								.get(RequestAttribute.DATA_PUBLIC_KEY
 										.getValue());
-						return publicKeyValue != null
-								&& publicKeyValue
-										.equals(localManagerPublicKeyData);
+						return publicKeyValue == null;
 					}
 				}), Mockito.anyString());
+		
+		String base64UserDataCmd = new String(Base64.decodeBase64(localManagerController
+				.createUserDataUtilsCommand(localRequest)), "UTF-8");
+		Assert.assertTrue(base64UserDataCmd.contains(localManagerPublicKeyData));
 	}
 	
 	@Test
 	@SuppressWarnings("unchecked")
-	public void testSSHKeyReplacementLocallyWhenOriginalRequestHasNoPublicKey() throws FileNotFoundException, IOException {
+	public void testSSHKeyReplacementLocallyWhenOriginalRequestHasNoPublicKey() 
+			throws FileNotFoundException, IOException, MessagingException {
 		Map<String, String> extraProperties = new HashMap<String, String>();
 		extraProperties.put(ConfigurationConstants.SSH_PUBLIC_KEY_PATH, 
 				DefaultDataTestHelper.LOCAL_MANAGER_SSH_PUBLIC_KEY_PATH);
@@ -2402,7 +2422,7 @@ public class TestManagerController {
 					@Override
 					public boolean matches(Object argument) {
 						List<Category> categories = (List<Category>) argument;
-						return categories.contains(publicKeyCategory);
+						return !categories.contains(publicKeyCategory);
 					}
 				}), Mockito.argThat(new ArgumentMatcher<Map<String, String>>() {
 
@@ -2412,16 +2432,19 @@ public class TestManagerController {
 						String publicKeyValue = xOCCIAttr
 								.get(RequestAttribute.DATA_PUBLIC_KEY
 										.getValue());
-						return publicKeyValue != null
-								&& publicKeyValue
-										.equals(localManagerPublicKeyData);
+						return publicKeyValue == null;
 					}
 				}), Mockito.anyString());
+		
+		String base64UserDataCmd = new String(Base64.decodeBase64(localManagerController
+				.createUserDataUtilsCommand(localRequest)), "UTF-8");
+		Assert.assertTrue(base64UserDataCmd.contains(localManagerPublicKeyData));
 	}
 	
 	@SuppressWarnings("unchecked")
 	@Test
-	public void testSSHKeyReplacementLocallyWhenManagerKeyIsNotDefined() {
+	public void testSSHKeyReplacementLocallyWhenManagerKeyIsNotDefined() 
+			throws FileNotFoundException, IOException, MessagingException {
 		ManagerController managerControllerSpy = Mockito.spy(managerController);
 		
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
@@ -2443,6 +2466,13 @@ public class TestManagerController {
 		managerControllerSpy.createInstanceWithFederationUser(localRequest);
 		
 		Mockito.verify(managerControllerSpy, Mockito.never()).waitForSSHPublicAddress(Mockito.eq(localRequestId));
+		
+		final String localManagerPublicKeyData = IOUtils.toString(new FileInputStream(
+				new File(DefaultDataTestHelper.LOCAL_MANAGER_SSH_PUBLIC_KEY_PATH)));
+		
+		String base64UserDataCmd = new String(Base64.decodeBase64(managerController
+				.createUserDataUtilsCommand(localRequest)), "UTF-8");
+		Assert.assertFalse(base64UserDataCmd.contains(localManagerPublicKeyData));
 	}
 	
 	public void testPreemption() {

@@ -18,15 +18,15 @@ public class SSHBenchmarkingPlugin implements BenchmarkingPlugin {
 	
 	Map<String, Double> instanceToPower = new HashMap<String, Double>();
 
-	private static final Logger LOGGER = Logger.getLogger(VanillaBenchmarkingPlugin.class);
-	private static final String NOF_BENCH_URL = "ssh_benchmarking_script_path";
+	private static final Logger LOGGER = Logger.getLogger(SSHBenchmarkingPlugin.class);
+	private static final String SSH_BENCHMARKING_SCRIPT_PATH = "ssh_benchmarking_script_path";
 	
 	private String scriptUrl;
 	private String managerPrivateKeyFilePath;
 	
 	public SSHBenchmarkingPlugin(Properties properties) {
 		this.scriptUrl = properties
-				.getProperty(NOF_BENCH_URL);
+				.getProperty(SSH_BENCHMARKING_SCRIPT_PATH);
 		this.managerPrivateKeyFilePath = properties.getProperty(ConfigurationConstants.SSH_PRIVATE_KEY_PATH);
 	}
 

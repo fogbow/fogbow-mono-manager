@@ -20,6 +20,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
+import javax.mail.MessagingException;
+
 import net.schmizz.sshj.connection.channel.direct.Session.Command;
 
 import org.apache.commons.io.IOUtils;
@@ -610,11 +612,7 @@ public class ManagerController {
 				+ xOCCIAtt + " for requesting member: " + request.getRequestingMemberId() + " with requestingToken " + request.getRequestingMemberId());
 
 		try {
-			String command = UserdataUtils.createBase64Command(request.getId(), 
-					properties.getProperty(ConfigurationConstants.TUNNEL_SSH_PRIVATE_HOST_KEY),
-					properties.getProperty(ConfigurationConstants.TUNNEL_SSH_HOST_PORT_KEY),
-					properties.getProperty(ConfigurationConstants.TUNNEL_SSH_HOST_HTTP_PORT_KEY),
-					getManagerSSHPublicKeyFilePath());
+			String command = createUserDataUtilsCommand(request);
 			xOCCIAtt.put(RequestAttribute.USER_DATA_ATT.getValue(), command);
 			categories.add(new Category(RequestConstants.USER_DATA_TERM,
 					RequestConstants.SCHEME, RequestConstants.MIXIN_CLASS));
@@ -637,7 +635,7 @@ public class ManagerController {
 		
 		try {
 			Map<String, String> xOCCIAttCopy = new HashMap<String, String>(xOCCIAtt);
-			populateWithManagerPublicKey(xOCCIAttCopy, categoriesWithoutImage);
+			removePublicKeyFromCategoriesAndAttributes(xOCCIAttCopy, categoriesWithoutImage);
 			String instanceId = computePlugin.requestInstance(federationUserToken, categoriesWithoutImage,
 					xOCCIAttCopy, localImageId);
 			
@@ -667,6 +665,16 @@ public class ManagerController {
 			}
 			throw e;
 		}
+	}
+
+	protected String createUserDataUtilsCommand(Request request)
+			throws IOException, MessagingException {
+		String command = UserdataUtils.createBase64Command(request.getId(), 
+				properties.getProperty(ConfigurationConstants.TUNNEL_SSH_PRIVATE_HOST_KEY),
+				properties.getProperty(ConfigurationConstants.TUNNEL_SSH_HOST_PORT_KEY),
+				properties.getProperty(ConfigurationConstants.TUNNEL_SSH_HOST_HTTP_PORT_KEY),
+				getManagerSSHPublicKeyFilePath());
+		return command;
 	}
 
 	protected String waitForSSHPublicAddress(String instanceToken) {
@@ -735,21 +743,22 @@ public class ManagerController {
 		return publicKeyFilePath;
 	}
 
-	private void populateWithManagerPublicKey(Map<String, String> xOCCIAtt, 
+	private void removePublicKeyFromCategoriesAndAttributes(Map<String, String> xOCCIAtt, 
 			List<Category> categories) {
 		String publicKey = getManagerSSHPublicKey();
 		if (publicKey == null) {
 			return;
 		}
-		xOCCIAtt.put(RequestAttribute.DATA_PUBLIC_KEY.getValue(), publicKey);
+		xOCCIAtt.remove(RequestAttribute.DATA_PUBLIC_KEY.getValue());
+		Category toRemove = null;
 		for (Category category : categories) {
 			if (category.getTerm().equals(RequestConstants.PUBLIC_KEY_TERM)) {
-				return;
+				toRemove = category;
 			}
 		}
-		categories.add(new Category(RequestConstants.PUBLIC_KEY_TERM, 
-				RequestConstants.CREDENTIALS_RESOURCE_SCHEME, 
-				RequestConstants.MIXIN_CLASS));
+		if (toRemove != null) {
+			categories.remove(toRemove);
+		}
 	}
 	
 	protected void preemption(Request requestToPreemption) {
@@ -988,7 +997,7 @@ public class ManagerController {
 		
 		Map<String, String> xOCCIAttCopy = new HashMap<String, String>(request.getxOCCIAtt());
 		List<Category> categoriesCopy = new LinkedList<Category>(request.getCategories());
-		populateWithManagerPublicKey(xOCCIAttCopy, categoriesCopy);
+		removePublicKeyFromCategoriesAndAttributes(xOCCIAttCopy, categoriesCopy);
 		request.setProvidingMemberId(memberAddress);
 
 		LOGGER.info("Submiting request " + request + " to member " + memberAddress);
@@ -1055,11 +1064,7 @@ public class ManagerController {
 		
 		try {
 			try {
-				String command = UserdataUtils.createBase64Command(request.getId(),
-						properties.getProperty(ConfigurationConstants.TUNNEL_SSH_PRIVATE_HOST_KEY),
-						properties.getProperty(ConfigurationConstants.TUNNEL_SSH_HOST_PORT_KEY),
-						properties.getProperty(ConfigurationConstants.TUNNEL_SSH_HOST_HTTP_PORT_KEY),
-						getManagerSSHPublicKeyFilePath());
+				String command = createUserDataUtilsCommand(request);
 				request.putAttValue(RequestAttribute.USER_DATA_ATT.getValue(), command);
 				request.addCategory(new Category(RequestConstants.USER_DATA_TERM,
 						RequestConstants.SCHEME, RequestConstants.MIXIN_CLASS));
@@ -1081,7 +1086,7 @@ public class ManagerController {
 			}
 			
 			Map<String, String> xOCCIAttCopy = new HashMap<String, String>(request.getxOCCIAtt());
-			populateWithManagerPublicKey(xOCCIAttCopy, categories);
+			removePublicKeyFromCategoriesAndAttributes(xOCCIAttCopy, categories);
 			String instanceId = computePlugin.requestInstance(request.getLocalToken(),
 					categories, xOCCIAttCopy, localImageId);			
 			request.setState(RequestState.SPAWNING);
