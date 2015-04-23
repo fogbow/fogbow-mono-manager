@@ -48,6 +48,11 @@ public class Request {
 		this.dateUtils = dateUtils;
 		setState(RequestState.OPEN);		
 	}
+	
+	public Request(Request request) {
+		this(request.getId(), request.getFederationToken(), request.getLocalToken(), request.getCategories(), 
+				request.getxOCCIAtt(), request.isLocal, request.getRequestingMemberId());
+	}
 
 	public List<Category> getCategories() {
 		if (categories == null) {
@@ -199,4 +204,5 @@ public class Request {
 		long now = new DateUtils().currentTimeMillis();
 		return expirationDate.getTime() < now;
 	}
+	
 }

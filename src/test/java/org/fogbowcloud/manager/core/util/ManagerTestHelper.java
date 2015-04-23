@@ -367,7 +367,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		
 		this.executorService = Mockito.mock(ScheduledExecutorService.class);
 		ManagerController managerController = new ManagerController(properties,
-				executorService);
+				executorService, null);
 
 		// mocking compute
 		computePlugin = Mockito.mock(ComputePlugin.class);

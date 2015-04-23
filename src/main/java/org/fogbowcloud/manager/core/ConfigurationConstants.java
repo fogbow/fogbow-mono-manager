@@ -61,6 +61,7 @@ public class ConfigurationConstants {
 	
 	public static final String SSH_PUBLIC_KEY_PATH = "ssh_public_key";
 	public static final String SSH_PRIVATE_KEY_PATH = "ssh_private_key";
+	public static final String SSH_COMMON_USER = "ssh_common_user";
 	
 	//benchmarking
 	public static final String BENCHMARKING_PLUGIN_CLASS_KEY = "benchmarking_class";

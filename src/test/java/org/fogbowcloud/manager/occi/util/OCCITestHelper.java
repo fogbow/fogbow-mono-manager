@@ -88,7 +88,7 @@ public class OCCITestHelper {
 			}
 		});
 		
-		ManagerController facade = new ManagerController(properties, executor);
+		ManagerController facade = new ManagerController(properties, executor, null);
 		facade.setComputePlugin(computePlugin);
 		facade.setAuthorizationPlugin(authorizationPlugin);
 		facade.setLocalIdentityPlugin(identityPlugin);
@@ -110,7 +110,7 @@ public class OCCITestHelper {
 		properties.put(ConfigurationConstants.TUNNEL_SSH_HOST_HTTP_PORT_KEY,
 				String.valueOf(DefaultDataTestHelper.TOKEN_SERVER_HTTP_PORT));
 		ManagerController facade = new ManagerController(properties, 
-				Mockito.mock(ScheduledExecutorService.class));
+				Mockito.mock(ScheduledExecutorService.class), null);
 		facade.setComputePlugin(computePlugin);
 		facade.setAuthorizationPlugin(authorizationPlugin);
 		facade.setLocalIdentityPlugin(identityPlugin);

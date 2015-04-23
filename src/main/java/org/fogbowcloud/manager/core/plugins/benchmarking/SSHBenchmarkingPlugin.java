@@ -19,15 +19,26 @@ public class SSHBenchmarkingPlugin implements BenchmarkingPlugin {
 	Map<String, Double> instanceToPower = new HashMap<String, Double>();
 
 	private static final Logger LOGGER = Logger.getLogger(SSHBenchmarkingPlugin.class);
-	private static final String SSH_BENCHMARKING_SCRIPT_PATH = "ssh_benchmarking_script_path";
+	private static final String SSH_BENCHMARKING_SCRIPT_URL = "ssh_benchmarking_script_url";
+	
+	private static final String STAGE_COMMAND = "curl %s -o exec;chmod +x exec;";
+	private static final String EXEC_COMMAND = "./exec";
 	
 	private String scriptUrl;
 	private String managerPrivateKeyFilePath;
+	private String sshCommonUser;
 	
 	public SSHBenchmarkingPlugin(Properties properties) {
-		this.scriptUrl = properties
-				.getProperty(SSH_BENCHMARKING_SCRIPT_PATH);
-		this.managerPrivateKeyFilePath = properties.getProperty(ConfigurationConstants.SSH_PRIVATE_KEY_PATH);
+		this.scriptUrl = properties.getProperty(
+				SSH_BENCHMARKING_SCRIPT_URL);
+		this.managerPrivateKeyFilePath = properties.getProperty(
+				ConfigurationConstants.SSH_PRIVATE_KEY_PATH);
+		this.sshCommonUser = getSSHCommonUser(properties);
+	}
+	
+	private static String getSSHCommonUser(Properties properties) {
+		String sshCommonUser = properties.getProperty(ConfigurationConstants.SSH_COMMON_USER);
+		return sshCommonUser == null ? sshCommonUser : ManagerController.DEFAULT_COMMON_SSH_USER;
 	}
 
 	@Override
@@ -40,13 +51,10 @@ public class SSHBenchmarkingPlugin implements BenchmarkingPlugin {
 		double power = UNDEFINED_POWER;
 		String ipAndPort = instance.getAttributes().get(Instance.SSH_PUBLIC_ADDRESS_ATT);
 		if (ipAndPort != null) {
-			String[] sshAddressData = ipAndPort.split(":");
-			long startTimeInMillis = System.currentTimeMillis();
-			Command output = sshBenchmarking(sshAddressData[0], sshAddressData[1], 
-					ManagerController.MANAGER_BENCHMARKING_SSH_USER);
-			long endTimeInMillis = System.currentTimeMillis();
-			if (output != null && output.getExitStatus() == 0) {
-				power = getFCUsFromOutput(endTimeInMillis - startTimeInMillis);
+			
+			long benchmarkingTime = sshBenchmarking(ipAndPort, sshCommonUser);
+			if (benchmarkingTime > 0) {
+				power = getFCUsFromOutput(benchmarkingTime);
 			}
 		}
 		
@@ -54,19 +62,26 @@ public class SSHBenchmarkingPlugin implements BenchmarkingPlugin {
 		instanceToPower.put(globalInstanceId, power);
 	}
 	
-	private Command sshBenchmarking(String ip, String port, String user) {
+	private long sshBenchmarking(String ipAndPort, String user) {
 		SshHelper ssh = new SshHelper();
+		long millis = 0;
 		try {
-			ssh.connect(ip, Integer.parseInt(port), user,
+			String[] sshAddressData = ipAndPort.split(":");
+			ssh.connect(sshAddressData[0], Integer.parseInt(sshAddressData[1]), user,
 					this.managerPrivateKeyFilePath);
-			String shellCmd = "curl " + this.scriptUrl
-					+ " -o script.sh -s && " + "chmod +x /home/" + user
-					+ "/script.sh &&" + "bash /home/" + user + "/script.sh &&"
-					+ "rm /home/" + user + "/script.sh && rm /home/" + user + "/bench";
-			return ssh.doSshExecution(shellCmd);
+			Command stagingCmd = ssh.doSshExecution(String.format(STAGE_COMMAND, scriptUrl));
+			if (stagingCmd.getExitStatus() == 0) {
+				long startTimestamp = System.currentTimeMillis();
+				Command executeBenchcmd = ssh.doSshExecution(EXEC_COMMAND);
+				long endTimestamp = System.currentTimeMillis();
+				if (executeBenchcmd.getExitStatus() == 0) {
+					return endTimestamp - startTimestamp;
+				}
+			}
 		} catch (Exception e) {
+			LOGGER.warn("Couldn't run benchmark.", e);
 		}
-		return null;
+		return millis;
 	}
 	
 	/**

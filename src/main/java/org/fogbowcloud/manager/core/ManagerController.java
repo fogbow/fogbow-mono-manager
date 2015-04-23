@@ -67,6 +67,8 @@ import org.restlet.Response;
 
 public class ManagerController {
 	
+	public static final String DEFAULT_COMMON_SSH_USER = "fogbow";
+	
 	private static final String PROP_MAX_WHOISALIVE_MANAGER_COUNT = "max_whoisalive_manager_count";
 	private static final Logger LOGGER = Logger.getLogger(ManagerController.class);
 	
@@ -79,8 +81,7 @@ public class ManagerController {
 	private static final long DEFAULT_INSTANCE_IP_MONITORING_PERIOD = 30000; // 30 seconds
 	private static final int DEFAULT_MAX_IP_MONITORING_TRIES = 30; // 30 tries
 	private static final long DEFAULT_ACCOUNTING_UPDATE_PERIOD = 300000; // 5 minutes
-	public static final String MANAGER_BENCHMARKING_SSH_USER = "fogbow";
-																			
+	
 	private final ManagerTimer requestSchedulerTimer;
 	private final ManagerTimer tokenUpdaterTimer;
 	private final ManagerTimer instanceMonitoringTimer;
@@ -104,20 +105,25 @@ public class ManagerController {
 	private Properties properties;
 	private AsyncPacketSender packetSender;
 	private FederationMemberValidator validator;
+	private ExecutorService benchmarkExecutor;
+	
 	private Map<String, ForwardedRequest> asynchronousRequests = new ConcurrentHashMap<String, ForwardedRequest>();
-	private final ExecutorService BENCHMARK_EXECUTOR = Executors.newScheduledThreadPool(10);
 	
 	private DateUtils dateUtils = new DateUtils();
+
 	public ManagerController(Properties properties) {
-		this(properties, null);
+		this(properties, null, null);
 	}
 
-	public ManagerController(Properties properties, ScheduledExecutorService executor) {
+	public ManagerController(Properties properties, ScheduledExecutorService executor, 
+			ExecutorService benchmarkExecutor) {
 		if (properties == null) {
 			throw new IllegalArgumentException();
 		}
 		this.properties = properties;
 		populateStaticFlavors();
+		this.benchmarkExecutor = benchmarkExecutor == null ? Executors.newFixedThreadPool(10) : benchmarkExecutor;
+		
 		if (executor == null) {
 			this.requestSchedulerTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
 			this.tokenUpdaterTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
@@ -153,6 +159,11 @@ public class ManagerController {
 		if (!accountingUpdaterTimer.isScheduled()) {
 			triggerAccountingUpdater();
 		}
+	}
+	
+	private String getSSHCommonUser() {
+		String sshCommonUser = properties.getProperty(ConfigurationConstants.SSH_COMMON_USER);
+		return sshCommonUser == null ? DEFAULT_COMMON_SSH_USER : sshCommonUser;
 	}
 	
 	private void triggerAccountingUpdater() {
@@ -384,7 +395,7 @@ public class ManagerController {
 		Request request = getRequestForInstance(accessId, instanceId);
 		return getInstance(request);
 	}
-
+	
 	private Instance getInstance(Request request) {
 		Instance instance = null;
 		if (isFulfilledByLocalMember(request)) {
@@ -402,6 +413,7 @@ public class ManagerController {
 			String sshPublicAdd = getSSHPublicAddress(request.getId());
 			if (sshPublicAdd != null) {
 				instance.addAttribute(Instance.SSH_PUBLIC_ADDRESS_ATT, sshPublicAdd);
+				instance.addAttribute(Instance.SSH_USERNAME_ATT, getSSHCommonUser());
 			}
 			Category osCategory = getImageCategory(request.getCategories());
 			if (osCategory != null) {
@@ -673,14 +685,17 @@ public class ManagerController {
 				properties.getProperty(ConfigurationConstants.TUNNEL_SSH_PRIVATE_HOST_KEY),
 				properties.getProperty(ConfigurationConstants.TUNNEL_SSH_HOST_PORT_KEY),
 				properties.getProperty(ConfigurationConstants.TUNNEL_SSH_HOST_HTTP_PORT_KEY),
-				getManagerSSHPublicKeyFilePath());
+				getManagerSSHPublicKeyFilePath(),
+				request.getAttValue(RequestAttribute.DATA_PUBLIC_KEY.getValue()),
+				getSSHCommonUser());
 		return command;
 	}
 
-	protected String waitForSSHPublicAddress(String instanceToken) {
+	protected String waitForSSHPublicAddress(Request request) {
 		int remainingTries = DEFAULT_MAX_IP_MONITORING_TRIES;
 		while (remainingTries-- > 0) {
-			String sshPublicAddress = getSSHPublicAddress(instanceToken);
+			Instance instance = getInstance(request);
+			String sshPublicAddress = instance.getAttributes().get(Instance.SSH_PUBLIC_ADDRESS_ATT);
 			if (sshPublicAddress != null) {
 				return sshPublicAddress;
 			}
@@ -718,23 +733,6 @@ public class ManagerController {
 		return publicKeyFilePath;
 	}
 	
-	private String getManagerSSHPrivateKey() {
-		String privateSSHKeyFilePath = properties.getProperty(ConfigurationConstants.SSH_PRIVATE_KEY_PATH);
-		if (privateSSHKeyFilePath == null || privateSSHKeyFilePath.isEmpty()) {
-			return null;
-		}
-		File managerPrivateKeyFile = new File(privateSSHKeyFilePath);
-		if (!managerPrivateKeyFile.exists()) {
-			return null;
-		}
-		try {
-			return IOUtils.toString(new FileInputStream(managerPrivateKeyFile));
-		} catch (IOException e) {
-			LOGGER.warn("Could not read manager private key file", e);
-			return null;
-		}
-	}
-	
 	private String getManagerSSHPrivateKeyFilePath() {
 		String publicKeyFilePath = properties.getProperty(ConfigurationConstants.SSH_PRIVATE_KEY_PATH);
 		if (publicKeyFilePath == null || publicKeyFilePath.isEmpty()) {
@@ -745,15 +743,12 @@ public class ManagerController {
 
 	private void removePublicKeyFromCategoriesAndAttributes(Map<String, String> xOCCIAtt, 
 			List<Category> categories) {
-		String publicKey = getManagerSSHPublicKey();
-		if (publicKey == null) {
-			return;
-		}
 		xOCCIAtt.remove(RequestAttribute.DATA_PUBLIC_KEY.getValue());
 		Category toRemove = null;
 		for (Category category : categories) {
 			if (category.getTerm().equals(RequestConstants.PUBLIC_KEY_TERM)) {
 				toRemove = category;
+				break;
 			}
 		}
 		if (toRemove != null) {
@@ -1125,37 +1120,32 @@ public class ManagerController {
 	private void execBenchmark(final Request request, final String instanceId,
 			final String providingMemberAddress, final boolean fulfilledByFederationUser) {
 
-		BENCHMARK_EXECUTOR.execute(new Runnable() {
+		benchmarkExecutor.execute(new Runnable() {
 			@Override
 			public void run() {
+				Request tempRequest = new Request(request);
+				tempRequest.setInstanceId(instanceId);
+				tempRequest.setState(RequestState.FULFILLED);
+				tempRequest.setProvidingMemberId(providingMemberAddress);
+				tempRequest.setFulfilledByFederationUser(fulfilledByFederationUser);
+				
 				String sshPublicAddress = null;
 				if (getManagerSSHPublicKey() != null) {
-					sshPublicAddress = waitForSSHPublicAddress(request.getId());
+					sshPublicAddress = waitForSSHPublicAddress(tempRequest);
 					waitForSSHConnectivity(sshPublicAddress);
-				}
-				Instance instance = null;
-				if (fulfilledByFederationUser) {
-					instance = computePlugin.getInstance(getFederationUserToken(), instanceId);
-				} else {
-					instance = computePlugin.getInstance(request.getLocalToken(), instanceId);
-				}
-				
-				//TODO check if this is really needed to have the SSH address in benchmarking
-				if (sshPublicAddress != null) {
-					instance.addAttribute(Instance.SSH_PUBLIC_ADDRESS_ATT, sshPublicAddress);
 				}
 				
 				benchmarkingPlugin.run(generateGlobalId(instanceId, providingMemberAddress),
-						instance);
+						getInstance(tempRequest));
 				
 				if (sshPublicAddress != null) {
 					replacePublicKeys(sshPublicAddress, request);
 				}
 
-				request.setInstanceId(instanceId);
-				request.setState(RequestState.FULFILLED);
-				request.setProvidingMemberId(providingMemberAddress);
-				request.setFulfilledByFederationUser(fulfilledByFederationUser);
+				request.setInstanceId(tempRequest.getInstanceId());
+				request.setState(tempRequest.getState());
+				request.setProvidingMemberId(tempRequest.getProvidingMemberId());
+				request.setFulfilledByFederationUser(tempRequest.isFulfilledByFederationUser());
 
 				if (request.isLocal() && !isFulfilledByLocalMember(request)) {
 					asynchronousRequests.remove(request.getId());
@@ -1213,7 +1203,7 @@ public class ManagerController {
 		String[] sshAddressAndPort = sshPublicAddress.split(":");
 		try {
 			sshHelper.connect(sshAddressAndPort[0], Integer.parseInt(sshAddressAndPort[1]), 
-					MANAGER_BENCHMARKING_SSH_USER, getManagerSSHPrivateKeyFilePath());
+					getSSHCommonUser(), getManagerSSHPrivateKeyFilePath());
 			Command sshOutput = sshHelper.doSshExecution(cmd);
 			return sshOutput;
 		} finally {

@@ -25,10 +25,12 @@ public class UserdataUtils {
 	protected static final String TOKEN_HOST_SSH_PORT_STR = "#TOKEN_HOST_SSH_PORT#";
 	protected static final String TOKEN_MANAGER_SSH_PUBLIC_KEY = "#TOKEN_MANAGER_SSH_PUBLIC_KEY#";
 	protected static final String TOKEN_MANAGER_SSH_USER = "#TOKEN_MANAGER_SSH_USER#";
+	
 	private static final String DEFAULT_SSH_HOST_PORT = "22";
 	
 	public static String createBase64Command(String tokenId, String sshPrivateHostIP,
-			String sshRemoteHostPort, String sshRemoteHostHttpPort, String managerPublicKeyFilePath) 
+			String sshRemoteHostPort, String sshRemoteHostHttpPort, String managerPublicKeyFilePath, 
+			String userPublicKey, String sshCommonUser) 
 					throws IOException, MessagingException {
 		
 		String sshTunnelCmdFilePath = "bin/fogbow-create-reverse-tunnel";
@@ -41,7 +43,7 @@ public class UserdataUtils {
 		CloudInitUserDataBuilder cloudInitUserDataBuilder = CloudInitUserDataBuilder.start();
 		cloudInitUserDataBuilder.addShellScript(new FileReader(sshTunnelCmdFilePath));
 		
-		if (managerPublicKeyFilePath != null) {
+		if (managerPublicKeyFilePath != null || userPublicKey != null) {
 			cloudInitUserDataBuilder.addCloudConfig(new FileReader(new File(cloudConfigFilePath)));
 		}
 		
@@ -53,12 +55,16 @@ public class UserdataUtils {
 		replacements.put(TOKEN_HOST_SSH_PORT_STR, sshRemoteHostPort);
 		replacements.put(TOKEN_HOST_HTTP_PORT_STR, sshRemoteHostHttpPort);
 		
+		String publicKeyToBeReplaced = null;
 		if (managerPublicKeyFilePath != null) {
-			String managerPublicKey = IOUtils.toString(new FileInputStream(
+			publicKeyToBeReplaced = IOUtils.toString(new FileInputStream(
 					new File(managerPublicKeyFilePath)));
-			replacements.put(TOKEN_MANAGER_SSH_PUBLIC_KEY, managerPublicKey);
-			replacements.put(TOKEN_MANAGER_SSH_USER, 
-					ManagerController.MANAGER_BENCHMARKING_SSH_USER);
+		} else if (userPublicKey != null) {
+			publicKeyToBeReplaced = userPublicKey;
+		}
+		if (publicKeyToBeReplaced != null) {
+			replacements.put(TOKEN_MANAGER_SSH_PUBLIC_KEY, publicKeyToBeReplaced);
+			replacements.put(TOKEN_MANAGER_SSH_USER, sshCommonUser);
 		}
 		
 		for (Entry<String, String> entry : replacements.entrySet()) {

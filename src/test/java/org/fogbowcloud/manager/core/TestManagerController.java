@@ -2308,7 +2308,7 @@ public class TestManagerController {
 		
 		managerControllerSpy.createInstanceWithFederationUser(servedRequest);
 		
-		Mockito.verify(managerControllerSpy, Mockito.never()).waitForSSHPublicAddress(Mockito.eq(servedRequestId));
+		Mockito.verify(managerControllerSpy, Mockito.never()).waitForSSHPublicAddress(Mockito.eq(servedRequest));
 		
 		final String localManagerPublicKeyData = IOUtils.toString(new FileInputStream(
 				new File(DefaultDataTestHelper.LOCAL_MANAGER_SSH_PUBLIC_KEY_PATH)));
@@ -2465,7 +2465,7 @@ public class TestManagerController {
 		
 		managerControllerSpy.createInstanceWithFederationUser(localRequest);
 		
-		Mockito.verify(managerControllerSpy, Mockito.never()).waitForSSHPublicAddress(Mockito.eq(localRequestId));
+		Mockito.verify(managerControllerSpy, Mockito.never()).waitForSSHPublicAddress(Mockito.eq(localRequest));
 		
 		final String localManagerPublicKeyData = IOUtils.toString(new FileInputStream(
 				new File(DefaultDataTestHelper.LOCAL_MANAGER_SSH_PUBLIC_KEY_PATH)));

@@ -1,9 +1,6 @@
 package org.fogbowcloud.manager.core.util;
 
-import java.io.File;
 import java.util.Date;
-
-import org.apache.commons.io.IOUtils;
 
 public class DefaultDataTestHelper {
 
