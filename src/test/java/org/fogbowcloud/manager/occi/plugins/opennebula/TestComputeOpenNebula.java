@@ -600,6 +600,8 @@ public class TestComputeOpenNebula {
 		Assert.assertEquals("0.0", resourcesInfo.getCpuInUse());
 		Assert.assertEquals("5120.0", resourcesInfo.getMemIdle());
 		Assert.assertEquals("0.0", resourcesInfo.getMemInUse());
+		Assert.assertEquals("10", resourcesInfo.getInstancesIdle());
+		Assert.assertEquals("0", resourcesInfo.getInstancesInUse());
 	}
 
 	@Test
@@ -655,6 +657,8 @@ public class TestComputeOpenNebula {
 		Assert.assertEquals("0.0", resourcesInfo.getCpuInUse());
 		Assert.assertEquals("4096.0", resourcesInfo.getMemIdle());
 		Assert.assertEquals("0.0", resourcesInfo.getMemInUse());
+		Assert.assertEquals("5", resourcesInfo.getInstancesIdle());
+		Assert.assertEquals("0", resourcesInfo.getInstancesInUse());
 	}
 
 	@Test
@@ -710,6 +714,8 @@ public class TestComputeOpenNebula {
 		Assert.assertEquals("0.0", resourcesInfo.getCpuInUse());
 		Assert.assertEquals("4096.0", resourcesInfo.getMemIdle());
 		Assert.assertEquals("0.0", resourcesInfo.getMemInUse());
+		Assert.assertEquals("5", resourcesInfo.getInstancesIdle());
+		Assert.assertEquals("0", resourcesInfo.getInstancesInUse());
 	}
 
 	@Test
@@ -765,6 +771,8 @@ public class TestComputeOpenNebula {
 		Assert.assertEquals("0.0", resourcesInfo.getCpuInUse());
 		Assert.assertEquals("4096.0", resourcesInfo.getMemIdle());
 		Assert.assertEquals("0.0", resourcesInfo.getMemInUse());
+		Assert.assertEquals("10", resourcesInfo.getInstancesIdle());
+		Assert.assertEquals("0", resourcesInfo.getInstancesInUse());
 	}
 
 	@Test
@@ -821,6 +829,8 @@ public class TestComputeOpenNebula {
 		Assert.assertEquals("2944.0", resourcesInfo.getMemIdle()); // 4096 -
 																	// 1152
 		Assert.assertEquals("1152.0", resourcesInfo.getMemInUse());
+		Assert.assertEquals("7", resourcesInfo.getInstancesIdle());
+		Assert.assertEquals("3", resourcesInfo.getInstancesInUse());
 	}
 
 	@Test
@@ -883,6 +893,7 @@ public class TestComputeOpenNebula {
 		String memIdleStr = String.valueOf(memIdle);
 		Assert.assertEquals(memIdleStr, resourcesInfo.getMemIdle());
 		Assert.assertEquals("1024.0", resourcesInfo.getMemInUse());
+		Assert.assertEquals(String.valueOf(instanceIdle), resourcesInfo.getInstancesIdle());
 	}
 
 	@Test
@@ -942,6 +953,7 @@ public class TestComputeOpenNebula {
 		String memIdleStr = String.valueOf(memIdle);
 		Assert.assertEquals(memIdleStr, resourcesInfo.getMemIdle());
 		Assert.assertEquals("1024.0", resourcesInfo.getMemInUse());
+		Assert.assertEquals(String.valueOf(instanceIdle), resourcesInfo.getInstancesIdle());
 	}
 	
 	@Test

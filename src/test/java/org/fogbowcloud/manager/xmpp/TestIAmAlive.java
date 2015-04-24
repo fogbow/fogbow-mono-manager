@@ -79,6 +79,9 @@ public class TestIAmAlive {
 		String cpuInUse = iqelement.element("cpu-inuse").getText();
 		String memIdle = iqelement.element("mem-idle").getText();
 		String memInUse = iqelement.element("mem-inuse").getText();
+		String instancesIdle = iqelement.element("instances-idle").getText();
+		String instancesInUse = iqelement.element("instances-inuse").getText();
+		
 		Assert.assertEquals(cpuIdle, managerTestHelper.getResources()
 				.getCpuIdle());
 		Assert.assertEquals(cpuInUse, managerTestHelper.getResources()
@@ -87,6 +90,10 @@ public class TestIAmAlive {
 				.getMemIdle());
 		Assert.assertEquals(memInUse, managerTestHelper.getResources()
 				.getMemInUse());
+		Assert.assertEquals(instancesIdle, managerTestHelper.getResources()
+				.getInstancesIdle());
+		Assert.assertEquals(instancesInUse, managerTestHelper.getResources()
+				.getInstancesInUse());
 
 		xmppClient.disconnect();
 	}

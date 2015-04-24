@@ -13,14 +13,14 @@ public class ResourcesInfo {
 	
 	public ResourcesInfo(String id, String cpuIdle, String cpuInUse,
 			String memIdle, String memInUse, 
-			String instancesIdle, String instancesInUses) {
+			String instancesIdle, String instancesInUse) {
 		setId(id);
 		setCpuIdle(cpuIdle);
 		setCpuInUse(cpuInUse);
 		setMemIdle(memIdle);
 		setMemInUse(memInUse);
 		setInstancesIdle(instancesIdle);
-		setInstancesInUse(instancesIdle);
+		setInstancesInUse(instancesInUse);
 	}
 	
 	public ResourcesInfo(String cpuIdle, String cpuInUse,
