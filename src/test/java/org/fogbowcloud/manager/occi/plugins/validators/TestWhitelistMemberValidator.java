@@ -27,26 +27,26 @@ public class TestWhitelistMemberValidator {
 	@Test
 	public void testCanDonateTo() throws Exception {
 		Assert.assertTrue(memberValidator.canDonateTo(
-				new FederationMember(new ResourcesInfo("donate1", "", "", "", "", null)), 
+				new FederationMember(new ResourcesInfo("donate1", "", "", "", "", "", "")), 
 				null));
 	}
 	
 	@Test
 	public void testCantDonateTo() throws Exception {
 		Assert.assertFalse(memberValidator.canDonateTo(
-				new FederationMember(new ResourcesInfo("donate4", "", "", "", "", null)), 
+				new FederationMember(new ResourcesInfo("donate4", "", "", "", "", "", "")), 
 				null));
 	}
 	
 	@Test
 	public void testCanReceiveFrom() throws Exception {
 		Assert.assertTrue(memberValidator.canReceiveFrom(
-				new FederationMember(new ResourcesInfo("receive1", "", "", "", "", null))));
+				new FederationMember(new ResourcesInfo("receive1", "", "", "", "", "", ""))));
 	}
 	
 	@Test
 	public void testCantReceiveFrom() throws Exception {
 		Assert.assertFalse(memberValidator.canReceiveFrom(
-				new FederationMember(new ResourcesInfo("receive4", "", "", "", "", null))));
+				new FederationMember(new ResourcesInfo("receive4", "", "", "", "", "", ""))));
 	}
 }

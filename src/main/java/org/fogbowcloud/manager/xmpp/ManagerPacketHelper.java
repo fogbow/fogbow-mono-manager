@@ -3,7 +3,6 @@ package org.fogbowcloud.manager.xmpp;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -15,7 +14,6 @@ import org.dom4j.Attribute;
 import org.dom4j.Element;
 import org.fogbowcloud.manager.core.AsynchronousRequestCallback;
 import org.fogbowcloud.manager.core.model.FederationMember;
-import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
@@ -54,14 +52,8 @@ public class ManagerPacketHelper {
 		statusEl.addElement("cpu-inuse").setText(resourcesInfo.getCpuInUse());
 		statusEl.addElement("mem-idle").setText(resourcesInfo.getMemIdle());
 		statusEl.addElement("mem-inuse").setText(resourcesInfo.getMemInUse());
-		List<Flavor> flavours = resourcesInfo.getFlavors();
-		for (Flavor f : flavours) {
-			Element flavorElement = statusEl.addElement("flavor");
-			flavorElement.addElement("name").setText(f.getName());
-			flavorElement.addElement("cpu").setText(f.getCpu());
-			flavorElement.addElement("mem").setText(f.getMem());
-			flavorElement.addElement("capacity").setText(f.getCapacity().toString());
-		}
+		statusEl.addElement("instances-idle").setText(resourcesInfo.getInstancesIdle());
+		statusEl.addElement("instances-inuse").setText(resourcesInfo.getInstancesInUse());
 		
 		packetSender.syncSendPacket(iq);		
 	}
@@ -122,25 +114,15 @@ public class ManagerPacketHelper {
 			Attribute id = itemEl.attribute("id");
 
 			Element statusEl = itemEl.element("status");
-			String cpuIdle = statusEl.element("cpu-idle").getText();
-			String cpuInUse = statusEl.element("cpu-inuse").getText();
-			String memIdle = statusEl.element("mem-idle").getText();
-			String memInUse = statusEl.element("mem-inuse").getText();
-
-			List<Flavor> flavoursList = new LinkedList<Flavor>();
-			Iterator<Element> flavourIterator = statusEl.elementIterator("flavor");
-			while (flavourIterator.hasNext()) {
-				Element flavour = (Element) flavourIterator.next();
-				String name = flavour.element("name").getText();
-				String cpu = flavour.element("cpu").getText();
-				String mem = flavour.element("mem").getText();
-				int capacity = Integer.parseInt(flavour.element("capacity").getText());
-				Flavor flavor = new Flavor(name, cpu, mem, capacity);
-				flavoursList.add(flavor);
-			}
+			String cpuIdle = statusEl.elementText("cpu-idle");
+			String cpuInUse = statusEl.elementText("cpu-inuse");
+			String memIdle = statusEl.elementText("mem-idle");
+			String memInUse = statusEl.elementText("mem-inuse");
+			String instancesIdle = statusEl.elementText("instances-idle");
+			String instancesInUse = statusEl.elementText("instances-inuse");
 
 			ResourcesInfo resources = new ResourcesInfo(id.getValue(), cpuIdle, cpuInUse, memIdle,
-					memInUse, flavoursList);
+					memInUse, instancesIdle, instancesInUse);
 			FederationMember item = new FederationMember(resources);
 			aliveItems.add(item);
 		}

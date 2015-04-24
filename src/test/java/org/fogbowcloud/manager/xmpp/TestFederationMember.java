@@ -5,10 +5,8 @@ import java.security.cert.CertificateException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.LinkedList;
 
 import org.fogbowcloud.manager.core.model.FederationMember;
-import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.util.ManagerTestHelper;
 import org.junit.Assert;
@@ -35,25 +33,25 @@ public class TestFederationMember {
 	@Test(expected = IllegalArgumentException.class)
 	public void testNullResourcesCpuIdle() throws CertificateException, IOException {
 		new ResourcesInfo("id", null,
-				"cpuInUse", "memIdle", "memInUse", new LinkedList<Flavor>());
+				"cpuInUse", "memIdle", "memInUse", "", "");
 	}
 	
 	@Test(expected = IllegalArgumentException.class)
 	public void testNullResourcesCpuInUse() throws CertificateException, IOException {
 		new ResourcesInfo("id", "CpuIdle",
-				null, "memIdle", "memInUse", new LinkedList<Flavor>());
+				null, "memIdle", "memInUse", "", "");
 	}
 	
 	@Test(expected = IllegalArgumentException.class)
 	public void testNullResourcesMemIdle() throws CertificateException, IOException {
 		new ResourcesInfo("id", "CpuIdle",
-				"cpuInUse", null, "memInUse", new LinkedList<Flavor>());
+				"cpuInUse", null, "memInUse", "", "");
 	}
 	
 	@Test(expected = IllegalArgumentException.class)
 	public void testNullResourcesMemInUse() throws CertificateException, IOException {
 		new ResourcesInfo("id", "CpuIdle",
-				"cpuInUse", "memIdle", null, new LinkedList<Flavor>());
+				"cpuInUse", "memIdle", null, "", "");
 	}
 	
 	@Test

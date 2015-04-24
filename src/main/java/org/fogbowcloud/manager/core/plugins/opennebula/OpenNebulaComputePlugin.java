@@ -414,14 +414,15 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		
 		resourceQuota = getQuota(maxUserVMsStr, vmsUserInUseStr, maxGroupVMsStr, vmsGroupInUseStr);
 		double maxVMs = resourceQuota.getMax();
-		double vmsInUse = resourceQuota.getInUse();
+		int instancesInUse = (int) resourceQuota.getInUse();
 
 		double cpuIdle = maxCpu - cpuInUse;
 		double memIdle = maxMem - memInUse;
-		double instancesIdle = maxVMs - vmsInUse;
+		int instancesIdle = (int) (maxVMs - instancesInUse);
 	
 		return new ResourcesInfo(String.valueOf(cpuIdle), String.valueOf(cpuInUse),
-				String.valueOf(memIdle), String.valueOf(memInUse), getFlavors(cpuIdle, memIdle, instancesIdle));
+				String.valueOf(memIdle), String.valueOf(memInUse), 
+				String.valueOf(instancesIdle), String.valueOf(instancesInUse));
 	}
 	
 	private ResourceQuota getQuota(String maxUserResource, String resourceUserInUse, String maxGroupResource, String resourceGroupInUse) {
@@ -477,28 +478,6 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 			return false;
 		}
 		return true;
-	}
-
-	private List<Flavor> getFlavors(double cpuIdle, double memIdle, double instancesIdle) {
-		
-		List<Flavor> newFlavorsList = new ArrayList<Flavor>();
-		for (Flavor flavor : this.flavors) {
-			int capacity = 0;
-			try {
-				double memFlavor = Double.parseDouble(flavor.getMem());
-				double cpuFlavor = Double.parseDouble(flavor.getCpu());
-				capacity = Math.min((int) Math.min(cpuIdle / cpuFlavor, memIdle / memFlavor),
-						(int) instancesIdle);
-			} catch (Exception e) {
-				LOGGER.error("", e);
-				throw new OCCIException(ErrorType.BAD_REQUEST,
-						ResponseConstants.INVALID_FLAVOR_SPECIFIED);
-			}
-			flavor.setCapacity(capacity);
-			newFlavorsList.add(flavor);
-		}
-		
-		return newFlavorsList;
 	}
 
 	@Override

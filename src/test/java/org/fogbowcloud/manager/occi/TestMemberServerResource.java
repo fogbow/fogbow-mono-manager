@@ -12,7 +12,6 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.fogbowcloud.manager.core.model.FederationMember;
-import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
@@ -30,8 +29,6 @@ import org.mockito.Mockito;
 
 public class TestMemberServerResource {
 
-	private final String FLAVOUR_1 = "flavour1";
-	private final String FLAVOUR_2 = "flavour1";
 	private final String ID_RESOURCEINFO1 = "id1";
 	private final String ID_RESOURCEINFO2 = "id2";
 
@@ -46,7 +43,7 @@ public class TestMemberServerResource {
 		this.computePlugin = Mockito.mock(ComputePlugin.class);
 		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class))).thenReturn(
 				new ResourcesInfo(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, 
-						"", "", "", "", new LinkedList<Flavor>()));
+						"", "", "", "", "", ""));
 		this.identityPlugin = Mockito.mock(IdentityPlugin.class);
 		this.accoutingPlugin = Mockito.mock(AccountingPlugin.class);
 		this.authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
@@ -61,13 +58,10 @@ public class TestMemberServerResource {
 	@Test
 	public void testGetMember() throws Exception {
 		List<FederationMember> federationMembers = new ArrayList<FederationMember>();
-		List<Flavor> flavours = new ArrayList<Flavor>();
-		flavours.add(new Flavor(FLAVOUR_1, "3", "135", 2));
-		flavours.add(new Flavor(FLAVOUR_2, "3", "135", 2));
 		ResourcesInfo resourcesInfo = new ResourcesInfo(ID_RESOURCEINFO1, "2", "1", "100", "35",
-				flavours);
+				"", "");
 		ResourcesInfo resourcesInfo2 = new ResourcesInfo(ID_RESOURCEINFO2, "2", "1", "100", "35",
-				null);
+				"", "");
 		federationMembers.add(new FederationMember(resourcesInfo));
 		federationMembers.add(new FederationMember(resourcesInfo));
 		federationMembers.add(new FederationMember(resourcesInfo2));
@@ -84,8 +78,6 @@ public class TestMemberServerResource {
 				String.valueOf(Charsets.UTF_8));
 
 		Assert.assertTrue(checkResponse(responseStr));
-		Assert.assertTrue(responseStr.contains(FLAVOUR_1));
-		Assert.assertTrue(responseStr.contains(FLAVOUR_2));
 		Assert.assertTrue(responseStr.contains(ID_RESOURCEINFO1));
 		Assert.assertTrue(responseStr.contains(ID_RESOURCEINFO2));
 		Assert.assertTrue(responseStr.contains(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL));

@@ -19,7 +19,6 @@ import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.message.BasicStatusLine;
 import org.fogbowcloud.manager.core.RequirementsHelper;
 import org.fogbowcloud.manager.core.model.Flavor;
-import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.openstack.KeystoneIdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.openstack.OpenStackConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.openstack.OpenStackNovaV2ComputePlugin;
@@ -65,7 +64,7 @@ public class TestNovaV2ComputeOpenStack {
 		flavors.add(flavorSmall); 
 		flavors.add(new Flavor("medium", "2", "2000", "20"));
 		flavors.add(new Flavor("big", "4", "4000", "40"));
-		novaV2ComputeOpenStack.setFlavors(flavors );
+		novaV2ComputeOpenStack.setFlavors(flavors);
 		
 		HashMap<String, String> tokenAtt = new HashMap<String, String>();
 		tokenAtt.put(KeystoneIdentityPlugin.TENANT_ID, "tenantid");
@@ -256,16 +255,6 @@ public class TestNovaV2ComputeOpenStack {
 		
 		// checking if instance was removed
 		Assert.assertEquals(0, novaV2ComputeOpenStack.getInstances(defaultToken).size());		
-	}
-	
-	@Test
-	public void testCapacity() {
-		ResourcesInfo resourcesInfo = novaV2ComputeOpenStack.getResourcesInfo(defaultToken);
-		List<Flavor> flavors = resourcesInfo.getFlavors();
-		// Limited by instance count
-		Assert.assertEquals(2, (int) flavors.get(0).getCapacity());
-		Assert.assertEquals(2, (int) flavors.get(1).getCapacity());
-		Assert.assertEquals(2, (int) flavors.get(2).getCapacity());
 	}
 	
 	@Test

@@ -600,11 +600,6 @@ public class TestComputeOpenNebula {
 		Assert.assertEquals("0.0", resourcesInfo.getCpuInUse());
 		Assert.assertEquals("5120.0", resourcesInfo.getMemIdle());
 		Assert.assertEquals("0.0", resourcesInfo.getMemInUse());
-		List<Flavor> flavors = new ArrayList<Flavor>();
-		flavors.add(new Flavor(RequestConstants.SMALL_TERM, "1.0", "128.0", 10));
-		flavors.add(new Flavor(RequestConstants.MEDIUM_TERM, "2.0", "256.0", 5));
-		flavors.add(new Flavor(RequestConstants.LARGE_TERM, "4.0", "512.0", 2));
-		Assert.assertEquals(flavors, resourcesInfo.getFlavors());
 	}
 
 	@Test
@@ -660,11 +655,6 @@ public class TestComputeOpenNebula {
 		Assert.assertEquals("0.0", resourcesInfo.getCpuInUse());
 		Assert.assertEquals("4096.0", resourcesInfo.getMemIdle());
 		Assert.assertEquals("0.0", resourcesInfo.getMemInUse());
-		List<Flavor> flavors = new ArrayList<Flavor>();
-		flavors.add(new Flavor(RequestConstants.SMALL_TERM, "1.0", "128.0", 5 / 1));
-		flavors.add(new Flavor(RequestConstants.MEDIUM_TERM, "2.0", "256.0", 5 / 2));
-		flavors.add(new Flavor(RequestConstants.LARGE_TERM, "4.0", "512.0", 5 / 4));
-		Assert.assertEquals(flavors, resourcesInfo.getFlavors());
 	}
 
 	@Test
@@ -720,11 +710,6 @@ public class TestComputeOpenNebula {
 		Assert.assertEquals("0.0", resourcesInfo.getCpuInUse());
 		Assert.assertEquals("4096.0", resourcesInfo.getMemIdle());
 		Assert.assertEquals("0.0", resourcesInfo.getMemInUse());
-		List<Flavor> flavors = new ArrayList<Flavor>();
-		flavors.add(new Flavor(RequestConstants.SMALL_TERM, "1.0", "128.0", 5 / 1));
-		flavors.add(new Flavor(RequestConstants.MEDIUM_TERM, "2.0", "256.0", 5 / 2));
-		flavors.add(new Flavor(RequestConstants.LARGE_TERM, "4.0", "512.0", 5 / 4));
-		Assert.assertEquals(flavors, resourcesInfo.getFlavors());
 	}
 
 	@Test
@@ -780,11 +765,6 @@ public class TestComputeOpenNebula {
 		Assert.assertEquals("0.0", resourcesInfo.getCpuInUse());
 		Assert.assertEquals("4096.0", resourcesInfo.getMemIdle());
 		Assert.assertEquals("0.0", resourcesInfo.getMemInUse());
-		List<Flavor> flavors = new ArrayList<Flavor>();
-		flavors.add(new Flavor(RequestConstants.SMALL_TERM, "1.0", "128.0", 5 / 1));
-		flavors.add(new Flavor(RequestConstants.MEDIUM_TERM, "2.0", "256.0", 5 / 2));
-		flavors.add(new Flavor(RequestConstants.LARGE_TERM, "4.0", "512.0", 5 / 4));
-		Assert.assertEquals(flavors, resourcesInfo.getFlavors());
 	}
 
 	@Test
@@ -841,11 +821,6 @@ public class TestComputeOpenNebula {
 		Assert.assertEquals("2944.0", resourcesInfo.getMemIdle()); // 4096 -
 																	// 1152
 		Assert.assertEquals("1152.0", resourcesInfo.getMemInUse());
-		List<Flavor> flavors = new ArrayList<Flavor>();
-		flavors.add(new Flavor(RequestConstants.SMALL_TERM, "1.0", "128.0", 3 / 1));
-		flavors.add(new Flavor(RequestConstants.MEDIUM_TERM, "2.0", "256.0", 3 / 2));
-		flavors.add(new Flavor(RequestConstants.LARGE_TERM, "4.0", "512.0", 3 / 4));
-		Assert.assertEquals(flavors, resourcesInfo.getFlavors());
 	}
 
 	@Test
@@ -908,15 +883,6 @@ public class TestComputeOpenNebula {
 		String memIdleStr = String.valueOf(memIdle);
 		Assert.assertEquals(memIdleStr, resourcesInfo.getMemIdle());
 		Assert.assertEquals("1024.0", resourcesInfo.getMemInUse());
-		List<Flavor> flavors = new ArrayList<Flavor>();
-		flavors.add(new Flavor(RequestConstants.SMALL_TERM, smallCpu, smallMem, calculateCapacity(
-				cpuIdle, memIdle, smallCpu, smallMem, instanceIdle)));
-		flavors.add(new Flavor(RequestConstants.MEDIUM_TERM, mediumCpu, mediumMem,
-				calculateCapacity(cpuIdle, memIdle, mediumCpu, mediumMem, instanceIdle)));
-		flavors.add(new Flavor(RequestConstants.LARGE_TERM, largeCpu, largeMem, calculateCapacity(
-				cpuIdle, memIdle, largeCpu, largeMem, instanceIdle)));
-
-		Assert.assertEquals(flavors, resourcesInfo.getFlavors());
 	}
 
 	@Test
@@ -976,21 +942,8 @@ public class TestComputeOpenNebula {
 		String memIdleStr = String.valueOf(memIdle);
 		Assert.assertEquals(memIdleStr, resourcesInfo.getMemIdle());
 		Assert.assertEquals("1024.0", resourcesInfo.getMemInUse());
-		List<Flavor> flavors = new ArrayList<Flavor>();
-		flavors.add(new Flavor(RequestConstants.SMALL_TERM, smallCpu, smallMem, calculateCapacity(
-				cpuIdle, memIdle, smallCpu, smallMem, instanceIdle)));
-		flavors.add(new Flavor(RequestConstants.MEDIUM_TERM, mediumCpu, mediumMem,
-				calculateCapacity(cpuIdle, memIdle, mediumCpu, mediumMem, instanceIdle)));
-		flavors.add(new Flavor(RequestConstants.LARGE_TERM, largeCpu, largeMem, calculateCapacity(
-				cpuIdle, memIdle, largeCpu, largeMem, instanceIdle)));
-
-		Assert.assertEquals(flavors, resourcesInfo.getFlavors());
 	}
 	
-	private int calculateCapacity(double cpuIdle, double memIdle, String cpuFlavor, String memFlavor, int instancesIdle) {
-		return Math.min((int) Math.min(cpuIdle / Double.parseDouble(cpuFlavor), memIdle / Double.parseDouble(memFlavor)), (int) instancesIdle);
-	}
-
 	@Test
 	public void testGetResourcesInfoWithUsed() {
 		// mocking opennebula structures
@@ -1031,11 +984,6 @@ public class TestComputeOpenNebula {
 		Assert.assertEquals("2.0", resourcesInfo.getCpuInUse());
 		Assert.assertEquals("4864.0", resourcesInfo.getMemIdle());
 		Assert.assertEquals("256.0", resourcesInfo.getMemInUse());
-		List<Flavor> flavors = new ArrayList<Flavor>();
-		flavors.add(new Flavor(RequestConstants.SMALL_TERM, "1.0", "128.0", 8));
-		flavors.add(new Flavor(RequestConstants.MEDIUM_TERM, "2.0", "256.0", 4));
-		flavors.add(new Flavor(RequestConstants.LARGE_TERM, "4.0", "512.0", 2));
-		Assert.assertEquals(flavors, resourcesInfo.getFlavors());
 	}
 
 	@Test
@@ -1087,14 +1035,6 @@ public class TestComputeOpenNebula {
 		Assert.assertEquals(OpenNebulaComputePlugin.DEFAULT_RESOURCE_MAX_VALUE,
 				Double.parseDouble(resourcesInfo.getMemIdle()), 0.0001);
 		Assert.assertEquals("0.0", resourcesInfo.getMemInUse());
-		List<Flavor> flavors = new ArrayList<Flavor>();
-		flavors.add(new Flavor(RequestConstants.SMALL_TERM, "1.0", "128.0",
-				OpenNebulaComputePlugin.DEFAULT_RESOURCE_MAX_VALUE / 128));
-		flavors.add(new Flavor(RequestConstants.MEDIUM_TERM, "2.0", "256.0",
-				OpenNebulaComputePlugin.DEFAULT_RESOURCE_MAX_VALUE / 256));
-		flavors.add(new Flavor(RequestConstants.LARGE_TERM, "4.0", "512.0",
-				OpenNebulaComputePlugin.DEFAULT_RESOURCE_MAX_VALUE / 512));
-		Assert.assertEquals(flavors, resourcesInfo.getFlavors());
 	}
 	
 	@Test

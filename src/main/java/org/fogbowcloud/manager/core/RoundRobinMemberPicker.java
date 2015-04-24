@@ -34,7 +34,7 @@ public class RoundRobinMemberPicker implements FederationMemberPicker {
 			}
 			if (!containsInList) {
 				membersListCopy.add(new FederationMember(new ResourcesInfo(lastMember, "", "", "",
-						"", null)));
+						"", "", "")));
 			}
 		}
 

@@ -1,12 +1,10 @@
 package org.fogbowcloud.manager.core.plugins.compute;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ImageState;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
@@ -53,8 +51,8 @@ public class NoCloudComputePlugin implements ComputePlugin {
 
 	@Override
 	public ResourcesInfo getResourcesInfo(Token token) {
-		return new ResourcesInfo(ZERO, ZERO, ZERO, ZERO, 
-				new LinkedList<Flavor>());
+		return new ResourcesInfo(ZERO, ZERO, ZERO, 
+				ZERO, ZERO, ZERO);
 	}
 
 	@Override
