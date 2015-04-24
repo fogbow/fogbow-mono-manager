@@ -147,27 +147,29 @@ public class ManagerPacketHelper {
 		return aliveItems;
 	}
 	
-	public static void asynchronousRemoteRequest(Request request, String memberAddress,
-			Token userFederationToken, AsyncPacketSender packetSender, final AsynchronousRequestCallback callback) {
+	public static void asynchronousRemoteRequest(String requestId, List<Category> categories, 
+			Map<String, String> xOCCIAttr, String memberAddress,
+			Token userFederationToken, AsyncPacketSender packetSender, 
+			final AsynchronousRequestCallback callback) {
 		IQ iq = new IQ();
-		iq.setID(request.getId());
+		iq.setID(requestId);
 		iq.setTo(memberAddress);
 		iq.setType(Type.set);
 		Element queryEl = iq.getElement().addElement("query",
 				ManagerXmppComponent.REQUEST_NAMESPACE);
-		for (Category category : request.getCategories()) {
+		for (Category category : categories) {
 			Element categoryEl = queryEl.addElement("category");
 			categoryEl.addElement("class").setText(category.getCatClass());
 			categoryEl.addElement("term").setText(category.getTerm());
 			categoryEl.addElement("scheme").setText(category.getScheme());
 		}
-		for (Entry<String, String> xOCCIEntry : request.getxOCCIAtt().entrySet()) {
+		for (Entry<String, String> xOCCIEntry : xOCCIAttr.entrySet()) {
 			Element attributeEl = queryEl.addElement("attribute");
 			attributeEl.addAttribute("var", xOCCIEntry.getKey());
 			attributeEl.addElement("value").setText(xOCCIEntry.getValue());
 		}
 		Element requestEl = queryEl.addElement("request");
-		requestEl.addElement("id").setText(request.getId());
+		requestEl.addElement("id").setText(requestId);
 
 		if (userFederationToken != null) {
 			Element tokenEl = queryEl.addElement("token");

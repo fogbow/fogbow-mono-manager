@@ -19,9 +19,9 @@ import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
 import org.fogbowcloud.manager.core.plugins.PrioritizationPlugin;
 import org.fogbowcloud.manager.core.plugins.accounting.FCUAccountingPlugin;
-import org.fogbowcloud.manager.core.plugins.benchmarking.FCUStaticBenchmarkingPlugin;
-import org.fogbowcloud.manager.core.plugins.prioritization.TwoFoldPrioritizationPlugin;
+import org.fogbowcloud.manager.core.plugins.benchmarking.VanillaBenchmarkingPlugin;
 import org.fogbowcloud.manager.core.plugins.imagestorage.egi.EgiImageStoragePlugin;
+import org.fogbowcloud.manager.core.plugins.prioritization.TwoFoldPrioritizationPlugin;
 import org.fogbowcloud.manager.occi.OCCIApplication;
 import org.fogbowcloud.manager.occi.core.ResourceRepository;
 import org.fogbowcloud.manager.xmpp.ManagerXmppComponent;
@@ -109,7 +109,7 @@ public class Main {
 			benchmarkingPlugin = (BenchmarkingPlugin) createInstance(
 					ConfigurationConstants.BENCHMARKING_PLUGIN_CLASS_KEY, properties);
 		} catch (Exception e) {
-			benchmarkingPlugin = new FCUStaticBenchmarkingPlugin(properties);
+			benchmarkingPlugin = new VanillaBenchmarkingPlugin(properties);
 			LOGGER.warn("Benchmarking plugin not specified in properties. Using the default one.", e);
 		}
 				

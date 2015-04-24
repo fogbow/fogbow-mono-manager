@@ -20,6 +20,7 @@ public class DefaultDataTestHelper {
 	
 	//manager controller data
 	public static final String CONFIG_PATH = "src/test/resources/manager.conf.test";
+	public static final String LOCAL_MANAGER_SSH_PUBLIC_KEY_PATH = "src/test/resources/server.id_rsa.pub";
 	
 	//time data
 	public static final Long SCHEDULER_PERIOD = 500L;

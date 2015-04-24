@@ -1,13 +1,11 @@
 package org.fogbowcloud.manager.core.plugins.accounting;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
 
-import org.apache.commons.io.FileUtils;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
@@ -24,17 +22,14 @@ public class TestFCUAccounting {
 
 	private static final double ACCEPTABLE_ERROR = 0.0;
 	private BenchmarkingPlugin benchmarkingPlugin;
-	private final String DATASTORE_PATH = "src/test/resources/accounting";
 	FCUAccountingPlugin accountingPlugin;
 	Properties properties;
 
 	@Before
 	public void setUp() throws IOException {
-		new File(DATASTORE_PATH).mkdir();
 		benchmarkingPlugin = Mockito.mock(BenchmarkingPlugin.class);
 		properties = new Properties();
-		properties.put("accounting_datastore_url", "jdbc:h2:mem:"
-				+ new File(DATASTORE_PATH).getAbsolutePath() + "usage");
+		properties.put("accounting_datastore_url", "jdbc:h2:mem:usage");
 		properties.put(ConfigurationConstants.XMPP_JID_KEY, "localMemberId");
 
 		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin);
@@ -43,7 +38,6 @@ public class TestFCUAccounting {
 
 	@After
 	public void tearDown() throws IOException {
-		FileUtils.cleanDirectory(new File(DATASTORE_PATH));
 		accountingPlugin.getDatabase().dispose();
 	}
 
