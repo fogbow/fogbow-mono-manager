@@ -6,6 +6,6 @@ import org.fogbowcloud.manager.occi.request.Request;
 
 public interface PrioritizationPlugin {
 	
-	public Request takeFrom(String requestingMemberId, List<Request> requestsWithInstance);
+	public Request takeFrom(Request newRequest, List<Request> requestsWithInstance);
 	
 }

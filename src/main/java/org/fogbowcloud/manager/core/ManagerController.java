@@ -666,7 +666,7 @@ public class ManagerController {
 			if (e.getType() == ErrorType.QUOTA_EXCEEDED) {
 				ArrayList<Request> requestsWithInstances = new ArrayList<Request>(
 						requests.getRequestsIn(RequestState.FULFILLED, RequestState.DELETED));
-				Request requestToPreemption = prioritizationPlugin.takeFrom(request.getRequestingMemberId(), requestsWithInstances);
+				Request requestToPreemption = prioritizationPlugin.takeFrom(request, requestsWithInstances);
 
 				if (requestToPreemption == null) {
 					throw e;
