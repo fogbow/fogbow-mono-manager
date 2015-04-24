@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ImageState;
@@ -21,6 +22,8 @@ public class NoCloudComputePlugin implements ComputePlugin {
 
 	private static final String ZERO = Integer.toString(0);
 	private static final String FAKE_IMAGE_ID = "no-image";
+	
+	public NoCloudComputePlugin(Properties properties) {}
 	
 	@Override
 	public String requestInstance(Token token, List<Category> categories,
