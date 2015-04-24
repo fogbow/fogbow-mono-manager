@@ -8,13 +8,13 @@ import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
 import org.fogbowcloud.manager.occi.instance.Instance;
 
-public class FCUStaticBenchmarkingPlugin implements BenchmarkingPlugin {
+public class VanillaBenchmarkingPlugin implements BenchmarkingPlugin {
 	
 	Map<String, Double> instanceToPower = new HashMap<String, Double>();
 	
-	private static final Logger LOGGER = Logger.getLogger(FCUStaticBenchmarkingPlugin.class);
+	private static final Logger LOGGER = Logger.getLogger(VanillaBenchmarkingPlugin.class);
 	
-	public FCUStaticBenchmarkingPlugin(Properties properties) {
+	public VanillaBenchmarkingPlugin(Properties properties) {
 	}
 
 	@Override

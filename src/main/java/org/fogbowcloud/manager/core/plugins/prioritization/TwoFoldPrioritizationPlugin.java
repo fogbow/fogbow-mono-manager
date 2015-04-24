@@ -1,5 +1,6 @@
 package org.fogbowcloud.manager.core.plugins.prioritization;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
@@ -43,9 +44,18 @@ public class TwoFoldPrioritizationPlugin implements PrioritizationPlugin {
 	}
 
 	@Override
-	public Request takeFrom(String requestingMemberId, List<Request> requestsWithInstance) {
-		Request localPreemption = localPrioritizationPlugin.takeFrom(requestingMemberId, requestsWithInstance);
+	public Request takeFrom(Request newRequest, List<Request> requestsWithInstance) {
+		List<Request> localRequests = new ArrayList<Request>();
+		List<Request> servedRequests = new ArrayList<Request>();
+		for (Request currentRequest : requestsWithInstance) {
+			if (currentRequest.isLocal()) {
+				localRequests.add(currentRequest);
+			} else {
+				servedRequests.add(currentRequest);
+			}
+		}
+		Request localPreemption = localPrioritizationPlugin.takeFrom(newRequest, localRequests);
 		return (localPreemption != null) ? localPreemption : 
-			remotePrioritizationPlugin.takeFrom(requestingMemberId, requestsWithInstance);
+			remotePrioritizationPlugin.takeFrom(newRequest, servedRequests);
 	}
 }

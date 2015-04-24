@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -185,9 +186,9 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		properties.put(ConfigurationConstants.FEDERATION_USER_PASS_KEY, "fogbow");
 		properties.put(ConfigurationConstants.FEDERATION_USER_TENANT_NAME_KEY, "fogbow");
 		properties.put(ConfigurationConstants.XMPP_JID_KEY, "manager.test.com");
-		properties.put(ConfigurationConstants.SSH_PRIVATE_HOST_KEY,
+		properties.put(ConfigurationConstants.TUNNEL_SSH_PRIVATE_HOST_KEY,
 				DefaultDataTestHelper.SERVER_HOST);
-		properties.put(ConfigurationConstants.SSH_HOST_HTTP_PORT_KEY,
+		properties.put(ConfigurationConstants.TUNNEL_SSH_HOST_HTTP_PORT_KEY,
 				String.valueOf(DefaultDataTestHelper.TOKEN_SERVER_HTTP_PORT));
 		properties.put(ConfigurationConstants.MAX_WHOISALIVE_MANAGER_COUNT,
 				MAX_WHOISALIVE_MANAGER_COUNT);
@@ -317,8 +318,12 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		return properties;
 	}
 
-	@SuppressWarnings("unchecked")
 	public ManagerController createDefaultManagerController() {
+		return createDefaultManagerController(null);
+	}
+
+	@SuppressWarnings("unchecked")
+	public ManagerController createDefaultManagerController(Map<String, String> extraProperties) {
 		Properties properties = new Properties();
 		properties.put(ConfigurationConstants.XMPP_JID_KEY,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
@@ -332,9 +337,9 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 				DefaultDataTestHelper.SCHEDULER_PERIOD.toString());
 		properties.put(ConfigurationConstants.INSTANCE_MONITORING_PERIOD_KEY,
 				Long.toString(DefaultDataTestHelper.LONG_TIME));
-		properties.put(ConfigurationConstants.SSH_PRIVATE_HOST_KEY,
+		properties.put(ConfigurationConstants.TUNNEL_SSH_PRIVATE_HOST_KEY,
 				DefaultDataTestHelper.SERVER_HOST);
-		properties.put(ConfigurationConstants.SSH_HOST_HTTP_PORT_KEY,
+		properties.put(ConfigurationConstants.TUNNEL_SSH_HOST_HTTP_PORT_KEY,
 				String.valueOf(DefaultDataTestHelper.TOKEN_SERVER_HTTP_PORT));
 		properties.put(ConfigurationConstants.PREFIX_FLAVORS + "small", VALUE_FLAVOR_SMALL);
 		properties.put(ConfigurationConstants.PREFIX_FLAVORS + "medium", VALUE_FLAVOR_MEDIUM);
@@ -342,6 +347,13 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		properties.put(ConfigurationConstants.SERVED_REQUEST_MONITORING_PERIOD_KEY,
 				String.valueOf(DefaultDataTestHelper.SERVED_REQUEST_MONITORING_PERIOD));
 		properties.put(ConfigurationConstants.GREEN_SITTER_JID, DefaultDataTestHelper.GREEN_SITTER_JID);
+		
+		if (extraProperties != null) {
+			for (Entry<String, String> entry : extraProperties.entrySet()) {
+				properties.put(entry.getKey(), entry.getValue());
+			}
+		}
+		
 		this.executorService = Mockito.mock(ScheduledExecutorService.class);
 		ManagerController managerController = new ManagerController(properties,
 				executorService);

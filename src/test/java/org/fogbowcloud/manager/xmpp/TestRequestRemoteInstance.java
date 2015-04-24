@@ -57,9 +57,11 @@ public class TestRequestRemoteInstance {
 				INSTANCE_DEFAULT);
 
 		final BlockingQueue<String> bq = new LinkedBlockingQueue<String>();
-		ManagerPacketHelper.asynchronousRemoteRequest(request, 
-				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, request.getFederationToken(),
-				managerTestHelper.createPacketSender(), new AsynchronousRequestCallback() {
+
+		ManagerPacketHelper.asynchronousRemoteRequest(request.getId(), request.getCategories(), 
+				request.getxOCCIAtt(), DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, 
+				request.getFederationToken(), managerTestHelper.createPacketSender(), 
+				new AsynchronousRequestCallback() {
 					
 					@Override
 					public void success(String instanceId) {

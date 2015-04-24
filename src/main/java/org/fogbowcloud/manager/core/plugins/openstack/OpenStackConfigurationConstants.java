@@ -54,6 +54,6 @@ public class OpenStackConfigurationConstants {
 	public static final String MAX_TOTAL_RAM_SIZE_ATT = "maxTotalRAMSize";
 	public static final String TOTAL_RAM_USED_ATT = "totalRAMUsed";
 	public static final String MAX_TOTAL_INSTANCES_ATT = "maxTotalInstances";
-	public static final String TOTAL_INSTANCES_USED_ATT = "totalInstancesUsed"; 
+	public static final String TOTAL_INSTANCES_USED_ATT = "totalInstancesUsed";
 
 }

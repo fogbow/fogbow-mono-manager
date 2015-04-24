@@ -19,6 +19,7 @@ public class NoFPrioritizationPlugin implements PrioritizationPlugin {
 	private AccountingPlugin accountingPlugin;
 	private String localMemberId;
 	private boolean trustworthy = false;
+	private boolean prioritizeLocal = true;
 	
 	private static final Logger LOGGER = Logger.getLogger(NoFPrioritizationPlugin.class);
 
@@ -26,17 +27,28 @@ public class NoFPrioritizationPlugin implements PrioritizationPlugin {
 		this.accountingPlugin = accountingPlugin;
 		this.localMemberId = properties.getProperty(ConfigurationConstants.XMPP_JID_KEY);
 		try {
-			this.trustworthy = Boolean.valueOf(properties.getProperty("nof_trustworthy"));			
+			this.trustworthy = Boolean.valueOf(properties.getProperty("nof_trustworthy").trim());
 		} catch (Exception e) {
-			LOGGER.error("Error while getting boolean value for nof_trustworhty. The default value is false.", e);
+			LOGGER.error(
+					"Error while getting boolean value for nof_trustworhty. The default value is false.",
+					e);
+		}
+
+		try {
+			this.prioritizeLocal = Boolean.valueOf(properties.getProperty("nof_prioritize_local")
+					.trim());
+		} catch (Exception e) {
+			LOGGER.error(
+					"Error while getting boolean value for nof_prioritize_local. The default value is true.",
+					e);
 		}
 	}
 	
 	@Override
-	public Request takeFrom(String requestingMemberId, List<Request> requestsWithInstance) {
+	public Request takeFrom(Request newRequest, List<Request> requestsWithInstance) {
 		LOGGER.debug("Choosing request to take instance from requestsWithInstance="
-				+ requestsWithInstance + " for requestMember=" + requestingMemberId);
-		if (localMemberId.equals(requestingMemberId) || requestsWithInstance == null) {
+				+ requestsWithInstance + " for requestMember=" + newRequest.getRequestingMemberId());
+		if (requestsWithInstance == null) {			
 			return null;
 		}
 		
@@ -53,7 +65,8 @@ public class NoFPrioritizationPlugin implements PrioritizationPlugin {
 		Collections.sort(memberDebts, new FederationMemberDebtComparator());
 		LOGGER.debug("Current memberDebts=" + memberDebts);
 		
-		double requestingMemberDebt = calcDebt(membersUsage, requestingMemberId);
+		double requestingMemberDebt = calcDebt(membersUsage, newRequest.getRequestingMemberId());
+		LOGGER.debug("Requesting member debt=" + requestingMemberDebt);
 		FederationMemberDebt firstMember = memberDebts.getFirst();
 		if (firstMember.getDebt() < requestingMemberDebt) {
 			String memberId = firstMember.getMember().getResourcesInfo().getId();
@@ -79,8 +92,7 @@ public class NoFPrioritizationPlugin implements PrioritizationPlugin {
 	private List<String> getServedMemberIds(List<Request> requests) {
 		List<String> servedMemberIds = new LinkedList<String>();
 		for (Request currentRequest : requests) {
-			if (!currentRequest.isLocal()
-					&& !servedMemberIds.contains(currentRequest.getRequestingMemberId())) {
+			if (!servedMemberIds.contains(currentRequest.getRequestingMemberId())) {
 				servedMemberIds.add(currentRequest.getRequestingMemberId());
 			}
 		}
@@ -89,6 +101,14 @@ public class NoFPrioritizationPlugin implements PrioritizationPlugin {
 
 	protected double calcDebt(Map<String, ResourceUsage> membersUsage, String memberId) {
 		double debt = 0;
+		if (localMemberId.equals(memberId)) {
+			if (prioritizeLocal) {
+				return Double.MAX_VALUE;
+			} else {
+				return -1;
+			}
+		}
+
 		if (membersUsage.containsKey(memberId)) {
 			debt = membersUsage.get(memberId).getConsumed()
 					- membersUsage.get(memberId).getDonated();

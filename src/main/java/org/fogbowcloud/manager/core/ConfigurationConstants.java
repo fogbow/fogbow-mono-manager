@@ -41,10 +41,10 @@ public class ConfigurationConstants {
 	public static final String ASYNC_REQUEST_WAITING_INTERVAL_KEY = "asyn_request_waiting_interval";
 	
 	//ssh properties TODO change these properties names to TOKEN_HOST_...
-	public static final String SSH_PRIVATE_HOST_KEY = "ssh_tunnel_private_host";
-	public static final String SSH_PUBLIC_HOST_KEY = "ssh_tunnel_public_host";
-	public static final String SSH_HOST_PORT_KEY = "ssh_tunnel_host_port";
-	public static final String SSH_HOST_HTTP_PORT_KEY = "ssh_tunnel_host_http_port";
+	public static final String TUNNEL_SSH_PRIVATE_HOST_KEY = "ssh_tunnel_private_host";
+	public static final String TUNNEL_SSH_PUBLIC_HOST_KEY = "ssh_tunnel_public_host";
+	public static final String TUNNEL_SSH_HOST_PORT_KEY = "ssh_tunnel_host_port";
+	public static final String TUNNEL_SSH_HOST_HTTP_PORT_KEY = "ssh_tunnel_host_http_port";
 
 	//voms
 	public static final String VOMS_PATH_VOMSES = "path_vomses";
@@ -58,6 +58,10 @@ public class ConfigurationConstants {
 	//pagination
 	public static final String MAX_WHOISALIVE_MANAGER_COUNT = "max_whoisalive_manager_count";
 	public static final String IMAGE_STORAGE_PLUGIN_CLASS = "image_storage_class";
+	
+	public static final String SSH_PUBLIC_KEY_PATH = "ssh_public_key";
+	public static final String SSH_PRIVATE_KEY_PATH = "ssh_private_key";
+	public static final String SSH_COMMON_USER = "ssh_common_user";
 	
 	//benchmarking
 	public static final String BENCHMARKING_PLUGIN_CLASS_KEY = "benchmarking_class";
