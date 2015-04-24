@@ -138,7 +138,7 @@
     <dependency>
       <groupId>org.jamppa</groupId>
       <artifactId>jamppa</artifactId>
-      <version>0.1.1</version>
+      <version>0.1.2</version>
     </dependency>
     <dependency>
       <groupId>condor</groupId>
@@ -224,6 +224,11 @@
 		<groupId>com.h2database</groupId>
 		<artifactId>h2</artifactId>
 		<version>1.4.186</version>
+	</dependency>
+	<dependency>
+		<groupId>javax.mail</groupId>
+		<artifactId>mail</artifactId>
+		<version>1.4</version>
 	</dependency>
   </dependencies>
   

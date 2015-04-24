@@ -5,8 +5,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import org.fogbowcloud.manager.core.ConfigurationConstants;
+import org.fogbowcloud.manager.core.CurrentThreadExecutorService;
 import org.fogbowcloud.manager.core.FederationMemberPicker;
 import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
@@ -28,6 +33,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 public class TestOCCIApplication {
 
@@ -49,8 +56,20 @@ public class TestOCCIApplication {
 				DefaultDataTestHelper.SERVER_HOST);
 		properties.put(ConfigurationConstants.TUNNEL_SSH_HOST_HTTP_PORT_KEY,
 				String.valueOf(DefaultDataTestHelper.TOKEN_SERVER_HTTP_PORT));
+				
+		ScheduledExecutorService executor = Mockito.mock(ScheduledExecutorService.class);
+		Mockito.when(executor.scheduleWithFixedDelay(Mockito.any(Runnable.class), Mockito.anyLong(), 
+				Mockito.anyLong(), Mockito.any(TimeUnit.class))).thenAnswer(new Answer<Future<?>>() {
+			@Override
+			public Future<?> answer(InvocationOnMock invocation)
+					throws Throwable {
+				Runnable runnable = (Runnable) invocation.getArguments()[0];
+				runnable.run();
+				return null;
+			}
+		});
 		
-		managerFacade = new ManagerController(properties);
+		managerFacade = new ManagerController(properties, executor);
 		occiApplication = new OCCIApplication(managerFacade);
 
 		// default instance count value is 1
@@ -79,12 +98,16 @@ public class TestOCCIApplication {
 		
 		FederationMemberPicker memberPickerPlugin = Mockito.mock(FederationMemberPicker.class);
 		
+		// mocking benchmark executor
+		ExecutorService benchmarkExecutor = new CurrentThreadExecutorService();
+		
 		managerFacade.setAuthorizationPlugin(authorizationPlugin);
 		managerFacade.setLocalIdentityPlugin(identityPlugin);
 		managerFacade.setFederationIdentityPlugin(identityPlugin);
 		managerFacade.setComputePlugin(computePlugin);
 		managerFacade.setBenchmarkingPlugin(benchmarkingPlugin);
 		managerFacade.setMemberPickerPlugin(memberPickerPlugin);
+		managerFacade.setBenchmarkExecutor(benchmarkExecutor);
 	}
 
 	@Test

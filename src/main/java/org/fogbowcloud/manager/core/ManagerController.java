@@ -62,7 +62,6 @@ import org.fogbowcloud.manager.occi.request.RequestState;
 import org.fogbowcloud.manager.occi.request.RequestType;
 import org.fogbowcloud.manager.xmpp.AsyncPacketSender;
 import org.fogbowcloud.manager.xmpp.ManagerPacketHelper;
-import org.json.JSONObject;
 import org.restlet.Response;
 
 public class ManagerController {
@@ -105,25 +104,22 @@ public class ManagerController {
 	private Properties properties;
 	private AsyncPacketSender packetSender;
 	private FederationMemberValidator validator;
-	private ExecutorService benchmarkExecutor;
+	private ExecutorService benchmarkExecutor = Executors.newFixedThreadPool(10);
 	
 	private Map<String, ForwardedRequest> asynchronousRequests = new ConcurrentHashMap<String, ForwardedRequest>();
 	
 	private DateUtils dateUtils = new DateUtils();
 
 	public ManagerController(Properties properties) {
-		this(properties, null, null);
+		this(properties, null);
 	}
 
-	public ManagerController(Properties properties, ScheduledExecutorService executor, 
-			ExecutorService benchmarkExecutor) {
+	public ManagerController(Properties properties, ScheduledExecutorService executor) {
 		if (properties == null) {
 			throw new IllegalArgumentException();
 		}
 		this.properties = properties;
-		populateStaticFlavors();
-		this.benchmarkExecutor = benchmarkExecutor == null ? Executors.newFixedThreadPool(10) : benchmarkExecutor;
-		
+		setFlavorsProvided(ResourceRepository.getStaticFlavors(properties));
 		if (executor == null) {
 			this.requestSchedulerTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
 			this.tokenUpdaterTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
@@ -141,8 +137,16 @@ public class ManagerController {
 		}
 	}
 	
+	public void setBenchmarkExecutor(ExecutorService benchmarkExecutor) {
+		this.benchmarkExecutor = benchmarkExecutor;
+	}
+	
 	public void setPrioritizationPlugin(PrioritizationPlugin prioritizationPlugin){
 		this.prioritizationPlugin = prioritizationPlugin;
+	}
+	
+	public void setFlavorsProvided(List<Flavor> flavorsProvided) {
+		this.flavorsProvided = flavorsProvided;
 	}
 	
 	public void setMemberPickerPlugin(FederationMemberPicker memberPicker) {
@@ -597,13 +601,17 @@ public class ManagerController {
 	}
 	
 	public void queueServedRequest(String requestingMemberId, List<Category> categories,
-			Map<String, String> xOCCIAtt, String instanceToken, Token requestingUserToken){
+			Map<String, String> xOCCIAtt, String requestId, Token requestingUserToken){
 		
 		LOGGER.info("Queueing request with categories: " + categories + " and xOCCIAtt: "
 				+ xOCCIAtt + " for requesting member: " + requestingMemberId + " with requestingToken " + requestingUserToken);
-		Request request = new Request(instanceToken, requestingUserToken,
+		Request request = new Request(requestId, requestingUserToken,
 				requestingUserToken, categories, xOCCIAtt, false, requestingMemberId);
 		requests.addRequest(requestingUserToken.getUser(), request);
+		
+		if (!requestSchedulerTimer.isScheduled()) {
+			triggerRequestScheduler();			
+		}
 	}
 
 	public String createInstanceWithFederationUser(Request request) {
@@ -651,13 +659,8 @@ public class ManagerController {
 			String instanceId = computePlugin.requestInstance(federationUserToken, categoriesWithoutImage,
 					xOCCIAttCopy, localImageId);
 			
-			request.setState(RequestState.SPAWNING);
-			
-			try {
-				execBenchmark(request, instanceId, properties.getProperty(ConfigurationConstants.XMPP_JID_KEY), true);
-			} catch (Throwable e) {
-				request.setState(RequestState.OPEN);
-			}
+			request.setState(RequestState.SPAWNING);						
+			execBenchmark(request, instanceId, properties.getProperty(ConfigurationConstants.XMPP_JID_KEY), true);			
 			return instanceId;
 		} catch (OCCIException e) {
 			if (e.getType() == ErrorType.QUOTA_EXCEEDED) {
@@ -1037,7 +1040,6 @@ public class ManagerController {
 						request.setProvidingMemberId(null);
 					}
 				});
-			
 	}
 
 	protected boolean isRequestForwardedtoRemoteMember(String requestId) {
@@ -1151,6 +1153,10 @@ public class ManagerController {
 					asynchronousRequests.remove(request.getId());
 				}
 
+				if (!request.isLocal()) {
+					ManagerPacketHelper.replyToServedRequest(request, packetSender);
+				}
+
 				LOGGER.debug("Fulfilled Request: " + request);
 
 				if (request.isLocal() && !instanceMonitoringTimer.isScheduled()) {
@@ -1180,7 +1186,7 @@ public class ManagerController {
 		}
 	}
 	
-	protected void waitForSSHConnectivity(String sshPublicAddress) {
+	private void waitForSSHConnectivity(String sshPublicAddress) {
 		if (sshPublicAddress == null) {
 			return;
 		}
@@ -1199,7 +1205,7 @@ public class ManagerController {
 	}
 
 	private Command execOnInstance(String sshPublicAddress, String cmd) throws Exception {
-		SshHelper sshHelper = new SshHelper();
+		SshHelper sshHelper = createSshHelper();
 		String[] sshAddressAndPort = sshPublicAddress.split(":");
 		try {
 			sshHelper.connect(sshAddressAndPort[0], Integer.parseInt(sshAddressAndPort[1]), 
@@ -1213,6 +1219,10 @@ public class ManagerController {
 				LOGGER.warn("Could not disconnect ssh client.", e);
 			}
 		}
+	}
+
+	protected SshHelper createSshHelper() {
+		return new SshHelper();
 	}
 
 	private void triggerRequestScheduler() {
@@ -1354,7 +1364,7 @@ public class ManagerController {
 		try {
 			instanceId = createInstanceWithFederationUser(request);
 		} catch (Exception e) {
-			LOGGER.info("Could not create instance with federation user locally." + e);
+			LOGGER.info("Could not create instance with federation user locally. " + e);
 		}
 
 		if (instanceId == null) {
@@ -1458,28 +1468,28 @@ public class ManagerController {
 		return this.flavorsProvided;
 	}
 	
-	private void populateStaticFlavors() {
-		List<Flavor> flavors = new ArrayList<Flavor>();
-		for (Object objectKey: this.properties.keySet()) {
-			String key = objectKey.toString();
-			if (key.startsWith(ConfigurationConstants.PREFIX_FLAVORS)) {
-				String value = (String) this.properties.get(key);
-				String cpu = getAttValue("cpu", value);
-				String mem = getAttValue("mem", value);				
-				flavors.add(new Flavor(key.replace(ConfigurationConstants.PREFIX_FLAVORS, ""), cpu, mem, "0"));
-			}			
-		}
-		flavorsProvided = flavors;
-	}
+//	private void populateStaticFlavors() {
+//		List<Flavor> flavors = new ArrayList<Flavor>();
+//		for (Object objectKey: this.properties.keySet()) {
+//			String key = objectKey.toString();
+//			if (key.startsWith(ConfigurationConstants.PREFIX_FLAVORS)) {
+//				String value = (String) this.properties.get(key);
+//				String cpu = getAttValue("cpu", value);
+//				String mem = getAttValue("mem", value);				
+//				flavors.add(new Flavor(key.replace(ConfigurationConstants.PREFIX_FLAVORS, ""), cpu, mem, "0"));
+//			}			
+//		}
+//		flavorsProvided = flavors;
+//	}
 	
-	public static String getAttValue(String attName, String flavorSpec) {		
-		try {
-			JSONObject root = new JSONObject(flavorSpec);
-			return root.getString(attName);
-		} catch (Exception e) {
-			return null;
-		}
-	}
+//	public static String getAttValue(String attName, String flavorSpec) {		
+//		try {
+//			JSONObject root = new JSONObject(flavorSpec);
+//			return root.getString(attName);
+//		} catch (Exception e) {
+//			return null;
+//		}
+//	}
 
 	public List<ResourceUsage> getMembersUsage(String federationAccessId) {
 		checkFederationAccessId(federationAccessId);		

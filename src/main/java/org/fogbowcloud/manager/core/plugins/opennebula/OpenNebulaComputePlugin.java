@@ -58,7 +58,7 @@ import org.w3c.dom.Element;
 
 public class OpenNebulaComputePlugin implements ComputePlugin {
 
-	public static final String OPENNEBULA_TEMPLATES = "opennebula_templates";
+	public static final String OPENNEBULA_TEMPLATES = "compute_one_templates";
 	public static final String OPENNEBULA_TEMPLATES_TYPE_ALL = "all";	
 	public static final int VALUE_DEFAULT_QUOTA_OPENNEBULA = -1;
 	public static final int VALUE_UNLIMITED_QUOTA_OPENNEBULA = -2;
@@ -325,8 +325,8 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		List<Resource> resources = new ArrayList<Resource>();
 		resources.add(ResourceRepository.getInstance().get("compute"));
 		resources.add(ResourceRepository.getInstance().get("os_tpl"));
-		resources.add(ResourceRepository.getInstance().get(
-				getUsedFlavor(Double.parseDouble(cpu), Double.parseDouble(mem))));
+		resources.add(ResourceRepository.generateFlavorResource(getUsedFlavor(
+				Double.parseDouble(cpu), Double.parseDouble(mem))));
 		
 		return new Instance(vm.getId(), resources, attributes, new ArrayList<Link>(), state);
 	}

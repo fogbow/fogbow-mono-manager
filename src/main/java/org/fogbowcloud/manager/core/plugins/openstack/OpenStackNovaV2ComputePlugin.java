@@ -410,8 +410,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 			resources.add(ResourceRepository.getInstance().get("os_tpl"));
 			
 			//TODO check this line
-//			resources.add(ResourceRepository.getInstance().get(flavorId));
-			resources.add(ResourceRepository.getInstance().get(getUsedFlavor(flavorId)));
+			resources.add(ResourceRepository.generateFlavorResource(getUsedFlavor(flavorId)));
 
 			LOGGER.debug("Instance resources: " + resources);
 

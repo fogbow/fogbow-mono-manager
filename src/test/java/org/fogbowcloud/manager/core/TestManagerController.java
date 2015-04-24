@@ -14,6 +14,8 @@ import java.util.Map;
 
 import javax.mail.MessagingException;
 
+import net.schmizz.sshj.connection.channel.direct.Session.Command;
+
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
 import org.dom4j.Element;
@@ -26,12 +28,14 @@ import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.openstack.KeystoneIdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.openstack.OpenStackOCCIComputePlugin;
+import org.fogbowcloud.manager.core.plugins.util.SshHelper;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.core.util.ManagerTestHelper;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.OCCIException;
 import org.fogbowcloud.manager.occi.core.Resource;
+import org.fogbowcloud.manager.occi.core.ResourceRepository;
 import org.fogbowcloud.manager.occi.core.ResponseConstants;
 import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.instance.Instance;
@@ -158,7 +162,6 @@ public class TestManagerController {
 		managerController.setRequests(requestRepository);
 
 		managerController.checkAndSubmitOpenRequests();
-		waitBenchmarkExecutor();
 
 		List<Request> requestsFromUser = managerController.getRequestsFromUser(token.getAccessId());
 		for (Request request : requestsFromUser) {
@@ -220,7 +223,6 @@ public class TestManagerController {
 				return iq.getTo().toBareJID().equals("green.server.com");
 			}
 		}));
-		
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -296,9 +298,7 @@ public class TestManagerController {
 		instanceEl = queryEl.addElement("instance");
 		instanceEl.addElement("id").setText("newinstanceid");
 		callbacks.get(0).handle(iq);
-
-		waitBenchmarkExecutor();
-		
+	
 		for (Request request : requestsFromUser) {
 			Assert.assertEquals(RequestState.FULFILLED, request.getState());
 			Assert.assertFalse(managerController.isRequestForwardedtoRemoteMember(request.getId()));
@@ -852,7 +852,6 @@ public class TestManagerController {
 
 		// getting instance for request
 		managerController.checkAndSubmitOpenRequests();
-		waitBenchmarkExecutor();
 
 		// checking if request has been fulfilled again
 		requestsFromUser = managerController
@@ -1010,7 +1009,6 @@ public class TestManagerController {
 		managerController.createRequests(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID, DefaultDataTestHelper.LOCAL_ACCESS_TOKEN_ID,
 				new ArrayList<Category>(), xOCCIAtt);
 		managerController.checkAndSubmitOpenRequests();		
-		waitBenchmarkExecutor();
 
 		List<Request> requests = managerController
 				.getRequestsFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
@@ -1023,13 +1021,6 @@ public class TestManagerController {
 		Assert.assertNotNull(requests.get(0).getProvidingMemberId());
 	}
 
-	private void waitBenchmarkExecutor() {
-		try {
-			Thread.sleep(DefaultDataTestHelper.GRACE_TIME);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}		
-	}
 
 	@Test
 	public void testOneTimeRequestSetFulfilledAndClosed() throws InterruptedException {
@@ -1039,7 +1030,6 @@ public class TestManagerController {
 		managerController.createRequests(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID, DefaultDataTestHelper.LOCAL_ACCESS_TOKEN_ID,
 				new ArrayList<Category>(), xOCCIAtt);
 		managerController.checkAndSubmitOpenRequests();
-		waitBenchmarkExecutor();
 		
 		// checking if request was properly created
 		List<Request> requests = managerController
@@ -1077,7 +1067,6 @@ public class TestManagerController {
 		managerController.createRequests(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID, DefaultDataTestHelper.LOCAL_ACCESS_TOKEN_ID,
 				new ArrayList<Category>(), xOCCIAtt);
 		managerController.checkAndSubmitOpenRequests();
-		waitBenchmarkExecutor();
 
 		// checking if request was properly created
 		List<Request> requests = managerController
@@ -1128,7 +1117,6 @@ public class TestManagerController {
 		managerController.createRequests(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID, DefaultDataTestHelper.LOCAL_ACCESS_TOKEN_ID,
 				new ArrayList<Category>(), xOCCIAtt);
  		managerController.checkAndSubmitOpenRequests();
- 		waitBenchmarkExecutor();
 
 		// checking if request was fulfilled with instanceID
 		List<Request> requests = managerController
@@ -1173,7 +1161,6 @@ public class TestManagerController {
 
 		// getting second instance
 		managerController.checkAndSubmitOpenRequests();
-		waitBenchmarkExecutor();
 
 		// checking if request was fulfilled with secondInstance
 		requests = managerController.getRequestsFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
@@ -1213,7 +1200,6 @@ public class TestManagerController {
 		// waiting expiration time
 		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD + DefaultDataTestHelper.GRACE_TIME);
 		managerController.checkAndSubmitOpenRequests();
-		waitBenchmarkExecutor();
 		requests = managerController.getRequestsFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
 
 		// checking if request was closed
@@ -1245,7 +1231,6 @@ public class TestManagerController {
 
 		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD);
 		managerController.checkAndSubmitOpenRequests();
-		waitBenchmarkExecutor();
 
 		// checking request is fulfilled
 		List<Request> requests = managerController
@@ -1275,7 +1260,6 @@ public class TestManagerController {
 				DefaultDataTestHelper.INSTANCE_ID  + Request.SEPARATOR_GLOBAL_ID
 	            + DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		managerController.checkAndSubmitOpenRequests();
-		waitBenchmarkExecutor();
 
 		// checking if request state was set to closed
 		requests = managerController.getRequestsFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
@@ -1381,7 +1365,6 @@ public class TestManagerController {
 		// sleeping for the scheduler period and submitting request
 		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD + DefaultDataTestHelper.GRACE_TIME);
 		managerController.checkAndSubmitOpenRequests();
-		waitBenchmarkExecutor();
 
 		// check if request is in valid period
 		requests = managerController.getRequestsFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
@@ -1438,7 +1421,6 @@ public class TestManagerController {
 		// sleeping for the scheduler period and submitting request
 		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD + DefaultDataTestHelper.GRACE_TIME);
 		managerController.checkAndSubmitOpenRequests();
-		waitBenchmarkExecutor();
 
 		// check if request is in valid period
 		requests = managerController.getRequestsFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
@@ -1484,7 +1466,6 @@ public class TestManagerController {
 		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD * 3 + DefaultDataTestHelper.GRACE_TIME);
 
 		managerController.checkAndSubmitOpenRequests();
-		waitBenchmarkExecutor();
 		
 		// checking is request is fulfilled
 		requests = managerController.getRequestsFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
@@ -1555,7 +1536,6 @@ public class TestManagerController {
 		// waiting for a time and request is into valid period
 		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD * 2 + DefaultDataTestHelper.GRACE_TIME);
 		managerController.checkAndSubmitOpenRequests();
-		waitBenchmarkExecutor();
 
 		// checking is request is fulfilled
 		requests = managerController.getRequestsFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
@@ -1621,6 +1601,9 @@ public class TestManagerController {
 
 		managerController.setComputePlugin(computePlugin);
 
+		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);
+		managerController.setPacketSender(packetSender);
+		
 		Request request = new Request("id1", null,
 				null, new ArrayList<Category>(), xOCCIAtt,
 				false, "abc");
@@ -1632,6 +1615,98 @@ public class TestManagerController {
 		managerController.setValidator(validatorMock);
 		
 		Assert.assertNull(managerController.createInstanceWithFederationUser(request));
+	}
+		
+	@Test
+	public void testReplyToServedRequestWithSuccess() {
+		ResourcesInfo resources = Mockito.mock(ResourcesInfo.class);
+		Mockito.doReturn("abc").when(resources).getId();
+
+		FederationMember member = Mockito.mock(FederationMember.class);
+		Mockito.doReturn(resources).when(member).getResourcesInfo();
+		List<FederationMember> list = new LinkedList<FederationMember>();
+		list.add(member);
+		managerController.updateMembers(list);
+
+		FederationMemberValidator validatorMock = Mockito.mock(FederationMemberValidator.class);
+		Mockito.doReturn(true).when(validatorMock).canDonateTo(Mockito.eq(member), Mockito.any(Token.class));
+		managerController.setValidator(validatorMock);
+
+		ComputePlugin computePlugin = Mockito.mock(OpenStackOCCIComputePlugin.class);
+		Mockito.doReturn("answer").when(computePlugin)
+				.requestInstance(Mockito.any(Token.class), Mockito.anyList(), Mockito.anyMap(), Mockito.anyString());
+
+		managerController.setComputePlugin(computePlugin);
+
+		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);
+		managerController.setPacketSender(packetSender);
+		
+		Request request = new Request("id1", null,
+				null, new ArrayList<Category>(), xOCCIAtt,
+				false, "abc");
+		
+		Assert.assertEquals("answer",
+				managerController.createInstanceWithFederationUser(request));
+
+		Mockito.verify(packetSender).sendPacket(Mockito.argThat(new ArgumentMatcher<IQ>() {
+			@Override
+			public boolean matches(Object argument) {
+				IQ iq = (IQ) argument;
+				if (!"id1".equals(iq.getID())) {
+					return false;
+				}				
+				String instanceId = iq.getElement().element("query").element("instance").elementText("id");
+				if (!"answer".equals(instanceId)){
+					return false;
+				}
+				return true;
+			}
+		}));		
+	}
+	
+	@Test
+	public void testReplyToServedRequestWithoutSuccess() {
+		ResourcesInfo resources = Mockito.mock(ResourcesInfo.class);
+		Mockito.doReturn("abc").when(resources).getId();
+
+		FederationMember member = Mockito.mock(FederationMember.class);
+		Mockito.doReturn(resources).when(member).getResourcesInfo();
+		List<FederationMember> list = new LinkedList<FederationMember>();
+		list.add(member);
+		managerController.updateMembers(list);
+
+		FederationMemberValidator validatorMock = Mockito.mock(FederationMemberValidator.class);
+		Mockito.doReturn(true).when(validatorMock).canDonateTo(Mockito.eq(member), Mockito.any(Token.class));
+		managerController.setValidator(validatorMock);
+
+		ComputePlugin computePlugin = Mockito.mock(OpenStackOCCIComputePlugin.class);
+		Mockito.doReturn(null).when(computePlugin)
+				.requestInstance(Mockito.any(Token.class), Mockito.anyList(), Mockito.anyMap(), Mockito.anyString());
+
+		managerController.setComputePlugin(computePlugin);
+
+		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);
+		managerController.setPacketSender(packetSender);
+		
+		Request request = new Request("id1", null,
+				null, new ArrayList<Category>(), xOCCIAtt,
+				false, "abc");
+		
+		Assert.assertNull(managerController.createInstanceWithFederationUser(request));
+
+		Mockito.verify(packetSender).sendPacket(Mockito.argThat(new ArgumentMatcher<IQ>() {
+			@Override
+			public boolean matches(Object argument) {
+				IQ iq = (IQ) argument;
+				if (!"id1".equals(iq.getID())) {
+					return false;
+				}				
+				if (!iq.getError().getCondition().equals(Condition.item_not_found)){
+					return false;
+				}				
+				return true;
+			}
+		}));		
 	}
 	
 	@Test
@@ -1731,9 +1806,9 @@ public class TestManagerController {
 		for (Flavor flavor : flavors) {
 			boolean thereIs = false;
 			for (String valueFlavor : verifyFlavors) {
-				if (flavor.getMem().equals(ManagerController.getAttValue("mem", valueFlavor))
+				if (flavor.getMem().equals(ResourceRepository.getAttValue("mem", valueFlavor))
 						&& flavor.getCpu()
-								.equals(ManagerController.getAttValue("cpu", valueFlavor))) {
+								.equals(ResourceRepository.getAttValue("cpu", valueFlavor))) {
 					thereIs = true;
 				}
 			}
@@ -1741,15 +1816,6 @@ public class TestManagerController {
 				Assert.fail();
 			}
 		}
-	}
-	
-	@Test
-	public void testGetAttValue() {
-		String cpuValue = "2";
-		String memValue = "10";
-		String flavorSpec = "{cpu=" + cpuValue + ",mem=" + memValue + "}";
-		Assert.assertEquals(cpuValue, ManagerController.getAttValue("cpu", flavorSpec));
-		Assert.assertEquals(memValue, ManagerController.getAttValue("mem", flavorSpec));		
 	}
 	
 	@Test
@@ -1928,7 +1994,6 @@ public class TestManagerController {
 		managerController.queueServedRequest("manager1-test.com", new ArrayList<Category>(),
 				xOCCIAtt, "id1", managerTestHelper.getDefaultFederationToken());
 		managerController.checkAndSubmitOpenRequests();
-		waitBenchmarkExecutor();
 		
 		// checking there is one served request
 		Assert.assertEquals(1, managerController.getRemoteRequests().size());
@@ -1973,7 +2038,6 @@ public class TestManagerController {
 		managerController.queueServedRequest("manager1-test.com", new ArrayList<Category>(),
 				xOCCIAtt, "id1", managerTestHelper.getDefaultFederationToken());		
 		managerController.checkAndSubmitOpenRequests();
-		waitBenchmarkExecutor();
 				
 		// checking there is one served request
 		System.out.println(managerController.getRemoteRequests());
@@ -2120,7 +2184,6 @@ public class TestManagerController {
 		managerController.queueServedRequest("manager1-test.com", new ArrayList<Category>(),
 				xOCCIAtt, "id1", managerTestHelper.getDefaultFederationToken());		
 		managerController.checkAndSubmitOpenRequests();
-		waitBenchmarkExecutor();
 				
 		// checking there is one served request
 		Assert.assertEquals(1, managerController.getRemoteRequests().size());
@@ -2169,8 +2232,11 @@ public class TestManagerController {
 				DefaultDataTestHelper.LOCAL_MANAGER_SSH_PUBLIC_KEY_PATH);
 		ManagerController localManagerController = 
 				managerTestHelper.createDefaultManagerController(extraProperties);
-		ManagerController managerControllerSpy = Mockito.spy(localManagerController);
+		ManagerController spiedManageController = Mockito.spy(localManagerController);
 		String remoteRequestId = "id1";
+		
+		SshHelper sshHelper = createFakeSSHHelper();
+		Mockito.doReturn(sshHelper).when(spiedManageController).createSshHelper();
 		
 		Map<String,String> newXOCCIAttr = new HashMap<String,String>(this.xOCCIAtt);
 		ArrayList<Category> categories = new ArrayList<Category>();
@@ -2184,7 +2250,7 @@ public class TestManagerController {
 		Mockito.when(
 				computePlugin.requestInstance(Mockito.any(Token.class), 
 						Mockito.anyList(), Mockito.anyMap(), Mockito.anyString())).thenReturn(newInstanceId);
-		managerControllerSpy.setComputePlugin(computePlugin);
+		spiedManageController.setComputePlugin(computePlugin);
 		
 		Request servedRequest = new Request(remoteRequestId, managerTestHelper.getDefaultFederationToken(),
 				managerTestHelper.getDefaultLocalToken(), categories,
@@ -2194,7 +2260,14 @@ public class TestManagerController {
 		servedRequest.setInstanceId(newInstanceId);
 		servedRequest.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		
-		managerControllerSpy.createInstanceWithFederationUser(servedRequest);
+		Instance instance = new Instance(newInstanceId);
+		instance.addAttribute(Instance.SSH_PUBLIC_ADDRESS_ATT, "127.0.0.1:5555");
+		instance.addAttribute(Instance.SSH_USERNAME_ATT, "fogbow");
+		
+		Mockito.when(computePlugin.getInstance(Mockito.any(Token.class), 
+				Mockito.eq(newInstanceId))).thenReturn(instance);
+		
+		spiedManageController.createInstanceWithFederationUser(servedRequest);
 		
 		final String localManagerPublicKeyData = IOUtils.toString(new FileInputStream(
 				new File(DefaultDataTestHelper.LOCAL_MANAGER_SSH_PUBLIC_KEY_PATH)));
@@ -2234,14 +2307,17 @@ public class TestManagerController {
 		ManagerController localManagerController = 
 				managerTestHelper.createDefaultManagerController(extraProperties);
 		String remoteRequestId = "id1";
-		ManagerController managerControllerSpy = Mockito.spy(localManagerController);
+		ManagerController spiedManageController = Mockito.spy(localManagerController);
+		
+		SshHelper sshHelper = createFakeSSHHelper();
+		Mockito.doReturn(sshHelper).when(spiedManageController).createSshHelper();
 		
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		String newInstanceId = "newinstanceid";
 		Mockito.when(
 				computePlugin.requestInstance(Mockito.any(Token.class), 
 				Mockito.anyList(), Mockito.anyMap(), Mockito.anyString())).thenReturn(newInstanceId);
-		managerControllerSpy.setComputePlugin(computePlugin);
+		spiedManageController.setComputePlugin(computePlugin);
 		
 		Request servedRequest = new Request(remoteRequestId, managerTestHelper.getDefaultFederationToken(),
 				managerTestHelper.getDefaultLocalToken(), new ArrayList<Category>(),
@@ -2251,7 +2327,14 @@ public class TestManagerController {
 		servedRequest.setInstanceId(newInstanceId);
 		servedRequest.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		
-		managerControllerSpy.createInstanceWithFederationUser(servedRequest);
+		Instance instance = new Instance(newInstanceId);
+		instance.addAttribute(Instance.SSH_PUBLIC_ADDRESS_ATT, "127.0.0.1:5555");
+		instance.addAttribute(Instance.SSH_USERNAME_ATT, "fogbow");
+		
+		Mockito.when(computePlugin.getInstance(Mockito.any(Token.class), 
+				Mockito.eq(newInstanceId))).thenReturn(instance);
+		
+		spiedManageController.createInstanceWithFederationUser(servedRequest);
 		
 		final String localManagerPublicKeyData = IOUtils.toString(new FileInputStream(
 				new File(DefaultDataTestHelper.LOCAL_MANAGER_SSH_PUBLIC_KEY_PATH)));
@@ -2326,7 +2409,11 @@ public class TestManagerController {
 				DefaultDataTestHelper.LOCAL_MANAGER_SSH_PUBLIC_KEY_PATH);
 		ManagerController localManagerController = 
 				managerTestHelper.createDefaultManagerController(extraProperties);
-		ManagerController managerControllerSpy = Mockito.spy(localManagerController);
+		ManagerController spiedManageController = Mockito.spy(localManagerController);
+		
+		SshHelper sshHelper = createFakeSSHHelper();
+		Mockito.doReturn(sshHelper).when(spiedManageController).createSshHelper();
+		
 		String localRequestId = "id1";
 		
 		Map<String,String> newXOCCIAttr = new HashMap<String,String>(this.xOCCIAtt);
@@ -2341,7 +2428,7 @@ public class TestManagerController {
 		Mockito.when(
 				computePlugin.requestInstance(Mockito.any(Token.class), 
 						Mockito.anyList(), Mockito.anyMap(), Mockito.anyString())).thenReturn(newInstanceId);
-		managerControllerSpy.setComputePlugin(computePlugin);
+		spiedManageController.setComputePlugin(computePlugin);
 		
 		Request localRequest = new Request(localRequestId, managerTestHelper.getDefaultFederationToken(),
 				managerTestHelper.getDefaultLocalToken(), categories,
@@ -2351,7 +2438,14 @@ public class TestManagerController {
 		localRequest.setInstanceId(newInstanceId);
 		localRequest.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		
-		managerControllerSpy.createInstanceWithFederationUser(localRequest);
+		Instance instance = new Instance(newInstanceId);
+		instance.addAttribute(Instance.SSH_PUBLIC_ADDRESS_ATT, "127.0.0.1:5555");
+		instance.addAttribute(Instance.SSH_USERNAME_ATT, "fogbow");
+		
+		Mockito.when(computePlugin.getInstance(Mockito.any(Token.class), 
+				Mockito.eq(newInstanceId))).thenReturn(instance);
+		
+		spiedManageController.createInstanceWithFederationUser(localRequest);
 		
 		final String localManagerPublicKeyData = IOUtils.toString(new FileInputStream(
 				new File(DefaultDataTestHelper.LOCAL_MANAGER_SSH_PUBLIC_KEY_PATH)));
@@ -2380,6 +2474,14 @@ public class TestManagerController {
 				.createUserDataUtilsCommand(localRequest)), "UTF-8");
 		Assert.assertTrue(base64UserDataCmd.contains(localManagerPublicKeyData));
 	}
+
+	private SshHelper createFakeSSHHelper() throws IOException {
+		SshHelper sshHelper = Mockito.mock(SshHelper.class);
+		Command command = Mockito.mock(Command.class);
+		Mockito.when(command.getExitStatus()).thenReturn(0);
+		Mockito.when(sshHelper.doSshExecution(Mockito.anyString())).thenReturn(command);
+		return sshHelper;
+	}
 	
 	@Test
 	@SuppressWarnings("unchecked")
@@ -2391,14 +2493,17 @@ public class TestManagerController {
 		ManagerController localManagerController = 
 				managerTestHelper.createDefaultManagerController(extraProperties);
 		String localRequestId = "id1";
-		ManagerController managerControllerSpy = Mockito.spy(localManagerController);
+		ManagerController spiedManageController = Mockito.spy(localManagerController);
+		
+		SshHelper sshHelper = createFakeSSHHelper();
+		Mockito.doReturn(sshHelper).when(spiedManageController).createSshHelper();
 		
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		String newInstanceId = "newinstanceid";
 		Mockito.when(
 				computePlugin.requestInstance(Mockito.any(Token.class), 
 				Mockito.anyList(), Mockito.anyMap(), Mockito.anyString())).thenReturn(newInstanceId);
-		managerControllerSpy.setComputePlugin(computePlugin);
+		spiedManageController.setComputePlugin(computePlugin);
 		
 		Request localRequest = new Request(localRequestId, managerTestHelper.getDefaultFederationToken(),
 				managerTestHelper.getDefaultLocalToken(), new ArrayList<Category>(),
@@ -2408,7 +2513,14 @@ public class TestManagerController {
 		localRequest.setInstanceId(newInstanceId);
 		localRequest.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		
-		managerControllerSpy.createInstanceWithFederationUser(localRequest);
+		Instance instance = new Instance(newInstanceId);
+		instance.addAttribute(Instance.SSH_PUBLIC_ADDRESS_ATT, "127.0.0.1:5555");
+		instance.addAttribute(Instance.SSH_USERNAME_ATT, "fogbow");
+		
+		Mockito.when(computePlugin.getInstance(Mockito.any(Token.class), 
+				Mockito.eq(newInstanceId))).thenReturn(instance);
+		
+		spiedManageController.createInstanceWithFederationUser(localRequest);
 		
 		final String localManagerPublicKeyData = IOUtils.toString(new FileInputStream(
 				new File(DefaultDataTestHelper.LOCAL_MANAGER_SSH_PUBLIC_KEY_PATH)));
