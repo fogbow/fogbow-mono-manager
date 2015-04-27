@@ -127,4 +127,11 @@ accounting_class=org.fogbowcloud.manager.core.plugins.accounting.FCUAccountingPl
 accounting_update_period=300000
 accounting_datastore_url=jdbc:h2:/tmp/usage
 
-benchmarking_class=org.fogbowcloud.manager.core.plugins.benchmarking.FCUStaticBenchmarkingPlugin
+# SSH Benchmarking plugin
+benchmarking_class=org.fogbowcloud.manager.core.plugins.benchmarking.SSHBenchmarkingPlugin
+# Benchmarking script to use with SSH Benchmarking plugin
+ssh_benchmarking_script_url=http://downloads.fogbowcloud.org/benchmark/script_ssh_benchmarking.sh
+
+# Manager public and private keys
+ssh_private_key=/etc/fogbow-manager/ssh/id_rsa
+ssh_public_key=/etc/fogbow-manager/ssh/id_rsa.pub
