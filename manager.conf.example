@@ -6,12 +6,19 @@ xmpp_port=5347
 rendezvous_jid=rendezvous.test.com
 greensitter_jid=greensitter.test.com
 
+# That flavor specification will be transformed into requirements.
+flavor_fogbow_small={mem=512, cpu=1}
+flavor_fogbow_medium={mem=1024, cpu=2}
+flavor_fogbow_large={mem=2048, cpu=4}
+
+# Compute Opennebula
 compute_class=org.fogbowcloud.manager.core.plugins.opennebula.OpenNebulaComputePlugin
 compute_one_url=http://localhost:2633/RPC2
-compute_one_flavor_small={mem=128, cpu=1}
-compute_one_flavor_medium={mem=256, cpu=2}
-compute_one_flavor_large={mem=512, cpu=4}
 compute_one_network_id=1
+
+# Setting used to find the correct flavor according to informed templates.
+# types :all or specific templates(template1,template2) 
+compute_one_templates=all
 
 # Settings used by ONE compute plugin to register new images in the cloud
 # ID of datastore to register the image
@@ -27,16 +34,24 @@ compute_one_ssh_key_file=/home/fogbow/.ssh/id_rsa
 # Set the directory to copy images in remote host
 compute_one_ssh_target_temp_folder=/tmp/images
 
+# Compute Openstack OCCI
 compute_class=org.fogbowcloud.manager.core.plugins.openstack.OpenStackOCCIComputePlugin
 compute_openstack_v2api_url=http://localhost:8182
 compute_occi_url=http://localhost:8182
-compute_occi_flavor_small=m1-small
-compute_occi_flavor_medium=m1-medium
-compute_occi_flavor_large=m1-large
 compute_occi_os_scheme=http://schemas.openstack.org/template/os#
 compute_occi_instance_scheme=http://schemas.openstack.org/compute/instance#
 compute_occi_resource_scheme=http://schemas.openstack.org/template/resource#
 compute_occi_network_id=ea51ed0c-0e8a-448d-8202-c79777109ffe
+
+# Compute Opennebula OCCI
+compute_class=org.fogbowcloud.manager.core.plugins.opennebula.OpenNebulaOCCIComputePlugin
+compute_one_url=http://localhost:2633/RPC2
+compute_occi_url=http://localhost:3000
+compute_occi_template_scheme=http://occi.localhost/occi/infrastructure/os_tpl#
+compute_occi_resource_scheme=http://schema.fedcloud.egi.eu/occi/infrastructure/resource_tpl#
+compute_occi_flavors_small={cpu=1,mem=512}
+compute_occi_flavors_medium={cpu=2,mem=1024}
+compute_occi_flavors_large={cpu=4,mem=2048}
 
 # If you are using the EgiImageStoragePlugin
 image_storage_class=org.fogbowcloud.manager.core.plugins.imagestorage.egi.EgiImageStoragePlugin
@@ -66,17 +81,17 @@ nof_prioritize_local=true
 local_prioritization_plugin_class=org.fogbowcloud.manager.core.plugins.prioritization.FCFSPrioritizationPlugin
 remote_prioritization_plugin_class=org.fogbowcloud.manager.core.plugins.prioritization.nof.NoFPrioritizationPlugin
 
+# Compute Openstack
 compute_class=org.fogbowcloud.manager.core.plugins.openstack.OpenStackNovaV2ComputePlugin
 compute_novav2_url=http://localhost:8774
 compute_glancev2_url=http://localhost:9292
-compute_novav2_flavor_small=1
-compute_novav2_flavor_medium=2
-compute_novav2_flavor_large=3
 compute_novav2_network_id=ea51ed0c-0e8a-448d-8202-c79777109ffe
 
+# Local identity
 local_identity_class=org.fogbowcloud.manager.core.plugins.openstack.KeystoneIdentityPlugin
 local_identity_url=http://localhost:5000
 
+# Federation identity
 federation_authorization_class=org.fogbowcloud.manager.core.plugins.common.AllowAllAuthorizationPlugin
 federation_identity_class=org.fogbowcloud.manager.core.plugins.openstack.KeystoneIdentityPlugin
 federation_identity_url=http://localhost:5000
