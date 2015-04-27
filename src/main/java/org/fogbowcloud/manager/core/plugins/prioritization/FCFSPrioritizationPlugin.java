@@ -13,7 +13,7 @@ public class FCFSPrioritizationPlugin implements PrioritizationPlugin {
 	}
 
 	@Override
-	public Request takeFrom(String requestingMemberId, List<Request> requestsWithInstance) {
+	public Request takeFrom(Request newRequest, List<Request> requestsWithInstance) {
 		return null;
 	}
 }

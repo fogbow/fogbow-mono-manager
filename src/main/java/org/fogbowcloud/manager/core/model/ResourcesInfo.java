@@ -1,6 +1,5 @@
 package org.fogbowcloud.manager.core.model;
 
-import java.util.List;
 
 public class ResourcesInfo {
 	
@@ -9,21 +8,26 @@ public class ResourcesInfo {
 	private String cpuInUse;
 	private String memIdle;
 	private String memInUse;
-	private List<Flavor> flavors;
+	private String instancesIdle;
+	private String instancesInUse;
 	
 	public ResourcesInfo(String id, String cpuIdle, String cpuInUse,
-			String memIdle, String memInUse, List<Flavor> flavours) {
+			String memIdle, String memInUse, 
+			String instancesIdle, String instancesInUse) {
 		setId(id);
 		setCpuIdle(cpuIdle);
 		setCpuInUse(cpuInUse);
 		setMemIdle(memIdle);
 		setMemInUse(memInUse);
-		setFlavours(flavours);
+		setInstancesIdle(instancesIdle);
+		setInstancesInUse(instancesInUse);
 	}
 	
 	public ResourcesInfo(String cpuIdle, String cpuInUse,
-			String memIdle, String memInUse, List<Flavor> flavours) {
-		this(null, cpuIdle, cpuInUse, memIdle, memInUse, flavours);
+			String memIdle, String memInUse, 
+			String instancesIdle, String instancesInUse) {
+		this(null, cpuIdle, cpuInUse, memIdle, memInUse, 
+				instancesIdle, instancesInUse);
 	}
 
 	public String getId() {
@@ -81,12 +85,20 @@ public class ResourcesInfo {
 		}
 		this.memInUse = memInUse;
 	}
-
-	public List<Flavor> getFlavors() {
-		return flavors;
+	
+	public void setInstancesIdle(String instancesIdle) {
+		this.instancesIdle = instancesIdle;
 	}
-
-	public void setFlavours(List<Flavor> flavors) {
-		this.flavors = flavors;
+	
+	public String getInstancesIdle() {
+		return instancesIdle;
+	}
+	
+	public void setInstancesInUse(String instancesInUse) {
+		this.instancesInUse = instancesInUse;
+	}
+	
+	public String getInstancesInUse() {
+		return instancesInUse;
 	}
 }

@@ -5,15 +5,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.Properties;
-import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import javax.mail.MessagingException;
 import javax.mail.Session;
+import javax.mail.internet.ContentType;
 import javax.mail.internet.MimeMessage;
-import javax.mail.internet.MimeMultipart;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
@@ -32,18 +31,27 @@ import org.json.JSONObject;
 public class VMCatcherStoragePlugin extends StaticImageStoragePlugin {
 
 	private static final Logger LOGGER = Logger.getLogger(ImageStoragePlugin.class);
-	private static final Executor IMAGE_DOWNLOADER = Executors.newFixedThreadPool(5);
 	
-	private static final String PROP_VMC_MAPPING_FILE = "image_storage_vmcatcher_glancepush_vmcmapping_file";
-	private static final String PROP_VMC_PUSH_METHOD = "image_storage_vmcatcher_push_method";
+	protected static final String PROP_VMC_MAPPING_FILE = "image_storage_vmcatcher_glancepush_vmcmapping_file";
+	protected static final String PROP_VMC_PUSH_METHOD = "image_storage_vmcatcher_push_method";
 	
 	private Properties props;
 	private ComputePlugin computePlugin;
+	private ExecutorService imageDownloader;
+	private ShellWrapper shellWrapper;
 	
-	public VMCatcherStoragePlugin(Properties properties, ComputePlugin computePlugin) {
+	protected VMCatcherStoragePlugin(Properties properties, ComputePlugin computePlugin, 
+			ExecutorService imageDownloader, ShellWrapper shellWrapper) {
 		super(properties, computePlugin);
 		this.props = properties;
 		this.computePlugin = computePlugin;
+		this.imageDownloader = imageDownloader;
+		this.shellWrapper = shellWrapper;
+	}
+	
+	public VMCatcherStoragePlugin(Properties properties, ComputePlugin computePlugin) {
+		this(properties, computePlugin, Executors.newFixedThreadPool(5), 
+				new ShellWrapper());
 	}
 	
 	@Override
@@ -67,9 +75,11 @@ public class VMCatcherStoragePlugin extends StaticImageStoragePlugin {
 		} else if (pushMethod.equals("cesga")) {
 			imageTitleTranslated = getImageNameWithCESGAPush(imageInfo);
 		}
+		if (imageTitleTranslated == null) {
+			return null;
+		}
 		
-		localId = imageTitleTranslated == null ? null : computePlugin
-				.getImageId(token, imageTitleTranslated);
+		localId = computePlugin.getImageId(token, imageTitleTranslated);
 		if (localId != null) {
 			return localId;
 		}
@@ -81,7 +91,7 @@ public class VMCatcherStoragePlugin extends StaticImageStoragePlugin {
 			LOGGER.warn("Couldn't add image.list to VMCatcher subscription list", e);
 		}
 		
-		IMAGE_DOWNLOADER.execute(new Runnable() {
+		imageDownloader.execute(new Runnable() {
 			@Override
 			public void run() {
 				try {
@@ -98,24 +108,27 @@ public class VMCatcherStoragePlugin extends StaticImageStoragePlugin {
 
 	private void executeShellCommand(String... command) throws IOException,
 			InterruptedException {
-		ProcessBuilder builder = new ProcessBuilder(command);
-		Process process = builder.start();
-		
-		int exitValue = process.waitFor();
-		String stdout = IOUtils.toString(process.getInputStream());
-		String stderr = IOUtils.toString(process.getErrorStream());
-		
-		LOGGER.debug("Command " + Arrays.asList(command) + " has finished. "
-				+ "Exit: " + exitValue + "; Stdout: " + stdout + "; Stderr: " + stderr);
+		shellWrapper.execute(command);
 	}
 
 	private String getImageNameWithCESGAPush(JSONObject imageInfo) {
-		return imageInfo.optJSONObject("hv:imagelist").optString("dc:identifier");
+		JSONObject imageListJson = imageInfo.optJSONObject("hv:imagelist");
+		if (imageListJson == null) {
+			return null;
+		}
+		return imageListJson.optString("dc:identifier", null);
 	}
 
 	private String getImageNameWithGlancePush(JSONObject imageInfo) {
 		String imageTitleTranslated = null;
-		String imageTitle = imageInfo.optJSONObject("hv:imagelist").optString("dc:title");
+		JSONObject imageListJson = imageInfo.optJSONObject("hv:imagelist");
+		if (imageListJson == null) {
+			return null;
+		}
+		String imageTitle = imageListJson.optString("dc:title", null);
+		if (imageTitle == null) {
+			return null;
+		}
 		if (this.props.containsKey(PROP_VMC_MAPPING_FILE)) {
 			try {
 				JSONObject vmcMapping = new JSONObject(IOUtils.toString(
@@ -139,9 +152,11 @@ public class VMCatcherStoragePlugin extends StaticImageStoragePlugin {
 		InputStream imageListStream = imageListURL.openStream();
 		MimeMessage message = new MimeMessage(
 				Session.getDefaultInstance(new Properties()), imageListStream);
-		MimeMultipart mime = (MimeMultipart) message.getContent();
-		JSONObject imageInfo = new JSONObject(IOUtils.toString(
-				mime.getBodyPart(0).getInputStream()));
+		ContentType type = new ContentType(message.getHeader("Content-Type")[0]);
+		String boundary = type.getParameter("boundary");
+		String messageContent = IOUtils.toString(message.getInputStream());
+		String[] splitMessageContent = messageContent.split("--" + boundary);
+		JSONObject imageInfo = new JSONObject(splitMessageContent[1]);
 		imageListStream.close();
 		
 		return imageInfo;

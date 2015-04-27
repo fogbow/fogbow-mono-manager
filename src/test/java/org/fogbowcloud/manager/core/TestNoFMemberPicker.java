@@ -48,7 +48,7 @@ public class TestNoFMemberPicker {
 	public void testOnlyLocalMember() {
 		// mocking
 		FederationMember localMember = new FederationMember(new ResourcesInfo(
-				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, "", "", "", "", null));
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, "", "", "", "", "", ""));
 		ArrayList<FederationMember> membersToReturn = new ArrayList<FederationMember>();
 		membersToReturn.add(localMember);
 		
@@ -65,9 +65,9 @@ public class TestNoFMemberPicker {
 	public void testOneRemoteMember() {
 		// mocking facade
 		FederationMember localMember = new FederationMember(new ResourcesInfo(
-				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, "", "", "", "", null));
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, "", "", "", "", "", ""));
 		FederationMember remoteMember = new FederationMember(new ResourcesInfo(
-				DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL, "", "", "", "", null));
+				DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL, "", "", "", "", "", ""));
 		ArrayList<FederationMember> membersToReturn = new ArrayList<FederationMember>();
 		membersToReturn.add(localMember);
 		membersToReturn.add(remoteMember);
@@ -91,11 +91,11 @@ public class TestNoFMemberPicker {
 	public void testTwoRemoteMembers() {
 		// mocking facade
 		FederationMember localMember = new FederationMember(new ResourcesInfo(
-				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, "", "", "", "", null));
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, "", "", "", "", "", ""));
 		FederationMember remoteMember1 = new FederationMember(new ResourcesInfo(
-				DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL + "1", "", "", "", "", null));
+				DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL + "1", "", "", "", "", "", ""));
 		FederationMember remoteMember2 = new FederationMember(new ResourcesInfo(
-				DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL + "2", "", "", "", "", null));
+				DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL + "2", "", "", "", "", "", ""));
 		ArrayList<FederationMember> membersToReturn = new ArrayList<FederationMember>();
 		membersToReturn.add(localMember);
 		membersToReturn.add(remoteMember1);

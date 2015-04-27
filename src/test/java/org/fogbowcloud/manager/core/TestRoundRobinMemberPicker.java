@@ -21,11 +21,11 @@ public class TestRoundRobinMemberPicker {
 	public void testPick() {
 		RoundRobinMemberPicker roundRobinMemberPicker = new RoundRobinMemberPicker(null, null);
 		List<FederationMember> members = new ArrayList<FederationMember>();
-		ResourcesInfo resourcesInfoD = new ResourcesInfo("d", "", "", "", "", null);
-		ResourcesInfo resourcesInfoA = new ResourcesInfo("a", "", "", "", "", null);
-		ResourcesInfo resourcesInfoCA = new ResourcesInfo("ca", "", "", "", "", null);
-		ResourcesInfo resourcesInfoCB = new ResourcesInfo("cb", "", "", "", "", null);
-		ResourcesInfo resourcesInfoB = new ResourcesInfo("b", "", "", "", "", null);
+		ResourcesInfo resourcesInfoD = new ResourcesInfo("d", "", "", "", "", "", "");
+		ResourcesInfo resourcesInfoA = new ResourcesInfo("a", "", "", "", "", "", "");
+		ResourcesInfo resourcesInfoCA = new ResourcesInfo("ca", "", "", "", "", "", "");
+		ResourcesInfo resourcesInfoCB = new ResourcesInfo("cb", "", "", "", "", "", "");
+		ResourcesInfo resourcesInfoB = new ResourcesInfo("b", "", "", "", "", "", "");
 		members.add(new FederationMember(resourcesInfoA));
 		members.add(new FederationMember(resourcesInfoCB));
 		members.add(new FederationMember(resourcesInfoCA));
@@ -72,11 +72,11 @@ public class TestRoundRobinMemberPicker {
 	public void testPickListMemberWithoutLastMember() {
 		RoundRobinMemberPicker roundRobinMemberPicker = new RoundRobinMemberPicker(null, null);
 		List<FederationMember> members = new ArrayList<FederationMember>();
-		ResourcesInfo resourcesInfoD = new ResourcesInfo("d", "", "", "", "", null);
-		ResourcesInfo resourcesInfoA = new ResourcesInfo("a", "", "", "", "", null);
-		ResourcesInfo resourcesInfoCA = new ResourcesInfo("ca", "", "", "", "", null);
-		ResourcesInfo resourcesInfoCB = new ResourcesInfo("cb", "", "", "", "", null);
-		ResourcesInfo resourcesInfoB = new ResourcesInfo("b", "", "", "", "", null);
+		ResourcesInfo resourcesInfoD = new ResourcesInfo("d", "", "", "", "", "", "");
+		ResourcesInfo resourcesInfoA = new ResourcesInfo("a", "", "", "", "", "", "");
+		ResourcesInfo resourcesInfoCA = new ResourcesInfo("ca", "", "", "", "", "", "");
+		ResourcesInfo resourcesInfoCB = new ResourcesInfo("cb", "", "", "", "", "", "");
+		ResourcesInfo resourcesInfoB = new ResourcesInfo("b", "", "", "", "", "", "");
 		members.add(new FederationMember(resourcesInfoA));
 		members.add(new FederationMember(resourcesInfoCB));
 		members.add(new FederationMember(resourcesInfoCA));

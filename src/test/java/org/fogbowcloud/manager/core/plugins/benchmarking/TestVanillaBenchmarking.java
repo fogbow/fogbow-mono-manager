@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
-import org.fogbowcloud.manager.core.plugins.benchmarking.FCUStaticBenchmarkingPlugin;
+import org.fogbowcloud.manager.core.plugins.benchmarking.VanillaBenchmarkingPlugin;
 import org.fogbowcloud.manager.occi.core.Resource;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.instance.Instance.Link;
@@ -14,18 +14,18 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-public class TestFCUStaticBenchmarking {
+public class TestVanillaBenchmarking {
 
 	private static final double ACCEPTABLE_ERROR = 0.00;
 	Map<String, String> instanceAttributes;
-	FCUStaticBenchmarkingPlugin benchmarking;
+	VanillaBenchmarkingPlugin benchmarking;
 	
 	@Before
 	public void setUp(){
 		instanceAttributes = new HashMap<String, String>();
 		instanceAttributes.put("occi.compute.memory", "2");
 		instanceAttributes.put("occi.compute.cores", "2");
-		benchmarking = new FCUStaticBenchmarkingPlugin(null);
+		benchmarking = new VanillaBenchmarkingPlugin(null);
 	}
 
 	@Test

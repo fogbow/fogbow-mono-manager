@@ -1,0 +1,105 @@
+MIME-Version: 1.0
+Content-Type: multipart/signed; protocol="application/x-pkcs7-signature"; micalg="sha1"; boundary="----30588B98B0E38B9A91CE05FB2BFC72DB"
+
+This is an S/MIME signed message
+
+------30588B98B0E38B9A91CE05FB2BFC72DB
+{
+   "hv:imagelist": {
+      "dc:date:created": "2014-10-29T16:53:55Z",
+      "dc:date:expires": "2499-12-31T22:00:00Z",
+      "dc:description": "Scientific Linux 6.5 Minimal OS",
+      "dc:identifier": "776690f9-d023-44c6-9923-b66ed853d77b",
+      "dc:source": "https://appdb.egi.eu/",
+      "dc:title": "Scientific Linux 6.5 Minimal",
+      "ad:swid": "799",
+      "hv:endorser": {
+         "hv:x509": {
+            "dc:creator": "EGI Applications Database",
+            "hv:ca": "/DC=ORG/DC=SEE-GRID/CN=SEE-GRID CA 2013",
+            "hv:dn": "/DC=EU/DC=EGI/C=NL/O=Hosts/O=EGI.eu/CN=appdb.egi.eu",
+            "hv:email": "appdb-support@iasa.gr"
+         }
+      },
+      "hv:images": [
+         {
+            "hv:image": {
+               "dc:description": "",
+               "dc:identifier": "2c24de6c-e385-49f1-b64f-f9ff35e70f43",
+               "ad:mpuri": "https://appdb.egi.eu/store/vm/image/2c24de6c-e385-49f1-b64f-f9ff35e70f43:3639/",
+               "dc:title": "OS Disk Image",
+               "ad:group": "Scientific Linux 6.5 Minimal OS",
+               "hv:hypervisor": "QEMU-KVM",
+               "hv:format": "OVA",
+               "hv:ram_minimum": "512",
+               "ad:ram_recommended": "1024",
+               "hv:core_minimum": "1",
+               "ad:core_recommended": "2",
+               "hv:size": "431902720",
+               "hv:uri": "http://appliance-repo.egi.eu/images/base/SL-6.5-x86_64-minimal/20141029/SL6.5-20141029.ova",
+               "hv:version": "20141029",
+               "sl:arch": "x86_64",
+               "sl:checksum:sha512": "a9690261dca2402ff9e42fff3031c0fe51992f3bac8e3791c09e9eb8edb7458578d8ca32559047f563d2e1e8ce42fcd867dd83d468abb3cd58e33eb4b18edad4",
+               "sl:comments": "",
+               "sl:os": "Linux",
+               "sl:osname": "Scientific Linux",
+               "sl:osversion": "Scientific Linux 6.5",
+               "ad:user:fullname": "Fernandez Enol",
+               "ad:user:guid": "e85470d8-2af9-11e0-8c26-0014c23dfd8c",
+               "ad:user:uri": "https://appdb.egi.eu/store/person/enol.fernandez"
+            }
+         }
+      ],
+      "hv:uri": "https://vmcaster.appdb.egi.eu/store/vappliance/scientific.linux.6.4.minimal/image.list",
+      "hv:version": "20141029"
+   }
+}
+
+------30588B98B0E38B9A91CE05FB2BFC72DB
+Content-Type: application/x-pkcs7-signature; name="smime.p7s"
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="smime.p7s"
+
+MIIHbQYJKoZIhvcNAQcCoIIHXjCCB1oCAQExCzAJBgUrDgMCGgUAMAsGCSqGSIb3
+DQEHAaCCBOQwggTgMIIDyKADAgECAgEjMA0GCSqGSIb3DQEBCwUAMEoxEzARBgoJ
+kiaJk/IsZAEZFgNPUkcxGDAWBgoJkiaJk/IsZAEZFghTRUUtR1JJRDEZMBcGA1UE
+AxMQU0VFLUdSSUQgQ0EgMjAxMzAeFw0xNDA3MTEwNzQ3MDFaFw0xNTA3MTEwNzQ3
+MDFaMG4xEjAQBgoJkiaJk/IsZAEZFgJFVTETMBEGCgmSJomT8ixkARkWA0VHSTEL
+MAkGA1UEBhMCTkwxDjAMBgNVBAoTBUhvc3RzMQ8wDQYDVQQKEwZFR0kuZXUxFTAT
+BgNVBAMTDGFwcGRiLmVnaS5ldTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoC
+ggEBAN7WawAUAFAPO+lhysWzI+vmnqDxk7O3dXzppl9L+IN1nfPmbNcBSw4AbR2q
+VhENBDWn92skVduUiE1Do8d8ZJtGrrzeeloC5lHn4vkxScy5HSbrPec+aNECPTzi
+b8PTlP3hAxAVBwkTboPYJyc5ow7AXM+SZACQzaeM4UuFa/w0Sp52ojv87hUDDVd3
+YMCd9AtfsZi+PVzEZFl3pbJyQ3bdaCOYhC6zbgfVfUH4em0xOnVVgUfCLVn20k4W
+SHcvWTqOrL/lSU4jir6ex5j3zMmIYtzlFx9LaNBmBtIdMbZ+WFWP2vQMxjiCOfOM
+FPIM6cVUw7ub0zZYL8IYUhAawNcCAwEAAaOCAaswggGnMAwGA1UdEwEB/wQCMAAw
+DgYDVR0PAQH/BAQDAgSwMCcGA1UdJQQgMB4GCCsGAQUFBwMBBggrBgEFBQcDAgYI
+KwYBBQUHAwQwHQYDVR0OBBYEFO1BKNJtjUY5+HfkNsNEvUNdaVfyMHIGA1UdIwRr
+MGmAFLTbgExuumOjXH7fknD2mC0aHHCAoU6kTDBKMRMwEQYKCZImiZPyLGQBGRYD
+T1JHMRgwFgYKCZImiZPyLGQBGRYIU0VFLUdSSUQxGTAXBgNVBAMTEFNFRS1HUklE
+IENBIDIwMTOCAQAwFwYDVR0RBBAwDoIMYXBwZGIuZWdpLmV1MEQGA1UdHwQ9MDsw
+OaA3oDWGM2h0dHA6Ly9jcmwuaGVsbGFzZ3JpZC5nci9zZWVncmlkLWNhLTIwMTMv
+Y3JsLXYyLnBlbTBsBgNVHSAEZTBjMGEGDSsGAQQBgYEDFAIBAgQwUDBOBggrBgEF
+BQcCARZCaHR0cDovL3NlZS1ncmlkLWNhLmhlbGxhc2dyaWQuZ3IvYXNzZXRzL1NF
+RS1HUklELUNBLUNQLUNQUy0yLjQucGRmMA0GCSqGSIb3DQEBCwUAA4IBAQDhrV+D
+3mOtbTziSUQ8Doz3WnN7YggQxU9Wq6DP54hWEDVzSLRX5EGwcAmj0G2Bhigj2F/N
+ta70tz4TsrWjMeQGrV01TuPkR3sj3JOZJmHK4k/y1eNCEhEEAhH4e4F3oBzwgNIb
+J+1n1nq6bilplmz5Ktn46yVwfm51qXX592yP/wYoDeSm7XeHQa8yVZbsmXAiZxIM
+VJqmSp/OAAtIixcUNK2C3+xmWEaObCrheT3pkIix91mNJQtSfpi/VXz91Qr+9Fa6
+DG5K7sEj+21CcaMk4p2aR5ntGRSN0WdqhpTpZBvsmHvjd+23RRDztWdi9McttOwc
+DlWylveScIkIbfQwMYICUTCCAk0CAQEwTzBKMRMwEQYKCZImiZPyLGQBGRYDT1JH
+MRgwFgYKCZImiZPyLGQBGRYIU0VFLUdSSUQxGTAXBgNVBAMTEFNFRS1HUklEIENB
+IDIwMTMCASMwCQYFKw4DAhoFAKCB2DAYBgkqhkiG9w0BCQMxCwYJKoZIhvcNAQcB
+MBwGCSqGSIb3DQEJBTEPFw0xNDEwMjkxNjUzNTdaMCMGCSqGSIb3DQEJBDEWBBSj
+oWE1pqpxTE3KQXPOSYDQaDX+wDB5BgkqhkiG9w0BCQ8xbDBqMAsGCWCGSAFlAwQB
+KjALBglghkgBZQMEARYwCwYJYIZIAWUDBAECMAoGCCqGSIb3DQMHMA4GCCqGSIb3
+DQMCAgIAgDANBggqhkiG9w0DAgIBQDAHBgUrDgMCBzANBggqhkiG9w0DAgIBKDAN
+BgkqhkiG9w0BAQEFAASCAQCB7fSVOzcnV29eungoUhMGYWf3uiE9yjRFQTqV3Dfb
+KRQmyxHUuaAM6Tsxz3BV0MRudcqdxIS23J77jzG2XPt9UmEceFykdvHh3yki0aYV
+0I1ZmIhy/r/2WfUcNC05wPr3Z/ZTPjIdM8qhxJfmv30K3BV4hzTb4p+uUiM8Fg2r
+07Qbfw6b0WBvG7aam/JA2nO7FGxNhaduI8mmEHhlMc8YQBoLqRFEqKe2wB9J2rZf
+1dXdkhfBmlsbBeuMkFl6pXww7QW3GMOG3V32ML0C2iLCtvzbNs2pB7NZ5vFduQdh
+7OQ+yXJb+hQCanMzg4/aAUwESF5EcqUuxWY9Sb+svpts
+
+------30588B98B0E38B9A91CE05FB2BFC72DB--
+

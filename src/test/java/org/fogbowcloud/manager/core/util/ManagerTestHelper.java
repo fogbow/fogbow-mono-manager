@@ -7,9 +7,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -24,7 +24,6 @@ import org.fogbowcloud.manager.core.DefaultMemberValidator;
 import org.fogbowcloud.manager.core.FederationMemberPicker;
 import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.model.FederationMember;
-import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
@@ -83,11 +82,8 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 	}
 
 	public ResourcesInfo getResources() throws CertificateException, IOException {
-		List<Flavor> flavours = new LinkedList<Flavor>();
-		flavours.add(new Flavor("small", "cpu", "mem", 2));
-		flavours.add(new Flavor("small", "cpu", "mem", 3));
-		ResourcesInfo resources = new ResourcesInfo("abc", "value1", "value2", "value3", "value4",
-				flavours);
+		ResourcesInfo resources = new ResourcesInfo("abc", "cpu-idle", "cpu-in-use", "mem-idle", 
+				"mem-in-use", "instances-idle", "instances-in-use");
 		return resources;
 	}
 
@@ -102,18 +98,14 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 			statusEl.addElement("cpu-idle").setText(rendezvousItem.getResourcesInfo().getCpuIdle());
 			statusEl.addElement("cpu-inuse").setText(
 					rendezvousItem.getResourcesInfo().getCpuInUse());
-			statusEl.addElement("mem-idle").setText(rendezvousItem.getResourcesInfo().getMemIdle());
+			statusEl.addElement("mem-idle").setText(
+					rendezvousItem.getResourcesInfo().getMemIdle());
 			statusEl.addElement("mem-inuse").setText(
 					rendezvousItem.getResourcesInfo().getMemInUse());
-
-			List<Flavor> flavours = rendezvousItem.getResourcesInfo().getFlavors();
-			for (Flavor f : flavours) {
-				Element flavorElement = statusEl.addElement("flavor");
-				flavorElement.addElement("name").setText(f.getName());
-				flavorElement.addElement("cpu").setText(f.getCpu());
-				flavorElement.addElement("mem").setText(f.getMem());
-				flavorElement.addElement("capacity").setText(f.getCapacity().toString());
-			}
+			statusEl.addElement("instances-idle").setText(
+					rendezvousItem.getResourcesInfo().getInstancesIdle());
+			statusEl.addElement("instances-inuse").setText(
+					rendezvousItem.getResourcesInfo().getInstancesInUse());
 			statusEl.addElement("cert");
 			statusEl.addElement("updated").setText(
 					String.valueOf(rendezvousItem.getFormattedTime()));
@@ -194,9 +186,9 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		properties.put(ConfigurationConstants.FEDERATION_USER_PASS_KEY, "fogbow");
 		properties.put(ConfigurationConstants.FEDERATION_USER_TENANT_NAME_KEY, "fogbow");
 		properties.put(ConfigurationConstants.XMPP_JID_KEY, "manager.test.com");
-		properties.put(ConfigurationConstants.SSH_PRIVATE_HOST_KEY,
+		properties.put(ConfigurationConstants.TUNNEL_SSH_PRIVATE_HOST_KEY,
 				DefaultDataTestHelper.SERVER_HOST);
-		properties.put(ConfigurationConstants.SSH_HOST_HTTP_PORT_KEY,
+		properties.put(ConfigurationConstants.TUNNEL_SSH_HOST_HTTP_PORT_KEY,
 				String.valueOf(DefaultDataTestHelper.TOKEN_SERVER_HTTP_PORT));
 		properties.put(ConfigurationConstants.MAX_WHOISALIVE_MANAGER_COUNT,
 				MAX_WHOISALIVE_MANAGER_COUNT);
@@ -301,20 +293,11 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 			String cpuInUse = statusEl.element("cpu-inuse").getText();
 			String memIdle = statusEl.element("mem-idle").getText();
 			String memInUse = statusEl.element("mem-inuse").getText();
-			List<Flavor> flavoursList = new LinkedList<Flavor>();
-			Iterator<Element> flavourIterator = itemEl.elementIterator("flavor");
-			while (flavourIterator.hasNext()) {
-				Element flavour = itemIterator.next();
-				String name = flavour.element("name").getText();
-				String cpu = flavour.element("cpu").getText();
-				String mem = flavour.element("mem").getText();
-				int capacity = Integer.parseInt(flavour.element("capacity").getText());
-				Flavor flavor = new Flavor(name, cpu, mem, capacity);
-				flavoursList.add(flavor);
-			}
+			String instancesIdle = statusEl.element("instances-idle").getText();
+			String instancesInUse = statusEl.element("instances-inuse").getText();
 
 			ResourcesInfo resources = new ResourcesInfo(id.getValue(), cpuIdle, cpuInUse, memIdle,
-					memInUse, flavoursList);
+					memInUse, instancesIdle, instancesInUse);
 			FederationMember item = new FederationMember(resources);
 			aliveItems.add(item);
 		}
@@ -335,8 +318,12 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		return properties;
 	}
 
-	@SuppressWarnings("unchecked")
 	public ManagerController createDefaultManagerController() {
+		return createDefaultManagerController(null);
+	}
+
+	@SuppressWarnings("unchecked")
+	public ManagerController createDefaultManagerController(Map<String, String> extraProperties) {
 		Properties properties = new Properties();
 		properties.put(ConfigurationConstants.XMPP_JID_KEY,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
@@ -350,9 +337,9 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 				DefaultDataTestHelper.SCHEDULER_PERIOD.toString());
 		properties.put(ConfigurationConstants.INSTANCE_MONITORING_PERIOD_KEY,
 				Long.toString(DefaultDataTestHelper.LONG_TIME));
-		properties.put(ConfigurationConstants.SSH_PRIVATE_HOST_KEY,
+		properties.put(ConfigurationConstants.TUNNEL_SSH_PRIVATE_HOST_KEY,
 				DefaultDataTestHelper.SERVER_HOST);
-		properties.put(ConfigurationConstants.SSH_HOST_HTTP_PORT_KEY,
+		properties.put(ConfigurationConstants.TUNNEL_SSH_HOST_HTTP_PORT_KEY,
 				String.valueOf(DefaultDataTestHelper.TOKEN_SERVER_HTTP_PORT));
 		properties.put(ConfigurationConstants.PREFIX_FLAVORS + "small", VALUE_FLAVOR_SMALL);
 		properties.put(ConfigurationConstants.PREFIX_FLAVORS + "medium", VALUE_FLAVOR_MEDIUM);
@@ -360,6 +347,13 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		properties.put(ConfigurationConstants.SERVED_REQUEST_MONITORING_PERIOD_KEY,
 				String.valueOf(DefaultDataTestHelper.SERVED_REQUEST_MONITORING_PERIOD));
 		properties.put(ConfigurationConstants.GREEN_SITTER_JID, DefaultDataTestHelper.GREEN_SITTER_JID);
+		
+		if (extraProperties != null) {
+			for (Entry<String, String> entry : extraProperties.entrySet()) {
+				properties.put(entry.getKey(), entry.getValue());
+			}
+		}
+		
 		this.executorService = Mockito.mock(ScheduledExecutorService.class);
 		ManagerController managerController = new ManagerController(properties,
 				executorService);
@@ -372,8 +366,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 				new OCCIException(ErrorType.QUOTA_EXCEEDED,
 						ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES));
 		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class))).thenReturn(
-				new ResourcesInfo(LOCAL_MANAGER_COMPONENT_URL, 
-						"", "", "", "", new LinkedList<Flavor>()));
+				new ResourcesInfo(LOCAL_MANAGER_COMPONENT_URL, "", "", "", "", "", ""));
 		Mockito.when(computePlugin.getInstances(Mockito.any(Token.class))).thenReturn(
 				new ArrayList<Instance>());
 		
@@ -398,7 +391,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		memberPickerPlugin = Mockito.mock(FederationMemberPicker.class);
 		Mockito.when(memberPickerPlugin.pick(Mockito.any(List.class))).thenReturn(
 				new FederationMember(new ResourcesInfo(
-						DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL, "", "", "", null)));
+						DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL, "", "", "", "", "")));
 		
 		// mocking benchmark executor
 		ExecutorService benchmarkExecutor = new CurrentThreadExecutorService();

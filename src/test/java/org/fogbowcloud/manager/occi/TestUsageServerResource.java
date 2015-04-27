@@ -2,7 +2,6 @@ package org.fogbowcloud.manager.occi;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -13,7 +12,6 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.fogbowcloud.manager.core.model.FederationMember;
-import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
@@ -50,15 +48,15 @@ public class TestUsageServerResource {
 		this.computePlugin = Mockito.mock(ComputePlugin.class);
 		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class))).thenReturn(
 				new ResourcesInfo(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, 
-						"", "", "", "", new LinkedList<Flavor>()));
+						"", "", "", "", "", ""));
 		this.identityPlugin = Mockito.mock(IdentityPlugin.class);
 		this.accountingPlugin = Mockito.mock(AccountingPlugin.class);
 		this.authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
 		
 		ResourcesInfo resourcesInfo = new ResourcesInfo(ID_RESOURCEINFO1, "", "", "", "",
-				new ArrayList<Flavor>());
+				"", "");
 		ResourcesInfo resourcesInfo2 = new ResourcesInfo(ID_RESOURCEINFO2, "", "", "", "",
-				new ArrayList<Flavor>());
+				"", "");
 		federationMembers.add(new FederationMember(resourcesInfo));
 		federationMembers.add(new FederationMember(resourcesInfo2));
 

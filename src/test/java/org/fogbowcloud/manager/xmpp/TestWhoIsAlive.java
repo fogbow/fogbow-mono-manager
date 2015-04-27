@@ -93,11 +93,6 @@ public class TestWhoIsAlive {
 		// The other member and the manager itself
 		Assert.assertEquals(2, managerXmppComponent.getManagerFacade()
 				.getMembers().size());
-		Assert.assertEquals(2, managerXmppComponent.getManagerFacade()
-				.getMembers().get(0).getResourcesInfo().getFlavors().size());
-		Assert.assertEquals("small", managerXmppComponent.getManagerFacade()
-				.getMembers().get(0).getResourcesInfo().getFlavors().get(0)
-				.getName());
 		xmppClient.disconnect();
 	}
 
@@ -152,9 +147,6 @@ public class TestWhoIsAlive {
 		// The other member and the manager itself
 		Assert.assertEquals(2, managerXmppComponent.getManagerFacade()
 				.getMembers().size());
-		Assert.assertEquals("small", managerXmppComponent.getManagerFacade()
-				.getMembers().get(0).getResourcesInfo().getFlavors().get(0)
-				.getName());
 		xmppClient.disconnect();
 	}
 	

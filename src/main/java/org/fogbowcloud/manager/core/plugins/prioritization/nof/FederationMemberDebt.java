@@ -9,7 +9,7 @@ public class FederationMemberDebt {
 	private double debt;
 
 	public FederationMemberDebt(String memberId, double debt) {
-		this(new FederationMember(new ResourcesInfo(memberId, "", "", "", "", null)), debt);
+		this(new FederationMember(new ResourcesInfo(memberId, "", "", "", "", "", "")), debt);
 	}
 
 	public FederationMemberDebt(FederationMember member, double debt) {
