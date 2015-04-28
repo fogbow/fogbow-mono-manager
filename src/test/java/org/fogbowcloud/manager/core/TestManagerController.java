@@ -2040,7 +2040,6 @@ public class TestManagerController {
 		managerController.checkAndSubmitOpenRequests();
 				
 		// checking there is one served request
-		System.out.println(managerController.getRemoteRequests());
 		Assert.assertEquals(1, managerController.getRemoteRequests().size());
 		Assert.assertEquals("manager1-test.com",
 				getRequestByInstanceId(managerController.getRemoteRequests(),

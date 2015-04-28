@@ -310,8 +310,6 @@ public class TestComputeOpenNebulaOCCI {
 					for (Header header : this.request.getAllHeaders()) {
 						if (header.getName().equals(OCCIHeaders.CATEGORY)
 								&& !headerComp.getValue().contains(header.getValue())) {
-							System.out.println(headerComp.getValue());
-							System.out.println(header.getValue());
 							headerEquals = false;
 						}
 					}

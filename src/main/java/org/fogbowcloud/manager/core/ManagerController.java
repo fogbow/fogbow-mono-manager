@@ -235,9 +235,9 @@ public class ManagerController {
 			List<Instance> federationInstances = computePlugin.getInstances(federationUserToken);
 			LOGGER.debug("Federation instances=" + federationInstances);
 			for (Instance instance : federationInstances) {
-				Request remoteRequest = requests.getRequestByInstance(instance.getId());
+				Request request = requests.getRequestByInstance(instance.getId());
 				if ((!instanceHasRequestRelatedTo(null, generateGlobalId(instance.getId(), null))
-						&& remoteRequest != null && !remoteRequest.isLocal()) || remoteRequest == null) {
+						&& request != null && !request.isLocal()) || request == null) {
 					// this is an orphan instance
 					LOGGER.debug("Removing the orphan instance " + instance.getId());
 					this.computePlugin.removeInstance(federationUserToken, instance.getId());
@@ -659,8 +659,11 @@ public class ManagerController {
 			String instanceId = computePlugin.requestInstance(federationUserToken, categoriesWithoutImage,
 					xOCCIAttCopy, localImageId);
 			
-			request.setState(RequestState.SPAWNING);						
-			execBenchmark(request, instanceId, properties.getProperty(ConfigurationConstants.XMPP_JID_KEY), true);			
+			request.setState(RequestState.SPAWNING);
+			request.setInstanceId(instanceId);
+			request.setProvidingMemberId(properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
+			request.setFulfilledByFederationUser(true);
+			execBenchmark(request);			
 			return instanceId;
 		} catch (OCCIException e) {
 			if (e.getType() == ErrorType.QUOTA_EXCEEDED) {
@@ -697,15 +700,15 @@ public class ManagerController {
 	protected String waitForSSHPublicAddress(Request request) {
 		int remainingTries = DEFAULT_MAX_IP_MONITORING_TRIES;
 		while (remainingTries-- > 0) {
-			Instance instance = getInstance(request);
-			String sshPublicAddress = instance.getAttributes().get(Instance.SSH_PUBLIC_ADDRESS_ATT);
-			if (sshPublicAddress != null) {
-				return sshPublicAddress;
-			}
 			try {
+				Instance instance = getInstance(request);
+				String sshPublicAddress = instance.getAttributes().get(Instance.SSH_PUBLIC_ADDRESS_ATT);
+				if (sshPublicAddress != null) {
+					return sshPublicAddress;
+				}
 				Thread.sleep(DEFAULT_INSTANCE_IP_MONITORING_PERIOD);
-			} catch (InterruptedException e) {
-				//do nothing
+			} catch (Exception e) {
+				LOGGER.warn("Exception while retrieving SSH public address", e);
 			}
 		}
 		return null;
@@ -1022,8 +1025,11 @@ public class ManagerController {
 						asynchronousRequests.get(request.getId()).setTimeStamp(
 								dateUtils.currentTimeMillis());
 						
+						request.setInstanceId(instanceId);
+						request.setProvidingMemberId(memberAddress);
+						request.setFulfilledByFederationUser(true);
 						try {
-							execBenchmark(request, instanceId, memberAddress, true);
+							execBenchmark(request);
 						} catch (Throwable e) {
 							LOGGER.error("Error while executing the benchmark in " + instanceId
 									+ " from member " + memberAddress + ".", e);
@@ -1087,26 +1093,24 @@ public class ManagerController {
 			String instanceId = computePlugin.requestInstance(request.getLocalToken(),
 					categories, xOCCIAttCopy, localImageId);			
 			request.setState(RequestState.SPAWNING);
-			
-			execBenchmark(request, instanceId, properties.getProperty(ConfigurationConstants.XMPP_JID_KEY), false);
+			request.setInstanceId(instanceId);
+			request.setProvidingMemberId(properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
+			request.setFulfilledByFederationUser(false);			
+			execBenchmark(request);
 		} catch (OCCIException e) {
 			ErrorType errorType = e.getType();
 			if (errorType == ErrorType.QUOTA_EXCEEDED) {
 				LOGGER.warn("Request failed locally for quota exceeded.", e);
-				request.setState(RequestState.OPEN);
 				return false;
 			} else if (errorType == ErrorType.UNAUTHORIZED) {
 				LOGGER.warn("Request failed locally for user unauthorized.", e);
-				request.setState(RequestState.OPEN);
 				return false;
 			} else if (errorType == ErrorType.BAD_REQUEST) {
 				LOGGER.warn("Request failed locally for image not found.", e);
-				request.setState(RequestState.OPEN);
 				return false;
 			} else if (errorType == ErrorType.NO_VALID_HOST_FOUND) {
 				LOGGER.warn("Request failed because no valid host was found,"
 						+ " we will try to wake up a sleeping host.", e);
-				request.setState(RequestState.OPEN);
 				wakeUpSleepingHosts(request);
 				return false;
 			} else {
@@ -1119,36 +1123,29 @@ public class ManagerController {
 		return true;
 	}
 
-	private void execBenchmark(final Request request, final String instanceId,
-			final String providingMemberAddress, final boolean fulfilledByFederationUser) {
+	private void execBenchmark(final Request request) {
 
 		benchmarkExecutor.execute(new Runnable() {
 			@Override
-			public void run() {
-				Request tempRequest = new Request(request);
-				tempRequest.setInstanceId(instanceId);
-				tempRequest.setState(RequestState.FULFILLED);
-				tempRequest.setProvidingMemberId(providingMemberAddress);
-				tempRequest.setFulfilledByFederationUser(fulfilledByFederationUser);
-				
+			public void run() {				
 				String sshPublicAddress = null;
 				if (getManagerSSHPublicKey() != null) {
-					sshPublicAddress = waitForSSHPublicAddress(tempRequest);
+					sshPublicAddress = waitForSSHPublicAddress(request);
 					waitForSSHConnectivity(sshPublicAddress);
 				}
 				
-				benchmarkingPlugin.run(generateGlobalId(instanceId, providingMemberAddress),
-						getInstance(tempRequest));
+				try {
+					benchmarkingPlugin.run(request.getGlobalInstanceId(), getInstance(request));
+				} catch (Exception e) {
+					LOGGER.warn("Couldn't run benchmark.", e);
+				}
 				
 				if (sshPublicAddress != null) {
 					replacePublicKeys(sshPublicAddress, request);
 				}
 
-				request.setInstanceId(tempRequest.getInstanceId());
-				request.setState(tempRequest.getState());
-				request.setProvidingMemberId(tempRequest.getProvidingMemberId());
-				request.setFulfilledByFederationUser(tempRequest.isFulfilledByFederationUser());
-
+				request.setState(RequestState.FULFILLED);
+				
 				if (request.isLocal() && !isFulfilledByLocalMember(request)) {
 					asynchronousRequests.remove(request.getId());
 				}
@@ -1197,10 +1194,12 @@ public class ManagerController {
 				if (sshOutput.getExitStatus() == 0) {
 					break;
 				}
-				Thread.sleep(DEFAULT_INSTANCE_IP_MONITORING_PERIOD);
 			} catch (Exception e) {
 				LOGGER.debug("Could not connect to instance to run benchmarking", e);
 			}
+			try {
+				Thread.sleep(DEFAULT_INSTANCE_IP_MONITORING_PERIOD);
+			} catch (InterruptedException e) {}
 		}
 	}
 
@@ -1209,7 +1208,8 @@ public class ManagerController {
 		String[] sshAddressAndPort = sshPublicAddress.split(":");
 		try {
 			sshHelper.connect(sshAddressAndPort[0], Integer.parseInt(sshAddressAndPort[1]), 
-					getSSHCommonUser(), getManagerSSHPrivateKeyFilePath());
+					getSSHCommonUser(), getManagerSSHPrivateKeyFilePath(), 
+					(int) DEFAULT_INSTANCE_IP_MONITORING_PERIOD);
 			Command sshOutput = sshHelper.doSshExecution(cmd);
 			return sshOutput;
 		} finally {

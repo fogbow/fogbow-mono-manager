@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.StringTokenizer;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -19,6 +20,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.ParseException;
 import org.apache.http.util.EntityUtils;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
+import org.fogbowcloud.manager.core.CurrentThreadExecutorService;
 import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
@@ -89,14 +91,17 @@ public class OCCITestHelper {
 			}
 		});
 		
+		ExecutorService benchmarkExecutor = new CurrentThreadExecutorService();
+		
 		ManagerController facade = new ManagerController(properties, executor);
 		ResourceRepository.init(properties);
 		facade.setComputePlugin(computePlugin);
 		facade.setAuthorizationPlugin(authorizationPlugin);
 		facade.setLocalIdentityPlugin(identityPlugin);
 		facade.setFederationIdentityPlugin(identityPlugin);
-		facade.setBenchmarkingPlugin(benchmarkingPlugin);
-
+		facade.setBenchmarkingPlugin(benchmarkingPlugin);		
+		facade.setBenchmarkExecutor(benchmarkExecutor);
+		
 		component.getDefaultHost().attach(new OCCIApplication(facade));
 		component.start();
 	}

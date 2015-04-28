@@ -143,7 +143,8 @@ public class RequestRepository {
 	public Request getRequestByInstance(String instanceId) {
 		for (List<Request> userRequests : requests.values()) {
 			for (Request request : userRequests) {
-				if (request.getState().in(RequestState.FULFILLED, RequestState.DELETED)
+				if (request.getState().in(RequestState.FULFILLED, 
+						RequestState.SPAWNING, RequestState.DELETED)
 						&& instanceId.equals(request.getInstanceId())) {
 					return request;
 				}
