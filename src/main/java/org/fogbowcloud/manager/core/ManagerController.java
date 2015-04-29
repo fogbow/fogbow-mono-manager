@@ -104,7 +104,7 @@ public class ManagerController {
 	private Properties properties;
 	private AsyncPacketSender packetSender;
 	private FederationMemberValidator validator;
-	private ExecutorService benchmarkExecutor = Executors.newFixedThreadPool(10);
+	private ExecutorService benchmarkExecutor = Executors.newCachedThreadPool();
 	
 	private Map<String, ForwardedRequest> asynchronousRequests = new ConcurrentHashMap<String, ForwardedRequest>();
 	
@@ -909,8 +909,11 @@ public class ManagerController {
 		LOGGER.info("Monitoring instances.");
 
 		for (Request request : requests.getAllLocalRequests()) {
-			if (request.getState().in(RequestState.FULFILLED, RequestState.DELETED)) {
+			if (request.getState().in(RequestState.FULFILLED, RequestState.DELETED, RequestState.SPAWNING)) {
 				turnOffTimer = false;
+			}
+			
+			if (request.getState().in(RequestState.FULFILLED, RequestState.DELETED)) {
 				try {
 					LOGGER.debug("Monitoring instance of request: " + request);
 					removeFailedInstance(request, getInstance(request));
@@ -918,7 +921,7 @@ public class ManagerController {
 					LOGGER.debug("Error while getInstance of " + request.getInstanceId(), e);
 					instanceRemoved(requests.get(request.getId()));
 				}
-			}
+			} 
 		}
 
 		if (turnOffTimer) {
@@ -1156,15 +1159,16 @@ public class ManagerController {
 
 				LOGGER.debug("Fulfilled Request: " + request);
 
-				if (request.isLocal() && !instanceMonitoringTimer.isScheduled()) {
-					triggerInstancesMonitor();
-				}
-
-				if (!request.isLocal() && !servedRequestMonitoringTimer.isScheduled()) {
-					triggerServedRequestMonitoring();
-				}
 			}
 		});
+
+		if (request.isLocal() && !instanceMonitoringTimer.isScheduled()) {
+			triggerInstancesMonitor();
+		}
+		
+		if (!request.isLocal() && !servedRequestMonitoringTimer.isScheduled()) {
+			triggerServedRequestMonitoring();
+		}
 	}
 	
 	protected void replacePublicKeys(String sshPublicAddress, Request request) {

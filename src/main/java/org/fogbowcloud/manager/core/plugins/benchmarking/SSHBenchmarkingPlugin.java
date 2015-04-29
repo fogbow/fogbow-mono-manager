@@ -75,6 +75,7 @@ public class SSHBenchmarkingPlugin implements BenchmarkingPlugin {
 				Command executeBenchcmd = ssh.doSshExecution(EXEC_COMMAND);
 				long endTimestamp = System.currentTimeMillis();
 				if (executeBenchcmd.getExitStatus() == 0) {
+					LOGGER.debug("Benchmarking execution - " + ipAndPort + " - Time: " + (endTimestamp - startTimestamp));
 					return endTimestamp - startTimestamp;
 				}
 			}
@@ -94,8 +95,6 @@ public class SSHBenchmarkingPlugin implements BenchmarkingPlugin {
 	 * @return The amount of FCUs benchmarked.
 	 */
 	protected double getFCUsFromOutput(long milliseconds) {
-		System.out.println(milliseconds + " milliseconds");
-
 		double seconds = (double) TimeUnit.MILLISECONDS.toSeconds(milliseconds);
 		return (10.0 / seconds);
 
