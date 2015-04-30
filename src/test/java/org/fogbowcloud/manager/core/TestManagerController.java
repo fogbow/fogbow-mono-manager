@@ -2263,8 +2263,7 @@ public class TestManagerController {
 		instance.addAttribute(Instance.SSH_PUBLIC_ADDRESS_ATT, "127.0.0.1:5555");
 		instance.addAttribute(Instance.SSH_USERNAME_ATT, "fogbow");
 		
-		Mockito.when(computePlugin.getInstance(Mockito.any(Token.class), 
-				Mockito.eq(newInstanceId))).thenReturn(instance);
+		Mockito.when(spiedManageController.waitForSSHPublicAddress(Mockito.any(Request.class))).thenReturn(instance);
 		
 		spiedManageController.createInstanceWithFederationUser(servedRequest);
 		
@@ -2330,8 +2329,7 @@ public class TestManagerController {
 		instance.addAttribute(Instance.SSH_PUBLIC_ADDRESS_ATT, "127.0.0.1:5555");
 		instance.addAttribute(Instance.SSH_USERNAME_ATT, "fogbow");
 		
-		Mockito.when(computePlugin.getInstance(Mockito.any(Token.class), 
-				Mockito.eq(newInstanceId))).thenReturn(instance);
+		Mockito.when(spiedManageController.waitForSSHPublicAddress(Mockito.any(Request.class))).thenReturn(instance);
 		
 		spiedManageController.createInstanceWithFederationUser(servedRequest);
 		
@@ -2441,8 +2439,7 @@ public class TestManagerController {
 		instance.addAttribute(Instance.SSH_PUBLIC_ADDRESS_ATT, "127.0.0.1:5555");
 		instance.addAttribute(Instance.SSH_USERNAME_ATT, "fogbow");
 		
-		Mockito.when(computePlugin.getInstance(Mockito.any(Token.class), 
-				Mockito.eq(newInstanceId))).thenReturn(instance);
+		Mockito.when(spiedManageController.waitForSSHPublicAddress(Mockito.any(Request.class))).thenReturn(instance);
 		
 		spiedManageController.createInstanceWithFederationUser(localRequest);
 		
@@ -2516,8 +2513,7 @@ public class TestManagerController {
 		instance.addAttribute(Instance.SSH_PUBLIC_ADDRESS_ATT, "127.0.0.1:5555");
 		instance.addAttribute(Instance.SSH_USERNAME_ATT, "fogbow");
 		
-		Mockito.when(computePlugin.getInstance(Mockito.any(Token.class), 
-				Mockito.eq(newInstanceId))).thenReturn(instance);
+		Mockito.when(spiedManageController.waitForSSHPublicAddress(Mockito.any(Request.class))).thenReturn(instance);
 		
 		spiedManageController.createInstanceWithFederationUser(localRequest);
 		
