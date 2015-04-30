@@ -10,7 +10,6 @@ import java.util.UUID;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
-import org.apache.http.HttpVersion;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
@@ -18,11 +17,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.FileEntity;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
-import org.apache.http.params.BasicHttpParams;
-import org.apache.http.params.CoreProtocolPNames;
-import org.apache.http.params.HttpParams;
+import org.apache.http.impl.client.HttpClients;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
@@ -117,6 +112,11 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 					ResponseConstants.IRREGULAR_SYNTAX);
 		}
 		
+		String tenantId = token.getAttributes().get(TENANT_ID);
+		if (tenantId == null) {
+			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.INVALID_TOKEN);
+		}
+		
 		// removing fogbow-request category
 		categories.remove(new Category(RequestConstants.TERM, RequestConstants.SCHEME,
 				RequestConstants.KIND_CLASS));
@@ -148,8 +148,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		String userdata = xOCCIAtt.get(RequestAttribute.USER_DATA_ATT.getValue());		
 		try {
 			JSONObject json = generateJsonRequest(imageRef, flavorId, userdata, keyName);
-			String requestEndpoint = computeV2APIEndpoint + token.getAttributes().get(TENANT_ID)
-					+ "/servers";
+			String requestEndpoint = computeV2APIEndpoint + tenantId + "/servers";
 			String jsonResponse = doPostRequest(requestEndpoint, token.getAccessId(), json);
 			return getAttFromJson(ID_JSON_FIELD, jsonResponse);
 		} catch (JSONException e) {
@@ -168,10 +167,13 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 
 	public synchronized void updateFlavors(Token token) {
 		try {
-			String endpoint = computeV2APIEndpoint + token.getAttributes().get(TENANT_ID)
-					+ SUFIX_ENDPOINT_FLAVORS;
+			String tenantId = token.getAttributes().get(TENANT_ID);
+			if (tenantId == null) {
+				return;
+			}
+			
+			String endpoint = computeV2APIEndpoint + tenantId + SUFIX_ENDPOINT_FLAVORS;
 			String authToken = token.getAccessId();
-
 			String jsonResponseFlavors = doGetRequest(endpoint, authToken);
 
 			Map<String, String> nameToFlavorId = new HashMap<String, String>();
@@ -275,11 +277,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 	}
 
 	private void initClient() {
-		client = new DefaultHttpClient();
-		HttpParams params = new BasicHttpParams();
-		params.setParameter(CoreProtocolPNames.PROTOCOL_VERSION, HttpVersion.HTTP_1_1);
-		client = new DefaultHttpClient(new ThreadSafeClientConnManager(params, client
-				.getConnectionManager().getSchemeRegistry()), params);
+		client = HttpClients.createMinimal();
 	}
 	
 	public void setClient(HttpClient client) {

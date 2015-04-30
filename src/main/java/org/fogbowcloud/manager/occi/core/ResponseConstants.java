@@ -30,5 +30,6 @@ public class ResponseConstants {
 	public static final String ACCEPT_NOT_ACCEPTABLE = "Accept not acceptable.";
 	public static final String CATEGORY_IS_NOT_REGISTERED = "The following category is not registered.";
 	public static final String NO_VALID_HOST_FOUND = "No valid host was found.";
+	public static final String INVALID_TOKEN = "Token type is not valid for this cloud manager";
 
 }

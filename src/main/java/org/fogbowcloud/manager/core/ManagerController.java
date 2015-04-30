@@ -29,7 +29,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.model.DateUtils;
@@ -185,9 +185,14 @@ public class ManagerController {
 	}
 	
 	private void updateAccounting() {
-		LOGGER.info("Updating accounting.");
-		List<Request> requestsWithInstances = new ArrayList<Request>(requests.getRequestsIn(RequestState.FULFILLED, RequestState.DELETED));
-		LOGGER.debug("requestsWithInstance=" + requestsWithInstances);		
+		List<Request> requestsWithInstances = new ArrayList<Request>(
+				requests.getRequestsIn(RequestState.FULFILLED, RequestState.DELETED));
+		List<String> requestIds = new LinkedList<String>();
+		for (Request request : requestsWithInstances) {
+			requestIds.add(request.getId());
+		}
+		LOGGER.debug("Usage accounting is about to be updated. "
+				+ "The following requests do have instances: " + requestIds);		
 		accountingPlugin.update(requestsWithInstances);
 	}
 
@@ -367,18 +372,17 @@ public class ManagerController {
 	}
 
 	public List<Instance> getInstances(String accessId) {
-		LOGGER.debug("Getting instances of token " + accessId);
+		LOGGER.debug("Retrieving instances of token " + accessId);
 		List<Instance> instances = new ArrayList<Instance>();
 		for (Request request : requests.getByUser(getUser(accessId))) {
 			String instanceId = request.getInstanceId();
-			LOGGER.debug("InstanceId " + instanceId);
 			if (instanceId == null) {
 				continue;
 			}
 			try {			
 				instances.add(generateInstanceWithGlobalId(request.getInstanceId(), request.getProvidingMemberId()));
 			} catch (Exception e) {
-				LOGGER.warn("Exception thown while getting instance " + instanceId + ".", e);
+				LOGGER.warn("Exception thown while retrieving instance " + instanceId + ".", e);
 			}
 		}
 		return instances;
@@ -398,6 +402,23 @@ public class ManagerController {
 	public Instance getInstance(String accessId, String instanceId) {
 		Request request = getRequestForInstance(accessId, instanceId);
 		return getInstance(request);
+	}
+	
+	private Instance getInstanceSSHAddress(Request request) {
+		Instance instance = null;
+		if (isFulfilledByLocalMember(request)) {
+			instance = new Instance(request.getInstanceId());
+			String sshPublicAdd = getSSHPublicAddress(request.getId());
+			if (sshPublicAdd != null) {
+				instance.addAttribute(Instance.SSH_PUBLIC_ADDRESS_ATT, sshPublicAdd);
+				instance.addAttribute(Instance.SSH_USERNAME_ATT, getSSHCommonUser());
+			}
+		} else {
+			LOGGER.debug(request.getInstanceId() + " is remote, going out to "
+					+ request.getProvidingMemberId() + " to get its information.");
+			instance = getRemoteInstance(request);
+		}
+		return instance;
 	}
 	
 	private Instance getInstance(Request request) {
@@ -447,6 +468,7 @@ public class ManagerController {
 		return osCategory;
 	}
 
+	
 	private String getSSHPublicAddress(String tokenId) {
 		
 		if (tokenId == null || tokenId.isEmpty()){
@@ -463,8 +485,8 @@ public class ManagerController {
 					+ tokenId);
 			HttpGet httpGet = new HttpGet("http://" + hostAddr + ":" + httpHostPort + "/token/"
 					+ tokenId);
-			HttpClient client = new DefaultHttpClient();
-			HttpResponse response = client.execute(httpGet);
+			HttpClient reverseTunnelHttpClient = HttpClients.createDefault();
+			HttpResponse response = reverseTunnelHttpClient.execute(httpGet);
 			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
 				String sshPort = EntityUtils.toString(response.getEntity());
 				String sshPublicHostIP = properties
@@ -697,14 +719,17 @@ public class ManagerController {
 		return command;
 	}
 
-	protected String waitForSSHPublicAddress(Request request) {
+	protected Instance waitForSSHPublicAddress(Request request) {
 		int remainingTries = DEFAULT_MAX_IP_MONITORING_TRIES;
 		while (remainingTries-- > 0) {
 			try {
-				Instance instance = getInstance(request);
-				String sshPublicAddress = instance.getAttributes().get(Instance.SSH_PUBLIC_ADDRESS_ATT);
-				if (sshPublicAddress != null) {
-					return sshPublicAddress;
+				Instance instance = getInstanceSSHAddress(request);
+				Map<String, String> attributes = instance.getAttributes();
+				if (attributes != null) {
+					String sshPublicAddress = attributes.get(Instance.SSH_PUBLIC_ADDRESS_ATT);
+					if (sshPublicAddress != null) {
+						return instance;
+					}
 				}
 				Thread.sleep(DEFAULT_INSTANCE_IP_MONITORING_PERIOD);
 			} catch (Exception e) {
@@ -791,7 +816,7 @@ public class ManagerController {
 			String globalImageId = osCategory.getTerm();
 			localImageId = imageStoragePlugin.getLocalId(federationUserToken, globalImageId);
 		}
-		LOGGER.debug("The " + osCategory.getTerm() + " is related to this localImageId=" + localImageId);
+		LOGGER.debug("Image " + osCategory.getTerm() + " corresponds locally to " + localImageId);
 		return localImageId;
 	}
 
@@ -970,11 +995,11 @@ public class ManagerController {
 					turnOffTimer = false;
 					long validInterval = request.getLocalToken().getExpirationDate().getTime()
 							- dateUtils.currentTimeMillis();
-					LOGGER.debug("Valid interval of requestId " + request.getId() + " is "
-							+ validInterval);
+					LOGGER.debug("Request " + request.getId() + " is still valid for "
+							+ validInterval + " ms");
 					if (validInterval < 2 * tokenUpdatePeriod) {
 						Token newToken = localIdentityPlugin.reIssueToken(request.getLocalToken());
-						LOGGER.info("Setting new token " + newToken + " on request "
+						LOGGER.info("Updating token " + newToken + " on request "
 								+ request.getId());
 						requests.get(request.getId()).setLocalToken(newToken);
 					}
@@ -1130,21 +1155,24 @@ public class ManagerController {
 
 		benchmarkExecutor.execute(new Runnable() {
 			@Override
-			public void run() {				
-				String sshPublicAddress = null;
+			public void run() {
+				Instance instance = null;
 				if (getManagerSSHPublicKey() != null) {
-					sshPublicAddress = waitForSSHPublicAddress(request);
-					waitForSSHConnectivity(sshPublicAddress);
+					instance = waitForSSHPublicAddress(request);
+					waitForSSHConnectivity(instance.getAttributes().get(Instance.SSH_PUBLIC_ADDRESS_ATT));
 				}
 				
 				try {
-					benchmarkingPlugin.run(request.getGlobalInstanceId(), getInstance(request));
+					benchmarkingPlugin.run(request.getGlobalInstanceId(), instance);
 				} catch (Exception e) {
 					LOGGER.warn("Couldn't run benchmark.", e);
 				}
 				
-				if (sshPublicAddress != null) {
-					replacePublicKeys(sshPublicAddress, request);
+				if (instance != null) {
+					LOGGER.debug("Replacing public keys on " + request.getId());
+					replacePublicKeys(instance.getAttributes().get(
+							Instance.SSH_PUBLIC_ADDRESS_ATT), request);
+					LOGGER.debug("Public keys replaced on " + request.getId());
 				}
 
 				request.setState(RequestState.FULFILLED);
@@ -1158,7 +1186,6 @@ public class ManagerController {
 				}
 
 				LOGGER.debug("Fulfilled Request: " + request);
-
 			}
 		});
 
@@ -1256,7 +1283,7 @@ public class ManagerController {
 						+ " was forwarded to remote member and is not fulfilled yet.");
 				continue;
 			}
-			LOGGER.debug(request.getId() + " considering for scheduling.");
+			LOGGER.debug(request.getId() + " being considered for scheduling.");
 			Map<String, String> xOCCIAtt = request.getxOCCIAtt();
 			if (request.isIntoValidPeriod()) {
 				if (request.isLocal()) {
@@ -1362,7 +1389,7 @@ public class ManagerController {
 	}
 
 	private boolean createLocalInstanceWithFederationUser(Request request) {
-		LOGGER.info("Submiting request " + request + " with federation user locally.");
+		LOGGER.info("Submitting request " + request + " with federation user locally.");
 
 		String instanceId = null;
 		try {
