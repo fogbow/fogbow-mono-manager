@@ -1159,7 +1159,7 @@ public class ManagerController {
 				Instance instance = null;
 				if (getManagerSSHPublicKey() != null) {
 					instance = waitForSSHPublicAddress(request);
-					waitForSSHConnectivity(instance.getAttributes().get(Instance.SSH_PUBLIC_ADDRESS_ATT));
+					waitForSSHConnectivity(instance);
 				}
 				
 				try {
@@ -1214,14 +1214,16 @@ public class ManagerController {
 		}
 	}
 	
-	private void waitForSSHConnectivity(String sshPublicAddress) {
-		if (sshPublicAddress == null) {
+	private void waitForSSHConnectivity(Instance instance) {
+		if (instance == null || instance.getAttributes() == null
+				|| instance.getAttributes().get(Instance.SSH_PUBLIC_ADDRESS_ATT) == null) {
 			return;
 		}
 		int retries = DEFAULT_MAX_IP_MONITORING_TRIES;
 		while (retries-- > 0) {
 			try {
-				Command sshOutput = execOnInstance(sshPublicAddress, "echo HelloWorld");
+				Command sshOutput = execOnInstance(instance.getAttributes()
+						.get(Instance.SSH_PUBLIC_ADDRESS_ATT),"echo HelloWorld");
 				if (sshOutput.getExitStatus() == 0) {
 					break;
 				}
