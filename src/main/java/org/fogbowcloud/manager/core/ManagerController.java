@@ -1085,8 +1085,12 @@ public class ManagerController {
 		
 		//The "1, 1" will be changed by request.getCPU and request.getRAM
 		if (greenSitterJID != null) {
-			ManagerPacketHelper.wakeUpSleepingHost(1, 1024, greenSitterJID,
-					packetSender);
+			String vcpu = RequirementsHelper.getSmallestValueForAttribute(
+					request.getRequirements(), RequirementsHelper.GLUE_VCPU_TERM);
+			String mem = RequirementsHelper.getSmallestValueForAttribute(
+					request.getRequirements(), RequirementsHelper.GLUE_MEM_RAM_TERM);
+			ManagerPacketHelper.wakeUpSleepingHost(Integer.valueOf(vcpu), 
+					Integer.valueOf(mem), greenSitterJID, packetSender);
 		}
 	}
 	

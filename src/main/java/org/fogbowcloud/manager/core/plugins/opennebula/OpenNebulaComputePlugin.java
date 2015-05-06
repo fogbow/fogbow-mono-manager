@@ -692,9 +692,9 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 
 	public Flavor getFlavor(Token token, String requirements) {
 		if (templateType == null || templateType.isEmpty()) {
-			String cpu = RequirementsHelper.getValueSmallerPerAttribute(requirements, RequirementsHelper.GLUE_VCPU_TERM);
-			String mem = RequirementsHelper.getValueSmallerPerAttribute(requirements, RequirementsHelper.GLUE_MEM_RAM_TERM);
-			String disk = RequirementsHelper.getValueSmallerPerAttribute(requirements, RequirementsHelper.GLUE_DISK_TERM);
+			String cpu = RequirementsHelper.getSmallestValueForAttribute(requirements, RequirementsHelper.GLUE_VCPU_TERM);
+			String mem = RequirementsHelper.getSmallestValueForAttribute(requirements, RequirementsHelper.GLUE_MEM_RAM_TERM);
+			String disk = RequirementsHelper.getSmallestValueForAttribute(requirements, RequirementsHelper.GLUE_DISK_TERM);
 			return new Flavor("flavor", cpu, mem, disk);
 		} 
 		updateFlavors(token);

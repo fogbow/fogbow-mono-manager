@@ -265,27 +265,27 @@ public class TestRequirementsHelper {
 		String attrName = "X";
 		String requirementsStr = attrName + ">1&&" + attrName + ">=10";
 		Assert.assertEquals("10",
-				RequirementsHelper.getValueSmallerPerAttribute(requirementsStr, attrName));
+				RequirementsHelper.getSmallestValueForAttribute(requirementsStr, attrName));
 
 		requirementsStr = attrName + ">1&&" + attrName + ">=10||" + attrName + ">=5";
 		Assert.assertEquals("5",
-				RequirementsHelper.getValueSmallerPerAttribute(requirementsStr, attrName));
+				RequirementsHelper.getSmallestValueForAttribute(requirementsStr, attrName));
 
 		requirementsStr = attrName + ">1&&" + attrName + ">=10 && Y>=12 || (A==\"Test\")";
 		Assert.assertEquals("10",
-				RequirementsHelper.getValueSmallerPerAttribute(requirementsStr, attrName));
+				RequirementsHelper.getSmallestValueForAttribute(requirementsStr, attrName));
 
 		requirementsStr = "(" + attrName + ">1&&" + attrName + ">=10 && Y>=12 || (A==\"Test\")) || D>=10 ";
 		Assert.assertEquals("10",
-				RequirementsHelper.getValueSmallerPerAttribute(requirementsStr, attrName));
+				RequirementsHelper.getSmallestValueForAttribute(requirementsStr, attrName));
 
 		requirementsStr = attrName + "<1&&" + attrName + "<=10";
 		Assert.assertEquals("0",
-				RequirementsHelper.getValueSmallerPerAttribute(requirementsStr, attrName));
+				RequirementsHelper.getSmallestValueForAttribute(requirementsStr, attrName));
 
 		requirementsStr = attrName + "<0&&" + attrName + "<=10";
 		Assert.assertEquals("-1",
-				RequirementsHelper.getValueSmallerPerAttribute(requirementsStr, attrName));
+				RequirementsHelper.getSmallestValueForAttribute(requirementsStr, attrName));
 	}
 	
 	@Test
