@@ -1545,6 +1545,12 @@ public class ManagerController {
 
 		return accountingPlugin.getUsersUsage();
 	}
+
+	public ResourcesInfo getLocalUserQuota(
+			String localAccessToken) {
+		return computePlugin.getResourcesInfo(
+				getTokenFromLocalIdP(localAccessToken));
+	}
 }
 
 class ForwardedRequest {
