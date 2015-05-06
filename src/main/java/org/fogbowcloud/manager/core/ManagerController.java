@@ -22,6 +22,8 @@ import java.util.concurrent.ScheduledExecutorService;
 
 import javax.mail.MessagingException;
 
+import net.schmizz.sshj.SSHClient;
+import net.schmizz.sshj.connection.channel.direct.Session;
 import net.schmizz.sshj.connection.channel.direct.Session.Command;
 
 import org.apache.commons.io.IOUtils;
@@ -29,7 +31,9 @@ import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.model.DateUtils;
@@ -44,7 +48,7 @@ import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
 import org.fogbowcloud.manager.core.plugins.PrioritizationPlugin;
 import org.fogbowcloud.manager.core.plugins.accounting.ResourceUsage;
-import org.fogbowcloud.manager.core.plugins.util.SshHelper;
+import org.fogbowcloud.manager.core.plugins.util.SshClientPool;
 import org.fogbowcloud.manager.occi.core.Category;
 import org.fogbowcloud.manager.occi.core.ErrorType;
 import org.fogbowcloud.manager.occi.core.OCCIException;
@@ -66,6 +70,7 @@ import org.restlet.Response;
 
 public class ManagerController {
 	
+
 	public static final String DEFAULT_COMMON_SSH_USER = "fogbow";
 	
 	private static final String PROP_MAX_WHOISALIVE_MANAGER_COUNT = "max_whoisalive_manager_count";
@@ -77,9 +82,10 @@ public class ManagerController {
 	private static final long DEFAULT_INSTANCE_MONITORING_PERIOD = 120000; // 2 minutes
 	private static final long DEFAULT_SERVED_REQUEST_MONITORING_PERIOD = 120000; // 2 minutes
 	private static final long DEFAULT_GARBAGE_COLLECTOR_PERIOD = 240000; // 4 minutes
-	private static final long DEFAULT_INSTANCE_IP_MONITORING_PERIOD = 30000; // 30 seconds
-	private static final int DEFAULT_MAX_IP_MONITORING_TRIES = 30; // 30 tries
+	private static final long DEFAULT_INSTANCE_IP_MONITORING_PERIOD = 10000; // 10 seconds
+	private static final int DEFAULT_MAX_IP_MONITORING_TRIES = 90; // 30 tries
 	private static final long DEFAULT_ACCOUNTING_UPDATE_PERIOD = 300000; // 5 minutes
+	public static final int DEFAULT_MAX_POOL = 200;
 	
 	private final ManagerTimer requestSchedulerTimer;
 	private final ManagerTimer tokenUpdaterTimer;
@@ -109,6 +115,8 @@ public class ManagerController {
 	private Map<String, ForwardedRequest> asynchronousRequests = new ConcurrentHashMap<String, ForwardedRequest>();
 	
 	private DateUtils dateUtils = new DateUtils();
+
+	private PoolingHttpClientConnectionManager cm;
 
 	public ManagerController(Properties properties) {
 		this(properties, null);
@@ -468,6 +476,14 @@ public class ManagerController {
 		return osCategory;
 	}
 
+	private CloseableHttpClient createReverseTunnelHttpClient() {
+		this.cm = new PoolingHttpClientConnectionManager();
+		cm.setMaxTotal(DEFAULT_MAX_POOL);		
+		cm.setDefaultMaxPerRoute(DEFAULT_MAX_POOL);
+		return HttpClients.custom().setConnectionManager(cm).build();
+	}
+	
+	private HttpClient reverseTunnelHttpClient = createReverseTunnelHttpClient();
 	
 	private String getSSHPublicAddress(String tokenId) {
 		
@@ -475,18 +491,13 @@ public class ManagerController {
 			return null;
 		}
 		
+		HttpResponse response = null;
 		try {
 			String hostAddr = properties.getProperty(ConfigurationConstants.TUNNEL_SSH_PRIVATE_HOST_KEY);
 			String httpHostPort = properties.getProperty(ConfigurationConstants.TUNNEL_SSH_HOST_HTTP_PORT_KEY);
-			LOGGER.debug("private host: " + hostAddr);
-			LOGGER.debug("private host HTTP port: " + httpHostPort);
-			LOGGER.debug("tokenId: " + tokenId);
-			LOGGER.debug("token address: http://" + hostAddr + ":" + httpHostPort + "/token/"
-					+ tokenId);
 			HttpGet httpGet = new HttpGet("http://" + hostAddr + ":" + httpHostPort + "/token/"
 					+ tokenId);
-			HttpClient reverseTunnelHttpClient = HttpClients.createDefault();
-			HttpResponse response = reverseTunnelHttpClient.execute(httpGet);
+			response = reverseTunnelHttpClient.execute(httpGet);
 			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
 				String sshPort = EntityUtils.toString(response.getEntity());
 				String sshPublicHostIP = properties
@@ -495,6 +506,14 @@ public class ManagerController {
 			}
 		} catch (Throwable e) {
 			LOGGER.warn("", e);
+		} finally {
+			if (response != null) {
+				try {
+					response.getEntity().getContent().close();
+				} catch (IOException e) {
+					// Best effort, may fail if the content was already closed.
+				}
+			}
 		}
 		return null;
 	}
@@ -1218,7 +1237,7 @@ public class ManagerController {
 		}
 	}
 	
-	private void waitForSSHConnectivity(Instance instance) {
+	protected void waitForSSHConnectivity(Instance instance) {
 		if (instance == null || instance.getAttributes() == null
 				|| instance.getAttributes().get(Instance.SSH_PUBLIC_ADDRESS_ATT) == null) {
 			return;
@@ -1232,7 +1251,7 @@ public class ManagerController {
 					break;
 				}
 			} catch (Exception e) {
-				LOGGER.debug("Could not connect to instance to run benchmarking", e);
+				LOGGER.debug("Check for SSH connectivity failed. " + retries + " retries left.", e);
 			}
 			try {
 				Thread.sleep(DEFAULT_INSTANCE_IP_MONITORING_PERIOD);
@@ -1240,26 +1259,15 @@ public class ManagerController {
 		}
 	}
 
+	private SshClientPool sshClientPool = new SshClientPool();
+	
 	private Command execOnInstance(String sshPublicAddress, String cmd) throws Exception {
-		SshHelper sshHelper = createSshHelper();
-		String[] sshAddressAndPort = sshPublicAddress.split(":");
-		try {
-			sshHelper.connect(sshAddressAndPort[0], Integer.parseInt(sshAddressAndPort[1]), 
-					getSSHCommonUser(), getManagerSSHPrivateKeyFilePath(), 
-					(int) DEFAULT_INSTANCE_IP_MONITORING_PERIOD);
-			Command sshOutput = sshHelper.doSshExecution(cmd);
-			return sshOutput;
-		} finally {
-			try {
-				sshHelper.disconnect();
-			} catch (IOException e) {
-				LOGGER.warn("Could not disconnect ssh client.", e);
-			}
-		}
-	}
-
-	protected SshHelper createSshHelper() {
-		return new SshHelper();
+		SSHClient sshClient = sshClientPool.getClient(sshPublicAddress, 
+				getSSHCommonUser(), getManagerSSHPrivateKeyFilePath());
+		Session session = sshClient.startSession();
+		Command command = session.exec(cmd);
+		command.join();
+		return command;
 	}
 
 	private void triggerRequestScheduler() {
@@ -1504,29 +1512,6 @@ public class ManagerController {
 	public List<Flavor> getFlavorsProvided() {		
 		return this.flavorsProvided;
 	}
-	
-//	private void populateStaticFlavors() {
-//		List<Flavor> flavors = new ArrayList<Flavor>();
-//		for (Object objectKey: this.properties.keySet()) {
-//			String key = objectKey.toString();
-//			if (key.startsWith(ConfigurationConstants.PREFIX_FLAVORS)) {
-//				String value = (String) this.properties.get(key);
-//				String cpu = getAttValue("cpu", value);
-//				String mem = getAttValue("mem", value);				
-//				flavors.add(new Flavor(key.replace(ConfigurationConstants.PREFIX_FLAVORS, ""), cpu, mem, "0"));
-//			}			
-//		}
-//		flavorsProvided = flavors;
-//	}
-	
-//	public static String getAttValue(String attName, String flavorSpec) {		
-//		try {
-//			JSONObject root = new JSONObject(flavorSpec);
-//			return root.getString(attName);
-//		} catch (Exception e) {
-//			return null;
-//		}
-//	}
 
 	public List<ResourceUsage> getMembersUsage(String federationAccessId) {
 		checkFederationAccessId(federationAccessId);		

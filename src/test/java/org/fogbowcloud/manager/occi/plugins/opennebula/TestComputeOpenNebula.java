@@ -115,10 +115,26 @@ public class TestComputeOpenNebula {
 				.getStatus().getDescription());
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testRequestInstance() throws ClientConfigurationException {
 		// mocking opennebula structures
 		Client oneClient = Mockito.mock(Client.class);
+		VirtualMachinePool vmPool = Mockito.mock(VirtualMachinePool.class);
+
+		VirtualMachine vm = Mockito.mock(VirtualMachine.class);
+		Mockito.when(vm.getId()).thenReturn(INSTANCE_ID);
+		Mockito.when(vm.getName()).thenReturn("one-instance");
+		Mockito.when(vm.lcmStateStr()).thenReturn("Running");
+		Mockito.when(vm.xpath("TEMPLATE/MEMORY")).thenReturn("128.0");
+		Mockito.when(vm.xpath("TEMPLATE/CPU")).thenReturn("1.0");
+		Mockito.when(vm.xpath("TEMPLATE/DISK/IMAGE")).thenReturn(IMAGE1_NAME);
+		Mockito.when(vm.xpath("TEMPLATE/OS/ARCH")).thenReturn("");
+
+		Iterator<VirtualMachine> mockIterator = Mockito.mock(Iterator.class);
+		Mockito.when(mockIterator.hasNext()).thenReturn(true, false);
+		Mockito.when(mockIterator.next()).thenReturn(vm);
+		Mockito.when(vmPool.iterator()).thenReturn(mockIterator);
 
 		// mocking clientFactory
 		OpenNebulaClientFactory clientFactory = Mockito.mock(OpenNebulaClientFactory.class);
@@ -126,8 +142,44 @@ public class TestComputeOpenNebula {
 				.thenReturn(oneClient);
 		Mockito.when(clientFactory.allocateVirtualMachine(oneClient, SMALL_TEMPLATE)).thenReturn(
 				INSTANCE_ID);
-		Mockito.when(clientFactory.createImagePool(oneClient)).thenReturn(new ImagePool(oneClient));
-		Mockito.when(clientFactory.createTemplatePool(oneClient)).thenReturn(new TemplatePool(oneClient));
+		Mockito.when(clientFactory.createVirtualMachinePool(oneClient)).thenReturn(vmPool);
+		
+		Image image = Mockito.mock(Image.class);
+		Mockito.when(image.xpath("SIZE")).thenReturn("100");
+		String imageOne = "imageOne";
+		Mockito.when(image.getName()).thenReturn(imageOne);
+
+		Image imageTow = Mockito.mock(Image.class);
+		Mockito.when(imageTow.xpath("SIZE")).thenReturn("200");
+		Mockito.when(imageTow.getName()).thenReturn("image2");
+
+		ImagePool imagePool = Mockito.mock(ImagePool.class);
+		Iterator<Image> imageMockIterator = Mockito.mock(Iterator.class);
+		Mockito.when(imageMockIterator.hasNext()).thenReturn(true, true, false);
+		Mockito.when(imageMockIterator.next()).thenReturn(image, imageTow);
+		Mockito.when(imagePool.iterator()).thenReturn(imageMockIterator);
+
+		Mockito.when(clientFactory.createImagePool(oneClient)).thenReturn(imagePool);
+
+		Template template = Mockito.mock(Template.class);
+		Mockito.when(template.xpath("NAME")).thenReturn(RequestConstants.SMALL_TERM);
+		Mockito.when(template.xpath("TEMPLATE/MEMORY")).thenReturn("2000");
+		Mockito.when(template.xpath("TEMPLATE/CPU")).thenReturn("2");
+		Mockito.when(template.xpath("TEMPLATE/DISK[1]/IMAGE")).thenReturn(imageOne);
+		Mockito.when(template.xpath("TEMPLATE/DISK[2]/SIZE")).thenReturn("100");
+		Mockito.when(template.xpath("TEMPLATE/DISK[2]")).thenReturn("NotNull");		
+		
+		TemplatePool templatePool = Mockito.mock(TemplatePool.class);
+		Iterator<Template> templateMockIterator = Mockito.mock(Iterator.class);
+		Mockito.when(clientFactory.createTemplatePool(oneClient)).thenReturn(templatePool );
+		Mockito.when(templateMockIterator.hasNext()).thenReturn(true, false);
+		Mockito.when(templateMockIterator.next()).thenReturn(template);
+		Mockito.when(templatePool.iterator()).thenReturn(templateMockIterator);
+		
+		Mockito.when(clientFactory.createImagePool(oneClient)).thenReturn(imagePool);
+		
+		Mockito.when(clientFactory.createTemplatePool(oneClient)).thenReturn(templatePool);
+		
 		properties.put(OpenNebulaComputePlugin.OPENNEBULA_TEMPLATES,
 				OpenNebulaComputePlugin.OPENNEBULA_TEMPLATES_TYPE_ALL);
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
@@ -143,6 +195,9 @@ public class TestComputeOpenNebula {
 		List<Category> categories = new ArrayList<Category>();
 		Assert.assertEquals(INSTANCE_ID,
 				computeOpenNebula.requestInstance(defaultToken, categories, xOCCIAtt, IMAGE1_ID));
+		
+		// checking the amount of flavors
+		Assert.assertEquals(1, computeOpenNebula.getFlavors().size());
 	}
 
 	@Test(expected = OCCIException.class)
@@ -181,6 +236,7 @@ public class TestComputeOpenNebula {
 		computeOpenNebula.requestInstance(defaultToken, categories, xOCCIAtt, IMAGE1_NAME);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testRemoveInstance() throws ClientConfigurationException {
 		// mocking opennebula structures
@@ -199,6 +255,44 @@ public class TestComputeOpenNebula {
 		Mockito.when(clientFactory.createVirtualMachine(oneClient, INSTANCE_ID)).thenReturn(vm);
 		Mockito.when(clientFactory.createImagePool(oneClient)).thenReturn(new ImagePool(oneClient));
 		Mockito.when(clientFactory.createTemplatePool(oneClient)).thenReturn(new TemplatePool(oneClient));		
+
+		Image image = Mockito.mock(Image.class);
+		Mockito.when(image.xpath("SIZE")).thenReturn("100");
+		String imageOne = "imageOne";
+		Mockito.when(image.getName()).thenReturn(imageOne);
+
+		Image imageTow = Mockito.mock(Image.class);
+		Mockito.when(imageTow.xpath("SIZE")).thenReturn("200");
+		Mockito.when(imageTow.getName()).thenReturn("image2");
+
+		ImagePool imagePool = Mockito.mock(ImagePool.class);
+		Iterator<Image> imageMockIterator = Mockito.mock(Iterator.class);
+		Mockito.when(imageMockIterator.hasNext()).thenReturn(true, true, false);
+		Mockito.when(imageMockIterator.next()).thenReturn(image, imageTow);
+		Mockito.when(imagePool.iterator()).thenReturn(imageMockIterator);
+
+		Mockito.when(clientFactory.createImagePool(oneClient)).thenReturn(imagePool);
+
+		Template template = Mockito.mock(Template.class);
+		Mockito.when(template.xpath("NAME")).thenReturn(RequestConstants.SMALL_TERM);
+		Mockito.when(template.xpath("TEMPLATE/MEMORY")).thenReturn("2000");
+		Mockito.when(template.xpath("TEMPLATE/CPU")).thenReturn("2");
+		Mockito.when(template.xpath("TEMPLATE/DISK[1]/IMAGE")).thenReturn(imageOne);
+		Mockito.when(template.xpath("TEMPLATE/DISK[2]/SIZE")).thenReturn("100");
+		Mockito.when(template.xpath("TEMPLATE/DISK[2]")).thenReturn("NotNull");		
+		
+		TemplatePool templatePool = Mockito.mock(TemplatePool.class);
+		Iterator<Template> templateMockIterator = Mockito.mock(Iterator.class);
+		Mockito.when(clientFactory.createTemplatePool(oneClient)).thenReturn(templatePool );
+		Mockito.when(templateMockIterator.hasNext()).thenReturn(true, false);
+		Mockito.when(templateMockIterator.next()).thenReturn(template);
+		Mockito.when(templatePool.iterator()).thenReturn(templateMockIterator);
+		
+		Mockito.when(clientFactory.createImagePool(oneClient)).thenReturn(imagePool);
+		
+		Mockito.when(clientFactory.createTemplatePool(oneClient)).thenReturn(templatePool);		
+
+		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);		
 		
 		properties.put(OpenNebulaComputePlugin.OPENNEBULA_TEMPLATES,
 				OpenNebulaComputePlugin.OPENNEBULA_TEMPLATES_TYPE_ALL);
@@ -218,6 +312,9 @@ public class TestComputeOpenNebula {
 		
 		// removing the instance
 		computeOpenNebula.removeInstance(defaultToken, INSTANCE_ID);
+		
+		// checking the amount of flavors
+		Assert.assertEquals(1, computeOpenNebula.getFlavors().size());
 	}
 
 	@Test(expected = OCCIException.class)
@@ -257,6 +354,7 @@ public class TestComputeOpenNebula {
 		computeOpenNebula.removeInstance(defaultToken, INSTANCE_ID);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testRemoveInstances() {
 		// mocking opennebula structures
@@ -268,13 +366,11 @@ public class TestComputeOpenNebula {
 		Mockito.when(vm.getId()).thenReturn(INSTANCE_ID);
 		Mockito.when(vm.delete()).thenReturn(new OneResponse(true, "" + INSTANCE_ID));
 
-		@SuppressWarnings("unchecked")
 		Iterator<VirtualMachine> firstMockIterator = Mockito.mock(Iterator.class);
 		Mockito.when(firstMockIterator.hasNext()).thenReturn(true, false);
 		Mockito.when(firstMockIterator.next()).thenReturn(vm);
 		Mockito.when(firstVMPool.iterator()).thenReturn(firstMockIterator);
 
-		@SuppressWarnings("unchecked")
 		Iterator<VirtualMachine> secondMockIterator = Mockito.mock(Iterator.class);
 		Mockito.when(secondMockIterator.hasNext()).thenReturn(false);
 		Mockito.when(secondVMPool.iterator()).thenReturn(secondMockIterator);
@@ -289,6 +385,49 @@ public class TestComputeOpenNebula {
 				secondVMPool);
 		Mockito.when(clientFactory.createImagePool(oneClient)).thenReturn(new ImagePool(oneClient));
 		Mockito.when(clientFactory.createTemplatePool(oneClient)).thenReturn(new TemplatePool(oneClient));
+		
+		Image image = Mockito.mock(Image.class);
+		Mockito.when(image.xpath("SIZE")).thenReturn("100");
+		String imageOne = "imageOne";
+		Mockito.when(image.getName()).thenReturn(imageOne);
+
+		Image imageTow = Mockito.mock(Image.class);
+		Mockito.when(imageTow.xpath("SIZE")).thenReturn("200");
+		Mockito.when(imageTow.getName()).thenReturn("image2");
+
+		ImagePool imagePool = Mockito.mock(ImagePool.class);
+		Iterator<Image> imageMockIterator = Mockito.mock(Iterator.class);
+		Mockito.when(imageMockIterator.hasNext()).thenReturn(true, true, false);
+		Mockito.when(imageMockIterator.next()).thenReturn(image, imageTow);
+		Mockito.when(imagePool.iterator()).thenReturn(imageMockIterator);
+
+		Mockito.when(clientFactory.createImagePool(oneClient)).thenReturn(imagePool);
+
+		Template template = Mockito.mock(Template.class);
+		Mockito.when(template.xpath("NAME")).thenReturn(RequestConstants.SMALL_TERM);
+		Mockito.when(template.xpath("TEMPLATE/MEMORY")).thenReturn("2000");
+		Mockito.when(template.xpath("TEMPLATE/CPU")).thenReturn("2");
+		Mockito.when(template.xpath("TEMPLATE/DISK[1]/IMAGE")).thenReturn(imageOne);
+		Mockito.when(template.xpath("TEMPLATE/DISK[2]/SIZE")).thenReturn("100");
+		Mockito.when(template.xpath("TEMPLATE/DISK[2]")).thenReturn("NotNull");		
+		
+		Template templateTwo = Mockito.mock(Template.class);
+		Mockito.when(templateTwo.xpath("NAME")).thenReturn("medium");
+		Mockito.when(templateTwo.xpath("TEMPLATE/MEMORY")).thenReturn("4000");
+		Mockito.when(templateTwo.xpath("TEMPLATE/CPU")).thenReturn("4");
+		Mockito.when(templateTwo.xpath("TEMPLATE/DISK[1]/IMAGE")).thenReturn("200");
+		Mockito.when(templateTwo.xpath("TEMPLATE/DISK[1]/SIZE")).thenReturn("200");		
+		
+		TemplatePool templatePool = Mockito.mock(TemplatePool.class);
+		Iterator<Template> templateMockIterator = Mockito.mock(Iterator.class);
+		Mockito.when(clientFactory.createTemplatePool(oneClient)).thenReturn(templatePool );
+		Mockito.when(templateMockIterator.hasNext()).thenReturn(true, true, false);
+		Mockito.when(templateMockIterator.next()).thenReturn(template, templateTwo);
+		Mockito.when(templatePool.iterator()).thenReturn(templateMockIterator);
+		
+		Mockito.when(clientFactory.createImagePool(oneClient)).thenReturn(imagePool);
+		
+		Mockito.when(clientFactory.createTemplatePool(oneClient)).thenReturn(templatePool);
 		
 		properties.put(OpenNebulaComputePlugin.OPENNEBULA_TEMPLATES,
 				OpenNebulaComputePlugin.OPENNEBULA_TEMPLATES_TYPE_ALL);
@@ -311,9 +450,13 @@ public class TestComputeOpenNebula {
 
 		// getting all instances
 		List<Instance> instances = computeOpenNebula.getInstances(defaultToken);
-		Assert.assertEquals(0, instances.size());
+		Assert.assertEquals(0, instances.size());		
+		
+		// checking the amount of flavors
+		Assert.assertEquals(2, computeOpenNebula.getFlavors().size());
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testGetInstanceDefaultArch() throws ClientConfigurationException {
 		// mocking opennebula structures
@@ -337,6 +480,56 @@ public class TestComputeOpenNebula {
 		Mockito.when(clientFactory.createVirtualMachine(oneClient, INSTANCE_ID)).thenReturn(vm);				
 		Mockito.when(clientFactory.createImagePool(oneClient)).thenReturn(new ImagePool(oneClient));
 		Mockito.when(clientFactory.createTemplatePool(oneClient)).thenReturn(new TemplatePool(oneClient));
+		
+		VirtualMachinePool vmPool = Mockito.mock(VirtualMachinePool.class);
+
+		Iterator<VirtualMachine> mockIterator = Mockito.mock(Iterator.class);
+		Mockito.when(mockIterator.hasNext()).thenReturn(true, false);
+		Mockito.when(mockIterator.next()).thenReturn(vm);
+		Mockito.when(vmPool.iterator()).thenReturn(mockIterator);
+
+		Image image = Mockito.mock(Image.class);
+		Mockito.when(image.xpath("SIZE")).thenReturn("100");
+		String imageOne = "imageOne";
+		Mockito.when(image.getName()).thenReturn(imageOne);
+
+		Image imageTow = Mockito.mock(Image.class);
+		Mockito.when(imageTow.xpath("SIZE")).thenReturn("200");
+		Mockito.when(imageTow.getName()).thenReturn("image2");
+
+		ImagePool imagePool = Mockito.mock(ImagePool.class);
+		Iterator<Image> imageMockIterator = Mockito.mock(Iterator.class);
+		Mockito.when(imageMockIterator.hasNext()).thenReturn(true, true, false);
+		Mockito.when(imageMockIterator.next()).thenReturn(image, imageTow);
+		Mockito.when(imagePool.iterator()).thenReturn(imageMockIterator);
+
+		Mockito.when(clientFactory.createImagePool(oneClient)).thenReturn(imagePool);
+
+		Template template = Mockito.mock(Template.class);
+		Mockito.when(template.xpath("NAME")).thenReturn(RequestConstants.SMALL_TERM);
+		Mockito.when(template.xpath("TEMPLATE/MEMORY")).thenReturn("2000");
+		Mockito.when(template.xpath("TEMPLATE/CPU")).thenReturn("2");
+		Mockito.when(template.xpath("TEMPLATE/DISK[1]/IMAGE")).thenReturn(imageOne);
+		Mockito.when(template.xpath("TEMPLATE/DISK[2]/SIZE")).thenReturn("100");
+		Mockito.when(template.xpath("TEMPLATE/DISK[2]")).thenReturn("NotNull");		
+		
+		Template templateTwo = Mockito.mock(Template.class);
+		Mockito.when(templateTwo.xpath("NAME")).thenReturn("");
+		Mockito.when(templateTwo.xpath("TEMPLATE/MEMORY")).thenReturn("4000");
+		Mockito.when(templateTwo.xpath("TEMPLATE/CPU")).thenReturn("4");
+		Mockito.when(templateTwo.xpath("TEMPLATE/DISK[1]/IMAGE")).thenReturn("200");
+		Mockito.when(templateTwo.xpath("TEMPLATE/DISK[1]/SIZE")).thenReturn("200");		
+		
+		TemplatePool templatePool = Mockito.mock(TemplatePool.class);
+		Iterator<Template> templateMockIterator = Mockito.mock(Iterator.class);
+		Mockito.when(clientFactory.createTemplatePool(oneClient)).thenReturn(templatePool );
+		Mockito.when(templateMockIterator.hasNext()).thenReturn(true, true, false);
+		Mockito.when(templateMockIterator.next()).thenReturn(template, templateTwo);
+		Mockito.when(templatePool.iterator()).thenReturn(templateMockIterator);
+		
+		Mockito.when(clientFactory.createImagePool(oneClient)).thenReturn(imagePool);
+		
+		Mockito.when(clientFactory.createTemplatePool(oneClient)).thenReturn(templatePool);
 		
 		properties.put(OpenNebulaComputePlugin.OPENNEBULA_TEMPLATES,
 				OpenNebulaComputePlugin.OPENNEBULA_TEMPLATES_TYPE_ALL);
@@ -374,8 +567,12 @@ public class TestComputeOpenNebula {
 			Assert.assertTrue(instance.getResources().contains(resource));
 		}
 		Assert.assertTrue(instance.getLinks().isEmpty());
+		
+		// checking the amount of flavors
+		Assert.assertEquals(2, computeOpenNebula.getFlavors().size());
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testGetInstance() throws ClientConfigurationException {
 		// mocking opennebula structures
@@ -400,6 +597,42 @@ public class TestComputeOpenNebula {
 		Mockito.when(clientFactory.createImagePool(oneClient)).thenReturn(new ImagePool(oneClient));
 		Mockito.when(clientFactory.createTemplatePool(oneClient)).thenReturn(new TemplatePool(oneClient));
 		
+		Image image = Mockito.mock(Image.class);
+		Mockito.when(image.xpath("SIZE")).thenReturn("100");
+		String imageOne = "imageOne";
+		Mockito.when(image.getName()).thenReturn(imageOne);
+
+		Image imageTow = Mockito.mock(Image.class);
+		Mockito.when(imageTow.xpath("SIZE")).thenReturn("200");
+		Mockito.when(imageTow.getName()).thenReturn("image2");
+
+		ImagePool imagePool = Mockito.mock(ImagePool.class);
+		Iterator<Image> imageMockIterator = Mockito.mock(Iterator.class);
+		Mockito.when(imageMockIterator.hasNext()).thenReturn(true, true, false);
+		Mockito.when(imageMockIterator.next()).thenReturn(image, imageTow);
+		Mockito.when(imagePool.iterator()).thenReturn(imageMockIterator);
+
+		Mockito.when(clientFactory.createImagePool(oneClient)).thenReturn(imagePool);
+
+		Template template = Mockito.mock(Template.class);
+		Mockito.when(template.xpath("NAME")).thenReturn(RequestConstants.SMALL_TERM);
+		Mockito.when(template.xpath("TEMPLATE/MEMORY")).thenReturn("2000");
+		Mockito.when(template.xpath("TEMPLATE/CPU")).thenReturn("2");
+		Mockito.when(template.xpath("TEMPLATE/DISK[1]/IMAGE")).thenReturn(imageOne);
+		Mockito.when(template.xpath("TEMPLATE/DISK[2]/SIZE")).thenReturn("100");
+		Mockito.when(template.xpath("TEMPLATE/DISK[2]")).thenReturn("NotNull");		
+		
+		TemplatePool templatePool = Mockito.mock(TemplatePool.class);
+		Iterator<Template> templateMockIterator = Mockito.mock(Iterator.class);
+		Mockito.when(clientFactory.createTemplatePool(oneClient)).thenReturn(templatePool );
+		Mockito.when(templateMockIterator.hasNext()).thenReturn(true, false);
+		Mockito.when(templateMockIterator.next()).thenReturn(template);
+		Mockito.when(templatePool.iterator()).thenReturn(templateMockIterator);
+		
+		Mockito.when(clientFactory.createImagePool(oneClient)).thenReturn(imagePool);		
+		Mockito.when(clientFactory.createTemplatePool(oneClient)).thenReturn(templatePool);		
+
+		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);		
 		properties.put(OpenNebulaComputePlugin.OPENNEBULA_TEMPLATES,
 				OpenNebulaComputePlugin.OPENNEBULA_TEMPLATES_TYPE_ALL);
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
@@ -436,6 +669,9 @@ public class TestComputeOpenNebula {
 			Assert.assertTrue(instance.getResources().contains(resource));
 		}
 		Assert.assertTrue(instance.getLinks().isEmpty());
+		
+		// checking the amount of flavors
+		Assert.assertEquals(1, computeOpenNebula.getFlavors().size());
 	}
 
 	@Test(expected = OCCIException.class)
@@ -474,6 +710,7 @@ public class TestComputeOpenNebula {
 		computeOpenNebula.getInstance(defaultToken, "instance");
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testGetInstances() throws ClientConfigurationException {
 		// mocking opennebula structures
@@ -489,7 +726,6 @@ public class TestComputeOpenNebula {
 		Mockito.when(vm.xpath("TEMPLATE/DISK/IMAGE")).thenReturn(IMAGE1_NAME);
 		Mockito.when(vm.xpath("TEMPLATE/OS/ARCH")).thenReturn("");
 
-		@SuppressWarnings("unchecked")
 		Iterator<VirtualMachine> mockIterator = Mockito.mock(Iterator.class);
 		Mockito.when(mockIterator.hasNext()).thenReturn(true, false);
 		Mockito.when(mockIterator.next()).thenReturn(vm);
@@ -503,8 +739,48 @@ public class TestComputeOpenNebula {
 				INSTANCE_ID);
 		Mockito.when(clientFactory.createVirtualMachinePool(oneClient)).thenReturn(vmPool);
 		
-		Mockito.when(clientFactory.createImagePool(oneClient)).thenReturn(new ImagePool(oneClient));
-		Mockito.when(clientFactory.createTemplatePool(oneClient)).thenReturn(new TemplatePool(oneClient));
+		Image image = Mockito.mock(Image.class);
+		Mockito.when(image.xpath("SIZE")).thenReturn("100");
+		String imageOne = "imageOne";
+		Mockito.when(image.getName()).thenReturn(imageOne);
+
+		Image imageTow = Mockito.mock(Image.class);
+		Mockito.when(imageTow.xpath("SIZE")).thenReturn("200");
+		Mockito.when(imageTow.getName()).thenReturn("image2");
+
+		ImagePool imagePool = Mockito.mock(ImagePool.class);
+		Iterator<Image> imageMockIterator = Mockito.mock(Iterator.class);
+		Mockito.when(imageMockIterator.hasNext()).thenReturn(true, true, false);
+		Mockito.when(imageMockIterator.next()).thenReturn(image, imageTow);
+		Mockito.when(imagePool.iterator()).thenReturn(imageMockIterator);
+
+		Mockito.when(clientFactory.createImagePool(oneClient)).thenReturn(imagePool);
+
+		Template template = Mockito.mock(Template.class);
+		Mockito.when(template.xpath("NAME")).thenReturn(RequestConstants.SMALL_TERM);
+		Mockito.when(template.xpath("TEMPLATE/MEMORY")).thenReturn("2000");
+		Mockito.when(template.xpath("TEMPLATE/CPU")).thenReturn("2");
+		Mockito.when(template.xpath("TEMPLATE/DISK[1]/IMAGE")).thenReturn(imageOne);
+		Mockito.when(template.xpath("TEMPLATE/DISK[2]/SIZE")).thenReturn("100");
+		Mockito.when(template.xpath("TEMPLATE/DISK[2]")).thenReturn("NotNull");		
+		
+		Template templateTwo = Mockito.mock(Template.class);
+		Mockito.when(templateTwo.xpath("NAME")).thenReturn("");
+		Mockito.when(templateTwo.xpath("TEMPLATE/MEMORY")).thenReturn("4000");
+		Mockito.when(templateTwo.xpath("TEMPLATE/CPU")).thenReturn("4");
+		Mockito.when(templateTwo.xpath("TEMPLATE/DISK[1]/IMAGE")).thenReturn("200");
+		Mockito.when(templateTwo.xpath("TEMPLATE/DISK[1]/SIZE")).thenReturn("200");		
+		
+		TemplatePool templatePool = Mockito.mock(TemplatePool.class);
+		Iterator<Template> templateMockIterator = Mockito.mock(Iterator.class);
+		Mockito.when(clientFactory.createTemplatePool(oneClient)).thenReturn(templatePool );
+		Mockito.when(templateMockIterator.hasNext()).thenReturn(true, true, false);
+		Mockito.when(templateMockIterator.next()).thenReturn(template, templateTwo);
+		Mockito.when(templatePool.iterator()).thenReturn(templateMockIterator);
+		
+		Mockito.when(clientFactory.createImagePool(oneClient)).thenReturn(imagePool);
+		
+		Mockito.when(clientFactory.createTemplatePool(oneClient)).thenReturn(templatePool);
 		
 		properties.put(OpenNebulaComputePlugin.OPENNEBULA_TEMPLATES,
 				OpenNebulaComputePlugin.OPENNEBULA_TEMPLATES_TYPE_ALL);
@@ -527,6 +803,9 @@ public class TestComputeOpenNebula {
 		List<Instance> instances = computeOpenNebula.getInstances(defaultToken);
 		Assert.assertEquals(1, instances.size());
 		Assert.assertEquals(INSTANCE_ID, instances.get(0).getId());
+		
+		// checking the amount of flavors
+		Assert.assertEquals(2, computeOpenNebula.getFlavors().size());
 	}
 
 	@Test

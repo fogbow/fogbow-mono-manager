@@ -158,8 +158,7 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		
 		// image or flavor was not specified
 		if (foundFlavor == null || localImageId == null){
-			throw new OCCIException(ErrorType.BAD_REQUEST,
-					ResponseConstants.IRREGULAR_SYNTAX);
+			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}
 		
 		String userdata = xOCCIAtt.get(RequestAttribute.USER_DATA_ATT.getValue());
@@ -614,11 +613,14 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 			imageSizes.put(image.getName(), image.xpath("SIZE"));
 		}				
 		
+		List<Flavor> allFlavorsTemplate = new ArrayList<Flavor>();
 		TemplatePool templatePool = this.clientFactory.createTemplatePool(oneClient);
 		for (Template template : templatePool) {
 			String name = template.xpath("NAME");
 			String memory = template.xpath("TEMPLATE/MEMORY");
 			String vcpu = template.xpath("TEMPLATE/CPU");
+			
+			allFlavorsTemplate.add(new Flavor(name, vcpu, memory, 0));
 			
 			boolean containsFlavor = false;
 			List<Flavor> flavors = new ArrayList<Flavor>(this.flavors);
@@ -664,7 +666,7 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		if (newFlavors != null) {
 			this.flavors.addAll(newFlavors);			
 		}
-		removeInvalidFlavors(newFlavors);
+		removeInvalidFlavors(allFlavorsTemplate);
 	}
 	
 	public void removeInvalidFlavors(List<Flavor> flavors) {

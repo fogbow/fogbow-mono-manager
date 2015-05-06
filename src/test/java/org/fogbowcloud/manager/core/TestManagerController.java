@@ -14,8 +14,6 @@ import java.util.Map;
 
 import javax.mail.MessagingException;
 
-import net.schmizz.sshj.connection.channel.direct.Session.Command;
-
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
 import org.dom4j.Element;
@@ -28,7 +26,6 @@ import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.openstack.KeystoneIdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.openstack.OpenStackOCCIComputePlugin;
-import org.fogbowcloud.manager.core.plugins.util.SshHelper;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.core.util.ManagerTestHelper;
 import org.fogbowcloud.manager.occi.core.Category;
@@ -1679,6 +1676,7 @@ public class TestManagerController {
 		Assert.assertNull(managerController.createInstanceWithFederationUser(request));
 	}
 		
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testReplyToServedRequestWithSuccess() {
 		ResourcesInfo resources = Mockito.mock(ResourcesInfo.class);
@@ -1726,6 +1724,7 @@ public class TestManagerController {
 		}));		
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testReplyToServedRequestWithoutSuccess() {
 		ResourcesInfo resources = Mockito.mock(ResourcesInfo.class);
@@ -2296,9 +2295,6 @@ public class TestManagerController {
 		ManagerController spiedManageController = Mockito.spy(localManagerController);
 		String remoteRequestId = "id1";
 		
-		SshHelper sshHelper = createFakeSSHHelper();
-		Mockito.doReturn(sshHelper).when(spiedManageController).createSshHelper();
-		
 		Map<String,String> newXOCCIAttr = new HashMap<String,String>(this.xOCCIAtt);
 		ArrayList<Category> categories = new ArrayList<Category>();
 		final Category publicKeyCategory = new Category(RequestConstants.PUBLIC_KEY_TERM, 
@@ -2326,6 +2322,7 @@ public class TestManagerController {
 		instance.addAttribute(Instance.SSH_USERNAME_ATT, "fogbow");
 		
 		Mockito.when(spiedManageController.waitForSSHPublicAddress(Mockito.any(Request.class))).thenReturn(instance);
+		Mockito.doNothing().when(spiedManageController).waitForSSHConnectivity(instance);
 		
 		spiedManageController.createInstanceWithFederationUser(servedRequest);
 		
@@ -2369,9 +2366,6 @@ public class TestManagerController {
 		String remoteRequestId = "id1";
 		ManagerController spiedManageController = Mockito.spy(localManagerController);
 		
-		SshHelper sshHelper = createFakeSSHHelper();
-		Mockito.doReturn(sshHelper).when(spiedManageController).createSshHelper();
-		
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		String newInstanceId = "newinstanceid";
 		Mockito.when(
@@ -2392,6 +2386,7 @@ public class TestManagerController {
 		instance.addAttribute(Instance.SSH_USERNAME_ATT, "fogbow");
 		
 		Mockito.when(spiedManageController.waitForSSHPublicAddress(Mockito.any(Request.class))).thenReturn(instance);
+		Mockito.doNothing().when(spiedManageController).waitForSSHConnectivity(instance);
 		
 		spiedManageController.createInstanceWithFederationUser(servedRequest);
 		
@@ -2470,9 +2465,6 @@ public class TestManagerController {
 				managerTestHelper.createDefaultManagerController(extraProperties);
 		ManagerController spiedManageController = Mockito.spy(localManagerController);
 		
-		SshHelper sshHelper = createFakeSSHHelper();
-		Mockito.doReturn(sshHelper).when(spiedManageController).createSshHelper();
-		
 		String localRequestId = "id1";
 		
 		Map<String,String> newXOCCIAttr = new HashMap<String,String>(this.xOCCIAtt);
@@ -2502,6 +2494,7 @@ public class TestManagerController {
 		instance.addAttribute(Instance.SSH_USERNAME_ATT, "fogbow");
 		
 		Mockito.when(spiedManageController.waitForSSHPublicAddress(Mockito.any(Request.class))).thenReturn(instance);
+		Mockito.doNothing().when(spiedManageController).waitForSSHConnectivity(instance);
 		
 		spiedManageController.createInstanceWithFederationUser(localRequest);
 		
@@ -2533,14 +2526,6 @@ public class TestManagerController {
 		Assert.assertTrue(base64UserDataCmd.contains(localManagerPublicKeyData));
 	}
 
-	private SshHelper createFakeSSHHelper() throws IOException {
-		SshHelper sshHelper = Mockito.mock(SshHelper.class);
-		Command command = Mockito.mock(Command.class);
-		Mockito.when(command.getExitStatus()).thenReturn(0);
-		Mockito.when(sshHelper.doSshExecution(Mockito.anyString())).thenReturn(command);
-		return sshHelper;
-	}
-	
 	@Test
 	@SuppressWarnings("unchecked")
 	public void testSSHKeyReplacementLocallyWhenOriginalRequestHasNoPublicKey() 
@@ -2551,10 +2536,7 @@ public class TestManagerController {
 		ManagerController localManagerController = 
 				managerTestHelper.createDefaultManagerController(extraProperties);
 		String localRequestId = "id1";
-		ManagerController spiedManageController = Mockito.spy(localManagerController);
-		
-		SshHelper sshHelper = createFakeSSHHelper();
-		Mockito.doReturn(sshHelper).when(spiedManageController).createSshHelper();
+		ManagerController spiedManageController = Mockito.spy(localManagerController);	
 		
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		String newInstanceId = "newinstanceid";
@@ -2576,6 +2558,7 @@ public class TestManagerController {
 		instance.addAttribute(Instance.SSH_USERNAME_ATT, "fogbow");
 		
 		Mockito.when(spiedManageController.waitForSSHPublicAddress(Mockito.any(Request.class))).thenReturn(instance);
+		Mockito.doNothing().when(spiedManageController).waitForSSHConnectivity(instance);
 		
 		spiedManageController.createInstanceWithFederationUser(localRequest);
 		

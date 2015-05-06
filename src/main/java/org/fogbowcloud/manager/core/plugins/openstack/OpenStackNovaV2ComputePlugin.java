@@ -519,7 +519,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		} finally {
 			try {
-				response.getEntity().consumeContent();
+				EntityUtils.consume(response.getEntity());
 			} catch (Throwable t) {
 				// Do nothing
 			}
@@ -544,7 +544,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		} finally {
 			try {
-				response.getEntity().consumeContent();
+				EntityUtils.consume(response.getEntity());
 			} catch (Throwable t) {
 				// Do nothing
 			}
@@ -564,7 +564,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		} finally {
 			try {
-				response.getEntity().consumeContent();
+				EntityUtils.consume(response.getEntity());
 			} catch (Throwable t) {
 				// Do nothing
 			}
@@ -681,7 +681,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
             throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
         } finally {
             try {
-                response.getEntity().consumeContent();
+            	EntityUtils.consume(response.getEntity());
             } catch (Throwable t) {
                 // Do nothing
             }
