@@ -237,7 +237,7 @@ public class TestGetRequest {
 		post.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
 		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, RequestAttribute.INSTANCE_COUNT.getValue()
-				+ " = 50");
+				+ " = 30");
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(post);
 		// Get
@@ -250,7 +250,7 @@ public class TestGetRequest {
 		Assert.assertTrue(response.getFirstHeader(OCCIHeaders.CONTENT_TYPE).getValue()
 				.startsWith(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE));
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
-		Assert.assertEquals(50, OCCITestHelper.getRequestIds(response).size());
+		Assert.assertEquals(30, OCCITestHelper.getRequestIds(response).size());
 	}
 	
 	@Test
