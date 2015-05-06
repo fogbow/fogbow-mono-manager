@@ -168,7 +168,7 @@ public class TestManagerController {
 	
 	@SuppressWarnings("unchecked")
 	@Test
-	public void testSubmitToGreenSitter() {
+	public void testSubmitToGreenSitterWithNoRequirements() {
 		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);
 		managerController.setPacketSender(packetSender);
 		
@@ -195,8 +195,70 @@ public class TestManagerController {
 		listMembers.add(new FederationMember(localResourcesInfo));
 		managerController.updateMembers(listMembers);
 		
-		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), managerTestHelper.getDefaultLocalToken(), new ArrayList<Category>(),
-				new HashMap<String, String>(), true, "");
+		HashMap<String, String> attributes = new HashMap<String, String>(xOCCIAtt);
+		attributes.put(RequestAttribute.REQUIREMENTS.getValue(), "true");
+		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), 
+				managerTestHelper.getDefaultLocalToken(), new ArrayList<Category>(),
+				attributes, true, "");
+		request1.setState(RequestState.OPEN);
+		RequestRepository requestRepository = new RequestRepository();
+		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(), request1);
+		managerController.setRequests(requestRepository);
+		managerController.checkAndSubmitOpenRequests();
+		        
+		Mockito.verify(packetSender).sendPacket(Mockito.argThat(new ArgumentMatcher<IQ>() {
+			@Override
+			public boolean matches(Object argument) {
+				IQ iq = (IQ) argument;
+				Element queryEl = iq.getElement().element("query");
+				if (queryEl == null) {
+					return false;
+				}
+				String minCPU = queryEl.elementText("minCPU");
+				String minRAM = queryEl.elementText("minRAM");
+				
+				if ((!minCPU.equals("0")) || (!minRAM.equals("0"))){
+					return false;
+				}
+				return iq.getTo().toBareJID().equals("green.server.com");
+			}
+		}));
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Test
+	public void testSubmitToGreenSitterWithRequirements() {
+		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);
+		managerController.setPacketSender(packetSender);
+		
+		FederationMemberPicker memberPickerPlugin = Mockito.mock(FederationMemberPicker.class);
+		Mockito.when(memberPickerPlugin.pick(Mockito.any(List.class)))
+				.thenReturn(null);
+		managerController.setMemberPickerPlugin(memberPickerPlugin);
+		
+		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
+
+		ResourcesInfo localResourcesInfo = new ResourcesInfo("", "", "", "", "", "");
+		localResourcesInfo.setId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		
+		Mockito.when(
+				computePlugin.requestInstance(Mockito.any(Token.class), Mockito.anyList(),
+						Mockito.anyMap(), Mockito.anyString())).thenThrow(
+				new OCCIException(ErrorType.NO_VALID_HOST_FOUND, ""));
+		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class))).thenReturn(
+				localResourcesInfo);
+		
+		managerController.setComputePlugin(computePlugin);
+
+		List<FederationMember> listMembers = new ArrayList<FederationMember>();
+		listMembers.add(new FederationMember(localResourcesInfo));
+		managerController.updateMembers(listMembers);
+		
+		HashMap<String, String> attributes = new HashMap<String, String>(xOCCIAtt);
+		attributes.put(RequestAttribute.REQUIREMENTS.getValue(), "Glue2vCPU >= 1 && Glue2RAM >= 1024");
+		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), 
+				managerTestHelper.getDefaultLocalToken(), new ArrayList<Category>(),
+				attributes, true, "");
 		request1.setState(RequestState.OPEN);
 		RequestRepository requestRepository = new RequestRepository();
 		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(), request1);

@@ -15,6 +15,7 @@ import condor.classad.Op;
 import condor.classad.RecordExpr;
 
 public class RequirementsHelper {
+	private static final String ZERO = "0";
 	public static final String GLUE_LOCATION_TERM = "Glue2CloudComputeManagerID";
 	public static final String GLUE_VCPU_TERM = "Glue2vCPU";
 	public static final String GLUE_DISK_TERM = "Glue2Disk";
@@ -33,9 +34,13 @@ public class RequirementsHelper {
 		}
 	}
 
-	public static String getValueSmallerPerAttribute(String requirementsStr, String attrName) {
-		ClassAdParser classAdParser = new ClassAdParser(requirementsStr);		
-		Op expr = (Op) classAdParser.parse();		
+	public static String getSmallestValueForAttribute(String requirementsStr, String attrName) {
+		ClassAdParser classAdParser = new ClassAdParser(requirementsStr);
+		Expr parsedClassAd = classAdParser.parse();
+		if (!(parsedClassAd instanceof Op)) {
+			return ZERO;
+		}
+		Op expr = (Op) parsedClassAd;		
 		Op opForAtt = normalizeOP(expr, attrName);
 		
 		List<Integer> values = new ArrayList<Integer>();
@@ -56,7 +61,7 @@ public class RequirementsHelper {
 		if (values.size() > 0) {
 			return String.valueOf(values.get(0));			
 		}
-		return "0";
+		return ZERO;
 	}
 	
 	private static boolean checkValue(Op op, String attrName, String value) {
@@ -83,7 +88,7 @@ public class RequirementsHelper {
 				if (findValuesInRequiremets.size() > 0) {
 					if (attr.equals(RequirementsHelper.GLUE_DISK_TERM)) {
 						value = flavor.getDisk();
-						if (value != null && !value.equals("0") ) {
+						if (value != null && !value.equals(ZERO) ) {
 							listAttrSearched.add(attr);							
 						}
 					} else if (attr.equals(RequirementsHelper.GLUE_MEM_RAM_TERM)) {
@@ -253,7 +258,11 @@ public class RequirementsHelper {
 			return locations;
 		}
 		ClassAdParser classAdParser = new ClassAdParser(requirementsStr);
-		Op expr = (Op) classAdParser.parse();
+		Expr parsedClassAd = classAdParser.parse();
+		if (!(parsedClassAd instanceof Op)) {
+			return locations;
+		}
+		Op expr = (Op) parsedClassAd;
 		List<ValueAndOperator> findValuesInRequiremets = findValuesInRequiremets(expr,
 				GLUE_LOCATION_TERM);
 		for (ValueAndOperator valueAndOperator : findValuesInRequiremets) {
