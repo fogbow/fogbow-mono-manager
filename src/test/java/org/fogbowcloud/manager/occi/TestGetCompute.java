@@ -11,7 +11,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
@@ -116,7 +116,7 @@ public class TestGetCompute {
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE);
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpGet.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
-		HttpClient client = new DefaultHttpClient();
+		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(httpGet);
 
 		Assert.assertEquals(3, OCCITestHelper.getRequestIds(response).size());
@@ -145,7 +145,7 @@ public class TestGetCompute {
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpGet.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);		
 		httpGet.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, "occi.compute.cores=\"2\"");
-		HttpClient client = new DefaultHttpClient();
+		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(httpGet);
 
 		Assert.assertEquals(2, OCCITestHelper.getRequestIds(response).size());
@@ -174,7 +174,7 @@ public class TestGetCompute {
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpGet.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);		
 		httpGet.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, "occi.compute.cores=\"2000000\"");
-		HttpClient client = new DefaultHttpClient();
+		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(httpGet);
 
 		Assert.assertEquals(0, OCCITestHelper.getRequestIds(response).size());
@@ -210,7 +210,7 @@ public class TestGetCompute {
 		httpGet.addHeader(OCCIHeaders.CATEGORY,
 				"m1-small; scheme=\"http://schemas.openstack.org/template/resource#\"; class=\"mixin\"");
 		
-		HttpClient client = new DefaultHttpClient();
+		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(httpGet);
 
 		Assert.assertEquals(2, OCCITestHelper.getRequestIds(response).size());
@@ -246,7 +246,7 @@ public class TestGetCompute {
 		httpGet.addHeader(OCCIHeaders.CATEGORY,
 				"wrong; scheme=\"http://schemas.openstack.org/template/resource#\"; class=\"mixin\"");
 		
-		HttpClient client = new DefaultHttpClient();
+		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(httpGet);
 
 		Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusLine().getStatusCode());
@@ -261,7 +261,7 @@ public class TestGetCompute {
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpGet.addHeader(OCCIHeaders.ACCEPT, OCCIHeaders.TEXT_URI_LIST_CONTENT_TYPE);
 		httpGet.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
-		HttpClient client = new DefaultHttpClient();
+		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(httpGet);
 
 		Assert.assertEquals(3, OCCITestHelper.getURIList(response).size());
@@ -287,7 +287,7 @@ public class TestGetCompute {
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpGet.addHeader(OCCIHeaders.ACCEPT, OCCIHeaders.TEXT_URI_LIST_CONTENT_TYPE);
 		httpGet.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
-		HttpClient client = new DefaultHttpClient();
+		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(httpGet);
 
 		Assert.assertEquals(0, OCCITestHelper.getURIList(response).size());
@@ -305,7 +305,7 @@ public class TestGetCompute {
 				+ Request.SEPARATOR_GLOBAL_ID + OCCITestHelper.MEMBER_ID);
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpGet.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
-		HttpClient client = new DefaultHttpClient();
+		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(httpGet);
 
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
@@ -322,7 +322,7 @@ public class TestGetCompute {
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpGet.addHeader(OCCIHeaders.ACCEPT, OCCIHeaders.TEXT_URI_LIST_CONTENT_TYPE);
 		httpGet.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
-		HttpClient client = new DefaultHttpClient();
+		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(httpGet);
 
 		Assert.assertEquals(HttpStatus.SC_NOT_ACCEPTABLE, response.getStatusLine().getStatusCode());
@@ -337,7 +337,7 @@ public class TestGetCompute {
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE + "wrong@member");
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpGet.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
-		HttpClient client = new DefaultHttpClient();
+		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(httpGet);
 
 		Assert.assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatusLine().getStatusCode());
@@ -353,7 +353,7 @@ public class TestGetCompute {
 				+ OCCITestHelper.MEMBER_ID);
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpGet.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
-		HttpClient client = new DefaultHttpClient();
+		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(httpGet);
 
 		Assert.assertEquals(HttpStatus.SC_UNAUTHORIZED, response.getStatusLine().getStatusCode());
@@ -367,7 +367,7 @@ public class TestGetCompute {
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE);
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, "any");
 		httpGet.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
-		HttpClient client = new DefaultHttpClient();
+		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(httpGet);
 
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
@@ -383,7 +383,7 @@ public class TestGetCompute {
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpGet.addHeader(OCCIHeaders.ACCEPT, "invalid-content");
 		httpGet.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
-		HttpClient client = new DefaultHttpClient();
+		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(httpGet);
 
 		Assert.assertEquals(HttpStatus.SC_NOT_ACCEPTABLE, response.getStatusLine().getStatusCode());
@@ -397,7 +397,7 @@ public class TestGetCompute {
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE);
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpGet.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
-		HttpClient client = new DefaultHttpClient();
+		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(httpGet);
 
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
@@ -412,7 +412,7 @@ public class TestGetCompute {
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE + INSTANCE_1_ID);
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpGet.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, "wrong");
-		HttpClient client = new DefaultHttpClient();
+		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(httpGet);
 
 		Assert.assertEquals(HttpStatus.SC_UNAUTHORIZED, response.getStatusLine().getStatusCode());
@@ -427,7 +427,7 @@ public class TestGetCompute {
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE);
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpGet.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, "");
-		HttpClient client = new DefaultHttpClient();
+		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(httpGet);
 
 		Assert.assertEquals(HttpStatus.SC_UNAUTHORIZED, response.getStatusLine().getStatusCode());
@@ -447,7 +447,7 @@ public class TestGetCompute {
 		
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE + INSTANCE_1_ID);
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		HttpClient client = new DefaultHttpClient();
+		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(httpGet);
 
 		Assert.assertEquals(HttpStatus.SC_UNAUTHORIZED, response.getStatusLine().getStatusCode());

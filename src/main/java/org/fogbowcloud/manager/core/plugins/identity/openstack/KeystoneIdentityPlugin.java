@@ -12,16 +12,11 @@ import org.apache.commons.codec.Charsets;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
-import org.apache.http.HttpVersion;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
-import org.apache.http.params.BasicHttpParams;
-import org.apache.http.params.CoreProtocolPNames;
-import org.apache.http.params.HttpParams;
-import org.apache.http.protocol.HTTP;
+import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
@@ -73,7 +68,7 @@ public class KeystoneIdentityPlugin implements IdentityPlugin {
 	private String keystoneUrl; 
 	private String v2TokensEndpoint;
 	private String v2TenantsEndpoint;
-	private DefaultHttpClient client;
+	private HttpClient client;
 	private Properties properties;
 
 	public KeystoneIdentityPlugin(Properties properties) {
@@ -126,38 +121,38 @@ public class KeystoneIdentityPlugin implements IdentityPlugin {
 	}
 
 	private String doPostRequest(String endpoint, JSONObject json) {
-		HttpResponse response;
+		HttpResponse response = null;
 		String responseStr = null;
 		try {
 			HttpPost request = new HttpPost(endpoint);
 			request.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.JSON_CONTENT_TYPE);
 			request.addHeader(OCCIHeaders.ACCEPT, OCCIHeaders.JSON_CONTENT_TYPE);
-			request.setEntity(new StringEntity(json.toString(), HTTP.UTF_8));
-			
-			getClient();
-			response = client.execute(request);
-			responseStr = EntityUtils.toString(response.getEntity(), HTTP.UTF_8);
+			request.setEntity(new StringEntity(json.toString(), Charsets.UTF_8));
+			response = getClient().execute(request);
+			responseStr = EntityUtils.toString(response.getEntity(), Charsets.UTF_8);
 		} catch (UnknownHostException e) {
 			LOGGER.error(e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.UNKNOWN_HOST);
 		} catch (Exception e) {
 			LOGGER.error(e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
+		} finally {
+			try {
+				EntityUtils.consume(response.getEntity());
+			} catch (Throwable t) {
+				// Do nothing
+			}
 		}
-		
 		checkStatusResponse(response);
 
 		return responseStr;
 	}
 
-	private void getClient() {
+	private HttpClient getClient() {
 		if (client == null) {
-			client = new DefaultHttpClient();
-			HttpParams params = new BasicHttpParams();
-			params.setParameter(CoreProtocolPNames.PROTOCOL_VERSION, HttpVersion.HTTP_1_1);
-			client = new DefaultHttpClient(new ThreadSafeClientConnManager(params, client
-					.getConnectionManager().getSchemeRegistry()), params);
+			client = HttpClients.createMinimal();
 		}
+		return client;
 	}
 
 	@Override

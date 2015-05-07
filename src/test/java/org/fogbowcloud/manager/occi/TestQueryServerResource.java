@@ -10,7 +10,7 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
-import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
@@ -68,7 +68,7 @@ public class TestQueryServerResource {
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_QUERY);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, "text/plain");
 		get.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
-		HttpClient client = new DefaultHttpClient();
+		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(get);
 
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
@@ -79,7 +79,7 @@ public class TestQueryServerResource {
 
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_QUERY);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		HttpClient client = new DefaultHttpClient();
+		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(get);
 
 		Assert.assertEquals(HttpStatus.SC_UNAUTHORIZED, response.getStatusLine().getStatusCode());
@@ -93,7 +93,7 @@ public class TestQueryServerResource {
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_QUERY);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		get.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
-		HttpClient client = new DefaultHttpClient();
+		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(get);
 
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
@@ -106,7 +106,7 @@ public class TestQueryServerResource {
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		get.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
 		get.addHeader(OCCIHeaders.ACCEPT, MediaType.TEXT_PLAIN.toString());
-		HttpClient client = new DefaultHttpClient();
+		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(get);
 
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
@@ -119,7 +119,7 @@ public class TestQueryServerResource {
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		get.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
 		get.addHeader(OCCIHeaders.ACCEPT, OCCIHeaders.OCCI_ACCEPT);
-		HttpClient client = new DefaultHttpClient();
+		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(get);
 
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
@@ -131,7 +131,7 @@ public class TestQueryServerResource {
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_QUERY);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		get.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
-		HttpClient client = new DefaultHttpClient();
+		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(get);
 
 		String responseStr = EntityUtils.toString(response.getEntity(),
@@ -150,7 +150,7 @@ public class TestQueryServerResource {
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_QUERY_TYPE_TWO);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		get.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
-		HttpClient client = new DefaultHttpClient();
+		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(get);
 
 		String responseStr = EntityUtils.toString(response.getEntity(),
@@ -168,7 +168,7 @@ public class TestQueryServerResource {
 
 		HttpHead head = new HttpHead(OCCITestHelper.URI_FOGBOW_QUERY);
 		head.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		HttpClient client = new DefaultHttpClient();
+		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(head);
 
 		Assert.assertEquals(HttpStatus.SC_UNAUTHORIZED, response.getStatusLine().getStatusCode());
@@ -185,7 +185,7 @@ public class TestQueryServerResource {
 		get.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
 		get.addHeader(OCCIHeaders.CATEGORY, OCCITestHelper.FOGBOW_SMALL_IMAGE + "; " + 
 				"scheme=\"http://schemas.fogbowcloud.org/template/resource#\"; class=\"mixin\";");
-		HttpClient client = new DefaultHttpClient();
+		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(get);
 		
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
@@ -203,7 +203,7 @@ public class TestQueryServerResource {
 		get.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
 		get.addHeader(OCCIHeaders.CATEGORY, categorySmall);
 		get.addHeader(OCCIHeaders.CATEGORY, categoryFogboeRequest);		
-		HttpClient client = new DefaultHttpClient();
+		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(get);
 		
 		String responseStr = EntityUtils.toString(response.getEntity());			
@@ -224,7 +224,7 @@ public class TestQueryServerResource {
 		get.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
 		get.addHeader(OCCIHeaders.CATEGORY, "Category: " + termCategory + "; " + 
 				" scheme=\"" + schemeCategory  + "\"; class=\"mixin\";");
-		HttpClient client = new DefaultHttpClient();
+		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(get);
 		
 		String responseStr = EntityUtils.toString(response.getEntity());
@@ -247,7 +247,7 @@ public class TestQueryServerResource {
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		get.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
 		get.addHeader(OCCIHeaders.CATEGORY, "wrong category");
-		HttpClient client = new DefaultHttpClient();
+		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(get);
 		
 		Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusLine().getStatusCode());
@@ -261,7 +261,7 @@ public class TestQueryServerResource {
 		get.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
 		get.addHeader(OCCIHeaders.CATEGORY, "fogbow_small " + 
 				"scheme=\"http://schemas.fogbowcloud.org/template/resource#\" class=\"mixin\"");
-		HttpClient client = new DefaultHttpClient();
+		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(get);
 		
 		Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusLine().getStatusCode());

@@ -9,7 +9,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpDelete;
-import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
@@ -93,7 +93,7 @@ public class TestDeleteCompute {
 		HttpDelete httpDelete = new HttpDelete(OCCITestHelper.URI_FOGBOW_COMPUTE);
 		httpDelete.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpDelete.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
-		HttpClient client = new DefaultHttpClient();
+		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(httpDelete);
 
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
@@ -105,7 +105,7 @@ public class TestDeleteCompute {
 				+ OTHER_INSTANCE_ID + Request.SEPARATOR_GLOBAL_ID + OCCITestHelper.MEMBER_ID);
 		httpDelete.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpDelete.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
-		HttpClient client = new DefaultHttpClient();
+		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(httpDelete);
 
 		Assert.assertEquals(HttpStatus.SC_UNAUTHORIZED, response.getStatusLine().getStatusCode());
@@ -117,7 +117,7 @@ public class TestDeleteCompute {
 				+ Request.SEPARATOR_GLOBAL_ID + OCCITestHelper.MEMBER_ID);
 		httpDelete.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpDelete.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
-		HttpClient client = new DefaultHttpClient();
+		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(httpDelete);
 
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
@@ -128,7 +128,7 @@ public class TestDeleteCompute {
 		HttpDelete httpDelete = new HttpDelete(OCCITestHelper.URI_FOGBOW_COMPUTE + "wrong");
 		httpDelete.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpDelete.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
-		HttpClient client = new DefaultHttpClient();
+		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(httpDelete);
 
 		Assert.assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatusLine().getStatusCode());
@@ -140,7 +140,7 @@ public class TestDeleteCompute {
 				+ Request.SEPARATOR_GLOBAL_ID + OCCITestHelper.MEMBER_ID);
 		httpDelete.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpDelete.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, "wrong");
-		HttpClient client = new DefaultHttpClient();
+		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(httpDelete);
 
 		Assert.assertEquals(HttpStatus.SC_UNAUTHORIZED, response.getStatusLine().getStatusCode());
@@ -151,7 +151,7 @@ public class TestDeleteCompute {
 		HttpDelete httpDelete = new HttpDelete(OCCITestHelper.URI_FOGBOW_COMPUTE);
 		httpDelete.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpDelete.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, "");
-		HttpClient client = new DefaultHttpClient();
+		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(httpDelete);
 
 		Assert.assertEquals(HttpStatus.SC_UNAUTHORIZED, response.getStatusLine().getStatusCode());
@@ -162,7 +162,7 @@ public class TestDeleteCompute {
 		HttpDelete get = new HttpDelete(OCCITestHelper.URI_FOGBOW_COMPUTE);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, "any");
 		get.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
-		HttpClient client = new DefaultHttpClient();
+		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(get);
 
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());

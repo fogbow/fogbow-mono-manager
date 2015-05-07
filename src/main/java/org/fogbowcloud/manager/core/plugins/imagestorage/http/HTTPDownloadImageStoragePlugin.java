@@ -20,10 +20,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
+import javax.net.ssl.SSLContext;
+
 import org.apache.commons.compress.archivers.ArchiveException;
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.io.Charsets;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
@@ -31,9 +34,11 @@ import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.conn.scheme.Scheme;
-import org.apache.http.conn.ssl.SSLSocketFactory;
-import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.ssl.SSLContexts;
+import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.model.ImageState;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
@@ -276,8 +281,7 @@ public class HTTPDownloadImageStoragePlugin extends StaticImageStoragePlugin {
 		HttpEntity entity = null;
 		File tempFile = null;
 		try {
-			httpclient = new DefaultHttpClient();
-			injectKeystore(httpclient);
+			httpclient = keystorePath == null ? HttpClients.createMinimal() : createSSLClient();
 			HttpGet httpget = new HttpGet(imageURL);
 			HttpResponse response = httpclient.execute(httpget);
 			
@@ -302,13 +306,10 @@ public class HTTPDownloadImageStoragePlugin extends StaticImageStoragePlugin {
 		} finally {
 			if (entity != null) {
 				try {
-					entity.consumeContent();
+					EntityUtils.toString(entity, Charsets.UTF_8);
 				} catch (IOException e) {
 					// Ignore this
 				}
-			}
-			if (httpclient != null) {
-				httpclient.getConnectionManager().shutdown();
 			}
 		}
 		return null;
@@ -367,15 +368,20 @@ public class HTTPDownloadImageStoragePlugin extends StaticImageStoragePlugin {
 	    return untaredFiles;
 	}
 
-	private void injectKeystore(HttpClient httpclient)
-			throws Exception {
-		if (keystorePath != null) {
-			KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
-			ks.load(new FileInputStream(keystorePath), keystorePassword.toCharArray());
-			SSLSocketFactory socketFactory = new SSLSocketFactory(ks);
-			Scheme sch = new Scheme("https", socketFactory, 443);
-			httpclient.getConnectionManager().getSchemeRegistry().register(sch);
-		}
+	private HttpClient createSSLClient() throws Exception {
+		KeyStore trustStore  = KeyStore.getInstance(KeyStore.getDefaultType());
+        FileInputStream instream = new FileInputStream(new File(keystorePath));
+        try {
+            trustStore.load(instream, keystorePassword.toCharArray());
+        } finally {
+            instream.close();
+        }
+        SSLContext sslcontext = SSLContexts.custom()
+                .loadTrustMaterial(trustStore, new TrustSelfSignedStrategy())
+                .build();
+        SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(
+                sslcontext);
+        return HttpClients.custom().setSSLSocketFactory(sslsf).build();
 	}
 
 	protected String createURL(String globalId) {

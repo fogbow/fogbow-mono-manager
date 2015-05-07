@@ -16,7 +16,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.RequirementsHelper;
@@ -143,7 +143,7 @@ public class TestBypassCompute {
 		httpPost.addHeader(OCCIHeaders.CATEGORY, new Category(PluginHelper.LINUX_X86_TERM,
 				OCCIComputeApplication.OS_SCHEME, RequestConstants.MIXIN_CLASS).toHeader());
 		
-		HttpClient client = new DefaultHttpClient();
+		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(httpPost);
 		
 		Assert.assertEquals(PluginHelper.COMPUTE_OCCI_URL + OpenStackOCCIComputePlugin.COMPUTE_ENDPOINT
@@ -166,7 +166,7 @@ public class TestBypassCompute {
 		httpPost.addHeader(OCCIHeaders.CATEGORY, new Category(PluginHelper.LINUX_X86_TERM,
 				OCCIComputeApplication.OS_SCHEME, RequestConstants.MIXIN_CLASS).toHeader());
 		
-		HttpClient client = new DefaultHttpClient();
+		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(httpPost);
 
 		Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusLine().getStatusCode());
@@ -180,7 +180,7 @@ public class TestBypassCompute {
 		httpPost.addHeader(OCCIHeaders.CATEGORY, new Category(PluginHelper.LINUX_X86_TERM,
 				OCCIComputeApplication.OS_SCHEME, RequestConstants.MIXIN_CLASS).toHeader());
 		
-		HttpClient client = new DefaultHttpClient();
+		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(httpPost);
 
 		Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusLine().getStatusCode());
@@ -212,7 +212,7 @@ public class TestBypassCompute {
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpGet.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, PluginHelper.ACCESS_ID);
 		httpGet.addHeader(OCCIHeaders.X_LOCAL_AUTH_TOKEN, PluginHelper.ACCESS_ID);
-		HttpClient client = new DefaultHttpClient();
+		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(httpGet);
 	
 		//checking instances are OK
@@ -236,7 +236,7 @@ public class TestBypassCompute {
 				+ RequirementsHelper.GLUE_MEM_RAM_TERM + " > 500 && "
 				+ RequirementsHelper.GLUE_VCPU_TERM + " > 0");
 		
-		HttpClient client = new DefaultHttpClient();
+		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(post);
 		List<String> requestIDs = OCCITestHelper.getRequestIdsPerLocationHeader(response);
 
@@ -266,7 +266,7 @@ public class TestBypassCompute {
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpGet.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, PluginHelper.ACCESS_ID);
 		httpGet.addHeader(OCCIHeaders.X_LOCAL_AUTH_TOKEN, PluginHelper.ACCESS_ID);
-		client = new DefaultHttpClient();
+		client = HttpClients.createMinimal();
 		response = client.execute(httpGet);
 	
 		//checking instances are OK
@@ -296,7 +296,7 @@ public class TestBypassCompute {
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpGet.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, PluginHelper.ACCESS_ID);
 		httpGet.addHeader(OCCIHeaders.X_LOCAL_AUTH_TOKEN, PluginHelper.ACCESS_ID);
-		HttpClient client = new DefaultHttpClient();
+		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(httpGet);
 	
 		//checking instance details
@@ -320,7 +320,7 @@ public class TestBypassCompute {
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE);
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpGet.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, "");
-		HttpClient client = new DefaultHttpClient();
+		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(httpGet);
 	
 		//checking unauthorized status
@@ -339,7 +339,7 @@ public class TestBypassCompute {
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE + "wrong");
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpGet.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
-		HttpClient client = new DefaultHttpClient();
+		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(httpGet);
 
 		Assert.assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatusLine().getStatusCode());
@@ -370,7 +370,7 @@ public class TestBypassCompute {
 		httpDelete.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpDelete.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, PluginHelper.ACCESS_ID);
 		httpDelete.addHeader(OCCIHeaders.X_LOCAL_AUTH_TOKEN, PluginHelper.ACCESS_ID);
-		HttpClient client = new DefaultHttpClient();
+		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(httpDelete);
 
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
@@ -384,7 +384,7 @@ public class TestBypassCompute {
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpGet.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, PluginHelper.ACCESS_ID);
 		httpGet.addHeader(OCCIHeaders.X_LOCAL_AUTH_TOKEN, PluginHelper.ACCESS_ID);
-		client = new DefaultHttpClient();
+		client = HttpClients.createMinimal();
 		response = client.execute(httpGet);
 
 		Assert.assertEquals(0, OCCITestHelper.getRequestIds(response).size());
@@ -407,7 +407,7 @@ public class TestBypassCompute {
 				+ RequirementsHelper.GLUE_DISK_TERM + " >= 10 && "
 				+ RequirementsHelper.GLUE_MEM_RAM_TERM + " > 500 && "
 				+ RequirementsHelper.GLUE_VCPU_TERM + " > 0");
-		HttpClient client = new DefaultHttpClient();
+		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(post);
 		List<String> requestIDs = OCCITestHelper.getRequestIdsPerLocationHeader(response);
 
@@ -432,7 +432,7 @@ public class TestBypassCompute {
 		httpDelete.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpDelete.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, PluginHelper.ACCESS_ID);
 		httpDelete.addHeader(OCCIHeaders.X_LOCAL_AUTH_TOKEN, PluginHelper.ACCESS_ID);
-		client = new DefaultHttpClient();
+		client = HttpClients.createMinimal();
 		response = client.execute(httpDelete);
 
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
@@ -446,7 +446,7 @@ public class TestBypassCompute {
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpGet.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, PluginHelper.ACCESS_ID);
 		httpGet.addHeader(OCCIHeaders.X_LOCAL_AUTH_TOKEN, PluginHelper.ACCESS_ID);
-		client = new DefaultHttpClient();
+		client = HttpClients.createMinimal();
 	
 		response = client.execute(httpGet);
 
@@ -480,7 +480,7 @@ public class TestBypassCompute {
 		httpDelete.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpDelete.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, PluginHelper.ACCESS_ID);
 		httpDelete.addHeader(OCCIHeaders.X_LOCAL_AUTH_TOKEN, PluginHelper.ACCESS_ID);
-		HttpClient client = new DefaultHttpClient();
+		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(httpDelete);
 
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
@@ -494,7 +494,7 @@ public class TestBypassCompute {
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpGet.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, PluginHelper.ACCESS_ID);
 		httpGet.addHeader(OCCIHeaders.X_LOCAL_AUTH_TOKEN, PluginHelper.ACCESS_ID);
-		client = new DefaultHttpClient();
+		client = HttpClients.createMinimal();
 		response = client.execute(httpGet);
 
 		Assert.assertEquals(2, OCCITestHelper.getRequestIds(response).size());
@@ -523,7 +523,7 @@ public class TestBypassCompute {
 		httpDelete.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpDelete.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, PluginHelper.ACCESS_ID);
 		httpDelete.addHeader(OCCIHeaders.X_LOCAL_AUTH_TOKEN, PluginHelper.ACCESS_ID);
-		HttpClient client = new DefaultHttpClient();
+		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(httpDelete);
 
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
@@ -537,7 +537,7 @@ public class TestBypassCompute {
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpGet.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, PluginHelper.ACCESS_ID);
 		httpGet.addHeader(OCCIHeaders.X_LOCAL_AUTH_TOKEN, PluginHelper.ACCESS_ID);
-		client = new DefaultHttpClient();
+		client = HttpClients.createMinimal();
 		response = client.execute(httpGet);
 
 		Assert.assertEquals(0, OCCITestHelper.getRequestIds(response).size());
@@ -551,7 +551,7 @@ public class TestBypassCompute {
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE);
 		get.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, PluginHelper.ACCESS_ID);
 		get.addHeader(OCCIHeaders.X_LOCAL_AUTH_TOKEN, PluginHelper.ACCESS_ID);
-		HttpClient client = new DefaultHttpClient();
+		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(get);
 
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
