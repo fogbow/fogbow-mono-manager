@@ -38,7 +38,7 @@ import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.model.ImageState;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.imagestorage.fixed.StaticImageStoragePlugin;
-import org.fogbowcloud.manager.occi.core.Token;
+import org.fogbowcloud.manager.occi.model.Token;
 
 public class EgiApplianceImageStoragePlugin extends StaticImageStoragePlugin {
 

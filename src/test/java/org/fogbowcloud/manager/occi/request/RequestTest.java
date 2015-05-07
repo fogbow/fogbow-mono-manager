@@ -3,7 +3,7 @@ package org.fogbowcloud.manager.occi.request;
 import java.util.HashMap;
 import java.util.LinkedList;
 
-import org.fogbowcloud.manager.occi.core.Category;
+import org.fogbowcloud.manager.occi.model.Category;
 import org.junit.Assert;
 import org.junit.Test;
 

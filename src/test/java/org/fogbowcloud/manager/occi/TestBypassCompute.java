@@ -26,16 +26,17 @@ import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
-import org.fogbowcloud.manager.core.plugins.openstack.OpenStackConfigurationConstants;
-import org.fogbowcloud.manager.core.plugins.openstack.OpenStackOCCIComputePlugin;
+import org.fogbowcloud.manager.core.plugins.compute.openstack.OpenStackConfigurationConstants;
+import org.fogbowcloud.manager.core.plugins.compute.openstack.OpenStackOCCIComputePlugin;
+import org.fogbowcloud.manager.core.plugins.compute.openstack.OpenstackOCCITestHelper;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
-import org.fogbowcloud.manager.occi.core.Category;
-import org.fogbowcloud.manager.occi.core.HeaderUtils;
-import org.fogbowcloud.manager.occi.core.OCCIHeaders;
-import org.fogbowcloud.manager.occi.core.Resource;
-import org.fogbowcloud.manager.occi.core.ResourceRepository;
-import org.fogbowcloud.manager.occi.core.ResponseConstants;
-import org.fogbowcloud.manager.occi.core.Token;
+import org.fogbowcloud.manager.occi.model.Category;
+import org.fogbowcloud.manager.occi.model.HeaderUtils;
+import org.fogbowcloud.manager.occi.model.OCCIHeaders;
+import org.fogbowcloud.manager.occi.model.Resource;
+import org.fogbowcloud.manager.occi.model.ResourceRepository;
+import org.fogbowcloud.manager.occi.model.ResponseConstants;
+import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
@@ -88,15 +89,14 @@ public class TestBypassCompute {
 		defaultToken = new Token(PluginHelper.ACCESS_ID, PluginHelper.USERNAME,
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>());
 		
-		computePlugin = new OpenStackOCCIComputePlugin(properties);
-		
 		List<Flavor> flavors = new ArrayList<Flavor>();
 		Flavor flavorSmall = new Flavor(RequestConstants.SMALL_TERM, "1", "1000", "10");
 		flavorSmall.setId(SECOND_INSTANCE_ID);
 		flavors.add(flavorSmall); 
 		flavors.add(new Flavor("medium", "2", "2000", "20"));
 		flavors.add(new Flavor("big", "4", "4000", "40"));
-		computePlugin.setFlavors(flavors );
+		
+		this.computePlugin = OpenstackOCCITestHelper.createComputePlugin(properties, flavors);
 				
 		identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.getToken(PluginHelper.ACCESS_ID)).thenReturn(defaultToken);
@@ -126,7 +126,7 @@ public class TestBypassCompute {
 				imageStoragePlugin, Mockito.mock(AccountingPlugin.class),
 				Mockito.mock(BenchmarkingPlugin.class), requests);
 	}
-	
+
 	@After
 	public void tearDown() throws Exception{
 		pluginHelper.disconnectComponent();
@@ -141,7 +141,7 @@ public class TestBypassCompute {
 		httpPost.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpPost.addHeader(OCCIHeaders.X_AUTH_TOKEN, PluginHelper.ACCESS_ID);
 		httpPost.addHeader(OCCIHeaders.CATEGORY, new Category(PluginHelper.LINUX_X86_TERM,
-				OpenStackOCCIComputePlugin.getOSScheme(), RequestConstants.MIXIN_CLASS).toHeader());
+				OCCIComputeApplication.OS_SCHEME, RequestConstants.MIXIN_CLASS).toHeader());
 		
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(httpPost);
@@ -164,7 +164,7 @@ public class TestBypassCompute {
 		httpPost.addHeader(OCCIHeaders.CONTENT_TYPE, "invalid-type");
 		httpPost.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, PluginHelper.ACCESS_ID);
 		httpPost.addHeader(OCCIHeaders.CATEGORY, new Category(PluginHelper.LINUX_X86_TERM,
-				OpenStackOCCIComputePlugin.getOSScheme(), RequestConstants.MIXIN_CLASS).toHeader());
+				OCCIComputeApplication.OS_SCHEME, RequestConstants.MIXIN_CLASS).toHeader());
 		
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(httpPost);
@@ -178,7 +178,7 @@ public class TestBypassCompute {
 		HttpPost httpPost = new HttpPost(OCCITestHelper.URI_FOGBOW_COMPUTE);
 		httpPost.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, PluginHelper.ACCESS_ID);
 		httpPost.addHeader(OCCIHeaders.CATEGORY, new Category(PluginHelper.LINUX_X86_TERM,
-				OpenStackOCCIComputePlugin.getOSScheme(), RequestConstants.MIXIN_CLASS).toHeader());
+				OCCIComputeApplication.OS_SCHEME, RequestConstants.MIXIN_CLASS).toHeader());
 		
 		HttpClient client = new DefaultHttpClient();
 		HttpResponse response = client.execute(httpPost);

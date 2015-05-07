@@ -1,7 +1,7 @@
 package org.fogbowcloud.manager.xmpp;
 
 import org.fogbowcloud.manager.core.ManagerController;
-import org.fogbowcloud.manager.occi.core.OCCIException;
+import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.jamppa.component.handler.AbstractQueryHandler;
 import org.xmpp.packet.IQ;
 

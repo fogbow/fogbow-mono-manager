@@ -8,8 +8,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.fogbowcloud.manager.core.model.DateUtils;
-import org.fogbowcloud.manager.occi.core.Category;
-import org.fogbowcloud.manager.occi.core.Token;
+import org.fogbowcloud.manager.occi.model.Category;
+import org.fogbowcloud.manager.occi.model.Token;
 
 public class Request {
 

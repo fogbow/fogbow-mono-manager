@@ -7,8 +7,8 @@ import java.util.Map;
 
 import org.dom4j.Element;
 import org.fogbowcloud.manager.core.ManagerController;
-import org.fogbowcloud.manager.occi.core.Category;
-import org.fogbowcloud.manager.occi.core.Token;
+import org.fogbowcloud.manager.occi.model.Category;
+import org.fogbowcloud.manager.occi.model.Token;
 import org.jamppa.component.handler.AsyncQueryHandler;
 import org.xmpp.packet.IQ;
 

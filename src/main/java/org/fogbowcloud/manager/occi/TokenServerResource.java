@@ -3,8 +3,8 @@ package org.fogbowcloud.manager.occi;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.fogbowcloud.manager.occi.core.HeaderUtils;
-import org.fogbowcloud.manager.occi.core.Token;
+import org.fogbowcloud.manager.occi.model.HeaderUtils;
+import org.fogbowcloud.manager.occi.model.Token;
 import org.restlet.engine.adapter.HttpRequest;
 import org.restlet.engine.header.Header;
 import org.restlet.resource.Get;

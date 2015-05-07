@@ -6,10 +6,10 @@ import java.util.Map;
 
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
 import org.fogbowcloud.manager.core.plugins.benchmarking.VanillaBenchmarkingPlugin;
-import org.fogbowcloud.manager.occi.core.Resource;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.instance.Instance.Link;
 import org.fogbowcloud.manager.occi.instance.InstanceState;
+import org.fogbowcloud.manager.occi.model.Resource;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;

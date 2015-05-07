@@ -12,7 +12,7 @@ flavor_fogbow_medium={mem=1024, cpu=2}
 flavor_fogbow_large={mem=2048, cpu=4}
 
 # Compute Opennebula
-compute_class=org.fogbowcloud.manager.core.plugins.opennebula.OpenNebulaComputePlugin
+compute_class=org.fogbowcloud.manager.core.plugins.compute.opennebula.OpenNebulaComputePlugin
 compute_one_url=http://localhost:2633/RPC2
 compute_one_network_id=1
 
@@ -35,7 +35,7 @@ compute_one_ssh_key_file=/home/fogbow/.ssh/id_rsa
 compute_one_ssh_target_temp_folder=/tmp/images
 
 # Compute Openstack OCCI
-compute_class=org.fogbowcloud.manager.core.plugins.openstack.OpenStackOCCIComputePlugin
+compute_class=org.fogbowcloud.manager.core.plugins.compute.openstack.OpenStackOCCIComputePlugin
 compute_openstack_v2api_url=http://localhost:8182
 compute_occi_url=http://localhost:8182
 compute_occi_os_scheme=http://schemas.openstack.org/template/os#
@@ -44,7 +44,7 @@ compute_occi_resource_scheme=http://schemas.openstack.org/template/resource#
 compute_occi_network_id=ea51ed0c-0e8a-448d-8202-c79777109ffe
 
 # Compute Opennebula OCCI
-compute_class=org.fogbowcloud.manager.core.plugins.opennebula.OpenNebulaOCCIComputePlugin
+compute_class=org.fogbowcloud.manager.core.plugins.compute.opennebula.OpenNebulaOCCIComputePlugin
 compute_one_url=http://localhost:2633/RPC2
 compute_occi_url=http://localhost:3000
 compute_occi_template_scheme=http://occi.localhost/occi/infrastructure/os_tpl#
@@ -73,34 +73,34 @@ image_storage_vmcatcher_push_method=cesga
 image_storage_static_fogbow-linux-x86=55d938ef-57d1-44ea-8155-6036d170780a 
 image_storage_static_fogbow-ubuntu-1204=81765250-a4e4-440d-a215-43c9c0849120
 
-member_picker_class=org.fogbowcloud.manager.core.RoundRobinMemberPicker
+member_picker_class=org.fogbowcloud.manager.core.plugins.memberpicker.RoundRobinMemberPickerPlugin
 #If you are using NoFMemberPicker or NoFPrioritizationPlugin classes
 nof_trustworthy=false
 nof_prioritize_local=true
 
-local_prioritization_plugin_class=org.fogbowcloud.manager.core.plugins.prioritization.FCFSPrioritizationPlugin
+local_prioritization_plugin_class=org.fogbowcloud.manager.core.plugins.prioritization.fcfs.FCFSPrioritizationPlugin
 remote_prioritization_plugin_class=org.fogbowcloud.manager.core.plugins.prioritization.nof.NoFPrioritizationPlugin
 
 # Compute Openstack
-compute_class=org.fogbowcloud.manager.core.plugins.openstack.OpenStackNovaV2ComputePlugin
+compute_class=org.fogbowcloud.manager.core.plugins.compute.openstack.OpenStackNovaV2ComputePlugin
 compute_novav2_url=http://localhost:8774
 compute_glancev2_url=http://localhost:9292
 compute_novav2_network_id=ea51ed0c-0e8a-448d-8202-c79777109ffe
 
 # Local identity
-local_identity_class=org.fogbowcloud.manager.core.plugins.openstack.KeystoneIdentityPlugin
+local_identity_class=org.fogbowcloud.manager.core.plugins.identity.openstack.KeystoneIdentityPlugin
 local_identity_url=http://localhost:5000
 
 # Federation identity
-federation_authorization_class=org.fogbowcloud.manager.core.plugins.common.AllowAllAuthorizationPlugin
-federation_identity_class=org.fogbowcloud.manager.core.plugins.openstack.KeystoneIdentityPlugin
+federation_authorization_class=org.fogbowcloud.manager.core.plugins.authorization.AllowAllAuthorizationPlugin
+federation_identity_class=org.fogbowcloud.manager.core.plugins.identity.openstack.KeystoneIdentityPlugin
 federation_identity_url=http://localhost:5000
 
 local_proxy_account_user_name=fogbow
 local_proxy_account_password=fogbow
 local_proxy_account_tenant_name=demo
 
-member_validator=org.fogbowcloud.manager.core.DefaultMemberValidator
+member_validator=org.fogbowcloud.manager.core.plugins.memberauthorization.DefaultMemberAuthorizationPlugin
 member_validator_ca_dir=
 
 cert_path=

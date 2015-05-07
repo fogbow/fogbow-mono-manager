@@ -1,6 +1,6 @@
 package org.fogbowcloud.manager.core.plugins;
 
-import org.fogbowcloud.manager.occi.core.Token;
+import org.fogbowcloud.manager.occi.model.Token;
 
 public interface AuthorizationPlugin {
 	
