@@ -1,4 +1,4 @@
-package org.fogbowcloud.manager.core.plugins.imagestorage.appliance;
+package org.fogbowcloud.manager.core.plugins.imagestorage.http;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -40,11 +40,11 @@ import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.imagestorage.fixed.StaticImageStoragePlugin;
 import org.fogbowcloud.manager.occi.model.Token;
 
-public class EgiApplianceImageStoragePlugin extends StaticImageStoragePlugin {
+public class HTTPDownloadImageStoragePlugin extends StaticImageStoragePlugin {
 
 	private static final int IMAGE_UPLOAD_RETRY_INTERVAL = 15000;
 
-	private static final Logger LOGGER = Logger.getLogger(EgiApplianceImageStoragePlugin.class);
+	private static final Logger LOGGER = Logger.getLogger(HTTPDownloadImageStoragePlugin.class);
 	private static final Executor IMAGE_DOWNLOADER = Executors.newFixedThreadPool(5);
 	
 	private ComputePlugin computePlugin;
@@ -56,13 +56,13 @@ public class EgiApplianceImageStoragePlugin extends StaticImageStoragePlugin {
 	private final String tmpStorage;
 	private final String keystorePassword;
 	
-	public EgiApplianceImageStoragePlugin(Properties properties, ComputePlugin computePlugin) {
+	public HTTPDownloadImageStoragePlugin(Properties properties, ComputePlugin computePlugin) {
 		super(properties, computePlugin);
 		this.computePlugin = computePlugin;
-		this.marketPlaceBaseURL = properties.getProperty("image_storage_appliance_base_url");
-		this.keystorePath = properties.getProperty("image_storage_applicance_keystore_path");
-		this.keystorePassword = properties.getProperty("image_storage_appliance_keystore_password");
-		this.tmpStorage = properties.getProperty("image_storage_appliance_tmp_storage");
+		this.marketPlaceBaseURL = properties.getProperty("image_storage_http_base_url");
+		this.keystorePath = properties.getProperty("image_storage_http_keystore_path");
+		this.keystorePassword = properties.getProperty("image_storage_http_keystore_password");
+		this.tmpStorage = properties.getProperty("image_storage_http_tmp_storage");
 	}
 	
 	@Override

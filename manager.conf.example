@@ -53,15 +53,10 @@ compute_occi_flavors_small={cpu=1,mem=512}
 compute_occi_flavors_medium={cpu=2,mem=1024}
 compute_occi_flavors_large={cpu=4,mem=2048}
 
-# If you are using the EgiImageStoragePlugin
-image_storage_class=org.fogbowcloud.manager.core.plugins.imagestorage.egi.EgiImageStoragePlugin
-image_storage_egi_base_url=http://lsd.ufcg.edu.br/~user/vm/ 
-image_storage_egi_tmp_storage=/tmp/ 
-
-# If you are using the EgiApplianceImageStoragePlugin
-image_storage_class=org.fogbowcloud.manager.core.plugins.imagestorage.appliance.EgiApplianceImageStoragePlugin
-image_storage_appliance_base_url=http://appliance-repo.egi.eu/images
-image_storage_appliance_tmp_storage=/tmp/
+# If you are using the HTTPDownloadImageStoragePlugin
+image_storage_class=org.fogbowcloud.manager.core.plugins.imagestorage.http.HTTPDownloadImageStoragePlugin
+image_storage_http_base_url=http://appliance-repo.egi.eu/images
+image_storage_http_tmp_storage=/tmp/
 
 # If you are using the VMCatcherStoragePlugin
 image_storage_class=org.fogbowcloud.manager.core.plugins.imagestorage.vmcatcher.VMCatcherStoragePlugin
