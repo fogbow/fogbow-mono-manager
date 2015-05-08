@@ -10,9 +10,7 @@ import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.CertificateUtils;
-import org.fogbowcloud.manager.core.plugins.identity.voms.VomsIdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.identity.voms.VomsIdentityPlugin.ProxyCertificateGenerator;
 import org.fogbowcloud.manager.core.plugins.util.Credential;
 import org.fogbowcloud.manager.occi.model.Token;
@@ -40,12 +38,12 @@ public class TestIdentityVoms {
 	@Before
 	public void setUp() {
 		properties = new Properties();
-		properties.put(ConfigurationConstants.VOMS_PATH_TRUST_ANCHORS,
+		properties.put(VomsIdentityPlugin.PROP_PATH_TRUST_ANCHORS,
 				"src/test/resources/voms/trust-anchors");
-		properties.put(ConfigurationConstants.VOMS_PATH_VOMSES, "src/test/resources/voms/vomses");
-		properties.put(ConfigurationConstants.VOMS_PATH_VOMSDIR, "src/test/resources/voms/vomsdir");
-		properties.put(ConfigurationConstants.FEDERATION_USER_PASS_VOMS, VOMS_PASSWORD);
-		properties.put(ConfigurationConstants.FEDERATION_USER_SERVER_VOMS, VOMS_SERVER);
+		properties.put(VomsIdentityPlugin.PROP_PATH_VOMSES, "src/test/resources/voms/vomses");
+		properties.put(VomsIdentityPlugin.PROP_PATH_VOMSDIR, "src/test/resources/voms/vomsdir");
+		properties.put(VomsIdentityPlugin.PROP_VOMS_FEDERATION_USER_PASS, VOMS_PASSWORD);
+		properties.put(VomsIdentityPlugin.PROP_VOMS_FEDERATION_USER_SERVER, VOMS_SERVER);
 
 		vomsIdentityPlugin = new VomsIdentityPlugin(properties);
 		generatorProxyCertificate = Mockito.mock(ProxyCertificateGenerator.class);
@@ -82,9 +80,8 @@ public class TestIdentityVoms {
 		Date after = new Date(System.currentTimeMillis() + TWELVE_HOURS);
 
 		Assert.assertEquals(
-				CertificateUtils.generateAccessId(
-						Arrays.asList(proxy.getCertificateChain()), proxy.getCredential()),
-				token.getAccessId());
+				CertificateUtils.generateAccessId(Arrays.asList(proxy.getCertificateChain()),
+						proxy.getCredential()), token.getAccessId());
 		Assert.assertEquals("CN=test0, O=IGI, C=IT", token.getUser());
 		Assert.assertTrue(token.getExpirationDate().after(before));
 		Assert.assertTrue(token.getExpirationDate().before(after));
@@ -100,9 +97,9 @@ public class TestIdentityVoms {
 
 		ProxyCertificate proxy = Utils.getVOMSAA().createVOMSProxy(holder, Fixture.defaultVOFqans);
 
-		String accessId = CertificateUtils.generateAccessId(Arrays.asList(proxy
-				.getCertificateChain()), proxy.getCredential());
-		
+		String accessId = CertificateUtils.generateAccessId(
+				Arrays.asList(proxy.getCertificateChain()), proxy.getCredential());
+
 		Token token = vomsIdentityPlugin.getToken(accessId);
 		Date after = new Date(System.currentTimeMillis() + TWELVE_HOURS);
 
@@ -121,8 +118,7 @@ public class TestIdentityVoms {
 
 		ProxyCertificate proxy = Utils.getVOMSAA().createVOMSProxy(holder, Fixture.defaultVOFqans);
 		Assert.assertTrue(vomsIdentityPlugin.isValid(CertificateUtils.generateAccessId(
-				Arrays.asList(proxy.getCertificateChain()), 
-				proxy.getCredential())));
+				Arrays.asList(proxy.getCertificateChain()), proxy.getCredential())));
 	}
 
 	@Test
@@ -134,8 +130,7 @@ public class TestIdentityVoms {
 
 		ProxyCertificate proxy = Utils.getVOMSAA().createVOMSProxy(holder, Fixture.defaultVOFqans);
 		Assert.assertFalse(vomsIdentityPlugin.isValid(CertificateUtils.generateAccessId(
-				Arrays.asList(proxy.getCertificateChain()), 
-				proxy.getCredential())));
+				Arrays.asList(proxy.getCertificateChain()), proxy.getCredential())));
 	}
 
 	@Test
@@ -150,52 +145,51 @@ public class TestIdentityVoms {
 		Assert.assertEquals(new Credential(VomsIdentityPlugin.PATH_USERKEY, false,
 				VomsIdentityPlugin.CREDENTIALS_PATH_DEFAULT), credentials[3]);
 	}
-	
-	private static final String PRIVATE_KEY_REGEX = 
-			"(-----BEGIN [A-Z\\s]* PRIVATE KEY-----)([^\\-]*)(-----END [A-Z\\s]* PRIVATE KEY-----)";
-	
+
+	private static final String PRIVATE_KEY_REGEX = "(-----BEGIN [A-Z\\s]* PRIVATE KEY-----)([^\\-]*)(-----END [A-Z\\s]* PRIVATE KEY-----)";
+
 	@Test
 	public void testGetForwardableTokenAsAWhole() throws Exception {
 		if (!SecurityRestrictionHelper.checkUnlimitedStrengthPolicy()) {
 			return;
 		}
-		
-		properties.put(ConfigurationConstants.VOMS_SHOULD_FORWARD_PRIVATE_KEY, "true");
-		
+
+		properties.put(VomsIdentityPlugin.PROP_SHOULD_FORWARD_PRIVATE_KEY, "true");
+
 		PEMCredential holder = Utils.getTestUserCredential();
 
 		ProxyCertificate proxy = Utils.getVOMSAA().createVOMSProxy(holder, Fixture.defaultVOFqans);
-		String accessId = CertificateUtils.generateAccessId(Arrays.asList(proxy
-				.getCertificateChain()), proxy.getCredential());
+		String accessId = CertificateUtils.generateAccessId(
+				Arrays.asList(proxy.getCertificateChain()), proxy.getCredential());
 		Token token = vomsIdentityPlugin.getToken(accessId);
-		
-		
+
 		Pattern pattern = Pattern.compile(PRIVATE_KEY_REGEX);
 		String forwardableToken = vomsIdentityPlugin.getForwardableToken(token).getAccessId();
 		Matcher matcher = pattern.matcher(forwardableToken);
-		
+
 		Assert.assertTrue(matcher.find());
 		Assert.assertEquals(token.getAccessId(), forwardableToken);
 	}
-	
+
 	@Test
 	public void testGetForwardableTokenWithNoPrivateKey() throws Exception {
 		if (!SecurityRestrictionHelper.checkUnlimitedStrengthPolicy()) {
 			return;
 		}
-		
-		properties.put(ConfigurationConstants.VOMS_SHOULD_FORWARD_PRIVATE_KEY, "false");
-		
+
+		properties.put(VomsIdentityPlugin.PROP_SHOULD_FORWARD_PRIVATE_KEY, "false");
+
 		PEMCredential holder = Utils.getTestUserCredential();
 
 		ProxyCertificate proxy = Utils.getVOMSAA().createVOMSProxy(holder, Fixture.defaultVOFqans);
-		String accessId = CertificateUtils.generateAccessId(Arrays.asList(proxy
-				.getCertificateChain()), proxy.getCredential());
+		String accessId = CertificateUtils.generateAccessId(
+				Arrays.asList(proxy.getCertificateChain()), proxy.getCredential());
 		Token token = vomsIdentityPlugin.getToken(accessId);
-		
+
 		Pattern pattern = Pattern.compile(PRIVATE_KEY_REGEX);
-		Matcher matcher = pattern.matcher(vomsIdentityPlugin.getForwardableToken(token).getAccessId());
-		
+		Matcher matcher = pattern.matcher(vomsIdentityPlugin.getForwardableToken(token)
+				.getAccessId());
+
 		Assert.assertFalse(matcher.find());
 	}
 }

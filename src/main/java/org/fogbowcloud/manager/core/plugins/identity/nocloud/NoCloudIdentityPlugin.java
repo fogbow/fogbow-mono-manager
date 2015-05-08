@@ -44,7 +44,7 @@ public class NoCloudIdentityPlugin implements IdentityPlugin {
 
 	@Override
 	public Credential[] getCredentials() {
-		return null;
+		return new Credential[] { new Credential("", false, null) };
 	}
 
 	@Override

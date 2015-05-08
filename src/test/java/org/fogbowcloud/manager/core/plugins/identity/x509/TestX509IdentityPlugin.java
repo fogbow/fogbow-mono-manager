@@ -9,9 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.CertificateUtils;
-import org.fogbowcloud.manager.core.plugins.identity.x509.X509IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.util.Credential;
 import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.Token;
@@ -25,6 +23,7 @@ public class TestX509IdentityPlugin {
 
 	private static final String CERTIFICATE_PATH = "src/test/resources/x509/cert.pem";
 	private static final String CA_DIR_PATH = "src/test/resources/x509/CAdir";
+	private static final String X509_CA_DIR_PATH_PROP = "x509_ca_dir_path";
 	private final String CERTIFICATE_USER = "CN=Test, OU=Fogbow, O=LSD, L=CG, ST=PB, C=Br";
 	private String dateFormat = "yyyy-MM-dd";
 	private Date CERTIFICATE_EXPIRATION_DATE;
@@ -44,7 +43,7 @@ public class TestX509IdentityPlugin {
 
 	@Test
 	public void testCreateToken() throws ParseException {
-		properties.put(ConfigurationConstants.X509_CA_DIR_PATH_KEY, CA_DIR_PATH);
+		properties.put(X509_CA_DIR_PATH_PROP, CA_DIR_PATH);
 		x509IdentityPlugin = new X509IdentityPlugin(properties);
 
 		Map<String, String> userCredentials = new HashMap<String, String>();
@@ -59,21 +58,21 @@ public class TestX509IdentityPlugin {
 
 	@Test
 	public void testIsValidAccessId() {
-		properties.put(ConfigurationConstants.X509_CA_DIR_PATH_KEY, CA_DIR_PATH);
+		properties.put(X509_CA_DIR_PATH_PROP, CA_DIR_PATH);
 		x509IdentityPlugin = new X509IdentityPlugin(properties);
 		Assert.assertTrue(x509IdentityPlugin.isValid(CERTIFICATE_ACCESS_ID));
 	}
 
 	@Test
 	public void testIsInvalidAccessId() {
-		properties.put(ConfigurationConstants.X509_CA_DIR_PATH_KEY, CA_DIR_PATH);
+		properties.put(X509_CA_DIR_PATH_PROP, CA_DIR_PATH);
 		x509IdentityPlugin = new X509IdentityPlugin(properties);
 		Assert.assertFalse(x509IdentityPlugin.isValid("invalid_accessId"));
 	}
 
 	@Test
 	public void testReIssueToken() throws ParseException {
-		properties.put(ConfigurationConstants.X509_CA_DIR_PATH_KEY, CA_DIR_PATH);
+		properties.put(X509_CA_DIR_PATH_PROP, CA_DIR_PATH);
 		x509IdentityPlugin = new X509IdentityPlugin(properties);
 
 		// getting token
@@ -92,7 +91,7 @@ public class TestX509IdentityPlugin {
 
 	@Test
 	public void testGetToken() throws ParseException {
-		properties.put(ConfigurationConstants.X509_CA_DIR_PATH_KEY, CA_DIR_PATH);
+		properties.put(X509_CA_DIR_PATH_PROP, CA_DIR_PATH);
 		x509IdentityPlugin = new X509IdentityPlugin(properties);
 
 		// getting token
@@ -108,9 +107,8 @@ public class TestX509IdentityPlugin {
 
 	@Test
 	public void testCreateFederationUser() throws ParseException {
-		properties.put(ConfigurationConstants.X509_CA_DIR_PATH_KEY, CA_DIR_PATH);
-		properties.put(ConfigurationConstants.FEDERATION_USER_X509_CERTIFICATE_PATH_KEY,
-				CERTIFICATE_PATH);
+		properties.put(X509_CA_DIR_PATH_PROP, CA_DIR_PATH);
+		properties.put("local_proxy_account_x509_certificate_path", CERTIFICATE_PATH);
 		x509IdentityPlugin = new X509IdentityPlugin(properties);
 
 		Token federationToken = x509IdentityPlugin.createFederationUserToken();
@@ -123,7 +121,7 @@ public class TestX509IdentityPlugin {
 
 	@Test(expected = OCCIException.class)
 	public void testCreateTokenWithoutCertificatePath() {
-		properties.put(ConfigurationConstants.X509_CA_DIR_PATH_KEY, CA_DIR_PATH);
+		properties.put(X509_CA_DIR_PATH_PROP, CA_DIR_PATH);
 		x509IdentityPlugin = new X509IdentityPlugin(properties);
 		x509IdentityPlugin.createToken(new HashMap<String, String>());
 	}

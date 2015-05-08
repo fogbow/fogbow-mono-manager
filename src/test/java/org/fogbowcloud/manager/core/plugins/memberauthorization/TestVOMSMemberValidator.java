@@ -24,11 +24,11 @@ public class TestVOMSMemberValidator {
 	@Before
 	public void setup() {
 		this.properties = new Properties();
-		this.properties.put(VOMSMemberAuthorizationPlugin.PROP_VOMS_PATH_TRUST_ANCHORS,
+		this.properties.put(VOMSMemberAuthorizationPlugin.PROP_PATH_TRUST_ANCHORS,
 				"src/test/resources/voms/trust-anchors");
-		this.properties.put(VOMSMemberAuthorizationPlugin.PROP_VOMS_PATH_VOMSES, 
+		this.properties.put(VOMSMemberAuthorizationPlugin.PROP_PATH_VOMSES, 
 				"src/test/resources/voms/vomses");
-		this.properties.put(VOMSMemberAuthorizationPlugin.PROP_VOMS_PATH_VOMSDIR, 
+		this.properties.put(VOMSMemberAuthorizationPlugin.PROP_PATH_VOMSDIR, 
 				"src/test/resources/voms/vomsdir");
 		this.memberValidator = new VOMSMemberAuthorizationPlugin(properties);
 	}

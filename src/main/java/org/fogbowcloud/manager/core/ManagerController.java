@@ -495,15 +495,15 @@ public class ManagerController {
 		
 		HttpResponse response = null;
 		try {
-			String hostAddr = properties.getProperty(ConfigurationConstants.TUNNEL_SSH_PRIVATE_HOST_KEY);
-			String httpHostPort = properties.getProperty(ConfigurationConstants.TUNNEL_SSH_HOST_HTTP_PORT_KEY);
+			String hostAddr = properties.getProperty(ConfigurationConstants.TOKEN_HOST_PRIVATE_ADDRESS_KEY);
+			String httpHostPort = properties.getProperty(ConfigurationConstants.TOKEN_HOST_HTTP_PORT_KEY);
 			HttpGet httpGet = new HttpGet("http://" + hostAddr + ":" + httpHostPort + "/token/"
 					+ tokenId);
 			response = reverseTunnelHttpClient.execute(httpGet);
 			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
 				String sshPort = EntityUtils.toString(response.getEntity());
 				String sshPublicHostIP = properties
-						.getProperty(ConfigurationConstants.TUNNEL_SSH_PUBLIC_HOST_KEY);
+						.getProperty(ConfigurationConstants.TOKEN_HOST_PUBLIC_ADDRESS_KEY);
 				return sshPublicHostIP + ":" + sshPort;
 			}
 		} catch (Throwable e) {
@@ -731,9 +731,9 @@ public class ManagerController {
 	protected String createUserDataUtilsCommand(Request request)
 			throws IOException, MessagingException {
 		String command = UserdataUtils.createBase64Command(request.getId(), 
-				properties.getProperty(ConfigurationConstants.TUNNEL_SSH_PRIVATE_HOST_KEY),
-				properties.getProperty(ConfigurationConstants.TUNNEL_SSH_HOST_PORT_KEY),
-				properties.getProperty(ConfigurationConstants.TUNNEL_SSH_HOST_HTTP_PORT_KEY),
+				properties.getProperty(ConfigurationConstants.TOKEN_HOST_PRIVATE_ADDRESS_KEY),
+				properties.getProperty(ConfigurationConstants.TOKEN_HOST_PORT_KEY),
+				properties.getProperty(ConfigurationConstants.TOKEN_HOST_HTTP_PORT_KEY),
 				getManagerSSHPublicKeyFilePath(),
 				request.getAttValue(RequestAttribute.DATA_PUBLIC_KEY.getValue()),
 				getSSHCommonUser());
