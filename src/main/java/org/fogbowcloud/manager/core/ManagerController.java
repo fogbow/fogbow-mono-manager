@@ -265,8 +265,9 @@ public class ManagerController {
 		LOGGER.debug("Checking if instance " + instanceId + " is related to request " + requestId);
 		// checking federation local user instances for local users
 		if (requestId == null) {
-			for (Request request : requests.getAllLocalRequests()) {
-				if (request.getState().in(RequestState.FULFILLED, RequestState.DELETED)) {
+			for (Request request : requests.getAllRequests()) {
+				if (request.getState().in(RequestState.FULFILLED, RequestState.DELETED,
+						RequestState.SPAWNING)) {
 					String reqInstanceId = generateGlobalId(request.getInstanceId(),
 							request.getProvidingMemberId());
 					if (reqInstanceId != null && reqInstanceId.equals(instanceId)) {
@@ -286,7 +287,8 @@ public class ManagerController {
 			if (request.getState().in(RequestState.OPEN)
 					&& asynchronousRequests.containsKey(requestId)) {
 				return true;
-			} else if (request.getState().in(RequestState.FULFILLED, RequestState.DELETED)) {
+			} else if (request.getState().in(RequestState.FULFILLED, RequestState.DELETED,
+					RequestState.SPAWNING)) {
 				String reqInstanceId = generateGlobalId(request.getInstanceId(),
 						request.getProvidingMemberId());
 				if (reqInstanceId != null && reqInstanceId.equals(instanceId)) {
