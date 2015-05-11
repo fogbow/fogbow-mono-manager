@@ -52,9 +52,9 @@ public class TestOCCIApplication {
 		properties.put("scheduler_period", SCHEDULER_PERIOD.toString());
 		properties.put(ConfigurationConstants.XMPP_JID_KEY,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
-		properties.put(ConfigurationConstants.TUNNEL_SSH_PRIVATE_HOST_KEY,
+		properties.put(ConfigurationConstants.TOKEN_HOST_PRIVATE_ADDRESS_KEY,
 				DefaultDataTestHelper.SERVER_HOST);
-		properties.put(ConfigurationConstants.TUNNEL_SSH_HOST_HTTP_PORT_KEY,
+		properties.put(ConfigurationConstants.TOKEN_HOST_HTTP_PORT_KEY,
 				String.valueOf(DefaultDataTestHelper.TOKEN_SERVER_HTTP_PORT));
 				
 		ScheduledExecutorService executor = Mockito.mock(ScheduledExecutorService.class);

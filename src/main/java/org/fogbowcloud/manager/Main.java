@@ -83,7 +83,7 @@ public class Main {
 		FederationMemberAuthorizationPlugin validator = new DefaultMemberAuthorizationPlugin(properties);
 		try {
 			validator = (FederationMemberAuthorizationPlugin) createInstance(
-					ConfigurationConstants.MEMBER_VALIDATOR_KEY, properties);
+					ConfigurationConstants.MEMBER_VALIDATOR_CLASS_KEY, properties);
 		} catch (Exception e) {
 			LOGGER.warn("Member Validator not especified in the properties.");
 			System.exit(EXIT_ERROR_CODE);

@@ -5,9 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.compute.opennebula.OpenNebulaClientFactory;
-import org.fogbowcloud.manager.core.plugins.identity.opennebula.OpenNebulaIdentityPlugin;
 import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.util.PluginHelper;
@@ -32,9 +30,9 @@ public class TestIdentityOpenNebula {
 	@BeforeClass
 	public static void setUp() throws IOException {
 		properties = new Properties();
-		properties.put(ConfigurationConstants.IDENTITY_URL, OPEN_NEBULA_URL);
-		properties.put(ConfigurationConstants.FEDERATION_USER_NAME_KEY, PluginHelper.FED_USERNAME);
-		properties.put(ConfigurationConstants.FEDERATION_USER_PASS_KEY, PluginHelper.FED_USER_PASS);
+		properties.put("identity_url", OPEN_NEBULA_URL);
+		properties.put("local_proxy_account_user_name", PluginHelper.FED_USERNAME);
+		properties.put("local_proxy_account_password", PluginHelper.FED_USER_PASS);
 		
 		USER_POOL_DEFAULT_RESPONSE = PluginHelper.getContentFile(
 				"src/test/resources/opennebula/userpool.response").replaceAll("#USERNAME#",

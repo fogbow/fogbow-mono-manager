@@ -144,7 +144,6 @@ public class RequestServerResource extends ServerResource {
 						+ request.getState() + "; " + RequestAttribute.TYPE.getValue() + "="
 						+ request.getAttValue(RequestAttribute.TYPE.getValue()) + "; "
 						+ RequestAttribute.INSTANCE_ID.getValue() + "="
-//						+ request.getInstanceId() + "\n";
 						+ request.getGlobalInstanceId() + "\n";
 						
 			}else {			
@@ -189,7 +188,6 @@ public class RequestServerResource extends ServerResource {
 		}
 		
 		attToOutput.put(RequestAttribute.STATE.getValue(), request.getState().getValue());
-//		attToOutput.put(RequestAttribute.INSTANCE_ID.getValue(), request.getInstanceId());
 		attToOutput.put(RequestAttribute.INSTANCE_ID.getValue(), request.getGlobalInstanceId());		
 		
 		for (String attName : attToOutput.keySet()) {
@@ -258,7 +256,7 @@ public class RequestServerResource extends ServerResource {
 	static protected Map<String, String> normalizeRequirements(List<Category> categories, Map<String, String> xOCCIAtt, List<Flavor> listFlavorsFogbow) {
 		String requirementsAttr = xOCCIAtt.get(RequestAttribute.REQUIREMENTS.getValue());
 		if (requirementsAttr != null) {
-			if (!RequirementsHelper.checkRequirements(requirementsAttr)) {
+			if (!RequirementsHelper.checkSyntax(requirementsAttr)) {
 				throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.UNSUPPORTED_ATTRIBUTES);
 			}			
 		}				

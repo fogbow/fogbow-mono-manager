@@ -6,196 +6,211 @@ import java.util.List;
 import org.fogbowcloud.manager.core.RequirementsHelper.ValueAndOperator;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 import condor.classad.ClassAdParser;
+import condor.classad.Expr;
 import condor.classad.Op;
 
 public class TestRequirementsHelper {
 
-	private RequirementsHelper requirementsHelper;
-
-	@Before
-	public void setUp() {
-		this.requirementsHelper = new RequirementsHelper();
-	}
-
-	@SuppressWarnings("static-access")
 	@Test
-	public void TestCheckValidRequirements() {
+	public void testCheckValidRequirements() {
 		String requirementsString = "X == 1 && Y >= 0";
-		Assert.assertTrue(requirementsHelper.checkRequirements(requirementsString));
+		Assert.assertTrue(RequirementsHelper.checkSyntax(requirementsString));
 	}
 
-	@SuppressWarnings("static-access")
 	@Test
-	public void TestCheckInvalidRequirements() {
-		String wrongRequirementsString = "X (Wrong) 1 && Y == 0";
-		Assert.assertFalse(requirementsHelper.checkRequirements(wrongRequirementsString));
+	public void testCheckInvalidRequirements() {
+		String wrongRequirementsString = "X (W =rong) 1 && Y == 0";
+		Assert.assertFalse(RequirementsHelper.checkSyntax(wrongRequirementsString));
 	}
-
-	@SuppressWarnings("static-access")
+	
 	@Test
-	public void TestNormalizeAttrForCheck() {
+	public void testNormalizeAttrForCheck() {
 		String value = "teste";
 		String valueExpected = "\"" + value + "\"";
-		Assert.assertEquals(valueExpected, requirementsHelper.normalizeLocationToCheck(value));
+		Assert.assertEquals(valueExpected, RequirementsHelper.quoteLocation(value));
 		Assert.assertEquals(valueExpected,
-				requirementsHelper.normalizeLocationToCheck(valueExpected));
-		Assert.assertNull(requirementsHelper.normalizeLocationToCheck(null));
+				RequirementsHelper.quoteLocation(valueExpected));
+		Assert.assertNull(RequirementsHelper.quoteLocation(null));
 	}
-
-	@SuppressWarnings("static-access")
+	
 	@Test
-	public void TestMatchLocation() {
+	public void testMatchLocation() {
 		String value = "\"valueCorrect\"";
 		String requirementsStr = "x==1 && " + RequirementsHelper.GLUE_LOCATION_TERM + "==" + value;
-		Assert.assertTrue(requirementsHelper.matchLocation(requirementsStr, value));
+		Assert.assertTrue(RequirementsHelper.matchLocation(requirementsStr, value));
 
 		value = "valueCorrect";
 		requirementsStr = RequirementsHelper.GLUE_LOCATION_TERM + "==" + "\"" + value + "\"";
-		Assert.assertTrue(requirementsHelper.matchLocation(requirementsStr, value));
+		Assert.assertTrue(RequirementsHelper.matchLocation(requirementsStr, value));
 		
 		// ignored location with "!="
 		value = "valueCorrect";
 		requirementsStr = RequirementsHelper.GLUE_LOCATION_TERM + "!=" + "\"" + value + "\"";
-		Assert.assertTrue(requirementsHelper.matchLocation(requirementsStr, value));
+		Assert.assertTrue(RequirementsHelper.matchLocation(requirementsStr, value));
 
 		// ignored location with "!="
 		value = "valueCorrect";
 		requirementsStr = "(" + RequirementsHelper.GLUE_LOCATION_TERM + "!=" + "\"" + value + "\")" + "||X==1";
-		Assert.assertTrue(requirementsHelper.matchLocation(requirementsStr, value));		
+		Assert.assertTrue(RequirementsHelper.matchLocation(requirementsStr, value));		
+		
+		value = "valueCorrect";
+		requirementsStr = "";
+		Assert.assertTrue(RequirementsHelper.matchLocation(requirementsStr, value));				
 	}
 	
-	@SuppressWarnings("static-access")
+	
 	@Test
-	public void TestMatchLocationSameValue() {
+	public void testMatchLocationSameValue() {
 		String value = "\"valueCorrect\"";
 		String requirementsStr = RequirementsHelper.GLUE_LOCATION_TERM + "==" + value + " && " + RequirementsHelper.GLUE_LOCATION_TERM + "==" + value;
-		Assert.assertTrue(requirementsHelper.matchLocation(requirementsStr, value));		
+		Assert.assertTrue(RequirementsHelper.matchLocation(requirementsStr, value));		
 	}
 	
-	@SuppressWarnings("static-access")
+	
 	@Test
-	public void TestMatchLocationNull() {
+	public void testMatchLocationNull() {
 		String value = "\"valueCorrect\"";
 		String requirementsStr = "x==1 && x>9";
-		Assert.assertTrue(requirementsHelper.matchLocation(requirementsStr, value));
+		Assert.assertTrue(RequirementsHelper.matchLocation(requirementsStr, value));
 	}
 	
-	@SuppressWarnings("static-access")
+	
 	@Test
-	public void TestMatchLocationWrongExpression() {
+	public void testMatchLocationWrongExpression() {
 		String value = "\"valueCorrect\"";
 		String requirementsStr = "x==1 && " + RequirementsHelper.GLUE_LOCATION_TERM + "=\"\"";
-		Assert.assertTrue(requirementsHelper.matchLocation(requirementsStr, value));
+		Assert.assertTrue(RequirementsHelper.matchLocation(requirementsStr, value));
 	}	
 
 	@Test
-	public void TestGetOneLocation() {
+	public void testGetOneLocation() {
 		String value = "local1";
 		String requirementsStr = "x==1 && " + RequirementsHelper.GLUE_LOCATION_TERM + "==" + value;
-		Assert.assertEquals(1, RequirementsHelper.getLocationsInRequiremets(requirementsStr).size());
+		Assert.assertEquals(1, RequirementsHelper.getLocations(requirementsStr).size());
 
 		requirementsStr = RequirementsHelper.GLUE_LOCATION_TERM + "==" + value;
-		Assert.assertEquals(1, RequirementsHelper.getLocationsInRequiremets(requirementsStr).size());
+		Assert.assertEquals(1, RequirementsHelper.getLocations(requirementsStr).size());
 	}
 
 	@Test
-	public void TestGetTwoLocation() {
+	public void testGetTwoLocation() {
 		String value = "local1";
 		String valueTwo = "local2";
 		String requirementsStr = "x==1 && " + RequirementsHelper.GLUE_LOCATION_TERM + "==" + value
 				+ "&&" + RequirementsHelper.GLUE_LOCATION_TERM + "==" + valueTwo;
-		Assert.assertEquals(2, RequirementsHelper.getLocationsInRequiremets(requirementsStr).size());
+		Assert.assertEquals(2, RequirementsHelper.getLocations(requirementsStr).size());
 	}
 
 	@Test
-	public void TestGetOneLocationWithTwoValues() {
+	public void testGetOneLocationWithTwoValues() {
 		String value = "local1";
 		String valueTwo = "local2";
 		String requirementsStr = "x==1 && " + RequirementsHelper.GLUE_LOCATION_TERM + "==" + value
 				+ "&&" + RequirementsHelper.GLUE_LOCATION_TERM + "!=" + valueTwo;
-		Assert.assertEquals(1, RequirementsHelper.getLocationsInRequiremets(requirementsStr).size());
+		Assert.assertEquals(1, RequirementsHelper.getLocations(requirementsStr).size());
 	}
 	
 	@Test
-	public void TestExistsLocation() {
+	public void testExistsLocation() {
 		String value = "local1";
 		String requirementsStr = "x==1 && " + RequirementsHelper.GLUE_LOCATION_TERM + "==" + value;
-		Assert.assertTrue(RequirementsHelper.existsLocation(requirementsStr));
+		Assert.assertTrue(RequirementsHelper.hasLocation(requirementsStr));
 
 		requirementsStr = RequirementsHelper.GLUE_LOCATION_TERM + "==" + value;
-		Assert.assertTrue(RequirementsHelper.existsLocation(requirementsStr));
+		Assert.assertTrue(RequirementsHelper.hasLocation(requirementsStr));
 		
 		requirementsStr =  "X ==" + value;
-		Assert.assertFalse(RequirementsHelper.existsLocation(requirementsStr));
+		Assert.assertFalse(RequirementsHelper.hasLocation(requirementsStr));
 		
 		requirementsStr = RequirementsHelper.GLUE_LOCATION_TERM + "==" + value + "|| X==" + value;
-		Assert.assertTrue(RequirementsHelper.existsLocation(requirementsStr));
+		Assert.assertTrue(RequirementsHelper.hasLocation(requirementsStr));
 	}
 
-	@SuppressWarnings("static-access")
+	@Test 
+	public void testGetLocationNoRequirements() {
+		String requirementsStr = "";
+		Assert.assertEquals(0, RequirementsHelper.getLocations(requirementsStr).size());		
+	}
+	
 	@Test
-	public void TestCheckFlavor() {
+	public void testCheckFlavor() {
 		Flavor flavor = new Flavor("test", "12", "400", "11");
 		String disk = RequirementsHelper.GLUE_DISK_TERM;
 		String mem = RequirementsHelper.GLUE_MEM_RAM_TERM;
 		String vCpu = RequirementsHelper.GLUE_VCPU_TERM;
 		String requirementsStr = disk + " > 10 && " + mem + " < 500 && " + vCpu + " >= 10";
-		Assert.assertTrue(requirementsHelper.checkFlavorPerRequirements(flavor, requirementsStr));
+		Assert.assertTrue(RequirementsHelper.matches(flavor, requirementsStr));
 	}
 	
-	@SuppressWarnings("static-access")
+	
 	@Test
-	public void TestCheckFlavorWithDiskEmpty() {
+	public void testCheckFlavorWithDiskEmpty() {
 		Flavor flavor = new Flavor("test", "12", "400", "0");
 		String disk = RequirementsHelper.GLUE_DISK_TERM;
 		String mem = RequirementsHelper.GLUE_MEM_RAM_TERM;
 		String vCpu = RequirementsHelper.GLUE_VCPU_TERM;
 		String requirementsStr = disk + " > 10 && " + mem + " < 500 && " + vCpu + " >= 10";
-		Assert.assertTrue(requirementsHelper.checkFlavorPerRequirements(flavor, requirementsStr));
+		Assert.assertTrue(RequirementsHelper.matches(flavor, requirementsStr));
 		
 		flavor = new Flavor("test", "12", "400", "");
 		flavor.setDisk(null);
-		Assert.assertTrue(requirementsHelper.checkFlavorPerRequirements(flavor, requirementsStr));
-	}	
+		Assert.assertTrue(RequirementsHelper.matches(flavor, requirementsStr));
+	}
 	
-	@SuppressWarnings("static-access")
+	
 	@Test
-	public void TestCheckFlavorWithLocation() {
+	public void testCheckFlavorWithoutGLUEExpressions() {
+		Flavor flavor = new Flavor("test", "12", "400", "10");
+		String requirementsStr = "x == 2";
+		
+		Assert.assertTrue(RequirementsHelper.matches(flavor, requirementsStr));
+	}		
+	
+	
+	@Test
+	public void testCheckFlavorWithRequirementsNullOrEmpty() {
+		Flavor flavor = new Flavor("test", "12", "400", "10");
+		// empty
+		String requirementsStr = "";		
+		Assert.assertTrue(RequirementsHelper.matches(flavor, requirementsStr));
+		
+		// null
+		requirementsStr = null;
+		Assert.assertTrue(RequirementsHelper.matches(flavor, requirementsStr));
+	}		
+	
+	
+	@Test
+	public void testCheckFlavorWithLocation() {
 		Flavor flavor = new Flavor("test", "12", "400", "11");
 		String disk = RequirementsHelper.GLUE_DISK_TERM;
 		String mem = RequirementsHelper.GLUE_MEM_RAM_TERM;
 		String vCpu = RequirementsHelper.GLUE_VCPU_TERM;
 		String location = RequirementsHelper.GLUE_LOCATION_TERM;
 		String requirementsStr = disk + " > 10 && " + mem + " < 500 && " + vCpu + " >= 10 && " + location + "==\"location\"";
-		Assert.assertTrue(requirementsHelper.checkFlavorPerRequirements(flavor, requirementsStr));
+		Assert.assertTrue(RequirementsHelper.matches(flavor, requirementsStr));
 	}
 
-	@SuppressWarnings("static-access")
+	
 	@Test
-	public void TestCheckInvalidFlavor() {
+	public void testCheckInvalidFlavor() {
 		Flavor flavor = new Flavor("test", "12", "400", "9");
 		String disk = RequirementsHelper.GLUE_DISK_TERM;
 		String mem = RequirementsHelper.GLUE_MEM_RAM_TERM;
 		String vCpu = RequirementsHelper.GLUE_VCPU_TERM;
 		String requirementsStr = disk + " > 10 && " + mem + " < 500 && " + vCpu + " >= 10";
-		Assert.assertFalse(requirementsHelper.checkFlavorPerRequirements(flavor, requirementsStr));
+		Assert.assertFalse(RequirementsHelper.matches(flavor, requirementsStr));
+		
+		requirementsStr = disk + " < 10 && " + mem + " < 200 && " + vCpu + " < 2 && X == true" ;
+		Assert.assertFalse(RequirementsHelper.matches(flavor, requirementsStr));				
 	}
-	
-	@SuppressWarnings("static-access")
-	@Test
-	public void TestCheckFlavorWithNullRequirements() {
-		Flavor flavor = new Flavor("test", "12", "400", "9");
-		String requirementsStr = null;
-		Assert.assertFalse(requirementsHelper.checkFlavorPerRequirements(flavor, requirementsStr));
-	}	
 
-	@SuppressWarnings("static-access")
+	
 	@Test
-	public void TestFindFlavor() {
+	public void testFindFlavor() {
 		String firstValue = "1";
 		Flavor flavorOne = new Flavor("One", firstValue, "1", "100", "10");
 		Flavor flavorTwo = new Flavor("Two", "2", "2", "200", "20");
@@ -211,13 +226,12 @@ public class TestRequirementsHelper {
 		String vCpu = RequirementsHelper.GLUE_VCPU_TERM;
 		String requirementsStr = disk + " > 5 && " + mem + " > 50 && " + vCpu + " > 0";
 
-		Assert.assertEquals(firstValue, requirementsHelper.findFlavor(flavors, requirementsStr)
+		Assert.assertEquals(firstValue, RequirementsHelper.findSmallestFlavor(flavors, requirementsStr)
 				.getId());
 	}
 	
-	@SuppressWarnings("static-access")
 	@Test
-	public void TestFindFlavorWithOutDisk() {
+	public void testFindFlavorWithOutDisk() {
 		String firstValue = "1";
 		Flavor flavorOne = new Flavor("One", firstValue, "1", "100", "10");
 		flavorOne.setDisk(null);
@@ -236,13 +250,13 @@ public class TestRequirementsHelper {
 		String vCpu = RequirementsHelper.GLUE_VCPU_TERM;
 		String requirementsStr = disk + " > 5 && " + mem + " > 50 && " + vCpu + " > 0";
 
-		Assert.assertEquals(firstValue, requirementsHelper.findFlavor(flavors, requirementsStr)
+		Assert.assertEquals(firstValue, RequirementsHelper.findSmallestFlavor(flavors, requirementsStr)
 				.getId());
 	}	
 
-	@SuppressWarnings("static-access")
+	
 	@Test
-	public void TestFindFlavorSameMenAndCore() {
+	public void testFindFlavorSameMenAndCore() {
 		String firstValue = "1";
 		Flavor flavorOne = new Flavor("One", firstValue, "1", "100", "10");
 		Flavor flavorTwo = new Flavor("Two", "2", "1", "100", "20");
@@ -256,7 +270,7 @@ public class TestRequirementsHelper {
 		String vCpu = RequirementsHelper.GLUE_VCPU_TERM;
 		String requirementsStr = disk + " > 5 && " + mem + " > 50 && " + vCpu + " > 0";
 
-		Assert.assertEquals(firstValue, requirementsHelper.findFlavor(flavors, requirementsStr)
+		Assert.assertEquals(firstValue, RequirementsHelper.findSmallestFlavor(flavors, requirementsStr)
 				.getId());
 	}	
 	
@@ -289,22 +303,25 @@ public class TestRequirementsHelper {
 	}
 	
 	@Test
-	public void testNormalizeOp() {		
+	public void testExtractVariableExpression() {		
 		String requirementsStr = "(((X>1) && (Y==1)) || Y<10) && Y==10 && X>10";
-		Op normalizeOPTypeTwo = RequirementsHelper.normalizeOP(toOp(requirementsStr), "X");
+		Expr normalizeOPTypeTwo = RequirementsHelper.extractVariableExpression(toOp(requirementsStr), "X");
 		Assert.assertEquals("((X>1)&&(X>10))", normalizeOPTypeTwo.toString());
 		
 		requirementsStr = "((X>1) && (Y==1))";
-		normalizeOPTypeTwo = RequirementsHelper.normalizeOP(toOp(requirementsStr), "X");
+		normalizeOPTypeTwo = RequirementsHelper.extractVariableExpression(toOp(requirementsStr), "X");
 		Assert.assertEquals("(X>1)", normalizeOPTypeTwo.toString());
 		
 		requirementsStr = "((X>1) && (Y==1))";
-		normalizeOPTypeTwo = RequirementsHelper.normalizeOP(toOp(requirementsStr), "X");
+		normalizeOPTypeTwo = RequirementsHelper.extractVariableExpression(toOp(requirementsStr), "X");
 		Assert.assertEquals("(X>1)", normalizeOPTypeTwo.toString());
 		
 		requirementsStr = "((X>1) && (Y==1) && (X>1) && (Y==1))";
-		normalizeOPTypeTwo = RequirementsHelper.normalizeOP(toOp(requirementsStr), "X");
+		normalizeOPTypeTwo = RequirementsHelper.extractVariableExpression(toOp(requirementsStr), "X");
 		Assert.assertEquals("((X>1)&&(X>1))", normalizeOPTypeTwo.toString());
+		
+		requirementsStr = "(X>1)";
+		Assert.assertNull(RequirementsHelper.extractVariableExpression(toOp(requirementsStr), "A"));		
 	}
 	
 	@Test
@@ -313,16 +330,20 @@ public class TestRequirementsHelper {
 		listAtt.add("X");
 		listAtt.add("Y");
 		String requirementsStr = "(((X>1) && (Y==1)) || Y<10) && Y==10 && X>10";
-		Op normalizeOPTypeTwo = RequirementsHelper.normalizeOP(toOp(requirementsStr), listAtt);
+		Expr normalizeOPTypeTwo = RequirementsHelper.extractVariablesExpression(toOp(requirementsStr), listAtt);
 		Assert.assertEquals("(((((X>1)&&(Y==1))||(Y<10))&&(Y==10))&&(X>10))", normalizeOPTypeTwo.toString());
 
 		requirementsStr = "W>=0 && ((((X>1) && (Y==1)) || Y<10) && Y==10 && X>10)";
-		normalizeOPTypeTwo = RequirementsHelper.normalizeOP(toOp(requirementsStr), listAtt);
+		normalizeOPTypeTwo = RequirementsHelper.extractVariablesExpression(toOp(requirementsStr), listAtt);
 		Assert.assertEquals("(((((X>1)&&(Y==1))||(Y<10))&&(Y==10))&&(X>10))", normalizeOPTypeTwo.toString());
 		
 		requirementsStr = "(W>=0 || X<=1) && ((((X>1) && (Y==1)) || Y<10) && Y==10 && X>10)";
-		normalizeOPTypeTwo = RequirementsHelper.normalizeOP(toOp(requirementsStr), listAtt);
+		normalizeOPTypeTwo = RequirementsHelper.extractVariablesExpression(toOp(requirementsStr), listAtt);
 		Assert.assertEquals("((X<=1)&&(((((X>1)&&(Y==1))||(Y<10))&&(Y==10))&&(X>10)))", normalizeOPTypeTwo.toString());
+		
+		listAtt.clear();
+		normalizeOPTypeTwo = RequirementsHelper.extractVariablesExpression(toOp(requirementsStr), listAtt);
+		Assert.assertNull(normalizeOPTypeTwo);		
 	}	
 	
 	@Test
@@ -341,7 +362,24 @@ public class TestRequirementsHelper {
 		attName = "X";
 		findValuesInRequiremets = RequirementsHelper.findValuesInRequiremets(toOp(requirements), attName);
 		Assert.assertEquals(4, findValuesInRequiremets.size());
+		
+		requirements = "X==\"id1\" || (X==\"id2\" && X==\"id3\") || X == \"\"";
+		attName = "Y";
+		findValuesInRequiremets = RequirementsHelper.findValuesInRequiremets(toOp(requirements), attName);
+		Assert.assertEquals(0, findValuesInRequiremets.size());		
 	}
+	
+	@Test
+	public void testTrueGetSmallestValueForAttribute() {
+		String requirementsStr = "true";
+		Assert.assertEquals("0", RequirementsHelper.getSmallestValueForAttribute(requirementsStr, RequirementsHelper.GLUE_VCPU_TERM));
+	}
+	
+	@Test
+	public void testEmptyGetSmallestValueForAttribute() {
+		String requirementsStr = "";
+		Assert.assertEquals("0", RequirementsHelper.getSmallestValueForAttribute(requirementsStr, RequirementsHelper.GLUE_VCPU_TERM));
+	}	
 	
 	private Op toOp(String requirementsStr) {
 		ClassAdParser classAdParser = new ClassAdParser(requirementsStr);

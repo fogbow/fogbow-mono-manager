@@ -19,7 +19,6 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
-import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.util.Credential;
 import org.fogbowcloud.manager.occi.model.ErrorType;
@@ -35,6 +34,10 @@ public class KeystoneIdentityPlugin implements IdentityPlugin {
 
 	public static final String OPEN_STACK_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss'Z'";
 
+	public static final String FEDERATION_USER_NAME_KEY = "local_proxy_account_user_name";
+	public static final String FEDERATION_USER_PASS_KEY = "local_proxy_account_password";
+	public static final String FEDERATION_USER_TENANT_NAME_KEY = "local_proxy_account_tenant_name";
+	
 	// keystone json data
 	public static final String TENANT_NAME_PROP = "tenantName";
 	public static final String USERNAME_PROP = "username";
@@ -73,7 +76,7 @@ public class KeystoneIdentityPlugin implements IdentityPlugin {
 
 	public KeystoneIdentityPlugin(Properties properties) {
 		this.properties = properties;
-		this.keystoneUrl = properties.getProperty(ConfigurationConstants.IDENTITY_URL);
+		this.keystoneUrl = properties.getProperty("identity_url");
 		this.v2TokensEndpoint = keystoneUrl + V2_TOKENS_ENDPOINT_PATH;
 		this.v2TenantsEndpoint = keystoneUrl + V2_TENANTS_ENDPOINT_PATH;
 	}
@@ -298,11 +301,12 @@ public class KeystoneIdentityPlugin implements IdentityPlugin {
 			for (int i = 0; i < tenantsStone.length(); i++) {
 				String currentTenantName = tenantsStone.getJSONObject(i).getString(NAME_PROP);
 				// if tenantName is not the same of fogbow tenant
-				if (currentTenantName != null && !currentTenantName.equals(properties
-						.getProperty(ConfigurationConstants.FEDERATION_USER_TENANT_NAME_KEY))){
+				if (currentTenantName != null
+						&& !currentTenantName.equals(properties
+								.getProperty("local_proxy_account_user_name"))) {
 					return currentTenantName;
 				}
-				
+
 			}
 			return tenantsStone.getJSONObject(0).getString(NAME_PROP); // getting first tenant
 		} catch (JSONException e) {
@@ -343,14 +347,13 @@ public class KeystoneIdentityPlugin implements IdentityPlugin {
 	@Override
 	public Token createFederationUserToken() {
 		Map<String, String> federationUserCredentials = new HashMap<String, String>();
-		String username = properties.getProperty(ConfigurationConstants.FEDERATION_USER_NAME_KEY);
-		String password = properties.getProperty(ConfigurationConstants.FEDERATION_USER_PASS_KEY);
-		String tenantName = properties
-				.getProperty(ConfigurationConstants.FEDERATION_USER_TENANT_NAME_KEY);
+		String username = properties.getProperty(FEDERATION_USER_NAME_KEY);
+		String password = properties.getProperty(FEDERATION_USER_PASS_KEY);
+		String tenantName = properties.getProperty(FEDERATION_USER_TENANT_NAME_KEY);
 		federationUserCredentials.put(USERNAME, username);
 		federationUserCredentials.put(PASSWORD, password);
 		federationUserCredentials.put(TENANT_NAME, tenantName);
-		
+
 		return createToken(federationUserCredentials, false);
 	}
 

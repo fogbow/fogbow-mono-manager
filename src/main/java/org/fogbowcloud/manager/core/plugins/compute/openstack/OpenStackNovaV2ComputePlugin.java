@@ -702,7 +702,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 	public Flavor getFlavor(Token token, String requirements) {
 		updateFlavors(token);
 		// Finding flavor
-		return RequirementsHelper.findFlavor(getFlavors(), requirements);
+		return RequirementsHelper.findSmallestFlavor(getFlavors(), requirements);
 	}
 	
 	@Override

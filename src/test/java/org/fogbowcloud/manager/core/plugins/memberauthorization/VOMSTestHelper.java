@@ -3,7 +3,6 @@ package org.fogbowcloud.manager.core.plugins.memberauthorization;
 import java.util.Arrays;
 import java.util.Properties;
 
-import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.CertificateUtils;
 import org.fogbowcloud.manager.core.plugins.identity.voms.Fixture;
 import org.fogbowcloud.manager.core.plugins.identity.voms.Utils;
@@ -28,12 +27,12 @@ public class VOMSTestHelper {
 				.getCertificateChain()), proxy.getCredential());
 		
 		Properties properties = new Properties();
-		properties.put(ConfigurationConstants.VOMS_PATH_TRUST_ANCHORS,
+		properties.put(VomsIdentityPlugin.PROP_PATH_TRUST_ANCHORS,
 				"src/test/resources/voms/trust-anchors");
-		properties.put(ConfigurationConstants.VOMS_PATH_VOMSES, "src/test/resources/voms/vomses");
-		properties.put(ConfigurationConstants.VOMS_PATH_VOMSDIR, "src/test/resources/voms/vomsdir");
-		properties.put(ConfigurationConstants.FEDERATION_USER_PASS_VOMS, VOMS_PASSWORD);
-		properties.put(ConfigurationConstants.FEDERATION_USER_SERVER_VOMS, VOMS_SERVER);
+		properties.put(VomsIdentityPlugin.PROP_PATH_VOMSES, "src/test/resources/voms/vomses");
+		properties.put(VomsIdentityPlugin.PROP_PATH_VOMSDIR, "src/test/resources/voms/vomsdir");
+		properties.put(VomsIdentityPlugin.PROP_VOMS_FEDERATION_USER_PASS, VOMS_PASSWORD);
+		properties.put(VomsIdentityPlugin.PROP_VOMS_FEDERATION_USER_SERVER, VOMS_SERVER);
 
 		VomsIdentityPlugin vomsIdentityPlugin = new VomsIdentityPlugin(properties);
 		ProxyCertificateGenerator generatorProxyCertificate = Mockito.mock(ProxyCertificateGenerator.class);

@@ -95,7 +95,7 @@ local_proxy_account_user_name=fogbow
 local_proxy_account_password=fogbow
 local_proxy_account_tenant_name=demo
 
-member_validator=org.fogbowcloud.manager.core.plugins.memberauthorization.DefaultMemberAuthorizationPlugin
+member_validator_class=org.fogbowcloud.manager.core.plugins.memberauthorization.DefaultMemberAuthorizationPlugin
 member_validator_ca_dir=
 
 cert_path=
@@ -107,10 +107,10 @@ served_request_monitoring_period=120000
 garbage_collector_period=240000
 asyn_request_waiting_interval=300000
 
-ssh_tunnel_public_host=150.165.80.1
-ssh_tunnel_private_host=10.0.0.1
-ssh_tunnel_host_http_port=2223
-ssh_tunnel_host_port=2222
+token_host_public_address=150.165.80.1
+token_host_private_address=10.0.0.1
+token_host_http_port=2223
+token_host_port=2222
 
 my_ip=127.0.0.1
 

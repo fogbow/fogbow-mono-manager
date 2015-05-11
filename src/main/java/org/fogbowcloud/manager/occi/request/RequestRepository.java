@@ -116,6 +116,16 @@ public class RequestRepository {
 		}
 	}
 
+	public List<Request> getAllRequests() {
+		List<Request> allRequests = new LinkedList<Request>();
+		for (List<Request> userRequests : requests.values()) {
+			for (Request request : userRequests) {
+				allRequests.add(request);
+			}
+		}
+		return allRequests;
+	}
+	
 	public List<Request> getAllLocalRequests() {
 		List<Request> allLocalRequests = new LinkedList<Request>();
 		for (List<Request> userRequests : requests.values()) {

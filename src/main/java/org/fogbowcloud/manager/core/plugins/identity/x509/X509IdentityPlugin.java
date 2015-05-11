@@ -21,7 +21,6 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.bouncycastle.util.io.pem.PemObject;
-import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.CertificateUtils;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.util.Credential;
@@ -147,8 +146,8 @@ public class X509IdentityPlugin implements IdentityPlugin {
 		}
 	}
 
-	private Set<TrustAnchor> getCACertificates() {
-		String caDirPath = properties.getProperty(ConfigurationConstants.X509_CA_DIR_PATH_KEY);
+	private Set<TrustAnchor> getCACertificates() {		
+		String caDirPath = properties.getProperty("x509_ca_dir_path");
 		File caDir = new File(caDirPath);
 		if (!caDir.exists() || !caDir.isDirectory()) {
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.INVALID_CA_DIR);
@@ -181,8 +180,8 @@ public class X509IdentityPlugin implements IdentityPlugin {
 	@Override
 	public Token createFederationUserToken() {
 		Map<String, String> credentials = new HashMap<String, String>();
-		credentials.put(CERTIFICATE_PATH_KEY, properties
-				.getProperty(ConfigurationConstants.FEDERATION_USER_X509_CERTIFICATE_PATH_KEY));
+		credentials.put(CERTIFICATE_PATH_KEY,
+				properties.getProperty("local_proxy_account_x509_certificate_path"));
 		return createToken(credentials);
 	}
 

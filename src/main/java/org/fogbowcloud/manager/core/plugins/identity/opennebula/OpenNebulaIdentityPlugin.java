@@ -6,7 +6,6 @@ import java.util.Properties;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.log4j.Logger;
-import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.compute.opennebula.OpenNebulaClientFactory;
 import org.fogbowcloud.manager.core.plugins.util.Credential;
@@ -36,7 +35,7 @@ public class OpenNebulaIdentityPlugin implements IdentityPlugin {
 		
 	public OpenNebulaIdentityPlugin(Properties properties, OpenNebulaClientFactory clientFactory) {
 		this.properties = properties;
-		this.openNebulaEndpoint = properties.getProperty(ConfigurationConstants.IDENTITY_URL);
+		this.openNebulaEndpoint = properties.getProperty("identity_url");
 		this.clientFactory = clientFactory;
 	}
 
@@ -101,8 +100,8 @@ public class OpenNebulaIdentityPlugin implements IdentityPlugin {
 	@Override
 	public Token createFederationUserToken() {
 		Map<String, String> federationUserCredentials = new HashMap<String, String>();
-		String username = properties.getProperty(ConfigurationConstants.FEDERATION_USER_NAME_KEY);
-		String password = properties.getProperty(ConfigurationConstants.FEDERATION_USER_PASS_KEY);
+		String username = properties.getProperty("local_proxy_account_user_name");
+		String password = properties.getProperty("local_proxy_account_password");
 
 		federationUserCredentials.put(USERNAME, username);
 		federationUserCredentials.put(USER_PASSWORD, password);		

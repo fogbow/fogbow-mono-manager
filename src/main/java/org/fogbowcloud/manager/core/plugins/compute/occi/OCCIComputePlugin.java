@@ -390,7 +390,7 @@ public class OCCIComputePlugin implements ComputePlugin {
 	}
 
 	protected Flavor getFlavor(Token token, String requirements) {
-		return RequirementsHelper.findFlavor(getFlavors(), requirements);
+		return RequirementsHelper.findSmallestFlavor(getFlavors(), requirements);
 	}
 	
 	protected void setFlavorsProvided(Properties properties) {		

@@ -81,9 +81,9 @@ public class TestBypassCompute {
 		properties.put(OpenStackConfigurationConstants.COMPUTE_OCCI_FLAVOR_LARGE_KEY, OCCIComputeApplication.MEDIUM_FLAVOR_TERM);
 		properties.put(OpenStackConfigurationConstants.COMPUTE_OCCI_IMAGE_PREFIX + PluginHelper.LINUX_X86_TERM, PluginHelper.CIRROS_IMAGE_TERM);
 		properties.put(ConfigurationConstants.SCHEDULER_PERIOD_KEY, LITTLE_SCHEDULE_TIME);
-		properties.put(ConfigurationConstants.TUNNEL_SSH_PRIVATE_HOST_KEY,
+		properties.put(ConfigurationConstants.TOKEN_HOST_PRIVATE_ADDRESS_KEY,
 				DefaultDataTestHelper.SERVER_HOST);
-		properties.put(ConfigurationConstants.TUNNEL_SSH_HOST_HTTP_PORT_KEY,
+		properties.put(ConfigurationConstants.TOKEN_HOST_HTTP_PORT_KEY,
 				String.valueOf(DefaultDataTestHelper.TOKEN_SERVER_HTTP_PORT));
 		
 		defaultToken = new Token(PluginHelper.ACCESS_ID, PluginHelper.USERNAME,
