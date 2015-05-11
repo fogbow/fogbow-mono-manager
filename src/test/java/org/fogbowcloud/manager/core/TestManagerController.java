@@ -54,6 +54,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
+import org.mockito.internal.verification.VerificationModeFactory;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.xmpp.packet.IQ;
@@ -208,7 +209,7 @@ public class TestManagerController {
 		managerController.setRequests(requestRepository);
 		managerController.checkAndSubmitOpenRequests();
 		        
-		Mockito.verify(packetSender).sendPacket(Mockito.argThat(new ArgumentMatcher<IQ>() {
+		Mockito.verify(packetSender, VerificationModeFactory.times(2)).sendPacket(Mockito.argThat(new ArgumentMatcher<IQ>() {
 			@Override
 			public boolean matches(Object argument) {
 				IQ iq = (IQ) argument;
@@ -267,7 +268,7 @@ public class TestManagerController {
 		managerController.setRequests(requestRepository);
 		managerController.checkAndSubmitOpenRequests();
 		        
-		Mockito.verify(packetSender).sendPacket(Mockito.argThat(new ArgumentMatcher<IQ>() {
+		Mockito.verify(packetSender, VerificationModeFactory.times(2)).sendPacket(Mockito.argThat(new ArgumentMatcher<IQ>() {
 			@Override
 			public boolean matches(Object argument) {
 				IQ iq = (IQ) argument;
@@ -1669,13 +1670,12 @@ public class TestManagerController {
 				null, new ArrayList<Category>(), xOCCIAtt,
 				false, "abc");
 		
-		Assert.assertEquals("answer",
-				managerController.createInstanceWithFederationUser(request));
+		Assert.assertTrue(managerController.createLocalInstanceWithFederationUser(request));
 
 		Mockito.doReturn(false).when(validatorMock).canDonateTo(Mockito.eq(member), Mockito.any(Token.class));
 		managerController.setValidator(validatorMock);
 		
-		Assert.assertNull(managerController.createInstanceWithFederationUser(request));
+		Assert.assertFalse(managerController.createLocalInstanceWithFederationUser(request));
 	}
 		
 	@SuppressWarnings("unchecked")
@@ -1707,8 +1707,7 @@ public class TestManagerController {
 				null, new ArrayList<Category>(), xOCCIAtt,
 				false, "abc");
 		
-		Assert.assertEquals("answer",
-				managerController.createInstanceWithFederationUser(request));
+		Assert.assertTrue(managerController.createLocalInstanceWithFederationUser(request));
 
 		Mockito.verify(packetSender).sendPacket(Mockito.argThat(new ArgumentMatcher<IQ>() {
 			@Override
@@ -1755,7 +1754,7 @@ public class TestManagerController {
 				null, new ArrayList<Category>(), xOCCIAtt,
 				false, "abc");
 		
-		Assert.assertNull(managerController.createInstanceWithFederationUser(request));
+		Assert.assertFalse(managerController.createLocalInstanceWithFederationUser(request));
 
 		Mockito.verify(packetSender).sendPacket(Mockito.argThat(new ArgumentMatcher<IQ>() {
 			@Override
@@ -2326,7 +2325,7 @@ public class TestManagerController {
 		Mockito.when(spiedManageController.waitForSSHPublicAddress(Mockito.any(Request.class))).thenReturn(instance);
 		Mockito.doNothing().when(spiedManageController).waitForSSHConnectivity(instance);
 		
-		spiedManageController.createInstanceWithFederationUser(servedRequest);
+		spiedManageController.createLocalInstanceWithFederationUser(servedRequest);
 		
 		final String localManagerPublicKeyData = IOUtils.toString(new FileInputStream(
 				new File(DefaultDataTestHelper.LOCAL_MANAGER_SSH_PUBLIC_KEY_PATH)));
@@ -2390,7 +2389,7 @@ public class TestManagerController {
 		Mockito.when(spiedManageController.waitForSSHPublicAddress(Mockito.any(Request.class))).thenReturn(instance);
 		Mockito.doNothing().when(spiedManageController).waitForSSHConnectivity(instance);
 		
-		spiedManageController.createInstanceWithFederationUser(servedRequest);
+		spiedManageController.createLocalInstanceWithFederationUser(servedRequest);
 		
 		final String localManagerPublicKeyData = IOUtils.toString(new FileInputStream(
 				new File(DefaultDataTestHelper.LOCAL_MANAGER_SSH_PUBLIC_KEY_PATH)));
@@ -2445,7 +2444,7 @@ public class TestManagerController {
 		servedRequest.setInstanceId(instanceId);
 		servedRequest.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		
-		managerControllerSpy.createInstanceWithFederationUser(servedRequest);
+		managerControllerSpy.createLocalInstanceWithFederationUser(servedRequest);
 		
 		Mockito.verify(managerControllerSpy, Mockito.never()).waitForSSHPublicAddress(Mockito.eq(servedRequest));
 		
@@ -2498,7 +2497,7 @@ public class TestManagerController {
 		Mockito.when(spiedManageController.waitForSSHPublicAddress(Mockito.any(Request.class))).thenReturn(instance);
 		Mockito.doNothing().when(spiedManageController).waitForSSHConnectivity(instance);
 		
-		spiedManageController.createInstanceWithFederationUser(localRequest);
+		spiedManageController.createLocalInstanceWithFederationUser(localRequest);
 		
 		final String localManagerPublicKeyData = IOUtils.toString(new FileInputStream(
 				new File(DefaultDataTestHelper.LOCAL_MANAGER_SSH_PUBLIC_KEY_PATH)));
@@ -2562,7 +2561,7 @@ public class TestManagerController {
 		Mockito.when(spiedManageController.waitForSSHPublicAddress(Mockito.any(Request.class))).thenReturn(instance);
 		Mockito.doNothing().when(spiedManageController).waitForSSHConnectivity(instance);
 		
-		spiedManageController.createInstanceWithFederationUser(localRequest);
+		spiedManageController.createLocalInstanceWithFederationUser(localRequest);
 		
 		final String localManagerPublicKeyData = IOUtils.toString(new FileInputStream(
 				new File(DefaultDataTestHelper.LOCAL_MANAGER_SSH_PUBLIC_KEY_PATH)));
@@ -2617,7 +2616,7 @@ public class TestManagerController {
 		localRequest.setInstanceId(instanceId);
 		localRequest.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		
-		managerControllerSpy.createInstanceWithFederationUser(localRequest);
+		managerControllerSpy.createLocalInstanceWithFederationUser(localRequest);
 		
 		Mockito.verify(managerControllerSpy, Mockito.never()).waitForSSHPublicAddress(Mockito.eq(localRequest));
 		

@@ -657,77 +657,6 @@ public class ManagerController {
 		}
 	}
 
-	public String createInstanceWithFederationUser(Request request) {
-		FederationMember member = null;
-		boolean isRemoteDonation = !properties.getProperty("xmpp_jid").equals(request.getRequestingMemberId());
-		try {
-			member = getFederationMember(request.getRequestingMemberId());
-		} catch (Exception e) {
-		}
-
-		if (isRemoteDonation && 
-				!validator.canDonateTo(member, request.getFederationToken())) {
-			return null;
-		}
-		List<Category> categories = request.getCategories();
-		Map<String, String> xOCCIAtt = request.getxOCCIAtt();
-		LOGGER.info("Submiting request with categories: " + categories  + " and xOCCIAtt: "
-				+ xOCCIAtt + " for requesting member: " + request.getRequestingMemberId() + " with requestingToken " + request.getRequestingMemberId());
-
-		try {
-			String command = createUserDataUtilsCommand(request);
-			xOCCIAtt.put(RequestAttribute.USER_DATA_ATT.getValue(), command);
-			categories.add(new Category(RequestConstants.USER_DATA_TERM,
-					RequestConstants.SCHEME, RequestConstants.MIXIN_CLASS));
-		} catch (Exception e) {
-			LOGGER.warn("Exception while creating ssh tunnel.", e);
-			return null;
-		}
-		
-		Token federationUserToken = getFederationUserToken();
-		String localImageId = getLocalImageId(categories, federationUserToken);
-		
-		List<Category> categoriesWithoutImage = new LinkedList<Category>();
-		for (Category category : categories) {
-			if (category.getScheme().equals(
-					RequestConstants.TEMPLATE_OS_SCHEME)) {
-				continue;
-			}
-			categoriesWithoutImage.add(category);
-		}
-		
-		try {
-			Map<String, String> xOCCIAttCopy = new HashMap<String, String>(xOCCIAtt);
-			removePublicKeyFromCategoriesAndAttributes(xOCCIAttCopy, categoriesWithoutImage);
-			String instanceId = computePlugin.requestInstance(federationUserToken, categoriesWithoutImage,
-					xOCCIAttCopy, localImageId);
-			
-			request.setState(RequestState.SPAWNING);
-			request.setInstanceId(instanceId);
-			request.setProvidingMemberId(properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
-			request.setFulfilledByFederationUser(true);
-			execBenchmark(request);			
-			return instanceId;
-		} catch (OCCIException e) {
-			if (e.getType() == ErrorType.QUOTA_EXCEEDED) {
-				ArrayList<Request> requestsWithInstances = new ArrayList<Request>(
-						requests.getRequestsIn(RequestState.FULFILLED, RequestState.DELETED));
-				Request requestToPreemption = prioritizationPlugin.takeFrom(request, requestsWithInstances);
-
-				if (requestToPreemption == null) {
-					throw e;
-				}
-				preemption(requestToPreemption);
-				return createInstanceWithFederationUser(request);
-			}
-
-			if (e.getStatus().getCode() == HttpStatus.SC_BAD_REQUEST) {
-				return null;
-			}
-			throw e;
-		}
-	}
-
 	protected String createUserDataUtilsCommand(Request request)
 			throws IOException, MessagingException {
 		String command = UserdataUtils.createBase64Command(request.getId(), 
@@ -1115,67 +1044,6 @@ public class ManagerController {
 		}
 	}
 	
-	private boolean createLocalInstance(Request request) {
-		LOGGER.info("Submiting local request " + request);		
-		
-		try {
-			try {
-				String command = createUserDataUtilsCommand(request);
-				request.putAttValue(RequestAttribute.USER_DATA_ATT.getValue(), command);
-				request.addCategory(new Category(RequestConstants.USER_DATA_TERM,
-						RequestConstants.SCHEME, RequestConstants.MIXIN_CLASS));
-			} catch (Exception e) {
-				LOGGER.warn("Exception while creating userdata.", e);
-				request.setState(RequestState.FAILED);
-				return false;
-			}	
-			
-			String localImageId = getLocalImageId(request.getCategories(), 
-					getFederationUserToken());
-			List<Category> categories = new LinkedList<Category>();
-			for (Category category : request.getCategories()) {
-				if (category.getScheme().equals(
-						RequestConstants.TEMPLATE_OS_SCHEME)) {
-					continue;
-				}
-				categories.add(category);
-			}
-			
-			Map<String, String> xOCCIAttCopy = new HashMap<String, String>(request.getxOCCIAtt());
-			removePublicKeyFromCategoriesAndAttributes(xOCCIAttCopy, categories);
-			String instanceId = computePlugin.requestInstance(request.getLocalToken(),
-					categories, xOCCIAttCopy, localImageId);			
-			request.setState(RequestState.SPAWNING);
-			request.setInstanceId(instanceId);
-			request.setProvidingMemberId(properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
-			request.setFulfilledByFederationUser(false);			
-			execBenchmark(request);
-		} catch (OCCIException e) {
-			ErrorType errorType = e.getType();
-			if (errorType == ErrorType.QUOTA_EXCEEDED) {
-				LOGGER.warn("Request failed locally for quota exceeded.", e);
-				return false;
-			} else if (errorType == ErrorType.UNAUTHORIZED) {
-				LOGGER.warn("Request failed locally for user unauthorized.", e);
-				return false;
-			} else if (errorType == ErrorType.BAD_REQUEST) {
-				LOGGER.warn("Request failed locally for image not found.", e);
-				return false;
-			} else if (errorType == ErrorType.NO_VALID_HOST_FOUND) {
-				LOGGER.warn("Request failed because no valid host was found,"
-						+ " we will try to wake up a sleeping host.", e);
-				wakeUpSleepingHosts(request);
-				return false;
-			} else {
-				// TODO Think this through...
-				request.setState(RequestState.FAILED);
-				LOGGER.warn("Request failed locally for an unknown reason.", e);
-				return true;				
-			}
-		}		
-		return true;
-	}
-
 	private void execBenchmark(final Request request) {
 
 		benchmarkExecutor.execute(new Runnable() {
@@ -1404,22 +1272,105 @@ public class ManagerController {
 		return now.after(c.getTime());
 	}
 
-	private boolean createLocalInstanceWithFederationUser(Request request) {
+	protected boolean createLocalInstanceWithFederationUser(Request request) {
 		LOGGER.info("Submitting request " + request + " with federation user locally.");
 
-		String instanceId = null;
+		FederationMember member = null;
+		boolean isRemoteDonation = !properties.getProperty("xmpp_jid").equals(request.getRequestingMemberId());
 		try {
-			instanceId = createInstanceWithFederationUser(request);
+			member = getFederationMember(request.getRequestingMemberId());
 		} catch (Exception e) {
-			LOGGER.info("Could not create instance with federation user locally. " + e);
 		}
 
-		if (instanceId == null) {
+		if (isRemoteDonation && 
+				!validator.canDonateTo(member, request.getFederationToken())) {
 			return false;
 		}
-		return true;
+		
+		try {
+			return createInstance(request, true);
+		} catch (Exception e) {
+			LOGGER.info("Could not create instance with federation user locally. ", e);
+			return false;
+		}
 	}
-
+	
+	private boolean createLocalInstance(Request request) {
+		return createInstance(request, false);
+	}
+	
+	protected boolean createInstance(Request request, boolean withFederationUser) {
+		
+		LOGGER.debug("Submiting request with categories: " + request.getCategories()  + " and xOCCIAtt: "
+				+ request.getxOCCIAtt() + " for requesting member: " + request.getRequestingMemberId() 
+				+ " with requestingToken " + request.getRequestingMemberId());
+		
+		try {
+			try {
+				String command = createUserDataUtilsCommand(request);
+				request.putAttValue(RequestAttribute.USER_DATA_ATT.getValue(), command);
+				request.addCategory(new Category(RequestConstants.USER_DATA_TERM,
+						RequestConstants.SCHEME, RequestConstants.MIXIN_CLASS));
+			} catch (Exception e) {
+				LOGGER.warn("Exception while creating userdata.", e);
+				return false;
+			}	
+			
+			String localImageId = getLocalImageId(request.getCategories(), 
+					getFederationUserToken());
+			List<Category> categories = new LinkedList<Category>();
+			for (Category category : request.getCategories()) {
+				if (category.getScheme().equals(
+						RequestConstants.TEMPLATE_OS_SCHEME)) {
+					continue;
+				}
+				categories.add(category);
+			}
+			
+			Map<String, String> xOCCIAttCopy = new HashMap<String, String>(request.getxOCCIAtt());
+			removePublicKeyFromCategoriesAndAttributes(xOCCIAttCopy, categories);
+			String instanceId = computePlugin.requestInstance(
+					withFederationUser ? getFederationUserToken() : request.getLocalToken(),
+					categories, xOCCIAttCopy, localImageId);			
+			request.setState(RequestState.SPAWNING);
+			request.setInstanceId(instanceId);
+			request.setProvidingMemberId(properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
+			request.setFulfilledByFederationUser(withFederationUser);			
+			execBenchmark(request);
+			return instanceId != null;
+		} catch (OCCIException e) {
+			ErrorType errorType = e.getType();
+			if (errorType == ErrorType.QUOTA_EXCEEDED) {
+				LOGGER.warn("Request failed locally for quota exceeded.", e);
+				if (withFederationUser) {
+					ArrayList<Request> requestsWithInstances = new ArrayList<Request>(
+							requests.getRequestsIn(RequestState.FULFILLED, RequestState.DELETED));
+					Request requestToPreempt = prioritizationPlugin.takeFrom(request, requestsWithInstances);
+					if (requestToPreempt == null) {
+						throw e;
+					}
+					preemption(requestToPreempt);
+					return createInstance(request, true);
+				}
+				return false;
+			} else if (errorType == ErrorType.UNAUTHORIZED) {
+				LOGGER.warn("Request failed locally for user unauthorized.", e);
+				return false;
+			} else if (errorType == ErrorType.BAD_REQUEST) {
+				LOGGER.warn("Request failed locally for image not found.", e);
+				return false;
+			} else if (errorType == ErrorType.NO_VALID_HOST_FOUND) {
+				LOGGER.warn("Request failed because no valid host was found,"
+						+ " we will try to wake up a sleeping host.", e);
+				wakeUpSleepingHosts(request);
+				return false;
+			} else {
+				LOGGER.warn("Request failed locally for an unknown reason.", e);
+				return false;				
+			}
+		}		
+	}
+	
 	public void setPacketSender(AsyncPacketSender packetSender) {
 		this.packetSender = packetSender;
 	}
@@ -1538,27 +1489,29 @@ public class ManagerController {
 		return computePlugin.getResourcesInfo(
 				getTokenFromLocalIdP(localAccessToken));
 	}
+	
+	private static class ForwardedRequest {
+		
+		private Request request;
+		private long timeStamp;
+		
+		public ForwardedRequest(Request request, long timeStamp) {
+			this.request = request;
+			this.timeStamp = timeStamp;
+		}
+		
+		public void setTimeStamp(long timeStamp) {
+			this.timeStamp = timeStamp;		
+		}
+		
+		public Request getRequest() {
+			return request;
+		}
+		
+		public long getTimeStamp() {
+			return timeStamp;
+		}
+	}
+	
 }
 
-class ForwardedRequest {
-	
-	private Request request;
-	private long timeStamp;
-	
-	public ForwardedRequest(Request request, long timeStamp) {
-		this.request = request;
-		this.timeStamp = timeStamp;
-	}
-	
-	public void setTimeStamp(long timeStamp) {
-		this.timeStamp = timeStamp;		
-	}
-
-	public Request getRequest() {
-		return request;
-	}
-	
-	public long getTimeStamp() {
-		return timeStamp;
-	}
-}
