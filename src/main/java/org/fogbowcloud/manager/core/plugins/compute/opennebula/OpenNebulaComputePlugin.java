@@ -700,7 +700,7 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 			return new Flavor("flavor", cpu, mem, disk);
 		} 
 		updateFlavors(token);
-		return RequirementsHelper.findFlavor(getFlavors(),requirements);			
+		return RequirementsHelper.findSmallestFlavor(getFlavors(),requirements);			
 	}
 	
 	protected List<String> getTemplatesInProperties(Properties properties) {

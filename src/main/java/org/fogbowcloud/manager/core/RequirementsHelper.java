@@ -21,17 +21,17 @@ public class RequirementsHelper {
 	public static final String GLUE_DISK_TERM = "Glue2Disk";
 	public static final String GLUE_MEM_RAM_TERM = "Glue2RAM";
 
-	public static boolean checkRequirements(String requirementsString) {
+	public static boolean checkSyntax(String requirementsString) {
+		if (requirementsString == null || requirementsString.isEmpty()) {
+			return true;
+		}
 		try {
 			ClassAdParser adParser = new ClassAdParser(requirementsString);
-			Op expr = (Op) adParser.parse();
-			if (expr != null) {
+			if (adParser.parse() != null) {
 				return true;
 			}
-			return false;
-		} catch (Exception e) {
-			return false;
-		}
+		} catch (Exception e) {}
+		return false;
 	}
 
 	public static String getSmallestValueForAttribute(String requirementsStr, String attrName) {
@@ -41,7 +41,11 @@ public class RequirementsHelper {
 			return ZERO;
 		}
 		Op expr = (Op) parsedClassAd;		
-		Op opForAtt = normalizeOP(expr, attrName);
+		Expr variableExpression = extractVariableExpression(expr, attrName);
+		if (variableExpression == null || !(variableExpression instanceof Op)) {
+			return ZERO;
+		}
+		Op opForAtt = (Op) variableExpression;
 		
 		List<Integer> values = new ArrayList<Integer>();
 		List<ValueAndOperator> findValuesInRequiremets = findValuesInRequiremets(expr, attrName);
@@ -70,8 +74,12 @@ public class RequirementsHelper {
 		return op.eval(env).isTrue();		
 	}
 	
-	public static boolean checkFlavorPerRequirements(Flavor flavor, String requirementsStr) {
+	public static boolean matches(Flavor flavor, String requirementsStr) {
 		try {
+			if (requirementsStr == null  || requirementsStr.isEmpty()) {
+				return true;
+			}
+			
 			ClassAdParser classAdParser = new ClassAdParser(requirementsStr);		
 			Op expr = (Op) classAdParser.parse();
 			
@@ -100,23 +108,23 @@ public class RequirementsHelper {
 					}
 					env.push((RecordExpr) new ClassAdParser("[" + attr + " = " + value + "]").parse());
 				}
+			}					
+			
+			if (listAttrSearched.isEmpty()) {
+				return true;
 			}
-			
-			
-			classAdParser = new ClassAdParser(requirementsStr);
-			expr = (Op) classAdParser.parse();
-			expr = normalizeOP(expr, listAttrSearched);
+			expr = extractVariablesExpression(expr, listAttrSearched);
 			
 			return expr.eval(env).isTrue();
 		} catch (Exception e) {
-			return false;
+			return true;
 		}
 	}
 	
-	public static Flavor findFlavor(List<Flavor> flavors, String requirementsStr) {
+	public static Flavor findSmallestFlavor(List<Flavor> flavors, String requirementsStr) {
 		List<Flavor> listFlavor = new ArrayList<Flavor>();
 		for (Flavor flavor : flavors) {
-			if (checkFlavorPerRequirements(flavor, requirementsStr)) {
+			if (matches(flavor, requirementsStr)) {
 				listFlavor.add(flavor);
 			}
 		}
@@ -130,7 +138,7 @@ public class RequirementsHelper {
 		return listFlavor.get(0);
 	}	
 	
-	public static Op normalizeOP(Op expr, String attName) {
+	public static Op extractVariableExpression(Op expr, String attName) {
 		if (expr.arg1 instanceof AttrRef) {
 			AttrRef attr = (AttrRef) expr.arg1;
 			if (!attr.name.rawString().equals(attName)) {
@@ -140,11 +148,11 @@ public class RequirementsHelper {
 		}
 		Expr left = expr.arg1;
 		if (left instanceof Op) {
-			left = normalizeOP((Op) expr.arg1, attName);
+			left = extractVariableExpression((Op) expr.arg1, attName);
 		}
 		Expr right = expr.arg2;
 		if (right instanceof Op) {
-			right = normalizeOP((Op) expr.arg2, attName);
+			right = extractVariableExpression((Op) expr.arg2, attName);
 		}
 		try {
 			if (left == null) {
@@ -158,7 +166,7 @@ public class RequirementsHelper {
 		return new Op(expr.op, left, right);
 	}
 	
-	public static Op normalizeOP(Op expr, List<String> listAttName) {
+	public static Op extractVariablesExpression(Op expr, List<String> listAttName) {
 		if (expr.arg1 instanceof AttrRef) {
 			AttrRef attr = (AttrRef) expr.arg1;
 			boolean thereIs = false;
@@ -174,11 +182,11 @@ public class RequirementsHelper {
 		}
 		Expr left = expr.arg1;
 		if (left instanceof Op) {
-			left = normalizeOP((Op) expr.arg1, listAttName);
+			left = extractVariablesExpression((Op) expr.arg1, listAttName);
 		}
 		Expr right = expr.arg2;
 		if (right instanceof Op) {
-			right = normalizeOP((Op) expr.arg2, listAttName);
+			right = extractVariablesExpression((Op) expr.arg2, listAttName);
 		}
 		try {
 			if (left == null) {
@@ -192,7 +200,7 @@ public class RequirementsHelper {
 		return new Op(expr.op, left, right);
 	}
 
-	protected static String normalizeLocationToCheck(String location) {
+	protected static String quoteLocation(String location) {
 		if (location == null) {
 			return null;
 		}
@@ -206,19 +214,19 @@ public class RequirementsHelper {
 	}
 	
 	public static boolean matchLocation(String requirementsStr, String valueLocation) {
-		if (!RequirementsHelper.existsLocation(requirementsStr)) {
+		if (!RequirementsHelper.hasLocation(requirementsStr)) {
 			return true;
 		}
 		
 		ClassAdParser classAdParser = new ClassAdParser(requirementsStr);
 		Op expr = (Op) classAdParser.parse();
 
-		valueLocation = normalizeLocationToCheck(valueLocation);
+		valueLocation = quoteLocation(valueLocation);
 		Env env = new Env();
 		env.push((RecordExpr) new ClassAdParser("[" + GLUE_LOCATION_TERM + " = " + valueLocation
 				+ "]").parse());
 
-		Op opForAtt = normalizeOP(expr, GLUE_LOCATION_TERM);
+		Expr opForAtt = extractVariableExpression(expr, GLUE_LOCATION_TERM);
 		
 		if (opForAtt == null) {
 			return false;
@@ -252,7 +260,7 @@ public class RequirementsHelper {
 		return valuesAndOperator;
 	}
 
-	public static List<String> getLocationsInRequiremets(String requirementsStr) {
+	public static List<String> getLocations(String requirementsStr) {
 		List<String> locations = new ArrayList<String>();
 		if (requirementsStr == null || requirementsStr.isEmpty()) {
 			return locations;
@@ -273,15 +281,15 @@ public class RequirementsHelper {
 		return locations;
 	}
 	
-	public static boolean existsLocation(String requirementsStr) {
-		List<String> locationsInRequiremets = getLocationsInRequiremets(requirementsStr);
+	public static boolean hasLocation(String requirementsStr) {
+		List<String> locationsInRequiremets = getLocations(requirementsStr);
 		if (locationsInRequiremets.isEmpty()) {
 			return false;
 		}
 		return true;
 	}
 
-	public static class ValueAndOperator {
+	protected static class ValueAndOperator {
 		private String value;
 		private int operator;
 
@@ -299,7 +307,7 @@ public class RequirementsHelper {
 		}
 	}
 
-	public static class FlavorComparator implements Comparator<Flavor> {
+	protected static class FlavorComparator implements Comparator<Flavor> {
 		private final int MEM_VALUE_RELEVANCE = 1;
 		private final int VCPU_VALUE_RELEVANCE = 1;
 

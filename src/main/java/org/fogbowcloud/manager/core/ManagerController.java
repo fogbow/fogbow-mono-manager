@@ -1340,10 +1340,16 @@ public class ManagerController {
 		List<FederationMember> federationMembers = new ArrayList<FederationMember>(members);
 		List<FederationMember> allowedFederationMembers = new ArrayList<FederationMember>();
 		for (FederationMember federationMember : federationMembers) {
-			if ((getValidator().canReceiveFrom(federationMember)) &&   
-					RequirementsHelper.matchLocation(requirements, federationMember.getResourcesInfo().getId())) {
-				allowedFederationMembers.add(federationMember);
+			if (federationMember.getResourcesInfo().getId().equals(properties.get(ConfigurationConstants.XMPP_JID_KEY))) {
+				continue;
 			}
+			if (!getValidator().canReceiveFrom(federationMember)) {
+				continue;
+			}			
+			if (!RequirementsHelper.matchLocation(requirements, federationMember.getResourcesInfo().getId())) {
+				continue;
+			}
+			allowedFederationMembers.add(federationMember);
 		}
 		return allowedFederationMembers;
 	}
