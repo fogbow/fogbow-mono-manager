@@ -739,6 +739,23 @@ public class ManagerController {
 		}
 	}
 	
+	private void populateWithManagerPublicKey(Map<String, String> xOCCIAtt, 
+			List<Category> categories) {
+		String publicKey = getManagerSSHPublicKey();
+		if (publicKey == null) {
+			return;
+		}
+		xOCCIAtt.put(RequestAttribute.DATA_PUBLIC_KEY.getValue(), publicKey);
+		for (Category category : categories) {
+			if (category.getTerm().equals(RequestConstants.PUBLIC_KEY_TERM)) {
+				return;
+			}
+		}
+		categories.add(new Category(RequestConstants.PUBLIC_KEY_TERM, 
+				RequestConstants.CREDENTIALS_RESOURCE_SCHEME, 
+				RequestConstants.MIXIN_CLASS));
+	}
+	
 	protected void preemption(Request requestToPreemption) {
 		removeInstance(requestToPreemption.getInstanceId(), requestToPreemption);		
 	}
@@ -978,7 +995,7 @@ public class ManagerController {
 		
 		Map<String, String> xOCCIAttCopy = new HashMap<String, String>(request.getxOCCIAtt());
 		List<Category> categoriesCopy = new LinkedList<Category>(request.getCategories());
-		removePublicKeyFromCategoriesAndAttributes(xOCCIAttCopy, categoriesCopy);
+		populateWithManagerPublicKey(xOCCIAttCopy, categoriesCopy);
 		request.setProvidingMemberId(memberAddress);
 
 		LOGGER.info("Submiting request " + request + " to member " + memberAddress);
