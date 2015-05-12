@@ -13,6 +13,8 @@ public enum RequestAttribute {
 	INSTANCE_ID("org.fogbowcloud.request.instance-id"),
 	DATA_PUBLIC_KEY("org.fogbowcloud.credentials.publickey.data"),
 	USER_DATA_ATT("org.fogbowcloud.request.user-data"),
+	EXTRA_USER_DATA_ATT("org.fogbowcloud.request.extra-user-data"),
+	EXTRA_USER_DATA_CONTENT_TYPE_ATT("org.fogbowcloud.request.extra-user-data-content-type"),
 	REQUIREMENTS("org.fogbowcloud.request.requirements");
 	
 	private String value;

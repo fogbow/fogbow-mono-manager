@@ -6,106 +6,114 @@ xmpp_port=5347
 rendezvous_jid=rendezvous.test.com
 greensitter_jid=greensitter.test.com
 
-# That flavor specification will be transformed into requirements.
-flavor_fogbow_small={mem=512, cpu=1}
-flavor_fogbow_medium={mem=1024, cpu=2}
-flavor_fogbow_large={mem=2048, cpu=4}
+## Static mapping from flavors to requirements (Optional)
+# flavor_fogbow_small={mem=512, cpu=1}
+# flavor_fogbow_medium={mem=1024, cpu=2}
+# flavor_fogbow_large={mem=2048, cpu=4}
 
-# Compute Opennebula
-compute_class=org.fogbowcloud.manager.core.plugins.compute.opennebula.OpenNebulaComputePlugin
-compute_one_url=http://localhost:2633/RPC2
-compute_one_network_id=1
-
-# Setting used to find the correct flavor according to informed templates.
-# types :all or specific templates(template1,template2) 
-compute_one_templates=all
-
-# Settings used by ONE compute plugin to register new images in the cloud
-# ID of datastore to register the image
-compute_one_datastore_id=1
-# To register a new image, the image file needs to be in the some machine where ONE is running
-# If the fogbow manager is running in a different machine, set the SSH properties to transfer the image
-# Or if the fogbow manager is in the same machine, leave it blank
-compute_one_ssh_host=127.0.0.1
-compute_one_ssh_port=22
-compute_one_ssh_username=fogbow
-# The SSH try to access using private key, set the path to ssh id_rsa file
-compute_one_ssh_key_file=/home/fogbow/.ssh/id_rsa
-# Set the directory to copy images in remote host
-compute_one_ssh_target_temp_folder=/tmp/images
-
-# Compute Openstack OCCI
-compute_class=org.fogbowcloud.manager.core.plugins.compute.openstack.OpenStackOCCIComputePlugin
-compute_openstack_v2api_url=http://localhost:8182
-compute_occi_url=http://localhost:8182
-compute_occi_os_scheme=http://schemas.openstack.org/template/os#
-compute_occi_instance_scheme=http://schemas.openstack.org/compute/instance#
-compute_occi_resource_scheme=http://schemas.openstack.org/template/resource#
-compute_occi_network_id=ea51ed0c-0e8a-448d-8202-c79777109ffe
-
-# Compute Opennebula OCCI
-compute_class=org.fogbowcloud.manager.core.plugins.compute.opennebula.OpenNebulaOCCIComputePlugin
-compute_one_url=http://localhost:2633/RPC2
-compute_occi_url=http://localhost:3000
-compute_occi_template_scheme=http://occi.localhost/occi/infrastructure/os_tpl#
-compute_occi_resource_scheme=http://schema.fedcloud.egi.eu/occi/infrastructure/resource_tpl#
-compute_occi_flavors_small={cpu=1,mem=512}
-compute_occi_flavors_medium={cpu=2,mem=1024}
-compute_occi_flavors_large={cpu=4,mem=2048}
-
-# If you are using the HTTPDownloadImageStoragePlugin
-image_storage_class=org.fogbowcloud.manager.core.plugins.imagestorage.http.HTTPDownloadImageStoragePlugin
-image_storage_http_base_url=http://appliance-repo.egi.eu/images
-image_storage_http_tmp_storage=/tmp/
-
-# If you are using the VMCatcherStoragePlugin
-image_storage_class=org.fogbowcloud.manager.core.plugins.imagestorage.vmcatcher.VMCatcherStoragePlugin
-image_storage_vmcatcher_glancepush_vmcmapping_file=/etc/vmcatcher/vmcmapping
-image_storage_vmcatcher_push_method=glancepush
-image_storage_vmcatcher_push_method=cesga
-
-# Applies to all image storage plugins
-image_storage_static_fogbow-linux-x86=55d938ef-57d1-44ea-8155-6036d170780a 
-image_storage_static_fogbow-ubuntu-1204=81765250-a4e4-440d-a215-43c9c0849120
-
-member_picker_class=org.fogbowcloud.manager.core.plugins.memberpicker.RoundRobinMemberPickerPlugin
-#If you are using NoFMemberPicker or NoFPrioritizationPlugin classes
-nof_trustworthy=false
-nof_prioritize_local=true
-
-local_prioritization_plugin_class=org.fogbowcloud.manager.core.plugins.prioritization.fcfs.FCFSPrioritizationPlugin
-remote_prioritization_plugin_class=org.fogbowcloud.manager.core.plugins.prioritization.nof.NoFPrioritizationPlugin
-
-# Compute Openstack
+## Compute Plugin (Openstack)
 compute_class=org.fogbowcloud.manager.core.plugins.compute.openstack.OpenStackNovaV2ComputePlugin
 compute_novav2_url=http://localhost:8774
 compute_glancev2_url=http://localhost:9292
 compute_novav2_network_id=ea51ed0c-0e8a-448d-8202-c79777109ffe
 
-# Local identity
+## Compute Plugin (Opennebula)
+# compute_class=org.fogbowcloud.manager.core.plugins.compute.opennebula.OpenNebulaComputePlugin
+# compute_one_url=http://localhost:2633/RPC2
+# compute_one_network_id=1 
+# compute_one_templates=all
+# compute_one_datastore_id=1
+# compute_one_ssh_host=127.0.0.1
+# compute_one_ssh_port=22
+# compute_one_ssh_username=fogbow
+# compute_one_ssh_key_file=/home/fogbow/.ssh/id_rsa
+# compute_one_ssh_target_temp_folder=/tmp/images
+
+## Compute Plugin (Openstack OCCI)
+# compute_class=org.fogbowcloud.manager.core.plugins.compute.openstack.OpenStackOCCIComputePlugin
+# compute_openstack_v2api_url=http://localhost:8182
+# compute_occi_url=http://localhost:8182
+# compute_occi_os_scheme=http://schemas.openstack.org/template/os#
+# compute_occi_instance_scheme=http://schemas.openstack.org/compute/instance#
+# compute_occi_resource_scheme=http://schemas.openstack.org/template/resource#
+# compute_occi_network_id=ea51ed0c-0e8a-448d-8202-c79777109ffe
+
+## Compute Plugin (Opennebula OCCI)
+# compute_class=org.fogbowcloud.manager.core.plugins.compute.opennebula.OpenNebulaOCCIComputePlugin
+# compute_one_url=http://localhost:2633/RPC2
+# compute_occi_url=http://localhost:3000
+# compute_occi_template_scheme=http://occi.localhost/occi/infrastructure/os_tpl#
+# compute_occi_resource_scheme=http://schema.fedcloud.egi.eu/occi/infrastructure/resource_tpl#
+# compute_occi_flavors_small={cpu=1,mem=512}
+# compute_occi_flavors_medium={cpu=2,mem=1024}
+# compute_occi_flavors_large={cpu=4,mem=2048}
+
+## Image Storage Plugin (HTTPDownload)
+image_storage_class=org.fogbowcloud.manager.core.plugins.imagestorage.http.HTTPDownloadImageStoragePlugin
+image_storage_http_base_url=http://appliance-repo.egi.eu/images
+image_storage_http_tmp_storage=/tmp/
+
+## Image Storage Plugin (VMCatcher)
+# image_storage_class=org.fogbowcloud.manager.core.plugins.imagestorage.vmcatcher.VMCatcherStoragePlugin
+# image_storage_vmcatcher_glancepush_vmcmapping_file=/etc/vmcatcher/vmcmapping
+# image_storage_vmcatcher_push_method=glancepush
+# image_storage_vmcatcher_push_method=cesga
+
+## Static mapping between local image ids and image names
+## Applies to all image storage plugins
+image_storage_static_fogbow-linux-x86=55d938ef-57d1-44ea-8155-6036d170780a 
+image_storage_static_fogbow-ubuntu-1204=81765250-a4e4-440d-a215-43c9c0849120
+
+## Member Picker Plugin (Round Robin) 
+member_picker_class=org.fogbowcloud.manager.core.plugins.memberpicker.RoundRobinMemberPickerPlugin
+
+## Member Picker Plugin (Nof Member Picker)
+# member_picker_class=org.fogbowcloud.manager.core.plugins.memberpicker.NoFMemberPickerPlugin
+
+## Local Prioritization Plugin
+local_prioritization_plugin_class=org.fogbowcloud.manager.core.plugins.prioritization.fcfs.FCFSPrioritizationPlugin
+## Remote Prioritization Plugin
+remote_prioritization_plugin_class=org.fogbowcloud.manager.core.plugins.prioritization.nof.NoFPrioritizationPlugin
+nof_prioritize_local=true
+
+## If you are using NoFMemberPicker or NoFPrioritizationPlugin classes
+nof_trustworthy=false
+
+## Local identity (Keystone Identity Plugin)
 local_identity_class=org.fogbowcloud.manager.core.plugins.identity.openstack.KeystoneIdentityPlugin
 local_identity_url=http://localhost:5000
-
-# Federation identity
-federation_authorization_class=org.fogbowcloud.manager.core.plugins.authorization.AllowAllAuthorizationPlugin
-federation_identity_class=org.fogbowcloud.manager.core.plugins.identity.openstack.KeystoneIdentityPlugin
-federation_identity_url=http://localhost:5000
-
 local_proxy_account_user_name=fogbow
 local_proxy_account_password=fogbow
 local_proxy_account_tenant_name=demo
 
+## Local Identity (X509 Identity Plugin)
+# local_identity_class=org.fogbowcloud.manager.core.plugins.x509.X509IdentityPlugin
+# x509_ca_dir_path=/path/to/ca/directory
+
+## Local Identity (Opennebula Identity Plugin)
+# local_identity_class=org.fogbowcloud.manager.core.plugins.opennebula.OpenNebulaIdentityPlugin
+# local_identity_url=http://localhost:2633/RPC2
+
+## Authorizatio Plugin
+federation_authorization_class=org.fogbowcloud.manager.core.plugins.authorization.AllowAllAuthorizationPlugin
+
+## Federation identity (Keystone Identity Plugin)
+federation_identity_class=org.fogbowcloud.manager.core.plugins.identity.openstack.KeystoneIdentityPlugin
+federation_identity_url=http://localhost:5000
+
+## Federation Identity (Opennebula Identity Plugin)
+# federation_identity_class=org.fogbowcloud.manager.core.plugins.opennebula.OpenNebulaIdentityPlugin
+# federation_identity_url=http://localhost:2633/RPC2
+
+## Federation Identity (VOMS Identity PLugin)
+# federation_identity_class=org.fogbowcloud.manager.core.plugins.identity.voms.VomsIdentityPlugin
+# path_vomses=/etc/vomses
+# path_trust_anchors=/etc/grid-security/certificates
+# path_vomsdir=/etc/grid-security/vomsdir
+
+## Member Validator
 member_validator_class=org.fogbowcloud.manager.core.plugins.memberauthorization.DefaultMemberAuthorizationPlugin
 member_validator_ca_dir=
-
-cert_path=
-
-scheduler_period=30000
-token_update_period=300000
-instance_monitoring_period=120000
-served_request_monitoring_period=120000
-garbage_collector_period=240000
-asyn_request_waiting_interval=300000
 
 token_host_public_address=150.165.80.1
 token_host_private_address=10.0.0.1
@@ -114,19 +122,18 @@ token_host_port=2222
 
 my_ip=127.0.0.1
 
-http_port=8182
-
-max_whoisalive_manager_count=100
-
+## Accounting Plugin
 accounting_class=org.fogbowcloud.manager.core.plugins.accounting.FCUAccountingPlugin
 accounting_update_period=300000
 accounting_datastore_url=jdbc:h2:/tmp/usage
 
-# SSH Benchmarking plugin
+## Benchmarking (SSH Benchmarking plugin)
 benchmarking_class=org.fogbowcloud.manager.core.plugins.benchmarking.SSHBenchmarkingPlugin
-# Benchmarking script to use with SSH Benchmarking plugin
+## Benchmarking script to use with SSH Benchmarking plugin
 ssh_benchmarking_script_url=http://downloads.fogbowcloud.org/benchmark/script_ssh_benchmarking.sh
-
-# Manager public and private keys
+## Manager public and private keys
 ssh_private_key=/etc/fogbow-manager/ssh/id_rsa
 ssh_public_key=/etc/fogbow-manager/ssh/id_rsa.pub
+
+## Benchmarking (Vanilla Benchmarking Plugin)
+# benchmarking_class=org.fogbowcloud.manager.core.plugins.benchmarking.VanillaBenchmarkingPlugin

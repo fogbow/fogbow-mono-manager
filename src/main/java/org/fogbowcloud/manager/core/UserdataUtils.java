@@ -16,11 +16,14 @@ import javax.mail.internet.MimeBodyPart;
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
+import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.plugins.util.CloudInitUserDataBuilder;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.fogbowcloud.manager.occi.request.RequestAttribute;
 
 public class UserdataUtils {
+	
+	private static final Logger LOGGER = Logger.getLogger(UserdataUtils.class);
 
 	protected static final String TOKEN_ID_STR = "#TOKEN_ID#";
 	protected static final String TOKEN_HOST_STR = "#TOKEN_HOST#";
@@ -28,6 +31,8 @@ public class UserdataUtils {
 	protected static final String TOKEN_HOST_SSH_PORT_STR = "#TOKEN_HOST_SSH_PORT#";
 	protected static final String TOKEN_MANAGER_SSH_PUBLIC_KEY = "#TOKEN_MANAGER_SSH_PUBLIC_KEY#";
 	protected static final String TOKEN_MANAGER_SSH_USER = "#TOKEN_MANAGER_SSH_USER#";
+	
+	public static final String USER_DATA_LINE_BREAKER = "\\n";
 	
 	private static final String DEFAULT_SSH_HOST_PORT = "22";
 	
@@ -91,6 +96,7 @@ public class UserdataUtils {
 			mimeString = mimeString.replace(entry.getKey(), entry.getValue());
 		}
 		
+		LOGGER.debug("Mime string content for Cloud Init: " + mimeString);
 		return new String(Base64.encodeBase64(mimeString.getBytes(Charsets.UTF_8), false, false),
 				Charsets.UTF_8);
 	}
