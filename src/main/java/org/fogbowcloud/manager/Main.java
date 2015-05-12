@@ -35,6 +35,7 @@ public class Main {
 
 	private static final Logger LOGGER = Logger.getLogger(Main.class);
 	private static final int EXIT_ERROR_CODE = 128;
+	private static final int DEFAULT_HTTP_PORT = 8182;
 	
 	public static void main(String[] args) throws Exception {
 		configureLog4j();
@@ -171,8 +172,8 @@ public class Main {
 		
 		try {
 			Component http = new Component();
-			http.getServers().add(Protocol.HTTP,
-					Integer.parseInt(properties.getProperty(ConfigurationConstants.HTTP_PORT_KEY)));
+			String httpPort = properties.getProperty(ConfigurationConstants.HTTP_PORT_KEY);			
+			http.getServers().add(Protocol.HTTP, httpPort == null ? DEFAULT_HTTP_PORT : Integer.parseInt(httpPort));
 			http.getDefaultHost().attach(application);
 			http.start();
 		} catch (Exception e) {

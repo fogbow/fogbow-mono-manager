@@ -75,10 +75,10 @@ public class ManagerController {
 
 	public static final String DEFAULT_COMMON_SSH_USER = "fogbow";
 	
-	private static final String PROP_MAX_WHOISALIVE_MANAGER_COUNT = "max_whoisalive_manager_count";
 	private static final Logger LOGGER = Logger.getLogger(ManagerController.class);
 	
-	public static final long DEFAULT_SCHEDULER_PERIOD = 30000; // 30 seconds
+	private static final int DEFAULT_MAX_WHOISALIVE_MANAGER_COUNT = 100;
+	private static final long DEFAULT_SCHEDULER_PERIOD = 30000; // 30 seconds
 	private static final long DEFAULT_TOKEN_UPDATE_PERIOD = 300000; // 5 minutes
 	protected static final int DEFAULT_ASYNC_REQUEST_WAITING_INTERVAL = 300000; // 5 minutes
 	private static final long DEFAULT_INSTANCE_MONITORING_PERIOD = 120000; // 2 minutes
@@ -1427,9 +1427,9 @@ public class ManagerController {
 	}
 	
 	public Integer getMaxWhoIsAliveManagerCount() {
-		String max = properties.getProperty(PROP_MAX_WHOISALIVE_MANAGER_COUNT);
+		String max = properties.getProperty(ConfigurationConstants.PROP_MAX_WHOISALIVE_MANAGER_COUNT);
 		if (max == null) {
-			return (Integer) null;
+			return DEFAULT_MAX_WHOISALIVE_MANAGER_COUNT;
 		}
 		return Integer.parseInt(max);
 	}
