@@ -661,14 +661,7 @@ public class ManagerController {
 
 	protected String createUserDataUtilsCommand(Request request)
 			throws IOException, MessagingException {
-		String command = UserdataUtils.createBase64Command(request.getId(), 
-				properties.getProperty(ConfigurationConstants.TOKEN_HOST_PRIVATE_ADDRESS_KEY),
-				properties.getProperty(ConfigurationConstants.TOKEN_HOST_PORT_KEY),
-				properties.getProperty(ConfigurationConstants.TOKEN_HOST_HTTP_PORT_KEY),
-				getManagerSSHPublicKeyFilePath(),
-				request.getAttValue(RequestAttribute.DATA_PUBLIC_KEY.getValue()),
-				getSSHCommonUser());
-		return command;
+		return UserdataUtils.createBase64Command(request, properties);
 	}
 
 	protected Instance waitForSSHPublicAddress(Request request) {
@@ -706,14 +699,6 @@ public class ManagerController {
 			LOGGER.warn("Could not read manager public key file", e);
 			return null;
 		}
-	}
-	
-	private String getManagerSSHPublicKeyFilePath() {
-		String publicKeyFilePath = properties.getProperty(ConfigurationConstants.SSH_PUBLIC_KEY_PATH);
-		if (publicKeyFilePath == null || publicKeyFilePath.isEmpty()) {
-			return null;
-		}
-		return publicKeyFilePath;
 	}
 	
 	private String getManagerSSHPrivateKeyFilePath() {

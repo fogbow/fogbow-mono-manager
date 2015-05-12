@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Properties;
 
 import javax.mail.MessagingException;
 import javax.mail.Multipart;
@@ -16,6 +17,8 @@ import org.apache.commons.codec.Charsets;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
 import org.fogbowcloud.manager.core.plugins.util.CloudInitUserDataBuilder;
+import org.fogbowcloud.manager.occi.request.Request;
+import org.fogbowcloud.manager.occi.request.RequestAttribute;
 
 public class UserdataUtils {
 
@@ -28,10 +31,27 @@ public class UserdataUtils {
 	
 	private static final String DEFAULT_SSH_HOST_PORT = "22";
 	
-	public static String createBase64Command(String tokenId, String sshPrivateHostIP,
-			String sshRemoteHostPort, String sshRemoteHostHttpPort, String managerPublicKeyFilePath, 
-			String userPublicKey, String sshCommonUser) 
-					throws IOException, MessagingException {
+	private static String getManagerSSHPublicKeyFilePath(Properties properties) {
+		String publicKeyFilePath = properties.getProperty(ConfigurationConstants.SSH_PUBLIC_KEY_PATH);
+		if (publicKeyFilePath == null || publicKeyFilePath.isEmpty()) {
+			return null;
+		}
+		return publicKeyFilePath;
+	}
+	
+	private static String getSSHCommonUser(Properties properties) {
+		String sshCommonUser = properties.getProperty(ConfigurationConstants.SSH_COMMON_USER);
+		return sshCommonUser == null ? ManagerController.DEFAULT_COMMON_SSH_USER : sshCommonUser;
+	}
+	
+	public static String createBase64Command(Request request, Properties properties) throws IOException, MessagingException {
+		String tokenId = request.getId();
+		String sshPrivateHostIP = properties.getProperty(ConfigurationConstants.TOKEN_HOST_PRIVATE_ADDRESS_KEY);
+		String sshRemoteHostPort = properties.getProperty(ConfigurationConstants.TOKEN_HOST_PORT_KEY);
+		String sshRemoteHostHttpPort = properties.getProperty(ConfigurationConstants.TOKEN_HOST_HTTP_PORT_KEY);
+		String managerPublicKeyFilePath = getManagerSSHPublicKeyFilePath(properties);
+		String userPublicKey = request.getAttValue(RequestAttribute.DATA_PUBLIC_KEY.getValue());
+		String sshCommonUser = getSSHCommonUser(properties);
 		
 		String sshTunnelCmdFilePath = "bin/fogbow-create-reverse-tunnel";
 		String cloudConfigFilePath = "bin/fogbow-cloud-config.cfg";
