@@ -15,9 +15,12 @@ import javax.mail.internet.MimeBodyPart;
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
+import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.plugins.util.CloudInitUserDataBuilder;
 
 public class UserdataUtils {
+	
+	private static final Logger LOGGER = Logger.getLogger(UserdataUtils.class);
 
 	protected static final String TOKEN_ID_STR = "#TOKEN_ID#";
 	protected static final String TOKEN_HOST_STR = "#TOKEN_HOST#";
@@ -71,6 +74,7 @@ public class UserdataUtils {
 			mimeString = mimeString.replace(entry.getKey(), entry.getValue());
 		}
 		
+		LOGGER.debug("Mime string content for Cloud Init: " + mimeString);
 		return new String(Base64.encodeBase64(mimeString.getBytes(Charsets.UTF_8), false, false),
 				Charsets.UTF_8);
 	}
