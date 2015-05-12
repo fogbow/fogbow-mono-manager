@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.StringReader;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -18,6 +19,7 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.plugins.util.CloudInitUserDataBuilder;
+import org.fogbowcloud.manager.core.plugins.util.CloudInitUserDataBuilder.FileType;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.fogbowcloud.manager.occi.request.RequestAttribute;
 
@@ -72,6 +74,13 @@ public class UserdataUtils {
 			cloudInitUserDataBuilder.addCloudConfig(new FileReader(new File(cloudConfigFilePath)));
 		}
 		
+		String extraUserData = request.getAttValue(
+				RequestAttribute.EXTRA_USER_DATA_ATT.getValue());
+		String extraUserDataContentType = request.getAttValue(
+				RequestAttribute.EXTRA_USER_DATA_CONTENT_TYPE_ATT.getValue());
+		
+		addExtraUserData(cloudInitUserDataBuilder, extraUserData, extraUserDataContentType);
+		
 		String mimeString = cloudInitUserDataBuilder.buildUserData();
 		
 		Map<String, String> replacements = new HashMap<String, String>();
@@ -101,6 +110,23 @@ public class UserdataUtils {
 				Charsets.UTF_8);
 	}
 	
+	private static void addExtraUserData(
+			CloudInitUserDataBuilder cloudInitUserDataBuilder,
+			String extraUserData, String extraUserDataContentType) {
+		if (extraUserData == null || extraUserDataContentType == null) {
+			return;
+		}
+		String normalizedExtraUserData = extraUserData.replace(USER_DATA_LINE_BREAKER, "\n");
+		for (FileType fileType : CloudInitUserDataBuilder.FileType.values()) {
+			if (fileType.getMimeType().equals(extraUserDataContentType)) {
+				cloudInitUserDataBuilder.addFile(fileType, 
+						new StringReader(normalizedExtraUserData));
+				break;
+			}
+		}
+		
+	}
+
 	public static void addMimeBodyPart(Multipart mimeMultipart, String filePath, String fileFormatType) 
 			throws IOException, MessagingException {
 		
