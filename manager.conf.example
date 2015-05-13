@@ -59,6 +59,11 @@ image_storage_http_tmp_storage=/tmp/
 # image_storage_vmcatcher_push_method=glancepush
 # image_storage_vmcatcher_push_method=cesga
 # image_storage_vmcatcher_use_sudo=false
+# image_storage_vmcatcher_env_VMCATCHER_RDBMS="sqlite:////var/lib/vmcatcher/vmcatcher.db"
+# image_storage_vmcatcher_env_VMCATCHER_CACHE_DIR_CACHE="/var/lib/vmcatcher/cache"
+# image_storage_vmcatcher_env_VMCATCHER_CACHE_DIR_DOWNLOAD="/var/lib/vmcatcher/cache/partial"
+# image_storage_vmcatcher_env_VMCATCHER_CACHE_DIR_EXPIRE="/var/lib/vmcatcher/cache/expired"
+# image_storage_vmcatcher_env_VMCATCHER_CACHE_EVENT="python /var/lib/vmcatcher/gpvcmupdate.py"
 
 ## Static mapping between local image ids and image names
 ## Applies to all image storage plugins
