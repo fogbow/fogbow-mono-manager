@@ -312,7 +312,7 @@ public class CloudInitUserDataBuilder {
     public CloudInitUserDataBuilder addFile( FileType fileType,  Readable in) throws IllegalArgumentException {
         Preconditions.checkNotNull(fileType, "'fileType' can NOT be null");
         Preconditions.checkNotNull(in, "'in' can NOT be null");
-        Preconditions.checkArgument(!alreadyAddedFileTypes.contains(fileType), "%s as already been added", fileType);
+        //Preconditions.checkArgument(!alreadyAddedFileTypes.contains(fileType), "%s as already been added", fileType);
         alreadyAddedFileTypes.add(fileType);
 
         try {
@@ -320,7 +320,7 @@ public class CloudInitUserDataBuilder {
             CharStreams.copy(in, sw);
             MimeBodyPart mimeBodyPart = new MimeBodyPart();
             mimeBodyPart.setText(sw.toString(), charset.name(), fileType.getMimeTextSubType());
-            mimeBodyPart.setFileName(fileType.getFileName());
+            mimeBodyPart.setFileName(System.currentTimeMillis() + fileType.getFileName());
             userDataMultipart.addBodyPart(mimeBodyPart);
 
         } catch (IOException e) {
