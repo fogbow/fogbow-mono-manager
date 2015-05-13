@@ -707,7 +707,7 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 			String term, int minimumValue) {
 		String valueStr = RequirementsHelper
 				.getSmallestValueForAttribute(requirements, term);
-		return String.valueOf(Math.max(Double.valueOf(valueStr), minimumValue));
+		return String.valueOf(Math.max(Integer.valueOf(valueStr), minimumValue));
 	}
 
 	protected List<String> getTemplatesInProperties(Properties properties) {
