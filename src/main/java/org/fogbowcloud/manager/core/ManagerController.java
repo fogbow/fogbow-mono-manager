@@ -1229,7 +1229,7 @@ public class ManagerController {
 	protected void monitorServedRequests() {
 		LOGGER.info("Monitoring served requests.");
 
-		List<Request> servedRequests = requests.getAllRemoteRequests();
+		List<Request> servedRequests = requests.getAllServedRequests();
 		for (Request request : servedRequests) {
 			if (!isInstanceBeingUsedByRemoteMember(request)){
 				LOGGER.debug("The instance " + request.getInstanceId() + " is not being used anymore by "
@@ -1240,7 +1240,7 @@ public class ManagerController {
 			}
 		}
 		
-		if (requests.getAllRemoteRequests().isEmpty()) {
+		if (requests.getAllServedRequests().isEmpty()) {
 			LOGGER.info("There are no remote requests. Canceling remote request monitoring.");
 			servedRequestMonitoringTimer.cancel();
 		}
@@ -1409,8 +1409,8 @@ public class ManagerController {
 		this.validator = validator;
 	}
 
-	protected List<Request> getRemoteRequests() {
-		return requests.getAllRemoteRequests();
+	protected List<Request> getServedRequests() {
+		return requests.getAllServedRequests();
 	}
 	
 	public List<Resource> getAllResouces(String accessId) {

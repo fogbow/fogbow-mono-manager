@@ -14,6 +14,12 @@ public class RequestRepository {
 
 	private Map<String, List<Request>> requests = new HashMap<String, List<Request>>();
 
+	/*
+	 * The get and remove operation in RequestRepository consider only local
+	 * requests to allow these operations only from manager where the request
+	 * was created.
+	 */
+	
 	public void addRequest(String user, Request request) {
 		LOGGER.debug("Adding request " + request.getId() + " to user " + user);
 		List<Request> userRequests = requests.get(user);
@@ -39,7 +45,7 @@ public class RequestRepository {
 	public Request get(String requestId) {
 		for (List<Request> userRequests : requests.values()) {
 			for (Request request : userRequests) {
-				if (request.getId().equals(requestId)) {
+				if (request.getId().equals(requestId) && request.isLocal()) {
 					LOGGER.debug("Getting request id " + request);
 					return request;
 				}
@@ -56,7 +62,7 @@ public class RequestRepository {
 			return null;
 		}
 		for (Request request : userRequests) {
-			if (request.getId().equals(requestId)) {
+			if (request.getId().equals(requestId) && request.isLocal()) {
 				LOGGER.debug("Getting request " + request + " owner by user " + user);
 				return request;
 			}
@@ -66,17 +72,27 @@ public class RequestRepository {
 	}
 
 	public List<Request> getByUser(String user) {
-		LOGGER.debug("Getting instances by user " + user);
+		LOGGER.debug("Getting local requests by user " + user);
 		List<Request> userRequests = requests.get(user);
-		return userRequests == null ? new LinkedList<Request>() : new LinkedList<Request>(
-				userRequests);
+		if (userRequests == null) {
+			return new LinkedList<Request>();
+		}		
+		LinkedList<Request> userLocalRequests = new LinkedList<Request>();
+		for (Request request : userRequests) {
+			if (request.isLocal()) {
+				userLocalRequests.add(request);
+			}
+		}
+		return userLocalRequests;
 	}
 
 	public void removeByUser(String user) {
 		List<Request> requestsByUser = requests.get(user);
 		if (requestsByUser != null) {
 			for (Request request : requestsByUser) {
-				remove(request.getId());
+				if (request.isLocal()) {
+					remove(request.getId());
+				}
 			}
 		}
 	}
@@ -88,7 +104,7 @@ public class RequestRepository {
 			Iterator<Request> iterator = userRequests.iterator();
 			while (iterator.hasNext()) {
 				Request request = (Request) iterator.next();
-				if (request.getId().equals(requestId)) {
+				if (request.getId().equals(requestId) && request.isLocal()) {
 					if (request.getState().equals(RequestState.CLOSED)) { 
 						LOGGER.debug("Request " + requestId + " does not have an instance. Excluding request.");
 						iterator.remove();
@@ -138,7 +154,7 @@ public class RequestRepository {
 		return allLocalRequests;
 	}
 	
-	public List<Request> getAllRemoteRequests() {
+	public List<Request> getAllServedRequests() {
 		List<Request> allRemoteRequests = new LinkedList<Request>();
 		for (List<Request> userRequests : requests.values()) {
 			for (Request request : userRequests) {

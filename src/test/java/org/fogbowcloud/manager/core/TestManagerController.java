@@ -2033,7 +2033,7 @@ public class TestManagerController {
 	@Test
 	public void testMonitorServedRequestRemovingRequest() throws InterruptedException{
 		// checking there is not served request
-		Assert.assertEquals(0, managerController.getRemoteRequests().size());
+		Assert.assertEquals(0, managerController.getServedRequests().size());
 		
 		mockRequestInstance();
 		
@@ -2058,27 +2058,27 @@ public class TestManagerController {
 		managerController.checkAndSubmitOpenRequests();
 		
 		// checking there is one served request
-		Assert.assertEquals(1, managerController.getRemoteRequests().size());
+		Assert.assertEquals(1, managerController.getServedRequests().size());
 		Assert.assertEquals("manager1-test.com",
-				getRequestByInstanceId(managerController.getRemoteRequests(),
+				getRequestByInstanceId(managerController.getServedRequests(),
 						DefaultDataTestHelper.INSTANCE_ID).getRequestingMemberId());
 		Assert.assertEquals(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
-				getRequestByInstanceId(managerController.getRemoteRequests(),
+				getRequestByInstanceId(managerController.getServedRequests(),
 						DefaultDataTestHelper.INSTANCE_ID).getProvidingMemberId());
-		Assert.assertEquals("id1", getRequestByInstanceId(managerController.getRemoteRequests(),
+		Assert.assertEquals("id1", getRequestByInstanceId(managerController.getServedRequests(),
 						DefaultDataTestHelper.INSTANCE_ID).getId());
 
 		// monitoring served requests
 		managerController.monitorServedRequests();
 	
 		// checking there is not served request		
-		Assert.assertEquals(0, managerController.getRemoteRequests().size());		
+		Assert.assertEquals(0, managerController.getServedRequests().size());		
 	}
 	
 	@Test
 	public void testMonitorServedRequestKeepingRequest() throws InterruptedException{
 		// checking there is not served request
-		Assert.assertEquals(0, managerController.getRemoteRequests().size());
+		Assert.assertEquals(0, managerController.getServedRequests().size());
 		
 		mockRequestInstance();
 		
@@ -2102,26 +2102,26 @@ public class TestManagerController {
 		managerController.checkAndSubmitOpenRequests();
 				
 		// checking there is one served request
-		Assert.assertEquals(1, managerController.getRemoteRequests().size());
+		Assert.assertEquals(1, managerController.getServedRequests().size());
 		Assert.assertEquals("manager1-test.com",
-				getRequestByInstanceId(managerController.getRemoteRequests(),
+				getRequestByInstanceId(managerController.getServedRequests(),
 						DefaultDataTestHelper.INSTANCE_ID).getRequestingMemberId());
 		Assert.assertEquals(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
-				getRequestByInstanceId(managerController.getRemoteRequests(),
+				getRequestByInstanceId(managerController.getServedRequests(),
 						DefaultDataTestHelper.INSTANCE_ID).getProvidingMemberId());
-		Assert.assertEquals("id1", getRequestByInstanceId(managerController.getRemoteRequests(),
+		Assert.assertEquals("id1", getRequestByInstanceId(managerController.getServedRequests(),
 						DefaultDataTestHelper.INSTANCE_ID).getId());
 
 		// monitoring served requests
 		managerController.monitorServedRequests();
 	
 		// checking there is not served request		
-		Assert.assertEquals(1, managerController.getRemoteRequests().size());
+		Assert.assertEquals(1, managerController.getServedRequests().size());
 		Assert.assertEquals("manager1-test.com",
-				getRequestByInstanceId(managerController.getRemoteRequests(),
+				getRequestByInstanceId(managerController.getServedRequests(),
 						DefaultDataTestHelper.INSTANCE_ID).getRequestingMemberId());
 		Assert.assertEquals(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
-				getRequestByInstanceId(managerController.getRemoteRequests(),
+				getRequestByInstanceId(managerController.getServedRequests(),
 						DefaultDataTestHelper.INSTANCE_ID).getProvidingMemberId());
 	}
 	
@@ -2222,7 +2222,7 @@ public class TestManagerController {
 	@Test
 	public void testGarbageCollectorWithServedRequest() {
 		// checking there is not served request
-		Assert.assertEquals(0, managerController.getRemoteRequests().size());
+		Assert.assertEquals(0, managerController.getServedRequests().size());
 		
 		// mocking getInstances
 		Mockito.reset(managerTestHelper.getComputePlugin());
@@ -2247,14 +2247,14 @@ public class TestManagerController {
 		managerController.checkAndSubmitOpenRequests();
 				
 		// checking there is one served request
-		Assert.assertEquals(1, managerController.getRemoteRequests().size());
+		Assert.assertEquals(1, managerController.getServedRequests().size());
 		Assert.assertEquals("manager1-test.com",
-				getRequestByInstanceId(managerController.getRemoteRequests(),
+				getRequestByInstanceId(managerController.getServedRequests(),
 						DefaultDataTestHelper.INSTANCE_ID).getRequestingMemberId());
 		Assert.assertEquals(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
-				getRequestByInstanceId(managerController.getRemoteRequests(),
+				getRequestByInstanceId(managerController.getServedRequests(),
 						DefaultDataTestHelper.INSTANCE_ID).getProvidingMemberId());
-		Assert.assertEquals("id1", getRequestByInstanceId(managerController.getRemoteRequests(),
+		Assert.assertEquals("id1", getRequestByInstanceId(managerController.getServedRequests(),
 						DefaultDataTestHelper.INSTANCE_ID).getId());
 				
 		// updating compute mock
@@ -2275,12 +2275,12 @@ public class TestManagerController {
 		Assert.assertEquals(1, resultInstances.size());
 		Assert.assertEquals(DefaultDataTestHelper.INSTANCE_ID, resultInstances.get(0).getId());
 		// checking there is one served request
-		Assert.assertEquals(1, managerController.getRemoteRequests().size());
+		Assert.assertEquals(1, managerController.getServedRequests().size());
 		Assert.assertEquals("manager1-test.com",
-				getRequestByInstanceId(managerController.getRemoteRequests(),
+				getRequestByInstanceId(managerController.getServedRequests(),
 						DefaultDataTestHelper.INSTANCE_ID).getRequestingMemberId());
 		Assert.assertEquals(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
-				getRequestByInstanceId(managerController.getRemoteRequests(),
+				getRequestByInstanceId(managerController.getServedRequests(),
 						DefaultDataTestHelper.INSTANCE_ID).getProvidingMemberId());
 	}
 	
@@ -2663,36 +2663,36 @@ public class TestManagerController {
 		Assert.assertEquals(1, requestRepository.getAllLocalRequests().size());
 		Assert.assertTrue(requestRepository.getAllLocalRequests().contains(localRequest));
 		Assert.assertEquals(RequestState.FULFILLED, localRequest.getState());
-		Assert.assertEquals(2, requestRepository.getAllRemoteRequests().size());
-		Assert.assertTrue(requestRepository.getAllRemoteRequests().contains(servedRequest1));
-		Assert.assertTrue(requestRepository.getAllRemoteRequests().contains(servedRequest2));
+		Assert.assertEquals(2, requestRepository.getAllServedRequests().size());
+		Assert.assertTrue(requestRepository.getAllServedRequests().contains(servedRequest1));
+		Assert.assertTrue(requestRepository.getAllServedRequests().contains(servedRequest2));
 		
 		// preempt servedRequest1
 		managerController.preemption(servedRequest1);
 		Assert.assertEquals(1, requestRepository.getAllLocalRequests().size());
 		Assert.assertTrue(requestRepository.getAllLocalRequests().contains(localRequest));
 		Assert.assertEquals(RequestState.FULFILLED, localRequest.getState());
-		Assert.assertEquals(1, requestRepository.getAllRemoteRequests().size());
-		Assert.assertFalse(requestRepository.getAllRemoteRequests().contains(servedRequest1));
-		Assert.assertTrue(requestRepository.getAllRemoteRequests().contains(servedRequest2));
+		Assert.assertEquals(1, requestRepository.getAllServedRequests().size());
+		Assert.assertFalse(requestRepository.getAllServedRequests().contains(servedRequest1));
+		Assert.assertTrue(requestRepository.getAllServedRequests().contains(servedRequest2));
 
 		// preempt servedRequest2
 		managerController.preemption(servedRequest2);
 		Assert.assertEquals(1, requestRepository.getAllLocalRequests().size());
 		Assert.assertTrue(requestRepository.getAllLocalRequests().contains(localRequest));
 		Assert.assertEquals(RequestState.FULFILLED, localRequest.getState());
-		Assert.assertTrue(requestRepository.getAllRemoteRequests().isEmpty());
-		Assert.assertFalse(requestRepository.getAllRemoteRequests().contains(servedRequest1));
-		Assert.assertFalse(requestRepository.getAllRemoteRequests().contains(servedRequest2));
+		Assert.assertTrue(requestRepository.getAllServedRequests().isEmpty());
+		Assert.assertFalse(requestRepository.getAllServedRequests().contains(servedRequest1));
+		Assert.assertFalse(requestRepository.getAllServedRequests().contains(servedRequest2));
 		
 		// preempt localRequest
 		managerController.preemption(localRequest);
 		Assert.assertEquals(1, requestRepository.getAllLocalRequests().size());
 		Assert.assertTrue(requestRepository.getAllLocalRequests().contains(localRequest));
 		Assert.assertEquals(RequestState.CLOSED, localRequest.getState());
-		Assert.assertTrue(requestRepository.getAllRemoteRequests().isEmpty());
-		Assert.assertFalse(requestRepository.getAllRemoteRequests().contains(servedRequest1));
-		Assert.assertFalse(requestRepository.getAllRemoteRequests().contains(servedRequest2));
+		Assert.assertTrue(requestRepository.getAllServedRequests().isEmpty());
+		Assert.assertFalse(requestRepository.getAllServedRequests().contains(servedRequest1));
+		Assert.assertFalse(requestRepository.getAllServedRequests().contains(servedRequest2));
 	}
 	
 }
