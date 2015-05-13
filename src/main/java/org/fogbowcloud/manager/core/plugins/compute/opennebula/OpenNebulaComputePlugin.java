@@ -694,15 +694,22 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 
 	protected Flavor getFlavor(Token token, String requirements) {
 		if (templateType == null || templateType.isEmpty()) {
-			String cpu = RequirementsHelper.getSmallestValueForAttribute(requirements, RequirementsHelper.GLUE_VCPU_TERM);
-			String mem = RequirementsHelper.getSmallestValueForAttribute(requirements, RequirementsHelper.GLUE_MEM_RAM_TERM);
-			String disk = RequirementsHelper.getSmallestValueForAttribute(requirements, RequirementsHelper.GLUE_DISK_TERM);
+			String cpu = getMinimumValueForRequirement(requirements, RequirementsHelper.GLUE_VCPU_TERM, 1);
+			String mem = getMinimumValueForRequirement(requirements, RequirementsHelper.GLUE_MEM_RAM_TERM, 1024);
+			String disk = getMinimumValueForRequirement(requirements, RequirementsHelper.GLUE_DISK_TERM, 0);
 			return new Flavor("flavor", cpu, mem, disk);
 		} 
 		updateFlavors(token);
 		return RequirementsHelper.findSmallestFlavor(getFlavors(),requirements);			
 	}
 	
+	private String getMinimumValueForRequirement(String requirements, 
+			String term, int minimumValue) {
+		String valueStr = RequirementsHelper
+				.getSmallestValueForAttribute(requirements, term);
+		return String.valueOf(Math.min(Double.valueOf(valueStr), minimumValue));
+	}
+
 	protected List<String> getTemplatesInProperties(Properties properties) {
 		List<String> listTemplate = new ArrayList<String>();
 		String propertiesTample = (String) properties.get(OPENNEBULA_TEMPLATES);
