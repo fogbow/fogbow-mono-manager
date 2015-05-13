@@ -5,7 +5,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -36,6 +38,7 @@ public class VMCatcherStoragePlugin extends StaticImageStoragePlugin {
 	protected static final String PROP_VMC_MAPPING_FILE = "image_storage_vmcatcher_glancepush_vmcmapping_file";
 	protected static final String PROP_VMC_PUSH_METHOD = "image_storage_vmcatcher_push_method";
 	protected static final String PROP_VMC_USE_SUDO = "image_storage_vmcatcher_use_sudo";
+	protected static final String PROP_VMC_ENV_PREFIX = "image_storage_vmcatcher_env_";
 	
 	private Properties props;
 	private ComputePlugin computePlugin;
@@ -71,7 +74,7 @@ public class VMCatcherStoragePlugin extends StaticImageStoragePlugin {
 		}
 		
 		String imageTitleTranslated = null;
-		String pushMethod = this.props.getProperty(PROP_VMC_PUSH_METHOD);
+		final String pushMethod = this.props.getProperty(PROP_VMC_PUSH_METHOD);
 		if (pushMethod.equals("glancepush")) {
 			imageTitleTranslated = getImageNameWithGlancePush(imageInfo);
 		} else if (pushMethod.equals("cesga")) {
@@ -99,6 +102,11 @@ public class VMCatcherStoragePlugin extends StaticImageStoragePlugin {
 				try {
 					executeShellCommand(sudo("vmcatcher_subscribe", "-U"));
 					executeShellCommand(sudo("vmcatcher_cache"));
+					if (pushMethod.equals("glancepush")) {
+						executeShellCommand(sudo("gpupdate"));
+					} else if (pushMethod.equals("cesga")) {
+						//TODO
+					}
 				} catch (Exception e) {
 					LOGGER.warn("Couldn't cache image via VMCatcher", e);
 				}
@@ -122,7 +130,15 @@ public class VMCatcherStoragePlugin extends StaticImageStoragePlugin {
 	
 	private void executeShellCommand(String... command) throws IOException,
 			InterruptedException {
-		shellWrapper.execute(command);
+		Map<String, String> envVars = new HashMap<String, String>();
+		for (Object propKey : props.keySet()) {
+			String propKeyStr = propKey.toString();
+			if (propKeyStr.startsWith(PROP_VMC_ENV_PREFIX)) {
+				envVars.put(propKeyStr.substring(PROP_VMC_ENV_PREFIX.length()), 
+						props.getProperty(propKeyStr));
+			}
+		}
+		shellWrapper.execute(envVars, command);
 	}
 
 	private String getImageNameWithCESGAPush(JSONObject imageInfo) {
