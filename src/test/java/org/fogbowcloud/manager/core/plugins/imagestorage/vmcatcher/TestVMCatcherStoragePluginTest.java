@@ -65,7 +65,7 @@ public class TestVMCatcherStoragePluginTest {
 		properties.put(VMCatcherStoragePlugin.PROP_VMC_PUSH_METHOD, "cesga");
 		Assert.assertNull(plugin.getLocalId(null, IMAGE_LIST_URL));
 		Mockito.verify(computePlugin).getImageId(null, "776690f9-d023-44c6-9923-b66ed853d77b");
-		Mockito.verify(shellWrapper).execute("sudo", "vmcatcher_subscribe", 
+		Mockito.verify(shellWrapper).execute("vmcatcher_subscribe", 
 				"--imagelist-newimage-subscribe", "--auto-endorse", "-s", IMAGE_LIST_URL);
 		Mockito.verify(downloader).execute(Mockito.any(Runnable.class));
 	}
@@ -75,7 +75,7 @@ public class TestVMCatcherStoragePluginTest {
 		properties.put(VMCatcherStoragePlugin.PROP_VMC_PUSH_METHOD, "glancepush");
 		Assert.assertNull(plugin.getLocalId(null, IMAGE_LIST_URL));
 		Mockito.verify(computePlugin).getImageId(null, "Scientific_Linux_6.5_Minimal");
-		Mockito.verify(shellWrapper).execute("sudo", "vmcatcher_subscribe", 
+		Mockito.verify(shellWrapper).execute("vmcatcher_subscribe", 
 				"--imagelist-newimage-subscribe", "--auto-endorse", "-s", IMAGE_LIST_URL);
 		Mockito.verify(downloader).execute(Mockito.any(Runnable.class));
 	}
@@ -84,6 +84,16 @@ public class TestVMCatcherStoragePluginTest {
 	public void testImageWithValidURLWithProperIdentifierCesgaSameThread() throws IOException, InterruptedException {
 		setupInSameThread();
 		properties.put(VMCatcherStoragePlugin.PROP_VMC_PUSH_METHOD, "cesga");
+		Assert.assertNull(plugin.getLocalId(null, IMAGE_LIST_URL));
+		Mockito.verify(shellWrapper).execute("vmcatcher_subscribe", "-U");
+		Mockito.verify(shellWrapper).execute("vmcatcher_cache");
+	}
+	
+	@Test
+	public void testImageWithValidURLWithProperIdentifierCesgaSameThreadForceSudo() throws IOException, InterruptedException {
+		setupInSameThread();
+		properties.put(VMCatcherStoragePlugin.PROP_VMC_PUSH_METHOD, "cesga");
+		properties.put(VMCatcherStoragePlugin.PROP_VMC_USE_SUDO, "true");
 		Assert.assertNull(plugin.getLocalId(null, IMAGE_LIST_URL));
 		Mockito.verify(shellWrapper).execute("sudo", "vmcatcher_subscribe", "-U");
 		Mockito.verify(shellWrapper).execute("sudo", "vmcatcher_cache");
@@ -94,8 +104,8 @@ public class TestVMCatcherStoragePluginTest {
 		setupInSameThread();
 		properties.put(VMCatcherStoragePlugin.PROP_VMC_PUSH_METHOD, "glancepush");
 		Assert.assertNull(plugin.getLocalId(null, IMAGE_LIST_URL));
-		Mockito.verify(shellWrapper).execute("sudo", "vmcatcher_subscribe", "-U");
-		Mockito.verify(shellWrapper).execute("sudo", "vmcatcher_cache");
+		Mockito.verify(shellWrapper).execute("vmcatcher_subscribe", "-U");
+		Mockito.verify(shellWrapper).execute("vmcatcher_cache");
 	}
 
 	private void setupInSameThread() {

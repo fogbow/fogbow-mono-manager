@@ -58,6 +58,7 @@ image_storage_http_tmp_storage=/tmp/
 # image_storage_vmcatcher_glancepush_vmcmapping_file=/etc/vmcatcher/vmcmapping
 # image_storage_vmcatcher_push_method=glancepush
 # image_storage_vmcatcher_push_method=cesga
+# image_storage_vmcatcher_use_sudo=false
 
 ## Static mapping between local image ids and image names
 ## Applies to all image storage plugins

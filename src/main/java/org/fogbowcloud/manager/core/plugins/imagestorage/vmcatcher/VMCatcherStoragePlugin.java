@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.LinkedList;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -34,6 +35,7 @@ public class VMCatcherStoragePlugin extends StaticImageStoragePlugin {
 	
 	protected static final String PROP_VMC_MAPPING_FILE = "image_storage_vmcatcher_glancepush_vmcmapping_file";
 	protected static final String PROP_VMC_PUSH_METHOD = "image_storage_vmcatcher_push_method";
+	protected static final String PROP_VMC_USE_SUDO = "image_storage_vmcatcher_use_sudo";
 	
 	private Properties props;
 	private ComputePlugin computePlugin;
@@ -85,8 +87,8 @@ public class VMCatcherStoragePlugin extends StaticImageStoragePlugin {
 		}
 		
 		try {
-			executeShellCommand("sudo", "vmcatcher_subscribe", 
-					"--imagelist-newimage-subscribe", "--auto-endorse", "-s", globalId);
+			executeShellCommand(sudo("vmcatcher_subscribe", 
+					"--imagelist-newimage-subscribe", "--auto-endorse", "-s", globalId));
 		} catch (Exception e) {
 			LOGGER.warn("Couldn't add image.list to VMCatcher subscription list", e);
 		}
@@ -95,8 +97,8 @@ public class VMCatcherStoragePlugin extends StaticImageStoragePlugin {
 			@Override
 			public void run() {
 				try {
-					executeShellCommand("sudo", "vmcatcher_subscribe", "-U");
-					executeShellCommand("sudo", "vmcatcher_cache");
+					executeShellCommand(sudo("vmcatcher_subscribe", "-U"));
+					executeShellCommand(sudo("vmcatcher_cache"));
 				} catch (Exception e) {
 					LOGGER.warn("Couldn't cache image via VMCatcher", e);
 				}
@@ -106,6 +108,18 @@ public class VMCatcherStoragePlugin extends StaticImageStoragePlugin {
 		return null;
 	}
 
+	private String[] sudo(String... cmds) {
+		LinkedList<String> cmdList = new LinkedList<String>();
+		String useSudoStr = props.getProperty(PROP_VMC_USE_SUDO);
+		if (useSudoStr != null && Boolean.parseBoolean(useSudoStr)) {
+			cmdList.add("sudo");
+		}
+		for (String cmd : cmds) {
+			cmdList.add(cmd);
+		}
+		return cmdList.toArray(new String[]{});
+	}
+	
 	private void executeShellCommand(String... command) throws IOException,
 			InterruptedException {
 		shellWrapper.execute(command);
