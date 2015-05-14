@@ -15,6 +15,7 @@ greensitter_jid=greensitter.test.com
 compute_class=org.fogbowcloud.manager.core.plugins.compute.openstack.OpenStackNovaV2ComputePlugin
 compute_novav2_url=http://localhost:8774
 compute_glancev2_url=http://localhost:9292
+compute_glancev2_image_visibility=private
 compute_novav2_network_id=ea51ed0c-0e8a-448d-8202-c79777109ffe
 
 ## Compute Plugin (Opennebula)

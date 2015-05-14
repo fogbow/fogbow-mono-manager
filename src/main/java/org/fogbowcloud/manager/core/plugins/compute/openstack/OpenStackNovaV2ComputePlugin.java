@@ -58,6 +58,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 	private static final String CONTAINER_FORMAT = "/container_format";
 	private static final String VISIBILITY_JSON_FIELD = "visibility";
 	private static final String PUBLIC = "public";
+	private static final String PRIVATE = "private";
 	private static final String NAME_JSON_FIELD = "name";
 	private static final String DISK_FORMAT = "/disk_format";
 	private static final String VALUE_JSON_FIELD = "value";
@@ -71,6 +72,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 	private static final String TENANT_ID = "tenantId";
 
 	private String glanceV2APIEndpoint;
+	private String glanceV2ImageVisibility;
 	private String computeV2APIEndpoint;
 	private String networkId;
 	private Map<String, String> fogbowTermToOpenStack = new HashMap<String, String>();
@@ -89,6 +91,10 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 
 		networkId = properties
 				.getProperty(OpenStackConfigurationConstants.COMPUTE_NOVAV2_NETWORK_KEY);
+		
+		glanceV2ImageVisibility = properties
+				.getProperty(OpenStackConfigurationConstants.COMPUTE_GLANCEV2_IMAGE_VISIBILITY, 
+						PRIVATE);
 		
 		// userdata
 		fogbowTermToOpenStack.put(RequestConstants.USER_DATA_TERM, "user_data");
@@ -587,7 +593,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		JSONObject json = new JSONObject();		
 		try {
 			json.put(NAME_JSON_FIELD, imageName);
-			json.put(VISIBILITY_JSON_FIELD, PUBLIC);
+			json.put(VISIBILITY_JSON_FIELD, glanceV2ImageVisibility);
 		} catch (JSONException e) {}
 
 		String responseStrCreateImage = doPostRequest(glanceV2APIEndpoint + V2_IMAGES,
