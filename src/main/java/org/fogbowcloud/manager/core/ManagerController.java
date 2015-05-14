@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -68,10 +69,13 @@ import org.fogbowcloud.manager.occi.request.RequestState;
 import org.fogbowcloud.manager.occi.request.RequestType;
 import org.fogbowcloud.manager.xmpp.AsyncPacketSender;
 import org.fogbowcloud.manager.xmpp.ManagerPacketHelper;
+import org.json.JSONObject;
 import org.restlet.Response;
 
 public class ManagerController {
 	
+
+	private static final String SSH_SERVICE_NAME = "ssh";
 
 	public static final String DEFAULT_COMMON_SSH_USER = "fogbow";
 	
@@ -420,10 +424,12 @@ public class ManagerController {
 		Instance instance = null;
 		if (isFulfilledByLocalMember(request)) {
 			instance = new Instance(request.getInstanceId());
-			String sshPublicAdd = getSSHPublicAddress(request.getId());
-			if (sshPublicAdd != null) {
-				instance.addAttribute(Instance.SSH_PUBLIC_ADDRESS_ATT, sshPublicAdd);
+			Map<String, String> serviceAddresses = getExternalServiceAddresses(request.getId());
+			if (serviceAddresses != null) {
+				instance.addAttribute(Instance.SSH_PUBLIC_ADDRESS_ATT, serviceAddresses.get(SSH_SERVICE_NAME));
 				instance.addAttribute(Instance.SSH_USERNAME_ATT, getSSHCommonUser());
+				serviceAddresses.remove(SSH_SERVICE_NAME);
+				instance.addAttribute(Instance.EXTRA_PORTS_ATT, new JSONObject(serviceAddresses).toString());
 			}
 		} else {
 			LOGGER.debug(request.getInstanceId() + " is remote, going out to "
@@ -447,10 +453,12 @@ public class ManagerController {
 						request.getInstanceId());
 			}
 
-			String sshPublicAdd = getSSHPublicAddress(request.getId());
-			if (sshPublicAdd != null) {
-				instance.addAttribute(Instance.SSH_PUBLIC_ADDRESS_ATT, sshPublicAdd);
+			Map<String, String> serviceAddresses = getExternalServiceAddresses(request.getId());
+			if (serviceAddresses != null) {
+				instance.addAttribute(Instance.SSH_PUBLIC_ADDRESS_ATT, serviceAddresses.get(SSH_SERVICE_NAME));
 				instance.addAttribute(Instance.SSH_USERNAME_ATT, getSSHCommonUser());
+				serviceAddresses.remove(SSH_SERVICE_NAME);
+				instance.addAttribute(Instance.EXTRA_PORTS_ATT, new JSONObject(serviceAddresses).toString());
 			}
 			Category osCategory = getImageCategory(request.getCategories());
 			if (osCategory != null) {
@@ -489,7 +497,8 @@ public class ManagerController {
 	
 	private HttpClient reverseTunnelHttpClient = createReverseTunnelHttpClient();
 	
-	private String getSSHPublicAddress(String tokenId) {
+	@SuppressWarnings("unchecked")
+	private Map<String, String> getExternalServiceAddresses(String tokenId) {
 		
 		if (tokenId == null || tokenId.isEmpty()){
 			return null;
@@ -500,13 +509,24 @@ public class ManagerController {
 			String hostAddr = properties.getProperty(ConfigurationConstants.TOKEN_HOST_PRIVATE_ADDRESS_KEY);
 			String httpHostPort = properties.getProperty(ConfigurationConstants.TOKEN_HOST_HTTP_PORT_KEY);
 			HttpGet httpGet = new HttpGet("http://" + hostAddr + ":" + httpHostPort + "/token/"
-					+ tokenId);
+					+ tokenId + "/all");
 			response = reverseTunnelHttpClient.execute(httpGet);
 			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-				String sshPort = EntityUtils.toString(response.getEntity());
+				JSONObject jsonPorts = new JSONObject(
+						EntityUtils.toString(response.getEntity()));
+				if (jsonPorts.isNull(SSH_SERVICE_NAME)) {
+					return null;
+				}
+				Iterator<String> serviceIterator = jsonPorts.keys();
+				Map<String, String> servicePerAddress = new HashMap<String, String>(); 
 				String sshPublicHostIP = properties
 						.getProperty(ConfigurationConstants.TOKEN_HOST_PUBLIC_ADDRESS_KEY);
-				return sshPublicHostIP + ":" + sshPort;
+				while (serviceIterator.hasNext()) {
+					String service = (String) serviceIterator.next();
+					String port = jsonPorts.optString(service);
+					servicePerAddress.put(service, sshPublicHostIP + ":" + port);
+				}
+				return servicePerAddress;
 			}
 		} catch (Throwable e) {
 			LOGGER.warn("", e);
@@ -790,10 +810,14 @@ public class ManagerController {
 			Instance instance = computePlugin.getInstance(getFederationUserToken(), instanceId);
 			Request servedRequest = requests.getRequestByInstance(instanceId);
 			if (servedRequest != null) {
-				String sshPublicAddress = getSSHPublicAddress(servedRequest.getId());			
-				if (sshPublicAddress != null) {
-					instance.addAttribute(Instance.SSH_PUBLIC_ADDRESS_ATT, sshPublicAddress);
+				Map<String, String> serviceAddresses = getExternalServiceAddresses(servedRequest.getId());
+				if (serviceAddresses != null) {
+					instance.addAttribute(Instance.SSH_PUBLIC_ADDRESS_ATT, serviceAddresses.get(SSH_SERVICE_NAME));
+					instance.addAttribute(Instance.SSH_USERNAME_ATT, getSSHCommonUser());
+					serviceAddresses.remove(SSH_SERVICE_NAME);
+					instance.addAttribute(Instance.EXTRA_PORTS_ATT, new JSONObject(serviceAddresses).toString());
 				}
+				
 				Category osCategory = getImageCategory(servedRequest.getCategories());
 				if (osCategory != null) {
 					instance.addResource(
@@ -1453,10 +1477,14 @@ public class ManagerController {
 							request.getInstanceId());
 				}
 
-				String sshPublicAdd = getSSHPublicAddress(request.getId());
-				if (sshPublicAdd != null) {
-					instance.addAttribute(Instance.SSH_PUBLIC_ADDRESS_ATT, sshPublicAdd);
+				Map<String, String> serviceAddresses = getExternalServiceAddresses(request.getId());
+				if (serviceAddresses != null) {
+					instance.addAttribute(Instance.SSH_PUBLIC_ADDRESS_ATT, serviceAddresses.get(SSH_SERVICE_NAME));
+					instance.addAttribute(Instance.SSH_USERNAME_ATT, getSSHCommonUser());
+					serviceAddresses.remove(SSH_SERVICE_NAME);
+					instance.addAttribute(Instance.EXTRA_PORTS_ATT, new JSONObject(serviceAddresses).toString());
 				}
+				
 				Category osCategory = getImageCategory(request.getCategories());
 				if (osCategory != null) {
 					instance.addResource(
