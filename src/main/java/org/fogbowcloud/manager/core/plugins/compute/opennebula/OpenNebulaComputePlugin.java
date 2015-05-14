@@ -324,8 +324,11 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		List<Resource> resources = new ArrayList<Resource>();
 		resources.add(ResourceRepository.getInstance().get("compute"));
 		resources.add(ResourceRepository.getInstance().get("os_tpl"));
-		resources.add(ResourceRepository.generateFlavorResource(getUsedFlavor(
-				Double.parseDouble(cpu), Double.parseDouble(mem))));
+		Resource flavorResource = ResourceRepository.generateFlavorResource(getUsedFlavor(
+				Double.parseDouble(cpu), Double.parseDouble(mem)));
+		if (flavorResource != null) {
+			resources.add(flavorResource);
+		}
 		
 		return new Instance(vm.getId(), resources, attributes, new ArrayList<Link>(), state);
 	}
@@ -350,11 +353,14 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 
 
 	private String getUsedFlavor(double cpu, double mem) {
-		for (Flavor flavor : flavors) {
-			if (Double.parseDouble(flavor.getCpu()) == cpu && Double.parseDouble(flavor.getMem()) == mem) {
-				return flavor.getName();
-			}
-		}
+		try {
+			List<Flavor> flavors = new ArrayList<Flavor>(this.flavors);
+			for (Flavor flavor : flavors) {
+				if (Double.parseDouble(flavor.getCpu()) == cpu && Double.parseDouble(flavor.getMem()) == mem) {
+					return flavor.getName();
+				}
+			}		
+		} catch (Exception e) {}
 		return null;
 	}
 
