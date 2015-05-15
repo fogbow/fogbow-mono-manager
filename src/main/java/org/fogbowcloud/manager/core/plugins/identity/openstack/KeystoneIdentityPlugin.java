@@ -95,7 +95,7 @@ public class KeystoneIdentityPlugin implements IdentityPlugin {
 		try {
 			json = mountJson(credentials);
 		} catch (JSONException e) {
-			LOGGER.error(e);
+			LOGGER.error("Could not mount JSON while creating token.", e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}
 
@@ -134,10 +134,10 @@ public class KeystoneIdentityPlugin implements IdentityPlugin {
 			response = getClient().execute(request);
 			responseStr = EntityUtils.toString(response.getEntity(), Charsets.UTF_8);
 		} catch (UnknownHostException e) {
-			LOGGER.error(e);
+			LOGGER.error("Could not do post request, unknown host.", e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.UNKNOWN_HOST);
 		} catch (Exception e) {
-			LOGGER.error(e);
+			LOGGER.error("Could not do post request.", e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		} finally {
 			try {
@@ -164,7 +164,7 @@ public class KeystoneIdentityPlugin implements IdentityPlugin {
 		try {
 			json = mountJson(token);
 		} catch (JSONException e) {
-			LOGGER.error(e);
+			LOGGER.error("Could not mount JSON.", e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}
 
@@ -265,7 +265,7 @@ public class KeystoneIdentityPlugin implements IdentityPlugin {
 		try {
 			root = mountJson(accessId, tenantName);
 		} catch (JSONException e) {
-			LOGGER.error(e);
+			LOGGER.error("Could not mount JSON.", e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}
 
@@ -287,7 +287,7 @@ public class KeystoneIdentityPlugin implements IdentityPlugin {
 			responseStr = EntityUtils
 					.toString(response.getEntity(), String.valueOf(Charsets.UTF_8));
 		} catch (Exception e) {
-			LOGGER.error(e);
+			LOGGER.error("Could not get tenant name.", e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}
 		checkStatusResponse(response);
@@ -310,7 +310,7 @@ public class KeystoneIdentityPlugin implements IdentityPlugin {
 			}
 			return tenantsStone.getJSONObject(0).getString(NAME_PROP); // getting first tenant
 		} catch (JSONException e) {
-			LOGGER.error(e);
+			LOGGER.error("Could not get tenant name from JSON.", e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}
 	}
