@@ -34,7 +34,7 @@ public class UserdataUtils {
 	protected static final String TOKEN_MANAGER_SSH_PUBLIC_KEY = "#TOKEN_MANAGER_SSH_PUBLIC_KEY#";
 	protected static final String TOKEN_MANAGER_SSH_USER = "#TOKEN_MANAGER_SSH_USER#";
 	
-	public static final String USER_DATA_LINE_BREAKER = "%\\n%";
+	public static final String USER_DATA_LINE_BREAKER = "[[\\n]]";
 	
 	private static final String DEFAULT_SSH_HOST_PORT = "22";
 	
