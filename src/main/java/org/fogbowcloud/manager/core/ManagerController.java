@@ -1272,8 +1272,12 @@ public class ManagerController {
 
 	private boolean isInstanceBeingUsedByRemoteMember(Request servedRequest) {
 		try{
+			String globalInstanceId = servedRequest.getGlobalInstanceId();
+			if (globalInstanceId == null) {
+				return false;
+			}
 			ManagerPacketHelper.checkIfInstanceIsBeingUsedByRemoteMember(
-					servedRequest.getGlobalInstanceId(), servedRequest, packetSender);
+					globalInstanceId, servedRequest, packetSender);
 			return true;
 		} catch (OCCIException e) {
 			return false;

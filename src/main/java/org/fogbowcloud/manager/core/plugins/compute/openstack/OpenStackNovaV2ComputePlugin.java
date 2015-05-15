@@ -522,7 +522,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 			response = client.execute(request);
 			responseStr = EntityUtils.toString(response.getEntity(), Charsets.UTF_8);
 		} catch (Exception e) {
-			LOGGER.error(e);
+			LOGGER.error("Could not make GET request.", e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		} finally {
 			try {

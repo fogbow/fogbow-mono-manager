@@ -22,6 +22,7 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.charset.Charset;
 import java.util.Properties;
+import java.util.Random;
 import java.util.Set;
 
 import javax.mail.MessagingException;
@@ -320,7 +321,7 @@ public class CloudInitUserDataBuilder {
             CharStreams.copy(in, sw);
             MimeBodyPart mimeBodyPart = new MimeBodyPart();
             mimeBodyPart.setText(sw.toString(), charset.name(), fileType.getMimeTextSubType());
-            mimeBodyPart.setFileName(System.currentTimeMillis() + fileType.getFileName());
+            mimeBodyPart.setFileName(Math.abs(new Random().nextLong()) + fileType.getFileName());
             userDataMultipart.addBodyPart(mimeBodyPart);
 
         } catch (IOException e) {
