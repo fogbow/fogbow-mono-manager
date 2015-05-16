@@ -1027,6 +1027,10 @@ public class ManagerController {
 							return;
 						}
 						
+						if (request.getState().in(RequestState.DELETED)) {
+							return;
+						}
+						
 						// reseting time stamp
 						asynchronousRequests.get(request.getId()).setTimeStamp(
 								dateUtils.currentTimeMillis());
@@ -1095,8 +1099,6 @@ public class ManagerController {
 							Instance.SSH_PUBLIC_ADDRESS_ATT), request);
 					LOGGER.debug("Public keys replaced on " + request.getId());
 				}
-
-				request.setState(RequestState.FULFILLED);
 				
 				if (request.isLocal() && !isFulfilledByLocalMember(request)) {
 					asynchronousRequests.remove(request.getId());
@@ -1104,6 +1106,10 @@ public class ManagerController {
 
 				if (!request.isLocal()) {
 					ManagerPacketHelper.replyToServedRequest(request, packetSender);
+				}
+				
+				if (!request.getState().in(RequestState.DELETED)) {
+					request.setState(RequestState.FULFILLED);
 				}
 
 				LOGGER.debug("Fulfilled Request: " + request);
