@@ -76,7 +76,8 @@ public class KeystoneIdentityPlugin implements IdentityPlugin {
 
 	public KeystoneIdentityPlugin(Properties properties) {
 		this.properties = properties;
-		this.keystoneUrl = properties.getProperty("identity_url");
+		this.keystoneUrl = properties.getProperty("identity_url") == null ? 
+				properties.getProperty(AUTH_URL) : properties.getProperty("identity_url");
 		this.v2TokensEndpoint = keystoneUrl + V2_TOKENS_ENDPOINT_PATH;
 		this.v2TenantsEndpoint = keystoneUrl + V2_TENANTS_ENDPOINT_PATH;
 	}
