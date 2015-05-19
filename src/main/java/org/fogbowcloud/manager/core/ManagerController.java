@@ -1267,8 +1267,10 @@ public class ManagerController {
 			if (!isInstanceBeingUsedByRemoteMember(request)){
 				LOGGER.debug("The instance " + request.getInstanceId() + " is not being used anymore by "
 						+ request.getRequestingMemberId() + " and will be removed.");
-				requests.exclude(request.getId());				
-				removeInstanceForRemoteMember(request.getInstanceId());
+				requests.exclude(request.getId());
+				if (request.getInstanceId() != null) {
+					removeInstanceForRemoteMember(request.getInstanceId());
+				}
 			}
 		}
 		
