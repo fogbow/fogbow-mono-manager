@@ -25,7 +25,7 @@ chmod +x /bin/fogbow-autossh
 setsid /bin/fogbow-autossh
 cat > /bin/create-fogbow-tunnel << EOL
 #!/bin/sh
-REMOTE_PORT=\$(curl -silent -X POST #TOKEN_HOST#:#TOKEN_HOST_HTTP_PORT#/token/#TOKEN_ID#-\${1})
+REMOTE_PORT=\$(curl -X POST #TOKEN_HOST#:#TOKEN_HOST_HTTP_PORT#/token/#TOKEN_ID#-\${1})
 ssh $SSH_OPTIONS -f -N -R 0.0.0.0:\$REMOTE_PORT:localhost:\${2} #TOKEN_ID#-\${1}@#TOKEN_HOST# -p #TOKEN_HOST_SSH_PORT#
 EOL
 chmod +x /bin/create-fogbow-tunnel
