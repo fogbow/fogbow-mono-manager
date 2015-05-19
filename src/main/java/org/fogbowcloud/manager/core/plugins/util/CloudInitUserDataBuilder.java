@@ -79,6 +79,8 @@ import com.google.common.io.CharStreams;
  * @author <a href="mailto:cyrille@cyrilleleclerc.com">Cyrille Le Clerc</a>
  */
 public class CloudInitUserDataBuilder {
+	
+	private int userDataCounter = 1;
 
     /**
      * File types supported by CloudInit
@@ -321,7 +323,7 @@ public class CloudInitUserDataBuilder {
             CharStreams.copy(in, sw);
             MimeBodyPart mimeBodyPart = new MimeBodyPart();
             mimeBodyPart.setText(sw.toString(), charset.name(), fileType.getMimeTextSubType());
-            mimeBodyPart.setFileName(Math.abs(new Random().nextLong()) + fileType.getFileName());
+            mimeBodyPart.setFileName((userDataCounter++) + fileType.getFileName());
             userDataMultipart.addBodyPart(mimeBodyPart);
 
         } catch (IOException e) {
