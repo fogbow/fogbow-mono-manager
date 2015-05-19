@@ -332,8 +332,10 @@ public class ManagerPacketHelper {
 				ManagerXmppComponent.INSTANCEBEINGUSED_NAMESPACE);
 		Element requestEl = queryEl.addElement("request");
 		requestEl.addElement("id").setText(servedRequest.getId());
-		Element instanceEl = queryEl.addElement("instance");
-		instanceEl.addElement("id").setText(instanceId);
+		if (instanceId != null) {
+			Element instanceEl = queryEl.addElement("instance");
+			instanceEl.addElement("id").setText(instanceId);
+		}
 		IQ response = (IQ) packetSender.syncSendPacket(iq);
 		if (response.getError() != null) {
 			raiseException(response.getError());

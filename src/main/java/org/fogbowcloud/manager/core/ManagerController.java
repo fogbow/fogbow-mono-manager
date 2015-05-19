@@ -285,6 +285,9 @@ public class ManagerController {
 			if (request == null) {
 				return false;
 			}
+			if (instanceId == null) {
+				return true;
+			}
 
 			// it is possible that the asynchronous request has not received
 			// instanceId yet
@@ -1265,7 +1268,6 @@ public class ManagerController {
 				LOGGER.debug("The instance " + request.getInstanceId() + " is not being used anymore by "
 						+ request.getRequestingMemberId() + " and will be removed.");
 				requests.exclude(request.getId());				
-				
 				removeInstanceForRemoteMember(request.getInstanceId());
 			}
 		}
@@ -1279,9 +1281,6 @@ public class ManagerController {
 	private boolean isInstanceBeingUsedByRemoteMember(Request servedRequest) {
 		try{
 			String globalInstanceId = servedRequest.getGlobalInstanceId();
-			if (globalInstanceId == null) {
-				return false;
-			}
 			ManagerPacketHelper.checkIfInstanceIsBeingUsedByRemoteMember(
 					globalInstanceId, servedRequest, packetSender);
 			return true;
