@@ -1199,6 +1199,10 @@ public class ManagerController {
 		
 		List<Request> openRequests = requests.getRequestsIn(RequestState.OPEN);
 		for (Request request : openRequests) {
+			if (!request.getState().equals(RequestState.OPEN)) {
+				LOGGER.debug("The request " + request.getId() + " is no longer open.");
+				continue;
+			}
 			if (isRequestForwardedtoRemoteMember(request.getId())) {
 				LOGGER.debug("The request " + request.getId()
 						+ " was forwarded to remote member and is not fulfilled yet.");
