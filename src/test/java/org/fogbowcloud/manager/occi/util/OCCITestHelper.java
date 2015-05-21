@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.StringTokenizer;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -19,6 +20,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.ParseException;
 import org.apache.http.util.EntityUtils;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
+import org.fogbowcloud.manager.core.CurrentThreadExecutorService;
 import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
@@ -29,9 +31,9 @@ import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.OCCIApplication;
-import org.fogbowcloud.manager.occi.core.HeaderUtils;
-import org.fogbowcloud.manager.occi.core.OCCIHeaders;
-import org.fogbowcloud.manager.occi.core.ResourceRepository;
+import org.fogbowcloud.manager.occi.model.HeaderUtils;
+import org.fogbowcloud.manager.occi.model.OCCIHeaders;
+import org.fogbowcloud.manager.occi.model.ResourceRepository;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
@@ -56,6 +58,7 @@ public class OCCITestHelper {
 	public static final String URI_FOGBOW_USAGE = "http://localhost:" + ENDPOINT_PORT + "/usage";
 	public static final String URI_FOGBOW_TOKEN = "http://localhost:" + ENDPOINT_PORT + "/token";
 	public static final String URI_FOGBOW_QUERY = "http://localhost:" + ENDPOINT_PORT + "/-/";
+	public static final String URI_FOGBOW_LOCAL_QUOTA = "http://localhost:" + ENDPOINT_PORT + "/quota";
 	public static final String URI_FOGBOW_QUERY_TYPE_TWO = "http://localhost:" + ENDPOINT_PORT
 			+ "/.well-known/org/ogf/occi/-/";	
 	public static final String USER_MOCK = "user_mock";
@@ -71,9 +74,9 @@ public class OCCITestHelper {
 
 		Properties properties = new Properties();
 		properties.put(ConfigurationConstants.XMPP_JID_KEY, MEMBER_ID);
-		properties.put(ConfigurationConstants.TUNNEL_SSH_PRIVATE_HOST_KEY,
+		properties.put(ConfigurationConstants.TOKEN_HOST_PRIVATE_ADDRESS_KEY,
 				DefaultDataTestHelper.SERVER_HOST);
-		properties.put(ConfigurationConstants.TUNNEL_SSH_HOST_HTTP_PORT_KEY,
+		properties.put(ConfigurationConstants.TOKEN_HOST_HTTP_PORT_KEY,
 				String.valueOf(DefaultDataTestHelper.TOKEN_SERVER_HTTP_PORT));
 		properties.put(ConfigurationConstants.PREFIX_FLAVORS + FOGBOW_SMALL_IMAGE, "{cpu=1,mem=100}");
 		
@@ -89,14 +92,17 @@ public class OCCITestHelper {
 			}
 		});
 		
+		ExecutorService benchmarkExecutor = new CurrentThreadExecutorService();
+		
 		ManagerController facade = new ManagerController(properties, executor);
 		ResourceRepository.init(properties);
 		facade.setComputePlugin(computePlugin);
 		facade.setAuthorizationPlugin(authorizationPlugin);
 		facade.setLocalIdentityPlugin(identityPlugin);
 		facade.setFederationIdentityPlugin(identityPlugin);
-		facade.setBenchmarkingPlugin(benchmarkingPlugin);
-
+		facade.setBenchmarkingPlugin(benchmarkingPlugin);		
+		facade.setBenchmarkExecutor(benchmarkExecutor);
+		
 		component.getDefaultHost().attach(new OCCIApplication(facade));
 		component.start();
 	}
@@ -107,9 +113,9 @@ public class OCCITestHelper {
 		component.getServers().add(Protocol.HTTP, ENDPOINT_PORT);
 
 		Properties properties = new Properties();
-		properties.put(ConfigurationConstants.TUNNEL_SSH_PRIVATE_HOST_KEY,
+		properties.put(ConfigurationConstants.TOKEN_HOST_PRIVATE_ADDRESS_KEY,
 				DefaultDataTestHelper.SERVER_HOST);
-		properties.put(ConfigurationConstants.TUNNEL_SSH_HOST_HTTP_PORT_KEY,
+		properties.put(ConfigurationConstants.TOKEN_HOST_HTTP_PORT_KEY,
 				String.valueOf(DefaultDataTestHelper.TOKEN_SERVER_HTTP_PORT));
 		properties.put(ConfigurationConstants.PREFIX_FLAVORS + FOGBOW_SMALL_IMAGE,
 				"{cpu=1,mem=100}");
@@ -136,9 +142,9 @@ public class OCCITestHelper {
 
 		Properties properties = new Properties();
 		properties.put(ConfigurationConstants.XMPP_JID_KEY, MEMBER_ID);
-		properties.put(ConfigurationConstants.TUNNEL_SSH_PRIVATE_HOST_KEY,
+		properties.put(ConfigurationConstants.TOKEN_HOST_PRIVATE_ADDRESS_KEY,
 				DefaultDataTestHelper.SERVER_HOST);
-		properties.put(ConfigurationConstants.TUNNEL_SSH_HOST_HTTP_PORT_KEY,
+		properties.put(ConfigurationConstants.TOKEN_HOST_HTTP_PORT_KEY,
 				String.valueOf(DefaultDataTestHelper.TOKEN_SERVER_HTTP_PORT));
 		ManagerController facade = new ManagerController(properties);
 		facade.setComputePlugin(computePlugin);

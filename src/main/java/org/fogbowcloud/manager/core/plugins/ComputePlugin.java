@@ -5,9 +5,9 @@ import java.util.Map;
 
 import org.fogbowcloud.manager.core.model.ImageState;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
-import org.fogbowcloud.manager.occi.core.Category;
-import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.instance.Instance;
+import org.fogbowcloud.manager.occi.model.Category;
+import org.fogbowcloud.manager.occi.model.Token;
 import org.restlet.Request;
 import org.restlet.Response;
 

@@ -22,7 +22,7 @@ public class SSHBenchmarkingPlugin implements BenchmarkingPlugin {
 	private static final String SSH_BENCHMARKING_SCRIPT_URL = "ssh_benchmarking_script_url";
 	
 	private static final String STAGE_COMMAND = "curl %s -o exec;chmod +x exec;";
-	private static final String EXEC_COMMAND = "./exec";
+	private static final String EXEC_COMMAND = "./exec; rm ./exec";
 	
 	private String scriptUrl;
 	private String managerPrivateKeyFilePath;
@@ -38,9 +38,9 @@ public class SSHBenchmarkingPlugin implements BenchmarkingPlugin {
 	
 	private static String getSSHCommonUser(Properties properties) {
 		String sshCommonUser = properties.getProperty(ConfigurationConstants.SSH_COMMON_USER);
-		return sshCommonUser == null ? sshCommonUser : ManagerController.DEFAULT_COMMON_SSH_USER;
+		return sshCommonUser != null ? sshCommonUser : ManagerController.DEFAULT_COMMON_SSH_USER;
 	}
-
+	
 	@Override
 	public void run(String globalInstanceId, Instance instance) {
 		if (instance == null) {
@@ -66,8 +66,8 @@ public class SSHBenchmarkingPlugin implements BenchmarkingPlugin {
 		SshHelper ssh = new SshHelper();
 		long millis = 0;
 		try {
-			String[] sshAddressData = ipAndPort.split(":");
-			ssh.connect(sshAddressData[0], Integer.parseInt(sshAddressData[1]), user,
+			String[] sshAddressRaw = ipAndPort.split(":");
+			ssh.connect(sshAddressRaw[0], Integer.parseInt(sshAddressRaw[1]), user,
 					this.managerPrivateKeyFilePath);
 			Command stagingCmd = ssh.doSshExecution(String.format(STAGE_COMMAND, scriptUrl));
 			if (stagingCmd.getExitStatus() == 0) {
@@ -75,6 +75,7 @@ public class SSHBenchmarkingPlugin implements BenchmarkingPlugin {
 				Command executeBenchcmd = ssh.doSshExecution(EXEC_COMMAND);
 				long endTimestamp = System.currentTimeMillis();
 				if (executeBenchcmd.getExitStatus() == 0) {
+					LOGGER.debug("Benchmarking execution - " + ipAndPort + " - Time: " + (endTimestamp - startTimestamp));
 					return endTimestamp - startTimestamp;
 				}
 			}
@@ -94,8 +95,6 @@ public class SSHBenchmarkingPlugin implements BenchmarkingPlugin {
 	 * @return The amount of FCUs benchmarked.
 	 */
 	protected double getFCUsFromOutput(long milliseconds) {
-		System.out.println(milliseconds + " milliseconds");
-
 		double seconds = (double) TimeUnit.MILLISECONDS.toSeconds(milliseconds);
 		return (10.0 / seconds);
 

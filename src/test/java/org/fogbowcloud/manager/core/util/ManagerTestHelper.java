@@ -20,8 +20,6 @@ import org.dom4j.Attribute;
 import org.dom4j.Element;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.CurrentThreadExecutorService;
-import org.fogbowcloud.manager.core.DefaultMemberValidator;
-import org.fogbowcloud.manager.core.FederationMemberPicker;
 import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
@@ -29,13 +27,15 @@ import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
+import org.fogbowcloud.manager.core.plugins.FederationMemberPickerPlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
-import org.fogbowcloud.manager.core.plugins.openstack.KeystoneIdentityPlugin;
-import org.fogbowcloud.manager.occi.core.ErrorType;
-import org.fogbowcloud.manager.occi.core.OCCIException;
-import org.fogbowcloud.manager.occi.core.ResponseConstants;
-import org.fogbowcloud.manager.occi.core.Token;
+import org.fogbowcloud.manager.core.plugins.identity.openstack.KeystoneIdentityPlugin;
+import org.fogbowcloud.manager.core.plugins.memberauthorization.DefaultMemberAuthorizationPlugin;
 import org.fogbowcloud.manager.occi.instance.Instance;
+import org.fogbowcloud.manager.occi.model.ErrorType;
+import org.fogbowcloud.manager.occi.model.OCCIException;
+import org.fogbowcloud.manager.occi.model.ResponseConstants;
+import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.xmpp.AsyncPacketSender;
 import org.fogbowcloud.manager.xmpp.ManagerXmppComponent;
 import org.jamppa.client.XMPPClient;
@@ -65,7 +65,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 	private AuthorizationPlugin authorizationPlugin;
 	private BenchmarkingPlugin benchmarkingPlugin;
 	private AccountingPlugin accountingPlugin;
-	private FederationMemberPicker memberPickerPlugin;
+	private FederationMemberPickerPlugin memberPickerPlugin;
 	private Token defaultUserToken;
 	private Token defaultFederationToken;
 	private FakeXMPPServer fakeServer = new FakeXMPPServer();
@@ -182,16 +182,15 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 	public ManagerXmppComponent initializeXMPPManagerComponent(boolean init) throws Exception {
 
 		Properties properties = new Properties();
-		properties.put(ConfigurationConstants.FEDERATION_USER_NAME_KEY, "fogbow");
-		properties.put(ConfigurationConstants.FEDERATION_USER_PASS_KEY, "fogbow");
-		properties.put(ConfigurationConstants.FEDERATION_USER_TENANT_NAME_KEY, "fogbow");
+		properties.put(KeystoneIdentityPlugin.FEDERATION_USER_NAME_KEY, "fogbow");
+		properties.put(KeystoneIdentityPlugin.FEDERATION_USER_PASS_KEY, "fogbow");
+		properties.put(KeystoneIdentityPlugin.FEDERATION_USER_TENANT_NAME_KEY, "fogbow");
 		properties.put(ConfigurationConstants.XMPP_JID_KEY, "manager.test.com");
-		properties.put(ConfigurationConstants.TUNNEL_SSH_PRIVATE_HOST_KEY,
+		properties.put(ConfigurationConstants.TOKEN_HOST_PRIVATE_ADDRESS_KEY,
 				DefaultDataTestHelper.SERVER_HOST);
-		properties.put(ConfigurationConstants.TUNNEL_SSH_HOST_HTTP_PORT_KEY,
+		properties.put(ConfigurationConstants.TOKEN_HOST_HTTP_PORT_KEY,
 				String.valueOf(DefaultDataTestHelper.TOKEN_SERVER_HTTP_PORT));
-		properties.put(ConfigurationConstants.MAX_WHOISALIVE_MANAGER_COUNT,
-				MAX_WHOISALIVE_MANAGER_COUNT);
+		properties.put("max_whoisalive_manager_count", MAX_WHOISALIVE_MANAGER_COUNT);
 		
 		ManagerController managerFacade = new ManagerController(properties);
 		return initializeXMPPManagerComponent(init, managerFacade);
@@ -218,7 +217,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		managerFacade.setFederationIdentityPlugin(identityPlugin);
 		managerFacade.setBenchmarkingPlugin(benchmarkingPlugin);
 		managerFacade.setAccountingPlugin(accountingPlugin);
-		managerFacade.setValidator(new DefaultMemberValidator(null));
+		managerFacade.setValidator(new DefaultMemberAuthorizationPlugin(null));
 		managerFacade.setBenchmarkExecutor(benchmarkExecutor);
 				
 		managerXmppComponent = Mockito.spy(new ManagerXmppComponent(LOCAL_MANAGER_COMPONENT_URL,
@@ -242,8 +241,8 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		this.identityPlugin = Mockito.mock(IdentityPlugin.class);
 
 		Properties properties = new Properties();
-		properties.put(ConfigurationConstants.FEDERATION_USER_NAME_KEY, "fogbow");
-		properties.put(ConfigurationConstants.FEDERATION_USER_PASS_KEY, "fogbow");
+		properties.put(KeystoneIdentityPlugin.FEDERATION_USER_NAME_KEY, "fogbow");
+		properties.put(KeystoneIdentityPlugin.FEDERATION_USER_PASS_KEY, "fogbow");
 		properties.put(ConfigurationConstants.XMPP_JID_KEY, "manager.test.com");
 
 		Mockito.when(computePlugin.getInstances(Mockito.any(Token.class))).thenReturn(
@@ -256,7 +255,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		managerFacade.setComputePlugin(computePlugin);
 		managerFacade.setLocalIdentityPlugin(identityPlugin);
 		managerFacade.setFederationIdentityPlugin(identityPlugin);
-		managerFacade.setValidator(new DefaultMemberValidator(null));
+		managerFacade.setValidator(new DefaultMemberAuthorizationPlugin(null));
 
 		managerXmppComponent = Mockito.spy(new ManagerXmppComponent(LOCAL_MANAGER_COMPONENT_URL,
 				MANAGER_COMPONENT_PASS, SERVER_HOST, SERVER_COMPONENT_PORT, managerFacade));
@@ -327,19 +326,19 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		Properties properties = new Properties();
 		properties.put(ConfigurationConstants.XMPP_JID_KEY,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
-		properties.put(ConfigurationConstants.FEDERATION_USER_NAME_KEY,
+		properties.put(KeystoneIdentityPlugin.FEDERATION_USER_NAME_KEY,
 				DefaultDataTestHelper.FED_USER_NAME);
-		properties.put(ConfigurationConstants.FEDERATION_USER_PASS_KEY,
+		properties.put(KeystoneIdentityPlugin.FEDERATION_USER_PASS_KEY,
 				DefaultDataTestHelper.FED_USER_PASS);
-		properties.put(ConfigurationConstants.FEDERATION_USER_TENANT_NAME_KEY,
+		properties.put(KeystoneIdentityPlugin.FEDERATION_USER_TENANT_NAME_KEY,
 				DefaultDataTestHelper.TENANT_NAME);
 		properties.put(ConfigurationConstants.SCHEDULER_PERIOD_KEY,
 				DefaultDataTestHelper.SCHEDULER_PERIOD.toString());
 		properties.put(ConfigurationConstants.INSTANCE_MONITORING_PERIOD_KEY,
 				Long.toString(DefaultDataTestHelper.LONG_TIME));
-		properties.put(ConfigurationConstants.TUNNEL_SSH_PRIVATE_HOST_KEY,
+		properties.put(ConfigurationConstants.TOKEN_HOST_PRIVATE_ADDRESS_KEY,
 				DefaultDataTestHelper.SERVER_HOST);
-		properties.put(ConfigurationConstants.TUNNEL_SSH_HOST_HTTP_PORT_KEY,
+		properties.put(ConfigurationConstants.TOKEN_HOST_HTTP_PORT_KEY,
 				String.valueOf(DefaultDataTestHelper.TOKEN_SERVER_HTTP_PORT));
 		properties.put(ConfigurationConstants.PREFIX_FLAVORS + "small", VALUE_FLAVOR_SMALL);
 		properties.put(ConfigurationConstants.PREFIX_FLAVORS + "medium", VALUE_FLAVOR_MEDIUM);
@@ -388,7 +387,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		
 		accountingPlugin = Mockito.mock(AccountingPlugin.class);
 		
-		memberPickerPlugin = Mockito.mock(FederationMemberPicker.class);
+		memberPickerPlugin = Mockito.mock(FederationMemberPickerPlugin.class);
 		Mockito.when(memberPickerPlugin.pick(Mockito.any(List.class))).thenReturn(
 				new FederationMember(new ResourcesInfo(
 						DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL, "", "", "", "", "")));
@@ -402,7 +401,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		managerController.setComputePlugin(computePlugin);
 		managerController.setBenchmarkingPlugin(benchmarkingPlugin);
 		managerController.setAccountingPlugin(accountingPlugin);
-		managerController.setValidator(new DefaultMemberValidator(null));
+		managerController.setValidator(new DefaultMemberAuthorizationPlugin(null));
 		managerController.setMemberPickerPlugin(memberPickerPlugin);
 		managerController.setBenchmarkExecutor(benchmarkExecutor);
 		

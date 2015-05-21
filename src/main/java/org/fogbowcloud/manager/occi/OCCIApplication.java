@@ -8,14 +8,15 @@ import org.apache.http.HttpStatus;
 import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.Flavor;
+import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.accounting.ResourceUsage;
-import org.fogbowcloud.manager.occi.core.Category;
-import org.fogbowcloud.manager.occi.core.HeaderUtils;
-import org.fogbowcloud.manager.occi.core.OCCIHeaders;
-import org.fogbowcloud.manager.occi.core.Resource;
-import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.instance.ComputeServerResource;
 import org.fogbowcloud.manager.occi.instance.Instance;
+import org.fogbowcloud.manager.occi.model.Category;
+import org.fogbowcloud.manager.occi.model.HeaderUtils;
+import org.fogbowcloud.manager.occi.model.OCCIHeaders;
+import org.fogbowcloud.manager.occi.model.Resource;
+import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.fogbowcloud.manager.occi.request.RequestServerResource;
@@ -45,6 +46,7 @@ public class OCCIApplication extends Application {
 		router.attach("/compute/", ComputeServerResource.class);
 		router.attach("/compute/{instanceId}", ComputeServerResource.class);
 		router.attach("/members", MemberServerResource.class);
+		router.attach("/quota", LocalQuotaServerResource.class);
 		router.attach("/token", TokenServerResource.class);
 		router.attach("/-/", QueryServerResource.class);
 		router.attach("/.well-known/org/ogf/occi/-/", QueryServerResource.class);
@@ -186,6 +188,10 @@ public class OCCIApplication extends Application {
 
 	public Map<String, Double> getUsersUsage(String authToken) {		
 		return managerFacade.getUsersUsage(authToken);
+	}
+
+	public ResourcesInfo getLocalUserQuota(String localAccessToken) {
+		return managerFacade.getLocalUserQuota(localAccessToken);
 	}
 
 }

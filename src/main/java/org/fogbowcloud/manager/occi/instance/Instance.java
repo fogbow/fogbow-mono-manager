@@ -6,14 +6,15 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.fogbowcloud.manager.occi.core.Category;
-import org.fogbowcloud.manager.occi.core.Resource;
+import org.fogbowcloud.manager.occi.model.Category;
+import org.fogbowcloud.manager.occi.model.Resource;
 
 public class Instance {
 
 	public static final String PREFIX_DEFAULT_INSTANCE = "X-OCCI-Location: ";
 	public static final String SSH_PUBLIC_ADDRESS_ATT = "org.fogbowcloud.request.ssh-public-address";
 	public static final String SSH_USERNAME_ATT = "org.fogbowcloud.request.ssh-username";
+	public static final String EXTRA_PORTS_ATT = "org.fogbowcloud.request.extra-ports";
 	
 	private static final String PREFIX_DEFAULT_ATTRIBUTE = "X-OCCI-Attribute: ";
 	private static final String CATEGORY = "Category:";

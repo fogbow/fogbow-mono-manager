@@ -1,5 +1,6 @@
 package org.fogbowcloud.manager.xmpp;
 
+import org.dom4j.Element;
 import org.fogbowcloud.manager.core.ManagerController;
 import org.jamppa.component.handler.AbstractQueryHandler;
 import org.xmpp.packet.IQ;
@@ -18,8 +19,11 @@ public class InstanceBeingUsedHandler extends AbstractQueryHandler {
 	public IQ handle(IQ query) {
 		String requestId = query.getElement().element("query").element("request")
 				.elementText("id");
-		String instanceId = query.getElement().element("query").element("instance")
-				.elementText("id");
+		String instanceId = null;
+		Element instanceEl = query.getElement().element("query").element("instance");
+		if (instanceEl != null) {
+			instanceId = instanceEl.elementText("id");
+		}
 		IQ response = IQ.createResultIQ(query);
 		if (!facade.instanceHasRequestRelatedTo(requestId, instanceId)) {
 			response.setError(Condition.item_not_found);

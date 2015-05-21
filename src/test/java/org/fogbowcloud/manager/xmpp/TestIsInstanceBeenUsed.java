@@ -7,8 +7,8 @@ import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.core.util.ManagerTestHelper;
-import org.fogbowcloud.manager.occi.core.OCCIException;
-import org.fogbowcloud.manager.occi.core.Token;
+import org.fogbowcloud.manager.occi.model.OCCIException;
+import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.fogbowcloud.manager.occi.request.RequestRepository;
 import org.fogbowcloud.manager.occi.request.RequestState;
@@ -132,15 +132,15 @@ public class TestIsInstanceBeenUsed {
 	
 	private ManagerController createManagerController() {
 		Properties properties = new Properties();
-		properties.put(ConfigurationConstants.FEDERATION_USER_NAME_KEY, "fogbow");
-		properties.put(ConfigurationConstants.FEDERATION_USER_PASS_KEY, "fogbow");
-		properties.put(ConfigurationConstants.FEDERATION_USER_TENANT_NAME_KEY, "fogbow");
+		properties.put("local_proxy_account_user_name", "fogbow");
+		properties.put("local_proxy_account_password", "fogbow");
+		properties.put("local_proxy_account_tenant_name", "fogbow");
 		properties.put(ConfigurationConstants.XMPP_JID_KEY, "manager.test.com");
-		properties.put(ConfigurationConstants.TUNNEL_SSH_PRIVATE_HOST_KEY,
+		properties.put(ConfigurationConstants.TOKEN_HOST_PRIVATE_ADDRESS_KEY,
 				DefaultDataTestHelper.SERVER_HOST);
-		properties.put(ConfigurationConstants.TUNNEL_SSH_HOST_HTTP_PORT_KEY,
+		properties.put(ConfigurationConstants.TOKEN_HOST_HTTP_PORT_KEY,
 				String.valueOf(DefaultDataTestHelper.TOKEN_SERVER_HTTP_PORT));
-		properties.put(ConfigurationConstants.MAX_WHOISALIVE_MANAGER_COUNT,
+		properties.put("max_whoisalive_manager_count",
 				ManagerTestHelper.MAX_WHOISALIVE_MANAGER_COUNT);
 		
 		ManagerController managerFacade = new ManagerController(properties);

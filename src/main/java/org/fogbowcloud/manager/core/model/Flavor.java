@@ -91,9 +91,7 @@ public class Flavor {
 	public boolean equals(Object obj) {
 		if (obj instanceof Flavor) {
 			Flavor otherFlavor = (Flavor) obj;
-			return otherFlavor.getName().equals(getName()) && otherFlavor.getCpu().equals(getCpu())
-					&& otherFlavor.getMem().equals(getMem())
-					&& otherFlavor.getCapacity().equals(getCapacity());
+			return otherFlavor.getName().equals(getName());
 		}
 		return false;
 	}

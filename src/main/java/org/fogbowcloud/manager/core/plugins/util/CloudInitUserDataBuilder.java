@@ -22,6 +22,7 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.charset.Charset;
 import java.util.Properties;
+import java.util.Random;
 import java.util.Set;
 
 import javax.mail.MessagingException;
@@ -78,6 +79,8 @@ import com.google.common.io.CharStreams;
  * @author <a href="mailto:cyrille@cyrilleleclerc.com">Cyrille Le Clerc</a>
  */
 public class CloudInitUserDataBuilder {
+	
+	private int userDataCounter = 1;
 
     /**
      * File types supported by CloudInit
@@ -312,7 +315,7 @@ public class CloudInitUserDataBuilder {
     public CloudInitUserDataBuilder addFile( FileType fileType,  Readable in) throws IllegalArgumentException {
         Preconditions.checkNotNull(fileType, "'fileType' can NOT be null");
         Preconditions.checkNotNull(in, "'in' can NOT be null");
-        Preconditions.checkArgument(!alreadyAddedFileTypes.contains(fileType), "%s as already been added", fileType);
+        //Preconditions.checkArgument(!alreadyAddedFileTypes.contains(fileType), "%s as already been added", fileType);
         alreadyAddedFileTypes.add(fileType);
 
         try {
@@ -320,7 +323,7 @@ public class CloudInitUserDataBuilder {
             CharStreams.copy(in, sw);
             MimeBodyPart mimeBodyPart = new MimeBodyPart();
             mimeBodyPart.setText(sw.toString(), charset.name(), fileType.getMimeTextSubType());
-            mimeBodyPart.setFileName(fileType.getFileName());
+            mimeBodyPart.setFileName((userDataCounter++) + fileType.getFileName());
             userDataMultipart.addBodyPart(mimeBodyPart);
 
         } catch (IOException e) {

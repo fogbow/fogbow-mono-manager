@@ -11,14 +11,14 @@ import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.RequirementsHelper;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.occi.OCCIApplication;
-import org.fogbowcloud.manager.occi.core.Category;
-import org.fogbowcloud.manager.occi.core.ErrorType;
-import org.fogbowcloud.manager.occi.core.HeaderUtils;
-import org.fogbowcloud.manager.occi.core.OCCIException;
-import org.fogbowcloud.manager.occi.core.OCCIHeaders;
-import org.fogbowcloud.manager.occi.core.Resource;
-import org.fogbowcloud.manager.occi.core.ResourceRepository;
-import org.fogbowcloud.manager.occi.core.ResponseConstants;
+import org.fogbowcloud.manager.occi.model.Category;
+import org.fogbowcloud.manager.occi.model.ErrorType;
+import org.fogbowcloud.manager.occi.model.HeaderUtils;
+import org.fogbowcloud.manager.occi.model.OCCIException;
+import org.fogbowcloud.manager.occi.model.OCCIHeaders;
+import org.fogbowcloud.manager.occi.model.Resource;
+import org.fogbowcloud.manager.occi.model.ResourceRepository;
+import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.restlet.data.MediaType;
 import org.restlet.data.Status;
 import org.restlet.engine.adapter.HttpRequest;
@@ -144,7 +144,6 @@ public class RequestServerResource extends ServerResource {
 						+ request.getState() + "; " + RequestAttribute.TYPE.getValue() + "="
 						+ request.getAttValue(RequestAttribute.TYPE.getValue()) + "; "
 						+ RequestAttribute.INSTANCE_ID.getValue() + "="
-//						+ request.getInstanceId() + "\n";
 						+ request.getGlobalInstanceId() + "\n";
 						
 			}else {			
@@ -189,7 +188,6 @@ public class RequestServerResource extends ServerResource {
 		}
 		
 		attToOutput.put(RequestAttribute.STATE.getValue(), request.getState().getValue());
-//		attToOutput.put(RequestAttribute.INSTANCE_ID.getValue(), request.getInstanceId());
 		attToOutput.put(RequestAttribute.INSTANCE_ID.getValue(), request.getGlobalInstanceId());		
 		
 		for (String attName : attToOutput.keySet()) {
@@ -258,7 +256,7 @@ public class RequestServerResource extends ServerResource {
 	static protected Map<String, String> normalizeRequirements(List<Category> categories, Map<String, String> xOCCIAtt, List<Flavor> listFlavorsFogbow) {
 		String requirementsAttr = xOCCIAtt.get(RequestAttribute.REQUIREMENTS.getValue());
 		if (requirementsAttr != null) {
-			if (!RequirementsHelper.checkRequirements(requirementsAttr)) {
+			if (!RequirementsHelper.checkSyntax(requirementsAttr)) {
 				throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.UNSUPPORTED_ATTRIBUTES);
 			}			
 		}				

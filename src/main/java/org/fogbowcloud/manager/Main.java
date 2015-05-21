@@ -6,24 +6,24 @@ import java.util.Properties;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
-import org.fogbowcloud.manager.core.DefaultMemberValidator;
-import org.fogbowcloud.manager.core.FederationMemberPicker;
-import org.fogbowcloud.manager.core.FederationMemberValidator;
 import org.fogbowcloud.manager.core.ManagerController;
-import org.fogbowcloud.manager.core.RoundRobinMemberPicker;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
+import org.fogbowcloud.manager.core.plugins.FederationMemberAuthorizationPlugin;
+import org.fogbowcloud.manager.core.plugins.FederationMemberPickerPlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
 import org.fogbowcloud.manager.core.plugins.PrioritizationPlugin;
 import org.fogbowcloud.manager.core.plugins.accounting.FCUAccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.benchmarking.VanillaBenchmarkingPlugin;
-import org.fogbowcloud.manager.core.plugins.imagestorage.egi.EgiImageStoragePlugin;
+import org.fogbowcloud.manager.core.plugins.imagestorage.http.HTTPDownloadImageStoragePlugin;
+import org.fogbowcloud.manager.core.plugins.memberauthorization.DefaultMemberAuthorizationPlugin;
+import org.fogbowcloud.manager.core.plugins.memberpicker.RoundRobinMemberPickerPlugin;
 import org.fogbowcloud.manager.core.plugins.prioritization.TwoFoldPrioritizationPlugin;
 import org.fogbowcloud.manager.occi.OCCIApplication;
-import org.fogbowcloud.manager.occi.core.ResourceRepository;
+import org.fogbowcloud.manager.occi.model.ResourceRepository;
 import org.fogbowcloud.manager.xmpp.ManagerXmppComponent;
 import org.restlet.Component;
 import org.restlet.data.Protocol;
@@ -35,6 +35,7 @@ public class Main {
 
 	private static final Logger LOGGER = Logger.getLogger(Main.class);
 	private static final int EXIT_ERROR_CODE = 128;
+	private static final int DEFAULT_HTTP_PORT = 8182;
 	
 	public static void main(String[] args) throws Exception {
 		configureLog4j();
@@ -80,10 +81,10 @@ public class Main {
 			System.exit(EXIT_ERROR_CODE);
 		}
 
-		FederationMemberValidator validator = new DefaultMemberValidator(properties);
+		FederationMemberAuthorizationPlugin validator = new DefaultMemberAuthorizationPlugin(properties);
 		try {
-			validator = (FederationMemberValidator) createInstance(
-					ConfigurationConstants.MEMBER_VALIDATOR_KEY, properties);
+			validator = (FederationMemberAuthorizationPlugin) createInstance(
+					ConfigurationConstants.MEMBER_VALIDATOR_CLASS_KEY, properties);
 		} catch (Exception e) {
 			LOGGER.warn("Member Validator not especified in the properties.");
 			System.exit(EXIT_ERROR_CODE);
@@ -100,7 +101,7 @@ public class Main {
 			imageStoragePlugin = (ImageStoragePlugin) createInstanceWithComputePlugin(
 					ConfigurationConstants.IMAGE_STORAGE_PLUGIN_CLASS, properties, computePlugin);
 		} catch (Exception e) {
-			imageStoragePlugin = new EgiImageStoragePlugin(properties, computePlugin);
+			imageStoragePlugin = new HTTPDownloadImageStoragePlugin(properties, computePlugin);
 			LOGGER.warn("Image Storage plugin not specified in properties. Using the default one.", e);
 		}
 				
@@ -122,13 +123,13 @@ public class Main {
 			LOGGER.warn("Accounting plugin not specified in properties. Using the default one.", e);
 		}
 		
-		FederationMemberPicker memberPickerPlugin = null;
+		FederationMemberPickerPlugin memberPickerPlugin = null;
 		try {
-			memberPickerPlugin = (FederationMemberPicker) createInstanceWithAccoutingPlugin(
+			memberPickerPlugin = (FederationMemberPickerPlugin) createInstanceWithAccoutingPlugin(
 					ConfigurationConstants.MEMBER_PICKER_PLUGIN_CLASS_KEY, properties,
 					accountingPlugin);
 		} catch (Exception e) {
-			memberPickerPlugin = new RoundRobinMemberPicker(properties, accountingPlugin);
+			memberPickerPlugin = new RoundRobinMemberPickerPlugin(properties, accountingPlugin);
 			LOGGER.warn("Member picker plugin not specified in properties. Using the default one.", e);
 		}
 		
@@ -171,8 +172,8 @@ public class Main {
 		
 		try {
 			Component http = new Component();
-			http.getServers().add(Protocol.HTTP,
-					Integer.parseInt(properties.getProperty(ConfigurationConstants.HTTP_PORT_KEY)));
+			String httpPort = properties.getProperty(ConfigurationConstants.HTTP_PORT_KEY);			
+			http.getServers().add(Protocol.HTTP, httpPort == null ? DEFAULT_HTTP_PORT : Integer.parseInt(httpPort));
 			http.getDefaultHost().attach(application);
 			http.start();
 		} catch (Exception e) {

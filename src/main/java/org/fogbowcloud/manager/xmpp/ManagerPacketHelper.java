@@ -15,15 +15,15 @@ import org.dom4j.Element;
 import org.fogbowcloud.manager.core.AsynchronousRequestCallback;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
-import org.fogbowcloud.manager.occi.core.Category;
-import org.fogbowcloud.manager.occi.core.ErrorType;
-import org.fogbowcloud.manager.occi.core.OCCIException;
-import org.fogbowcloud.manager.occi.core.Resource;
-import org.fogbowcloud.manager.occi.core.ResponseConstants;
-import org.fogbowcloud.manager.occi.core.Token;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.instance.Instance.Link;
 import org.fogbowcloud.manager.occi.instance.InstanceState;
+import org.fogbowcloud.manager.occi.model.Category;
+import org.fogbowcloud.manager.occi.model.ErrorType;
+import org.fogbowcloud.manager.occi.model.OCCIException;
+import org.fogbowcloud.manager.occi.model.Resource;
+import org.fogbowcloud.manager.occi.model.ResponseConstants;
+import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.jamppa.component.PacketCallback;
 import org.jamppa.component.PacketSender;
@@ -332,8 +332,10 @@ public class ManagerPacketHelper {
 				ManagerXmppComponent.INSTANCEBEINGUSED_NAMESPACE);
 		Element requestEl = queryEl.addElement("request");
 		requestEl.addElement("id").setText(servedRequest.getId());
-		Element instanceEl = queryEl.addElement("instance");
-		instanceEl.addElement("id").setText(instanceId);
+		if (instanceId != null) {
+			Element instanceEl = queryEl.addElement("instance");
+			instanceEl.addElement("id").setText(instanceId);
+		}
 		IQ response = (IQ) packetSender.syncSendPacket(iq);
 		if (response.getError() != null) {
 			raiseException(response.getError());
