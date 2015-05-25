@@ -11,7 +11,7 @@ import org.fogbowcloud.manager.occi.model.Token;
 
 public class StaticImageStoragePlugin implements ImageStoragePlugin {
 
-	private static final String PROP_STATIC_IMAGE_PREFIX = "image_storage_static_";
+	public static final String PROP_STATIC_IMAGE_PREFIX = "image_storage_static_";
 	
 	private Map<String, String> globalToLocalIds = new HashMap<String, String>();
 	

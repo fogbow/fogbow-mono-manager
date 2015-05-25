@@ -333,7 +333,7 @@ public class HTTPDownloadImageStoragePlugin extends StaticImageStoragePlugin {
 		return extension;
 	}
 
-	private String removeHTTPPrefix(String imageURL) {
+	protected String removeHTTPPrefix(String imageURL) {
 		return imageURL.replaceFirst("http://", "");
 	}
 	
