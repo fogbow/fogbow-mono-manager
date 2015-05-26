@@ -80,12 +80,14 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 	private List<String> validTemplates;
 	
 	private static final Logger LOGGER = Logger.getLogger(OpenNebulaComputePlugin.class);
+	private Properties properties;
 
 	public OpenNebulaComputePlugin(Properties properties){
 		this(properties, new OpenNebulaClientFactory());
 	}
 		
 	protected OpenNebulaComputePlugin(Properties properties, OpenNebulaClientFactory clientFactory) {
+		this.properties = properties;
 		this.openNebulaEndpoint = properties.getProperty(OneConfigurationConstants.COMPUTE_ONE_URL);
 		this.clientFactory = clientFactory;
 		fogbowTermToOpenNebula = new HashMap<String, String>();
@@ -204,6 +206,13 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 				Element userdataElement = doc.createElement("USERDATA");
 				userdataElement.appendChild(doc.createTextNode(userdata));
 				contextElement.appendChild(userdataElement);
+			}
+			if (Boolean.parseBoolean(properties.getProperty(
+					OneConfigurationConstants.COMPUTE_ONE_NETWORK_CONTEXTUALIZATION, 
+					Boolean.FALSE.toString()))) {
+				Element networkContextElement = doc.createElement("NETWORK");
+				networkContextElement.appendChild(doc.createTextNode("YES"));
+				contextElement.appendChild(networkContextElement);
 			}
 			// cpu
 			Element cpuElement = doc.createElement("CPU");
