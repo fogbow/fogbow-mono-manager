@@ -22,6 +22,7 @@ compute_novav2_network_id=ea51ed0c-0e8a-448d-8202-c79777109ffe
 # compute_class=org.fogbowcloud.manager.core.plugins.compute.opennebula.OpenNebulaComputePlugin
 # compute_one_url=http://localhost:2633/RPC2
 # compute_one_network_id=1 
+# compute_one_network_contextualization=false
 # compute_one_templates=all
 # compute_one_datastore_id=1
 # compute_one_ssh_host=127.0.0.1
