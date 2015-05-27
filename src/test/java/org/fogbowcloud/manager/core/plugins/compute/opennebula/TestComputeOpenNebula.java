@@ -1379,6 +1379,17 @@ public class TestComputeOpenNebula {
 	}
 	
 	@Test
+	public void testGetFlavorWithoutTemplateTypeAndRequirementsNull() {
+		OpenNebulaClientFactory clientFactory = Mockito.mock(OpenNebulaClientFactory.class);
+		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
+
+		Token token = new Token("", "", new Date(), new HashMap<String, String>());
+		Flavor flavor = computeOpenNebula.getFlavor(token, null);
+		Assert.assertEquals("1", flavor.getCpu());
+		Assert.assertEquals("1024", flavor.getMem());
+	}	
+	
+	@Test
 	public void testGetFlavorTemplateTypeTemplatesWithoutTamplate() {
 		OpenNebulaClientFactory clientFactory = Mockito.mock(OpenNebulaClientFactory.class);
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);

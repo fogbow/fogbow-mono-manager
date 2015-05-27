@@ -19,8 +19,6 @@ import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.message.BasicStatusLine;
 import org.fogbowcloud.manager.core.RequirementsHelper;
 import org.fogbowcloud.manager.core.model.Flavor;
-import org.fogbowcloud.manager.core.plugins.compute.openstack.OpenStackConfigurationConstants;
-import org.fogbowcloud.manager.core.plugins.compute.openstack.OpenStackNovaV2ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.identity.openstack.KeystoneIdentityPlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.instance.Instance;
@@ -314,5 +312,19 @@ public class TestNovaV2ComputeOpenStack {
 				novaV2ComputeOpenStack.getInstance(defaultToken, "initialized").getState());
 		Assert.assertEquals(InstanceState.SUSPENDED, 
 				novaV2ComputeOpenStack.getInstance(defaultToken, "suspended").getState());
-	}	
+	}
+	
+//	@PrepareForTest(EntityUtils.class)
+//	@Test
+//	public void test() throws Exception {
+//		mockEntityUtils("Neto");
+//		Token token = null;
+//		String imageName = null;
+//		novaV2ComputeOpenStack.getImageState(token, imageName);
+//	}
+//	
+//	protected void mockEntityUtils(String string) throws Exception {
+//		PowerMockito.mockStatic(EntityUtils.class);
+//		Mockito.when(EntityUtils.toString(Mockito.any(HttpEntity.class))).thenReturn(string);
+//	}
 }

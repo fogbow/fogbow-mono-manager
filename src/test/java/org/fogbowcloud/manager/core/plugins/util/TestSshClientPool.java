@@ -19,7 +19,7 @@ import org.mockito.Mockito;
 
 public class TestSshClientPool {
 	
-	private static final int EXTRA_TIME = 1000;
+	private static final int EXTRA_TIME = 100000;
 	private SshClientPool sshClientPool; 
 	private Semaphore semaphore;
 	

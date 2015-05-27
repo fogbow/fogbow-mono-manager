@@ -15,7 +15,7 @@ import condor.classad.Op;
 import condor.classad.RecordExpr;
 
 public class RequirementsHelper {
-	private static final String ZERO = "0";
+	protected static final String ZERO = "0";
 	public static final String GLUE_LOCATION_TERM = "Glue2CloudComputeManagerID";
 	public static final String GLUE_VCPU_TERM = "Glue2vCPU";
 	public static final String GLUE_DISK_TERM = "Glue2Disk";
@@ -35,6 +35,9 @@ public class RequirementsHelper {
 	}
 
 	public static String getSmallestValueForAttribute(String requirementsStr, String attrName) {
+		if (requirementsStr == null) {
+			return ZERO;
+		}
 		ClassAdParser classAdParser = new ClassAdParser(requirementsStr);
 		Expr parsedClassAd = classAdParser.parse();
 		if (!(parsedClassAd instanceof Op)) {

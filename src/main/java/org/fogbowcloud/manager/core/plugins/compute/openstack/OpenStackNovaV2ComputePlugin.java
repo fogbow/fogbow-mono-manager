@@ -57,7 +57,6 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 	private static final String BARE = "bare";
 	private static final String CONTAINER_FORMAT = "/container_format";
 	private static final String VISIBILITY_JSON_FIELD = "visibility";
-	private static final String PUBLIC = "public";
 	private static final String PRIVATE = "private";
 	private static final String NAME_JSON_FIELD = "name";
 	private static final String DISK_FORMAT = "/disk_format";
