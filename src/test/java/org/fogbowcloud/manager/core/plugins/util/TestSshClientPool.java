@@ -19,7 +19,7 @@ import org.mockito.Mockito;
 
 public class TestSshClientPool {
 	
-	private static final int EXTRA_TIME = 100000;
+	private static final int EXTRA_TIME = 10000;
 	private SshClientPool sshClientPool; 
 	private Semaphore semaphore;
 	
@@ -43,9 +43,17 @@ public class TestSshClientPool {
 		
 		Assert.assertEquals(4, sshClientPool.getPool().size());
 		
+		sshClientPool.setDateUtils(dateUtils);
 		sshClientPool.removeTimedoutSSHConnection();
 		
 		Assert.assertEquals(2, sshClientPool.getPool().size());
+	}
+	
+	@Test
+	public void testRemoveTimedoutConnectionPullNull() throws Exception {		
+		sshClientPool.setPool(null);
+		sshClientPool.removeTimedoutSSHConnection();
+		Assert.assertNull(sshClientPool.getPool());
 	}
 	
 	@Test
