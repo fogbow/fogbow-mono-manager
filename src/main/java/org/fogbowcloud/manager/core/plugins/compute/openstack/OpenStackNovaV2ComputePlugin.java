@@ -64,8 +64,8 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 	private static final String PATH_JSON_FIELD = "path";
 	private static final String REPLACE_VALUE_UPLOAD_IMAGE = "replace";
 	private static final String OP_JSON_FIELD = "op";
-	private static final String V2_IMAGES_FILE = "/file";
-	private static final String V2_IMAGES = "/v2/images";
+	protected static final String V2_IMAGES_FILE = "/file";
+	protected static final String V2_IMAGES = "/v2/images";
 
 	private final String COMPUTE_V2_API_ENDPOINT = "/v2/";
 	private static final String TENANT_ID = "tenantId";
@@ -597,7 +597,6 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 
 		String responseStrCreateImage = doPostRequest(glanceV2APIEndpoint + V2_IMAGES,
 				token.getAccessId(), json);
-		
 		String id = null;
 		try {
 			JSONObject featuresImage = new JSONObject(responseStrCreateImage);

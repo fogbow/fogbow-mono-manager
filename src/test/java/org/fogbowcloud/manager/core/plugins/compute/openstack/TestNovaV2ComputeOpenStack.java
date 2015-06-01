@@ -1,6 +1,8 @@
 package org.fogbowcloud.manager.core.plugins.compute.openstack;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -8,18 +10,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpException;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.ProtocolVersion;
 import org.apache.http.StatusLine;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.message.BasicStatusLine;
 import org.fogbowcloud.manager.core.RequirementsHelper;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.plugins.identity.openstack.KeystoneIdentityPlugin;
+import org.fogbowcloud.manager.core.plugins.util.HttpPatch;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.instance.InstanceState;
@@ -36,10 +42,12 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
 
 public class TestNovaV2ComputeOpenStack {
 
+	private static final String GLACE_V2 = "glaceV2";
 	private static final String FIRST_INSTANCE_ID = "0";
 	private static final String SECOND_INSTANCE_ID = "1";
 	private PluginHelper pluginHelper;
@@ -53,6 +61,7 @@ public class TestNovaV2ComputeOpenStack {
 		properties.put(OpenStackConfigurationConstants.COMPUTE_NOVAV2_URL_KEY, PluginHelper.COMPUTE_NOVAV2_URL);
 		properties.put(OpenStackConfigurationConstants.COMPUTE_NOVAV2_IMAGE_PREFIX_KEY
 				+ PluginHelper.LINUX_X86_TERM, "imageid");
+		properties.put(OpenStackConfigurationConstants.COMPUTE_GLANCEV2_URL_KEY, GLACE_V2);
 		
 		novaV2ComputeOpenStack = new OpenStackNovaV2ComputePlugin(properties);
 		
@@ -314,17 +323,89 @@ public class TestNovaV2ComputeOpenStack {
 				novaV2ComputeOpenStack.getInstance(defaultToken, "suspended").getState());
 	}
 	
-//	@PrepareForTest(EntityUtils.class)
-//	@Test
-//	public void test() throws Exception {
-//		mockEntityUtils("Neto");
-//		Token token = null;
-//		String imageName = null;
-//		novaV2ComputeOpenStack.getImageState(token, imageName);
-//	}
-//	
-//	protected void mockEntityUtils(String string) throws Exception {
-//		PowerMockito.mockStatic(EntityUtils.class);
-//		Mockito.when(EntityUtils.toString(Mockito.any(HttpEntity.class))).thenReturn(string);
-//	}
+	@Test
+	public void testUploadImage() throws Exception {
+		String id = "id_123";
+		String responseStr = "{\"id\":\"" + id + "\"}";
+		HttpResponse createHttpResposeMock = createHttpResponseMock(responseStr, HttpStatus.SC_OK);
+		HttpClient httpClient = Mockito.mock(HttpClient.class);
+		Mockito.when(httpClient.execute(Mockito.any(HttpUriRequest.class))).thenReturn(
+				createHttpResposeMock);
+
+		novaV2ComputeOpenStack.setClient(httpClient);
+
+		List<HttpUriRequest> requests = new ArrayList<HttpUriRequest>();
+		requests.add(new HttpPost(GLACE_V2 + OpenStackNovaV2ComputePlugin.V2_IMAGES));
+		requests.add(new HttpPatch(GLACE_V2 + OpenStackNovaV2ComputePlugin.V2_IMAGES + "/" + id));
+		requests.add(new HttpPut(GLACE_V2 + OpenStackNovaV2ComputePlugin.V2_IMAGES + "/" + id
+				+ OpenStackNovaV2ComputePlugin.V2_IMAGES_FILE));
+		HttpUriRequestMatcher expectedRequests = new HttpUriRequestMatcher(requests);
+
+		novaV2ComputeOpenStack.uploadImage(new Token("", "", null, null), "", "image", "");
+
+		Mockito.verify(httpClient, Mockito.times(3)).execute(Mockito.argThat(expectedRequests));
+	}
+	
+	@Test(expected=OCCIException.class)
+	public void testUploadImageWithoutImage() throws Exception {
+		novaV2ComputeOpenStack.uploadImage(new Token("", "", null, null), "", null, "");
+	}	
+	
+	@Test(expected=OCCIException.class)
+	public void testUploadImageDeletingImage() throws Exception {
+		String id = "id_123";
+		String responseStr = "{\"id\":\"" + id + "\"}";
+		HttpResponse httpResposeMock = createHttpResponseMock(responseStr, HttpStatus.SC_OK);
+		HttpResponse httpResposeMockException = createHttpResponseMock(responseStr, HttpStatus.SC_BAD_REQUEST);
+		HttpClient httpClient = Mockito.mock(HttpClient.class);
+		Mockito.when(httpClient.execute(Mockito.any(HttpUriRequest.class))).thenReturn(
+				httpResposeMock, httpResposeMockException, httpResposeMock);
+
+		novaV2ComputeOpenStack.setClient(httpClient);
+		novaV2ComputeOpenStack.uploadImage(new Token("", "", null, null), "", "image", "");
+	}	
+
+	private HttpResponse createHttpResponseMock(String responseStr, int statusCode) {
+		HttpResponse httpResponse = Mockito.mock(HttpResponse.class);
+		try {
+			HttpEntity httpEntity = Mockito.mock(HttpEntity.class);
+			InputStream value = new ByteArrayInputStream(responseStr.getBytes());
+			Mockito.when(httpEntity.getContent()).thenReturn(value);
+			Mockito.when(httpResponse.getEntity()).thenReturn(httpEntity);
+			StatusLine statusLine = new BasicStatusLine(
+					new ProtocolVersion("", 1, 0), statusCode,"");
+			Mockito.when(httpResponse.getStatusLine()).thenReturn(statusLine);
+		} catch (Exception e) {
+		}
+		return httpResponse;
+	}
+
+	private static class HttpUriRequestMatcher extends ArgumentMatcher<HttpUriRequest> {
+
+		private List<HttpUriRequest> requests;
+		private int cont;
+		private boolean valid;
+
+		public HttpUriRequestMatcher(List<HttpUriRequest> requests) {
+			this.cont = -1;
+			this.valid = true;
+			this.requests = requests;
+		}
+
+		public boolean matches(Object object) {
+			try {
+				this.cont++;
+				HttpUriRequest comparedRequest = (HttpUriRequest) object;
+				HttpUriRequest request = this.requests.get(cont);
+				if (!request.getURI().equals(comparedRequest.getURI())) {
+					this.valid = false;
+				}
+				if (!request.getMethod().equals(comparedRequest.getMethod())) {
+					this.valid = false;
+				}				
+			} catch (Exception e) {}
+			return this.valid;
+		}
+	}
+	
 }
