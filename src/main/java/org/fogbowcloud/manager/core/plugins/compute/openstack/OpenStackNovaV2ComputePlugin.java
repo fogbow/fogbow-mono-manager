@@ -58,17 +58,17 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 	private static final String CONTAINER_FORMAT = "/container_format";
 	private static final String VISIBILITY_JSON_FIELD = "visibility";
 	private static final String PRIVATE = "private";
-	private static final String NAME_JSON_FIELD = "name";
 	private static final String DISK_FORMAT = "/disk_format";
 	private static final String VALUE_JSON_FIELD = "value";
 	private static final String PATH_JSON_FIELD = "path";
 	private static final String REPLACE_VALUE_UPLOAD_IMAGE = "replace";
 	private static final String OP_JSON_FIELD = "op";
+	protected static final String NAME_JSON_FIELD = "name";
 	protected static final String V2_IMAGES_FILE = "/file";
 	protected static final String V2_IMAGES = "/v2/images";
 
 	private final String COMPUTE_V2_API_ENDPOINT = "/v2/";
-	private static final String TENANT_ID = "tenantId";
+	protected static final String TENANT_ID = "tenantId";
 
 	private String glanceV2APIEndpoint;
 	private String glanceV2ImageVisibility;
@@ -426,7 +426,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 
 	}
 
-	private String getUsedFlavor(String flavorId) {
+	protected String getUsedFlavor(String flavorId) {
 		for (Flavor flavor : getFlavors()) {
 			if (flavor.getId().equals(flavorId)) {
 				return flavor.getName();
@@ -436,7 +436,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		
 	}
 	
-	private InstanceState getInstanceState(String instanceStatus) {
+	protected InstanceState getInstanceState(String instanceStatus) {
 		if ("active".equalsIgnoreCase(instanceStatus)) {
 			return InstanceState.RUNNING;
 		}
@@ -510,7 +510,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 				ResponseConstants.CLOUD_NOT_SUPPORT_OCCI_INTERFACE);
 	}
 	
-	private String doGetRequest(String endpoint, String authToken) {
+	protected String doGetRequest(String endpoint, String authToken) {
 		HttpResponse response = null;
 		String responseStr = null;
 		try {
@@ -534,7 +534,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		return responseStr;
 	}
 	
-	private String doPostRequest(String endpoint, String authToken, JSONObject json) {
+	protected String doPostRequest(String endpoint, String authToken, JSONObject json) {
 		HttpResponse response = null;
 		String responseStr = null;
 		try {
@@ -559,7 +559,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		return responseStr;
 	}
 	
-	private void doDeleteRequest(String endpoint, String authToken) {
+	protected void doDeleteRequest(String endpoint, String authToken) {
 		HttpResponse response = null;
 		try {
 			HttpDelete request = new HttpDelete(endpoint);
@@ -647,7 +647,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		return null;
 	}
 
-    private String doPatchRequest(String endpoint, String authToken, String json) {
+	protected String doPatchRequest(String endpoint, String authToken, String json) {
         HttpResponse response = null;
         String responseStr = null;
         try {
@@ -672,7 +672,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
         return responseStr;
     }    
     
-    private String doPutRequest(String endpoint, String authToken, String path) {
+	protected String doPutRequest(String endpoint, String authToken, String path) {
         HttpResponse response = null;
         String responseStr = null;
         try {

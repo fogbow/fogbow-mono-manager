@@ -11,6 +11,7 @@ import java.util.Properties;
 import org.apache.http.HttpException;
 import org.apache.http.HttpStatus;
 import org.apache.http.ParseException;
+import org.apache.http.message.BasicHeader;
 import org.fogbowcloud.manager.core.RequirementsHelper;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
@@ -32,6 +33,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.restlet.Request;
 import org.restlet.Response;
+import org.restlet.data.MediaType;
 import org.restlet.data.Method;
 import org.restlet.engine.header.Header;
 import org.restlet.util.Series;
@@ -694,6 +696,27 @@ public class TestOCCIComputeOpenStack {
 		instanceLocations = getInstanceLocations(occiComputeOpenStack
 				.getInstances(defaultToken));
 		Assert.assertEquals(1, instanceLocations.size());
+	}
+	
+	@Test
+	public void testConvertRequestToOcci() {
+		Request request = new Request();
+		request.setEntity("Hello\n" 
+								+ OCCIHeaders.CATEGORY +": X \n " 
+								+ OCCIHeaders.X_OCCI_ATTRIBUTE + ":Y" , MediaType.TEXT_PLAIN);
+		Series<org.restlet.engine.header.Header> requestHeaders = new Series<org.restlet.engine.header.Header>(
+				org.restlet.engine.header.Header.class);
+		String valueOne = "One";
+		String valueTwo = "Two";
+		
+		requestHeaders.add(OCCIHeaders.CATEGORY, valueOne);
+		requestHeaders.add(OCCIHeaders.CATEGORY, valueTwo);
+		requestHeaders.add(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE, "");
+		requestHeaders.add("Content-type", "x");
+		
+		Assert.assertEquals(4, requestHeaders.size());
+		occiComputeOpenStack.convertRequestToOcci(request, requestHeaders);
+		Assert.assertEquals(6, requestHeaders.size());
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
