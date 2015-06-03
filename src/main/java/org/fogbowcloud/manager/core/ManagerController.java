@@ -117,6 +117,7 @@ public class ManagerController {
 	private AsyncPacketSender packetSender;
 	private FederationMemberAuthorizationPlugin validator;
 	private ExecutorService benchmarkExecutor = Executors.newCachedThreadPool();
+	private SshClientPool sshClientPool = new SshClientPool();
 	
 	private Map<String, ForwardedRequest> asynchronousRequests = new ConcurrentHashMap<String, ForwardedRequest>();
 	
@@ -1165,8 +1166,6 @@ public class ManagerController {
 			} catch (InterruptedException e) {}
 		}
 	}
-
-	private SshClientPool sshClientPool = new SshClientPool();
 	
 	private Command execOnInstance(String sshPublicAddress, String cmd) throws Exception {
 		SSHClient sshClient = sshClientPool.getClient(sshPublicAddress, 

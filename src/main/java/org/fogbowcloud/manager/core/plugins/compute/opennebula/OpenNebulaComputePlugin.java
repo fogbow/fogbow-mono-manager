@@ -178,7 +178,7 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		return clientFactory.allocateVirtualMachine(oneClient, vmTemplate);
 	}
 
-	private String generateTemplate(Map<String, String> templateProperties) {
+	protected String generateTemplate(Map<String, String> templateProperties) {
 		DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder docBuilder;
 		try {
@@ -554,7 +554,7 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		return sshHost != null && !sshHost.isEmpty();
 	}
 
-	private String generateImageTemplate(Map<String, String> templateProperties) {
+	protected String generateImageTemplate(Map<String, String> templateProperties) {
 		DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder docBuilder;
 		try {
@@ -598,7 +598,7 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 	@Override
 	public String getImageId(Token token, String imageName) {
 		Client oneClient = clientFactory.createClient(token.getAccessId(), openNebulaEndpoint);
-		ImagePool imagePool = new ImagePool(oneClient); 
+		ImagePool imagePool = clientFactory.createImagePool(oneClient);
 		OneResponse response = imagePool.info();
 		
 		if (response.isError()) {
@@ -745,7 +745,7 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 	public ImageState getImageState(Token token, String imageName) {
 		LOGGER.debug("Getting image status from image " + imageName + " with token " + token);
 		Client oneClient = clientFactory.createClient(token.getAccessId(), openNebulaEndpoint);
-		ImagePool imagePool = new ImagePool(oneClient); 
+		ImagePool imagePool = clientFactory.createImagePool(oneClient);
 		OneResponse response = imagePool.info();
 		
 		if (response.isError()) {

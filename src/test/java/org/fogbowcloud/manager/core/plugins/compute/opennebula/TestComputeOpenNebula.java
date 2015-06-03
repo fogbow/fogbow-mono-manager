@@ -14,10 +14,8 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpStatus;
 import org.fogbowcloud.manager.core.RequirementsHelper;
 import org.fogbowcloud.manager.core.model.Flavor;
+import org.fogbowcloud.manager.core.model.ImageState;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
-import org.fogbowcloud.manager.core.plugins.compute.opennebula.OneConfigurationConstants;
-import org.fogbowcloud.manager.core.plugins.compute.opennebula.OpenNebulaClientFactory;
-import org.fogbowcloud.manager.core.plugins.compute.opennebula.OpenNebulaComputePlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.instance.InstanceState;
@@ -1651,5 +1649,135 @@ public class TestComputeOpenNebula {
 		
 		Assert.assertEquals(2, computeOpenNebula.getFlavors().size());
 	}	
+
+	@Test
+	public void testGenerateImageTemplate() {
+		Map<String, String> templateProperties = new HashMap<String, String>();
+		String imageName = "name";
+		templateProperties.put("image_name", imageName);
+		String imagePath = "path";
+		templateProperties.put("image_path", imagePath);
+		String imageDiskSize = "size";
+		templateProperties.put("image_size", imageDiskSize);
+		String imageDiskFormat = "format";
+		templateProperties.put("image_disk_format", imageDiskFormat);
+		
+		computeOpenNebula = new OpenNebulaComputePlugin(properties);
+		String imageTemplate = computeOpenNebula.generateImageTemplate(templateProperties);
+		Assert.assertTrue(imageTemplate.contains(imageName));
+		Assert.assertTrue(imageTemplate.contains(imagePath));
+		Assert.assertTrue(imageTemplate.contains(imageDiskSize));
+		Assert.assertTrue(imageTemplate.contains(imageDiskFormat));
+	}
 	
+	@Test
+	public void testGenerateTemplate() {
+		computeOpenNebula = new OpenNebulaComputePlugin(properties);
+		Map<String, String> templateProperties = new HashMap<String, String>();
+		String sshPublicKey = "sshPublicKey";
+		templateProperties.put("ssh-public-key", sshPublicKey);
+		String userdata = "Userdata";
+		templateProperties.put("userdata", userdata);
+		String diskId = "1";
+		templateProperties.put("disk-id", diskId);
+		String diskSize = "1";
+		templateProperties.put("disk-size", diskSize);
+		String cpu = "10";
+		templateProperties.put("cpu", cpu);
+		String mem = "1000";
+		templateProperties.put("mem", mem);
+		String imageId = "11";
+		templateProperties.put("image-id", imageId);
+		String imageDisk = "1";
+		templateProperties.put("image-disk", imageDisk);
+		String template = computeOpenNebula.generateTemplate(templateProperties);
+		Assert.assertTrue(template.contains(sshPublicKey));
+		Assert.assertTrue(template.contains(userdata));
+		Assert.assertTrue(template.contains(diskId));
+		Assert.assertTrue(template.contains(diskSize));
+		Assert.assertTrue(template.contains(cpu));
+		Assert.assertTrue(template.contains(mem));
+		Assert.assertTrue(template.contains(imageId));
+		Assert.assertTrue(template.contains(imageDisk));
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Test
+	public void testGetImageId() {
+		OpenNebulaClientFactory clientFactory = Mockito.mock(OpenNebulaClientFactory.class);
+		Client oneClient = Mockito.mock(Client.class);
+		Mockito.when(clientFactory.createClient(Mockito.anyString(), Mockito.anyString()))
+				.thenReturn(oneClient);
+
+		Image image = Mockito.mock(Image.class);
+		String imageName = "image";
+		String id = "1";
+		Mockito.when(image.getId()).thenReturn(id);
+		Mockito.when(image.getName()).thenReturn(imageName);
+
+		ImagePool imagePool = Mockito.mock(ImagePool.class);
+		Iterator<Image> imageMockIterator = Mockito.mock(Iterator.class);
+		Mockito.when(imageMockIterator.hasNext()).thenReturn(true, false);
+		Mockito.when(imageMockIterator.next()).thenReturn(image);
+		OneResponse oneResponse = Mockito.mock(OneResponse.class);
+		Mockito.when(oneResponse.isError()).thenReturn(false);
+		Mockito.when(imagePool.info()).thenReturn(oneResponse);
+		Mockito.when(imagePool.iterator()).thenReturn(imageMockIterator);
+
+		Mockito.when(clientFactory.createImagePool(oneClient)).thenReturn(imagePool);
+
+		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
+		String imageId = computeOpenNebula.getImageId(new Token("0123", "", null,
+				new HashMap<String, String>()), imageName);
+		Assert.assertEquals(id, imageId);
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	public void testGetImageState() {
+		OpenNebulaClientFactory clientFactory = Mockito.mock(OpenNebulaClientFactory.class);
+		Client oneClient = Mockito.mock(Client.class);
+		Mockito.when(clientFactory.createClient(Mockito.anyString(), Mockito.anyString()))
+				.thenReturn(oneClient);
+
+		Image imageLOCKED = Mockito.mock(Image.class);
+		String imageNameLOCKED = "locked";
+		Mockito.when(imageLOCKED.getName()).thenReturn(imageNameLOCKED);
+		Mockito.when(imageLOCKED.stateString()).thenReturn("LOCKED");
+
+		Image imageREADY = Mockito.mock(Image.class);
+		String imageNameREADY = "ready";
+		Mockito.when(imageREADY.getName()).thenReturn(imageNameREADY);
+		Mockito.when(imageREADY.stateString()).thenReturn("READY");
+
+		Image imageANYTHING = Mockito.mock(Image.class);
+		String imageNameANYTHING = "anything";
+		Mockito.when(imageANYTHING.getName()).thenReturn(imageNameANYTHING);
+		Mockito.when(imageANYTHING.stateString()).thenReturn("ANYTHING");
+
+		ImagePool imagePool = Mockito.mock(ImagePool.class);
+		Iterator<Image> imageMockIterator = Mockito.mock(Iterator.class);
+		Mockito.when(imageMockIterator.hasNext()).thenReturn(true, true, true, false);
+		Mockito.when(imageMockIterator.next()).thenReturn(imageLOCKED, imageREADY, imageANYTHING);
+		OneResponse oneResponse = Mockito.mock(OneResponse.class);
+		Mockito.when(oneResponse.isError()).thenReturn(false);
+		Mockito.when(imagePool.info()).thenReturn(oneResponse);
+		Mockito.when(imagePool.iterator()).thenReturn(imageMockIterator);
+
+		Mockito.when(clientFactory.createImagePool(oneClient)).thenReturn(imagePool);
+
+		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
+		ImageState imageState = computeOpenNebula.getImageState(new Token("0123", "", null,
+				new HashMap<String, String>()), imageNameLOCKED);
+		Assert.assertEquals(ImageState.PENDING.getValue(), imageState.getValue());
+
+		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
+		imageState = computeOpenNebula.getImageState(new Token("01234", "", null,
+				new HashMap<String, String>()), imageNameREADY);
+		Assert.assertEquals(ImageState.ACTIVE.getValue(), imageState.getValue());
+
+		imageState = computeOpenNebula.getImageState(new Token("01235", "", null,
+				new HashMap<String, String>()), imageNameANYTHING);
+		Assert.assertEquals(ImageState.FAILED.getValue(), imageState.getValue());
+	}
 }
