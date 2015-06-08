@@ -39,6 +39,10 @@ public class ManagerPacketHelper {
 
 	public static void iAmAlive(ResourcesInfo resourcesInfo, String rendezvousAddress,
 			Properties properties, PacketSender packetSender) throws Exception {
+		if (packetSender == null) {
+			LOGGER.warn("Packet sender not set.");
+			throw new IllegalArgumentException("Packet sender not set.");
+		}
 		IQ iq = new IQ(Type.get);
 		if (rendezvousAddress == null) {
 			LOGGER.warn("Rendezvous not specified.");
@@ -71,6 +75,10 @@ public class ManagerPacketHelper {
 	public static List<FederationMember> whoIsalive(String rendezvousAddress,
 			PacketSender packetSender, int maxWhoIsAliveManagerCount,
 			String after) throws Exception {
+		if (packetSender == null) {
+			LOGGER.warn("Packet sender not set.");
+			throw new IllegalArgumentException("Packet sender not set.");
+		}
 		IQ iq = new IQ(Type.get);
 		if (rendezvousAddress == null) {
 			LOGGER.warn("Rendezvous not especified.");
@@ -133,6 +141,12 @@ public class ManagerPacketHelper {
 			Map<String, String> xOCCIAttr, String memberAddress,
 			Token userFederationToken, AsyncPacketSender packetSender, 
 			final AsynchronousRequestCallback callback) {
+		
+		if (packetSender == null) {
+			LOGGER.warn("Packet sender not set.");
+			throw new IllegalArgumentException("Packet sender not set.");
+		}
+		
 		IQ iq = new IQ();
 		iq.setID(requestId);
 		iq.setTo(memberAddress);
@@ -184,6 +198,12 @@ public class ManagerPacketHelper {
 	
 	public static Instance getRemoteInstance(String memberId, String instanceId,
 			PacketSender packetSender) {
+		
+		if (packetSender == null) {
+			LOGGER.warn("Packet sender not set.");
+			throw new IllegalArgumentException("Packet sender not set.");
+		}
+		
 		IQ iq = new IQ();
 		iq.setTo(memberId);
 		iq.setType(Type.get);
@@ -209,6 +229,12 @@ public class ManagerPacketHelper {
 	}
 
 	public static void deleteRemoteInstace(Request request, PacketSender packetSender) {
+		
+		if (packetSender == null) {
+			LOGGER.warn("Packet sender not set.");
+			throw new IllegalArgumentException("Packet sender not set.");
+		}
+		
 		IQ iq = new IQ();
 		iq.setTo(request.getProvidingMemberId());
 		iq.setType(Type.set);
@@ -325,6 +351,12 @@ public class ManagerPacketHelper {
 
 	public static void checkIfInstanceIsBeingUsedByRemoteMember(String instanceId,
 			Request servedRequest, PacketSender packetSender) {
+		
+		if (packetSender == null) {
+			LOGGER.warn("Packet sender not set.");
+			throw new IllegalArgumentException("Packet sender not set.");
+		}
+		
 		IQ iq = new IQ();
 		iq.setTo(servedRequest.getRequestingMemberId());
 		iq.setType(Type.get);
@@ -343,6 +375,12 @@ public class ManagerPacketHelper {
 	}
 
 	public static void replyToServedRequest(Request request, PacketSender packetSender) {
+		
+		if (packetSender == null) {
+			LOGGER.warn("Packet sender not set.");
+			throw new IllegalArgumentException("Packet sender not set.");
+		}
+		
 		IQ response = new IQ(Type.result, request.getId());
 		response.setFrom(request.getProvidingMemberId());
 		response.setTo(request.getRequestingMemberId());

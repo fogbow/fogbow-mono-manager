@@ -998,8 +998,11 @@ public class ManagerController {
 	}
 
 	private void createAsynchronousRemoteInstance(final Request request, List<FederationMember> allowedMembers) {
+		if (packetSender == null) {
+			return;
+		}
+		
 		FederationMember member = memberPickerPlugin.pick(allowedMembers);
-
 		if (member == null) {
 			return;
 		}
@@ -1070,7 +1073,7 @@ public class ManagerController {
 		String greenSitterJID = properties.getProperty("greensitter_jid");
 		
 		//The "1, 1" will be changed by request.getCPU and request.getRAM
-		if (greenSitterJID != null) {
+		if (greenSitterJID != null && packetSender != null) {
 			String vcpu = RequirementsHelper.getSmallestValueForAttribute(
 					request.getRequirements(), RequirementsHelper.GLUE_VCPU_TERM);
 			String mem = RequirementsHelper.getSmallestValueForAttribute(
