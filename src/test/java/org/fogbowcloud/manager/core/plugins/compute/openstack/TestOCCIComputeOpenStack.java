@@ -11,7 +11,6 @@ import java.util.Properties;
 import org.apache.http.HttpException;
 import org.apache.http.HttpStatus;
 import org.apache.http.ParseException;
-import org.apache.http.message.BasicHeader;
 import org.fogbowcloud.manager.core.RequirementsHelper;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;

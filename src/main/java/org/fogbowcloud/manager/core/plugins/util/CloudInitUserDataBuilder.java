@@ -22,7 +22,6 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.charset.Charset;
 import java.util.Properties;
-import java.util.Random;
 import java.util.Set;
 
 import javax.mail.MessagingException;
