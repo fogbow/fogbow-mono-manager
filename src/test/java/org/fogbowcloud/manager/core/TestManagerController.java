@@ -1340,6 +1340,10 @@ public class TestManagerController {
 				managerTestHelper.getComputePlugin().requestInstance(Mockito.any(Token.class),
 						Mockito.any(List.class), Mockito.any(Map.class), Mockito.anyString())).thenReturn(
 				DefaultDataTestHelper.INSTANCE_ID);
+		
+		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
+		Mockito.when(identityPlugin.getToken(Mockito.anyString())).thenThrow(new OCCIException(ErrorType.UNAUTHORIZED, ""));
+		managerController.setLocalIdentityPlugin(identityPlugin);
 	}
 
 	@Test
@@ -2695,4 +2699,26 @@ public class TestManagerController {
 		Assert.assertFalse(requestRepository.getAllServedRequests().contains(servedRequest2));
 	}
 	
+	@Test
+	public void createRequests() {
+		IdentityPlugin federationIdentityPlugin = Mockito.mock(IdentityPlugin.class);
+		IdentityPlugin localIdentityPlugin = Mockito.mock(IdentityPlugin.class);
+		String federationUser = "user";
+		Token federationToken = new Token("id", federationUser, new Date(),
+				new HashMap<String, String>());
+		Mockito.when(federationIdentityPlugin.getToken(Mockito.anyString())).thenReturn(
+				federationToken, federationToken);
+		Mockito.when(localIdentityPlugin.getToken(Mockito.anyString())).thenThrow(
+				new OCCIException(ErrorType.UNAUTHORIZED, ""));
+		managerController.setLocalIdentityPlugin(localIdentityPlugin);
+		managerController.setFederationIdentityPlugin(federationIdentityPlugin);
+		managerController.createRequests(ACCESS_TOKEN_ID_2, null, new ArrayList<Category>(),
+				xOCCIAtt);
+
+		for (Request request : managerController.getRequestsFromUser(federationToken.getAccessId())) {
+			if (!request.getLocalToken().getAccessId().isEmpty()) {
+				Assert.fail();
+			}
+		}
+	}
 }

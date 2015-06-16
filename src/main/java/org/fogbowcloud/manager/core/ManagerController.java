@@ -863,8 +863,7 @@ public class ManagerController {
 			localToken = getTokenFromLocalIdP(localAccessTokenStr);			
 		} catch (Throwable e) {
 			LOGGER.warn("Local Access Token \"" + localAccessTokenStr + "\" is not valid.", e);
-			LOGGER.debug("Making local access token equals to federation access token.");
-			localToken = federationToken;
+			localToken = new Token("", "", new Date(), new HashMap<String, String>());
 		}
 		LOGGER.debug("Federation User Token: " + federationToken);
 		LOGGER.debug("Local User Token: " + localToken);
@@ -1223,8 +1222,8 @@ public class ManagerController {
 					
 					boolean isFulfilled = false;
 					if (RequirementsHelper.matchLocation(requirements,
-							properties.getProperty(ConfigurationConstants.XMPP_JID_KEY))) {				
-						isFulfilled = createLocalInstance(request)
+							properties.getProperty(ConfigurationConstants.XMPP_JID_KEY))) {
+						isFulfilled = (!request.getLocalToken().getAccessId().isEmpty() && createLocalInstance(request))
 								|| createLocalInstanceWithFederationUser(request);
 					}
 					if (!isFulfilled) {
