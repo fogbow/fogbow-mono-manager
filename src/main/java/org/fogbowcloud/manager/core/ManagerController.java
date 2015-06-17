@@ -150,6 +150,9 @@ public class ManagerController {
 			this.garbageCollectorTimer = new ManagerTimer(executor);
 			this.accountingUpdaterTimer = new ManagerTimer(executor);
 		}
+		
+		batchIdFaildMap.put(FAILED_CREATE_LOCAL_USER_TYPE, new ArrayList<String>());
+		batchIdFaildMap.put(FAILED_CREATE_FEDERATION_LOCAL_USER_TYPE, new ArrayList<String>());
 	}
 	
 	public void setBenchmarkExecutor(ExecutorService benchmarkExecutor) {
@@ -871,6 +874,8 @@ public class ManagerController {
 		Integer instanceCount = Integer.valueOf(xOCCIAtt.get(RequestAttribute.INSTANCE_COUNT
 				.getValue()));
 		LOGGER.info("Request " + instanceCount + " instances");
+				
+		xOCCIAtt.put(RequestAttribute.BATCH_ID.getValue(), String.valueOf(UUID.randomUUID()));
 
 		List<Request> currentRequests = new ArrayList<Request>();
 		for (int i = 0; i < instanceCount; i++) {
@@ -1190,7 +1195,19 @@ public class ManagerController {
 			}
 		}, 0, schedulerPeriod);
 	}
-
+	
+	private Map<String, List<String>> batchIdFaildMap = new HashMap<String, List<String>>();
+	protected static final String FAILED_CREATE_LOCAL_USER_TYPE = "faield_create_local_user_type";
+	protected static final String FAILED_CREATE_FEDERATION_LOCAL_USER_TYPE = "faield_create_federation_local_user_type";
+	
+	protected synchronized void addBatchIdFaild(String type, String batchId) {
+		this.batchIdFaildMap.get(type).add(batchId);
+	}
+	
+	protected List<String> getBatchIdsList(String type) {
+		return this.batchIdFaildMap.get(type);
+	}
+	
 	protected void checkAndSubmitOpenRequests() {
 		boolean allFulfilled = true;
 		LOGGER.debug("Checking and submiting requests.");
@@ -1198,7 +1215,7 @@ public class ManagerController {
 		// removing requests that reach timeout
 		removeRequestsThatReachTimeout();
 		
-		List<Request> openRequests = requests.getRequestsIn(RequestState.OPEN);
+		List<Request> openRequests = new ArrayList<Request>(requests.getRequestsIn(RequestState.OPEN)); 
 		for (Request request : openRequests) {
 			if (!request.getState().equals(RequestState.OPEN)) {
 				LOGGER.debug("The request " + request.getId() + " is no longer open.");
@@ -1212,6 +1229,7 @@ public class ManagerController {
 			LOGGER.debug(request.getId() + " being considered for scheduling.");
 			Map<String, String> xOCCIAtt = request.getxOCCIAtt();
 			if (request.isIntoValidPeriod()) {
+				boolean isFulfilled = false;
 				if (request.isLocal()) {
 					for (String keyAttributes : RequestAttribute.getValues()) {
 						xOCCIAtt.remove(keyAttributes);
@@ -1220,19 +1238,35 @@ public class ManagerController {
 					String requirements = request.getRequirements();
 					List<FederationMember> allowedFederationMembers = getAllowedFederationMembers(requirements);
 					
-					boolean isFulfilled = false;
 					if (RequirementsHelper.matchLocation(requirements,
 							properties.getProperty(ConfigurationConstants.XMPP_JID_KEY))) {
-						isFulfilled = (!request.getLocalToken().getAccessId().isEmpty() && createLocalInstance(request))
-								|| createLocalInstanceWithFederationUser(request);
+						
+						if (!batchIdFaildMap.get(FAILED_CREATE_LOCAL_USER_TYPE).contains(request.getBatchId())) {
+							isFulfilled = (!request.getLocalToken().getAccessId().isEmpty() && createLocalInstance(request));
+							if (!isFulfilled) {
+								addBatchIdFaild(FAILED_CREATE_LOCAL_USER_TYPE, request.getBatchId());	
+							}
+						}
+						
+						if (!isFulfilled && !batchIdFaildMap.get(FAILED_CREATE_FEDERATION_LOCAL_USER_TYPE).contains(request.getBatchId())) {
+							isFulfilled = createLocalInstanceWithFederationUser(request);
+							if (!isFulfilled) {
+								addBatchIdFaild(FAILED_CREATE_FEDERATION_LOCAL_USER_TYPE, request.getBatchId());				
+							}
+						}
+						
 					}
 					if (!isFulfilled) {
 						createAsynchronousRemoteInstance(request, allowedFederationMembers);
 					}
 					allFulfilled &= isFulfilled;
 				} else { //it is served Request
-					boolean isFulfilled = false;
-					isFulfilled = createLocalInstanceWithFederationUser(request);
+					if (!batchIdFaildMap.get(FAILED_CREATE_FEDERATION_LOCAL_USER_TYPE).contains(request.getBatchId())) {
+						isFulfilled = createLocalInstanceWithFederationUser(request);
+						if (!isFulfilled) {							
+							addBatchIdFaild(FAILED_CREATE_FEDERATION_LOCAL_USER_TYPE, request.getBatchId());
+						}
+					}
 					allFulfilled &= isFulfilled;
 				}
 			} else if (request.isExpired()) {
