@@ -103,7 +103,7 @@ local_proxy_account_tenant_name=demo
 # x509_ca_dir_path=/path/to/ca/directory
 
 ## Local Identity (Opennebula Identity Plugin)
-# local_identity_class=org.fogbowcloud.manager.core.plugins.opennebula.OpenNebulaIdentityPlugin
+# local_identity_class=org.fogbowcloud.manager.core.plugins.identity.opennebula.OpenNebulaIdentityPlugin
 # local_identity_url=http://localhost:2633/RPC2
 
 ## Authorizatio Plugin
