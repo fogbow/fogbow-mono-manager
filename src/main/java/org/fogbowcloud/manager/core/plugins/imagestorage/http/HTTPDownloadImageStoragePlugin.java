@@ -7,8 +7,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.security.KeyStore;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -26,7 +28,6 @@ import org.apache.commons.compress.archivers.ArchiveException;
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
-import org.apache.commons.io.Charsets;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
@@ -38,7 +39,6 @@ import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContexts;
-import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.model.ImageState;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
@@ -159,9 +159,9 @@ public class HTTPDownloadImageStoragePlugin extends StaticImageStoragePlugin {
 							String innerDiskFormat = "disk1."
 									+ getExtension(file.getAbsolutePath());
 							if (isValidDiskForConversion(innerDiskFormat)) {
-								imagePath = convertToQcow2Format(token, imageURL, file,
+								imagePath = convertToRawFormat(token, imageURL, file,
 										innerDiskFormat);
-								diskFormat = Extensions.qcow2.name();
+								diskFormat = Extensions.raw.name();
 								foundValidImage = true;
 								break;
 							}
@@ -170,11 +170,13 @@ public class HTTPDownloadImageStoragePlugin extends StaticImageStoragePlugin {
 						if (!foundValidImage) {
 							LOGGER.error("Couldn't find valid disk image inside OVA.");
 							removeImageFiles(downloadTempFile, outputDir);
+							pendingImageUploads.remove(imageURL);
 							return;
 						}
 					} catch (Throwable e) {
 						LOGGER.error("Couldn't untar OVA image.", e);
 						removeImageFiles(downloadTempFile, outputDir);
+						pendingImageUploads.remove(imageURL);
 						return;
 					}
 				} else if (imageExtension.equalsIgnoreCase(Extensions.img.name())) {
@@ -222,15 +224,15 @@ public class HTTPDownloadImageStoragePlugin extends StaticImageStoragePlugin {
 				}
 			}
 
-			private String convertToQcow2Format(final Token token, final String imageURL, File file,
+			private String convertToRawFormat(final Token token, final String imageURL, File file,
 					String innerDiskFormat) {
 				LOGGER.debug("Disk format into tar file = " + innerDiskFormat);				
 				if (executeCommand("qemu-img", "info", file.getAbsolutePath()) != 0) {
 					LOGGER.warn("Couldn't convert image. qemu-img isn't installed.");
 					return null;
 				}
-				String convertedDiskFileName = file.getAbsolutePath() + ".qcow2";
-				int conversionResultCode = executeCommand("qemu-img", "convert", "-O", "qcow2",
+				String convertedDiskFileName = file.getAbsolutePath() + ".raw";
+				int conversionResultCode = executeCommand("qemu-img", "convert", "-O", "raw",
 						file.getAbsolutePath(), convertedDiskFileName);
 				if (conversionResultCode != 0) {
 					LOGGER.warn("Couldn't convert image. qemu-img conversion result code: "
@@ -271,7 +273,13 @@ public class HTTPDownloadImageStoragePlugin extends StaticImageStoragePlugin {
 				strBuilder.append(c);
 			}
 		}
-		return strBuilder.toString();
+		String normalizedName = strBuilder.toString();
+		int maxLength = 50;
+		if (normalizedName.length() > maxLength) {
+			normalizedName = normalizedName
+					.substring(normalizedName.length() - maxLength);
+		}
+		return normalizedName;
 	}
 	
 	private File downloadTempFile(final String imageURL) {
@@ -279,6 +287,7 @@ public class HTTPDownloadImageStoragePlugin extends StaticImageStoragePlugin {
 		
 		HttpClient httpclient = null;
 		HttpEntity entity = null;
+		InputStream instream = null;
 		File tempFile = null;
 		try {
 			httpclient = keystorePath == null ? HttpClients.createMinimal() : createSSLClient();
@@ -292,7 +301,7 @@ public class HTTPDownloadImageStoragePlugin extends StaticImageStoragePlugin {
 			entity = response.getEntity();
 			if (entity != null) {
 				tempFile = getTemFile(imageURL);
-				InputStream instream = entity.getContent();
+				instream = entity.getContent();
 				FileUtils.copyInputStreamToFile(instream, tempFile);;
 				instream.close();
 				return tempFile;
@@ -304,9 +313,9 @@ public class HTTPDownloadImageStoragePlugin extends StaticImageStoragePlugin {
 				tempFile.delete();
 			}			
 		} finally {
-			if (entity != null) {
+			if (entity != null && instream != null) {
 				try {
-					EntityUtils.toString(entity, Charsets.UTF_8);
+					instream.close();
 				} catch (IOException e) {
 					// Ignore this
 				}
@@ -327,14 +336,18 @@ public class HTTPDownloadImageStoragePlugin extends StaticImageStoragePlugin {
 	private String getExtension(final String imageName) {
 		LOGGER.debug("Getting extension of name " + imageName);
 		String extension = imageName.substring(imageName.lastIndexOf(".") + 1);
-		if (!Extensions.in(extension)) {
-			return Extensions.img.name();
-		}
 		return extension;
 	}
 
 	protected String removeHTTPPrefix(String imageURL) {
-		return imageURL.replaceFirst("http://", "");
+		String protocol = "http";
+		try {
+			URL url = new URL(imageURL);
+			protocol = url.getProtocol().toLowerCase();
+		} catch (MalformedURLException e) {
+			//ignore
+		}
+		return imageURL.replaceFirst(protocol + "://", "");
 	}
 	
 	private static List<File> unTar(final File inputFile, final File outputDir) throws FileNotFoundException, IOException, ArchiveException {

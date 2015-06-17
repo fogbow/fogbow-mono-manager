@@ -575,10 +575,9 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 			sizeElement.appendChild(doc.createTextNode(templateProperties.get("image_size")));
 			rootElement.appendChild(sizeElement);
 
-			Element driverElement = doc.createElement("DRIVER");
-			driverElement.appendChild(doc.createTextNode(templateProperties
-					.get("image_disk_format")));
-			rootElement.appendChild(driverElement);
+			Element typeElement = doc.createElement("TYPE");
+			typeElement.appendChild(doc.createTextNode("OS"));
+			rootElement.appendChild(typeElement);
 
 			TransformerFactory transformerFactory = TransformerFactory.newInstance();
 			Transformer transformer = transformerFactory.newTransformer();
