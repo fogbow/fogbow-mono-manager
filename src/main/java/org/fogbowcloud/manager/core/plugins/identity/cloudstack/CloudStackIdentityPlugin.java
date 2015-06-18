@@ -1,24 +1,15 @@
 package org.fogbowcloud.manager.core.plugins.identity.cloudstack;
 
-import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import org.apache.commons.codec.Charsets;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.util.Credential;
+import org.fogbowcloud.manager.core.plugins.util.HttpClientWrapper;
 import org.fogbowcloud.manager.occi.model.ErrorType;
 import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;
@@ -28,48 +19,35 @@ import org.json.JSONObject;
 
 public class CloudStackIdentityPlugin implements IdentityPlugin {
 	
-	private final static String USER = "username";
-	private final static String PASSWORD = "password";
-	private final static String DOMAIN = "domain";
-	private final static String RESPONSE_FORMAT = "response";
-	private final static String JSON_FORMAT = "json";
-	private final static String COMMAND = "command";
-	private final static String LOGIN = "login";
-	private final static String ACCESS_PROP = "loginresponse";
-	private final static String ACCESS_ID = "sessionkey"; 
-	private final static String TIME_OUT = "timeout";
-	private static final Logger LOGGER = Logger.getLogger(CloudStackIdentityPlugin.class);
+	public final static String USER = "username";
+	public final static String PASSWORD = "password";
+	public final static String DOMAIN = "domain";
+	public final static String RESPONSE_FORMAT = "response";
+	public final static String JSON_FORMAT = "json";
+	public final static String COMMAND = "command";
+	public final static String LOGIN = "login";
+	public final static String ACCESS_PROP = "loginresponse";
+	public final static String ACCESS_ID = "sessionkey"; 
+	public final static String TIME_OUT = "timeout";
+	public static final Logger LOGGER = Logger.getLogger(CloudStackIdentityPlugin.class);
 	
 	private Properties properties;
 	private String endpoint;
-	private HttpClient client;
-	
-	private HttpClient getClient() {
-		if (client == null) {
-			client = HttpClients.createMinimal();
-		}
-		return client;
-	}
+	private HttpClientWrapper httpClient;
 	
 	public CloudStackIdentityPlugin(Properties properties) {
+		this(properties, new HttpClientWrapper());
+	}
+	
+	public CloudStackIdentityPlugin(Properties properties, HttpClientWrapper httpClient) {
 		this.properties = properties;
+		this.httpClient = httpClient;
 		this.endpoint = this.properties.getProperty("identity_url");
 	}
 	
-	private void checkStatusResponse(HttpResponse response) {
-		if (response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
-			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
-		} else if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_FOUND) {
-			throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
-		} 
-	}
-	
 	private String doPost(String username, String password, String domain)  {
-		HttpResponse response = null;
-		String responseStr = null;
-		URIBuilder requestEndpoint;
 		try {
-			requestEndpoint = new URIBuilder(endpoint);
+			URIBuilder requestEndpoint = new URIBuilder(endpoint);
 			requestEndpoint.addParameter(COMMAND, LOGIN);
 			requestEndpoint.addParameter(USER, username);
 			requestEndpoint.addParameter(PASSWORD, password);
@@ -77,15 +55,10 @@ public class CloudStackIdentityPlugin implements IdentityPlugin {
 				requestEndpoint.addParameter(DOMAIN, domain);
 			}
 			requestEndpoint.addParameter(RESPONSE_FORMAT, JSON_FORMAT);
-			HttpPost request = new HttpPost(requestEndpoint.toString());
-			response = getClient().execute(request);
-			responseStr = EntityUtils.toString(response.getEntity(), Charsets.UTF_8);
-		} catch (Exception e) {
-			LOGGER.error("Could not do post request.", e);
+			return httpClient.doPost(requestEndpoint.build().toString());
+		} catch (URISyntaxException e) {
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}
-		checkStatusResponse(response);
-		return responseStr;
 	}
 	
 	private Token getTokenFromJson(String responseStr) {
@@ -153,17 +126,4 @@ public class CloudStackIdentityPlugin implements IdentityPlugin {
 		// TODO Auto-generated method stub
 		return null;
 	}
-	
-	public static void main(String[] args) throws ClientProtocolException, IOException, URISyntaxException {
-		Properties p = new Properties();
-		p.setProperty("identity_url", "http://10.4.10.247:8080/client/api");
-		CloudStackIdentityPlugin csp = new CloudStackIdentityPlugin(p);
-		csp.getTokenFromJson(csp.doPost("admin", "password", null));
-		Map<String, String> uc = new HashMap<String, String>();
-		uc.put(USER, "admin");
-		uc.put(PASSWORD, "password");
-		
-		System.out.println(csp.createToken(uc));
-	}
-
 }
