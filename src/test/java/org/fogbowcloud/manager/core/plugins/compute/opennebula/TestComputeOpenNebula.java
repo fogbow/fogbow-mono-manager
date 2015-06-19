@@ -1659,15 +1659,15 @@ public class TestComputeOpenNebula {
 		templateProperties.put("image_path", imagePath);
 		String imageDiskSize = "size";
 		templateProperties.put("image_size", imageDiskSize);
-		String imageDiskFormat = "format";
-		templateProperties.put("image_disk_format", imageDiskFormat);
+		String imageType = "type";
+		templateProperties.put("image_type", imageType);
 		
 		computeOpenNebula = new OpenNebulaComputePlugin(properties);
 		String imageTemplate = computeOpenNebula.generateImageTemplate(templateProperties);
 		Assert.assertTrue(imageTemplate.contains(imageName));
 		Assert.assertTrue(imageTemplate.contains(imagePath));
 		Assert.assertTrue(imageTemplate.contains(imageDiskSize));
-		Assert.assertTrue(imageTemplate.contains(imageDiskFormat));
+		Assert.assertTrue(imageTemplate.contains(imageType));
 	}
 	
 	@Test

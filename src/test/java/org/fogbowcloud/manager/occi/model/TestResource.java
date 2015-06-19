@@ -3,8 +3,6 @@ package org.fogbowcloud.manager.occi.model;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.fogbowcloud.manager.occi.model.Category;
-import org.fogbowcloud.manager.occi.model.Resource;
 import org.junit.Assert;
 import org.junit.Test;
 

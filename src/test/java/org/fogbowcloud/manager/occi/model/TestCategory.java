@@ -1,6 +1,5 @@
 package org.fogbowcloud.manager.occi.model;
 
-import org.fogbowcloud.manager.occi.model.Category;
 import org.junit.Assert;
 import org.junit.Test;
 

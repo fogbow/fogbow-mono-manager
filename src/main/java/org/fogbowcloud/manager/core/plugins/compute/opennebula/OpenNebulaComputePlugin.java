@@ -536,7 +536,7 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		Map<String, String> templateProperties = new HashMap<String, String>();
 		templateProperties.put("image_name", imageName);
 		templateProperties.put("image_path", imageSourcePath);
-		templateProperties.put("image_disk_format", diskFormat);
+		templateProperties.put("image_type", "OS");
 		Long imageSize = (long) Math.ceil(((double) new File(imagePath).length()) / (1024d * 1024d));
 		templateProperties.put("image_size", imageSize.toString());
 		
@@ -576,7 +576,7 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 			rootElement.appendChild(sizeElement);
 
 			Element typeElement = doc.createElement("TYPE");
-			typeElement.appendChild(doc.createTextNode("OS"));
+			typeElement.appendChild(doc.createTextNode(templateProperties.get("image_type")));
 			rootElement.appendChild(typeElement);
 
 			TransformerFactory transformerFactory = TransformerFactory.newInstance();

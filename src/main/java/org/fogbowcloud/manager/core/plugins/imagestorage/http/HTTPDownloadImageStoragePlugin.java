@@ -12,6 +12,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.KeyStore;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -60,6 +61,8 @@ public class HTTPDownloadImageStoragePlugin extends StaticImageStoragePlugin {
 	private final String keystorePath;
 	private final String tmpStorage;
 	private final String keystorePassword;
+	private final String[] acceptedFormats;
+	private final String conversionOutputFormat;
 	
 	public HTTPDownloadImageStoragePlugin(Properties properties, ComputePlugin computePlugin) {
 		super(properties, computePlugin);
@@ -68,6 +71,13 @@ public class HTTPDownloadImageStoragePlugin extends StaticImageStoragePlugin {
 		this.keystorePath = properties.getProperty("image_storage_http_keystore_path");
 		this.keystorePassword = properties.getProperty("image_storage_http_keystore_password");
 		this.tmpStorage = properties.getProperty("image_storage_http_tmp_storage");
+		String acceptedFormatsValue = properties.getProperty("image_storage_http_accepted_formats", null);
+		if (acceptedFormatsValue != null) {
+			this.acceptedFormats = acceptedFormatsValue.split(",");
+		} else {
+			this.acceptedFormats = null;
+		}
+		this.conversionOutputFormat = properties.getProperty("image_storage_http_conversion_output_format", "raw");
 	}
 	
 	@Override
@@ -147,6 +157,8 @@ public class HTTPDownloadImageStoragePlugin extends StaticImageStoragePlugin {
 				LOGGER.debug("Image extension = " + imageExtension);
 				String diskFormat = imageExtension.toLowerCase();
 				File outputDir = new File(tmpStorage + "/" + UUID.randomUUID());
+				List<File> imagesToDelete = new ArrayList<File>();
+				imagesToDelete.add(downloadTempFile);
 
 				if (imageExtension.equalsIgnoreCase(Extensions.ova.name())) {
 					LOGGER.debug("Image is tar file");
@@ -159,9 +171,9 @@ public class HTTPDownloadImageStoragePlugin extends StaticImageStoragePlugin {
 							String innerDiskFormat = "disk1."
 									+ getExtension(file.getAbsolutePath());
 							if (isValidDiskForConversion(innerDiskFormat)) {
-								imagePath = convertToRawFormat(token, imageURL, file,
+								imagePath = convertToValidFormat(token, imageURL, file,
 										innerDiskFormat);
-								diskFormat = Extensions.raw.name();
+								diskFormat = HTTPDownloadImageStoragePlugin.this.conversionOutputFormat;
 								foundValidImage = true;
 								break;
 							}
@@ -169,33 +181,50 @@ public class HTTPDownloadImageStoragePlugin extends StaticImageStoragePlugin {
 
 						if (!foundValidImage) {
 							LOGGER.error("Couldn't find valid disk image inside OVA.");
-							removeImageFiles(downloadTempFile, outputDir);
+							removeImageFiles(imagesToDelete, outputDir);
 							pendingImageUploads.remove(imageURL);
 							return;
 						}
 					} catch (Throwable e) {
 						LOGGER.error("Couldn't untar OVA image.", e);
-						removeImageFiles(downloadTempFile, outputDir);
+						removeImageFiles(imagesToDelete, outputDir);
 						pendingImageUploads.remove(imageURL);
 						return;
 					}
+				} else if (!isAnAcceptedFormat(imageExtension)) {
+					imagePath = convertToValidFormat(token, imageURL, downloadTempFile,
+							diskFormat);
+					imagesToDelete.add(new File(imagePath));
 				} else if (imageExtension.equalsIgnoreCase(Extensions.img.name())) {
 					LOGGER.debug("Image extension is IMG.");
 					diskFormat = Extensions.qcow2.name();
 				}
 				try {
 					computePlugin.uploadImage(token, imagePath, imageName, diskFormat);
-					waitUploadAndDeleteFiles(token, downloadTempFile, imageName, outputDir);
+					waitUploadAndDeleteFiles(token, imagesToDelete, imageName, outputDir);
 				} catch (Throwable e) {
 					LOGGER.error("Couldn't upload image.", e);
-					removeImageFiles(downloadTempFile, outputDir);
+					removeImageFiles(imagesToDelete, outputDir);
 				}
 
 				pendingImageUploads.remove(imageURL);
 			}
+			
+			private boolean isAnAcceptedFormat(String extension) {
+				if (HTTPDownloadImageStoragePlugin.this.acceptedFormats != null) {
+					for (String accepted : HTTPDownloadImageStoragePlugin.this.acceptedFormats) {
+						if (extension.equalsIgnoreCase(accepted)) {
+							return true;
+						}
+					}
+				}
+				return false;
+			}
 
-			private void removeImageFiles(File imageFile, File imageOutputDir) {
-				imageFile.delete();
+			private void removeImageFiles(List<File> imagesToDelete, File imageOutputDir) {
+				for (File imageFile : imagesToDelete) {
+					imageFile.delete();
+				}
 				try {
 					FileUtils.deleteDirectory(imageOutputDir);
 				} catch (IOException e) {
@@ -204,7 +233,7 @@ public class HTTPDownloadImageStoragePlugin extends StaticImageStoragePlugin {
 				}
 			}
 
-			private void waitUploadAndDeleteFiles(final Token token, File downloadTempFile,
+			private void waitUploadAndDeleteFiles(final Token token, List<File> imagesToDelete,
 					String imageName, File outputDir) throws InterruptedException {
 				while (true) {
 					ImageState imageState = null;
@@ -218,21 +247,22 @@ public class HTTPDownloadImageStoragePlugin extends StaticImageStoragePlugin {
 					if (imageState != null && imageState.in(ImageState.PENDING)) {
 						Thread.sleep(IMAGE_UPLOAD_RETRY_INTERVAL);
 					} else {
-						removeImageFiles(downloadTempFile, outputDir);
+						removeImageFiles(imagesToDelete, outputDir);
 						return;
 					}
 				}
 			}
 
-			private String convertToRawFormat(final Token token, final String imageURL, File file,
+			private String convertToValidFormat(final Token token, final String imageURL, File file,
 					String innerDiskFormat) {
 				LOGGER.debug("Disk format into tar file = " + innerDiskFormat);				
-				if (executeCommand("qemu-img", "info", file.getAbsolutePath()) != 0) {
+				if (executeCommand("qemu-img", "info", file.getAbsolutePath()) != 0) { 
 					LOGGER.warn("Couldn't convert image. qemu-img isn't installed.");
 					return null;
 				}
 				String convertedDiskFileName = file.getAbsolutePath() + ".raw";
-				int conversionResultCode = executeCommand("qemu-img", "convert", "-O", "raw",
+				int conversionResultCode = executeCommand("qemu-img", "convert", "-O", 
+						HTTPDownloadImageStoragePlugin.this.conversionOutputFormat,
 						file.getAbsolutePath(), convertedDiskFileName);
 				if (conversionResultCode != 0) {
 					LOGGER.warn("Couldn't convert image. qemu-img conversion result code: "

@@ -4,7 +4,6 @@ import java.util.Properties;
 
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
-import org.fogbowcloud.manager.core.plugins.memberauthorization.WhitelistMemberAuthorizationPlugin;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
