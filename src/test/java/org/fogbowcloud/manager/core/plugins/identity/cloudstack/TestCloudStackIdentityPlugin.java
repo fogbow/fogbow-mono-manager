@@ -15,33 +15,41 @@ public class TestCloudStackIdentityPlugin {
 	private static final String IDENTITY_URL_KEY = "identity_url";
 	private static final String CLOUDSTACK_URL = "http://localhost:8080/client/api";
 	
-	
-
-	public HttpClientWrapper createClientMock(String url) {
-		HttpClientWrapper hcw = Mockito.mock(HttpClientWrapper.class);
-		Mockito.when(hcw.doPost(url)).thenReturn("{ \"loginresponse\" : { \"timeout\" : \"1800\", " +
-			"\"lastname\" : \"cloud\", \"registered\" : \"false\", \"username\" : "
-			+ "\"user\", \"firstname\" : \"admin\", \"domainid\" : \"ae389e11-1385-11e5-be87-fa163ec5cca2\", "
-			+"\"userid\" : \"879979f7-1392-11e5-be87-fa163ec5cca2\", \"type\" : \"1\", "
-			+"\"sessionkey\" : \"eZNcMWVo9ualhWca3uk1ZxpWXZg=\", \"account\" : \"admin\" } }");
-		return hcw;
+	private CloudStackIdentityPlugin createPlugin(HttpClientWrapper httpClient) {
+		Properties properties = new Properties();
+		properties.put(IDENTITY_URL_KEY, CLOUDSTACK_URL);
+		if(httpClient == null) {		
+			return new CloudStackIdentityPlugin(properties);
+		} else {
+			return new CloudStackIdentityPlugin(properties, httpClient);
+		}
 	}
 	
 	@Test
 	public void testCreateToken() {
-		Properties properties = new Properties();
-		properties.put(IDENTITY_URL_KEY, CLOUDSTACK_URL);
-		CloudStackIdentityPlugin cloudstackIdentity = 
-				new CloudStackIdentityPlugin(properties, 
-						createClientMock("http://localhost:8080/client/api?command="
-								+ "login&username=user&password=password&response=json"));
 		Map<String, String> tokenAttributes = new HashMap<String, String>();
-		tokenAttributes.put(CloudStackIdentityPlugin.USER, "user");
-		tokenAttributes.put(CloudStackIdentityPlugin.PASSWORD, "password");
-		Token token = cloudstackIdentity.createToken(tokenAttributes);
-		Assert.assertEquals("eZNcMWVo9ualhWca3uk1ZxpWXZg=", token.getAccessId());
-		Assert.assertEquals("user", token.getUser());
+		tokenAttributes.put(CloudStackIdentityPlugin.API_KEY, "api");
+		tokenAttributes.put(CloudStackIdentityPlugin.SECRET_KEY, "key");
+		Token token = createPlugin(null).createToken(tokenAttributes);
+		Assert.assertEquals("api:key", token.getAccessId());
+		Assert.assertEquals("api", token.getUser());
 		
 	}
-
+	
+	@Test
+	public void testGetToken() {
+		HttpClientWrapper httpClient = Mockito.mock(HttpClientWrapper.class);
+		Mockito.doReturn("").when(httpClient).doGet(Mockito.anyString());
+		CloudStackIdentityPlugin csip = createPlugin(httpClient);
+		Token token = csip.getToken("api:key");
+		Assert.assertEquals("api", token.getUser());
+	}
+	
+	@Test
+	public void testReissueToken() {
+		Token token = new Token(null, null, null, null);
+		Token token2 = createPlugin(null).reIssueToken(token);
+		Assert.assertEquals(token, token2);
+	}
+	
 }

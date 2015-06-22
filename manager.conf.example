@@ -91,6 +91,13 @@ nof_prioritize_local=true
 ## If you are using NoFMemberPicker or NoFPrioritizationPlugin classes
 nof_trustworthy=false
 
+## Local identity (CloudStack Identity Plugin)
+local_identity_class=org.fogbowcloud.manager.core.plugins.identity.cloudstack.cloudStackIdentityPlugin
+local_identity_url=http://localhost:8080/client/api
+local_proxy_account_user_name=fogbow
+local_proxy_account_password=fogbow
+local_proxy_account_domain=root
+
 ## Local identity (Keystone Identity Plugin)
 local_identity_class=org.fogbowcloud.manager.core.plugins.identity.openstack.KeystoneIdentityPlugin
 local_identity_url=http://localhost:5000

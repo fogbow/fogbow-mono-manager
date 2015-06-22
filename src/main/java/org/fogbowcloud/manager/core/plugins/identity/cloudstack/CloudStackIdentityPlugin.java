@@ -1,7 +1,7 @@
 package org.fogbowcloud.manager.core.plugins.identity.cloudstack;
 
 import java.net.URISyntaxException;
-import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
@@ -14,22 +14,20 @@ import org.fogbowcloud.manager.occi.model.ErrorType;
 import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.fogbowcloud.manager.occi.model.Token;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 public class CloudStackIdentityPlugin implements IdentityPlugin {
 	
-	public final static String USER = "username";
-	public final static String PASSWORD = "password";
-	public final static String DOMAIN = "domain";
-	public final static String RESPONSE_FORMAT = "response";
-	public final static String JSON_FORMAT = "json";
-	public final static String COMMAND = "command";
-	public final static String LOGIN = "login";
-	public final static String ACCESS_PROP = "loginresponse";
-	public final static String ACCESS_ID = "sessionkey"; 
-	public final static String TIME_OUT = "timeout";
-	public static final Logger LOGGER = Logger.getLogger(CloudStackIdentityPlugin.class);
+	private static final String FEDERATION_USER_API_KEY = "local_proxy_account_api_key";
+	private static final String FEDERATION_USER_SECRET_KEY = "local_proxy_account_secret_key";
+	
+	private final static String REISSUE_COMMAND = "listApis";
+	private final static String COMMAND = "command";
+	
+	protected static final String API_KEY = "apiKey";
+	protected static final String SECRET_KEY = "secretKey";
+	protected static final String SIGNATURE = "signature";
+	
+	private static final Logger LOGGER = Logger.getLogger(CloudStackIdentityPlugin.class);
 	
 	private Properties properties;
 	private String endpoint;
@@ -45,85 +43,70 @@ public class CloudStackIdentityPlugin implements IdentityPlugin {
 		this.endpoint = this.properties.getProperty("identity_url");
 	}
 	
-	private String doPost(String username, String password, String domain)  {
-		try {
-			URIBuilder requestEndpoint = new URIBuilder(endpoint);
-			requestEndpoint.addParameter(COMMAND, LOGIN);
-			requestEndpoint.addParameter(USER, username);
-			requestEndpoint.addParameter(PASSWORD, password);
-			if (domain != null) {
-				requestEndpoint.addParameter(DOMAIN, domain);
-			}
-			requestEndpoint.addParameter(RESPONSE_FORMAT, JSON_FORMAT);
-			return httpClient.doPost(requestEndpoint.build().toString());
-		} catch (URISyntaxException e) {
-			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
-		}
-	}
-	
-	private Token getTokenFromJson(String responseStr) {
-		try {
-			JSONObject root = new JSONObject(responseStr);
-			JSONObject tokenKeyStone = root.getJSONObject(ACCESS_PROP);
-			String accessId = tokenKeyStone.getString(ACCESS_ID);
-			String user = tokenKeyStone.getString(USER);
-		    Long timeOut = Long.parseLong(tokenKeyStone.getString(TIME_OUT));
-		    Date expirationDate = new Date(new Date().getTime() + timeOut * 1000);
-		    return new Token(accessId, user, expirationDate, null);
-		} catch (JSONException e) {
-			LOGGER.error("Exception while getting token from json.", e);
-			return null;
-		}
-	}
-
 	@Override
 	public Token createToken(Map<String, String> userCredentials) {
-		String username = userCredentials.get(USER);
-		String password = userCredentials.get(PASSWORD);
-		String domain = userCredentials.get(DOMAIN);
-		String responseStr = doPost(username, password, domain);
-		return getTokenFromJson(responseStr);
+		LOGGER.debug("Creating token with credentials: " + userCredentials);
+		String apiKey = userCredentials.get(API_KEY);
+		String secretKey = userCredentials.get(SECRET_KEY);
+		String accessId = apiKey + ":" + secretKey;
+		return new Token(accessId, apiKey, null, new HashMap<String, String>());
 	}
 
 	@Override
 	public Token reIssueToken(Token token) {
-		// TODO Auto-generated method stub
-		return null;
+		return token;
 	}
 
 	@Override
 	public Token getToken(String accessId) {
-		// TODO Auto-generated method stub
-		return null;
+		String[] accessIdSplit = accessId.split(":");
+		String apiKey = accessIdSplit[0];
+		
+		URIBuilder requestEndpoint = null;
+		try {
+			requestEndpoint = new URIBuilder(endpoint);
+			requestEndpoint.addParameter(COMMAND, REISSUE_COMMAND);
+			CloudStackUtils.sign(requestEndpoint, accessId);
+		} catch (URISyntaxException e) {
+			LOGGER.warn("Couldn't retrieve token.", e);
+			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
+		}
+		
+		httpClient.doGet(requestEndpoint.toString());
+		return new Token(accessId, apiKey, null, new HashMap<String, String>());
 	}
 
 	@Override
 	public boolean isValid(String accessId) {
-		// TODO Auto-generated method stub
-		return false;
+		try {
+			return getToken(accessId) != null;
+		} catch (OCCIException e) {
+			return false;
+		}
 	}
 
 	@Override
 	public Token createFederationUserToken() {
-		// TODO Auto-generated method stub
-		return null;
+		Map<String, String> credentials = new HashMap<String, String>();
+		credentials.put(API_KEY, properties.getProperty(FEDERATION_USER_API_KEY));
+		credentials.put(SECRET_KEY, properties.getProperty(FEDERATION_USER_SECRET_KEY));
+		return createToken(credentials);
 	}
 
 	@Override
 	public Credential[] getCredentials() {
-		// TODO Auto-generated method stub
-		return null;
+		return new Credential[] { new Credential(API_KEY, true, null),
+				new Credential(SECRET_KEY, true, null) };
 	}
 
 	@Override
 	public String getAuthenticationURI() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public Token getForwardableToken(Token originalToken) {
-		// TODO Auto-generated method stub
 		return null;
 	}
+	
 }
