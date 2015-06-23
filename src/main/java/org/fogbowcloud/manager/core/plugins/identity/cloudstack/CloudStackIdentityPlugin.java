@@ -66,7 +66,7 @@ public class CloudStackIdentityPlugin implements IdentityPlugin {
 		try {
 			requestEndpoint = new URIBuilder(endpoint);
 			requestEndpoint.addParameter(COMMAND, REISSUE_COMMAND);
-			CloudStackUtils.sign(requestEndpoint, accessId);
+			CloudStackHelper.sign(requestEndpoint, accessId);
 		} catch (URISyntaxException e) {
 			LOGGER.warn("Couldn't retrieve token.", e);
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);

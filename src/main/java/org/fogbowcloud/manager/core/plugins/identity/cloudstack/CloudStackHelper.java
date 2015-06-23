@@ -16,9 +16,12 @@ import org.fogbowcloud.manager.occi.model.ErrorType;
 import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;
 
-public class CloudStackUtils {
+public class CloudStackHelper {
 	
 	private static final Logger LOGGER = Logger.getLogger(CloudStackIdentityPlugin.class);
+	
+	private static final String JSON = "json";
+	private static final String RESPONSE_FORMAT = "response";
 
 	public static void sign(URIBuilder requestEndpoint, String accessId) {
 		
@@ -27,6 +30,7 @@ public class CloudStackUtils {
 		String secretKey = accessIdSplit[1];
 		
 		requestEndpoint.addParameter(CloudStackIdentityPlugin.API_KEY, apiKey);
+		requestEndpoint.addParameter(RESPONSE_FORMAT, JSON);
 		
 		String query = null;
 		try {

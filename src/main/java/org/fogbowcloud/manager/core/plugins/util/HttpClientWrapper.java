@@ -18,6 +18,7 @@ import org.fogbowcloud.manager.occi.model.ResponseConstants;
 public class HttpClientWrapper {
 
 	private static final Logger LOGGER = Logger.getLogger(HttpClientWrapper.class);
+	private static final int SC_REQUEST_HEADER_TOO_LARGE = 431;
 	private HttpClient client;
 
 	private String doRequest(String url, String method) {
@@ -62,7 +63,8 @@ public class HttpClientWrapper {
 	private void checkStatusResponse(HttpResponse response) {
 		if (response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
-		} else if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_FOUND) {
+		} else if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_FOUND || 
+				response.getStatusLine().getStatusCode() == SC_REQUEST_HEADER_TOO_LARGE) {
 			throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
 		} 
 	}
