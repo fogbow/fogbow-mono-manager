@@ -76,6 +76,7 @@ public class ManagerController {
 	
 
 	private static final String SSH_SERVICE_NAME = "ssh";
+	protected final int MAX_REQUESTS_PER_THREAD = 25;
 
 	public static final String DEFAULT_COMMON_SSH_USER = "fogbow";
 	
@@ -118,8 +119,11 @@ public class ManagerController {
 	private FederationMemberAuthorizationPlugin validator;
 	private ExecutorService benchmarkExecutor = Executors.newCachedThreadPool();
 	private SshClientPool sshClientPool = new SshClientPool();
+	private ExecutorService requestSubmissionThreadPool = Executors.newFixedThreadPool(20);
+	private int checkAndSubmitOpenRequestsThreadsInUse = 0;
+	private FailedBatch failedBatch = new FailedBatch();
 	
-	private Map<String, ForwardedRequest> asynchronousRequests = new ConcurrentHashMap<String, ForwardedRequest>();
+	private Map<String, ForwardedRequest> asynchronousRequests = new ConcurrentHashMap<String, ForwardedRequest>();	
 	
 	private DateUtils dateUtils = new DateUtils();
 
@@ -150,9 +154,6 @@ public class ManagerController {
 			this.garbageCollectorTimer = new ManagerTimer(executor);
 			this.accountingUpdaterTimer = new ManagerTimer(executor);
 		}
-		
-		batchIdFaildMap.put(FAILED_CREATE_LOCAL_USER_TYPE, new ArrayList<String>());
-		batchIdFaildMap.put(FAILED_CREATE_FEDERATION_LOCAL_USER_TYPE, new ArrayList<String>());
 	}
 	
 	public void setBenchmarkExecutor(ExecutorService benchmarkExecutor) {
@@ -1191,31 +1192,71 @@ public class ManagerController {
 		requestSchedulerTimer.scheduleAtFixedRate(new TimerTask() {
 			@Override
 			public void run() {
-				checkAndSubmitOpenRequests();
+				if (checkAndSubmitOpenRequestsThreadsInUse == 0) {
+					checkAndSubmitOpenRequestsThreads();
+				}
 			}
 		}, 0, schedulerPeriod);
 	}
 	
-	private Map<String, List<String>> batchIdFaildMap = new HashMap<String, List<String>>();
-	protected static final String FAILED_CREATE_LOCAL_USER_TYPE = "faield_create_local_user_type";
-	protected static final String FAILED_CREATE_FEDERATION_LOCAL_USER_TYPE = "faield_create_federation_local_user_type";
-	
-	protected synchronized void addBatchIdFaild(String type, String batchId) {
-		this.batchIdFaildMap.get(type).add(batchId);
+	protected Map<String, List<Request>> getRequestsPerBatchId() {
+		Map<String, List<Request>> requestsPerBatchId = new HashMap<String, List<Request>>();
+		List<Request> allOpenRequests = new ArrayList<Request>(
+				requests.getRequestsIn(RequestState.OPEN));
+		for (Request request : allOpenRequests) {
+			List<Request> requestList = requestsPerBatchId.get(request.getBatchId());
+			if (requestList == null) {
+				requestList = new ArrayList<Request>();
+			}
+			requestList.add(request);
+			requestsPerBatchId.put(request.getBatchId(), requestList);
+		}
+		return requestsPerBatchId;
 	}
 	
-	protected List<String> getBatchIdsList(String type) {
-		return this.batchIdFaildMap.get(type);
+	protected List<List<Request>> getRequestSubList() {
+		Map<String, List<Request>> requestsMap = getRequestsPerBatchId();
+		List<List<Request>> subLists = new ArrayList<List<Request>>();
+		for (String key : requestsMap.keySet()) {
+			List<Request> requests = requestsMap.get(key);
+			List<Request> newRequests = new ArrayList<Request>();
+			int count = 0;
+			for (int i = 0; i < requests.size(); i++) {
+				count++;
+				newRequests.add(requests.get(i));
+				if (count == MAX_REQUESTS_PER_THREAD || i == requests.size() - 1) {
+					count = 0;
+					subLists.add(newRequests);
+					newRequests = new ArrayList<Request>();
+				}
+			}
+		}
+		return subLists;
+	}
+	
+	protected void checkAndSubmitOpenRequestsThreads() {
+		for (final List<Request> requestSubList : getRequestSubList()) {
+			checkAndSubmitOpenRequestsThreadsInUse++;
+			requestSubmissionThreadPool.execute(new Runnable() {
+				@Override
+				public void run() {
+					checkAndSubmitOpenRequests(requestSubList);
+					checkAndSubmitOpenRequestsThreadsInUse--;
+				}
+			});
+		}
 	}
 	
 	protected void checkAndSubmitOpenRequests() {
+		checkAndSubmitOpenRequests(new ArrayList<Request>(requests.getRequestsIn(RequestState.OPEN)));
+	}
+	
+	protected void checkAndSubmitOpenRequests(List<Request> openRequests) {
 		boolean allFulfilled = true;
 		LOGGER.debug("Checking and submiting requests.");
 
 		// removing requests that reach timeout
 		removeRequestsThatReachTimeout();
-		
-		List<Request> openRequests = new ArrayList<Request>(requests.getRequestsIn(RequestState.OPEN)); 
 		for (Request request : openRequests) {
 			if (!request.getState().equals(RequestState.OPEN)) {
 				LOGGER.debug("The request " + request.getId() + " is no longer open.");
@@ -1241,30 +1282,29 @@ public class ManagerController {
 					if (RequirementsHelper.matchLocation(requirements,
 							properties.getProperty(ConfigurationConstants.XMPP_JID_KEY))) {
 						
-						if (!batchIdFaildMap.get(FAILED_CREATE_LOCAL_USER_TYPE).contains(request.getBatchId())) {
+						if (!failedBatch.batchExists(request.getBatchId(), FailedBatchType.LOCAL_USER)) {
 							isFulfilled = (!request.getLocalToken().getAccessId().isEmpty() && createLocalInstance(request));
 							if (!isFulfilled) {
-								addBatchIdFaild(FAILED_CREATE_LOCAL_USER_TYPE, request.getBatchId());	
+								failedBatch.failBatch(request.getBatchId(), FailedBatchType.LOCAL_USER);
 							}
 						}
 						
-						if (!isFulfilled && !batchIdFaildMap.get(FAILED_CREATE_FEDERATION_LOCAL_USER_TYPE).contains(request.getBatchId())) {
+						if (!isFulfilled && !failedBatch.batchExists(request.getBatchId(), FailedBatchType.FEDERATION_USER)) {
 							isFulfilled = createLocalInstanceWithFederationUser(request);
 							if (!isFulfilled) {
-								addBatchIdFaild(FAILED_CREATE_FEDERATION_LOCAL_USER_TYPE, request.getBatchId());				
+								failedBatch.failBatch(request.getBatchId(), FailedBatchType.FEDERATION_USER);
 							}
-						}
-						
+						}	
 					}
 					if (!isFulfilled) {
 						createAsynchronousRemoteInstance(request, allowedFederationMembers);
 					}
 					allFulfilled &= isFulfilled;
 				} else { //it is served Request
-					if (!batchIdFaildMap.get(FAILED_CREATE_FEDERATION_LOCAL_USER_TYPE).contains(request.getBatchId())) {
+					if (!failedBatch.batchExists(request.getBatchId(), FailedBatchType.FEDERATION_USER)) {
 						isFulfilled = createLocalInstanceWithFederationUser(request);
-						if (!isFulfilled) {							
-							addBatchIdFaild(FAILED_CREATE_FEDERATION_LOCAL_USER_TYPE, request.getBatchId());
+						if (!isFulfilled) {
+							failedBatch.failBatch(request.getBatchId(), FailedBatchType.FEDERATION_USER);
 						}
 					}
 					allFulfilled &= isFulfilled;
@@ -1577,6 +1617,43 @@ public class ManagerController {
 		return computePlugin.getResourcesInfo(
 				getTokenFromLocalIdP(localAccessToken));
 	}
+	
+	protected FailedBatch getFailedBatches() {
+		return failedBatch;
+	}
+	
+	protected class FailedBatch {
+		private Map<String, FailedBatchType> failedBatches = new HashMap<String, FailedBatchType>();
+			
+		public void failBatch(String batchId, FailedBatchType failedBatchType) {
+			failedBatches.put(batchId, failedBatchType);
+		}
+		
+		public boolean batchExists(String batchId, FailedBatchType failedBatchType) {
+			if (failedBatchType.equals(FailedBatchType.LOCAL_USER)) {
+				return failedBatches.get(batchId) != null;
+			}
+			if (failedBatches.get(batchId) != null
+					&& failedBatches.get(batchId).equals(FailedBatchType.FEDERATION_USER)) {
+				return true;
+			}
+			return false;
+		}
+		
+		protected List<String> getFailedBatchIdsPerType(FailedBatchType failedBatchType) {
+			List<String> failedBatchIds = new ArrayList<String>();
+			HashMap<String, FailedBatchType> newFailedBatches = new HashMap<String, FailedBatchType>(
+					failedBatches);
+			for (String key : newFailedBatches.keySet()) {
+				if (newFailedBatches.get(key).equals(failedBatchType)) {
+					failedBatchIds.add(key);					
+				}
+			}
+			return failedBatchIds;
+		}
+	}
+	
+	protected enum FailedBatchType { LOCAL_USER, FEDERATION_USER; }		
 	
 	private static class ForwardedRequest {
 		
