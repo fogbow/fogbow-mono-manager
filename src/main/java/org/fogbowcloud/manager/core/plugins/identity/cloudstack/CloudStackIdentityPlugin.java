@@ -17,8 +17,8 @@ import org.fogbowcloud.manager.occi.model.Token;
 
 public class CloudStackIdentityPlugin implements IdentityPlugin {
 	
-	private static final String FEDERATION_USER_API_KEY = "local_proxy_account_api_key";
-	private static final String FEDERATION_USER_SECRET_KEY = "local_proxy_account_secret_key";
+	protected static final String FEDERATION_USER_API_KEY = "local_proxy_account_api_key";
+	protected static final String FEDERATION_USER_SECRET_KEY = "local_proxy_account_secret_key";
 	
 	private final static String REISSUE_COMMAND = "listApis";
 	private final static String COMMAND = "command";
@@ -60,8 +60,10 @@ public class CloudStackIdentityPlugin implements IdentityPlugin {
 	@Override
 	public Token getToken(String accessId) {
 		String[] accessIdSplit = accessId.split(":");
+		if (accessIdSplit.length != 2) {
+			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
+		}
 		String apiKey = accessIdSplit[0];
-		
 		URIBuilder requestEndpoint = null;
 		try {
 			requestEndpoint = new URIBuilder(endpoint);
