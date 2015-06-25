@@ -71,7 +71,6 @@ public class CloudStackComputePlugin implements ComputePlugin {
 		CloudStackHelper.sign(uriBuilder, token.getAccessId());
 		
 		String response = httpClient.doGet(uriBuilder.toString());
-		System.out.println(response);
 		List<Instance> instances = new LinkedList<Instance>();
 		try {
 			JSONArray jsonVms = new JSONObject(response).optJSONObject(
@@ -84,7 +83,6 @@ public class CloudStackComputePlugin implements ComputePlugin {
 			throw new OCCIException(ErrorType.BAD_REQUEST, 
 					ResponseConstants.IRREGULAR_SYNTAX);
 		}
-		
 		return instances;
 	}
 
