@@ -752,6 +752,12 @@ public class ManagerController {
 		}
 	}
 	
+	public void normalizeBatchId(String jidKey, Map<String, String> xOCCIAtt) {
+		// adding xmpp jid key in the batch id
+		xOCCIAtt.put(RequestAttribute.BATCH_ID.getValue(),
+				jidKey + "@" + xOCCIAtt.get(RequestAttribute.BATCH_ID.getValue()));
+	}
+	
 	private void populateWithManagerPublicKey(Map<String, String> xOCCIAtt, 
 			List<Category> categories) {
 		String publicKey = getManagerSSHPublicKey();

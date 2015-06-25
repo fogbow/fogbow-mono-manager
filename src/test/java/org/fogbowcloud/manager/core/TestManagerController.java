@@ -2967,4 +2967,15 @@ public class TestManagerController {
 		List<List<Request>> requestSubList = managerController.getRequestSubList();
 		Assert.assertEquals(7, requestSubList.size());
 	}
+	
+	@Test
+	public void testNormalizeBatchId() {
+		Map<String, String> xOCCIAtt = new HashMap<String, String>();
+		String batchId = "batchId";
+		xOCCIAtt.put(RequestAttribute.BATCH_ID.getValue(), batchId);
+		managerController.normalizeBatchId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
+				xOCCIAtt);
+		Assert.assertEquals(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL + "@" + batchId,
+				xOCCIAtt.get(RequestAttribute.BATCH_ID.getValue()));
+	}
 }
