@@ -197,7 +197,6 @@ public class CloudStackComputePlugin implements ComputePlugin {
 			throw new OCCIException(ErrorType.BAD_REQUEST, 
 					ResponseConstants.IRREGULAR_SYNTAX);
 		}
-		
 		return instances;
 	}
 
