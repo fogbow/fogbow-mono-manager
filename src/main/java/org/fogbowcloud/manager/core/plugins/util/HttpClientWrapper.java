@@ -1,13 +1,14 @@
 package org.fogbowcloud.manager.core.plugins.util;
 
 import org.apache.commons.codec.Charsets;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.conn.HttpHostConnectException;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
@@ -18,13 +19,15 @@ import org.fogbowcloud.manager.occi.model.ResponseConstants;
 public class HttpClientWrapper {
 
 	private static final Logger LOGGER = Logger.getLogger(HttpClientWrapper.class);
-	private static final int SC_REQUEST_HEADER_TOO_LARGE = 431;
 	private HttpClient client;
 
-	private String doRequest(String url, String method) {
+	private HttpResponseWrapper doRequest(String url, String method, HttpEntity entity) {
 		HttpRequestBase request = null;
 		if (method.equals("post")) {
 			request = new HttpPost(url);
+			if (entity != null) {
+				((HttpPost)request).setEntity(entity);
+			}
 		} else if (method.equals("get")) {
 			request = new HttpGet(url);
 		}
@@ -41,16 +44,20 @@ public class HttpClientWrapper {
 			LOGGER.error("Could not do post request.", e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}
-		checkStatusResponse(response);
-		return responseStr;
+		return new HttpResponseWrapper(response.getStatusLine(), responseStr);
 	}
 	
-	public String doPost(String url)  {
-         return doRequest(url, "post");
+	public HttpResponseWrapper doPost(String url)  {
+         return doPost(url, null);
 	}
 	
-	public String doGet(String url)  {
-		return doRequest(url, "get");
+	public HttpResponseWrapper doGet(String url)  {
+		return doRequest(url, "get", null);
+	}
+	
+	public HttpResponseWrapper doPost(String url, 
+			StringEntity entity) {
+		return doRequest(url, "post", entity);
 	}
 	
 	private HttpClient getClient() {
@@ -58,15 +65,6 @@ public class HttpClientWrapper {
 			client = HttpClients.createMinimal();
 		}
 		return client;
-	}
-	
-	private void checkStatusResponse(HttpResponse response) {
-		if (response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
-			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
-		} else if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_FOUND || 
-				response.getStatusLine().getStatusCode() == SC_REQUEST_HEADER_TOO_LARGE) {
-			throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
-		} 
 	}
 	
 }

@@ -1,9 +1,8 @@
 package org.fogbowcloud.manager.core.plugins.identity.cloudstack;
 
-import java.net.URISyntaxException;
 import java.security.Key;
-import java.util.TreeMap;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -34,8 +33,9 @@ public class CloudStackHelper {
 		
 		String query = null;
 		try {
-			query = requestEndpoint.build().getQuery();
-		} catch (URISyntaxException e) {
+			query = requestEndpoint.toString().substring(
+					requestEndpoint.toString().indexOf("?") + 1);
+		} catch (IndexOutOfBoundsException e) {
 			LOGGER.warn("Couldn't generate signature.", e);
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}
