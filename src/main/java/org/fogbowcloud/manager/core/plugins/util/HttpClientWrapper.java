@@ -7,7 +7,6 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.conn.HttpHostConnectException;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
@@ -36,13 +35,16 @@ public class HttpClientWrapper {
 		try {
 			response = getClient().execute(request);
 			responseStr = EntityUtils.toString(response.getEntity(), Charsets.UTF_8);
-		} catch (HttpHostConnectException e) {
-			LOGGER.error("could not connect to the host.", e);
-			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.NOT_FOUND);
-		} 	
-		catch (Exception e) {
-			LOGGER.error("Could not do post request.", e);
-			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
+		} catch (Exception e) {
+			LOGGER.error("Could not perform HTTP request.", e);
+			throw new OCCIException(ErrorType.BAD_REQUEST, 
+					ResponseConstants.IRREGULAR_SYNTAX);
+		} finally {
+			try {
+				response.getEntity().getContent().close();
+			} catch (Exception e) {
+				// Best effort
+			}
 		}
 		return new HttpResponseWrapper(response.getStatusLine(), responseStr);
 	}

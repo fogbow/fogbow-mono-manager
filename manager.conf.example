@@ -50,6 +50,15 @@ compute_novav2_network_id=ea51ed0c-0e8a-448d-8202-c79777109ffe
 # compute_occi_flavors_medium={cpu=2,mem=1024}
 # compute_occi_flavors_large={cpu=4,mem=2048}
 
+## Compute Plugin (Cloudstack)
+# compute_class=org.fogbowcloud.manager.core.plugins.compute.cloudstack.CloudStackComputePlugin
+# compute_cloudstack_api_url=http://127.0.0.1:8080/client/api
+# compute_cloudstack_zone_id=d05bfc3e-85e5-4be8-9ae9-cc7c2deb95f1
+# compute_cloudstack_image_download_base_url=http://127.0.0.1/downloads/
+# compute_cloudstack_image_download_base_path=/var/www/downloads/
+# compute_cloudstack_hypervisor=KVM
+# compute_cloudstack_image_download_os_type_id=ea51ed0c-0e8a-448d-8202-c79777109ffe
+
 ## Image Storage Plugin (HTTPDownload)
 image_storage_class=org.fogbowcloud.manager.core.plugins.imagestorage.http.HTTPDownloadImageStoragePlugin
 image_storage_http_base_url=http://appliance-repo.egi.eu/images
@@ -112,6 +121,12 @@ local_proxy_account_tenant_name=demo
 ## Local Identity (Opennebula Identity Plugin)
 # local_identity_class=org.fogbowcloud.manager.core.plugins.opennebula.OpenNebulaIdentityPlugin
 # local_identity_url=http://localhost:2633/RPC2
+
+## Local Identity (Cloudstack Identity Plugin)
+# local_identity_class=org.fogbowcloud.manager.core.plugins.identity.cloudstack.CloudStackIdentityPlugin
+# local_identity_url=http://127.0.0.1:8080/client/api/
+# local_proxy_account_api_key=user_api_key
+# local_proxy_account_secret_key=user_secret_key
 
 ## Authorizatio Plugin
 federation_authorization_class=org.fogbowcloud.manager.core.plugins.authorization.AllowAllAuthorizationPlugin

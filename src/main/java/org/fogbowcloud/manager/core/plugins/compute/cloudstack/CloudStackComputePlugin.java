@@ -95,7 +95,7 @@ public class CloudStackComputePlugin implements ComputePlugin {
 		this.imageDownloadBasePath = this.properties.getProperty("compute_cloudstack_image_download_base_path");
 		String hypervisorType = this.properties.getProperty("compute_cloudstack_hypervisor");
 		this.hypervisor = hypervisorType == null ? DEFAULT_HYPERVISOR : hypervisorType;
-		this.osTypeId = this.properties.getProperty("compute_cloudstack_image_download_os_type");
+		this.osTypeId = this.properties.getProperty("compute_cloudstack_image_download_os_type_id");
 	}
 	
 	@Override
