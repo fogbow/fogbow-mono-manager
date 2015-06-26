@@ -127,13 +127,12 @@ public class CloudStackComputePlugin implements ComputePlugin {
 			serviceOfferingId = serviceOffering.getId();
 		}
 		uriBuilder.addParameter(SERVICE_OFFERING_ID, serviceOfferingId);
-		CloudStackHelper.sign(uriBuilder, token.getAccessId());
-		
 		String userdata = xOCCIAtt.get(RequestAttribute.USER_DATA_ATT.getValue());
 		if (userdata != null) {
 			uriBuilder.addParameter(USERDATA, userdata);
 		}
 		
+		CloudStackHelper.sign(uriBuilder, token.getAccessId());
 		HttpResponseWrapper response = httpClient.doPost(uriBuilder.toString());
 		checkStatusResponse(response.getStatusLine());
 		try {
