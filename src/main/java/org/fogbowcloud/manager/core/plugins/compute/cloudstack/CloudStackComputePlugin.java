@@ -1,6 +1,5 @@
 package org.fogbowcloud.manager.core.plugins.compute.cloudstack;
 
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -11,7 +10,6 @@ import java.util.Properties;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
 import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.entity.StringEntity;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.RequirementsHelper;
 import org.fogbowcloud.manager.core.model.Flavor;
@@ -64,6 +62,7 @@ public class CloudStackComputePlugin implements ComputePlugin {
 	private static final String HYPERVISOR = "hypervisor";
 	private static final String FORMAT = "format";
 	private static final String DISPLAY_TEXT = "displaytext";
+	private static final String USERDATA = "userdata";
 	
 	private static final int LIMIT_TYPE_INSTANCES = 0;
 	private static final int LIMIT_TYPE_MEMORY = 9;
@@ -131,15 +130,11 @@ public class CloudStackComputePlugin implements ComputePlugin {
 		CloudStackHelper.sign(uriBuilder, token.getAccessId());
 		
 		String userdata = xOCCIAtt.get(RequestAttribute.USER_DATA_ATT.getValue());
-		StringEntity userdataEntity = null;
-		try {
-			userdataEntity = new StringEntity(userdata);
-		} catch (UnsupportedEncodingException e) {
-			throw new OCCIException(ErrorType.BAD_REQUEST,
-					ResponseConstants.IRREGULAR_SYNTAX);
+		if (userdata != null) {
+			uriBuilder.addParameter(USERDATA, userdata);
 		}
 		
-		HttpResponseWrapper response = httpClient.doPost(uriBuilder.toString(), userdataEntity);
+		HttpResponseWrapper response = httpClient.doPost(uriBuilder.toString());
 		checkStatusResponse(response.getStatusLine());
 		try {
 			JSONObject vm = new JSONObject(response.getContent()).optJSONObject(
