@@ -51,7 +51,6 @@ public class CloudStackComputePlugin implements ComputePlugin {
 	private static final String REGISTER_TEMPLATE_COMMAND = "registerTemplate";
 	private static final String LIST_OS_TYPES_COMMAND = "listOsTypes";
 	
-	private static final String EXPUNGE = "expunge";
 	private static final String COMMAND = "command";
 	private static final String TEMPLATE_ID = "templateid";
 	private static final String SERVICE_OFFERING_ID = "serviceofferingid";
@@ -264,7 +263,6 @@ public class CloudStackComputePlugin implements ComputePlugin {
 	public void removeInstance(Token token, String instanceId) {
 		URIBuilder uriBuilder = createURIBuilder(endpoint, DESTROY_VM_COMMAND);
 		uriBuilder.addParameter(VM_ID, instanceId);
-		uriBuilder.addParameter(EXPUNGE, Boolean.TRUE.toString());
 		CloudStackHelper.sign(uriBuilder, token.getAccessId());
 		
 		httpClient.doPost(uriBuilder.toString());
