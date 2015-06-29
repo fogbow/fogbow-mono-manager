@@ -1199,7 +1199,12 @@ public class ManagerController {
 			@Override
 			public void run() {
 				if (checkAndSubmitOpenRequestsThreadsInUse == 0) {
-					checkAndSubmitOpenRequestsThreads();
+					List<List<Request>> requestSubLists = getRequestSubList();
+					if (requestSubLists.size() < 1 ) {						
+						checkAndSubmitOpenRequestsThreads(requestSubLists);
+					} else {
+						checkAndSubmitOpenRequests();
+					}
 				}
 			}
 		}, 0, schedulerPeriod);
@@ -1240,13 +1245,13 @@ public class ManagerController {
 		return subLists;
 	}
 	
-	protected void checkAndSubmitOpenRequestsThreads() {
-		for (final List<Request> requestSubList : getRequestSubList()) {
+	protected void checkAndSubmitOpenRequestsThreads(List<List<Request>> requestSubLists) {
+		for (final List<Request> subList : requestSubLists) {
 			checkAndSubmitOpenRequestsThreadsInUse++;
 			requestSubmissionThreadPool.execute(new Runnable() {
 				@Override
 				public void run() {
-					checkAndSubmitOpenRequests(requestSubList);
+					checkAndSubmitOpenRequests(subList);
 					checkAndSubmitOpenRequestsThreadsInUse--;
 				}
 			});
@@ -1685,4 +1690,3 @@ public class ManagerController {
 	}
 	
 }
-
