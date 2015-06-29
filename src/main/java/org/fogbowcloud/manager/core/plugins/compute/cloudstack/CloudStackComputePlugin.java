@@ -40,16 +40,16 @@ public class CloudStackComputePlugin implements ComputePlugin {
 
 	private static final Logger LOGGER = Logger.getLogger(CloudStackComputePlugin.class);
 	
-	private static final String LIST_VMS_COMMAND = "listVirtualMachines";
+	protected static final String LIST_VMS_COMMAND = "listVirtualMachines";
 	private static final String DEPLOY_VM_COMMAND = "deployVirtualMachine";
-	private static final String LIST_RESOURCE_LIMITS_COMMAND = "listResourceLimits";
+	protected static final String LIST_RESOURCE_LIMITS_COMMAND = "listResourceLimits";
 	protected static final String DESTROY_VM_COMMAND = "destroyVirtualMachine";
 	private static final String LIST_SERVICE_OFFERINGS_COMMAND = "listServiceOfferings";
 	private static final String LIST_TEMPLATES_COMMAND = "listTemplates";
 	private static final String REGISTER_TEMPLATE_COMMAND = "registerTemplate";
 	private static final String LIST_OS_TYPES_COMMAND = "listOsTypes";
 	
-	protected static final String COMMAND = "command";
+	private static final String COMMAND = "command";
 	private static final String TEMPLATE_ID = "templateid";
 	private static final String SERVICE_OFFERING_ID = "serviceofferingid";
 	private static final String ZONE_ID = "zoneid";
@@ -187,6 +187,7 @@ public class CloudStackComputePlugin implements ComputePlugin {
 				instances.add(mountInstance(instanceJson));
 			}
 		} catch (JSONException e) {
+			System.out.println(e.getMessage());
 			throw new OCCIException(ErrorType.BAD_REQUEST, 
 					ResponseConstants.IRREGULAR_SYNTAX);
 		}
