@@ -43,17 +43,17 @@ public class CloudStackComputePlugin implements ComputePlugin {
 	private static final String LIST_VMS_COMMAND = "listVirtualMachines";
 	private static final String DEPLOY_VM_COMMAND = "deployVirtualMachine";
 	private static final String LIST_RESOURCE_LIMITS_COMMAND = "listResourceLimits";
-	private static final String DESTROY_VM_COMMAND = "destroyVirtualMachine";
+	protected static final String DESTROY_VM_COMMAND = "destroyVirtualMachine";
 	private static final String LIST_SERVICE_OFFERINGS_COMMAND = "listServiceOfferings";
 	private static final String LIST_TEMPLATES_COMMAND = "listTemplates";
 	private static final String REGISTER_TEMPLATE_COMMAND = "registerTemplate";
 	private static final String LIST_OS_TYPES_COMMAND = "listOsTypes";
 	
-	private static final String COMMAND = "command";
+	protected static final String COMMAND = "command";
 	private static final String TEMPLATE_ID = "templateid";
 	private static final String SERVICE_OFFERING_ID = "serviceofferingid";
 	private static final String ZONE_ID = "zoneid";
-	private static final String VM_ID = "id";
+	protected static final String VM_ID = "id";
 	private static final String TEMPLATE_FILTER = "templatefilter";
 	private static final String IS_PUBLIC = "ispublic";
 	private static final String URL = "url";
@@ -429,7 +429,7 @@ public class CloudStackComputePlugin implements ComputePlugin {
 		}
 	}
 	
-	private static URIBuilder createURIBuilder(String endpoint, String command) {
+	protected static URIBuilder createURIBuilder(String endpoint, String command) {
 		try {
 			URIBuilder uriBuilder = new URIBuilder(endpoint);
 			uriBuilder.addParameter(COMMAND, command);
