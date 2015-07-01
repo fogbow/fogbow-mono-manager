@@ -46,22 +46,22 @@ public class CloudStackComputePlugin implements ComputePlugin {
 	protected static final String DESTROY_VM_COMMAND = "destroyVirtualMachine";
 	private static final String LIST_SERVICE_OFFERINGS_COMMAND = "listServiceOfferings";
 	private static final String LIST_TEMPLATES_COMMAND = "listTemplates";
-	private static final String REGISTER_TEMPLATE_COMMAND = "registerTemplate";
+	protected static final String REGISTER_TEMPLATE_COMMAND = "registerTemplate";
 	private static final String LIST_OS_TYPES_COMMAND = "listOsTypes";
 	
 	private static final String COMMAND = "command";
 	private static final String TEMPLATE_ID = "templateid";
 	private static final String SERVICE_OFFERING_ID = "serviceofferingid";
-	private static final String ZONE_ID = "zoneid";
+	protected static final String ZONE_ID = "zoneid";
 	protected static final String VM_ID = "id";
 	private static final String TEMPLATE_FILTER = "templatefilter";
-	private static final String IS_PUBLIC = "ispublic";
-	private static final String URL = "url";
-	private static final String OS_TYPE_ID = "ostypeid";
-	private static final String NAME = "name";
-	private static final String HYPERVISOR = "hypervisor";
-	private static final String FORMAT = "format";
-	private static final String DISPLAY_TEXT = "displaytext";
+	protected static final String IS_PUBLIC = "ispublic";
+	protected static final String URL = "url";
+	protected static final String OS_TYPE_ID = "ostypeid";
+	protected static final String NAME = "name";
+	protected static final String HYPERVISOR = "hypervisor";
+	protected static final String FORMAT = "format";
+	protected static final String DISPLAY_TEXT = "displaytext";
 	private static final String USERDATA = "userdata";
 	
 	private static final int LIMIT_TYPE_INSTANCES = 0;
@@ -349,7 +349,6 @@ public class CloudStackComputePlugin implements ComputePlugin {
 		uriBuilder.addParameter(ZONE_ID, zoneId);
 		uriBuilder.addParameter(URL, imageURL);
 		uriBuilder.addParameter(IS_PUBLIC, Boolean.TRUE.toString());
-		
 		CloudStackHelper.sign(uriBuilder, token.getAccessId());
 		HttpResponseWrapper response = httpClient.doPost(uriBuilder.toString());
 		checkStatusResponse(response.getStatusLine());
@@ -446,7 +445,7 @@ public class CloudStackComputePlugin implements ComputePlugin {
 	private static final int SC_RESOURCE_UNAVAILABLE_ERROR = 534;
 	private static final int SC_RESOURCE_ALLOCATION_ERROR = 535;
 	
-	private void checkStatusResponse(StatusLine statusLine) {
+	protected void checkStatusResponse(StatusLine statusLine) {
 		if (statusLine.getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		} else if (statusLine.getStatusCode() == SC_PARAM_ERROR) {
