@@ -2910,65 +2910,6 @@ public class TestManagerController {
 	}
 	
 	@Test
-	public void testSeparateRequestsPerBatchId() {
-		String batchIdOne = "111";
-		String batchIdTwo = "222";
-		String batchIdThree = "333";
-		RequestRepository requests = new RequestRepository();
-		Map<String, String> xOCCIAttOne = new HashMap<String, String>();
-		xOCCIAttOne.put(RequestAttribute.BATCH_ID.getValue(), batchIdOne);
-		Map<String, String> xOCCIAttTwo = new HashMap<String, String>();
-		xOCCIAttTwo.put(RequestAttribute.BATCH_ID.getValue(), batchIdTwo);
-		Map<String, String> xOCCIAttThree = new HashMap<String, String>();
-		xOCCIAttThree.put(RequestAttribute.BATCH_ID.getValue(), batchIdThree);		
-		for (int i = 0; i < 100; i++) {
-			requests.addRequest("user",new Request("One" + i, managerTestHelper.getDefaultFederationToken(),
-							managerTestHelper.getDefaultFederationToken(),
-							new ArrayList<Category>(), xOCCIAttOne, true, ""));
-		}
-		for (int i = 0; i < 55; i++) {
-			requests.addRequest("user",new Request("Two" + i, managerTestHelper.getDefaultFederationToken(),
-							managerTestHelper.getDefaultFederationToken(),
-							new ArrayList<Category>(), xOCCIAttTwo, true, ""));
-		}
-		for (int i = 0; i < 1; i++) {
-			requests.addRequest("user",new Request("Three" + i, managerTestHelper.getDefaultFederationToken(),
-							managerTestHelper.getDefaultFederationToken(),
-							new ArrayList<Category>(), xOCCIAttThree, true, ""));
-		}		
-		managerController.setRequests(requests);
-		Map<String, List<Request>> requestsPerBatchId = managerController.getRequestsPerBatchId();
-		Assert.assertEquals(3, requestsPerBatchId.size());
-	}
-	
-	@Test
-	public void testGetRequestSubList() {
-		String batchIdOne = "batchIdOne";
-		String batchIdTwo = "batchIdTwo";
-		RequestRepository requests = new RequestRepository();
-		Map<String, String> xOCCIAttOne = new HashMap<String, String>();
-		xOCCIAttOne.put(RequestAttribute.BATCH_ID.getValue(), batchIdOne);
-		Map<String, String> xOCCIAttTwo = new HashMap<String, String>();
-		xOCCIAttTwo.put(RequestAttribute.BATCH_ID.getValue(), batchIdTwo);		
-		for (int i = 0; i < 100; i++) {
-			requests.addRequest("user",new Request("One" + i, managerTestHelper.getDefaultFederationToken(),
-							managerTestHelper.getDefaultFederationToken(),
-							new ArrayList<Category>(), xOCCIAttOne, true, ""));
-		}
-		for (int i = 0; i < 52; i++) {
-			requests.addRequest("user",new Request("Two" + i, managerTestHelper.getDefaultFederationToken(),
-							managerTestHelper.getDefaultFederationToken(),
-							new ArrayList<Category>(), xOCCIAttTwo, true, ""));
-		}		
-		managerController.setRequests(requests);
-		Map<String, List<Request>> requestsPerBatchId = managerController.getRequestsPerBatchId();
-		Assert.assertEquals(2, requestsPerBatchId.size());
-		
-		List<List<Request>> requestSubList = managerController.getRequestSubList();
-		Assert.assertEquals(7, requestSubList.size());
-	}
-	
-	@Test
 	public void testNormalizeBatchId() {
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
 		String batchId = "batchId";

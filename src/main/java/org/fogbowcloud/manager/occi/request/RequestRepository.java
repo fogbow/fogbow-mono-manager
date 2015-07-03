@@ -20,7 +20,7 @@ public class RequestRepository {
 	 * was created.
 	 */
 	
-	protected boolean isThereRequest(List<Request> requests, Request userRequest) {
+	protected boolean requestExists(List<Request> requests, Request userRequest) {
 		for (Request request : requests) {
 			if (request.getId().equals(userRequest.getId())) {
 				return true;
@@ -36,7 +36,7 @@ public class RequestRepository {
 			userRequests = new LinkedList<Request>();
 			requests.put(user, userRequests);
 		}
-		if (isThereRequest(userRequests, request)) {
+		if (requestExists(userRequests, request)) {
 			return;
 		}
 		userRequests.add(request);

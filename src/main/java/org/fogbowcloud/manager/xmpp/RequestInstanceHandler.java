@@ -36,9 +36,7 @@ public class RequestInstanceHandler extends AsyncQueryHandler {
 		List<Element> attributesEl = queryEl.elements("attribute");
 		for (Element attributeEl : attributesEl) {
 			xOCCIAtt.put(attributeEl.attributeValue("var"), attributeEl.element("value").getText());
-		}
-		
-		this.facade.normalizeBatchId(iq.getFrom().toString(), xOCCIAtt);
+		}	
 		
 		String requestId = queryEl.element("request").element("id").getText();
 

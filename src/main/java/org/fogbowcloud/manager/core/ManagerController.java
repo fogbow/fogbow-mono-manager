@@ -119,8 +119,6 @@ public class ManagerController {
 	private FederationMemberAuthorizationPlugin validator;
 	private ExecutorService benchmarkExecutor = Executors.newCachedThreadPool();
 	private SshClientPool sshClientPool = new SshClientPool();
-	private ExecutorService requestSubmissionThreadPool = Executors.newFixedThreadPool(20);
-	private int checkAndSubmitOpenRequestsThreadsInUse = 0;
 	private FailedBatch failedBatch = new FailedBatch();
 	
 	private Map<String, ForwardedRequest> asynchronousRequests = new ConcurrentHashMap<String, ForwardedRequest>();	
@@ -675,6 +673,8 @@ public class ManagerController {
 	
 	public void queueServedRequest(String requestingMemberId, List<Category> categories,
 			Map<String, String> xOCCIAtt, String requestId, Token requestingUserToken){
+
+		normalizeBatchId(requestingMemberId, xOCCIAtt);
 		
 		LOGGER.info("Queueing request with categories: " + categories + " and xOCCIAtt: "
 				+ xOCCIAtt + " for requesting member: " + requestingMemberId + " with requestingToken " + requestingUserToken);
@@ -752,7 +752,7 @@ public class ManagerController {
 		}
 	}
 	
-	public void normalizeBatchId(String jidKey, Map<String, String> xOCCIAtt) {
+	protected void normalizeBatchId(String jidKey, Map<String, String> xOCCIAtt) {
 		// adding xmpp jid key in the batch id
 		xOCCIAtt.put(RequestAttribute.BATCH_ID.getValue(),
 				jidKey + "@" + xOCCIAtt.get(RequestAttribute.BATCH_ID.getValue()));
@@ -1198,77 +1198,18 @@ public class ManagerController {
 		requestSchedulerTimer.scheduleAtFixedRate(new TimerTask() {
 			@Override
 			public void run() {
-				if (checkAndSubmitOpenRequestsThreadsInUse == 0) {
-					List<List<Request>> requestSubLists = getRequestSubList();
-					if (requestSubLists.size() < 1 ) {						
-						checkAndSubmitOpenRequestsThreads(requestSubLists);
-					} else {
-						checkAndSubmitOpenRequests();
-					}
-				}
+				checkAndSubmitOpenRequests();
 			}
 		}, 0, schedulerPeriod);
 	}
-	
-	protected Map<String, List<Request>> getRequestsPerBatchId() {
-		Map<String, List<Request>> requestsPerBatchId = new HashMap<String, List<Request>>();
-		List<Request> allOpenRequests = new ArrayList<Request>(
-				requests.getRequestsIn(RequestState.OPEN));
-		for (Request request : allOpenRequests) {
-			List<Request> requestList = requestsPerBatchId.get(request.getBatchId());
-			if (requestList == null) {
-				requestList = new ArrayList<Request>();
-			}
-			requestList.add(request);
-			requestsPerBatchId.put(request.getBatchId(), requestList);
-		}
-		return requestsPerBatchId;
-	}
-	
-	protected List<List<Request>> getRequestSubList() {
-		Map<String, List<Request>> requestsMap = getRequestsPerBatchId();
-		List<List<Request>> subLists = new ArrayList<List<Request>>();
-		for (String key : requestsMap.keySet()) {
-			List<Request> requests = requestsMap.get(key);
-			List<Request> newRequests = new ArrayList<Request>();
-			int count = 0;
-			for (int i = 0; i < requests.size(); i++) {
-				count++;
-				newRequests.add(requests.get(i));
-				if (count == MAX_REQUESTS_PER_THREAD || i == requests.size() - 1) {
-					count = 0;
-					subLists.add(newRequests);
-					newRequests = new ArrayList<Request>();
-				}
-			}
-		}
-		return subLists;
-	}
-	
-	protected void checkAndSubmitOpenRequestsThreads(List<List<Request>> requestSubLists) {
-		for (final List<Request> subList : requestSubLists) {
-			checkAndSubmitOpenRequestsThreadsInUse++;
-			requestSubmissionThreadPool.execute(new Runnable() {
-				@Override
-				public void run() {
-					checkAndSubmitOpenRequests(subList);
-					checkAndSubmitOpenRequestsThreadsInUse--;
-				}
-			});
-		}
-	}
-	
+		
 	protected void checkAndSubmitOpenRequests() {
-		checkAndSubmitOpenRequests(new ArrayList<Request>(requests.getRequestsIn(RequestState.OPEN)));
-	}
-	
-	protected void checkAndSubmitOpenRequests(List<Request> openRequests) {
 		boolean allFulfilled = true;
 		LOGGER.debug("Checking and submiting requests.");
 
 		// removing requests that reach timeout
 		removeRequestsThatReachTimeout();
-		for (Request request : openRequests) {
+		for (Request request : new ArrayList<Request>(requests.getRequestsIn(RequestState.OPEN))) {
 			if (!request.getState().equals(RequestState.OPEN)) {
 				LOGGER.debug("The request " + request.getId() + " is no longer open.");
 				continue;
