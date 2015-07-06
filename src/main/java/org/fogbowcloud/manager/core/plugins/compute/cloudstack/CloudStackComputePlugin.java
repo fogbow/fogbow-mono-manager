@@ -45,7 +45,7 @@ public class CloudStackComputePlugin implements ComputePlugin {
 	protected static final String LIST_RESOURCE_LIMITS_COMMAND = "listResourceLimits";
 	protected static final String DESTROY_VM_COMMAND = "destroyVirtualMachine";
 	private static final String LIST_SERVICE_OFFERINGS_COMMAND = "listServiceOfferings";
-	private static final String LIST_TEMPLATES_COMMAND = "listTemplates";
+	protected static final String LIST_TEMPLATES_COMMAND = "listTemplates";
 	protected static final String REGISTER_TEMPLATE_COMMAND = "registerTemplate";
 	protected static final String LIST_OS_TYPES_COMMAND = "listOsTypes";
 	
@@ -54,7 +54,7 @@ public class CloudStackComputePlugin implements ComputePlugin {
 	private static final String SERVICE_OFFERING_ID = "serviceofferingid";
 	protected static final String ZONE_ID = "zoneid";
 	protected static final String VM_ID = "id";
-	private static final String TEMPLATE_FILTER = "templatefilter";
+	protected static final String TEMPLATE_FILTER = "templatefilter";
 	protected static final String IS_PUBLIC = "ispublic";
 	protected static final String URL = "url";
 	protected static final String OS_TYPE_ID = "ostypeid";
@@ -373,17 +373,17 @@ public class CloudStackComputePlugin implements ComputePlugin {
 		return ImageState.PENDING;
 	}
 
-	private JSONObject getTemplateByName(Token token, String imageName) {
+	private JSONObject getTemplateByName(Token token, String templateName) {
 		URIBuilder uriBuilder = createURIBuilder(endpoint, LIST_TEMPLATES_COMMAND);
 		uriBuilder.addParameter(TEMPLATE_FILTER, "executable");
 		CloudStackHelper.sign(uriBuilder, token.getAccessId());
-		HttpResponseWrapper response = httpClient.doGet(uriBuilder.toString());		
+		HttpResponseWrapper response = httpClient.doGet(uriBuilder.toString());	
 		try {
 			JSONArray jsonTemplates = new JSONObject(response.getContent()).optJSONObject(
 					"listtemplatesresponse").optJSONArray("template");
 			for (int i = 0; jsonTemplates != null && i < jsonTemplates.length(); i++) {
 				JSONObject template = jsonTemplates.optJSONObject(i);
-				if (template.optString(NAME).equals(imageName)) {
+				if (template.optString(NAME).equals(templateName)) {
 					return template;
 				}
 			}

@@ -29,7 +29,7 @@ import org.mockito.Mockito;
 public class TestCloudStackComputePlugin {
 	
 	private static final String COMPUTE_DEFAULT_ZONE = "root";
-	private static final String CLOUDSTACK_URL = "http://localhost:8080/client/api";
+	private static final String CLOUDSTACK_URL = "http://10.4.10.247:8080/client/api";
 	private static final String OS_TYPE = "Ubuntu";
 	private static final String IMAGE_DOWNLOADED_BASE_URL = "http://127.0.0.1";
 	private static final String IMAGE_DOWNLOADED_BASE_PATH = "/var/www";
@@ -39,6 +39,7 @@ public class TestCloudStackComputePlugin {
 	private static final String RESPONSE_NO_INSTANCE = "{ \"listvirtualmachinesresponse\" : {}}";
 	private static String RESPONSE_RESOURCES_INFO;
 	private static String RESPONSE_OS_TYPE;
+	private static String RESPONSE_LIST_TEMPLATES;
 	
 	@Before
 	public void setUp() throws IOException {
@@ -48,6 +49,8 @@ public class TestCloudStackComputePlugin {
 				.getContentFile("src/test/resources/cloudstack/response.resources_info");
 		RESPONSE_OS_TYPE = PluginHelper
 				.getContentFile("src/test/resources/cloudstack/response.os_type");
+		RESPONSE_LIST_TEMPLATES = PluginHelper
+		.getContentFile("src/test/resources/cloudstack/response.list_template");
 	}
 
 	private CloudStackComputePlugin createPlugin(HttpClientWrapper httpClient, Properties extraProperties) {
@@ -289,6 +292,23 @@ public class TestCloudStackComputePlugin {
 				commandResponse, requestType);
 		CloudStackComputePlugin cscp = createPlugin(httpClient, null);
 		cscp.uploadImage(token, imagePath, imageName, diskFormat);
+	}
+	
+	@Test
+	public void testGetImageId() {
+		Token token = new Token("api:key", null, null, null);
+		String[] commands = new String[2];
+		commands[0] = CloudStackComputePlugin.LIST_TEMPLATES_COMMAND;
+		commands[1] = CloudStackComputePlugin.TEMPLATE_FILTER + " executable";
+		String[] requestType = new String[1];
+		requestType[0] = "get";
+		Map<String[], String> commandResponse = new HashMap<String[], String>();
+		commandResponse.put(commands, RESPONSE_LIST_TEMPLATES);
+		HttpClientWrapper httpClient = createHttpClientWrapperMock(token,
+				commandResponse, requestType);
+		CloudStackComputePlugin cscp = createPlugin(httpClient, null);
+		String imageId = cscp.getImageId(token, "cirros-123");
+		Assert.assertEquals("f8340307-52c6-4aec-a224-8ff84538107e",imageId);
 	}
 
 }
