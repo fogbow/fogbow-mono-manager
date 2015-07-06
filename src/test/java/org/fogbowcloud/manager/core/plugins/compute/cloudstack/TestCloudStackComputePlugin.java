@@ -1,9 +1,10 @@
 package org.fogbowcloud.manager.core.plugins.compute.cloudstack;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -12,6 +13,7 @@ import java.util.Properties;
 import org.apache.http.ProtocolVersion;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.message.BasicStatusLine;
+import org.fogbowcloud.manager.core.model.ImageState;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.identity.cloudstack.CloudStackHelper;
 import org.fogbowcloud.manager.core.plugins.util.HttpClientWrapper;
@@ -201,7 +203,7 @@ public class TestCloudStackComputePlugin {
 	@Test
 	public void testGetResourcesWithNoInstances() {
 		Token token = new Token("api:key", null, null, null);
-		Map<String[], String> commandResponse = new HashMap<String[], String>();
+		Map<String[], String> commandResponse = new LinkedHashMap<String[], String>();
 		String[] commands1 = new String[1];
 		commands1[0] = CloudStackComputePlugin.LIST_VMS_COMMAND;
 		commandResponse.put(commands1, RESPONSE_NO_INSTANCE);
@@ -268,7 +270,7 @@ public class TestCloudStackComputePlugin {
 		String hypervisor = "KVM";
 		String imagePath = "/var/www/cirros.img";
 		Token token = new Token("api:key", null, null, null);
-		Map<String[], String> commandResponse = new HashMap<String[], String>();
+		Map<String[], String> commandResponse = new LinkedHashMap<String[], String>();
 		String imageURL = imagePath.replace(IMAGE_DOWNLOADED_BASE_PATH, IMAGE_DOWNLOADED_BASE_URL + "/");
 		String[] uploadImageCommands = new String[9];
 		uploadImageCommands[0] = CloudStackComputePlugin.REGISTER_TEMPLATE_COMMAND;
@@ -309,6 +311,29 @@ public class TestCloudStackComputePlugin {
 		CloudStackComputePlugin cscp = createPlugin(httpClient, null);
 		String imageId = cscp.getImageId(token, "cirros-123");
 		Assert.assertEquals("f8340307-52c6-4aec-a224-8ff84538107e",imageId);
+		imageId = cscp.getImageId(token, "doesnt-exist");
+		Assert.assertNull(imageId);
+	}
+	
+	@Test
+	public void testGetImageState() {
+		Token token = new Token("api:key", null, null, null);
+		String[] commands = new String[2];
+		commands[0] = CloudStackComputePlugin.LIST_TEMPLATES_COMMAND;
+		commands[1] = CloudStackComputePlugin.TEMPLATE_FILTER + " executable";
+		String[] requestType = new String[1];
+		requestType[0] = "get";
+		Map<String[], String> commandResponse = new HashMap<String[], String>();
+		commandResponse.put(commands, RESPONSE_LIST_TEMPLATES);
+		HttpClientWrapper httpClient = createHttpClientWrapperMock(token,
+				commandResponse, requestType);
+		CloudStackComputePlugin cscp = createPlugin(httpClient, null);
+		ImageState imageState = cscp.getImageState(token, "cirros-123");
+		Assert.assertEquals(ImageState.ACTIVE, imageState);
+		imageState = cscp.getImageState(token, "centos-failed");
+		Assert.assertEquals(ImageState.PENDING, imageState);
+		imageState = cscp.getImageState(token, "doenst-exist");
+		Assert.assertNull(imageState);
 	}
 
 }

@@ -187,7 +187,6 @@ public class CloudStackComputePlugin implements ComputePlugin {
 				instances.add(mountInstance(instanceJson));
 			}
 		} catch (JSONException e) {
-			System.out.println(e.getMessage());
 			throw new OCCIException(ErrorType.BAD_REQUEST, 
 					ResponseConstants.IRREGULAR_SYNTAX);
 		}
