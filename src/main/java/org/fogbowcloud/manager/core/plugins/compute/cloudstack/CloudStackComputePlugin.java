@@ -47,7 +47,7 @@ public class CloudStackComputePlugin implements ComputePlugin {
 	private static final String LIST_SERVICE_OFFERINGS_COMMAND = "listServiceOfferings";
 	private static final String LIST_TEMPLATES_COMMAND = "listTemplates";
 	protected static final String REGISTER_TEMPLATE_COMMAND = "registerTemplate";
-	private static final String LIST_OS_TYPES_COMMAND = "listOsTypes";
+	protected static final String LIST_OS_TYPES_COMMAND = "listOsTypes";
 	
 	private static final String COMMAND = "command";
 	private static final String TEMPLATE_ID = "templateid";
@@ -377,9 +377,7 @@ public class CloudStackComputePlugin implements ComputePlugin {
 		URIBuilder uriBuilder = createURIBuilder(endpoint, LIST_TEMPLATES_COMMAND);
 		uriBuilder.addParameter(TEMPLATE_FILTER, "executable");
 		CloudStackHelper.sign(uriBuilder, token.getAccessId());
-		HttpResponseWrapper response = httpClient.doGet(uriBuilder.toString());
-		checkStatusResponse(response.getStatusLine());
-		
+		HttpResponseWrapper response = httpClient.doGet(uriBuilder.toString());		
 		try {
 			JSONArray jsonTemplates = new JSONObject(response.getContent()).optJSONObject(
 					"listtemplatesresponse").optJSONArray("template");
@@ -405,7 +403,6 @@ public class CloudStackComputePlugin implements ComputePlugin {
 		CloudStackHelper.sign(uriBuilder, token.getAccessId());
 		HttpResponseWrapper response = httpClient.doGet(uriBuilder.toString());
 		checkStatusResponse(response.getStatusLine());
-		
 		try {
 			JSONArray jsonOsTypes = new JSONObject(response.getContent()).optJSONObject(
 					"listostypesresponse").optJSONArray("ostype");
