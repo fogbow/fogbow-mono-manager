@@ -3,6 +3,8 @@ package org.fogbowcloud.manager.core.plugins.compute.cloudstack;
 import static org.junit.Assert.fail;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -20,8 +22,10 @@ import org.fogbowcloud.manager.core.plugins.util.HttpClientWrapper;
 import org.fogbowcloud.manager.core.plugins.util.HttpResponseWrapper;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.instance.InstanceState;
+import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.Token;
+import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.fogbowcloud.manager.occi.util.PluginHelper;
 import org.junit.Assert;
 import org.junit.Before;
@@ -31,7 +35,7 @@ import org.mockito.Mockito;
 public class TestCloudStackComputePlugin {
 	
 	private static final String COMPUTE_DEFAULT_ZONE = "root";
-	private static final String CLOUDSTACK_URL = "http://10.4.10.247:8080/client/api";
+	private static final String CLOUDSTACK_URL = "http://localhost:8080/client/api";
 	private static final String OS_TYPE = "Ubuntu";
 	private static final String IMAGE_DOWNLOADED_BASE_URL = "http://127.0.0.1";
 	private static final String IMAGE_DOWNLOADED_BASE_PATH = "/var/www";
@@ -39,9 +43,11 @@ public class TestCloudStackComputePlugin {
 
 	private static String RESPONSE_ONE_INSTANCE;
 	private static final String RESPONSE_NO_INSTANCE = "{ \"listvirtualmachinesresponse\" : {}}";
+	private static String RESPONSE_DEPLOY_VM;
 	private static String RESPONSE_RESOURCES_INFO;
 	private static String RESPONSE_OS_TYPE;
 	private static String RESPONSE_LIST_TEMPLATES;
+	private static String RESPONSE_GET_FLAVOR;
 	
 	@Before
 	public void setUp() throws IOException {
@@ -53,6 +59,10 @@ public class TestCloudStackComputePlugin {
 				.getContentFile("src/test/resources/cloudstack/response.os_type");
 		RESPONSE_LIST_TEMPLATES = PluginHelper
 		.getContentFile("src/test/resources/cloudstack/response.list_template");
+		RESPONSE_GET_FLAVOR = PluginHelper
+				.getContentFile("src/test/resources/cloudstack/response.get_flavor");
+		RESPONSE_DEPLOY_VM = PluginHelper
+				.getContentFile("src/test/resources/cloudstack/response.deploy_vm");
 	}
 
 	private CloudStackComputePlugin createPlugin(HttpClientWrapper httpClient, Properties extraProperties) {
@@ -66,7 +76,6 @@ public class TestCloudStackComputePlugin {
 				CLOUDSTACK_URL);
 		properties.put("compute_cloudstack_image_download_base_path", IMAGE_DOWNLOADED_BASE_PATH);
 		properties.put("compute_cloudstack_image_download_base_url", IMAGE_DOWNLOADED_BASE_URL);
-		properties.put("compute_cloudstack_zone_id", ZONE_ID);;
 		if (httpClient == null) {
 			return new CloudStackComputePlugin(properties);
 		} else {
@@ -106,7 +115,34 @@ public class TestCloudStackComputePlugin {
 		}
 		return httpClient;
 	}
-
+	
+	@Test
+	public void testRequestInstaceUserDataNull() {
+		List<Category> categories = new ArrayList<Category>();
+		String imageId = "imageId";
+		categories.add(new Category(RequestConstants.SMALL_TERM,
+				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
+		Token token = new Token("api:key", null, new Date(), null);
+		Properties extraProperties = new Properties();
+		extraProperties.put("compute_cloudstack_zone_id", ZONE_ID);
+		Map<String[], String> commandResponse = new LinkedHashMap<String[], String>();
+		String[] commandsDeployVM = new String[4];
+		commandsDeployVM[0] = CloudStackComputePlugin.DEPLOY_VM_COMMAND;
+		commandsDeployVM[1] = CloudStackComputePlugin.TEMPLATE_ID + " " + imageId;
+		commandsDeployVM[2] = CloudStackComputePlugin.ZONE_ID + " " + ZONE_ID;
+		commandsDeployVM[3] = "serviceofferingid 62d5f174-2f1e-42f0-931e-07600a05470e";
+		String commandsGetFlavor[] = new String[1];
+		commandsGetFlavor[0] = CloudStackComputePlugin.LIST_SERVICE_OFFERINGS_COMMAND;
+		commandResponse.put(commandsDeployVM, RESPONSE_DEPLOY_VM);
+		commandResponse.put(commandsGetFlavor, RESPONSE_GET_FLAVOR);
+		String[] requestType = new String[2];
+		requestType[0] = "post";
+		requestType[1] = "get";
+		HttpClientWrapper httpClient = createHttpClientWrapperMock(token, commandResponse, requestType);
+		CloudStackComputePlugin cscp = createPlugin(httpClient, extraProperties);
+		cscp.requestInstance(token, categories, new HashMap<String, String>(), imageId);
+	}
+	 
 	@Test
 	public void testGetInstances() {
 		Token token = new Token("api:key", null, null, null);
@@ -259,6 +295,7 @@ public class TestCloudStackComputePlugin {
 				commandResponse, requestType);
 		Properties extraProperties = new Properties();
 		extraProperties.put("compute_cloudstack_image_download_os_type_id", OS_TYPE);
+		extraProperties.put("compute_cloudstack_zone_id", ZONE_ID);
 		CloudStackComputePlugin cscp = createPlugin(httpClient, extraProperties);
 		cscp.uploadImage(token, imagePath, imageName, diskFormat);
 	}
@@ -292,7 +329,9 @@ public class TestCloudStackComputePlugin {
 		requestType[1] = "get";
 		HttpClientWrapper httpClient = createHttpClientWrapperMock(token,
 				commandResponse, requestType);
-		CloudStackComputePlugin cscp = createPlugin(httpClient, null);
+		Properties extraProperties = new Properties();
+		extraProperties.put("compute_cloudstack_zone_id", ZONE_ID);
+		CloudStackComputePlugin cscp = createPlugin(httpClient, extraProperties);
 		cscp.uploadImage(token, imagePath, imageName, diskFormat);
 	}
 	

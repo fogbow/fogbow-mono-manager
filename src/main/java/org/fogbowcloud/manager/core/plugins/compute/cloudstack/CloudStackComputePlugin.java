@@ -41,17 +41,17 @@ public class CloudStackComputePlugin implements ComputePlugin {
 	private static final Logger LOGGER = Logger.getLogger(CloudStackComputePlugin.class);
 	
 	protected static final String LIST_VMS_COMMAND = "listVirtualMachines";
-	private static final String DEPLOY_VM_COMMAND = "deployVirtualMachine";
+	protected static final String DEPLOY_VM_COMMAND = "deployVirtualMachine";
 	protected static final String LIST_RESOURCE_LIMITS_COMMAND = "listResourceLimits";
 	protected static final String DESTROY_VM_COMMAND = "destroyVirtualMachine";
-	private static final String LIST_SERVICE_OFFERINGS_COMMAND = "listServiceOfferings";
+	protected static final String LIST_SERVICE_OFFERINGS_COMMAND = "listServiceOfferings";
 	protected static final String LIST_TEMPLATES_COMMAND = "listTemplates";
 	protected static final String REGISTER_TEMPLATE_COMMAND = "registerTemplate";
 	protected static final String LIST_OS_TYPES_COMMAND = "listOsTypes";
 	
 	private static final String COMMAND = "command";
-	private static final String TEMPLATE_ID = "templateid";
-	private static final String SERVICE_OFFERING_ID = "serviceofferingid";
+	protected static final String TEMPLATE_ID = "templateid";
+	protected static final String SERVICE_OFFERING_ID = "serviceofferingid";
 	protected static final String ZONE_ID = "zoneid";
 	protected static final String VM_ID = "id";
 	protected static final String TEMPLATE_FILTER = "templatefilter";
@@ -62,7 +62,7 @@ public class CloudStackComputePlugin implements ComputePlugin {
 	protected static final String HYPERVISOR = "hypervisor";
 	protected static final String FORMAT = "format";
 	protected static final String DISPLAY_TEXT = "displaytext";
-	private static final String USERDATA = "userdata";
+	protected static final String USERDATA = "userdata";
 	
 	private static final int LIMIT_TYPE_INSTANCES = 0;
 	private static final int LIMIT_TYPE_MEMORY = 9;
@@ -131,7 +131,6 @@ public class CloudStackComputePlugin implements ComputePlugin {
 		if (userdata != null) {
 			uriBuilder.addParameter(USERDATA, userdata);
 		}
-		
 		CloudStackHelper.sign(uriBuilder, token.getAccessId());
 		HttpResponseWrapper response = httpClient.doPost(uriBuilder.toString());
 		checkStatusResponse(response.getStatusLine());
@@ -150,7 +149,6 @@ public class CloudStackComputePlugin implements ComputePlugin {
 		CloudStackHelper.sign(uriBuilder, token.getAccessId());
 		HttpResponseWrapper response = httpClient.doGet(uriBuilder.toString());
 		checkStatusResponse(response.getStatusLine());
-		
 		List<Flavor> flavours = new LinkedList<Flavor>();
 		try {
 			JSONArray jsonOfferings = new JSONObject(response.getContent()).optJSONObject(
