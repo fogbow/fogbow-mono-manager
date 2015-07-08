@@ -25,6 +25,7 @@ import org.fogbowcloud.manager.occi.instance.InstanceState;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.Token;
+import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.fogbowcloud.manager.occi.util.PluginHelper;
 import org.junit.Assert;
@@ -117,7 +118,7 @@ public class TestCloudStackComputePlugin {
 	}
 	
 	@Test
-	public void testRequestInstaceUserDataNull() {
+	public void testRequestInstace() {
 		List<Category> categories = new ArrayList<Category>();
 		String imageId = "imageId";
 		categories.add(new Category(RequestConstants.SMALL_TERM,
@@ -142,7 +143,83 @@ public class TestCloudStackComputePlugin {
 		CloudStackComputePlugin cscp = createPlugin(httpClient, extraProperties);
 		cscp.requestInstance(token, categories, new HashMap<String, String>(), imageId);
 	}
-	 
+	
+	@Test(expected=OCCIException.class)
+	public void testRequestInstanceNullImageId() {
+		List<Category> categories = new ArrayList<Category>();
+		Token token = new Token("api:key", null, new Date(), null);
+		CloudStackComputePlugin cscp = createPlugin(null, null);
+		cscp.requestInstance(token, categories, new HashMap<String, String>(), null);
+	}
+	
+	@Test(expected=OCCIException.class)
+	public void testRequestInstanceZoneIdNull() {
+		List<Category> categories = new ArrayList<Category>();
+		Token token = new Token("api:key", null, new Date(), null);
+		CloudStackComputePlugin cscp = createPlugin(null, null);
+		cscp.requestInstance(token, categories, new HashMap<String, String>(), "");
+	}
+	
+	@Test
+	public void testRequestInstanceWithUserData() {
+		List<Category> categories = new ArrayList<Category>();
+		String imageId = "imageId";
+		categories.add(new Category(RequestConstants.SMALL_TERM,
+				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
+		Token token = new Token("api:key", null, new Date(), null);
+		Properties extraProperties = new Properties();
+		extraProperties.put("compute_cloudstack_zone_id", ZONE_ID);
+		Map<String[], String> commandResponse = new LinkedHashMap<String[], String>();
+		String[] commandsDeployVM = new String[5];
+		commandsDeployVM[0] = CloudStackComputePlugin.DEPLOY_VM_COMMAND;
+		commandsDeployVM[1] = CloudStackComputePlugin.TEMPLATE_ID + " " + imageId;
+		commandsDeployVM[2] = CloudStackComputePlugin.ZONE_ID + " " + ZONE_ID;
+		commandsDeployVM[3] = "serviceofferingid 62d5f174-2f1e-42f0-931e-07600a05470e";
+		commandsDeployVM[4] = CloudStackComputePlugin.USERDATA + " userdata";
+		String commandsGetFlavor[] = new String[1];
+		commandsGetFlavor[0] = CloudStackComputePlugin.LIST_SERVICE_OFFERINGS_COMMAND;
+		commandResponse.put(commandsDeployVM, RESPONSE_DEPLOY_VM);
+		commandResponse.put(commandsGetFlavor, RESPONSE_GET_FLAVOR);
+		String[] requestType = new String[2];
+		requestType[0] = "post";
+		requestType[1] = "get";
+		HttpClientWrapper httpClient = createHttpClientWrapperMock(token, commandResponse, requestType);
+		CloudStackComputePlugin cscp = createPlugin(httpClient, extraProperties);
+		HashMap<String, String> occiAttributes = new HashMap<String, String>();
+		occiAttributes.put(RequestAttribute.USER_DATA_ATT.getValue(), "userdata");
+		cscp.requestInstance(token, categories, occiAttributes, imageId);
+	}
+	
+	@Test(expected=OCCIException.class)
+	public void testRequestInstanceWithBadResponse() {
+		List<Category> categories = new ArrayList<Category>();
+		String imageId = "imageId";
+		categories.add(new Category(RequestConstants.SMALL_TERM,
+				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
+		Token token = new Token("api:key", null, new Date(), null);
+		Properties extraProperties = new Properties();
+		extraProperties.put("compute_cloudstack_zone_id", ZONE_ID);
+		Map<String[], String> commandResponse = new LinkedHashMap<String[], String>();
+		String[] commandsDeployVM = new String[5];
+		commandsDeployVM[0] = CloudStackComputePlugin.DEPLOY_VM_COMMAND;
+		commandsDeployVM[1] = CloudStackComputePlugin.TEMPLATE_ID + " " + imageId;
+		commandsDeployVM[2] = CloudStackComputePlugin.ZONE_ID + " " + ZONE_ID;
+		commandsDeployVM[3] = "serviceofferingid 62d5f174-2f1e-42f0-931e-07600a05470e";
+		commandsDeployVM[4] = CloudStackComputePlugin.USERDATA + " userdata";
+		String commandsGetFlavor[] = new String[1];
+		commandsGetFlavor[0] = CloudStackComputePlugin.LIST_SERVICE_OFFERINGS_COMMAND;
+		commandResponse.put(commandsDeployVM, "whatever");
+		commandResponse.put(commandsGetFlavor, RESPONSE_GET_FLAVOR);
+		String[] requestType = new String[2];
+		requestType[0] = "post";
+		requestType[1] = "get";
+		HttpClientWrapper httpClient = createHttpClientWrapperMock(token, commandResponse, requestType);
+		CloudStackComputePlugin cscp = createPlugin(httpClient, extraProperties);
+		HashMap<String, String> occiAttributes = new HashMap<String, String>();
+		occiAttributes.put(RequestAttribute.USER_DATA_ATT.getValue(), "userdata");
+		cscp.requestInstance(token, categories, occiAttributes, imageId);
+	}
+	  
 	@Test
 	public void testGetInstances() {
 		Token token = new Token("api:key", null, null, null);
