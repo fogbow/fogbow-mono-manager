@@ -49,7 +49,7 @@ public class CloudStackComputePlugin implements ComputePlugin {
 	protected static final String REGISTER_TEMPLATE_COMMAND = "registerTemplate";
 	protected static final String LIST_OS_TYPES_COMMAND = "listOsTypes";
 	
-	private static final String COMMAND = "command";
+	protected static final String COMMAND = "command";
 	protected static final String TEMPLATE_ID = "templateid";
 	protected static final String SERVICE_OFFERING_ID = "serviceofferingid";
 	protected static final String ZONE_ID = "zoneid";

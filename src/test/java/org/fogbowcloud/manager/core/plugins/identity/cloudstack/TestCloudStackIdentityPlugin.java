@@ -21,6 +21,8 @@ public class TestCloudStackIdentityPlugin {
 	private static final String FEDERATION_API_KEY = "fogbow";
 	private static final String FEDERATION_SECRET_KEY = "secret";
 	
+	// TODO Don't use acronyms for plugin variables
+	
 	private CloudStackIdentityPlugin createPlugin(HttpClientWrapper httpClient) {
 		Properties properties = new Properties();
 		properties.put(IDENTITY_URL_KEY, CLOUDSTACK_URL);
@@ -41,8 +43,9 @@ public class TestCloudStackIdentityPlugin {
 		Token token = createPlugin(null).createToken(tokenAttributes);
 		Assert.assertEquals("api:key", token.getAccessId());
 		Assert.assertEquals("api", token.getUser());
-		
 	}
+	
+	// TODO Create token with null API_KEY or SECRET_KEY
 	
 	@Test
 	public void testGetToken() {
@@ -53,6 +56,9 @@ public class TestCloudStackIdentityPlugin {
 		Assert.assertEquals("api", token.getUser());
 	}
 	
+	// TODO Unauthorized
+	// TODO Bad request
+	
 	@Test
 	public void testReissueToken() {
 		Token token = new Token(null, null, null, null);
@@ -60,21 +66,25 @@ public class TestCloudStackIdentityPlugin {
 		Assert.assertEquals(token, token2);
 	}
 	
+	private static final String NOT_VALID_ACCESS_ID_BAD_FORMAT = "notvalid";
+	private static final String NOT_VALID_ACCESS_ID_NOT_AUTHORIZED = "not:valid";
+	
 	@Test
 	public void testIsValid() {
-		String accessID = "notvalid";
 		HttpClientWrapper httpClientNotValid = Mockito.mock(HttpClientWrapper.class);
 		Mockito.doThrow(new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.NOT_FOUND)).
 		when(httpClientNotValid).doGet(Mockito.anyString());
 		CloudStackIdentityPlugin csip = createPlugin(httpClientNotValid);
-		Assert.assertEquals(false, csip.isValid(accessID));
-		accessID = "not:valid";
-		Assert.assertEquals(false, csip.isValid(accessID));
+		Assert.assertEquals(false, csip.isValid(NOT_VALID_ACCESS_ID_BAD_FORMAT));
+		Assert.assertEquals(false, csip.isValid(NOT_VALID_ACCESS_ID_NOT_AUTHORIZED));
 		HttpClientWrapper httpClientValid = Mockito.mock(HttpClientWrapper.class);
 		Mockito.doReturn("").when(httpClientValid).doGet(Mockito.anyString());
 		csip = createPlugin(httpClientValid);
-		Assert.assertEquals(true, csip.isValid(accessID));
+		Assert.assertEquals(true, csip.isValid(NOT_VALID_ACCESS_ID_NOT_AUTHORIZED));
 	}
+	
+	// TODO Unauthorized
+	// TODO Bad request
 	
 	@Test
 	public void testCreateFederationUser() {
@@ -84,6 +94,8 @@ public class TestCloudStackIdentityPlugin {
 				token.getAccessId());
 		Assert.assertEquals(FEDERATION_API_KEY, token.getUser());
 	}
+	
+	// TODO Federation user properties not set?
 	
 	@Test
 	public void testGetCredentials() {
@@ -101,5 +113,7 @@ public class TestCloudStackIdentityPlugin {
 		Assert.assertEquals(null, csip.getAuthenticationURI());
 		Assert.assertEquals(null, csip.getForwardableToken(new Token(null, null, null, null)));
 	}
+	
+	// TODO Split in two different methods
 	
 }
