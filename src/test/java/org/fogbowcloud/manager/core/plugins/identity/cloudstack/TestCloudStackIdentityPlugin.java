@@ -1,27 +1,41 @@
 package org.fogbowcloud.manager.core.plugins.identity.cloudstack;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+import org.fogbowcloud.manager.core.plugins.compute.cloudstack.TestHelperCloudStack;
 import org.fogbowcloud.manager.core.plugins.util.Credential;
 import org.fogbowcloud.manager.core.plugins.util.HttpClientWrapper;
-import org.fogbowcloud.manager.occi.model.ErrorType;
 import org.fogbowcloud.manager.occi.model.OCCIException;
-import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.fogbowcloud.manager.occi.model.Token;
+import org.fogbowcloud.manager.occi.util.PluginHelper;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
 
 public class TestCloudStackIdentityPlugin {
 	
+	private static final String VALID_ACCESS_ID = "api:key";
+	private static final String NOT_VALID_ACCESS_ID_BAD_FORMAT = "notvalid";
+	private static final String NOT_VALID_ACCESS_ID_NOT_AUTHORIZED = "not:valid";
+	
 	private static final String IDENTITY_URL_KEY = "identity_url";
 	private static final String CLOUDSTACK_URL = "http://localhost:8080/client/api";
 	private static final String FEDERATION_API_KEY = "fogbow";
 	private static final String FEDERATION_SECRET_KEY = "secret";
 	
-	// TODO Don't use acronyms for plugin variables
+	private static String RESPONSE_UNAUTHORIZED;
+	
+	static {
+		try {
+			RESPONSE_UNAUTHORIZED = PluginHelper
+					.getContentFile("src/test/resources/cloudstack/response.unauthorized");
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
 	
 	private CloudStackIdentityPlugin createPlugin(HttpClientWrapper httpClient) {
 		Properties properties = new Properties();
@@ -41,23 +55,62 @@ public class TestCloudStackIdentityPlugin {
 		tokenAttributes.put(CloudStackIdentityPlugin.API_KEY, "api");
 		tokenAttributes.put(CloudStackIdentityPlugin.SECRET_KEY, "key");
 		Token token = createPlugin(null).createToken(tokenAttributes);
-		Assert.assertEquals("api:key", token.getAccessId());
+		Assert.assertEquals(VALID_ACCESS_ID, token.getAccessId());
 		Assert.assertEquals("api", token.getUser());
 	}
 	
-	// TODO Create token with null API_KEY or SECRET_KEY
+	@Test(expected=OCCIException.class)
+	public void testCreateTokenWithNullAttributes() {
+		createPlugin(null).createToken(null);
+	}
+	
+	@Test(expected=OCCIException.class)
+	public void testCreateTokenWithNullApiKey() {
+		Map<String, String> tokenAttributes = new HashMap<String, String>();
+		tokenAttributes.put(CloudStackIdentityPlugin.SECRET_KEY, "key");
+		createPlugin(null).createToken(tokenAttributes);
+	}
+	
+	@Test(expected=OCCIException.class)
+	public void testCreateTokenWithNullSecretKey() {
+		Map<String, String> tokenAttributes = new HashMap<String, String>();
+		tokenAttributes.put(CloudStackIdentityPlugin.API_KEY, "key");
+		createPlugin(null).createToken(tokenAttributes);
+	}
 	
 	@Test
 	public void testGetToken() {
+		String  reissueTokenUrl = TestHelperCloudStack.createURL(
+				CloudStackIdentityPlugin.REISSUE_COMMAND);
 		HttpClientWrapper httpClient = Mockito.mock(HttpClientWrapper.class);
-		Mockito.doReturn("").when(httpClient).doGet(Mockito.anyString());
-		CloudStackIdentityPlugin csip = createPlugin(httpClient);
-		Token token = csip.getToken("api:key");
+		Token mockToken = new Token(VALID_ACCESS_ID, null, null, null);
+		TestHelperCloudStack.recordHTTPClientWrapperRequest(httpClient, mockToken, 
+				TestHelperCloudStack.GET, reissueTokenUrl, "", 200);
+		
+		CloudStackIdentityPlugin identityPlugin = createPlugin(httpClient);
+		Token token = identityPlugin.getToken(VALID_ACCESS_ID);	
 		Assert.assertEquals("api", token.getUser());
 	}
 	
-	// TODO Unauthorized
-	// TODO Bad request
+	@Test(expected=OCCIException.class)
+	public void testGetTokenBadRequest() {
+		HttpClientWrapper httpClientNotValid = Mockito.mock(HttpClientWrapper.class);
+		CloudStackIdentityPlugin identityPlugin = createPlugin(httpClientNotValid);
+		identityPlugin.getToken(NOT_VALID_ACCESS_ID_BAD_FORMAT);
+	}
+	
+	@Test(expected=OCCIException.class)
+	public void testGetTokenUnauthorized() {
+		String  reissueTokenUrl = TestHelperCloudStack.createURL(
+				CloudStackIdentityPlugin.REISSUE_COMMAND);
+		HttpClientWrapper httpClient = Mockito.mock(HttpClientWrapper.class);
+		Token mockToken = new Token(NOT_VALID_ACCESS_ID_NOT_AUTHORIZED, null, null, null);
+		TestHelperCloudStack.recordHTTPClientWrapperRequest(httpClient, mockToken, 
+				TestHelperCloudStack.GET, reissueTokenUrl, RESPONSE_UNAUTHORIZED, 401);
+		
+		CloudStackIdentityPlugin identityPlugin = createPlugin(httpClient);
+		identityPlugin.getToken(NOT_VALID_ACCESS_ID_NOT_AUTHORIZED);	
+	}
 	
 	@Test
 	public void testReissueToken() {
@@ -66,41 +119,62 @@ public class TestCloudStackIdentityPlugin {
 		Assert.assertEquals(token, token2);
 	}
 	
-	private static final String NOT_VALID_ACCESS_ID_BAD_FORMAT = "notvalid";
-	private static final String NOT_VALID_ACCESS_ID_NOT_AUTHORIZED = "not:valid";
+	
+	@Test
+	public void testIsValidBadFormat() {
+		HttpClientWrapper httpClientNotValid = Mockito.mock(HttpClientWrapper.class);
+		CloudStackIdentityPlugin identityPlugin = createPlugin(httpClientNotValid);
+		Assert.assertEquals(false, identityPlugin.isValid(NOT_VALID_ACCESS_ID_BAD_FORMAT));
+	}
+	
+	@Test
+	public void testIsValidUnauthorazed() {
+		String  reissueTokenUrl = TestHelperCloudStack.createURL(
+				CloudStackIdentityPlugin.REISSUE_COMMAND);
+		HttpClientWrapper httpClient = Mockito.mock(HttpClientWrapper.class);
+		Token mockToken = new Token(NOT_VALID_ACCESS_ID_NOT_AUTHORIZED, null, null, null);
+		TestHelperCloudStack.recordHTTPClientWrapperRequest(httpClient, mockToken, 
+				TestHelperCloudStack.GET, reissueTokenUrl, RESPONSE_UNAUTHORIZED, 401);
+		
+		CloudStackIdentityPlugin identityPlugin = createPlugin(httpClient);
+		Assert.assertEquals(false, identityPlugin.isValid(NOT_VALID_ACCESS_ID_NOT_AUTHORIZED));
+	}
 	
 	@Test
 	public void testIsValid() {
-		HttpClientWrapper httpClientNotValid = Mockito.mock(HttpClientWrapper.class);
-		Mockito.doThrow(new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.NOT_FOUND)).
-		when(httpClientNotValid).doGet(Mockito.anyString());
-		CloudStackIdentityPlugin csip = createPlugin(httpClientNotValid);
-		Assert.assertEquals(false, csip.isValid(NOT_VALID_ACCESS_ID_BAD_FORMAT));
-		Assert.assertEquals(false, csip.isValid(NOT_VALID_ACCESS_ID_NOT_AUTHORIZED));
-		HttpClientWrapper httpClientValid = Mockito.mock(HttpClientWrapper.class);
-		Mockito.doReturn("").when(httpClientValid).doGet(Mockito.anyString());
-		csip = createPlugin(httpClientValid);
-		Assert.assertEquals(true, csip.isValid(NOT_VALID_ACCESS_ID_NOT_AUTHORIZED));
+		String  reissueTokenUrl = TestHelperCloudStack.createURL(
+				CloudStackIdentityPlugin.REISSUE_COMMAND);
+		HttpClientWrapper httpClient = Mockito.mock(HttpClientWrapper.class);
+		Token mockToken = new Token(VALID_ACCESS_ID, null, null, null);
+		TestHelperCloudStack.recordHTTPClientWrapperRequest(httpClient, mockToken, 
+				TestHelperCloudStack.GET, reissueTokenUrl, "", 200);
+		
+		CloudStackIdentityPlugin identityPlugin = createPlugin(httpClient);
+		Assert.assertEquals(true, identityPlugin.isValid(VALID_ACCESS_ID));
 	}
-	
-	// TODO Unauthorized
-	// TODO Bad request
 	
 	@Test
 	public void testCreateFederationUser() {
-		CloudStackIdentityPlugin csip = createPlugin(null);
-		Token token = csip.createFederationUserToken();
+		CloudStackIdentityPlugin identityPlugin = createPlugin(null);
+		Token token = identityPlugin.createFederationUserToken();
 		Assert.assertEquals(FEDERATION_API_KEY + ":" + FEDERATION_SECRET_KEY, 
 				token.getAccessId());
 		Assert.assertEquals(FEDERATION_API_KEY, token.getUser());
 	}
 	
-	// TODO Federation user properties not set?
+	@Test(expected=OCCIException.class)
+	public void testCreateFederationUserWithoutProperties() {
+		Properties properties = new Properties();
+		properties.put(IDENTITY_URL_KEY, CLOUDSTACK_URL);
+		CloudStackIdentityPlugin identityPlugin = new CloudStackIdentityPlugin(properties);
+		Token token = identityPlugin.createFederationUserToken();
+		Assert.assertNull(token.getUser());
+	}
 	
 	@Test
 	public void testGetCredentials() {
-		CloudStackIdentityPlugin csip = createPlugin(null);
-		Credential[] credentials = csip.getCredentials();
+		CloudStackIdentityPlugin identityPlugin = createPlugin(null);
+		Credential[] credentials = identityPlugin.getCredentials();
 		Assert.assertEquals(new Credential
 				(CloudStackIdentityPlugin.API_KEY, true, null), credentials[0]);
 		Assert.assertEquals(new Credential
@@ -108,12 +182,15 @@ public class TestCloudStackIdentityPlugin {
 	}
 	
 	@Test
-	public void testGetAuthenticationURIandFowardableToken() {
-		CloudStackIdentityPlugin csip = createPlugin(null);
-		Assert.assertEquals(null, csip.getAuthenticationURI());
-		Assert.assertEquals(null, csip.getForwardableToken(new Token(null, null, null, null)));
+	public void testGetAuthenticationURI() {
+		CloudStackIdentityPlugin identityPlugin = createPlugin(null);
+		Assert.assertEquals(null, identityPlugin.getAuthenticationURI());
 	}
 	
-	// TODO Split in two different methods
+	@Test
+	public void testGetFowardableToken() {
+		CloudStackIdentityPlugin identityPlugin = createPlugin(null);
+		Assert.assertEquals(null, identityPlugin.getForwardableToken(new Token(null, null, null, null)));
+	}
 	
 }

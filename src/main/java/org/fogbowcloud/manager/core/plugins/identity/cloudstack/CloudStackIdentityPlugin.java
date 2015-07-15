@@ -5,47 +5,56 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+import org.apache.http.HttpStatus;
+import org.apache.http.StatusLine;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.util.Credential;
 import org.fogbowcloud.manager.core.plugins.util.HttpClientWrapper;
+import org.fogbowcloud.manager.core.plugins.util.HttpResponseWrapper;
 import org.fogbowcloud.manager.occi.model.ErrorType;
 import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.fogbowcloud.manager.occi.model.Token;
 
 public class CloudStackIdentityPlugin implements IdentityPlugin {
-	
+
 	protected static final String FEDERATION_USER_API_KEY = "local_proxy_account_api_key";
 	protected static final String FEDERATION_USER_SECRET_KEY = "local_proxy_account_secret_key";
-	
-	private final static String REISSUE_COMMAND = "listApis";
+
+	protected final static String REISSUE_COMMAND = "listApis";
 	private final static String COMMAND = "command";
-	
+
 	protected static final String API_KEY = "apiKey";
 	protected static final String SECRET_KEY = "secretKey";
 	protected static final String SIGNATURE = "signature";
-	
-	private static final Logger LOGGER = Logger.getLogger(CloudStackIdentityPlugin.class);
-	
+
+	private static final Logger LOGGER = Logger
+			.getLogger(CloudStackIdentityPlugin.class);
+
 	private Properties properties;
 	private String endpoint;
 	private HttpClientWrapper httpClient;
-	
+
 	public CloudStackIdentityPlugin(Properties properties) {
 		this(properties, new HttpClientWrapper());
 	}
-	
-	public CloudStackIdentityPlugin(Properties properties, HttpClientWrapper httpClient) {
+
+	public CloudStackIdentityPlugin(Properties properties,
+			HttpClientWrapper httpClient) {
 		this.properties = properties;
 		this.httpClient = httpClient;
 		this.endpoint = this.properties.getProperty("identity_url");
 	}
-	
+
 	@Override
 	public Token createToken(Map<String, String> userCredentials) {
 		LOGGER.debug("Creating token with credentials: " + userCredentials);
+		if ((userCredentials == null) || (userCredentials.get(API_KEY) == null) 
+				|| (userCredentials.get(SECRET_KEY) == null)) {
+			throw new OCCIException(ErrorType.BAD_REQUEST, "User credentials can't be null");
+		}
 		String apiKey = userCredentials.get(API_KEY);
 		String secretKey = userCredentials.get(SECRET_KEY);
 		String accessId = apiKey + ":" + secretKey;
@@ -61,7 +70,8 @@ public class CloudStackIdentityPlugin implements IdentityPlugin {
 	public Token getToken(String accessId) {
 		String[] accessIdSplit = accessId.split(":");
 		if (accessIdSplit.length != 2) {
-			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
+			throw new OCCIException(ErrorType.BAD_REQUEST,
+					ResponseConstants.IRREGULAR_SYNTAX);
 		}
 		String apiKey = accessIdSplit[0];
 		URIBuilder requestEndpoint = null;
@@ -71,10 +81,11 @@ public class CloudStackIdentityPlugin implements IdentityPlugin {
 			CloudStackHelper.sign(requestEndpoint, accessId);
 		} catch (URISyntaxException e) {
 			LOGGER.warn("Couldn't retrieve token.", e);
-			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
+			throw new OCCIException(ErrorType.UNAUTHORIZED,
+					ResponseConstants.UNAUTHORIZED);
 		}
-		
-		httpClient.doGet(requestEndpoint.toString());
+		HttpResponseWrapper response = httpClient.doGet(requestEndpoint.toString());
+		checkStatusResponse(response.getStatusLine());
 		return new Token(accessId, apiKey, null, new HashMap<String, String>());
 	}
 
@@ -90,8 +101,10 @@ public class CloudStackIdentityPlugin implements IdentityPlugin {
 	@Override
 	public Token createFederationUserToken() {
 		Map<String, String> credentials = new HashMap<String, String>();
-		credentials.put(API_KEY, properties.getProperty(FEDERATION_USER_API_KEY));
-		credentials.put(SECRET_KEY, properties.getProperty(FEDERATION_USER_SECRET_KEY));
+		credentials.put(API_KEY,
+				properties.getProperty(FEDERATION_USER_API_KEY));
+		credentials.put(SECRET_KEY,
+				properties.getProperty(FEDERATION_USER_SECRET_KEY));
 		return createToken(credentials);
 	}
 
@@ -111,4 +124,12 @@ public class CloudStackIdentityPlugin implements IdentityPlugin {
 		return null;
 	}
 	
+	protected void checkStatusResponse(StatusLine statusLine) {
+		if (statusLine.getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
+			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
+		} else if (statusLine.getStatusCode() > 204) {
+			throw new OCCIException(ErrorType.BAD_REQUEST, statusLine.getReasonPhrase());
+		}
+	}
+
 }
