@@ -75,7 +75,7 @@ public class TestVMCatcherStoragePluginTest {
 	public void testImageWithValidURLWithProperIdentifierGlance() throws IOException, InterruptedException {
 		properties.put(VMCatcherStoragePlugin.PROP_VMC_PUSH_METHOD, "glancepush");
 		Assert.assertNull(plugin.getLocalId(null, IMAGE_LIST_URL));
-		Mockito.verify(computePlugin).getImageId(null, "Scientific_Linux_6.5_Minimal");
+		Mockito.verify(computePlugin).getImageId(null, "OS_Disk_Image");
 		Mockito.verify(shellWrapper).execute(new HashMap<String, String>(), "vmcatcher_subscribe", 
 				"--imagelist-newimage-subscribe", "--auto-endorse", "-s", IMAGE_LIST_URL);
 		Mockito.verify(downloader).execute(Mockito.any(Runnable.class));
@@ -87,7 +87,7 @@ public class TestVMCatcherStoragePluginTest {
 		properties.put(VMCatcherStoragePlugin.PROP_VMC_ENV_PREFIX + "VMCATCHER_CACHE_EVENT", "python /var/lib/vmcatcher/gpvcmupdate.py");
 		properties.put(VMCatcherStoragePlugin.PROP_VMC_ENV_PREFIX + "VMCATCHER_CACHE_DIR_EXPIRE", "/var/lib/vmcatcher/cache/expired");
 		Assert.assertNull(plugin.getLocalId(null, IMAGE_LIST_URL));
-		Mockito.verify(computePlugin).getImageId(null, "Scientific_Linux_6.5_Minimal");
+		Mockito.verify(computePlugin).getImageId(null, "OS_Disk_Image");
 		
 		HashMap<String, String> envVarMap = new HashMap<String, String>();
 		envVarMap.put("VMCATCHER_CACHE_EVENT", "python /var/lib/vmcatcher/gpvcmupdate.py");
@@ -113,8 +113,8 @@ public class TestVMCatcherStoragePluginTest {
 		properties.put(VMCatcherStoragePlugin.PROP_VMC_PUSH_METHOD, "cesga");
 		properties.put(VMCatcherStoragePlugin.PROP_VMC_USE_SUDO, "true");
 		Assert.assertNull(plugin.getLocalId(null, IMAGE_LIST_URL));
-		Mockito.verify(shellWrapper).execute(new HashMap<String, String>(), "sudo", "vmcatcher_subscribe", "-U");
-		Mockito.verify(shellWrapper).execute(new HashMap<String, String>(), "sudo", "vmcatcher_cache");
+		Mockito.verify(shellWrapper).execute(new HashMap<String, String>(), "sudo", "-E", "vmcatcher_subscribe", "-U");
+		Mockito.verify(shellWrapper).execute(new HashMap<String, String>(), "sudo", "-E", "vmcatcher_cache");
 	}
 	
 	@Test

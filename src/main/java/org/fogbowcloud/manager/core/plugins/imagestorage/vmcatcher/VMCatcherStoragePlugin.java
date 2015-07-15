@@ -23,6 +23,7 @@ import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
 import org.fogbowcloud.manager.core.plugins.imagestorage.fixed.StaticImageStoragePlugin;
 import org.fogbowcloud.manager.occi.model.Token;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -119,8 +120,11 @@ public class VMCatcherStoragePlugin extends StaticImageStoragePlugin {
 	private String[] sudo(String... cmds) {
 		LinkedList<String> cmdList = new LinkedList<String>();
 		String useSudoStr = props.getProperty(PROP_VMC_USE_SUDO);
-		if (useSudoStr != null && Boolean.parseBoolean(useSudoStr)) {
+		boolean useSudo = useSudoStr != null && Boolean.parseBoolean(useSudoStr);
+		
+		if (useSudo) {
 			cmdList.add("sudo");
+			cmdList.add("-E");
 		}
 		for (String cmd : cmds) {
 			cmdList.add(cmd);
@@ -155,7 +159,9 @@ public class VMCatcherStoragePlugin extends StaticImageStoragePlugin {
 		if (imageListJson == null) {
 			return null;
 		}
-		String imageTitle = imageListJson.optString("dc:title", null);
+		JSONArray imagesArray = imageListJson.optJSONArray("hv:images");
+		JSONObject imageJson = imagesArray.optJSONObject(0).optJSONObject("hv:image");
+		String imageTitle = imageJson.optString("dc:title", null);
 		if (imageTitle == null) {
 			return null;
 		}
@@ -191,5 +197,5 @@ public class VMCatcherStoragePlugin extends StaticImageStoragePlugin {
 		
 		return imageInfo;
 	}
-
+	
 }
