@@ -11,7 +11,7 @@ import org.fogbowcloud.manager.core.plugins.util.HttpResponseWrapper;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.mockito.Mockito;
 
-public class TestHelperCloudStack {
+public class CloudStackTestHelper {
 	
 	public static final String CLOUDSTACK_URL = "http://localhost:8080/client/api";
 	public static final String POST = "post";

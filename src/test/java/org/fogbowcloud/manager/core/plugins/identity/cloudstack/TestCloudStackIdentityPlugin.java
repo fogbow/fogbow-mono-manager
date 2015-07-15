@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import org.fogbowcloud.manager.core.plugins.compute.cloudstack.TestHelperCloudStack;
+import org.fogbowcloud.manager.core.plugins.compute.cloudstack.CloudStackTestHelper;
 import org.fogbowcloud.manager.core.plugins.util.Credential;
 import org.fogbowcloud.manager.core.plugins.util.HttpClientWrapper;
 import org.fogbowcloud.manager.occi.model.OCCIException;
@@ -80,12 +80,12 @@ public class TestCloudStackIdentityPlugin {
 	
 	@Test
 	public void testGetToken() {
-		String  reissueTokenUrl = TestHelperCloudStack.createURL(
+		String  reissueTokenUrl = CloudStackTestHelper.createURL(
 				CloudStackIdentityPlugin.REISSUE_COMMAND);
 		HttpClientWrapper httpClient = Mockito.mock(HttpClientWrapper.class);
 		Token mockToken = new Token(VALID_ACCESS_ID, null, null, null);
-		TestHelperCloudStack.recordHTTPClientWrapperRequest(httpClient, mockToken, 
-				TestHelperCloudStack.GET, reissueTokenUrl, "", 200);
+		CloudStackTestHelper.recordHTTPClientWrapperRequest(httpClient, mockToken, 
+				CloudStackTestHelper.GET, reissueTokenUrl, "", 200);
 		
 		CloudStackIdentityPlugin identityPlugin = createPlugin(httpClient);
 		Token token = identityPlugin.getToken(VALID_ACCESS_ID);	
@@ -101,12 +101,12 @@ public class TestCloudStackIdentityPlugin {
 	
 	@Test(expected=OCCIException.class)
 	public void testGetTokenUnauthorized() {
-		String  reissueTokenUrl = TestHelperCloudStack.createURL(
+		String  reissueTokenUrl = CloudStackTestHelper.createURL(
 				CloudStackIdentityPlugin.REISSUE_COMMAND);
 		HttpClientWrapper httpClient = Mockito.mock(HttpClientWrapper.class);
 		Token mockToken = new Token(NOT_VALID_ACCESS_ID_NOT_AUTHORIZED, null, null, null);
-		TestHelperCloudStack.recordHTTPClientWrapperRequest(httpClient, mockToken, 
-				TestHelperCloudStack.GET, reissueTokenUrl, RESPONSE_UNAUTHORIZED, 401);
+		CloudStackTestHelper.recordHTTPClientWrapperRequest(httpClient, mockToken, 
+				CloudStackTestHelper.GET, reissueTokenUrl, RESPONSE_UNAUTHORIZED, 401);
 		
 		CloudStackIdentityPlugin identityPlugin = createPlugin(httpClient);
 		identityPlugin.getToken(NOT_VALID_ACCESS_ID_NOT_AUTHORIZED);	
@@ -128,13 +128,13 @@ public class TestCloudStackIdentityPlugin {
 	}
 	
 	@Test
-	public void testIsValidUnauthorazed() {
-		String  reissueTokenUrl = TestHelperCloudStack.createURL(
+	public void testIsValidUnauthorized() {
+		String  reissueTokenUrl = CloudStackTestHelper.createURL(
 				CloudStackIdentityPlugin.REISSUE_COMMAND);
 		HttpClientWrapper httpClient = Mockito.mock(HttpClientWrapper.class);
 		Token mockToken = new Token(NOT_VALID_ACCESS_ID_NOT_AUTHORIZED, null, null, null);
-		TestHelperCloudStack.recordHTTPClientWrapperRequest(httpClient, mockToken, 
-				TestHelperCloudStack.GET, reissueTokenUrl, RESPONSE_UNAUTHORIZED, 401);
+		CloudStackTestHelper.recordHTTPClientWrapperRequest(httpClient, mockToken, 
+				CloudStackTestHelper.GET, reissueTokenUrl, RESPONSE_UNAUTHORIZED, 401);
 		
 		CloudStackIdentityPlugin identityPlugin = createPlugin(httpClient);
 		Assert.assertEquals(false, identityPlugin.isValid(NOT_VALID_ACCESS_ID_NOT_AUTHORIZED));
@@ -142,12 +142,12 @@ public class TestCloudStackIdentityPlugin {
 	
 	@Test
 	public void testIsValid() {
-		String  reissueTokenUrl = TestHelperCloudStack.createURL(
+		String  reissueTokenUrl = CloudStackTestHelper.createURL(
 				CloudStackIdentityPlugin.REISSUE_COMMAND);
 		HttpClientWrapper httpClient = Mockito.mock(HttpClientWrapper.class);
 		Token mockToken = new Token(VALID_ACCESS_ID, null, null, null);
-		TestHelperCloudStack.recordHTTPClientWrapperRequest(httpClient, mockToken, 
-				TestHelperCloudStack.GET, reissueTokenUrl, "", 200);
+		CloudStackTestHelper.recordHTTPClientWrapperRequest(httpClient, mockToken, 
+				CloudStackTestHelper.GET, reissueTokenUrl, "", 200);
 		
 		CloudStackIdentityPlugin identityPlugin = createPlugin(httpClient);
 		Assert.assertEquals(true, identityPlugin.isValid(VALID_ACCESS_ID));

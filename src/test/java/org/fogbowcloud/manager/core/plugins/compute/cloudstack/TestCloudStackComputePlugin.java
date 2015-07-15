@@ -71,10 +71,10 @@ public class TestCloudStackComputePlugin {
 			properties.putAll(extraProperties);
 		}
 		properties.put("compute_cloudstack_api_url",
-				TestHelperCloudStack.CLOUDSTACK_URL);
+				CloudStackTestHelper.CLOUDSTACK_URL);
 		properties.put("compute_cloudstack_default_zone", COMPUTE_DEFAULT_ZONE);
 		properties.put("compute_cloudstack_image_download_base_path",
-				TestHelperCloudStack.CLOUDSTACK_URL);
+				CloudStackTestHelper.CLOUDSTACK_URL);
 		properties.put("compute_cloudstack_image_download_base_path",
 				IMAGE_DOWNLOADED_BASE_PATH);
 		properties.put("compute_cloudstack_image_download_base_url",
@@ -101,19 +101,19 @@ public class TestCloudStackComputePlugin {
 
 		HttpClientWrapper httpClient = Mockito.mock(HttpClientWrapper.class);
 
-		String deployyVMUrl = TestHelperCloudStack.createURL(
+		String deployyVMUrl = CloudStackTestHelper.createURL(
 				CloudStackComputePlugin.DEPLOY_VM_COMMAND,
 				CloudStackComputePlugin.TEMPLATE_ID, imageId,
 				CloudStackComputePlugin.ZONE_ID, ZONE_ID,
 				SERVICE_OFFERING_PARAMETER,
 				"62d5f174-2f1e-42f0-931e-07600a05470e");
-		TestHelperCloudStack.recordHTTPClientWrapperRequest(httpClient, token,
-				TestHelperCloudStack.POST, deployyVMUrl, RESPONSE_DEPLOY_VM, 200);
+		CloudStackTestHelper.recordHTTPClientWrapperRequest(httpClient, token,
+				CloudStackTestHelper.POST, deployyVMUrl, RESPONSE_DEPLOY_VM, 200);
 
-		String getVMUrl = TestHelperCloudStack
+		String getVMUrl = CloudStackTestHelper
 				.createURL(CloudStackComputePlugin.LIST_SERVICE_OFFERINGS_COMMAND);
-		TestHelperCloudStack.recordHTTPClientWrapperRequest(httpClient, token,
-				TestHelperCloudStack.GET, getVMUrl, RESPONSE_GET_FLAVOR, 200);
+		CloudStackTestHelper.recordHTTPClientWrapperRequest(httpClient, token,
+				CloudStackTestHelper.GET, getVMUrl, RESPONSE_GET_FLAVOR, 200);
 
 		CloudStackComputePlugin computePlugin = createPlugin(httpClient,
 				extraProperties);
@@ -152,19 +152,19 @@ public class TestCloudStackComputePlugin {
 
 		HttpClientWrapper httpClient = Mockito.mock(HttpClientWrapper.class);
 
-		String deployyVMUrl = TestHelperCloudStack.createURL(
+		String deployyVMUrl = CloudStackTestHelper.createURL(
 				CloudStackComputePlugin.DEPLOY_VM_COMMAND,
 				CloudStackComputePlugin.TEMPLATE_ID, imageId,
 				CloudStackComputePlugin.ZONE_ID, ZONE_ID,
 				SERVICE_OFFERING_PARAMETER,
 				"62d5f174-2f1e-42f0-931e-07600a05470e",
 				CloudStackComputePlugin.USERDATA, "userdata");
-		TestHelperCloudStack.recordHTTPClientWrapperRequest(httpClient, token,
-				TestHelperCloudStack.POST, deployyVMUrl, RESPONSE_DEPLOY_VM, 200);
-		String getVMUrl = TestHelperCloudStack
+		CloudStackTestHelper.recordHTTPClientWrapperRequest(httpClient, token,
+				CloudStackTestHelper.POST, deployyVMUrl, RESPONSE_DEPLOY_VM, 200);
+		String getVMUrl = CloudStackTestHelper
 				.createURL(CloudStackComputePlugin.LIST_SERVICE_OFFERINGS_COMMAND);
-		TestHelperCloudStack.recordHTTPClientWrapperRequest(httpClient, token,
-				TestHelperCloudStack.GET, getVMUrl, RESPONSE_GET_FLAVOR, 200);
+		CloudStackTestHelper.recordHTTPClientWrapperRequest(httpClient, token,
+				CloudStackTestHelper.GET, getVMUrl, RESPONSE_GET_FLAVOR, 200);
 
 		HashMap<String, String> occiAttributes = new HashMap<String, String>();
 		occiAttributes.put(RequestAttribute.USER_DATA_ATT.getValue(),
@@ -190,19 +190,19 @@ public class TestCloudStackComputePlugin {
 
 		HttpClientWrapper httpClient = Mockito.mock(HttpClientWrapper.class);
 
-		String deployyVMUrl = TestHelperCloudStack.createURL(
+		String deployyVMUrl = CloudStackTestHelper.createURL(
 				CloudStackComputePlugin.DEPLOY_VM_COMMAND,
 				CloudStackComputePlugin.TEMPLATE_ID, imageId,
 				CloudStackComputePlugin.ZONE_ID, ZONE_ID,
 				SERVICE_OFFERING_PARAMETER,
 				"62d5f174-2f1e-42f0-931e-07600a05470e",
 				CloudStackComputePlugin.USERDATA, "userdata");
-		TestHelperCloudStack.recordHTTPClientWrapperRequest(httpClient, token,
-				TestHelperCloudStack.POST, deployyVMUrl, BAD_RESPONSE_STRING, 200);
-		String getVMUrl = TestHelperCloudStack
+		CloudStackTestHelper.recordHTTPClientWrapperRequest(httpClient, token,
+				CloudStackTestHelper.POST, deployyVMUrl, BAD_RESPONSE_STRING, 200);
+		String getVMUrl = CloudStackTestHelper
 				.createURL(CloudStackComputePlugin.LIST_SERVICE_OFFERINGS_COMMAND);
-		TestHelperCloudStack.recordHTTPClientWrapperRequest(httpClient, token,
-				TestHelperCloudStack.GET, getVMUrl, RESPONSE_GET_FLAVOR, 200);
+		CloudStackTestHelper.recordHTTPClientWrapperRequest(httpClient, token,
+				CloudStackTestHelper.GET, getVMUrl, RESPONSE_GET_FLAVOR, 200);
 
 		CloudStackComputePlugin computePlugin = createPlugin(httpClient,
 				extraProperties);
@@ -219,10 +219,10 @@ public class TestCloudStackComputePlugin {
 
 		HttpClientWrapper httpClient = Mockito.mock(HttpClientWrapper.class);
 
-		String deployyVMUrl = TestHelperCloudStack
+		String deployyVMUrl = CloudStackTestHelper
 				.createURL(CloudStackComputePlugin.LIST_VMS_COMMAND);
-		TestHelperCloudStack.recordHTTPClientWrapperRequest(httpClient, token,
-				TestHelperCloudStack.GET, deployyVMUrl, RESPONSE_ONE_INSTANCE, 200);
+		CloudStackTestHelper.recordHTTPClientWrapperRequest(httpClient, token,
+				CloudStackTestHelper.GET, deployyVMUrl, RESPONSE_ONE_INSTANCE, 200);
 
 		CloudStackComputePlugin cscp = createPlugin(httpClient, null);
 		List<Instance> instances = cscp.getInstances(token);
@@ -236,10 +236,10 @@ public class TestCloudStackComputePlugin {
 
 		HttpClientWrapper httpClient = Mockito.mock(HttpClientWrapper.class);
 
-		String deployyVMUrl = TestHelperCloudStack
+		String deployyVMUrl = CloudStackTestHelper
 				.createURL(CloudStackComputePlugin.LIST_VMS_COMMAND);
-		TestHelperCloudStack.recordHTTPClientWrapperRequest(httpClient, token,
-				TestHelperCloudStack.GET, deployyVMUrl,
+		CloudStackTestHelper.recordHTTPClientWrapperRequest(httpClient, token,
+				CloudStackTestHelper.GET, deployyVMUrl,
 				RESPONSE_MULTIPLE_INSTANCES, 200);
 
 		CloudStackComputePlugin cscp = createPlugin(httpClient, null);
@@ -254,10 +254,10 @@ public class TestCloudStackComputePlugin {
 
 		HttpClientWrapper httpClient = Mockito.mock(HttpClientWrapper.class);
 
-		String deployyVMUrl = TestHelperCloudStack
+		String deployyVMUrl = CloudStackTestHelper
 				.createURL(CloudStackComputePlugin.LIST_VMS_COMMAND);
-		TestHelperCloudStack.recordHTTPClientWrapperRequest(httpClient, token,
-				TestHelperCloudStack.GET, deployyVMUrl, RESPONSE_NO_INSTANCE, 200);
+		CloudStackTestHelper.recordHTTPClientWrapperRequest(httpClient, token,
+				CloudStackTestHelper.GET, deployyVMUrl, RESPONSE_NO_INSTANCE, 200);
 
 		CloudStackComputePlugin cscp = createPlugin(httpClient, null);
 		List<Instance> instances = cscp.getInstances(token);
@@ -272,11 +272,11 @@ public class TestCloudStackComputePlugin {
 
 		HttpClientWrapper httpClient = Mockito.mock(HttpClientWrapper.class);
 
-		String deployyVMUrl = TestHelperCloudStack.createURL(
+		String deployyVMUrl = CloudStackTestHelper.createURL(
 				CloudStackComputePlugin.LIST_VMS_COMMAND,
 				CloudStackComputePlugin.VM_ID, VM_ID);
-		TestHelperCloudStack.recordHTTPClientWrapperRequest(httpClient, token,
-				TestHelperCloudStack.GET, deployyVMUrl, RESPONSE_ONE_INSTANCE, 200);
+		CloudStackTestHelper.recordHTTPClientWrapperRequest(httpClient, token,
+				CloudStackTestHelper.GET, deployyVMUrl, RESPONSE_ONE_INSTANCE, 200);
 
 		CloudStackComputePlugin computePlugin = createPlugin(httpClient, null);
 		Instance instance = computePlugin.getInstance(token, VM_ID);
@@ -289,11 +289,11 @@ public class TestCloudStackComputePlugin {
 
 		HttpClientWrapper httpClient = Mockito.mock(HttpClientWrapper.class);
 
-		String deployyVMUrl = TestHelperCloudStack.createURL(
+		String deployyVMUrl = CloudStackTestHelper.createURL(
 				CloudStackComputePlugin.LIST_VMS_COMMAND,
 				CloudStackComputePlugin.VM_ID, VM_ID);
-		TestHelperCloudStack.recordHTTPClientWrapperRequest(httpClient, token,
-				TestHelperCloudStack.GET, deployyVMUrl, RESPONSE_NO_INSTANCE, 200);
+		CloudStackTestHelper.recordHTTPClientWrapperRequest(httpClient, token,
+				CloudStackTestHelper.GET, deployyVMUrl, RESPONSE_NO_INSTANCE, 200);
 
 		CloudStackComputePlugin computePlugin = createPlugin(httpClient, null);
 		computePlugin.getInstance(token, VM_ID);
@@ -303,16 +303,16 @@ public class TestCloudStackComputePlugin {
 	public void testRemoveInstance() {
 		Token token = new Token("api:key", null, null, null);
 		URIBuilder uriBuilder = CloudStackComputePlugin.createURIBuilder(
-				TestHelperCloudStack.CLOUDSTACK_URL,
+				CloudStackTestHelper.CLOUDSTACK_URL,
 				CloudStackComputePlugin.DESTROY_VM_COMMAND);
 		uriBuilder.addParameter(CloudStackComputePlugin.VM_ID, VM_ID);
 		CloudStackHelper.sign(uriBuilder, token.getAccessId());
 
 		HttpClientWrapper httpClient = Mockito.mock(HttpClientWrapper.class);
-		String getInstancesURL = TestHelperCloudStack
+		String getInstancesURL = CloudStackTestHelper
 				.createURL(CloudStackComputePlugin.LIST_VMS_COMMAND);
-		TestHelperCloudStack.recordHTTPClientWrapperRequest(httpClient, token,
-				TestHelperCloudStack.GET, getInstancesURL,
+		CloudStackTestHelper.recordHTTPClientWrapperRequest(httpClient, token,
+				CloudStackTestHelper.GET, getInstancesURL,
 				RESPONSE_ONE_INSTANCE, 200);
 
 		CloudStackComputePlugin cscp = createPlugin(httpClient, null);
@@ -324,17 +324,17 @@ public class TestCloudStackComputePlugin {
 	public void testRemoveInstanceWithoutInstance() {
 		Token token = new Token("api:key", null, null, null);
 		URIBuilder uriBuilder = CloudStackComputePlugin.createURIBuilder(
-				TestHelperCloudStack.CLOUDSTACK_URL,
+				CloudStackTestHelper.CLOUDSTACK_URL,
 				CloudStackComputePlugin.DESTROY_VM_COMMAND);
 		uriBuilder.addParameter(CloudStackComputePlugin.VM_ID, VM_ID);
 		CloudStackHelper.sign(uriBuilder, token.getAccessId());
 
 		HttpClientWrapper httpClient = Mockito.mock(HttpClientWrapper.class);
-		String getInstancesURL = TestHelperCloudStack
+		String getInstancesURL = CloudStackTestHelper
 				.createURL(CloudStackComputePlugin.LIST_VMS_COMMAND);
-		TestHelperCloudStack
+		CloudStackTestHelper
 				.recordHTTPClientWrapperRequest(httpClient, token,
-						TestHelperCloudStack.GET, getInstancesURL,
+						CloudStackTestHelper.GET, getInstancesURL,
 						RESPONSE_NO_INSTANCE, 200);
 
 		CloudStackComputePlugin cscp = createPlugin(httpClient, null);
@@ -347,14 +347,14 @@ public class TestCloudStackComputePlugin {
 	public void testGetResourceInfoOneInstance() {
 		Token token = new Token("api:key", null, null, null);
 		HttpClientWrapper httpClient = Mockito.mock(HttpClientWrapper.class);
-		String urlListVM = TestHelperCloudStack
+		String urlListVM = CloudStackTestHelper
 				.createURL(CloudStackComputePlugin.LIST_VMS_COMMAND);
-		String urlListResources = TestHelperCloudStack
+		String urlListResources = CloudStackTestHelper
 				.createURL(CloudStackComputePlugin.LIST_RESOURCE_LIMITS_COMMAND);
-		TestHelperCloudStack.recordHTTPClientWrapperRequest(httpClient, token,
-				TestHelperCloudStack.GET, urlListVM, RESPONSE_ONE_INSTANCE, 200);
-		TestHelperCloudStack.recordHTTPClientWrapperRequest(httpClient, token,
-				TestHelperCloudStack.GET, urlListResources,
+		CloudStackTestHelper.recordHTTPClientWrapperRequest(httpClient, token,
+				CloudStackTestHelper.GET, urlListVM, RESPONSE_ONE_INSTANCE, 200);
+		CloudStackTestHelper.recordHTTPClientWrapperRequest(httpClient, token,
+				CloudStackTestHelper.GET, urlListResources,
 				RESPONSE_RESOURCES_INFO, 200);
 
 		CloudStackComputePlugin computePlugin = createPlugin(httpClient, null);
@@ -368,15 +368,15 @@ public class TestCloudStackComputePlugin {
 	public void testGetResourcesInfoMultipleInstances() {
 		Token token = new Token("api:key", null, null, null);
 		HttpClientWrapper httpClient = Mockito.mock(HttpClientWrapper.class);
-		String urlListVM = TestHelperCloudStack
+		String urlListVM = CloudStackTestHelper
 				.createURL(CloudStackComputePlugin.LIST_VMS_COMMAND);
-		String urlListResources = TestHelperCloudStack
+		String urlListResources = CloudStackTestHelper
 				.createURL(CloudStackComputePlugin.LIST_RESOURCE_LIMITS_COMMAND);
-		TestHelperCloudStack.recordHTTPClientWrapperRequest(httpClient, token,
-				TestHelperCloudStack.GET, urlListVM,
+		CloudStackTestHelper.recordHTTPClientWrapperRequest(httpClient, token,
+				CloudStackTestHelper.GET, urlListVM,
 				RESPONSE_MULTIPLE_INSTANCES, 200);
-		TestHelperCloudStack.recordHTTPClientWrapperRequest(httpClient, token,
-				TestHelperCloudStack.GET, urlListResources,
+		CloudStackTestHelper.recordHTTPClientWrapperRequest(httpClient, token,
+				CloudStackTestHelper.GET, urlListResources,
 				RESPONSE_RESOURCES_INFO, 200);
 
 		CloudStackComputePlugin computePlugin = createPlugin(httpClient, null);
@@ -390,14 +390,14 @@ public class TestCloudStackComputePlugin {
 	public void testGetResourcesNoInstances() {
 		Token token = new Token("api:key", null, null, null);
 		HttpClientWrapper httpClient = Mockito.mock(HttpClientWrapper.class);
-		String urlListVM = TestHelperCloudStack
+		String urlListVM = CloudStackTestHelper
 				.createURL(CloudStackComputePlugin.LIST_VMS_COMMAND);
-		String urlListResources = TestHelperCloudStack
+		String urlListResources = CloudStackTestHelper
 				.createURL(CloudStackComputePlugin.LIST_RESOURCE_LIMITS_COMMAND);
-		TestHelperCloudStack.recordHTTPClientWrapperRequest(httpClient, token,
-				TestHelperCloudStack.GET, urlListVM, RESPONSE_NO_INSTANCE, 200);
-		TestHelperCloudStack.recordHTTPClientWrapperRequest(httpClient, token,
-				TestHelperCloudStack.GET, urlListResources,
+		CloudStackTestHelper.recordHTTPClientWrapperRequest(httpClient, token,
+				CloudStackTestHelper.GET, urlListVM, RESPONSE_NO_INSTANCE, 200);
+		CloudStackTestHelper.recordHTTPClientWrapperRequest(httpClient, token,
+				CloudStackTestHelper.GET, urlListResources,
 				RESPONSE_RESOURCES_INFO, 200);
 
 		CloudStackComputePlugin cscp = createPlugin(httpClient, null);
@@ -412,7 +412,6 @@ public class TestCloudStackComputePlugin {
 		cscp.bypass(null, null);
 	}
 
-	// TODO Test cases where a bad request is thrown
 	private static final String IMAGE_NAME = "name";
 	private static final String DISK_FORMAT = "FORMAT";
 	private static final String HYPERVISOR = "KVM";
@@ -423,7 +422,7 @@ public class TestCloudStackComputePlugin {
 	@Test
 	public void testUploadImage() {
 		Token token = new Token("api:key", null, null, null);
-		String registerTemplateURL = TestHelperCloudStack.createURL(
+		String registerTemplateURL = CloudStackTestHelper.createURL(
 				CloudStackComputePlugin.REGISTER_TEMPLATE_COMMAND,
 				CloudStackComputePlugin.DISPLAY_TEXT, IMAGE_NAME,
 				CloudStackComputePlugin.FORMAT, DISK_FORMAT,
@@ -434,8 +433,8 @@ public class TestCloudStackComputePlugin {
 				CloudStackComputePlugin.URL, IMAGE_URL,
 				CloudStackComputePlugin.IS_PUBLIC, Boolean.TRUE.toString());
 		HttpClientWrapper httpClient = Mockito.mock(HttpClientWrapper.class);
-		TestHelperCloudStack.recordHTTPClientWrapperRequest(httpClient, token,
-				TestHelperCloudStack.POST, registerTemplateURL, "response", 200);
+		CloudStackTestHelper.recordHTTPClientWrapperRequest(httpClient, token,
+				CloudStackTestHelper.POST, registerTemplateURL, "response", 200);
 
 		Properties extraProperties = new Properties();
 		extraProperties.put("compute_cloudstack_image_download_os_type_id",
@@ -450,7 +449,7 @@ public class TestCloudStackComputePlugin {
 	@Test(expected = OCCIException.class)
 	public void testUploadImageNotValidPath() {
 		Token token = new Token("api:key", null, null, null);
-		String registerTemplateURL = TestHelperCloudStack.createURL(
+		String registerTemplateURL = CloudStackTestHelper.createURL(
 				CloudStackComputePlugin.REGISTER_TEMPLATE_COMMAND,
 				CloudStackComputePlugin.DISPLAY_TEXT, IMAGE_NAME,
 				CloudStackComputePlugin.FORMAT, DISK_FORMAT,
@@ -461,8 +460,8 @@ public class TestCloudStackComputePlugin {
 				CloudStackComputePlugin.URL, IMAGE_URL,
 				CloudStackComputePlugin.IS_PUBLIC, Boolean.TRUE.toString());
 		HttpClientWrapper httpClient = Mockito.mock(HttpClientWrapper.class);
-		TestHelperCloudStack.recordHTTPClientWrapperRequest(httpClient, token,
-				TestHelperCloudStack.POST, registerTemplateURL, "response", 200);
+		CloudStackTestHelper.recordHTTPClientWrapperRequest(httpClient, token,
+				CloudStackTestHelper.POST, registerTemplateURL, "response", 200);
 
 		Properties extraProperties = new Properties();
 		extraProperties.put("compute_cloudstack_image_download_os_type_id",
@@ -477,7 +476,7 @@ public class TestCloudStackComputePlugin {
 	@Test
 	public void testUploadImageWithoutOSType() {
 		Token token = new Token("api:key", null, null, null);
-		String registerTemplateURL = TestHelperCloudStack.createURL(
+		String registerTemplateURL = CloudStackTestHelper.createURL(
 				CloudStackComputePlugin.REGISTER_TEMPLATE_COMMAND,
 				CloudStackComputePlugin.DISPLAY_TEXT, IMAGE_NAME,
 				CloudStackComputePlugin.FORMAT, DISK_FORMAT,
@@ -487,13 +486,13 @@ public class TestCloudStackComputePlugin {
 				CloudStackComputePlugin.ZONE_ID, ZONE_ID,
 				CloudStackComputePlugin.URL, IMAGE_URL,
 				CloudStackComputePlugin.IS_PUBLIC, Boolean.TRUE.toString());
-		String listOSTypeURL = TestHelperCloudStack
+		String listOSTypeURL = CloudStackTestHelper
 				.createURL(CloudStackComputePlugin.LIST_OS_TYPES_COMMAND);
 		HttpClientWrapper httpClient = Mockito.mock(HttpClientWrapper.class);
-		TestHelperCloudStack.recordHTTPClientWrapperRequest(httpClient, token,
-				TestHelperCloudStack.POST, registerTemplateURL, "response", 200);
-		TestHelperCloudStack.recordHTTPClientWrapperRequest(httpClient, token,
-				TestHelperCloudStack.GET, listOSTypeURL, RESPONSE_OS_TYPE, 200);
+		CloudStackTestHelper.recordHTTPClientWrapperRequest(httpClient, token,
+				CloudStackTestHelper.POST, registerTemplateURL, "response", 200);
+		CloudStackTestHelper.recordHTTPClientWrapperRequest(httpClient, token,
+				CloudStackTestHelper.GET, listOSTypeURL, RESPONSE_OS_TYPE, 200);
 
 		Properties extraProperties = new Properties();
 		extraProperties.put("compute_cloudstack_zone_id", ZONE_ID);
@@ -508,13 +507,13 @@ public class TestCloudStackComputePlugin {
 	@Test
 	public void testGetImageId() {
 		Token token = new Token("api:key", null, null, null);
-		String listTemplatesURL = TestHelperCloudStack.createURL(
+		String listTemplatesURL = CloudStackTestHelper.createURL(
 				CloudStackComputePlugin.LIST_TEMPLATES_COMMAND,
 				CloudStackComputePlugin.TEMPLATE_FILTER,
 				TEMPLATE_FILTER_EXECUTABLE);
 		HttpClientWrapper httpClient = Mockito.mock(HttpClientWrapper.class);
-		TestHelperCloudStack.recordHTTPClientWrapperRequest(httpClient, token,
-				TestHelperCloudStack.GET, listTemplatesURL,
+		CloudStackTestHelper.recordHTTPClientWrapperRequest(httpClient, token,
+				CloudStackTestHelper.GET, listTemplatesURL,
 				RESPONSE_LIST_TEMPLATES, 200);
 		CloudStackComputePlugin computePlugin = createPlugin(httpClient, null);
 		String imageId = computePlugin.getImageId(token, VALID_IMAGE_NAME);
@@ -526,13 +525,13 @@ public class TestCloudStackComputePlugin {
 	@Test
 	public void testGetImageBadRequest() {
 		Token token = new Token("api:key", null, null, null);
-		String listTemplatesURL = TestHelperCloudStack.createURL(
+		String listTemplatesURL = CloudStackTestHelper.createURL(
 				CloudStackComputePlugin.LIST_TEMPLATES_COMMAND,
 				CloudStackComputePlugin.TEMPLATE_FILTER,
 				TEMPLATE_FILTER_EXECUTABLE);
 		HttpClientWrapper httpClient = Mockito.mock(HttpClientWrapper.class);
-		TestHelperCloudStack.recordHTTPClientWrapperRequest(httpClient, token,
-				TestHelperCloudStack.GET, listTemplatesURL,
+		CloudStackTestHelper.recordHTTPClientWrapperRequest(httpClient, token,
+				CloudStackTestHelper.GET, listTemplatesURL,
 				RESPONSE_LIST_TEMPLATES, 200);
 
 		CloudStackComputePlugin computePlugin = createPlugin(httpClient, null);
@@ -544,12 +543,12 @@ public class TestCloudStackComputePlugin {
 	public void testGetImageStateActive() {
 		Token token = new Token("api:key", null, null, null);
 		HttpClientWrapper httpClient = Mockito.mock(HttpClientWrapper.class);
-		String listTemplatesURL = TestHelperCloudStack.createURL(
+		String listTemplatesURL = CloudStackTestHelper.createURL(
 				CloudStackComputePlugin.LIST_TEMPLATES_COMMAND,
 				CloudStackComputePlugin.TEMPLATE_FILTER,
 				TEMPLATE_FILTER_EXECUTABLE);
-		TestHelperCloudStack.recordHTTPClientWrapperRequest(httpClient, token,
-				TestHelperCloudStack.GET, listTemplatesURL,
+		CloudStackTestHelper.recordHTTPClientWrapperRequest(httpClient, token,
+				CloudStackTestHelper.GET, listTemplatesURL,
 				RESPONSE_LIST_TEMPLATES, 200);
 
 		CloudStackComputePlugin computePlugin = createPlugin(httpClient, null);
@@ -564,12 +563,12 @@ public class TestCloudStackComputePlugin {
 	public void testGetImageStatePending() {
 		Token token = new Token("api:key", null, null, null);
 		HttpClientWrapper httpClient = Mockito.mock(HttpClientWrapper.class);
-		String listTemplatesURL = TestHelperCloudStack.createURL(
+		String listTemplatesURL = CloudStackTestHelper.createURL(
 				CloudStackComputePlugin.LIST_TEMPLATES_COMMAND,
 				CloudStackComputePlugin.TEMPLATE_FILTER,
 				TEMPLATE_FILTER_EXECUTABLE);
-		TestHelperCloudStack.recordHTTPClientWrapperRequest(httpClient, token,
-				TestHelperCloudStack.GET, listTemplatesURL,
+		CloudStackTestHelper.recordHTTPClientWrapperRequest(httpClient, token,
+				CloudStackTestHelper.GET, listTemplatesURL,
 				RESPONSE_LIST_TEMPLATES, 200);
 
 		CloudStackComputePlugin computePlugin = createPlugin(httpClient, null);
@@ -582,12 +581,12 @@ public class TestCloudStackComputePlugin {
 	public void testGetImageStateBadRequest() {
 		Token token = new Token("api:key", null, null, null);
 		HttpClientWrapper httpClient = Mockito.mock(HttpClientWrapper.class);
-		String listTemplatesURL = TestHelperCloudStack.createURL(
+		String listTemplatesURL = CloudStackTestHelper.createURL(
 				CloudStackComputePlugin.LIST_TEMPLATES_COMMAND,
 				CloudStackComputePlugin.TEMPLATE_FILTER,
 				TEMPLATE_FILTER_EXECUTABLE);
-		TestHelperCloudStack.recordHTTPClientWrapperRequest(httpClient, token,
-				TestHelperCloudStack.GET, listTemplatesURL,
+		CloudStackTestHelper.recordHTTPClientWrapperRequest(httpClient, token,
+				CloudStackTestHelper.GET, listTemplatesURL,
 				RESPONSE_LIST_TEMPLATES, 200);
 
 		CloudStackComputePlugin computePlugin = createPlugin(httpClient, null);
