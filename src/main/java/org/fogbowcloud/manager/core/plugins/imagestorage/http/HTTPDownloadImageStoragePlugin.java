@@ -143,157 +143,168 @@ public class HTTPDownloadImageStoragePlugin extends StaticImageStoragePlugin {
 		IMAGE_DOWNLOADER.execute(new Runnable() {
 			@Override
 			public void run() {
-				File downloadTempFile = downloadTempFile(imageURL);
-				if (downloadTempFile == null) {
-					LOGGER.debug("Download of image " + imageURL + " failed.");
-					return;
-				}
-				LOGGER.debug("Download of image " + imageURL + " was done.");
-
-				String imagePath = downloadTempFile.getAbsolutePath();
-				String imageName = normalizeImageName(removeHTTPPrefix(imageURL));
-
-				String imageExtension = getExtension(imageURL);
-				LOGGER.debug("Image extension = " + imageExtension);
-				String diskFormat = imageExtension.toLowerCase();
-				File outputDir = new File(tmpStorage + "/" + UUID.randomUUID());
-				List<File> imagesToDelete = new ArrayList<File>();
-				imagesToDelete.add(downloadTempFile);
-
-				if (imageExtension.equalsIgnoreCase(Extensions.ova.name())) {
-					LOGGER.debug("Image is tar file");
-					LOGGER.debug("Creating output directory = " + outputDir.getAbsolutePath());
-					outputDir.mkdirs();
-					try {
-						List<File> files = unTar(downloadTempFile, outputDir);
-						boolean foundValidImage = false;
-						for (File file : files) {
-							String innerDiskFormat = "disk1."
-									+ getExtension(file.getAbsolutePath());
-							if (isValidDiskForConversion(innerDiskFormat)) {
-								imagePath = convertToValidFormat(token, imageURL, file,
-										innerDiskFormat);
-								diskFormat = HTTPDownloadImageStoragePlugin.this.conversionOutputFormat;
-								foundValidImage = true;
-								break;
-							}
-						}
-
-						if (!foundValidImage) {
-							LOGGER.error("Couldn't find valid disk image inside OVA.");
-							removeImageFiles(imagesToDelete, outputDir);
-							pendingImageUploads.remove(imageURL);
-							return;
-						}
-					} catch (Throwable e) {
-						LOGGER.error("Couldn't untar OVA image.", e);
-						removeImageFiles(imagesToDelete, outputDir);
-						pendingImageUploads.remove(imageURL);
-						return;
-					}
-				} else if (!isAnAcceptedFormat(imageExtension)) {
-					imagePath = convertToValidFormat(token, imageURL, downloadTempFile,
-							diskFormat);
-					imagesToDelete.add(new File(imagePath));
-				} else if (imageExtension.equalsIgnoreCase(Extensions.img.name())) {
-					LOGGER.debug("Image extension is IMG.");
-					diskFormat = Extensions.qcow2.name();
-				}
 				try {
-					computePlugin.uploadImage(token, imagePath, imageName, diskFormat);
-					waitUploadAndDeleteFiles(token, imagesToDelete, imageName, outputDir);
-				} catch (Throwable e) {
-					LOGGER.error("Couldn't upload image.", e);
-					removeImageFiles(imagesToDelete, outputDir);
+					doDownloadImage(token, imageURL);
+				} finally {
+					pendingImageUploads.remove(imageURL);
 				}
-
-				pendingImageUploads.remove(imageURL);
-			}
-			
-			private boolean isAnAcceptedFormat(String extension) {
-				if (HTTPDownloadImageStoragePlugin.this.acceptedFormats != null) {
-					for (String accepted : HTTPDownloadImageStoragePlugin.this.acceptedFormats) {
-						if (extension.equalsIgnoreCase(accepted)) {
-							return true;
-						}
-					}
-				}
-				return false;
-			}
-
-			private void removeImageFiles(List<File> imagesToDelete, File imageOutputDir) {
-				for (File imageFile : imagesToDelete) {
-					imageFile.delete();
-				}
-				try {
-					FileUtils.deleteDirectory(imageOutputDir);
-				} catch (IOException e) {
-					LOGGER.error(
-							"Error while removing directory " + imageOutputDir.getAbsolutePath(), e);
-				}
-			}
-
-			private void waitUploadAndDeleteFiles(final Token token, List<File> imagesToDelete,
-					String imageName, File outputDir) throws InterruptedException {
-				while (true) {
-					ImageState imageState = null;
-					
-					try {
-						imageState = computePlugin.getImageState(token, imageName);
-					} catch (Exception e) {
-						LOGGER.error("Error while getting image state.", e);
-					}
-					
-					if (imageState != null && imageState.in(ImageState.PENDING)) {
-						Thread.sleep(IMAGE_UPLOAD_RETRY_INTERVAL);
-					} else {
-						removeImageFiles(imagesToDelete, outputDir);
-						return;
-					}
-				}
-			}
-
-			private String convertToValidFormat(final Token token, final String imageURL, File file,
-					String innerDiskFormat) {
-				LOGGER.debug("Disk format into tar file = " + innerDiskFormat);				
-				if (executeCommand("qemu-img", "info", file.getAbsolutePath()) != 0) { 
-					LOGGER.warn("Couldn't convert image. qemu-img isn't installed.");
-					return null;
-				}
-				String convertedDiskFileName = file.getAbsolutePath() + ".raw";
-				int conversionResultCode = executeCommand("qemu-img", "convert", "-O", 
-						HTTPDownloadImageStoragePlugin.this.conversionOutputFormat,
-						file.getAbsolutePath(), convertedDiskFileName);
-				if (conversionResultCode != 0) {
-					LOGGER.warn("Couldn't convert image. qemu-img conversion result code: "
-							+ conversionResultCode);
-					return null;
-				}				
-				return convertedDiskFileName;
-				
-			}
-
-			private int executeCommand(String... cmd) {
-				ProcessBuilder processBuilder = new ProcessBuilder(cmd);
-				try {
-					Process process = processBuilder.start();
-					int resultCode = process.waitFor();
-					if (resultCode != 0) {
-						LOGGER.error("Process error stream: "
-								+ IOUtils.toString(process.getErrorStream()));
-					}
-					return resultCode;
-				} catch (Exception e) {
-					LOGGER.error("Error while executing command.", e);
-				}
-				return 1;
-			}
-
-			private boolean isValidDiskForConversion(String extension) {
-				return (extension.equalsIgnoreCase("disk1." + Extensions.vmdk.name()) || extension.equalsIgnoreCase("disk1." + Extensions.vdi.name())
-						|| extension.equalsIgnoreCase("disk1." + Extensions.img.name()));
 			}
 		});
+	}
+	
+	private void doDownloadImage(final Token token, final String imageURL) {
+		
+		File downloadTempFile = downloadTempFile(imageURL);
+		if (downloadTempFile == null) {
+			LOGGER.debug("Download of image " + imageURL + " failed.");
+			return;
+		}
+		LOGGER.debug("Download of image " + imageURL + " was done.");
+
+		String imagePath = downloadTempFile.getAbsolutePath();
+		String imageName = normalizeImageName(removeHTTPPrefix(imageURL));
+		String imageExtension = getExtension(imageURL);
+		
+		LOGGER.debug("Image extension = " + imageExtension);
+		
+		String diskFormat = imageExtension.toLowerCase();
+		File outputDir = new File(tmpStorage + "/" + UUID.randomUUID());
+		List<File> imagesToDelete = new ArrayList<File>();
+		imagesToDelete.add(downloadTempFile);
+
+		if (imageExtension.equalsIgnoreCase(Extensions.ova.name())) {
+			LOGGER.debug("Image is tar file");
+			LOGGER.debug("Creating output directory = " + outputDir.getAbsolutePath());
+			outputDir.mkdirs();
+			try {
+				List<File> files = unTar(downloadTempFile, outputDir);
+				boolean foundValidImage = false;
+				for (File file : files) {
+					if (isOVAMainDisk(file.getName())) {
+						String extension = getExtension(file.getName());
+						if (isAnAcceptedFormat(extension)) {
+							imagePath = file.getAbsolutePath();
+							diskFormat = extension.toLowerCase();
+						} else {
+							imagePath = convertToValidFormat(token, imageURL, file);
+							diskFormat = conversionOutputFormat;
+						}
+						foundValidImage = true;
+						break;
+					}
+				}
+
+				if (!foundValidImage) {
+					LOGGER.error("Couldn't find valid disk image inside OVA.");
+					removeImageFiles(imagesToDelete, outputDir);
+					pendingImageUploads.remove(imageURL);
+					return;
+				}
+			} catch (Throwable e) {
+				LOGGER.error("Couldn't untar OVA image.", e);
+				removeImageFiles(imagesToDelete, outputDir);
+				pendingImageUploads.remove(imageURL);
+				return;
+			}
+		} else if (!isAnAcceptedFormat(imageExtension)) {
+			imagePath = convertToValidFormat(token, imageURL, downloadTempFile);
+			imagesToDelete.add(new File(imagePath));
+		} else if (imageExtension.equalsIgnoreCase(Extensions.img.name())) {
+			LOGGER.debug("Image extension is IMG.");
+			diskFormat = Extensions.qcow2.name();
+		}
+		try {
+			computePlugin.uploadImage(token, imagePath, imageName, diskFormat);
+			waitUploadAndDeleteFiles(token, imagesToDelete, imageName, outputDir);
+		} catch (Throwable e) {
+			LOGGER.error("Couldn't upload image.", e);
+			removeImageFiles(imagesToDelete, outputDir);
+		}
+	}
+	
+	private boolean isAnAcceptedFormat(String extension) {
+		if (acceptedFormats == null) {
+			return true;
+		}
+		for (String accepted : acceptedFormats) {
+			if (extension.equalsIgnoreCase(accepted)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private void removeImageFiles(List<File> imagesToDelete, File imageOutputDir) {
+		for (File imageFile : imagesToDelete) {
+			imageFile.delete();
+		}
+		try {
+			FileUtils.deleteDirectory(imageOutputDir);
+		} catch (IOException e) {
+			LOGGER.error(
+					"Error while removing directory " + imageOutputDir.getAbsolutePath(), e);
+		}
+	}
+
+	private void waitUploadAndDeleteFiles(final Token token, List<File> imagesToDelete,
+			String imageName, File outputDir) throws InterruptedException {
+		while (true) {
+			ImageState imageState = null;
+			
+			try {
+				imageState = computePlugin.getImageState(token, imageName);
+			} catch (Exception e) {
+				LOGGER.error("Error while getting image state.", e);
+			}
+			
+			if (imageState != null && imageState.in(ImageState.PENDING)) {
+				Thread.sleep(IMAGE_UPLOAD_RETRY_INTERVAL);
+			} else {
+				removeImageFiles(imagesToDelete, outputDir);
+				return;
+			}
+		}
+	}
+
+	private String convertToValidFormat(final Token token, final String imageURL, File file) {
+		LOGGER.debug("Converting " + file.getName() + " to a valid format.");
+		if (executeCommand("qemu-img", "info", file.getAbsolutePath()) != 0) { 
+			LOGGER.warn("Couldn't convert image. qemu-img isn't installed.");
+			return null;
+		}
+		String convertedDiskFileName = file.getAbsolutePath() + ".raw";
+		int conversionResultCode = executeCommand("qemu-img", "convert", "-O", 
+				HTTPDownloadImageStoragePlugin.this.conversionOutputFormat,
+				file.getAbsolutePath(), convertedDiskFileName);
+		if (conversionResultCode != 0) {
+			LOGGER.warn("Couldn't convert image. qemu-img conversion result code: "
+					+ conversionResultCode);
+			return null;
+		}				
+		return convertedDiskFileName;
+		
+	}
+
+	private int executeCommand(String... cmd) {
+		ProcessBuilder processBuilder = new ProcessBuilder(cmd);
+		try {
+			Process process = processBuilder.start();
+			int resultCode = process.waitFor();
+			if (resultCode != 0) {
+				LOGGER.error("Process error stream: "
+						+ IOUtils.toString(process.getErrorStream()));
+			}
+			return resultCode;
+		} catch (Exception e) {
+			LOGGER.error("Error while executing command.", e);
+		}
+		return 1;
+	}
+
+	private boolean isOVAMainDisk(String fileName) {
+		String extension = getExtension(fileName);
+		return (extension.equalsIgnoreCase(Extensions.vmdk.name()) || extension.equalsIgnoreCase(Extensions.vdi.name())
+				|| extension.equalsIgnoreCase(Extensions.img.name()));
 	}
 	
 	private String normalizeImageName(final String imageURL) {
