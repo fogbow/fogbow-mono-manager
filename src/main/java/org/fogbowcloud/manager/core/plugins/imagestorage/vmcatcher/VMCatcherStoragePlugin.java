@@ -95,6 +95,7 @@ public class VMCatcherStoragePlugin extends StaticImageStoragePlugin {
 					"--imagelist-newimage-subscribe", "--auto-endorse", "-s", globalId));
 		} catch (Exception e) {
 			LOGGER.warn("Couldn't add image.list to VMCatcher subscription list", e);
+			return null;
 		}
 		
 		imageDownloader.execute(new Runnable() {
