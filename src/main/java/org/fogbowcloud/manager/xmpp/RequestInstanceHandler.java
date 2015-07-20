@@ -36,8 +36,8 @@ public class RequestInstanceHandler extends AsyncQueryHandler {
 		List<Element> attributesEl = queryEl.elements("attribute");
 		for (Element attributeEl : attributesEl) {
 			xOCCIAtt.put(attributeEl.attributeValue("var"), attributeEl.element("value").getText());
-		}
-
+		}	
+		
 		String requestId = queryEl.element("request").element("id").getText();
 
 		Element tokenEl = queryEl.element("token");
