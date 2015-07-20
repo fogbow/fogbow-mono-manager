@@ -251,7 +251,6 @@ public class KeystoneIdentityPlugin implements IdentityPlugin {
 
 	@Override
 	public Token getToken(String accessId) {
-		
 		String tenantName = null;
 		try {
 			JSONObject decodedAccessId = new JSONObject(new String(Base64.decodeBase64(

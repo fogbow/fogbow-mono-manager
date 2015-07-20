@@ -1082,8 +1082,6 @@ public class ManagerController {
 	
 	private void wakeUpSleepingHosts(Request request) {
 		String greenSitterJID = properties.getProperty("greensitter_jid");
-		
-		//The "1, 1" will be changed by request.getCPU and request.getRAM
 		if (greenSitterJID != null && packetSender != null) {
 			String vcpu = RequirementsHelper.getSmallestValueForAttribute(
 					request.getRequirements(), RequirementsHelper.GLUE_VCPU_TERM);
