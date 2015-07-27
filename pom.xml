@@ -20,6 +20,11 @@
       <name>Contrail repository</name>
       <url>http://contrail.ow2.org/repositories/thirdparty</url>
     </repository>
+    <repository>
+      <id>in2p3.fr</id>
+      <name>in2p3.fr</name>
+      <url>http://maven.in2p3.fr</url>
+    </repository>
   </repositories>
 
   <build>
