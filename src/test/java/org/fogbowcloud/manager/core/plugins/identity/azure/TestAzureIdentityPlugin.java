@@ -10,13 +10,13 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 public class TestAzureIdentityPlugin {
-	// TODO: Tests get token
-	private final static String SUBSCRIPTION_ID_PROPERTY = "local_proxy_account_subscription_id"; 
-	private final static String SUBSCRIPTION_ID_VALUE = "subscription_id";
-	private final static String KEY_STORE_PATH_PROPERTY = "local_proxy_account_keystore_path";
-	private final static String KEY_STORE_PATH_VALUE = "home/test/value";
-	private final static String KEYSTORE_PASSWORD = "local_proxy_account_keystore_password";
-	private final static String KEYSTORE_PASSWORD_VALUE = "password";
+	
+	private static final String SUBSCRIPTION_ID_PROPERTY = "local_proxy_account_subscription_id"; 
+	private static final String SUBSCRIPTION_ID_VALUE = "subscription_id";
+	private static final String KEY_STORE_PATH_PROPERTY = "local_proxy_account_keystore_path";
+	private static final String KEY_STORE_PATH_VALUE = "home/test/value";
+	private static final String KEYSTORE_PASSWORD = "local_proxy_account_keystore_password";
+	private static final String KEYSTORE_PASSWORD_VALUE = "password";
 	
 	private Properties createProperties(Properties extraProperties) {
 		Properties properties = new Properties();
@@ -29,18 +29,56 @@ public class TestAzureIdentityPlugin {
 		return properties;
 	}
 	
+	private static final String VALID_ACCESS_ID = "access_id";
+	private static final String NOT_VALID_ACCESS_ID = "not_valid";
 	private static final String ACCESS_ID_PROPERTY = "local_proxy_account_access_id";
-	private final static String ACCESS_ID_VALUE = "anyValue";
+	private static final String ACCESS_ID_VALUE_PROPERTY = "access_id";
+	private static final String DEFAULT_USER = "Fogbow";
+	
+	@Test(expected=OCCIException.class)
+	public void testGetTokenNullProperties() {
+		AzureIdentityPlugin azureIdentityPlugin = 
+				new AzureIdentityPlugin(null);
+		azureIdentityPlugin.getToken(VALID_ACCESS_ID);
+	}
+	
+	@Test(expected=OCCIException.class)
+	public void testGetTokenNullAccessID() {
+		AzureIdentityPlugin azureIdentityPlugin = 
+				new AzureIdentityPlugin(createProperties(null));
+		azureIdentityPlugin.getToken(VALID_ACCESS_ID);
+	}
+	
+	@Test(expected=OCCIException.class)
+	public void testGetTokenInvalidAccessID() {
+		Properties extraProperties = new Properties();
+		extraProperties.put(ACCESS_ID_PROPERTY, ACCESS_ID_VALUE_PROPERTY);
+		AzureIdentityPlugin azureIdentityPlugin = 
+				new AzureIdentityPlugin(createProperties(extraProperties));
+		azureIdentityPlugin.getToken(NOT_VALID_ACCESS_ID);
+	}
+	
+	@Test
+	public void testGetToken() {
+		Properties extraProperties = new Properties();
+		extraProperties.put(ACCESS_ID_PROPERTY, ACCESS_ID_VALUE_PROPERTY);
+		AzureIdentityPlugin azureIdentityPlugin = 
+				new AzureIdentityPlugin(createProperties(extraProperties));
+		Token token = azureIdentityPlugin.getToken(VALID_ACCESS_ID);
+		Assert.assertEquals(DEFAULT_USER, token.getUser());
+		Assert.assertEquals(ACCESS_ID_VALUE_PROPERTY, token.getAccessId());
+		Assert.assertEquals(3, token.getAttributes().size());
+	}
 	
 	@Test
 	public void testCreateFederationToken() {
 		Properties extraProperties = new Properties();
-		extraProperties.put(ACCESS_ID_PROPERTY, ACCESS_ID_VALUE);
+		extraProperties.put(ACCESS_ID_PROPERTY, ACCESS_ID_VALUE_PROPERTY);
 		AzureIdentityPlugin azureIdentityPlugin = 
 				new AzureIdentityPlugin(createProperties(extraProperties));
 		Token token = azureIdentityPlugin.createFederationUserToken();
-		Assert.assertEquals("Fogbow", token.getUser());
-		Assert.assertEquals(ACCESS_ID_VALUE, token.getAccessId());
+		Assert.assertEquals(DEFAULT_USER, token.getUser());
+		Assert.assertEquals(ACCESS_ID_VALUE_PROPERTY, token.getAccessId());
 		Assert.assertEquals(3, token.getAttributes().size());
 	}
 	
@@ -49,7 +87,7 @@ public class TestAzureIdentityPlugin {
 		AzureIdentityPlugin azureIdentityPlugin = 
 				new AzureIdentityPlugin(createProperties(null));
 		Token token = azureIdentityPlugin.createFederationUserToken();
-		Assert.assertEquals("Fogbow", token.getUser());
+		Assert.assertEquals(DEFAULT_USER, token.getUser());
 		Assert.assertNotNull(token.getAccessId());
 		Assert.assertEquals(3, token.getAttributes().size());
 	}
