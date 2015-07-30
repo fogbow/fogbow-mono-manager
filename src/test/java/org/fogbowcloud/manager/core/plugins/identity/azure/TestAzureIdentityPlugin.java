@@ -3,6 +3,7 @@ package org.fogbowcloud.manager.core.plugins.identity.azure;
 import java.util.HashMap;
 import java.util.Properties;
 
+import org.fogbowcloud.manager.core.plugins.util.Credential;
 import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.junit.Assert;
@@ -64,6 +65,7 @@ public class TestAzureIdentityPlugin {
 		extraProperties.put(ACCESS_ID_PROPERTY, ACCESS_ID_VALUE_PROPERTY);
 		AzureIdentityPlugin azureIdentityPlugin = 
 				new AzureIdentityPlugin(createProperties(extraProperties));
+		azureIdentityPlugin.accessID = VALID_ACCESS_ID;
 		Token token = azureIdentityPlugin.getToken(VALID_ACCESS_ID);
 		Assert.assertEquals(DEFAULT_USER, token.getUser());
 		Assert.assertEquals(ACCESS_ID_VALUE_PROPERTY, token.getAccessId());
@@ -72,18 +74,6 @@ public class TestAzureIdentityPlugin {
 	
 	@Test
 	public void testCreateFederationToken() {
-		Properties extraProperties = new Properties();
-		extraProperties.put(ACCESS_ID_PROPERTY, ACCESS_ID_VALUE_PROPERTY);
-		AzureIdentityPlugin azureIdentityPlugin = 
-				new AzureIdentityPlugin(createProperties(extraProperties));
-		Token token = azureIdentityPlugin.createFederationUserToken();
-		Assert.assertEquals(DEFAULT_USER, token.getUser());
-		Assert.assertEquals(ACCESS_ID_VALUE_PROPERTY, token.getAccessId());
-		Assert.assertEquals(3, token.getAttributes().size());
-	}
-	
-	@Test
-	public void testCreateFederationTokenWithoutAccessIDSet() {
 		AzureIdentityPlugin azureIdentityPlugin = 
 				new AzureIdentityPlugin(createProperties(null));
 		Token token = azureIdentityPlugin.createFederationUserToken();
@@ -108,26 +98,32 @@ public class TestAzureIdentityPlugin {
 		azureIdentityPlugin.createToken(new HashMap<String, String>());
 	}
 	
-	@Test(expected=UnsupportedOperationException.class)
+	@Test
 	public void testGetCredentials() {
 		AzureIdentityPlugin azureIdentityPlugin = 
 				new AzureIdentityPlugin(new Properties());
-		azureIdentityPlugin.getCredentials();
+		Credential[] credentials  = azureIdentityPlugin.getCredentials();
+		Assert.assertEquals(AzureIdentityPlugin.SUBSCRIPTION_ID_CREDENTIAL, 
+				credentials[0].getName());
+		Assert.assertEquals(AzureIdentityPlugin.KEYSTORE_PATH_CREDENTIAL, 
+				credentials[1].getName());
+		Assert.assertEquals(AzureIdentityPlugin.KEYSTORE_PASSWORD_CREDENTIAL, 
+				credentials[2].getName());
 	}
 	
-	@Test(expected=UnsupportedOperationException.class)
+	@Test
 	public void testAuthURI() {
 		AzureIdentityPlugin azureIdentityPlugin = 
 				new AzureIdentityPlugin(new Properties());
-		azureIdentityPlugin.getAuthenticationURI();
+		Assert.assertNull(azureIdentityPlugin.getAuthenticationURI());
 	}
 	
-	@Test(expected=UnsupportedOperationException.class)
+	@Test
 	public void testGetFordwableToken() {
 		AzureIdentityPlugin azureIdentityPlugin = 
 				new AzureIdentityPlugin(new Properties());
-		azureIdentityPlugin.getForwardableToken
-		(new Token(null, null, null, null));
+		Assert.assertNull(azureIdentityPlugin.getForwardableToken
+		(new Token(null, null, null, null)));
 	}
 	
 	@Test(expected=OCCIException.class)
