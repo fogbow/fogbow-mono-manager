@@ -74,12 +74,15 @@ public class UserdataUtils {
 			cloudInitUserDataBuilder.addCloudConfig(new FileReader(new File(cloudConfigFilePath)));
 		}
 		
-		String extraUserData = request.getAttValue(
-				RequestAttribute.EXTRA_USER_DATA_ATT.getValue());
+		String extraUserdata = request.getAttValue(RequestAttribute.EXTRA_USER_DATA_ATT.getValue());
+		String extraUsedataNOmalized = null;
+		if (extraUserdata != null) {
+			extraUsedataNOmalized = new String(Base64.decodeBase64(extraUserdata));			
+		}
 		String extraUserDataContentType = request.getAttValue(
 				RequestAttribute.EXTRA_USER_DATA_CONTENT_TYPE_ATT.getValue());
 		
-		addExtraUserData(cloudInitUserDataBuilder, extraUserData, extraUserDataContentType);
+		addExtraUserData(cloudInitUserDataBuilder, extraUsedataNOmalized, extraUserDataContentType);
 		
 		String mimeString = cloudInitUserDataBuilder.buildUserData();
 		

@@ -7,8 +7,8 @@
 
   <repositories>
 	<repository>
-	  <id>local</id>
-	  <url>file://${basedir}/.m2</url>
+	  <id>maven-fogbow</id>
+	  <url>https://github.com/fogbow/mvn-repo/raw/master/releases/</url>
 	</repository>
     <repository>
 	  <id>maven-restlet</id>
