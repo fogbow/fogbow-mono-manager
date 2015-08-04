@@ -75,6 +75,11 @@ public class VMCatcherStoragePlugin extends StaticImageStoragePlugin {
 			return null;
 		}
 		
+		localId = computePlugin.getImageId(token, globalId);
+		if (localId != null) {
+			return localId;
+		}
+		
 		String imageTitleTranslated = null;
 		final String pushMethod = this.props.getProperty(PROP_VMC_PUSH_METHOD);
 		if (pushMethod.equals("glancepush")) {
