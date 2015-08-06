@@ -10,6 +10,7 @@ import org.apache.http.StatusLine;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
+import org.fogbowcloud.manager.core.plugins.common.cloudstack.CloudStackHelper;
 import org.fogbowcloud.manager.core.plugins.util.Credential;
 import org.fogbowcloud.manager.core.plugins.util.HttpClientWrapper;
 import org.fogbowcloud.manager.core.plugins.util.HttpResponseWrapper;
@@ -26,9 +27,9 @@ public class CloudStackIdentityPlugin implements IdentityPlugin {
 	protected final static String REISSUE_COMMAND = "listApis";
 	private final static String COMMAND = "command";
 
-	protected static final String API_KEY = "apiKey";
+	public static final String API_KEY = "apiKey";
 	protected static final String SECRET_KEY = "secretKey";
-	protected static final String SIGNATURE = "signature";
+	public static final String SIGNATURE = "signature";
 
 	private static final Logger LOGGER = Logger
 			.getLogger(CloudStackIdentityPlugin.class);

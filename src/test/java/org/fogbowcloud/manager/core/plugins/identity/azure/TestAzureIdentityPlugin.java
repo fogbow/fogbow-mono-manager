@@ -69,7 +69,7 @@ public class TestAzureIdentityPlugin {
 		Token token = azureIdentityPlugin.getToken(VALID_ACCESS_ID);
 		Assert.assertEquals(DEFAULT_USER, token.getUser());
 		Assert.assertEquals(ACCESS_ID_VALUE_PROPERTY, token.getAccessId());
-		Assert.assertEquals(3, token.getAttributes().size());
+		Assert.assertEquals(4, token.getAttributes().size());
 	}
 	
 	@Test
@@ -79,7 +79,7 @@ public class TestAzureIdentityPlugin {
 		Token token = azureIdentityPlugin.createFederationUserToken();
 		Assert.assertEquals(DEFAULT_USER, token.getUser());
 		Assert.assertNotNull(token.getAccessId());
-		Assert.assertEquals(3, token.getAttributes().size());
+		Assert.assertEquals(4, token.getAttributes().size());
 	}
 	
 	@Test
@@ -103,11 +103,11 @@ public class TestAzureIdentityPlugin {
 		AzureIdentityPlugin azureIdentityPlugin = 
 				new AzureIdentityPlugin(new Properties());
 		Credential[] credentials  = azureIdentityPlugin.getCredentials();
-		Assert.assertEquals(AzureIdentityPlugin.SUBSCRIPTION_ID_CREDENTIAL, 
+		Assert.assertEquals(AzureIdentityPlugin.SUBSCRIPTION_ID_KEY, 
 				credentials[0].getName());
-		Assert.assertEquals(AzureIdentityPlugin.KEYSTORE_PATH_CREDENTIAL, 
+		Assert.assertEquals(AzureIdentityPlugin.KEYSTORE_PATH_KEY, 
 				credentials[1].getName());
-		Assert.assertEquals(AzureIdentityPlugin.KEYSTORE_PASSWORD_CREDENTIAL, 
+		Assert.assertEquals(AzureIdentityPlugin.KEYSTORE_PASSWORD_KEY, 
 				credentials[2].getName());
 	}
 	

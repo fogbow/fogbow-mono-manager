@@ -18,13 +18,13 @@ public class AzureIdentityPlugin implements IdentityPlugin {
 	private static final Logger LOGGER = Logger
 			.getLogger(AzureIdentityPlugin.class);
 	private static final String SUBSCRIPTION_ID_PATH = "local_proxy_account_subscription_id";
-	protected static final String SUBSCRIPTION_ID_CREDENTIAL = "subscriptionID";
 	private static final String KEYSTORE_PATH = "local_proxy_account_keystore_path";
-	protected static final String KEYSTORE_PATH_CREDENTIAL = "keystorePath";
 	private static final String KEYSTORE_PASSWORD = "local_proxy_account_keystore_password";
-	protected static final String KEYSTORE_PASSWORD_CREDENTIAL = "keystorePassword";
 	private static final String USER = "Fogbow";
-
+	public static final String SUBSCRIPTION_ID_KEY = "subscriptionID";
+	public static final String KEYSTORE_PATH_KEY = "keystorePath";
+	public static final String KEYSTORE_PASSWORD_KEY = "keystorePassword";	
+	
 	private Properties properties;
 	protected String accessID;
 
@@ -91,19 +91,21 @@ public class AzureIdentityPlugin implements IdentityPlugin {
 			LOGGER.debug(accessID + " is the new access ID");
 		}
 		Map<String, String> attributes = new HashMap<String, String>();
-		attributes.put(properties.getProperty(KEYSTORE_PATH), 
-				properties.getProperty(KEYSTORE_PASSWORD));
-		attributes.put(SUBSCRIPTION_ID_CREDENTIAL,
+		attributes.put(SUBSCRIPTION_ID_KEY,
 				properties.getProperty(SUBSCRIPTION_ID_PATH));
+		attributes.put(KEYSTORE_PATH_KEY,
+				properties.getProperty(KEYSTORE_PATH));
+		attributes.put(KEYSTORE_PASSWORD_KEY, 
+				properties.getProperty(KEYSTORE_PASSWORD));
 		return new Token(accessID, USER,
 				new Date(), attributes);
 	}
 
 	@Override
 	public Credential[] getCredentials() {
-		return new Credential[]{ new Credential(SUBSCRIPTION_ID_CREDENTIAL, true, null),
-				new Credential(KEYSTORE_PATH_CREDENTIAL, true, null), 
-				new Credential(KEYSTORE_PASSWORD_CREDENTIAL, true, null)};
+		return new Credential[]{ new Credential(SUBSCRIPTION_ID_KEY, true, null),
+				new Credential(KEYSTORE_PATH_KEY, true, null), 
+				new Credential(KEYSTORE_PASSWORD_KEY, true, null)};
 	}
 
 	@Override

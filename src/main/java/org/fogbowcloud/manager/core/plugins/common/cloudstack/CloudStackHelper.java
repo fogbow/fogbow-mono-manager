@@ -1,4 +1,4 @@
-package org.fogbowcloud.manager.core.plugins.identity.cloudstack;
+package org.fogbowcloud.manager.core.plugins.common.cloudstack;
 
 import java.security.Key;
 import java.util.Map.Entry;
@@ -11,6 +11,7 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.Charsets;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.core.plugins.identity.cloudstack.CloudStackIdentityPlugin;
 import org.fogbowcloud.manager.occi.model.ErrorType;
 import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;

@@ -5,7 +5,7 @@ import java.net.URISyntaxException;
 import org.apache.http.ProtocolVersion;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.message.BasicStatusLine;
-import org.fogbowcloud.manager.core.plugins.identity.cloudstack.CloudStackHelper;
+import org.fogbowcloud.manager.core.plugins.common.cloudstack.CloudStackHelper;
 import org.fogbowcloud.manager.core.plugins.util.HttpClientWrapper;
 import org.fogbowcloud.manager.core.plugins.util.HttpResponseWrapper;
 import org.fogbowcloud.manager.occi.model.Token;
