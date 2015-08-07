@@ -1203,6 +1203,7 @@ public class ManagerController {
 		
 	protected void checkAndSubmitOpenRequests() {
 		boolean allFulfilled = true;
+		failedBatch.clear();
 		LOGGER.debug("Checking and submiting requests.");
 
 		// removing requests that reach timeout
@@ -1267,7 +1268,7 @@ public class ManagerController {
 		}
 		if (allFulfilled) {
 			LOGGER.info("All requests fulfilled.");
-		}
+		}		
 	}
 
 	protected List<FederationMember> getAllowedFederationMembers(String requirements) {
@@ -1600,6 +1601,10 @@ public class ManagerController {
 				}
 			}
 			return failedBatchIds;
+		}
+		
+		public void clear() {
+			failedBatches.clear();
 		}
 	}
 	
