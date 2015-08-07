@@ -266,7 +266,7 @@ public class VomsIdentityPlugin implements IdentityPlugin {
 			if (userCredentials.containsKey(PATH_USERCRED)
 					&& userCredentials.containsKey(PATH_USERKEY)) {
 
-				String privateKeyPath = userCredentials.get(PATH_USERKEY);
+				String privateKeyPath = userCredentials.get(PATH_USERCRED);
 				String certificatePath = userCredentials.get(PATH_USERKEY);
 
 				FilePermissionHelper.checkPrivateKeyPermissions(privateKeyPath);
