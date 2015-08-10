@@ -66,8 +66,6 @@ public class VomsIdentityPlugin implements IdentityPlugin {
 	public static final String PATH_USERCRED = "pathUserCred";
 	public static final String PATH_USERKEY = "pathUserKey";
 
-	private static final int DEFAULT_LIFE_TIME = 10;
-
 	private static final Logger LOGGER = Logger.getLogger(VomsIdentityPlugin.class);
 
 	private Properties properties;
@@ -289,8 +287,8 @@ public class VomsIdentityPlugin implements IdentityPlugin {
 
 			VOMSACService service = new DefaultVOMSACService.Builder(validatorExt).build();
 
-			DefaultVOMSACRequest request = new DefaultVOMSACRequest.Builder(vomsNameServer)
-					.lifetime(DEFAULT_LIFE_TIME).build();
+			DefaultVOMSACRequest request = new DefaultVOMSACRequest.Builder(vomsNameServer).build();
+			
 			AttributeCertificate attributeCertificate = service.getVOMSAttributeCertificate(cred,
 					request);
 
