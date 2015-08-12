@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
@@ -44,8 +43,8 @@ public class AzureComputePlugin implements ComputePlugin {
 	private static final String GET_FLAVOR_COMMAND = "/rolesizes";
 	private static final String GET_CLOUD_SERVICE_COMMAND = "/services/hostedservices";
 	private static final String GET_VMS_COMMAND = "/services/hostedservices/%s/deployments/%s";
-	private static final String DELET_VM_COMMAND = "/services/hostedservices/%s/deployments/%s";
-	private static final String DELET_CLOUD_SERVICE_COMMAND = "/services/hostedservices/%s";
+	private static final String DELETE_VM_COMMAND = "/services/hostedservices/%s/deployments/%s";
+	private static final String DELETE_CLOUD_SERVICE_COMMAND = "/services/hostedservices/%s";
 
 	private static final String[] AZURE_STATE_RUNNING = { "Running" };
 	private static final String[] AZURE_STATE_FAILED = { "Deleting" };
@@ -92,7 +91,6 @@ public class AzureComputePlugin implements ComputePlugin {
 			throw new OCCIException(ErrorType.BAD_REQUEST,
 					"Subscription ID can't be null");
 		}
-		
 		List<String> cloudServicesNames = getCloudServicesNames(token);
 		List<Instance> instances = new LinkedList<Instance>();
 		for (String cloudService : cloudServicesNames) {
@@ -126,15 +124,39 @@ public class AzureComputePlugin implements ComputePlugin {
 		}
 		return null;
 	}
+	
+	public void removeCloudService(Token token, String cloudServiceId){
+		StringBuilder url = new StringBuilder(BASE_URL);
+		url.append(token.get(AzureAttributes.SUBSCRIPTION_ID_KEY));
+		url.append(String.format(DELETE_CLOUD_SERVICE_COMMAND, cloudServiceId));
+		HttpResponseWrapper response = 	httpWrapper.doDeleteSSL(url.toString(),
+				getSSLFromToken(token), getHeaders(null));
+		checkStatusResponse(response.getStatusLine());
+	}
+	
+	public void removeCloudServices(Token token) {
+		List<String> cloudServices = getCloudServicesNames(token);
+		for (String cloudService : cloudServices) {
+			removeCloudService(token, cloudService);
+		}	
+	}
 
 	@Override
 	public void removeInstance(Token token, String instanceId) {
-
+		StringBuilder urlDeleteVM = new StringBuilder(BASE_URL);
+		urlDeleteVM.append(token.get(AzureAttributes.SUBSCRIPTION_ID_KEY));
+		urlDeleteVM.append(String.format(DELETE_VM_COMMAND, instanceId, instanceId));
+		HttpResponseWrapper response = httpWrapper.doDeleteSSL(urlDeleteVM.toString(),
+				getSSLFromToken(token), getHeaders(null));
+		checkStatusResponse(response.getStatusLine());
 	}
 
 	@Override
 	public void removeInstances(Token token) {
-
+		List<Instance> instances = getInstances(token);
+		for (Instance instance : instances) {
+			removeInstance(token, instance.getId());
+		}	
 	}
 
 	@Override
