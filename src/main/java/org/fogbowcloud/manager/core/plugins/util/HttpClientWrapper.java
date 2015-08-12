@@ -1,9 +1,13 @@
 package org.fogbowcloud.manager.core.plugins.util;
 
+import java.util.Map;
+import java.util.Map.Entry;
+
 import org.apache.commons.codec.Charsets;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
@@ -20,12 +24,14 @@ public class HttpClientWrapper {
 
 	private static final String GET = "get";
 	private static final String POST = "post";
+	private static final String DELETE = "delete";
 	private static final Logger LOGGER = Logger
 			.getLogger(HttpClientWrapper.class);
 	private HttpClient client;
 
 	private HttpResponseWrapper doRequest(String url, String method,
-			HttpEntity entity, SSLConnectionSocketFactory sslSocketFactory) {
+			HttpEntity entity, SSLConnectionSocketFactory sslSocketFactory,
+			Map<String, String> headers) {
 		HttpRequestBase request = null;
 		if (method.equals(POST)) {
 			request = new HttpPost(url);
@@ -34,6 +40,13 @@ public class HttpClientWrapper {
 			}
 		} else if (method.equals(GET)) {
 			request = new HttpGet(url);
+		} else if (method.equals(DELETE)) {
+			request = new HttpDelete(url);
+		}
+		if (headers != null) {
+			for (Entry<String, String> header : headers.entrySet()) {
+				request.setHeader(header.getKey(), header.getValue());
+			}
 		}
 		HttpResponse response = null;
 		String responseStr = null;
@@ -59,30 +72,58 @@ public class HttpClientWrapper {
 		return doPost(url, null);
 	}
 
+	public HttpResponseWrapper doGet(String url, Map<String, String> headers) {
+		return doRequest(url, GET, null, null, headers);
+	}
+
 	public HttpResponseWrapper doGet(String url) {
-		return doRequest(url, GET, null, null);
+		return doGet(url, null);
 	}
 
 	public HttpResponseWrapper doPost(String url, StringEntity entity) {
-		return doRequest(url, POST, entity, null);
+		return doPost(url, entity, null);
 	}
-	
+
+	public HttpResponseWrapper doPost(String url, StringEntity entity,
+			Map<String, String> headers) {
+		return doRequest(url, POST, entity, null, headers);
+	}
+
+	public HttpResponseWrapper doPostSSL(String url, StringEntity entity,
+			SSLConnectionSocketFactory sslSocketFactory,
+			Map<String, String> headers) {
+		return doRequest(url, POST, entity, sslSocketFactory, headers);
+	}
+
 	public HttpResponseWrapper doPostSSL(String url,
 			SSLConnectionSocketFactory sslSocketFactory) {
-		return doRequest(url, POST, null, sslSocketFactory);
+		return doPostSSL(url, null, sslSocketFactory, null);
 	}
 
 	public HttpResponseWrapper doGetSSL(String url,
 			SSLConnectionSocketFactory sslSocketFactory) {
-		return doRequest(url, GET, null, sslSocketFactory);
+		return doGetSSL(url, sslSocketFactory, null);
+	}
+
+	public HttpResponseWrapper doGetSSL(String url,
+			SSLConnectionSocketFactory sslSocketFactory,
+			Map<String, String> headers) {
+		return doRequest(url, GET, null, sslSocketFactory, headers);
+	}
+	
+	public HttpResponseWrapper doDeleteSSL(String url, SSLConnectionSocketFactory sslSocketFactory, 
+			Map<String, String> headers) {
+		return doRequest(url, DELETE, null, sslSocketFactory, headers);
 	}
 
 	private HttpClient getClient(SSLConnectionSocketFactory sslSocketFactory) {
-		if (sslSocketFactory == null) {
-			client = HttpClients.createMinimal();
-		} else {
-			client = HttpClients.custom().setSSLSocketFactory(sslSocketFactory)
-					.build();
+		if (client == null) {
+			if (sslSocketFactory == null) {
+				client = HttpClients.createMinimal();
+			} else {
+				client = HttpClients.custom()
+						.setSSLSocketFactory(sslSocketFactory).build();
+			}
 		}
 		return client;
 	}

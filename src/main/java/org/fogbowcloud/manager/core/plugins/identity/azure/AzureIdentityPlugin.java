@@ -8,6 +8,7 @@ import java.util.UUID;
 
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
+import org.fogbowcloud.manager.core.plugins.common.azure.AzureAttributes;
 import org.fogbowcloud.manager.core.plugins.util.Credential;
 import org.fogbowcloud.manager.occi.model.ErrorType;
 import org.fogbowcloud.manager.occi.model.OCCIException;
@@ -15,15 +16,12 @@ import org.fogbowcloud.manager.occi.model.Token;
 
 public class AzureIdentityPlugin implements IdentityPlugin {
 
-	private static final Logger LOGGER = Logger
-			.getLogger(AzureIdentityPlugin.class);
-	private static final String SUBSCRIPTION_ID_PATH = "local_proxy_account_subscription_id";
-	private static final String KEYSTORE_PATH = "local_proxy_account_keystore_path";
-	private static final String KEYSTORE_PASSWORD = "local_proxy_account_keystore_password";
+	private static final Logger LOGGER = 
+			Logger.getLogger(AzureIdentityPlugin.class);
+	private static final String SUBSCRIPTION_ID_PATH = "proxy_account_subscription_id";
+	private static final String KEYSTORE_PATH = "proxy_account_keystore_path";
+	private static final String KEYSTORE_PASSWORD = "proxy_account_keystore_password";
 	private static final String USER = "Fogbow";
-	public static final String SUBSCRIPTION_ID_KEY = "subscriptionID";
-	public static final String KEYSTORE_PATH_KEY = "keystorePath";
-	public static final String KEYSTORE_PASSWORD_KEY = "keystorePassword";	
 	
 	private Properties properties;
 	protected String accessID;
@@ -91,11 +89,11 @@ public class AzureIdentityPlugin implements IdentityPlugin {
 			LOGGER.debug(accessID + " is the new access ID");
 		}
 		Map<String, String> attributes = new HashMap<String, String>();
-		attributes.put(SUBSCRIPTION_ID_KEY,
+		attributes.put(AzureAttributes.SUBSCRIPTION_ID_KEY,
 				properties.getProperty(SUBSCRIPTION_ID_PATH));
-		attributes.put(KEYSTORE_PATH_KEY,
+		attributes.put(AzureAttributes.KEYSTORE_PATH_KEY,
 				properties.getProperty(KEYSTORE_PATH));
-		attributes.put(KEYSTORE_PASSWORD_KEY, 
+		attributes.put(AzureAttributes.KEYSTORE_PASSWORD_KEY, 
 				properties.getProperty(KEYSTORE_PASSWORD));
 		return new Token(accessID, USER,
 				new Date(), attributes);
@@ -103,9 +101,9 @@ public class AzureIdentityPlugin implements IdentityPlugin {
 
 	@Override
 	public Credential[] getCredentials() {
-		return new Credential[]{ new Credential(SUBSCRIPTION_ID_KEY, true, null),
-				new Credential(KEYSTORE_PATH_KEY, true, null), 
-				new Credential(KEYSTORE_PASSWORD_KEY, true, null)};
+		return new Credential[]{ new Credential(AzureAttributes.SUBSCRIPTION_ID_KEY, true, null),
+				new Credential(AzureAttributes.KEYSTORE_PATH_KEY, true, null), 
+				new Credential(AzureAttributes.KEYSTORE_PASSWORD_KEY, true, null)};
 	}
 
 	@Override

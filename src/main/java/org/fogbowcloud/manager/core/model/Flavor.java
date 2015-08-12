@@ -5,8 +5,17 @@ public class Flavor {
 	private Integer capacity;
 	private String name;
 	private String id;
+	/**
+	 * Number of cores of the CPU.
+	 */
 	private String cpu;
+	/**
+	 * RAM memory in MB.
+	 */
 	private String mem;
+	/**
+	 * Disk in GB.
+	 */
 	private String disk;
 
 	public Flavor(String name, String cpu, String mem, String disk) {

@@ -59,6 +59,9 @@ compute_novav2_network_id=ea51ed0c-0e8a-448d-8202-c79777109ffe
 # compute_cloudstack_hypervisor=KVM
 # compute_cloudstack_image_download_os_type_id=ea51ed0c-0e8a-448d-8202-c79777109ffe
 
+##Compute Plugin (Azure)
+# compute_class=org.fogbowcloud.manager.core.plugins.compute.cloudstack.AzureComputePlugin
+
 ## Image Storage Plugin (HTTPDownload)
 image_storage_class=org.fogbowcloud.manager.core.plugins.imagestorage.http.HTTPDownloadImageStoragePlugin
 image_storage_http_base_url=http://appliance-repo.egi.eu/images
@@ -144,6 +147,12 @@ federation_identity_url=http://localhost:5000
 # path_vomses=/etc/vomses
 # path_trust_anchors=/etc/grid-security/certificates
 # path_vomsdir=/etc/grid-security/vomsdir
+
+## Identity (Azure)
+# federation_identity_class=org.fogbowcloud.manager.core.plugins.identity.azure.AzureIdentityPlugin
+# proxy_account_subscription_id=subscription_id
+# proxy_account_keystore_path=/etc/keystore/azure
+# proxy_account_keystore_password=test123
 
 ## Member Validator
 member_validator_class=org.fogbowcloud.manager.core.plugins.memberauthorization.DefaultMemberAuthorizationPlugin
