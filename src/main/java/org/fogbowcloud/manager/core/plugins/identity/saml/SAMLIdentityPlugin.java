@@ -1,12 +1,15 @@
 package org.fogbowcloud.manager.core.plugins.identity.saml;
 
-import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.io.StringReader;
+import java.net.URL;
+import java.security.KeyStore;
+import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -16,7 +19,6 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.log4j.Logger;
-import org.fogbowcloud.manager.core.plugins.CertificateUtils;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.util.Credential;
 import org.fogbowcloud.manager.occi.model.ErrorType;
@@ -25,21 +27,44 @@ import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.joda.time.DateTime;
 import org.opensaml.DefaultBootstrap;
+import org.opensaml.common.xml.SAMLConstants;
 import org.opensaml.saml2.core.Assertion;
 import org.opensaml.saml2.core.Attribute;
 import org.opensaml.saml2.core.AttributeStatement;
 import org.opensaml.saml2.core.AuthnStatement;
+import org.opensaml.saml2.core.EncryptedAssertion;
+import org.opensaml.saml2.core.Response;
+import org.opensaml.saml2.encryption.Decrypter;
+import org.opensaml.saml2.encryption.EncryptedElementTypeEncryptedKeyResolver;
+import org.opensaml.saml2.metadata.IDPSSODescriptor;
+import org.opensaml.saml2.metadata.provider.DOMMetadataProvider;
+import org.opensaml.saml2.metadata.provider.MetadataProviderException;
+import org.opensaml.security.MetadataCredentialResolver;
+import org.opensaml.security.MetadataCredentialResolverFactory;
+import org.opensaml.security.MetadataCriteria;
+import org.opensaml.security.SAMLSignatureProfileValidator;
 import org.opensaml.xml.Configuration;
 import org.opensaml.xml.ConfigurationException;
 import org.opensaml.xml.XMLObject;
+import org.opensaml.xml.encryption.ChainingEncryptedKeyResolver;
+import org.opensaml.xml.encryption.DecryptionException;
+import org.opensaml.xml.encryption.InlineEncryptedKeyResolver;
+import org.opensaml.xml.encryption.SimpleRetrievalMethodEncryptedKeyResolver;
 import org.opensaml.xml.io.Unmarshaller;
-import org.opensaml.xml.io.UnmarshallerFactory;
 import org.opensaml.xml.io.UnmarshallingException;
+import org.opensaml.xml.parse.BasicParserPool;
+import org.opensaml.xml.security.CriteriaSet;
+import org.opensaml.xml.security.SecurityException;
+import org.opensaml.xml.security.criteria.EntityIDCriteria;
+import org.opensaml.xml.security.keyinfo.KeyInfoCredentialResolver;
+import org.opensaml.xml.security.keyinfo.KeyInfoProvider;
+import org.opensaml.xml.security.keyinfo.LocalKeyInfoCredentialResolver;
+import org.opensaml.xml.security.keyinfo.StaticKeyInfoCredentialResolver;
+import org.opensaml.xml.security.keyinfo.provider.InlineX509DataProvider;
+import org.opensaml.xml.security.keyinfo.provider.RSAKeyValueProvider;
 import org.opensaml.xml.security.x509.BasicX509Credential;
-import org.opensaml.xml.signature.Signature;
+import org.opensaml.xml.security.x509.X509Credential;
 import org.opensaml.xml.signature.SignatureValidator;
-import org.opensaml.xml.signature.X509Data;
-import org.opensaml.xml.signature.X509SubjectName;
 import org.opensaml.xml.validation.ValidationException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -49,11 +74,12 @@ public class SAMLIdentityPlugin implements IdentityPlugin {
 
 	private static final Logger LOGGER = Logger.getLogger(SAMLIdentityPlugin.class);
 	private static final String DEFAULT_IDENTIFIER_ATTRIBUTE = "eduPersonPrincipalName";
+	private static final String DEFAULT_METADATA_URL = "https://ds.cafe.rnp.br/metadata/cafe-metadata.xml";
 	private static final long DEFAULT_EXPIRATION_INTERVAL = 60 * 60 * 1000; // One hour
 	
-	private List<java.security.cert.X509Certificate> caCertificates = 
-			new LinkedList<java.security.cert.X509Certificate>();
 	private String identifierAttribute;
+	private String samlMetadataURL;
+	private Decrypter spDecrypter;
 	
 	public SAMLIdentityPlugin(Properties properties) {
 		try {
@@ -61,29 +87,71 @@ public class SAMLIdentityPlugin implements IdentityPlugin {
 		} catch (ConfigurationException e) {
 			LOGGER.warn("Couldn't bootstrap OpenSAML", e);
 		}
-		String certDirectory = properties.getProperty("identity_saml_certificate_directory");
-		loadCertificates(certDirectory);
-		
 		String identifierAttributeProp = properties.getProperty("identity_saml_identifier_attribute");
 		this.identifierAttribute = identifierAttributeProp == null ? 
 				DEFAULT_IDENTIFIER_ATTRIBUTE : identifierAttributeProp;
+		
+		String metadataURLProp = properties.getProperty("identity_saml_metadata_url");
+		this.samlMetadataURL = metadataURLProp == null ? 
+				DEFAULT_METADATA_URL : metadataURLProp;
+		initSPDecrypter(properties);
 	}
 	
-	private void loadCertificates(String certDirectory) {
-		File[] files = new File(certDirectory).listFiles();
-		for (File file : files) {
-			try {
-				Collection<X509Certificate> certificateChain = 
-						CertificateUtils.getCertificateChainFromFile(file.getAbsolutePath());
-				if (certificateChain.isEmpty()) {
-					LOGGER.warn("CA certificate chain in " + file.getAbsolutePath() + " is empty.");
-					continue;
-				}
-				caCertificates.add(certificateChain.iterator().next());
-			} catch (Exception e) {
-				LOGGER.warn("Couldn't load CA certificate from " + file.getAbsolutePath(), e);
-			}
+	private BasicX509Credential loadSPCredential(Properties properties) {
+		KeyStore ks = null;
+		String spKeystorePassword = properties.getProperty("identity_saml_sp_keystore_password");
+		char[] password = spKeystorePassword.toCharArray();
+
+		try {
+			ks = KeyStore.getInstance(KeyStore.getDefaultType());
+			FileInputStream fis = new FileInputStream(properties.getProperty("identity_saml_sp_keystore_path"));
+			ks.load(fis, password);
+			fis.close();
+		} catch (Exception e) {
+			LOGGER.error("Error while initializing SP Keystore", e);
+			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}
+
+		KeyStore.PrivateKeyEntry pkEntry = null;
+		try {
+			pkEntry = (KeyStore.PrivateKeyEntry) ks.getEntry(
+					properties.getProperty("identity_saml_sp_keystore_cert_alias"), 
+					new KeyStore.PasswordProtection(password));
+		} catch (Exception e) {
+			LOGGER.error("Failed to get Private Entry from the SP keystore.", e);
+		}
+		
+		PrivateKey pk = pkEntry.getPrivateKey();
+		X509Certificate certificate = (X509Certificate) pkEntry
+				.getCertificate();
+		BasicX509Credential credential = new BasicX509Credential();
+		credential.setEntityCertificate(certificate);
+		credential.setPrivateKey(pk);
+		return credential;
+	}
+	
+	private void initSPDecrypter(Properties properties) {
+		StaticKeyInfoCredentialResolver localCredResolver = new StaticKeyInfoCredentialResolver(
+				loadSPCredential(properties));
+
+		List<KeyInfoProvider> kiProviders = new ArrayList<KeyInfoProvider>();
+		kiProviders.add(new RSAKeyValueProvider());
+		kiProviders.add(new InlineX509DataProvider());
+
+		KeyInfoCredentialResolver kekResolver = new LocalKeyInfoCredentialResolver(
+				kiProviders, localCredResolver);
+
+		ChainingEncryptedKeyResolver encryptedKeyResolver = new ChainingEncryptedKeyResolver();
+		encryptedKeyResolver.getResolverChain().add(
+				new InlineEncryptedKeyResolver());
+		encryptedKeyResolver.getResolverChain().add(
+				new EncryptedElementTypeEncryptedKeyResolver());
+		encryptedKeyResolver.getResolverChain().add(
+				new SimpleRetrievalMethodEncryptedKeyResolver());
+
+		this.spDecrypter = new Decrypter(null, kekResolver,
+				encryptedKeyResolver);
+		         
 	}
 
 	@Override
@@ -98,43 +166,59 @@ public class SAMLIdentityPlugin implements IdentityPlugin {
 
 	@Override
 	public Token getToken(String accessId) {
-		DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-        documentBuilderFactory.setNamespaceAware(true);
-        DocumentBuilder docBuilder = null;
-		try {
-			docBuilder = documentBuilderFactory.newDocumentBuilder();
-		} catch (ParserConfigurationException e) {
-			LOGGER.warn("Couldn't create document builder.", e);
-			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
-		}
-
         Document document = null;
 		try {
-			document = docBuilder.parse(new InputSource(new StringReader(accessId)));
+			document = createDocumentBuilder().parse(new InputSource(new StringReader(accessId)));
 		} catch (Exception e) {
 			LOGGER.warn("Couldn't parse document from serialized SAML response.", e);
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}
-        Element element = document.getDocumentElement();
-        element = (Element)element.getElementsByTagNameNS("saml", "Assertion").item(0);
-        
-        UnmarshallerFactory unmarshallerFactory = Configuration.getUnmarshallerFactory();
-        Unmarshaller unmarshaller = unmarshallerFactory.getUnmarshaller(element);
-        Assertion assertion = null;
+        Element responseEl = document.getDocumentElement();
+        Unmarshaller responseUnmarshaller = Configuration.getUnmarshallerFactory().getUnmarshaller(responseEl);
+        Response response = null;
         try {
-			assertion = (Assertion) unmarshaller.unmarshall(element);
+        	response = (Response) responseUnmarshaller.unmarshall(responseEl);
 		} catch (UnmarshallingException e) {
 			LOGGER.warn("Couldn't unmarshall SAML assertion from XML document.", e);
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}
         
-        Signature signature = assertion.getSignature();
-        List<X509Data> x509Datas = signature.getKeyInfo().getX509Datas();
-        if (!x509Datas.isEmpty()) {
-        	X509Data x509Data = x509Datas.iterator().next();
-			X509SubjectName x509SubjectName = x509Data.getX509SubjectNames().iterator().next();
-			verify(signature, x509SubjectName);
-        }
+        Element assertionEl = (Element)responseEl.getElementsByTagNameNS(
+        		"urn:oasis:names:tc:SAML:2.0:assertion", "EncryptedAssertion").item(0);
+        Unmarshaller unmarshaller = Configuration.getUnmarshallerFactory().getUnmarshaller(assertionEl);
+        EncryptedAssertion encryptedAssertion = null;
+        try {
+        	encryptedAssertion = (EncryptedAssertion) unmarshaller.unmarshall(assertionEl);
+		} catch (UnmarshallingException e) {
+			LOGGER.warn("Couldn't unmarshall SAML assertion from XML document.", e);
+			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
+		}
+
+		Assertion assertion = null;
+		try {
+			assertion = spDecrypter.decrypt(encryptedAssertion);
+		} catch (DecryptionException e) {
+			LOGGER.warn("Couldn't decrypt assertion.", e);
+			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
+		}
+		
+        try {
+        	SAMLSignatureProfileValidator profileValidator = new SAMLSignatureProfileValidator();
+			profileValidator.validate(assertion.getSignature());
+		} catch (ValidationException e) {
+			LOGGER.warn("Couldn't validate SAML profile.", e);
+			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
+		}
+        
+        X509Credential idPCredential = getIdPCredential(response);
+        
+        try {
+        	SignatureValidator sigValidator = new SignatureValidator(idPCredential);
+			sigValidator.validate(assertion.getSignature());
+		} catch (ValidationException e) {
+			LOGGER.warn("Couldn't validate signature against issuer credential.", e);
+			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
+		}
         
         String user = null;
         
@@ -168,30 +252,56 @@ public class SAMLIdentityPlugin implements IdentityPlugin {
 		return token;
 	}
 
-	private void verify(Signature signature, X509SubjectName x509SubjectName) {
-		
-		java.security.cert.X509Certificate pickedCACertificate = null;
-		
-		for (java.security.cert.X509Certificate caCertificate : caCertificates) {
-			if (caCertificate.getSubjectDN().toString().equals(x509SubjectName.getValue())) {
-				pickedCACertificate = caCertificate;
-			}
-		}
-		
-		if (pickedCACertificate == null) {
-			LOGGER.warn("There is no CA certificate for this assertion.");
-			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
-		}
-		
-		BasicX509Credential validatingCredential = new BasicX509Credential();
-		validatingCredential.setEntityCertificate(pickedCACertificate);
-		SignatureValidator signatureValidator = new SignatureValidator(validatingCredential);
+	private DocumentBuilder createDocumentBuilder() {
+		DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+        documentBuilderFactory.setNamespaceAware(true);
+        DocumentBuilder docBuilder = null;
 		try {
-			signatureValidator.validate(signature);
-		} catch (ValidationException e) {
-			LOGGER.warn("Couldn't validate SAML signature.", e);
+			docBuilder = documentBuilderFactory.newDocumentBuilder();
+		} catch (ParserConfigurationException e) {
+			LOGGER.warn("Couldn't create document builder.", e);
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}
+		return docBuilder;
+	}
+
+	private X509Credential getIdPCredential(Response response) {
+		Element metadataRoot = null;
+        try {
+        	InputStream metaDataInputStream = new URL(samlMetadataURL).openStream();
+        	Document metaDataDocument = createDocumentBuilder().parse(metaDataInputStream);
+        	metadataRoot = metaDataDocument.getDocumentElement();
+        	metaDataInputStream.close();
+		} catch (Exception e) {
+			LOGGER.warn("Couldn't parse SAML medatada from " + samlMetadataURL, e);
+			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
+		}
+         
+        DOMMetadataProvider idpMetadataProvider = new DOMMetadataProvider(metadataRoot);
+        idpMetadataProvider.setRequireValidMetadata(true);
+        idpMetadataProvider.setParserPool(new BasicParserPool());
+        try {
+			idpMetadataProvider.initialize();
+		} catch (MetadataProviderException e) {
+			LOGGER.warn("Couldn't initialize DOMMetadataProdiver.", e);
+			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
+		}
+        
+        MetadataCredentialResolverFactory credentialResolverFactory = MetadataCredentialResolverFactory.getFactory();
+        MetadataCredentialResolver credentialResolver = credentialResolverFactory.getInstance(idpMetadataProvider);
+         
+        CriteriaSet criteriaSet = new CriteriaSet();
+        criteriaSet.add(new MetadataCriteria(IDPSSODescriptor.DEFAULT_ELEMENT_NAME, SAMLConstants.SAML20P_NS));
+        criteriaSet.add(new EntityIDCriteria(response.getIssuer().getValue()));
+         
+        X509Credential idpCredential = null;
+		try {
+			idpCredential = (X509Credential) credentialResolver.resolveSingle(criteriaSet);
+		} catch (SecurityException e) {
+			LOGGER.warn("Couldn't resolve credential for " + response.getIssuer().getValue(), e);
+			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
+		}
+		return idpCredential;
 	}
 
 	@Override

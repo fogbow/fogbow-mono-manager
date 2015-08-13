@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<saml1p:Response xmlns:saml1p="urn:oasis:names:tc:SAML:1.0:protocol" IssueInstant="2015-08-12T19:08:28.160Z" MajorVersion="1" MinorVersion="1" Recipient="https://verify2.newsbank.com/Shibboleth.sso/SAML/POST" ResponseID="_fdb9ead9654230846f6626b2248c0104">
+   <ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+      <ds:SignedInfo>
+         <ds:CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#" />
+         <ds:SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1" />
+         <ds:Reference URI="#_fdb9ead9654230846f6626b2248c0104">
+            <ds:Transforms>
+               <ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature" />
+               <ds:Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#" />
+            </ds:Transforms>
+            <ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1" />
+            <ds:DigestValue>9U+rMEhbyU1LzS5XGhW4mFiV6Mo=</ds:DigestValue>
+         </ds:Reference>
+      </ds:SignedInfo>
+      <ds:SignatureValue>kfMejwqj+8inAdmCDdiBWnmJYNsGlLJ265U/bhwr/7zeV/va0RhRYIo6yXz2PsIc5QuwZB+u8y1F9pwXg42x1rYS8R0V5gmvAai7RCLqFcjNf3HoYhkMCeh84D7HGtky8MIbWHkC1rVnVUoBiemYVoN69TraOmJxa/mhUrcQz4C4OuDsWhr1I0GSGNkZ0pBvnrJnLQ4DLcxgWPZQpLppSrphswgzODNHei7RC+Jbux3mPJLQspB1FDGFjjtyvd366oI5kX6cUTZp0gbb/QxH4agqdfEr50fOETDxn6EhyHRhrrax0fRk5GF40ZhHDkJ1geezsW5Ftfm+cjdiNdwbUQ==</ds:SignatureValue>
+      <ds:KeyInfo>
+         <ds:X509Data>
+            <ds:X509Certificate>MIID5DCCAswCAQAwDQYJKoZIhvcNAQEFBQAwgbcxLDAqBgNVBAoTI0lGUEIgLSBJbnN0aXR1dG8g
+RmVkZXJhbCBkYSBQYXJhaWJhMQwwCgYDVQQLEwNEVEkxKjAoBgkqhkiG9w0BCQEWG2pvc2UuY2F2
+YWxjYW50aUBpZnBiLmVkdS5icjEUMBIGA1UEBxMLSm9hbyBQZXNzb2ExEDAOBgNVBAgTB1BhcmFp
+YmExCzAJBgNVBAYTAkJSMRgwFgYDVQQDEw9pZHAuaWZwYi5lZHUuYnIwHhcNMTQwNDIzMjAzMzE0
+WhcNMTkwNDIyMjAzMzE0WjCBtzEsMCoGA1UEChMjSUZQQiAtIEluc3RpdHV0byBGZWRlcmFsIGRh
+IFBhcmFpYmExDDAKBgNVBAsTA0RUSTEqMCgGCSqGSIb3DQEJARYbam9zZS5jYXZhbGNhbnRpQGlm
+cGIuZWR1LmJyMRQwEgYDVQQHEwtKb2FvIFBlc3NvYTEQMA4GA1UECBMHUGFyYWliYTELMAkGA1UE
+BhMCQlIxGDAWBgNVBAMTD2lkcC5pZnBiLmVkdS5icjCCASIwDQYJKoZIhvcNAQEBBQADggEPADCC
+AQoCggEBANZ5IlaQxWRUtbccktlNZQQBAWQi/f86zxT/f8ilpR8Lmss8W3TG3/U5L4MoscHCEQfO
+fBgAoQqxHsj8V1VDoL8BNfR6XAFqeWfKf8B8wcbX8CnNY9FZbgs2g1z2xsNQuAbFYunxUe3Y5A1x
+wH0aD04g8E4ubcEnLisB3an5zK/dWbGdBjUSuNADzgqbhftpFjZFPDi8DYezjYYxHUX5MNv6lb5/
+uQ7JjTWT3QssD0qG6pgNNANpQA8Jl2IWGb1qnNtjb9UbUPwYF2R6k4oXBFo+I2XW2cMUFvowftOp
+iNP/IrAAKIX0BGWuEtjL4VHoKvOtNwnikGw1DQYtUUvxNvkCAwEAATANBgkqhkiG9w0BAQUFAAOC
+AQEAZhN6yFJijeBhyIU+td6IXlEQ9hNJ4CJdGXb/jpnyYj5DOYSBKE/0mQd4zPoME7Xc9+Zz8FEr
+WxephrvNVm8sSNmWjKqGJpCtvAjhJhL48QkjqgGWQJq0kVyHEfuwFbva3mH22I1oRrsnw44paMVH
+OrNtcEkf2NL2aDYQL1qLooSFjrvndyvfEIlxa+QJP8D9pgD3GLtiyPt4WWcUb4SmXrVc1RpFZSyU
+tVN4EFbgvRCPqHc+GX/5vjxJwTl7tFO9Jqa0C5i/4mRhqW5wRqd7I35KTJTimc/bkCPbbyEGhzyW
+dtZGIWPGqY+fZw8Z6WcAOOr25/JEw/veCHLskaV6GA==</ds:X509Certificate>
+         </ds:X509Data>
+      </ds:KeyInfo>
+   </ds:Signature>
+   <saml1p:Status>
+      <saml1p:StatusCode Value="saml1p:Success" />
+   </saml1p:Status>
+   <saml1:Assertion xmlns:saml1="urn:oasis:names:tc:SAML:1.0:assertion" AssertionID="_e39fc8ad45d4c5f2dbfab1673bcaeaf1" IssueInstant="2015-08-12T19:08:28.160Z" Issuer="https://idp.ifpb.edu.br/idp/shibboleth" MajorVersion="1" MinorVersion="1">
+      <saml1:Conditions NotBefore="2015-08-12T19:08:28.160Z" NotOnOrAfter="2015-08-12T19:13:28.160Z">
+         <saml1:AudienceRestrictionCondition>
+            <saml1:Audience>https://verify2.newsbank.com/shibboleth</saml1:Audience>
+         </saml1:AudienceRestrictionCondition>
+      </saml1:Conditions>
+      <saml1:AuthenticationStatement AuthenticationInstant="2015-08-12T19:08:28.104Z" AuthenticationMethod="urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport">
+         <saml1:Subject>
+            <saml1:NameIdentifier Format="urn:mace:shibboleth:1.0:nameIdentifier" NameQualifier="https://idp.ifpb.edu.br/idp/shibboleth">_4b160eecddedadd00d79f26f2766b05f</saml1:NameIdentifier>
+            <saml1:SubjectConfirmation>
+               <saml1:ConfirmationMethod>urn:oasis:names:tc:SAML:1.0:cm:bearer</saml1:ConfirmationMethod>
+            </saml1:SubjectConfirmation>
+         </saml1:Subject>
+         <saml1:SubjectLocality IPAddress="177.36.9.10" />
+      </saml1:AuthenticationStatement>
+   </saml1:Assertion>
+</saml1p:Response>
