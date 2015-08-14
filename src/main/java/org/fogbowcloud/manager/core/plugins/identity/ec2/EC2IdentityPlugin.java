@@ -1,7 +1,10 @@
 package org.fogbowcloud.manager.core.plugins.identity.ec2;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
@@ -13,20 +16,35 @@ import org.fogbowcloud.manager.occi.model.Token;
 
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.identitymanagement.AmazonIdentityManagementClient;
-import com.amazonaws.services.identitymanagement.model.GetAccountSummaryResult;
+import com.amazonaws.services.identitymanagement.model.GetUserResult;
+import com.google.common.collect.ImmutableMap;
 
 public class EC2IdentityPlugin implements IdentityPlugin {
 
-	private final static Logger LOGGER = Logger.getLogger(EC2IdentityPlugin.class);
+	private static final Logger LOGGER = Logger.getLogger(EC2IdentityPlugin.class);
+	private static final long EXPIRATION_INTERVAL = TimeUnit.DAYS.toMillis(365); // One year 
+	
+	public static final String CRED_ACCESS_KEY = "accessKey";
+	public static final String CRED_SECRET_KEY = "secretKey";
+	
+	private static final String FEDERATION_USER_ACCESS_KEY = "local_proxy_account_ec2_access_key";
+	private static final String FEDERATION_USER_SECRET_KEY = "local_proxy_account_ec2_secret_key";
+	
+	private Properties properties;
+	
+	public EC2IdentityPlugin(Properties properties) {
+		this.properties = properties;
+	}
 	
 	@Override
 	public Token createToken(Map<String, String> userCredentials) {
-		return null;
+		return getToken(userCredentials.get(CRED_ACCESS_KEY) + 
+				":" + userCredentials.get(CRED_SECRET_KEY));
 	}
 
 	@Override
 	public Token reIssueToken(Token token) {
-		return null;
+		return token;
 	}
 
 	@Override
@@ -36,31 +54,48 @@ public class EC2IdentityPlugin implements IdentityPlugin {
 		String secretKey = accessIdSplit[1];
 		
 		BasicAWSCredentials awsCreds = new BasicAWSCredentials(accessKey, secretKey);
-		AmazonIdentityManagementClient idClient = new AmazonIdentityManagementClient(awsCreds);
 		
-		GetAccountSummaryResult accountAttributes = null;
+		GetUserResult getUserResult = null;
 		try {
-			accountAttributes = idClient.getAccountSummary();
+			AmazonIdentityManagementClient idClient = new AmazonIdentityManagementClient(awsCreds);
+			getUserResult = idClient.getUser();
 		} catch (Exception e) {
 			LOGGER.error("Couldn't load account summary from IAM.", e);
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}
-		return new Token(accessId, null, null, new HashMap<String, String>());
+		
+		Map<String, String> attributes = new HashMap<String, String>();
+		attributes.put(CRED_ACCESS_KEY, accessKey);
+		attributes.put(CRED_SECRET_KEY, secretKey);
+		
+		return new Token(accessId, getUserResult.getUser().getArn(), 
+				new Date(new Date().getTime() + EXPIRATION_INTERVAL), 
+				attributes);
 	}
 
 	@Override
 	public boolean isValid(String accessId) {
-		return false;
+		try {
+			getToken(accessId);
+			return true;
+		} catch (Exception e) {
+			return false;
+		}
 	}
 
 	@Override
 	public Token createFederationUserToken() {
-		return null;
+		ImmutableMap<String, String> credentials = ImmutableMap.of(
+				CRED_ACCESS_KEY, properties.getProperty(FEDERATION_USER_ACCESS_KEY), 
+				CRED_SECRET_KEY, properties.getProperty(FEDERATION_USER_SECRET_KEY));
+		return createToken(credentials);
 	}
 
 	@Override
 	public Credential[] getCredentials() {
-		return null;
+		return new Credential[]{
+				new Credential(CRED_ACCESS_KEY, true, null), 
+				new Credential(CRED_SECRET_KEY, true, null)};
 	}
 
 	@Override
