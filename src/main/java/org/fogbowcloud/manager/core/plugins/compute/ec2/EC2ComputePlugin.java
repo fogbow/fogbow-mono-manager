@@ -75,7 +75,7 @@ public class EC2ComputePlugin implements ComputePlugin {
 	public EC2ComputePlugin(Properties properties) {
 		this.region = properties.getProperty("compute_ec2_region");
 		this.securityGroup = properties.getProperty("compute_ec2_security_group");
-		this.imageBucketName = properties.getProperty("compute_ec2_bucket_name");
+		this.imageBucketName = properties.getProperty("compute_ec2_image_bucket_name");
 		this.maxVCPU = Integer.parseInt(properties.getProperty("compute_ec2_max_vcpu"));
 		this.maxRAM = Integer.parseInt(properties.getProperty("compute_ec2_max_ram"));
 		this.maxInstances = Integer.parseInt(properties.getProperty("compute_ec2_max_instances"));
