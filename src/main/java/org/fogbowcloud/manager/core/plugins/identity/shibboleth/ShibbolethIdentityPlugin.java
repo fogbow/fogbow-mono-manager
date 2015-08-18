@@ -30,7 +30,6 @@ import org.opensaml.xml.Configuration;
 import org.opensaml.xml.ConfigurationException;
 import org.opensaml.xml.XMLObject;
 import org.opensaml.xml.io.Unmarshaller;
-import org.opensaml.xml.io.UnmarshallingException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.InputSource;
@@ -42,21 +41,26 @@ public class ShibbolethIdentityPlugin implements IdentityPlugin {
 	private static final String IDENTIFIER_ATTRIBUTE = "eduPersonPrincipalName";
 	private static final String DEFAULT_ASSERTION_URL = "http://localhost/Shibboleth.sso/GetAssertion";
 	
-	
 	public static final String CRED_ASSERTION_KEY = "assertionKey";
 	public static final String CRED_ASSERTION_ID = "assertionId";
 
 	private static final long DEFAULT_EXPIRATION_INTERVAL = 60 * 60 * 1000; // One hour
 	
 	private String getAssertionURL;
+	private HttpClientWrapper httpClient;
 	
-	public ShibbolethIdentityPlugin(Properties props) {
+	protected ShibbolethIdentityPlugin(Properties props, HttpClientWrapper httpClient) {
 		try {
 			DefaultBootstrap.bootstrap();
 		} catch (ConfigurationException e) {
 			LOGGER.warn("Couldn't bootstrap OpenSAML", e);
 		}
 		this.getAssertionURL = props.getProperty("identity_shibboleth_get_assertion_url");
+		this.httpClient = httpClient;
+	}
+	
+	public ShibbolethIdentityPlugin(Properties props) {
+		this(props, new HttpClientWrapper());
 	}
 	
 	@Override
@@ -87,10 +91,9 @@ public class ShibbolethIdentityPlugin implements IdentityPlugin {
 		uriBuilder.addParameter("key", assertionKey);
 		uriBuilder.addParameter("ID", assertionId);
 		
-		HttpClientWrapper httpClientWrapper = new HttpClientWrapper();
 		HttpResponseWrapper responseWrapper = null;
 		try {
-			responseWrapper = httpClientWrapper.doGet(uriBuilder.build().toString());
+			responseWrapper = httpClient.doGet(uriBuilder.build().toString());
 		} catch (URISyntaxException e) {
 			LOGGER.warn("Couldn't build URL from assertion builder.", e);
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
@@ -111,7 +114,7 @@ public class ShibbolethIdentityPlugin implements IdentityPlugin {
         Assertion assertion = null;
         try {
         	assertion = (Assertion) unmarshaller.unmarshall(assertionEl);
-		} catch (UnmarshallingException e) {
+		} catch (Exception e) {
 			LOGGER.warn("Couldn't unmarshall SAML assertion from XML document.", e);
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}
@@ -167,7 +170,9 @@ public class ShibbolethIdentityPlugin implements IdentityPlugin {
 
 	@Override
 	public Credential[] getCredentials() {
-		return null;
+		return new Credential[]{
+				new Credential(CRED_ASSERTION_ID, true, null), 
+				new Credential(CRED_ASSERTION_KEY, true, null)};
 	}
 
 	@Override
@@ -177,7 +182,7 @@ public class ShibbolethIdentityPlugin implements IdentityPlugin {
 
 	@Override
 	public Token getForwardableToken(Token originalToken) {
-		return originalToken;
+		return null;
 	}
 
 }
