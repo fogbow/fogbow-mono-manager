@@ -15,8 +15,7 @@ import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.fogbowcloud.manager.occi.model.Token;
 
 import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.services.identitymanagement.AmazonIdentityManagementClient;
-import com.amazonaws.services.identitymanagement.model.GetUserResult;
+import com.amazonaws.services.ec2.AmazonEC2Client;
 import com.google.common.collect.ImmutableMap;
 
 public class EC2IdentityPlugin implements IdentityPlugin {
@@ -55,10 +54,9 @@ public class EC2IdentityPlugin implements IdentityPlugin {
 		
 		BasicAWSCredentials awsCreds = new BasicAWSCredentials(accessKey, secretKey);
 		
-		GetUserResult getUserResult = null;
 		try {
-			AmazonIdentityManagementClient idClient = new AmazonIdentityManagementClient(awsCreds);
-			getUserResult = idClient.getUser();
+			AmazonEC2Client idClient = new AmazonEC2Client(awsCreds);
+			idClient.describeAccountAttributes();
 		} catch (Exception e) {
 			LOGGER.error("Couldn't load account summary from IAM.", e);
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
@@ -68,7 +66,7 @@ public class EC2IdentityPlugin implements IdentityPlugin {
 		attributes.put(CRED_ACCESS_KEY, accessKey);
 		attributes.put(CRED_SECRET_KEY, secretKey);
 		
-		return new Token(accessId, getUserResult.getUser().getArn(), 
+		return new Token(accessId, accessKey, 
 				new Date(new Date().getTime() + EXPIRATION_INTERVAL), 
 				attributes);
 	}

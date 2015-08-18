@@ -47,6 +47,7 @@ import com.amazonaws.services.ec2.model.Filter;
 import com.amazonaws.services.ec2.model.Image;
 import com.amazonaws.services.ec2.model.ImageDiskContainer;
 import com.amazonaws.services.ec2.model.ImportImageRequest;
+import com.amazonaws.services.ec2.model.InstanceNetworkInterfaceSpecification;
 import com.amazonaws.services.ec2.model.Reservation;
 import com.amazonaws.services.ec2.model.RunInstancesRequest;
 import com.amazonaws.services.ec2.model.RunInstancesResult;
@@ -63,9 +64,11 @@ public class EC2ComputePlugin implements ComputePlugin {
 	private static final String FOGBOW_INSTANCE_TAG = "fogbow-instance";
 	private static final Logger LOGGER = Logger.getLogger(EC2ComputePlugin.class);
 	
-	private String region;
 	private Map<String, Flavor> flavors;
-	private String securityGroup;
+	
+	private String region;
+	private String securityGroupId;
+	private String subnetId;
 	private String imageBucketName;
 	
 	private int maxVCPU;
@@ -74,7 +77,8 @@ public class EC2ComputePlugin implements ComputePlugin {
 
 	public EC2ComputePlugin(Properties properties) {
 		this.region = properties.getProperty("compute_ec2_region");
-		this.securityGroup = properties.getProperty("compute_ec2_security_group");
+		this.securityGroupId = properties.getProperty("compute_ec2_security_group_id");
+		this.subnetId = properties.getProperty("compute_ec2_subnet_id");
 		this.imageBucketName = properties.getProperty("compute_ec2_image_bucket_name");
 		this.maxVCPU = Integer.parseInt(properties.getProperty("compute_ec2_max_vcpu"));
 		this.maxRAM = Integer.parseInt(properties.getProperty("compute_ec2_max_ram"));
@@ -89,6 +93,14 @@ public class EC2ComputePlugin implements ComputePlugin {
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}
 		
+		ResourcesInfo resourcesInfo = getResourcesInfo(token);
+		if (Integer.parseInt(resourcesInfo.getInstancesIdle()) == 0 || 
+				Integer.parseInt(resourcesInfo.getCpuIdle()) == 0 || 
+				Integer.parseInt(resourcesInfo.getMemIdle()) == 0) {
+			throw new OCCIException(ErrorType.QUOTA_EXCEEDED, 
+					ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES);
+		}
+		
 		AmazonEC2Client ec2Client = createEC2Client(token);
 		RunInstancesRequest runInstancesRequest = new RunInstancesRequest();
 
@@ -99,9 +111,21 @@ public class EC2ComputePlugin implements ComputePlugin {
 		runInstancesRequest.withImageId(imageId)
 				.withInstanceType(flavor.getName())
 				.withMinCount(1)
-				.withMaxCount(1)
-				.withSecurityGroups(securityGroup);
+				.withMaxCount(1);
 		
+		if (subnetId != null || securityGroupId != null) {
+			InstanceNetworkInterfaceSpecification networkSpec = 
+					new InstanceNetworkInterfaceSpecification();
+			networkSpec.withDeviceIndex(0);
+			if (subnetId != null) {
+				networkSpec.withSubnetId(subnetId);
+			}
+			if (securityGroupId != null) {
+				networkSpec.withGroups(securityGroupId);
+			}
+			runInstancesRequest.withNetworkInterfaces(networkSpec);
+		}
+				
 		String userData = xOCCIAtt.get(RequestAttribute.USER_DATA_ATT.getValue());
 		if (userData != null) {
 			runInstancesRequest.withUserData(userData);
@@ -120,7 +144,8 @@ public class EC2ComputePlugin implements ComputePlugin {
 		String instanceId = reservation.getInstances().get(0).getInstanceId();
 		
 		CreateTagsRequest createTagsRequest = new CreateTagsRequest();
-		createTagsRequest.withResources(instanceId).withTags(new Tag(FOGBOW_INSTANCE_TAG));
+		createTagsRequest.withResources(instanceId).withTags(
+				new Tag(FOGBOW_INSTANCE_TAG, Boolean.TRUE.toString()));
 		ec2Client.createTags(createTagsRequest);
 		
 		return instanceId;
