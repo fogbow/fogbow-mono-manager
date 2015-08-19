@@ -1,7 +1,6 @@
 package org.fogbowcloud.manager.core.plugins.compute.ec2;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -41,12 +40,15 @@ import com.amazonaws.services.ec2.AmazonEC2Client;
 import com.amazonaws.services.ec2.model.CreateTagsRequest;
 import com.amazonaws.services.ec2.model.DescribeImagesRequest;
 import com.amazonaws.services.ec2.model.DescribeImagesResult;
+import com.amazonaws.services.ec2.model.DescribeImportImageTasksRequest;
+import com.amazonaws.services.ec2.model.DescribeImportImageTasksResult;
 import com.amazonaws.services.ec2.model.DescribeInstancesRequest;
 import com.amazonaws.services.ec2.model.DescribeInstancesResult;
 import com.amazonaws.services.ec2.model.Filter;
 import com.amazonaws.services.ec2.model.Image;
 import com.amazonaws.services.ec2.model.ImageDiskContainer;
 import com.amazonaws.services.ec2.model.ImportImageRequest;
+import com.amazonaws.services.ec2.model.ImportImageTask;
 import com.amazonaws.services.ec2.model.InstanceNetworkInterfaceSpecification;
 import com.amazonaws.services.ec2.model.Reservation;
 import com.amazonaws.services.ec2.model.RunInstancesRequest;
@@ -55,14 +57,25 @@ import com.amazonaws.services.ec2.model.Tag;
 import com.amazonaws.services.ec2.model.TerminateInstancesRequest;
 import com.amazonaws.services.ec2.model.UserBucket;
 import com.amazonaws.services.s3.AmazonS3Client;
-import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.amazonaws.services.s3.model.AbortMultipartUploadRequest;
+import com.amazonaws.services.s3.model.CompleteMultipartUploadRequest;
+import com.amazonaws.services.s3.model.InitiateMultipartUploadRequest;
+import com.amazonaws.services.s3.model.InitiateMultipartUploadResult;
+import com.amazonaws.services.s3.model.PartETag;
+import com.amazonaws.services.s3.model.UploadPartRequest;
 import com.google.common.collect.ImmutableList;
 
 public class EC2ComputePlugin implements ComputePlugin {
 
-	private static final String FOGBOW_INSTANCE_TAG = "fogbow-instance";
+	private static final int S3_PART_SIZE = 5 * 1024 * 1024;
+
 	private static final Logger LOGGER = Logger.getLogger(EC2ComputePlugin.class);
+	
+	private static final String STATE_STOPPED = "stopped";
+	private static final String STATE_RUNNING = "running";
+	private static final String STATE_TERMINATED = "terminated";
+	
+	private static final String FOGBOW_INSTANCE_TAG = "fogbow-instance";
 	
 	private Map<String, Flavor> flavors;
 	
@@ -80,9 +93,27 @@ public class EC2ComputePlugin implements ComputePlugin {
 		this.securityGroupId = properties.getProperty("compute_ec2_security_group_id");
 		this.subnetId = properties.getProperty("compute_ec2_subnet_id");
 		this.imageBucketName = properties.getProperty("compute_ec2_image_bucket_name");
-		this.maxVCPU = Integer.parseInt(properties.getProperty("compute_ec2_max_vcpu"));
-		this.maxRAM = Integer.parseInt(properties.getProperty("compute_ec2_max_ram"));
-		this.maxInstances = Integer.parseInt(properties.getProperty("compute_ec2_max_instances"));
+		
+		String maxCPUStr = properties.getProperty("compute_ec2_max_vcpu");
+		if (maxCPUStr == null) {
+			LOGGER.error("Property compute_ec2_max_vcpu must be set.");
+			throw new IllegalArgumentException("Property compute_ec2_max_vcpu must be set.");
+		}
+		this.maxVCPU = Integer.parseInt(maxCPUStr);
+		
+		String maxRAMStr = properties.getProperty("compute_ec2_max_ram");
+		if (maxRAMStr == null) {
+			LOGGER.error("Property compute_ec2_max_ram must be set.");
+			throw new IllegalArgumentException("Property compute_ec2_max_ram must be set.");
+		}
+		this.maxRAM = Integer.parseInt(maxRAMStr);
+		
+		String maxInstancesStr = properties.getProperty("compute_ec2_max_instances");
+		if (maxInstancesStr == null) {
+			LOGGER.error("Property compute_ec2_max_instances must be set.");
+			throw new IllegalArgumentException("Property compute_ec2_max_instances must be set.");
+		}
+		this.maxInstances = Integer.parseInt(maxInstancesStr);
 	}
 	
 	@Override
@@ -172,6 +203,9 @@ public class EC2ComputePlugin implements ComputePlugin {
 		for (Reservation reservation : reservations) {
 			List<com.amazonaws.services.ec2.model.Instance> ec2Instances = reservation.getInstances();
 			for (com.amazonaws.services.ec2.model.Instance ec2Instance : ec2Instances) {
+				if (ec2Instance.getState().getName().equals(STATE_TERMINATED)) {
+					continue;
+				}
 				String instanceId = ec2Instance.getInstanceId();
 				instances.add(fullInfo ? convertInstance(ec2Instance) : new Instance(instanceId));
 			}
@@ -197,6 +231,9 @@ public class EC2ComputePlugin implements ComputePlugin {
 		List<Reservation> reservations = describeInstancesResult.getReservations();
 		for (Reservation reservation : reservations) {
 			for (com.amazonaws.services.ec2.model.Instance ec2Instance : reservation.getInstances()) {
+				if (ec2Instance.getState().getName().equals(STATE_TERMINATED)) {
+					continue;
+				}
 				return convertInstance(ec2Instance);
 			}
 		}
@@ -267,19 +304,12 @@ public class EC2ComputePlugin implements ComputePlugin {
 			String diskFormat) {
 		
 		AmazonS3Client s3Client = createS3Client(token);
-		FileInputStream stream = null;
 		try {
-			stream = new FileInputStream(imagePath);
-		} catch (FileNotFoundException e) {
-			LOGGER.error("Couldn't instantiate file stream.", e);
+			uploadToS3(new File(imagePath), s3Client, imageBucketName, imageName);
+		} catch (Exception e) {
+			LOGGER.error("Couldn't upload file to S3.", e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.INVALID_STATE);
 		}
-		
-		ObjectMetadata objectMetadata = new ObjectMetadata();
-		
-		PutObjectRequest putObjectRequest = new PutObjectRequest(
-				imageBucketName, imageName, stream, objectMetadata);
-		s3Client.putObject(putObjectRequest);
 		
 		AmazonEC2Client ec2Client = createEC2Client(token);
 		
@@ -287,6 +317,7 @@ public class EC2ComputePlugin implements ComputePlugin {
 				.withS3Bucket(imageBucketName)
 				.withS3Key(imageName);
 		ImageDiskContainer imageDiskContainer = new ImageDiskContainer()
+				.withDescription(imageName)
 				.withFormat(diskFormat)
 				.withUserBucket(userBucket);
 		ImportImageRequest importImageRequest = new ImportImageRequest()
@@ -294,8 +325,51 @@ public class EC2ComputePlugin implements ComputePlugin {
 				.withDescription(imageName);
 		
 		ec2Client.importImage(importImageRequest);
+		
+		try {
+			s3Client.deleteObject(imageBucketName, imageName);
+		} catch (Exception e) {
+			LOGGER.warn("Couldn't cleanup image from S3 bucket after importing it to EC2.", e);
+		}
 	}
 
+	private void uploadToS3(File file, AmazonS3Client s3Client, 
+			String bucketName, String keyName) throws Exception {
+		List<PartETag> partETags = new ArrayList<PartETag>();
+		InitiateMultipartUploadRequest initRequest = new InitiateMultipartUploadRequest(
+				bucketName, keyName);
+		InitiateMultipartUploadResult initResponse = s3Client
+				.initiateMultipartUpload(initRequest);
+
+		long contentLength = file.length();
+		long partSize = S3_PART_SIZE;
+		try {
+			long filePosition = 0;
+			for (int i = 1; filePosition < contentLength; i++) {
+				partSize = Math.min(partSize, (contentLength - filePosition));
+
+				UploadPartRequest uploadRequest = new UploadPartRequest()
+						.withBucketName(bucketName).withKey(keyName)
+						.withUploadId(initResponse.getUploadId())
+						.withPartNumber(i).withFileOffset(filePosition)
+						.withFile(file).withPartSize(partSize);
+
+				partETags.add(s3Client.uploadPart(uploadRequest).getPartETag());
+
+				filePosition += partSize;
+			}
+			CompleteMultipartUploadRequest compRequest = new CompleteMultipartUploadRequest(
+					bucketName, keyName, initResponse.getUploadId(),
+					partETags);
+
+			s3Client.completeMultipartUpload(compRequest);
+		} catch (Exception e) {
+			s3Client.abortMultipartUpload(new AbortMultipartUploadRequest(
+					bucketName, keyName, initResponse.getUploadId()));
+			throw e;
+		}
+	}
+	
 	@Override
 	public String getImageId(Token token, String imageName) {
 		AmazonEC2Client ec2Client = createEC2Client(token);
@@ -317,7 +391,30 @@ public class EC2ComputePlugin implements ComputePlugin {
 
 	@Override
 	public ImageState getImageState(Token token, String imageName) {
-		return ImageState.ACTIVE;
+		AmazonEC2Client ec2Client = createEC2Client(token);
+		DescribeImportImageTasksRequest describeImportImageTasksRequest = new DescribeImportImageTasksRequest();
+		DescribeImportImageTasksResult imageTasksResult = 
+				ec2Client.describeImportImageTasks(describeImportImageTasksRequest);
+		
+		ImportImageTask imageTask = null;
+		List<ImportImageTask> imageTasks = imageTasksResult.getImportImageTasks();
+		for (ImportImageTask importImageTask : imageTasks) {
+			if (importImageTask.getDescription().equals(imageName)) {
+				imageTask = importImageTask;
+				break;
+			}
+		}
+		
+		if (imageTask == null) {
+			return ImageState.ACTIVE;
+		}
+		if (imageTask.getStatus().equals("active")) {
+			return ImageState.PENDING;
+		}
+		if (imageTask.getStatus().equals("completed")) {
+			return ImageState.ACTIVE;
+		}
+		return ImageState.FAILED;
 	}
 	
 	private AmazonEC2Client createEC2Client(Token token) {
@@ -373,10 +470,10 @@ public class EC2ComputePlugin implements ComputePlugin {
 	}
 
 	private InstanceState getInstanceState(String instanceStatus) {
-		if ("running".equalsIgnoreCase(instanceStatus)) {
+		if (STATE_RUNNING.equalsIgnoreCase(instanceStatus)) {
 			return InstanceState.RUNNING;
 		}
-		if ("stopped".equalsIgnoreCase(instanceStatus)) {
+		if (STATE_STOPPED.equalsIgnoreCase(instanceStatus)) {
 			return InstanceState.SUSPENDED;
 		}
 		return InstanceState.PENDING;
