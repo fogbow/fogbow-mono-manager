@@ -456,7 +456,8 @@ public class EC2ComputePlugin implements ComputePlugin {
 		
 		Flavor flavor = getFlavors().get(ec2Instance.getInstanceType());
 		
-		attributes.put("occi.compute.memory", flavor.getMem());
+		attributes.put("occi.compute.memory", String.valueOf(
+				Integer.parseInt(flavor.getMem()) / 1024));
 		attributes.put("occi.compute.cores", flavor.getCpu());
 
 		attributes.put("occi.compute.hostname", ec2Instance.getPrivateDnsName());

@@ -6,36 +6,36 @@ public class Flavor {
 	private String name;
 	private String id;
 	private String cpu;
-	private String mem;
+	private String memInMB;
 	private String disk;
 
-	public Flavor(String name, String cpu, String mem, String disk) {
+	public Flavor(String name, String cpu, String memInMB, String disk) {
 		this.setName(name);
 		this.setCpu(cpu);
-		this.setMem(mem);
+		this.setMem(memInMB);
 		this.setDisk(disk);
 	}
 	
-	public Flavor(String name, String cpu, String mem, Integer capacity) {
+	public Flavor(String name, String cpu, String memInMB, Integer capacity) {
 		this.setName(name);
 		this.setCpu(cpu);
-		this.setMem(mem);
+		this.setMem(memInMB);
 		this.setCapacity(capacity);
 	}
 	
-	public Flavor(String name, String id, String cpu, String mem, String disk) {
+	public Flavor(String name, String id, String cpu, String memInMB, String disk) {
 		this.setName(name);
 		this.setCpu(cpu);
-		this.setMem(mem);
+		this.setMem(memInMB);
 		this.setDisk(disk);
 		this.setId(id);
 	}
 	
-	public Flavor(String name, String cpu, String mem, String disk, Integer capacity) {		
+	public Flavor(String name, String cpu, String memInMB, String disk, Integer capacity) {		
 		this.setCapacity(capacity);
 		this.setName(name);
 		this.setCpu(cpu);
-		this.setMem(mem);
+		this.setMem(memInMB);
 		this.setDisk(disk);
 	}
 
@@ -72,11 +72,11 @@ public class Flavor {
 	}
 
 	public String getMem() {
-		return mem;
+		return memInMB;
 	}
 
 	public void setMem(String mem) {
-		this.mem = mem;
+		this.memInMB = mem;
 	}
 	
 	public String getId() {
@@ -98,6 +98,6 @@ public class Flavor {
 	
 	@Override
 	public String toString() {
-		return "Name: " + getName() + ", cpu: " + cpu + ", mem: " + mem + ", capacity: " + capacity;
+		return "Name: " + getName() + ", cpu: " + cpu + ", mem: " + memInMB + ", capacity: " + capacity;
 	}
 }
