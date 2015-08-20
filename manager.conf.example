@@ -61,7 +61,8 @@ compute_novav2_network_id=ea51ed0c-0e8a-448d-8202-c79777109ffe
 
 ## Compute Plugin (EC2)
 # compute_ec2_region=us-east-1
-# compute_ec2_security_group=my-security-group
+# compute_ec2_security_group_id=sg-12345678
+# compute_ec2_subnet_id=subnet-12345678
 # compute_ec2_image_bucket_name=s3-bucket-for-images
 # compute_ec2_max_vcpu=10
 # compute_ec2_max_ram=10240

@@ -67,9 +67,10 @@ import com.google.common.collect.ImmutableList;
 
 public class EC2ComputePlugin implements ComputePlugin {
 
-	private static final int S3_PART_SIZE = 5 * 1024 * 1024;
-
 	private static final Logger LOGGER = Logger.getLogger(EC2ComputePlugin.class);
+	
+	private static final String FLAVORS_JSON_URL = "https://a0.awsstatic.com/pricing/1/deprecated/ec2/linux-od.json";
+	private static final int S3_PART_SIZE = 5 * 1024 * 1024;
 	
 	private static final String STATE_STOPPED = "stopped";
 	private static final String STATE_RUNNING = "running";
@@ -461,6 +462,8 @@ public class EC2ComputePlugin implements ComputePlugin {
 		attributes.put("occi.compute.hostname", ec2Instance.getPrivateDnsName());
 		attributes.put("occi.core.id", iid);
 		
+		attributes.put(Instance.SSH_PUBLIC_ADDRESS_ATT, ec2Instance.getPublicIpAddress());
+		
 		List<Resource> resources = new ArrayList<Resource>();
 		resources.add(ResourceRepository.getInstance().get("compute"));
 		resources.add(ResourceRepository.getInstance().get("os_tpl"));
@@ -486,7 +489,7 @@ public class EC2ComputePlugin implements ComputePlugin {
 		}
 		
 		HttpClientWrapper httpClient = new HttpClientWrapper();
-		HttpResponseWrapper response = httpClient.doGet("https://a0.awsstatic.com/pricing/1/deprecated/ec2/linux-od.json");
+		HttpResponseWrapper response = httpClient.doGet(FLAVORS_JSON_URL);
 		JSONObject content = null;
 		try {
 			content = new JSONObject(response.getContent());
@@ -509,8 +512,9 @@ public class EC2ComputePlugin implements ComputePlugin {
 			JSONArray sizes = instanceTypes.optJSONObject(i).optJSONArray("sizes");
 			for (int j = 0; j < sizes.length(); j++) {
 				JSONObject size = sizes.optJSONObject(j);
-				Flavor flavor = new Flavor(size.optString("size"), size.optString("vCPU"), 
-						size.optString("memoryGiB"), 
+				Flavor flavor = new Flavor(size.optString("size"), 
+						size.optString("vCPU"), 
+						String.valueOf(size.optInt("memoryGiB") * 1024), 
 						storageToGB(size.optString("storageGB")));
 				flavors.put(size.optString("size"), flavor);
 			}
@@ -545,4 +549,5 @@ public class EC2ComputePlugin implements ComputePlugin {
 		}
 		return totalStorage.toString();
 	}
+	
 }

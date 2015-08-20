@@ -459,13 +459,14 @@ public class ManagerController {
 						request.getInstanceId());
 			}
 
+			instance.addAttribute(Instance.SSH_USERNAME_ATT, getSSHCommonUser());
 			Map<String, String> serviceAddresses = getExternalServiceAddresses(request.getId());
 			if (serviceAddresses != null) {
 				instance.addAttribute(Instance.SSH_PUBLIC_ADDRESS_ATT, serviceAddresses.get(SSH_SERVICE_NAME));
-				instance.addAttribute(Instance.SSH_USERNAME_ATT, getSSHCommonUser());
 				serviceAddresses.remove(SSH_SERVICE_NAME);
 				instance.addAttribute(Instance.EXTRA_PORTS_ATT, new JSONObject(serviceAddresses).toString());
 			}
+			
 			Category osCategory = getImageCategory(request.getCategories());
 			if (osCategory != null) {
 				instance.addResource(
@@ -510,9 +511,14 @@ public class ManagerController {
 			return null;
 		}
 		
+		String hostAddr = properties.getProperty(
+				ConfigurationConstants.TOKEN_HOST_PRIVATE_ADDRESS_KEY);
+		if (hostAddr == null) {
+			return null;
+		}
+		
 		HttpResponse response = null;
 		try {
-			String hostAddr = properties.getProperty(ConfigurationConstants.TOKEN_HOST_PRIVATE_ADDRESS_KEY);
 			String httpHostPort = properties.getProperty(ConfigurationConstants.TOKEN_HOST_HTTP_PORT_KEY);
 			HttpGet httpGet = new HttpGet("http://" + hostAddr + ":" + httpHostPort + "/token/"
 					+ tokenId + "/all");
