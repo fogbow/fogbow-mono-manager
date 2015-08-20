@@ -77,6 +77,7 @@ public class EC2ComputePlugin implements ComputePlugin {
 	private static final String STATE_TERMINATED = "terminated";
 	
 	private static final String FOGBOW_INSTANCE_TAG = "fogbow-instance";
+	private static final String DEFAULT_SSH_HOST_PORT = "22";
 	
 	private Map<String, Flavor> flavors;
 	
@@ -463,7 +464,8 @@ public class EC2ComputePlugin implements ComputePlugin {
 		attributes.put("occi.compute.hostname", ec2Instance.getPrivateDnsName());
 		attributes.put("occi.core.id", iid);
 		
-		attributes.put(Instance.SSH_PUBLIC_ADDRESS_ATT, ec2Instance.getPublicIpAddress());
+		attributes.put(Instance.SSH_PUBLIC_ADDRESS_ATT, 
+				ec2Instance.getPublicIpAddress() + ":" + DEFAULT_SSH_HOST_PORT);
 		
 		List<Resource> resources = new ArrayList<Resource>();
 		resources.add(ResourceRepository.getInstance().get("compute"));
