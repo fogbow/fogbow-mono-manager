@@ -127,19 +127,23 @@ public class EC2ComputePlugin implements ComputePlugin {
 		}
 		
 		ResourcesInfo resourcesInfo = getResourcesInfo(token);
-		if (Integer.parseInt(resourcesInfo.getInstancesIdle()) == 0 || 
-				Integer.parseInt(resourcesInfo.getCpuIdle()) == 0 || 
-				Integer.parseInt(resourcesInfo.getMemIdle()) == 0) {
+		if (Integer.parseInt(resourcesInfo.getInstancesIdle()) == 0) {
+			throw new OCCIException(ErrorType.QUOTA_EXCEEDED, 
+					ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES);
+		}
+		
+		Flavor flavor = RequirementsHelper.findSmallestFlavor(
+				new LinkedList<Flavor>(getFlavors().values()), 
+				xOCCIAtt.get(RequestAttribute.REQUIREMENTS.getValue()));
+		
+		if (Integer.parseInt(resourcesInfo.getCpuIdle()) < Integer.parseInt(flavor.getCpu()) || 
+				Integer.parseInt(resourcesInfo.getMemIdle()) < Integer.parseInt(flavor.getMem())) {
 			throw new OCCIException(ErrorType.QUOTA_EXCEEDED, 
 					ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES);
 		}
 		
 		AmazonEC2Client ec2Client = createEC2Client(token);
 		RunInstancesRequest runInstancesRequest = new RunInstancesRequest();
-
-		Flavor flavor = RequirementsHelper.findSmallestFlavor(
-				new LinkedList<Flavor>(getFlavors().values()), 
-				xOCCIAtt.get(RequestAttribute.REQUIREMENTS.getValue()));
 		
 		runInstancesRequest.withImageId(imageId)
 				.withInstanceType(flavor.getName())
