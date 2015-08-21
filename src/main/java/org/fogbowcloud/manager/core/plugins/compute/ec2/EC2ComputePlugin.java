@@ -76,7 +76,7 @@ public class EC2ComputePlugin implements ComputePlugin {
 	private static final String STATE_RUNNING = "running";
 	private static final String STATE_TERMINATED = "terminated";
 	
-	private static final String FOGBOW_INSTANCE_TAG = "fogbow-instance";
+	protected static final String FOGBOW_INSTANCE_TAG = "fogbow-instance";
 	private static final String DEFAULT_SSH_HOST_PORT = "22";
 	
 	private Map<String, Flavor> flavors;
@@ -90,7 +90,14 @@ public class EC2ComputePlugin implements ComputePlugin {
 	private int maxRAM;
 	private int maxInstances;
 
+	private HttpClientWrapper httpClient;
+
 	public EC2ComputePlugin(Properties properties) {
+		this(properties, new HttpClientWrapper());
+	}
+	
+	protected EC2ComputePlugin(Properties properties, HttpClientWrapper httpClient) {
+		this.httpClient = httpClient;
 		this.region = properties.getProperty("compute_ec2_region");
 		this.securityGroupId = properties.getProperty("compute_ec2_security_group_id");
 		this.subnetId = properties.getProperty("compute_ec2_subnet_id");
@@ -423,7 +430,7 @@ public class EC2ComputePlugin implements ComputePlugin {
 		return ImageState.FAILED;
 	}
 	
-	private AmazonEC2Client createEC2Client(Token token) {
+	protected AmazonEC2Client createEC2Client(Token token) {
 		BasicAWSCredentials awsCreds = loadCredentials(token);
 		AmazonEC2Client ec2Client = new AmazonEC2Client(awsCreds);
 		ec2Client.setRegion(Region.getRegion(Regions.fromName(region)));
@@ -495,7 +502,6 @@ public class EC2ComputePlugin implements ComputePlugin {
 			return flavors;
 		}
 		
-		HttpClientWrapper httpClient = new HttpClientWrapper();
 		HttpResponseWrapper response = httpClient.doGet(FLAVORS_JSON_URL);
 		JSONObject content = null;
 		try {
