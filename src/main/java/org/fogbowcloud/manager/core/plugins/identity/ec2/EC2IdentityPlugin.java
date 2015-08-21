@@ -52,11 +52,8 @@ public class EC2IdentityPlugin implements IdentityPlugin {
 		String accessKey = accessIdSplit[0];
 		String secretKey = accessIdSplit[1];
 		
-		BasicAWSCredentials awsCreds = new BasicAWSCredentials(accessKey, secretKey);
-		
 		try {
-			AmazonEC2Client idClient = new AmazonEC2Client(awsCreds);
-			idClient.describeAccountAttributes();
+			createEC2Client(accessKey, secretKey).describeAccountAttributes();
 		} catch (Exception e) {
 			LOGGER.error("Couldn't load account summary from IAM.", e);
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
@@ -69,6 +66,12 @@ public class EC2IdentityPlugin implements IdentityPlugin {
 		return new Token(accessId, accessKey, 
 				new Date(new Date().getTime() + EXPIRATION_INTERVAL), 
 				attributes);
+	}
+
+	protected AmazonEC2Client createEC2Client(String accessKey, String secretKey) {
+		BasicAWSCredentials awsCreds = new BasicAWSCredentials(accessKey, secretKey);
+		AmazonEC2Client ec2Client = new AmazonEC2Client(awsCreds);
+		return ec2Client;
 	}
 
 	@Override
