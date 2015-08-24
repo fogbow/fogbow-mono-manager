@@ -13,6 +13,13 @@ import org.restlet.Response;
 
 public interface ComputePlugin {
 
+	/**
+	 * @param token
+	 * @param categories, list of categories.
+	 * @param xOCCIAtt
+	 * @param imageId
+	 * @return the instance ID
+	 */
 	public String requestInstance(Token token,List<Category> categories, 
 			Map<String, String> xOCCIAtt, String imageId);
 
@@ -24,6 +31,10 @@ public interface ComputePlugin {
 	
 	public void removeInstances(Token token);
 	
+	/**
+	 * @param token
+	 * @return the amount of resources still available in the cloud.
+	 */
 	public ResourcesInfo getResourcesInfo(Token token);
 	
 	public void bypass(Request request, Response response);
