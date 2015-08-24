@@ -1,5 +1,6 @@
 package org.fogbowcloud.manager.core.plugins.compute.ec2;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.util.Date;
 import java.util.HashMap;
@@ -10,6 +11,7 @@ import java.util.Properties;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.ProtocolVersion;
 import org.apache.http.message.BasicStatusLine;
+import org.fogbowcloud.manager.core.model.ImageState;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.util.HttpClientWrapper;
 import org.fogbowcloud.manager.core.plugins.util.HttpResponseWrapper;
@@ -18,16 +20,33 @@ import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
 
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.ec2.AmazonEC2Client;
+import com.amazonaws.services.ec2.model.DescribeImagesRequest;
+import com.amazonaws.services.ec2.model.DescribeImagesResult;
+import com.amazonaws.services.ec2.model.DescribeImportImageTasksRequest;
+import com.amazonaws.services.ec2.model.DescribeImportImageTasksResult;
 import com.amazonaws.services.ec2.model.DescribeInstancesRequest;
 import com.amazonaws.services.ec2.model.DescribeInstancesResult;
+import com.amazonaws.services.ec2.model.Filter;
+import com.amazonaws.services.ec2.model.Image;
+import com.amazonaws.services.ec2.model.ImageDiskContainer;
+import com.amazonaws.services.ec2.model.ImportImageRequest;
+import com.amazonaws.services.ec2.model.ImportImageTask;
 import com.amazonaws.services.ec2.model.InstanceState;
 import com.amazonaws.services.ec2.model.Reservation;
 import com.amazonaws.services.ec2.model.Tag;
 import com.amazonaws.services.ec2.model.TerminateInstancesRequest;
+import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.model.CompleteMultipartUploadRequest;
+import com.amazonaws.services.s3.model.CompleteMultipartUploadResult;
+import com.amazonaws.services.s3.model.InitiateMultipartUploadRequest;
+import com.amazonaws.services.s3.model.InitiateMultipartUploadResult;
+import com.amazonaws.services.s3.model.UploadPartRequest;
+import com.amazonaws.services.s3.model.UploadPartResult;
 import com.google.common.collect.ImmutableList;
 
 public class TestEC2ComputePlugin {
@@ -221,7 +240,263 @@ public class TestEC2ComputePlugin {
 		
 		computePlugin.getInstances(createToken());
 	}
+	
+	@Test
+	public void testGetImageId() {
+		EC2ComputePlugin computePlugin = createEC2ComputePlugin();
+		AmazonEC2Client ec2Client = createEC2Client(computePlugin);
+		
+		DescribeImagesResult describeImagesResult = new DescribeImagesResult().withImages(
+				new Image().withImageId("ami-1234567"));
+		Mockito.doReturn(describeImagesResult).when(ec2Client).describeImages(
+				Mockito.any(DescribeImagesRequest.class));
+		
+		String imageId = computePlugin.getImageId(createToken(), "ubuntu");
+		
+		Assert.assertEquals("ami-1234567", imageId);
+		
+		DescribeImagesRequest describeImagesRequest = new DescribeImagesRequest().withFilters(
+				new Filter("description", ImmutableList.of("ubuntu")));
+		Mockito.verify(ec2Client).describeImages(Mockito.eq(describeImagesRequest));
+	}
+	
+	@Test
+	public void testGetImageIdWithFailure() {
+		EC2ComputePlugin computePlugin = createEC2ComputePlugin();
+		AmazonEC2Client ec2Client = createEC2Client(computePlugin);
+		
+		Mockito.doThrow(new AmazonServiceException(null)).when(ec2Client).describeImages(
+				Mockito.any(DescribeImagesRequest.class));
+		
+		String imageId = computePlugin.getImageId(createToken(), "ubuntu");
+		
+		Assert.assertNull(imageId);
+		
+		DescribeImagesRequest describeImagesRequest = new DescribeImagesRequest().withFilters(
+				new Filter("description", ImmutableList.of("ubuntu")));
+		Mockito.verify(ec2Client).describeImages(Mockito.eq(describeImagesRequest));
+	}
+	
+	@Test
+	public void testGetImageIdNoImages() {
+		EC2ComputePlugin computePlugin = createEC2ComputePlugin();
+		AmazonEC2Client ec2Client = createEC2Client(computePlugin);
+		
+		DescribeImagesResult describeImagesResult = new DescribeImagesResult().withImages();
+		Mockito.doReturn(describeImagesResult).when(ec2Client).describeImages(
+				Mockito.any(DescribeImagesRequest.class));
+		
+		String imageId = computePlugin.getImageId(createToken(), "ubuntu");
+		
+		Assert.assertNull(imageId);
+		
+		DescribeImagesRequest describeImagesRequest = new DescribeImagesRequest().withFilters(
+				new Filter("description", ImmutableList.of("ubuntu")));
+		Mockito.verify(ec2Client).describeImages(Mockito.eq(describeImagesRequest));
+	}
+	
+	@Test
+	public void testGetImageStateNoUploadTask() {
+		EC2ComputePlugin computePlugin = createEC2ComputePlugin();
+		AmazonEC2Client ec2Client = createEC2Client(computePlugin);
+		
+		DescribeImportImageTasksResult importTasksResult = 
+				new DescribeImportImageTasksResult().withImportImageTasks();
+		
+		Mockito.doReturn(importTasksResult).when(ec2Client).describeImportImageTasks(
+				Mockito.any(DescribeImportImageTasksRequest.class));
+		
+		ImageState imageState = computePlugin.getImageState(createToken(), "ubuntu");
+		
+		Assert.assertEquals(ImageState.ACTIVE, imageState);
+		
+		DescribeImportImageTasksRequest describeImportTasks = new DescribeImportImageTasksRequest();
+		Mockito.verify(ec2Client).describeImportImageTasks(Mockito.eq(describeImportTasks));
+	}
+	
+	@Test
+	public void testGetImageStateUploadTaskWithDifferentName() {
+		EC2ComputePlugin computePlugin = createEC2ComputePlugin();
+		AmazonEC2Client ec2Client = createEC2Client(computePlugin);
+		
+		DescribeImportImageTasksResult importTasksResult = 
+				new DescribeImportImageTasksResult().withImportImageTasks(
+						new ImportImageTask().withDescription("non-ubuntu"));
+		
+		Mockito.doReturn(importTasksResult).when(ec2Client).describeImportImageTasks(
+				Mockito.any(DescribeImportImageTasksRequest.class));
+		
+		ImageState imageState = computePlugin.getImageState(createToken(), "ubuntu");
+		
+		Assert.assertEquals(ImageState.ACTIVE, imageState);
+		
+		DescribeImportImageTasksRequest describeImportTasks = new DescribeImportImageTasksRequest();
+		Mockito.verify(ec2Client).describeImportImageTasks(Mockito.eq(describeImportTasks));
+	}
 
+	@Test
+	public void testGetImageStateUploadTaskWithActiveTask() {
+		EC2ComputePlugin computePlugin = createEC2ComputePlugin();
+		AmazonEC2Client ec2Client = createEC2Client(computePlugin);
+		
+		DescribeImportImageTasksResult importTasksResult = 
+				new DescribeImportImageTasksResult().withImportImageTasks(
+						new ImportImageTask()
+							.withDescription("ubuntu")
+							.withStatus("active"));
+		
+		Mockito.doReturn(importTasksResult).when(ec2Client).describeImportImageTasks(
+				Mockito.any(DescribeImportImageTasksRequest.class));
+		
+		ImageState imageState = computePlugin.getImageState(createToken(), "ubuntu");
+		
+		Assert.assertEquals(ImageState.PENDING, imageState);
+		
+		DescribeImportImageTasksRequest describeImportTasks = new DescribeImportImageTasksRequest();
+		Mockito.verify(ec2Client).describeImportImageTasks(Mockito.eq(describeImportTasks));
+	}
+	
+	@Test
+	public void testGetImageStateUploadTaskWithCompletedTask() {
+		EC2ComputePlugin computePlugin = createEC2ComputePlugin();
+		AmazonEC2Client ec2Client = createEC2Client(computePlugin);
+		
+		DescribeImportImageTasksResult importTasksResult = 
+				new DescribeImportImageTasksResult().withImportImageTasks(
+						new ImportImageTask()
+							.withDescription("ubuntu")
+							.withStatus("completed"));
+		
+		Mockito.doReturn(importTasksResult).when(ec2Client).describeImportImageTasks(
+				Mockito.any(DescribeImportImageTasksRequest.class));
+		
+		ImageState imageState = computePlugin.getImageState(createToken(), "ubuntu");
+		
+		Assert.assertEquals(ImageState.ACTIVE, imageState);
+		
+		DescribeImportImageTasksRequest describeImportTasks = new DescribeImportImageTasksRequest();
+		Mockito.verify(ec2Client).describeImportImageTasks(Mockito.eq(describeImportTasks));
+	}
+	
+	@Test
+	public void testGetImageStateUploadTaskInUnknownState() {
+		EC2ComputePlugin computePlugin = createEC2ComputePlugin();
+		AmazonEC2Client ec2Client = createEC2Client(computePlugin);
+		
+		DescribeImportImageTasksResult importTasksResult = 
+				new DescribeImportImageTasksResult().withImportImageTasks(
+						new ImportImageTask()
+							.withDescription("ubuntu")
+							.withStatus("unknown"));
+		
+		Mockito.doReturn(importTasksResult).when(ec2Client).describeImportImageTasks(
+				Mockito.any(DescribeImportImageTasksRequest.class));
+		
+		ImageState imageState = computePlugin.getImageState(createToken(), "ubuntu");
+		
+		Assert.assertEquals(ImageState.FAILED, imageState);
+		
+		DescribeImportImageTasksRequest describeImportTasks = new DescribeImportImageTasksRequest();
+		Mockito.verify(ec2Client).describeImportImageTasks(Mockito.eq(describeImportTasks));
+	}
+	
+	@Test(expected=AmazonServiceException.class)
+	public void testGetImageStateWithFailure() {
+		EC2ComputePlugin computePlugin = createEC2ComputePlugin();
+		AmazonEC2Client ec2Client = createEC2Client(computePlugin);
+		
+		Mockito.doThrow(new AmazonServiceException(null)).when(ec2Client).describeImportImageTasks(
+				Mockito.any(DescribeImportImageTasksRequest.class));
+		
+		computePlugin.getImageState(createToken(), "ubuntu");
+	}
+	
+	@Test
+	public void testUploadImage() {
+		EC2ComputePlugin computePlugin = createEC2ComputePlugin();
+		AmazonEC2Client ec2Client = createEC2Client(computePlugin);
+		AmazonS3Client s3Client = createS3Client(computePlugin);
+		
+		final String bucketName = "image_bucket_name";
+		final String keyName = "ubuntu";
+		final String uploadId = "upload-id";
+		File uploadingFile = new File("src/test/resources/ec2/file-to-be-uploaded");
+		
+		InitiateMultipartUploadResult initResponse = new InitiateMultipartUploadResult();
+		initResponse.setUploadId(uploadId);
+		Mockito.doReturn(initResponse).when(s3Client).initiateMultipartUpload(Mockito.argThat(
+				new ArgumentMatcher<InitiateMultipartUploadRequest>() {
+					@Override
+					public boolean matches(Object argument) {
+						InitiateMultipartUploadRequest requestArg = (InitiateMultipartUploadRequest) argument;
+						return requestArg.getBucketName().equals(bucketName) 
+								&& requestArg.getKey().equals(keyName);
+					}
+		}));
+		
+		UploadPartRequest uploadRequest1 = new UploadPartRequest()
+				.withBucketName(bucketName).withKey(keyName)
+				.withUploadId(initResponse.getUploadId())
+				.withPartNumber(1).withFileOffset(0)
+				.withFile(uploadingFile).withPartSize(EC2ComputePlugin.S3_PART_SIZE);
+		
+		UploadPartRequest uploadRequest2 = new UploadPartRequest()
+				.withBucketName(bucketName).withKey(keyName)
+				.withUploadId(initResponse.getUploadId())
+				.withPartNumber(2).withFileOffset(EC2ComputePlugin.S3_PART_SIZE)
+				.withFile(uploadingFile).withPartSize(1024);
+		
+		Mockito.doReturn(new UploadPartResult()).when(s3Client).uploadPart(
+				Mockito.argThat(createUploadRequestMatcher(uploadRequest1)));
+		Mockito.doReturn(new UploadPartResult()).when(s3Client).uploadPart(
+				Mockito.argThat(createUploadRequestMatcher(uploadRequest2)));
+		
+		Mockito.doReturn(new CompleteMultipartUploadResult()).when(s3Client).completeMultipartUpload(Mockito.argThat(
+				new ArgumentMatcher<CompleteMultipartUploadRequest>() {
+					@Override
+					public boolean matches(Object argument) {
+						CompleteMultipartUploadRequest requestArg = (CompleteMultipartUploadRequest) argument;
+						return requestArg.getUploadId().equals(uploadId);
+					}
+		}));
+		
+		final String diskFormat = "vpc";
+		computePlugin.uploadImage(createToken(), 
+				uploadingFile.getAbsolutePath(), keyName, diskFormat);
+		
+		Mockito.verify(ec2Client).importImage(Mockito.argThat(
+				new ArgumentMatcher<ImportImageRequest>() {
+			@Override
+			public boolean matches(Object argument) {
+				ImportImageRequest requestArg = (ImportImageRequest) argument;
+				ImageDiskContainer diskContainer = requestArg.getDiskContainers().get(0);
+				return requestArg.getDescription().equals(keyName) 
+						&& diskContainer.getDescription().equals(keyName)
+						&& diskContainer.getFormat().equals(diskFormat)
+						&& diskContainer.getUserBucket().getS3Bucket().equals(bucketName)
+						&& diskContainer.getUserBucket().getS3Key().equals(keyName);
+			}
+		}));
+		
+		Mockito.verify(s3Client).deleteObject(
+				Mockito.eq(bucketName), Mockito.eq(keyName));
+	}
+	
+	private ArgumentMatcher<UploadPartRequest> createUploadRequestMatcher(
+			final UploadPartRequest req) {
+		return new ArgumentMatcher<UploadPartRequest>() {
+			@Override
+			public boolean matches(Object argument) {
+				UploadPartRequest requestArg = (UploadPartRequest) argument;
+				return requestArg.getBucketName().equals(req.getBucketName())
+						&& requestArg.getKey().equals(req.getKey())
+						&& requestArg.getPartNumber() == req.getPartNumber()
+						&& requestArg.getFileOffset() == req.getFileOffset()
+						&& requestArg.getPartSize() == req.getPartSize();
+			}
+		};
+	}
+	
 	private Token createToken() {
 		Token token = new Token("AccessKey:AccessSecret", "AccessKey", 
 				new Date(), new HashMap<String, String>());
@@ -259,6 +534,13 @@ public class TestEC2ComputePlugin {
 		return ec2Client;
 	}
 	
+	private AmazonS3Client createS3Client(EC2ComputePlugin computePlugin) {
+		AmazonS3Client s3Client = Mockito.mock(AmazonS3Client.class);
+		Mockito.doReturn(s3Client).when(
+				computePlugin).createS3Client(Mockito.any(Token.class));
+		return s3Client;
+	}
+	
 	private static final ProtocolVersion PROTO = new ProtocolVersion("HTTP", 1, 1);
 	
 	private EC2ComputePlugin createEC2ComputePlugin() {
@@ -267,6 +549,7 @@ public class TestEC2ComputePlugin {
 		properties.setProperty("compute_ec2_max_vcpu", "2");
 		properties.setProperty("compute_ec2_max_ram", "2048");
 		properties.setProperty("compute_ec2_max_instances", "2");
+		properties.setProperty("compute_ec2_image_bucket_name", "image_bucket_name");
 		
 		HttpClientWrapper clientWrapper = Mockito.mock(HttpClientWrapper.class);
 		String jdFlavors = null;
@@ -285,6 +568,4 @@ public class TestEC2ComputePlugin {
 		EC2ComputePlugin computePlugin = Mockito.spy(new EC2ComputePlugin(properties));
 		return computePlugin;
 	}
-	
-	
 }

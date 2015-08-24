@@ -70,7 +70,7 @@ public class EC2ComputePlugin implements ComputePlugin {
 	private static final Logger LOGGER = Logger.getLogger(EC2ComputePlugin.class);
 	
 	private static final String FLAVORS_JSON_URL = "https://a0.awsstatic.com/pricing/1/deprecated/ec2/linux-od.json";
-	private static final int S3_PART_SIZE = 5 * 1024 * 1024;
+	protected static final int S3_PART_SIZE = 5 * 1024 * 1024;
 	
 	private static final String STATE_STOPPED = "stopped";
 	private static final String STATE_RUNNING = "running";
@@ -437,7 +437,7 @@ public class EC2ComputePlugin implements ComputePlugin {
 		return ec2Client;
 	}
 	
-	private AmazonS3Client createS3Client(Token token) {
+	protected AmazonS3Client createS3Client(Token token) {
 		BasicAWSCredentials awsCreds = loadCredentials(token);
 		AmazonS3Client s3Client = new AmazonS3Client(awsCreds);
 		s3Client.setRegion(Region.getRegion(Regions.fromName(region)));
