@@ -69,13 +69,14 @@ public class AzureComputePlugin implements ComputePlugin {
 	private static final String DELETE_CLOUD_SERVICE_COMMAND = "/services/hostedservices/%s";
 	private static final String LIST_IMAGES_COMMAND = "/services/vmimages";
 
-	private static final String AZURE_VM_DEFAULT_LABEL = "A Fogbow VM";
+	private static final String AZURE_VM_DEFAULT_LABEL = "FogbowVM";
 	private static final String[] AZURE_STATE_RUNNING = { "Running" };
 	private static final String[] AZURE_STATE_FAILED = { "Deleting" };
 	private static final String[] AZURE_STATE_PENDING = { "Deploying",
 			"Starting", "RunningTransitioning", "SuspendedTransitioning" };
 	private static final String[] AZURE_STATE_SUSPENDED = { "Suspending",
 			"Suspended" };
+	
 	private static final String STORAGE_CONTAINER = "vhd-store";
 
 	private static final int XML_VM_NAME = 0;
@@ -96,7 +97,7 @@ public class AzureComputePlugin implements ComputePlugin {
 	private Properties properties;
 	private int maxVCPU;
 	private int maxRAM;
-	private int maxInstances;
+	private int maxInstances;	
 
 	private String region;
 
@@ -154,6 +155,7 @@ public class AzureComputePlugin implements ComputePlugin {
 		String userName = "fogbow" + (int) (Math.random() * 10000);
 		String deploymentName = userName;
 		String userpassword = UUID.randomUUID().toString();
+		System.out.println(userpassword);
 		VirtualMachineCreateDeploymentParameters deploymentParameters = new VirtualMachineCreateDeploymentParameters();
 
 		ResourcesInfo resourcesInfo = getResourcesInfo(token);
@@ -161,9 +163,9 @@ public class AzureComputePlugin implements ComputePlugin {
 			throw new OCCIException(ErrorType.QUOTA_EXCEEDED,
 					ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES);
 		}
-
+		
 		Flavor flavor = RequirementsHelper.findSmallestFlavor(
-				getFlavors(token),
+				new LinkedList<Flavor>(getFlavors(token)), 
 				xOCCIAtt.get(RequestAttribute.REQUIREMENTS.getValue()));
 
 		if (Integer.parseInt(resourcesInfo.getCpuIdle()) < Integer
@@ -184,9 +186,9 @@ public class AzureComputePlugin implements ComputePlugin {
 			throw new OCCIException(ErrorType.BAD_REQUEST,
 					"It was not possible to create the Hosted Service");
 		}
+		
 		String userData = xOCCIAtt.get(RequestAttribute.USER_DATA_ATT
-				.getValue());
-
+				.getValue());	
 		deploymentParameters.setDeploymentSlot(DeploymentSlot.Staging);
 		deploymentParameters.setName(deploymentName);
 		deploymentParameters.setLabel(AZURE_VM_DEFAULT_LABEL);
@@ -389,22 +391,14 @@ public class AzureComputePlugin implements ComputePlugin {
 		configurationSet.setComputerName(computerName);
 		configurationSet.setUserName(username);
 		configurationSet.setUserPassword(userPassword);
-		configurationSet.setDisableSshPasswordAuthentication(false);
-		if (userData != null)
+		configurationSet.setDisableSshPasswordAuthentication(true);
+		if (userData != null) {
 			configurationSet.setCustomData(userData);
-
-		InputEndpoint inputEndpoint = new InputEndpoint();
-		inputEndpoint.setLocalPort(22);
-		inputEndpoint.setPort(22);
-		inputEndpoint.setEnableDirectServerReturn(false);
-		inputEndpoint.setName("SSH");
-		inputEndpoint.setProtocol(InputEndpointTransportProtocol.TCP);
-
-		ArrayList<InputEndpoint> endpoints = new ArrayList<InputEndpoint>();
-		endpoints.add(inputEndpoint);
-		configurationSet.setInputEndpoints(endpoints);
+		}
+		
 		configurationSet.setHostName(virtualMachineName + ".cloudapp.net");
 		configurationSetList.add(configurationSet);
+		configurationSetList.add(createSSHConfiguration());
 
 		OSVirtualHardDisk oSVirtualHardDisk = new OSVirtualHardDisk();
 		oSVirtualHardDisk.setName(osVHarddiskName);
@@ -419,6 +413,21 @@ public class AzureComputePlugin implements ComputePlugin {
 		role.setOSVirtualHardDisk(oSVirtualHardDisk);
 		roleList.add(role);
 		return roleList;
+	}
+	
+	private ConfigurationSet createSSHConfiguration() {
+		ConfigurationSet configurationSet = new ConfigurationSet();
+		configurationSet.setConfigurationSetType(ConfigurationSetTypes.NETWORKCONFIGURATION);
+		InputEndpoint inputEndpoint = new InputEndpoint();
+		inputEndpoint.setLocalPort(22);
+		inputEndpoint.setPort(22);
+		inputEndpoint.setEnableDirectServerReturn(false);
+		inputEndpoint.setName("SSH");
+		inputEndpoint.setProtocol(InputEndpointTransportProtocol.TCP);
+		ArrayList<InputEndpoint> endpoints = configurationSet.getInputEndpoints();
+		endpoints.add(inputEndpoint);
+		configurationSet.setInputEndpoints(endpoints);
+		return configurationSet;
 	}
 
 	private InstanceState getOCCIStatus(String azureStatus) {
@@ -444,6 +453,16 @@ public class AzureComputePlugin implements ComputePlugin {
 		}
 		return InstanceState.PENDING;
 	}
+	
+	private Flavor getFlavorByName(String flavorStr, Token token) {
+		Flavor flavor = null;
+		for (Flavor flavorSearch : getFlavors(token)) {
+			if (flavorSearch.getName().equals(flavorStr)) {
+				flavor = flavorSearch;
+			}
+		}
+		return flavor;
+	}
 
 	private Instance mountInstanceFromXML(Token token,
 			HttpResponseWrapper response) {
@@ -460,13 +479,8 @@ public class AzureComputePlugin implements ComputePlugin {
 		String flavorStr = roleInstance.getChildren()
 				.get(XML_ROLE_INSTANCE_FLAVOR).getText();
 
-		Flavor flavor = null;
-		for (Flavor flavorSearch : getFlavors(token)) {
-			if (flavorSearch.getName().equals(flavorStr)) {
-				flavor = flavorSearch;
-			}
-		}
-
+		Flavor flavor = getFlavorByName(flavorStr, token);
+		
 		attributes.put("occi.core.id", id);
 		attributes.put("occi.compute.hostname", name);
 		attributes.put("occi.compute.cores", flavor.getCpu());
