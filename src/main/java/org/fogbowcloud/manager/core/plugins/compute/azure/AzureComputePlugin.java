@@ -1,7 +1,11 @@
 package org.fogbowcloud.manager.core.plugins.compute.azure;
 
-import java.io.StringReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -10,9 +14,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 
-import org.apache.http.HttpStatus;
-import org.apache.http.StatusLine;
-import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.RequirementsHelper;
 import org.fogbowcloud.manager.core.model.Flavor;
@@ -20,9 +21,6 @@ import org.fogbowcloud.manager.core.model.ImageState;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.common.azure.AzureAttributes;
-import org.fogbowcloud.manager.core.plugins.util.HttpClientWrapper;
-import org.fogbowcloud.manager.core.plugins.util.HttpResponseWrapper;
-import org.fogbowcloud.manager.core.plugins.util.SslHelper;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.instance.InstanceState;
 import org.fogbowcloud.manager.occi.model.Category;
@@ -33,28 +31,45 @@ import org.fogbowcloud.manager.occi.model.ResourceRepository;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.request.RequestAttribute;
-import org.jdom2.Document;
-import org.jdom2.Element;
-import org.jdom2.input.SAXBuilder;
 import org.restlet.Request;
 import org.restlet.Response;
 
+import com.microsoft.azure.storage.CloudStorageAccount;
+import com.microsoft.azure.storage.StorageCredentials;
+import com.microsoft.azure.storage.StorageException;
+import com.microsoft.azure.storage.blob.CloudBlobClient;
+import com.microsoft.azure.storage.blob.CloudBlobContainer;
+import com.microsoft.azure.storage.blob.CloudBlockBlob;
 import com.microsoft.windowsazure.Configuration;
 import com.microsoft.windowsazure.core.utils.KeyStoreType;
+import com.microsoft.windowsazure.exception.ServiceException;
+import com.microsoft.windowsazure.management.ManagementClient;
+import com.microsoft.windowsazure.management.ManagementService;
+import com.microsoft.windowsazure.management.RoleSizeOperations;
 import com.microsoft.windowsazure.management.compute.ComputeManagementClient;
 import com.microsoft.windowsazure.management.compute.ComputeManagementService;
+import com.microsoft.windowsazure.management.compute.DeploymentOperations;
 import com.microsoft.windowsazure.management.compute.HostedServiceOperations;
 import com.microsoft.windowsazure.management.compute.models.ConfigurationSet;
 import com.microsoft.windowsazure.management.compute.models.ConfigurationSetTypes;
+import com.microsoft.windowsazure.management.compute.models.DeploymentGetResponse;
 import com.microsoft.windowsazure.management.compute.models.DeploymentSlot;
+import com.microsoft.windowsazure.management.compute.models.DeploymentStatus;
 import com.microsoft.windowsazure.management.compute.models.HostedServiceCreateParameters;
+import com.microsoft.windowsazure.management.compute.models.HostedServiceListResponse;
+import com.microsoft.windowsazure.management.compute.models.HostedServiceListResponse.HostedService;
 import com.microsoft.windowsazure.management.compute.models.InputEndpoint;
 import com.microsoft.windowsazure.management.compute.models.InputEndpointTransportProtocol;
 import com.microsoft.windowsazure.management.compute.models.OSVirtualHardDisk;
 import com.microsoft.windowsazure.management.compute.models.Role;
+import com.microsoft.windowsazure.management.compute.models.RoleInstance;
 import com.microsoft.windowsazure.management.compute.models.VirtualMachineCreateDeploymentParameters;
+import com.microsoft.windowsazure.management.compute.models.VirtualMachineOSImageCreateParameters;
+import com.microsoft.windowsazure.management.compute.models.VirtualMachineOSImageGetResponse;
 import com.microsoft.windowsazure.management.compute.models.VirtualMachineRoleType;
 import com.microsoft.windowsazure.management.configuration.ManagementConfiguration;
+import com.microsoft.windowsazure.management.models.RoleSizeListResponse;
+import com.microsoft.windowsazure.management.models.RoleSizeListResponse.RoleSize;
 
 public class AzureComputePlugin implements ComputePlugin {
 
@@ -62,50 +77,21 @@ public class AzureComputePlugin implements ComputePlugin {
 			.getLogger(AzureComputePlugin.class);
 
 	private static final String BASE_URL = "https://management.core.windows.net/";
-	private static final String GET_FLAVOR_COMMAND = "/rolesizes";
-	private static final String GET_CLOUD_SERVICE_COMMAND = "/services/hostedservices";
-	private static final String GET_VMS_COMMAND = "/services/hostedservices/%s/deployments/%s";
-	private static final String DELETE_VM_COMMAND = "/services/hostedservices/%s/deployments/%s";
-	private static final String DELETE_CLOUD_SERVICE_COMMAND = "/services/hostedservices/%s";
-	private static final String LIST_IMAGES_COMMAND = "/services/vmimages";
-
 	private static final String AZURE_VM_DEFAULT_LABEL = "FogbowVM";
-	private static final String[] AZURE_STATE_RUNNING = { "Running" };
-	private static final String[] AZURE_STATE_FAILED = { "Deleting" };
-	private static final String[] AZURE_STATE_PENDING = { "Deploying",
-			"Starting", "RunningTransitioning", "SuspendedTransitioning" };
-	private static final String[] AZURE_STATE_SUSPENDED = { "Suspending",
-			"Suspended" };
-	
 	private static final String STORAGE_CONTAINER = "vhd-store";
 
-	private static final int XML_VM_NAME = 0;
-	private static final int XML_VM_ID = 0;
-	private static final int XML_VM_STATE = 3;
-	private static final int XML_ROLE_INSTANCES = 7;
-	private static final int XML_ROLE_INSTANCE = 0;
-	private static final int XML_ROLE_INSTANCE_FLAVOR = 5;
-	private static final int XML_FLAVOR_NAME = 0;
-	private static final int XML_FLAVOR_CPU = 2;
-	private static final int XML_FLAVOR_MEM = 3;
-	private static final int XML_FLAVOR_DISK = 8;
-	private static final int XML_CLOUD_SERVICE = 1;
-
-	private SSLConnectionSocketFactory sslSocketFactory;
 	protected List<Flavor> flavors;
-	private HttpClientWrapper httpWrapper;
-	private Properties properties;
 	private int maxVCPU;
 	private int maxRAM;
 	private int maxInstances;	
 
 	private String region;
 
-	protected AzureComputePlugin(HttpClientWrapper httpWrapper,
-			Properties properties) {
-		this.httpWrapper = httpWrapper;
-		this.properties = properties;
+	private String storageAccountName;
 
+	private String storageKey;
+
+	public AzureComputePlugin(Properties properties) {
 		this.region = properties.getProperty("compute_azure_region");
 		if (region == null) {
 			region = "East US";
@@ -135,10 +121,15 @@ public class AzureComputePlugin implements ComputePlugin {
 					"Property compute_azure_max_instances must be set.");
 		}
 		this.maxInstances = Integer.parseInt(maxInstancesStr);
-	}
-
-	public AzureComputePlugin(Properties properties) {
-		this(new HttpClientWrapper(), properties);
+		String storageAccountName = properties
+				.getProperty("compute_azure_storage_account_name");
+		if (storageAccountName == null) {
+			LOGGER.error("Property compute_azure_storage_account_name must be set");
+			throw new IllegalArgumentException(
+					"Property compute_azure_storage_account_name must be set");
+		}
+		this.storageAccountName = storageAccountName;
+		this.storageKey = properties.getProperty("compute_azure_storage_key");
 	}
 
 	@Override
@@ -152,10 +143,11 @@ public class AzureComputePlugin implements ComputePlugin {
 			throw new OCCIException(ErrorType.BAD_REQUEST,
 					ResponseConstants.IRREGULAR_SYNTAX);
 		}
-		String userName = "fogbow" + (int) (Math.random() * 10000);
+		
+		String userName = "fogbow" + (int) (Math.random() * 100000);
 		String deploymentName = userName;
 		String userpassword = UUID.randomUUID().toString();
-		System.out.println(userpassword);
+		
 		VirtualMachineCreateDeploymentParameters deploymentParameters = new VirtualMachineCreateDeploymentParameters();
 
 		ResourcesInfo resourcesInfo = getResourcesInfo(token);
@@ -176,12 +168,10 @@ public class AzureComputePlugin implements ComputePlugin {
 					ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES);
 		}
 
-		ComputeManagementClient computeManagementClient = null;
+		ComputeManagementClient computeManagementClient = createComputeManagementClient(token);
 		try {
-			computeManagementClient = createComputeManagementClient(token);
 			createHostedService(computeManagementClient, deploymentName);
 		} catch (Exception e) {
-			System.out.println(e);
 			LOGGER.error("It was not possible to create the Hosted Service", e);
 			throw new OCCIException(ErrorType.BAD_REQUEST,
 					"It was not possible to create the Hosted Service");
@@ -189,7 +179,7 @@ public class AzureComputePlugin implements ComputePlugin {
 		
 		String userData = xOCCIAtt.get(RequestAttribute.USER_DATA_ATT
 				.getValue());	
-		deploymentParameters.setDeploymentSlot(DeploymentSlot.Staging);
+		deploymentParameters.setDeploymentSlot(DeploymentSlot.STAGING);
 		deploymentParameters.setName(deploymentName);
 		deploymentParameters.setLabel(AZURE_VM_DEFAULT_LABEL);
 
@@ -216,66 +206,109 @@ public class AzureComputePlugin implements ComputePlugin {
 			throw new OCCIException(ErrorType.BAD_REQUEST,
 					"Subscription ID can't be null");
 		}
-		List<String> cloudServicesNames = getCloudServicesNames(token);
+		ComputeManagementClient computeManagementClient = createComputeManagementClient(token);
+		HostedServiceOperations hostedServicesOperations = computeManagementClient.getHostedServicesOperations();
+		HostedServiceListResponse hostedServiceListResponse = null;
+		try {
+			hostedServiceListResponse = hostedServicesOperations.list();
+		} catch (Exception e) {
+			LOGGER.error("Couldn't list hosted services.", e);
+			throw new OCCIException(ErrorType.BAD_REQUEST, "Couldn't list hosted services.");
+		}
+		
+		ArrayList<HostedService> hostedServices = hostedServiceListResponse.getHostedServices();
 		List<Instance> instances = new LinkedList<Instance>();
-		for (String cloudService : cloudServicesNames) {
-			Instance instance = getInstance(token, cloudService);
-			if (instance != null) {
-				instances.add(instance);
+		for (HostedService hostedService : hostedServices) {
+			String serviceLabel = hostedService.getProperties().getLabel();
+			if (serviceLabel == null || !serviceLabel.equals(AZURE_VM_DEFAULT_LABEL)) {
+				continue;
 			}
+			DeploymentOperations deploymentsOperations = computeManagementClient.getDeploymentsOperations();
+			DeploymentGetResponse deploymentGetResponse = null;
+			try {
+				deploymentGetResponse = deploymentsOperations.getByName(
+						hostedService.getServiceName(), hostedService.getServiceName());
+			} catch (Exception e) {
+				LOGGER.error("Couldn't retrieve deployment " + hostedService.getServiceName() + ".", e);
+				throw new OCCIException(ErrorType.BAD_REQUEST, 
+						"Couldn't retrieve deployment " + hostedService.getServiceName() + ".");
+			}
+			String deploymentLabel = deploymentGetResponse.getLabel();
+			if (deploymentLabel == null || !deploymentLabel.equals(AZURE_VM_DEFAULT_LABEL)) {
+				continue;
+			}
+			
+			instances.add(toInstance(deploymentGetResponse, token));
 		}
 		return instances;
 	}
 
+	private Instance toInstance(DeploymentGetResponse deployment, Token token) {
+		Map<String, String> attributes = new HashMap<String, String>();
+
+		String name = deployment.getName();
+		String id = deployment.getName();
+		InstanceState state = getOCCIStatus(deployment.getStatus());
+
+		RoleInstance roleInstance = deployment.getRoleInstances().get(0);
+		String instanceSize = roleInstance.getInstanceSize();
+		
+		Flavor flavor = getFlavorByName(instanceSize, token);
+		
+		attributes.put("occi.core.id", id);
+		attributes.put("occi.compute.hostname", name);
+		attributes.put("occi.compute.cores", flavor.getCpu());
+		attributes.put("occi.compute.memory",
+				String.valueOf(Integer.parseInt(flavor.getMem()) / 1024)); // Gb
+		attributes.put("occi.compute.architecture", "Not defined");
+		attributes.put("occi.compute.speed", "Not defined");
+		attributes.put("occi.compute.state", state.getOcciState());
+
+		List<Resource> resources = new ArrayList<Resource>();
+		resources.add(ResourceRepository.getInstance().get("compute"));
+		resources.add(ResourceRepository.getInstance().get("os_tpl"));
+		resources.add(ResourceRepository.generateFlavorResource(instanceSize));
+
+		return new Instance(id, resources, attributes,
+				new ArrayList<Instance.Link>(), state);
+	}
+
 	@Override
 	public Instance getInstance(Token token, String instanceId) {
-		StringBuilder url = new StringBuilder(BASE_URL);
-		url.append(token.get(AzureAttributes.SUBSCRIPTION_ID_KEY));
-		url.append(String.format(GET_VMS_COMMAND, instanceId, instanceId));
-		HttpResponseWrapper response = httpWrapper.doGetSSL(url.toString(),
-				getSSLFromToken(token), getHeaders(null));
+		ComputeManagementClient computeManagementClient = createComputeManagementClient(token);
+		DeploymentOperations deploymentsOperations = computeManagementClient.getDeploymentsOperations();
+		DeploymentGetResponse deploymentGetResponse = null;
 		try {
-			checkStatusResponse(response.getStatusLine());
-			return mountInstanceFromXML(token, response);
-		} catch (OCCIException occiException) {
-			/*
-			 * Azure throws the error "not found" when there is a cloud service
-			 * not associated with any virtual machines, we want to ignore those
-			 * cloud services.
-			 */
-			if (!occiException.getType().equals(ErrorType.NOT_FOUND)) {
-				throw occiException;
-			}
+			deploymentGetResponse = deploymentsOperations.getByName(instanceId, instanceId);
+		} catch (ServiceException e) {
+			LOGGER.error("Deployment " + instanceId + " does not exist.", e);
+			throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
+		} catch (Exception e) {
+			LOGGER.error("Couldn't retrieve deployment " + instanceId + ".", e);
+			throw new OCCIException(ErrorType.BAD_REQUEST, 
+					"Couldn't retrieve deployment " + instanceId + ".");
 		}
-		return null;
-	}
-
-	public void removeCloudService(Token token, String cloudServiceId) {
-		StringBuilder url = new StringBuilder(BASE_URL);
-		url.append(token.get(AzureAttributes.SUBSCRIPTION_ID_KEY));
-		url.append(String.format(DELETE_CLOUD_SERVICE_COMMAND, cloudServiceId));
-		HttpResponseWrapper response = httpWrapper.doDeleteSSL(url.toString(),
-				getSSLFromToken(token), getHeaders(null));
-		checkStatusResponse(response.getStatusLine());
-	}
-
-	public void removeCloudServices(Token token) {
-		List<String> cloudServices = getCloudServicesNames(token);
-		for (String cloudService : cloudServices) {
-			removeCloudService(token, cloudService);
+		
+		String deploymentLabel = deploymentGetResponse.getLabel();
+		if (deploymentLabel == null || !deploymentLabel.equals(AZURE_VM_DEFAULT_LABEL)) {
+			LOGGER.error("Deployment " + instanceId + " does not exist.");
+			throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
 		}
+		
+		return toInstance(deploymentGetResponse, token);
 	}
 
 	@Override
 	public void removeInstance(Token token, String instanceId) {
-		StringBuilder urlDeleteVM = new StringBuilder(BASE_URL);
-		urlDeleteVM.append(token.get(AzureAttributes.SUBSCRIPTION_ID_KEY));
-		urlDeleteVM.append(String.format(DELETE_VM_COMMAND, instanceId,
-				instanceId));
-		HttpResponseWrapper response = httpWrapper.doDeleteSSL(
-				urlDeleteVM.toString(), getSSLFromToken(token),
-				getHeaders(null));
-		checkStatusResponse(response.getStatusLine());
+		ComputeManagementClient computeManagementClient = createComputeManagementClient(token);
+		HostedServiceOperations hostedServicesOperations = computeManagementClient.getHostedServicesOperations();
+		try {
+			hostedServicesOperations.deleteAll(instanceId);
+		} catch (Exception e) {
+			LOGGER.error("Couldn't delete cloud service " + instanceId + ".", e);
+			throw new OCCIException(ErrorType.BAD_REQUEST, 
+					"Couldn't delete cloud service " + instanceId + ".");
+		}
 	}
 
 	@Override
@@ -312,19 +345,59 @@ public class AzureComputePlugin implements ComputePlugin {
 	@Override
 	public void uploadImage(Token token, String imagePath, String imageName,
 			String diskFormat) {
-		// I think it is not possible to upload a new image in azure.
-		throw new UnsupportedOperationException();
+		
+		URI blobURI = null;
+		try {
+			blobURI = upload(imagePath, imageName);
+		} catch (Exception e) {
+			LOGGER.error("Couldn't upload image blob to Azure storage.", e);
+			throw new OCCIException(ErrorType.BAD_REQUEST, 
+					"Couldn't upload image blob to Azure storage.");
+		}
+		
+		ComputeManagementClient computeManagementClient = createComputeManagementClient(token);
+		VirtualMachineOSImageCreateParameters parameters = new VirtualMachineOSImageCreateParameters();
+		parameters.setMediaLinkUri(blobURI);
+		parameters.setIsPremium(false);
+		parameters.setLabel(imageName);
+		parameters.setName(imageName);
+		parameters.setOperatingSystemType("Linux");
+		
+		try {
+			computeManagementClient.getVirtualMachineOSImagesOperations().create(parameters);
+		} catch (Exception e) {
+			LOGGER.error("Couldn't register image " + imageName + ".", e);
+			throw new OCCIException(ErrorType.BAD_REQUEST, 
+					"Couldn't register image " + imageName + ".");
+		}
+	}
+
+	private URI upload(String imagePath, String imageName)
+			throws URISyntaxException, StorageException, IOException,
+			FileNotFoundException {
+		CloudStorageAccount cloudStorageAccount = createStorageAccount();
+		CloudBlobClient blobClient = cloudStorageAccount.createCloudBlobClient();
+		CloudBlobContainer container = blobClient.getContainerReference(STORAGE_CONTAINER);
+		CloudBlockBlob blob = container.getBlockBlobReference(imageName);
+		
+		File source = new File(imagePath); 
+		blob.upload(new FileInputStream(source), source.length());
+		URI blobURI = blob.getQualifiedUri();
+		return blobURI;
 	}
 
 	@Override
 	public String getImageId(Token token, String imageName) {
-		StringBuilder url = new StringBuilder(BASE_URL);
-		url.append(token.get(AzureAttributes.SUBSCRIPTION_ID_KEY));
-		url.append(LIST_IMAGES_COMMAND);
-		HttpResponseWrapper response = httpWrapper.doGetSSL(url.toString(),
-				getSSLFromToken(token), getHeaders(null));
-		System.out.println(response.getContent());
-		return null;
+		ComputeManagementClient computeManagementClient = createComputeManagementClient(token);
+		VirtualMachineOSImageGetResponse virtualMachineOSImageGetResponse = null;
+		try {
+			virtualMachineOSImageGetResponse = 
+					computeManagementClient.getVirtualMachineOSImagesOperations().get(imageName);
+		} catch (Exception e) {
+			LOGGER.error("Couldn't retrieve image " + imageName + ".", e);
+			return null;
+		}
+		return virtualMachineOSImageGetResponse.getName();
 	}
 
 	@Override
@@ -342,26 +415,53 @@ public class AzureComputePlugin implements ComputePlugin {
 		HostedServiceCreateParameters createParameters = new HostedServiceCreateParameters();
 		createParameters.setServiceName(hostedServiceName);
 		createParameters.setLocation(region);
+		createParameters.setLabel(AZURE_VM_DEFAULT_LABEL);
 
 		hostedServiceOperations.create(createParameters);
-		LOGGER.debug("hostedservice created: " + hostedServiceName);
 	}
 
-	protected static Configuration createConfiguration(Token token)
-			throws Exception {
-		return ManagementConfiguration.configure(new URI(BASE_URL),
-				token.get(AzureAttributes.SUBSCRIPTION_ID_KEY),
-				token.get(AzureAttributes.KEYSTORE_PATH_KEY),
-				token.get(AzureAttributes.KEYSTORE_PASSWORD_KEY),
-				KeyStoreType.jks);
+	protected static Configuration createConfiguration(Token token) {
+		try {
+			return ManagementConfiguration.configure(new URI(BASE_URL),
+					token.get(AzureAttributes.SUBSCRIPTION_ID_KEY),
+					token.get(AzureAttributes.KEYSTORE_PATH_KEY),
+					token.get(AzureAttributes.KEYSTORE_PASSWORD_KEY),
+					KeyStoreType.jks);
+		} catch (Exception e) {
+			throw new OCCIException(ErrorType.BAD_REQUEST, "Can't create azure configuration");
+		}
 	}
 
 	protected static ComputeManagementClient createComputeManagementClient(
-			Token token) throws Exception {
+			Token token) {
 		Configuration config = createConfiguration(token);
 		ComputeManagementClient computeManagementClient = ComputeManagementService
 				.create(config);
 		return computeManagementClient;
+	}
+	
+	protected CloudStorageAccount createStorageAccount() {
+		if (storageKey == null) {
+			throw new OCCIException(ErrorType.BAD_REQUEST, "Storage key is mandatory for Azure blob uploads.");
+		}
+		try {
+			StorageCredentials credentials = StorageCredentials.tryParseCredentials(
+					"DefaultEndpointsProtocol=http;"
+							+ "AccountName=" + storageAccountName + ";"
+							+ "AccountKey=" + storageKey);
+			return new CloudStorageAccount(credentials);
+		} catch (Exception e) {
+			LOGGER.error("Couldn't retrieve account from Azure storage.", e);
+			throw new OCCIException(ErrorType.BAD_REQUEST, 
+					"Couldn't retrieve account from Azure storage.");
+		}
+	}
+
+	protected static ManagementClient createManagementClient(
+			Token token) {
+		Configuration config = createConfiguration(token);
+		ManagementClient managementClient = ManagementService.create(config);
+		return managementClient;
 	}
 
 	private ArrayList<Role> createRoleList(String virtualMachineName,
@@ -373,18 +473,12 @@ public class AzureComputePlugin implements ComputePlugin {
 		Role role = new Role();
 		String roleName = virtualMachineName;
 		String computerName = virtualMachineName;
-		String storageAccountName = properties
-				.getProperty("compute_azure_storage_account_name");
-		if (storageAccountName == null) {
-			LOGGER.error("The azure storage account name can't be null");
-			throw new OCCIException(ErrorType.BAD_REQUEST,
-					"The azure storage account name can't be null");
-		}
 		URI mediaLinkUriValue = new URI("http://" + storageAccountName
 				+ ".blob.core.windows.net/" + STORAGE_CONTAINER + "/"
 				+ virtualMachineName + random + ".vhd");
 		String osVHarddiskName = username + "oshdname" + random;
 		ArrayList<ConfigurationSet> configurationSetList = new ArrayList<ConfigurationSet>();
+		
 		ConfigurationSet configurationSet = new ConfigurationSet();
 		configurationSet
 				.setConfigurationSetType(ConfigurationSetTypes.LINUXPROVISIONINGCONFIGURATION);
@@ -406,7 +500,7 @@ public class AzureComputePlugin implements ComputePlugin {
 		oSVirtualHardDisk.setSourceImageName(imageID);
 
 		role.setRoleName(roleName);
-		role.setRoleType(VirtualMachineRoleType.PersistentVMRole.toString());
+		role.setRoleType(VirtualMachineRoleType.PERSISTENTVMROLE.toString());
 		role.setRoleSize(roleSizeName);
 		role.setProvisionGuestAgent(true);
 		role.setConfigurationSets(configurationSetList);
@@ -430,26 +524,15 @@ public class AzureComputePlugin implements ComputePlugin {
 		return configurationSet;
 	}
 
-	private InstanceState getOCCIStatus(String azureStatus) {
-		for (String azureStatusRunning : AZURE_STATE_RUNNING) {
-			if (azureStatus.equals(azureStatusRunning)) {
-				return InstanceState.RUNNING;
-			}
+	private InstanceState getOCCIStatus(DeploymentStatus status) {
+		if (status.equals(DeploymentStatus.RUNNING)) {
+			return InstanceState.RUNNING;
 		}
-		for (String azureStatusPending : AZURE_STATE_PENDING) {
-			if (azureStatus.equals(azureStatusPending)) {
-				return InstanceState.PENDING;
-			}
+		if (status.equals(DeploymentStatus.DELETING)) {
+			return InstanceState.FAILED;
 		}
-		for (String azureStatusFailed : AZURE_STATE_FAILED) {
-			if (azureStatus.equals(azureStatusFailed)) {
-				return InstanceState.FAILED;
-			}
-		}
-		for (String azureStatusSuspended : AZURE_STATE_SUSPENDED) {
-			if (azureStatus.equals(azureStatusSuspended)) {
-				return InstanceState.SUSPENDED;
-			}
+		if (status.equals(DeploymentStatus.SUSPENDED)) {
+			return InstanceState.SUSPENDED;
 		}
 		return InstanceState.PENDING;
 	}
@@ -464,128 +547,31 @@ public class AzureComputePlugin implements ComputePlugin {
 		return flavor;
 	}
 
-	private Instance mountInstanceFromXML(Token token,
-			HttpResponseWrapper response) {
-		Element virtualMachine = getElementFromResponse(response.getContent());
-		Map<String, String> attributes = new HashMap<String, String>();
-
-		String name = virtualMachine.getChildren().get(XML_VM_NAME).getText();
-		String id = virtualMachine.getChildren().get(XML_VM_ID).getText();
-		String stateStr = virtualMachine.getChildren().get(XML_VM_STATE)
-				.getText();
-		Element roleInstance = virtualMachine.getChildren()
-				.get(XML_ROLE_INSTANCES).getChildren().get(XML_ROLE_INSTANCE);
-		InstanceState state = getOCCIStatus(stateStr);
-		String flavorStr = roleInstance.getChildren()
-				.get(XML_ROLE_INSTANCE_FLAVOR).getText();
-
-		Flavor flavor = getFlavorByName(flavorStr, token);
-		
-		attributes.put("occi.core.id", id);
-		attributes.put("occi.compute.hostname", name);
-		attributes.put("occi.compute.cores", flavor.getCpu());
-		attributes.put("occi.compute.memory",
-				String.valueOf(Integer.parseInt(flavor.getMem()) / 1024)); // Gb
-		attributes.put("occi.compute.architecture", "Not defined");
-		attributes.put("occi.compute.speed", "Not defined");
-		attributes.put("occi.compute.state", state.getOcciState());
-
-		List<Resource> resources = new ArrayList<Resource>();
-		resources.add(ResourceRepository.getInstance().get("compute"));
-		resources.add(ResourceRepository.getInstance().get("os_tpl"));
-		resources.add(ResourceRepository.generateFlavorResource(flavorStr));
-
-		return new Instance(id, resources, attributes,
-				new ArrayList<Instance.Link>(), state);
-	}
-
-	private List<String> getCloudServicesNames(Token token) {
-		List<String> cloudServicesNames = new LinkedList<String>();
-		StringBuilder url = new StringBuilder(BASE_URL);
-		url.append(token.get(AzureAttributes.SUBSCRIPTION_ID_KEY));
-		url.append(GET_CLOUD_SERVICE_COMMAND);
-		HttpResponseWrapper response = httpWrapper.doGetSSL(url.toString(),
-				getSSLFromToken(token), getHeaders(null));
-		checkStatusResponse(response.getStatusLine());
-		List<Element> cloudServices = getElementFromResponse(
-				response.getContent()).getChildren();
-		for (Element cloudService : cloudServices) {
-			String cloudServiceName = cloudService.getChildren()
-					.get(XML_CLOUD_SERVICE).getText();
-			cloudServicesNames.add(cloudServiceName);
-		}
-		return cloudServicesNames;
-	}
-
 	private List<Flavor> getFlavors(Token token) {
 		if (flavors != null) {
 			return flavors;
 		}
 		flavors = new LinkedList<Flavor>();
-		StringBuilder url = new StringBuilder(BASE_URL);
-		url.append(token.get(AzureAttributes.SUBSCRIPTION_ID_KEY));
-		url.append(GET_FLAVOR_COMMAND);
-		HttpResponseWrapper response = httpWrapper.doGetSSL(url.toString(),
-				getSSLFromToken(token), getHeaders(null));
-		checkStatusResponse(response.getStatusLine());
-		List<Element> flavorsAzure = getElementFromResponse(
-				response.getContent()).getChildren();
-		for (Element flavorAzure : flavorsAzure) {
-			String name = flavorAzure.getChildren().get(XML_FLAVOR_NAME)
-					.getText();
-			String cpu = flavorAzure.getChildren().get(XML_FLAVOR_CPU)
-					.getText();
-			String mem = flavorAzure.getChildren().get(XML_FLAVOR_MEM)
-					.getText();
-			String disk = String.valueOf(Integer.parseInt(flavorAzure
-					.getChildren().get(XML_FLAVOR_DISK).getText()) / 1024);
+		ManagementClient managementClient = createManagementClient(token);
+		RoleSizeOperations roleSizesOperations = managementClient.getRoleSizesOperations();
+		RoleSizeListResponse roleSizeListResponse = null;
+		try {
+			roleSizeListResponse = roleSizesOperations.list();
+		} catch (Exception e) {
+			LOGGER.error("Couldn't list role sizes.", e);
+			throw new OCCIException(ErrorType.BAD_REQUEST, "Couldn't list role sizes.");
+		}
+		
+		for (RoleSize roleSize : roleSizeListResponse.getRoleSizes()) {
+			String name = roleSize.getName();
+			String cpu = String.valueOf(roleSize.getCores());
+			String mem = String.valueOf(roleSize.getMemoryInMb());
+			String disk = String.valueOf(
+					roleSize.getVirtualMachineResourceDiskSizeInMb() / 1024);
 			Flavor flavor = new Flavor(name, cpu, mem, disk);
 			flavors.add(flavor);
 		}
 		return flavors;
-	}
-
-	private SSLConnectionSocketFactory getSSLFromToken(Token token) {
-		if (sslSocketFactory == null) {
-			sslSocketFactory = SslHelper.getSSLFromToken(token);
-		}
-		return sslSocketFactory;
-	}
-
-	private Element getElementFromResponse(String response) {
-		SAXBuilder builder = new SAXBuilder();
-		Document document;
-		try {
-			document = builder.build(new StringReader(response));
-		} catch (Exception e) {
-			LOGGER.warn("It was not possible to retrieve"
-					+ " XML from the response", e);
-			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
-		}
-		Element element = document.getRootElement();
-		return element;
-	}
-
-	protected void checkStatusResponse(StatusLine statusLine) {
-		if (statusLine.getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
-			throw new OCCIException(ErrorType.UNAUTHORIZED,
-					ResponseConstants.UNAUTHORIZED);
-		} else if (statusLine.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
-			throw new OCCIException(ErrorType.NOT_FOUND,
-					statusLine.getReasonPhrase());
-		} else if (statusLine.getStatusCode() > 204) {
-			throw new OCCIException(ErrorType.BAD_REQUEST,
-					statusLine.getReasonPhrase());
-		}
-	}
-
-	private Map<String, String> getHeaders(Map<String, String> extraHeaders) {
-		Map<String, String> headers = new HashMap<String, String>();
-		if (extraHeaders != null) {
-			headers.putAll(extraHeaders);
-		}
-		headers.put("x-ms-version", " 2015-04-01");
-		return headers;
 	}
 
 }
