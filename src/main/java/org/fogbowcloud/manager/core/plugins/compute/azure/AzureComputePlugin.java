@@ -41,6 +41,7 @@ import org.restlet.Response;
 
 import com.microsoft.windowsazure.Configuration;
 import com.microsoft.windowsazure.core.utils.KeyStoreType;
+import com.microsoft.windowsazure.core.OperationResponse;
 import com.microsoft.windowsazure.management.compute.ComputeManagementClient;
 import com.microsoft.windowsazure.management.compute.ComputeManagementService;
 import com.microsoft.windowsazure.management.compute.HostedServiceOperations;
