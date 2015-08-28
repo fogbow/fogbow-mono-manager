@@ -252,12 +252,15 @@ public class ManagerController {
 	}
 	
 	protected void garbageCollector() {
+		LOGGER.debug("Garbage collector...");
 		if (computePlugin != null) {
 			Token federationUserToken = getFederationUserToken();
 			List<Instance> federationInstances = computePlugin.getInstances(federationUserToken);
-			LOGGER.debug("Federation instances=" + federationInstances);
+			LOGGER.debug("Number of federation instances = " + federationInstances.size());
 			for (Instance instance : federationInstances) {
+				LOGGER.debug("federation instance=" + instance.getId());
 				Request request = requests.getRequestByInstance(instance.getId());
+				LOGGER.debug("request for instance " + instance.getId() + " is " + request);
 				if ((!instanceHasRequestRelatedTo(null, generateGlobalId(instance.getId(), null))
 						&& request != null && !request.isLocal()) || request == null) {
 					// this is an orphan instance
@@ -278,6 +281,7 @@ public class ManagerController {
 					String reqInstanceId = generateGlobalId(request.getInstanceId(),
 							request.getProvidingMemberId());
 					if (reqInstanceId != null && reqInstanceId.equals(instanceId)) {
+						LOGGER.debug("The instance " + instanceId + " is related to request " + request.getId());
 						return true;
 					}
 				}
@@ -285,6 +289,7 @@ public class ManagerController {
 		} else {
 			// checking federation local users instances for remote members
 			Request request = requests.get(requestId);
+			LOGGER.debug("The request with id " + requestId + " is " + request);
 			if (request == null) {
 				return false;
 			}
@@ -296,12 +301,14 @@ public class ManagerController {
 			// instanceId yet
 			if (request.getState().in(RequestState.OPEN)
 					&& asynchronousRequests.containsKey(requestId)) {
+				LOGGER.debug("The instance " + instanceId + " is related to request " + request.getId());
 				return true;
 			} else if (request.getState().in(RequestState.FULFILLED, RequestState.DELETED,
 					RequestState.SPAWNING)) {
 				String reqInstanceId = generateGlobalId(request.getInstanceId(),
 						request.getProvidingMemberId());
 				if (reqInstanceId != null && reqInstanceId.equals(instanceId)) {
+					LOGGER.debug("The instance " + instanceId + " is related to request " + request.getId());
 					return true;
 				}
 			}
@@ -459,13 +466,14 @@ public class ManagerController {
 						request.getInstanceId());
 			}
 
+			instance.addAttribute(Instance.SSH_USERNAME_ATT, getSSHCommonUser());
 			Map<String, String> serviceAddresses = getExternalServiceAddresses(request.getId());
 			if (serviceAddresses != null) {
 				instance.addAttribute(Instance.SSH_PUBLIC_ADDRESS_ATT, serviceAddresses.get(SSH_SERVICE_NAME));
-				instance.addAttribute(Instance.SSH_USERNAME_ATT, getSSHCommonUser());
 				serviceAddresses.remove(SSH_SERVICE_NAME);
 				instance.addAttribute(Instance.EXTRA_PORTS_ATT, new JSONObject(serviceAddresses).toString());
 			}
+			
 			Category osCategory = getImageCategory(request.getCategories());
 			if (osCategory != null) {
 				instance.addResource(
@@ -510,9 +518,14 @@ public class ManagerController {
 			return null;
 		}
 		
+		String hostAddr = properties.getProperty(
+				ConfigurationConstants.TOKEN_HOST_PRIVATE_ADDRESS_KEY);
+		if (hostAddr == null) {
+			return null;
+		}
+		
 		HttpResponse response = null;
 		try {
-			String hostAddr = properties.getProperty(ConfigurationConstants.TOKEN_HOST_PRIVATE_ADDRESS_KEY);
 			String httpHostPort = properties.getProperty(ConfigurationConstants.TOKEN_HOST_HTTP_PORT_KEY);
 			HttpGet httpGet = new HttpGet("http://" + hostAddr + ":" + httpHostPort + "/token/"
 					+ tokenId + "/all");
