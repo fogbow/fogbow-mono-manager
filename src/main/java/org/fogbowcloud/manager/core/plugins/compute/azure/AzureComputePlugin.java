@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 
+import org.apache.http.HttpStatus;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.RequirementsHelper;
 import org.fogbowcloud.manager.core.model.Flavor;
@@ -63,15 +64,17 @@ import com.microsoft.windowsazure.management.compute.models.InputEndpointTranspo
 import com.microsoft.windowsazure.management.compute.models.OSVirtualHardDisk;
 import com.microsoft.windowsazure.management.compute.models.Role;
 import com.microsoft.windowsazure.management.compute.models.RoleInstance;
+import com.microsoft.windowsazure.management.compute.models.VirtualIPAddress;
 import com.microsoft.windowsazure.management.compute.models.VirtualMachineCreateDeploymentParameters;
 import com.microsoft.windowsazure.management.compute.models.VirtualMachineOSImageCreateParameters;
 import com.microsoft.windowsazure.management.compute.models.VirtualMachineOSImageGetResponse;
-import com.microsoft.windowsazure.management.compute.models.VirtualMachineRoleType;
 import com.microsoft.windowsazure.management.configuration.ManagementConfiguration;
 import com.microsoft.windowsazure.management.models.RoleSizeListResponse;
 import com.microsoft.windowsazure.management.models.RoleSizeListResponse.RoleSize;
 
 public class AzureComputePlugin implements ComputePlugin {
+
+	private static final int SSH_PORT = 22;
 
 	private static final Logger LOGGER = Logger
 			.getLogger(AzureComputePlugin.class);
@@ -79,6 +82,7 @@ public class AzureComputePlugin implements ComputePlugin {
 	private static final String BASE_URL = "https://management.core.windows.net/";
 	private static final String AZURE_VM_DEFAULT_LABEL = "FogbowVM";
 	private static final String STORAGE_CONTAINER = "vhd-store";
+	private static final String PERSISTENT_VM_ROLE = "PersistentVMRole";
 
 	protected List<Flavor> flavors;
 	private int maxVCPU;
@@ -86,9 +90,7 @@ public class AzureComputePlugin implements ComputePlugin {
 	private int maxInstances;	
 
 	private String region;
-
 	private String storageAccountName;
-
 	private String storageKey;
 
 	public AzureComputePlugin(Properties properties) {
@@ -143,14 +145,27 @@ public class AzureComputePlugin implements ComputePlugin {
 			throw new OCCIException(ErrorType.BAD_REQUEST,
 					ResponseConstants.IRREGULAR_SYNTAX);
 		}
-		
+
+		ComputeManagementClient computeManagementClient = createComputeManagementClient(token);
+		try {
+			return requestInstance(token, xOCCIAtt, imageId, computeManagementClient);
+		} finally {
+			try {
+				computeManagementClient.close();
+			} catch (IOException e) {
+			}
+		}
+	}
+
+	private String requestInstance(Token token, Map<String, String> xOCCIAtt,
+			String imageId, ComputeManagementClient computeManagementClient) {
 		String userName = "fogbow" + (int) (Math.random() * 100000);
 		String deploymentName = userName;
 		String userpassword = UUID.randomUUID().toString();
 		
 		VirtualMachineCreateDeploymentParameters deploymentParameters = new VirtualMachineCreateDeploymentParameters();
 
-		ResourcesInfo resourcesInfo = getResourcesInfo(token);
+		ResourcesInfo resourcesInfo = getResourcesInfo(token, computeManagementClient);
 		if (Integer.parseInt(resourcesInfo.getInstancesIdle()) == 0) {
 			throw new OCCIException(ErrorType.QUOTA_EXCEEDED,
 					ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES);
@@ -168,7 +183,6 @@ public class AzureComputePlugin implements ComputePlugin {
 					ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES);
 		}
 
-		ComputeManagementClient computeManagementClient = createComputeManagementClient(token);
 		try {
 			createHostedService(computeManagementClient, deploymentName);
 		} catch (Exception e) {
@@ -190,8 +204,12 @@ public class AzureComputePlugin implements ComputePlugin {
 			deploymentParameters.setRoles(rolelist);
 			computeManagementClient.getVirtualMachinesOperations()
 					.createDeployment(deploymentName, deploymentParameters);
-			computeManagementClient.close();
 		} catch (Exception e) {
+			try {
+				removeInstance(token, deploymentName);
+			} catch (Exception e1) {
+				// Best effort
+			}
 			LOGGER.error("It was not possible to create the Virtual Machine", e);
 			throw new OCCIException(ErrorType.BAD_REQUEST,
 					"It was not possible to create the Virtual Machine");
@@ -207,6 +225,19 @@ public class AzureComputePlugin implements ComputePlugin {
 					"Subscription ID can't be null");
 		}
 		ComputeManagementClient computeManagementClient = createComputeManagementClient(token);
+		try {
+			List<Instance> instances = getInstances(token, computeManagementClient);
+			return instances;
+		} finally {
+			try {
+				computeManagementClient.close();
+			} catch (IOException e) {
+			}
+		}
+	}
+
+	private List<Instance> getInstances(Token token,
+			ComputeManagementClient computeManagementClient) {
 		HostedServiceOperations hostedServicesOperations = computeManagementClient.getHostedServicesOperations();
 		HostedServiceListResponse hostedServiceListResponse = null;
 		try {
@@ -228,6 +259,13 @@ public class AzureComputePlugin implements ComputePlugin {
 			try {
 				deploymentGetResponse = deploymentsOperations.getByName(
 						hostedService.getServiceName(), hostedService.getServiceName());
+			} catch (ServiceException e) {
+				if (e.getHttpStatusCode() == HttpStatus.SC_NOT_FOUND) {
+					continue;
+				}
+				LOGGER.error("Couldn't retrieve deployment " + hostedService.getServiceName() + ".", e);
+				throw new OCCIException(ErrorType.BAD_REQUEST, 
+						"Couldn't retrieve deployment " + hostedService.getServiceName() + ".");
 			} catch (Exception e) {
 				LOGGER.error("Couldn't retrieve deployment " + hostedService.getServiceName() + ".", e);
 				throw new OCCIException(ErrorType.BAD_REQUEST, 
@@ -263,6 +301,12 @@ public class AzureComputePlugin implements ComputePlugin {
 		attributes.put("occi.compute.architecture", "Not defined");
 		attributes.put("occi.compute.speed", "Not defined");
 		attributes.put("occi.compute.state", state.getOcciState());
+		
+		ArrayList<VirtualIPAddress> addresses = deployment.getVirtualIPAddresses();
+		if (!addresses.isEmpty()) {
+			attributes.put(Instance.SSH_PUBLIC_ADDRESS_ATT, 
+					addresses.get(0).getAddress().getHostAddress() + ":" + SSH_PORT);
+		}
 
 		List<Resource> resources = new ArrayList<Resource>();
 		resources.add(ResourceRepository.getInstance().get("compute"));
@@ -276,13 +320,30 @@ public class AzureComputePlugin implements ComputePlugin {
 	@Override
 	public Instance getInstance(Token token, String instanceId) {
 		ComputeManagementClient computeManagementClient = createComputeManagementClient(token);
+		try {
+			return getInstance(token, instanceId, computeManagementClient);
+		} finally {
+			try {
+				computeManagementClient.close();
+			} catch (IOException e) {
+			}
+		}
+	}
+
+	private Instance getInstance(Token token, String instanceId,
+			ComputeManagementClient computeManagementClient) {
 		DeploymentOperations deploymentsOperations = computeManagementClient.getDeploymentsOperations();
 		DeploymentGetResponse deploymentGetResponse = null;
 		try {
 			deploymentGetResponse = deploymentsOperations.getByName(instanceId, instanceId);
 		} catch (ServiceException e) {
-			LOGGER.error("Deployment " + instanceId + " does not exist.", e);
-			throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
+			if (e.getHttpStatusCode() == HttpStatus.SC_NOT_FOUND) {
+				LOGGER.error("Deployment " + instanceId + " does not exist.", e);
+				throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
+			}
+			LOGGER.error("Couldn't retrieve deployment " + instanceId + ".", e);
+			throw new OCCIException(ErrorType.BAD_REQUEST, 
+					"Couldn't retrieve deployment " + instanceId + ".");
 		} catch (Exception e) {
 			LOGGER.error("Couldn't retrieve deployment " + instanceId + ".", e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, 
@@ -301,6 +362,18 @@ public class AzureComputePlugin implements ComputePlugin {
 	@Override
 	public void removeInstance(Token token, String instanceId) {
 		ComputeManagementClient computeManagementClient = createComputeManagementClient(token);
+		try {
+			removeInstance(instanceId, computeManagementClient);
+		} catch (Exception e) {
+			try {
+				computeManagementClient.close();
+			} catch (IOException e1) {
+			}
+		}
+	}
+
+	private void removeInstance(String instanceId,
+			ComputeManagementClient computeManagementClient) {
 		HostedServiceOperations hostedServicesOperations = computeManagementClient.getHostedServicesOperations();
 		try {
 			hostedServicesOperations.deleteAll(instanceId);
@@ -313,15 +386,36 @@ public class AzureComputePlugin implements ComputePlugin {
 
 	@Override
 	public void removeInstances(Token token) {
-		List<Instance> instances = getInstances(token);
-		for (Instance instance : instances) {
-			removeInstance(token, instance.getId());
+		ComputeManagementClient computeManagementClient = createComputeManagementClient(token);
+		try {
+			List<Instance> instances = getInstances(token, computeManagementClient);
+			for (Instance instance : instances) {
+				removeInstance(instance.getId(), computeManagementClient);
+			}
+		} finally {
+			try {
+				computeManagementClient.close();
+			} catch (IOException e) {
+			}
 		}
 	}
 
 	@Override
 	public ResourcesInfo getResourcesInfo(Token token) {
-		List<Instance> instances = getInstances(token);
+		ComputeManagementClient computeManagementClient = createComputeManagementClient(token);
+		try {
+			return getResourcesInfo(token, computeManagementClient);
+		} finally {
+			try {
+				computeManagementClient.close();
+			} catch (IOException e) {
+			}
+		}
+	}
+
+	private ResourcesInfo getResourcesInfo(Token token,
+			ComputeManagementClient computeManagementClient) {
+		List<Instance> instances = getInstances(token, computeManagementClient);
 		int cpuInUse = 0;
 		int ramInUse = 0;
 		for (Instance instance : instances) {
@@ -356,6 +450,18 @@ public class AzureComputePlugin implements ComputePlugin {
 		}
 		
 		ComputeManagementClient computeManagementClient = createComputeManagementClient(token);
+		try {
+			registerImage(imageName, blobURI, computeManagementClient);
+		} finally {
+			try {
+				computeManagementClient.close();
+			} catch (IOException e) {
+			}
+		}
+	}
+
+	private void registerImage(String imageName, URI blobURI,
+			ComputeManagementClient computeManagementClient) {
 		VirtualMachineOSImageCreateParameters parameters = new VirtualMachineOSImageCreateParameters();
 		parameters.setMediaLinkUri(blobURI);
 		parameters.setIsPremium(false);
@@ -389,6 +495,18 @@ public class AzureComputePlugin implements ComputePlugin {
 	@Override
 	public String getImageId(Token token, String imageName) {
 		ComputeManagementClient computeManagementClient = createComputeManagementClient(token);
+		try {
+			return getImageId(imageName, computeManagementClient);
+		} finally {
+			try {
+				computeManagementClient.close();
+			} catch (IOException e) {
+			}
+		}
+	}
+
+	private String getImageId(String imageName,
+			ComputeManagementClient computeManagementClient) {
 		VirtualMachineOSImageGetResponse virtualMachineOSImageGetResponse = null;
 		try {
 			virtualMachineOSImageGetResponse = 
@@ -500,7 +618,7 @@ public class AzureComputePlugin implements ComputePlugin {
 		oSVirtualHardDisk.setSourceImageName(imageID);
 
 		role.setRoleName(roleName);
-		role.setRoleType(VirtualMachineRoleType.PERSISTENTVMROLE.toString());
+		role.setRoleType(PERSISTENT_VM_ROLE);
 		role.setRoleSize(roleSizeName);
 		role.setProvisionGuestAgent(true);
 		role.setConfigurationSets(configurationSetList);
@@ -514,7 +632,7 @@ public class AzureComputePlugin implements ComputePlugin {
 		configurationSet.setConfigurationSetType(ConfigurationSetTypes.NETWORKCONFIGURATION);
 		InputEndpoint inputEndpoint = new InputEndpoint();
 		inputEndpoint.setLocalPort(22);
-		inputEndpoint.setPort(22);
+		inputEndpoint.setPort(SSH_PORT);
 		inputEndpoint.setEnableDirectServerReturn(false);
 		inputEndpoint.setName("SSH");
 		inputEndpoint.setProtocol(InputEndpointTransportProtocol.TCP);
@@ -553,6 +671,18 @@ public class AzureComputePlugin implements ComputePlugin {
 		}
 		flavors = new LinkedList<Flavor>();
 		ManagementClient managementClient = createManagementClient(token);
+		try {
+			updateFlavors(managementClient);
+		} finally {
+			try {
+				managementClient.close();
+			} catch (IOException e) {
+			}
+		}
+		return flavors;
+	}
+
+	private void updateFlavors(ManagementClient managementClient) {
 		RoleSizeOperations roleSizesOperations = managementClient.getRoleSizesOperations();
 		RoleSizeListResponse roleSizeListResponse = null;
 		try {
@@ -571,7 +701,6 @@ public class AzureComputePlugin implements ComputePlugin {
 			Flavor flavor = new Flavor(name, cpu, mem, disk);
 			flavors.add(flavor);
 		}
-		return flavors;
 	}
 
 }
