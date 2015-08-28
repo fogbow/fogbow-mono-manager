@@ -49,7 +49,7 @@ public class TestVMCatcherStoragePluginTest {
 	public void testImageWithValidURLWithNoIdentifierCesga() {
 		properties.put(VMCatcherStoragePlugin.PROP_VMC_PUSH_METHOD, "cesga");
 		Assert.assertNull(plugin.getLocalId(null, "file://" + new File("").getAbsolutePath() + 
-				"/src/test/resources/imagestorage/vmcatcher/image.list.noidentifier"));
+				"/src/test/resources/imagestorage/vmcatcher/image.list.noidentifier."));
 		Mockito.verifyZeroInteractions(downloader);
 	}
 	
@@ -65,7 +65,7 @@ public class TestVMCatcherStoragePluginTest {
 	public void testImageWithValidURLWithProperIdentifierCesga() throws IOException, InterruptedException {
 		properties.put(VMCatcherStoragePlugin.PROP_VMC_PUSH_METHOD, "cesga");
 		Assert.assertNull(plugin.getLocalId(null, IMAGE_LIST_URL));
-		Mockito.verify(computePlugin).getImageId(null, "776690f9-d023-44c6-9923-b66ed853d77b");
+		Mockito.verify(computePlugin).getImageId(null, "2c24de6c-e385-49f1-b64f-f9ff35e70f43");
 		Mockito.verify(shellWrapper).execute(new HashMap<String, String>(), "vmcatcher_subscribe", 
 				"--imagelist-newimage-subscribe", "--auto-endorse", "-s", IMAGE_LIST_URL);
 		Mockito.verify(downloader).execute(Mockito.any(Runnable.class));

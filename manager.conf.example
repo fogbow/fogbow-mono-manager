@@ -61,6 +61,20 @@ compute_novav2_network_id=ea51ed0c-0e8a-448d-8202-c79777109ffe
 
 ##Compute Plugin (Azure)
 # compute_class=org.fogbowcloud.manager.core.plugins.compute.cloudstack.AzureComputePlugin
+# compute_azure_max_vcpu=10
+# compute_azure_max_ram=10240
+# compute_azure_region=East US
+# compute_azure_storage_account_name=storage1
+# compute_azure_storage_key=abcd12345
+
+## Compute Plugin (EC2)
+# compute_ec2_region=us-east-1
+# compute_ec2_security_group_id=sg-12345678
+# compute_ec2_subnet_id=subnet-12345678
+# compute_ec2_image_bucket_name=s3-bucket-for-images
+# compute_ec2_max_vcpu=10
+# compute_ec2_max_ram=10240
+# compute_ec2_max_instances=10
 
 ## Image Storage Plugin (HTTPDownload)
 image_storage_class=org.fogbowcloud.manager.core.plugins.imagestorage.http.HTTPDownloadImageStoragePlugin
@@ -131,7 +145,11 @@ local_proxy_account_tenant_name=demo
 # local_proxy_account_api_key=user_api_key
 # local_proxy_account_secret_key=user_secret_key
 
-## Authorizatio Plugin
+## Local Identity (EC2)
+# local_proxy_account_ec2_access_key=AKIALSKQLKFD7AHQLKEUO
+# local_proxy_account_ec2_secret_key=Iuaooiad&891/2309asd0123+akplkdh
+
+## Authorization Plugin
 federation_authorization_class=org.fogbowcloud.manager.core.plugins.authorization.AllowAllAuthorizationPlugin
 
 ## Federation identity (Keystone Identity Plugin)
