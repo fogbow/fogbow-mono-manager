@@ -40,7 +40,7 @@ import com.microsoft.azure.storage.StorageCredentials;
 import com.microsoft.azure.storage.StorageException;
 import com.microsoft.azure.storage.blob.CloudBlobClient;
 import com.microsoft.azure.storage.blob.CloudBlobContainer;
-import com.microsoft.azure.storage.blob.CloudBlockBlob;
+import com.microsoft.azure.storage.blob.CloudPageBlob;
 import com.microsoft.windowsazure.Configuration;
 import com.microsoft.windowsazure.core.utils.KeyStoreType;
 import com.microsoft.windowsazure.exception.ServiceException;
@@ -485,7 +485,7 @@ public class AzureComputePlugin implements ComputePlugin {
 		CloudStorageAccount cloudStorageAccount = createStorageAccount();
 		CloudBlobClient blobClient = cloudStorageAccount.createCloudBlobClient();
 		CloudBlobContainer container = blobClient.getContainerReference(STORAGE_CONTAINER);
-		CloudBlockBlob blob = container.getBlockBlobReference(imageName);
+		CloudPageBlob blob = container.getPageBlobReference(imageName);
 		
 		File source = new File(imagePath); 
 		blob.upload(new FileInputStream(source), source.length());
