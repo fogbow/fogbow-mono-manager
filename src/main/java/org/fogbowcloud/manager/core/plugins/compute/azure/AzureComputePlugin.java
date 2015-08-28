@@ -202,11 +202,12 @@ public class AzureComputePlugin implements ComputePlugin {
 					userpassword, imageId, flavor.getName(), userData,
 					computeManagementClient);
 			deploymentParameters.setRoles(rolelist);
-			computeManagementClient.getVirtualMachinesOperations()
-					.createDeployment(deploymentName, deploymentParameters);
+			computeManagementClient
+					.getVirtualMachinesOperations().createDeployment(
+							deploymentName, deploymentParameters);
 		} catch (Exception e) {
 			try {
-				removeInstance(token, deploymentName);
+				removeInstance(deploymentName, computeManagementClient);
 			} catch (Exception e1) {
 				// Best effort
 			}
