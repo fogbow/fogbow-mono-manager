@@ -75,6 +75,11 @@ public class VMCatcherStoragePlugin extends StaticImageStoragePlugin {
 			return null;
 		}
 		
+		localId = computePlugin.getImageId(token, globalId);
+		if (localId != null) {
+			return localId;
+		}
+		
 		String imageTitleTranslated = null;
 		final String pushMethod = this.props.getProperty(PROP_VMC_PUSH_METHOD);
 		if (pushMethod.equals("glancepush")) {
@@ -169,7 +174,9 @@ public class VMCatcherStoragePlugin extends StaticImageStoragePlugin {
 		if (imageListJson == null) {
 			return null;
 		}
-		return imageListJson.optString("dc:identifier", null);
+		JSONArray imagesArray = imageListJson.optJSONArray("hv:images");
+		JSONObject imageJson = imagesArray.optJSONObject(0).optJSONObject("hv:image");
+		return imageJson.optString("dc:identifier", null);
 	}
 
 	private String getImageNameWithGlancePush(JSONObject imageInfo) {

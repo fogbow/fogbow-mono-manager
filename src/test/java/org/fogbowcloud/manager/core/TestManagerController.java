@@ -2909,6 +2909,67 @@ public class TestManagerController {
 						.getFailedBatchIdsPerType(FailedBatchType.FEDERATION_USER).get(0));
 	}
 	
+	@SuppressWarnings("unchecked")
+	@Test
+	public void testSubmitRequestsSameBatchIdFailingCreateFederationUserTryingAgain() throws InterruptedException {
+		ResourcesInfo resourcesInfo = new ResourcesInfo("", "", "", "", "", "");
+		resourcesInfo.setId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		
+		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
+		Mockito.when(
+				computePlugin.requestInstance(Mockito.any(Token.class),
+						Mockito.anyList(), Mockito.anyMap(), Mockito.anyString()))
+				.thenReturn("newinstanceid")
+				.thenThrow(new OCCIException(ErrorType.UNAUTHORIZED, ""))
+				.thenThrow(new OCCIException(ErrorType.UNAUTHORIZED, ""))
+				.thenReturn("newinstanceid")
+				.thenThrow(new OCCIException(ErrorType.UNAUTHORIZED, ""));
+		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class)))
+				.thenReturn(resourcesInfo);
+		managerController.setComputePlugin(computePlugin);
+
+		String batchId = "batchIdOne";
+		HashMap<String, String> xOCCIAtt = new HashMap<String, String>();
+		xOCCIAtt.put(RequestAttribute.BATCH_ID.getValue(), batchId);
+		Token token = managerTestHelper.getDefaultFederationToken();
+		Request request1 = new Request("id1", token, token, new ArrayList<Category>(),
+				xOCCIAtt, true, "");
+		request1.setState(RequestState.OPEN);
+		Request request2 = new Request("id2", token, token, new ArrayList<Category>(),
+				xOCCIAtt, true, "");
+		request2.setState(RequestState.OPEN);
+		Request request3 = new Request("id3", token, token, new ArrayList<Category>(),
+				xOCCIAtt, true, "");
+		request3.setState(RequestState.OPEN);		
+		RequestRepository requestRepository = new RequestRepository();
+		requestRepository.addRequest(token.getUser(), request1);
+		requestRepository.addRequest(token.getUser(), request2);
+		requestRepository.addRequest(token.getUser(), request3);
+		managerController.setRequests(requestRepository);
+
+		managerController.checkAndSubmitOpenRequests();
+
+		List<Request> requestsFromUser = managerController.getRequestsFromUser(token.getAccessId());
+		Assert.assertEquals(RequestState.FULFILLED, requestsFromUser.get(0).getState());
+		Assert.assertEquals(RequestState.OPEN, requestsFromUser.get(1).getState());
+		Assert.assertEquals(RequestState.OPEN, requestsFromUser.get(2).getState());
+		Assert.assertEquals(0, managerController.getFailedBatches()
+				.getFailedBatchIdsPerType(FailedBatchType.LOCAL_USER).size());
+		Assert.assertEquals(batchId, managerController.getFailedBatches()
+				.getFailedBatchIdsPerType(FailedBatchType.FEDERATION_USER).get(0));
+		
+		managerController.checkAndSubmitOpenRequests();
+
+		requestsFromUser = managerController.getRequestsFromUser(token.getAccessId());
+		Assert.assertEquals(RequestState.FULFILLED, requestsFromUser.get(0).getState());
+		Assert.assertEquals(RequestState.FULFILLED, requestsFromUser.get(1).getState());
+		Assert.assertEquals(RequestState.OPEN, requestsFromUser.get(2).getState());
+		Assert.assertEquals(0, managerController.getFailedBatches()
+				.getFailedBatchIdsPerType(FailedBatchType.LOCAL_USER).size());
+		Assert.assertEquals(batchId, managerController.getFailedBatches()
+				.getFailedBatchIdsPerType(FailedBatchType.FEDERATION_USER).get(0));			
+	}
+	
 	@Test
 	public void testNormalizeBatchId() {
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
