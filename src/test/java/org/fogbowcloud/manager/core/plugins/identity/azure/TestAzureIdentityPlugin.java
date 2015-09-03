@@ -3,6 +3,7 @@ package org.fogbowcloud.manager.core.plugins.identity.azure;
 import java.util.HashMap;
 import java.util.Properties;
 
+import org.fogbowcloud.manager.core.plugins.common.azure.AzureAttributes;
 import org.fogbowcloud.manager.core.plugins.util.Credential;
 import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.Token;
@@ -12,11 +13,11 @@ import org.mockito.Mockito;
 
 public class TestAzureIdentityPlugin {
 	
-	private static final String SUBSCRIPTION_ID_PROPERTY = "local_proxy_account_subscription_id"; 
+	private static final String SUBSCRIPTION_ID_PROPERTY = "proxy_account_subscription_id"; 
 	private static final String SUBSCRIPTION_ID_VALUE = "subscription_id";
-	private static final String KEY_STORE_PATH_PROPERTY = "local_proxy_account_keystore_path";
+	private static final String KEY_STORE_PATH_PROPERTY = "proxy_account_keystore_path";
 	private static final String KEY_STORE_PATH_VALUE = "home/test/value";
-	private static final String KEYSTORE_PASSWORD = "local_proxy_account_keystore_password";
+	private static final String KEYSTORE_PASSWORD = "proxy_account_keystore_password";
 	private static final String KEYSTORE_PASSWORD_VALUE = "password";
 	
 	private Properties createProperties(Properties extraProperties) {
@@ -103,11 +104,11 @@ public class TestAzureIdentityPlugin {
 		AzureIdentityPlugin azureIdentityPlugin = 
 				new AzureIdentityPlugin(new Properties());
 		Credential[] credentials  = azureIdentityPlugin.getCredentials();
-		Assert.assertEquals(AzureIdentityPlugin.SUBSCRIPTION_ID_KEY, 
+		Assert.assertEquals(AzureAttributes.SUBSCRIPTION_ID_KEY, 
 				credentials[0].getName());
-		Assert.assertEquals(AzureIdentityPlugin.KEYSTORE_PATH_KEY, 
+		Assert.assertEquals(AzureAttributes.KEYSTORE_PATH_KEY, 
 				credentials[1].getName());
-		Assert.assertEquals(AzureIdentityPlugin.KEYSTORE_PASSWORD_KEY, 
+		Assert.assertEquals(AzureAttributes.KEYSTORE_PASSWORD_KEY, 
 				credentials[2].getName());
 	}
 	
