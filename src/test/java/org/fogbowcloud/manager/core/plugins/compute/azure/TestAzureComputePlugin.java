@@ -4,29 +4,58 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.plugins.common.azure.AzureAttributes;
 import org.fogbowcloud.manager.occi.instance.Instance;
+import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
 
+import com.microsoft.windowsazure.core.OperationStatusResponse;
 import com.microsoft.windowsazure.management.ManagementClient;
 import com.microsoft.windowsazure.management.compute.ComputeManagementClient;
 import com.microsoft.windowsazure.management.compute.DeploymentOperations;
 import com.microsoft.windowsazure.management.compute.HostedServiceOperations;
+import com.microsoft.windowsazure.management.compute.VirtualMachineOperations;
 import com.microsoft.windowsazure.management.compute.models.DeploymentGetResponse;
 import com.microsoft.windowsazure.management.compute.models.DeploymentStatus;
 import com.microsoft.windowsazure.management.compute.models.HostedServiceListResponse;
 import com.microsoft.windowsazure.management.compute.models.RoleInstance;
 import com.microsoft.windowsazure.management.compute.models.HostedServiceListResponse.HostedService;
 import com.microsoft.windowsazure.management.compute.models.HostedServiceProperties;
+import com.microsoft.windowsazure.management.compute.models.VirtualMachineCreateDeploymentParameters;
 
 public class TestAzureComputePlugin {
+
+	@Test
+	public void testRequestInstances() throws Exception {
+		AzureComputePlugin plugin = createAzureComputePlugin();
+		ComputeManagementClient computeManagementClient = createComputeManagementClient(plugin);
+		recordFlavors(plugin);
+		List<AzureTestInstanceConfigurationSet> instances = new LinkedList<AzureTestInstanceConfigurationSet>();
+		instances.add(new AzureTestInstanceConfigurationSet("id1"));
+		recordInstances(computeManagementClient, instances);
+
+		VirtualMachineOperations vmOperation = Mockito
+				.mock(VirtualMachineOperations.class);
+		Mockito.doReturn(vmOperation).when(computeManagementClient)
+				.getVirtualMachinesOperations();
+		Mockito.doReturn(new OperationStatusResponse()).when(vmOperation)
+				.createDeployment(Mockito.anyString(),
+						(VirtualMachineCreateDeploymentParameters) Mockito.any(Map.class));
+		HashMap<String, String> attributes = new HashMap<String, String>();
+		attributes.put(AzureAttributes.SUBSCRIPTION_ID_KEY, "subscription_key");
+		attributes.put(AzureAttributes.KEYSTORE_PATH_KEY, "/path");
+		Token token = new Token("accessId", "user", null, attributes);
+		plugin.requestInstance(token, new LinkedList<Category>(), attributes,
+				"id");
+	}
 
 	@Test
 	public void testGetInstances() throws Exception {
