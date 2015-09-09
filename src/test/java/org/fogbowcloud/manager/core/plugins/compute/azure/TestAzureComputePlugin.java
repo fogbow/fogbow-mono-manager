@@ -2,12 +2,14 @@ package org.fogbowcloud.manager.core.plugins.compute.azure;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
 
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.plugins.common.azure.AzureAttributes;
 import org.fogbowcloud.manager.occi.instance.Instance;
+import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.junit.Assert;
 import org.junit.Test;
@@ -26,14 +28,16 @@ import com.microsoft.windowsazure.management.compute.models.HostedServicePropert
 
 public class TestAzureComputePlugin {
 
-	private static final String DEFAULT_TEST_FLAVOR_NAME = "Standard_D1";
-
 	@Test
 	public void testGetInstances() throws Exception {
 		AzureComputePlugin plugin = createAzureComputePlugin();
 		ComputeManagementClient computeManagementClient = createComputeManagementClient(plugin);
 		recordFlavors(plugin);
-		recordInstances(computeManagementClient, "id1", "id2");
+
+		List<AzureTestInstanceConfigurationSet> instances = new LinkedList<AzureTestInstanceConfigurationSet>();
+		instances.add(new AzureTestInstanceConfigurationSet("id1"));
+		instances.add(new AzureTestInstanceConfigurationSet("id2"));
+		recordInstances(computeManagementClient, instances);
 
 		HashMap<String, String> attributes = new HashMap<String, String>();
 		attributes.put(AzureAttributes.SUBSCRIPTION_ID_KEY, "subscription_key");
@@ -44,32 +48,68 @@ public class TestAzureComputePlugin {
 		Assert.assertEquals(2, instance.size());
 	}
 
+	@Test(expected = OCCIException.class)
+	public void testGetInstanceNullSubscriptionID() throws Exception {
+		AzureComputePlugin plugin = createAzureComputePlugin();
+		ComputeManagementClient computeManagementClient = createComputeManagementClient(plugin);
+		recordFlavors(plugin);
+
+		List<AzureTestInstanceConfigurationSet> instances = new LinkedList<AzureTestInstanceConfigurationSet>();
+		instances.add(new AzureTestInstanceConfigurationSet("id1"));
+		instances.add(new AzureTestInstanceConfigurationSet("id2"));
+		recordInstances(computeManagementClient, instances);
+
+		HashMap<String, String> attributes = new HashMap<String, String>();
+		plugin.getInstances(new Token("accessId", "user", null, attributes));
+	}
+
+	@Test
+	public void testGetInstanceWithDifferentLabels() throws Exception {
+		AzureComputePlugin plugin = createAzureComputePlugin();
+		ComputeManagementClient computeManagementClient = createComputeManagementClient(plugin);
+		recordFlavors(plugin);
+
+		List<AzureTestInstanceConfigurationSet> instances = new LinkedList<AzureTestInstanceConfigurationSet>();
+		instances.add(new AzureTestInstanceConfigurationSet("id1",
+				"otherlabel",
+				AzureTestInstanceConfigurationSet.DEFAULT_SIZE_NAME));
+		instances.add(new AzureTestInstanceConfigurationSet("id2"));
+		recordInstances(computeManagementClient, instances);
+
+		HashMap<String, String> attributes = new HashMap<String, String>();
+		attributes.put(AzureAttributes.SUBSCRIPTION_ID_KEY, "subscription_key");
+		attributes.put(AzureAttributes.KEYSTORE_PATH_KEY, "/path");
+		List<Instance> instance = plugin.getInstances(new Token("accessId",
+				"user", null, attributes));
+
+		Assert.assertEquals(1, instance.size());
+	}
+
 	private void recordInstances(
 			ComputeManagementClient computeManagementClient,
-			String... instanceIds) throws Exception {
+			List<AzureTestInstanceConfigurationSet> instances) throws Exception {
 		ArrayList<HostedService> deploymentResponse = new ArrayList<HostedService>();
 		DeploymentOperations deploymentsOperations = Mockito
 				.mock(DeploymentOperations.class);
-
-		for (String instanceId : instanceIds) {
+		for (AzureTestInstanceConfigurationSet instance : instances) {
 			HostedService hostedService = new HostedService();
-			hostedService.setServiceName(instanceId);
+			hostedService.setServiceName(instance.getId());
 			HostedServiceProperties properties = new HostedServiceProperties();
-			properties.setLabel(AzureComputePlugin.AZURE_VM_DEFAULT_LABEL);
+			properties.setLabel(instance.getLabel());
 			hostedService.setProperties(properties);
 			deploymentResponse.add(hostedService);
 
 			DeploymentGetResponse deployment = new DeploymentGetResponse();
 			RoleInstance roleInstance = new RoleInstance();
-			roleInstance.setInstanceSize(DEFAULT_TEST_FLAVOR_NAME);
+			roleInstance.setInstanceSize(instance.getSizeName());
 			ArrayList<RoleInstance> roleInstances = new ArrayList<RoleInstance>();
 			roleInstances.add(roleInstance);
 			deployment.setRoleInstances(roleInstances);
-			deployment.setName(instanceId);
-			deployment.setLabel(AzureComputePlugin.AZURE_VM_DEFAULT_LABEL);
+			deployment.setName(instance.getId());
+			deployment.setLabel(instance.getLabel());
 			deployment.setStatus(DeploymentStatus.RUNNING);
 			Mockito.doReturn(deployment).when(deploymentsOperations)
-					.getByName(instanceId, instanceId);
+					.getByName(instance.getId(), instance.getId());
 		}
 		HostedServiceOperations hostedServiceOperation = Mockito
 				.mock(HostedServiceOperations.class);
@@ -85,10 +125,12 @@ public class TestAzureComputePlugin {
 	}
 
 	private void recordFlavors(AzureComputePlugin azureComputePlugin) {
-		Flavor flavor = new Flavor(DEFAULT_TEST_FLAVOR_NAME, "1", "3584",
-				new Integer(0));
+		Flavor standardD1 = new Flavor("Standard_D1", "1", "3584", new Integer(
+				0));
+		Flavor extraSmall = new Flavor("ExtraSmall", "1", "784", new Integer(0));
 		ArrayList<Flavor> flavors = new ArrayList<Flavor>();
-		flavors.add(flavor);
+		flavors.add(standardD1);
+		flavors.add(extraSmall);
 		azureComputePlugin.flavors = flavors;
 	}
 
