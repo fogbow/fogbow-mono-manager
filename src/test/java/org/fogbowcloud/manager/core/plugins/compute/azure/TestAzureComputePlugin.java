@@ -26,62 +26,75 @@ import com.microsoft.windowsazure.management.compute.VirtualMachineOperations;
 import com.microsoft.windowsazure.management.compute.models.DeploymentGetResponse;
 import com.microsoft.windowsazure.management.compute.models.DeploymentStatus;
 import com.microsoft.windowsazure.management.compute.models.HostedServiceListResponse;
-import com.microsoft.windowsazure.management.compute.models.RoleInstance;
 import com.microsoft.windowsazure.management.compute.models.HostedServiceListResponse.HostedService;
 import com.microsoft.windowsazure.management.compute.models.HostedServiceProperties;
+import com.microsoft.windowsazure.management.compute.models.RoleInstance;
 import com.microsoft.windowsazure.management.compute.models.VirtualMachineCreateDeploymentParameters;
 
 public class TestAzureComputePlugin {
 
 	private static final String FLAVOR_NAME_STANDARD_D1 = "Standard_D1";
-	private static final String FLAVOR_NAME_EXTRA_SMALL = "ExtraSmall";
+	protected static final String FLAVOR_NAME_EXTRA_SMALL = "ExtraSmall";
 
 	private static final String VM_DEFAULT_PASSWORD = "password";
 	private static final String VM_DEFAULT_PREFIX = "fogbow";
 	private static final String VM_DEFAULT_ID_1 = "id1";
 	private static final String VM_DEFAULT_ID_2 = "id2";
-	
+
 	@Test
 	public void testRequestInstances() throws Exception {
 		AzureComputePlugin plugin = createAzureComputePlugin();
 		ComputeManagementClient computeManagementClient = createComputeManagementClient(plugin);
 		recordFlavors(plugin);
 		Mockito.doReturn(VM_DEFAULT_PASSWORD).when(plugin).getPassword();
-		List<AzureTestInstanceConfigurationSet> instances = new LinkedList<AzureTestInstanceConfigurationSet>();
-		instances.add(new AzureTestInstanceConfigurationSet(VM_DEFAULT_ID_1));
+		List<AzureTestInstanceConfigurationSet> instances = createDefaultInstances();
 		recordInstances(computeManagementClient, instances);
-
-		VirtualMachineOperations vmOperation = Mockito
-				.mock(VirtualMachineOperations.class);
-		Mockito.doReturn(vmOperation).when(computeManagementClient)
-				.getVirtualMachinesOperations();
-		Mockito.doReturn(new OperationStatusResponse())
-				.when(vmOperation)
-				.createDeployment(
-						Mockito.anyString(),
-						(VirtualMachineCreateDeploymentParameters) Mockito
-								.any(Map.class));
 
 		Token token = createToken(null);
 		String imageName = plugin.requestInstance(token,
-				new LinkedList<Category>(), new HashMap<String, String>(), VM_DEFAULT_ID_1);
+				new LinkedList<Category>(), new HashMap<String, String>(),
+				VM_DEFAULT_ID_1);
 		Assert.assertTrue(imageName.contains(VM_DEFAULT_PREFIX));
 		Mockito.verify(plugin).createRoleList(imageName, imageName,
-				VM_DEFAULT_PASSWORD, VM_DEFAULT_ID_1, FLAVOR_NAME_EXTRA_SMALL, null,
-				computeManagementClient);
+				VM_DEFAULT_PASSWORD, VM_DEFAULT_ID_1, FLAVOR_NAME_EXTRA_SMALL,
+				null, computeManagementClient);
 	}
 
+	@Test(expected = OCCIException.class)
+	public void testRequestInstanceMaxInstancesExceeded() throws Exception {
+		AzureComputePlugin plugin = createAzureComputePlugin();
+		ComputeManagementClient computeManagementClient = createComputeManagementClient(plugin);
+		recordFlavors(plugin);
+		List<AzureTestInstanceConfigurationSet> instances = 
+				createDefaultInstances(VM_DEFAULT_ID_1, VM_DEFAULT_ID_2);
+		recordInstances(computeManagementClient, instances);
+		plugin.requestInstance(createToken(null),
+				new LinkedList<Category>(), new HashMap<String, String>(),
+				VM_DEFAULT_ID_1);
+	}
+
+	@Test(expected = OCCIException.class)
+	public void testRequestInstanceMemoryExceeded() throws Exception {
+		AzureComputePlugin plugin = createAzureComputePlugin();
+		ComputeManagementClient computeManagementClient = createComputeManagementClient(plugin);
+		recordFlavors(plugin);
+		List<AzureTestInstanceConfigurationSet> instances = createDefaultInstances();
+		instances.add(new AzureTestInstanceConfigurationSet
+				(VM_DEFAULT_ID_1, AzureComputePlugin.AZURE_VM_DEFAULT_LABEL, FLAVOR_NAME_STANDARD_D1));
+		recordInstances(computeManagementClient, instances);
+		plugin.requestInstance(createToken(null),
+				new LinkedList<Category>(), new HashMap<String, String>(),
+				VM_DEFAULT_ID_1);
+	}
+	
 	@Test
 	public void testGetInstances() throws Exception {
 		AzureComputePlugin plugin = createAzureComputePlugin();
 		ComputeManagementClient computeManagementClient = createComputeManagementClient(plugin);
 		recordFlavors(plugin);
 
-		List<AzureTestInstanceConfigurationSet> instances = new LinkedList<AzureTestInstanceConfigurationSet>();
-		instances.add(new AzureTestInstanceConfigurationSet(VM_DEFAULT_ID_1));
-		instances.add(new AzureTestInstanceConfigurationSet(VM_DEFAULT_ID_2));
-		recordInstances(computeManagementClient, instances);
-
+		recordInstances(computeManagementClient,
+				createDefaultInstances(VM_DEFAULT_ID_1, VM_DEFAULT_ID_2));
 		List<Instance> instance = plugin.getInstances(createToken(null));
 
 		Assert.assertEquals(2, instance.size());
@@ -92,13 +105,11 @@ public class TestAzureComputePlugin {
 		AzureComputePlugin plugin = createAzureComputePlugin();
 		ComputeManagementClient computeManagementClient = createComputeManagementClient(plugin);
 		recordFlavors(plugin);
+		recordInstances(computeManagementClient,
+				createDefaultInstances(VM_DEFAULT_ID_1, VM_DEFAULT_ID_2));
 
-		List<AzureTestInstanceConfigurationSet> instances = new LinkedList<AzureTestInstanceConfigurationSet>();
-		instances.add(new AzureTestInstanceConfigurationSet(VM_DEFAULT_ID_1));
-		instances.add(new AzureTestInstanceConfigurationSet(VM_DEFAULT_ID_2));
-		recordInstances(computeManagementClient, instances);
-
-		plugin.getInstances(new Token("token", "user", null, new HashMap<String, String>()));
+		plugin.getInstances(new Token("token", "user", null,
+				new HashMap<String, String>()));
 	}
 
 	@Test
@@ -109,11 +120,10 @@ public class TestAzureComputePlugin {
 
 		List<AzureTestInstanceConfigurationSet> instances = new LinkedList<AzureTestInstanceConfigurationSet>();
 		instances.add(new AzureTestInstanceConfigurationSet(VM_DEFAULT_ID_1,
-				"otherlabel",
-				AzureTestInstanceConfigurationSet.DEFAULT_SIZE_NAME));
+				"otherlabel", FLAVOR_NAME_EXTRA_SMALL));
 		instances.add(new AzureTestInstanceConfigurationSet(VM_DEFAULT_ID_2));
 		recordInstances(computeManagementClient, instances);
-		
+
 		List<Instance> instance = plugin.getInstances(createToken(null));
 
 		Assert.assertEquals(1, instance.size());
@@ -158,21 +168,30 @@ public class TestAzureComputePlugin {
 				.getDeploymentsOperations();
 	}
 
+	private List<AzureTestInstanceConfigurationSet> createDefaultInstances(
+			String... instanceIDs) {
+		List<AzureTestInstanceConfigurationSet> instances = new LinkedList<AzureTestInstanceConfigurationSet>();
+		for (String instanceID : instanceIDs) {
+			instances.add(new AzureTestInstanceConfigurationSet(instanceID));
+		}
+		return instances;
+	}
+
 	private Token createToken(Map<String, String> extraAttributes) {
 		HashMap<String, String> attributes = new HashMap<String, String>();
-		if(extraAttributes != null) {
+		if (extraAttributes != null) {
 			attributes.putAll(extraAttributes);
 		}
 		attributes.put(AzureAttributes.SUBSCRIPTION_ID_KEY, "subscription_key");
 		attributes.put(AzureAttributes.KEYSTORE_PATH_KEY, "/path");
-		return new Token("accessId",
-				"user", null, attributes);
+		return new Token("accessId", "user", null, attributes);
 	}
-	
+
 	private void recordFlavors(AzureComputePlugin azureComputePlugin) {
-		Flavor standardD1 = new Flavor(FLAVOR_NAME_STANDARD_D1, "1", "3584", new Integer(
-				0));
-		Flavor extraSmall = new Flavor(FLAVOR_NAME_EXTRA_SMALL, "1", "784", new Integer(0));
+		Flavor standardD1 = new Flavor(FLAVOR_NAME_STANDARD_D1, "2", "3584",
+				new Integer(0));
+		Flavor extraSmall = new Flavor(FLAVOR_NAME_EXTRA_SMALL, "1", "784",
+				new Integer(0));
 		ArrayList<Flavor> flavors = new ArrayList<Flavor>();
 		flavors.add(standardD1);
 		flavors.add(extraSmall);
@@ -189,20 +208,30 @@ public class TestAzureComputePlugin {
 	}
 
 	private ComputeManagementClient createComputeManagementClient(
-			AzureComputePlugin computePlugin) {
+			AzureComputePlugin computePlugin) throws Exception {
 		ComputeManagementClient computeManagementClient = Mockito
 				.mock(ComputeManagementClient.class);
 		Mockito.doReturn(computeManagementClient).when(computePlugin)
 				.createComputeManagementClient(Mockito.any(Token.class));
+		VirtualMachineOperations vmOperation = Mockito
+				.mock(VirtualMachineOperations.class);
+		Mockito.doReturn(vmOperation).when(computeManagementClient)
+				.getVirtualMachinesOperations();
+		Mockito.doReturn(new OperationStatusResponse())
+				.when(vmOperation)
+				.createDeployment(
+						Mockito.anyString(),
+						(VirtualMachineCreateDeploymentParameters) Mockito
+								.any(Map.class));
 		return computeManagementClient;
 	}
 
 	private AzureComputePlugin createAzureComputePlugin() {
 		Properties properties = new Properties();
 		properties.put("compute_azure_storage_account_name", "ana123");
-		properties.put("compute_azure_max_vcpu", "100");
-		properties.put("compute_azure_max_ram", "9999999");
-		properties.put("compute_azure_max_instances", "50");
+		properties.put("compute_azure_max_vcpu", "3");
+		properties.put("compute_azure_max_ram", "3500");
+		properties.put("compute_azure_max_instances", "2");
 		AzureComputePlugin computePlugin = Mockito.spy(new AzureComputePlugin(
 				properties));
 		return computePlugin;
