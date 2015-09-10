@@ -156,12 +156,16 @@ public class AzureComputePlugin implements ComputePlugin {
 			}
 		}
 	}
+	
+	protected String getPassword() {
+		return UUID.randomUUID().toString();
+	}
 
 	private String requestInstance(Token token, Map<String, String> xOCCIAtt,
 			String imageId, ComputeManagementClient computeManagementClient) {
 		String userName = "fogbow" + (int) (Math.random() * 100000);
 		String deploymentName = userName;
-		String userpassword = UUID.randomUUID().toString();
+		String userpassword = getPassword();
 		
 		VirtualMachineCreateDeploymentParameters deploymentParameters = new VirtualMachineCreateDeploymentParameters();
 
@@ -583,7 +587,7 @@ public class AzureComputePlugin implements ComputePlugin {
 		return managementClient;
 	}
 
-	private ArrayList<Role> createRoleList(String virtualMachineName,
+	protected ArrayList<Role> createRoleList(String virtualMachineName,
 			String username, String userPassword, String imageID,
 			String roleSizeName, String userData,
 			ComputeManagementClient computeManagementClient) throws Exception {

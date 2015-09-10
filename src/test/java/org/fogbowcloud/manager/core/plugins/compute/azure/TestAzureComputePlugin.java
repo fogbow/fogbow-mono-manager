@@ -33,28 +33,42 @@ import com.microsoft.windowsazure.management.compute.models.VirtualMachineCreate
 
 public class TestAzureComputePlugin {
 
+	private static final String FLAVOR_NAME_STANDARD_D1 = "Standard_D1";
+	private static final String FLAVOR_NAME_EXTRA_SMALL = "ExtraSmall";
+
+	private static final String VM_DEFAULT_PASSWORD = "password";
+	private static final String VM_DEFAULT_PREFIX = "fogbow";
+	private static final String VM_DEFAULT_ID_1 = "id1";
+	private static final String VM_DEFAULT_ID_2 = "id2";
+	
 	@Test
 	public void testRequestInstances() throws Exception {
 		AzureComputePlugin plugin = createAzureComputePlugin();
 		ComputeManagementClient computeManagementClient = createComputeManagementClient(plugin);
 		recordFlavors(plugin);
+		Mockito.doReturn(VM_DEFAULT_PASSWORD).when(plugin).getPassword();
 		List<AzureTestInstanceConfigurationSet> instances = new LinkedList<AzureTestInstanceConfigurationSet>();
-		instances.add(new AzureTestInstanceConfigurationSet("id1"));
+		instances.add(new AzureTestInstanceConfigurationSet(VM_DEFAULT_ID_1));
 		recordInstances(computeManagementClient, instances);
 
 		VirtualMachineOperations vmOperation = Mockito
 				.mock(VirtualMachineOperations.class);
 		Mockito.doReturn(vmOperation).when(computeManagementClient)
 				.getVirtualMachinesOperations();
-		Mockito.doReturn(new OperationStatusResponse()).when(vmOperation)
-				.createDeployment(Mockito.anyString(),
-						(VirtualMachineCreateDeploymentParameters) Mockito.any(Map.class));
-		HashMap<String, String> attributes = new HashMap<String, String>();
-		attributes.put(AzureAttributes.SUBSCRIPTION_ID_KEY, "subscription_key");
-		attributes.put(AzureAttributes.KEYSTORE_PATH_KEY, "/path");
-		Token token = new Token("accessId", "user", null, attributes);
-		plugin.requestInstance(token, new LinkedList<Category>(), attributes,
-				"id");
+		Mockito.doReturn(new OperationStatusResponse())
+				.when(vmOperation)
+				.createDeployment(
+						Mockito.anyString(),
+						(VirtualMachineCreateDeploymentParameters) Mockito
+								.any(Map.class));
+
+		Token token = createToken(null);
+		String imageName = plugin.requestInstance(token,
+				new LinkedList<Category>(), new HashMap<String, String>(), VM_DEFAULT_ID_1);
+		Assert.assertTrue(imageName.contains(VM_DEFAULT_PREFIX));
+		Mockito.verify(plugin).createRoleList(imageName, imageName,
+				VM_DEFAULT_PASSWORD, VM_DEFAULT_ID_1, FLAVOR_NAME_EXTRA_SMALL, null,
+				computeManagementClient);
 	}
 
 	@Test
@@ -64,15 +78,11 @@ public class TestAzureComputePlugin {
 		recordFlavors(plugin);
 
 		List<AzureTestInstanceConfigurationSet> instances = new LinkedList<AzureTestInstanceConfigurationSet>();
-		instances.add(new AzureTestInstanceConfigurationSet("id1"));
-		instances.add(new AzureTestInstanceConfigurationSet("id2"));
+		instances.add(new AzureTestInstanceConfigurationSet(VM_DEFAULT_ID_1));
+		instances.add(new AzureTestInstanceConfigurationSet(VM_DEFAULT_ID_2));
 		recordInstances(computeManagementClient, instances);
 
-		HashMap<String, String> attributes = new HashMap<String, String>();
-		attributes.put(AzureAttributes.SUBSCRIPTION_ID_KEY, "subscription_key");
-		attributes.put(AzureAttributes.KEYSTORE_PATH_KEY, "/path");
-		List<Instance> instance = plugin.getInstances(new Token("accessId",
-				"user", null, attributes));
+		List<Instance> instance = plugin.getInstances(createToken(null));
 
 		Assert.assertEquals(2, instance.size());
 	}
@@ -84,12 +94,11 @@ public class TestAzureComputePlugin {
 		recordFlavors(plugin);
 
 		List<AzureTestInstanceConfigurationSet> instances = new LinkedList<AzureTestInstanceConfigurationSet>();
-		instances.add(new AzureTestInstanceConfigurationSet("id1"));
-		instances.add(new AzureTestInstanceConfigurationSet("id2"));
+		instances.add(new AzureTestInstanceConfigurationSet(VM_DEFAULT_ID_1));
+		instances.add(new AzureTestInstanceConfigurationSet(VM_DEFAULT_ID_2));
 		recordInstances(computeManagementClient, instances);
 
-		HashMap<String, String> attributes = new HashMap<String, String>();
-		plugin.getInstances(new Token("accessId", "user", null, attributes));
+		plugin.getInstances(new Token("token", "user", null, new HashMap<String, String>()));
 	}
 
 	@Test
@@ -99,17 +108,13 @@ public class TestAzureComputePlugin {
 		recordFlavors(plugin);
 
 		List<AzureTestInstanceConfigurationSet> instances = new LinkedList<AzureTestInstanceConfigurationSet>();
-		instances.add(new AzureTestInstanceConfigurationSet("id1",
+		instances.add(new AzureTestInstanceConfigurationSet(VM_DEFAULT_ID_1,
 				"otherlabel",
 				AzureTestInstanceConfigurationSet.DEFAULT_SIZE_NAME));
-		instances.add(new AzureTestInstanceConfigurationSet("id2"));
+		instances.add(new AzureTestInstanceConfigurationSet(VM_DEFAULT_ID_2));
 		recordInstances(computeManagementClient, instances);
-
-		HashMap<String, String> attributes = new HashMap<String, String>();
-		attributes.put(AzureAttributes.SUBSCRIPTION_ID_KEY, "subscription_key");
-		attributes.put(AzureAttributes.KEYSTORE_PATH_KEY, "/path");
-		List<Instance> instance = plugin.getInstances(new Token("accessId",
-				"user", null, attributes));
+		
+		List<Instance> instance = plugin.getInstances(createToken(null));
 
 		Assert.assertEquals(1, instance.size());
 	}
@@ -153,10 +158,21 @@ public class TestAzureComputePlugin {
 				.getDeploymentsOperations();
 	}
 
+	private Token createToken(Map<String, String> extraAttributes) {
+		HashMap<String, String> attributes = new HashMap<String, String>();
+		if(extraAttributes != null) {
+			attributes.putAll(extraAttributes);
+		}
+		attributes.put(AzureAttributes.SUBSCRIPTION_ID_KEY, "subscription_key");
+		attributes.put(AzureAttributes.KEYSTORE_PATH_KEY, "/path");
+		return new Token("accessId",
+				"user", null, attributes);
+	}
+	
 	private void recordFlavors(AzureComputePlugin azureComputePlugin) {
-		Flavor standardD1 = new Flavor("Standard_D1", "1", "3584", new Integer(
+		Flavor standardD1 = new Flavor(FLAVOR_NAME_STANDARD_D1, "1", "3584", new Integer(
 				0));
-		Flavor extraSmall = new Flavor("ExtraSmall", "1", "784", new Integer(0));
+		Flavor extraSmall = new Flavor(FLAVOR_NAME_EXTRA_SMALL, "1", "784", new Integer(0));
 		ArrayList<Flavor> flavors = new ArrayList<Flavor>();
 		flavors.add(standardD1);
 		flavors.add(extraSmall);
