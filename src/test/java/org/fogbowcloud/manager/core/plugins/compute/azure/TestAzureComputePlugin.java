@@ -41,6 +41,9 @@ public class TestAzureComputePlugin {
 	private static final String VM_DEFAULT_ID_1 = "id1";
 	private static final String VM_DEFAULT_ID_2 = "id2";
 
+	private static final String TOKEN_DEFAULT_ACCESS_ID = "accessId";
+	private static final String TOKEN_DEFAULT_USERNAME = "token";
+
 	@Test
 	public void testRequestInstances() throws Exception {
 		AzureComputePlugin plugin = createAzureComputePlugin();
@@ -65,12 +68,13 @@ public class TestAzureComputePlugin {
 		AzureComputePlugin plugin = createAzureComputePlugin();
 		ComputeManagementClient computeManagementClient = createComputeManagementClient(plugin);
 		recordFlavors(plugin);
-		List<AzureTestInstanceConfigurationSet> instances = 
-				createDefaultInstances(VM_DEFAULT_ID_1, VM_DEFAULT_ID_2);
+
+		List<AzureTestInstanceConfigurationSet> instances = createDefaultInstances(
+				VM_DEFAULT_ID_1, VM_DEFAULT_ID_2);
 		recordInstances(computeManagementClient, instances);
-		plugin.requestInstance(createToken(null),
-				new LinkedList<Category>(), new HashMap<String, String>(),
-				VM_DEFAULT_ID_1);
+
+		plugin.requestInstance(createToken(null), new LinkedList<Category>(),
+				new HashMap<String, String>(), VM_DEFAULT_ID_1);
 	}
 
 	@Test(expected = OCCIException.class)
@@ -78,15 +82,17 @@ public class TestAzureComputePlugin {
 		AzureComputePlugin plugin = createAzureComputePlugin();
 		ComputeManagementClient computeManagementClient = createComputeManagementClient(plugin);
 		recordFlavors(plugin);
+
 		List<AzureTestInstanceConfigurationSet> instances = createDefaultInstances();
-		instances.add(new AzureTestInstanceConfigurationSet
-				(VM_DEFAULT_ID_1, AzureComputePlugin.AZURE_VM_DEFAULT_LABEL, FLAVOR_NAME_STANDARD_D1));
+		instances.add(new AzureTestInstanceConfigurationSet(VM_DEFAULT_ID_1,
+				AzureComputePlugin.AZURE_VM_DEFAULT_LABEL,
+				FLAVOR_NAME_STANDARD_D1));
 		recordInstances(computeManagementClient, instances);
-		plugin.requestInstance(createToken(null),
-				new LinkedList<Category>(), new HashMap<String, String>(),
-				VM_DEFAULT_ID_1);
+
+		plugin.requestInstance(createToken(null), new LinkedList<Category>(),
+				new HashMap<String, String>(), VM_DEFAULT_ID_1);
 	}
-	
+
 	@Test
 	public void testGetInstances() throws Exception {
 		AzureComputePlugin plugin = createAzureComputePlugin();
@@ -108,9 +114,44 @@ public class TestAzureComputePlugin {
 		recordInstances(computeManagementClient,
 				createDefaultInstances(VM_DEFAULT_ID_1, VM_DEFAULT_ID_2));
 
-		plugin.getInstances(new Token("token", "user", null,
-				new HashMap<String, String>()));
+		plugin.getInstances(new Token(TOKEN_DEFAULT_ACCESS_ID,
+				TOKEN_DEFAULT_USERNAME, null, new HashMap<String, String>()));
 	}
+
+	@Test
+	public void testRemoveInstance() throws Exception {
+		AzureComputePlugin plugin = createAzureComputePlugin();
+		ComputeManagementClient computeManagementClient = createComputeManagementClient(plugin);
+		recordFlavors(plugin);
+
+		List<AzureTestInstanceConfigurationSet> instancesConfiguration = 
+				createDefaultInstances(VM_DEFAULT_ID_1, VM_DEFAULT_ID_2);
+		recordInstances(computeManagementClient, instancesConfiguration);
+
+		plugin.removeInstance(createToken(null), VM_DEFAULT_ID_1);
+		Mockito.verify(computeManagementClient.getHostedServicesOperations())
+				.deleteAll(VM_DEFAULT_ID_1);
+
+	}
+	
+	@Test
+	public void testRemoveInstances() throws Exception{
+		AzureComputePlugin plugin = createAzureComputePlugin();
+		ComputeManagementClient computeManagementClient = createComputeManagementClient(plugin);
+		recordFlavors(plugin);
+
+		List<AzureTestInstanceConfigurationSet> instancesConfiguration = 
+				createDefaultInstances(VM_DEFAULT_ID_1, VM_DEFAULT_ID_2);
+		recordInstances(computeManagementClient, instancesConfiguration);
+
+		plugin.removeInstances(createToken(null));
+		Mockito.verify(computeManagementClient.getHostedServicesOperations())
+				.deleteAll(VM_DEFAULT_ID_1);
+		Mockito.verify(computeManagementClient.getHostedServicesOperations())
+		.deleteAll(VM_DEFAULT_ID_2);
+	}
+
+	private static final String DIFFERENT_LABEL = "otherlabel";
 
 	@Test
 	public void testGetInstanceWithDifferentLabels() throws Exception {
@@ -120,7 +161,7 @@ public class TestAzureComputePlugin {
 
 		List<AzureTestInstanceConfigurationSet> instances = new LinkedList<AzureTestInstanceConfigurationSet>();
 		instances.add(new AzureTestInstanceConfigurationSet(VM_DEFAULT_ID_1,
-				"otherlabel", FLAVOR_NAME_EXTRA_SMALL));
+				DIFFERENT_LABEL, FLAVOR_NAME_EXTRA_SMALL));
 		instances.add(new AzureTestInstanceConfigurationSet(VM_DEFAULT_ID_2));
 		recordInstances(computeManagementClient, instances);
 
@@ -184,7 +225,8 @@ public class TestAzureComputePlugin {
 		}
 		attributes.put(AzureAttributes.SUBSCRIPTION_ID_KEY, "subscription_key");
 		attributes.put(AzureAttributes.KEYSTORE_PATH_KEY, "/path");
-		return new Token("accessId", "user", null, attributes);
+		return new Token(TOKEN_DEFAULT_ACCESS_ID, TOKEN_DEFAULT_USERNAME, null,
+				attributes);
 	}
 
 	private void recordFlavors(AzureComputePlugin azureComputePlugin) {
@@ -223,6 +265,10 @@ public class TestAzureComputePlugin {
 						Mockito.anyString(),
 						(VirtualMachineCreateDeploymentParameters) Mockito
 								.any(Map.class));
+		HostedServiceOperations hostedServiceOperations = Mockito
+				.mock(HostedServiceOperations.class);
+		Mockito.doReturn(hostedServiceOperations).when(computeManagementClient)
+				.getHostedServicesOperations();
 		return computeManagementClient;
 	}
 
