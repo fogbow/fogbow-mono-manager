@@ -48,6 +48,30 @@ public class TestAzureComputePlugin {
 
 	private static final String TOKEN_DEFAULT_ACCESS_ID = "accessId";
 	private static final String TOKEN_DEFAULT_USERNAME = "token";
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testConstructorWithoutMaxVCPU() {
+		Properties properties = new Properties();
+		properties.setProperty("compute_azure_max_ram", "1024");
+		properties.setProperty("compute_azure_max_instances", "1");
+		new AzureComputePlugin(properties);
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testConstructorWithoutMaxRAM() {
+		Properties properties = new Properties();
+		properties.setProperty("compute_ec2_azure_vcpu", "1");
+		properties.setProperty("compute_ec2_azure_instances", "1");
+		new AzureComputePlugin(properties);
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testConstructorWithoutMaxInstances() {
+		Properties properties = new Properties();
+		properties.setProperty("compute_ec2_azure_vcpu", "1");
+		properties.setProperty("compute_ec2_azure_ram", "1024");
+		new AzureComputePlugin(properties);
+	}
 
 	@Test(expected = UnsupportedOperationException.class)
 	public void testBypass() {
