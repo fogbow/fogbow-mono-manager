@@ -6,6 +6,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.UUID;
 
 import javax.ws.rs.core.UriBuilder;
 
@@ -16,6 +17,7 @@ import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.Token;
+import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -132,6 +134,28 @@ public class TestAzureComputePlugin {
 		Mockito.verify(plugin).createRoleList(imageName, imageName,
 				VM_DEFAULT_PASSWORD, VM_DEFAULT_ID_1, FLAVOR_NAME_EXTRA_SMALL,
 				null, computeManagementClient);
+	}
+	
+	@Test
+	public void testRequestInstanceWithUserData() throws Exception {
+		AzureComputePlugin plugin = createAzureComputePlugin();
+		ComputeManagementClient computeManagementClient = createComputeManagementClient(plugin);
+		recordFlavors(plugin);
+		Mockito.doReturn(VM_DEFAULT_PASSWORD).when(plugin).getPassword();
+		List<AzureTestInstanceConfigurationSet> instances = createDefaultInstances();
+		recordInstances(computeManagementClient, instances);
+
+		Token token = createToken(null);
+		String userData = UUID.randomUUID().toString();
+		HashMap<String, String> occiAtt = new HashMap<String, String>();
+		occiAtt.put(RequestAttribute.USER_DATA_ATT.getValue(), userData);
+		String imageName = plugin.requestInstance(token,
+				new LinkedList<Category>(), occiAtt,
+				VM_DEFAULT_ID_1);
+		Assert.assertTrue(imageName.contains(VM_DEFAULT_PREFIX));
+		Mockito.verify(plugin).createRoleList(imageName, imageName,
+				VM_DEFAULT_PASSWORD, VM_DEFAULT_ID_1, FLAVOR_NAME_EXTRA_SMALL,
+				userData, computeManagementClient);
 	}
 
 	@Test(expected = OCCIException.class)
