@@ -483,7 +483,7 @@ public class AzureComputePlugin implements ComputePlugin {
 		}
 	}
 
-	private URI upload(String imagePath, String imageName)
+	protected URI upload(String imagePath, String imageName)
 			throws URISyntaxException, StorageException, IOException,
 			FileNotFoundException {
 		CloudStorageAccount cloudStorageAccount = createStorageAccount();

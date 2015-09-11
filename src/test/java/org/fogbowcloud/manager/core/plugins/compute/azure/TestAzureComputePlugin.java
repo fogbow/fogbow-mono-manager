@@ -7,7 +7,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import javax.ws.rs.core.UriBuilder;
+
 import org.fogbowcloud.manager.core.model.Flavor;
+import org.fogbowcloud.manager.core.model.ImageState;
 import org.fogbowcloud.manager.core.plugins.common.azure.AzureAttributes;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.model.Category;
@@ -18,10 +21,10 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 import com.microsoft.windowsazure.core.OperationStatusResponse;
-import com.microsoft.windowsazure.management.ManagementClient;
 import com.microsoft.windowsazure.management.compute.ComputeManagementClient;
 import com.microsoft.windowsazure.management.compute.DeploymentOperations;
 import com.microsoft.windowsazure.management.compute.HostedServiceOperations;
+import com.microsoft.windowsazure.management.compute.VirtualMachineOSImageOperations;
 import com.microsoft.windowsazure.management.compute.VirtualMachineOperations;
 import com.microsoft.windowsazure.management.compute.models.DeploymentGetResponse;
 import com.microsoft.windowsazure.management.compute.models.DeploymentStatus;
@@ -30,6 +33,8 @@ import com.microsoft.windowsazure.management.compute.models.HostedServiceListRes
 import com.microsoft.windowsazure.management.compute.models.HostedServiceProperties;
 import com.microsoft.windowsazure.management.compute.models.RoleInstance;
 import com.microsoft.windowsazure.management.compute.models.VirtualMachineCreateDeploymentParameters;
+import com.microsoft.windowsazure.management.compute.models.VirtualMachineOSImageCreateParameters;
+import com.microsoft.windowsazure.management.compute.models.VirtualMachineOSImageGetResponse;
 
 public class TestAzureComputePlugin {
 
@@ -43,6 +48,48 @@ public class TestAzureComputePlugin {
 
 	private static final String TOKEN_DEFAULT_ACCESS_ID = "accessId";
 	private static final String TOKEN_DEFAULT_USERNAME = "token";
+
+	@Test(expected = UnsupportedOperationException.class)
+	public void testBypass() {
+		AzureComputePlugin plugin = createAzureComputePlugin();
+		plugin.bypass(null, null);
+	}
+
+	private static final String UPLOAD_URI = "http://URI";
+	private static final String IMAGE_NAME = "name";
+
+	@Test
+	public void testGetImageId() throws Exception {
+		AzureComputePlugin plugin = createAzureComputePlugin();
+		ComputeManagementClient computeManagementClient = createComputeManagementClient(plugin);
+
+		plugin.getImageId(createToken(null), IMAGE_NAME);
+		Mockito.verify(
+				computeManagementClient.getVirtualMachineOSImagesOperations())
+				.get(IMAGE_NAME);
+	}
+
+	@Test
+	public void testUploadImage() throws Exception {
+		AzureComputePlugin plugin = createAzureComputePlugin();
+		ComputeManagementClient computeManagementClient = createComputeManagementClient(plugin);
+		UriBuilder builder = UriBuilder.fromPath(UPLOAD_URI);
+		Mockito.doReturn(builder.build()).when(plugin)
+				.upload(UPLOAD_URI, IMAGE_NAME);
+
+		plugin.uploadImage(createToken(null), UPLOAD_URI, IMAGE_NAME, null);
+		Mockito.verify(
+				computeManagementClient.getVirtualMachineOSImagesOperations())
+				.create(Mockito
+						.any(VirtualMachineOSImageCreateParameters.class));
+	}
+
+	@Test
+	public void testGetImageState() {
+		AzureComputePlugin plugin = createAzureComputePlugin();
+		Assert.assertEquals(ImageState.ACTIVE,
+				plugin.getImageState(createToken(null), IMAGE_NAME));
+	}
 
 	@Test
 	public void testRequestInstances() throws Exception {
@@ -124,8 +171,8 @@ public class TestAzureComputePlugin {
 		ComputeManagementClient computeManagementClient = createComputeManagementClient(plugin);
 		recordFlavors(plugin);
 
-		List<AzureTestInstanceConfigurationSet> instancesConfiguration = 
-				createDefaultInstances(VM_DEFAULT_ID_1, VM_DEFAULT_ID_2);
+		List<AzureTestInstanceConfigurationSet> instancesConfiguration = createDefaultInstances(
+				VM_DEFAULT_ID_1, VM_DEFAULT_ID_2);
 		recordInstances(computeManagementClient, instancesConfiguration);
 
 		plugin.removeInstance(createToken(null), VM_DEFAULT_ID_1);
@@ -133,22 +180,22 @@ public class TestAzureComputePlugin {
 				.deleteAll(VM_DEFAULT_ID_1);
 
 	}
-	
+
 	@Test
-	public void testRemoveInstances() throws Exception{
+	public void testRemoveInstances() throws Exception {
 		AzureComputePlugin plugin = createAzureComputePlugin();
 		ComputeManagementClient computeManagementClient = createComputeManagementClient(plugin);
 		recordFlavors(plugin);
 
-		List<AzureTestInstanceConfigurationSet> instancesConfiguration = 
-				createDefaultInstances(VM_DEFAULT_ID_1, VM_DEFAULT_ID_2);
+		List<AzureTestInstanceConfigurationSet> instancesConfiguration = createDefaultInstances(
+				VM_DEFAULT_ID_1, VM_DEFAULT_ID_2);
 		recordInstances(computeManagementClient, instancesConfiguration);
 
 		plugin.removeInstances(createToken(null));
 		Mockito.verify(computeManagementClient.getHostedServicesOperations())
 				.deleteAll(VM_DEFAULT_ID_1);
 		Mockito.verify(computeManagementClient.getHostedServicesOperations())
-		.deleteAll(VM_DEFAULT_ID_2);
+				.deleteAll(VM_DEFAULT_ID_2);
 	}
 
 	private static final String DIFFERENT_LABEL = "otherlabel";
@@ -240,14 +287,7 @@ public class TestAzureComputePlugin {
 		azureComputePlugin.flavors = flavors;
 	}
 
-	private ManagementClient createManagementClient(
-			AzureComputePlugin computePlugin) {
-		ManagementClient managementClient = Mockito
-				.mock(ManagementClient.class);
-		Mockito.doReturn(managementClient).when(computePlugin)
-				.createManagementClient(Mockito.any(Token.class));
-		return managementClient;
-	}
+	private static final String IMAGE_ID = "randomID";
 
 	private ComputeManagementClient createComputeManagementClient(
 			AzureComputePlugin computePlugin) throws Exception {
@@ -255,6 +295,7 @@ public class TestAzureComputePlugin {
 				.mock(ComputeManagementClient.class);
 		Mockito.doReturn(computeManagementClient).when(computePlugin)
 				.createComputeManagementClient(Mockito.any(Token.class));
+		
 		VirtualMachineOperations vmOperation = Mockito
 				.mock(VirtualMachineOperations.class);
 		Mockito.doReturn(vmOperation).when(computeManagementClient)
@@ -265,10 +306,19 @@ public class TestAzureComputePlugin {
 						Mockito.anyString(),
 						(VirtualMachineCreateDeploymentParameters) Mockito
 								.any(Map.class));
+		
 		HostedServiceOperations hostedServiceOperations = Mockito
 				.mock(HostedServiceOperations.class);
 		Mockito.doReturn(hostedServiceOperations).when(computeManagementClient)
 				.getHostedServicesOperations();
+		
+		VirtualMachineOSImageOperations VMImageOperations = Mockito
+				.mock(VirtualMachineOSImageOperations.class);
+		VirtualMachineOSImageGetResponse VMImageResponse = Mockito.mock(VirtualMachineOSImageGetResponse.class);
+		Mockito.doReturn(IMAGE_ID).when(VMImageResponse).getName();
+		Mockito.doReturn(VMImageResponse).when(VMImageOperations).get(Mockito.anyString());
+		Mockito.doReturn(VMImageOperations).when(computeManagementClient)
+				.getVirtualMachineOSImagesOperations();
 		return computeManagementClient;
 	}
 
