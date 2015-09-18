@@ -1497,6 +1497,12 @@ public class ManagerController {
 		return ResourceRepository.getInstance().getAll();
 	}
 
+	/**
+	 * This method will not be supported in next releases.
+	 * @param request
+	 * @param response
+	 */
+	@Deprecated
 	public void bypass(org.restlet.Request request, Response response) {
 		LOGGER.debug("Bypassing request: " + request);
 		computePlugin.bypass(request, response);
