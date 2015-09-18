@@ -16,7 +16,7 @@ import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ImageState;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
-import org.fogbowcloud.manager.core.plugins.identity.cloudstack.CloudStackHelper;
+import org.fogbowcloud.manager.core.plugins.common.cloudstack.CloudStackHelper;
 import org.fogbowcloud.manager.core.plugins.util.HttpClientWrapper;
 import org.fogbowcloud.manager.core.plugins.util.HttpResponseWrapper;
 import org.fogbowcloud.manager.occi.instance.Instance;
