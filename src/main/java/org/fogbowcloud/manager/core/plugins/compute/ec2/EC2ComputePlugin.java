@@ -507,8 +507,10 @@ public class EC2ComputePlugin implements ComputePlugin {
 		try {
 			content = new JSONObject(response.getContent());
 		} catch (JSONException e) {
-			
+			LOGGER.error("Couldn't retrieve flavours from AWS.", e);
+			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.INVALID_STATE);
 		}
+		
 		JSONArray regionsAr = content.optJSONObject("config").optJSONArray("regions");
 		JSONObject regionJson = null;
 		for (int i = 0; i < regionsAr.length(); i++) {

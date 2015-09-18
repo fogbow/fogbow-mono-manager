@@ -6,6 +6,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 
 import org.apache.commons.io.IOUtils;
@@ -16,8 +18,10 @@ import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.util.HttpClientWrapper;
 import org.fogbowcloud.manager.core.plugins.util.HttpResponseWrapper;
 import org.fogbowcloud.manager.occi.instance.Instance;
+import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.Token;
+import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
@@ -25,6 +29,7 @@ import org.mockito.Mockito;
 
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.ec2.AmazonEC2Client;
+import com.amazonaws.services.ec2.model.CreateTagsRequest;
 import com.amazonaws.services.ec2.model.DescribeImagesRequest;
 import com.amazonaws.services.ec2.model.DescribeImagesResult;
 import com.amazonaws.services.ec2.model.DescribeImportImageTasksRequest;
@@ -38,6 +43,8 @@ import com.amazonaws.services.ec2.model.ImportImageRequest;
 import com.amazonaws.services.ec2.model.ImportImageTask;
 import com.amazonaws.services.ec2.model.InstanceState;
 import com.amazonaws.services.ec2.model.Reservation;
+import com.amazonaws.services.ec2.model.RunInstancesRequest;
+import com.amazonaws.services.ec2.model.RunInstancesResult;
 import com.amazonaws.services.ec2.model.Tag;
 import com.amazonaws.services.ec2.model.TerminateInstancesRequest;
 import com.amazonaws.services.s3.AmazonS3Client;
@@ -239,6 +246,174 @@ public class TestEC2ComputePlugin {
 				.describeInstances(Mockito.any(DescribeInstancesRequest.class));
 		
 		computePlugin.getInstances(createToken());
+	}
+	
+	
+	@Test(expected=OCCIException.class)
+	public void testRequestInstanceImageIdNUll() {
+		EC2ComputePlugin computePlugin = createEC2ComputePlugin();
+		computePlugin.requestInstance(createToken(), new LinkedList<Category>(), 
+				new HashMap<String, String>(), null);
+	}
+	
+	@Test(expected=OCCIException.class)
+	public void testRequestInstanceNoInstanceIdle() {
+		EC2ComputePlugin computePlugin = createEC2ComputePlugin();
+		
+		Token token = createToken();
+		Mockito.doReturn(new ResourcesInfo("1", "1", 
+				"512", "512", "0", "0")).when(computePlugin).getResourcesInfo(token);
+		
+		computePlugin.requestInstance(token, new LinkedList<Category>(), 
+				new HashMap<String, String>(), "image");
+	}
+	
+	@Test(expected=OCCIException.class)
+	public void testRequestInstanceNotEnoughvCPU() {
+		EC2ComputePlugin computePlugin = createEC2ComputePlugin();
+		
+		Token token = createToken();
+		Mockito.doReturn(new ResourcesInfo("0", "1", 
+				"1024", "1024", "1", "1")).when(computePlugin).getResourcesInfo(token);
+		
+		computePlugin.requestInstance(token, new LinkedList<Category>(), 
+				new HashMap<String, String>(), "image");
+	}
+	
+	@Test(expected=OCCIException.class)
+	public void testRequestInstanceNotEnoughRAM() {
+		EC2ComputePlugin computePlugin = createEC2ComputePlugin();
+		
+		Token token = createToken();
+		Mockito.doReturn(new ResourcesInfo("1", "1", 
+				"1024", "0", "1", "1")).when(computePlugin).getResourcesInfo(token);
+		
+		computePlugin.requestInstance(token, new LinkedList<Category>(), 
+				new HashMap<String, String>(), "image");
+	}
+	
+	@Test
+	public void testRequestInstance() {
+		EC2ComputePlugin computePlugin = createEC2ComputePlugin();
+		AmazonEC2Client ec2Client = createEC2Client(computePlugin);
+		
+		Token token = createToken();
+		Mockito.doReturn(new ResourcesInfo("1", "1", 
+				"1024", "1024", "1", "1")).when(computePlugin).getResourcesInfo(token);
+		
+		Reservation reservation = new Reservation();
+		com.amazonaws.services.ec2.model.Instance instance = 
+				new com.amazonaws.services.ec2.model.Instance();
+		instance.setInstanceId("instanceId");
+		reservation.withInstances(ImmutableList.of(instance));
+		RunInstancesResult runInstancesResult = new RunInstancesResult();
+		runInstancesResult.withReservation(reservation);
+		
+		Mockito.doReturn(runInstancesResult).when(ec2Client).runInstances(Mockito.argThat(
+				new ArgumentMatcher<RunInstancesRequest>() {
+					@Override
+					public boolean matches(Object argument) {
+						RunInstancesRequest requestArg = (RunInstancesRequest) argument;
+								return requestArg.getInstanceType().equals("t2.micro")
+										&& requestArg.getImageId().equals("image");
+					}
+		}));
+
+		final String instanceId = computePlugin.requestInstance(token, new LinkedList<Category>(), 
+				new HashMap<String, String>(), "image");
+
+		Mockito.verify(ec2Client).createTags(Mockito.argThat(
+				new ArgumentMatcher<CreateTagsRequest>() {
+					@Override
+					public boolean matches(Object argument) {
+						CreateTagsRequest requestArg = (CreateTagsRequest) argument;
+								return requestArg.getResources().get(0).equals(instanceId)
+										&& requestArg.getTags().get(0).getKey().equals(
+												EC2ComputePlugin.FOGBOW_INSTANCE_TAG);
+					}
+		}));
+		
+		Assert.assertEquals("instanceId", instanceId);
+	}
+	
+	@Test
+	public void testRequestInstanceWithUserDataAndSecGroup() {
+		Map<String, String> extraProps = new HashMap<String, String>();
+		extraProps.put("compute_ec2_security_group_id", "sg-123");
+		
+		EC2ComputePlugin computePlugin = createEC2ComputePlugin(extraProps);
+		AmazonEC2Client ec2Client = createEC2Client(computePlugin);
+		
+		Token token = createToken();
+		Mockito.doReturn(new ResourcesInfo("1", "1", 
+				"1024", "1024", "1", "1")).when(computePlugin).getResourcesInfo(token);
+		
+		Reservation reservation = new Reservation();
+		com.amazonaws.services.ec2.model.Instance instance = 
+				new com.amazonaws.services.ec2.model.Instance();
+		instance.setInstanceId("instanceId");
+		reservation.withInstances(ImmutableList.of(instance));
+		RunInstancesResult runInstancesResult = new RunInstancesResult();
+		runInstancesResult.withReservation(reservation);
+		
+		Mockito.doReturn(runInstancesResult).when(ec2Client).runInstances(Mockito.argThat(
+				new ArgumentMatcher<RunInstancesRequest>() {
+					@Override
+					public boolean matches(Object argument) {
+						RunInstancesRequest requestArg = (RunInstancesRequest) argument;
+								return requestArg.getInstanceType().equals("t2.micro")
+										&& requestArg.getImageId().equals("image")
+										&& requestArg.getUserData().equals("userData")
+										&& requestArg.getNetworkInterfaces().get(0).getGroups().get(0).equals("sg-123");
+					}
+		}));
+
+		HashMap<String, String> xOCCIAtt = new HashMap<String, String>();
+		xOCCIAtt.put(RequestAttribute.USER_DATA_ATT.getValue(), "userData");
+		final String instanceId = computePlugin.requestInstance(token, new LinkedList<Category>(), 
+				xOCCIAtt, "image");
+		
+		Assert.assertEquals("instanceId", instanceId);
+	}
+	
+	@Test
+	public void testRequestInstanceWithUserDataAndSubnetId() {
+		Map<String, String> extraProps = new HashMap<String, String>();
+		extraProps.put("compute_ec2_subnet_id", "net-123");
+		
+		EC2ComputePlugin computePlugin = createEC2ComputePlugin(extraProps);
+		AmazonEC2Client ec2Client = createEC2Client(computePlugin);
+		
+		Token token = createToken();
+		Mockito.doReturn(new ResourcesInfo("1", "1", 
+				"1024", "1024", "1", "1")).when(computePlugin).getResourcesInfo(token);
+		
+		Reservation reservation = new Reservation();
+		com.amazonaws.services.ec2.model.Instance instance = 
+				new com.amazonaws.services.ec2.model.Instance();
+		instance.setInstanceId("instanceId");
+		reservation.withInstances(ImmutableList.of(instance));
+		RunInstancesResult runInstancesResult = new RunInstancesResult();
+		runInstancesResult.withReservation(reservation);
+		
+		Mockito.doReturn(runInstancesResult).when(ec2Client).runInstances(Mockito.argThat(
+				new ArgumentMatcher<RunInstancesRequest>() {
+					@Override
+					public boolean matches(Object argument) {
+						RunInstancesRequest requestArg = (RunInstancesRequest) argument;
+								return requestArg.getInstanceType().equals("t2.micro")
+										&& requestArg.getImageId().equals("image")
+										&& requestArg.getUserData().equals("userData")
+										&& requestArg.getNetworkInterfaces().get(0).getSubnetId().equals("net-123");
+					}
+		}));
+
+		HashMap<String, String> xOCCIAtt = new HashMap<String, String>();
+		xOCCIAtt.put(RequestAttribute.USER_DATA_ATT.getValue(), "userData");
+		final String instanceId = computePlugin.requestInstance(token, new LinkedList<Category>(), 
+				xOCCIAtt, "image");
+		
+		Assert.assertEquals("instanceId", instanceId);
 	}
 	
 	@Test
@@ -544,12 +719,19 @@ public class TestEC2ComputePlugin {
 	private static final ProtocolVersion PROTO = new ProtocolVersion("HTTP", 1, 1);
 	
 	private EC2ComputePlugin createEC2ComputePlugin() {
+		return createEC2ComputePlugin(new HashMap<String, String>());
+	}
+	
+	private EC2ComputePlugin createEC2ComputePlugin(Map<String, String> extraProps) {
 		Properties properties = new Properties();
 		properties.setProperty("compute_ec2_region", "us-east-1");
 		properties.setProperty("compute_ec2_max_vcpu", "2");
 		properties.setProperty("compute_ec2_max_ram", "2048");
 		properties.setProperty("compute_ec2_max_instances", "2");
 		properties.setProperty("compute_ec2_image_bucket_name", "image_bucket_name");
+		for (Entry<String, String> entry : extraProps.entrySet()) {
+			properties.setProperty(entry.getKey(), entry.getValue());
+		}
 		
 		HttpClientWrapper clientWrapper = Mockito.mock(HttpClientWrapper.class);
 		String jdFlavors = null;

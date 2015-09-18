@@ -37,6 +37,12 @@ public interface ComputePlugin {
 	 */
 	public ResourcesInfo getResourcesInfo(Token token);
 	
+	/**
+	 * This method will not be supported in next releases.
+	 * @param request
+	 * @param response
+	 */
+	@Deprecated
 	public void bypass(Request request, Response response);
 
 	public void uploadImage(Token token, String imagePath, String imageName, String diskFormat);

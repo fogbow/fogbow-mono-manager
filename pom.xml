@@ -250,6 +250,11 @@
 	    <artifactId>azure-management</artifactId>
 	    <version>0.8.0</version>
 	</dependency>
+    <dependency>
+		<groupId>org.opensaml</groupId>
+		<artifactId>opensaml</artifactId>
+		<version>2.6.4</version>
+	</dependency>
   </dependencies>
   
 </project>
