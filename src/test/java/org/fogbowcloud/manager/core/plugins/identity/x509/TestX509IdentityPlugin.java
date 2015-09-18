@@ -38,7 +38,7 @@ public class TestX509IdentityPlugin {
 		CERTIFICATE_ACCESS_ID = CertificateUtils.generateAccessId(CertificateUtils
 				.getCertificateChainFromFile(CERTIFICATE_PATH));
 		SimpleDateFormat sdf = new SimpleDateFormat(dateFormat);
-		CERTIFICATE_EXPIRATION_DATE = sdf.parse("2015-08-26");
+		CERTIFICATE_EXPIRATION_DATE = sdf.parse("2025-09-15");
 	}
 
 	@Test
