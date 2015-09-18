@@ -94,7 +94,11 @@ public class SAMLIdentityPlugin implements IdentityPlugin {
 		String metadataURLProp = properties.getProperty("identity_saml_metadata_url");
 		this.samlMetadataURL = metadataURLProp == null ? 
 				DEFAULT_METADATA_URL : metadataURLProp;
-		initSPDecrypter(properties);
+		try {
+			initSPDecrypter(properties);
+		} catch (Throwable e) {
+			LOGGER.error("Couldn't init SPDecripter", e);
+		}
 	}
 	
 	private BasicX509Credential loadSPCredential(Properties properties) {
