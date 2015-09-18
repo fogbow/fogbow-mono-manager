@@ -4,10 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.fogbowcloud.manager.occi.model.Category;
-import org.fogbowcloud.manager.occi.model.HeaderUtils;
-import org.fogbowcloud.manager.occi.model.OCCIException;
-import org.fogbowcloud.manager.occi.model.OCCIHeaders;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.fogbowcloud.manager.occi.util.OCCITestHelper;
 import org.junit.Assert;

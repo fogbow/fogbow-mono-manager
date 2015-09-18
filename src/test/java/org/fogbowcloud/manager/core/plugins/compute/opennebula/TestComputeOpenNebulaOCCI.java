@@ -24,8 +24,6 @@ import org.apache.http.impl.DefaultHttpResponseFactory;
 import org.apache.http.message.BasicStatusLine;
 import org.fogbowcloud.manager.core.RequirementsHelper;
 import org.fogbowcloud.manager.core.plugins.compute.occi.OCCIComputePlugin;
-import org.fogbowcloud.manager.core.plugins.compute.opennebula.OneConfigurationConstants;
-import org.fogbowcloud.manager.core.plugins.compute.opennebula.OpenNebulaOCCIComputePlugin;
 import org.fogbowcloud.manager.core.plugins.compute.openstack.OpenStackConfigurationConstants;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.OCCIException;

@@ -14,6 +14,7 @@ public class OneConfigurationConstants {
 	
 	// network	
 	public static final String COMPUTE_ONE_NETWORK_KEY = "compute_one_network_id";
+	public static final String COMPUTE_ONE_NETWORK_CONTEXTUALIZATION = "compute_one_network_contextualization";
 
 	//datastore and images configuration
 	public static final String COMPUTE_ONE_DATASTORE_ID = "compute_one_datastore_id";

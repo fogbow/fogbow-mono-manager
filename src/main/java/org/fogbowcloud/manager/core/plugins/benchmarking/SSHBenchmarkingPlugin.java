@@ -10,6 +10,7 @@ import net.schmizz.sshj.connection.channel.direct.Session.Command;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.ManagerController;
+import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
 import org.fogbowcloud.manager.core.plugins.util.SshHelper;
 import org.fogbowcloud.manager.occi.instance.Instance;
@@ -27,6 +28,8 @@ public class SSHBenchmarkingPlugin implements BenchmarkingPlugin {
 	private String scriptUrl;
 	private String managerPrivateKeyFilePath;
 	private String sshCommonUser;
+	private SshHelper sshHelper;
+	private DateUtils dateUtils;
 	
 	public SSHBenchmarkingPlugin(Properties properties) {
 		this.scriptUrl = properties.getProperty(
@@ -36,7 +39,7 @@ public class SSHBenchmarkingPlugin implements BenchmarkingPlugin {
 		this.sshCommonUser = getSSHCommonUser(properties);
 	}
 	
-	private static String getSSHCommonUser(Properties properties) {
+	protected static String getSSHCommonUser(Properties properties) {
 		String sshCommonUser = properties.getProperty(ConfigurationConstants.SSH_COMMON_USER);
 		return sshCommonUser != null ? sshCommonUser : ManagerController.DEFAULT_COMMON_SSH_USER;
 	}
@@ -62,8 +65,9 @@ public class SSHBenchmarkingPlugin implements BenchmarkingPlugin {
 		instanceToPower.put(globalInstanceId, power);
 	}
 	
+	
 	private long sshBenchmarking(String ipAndPort, String user) {
-		SshHelper ssh = new SshHelper();
+		SshHelper ssh = getSshHelper();
 		long millis = 0;
 		try {
 			String[] sshAddressRaw = ipAndPort.split(":");
@@ -71,9 +75,9 @@ public class SSHBenchmarkingPlugin implements BenchmarkingPlugin {
 					this.managerPrivateKeyFilePath);
 			Command stagingCmd = ssh.doSshExecution(String.format(STAGE_COMMAND, scriptUrl));
 			if (stagingCmd.getExitStatus() == 0) {
-				long startTimestamp = System.currentTimeMillis();
+				long startTimestamp = this.dateUtils.currentTimeMillis();
 				Command executeBenchcmd = ssh.doSshExecution(EXEC_COMMAND);
-				long endTimestamp = System.currentTimeMillis();
+				long endTimestamp = this.dateUtils.currentTimeMillis();
 				if (executeBenchcmd.getExitStatus() == 0) {
 					LOGGER.debug("Benchmarking execution - " + ipAndPort + " - Time: " + (endTimestamp - startTimestamp));
 					return endTimestamp - startTimestamp;
@@ -97,7 +101,6 @@ public class SSHBenchmarkingPlugin implements BenchmarkingPlugin {
 	protected double getFCUsFromOutput(long milliseconds) {
 		double seconds = (double) TimeUnit.MILLISECONDS.toSeconds(milliseconds);
 		return (10.0 / seconds);
-
 	}
 
 	@Override
@@ -115,4 +118,27 @@ public class SSHBenchmarkingPlugin implements BenchmarkingPlugin {
 		LOGGER.debug("Removing instance: " + globalInstanceId + " from benchmarking map.");
 		instanceToPower.remove(globalInstanceId);		
 	}
+	
+	protected void setInstanceToPower(Map<String, Double> instanceToPower) {
+		this.instanceToPower = instanceToPower;
+	}
+	
+	protected Map<String, Double> getInstanceToPower() {
+		return instanceToPower;
+	}
+	
+	protected void setSshHelper(SshHelper sshHelper) {
+		this.sshHelper = sshHelper;
+	}
+	
+	protected SshHelper getSshHelper() {
+		if (sshHelper != null) {
+			return sshHelper;
+		}
+		return new SshHelper();
+	}
+
+	protected void setDateUtils(DateUtils dateUtils) {
+		this.dateUtils = dateUtils;
+	}	
 }

@@ -20,12 +20,24 @@ public class RequestRepository {
 	 * was created.
 	 */
 	
+	protected boolean requestExists(List<Request> requests, Request userRequest) {
+		for (Request request : requests) {
+			if (request.getId().equals(userRequest.getId())) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
 	public void addRequest(String user, Request request) {
 		LOGGER.debug("Adding request " + request.getId() + " to user " + user);
 		List<Request> userRequests = requests.get(user);
 		if (userRequests == null) {
 			userRequests = new LinkedList<Request>();
 			requests.put(user, userRequests);
+		}
+		if (requestExists(userRequests, request)) {
+			return;
 		}
 		userRequests.add(request);
 	}

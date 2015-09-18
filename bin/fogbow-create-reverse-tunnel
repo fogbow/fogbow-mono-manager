@@ -8,14 +8,19 @@ if [ -n "$IS_OPENSSH" ] || [ -n "$IS_NEW_OPENSSH" ]; then
 elif [ -n "$IS_DROPBEAR" ]; then
   SSH_OPTIONS="-y -K 30"
 fi
-REMOTE_PORT=$(curl -X POST #TOKEN_HOST#:#TOKEN_HOST_HTTP_PORT#/token/#TOKEN_ID#)
 cat > /bin/fogbow-autossh << EOL
 #!/bin/sh
 autossh() {
   while true; do
-    echo "Starting tunnel in port $REMOTE_PORT"
-    echo "Command: ssh $SSH_OPTIONS -N -R 0.0.0.0:$REMOTE_PORT:localhost:22 #TOKEN_ID#@#TOKEN_HOST# -p #TOKEN_HOST_SSH_PORT#"
-    ssh $SSH_OPTIONS -N -R 0.0.0.0:$REMOTE_PORT:localhost:22 #TOKEN_ID#@#TOKEN_HOST# -p #TOKEN_HOST_SSH_PORT#
+    REMOTE_PORT="\$(curl -X POST #TOKEN_HOST#:#TOKEN_HOST_HTTP_PORT#/token/#TOKEN_ID#)"
+    if [ -z "\$REMOTE_PORT" ]; then
+      echo "No remote port available for #TOKEN_ID#, will try again in 30 seconds"
+      sleep 30
+      continue
+    fi
+    echo "Starting tunnel in port \$REMOTE_PORT"
+    echo "Command: ssh $SSH_OPTIONS -N -R 0.0.0.0:\$REMOTE_PORT:localhost:22 #TOKEN_ID#@#TOKEN_HOST# -p #TOKEN_HOST_SSH_PORT#"
+    ssh $SSH_OPTIONS -N -R 0.0.0.0:\$REMOTE_PORT:localhost:22 #TOKEN_ID#@#TOKEN_HOST# -p #TOKEN_HOST_SSH_PORT#
     sleep 5
   done
 }

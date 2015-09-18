@@ -23,6 +23,7 @@ import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
 import org.fogbowcloud.manager.core.plugins.imagestorage.fixed.StaticImageStoragePlugin;
 import org.fogbowcloud.manager.occi.model.Token;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -38,6 +39,7 @@ public class VMCatcherStoragePlugin extends StaticImageStoragePlugin {
 	protected static final String PROP_VMC_MAPPING_FILE = "image_storage_vmcatcher_glancepush_vmcmapping_file";
 	protected static final String PROP_VMC_PUSH_METHOD = "image_storage_vmcatcher_push_method";
 	protected static final String PROP_VMC_USE_SUDO = "image_storage_vmcatcher_use_sudo";
+	protected static final String PROP_VMC_RUN_AS = "image_storage_vmcatcher_run_as";
 	protected static final String PROP_VMC_ENV_PREFIX = "image_storage_vmcatcher_env_";
 	
 	private Properties props;
@@ -73,6 +75,11 @@ public class VMCatcherStoragePlugin extends StaticImageStoragePlugin {
 			return null;
 		}
 		
+		localId = computePlugin.getImageId(token, globalId);
+		if (localId != null) {
+			return localId;
+		}
+		
 		String imageTitleTranslated = null;
 		final String pushMethod = this.props.getProperty(PROP_VMC_PUSH_METHOD);
 		if (pushMethod.equals("glancepush")) {
@@ -94,6 +101,7 @@ public class VMCatcherStoragePlugin extends StaticImageStoragePlugin {
 					"--imagelist-newimage-subscribe", "--auto-endorse", "-s", globalId));
 		} catch (Exception e) {
 			LOGGER.warn("Couldn't add image.list to VMCatcher subscription list", e);
+			return null;
 		}
 		
 		imageDownloader.execute(new Runnable() {
@@ -119,13 +127,33 @@ public class VMCatcherStoragePlugin extends StaticImageStoragePlugin {
 	private String[] sudo(String... cmds) {
 		LinkedList<String> cmdList = new LinkedList<String>();
 		String useSudoStr = props.getProperty(PROP_VMC_USE_SUDO);
-		if (useSudoStr != null && Boolean.parseBoolean(useSudoStr)) {
+		boolean useSudo = useSudoStr != null && Boolean.parseBoolean(useSudoStr);
+		String runAs = props.getProperty(PROP_VMC_RUN_AS);		
+		
+		if (useSudo) {
 			cmdList.add("sudo");
+			cmdList.add("-E");
 		}
-		for (String cmd : cmds) {
-			cmdList.add(cmd);
+		if (runAs != null) {
+			cmdList.add("su");
+			cmdList.add(runAs);
+			cmdList.add("-c");
+			cmdList.add(join(cmds));
+		} else {
+			for (String cmd : cmds) {
+				cmdList.add(cmd);
+			}			
 		}
 		return cmdList.toArray(new String[]{});
+	}
+	
+	private static String join(String... cmds) {
+		StringBuilder joinedStr = new StringBuilder();
+		for (String cmd : cmds) {
+			joinedStr.append(cmd);
+			joinedStr.append(" ");
+		}	
+		return joinedStr.toString().trim();
 	}
 	
 	private void executeShellCommand(String... command) throws IOException,
@@ -146,7 +174,9 @@ public class VMCatcherStoragePlugin extends StaticImageStoragePlugin {
 		if (imageListJson == null) {
 			return null;
 		}
-		return imageListJson.optString("dc:identifier", null);
+		JSONArray imagesArray = imageListJson.optJSONArray("hv:images");
+		JSONObject imageJson = imagesArray.optJSONObject(0).optJSONObject("hv:image");
+		return imageJson.optString("dc:identifier", null);
 	}
 
 	private String getImageNameWithGlancePush(JSONObject imageInfo) {
@@ -155,7 +185,9 @@ public class VMCatcherStoragePlugin extends StaticImageStoragePlugin {
 		if (imageListJson == null) {
 			return null;
 		}
-		String imageTitle = imageListJson.optString("dc:title", null);
+		JSONArray imagesArray = imageListJson.optJSONArray("hv:images");
+		JSONObject imageJson = imagesArray.optJSONObject(0).optJSONObject("hv:image");
+		String imageTitle = imageJson.optString("dc:title", null);
 		if (imageTitle == null) {
 			return null;
 		}
@@ -191,5 +223,5 @@ public class VMCatcherStoragePlugin extends StaticImageStoragePlugin {
 		
 		return imageInfo;
 	}
-
+	
 }

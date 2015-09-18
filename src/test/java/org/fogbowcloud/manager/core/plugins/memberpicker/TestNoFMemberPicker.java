@@ -10,7 +10,6 @@ import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.accounting.ResourceUsage;
-import org.fogbowcloud.manager.core.plugins.memberpicker.NoFMemberPickerPlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.junit.Assert;
 import org.junit.Before;

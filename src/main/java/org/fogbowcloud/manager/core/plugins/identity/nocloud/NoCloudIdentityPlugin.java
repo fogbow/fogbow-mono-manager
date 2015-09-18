@@ -11,7 +11,7 @@ import org.fogbowcloud.manager.occi.model.Token;
 
 public class NoCloudIdentityPlugin implements IdentityPlugin {
 
-	private static final String FAKE_USERNAME = "no-user";
+	protected static final String FAKE_USERNAME = "no-user";
 	
 	public NoCloudIdentityPlugin(Properties properties) {}
 	

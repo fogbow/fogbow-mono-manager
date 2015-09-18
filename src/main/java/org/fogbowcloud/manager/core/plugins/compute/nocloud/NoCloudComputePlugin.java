@@ -18,8 +18,8 @@ import org.restlet.Response;
 
 public class NoCloudComputePlugin implements ComputePlugin {
 
-	private static final String ZERO = Integer.toString(0);
-	private static final String FAKE_IMAGE_ID = "no-image";
+	protected static final String ZERO = Integer.toString(0);
+	protected static final String FAKE_IMAGE_ID = "no-image";
 	
 	public NoCloudComputePlugin(Properties properties) {}
 	
@@ -51,8 +51,7 @@ public class NoCloudComputePlugin implements ComputePlugin {
 
 	@Override
 	public ResourcesInfo getResourcesInfo(Token token) {
-		return new ResourcesInfo(ZERO, ZERO, ZERO, 
-				ZERO, ZERO, ZERO);
+		return new ResourcesInfo(ZERO, ZERO, ZERO, ZERO, ZERO, ZERO);
 	}
 
 	@Override

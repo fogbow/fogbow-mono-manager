@@ -5,7 +5,6 @@ import java.util.List;
 
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
-import org.fogbowcloud.manager.core.plugins.memberpicker.RoundRobinMemberPickerPlugin;
 import org.junit.Assert;
 import org.junit.Test;
 

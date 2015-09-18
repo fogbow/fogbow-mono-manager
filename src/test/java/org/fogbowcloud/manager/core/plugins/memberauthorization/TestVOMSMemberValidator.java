@@ -9,7 +9,6 @@ import org.bouncycastle.util.io.pem.PemObject;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.CertificateUtils;
-import org.fogbowcloud.manager.core.plugins.memberauthorization.VOMSMemberAuthorizationPlugin;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.util.SecurityRestrictionHelper;
 import org.junit.Assert;

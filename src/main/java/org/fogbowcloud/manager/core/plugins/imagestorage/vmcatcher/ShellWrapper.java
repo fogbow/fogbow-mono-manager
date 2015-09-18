@@ -27,6 +27,12 @@ public class ShellWrapper {
 		LOGGER.debug("Command " + Arrays.asList(command) + " has finished. "
 				+ "Exit: " + exitValue + "; Stdout: " + stdout + "; Stderr: "
 				+ stderr);
+		
+		if (exitValue != 0) {
+			throw new RuntimeException("Command " + Arrays.asList(command) + " has finished with error. "
+					+ "Exit: " + exitValue + "; Stdout: " + stdout + "; Stderr: "
+					+ stderr);
+		}
 	}
 
 }

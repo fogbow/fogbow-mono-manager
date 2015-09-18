@@ -12,15 +12,17 @@ import org.fogbowcloud.manager.occi.request.Request;
 
 public class TwoFoldPrioritizationPlugin implements PrioritizationPlugin {
 
-	PrioritizationPlugin localPrioritizationPlugin;
-	PrioritizationPlugin remotePrioritizationPlugin;
+	protected static final String REMOTE_PRIORITIZATION_PLUGIN_CLASS = "remote_prioritization_plugin_class";
+	protected static final String LOCAL_PRIORITIZATION_PLUGIN_CLASS = "local_prioritization_plugin_class";
+	private PrioritizationPlugin localPrioritizationPlugin;
+	private PrioritizationPlugin remotePrioritizationPlugin;
 	
 	private static final Logger LOGGER = Logger.getLogger(TwoFoldPrioritizationPlugin.class);
 	
 	public TwoFoldPrioritizationPlugin(Properties properties, AccountingPlugin accountingPlugin) {
 		try {
 			localPrioritizationPlugin = (PrioritizationPlugin) createInstanceWithAccoutingPlugin(
-					"local_prioritization_plugin_class", properties, accountingPlugin);
+					LOCAL_PRIORITIZATION_PLUGIN_CLASS, properties, accountingPlugin);
 		} catch (Exception e) {
 			LOGGER.warn("A valid local prioritization plugin was not specified in properties. "
 					+ "Using the default one.",	e);
@@ -29,7 +31,7 @@ public class TwoFoldPrioritizationPlugin implements PrioritizationPlugin {
 		
 		try {
 			remotePrioritizationPlugin = (PrioritizationPlugin) createInstanceWithAccoutingPlugin(
-					"remote_prioritization_plugin_class", properties, accountingPlugin);
+					REMOTE_PRIORITIZATION_PLUGIN_CLASS, properties, accountingPlugin);
 		} catch (Exception e) {
 			LOGGER.warn("A valid remote prioritization plugin was not specified in properties. "
 					+ "Using the default one.",	e);
@@ -58,5 +60,13 @@ public class TwoFoldPrioritizationPlugin implements PrioritizationPlugin {
 		Request localPreemption = localPrioritizationPlugin.takeFrom(newRequest, localRequests);
 		return (localPreemption != null) ? localPreemption : 
 			remotePrioritizationPlugin.takeFrom(newRequest, servedRequests);
+	}
+	
+	protected PrioritizationPlugin getLocalPrioritizationPlugin() {
+		return localPrioritizationPlugin;
+	}
+	
+	protected PrioritizationPlugin getRemotePrioritizationPlugin() {
+		return remotePrioritizationPlugin;
 	}
 }

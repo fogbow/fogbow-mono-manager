@@ -1,27 +1,34 @@
 package org.fogbowcloud.manager.core.plugins.compute.openstack;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpException;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.ProtocolVersion;
 import org.apache.http.StatusLine;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.message.BasicStatusLine;
 import org.fogbowcloud.manager.core.RequirementsHelper;
 import org.fogbowcloud.manager.core.model.Flavor;
-import org.fogbowcloud.manager.core.plugins.compute.openstack.OpenStackConfigurationConstants;
-import org.fogbowcloud.manager.core.plugins.compute.openstack.OpenStackNovaV2ComputePlugin;
+import org.fogbowcloud.manager.core.model.ImageState;
+import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.identity.openstack.KeystoneIdentityPlugin;
+import org.fogbowcloud.manager.core.plugins.util.HttpPatch;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.instance.InstanceState;
@@ -34,14 +41,18 @@ import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.fogbowcloud.manager.occi.util.NovaV2ComputeApplication;
 import org.fogbowcloud.manager.occi.util.PluginHelper;
+import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
+import org.restlet.Response;
 
 public class TestNovaV2ComputeOpenStack {
 
+	private static final String GLACE_V2 = "glaceV2";
 	private static final String FIRST_INSTANCE_ID = "0";
 	private static final String SECOND_INSTANCE_ID = "1";
 	private PluginHelper pluginHelper;
@@ -55,6 +66,7 @@ public class TestNovaV2ComputeOpenStack {
 		properties.put(OpenStackConfigurationConstants.COMPUTE_NOVAV2_URL_KEY, PluginHelper.COMPUTE_NOVAV2_URL);
 		properties.put(OpenStackConfigurationConstants.COMPUTE_NOVAV2_IMAGE_PREFIX_KEY
 				+ PluginHelper.LINUX_X86_TERM, "imageid");
+		properties.put(OpenStackConfigurationConstants.COMPUTE_GLANCEV2_URL_KEY, GLACE_V2);
 		
 		novaV2ComputeOpenStack = new OpenStackNovaV2ComputePlugin(properties);
 		
@@ -62,8 +74,12 @@ public class TestNovaV2ComputeOpenStack {
 		Flavor flavorSmall = new Flavor(RequestConstants.SMALL_TERM, "1", "1000", "10");
 		flavorSmall.setId(SECOND_INSTANCE_ID);
 		flavors.add(flavorSmall); 
-		flavors.add(new Flavor("medium", "2", "2000", "20"));
-		flavors.add(new Flavor("big", "4", "4000", "40"));
+		Flavor flavorMedium = new Flavor("medium", "2", "2000", "20");
+		flavorMedium.setId("2");
+		flavors.add(flavorMedium);
+		Flavor flavorBig = new Flavor("big", "4", "4000", "40");
+		flavorBig.setId("3");
+		flavors.add(flavorBig);
 		novaV2ComputeOpenStack.setFlavors(flavors);
 		
 		HashMap<String, String> tokenAtt = new HashMap<String, String>();
@@ -89,6 +105,19 @@ public class TestNovaV2ComputeOpenStack {
 				defaultToken, new ArrayList<Category>(), new HashMap<String, String>(), PluginHelper.LINUX_X86_TERM));
 		
 		Assert.assertEquals(1, novaV2ComputeOpenStack.getInstances(defaultToken).size());
+	}
+	
+	@Test(expected = OCCIException.class)
+	public void testCreateRequestWithoutImage() {
+		novaV2ComputeOpenStack.requestInstance(defaultToken, new ArrayList<Category>(),
+				new HashMap<String, String>(), null);
+	}
+
+	@Test(expected = OCCIException.class)
+	public void testCreateRequestTenantId() {
+		defaultToken.getAttributes().remove(OpenStackNovaV2ComputePlugin.TENANT_ID);
+		novaV2ComputeOpenStack.requestInstance(defaultToken, new ArrayList<Category>(),
+				new HashMap<String, String>(), PluginHelper.LINUX_X86_TERM);
 	}
 	
 	@Test
@@ -314,5 +343,200 @@ public class TestNovaV2ComputeOpenStack {
 				novaV2ComputeOpenStack.getInstance(defaultToken, "initialized").getState());
 		Assert.assertEquals(InstanceState.SUSPENDED, 
 				novaV2ComputeOpenStack.getInstance(defaultToken, "suspended").getState());
+	}
+	
+	@Test
+	public void testUploadImage() throws Exception {
+		String id = "id_123";
+		String responseStr = "{\"id\":\"" + id + "\"}";
+		HttpResponse createHttpResposeMock = createHttpResponseMock(responseStr, HttpStatus.SC_OK);
+		HttpClient httpClient = Mockito.mock(HttpClient.class);
+		Mockito.when(httpClient.execute(Mockito.any(HttpUriRequest.class))).thenReturn(
+				createHttpResposeMock);
+
+		novaV2ComputeOpenStack.setClient(httpClient);
+
+		List<HttpUriRequest> requests = new ArrayList<HttpUriRequest>();
+		requests.add(new HttpPost(GLACE_V2 + OpenStackNovaV2ComputePlugin.V2_IMAGES));
+		requests.add(new HttpPatch(GLACE_V2 + OpenStackNovaV2ComputePlugin.V2_IMAGES + "/" + id));
+		requests.add(new HttpPut(GLACE_V2 + OpenStackNovaV2ComputePlugin.V2_IMAGES + "/" + id
+				+ OpenStackNovaV2ComputePlugin.V2_IMAGES_FILE));
+		HttpUriRequestMatcher expectedRequests = new HttpUriRequestMatcher(requests);
+
+		novaV2ComputeOpenStack.uploadImage(new Token("", "", null, null), "", "image", "");
+
+		Mockito.verify(httpClient, Mockito.times(3)).execute(Mockito.argThat(expectedRequests));
+	}
+	
+	@Test
+	public void testGetResourceInfo() throws Exception {
+		JSONObject jsonObsoluteValues = new JSONObject();
+		
+		String value = "10";
+		String halfValue = "5";
+		jsonObsoluteValues.put(OpenStackConfigurationConstants.TOTAL_CORES_USED_ATT, halfValue);
+		jsonObsoluteValues.put(OpenStackConfigurationConstants.MAX_TOTAL_CORES_ATT, value);
+		jsonObsoluteValues.put(OpenStackConfigurationConstants.TOTAL_RAM_USED_ATT, halfValue);
+		jsonObsoluteValues.put(OpenStackConfigurationConstants.MAX_TOTAL_RAM_SIZE_ATT, value);
+		jsonObsoluteValues.put(OpenStackConfigurationConstants.TOTAL_INSTANCES_USED_ATT, halfValue);
+		jsonObsoluteValues.put(OpenStackConfigurationConstants.MAX_TOTAL_INSTANCES_ATT, value);
+		
+		JSONObject jsonAbsolute = new JSONObject();
+		jsonAbsolute.put("absolute", jsonObsoluteValues);
+		
+		JSONObject jsonLimits = new JSONObject();
+		jsonLimits.put("limits", jsonAbsolute);
+		
+		HttpResponse httpResposeMock = createHttpResponseMock(jsonLimits.toString(), HttpStatus.SC_OK);
+		HttpClient httpClient = Mockito.mock(HttpClient.class);
+		Mockito.when(httpClient.execute(Mockito.any(HttpUriRequest.class)))
+			.thenReturn(httpResposeMock);
+		
+		novaV2ComputeOpenStack.setClient(httpClient);
+		
+		ResourcesInfo resourcesInfo = novaV2ComputeOpenStack.getResourcesInfo(defaultToken);
+		Assert.assertEquals(halfValue, resourcesInfo.getCpuIdle());
+		Assert.assertEquals(halfValue, resourcesInfo.getCpuInUse());
+		Assert.assertEquals(halfValue, resourcesInfo.getInstancesInUse());
+		Assert.assertEquals(halfValue, resourcesInfo.getInstancesIdle());
+		Assert.assertEquals(halfValue, resourcesInfo.getMemInUse());
+		Assert.assertEquals(halfValue, resourcesInfo.getMemIdle());
+	}
+	
+	@Test
+	public void testDoRequestExceptions() throws Exception {
+		HttpResponse httpResposeMockException = createHttpResponseMock("", HttpStatus.SC_BAD_REQUEST);
+		HttpClient httpClient = Mockito.mock(HttpClient.class);
+		Mockito.when(httpClient.execute(Mockito.any(HttpUriRequest.class))).thenReturn(httpResposeMockException);
+
+		novaV2ComputeOpenStack.setClient(httpClient);
+		try {
+			novaV2ComputeOpenStack.doDeleteRequest("", "");
+			Assert.fail();
+		} catch (Exception e) {}
+		
+		try {
+			novaV2ComputeOpenStack.doPutRequest("", "", "");
+			Assert.fail();
+		} catch (Exception e) {}
+		
+		try {
+			novaV2ComputeOpenStack.doPostRequest("", "", null);
+			Assert.fail();
+		} catch (Exception e) {}
+		
+		try {
+			novaV2ComputeOpenStack.doPutRequest("", "", "");
+			Assert.fail();
+		} catch (Exception e) {}
+		
+		try {
+			novaV2ComputeOpenStack.doGetRequest("", "");
+			Assert.fail();
+		} catch (Exception e) {}
+	}
+	
+	@Test
+	public void testGetImageState() throws Exception {
+		List<JSONObject> list = new ArrayList<JSONObject>();
+		String imageOne = "imageOne";
+		String imageTwo = "imageTwo";
+		String imageThree = "imageThree";
+		list.add(new JSONObject("{\"name\": \"" + imageOne  + "\", \"status\": \"active\"}"));
+		list.add(new JSONObject("{\"name\": \"" + imageTwo + "\", \"status\": \"saving\"}"));
+		list.add(new JSONObject("{\"name\": \"" + imageThree + "\", \"status\": \"x\"}"));
+		JSONObject jsonObject = new JSONObject();
+		jsonObject.put("images", list);
+		HttpResponse httpResposeMock = createHttpResponseMock(jsonObject.toString(), HttpStatus.SC_OK);
+		HttpClient httpClient = Mockito.mock(HttpClient.class);
+		Mockito.when(httpClient.execute(Mockito.any(HttpUriRequest.class))).thenReturn(
+				httpResposeMock);
+		novaV2ComputeOpenStack.setClient(httpClient);
+				
+		Assert.assertEquals(ImageState.ACTIVE, novaV2ComputeOpenStack.getImageState(new Token("",
+				"", new Date(), new HashMap<String, String>()), imageOne));
+	}
+	
+	@Test
+	public void testByPass() {
+		Response response = new org.restlet.engine.adapter.HttpResponse(null, null);
+		novaV2ComputeOpenStack.bypass(null, response);
+		Assert.assertEquals(400, response.getStatus().getCode());
+	}
+	
+	@Test
+	public void testGetUsedFlavor() {
+		Assert.assertNull(novaV2ComputeOpenStack.getUsedFlavor("0"));
+	}
+	
+	@Test
+	public void testGetInstanceState() {
+		Assert.assertEquals(InstanceState.SUSPENDED, novaV2ComputeOpenStack.getInstanceState(InstanceState.SUSPENDED.getOcciState()));
+		Assert.assertEquals(InstanceState.RUNNING, novaV2ComputeOpenStack.getInstanceState(InstanceState.RUNNING.getOcciState()));
+		Assert.assertEquals(InstanceState.PENDING, novaV2ComputeOpenStack.getInstanceState(InstanceState.PENDING.getOcciState()));
+		Assert.assertEquals(InstanceState.FAILED, novaV2ComputeOpenStack.getInstanceState("error"));
+	}
+	
+	@Test(expected=OCCIException.class)
+	public void testUploadImageWithoutImage() throws Exception {
+		novaV2ComputeOpenStack.uploadImage(new Token("", "", null, null), "", null, "");
 	}	
+	
+	@Test(expected=OCCIException.class)
+	public void testUploadImageDeletingImage() throws Exception {
+		String id = "id_123";
+		String responseStr = "{\"id\":\"" + id + "\"}";
+		HttpResponse httpResposeMock = createHttpResponseMock(responseStr, HttpStatus.SC_OK);
+		HttpResponse httpResposeMockException = createHttpResponseMock(responseStr, HttpStatus.SC_BAD_REQUEST);
+		HttpClient httpClient = Mockito.mock(HttpClient.class);
+		Mockito.when(httpClient.execute(Mockito.any(HttpUriRequest.class))).thenReturn(
+				httpResposeMock, httpResposeMockException, httpResposeMock);
+
+		novaV2ComputeOpenStack.setClient(httpClient);
+		novaV2ComputeOpenStack.uploadImage(new Token("", "", null, null), "", "image", "");
+	}	
+
+	private HttpResponse createHttpResponseMock(String responseStr, int statusCode) {
+		HttpResponse httpResponse = Mockito.mock(HttpResponse.class);
+		try {
+			HttpEntity httpEntity = Mockito.mock(HttpEntity.class);
+			InputStream value = new ByteArrayInputStream(responseStr.getBytes());
+			Mockito.when(httpEntity.getContent()).thenReturn(value);
+			Mockito.when(httpResponse.getEntity()).thenReturn(httpEntity);
+			StatusLine statusLine = new BasicStatusLine(
+					new ProtocolVersion("", 1, 0), statusCode,"");
+			Mockito.when(httpResponse.getStatusLine()).thenReturn(statusLine);
+		} catch (Exception e) {
+		}
+		return httpResponse;
+	}
+
+	private static class HttpUriRequestMatcher extends ArgumentMatcher<HttpUriRequest> {
+
+		private List<HttpUriRequest> requests;
+		private int cont;
+		private boolean valid;
+
+		public HttpUriRequestMatcher(List<HttpUriRequest> requests) {
+			this.cont = -1;
+			this.valid = true;
+			this.requests = requests;
+		}
+
+		public boolean matches(Object object) {
+			try {
+				this.cont++;
+				HttpUriRequest comparedRequest = (HttpUriRequest) object;
+				HttpUriRequest request = this.requests.get(cont);
+				if (!request.getURI().equals(comparedRequest.getURI())) {
+					this.valid = false;
+				}
+				if (!request.getMethod().equals(comparedRequest.getMethod())) {
+					this.valid = false;
+				}				
+			} catch (Exception e) {}
+			return this.valid;
+		}
+	}
+	
 }

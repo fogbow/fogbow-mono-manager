@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<saml2:Assertion xmlns:saml2="urn:oasis:names:tc:SAML:2.0:assertion" ID="_706eff2579144c34e0d13809fade08f8" IssueInstant="2015-08-18T13:02:12.923Z" Version="2.0">
+   <saml2:Issuer Format="urn:oasis:names:tc:SAML:2.0:nameid-format:entity">https://idp1.cafeexpresso.rnp.br/idp/shibboleth</saml2:Issuer>
+   <saml2:Subject>
+      <saml2:NameID Format="urn:oasis:names:tc:SAML:2.0:nameid-format:transient">_05a15e6c99f423108ec4a21c4c1d115d</saml2:NameID>
+      <saml2:SubjectConfirmation Method="urn:oasis:names:tc:SAML:2.0:cm:bearer">
+         <saml2:SubjectConfirmationData Address="150.165.85.192" InResponseTo="_6d08cf9ee5bc94379fda5c7dc4c8f1d7" NotOnOrAfter="2015-08-18T13:07:12.923Z" Recipient="https://cdc-rnp.dashboard.fogbowcloud.org/Shibboleth.sso/SAML2/POST" />
+      </saml2:SubjectConfirmation>
+   </saml2:Subject>
+   <saml2:Conditions NotBefore="2015-08-18T13:02:12.923Z" NotOnOrAfter="2015-08-18T13:07:12.923Z">
+      <saml2:AudienceRestriction>
+         <saml2:Audience>https://cdc-rnp.dashboard.fogbowcloud.org/shibboleth-sp2</saml2:Audience>
+      </saml2:AudienceRestriction>
+   </saml2:Conditions>
+   <saml2:AuthnStatement AuthnInstant="2015-08-18T13:02:12.817Z" SessionIndex="1a952c26a22409719687c4f1a575c6edd23be2cb2e63bbd299cc668ab623cf53">
+      <saml2:SubjectLocality Address="150.165.85.192" />
+      <saml2:AuthnContext>
+         <saml2:AuthnContextClassRef>urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport</saml2:AuthnContextClassRef>
+      </saml2:AuthnContext>
+   </saml2:AuthnStatement>
+   <saml2:AttributeStatement>
+      <saml2:Attribute FriendlyName="brEduVoIPalias" Name="urn:oid:1.3.6.1.4.1.15996.100.1.1.4.1" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
+         <saml2:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">2345</saml2:AttributeValue>
+         <saml2:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">2346</saml2:AttributeValue>
+      </saml2:Attribute>
+      <saml2:Attribute FriendlyName="uid" Name="urn:oid:0.9.2342.19200300.100.1.1" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
+         <saml2:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">ford</saml2:AttributeValue>
+      </saml2:Attribute>
+      <saml2:Attribute FriendlyName="eduPersonPrincipalName" Name="urn:oid:1.3.6.1.4.1.5923.1.1.1.6" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
+         <saml2:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">80ca06abfa1a5104af9a770f485dad07@idp1.cafeexpresso.rnp.br</saml2:AttributeValue>
+      </saml2:Attribute>
+      <saml2:Attribute FriendlyName="brPersonCPF" Name="urn:oid:1.3.6.1.4.1.15996.100.1.1.1.1" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
+         <saml2:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">12345678900</saml2:AttributeValue>
+      </saml2:Attribute>
+      <saml2:Attribute FriendlyName="sn" Name="urn:oid:2.5.4.4" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
+         <saml2:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">Prefect</saml2:AttributeValue>
+      </saml2:Attribute>
+      <saml2:Attribute FriendlyName="brEduVoIPaddress" Name="urn:oid:1.3.6.1.4.1.15996.100.1.1.4.5" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
+         <saml2:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">200.157.0.333</saml2:AttributeValue>
+      </saml2:Attribute>
+      <saml2:Attribute FriendlyName="brPersonPassport" Name="urn:oid:1.3.6.1.4.1.15996.100.1.1.1.2" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
+         <saml2:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">A23456</saml2:AttributeValue>
+      </saml2:Attribute>
+      <saml2:Attribute FriendlyName="brEduVoIPbalance" Name="urn:oid:1.3.6.1.4.1.15996.100.1.1.4.7" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
+         <saml2:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">295340</saml2:AttributeValue>
+      </saml2:Attribute>
+      <saml2:Attribute FriendlyName="schacGender" Name="urn:oid:1.3.6.1.4.1.1466.115.121.1.27" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
+         <saml2:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">2</saml2:AttributeValue>
+      </saml2:Attribute>
+      <saml2:Attribute FriendlyName="brEduVoIPcredit" Name="urn:oid:1.3.6.1.4.1.15996.100.1.1.4.8" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
+         <saml2:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">300000</saml2:AttributeValue>
+      </saml2:Attribute>
+      <saml2:Attribute FriendlyName="cn" Name="urn:oid:2.5.4.3" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
+         <saml2:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">Ford Prefect</saml2:AttributeValue>
+      </saml2:Attribute>
+      <saml2:Attribute FriendlyName="brEduVoIPadmin" Name="urn:oid:1.3.6.1.4.1.15996.100.1.1.4.3" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
+         <saml2:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">uid=administrador,ou=people,dc=cafeexpresso,dc=rnp,dc=br</saml2:AttributeValue>
+      </saml2:Attribute>
+      <saml2:Attribute FriendlyName="homePostalAddress" Name="urn:oid:1.3.6.1.4.1.1466.115.121.1.41" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
+         <saml2:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">""</saml2:AttributeValue>
+      </saml2:Attribute>
+      <saml2:Attribute FriendlyName="schacDateOfBirth" Name="urn:oid:1.3.6.1.4.1.1466.115.121.1.36" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
+         <saml2:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">19000523</saml2:AttributeValue>
+      </saml2:Attribute>
+      <saml2:Attribute FriendlyName="schacCountryOfCitizenship" Name="urn:oid:1.3.6.1.4.1.1466.115.121.1.15" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
+         <saml2:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">Brazil</saml2:AttributeValue>
+      </saml2:Attribute>
+      <saml2:Attribute FriendlyName="brEduVoIPPhone" Name="urn:oid:1.3.6.1.4.1.15996.100.1.1.4.9" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
+         <saml2:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">1</saml2:AttributeValue>
+         <saml2:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">2</saml2:AttributeValue>
+      </saml2:Attribute>
+      <saml2:Attribute FriendlyName="mail" Name="urn:oid:0.9.2342.19200300.100.1.3" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
+         <saml2:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">"ford.prefect@gidlab.rnp.br"</saml2:AttributeValue>
+      </saml2:Attribute>
+      <saml2:Attribute FriendlyName="telephoneNumber" Name="urn:oid:1.3.6.1.4.1.1466.115.121.1.50" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
+         <saml2:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">+55 22 81389199</saml2:AttributeValue>
+      </saml2:Attribute>
+      <saml2:Attribute FriendlyName="brEduAffiliationType" Name="urn:oid:1.3.6.1.4.1.15996.100.1.1.2.1" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
+         <saml2:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">faculty</saml2:AttributeValue>
+      </saml2:Attribute>
+      <saml2:Attribute FriendlyName="brEduVoIPexpiryDate" Name="urn:oid:1.3.6.1.4.1.15996.100.1.1.4.6" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
+         <saml2:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">20081030</saml2:AttributeValue>
+      </saml2:Attribute>
+   </saml2:AttributeStatement>
+</saml2:Assertion>

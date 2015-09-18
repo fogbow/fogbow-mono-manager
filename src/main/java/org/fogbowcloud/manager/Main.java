@@ -148,22 +148,27 @@ public class Main {
 		facade.setMemberPickerPlugin(memberPickerPlugin);
 		facade.setPrioritizationPlugin(prioritizationPlugin);
 		
-		ManagerXmppComponent xmpp = new ManagerXmppComponent(
-				properties.getProperty(ConfigurationConstants.XMPP_JID_KEY),
-				properties.getProperty(ConfigurationConstants.XMPP_PASS_KEY),
-				properties.getProperty(ConfigurationConstants.XMPP_HOST_KEY),
-				Integer.parseInt(properties.getProperty(ConfigurationConstants.XMPP_PORT_KEY)),
-				facade);
-		xmpp.setRendezvousAddress(properties.getProperty(ConfigurationConstants.RENDEZVOUS_JID_KEY));
-		try {
-			xmpp.connect();			
-		} catch (ComponentException e) {
-			LOGGER.error("Conflict in the initialization of xmpp component.", e);
-			System.exit(EXIT_ERROR_CODE);
+		String xmppHost = properties.getProperty(ConfigurationConstants.XMPP_HOST_KEY);
+		String xmppJid = properties.getProperty(ConfigurationConstants.XMPP_JID_KEY);
+		
+		if (xmppHost != null && xmppJid != null) {
+			ManagerXmppComponent xmpp = new ManagerXmppComponent(
+					xmppJid,
+					properties.getProperty(ConfigurationConstants.XMPP_PASS_KEY),
+					xmppHost,
+					Integer.parseInt(properties.getProperty(ConfigurationConstants.XMPP_PORT_KEY)),
+					facade);
+			xmpp.setRendezvousAddress(properties.getProperty(ConfigurationConstants.RENDEZVOUS_JID_KEY));
+			try {
+				xmpp.connect();			
+			} catch (ComponentException e) {
+				LOGGER.error("Conflict in the initialization of xmpp component.", e);
+				System.exit(EXIT_ERROR_CODE);
+			}
+			xmpp.process(false);
+			xmpp.init();
+			facade.setPacketSender(xmpp);
 		}
-		xmpp.process(false);
-		xmpp.init();
-		facade.setPacketSender(xmpp);
 
 		OCCIApplication application = new OCCIApplication(facade);
 

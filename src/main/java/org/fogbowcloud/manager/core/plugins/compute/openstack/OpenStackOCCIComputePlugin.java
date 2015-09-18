@@ -48,11 +48,6 @@ public class OpenStackOCCIComputePlugin extends OCCIComputePlugin{
 				PUBLIC_KEY_TERM, PUBLIC_KEY_SCHEME, RequestConstants.MIXIN_CLASS));
 	}
 	
-	protected void setOpenStackNovaV2ComputePlugin(
-			OpenStackNovaV2ComputePlugin openStackNovaV2ComputePlugin) {
-		this.openStackNovaV2ComputePlugin = openStackNovaV2ComputePlugin;
-	}
-	
 	protected Set<Header> getExtraHeaders(List<Category> requestCategories,
 			Map<String, String> xOCCIAtt, Token token) {
 		List<Category> openStackCategories = new ArrayList<Category>();
@@ -158,7 +153,7 @@ public class OpenStackOCCIComputePlugin extends OCCIComputePlugin{
 		return openStackNovaV2ComputePlugin.getResourcesInfo(token);
 	}	
 
-	private void convertRequestToOcci(Request request, Series<org.restlet.engine.header.Header> requestHeaders) {
+	protected void convertRequestToOcci(Request request, Series<org.restlet.engine.header.Header> requestHeaders) {
 		try {
 			String entityAsText = request.getEntityAsText();
 			if (!entityAsText.contains(OCCIHeaders.CATEGORY)

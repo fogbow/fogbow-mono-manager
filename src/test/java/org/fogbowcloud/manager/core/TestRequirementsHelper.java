@@ -19,6 +19,11 @@ public class TestRequirementsHelper {
 		String requirementsString = "X == 1 && Y >= 0";
 		Assert.assertTrue(RequirementsHelper.checkSyntax(requirementsString));
 	}
+	
+	@Test
+	public void testCheckNullRequirements() {
+		Assert.assertTrue(RequirementsHelper.checkSyntax(null));
+	}
 
 	@Test
 	public void testCheckInvalidRequirements() {
@@ -160,15 +165,21 @@ public class TestRequirementsHelper {
 		Assert.assertTrue(RequirementsHelper.matches(flavor, requirementsStr));
 	}
 	
-	
 	@Test
 	public void testCheckFlavorWithoutGLUEExpressions() {
 		Flavor flavor = new Flavor("test", "12", "400", "10");
 		String requirementsStr = "x == 2";
 		
 		Assert.assertTrue(RequirementsHelper.matches(flavor, requirementsStr));
-	}		
+	}
 	
+	@Test
+	public void testCheckFlavorIrregularSyntax() {
+		Flavor flavor = new Flavor("test", "12", "400", "10");
+		String requirementsStr = "/X|=dof";
+		
+		Assert.assertTrue(RequirementsHelper.matches(flavor, requirementsStr));
+	}			
 	
 	@Test
 	public void testCheckFlavorWithRequirementsNullOrEmpty() {
@@ -182,7 +193,6 @@ public class TestRequirementsHelper {
 		Assert.assertTrue(RequirementsHelper.matches(flavor, requirementsStr));
 	}		
 	
-	
 	@Test
 	public void testCheckFlavorWithLocation() {
 		Flavor flavor = new Flavor("test", "12", "400", "11");
@@ -193,7 +203,6 @@ public class TestRequirementsHelper {
 		String requirementsStr = disk + " > 10 && " + mem + " < 500 && " + vCpu + " >= 10 && " + location + "==\"location\"";
 		Assert.assertTrue(RequirementsHelper.matches(flavor, requirementsStr));
 	}
-
 	
 	@Test
 	public void testCheckInvalidFlavor() {
@@ -207,7 +216,6 @@ public class TestRequirementsHelper {
 		requirementsStr = disk + " < 10 && " + mem + " < 200 && " + vCpu + " < 2 && X == true" ;
 		Assert.assertFalse(RequirementsHelper.matches(flavor, requirementsStr));				
 	}
-
 	
 	@Test
 	public void testFindFlavor() {
@@ -253,7 +261,6 @@ public class TestRequirementsHelper {
 		Assert.assertEquals(firstValue, RequirementsHelper.findSmallestFlavor(flavors, requirementsStr)
 				.getId());
 	}	
-
 	
 	@Test
 	public void testFindFlavorSameMenAndCore() {
@@ -300,6 +307,16 @@ public class TestRequirementsHelper {
 		requirementsStr = attrName + "<0&&" + attrName + "<=10";
 		Assert.assertEquals("-1",
 				RequirementsHelper.getSmallestValueForAttribute(requirementsStr, attrName));
+		
+		requirementsStr = attrName + "<20&&" + attrName + ">=10";
+		Assert.assertEquals("10",
+				RequirementsHelper.getSmallestValueForAttribute(requirementsStr, attrName));		
+	}
+	
+	@Test
+	public void testGetSmallestValueForAttribute() {
+		Assert.assertEquals(RequirementsHelper.ZERO,
+				RequirementsHelper.getSmallestValueForAttribute("X==1", "Y"));		
 	}
 	
 	@Test
@@ -372,17 +389,22 @@ public class TestRequirementsHelper {
 	@Test
 	public void testTrueGetSmallestValueForAttribute() {
 		String requirementsStr = "true";
-		Assert.assertEquals("0", RequirementsHelper.getSmallestValueForAttribute(requirementsStr, RequirementsHelper.GLUE_VCPU_TERM));
+		Assert.assertEquals(RequirementsHelper.ZERO, RequirementsHelper.getSmallestValueForAttribute(requirementsStr, RequirementsHelper.GLUE_VCPU_TERM));
 	}
+	
+	@Test
+	public void testGetSmallestValueForAttributeRequirementsNull() {
+		Assert.assertEquals(RequirementsHelper.ZERO, RequirementsHelper.getSmallestValueForAttribute(null, RequirementsHelper.GLUE_VCPU_TERM));
+	}	
 	
 	@Test
 	public void testEmptyGetSmallestValueForAttribute() {
 		String requirementsStr = "";
-		Assert.assertEquals("0", RequirementsHelper.getSmallestValueForAttribute(requirementsStr, RequirementsHelper.GLUE_VCPU_TERM));
+		Assert.assertEquals(RequirementsHelper.ZERO, RequirementsHelper.getSmallestValueForAttribute(requirementsStr, RequirementsHelper.GLUE_VCPU_TERM));
 	}	
 	
 	private Op toOp(String requirementsStr) {
 		ClassAdParser classAdParser = new ClassAdParser(requirementsStr);
-		return (Op) classAdParser.parse();	 
+		return (Op) classAdParser.parse();
 	}
 }

@@ -23,6 +23,15 @@ public class Instance {
 	private List<Resource> resources;
 	private List<Link> links;
 	private InstanceState state = InstanceState.PENDING;
+	/**
+	 * Attributes:
+	 * - occi.core.id
+	 * - occi.compute.state
+	 * - occi.compute.speed
+	 * - occi.compute.cores
+	 * - occi.compute.hostname
+	 * - occi.compute.memory
+	 */
 	private Map<String, String> attributes;
 
 	public Instance(String id) {

@@ -22,6 +22,7 @@ compute_novav2_network_id=ea51ed0c-0e8a-448d-8202-c79777109ffe
 # compute_class=org.fogbowcloud.manager.core.plugins.compute.opennebula.OpenNebulaComputePlugin
 # compute_one_url=http://localhost:2633/RPC2
 # compute_one_network_id=1 
+# compute_one_network_contextualization=false
 # compute_one_templates=all
 # compute_one_datastore_id=1
 # compute_one_ssh_host=127.0.0.1
@@ -48,6 +49,32 @@ compute_novav2_network_id=ea51ed0c-0e8a-448d-8202-c79777109ffe
 # compute_occi_flavors_small={cpu=1,mem=512}
 # compute_occi_flavors_medium={cpu=2,mem=1024}
 # compute_occi_flavors_large={cpu=4,mem=2048}
+
+## Compute Plugin (Cloudstack)
+# compute_class=org.fogbowcloud.manager.core.plugins.compute.cloudstack.CloudStackComputePlugin
+# compute_cloudstack_api_url=http://127.0.0.1:8080/client/api
+# compute_cloudstack_zone_id=d05bfc3e-85e5-4be8-9ae9-cc7c2deb95f1
+# compute_cloudstack_image_download_base_url=http://127.0.0.1/downloads/
+# compute_cloudstack_image_download_base_path=/var/www/downloads/
+# compute_cloudstack_hypervisor=KVM
+# compute_cloudstack_image_download_os_type_id=ea51ed0c-0e8a-448d-8202-c79777109ffe
+
+##Compute Plugin (Azure)
+# compute_class=org.fogbowcloud.manager.core.plugins.compute.cloudstack.AzureComputePlugin
+# compute_azure_max_vcpu=10
+# compute_azure_max_ram=10240
+# compute_azure_region=East US
+# compute_azure_storage_account_name=storage1
+# compute_azure_storage_key=abcd12345
+
+## Compute Plugin (EC2)
+# compute_ec2_region=us-east-1
+# compute_ec2_security_group_id=sg-12345678
+# compute_ec2_subnet_id=subnet-12345678
+# compute_ec2_image_bucket_name=s3-bucket-for-images
+# compute_ec2_max_vcpu=10
+# compute_ec2_max_ram=10240
+# compute_ec2_max_instances=10
 
 ## Image Storage Plugin (HTTPDownload)
 image_storage_class=org.fogbowcloud.manager.core.plugins.imagestorage.http.HTTPDownloadImageStoragePlugin
@@ -90,6 +117,13 @@ nof_prioritize_local=true
 ## If you are using NoFMemberPicker or NoFPrioritizationPlugin classes
 nof_trustworthy=false
 
+## Local identity (CloudStack Identity Plugin)
+local_identity_class=org.fogbowcloud.manager.core.plugins.identity.cloudstack.cloudStackIdentityPlugin
+local_identity_url=http://localhost:8080/client/api
+local_proxy_account_user_name=fogbow
+local_proxy_account_password=fogbow
+local_proxy_account_domain=root
+
 ## Local identity (Keystone Identity Plugin)
 local_identity_class=org.fogbowcloud.manager.core.plugins.identity.openstack.KeystoneIdentityPlugin
 local_identity_url=http://localhost:5000
@@ -102,10 +136,20 @@ local_proxy_account_tenant_name=demo
 # x509_ca_dir_path=/path/to/ca/directory
 
 ## Local Identity (Opennebula Identity Plugin)
-# local_identity_class=org.fogbowcloud.manager.core.plugins.opennebula.OpenNebulaIdentityPlugin
+# local_identity_class=org.fogbowcloud.manager.core.plugins.identity.opennebula.OpenNebulaIdentityPlugin
 # local_identity_url=http://localhost:2633/RPC2
 
-## Authorizatio Plugin
+## Local Identity (Cloudstack Identity Plugin)
+# local_identity_class=org.fogbowcloud.manager.core.plugins.identity.cloudstack.CloudStackIdentityPlugin
+# local_identity_url=http://127.0.0.1:8080/client/api/
+# local_proxy_account_api_key=user_api_key
+# local_proxy_account_secret_key=user_secret_key
+
+## Local Identity (EC2)
+# local_proxy_account_ec2_access_key=AKIALSKQLKFD7AHQLKEUO
+# local_proxy_account_ec2_secret_key=Iuaooiad&891/2309asd0123+akplkdh
+
+## Authorization Plugin
 federation_authorization_class=org.fogbowcloud.manager.core.plugins.authorization.AllowAllAuthorizationPlugin
 
 ## Federation identity (Keystone Identity Plugin)
@@ -121,6 +165,12 @@ federation_identity_url=http://localhost:5000
 # path_vomses=/etc/vomses
 # path_trust_anchors=/etc/grid-security/certificates
 # path_vomsdir=/etc/grid-security/vomsdir
+
+## Identity (Azure)
+# federation_identity_class=org.fogbowcloud.manager.core.plugins.identity.azure.AzureIdentityPlugin
+# proxy_account_subscription_id=subscription_id
+# proxy_account_keystore_path=/etc/keystore/azure
+# proxy_account_keystore_password=test123
 
 ## Member Validator
 member_validator_class=org.fogbowcloud.manager.core.plugins.memberauthorization.DefaultMemberAuthorizationPlugin

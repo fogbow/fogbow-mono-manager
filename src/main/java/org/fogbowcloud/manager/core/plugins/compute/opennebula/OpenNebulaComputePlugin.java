@@ -80,12 +80,14 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 	private List<String> validTemplates;
 	
 	private static final Logger LOGGER = Logger.getLogger(OpenNebulaComputePlugin.class);
+	private Properties properties;
 
 	public OpenNebulaComputePlugin(Properties properties){
 		this(properties, new OpenNebulaClientFactory());
 	}
 		
 	protected OpenNebulaComputePlugin(Properties properties, OpenNebulaClientFactory clientFactory) {
+		this.properties = properties;
 		this.openNebulaEndpoint = properties.getProperty(OneConfigurationConstants.COMPUTE_ONE_URL);
 		this.clientFactory = clientFactory;
 		fogbowTermToOpenNebula = new HashMap<String, String>();
@@ -176,7 +178,7 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		return clientFactory.allocateVirtualMachine(oneClient, vmTemplate);
 	}
 
-	private String generateTemplate(Map<String, String> templateProperties) {
+	protected String generateTemplate(Map<String, String> templateProperties) {
 		DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder docBuilder;
 		try {
@@ -204,6 +206,13 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 				Element userdataElement = doc.createElement("USERDATA");
 				userdataElement.appendChild(doc.createTextNode(userdata));
 				contextElement.appendChild(userdataElement);
+			}
+			if (Boolean.parseBoolean(properties.getProperty(
+					OneConfigurationConstants.COMPUTE_ONE_NETWORK_CONTEXTUALIZATION, 
+					Boolean.FALSE.toString()))) {
+				Element networkContextElement = doc.createElement("NETWORK");
+				networkContextElement.appendChild(doc.createTextNode("YES"));
+				contextElement.appendChild(networkContextElement);
 			}
 			// cpu
 			Element cpuElement = doc.createElement("CPU");
@@ -527,7 +536,7 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		Map<String, String> templateProperties = new HashMap<String, String>();
 		templateProperties.put("image_name", imageName);
 		templateProperties.put("image_path", imageSourcePath);
-		templateProperties.put("image_disk_format", diskFormat);
+		templateProperties.put("image_type", "OS");
 		Long imageSize = (long) Math.ceil(((double) new File(imagePath).length()) / (1024d * 1024d));
 		templateProperties.put("image_size", imageSize.toString());
 		
@@ -545,7 +554,7 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		return sshHost != null && !sshHost.isEmpty();
 	}
 
-	private String generateImageTemplate(Map<String, String> templateProperties) {
+	protected String generateImageTemplate(Map<String, String> templateProperties) {
 		DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder docBuilder;
 		try {
@@ -566,10 +575,9 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 			sizeElement.appendChild(doc.createTextNode(templateProperties.get("image_size")));
 			rootElement.appendChild(sizeElement);
 
-			Element driverElement = doc.createElement("DRIVER");
-			driverElement.appendChild(doc.createTextNode(templateProperties
-					.get("image_disk_format")));
-			rootElement.appendChild(driverElement);
+			Element typeElement = doc.createElement("TYPE");
+			typeElement.appendChild(doc.createTextNode(templateProperties.get("image_type")));
+			rootElement.appendChild(typeElement);
 
 			TransformerFactory transformerFactory = TransformerFactory.newInstance();
 			Transformer transformer = transformerFactory.newTransformer();
@@ -589,7 +597,7 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 	@Override
 	public String getImageId(Token token, String imageName) {
 		Client oneClient = clientFactory.createClient(token.getAccessId(), openNebulaEndpoint);
-		ImagePool imagePool = new ImagePool(oneClient); 
+		ImagePool imagePool = clientFactory.createImagePool(oneClient);
 		OneResponse response = imagePool.info();
 		
 		if (response.isError()) {
@@ -736,7 +744,7 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 	public ImageState getImageState(Token token, String imageName) {
 		LOGGER.debug("Getting image status from image " + imageName + " with token " + token);
 		Client oneClient = clientFactory.createClient(token.getAccessId(), openNebulaEndpoint);
-		ImagePool imagePool = new ImagePool(oneClient); 
+		ImagePool imagePool = clientFactory.createImagePool(oneClient);
 		OneResponse response = imagePool.info();
 		
 		if (response.isError()) {

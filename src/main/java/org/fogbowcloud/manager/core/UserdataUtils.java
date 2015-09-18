@@ -68,26 +68,33 @@ public class UserdataUtils {
 		}
 		
 		CloudInitUserDataBuilder cloudInitUserDataBuilder = CloudInitUserDataBuilder.start();
-		cloudInitUserDataBuilder.addShellScript(new FileReader(sshTunnelCmdFilePath));
+		if (sshPrivateHostIP != null) {
+			cloudInitUserDataBuilder.addShellScript(new FileReader(sshTunnelCmdFilePath));
+		}
 		
 		if (managerPublicKeyFilePath != null || userPublicKey != null) {
 			cloudInitUserDataBuilder.addCloudConfig(new FileReader(new File(cloudConfigFilePath)));
 		}
 		
-		String extraUserData = request.getAttValue(
-				RequestAttribute.EXTRA_USER_DATA_ATT.getValue());
+		String extraUserdata = request.getAttValue(RequestAttribute.EXTRA_USER_DATA_ATT.getValue());
+		String extraUserdataNormalized = null;
+		if (extraUserdata != null) {
+			extraUserdataNormalized = new String(Base64.decodeBase64(extraUserdata));			
+		}
 		String extraUserDataContentType = request.getAttValue(
 				RequestAttribute.EXTRA_USER_DATA_CONTENT_TYPE_ATT.getValue());
 		
-		addExtraUserData(cloudInitUserDataBuilder, extraUserData, extraUserDataContentType);
+		addExtraUserData(cloudInitUserDataBuilder, extraUserdataNormalized, extraUserDataContentType);
 		
 		String mimeString = cloudInitUserDataBuilder.buildUserData();
 		
 		Map<String, String> replacements = new HashMap<String, String>();
 		replacements.put(TOKEN_ID_STR, tokenId);
-		replacements.put(TOKEN_HOST_STR, sshPrivateHostIP);
-		replacements.put(TOKEN_HOST_SSH_PORT_STR, sshRemoteHostPort);
-		replacements.put(TOKEN_HOST_HTTP_PORT_STR, sshRemoteHostHttpPort);
+		if (sshPrivateHostIP != null) {
+			replacements.put(TOKEN_HOST_STR, sshPrivateHostIP);
+			replacements.put(TOKEN_HOST_SSH_PORT_STR, sshRemoteHostPort);
+			replacements.put(TOKEN_HOST_HTTP_PORT_STR, sshRemoteHostHttpPort);
+		}
 		
 		String publicKeyToBeReplaced = null;
 		if (managerPublicKeyFilePath != null) {

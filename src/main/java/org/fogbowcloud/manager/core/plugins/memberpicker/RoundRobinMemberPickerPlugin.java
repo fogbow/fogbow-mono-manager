@@ -19,7 +19,7 @@ public class RoundRobinMemberPickerPlugin implements FederationMemberPickerPlugi
 	}
 
 	@Override
-	public FederationMember pick(List<FederationMember> members) {
+	public synchronized FederationMember pick(List<FederationMember> members) {
 		if (members == null) {
 			return null;
 		}

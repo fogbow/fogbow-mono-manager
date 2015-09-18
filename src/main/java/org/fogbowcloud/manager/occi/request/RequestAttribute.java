@@ -15,7 +15,8 @@ public enum RequestAttribute {
 	USER_DATA_ATT("org.fogbowcloud.request.user-data"),
 	EXTRA_USER_DATA_ATT("org.fogbowcloud.request.extra-user-data"),
 	EXTRA_USER_DATA_CONTENT_TYPE_ATT("org.fogbowcloud.request.extra-user-data-content-type"),
-	REQUIREMENTS("org.fogbowcloud.request.requirements");
+	REQUIREMENTS("org.fogbowcloud.request.requirements"),
+	BATCH_ID("org.fogbowcloud.request.batch-id");
 	
 	private String value;
 	

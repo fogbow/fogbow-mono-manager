@@ -74,6 +74,10 @@ public class Request {
 		return xOCCIAtt.get(RequestAttribute.REQUIREMENTS.getValue());
 	}
 	
+	public String getBatchId() {
+		return xOCCIAtt.get(RequestAttribute.BATCH_ID.getValue());
+	}
+	
 	public String getInstanceId() {
 		return instanceId;
 	}
