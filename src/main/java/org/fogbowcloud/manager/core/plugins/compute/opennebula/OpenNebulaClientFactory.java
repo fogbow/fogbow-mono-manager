@@ -104,6 +104,12 @@ public class OpenNebulaClientFactory {
 				throw new OCCIException(ErrorType.QUOTA_EXCEEDED,
 						ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES);
 			}
+			
+			if ((errorMessage.contains("Not enough free memory")) ||
+					(errorMessage.contains("No space left on device"))) {
+				throw new OCCIException(ErrorType.NO_VALID_HOST_FOUND,
+						ResponseConstants.NO_VALID_HOST_FOUND);
+			}
 
 			throw new OCCIException(ErrorType.BAD_REQUEST, errorMessage);
 		}
