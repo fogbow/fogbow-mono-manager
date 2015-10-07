@@ -250,10 +250,16 @@
 	    <artifactId>azure-management</artifactId>
 	    <version>0.8.0</version>
 	</dependency>
-    <dependency>
+    	<dependency>
 		<groupId>org.opensaml</groupId>
 		<artifactId>opensaml</artifactId>
 		<version>2.6.4</version>
+            	<exclusions>
+        	    <exclusion>
+              		<groupId>org.bouncycastle</groupId>
+                   	<artifactId>bcprov-jdk15on</artifactId>
+                    </exclusion>
+            	</exclusions>
 	</dependency>
   </dependencies>
   
