@@ -112,7 +112,7 @@ public class TestOCCIApplication {
 
 	@Test
 	public void testGetRequestDetails() throws InterruptedException {
-		occiApplication.createRequests(OCCITestHelper.FED_ACCESS_TOKEN, OCCITestHelper.LOCAL_ACCESS_TOKEN, new ArrayList<Category>(),
+		occiApplication.createRequests(OCCITestHelper.FED_ACCESS_TOKEN, new ArrayList<Category>(),
 				xOCCIAtt);
 		List<Request> requests = occiApplication.getRequestsFromUser(OCCITestHelper.FED_ACCESS_TOKEN);
 		Assert.assertEquals(1, requests.size());
@@ -133,9 +133,7 @@ public class TestOCCIApplication {
 						Mockito.any(Map.class), Mockito.anyString())).thenReturn(INSTANCE_ID);
 
 		managerFacade.setComputePlugin(computePlugin);
-		occiApplication.createRequests(OCCITestHelper.FED_ACCESS_TOKEN,
-				OCCITestHelper.LOCAL_ACCESS_TOKEN, new ArrayList<Category>(),
-				xOCCIAtt);
+		occiApplication.createRequests(OCCITestHelper.FED_ACCESS_TOKEN, new ArrayList<Category>(), xOCCIAtt);
 		List<Request> requests = occiApplication.getRequestsFromUser(OCCITestHelper.FED_ACCESS_TOKEN);
 		Assert.assertEquals(1, requests.size());
 		String requestId = requests.get(0).getId();
@@ -150,7 +148,7 @@ public class TestOCCIApplication {
 
 	@Test
 	public void testResquestUser() {
-		this.occiApplication.createRequests(OCCITestHelper.FED_ACCESS_TOKEN, OCCITestHelper.LOCAL_ACCESS_TOKEN, new ArrayList<Category>(),
+		this.occiApplication.createRequests(OCCITestHelper.FED_ACCESS_TOKEN, new ArrayList<Category>(),
 				xOCCIAtt);
 		List<Request> requestsFromUser = occiApplication
 				.getRequestsFromUser(OCCITestHelper.FED_ACCESS_TOKEN);
@@ -162,7 +160,7 @@ public class TestOCCIApplication {
 	public void testManyResquestUser() {
 		int numberOfInstances = 10;
 		xOCCIAtt.put(RequestAttribute.INSTANCE_COUNT.getValue(), String.valueOf(numberOfInstances));
-		this.occiApplication.createRequests(OCCITestHelper.FED_ACCESS_TOKEN, OCCITestHelper.LOCAL_ACCESS_TOKEN, new ArrayList<Category>(),
+		this.occiApplication.createRequests(OCCITestHelper.FED_ACCESS_TOKEN, new ArrayList<Category>(),
 				xOCCIAtt);
 		List<Request> requestsFromUser = occiApplication
 				.getRequestsFromUser(OCCITestHelper.FED_ACCESS_TOKEN);
@@ -174,7 +172,7 @@ public class TestOCCIApplication {
 	public void testRemoveAllRequest() throws InterruptedException {
 		int numberOfInstances = 10;
 		xOCCIAtt.put(RequestAttribute.INSTANCE_COUNT.getValue(), String.valueOf(numberOfInstances));
-		occiApplication.createRequests(OCCITestHelper.FED_ACCESS_TOKEN, OCCITestHelper.LOCAL_ACCESS_TOKEN, new ArrayList<Category>(),
+		occiApplication.createRequests(OCCITestHelper.FED_ACCESS_TOKEN, new ArrayList<Category>(),
 				xOCCIAtt);
 
 		List<Request> requestsFromUser = occiApplication
@@ -191,7 +189,7 @@ public class TestOCCIApplication {
 	public void testRemoveSpecificRequest() {
 		int numberOfInstances = 10;
 		xOCCIAtt.put(RequestAttribute.INSTANCE_COUNT.getValue(), String.valueOf(numberOfInstances));
-		occiApplication.createRequests(OCCITestHelper.FED_ACCESS_TOKEN, OCCITestHelper.LOCAL_ACCESS_TOKEN, new ArrayList<Category>(),
+		occiApplication.createRequests(OCCITestHelper.FED_ACCESS_TOKEN, new ArrayList<Category>(),
 				xOCCIAtt);
 
 		List<Request> requestsFromUser = occiApplication

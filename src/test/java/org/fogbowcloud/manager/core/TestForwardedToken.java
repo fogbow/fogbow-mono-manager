@@ -31,8 +31,7 @@ public class TestForwardedToken {
 	public void testTokenBeingForwarded() {
 		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);
 		
-		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), 
-				managerTestHelper.getDefaultLocalToken(), new ArrayList<Category>(),
+		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), new ArrayList<Category>(),
 				new HashMap<String, String>(), true, DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		request1.setState(RequestState.OPEN);
         
@@ -59,8 +58,7 @@ public class TestForwardedToken {
 	public void testTokenNotBeingForwarded() {
 		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);
 		
-		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), 
-				managerTestHelper.getDefaultLocalToken(), new ArrayList<Category>(),
+		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), new ArrayList<Category>(),
 				new HashMap<String, String>(), true, DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		request1.setState(RequestState.OPEN);
         

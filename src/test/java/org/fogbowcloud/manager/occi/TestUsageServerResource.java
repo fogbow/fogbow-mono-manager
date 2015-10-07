@@ -84,7 +84,6 @@ public class TestUsageServerResource {
 		
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_USAGE);
 		get.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
-		get.addHeader(OCCIHeaders.X_LOCAL_AUTH_TOKEN, DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
 		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(get);
 
@@ -118,7 +117,6 @@ public class TestUsageServerResource {
 		
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_USAGE);
 		get.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
-		get.addHeader(OCCIHeaders.X_LOCAL_AUTH_TOKEN, DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
 		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(get);
 
@@ -156,7 +154,6 @@ public class TestUsageServerResource {
 		
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_USAGE + "/users");
 		get.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
-		get.addHeader(OCCIHeaders.X_LOCAL_AUTH_TOKEN, DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
 		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(get);
 
@@ -197,7 +194,6 @@ public class TestUsageServerResource {
 		
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_USAGE + "/members");
 		get.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
-		get.addHeader(OCCIHeaders.X_LOCAL_AUTH_TOKEN, DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
 		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(get);
 
@@ -238,7 +234,6 @@ public class TestUsageServerResource {
 		
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_USAGE);
 		get.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
-		get.addHeader(OCCIHeaders.X_LOCAL_AUTH_TOKEN, DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
 		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(get);
 

@@ -41,16 +41,16 @@ public class TestIsInstanceBeenUsed {
 		managerTestHelper.initializeXMPPManagerComponent(false, managerController);
 		
 		// setting request repository
-		Request request1 = new Request("id1", managerTestHelper.getDefaultLocalToken(), null, null, null, true, "");
+		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), null, null, true, "");
 		request1.setState(RequestState.FULFILLED);
 		request1.setInstanceId(INSTANCE_DEFAULT);
 		
 		RequestRepository requestRepository = new RequestRepository();
-		requestRepository.addRequest(managerTestHelper.getDefaultLocalToken().getUser(), request1);
+		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(), request1);
 		managerController.setRequests(requestRepository);
 		
 		Request servedRequest = new Request(request1.getId(), new Token("accessId", "userId1", null,
-				new HashMap<String, String>()), null, null, null, false, MANAGER_COMPONENT_URL);
+				new HashMap<String, String>()), null, null, false, MANAGER_COMPONENT_URL);
 		servedRequest.setInstanceId(INSTANCE_DEFAULT);
 		servedRequest.setState(RequestState.FULFILLED);
 		servedRequest.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
@@ -68,16 +68,16 @@ public class TestIsInstanceBeenUsed {
 		managerTestHelper.initializeXMPPManagerComponent(false, managerController);
 		
 		// setting request repository
-		Request request1 = new Request("id1", managerTestHelper.getDefaultLocalToken(), null, null, null, true, "");
+		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), null, null, true, "");
 		request1.setState(RequestState.DELETED);
 		request1.setInstanceId(INSTANCE_DEFAULT);
 		
 		RequestRepository requestRepository = new RequestRepository();
-		requestRepository.addRequest(managerTestHelper.getDefaultLocalToken().getUser(), request1);
+		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(), request1);
 		managerController.setRequests(requestRepository);
 		
 		Request servedRequest = new Request(request1.getId(), new Token("accessId", "userId1", null,
-				new HashMap<String, String>()), null, null, null, false, MANAGER_COMPONENT_URL);
+				new HashMap<String, String>()), null, null, false, MANAGER_COMPONENT_URL);
 		servedRequest.setInstanceId(INSTANCE_DEFAULT);
 		servedRequest.setState(RequestState.FULFILLED);
 		servedRequest.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
@@ -95,15 +95,15 @@ public class TestIsInstanceBeenUsed {
 		managerTestHelper.initializeXMPPManagerComponent(false, managerController);
 		
 		// setting request repository
-		Request request1 = new Request("id1", managerTestHelper.getDefaultLocalToken(), null, null, null, true, "");
+		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), null, null, true, "");
 		request1.setState(RequestState.OPEN);
 		
 		RequestRepository requestRepository = new RequestRepository();
-		requestRepository.addRequest(managerTestHelper.getDefaultLocalToken().getUser(), request1);
+		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(), request1);
 		managerController.setRequests(requestRepository);
 		
 		Request servedRequest = new Request(request1.getId(), new Token("accessId", "userId1", null,
-				new HashMap<String, String>()), null, null, null, false, MANAGER_COMPONENT_URL);
+				new HashMap<String, String>()), null, null, false, MANAGER_COMPONENT_URL);
 		servedRequest.setInstanceId(INSTANCE_DEFAULT);
 		servedRequest.setState(RequestState.FULFILLED);
 		servedRequest.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
@@ -120,7 +120,7 @@ public class TestIsInstanceBeenUsed {
 		managerTestHelper.initializeXMPPManagerComponent(false, managerController);
 		
 		Request servedRequest = new Request("id1", new Token("accessId", "userId1", null,
-				new HashMap<String, String>()), null, null, null, false, MANAGER_COMPONENT_URL);
+				new HashMap<String, String>()), null, null, false, MANAGER_COMPONENT_URL);
 		servedRequest.setInstanceId(INSTANCE_DEFAULT);
 		servedRequest.setState(RequestState.FULFILLED);
 		servedRequest.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);

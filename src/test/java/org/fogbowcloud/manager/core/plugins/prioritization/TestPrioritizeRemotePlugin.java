@@ -41,20 +41,18 @@ public class TestPrioritizeRemotePlugin {
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 		
 		Request servedRequest1 = new Request("id1", new Token("accessId", "remoteUserId", null,
-				new HashMap<String, String>()), null, null, null, false, "member1", dateUtils);
+				new HashMap<String, String>()), null, null, false, "member1", dateUtils);
 		servedRequest1.setInstanceId("instanceId1");
 		servedRequest1.setState(RequestState.FULFILLED);
-		servedRequest1.setFulfilledByFederationUser(true);
 		servedRequest1.setProvidingMemberId("localMemberId");
 		
 		// mocking dateUtils
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now + 30);
 		
 		Request servedRequest2 = new Request("id2", new Token("accessId", "remoteUserId", null,
-				new HashMap<String, String>()), null, null, null, false, "member1", dateUtils);
+				new HashMap<String, String>()), null, null, false, "member1", dateUtils);
 		servedRequest2.setInstanceId("instanceId2");
 		servedRequest2.setState(RequestState.FULFILLED);
-		servedRequest2.setFulfilledByFederationUser(true);
 		servedRequest2.setProvidingMemberId("localMemberId");
 		
 		List<Request> requests = new ArrayList<Request>();
@@ -62,7 +60,7 @@ public class TestPrioritizeRemotePlugin {
 		requests.add(servedRequest2);
 		
 		Request newRequest = new Request("newID", new Token("newAccessId", "newRemoteUserId", null,
-				new HashMap<String, String>()), null, null, null, true,
+				new HashMap<String, String>()), null, null, true,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, dateUtils);
 		
 		Assert.assertNull(plugin.takeFrom(newRequest, requests));
@@ -78,20 +76,18 @@ public class TestPrioritizeRemotePlugin {
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 		
 		Request servedRequest1 = new Request("id1", new Token("accessId", "remoteUserId", null,
-				new HashMap<String, String>()), null, null, null, false, "member1", dateUtils);
+				new HashMap<String, String>()), null, null, false, "member1", dateUtils);
 		servedRequest1.setInstanceId("instanceId1");
 		servedRequest1.setState(RequestState.FULFILLED);
-		servedRequest1.setFulfilledByFederationUser(true);
 		servedRequest1.setProvidingMemberId("localMemberId");
 		
 		// mocking dateUtils
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now + 30);
 		
 		Request servedRequest2 = new Request("id2", new Token("accessId", "remoteUserId", null,
-				new HashMap<String, String>()), null, null, null, false, "member1", dateUtils);
+				new HashMap<String, String>()), null, null, false, "member1", dateUtils);
 		servedRequest2.setInstanceId("instanceId2");
 		servedRequest2.setState(RequestState.FULFILLED);
-		servedRequest2.setFulfilledByFederationUser(true);
 		servedRequest2.setProvidingMemberId("localMemberId");
 		
 		List<Request> requests = new ArrayList<Request>();
@@ -99,7 +95,7 @@ public class TestPrioritizeRemotePlugin {
 		requests.add(servedRequest2);
 		
 		Request newRequest = new Request("newID", new Token("newAccessId", "newRemoteUserId", null,
-				new HashMap<String, String>()), null, null, null, false, "member2", dateUtils);
+				new HashMap<String, String>()), null, null, false, "member2", dateUtils);
 		
 		// checking if take from most recent request
 		Assert.assertEquals(servedRequest2, plugin.takeFrom(newRequest, requests));
@@ -115,22 +111,20 @@ public class TestPrioritizeRemotePlugin {
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 		
 		Request request1 = new Request("id1", new Token("accessId", "localUserId", null,
-				new HashMap<String, String>()), null, null, null, true,
+				new HashMap<String, String>()), null, null, true,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, dateUtils);
 		request1.setInstanceId("instanceId1");
 		request1.setState(RequestState.FULFILLED);
-		request1.setFulfilledByFederationUser(true);
 		request1.setProvidingMemberId("localMemberId");
 		
 		// mocking dateUtils
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now + 30);
 		
 		Request request2 = new Request("id2", new Token("accessId", "localUserId", null,
-				new HashMap<String, String>()), null, null, null, true,
+				new HashMap<String, String>()), null, null, true,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, dateUtils);
 		request2.setInstanceId("instanceId2");
 		request2.setState(RequestState.FULFILLED);
-		request2.setFulfilledByFederationUser(true);
 		request2.setProvidingMemberId("localMemberId");
 		
 		List<Request> requests = new ArrayList<Request>();
@@ -138,7 +132,7 @@ public class TestPrioritizeRemotePlugin {
 		requests.add(request2);
 		
 		Request newRequest = new Request("newID", new Token("newAccessId", "newRemoteUserId", null,
-				new HashMap<String, String>()), null, null, null, false, "member2", dateUtils);
+				new HashMap<String, String>()), null, null, false, "member2", dateUtils);
 		
 		// checking if take from most recent request
 		Assert.assertEquals(request2, plugin.takeFrom(newRequest, requests));
@@ -154,10 +148,9 @@ public class TestPrioritizeRemotePlugin {
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 		
 		Request servedRequest1 = new Request("id1", new Token("accessId", "remoteUserId", null,
-				new HashMap<String, String>()), null, null, null, false, "member1", dateUtils);
+				new HashMap<String, String>()), null, null, false, "member1", dateUtils);
 		servedRequest1.setInstanceId("instanceId1");
 		servedRequest1.setState(RequestState.FULFILLED);
-		servedRequest1.setFulfilledByFederationUser(true);
 		servedRequest1.setProvidingMemberId("localMemberId");
 		
 		// mocking dateUtils
@@ -165,11 +158,10 @@ public class TestPrioritizeRemotePlugin {
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 		
 		Request request2 = new Request("id2", new Token("accessId", "localUserId", null,
-				new HashMap<String, String>()), null, null, null, true,
+				new HashMap<String, String>()), null, null, true,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, dateUtils);
 		request2.setInstanceId("instanceId2");
 		request2.setState(RequestState.FULFILLED);
-		request2.setFulfilledByFederationUser(true);
 		request2.setProvidingMemberId("localMemberId");
 		
 		// mocking dateUtils
@@ -177,11 +169,10 @@ public class TestPrioritizeRemotePlugin {
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 
 		Request request3 = new Request("id3", new Token("accessId", "localUserId", null,
-				new HashMap<String, String>()), null, null, null, true,
+				new HashMap<String, String>()), null, null, true,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, dateUtils);
 		request3.setInstanceId("instanceId3");
 		request3.setState(RequestState.FULFILLED);
-		request3.setFulfilledByFederationUser(true);
 		request3.setProvidingMemberId("localMemberId");
 		
 		List<Request> requests = new ArrayList<Request>();
@@ -190,7 +181,7 @@ public class TestPrioritizeRemotePlugin {
 		requests.add(request3);
 		
 		Request newRequest = new Request("newID", new Token("newAccessId", "newRemoteUserId", null,
-				new HashMap<String, String>()), null, null, null, false, "member2", dateUtils);
+				new HashMap<String, String>()), null, null, false, "member2", dateUtils);
 		
 		// checking if take from most recent request
 		Assert.assertEquals(request3, plugin.takeFrom(newRequest, requests));

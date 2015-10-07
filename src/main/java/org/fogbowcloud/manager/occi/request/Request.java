@@ -17,12 +17,10 @@ public class Request {
 	
 	private String id;
 	private Token federationToken;
-	private Token localToken;
 	private String instanceId;
 	private String providingMemberId;
 	private final String requestingMemberId;
 	private long fulfilledTime = 0;
-	private boolean fulfilledByFederationUser;
 	private final boolean isLocal;
 	private RequestState state;
 	private List<Category> categories;
@@ -30,19 +28,17 @@ public class Request {
 	
 	private DateUtils dateUtils = new DateUtils();
 	
-	public Request(String id, Token federationToken, Token localToken, 
+	public Request(String id, Token federationToken, 
 			List<Category> categories, Map<String, String> xOCCIAtt, boolean isLocal, String requestingMemberId) {
-		this(id, federationToken, localToken, categories, xOCCIAtt, isLocal, requestingMemberId, new DateUtils());
+		this(id, federationToken, categories, xOCCIAtt, isLocal, requestingMemberId, new DateUtils());
 	}
 	
-	public Request(String id, Token federationToken, Token localToken, 
+	public Request(String id, Token federationToken, 
 			List<Category> categories, Map<String, String> xOCCIAtt, boolean isLocal, String requestingMemberId, DateUtils dateUtils) {
 		this.id = id;
 		this.federationToken = federationToken;
-		this.localToken = localToken;
 		this.categories = categories;
 		this.xOCCIAtt = xOCCIAtt;
-		this.fulfilledByFederationUser = false;
 		this.isLocal = isLocal;
 		this.requestingMemberId = requestingMemberId;
 		this.dateUtils = dateUtils;
@@ -50,7 +46,7 @@ public class Request {
 	}
 	
 	public Request(Request request) {
-		this(request.getId(), request.getFederationToken(), request.getLocalToken(), request.getCategories(), 
+		this(request.getId(), request.getFederationToken(), request.getCategories(), 
 				request.getxOCCIAtt(), request.isLocal, request.getRequestingMemberId());
 	}
 
@@ -80,14 +76,6 @@ public class Request {
 	
 	public String getInstanceId() {
 		return instanceId;
-	}
-	
-	public boolean isFulfilledByFederationUser() {
-		return fulfilledByFederationUser;
-	}
-
-	public void setFulfilledByFederationUser(boolean fulfilledByFederationUser) {
-		this.fulfilledByFederationUser = fulfilledByFederationUser;
 	}
 
 	public String getGlobalInstanceId() {
@@ -150,14 +138,6 @@ public class Request {
 	
 	public long getFulfilledTime() {
 		return fulfilledTime;
-	}
-
-	public Token getLocalToken() {
-		return localToken;
-	}
-
-	public void setLocalToken(Token localToken) {
-		this.localToken = localToken;
 	}
 
 	public Map<String, String> getxOCCIAtt() {
