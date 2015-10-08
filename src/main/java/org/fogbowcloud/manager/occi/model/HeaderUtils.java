@@ -71,10 +71,6 @@ public class HeaderUtils {
 		}
 		return token;
 	}
-	
-	public static String getLocalAuthToken(Series<Header> headers) {
-		return headers.getValues(OCCIHeaders.X_LOCAL_AUTH_TOKEN);
-	}
 
 	public static String getLink(Series<Header> headers) {
 		return headers.getValues(OCCIHeaders.LINK);		

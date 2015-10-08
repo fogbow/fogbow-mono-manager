@@ -79,16 +79,16 @@ public class TestGetCompute {
 		Token token = new Token(OCCITestHelper.FED_ACCESS_TOKEN,
 				OCCITestHelper.USER_MOCK, DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
 				new HashMap<String, String>());
-		Request request1 = new Request("1", token, null, null, null, true, "");
+		Request request1 = new Request("1", token, null, null, true, "");
 		request1.setInstanceId(INSTANCE_1_ID);
 		request1.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
 		requests.add(request1);
-		Request request2 = new Request("2", token, null, null, null, true, "");
+		Request request2 = new Request("2", token, null, null, true, "");
 		request2.setInstanceId(INSTANCE_2_ID);
 		request2.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
 		requests.add(request2);
 		Request request3 = new Request("3", new Token("token", "user",
-				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), null, null, null, true, "");
+				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), null, null, true, "");
 		request3.setInstanceId(INSTANCE_3_ID_WITHOUT_USER);
 		request3.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
 		requests.add(request3);

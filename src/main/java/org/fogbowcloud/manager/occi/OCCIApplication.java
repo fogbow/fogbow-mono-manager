@@ -46,7 +46,7 @@ public class OCCIApplication extends Application {
 		router.attach("/compute/", ComputeServerResource.class);
 		router.attach("/compute/{instanceId}", ComputeServerResource.class);
 		router.attach("/members", MemberServerResource.class);
-		router.attach("/quota", LocalQuotaServerResource.class);
+		//TODO remove this endpoint
 		router.attach("/token", TokenServerResource.class);
 		router.attach("/-/", QueryServerResource.class);
 		router.attach("/.well-known/org/ogf/occi/-/", QueryServerResource.class);
@@ -106,15 +106,11 @@ public class OCCIApplication extends Application {
 	}
 	
 	@SuppressWarnings("unchecked")
-	private static void normalizeHeadersForBypass(org.restlet.Request request) {
+	public static void normalizeHeadersForBypass(org.restlet.Request request) {
 		Series<Header> requestHeaders = (Series<Header>) request.getAttributes().get("org.restlet.http.headers");
-		String localAuthToken = requestHeaders.getFirstValue(HeaderUtils.normalize(OCCIHeaders.X_LOCAL_AUTH_TOKEN));
-		if (localAuthToken == null) {
-			return;
-		}
+		requestHeaders.add(OCCIHeaders.X_AUTH_TOKEN, requestHeaders.getFirstValue(HeaderUtils
+				.normalize(OCCIHeaders.X_FEDERATION_AUTH_TOKEN)));
 		requestHeaders.removeFirst(HeaderUtils.normalize(OCCIHeaders.X_FEDERATION_AUTH_TOKEN));
-		requestHeaders.removeFirst(HeaderUtils.normalize(OCCIHeaders.X_LOCAL_AUTH_TOKEN));
-		requestHeaders.add(new Header(OCCIHeaders.X_AUTH_TOKEN, localAuthToken));
 	}
 	
 	public List<FederationMember> getFederationMembers() {		
@@ -125,9 +121,9 @@ public class OCCIApplication extends Application {
 		return managerFacade.getRequest(authToken, requestId);
 	}
 
-	public List<Request> createRequests(String federationAuthToken, String localAuthToken, List<Category> categories,
+	public List<Request> createRequests(String federationAuthToken, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
-		return managerFacade.createRequests(federationAuthToken, localAuthToken, categories, xOCCIAtt);
+		return managerFacade.createRequests(federationAuthToken, categories, xOCCIAtt);
 	}
 
 	public List<Request> getRequestsFromUser(String authToken) {

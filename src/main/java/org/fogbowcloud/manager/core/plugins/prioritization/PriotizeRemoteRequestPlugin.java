@@ -35,9 +35,7 @@ public class PriotizeRemoteRequestPlugin implements PrioritizationPlugin {
 	private List<Request> filterRequestsFulfilledByFedUser(List<Request> requestsWithInstance) {
 		List<Request> federationUserRequests = new ArrayList<Request>();
 		for (Request currentRequest : requestsWithInstance) {
-			if (currentRequest.isFulfilledByFederationUser()) {
-				federationUserRequests.add(currentRequest);
-			}
+			federationUserRequests.add(currentRequest);
 		}
 		return federationUserRequests;
 	}

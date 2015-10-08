@@ -32,7 +32,6 @@ public class DefaultDataTestHelper {
 	//test default values
 	public static final String USER_NAME = "user";
 	public static final String USER_PASS = "password";
-	public static final String LOCAL_ACCESS_TOKEN_ID = "accesstoken";
 	public static final String TENANT_NAME = "tenantName";
     public static final String INSTANCE_ID = "instanceid";
     

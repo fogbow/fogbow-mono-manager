@@ -66,7 +66,6 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 	private BenchmarkingPlugin benchmarkingPlugin;
 	private AccountingPlugin accountingPlugin;
 	private FederationMemberPickerPlugin memberPickerPlugin;
-	private Token defaultUserToken;
 	private Token defaultFederationToken;
 	private FakeXMPPServer fakeServer = new FakeXMPPServer();
 	private ScheduledExecutorService executorService;
@@ -74,8 +73,6 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 	public ManagerTestHelper() {
 		Map<String, String> tokenAttributes = new HashMap<String, String>();
 		tokenAttributes.put(KeystoneIdentityPlugin.TENANT_ID, "tenantId_r4fci3qhbcy3b");
-		this.defaultUserToken = new Token(LOCAL_ACCESS_TOKEN_ID, USER_NAME, TOKEN_FUTURE_EXPIRATION,
-				tokenAttributes);
 		
 		this.defaultFederationToken = new Token(FED_ACCESS_TOKEN_ID, FED_USER_NAME, new Date(),
 				new HashMap<String, String>());
@@ -207,7 +204,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 				new ArrayList<Instance>());
 		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class))).thenReturn(
 				getResources());
-		Mockito.when(identityPlugin.createFederationUserToken()).thenReturn(defaultUserToken);
+		Mockito.when(identityPlugin.createFederationUserToken()).thenReturn(defaultFederationToken);
 
 		// mocking benchmark executor
 		ExecutorService benchmarkExecutor = new CurrentThreadExecutorService();
@@ -249,7 +246,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 				new ArrayList<Instance>());
 		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class))).thenReturn(
 				getResources());
-		Mockito.when(identityPlugin.createFederationUserToken()).thenReturn(defaultUserToken);
+		Mockito.when(identityPlugin.createFederationUserToken()).thenReturn(defaultFederationToken);
 
 		ManagerController managerFacade = new ManagerController(properties);
 		managerFacade.setComputePlugin(computePlugin);
@@ -372,8 +369,6 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		// mocking identity
 		identityPlugin = Mockito.mock(IdentityPlugin.class);
 		federationIdentityPlugin = Mockito.mock(IdentityPlugin.class);
-		Mockito.when(federationIdentityPlugin.getToken(LOCAL_ACCESS_TOKEN_ID)).thenReturn(
-				defaultUserToken);
 		Mockito.when(federationIdentityPlugin.getToken(FED_ACCESS_TOKEN_ID)).thenReturn(
 				defaultFederationToken);
 		Mockito.when(identityPlugin.createFederationUserToken()).thenReturn(defaultFederationToken);
@@ -420,10 +415,6 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 				return null;
 			}
 		});
-	}
-	
-	public Token getDefaultLocalToken() {
-		return defaultUserToken;
 	}
 
 	public Token getDefaultFederationToken() {

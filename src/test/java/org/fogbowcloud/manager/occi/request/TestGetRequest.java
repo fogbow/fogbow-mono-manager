@@ -352,7 +352,6 @@ public class TestGetRequest {
 				RequestConstants.KIND_CLASS);
 		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		post.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
-		post.addHeader(OCCIHeaders.X_LOCAL_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
 		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, RequestAttribute.INSTANCE_COUNT.getValue()
 				+ " = 1");

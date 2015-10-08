@@ -50,8 +50,8 @@ public class TestTwoFoldPrioritizationPlugin {
 		twoFoldPrioritizationPlugin = new TwoFoldPrioritizationPlugin(null, null);
 		Request newRequest = null;
 		List<Request> requestsWithInstance = new ArrayList<Request>();
-		requestsWithInstance.add(new Request("One", null, null, null, null, true, null));
-		requestsWithInstance.add(new Request("Two", null, null, null, null, false, null));
+		requestsWithInstance.add(new Request("One", null, null, null, true, null));
+		requestsWithInstance.add(new Request("Two", null, null, null, false, null));
 		Assert.assertNull(twoFoldPrioritizationPlugin.takeFrom(newRequest, requestsWithInstance));
 	}
 }

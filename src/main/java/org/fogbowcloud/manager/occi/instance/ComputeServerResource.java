@@ -29,6 +29,7 @@ public class ComputeServerResource extends ServerResource {
 	protected static final String NO_INSTANCES_MESSAGE = "There are not instances.";
 	private static final Logger LOGGER = Logger.getLogger(ComputeServerResource.class);
 	
+	@SuppressWarnings("deprecation")
 	@Get
 	public StringRepresentation fetch() {
 		OCCIApplication application = (OCCIApplication) getApplication();
@@ -88,7 +89,7 @@ public class ComputeServerResource extends ServerResource {
 				Response response = new Response(getRequest());			
 				
 				normalizeURIForBypass(req);
-				normalizeHeadersForBypass(req);
+				OCCIApplication.normalizeHeadersForBypass(req);
 				
 				application.bypass(req, response); 			
 				
@@ -113,17 +114,6 @@ public class ComputeServerResource extends ServerResource {
 			path = partOfInstanceId[0];
 		}
 		req.getResourceRef().setPath(path);
-	}
-	
-	private static void normalizeHeadersForBypass(HttpRequest req) {
-		String localAuthToken = req.getHeaders().getFirstValue(HeaderUtils.normalize(OCCIHeaders.X_LOCAL_AUTH_TOKEN));
-		LOGGER.debug("Local Auth Token = " + localAuthToken);
-		if (localAuthToken == null) {
-			return;
-		}
-		req.getHeaders().removeFirst(HeaderUtils.normalize(OCCIHeaders.X_FEDERATION_AUTH_TOKEN));
-		req.getHeaders().removeFirst(HeaderUtils.normalize(OCCIHeaders.X_LOCAL_AUTH_TOKEN));
-		req.getHeaders().add(OCCIHeaders.X_AUTH_TOKEN, localAuthToken);
 	}
 	
 	private List<Instance> filterInstances(List<Instance> allInstances,
@@ -168,6 +158,7 @@ public class ComputeServerResource extends ServerResource {
 		return allInstances;
 	}
 
+	@SuppressWarnings("deprecation")
 	private List<Instance> getInstances(OCCIApplication application, String authToken) {
 		authToken = normalizeAuthToken(authToken);
 		List<Instance> allInstances = application.getInstances(authToken);
@@ -175,7 +166,7 @@ public class ComputeServerResource extends ServerResource {
 		//Adding local instances created out of fogbow
 		HttpRequest req = (HttpRequest) getRequest();
 		Response response = new Response(req);
-		normalizeHeadersForBypass(req);
+		OCCIApplication.normalizeHeadersForBypass(req);
 		application.bypass(req, response);
 		for (Instance instance : getInstancesCreatedOutOfFogbow(response, application)) {
 			if (!allInstances.contains(instance)){
@@ -256,6 +247,7 @@ public class ComputeServerResource extends ServerResource {
 		return removeInstance(application, federationAuthToken, instanceId);
 	}
 
+	@SuppressWarnings("deprecation")
 	private String removeInstance(OCCIApplication application, String federationAuthToken, String instanceId) {
 		try {
 			application.removeInstance(federationAuthToken, instanceId);
@@ -266,7 +258,7 @@ public class ComputeServerResource extends ServerResource {
 				Response response = new Response(req);
 				
 				normalizeURIForBypass(req);
-				normalizeHeadersForBypass(req);
+				OCCIApplication.normalizeHeadersForBypass(req);
 				
 				application.bypass(req, response);
 				//if it is a local instance created outside fogbow
@@ -279,12 +271,13 @@ public class ComputeServerResource extends ServerResource {
 		return ResponseConstants.OK;
 	}
 
+	@SuppressWarnings("deprecation")
 	private String removeIntances(OCCIApplication application, String authToken) {
 		application.removeInstances(authToken);
 		//Removing local cloud instances for the token
 		HttpRequest req = (HttpRequest) getRequest();
 		Response response = new Response(req);
-		normalizeHeadersForBypass(req);
+		OCCIApplication.normalizeHeadersForBypass(req);
 		try {
 			application.bypass(req, response);
 		} catch (OCCIException e) { }
