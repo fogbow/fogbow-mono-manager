@@ -140,9 +140,14 @@ public class RequestServerResource extends ServerResource {
 				requestEndpoint += requestEndpoint + "/";
 			}
 			if (verbose) {
+				String providingMemberId = (request.getProvidingMemberId() == null) ? "None"
+						: request.getProvidingMemberId();
+
 				result += requestEndpoint + request.getId() + "; " + "State="
 						+ request.getState() + "; " + RequestAttribute.TYPE.getValue() + "="
 						+ request.getAttValue(RequestAttribute.TYPE.getValue()) + "; "
+						+ RequestAttribute.REQUESTING_MEMBER.getValue() + "=" + request.getRequestingMemberId() + "; "
+						+ RequestAttribute.PROVIDING_MEMBER.getValue() + "=" + providingMemberId + "; "
 						+ RequestAttribute.INSTANCE_ID.getValue() + "="
 						+ request.getGlobalInstanceId() + "\n";
 						
@@ -188,6 +193,12 @@ public class RequestServerResource extends ServerResource {
 		}
 		
 		attToOutput.put(RequestAttribute.STATE.getValue(), request.getState().getValue());
+		attToOutput.put(RequestAttribute.REQUESTING_MEMBER.getValue(), request.getRequestingMemberId());
+		if (request.getProvidingMemberId() == null) {
+			attToOutput.put(RequestAttribute.PROVIDING_MEMBER.getValue(), "None");
+		} else {
+			attToOutput.put(RequestAttribute.PROVIDING_MEMBER.getValue(), request.getProvidingMemberId());
+		}
 		attToOutput.put(RequestAttribute.INSTANCE_ID.getValue(), request.getGlobalInstanceId());		
 		
 		for (String attName : attToOutput.keySet()) {
