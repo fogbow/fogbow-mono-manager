@@ -37,12 +37,6 @@ public class NoCloudIdentityPlugin implements IdentityPlugin {
 	}
 
 	@Override
-	public Token createFederationUserToken() {		
-		return new Token(String.valueOf(UUID.randomUUID()), FAKE_USERNAME, null,
-				new HashMap<String, String>());
-	}
-
-	@Override
 	public Credential[] getCredentials() {
 		return new Credential[] { new Credential("", false, null) };
 	}

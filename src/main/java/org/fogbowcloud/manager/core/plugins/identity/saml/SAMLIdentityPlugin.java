@@ -319,11 +319,6 @@ public class SAMLIdentityPlugin implements IdentityPlugin {
 	}
 
 	@Override
-	public Token createFederationUserToken() {
-		return null;
-	}
-
-	@Override
 	public Credential[] getCredentials() {
 		return null;
 	}

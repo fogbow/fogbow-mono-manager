@@ -178,14 +178,6 @@ public class X509IdentityPlugin implements IdentityPlugin {
 	}
 
 	@Override
-	public Token createFederationUserToken() {
-		Map<String, String> credentials = new HashMap<String, String>();
-		credentials.put(CERTIFICATE_PATH_KEY,
-				properties.getProperty("local_proxy_account_x509_certificate_path"));
-		return createToken(credentials);
-	}
-
-	@Override
 	public Credential[] getCredentials() {
 		return new Credential[] { new Credential(CERTIFICATE_PATH_KEY, true, null) };
 	}

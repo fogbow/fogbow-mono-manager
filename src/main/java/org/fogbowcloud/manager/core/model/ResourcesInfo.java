@@ -11,6 +11,18 @@ public class ResourcesInfo {
 	private String instancesIdle;
 	private String instancesInUse;
 	
+	private final String ZERO = "0";
+	
+	public ResourcesInfo() {
+		setId(ZERO);
+		setCpuIdle(ZERO);
+		setCpuInUse(ZERO);
+		setMemIdle(ZERO);
+		setMemInUse(ZERO);
+		setInstancesIdle(ZERO);
+		setInstancesInUse(ZERO);
+	}
+	
 	public ResourcesInfo(String id, String cpuIdle, String cpuInUse,
 			String memIdle, String memInUse, 
 			String instancesIdle, String instancesInUse) {
@@ -28,6 +40,28 @@ public class ResourcesInfo {
 			String instancesIdle, String instancesInUse) {
 		this(null, cpuIdle, cpuInUse, memIdle, memInUse, 
 				instancesIdle, instancesInUse);
+	}
+	
+	// Create test to this method
+	public void addResource(ResourcesInfo resourcesInfo) {
+		if (resourcesInfo == null) {
+			return;
+		}
+		setCpuIdle(calculateStringValues(getCpuIdle(), resourcesInfo.getCpuIdle()));
+		setCpuInUse(calculateStringValues(getCpuInUse(), resourcesInfo.getCpuInUse()));
+		setMemIdle(calculateStringValues(getMemIdle(), resourcesInfo.getMemIdle()));
+		setMemInUse(calculateStringValues(getMemInUse(), resourcesInfo.getMemInUse()));
+		setInstancesIdle(calculateStringValues(getInstancesIdle(), resourcesInfo.getInstancesIdle()));
+		setInstancesInUse(calculateStringValues(getInstancesInUse(), resourcesInfo.getInstancesInUse()));
+	}
+	
+	// Test for this one
+	private String calculateStringValues(String valueOne, String ValueTwo) {
+		try {			
+			return String.valueOf(Integer.parseInt(valueOne) + Integer.parseInt(ValueTwo));
+		} catch (Exception e) {
+			return ZERO;
+		}
 	}
 
 	public String getId() {

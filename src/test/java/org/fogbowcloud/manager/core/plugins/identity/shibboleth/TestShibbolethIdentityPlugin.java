@@ -35,11 +35,6 @@ public class TestShibbolethIdentityPlugin {
 		Assert.assertSame(t, reIssuedToken);
 	}
 	
-	@Test
-	public void testCreateFederationUserToken() {
-		Assert.assertNull(new ShibbolethIdentityPlugin(
-				new Properties()).createFederationUserToken());
-	}
 	
 	@Test
 	public void testGetCredentials() {

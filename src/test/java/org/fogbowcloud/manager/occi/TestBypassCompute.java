@@ -24,6 +24,7 @@ import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
+import org.fogbowcloud.manager.core.plugins.FederationUserCredentailsPlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
 import org.fogbowcloud.manager.core.plugins.compute.openstack.OpenStackConfigurationConstants;
@@ -64,12 +65,14 @@ public class TestBypassCompute {
 	private AuthorizationPlugin authorizationPlugin;
 	private Token defaultToken;
 	private ImageStoragePlugin imageStoragePlugin;
+	private FederationUserCredentailsPlugin federationUserCredentailsPlugin;
 	
 	@Before
 	public void setup() throws Exception{
 		setup(new ArrayList<Request>());
 	}
 	
+	@SuppressWarnings("unchecked")
 	private void setup(List<Request> requests) throws Exception {		
 		Properties properties = new Properties();
 		properties.put(OpenStackConfigurationConstants.COMPUTE_OCCI_URL_KEY, PluginHelper.COMPUTE_OCCI_URL);
@@ -100,7 +103,7 @@ public class TestBypassCompute {
 				
 		identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.getToken(PluginHelper.ACCESS_ID)).thenReturn(defaultToken);
-		Mockito.when(identityPlugin.createFederationUserToken()).thenReturn(defaultToken);
+		Mockito.when(identityPlugin.createToken(Mockito.anyMap())).thenReturn(defaultToken);
 		Mockito.when(identityPlugin.getAuthenticationURI()).thenReturn("Keystone uri='http://localhost:5000/'");
 		
 		// three first generated instance ids
@@ -114,6 +117,10 @@ public class TestBypassCompute {
 		//initializing fake Cloud Compute Application
 		pluginHelper.initializeOCCIComputeComponent(expectedInstanceIds);
 		
+		federationUserCredentailsPlugin = Mockito.mock(FederationUserCredentailsPlugin.class);
+		Mockito.when(federationUserCredentailsPlugin.getFedUserCredentials(Mockito.any(Request.class)))
+				.thenReturn(new HashMap<String, String>());
+		
 		authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
 		Mockito.when(authorizationPlugin.isAuthorized(Mockito.any(Token.class))).thenReturn(true);
 		
@@ -125,7 +132,7 @@ public class TestBypassCompute {
 		helper = new OCCITestHelper();
 		helper.initializeComponentCompute(computePlugin, identityPlugin, authorizationPlugin,
 				imageStoragePlugin, Mockito.mock(AccountingPlugin.class),
-				Mockito.mock(BenchmarkingPlugin.class), requests);
+				Mockito.mock(BenchmarkingPlugin.class), requests, federationUserCredentailsPlugin);
 	}
 
 	@After

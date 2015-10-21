@@ -4,6 +4,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -14,6 +15,7 @@ import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
+import org.fogbowcloud.manager.core.plugins.FederationUserCredentailsPlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
@@ -39,6 +41,7 @@ public class TestDeleteCompute {
 	private OCCITestHelper helper;
 	private ImageStoragePlugin imageStoragePlugin;
 
+	@SuppressWarnings("deprecation")
 	@Before
 	public void setup() throws Exception {
 		this.helper = new OCCITestHelper();
@@ -54,9 +57,10 @@ public class TestDeleteCompute {
 				.when(computePlugin).bypass(Mockito.any(org.restlet.Request.class), Mockito.any(Response.class));
 		
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
+		Token tokenTwo = new Token("1", OCCITestHelper.USER_MOCK, new Date(),
+		new HashMap<String, String>());
 		Mockito.when(identityPlugin.getToken(OCCITestHelper.FED_ACCESS_TOKEN))
-				.thenReturn(new Token("1", OCCITestHelper.USER_MOCK, new Date(),
-				new HashMap<String, String>()));
+				.thenReturn(tokenTwo);
 
 		List<Request> requests = new LinkedList<Request>();
 		Request request1 = new Request("1", new Token(OCCITestHelper.FED_ACCESS_TOKEN,
@@ -79,8 +83,17 @@ public class TestDeleteCompute {
 		AccountingPlugin accountingPlugin = Mockito.mock(AccountingPlugin.class);
 		BenchmarkingPlugin benchmarkingPlugin = Mockito.mock(BenchmarkingPlugin.class);
 		
-		this.helper.initializeComponentCompute(computePlugin, identityPlugin, 
-				authorizationPlugin, imageStoragePlugin, accountingPlugin, benchmarkingPlugin, requests);
+		FederationUserCredentailsPlugin federationUserCredentailsPlugin = Mockito
+				.mock(FederationUserCredentailsPlugin.class);
+		Map<String, String> crendentials = new HashMap<String, String>();
+		Mockito.when(
+				federationUserCredentailsPlugin.getFedUserCredentials(Mockito.any(Request.class)))
+				.thenReturn(crendentials);
+		Mockito.when(identityPlugin.createToken(crendentials)).thenReturn(tokenTwo);
+		
+		this.helper.initializeComponentCompute(computePlugin, identityPlugin, authorizationPlugin,
+				imageStoragePlugin, accountingPlugin, benchmarkingPlugin, requests,
+				federationUserCredentailsPlugin);
 	}
 
 	@After

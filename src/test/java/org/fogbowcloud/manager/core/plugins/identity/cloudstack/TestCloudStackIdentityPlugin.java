@@ -40,7 +40,7 @@ public class TestCloudStackIdentityPlugin {
 	private CloudStackIdentityPlugin createPlugin(HttpClientWrapper httpClient) {
 		Properties properties = new Properties();
 		properties.put(IDENTITY_URL_KEY, CLOUDSTACK_URL);
-		properties.put(CloudStackIdentityPlugin.FEDERATION_USER_API_KEY,FEDERATION_API_KEY);
+		properties.put(CloudStackIdentityPlugin.FEDERATION_USER_API_KEY, FEDERATION_API_KEY);
 		properties.put(CloudStackIdentityPlugin.FEDERATION_USER_SECRET_KEY, FEDERATION_SECRET_KEY);
 		if(httpClient == null) {		
 			return new CloudStackIdentityPlugin(properties);
@@ -156,19 +156,13 @@ public class TestCloudStackIdentityPlugin {
 	@Test
 	public void testCreateFederationUser() {
 		CloudStackIdentityPlugin identityPlugin = createPlugin(null);
-		Token token = identityPlugin.createFederationUserToken();
+		Map<String, String> userCredentials = new HashMap<String, String>();
+		userCredentials.put(CloudStackIdentityPlugin.API_KEY, FEDERATION_API_KEY);
+		userCredentials.put(CloudStackIdentityPlugin.SECRET_KEY, FEDERATION_SECRET_KEY);
+		Token token = identityPlugin.createToken(userCredentials);
 		Assert.assertEquals(FEDERATION_API_KEY + ":" + FEDERATION_SECRET_KEY, 
 				token.getAccessId());
 		Assert.assertEquals(FEDERATION_API_KEY, token.getUser());
-	}
-	
-	@Test(expected=OCCIException.class)
-	public void testCreateFederationUserWithoutProperties() {
-		Properties properties = new Properties();
-		properties.put(IDENTITY_URL_KEY, CLOUDSTACK_URL);
-		CloudStackIdentityPlugin identityPlugin = new CloudStackIdentityPlugin(properties);
-		Token token = identityPlugin.createFederationUserToken();
-		Assert.assertNull(token.getUser());
 	}
 	
 	@Test

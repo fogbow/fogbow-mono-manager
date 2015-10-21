@@ -20,6 +20,7 @@ import org.apache.http.util.EntityUtils;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
+import org.fogbowcloud.manager.core.plugins.FederationUserCredentailsPlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.model.Category;
@@ -56,8 +57,7 @@ public class TestGetRequest {
 		
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.getToken(OCCITestHelper.FED_ACCESS_TOKEN))
-				.thenReturn(
-						new Token("id", OCCITestHelper.USER_MOCK, new Date(),
+				.thenReturn(new Token("id", OCCITestHelper.USER_MOCK, new Date(),
 								new HashMap<String, String>()));
 		Mockito.when(identityPlugin.getToken(OCCITestHelper.INVALID_TOKEN)).thenThrow(
 				new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED));
@@ -68,12 +68,23 @@ public class TestGetRequest {
 
 		Mockito.when(identityPlugin.getToken(OCCITestHelper.FED_ACCESS_TOKEN)).thenReturn(userToken);
 
+		FederationUserCredentailsPlugin federationUserCredentailsPlugin = Mockito
+				.mock(FederationUserCredentailsPlugin.class);
+		Map<String, Map<String, String>> defaultFederationUsersCrendetials = 
+				new HashMap<String, Map<String,String>>();
+		HashMap<String, String> credentails = new HashMap<String, String>();
+		defaultFederationUsersCrendetials.put("one", credentails);
+		Mockito.when(federationUserCredentailsPlugin.getAllFedUsersCredentials()).thenReturn(
+				defaultFederationUsersCrendetials);
+		Mockito.when(identityPlugin.createToken(credentails)).thenReturn(
+				new Token("id", OCCITestHelper.USER_MOCK, new Date(), new HashMap<String, String>()));		
+		
 		AuthorizationPlugin authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
 		Mockito.when(authorizationPlugin.isAuthorized(Mockito.any(Token.class))).thenReturn(true);
 		
 		BenchmarkingPlugin benchmarkingPlugin = Mockito.mock(BenchmarkingPlugin.class);
 		this.requestHelper.initializeComponentExecutorSameThread(computePlugin, identityPlugin,
-				authorizationPlugin, benchmarkingPlugin);
+				authorizationPlugin, benchmarkingPlugin, federationUserCredentailsPlugin);
 	}
 
 	@Test

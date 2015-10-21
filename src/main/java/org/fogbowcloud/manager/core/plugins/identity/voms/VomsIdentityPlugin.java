@@ -224,15 +224,6 @@ public class VomsIdentityPlugin implements IdentityPlugin {
 		}
 		return false;
 	}
-	
-	@Override
-	public Token createFederationUserToken() {
-		Map<String, String> credentials = new HashMap<String, String>();
-		credentials.put(PASSWORD, properties.getProperty(PROP_VOMS_FEDERATION_USER_PASS));
-		credentials.put(SERVER_NAME, properties.getProperty(PROP_VOMS_FEDERATION_USER_SERVER));
-
-		return createToken(credentials);
-	}
 
 	private VOMSACValidator getVOMSValidator() {
 		String trust = properties.getProperty(PROP_PATH_TRUST_ANCHORS);

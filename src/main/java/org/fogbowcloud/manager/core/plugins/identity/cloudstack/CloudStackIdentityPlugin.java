@@ -100,16 +100,6 @@ public class CloudStackIdentityPlugin implements IdentityPlugin {
 	}
 
 	@Override
-	public Token createFederationUserToken() {
-		Map<String, String> credentials = new HashMap<String, String>();
-		credentials.put(API_KEY,
-				properties.getProperty(FEDERATION_USER_API_KEY));
-		credentials.put(SECRET_KEY,
-				properties.getProperty(FEDERATION_USER_SECRET_KEY));
-		return createToken(credentials);
-	}
-
-	@Override
 	public Credential[] getCredentials() {
 		return new Credential[] { new Credential(API_KEY, true, null),
 				new Credential(SECRET_KEY, true, null) };

@@ -164,11 +164,6 @@ public class ShibbolethIdentityPlugin implements IdentityPlugin {
 	}
 
 	@Override
-	public Token createFederationUserToken() {
-		return null;
-	}
-
-	@Override
 	public Credential[] getCredentials() {
 		return new Credential[]{
 				new Credential(CRED_ASSERTION_ID, true, null), 

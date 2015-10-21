@@ -19,6 +19,7 @@ public class ConfigurationConstants {
 	public static final String MEMBER_PICKER_PLUGIN_CLASS_KEY = "member_picker_class";
 	public static final String IDENTITY_CLASS_KEY = "identity_class";
 	public static final String MEMBER_VALIDATOR_CLASS_KEY = "member_validator_class";
+	public static final String FEDERATION_USER_CREDENTAILS_CLASS_KEY = "federation_user_credentail_class";
 
 	// prefixs
 	public static final String LOCAL_PREFIX = "local_";

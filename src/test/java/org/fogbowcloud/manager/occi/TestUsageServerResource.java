@@ -16,6 +16,7 @@ import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
+import org.fogbowcloud.manager.core.plugins.FederationUserCredentailsPlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.accounting.ResourceUsage;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
@@ -39,6 +40,7 @@ public class TestUsageServerResource {
 	private IdentityPlugin identityPlugin;
 	private AccountingPlugin accountingPlugin;
 	private AuthorizationPlugin authorizationPlugin;
+	private FederationUserCredentailsPlugin federationUserCredentailsPlugin;
 	
 	private List<FederationMember> federationMembers = new ArrayList<FederationMember>();
 	private Token defaultToken = new Token("access", "user", null, new HashMap<String, String>());
@@ -49,6 +51,12 @@ public class TestUsageServerResource {
 		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class))).thenReturn(
 				new ResourcesInfo(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, 
 						"", "", "", "", "", ""));
+		this.federationUserCredentailsPlugin = Mockito.mock(FederationUserCredentailsPlugin.class);
+		Map<String, Map<String, String>> defaultFederationUsersCrendetials = 
+				new HashMap<String, Map<String,String>>();
+		defaultFederationUsersCrendetials.put("one", new HashMap<String, String>());
+		Mockito.when(federationUserCredentailsPlugin.getAllFedUsersCredentials()).thenReturn(
+				defaultFederationUsersCrendetials);	
 		this.identityPlugin = Mockito.mock(IdentityPlugin.class);
 		this.accountingPlugin = Mockito.mock(AccountingPlugin.class);
 		this.authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
@@ -80,7 +88,7 @@ public class TestUsageServerResource {
 		
 		// initializing component
 		helper.initializeComponentMember(computePlugin, identityPlugin, authorizationPlugin,
-				accountingPlugin, federationMembers);
+				accountingPlugin, federationMembers, federationUserCredentailsPlugin);
 		
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_USAGE);
 		get.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
@@ -113,7 +121,7 @@ public class TestUsageServerResource {
 		
 		// initializing component
 		helper.initializeComponentMember(computePlugin, identityPlugin, authorizationPlugin,
-				accountingPlugin, federationMembers);
+				accountingPlugin, federationMembers, federationUserCredentailsPlugin);
 		
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_USAGE);
 		get.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
@@ -150,7 +158,7 @@ public class TestUsageServerResource {
 		
 		// initializing component
 		helper.initializeComponentMember(computePlugin, identityPlugin, authorizationPlugin,
-				accountingPlugin, federationMembers);
+				accountingPlugin, federationMembers, federationUserCredentailsPlugin);
 		
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_USAGE + "/users");
 		get.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
@@ -190,7 +198,7 @@ public class TestUsageServerResource {
 		
 		// initializing component
 		helper.initializeComponentMember(computePlugin, identityPlugin, authorizationPlugin,
-				accountingPlugin, federationMembers);
+				accountingPlugin, federationMembers, federationUserCredentailsPlugin);
 		
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_USAGE + "/members");
 		get.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
@@ -230,7 +238,7 @@ public class TestUsageServerResource {
 		
 		// initializing component
 		helper.initializeComponentMember(computePlugin, identityPlugin, authorizationPlugin,
-				accountingPlugin, federationMembers);
+				accountingPlugin, federationMembers,federationUserCredentailsPlugin);
 		
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_USAGE);
 		get.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
