@@ -23,6 +23,7 @@ public class OpenNebulaIdentityPlugin implements IdentityPlugin {
 	public static final String USERNAME = "username";
 	public static final String USER_PASSWORD = "password";
 	
+	@SuppressWarnings("unused")
 	private Properties properties;
 	private String openNebulaEndpoint;
 	private OpenNebulaClientFactory clientFactory;
@@ -95,17 +96,6 @@ public class OpenNebulaIdentityPlugin implements IdentityPlugin {
 		} catch (OCCIException e) {
 			return false;
 		}
-	}
-
-	@Override
-	public Token createFederationUserToken() {
-		Map<String, String> federationUserCredentials = new HashMap<String, String>();
-		String username = properties.getProperty("local_proxy_account_user_name");
-		String password = properties.getProperty("local_proxy_account_password");
-
-		federationUserCredentials.put(USERNAME, username);
-		federationUserCredentials.put(USER_PASSWORD, password);		
-		return createToken(federationUserCredentials);
 	}
 
 	@Override

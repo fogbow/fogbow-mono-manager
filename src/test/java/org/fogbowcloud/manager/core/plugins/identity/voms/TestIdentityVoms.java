@@ -28,8 +28,8 @@ public class TestIdentityVoms {
 
 	private static final long TWELVE_HOURS = 1000 * 60 * 60 * 12;
 	private static final long ONE_MINUTE = 1000 * 60;
-	private final String VOMS_PASSWORD = "pass";
-	private final String VOMS_SERVER = "test.vo";
+	public final String VOMS_PASSWORD = "pass";
+	public final String VOMS_SERVER = "test.vo";
 
 	private ProxyCertificateGenerator generatorProxyCertificate;
 	private VomsIdentityPlugin vomsIdentityPlugin;

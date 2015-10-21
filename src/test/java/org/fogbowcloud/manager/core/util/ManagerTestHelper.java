@@ -28,6 +28,7 @@ import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.FederationMemberPickerPlugin;
+import org.fogbowcloud.manager.core.plugins.LocalCredentialsPlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.identity.openstack.KeystoneIdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.memberauthorization.DefaultMemberAuthorizationPlugin;
@@ -36,6 +37,7 @@ import org.fogbowcloud.manager.occi.model.ErrorType;
 import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.fogbowcloud.manager.occi.model.Token;
+import org.fogbowcloud.manager.occi.request.Request;
 import org.fogbowcloud.manager.xmpp.AsyncPacketSender;
 import org.fogbowcloud.manager.xmpp.ManagerXmppComponent;
 import org.jamppa.client.XMPPClient;
@@ -61,14 +63,24 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 	private ManagerXmppComponent managerXmppComponent;
 	private ComputePlugin computePlugin;
 	private IdentityPlugin identityPlugin;
+	private LocalCredentialsPlugin localCredentialsPlugin;
 	private IdentityPlugin federationIdentityPlugin;
 	private AuthorizationPlugin authorizationPlugin;
 	private BenchmarkingPlugin benchmarkingPlugin;
 	private AccountingPlugin accountingPlugin;
 	private FederationMemberPickerPlugin memberPickerPlugin;
 	private Token defaultFederationToken;
+	private Map<String, Map<String, String>> defaultFederationUsersCrendetials;
+	private Map<String, String> defaultFederationUserCrendetials = new HashMap<String, String>();
 	private FakeXMPPServer fakeServer = new FakeXMPPServer();
 	private ScheduledExecutorService executorService;
+	
+	private final String CPU_IDLE = "1";
+	private final String CPU_INUSE = "2";
+	private final String MEM_IDLE = "1000";
+	private final String MEM_INUSE = "2000";
+	private final String INSTANCES_IDLE = "5";
+	private final String INSTANCES_INUSE = "10";
 
 	public ManagerTestHelper() {
 		Map<String, String> tokenAttributes = new HashMap<String, String>();
@@ -76,11 +88,14 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		
 		this.defaultFederationToken = new Token(FED_ACCESS_TOKEN_ID, FED_USER_NAME, new Date(),
 				new HashMap<String, String>());
+		
+		this.defaultFederationUsersCrendetials = new HashMap<String, Map<String,String>>();
+		this.defaultFederationUsersCrendetials.put("one", defaultFederationUserCrendetials);
 	}
 
 	public ResourcesInfo getResources() throws CertificateException, IOException {
-		ResourcesInfo resources = new ResourcesInfo("abc", "cpu-idle", "cpu-in-use", "mem-idle", 
-				"mem-in-use", "instances-idle", "instances-in-use");
+		ResourcesInfo resources = new ResourcesInfo("abc", CPU_IDLE, CPU_INUSE, MEM_IDLE, 
+				MEM_INUSE, INSTANCES_IDLE, INSTANCES_INUSE);
 		return resources;
 	}
 
@@ -193,29 +208,33 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		return initializeXMPPManagerComponent(init, managerFacade);
 	}
 	
+	@SuppressWarnings("unchecked")
 	public ManagerXmppComponent initializeXMPPManagerComponent(boolean init, ManagerController managerFacade) throws Exception {
 				
 		this.computePlugin = Mockito.mock(ComputePlugin.class);
 		this.identityPlugin = Mockito.mock(IdentityPlugin.class);
 		this.benchmarkingPlugin = Mockito.mock(BenchmarkingPlugin.class);
 		this.accountingPlugin = Mockito.mock(AccountingPlugin.class);
+		this.localCredentialsPlugin = Mockito.mock(LocalCredentialsPlugin.class);
 		
 		Mockito.when(computePlugin.getInstances(Mockito.any(Token.class))).thenReturn(
 				new ArrayList<Instance>());
 		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class))).thenReturn(
 				getResources());
-		Mockito.when(identityPlugin.createFederationUserToken()).thenReturn(defaultFederationToken);
+		Mockito.when(localCredentialsPlugin.getAllLocalCredentials()).thenReturn(this.defaultFederationUsersCrendetials);
+		Mockito.when(identityPlugin.createToken(Mockito.anyMap())).thenReturn(defaultFederationToken);
 
 		// mocking benchmark executor
 		ExecutorService benchmarkExecutor = new CurrentThreadExecutorService();
 				
 		managerFacade.setComputePlugin(computePlugin);
-		managerFacade.setLocalIdentityPlugin(identityPlugin);
-		managerFacade.setFederationIdentityPlugin(identityPlugin);
-		managerFacade.setBenchmarkingPlugin(benchmarkingPlugin);
 		managerFacade.setAccountingPlugin(accountingPlugin);
-		managerFacade.setValidator(new DefaultMemberAuthorizationPlugin(null));
+		managerFacade.setLocalIdentityPlugin(identityPlugin);
 		managerFacade.setBenchmarkExecutor(benchmarkExecutor);
+		managerFacade.setBenchmarkingPlugin(benchmarkingPlugin);
+		managerFacade.setFederationIdentityPlugin(identityPlugin);
+		managerFacade.setValidator(new DefaultMemberAuthorizationPlugin(null));
+		managerFacade.setFederationUserCredentailsPlugin(localCredentialsPlugin);
 				
 		managerXmppComponent = Mockito.spy(new ManagerXmppComponent(LOCAL_MANAGER_COMPONENT_URL,
 				MANAGER_COMPONENT_PASS, SERVER_HOST, SERVER_COMPONENT_PORT, managerFacade));
@@ -232,10 +251,12 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		return managerXmppComponent;
 	}
 
+	@SuppressWarnings("unchecked")
 	public ManagerXmppComponent initializeLocalXMPPManagerComponent() throws Exception {
 
 		this.computePlugin = Mockito.mock(ComputePlugin.class);
 		this.identityPlugin = Mockito.mock(IdentityPlugin.class);
+		this.localCredentialsPlugin = Mockito.mock(LocalCredentialsPlugin.class);
 
 		Properties properties = new Properties();
 		properties.put(KeystoneIdentityPlugin.FEDERATION_USER_NAME_KEY, "fogbow");
@@ -246,12 +267,14 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 				new ArrayList<Instance>());
 		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class))).thenReturn(
 				getResources());
-		Mockito.when(identityPlugin.createFederationUserToken()).thenReturn(defaultFederationToken);
+		Mockito.when(localCredentialsPlugin.getAllLocalCredentials()).thenReturn(this.defaultFederationUsersCrendetials);
+		Mockito.when(identityPlugin.createToken(Mockito.anyMap())).thenReturn(defaultFederationToken);
 
 		ManagerController managerFacade = new ManagerController(properties);
 		managerFacade.setComputePlugin(computePlugin);
 		managerFacade.setLocalIdentityPlugin(identityPlugin);
 		managerFacade.setFederationIdentityPlugin(identityPlugin);
+		managerFacade.setFederationUserCredentailsPlugin(localCredentialsPlugin);
 		managerFacade.setValidator(new DefaultMemberAuthorizationPlugin(null));
 
 		managerXmppComponent = Mockito.spy(new ManagerXmppComponent(LOCAL_MANAGER_COMPONENT_URL,
@@ -371,10 +394,18 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		federationIdentityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(federationIdentityPlugin.getToken(FED_ACCESS_TOKEN_ID)).thenReturn(
 				defaultFederationToken);
-		Mockito.when(identityPlugin.createFederationUserToken()).thenReturn(defaultFederationToken);
 		Mockito.when(identityPlugin.getToken(FED_ACCESS_TOKEN_ID)).thenReturn(
 				defaultFederationToken);
 
+		// mocking FUC
+		this.localCredentialsPlugin = Mockito.mock(LocalCredentialsPlugin.class);
+		Mockito.when(localCredentialsPlugin.getAllLocalCredentials()).thenReturn(
+				this.defaultFederationUsersCrendetials);
+		Mockito.when(
+				localCredentialsPlugin.getLocalCredentials(Mockito.any(Request.class)))
+				.thenReturn(this.defaultFederationUserCrendetials);
+		Mockito.when(identityPlugin.createToken(this.defaultFederationUserCrendetials)).thenReturn(defaultFederationToken);
+		
 		authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
 		Mockito.when(authorizationPlugin.isAuthorized(Mockito.any(Token.class))).thenReturn(true);
 		
@@ -393,6 +424,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		managerController.setAuthorizationPlugin(authorizationPlugin);
 		managerController.setLocalIdentityPlugin(identityPlugin);
 		managerController.setFederationIdentityPlugin(federationIdentityPlugin);
+		managerController.setFederationUserCredentailsPlugin(localCredentialsPlugin);
 		managerController.setComputePlugin(computePlugin);
 		managerController.setBenchmarkingPlugin(benchmarkingPlugin);
 		managerController.setAccountingPlugin(accountingPlugin);

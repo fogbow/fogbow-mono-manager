@@ -27,6 +27,7 @@ import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
+import org.fogbowcloud.manager.core.plugins.LocalCredentialsPlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
@@ -68,7 +69,7 @@ public class OCCITestHelper {
 
 	public void initializeComponentExecutorSameThread(ComputePlugin computePlugin,
 			IdentityPlugin identityPlugin, AuthorizationPlugin authorizationPlugin,
-			BenchmarkingPlugin benchmarkingPlugin) throws Exception {
+			BenchmarkingPlugin benchmarkingPlugin, LocalCredentialsPlugin localCredentialsPlugin) throws Exception {
 		component = new Component();
 		component.getServers().add(Protocol.HTTP, ENDPOINT_PORT);
 
@@ -97,6 +98,7 @@ public class OCCITestHelper {
 		ManagerController facade = new ManagerController(properties, executor);
 		ResourceRepository.init(properties);
 		facade.setComputePlugin(computePlugin);
+		facade.setFederationUserCredentailsPlugin(localCredentialsPlugin);
 		facade.setAuthorizationPlugin(authorizationPlugin);
 		facade.setLocalIdentityPlugin(identityPlugin);
 		facade.setFederationIdentityPlugin(identityPlugin);
@@ -136,7 +138,8 @@ public class OCCITestHelper {
 	public void initializeComponentCompute(ComputePlugin computePlugin,
 			IdentityPlugin identityPlugin, AuthorizationPlugin authorizationPlugin,
 			ImageStoragePlugin imageStoragePlugin, AccountingPlugin accountingPlugin,
-			BenchmarkingPlugin benchmarkingPlugin, List<Request> requestsToAdd) throws Exception {
+			BenchmarkingPlugin benchmarkingPlugin, List<Request> requestsToAdd,
+			LocalCredentialsPlugin localCredentialsPlugin) throws Exception {
 		component = new Component();
 		component.getServers().add(Protocol.HTTP, ENDPOINT_PORT);
 
@@ -149,6 +152,7 @@ public class OCCITestHelper {
 		ManagerController facade = new ManagerController(properties);
 		facade.setComputePlugin(computePlugin);
 		facade.setAuthorizationPlugin(authorizationPlugin);
+		facade.setFederationUserCredentailsPlugin(localCredentialsPlugin);
 		facade.setLocalIdentityPlugin(identityPlugin);
 		facade.setFederationIdentityPlugin(identityPlugin);
 		facade.setImageStoragePlugin(imageStoragePlugin);
@@ -167,7 +171,7 @@ public class OCCITestHelper {
 
 	public void initializeComponentMember(ComputePlugin computePlugin,
 			IdentityPlugin identityPlugin, AuthorizationPlugin authorizationPlugin, AccountingPlugin accountingPlugin,
-			List<FederationMember> federationMembers) throws Exception {
+			List<FederationMember> federationMembers, LocalCredentialsPlugin localCredentialsPlugin) throws Exception {
 		component = new Component();
 		component.getServers().add(Protocol.HTTP, ENDPOINT_PORT);
 
@@ -180,6 +184,7 @@ public class OCCITestHelper {
 		facade.setFederationIdentityPlugin(identityPlugin);
 		facade.setAuthorizationPlugin(authorizationPlugin);
 		facade.setAccountingPlugin(accountingPlugin);
+		facade.setFederationUserCredentailsPlugin(localCredentialsPlugin);
 		facade.updateMembers(federationMembers);
 
 		component.getDefaultHost().attach(new OCCIApplication(facade));

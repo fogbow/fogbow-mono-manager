@@ -1,8 +1,10 @@
 package org.fogbowcloud.manager.occi;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.codec.Charsets;
 import org.apache.http.HttpResponse;
@@ -16,6 +18,7 @@ import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
+import org.fogbowcloud.manager.core.plugins.LocalCredentialsPlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.model.OCCIHeaders;
@@ -37,6 +40,7 @@ public class TestMemberServerResource {
 	private IdentityPlugin identityPlugin;
 	private AccountingPlugin accoutingPlugin;
 	private AuthorizationPlugin authorizationPlugin;
+	private LocalCredentialsPlugin localCredentialsPlugin;
 	
 	@Before
 	public void setup() throws Exception {
@@ -44,6 +48,12 @@ public class TestMemberServerResource {
 		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class))).thenReturn(
 				new ResourcesInfo(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, 
 						"", "", "", "", "", ""));
+		this.localCredentialsPlugin = Mockito.mock(LocalCredentialsPlugin.class);
+		Map<String, Map<String, String>> defaultFederationUsersCrendetials = 
+				new HashMap<String, Map<String,String>>();
+		defaultFederationUsersCrendetials.put("one", new HashMap<String, String>());
+		Mockito.when(localCredentialsPlugin.getAllLocalCredentials()).thenReturn(
+				defaultFederationUsersCrendetials);
 		this.identityPlugin = Mockito.mock(IdentityPlugin.class);
 		this.accoutingPlugin = Mockito.mock(AccountingPlugin.class);
 		this.authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
@@ -67,7 +77,7 @@ public class TestMemberServerResource {
 		federationMembers.add(new FederationMember(resourcesInfo2));
 
 		this.helper.initializeComponentMember(computePlugin, identityPlugin, authorizationPlugin,
-				accoutingPlugin, federationMembers);		
+				accoutingPlugin, federationMembers, localCredentialsPlugin);		
 		
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_MEMBER);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
@@ -88,7 +98,7 @@ public class TestMemberServerResource {
 	public void testGetMemberOnlyMe() throws Exception {
 		List<FederationMember> federationMembers = new ArrayList<FederationMember>();
 		this.helper.initializeComponentMember(computePlugin, identityPlugin, authorizationPlugin,
-				accoutingPlugin, federationMembers);
+				accoutingPlugin, federationMembers, localCredentialsPlugin);
 		
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_MEMBER);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
@@ -105,7 +115,7 @@ public class TestMemberServerResource {
 	@Test
 	public void testGetMemberWrongContentType() throws Exception {
 		this.helper.initializeComponentMember(computePlugin, identityPlugin, authorizationPlugin,
-				accoutingPlugin, new LinkedList<FederationMember>());
+				accoutingPlugin, new LinkedList<FederationMember>(), localCredentialsPlugin);
 		
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_MEMBER);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, "wrong");

@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -26,9 +27,9 @@ import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.FederationMemberAuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.FederationMemberPickerPlugin;
+import org.fogbowcloud.manager.core.plugins.LocalCredentialsPlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.compute.openstack.OpenStackOCCIComputePlugin;
-import org.fogbowcloud.manager.core.plugins.identity.openstack.KeystoneIdentityPlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.core.util.ManagerTestHelper;
 import org.fogbowcloud.manager.occi.instance.Instance;
@@ -522,7 +523,7 @@ public class TestManagerController {
 		Mockito.when(
 				federationIdentityPlugin.getToken(managerTestHelper.getDefaultFederationToken()
 						.getAccessId())).thenReturn(managerTestHelper.getDefaultFederationToken());
-		Mockito.when(identityPlugin.createFederationUserToken()).thenReturn(
+		Mockito.when(identityPlugin.createToken(Mockito.anyMap())).thenReturn(
 				managerTestHelper.getDefaultFederationToken());
 		managerController.setLocalIdentityPlugin(identityPlugin);
 		managerController.setFederationIdentityPlugin(federationIdentityPlugin);
@@ -556,57 +557,6 @@ public class TestManagerController {
 			Assert.assertEquals(RequestState.OPEN, request.getState());
 			Assert.assertFalse(managerController.isRequestForwardedtoRemoteMember(request.getId()));
 		}
-	}
-
-	@Test
-	public void testGetFederationMember() throws InterruptedException {
-		Map<String, String> tokenCredentials = new HashMap<String, String>();
-		tokenCredentials.put(KeystoneIdentityPlugin.USERNAME, DefaultDataTestHelper.USER_NAME);
-		tokenCredentials.put(KeystoneIdentityPlugin.PASSWORD, DefaultDataTestHelper.USER_PASS);
-		tokenCredentials.put(KeystoneIdentityPlugin.TENANT_NAME,
-				DefaultDataTestHelper.TENANT_NAME);
-
-		long tokenExpirationTime = System.currentTimeMillis() + 500;
-
-		Map<String, String> attributesTokenReturn = new HashMap<String, String>();
-		attributesTokenReturn.put(KeystoneIdentityPlugin.TENANT_ID, "987654321");
-		attributesTokenReturn.put(KeystoneIdentityPlugin.TENANT_NAME,
-				DefaultDataTestHelper.TENANT_NAME);
-
-		Token firstToken = new Token(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
-				DefaultDataTestHelper.USER_NAME, new Date(tokenExpirationTime),
-				attributesTokenReturn);
-		Token secondToken = new Token(ACCESS_TOKEN_ID_2, DefaultDataTestHelper.USER_NAME, new Date(
-				tokenExpirationTime + DefaultDataTestHelper.LONG_TIME), attributesTokenReturn);
-
-		// mocking identity plugin
-		KeystoneIdentityPlugin openStackidentityPlugin = Mockito
-				.mock(KeystoneIdentityPlugin.class);
-		Mockito.when(openStackidentityPlugin.createFederationUserToken()).thenReturn(firstToken,
-				secondToken);
-		Mockito.when(openStackidentityPlugin.createToken(tokenCredentials)).thenReturn(firstToken,
-				secondToken);
-		Mockito.when(openStackidentityPlugin.isValid(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID))
-				.thenReturn(true, false);
-		managerController.setLocalIdentityPlugin(openStackidentityPlugin);
-
-		// Get new token
-		Token federationUserToken = managerController.getFederationUserToken();
-		String accessToken = federationUserToken.getAccessId();
-		Assert.assertEquals(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID, accessToken);
-
-		// Use member token
-		accessToken = managerController.getFederationUserToken().getAccessId();
-		Assert.assertEquals(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID, accessToken);
-
-		DateUtils dateUtils = Mockito.mock(DateUtils.class);
-		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(
-				tokenExpirationTime + DefaultDataTestHelper.GRACE_TIME);
-		firstToken.setDateUtils(dateUtils);
-
-		// Get new token
-		accessToken = managerController.getFederationUserToken().getAccessId();
-		Assert.assertEquals(ACCESS_TOKEN_ID_2, accessToken);
 	}
 	
 	@Test
@@ -2049,6 +1999,120 @@ public class TestManagerController {
 	}
 
 	@Test
+	public void testGetAllFogbowFedertionInstances() {
+		LocalCredentialsPlugin localCredentialsPlugin = Mockito
+				.mock(LocalCredentialsPlugin.class);
+		Map<String, Map<String, String>> fedUsersCredentials = new HashMap<String, Map<String,String>>();
+		HashMap<String, String> credentialsOne = new HashMap<String, String>();
+		credentialsOne.put("one", "x1");
+		HashMap<String, String> credentialsTwo = new HashMap<String, String>();
+		credentialsTwo.put("two", "y1");
+		HashMap<String, String> credentialsThree = new HashMap<String, String>();
+		credentialsThree.put("trhee", "z1");
+		fedUsersCredentials.put("One", credentialsOne);
+		fedUsersCredentials.put("two", credentialsTwo);
+		fedUsersCredentials.put("three", credentialsThree);
+		Mockito.when(localCredentialsPlugin.getAllLocalCredentials()).thenReturn(fedUsersCredentials);
+		managerController.setFederationUserCredentailsPlugin(localCredentialsPlugin);
+				
+		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
+		Token tokenOne = new Token("One", "", null, null);
+		Mockito.when(identityPlugin.createToken(credentialsOne)).thenReturn(tokenOne);
+		Token tokenTwo = new Token("Two", "", null, null);
+		Mockito.when(identityPlugin.createToken(credentialsTwo)).thenReturn(tokenTwo);
+		Token tokenThree = new Token("Three", "", null, null);
+		Mockito.when(identityPlugin.createToken(credentialsThree)).thenReturn(tokenThree);
+		managerController.setLocalIdentityPlugin(identityPlugin);
+		
+		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
+		List<Instance> instancesListOne = Arrays.asList(new Instance[] {new Instance("One"), new Instance("Two")});
+		Mockito.when(computePlugin.getInstances(tokenOne)).thenReturn(instancesListOne);
+		List<Instance> instancesListTwo = Arrays.asList(new Instance[] {new Instance("Three"), new Instance("Four"), new Instance("Five")});
+		Mockito.when(computePlugin.getInstances(tokenTwo)).thenReturn(instancesListTwo);	
+		Mockito.when(computePlugin.getInstances(tokenThree)).thenReturn(instancesListTwo);
+		managerController.setComputePlugin(computePlugin);
+		List<Instance> allFogbowFederationInstances = managerController.getAllFogbowFederationInstances();
+		Assert.assertEquals(5, allFogbowFederationInstances.size());
+	}
+	
+	@Test
+	public void testGetAllFogbowFedertionInstancesWithWrongCrendentials() {
+		LocalCredentialsPlugin localCredentialsPlugin = Mockito
+				.mock(LocalCredentialsPlugin.class);
+		Map<String, Map<String, String>> fedUsersCredentials = new HashMap<String, Map<String,String>>();
+		HashMap<String, String> credentialsOne = new HashMap<String, String>();
+		credentialsOne.put("one", "x1");
+		HashMap<String, String> credentialsTwo = new HashMap<String, String>();
+		credentialsTwo.put("two", "y1");
+		HashMap<String, String> credentialsTree = new HashMap<String, String>();
+		credentialsTree.put("tree", "y1");
+		HashMap<String, String> credentialsFour = new HashMap<String, String>();
+		fedUsersCredentials.put("one", credentialsOne);
+		fedUsersCredentials.put("two",credentialsTwo);
+		fedUsersCredentials.put("three",credentialsTree);
+		fedUsersCredentials.put("four",credentialsFour);		
+		Mockito.when(localCredentialsPlugin.getAllLocalCredentials())
+				.thenReturn(fedUsersCredentials);
+		managerController.setFederationUserCredentailsPlugin(localCredentialsPlugin);
+				
+		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
+		Token tokenOne = new Token("One", "", null, null);
+		Mockito.when(identityPlugin.createToken(credentialsOne)).thenReturn(tokenOne);
+		Token tokenTwo = new Token("Two", "", null, null);
+		Mockito.when(identityPlugin.createToken(credentialsTwo)).thenReturn(tokenTwo);
+		Mockito.when(identityPlugin.createToken(credentialsTree)).thenReturn(null);
+		Mockito.when(identityPlugin.createToken(credentialsFour)).thenThrow(new OCCIException(ErrorType.UNAUTHORIZED, ""));
+		managerController.setLocalIdentityPlugin(identityPlugin);
+		
+		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
+		List<Instance> instancesListOne = Arrays.asList(new Instance[] {new Instance("One"), new Instance("Two")});
+		Mockito.when(computePlugin.getInstances(tokenOne)).thenReturn(instancesListOne);
+		List<Instance> instancesListTwo = Arrays.asList(new Instance[] {new Instance("Three")});
+		Mockito.when(computePlugin.getInstances(tokenTwo)).thenReturn(instancesListTwo);
+		managerController.setComputePlugin(computePlugin);
+		List<Instance> allFogbowFederationInstances = managerController.getAllFogbowFederationInstances();
+		Assert.assertEquals(3, allFogbowFederationInstances.size());
+	}	
+	
+	@Test
+	public void testGetTokenPerInstance() {
+		LocalCredentialsPlugin localCredentialsPlugin = Mockito
+				.mock(LocalCredentialsPlugin.class);
+		Map<String, Map<String, String>> fedUsersCredentials = new HashMap<String, Map<String,String>>();
+		HashMap<String, String> credentialsOne = new HashMap<String, String>();
+		credentialsOne.put("one", "x1");
+		HashMap<String, String> credentialsTwo = new HashMap<String, String>();
+		credentialsTwo.put("two", "y1");
+		fedUsersCredentials.put("one", credentialsOne);
+		fedUsersCredentials.put("two", credentialsTwo);
+		Mockito.when(localCredentialsPlugin.getAllLocalCredentials()).thenReturn(fedUsersCredentials);
+		managerController.setFederationUserCredentailsPlugin(localCredentialsPlugin);
+				
+		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
+		Token tokenOne = new Token("One", "", null, null);
+		Mockito.when(identityPlugin.createToken(credentialsOne)).thenReturn(tokenOne);
+		Token tokenTwo = new Token("Two", "", null, null);;
+		Mockito.when(identityPlugin.createToken(credentialsTwo)).thenReturn(tokenTwo);
+		managerController.setLocalIdentityPlugin(identityPlugin);
+		
+		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
+		Instance instanceOne = new Instance("one");
+		Instance instanceTwo = new Instance("two");
+		Instance instanceThree = new Instance("three");
+		List<Instance> instancesListOne = Arrays.asList(new Instance[] {instanceOne, new Instance("four")});
+		Mockito.when(computePlugin.getInstances(tokenOne)).thenReturn(instancesListOne);
+		List<Instance> instancesListTwo = Arrays.asList(new Instance[] {instanceTwo, new Instance("five"), instanceThree});
+		Mockito.when(computePlugin.getInstances(tokenTwo)).thenReturn(instancesListTwo);
+		managerController.setComputePlugin(computePlugin);
+		List<Instance> allFogbowFederationInstances = managerController.getAllFogbowFederationInstances();
+		Assert.assertEquals(5, allFogbowFederationInstances.size());
+		
+		Assert.assertEquals(tokenOne, managerController.getTokenPerInstance(instanceOne.getId()));
+		Assert.assertEquals(tokenTwo, managerController.getTokenPerInstance(instanceTwo.getId()));
+		Assert.assertEquals(tokenTwo, managerController.getTokenPerInstance(instanceThree.getId()));
+	}	
+	
+	@Test
 	public void testGarbageCollector(){
 		// setting request repository
 		Token federationToken = new Token(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
@@ -2776,4 +2840,90 @@ public class TestManagerController {
 		Assert.assertEquals(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL + "@" + batchId,
 				xOCCIAtt.get(RequestAttribute.BATCH_ID.getValue()));
 	}
+	
+	@Test
+	public void testGetResourceInfo() {
+		LocalCredentialsPlugin localCredentialsPlugin = Mockito
+				.mock(LocalCredentialsPlugin.class);
+		Map<String, Map<String, String>> fedUsersCredentials = new HashMap<String, Map<String,String>>();
+		HashMap<String, String> credentialsOne = new HashMap<String, String>();
+		credentialsOne.put("one", "x1");
+		HashMap<String, String> credentialsTwo = new HashMap<String, String>();
+		credentialsTwo.put("two", "y1");
+		HashMap<String, String> credentialsTree = new HashMap<String, String>();
+		credentialsTree.put("two", "y1");
+		fedUsersCredentials.put("one", credentialsOne);
+		fedUsersCredentials.put("two", credentialsTwo);
+		fedUsersCredentials.put("three", credentialsTree);
+		Mockito.when(localCredentialsPlugin.getAllLocalCredentials()).thenReturn(fedUsersCredentials);
+		managerController.setFederationUserCredentailsPlugin(localCredentialsPlugin);
+				
+		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
+		Token tokenOne = new Token("One", "", null, null);
+		Mockito.when(identityPlugin.createToken(credentialsOne)).thenReturn(tokenOne);
+		Token tokenTwo = new Token("Two", "", null, null);;
+		Mockito.when(identityPlugin.createToken(credentialsTwo)).thenReturn(tokenTwo);
+		Mockito.when(identityPlugin.createToken(credentialsTree)).thenReturn(tokenTwo);
+		managerController.setLocalIdentityPlugin(identityPlugin);
+		
+		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
+		ResourcesInfo resourcesInfoOne = new ResourcesInfo("10", "20", "10", "20", "10", "20");
+		Mockito.when(computePlugin.getResourcesInfo(tokenOne)).thenReturn(resourcesInfoOne);
+		ResourcesInfo resourcesInfoTwo = new ResourcesInfo("20", "20", "20", "20", "20", "20");
+		Mockito.when(computePlugin.getResourcesInfo(tokenTwo)).thenReturn(resourcesInfoTwo);
+		managerController.setComputePlugin(computePlugin);
+		
+		ResourcesInfo resourcesInfo = managerController.getResourcesInfo();
+		Assert.assertEquals("40", resourcesInfo.getCpuInUse());
+		Assert.assertEquals("30", resourcesInfo.getCpuIdle());
+		Assert.assertEquals("40", resourcesInfo.getMemInUse());
+		Assert.assertEquals("30", resourcesInfo.getMemIdle());
+		Assert.assertEquals("40", resourcesInfo.getInstancesInUse());
+		Assert.assertEquals("30", resourcesInfo.getInstancesIdle());
+	}
+	
+	@Test
+	public void testGetResourceInfoWorngCredentials() {
+		LocalCredentialsPlugin localCredentialsPlugin = Mockito
+				.mock(LocalCredentialsPlugin.class);
+		Map<String, Map<String, String>> fedUsersCredentials = new HashMap<String, Map<String,String>>();
+		HashMap<String, String> credentialsOne = new HashMap<String, String>();
+		credentialsOne.put("one", "x1");
+		HashMap<String, String> credentialsTwo = new HashMap<String, String>();
+		credentialsTwo.put("two", "y1");
+		HashMap<String, String> credentialsTree = new HashMap<String, String>();
+		HashMap<String, String> credentialsFour = new HashMap<String, String>();
+		fedUsersCredentials.put("one", credentialsOne);
+		fedUsersCredentials.put("two", credentialsTwo);
+		fedUsersCredentials.put("three", credentialsTree);
+		fedUsersCredentials.put("four", credentialsFour);
+		Mockito.when(localCredentialsPlugin.getAllLocalCredentials())
+					.thenReturn(fedUsersCredentials);
+		managerController.setFederationUserCredentailsPlugin(localCredentialsPlugin);
+				
+		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
+		Token tokenOne = new Token("One", "", null, null);
+		Mockito.when(identityPlugin.createToken(credentialsOne)).thenReturn(tokenOne);
+		Token tokenTwo = new Token("Two", "", null, null);;
+		Mockito.when(identityPlugin.createToken(credentialsTwo)).thenReturn(tokenTwo);
+		Mockito.when(identityPlugin.createToken(credentialsTree)).thenReturn(null);
+		Mockito.when(identityPlugin.createToken(credentialsFour)).thenThrow(
+				new OCCIException(ErrorType.UNAUTHORIZED, ""));
+		managerController.setLocalIdentityPlugin(identityPlugin);
+		
+		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
+		ResourcesInfo resourcesInfoOne = new ResourcesInfo("10", "20", "10", "20", "10", "20");
+		Mockito.when(computePlugin.getResourcesInfo(tokenOne)).thenReturn(resourcesInfoOne);
+		ResourcesInfo resourcesInfoTwo = new ResourcesInfo("20", "20", "20", "20", "20", "20");
+		Mockito.when(computePlugin.getResourcesInfo(tokenTwo)).thenReturn(resourcesInfoTwo);
+		managerController.setComputePlugin(computePlugin);
+		
+		ResourcesInfo resourcesInfo = managerController.getResourcesInfo();
+		Assert.assertEquals("40", resourcesInfo.getCpuInUse());
+		Assert.assertEquals("30", resourcesInfo.getCpuIdle());
+		Assert.assertEquals("40", resourcesInfo.getMemInUse());
+		Assert.assertEquals("30", resourcesInfo.getMemIdle());
+		Assert.assertEquals("40", resourcesInfo.getInstancesInUse());
+		Assert.assertEquals("30", resourcesInfo.getInstancesIdle());
+	}	
 }

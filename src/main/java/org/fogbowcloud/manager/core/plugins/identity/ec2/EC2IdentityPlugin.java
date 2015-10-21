@@ -16,7 +16,6 @@ import org.fogbowcloud.manager.occi.model.Token;
 
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.ec2.AmazonEC2Client;
-import com.google.common.collect.ImmutableMap;
 
 public class EC2IdentityPlugin implements IdentityPlugin {
 
@@ -26,13 +25,7 @@ public class EC2IdentityPlugin implements IdentityPlugin {
 	public static final String CRED_ACCESS_KEY = "accessKey";
 	public static final String CRED_SECRET_KEY = "secretKey";
 	
-	private static final String FEDERATION_USER_ACCESS_KEY = "local_proxy_account_ec2_access_key";
-	private static final String FEDERATION_USER_SECRET_KEY = "local_proxy_account_ec2_secret_key";
-	
-	private Properties properties;
-	
 	public EC2IdentityPlugin(Properties properties) {
-		this.properties = properties;
 	}
 	
 	@Override
@@ -82,14 +75,6 @@ public class EC2IdentityPlugin implements IdentityPlugin {
 		} catch (Exception e) {
 			return false;
 		}
-	}
-
-	@Override
-	public Token createFederationUserToken() {
-		ImmutableMap<String, String> credentials = ImmutableMap.of(
-				CRED_ACCESS_KEY, properties.getProperty(FEDERATION_USER_ACCESS_KEY), 
-				CRED_SECRET_KEY, properties.getProperty(FEDERATION_USER_SECRET_KEY));
-		return createToken(credentials);
 	}
 
 	@Override

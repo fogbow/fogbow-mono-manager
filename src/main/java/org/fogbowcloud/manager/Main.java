@@ -13,12 +13,14 @@ import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.FederationMemberAuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.FederationMemberPickerPlugin;
+import org.fogbowcloud.manager.core.plugins.LocalCredentialsPlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
 import org.fogbowcloud.manager.core.plugins.PrioritizationPlugin;
 import org.fogbowcloud.manager.core.plugins.accounting.FCUAccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.benchmarking.VanillaBenchmarkingPlugin;
 import org.fogbowcloud.manager.core.plugins.imagestorage.http.HTTPDownloadImageStoragePlugin;
+import org.fogbowcloud.manager.core.plugins.localcredentails.SingleLocalCrendentialsPlugin;
 import org.fogbowcloud.manager.core.plugins.memberauthorization.DefaultMemberAuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.memberpicker.RoundRobinMemberPickerPlugin;
 import org.fogbowcloud.manager.core.plugins.prioritization.TwoFoldPrioritizationPlugin;
@@ -133,6 +135,15 @@ public class Main {
 			LOGGER.warn("Member picker plugin not specified in properties. Using the default one.", e);
 		}
 		
+		LocalCredentialsPlugin localCredentialsPlugin = null;
+		try {
+			localCredentialsPlugin = (LocalCredentialsPlugin) createInstance(
+					ConfigurationConstants.LOCAL_CREDENTIALS_CLASS_KEY, properties);
+		} catch (Exception e) {
+			localCredentialsPlugin = new SingleLocalCrendentialsPlugin(properties);
+			LOGGER.warn("Federation user crendetail plugin not specified in properties. Using the default one.", e);
+		}		
+		
 		PrioritizationPlugin prioritizationPlugin = new TwoFoldPrioritizationPlugin(properties,
 				accountingPlugin);
 
@@ -147,6 +158,7 @@ public class Main {
 		facade.setAccountingPlugin(accountingPlugin);
 		facade.setMemberPickerPlugin(memberPickerPlugin);
 		facade.setPrioritizationPlugin(prioritizationPlugin);
+		facade.setFederationUserCredentailsPlugin(localCredentialsPlugin);
 		
 		String xmppHost = properties.getProperty(ConfigurationConstants.XMPP_HOST_KEY);
 		String xmppJid = properties.getProperty(ConfigurationConstants.XMPP_JID_KEY);

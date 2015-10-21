@@ -21,9 +21,6 @@ import org.fogbowcloud.manager.occi.model.Token;
 
 public class CloudStackIdentityPlugin implements IdentityPlugin {
 
-	protected static final String FEDERATION_USER_API_KEY = "local_proxy_account_api_key";
-	protected static final String FEDERATION_USER_SECRET_KEY = "local_proxy_account_secret_key";
-
 	protected final static String REISSUE_COMMAND = "listApis";
 	private final static String COMMAND = "command";
 
@@ -97,16 +94,6 @@ public class CloudStackIdentityPlugin implements IdentityPlugin {
 		} catch (OCCIException e) {
 			return false;
 		}
-	}
-
-	@Override
-	public Token createFederationUserToken() {
-		Map<String, String> credentials = new HashMap<String, String>();
-		credentials.put(API_KEY,
-				properties.getProperty(FEDERATION_USER_API_KEY));
-		credentials.put(SECRET_KEY,
-				properties.getProperty(FEDERATION_USER_SECRET_KEY));
-		return createToken(credentials);
 	}
 
 	@Override

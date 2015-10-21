@@ -43,6 +43,9 @@ public class Token {
 	}
 	
 	public Date getExpirationDate() {
+		if (attributes == null) {
+			return null;
+		}
 		String dataExpiration = attributes.get(DATE_EXPIRATION);
 		if (dataExpiration  != null){
 			return new Date(Long.parseLong(dataExpiration));
