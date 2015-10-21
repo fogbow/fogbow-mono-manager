@@ -16,16 +16,16 @@ public class MemberBasedFUCPlugin implements FederationUserCredentailsPlugin {
 
 	@Override
 	public Map<String, String> getFedUserCredentials(Request request) {
-		Map<String, String> credentialsPerProvider = FUCPluginHelper.getCredentialsPerProvider(
+		Map<String, String> credentialsPerProvider = FUCPluginHelper.getCredentialsPerMember(
 				this.properties, request.getRequestingMemberId());
 		if (!credentialsPerProvider.isEmpty()) {
 			return credentialsPerProvider;
 		}
-		return FUCPluginHelper.getCredentialsPerProvider(this.properties, FUCPluginHelper.FOGBOW_DEFAULTS);
+		return FUCPluginHelper.getCredentialsPerMember(this.properties, FUCPluginHelper.FOGBOW_DEFAULTS);
 	}
 
 	@Override
 	public Map<String, Map<String, String>> getAllFedUsersCredentials() {
-		return FUCPluginHelper.getProvidersCredentials(properties, null);
+		return FUCPluginHelper.getMemberCredentials(properties, null);
 	}
 }

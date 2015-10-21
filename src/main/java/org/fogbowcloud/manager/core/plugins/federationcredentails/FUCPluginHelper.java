@@ -12,11 +12,13 @@ public class FUCPluginHelper {
 	public static String UNDERLINE = "_";
 	public static String FOGBOW_DEFAULTS = "defaults";
 
-	public static Map<String, Map<String, String>> getProvidersCredentials(Properties properties, List<String> filters) {
-		Map<String, Map<String, String>> providersCredentialsList = new HashMap<String, Map<String,String>>();
-		List<String> providersMember = new ArrayList<String>();
+	public static Map<String, Map<String, String>> getMemberCredentials(
+			Properties properties, List<String> filters) {
+		Map<String, Map<String, String>> memberCredentialsList = 
+			new HashMap<String, Map<String,String>>();
+		List<String> members = new ArrayList<String>();
 		if (properties == null) {
-			return providersCredentialsList;
+			return memberCredentialsList;
 		}
 		for (Object key : properties.keySet()) {
 			String keyStr = key.toString();
@@ -26,7 +28,7 @@ public class FUCPluginHelper {
 					continue;
 				}
 				String member = splitKeys[0].toString();
-				if (providersMember.contains(member)) {
+				if (members.contains(member)) {
 					continue;
 				}
 				if (filters != null) {					
@@ -34,20 +36,22 @@ public class FUCPluginHelper {
 						continue;
 					}
 				}
-				providersMember.add(member);
-				providersCredentialsList.put(member, getCredentialsPerProvider(properties, member));	
+				members.add(member);
+				memberCredentialsList.put(member, getCredentialsPerMember(properties, member));	
 			}
 		}
-		return providersCredentialsList;
+		return memberCredentialsList;
 	}
 	
-	protected static Map<String, String> getCredentialsPerProvider(Properties properties, String providerMember) {
+	protected static Map<String, String> getCredentialsPerMember(Properties properties
+			, String member) {
 		Map<String, String> credentials = new HashMap<String, String>();
 		for (Object key : properties.keySet()) {
-			String prefix = FUC_PREFIX + providerMember + "_";
+			String prefix = FUC_PREFIX + member + "_";
 			if (key.toString().startsWith(prefix)) {
 				String crendentialKey = key.toString().replace(prefix, "");
-				credentials.put(crendentialKey.toString(), properties.get(key.toString()).toString());
+				credentials.put(crendentialKey.toString(), properties.get(
+						key.toString()).toString());
 			}
 		}
 		return credentials;

@@ -35,7 +35,7 @@ public class AzureIdentityPlugin implements IdentityPlugin {
 
 	private void createTokens(Properties properties) {
 		Map<String, Map<String, String>> providersCredentials = 
-				FUCPluginHelper.getProvidersCredentials(properties, null);
+				FUCPluginHelper.getMemberCredentials(properties, null);
 		for (String key : providersCredentials.keySet()) {
 			Map<String, String> credentials = providersCredentials.get(key);
 			createToken(credentials).getAccessId();

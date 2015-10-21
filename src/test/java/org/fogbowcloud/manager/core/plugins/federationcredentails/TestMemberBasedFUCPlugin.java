@@ -13,8 +13,8 @@ public class TestMemberBasedFUCPlugin {
 	private MemberBasedFUCPlugin memberBasedFUCPlugin;
 	private final String CREDENTIAL_ONE = "credOne";
 	private final String CREDENTIAL_TWO = "credTwo";
-	private String PROVIDER_ONE = "providerOne";
-	private String PROVIDER_TWO = "providerTwo";
+	private String MEMBER_ONE = "providerOne";
+	private String MEMBER_TWO = "providerTwo";
 	private String VALUE_ONE_FOGBOW = "valueOneFogbow";
 	private String VALUE_TWO_FOGBOW = "valueTwoFogbow";	
 	private String VALUE_ONE = "valueOne";
@@ -30,13 +30,13 @@ public class TestMemberBasedFUCPlugin {
 				+ CREDENTIAL_ONE, VALUE_ONE_FOGBOW);
 		properties.put(FUCPluginHelper.FUC_PREFIX + FUCPluginHelper.FOGBOW_DEFAULTS + FUCPluginHelper.UNDERLINE
 				+ CREDENTIAL_TWO, VALUE_TWO_FOGBOW);		
-		properties.put(FUCPluginHelper.FUC_PREFIX + PROVIDER_ONE + FUCPluginHelper.UNDERLINE
+		properties.put(FUCPluginHelper.FUC_PREFIX + MEMBER_ONE + FUCPluginHelper.UNDERLINE
 				+ CREDENTIAL_ONE, VALUE_ONE);
-		properties.put(FUCPluginHelper.FUC_PREFIX + PROVIDER_ONE + FUCPluginHelper.UNDERLINE
+		properties.put(FUCPluginHelper.FUC_PREFIX + MEMBER_ONE + FUCPluginHelper.UNDERLINE
 				+ CREDENTIAL_TWO, VALUE_TWO);
-		properties.put(FUCPluginHelper.FUC_PREFIX + PROVIDER_TWO + FUCPluginHelper.UNDERLINE
+		properties.put(FUCPluginHelper.FUC_PREFIX + MEMBER_TWO + FUCPluginHelper.UNDERLINE
 				+ CREDENTIAL_ONE, VALUE_THREE);
-		properties.put(FUCPluginHelper.FUC_PREFIX + PROVIDER_TWO + FUCPluginHelper.UNDERLINE
+		properties.put(FUCPluginHelper.FUC_PREFIX + MEMBER_TWO + FUCPluginHelper.UNDERLINE
 				+ CREDENTIAL_TWO, VALUE_FOUR);
 		properties.put(FUCPluginHelper.FUC_PREFIX + "wrong" + FUCPluginHelper.UNDERLINE
 				+ CREDENTIAL_TWO, VALUE_FOUR);
@@ -54,25 +54,25 @@ public class TestMemberBasedFUCPlugin {
 				FUCPluginHelper.FOGBOW_DEFAULTS).get(CREDENTIAL_ONE));
 		Assert.assertEquals(VALUE_TWO_FOGBOW, allFedUserCredentials.get(
 				FUCPluginHelper.FOGBOW_DEFAULTS).get(CREDENTIAL_TWO));		
-		Assert.assertEquals(VALUE_ONE, allFedUserCredentials.get(PROVIDER_ONE)
+		Assert.assertEquals(VALUE_ONE, allFedUserCredentials.get(MEMBER_ONE)
 				.get(CREDENTIAL_ONE));
-		Assert.assertEquals(VALUE_TWO, allFedUserCredentials.get(PROVIDER_ONE)
+		Assert.assertEquals(VALUE_TWO, allFedUserCredentials.get(MEMBER_ONE)
 				.get(CREDENTIAL_TWO));
-		Assert.assertEquals(VALUE_THREE, allFedUserCredentials.get(PROVIDER_TWO)
+		Assert.assertEquals(VALUE_THREE, allFedUserCredentials.get(MEMBER_TWO)
 				.get(CREDENTIAL_ONE));
-		Assert.assertEquals(VALUE_FOUR, allFedUserCredentials.get(PROVIDER_TWO)
+		Assert.assertEquals(VALUE_FOUR, allFedUserCredentials.get(MEMBER_TWO)
 				.get(CREDENTIAL_TWO));	
 		Assert.assertEquals(5, allFedUserCredentials.size());	
 	}
 	
 	@Test
 	public void testGetFedUserCredentials() {
-		Request request = new Request(null, null, null, null, false, PROVIDER_ONE);
+		Request request = new Request(null, null, null, null, false, MEMBER_ONE);
 		Map<String, String> fedUserCredentials = this.memberBasedFUCPlugin.getFedUserCredentials(request);
 		Assert.assertEquals(VALUE_ONE, fedUserCredentials.get(CREDENTIAL_ONE));
 		Assert.assertEquals(VALUE_TWO, fedUserCredentials.get(CREDENTIAL_TWO));
 		
-		request = new Request(null, null, null, null, false, PROVIDER_TWO);
+		request = new Request(null, null, null, null, false, MEMBER_TWO);
 		fedUserCredentials = this.memberBasedFUCPlugin.getFedUserCredentials(request);
 		Assert.assertEquals(VALUE_THREE, fedUserCredentials.get(CREDENTIAL_ONE));
 		Assert.assertEquals(VALUE_FOUR, fedUserCredentials.get(CREDENTIAL_TWO));
@@ -97,7 +97,7 @@ public class TestMemberBasedFUCPlugin {
 	public void testGetFedUserCredentialsNotFoundWithoutDefaultValue() {
 		memberBasedFUCPlugin = new MemberBasedFUCPlugin(new Properties()); 
 		Request request = new Request(null, null, null, null, false, null);
-		request.setProvidingMemberId(PROVIDER_ONE);
+		request.setProvidingMemberId(MEMBER_ONE);
 		Map<String, String> fedUserCredentials = this.memberBasedFUCPlugin.getFedUserCredentials(request);
 		Assert.assertTrue(fedUserCredentials.isEmpty());
 	}	

@@ -17,12 +17,12 @@ public class SingleFUCPlugin implements FederationUserCredentailsPlugin {
 
 	@Override
 	public Map<String, String> getFedUserCredentials(Request request) {
-		return FUCPluginHelper.getCredentialsPerProvider(this.properties, FUCPluginHelper.FOGBOW_DEFAULTS);
+		return FUCPluginHelper.getCredentialsPerMember(this.properties, FUCPluginHelper.FOGBOW_DEFAULTS);
 	}
 
 	@Override
 	public Map<String, Map<String, String>> getAllFedUsersCredentials() {
-		return FUCPluginHelper.getProvidersCredentials(properties,
+		return FUCPluginHelper.getMemberCredentials(properties,
 				Arrays.asList(new String[] { FUCPluginHelper.FOGBOW_DEFAULTS }));
 	}
 }

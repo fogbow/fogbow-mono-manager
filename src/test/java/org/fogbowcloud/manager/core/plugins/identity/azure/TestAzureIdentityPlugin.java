@@ -70,7 +70,7 @@ public class TestAzureIdentityPlugin {
 		AzureIdentityPlugin azureIdentityPlugin = 
 				new AzureIdentityPlugin(properties);
 		String accessId = azureIdentityPlugin.getAccessID(FUCPluginHelper
-				.getProvidersCredentials(properties, null).get(FUCPluginHelper.FOGBOW_DEFAULTS));
+				.getMemberCredentials(properties, null).get(FUCPluginHelper.FOGBOW_DEFAULTS));
 		Token token = azureIdentityPlugin.getToken(accessId);
 		Assert.assertEquals(DEFAULT_USER, token.getUser());
 		Assert.assertEquals(accessId, token.getAccessId());

@@ -13,8 +13,8 @@ public class TestSingleFUCPlugin {
 	private SingleFUCPlugin singleFUCPlugin;
 	private final String CREDENTIAL_ONE = "credOne";
 	private final String CREDENTIAL_TWO = "credTwo";
-	private String PROVIDER_ONE = "providerOne";
-	private String PROVIDER_TWO = "providerTwo";
+	private String MEMBER_ONE = "providerOne";
+	private String MEMBER_TWO = "providerTwo";
 	private String VALUE_ONE_FOGBOW = "valueOneFogbow";
 	private String VALUE_TWO_FOGBOW = "valueTwoFogbow";	
 	private String VALUE_ONE = "valueOne";
@@ -30,13 +30,13 @@ public class TestSingleFUCPlugin {
 				FUCPluginHelper.UNDERLINE + CREDENTIAL_ONE, VALUE_ONE_FOGBOW);
 		properties.put(FUCPluginHelper.FUC_PREFIX + FUCPluginHelper.FOGBOW_DEFAULTS + 
 				FUCPluginHelper.UNDERLINE + CREDENTIAL_TWO, VALUE_TWO_FOGBOW);		
-		properties.put(FUCPluginHelper.FUC_PREFIX + PROVIDER_ONE + FUCPluginHelper.UNDERLINE
+		properties.put(FUCPluginHelper.FUC_PREFIX + MEMBER_ONE + FUCPluginHelper.UNDERLINE
 				+ CREDENTIAL_ONE, VALUE_ONE);
-		properties.put(FUCPluginHelper.FUC_PREFIX + PROVIDER_ONE + FUCPluginHelper.UNDERLINE
+		properties.put(FUCPluginHelper.FUC_PREFIX + MEMBER_ONE + FUCPluginHelper.UNDERLINE
 				+ CREDENTIAL_TWO, VALUE_TWO);
-		properties.put(FUCPluginHelper.FUC_PREFIX + PROVIDER_TWO + FUCPluginHelper.UNDERLINE
+		properties.put(FUCPluginHelper.FUC_PREFIX + MEMBER_TWO + FUCPluginHelper.UNDERLINE
 				+ CREDENTIAL_ONE, VALUE_THREE);
-		properties.put(FUCPluginHelper.FUC_PREFIX + PROVIDER_TWO + FUCPluginHelper.UNDERLINE
+		properties.put(FUCPluginHelper.FUC_PREFIX + MEMBER_TWO + FUCPluginHelper.UNDERLINE
 				+ CREDENTIAL_TWO, VALUE_FOUR);
 		properties.put(FUCPluginHelper.FUC_PREFIX + "wrong" + FUCPluginHelper.UNDERLINE
 				+ CREDENTIAL_TWO, VALUE_FOUR);
@@ -60,7 +60,7 @@ public class TestSingleFUCPlugin {
 	@Test
 	public void testGetFedUserCredentials() {
 		Request request = new Request(null, null, null, null, false, null);
-		request.setProvidingMemberId(PROVIDER_ONE);
+		request.setProvidingMemberId(MEMBER_ONE);
 		Map<String, String> fedUserCredentials = this.singleFUCPlugin.getFedUserCredentials(request);
 		Assert.assertEquals(VALUE_ONE_FOGBOW, fedUserCredentials.get(CREDENTIAL_ONE));
 		Assert.assertEquals(VALUE_TWO_FOGBOW, fedUserCredentials.get(CREDENTIAL_TWO));		
@@ -86,7 +86,7 @@ public class TestSingleFUCPlugin {
 	public void testGetFedUserCredentialsNotFoundWithoutDefaultValue() {
 		singleFUCPlugin = new SingleFUCPlugin(new Properties()); 
 		Request request = new Request(null, null, null, null, false, null);
-		request.setProvidingMemberId(PROVIDER_ONE);
+		request.setProvidingMemberId(MEMBER_ONE);
 		Map<String, String> fedUserCredentials = this.singleFUCPlugin.getFedUserCredentials(request);
 		Assert.assertTrue(fedUserCredentials.isEmpty());
 	}	
