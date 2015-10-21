@@ -5,45 +5,45 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.fogbowcloud.manager.core.plugins.CertificateUtils;
-import org.fogbowcloud.manager.core.plugins.FederationUserCredentailsPlugin;
+import org.fogbowcloud.manager.core.plugins.LocalCredentialsPlugin;
 import org.fogbowcloud.manager.core.plugins.identity.voms.VomsIdentityPlugin;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.italiangrid.voms.VOMSAttribute;
 import org.italiangrid.voms.VOMSValidators;
 import org.italiangrid.voms.ac.VOMSACValidator;
 
-public class VOBasedFUCPlugin implements FederationUserCredentailsPlugin {
+public class VOBasedLocalCrendentialsPlugin implements LocalCredentialsPlugin {
 
 	private Properties properties;
 	private VOMSACValidator vomSACValidator;
 	
-	public VOBasedFUCPlugin(Properties properties) {
+	public VOBasedLocalCrendentialsPlugin(Properties properties) {
 		this.properties = properties;
 		this.vomSACValidator = VOMSValidators.newValidator();
 	}
 
 	@Override
-	public Map<String, String> getFedUserCredentials(Request request) {
-		String member = getVOMember(request);
-		Map<String, String> credentialsPerMember = FUCPluginHelper.getCredentialsPerMember(
-				this.properties, member);
+	public Map<String, String> getLocalCredentials(Request request) {
+		String member = getVO(request);
+		Map<String, String> credentialsPerMember = LocalCredentialsHelper
+				.getCredentialsPerRelatedLocalName(this.properties, member);
 		if (!credentialsPerMember.isEmpty()) {
 			return credentialsPerMember;
 		}
-		return FUCPluginHelper.getCredentialsPerMember(this.properties,
-				FUCPluginHelper.FOGBOW_DEFAULTS);
+		return LocalCredentialsHelper.getCredentialsPerRelatedLocalName(this.properties,
+				LocalCredentialsHelper.FOGBOW_DEFAULTS);
 	}
 
 	@Override
-	public Map<String, Map<String, String>> getAllFedUsersCredentials() {
-		return FUCPluginHelper.getMemberCredentials(properties, null);
+	public Map<String, Map<String, String>> getAllLocalCredentials() {
+		return LocalCredentialsHelper.getLocalCredentials(properties, null);
 	}
 	
-	protected String getVOMember(Request request) {
+	protected String getVO(Request request) {
 		String accessId = request.getFederationToken().getAccessId();
 		VomsIdentityPlugin vomsIdentityPlugin = new VomsIdentityPlugin(properties);
 		if (!vomsIdentityPlugin.isValid(accessId)) {
-			return FUCPluginHelper.FOGBOW_DEFAULTS;
+			return LocalCredentialsHelper.FOGBOW_DEFAULTS;
 		}	
 
 		X509Certificate[] theChain = null;
@@ -55,7 +55,7 @@ public class VOBasedFUCPlugin implements FederationUserCredentailsPlugin {
 			}
 		} catch (Exception e) {}		
 		
-		return FUCPluginHelper.FOGBOW_DEFAULTS;
+		return LocalCredentialsHelper.FOGBOW_DEFAULTS;
 	}
 
 	public void setVomSACValidator(VOMSACValidator vomSACValidator) {

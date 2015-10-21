@@ -47,7 +47,7 @@ import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.FederationMemberAuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.FederationMemberPickerPlugin;
-import org.fogbowcloud.manager.core.plugins.FederationUserCredentailsPlugin;
+import org.fogbowcloud.manager.core.plugins.LocalCredentialsPlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
 import org.fogbowcloud.manager.core.plugins.PrioritizationPlugin;
@@ -113,7 +113,7 @@ public class ManagerController {
 	private IdentityPlugin localIdentityPlugin;
 	private IdentityPlugin federationIdentityPlugin;
 	private PrioritizationPlugin prioritizationPlugin;
-	private FederationUserCredentailsPlugin federationUserCredentailsPlugin;
+	private LocalCredentialsPlugin localCredentialsPlugin;
 	private Properties properties;
 	private AsyncPacketSender packetSender;
 	private FederationMemberAuthorizationPlugin validator;
@@ -276,10 +276,10 @@ public class ManagerController {
 	protected List<Instance> getAllFogbowFederationInstances() {
 		this.instanceIdToToken = new HashMap<String, Token>();
 		List<Instance> federationInstances = new ArrayList<Instance>();
-		Map<String, Map<String, String>> allFedUsersCredentials = 
-				this.federationUserCredentailsPlugin.getAllFedUsersCredentials();
-		for (String key : allFedUsersCredentials.keySet()) {
-			Map<String, String> credentials = allFedUsersCredentials.get(key);  
+		Map<String, Map<String, String>> allLocalCredentials = 
+				this.localCredentialsPlugin.getAllLocalCredentials();
+		for (String localName : allLocalCredentials.keySet()) {
+			Map<String, String> credentials = allLocalCredentials.get(localName);  
 			List<Instance> instances = null;
 			try {
  				Token token = this.localIdentityPlugin.createToken(credentials);
@@ -291,7 +291,8 @@ public class ManagerController {
 					}
 				}
 			} catch (Exception e) {
-				LOGGER.debug("Does not possible get instances with credentials of " + key);
+				LOGGER.warn("Does not possible get instances "
+						+ "with credentials of " + localName);
 			}
 		}
 		return federationInstances;
@@ -383,12 +384,11 @@ public class ManagerController {
 	public ResourcesInfo getResourcesInfo() {
 		ResourcesInfo totalResourcesInfo = new ResourcesInfo();
 		totalResourcesInfo.setId(properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
-		Map<String, Map<String, String>> allFedUsersCredentials = 
-				this.federationUserCredentailsPlugin.getAllFedUsersCredentials();
+		Map<String, Map<String, String>> allLocalCredentials = 
+				this.localCredentialsPlugin.getAllLocalCredentials();
 		List<Map<String, String>> credentialsUsed = new ArrayList<Map<String,String>>();
-		for (String key : allFedUsersCredentials.keySet()) {
-			
-			Map<String, String> credentials = allFedUsersCredentials.get(key);
+		for (String localName : allLocalCredentials.keySet()) {			
+			Map<String, String> credentials = allLocalCredentials.get(localName);
 			if (credentialsUsed.contains(credentials)) {
 				continue;
 			}
@@ -396,9 +396,10 @@ public class ManagerController {
 			
 			ResourcesInfo resourcesInfo = null;
 			try {
-				resourcesInfo = computePlugin.getResourcesInfo(localIdentityPlugin.createToken(credentials));				
+				resourcesInfo = computePlugin.getResourcesInfo(
+						localIdentityPlugin.createToken(credentials));				
 			} catch (Exception e) {
-				LOGGER.debug("Does not possible get resources info with credentials of " + key);
+				LOGGER.warn("Does not possible get resources info with credentials of " + localName);
 			}
 			totalResourcesInfo.addResource(resourcesInfo);
 		}
@@ -857,7 +858,7 @@ public class ManagerController {
 	protected Token getFederationUserToken(Request request) {
 		LOGGER.debug("Getting federation user token.");
 		return localIdentityPlugin.createToken(
-				federationUserCredentailsPlugin.getFedUserCredentials(request));
+				localCredentialsPlugin.getLocalCredentials(request));
 	}
 
 	public Instance getInstanceForRemoteMember(String instanceId) {
@@ -1445,13 +1446,13 @@ public class ManagerController {
 		return requests.getAllServedRequests();
 	}
 	
-	public FederationUserCredentailsPlugin getFederationUserCredentailsPlugin() {
-		return federationUserCredentailsPlugin;
+	public LocalCredentialsPlugin getFederationUserCredentailsPlugin() {
+		return localCredentialsPlugin;
 	}
 
 	public void setFederationUserCredentailsPlugin(
-			FederationUserCredentailsPlugin federationUserCredentailsPlugin) {
-		this.federationUserCredentailsPlugin = federationUserCredentailsPlugin;
+			LocalCredentialsPlugin localCredentialsPlugin) {
+		this.localCredentialsPlugin = localCredentialsPlugin;
 	}
 
 	public List<Resource> getAllResouces(String accessId) {

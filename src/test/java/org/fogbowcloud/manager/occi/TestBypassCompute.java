@@ -24,7 +24,7 @@ import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
-import org.fogbowcloud.manager.core.plugins.FederationUserCredentailsPlugin;
+import org.fogbowcloud.manager.core.plugins.LocalCredentialsPlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
 import org.fogbowcloud.manager.core.plugins.compute.openstack.OpenStackConfigurationConstants;
@@ -65,7 +65,7 @@ public class TestBypassCompute {
 	private AuthorizationPlugin authorizationPlugin;
 	private Token defaultToken;
 	private ImageStoragePlugin imageStoragePlugin;
-	private FederationUserCredentailsPlugin federationUserCredentailsPlugin;
+	private LocalCredentialsPlugin localCredentialsPlugin;
 	
 	@Before
 	public void setup() throws Exception{
@@ -117,8 +117,8 @@ public class TestBypassCompute {
 		//initializing fake Cloud Compute Application
 		pluginHelper.initializeOCCIComputeComponent(expectedInstanceIds);
 		
-		federationUserCredentailsPlugin = Mockito.mock(FederationUserCredentailsPlugin.class);
-		Mockito.when(federationUserCredentailsPlugin.getFedUserCredentials(Mockito.any(Request.class)))
+		localCredentialsPlugin = Mockito.mock(LocalCredentialsPlugin.class);
+		Mockito.when(localCredentialsPlugin.getLocalCredentials(Mockito.any(Request.class)))
 				.thenReturn(new HashMap<String, String>());
 		
 		authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
@@ -132,7 +132,7 @@ public class TestBypassCompute {
 		helper = new OCCITestHelper();
 		helper.initializeComponentCompute(computePlugin, identityPlugin, authorizationPlugin,
 				imageStoragePlugin, Mockito.mock(AccountingPlugin.class),
-				Mockito.mock(BenchmarkingPlugin.class), requests, federationUserCredentailsPlugin);
+				Mockito.mock(BenchmarkingPlugin.class), requests, localCredentialsPlugin);
 	}
 
 	@After

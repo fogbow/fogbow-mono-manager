@@ -27,7 +27,7 @@ import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.FederationMemberAuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.FederationMemberPickerPlugin;
-import org.fogbowcloud.manager.core.plugins.FederationUserCredentailsPlugin;
+import org.fogbowcloud.manager.core.plugins.LocalCredentialsPlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.compute.openstack.OpenStackOCCIComputePlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
@@ -2000,8 +2000,8 @@ public class TestManagerController {
 
 	@Test
 	public void testGetAllFogbowFedertionInstances() {
-		FederationUserCredentailsPlugin federationUserCredentailsPlugin = Mockito
-				.mock(FederationUserCredentailsPlugin.class);
+		LocalCredentialsPlugin localCredentialsPlugin = Mockito
+				.mock(LocalCredentialsPlugin.class);
 		Map<String, Map<String, String>> fedUsersCredentials = new HashMap<String, Map<String,String>>();
 		HashMap<String, String> credentialsOne = new HashMap<String, String>();
 		credentialsOne.put("one", "x1");
@@ -2012,8 +2012,8 @@ public class TestManagerController {
 		fedUsersCredentials.put("One", credentialsOne);
 		fedUsersCredentials.put("two", credentialsTwo);
 		fedUsersCredentials.put("three", credentialsThree);
-		Mockito.when(federationUserCredentailsPlugin.getAllFedUsersCredentials()).thenReturn(fedUsersCredentials);
-		managerController.setFederationUserCredentailsPlugin(federationUserCredentailsPlugin);
+		Mockito.when(localCredentialsPlugin.getAllLocalCredentials()).thenReturn(fedUsersCredentials);
+		managerController.setFederationUserCredentailsPlugin(localCredentialsPlugin);
 				
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Token tokenOne = new Token("One", "", null, null);
@@ -2037,8 +2037,8 @@ public class TestManagerController {
 	
 	@Test
 	public void testGetAllFogbowFedertionInstancesWithWrongCrendentials() {
-		FederationUserCredentailsPlugin federationUserCredentailsPlugin = Mockito
-				.mock(FederationUserCredentailsPlugin.class);
+		LocalCredentialsPlugin localCredentialsPlugin = Mockito
+				.mock(LocalCredentialsPlugin.class);
 		Map<String, Map<String, String>> fedUsersCredentials = new HashMap<String, Map<String,String>>();
 		HashMap<String, String> credentialsOne = new HashMap<String, String>();
 		credentialsOne.put("one", "x1");
@@ -2051,9 +2051,9 @@ public class TestManagerController {
 		fedUsersCredentials.put("two",credentialsTwo);
 		fedUsersCredentials.put("three",credentialsTree);
 		fedUsersCredentials.put("four",credentialsFour);		
-		Mockito.when(federationUserCredentailsPlugin.getAllFedUsersCredentials())
+		Mockito.when(localCredentialsPlugin.getAllLocalCredentials())
 				.thenReturn(fedUsersCredentials);
-		managerController.setFederationUserCredentailsPlugin(federationUserCredentailsPlugin);
+		managerController.setFederationUserCredentailsPlugin(localCredentialsPlugin);
 				
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Token tokenOne = new Token("One", "", null, null);
@@ -2076,8 +2076,8 @@ public class TestManagerController {
 	
 	@Test
 	public void testGetTokenPerInstance() {
-		FederationUserCredentailsPlugin federationUserCredentailsPlugin = Mockito
-				.mock(FederationUserCredentailsPlugin.class);
+		LocalCredentialsPlugin localCredentialsPlugin = Mockito
+				.mock(LocalCredentialsPlugin.class);
 		Map<String, Map<String, String>> fedUsersCredentials = new HashMap<String, Map<String,String>>();
 		HashMap<String, String> credentialsOne = new HashMap<String, String>();
 		credentialsOne.put("one", "x1");
@@ -2085,8 +2085,8 @@ public class TestManagerController {
 		credentialsTwo.put("two", "y1");
 		fedUsersCredentials.put("one", credentialsOne);
 		fedUsersCredentials.put("two", credentialsTwo);
-		Mockito.when(federationUserCredentailsPlugin.getAllFedUsersCredentials()).thenReturn(fedUsersCredentials);
-		managerController.setFederationUserCredentailsPlugin(federationUserCredentailsPlugin);
+		Mockito.when(localCredentialsPlugin.getAllLocalCredentials()).thenReturn(fedUsersCredentials);
+		managerController.setFederationUserCredentailsPlugin(localCredentialsPlugin);
 				
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Token tokenOne = new Token("One", "", null, null);
@@ -2843,8 +2843,8 @@ public class TestManagerController {
 	
 	@Test
 	public void testGetResourceInfo() {
-		FederationUserCredentailsPlugin federationUserCredentailsPlugin = Mockito
-				.mock(FederationUserCredentailsPlugin.class);
+		LocalCredentialsPlugin localCredentialsPlugin = Mockito
+				.mock(LocalCredentialsPlugin.class);
 		Map<String, Map<String, String>> fedUsersCredentials = new HashMap<String, Map<String,String>>();
 		HashMap<String, String> credentialsOne = new HashMap<String, String>();
 		credentialsOne.put("one", "x1");
@@ -2855,8 +2855,8 @@ public class TestManagerController {
 		fedUsersCredentials.put("one", credentialsOne);
 		fedUsersCredentials.put("two", credentialsTwo);
 		fedUsersCredentials.put("three", credentialsTree);
-		Mockito.when(federationUserCredentailsPlugin.getAllFedUsersCredentials()).thenReturn(fedUsersCredentials);
-		managerController.setFederationUserCredentailsPlugin(federationUserCredentailsPlugin);
+		Mockito.when(localCredentialsPlugin.getAllLocalCredentials()).thenReturn(fedUsersCredentials);
+		managerController.setFederationUserCredentailsPlugin(localCredentialsPlugin);
 				
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Token tokenOne = new Token("One", "", null, null);
@@ -2884,8 +2884,8 @@ public class TestManagerController {
 	
 	@Test
 	public void testGetResourceInfoWorngCredentials() {
-		FederationUserCredentailsPlugin federationUserCredentailsPlugin = Mockito
-				.mock(FederationUserCredentailsPlugin.class);
+		LocalCredentialsPlugin localCredentialsPlugin = Mockito
+				.mock(LocalCredentialsPlugin.class);
 		Map<String, Map<String, String>> fedUsersCredentials = new HashMap<String, Map<String,String>>();
 		HashMap<String, String> credentialsOne = new HashMap<String, String>();
 		credentialsOne.put("one", "x1");
@@ -2897,9 +2897,9 @@ public class TestManagerController {
 		fedUsersCredentials.put("two", credentialsTwo);
 		fedUsersCredentials.put("three", credentialsTree);
 		fedUsersCredentials.put("four", credentialsFour);
-		Mockito.when(federationUserCredentailsPlugin.getAllFedUsersCredentials())
+		Mockito.when(localCredentialsPlugin.getAllLocalCredentials())
 					.thenReturn(fedUsersCredentials);
-		managerController.setFederationUserCredentailsPlugin(federationUserCredentailsPlugin);
+		managerController.setFederationUserCredentailsPlugin(localCredentialsPlugin);
 				
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Token tokenOne = new Token("One", "", null, null);

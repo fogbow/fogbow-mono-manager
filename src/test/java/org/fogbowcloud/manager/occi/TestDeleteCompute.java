@@ -15,7 +15,7 @@ import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
-import org.fogbowcloud.manager.core.plugins.FederationUserCredentailsPlugin;
+import org.fogbowcloud.manager.core.plugins.LocalCredentialsPlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
@@ -83,17 +83,17 @@ public class TestDeleteCompute {
 		AccountingPlugin accountingPlugin = Mockito.mock(AccountingPlugin.class);
 		BenchmarkingPlugin benchmarkingPlugin = Mockito.mock(BenchmarkingPlugin.class);
 		
-		FederationUserCredentailsPlugin federationUserCredentailsPlugin = Mockito
-				.mock(FederationUserCredentailsPlugin.class);
+		LocalCredentialsPlugin localCredentialsPlugin = Mockito
+				.mock(LocalCredentialsPlugin.class);
 		Map<String, String> crendentials = new HashMap<String, String>();
 		Mockito.when(
-				federationUserCredentailsPlugin.getFedUserCredentials(Mockito.any(Request.class)))
+				localCredentialsPlugin.getLocalCredentials(Mockito.any(Request.class)))
 				.thenReturn(crendentials);
 		Mockito.when(identityPlugin.createToken(crendentials)).thenReturn(tokenTwo);
 		
 		this.helper.initializeComponentCompute(computePlugin, identityPlugin, authorizationPlugin,
 				imageStoragePlugin, accountingPlugin, benchmarkingPlugin, requests,
-				federationUserCredentailsPlugin);
+				localCredentialsPlugin);
 	}
 
 	@After

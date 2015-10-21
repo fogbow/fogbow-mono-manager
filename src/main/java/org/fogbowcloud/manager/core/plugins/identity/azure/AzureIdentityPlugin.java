@@ -9,7 +9,7 @@ import java.util.UUID;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.common.azure.AzureAttributes;
-import org.fogbowcloud.manager.core.plugins.federationcredentails.FUCPluginHelper;
+import org.fogbowcloud.manager.core.plugins.federationcredentails.LocalCredentialsHelper;
 import org.fogbowcloud.manager.core.plugins.util.Credential;
 import org.fogbowcloud.manager.occi.model.ErrorType;
 import org.fogbowcloud.manager.occi.model.OCCIException;
@@ -35,7 +35,7 @@ public class AzureIdentityPlugin implements IdentityPlugin {
 
 	private void createTokens(Properties properties) {
 		Map<String, Map<String, String>> providersCredentials = 
-				FUCPluginHelper.getMemberCredentials(properties, null);
+				LocalCredentialsHelper.getLocalCredentials(properties, null);
 		for (String key : providersCredentials.keySet()) {
 			Map<String, String> credentials = providersCredentials.get(key);
 			createToken(credentials).getAccessId();

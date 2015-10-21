@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.fogbowcloud.manager.core.plugins.common.azure.AzureAttributes;
-import org.fogbowcloud.manager.core.plugins.federationcredentails.FUCPluginHelper;
+import org.fogbowcloud.manager.core.plugins.federationcredentails.LocalCredentialsHelper;
 import org.fogbowcloud.manager.core.plugins.util.Credential;
 import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.Token;
@@ -15,8 +15,8 @@ import org.mockito.Mockito;
 
 public class TestAzureIdentityPlugin {
 	 
-	private static final String PREFIX_PROPERTIES = FUCPluginHelper.FUC_PREFIX + 
-			FUCPluginHelper.FOGBOW_DEFAULTS + FUCPluginHelper.UNDERLINE;
+	private static final String PREFIX_PROPERTIES = LocalCredentialsHelper.LOCAL_CREDENTIAL_PREFIX + 
+			LocalCredentialsHelper.FOGBOW_DEFAULTS + LocalCredentialsHelper.UNDERLINE;
 	private static final String SUBSCRIPTION_ID_VALUE = "subscription_id";
 	private static final String KEY_STORE_PATH_VALUE = "home/test/value";
 	private static final String KEYSTORE_PASSWORD_VALUE = "password";
@@ -69,8 +69,8 @@ public class TestAzureIdentityPlugin {
 		Properties properties = createProperties(extraProperties);
 		AzureIdentityPlugin azureIdentityPlugin = 
 				new AzureIdentityPlugin(properties);
-		String accessId = azureIdentityPlugin.getAccessID(FUCPluginHelper
-				.getMemberCredentials(properties, null).get(FUCPluginHelper.FOGBOW_DEFAULTS));
+		String accessId = azureIdentityPlugin.getAccessID(LocalCredentialsHelper
+				.getLocalCredentials(properties, null).get(LocalCredentialsHelper.FOGBOW_DEFAULTS));
 		Token token = azureIdentityPlugin.getToken(accessId);
 		Assert.assertEquals(DEFAULT_USER, token.getUser());
 		Assert.assertEquals(accessId, token.getAccessId());

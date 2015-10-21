@@ -17,7 +17,7 @@ import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
-import org.fogbowcloud.manager.core.plugins.FederationUserCredentailsPlugin;
+import org.fogbowcloud.manager.core.plugins.LocalCredentialsPlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
@@ -51,7 +51,7 @@ public class TestGetCompute {
 	private AuthorizationPlugin authorizationPlugin;
 	private OCCITestHelper helper;
 	private ImageStoragePlugin imageStoragePlugin;
-	private FederationUserCredentailsPlugin federationUserCredentailsPlugin;
+	private LocalCredentialsPlugin localCredentialsPlugin;
 
 	@Before
 	public void setup() throws Exception {
@@ -98,15 +98,15 @@ public class TestGetCompute {
 		authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
 		Mockito.when(authorizationPlugin.isAuthorized(Mockito.any(Token.class))).thenReturn(true);
 		
-		federationUserCredentailsPlugin = Mockito.mock(FederationUserCredentailsPlugin.class);
-		Mockito.when(federationUserCredentailsPlugin.getFedUserCredentials(Mockito.any(Request.class)))
+		localCredentialsPlugin = Mockito.mock(LocalCredentialsPlugin.class);
+		Mockito.when(localCredentialsPlugin.getLocalCredentials(Mockito.any(Request.class)))
 				.thenReturn(new HashMap<String, String>());
 		
 		imageStoragePlugin = Mockito.mock(ImageStoragePlugin.class);
 		
 		this.helper.initializeComponentCompute(computePlugin, identityPlugin, authorizationPlugin,
 				imageStoragePlugin, Mockito.mock(AccountingPlugin.class),
-				Mockito.mock(BenchmarkingPlugin.class), requests, federationUserCredentailsPlugin);
+				Mockito.mock(BenchmarkingPlugin.class), requests, localCredentialsPlugin);
 	}
 
 	@After
