@@ -117,19 +117,9 @@ nof_prioritize_local=true
 ## If you are using NoFMemberPicker or NoFPrioritizationPlugin classes
 nof_trustworthy=false
 
-## Local identity (CloudStack Identity Plugin)
-local_identity_class=org.fogbowcloud.manager.core.plugins.identity.cloudstack.cloudStackIdentityPlugin
-local_identity_url=http://localhost:8080/client/api
-local_proxy_account_user_name=fogbow
-local_proxy_account_password=fogbow
-local_proxy_account_domain=root
-
 ## Local identity (Keystone Identity Plugin)
 local_identity_class=org.fogbowcloud.manager.core.plugins.identity.openstack.KeystoneIdentityPlugin
 local_identity_url=http://localhost:5000
-local_proxy_account_user_name=fogbow
-local_proxy_account_password=fogbow
-local_proxy_account_tenant_name=demo
 
 ## Local Identity (X509 Identity Plugin)
 # local_identity_class=org.fogbowcloud.manager.core.plugins.x509.X509IdentityPlugin
@@ -142,12 +132,35 @@ local_proxy_account_tenant_name=demo
 ## Local Identity (Cloudstack Identity Plugin)
 # local_identity_class=org.fogbowcloud.manager.core.plugins.identity.cloudstack.CloudStackIdentityPlugin
 # local_identity_url=http://127.0.0.1:8080/client/api/
-# local_proxy_account_api_key=user_api_key
-# local_proxy_account_secret_key=user_secret_key
 
-## Local Identity (EC2)
-# local_proxy_account_ec2_access_key=AKIALSKQLKFD7AHQLKEUO
-# local_proxy_account_ec2_secret_key=Iuaooiad&891/2309asd0123+akplkdh
+## Local Credentials
+federation_user_credentail_class=org.fogbowcloud.manager.core.plugins.localcredentails.SingleLocalCrendentialsPlugin
+# federation_user_credentail_class=org.fogbowcloud.manager.core.plugins.localcredentails.MemberBasedLocalCrendetialsPlugin
+# federation_user_credentail_class=org.fogbowcloud.manager.core.plugins.localcredentails.VOBasedLocalCrendentialsPlugin
+
+## Mandatory for Local Credentails
+
+# Local credentials for openstack
+local_credential_defaults_username=fogbow
+local_credential_defaults_password=fogbow
+local_credential_defaults_tenantName=fogbow
+
+# Local credentials for opennebula
+# local_credential_defaults_username=fogbow
+# local_credential_defaults_password=fogbowpass
+
+## Local credentials for (EC2)
+# local_credential_defaults_accessKey=AKIALSKQLKFD7AHQLKEUO
+# local_credential_defaults_secretKey=Iuaooiad&891/2309asd0123+akplkdh
+
+## Local credentials for Cloudstack
+# local_credential_defaults_apiKey=user_api_key
+# local_credential_defaults_secret_key=user_secret_key
+
+## Optional for Local Credentails
+# local_credential_other_username=
+# local_credential_other_password=
+# local_credential_other_tenantName=
 
 ## Authorization Plugin
 federation_authorization_class=org.fogbowcloud.manager.core.plugins.authorization.AllowAllAuthorizationPlugin
@@ -168,9 +181,9 @@ federation_identity_url=http://localhost:5000
 
 ## Identity (Azure)
 # federation_identity_class=org.fogbowcloud.manager.core.plugins.identity.azure.AzureIdentityPlugin
-# proxy_account_subscription_id=subscription_id
-# proxy_account_keystore_path=/etc/keystore/azure
-# proxy_account_keystore_password=test123
+# local_credential_defaults_subscription_id=subscription_id
+# local_credential_defaults_keystore_path=/etc/keystore/azure
+# local_credential_defaults_keystore_password=test123
 
 ## Member Validator
 member_validator_class=org.fogbowcloud.manager.core.plugins.memberauthorization.DefaultMemberAuthorizationPlugin

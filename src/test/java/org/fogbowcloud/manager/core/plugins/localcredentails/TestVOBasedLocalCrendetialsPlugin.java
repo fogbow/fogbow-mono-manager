@@ -1,9 +1,6 @@
-package org.fogbowcloud.manager.core.plugins.federationcredentails;
+package org.fogbowcloud.manager.core.plugins.localcredentails;
 
-import java.security.cert.X509Certificate;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -11,14 +8,13 @@ import org.fogbowcloud.manager.core.plugins.CertificateUtils;
 import org.fogbowcloud.manager.core.plugins.identity.voms.Fixture;
 import org.fogbowcloud.manager.core.plugins.identity.voms.Utils;
 import org.fogbowcloud.manager.core.plugins.identity.voms.VomsIdentityPlugin;
+import org.fogbowcloud.manager.core.plugins.localcredentails.LocalCredentialsHelper;
+import org.fogbowcloud.manager.core.plugins.localcredentails.VOBasedLocalCrendentialsPlugin;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.request.Request;
-import org.italiangrid.voms.VOMSAttribute;
-import org.italiangrid.voms.ac.VOMSACValidator;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 import eu.emi.security.authn.x509.impl.PEMCredential;
 import eu.emi.security.authn.x509.proxy.ProxyCertificate;
@@ -31,7 +27,7 @@ public class TestVOBasedLocalCrendetialsPlugin {
 	private VOBasedLocalCrendentialsPlugin vOBasedLocalCrendentialsPlugin;
 	private final String CREDENTIAL_ONE = "credOne";
 	private final String CREDENTIAL_TWO = "credTwo";
-	private String MEMBER_ONE = "vofogbow";
+	private String MEMBER_ONE = "test.vo";
 	private String MEMBER_TWO = "memberTwo";
 	private String VALUE_ONE_FOGBOW = "valueOneFogbow";
 	private String VALUE_TWO_FOGBOW = "valueTwoFogbow";	
@@ -70,19 +66,8 @@ public class TestVOBasedLocalCrendetialsPlugin {
 		properties.put(VomsIdentityPlugin.PROP_PATH_VOMSDIR, "src/test/resources/voms/vomsdir");
 		properties.put(VomsIdentityPlugin.PROP_VOMS_FEDERATION_USER_PASS, VOMS_PASSWORD);
 		properties.put(VomsIdentityPlugin.PROP_VOMS_FEDERATION_USER_SERVER, VOMS_SERVER);
-		
-		
+				
 		this.vOBasedLocalCrendentialsPlugin = new VOBasedLocalCrendentialsPlugin(properties);
-		
-		VOMSACValidator vomsACValidator = Mockito.mock(VOMSACValidator.class);
-		VOMSAttribute vomsAttribute = Mockito.mock(VOMSAttribute.class);
-		Mockito.when(vomsAttribute.getVO()).thenReturn(MEMBER_ONE);
-		List<VOMSAttribute> vomsAttributes = new ArrayList<VOMSAttribute>();
-		vomsAttributes.add(vomsAttribute);
-		Mockito.when(vomsACValidator.validate(Mockito.any(X509Certificate[].class)))
-				.thenReturn(vomsAttributes);
-		
-		vOBasedLocalCrendentialsPlugin.setVomSACValidator(vomsACValidator);
 		
 		PEMCredential holder = Utils.getTestUserCredential();
 		ProxyCertificate proxy = Utils.getVOMSAA().createVOMSProxy(holder, Fixture.defaultVOFqans);

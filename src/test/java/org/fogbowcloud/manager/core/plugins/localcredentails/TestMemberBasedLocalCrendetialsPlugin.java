@@ -1,8 +1,10 @@
-package org.fogbowcloud.manager.core.plugins.federationcredentails;
+package org.fogbowcloud.manager.core.plugins.localcredentails;
 
 import java.util.Map;
 import java.util.Properties;
 
+import org.fogbowcloud.manager.core.plugins.localcredentails.LocalCredentialsHelper;
+import org.fogbowcloud.manager.core.plugins.localcredentails.MemberBasedLocalCrendetialsPlugin;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.junit.Assert;
 import org.junit.Before;

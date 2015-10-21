@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.fogbowcloud.manager.core.plugins.common.azure.AzureAttributes;
-import org.fogbowcloud.manager.core.plugins.federationcredentails.LocalCredentialsHelper;
+import org.fogbowcloud.manager.core.plugins.localcredentails.LocalCredentialsHelper;
 import org.fogbowcloud.manager.core.plugins.util.Credential;
 import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.Token;

@@ -1,4 +1,4 @@
-package org.fogbowcloud.manager.core.plugins.federationcredentails;
+package org.fogbowcloud.manager.core.plugins.localcredentails;
 
 import java.security.cert.X509Certificate;
 import java.util.Map;
@@ -9,17 +9,15 @@ import org.fogbowcloud.manager.core.plugins.LocalCredentialsPlugin;
 import org.fogbowcloud.manager.core.plugins.identity.voms.VomsIdentityPlugin;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.italiangrid.voms.VOMSAttribute;
-import org.italiangrid.voms.VOMSValidators;
-import org.italiangrid.voms.ac.VOMSACValidator;
 
 public class VOBasedLocalCrendentialsPlugin implements LocalCredentialsPlugin {
 
 	private Properties properties;
-	private VOMSACValidator vomSACValidator;
+	private VomsIdentityPlugin vomsIdentityPlugin;
 	
 	public VOBasedLocalCrendentialsPlugin(Properties properties) {
 		this.properties = properties;
-		this.vomSACValidator = VOMSValidators.newValidator();
+		this.vomsIdentityPlugin = new VomsIdentityPlugin(properties);
 	}
 
 	@Override
@@ -41,7 +39,6 @@ public class VOBasedLocalCrendentialsPlugin implements LocalCredentialsPlugin {
 	
 	protected String getVO(Request request) {
 		String accessId = request.getFederationToken().getAccessId();
-		VomsIdentityPlugin vomsIdentityPlugin = new VomsIdentityPlugin(properties);
 		if (!vomsIdentityPlugin.isValid(accessId)) {
 			return LocalCredentialsHelper.FOGBOW_DEFAULTS;
 		}	
@@ -50,15 +47,11 @@ public class VOBasedLocalCrendentialsPlugin implements LocalCredentialsPlugin {
 		try {
 			theChain = CertificateUtils.extractCertificates(
 					CertificateUtils.parseChain(accessId)).toArray(new X509Certificate[] {});
-			for (VOMSAttribute vomsAttribute : vomSACValidator.validate(theChain)) {
+			for (VOMSAttribute vomsAttribute : vomsIdentityPlugin.getVOMSValidator().validate(theChain)) {
 				return vomsAttribute.getVO();
 			}
 		} catch (Exception e) {}		
 		
 		return LocalCredentialsHelper.FOGBOW_DEFAULTS;
-	}
-
-	public void setVomSACValidator(VOMSACValidator vomSACValidator) {
-		this.vomSACValidator = vomSACValidator;
 	}
 }

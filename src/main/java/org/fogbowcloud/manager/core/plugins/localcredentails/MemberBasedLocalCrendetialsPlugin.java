@@ -1,4 +1,4 @@
-package org.fogbowcloud.manager.core.plugins.federationcredentails;
+package org.fogbowcloud.manager.core.plugins.localcredentails;
 
 import java.util.Map;
 import java.util.Properties;

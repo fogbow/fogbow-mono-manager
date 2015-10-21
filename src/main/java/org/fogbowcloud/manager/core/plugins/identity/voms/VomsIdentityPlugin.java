@@ -225,7 +225,7 @@ public class VomsIdentityPlugin implements IdentityPlugin {
 		return false;
 	}
 
-	private VOMSACValidator getVOMSValidator() {
+	public VOMSACValidator getVOMSValidator() {
 		String trust = properties.getProperty(PROP_PATH_TRUST_ANCHORS);
 		if (trust == null || trust.isEmpty()) {
 			trust = DefaultVOMSValidator.DEFAULT_TRUST_ANCHORS_DIR.toString();

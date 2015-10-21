@@ -9,7 +9,7 @@ import java.util.UUID;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.common.azure.AzureAttributes;
-import org.fogbowcloud.manager.core.plugins.federationcredentails.LocalCredentialsHelper;
+import org.fogbowcloud.manager.core.plugins.localcredentails.LocalCredentialsHelper;
 import org.fogbowcloud.manager.core.plugins.util.Credential;
 import org.fogbowcloud.manager.occi.model.ErrorType;
 import org.fogbowcloud.manager.occi.model.OCCIException;
@@ -17,9 +17,9 @@ import org.fogbowcloud.manager.occi.model.Token;
 
 public class AzureIdentityPlugin implements IdentityPlugin {
 
-	protected static final String SUBSCRIPTION_ID_PATH = "proxy_account_subscription_id";
-	protected static final String KEYSTORE_PATH = "proxy_account_keystore_path";
-	protected static final String KEYSTORE_PASSWORD = "proxy_account_keystore_password";
+	protected static final String SUBSCRIPTION_ID_PATH = "subscription_id";
+	protected static final String KEYSTORE_PATH = "keystore_path";
+	protected static final String KEYSTORE_PASSWORD = "keystore_password";
 	private static final String USER = "Fogbow";
 	
 	private static final Logger LOGGER = Logger.getLogger(AzureIdentityPlugin.class);

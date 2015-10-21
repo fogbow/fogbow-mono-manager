@@ -40,8 +40,6 @@ public class TestCloudStackIdentityPlugin {
 	private CloudStackIdentityPlugin createPlugin(HttpClientWrapper httpClient) {
 		Properties properties = new Properties();
 		properties.put(IDENTITY_URL_KEY, CLOUDSTACK_URL);
-		properties.put(CloudStackIdentityPlugin.FEDERATION_USER_API_KEY, FEDERATION_API_KEY);
-		properties.put(CloudStackIdentityPlugin.FEDERATION_USER_SECRET_KEY, FEDERATION_SECRET_KEY);
 		if(httpClient == null) {		
 			return new CloudStackIdentityPlugin(properties);
 		} else {
