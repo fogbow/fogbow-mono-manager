@@ -32,7 +32,7 @@ public class TestVOBasedFUCPlugin {
 	private final String CREDENTIAL_ONE = "credOne";
 	private final String CREDENTIAL_TWO = "credTwo";
 	private String MEMBER_ONE = "vofogbow";
-	private String MEMBER_TWO = "providerTwo";
+	private String MEMBER_TWO = "memberTwo";
 	private String VALUE_ONE_FOGBOW = "valueOneFogbow";
 	private String VALUE_TWO_FOGBOW = "valueTwoFogbow";	
 	private String VALUE_ONE = "valueOne";

@@ -24,11 +24,11 @@ public class VOBasedFUCPlugin implements FederationUserCredentailsPlugin {
 
 	@Override
 	public Map<String, String> getFedUserCredentials(Request request) {
-		String providerMember = getVOMember(request);
-		Map<String, String> credentialsPerProvider = FUCPluginHelper.getCredentialsPerMember(
-				this.properties, providerMember);
-		if (!credentialsPerProvider.isEmpty()) {
-			return credentialsPerProvider;
+		String member = getVOMember(request);
+		Map<String, String> credentialsPerMember = FUCPluginHelper.getCredentialsPerMember(
+				this.properties, member);
+		if (!credentialsPerMember.isEmpty()) {
+			return credentialsPerMember;
 		}
 		return FUCPluginHelper.getCredentialsPerMember(this.properties,
 				FUCPluginHelper.FOGBOW_DEFAULTS);

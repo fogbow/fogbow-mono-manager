@@ -13,7 +13,7 @@ public class FUCPluginHelper {
 	public static String FOGBOW_DEFAULTS = "defaults";
 
 	public static Map<String, Map<String, String>> getMemberCredentials(
-			Properties properties, List<String> filters) {
+			Properties properties, List<String> filtersMembers) {
 		Map<String, Map<String, String>> memberCredentialsList = 
 			new HashMap<String, Map<String,String>>();
 		List<String> members = new ArrayList<String>();
@@ -31,8 +31,8 @@ public class FUCPluginHelper {
 				if (members.contains(member)) {
 					continue;
 				}
-				if (filters != null) {					
-					if (!filters.contains(member)) {
+				if (filtersMembers != null) {					
+					if (!filtersMembers.contains(member)) {
 						continue;
 					}
 				}
