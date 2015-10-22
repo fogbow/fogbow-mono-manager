@@ -4,30 +4,37 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpStatus;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.occi.OCCIApplication;
+import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.ErrorType;
 import org.fogbowcloud.manager.occi.model.HeaderUtils;
 import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.OCCIHeaders;
 import org.fogbowcloud.manager.occi.model.Resource;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;
+import org.fogbowcloud.manager.occi.request.Request;
+import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.restlet.Response;
 import org.restlet.data.MediaType;
+import org.restlet.data.Status;
 import org.restlet.engine.adapter.HttpRequest;
 import org.restlet.representation.StringRepresentation;
 import org.restlet.resource.Delete;
 import org.restlet.resource.Get;
+import org.restlet.resource.Post;
 import org.restlet.resource.ServerResource;
 
 public class ComputeServerResource extends ServerResource {
 
 	protected static final String NO_INSTANCES_MESSAGE = "There are not instances.";
 	private static final Logger LOGGER = Logger.getLogger(ComputeServerResource.class);
+	private static final String FED_INSTANCE_PREFIX = "federated_instance_";
 	
 	@SuppressWarnings("deprecation")
 	@Get
@@ -105,6 +112,99 @@ public class ComputeServerResource extends ServerResource {
 		}
 		throw new OCCIException(ErrorType.NOT_ACCEPTABLE,
 				ResponseConstants.ACCEPT_NOT_ACCEPTABLE);
+	}
+
+	@Post
+	public String post(){
+		LOGGER.info("Posting a new compute...");
+		
+//		OCCIApplication application = (OCCIApplication) getApplication();
+//		HttpRequest req = (HttpRequest) getRequest();
+//		String federationAuthToken = HeaderUtils.getFederationAuthToken(req.getHeaders(), getResponse(),
+//				application.getAuthenticationURI());
+//		String instanceId = (String) getRequestAttributes().get("instanceId");
+//		List<String> acceptContent = HeaderUtils.getAccept(req.getHeaders());
+	
+//		occi.compute.architecture Enum {x86, x64} 0. . . 1 Mutable CPU Architecture of the instance.
+//		occi.compute.cores Integer 0. . . 1 Mutable Number of CPU cores assigned to the instance.
+//		occi.compute.hostname String 0. . . 1 Mutable Fully Qualified DNS hostname for the instance.
+//		occi.compute.speed Float, 10 9	(GHz) 0. . . 1 Mutable CPU Clock frequency (speed) in gigahertz.
+//		occi.compute.memory Float, 10	9	(GiB) 0. . . 1 Mutable Maximum RAM in gigabytes allocated to the instance
+		
+//		$ OS_TPL=<paste here the OS Template (VM Image)>
+//		$ RES_TPL=<paste here the resource template (flavor)>
+//
+//		$ occi --endpoint $ENDPOINT --auth x509 --user-cred $X509_USER_PROXY --voms \
+//		       --action create --resource compute --attribute occi.core.title="MyFirstVM" \
+//		       --mixin $OS_TPL --mixin $RES_TPL \
+//		       --context user_data="file://$PWD/tmpfedcloud.login"
+		
+//		Category: compute;
+//				  scheme="http://schemas.ogf.org/occi/infrastructure#";
+//			  	  class="kind";
+		
+		OCCIApplication application = (OCCIApplication) getApplication();
+		HttpRequest req = (HttpRequest) getRequest();
+		String acceptType = getComputePostAccept(HeaderUtils.getAccept(req.getHeaders()));
+//		String acceptType = getAccept(HeaderUtils.getAccept(req.getHeaders()));
+		//TODO validate if request has a valid ACCEPT header OK - Check
+		
+		List<Category> categories = HeaderUtils.getCategories(req.getHeaders());
+		LOGGER.debug("Categories: " + categories);
+		
+		
+		//TODO check categories must have at last one RequestConstants.TEMPLATE_OS_SCHEME
+		//HeaderUtils.checkCategories(categories, RequestConstants.TERM);
+//		HeaderUtils.checkOCCIContentType(req.getHeaders());		
+		
+		
+		
+		Map<String, String> xOCCIAtt = HeaderUtils.getXOCCIAtributes(req.getHeaders());
+		//TODO get Attribute list
+//		xOCCIAtt = normalizeXOCCIAtt(xOCCIAtt);
+//		
+//		xOCCIAtt = normalizeRequirements(categories, xOCCIAtt, application.getFlavorsProvided());
+		
+		String federationAuthToken = HeaderUtils.getFederationAuthToken(
+				req.getHeaders(), getResponse(), application.getAuthenticationURI());
+		
+		
+		//Translate compute categories and attributes to request categories and default attributes
+		
+		Instance instance = new Instance(FED_INSTANCE_PREFIX + UUID.randomUUID().toString());
+		
+		List<Request> currentRequests = application.createRequests(federationAuthToken, categories, xOCCIAtt);
+		
+		if (currentRequests != null || !currentRequests.isEmpty()) {
+			setStatus(Status.SUCCESS_CREATED);
+		}
+		
+		Request relatedOrder = currentRequests.get(0);
+		
+		//TODO store instance - relatedOrder
+				
+	//	setLocationHeader(instance, req);
+		
+//		TODO check accpet and return
+//		if (acceptType.equals(OCCIHeaders.OCCI_ACCEPT)) {
+//			return new StringRepresentation(ResponseConstants.OK, new MediaType(
+//					OCCIHeaders.OCCI_ACCEPT));	
+//		}
+		return new String(ResponseConstants.OK);
+		
+	}
+	
+	private String getComputePostAccept(List<String> listAccept) {
+		if (listAccept.size() > 0 ) {
+			if (listAccept.get(0).contains(MediaType.TEXT_PLAIN.toString())) {
+				return MediaType.TEXT_PLAIN.toString();			
+			} else {
+				throw new OCCIException(ErrorType.NOT_ACCEPTABLE,
+						ResponseConstants.ACCEPT_NOT_ACCEPTABLE);				
+			}
+		} else {
+			return "";
+		}
 	}
 
 	public static void normalizeURIForBypass(HttpRequest req) {
