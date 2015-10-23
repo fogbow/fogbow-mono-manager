@@ -49,4 +49,7 @@ public class ConfigurationConstants {
 	public static final String HTTP_PORT_KEY = "http_port";
 	
 	public static final String PROP_MAX_WHOISALIVE_MANAGER_COUNT = "max_whoisalive_manager_count";
+	
+	// OCCI extra resource
+	public static final String OCCI_EXTRA_RESOURCES_KEY_PATH = "occi_extra_resource_file_path";
 }

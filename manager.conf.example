@@ -211,3 +211,7 @@ ssh_public_key=/etc/fogbow-manager/ssh/id_rsa.pub
 
 ## Benchmarking (Vanilla Benchmarking Plugin)
 # benchmarking_class=org.fogbowcloud.manager.core.plugins.benchmarking.VanillaBenchmarkingPlugin
+
+
+## OCCI extra resources
+#occi_extra_resource_file_path=

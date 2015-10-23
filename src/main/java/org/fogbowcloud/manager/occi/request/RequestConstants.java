@@ -25,4 +25,7 @@ public class RequestConstants {
 	public static final String USER_DATA_TERM = "fogbow_userdata";
 	public static final String PUBLIC_KEY_TERM = "fogbow_public_key";
 	public static final String CREDENTIALS_RESOURCE_SCHEME = "http://schemas.fogbowcloud/credentials#";	
+	
+	// compute endpoint
+	public static final String COMPUTE_TERM = "compute";
 }

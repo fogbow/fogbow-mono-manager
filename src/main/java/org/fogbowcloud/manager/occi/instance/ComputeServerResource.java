@@ -2,6 +2,7 @@ package org.fogbowcloud.manager.occi.instance;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -17,6 +18,7 @@ import org.fogbowcloud.manager.occi.model.HeaderUtils;
 import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.OCCIHeaders;
 import org.fogbowcloud.manager.occi.model.Resource;
+import org.fogbowcloud.manager.occi.model.ResourceRepository;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
@@ -154,12 +156,52 @@ public class ComputeServerResource extends ServerResource {
 		
 		
 		//TODO check categories must have at last one RequestConstants.TEMPLATE_OS_SCHEME
-		//HeaderUtils.checkCategories(categories, RequestConstants.TERM);
+//		HeaderUtils.checkCategories(categories, RequestConstants.TERM);
 //		HeaderUtils.checkOCCIContentType(req.getHeaders());		
 		
+		List<Resource> resources = ResourceRepository.getInstance().get(categories);
+
+		if (resources.size() != categories.size()) {
+			LOGGER.debug("Some categories was not found in available resources! Resources "
+					+ resources.size() + " and categories " + categories.size());
+			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
+		}
 		
+		boolean computeWasFound = false;
+		for (Category category : categories) {
+			if (category.getTerm().equals(RequestConstants.COMPUTE_TERM)) {
+				Resource resource = ResourceRepository.getInstance().get(RequestConstants.COMPUTE_TERM);
+				if (resource == null || !resource.matches(category)) {
+					LOGGER.debug("There was not a matched resource to term compute." );
+					throw new OCCIException(ErrorType.BAD_REQUEST,
+							ResponseConstants.IRREGULAR_SYNTAX);
+				}
+				computeWasFound = true;
+				break;
+			}
+		}
+		
+		if (!computeWasFound) {
+			throw new OCCIException(ErrorType.BAD_REQUEST,
+					ResponseConstants.IRREGULAR_SYNTAX);
+		}
+		
+		
+		List<Resource> osTplResources = filterByRelProperty(ResourceRepository.OS_TPL_OCCI_SCHEME, resources);
+		if (osTplResources.size() != 1) {
+			throw new OCCIException(ErrorType.BAD_REQUEST,
+					ResponseConstants.IRREGULAR_SYNTAX);
+		}
+		
+		List<Resource> resourceTplResources = filterByRelProperty(
+				ResourceRepository.RESOURCE_TPL_OCCI_SCHEME, resources);
 		
 		Map<String, String> xOCCIAtt = HeaderUtils.getXOCCIAtributes(req.getHeaders());
+		
+		
+		
+		
+		
 		//TODO get Attribute list
 //		xOCCIAtt = normalizeXOCCIAtt(xOCCIAtt);
 //		
@@ -194,6 +236,17 @@ public class ComputeServerResource extends ServerResource {
 		
 	}
 	
+	private List<Resource> filterByRelProperty(String relScheme, List<Resource> resources) {
+		List<Resource> filtered = new ArrayList<Resource>();
+
+		for (Resource resource : resources) {
+			if (relScheme.equals(resource.getRel())) {
+				filtered.add(resource);
+			}
+		}
+		return filtered;
+	}
+
 	private String getComputePostAccept(List<String> listAccept) {
 		if (listAccept.size() > 0 ) {
 			if (listAccept.get(0).contains(MediaType.TEXT_PLAIN.toString())) {

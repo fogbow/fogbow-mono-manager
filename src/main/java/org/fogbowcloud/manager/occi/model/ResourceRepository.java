@@ -1,9 +1,12 @@
 package org.fogbowcloud.manager.occi.model;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.model.Flavor;
@@ -17,8 +20,8 @@ public class ResourceRepository {
 	protected static final String SCHEMAS_OCCI_INFRASTRUCTURE = "http://schemas.ogf.org/occi/infrastructure#";
 	protected static final String RESOURCE_TPL = "resource_tpl";
 	private static final Logger LOGGER = Logger.getLogger(ResourceRepository.class);
-	private static final String OS_TPL_OCCI_SCHEME = "http://schemas.ogf.org/occi/infrastructure#os_tpl";
-	private static final String RESOURCE_TPL_OCCI_SCHEME = "http://schemas.ogf.org/occi/infrastructure#resource_tpl";
+	public static final String OS_TPL_OCCI_SCHEME = "http://schemas.ogf.org/occi/infrastructure#os_tpl";
+	public static final String RESOURCE_TPL_OCCI_SCHEME = "http://schemas.ogf.org/occi/infrastructure#resource_tpl";
 	private static final String RESOURCE_OCCI_SCHEME = "http://schemas.ogf.org/occi/core#resource";
 	private static ResourceRepository instance;
 	private static final String FOGBOWCLOUD_ENDPOINT = "http://localhost:8182";
@@ -129,8 +132,38 @@ public class ResourceRepository {
 		
 		resources.add(resourceTlp);
 		resources.add(osTlp);
+		
+		List<Resource> occiExtraResources = getOCCIExtraResources(properties);		
+		for (Resource occiResource : occiExtraResources) {
+			if (!resources.contains(occiResource)) {
+				resources.add(occiResource);
+			}
+		}
 	}
 		
+	private List<Resource> getOCCIExtraResources(Properties properties) {
+		String filePath = properties.getProperty(ConfigurationConstants.OCCI_EXTRA_RESOURCES_KEY_PATH);
+		if (filePath == null || filePath.isEmpty()) {
+			return new ArrayList<Resource>();
+		}
+
+		File occiResourceFile = new File(filePath);
+		if (!occiResourceFile.exists()) {
+			return new ArrayList<Resource>();
+		}
+
+		try {
+			List<Resource> occiResources = new ArrayList<Resource>();
+			for (String line : FileUtils.readLines(occiResourceFile)) {
+				occiResources.add(new Resource(line));
+			}
+			return occiResources;
+		} catch (IOException e) {
+			LOGGER.error("Error while reading extra OCCI resources in file " + filePath + ".", e);
+			return new ArrayList<Resource>();
+		}
+	}
+
 	public List<Resource> getAll() {
 		return resources;
 	}
