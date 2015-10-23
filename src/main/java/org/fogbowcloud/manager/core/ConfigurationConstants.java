@@ -25,6 +25,7 @@ public class ConfigurationConstants {
 	public static final String LOCAL_PREFIX = "local_";
 	public static final String FEDERATION_PREFIX = "federation_";
 	public static final String PREFIX_FLAVORS = "flavor_";
+	public static final String OCCI_EXTRA_RESOURCES_PREFIX = "occi_extra_resource_";
 
 	// periods
 	public static final String SCHEDULER_PERIOD_KEY = "scheduler_period";

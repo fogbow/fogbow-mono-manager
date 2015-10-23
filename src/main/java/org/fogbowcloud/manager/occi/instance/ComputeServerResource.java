@@ -194,13 +194,41 @@ public class ComputeServerResource extends ServerResource {
 		}
 		
 		List<Resource> resourceTplResources = filterByRelProperty(
-				ResourceRepository.RESOURCE_TPL_OCCI_SCHEME, resources);
+				ResourceRepository.RESOURCE_TPL_OCCI_SCHEME, resources);		
+		
+		String imageName = application.getOCCIResourceProperty(osTplResources.get(0).getCategory().getTerm());
+		if (imageName == null || imageName.isEmpty()) {
+			throw new OCCIException(ErrorType.BAD_REQUEST,
+					ResponseConstants.PROPERTY_NOT_SPECIFIED_FOR_EXTRA_OCCI_RESOURCE
+							+ osTplResources.get(0).getCategory());
+		}
+		
+		StringBuilder requirements = new StringBuilder();
+		for (int i = 0; i < resourceTplResources.size(); i++) {
+			String currentRequirement = application.getOCCIResourceProperty(resourceTplResources.get(i).getCategory().getTerm());
+			
+			if (currentRequirement == null || currentRequirement.isEmpty()) {
+				throw new OCCIException(ErrorType.BAD_REQUEST,
+						ResponseConstants.PROPERTY_NOT_SPECIFIED_FOR_EXTRA_OCCI_RESOURCE
+								+ resourceTplResources.get(i));
+			}
+			
+			// if it is not the last resource requirement
+			if (i < resourceTplResources.size() - 1) { 
+				requirements.append(currentRequirement + " && ");
+			} else {
+				requirements.append(currentRequirement);
+			}
+		}
+		
+		String fogbowRequirements = requirements.toString();
+			
+		
+		//TODO looking for userdata and public_key
+		
 		
 		Map<String, String> xOCCIAtt = HeaderUtils.getXOCCIAtributes(req.getHeaders());
-		
-		
-		
-		
+		//TODO How to handle attributes?
 		
 		//TODO get Attribute list
 //		xOCCIAtt = normalizeXOCCIAtt(xOCCIAtt);

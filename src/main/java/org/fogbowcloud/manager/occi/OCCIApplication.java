@@ -196,4 +196,8 @@ public class OCCIApplication extends Application {
 		return managerFacade.getLocalUserQuota(localAccessToken);
 	}
 
+	public String getOCCIResourceProperty(String occiResourceTerm) {
+		return managerFacade.getOCCIResourceProperty(occiResourceTerm);
+	}
+
 }

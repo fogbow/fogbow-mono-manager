@@ -1550,6 +1550,11 @@ public class ManagerController {
 		return failedBatch;
 	}
 	
+	public String getOCCIResourceProperty(String occiResourceTerm) {
+		return properties.getProperty(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX
+				+ occiResourceTerm);
+	}
+	
 	protected class FailedBatch {
 		private Map<String, FailedBatchType> failedBatches = new HashMap<String, FailedBatchType>();
 			
