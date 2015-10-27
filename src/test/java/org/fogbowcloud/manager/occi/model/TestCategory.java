@@ -1,5 +1,7 @@
 package org.fogbowcloud.manager.occi.model;
 
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -56,4 +58,13 @@ public class TestCategory {
 		Assert.assertTrue(category.equals(categoryEquals));
 	}
 	
+	@Test
+	public void testCategoryFromJson() throws JSONException {
+		Category category = new Category("term", "scheme", "class");
+		JSONObject jsonObjectCategory = category.toJSON();
+		
+		Category categoryFromJson = Category.fromJSON(jsonObjectCategory.toString());
+		
+		Assert.assertTrue(category.equals(categoryFromJson));
+	}	
 }

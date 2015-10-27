@@ -3,6 +3,7 @@ package org.fogbowcloud.manager.core;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
@@ -47,9 +48,9 @@ import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.FederationMemberAuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.FederationMemberPickerPlugin;
-import org.fogbowcloud.manager.core.plugins.LocalCredentialsPlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
+import org.fogbowcloud.manager.core.plugins.LocalCredentialsPlugin;
 import org.fogbowcloud.manager.core.plugins.PrioritizationPlugin;
 import org.fogbowcloud.manager.core.plugins.accounting.ResourceUsage;
 import org.fogbowcloud.manager.core.plugins.util.SshClientPool;
@@ -62,6 +63,7 @@ import org.fogbowcloud.manager.occi.model.Resource;
 import org.fogbowcloud.manager.occi.model.ResourceRepository;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.fogbowcloud.manager.occi.model.Token;
+import org.fogbowcloud.manager.occi.request.OrderDataStore;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
@@ -70,6 +72,7 @@ import org.fogbowcloud.manager.occi.request.RequestState;
 import org.fogbowcloud.manager.occi.request.RequestType;
 import org.fogbowcloud.manager.xmpp.AsyncPacketSender;
 import org.fogbowcloud.manager.xmpp.ManagerPacketHelper;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.restlet.Response;
 
@@ -84,6 +87,7 @@ public class ManagerController {
 	private static final Logger LOGGER = Logger.getLogger(ManagerController.class);
 	
 	private static final int DEFAULT_MAX_WHOISALIVE_MANAGER_COUNT = 100;
+	private static final long DEFAULT_BD_UPDATE_PERIOD = 300000; // 5 minute
 	private static final long DEFAULT_SCHEDULER_PERIOD = 30000; // 30 seconds
 	protected static final int DEFAULT_ASYNC_REQUEST_WAITING_INTERVAL = 300000; // 5 minutes
 	private static final long DEFAULT_INSTANCE_MONITORING_PERIOD = 120000; // 2 minutes
@@ -99,6 +103,7 @@ public class ManagerController {
 	private final ManagerTimer servedRequestMonitoringTimer;
 	private final ManagerTimer garbageCollectorTimer;
 	private final ManagerTimer accountingUpdaterTimer;
+	private final ManagerTimer requestDBUpdaterTimer;
 
 	private Map<String, Token> instanceIdToToken = new HashMap<String, Token>();	
 	private final List<FederationMember> members = Collections.synchronizedList(new LinkedList<FederationMember>());
@@ -126,6 +131,8 @@ public class ManagerController {
 	private DateUtils dateUtils = new DateUtils();
 
 	private PoolingHttpClientConnectionManager cm;
+	
+	private OrderDataStore requestDB;
 
 	public ManagerController(Properties properties) {
 		this(properties, null);
@@ -143,15 +150,24 @@ public class ManagerController {
 			this.servedRequestMonitoringTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
 			this.garbageCollectorTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
 			this.accountingUpdaterTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
+			this.requestDBUpdaterTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
 		} else {
 			this.requestSchedulerTimer = new ManagerTimer(executor);
 			this.instanceMonitoringTimer = new ManagerTimer(executor);
 			this.servedRequestMonitoringTimer = new ManagerTimer(executor);
 			this.garbageCollectorTimer = new ManagerTimer(executor);
 			this.accountingUpdaterTimer = new ManagerTimer(executor);
+			this.requestDBUpdaterTimer  = new ManagerTimer(executor);
 		}
+		requestDB = new OrderDataStore(properties);
+		recoverPreviousRequests();		
+		triggerRequestDBUpdater();		
 	}
 	
+	public void setDatabase(OrderDataStore database) {
+		this.requestDB = database;
+	}
+
 	public void setBenchmarkExecutor(ExecutorService benchmarkExecutor) {
 		this.benchmarkExecutor = benchmarkExecutor;
 	}
@@ -180,6 +196,45 @@ public class ManagerController {
 		}
 	}
 	
+	private void recoverPreviousRequests() {
+		new Thread(new Runnable() {			
+			@Override
+			public void run() {
+				try {
+					initializeManager();
+				} catch (Exception e) {
+					LOGGER.error("Could not recover requests.", e);
+				}
+			}
+		}).start();
+	}	
+	
+	protected void initializeManager() throws SQLException, JSONException {
+		LOGGER.debug("Recovering previous requests." );
+		for (Request request : this.requestDB.getOrders()) {
+			Instance instance = null;
+			try {
+				if (request.getState().equals(RequestState.FULFILLED) ||
+					request.getState().equals(RequestState.DELETED))  {
+					instance = getInstance(request);
+					LOGGER.debug(instance.getId() + " was recovered to request " + request.getId());
+				}				
+			} catch (Exception e) {
+				LOGGER.debug(request.getGlobalInstanceId() + " does not exist anymore.");
+				if (request.getState().equals(RequestState.DELETED)) {
+					continue;					
+				}
+				instanceRemoved(request);					
+			}
+			requests.addRequest(request.getFederationToken().getUser(), request);
+		}
+		if (!requestSchedulerTimer.isScheduled() &&
+				requests.getRequestsIn(RequestState.OPEN).size() > 0) {
+			triggerRequestScheduler();			
+		}
+		LOGGER.debug("Previous requests recovered.");
+	}
+
 	private String getSSHCommonUser() {
 		String sshCommonUser = properties.getProperty(ConfigurationConstants.SSH_COMMON_USER);
 		return sshCommonUser == null ? DEFAULT_COMMON_SSH_USER : sshCommonUser;
@@ -934,6 +989,45 @@ public class ManagerController {
 		}
 
 		return currentRequests;
+	}
+	
+	private void triggerRequestDBUpdater() {
+		String bdUpdaterPeriodStr = properties
+				.getProperty(ConfigurationConstants.ORDER_BD_UPDATER_PERIOD_KEY);
+		long schedulerPeriod = bdUpdaterPeriodStr == null ? DEFAULT_BD_UPDATE_PERIOD : Long
+				.valueOf(bdUpdaterPeriodStr);
+		requestDBUpdaterTimer.scheduleAtFixedRate(new TimerTask() {
+			@Override
+			public void run() {
+				try {
+					updateRequestDB();
+				} catch (Exception e) {
+					LOGGER.error("Could not update the database.", e);
+				}
+			}
+		}, 60000, schedulerPeriod);
+	}
+
+	protected void updateRequestDB() throws SQLException, JSONException {
+		LOGGER.debug("Database update start." );
+		List<Request> orders = this.requestDB.getOrders();
+		Map<String, Request> ordersDB = new HashMap<String, Request>();
+		for (Request request : orders) {
+			ordersDB.put(request.getId(), request);
+		}
+		List<Request> allRequests = new ArrayList<Request>(requests.getAllRequests());
+		for (Request request : allRequests) {
+			if (ordersDB.get(request.getId()) == null) {
+				requestDB.addOrder(request);
+			} else {
+				requestDB.updateOrder(request);
+				ordersDB.remove(request.getId());
+			}
+		}
+		for (String key : ordersDB.keySet()) {
+			requestDB.removeOrder(ordersDB.get(key));
+		}
+		LOGGER.debug("Database update finish." );
 	}
 
 	private Token getTokenFromLocalIdP(String localAccessTokenStr) {
