@@ -39,16 +39,16 @@ public class ComputeServerResource extends ServerResource {
 	private static final Logger LOGGER = Logger.getLogger(ComputeServerResource.class);
 	private static final String FED_INSTANCE_PREFIX = "federated_instance_";
 
-	protected static final String OCCI_NETWORK_INTERFACE_GATEWAY = "occi.networkinterface.gateway";   
-	protected static final String OCCI_NETWORK_INTERFACE_MAC = "occi.networkinterface.mac";       
-	protected static final String OCCI_NETWORK_INTERFACE = "occi.networkinterface.interface"; 
-	protected static final String OCCI_NETWORK_INTERFACE_STATE = "occi.networkinterface.state";     
+	protected static final String OCCI_NETWORK_INTERFACE_GATEWAY = "occi.networkinterface.gateway";
+	protected static final String OCCI_NETWORK_INTERFACE_MAC = "occi.networkinterface.mac";
+	protected static final String OCCI_NETWORK_INTERFACE = "occi.networkinterface.interface";
+	protected static final String OCCI_NETWORK_INTERFACE_STATE = "occi.networkinterface.state";
 	protected static final String OCCI_NETWORK_INTERFACE_ALLOCATION = "occi.networkinterface.allocation";
-	protected static final String OCCI_NETWORK_INTERFACE_ADDRESS = "occi.networkinterface.address";   
-	protected static final String OCCI_CORE_SOURCE = "occi.core.source";                
-	protected static final String OCCI_CORE_TARGET = "occi.core.target";                
-	protected static final String OCCI_CORE_ID ="occi.core.id";                    
-	
+	protected static final String OCCI_NETWORK_INTERFACE_ADDRESS = "occi.networkinterface.address";
+	protected static final String OCCI_CORE_SOURCE = "occi.core.source";
+	protected static final String OCCI_CORE_TARGET = "occi.core.target";
+	protected static final String OCCI_CORE_ID = "occi.core.id";
+
 	private InstanceDataStore instanceDb;
 
 	protected void doInit() throws ResourceException {
@@ -84,11 +84,25 @@ public class ComputeServerResource extends ServerResource {
 			} else {
 				allInstances = getInstances(application, federationAuthToken);
 			}
-			// TODO Translate local id to fed id.
+			
+			//Translating fogbow instance id to federation id if instance was created by post compute.
+			List<Instance> formatedInstanceList = new ArrayList<Instance>();
+			for(Instance intance : allInstances){
+				
+				FedInstanceState fedInstanceState = instanceDb.getByInstanceId(intance.getId());
+				if(fedInstanceState != null){
+					Instance newInstance = new Instance(fedInstanceState.getFedInstanceId()); 
+					formatedInstanceList.add(newInstance);
+				}else{
+					formatedInstanceList.add(intance);
+				}
+				
+			}
+			
 			if (acceptContent.size() == 0 || acceptContent.contains(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE)) {
-				return new StringRepresentation(generateResponse(allInstances), MediaType.TEXT_PLAIN);
+				return new StringRepresentation(generateResponse(formatedInstanceList), MediaType.TEXT_PLAIN);
 			} else if (acceptContent.contains(OCCIHeaders.TEXT_URI_LIST_CONTENT_TYPE)) {
-				return new StringRepresentation(generateURIListResponse(allInstances, req), MediaType.TEXT_URI_LIST);
+				return new StringRepresentation(generateURIListResponse(formatedInstanceList, req), MediaType.TEXT_URI_LIST);
 			}
 			throw new OCCIException(ErrorType.NOT_ACCEPTABLE, ResponseConstants.ACCEPT_NOT_ACCEPTABLE);
 
@@ -98,10 +112,9 @@ public class ComputeServerResource extends ServerResource {
 
 		if (instanceId.startsWith(FED_INSTANCE_PREFIX)) {
 
-			Map<String, String> instanceOrderMap = instanceDb.getByInstanceId(instanceId);
-			String postOrderId = instanceOrderMap.get(instanceId);
+			FedInstanceState fedInstanceState = instanceDb.getByInstanceId(instanceId);
 
-			postOrder = application.getRequest(federationAuthToken, postOrderId);
+			postOrder = application.getRequest(federationAuthToken, fedInstanceState.getOrderId());
 			if (postOrder.getInstanceId() == null || postOrder.getInstanceId().isEmpty()) {
 				// TODO return response with Instance state not ready
 				return null;
@@ -117,47 +130,64 @@ public class ComputeServerResource extends ServerResource {
 				if (postOrder != null) {
 
 					instance = application.getInstance(federationAuthToken, postOrder.getGlobalInstanceId());
+					
+					FedInstanceState fedInstanceState = instanceDb.getByInstanceId(instanceId);
+					fedInstanceState.setGlobalInstanceId(postOrder.getGlobalInstanceId());
+					instanceDb.update(fedInstanceState);
+					
 					// TODO Add network informations
-					
-//				occi.networkinterface.gateway    = "Not defined"
-//				occi.networkinterface.mac        = "Not defined"
-//				occi.networkinterface.interface  = eth0
-//				occi.networkinterface.state      = active
-//				occi.networkinterface.allocation = static
-//				occi.networkinterface.address    =  ${HOST}
-//				occi.core.source                 = http://localhost:8182//compute/${INSTANCE_ID}
-//				occi.core.target                 = http://localhost:8182//network/public
-//				occi.core.id                     = http://localhost:8182/network/interface/18047596-098d-4ce4-af75-ca7f908fbc09
-					
-//					// #Network Resource
-//					List<String> networkAttributes = new ArrayList<String>();
-//					networkAttributes.add("occi.network.vlan");
-//					networkAttributes.add("occi.network.label");
-//					networkAttributes.add("occi.network.state{immutable}");
-//
-//					List<String> networkActions = new ArrayList<String>();
-//					networkActions.add("http://schemas.ogf.org/occi/infrastructure/network/action#up");
-//					networkActions.add("http://schemas.ogf.org/occi/infrastructure/network/action#down");
-//
-//					Resource networkResource = new Resource(OCCI_NETWORK_TERM, SCHEMAS_OCCI_INFRASTRUCTURE,
-//							RequestConstants.KIND_CLASS, networkAttributes, networkActions, FOGBOWCLOUD_ENDPOINT + "/" + "compute/",
-//							"Network Resource", SCHEMAS_OCCI_INFRASTRUCTURE + OCCI_IP_NETWORK_TERM);
-//
-//					Link networkIpNetworkLink;
-//
-//					// #IPNetwork Resource
-//					List<String> ipNetworkAttributes = new ArrayList<String>();
-//					ipNetworkAttributes.add("occi.network.address");
-//					ipNetworkAttributes.add("occi.network.gateway");
-//					ipNetworkAttributes.add("occi.network.allocation");
-//
-//					Resource ipNetworkResource = new Resource(OCCI_IP_NETWORK_TERM, SCHEMAS_OCCI_INFRASTRUCTURE,
-//							RequestConstants.MIXIN_CLASS, ipNetworkAttributes, new ArrayList<String>(),
-//							FOGBOWCLOUD_ENDPOINT + "/" + "compute/", "IPNetwork Resource",
-//							SCHEMAS_OCCI_INFRASTRUCTURE + OCCI_NETWORK_TERM);
-//
-//					resources.add(networkResource);
-//					resources.add(ipNetworkResource);
+
+					// occi.networkinterface.gateway = "Not defined"
+					// occi.networkinterface.mac = "Not defined"
+					// occi.networkinterface.interface = eth0
+					// occi.networkinterface.state = active
+					// occi.networkinterface.allocation = static
+					// occi.networkinterface.address = ${HOST}
+					// occi.core.source =
+					// http://localhost:8182//compute/${INSTANCE_ID}
+					// occi.core.target = http://localhost:8182//network/public
+					// occi.core.id =
+					// http://localhost:8182/network/interface/18047596-098d-4ce4-af75-ca7f908fbc09
+
+					// // #Network Resource
+					// List<String> networkAttributes = new ArrayList<String>();
+					// networkAttributes.add("occi.network.vlan");
+					// networkAttributes.add("occi.network.label");
+					// networkAttributes.add("occi.network.state{immutable}");
+					//
+					// List<String> networkActions = new ArrayList<String>();
+					// networkActions.add("http://schemas.ogf.org/occi/infrastructure/network/action#up");
+					// networkActions.add("http://schemas.ogf.org/occi/infrastructure/network/action#down");
+					//
+					// Resource networkResource = new
+					// Resource(OCCI_NETWORK_TERM, SCHEMAS_OCCI_INFRASTRUCTURE,
+					// RequestConstants.KIND_CLASS, networkAttributes,
+					// networkActions, FOGBOWCLOUD_ENDPOINT + "/" + "compute/",
+					// "Network Resource", SCHEMAS_OCCI_INFRASTRUCTURE +
+					// OCCI_IP_NETWORK_TERM);
+					//
+					// Link networkIpNetworkLink;
+					//
+					// // #IPNetwork Resource
+					// List<String> ipNetworkAttributes = new
+					// ArrayList<String>();
+					// ipNetworkAttributes.add("occi.network.address");
+					// ipNetworkAttributes.add("occi.network.gateway");
+					// ipNetworkAttributes.add("occi.network.allocation");
+					//
+					// Resource ipNetworkResource = new
+					// Resource(OCCI_IP_NETWORK_TERM,
+					// SCHEMAS_OCCI_INFRASTRUCTURE,
+					// RequestConstants.MIXIN_CLASS, ipNetworkAttributes, new
+					// ArrayList<String>(),
+					// FOGBOWCLOUD_ENDPOINT + "/" + "compute/", "IPNetwork
+					// Resource",
+					// SCHEMAS_OCCI_INFRASTRUCTURE + OCCI_NETWORK_TERM);
+					//
+					// resources.add(networkResource);
+					// resources.add(ipNetworkResource);
+					//TODO Change this return to specific method that return the instance message format for POST Instance. 
+					//return new StringRepresentation(instance.toOCCIMessageFormatDetails(), MediaType.TEXT_PLAIN);
 
 				} else {
 					instance = application.getInstance(federationAuthToken, instanceId);
@@ -337,9 +367,11 @@ public class ComputeServerResource extends ServerResource {
 		}
 
 		Request relatedOrder = currentRequests.get(0);
-		relatedOrder.getFederationToken().getUser();
+		
 		// TODO store instance - relatedOrder
-		instanceDb.insert(instance.getId(), relatedOrder.getId());
+		FedInstanceState fedInstanceState = new FedInstanceState(instance.getId(), relatedOrder.getId(), "",
+				relatedOrder.getFederationToken().getUser());
+		instanceDb.insert(fedInstanceState);
 
 		// setLocationHeader(instance, req);
 
@@ -508,6 +540,11 @@ public class ComputeServerResource extends ServerResource {
 			return removeIntances(application, federationAuthToken);
 		}
 
+		FedInstanceState fedInstanceState = instanceDb.getByInstanceId(instanceId);
+		if(fedInstanceState != null && fedInstanceState.getGlobalInstanceId() != null){
+			return removeInstance(application, federationAuthToken, fedInstanceState.getGlobalInstanceId());
+		}
+		
 		LOGGER.info("Removing instance " + instanceId);
 		return removeInstance(application, federationAuthToken, instanceId);
 	}

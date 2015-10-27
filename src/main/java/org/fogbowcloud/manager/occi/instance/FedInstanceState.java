@@ -39,6 +39,38 @@ public class FedInstanceState {
 		this.user = user;
 	}
 
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		FedInstanceState other = (FedInstanceState) obj;
+		if (fedInstanceId == null) {
+			if (other.fedInstanceId != null)
+				return false;
+		} else if (!fedInstanceId.equals(other.fedInstanceId))
+			return false;
+		if (globalInstanceId == null) {
+			if (other.globalInstanceId != null)
+				return false;
+		} else if (!globalInstanceId.equals(other.globalInstanceId))
+			return false;
+		if (orderId == null) {
+			if (other.orderId != null)
+				return false;
+		} else if (!orderId.equals(other.orderId))
+			return false;
+		if (user == null) {
+			if (other.user != null)
+				return false;
+		} else if (!user.equals(other.user))
+			return false;
+		return true;
+	}
+
 	
 	
 }
