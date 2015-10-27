@@ -53,4 +53,7 @@ public class ConfigurationConstants {
 	
 	// OCCI extra resource
 	public static final String OCCI_EXTRA_RESOURCES_KEY_PATH = "occi_extra_resource_file_path";
+	
+	// Instance Data Store
+	public static final String INSTANCE_DATA_STORE_URL = "instance_datastore_url";
 }

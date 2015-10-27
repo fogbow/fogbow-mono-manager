@@ -1550,9 +1550,8 @@ public class ManagerController {
 		return failedBatch;
 	}
 	
-	public String getOCCIResourceProperty(String occiResourceTerm) {
-		return properties.getProperty(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX
-				+ occiResourceTerm);
+	public String getProperty(String property) {
+		return properties.getProperty(property);
 	}
 	
 	protected class FailedBatch {
