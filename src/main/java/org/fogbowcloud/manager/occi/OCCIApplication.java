@@ -200,4 +200,8 @@ public class OCCIApplication extends Application {
 		return managerFacade.getProperty(property);
 	}
 
+	public String getUser(String authToken) {
+		return managerFacade.getUser(authToken);
+	}
+
 }
