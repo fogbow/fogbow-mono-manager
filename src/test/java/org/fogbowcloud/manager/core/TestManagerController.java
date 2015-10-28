@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.security.cert.CertificateException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -42,6 +43,7 @@ import org.fogbowcloud.manager.occi.model.Resource;
 import org.fogbowcloud.manager.occi.model.ResourceRepository;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.fogbowcloud.manager.occi.model.Token;
+import org.fogbowcloud.manager.occi.request.OrderDataStore;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
@@ -51,6 +53,7 @@ import org.fogbowcloud.manager.occi.request.RequestType;
 import org.fogbowcloud.manager.xmpp.AsyncPacketSender;
 import org.fogbowcloud.manager.xmpp.ManagerXmppComponent;
 import org.jamppa.component.PacketCallback;
+import org.json.JSONException;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -2926,4 +2929,135 @@ public class TestManagerController {
 		Assert.assertEquals("40", resourcesInfo.getInstancesInUse());
 		Assert.assertEquals("30", resourcesInfo.getInstancesIdle());
 	}	
+	
+	@Test
+	public void testInitializeManager() throws SQLException, JSONException {
+		OrderDataStore database = Mockito.mock(OrderDataStore.class);
+		List<Request> requests = new ArrayList<Request>();
+		String userOne = "userOne";
+		String accessIdOne = "One";
+		Token federationTokenOne = new Token(accessIdOne, userOne , new Date(), null);
+		String userTwo = "userTwo";
+		String accessIdTwo = "Two";
+		Token federationTokenTwo = new Token(accessIdTwo, userTwo  , new Date(), null);
+		String instanceIdOne = "instOne";
+		String instanceIdTwo = "instTwo";
+		String instanceIdThree = "instThree";
+		String instanceIdFive = "instFive";
+		Request requestOneUserOne = new Request("One", federationTokenOne, instanceIdOne,
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, new Date().getTime(), true,
+				RequestState.FULFILLED, null, null);
+		Request requestTwoUserOne = new Request("Two", federationTokenOne, instanceIdTwo,
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, new Date().getTime(), true,
+				RequestState.FULFILLED, null, null);
+		Request requestThreeUserTwo = new Request("Three", federationTokenTwo, instanceIdThree,
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, new Date().getTime(), true,
+				RequestState.FULFILLED, null, null);
+		Request requestOPENFour = new Request("Four", federationTokenTwo, "444",
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, new Date().getTime(), true,
+				RequestState.OPEN, null, null);
+		Request requestFiveDELETEDUserTwo = new Request("Five", federationTokenTwo, instanceIdFive,
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, new Date().getTime(), true,
+				RequestState.DELETED, null, null);		
+		requests.add(requestOneUserOne);
+		requests.add(requestTwoUserOne);
+		requests.add(requestThreeUserTwo);
+		requests.add(requestOPENFour);
+		requests.add(requestFiveDELETEDUserTwo);
+		Mockito.when(database.getOrders()).thenReturn(requests);
+		managerController.setDatabase(database);
+		
+		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
+		Mockito.when(computePlugin.getInstance(Mockito.any(Token.class), Mockito.anyString()))
+				.thenReturn(new Instance("")).thenThrow(new OCCIException(ErrorType.UNAUTHORIZED, ""))
+				.thenThrow(new OCCIException(ErrorType.BAD_REQUEST, ""));
+		managerController.setComputePlugin(computePlugin);
+		
+		IdentityPlugin federationIdentityPlugin = Mockito.mock(IdentityPlugin.class);
+		Mockito.when(federationIdentityPlugin.getToken(accessIdOne)).thenReturn(federationTokenOne);
+		Mockito.when(federationIdentityPlugin.getToken(accessIdTwo)).thenReturn(federationTokenTwo);
+		managerController.setFederationIdentityPlugin(federationIdentityPlugin);
+
+		managerController.initializeManager();
+		
+		List<Request> requestsFromUser = managerController.getRequestsFromUser(federationTokenOne.getAccessId());
+		Assert.assertEquals(2, requestsFromUser.size());
+		Assert.assertEquals(RequestState.FULFILLED, requestsFromUser.get(0).getState());
+		Assert.assertEquals(RequestState.CLOSED, requestsFromUser.get(1).getState());
+		
+		requestsFromUser = managerController.getRequestsFromUser(federationTokenTwo.getAccessId());
+		Assert.assertEquals(2, requestsFromUser.size());
+		Assert.assertEquals(RequestState.CLOSED, requestsFromUser.get(0).getState());
+		Assert.assertEquals(null, requestsFromUser.get(0).getInstanceId());
+		Assert.assertEquals(RequestState.OPEN, requestsFromUser.get(1).getState());		
+	}
+	
+	@Test
+	public void testDBUpdater() throws SQLException, JSONException {		
+		OrderDataStore database = Mockito.mock(OrderDataStore.class);
+		List<Request> requestsBD = new ArrayList<Request>();
+		String userOne = "userOne";
+		String accessIdOne = "One";
+		Token federationTokenOne = new Token(accessIdOne, userOne , new Date(), null);
+		String userTwo = "userTwo";
+		String accessIdTwo = "Two";
+		Token federationTokenTwo = new Token(accessIdTwo, userTwo  , new Date(), null);
+		String instanceIdOne = "instOne";
+		String instanceIdTwo = "instTwo";
+		String instanceIdThree = "instThree";
+		Request requestOneUserOne = new Request("One", federationTokenOne, instanceIdOne,
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, new Date().getTime(), true,
+				RequestState.FULFILLED, null, null);
+		Request requestTwoUserOne = new Request("Two", federationTokenOne, instanceIdTwo,
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, new Date().getTime(), true,
+				RequestState.FULFILLED, null, null);
+		Request requestThreeUserTwo = new Request("Three", federationTokenTwo, instanceIdThree,
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, new Date().getTime(), true,
+				RequestState.FULFILLED, null, null);
+		Request requestOPENFour = new Request("Four", federationTokenTwo, "444",
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, new Date().getTime(), true,
+				RequestState.OPEN, null, null);
+		requestsBD.add(requestOneUserOne);
+		requestsBD.add(requestTwoUserOne);
+		requestsBD.add(requestThreeUserTwo);
+		requestsBD.add(requestOPENFour);
+		Mockito.when(database.getOrders()).thenReturn(requestsBD);
+		Mockito.when(database.addOrder(Mockito.any(Request.class))).thenReturn(true);
+		Mockito.when(database.updateOrder(Mockito.any(Request.class))).thenReturn(true);
+		Mockito.when(database.removeOrder(Mockito.any(Request.class))).thenReturn(true);
+		managerController.setDatabase(database);
+		
+		IdentityPlugin federationIdentityPlugin = Mockito.mock(IdentityPlugin.class);
+		Mockito.when(federationIdentityPlugin.getToken(accessIdOne)).thenReturn(federationTokenOne);
+		Mockito.when(federationIdentityPlugin.getToken(accessIdTwo)).thenReturn(federationTokenTwo);
+		managerController.setFederationIdentityPlugin(federationIdentityPlugin);		
+		
+		Request requestOPENFive = new Request("Five", federationTokenTwo, "555",
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, new Date().getTime(), true,
+				RequestState.OPEN, null, null);			
+		RequestRepository requestRepository = new RequestRepository();
+		requestRepository.addRequest(requestOneUserOne.getFederationToken().getUser(), requestOneUserOne);
+		requestRepository.addRequest(requestThreeUserTwo.getFederationToken().getUser(), requestThreeUserTwo);
+		requestRepository.addRequest(requestOPENFive.getFederationToken().getUser(), requestOPENFive);		
+		managerController.setRequests(requestRepository);
+		
+		managerController.updateRequestDB();
+		
+		Assert.assertEquals(1, managerController.getRequestsFromUser(federationTokenOne.getAccessId()).size());
+		Assert.assertEquals(2, managerController.getRequestsFromUser(federationTokenTwo.getAccessId()).size());
+		Mockito.verify(database, Mockito.times(2)).removeOrder(Mockito.any(Request.class));
+		Mockito.verify(database, Mockito.times(1)).addOrder(Mockito.any(Request.class));
+		Mockito.verify(database, Mockito.times(2)).updateOrder(Mockito.any(Request.class));
+	}
+	
 }

@@ -3,13 +3,18 @@ package org.fogbowcloud.manager.occi.request;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
 import org.fogbowcloud.manager.core.model.DateUtils;
+import org.fogbowcloud.manager.occi.OrderDataStoreHelper;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.Token;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.json.JSONArray;
 
 public class Request {
 
@@ -27,7 +32,22 @@ public class Request {
 	private Map<String, String> xOCCIAtt;
 	
 	private DateUtils dateUtils = new DateUtils();
-	
+		
+	public Request(String id, Token federationToken, String instanceId, String providingMemberId,
+			String requestingMemberId, long fulfilledTime, boolean isLocal, RequestState state,
+			List<Category> categories, Map<String, String> xOCCIAtt) {
+		this.id = id;
+		this.federationToken = federationToken;
+		this.instanceId = instanceId;
+		this.providingMemberId = providingMemberId;
+		this.requestingMemberId = requestingMemberId;
+		this.fulfilledTime = fulfilledTime;
+		this.isLocal = isLocal;
+		this.state = state;
+		this.categories = categories;
+		this.xOCCIAtt = xOCCIAtt;
+	}
+
 	public Request(String id, Token federationToken, 
 			List<Category> categories, Map<String, String> xOCCIAtt, boolean isLocal, String requestingMemberId) {
 		this(id, federationToken, categories, xOCCIAtt, isLocal, requestingMemberId, new DateUtils());
@@ -187,6 +207,87 @@ public class Request {
 
 		long now = new DateUtils().currentTimeMillis();
 		return expirationDate.getTime() < now;
+	}
+
+	public JSONArray getCategoriesInJSONFormat() throws JSONException {
+		List<JSONObject> categoryObj = new ArrayList<JSONObject>();
+		for (Category category : categories != null ? categories : new ArrayList<Category>()) {
+			categoryObj.add(category.toJSON());
+		}
+		return new JSONArray(categoryObj);
+	}
+
+	public static List<Category> getCategoriesFromJSON(String jsonArrayString) throws JSONException {
+		JSONArray jsonArray = new JSONArray(jsonArrayString);
+		List<Category> categories = new ArrayList<Category>();
+		for (int i = 0; i < jsonArray.length(); i++) {
+			categories.add(Category.fromJSON(jsonArray.getString(i)));
+		}
+		return categories;
+	}
+
+	public JSONObject getXOCCIAttrInJSONFormat() throws JSONException {
+		return new JSONObject().put("xocci_attributes", xOCCIAtt != null ? xOCCIAtt.toString()
+				: null);
+	}
+
+	public static Map<String, String> getXOCCIAttrFromJSON(String jsonStr) throws JSONException {
+		JSONObject jsonObject = new JSONObject(jsonStr);
+		return OrderDataStoreHelper.toMap(jsonObject.optString("xocci_attributes"));
+	}
+
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Request other = (Request) obj;
+		if (categories == null) {
+			if (other.categories != null)
+				return false;
+		} else if (!categories.equals(other.categories))
+			return false;
+		if (federationToken == null) {
+			if (other.federationToken != null)
+				return false;
+		} else if (!federationToken.equals(other.federationToken))
+			return false;
+		if (fulfilledTime != other.fulfilledTime)
+			return false;
+		if (id == null) {
+			if (other.id != null)
+				return false;
+		} else if (!id.equals(other.id))
+			return false;
+		if (instanceId == null) {
+			if (other.instanceId != null)
+				return false;
+		} else if (!instanceId.equals(other.instanceId))
+			return false;
+		if (isLocal != other.isLocal)
+			return false;
+		if (providingMemberId == null) {
+			if (other.providingMemberId != null)
+				return false;
+		} else if (!providingMemberId.equals(other.providingMemberId))
+			return false;
+		if (requestingMemberId == null) {
+			if (other.requestingMemberId != null)
+				return false;
+		} else if (!requestingMemberId.equals(other.requestingMemberId))
+			return false;
+		if (state != other.state)
+			return false;
+		if (xOCCIAtt == null) {
+			if (other.xOCCIAtt != null)
+				return false;
+		} else if (xOCCIAtt != null && !new HashSet(xOCCIAtt.values()).equals(new HashSet(other.xOCCIAtt.values())))
+			return false;
+		return true;
 	}
 	
 }

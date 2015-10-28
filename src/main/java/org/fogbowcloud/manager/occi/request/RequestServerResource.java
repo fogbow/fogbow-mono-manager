@@ -405,7 +405,6 @@ public class RequestServerResource extends ServerResource {
 						+ RequestAttribute.STATE.getValue() + "=" + request.getState() + "; "
 						+ RequestAttribute.TYPE.getValue() + "="
 						+ request.getAttValue(RequestAttribute.TYPE.getValue()) + "; "
-//						+ RequestAttribute.INSTANCE_ID.getValue() + "=" + request.getInstanceId()
 						+ RequestAttribute.INSTANCE_ID.getValue() + "=" + request.getGlobalInstanceId()
 						+ "\n";
 			}else {			
