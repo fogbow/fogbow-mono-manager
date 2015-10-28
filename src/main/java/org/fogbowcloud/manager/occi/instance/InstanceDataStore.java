@@ -30,13 +30,13 @@ public class InstanceDataStore {
 
 	private static final String INSERT_INSTANCE_TABLE_SQL = "INSERT INTO " + INSTANCE_ORDER_TABLE_NAME
 			+ " VALUES(?, ?, ?, ?)";
-	
+
 	private static final String UPDATE_INSTANCE_TABLE_SQL = "UPDATE " + INSTANCE_ORDER_TABLE_NAME + " SET " + ORDER_ID
 			+ " = ?, " + GLOBAL_INSTANCE_ID + " = ? WHERE " + INSTANCE_ID + " = ? AND " + USER + " = ?";
 
 	private static final String GET_ALL_INSTANCE = "SELECT " + INSTANCE_ID + ", " + ORDER_ID + ", " + GLOBAL_INSTANCE_ID
 			+ ", " + USER + "  FROM " + INSTANCE_ORDER_TABLE_NAME;
-	
+
 	private static final String GET_INSTANCE_BY_USER = GET_ALL_INSTANCE + " WHERE " + USER + " = ? ";
 	private static final String GET_INSTANCE_BY_INSTANCE_ID = GET_ALL_INSTANCE + " WHERE " + INSTANCE_ID + " = ?";
 	private static final String GET_INSTANCE_BY_ORDER_ID = GET_ALL_INSTANCE + " WHERE " + ORDER_ID + " = ?";
@@ -44,7 +44,8 @@ public class InstanceDataStore {
 	private static final String DELETE_ALL_INSTANCE_TABLE_SQL = "DELETE FROM " + INSTANCE_ORDER_TABLE_NAME;
 	private static final String DELETE_BY_USER = "DELETE FROM " + INSTANCE_ORDER_TABLE_NAME + " WHERE " + USER
 			+ " = ? ";
-	private static final String DELETE_BY_INSTANCE_ID_SQL = DELETE_BY_USER + " AND " + INSTANCE_ID + " = ?";
+	private static final String DELETE_BY_INSTANCE_ID_SQL = "DELETE FROM " + INSTANCE_ORDER_TABLE_NAME + " WHERE "
+			+ INSTANCE_ID + " = ?";
 
 	private static final Logger LOGGER = Logger.getLogger(InstanceDataStore.class);
 
@@ -197,7 +198,7 @@ public class InstanceDataStore {
 
 		String queryStatement = GET_INSTANCE_BY_INSTANCE_ID;
 		List<FedInstanceState> fedInstanceStateList = executeQueryStatement(queryStatement, instanceId);
-		if(fedInstanceStateList != null && !fedInstanceStateList.isEmpty()){
+		if (fedInstanceStateList != null && !fedInstanceStateList.isEmpty()) {
 			return fedInstanceStateList.get(0);
 		}
 		return null;
@@ -211,8 +212,8 @@ public class InstanceDataStore {
 		String queryStatement = GET_INSTANCE_BY_ORDER_ID;
 
 		List<FedInstanceState> fedInstanceStateList = executeQueryStatement(queryStatement, orderId);
-		
-		if(fedInstanceStateList != null && !fedInstanceStateList.isEmpty()){
+
+		if (fedInstanceStateList != null && !fedInstanceStateList.isEmpty()) {
 			return fedInstanceStateList.get(0);
 		}
 		return null;
@@ -264,7 +265,7 @@ public class InstanceDataStore {
 		}
 	}
 
-	public boolean deleteByIntanceId(String user, String instanceId) {
+	public boolean deleteByIntanceId(String instanceId) {
 
 		LOGGER.debug("Deleting all instances id with related orders with id");
 
@@ -274,8 +275,7 @@ public class InstanceDataStore {
 
 			conn = getConnection();
 			statement = conn.prepareStatement(DELETE_BY_INSTANCE_ID_SQL);
-			statement.setString(1, user);
-			statement.setString(2, instanceId);
+			statement.setString(1, instanceId);
 			boolean result = statement.execute();
 			conn.commit();
 			return result;

@@ -249,6 +249,34 @@ public class TestInstanceDataStore {
 	}
 	
 	@Test
+	public void testDeleteAllByUser(){
+		
+		String fakeInstanceId_A = "InstanceA";
+		String fakeInstanceId_B = "InstanceB";
+		String fakeOrderId_A = "OrderA";
+		String fakeOrderId_B = "OrderB";
+		String fakeUserA = "UserA";
+		String fakeUserB = "UserB";
+		
+		FedInstanceState fedInstanceStateA = new FedInstanceState(fakeInstanceId_A, fakeOrderId_A, "", fakeUserA);
+		FedInstanceState fedInstanceStateB = new FedInstanceState(fakeInstanceId_B, fakeOrderId_B, "", fakeUserB);
+		
+		List<FedInstanceState> fakeFedInstanceStateList =  new ArrayList<FedInstanceState>();
+		fakeFedInstanceStateList.add(fedInstanceStateA);
+		fakeFedInstanceStateList.add(fedInstanceStateB);
+		
+		instanceDb.insert(fakeFedInstanceStateList);
+		instanceDb.deleteAllFromUser(fakeUserA);
+		List<FedInstanceState> fedInstanceStateList = instanceDb.getAll();
+		
+		assertNotNull(fedInstanceStateList);
+		assertEquals(1, fedInstanceStateList.size());
+		assertFalse(fedInstanceStateList.contains(fedInstanceStateA));
+		assertTrue(fedInstanceStateList.contains(fedInstanceStateB));
+		
+	}
+	
+	@Test
 	public void testDeleteByIntanceId(){
 		
 		String fakeInstanceId_A = "InstanceA";
@@ -266,7 +294,7 @@ public class TestInstanceDataStore {
 		fakeFedInstanceStateList.add(fedInstanceStateB);
 		
 		instanceDb.insert(fakeFedInstanceStateList);
-		instanceDb.deleteByIntanceId(fakeUserA, fakeInstanceId_A);
+		instanceDb.deleteByIntanceId(fakeInstanceId_A);
 		List<FedInstanceState> fedInstanceStateList = instanceDb.getAll();
 		
 		assertNotNull(fedInstanceStateList);
@@ -276,31 +304,5 @@ public class TestInstanceDataStore {
 		
 	}
 	
-	@Test
-	public void testDeleteByIntanceIdWrongUser(){
-		
-		String fakeInstanceId_A = "InstanceA";
-		String fakeInstanceId_B = "InstanceB";
-		String fakeOrderId_A = "OrderA";
-		String fakeOrderId_B = "OrderB";
-		String fakeUserA = "UserA";
-		String fakeUserB = "UserB";
-		
-		FedInstanceState fedInstanceStateA = new FedInstanceState(fakeInstanceId_A, fakeOrderId_A, "", fakeUserA);
-		FedInstanceState fedInstanceStateB = new FedInstanceState(fakeInstanceId_B, fakeOrderId_B, "", fakeUserB);
-		
-		List<FedInstanceState> fakeFedInstanceStateList =  new ArrayList<FedInstanceState>();
-		fakeFedInstanceStateList.add(fedInstanceStateA);
-		fakeFedInstanceStateList.add(fedInstanceStateB);
-		
-		instanceDb.insert(fakeFedInstanceStateList);
-		instanceDb.deleteByIntanceId(fakeUserB, fakeInstanceId_A);
-		List<FedInstanceState> fedInstanceStateList = instanceDb.getAll();
-		
-		assertNotNull(fedInstanceStateList);
-		assertEquals(2, fedInstanceStateList.size());
-		assertTrue(fedInstanceStateList.contains(fedInstanceStateA));
-		assertTrue(fedInstanceStateList.contains(fedInstanceStateB));
-		
-	}
+	
 }
