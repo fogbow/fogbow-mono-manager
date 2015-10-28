@@ -5,6 +5,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 public class Category {
 
 	private String term;
@@ -105,4 +108,15 @@ public class Category {
 	public String toString() {	
 		return toHeader();
 	}
+
+	public JSONObject toJSON() throws JSONException {
+		return new JSONObject().put("term", term).put("class", catClass).put("scheme", scheme);
+	}
+
+	public static Category fromJSON(String jsonStr) throws JSONException {
+		JSONObject jsonObject = new JSONObject(jsonStr);
+		return new Category(jsonObject.optString("term"), jsonObject.optString("scheme"),
+				jsonObject.optString("class"));
+	}
+	
 }

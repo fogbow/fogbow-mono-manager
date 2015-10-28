@@ -6,6 +6,10 @@ xmpp_port=5347
 rendezvous_jid=rendezvous.test.com
 greensitter_jid=greensitter.test.com
 
+## Order database
+order_datastore_url=jdbc:h2:/home/chicog/Backup/dbmanager
+order_bd_updater_period=30000
+
 ## Static mapping from flavors to requirements (Optional)
 # flavor_fogbow_small={mem=512, cpu=1}
 # flavor_fogbow_medium={mem=1024, cpu=2}

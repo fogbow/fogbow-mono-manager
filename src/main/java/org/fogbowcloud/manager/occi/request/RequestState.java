@@ -30,6 +30,15 @@ public enum RequestState {
 		return this.value;
 	}
 	
+	public static RequestState getState(String stateStr) {
+		for (RequestState state : RequestState.values()) {
+			if (state.toString().equals(stateStr)) {
+				return state;
+			}
+		}
+		return null;
+	}
+	
 	public boolean in(RequestState... requestStates) {
 		for (RequestState requestState : requestStates) {
 			if (requestState.equals(this)){
