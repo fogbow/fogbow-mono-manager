@@ -215,3 +215,15 @@ ssh_public_key=/etc/fogbow-manager/ssh/id_rsa.pub
 
 ## OCCI extra resources
 #occi_extra_resource_file_path=
+
+
+public_key; scheme="http://schemas.openstack.org/instance/credentials#"; class="mixin"; 
+org.openstack.credentials.publickey.data
+
+# Request public key properties
+occi_extra_resource_fogbow_public_key=public_key
+occi_extra_resource_org.fogbowcloud.credentials.publickey.data=org.openstack.credentials.publickey.data
+
+# Request userdata properties
+occi_extra_resource_fogbow_userdata=user_data
+occi_extra_resource_org.fogbowcloud.request.extra-user-data=org.openstack.compute.user_data

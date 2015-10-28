@@ -5,12 +5,14 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.UUID;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpStatus;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
+import org.fogbowcloud.manager.core.UserdataUtils;
 import org.fogbowcloud.manager.occi.OCCIApplication;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.ErrorType;
@@ -21,18 +23,22 @@ import org.fogbowcloud.manager.occi.model.Resource;
 import org.fogbowcloud.manager.occi.model.ResourceRepository;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.fogbowcloud.manager.occi.request.Request;
+import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.fogbowcloud.manager.occi.request.RequestState;
 import org.restlet.Response;
 import org.restlet.data.MediaType;
 import org.restlet.data.Status;
 import org.restlet.engine.adapter.HttpRequest;
+import org.restlet.engine.adapter.ServerCall;
+import org.restlet.engine.header.Header;
 import org.restlet.representation.StringRepresentation;
 import org.restlet.resource.Delete;
 import org.restlet.resource.Get;
 import org.restlet.resource.Post;
 import org.restlet.resource.ResourceException;
 import org.restlet.resource.ServerResource;
+import org.restlet.util.Series;
 
 public class ComputeServerResource extends ServerResource {
 
@@ -249,60 +255,21 @@ public class ComputeServerResource extends ServerResource {
 	}
 
 	@Post
-	public String post() {
+	public StringRepresentation post() {
 		LOGGER.info("Posting a new compute...");
 
-		// OCCIApplication application = (OCCIApplication) getApplication();
-		// HttpRequest req = (HttpRequest) getRequest();
-		// String federationAuthToken =
-		// HeaderUtils.getFederationAuthToken(req.getHeaders(), getResponse(),
-		// application.getAuthenticationURI());
-		// String instanceId = (String)
-		// getRequestAttributes().get("instanceId");
-		// List<String> acceptContent = HeaderUtils.getAccept(req.getHeaders());
-
-		// occi.compute.architecture Enum {x86, x64} 0. . . 1 Mutable CPU
-		// Architecture of the instance.
-		// occi.compute.cores Integer 0. . . 1 Mutable Number of CPU cores
-		// assigned to the instance.
-		// occi.compute.hostname String 0. . . 1 Mutable Fully Qualified DNS
-		// hostname for the instance.
-		// occi.compute.speed Float, 10 9 (GHz) 0. . . 1 Mutable CPU Clock
-		// frequency (speed) in gigahertz.
-		// occi.compute.memory Float, 10 9 (GiB) 0. . . 1 Mutable Maximum RAM in
-		// gigabytes allocated to the instance
-
-		// $ OS_TPL=<paste here the OS Template (VM Image)>
-		// $ RES_TPL=<paste here the resource template (flavor)>
-		//
-		// $ occi --endpoint $ENDPOINT --auth x509 --user-cred $X509_USER_PROXY
-		// --voms \
-		// --action create --resource compute --attribute
-		// occi.core.title="MyFirstVM" \
-		// --mixin $OS_TPL --mixin $RES_TPL \
-		// --context user_data="file://$PWD/tmpfedcloud.login"
-
-		// Category: compute;
-		// scheme="http://schemas.ogf.org/occi/infrastructure#";
-		// class="kind";
-
 		OCCIApplication application = (OCCIApplication) getApplication();
+		Properties properties = application.getProperties();
+		
 		HttpRequest req = (HttpRequest) getRequest();
 		String acceptType = getComputePostAccept(HeaderUtils.getAccept(req.getHeaders()));
-		// String acceptType =
-		// getAccept(HeaderUtils.getAccept(req.getHeaders()));
-		// TODO validate if request has a valid ACCEPT header OK - Check
 
 		List<Category> categories = HeaderUtils.getCategories(req.getHeaders());
 		LOGGER.debug("Categories: " + categories);
 
-		// TODO check categories must have at last one
-		// RequestConstants.TEMPLATE_OS_SCHEME
-		// HeaderUtils.checkCategories(categories, RequestConstants.TERM);
-		// HeaderUtils.checkOCCIContentType(req.getHeaders());
+		HeaderUtils.checkOCCIContentType(req.getHeaders());
 
 		List<Resource> resources = ResourceRepository.getInstance().get(categories);
-
 		if (resources.size() != categories.size()) {
 			LOGGER.debug("Some categories was not found in available resources! Resources " + resources.size()
 					+ " and categories " + categories.size());
@@ -326,13 +293,16 @@ public class ComputeServerResource extends ServerResource {
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}
 
+		List<Category> requestCategories = new ArrayList<Category>();
+		requestCategories.add(new Category(RequestConstants.TERM, RequestConstants.SCHEME, RequestConstants.KIND_CLASS));
+		
+		Map<String, String> requestXOCCIAtt = new HashMap<String, String>();
+		
+		// os tpl
 		List<Resource> osTplResources = filterByRelProperty(ResourceRepository.OS_TPL_OCCI_SCHEME, resources);
 		if (osTplResources.size() != 1) {
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}
-
-		List<Resource> resourceTplResources = filterByRelProperty(ResourceRepository.RESOURCE_TPL_OCCI_SCHEME,
-				resources);
 
 		String imageName = application.getProperty(
 				ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + osTplResources.get(0).getCategory().getTerm());
@@ -341,6 +311,11 @@ public class ComputeServerResource extends ServerResource {
 					ResponseConstants.PROPERTY_NOT_SPECIFIED_FOR_EXTRA_OCCI_RESOURCE
 							+ osTplResources.get(0).getCategory());
 		}
+		requestCategories.add(new Category(imageName, RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
+
+		// resource tpl
+		List<Resource> resourceTplResources = filterByRelProperty(ResourceRepository.RESOURCE_TPL_OCCI_SCHEME,
+				resources);
 
 		StringBuilder requirements = new StringBuilder();
 		for (int i = 0; i < resourceTplResources.size(); i++) {
@@ -361,48 +336,90 @@ public class ComputeServerResource extends ServerResource {
 		}
 
 		String fogbowRequirements = requirements.toString();
-
-		// TODO looking for userdata and public_key
-
+		requestXOCCIAtt.put(RequestAttribute.REQUIREMENTS.getValue(), fogbowRequirements);
+		
 		Map<String, String> xOCCIAtt = HeaderUtils.getXOCCIAtributes(req.getHeaders());
-		// TODO How to handle attributes?
-
-		// TODO get Attribute list
-		// xOCCIAtt = normalizeXOCCIAtt(xOCCIAtt);
-		//
-		// xOCCIAtt = normalizeRequirements(categories, xOCCIAtt,
-		// application.getFlavorsProvided());
+		
+		String publicKeyTerm = application
+				.getProperty(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX
+						+ RequestConstants.PUBLIC_KEY_TERM);
+		if (publicKeyTerm != null && !publicKeyTerm.isEmpty()) {
+			Resource publicKeyResource = filterByTerm(publicKeyTerm, resources);
+			
+			if (publicKeyResource != null) {
+				requestCategories.add(new Category(RequestConstants.PUBLIC_KEY_TERM,
+						RequestConstants.CREDENTIALS_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
+				
+				String publicKeyDataAtt = properties.getProperty(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + RequestAttribute.DATA_PUBLIC_KEY.getValue());
+				requestXOCCIAtt.put(RequestAttribute.DATA_PUBLIC_KEY.getValue(), xOCCIAtt.get(publicKeyDataAtt));
+				
+			}
+		}
+					
+		String userdataTerm = application
+				.getProperty(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX
+						+ RequestConstants.PUBLIC_KEY_TERM);
+		
+		if (userdataTerm != null && !userdataTerm.isEmpty()) {
+			Resource userDataResource = filterByTerm(userdataTerm, resources);
+			if (userDataResource != null) {
+				requestCategories.add(new Category(RequestConstants.USER_DATA_TERM,
+						RequestConstants.SCHEME, RequestConstants.MIXIN_CLASS));
+				
+				String userdataDataAtt = properties
+						.getProperty(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX
+								+ RequestAttribute.EXTRA_USER_DATA_ATT.getValue());
+			
+				String userDataContent = xOCCIAtt.get(userdataDataAtt);				
+				String userDataContentType = getTypeFromUserData(userDataContent);
+				
+				String userData = userDataContent.replace("\n",
+						UserdataUtils.USER_DATA_LINE_BREAKER);
+				userData = new String(Base64.encodeBase64(userData.getBytes()));
+				
+				requestXOCCIAtt.put(RequestAttribute.EXTRA_USER_DATA_ATT.getValue(), userData);
+				requestXOCCIAtt.put(RequestAttribute.EXTRA_USER_DATA_CONTENT_TYPE_ATT.getValue(),
+						userDataContentType);
+			}
+		}
 
 		String federationAuthToken = HeaderUtils.getFederationAuthToken(req.getHeaders(), getResponse(),
 				application.getAuthenticationURI());
 
-		// Translate compute categories and attributes to request categories and
-		// default attributes
-
 		Instance instance = new Instance(FED_INSTANCE_PREFIX + UUID.randomUUID().toString());
+		List<Request> newRequest = application.createRequests(federationAuthToken,
+				requestCategories, requestXOCCIAtt);
 
-		List<Request> currentRequests = application.createRequests(federationAuthToken, categories, xOCCIAtt);
-
-		if (currentRequests != null || !currentRequests.isEmpty()) {
+		if (newRequest != null && !newRequest.isEmpty()) {
 			setStatus(Status.SUCCESS_CREATED);
 		}
-
-		Request relatedOrder = currentRequests.get(0);
 		
-		// TODO store instance - relatedOrder
+		Request relatedOrder = newRequest.get(0);
+		
 		FedInstanceState fedInstanceState = new FedInstanceState(instance.getId(), relatedOrder.getId(), "",
 				relatedOrder.getFederationToken().getUser());
 		instanceDB.insert(fedInstanceState);
 
-		// setLocationHeader(instance, req);
+		 setLocationHeader(instance, req);
 
 		// TODO check accpet and return
-		// if (acceptType.equals(OCCIHeaders.OCCI_ACCEPT)) {
-		// return new StringRepresentation(ResponseConstants.OK, new MediaType(
-		// OCCIHeaders.OCCI_ACCEPT));
-		// }
-		return new String(ResponseConstants.OK);
+		if (acceptType.equals(OCCIHeaders.OCCI_ACCEPT)) {
+			return new StringRepresentation(ResponseConstants.OK, new MediaType(
+					OCCIHeaders.OCCI_ACCEPT));
+		}
+		
+		return new StringRepresentation(ResponseConstants.OK);
+	}
 
+	private String getTypeFromUserData(String userDataContent) {
+		// TODO Auto-generated method stub
+		// http://cloudinit.readthedocs.org/en/latest/topics/format.html
+		return null;
+	}
+
+	private Resource filterByTerm(String string, List<Resource> resources) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	private List<Resource> filterByRelProperty(String relScheme, List<Resource> resources) {
@@ -420,6 +437,8 @@ public class ComputeServerResource extends ServerResource {
 		if (listAccept.size() > 0) {
 			if (listAccept.get(0).contains(MediaType.TEXT_PLAIN.toString())) {
 				return MediaType.TEXT_PLAIN.toString();
+			} else if (listAccept.get(0).contains(OCCIHeaders.OCCI_CONTENT_TYPE)) {
+				return OCCIHeaders.OCCI_CONTENT_TYPE;				
 			} else {
 				throw new OCCIException(ErrorType.NOT_ACCEPTABLE, ResponseConstants.ACCEPT_NOT_ACCEPTABLE);
 			}
@@ -435,6 +454,36 @@ public class ComputeServerResource extends ServerResource {
 			path = partOfInstanceId[0];
 		}
 		req.getResourceRef().setPath(path);
+	}
+	
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	private void setLocationHeader(Instance instance, HttpRequest req) {
+		String requestEndpoint = getHostRef(req) + req.getHttpCall().getRequestUri();
+		Series<Header> responseHeaders = (Series<Header>) getResponse().getAttributes().get(
+				"org.restlet.http.headers");
+		if (responseHeaders == null) {
+			responseHeaders = new Series(Header.class);
+			getResponse().getAttributes().put("org.restlet.http.headers", responseHeaders);
+		}
+		
+		responseHeaders.add(new Header("Location",
+				generateLocationHeader(instance, requestEndpoint)));		
+	}
+	
+	private String generateLocationHeader(Instance instance, String requestEndpoint) {
+		String prefix = requestEndpoint;
+		if (!prefix.endsWith("/")){
+			prefix += "/";
+		}			
+		return prefix + instance.getId();
+	}
+	
+	private String getHostRef(HttpRequest req) {
+		OCCIApplication application = (OCCIApplication) getApplication();
+		String myIp = application.getProperties().getProperty("my_ip");
+		ServerCall httpCall = req.getHttpCall();
+		String hostDomain = myIp == null ? httpCall.getHostDomain() : myIp;
+		return req.getProtocol().getSchemeName() + "://" + hostDomain + ":" + httpCall.getHostPort();
 	}
 
 	private List<Instance> filterInstances(List<Instance> allInstances, List<String> filterCategory,
