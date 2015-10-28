@@ -155,6 +155,9 @@ public class ResourceRepository {
 		try {
 			List<Resource> occiResources = new ArrayList<Resource>();
 			for (String line : FileUtils.readLines(occiResourceFile)) {
+				if(line.startsWith("Category:")){
+					line = line.substring("Category:".length()).trim();
+				}
 				occiResources.add(new Resource(line));
 			}
 			return occiResources;
