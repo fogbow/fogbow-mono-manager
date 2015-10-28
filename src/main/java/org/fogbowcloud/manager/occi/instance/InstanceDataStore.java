@@ -366,7 +366,7 @@ public class InstanceDataStore {
 
 		} catch (SQLException e) {
 			LOGGER.error("Couldn't get Intances and Orders ID.", e);
-			return null;
+			return new ArrayList<FedInstanceState>();
 		} finally {
 			close(preparedStatement, conn);
 		}
