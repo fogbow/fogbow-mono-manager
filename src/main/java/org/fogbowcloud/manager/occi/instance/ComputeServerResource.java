@@ -184,109 +184,67 @@ public class ComputeServerResource extends ServerResource {
 
 		}
 		throw new OCCIException(ErrorType.NOT_ACCEPTABLE, ResponseConstants.ACCEPT_NOT_ACCEPTABLE);
-
 	}
 
 	private String generateFedInstanceResponse(FedInstanceState fedInstanceState, Request relatedOrder,
 			Instance instance) {
+		
+		String sshInformation = instance.getAttributes().get(Instance.SSH_PUBLIC_ADDRESS_ATT);
+		List<Link> links = fedInstanceState.getLinks();
+		if (links.isEmpty() && sshInformation != null) {
+			links = generateFakeLink(fedInstanceState.getFedInstanceId(), instance);
+			fedInstanceState.setLinks(links);			
+			fedInstanceState.addResource(ResourceRepository.getInstance().get(ResourceRepository.LINK));
+			fedInstanceState.addResource(ResourceRepository.getInstance().get(ResourceRepository.NETWORK_INTERFACE));			
+			instanceDB.update(fedInstanceState);
+		}
+		
+		return new Instance(fedInstanceState.getFedInstanceId(), fedInstanceState.getResources(),
+				instance.getAttributes(), links, instance.getState()).toOCCIMessageFormatDetails();
+	}
 
-		Map<String, String> fedInstanceAtt = new HashMap<String, String>(instance.getAttributes());
-		List<Resource> fedInstanceResources = new ArrayList<Resource>(instance.getResources());
-		List<Link> fedInstanceLinks = new ArrayList<Instance.Link>(instance.getLinks());
-
-		// InstanceState instanceState
-
+	private List<Link> generateFakeLink(String fedInstanceId, Instance instance) {
 		String sshInformation = instance.getAttributes().get(Instance.SSH_PUBLIC_ADDRESS_ATT);
 
 		String[] addressInfo = sshInformation.split(":");
 		String host = addressInfo[0];
-		String port = addressInfo[1];
-
-		// TODO Add network informations
-		fedInstanceAtt.put("occi.networkinterface.gateway", "Not defined");
-		fedInstanceAtt.put("occi.networkinterface.mac", "Not defined");
-		fedInstanceAtt.put("occi.networkinterface.interface", "eth0");
-		fedInstanceAtt.put("occi.networkinterface.state", "active");
-		fedInstanceAtt.put("occi.networkinterface.allocation", "static");
-		fedInstanceAtt.put("occi.networkinterface.address", host);
-		fedInstanceAtt.put("occi.core.source", "");
-		fedInstanceAtt.put("occi.core.target", "");
-		fedInstanceAtt.put("occi.core.id", "");
-
-		// = ""
-		// = ""
-		// =
-		// =
-		// =
-		// =
-
-		// Link
-		// occi.core.source = http://localhost:8182//compute/${INSTANCE_ID}
-		// occi.core.target = http://localhost:8182//network/public
-		// occi.core.id =
-		// http://localhost:8182/network/interface/18047596-098d-4ce4-af75-ca7f908fbc09
-
-		// // #Network Resource
-		// List<String> networkAttributes = new ArrayList<String>();
-		// networkAttributes.add("occi.network.vlan");
-		// networkAttributes.add("occi.network.label");
-		// networkAttributes.add("occi.network.state{immutable}");
-		//
-		// List<String> networkActions = new ArrayList<String>();
-		// networkActions.add("http://schemas.ogf.org/occi/infrastructure/network/action#up");
-		// networkActions.add("http://schemas.ogf.org/occi/infrastructure/network/action#down");
-		//
-		// Resource networkResource = new
-		// Resource(OCCI_NETWORK_TERM, SCHEMAS_OCCI_INFRASTRUCTURE,
-		// RequestConstants.KIND_CLASS, networkAttributes,
-		// networkActions, FOGBOWCLOUD_ENDPOINT + "/" + "compute/",
-		// "Network Resource", SCHEMAS_OCCI_INFRASTRUCTURE +
-		// OCCI_IP_NETWORK_TERM);
-
-		//
-		// // #IPNetwork Resource
-		// List<String> ipNetworkAttributes = new
-		// ArrayList<String>();
-		// ipNetworkAttributes.add("occi.network.address");
-		// ipNetworkAttributes.add("occi.network.gateway");
-		// ipNetworkAttributes.add("occi.network.allocation");
-		//
-		// Resource ipNetworkResource = new
-		// Resource(OCCI_IP_NETWORK_TERM,
-		// SCHEMAS_OCCI_INFRASTRUCTURE,
-		// RequestConstants.MIXIN_CLASS, ipNetworkAttributes, new
-		// ArrayList<String>(),
-		// FOGBOWCLOUD_ENDPOINT + "/" + "compute/", "IPNetwork
-		// Resource",
-		// SCHEMAS_OCCI_INFRASTRUCTURE + OCCI_NETWORK_TERM);
-		//
-		// resources.add(networkResource);
-		// resources.add(ipNetworkResource);
-		// TODO Change this return to specific method that return the instance
-		// message format for POST Instance.
-		// return new
-		// StringRepresentation(instance.toOCCIMessageFormatDetails(),
-		// MediaType.TEXT_PLAIN);
-
-		// #IPNetwork Resource
-		List<String> linkResourceAttributes = new ArrayList<String>();
-		linkResourceAttributes.add("occi.core.source");
-		linkResourceAttributes.add("occi.core.target");
-
-		Resource linkResource = new Resource("link", "http://schemas.ogf.org/occi/core#", "kind",
-				linkResourceAttributes, new ArrayList<String>(), "", "Link", "");
 		
-		fedInstanceResources.add(linkResource);
-
-		Instance fedInstance = new Instance(fedInstanceState.getGlobalInstanceId(), fedInstanceResources,
-				fedInstanceAtt, fedInstanceLinks, instance.getState());
-
-		return fedInstance.toOCCIMessageFormatDetails();
+		Map<String, String> linkAttrs = new HashMap<String, String>();
+		linkAttrs.put("occi.networkinterface.gateway", "Not defined");
+		linkAttrs.put("occi.networkinterface.mac", "Not defined");
+		linkAttrs.put("occi.networkinterface.interface", "eth0");
+		linkAttrs.put("occi.networkinterface.state", "active");
+		linkAttrs.put("occi.networkinterface.allocation", "static");
+		linkAttrs.put("occi.networkinterface.address", host);
+		linkAttrs.put("occi.core.source", "/compute/" + fedInstanceId);
+		linkAttrs.put("occi.core.target", "/network/public");
+		String fakeLinkId = "/network/interface/" + UUID.randomUUID().toString();
+		linkAttrs.put("occi.core.id", fakeLinkId);
+		
+		ArrayList<Link> links = new ArrayList<Link>();
+		links.add(new Link(fakeLinkId, linkAttrs));
+		return links;
 	}
 
 	private String generateInactiveInstanceResponse(FedInstanceState fedInstanceState, Request order) {
-		// TODO Auto-generated method stub
-		return null;
+		Map<String, String> instanceAttrs = new HashMap<String, String>();
+		instanceAttrs.put("occi.core.id", fedInstanceState.getFedInstanceId());
+		
+		String titleAttValue = order.getAttValue("occi.core.title");
+		if (titleAttValue != null) {
+			instanceAttrs.put("occi.core.title", titleAttValue);
+		}
+		
+		instanceAttrs.put("occi.compute.architecture", "Not defined");
+		instanceAttrs.put("occi.compute.state", InstanceState.PENDING.getOcciState());
+		instanceAttrs.put("occi.compute.speed", "Not defined");
+		instanceAttrs.put("occi.compute.memory", "Not defined");
+		instanceAttrs.put("occi.compute.cores", "Not defined");
+		instanceAttrs.put("occi.compute.hostname", "Not defined");
+		
+		return new Instance(fedInstanceState.getFedInstanceId(), fedInstanceState.getResources(),
+				instanceAttrs, fedInstanceState.getLinks(), InstanceState.PENDING)
+				.toOCCIMessageFormatDetails();
 	}
 
 	@Post
@@ -353,7 +311,43 @@ public class ComputeServerResource extends ServerResource {
 		// resource tpl
 		List<Resource> resourceTplResources = filterByRelProperty(ResourceRepository.RESOURCE_TPL_OCCI_SCHEME,
 				resources);
+		String fogbowRequirements = getRequirements(application, resourceTplResources);		
+		requestXOCCIAtt.put(RequestAttribute.REQUIREMENTS.getValue(), fogbowRequirements);
 
+		Map<String, String> xOCCIAtt = HeaderUtils.getXOCCIAtributes(req.getHeaders());
+		if (xOCCIAtt.keySet().contains("occi.core.title")) {
+			requestXOCCIAtt.put("occi.core.title", xOCCIAtt.get("occi.core.title"));
+		}
+
+		convertPublicKey(application, properties, resources, requestCategories, requestXOCCIAtt, xOCCIAtt);
+		convertUserData(application, properties, resources, requestCategories, requestXOCCIAtt, xOCCIAtt);
+
+		String federationAuthToken = HeaderUtils.getFederationAuthToken(req.getHeaders(), getResponse(),
+				application.getAuthenticationURI());
+
+		Instance instance = new Instance(FED_INSTANCE_PREFIX + UUID.randomUUID().toString());
+		List<Request> newRequest = application.createRequests(federationAuthToken, requestCategories, requestXOCCIAtt);
+
+		if (newRequest != null && !newRequest.isEmpty()) {
+			setStatus(Status.SUCCESS_CREATED);
+		}
+
+		Request relatedOrder = newRequest.get(0);
+		FedInstanceState fedInstanceState = new FedInstanceState(instance.getId(), relatedOrder.getId(), "",
+				relatedOrder.getFederationToken().getUser());
+		instanceDB.insert(fedInstanceState);
+
+		setLocationHeader(instance, req);
+
+		// TODO check accpet and return
+		if (acceptType.equals(OCCIHeaders.OCCI_ACCEPT)) {
+			return new StringRepresentation(ResponseConstants.OK, new MediaType(OCCIHeaders.OCCI_ACCEPT));
+		}
+
+		return new StringRepresentation(ResponseConstants.OK);
+	}
+
+	private String getRequirements(OCCIApplication application, List<Resource> resourceTplResources) {
 		StringBuilder requirements = new StringBuilder();
 		for (int i = 0; i < resourceTplResources.size(); i++) {
 			String currentRequirement = application.getProperty(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX
@@ -372,11 +366,39 @@ public class ComputeServerResource extends ServerResource {
 			}
 		}
 
-		String fogbowRequirements = requirements.toString();
-		requestXOCCIAtt.put(RequestAttribute.REQUIREMENTS.getValue(), fogbowRequirements);
+		return requirements.toString();
+	}
 
-		Map<String, String> xOCCIAtt = HeaderUtils.getXOCCIAtributes(req.getHeaders());
+	private void convertUserData(OCCIApplication application, Properties properties,
+			List<Resource> resources, List<Category> requestCategories,
+			Map<String, String> requestXOCCIAtt, Map<String, String> xOCCIAtt) {
+		String userdataTerm = application
+				.getProperty(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + RequestConstants.PUBLIC_KEY_TERM);
 
+		if (userdataTerm != null && !userdataTerm.isEmpty()) {
+			Resource userDataResource = filterByTerm(userdataTerm, resources);
+			if (userDataResource != null) {
+				requestCategories.add(new Category(RequestConstants.USER_DATA_TERM, RequestConstants.SCHEME,
+						RequestConstants.MIXIN_CLASS));
+
+				String userdataDataAtt = properties.getProperty(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX
+						+ RequestAttribute.EXTRA_USER_DATA_ATT.getValue());
+				
+				String userDataContent = xOCCIAtt.get(userdataDataAtt);
+				String userDataContentType = getTypeFromUserData(userDataContent);
+
+				String userData = userDataContent.replace("\n", UserdataUtils.USER_DATA_LINE_BREAKER);
+				userData = new String(Base64.encodeBase64(userData.getBytes()));
+
+				requestXOCCIAtt.put(RequestAttribute.EXTRA_USER_DATA_ATT.getValue(), userData);
+				requestXOCCIAtt.put(RequestAttribute.EXTRA_USER_DATA_CONTENT_TYPE_ATT.getValue(), userDataContentType);
+			}
+		}
+	}
+
+	private void convertPublicKey(OCCIApplication application, Properties properties,
+			List<Resource> resources, List<Category> requestCategories,
+			Map<String, String> requestXOCCIAtt, Map<String, String> xOCCIAtt) {
 		String publicKeyTerm = application
 				.getProperty(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + RequestConstants.PUBLIC_KEY_TERM);
 		if (publicKeyTerm != null && !publicKeyTerm.isEmpty()) {
@@ -389,67 +411,16 @@ public class ComputeServerResource extends ServerResource {
 				String publicKeyDataAtt = properties.getProperty(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX
 						+ RequestAttribute.DATA_PUBLIC_KEY.getValue());
 				requestXOCCIAtt.put(RequestAttribute.DATA_PUBLIC_KEY.getValue(), xOCCIAtt.get(publicKeyDataAtt));
-
 			}
 		}
-
-		String userdataTerm = application
-				.getProperty(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + RequestConstants.PUBLIC_KEY_TERM);
-
-		if (userdataTerm != null && !userdataTerm.isEmpty()) {
-			Resource userDataResource = filterByTerm(userdataTerm, resources);
-			if (userDataResource != null) {
-				requestCategories.add(new Category(RequestConstants.USER_DATA_TERM, RequestConstants.SCHEME,
-						RequestConstants.MIXIN_CLASS));
-
-				String userdataDataAtt = properties.getProperty(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX
-						+ RequestAttribute.EXTRA_USER_DATA_ATT.getValue());
-
-				String userDataContent = xOCCIAtt.get(userdataDataAtt);
-				String userDataContentType = getTypeFromUserData(userDataContent);
-
-				String userData = userDataContent.replace("\n", UserdataUtils.USER_DATA_LINE_BREAKER);
-				userData = new String(Base64.encodeBase64(userData.getBytes()));
-
-				requestXOCCIAtt.put(RequestAttribute.EXTRA_USER_DATA_ATT.getValue(), userData);
-				requestXOCCIAtt.put(RequestAttribute.EXTRA_USER_DATA_CONTENT_TYPE_ATT.getValue(), userDataContentType);
-			}
-		}
-
-		String federationAuthToken = HeaderUtils.getFederationAuthToken(req.getHeaders(), getResponse(),
-				application.getAuthenticationURI());
-
-		Instance instance = new Instance(FED_INSTANCE_PREFIX + UUID.randomUUID().toString());
-		List<Request> newRequest = application.createRequests(federationAuthToken, requestCategories, requestXOCCIAtt);
-
-		if (newRequest != null && !newRequest.isEmpty()) {
-			setStatus(Status.SUCCESS_CREATED);
-		}
-
-		Request relatedOrder = newRequest.get(0);
-
-		FedInstanceState fedInstanceState = new FedInstanceState(instance.getId(), relatedOrder.getId(), "",
-				relatedOrder.getFederationToken().getUser());
-		instanceDB.insert(fedInstanceState);
-
-		setLocationHeader(instance, req);
-
-		// TODO check accpet and return
-		if (acceptType.equals(OCCIHeaders.OCCI_ACCEPT)) {
-			return new StringRepresentation(ResponseConstants.OK, new MediaType(OCCIHeaders.OCCI_ACCEPT));
-		}
-
-		return new StringRepresentation(ResponseConstants.OK);
 	}
 
+	// http://cloudinit.readthedocs.org/en/latest/topics/format.html
 	private String getTypeFromUserData(String userDataContent) {
-		// TODO Auto-generated method stub
-		// http://cloudinit.readthedocs.org/en/latest/topics/format.html
 		return MIMEMultipartArchive.getTypeFromContent(userDataContent);
 	}
 
 	private Resource filterByTerm(String term, List<Resource> resources) {
-		// TODO Auto-generated method stub
 		for (Resource r : resources) {
 			if (term.equals(r.getCategory().getTerm())) {
 				return r;

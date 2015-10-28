@@ -17,6 +17,8 @@ import org.json.JSONObject;
 public class ResourceRepository {
 	
 	protected static final String OS_TPL = "os_tpl";
+	public static final String LINK = "link";
+	public static final String NETWORK_INTERFACE = "networkinterface";
 	protected static final String SCHEMAS_OCCI_INFRASTRUCTURE = "http://schemas.ogf.org/occi/infrastructure#";
 	protected static final String RESOURCE_TPL = "resource_tpl";
 	private static final Logger LOGGER = Logger.getLogger(ResourceRepository.class);
@@ -122,7 +124,7 @@ public class ResourceRepository {
 		List<String> linkAtt = new ArrayList<String>();
 		linkAtt.add("occi.core.source");
 		linkAtt.add("occi.core.target");
-		Resource link = new Resource("link", "http://schemas.ogf.org/occi/core#",
+		Resource link = new Resource(LINK, "http://schemas.ogf.org/occi/core#",
 				RequestConstants.KIND_CLASS, linkAtt, new ArrayList<String>(), FOGBOWCLOUD_ENDPOINT
 						+ "/link/", "Link", "http://schemas.ogf.org/occi/core#entity");
 		
