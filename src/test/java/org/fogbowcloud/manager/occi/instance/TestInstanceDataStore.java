@@ -1,12 +1,16 @@
 package org.fogbowcloud.manager.occi.instance;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
+import org.fogbowcloud.manager.occi.instance.Instance.Link;
+import org.fogbowcloud.manager.occi.model.Category;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -36,7 +40,7 @@ public class TestInstanceDataStore {
 		String fakeOrderId_A = "OrderA";
 		String fakeUserA = "UserA";
 		
-		FedInstanceState fedInstanceState = new FedInstanceState(fakeInstanceId_A, fakeOrderId_A, "", fakeUserA);
+		FedInstanceState fedInstanceState = new FedInstanceState(fakeInstanceId_A, fakeOrderId_A, new ArrayList<Category>(), new ArrayList<Link>(), "", fakeUserA);
 		
 		assertTrue(instanceDb.insert(fedInstanceState));
 		List<FedInstanceState> fedInstanceStateList = instanceDb.getAll();
@@ -56,8 +60,8 @@ public class TestInstanceDataStore {
 		String fakeUserA = "UserA";
 		String fakeUserB = "UserB";
 		
-		FedInstanceState fedInstanceStateA = new FedInstanceState(fakeInstanceId_A, fakeOrderId_A, "", fakeUserA);
-		FedInstanceState fedInstanceStateB = new FedInstanceState(fakeInstanceId_B, fakeOrderId_B, "", fakeUserB);
+		FedInstanceState fedInstanceStateA = new FedInstanceState(fakeInstanceId_A, fakeOrderId_A, new ArrayList<Category>(), new ArrayList<Link>(), "", fakeUserA);
+		FedInstanceState fedInstanceStateB = new FedInstanceState(fakeInstanceId_B, fakeOrderId_B, new ArrayList<Category>(), new ArrayList<Link>(), "", fakeUserB);
 		
 		List<FedInstanceState> fakeFedInstanceStateList =  new ArrayList<FedInstanceState>();
 		fakeFedInstanceStateList.add(fedInstanceStateA);
@@ -81,7 +85,7 @@ public class TestInstanceDataStore {
 		String fakeGlobalInstanceId_A = "GlobalInstanceIdA";
 		String fakeUserA = "UserA";
 		
-		FedInstanceState fedInstanceState = new FedInstanceState(fakeInstanceId_A, fakeOrderId_A, "", fakeUserA);
+		FedInstanceState fedInstanceState = new FedInstanceState(fakeInstanceId_A, fakeOrderId_A, new ArrayList<Category>(), new ArrayList<Link>(), "", fakeUserA);
 		
 		instanceDb.insert(fedInstanceState);
 		List<FedInstanceState> fedInstanceStateList = instanceDb.getAll();
@@ -114,9 +118,9 @@ public class TestInstanceDataStore {
 		String fakeUserB = "UserB";
 		
 		
-		FedInstanceState fedInstanceStateA = new FedInstanceState(fakeInstanceId_A, fakeOrderId_A, fakeGlobalInstanceId_A, fakeUserA);
-		FedInstanceState fedInstanceStateB = new FedInstanceState(fakeInstanceId_B, fakeOrderId_B, fakeGlobalInstanceId_B, fakeUserB);
-		FedInstanceState fedInstanceStateC = new FedInstanceState(fakeInstanceId_C, fakeOrderId_C, fakeGlobalInstanceId_C, fakeUserA);
+		FedInstanceState fedInstanceStateA = new FedInstanceState(fakeInstanceId_A, fakeOrderId_A, new ArrayList<Category>(), new ArrayList<Link>(), fakeGlobalInstanceId_A, fakeUserA);
+		FedInstanceState fedInstanceStateB = new FedInstanceState(fakeInstanceId_B, fakeOrderId_B, new ArrayList<Category>(), new ArrayList<Link>(), fakeGlobalInstanceId_B, fakeUserB);
+		FedInstanceState fedInstanceStateC = new FedInstanceState(fakeInstanceId_C, fakeOrderId_C, new ArrayList<Category>(), new ArrayList<Link>(), fakeGlobalInstanceId_C, fakeUserA);
 		
 		List<FedInstanceState> fakeFedInstanceStateList =  new ArrayList<FedInstanceState>();
 		fakeFedInstanceStateList.add(fedInstanceStateA);
@@ -154,8 +158,8 @@ public class TestInstanceDataStore {
 		String fakeUserA = "UserA";
 		String fakeUserB = "UserB";
 		
-		FedInstanceState fedInstanceStateA = new FedInstanceState(fakeInstanceId_A, fakeOrderId_A, fakeGlobalInstanceId_A, fakeUserA);
-		FedInstanceState fedInstanceStateB = new FedInstanceState(fakeInstanceId_B, fakeOrderId_B, fakeGlobalInstanceId_B, fakeUserB);
+		FedInstanceState fedInstanceStateA = new FedInstanceState(fakeInstanceId_A, fakeOrderId_A, new ArrayList<Category>(), new ArrayList<Link>(), fakeGlobalInstanceId_A, fakeUserA);
+		FedInstanceState fedInstanceStateB = new FedInstanceState(fakeInstanceId_B, fakeOrderId_B, new ArrayList<Category>(), new ArrayList<Link>(), fakeGlobalInstanceId_B, fakeUserB);
 		
 		List<FedInstanceState> fakeFedInstanceStateList =  new ArrayList<FedInstanceState>();
 		fakeFedInstanceStateList.add(fedInstanceStateA);
@@ -171,6 +175,42 @@ public class TestInstanceDataStore {
 	}
 	
 	@Test
+	public void testGetByInstanceIdWithCategories(){
+		
+		String fakeInstanceId_A = "InstanceA";
+		String fakeInstanceId_B = "InstanceB";
+		String fakeOrderId_A = "OrderA";
+		String fakeOrderId_B = "OrderB";
+		String fakeGlobalInstanceId_A = "GlobalInstanceIdA";
+		String fakeGlobalInstanceId_B = "GlobalInstanceIdB";
+		String fakeUserA = "UserA";
+		String fakeUserB = "UserB";
+		
+		List<Category> categories = new ArrayList<Category>();
+		categories.add(new Category("term1", "scheme1", "class1"));
+		categories.add(new Category("term2", "scheme2", "class2"));
+		
+		FedInstanceState fedInstanceStateA = new FedInstanceState(fakeInstanceId_A, fakeOrderId_A, categories, new ArrayList<Link>(), fakeGlobalInstanceId_A, fakeUserA);
+		FedInstanceState fedInstanceStateB = new FedInstanceState(fakeInstanceId_B, fakeOrderId_B, categories, new ArrayList<Link>(), fakeGlobalInstanceId_B, fakeUserB);
+		
+		List<FedInstanceState> fakeFedInstanceStateList =  new ArrayList<FedInstanceState>();
+		fakeFedInstanceStateList.add(fedInstanceStateA);
+		fakeFedInstanceStateList.add(fedInstanceStateB);
+		
+		instanceDb.insert(fakeFedInstanceStateList);
+		
+		FedInstanceState fedInstanceState = instanceDb.getByInstanceId(fakeInstanceId_B);
+		
+		assertNotNull(fedInstanceState);
+		System.out.println(categories);
+		System.out.println(fedInstanceState.getCategories());
+		System.out.println(categories);
+		System.out.println(fedInstanceState.getLinks());
+		assertEquals(fedInstanceStateB, fedInstanceState);
+		
+	}
+	
+	@Test
 	public void testGetByInstanceIdWrongID(){
 		
 		String fakeInstanceId_A = "InstanceA";
@@ -181,8 +221,8 @@ public class TestInstanceDataStore {
 		String fakeUserA = "UserA";
 		String fakeUserB = "UserB";
 		
-		FedInstanceState fedInstanceStateA = new FedInstanceState(fakeInstanceId_A, fakeOrderId_A, "", fakeUserA);
-		FedInstanceState fedInstanceStateB = new FedInstanceState(fakeInstanceId_B, fakeOrderId_B, "", fakeUserB);
+		FedInstanceState fedInstanceStateA = new FedInstanceState(fakeInstanceId_A, fakeOrderId_A, new ArrayList<Category>(), new ArrayList<Link>(), "", fakeUserA);
+		FedInstanceState fedInstanceStateB = new FedInstanceState(fakeInstanceId_B, fakeOrderId_B, new ArrayList<Category>(), new ArrayList<Link>(), "", fakeUserB);
 		
 		List<FedInstanceState> fakeFedInstanceStateList =  new ArrayList<FedInstanceState>();
 		fakeFedInstanceStateList.add(fedInstanceStateA);
@@ -206,8 +246,8 @@ public class TestInstanceDataStore {
 		String fakeUserA = "UserA";
 		String fakeUserB = "UserB";
 		
-		FedInstanceState fedInstanceStateA = new FedInstanceState(fakeInstanceId_A, fakeOrderId_A, "", fakeUserA);
-		FedInstanceState fedInstanceStateB = new FedInstanceState(fakeInstanceId_B, fakeOrderId_B, "", fakeUserB);
+		FedInstanceState fedInstanceStateA = new FedInstanceState(fakeInstanceId_A, fakeOrderId_A, new ArrayList<Category>(), new ArrayList<Link>(), "", fakeUserA);
+		FedInstanceState fedInstanceStateB = new FedInstanceState(fakeInstanceId_B, fakeOrderId_B, new ArrayList<Category>(), new ArrayList<Link>(), "", fakeUserB);
 		
 		List<FedInstanceState> fakeFedInstanceStateList =  new ArrayList<FedInstanceState>();
 		fakeFedInstanceStateList.add(fedInstanceStateA);
@@ -232,8 +272,8 @@ public class TestInstanceDataStore {
 		String fakeUserA = "UserA";
 		String fakeUserB = "UserB";
 		
-		FedInstanceState fedInstanceStateA = new FedInstanceState(fakeInstanceId_A, fakeOrderId_A, "", fakeUserA);
-		FedInstanceState fedInstanceStateB = new FedInstanceState(fakeInstanceId_B, fakeOrderId_B, "", fakeUserB);
+		FedInstanceState fedInstanceStateA = new FedInstanceState(fakeInstanceId_A, fakeOrderId_A,new ArrayList<Category>(), new ArrayList<Link>(), "", fakeUserA);
+		FedInstanceState fedInstanceStateB = new FedInstanceState(fakeInstanceId_B, fakeOrderId_B, new ArrayList<Category>(), new ArrayList<Link>(), "", fakeUserB);
 		
 		List<FedInstanceState> fakeFedInstanceStateList =  new ArrayList<FedInstanceState>();
 		fakeFedInstanceStateList.add(fedInstanceStateA);
@@ -258,8 +298,8 @@ public class TestInstanceDataStore {
 		String fakeUserA = "UserA";
 		String fakeUserB = "UserB";
 		
-		FedInstanceState fedInstanceStateA = new FedInstanceState(fakeInstanceId_A, fakeOrderId_A, "", fakeUserA);
-		FedInstanceState fedInstanceStateB = new FedInstanceState(fakeInstanceId_B, fakeOrderId_B, "", fakeUserB);
+		FedInstanceState fedInstanceStateA = new FedInstanceState(fakeInstanceId_A, fakeOrderId_A, new ArrayList<Category>(), new ArrayList<Link>(), "", fakeUserA);
+		FedInstanceState fedInstanceStateB = new FedInstanceState(fakeInstanceId_B, fakeOrderId_B, new ArrayList<Category>(), new ArrayList<Link>(), "", fakeUserB);
 		
 		List<FedInstanceState> fakeFedInstanceStateList =  new ArrayList<FedInstanceState>();
 		fakeFedInstanceStateList.add(fedInstanceStateA);
@@ -286,8 +326,8 @@ public class TestInstanceDataStore {
 		String fakeUserA = "UserA";
 		String fakeUserB = "UserB";
 		
-		FedInstanceState fedInstanceStateA = new FedInstanceState(fakeInstanceId_A, fakeOrderId_A, "", fakeUserA);
-		FedInstanceState fedInstanceStateB = new FedInstanceState(fakeInstanceId_B, fakeOrderId_B, "", fakeUserB);
+		FedInstanceState fedInstanceStateA = new FedInstanceState(fakeInstanceId_A, fakeOrderId_A, new ArrayList<Category>(), new ArrayList<Link>(), "", fakeUserA);
+		FedInstanceState fedInstanceStateB = new FedInstanceState(fakeInstanceId_B, fakeOrderId_B, new ArrayList<Category>(), new ArrayList<Link>(), "", fakeUserB);
 		
 		List<FedInstanceState> fakeFedInstanceStateList =  new ArrayList<FedInstanceState>();
 		fakeFedInstanceStateList.add(fedInstanceStateA);

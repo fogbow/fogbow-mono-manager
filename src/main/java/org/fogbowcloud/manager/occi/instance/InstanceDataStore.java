@@ -6,15 +6,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Properties;
 
 import org.apache.log4j.Logger;
-import org.fogbowcloud.manager.core.plugins.accounting.ResourceUsage;
+import org.fogbowcloud.manager.occi.OrderDataStoreHelper;
 import org.h2.jdbcx.JdbcConnectionPool;
+import org.json.JSONArray;
+import org.json.JSONException;
 
 public class InstanceDataStore {
 
@@ -23,19 +21,26 @@ public class InstanceDataStore {
 	public static final String ORDER_ID = "order_id";
 	public static final String GLOBAL_INSTANCE_ID = "global_intance_id";
 	public static final String USER = "user";
+	public static final String CATEGORIES = "categories";
+	public static final String LINKS = "links";
 
 	private final String CREATE_TABLE_STATEMENT = "CREATE TABLE IF NOT EXISTS " + INSTANCE_ORDER_TABLE_NAME + "("
-			+ INSTANCE_ID + " VARCHAR(255) PRIMARY KEY, " + ORDER_ID + " VARCHAR (255), " + GLOBAL_INSTANCE_ID
-			+ " VARCHAR (255), " + USER + " VARCHAR (255) )";
+					+ INSTANCE_ID + " VARCHAR(255) PRIMARY KEY, " 
+					+ ORDER_ID + " VARCHAR (255), " 
+					+ GLOBAL_INSTANCE_ID + " VARCHAR (255), " 
+					+ USER + " VARCHAR (255), " 
+					+ CATEGORIES + " TEXT, "
+					+ LINKS + " TEXT)";
 
 	private static final String INSERT_INSTANCE_TABLE_SQL = "INSERT INTO " + INSTANCE_ORDER_TABLE_NAME
-			+ " VALUES(?, ?, ?, ?)";
+			+ " VALUES(?, ?, ?, ?, ?, ?)";
 
-	private static final String UPDATE_INSTANCE_TABLE_SQL = "UPDATE " + INSTANCE_ORDER_TABLE_NAME + " SET " + ORDER_ID
-			+ " = ?, " + GLOBAL_INSTANCE_ID + " = ? WHERE " + INSTANCE_ID + " = ? AND " + USER + " = ?";
+	private static final String UPDATE_INSTANCE_TABLE_SQL = "UPDATE " + INSTANCE_ORDER_TABLE_NAME
+			+ " SET " + ORDER_ID + " = ?, " + GLOBAL_INSTANCE_ID + " = ?, " + CATEGORIES + " = ?, "
+			+ LINKS + " = ? WHERE " + INSTANCE_ID + " = ? AND " + USER + " = ?";
 
 	private static final String GET_ALL_INSTANCE = "SELECT " + INSTANCE_ID + ", " + ORDER_ID + ", " + GLOBAL_INSTANCE_ID
-			+ ", " + USER + "  FROM " + INSTANCE_ORDER_TABLE_NAME;
+			+ ", " + USER + ", " + CATEGORIES + ", " + LINKS + "  FROM " + INSTANCE_ORDER_TABLE_NAME;
 
 	private static final String GET_INSTANCE_BY_USER = GET_ALL_INSTANCE + " WHERE " + USER + " = ? ";
 	private static final String GET_INSTANCE_BY_INSTANCE_ID = GET_ALL_INSTANCE + " WHERE " + INSTANCE_ID + " = ?";
@@ -91,13 +96,16 @@ public class InstanceDataStore {
 		PreparedStatement preparedStatement = null;
 		Connection connection = null;
 		try {
-
 			connection = getConnection();
 			preparedStatement = connection.prepareStatement(INSERT_INSTANCE_TABLE_SQL);
 			preparedStatement.setString(1, fedInstanceState.getFedInstanceId());
 			preparedStatement.setString(2, fedInstanceState.getOrderId());
 			preparedStatement.setString(3, fedInstanceState.getGlobalInstanceId());
 			preparedStatement.setString(4, fedInstanceState.getUser());
+			JSONArray jsonCategories = OrderDataStoreHelper.mountCategoriesJSON(fedInstanceState.getCategories());
+			preparedStatement.setString(5, jsonCategories == null ? null : jsonCategories.toString());
+			JSONArray josnLink = OrderDataStoreHelper.mountLinksJSON(fedInstanceState.getLinks());
+			preparedStatement.setString(6, josnLink == null ? null : josnLink.toString());
 
 			preparedStatement.execute();
 			connection.commit();
@@ -112,6 +120,9 @@ public class InstanceDataStore {
 			} catch (SQLException e1) {
 				LOGGER.error("Couldn't rollback transaction.", e1);
 			}
+			return false;
+		} catch (JSONException e) {
+			LOGGER.error("Error while mounting JSON.", e);
 			return false;
 		} finally {
 			close(preparedStatement, connection);
@@ -152,9 +163,13 @@ public class InstanceDataStore {
 			preparedStatement = connection.prepareStatement(UPDATE_INSTANCE_TABLE_SQL);
 			preparedStatement.setString(1, fedInstanceState.getOrderId());
 			preparedStatement.setString(2, fedInstanceState.getGlobalInstanceId());
-			preparedStatement.setString(3, fedInstanceState.getFedInstanceId());
-			preparedStatement.setString(4, fedInstanceState.getUser());
-
+			JSONArray jsonCategories = OrderDataStoreHelper.mountCategoriesJSON(fedInstanceState.getCategories());
+			preparedStatement.setString(3, jsonCategories == null ? null : jsonCategories.toString());
+			JSONArray josnLink = OrderDataStoreHelper.mountLinksJSON(fedInstanceState.getLinks());
+			preparedStatement.setString(4, josnLink == null ? null : josnLink.toString());
+			preparedStatement.setString(5, fedInstanceState.getFedInstanceId());
+			preparedStatement.setString(6, fedInstanceState.getUser());
+			
 			preparedStatement.execute();
 			connection.commit();
 			return true;
@@ -168,6 +183,9 @@ public class InstanceDataStore {
 			} catch (SQLException e1) {
 				LOGGER.error("Couldn't rollback transaction.", e1);
 			}
+			return false;
+		} catch (JSONException e) {
+			LOGGER.error("Error while mounting JSON.", e);
 			return false;
 		} finally {
 			close(preparedStatement, connection);
@@ -305,6 +323,10 @@ public class InstanceDataStore {
 				preparedStatement.setString(2, fedInstanceState.getOrderId());
 				preparedStatement.setString(3, fedInstanceState.getGlobalInstanceId());
 				preparedStatement.setString(4, fedInstanceState.getUser());
+				JSONArray jsonCategories = OrderDataStoreHelper.mountCategoriesJSON(fedInstanceState.getCategories());
+				preparedStatement.setString(5, jsonCategories == null ? null : jsonCategories.toString());
+				JSONArray josnLink = OrderDataStoreHelper.mountLinksJSON(fedInstanceState.getLinks());
+				preparedStatement.setString(6, josnLink == null ? null : josnLink.toString());
 				preparedStatement.addBatch();
 
 			}
@@ -326,6 +348,9 @@ public class InstanceDataStore {
 			} catch (SQLException e1) {
 				LOGGER.error("Couldn't rollback transaction.", e1);
 			}
+			return false;
+		} catch (JSONException e) {
+			LOGGER.error("Error while mounting JSON.", e);
 			return false;
 		} finally {
 			close(preparedStatement, connection);
@@ -354,13 +379,17 @@ public class InstanceDataStore {
 			if (rs != null) {
 				try {
 					while (rs.next()) {
-						FedInstanceState fedInstanceState = new FedInstanceState(rs.getString(INSTANCE_ID),
-								rs.getString(ORDER_ID), rs.getString(GLOBAL_INSTANCE_ID), rs.getString(USER));
+						FedInstanceState fedInstanceState = new FedInstanceState(
+								rs.getString(INSTANCE_ID),
+								rs.getString(ORDER_ID),
+								OrderDataStoreHelper.getCategoriesFromJSON(rs.getString(CATEGORIES)),
+								OrderDataStoreHelper.getLinksFromJSON(rs.getString(LINKS)),
+								rs.getString(GLOBAL_INSTANCE_ID),
+								rs.getString(USER));
 						fedInstanceStateList.add(fedInstanceState);
 					}
-				} catch (SQLException e) {
-					LOGGER.error("Couldn't get InstancesOrders Map.", e);
-					new HashMap<String, String>();
+				} catch (Exception e) {
+					LOGGER.error("Error while mounting instande from DB.", e);
 				}
 			}
 
