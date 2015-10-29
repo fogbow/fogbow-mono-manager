@@ -1,11 +1,10 @@
 package org.fogbowcloud.manager.occi.instance;
 
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import org.fogbowcloud.manager.occi.instance.Instance.Link;
-import org.fogbowcloud.manager.occi.model.Resource;
+import org.fogbowcloud.manager.occi.model.Category;
 
 public class FedInstanceState {
 
@@ -13,19 +12,14 @@ public class FedInstanceState {
 	private String orderId;
 	private String globalInstanceId;
 	private String user;
-	private Map<String, String> attributesMapping = new HashMap<String, String>();
+	private List<Category> categories = new ArrayList<Category>();
+	private List<Link> links = new ArrayList<Link>();
 	
-//	public void mapAtt(String instanceAttName, String requestAttName) {
-//		attributesMapping.put(instanceAttName, requestAttName);
-//	}
-	
-	public Map<String, String> getAttributesMapping() {
-		return attributesMapping;
-	}
-	
-	public FedInstanceState(String fedInstanceId, String orderId, String globalInstanceId, String user) {
+	public FedInstanceState(String fedInstanceId, String orderId, List<Category> categories, List<Link> links, String globalInstanceId, String user) {
 		this.fedInstanceId = fedInstanceId;
 		this.orderId = orderId;
+		this.categories = categories;
+		this.links = links;
 		this.globalInstanceId = globalInstanceId;
 		this.user = user;
 	}
@@ -55,24 +49,20 @@ public class FedInstanceState {
 		this.user = user;
 	}
 	
-	public List<Resource> getResources() {
-		// TODO Auto-generated method stub
-		return null;
+	public List<Category> getCategories() {
+		return this.categories;
 	}
 	
 	public List<Link> getLinks() {
-		// TODO Auto-generated method stub
-		return null;
+		return this.links;
 	}
 	
 	public void setLinks(List<Link> links) {
-		// TODO Auto-generated method stub
-		
+		this.links = links;
 	}
 	
-	public void addResource(Object object) {
-		// TODO Auto-generated method stub
-		
+	public void addCategory(Category newCategory) {
+		categories.add(newCategory);
 	}
 
 	@Override
@@ -104,7 +94,16 @@ public class FedInstanceState {
 				return false;
 		} else if (!user.equals(other.user))
 			return false;
+		if (categories == null) {
+			if (other.categories != null)
+				return false;
+		} else if (!categories.equals(other.categories))
+			return false;
+		if (links == null) {
+			if (other.links != null)
+				return false;
+		} else if (!links.equals(other.links))
+			return false;
 		return true;
 	}
-
 }

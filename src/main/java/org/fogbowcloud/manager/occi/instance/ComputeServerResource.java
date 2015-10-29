@@ -194,13 +194,20 @@ public class ComputeServerResource extends ServerResource {
 		if (links.isEmpty() && sshInformation != null) {
 			links = generateFakeLink(fedInstanceState.getFedInstanceId(), instance);
 			fedInstanceState.setLinks(links);			
-			fedInstanceState.addResource(ResourceRepository.getInstance().get(ResourceRepository.LINK));
-			fedInstanceState.addResource(ResourceRepository.getInstance().get(ResourceRepository.NETWORK_INTERFACE));			
+			Resource linkRresource = ResourceRepository.getInstance().get(ResourceRepository.LINK);
+			if (linkRresource != null) {
+				fedInstanceState.addCategory(linkRresource.getCategory());
+			}
+			Resource networkInterfaceResource = ResourceRepository.getInstance().get(ResourceRepository.NETWORK_INTERFACE);
+			if (networkInterfaceResource != null) {
+				fedInstanceState.addCategory(networkInterfaceResource.getCategory());			
+			}
 			instanceDB.update(fedInstanceState);
 		}
 		
-		return new Instance(fedInstanceState.getFedInstanceId(), fedInstanceState.getResources(),
-				instance.getAttributes(), links, instance.getState()).toOCCIMessageFormatDetails();
+		return new Instance(fedInstanceState.getFedInstanceId(), ResourceRepository.getInstance()
+				.get(fedInstanceState.getCategories()), instance.getAttributes(), links,
+				instance.getState()).toOCCIMessageFormatDetails();
 	}
 
 	private List<Link> generateFakeLink(String fedInstanceId, Instance instance) {
@@ -242,9 +249,9 @@ public class ComputeServerResource extends ServerResource {
 		instanceAttrs.put("occi.compute.cores", "Not defined");
 		instanceAttrs.put("occi.compute.hostname", "Not defined");
 		
-		return new Instance(fedInstanceState.getFedInstanceId(), fedInstanceState.getResources(),
-				instanceAttrs, fedInstanceState.getLinks(), InstanceState.PENDING)
-				.toOCCIMessageFormatDetails();
+		return new Instance(fedInstanceState.getFedInstanceId(), ResourceRepository.getInstance()
+				.get(fedInstanceState.getCategories()), instanceAttrs, fedInstanceState.getLinks(),
+				InstanceState.PENDING).toOCCIMessageFormatDetails();
 	}
 
 	@Post
@@ -333,8 +340,9 @@ public class ComputeServerResource extends ServerResource {
 		}
 
 		Request relatedOrder = newRequest.get(0);
-		FedInstanceState fedInstanceState = new FedInstanceState(instance.getId(), relatedOrder.getId(), "",
-				relatedOrder.getFederationToken().getUser());
+		FedInstanceState fedInstanceState = new FedInstanceState(instance.getId(),
+				relatedOrder.getId(), categories, new ArrayList<Link>(), "", relatedOrder
+						.getFederationToken().getUser());
 		instanceDB.insert(fedInstanceState);
 
 		setLocationHeader(instance, req);
@@ -612,7 +620,7 @@ public class ComputeServerResource extends ServerResource {
 
 		if (instanceId == null) {
 			LOGGER.info("Removing all instances of token :" + federationAuthToken);
-			String user = application.getUser(federationAuthToken);
+			String user = application.getUser(normalizeAuthToken(federationAuthToken));
 			if (user == null) {
 				throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 			}
@@ -620,10 +628,24 @@ public class ComputeServerResource extends ServerResource {
 			return removeIntances(application, federationAuthToken);
 		}
 
-		FedInstanceState fedInstanceState = instanceDB.getByInstanceId(instanceId);
-		if (fedInstanceState != null && fedInstanceState.getGlobalInstanceId() != null) {
-			instanceDB.deleteByIntanceId(instanceId);
-			return removeInstance(application, federationAuthToken, fedInstanceState.getGlobalInstanceId());
+		if (instanceId.startsWith(FED_INSTANCE_PREFIX)) {
+			LOGGER.info("Removing federated instance " + instanceId);
+			FedInstanceState fedInstanceState = instanceDB.getByInstanceId(instanceId);
+			if (fedInstanceState != null) {
+				instanceDB.deleteByIntanceId(instanceId);
+				application.removeRequest(federationAuthToken, fedInstanceState.getOrderId());
+				if (fedInstanceState.getGlobalInstanceId() != null) {
+					LOGGER.debug("Federated instance " + instanceId + " is related to "
+							+ fedInstanceState.getGlobalInstanceId());
+		
+					return removeInstance(application, federationAuthToken,
+							fedInstanceState.getGlobalInstanceId());
+				} else {
+					LOGGER.debug("Federated instance " + instanceId
+							+ " does not have a fogbow instance related to it yet.");
+					return ResponseConstants.OK;
+				}
+			}
 		}
 
 		LOGGER.info("Removing instance " + instanceId);
