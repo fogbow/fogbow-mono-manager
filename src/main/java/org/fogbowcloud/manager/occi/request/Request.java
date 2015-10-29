@@ -11,9 +11,6 @@ import java.util.Map;
 import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.Token;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.json.JSONArray;
 
 public class Request {
 
@@ -207,11 +204,6 @@ public class Request {
 		long now = new DateUtils().currentTimeMillis();
 		return expirationDate.getTime() < now;
 	}
-
-//	public JSONObject getXOCCIAttrInJSONFormat() throws JSONException {
-//		return new JSONObject().put("xocci_attributes", xOCCIAtt != null ? xOCCIAtt.toString()
-//				: null);
-//	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override

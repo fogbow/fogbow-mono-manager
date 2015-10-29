@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.log4j.Logger;
-import org.fogbowcloud.manager.occi.OrderDataStoreHelper;
+import org.fogbowcloud.manager.occi.JSONHelper;
 import org.h2.jdbcx.JdbcConnectionPool;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -43,14 +43,14 @@ public class InstanceDataStore {
 			+ ", " + USER + ", " + CATEGORIES + ", " + LINKS + "  FROM " + INSTANCE_ORDER_TABLE_NAME;
 
 	private static final String GET_INSTANCE_BY_USER = GET_ALL_INSTANCE + " WHERE " + USER + " = ? ";
-	private static final String GET_INSTANCE_BY_INSTANCE_ID = GET_ALL_INSTANCE + " WHERE " + INSTANCE_ID + " = ?";
-	private static final String GET_INSTANCE_BY_ORDER_ID = GET_ALL_INSTANCE + " WHERE " + ORDER_ID + " = ?";
+	private static final String GET_INSTANCE_BY_INSTANCE_ID = GET_ALL_INSTANCE + " WHERE " + INSTANCE_ID + " = ? AND " + USER + " = ?";
+	private static final String GET_INSTANCE_BY_ORDER_ID = GET_ALL_INSTANCE + " WHERE " + ORDER_ID + " = ? AND " + USER + " = ?";
 
 	private static final String DELETE_ALL_INSTANCE_TABLE_SQL = "DELETE FROM " + INSTANCE_ORDER_TABLE_NAME;
 	private static final String DELETE_BY_USER = "DELETE FROM " + INSTANCE_ORDER_TABLE_NAME + " WHERE " + USER
 			+ " = ? ";
 	private static final String DELETE_BY_INSTANCE_ID_SQL = "DELETE FROM " + INSTANCE_ORDER_TABLE_NAME + " WHERE "
-			+ INSTANCE_ID + " = ?";
+			+ INSTANCE_ID + " = ? AND " + USER + " = ?";
 
 	private static final Logger LOGGER = Logger.getLogger(InstanceDataStore.class);
 
@@ -102,9 +102,9 @@ public class InstanceDataStore {
 			preparedStatement.setString(2, fedInstanceState.getOrderId());
 			preparedStatement.setString(3, fedInstanceState.getGlobalInstanceId());
 			preparedStatement.setString(4, fedInstanceState.getUser());
-			JSONArray jsonCategories = OrderDataStoreHelper.mountCategoriesJSON(fedInstanceState.getCategories());
+			JSONArray jsonCategories = JSONHelper.mountCategoriesJSON(fedInstanceState.getCategories());
 			preparedStatement.setString(5, jsonCategories == null ? null : jsonCategories.toString());
-			JSONArray josnLink = OrderDataStoreHelper.mountLinksJSON(fedInstanceState.getLinks());
+			JSONArray josnLink = JSONHelper.mountLinksJSON(fedInstanceState.getLinks());
 			preparedStatement.setString(6, josnLink == null ? null : josnLink.toString());
 
 			preparedStatement.execute();
@@ -163,9 +163,9 @@ public class InstanceDataStore {
 			preparedStatement = connection.prepareStatement(UPDATE_INSTANCE_TABLE_SQL);
 			preparedStatement.setString(1, fedInstanceState.getOrderId());
 			preparedStatement.setString(2, fedInstanceState.getGlobalInstanceId());
-			JSONArray jsonCategories = OrderDataStoreHelper.mountCategoriesJSON(fedInstanceState.getCategories());
+			JSONArray jsonCategories = JSONHelper.mountCategoriesJSON(fedInstanceState.getCategories());
 			preparedStatement.setString(3, jsonCategories == null ? null : jsonCategories.toString());
-			JSONArray josnLink = OrderDataStoreHelper.mountLinksJSON(fedInstanceState.getLinks());
+			JSONArray josnLink = JSONHelper.mountLinksJSON(fedInstanceState.getLinks());
 			preparedStatement.setString(4, josnLink == null ? null : josnLink.toString());
 			preparedStatement.setString(5, fedInstanceState.getFedInstanceId());
 			preparedStatement.setString(6, fedInstanceState.getUser());
@@ -210,12 +210,12 @@ public class InstanceDataStore {
 		return executeQueryStatement(queryStatement, user);
 	}
 
-	public FedInstanceState getByInstanceId(String instanceId) {
+	public FedInstanceState getByInstanceId(String instanceId, String user) {
 
 		LOGGER.debug("Getting instances id with related orders by Instance ID [" + instanceId + "]");
 
 		String queryStatement = GET_INSTANCE_BY_INSTANCE_ID;
-		List<FedInstanceState> fedInstanceStateList = executeQueryStatement(queryStatement, instanceId);
+		List<FedInstanceState> fedInstanceStateList = executeQueryStatement(queryStatement, instanceId, user);
 		if (fedInstanceStateList != null && !fedInstanceStateList.isEmpty()) {
 			return fedInstanceStateList.get(0);
 		}
@@ -223,13 +223,13 @@ public class InstanceDataStore {
 
 	}
 
-	public FedInstanceState getByOrderId(String orderId) {
+	public FedInstanceState getByOrderId(String orderId, String user) {
 
 		LOGGER.debug("Getting instances id with related orders by Order ID [" + orderId + "]");
 
 		String queryStatement = GET_INSTANCE_BY_ORDER_ID;
 
-		List<FedInstanceState> fedInstanceStateList = executeQueryStatement(queryStatement, orderId);
+		List<FedInstanceState> fedInstanceStateList = executeQueryStatement(queryStatement, orderId, user);
 
 		if (fedInstanceStateList != null && !fedInstanceStateList.isEmpty()) {
 			return fedInstanceStateList.get(0);
@@ -283,7 +283,7 @@ public class InstanceDataStore {
 		}
 	}
 
-	public boolean deleteByIntanceId(String instanceId) {
+	public boolean deleteByIntanceId(String instanceId, String user) {
 
 		LOGGER.debug("Deleting all instances id with related orders with id");
 
@@ -294,6 +294,7 @@ public class InstanceDataStore {
 			conn = getConnection();
 			statement = conn.prepareStatement(DELETE_BY_INSTANCE_ID_SQL);
 			statement.setString(1, instanceId);
+			statement.setString(2, user);
 			boolean result = statement.execute();
 			conn.commit();
 			return result;
@@ -323,9 +324,9 @@ public class InstanceDataStore {
 				preparedStatement.setString(2, fedInstanceState.getOrderId());
 				preparedStatement.setString(3, fedInstanceState.getGlobalInstanceId());
 				preparedStatement.setString(4, fedInstanceState.getUser());
-				JSONArray jsonCategories = OrderDataStoreHelper.mountCategoriesJSON(fedInstanceState.getCategories());
+				JSONArray jsonCategories = JSONHelper.mountCategoriesJSON(fedInstanceState.getCategories());
 				preparedStatement.setString(5, jsonCategories == null ? null : jsonCategories.toString());
-				JSONArray josnLink = OrderDataStoreHelper.mountLinksJSON(fedInstanceState.getLinks());
+				JSONArray josnLink = JSONHelper.mountLinksJSON(fedInstanceState.getLinks());
 				preparedStatement.setString(6, josnLink == null ? null : josnLink.toString());
 				preparedStatement.addBatch();
 
@@ -382,8 +383,8 @@ public class InstanceDataStore {
 						FedInstanceState fedInstanceState = new FedInstanceState(
 								rs.getString(INSTANCE_ID),
 								rs.getString(ORDER_ID),
-								OrderDataStoreHelper.getCategoriesFromJSON(rs.getString(CATEGORIES)),
-								OrderDataStoreHelper.getLinksFromJSON(rs.getString(LINKS)),
+								JSONHelper.getCategoriesFromJSON(rs.getString(CATEGORIES)),
+								JSONHelper.getLinksFromJSON(rs.getString(LINKS)),
 								rs.getString(GLOBAL_INSTANCE_ID),
 								rs.getString(USER));
 						fedInstanceStateList.add(fedInstanceState);

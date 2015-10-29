@@ -6,7 +6,7 @@ import java.util.HashSet;
 import java.util.Map;
 
 import org.fogbowcloud.manager.core.model.DateUtils;
-import org.fogbowcloud.manager.occi.OrderDataStoreHelper;
+import org.fogbowcloud.manager.occi.JSONHelper;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -90,7 +90,7 @@ public class Token {
 		String accessId = jsonObject.optString("access_id");
 		String user = jsonObject.optString("user");
 		return new Token(!accessId.isEmpty() ? accessId : null, !user.isEmpty() ? user : null,
-				null, OrderDataStoreHelper.toMap(jsonObject.optString("attributes")));
+				null, JSONHelper.toMap(jsonObject.optString("attributes")));
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })

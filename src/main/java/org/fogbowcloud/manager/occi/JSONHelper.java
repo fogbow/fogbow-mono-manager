@@ -11,7 +11,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class OrderDataStoreHelper {
+public class JSONHelper {
 		
 	public static Map<String, String> toMap(String jsonStr) {
 		Map<String, String> newMap = new HashMap<String, String>();
