@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Properties;
 
 import org.apache.log4j.Logger;
-import org.fogbowcloud.manager.occi.OrderDataStoreHelper;
+import org.fogbowcloud.manager.occi.JSONHelper;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.h2.jdbcx.JdbcConnectionPool;
 import org.json.JSONException;
@@ -94,9 +94,9 @@ public class OrderDataStore {
 			orderStmt.setBoolean(7, order.isLocal());
 			orderStmt.setString(8, order.getState() != null ? 
 					order.getState().toString() : null);
-			orderStmt.setString(9, OrderDataStoreHelper.mountCategoriesJSON(order.getCategories()).toString());
+			orderStmt.setString(9, JSONHelper.mountCategoriesJSON(order.getCategories()).toString());
 			orderStmt.setTimestamp(10, new Timestamp(new Date().getTime()));
-			orderStmt.setString(11, OrderDataStoreHelper.mountXOCCIAttrJSON(order.getxOCCIAtt()).toString());
+			orderStmt.setString(11, JSONHelper.mountXOCCIAttrJSON(order.getxOCCIAtt()).toString());
 			orderStmt.executeUpdate();
 			
 			connection.commit();
@@ -141,8 +141,8 @@ public class OrderDataStore {
 				orders.add(new Request(resultSet.getString(1), Token.fromJSON(resultSet
 						.getString(5)), resultSet.getString(2), resultSet.getString(3), resultSet
 						.getString(4), resultSet.getLong(6), resultSet.getBoolean(7), RequestState
-						.getState(resultSet.getString(8)), OrderDataStoreHelper.getCategoriesFromJSON(resultSet
-						.getString(9)), OrderDataStoreHelper.getXOCCIAttrFromJSON(resultSet.getString(10))));
+						.getState(resultSet.getString(8)), JSONHelper.getCategoriesFromJSON(resultSet
+						.getString(9)), JSONHelper.getXOCCIAttrFromJSON(resultSet.getString(10))));
 			}
 					
 			connection.commit();
@@ -250,9 +250,9 @@ public class OrderDataStore {
 			updateOrderStmt.setBoolean(6, order.isLocal());
 			updateOrderStmt.setString(7, order.getState() != null ? 
 					order.getState().toString() : null);
-			updateOrderStmt.setString(8, OrderDataStoreHelper.mountCategoriesJSON(order.getCategories()).toString());
+			updateOrderStmt.setString(8, JSONHelper.mountCategoriesJSON(order.getCategories()).toString());
 			updateOrderStmt.setTimestamp(9, new Timestamp(new Date().getTime()));			
-			updateOrderStmt.setString(10, OrderDataStoreHelper.mountXOCCIAttrJSON(order.getxOCCIAtt()).toString());
+			updateOrderStmt.setString(10, JSONHelper.mountXOCCIAttrJSON(order.getxOCCIAtt()).toString());
 			updateOrderStmt.setString(11, order.getId());
 			updateOrderStmt.executeUpdate();
 			

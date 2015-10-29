@@ -121,7 +121,12 @@ public class ComputeServerResource extends ServerResource {
 		Request relatedOrder = null;
 
 		if (instanceId.startsWith(FED_INSTANCE_PREFIX)) {
-			FedInstanceState fedInstanceState = instanceDB.getByInstanceId(instanceId);
+			String user = application.getUser(normalizeAuthToken(federationAuthToken));
+			if (user == null) {
+				throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
+			}
+			
+			FedInstanceState fedInstanceState = instanceDB.getByInstanceId(instanceId, user);
 
 			relatedOrder = application.getRequest(federationAuthToken, fedInstanceState.getOrderId());
 			if (!relatedOrder.getState().in(RequestState.FULFILLED)) {
@@ -139,10 +144,15 @@ public class ComputeServerResource extends ServerResource {
 				Instance instance;
 				// if it is instance created by post-compute
 				if (relatedOrder != null) {
+					String user = application.getUser(normalizeAuthToken(federationAuthToken));
+					if (user == null) {
+						throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
+					}
+					
 					instance = application.getInstance(federationAuthToken, relatedOrder.getGlobalInstanceId());
 
 					// updating instance DB
-					FedInstanceState fedInstanceState = instanceDB.getByInstanceId(instanceId);
+					FedInstanceState fedInstanceState = instanceDB.getByInstanceId(instanceId, user);
 					fedInstanceState.setGlobalInstanceId(relatedOrder.getGlobalInstanceId());
 					instanceDB.update(fedInstanceState);
 
@@ -627,9 +637,15 @@ public class ComputeServerResource extends ServerResource {
 
 		if (instanceId.startsWith(FED_INSTANCE_PREFIX)) {
 			LOGGER.info("Removing federated instance " + instanceId);
-			FedInstanceState fedInstanceState = instanceDB.getByInstanceId(instanceId);
+			
+			String user = application.getUser(normalizeAuthToken(federationAuthToken));
+			if (user == null) {
+				throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
+			}
+			
+			FedInstanceState fedInstanceState = instanceDB.getByInstanceId(instanceId, user);
 			if (fedInstanceState != null) {
-				instanceDB.deleteByIntanceId(instanceId);
+				instanceDB.deleteByIntanceId(instanceId, user);
 				application.removeRequest(federationAuthToken, fedInstanceState.getOrderId());
 				if (fedInstanceState.getGlobalInstanceId() != null) {
 					LOGGER.debug("Federated instance " + instanceId + " is related to "

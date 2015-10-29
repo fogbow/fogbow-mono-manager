@@ -6,7 +6,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.fogbowcloud.manager.occi.OrderDataStoreHelper;
+import org.fogbowcloud.manager.occi.JSONHelper;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.Resource;
 import org.json.JSONException;
@@ -253,7 +253,7 @@ public class Instance {
 
 		public static Link fromJSON(String linkJSON) throws JSONException {
 			JSONObject jsonObject = new JSONObject(linkJSON);
-			return new Link(jsonObject.optString("name"), OrderDataStoreHelper.toMap("attributes"));
+			return new Link(jsonObject.optString("name"), JSONHelper.toMap("attributes"));
 		}
 	}
 

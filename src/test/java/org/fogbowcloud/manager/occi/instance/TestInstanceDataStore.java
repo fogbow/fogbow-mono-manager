@@ -167,7 +167,7 @@ public class TestInstanceDataStore {
 		
 		instanceDb.insert(fakeFedInstanceStateList);
 		
-		FedInstanceState fedInstanceState = instanceDb.getByInstanceId(fakeInstanceId_B);
+		FedInstanceState fedInstanceState = instanceDb.getByInstanceId(fakeInstanceId_B, fakeUserB);
 		
 		assertNotNull(fedInstanceState);
 		assertEquals(fedInstanceStateB, fedInstanceState);
@@ -199,7 +199,7 @@ public class TestInstanceDataStore {
 		
 		instanceDb.insert(fakeFedInstanceStateList);
 		
-		FedInstanceState fedInstanceState = instanceDb.getByInstanceId(fakeInstanceId_B);
+		FedInstanceState fedInstanceState = instanceDb.getByInstanceId(fakeInstanceId_B, fakeUserB);
 		
 		assertNotNull(fedInstanceState);
 		System.out.println(categories);
@@ -230,7 +230,7 @@ public class TestInstanceDataStore {
 		
 		instanceDb.insert(fakeFedInstanceStateList);
 		
-		FedInstanceState fedInstanceState = instanceDb.getByInstanceId(fakeInstanceId_C);
+		FedInstanceState fedInstanceState = instanceDb.getByInstanceId(fakeInstanceId_C, fakeUserB);
 		
 		assertNull(fedInstanceState);
 		
@@ -255,11 +255,81 @@ public class TestInstanceDataStore {
 		
 		instanceDb.insert(fakeFedInstanceStateList);
 		
-		FedInstanceState fedInstanceState = instanceDb.getByOrderId(fakeOrderId_A);
+		FedInstanceState fedInstanceState = instanceDb.getByOrderId(fakeOrderId_A, fakeUserA);
 		
 		assertNotNull(fedInstanceState);
 		assertEquals(fedInstanceStateA, fedInstanceState);
 		
+	}
+	
+	@Test
+	public void testGetByOrderIdWithWrongUser(){		
+		String fakeInstanceId_A = "InstanceA";
+		String fakeInstanceId_B = "InstanceB";
+		String fakeOrderId_A = "OrderA";
+		String fakeOrderId_B = "OrderB";
+		String fakeUserA = "UserA";
+		String fakeUserB = "UserB";
+		
+		FedInstanceState fedInstanceStateA = new FedInstanceState(fakeInstanceId_A, fakeOrderId_A, new ArrayList<Category>(), new ArrayList<Link>(), "", fakeUserA);
+		FedInstanceState fedInstanceStateB = new FedInstanceState(fakeInstanceId_B, fakeOrderId_B, new ArrayList<Category>(), new ArrayList<Link>(), "", fakeUserB);
+		
+		List<FedInstanceState> fakeFedInstanceStateList =  new ArrayList<FedInstanceState>();
+		fakeFedInstanceStateList.add(fedInstanceStateA);
+		fakeFedInstanceStateList.add(fedInstanceStateB);
+		
+		instanceDb.insert(fakeFedInstanceStateList);
+		
+		FedInstanceState fedInstanceState = instanceDb.getByOrderId(fakeOrderId_A, fakeUserB);
+
+		assertNull(fedInstanceState);
+		assertEquals(2, instanceDb.getAll().size());
+	}
+	
+	@Test
+	public void testGetByInstanceIdWithWrongUser(){		
+		String fakeInstanceId_A = "InstanceA";
+		String fakeInstanceId_B = "InstanceB";
+		String fakeOrderId_A = "OrderA";
+		String fakeOrderId_B = "OrderB";
+		String fakeUserA = "UserA";
+		String fakeUserB = "UserB";
+		
+		FedInstanceState fedInstanceStateA = new FedInstanceState(fakeInstanceId_A, fakeOrderId_A, new ArrayList<Category>(), new ArrayList<Link>(), "", fakeUserA);
+		FedInstanceState fedInstanceStateB = new FedInstanceState(fakeInstanceId_B, fakeOrderId_B, new ArrayList<Category>(), new ArrayList<Link>(), "", fakeUserB);
+		
+		List<FedInstanceState> fakeFedInstanceStateList =  new ArrayList<FedInstanceState>();
+		fakeFedInstanceStateList.add(fedInstanceStateA);
+		fakeFedInstanceStateList.add(fedInstanceStateB);
+		
+		instanceDb.insert(fakeFedInstanceStateList);
+		
+		FedInstanceState fedInstanceState = instanceDb.getByInstanceId(fakeInstanceId_A, fakeUserB);
+
+		assertNull(fedInstanceState);
+		assertEquals(2, instanceDb.getAll().size());
+	}
+	
+	@Test
+	public void testDeleteByOrderIdWithWrongUser(){		
+		String fakeInstanceId_A = "InstanceA";
+		String fakeInstanceId_B = "InstanceB";
+		String fakeOrderId_A = "OrderA";
+		String fakeOrderId_B = "OrderB";
+		String fakeUserA = "UserA";
+		String fakeUserB = "UserB";
+		
+		FedInstanceState fedInstanceStateA = new FedInstanceState(fakeInstanceId_A, fakeOrderId_A, new ArrayList<Category>(), new ArrayList<Link>(), "", fakeUserA);
+		FedInstanceState fedInstanceStateB = new FedInstanceState(fakeInstanceId_B, fakeOrderId_B, new ArrayList<Category>(), new ArrayList<Link>(), "", fakeUserB);
+		
+		List<FedInstanceState> fakeFedInstanceStateList =  new ArrayList<FedInstanceState>();
+		fakeFedInstanceStateList.add(fedInstanceStateA);
+		fakeFedInstanceStateList.add(fedInstanceStateB);
+		
+		instanceDb.insert(fakeFedInstanceStateList);
+		
+		assertFalse(instanceDb.deleteByIntanceId(fakeInstanceId_A, fakeUserB));
+		assertEquals(2, instanceDb.getAll().size());
 	}
 	
 	@Test
@@ -334,7 +404,7 @@ public class TestInstanceDataStore {
 		fakeFedInstanceStateList.add(fedInstanceStateB);
 		
 		instanceDb.insert(fakeFedInstanceStateList);
-		instanceDb.deleteByIntanceId(fakeInstanceId_A);
+		instanceDb.deleteByIntanceId(fakeInstanceId_A, fakeUserA);
 		List<FedInstanceState> fedInstanceStateList = instanceDb.getAll();
 		
 		assertNotNull(fedInstanceStateList);
