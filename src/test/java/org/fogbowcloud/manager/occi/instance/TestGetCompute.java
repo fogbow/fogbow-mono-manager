@@ -163,9 +163,6 @@ public class TestGetCompute {
 				Mockito.mock(AccountingPlugin.class), Mockito.mock(BenchmarkingPlugin.class), requestsToAdd,
 				localCredentialsPlugin);
 
-		File file = new File("./"+INSTANCE_DB_FILE);
-		file.exists();
-		file.delete();
 		instanceDB = new InstanceDataStore(INSTANCE_DB_URL);
 	}
 

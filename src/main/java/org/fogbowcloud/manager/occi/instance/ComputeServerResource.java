@@ -175,6 +175,7 @@ public class ComputeServerResource extends ServerResource {
 				}
 
 				return new StringRepresentation(instance.toOCCIMessageFormatDetails(), MediaType.TEXT_PLAIN);
+				
 			} catch (OCCIException e) {
 				Response response = new Response(getRequest());
 
@@ -352,13 +353,12 @@ public class ComputeServerResource extends ServerResource {
 						.getFederationToken().getUser());
 		instanceDB.insert(fedInstanceState);
 
-		setLocationHeader(instance, req);
-
-		// TODO check accpet and return
-		if (acceptType.equals(OCCIHeaders.OCCI_ACCEPT)) {
-			return new StringRepresentation(ResponseConstants.OK, new MediaType(OCCIHeaders.OCCI_ACCEPT));
+		if (acceptType.equals(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE)) {
+			String requestEndpoint = getHostRef(req) + req.getHttpCall().getRequestUri();
+			return new StringRepresentation(HeaderUtils.X_OCCI_LOCATION_PREFIX+generateLocationHeader(instance, requestEndpoint), new MediaType(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE));
 		}
 
+		setLocationHeader(instance, req);
 		return new StringRepresentation(ResponseConstants.OK);
 	}
 
