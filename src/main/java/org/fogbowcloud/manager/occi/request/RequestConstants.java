@@ -26,6 +26,14 @@ public class RequestConstants {
 	public static final String PUBLIC_KEY_TERM = "fogbow_public_key";
 	public static final String CREDENTIALS_RESOURCE_SCHEME = "http://schemas.fogbowcloud/credentials#";	
 	
-	// compute endpoint
+	// OCCI constants
 	public static final String COMPUTE_TERM = "compute";
+	public static final String INFRASTRUCTURE_OCCI_SCHEME = "http://schemas.ogf.org/occi/infrastructure#";
+	public static final String RESOURCE_TPL_OCCI_SCHEME = "http://schemas.ogf.org/occi/infrastructure#resource_tpl";
+	public static final String RESOURCE_OCCI_SCHEME = "http://schemas.ogf.org/occi/core#resource";
+	public static final String OS_TPL_OCCI_SCHEME = "http://schemas.ogf.org/occi/infrastructure#os_tpl";
+	public static final String RESOURCE_TPL_TERM = "resource_tpl";
+	public static final String NETWORK_INTERFACE_TERM = "networkinterface";
+	public static final String LINK_TERM = "link";
+	public static final String OS_TPL_TERM = "os_tpl";
 }

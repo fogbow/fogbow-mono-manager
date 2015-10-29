@@ -16,15 +16,7 @@ import org.json.JSONObject;
 
 public class ResourceRepository {
 	
-	protected static final String OS_TPL = "os_tpl";
-	public static final String LINK = "link";
-	public static final String NETWORK_INTERFACE = "networkinterface";
-	protected static final String SCHEMAS_OCCI_INFRASTRUCTURE = "http://schemas.ogf.org/occi/infrastructure#";
-	protected static final String RESOURCE_TPL = "resource_tpl";
 	private static final Logger LOGGER = Logger.getLogger(ResourceRepository.class);
-	public static final String OS_TPL_OCCI_SCHEME = "http://schemas.ogf.org/occi/infrastructure#os_tpl";
-	public static final String RESOURCE_TPL_OCCI_SCHEME = "http://schemas.ogf.org/occi/infrastructure#resource_tpl";
-	private static final String RESOURCE_OCCI_SCHEME = "http://schemas.ogf.org/occi/core#resource";
 	private static ResourceRepository instance;
 	private static final String FOGBOWCLOUD_ENDPOINT = "http://localhost:8182";
 	private List<Resource> resources = new ArrayList<Resource>();
@@ -45,7 +37,7 @@ public class ResourceRepository {
 		Resource fogbowRequest = new Resource(RequestConstants.TERM, RequestConstants.SCHEME,
 				RequestConstants.KIND_CLASS, RequestAttribute.getValues(), new ArrayList<String>(),
 				FOGBOWCLOUD_ENDPOINT + "/" + RequestConstants.TERM + "/", "Request new Instances",
-				RESOURCE_OCCI_SCHEME);
+				RequestConstants.RESOURCE_OCCI_SCHEME);
 		
 		//TODO implement properties of attributes. For example, {immutable}
 		List<String> computeAttributes = new ArrayList<String>();
@@ -62,9 +54,9 @@ public class ResourceRepository {
 		computeActions.add("http://schemas.ogf.org/occi/infrastructure/compute/action#restart");
 		computeActions.add("http://schemas.ogf.org/occi/infrastructure/compute/action#suspend");
 
-		Resource compute = new Resource("compute", SCHEMAS_OCCI_INFRASTRUCTURE,
+		Resource compute = new Resource(RequestConstants.COMPUTE_TERM, RequestConstants.INFRASTRUCTURE_OCCI_SCHEME,
 				RequestConstants.KIND_CLASS, computeAttributes, computeActions, FOGBOWCLOUD_ENDPOINT + "/" + "compute/",
-				"Compute Resource", RESOURCE_OCCI_SCHEME);
+				"Compute Resource", RequestConstants.RESOURCE_OCCI_SCHEME);
 		
 		//userdata
 		Resource fogbowUserdata = new Resource(RequestConstants.USER_DATA_TERM,
@@ -88,7 +80,7 @@ public class ResourceRepository {
 			flavorsResources.add(new Resource(flavor.getName(),
 					RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS,
 					new ArrayList<String>(), new ArrayList<String>(), FOGBOWCLOUD_ENDPOINT + "/"
-							+ flavor.getName() + "/", flavor.getName(), RESOURCE_TPL_OCCI_SCHEME));
+							+ flavor.getName() + "/", flavor.getName(), RequestConstants.RESOURCE_TPL_OCCI_SCHEME));
 		}
 		
 		if (!flavorsResources.isEmpty()) {
@@ -100,12 +92,12 @@ public class ResourceRepository {
 		resources.add(compute);
 		resources.add(fogbowUserdata);
 
-		Resource resourceTlp = new Resource(RESOURCE_TPL,
-				SCHEMAS_OCCI_INFRASTRUCTURE, RequestConstants.MIXIN_CLASS,
+		Resource resourceTlp = new Resource(RequestConstants.RESOURCE_TPL_TERM,
+				RequestConstants.INFRASTRUCTURE_OCCI_SCHEME, RequestConstants.MIXIN_CLASS,
 				new ArrayList<String>(), new ArrayList<String>(), FOGBOWCLOUD_ENDPOINT + "/resource_tpl/",
 				"", "");
-		Resource osTlp = new Resource(OS_TPL,
-				SCHEMAS_OCCI_INFRASTRUCTURE, RequestConstants.MIXIN_CLASS,
+		Resource osTlp = new Resource(RequestConstants.OS_TPL_TERM,
+				RequestConstants.INFRASTRUCTURE_OCCI_SCHEME, RequestConstants.MIXIN_CLASS,
 				new ArrayList<String>(), new ArrayList<String>(), FOGBOWCLOUD_ENDPOINT + "/os_tpl/",
 				"", "");
 		
@@ -124,7 +116,7 @@ public class ResourceRepository {
 		List<String> linkAtt = new ArrayList<String>();
 		linkAtt.add("occi.core.source");
 		linkAtt.add("occi.core.target");
-		Resource link = new Resource(LINK, "http://schemas.ogf.org/occi/core#",
+		Resource link = new Resource(RequestConstants.LINK_TERM, "http://schemas.ogf.org/occi/core#",
 				RequestConstants.KIND_CLASS, linkAtt, new ArrayList<String>(), FOGBOWCLOUD_ENDPOINT
 						+ "/link/", "Link", "http://schemas.ogf.org/occi/core#entity");
 		
@@ -179,7 +171,7 @@ public class ResourceRepository {
 		}
 		return new Resource(flavorName, RequestConstants.TEMPLATE_RESOURCE_SCHEME,
 				RequestConstants.MIXIN_CLASS, new ArrayList<String>(), new ArrayList<String>(),
-				FOGBOWCLOUD_ENDPOINT + "/" + flavorName + "/", flavorName, RESOURCE_TPL_OCCI_SCHEME);
+				FOGBOWCLOUD_ENDPOINT + "/" + flavorName + "/", flavorName, RequestConstants.RESOURCE_TPL_OCCI_SCHEME);
 	}
 	
 	public void addImageResource(String imageName){
@@ -193,7 +185,7 @@ public class ResourceRepository {
 	public static Resource createImageResource(String imageName) {
 		Resource imageResource = new Resource(imageName, RequestConstants.TEMPLATE_OS_SCHEME,
 				RequestConstants.MIXIN_CLASS, new ArrayList<String>(), new ArrayList<String>(),
-				FOGBOWCLOUD_ENDPOINT + "/" + imageName + "/", imageName + " image", OS_TPL_OCCI_SCHEME);
+				FOGBOWCLOUD_ENDPOINT + "/" + imageName + "/", imageName + " image", RequestConstants.OS_TPL_OCCI_SCHEME);
 		return imageResource;
 	}
 	

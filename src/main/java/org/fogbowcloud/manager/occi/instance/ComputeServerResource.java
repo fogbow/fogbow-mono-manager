@@ -206,11 +206,11 @@ public class ComputeServerResource extends ServerResource {
 		if (links.isEmpty() && sshInformation != null) {
 			links = generateFakeLink(fedInstanceState.getFedInstanceId(), instance);
 			fedInstanceState.setLinks(links);			
-			Resource linkRresource = ResourceRepository.getInstance().get(ResourceRepository.LINK);
+			Resource linkRresource = ResourceRepository.getInstance().get(RequestConstants.LINK_TERM);
 			if (linkRresource != null) {
 				fedInstanceState.addCategory(linkRresource.getCategory());
 			}
-			Resource networkInterfaceResource = ResourceRepository.getInstance().get(ResourceRepository.NETWORK_INTERFACE);
+			Resource networkInterfaceResource = ResourceRepository.getInstance().get(RequestConstants.NETWORK_INTERFACE_TERM);
 			if (networkInterfaceResource != null) {
 				fedInstanceState.addCategory(networkInterfaceResource.getCategory());			
 			}
@@ -307,7 +307,7 @@ public class ComputeServerResource extends ServerResource {
 		Map<String, String> requestXOCCIAtt = new HashMap<String, String>();
 
 		// os tpl
-		List<Resource> osTplResources = filterByRelProperty(ResourceRepository.OS_TPL_OCCI_SCHEME, resources);
+		List<Resource> osTplResources = filterByRelProperty(RequestConstants.OS_TPL_OCCI_SCHEME, resources);
 		if (osTplResources.size() != 1) {
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}
@@ -323,7 +323,7 @@ public class ComputeServerResource extends ServerResource {
 				.add(new Category(imageName, RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
 
 		// resource tpl
-		List<Resource> resourceTplResources = filterByRelProperty(ResourceRepository.RESOURCE_TPL_OCCI_SCHEME,
+		List<Resource> resourceTplResources = filterByRelProperty(RequestConstants.RESOURCE_TPL_OCCI_SCHEME,
 				resources);
 		String fogbowRequirements = getRequirements(application, resourceTplResources);		
 		requestXOCCIAtt.put(RequestAttribute.REQUIREMENTS.getValue(), fogbowRequirements);
@@ -399,7 +399,8 @@ public class ComputeServerResource extends ServerResource {
 				String userdataDataAtt = properties.getProperty(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX
 						+ RequestAttribute.EXTRA_USER_DATA_ATT.getValue());
 				
-				String userDataContent = xOCCIAtt.get(userdataDataAtt);
+				String userDataContent = new String(Base64.decodeBase64(xOCCIAtt.get(userdataDataAtt)));
+				
 				String userDataContentType = getTypeFromUserData(userDataContent);
 
 				String userData = userDataContent.replace("\n", UserdataUtils.USER_DATA_LINE_BREAKER);
