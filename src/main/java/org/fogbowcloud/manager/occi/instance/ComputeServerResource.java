@@ -43,9 +43,10 @@ import org.restlet.util.Series;
 
 public class ComputeServerResource extends ServerResource {
 
+	private static final String DEFAULT_INSTANCE_COUNT = "1";
 	protected static final String NO_INSTANCES_MESSAGE = "There are not instances.";
 	private static final Logger LOGGER = Logger.getLogger(ComputeServerResource.class);
-	private static final String FED_INSTANCE_PREFIX = "federated_instance_";
+	protected static final String FED_INSTANCE_PREFIX = "federated_instance_";
 
 	protected static final String OCCI_NETWORK_INTERFACE_GATEWAY = "occi.networkinterface.gateway";
 	protected static final String OCCI_NETWORK_INTERFACE_MAC = "occi.networkinterface.mac";
@@ -194,13 +195,20 @@ public class ComputeServerResource extends ServerResource {
 		if (links.isEmpty() && sshInformation != null) {
 			links = generateFakeLink(fedInstanceState.getFedInstanceId(), instance);
 			fedInstanceState.setLinks(links);			
-			fedInstanceState.addResource(ResourceRepository.getInstance().get(ResourceRepository.LINK));
-			fedInstanceState.addResource(ResourceRepository.getInstance().get(ResourceRepository.NETWORK_INTERFACE));			
+			Resource linkRresource = ResourceRepository.getInstance().get(ResourceRepository.LINK);
+			if (linkRresource != null) {
+				fedInstanceState.addCategory(linkRresource.getCategory());
+			}
+			Resource networkInterfaceResource = ResourceRepository.getInstance().get(ResourceRepository.NETWORK_INTERFACE);
+			if (networkInterfaceResource != null) {
+				fedInstanceState.addCategory(networkInterfaceResource.getCategory());			
+			}
 			instanceDB.update(fedInstanceState);
 		}
 		
-		return new Instance(fedInstanceState.getFedInstanceId(), fedInstanceState.getResources(),
-				instance.getAttributes(), links, instance.getState()).toOCCIMessageFormatDetails();
+		return new Instance(fedInstanceState.getFedInstanceId(), ResourceRepository.getInstance()
+				.get(fedInstanceState.getCategories()), instance.getAttributes(), links,
+				instance.getState()).toOCCIMessageFormatDetails();
 	}
 
 	private List<Link> generateFakeLink(String fedInstanceId, Instance instance) {
@@ -242,9 +250,9 @@ public class ComputeServerResource extends ServerResource {
 		instanceAttrs.put("occi.compute.cores", "Not defined");
 		instanceAttrs.put("occi.compute.hostname", "Not defined");
 		
-		return new Instance(fedInstanceState.getFedInstanceId(), fedInstanceState.getResources(),
-				instanceAttrs, fedInstanceState.getLinks(), InstanceState.PENDING)
-				.toOCCIMessageFormatDetails();
+		return new Instance(fedInstanceState.getFedInstanceId(), ResourceRepository.getInstance()
+				.get(fedInstanceState.getCategories()), instanceAttrs, fedInstanceState.getLinks(),
+				InstanceState.PENDING).toOCCIMessageFormatDetails();
 	}
 
 	@Post
@@ -272,11 +280,6 @@ public class ComputeServerResource extends ServerResource {
 		boolean computeWasFound = false;
 		for (Category category : categories) {
 			if (category.getTerm().equals(RequestConstants.COMPUTE_TERM)) {
-				Resource resource = ResourceRepository.getInstance().get(RequestConstants.COMPUTE_TERM);
-				if (resource == null || !resource.matches(category)) {
-					LOGGER.debug("There was not a matched resource to term compute.");
-					throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
-				}
 				computeWasFound = true;
 				break;
 			}
@@ -313,6 +316,7 @@ public class ComputeServerResource extends ServerResource {
 				resources);
 		String fogbowRequirements = getRequirements(application, resourceTplResources);		
 		requestXOCCIAtt.put(RequestAttribute.REQUIREMENTS.getValue(), fogbowRequirements);
+		requestXOCCIAtt.put(RequestAttribute.INSTANCE_COUNT.getValue(), DEFAULT_INSTANCE_COUNT);
 
 		Map<String, String> xOCCIAtt = HeaderUtils.getXOCCIAtributes(req.getHeaders());
 		if (xOCCIAtt.keySet().contains("occi.core.title")) {
@@ -333,8 +337,9 @@ public class ComputeServerResource extends ServerResource {
 		}
 
 		Request relatedOrder = newRequest.get(0);
-		FedInstanceState fedInstanceState = new FedInstanceState(instance.getId(), relatedOrder.getId(), "",
-				relatedOrder.getFederationToken().getUser());
+		FedInstanceState fedInstanceState = new FedInstanceState(instance.getId(),
+				relatedOrder.getId(), categories, new ArrayList<Link>(), "", relatedOrder
+						.getFederationToken().getUser());
 		instanceDB.insert(fedInstanceState);
 
 		setLocationHeader(instance, req);
@@ -612,7 +617,7 @@ public class ComputeServerResource extends ServerResource {
 
 		if (instanceId == null) {
 			LOGGER.info("Removing all instances of token :" + federationAuthToken);
-			String user = application.getUser(federationAuthToken);
+			String user = application.getUser(normalizeAuthToken(federationAuthToken));
 			if (user == null) {
 				throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 			}
@@ -620,10 +625,24 @@ public class ComputeServerResource extends ServerResource {
 			return removeIntances(application, federationAuthToken);
 		}
 
-		FedInstanceState fedInstanceState = instanceDB.getByInstanceId(instanceId);
-		if (fedInstanceState != null && fedInstanceState.getGlobalInstanceId() != null) {
-			instanceDB.deleteByIntanceId(instanceId);
-			return removeInstance(application, federationAuthToken, fedInstanceState.getGlobalInstanceId());
+		if (instanceId.startsWith(FED_INSTANCE_PREFIX)) {
+			LOGGER.info("Removing federated instance " + instanceId);
+			FedInstanceState fedInstanceState = instanceDB.getByInstanceId(instanceId);
+			if (fedInstanceState != null) {
+				instanceDB.deleteByIntanceId(instanceId);
+				application.removeRequest(federationAuthToken, fedInstanceState.getOrderId());
+				if (fedInstanceState.getGlobalInstanceId() != null) {
+					LOGGER.debug("Federated instance " + instanceId + " is related to "
+							+ fedInstanceState.getGlobalInstanceId());
+		
+					return removeInstance(application, federationAuthToken,
+							fedInstanceState.getGlobalInstanceId());
+				} else {
+					LOGGER.debug("Federated instance " + instanceId
+							+ " does not have a fogbow instance related to it yet.");
+					return ResponseConstants.OK;
+				}
+			}
 		}
 
 		LOGGER.info("Removing instance " + instanceId);
