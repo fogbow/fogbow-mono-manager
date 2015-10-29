@@ -91,8 +91,11 @@ public class TestDeleteCompute {
 				.thenReturn(crendentials);
 		Mockito.when(identityPlugin.createToken(crendentials)).thenReturn(tokenTwo);
 		
+		Map<String, List<Request>> requestsToAdd = new HashMap<String, List<Request>>();
+		requestsToAdd.put(OCCITestHelper.USER_MOCK, requests);
+		
 		this.helper.initializeComponentCompute(computePlugin, identityPlugin, authorizationPlugin,
-				imageStoragePlugin, accountingPlugin, benchmarkingPlugin, requests,
+				imageStoragePlugin, accountingPlugin, benchmarkingPlugin, requestsToAdd,
 				localCredentialsPlugin);
 	}
 

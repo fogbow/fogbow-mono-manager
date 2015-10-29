@@ -112,7 +112,7 @@ public class TestGetRequest {
 
 		Assert.assertTrue(response.getFirstHeader(OCCIHeaders.CONTENT_TYPE).getValue()
 				.startsWith(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE));
-		Assert.assertEquals(0, OCCITestHelper.getRequestIds(response).size());
+		Assert.assertEquals(0, OCCITestHelper.getLocationIds(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 
@@ -126,7 +126,7 @@ public class TestGetRequest {
 
 		Assert.assertTrue(response.getFirstHeader(OCCIHeaders.CONTENT_TYPE).getValue()
 				.startsWith(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE));
-		Assert.assertEquals(0, OCCITestHelper.getRequestIds(response).size());
+		Assert.assertEquals(0, OCCITestHelper.getLocationIds(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 	
@@ -139,7 +139,7 @@ public class TestGetRequest {
 
 		Assert.assertTrue(response.getFirstHeader(OCCIHeaders.CONTENT_TYPE).getValue()
 				.startsWith(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE));
-		Assert.assertEquals(0, OCCITestHelper.getRequestIds(response).size());
+		Assert.assertEquals(0, OCCITestHelper.getLocationIds(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 	
@@ -205,7 +205,7 @@ public class TestGetRequest {
 		//Default accept is text/plain
 		Assert.assertTrue(response.getFirstHeader(OCCIHeaders.CONTENT_TYPE).getValue()
 				.startsWith(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE));
-		Assert.assertEquals(2, OCCITestHelper.getRequestIds(response).size());
+		Assert.assertEquals(2, OCCITestHelper.getLocationIds(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 
@@ -260,7 +260,7 @@ public class TestGetRequest {
 		Assert.assertTrue(response.getFirstHeader(OCCIHeaders.CONTENT_TYPE).getValue()
 				.startsWith(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE));
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
-		Assert.assertEquals(30, OCCITestHelper.getRequestIds(response).size());
+		Assert.assertEquals(30, OCCITestHelper.getLocationIds(response).size());
 	}
 	
 	@Test
@@ -405,7 +405,7 @@ public class TestGetRequest {
 		get.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
 		response = client.execute(get);
 
-		Assert.assertEquals(2, OCCITestHelper.getRequestIds(response).size());
+		Assert.assertEquals(2, OCCITestHelper.getLocationIds(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 		
 		// Post
@@ -431,7 +431,7 @@ public class TestGetRequest {
 		client = HttpClients.createMinimal();
 		response = client.execute(get);
 
-		Assert.assertEquals(2, OCCITestHelper.getRequestIds(response).size());
+		Assert.assertEquals(2, OCCITestHelper.getLocationIds(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());	
 		
 		// Get 
@@ -442,7 +442,7 @@ public class TestGetRequest {
 		client = HttpClients.createMinimal();
 		response = client.execute(get);
 		
-		Assert.assertEquals(0, OCCITestHelper.getRequestIds(response).size());
+		Assert.assertEquals(0, OCCITestHelper.getLocationIds(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());	
 	}
 
@@ -477,7 +477,7 @@ public class TestGetRequest {
 		client = HttpClients.createMinimal();
 		response = client.execute(get);
 
-		Assert.assertEquals(2, OCCITestHelper.getRequestIds(response).size());
+		Assert.assertEquals(2, OCCITestHelper.getLocationIds(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 
 		get = new HttpGet(OCCITestHelper.URI_FOGBOW_REQUEST);

@@ -128,11 +128,14 @@ public class TestBypassCompute {
 		Mockito.when(imageStoragePlugin.getLocalId(Mockito.any(
 				Token.class), Mockito.anyString())).thenReturn(PluginHelper.CIRROS_IMAGE_TERM);
 		
+		Map<String, List<Request>> requestsToAdd = new HashMap<String, List<Request>>();
+		requestsToAdd.put(OCCITestHelper.USER_MOCK, requests);
+		
 		//initializing fogbow OCCI Application
 		helper = new OCCITestHelper();
 		helper.initializeComponentCompute(computePlugin, identityPlugin, authorizationPlugin,
 				imageStoragePlugin, Mockito.mock(AccountingPlugin.class),
-				Mockito.mock(BenchmarkingPlugin.class), requests, localCredentialsPlugin);
+				Mockito.mock(BenchmarkingPlugin.class), requestsToAdd, localCredentialsPlugin);
 	}
 
 	@After
@@ -223,7 +226,7 @@ public class TestBypassCompute {
 		HttpResponse response = client.execute(httpGet);
 	
 		//checking instances are OK
-		Assert.assertEquals(3, OCCITestHelper.getRequestIds(response).size());
+		Assert.assertEquals(3, OCCITestHelper.getLocationIds(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 	
@@ -277,7 +280,7 @@ public class TestBypassCompute {
 		response = client.execute(httpGet);
 	
 		//checking instances are OK
-		Assert.assertEquals(3, OCCITestHelper.getRequestIds(response).size());
+		Assert.assertEquals(3, OCCITestHelper.getLocationIds(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 
@@ -391,7 +394,7 @@ public class TestBypassCompute {
 		client = HttpClients.createMinimal();
 		response = client.execute(httpGet);
 
-		Assert.assertEquals(0, OCCITestHelper.getRequestIds(response).size());
+		Assert.assertEquals(0, OCCITestHelper.getLocationIds(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 	
@@ -451,7 +454,7 @@ public class TestBypassCompute {
 	
 		response = client.execute(httpGet);
 
-		Assert.assertEquals(0, OCCITestHelper.getRequestIds(response).size());
+		Assert.assertEquals(0, OCCITestHelper.getLocationIds(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 	
@@ -496,7 +499,7 @@ public class TestBypassCompute {
 		client = HttpClients.createMinimal();
 		response = client.execute(httpGet);
 
-		Assert.assertEquals(2, OCCITestHelper.getRequestIds(response).size());
+		Assert.assertEquals(2, OCCITestHelper.getLocationIds(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 	
@@ -537,7 +540,7 @@ public class TestBypassCompute {
 		client = HttpClients.createMinimal();
 		response = client.execute(httpGet);
 
-		Assert.assertEquals(0, OCCITestHelper.getRequestIds(response).size());
+		Assert.assertEquals(0, OCCITestHelper.getLocationIds(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 	
