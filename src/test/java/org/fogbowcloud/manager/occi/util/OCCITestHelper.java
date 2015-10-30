@@ -138,21 +138,31 @@ public class OCCITestHelper {
 			AuthorizationPlugin authorizationPlugin, ImageStoragePlugin imageStoragePlugin,
 			AccountingPlugin accountingPlugin, BenchmarkingPlugin benchmarkingPlugin, Map<String, List<Request>> requestsToAdd,
 			LocalCredentialsPlugin localCredentialsPlugin) throws Exception {
+		return initializeComponentCompute(computePlugin, identityPlugin, authorizationPlugin,
+				imageStoragePlugin, accountingPlugin, benchmarkingPlugin, requestsToAdd,
+				localCredentialsPlugin, null);
+	}
+	public ManagerController initializeComponentCompute(ComputePlugin computePlugin, IdentityPlugin identityPlugin,
+			AuthorizationPlugin authorizationPlugin, ImageStoragePlugin imageStoragePlugin,
+			AccountingPlugin accountingPlugin, BenchmarkingPlugin benchmarkingPlugin, Map<String, List<Request>> requestsToAdd,
+			LocalCredentialsPlugin localCredentialsPlugin, Properties properties) throws Exception {
 		component = new Component();
 		component.getServers().add(Protocol.HTTP, ENDPOINT_PORT);
 
-		Properties properties = new Properties();
-		properties.put(ConfigurationConstants.XMPP_JID_KEY, MEMBER_ID);
-		properties.put(ConfigurationConstants.TOKEN_HOST_PRIVATE_ADDRESS_KEY, DefaultDataTestHelper.SERVER_HOST);
-		properties.put(ConfigurationConstants.TOKEN_HOST_HTTP_PORT_KEY,
-				String.valueOf(DefaultDataTestHelper.TOKEN_SERVER_HTTP_PORT));
-
-		properties.put(ConfigurationConstants.INSTANCE_DATA_STORE_URL, "jdbc:h2:file:./scr/test/resources/fedInstance.db");
-		properties.put(ConfigurationConstants.OCCI_EXTRA_RESOURCES_KEY_PATH, "./src/test/resources/post-compute/occi-fake-resources.txt");
-		//Image OCCI to FogbowRequest
-		properties.put(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + "fbc85206-fbcc-4ad9-ae93-54946fdd5df7", "fogbow-ubuntu");
-		properties.put(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + "m1-xlarge", "Glue2vCPU >= 4 && Glue2RAM >= 8192");
-		properties.put(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + "m1-medium", "Glue2vCPU >= 2 && Glue2RAM >= 8096");
+		if (properties == null) {
+			properties = new Properties();
+			properties.put(ConfigurationConstants.XMPP_JID_KEY, MEMBER_ID);
+			properties.put(ConfigurationConstants.TOKEN_HOST_PRIVATE_ADDRESS_KEY, DefaultDataTestHelper.SERVER_HOST);
+			properties.put(ConfigurationConstants.TOKEN_HOST_HTTP_PORT_KEY,
+					String.valueOf(DefaultDataTestHelper.TOKEN_SERVER_HTTP_PORT));
+			
+			properties.put(ConfigurationConstants.INSTANCE_DATA_STORE_URL, "jdbc:h2:file:./scr/test/resources/fedInstance.db");
+			properties.put(ConfigurationConstants.OCCI_EXTRA_RESOURCES_KEY_PATH, "./src/test/resources/post-compute/occi-fake-resources.txt");
+			//Image OCCI to FogbowRequest
+			properties.put(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + "fbc85206-fbcc-4ad9-ae93-54946fdd5df7", "fogbow-ubuntu");
+			properties.put(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + "m1-xlarge", "Glue2vCPU >= 4 && Glue2RAM >= 8192");
+			properties.put(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + "m1-medium", "Glue2vCPU >= 2 && Glue2RAM >= 8096");
+		}
 
 		ManagerController facade = new ManagerController(properties);
 		facade.setComputePlugin(computePlugin);

@@ -4,11 +4,12 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
-import org.apache.commons.codec.Charsets;
 import org.apache.http.HttpException;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -24,9 +25,9 @@ import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
-import org.fogbowcloud.manager.core.plugins.LocalCredentialsPlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
+import org.fogbowcloud.manager.core.plugins.LocalCredentialsPlugin;
 import org.fogbowcloud.manager.core.plugins.compute.openstack.OpenStackConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.compute.openstack.OpenStackOCCIComputePlugin;
 import org.fogbowcloud.manager.core.plugins.compute.openstack.OpenstackOCCITestHelper;
@@ -142,59 +143,6 @@ public class TestBypassCompute {
 	public void tearDown() throws Exception{
 		pluginHelper.disconnectComponent();
 		helper.stopComponent();
-	}
-	
-	
-	@Test
-	public void testBypassPostComputeOK() throws URISyntaxException, HttpException, IOException {
-		//post compute through fogbow endpoint
-		HttpPost httpPost = new HttpPost(OCCITestHelper.URI_FOGBOW_COMPUTE);
-		httpPost.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		httpPost.addHeader(OCCIHeaders.X_AUTH_TOKEN, PluginHelper.ACCESS_ID);
-		httpPost.addHeader(OCCIHeaders.CATEGORY, new Category(PluginHelper.LINUX_X86_TERM,
-				OCCIComputeApplication.OS_SCHEME, RequestConstants.MIXIN_CLASS).toHeader());
-		
-		HttpClient client = HttpClients.createMinimal();
-		HttpResponse response = client.execute(httpPost);
-		
-		Assert.assertEquals(PluginHelper.COMPUTE_OCCI_URL + OpenStackOCCIComputePlugin.COMPUTE_ENDPOINT
-				+ FIRST_INSTANCE_ID, response.getFirstHeader(HeaderUtils.normalize("Location")).getValue());
-		Assert.assertEquals(1, response.getHeaders(HeaderUtils.normalize("Location")).length);
-		Assert.assertTrue(response.getEntity().getContentType().getValue().startsWith(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE));
-		Assert.assertEquals(1, response.getHeaders(HeaderUtils.normalize("Content-Type")).length);
-		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
-		String message = EntityUtils.toString(response.getEntity(),
-				String.valueOf(Charsets.UTF_8));
-		Assert.assertEquals(ResponseConstants.OK, message);
-	}
-	
-	@Test
-	public void testBypassPostComputeWithWrongMediaTypeTextPlain() throws URISyntaxException, HttpException, IOException {
-		//post compute through fogbow endpoint
-		HttpPost httpPost = new HttpPost(OCCITestHelper.URI_FOGBOW_COMPUTE);
-		httpPost.addHeader(OCCIHeaders.CONTENT_TYPE, "invalid-type");
-		httpPost.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, PluginHelper.ACCESS_ID);
-		httpPost.addHeader(OCCIHeaders.CATEGORY, new Category(PluginHelper.LINUX_X86_TERM,
-				OCCIComputeApplication.OS_SCHEME, RequestConstants.MIXIN_CLASS).toHeader());
-		
-		HttpClient client = HttpClients.createMinimal();
-		HttpResponse response = client.execute(httpPost);
-
-		Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusLine().getStatusCode());
-	}
-	
-	@Test
-	public void testBypassPostComputeWithoutMediaType() throws URISyntaxException, HttpException, IOException {
-		//post compute through fogbow endpoint
-		HttpPost httpPost = new HttpPost(OCCITestHelper.URI_FOGBOW_COMPUTE);
-		httpPost.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, PluginHelper.ACCESS_ID);
-		httpPost.addHeader(OCCIHeaders.CATEGORY, new Category(PluginHelper.LINUX_X86_TERM,
-				OCCIComputeApplication.OS_SCHEME, RequestConstants.MIXIN_CLASS).toHeader());
-		
-		HttpClient client = HttpClients.createMinimal();
-		HttpResponse response = client.execute(httpPost);
-
-		Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusLine().getStatusCode());
 	}
 	
 	@Test
@@ -557,18 +505,28 @@ public class TestBypassCompute {
 		String resourcesStr = EntityUtils.toString(response.getEntity());
 		List<Resource> availableResources = getResourcesFromStr(resourcesStr);		
 		
-		List<Resource> fogResources = ResourceRepository.getInstance().getAll();
-		List<Resource> compResources = OCCIComputeApplication.getResources();	
+		List<Resource> fogbowResources = ResourceRepository.getInstance().getAll();
+		List<Resource> occiFakeResourceByApp = OCCIComputeApplication.getResources();	
 		
 		for (Resource resource : availableResources) {
-			Assert.assertTrue(fogResources.contains(resource) || compResources.contains(resource));
-		}
+			Assert.assertTrue(fogbowResources.contains(resource) || occiFakeResourceByApp.contains(resource));
+		}	
 		
 		/*
-		 * expected is (fog + comp - 2) because there are two repeated resources
-		 * at both (compute and resource_tpl)
-		 */ 
-		Assert.assertEquals(fogResources.size() + compResources.size() - 2, availableResources.size());
+		 * Joining fogbow and compute resources because they may repeat
+		 * resources according to extra-occi-resource configuration for
+		 * supporting post-compute
+		 */		
+		List<Resource> resources = new ArrayList<Resource>();
+		for (Resource fogbowResource : fogbowResources) {			
+			resources.add(fogbowResource);
+		}
+		for (Resource fakeResourceByApp : occiFakeResourceByApp) {
+			if (!resources.contains(fakeResourceByApp)) {
+				resources.add(fakeResourceByApp);
+			}
+		}
+		Assert.assertEquals(resources.size(), availableResources.size());
 	}
 
 	//TODO duplicated code at QueryServerResource 
