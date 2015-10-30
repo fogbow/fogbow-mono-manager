@@ -17,6 +17,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.codec.Charsets;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.ParseException;
@@ -24,6 +25,7 @@ import org.apache.http.util.EntityUtils;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.CurrentThreadExecutorService;
 import org.fogbowcloud.manager.core.ManagerController;
+import org.fogbowcloud.manager.core.UserdataUtils;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
@@ -138,21 +140,31 @@ public class OCCITestHelper {
 			AuthorizationPlugin authorizationPlugin, ImageStoragePlugin imageStoragePlugin,
 			AccountingPlugin accountingPlugin, BenchmarkingPlugin benchmarkingPlugin, Map<String, List<Request>> requestsToAdd,
 			LocalCredentialsPlugin localCredentialsPlugin) throws Exception {
+		return initializeComponentCompute(computePlugin, identityPlugin, authorizationPlugin,
+				imageStoragePlugin, accountingPlugin, benchmarkingPlugin, requestsToAdd,
+				localCredentialsPlugin, null);
+	}
+	public ManagerController initializeComponentCompute(ComputePlugin computePlugin, IdentityPlugin identityPlugin,
+			AuthorizationPlugin authorizationPlugin, ImageStoragePlugin imageStoragePlugin,
+			AccountingPlugin accountingPlugin, BenchmarkingPlugin benchmarkingPlugin, Map<String, List<Request>> requestsToAdd,
+			LocalCredentialsPlugin localCredentialsPlugin, Properties properties) throws Exception {
 		component = new Component();
 		component.getServers().add(Protocol.HTTP, ENDPOINT_PORT);
 
-		Properties properties = new Properties();
-		properties.put(ConfigurationConstants.XMPP_JID_KEY, MEMBER_ID);
-		properties.put(ConfigurationConstants.TOKEN_HOST_PRIVATE_ADDRESS_KEY, DefaultDataTestHelper.SERVER_HOST);
-		properties.put(ConfigurationConstants.TOKEN_HOST_HTTP_PORT_KEY,
-				String.valueOf(DefaultDataTestHelper.TOKEN_SERVER_HTTP_PORT));
-
-		properties.put(ConfigurationConstants.INSTANCE_DATA_STORE_URL, "jdbc:h2:file:./scr/test/resources/fedInstance.db");
-		properties.put(ConfigurationConstants.OCCI_EXTRA_RESOURCES_KEY_PATH, "./src/test/resources/post-compute/occi-fake-resources.txt");
-		//Image OCCI to FogbowRequest
-		properties.put(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + "fbc85206-fbcc-4ad9-ae93-54946fdd5df7", "fogbow-ubuntu");
-		properties.put(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + "m1-xlarge", "Glue2vCPU >= 4 && Glue2RAM >= 8192");
-		properties.put(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + "m1-medium", "Glue2vCPU >= 2 && Glue2RAM >= 8096");
+		if (properties == null) {
+			properties = new Properties();
+			properties.put(ConfigurationConstants.XMPP_JID_KEY, MEMBER_ID);
+			properties.put(ConfigurationConstants.TOKEN_HOST_PRIVATE_ADDRESS_KEY, DefaultDataTestHelper.SERVER_HOST);
+			properties.put(ConfigurationConstants.TOKEN_HOST_HTTP_PORT_KEY,
+					String.valueOf(DefaultDataTestHelper.TOKEN_SERVER_HTTP_PORT));
+			
+			properties.put(ConfigurationConstants.INSTANCE_DATA_STORE_URL, "jdbc:h2:file:./src/test/resources/fedInstance.db");
+			properties.put(ConfigurationConstants.OCCI_EXTRA_RESOURCES_KEY_PATH, "./src/test/resources/post-compute/occi-fake-resources.txt");
+			//Image OCCI to FogbowRequest
+			properties.put(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + "fbc85206-fbcc-4ad9-ae93-54946fdd5df7", "fogbow-ubuntu");
+			properties.put(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + "m1-xlarge", "Glue2vCPU >= 4 && Glue2RAM >= 8192");
+			properties.put(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + "m1-medium", "Glue2vCPU >= 2 && Glue2RAM >= 8096");
+		}
 
 		ManagerController facade = new ManagerController(properties);
 		facade.setComputePlugin(computePlugin);
@@ -167,15 +179,15 @@ public class OCCITestHelper {
 		requests = new RequestRepository();
 		facade.setRequests(requests);
 		for (Entry<String, List<Request>> entry : requestsToAdd.entrySet()) {
-			for(Request request : entry.getValue())
-			requests.addRequest(entry.getKey(), request);
+			for (Request request : entry.getValue())
+				requests.addRequest(entry.getKey(), request);
 		}
-		
+
 		ResourceRepository.init(properties);
 
 		component.getDefaultHost().attach(new OCCIApplication(facade));
 		component.start();
-		
+
 		return facade;
 	}
 
@@ -249,9 +261,8 @@ public class OCCITestHelper {
 		}
 		return requestIds;
 	}
-	
-	public static String getInstanceIdPerLocationHeader(HttpResponse response)
-			throws ParseException, IOException {
+
+	public static String getInstanceIdPerLocationHeader(HttpResponse response) throws ParseException, IOException {
 		Header[] allHeaders = response.getAllHeaders();
 		for (Header header : allHeaders) {
 			if (header.getName().equals("Location")) {
@@ -261,24 +272,57 @@ public class OCCITestHelper {
 
 		return null;
 	}
+	
+	public static String getOCCIAttByHeader(HttpResponse response, String attribute) throws ParseException, IOException {
+		Header[] allHeaders = response.getAllHeaders();
+		for (Header header : allHeaders) {
+			if (header.getName().equals(attribute)) {
+				return header.getValue().replace(OCCIHeaders.X_OCCI_ATTRIBUTE, "");
+			}
+		}
 
-	public static Map<String, String> getLinkAttributes(HttpResponse response)
-			throws ParseException, IOException {
+		return null;
+	}
+	
+	public static String getOCCIAttByBody(HttpResponse response, String attribute) throws ParseException, IOException {
+		String responseStr = "";
+		String attValue = null;
+		try {
+			responseStr = EntityUtils.toString(response.getEntity(), String.valueOf(Charsets.UTF_8));
+		} catch (Exception e) {
+			return attValue;
+		}
 		
+		Scanner sc = new Scanner(responseStr);
+		boolean notFound = true;
+		while (sc.hasNextLine() && notFound) {
+			String line = sc.nextLine().trim();
+			if (line.contains(OCCIHeaders.X_OCCI_ATTRIBUTE) && line.contains(attribute)) {
+				String[] tokens = line.split(attribute+"=");
+				attValue = tokens.length > 1 ? tokens[1] : null;
+				notFound = true;
+			}
+		}
+		sc.close();
+		
+		return attValue;
+	}
+
+	public static Map<String, String> getLinkAttributes(HttpResponse response) throws ParseException, IOException {
+
 		Map<String, String> attsMap = new HashMap<String, String>();
-		
+
 		String responseStr = "";
 		try {
 			responseStr = EntityUtils.toString(response.getEntity(), String.valueOf(Charsets.UTF_8));
 		} catch (Exception e) {
 			return attsMap;
 		}
-		Scanner sc = new Scanner(responseStr); 
+		Scanner sc = new Scanner(responseStr);
 		boolean notFound = true;
-		while (sc.hasNextLine() && notFound)  
-		{  
+		while (sc.hasNextLine() && notFound) {
 			String line = sc.nextLine().trim();
-			if(line.startsWith("Link:")){
+			if (line.startsWith("Link:")) {
 				String[] tokens = line.split("Link:");
 				String[] attributes = tokens.length > 1 ? tokens[1].trim().split(";") : new String[0];
 				for (int i = 0; i < attributes.length; i++) {
@@ -293,7 +337,7 @@ public class OCCITestHelper {
 		sc.close();
 		return attsMap;
 	}
-	
+
 	public String getStateFromRequestDetails(String requestDetails) {
 		StringTokenizer st = new StringTokenizer(requestDetails, "\n");
 		Map<String, String> occiAttributes = new HashMap<String, String>();

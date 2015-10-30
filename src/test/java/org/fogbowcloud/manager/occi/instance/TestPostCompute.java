@@ -1,10 +1,11 @@
 package org.fogbowcloud.manager.occi.instance;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
-import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -12,14 +13,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import org.apache.http.Header;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.HttpClients;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
-import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
@@ -28,45 +28,42 @@ import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
 import org.fogbowcloud.manager.core.plugins.LocalCredentialsPlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
-import org.fogbowcloud.manager.occi.instance.ComputeServerResource;
-import org.fogbowcloud.manager.occi.instance.InstanceDataStore;
+import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.ErrorType;
-import org.fogbowcloud.manager.occi.model.HeaderUtils;
 import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.OCCIHeaders;
 import org.fogbowcloud.manager.occi.model.Resource;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.fogbowcloud.manager.occi.model.Token;
-import org.fogbowcloud.manager.occi.request.OrderDataStore;
 import org.fogbowcloud.manager.occi.request.Request;
+import org.fogbowcloud.manager.occi.request.RequestAttribute;
+import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.fogbowcloud.manager.occi.util.OCCITestHelper;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.mockito.Mockito;
-import org.restlet.util.Series;
 
 public class TestPostCompute {
-
-	private static final String NULL_VALUE = "null";
-	private static final String CATEGORY = "Category";
-	private static final String X_OCCI_ATTRIBUTE = "X-OCCI-Attribute";
-	private static final String DEFAULT_USER = "user";
+	
+	private static final String FED_COMPUTE_ATT_PUBLICKEY_NAME = "org.openstack.credentials.publickey.data org.openstack.credentials.publickey.name";
+	private static final String FED_COMPUTE_USER_DATA = "org.openstack.compute.user_data";
 	
 	private static final String INSTANCE_1_ID = "test1";
 	private static final String INSTANCE_2_ID = "test2";
 	private static final String INSTANCE_3_ID_WITHOUT_USER = "test3";
 
-	private ComputePlugin computePlugin;
 	private IdentityPlugin identityPlugin;
-	private AuthorizationPlugin authorizationPlugin;
 	private OCCITestHelper helper;
 	private ImageStoragePlugin imageStoragePlugin;
 	private LocalCredentialsPlugin localCredentialsPlugin;
-	private InstanceDataStore instanceDB;
-	private ManagerController facade;
 
+	@Rule
+	public final ExpectedException exception = ExpectedException.none();
+	
 	@Before
 	public void setup() throws Exception {
 
@@ -75,18 +72,16 @@ public class TestPostCompute {
 		List<Resource> list = new ArrayList<Resource>();
 		Map<String, String> map = new HashMap<String, String>();
 		map.put("test", "test");
-		
+
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
-		Mockito.when(computePlugin.requestInstance(Mockito.any(Token.class), 
-				Mockito.any(List.class), Mockito.any(Map.class), Mockito.anyString()))
-				.thenReturn("");
+		Mockito.when(computePlugin.requestInstance(Mockito.any(Token.class), Mockito.any(List.class),
+				Mockito.any(Map.class), Mockito.anyString())).thenReturn("");
 
 		identityPlugin = Mockito.mock(IdentityPlugin.class);
-		Mockito.when(identityPlugin.getToken(OCCITestHelper.FED_ACCESS_TOKEN)).thenReturn(
-				new Token("id", OCCITestHelper.USER_MOCK, new Date(), 
-				new HashMap<String, String>()));
-		Mockito.when(identityPlugin.getToken(OCCITestHelper.INVALID_TOKEN)).thenThrow(
-				new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED));
+		Mockito.when(identityPlugin.getToken(OCCITestHelper.FED_ACCESS_TOKEN))
+				.thenReturn(new Token("id", OCCITestHelper.USER_MOCK, new Date(), new HashMap<String, String>()));
+		Mockito.when(identityPlugin.getToken(OCCITestHelper.INVALID_TOKEN))
+				.thenThrow(new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED));
 
 		AuthorizationPlugin authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
 		Mockito.when(authorizationPlugin.isAuthorized(Mockito.any(Token.class))).thenReturn(true);
@@ -119,11 +114,10 @@ public class TestPostCompute {
 
 		Map<String, List<Request>> requestsToAdd = new HashMap<String, List<Request>>();
 		requestsToAdd.put(OCCITestHelper.USER_MOCK, requests);
-		
-		facade = this.helper.initializeComponentCompute(computePlugin, identityPlugin, authorizationPlugin, imageStoragePlugin,
-				Mockito.mock(AccountingPlugin.class), Mockito.mock(BenchmarkingPlugin.class), requestsToAdd,
-				localCredentialsPlugin);
-		
+
+		this.helper.initializeComponentCompute(computePlugin, identityPlugin, authorizationPlugin,
+				imageStoragePlugin, Mockito.mock(AccountingPlugin.class), Mockito.mock(BenchmarkingPlugin.class),
+				requestsToAdd, localCredentialsPlugin);
 
 	}
 
@@ -131,7 +125,7 @@ public class TestPostCompute {
 	public void tearDown() throws Exception {
 		this.helper.stopComponent();
 	}
-	
+
 	@Test
 	public void testPostComputeAcceptOcciOk() throws Exception {
 
@@ -148,14 +142,13 @@ public class TestPostCompute {
 		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(httpPost);
 		String instanceId = OCCITestHelper.getInstanceIdPerLocationHeader(response);
-		
+
 		assertEquals(HttpStatus.SC_CREATED, response.getStatusLine().getStatusCode());
 		assertNotNull(instanceId);
 		assertTrue(OCCITestHelper.getLocationIds(response).isEmpty());
-		
-		
+
 	}
-	
+
 	@Test
 	public void testPostComputeTextPlainOk() throws Exception {
 
@@ -174,16 +167,13 @@ public class TestPostCompute {
 		HttpResponse response = client.execute(httpPost);
 		String instanceIdHead = OCCITestHelper.getInstanceIdPerLocationHeader(response);
 		String instanceIdBody = OCCITestHelper.getLocationIds(response).get(0);
-		
+
 		assertEquals(HttpStatus.SC_CREATED, response.getStatusLine().getStatusCode());
 		assertNull(instanceIdHead);
 		assertNotNull(instanceIdBody);
-		
-		
+
 	}
-	
-	
-	
+
 	@Test
 	public void testPostComputeWrongComputeFailed() throws Exception {
 
@@ -202,7 +192,7 @@ public class TestPostCompute {
 		assertNull(instanceId);
 		Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusLine().getStatusCode());
 	}
-	
+
 	@Test
 	public void testPostComputeNoComputeFailed() throws Exception {
 
@@ -219,7 +209,7 @@ public class TestPostCompute {
 		assertNull(instanceId);
 		Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusLine().getStatusCode());
 	}
-	
+
 	@Test
 	public void testPostComputeNoImageFailed() throws Exception {
 
@@ -236,7 +226,7 @@ public class TestPostCompute {
 		assertNull(instanceId);
 		Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusLine().getStatusCode());
 	}
-	
+
 	@Test
 	public void testPostComputeNoRelativeResourceFailed() throws Exception {
 
@@ -253,7 +243,7 @@ public class TestPostCompute {
 		assertNull(instanceId);
 		Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusLine().getStatusCode());
 	}
-	
+
 	@Test
 	public void testPostComputeNoMappedImageFailed() throws Exception {
 
@@ -270,5 +260,156 @@ public class TestPostCompute {
 		assertNull(instanceId);
 		Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusLine().getStatusCode());
 	}
+
+	@Test
+	public void testConvertUserData() throws Exception {
+
+		String fakeScriptEncoded = new String(Base64.encodeBase64(
+				"#!/bin/sh echo \"Hello World.  The time is now $(date -R)!\" | tee /root/output.txt".getBytes()));
+
+
+		Resource occiUserdataResource = new Resource("user_data; scheme=\"http://schemas.openstack.org/compute/instance#\"; class=\"mixin\"");
+
+		Properties properties = new Properties();
+		properties.put(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + RequestConstants.USER_DATA_TERM,
+				"user_data");
+		properties.put(
+				ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + RequestAttribute.EXTRA_USER_DATA_ATT.getValue(),
+				FED_COMPUTE_USER_DATA);
+		
+		List<Resource> resources = new ArrayList<Resource>();
+		resources.add(occiUserdataResource);
+		List<Category> requestCategories = new ArrayList<Category>();
+		Map<String, String> requestXOCCIAtt = new HashMap<String, String>();
+		Map<String, String> xOCCIAtt = new HashMap<String, String>();
+		xOCCIAtt.put(FED_COMPUTE_USER_DATA, fakeScriptEncoded);
+
+		ComputeServerResource csr = new ComputeServerResource();
+		csr.convertUserData(properties, resources, requestCategories, requestXOCCIAtt,
+				xOCCIAtt);
+		
+		assertEquals(1, requestCategories.size());
+		assertEquals(new Category(RequestConstants.USER_DATA_TERM, RequestConstants.SCHEME, RequestConstants.MIXIN_CLASS), requestCategories.get(0));
+		assertEquals(2, requestXOCCIAtt.size());
+		assertEquals(fakeScriptEncoded, requestXOCCIAtt.get(RequestAttribute.EXTRA_USER_DATA_ATT.getValue()));
+		assertEquals(MIMEMultipartArchive.SHELLSCRIPT.getType(), requestXOCCIAtt.get(RequestAttribute.EXTRA_USER_DATA_CONTENT_TYPE_ATT.getValue()));
+	}
+	
+	@Test
+	public void testConvertUserDataBadRequest() throws Exception {
+
+		exception.expect(OCCIException.class);
+
+		Resource occiUserdataResource = new Resource("user_data; scheme=\"http://schemas.openstack.org/compute/instance#\"; class=\"mixin\"");
+
+		Properties properties = new Properties();
+		properties.put(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + RequestConstants.USER_DATA_TERM,
+				"user_data");
+		properties.put(
+				ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + RequestAttribute.EXTRA_USER_DATA_ATT.getValue(),
+				FED_COMPUTE_USER_DATA);
+		
+		List<Resource> resources = new ArrayList<Resource>();
+		resources.add(occiUserdataResource);
+		List<Category> requestCategories = new ArrayList<Category>();
+		Map<String, String> requestXOCCIAtt = new HashMap<String, String>();
+		Map<String, String> xOCCIAtt = new HashMap<String, String>();
+
+		ComputeServerResource csr = new ComputeServerResource();
+		csr.convertUserData(properties, resources, requestCategories, requestXOCCIAtt,
+				xOCCIAtt);
+		
+	}
+
+	@Test
+	public void testConvertPublicKey() throws Exception {
+
+		
+		String fakePublicKey = "org.openstack.credentials.publickey.data org.openstack.credentials.publickey.name=ssh-rsa "
+				+ "AAAAB3NzaC1yc2EAAAADAQABAAABAQDI6g9Q7epXV1ciIsPHin";
+		
+		Resource fogbowPublicKey = new Resource("public_key; scheme=\"http://schemas.openstack.org/instance/credentials#\"; class=\"mixin\"");	
+
+		Properties properties = new Properties();
+		properties.put(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + RequestConstants.PUBLIC_KEY_TERM,
+				"public_key");
+		properties.put(
+				ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + RequestAttribute.DATA_PUBLIC_KEY.getValue(),
+				FED_COMPUTE_ATT_PUBLICKEY_NAME);
+
+		List<Resource> resources = new ArrayList<Resource>();
+		resources.add(fogbowPublicKey);
+		List<Category> requestCategories = new ArrayList<Category>();
+		Map<String, String> requestXOCCIAtt = new HashMap<String, String>();
+		Map<String, String> xOCCIAtt = new HashMap<String, String>();
+		xOCCIAtt.put(FED_COMPUTE_ATT_PUBLICKEY_NAME, fakePublicKey);
+
+		
+		ComputeServerResource csr = new ComputeServerResource();
+		csr.convertPublicKey(properties, resources, requestCategories, requestXOCCIAtt,
+				xOCCIAtt);
+		
+		assertEquals(1, requestCategories.size());
+		assertEquals(RequestConstants.PUBLIC_KEY_TERM, requestCategories.get(0).getTerm());
+		assertEquals(1, requestXOCCIAtt.size());
+		assertEquals(fakePublicKey, requestXOCCIAtt.get(RequestAttribute.DATA_PUBLIC_KEY.getValue()));
+
+	}
+	
+	@Test
+	public void testConvertPublicKeyBadRequest() throws Exception {
+		
+		exception.expect(OCCIException.class);
+		
+		Resource fogbowPublicKey = new Resource("public_key; scheme=\"http://schemas.openstack.org/instance/credentials#\"; class=\"mixin\"");	
+
+		Properties properties = new Properties();
+		properties.put(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + RequestConstants.PUBLIC_KEY_TERM,
+				"public_key");
+		properties.put(
+				ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + RequestAttribute.DATA_PUBLIC_KEY.getValue(),
+				FED_COMPUTE_ATT_PUBLICKEY_NAME);
+
+		List<Resource> resources = new ArrayList<Resource>();
+		resources.add(fogbowPublicKey);
+		List<Category> requestCategories = new ArrayList<Category>();
+		Map<String, String> requestXOCCIAtt = new HashMap<String, String>();
+		Map<String, String> xOCCIAtt = new HashMap<String, String>();
+		
+		ComputeServerResource csr = new ComputeServerResource();
+		csr.convertPublicKey(properties, resources, requestCategories, requestXOCCIAtt,
+				xOCCIAtt);
+
+	}
+	
+	
+//	@Test
+//	public void testBypassPostComputeWithWrongMediaTypeTextPlain() throws URISyntaxException, HttpException, IOException {
+//		//post compute through fogbow endpoint
+//		HttpPost httpPost = new HttpPost(OCCITestHelper.URI_FOGBOW_COMPUTE);
+//		httpPost.addHeader(OCCIHeaders.CONTENT_TYPE, "invalid-type");
+//		httpPost.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, PluginHelper.ACCESS_ID);
+//		httpPost.addHeader(OCCIHeaders.CATEGORY, new Category(PluginHelper.LINUX_X86_TERM,
+//				OCCIComputeApplication.OS_SCHEME, RequestConstants.MIXIN_CLASS).toHeader());
+//		
+//		HttpClient client = HttpClients.createMinimal();
+//		HttpResponse response = client.execute(httpPost);
+//
+//		Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusLine().getStatusCode());
+//	}
+//	
+//	@Test
+//	public void testBypassPostComputeWithoutMediaType() throws URISyntaxException, HttpException, IOException {
+//		//post compute through fogbow endpoint
+//		HttpPost httpPost = new HttpPost(OCCITestHelper.URI_FOGBOW_COMPUTE);
+//		httpPost.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, PluginHelper.ACCESS_ID);
+//		httpPost.addHeader(OCCIHeaders.CATEGORY, new Category(PluginHelper.LINUX_X86_TERM,
+//				OCCIComputeApplication.OS_SCHEME, RequestConstants.MIXIN_CLASS).toHeader());
+//		
+//		HttpClient client = HttpClients.createMinimal();
+//		HttpResponse response = client.execute(httpPost);
+//
+//		Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusLine().getStatusCode());
+//	}
 
 }
