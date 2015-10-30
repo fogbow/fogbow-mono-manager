@@ -260,6 +260,37 @@ public class TestPostCompute {
 		assertNull(instanceId);
 		Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusLine().getStatusCode());
 	}
+	
+	
+//	@Test
+//	public void testBypassPostComputeWithWrongMediaTypeTextPlain() throws URISyntaxException, HttpException, IOException {
+//		//post compute through fogbow endpoint
+//		HttpPost httpPost = new HttpPost(OCCITestHelper.URI_FOGBOW_COMPUTE);
+//		httpPost.addHeader(OCCIHeaders.CONTENT_TYPE, "invalid-type");
+//		httpPost.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, PluginHelper.ACCESS_ID);
+//		httpPost.addHeader(OCCIHeaders.CATEGORY, new Category(PluginHelper.LINUX_X86_TERM,
+//				OCCIComputeApplication.OS_SCHEME, RequestConstants.MIXIN_CLASS).toHeader());
+//		
+//		HttpClient client = HttpClients.createMinimal();
+//		HttpResponse response = client.execute(httpPost);
+//
+//		Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusLine().getStatusCode());
+//	}
+//	
+//	@Test
+//	public void testBypassPostComputeWithoutMediaType() throws URISyntaxException, HttpException, IOException {
+//		//post compute through fogbow endpoint
+//		HttpPost httpPost = new HttpPost(OCCITestHelper.URI_FOGBOW_COMPUTE);
+//		httpPost.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, PluginHelper.ACCESS_ID);
+//		httpPost.addHeader(OCCIHeaders.CATEGORY, new Category(PluginHelper.LINUX_X86_TERM,
+//				OCCIComputeApplication.OS_SCHEME, RequestConstants.MIXIN_CLASS).toHeader());
+//		
+//		HttpClient client = HttpClients.createMinimal();
+//		HttpResponse response = client.execute(httpPost);
+//
+//		Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusLine().getStatusCode());
+//	}
+
 
 	@Test
 	public void testConvertUserData() throws Exception {

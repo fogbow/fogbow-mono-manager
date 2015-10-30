@@ -47,7 +47,7 @@ public class TestDeleteCompute {
 	private OCCITestHelper helper;
 	private ImageStoragePlugin imageStoragePlugin;
 	
-	private static final String INSTANCE_DB_FILE = "./scr/test/resources/fedInstance.db";
+	private static final String INSTANCE_DB_FILE = "./src/test/resources/fedInstance.db";
 	private static final String INSTANCE_DB_URL = "jdbc:h2:file:"+INSTANCE_DB_FILE;
 	private InstanceDataStore instanceDB;
 	private ManagerController facade;

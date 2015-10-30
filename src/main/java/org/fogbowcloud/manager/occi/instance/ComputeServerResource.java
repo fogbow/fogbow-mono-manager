@@ -397,7 +397,7 @@ public class ComputeServerResource extends ServerResource {
 		return requirements.toString();
 	}
 
-	private void convertUserData(Properties properties,
+	protected void convertUserData(Properties properties,
 			List<Resource> resources, List<Category> requestCategories,
 			Map<String, String> requestXOCCIAtt, Map<String, String> xOCCIAtt) {
 		String userdataTerm = properties
@@ -431,7 +431,7 @@ public class ComputeServerResource extends ServerResource {
 		}
 	}
 
-	private void convertPublicKey(Properties properties,
+	protected void convertPublicKey(Properties properties,
 			List<Resource> resources, List<Category> requestCategories,
 			Map<String, String> requestXOCCIAtt, Map<String, String> xOCCIAtt) {
 		String publicKeyTerm = properties

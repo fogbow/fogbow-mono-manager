@@ -56,7 +56,7 @@ public class TestGetCompute {
 	private static final String POST_INSTANCE_2_ID = "postInstance2";
 	private static final String POST_INSTANCE_3_ID = "postInstance3";
 
-	private static final String INSTANCE_DB_FILE = "./scr/test/resources/fedInstance.db";
+	private static final String INSTANCE_DB_FILE = "./src/test/resources/fedInstance.db";
 	private static final String INSTANCE_DB_URL = "jdbc:h2:file:"+INSTANCE_DB_FILE;
 
 	private ComputePlugin computePlugin;
@@ -99,8 +99,8 @@ public class TestGetCompute {
 				.thenReturn(postInstance1);
 		Mockito.when(computePlugin.getInstance(Mockito.any(Token.class), Mockito.eq(POST_INSTANCE_2_ID)))
 				.thenReturn(postInstance2);
-		Mockito.when(computePlugin.getInstance(Mockito.any(Token.class), Mockito.eq(POST_INSTANCE_3_ID)))
-				.thenReturn(postInstance3);
+//		Mockito.when(computePlugin.getInstance(Mockito.any(Token.class), Mockito.eq(POST_INSTANCE_3_ID)))
+//				.thenReturn(postInstance3);
 
 		identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.getToken(OCCITestHelper.FED_ACCESS_TOKEN))
@@ -141,7 +141,7 @@ public class TestGetCompute {
 		requestPostCompute2.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
 		requestsB.add(requestPostCompute2);
 		Request requestPostCompute3 = new Request("Order3", postToken, null, null, true, "");
-		requestPostCompute3.setInstanceId(POST_INSTANCE_3_ID);
+		requestPostCompute3.setInstanceId(null);
 		requestPostCompute3.setState(RequestState.OPEN);
 		requestPostCompute3.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
 		requestsB.add(requestPostCompute3);
@@ -516,20 +516,20 @@ public class TestGetCompute {
 		String fakeInstanceId_A = "InstanceA";
 		String fakeInstanceId_B = "InstanceB";
 		String fakeInstanceId_C = "InstanceC";
-		String fakeOrderId_A = "OrderA";
-		String fakeOrderId_B = "OrderB";
-		String fakeOrderId_C = "OrderC";
+		String fakeOrderId_A = "Order1";
+		String fakeOrderId_B = "Order2";
+		String fakeOrderId_C = "Order3";
 		String fakeUser = OCCITestHelper.USER_MOCK+"_post";
 
 		List<Category> categories = new ArrayList<Category>();
 		List<Link> links = new ArrayList<Link>();
 
 		FedInstanceState fedInstanceStateA = new FedInstanceState(fakeInstanceId_A, fakeOrderId_A, categories, links,
-				POST_INSTANCE_1_ID + "@" + OCCITestHelper.MEMBER_ID, fakeUser);
+				null, fakeUser);
 		FedInstanceState fedInstanceStateB = new FedInstanceState(fakeInstanceId_B, fakeOrderId_B, categories, links,
 				POST_INSTANCE_2_ID + "@" + OCCITestHelper.MEMBER_ID, fakeUser);
 		FedInstanceState fedInstanceStateC = new FedInstanceState(fakeInstanceId_C, fakeOrderId_C, categories, links,
-				POST_INSTANCE_3_ID + "@" + OCCITestHelper.MEMBER_ID, fakeUser);
+				null, fakeUser);
 		
 		List<FedInstanceState> fakeFedInstanceStateList = new ArrayList<FedInstanceState>();
 		fakeFedInstanceStateList.add(fedInstanceStateA);
@@ -588,5 +588,55 @@ public class TestGetCompute {
 
 		assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 		assertEquals("\""+FAKE_POST_INSTANCE_HOST+"\"", linkAttrs.get("occi.networkinterface.address"));
+	}
+	
+	@Test
+	public void testGetSpecificFedInstanceNotReady() throws Exception {
+
+		String fakeInstanceId = ComputeServerResource.FED_INSTANCE_PREFIX+"InstanceA";
+		String fakeOrderId = "Order3";
+		String fakeUser = OCCITestHelper.USER_MOCK+"_post";
+
+		List<Category> categories = new ArrayList<Category>();
+		List<Link> links = new ArrayList<Link>();
+		
+		FedInstanceState fedInstanceStateA = new FedInstanceState(fakeInstanceId, fakeOrderId, categories, links, 
+				"", fakeUser);
+
+		List<FedInstanceState> fakeFedInstanceStateList = new ArrayList<FedInstanceState>();
+		fakeFedInstanceStateList.add(fedInstanceStateA);
+
+		instanceDB.insert(fakeFedInstanceStateList);
+
+		Mockito.doNothing().when(computePlugin).bypass(Mockito.any(org.restlet.Request.class),
+				Mockito.any(Response.class));
+
+		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE + fakeInstanceId);
+		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
+		httpGet.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.POST_FED_ACCESS_TOKEN);
+		HttpClient client = HttpClients.createMinimal();
+		HttpResponse response = client.execute(httpGet);
+
+		assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+		assertEquals("\""+InstanceState.PENDING.getOcciState()+"\"",OCCITestHelper.getOCCIAttByBody(response, "occi.compute.state"));
+		
+	}
+	
+	@Test
+	public void testGetSpecificFedInstanceNotInDB() throws Exception {
+
+		String fakeInstanceId_A = ComputeServerResource.FED_INSTANCE_PREFIX+"InstanceA";
+
+		Mockito.doNothing().when(computePlugin).bypass(Mockito.any(org.restlet.Request.class),
+				Mockito.any(Response.class));
+
+		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE + fakeInstanceId_A);
+		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
+		httpGet.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.POST_FED_ACCESS_TOKEN);
+		HttpClient client = HttpClients.createMinimal();
+		HttpResponse response = client.execute(httpGet);
+		Map<String, String> linkAttrs = OCCITestHelper.getLinkAttributes(response);
+
+		assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatusLine().getStatusCode());
 	}
 }
