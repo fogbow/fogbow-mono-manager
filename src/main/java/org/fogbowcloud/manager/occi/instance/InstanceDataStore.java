@@ -376,7 +376,7 @@ public class InstanceDataStore {
 			}
 
 			ResultSet rs = preparedStatement.executeQuery();
-
+			
 			if (rs != null) {
 				try {
 					while (rs.next()) {
@@ -400,7 +400,7 @@ public class InstanceDataStore {
 		} finally {
 			close(preparedStatement, conn);
 		}
-
+		LOGGER.debug("There are " + fedInstanceStateList.size() + " federated_instances at DB to this query (" + preparedStatement.toString() + ").");
 		return fedInstanceStateList;
 	}
 

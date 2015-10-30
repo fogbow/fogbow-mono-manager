@@ -92,20 +92,29 @@ public class ComputeServerResource extends ServerResource {
 						filterAttribute);
 			} else {
 				allInstances = getInstances(application, federationAuthToken);
-			}
+			}			
+			LOGGER.debug("There are " + allInstances.size() + " related to auth_token " + federationAuthToken);
 
 			String user = application.getUser(normalizeAuthToken(federationAuthToken));
 			if (user == null) {
 				throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 			}
-
 			List<FedInstanceState> fedPostInstances = instanceDB.getAllByUser(user);
-
+			LOGGER.debug("There are " + fedPostInstances.size() + " owened by user " + user);
 			// replacing real instance id by fed_instance_id
 			for (FedInstanceState currentInstance : fedPostInstances) {
-				if (allInstances.contains(new Instance(currentInstance.getGlobalInstanceId()))) {
-					allInstances.remove(new Instance(currentInstance.getGlobalInstanceId()));
-					allInstances.add(new Instance(currentInstance.getFedInstanceId()));
+				allInstances.add(new Instance(currentInstance.getFedInstanceId()));
+				
+				String globalId = currentInstance.getGlobalInstanceId();
+				if (globalId == null || globalId.isEmpty()) {
+					Request relatedOrder = application.getRequest(federationAuthToken, currentInstance.getOrderId());
+					if (relatedOrder.getState().in(RequestState.FULFILLED)) {
+						globalId = relatedOrder.getGlobalInstanceId();
+					}					
+				}
+
+				if (globalId != null && allInstances.contains(new Instance(globalId))) {
+					allInstances.remove(new Instance(globalId));
 				}
 			}
 
@@ -128,6 +137,10 @@ public class ComputeServerResource extends ServerResource {
 			
 			FedInstanceState fedInstanceState = instanceDB.getByInstanceId(instanceId, user);
 
+			if (fedInstanceState == null) {
+				throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
+			}
+			
 			relatedOrder = application.getRequest(federationAuthToken, fedInstanceState.getOrderId());
 			if (!relatedOrder.getState().in(RequestState.FULFILLED)) {
 				// instance is not ready for using yet
@@ -645,21 +658,24 @@ public class ComputeServerResource extends ServerResource {
 			}
 			
 			FedInstanceState fedInstanceState = instanceDB.getByInstanceId(instanceId, user);
-			if (fedInstanceState != null) {
-				instanceDB.deleteByIntanceId(instanceId, user);
+			
+			if (fedInstanceState == null) {
+				throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
+			}
+			instanceDB.deleteByIntanceId(instanceId, user);
+			try {
 				application.removeRequest(federationAuthToken, fedInstanceState.getOrderId());
 				if (fedInstanceState.getGlobalInstanceId() != null) {
 					LOGGER.debug("Federated instance " + instanceId + " is related to "
 							+ fedInstanceState.getGlobalInstanceId());
-		
+
 					return removeInstance(application, federationAuthToken,
 							fedInstanceState.getGlobalInstanceId());
-				} else {
-					LOGGER.debug("Federated instance " + instanceId
-							+ " does not have a fogbow instance related to it yet.");
-					return ResponseConstants.OK;
 				}
+			} catch (Exception e) {
+				LOGGER.warn("Error while removing resources related to federated instance " + instanceId + ".", e);
 			}
+			return ResponseConstants.OK;
 		}
 
 		LOGGER.info("Removing instance " + instanceId);

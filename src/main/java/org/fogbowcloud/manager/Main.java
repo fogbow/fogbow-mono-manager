@@ -144,6 +144,16 @@ public class Main {
 			LOGGER.warn("Federation user crendetail plugin not specified in properties. Using the default one.", e);
 		}		
 		
+		String occiExtraResourcesPath = properties
+				.getProperty(ConfigurationConstants.OCCI_EXTRA_RESOURCES_KEY_PATH);
+		if (occiExtraResourcesPath != null && !occiExtraResourcesPath.isEmpty()) {
+			if (properties.getProperty(ConfigurationConstants.INSTANCE_DATA_STORE_URL) == null) {
+				LOGGER.error("If OCCI extra resources was set for supporting post-compute, you must also set instance datastore property ("
+						+ ConfigurationConstants.INSTANCE_DATA_STORE_URL + ").");
+				System.exit(EXIT_ERROR_CODE);
+			}
+		}
+		
 		PrioritizationPlugin prioritizationPlugin = new TwoFoldPrioritizationPlugin(properties,
 				accountingPlugin);
 
