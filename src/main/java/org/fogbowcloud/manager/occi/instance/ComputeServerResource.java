@@ -347,8 +347,8 @@ public class ComputeServerResource extends ServerResource {
 			requestXOCCIAtt.put("occi.core.title", xOCCIAtt.get("occi.core.title"));
 		}
 
-		convertPublicKey(application, properties, resources, requestCategories, requestXOCCIAtt, xOCCIAtt);
-		convertUserData(application, properties, resources, requestCategories, requestXOCCIAtt, xOCCIAtt);
+		convertPublicKey(properties, resources, requestCategories, requestXOCCIAtt, xOCCIAtt);
+		convertUserData(properties, resources, requestCategories, requestXOCCIAtt, xOCCIAtt);
 
 		String federationAuthToken = HeaderUtils.getFederationAuthToken(req.getHeaders(), getResponse(),
 				application.getAuthenticationURI());
@@ -397,11 +397,11 @@ public class ComputeServerResource extends ServerResource {
 		return requirements.toString();
 	}
 
-	private void convertUserData(OCCIApplication application, Properties properties,
+	private void convertUserData(Properties properties,
 			List<Resource> resources, List<Category> requestCategories,
 			Map<String, String> requestXOCCIAtt, Map<String, String> xOCCIAtt) {
-		String userdataTerm = application
-				.getProperty(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + RequestConstants.PUBLIC_KEY_TERM);
+		String userdataTerm = properties
+				.getProperty(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + RequestConstants.USER_DATA_TERM);
 
 		if (userdataTerm != null && !userdataTerm.isEmpty()) {
 			Resource userDataResource = filterByTerm(userdataTerm, resources);
@@ -411,6 +411,12 @@ public class ComputeServerResource extends ServerResource {
 
 				String userdataDataAtt = properties.getProperty(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX
 						+ RequestAttribute.EXTRA_USER_DATA_ATT.getValue());
+				
+				String userDataContenEncoded = xOCCIAtt.get(userdataDataAtt);
+				if (userDataContenEncoded == null) {
+					throw new OCCIException(ErrorType.BAD_REQUEST,
+							"User Data content mus not be null");					
+				}
 				
 				String userDataContent = new String(Base64.decodeBase64(xOCCIAtt.get(userdataDataAtt)));
 				
@@ -425,11 +431,12 @@ public class ComputeServerResource extends ServerResource {
 		}
 	}
 
-	private void convertPublicKey(OCCIApplication application, Properties properties,
+	private void convertPublicKey(Properties properties,
 			List<Resource> resources, List<Category> requestCategories,
 			Map<String, String> requestXOCCIAtt, Map<String, String> xOCCIAtt) {
-		String publicKeyTerm = application
-				.getProperty(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + RequestConstants.PUBLIC_KEY_TERM);
+		String publicKeyTerm = properties
+				.getProperty(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX
+						+ RequestConstants.PUBLIC_KEY_TERM);
 		if (publicKeyTerm != null && !publicKeyTerm.isEmpty()) {
 			Resource publicKeyResource = filterByTerm(publicKeyTerm, resources);
 
@@ -439,7 +446,13 @@ public class ComputeServerResource extends ServerResource {
 
 				String publicKeyDataAtt = properties.getProperty(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX
 						+ RequestAttribute.DATA_PUBLIC_KEY.getValue());
-				requestXOCCIAtt.put(RequestAttribute.DATA_PUBLIC_KEY.getValue(), xOCCIAtt.get(publicKeyDataAtt));
+				
+				String publicKeyContent = xOCCIAtt.get(publicKeyDataAtt);
+				if (publicKeyContent == null) {
+					throw new OCCIException(ErrorType.BAD_REQUEST,
+							"public-key content mus not be null");					
+				}
+				requestXOCCIAtt.put(RequestAttribute.DATA_PUBLIC_KEY.getValue(), publicKeyContent);
 			}
 		}
 	}
