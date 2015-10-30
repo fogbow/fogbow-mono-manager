@@ -127,7 +127,6 @@ public class TestAzureIdentityPlugin {
 		azureIdentityPlugin.isValid(null);
 	}
 	
-	@Ignore
 	@Test
 	public void isValidNullAccessId() {
 		AzureIdentityPlugin azureIdentityPlugin = new AzureIdentityPlugin(new Properties());
