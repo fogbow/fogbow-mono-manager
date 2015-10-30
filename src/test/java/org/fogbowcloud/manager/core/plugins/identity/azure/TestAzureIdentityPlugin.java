@@ -129,7 +129,7 @@ public class TestAzureIdentityPlugin {
 	@Test
 	public void isValidNullAccessId() {
 		AzureIdentityPlugin azureIdentityPlugin = new AzureIdentityPlugin(new Properties());
-		Assert.assertEquals(false, azureIdentityPlugin.isValid(Mockito.anyString()));
+		Assert.assertEquals(false, azureIdentityPlugin.isValid(null));
 	}
 	
 }
