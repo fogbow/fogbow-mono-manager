@@ -62,7 +62,8 @@ public class ComputeServerResource extends ServerResource {
 
 	protected void doInit() throws ResourceException {
 
-		String instanceDSUrl = ((OCCIApplication) getApplication())
+		Properties properties = ((OCCIApplication) getApplication()).getProperties();
+		String instanceDSUrl = properties
 				.getProperty(ConfigurationConstants.INSTANCE_DATA_STORE_URL);
 		instanceDB = new InstanceDataStore(instanceDSUrl);
 
@@ -325,7 +326,7 @@ public class ComputeServerResource extends ServerResource {
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}
 
-		String imageName = application.getProperty(
+		String imageName = properties.getProperty(
 				ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + osTplResources.get(0).getCategory().getTerm());
 		if (imageName == null || imageName.isEmpty()) {
 			throw new OCCIException(ErrorType.BAD_REQUEST,
@@ -338,7 +339,7 @@ public class ComputeServerResource extends ServerResource {
 		// resource tpl
 		List<Resource> resourceTplResources = filterByRelProperty(RequestConstants.RESOURCE_TPL_OCCI_SCHEME,
 				resources);
-		String fogbowRequirements = getRequirements(application, resourceTplResources);		
+		String fogbowRequirements = getRequirements(properties, resourceTplResources);		
 		requestXOCCIAtt.put(RequestAttribute.REQUIREMENTS.getValue(), fogbowRequirements);
 		requestXOCCIAtt.put(RequestAttribute.INSTANCE_COUNT.getValue(), DEFAULT_INSTANCE_COUNT);
 
@@ -375,10 +376,10 @@ public class ComputeServerResource extends ServerResource {
 		return new StringRepresentation(ResponseConstants.OK);
 	}
 
-	private String getRequirements(OCCIApplication application, List<Resource> resourceTplResources) {
+	private String getRequirements(Properties properties, List<Resource> resourceTplResources) {
 		StringBuilder requirements = new StringBuilder();
 		for (int i = 0; i < resourceTplResources.size(); i++) {
-			String currentRequirement = application.getProperty(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX
+			String currentRequirement = properties.getProperty(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX
 					+ resourceTplResources.get(i).getCategory().getTerm());
 
 			if (currentRequirement == null || currentRequirement.isEmpty()) {

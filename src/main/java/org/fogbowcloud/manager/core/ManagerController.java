@@ -1644,10 +1644,6 @@ public class ManagerController {
 		return failedBatch;
 	}
 	
-	public String getProperty(String property) {
-		return properties.getProperty(property);
-	}
-	
 	protected class FailedBatch {
 		private Map<String, FailedBatchType> failedBatches = new HashMap<String, FailedBatchType>();
 			
