@@ -159,26 +159,4 @@ public class TestIdentityOpenNebula {
 		// testing is not valid
 		Assert.assertFalse(identityOpenNebula.isValid("invalidAccessId"));
 	}
-
-	@Test
-	public void testCreateFedrationUserToken() throws ClientConfigurationException {
-		// mocking client
-		Client oneClient = Mockito.mock(Client.class);
-		Mockito.when(oneClient.call("userpool.info")).thenReturn(
-				new OneResponse(true, USER_POOL_DEFAULT_RESPONSE));
-		
-		String federationUserAccessId = PluginHelper.FED_USERNAME + ":" + PluginHelper.FED_USER_PASS;
-		OpenNebulaClientFactory clientFactory = Mockito.mock(OpenNebulaClientFactory.class);
-		Mockito.when(clientFactory.createClient(federationUserAccessId, OPEN_NEBULA_URL))
-				.thenReturn(oneClient);
-		
-		identityOpenNebula = new OpenNebulaIdentityPlugin(properties, clientFactory);
-
-		// creating federation user token
-		Token federationToken = identityOpenNebula.createFederationUserToken();
-		Assert.assertEquals(federationUserAccessId,
-				federationToken.getAccessId());
-		Assert.assertEquals(PluginHelper.FED_USERNAME, federationToken.getUser());
-		Assert.assertNull(federationToken.getExpirationDate());
-	}
 }

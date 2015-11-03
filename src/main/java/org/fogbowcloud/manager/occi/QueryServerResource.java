@@ -26,6 +26,7 @@ public class QueryServerResource extends ServerResource {
 
 	private static final Logger LOGGER = Logger.getLogger(QueryServerResource.class);
 
+	@SuppressWarnings("deprecation")
 	@Get
 	public StringRepresentation fetch() {
 		LOGGER.debug("Executing the query interface fetch method");
@@ -64,8 +65,9 @@ public class QueryServerResource extends ServerResource {
 		normalizeRequest();
 		if (req.getHeaders().getFirst(OCCIHeaders.X_AUTH_TOKEN) == null
 				|| req.getHeaders().getFirst(HeaderUtils.normalize(OCCIHeaders.X_AUTH_TOKEN)) == null) {
-			req.getHeaders().add(new Header(OCCIHeaders.X_AUTH_TOKEN, 
-					req.getHeaders().getFirstValue(HeaderUtils.normalize(OCCIHeaders.X_LOCAL_AUTH_TOKEN))));
+			req.getHeaders().add(
+					new Header(OCCIHeaders.X_AUTH_TOKEN, req.getHeaders().getFirstValue(
+							HeaderUtils.normalize(OCCIHeaders.X_FEDERATION_AUTH_TOKEN))));
 		}
 
 		application.bypass(req, response);			

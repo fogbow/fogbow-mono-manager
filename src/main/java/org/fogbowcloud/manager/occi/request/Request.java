@@ -3,6 +3,7 @@ package org.fogbowcloud.manager.occi.request;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -17,32 +18,43 @@ public class Request {
 	
 	private String id;
 	private Token federationToken;
-	private Token localToken;
 	private String instanceId;
 	private String providingMemberId;
 	private final String requestingMemberId;
 	private long fulfilledTime = 0;
-	private boolean fulfilledByFederationUser;
 	private final boolean isLocal;
 	private RequestState state;
 	private List<Category> categories;
 	private Map<String, String> xOCCIAtt;
 	
 	private DateUtils dateUtils = new DateUtils();
-	
-	public Request(String id, Token federationToken, Token localToken, 
+		
+	public Request(String id, Token federationToken, String instanceId, String providingMemberId,
+			String requestingMemberId, long fulfilledTime, boolean isLocal, RequestState state,
+			List<Category> categories, Map<String, String> xOCCIAtt) {
+		this.id = id;
+		this.federationToken = federationToken;
+		this.instanceId = instanceId;
+		this.providingMemberId = providingMemberId;
+		this.requestingMemberId = requestingMemberId;
+		this.fulfilledTime = fulfilledTime;
+		this.isLocal = isLocal;
+		this.state = state;
+		this.categories = categories;
+		this.xOCCIAtt = xOCCIAtt;
+	}
+
+	public Request(String id, Token federationToken, 
 			List<Category> categories, Map<String, String> xOCCIAtt, boolean isLocal, String requestingMemberId) {
-		this(id, federationToken, localToken, categories, xOCCIAtt, isLocal, requestingMemberId, new DateUtils());
+		this(id, federationToken, categories, xOCCIAtt, isLocal, requestingMemberId, new DateUtils());
 	}
 	
-	public Request(String id, Token federationToken, Token localToken, 
+	public Request(String id, Token federationToken, 
 			List<Category> categories, Map<String, String> xOCCIAtt, boolean isLocal, String requestingMemberId, DateUtils dateUtils) {
 		this.id = id;
 		this.federationToken = federationToken;
-		this.localToken = localToken;
 		this.categories = categories;
 		this.xOCCIAtt = xOCCIAtt;
-		this.fulfilledByFederationUser = false;
 		this.isLocal = isLocal;
 		this.requestingMemberId = requestingMemberId;
 		this.dateUtils = dateUtils;
@@ -50,7 +62,7 @@ public class Request {
 	}
 	
 	public Request(Request request) {
-		this(request.getId(), request.getFederationToken(), request.getLocalToken(), request.getCategories(), 
+		this(request.getId(), request.getFederationToken(), request.getCategories(), 
 				request.getxOCCIAtt(), request.isLocal, request.getRequestingMemberId());
 	}
 
@@ -80,14 +92,6 @@ public class Request {
 	
 	public String getInstanceId() {
 		return instanceId;
-	}
-	
-	public boolean isFulfilledByFederationUser() {
-		return fulfilledByFederationUser;
-	}
-
-	public void setFulfilledByFederationUser(boolean fulfilledByFederationUser) {
-		this.fulfilledByFederationUser = fulfilledByFederationUser;
 	}
 
 	public String getGlobalInstanceId() {
@@ -152,14 +156,6 @@ public class Request {
 		return fulfilledTime;
 	}
 
-	public Token getLocalToken() {
-		return localToken;
-	}
-
-	public void setLocalToken(Token localToken) {
-		this.localToken = localToken;
-	}
-
 	public Map<String, String> getxOCCIAtt() {
 		return new HashMap<String, String>(xOCCIAtt);
 	}
@@ -207,6 +203,60 @@ public class Request {
 
 		long now = new DateUtils().currentTimeMillis();
 		return expirationDate.getTime() < now;
+	}
+
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Request other = (Request) obj;
+		if (categories == null) {
+			if (other.categories != null)
+				return false;
+		} else if (!categories.equals(other.categories))
+			return false;
+		if (federationToken == null) {
+			if (other.federationToken != null)
+				return false;
+		} else if (!federationToken.equals(other.federationToken))
+			return false;
+		if (fulfilledTime != other.fulfilledTime)
+			return false;
+		if (id == null) {
+			if (other.id != null)
+				return false;
+		} else if (!id.equals(other.id))
+			return false;
+		if (instanceId == null) {
+			if (other.instanceId != null)
+				return false;
+		} else if (!instanceId.equals(other.instanceId))
+			return false;
+		if (isLocal != other.isLocal)
+			return false;
+		if (providingMemberId == null) {
+			if (other.providingMemberId != null)
+				return false;
+		} else if (!providingMemberId.equals(other.providingMemberId))
+			return false;
+		if (requestingMemberId == null) {
+			if (other.requestingMemberId != null)
+				return false;
+		} else if (!requestingMemberId.equals(other.requestingMemberId))
+			return false;
+		if (state != other.state)
+			return false;
+		if (xOCCIAtt == null) {
+			if (other.xOCCIAtt != null)
+				return false;
+		} else if (xOCCIAtt != null && !new HashSet(xOCCIAtt.values()).equals(new HashSet(other.xOCCIAtt.values())))
+			return false;
+		return true;
 	}
 	
 }

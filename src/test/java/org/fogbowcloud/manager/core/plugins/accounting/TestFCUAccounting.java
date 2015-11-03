@@ -62,7 +62,7 @@ public class TestFCUAccounting {
 		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin, dateUtils);
 
 		Request request1 = new Request("id1", new Token("accessId", "userId", null,
-				new HashMap<String, String>()), null, null, null, true, "localMemberId");
+				new HashMap<String, String>()), null, null, true, "localMemberId");
 		request1.setDateUtils(dateUtils);
 		request1.setState(RequestState.FULFILLED);
 		request1.setProvidingMemberId("remoteMemberId");
@@ -100,7 +100,7 @@ public class TestFCUAccounting {
 		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin, dateUtils);
 
 		Request request1 = new Request("id1", new Token("accessId", "userId", null,
-				new HashMap<String, String>()), null, null, null, true, "localMemberId");
+				new HashMap<String, String>()), null, null, true, "localMemberId");
 		request1.setDateUtils(dateUtils);
 		request1.setState(RequestState.FULFILLED);
 		request1.setInstanceId("instanceId");
@@ -139,14 +139,14 @@ public class TestFCUAccounting {
 		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin, dateUtils);
 
 		Request request1 = new Request("id1", new Token("accessId", "userId1", null,
-				new HashMap<String, String>()), null, null, null, true, "localMemberId");
+				new HashMap<String, String>()), null, null, true, "localMemberId");
 		request1.setDateUtils(dateUtils);
 		request1.setState(RequestState.FULFILLED);
 		request1.setInstanceId("instanceId1");
 		request1.setProvidingMemberId("localMemberId");
 		
 		Request request2 = new Request("id2", new Token("accessId", "userId2", null,
-				new HashMap<String, String>()), null, null, null, true, "localMemberId");
+				new HashMap<String, String>()), null, null, true, "localMemberId");
 		request2.setDateUtils(dateUtils);
 		request2.setState(RequestState.FULFILLED);
 		request2.setInstanceId("instanceId2");
@@ -188,7 +188,7 @@ public class TestFCUAccounting {
 		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin, dateUtils);
 
 		Request servedRequest = new Request("instanceToken", new Token("accessId", "userId1", null,
-				new HashMap<String, String>()), null, null, null, false, "remoteMemberId", dateUtils);
+				new HashMap<String, String>()), null, null, false, "remoteMemberId", dateUtils);
 		servedRequest.setInstanceId("instanceId");
 		servedRequest.setProvidingMemberId("localMemberId");
 
@@ -225,7 +225,7 @@ public class TestFCUAccounting {
 		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin, dateUtils);
 
 		Request request1 = new Request("id1", new Token("accessId", "userId", null,
-				new HashMap<String, String>()), null, null, null, true, "localMemberId", dateUtils);
+				new HashMap<String, String>()), null, null, true, "localMemberId", dateUtils);
 		request1.setState(RequestState.FULFILLED);
 		request1.setProvidingMemberId("remoteMemberId");
 		request1.setInstanceId("instanceId1");
@@ -234,7 +234,7 @@ public class TestFCUAccounting {
 		requestsWithInstance.add(request1);
 
 		Request servedRequest = new Request("instanceToken", new Token("accessId", "userId1", null,
-				new HashMap<String, String>()), null, null, null, false, "remoteMemberId", dateUtils);
+				new HashMap<String, String>()), null, null, false, "remoteMemberId", dateUtils);
 		servedRequest.setInstanceId("instanceId2");
 		servedRequest.setState(RequestState.FULFILLED);
 		servedRequest.setProvidingMemberId("localMemberId");
@@ -272,7 +272,7 @@ public class TestFCUAccounting {
 		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin, dateUtils);
 
 		Request request1 = new Request("id1", new Token("accessId", "userId", null,
-				new HashMap<String, String>()), null, null, null, true, "");
+				new HashMap<String, String>()), null, null, true, "");
 		request1.setDateUtils(dateUtils);
 		request1.setState(RequestState.FULFILLED);
 		request1.setInstanceId("instanceId1");
@@ -282,7 +282,7 @@ public class TestFCUAccounting {
 		requestsWithInstance.add(request1);
 
 		Request servedRequest = new Request("instanceToken", new Token("accessId", "userId1", null,
-				new HashMap<String, String>()), null, null, null, false, "remoteMemberId", dateUtils);
+				new HashMap<String, String>()), null, null, false, "remoteMemberId", dateUtils);
 		servedRequest.setInstanceId("instanceId2");
 		servedRequest.setState(RequestState.FULFILLED);
 		servedRequest.setProvidingMemberId("localMemberId");
@@ -322,7 +322,7 @@ public class TestFCUAccounting {
 		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin, dateUtils);
 
 		Request request1 = new Request("id1", new Token("accessId", "userId", null,
-				new HashMap<String, String>()), null, null, null, true, "localMemberId");
+				new HashMap<String, String>()), null, null, true, "localMemberId");
 		request1.setDateUtils(dateUtils);
 		request1.setState(RequestState.FULFILLED);
 		request1.setProvidingMemberId("remoteMemberId1");
@@ -332,7 +332,7 @@ public class TestFCUAccounting {
 		requestsWithInstance.add(request1);
 
 		Request servedRequest = new Request("instanceToken", new Token("accessId", "userId1", null,
-				new HashMap<String, String>()), null, null, null, false, "remoteMemberId2", dateUtils);
+				new HashMap<String, String>()), null, null, false, "remoteMemberId2", dateUtils);
 		servedRequest.setInstanceId("instanceId2");
 		servedRequest.setState(RequestState.FULFILLED);
 		servedRequest.setProvidingMemberId("localMemberId");
@@ -375,7 +375,7 @@ public class TestFCUAccounting {
 		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin, dateUtils);
 
 		Request request1 = new Request("id1", new Token("accessId", "userId", null,
-				new HashMap<String, String>()), null, null, null, true, "localMemberId");
+				new HashMap<String, String>()), null, null, true, "localMemberId");
 		request1.setDateUtils(dateUtils);
 		request1.setState(RequestState.FULFILLED);
 		request1.setInstanceId("instanceId1");
@@ -385,7 +385,7 @@ public class TestFCUAccounting {
 		requestsWithInstance.add(request1);
 
 		Request servedRequest = new Request("instanceToken", new Token("accessId", "userId1", null,
-				new HashMap<String, String>()), null, null, null, false, "remoteMemberId", dateUtils);
+				new HashMap<String, String>()), null, null, false, "remoteMemberId", dateUtils);
 		servedRequest.setInstanceId("instanceId2");
 		servedRequest.setState(RequestState.FULFILLED);
 		servedRequest.setProvidingMemberId("localMemberId");
@@ -428,7 +428,7 @@ public class TestFCUAccounting {
 		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin, dateUtils);
 
 		Request request1 = new Request("id1", new Token("accessId", "userId", null,
-				new HashMap<String, String>()), null, null, null, true, "localMemberId");
+				new HashMap<String, String>()), null, null, true, "localMemberId");
 		request1.setDateUtils(dateUtils);
 		request1.setState(RequestState.FULFILLED);
 		request1.setProvidingMemberId("remoteMemberId");
@@ -438,7 +438,7 @@ public class TestFCUAccounting {
 		requestsWithInstance.add(request1);
 		
 		Request servedRequest = new Request("instanceToken", new Token("accessId", "userId1", null,
-				new HashMap<String, String>()), null, null, null, false, "remoteMemberId", dateUtils);
+				new HashMap<String, String>()), null, null, false, "remoteMemberId", dateUtils);
 		servedRequest.setInstanceId("instanceId2");
 		servedRequest.setState(RequestState.FULFILLED);
 		servedRequest.setProvidingMemberId("localMemberId");
@@ -483,14 +483,14 @@ public class TestFCUAccounting {
 		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin, dateUtils);
 
 		Request request1 = new Request("id1", new Token("accessId", "userId", null,
-				new HashMap<String, String>()), null, null, null, true, "localMemberId");
+				new HashMap<String, String>()), null, null, true, "localMemberId");
 		request1.setDateUtils(dateUtils);
 		request1.setState(RequestState.FULFILLED);
 		request1.setProvidingMemberId("remoteMemberId");
 		request1.setInstanceId("instanceId1");
 		
 		Request request2 = new Request("id2", new Token("accessId", "userId", null,
-				new HashMap<String, String>()), null, null, null, true, "localMemberId");
+				new HashMap<String, String>()), null, null, true, "localMemberId");
 		request2.setDateUtils(dateUtils);
 		request2.setState(RequestState.FULFILLED);
 		request2.setInstanceId("instanceId3");
@@ -501,7 +501,7 @@ public class TestFCUAccounting {
 		requestsWithInstance.add(request2);
 
 		Request servedRequest = new Request("instanceToken", new Token("accessId", "userId1", null,
-				new HashMap<String, String>()), null, null, null, false, "remoteMemberId", dateUtils);
+				new HashMap<String, String>()), null, null, false, "remoteMemberId", dateUtils);
 		servedRequest.setInstanceId("instanceId2");
 		servedRequest.setState(RequestState.FULFILLED);
 		servedRequest.setProvidingMemberId("localMemberId");
@@ -550,7 +550,7 @@ public class TestFCUAccounting {
 		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin, dateUtils);
 
 		Request request1 = new Request("id1", new Token("accessId", "userId", null,
-				new HashMap<String, String>()), null, null, null, true, "localMemberId");
+				new HashMap<String, String>()), null, null, true, "localMemberId");
 		request1.setDateUtils(dateUtils);
 		request1.setState(RequestState.FULFILLED);
 		request1.setInstanceId("instanceId1");
@@ -560,7 +560,7 @@ public class TestFCUAccounting {
 		requestsWithInstance.add(request1);
 
 		Request servedRequest = new Request("instanceToken", new Token("accessId", "userId1", null,
-				new HashMap<String, String>()), null, null, null, false, "remoteMemberId", dateUtils);
+				new HashMap<String, String>()), null, null, false, "remoteMemberId", dateUtils);
 		servedRequest.setInstanceId("instanceId2");
 		servedRequest.setState(RequestState.FULFILLED);
 		servedRequest.setProvidingMemberId("localMemberId");

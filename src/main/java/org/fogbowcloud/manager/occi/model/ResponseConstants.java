@@ -32,5 +32,6 @@ public class ResponseConstants {
 	public static final String NO_VALID_HOST_FOUND = "No valid host was found.";
 	public static final String INVALID_TOKEN = "Token type is not valid for this cloud manager";
 	public static final String INVALID_STATE = "Current state is not valid.";
+	public static final String PROPERTY_NOT_SPECIFIED_FOR_EXTRA_OCCI_RESOURCE = "There is not any property specified at manager conf file for OCCI resource: ";
 
 }

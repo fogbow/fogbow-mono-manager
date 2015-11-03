@@ -77,7 +77,7 @@ public class TestGetRemoteInstance {
 
 		Token token = new Token("anyvalue", OCCITestHelper.USER_MOCK,
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>());
-		Request request = new Request("anyvalue", token, null, null, null, true, "");
+		Request request = new Request("anyvalue", token, null, null, true, "");
 		request.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
 		request.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 
@@ -100,7 +100,7 @@ public class TestGetRemoteInstance {
 	@Test(expected=OCCIException.class)
 	public void testGetRemoteInstaceNotFound() throws Exception {
 		Request request = new Request("anyvalue", new Token(WRONG_TOKEN, OCCITestHelper.USER_MOCK,
-				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), null, null, null, true, "");
+				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), null, null, true, "");
 		request.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
 		request.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 
@@ -117,7 +117,7 @@ public class TestGetRemoteInstance {
 	public void testGetRemoteInstanceUnauthorized() throws Exception {
 		Token token = new Token(WRONG_TOKEN, OCCITestHelper.USER_MOCK,
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>());
-		Request request = new Request("anyvalue", token, null, null, null, true, "");
+		Request request = new Request("anyvalue", token, null, null, true, "");
 		request.setInstanceId(INSTANCE_OTHER_USER);
 		request.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 

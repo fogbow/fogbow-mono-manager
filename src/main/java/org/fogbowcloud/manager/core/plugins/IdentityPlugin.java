@@ -38,12 +38,6 @@ public interface IdentityPlugin {
 	 * @return a boolean stating whether the access id is valid or not.
 	 */
 	public boolean isValid(String accessId);
-
-	/**
-	 * Creates a Token for the user that acts as a proxy for federation requests.
-	 * @return a valid Token for the federation user.
-	 */
-	public Token createFederationUserToken();
 	
 	/**
 	 * @return an array of the required and optional fields for token creation.

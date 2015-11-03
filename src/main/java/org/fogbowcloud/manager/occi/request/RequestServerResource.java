@@ -237,10 +237,8 @@ public class RequestServerResource extends ServerResource {
 		
 		String federationAuthToken = HeaderUtils.getFederationAuthToken(
 				req.getHeaders(), getResponse(), application.getAuthenticationURI());
-		String localAuthToken = HeaderUtils.getLocalAuthToken(req.getHeaders());
 		
-		List<Request> currentRequests = application.createRequests(federationAuthToken, 
-				localAuthToken, categories, xOCCIAtt);
+		List<Request> currentRequests = application.createRequests(federationAuthToken, categories, xOCCIAtt);
 		if (currentRequests != null || !currentRequests.isEmpty()) {
 			setStatus(Status.SUCCESS_CREATED);
 		}		
@@ -407,7 +405,6 @@ public class RequestServerResource extends ServerResource {
 						+ RequestAttribute.STATE.getValue() + "=" + request.getState() + "; "
 						+ RequestAttribute.TYPE.getValue() + "="
 						+ request.getAttValue(RequestAttribute.TYPE.getValue()) + "; "
-//						+ RequestAttribute.INSTANCE_ID.getValue() + "=" + request.getInstanceId()
 						+ RequestAttribute.INSTANCE_ID.getValue() + "=" + request.getGlobalInstanceId()
 						+ "\n";
 			}else {			

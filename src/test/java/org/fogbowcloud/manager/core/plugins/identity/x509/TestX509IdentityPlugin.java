@@ -105,20 +105,6 @@ public class TestX509IdentityPlugin {
 				PluginHelper.formatExpirationDate(dateFormat, token));
 	}
 
-	@Test
-	public void testCreateFederationUser() throws ParseException {
-		properties.put(X509_CA_DIR_PATH_PROP, CA_DIR_PATH);
-		properties.put("local_proxy_account_x509_certificate_path", CERTIFICATE_PATH);
-		x509IdentityPlugin = new X509IdentityPlugin(properties);
-
-		Token federationToken = x509IdentityPlugin.createFederationUserToken();
-
-		Assert.assertEquals(CERTIFICATE_ACCESS_ID, federationToken.getAccessId());
-		Assert.assertEquals(CERTIFICATE_USER, federationToken.getUser());
-		Assert.assertEquals(CERTIFICATE_EXPIRATION_DATE,
-				PluginHelper.formatExpirationDate(dateFormat, federationToken));
-	}
-
 	@Test(expected = OCCIException.class)
 	public void testCreateTokenWithoutCertificatePath() {
 		properties.put(X509_CA_DIR_PATH_PROP, CA_DIR_PATH);

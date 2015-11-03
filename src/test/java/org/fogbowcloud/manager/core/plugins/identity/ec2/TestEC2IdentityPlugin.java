@@ -54,12 +54,12 @@ public class TestEC2IdentityPlugin {
 	@Test
 	public void testCreateFederationUserToken() {
 		Properties properties = new Properties();
-		properties.setProperty("local_proxy_account_ec2_access_key", "AccessId");
-		properties.setProperty("local_proxy_account_ec2_secret_key", "SecretKey");
-		
 		EC2IdentityPlugin spy = Mockito.spy(new EC2IdentityPlugin(properties));
 		Mockito.doReturn(null).when(spy).getToken(Mockito.anyString());
-		spy.createFederationUserToken();
+		Map<String, String> userCredentails = new HashMap<String, String>();
+		userCredentails.put(EC2IdentityPlugin.CRED_ACCESS_KEY, "AccessId");
+		userCredentails.put(EC2IdentityPlugin.CRED_SECRET_KEY, "SecretKey");
+		spy.createToken(userCredentails);
 		Mockito.verify(spy).getToken("AccessId:SecretKey");
 	}
 	

@@ -41,7 +41,7 @@ public class TestNoFPrioritizationPlugin {
 				new HashMap<String, ResourceUsage>());
 		
 		Request newRequest = new Request("newID", new Token("newAccessId", "newRemoteUserId", null,
-				new HashMap<String, String>()), null, null, null, false, "memberId");
+				new HashMap<String, String>()), null, null, false, "memberId");
 		
 		NoFPrioritizationPlugin nofPlugin = new NoFPrioritizationPlugin(properties, accountingPlugin);
 		Assert.assertNull(nofPlugin.takeFrom(newRequest, null));
@@ -54,7 +54,7 @@ public class TestNoFPrioritizationPlugin {
 				new HashMap<String, ResourceUsage>());
 		
 		Request newRequest = new Request("newID", new Token("newAccessId", "newRemoteUserId", null,
-				new HashMap<String, String>()), null, null, null, false, "memberId");
+				new HashMap<String, String>()), null, null, false, "memberId");
 		
 		NoFPrioritizationPlugin nofPlugin = new NoFPrioritizationPlugin(properties, accountingPlugin);
 		Assert.assertNull(nofPlugin.takeFrom(newRequest, new ArrayList<Request>()));
@@ -80,7 +80,7 @@ public class TestNoFPrioritizationPlugin {
 		NoFPrioritizationPlugin nofPlugin = new NoFPrioritizationPlugin(properties, accountingPlugin);
 		
 		Request servedRequest = new Request("id", new Token("accessId", "remoteUserId", null,
-				new HashMap<String, String>()), null, null, null, false, "member1");
+				new HashMap<String, String>()), null, null, false, "member1");
 		servedRequest.setInstanceId("instanceId");
 		servedRequest.setState(RequestState.FULFILLED);
 		servedRequest.setProvidingMemberId("localMemberId");
@@ -89,7 +89,7 @@ public class TestNoFPrioritizationPlugin {
 		requests.add(servedRequest);
 		
 		Request newRequest = new Request("newID", new Token("newAccessId", "newRemoteUserId", null,
-				new HashMap<String, String>()), null, null, null, false, "member2");
+				new HashMap<String, String>()), null, null, false, "member2");
 		
 		Assert.assertEquals(servedRequest, nofPlugin.takeFrom(newRequest, requests));
 	}
@@ -114,7 +114,7 @@ public class TestNoFPrioritizationPlugin {
 		NoFPrioritizationPlugin nofPlugin = new NoFPrioritizationPlugin(properties, accountingPlugin);
 		
 		Request servedRequest = new Request("id", new Token("accessId", "remoteUserId", null,
-				new HashMap<String, String>()), null, null, null, false, "member1");
+				new HashMap<String, String>()), null, null, false, "member1");
 		servedRequest.setInstanceId("instanceId");
 		servedRequest.setState(RequestState.FULFILLED);
 		servedRequest.setProvidingMemberId("localMemberId");
@@ -123,7 +123,7 @@ public class TestNoFPrioritizationPlugin {
 		requests.add(servedRequest);
 		
 		Request newRequest = new Request("newID", new Token("newAccessId", "newRemoteUserId", null,
-				new HashMap<String, String>()), null, null, null, false, "member2");
+				new HashMap<String, String>()), null, null, false, "member2");
 		
 		Assert.assertNull(nofPlugin.takeFrom(newRequest, requests));
 	}
@@ -153,7 +153,7 @@ public class TestNoFPrioritizationPlugin {
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 		
 		Request servedRequest1 = new Request("id1", new Token("accessId", "remoteUserId", null,
-				new HashMap<String, String>()), null, null, null, false, "member1", dateUtils);
+				new HashMap<String, String>()), null, null, false, "member1", dateUtils);
 		servedRequest1.setInstanceId("instanceId1");
 		servedRequest1.setState(RequestState.FULFILLED);
 		servedRequest1.setProvidingMemberId("localMemberId");
@@ -162,7 +162,7 @@ public class TestNoFPrioritizationPlugin {
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now + 30);
 		
 		Request servedRequest2 = new Request("id2", new Token("accessId", "remoteUserId", null,
-				new HashMap<String, String>()), null, null, null, false, "member1", dateUtils);
+				new HashMap<String, String>()), null, null, false, "member1", dateUtils);
 		servedRequest2.setInstanceId("instanceId2");
 		servedRequest2.setState(RequestState.FULFILLED);
 		servedRequest2.setProvidingMemberId("localMemberId");
@@ -172,7 +172,7 @@ public class TestNoFPrioritizationPlugin {
 		requests.add(servedRequest2);
 		
 		Request newRequest = new Request("newID", new Token("newAccessId", "newRemoteUserId", null,
-				new HashMap<String, String>()), null, null, null, false, "member2");
+				new HashMap<String, String>()), null, null, false, "member2");
 		
 		// checking if take from most recent request
 		Assert.assertEquals(servedRequest2, nofPlugin.takeFrom(newRequest, requests));
@@ -203,7 +203,7 @@ public class TestNoFPrioritizationPlugin {
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 		
 		Request servedRequest1 = new Request("id1", new Token("accessId", "remoteUserId", null,
-				new HashMap<String, String>()), null, null, null, false, "member1", dateUtils);
+				new HashMap<String, String>()), null, null, false, "member1", dateUtils);
 		servedRequest1.setInstanceId("instanceId1");
 		servedRequest1.setState(RequestState.FULFILLED);
 		servedRequest1.setProvidingMemberId("localMemberId");
@@ -212,7 +212,7 @@ public class TestNoFPrioritizationPlugin {
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now + 30);
 		
 		Request servedRequest2 = new Request("id2", new Token("accessId", "remoteUserId", null,
-				new HashMap<String, String>()), null, null, null, false, "member1", dateUtils);
+				new HashMap<String, String>()), null, null, false, "member1", dateUtils);
 		servedRequest2.setInstanceId("instanceId2");
 		servedRequest2.setState(RequestState.FULFILLED);
 		servedRequest2.setProvidingMemberId("localMemberId");
@@ -222,7 +222,7 @@ public class TestNoFPrioritizationPlugin {
 		requests.add(servedRequest2);
 		
 		Request newRequest = new Request("newID", new Token("newAccessId", "newRemoteUserId", null,
-				new HashMap<String, String>()), null, null, null, false, "member2");
+				new HashMap<String, String>()), null, null, false, "member2");
 		
 		// checking if take from most recent request
 		Assert.assertEquals(servedRequest2, nofPlugin.takeFrom(newRequest, requests));
@@ -254,7 +254,7 @@ public class TestNoFPrioritizationPlugin {
 		NoFPrioritizationPlugin nofPlugin = new NoFPrioritizationPlugin(properties, accountingPlugin);
 		
 		Request servedRequest = new Request("id", new Token("accessId", "remoteUserId", null,
-				new HashMap<String, String>()), null, null, null, false, "member1");
+				new HashMap<String, String>()), null, null, false, "member1");
 		servedRequest.setInstanceId("instanceId");
 		servedRequest.setState(RequestState.FULFILLED);
 		servedRequest.setProvidingMemberId("localMemberId");
@@ -263,7 +263,7 @@ public class TestNoFPrioritizationPlugin {
 		requests.add(servedRequest);
 		
 		Request newRequest = new Request("newID", new Token("newAccessId", "newLocalUserId", null,
-				new HashMap<String, String>()), null, null, null, true, DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+				new HashMap<String, String>()), null, null, true, DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		
 		Assert.assertEquals(servedRequest, nofPlugin.takeFrom(newRequest, requests));
 	}
@@ -293,7 +293,7 @@ public class TestNoFPrioritizationPlugin {
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 		
 		Request servedRequest1 = new Request("id1", new Token("accessId", "remoteUserId", null,
-				new HashMap<String, String>()), null, null, null, false, "member1", dateUtils);
+				new HashMap<String, String>()), null, null, false, "member1", dateUtils);
 		servedRequest1.setInstanceId("instanceId1");
 		servedRequest1.setState(RequestState.FULFILLED);
 		servedRequest1.setProvidingMemberId("localMemberId");
@@ -302,7 +302,7 @@ public class TestNoFPrioritizationPlugin {
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now + 30);
 		
 		Request servedRequest2 = new Request("id2", new Token("accessId", "remoteUserId", null,
-				new HashMap<String, String>()), null, null, null, false, "member1", dateUtils);
+				new HashMap<String, String>()), null, null, false, "member1", dateUtils);
 		servedRequest2.setInstanceId("instanceId2");
 		servedRequest2.setState(RequestState.FULFILLED);
 		servedRequest2.setProvidingMemberId("localMemberId");
@@ -312,7 +312,7 @@ public class TestNoFPrioritizationPlugin {
 		requests.add(servedRequest2);
 		
 		Request newRequest = new Request("newID", new Token("newAccessId", "newLocalUserId", null,
-				new HashMap<String, String>()), null, null, null, true, DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+				new HashMap<String, String>()), null, null, true, DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		
 		// checking if take from most recent request
 		Assert.assertEquals(servedRequest2, nofPlugin.takeFrom(newRequest, requests));

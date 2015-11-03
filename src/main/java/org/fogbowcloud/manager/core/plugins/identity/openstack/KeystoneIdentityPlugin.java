@@ -88,10 +88,6 @@ public class KeystoneIdentityPlugin implements IdentityPlugin {
 	
 	@Override
 	public Token createToken(Map<String, String> credentials) {
-		return createToken(credentials, true);
-	}
-	
-	private Token createToken(Map<String, String> credentials, boolean encodeJSON) {
 		JSONObject json;
 		try {
 			json = mountJson(credentials);
@@ -107,7 +103,7 @@ public class KeystoneIdentityPlugin implements IdentityPlugin {
 		}
 		
 		String responseStr = doPostRequest(currentTokenEndpoint, json);
-		Token token = getTokenFromJson(responseStr, encodeJSON);
+		Token token = getTokenFromJson(responseStr);
 		
 		return token;
 	}
@@ -170,7 +166,7 @@ public class KeystoneIdentityPlugin implements IdentityPlugin {
 		}
 
 		String responseStr = doPostRequest(v2TokensEndpoint, json);
-		return getTokenFromJson(responseStr, false);
+		return getTokenFromJson(responseStr);
 	}
 
 	private static JSONObject mountJson(Token token) throws JSONException {
@@ -198,7 +194,7 @@ public class KeystoneIdentityPlugin implements IdentityPlugin {
 		}
 	}
 
-	private Token getTokenFromJson(String responseStr, boolean encodeJSON) {
+	private Token getTokenFromJson(String responseStr) {
 		try {
 			JSONObject root = new JSONObject(responseStr);
 			JSONObject tokenKeyStone = root.getJSONObject(ACCESS_PROP).getJSONObject(TOKEN_PROP);
@@ -227,20 +223,7 @@ public class KeystoneIdentityPlugin implements IdentityPlugin {
 			LOGGER.debug("json token: " + accessId);
 			LOGGER.debug("json user: " + user);
 			LOGGER.debug("json expirationDate: " + expirationDateToken);
-			LOGGER.debug("json attributes: " + tokenAtt);
-			
-			if (encodeJSON && (tenantId != null || tenantName != null)) {
-				JSONObject jsonAccess = new JSONObject();
-				jsonAccess.put(ACCESS_PROP, accessId);
-				if (tenantId != null) {
-					jsonAccess.put(TENANT_ID, tenantId);
-				}
-				if (tenantName != null) {
-					jsonAccess.put(TENANT_NAME, tenantName);
-				}
-				accessId = new String(Base64.encodeBase64(jsonAccess.toString().getBytes(Charsets.UTF_8), 
-						false, false), Charsets.UTF_8);
-			}
+			LOGGER.debug("json attributes: " + tokenAtt);		
 			
 			return new Token(accessId, user, getDateFromOpenStackFormat(expirationDateToken), tokenAtt);
 		} catch (Exception e) {
@@ -270,7 +253,7 @@ public class KeystoneIdentityPlugin implements IdentityPlugin {
 		}
 
 		String responseStr = doPostRequest(v2TokensEndpoint, root);
-		return getTokenFromJson(responseStr, false);
+		return getTokenFromJson(responseStr);
 	}
 
 	private String getTenantName(String accessId) {
@@ -342,19 +325,6 @@ public class KeystoneIdentityPlugin implements IdentityPlugin {
 			LOGGER.error("Exception while parsing date.", e);
 			return null;
 		}
-	}
-
-	@Override
-	public Token createFederationUserToken() {
-		Map<String, String> federationUserCredentials = new HashMap<String, String>();
-		String username = properties.getProperty(FEDERATION_USER_NAME_KEY);
-		String password = properties.getProperty(FEDERATION_USER_PASS_KEY);
-		String tenantName = properties.getProperty(FEDERATION_USER_TENANT_NAME_KEY);
-		federationUserCredentials.put(USERNAME, username);
-		federationUserCredentials.put(PASSWORD, password);
-		federationUserCredentials.put(TENANT_NAME, tenantName);
-
-		return createToken(federationUserCredentials, false);
 	}
 
 	@Override

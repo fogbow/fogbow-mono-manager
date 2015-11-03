@@ -20,6 +20,7 @@ import org.apache.http.util.EntityUtils;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
+import org.fogbowcloud.manager.core.plugins.LocalCredentialsPlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.model.Category;
@@ -56,8 +57,7 @@ public class TestGetRequest {
 		
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.getToken(OCCITestHelper.FED_ACCESS_TOKEN))
-				.thenReturn(
-						new Token("id", OCCITestHelper.USER_MOCK, new Date(),
+				.thenReturn(new Token("id", OCCITestHelper.USER_MOCK, new Date(),
 								new HashMap<String, String>()));
 		Mockito.when(identityPlugin.getToken(OCCITestHelper.INVALID_TOKEN)).thenThrow(
 				new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED));
@@ -68,12 +68,23 @@ public class TestGetRequest {
 
 		Mockito.when(identityPlugin.getToken(OCCITestHelper.FED_ACCESS_TOKEN)).thenReturn(userToken);
 
+		LocalCredentialsPlugin localCredentialsPlugin = Mockito
+				.mock(LocalCredentialsPlugin.class);
+		Map<String, Map<String, String>> defaultFederationUsersCrendetials = 
+				new HashMap<String, Map<String,String>>();
+		HashMap<String, String> credentails = new HashMap<String, String>();
+		defaultFederationUsersCrendetials.put("one", credentails);
+		Mockito.when(localCredentialsPlugin.getAllLocalCredentials()).thenReturn(
+				defaultFederationUsersCrendetials);
+		Mockito.when(identityPlugin.createToken(credentails)).thenReturn(
+				new Token("id", OCCITestHelper.USER_MOCK, new Date(), new HashMap<String, String>()));		
+		
 		AuthorizationPlugin authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
 		Mockito.when(authorizationPlugin.isAuthorized(Mockito.any(Token.class))).thenReturn(true);
 		
 		BenchmarkingPlugin benchmarkingPlugin = Mockito.mock(BenchmarkingPlugin.class);
 		this.requestHelper.initializeComponentExecutorSameThread(computePlugin, identityPlugin,
-				authorizationPlugin, benchmarkingPlugin);
+				authorizationPlugin, benchmarkingPlugin, localCredentialsPlugin);
 	}
 
 	@Test
@@ -101,7 +112,7 @@ public class TestGetRequest {
 
 		Assert.assertTrue(response.getFirstHeader(OCCIHeaders.CONTENT_TYPE).getValue()
 				.startsWith(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE));
-		Assert.assertEquals(0, OCCITestHelper.getRequestIds(response).size());
+		Assert.assertEquals(0, OCCITestHelper.getLocationIds(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 
@@ -115,7 +126,7 @@ public class TestGetRequest {
 
 		Assert.assertTrue(response.getFirstHeader(OCCIHeaders.CONTENT_TYPE).getValue()
 				.startsWith(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE));
-		Assert.assertEquals(0, OCCITestHelper.getRequestIds(response).size());
+		Assert.assertEquals(0, OCCITestHelper.getLocationIds(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 	
@@ -128,7 +139,7 @@ public class TestGetRequest {
 
 		Assert.assertTrue(response.getFirstHeader(OCCIHeaders.CONTENT_TYPE).getValue()
 				.startsWith(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE));
-		Assert.assertEquals(0, OCCITestHelper.getRequestIds(response).size());
+		Assert.assertEquals(0, OCCITestHelper.getLocationIds(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 	
@@ -194,7 +205,7 @@ public class TestGetRequest {
 		//Default accept is text/plain
 		Assert.assertTrue(response.getFirstHeader(OCCIHeaders.CONTENT_TYPE).getValue()
 				.startsWith(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE));
-		Assert.assertEquals(2, OCCITestHelper.getRequestIds(response).size());
+		Assert.assertEquals(2, OCCITestHelper.getLocationIds(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 
@@ -249,7 +260,7 @@ public class TestGetRequest {
 		Assert.assertTrue(response.getFirstHeader(OCCIHeaders.CONTENT_TYPE).getValue()
 				.startsWith(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE));
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
-		Assert.assertEquals(30, OCCITestHelper.getRequestIds(response).size());
+		Assert.assertEquals(30, OCCITestHelper.getLocationIds(response).size());
 	}
 	
 	@Test
@@ -352,7 +363,6 @@ public class TestGetRequest {
 				RequestConstants.KIND_CLASS);
 		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		post.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
-		post.addHeader(OCCIHeaders.X_LOCAL_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
 		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, RequestAttribute.INSTANCE_COUNT.getValue()
 				+ " = 1");
@@ -395,7 +405,7 @@ public class TestGetRequest {
 		get.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
 		response = client.execute(get);
 
-		Assert.assertEquals(2, OCCITestHelper.getRequestIds(response).size());
+		Assert.assertEquals(2, OCCITestHelper.getLocationIds(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 		
 		// Post
@@ -421,7 +431,7 @@ public class TestGetRequest {
 		client = HttpClients.createMinimal();
 		response = client.execute(get);
 
-		Assert.assertEquals(2, OCCITestHelper.getRequestIds(response).size());
+		Assert.assertEquals(2, OCCITestHelper.getLocationIds(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());	
 		
 		// Get 
@@ -432,7 +442,7 @@ public class TestGetRequest {
 		client = HttpClients.createMinimal();
 		response = client.execute(get);
 		
-		Assert.assertEquals(0, OCCITestHelper.getRequestIds(response).size());
+		Assert.assertEquals(0, OCCITestHelper.getLocationIds(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());	
 	}
 
@@ -467,7 +477,7 @@ public class TestGetRequest {
 		client = HttpClients.createMinimal();
 		response = client.execute(get);
 
-		Assert.assertEquals(2, OCCITestHelper.getRequestIds(response).size());
+		Assert.assertEquals(2, OCCITestHelper.getLocationIds(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 
 		get = new HttpGet(OCCITestHelper.URI_FOGBOW_REQUEST);
