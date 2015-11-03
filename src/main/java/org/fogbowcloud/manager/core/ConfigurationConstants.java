@@ -25,6 +25,7 @@ public class ConfigurationConstants {
 	public static final String LOCAL_PREFIX = "local_";
 	public static final String FEDERATION_PREFIX = "federation_";
 	public static final String PREFIX_FLAVORS = "flavor_";
+	public static final String OCCI_EXTRA_RESOURCES_PREFIX = "occi_extra_resource_";
 
 	// periods
 	public static final String ORDER_BD_UPDATER_PERIOD_KEY = "order_bd_updater_period";
@@ -50,4 +51,10 @@ public class ConfigurationConstants {
 	public static final String HTTP_PORT_KEY = "http_port";
 	
 	public static final String PROP_MAX_WHOISALIVE_MANAGER_COUNT = "max_whoisalive_manager_count";
+	
+	// OCCI extra resource
+	public static final String OCCI_EXTRA_RESOURCES_KEY_PATH = "occi_extra_resource_file_path";
+	
+	// Instance Data Store
+	public static final String INSTANCE_DATA_STORE_URL = "instance_datastore_url";
 }

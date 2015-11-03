@@ -84,7 +84,7 @@ public class TestDeleteRequest {
 		get.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
 		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(get);
-		Assert.assertEquals(0, OCCITestHelper.getRequestIds(response).size());
+		Assert.assertEquals(0, OCCITestHelper.getLocationIds(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 		// Delete
 		HttpDelete delete = new HttpDelete(OCCITestHelper.URI_FOGBOW_REQUEST);
@@ -95,7 +95,7 @@ public class TestDeleteRequest {
 		// Get
 		client = HttpClients.createMinimal();
 		response = client.execute(get);
-		Assert.assertEquals(0, OCCITestHelper.getRequestIds(response).size());
+		Assert.assertEquals(0, OCCITestHelper.getLocationIds(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 
@@ -240,7 +240,7 @@ public class TestDeleteRequest {
 	private int deletedInstancesCounter(HttpResponse response) throws ParseException, IOException,
 			URISyntaxException, HttpException {
 		HttpClient client = HttpClients.createMinimal();
-		List<String> requestLocations2 = OCCITestHelper.getRequestIds(response);
+		List<String> requestLocations2 = OCCITestHelper.getLocationIds(response);
 		int countDeletedInscantes = 0;
 		for (String requestLocation : requestLocations2) {
 			HttpGet getSpecific = new HttpGet(requestLocation);

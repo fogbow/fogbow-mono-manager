@@ -6,6 +6,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import org.fogbowcloud.manager.occi.JSONHelper;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -14,7 +15,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 
-public class RequestTest {
+public class TestRequest {
 
 	@Test
 	public void testAddCategoryTwice() {
@@ -33,22 +34,18 @@ public class RequestTest {
 		List<Category> categories = new ArrayList<Category>();
 		categories.add(new Category("term", "scheme", "catClass"));
 		categories.add(new Category("termTwo", "schemeTwo", "catClassTwo"));
-		Request request = new Request(null, null, null, null, null, 0, 
-				false, null, categories, null);
 		
-		JSONArray categoriesJSON = request.getCategoriesInJSONFormat();
-		List<Category> categoriesFromJSON = Request.getCategoriesFromJSON(categoriesJSON.toString());
+		JSONArray categoriesJSON = JSONHelper.mountCategoriesJSON(categories);
+		List<Category> categoriesFromJSON = JSONHelper.getCategoriesFromJSON(categoriesJSON.toString());
 		
 		Assert.assertEquals(categories, categoriesFromJSON);
 	}
 	
 	@Test
 	public void testFromCategoriesJSONNullValue() throws JSONException {
-		Request request = new Request(null, null, null, null, null, 0, 
-				false, null, null, null);
 		
-		JSONArray categoriesJSON = request.getCategoriesInJSONFormat();
-		List<Category> categoriesFromJSON = Request.getCategoriesFromJSON(categoriesJSON.toString());
+		JSONArray categoriesJSON = JSONHelper.mountCategoriesJSON(null);
+		List<Category> categoriesFromJSON = JSONHelper.getCategoriesFromJSON(categoriesJSON.toString());
 		
 		Assert.assertTrue(categoriesFromJSON.isEmpty());
 	}	
@@ -58,22 +55,17 @@ public class RequestTest {
 		Map<String, String> xOCCIAttributes = new HashMap<String, String>();
 		xOCCIAttributes.put("keyOne", "valueOne");
 		xOCCIAttributes.put("keyTwo", "valueTwo");
-		Request request = new Request(null, null, null, null, null, 0, 
-				false, null, null, xOCCIAttributes);
 		
-		JSONObject xocciAttrToJSON = request.getXOCCIAttrInJSONFormat();
-		Map<String, String> fromXOCCIAttrJSON = Request.getXOCCIAttrFromJSON(xocciAttrToJSON.toString());
+		JSONObject xocciAttrToJSON = JSONHelper.mountXOCCIAttrJSON(xOCCIAttributes);
+		Map<String, String> fromXOCCIAttrJSON = JSONHelper.getXOCCIAttrFromJSON(xocciAttrToJSON.toString());
 		
 		Assert.assertEquals(xOCCIAttributes, fromXOCCIAttrJSON);
 	}
 	
 	@Test
 	public void testGetXOCCIAttrToJSONNUllValue() throws JSONException {
-		Request request = new Request(null, null, null, null, null, 0, 
-				false, null, null, null);
-		
-		JSONObject xocciAttrToJSON = request.getXOCCIAttrInJSONFormat();
-		Map<String, String> fromXOCCIAttrJSON = Request.getXOCCIAttrFromJSON(xocciAttrToJSON.toString());
+		JSONObject xocciAttrToJSON = JSONHelper.mountXOCCIAttrJSON(null);
+		Map<String, String> fromXOCCIAttrJSON = JSONHelper.getXOCCIAttrFromJSON(xocciAttrToJSON.toString());
 		
 		Assert.assertTrue(fromXOCCIAttrJSON.isEmpty());
 	}

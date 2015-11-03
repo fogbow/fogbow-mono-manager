@@ -9,12 +9,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.fogbowcloud.manager.core.model.DateUtils;
-import org.fogbowcloud.manager.occi.OrderDataStoreHelper;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.Token;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.json.JSONArray;
 
 public class Request {
 
@@ -207,33 +203,6 @@ public class Request {
 
 		long now = new DateUtils().currentTimeMillis();
 		return expirationDate.getTime() < now;
-	}
-
-	public JSONArray getCategoriesInJSONFormat() throws JSONException {
-		List<JSONObject> categoryObj = new ArrayList<JSONObject>();
-		for (Category category : categories != null ? categories : new ArrayList<Category>()) {
-			categoryObj.add(category.toJSON());
-		}
-		return new JSONArray(categoryObj);
-	}
-
-	public static List<Category> getCategoriesFromJSON(String jsonArrayString) throws JSONException {
-		JSONArray jsonArray = new JSONArray(jsonArrayString);
-		List<Category> categories = new ArrayList<Category>();
-		for (int i = 0; i < jsonArray.length(); i++) {
-			categories.add(Category.fromJSON(jsonArray.getString(i)));
-		}
-		return categories;
-	}
-
-	public JSONObject getXOCCIAttrInJSONFormat() throws JSONException {
-		return new JSONObject().put("xocci_attributes", xOCCIAtt != null ? xOCCIAtt.toString()
-				: null);
-	}
-
-	public static Map<String, String> getXOCCIAttrFromJSON(String jsonStr) throws JSONException {
-		JSONObject jsonObject = new JSONObject(jsonStr);
-		return OrderDataStoreHelper.toMap(jsonObject.optString("xocci_attributes"));
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })

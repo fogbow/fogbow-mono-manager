@@ -10,6 +10,7 @@ import org.fogbowcloud.manager.core.plugins.util.Credential;
 import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -129,7 +130,7 @@ public class TestAzureIdentityPlugin {
 	@Test
 	public void isValidNullAccessId() {
 		AzureIdentityPlugin azureIdentityPlugin = new AzureIdentityPlugin(new Properties());
-		Assert.assertEquals(false, azureIdentityPlugin.isValid(Mockito.anyString()));
+		Assert.assertEquals(false, azureIdentityPlugin.isValid(null));
 	}
 	
 }

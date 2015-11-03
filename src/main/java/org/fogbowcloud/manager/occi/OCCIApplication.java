@@ -42,9 +42,9 @@ public class OCCIApplication extends Application {
 		router.attach("/" + RequestConstants.TERM, RequestServerResource.class);
 		router.attach("/" + RequestConstants.TERM + "/", RequestServerResource.class);
 		router.attach("/" + RequestConstants.TERM + "/{requestId}", RequestServerResource.class);
-		router.attach("/compute", ComputeServerResource.class);
-		router.attach("/compute/", ComputeServerResource.class);
-		router.attach("/compute/{instanceId}", ComputeServerResource.class);
+		router.attach("/" + RequestConstants.COMPUTE_TERM, ComputeServerResource.class);
+		router.attach("/" + RequestConstants.COMPUTE_TERM + "/", ComputeServerResource.class);
+		router.attach("/" + RequestConstants.COMPUTE_TERM + "/{instanceId}", ComputeServerResource.class);
 		router.attach("/members", MemberServerResource.class);
 		//TODO remove this endpoint
 		router.attach("/token", TokenServerResource.class);
@@ -194,6 +194,10 @@ public class OCCIApplication extends Application {
 
 	public ResourcesInfo getLocalUserQuota(String localAccessToken) {
 		return managerFacade.getLocalUserQuota(localAccessToken);
+	}
+
+	public String getUser(String authToken) {
+		return managerFacade.getUser(authToken);
 	}
 
 }

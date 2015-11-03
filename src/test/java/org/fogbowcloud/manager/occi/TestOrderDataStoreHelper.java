@@ -25,7 +25,7 @@ public class TestOrderDataStoreHelper {
 		map.put(keyFour, new String(Base64.encodeBase64("2134543fvs.g,6.7.67,4.7,.8==´´´".getBytes())));
 		
 		JSONObject jsonObject = new JSONObject().put("attribute", map.toString());
-		Map<String, String> jsontoMap = OrderDataStoreHelper.toMap(jsonObject.optString("attribute"));
+		Map<String, String> jsontoMap = JSONHelper.toMap(jsonObject.optString("attribute"));
 		
 		Assert.assertEquals(map, jsontoMap);
 	}	
