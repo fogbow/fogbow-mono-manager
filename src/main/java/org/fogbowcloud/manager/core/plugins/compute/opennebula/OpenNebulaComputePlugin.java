@@ -299,6 +299,10 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 	public Instance getInstance(Token token, String instanceId) {
 		LOGGER.debug("Getting instance " + instanceId + " of token: " + token);
 
+		if (getFlavors() == null || getFlavors().isEmpty() ) {
+			updateFlavors(token);
+		}
+		
 		Client oneClient = clientFactory.createClient(token.getAccessId(), openNebulaEndpoint);
 		VirtualMachine vm = clientFactory.createVirtualMachine(oneClient, instanceId);
 		return mountInstance(vm);

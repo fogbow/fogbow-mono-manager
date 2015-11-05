@@ -368,6 +368,10 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 	@Override
 	public Instance getInstance(Token token, String instanceId) {
 		LOGGER.info("Getting instance " + instanceId + " with token " + token);
+		
+		if (getFlavors() == null || getFlavors().isEmpty()) {
+			updateFlavors(token);
+		}
 
 		String requestEndpoint = computeV2APIEndpoint + token.getAttributes().get(TENANT_ID)
 				+ "/servers/" + instanceId;
