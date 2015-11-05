@@ -342,7 +342,8 @@ public class ComputeServerResource extends ServerResource {
 		String fogbowRequirements = getRequirements(properties, resourceTplResources);		
 		requestXOCCIAtt.put(RequestAttribute.REQUIREMENTS.getValue(), fogbowRequirements);
 		requestXOCCIAtt.put(RequestAttribute.INSTANCE_COUNT.getValue(), DEFAULT_INSTANCE_COUNT);
-
+		requestXOCCIAtt.put(RequestAttribute.TYPE.getValue(), RequestConstants.DEFAULT_TYPE);
+		
 		Map<String, String> xOCCIAtt = HeaderUtils.getXOCCIAtributes(req.getHeaders());
 		if (xOCCIAtt.keySet().contains("occi.core.title")) {
 			requestXOCCIAtt.put("occi.core.title", xOCCIAtt.get("occi.core.title"));
