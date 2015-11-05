@@ -299,7 +299,7 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 	public Instance getInstance(Token token, String instanceId) {
 		LOGGER.debug("Getting instance " + instanceId + " of token: " + token);
 
-		if (getFlavors() == null) {
+		if (getFlavors() == null || getFlavors().isEmpty() ) {
 			updateFlavors(token);
 		}
 		

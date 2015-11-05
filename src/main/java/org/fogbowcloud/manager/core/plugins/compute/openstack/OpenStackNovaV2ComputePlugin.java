@@ -369,7 +369,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 	public Instance getInstance(Token token, String instanceId) {
 		LOGGER.info("Getting instance " + instanceId + " with token " + token);
 		
-		if (getFlavors() == null) {
+		if (getFlavors() == null || getFlavors().isEmpty()) {
 			updateFlavors(token);
 		}
 
