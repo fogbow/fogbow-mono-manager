@@ -652,10 +652,12 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 				continue;
 			}
 			
-			if (!templateType.equals(OPENNEBULA_TEMPLATES_TYPE_ALL) && !validTemplates.contains(name)) {
+			if (templateType != null 
+					&& !templateType.equals(OPENNEBULA_TEMPLATES_TYPE_ALL)
+					&& !validTemplates.contains(name)) {
 				continue;
 			}
-						
+
 			int diskIndex = 1;
 			int allDiskSize = 0;
 			while (true) {
