@@ -159,7 +159,7 @@ local_credential_defaults_tenantName=fogbow
 
 ## Local credentials for Cloudstack
 # local_credential_defaults_apiKey=user_api_key
-# local_credential_defaults_secret_key=user_secret_key
+# local_credential_defaults_secretKey=user_secret_key
 
 ## Optional for Local Credentails
 # local_credential_other_username=
