@@ -81,6 +81,7 @@ public class TestMemberServerResource {
 		
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_MEMBER);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
+		get.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, "x_federation_auth_token");
 		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(get);
 
@@ -102,6 +103,7 @@ public class TestMemberServerResource {
 		
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_MEMBER);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
+		get.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, "x_federation_auth_token");
 		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(get);
 
@@ -113,17 +115,33 @@ public class TestMemberServerResource {
 	}
 	
 	@Test
+	public void testGetMemberWithoutFederationToken() throws Exception {
+		List<FederationMember> federationMembers = new ArrayList<FederationMember>();
+		this.helper.initializeComponentMember(computePlugin, identityPlugin, authorizationPlugin,
+				accoutingPlugin, federationMembers, localCredentialsPlugin);
+		
+		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_MEMBER);
+		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
+		HttpClient client = HttpClients.createMinimal();
+		HttpResponse response = client.execute(get);
+
+		Assert.assertEquals(HttpStatus.SC_UNAUTHORIZED, response.getStatusLine().getStatusCode());
+	}	
+	
+	@Test
 	public void testGetMemberWrongContentType() throws Exception {
 		this.helper.initializeComponentMember(computePlugin, identityPlugin, authorizationPlugin,
 				accoutingPlugin, new LinkedList<FederationMember>(), localCredentialsPlugin);
 		
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_MEMBER);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, "wrong");
+		get.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, "x_federation_auth_token");
 		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(get);
 
 		Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusLine().getStatusCode());
-	}	
+	}
+	
 	
 	private boolean checkResponse(String response) {
 		String[] tokens = response.split("\n");

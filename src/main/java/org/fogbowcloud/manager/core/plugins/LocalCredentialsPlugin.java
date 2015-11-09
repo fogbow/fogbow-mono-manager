@@ -10,4 +10,6 @@ public interface LocalCredentialsPlugin {
 
 	public Map<String, Map<String, String>> getAllLocalCredentials();
 	
+	public Map<String, String> getLocalCredentials(String accessId);
+	
 }

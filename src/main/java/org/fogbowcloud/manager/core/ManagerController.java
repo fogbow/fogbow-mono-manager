@@ -417,28 +417,48 @@ public class ManagerController {
 		}
 	}
 
-	public List<FederationMember> getMembers() {
+	public List<FederationMember> getMembers(String accessId) {
 		List<FederationMember> membersCopy = null;
 		synchronized (this.members) {
 			membersCopy = new LinkedList<FederationMember>(members);
 		}
-		boolean containsThis = false;
+		Map<String, String> localCredentials = localCredentialsPlugin.getLocalCredentials(accessId);
 		for (FederationMember member : membersCopy) {
 			if (member.getResourcesInfo().getId().equals(
 					properties.getProperty(ConfigurationConstants.XMPP_JID_KEY))) {
-				containsThis = true;
-				break;
+				if (localCredentials != null) {
+					membersCopy.remove(member);
+					break;
+				} else {
+					return membersCopy;
+				}
 			}
 		}
-		if (!containsThis) {
-			membersCopy.add(new FederationMember(getResourcesInfo()));
+
+		if (accessId != null 
+				&& localCredentials != null 
+				&& !localCredentials.isEmpty()) {
+			membersCopy.add(new FederationMember(getResourcesInfo(localCredentials)));				
+		} else {
+			membersCopy.add(new FederationMember(getResourcesInfo()));				
 		}
+		
 		return membersCopy;
 	}
 
 	public ResourcesInfo getResourcesInfo() {
+		return getResourcesInfo(null);
+	}
+	
+	public ResourcesInfo getResourcesInfo(Map<String, String> localCredentials) {
 		ResourcesInfo totalResourcesInfo = new ResourcesInfo();
 		totalResourcesInfo.setId(properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
+		
+		if (localCredentials != null) {
+			totalResourcesInfo.addResource(computePlugin.getResourcesInfo(localIdentityPlugin.createToken(localCredentials)));
+			return totalResourcesInfo;
+		}
+		
 		Map<String, Map<String, String>> allLocalCredentials = 
 				this.localCredentialsPlugin.getAllLocalCredentials();
 		List<Map<String, String>> credentialsUsed = new ArrayList<Map<String,String>>();
@@ -1540,11 +1560,11 @@ public class ManagerController {
 		return requests.getAllServedRequests();
 	}
 	
-	public LocalCredentialsPlugin getFederationUserCredentailsPlugin() {
+	public LocalCredentialsPlugin getLocalCredentailsPlugin() {
 		return localCredentialsPlugin;
 	}
 
-	public void setFederationUserCredentailsPlugin(
+	public void setLocalCredentailsPlugin(
 			LocalCredentialsPlugin localCredentialsPlugin) {
 		this.localCredentialsPlugin = localCredentialsPlugin;
 	}

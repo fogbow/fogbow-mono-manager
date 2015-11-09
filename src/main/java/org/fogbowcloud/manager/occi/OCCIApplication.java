@@ -113,8 +113,8 @@ public class OCCIApplication extends Application {
 		requestHeaders.removeFirst(HeaderUtils.normalize(OCCIHeaders.X_FEDERATION_AUTH_TOKEN));
 	}
 	
-	public List<FederationMember> getFederationMembers() {		
-		return managerFacade.getMembers();
+	public List<FederationMember> getFederationMembers(String accessId) {		
+		return managerFacade.getMembers(accessId);
 	}
 
 	public Request getRequest(String authToken, String requestId) {
