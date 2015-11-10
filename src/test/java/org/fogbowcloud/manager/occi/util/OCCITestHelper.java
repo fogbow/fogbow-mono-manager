@@ -102,7 +102,7 @@ public class OCCITestHelper {
 		ManagerController facade = new ManagerController(properties, executor);
 		ResourceRepository.init(properties);
 		facade.setComputePlugin(computePlugin);
-		facade.setFederationUserCredentailsPlugin(localCredentialsPlugin);
+		facade.setLocalCredentailsPlugin(localCredentialsPlugin);
 		facade.setAuthorizationPlugin(authorizationPlugin);
 		facade.setLocalIdentityPlugin(identityPlugin);
 		facade.setFederationIdentityPlugin(identityPlugin);
@@ -169,7 +169,7 @@ public class OCCITestHelper {
 		ManagerController facade = new ManagerController(properties);
 		facade.setComputePlugin(computePlugin);
 		facade.setAuthorizationPlugin(authorizationPlugin);
-		facade.setFederationUserCredentailsPlugin(localCredentialsPlugin);
+		facade.setLocalCredentailsPlugin(localCredentialsPlugin);
 		facade.setLocalIdentityPlugin(identityPlugin);
 		facade.setFederationIdentityPlugin(identityPlugin);
 		facade.setImageStoragePlugin(imageStoragePlugin);
@@ -205,7 +205,7 @@ public class OCCITestHelper {
 		facade.setFederationIdentityPlugin(identityPlugin);
 		facade.setAuthorizationPlugin(authorizationPlugin);
 		facade.setAccountingPlugin(accountingPlugin);
-		facade.setFederationUserCredentailsPlugin(localCredentialsPlugin);
+		facade.setLocalCredentailsPlugin(localCredentialsPlugin);
 		facade.updateMembers(federationMembers);
 
 		component.getDefaultHost().attach(new OCCIApplication(facade));

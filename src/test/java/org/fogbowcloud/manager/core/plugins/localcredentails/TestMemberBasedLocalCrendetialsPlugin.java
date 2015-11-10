@@ -102,4 +102,9 @@ public class TestMemberBasedLocalCrendetialsPlugin {
 		Map<String, String> localCredentials = this.memberBasedLocalCrendetialsPlugin.getLocalCredentials(request);
 		Assert.assertTrue(localCredentials.isEmpty());
 	}	
+	
+	@Test
+	public void testGetLocalCrendetialsWithAccessId() {
+		Assert.assertNull(memberBasedLocalCrendetialsPlugin.getLocalCredentials("accessId"));
+	}
 }

@@ -1,6 +1,7 @@
 package org.fogbowcloud.manager.core.plugins.localcredentails;
 
 import java.util.Arrays;
+import java.util.Date;
 import java.util.Map;
 import java.util.Properties;
 
@@ -24,5 +25,11 @@ public class SingleLocalCrendentialsPlugin implements LocalCredentialsPlugin {
 	public Map<String, Map<String, String>> getAllLocalCredentials() {
 		return LocalCredentialsHelper.getLocalCredentials(properties,
 				Arrays.asList(new String[] { LocalCredentialsHelper.FOGBOW_DEFAULTS }));
+	}
+
+	@Override
+	public Map<String, String> getLocalCredentials(String accessId) {
+		return getLocalCredentials(new Request("", null, "", "", "", 
+				new Date().getTime(), false, null, null, null));
 	}
 }

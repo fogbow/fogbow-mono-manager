@@ -234,7 +234,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		managerFacade.setBenchmarkingPlugin(benchmarkingPlugin);
 		managerFacade.setFederationIdentityPlugin(identityPlugin);
 		managerFacade.setValidator(new DefaultMemberAuthorizationPlugin(null));
-		managerFacade.setFederationUserCredentailsPlugin(localCredentialsPlugin);
+		managerFacade.setLocalCredentailsPlugin(localCredentialsPlugin);
 				
 		managerXmppComponent = Mockito.spy(new ManagerXmppComponent(LOCAL_MANAGER_COMPONENT_URL,
 				MANAGER_COMPONENT_PASS, SERVER_HOST, SERVER_COMPONENT_PORT, managerFacade));
@@ -274,7 +274,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		managerFacade.setComputePlugin(computePlugin);
 		managerFacade.setLocalIdentityPlugin(identityPlugin);
 		managerFacade.setFederationIdentityPlugin(identityPlugin);
-		managerFacade.setFederationUserCredentailsPlugin(localCredentialsPlugin);
+		managerFacade.setLocalCredentailsPlugin(localCredentialsPlugin);
 		managerFacade.setValidator(new DefaultMemberAuthorizationPlugin(null));
 
 		managerXmppComponent = Mockito.spy(new ManagerXmppComponent(LOCAL_MANAGER_COMPONENT_URL,
@@ -424,7 +424,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		managerController.setAuthorizationPlugin(authorizationPlugin);
 		managerController.setLocalIdentityPlugin(identityPlugin);
 		managerController.setFederationIdentityPlugin(federationIdentityPlugin);
-		managerController.setFederationUserCredentailsPlugin(localCredentialsPlugin);
+		managerController.setLocalCredentailsPlugin(localCredentialsPlugin);
 		managerController.setComputePlugin(computePlugin);
 		managerController.setBenchmarkingPlugin(benchmarkingPlugin);
 		managerController.setAccountingPlugin(accountingPlugin);
