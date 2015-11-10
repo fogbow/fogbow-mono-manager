@@ -3,7 +3,9 @@ package org.fogbowcloud.manager.core.plugins.localcredentails;
 import java.util.Map;
 import java.util.Properties;
 
+import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
+import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.LocalCredentialsPlugin;
 import org.fogbowcloud.manager.occi.model.Token;
@@ -13,6 +15,7 @@ public class FederationUserBasedLocalCrendentialsPlugin implements LocalCredenti
 
 	private Properties properties;
 	private IdentityPlugin federationIdentityPlugin;
+	private static final Logger LOGGER = Logger.getLogger(FederationUserBasedLocalCrendentialsPlugin.class);
 	
 	public FederationUserBasedLocalCrendentialsPlugin(Properties properties) {
 		this.properties = properties;
@@ -67,9 +70,15 @@ public class FederationUserBasedLocalCrendentialsPlugin implements LocalCredenti
 	public Map<String, String> getLocalCredentials(String accessId) {
 		Token token = federationIdentityPlugin.getToken(accessId);
 		
-		String federationUser = token.getUser();		
+		LOGGER.debug("federationToken=" + token);
+		String federationUser = token.getUser();
+
+		LOGGER.debug("federationUser=" + federationUser);
+		
 		Map<String, String> credentialsPerMember = LocalCredentialsHelper
 				.getCredentialsPerRelatedLocalName(this.properties, federationUser);
+		
+		LOGGER.debug("Credentials for " + federationUser + " are " + credentialsPerMember);
 		if (!credentialsPerMember.isEmpty()) {
 			return credentialsPerMember;
 		}
