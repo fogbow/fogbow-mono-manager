@@ -20,10 +20,12 @@ public class FederationUserBasedLocalCrendentialsPlugin implements LocalCredenti
 	public FederationUserBasedLocalCrendentialsPlugin(Properties properties) {
 		this.properties = properties;
 		
+		LOGGER.debug("Using FederationUserBasedLocalCredentialsPlugin");
 		federationIdentityPlugin = null;		
 		try {
 			federationIdentityPlugin = (IdentityPlugin) getIdentityPluginByPrefix(properties,
 					ConfigurationConstants.FEDERATION_PREFIX);
+			LOGGER.debug("federationPlugin is null?" + (federationIdentityPlugin == null));
 		} catch (Exception e) {
 			throw new IllegalArgumentException("Federation Identity Plugin not especified in the properties.", e);
 		}
@@ -52,8 +54,11 @@ public class FederationUserBasedLocalCrendentialsPlugin implements LocalCredenti
 	public Map<String, String> getLocalCredentials(Request request) {
 		String federationUser = request.getFederationToken().getUser();
 		
+		LOGGER.debug("federationUser=" + federationUser);		
 		Map<String, String> credentialsPerMember = LocalCredentialsHelper
 				.getCredentialsPerRelatedLocalName(this.properties, federationUser);
+		
+		LOGGER.debug("Credentials for " + federationUser + " are " + credentialsPerMember);
 		if (!credentialsPerMember.isEmpty()) {
 			return credentialsPerMember;
 		}
