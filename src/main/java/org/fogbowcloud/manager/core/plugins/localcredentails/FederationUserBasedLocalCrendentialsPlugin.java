@@ -5,7 +5,6 @@ import java.util.Properties;
 
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
-import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.LocalCredentialsPlugin;
 import org.fogbowcloud.manager.occi.model.Token;
@@ -53,6 +52,8 @@ public class FederationUserBasedLocalCrendentialsPlugin implements LocalCredenti
 	@Override
 	public Map<String, String> getLocalCredentials(Request request) {
 		String federationUser = request.getFederationToken().getUser();
+		federationUser = federationUser.replaceAll("=", "(*)");
+		federationUser = federationUser.replaceAll(" ", "(#)");
 		
 		LOGGER.debug("federationUser=" + federationUser);		
 		Map<String, String> credentialsPerMember = LocalCredentialsHelper
@@ -77,6 +78,9 @@ public class FederationUserBasedLocalCrendentialsPlugin implements LocalCredenti
 		
 		LOGGER.debug("federationToken=" + token);
 		String federationUser = token.getUser();
+		// Normalizing
+		federationUser = federationUser.replaceAll("=", "(*)");
+		federationUser = federationUser.replaceAll(" ", "(#)");
 
 		LOGGER.debug("federationUser=" + federationUser);
 		
