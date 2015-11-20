@@ -22,14 +22,19 @@ public class VOBasedLocalCrendentialsPlugin implements LocalCredentialsPlugin {
 
 	@Override
 	public Map<String, String> getLocalCredentials(Request request) {
+		if (request == null) {
+			return LocalCredentialsHelper.getCredentialsPerRelatedLocalName(
+					this.properties, LocalCredentialsHelper.FOGBOW_DEFAULTS);			
+		}
+		
 		String member = getVO(request);
 		Map<String, String> credentialsPerMember = LocalCredentialsHelper
 				.getCredentialsPerRelatedLocalName(this.properties, member);
 		if (!credentialsPerMember.isEmpty()) {
 			return credentialsPerMember;
 		}
-		return LocalCredentialsHelper.getCredentialsPerRelatedLocalName(this.properties,
-				LocalCredentialsHelper.FOGBOW_DEFAULTS);
+		return LocalCredentialsHelper.getCredentialsPerRelatedLocalName(
+				this.properties, LocalCredentialsHelper.FOGBOW_DEFAULTS);
 	}
 
 	@Override

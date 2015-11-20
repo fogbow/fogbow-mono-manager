@@ -16,12 +16,17 @@ public class MemberBasedLocalCrendetialsPlugin implements LocalCredentialsPlugin
 
 	@Override
 	public Map<String, String> getLocalCredentials(Request request) {
+		if (request == null) {
+			return LocalCredentialsHelper.getCredentialsPerRelatedLocalName(
+					this.properties, LocalCredentialsHelper.FOGBOW_DEFAULTS);	
+		}
 		Map<String, String> credentialsPerMember = LocalCredentialsHelper.getCredentialsPerRelatedLocalName(
 				this.properties, request.getRequestingMemberId());
 		if (!credentialsPerMember.isEmpty()) {
 			return credentialsPerMember;
 		}
-		return LocalCredentialsHelper.getCredentialsPerRelatedLocalName(this.properties, LocalCredentialsHelper.FOGBOW_DEFAULTS);
+		return LocalCredentialsHelper.getCredentialsPerRelatedLocalName(
+				this.properties, LocalCredentialsHelper.FOGBOW_DEFAULTS);
 	}
 
 	@Override
