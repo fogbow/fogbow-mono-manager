@@ -18,7 +18,8 @@ public enum RequestState {
 	 * subsequently was interrupted or terminated), or was not fulfilled within
 	 * the period specified.
 	 */
-	OPEN("open"), FAILED("failed"), SPAWNING("spawning"), FULFILLED("fulfilled"), DELETED("deleted"), CLOSED("closed");
+	OPEN("open"), FAILED("failed"), SPAWNING("spawning"), FULFILLED("fulfilled"), 
+			DELETED("deleted"), CLOSED("closed"), PENDING("pending");
 
 	private String value;
 

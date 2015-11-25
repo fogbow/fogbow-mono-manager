@@ -334,7 +334,7 @@ public class TestManagerController {
 		List<Request> requestsFromUser = managerController.getRequestsFromUser(managerTestHelper
 				.getDefaultFederationToken().getAccessId());
 		for (Request request : requestsFromUser) {
-			Assert.assertEquals(RequestState.OPEN, request.getState());
+			Assert.assertEquals(RequestState.PENDING, request.getState());
 		}
 		Assert.assertTrue(managerController.isRequestForwardedtoRemoteMember(request1.getId()));
 
@@ -396,7 +396,7 @@ public class TestManagerController {
 		List<Request> requestsFromUser = managerController.getRequestsFromUser(
 				managerTestHelper.getDefaultFederationToken().getAccessId());
 		for (Request request : requestsFromUser) {
-			Assert.assertEquals(RequestState.OPEN, request.getState());
+			Assert.assertEquals(RequestState.PENDING, request.getState());
 		}
 		Assert.assertTrue(managerController.isRequestForwardedtoRemoteMember(
 				request1.getId()));
@@ -404,7 +404,7 @@ public class TestManagerController {
 		//updating time
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now + ManagerController.DEFAULT_ASYNC_REQUEST_WAITING_INTERVAL + 100);
 		
-		managerController.removeRequestsThatReachTimeout();
+		managerController.checkPedingRequests();
 		
 		Assert.assertFalse(managerController.isRequestForwardedtoRemoteMember(
 				request1.getId()));
@@ -465,7 +465,7 @@ public class TestManagerController {
 		List<Request> requestsFromUser = managerController.getRequestsFromUser(managerTestHelper
 				.getDefaultFederationToken().getAccessId());
 		for (Request request : requestsFromUser) {
-			Assert.assertEquals(RequestState.OPEN, request.getState());
+			Assert.assertEquals(RequestState.PENDING, request.getState());
 		}
 		Assert.assertTrue(managerController.isRequestForwardedtoRemoteMember(
 				request1.getId()));
@@ -543,7 +543,7 @@ public class TestManagerController {
 		List<Request> requestsFromUser = managerController.getRequestsFromUser(
 				managerTestHelper.getDefaultFederationToken().getAccessId());
 		for (Request request : requestsFromUser) {
-			Assert.assertEquals(RequestState.OPEN, request.getState());
+			Assert.assertEquals(RequestState.PENDING, request.getState());
 		}
 		Assert.assertTrue(managerController.isRequestForwardedtoRemoteMember(
 				request1.getId()));
@@ -1848,11 +1848,11 @@ public class TestManagerController {
 		listMembers.add(new FederationMember(remoteResourcesInfo));
 		managerController.updateMembers(listMembers);
 
-		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), new ArrayList<Category>(),
+		Request requestOne = new Request("id1", managerTestHelper.getDefaultFederationToken(), new ArrayList<Category>(),
 				new HashMap<String, String>(), true, "");
-		request1.setState(RequestState.OPEN);
+		requestOne.setState(RequestState.OPEN);
 		RequestRepository requestRepository = new RequestRepository();
-		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(), request1);
+		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(), requestOne);
 		managerController.setRequests(requestRepository);
 
 		// mocking date
@@ -1868,17 +1868,17 @@ public class TestManagerController {
 		List<Request> requestsFromUser = managerController.getRequestsFromUser(
 				managerTestHelper.getDefaultFederationToken().getAccessId());
 		for (Request request : requestsFromUser) {
-			Assert.assertEquals(RequestState.OPEN, request.getState());
+			Assert.assertEquals(RequestState.PENDING, request.getState());
 		}
 		Assert.assertTrue(managerController.isRequestForwardedtoRemoteMember(
-				request1.getId()));
+				requestOne.getId()));
 		
 		// checking if forwarded request is being considered while checking if
 		// instance is being used
-		Assert.assertTrue(managerController.instanceHasRequestRelatedTo(request1.getId(),
+		Assert.assertTrue(managerController.instanceHasRequestRelatedTo(requestOne.getId(),
 				DefaultDataTestHelper.INSTANCE_ID + Request.SEPARATOR_GLOBAL_ID
 						+ DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL));
-		Assert.assertTrue(managerController.instanceHasRequestRelatedTo(request1.getId(),
+		Assert.assertTrue(managerController.instanceHasRequestRelatedTo(requestOne.getId(),
 				"any_value" + Request.SEPARATOR_GLOBAL_ID
 						+ DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL));
 	}

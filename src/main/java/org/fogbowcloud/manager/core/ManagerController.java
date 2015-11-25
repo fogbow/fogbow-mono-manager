@@ -389,8 +389,8 @@ public class ManagerController {
 
 			// it is possible that the asynchronous request has not received
 			// instanceId yet
-			if (request.getState().in(RequestState.OPEN)
-					&& asynchronousRequests.containsKey(requestId)) {
+			if ((request.getState().in(RequestState.OPEN) || request.getState().in(RequestState.PENDING)) 
+						&& asynchronousRequests.containsKey(requestId)) {
 				LOGGER.debug("The instance " + instanceId + " is related to request " + request.getId());
 				return true;
 			} else if (request.getState().in(RequestState.FULFILLED, RequestState.DELETED,
@@ -1120,6 +1120,7 @@ public class ManagerController {
 		List<Category> categoriesCopy = new LinkedList<Category>(request.getCategories());
 		populateWithManagerPublicKey(xOCCIAttCopy, categoriesCopy);
 		request.setProvidingMemberId(memberAddress);
+		request.setState(RequestState.PENDING);
 
 		LOGGER.info("Submiting request " + request + " to member " + memberAddress);
 		
@@ -1137,6 +1138,7 @@ public class ManagerController {
 							return;
 						}
 						if (instanceId == null) {
+							request.setState(RequestState.OPEN);
 							asynchronousRequests.remove(request.getId());
 							return;
 						}
@@ -1156,6 +1158,7 @@ public class ManagerController {
 						} catch (Throwable e) {
 							LOGGER.error("Error while executing the benchmark in " + instanceId
 									+ " from member " + memberAddress + ".", e);
+							request.setState(RequestState.OPEN);
 							asynchronousRequests.remove(request.getId());
 							return;
 						}
@@ -1165,6 +1168,7 @@ public class ManagerController {
 					public void error(Throwable t) {
 						LOGGER.debug("The request " + request + " forwarded to " + memberAddress
 								+ " gets error ", t);
+						request.setState(RequestState.OPEN);
 						asynchronousRequests.remove(request.getId());
 						request.setProvidingMemberId(null);
 					}
@@ -1306,7 +1310,7 @@ public class ManagerController {
 		LOGGER.debug("Checking and submiting requests.");
 
 		// removing requests that reach timeout
-		removeRequestsThatReachTimeout();
+		checkPedingRequests();
 		for (Request request : new ArrayList<Request>(requests.getRequestsIn(RequestState.OPEN))) {
 			if (!request.getState().equals(RequestState.OPEN)) {
 				LOGGER.debug("The request " + request.getId() + " is no longer open.");
@@ -1415,12 +1419,13 @@ public class ManagerController {
 		}
 	}
 
-	protected void removeRequestsThatReachTimeout() {
+	protected void checkPedingRequests() {
 		Collection<ForwardedRequest> forwardedRequests = asynchronousRequests.values();
 		for (ForwardedRequest forwardedRequest : forwardedRequests) {
 			if (timoutReached(forwardedRequest.getTimeStamp())){
 				LOGGER.debug("The forwarded request " + forwardedRequest.getRequest().getId()
 						+ " reached timeout and is been removed from asynchronousRequests list.");
+				forwardedRequest.getRequest().setState(RequestState.OPEN);
 				asynchronousRequests.remove(forwardedRequest.getRequest().getId());
 			}
 		}
