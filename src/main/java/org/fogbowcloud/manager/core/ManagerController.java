@@ -411,6 +411,25 @@ public class ManagerController {
 		}
 	}
 
+	public List<FederationMember> getRendezvousMembersInfo() {
+		List<FederationMember> membersCopy = null;
+		synchronized (this.members) {
+			membersCopy = new LinkedList<FederationMember>(members);
+		}
+		boolean containsThis = false;
+		for (FederationMember member : membersCopy) {
+			if (member.getResourcesInfo().getId().equals(
+					properties.getProperty(ConfigurationConstants.XMPP_JID_KEY))) {
+				containsThis = true;
+				break;
+			}
+		}
+		if (!containsThis) {
+			membersCopy.add(new FederationMember(getResourcesInfo()));
+		}
+		return membersCopy;
+	}
+	
 	public List<FederationMember> getMembers(String accessId) {
 		
 		List<FederationMember> membersQuote =  new LinkedList<FederationMember>();
@@ -1027,10 +1046,6 @@ public class ManagerController {
 			requestDB.removeOrder(ordersDB.get(key));
 		}
 		LOGGER.debug("Database update finish.");
-	}
-
-	private Token getTokenFromLocalIdP(String localAccessTokenStr) {
-		return localIdentityPlugin.getToken(localAccessTokenStr);
 	}
 
 	protected void triggerInstancesMonitor() {
