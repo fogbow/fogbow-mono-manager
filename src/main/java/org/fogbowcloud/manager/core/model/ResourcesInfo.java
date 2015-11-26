@@ -135,4 +135,12 @@ public class ResourcesInfo {
 	public String getInstancesInUse() {
 		return instancesInUse;
 	}
+
+	@Override
+	public String toString() {
+		return "ResourcesInfo [id=" + id + ", cpuIdle=" + cpuIdle + ", cpuInUse=" + cpuInUse + ", memIdle=" + memIdle
+				+ ", memInUse=" + memInUse + ", instancesIdle=" + instancesIdle + ", instancesInUse=" + instancesInUse
+				+ ", ZERO=" + ZERO + "]";
+	}
+	
 }

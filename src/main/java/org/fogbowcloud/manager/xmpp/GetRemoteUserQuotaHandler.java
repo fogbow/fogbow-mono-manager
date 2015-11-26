@@ -17,11 +17,12 @@ public class GetRemoteUserQuotaHandler extends AbstractQueryHandler {
 
 	@Override
 	public IQ handle(IQ query) {
-
+	
 		String accessId = query.getElement().element("query").element("token").elementText("accessId");
 
 		IQ response = IQ.createResultIQ(query);
 		ResourcesInfo resourcesInfo = facade.getResourceInfoForRemoteMember(accessId);
+		
 		if (resourcesInfo == null) {
 			return response;
 		}

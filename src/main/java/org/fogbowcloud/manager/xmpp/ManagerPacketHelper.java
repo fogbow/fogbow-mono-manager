@@ -400,6 +400,7 @@ public class ManagerPacketHelper {
 		}
 
 		return parseResourcesInfo(response.getElement().element("query").element("resourcesInfo"));
+		
 	}
 	
 	private static ResourcesInfo parseResourcesInfo(Element instanceEl) {

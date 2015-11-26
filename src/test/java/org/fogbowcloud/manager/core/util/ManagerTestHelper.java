@@ -452,4 +452,8 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 	public Token getDefaultFederationToken() {
 		return defaultFederationToken;
 	}
+	
+	public LocalCredentialsPlugin getLocalCredentialsPlugin(){
+		return localCredentialsPlugin;
+	}
 }
