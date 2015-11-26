@@ -395,4 +395,28 @@ public class ManagerPacketHelper {
 		}
 		packetSender.sendPacket(response);		
 	}
+	
+	public static void deleteRemoteRequest(String providingMember, Request request, AsyncPacketSender packetSender) {
+		if (packetSender == null) {
+			LOGGER.warn("Packet sender not set.");
+			throw new IllegalArgumentException("Packet sender not set.");
+		}
+		
+		IQ iq = new IQ();
+		iq.setTo(providingMember);
+		iq.setType(Type.set);
+		Element queryEl = iq.getElement().addElement("query",
+				ManagerXmppComponent.REMOVEREQUEST_NAMESPACE);
+		Element requestEl = queryEl.addElement("request");
+		requestEl.addElement("id").setText(request.getId());
+		Element tokenEl = queryEl.addElement("token");
+		tokenEl.addElement("accessId").setText(request.getFederationToken().getAccessId());
+		
+		packetSender.addPacketCallback(iq, new PacketCallback() {		
+			@Override
+			public void handle(Packet response) {
+			}
+		});
+		packetSender.sendPacket(iq);
+	}
 }

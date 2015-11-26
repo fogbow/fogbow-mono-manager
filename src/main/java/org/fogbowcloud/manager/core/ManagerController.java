@@ -494,6 +494,10 @@ public class ManagerController {
 	public void removeRequest(String accessId, String requestId) {
 		LOGGER.debug("Removing requestId: " + requestId);
 		checkRequestId(accessId, requestId);
+		Request request = requests.get(requestId);
+		if (request != null && request.getProvidingMemberId() != null) {
+			removeAsynchronousRemoteRequests(request, true);			
+		}
 		requests.remove(requestId);
 		if (!instanceMonitoringTimer.isScheduled()) {
 			triggerInstancesMonitor();
@@ -742,6 +746,10 @@ public class ManagerController {
 						RequestType.PERSISTENT.getValue());
 	}
 
+	private void removeRemoteRequest(String providingMember, Request request) {
+		ManagerPacketHelper.deleteRemoteRequest(providingMember ,request, packetSender);
+	}
+	
 	private void removeRemoteInstance(Request request) {
 		ManagerPacketHelper.deleteRemoteInstace(request, packetSender);
 	}
@@ -957,7 +965,7 @@ public class ManagerController {
 			throw e;
 		}
 	}
-
+	
 	public void removeInstanceForRemoteMember(String instanceId) {
 		LOGGER.info("Removing instance " + instanceId + " for remote member.");
 
@@ -1124,8 +1132,12 @@ public class ManagerController {
 
 		LOGGER.info("Submiting request " + request + " to member " + memberAddress);
 		
-		asynchronousRequests.put(request.getId(),
-				new ForwardedRequest(request, dateUtils.currentTimeMillis()));
+		ForwardedRequest forwardedRequest = new ForwardedRequest(request, dateUtils.currentTimeMillis());
+		ForwardedRequest forwardedRequestBefore = asynchronousRequests.get(request.getId());
+		if (forwardedRequestBefore != null) {
+			forwardedRequest.addMembersServered(forwardedRequestBefore.getMembersServered());
+		}
+		asynchronousRequests.put(request.getId(),forwardedRequest);
 		ManagerPacketHelper.asynchronousRemoteRequest(request.getId(), categoriesCopy, xOCCIAttCopy, memberAddress, 
 				federationIdentityPlugin.getForwardableToken(request.getFederationToken()), 
 				packetSender, new AsynchronousRequestCallback() {
@@ -1139,7 +1151,6 @@ public class ManagerController {
 						}
 						if (instanceId == null) {
 							request.setState(RequestState.OPEN);
-							asynchronousRequests.remove(request.getId());
 							return;
 						}
 						
@@ -1159,7 +1170,6 @@ public class ManagerController {
 							LOGGER.error("Error while executing the benchmark in " + instanceId
 									+ " from member " + memberAddress + ".", e);
 							request.setState(RequestState.OPEN);
-							asynchronousRequests.remove(request.getId());
 							return;
 						}
 					}
@@ -1169,7 +1179,6 @@ public class ManagerController {
 						LOGGER.debug("The request " + request + " forwarded to " + memberAddress
 								+ " gets error ", t);
 						request.setState(RequestState.OPEN);
-						asynchronousRequests.remove(request.getId());
 						request.setProvidingMemberId(null);
 					}
 				});
@@ -1216,6 +1225,7 @@ public class ManagerController {
 				}
 				
 				if (request.isLocal() && !isFulfilledByLocalMember(request)) {
+					removeAsynchronousRemoteRequests(request, false);
 					asynchronousRequests.remove(request.getId());
 				}
 
@@ -1239,6 +1249,20 @@ public class ManagerController {
 			triggerServedRequestMonitoring();
 		}
 	}
+	
+	private void removeAsynchronousRemoteRequests(final Request request, boolean removeAll) {
+		ForwardedRequest forwardedRequest = asynchronousRequests.get(request.getId());
+		for (String memberServered : forwardedRequest != null ? forwardedRequest.getMembersServered() : new ArrayList<String>()) {						
+			if (memberServered == null || forwardedRequest.getRequest() == null 
+					|| (!removeAll && request.getProvidingMemberId().equals(memberServered) )) {
+				continue;
+			}
+			try {
+				removeRemoteRequest(memberServered, request);		
+			} catch (Exception e) {
+			}
+		}
+	}	
 	
 	protected void replacePublicKeys(String sshPublicAddress, Request request) {
 		String requestPublicKey = request.getAttValue(RequestAttribute.DATA_PUBLIC_KEY.getValue());
@@ -1316,11 +1340,7 @@ public class ManagerController {
 				LOGGER.debug("The request " + request.getId() + " is no longer open.");
 				continue;
 			}
-			if (isRequestForwardedtoRemoteMember(request.getId())) {
-				LOGGER.debug("The request " + request.getId()
-						+ " was forwarded to remote member and is not fulfilled yet.");
-				continue;
-			}
+			
 			LOGGER.debug(request.getId() + " being considered for scheduling.");
 			Map<String, String> xOCCIAtt = request.getxOCCIAtt();
 			if (request.isIntoValidPeriod()) {
@@ -1426,7 +1446,6 @@ public class ManagerController {
 				LOGGER.debug("The forwarded request " + forwardedRequest.getRequest().getId()
 						+ " reached timeout and is been removed from asynchronousRequests list.");
 				forwardedRequest.getRequest().setState(RequestState.OPEN);
-				asynchronousRequests.remove(forwardedRequest.getRequest().getId());
 			}
 		}
 	}
@@ -1442,7 +1461,7 @@ public class ManagerController {
 		
 		Calendar c = Calendar.getInstance();
 		c.setTime(new Date(timeStamp));		
-		c.add(Calendar.MILLISECOND, asyncRequestWaitingInterval); 
+		c.add(Calendar.MILLISECOND, asyncRequestWaitingInterval);
 		return now.after(c.getTime());
 	}
 
@@ -1703,27 +1722,38 @@ public class ManagerController {
 	}
 
 	protected enum FailedBatchType { FEDERATION_USER }
-	
+
 	private static class ForwardedRequest {
-		
+
 		private Request request;
 		private long timeStamp;
-		
+		private List<String> membersServered;
+
 		public ForwardedRequest(Request request, long timeStamp) {
 			this.request = request;
 			this.timeStamp = timeStamp;
+			this.membersServered = new ArrayList<String>();
+			this.membersServered.add(request.getProvidingMemberId());
 		}
-		
+
 		public void setTimeStamp(long timeStamp) {
-			this.timeStamp = timeStamp;		
+			this.timeStamp = timeStamp;
 		}
-		
+
 		public Request getRequest() {
 			return request;
 		}
-		
+
 		public long getTimeStamp() {
 			return timeStamp;
+		}
+
+		public List<String> getMembersServered() {
+			return membersServered;
+		}
+
+		public void addMembersServered(List<String> membersServered) {
+			this.membersServered.addAll(membersServered);
 		}
 	}
 	
