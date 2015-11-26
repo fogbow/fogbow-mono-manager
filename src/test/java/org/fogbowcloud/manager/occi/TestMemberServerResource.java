@@ -13,6 +13,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import org.dom4j.Element;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
@@ -24,11 +25,15 @@ import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.model.OCCIHeaders;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.util.OCCITestHelper;
+import org.fogbowcloud.manager.xmpp.AsyncPacketSender;
+import org.fogbowcloud.manager.xmpp.ManagerXmppComponent;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.IQ.Type;
 
 public class TestMemberServerResource {
 
@@ -51,9 +56,14 @@ public class TestMemberServerResource {
 		this.localCredentialsPlugin = Mockito.mock(LocalCredentialsPlugin.class);
 		Map<String, Map<String, String>> defaultFederationUsersCrendetials = 
 				new HashMap<String, Map<String,String>>();
-		defaultFederationUsersCrendetials.put("one", new HashMap<String, String>());
+		HashMap<String, String> localUserCredentials = new HashMap<String, String>();
+		defaultFederationUsersCrendetials.put("one", localUserCredentials);
 		Mockito.when(localCredentialsPlugin.getAllLocalCredentials()).thenReturn(
 				defaultFederationUsersCrendetials);
+		Mockito.when(localCredentialsPlugin.getLocalCredentials("x_federation_auth_token")).thenReturn(
+				localUserCredentials);
+
+		
 		this.identityPlugin = Mockito.mock(IdentityPlugin.class);
 		this.accoutingPlugin = Mockito.mock(AccountingPlugin.class);
 		this.authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
@@ -68,16 +78,21 @@ public class TestMemberServerResource {
 	@Test
 	public void testGetMember() throws Exception {
 		List<FederationMember> federationMembers = new ArrayList<FederationMember>();
-		ResourcesInfo resourcesInfo = new ResourcesInfo(ID_RESOURCEINFO1, "2", "1", "100", "35",
+		ResourcesInfo resourcesInfo1 = new ResourcesInfo(ID_RESOURCEINFO1, "2", "1", "100", "35",
 				"", "");
 		ResourcesInfo resourcesInfo2 = new ResourcesInfo(ID_RESOURCEINFO2, "2", "1", "100", "35",
 				"", "");
-		federationMembers.add(new FederationMember(resourcesInfo));
-		federationMembers.add(new FederationMember(resourcesInfo));
+		federationMembers.add(new FederationMember(resourcesInfo1));
 		federationMembers.add(new FederationMember(resourcesInfo2));
 
+		List<ResourcesInfo> resourcesInfo = new ArrayList<ResourcesInfo>();
+		resourcesInfo.add(resourcesInfo1);
+		resourcesInfo.add(resourcesInfo2);
+		
+		AsyncPacketSender packetSender = createPacketSenderMock(resourcesInfo);
+		
 		this.helper.initializeComponentMember(computePlugin, identityPlugin, authorizationPlugin,
-				accoutingPlugin, federationMembers, localCredentialsPlugin);		
+				accoutingPlugin, federationMembers, localCredentialsPlugin, packetSender);		
 		
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_MEMBER);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
@@ -93,6 +108,44 @@ public class TestMemberServerResource {
 		Assert.assertTrue(responseStr.contains(ID_RESOURCEINFO2));
 		Assert.assertTrue(responseStr.contains(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL));
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+	}
+
+	private AsyncPacketSender createPacketSenderMock(List<ResourcesInfo> resourcesInfo) {
+		// mocking packet sender
+		List<IQ> responses = new ArrayList<IQ>();
+
+		for (ResourcesInfo resourceInfo : resourcesInfo) {
+			IQ iq = new IQ();
+			iq.setTo(resourceInfo.getId());
+			iq.setType(Type.get);
+			Element queryEl = iq.getElement().addElement("query",
+					ManagerXmppComponent.GETREMOTEUSERQUOTA_NAMESPACE);
+			Element userEl = queryEl.addElement("token");
+			userEl.addElement("accessId").setText("x_federation_auth_token");
+
+			IQ response = IQ.createResultIQ(iq);
+			queryEl = response.getElement().addElement("query",
+					ManagerXmppComponent.GETREMOTEUSERQUOTA_NAMESPACE);
+			Element resourceEl = queryEl.addElement("resourcesInfo");
+
+			resourceEl.addElement("id").setText(resourceInfo.getId());
+			resourceEl.addElement("cpuIdle").setText(resourceInfo.getCpuIdle());
+			resourceEl.addElement("cpuInUse").setText(resourceInfo.getCpuInUse());
+			resourceEl.addElement("instancesIdle").setText(resourceInfo.getInstancesIdle());
+			resourceEl.addElement("instancesInUse").setText(resourceInfo.getInstancesInUse());
+			resourceEl.addElement("memIdle").setText(resourceInfo.getMemIdle());
+			resourceEl.addElement("memInUse").setText(resourceInfo.getMemInUse());
+			responses.add(response);
+		}
+
+		IQ firstResponse = responses.remove(0);
+		IQ[] nextResponses = new IQ[responses.size()];
+		responses.toArray(nextResponses);
+		
+		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);
+		Mockito.when(packetSender.syncSendPacket(Mockito.any(IQ.class))).thenReturn(firstResponse,
+				nextResponses);
+		return packetSender;
 	}
 
 	@Test

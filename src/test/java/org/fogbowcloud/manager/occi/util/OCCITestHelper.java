@@ -17,7 +17,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.codec.Charsets;
-import org.apache.commons.codec.binary.Base64;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.ParseException;
@@ -25,7 +24,6 @@ import org.apache.http.util.EntityUtils;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.CurrentThreadExecutorService;
 import org.fogbowcloud.manager.core.ManagerController;
-import org.fogbowcloud.manager.core.UserdataUtils;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
@@ -43,6 +41,7 @@ import org.fogbowcloud.manager.occi.request.Request;
 import org.fogbowcloud.manager.occi.request.RequestAttribute;
 import org.fogbowcloud.manager.occi.request.RequestConstants;
 import org.fogbowcloud.manager.occi.request.RequestRepository;
+import org.fogbowcloud.manager.xmpp.AsyncPacketSender;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -194,6 +193,13 @@ public class OCCITestHelper {
 	public void initializeComponentMember(ComputePlugin computePlugin, IdentityPlugin identityPlugin,
 			AuthorizationPlugin authorizationPlugin, AccountingPlugin accountingPlugin,
 			List<FederationMember> federationMembers, LocalCredentialsPlugin localCredentialsPlugin) throws Exception {
+		initializeComponentMember(computePlugin, identityPlugin, authorizationPlugin,
+				accountingPlugin, federationMembers, localCredentialsPlugin, null);
+	}
+	
+	public void initializeComponentMember(ComputePlugin computePlugin, IdentityPlugin identityPlugin,
+			AuthorizationPlugin authorizationPlugin, AccountingPlugin accountingPlugin,
+			List<FederationMember> federationMembers, LocalCredentialsPlugin localCredentialsPlugin, AsyncPacketSender packetSender) throws Exception {
 		component = new Component();
 		component.getServers().add(Protocol.HTTP, ENDPOINT_PORT);
 
@@ -207,6 +213,10 @@ public class OCCITestHelper {
 		facade.setAccountingPlugin(accountingPlugin);
 		facade.setLocalCredentailsPlugin(localCredentialsPlugin);
 		facade.updateMembers(federationMembers);
+		
+		if (packetSender != null) {
+			facade.setPacketSender(packetSender);
+		}
 
 		component.getDefaultHost().attach(new OCCIApplication(facade));
 		component.start();

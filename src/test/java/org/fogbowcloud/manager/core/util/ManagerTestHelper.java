@@ -70,7 +70,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 	private AccountingPlugin accountingPlugin;
 	private FederationMemberPickerPlugin memberPickerPlugin;
 	private Token defaultFederationToken;
-	private Map<String, Map<String, String>> defaultFederationUsersCrendetials;
+	private Map<String, Map<String, String>> defaultFederationAllUsersCrendetials;
 	private Map<String, String> defaultFederationUserCrendetials = new HashMap<String, String>();
 	private FakeXMPPServer fakeServer = new FakeXMPPServer();
 	private ScheduledExecutorService executorService;
@@ -89,8 +89,8 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		this.defaultFederationToken = new Token(FED_ACCESS_TOKEN_ID, FED_USER_NAME, new Date(),
 				new HashMap<String, String>());
 		
-		this.defaultFederationUsersCrendetials = new HashMap<String, Map<String,String>>();
-		this.defaultFederationUsersCrendetials.put("one", defaultFederationUserCrendetials);
+		this.defaultFederationAllUsersCrendetials = new HashMap<String, Map<String,String>>();
+		this.defaultFederationAllUsersCrendetials.put("one", defaultFederationUserCrendetials);
 	}
 
 	public ResourcesInfo getResources() throws CertificateException, IOException {
@@ -221,8 +221,10 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 				new ArrayList<Instance>());
 		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class))).thenReturn(
 				getResources());
-		Mockito.when(localCredentialsPlugin.getAllLocalCredentials()).thenReturn(this.defaultFederationUsersCrendetials);
-		Mockito.when(identityPlugin.createToken(Mockito.anyMap())).thenReturn(defaultFederationToken);
+		Mockito.when(localCredentialsPlugin.getAllLocalCredentials()).thenReturn(
+				this.defaultFederationAllUsersCrendetials);
+		Mockito.when(identityPlugin.createToken(Mockito.anyMap())).thenReturn(
+				defaultFederationToken);
 
 		// mocking benchmark executor
 		ExecutorService benchmarkExecutor = new CurrentThreadExecutorService();
@@ -267,7 +269,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 				new ArrayList<Instance>());
 		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class))).thenReturn(
 				getResources());
-		Mockito.when(localCredentialsPlugin.getAllLocalCredentials()).thenReturn(this.defaultFederationUsersCrendetials);
+		Mockito.when(localCredentialsPlugin.getAllLocalCredentials()).thenReturn(this.defaultFederationAllUsersCrendetials);
 		Mockito.when(identityPlugin.createToken(Mockito.anyMap())).thenReturn(defaultFederationToken);
 
 		ManagerController managerFacade = new ManagerController(properties);
@@ -400,7 +402,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		// mocking FUC
 		this.localCredentialsPlugin = Mockito.mock(LocalCredentialsPlugin.class);
 		Mockito.when(localCredentialsPlugin.getAllLocalCredentials()).thenReturn(
-				this.defaultFederationUsersCrendetials);
+				this.defaultFederationAllUsersCrendetials);
 		Mockito.when(
 				localCredentialsPlugin.getLocalCredentials(Mockito.any(Request.class)))
 				.thenReturn(this.defaultFederationUserCrendetials);
