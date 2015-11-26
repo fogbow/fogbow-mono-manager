@@ -192,12 +192,7 @@ public class OCCIApplication extends Application {
 		return managerFacade.getUsersUsage(authToken);
 	}
 
-	public ResourcesInfo getLocalUserQuota(String localAccessToken) {
-		return managerFacade.getLocalUserQuota(localAccessToken);
-	}
-
 	public String getUser(String authToken) {
 		return managerFacade.getUser(authToken);
 	}
-
 }
