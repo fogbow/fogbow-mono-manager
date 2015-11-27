@@ -37,8 +37,8 @@ public class ManagerPacketHelper {
 
 	private final static Logger LOGGER = Logger.getLogger(ManagerPacketHelper.class.getName());
 
-	public static void iAmAlive(ResourcesInfo resourcesInfo, String rendezvousAddress,
-			Properties properties, PacketSender packetSender) throws Exception {
+	public static void iAmAlive(ResourcesInfo resourcesInfo, String rendezvousAddress, Properties properties,
+			PacketSender packetSender) throws Exception {
 		if (packetSender == null) {
 			LOGGER.warn("Packet sender not set.");
 			throw new IllegalArgumentException("Packet sender not set.");
@@ -49,8 +49,8 @@ public class ManagerPacketHelper {
 			throw new IllegalArgumentException("Rendezvous address has not been specified.");
 		}
 		iq.setTo(rendezvousAddress);
-		Element statusEl = iq.getElement()
-				.addElement("query", ManagerXmppComponent.IAMALIVE_NAMESPACE).addElement("status");
+		Element statusEl = iq.getElement().addElement("query", ManagerXmppComponent.IAMALIVE_NAMESPACE)
+				.addElement("status");
 
 		statusEl.addElement("cpu-idle").setText(resourcesInfo.getCpuIdle());
 		statusEl.addElement("cpu-inuse").setText(resourcesInfo.getCpuInUse());
@@ -58,23 +58,21 @@ public class ManagerPacketHelper {
 		statusEl.addElement("mem-inuse").setText(resourcesInfo.getMemInUse());
 		statusEl.addElement("instances-idle").setText(resourcesInfo.getInstancesIdle());
 		statusEl.addElement("instances-inuse").setText(resourcesInfo.getInstancesInUse());
-		
-		packetSender.syncSendPacket(iq);		
+
+		packetSender.syncSendPacket(iq);
 	}
-	
-	public static void wakeUpSleepingHost(int minCPU, int minRAM, 
-			String greenAddress, PacketSender packetSender) {
+
+	public static void wakeUpSleepingHost(int minCPU, int minRAM, String greenAddress, PacketSender packetSender) {
 		IQ iq = new IQ(Type.set);
 		iq.setTo(greenAddress);
 		Element query = iq.getElement().addElement("query");
-        query.addElement("minCPU").setText(Integer.toString(minCPU));
-        query.addElement("minRAM").setText(Integer.toString(minRAM));
-        packetSender.sendPacket(iq);
+		query.addElement("minCPU").setText(Integer.toString(minCPU));
+		query.addElement("minRAM").setText(Integer.toString(minRAM));
+		packetSender.sendPacket(iq);
 	}
 
-	public static List<FederationMember> whoIsalive(String rendezvousAddress,
-			PacketSender packetSender, int maxWhoIsAliveManagerCount,
-			String after) throws Exception {
+	public static List<FederationMember> whoIsalive(String rendezvousAddress, PacketSender packetSender,
+			int maxWhoIsAliveManagerCount, String after) throws Exception {
 		if (packetSender == null) {
 			LOGGER.warn("Packet sender not set.");
 			throw new IllegalArgumentException("Packet sender not set.");
@@ -85,32 +83,29 @@ public class ManagerPacketHelper {
 			throw new Exception();
 		}
 		iq.setTo(rendezvousAddress);
-		Element queryEl = iq.getElement().addElement("query",
-				ManagerXmppComponent.WHOISALIVE_NAMESPACE);
+		Element queryEl = iq.getElement().addElement("query", ManagerXmppComponent.WHOISALIVE_NAMESPACE);
 		Element setEl = queryEl.addElement("set");
 		setEl.addElement("max").setText(Integer.toString(maxWhoIsAliveManagerCount));
 		if (after != null) {
 			setEl.addElement("after").setText(after);
 		}
 		IQ response = (IQ) packetSender.syncSendPacket(iq);
-		
-		if (response == null || (response.toString().contains("error")
-				&& response.toString().contains("remote-server-not-found"))) {
+
+		if (response == null
+				|| (response.toString().contains("error") && response.toString().contains("remote-server-not-found"))) {
 			LOGGER.warn("Remote server (Rendezvous) not found.");
 			throw new Exception();
-		}		
-		
+		}
+
 		ArrayList<FederationMember> members = getMembersFromIQ(response);
 		return members;
 	}
-	
-	public static List<FederationMember> whoIsalive(String rendezvousAddress,
-			PacketSender packetSender, int maxWhoIsAliveManagerCount)
-			throws Exception {
-		return whoIsalive(rendezvousAddress, packetSender,
-				maxWhoIsAliveManagerCount, null);
+
+	public static List<FederationMember> whoIsalive(String rendezvousAddress, PacketSender packetSender,
+			int maxWhoIsAliveManagerCount) throws Exception {
+		return whoIsalive(rendezvousAddress, packetSender, maxWhoIsAliveManagerCount, null);
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	private static ArrayList<FederationMember> getMembersFromIQ(IQ responseFromWhoIsAliveIQ) {
 		Element queryElement = responseFromWhoIsAliveIQ.getElement().element("query");
@@ -129,30 +124,28 @@ public class ManagerPacketHelper {
 			String instancesIdle = statusEl.elementText("instances-idle");
 			String instancesInUse = statusEl.elementText("instances-inuse");
 
-			ResourcesInfo resources = new ResourcesInfo(id.getValue(), cpuIdle, cpuInUse, memIdle,
-					memInUse, instancesIdle, instancesInUse);
+			ResourcesInfo resources = new ResourcesInfo(id.getValue(), cpuIdle, cpuInUse, memIdle, memInUse,
+					instancesIdle, instancesInUse);
 			FederationMember item = new FederationMember(resources);
 			aliveItems.add(item);
 		}
 		return aliveItems;
 	}
-	
-	public static void asynchronousRemoteRequest(String requestId, List<Category> categories, 
-			Map<String, String> xOCCIAttr, String memberAddress,
-			Token userFederationToken, AsyncPacketSender packetSender, 
-			final AsynchronousRequestCallback callback) {
-		
+
+	public static void asynchronousRemoteRequest(String requestId, List<Category> categories,
+			Map<String, String> xOCCIAttr, String memberAddress, Token userFederationToken,
+			AsyncPacketSender packetSender, final AsynchronousRequestCallback callback) {
+
 		if (packetSender == null) {
 			LOGGER.warn("Packet sender not set.");
 			throw new IllegalArgumentException("Packet sender not set.");
 		}
-		
+
 		IQ iq = new IQ();
 		iq.setID(requestId);
 		iq.setTo(memberAddress);
 		iq.setType(Type.set);
-		Element queryEl = iq.getElement().addElement("query",
-				ManagerXmppComponent.REQUEST_NAMESPACE);
+		Element queryEl = iq.getElement().addElement("query", ManagerXmppComponent.REQUEST_NAMESPACE);
 		for (Category category : categories) {
 			Element categoryEl = queryEl.addElement("category");
 			categoryEl.addElement("class").setText(category.getCatClass());
@@ -172,9 +165,9 @@ public class ManagerPacketHelper {
 			tokenEl.addElement("accessId").setText(userFederationToken.getAccessId());
 			tokenEl.addElement("user").setText(userFederationToken.getUser());
 		}
-		
+
 		packetSender.addPacketCallback(iq, new PacketCallback() {
-			
+
 			@Override
 			public void handle(Packet response) {
 				if (response.getError() != null) {
@@ -184,8 +177,7 @@ public class ManagerPacketHelper {
 						callback.error(createException(response.getError()));
 					}
 				} else {
-					callback.success(response.getElement().element("query")
-							.element("instance").elementText("id"));
+					callback.success(response.getElement().element("query").element("instance").elementText("id"));
 				}
 			}
 		});
@@ -195,20 +187,18 @@ public class ManagerPacketHelper {
 	protected static Instance getRemoteInstance(Request request, PacketSender packetSender) {
 		return getRemoteInstance(request.getProvidingMemberId(), request.getInstanceId(), packetSender);
 	}
-	
-	public static Instance getRemoteInstance(String memberId, String instanceId,
-			PacketSender packetSender) {
-		
+
+	public static Instance getRemoteInstance(String memberId, String instanceId, PacketSender packetSender) {
+
 		if (packetSender == null) {
 			LOGGER.warn("Packet sender not set.");
 			throw new IllegalArgumentException("Packet sender not set.");
 		}
-		
+
 		IQ iq = new IQ();
 		iq.setTo(memberId);
 		iq.setType(Type.get);
-		Element queryEl = iq.getElement().addElement("query",
-				ManagerXmppComponent.GETINSTANCE_NAMESPACE);
+		Element queryEl = iq.getElement().addElement("query", ManagerXmppComponent.GETINSTANCE_NAMESPACE);
 		Element instanceEl = queryEl.addElement("instance");
 		try {
 			instanceEl.addElement("id").setText(instanceId);
@@ -229,17 +219,16 @@ public class ManagerPacketHelper {
 	}
 
 	public static void deleteRemoteInstace(Request request, PacketSender packetSender) {
-		
+
 		if (packetSender == null) {
 			LOGGER.warn("Packet sender not set.");
 			throw new IllegalArgumentException("Packet sender not set.");
 		}
-		
+
 		IQ iq = new IQ();
 		iq.setTo(request.getProvidingMemberId());
 		iq.setType(Type.set);
-		Element queryEl = iq.getElement().addElement("query",
-				ManagerXmppComponent.REMOVEINSTANCE_NAMESPACE);
+		Element queryEl = iq.getElement().addElement("query", ManagerXmppComponent.REMOVEINSTANCE_NAMESPACE);
 		Element instanceEl = queryEl.addElement("instance");
 		instanceEl.addElement("id").setText(request.getInstanceId());
 
@@ -248,11 +237,11 @@ public class ManagerPacketHelper {
 			raiseException(response.getError());
 		}
 	}
-	
+
 	private static void raiseException(PacketError error) {
 		throw createException(error);
 	}
-	
+
 	private static OCCIException createException(PacketError error) {
 		Condition condition = error.getCondition();
 		if (condition.equals(Condition.item_not_found)) {
@@ -269,10 +258,10 @@ public class ManagerPacketHelper {
 		String id = instanceEl.element("id").getText();
 
 		InstanceState state = InstanceState.valueOf(instanceEl.elementText("state"));
-		
+
 		Iterator<Element> linkIterator = instanceEl.elementIterator("link");
 		List<Link> links = new ArrayList<Link>();
-		
+
 		while (linkIterator.hasNext()) {
 			Element linkEl = (Element) linkIterator.next();
 			String linkName = linkEl.element("link").getText();
@@ -288,7 +277,7 @@ public class ManagerPacketHelper {
 			Link link = new Link(linkName, attributesLink);
 			links.add(link);
 		}
-		
+
 		Iterator<Element> resourceIterator = instanceEl.elementIterator("resource");
 		List<Resource> resources = new ArrayList<Resource>();
 		while (resourceIterator.hasNext()) {
@@ -306,8 +295,7 @@ public class ManagerPacketHelper {
 				resourceAttributes.add(itemResourseAttributeEl.getText());
 			}
 
-			Iterator<Element> resourceActionsIterator = itemResourseEl.element("category")
-					.elementIterator("action");
+			Iterator<Element> resourceActionsIterator = itemResourseEl.element("category").elementIterator("action");
 			List<String> resourceActions = new ArrayList<String>();
 			while (resourceActionsIterator.hasNext()) {
 				Element itemResourseActionEl = (Element) resourceActionsIterator.next();
@@ -318,8 +306,7 @@ public class ManagerPacketHelper {
 			String title = itemResourseEl.element("title").getText();
 			String rel = itemResourseEl.element("rel").getText();
 
-			resources.add(new Resource(category, resourceAttributes, resourceActions, location,
-					title, rel));
+			resources.add(new Resource(category, resourceAttributes, resourceActions, location, title, rel));
 		}
 
 		Iterator<Element> attributesIterator = instanceEl.elementIterator("attribute");
@@ -336,7 +323,7 @@ public class ManagerPacketHelper {
 	}
 
 	public static Condition getCondition(OCCIException e) {
-		//TODO check if it is not needs other codes, e.g. quota exceeded
+		// TODO check if it is not needs other codes, e.g. quota exceeded
 		switch (e.getStatus().getCode()) {
 		case HttpStatus.SC_NOT_FOUND:
 			return Condition.item_not_found;
@@ -349,19 +336,18 @@ public class ManagerPacketHelper {
 		}
 	}
 
-	public static void checkIfInstanceIsBeingUsedByRemoteMember(String instanceId,
-			Request servedRequest, PacketSender packetSender) {
-		
+	public static void checkIfInstanceIsBeingUsedByRemoteMember(String instanceId, Request servedRequest,
+			PacketSender packetSender) {
+
 		if (packetSender == null) {
 			LOGGER.warn("Packet sender not set.");
 			throw new IllegalArgumentException("Packet sender not set.");
 		}
-		
+
 		IQ iq = new IQ();
 		iq.setTo(servedRequest.getRequestingMemberId());
 		iq.setType(Type.get);
-		Element queryEl = iq.getElement().addElement("query",
-				ManagerXmppComponent.INSTANCEBEINGUSED_NAMESPACE);
+		Element queryEl = iq.getElement().addElement("query", ManagerXmppComponent.INSTANCEBEINGUSED_NAMESPACE);
 		Element requestEl = queryEl.addElement("request");
 		requestEl.addElement("id").setText(servedRequest.getId());
 		if (instanceId != null) {
@@ -371,16 +357,16 @@ public class ManagerPacketHelper {
 		IQ response = (IQ) packetSender.syncSendPacket(iq);
 		if (response.getError() != null) {
 			raiseException(response.getError());
-		}	
+		}
 	}
 
 	public static void replyToServedRequest(Request request, PacketSender packetSender) {
-		
+
 		if (packetSender == null) {
 			LOGGER.warn("Packet sender not set.");
 			throw new IllegalArgumentException("Packet sender not set.");
 		}
-		
+
 		IQ response = new IQ(Type.result, request.getId());
 		response.setFrom(request.getProvidingMemberId());
 		response.setTo(request.getRequestingMemberId());
@@ -388,11 +374,44 @@ public class ManagerPacketHelper {
 		if (request.getInstanceId() == null) {
 			response.setError(Condition.item_not_found);
 		} else {
-			Element queryResponseEl = response.getElement().addElement("query",
-					ManagerXmppComponent.REQUEST_NAMESPACE);
-			queryResponseEl.addElement("instance").addElement("id")
-					.setText(request.getInstanceId());
+			Element queryResponseEl = response.getElement().addElement("query", ManagerXmppComponent.REQUEST_NAMESPACE);
+			queryResponseEl.addElement("instance").addElement("id").setText(request.getInstanceId());
 		}
-		packetSender.sendPacket(response);		
+		packetSender.sendPacket(response);
+	}
+
+	public static ResourcesInfo getRemoteUserQuota(String accessId, String memberId, PacketSender packetSender)
+			throws Exception {
+		if (packetSender == null) {
+			LOGGER.warn("Packet sender not set.");
+			throw new IllegalArgumentException("Packet sender not set.");
+		}
+
+		IQ iq = new IQ();
+		iq.setTo(memberId);
+		iq.setType(Type.get);
+		Element queryEl = iq.getElement().addElement("query", ManagerXmppComponent.GETREMOTEUSERQUOTA_NAMESPACE);
+		Element userEl = queryEl.addElement("token");
+		userEl.addElement("accessId").setText(accessId);
+
+		IQ response = (IQ) packetSender.syncSendPacket(iq);
+		if (response.getError() != null) {
+			raiseException(response.getError());
+		}
+
+		return parseResourcesInfo(response.getElement().element("query").element("resourcesInfo"));
+		
+	}
+	
+	private static ResourcesInfo parseResourcesInfo(Element instanceEl) {
+		String id = instanceEl.element("id").getText();
+		String cpuIdle = instanceEl.element("cpuIdle").getText();
+		String cpuInUse = instanceEl.element("cpuInUse").getText();
+		String instancesIdle = instanceEl.element("instancesIdle").getText();
+		String instancesInUse = instanceEl.element("instancesInUse").getText();
+		String memIdle = instanceEl.element("memIdle").getText();
+		String memInUse = instanceEl.element("memInUse").getText();
+
+		return new ResourcesInfo(id, cpuIdle, cpuInUse, memIdle, memInUse, instancesIdle, instancesInUse);
 	}
 }

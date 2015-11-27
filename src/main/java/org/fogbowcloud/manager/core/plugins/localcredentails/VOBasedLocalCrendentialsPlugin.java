@@ -1,12 +1,14 @@
 package org.fogbowcloud.manager.core.plugins.localcredentails;
 
 import java.security.cert.X509Certificate;
+import java.util.Date;
 import java.util.Map;
 import java.util.Properties;
 
 import org.fogbowcloud.manager.core.plugins.CertificateUtils;
 import org.fogbowcloud.manager.core.plugins.LocalCredentialsPlugin;
 import org.fogbowcloud.manager.core.plugins.identity.voms.VomsIdentityPlugin;
+import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.italiangrid.voms.VOMSAttribute;
 
@@ -58,5 +60,12 @@ public class VOBasedLocalCrendentialsPlugin implements LocalCredentialsPlugin {
 		} catch (Exception e) {}		
 		
 		return LocalCredentialsHelper.FOGBOW_DEFAULTS;
+	}
+
+	@Override
+	public Map<String, String> getLocalCredentials(String accessId) {
+		Token token = new Token(accessId, "", new Date(), null);
+		return getLocalCredentials(new Request("", token, "", "", "", 
+				new Date().getTime(), false, null, null, null));
 	}
 }

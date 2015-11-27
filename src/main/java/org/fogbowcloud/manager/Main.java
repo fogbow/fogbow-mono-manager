@@ -168,7 +168,7 @@ public class Main {
 		facade.setAccountingPlugin(accountingPlugin);
 		facade.setMemberPickerPlugin(memberPickerPlugin);
 		facade.setPrioritizationPlugin(prioritizationPlugin);
-		facade.setFederationUserCredentailsPlugin(localCredentialsPlugin);
+		facade.setLocalCredentailsPlugin(localCredentialsPlugin);
 		
 		String xmppHost = properties.getProperty(ConfigurationConstants.XMPP_HOST_KEY);
 		String xmppJid = properties.getProperty(ConfigurationConstants.XMPP_JID_KEY);

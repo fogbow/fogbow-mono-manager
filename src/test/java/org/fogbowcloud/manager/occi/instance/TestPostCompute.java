@@ -66,10 +66,8 @@ public class TestPostCompute {
 	
 	@Before
 	public void setup() throws Exception {
-
 		this.helper = new OCCITestHelper();
 
-		List<Resource> list = new ArrayList<Resource>();
 		Map<String, String> map = new HashMap<String, String>();
 		map.put("test", "test");
 
@@ -260,37 +258,6 @@ public class TestPostCompute {
 		assertNull(instanceId);
 		Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusLine().getStatusCode());
 	}
-	
-	
-//	@Test
-//	public void testBypassPostComputeWithWrongMediaTypeTextPlain() throws URISyntaxException, HttpException, IOException {
-//		//post compute through fogbow endpoint
-//		HttpPost httpPost = new HttpPost(OCCITestHelper.URI_FOGBOW_COMPUTE);
-//		httpPost.addHeader(OCCIHeaders.CONTENT_TYPE, "invalid-type");
-//		httpPost.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, PluginHelper.ACCESS_ID);
-//		httpPost.addHeader(OCCIHeaders.CATEGORY, new Category(PluginHelper.LINUX_X86_TERM,
-//				OCCIComputeApplication.OS_SCHEME, RequestConstants.MIXIN_CLASS).toHeader());
-//		
-//		HttpClient client = HttpClients.createMinimal();
-//		HttpResponse response = client.execute(httpPost);
-//
-//		Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusLine().getStatusCode());
-//	}
-//	
-//	@Test
-//	public void testBypassPostComputeWithoutMediaType() throws URISyntaxException, HttpException, IOException {
-//		//post compute through fogbow endpoint
-//		HttpPost httpPost = new HttpPost(OCCITestHelper.URI_FOGBOW_COMPUTE);
-//		httpPost.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, PluginHelper.ACCESS_ID);
-//		httpPost.addHeader(OCCIHeaders.CATEGORY, new Category(PluginHelper.LINUX_X86_TERM,
-//				OCCIComputeApplication.OS_SCHEME, RequestConstants.MIXIN_CLASS).toHeader());
-//		
-//		HttpClient client = HttpClients.createMinimal();
-//		HttpResponse response = client.execute(httpPost);
-//
-//		Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusLine().getStatusCode());
-//	}
-
 
 	@Test
 	public void testConvertUserData() throws Exception {
@@ -328,7 +295,6 @@ public class TestPostCompute {
 	
 	@Test
 	public void testConvertUserDataBadRequest() throws Exception {
-
 		exception.expect(OCCIException.class);
 
 		Resource occiUserdataResource = new Resource("user_data; scheme=\"http://schemas.openstack.org/compute/instance#\"; class=\"mixin\"");
@@ -354,8 +320,6 @@ public class TestPostCompute {
 
 	@Test
 	public void testConvertPublicKey() throws Exception {
-
-		
 		String fakePublicKey = "org.openstack.credentials.publickey.data org.openstack.credentials.publickey.name=ssh-rsa "
 				+ "AAAAB3NzaC1yc2EAAAADAQABAAABAQDI6g9Q7epXV1ciIsPHin";
 		
@@ -374,7 +338,6 @@ public class TestPostCompute {
 		Map<String, String> requestXOCCIAtt = new HashMap<String, String>();
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
 		xOCCIAtt.put(FED_COMPUTE_ATT_PUBLICKEY_NAME, fakePublicKey);
-
 		
 		ComputeServerResource csr = new ComputeServerResource();
 		csr.convertPublicKey(properties, resources, requestCategories, requestXOCCIAtt,
@@ -412,35 +375,4 @@ public class TestPostCompute {
 				xOCCIAtt);
 
 	}
-	
-	
-//	@Test
-//	public void testBypassPostComputeWithWrongMediaTypeTextPlain() throws URISyntaxException, HttpException, IOException {
-//		//post compute through fogbow endpoint
-//		HttpPost httpPost = new HttpPost(OCCITestHelper.URI_FOGBOW_COMPUTE);
-//		httpPost.addHeader(OCCIHeaders.CONTENT_TYPE, "invalid-type");
-//		httpPost.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, PluginHelper.ACCESS_ID);
-//		httpPost.addHeader(OCCIHeaders.CATEGORY, new Category(PluginHelper.LINUX_X86_TERM,
-//				OCCIComputeApplication.OS_SCHEME, RequestConstants.MIXIN_CLASS).toHeader());
-//		
-//		HttpClient client = HttpClients.createMinimal();
-//		HttpResponse response = client.execute(httpPost);
-//
-//		Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusLine().getStatusCode());
-//	}
-//	
-//	@Test
-//	public void testBypassPostComputeWithoutMediaType() throws URISyntaxException, HttpException, IOException {
-//		//post compute through fogbow endpoint
-//		HttpPost httpPost = new HttpPost(OCCITestHelper.URI_FOGBOW_COMPUTE);
-//		httpPost.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, PluginHelper.ACCESS_ID);
-//		httpPost.addHeader(OCCIHeaders.CATEGORY, new Category(PluginHelper.LINUX_X86_TERM,
-//				OCCIComputeApplication.OS_SCHEME, RequestConstants.MIXIN_CLASS).toHeader());
-//		
-//		HttpClient client = HttpClients.createMinimal();
-//		HttpResponse response = client.execute(httpPost);
-//
-//		Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusLine().getStatusCode());
-//	}
-
 }

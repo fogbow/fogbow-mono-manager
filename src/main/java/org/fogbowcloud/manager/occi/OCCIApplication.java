@@ -113,8 +113,8 @@ public class OCCIApplication extends Application {
 		requestHeaders.removeFirst(HeaderUtils.normalize(OCCIHeaders.X_FEDERATION_AUTH_TOKEN));
 	}
 	
-	public List<FederationMember> getFederationMembers() {		
-		return managerFacade.getMembers();
+	public List<FederationMember> getFederationMembers(String accessId) {		
+		return managerFacade.getMembers(accessId);
 	}
 
 	public Request getRequest(String authToken, String requestId) {
@@ -192,12 +192,7 @@ public class OCCIApplication extends Application {
 		return managerFacade.getUsersUsage(authToken);
 	}
 
-	public ResourcesInfo getLocalUserQuota(String localAccessToken) {
-		return managerFacade.getLocalUserQuota(localAccessToken);
-	}
-
 	public String getUser(String authToken) {
 		return managerFacade.getUser(authToken);
 	}
-
 }
