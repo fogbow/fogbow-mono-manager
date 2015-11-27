@@ -5,6 +5,7 @@ import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.jamppa.component.handler.AbstractQueryHandler;
 import org.xmpp.packet.IQ;
+import org.xmpp.packet.PacketError.Condition;
 
 public class GetRemoteUserQuotaHandler extends AbstractQueryHandler {
 
@@ -24,6 +25,7 @@ public class GetRemoteUserQuotaHandler extends AbstractQueryHandler {
 		ResourcesInfo resourcesInfo = facade.getResourceInfoForRemoteMember(accessId);
 		
 		if (resourcesInfo == null) {
+			response.setError(Condition.item_not_found);
 			return response;
 		}
 

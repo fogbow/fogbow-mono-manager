@@ -917,6 +917,7 @@ public class TestManagerController {
 				members.get(0).getResourcesInfo().getId());
 		Assert.assertEquals("abc", members.get(1).getResourcesInfo().getId());
 	}
+	
 
 	private AsyncPacketSender mockGetRemoteResourceInfo(List<FederationMember> members) {
 		// mocking packet sender

@@ -204,7 +204,23 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 				String.valueOf(DefaultDataTestHelper.TOKEN_SERVER_HTTP_PORT));
 		properties.put("max_whoisalive_manager_count", MAX_WHOISALIVE_MANAGER_COUNT);
 		
-		ManagerController managerFacade = new ManagerController(properties);
+		ManagerController managerFacade = Mockito.spy(new ManagerController(properties));
+		return initializeXMPPManagerComponent(init, managerFacade);
+	}
+	
+	public ManagerXmppComponent initializeXMPPManagerComponentFacadeMocki(boolean init, ManagerController managerFacade) throws Exception {
+
+		Properties properties = new Properties();
+		properties.put(KeystoneIdentityPlugin.FEDERATION_USER_NAME_KEY, "fogbow");
+		properties.put(KeystoneIdentityPlugin.FEDERATION_USER_PASS_KEY, "fogbow");
+		properties.put(KeystoneIdentityPlugin.FEDERATION_USER_TENANT_NAME_KEY, "fogbow");
+		properties.put(ConfigurationConstants.XMPP_JID_KEY, "manager.test.com");
+		properties.put(ConfigurationConstants.TOKEN_HOST_PRIVATE_ADDRESS_KEY,
+				DefaultDataTestHelper.SERVER_HOST);
+		properties.put(ConfigurationConstants.TOKEN_HOST_HTTP_PORT_KEY,
+				String.valueOf(DefaultDataTestHelper.TOKEN_SERVER_HTTP_PORT));
+		properties.put("max_whoisalive_manager_count", MAX_WHOISALIVE_MANAGER_COUNT);
+		
 		return initializeXMPPManagerComponent(init, managerFacade);
 	}
 	
@@ -458,4 +474,5 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 	public LocalCredentialsPlugin getLocalCredentialsPlugin(){
 		return localCredentialsPlugin;
 	}
+
 }
