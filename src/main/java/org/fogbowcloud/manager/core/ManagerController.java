@@ -495,14 +495,31 @@ public class ManagerController {
 		LOGGER.debug("Removing requestId: " + requestId);
 		checkRequestId(accessId, requestId);
 		Request request = requests.get(requestId);
-		if (request != null && request.getProvidingMemberId() != null) {
-			removeAsynchronousRemoteRequests(request, true);			
+		if (request != null 
+				&& request.getProvidingMemberId() != null 
+				&& (request.getState().equals(RequestState.OPEN) 
+						|| request.getState().equals(RequestState.PENDING))) {
+			removeAsynchronousRemoteRequests(request, true);	
 		}
 		requests.remove(requestId);
 		if (!instanceMonitoringTimer.isScheduled()) {
 			triggerInstancesMonitor();
 		}
 	}
+	
+	public void removeRequestForRemoteMember(String accessId, String requestId) {
+		LOGGER.debug("Removing requestId: " + requestId);
+		checkRequestId(accessId, requestId);
+		Request request = requests.get(requestId);
+		if (request != null && request.getInstanceId() != null) {
+			try {
+				computePlugin.removeInstance(localIdentityPlugin.getToken(accessId), 
+						request.getInstanceId());				
+			} catch (Exception e) {
+			}
+		}
+		requests.exclude(request.getId());
+	}	
 
 	private void checkRequestId(String accessId, String requestId) {
 		String user = getUser(accessId);
@@ -746,8 +763,19 @@ public class ManagerController {
 						RequestType.PERSISTENT.getValue());
 	}
 
-	private void removeRemoteRequest(String providingMember, Request request) {
-		ManagerPacketHelper.deleteRemoteRequest(providingMember ,request, packetSender);
+	private void removeRemoteRequest(final String providingMember, final Request request) {
+		ManagerPacketHelper.deleteRemoteRequest(providingMember ,request, packetSender, new AsynchronousRequestCallback() {
+			
+			@Override
+			public void success(String instanceId) {
+				LOGGER.info("Servered request id " + request.getId() + " on " + providingMember + " removed");
+			}
+			
+			@Override
+			public void error(Throwable t) {
+				LOGGER.warn("Error while removing servered request id " + request.getId() + " on " + providingMember);
+			}
+		});
 	}
 	
 	private void removeRemoteInstance(Request request) {
@@ -1134,9 +1162,9 @@ public class ManagerController {
 		
 		ForwardedRequest forwardedRequest = new ForwardedRequest(request, dateUtils.currentTimeMillis());
 		ForwardedRequest forwardedRequestBefore = asynchronousRequests.get(request.getId());
-		if (forwardedRequestBefore != null) {
-			forwardedRequest.addMembersServered(forwardedRequestBefore.getMembersServered());
-		}
+		forwardedRequest.addMembersServered(
+				forwardedRequestBefore != null ? forwardedRequestBefore.getMembersServered() : null);
+		
 		asynchronousRequests.put(request.getId(),forwardedRequest);
 		ManagerPacketHelper.asynchronousRemoteRequest(request.getId(), categoriesCopy, xOCCIAttCopy, memberAddress, 
 				federationIdentityPlugin.getForwardableToken(request.getFederationToken()), 
@@ -1733,7 +1761,6 @@ public class ManagerController {
 			this.request = request;
 			this.timeStamp = timeStamp;
 			this.membersServered = new ArrayList<String>();
-			this.membersServered.add(request.getProvidingMemberId());
 		}
 
 		public void setTimeStamp(long timeStamp) {
@@ -1753,6 +1780,12 @@ public class ManagerController {
 		}
 
 		public void addMembersServered(List<String> membersServered) {
+			if (membersServered == null || !membersServered.contains(request.getProvidingMemberId())) {
+				this.membersServered.add(request.getProvidingMemberId());
+			}
+			if (membersServered == null) {
+				return;
+			}
 			this.membersServered.addAll(membersServered);
 		}
 	}

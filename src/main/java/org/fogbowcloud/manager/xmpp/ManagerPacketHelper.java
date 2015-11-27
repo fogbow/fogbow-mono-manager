@@ -396,7 +396,8 @@ public class ManagerPacketHelper {
 		packetSender.sendPacket(response);		
 	}
 	
-	public static void deleteRemoteRequest(String providingMember, Request request, AsyncPacketSender packetSender) {
+	public static void deleteRemoteRequest(String providingMember, Request request, 
+			AsyncPacketSender packetSender, final AsynchronousRequestCallback callback) {
 		if (packetSender == null) {
 			LOGGER.warn("Packet sender not set.");
 			throw new IllegalArgumentException("Packet sender not set.");
@@ -415,6 +416,11 @@ public class ManagerPacketHelper {
 		packetSender.addPacketCallback(iq, new PacketCallback() {		
 			@Override
 			public void handle(Packet response) {
+				if (response.getError() != null) {
+					callback.error(null);
+				} else {
+					callback.success(null);
+				}
 			}
 		});
 		packetSender.sendPacket(iq);
