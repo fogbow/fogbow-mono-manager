@@ -1,5 +1,7 @@
 package org.fogbowcloud.manager.core.plugins.localcredentails;
 
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -44,5 +46,25 @@ public class TestLocalCredentialsHelper {
 		
 		Assert.assertEquals(expectedCredentials, localCredentials);
 	}
+	
+	@Test
+	public void testGetCredentialsFromFile() throws IOException {		
+		String propertiesFile = "src/test/resources/local_credentials/fake_properties";
 
+		Properties properties = new Properties();
+		FileInputStream input = new FileInputStream(propertiesFile);
+		properties.load(input);
+
+		String normalizeUser = LocalCredentialsHelper
+				.normalizeUser("CN=Giovanni Farias, OU=DSC, O=UFCG, O=UFF BrGrid CA, O=ICPEDU, C=BR");
+		Map<String, String> localCredentials = LocalCredentialsHelper
+				.getCredentialsPerRelatedLocalName(properties, normalizeUser);
+
+		Map<String, String> expectedCredentials = new HashMap<String, String>();
+		expectedCredentials.put("username", "user1");
+		expectedCredentials.put("password", "userpass1");
+		expectedCredentials.put("tenantName", "usertenant1");
+
+		Assert.assertEquals(expectedCredentials, localCredentials);
+	}
 }

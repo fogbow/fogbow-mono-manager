@@ -444,7 +444,11 @@ public class ManagerController {
 		}
 
 		// getting resources info from other members
-		for (FederationMember member : members) {
+		List<FederationMember> membersCopy = null;
+		synchronized (this.members) {
+			membersCopy = new LinkedList<FederationMember>(members);
+		}
+		for (FederationMember member : membersCopy) {
 			if (!member.getResourcesInfo().getId()
 					.equals(properties.getProperty(ConfigurationConstants.XMPP_JID_KEY))) {
 				try {

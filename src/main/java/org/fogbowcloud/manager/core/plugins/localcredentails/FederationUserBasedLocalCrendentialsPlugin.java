@@ -7,7 +7,6 @@ import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.LocalCredentialsPlugin;
-import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.request.Request;
 
 public class FederationUserBasedLocalCrendentialsPlugin implements LocalCredentialsPlugin {
@@ -51,15 +50,14 @@ public class FederationUserBasedLocalCrendentialsPlugin implements LocalCredenti
 
 	@Override
 	public Map<String, String> getLocalCredentials(Request request) {
-		String federationUser = request.getFederationToken().getUser();
-		federationUser = federationUser.replaceAll("=", "(*)");
-		federationUser = federationUser.replaceAll(" ", "(#)");
-		
-		LOGGER.debug("federationUser=" + federationUser);		
+		String normalizedUser = LocalCredentialsHelper.normalizeUser(request.getFederationToken()
+				.getUser());
+
+		LOGGER.debug("normalizedFederationUser=" + normalizedUser);
 		Map<String, String> credentialsPerMember = LocalCredentialsHelper
-				.getCredentialsPerRelatedLocalName(this.properties, federationUser);
-		
-		LOGGER.debug("Credentials for " + federationUser + " are " + credentialsPerMember);
+				.getCredentialsPerRelatedLocalName(this.properties, normalizedUser);
+
+		LOGGER.debug("Credentials for " + normalizedUser + " are " + credentialsPerMember);
 		if (!credentialsPerMember.isEmpty()) {
 			return credentialsPerMember;
 		}
@@ -74,25 +72,18 @@ public class FederationUserBasedLocalCrendentialsPlugin implements LocalCredenti
 
 	@Override
 	public Map<String, String> getLocalCredentials(String accessId) {
-		Token token = federationIdentityPlugin.getToken(accessId);
-		
-		LOGGER.debug("federationToken=" + token);
-		String federationUser = token.getUser();
-		// Normalizing
-		federationUser = federationUser.replaceAll("=", "(*)");
-		federationUser = federationUser.replaceAll(" ", "(#)");
+		String normalizedUser = LocalCredentialsHelper.normalizeUser(federationIdentityPlugin
+				.getToken(accessId).getUser());
+		LOGGER.debug("normalizeFederationUser=" + normalizedUser);
 
-		LOGGER.debug("federationUser=" + federationUser);
-		
 		Map<String, String> credentialsPerMember = LocalCredentialsHelper
-				.getCredentialsPerRelatedLocalName(this.properties, federationUser);
-		
-		LOGGER.debug("Credentials for " + federationUser + " are " + credentialsPerMember);
+				.getCredentialsPerRelatedLocalName(this.properties, normalizedUser);
+
+		LOGGER.debug("Credentials for " + normalizedUser + " are " + credentialsPerMember);
 		if (!credentialsPerMember.isEmpty()) {
 			return credentialsPerMember;
 		}
 		return LocalCredentialsHelper.getCredentialsPerRelatedLocalName(this.properties,
 				LocalCredentialsHelper.FOGBOW_DEFAULTS);
-		
 	}
 }
