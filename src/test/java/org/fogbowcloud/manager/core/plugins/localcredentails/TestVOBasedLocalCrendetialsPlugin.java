@@ -151,9 +151,18 @@ public class TestVOBasedLocalCrendetialsPlugin {
 	
 	@Test
 	public void testGetLocalCredentialsRequestNull() { 
-		Map<String, String> localCredentials = this.vOBasedLocalCrendentialsPlugin.getLocalCredentials(null);
+		Map<String, String> localCredentials = this.vOBasedLocalCrendentialsPlugin
+				.getLocalCredentials(new Request(null, new Token("", null, null, null), null, null,
+						false, null));
 		Assert.assertEquals(VALUE_ONE_FOGBOW, localCredentials.get(CREDENTIAL_ONE));
 		Assert.assertEquals(VALUE_TWO_FOGBOW, localCredentials.get(CREDENTIAL_TWO));	
 	}		
+	
+	@Test
+	public void testGetCredentialsWithAccessId() {
+		Map<String, String> localCredentials = this.vOBasedLocalCrendentialsPlugin.getLocalCredentials("123");
+		Assert.assertEquals(VALUE_ONE_FOGBOW, localCredentials.get(CREDENTIAL_ONE));
+		Assert.assertEquals(VALUE_TWO_FOGBOW, localCredentials.get(CREDENTIAL_TWO));		
+	}
 	
 }

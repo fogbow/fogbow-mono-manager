@@ -107,7 +107,7 @@ public class TestOCCIApplication {
 				.thenReturn(new HashMap<String, String>());
 		
 		managerFacade.setAuthorizationPlugin(authorizationPlugin);
-		managerFacade.setFederationUserCredentailsPlugin(localCredentialsPlugin);
+		managerFacade.setLocalCredentailsPlugin(localCredentialsPlugin);
 		managerFacade.setLocalIdentityPlugin(identityPlugin);
 		managerFacade.setFederationIdentityPlugin(identityPlugin);
 		managerFacade.setComputePlugin(computePlugin);

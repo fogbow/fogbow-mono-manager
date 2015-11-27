@@ -56,5 +56,10 @@ public class LocalCredentialsHelper {
 			}
 		}
 		return credentials;
-	}		
+	}
+	
+
+	protected static String normalizeUser(String federationUser) {
+		return federationUser.replaceAll("=", "->").replaceAll(" ", "");
+	}
 }
