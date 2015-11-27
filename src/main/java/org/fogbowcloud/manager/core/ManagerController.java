@@ -252,7 +252,11 @@ public class ManagerController {
 		accountingUpdaterTimer.scheduleAtFixedRate(new TimerTask() {
 			@Override
 			public void run() {
-				updateAccounting();
+				try {
+					updateAccounting();					
+				} catch (Throwable e) {
+					LOGGER.error("Erro while updating accounting", e);
+				}
 			}
 		}, 0, accountingUpdaterPeriod);
 	}
@@ -300,8 +304,12 @@ public class ManagerController {
 
 		garbageCollectorTimer.scheduleAtFixedRate(new TimerTask() {
 			@Override
-			public void run() {
-				garbageCollector();
+			public void run() {	
+				try {
+					garbageCollector();					
+				} catch (Throwable e) {
+					LOGGER.error("Erro while executing garbage collector", e);
+				}
 			}
 		}, 0, garbageCollectorPeriod);
 	}
@@ -918,8 +926,12 @@ public class ManagerController {
 
 		servedRequestMonitoringTimer.scheduleAtFixedRate(new TimerTask() {
 			@Override
-			public void run() {
-				monitorServedRequests();
+			public void run() {	
+				try {
+					monitorServedRequests();
+				} catch (Throwable e) {
+					LOGGER.error("Erro while monitoring served requests", e);
+				}
 			}
 		}, 0, servedRequestMonitoringPeriod);
 	}
@@ -1023,7 +1035,7 @@ public class ManagerController {
 			public void run() {
 				try {
 					updateRequestDB();
-				} catch (Exception e) {
+				} catch (Throwable e) {
 					LOGGER.error("Could not update the database.", e);
 				}
 			}
@@ -1061,7 +1073,11 @@ public class ManagerController {
 		instanceMonitoringTimer.scheduleAtFixedRate(new TimerTask() {
 			@Override
 			public void run() {
-				monitorInstancesForLocalRequests();
+				try {
+					monitorInstancesForLocalRequests();					
+				} catch (Throwable e) {
+					LOGGER.error("Erro while monitoring instances for local requests", e);
+				}
 			}
 		}, 0, instanceMonitoringPeriod);
 	}
@@ -1288,7 +1304,11 @@ public class ManagerController {
 		requestSchedulerTimer.scheduleAtFixedRate(new TimerTask() {
 			@Override
 			public void run() {
-				checkAndSubmitOpenRequests();
+				try {
+					checkAndSubmitOpenRequests();					
+				} catch (Throwable e) {
+					LOGGER.error("Erro while checking and submitting open requests", e);
+				}
 			}
 		}, 0, schedulerPeriod);
 	}
@@ -1384,10 +1404,12 @@ public class ManagerController {
 			if (!isInstanceBeingUsedByRemoteMember(request)) {
 				LOGGER.debug("The instance " + request.getInstanceId() + " is not being used anymore by "
 						+ request.getRequestingMemberId() + " and will be removed.");
-				requests.exclude(request.getId());
 				if (request.getInstanceId() != null) {
-					removeInstanceForRemoteMember(request.getInstanceId());
+					try {
+						removeInstanceForRemoteMember(request.getInstanceId());						
+					} catch (Exception e) {}
 				}
+				requests.exclude(request.getId());
 			}
 		}
 
