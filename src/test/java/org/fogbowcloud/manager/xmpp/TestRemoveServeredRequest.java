@@ -25,7 +25,7 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import org.mockito.internal.verification.VerificationModeFactory;
 
-public class TestRemoceServeredRequest {
+public class TestRemoveServeredRequest {
 
 	private static final String INSTANCE_ID = "instanceId";
 	private static final String ACCESS_ID = "accessId";
@@ -44,7 +44,7 @@ public class TestRemoceServeredRequest {
 	}
 	
 	@Test
-	public void test() throws Exception {
+	public void testRemoveServeredRequest() throws Exception {
 		ManagerXmppComponent initializeXMPPManagerComponent = managerTestHelper.initializeXMPPManagerComponent(false);
 		Request request = createRequest();
 		RequestRepository requests = new RequestRepository();
@@ -61,7 +61,7 @@ public class TestRemoceServeredRequest {
 		Mockito.when(managerTestHelper.getAuthorizationPlugin().isAuthorized(token)).thenReturn(true);			
 
 		Assert.assertEquals(1, initializeXMPPManagerComponent.getManagerFacade()
-				.getRequestsFromUser(token.getAccessId()).size());
+				.getRequestsFromUser(token.getAccessId(), false).size());
 		
 		final BlockingQueue<String> bq = new LinkedBlockingQueue<String>();
 
@@ -78,10 +78,10 @@ public class TestRemoceServeredRequest {
 					}
 				});
 		
-		String instanceId = bq.poll(5, TimeUnit.SECONDS);
+		String instanceId = bq.poll(1500, TimeUnit.SECONDS);
 		
 		Assert.assertEquals(0, initializeXMPPManagerComponent.getManagerFacade()
-				.getRequestsFromUser(token.getAccessId()).size());
+				.getRequestsFromUser(token.getAccessId(), false).size());
 
 		Mockito.verify(managerTestHelper.getComputePlugin(), VerificationModeFactory.times(1))
 				.removeInstance(token, INSTANCE_ID);
@@ -98,7 +98,7 @@ public class TestRemoceServeredRequest {
 		Request request = new Request(REQUEST_ID, new Token(ACCESS_ID,
 				OCCITestHelper.USER_MOCK,
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
-				new HashMap<String, String>()), categories, attributes, true, DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+				new HashMap<String, String>()), categories, attributes, false, DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		request.setInstanceId(INSTANCE_ID);
 		return request;
 	}	

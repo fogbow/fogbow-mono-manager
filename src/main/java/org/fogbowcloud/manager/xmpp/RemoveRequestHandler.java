@@ -21,7 +21,6 @@ public class RemoveRequestHandler extends AbstractQueryHandler {
 		IQ response = IQ.createResultIQ(query);
 		try {
 			facade.removeRequestForRemoteMember(accessId, requestId);
-			
 		} catch (OCCIException e) {
 			response.setError(ManagerPacketHelper.getCondition(e));
 		}
