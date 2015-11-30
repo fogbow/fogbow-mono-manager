@@ -33,4 +33,9 @@ public class MemberBasedLocalCrendetialsPlugin implements LocalCredentialsPlugin
 	public Map<String, Map<String, String>> getAllLocalCredentials() {
 		return LocalCredentialsHelper.getLocalCredentials(properties, null);
 	}
+
+	@Override
+	public Map<String, String> getLocalCredentials(String accessId) {
+		return null;
+	}
 }

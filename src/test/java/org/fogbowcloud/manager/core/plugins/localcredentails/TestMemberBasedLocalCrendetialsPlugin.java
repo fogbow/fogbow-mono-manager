@@ -5,6 +5,7 @@ import java.util.Properties;
 
 import org.fogbowcloud.manager.core.plugins.localcredentails.LocalCredentialsHelper;
 import org.fogbowcloud.manager.core.plugins.localcredentails.MemberBasedLocalCrendetialsPlugin;
+import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.junit.Assert;
 import org.junit.Before;
@@ -104,9 +105,18 @@ public class TestMemberBasedLocalCrendetialsPlugin {
 	}	
 	
 	@Test
+
+	public void testGetLocalCrendetialsWithAccessId() {
+		Assert.assertNull(memberBasedLocalCrendetialsPlugin.getLocalCredentials("accessId"));
+	}
+
+	@Test
 	public void testGetLocalCredentialsRequestNull() {
-		Map<String, String> localCredentials = this.memberBasedLocalCrendetialsPlugin.getLocalCredentials(null);
+		Map<String, String> localCredentials = this.memberBasedLocalCrendetialsPlugin
+				.getLocalCredentials(new Request(null, new Token("", null, null, null), null, null,
+						false, null));
 		Assert.assertEquals(VALUE_ONE_FOGBOW, localCredentials.get(CREDENTIAL_ONE));
 		Assert.assertEquals(VALUE_TWO_FOGBOW, localCredentials.get(CREDENTIAL_TWO));		
 	}		
+
 }
