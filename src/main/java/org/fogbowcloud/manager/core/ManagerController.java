@@ -522,8 +522,12 @@ public class ManagerController {
 	}
 
 	public List<Request> getRequestsFromUser(String federationAccessToken) {
+		return getRequestsFromUser(federationAccessToken, true);
+	}
+	
+	public List<Request> getRequestsFromUser(String federationAccessToken, boolean findLocalRequest) {
 		String user = getUser(federationAccessToken);
-		return requests.getByUser(user);
+		return requests.getByUser(user, findLocalRequest);
 	}
 
 	public void removeAllRequests(String accessId) {
@@ -538,15 +542,40 @@ public class ManagerController {
 	public void removeRequest(String accessId, String requestId) {
 		LOGGER.debug("Removing requestId: " + requestId);
 		checkRequestId(accessId, requestId);
+		Request request = requests.get(requestId);
+		if (request != null 
+				&& request.getProvidingMemberId() != null 
+				&& (request.getState().equals(RequestState.OPEN) 
+						|| request.getState().equals(RequestState.PENDING))) {
+			removeAsynchronousRemoteRequests(request, true);
+		}
 		requests.remove(requestId);
 		if (!instanceMonitoringTimer.isScheduled()) {
 			triggerInstancesMonitor();
 		}
 	}
+	
+	public void removeRequestForRemoteMember(String accessId, String requestId) {
+		LOGGER.debug("Removing requestId for remote member: " + requestId);
+		checkRequestId(accessId, requestId, false);
+		Request request = requests.get(requestId, false);
+		if (request != null && request.getInstanceId() != null) {
+			try {
+				computePlugin.removeInstance(localIdentityPlugin.getToken(accessId), 
+						request.getInstanceId());				
+			} catch (Exception e) { 
+			}
+		}
+		requests.exclude(request.getId());
+	}	
 
 	private void checkRequestId(String accessId, String requestId) {
+		checkRequestId(accessId, requestId, true);
+	}
+	
+	private void checkRequestId(String accessId, String requestId, boolean lookingForLocalRequest) {
 		String user = getUser(accessId);
-		if (requests.get(user, requestId) == null) {
+		if (requests.get(user, requestId, lookingForLocalRequest) == null) {
 			LOGGER.debug("User " + user + " does not have requesId " + requestId);
 			throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
 		}
@@ -777,6 +806,21 @@ public class ManagerController {
 				&& request.getAttValue(RequestAttribute.TYPE.getValue()).equals(RequestType.PERSISTENT.getValue());
 	}
 
+	private void removeRemoteRequest(final String providingMember, final Request request) {
+		ManagerPacketHelper.deleteRemoteRequest(providingMember ,request, packetSender, new AsynchronousRequestCallback() {
+			
+			@Override
+			public void success(String instanceId) {
+				LOGGER.info("Servered request id " + request.getId() + " on " + providingMember + " removed");
+			}
+			
+			@Override
+			public void error(Throwable t) {
+				LOGGER.warn("Error while removing servered request id " + request.getId() + " on " + providingMember);
+			}
+		});
+	}
+	
 	private void removeRemoteInstance(Request request) {
 		ManagerPacketHelper.deleteRemoteInstace(request, packetSender);
 	}
@@ -984,7 +1028,7 @@ public class ManagerController {
 			throw e;
 		}
 	}
-
+	
 	public void removeInstanceForRemoteMember(String instanceId) {
 		LOGGER.info("Removing instance " + instanceId + " for remote member.");
 
@@ -1142,12 +1186,16 @@ public class ManagerController {
 		request.setState(RequestState.PENDING);
 
 		LOGGER.info("Submiting request " + request + " to member " + memberAddress);
-
-		asynchronousRequests.put(request.getId(), new ForwardedRequest(request, dateUtils.currentTimeMillis()));
-		ManagerPacketHelper.asynchronousRemoteRequest(request.getId(), categoriesCopy, xOCCIAttCopy, memberAddress,
-				federationIdentityPlugin.getForwardableToken(request.getFederationToken()), packetSender,
-				new AsynchronousRequestCallback() {
-
+		
+		ForwardedRequest forwardedRequest = new ForwardedRequest(request, dateUtils.currentTimeMillis());
+		ForwardedRequest forwardedRequestBefore = asynchronousRequests.get(request.getId());
+		forwardedRequest.addMembersServered(
+				forwardedRequestBefore != null ? forwardedRequestBefore.getMembersServered() : null);
+		
+		asynchronousRequests.put(request.getId(),forwardedRequest);
+		ManagerPacketHelper.asynchronousRemoteRequest(request.getId(), categoriesCopy, xOCCIAttCopy, memberAddress, 
+				federationIdentityPlugin.getForwardableToken(request.getFederationToken()), 
+				packetSender, new AsynchronousRequestCallback() {
 					@Override
 					public void success(String instanceId) {
 						LOGGER.debug("The request " + request + " forwarded to " + memberAddress + " gets instance "
@@ -1156,8 +1204,9 @@ public class ManagerController {
 							return;
 						}
 						if (instanceId == null) {
-							request.setState(RequestState.OPEN);
-							asynchronousRequests.remove(request.getId());
+							if (request.getState().equals(RequestState.PENDING)) {
+								request.setState(RequestState.OPEN);								
+							}
 							return;
 						}
 
@@ -1175,17 +1224,20 @@ public class ManagerController {
 						} catch (Throwable e) {
 							LOGGER.error("Error while executing the benchmark in " + instanceId
 									+ " from member " + memberAddress + ".", e);
-							request.setState(RequestState.OPEN);
-							asynchronousRequests.remove(request.getId());
+							if (request.getState().equals(RequestState.PENDING)) {
+								request.setState(RequestState.OPEN);
+							}
 							return;
 						}
 					}
 
 					@Override
 					public void error(Throwable t) {
-						LOGGER.debug("The request " + request + " forwarded to " + memberAddress + " gets error ", t);
-						request.setState(RequestState.OPEN);
-						asynchronousRequests.remove(request.getId());
+						LOGGER.debug("The request " + request + " forwarded to " + memberAddress
+								+ " gets error ", t);
+						if (request.getState().equals(RequestState.PENDING)) {
+							request.setState(RequestState.OPEN);
+						}
 						request.setProvidingMemberId(null);
 					}
 				});
@@ -1231,6 +1283,7 @@ public class ManagerController {
 				}
 
 				if (request.isLocal() && !isFulfilledByLocalMember(request)) {
+					removeAsynchronousRemoteRequests(request, false);
 					asynchronousRequests.remove(request.getId());
 				}
 
@@ -1254,7 +1307,21 @@ public class ManagerController {
 			triggerServedRequestMonitoring();
 		}
 	}
-
+	
+	private void removeAsynchronousRemoteRequests(final Request request, boolean removeAll) {
+		ForwardedRequest forwardedRequest = asynchronousRequests.get(request.getId());
+		for (String memberServered : forwardedRequest != null ? forwardedRequest.getMembersServered() : new ArrayList<String>()) {						
+			if (memberServered == null || forwardedRequest.getRequest() == null 
+					|| (!removeAll && request.getProvidingMemberId().equals(memberServered) )) {
+				continue;
+			}
+			try {
+				removeRemoteRequest(memberServered, request);		
+			} catch (Exception e) {
+			}
+		}
+	}	
+	
 	protected void replacePublicKeys(String sshPublicAddress, Request request) {
 		String requestPublicKey = request.getAttValue(RequestAttribute.DATA_PUBLIC_KEY.getValue());
 		if (requestPublicKey == null) {
@@ -1330,11 +1397,7 @@ public class ManagerController {
 				LOGGER.debug("The request " + request.getId() + " is no longer open.");
 				continue;
 			}
-			if (isRequestForwardedtoRemoteMember(request.getId())) {
-				LOGGER.debug(
-						"The request " + request.getId() + " was forwarded to remote member and is not fulfilled yet.");
-				continue;
-			}
+
 			LOGGER.debug(request.getId() + " being considered for scheduling.");
 			Map<String, String> xOCCIAtt = request.getxOCCIAtt();
 			if (request.isIntoValidPeriod()) {
@@ -1437,11 +1500,11 @@ public class ManagerController {
 	protected void checkPedingRequests() {
 		Collection<ForwardedRequest> forwardedRequests = asynchronousRequests.values();
 		for (ForwardedRequest forwardedRequest : forwardedRequests) {
-			if (timoutReached(forwardedRequest.getTimeStamp())) {
+			if (timoutReached(forwardedRequest.getTimeStamp()) 
+					&& forwardedRequest.getRequest().getState().equals(RequestState.PENDING)){
 				LOGGER.debug("The forwarded request " + forwardedRequest.getRequest().getId()
 						+ " reached timeout and is been removed from asynchronousRequests list.");
 				forwardedRequest.getRequest().setState(RequestState.OPEN);
-				asynchronousRequests.remove(forwardedRequest.getRequest().getId());
 			}
 		}
 	}
@@ -1456,7 +1519,7 @@ public class ManagerController {
 				? DEFAULT_ASYNC_REQUEST_WAITING_INTERVAL : Integer.valueOf(asyncRequestWaitingIntervalStr);
 
 		Calendar c = Calendar.getInstance();
-		c.setTime(new Date(timeStamp));
+		c.setTime(new Date(timeStamp));		
 		c.add(Calendar.MILLISECOND, asyncRequestWaitingInterval);
 		return now.after(c.getTime());
 	}
@@ -1713,18 +1776,19 @@ public class ManagerController {
 		}
 	}
 
-	protected enum FailedBatchType {
-		FEDERATION_USER
-	}
+	protected enum FailedBatchType { FEDERATION_USER }
 
 	private static class ForwardedRequest {
 
 		private Request request;
 		private long timeStamp;
+		private List<String> membersServered;
+
 
 		public ForwardedRequest(Request request, long timeStamp) {
 			this.request = request;
 			this.timeStamp = timeStamp;
+			this.membersServered = new ArrayList<String>();
 		}
 
 		public void setTimeStamp(long timeStamp) {
@@ -1737,6 +1801,20 @@ public class ManagerController {
 
 		public long getTimeStamp() {
 			return timeStamp;
+		}
+
+		public List<String> getMembersServered() {
+			return membersServered;
+		}
+
+		public void addMembersServered(List<String> membersServered) {
+			if (membersServered == null || !membersServered.contains(request.getProvidingMemberId())) {
+				this.membersServered.add(request.getProvidingMemberId());
+			}
+			if (membersServered == null) {
+				return;
+			}
+			this.membersServered.addAll(membersServered);
 		}
 	}
 
