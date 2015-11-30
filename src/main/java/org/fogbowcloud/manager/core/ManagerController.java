@@ -529,9 +529,9 @@ public class ManagerController {
 		checkRequestId(accessId, requestId, true);
 	}
 	
-	private void checkRequestId(String accessId, String requestId, boolean isLocal) {
+	private void checkRequestId(String accessId, String requestId, boolean lookingForLocalRequest) {
 		String user = getUser(accessId);
-		if (requests.get(user, requestId, isLocal) == null) {
+		if (requests.get(user, requestId, lookingForLocalRequest) == null) {
 			LOGGER.debug("User " + user + " does not have requesId " + requestId);
 			throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
 		}

@@ -58,12 +58,12 @@ public class RequestRepository {
 		return get(requestId, true);
 	}
 	
-	public Request get(String requestId, boolean findLocalRequest) {
+	public Request get(String requestId, boolean lookingForLocalRequest) {
 		for (List<Request> userRequests : requests.values()) {
 			for (Request request : userRequests) {
 				if (request.getId().equals(requestId)) {
-					if (findLocalRequest && request.isLocal() 
-							|| !findLocalRequest && !request.isLocal()) {
+					if (lookingForLocalRequest && request.isLocal() 
+							|| !lookingForLocalRequest && !request.isLocal()) {
 						LOGGER.debug("Getting request id " + request);
 						return request;						
 					}
@@ -78,7 +78,7 @@ public class RequestRepository {
 		return get(user, requestId, true);
 	}
 	
-	public Request get(String user, String requestId, boolean findLocalRequest) {
+	public Request get(String user, String requestId, boolean lookingForLocalRequest) {
 		List<Request> userRequests = requests.get(user);
 		if (userRequests == null) {
 			LOGGER.debug("User " + user + " does not have requests.");
@@ -86,8 +86,8 @@ public class RequestRepository {
 		}
 		for (Request request : userRequests) {
 			if (request.getId().equals(requestId)) {
-				if (findLocalRequest && request.isLocal() 
-						|| !findLocalRequest && !request.isLocal()) {
+				if (lookingForLocalRequest && request.isLocal() 
+						|| !lookingForLocalRequest && !request.isLocal()) {
 					LOGGER.debug("Getting request " + request + " owner by user " + user);
 					return request;					
 				}
@@ -101,7 +101,7 @@ public class RequestRepository {
 		return getByUser(user, true);
 	}
 	
-	public List<Request> getByUser(String user, boolean findLocalRequest) {
+	public List<Request> getByUser(String user, boolean lookingForLocalRequest) {
 		LOGGER.debug("Getting local requests by user " + user);
 		List<Request> userRequests = requests.get(user);
 		if (userRequests == null) {
@@ -109,9 +109,9 @@ public class RequestRepository {
 		}		
 		LinkedList<Request> userLocalRequests = new LinkedList<Request>();
 		for (Request request : userRequests) {
-			if (findLocalRequest && request.isLocal()) {
+			if (lookingForLocalRequest && request.isLocal()) {
 				userLocalRequests.add(request);
-			} else if (!findLocalRequest && !request.isLocal()) {
+			} else if (!lookingForLocalRequest && !request.isLocal()) {
 				userLocalRequests.add(request);
 			}
 		}
