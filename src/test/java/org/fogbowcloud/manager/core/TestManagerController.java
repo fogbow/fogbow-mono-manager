@@ -274,6 +274,368 @@ public class TestManagerController {
 	
 	@SuppressWarnings("unchecked")
 	@Test
+	public void testRemoveLocalAndRemoteRequests() {
+		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);
+		managerController.setPacketSender(packetSender);
+		
+		// mocking getRemoteInstance for running benchmarking
+		IQ response = new IQ(); 
+		response.setType(Type.result);
+		Element queryEl = response.getElement().addElement("query", 
+				ManagerXmppComponent.GETINSTANCE_NAMESPACE);
+		Element instanceEl = queryEl.addElement("instance");
+		instanceEl.addElement("id").setText("newinstanceid");
+		instanceEl.addElement("state").setText(InstanceState.RUNNING.toString());
+		
+		Mockito.when(packetSender.syncSendPacket(Mockito.any(IQ.class))).thenReturn(response);
+
+		final List<PacketCallback> callbacks = new LinkedList<PacketCallback>();
+		
+		Mockito.doAnswer(new Answer<Void>() {
+			@Override
+			public Void answer(InvocationOnMock invocation) throws Throwable {
+				callbacks.add((PacketCallback) invocation.getArguments()[1]);
+				return null;
+			}
+		}).when(packetSender).addPacketCallback(Mockito.any(Packet.class), Mockito.any(PacketCallback.class));
+		
+		ResourcesInfo localResourcesInfo = new ResourcesInfo("", "", "", "", "", "");
+		localResourcesInfo.setId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		
+		ResourcesInfo remoteResourcesInfoOne = new ResourcesInfo("", "", "", "", "", "");
+		remoteResourcesInfoOne.setId(DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL);
+		
+		ResourcesInfo remoteResourcesInfoTwo = new ResourcesInfo("", "", "", "", "", "");
+		remoteResourcesInfoTwo.setId(DefaultDataTestHelper.REMOTE_MANAGER_TWO_COMPONENT_URL);
+		
+		ResourcesInfo remoteResourcesInfoThree = new ResourcesInfo("", "", "", "", "", "");
+		remoteResourcesInfoThree.setId(DefaultDataTestHelper.REMOTE_MANAGER_THREE_COMPONENT_URL);
+		
+		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
+		Mockito.when(
+				computePlugin.requestInstance(Mockito.any(Token.class), Mockito.anyList(),
+						Mockito.anyMap(), Mockito.anyString())).thenThrow(
+				new OCCIException(ErrorType.UNAUTHORIZED, ""));
+
+		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class))).thenReturn(
+				localResourcesInfo);
+		managerController.setComputePlugin(computePlugin);
+
+		final List<FederationMember> listMembers = new ArrayList<FederationMember>();
+		listMembers.add(new FederationMember(localResourcesInfo));
+		listMembers.add(new FederationMember(remoteResourcesInfoOne));
+		listMembers.add(new FederationMember(remoteResourcesInfoTwo));
+		listMembers.add(new FederationMember(remoteResourcesInfoThree));
+		managerController.updateMembers(listMembers);
+		
+		FederationMemberPickerPlugin memberPicker = Mockito.mock(FederationMemberPickerPlugin.class);
+		Mockito.when(memberPicker.pick(Mockito.anyList())).thenReturn(
+				new FederationMember(remoteResourcesInfoOne), new FederationMember(remoteResourcesInfoTwo),
+				new FederationMember(remoteResourcesInfoThree));
+		managerController.setMemberPickerPlugin(memberPicker );
+
+		final String requestId = "requestId";
+		Request requestOne = new Request(requestId, managerTestHelper.getDefaultFederationToken(),
+				new ArrayList<Category>(),
+				new HashMap<String, String>(), true,
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		requestOne.setState(RequestState.OPEN);
+		RequestRepository requestRepository = new RequestRepository();
+		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(),
+				requestOne);
+		managerController.setRequests(requestRepository);
+
+		// mocking date
+		long now = System.currentTimeMillis();
+		DateUtils dateUtils = Mockito.mock(DateUtils.class);
+		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
+		managerController.setDateUtils(dateUtils);
+		
+		// Send to first member
+		managerController.checkAndSubmitOpenRequests();
+
+		List<Request> requestsFromUser = managerController.getRequestsFromUser(managerTestHelper
+				.getDefaultFederationToken().getAccessId());
+		for (Request request : requestsFromUser) {
+			Assert.assertEquals(RequestState.PENDING, request.getState());
+		}
+		Assert.assertTrue(managerController.isRequestForwardedtoRemoteMember(requestOne.getId()));
+
+		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(
+				now + ManagerController.DEFAULT_ASYNC_REQUEST_WAITING_INTERVAL + 100);		
+		
+		// Timeout expired
+		managerController.checkPedingRequests();		
+		
+		for (Request request : requestsFromUser) {
+			Assert.assertEquals(RequestState.OPEN, request.getState());
+			Assert.assertTrue(managerController.isRequestForwardedtoRemoteMember(request.getId()));
+		}
+		Assert.assertTrue(managerController.isRequestForwardedtoRemoteMember(requestOne.getId()));
+		
+		// mocking date
+		now = System.currentTimeMillis();
+		dateUtils = Mockito.mock(DateUtils.class);
+		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
+		managerController.setDateUtils(dateUtils);
+		
+		// Send to second member
+		managerController.checkAndSubmitOpenRequests();
+
+		requestsFromUser = managerController.getRequestsFromUser(managerTestHelper
+				.getDefaultFederationToken().getAccessId());
+		for (Request request : requestsFromUser) {
+			Assert.assertEquals(RequestState.PENDING, request.getState());
+		}
+		Assert.assertTrue(managerController.isRequestForwardedtoRemoteMember(requestOne.getId()));		
+
+		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(
+				now + ManagerController.DEFAULT_ASYNC_REQUEST_WAITING_INTERVAL + 100);		
+		
+		// Timeout expired
+		managerController.checkPedingRequests();		
+		
+		for (Request request : requestsFromUser) {
+			Assert.assertEquals(RequestState.OPEN, request.getState());
+			Assert.assertTrue(managerController.isRequestForwardedtoRemoteMember(request.getId()));
+		}
+		Assert.assertTrue(managerController.isRequestForwardedtoRemoteMember(requestOne.getId()));
+		
+		// Send to third member
+		managerController.checkAndSubmitOpenRequests();
+
+		requestsFromUser = managerController.getRequestsFromUser(managerTestHelper
+				.getDefaultFederationToken().getAccessId());
+		for (Request request : requestsFromUser) {
+			Assert.assertEquals(RequestState.PENDING, request.getState());
+		}
+		Assert.assertTrue(managerController.isRequestForwardedtoRemoteMember(requestOne.getId()));			
+		
+		AsyncPacketSender packetSenderTwo = Mockito.mock(AsyncPacketSender.class);
+		managerController.setPacketSender(packetSenderTwo);				
+		
+		managerController.removeRequest(managerTestHelper.getDefaultFederationToken().getAccessId(), requestId);
+		
+		Mockito.verify(packetSenderTwo, VerificationModeFactory.times(3)).sendPacket(Mockito.argThat(new ArgumentMatcher<IQ>() {
+			@Override
+			public boolean matches(Object argument) {
+				IQ iq = (IQ) argument;
+				Element queryEl = iq.getElement().element("query");
+				if (queryEl == null) {
+					return false;
+				}
+				String requestId = queryEl.element("request").elementText("id");
+				String accessId = queryEl.element("token").elementText("accessId");			
+				
+				if (requestId.equals(requestId) 
+						&& iq.getTo().toBareJID().equals(DefaultDataTestHelper.REMOTE_MANAGER_TWO_COMPONENT_URL)
+						&& accessId.equals(managerTestHelper.getDefaultFederationToken().getAccessId())) {
+					return true;
+				}
+				
+				if (requestId.equals(requestId) 
+						&& iq.getTo().toBareJID().equals(DefaultDataTestHelper.REMOTE_MANAGER_THREE_COMPONENT_URL)
+						&& accessId.equals(managerTestHelper.getDefaultFederationToken().getAccessId())) {
+					return true;
+				}
+				
+				if (requestId.equals(requestId) 
+						&& iq.getTo().toBareJID().equals(DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL)
+						&& accessId.equals(managerTestHelper.getDefaultFederationToken().getAccessId())) {
+					return true;
+				}				
+				
+				return false;
+			}
+		}));			
+		
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Test
+	public void testSubmitRequestToRemoteMemberAndRemovingAllRequestsInOthersMembers() throws InterruptedException {
+		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);
+		managerController.setPacketSender(packetSender);
+		
+		// mocking getRemoteInstance for running benchmarking
+		IQ response = new IQ(); 
+		response.setType(Type.result);
+		Element queryEl = response.getElement().addElement("query", 
+				ManagerXmppComponent.GETINSTANCE_NAMESPACE);
+		Element instanceEl = queryEl.addElement("instance");
+		instanceEl.addElement("id").setText("newinstanceid");
+		instanceEl.addElement("state").setText(InstanceState.RUNNING.toString());
+		
+		Mockito.when(packetSender.syncSendPacket(Mockito.any(IQ.class))).thenReturn(response);
+
+		final List<PacketCallback> callbacks = new LinkedList<PacketCallback>();
+		
+		Mockito.doAnswer(new Answer<Void>() {
+			@Override
+			public Void answer(InvocationOnMock invocation) throws Throwable {
+				callbacks.add((PacketCallback) invocation.getArguments()[1]);
+				return null;
+			}
+		}).when(packetSender).addPacketCallback(Mockito.any(Packet.class), Mockito.any(PacketCallback.class));
+		
+		ResourcesInfo localResourcesInfo = new ResourcesInfo("", "", "", "", "", "");
+		localResourcesInfo.setId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		
+		ResourcesInfo remoteResourcesInfoOne = new ResourcesInfo("", "", "", "", "", "");
+		remoteResourcesInfoOne.setId(DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL);
+		
+		ResourcesInfo remoteResourcesInfoTwo = new ResourcesInfo("", "", "", "", "", "");
+		remoteResourcesInfoTwo.setId(DefaultDataTestHelper.REMOTE_MANAGER_TWO_COMPONENT_URL);
+		
+		ResourcesInfo remoteResourcesInfoThree = new ResourcesInfo("", "", "", "", "", "");
+		remoteResourcesInfoThree.setId(DefaultDataTestHelper.REMOTE_MANAGER_THREE_COMPONENT_URL);
+		
+		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
+		Mockito.when(
+				computePlugin.requestInstance(Mockito.any(Token.class), Mockito.anyList(),
+						Mockito.anyMap(), Mockito.anyString())).thenThrow(
+				new OCCIException(ErrorType.UNAUTHORIZED, ""));
+
+		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class))).thenReturn(
+				localResourcesInfo);
+		managerController.setComputePlugin(computePlugin);
+
+		final List<FederationMember> listMembers = new ArrayList<FederationMember>();
+		listMembers.add(new FederationMember(localResourcesInfo));
+		listMembers.add(new FederationMember(remoteResourcesInfoOne));
+		listMembers.add(new FederationMember(remoteResourcesInfoTwo));
+		listMembers.add(new FederationMember(remoteResourcesInfoThree));
+		managerController.updateMembers(listMembers);
+		
+		FederationMemberPickerPlugin memberPicker = Mockito.mock(FederationMemberPickerPlugin.class);
+		Mockito.when(memberPicker.pick(Mockito.anyList())).thenReturn(
+				new FederationMember(remoteResourcesInfoOne), new FederationMember(remoteResourcesInfoTwo),
+				new FederationMember(remoteResourcesInfoThree));
+		managerController.setMemberPickerPlugin(memberPicker );
+
+		final String requestId = "requestId";
+		Request requestOne = new Request(requestId, managerTestHelper.getDefaultFederationToken(),
+				new ArrayList<Category>(),
+				new HashMap<String, String>(), true,
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		requestOne.setState(RequestState.OPEN);
+		RequestRepository requestRepository = new RequestRepository();
+		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(),
+				requestOne);
+		managerController.setRequests(requestRepository);
+
+		// mocking date
+		long now = System.currentTimeMillis();
+		DateUtils dateUtils = Mockito.mock(DateUtils.class);
+		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
+		managerController.setDateUtils(dateUtils);
+		
+		// Send to first member
+		managerController.checkAndSubmitOpenRequests();
+
+		List<Request> requestsFromUser = managerController.getRequestsFromUser(managerTestHelper
+				.getDefaultFederationToken().getAccessId());
+		for (Request request : requestsFromUser) {
+			Assert.assertEquals(RequestState.PENDING, request.getState());
+		}
+		Assert.assertTrue(managerController.isRequestForwardedtoRemoteMember(requestOne.getId()));
+
+		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(
+				now + ManagerController.DEFAULT_ASYNC_REQUEST_WAITING_INTERVAL + 100);		
+		
+		// Timeout expired
+		managerController.checkPedingRequests();		
+		
+		for (Request request : requestsFromUser) {
+			Assert.assertEquals(RequestState.OPEN, request.getState());
+			Assert.assertTrue(managerController.isRequestForwardedtoRemoteMember(request.getId()));
+		}
+		Assert.assertTrue(managerController.isRequestForwardedtoRemoteMember(requestOne.getId()));
+		
+		// mocking date
+		now = System.currentTimeMillis();
+		dateUtils = Mockito.mock(DateUtils.class);
+		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
+		managerController.setDateUtils(dateUtils);
+		
+		// Send to second member
+		managerController.checkAndSubmitOpenRequests();
+
+		requestsFromUser = managerController.getRequestsFromUser(managerTestHelper
+				.getDefaultFederationToken().getAccessId());
+		for (Request request : requestsFromUser) {
+			Assert.assertEquals(RequestState.PENDING, request.getState());
+		}
+		Assert.assertTrue(managerController.isRequestForwardedtoRemoteMember(requestOne.getId()));		
+
+		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(
+				now + ManagerController.DEFAULT_ASYNC_REQUEST_WAITING_INTERVAL + 100);		
+		
+		// Timeout expired
+		managerController.checkPedingRequests();		
+		
+		for (Request request : requestsFromUser) {
+			Assert.assertEquals(RequestState.OPEN, request.getState());
+			Assert.assertTrue(managerController.isRequestForwardedtoRemoteMember(request.getId()));
+		}
+		Assert.assertTrue(managerController.isRequestForwardedtoRemoteMember(requestOne.getId()));
+		
+		// Send to third member
+		managerController.checkAndSubmitOpenRequests();
+
+		requestsFromUser = managerController.getRequestsFromUser(managerTestHelper
+				.getDefaultFederationToken().getAccessId());
+		for (Request request : requestsFromUser) {
+			Assert.assertEquals(RequestState.PENDING, request.getState());
+		}
+		Assert.assertTrue(managerController.isRequestForwardedtoRemoteMember(requestOne.getId()));			
+		
+		AsyncPacketSender packetSenderTwo = Mockito.mock(AsyncPacketSender.class);
+		managerController.setPacketSender(packetSenderTwo);
+		
+		IQ iq = new IQ();
+		queryEl = iq.getElement().addElement("query",
+				ManagerXmppComponent.REQUEST_NAMESPACE);
+		instanceEl = queryEl.addElement("instance");
+		instanceEl.addElement("id").setText("newinstanceid");
+		callbacks.get(0).handle(iq);
+		
+		for (Request request : requestsFromUser) {
+			Assert.assertEquals(RequestState.FULFILLED, request.getState());
+			Assert.assertFalse(managerController.isRequestForwardedtoRemoteMember(request.getId()));
+		}
+		
+		Mockito.verify(packetSenderTwo, VerificationModeFactory.times(2)).sendPacket(Mockito.argThat(new ArgumentMatcher<IQ>() {
+			@Override
+			public boolean matches(Object argument) {
+				IQ iq = (IQ) argument;
+				Element queryEl = iq.getElement().element("query");
+				if (queryEl == null) {
+					return false;
+				}
+				String requestId = queryEl.element("request").elementText("id");
+				String accessId = queryEl.element("token").elementText("accessId");			
+				
+				if (requestId.equals(requestId) 
+						&& iq.getTo().toBareJID().equals(DefaultDataTestHelper.REMOTE_MANAGER_TWO_COMPONENT_URL)
+						&& accessId.equals(managerTestHelper.getDefaultFederationToken().getAccessId())) {
+					return true;
+				}
+				
+				if (requestId.equals(requestId) 
+						&& iq.getTo().toBareJID().equals(DefaultDataTestHelper.REMOTE_MANAGER_THREE_COMPONENT_URL)
+						&& accessId.equals(managerTestHelper.getDefaultFederationToken().getAccessId())) {
+					return true;
+				}
+				
+				return false;
+			}
+		}));		
+		
+	}	
+	
+	@SuppressWarnings("unchecked")
+	@Test
 	public void testSubmitRequestToRemoteMember() throws InterruptedException {
 		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);
 		managerController.setPacketSender(packetSender);
@@ -320,14 +682,14 @@ public class TestManagerController {
 		listMembers.add(new FederationMember(remoteResourcesInfo));
 		managerController.updateMembers(listMembers);
 
-		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(),
+		Request requestOne = new Request("id1", managerTestHelper.getDefaultFederationToken(),
 				new ArrayList<Category>(),
 				new HashMap<String, String>(), true,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
-		request1.setState(RequestState.OPEN);
+		requestOne.setState(RequestState.OPEN);
 		RequestRepository requestRepository = new RequestRepository();
 		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(),
-				request1);
+				requestOne);
 		managerController.setRequests(requestRepository);
 
 		managerController.checkAndSubmitOpenRequests();
@@ -337,7 +699,7 @@ public class TestManagerController {
 		for (Request request : requestsFromUser) {
 			Assert.assertEquals(RequestState.PENDING, request.getState());
 		}
-		Assert.assertTrue(managerController.isRequestForwardedtoRemoteMember(request1.getId()));
+		Assert.assertTrue(managerController.isRequestForwardedtoRemoteMember(requestOne.getId()));
 
 		IQ iq = new IQ();
 		queryEl = iq.getElement().addElement("query",
@@ -379,11 +741,11 @@ public class TestManagerController {
 		listMembers.add(new FederationMember(remoteResourcesInfo));
 		managerController.updateMembers(listMembers);
 
-		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), new ArrayList<Category>(),
+		Request requestOne = new Request("id1", managerTestHelper.getDefaultFederationToken(), new ArrayList<Category>(),
 				new HashMap<String, String>(), true, "");
-		request1.setState(RequestState.OPEN);
+		requestOne.setState(RequestState.OPEN);
 		RequestRepository requestRepository = new RequestRepository();
-		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(), request1);
+		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(), requestOne);
 		managerController.setRequests(requestRepository);
 
 		// mocking date
@@ -400,19 +762,17 @@ public class TestManagerController {
 			Assert.assertEquals(RequestState.PENDING, request.getState());
 		}
 		Assert.assertTrue(managerController.isRequestForwardedtoRemoteMember(
-				request1.getId()));
+				requestOne.getId()));
 		
 		//updating time
-		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now + ManagerController.DEFAULT_ASYNC_REQUEST_WAITING_INTERVAL + 100);
+		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(
+				now + ManagerController.DEFAULT_ASYNC_REQUEST_WAITING_INTERVAL + 100);
 		
-		managerController.checkPedingRequests();
-		
-		Assert.assertFalse(managerController.isRequestForwardedtoRemoteMember(
-				request1.getId()));
+		managerController.checkPedingRequests();	
 		
 		for (Request request : requestsFromUser) {
 			Assert.assertEquals(RequestState.OPEN, request.getState());
-			Assert.assertFalse(managerController.isRequestForwardedtoRemoteMember(request.getId()));
+			Assert.assertTrue(managerController.isRequestForwardedtoRemoteMember(request.getId()));
 		}
 	}
 		
@@ -481,7 +841,7 @@ public class TestManagerController {
 		
 		for (Request request : requestsFromUser) {
 			Assert.assertEquals(RequestState.OPEN, request.getState());
-			Assert.assertFalse(managerController.isRequestForwardedtoRemoteMember(request.getId()));
+			Assert.assertTrue(managerController.isRequestForwardedtoRemoteMember(request.getId()));
 		}
 	}
 	
@@ -559,7 +919,7 @@ public class TestManagerController {
 		
 		for (Request request : requestsFromUser) {
 			Assert.assertEquals(RequestState.OPEN, request.getState());
-			Assert.assertFalse(managerController.isRequestForwardedtoRemoteMember(request.getId()));
+			Assert.assertTrue(managerController.isRequestForwardedtoRemoteMember(request.getId()));
 		}
 	}
 	

@@ -229,9 +229,11 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 				
 		this.computePlugin = Mockito.mock(ComputePlugin.class);
 		this.identityPlugin = Mockito.mock(IdentityPlugin.class);
+		this.federationIdentityPlugin = Mockito.mock(IdentityPlugin.class);
 		this.benchmarkingPlugin = Mockito.mock(BenchmarkingPlugin.class);
 		this.accountingPlugin = Mockito.mock(AccountingPlugin.class);
 		this.localCredentialsPlugin = Mockito.mock(LocalCredentialsPlugin.class);
+		this.authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
 		
 		Mockito.when(computePlugin.getInstances(Mockito.any(Token.class))).thenReturn(
 				new ArrayList<Instance>());
@@ -250,7 +252,8 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		managerFacade.setLocalIdentityPlugin(identityPlugin);
 		managerFacade.setBenchmarkExecutor(benchmarkExecutor);
 		managerFacade.setBenchmarkingPlugin(benchmarkingPlugin);
-		managerFacade.setFederationIdentityPlugin(identityPlugin);
+		managerFacade.setFederationIdentityPlugin(federationIdentityPlugin);
+		managerFacade.setAuthorizationPlugin(authorizationPlugin);
 		managerFacade.setValidator(new DefaultMemberAuthorizationPlugin(null));
 		managerFacade.setLocalCredentailsPlugin(localCredentialsPlugin);
 				

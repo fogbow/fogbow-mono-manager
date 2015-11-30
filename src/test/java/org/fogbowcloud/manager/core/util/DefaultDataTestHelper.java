@@ -14,6 +14,8 @@ public class DefaultDataTestHelper {
 	public static final String SERVER_HOST = "localhost";
 	public static final String LOCAL_MANAGER_COMPONENT_URL = "manager.test.com";
 	public static final String REMOTE_MANAGER_COMPONENT_URL = "remote-manager.test.com";
+	public static final String REMOTE_MANAGER_TWO_COMPONENT_URL = "remote-manager-two.test.com";
+	public static final String REMOTE_MANAGER_THREE_COMPONENT_URL = "remote-manager-three.test.com";
 	public static final String MANAGER_COMPONENT_PASS = "password";
 	public static final String WHOISALIVE_NAMESPACE = "http://fogbowcloud.org/rendezvous/whoisalive";
 	public static final String IAMALIVE_NAMESPACE = "http://fogbowcloud.org/rendezvous/iamalive";
