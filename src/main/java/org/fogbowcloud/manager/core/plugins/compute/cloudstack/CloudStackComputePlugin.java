@@ -54,6 +54,7 @@ public class CloudStackComputePlugin implements ComputePlugin {
 	protected static final String SERVICE_OFFERING_ID = "serviceofferingid";
 	protected static final String ZONE_ID = "zoneid";
 	protected static final String VM_ID = "id";
+	protected static final String VM_EXPUNGE = "expunge";
 	protected static final String TEMPLATE_FILTER = "templatefilter";
 	protected static final String IS_PUBLIC = "ispublic";
 	protected static final String URL = "url";
@@ -70,6 +71,7 @@ public class CloudStackComputePlugin implements ComputePlugin {
 
 	private static final String DEFAULT_HYPERVISOR = "KVM";
 	private static final String DEFAULT_OS_TYPE_NAME = "Other (64-bit)";
+	private static final String DEFAULT_EXPUNGE_ON_DESTROY = "true";
 	
 	private Properties properties;
 	private HttpClientWrapper httpClient;
@@ -79,6 +81,7 @@ public class CloudStackComputePlugin implements ComputePlugin {
 	private String imageDownloadBasePath;
 	private String hypervisor;
 	private String osTypeId;
+	private String expungeOnDestroy;
 
 	public CloudStackComputePlugin(Properties properties) {
 		this(properties, new HttpClientWrapper());
@@ -94,6 +97,8 @@ public class CloudStackComputePlugin implements ComputePlugin {
 		String hypervisorType = this.properties.getProperty("compute_cloudstack_hypervisor");
 		this.hypervisor = hypervisorType == null ? DEFAULT_HYPERVISOR : hypervisorType;
 		this.osTypeId = this.properties.getProperty("compute_cloudstack_image_download_os_type_id");
+		this.expungeOnDestroy = this.properties.getProperty(
+				"compute_cloudstack_expunge_on_destroy", DEFAULT_EXPUNGE_ON_DESTROY);
 	}
 	
 	@Override
@@ -255,6 +260,7 @@ public class CloudStackComputePlugin implements ComputePlugin {
 	public void removeInstance(Token token, String instanceId) {
 		URIBuilder uriBuilder = createURIBuilder(endpoint, DESTROY_VM_COMMAND);
 		uriBuilder.addParameter(VM_ID, instanceId);
+		uriBuilder.addParameter(VM_EXPUNGE, expungeOnDestroy);
 		CloudStackHelper.sign(uriBuilder, token.getAccessId());
 		
 		httpClient.doPost(uriBuilder.toString());
