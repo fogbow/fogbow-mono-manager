@@ -96,7 +96,7 @@ public class TestMemberServerResource {
 		
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_MEMBER);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		get.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, "x_federation_auth_token");
+		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, "x_federation_auth_token");
 		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(get);
 
@@ -156,7 +156,7 @@ public class TestMemberServerResource {
 		
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_MEMBER);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		get.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, "x_federation_auth_token");
+		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, "x_federation_auth_token");
 		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(get);
 
@@ -188,7 +188,7 @@ public class TestMemberServerResource {
 		
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_MEMBER);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, "wrong");
-		get.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, "x_federation_auth_token");
+		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, "x_federation_auth_token");
 		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(get);
 

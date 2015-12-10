@@ -35,7 +35,7 @@ public class QueryServerResource extends ServerResource {
 		Series<Header> headers = req.getHeaders();
 		
 		if (req.getMethod().equals(Method.HEAD)){
-			String token = headers.getValues(OCCIHeaders.X_FEDERATION_AUTH_TOKEN);
+			String token = headers.getValues(OCCIHeaders.X_AUTH_TOKEN);
 			if (token == null || token.equals("")) {
 				HeaderUtils.setResponseHeader(getResponse(), HeaderUtils.WWW_AUTHENTICATE,
 						application.getAuthenticationURI());
@@ -51,7 +51,7 @@ public class QueryServerResource extends ServerResource {
 		List<String> listAccept = HeaderUtils.getAccept(headers);
 		String acceptType = getAccept(listAccept);
 		
-		String authToken = HeaderUtils.getFederationAuthToken(headers, getResponse(),
+		String authToken = HeaderUtils.getAuthToken(headers, getResponse(),
 				application.getAuthenticationURI());
 		List<Resource> allResources = application.getAllResources(authToken);
 		LOGGER.debug("Fogbow resources = " + allResources);
@@ -67,7 +67,7 @@ public class QueryServerResource extends ServerResource {
 				|| req.getHeaders().getFirst(HeaderUtils.normalize(OCCIHeaders.X_AUTH_TOKEN)) == null) {
 			req.getHeaders().add(
 					new Header(OCCIHeaders.X_AUTH_TOKEN, req.getHeaders().getFirstValue(
-							HeaderUtils.normalize(OCCIHeaders.X_FEDERATION_AUTH_TOKEN))));
+							HeaderUtils.normalize(OCCIHeaders.X_AUTH_TOKEN))));
 		}
 
 		application.bypass(req, response);			
