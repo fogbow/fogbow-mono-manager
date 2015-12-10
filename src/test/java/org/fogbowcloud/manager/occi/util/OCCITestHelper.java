@@ -53,9 +53,9 @@ public class OCCITestHelper {
 	public static final String FOGBOW_SMALL_IMAGE = "fogbow_small";
 	public static final String MEMBER_ID = "memberId";
 	public static final int ENDPOINT_PORT = PluginHelper.getAvailablePort();
-	public static final String FED_ACCESS_TOKEN = "HgjhgYUDFTGBgrbelihBDFGB40uyrb";
+	public static final String ACCESS_TOKEN = "HgjhgYUDFTGBgrbelihBDFGB40uyrb";
 	public static final String POST_FED_ACCESS_TOKEN = "POST_HgjhgYUDFTGBgrbelihBDFGB40uyrb";
-	public static final String LOCAL_ACCESS_TOKEN = "HgjhgYUDFTGBgrbelihBDFGB40uyrb";
+//	public static final String LOCAL_ACCESS_TOKEN = "HgjhgYUDFTGBgrbelihBDFGB40uyrb";
 	public static final String INVALID_TOKEN = "invalid-token";
 	public static final String URI_FOGBOW_REQUEST = "http://localhost:" + ENDPOINT_PORT + "/" + RequestConstants.TERM
 			+ "/";

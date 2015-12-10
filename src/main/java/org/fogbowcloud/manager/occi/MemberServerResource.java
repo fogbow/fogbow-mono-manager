@@ -20,7 +20,7 @@ public class MemberServerResource extends ServerResource {
 		HttpRequest req = (HttpRequest) getRequest();
 		HeaderUtils.checkOCCIContentType(req.getHeaders());
 		
-		String federationAuthToken = HeaderUtils.getFederationAuthToken(
+		String federationAuthToken = HeaderUtils.getAuthToken(
 				req.getHeaders(), getResponse(), application.getAuthenticationURI());
 		
 		List<FederationMember> federationMembers = application.getFederationMembers(federationAuthToken);

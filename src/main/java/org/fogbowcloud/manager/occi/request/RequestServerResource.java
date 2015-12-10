@@ -42,7 +42,7 @@ public class RequestServerResource extends ServerResource {
 	public StringRepresentation fetch() {
 		OCCIApplication application = (OCCIApplication) getApplication();
 		HttpRequest req = (HttpRequest) getRequest();
-		String federationAccessToken = HeaderUtils.getFederationAuthToken(
+		String federationAccessToken = HeaderUtils.getAuthToken(
 				req.getHeaders(), getResponse(),
 				application.getAuthenticationURI());
 		String requestId = (String) getRequestAttributes().get("requestId");
@@ -213,7 +213,7 @@ public class RequestServerResource extends ServerResource {
 	public String remove() {		
 		OCCIApplication application = (OCCIApplication) getApplication();
 		HttpRequest req = (HttpRequest) getRequest();
-		String federationAccessToken = HeaderUtils.getFederationAuthToken(req.getHeaders(), getResponse(),
+		String federationAccessToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse(),
 				application.getAuthenticationURI());
 		String requestId = (String) getRequestAttributes().get("requestId");
 
@@ -246,7 +246,7 @@ public class RequestServerResource extends ServerResource {
 		
 		xOCCIAtt = normalizeRequirements(categories, xOCCIAtt, application.getFlavorsProvided());
 		
-		String federationAuthToken = HeaderUtils.getFederationAuthToken(
+		String federationAuthToken = HeaderUtils.getAuthToken(
 				req.getHeaders(), getResponse(), application.getAuthenticationURI());
 		
 		List<Request> currentRequests = application.createRequests(federationAuthToken, categories, xOCCIAtt);

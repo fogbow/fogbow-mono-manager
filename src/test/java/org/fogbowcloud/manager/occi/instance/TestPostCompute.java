@@ -76,7 +76,7 @@ public class TestPostCompute {
 				Mockito.any(Map.class), Mockito.anyString())).thenReturn("");
 
 		identityPlugin = Mockito.mock(IdentityPlugin.class);
-		Mockito.when(identityPlugin.getToken(OCCITestHelper.FED_ACCESS_TOKEN))
+		Mockito.when(identityPlugin.getToken(OCCITestHelper.ACCESS_TOKEN))
 				.thenReturn(new Token("id", OCCITestHelper.USER_MOCK, new Date(), new HashMap<String, String>()));
 		Mockito.when(identityPlugin.getToken(OCCITestHelper.INVALID_TOKEN))
 				.thenThrow(new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED));
@@ -85,7 +85,7 @@ public class TestPostCompute {
 		Mockito.when(authorizationPlugin.isAuthorized(Mockito.any(Token.class))).thenReturn(true);
 
 		List<Request> requests = new LinkedList<Request>();
-		Token token = new Token(OCCITestHelper.FED_ACCESS_TOKEN, OCCITestHelper.USER_MOCK,
+		Token token = new Token(OCCITestHelper.ACCESS_TOKEN, OCCITestHelper.USER_MOCK,
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>());
 		Request request1 = new Request("1", token, null, null, true, "");
 		request1.setInstanceId(INSTANCE_1_ID);
@@ -129,7 +129,7 @@ public class TestPostCompute {
 
 		HttpPost httpPost = new HttpPost(OCCITestHelper.URI_FOGBOW_COMPUTE);
 		httpPost.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		httpPost.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
+		httpPost.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		httpPost.addHeader(OCCIHeaders.CATEGORY,
 				"compute; scheme=\"http://schemas.ogf.org/occi/infrastructure#\"; class=\"kind\"; ");
 		httpPost.addHeader(OCCIHeaders.CATEGORY,
@@ -152,7 +152,7 @@ public class TestPostCompute {
 
 		HttpPost httpPost = new HttpPost(OCCITestHelper.URI_FOGBOW_COMPUTE);
 		httpPost.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		httpPost.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
+		httpPost.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		httpPost.addHeader(OCCIHeaders.ACCEPT, OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE);
 		httpPost.addHeader(OCCIHeaders.CATEGORY,
 				"compute; scheme=\"http://schemas.ogf.org/occi/infrastructure#\"; class=\"kind\"; ");
@@ -177,7 +177,7 @@ public class TestPostCompute {
 
 		HttpPost httpPost = new HttpPost(OCCITestHelper.URI_FOGBOW_COMPUTE);
 		httpPost.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		httpPost.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
+		httpPost.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		httpPost.addHeader(OCCIHeaders.CATEGORY,
 				"compute; scheme=\"http://schemas.ogf.org/occi/wrong#\"; class=\"kind\"; ");
 		httpPost.addHeader(OCCIHeaders.CATEGORY,
@@ -196,7 +196,7 @@ public class TestPostCompute {
 
 		HttpPost httpPost = new HttpPost(OCCITestHelper.URI_FOGBOW_COMPUTE);
 		httpPost.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		httpPost.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
+		httpPost.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		httpPost.addHeader(OCCIHeaders.CATEGORY,
 				"fbc85206-fbcc-4ad9-ae93-54946fdd5df7; scheme=\"http://schemas.openstack.org/template/os#\"; class=\"mixin\"; ");
 		httpPost.addHeader(OCCIHeaders.CATEGORY,
@@ -213,7 +213,7 @@ public class TestPostCompute {
 
 		HttpPost httpPost = new HttpPost(OCCITestHelper.URI_FOGBOW_COMPUTE);
 		httpPost.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		httpPost.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
+		httpPost.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		httpPost.addHeader(OCCIHeaders.CATEGORY,
 				"compute; scheme=\"http://schemas.ogf.org/occi/infrastructure#\"; class=\"kind\"; ");
 		httpPost.addHeader(OCCIHeaders.CATEGORY,
@@ -230,7 +230,7 @@ public class TestPostCompute {
 
 		HttpPost httpPost = new HttpPost(OCCITestHelper.URI_FOGBOW_COMPUTE);
 		httpPost.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		httpPost.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
+		httpPost.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		httpPost.addHeader(OCCIHeaders.CATEGORY,
 				"compute; scheme=\"http://schemas.ogf.org/occi/infrastructure#\"; class=\"kind\"; ");
 		httpPost.addHeader(OCCIHeaders.CATEGORY,
@@ -247,7 +247,7 @@ public class TestPostCompute {
 
 		HttpPost httpPost = new HttpPost(OCCITestHelper.URI_FOGBOW_COMPUTE);
 		httpPost.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		httpPost.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
+		httpPost.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		httpPost.addHeader(OCCIHeaders.CATEGORY,
 				"compute; scheme=\"http://schemas.ogf.org/occi/infrastructure#\"; class=\"kind\"; ");
 		httpPost.addHeader(OCCIHeaders.CATEGORY,
