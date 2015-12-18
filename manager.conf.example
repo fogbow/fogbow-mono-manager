@@ -7,7 +7,7 @@ rendezvous_jid=rendezvous.test.com
 greensitter_jid=greensitter.test.com
 
 ## Order database
-order_datastore_url=jdbc:h2:/home/chicog/Backup/dbmanager
+order_datastore_url=jdbc:sqlite:/tmp/dbOrderSQLite.db
 order_bd_updater_period=30000
 
 ## Static mapping from flavors to requirements (Optional)
@@ -119,6 +119,8 @@ local_prioritization_plugin_class=org.fogbowcloud.manager.core.plugins.prioritiz
 remote_prioritization_plugin_class=org.fogbowcloud.manager.core.plugins.prioritization.nof.NoFPrioritizationPlugin
 nof_prioritize_local=true
 
+instance_datastore_url=jdbc:sqlite:/tmp/federated_instance
+
 ## If you are using NoFMemberPicker or NoFPrioritizationPlugin classes
 nof_trustworthy=false
 
@@ -204,7 +206,7 @@ my_ip=127.0.0.1
 ## Accounting Plugin
 accounting_class=org.fogbowcloud.manager.core.plugins.accounting.FCUAccountingPlugin
 accounting_update_period=300000
-accounting_datastore_url=jdbc:h2:/tmp/usage
+accounting_datastore_url=jdbc:sqlite:/tmp/usage
 
 ## Benchmarking (SSH Benchmarking plugin)
 benchmarking_class=org.fogbowcloud.manager.core.plugins.benchmarking.SSHBenchmarkingPlugin

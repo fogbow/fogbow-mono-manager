@@ -1,6 +1,7 @@
 package org.fogbowcloud.manager.core.plugins.accounting;
 
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -12,10 +13,13 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.apache.log4j.Logger;
-import org.h2.jdbcx.JdbcConnectionPool;
+import org.sqlite.SQLiteConfig;
 
 public class DataStore {
 
+	public static final String ACCOUNTING_DATASTORE_URL = "accounting_datastore_url";
+	public static final String ACCOUNTING_DATASTORE_URL_DEFAULT = "jdbc:sqlite:/tmp/usage";
+	public static final String ACCOUNTING_DATASTORE_SQLITE_DRIVER = "org.sqlite.JDBC";
 	public static final String MEMBER_TABLE_NAME = "member_usage";
 	public static final String USER_TABLE_NAME = "user_usage";
 	public static final String MEMBER_ID = "member_id";
@@ -26,18 +30,16 @@ public class DataStore {
 	private static final Logger LOGGER = Logger.getLogger(DataStore.class);
 
 	private String dataStoreURL;
-	private JdbcConnectionPool cp;
 
 	public DataStore(Properties properties) {
-		this.dataStoreURL = properties.getProperty("accounting_datastore_url");
+		this.dataStoreURL = properties.getProperty(ACCOUNTING_DATASTORE_URL, ACCOUNTING_DATASTORE_URL_DEFAULT);
 
 		Statement statement = null;
 		Connection connection = null;
 		try {
 			LOGGER.debug("DatastoreURL: " + dataStoreURL);
 
-			Class.forName("org.h2.Driver");
-			this.cp = JdbcConnectionPool.create(dataStoreURL, "sa", "");
+			Class.forName(ACCOUNTING_DATASTORE_SQLITE_DRIVER);
 
 			connection = getConnection();
 			statement = connection.createStatement();
@@ -239,7 +241,7 @@ public class DataStore {
 	 */
 	public Connection getConnection() throws SQLException {
 		try {
-			return cp.getConnection();
+			return DriverManager.getConnection(this.dataStoreURL);
 		} catch (SQLException e) {
 			LOGGER.error("Error while getting a new connection from the connection pool.", e);
 			throw e;
@@ -266,10 +268,6 @@ public class DataStore {
 				LOGGER.error("Couldn't close connection");
 			}
 		}
-	}
-
-	public void dispose() {
-		cp.dispose();
 	}
 
 }

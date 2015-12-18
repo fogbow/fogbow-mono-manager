@@ -1,5 +1,6 @@
 package org.fogbowcloud.manager.core.plugins.accounting;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,6 +22,7 @@ import org.mockito.Mockito;
 public class TestFCUAccounting {
 
 	private static final double ACCEPTABLE_ERROR = 0.0;
+	private static final String TEST_DB_PATH = "src/test/resources/testdbaccounting.sqlite";
 	private BenchmarkingPlugin benchmarkingPlugin;
 	FCUAccountingPlugin accountingPlugin;
 	Properties properties;
@@ -29,16 +31,18 @@ public class TestFCUAccounting {
 	public void setUp() throws IOException {
 		benchmarkingPlugin = Mockito.mock(BenchmarkingPlugin.class);
 		properties = new Properties();
-		properties.put("accounting_datastore_url", "jdbc:h2:mem:usage");
+		properties.put("accounting_datastore_url", "jdbc:sqlite:" + TEST_DB_PATH);
 		properties.put(ConfigurationConstants.XMPP_JID_KEY, "localMemberId");
 
 		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin);
-		accountingPlugin.getDatabase().dispose();
 	}
 
 	@After
 	public void tearDown() throws IOException {
-		accountingPlugin.getDatabase().dispose();
+		File dbFile = new File(TEST_DB_PATH);
+		if (dbFile.exists()) {
+			dbFile.delete();
+		}
 	}
 
 	@Test

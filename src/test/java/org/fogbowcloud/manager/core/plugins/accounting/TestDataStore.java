@@ -2,13 +2,13 @@ package org.fogbowcloud.manager.core.plugins.accounting;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 import org.junit.After;
 import org.junit.Assert;
@@ -20,7 +20,8 @@ public class TestDataStore {
 	private static final Logger LOGGER = Logger.getLogger(TestDataStore.class);
 	
 	private final double ACCEPTABLE_ERROR = 0.01; 
-	private final String DATASTORE_PATH = "src/test/resources/accounting/";
+	private final String DATASTORE_PATH = "src/test/resources/testDataStoreDb.sqlite";
+	private final String DATASTORE_URL = "jdbc:sqlite:" + DATASTORE_PATH;
 	
 	Properties properties = null;
 	DataStore db = null; 
@@ -28,18 +29,18 @@ public class TestDataStore {
 	@Before
 	public void initialize() {		
 		LOGGER.debug("Creating data store.");
-		new File(DATASTORE_PATH).mkdir();
 		properties = new Properties();
-		properties.put("accounting_datastore_url", "jdbc:h2:mem:"
-				+ new File(DATASTORE_PATH).getAbsolutePath() + "usage");
+		properties.put("accounting_datastore_url", DATASTORE_URL);
 
 		db = new DataStore(properties);
 	}
 	
 	@After
 	public void tearDown() throws IOException{
-		FileUtils.cleanDirectory(new File (DATASTORE_PATH));
-		db.dispose();
+		File dbFile = new File(DATASTORE_PATH);
+		if (dbFile.exists()) {
+			dbFile.delete();
+		}
 	}
 	
 	@Test
@@ -133,10 +134,17 @@ public class TestDataStore {
 
 		// checking if consumed is 5
 		String sql = "select * from " + DataStore.USER_TABLE_NAME + " where " + DataStore.USER_ID + "='" + userId + "'";
-		ResultSet rs = db.getConnection().createStatement().executeQuery(sql);
+		Connection conn1 = db.getConnection();
+		ResultSet rs = conn1.createStatement().executeQuery(sql);
 		rs.next();
 		
-		Assert.assertEquals(5, rs.getDouble(DataStore.CONSUMED), ACCEPTABLE_ERROR);	
+		Assert.assertEquals(5, rs.getDouble(DataStore.CONSUMED), ACCEPTABLE_ERROR);
+		if (!rs.isClosed()) {
+			rs.close();
+		}
+		if (!conn1.isClosed()) {
+			conn1.close();
+		}
 		
 		// updating user consumed 
 		users.put(userId, 10.0);		
@@ -144,9 +152,16 @@ public class TestDataStore {
 		
 		// checking if consumed is 15 (value must be previous + current = 5 + 10)
 		sql = "select * from " + DataStore.USER_TABLE_NAME + " where " + DataStore.USER_ID + "='" + userId + "'";
-		rs = db.getConnection().createStatement().executeQuery(sql);
+		Connection conn2 = db.getConnection();
+		rs = conn2.createStatement().executeQuery(sql);
 		rs.next();
-		Assert.assertEquals(15, rs.getDouble(DataStore.CONSUMED), ACCEPTABLE_ERROR); 
+		Assert.assertEquals(15, rs.getDouble(DataStore.CONSUMED), ACCEPTABLE_ERROR);
+		if (!rs.isClosed()) {
+			rs.close();
+		}
+		if (!conn2.isClosed()) {
+			conn2.close();
+		}
 	}
 	
 	@Test
