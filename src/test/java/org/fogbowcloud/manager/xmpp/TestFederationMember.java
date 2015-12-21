@@ -27,7 +27,8 @@ public class TestFederationMember {
 
 	@Test(expected = IllegalArgumentException.class)
 	public void testInvalidResources() {
-		new FederationMember(null);
+		ResourcesInfo resourcesInfo = null;
+		new FederationMember(resourcesInfo);
 	}
 	
 	@Test(expected = IllegalArgumentException.class)

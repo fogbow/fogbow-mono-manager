@@ -406,20 +406,15 @@ public class ManagerController {
 		if (members == null) {
 			throw new IllegalArgumentException();
 		}
-		FederationMember myself = new FederationMember(getResourcesInfo());
 		synchronized (this.members) {
 			this.members.clear();
 			for (FederationMember member : members) {
-				if (member.getResourcesInfo().getId()
-						.equals(properties.getProperty(ConfigurationConstants.XMPP_JID_KEY))) {
-					this.members.add(myself);
-				} else {
-					this.members.add(member);
-				}
+				this.members.add(member);
 			}
 		}
 	}
 
+	// TODO only In test. Remove?
 	public List<FederationMember> getRendezvousMembersInfo() {
 		List<FederationMember> membersCopy = null;
 		synchronized (this.members) {
@@ -427,14 +422,14 @@ public class ManagerController {
 		}
 		boolean containsThis = false;
 		for (FederationMember member : membersCopy) {
-			if (member.getResourcesInfo().getId().equals(
+			if (member.getId().equals(
 					properties.getProperty(ConfigurationConstants.XMPP_JID_KEY))) {
 				containsThis = true;
 				break;
 			}
 		}
 		if (!containsThis) {
-			membersCopy.add(new FederationMember(getResourcesInfo()));
+			membersCopy.add(new FederationMember(properties.getProperty(ConfigurationConstants.XMPP_JID_KEY)));
 		}
 		return membersCopy;
 	}
@@ -458,17 +453,17 @@ public class ManagerController {
 			membersCopy = new LinkedList<FederationMember>(members);
 		}
 		for (FederationMember member : membersCopy) {
-			if (!member.getResourcesInfo().getId()
+			if (!member.getId()
 					.equals(properties.getProperty(ConfigurationConstants.XMPP_JID_KEY))) {
 				try {
 					ResourcesInfo resourcesInfo = ManagerPacketHelper.getRemoteUserQuota(accessId,
-							member.getResourcesInfo().getId(), packetSender);
+							member.getId(), packetSender);
 					if (resourcesInfo != null) {
 						membersQuote.add(new FederationMember(resourcesInfo));
 					}
 				} catch (Exception e) {
 					LOGGER.error("Error while trying to get member [" + accessId + "] quota from ["
-							+ member.getResourcesInfo().getId() + "]");
+							+ member.getId() + "]");
 				}
 			}
 		}
@@ -850,7 +845,7 @@ public class ManagerController {
 
 	public FederationMember getFederationMember(String memberId) {
 		for (FederationMember member : members) {
-			if (member.getResourcesInfo().getId().equals(memberId)) {
+			if (member.getId().equals(memberId)) {
 				return member;
 			}
 		}
@@ -1177,7 +1172,7 @@ public class ManagerController {
 			return;
 		}
 
-		final String memberAddress = member.getResourcesInfo().getId();
+		final String memberAddress = member.getId();
 
 		Map<String, String> xOCCIAttCopy = new HashMap<String, String>(request.getxOCCIAtt());
 		List<Category> categoriesCopy = new LinkedList<Category>(request.getCategories());
@@ -1449,14 +1444,14 @@ public class ManagerController {
 		List<FederationMember> federationMembers = new ArrayList<FederationMember>(members);
 		List<FederationMember> allowedFederationMembers = new ArrayList<FederationMember>();
 		for (FederationMember federationMember : federationMembers) {
-			if (federationMember.getResourcesInfo().getId()
+			if (federationMember.getId()
 					.equals(properties.get(ConfigurationConstants.XMPP_JID_KEY))) {
 				continue;
 			}
 			if (!getValidator().canReceiveFrom(federationMember)) {
 				continue;
 			}
-			if (!RequirementsHelper.matchLocation(requirements, federationMember.getResourcesInfo().getId())) {
+			if (!RequirementsHelper.matchLocation(requirements, federationMember.getId())) {
 				continue;
 			}
 			allowedFederationMembers.add(federationMember);

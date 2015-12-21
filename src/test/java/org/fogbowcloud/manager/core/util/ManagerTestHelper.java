@@ -56,6 +56,7 @@ import org.xmpp.packet.Packet;
 
 public class ManagerTestHelper extends DefaultDataTestHelper {
 
+	public static final String MANAGER_TEST_JID = "manager.test.com";
 	public static final String VALUE_FLAVOR_LARGE = "{cpu=4,mem=8}";
 	public  static final String VALUE_FLAVOR_MEDIUM = "{cpu=2,mem=4}";
 	public static final String VALUE_FLAVOR_SMALL = "{cpu=1,mem=1}";
@@ -105,22 +106,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		Element queryElement = resultIQ.getElement().addElement("query", WHOISALIVE_NAMESPACE);
 		for (FederationMember rendezvousItem : aliveIds) {
 			Element itemEl = queryElement.addElement("item");
-			itemEl.addAttribute("id", rendezvousItem.getResourcesInfo().getId());
-			Element statusEl = itemEl.addElement("status");
-			statusEl.addElement("cpu-idle").setText(rendezvousItem.getResourcesInfo().getCpuIdle());
-			statusEl.addElement("cpu-inuse").setText(
-					rendezvousItem.getResourcesInfo().getCpuInUse());
-			statusEl.addElement("mem-idle").setText(
-					rendezvousItem.getResourcesInfo().getMemIdle());
-			statusEl.addElement("mem-inuse").setText(
-					rendezvousItem.getResourcesInfo().getMemInUse());
-			statusEl.addElement("instances-idle").setText(
-					rendezvousItem.getResourcesInfo().getInstancesIdle());
-			statusEl.addElement("instances-inuse").setText(
-					rendezvousItem.getResourcesInfo().getInstancesInUse());
-			statusEl.addElement("cert");
-			statusEl.addElement("updated").setText(
-					String.valueOf(rendezvousItem.getFormattedTime()));
+			itemEl.addAttribute("id", rendezvousItem.getId());
 		}
 		return resultIQ;
 	}
@@ -197,7 +183,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		properties.put(KeystoneIdentityPlugin.FEDERATION_USER_NAME_KEY, "fogbow");
 		properties.put(KeystoneIdentityPlugin.FEDERATION_USER_PASS_KEY, "fogbow");
 		properties.put(KeystoneIdentityPlugin.FEDERATION_USER_TENANT_NAME_KEY, "fogbow");
-		properties.put(ConfigurationConstants.XMPP_JID_KEY, "manager.test.com");
+		properties.put(ConfigurationConstants.XMPP_JID_KEY, MANAGER_TEST_JID);
 		properties.put(ConfigurationConstants.TOKEN_HOST_PRIVATE_ADDRESS_KEY,
 				DefaultDataTestHelper.SERVER_HOST);
 		properties.put(ConfigurationConstants.TOKEN_HOST_HTTP_PORT_KEY,
@@ -214,7 +200,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		properties.put(KeystoneIdentityPlugin.FEDERATION_USER_NAME_KEY, "fogbow");
 		properties.put(KeystoneIdentityPlugin.FEDERATION_USER_PASS_KEY, "fogbow");
 		properties.put(KeystoneIdentityPlugin.FEDERATION_USER_TENANT_NAME_KEY, "fogbow");
-		properties.put(ConfigurationConstants.XMPP_JID_KEY, "manager.test.com");
+		properties.put(ConfigurationConstants.XMPP_JID_KEY, MANAGER_TEST_JID);
 		properties.put(ConfigurationConstants.TOKEN_HOST_PRIVATE_ADDRESS_KEY,
 				DefaultDataTestHelper.SERVER_HOST);
 		properties.put(ConfigurationConstants.TOKEN_HOST_HTTP_PORT_KEY,
@@ -282,7 +268,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		Properties properties = new Properties();
 		properties.put(KeystoneIdentityPlugin.FEDERATION_USER_NAME_KEY, "fogbow");
 		properties.put(KeystoneIdentityPlugin.FEDERATION_USER_PASS_KEY, "fogbow");
-		properties.put(ConfigurationConstants.XMPP_JID_KEY, "manager.test.com");
+		properties.put(ConfigurationConstants.XMPP_JID_KEY, MANAGER_TEST_JID);
 
 		Mockito.when(computePlugin.getInstances(Mockito.any(Token.class))).thenReturn(
 				new ArrayList<Instance>());

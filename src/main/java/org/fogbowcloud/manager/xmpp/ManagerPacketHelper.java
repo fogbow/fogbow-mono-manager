@@ -35,9 +35,10 @@ import org.xmpp.packet.PacketError.Condition;
 
 public class ManagerPacketHelper {
 
+	public static final String I_AM_ALIVE_PERIOD = "iamalive-period";
 	private final static Logger LOGGER = Logger.getLogger(ManagerPacketHelper.class.getName());
 
-	public static void iAmAlive(ResourcesInfo resourcesInfo, String rendezvousAddress, Properties properties,
+	public static String iAmAlive(String rendezvousAddress, Properties properties,
 			PacketSender packetSender) throws Exception {
 		if (packetSender == null) {
 			LOGGER.warn("Packet sender not set.");
@@ -49,17 +50,15 @@ public class ManagerPacketHelper {
 			throw new IllegalArgumentException("Rendezvous address has not been specified.");
 		}
 		iq.setTo(rendezvousAddress);
-		Element statusEl = iq.getElement().addElement("query", ManagerXmppComponent.IAMALIVE_NAMESPACE)
-				.addElement("status");
+		iq.getElement().addElement("query", ManagerXmppComponent.IAMALIVE_NAMESPACE);
 
-		statusEl.addElement("cpu-idle").setText(resourcesInfo.getCpuIdle());
-		statusEl.addElement("cpu-inuse").setText(resourcesInfo.getCpuInUse());
-		statusEl.addElement("mem-idle").setText(resourcesInfo.getMemIdle());
-		statusEl.addElement("mem-inuse").setText(resourcesInfo.getMemInUse());
-		statusEl.addElement("instances-idle").setText(resourcesInfo.getInstancesIdle());
-		statusEl.addElement("instances-inuse").setText(resourcesInfo.getInstancesInUse());
+		IQ response = (IQ) packetSender.syncSendPacket(iq);
+		if (response == null) {
+			LOGGER.warn("Error while received the iamalive response");
+			return null;
+		}
 
-		packetSender.syncSendPacket(iq);
+		return response.getElement().element("query").element(I_AM_ALIVE_PERIOD).getText();
 	}
 
 	public static void wakeUpSleepingHost(int minCPU, int minRAM, String greenAddress, PacketSender packetSender) {
@@ -115,18 +114,7 @@ public class ManagerPacketHelper {
 		while (itemIterator.hasNext()) {
 			Element itemEl = (Element) itemIterator.next();
 			Attribute id = itemEl.attribute("id");
-
-			Element statusEl = itemEl.element("status");
-			String cpuIdle = statusEl.elementText("cpu-idle");
-			String cpuInUse = statusEl.elementText("cpu-inuse");
-			String memIdle = statusEl.elementText("mem-idle");
-			String memInUse = statusEl.elementText("mem-inuse");
-			String instancesIdle = statusEl.elementText("instances-idle");
-			String instancesInUse = statusEl.elementText("instances-inuse");
-
-			ResourcesInfo resources = new ResourcesInfo(id.getValue(), cpuIdle, cpuInUse, memIdle, memInUse,
-					instancesIdle, instancesInUse);
-			FederationMember item = new FederationMember(resources);
+			FederationMember item = new FederationMember(id.getValue());
 			aliveItems.add(item);
 		}
 		return aliveItems;
