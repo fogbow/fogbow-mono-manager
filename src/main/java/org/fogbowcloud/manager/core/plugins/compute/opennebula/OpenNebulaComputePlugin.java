@@ -422,6 +422,12 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		String maxGroupVMsStr = group.xpath("VM_QUOTA/VM/VMS");
 		String vmsGroupInUseStr = group.xpath("VM_QUOTA/VM/VMS_USED");
 		
+		LOGGER.debug("Information about quota : MaxUserCpu = " + maxUserCpuStr + ", CPUUserInUse = " + cpuUserInUseStr
+				+ ", MaxUserMem = " + maxUserMemStr + ", MemUserInUse = " + memUserInUseStr + ", MaxUserInUser = " + maxUserVMsStr
+				+ ", VmsYserInUse = " + vmsUserInUseStr + ", MaxGroupCpu = " + maxGroupCpuStr + ", CpuGroupInUse = " + cpuGroupInUseStr
+				+ ", MaxGroupMem = " + maxGroupMemStr + ", MemGroupInUse = " + memGroupInUseStr + ", MaxGroupVms = " + maxGroupVMsStr
+				+ ", VmsGroupInUse" + vmsGroupInUseStr + ".");
+		
 		ResourceQuota resourceQuota = getQuota(maxUserCpuStr, cpuUserInUseStr, maxGroupCpuStr, cpuGroupInUseStr);
 		double maxCpu = resourceQuota.getMax();
 		double cpuInUse = resourceQuota.getInUse();
