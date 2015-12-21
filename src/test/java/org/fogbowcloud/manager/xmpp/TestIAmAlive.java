@@ -43,15 +43,22 @@ public class TestIAmAlive {
 
 		final BlockingQueue<Packet> blockingQueue = new LinkedBlockingQueue<Packet>(1);
 
+		final String value = "10";
 		final PacketListener callback = new PacketListener() {
 			public void processPacket(Packet packet) {
 				IQ iAmAlive = (IQ) packet;
+				iAmAlive.getElement().element("query")
+						.addElement(ManagerPacketHelper.I_AM_ALIVE_PERIOD).setText(value);
 				try {
 					blockingQueue.put(packet);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
-				xmppClient.send(IQ.createResultIQ(iAmAlive));
+				IQ createResultIQ = IQ.createResultIQ(iAmAlive);
+				createResultIQ.getElement().addElement("query")
+						.addElement(ManagerPacketHelper.I_AM_ALIVE_PERIOD)
+						.setText(value);
+				xmppClient.send(createResultIQ);
 			}
 		};
 
@@ -73,28 +80,8 @@ public class TestIAmAlive {
 		}
 
 		Packet packet = blockingQueue.poll(5, TimeUnit.SECONDS);
-		Element element = packet.getElement().element("query");
-		Element iqelement = element.element("status");
-		String cpuIdle = iqelement.element("cpu-idle").getText();
-		String cpuInUse = iqelement.element("cpu-inuse").getText();
-		String memIdle = iqelement.element("mem-idle").getText();
-		String memInUse = iqelement.element("mem-inuse").getText();
-		String instancesIdle = iqelement.element("instances-idle").getText();
-		String instancesInUse = iqelement.element("instances-inuse").getText();
-		
-		Assert.assertEquals(cpuIdle, managerTestHelper.getResources()
-				.getCpuIdle());
-		Assert.assertEquals(cpuInUse, managerTestHelper.getResources()
-				.getCpuInUse());
-		Assert.assertEquals(memIdle, managerTestHelper.getResources()
-				.getMemIdle());
-		Assert.assertEquals(memInUse, managerTestHelper.getResources()
-				.getMemInUse());
-		Assert.assertEquals(instancesIdle, managerTestHelper.getResources()
-				.getInstancesIdle());
-		Assert.assertEquals(instancesInUse, managerTestHelper.getResources()
-				.getInstancesInUse());
-
+		Assert.assertEquals(value, packet.getElement().element("query")
+				.element(ManagerPacketHelper.I_AM_ALIVE_PERIOD).getText());
 		xmppClient.disconnect();
 	}
 

@@ -36,7 +36,7 @@ public class MemberServerResource extends ServerResource {
 		for (FederationMember federationMember : federationMembers) {
 			Map<String, String> resourcesInfoMap = new HashMap<String, String>();
 			ResourcesInfo resourcesInfo = federationMember.getResourcesInfo();
-			resourcesInfoMap.put("id", resourcesInfo.getId());
+			resourcesInfoMap.put("id", federationMember.getId());
 			resourcesInfoMap.put("cpuIdle", resourcesInfo.getCpuIdle());
 			resourcesInfoMap.put("cpuInUse", resourcesInfo.getCpuInUse());
 			resourcesInfoMap.put("memIdle", resourcesInfo.getMemIdle());

@@ -9,7 +9,7 @@ public class TestManagerPacketHelter {
 
 	@Test(expected=Exception.class)
 	public void testIAmAliveWithRendezvousNotSpecified() throws Exception {
-		ManagerPacketHelper.iAmAlive(null, null, null, null);
+		ManagerPacketHelper.iAmAlive(null, null, null);
 	}
 
 	@Test(expected=Exception.class)

@@ -48,9 +48,17 @@ public class ManagerXmppComponent extends XMPPComponent implements AsyncPacketSe
 		scheduleIamAlive();
 	}
 
-	public void iAmAlive() throws CertificateException, Exception {
-		ManagerPacketHelper.iAmAlive(managerFacade.getResourcesInfo(),
-				rendezvousAddress, managerFacade.getProperties(), this);
+	public long iAmAlive() throws CertificateException, Exception {
+		String iAmAlivePeriodStr = ManagerPacketHelper
+				.iAmAlive(rendezvousAddress, managerFacade.getProperties(), this);
+		
+		try {
+			return Long.parseLong(iAmAlivePeriodStr);
+		} catch (Exception e) {
+			LOGGER.warn("Error while trying to convert String(" + iAmAlivePeriodStr + ") to Long.",
+					e);
+		}	
+		return PERIOD;
 	}
 	
 	@Override
@@ -76,21 +84,30 @@ public class ManagerXmppComponent extends XMPPComponent implements AsyncPacketSe
 	}
 	
 	private void scheduleIamAlive() {
+		scheduleIamAlive(0, PERIOD);
+	}
+	
+	private void scheduleIamAlive(final long delay, final long period) {
 		timer.schedule(new TimerTask() {
 			@Override
 			public void run() {
 				try {
-					iAmAlive();
+					long currentIAmAlivePeriod = iAmAlive();
+					
+					if (period != currentIAmAlivePeriod) {
+						scheduleIamAlive(currentIAmAlivePeriod, currentIAmAlivePeriod);
+						this.cancel();
+					}					
 				} catch (Exception e) {
-					LOGGER.error("Failure during IAmAlive().");
+					LOGGER.error("Failure during IAmAlive().", e);
 				}
 				try {
 					whoIsalive();
 				} catch (Exception e) {
-					LOGGER.error("Failure during whoIsAlive()."); 
+					LOGGER.error("Failure during whoIsAlive().", e); 
 				}
 			}
-		}, 0, PERIOD);
+		}, delay, period);
 	}
 
 	public void setRendezvousAddress(String address) {

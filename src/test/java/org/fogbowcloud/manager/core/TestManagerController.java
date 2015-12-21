@@ -2149,11 +2149,9 @@ public class TestManagerController {
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testSubmitRequestForRemoteMemberValidation() {
-		ResourcesInfo resources = Mockito.mock(ResourcesInfo.class);
-		Mockito.doReturn("abc").when(resources).getId();
 
 		FederationMember member = Mockito.mock(FederationMember.class);
-		Mockito.doReturn(resources).when(member).getResourcesInfo();
+		Mockito.doReturn("abc").when(member).getId();
 		List<FederationMember> list = new LinkedList<FederationMember>();
 		list.add(member);
 		managerController.updateMembers(list);
@@ -2185,11 +2183,8 @@ public class TestManagerController {
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testReplyToServedRequestWithSuccess() {
-		ResourcesInfo resources = Mockito.mock(ResourcesInfo.class);
-		Mockito.doReturn("abc").when(resources).getId();
-
 		FederationMember member = Mockito.mock(FederationMember.class);
-		Mockito.doReturn(resources).when(member).getResourcesInfo();
+		Mockito.doReturn("abc").when(member).getId();
 		List<FederationMember> list = new LinkedList<FederationMember>();
 		list.add(member);
 		managerController.updateMembers(list);
@@ -2231,11 +2226,8 @@ public class TestManagerController {
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testReplyToServedRequestWithoutSuccess() {
-		ResourcesInfo resources = Mockito.mock(ResourcesInfo.class);
-		Mockito.doReturn("abc").when(resources).getId();
-
 		FederationMember member = Mockito.mock(FederationMember.class);
-		Mockito.doReturn(resources).when(member).getResourcesInfo();
+		Mockito.doReturn("abc").when(member).getId();
 		List<FederationMember> list = new LinkedList<FederationMember>();
 		list.add(member);
 		managerController.updateMembers(list);

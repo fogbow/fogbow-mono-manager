@@ -40,8 +40,7 @@ public class TestWhoIsAlive {
 		managerXmppComponent = managerTestHelper
 				.initializeXMPPManagerComponent(false);
 		final XMPPClient xmppClient = managerTestHelper.createXMPPClient();
-		final BlockingQueue<Packet> blockingQueue = new LinkedBlockingQueue<Packet>(
-				1);
+		final BlockingQueue<Packet> blockingQueue = new LinkedBlockingQueue<Packet>(1);
 
 		final PacketListener callback = new PacketListener() {
 			public void processPacket(Packet packet) {
@@ -52,14 +51,8 @@ public class TestWhoIsAlive {
 					e.printStackTrace();
 				}
 				List<FederationMember> aliveIds = new ArrayList<FederationMember>();
-				try {
-					aliveIds.add(new FederationMember(managerTestHelper
-							.getResources()));
-				} catch (CertificateException e) {
-					e.printStackTrace();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
+				aliveIds.add(new FederationMember("One"));
+				aliveIds.add(new FederationMember(ManagerTestHelper.MANAGER_TEST_JID));
 				IQ iq = null;
 				try {
 					iq = managerTestHelper.createWhoIsAliveResponse(
@@ -104,14 +97,8 @@ public class TestWhoIsAlive {
 			public void processPacket(Packet packet) {
 				IQ whoIsAlive = (IQ) packet;
 				List<FederationMember> aliveIds = new ArrayList<FederationMember>();
-				try {
-					aliveIds.add(new FederationMember(managerTestHelper
-							.getResources()));
-				} catch (CertificateException e1) {
-					e1.printStackTrace();
-				} catch (IOException e1) {
-					e1.printStackTrace();
-				}
+				aliveIds.add(new FederationMember("One"));
+				aliveIds.add(new FederationMember(ManagerTestHelper.MANAGER_TEST_JID));				
 				IQ iq = null;
 				try {
 					iq = managerTestHelper.createWhoIsAliveResponse(

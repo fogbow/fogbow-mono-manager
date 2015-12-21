@@ -502,7 +502,7 @@ public class EC2ComputePlugin implements ComputePlugin {
 			return flavors;
 		}
 		
-		HttpResponseWrapper response = httpClient.doGet(FLAVORS_JSON_URL);
+		HttpResponseWrapper response = getHttpClient().doGet(FLAVORS_JSON_URL);
 		JSONObject content = null;
 		try {
 			content = new JSONObject(response.getContent());
@@ -563,6 +563,10 @@ public class EC2ComputePlugin implements ComputePlugin {
 			}
 		}
 		return totalStorage.toString();
+	}
+	
+	public HttpClientWrapper getHttpClient() {
+		return httpClient;
 	}
 	
 }
