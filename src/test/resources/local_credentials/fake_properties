@@ -1,3 +1,0 @@
-local_credential_CN->GiovanniFarias,OU->DSC,O->UFCG,O->UFFBrGridCA,O->ICPEDU,C->BR_username=user1
-local_credential_CN->GiovanniFarias,OU->DSC,O->UFCG,O->UFFBrGridCA,O->ICPEDU,C->BR_password=userpass1
-local_credential_CN->GiovanniFarias,OU->DSC,O->UFCG,O->UFFBrGridCA,O->ICPEDU,C->BR_tenantName=usertenant1

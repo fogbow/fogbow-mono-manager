@@ -3,35 +3,35 @@ package org.fogbowcloud.manager.core.plugins.localcredentails;
 import java.util.Map;
 import java.util.Properties;
 
-import org.fogbowcloud.manager.core.plugins.LocalCredentialsPlugin;
+import org.fogbowcloud.manager.core.plugins.MapperPlugin;
 import org.fogbowcloud.manager.occi.request.Request;
 
-public class MemberBasedLocalCrendetialsPlugin implements LocalCredentialsPlugin {
+public class MemberBasedMapperPlugin implements MapperPlugin {
 	
 	private Properties properties;
 	
-	public MemberBasedLocalCrendetialsPlugin(Properties properties) {
+	public MemberBasedMapperPlugin(Properties properties) {
 		this.properties = properties;
 	}
 
 	@Override
 	public Map<String, String> getLocalCredentials(Request request) {
 		if (request == null) {
-			return LocalCredentialsHelper.getCredentialsPerRelatedLocalName(
-					this.properties, LocalCredentialsHelper.FOGBOW_DEFAULTS);	
+			return MapperHelper.getCredentialsPerRelatedLocalName(
+					this.properties, MapperHelper.FOGBOW_DEFAULTS);	
 		}
-		Map<String, String> credentialsPerMember = LocalCredentialsHelper.getCredentialsPerRelatedLocalName(
+		Map<String, String> credentialsPerMember = MapperHelper.getCredentialsPerRelatedLocalName(
 				this.properties, request.getRequestingMemberId());
 		if (!credentialsPerMember.isEmpty()) {
 			return credentialsPerMember;
 		}
-		return LocalCredentialsHelper.getCredentialsPerRelatedLocalName(
-				this.properties, LocalCredentialsHelper.FOGBOW_DEFAULTS);
+		return MapperHelper.getCredentialsPerRelatedLocalName(
+				this.properties, MapperHelper.FOGBOW_DEFAULTS);
 	}
 
 	@Override
 	public Map<String, Map<String, String>> getAllLocalCredentials() {
-		return LocalCredentialsHelper.getLocalCredentials(properties, null);
+		return MapperHelper.getLocalCredentials(properties, null);
 	}
 
 	@Override

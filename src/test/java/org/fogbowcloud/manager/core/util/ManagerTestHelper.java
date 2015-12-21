@@ -28,7 +28,7 @@ import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.FederationMemberPickerPlugin;
-import org.fogbowcloud.manager.core.plugins.LocalCredentialsPlugin;
+import org.fogbowcloud.manager.core.plugins.MapperPlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.identity.openstack.KeystoneIdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.memberauthorization.DefaultMemberAuthorizationPlugin;
@@ -64,7 +64,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 	private ManagerXmppComponent managerXmppComponent;
 	private ComputePlugin computePlugin;
 	private IdentityPlugin identityPlugin;
-	private LocalCredentialsPlugin localCredentialsPlugin;
+	private MapperPlugin mapperPlugin;
 	private IdentityPlugin federationIdentityPlugin;
 	private AuthorizationPlugin authorizationPlugin;
 	private BenchmarkingPlugin benchmarkingPlugin;
@@ -218,14 +218,14 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		this.federationIdentityPlugin = Mockito.mock(IdentityPlugin.class);
 		this.benchmarkingPlugin = Mockito.mock(BenchmarkingPlugin.class);
 		this.accountingPlugin = Mockito.mock(AccountingPlugin.class);
-		this.localCredentialsPlugin = Mockito.mock(LocalCredentialsPlugin.class);
+		this.mapperPlugin = Mockito.mock(MapperPlugin.class);
 		this.authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
 		
 		Mockito.when(computePlugin.getInstances(Mockito.any(Token.class))).thenReturn(
 				new ArrayList<Instance>());
 		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class))).thenReturn(
 				getResources());
-		Mockito.when(localCredentialsPlugin.getAllLocalCredentials()).thenReturn(
+		Mockito.when(mapperPlugin.getAllLocalCredentials()).thenReturn(
 				this.defaultFederationAllUsersCrendetials);
 		Mockito.when(identityPlugin.createToken(Mockito.anyMap())).thenReturn(
 				defaultFederationToken);
@@ -241,7 +241,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		managerFacade.setFederationIdentityPlugin(federationIdentityPlugin);
 		managerFacade.setAuthorizationPlugin(authorizationPlugin);
 		managerFacade.setValidator(new DefaultMemberAuthorizationPlugin(null));
-		managerFacade.setLocalCredentailsPlugin(localCredentialsPlugin);
+		managerFacade.setLocalCredentailsPlugin(mapperPlugin);
 				
 		managerXmppComponent = Mockito.spy(new ManagerXmppComponent(LOCAL_MANAGER_COMPONENT_URL,
 				MANAGER_COMPONENT_PASS, SERVER_HOST, SERVER_COMPONENT_PORT, managerFacade));
@@ -263,7 +263,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 
 		this.computePlugin = Mockito.mock(ComputePlugin.class);
 		this.identityPlugin = Mockito.mock(IdentityPlugin.class);
-		this.localCredentialsPlugin = Mockito.mock(LocalCredentialsPlugin.class);
+		this.mapperPlugin = Mockito.mock(MapperPlugin.class);
 
 		Properties properties = new Properties();
 		properties.put(KeystoneIdentityPlugin.FEDERATION_USER_NAME_KEY, "fogbow");
@@ -274,14 +274,14 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 				new ArrayList<Instance>());
 		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class))).thenReturn(
 				getResources());
-		Mockito.when(localCredentialsPlugin.getAllLocalCredentials()).thenReturn(this.defaultFederationAllUsersCrendetials);
+		Mockito.when(mapperPlugin.getAllLocalCredentials()).thenReturn(this.defaultFederationAllUsersCrendetials);
 		Mockito.when(identityPlugin.createToken(Mockito.anyMap())).thenReturn(defaultFederationToken);
 
 		ManagerController managerFacade = new ManagerController(properties);
 		managerFacade.setComputePlugin(computePlugin);
 		managerFacade.setLocalIdentityPlugin(identityPlugin);
 		managerFacade.setFederationIdentityPlugin(identityPlugin);
-		managerFacade.setLocalCredentailsPlugin(localCredentialsPlugin);
+		managerFacade.setLocalCredentailsPlugin(mapperPlugin);
 		managerFacade.setValidator(new DefaultMemberAuthorizationPlugin(null));
 
 		managerXmppComponent = Mockito.spy(new ManagerXmppComponent(LOCAL_MANAGER_COMPONENT_URL,
@@ -405,11 +405,11 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 				defaultFederationToken);
 
 		// mocking FUC
-		this.localCredentialsPlugin = Mockito.mock(LocalCredentialsPlugin.class);
-		Mockito.when(localCredentialsPlugin.getAllLocalCredentials()).thenReturn(
+		this.mapperPlugin = Mockito.mock(MapperPlugin.class);
+		Mockito.when(mapperPlugin.getAllLocalCredentials()).thenReturn(
 				this.defaultFederationAllUsersCrendetials);
 		Mockito.when(
-				localCredentialsPlugin.getLocalCredentials(Mockito.any(Request.class)))
+				mapperPlugin.getLocalCredentials(Mockito.any(Request.class)))
 				.thenReturn(this.defaultFederationUserCrendetials);
 		Mockito.when(identityPlugin.createToken(this.defaultFederationUserCrendetials)).thenReturn(defaultFederationToken);
 		
@@ -431,7 +431,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		managerController.setAuthorizationPlugin(authorizationPlugin);
 		managerController.setLocalIdentityPlugin(identityPlugin);
 		managerController.setFederationIdentityPlugin(federationIdentityPlugin);
-		managerController.setLocalCredentailsPlugin(localCredentialsPlugin);
+		managerController.setLocalCredentailsPlugin(mapperPlugin);
 		managerController.setComputePlugin(computePlugin);
 		managerController.setBenchmarkingPlugin(benchmarkingPlugin);
 		managerController.setAccountingPlugin(accountingPlugin);
@@ -460,8 +460,8 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		return defaultFederationToken;
 	}
 	
-	public LocalCredentialsPlugin getLocalCredentialsPlugin(){
-		return localCredentialsPlugin;
+	public MapperPlugin getLocalCredentialsPlugin(){
+		return mapperPlugin;
 	}
 
 }

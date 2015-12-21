@@ -17,7 +17,7 @@ import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.FederationMemberPickerPlugin;
-import org.fogbowcloud.manager.core.plugins.LocalCredentialsPlugin;
+import org.fogbowcloud.manager.core.plugins.MapperPlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.model.Category;
@@ -102,12 +102,12 @@ public class TestOCCIApplication {
 		// mocking benchmark executor
 		ExecutorService benchmarkExecutor = new CurrentThreadExecutorService();
 		
-		LocalCredentialsPlugin localCredentialsPlugin = Mockito.mock(LocalCredentialsPlugin.class);
-		Mockito.when(localCredentialsPlugin.getLocalCredentials(Mockito.any(Request.class)))
+		MapperPlugin mapperPlugin = Mockito.mock(MapperPlugin.class);
+		Mockito.when(mapperPlugin.getLocalCredentials(Mockito.any(Request.class)))
 				.thenReturn(new HashMap<String, String>());
 		
 		managerFacade.setAuthorizationPlugin(authorizationPlugin);
-		managerFacade.setLocalCredentailsPlugin(localCredentialsPlugin);
+		managerFacade.setLocalCredentailsPlugin(mapperPlugin);
 		managerFacade.setLocalIdentityPlugin(identityPlugin);
 		managerFacade.setFederationIdentityPlugin(identityPlugin);
 		managerFacade.setComputePlugin(computePlugin);

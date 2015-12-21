@@ -3,7 +3,6 @@ package org.fogbowcloud.manager.occi.instance;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -23,7 +22,7 @@ import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
-import org.fogbowcloud.manager.core.plugins.LocalCredentialsPlugin;
+import org.fogbowcloud.manager.core.plugins.MapperPlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.instance.Instance.Link;
 import org.fogbowcloud.manager.occi.model.Category;
@@ -64,7 +63,7 @@ public class TestGetCompute {
 	private AuthorizationPlugin authorizationPlugin;
 	private OCCITestHelper helper;
 	private ImageStoragePlugin imageStoragePlugin;
-	private LocalCredentialsPlugin localCredentialsPlugin;
+	private MapperPlugin mapperPlugin;
 	private InstanceDataStore instanceDB;
 
 	@Before
@@ -85,7 +84,6 @@ public class TestGetCompute {
 
 		Instance postInstance1 = new Instance(POST_INSTANCE_1_ID, list, postMap, null, InstanceState.RUNNING);
 		Instance postInstance2 = new Instance(POST_INSTANCE_2_ID, list, postMap, null, InstanceState.PENDING);
-		Instance postInstance3 = new Instance(POST_INSTANCE_3_ID, list, postMap, null, InstanceState.PENDING);
 
 		computePlugin = Mockito.mock(ComputePlugin.class);
 		Mockito.when(computePlugin.getInstance(Mockito.any(Token.class), Mockito.eq(INSTANCE_1_ID)))
@@ -99,8 +97,6 @@ public class TestGetCompute {
 				.thenReturn(postInstance1);
 		Mockito.when(computePlugin.getInstance(Mockito.any(Token.class), Mockito.eq(POST_INSTANCE_2_ID)))
 				.thenReturn(postInstance2);
-//		Mockito.when(computePlugin.getInstance(Mockito.any(Token.class), Mockito.eq(POST_INSTANCE_3_ID)))
-//				.thenReturn(postInstance3);
 
 		identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.getToken(OCCITestHelper.ACCESS_TOKEN))
@@ -149,8 +145,8 @@ public class TestGetCompute {
 		authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
 		Mockito.when(authorizationPlugin.isAuthorized(Mockito.any(Token.class))).thenReturn(true);
 
-		localCredentialsPlugin = Mockito.mock(LocalCredentialsPlugin.class);
-		Mockito.when(localCredentialsPlugin.getLocalCredentials(Mockito.any(Request.class)))
+		mapperPlugin = Mockito.mock(MapperPlugin.class);
+		Mockito.when(mapperPlugin.getLocalCredentials(Mockito.any(Request.class)))
 				.thenReturn(new HashMap<String, String>());
 
 		imageStoragePlugin = Mockito.mock(ImageStoragePlugin.class);
@@ -161,7 +157,7 @@ public class TestGetCompute {
 		
 		this.helper.initializeComponentCompute(computePlugin, identityPlugin, authorizationPlugin, imageStoragePlugin,
 				Mockito.mock(AccountingPlugin.class), Mockito.mock(BenchmarkingPlugin.class), requestsToAdd,
-				localCredentialsPlugin);
+				mapperPlugin);
 
 		instanceDB = new InstanceDataStore(INSTANCE_DB_URL);
 	}

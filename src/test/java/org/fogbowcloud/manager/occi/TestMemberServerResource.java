@@ -19,7 +19,7 @@ import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
-import org.fogbowcloud.manager.core.plugins.LocalCredentialsPlugin;
+import org.fogbowcloud.manager.core.plugins.MapperPlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.model.OCCIHeaders;
@@ -45,7 +45,7 @@ public class TestMemberServerResource {
 	private IdentityPlugin identityPlugin;
 	private AccountingPlugin accoutingPlugin;
 	private AuthorizationPlugin authorizationPlugin;
-	private LocalCredentialsPlugin localCredentialsPlugin;
+	private MapperPlugin mapperPlugin;
 	
 	@Before
 	public void setup() throws Exception {
@@ -53,14 +53,14 @@ public class TestMemberServerResource {
 		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class))).thenReturn(
 				new ResourcesInfo(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, 
 						"", "", "", "", "", ""));
-		this.localCredentialsPlugin = Mockito.mock(LocalCredentialsPlugin.class);
+		this.mapperPlugin = Mockito.mock(MapperPlugin.class);
 		Map<String, Map<String, String>> defaultFederationUsersCrendetials = 
 				new HashMap<String, Map<String,String>>();
 		HashMap<String, String> localUserCredentials = new HashMap<String, String>();
 		defaultFederationUsersCrendetials.put("one", localUserCredentials);
-		Mockito.when(localCredentialsPlugin.getAllLocalCredentials()).thenReturn(
+		Mockito.when(mapperPlugin.getAllLocalCredentials()).thenReturn(
 				defaultFederationUsersCrendetials);
-		Mockito.when(localCredentialsPlugin.getLocalCredentials("x_federation_auth_token")).thenReturn(
+		Mockito.when(mapperPlugin.getLocalCredentials("x_federation_auth_token")).thenReturn(
 				localUserCredentials);
 
 		
@@ -92,7 +92,7 @@ public class TestMemberServerResource {
 		AsyncPacketSender packetSender = createPacketSenderMock(resourcesInfo);
 		
 		this.helper.initializeComponentMember(computePlugin, identityPlugin, authorizationPlugin,
-				accoutingPlugin, federationMembers, localCredentialsPlugin, packetSender);		
+				accoutingPlugin, federationMembers, mapperPlugin, packetSender);		
 		
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_MEMBER);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
@@ -152,7 +152,7 @@ public class TestMemberServerResource {
 	public void testGetMemberOnlyMe() throws Exception {
 		List<FederationMember> federationMembers = new ArrayList<FederationMember>();
 		this.helper.initializeComponentMember(computePlugin, identityPlugin, authorizationPlugin,
-				accoutingPlugin, federationMembers, localCredentialsPlugin);
+				accoutingPlugin, federationMembers, mapperPlugin);
 		
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_MEMBER);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
@@ -171,7 +171,7 @@ public class TestMemberServerResource {
 	public void testGetMemberWithoutFederationToken() throws Exception {
 		List<FederationMember> federationMembers = new ArrayList<FederationMember>();
 		this.helper.initializeComponentMember(computePlugin, identityPlugin, authorizationPlugin,
-				accoutingPlugin, federationMembers, localCredentialsPlugin);
+				accoutingPlugin, federationMembers, mapperPlugin);
 		
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_MEMBER);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
@@ -184,7 +184,7 @@ public class TestMemberServerResource {
 	@Test
 	public void testGetMemberWrongContentType() throws Exception {
 		this.helper.initializeComponentMember(computePlugin, identityPlugin, authorizationPlugin,
-				accoutingPlugin, new LinkedList<FederationMember>(), localCredentialsPlugin);
+				accoutingPlugin, new LinkedList<FederationMember>(), mapperPlugin);
 		
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_MEMBER);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, "wrong");

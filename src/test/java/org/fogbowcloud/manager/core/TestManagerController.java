@@ -30,7 +30,7 @@ import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.FederationMemberAuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.FederationMemberPickerPlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
-import org.fogbowcloud.manager.core.plugins.LocalCredentialsPlugin;
+import org.fogbowcloud.manager.core.plugins.MapperPlugin;
 import org.fogbowcloud.manager.core.plugins.compute.openstack.OpenStackOCCIComputePlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.core.util.ManagerTestHelper;
@@ -1341,11 +1341,11 @@ public class TestManagerController {
 	
 	@Test
 	public void testGetManyItemsFromIQFoundLocalCredentailsPlugin() throws CertificateException, IOException {
-		LocalCredentialsPlugin localCredentialsPlugin = Mockito.mock(LocalCredentialsPlugin.class);
+		MapperPlugin mapperPlugin = Mockito.mock(MapperPlugin.class);
 		String accessId = "accessId";
 		Map<String, String> credentails = new HashMap<String, String>();
 		credentails.put("123", "321");
-		Mockito.when(localCredentialsPlugin.getLocalCredentials(accessId)).thenReturn(credentails);		
+		Mockito.when(mapperPlugin.getLocalCredentials(accessId)).thenReturn(credentails);		
 		
 		IdentityPlugin localIdentityPlugin = Mockito.mock(IdentityPlugin.class);
 		Token token = new Token("", "", new Date(), null);
@@ -1357,7 +1357,7 @@ public class TestManagerController {
 		
 		managerController.setComputePlugin(computePlugin);
 		managerController.setLocalIdentityPlugin(localIdentityPlugin);
-		managerController.setLocalCredentailsPlugin(localCredentialsPlugin);
+		managerController.setLocalCredentailsPlugin(mapperPlugin);
 		
 		ArrayList<FederationMember> items = new ArrayList<FederationMember>();
 		for (int i = 0; i < 10; i++) {
@@ -1383,11 +1383,11 @@ public class TestManagerController {
 	
 	@Test
 	public void testGetManyItemsFromIQFoundLocalCredentailsPluginWithLocalMember() throws CertificateException, IOException {
-		LocalCredentialsPlugin localCredentialsPlugin = Mockito.mock(LocalCredentialsPlugin.class);
+		MapperPlugin mapperPlugin = Mockito.mock(MapperPlugin.class);
 		String accessId = "accessId";
 		Map<String, String> credentails = new HashMap<String, String>();
 		credentails.put("123", "321");
-		Mockito.when(localCredentialsPlugin.getLocalCredentials(accessId)).thenReturn(credentails);		
+		Mockito.when(mapperPlugin.getLocalCredentials(accessId)).thenReturn(credentails);		
 		
 		IdentityPlugin localIdentityPlugin = Mockito.mock(IdentityPlugin.class);
 		Token token = new Token("", "", new Date(), null);
@@ -1399,7 +1399,7 @@ public class TestManagerController {
 		
 		managerController.setComputePlugin(computePlugin);
 		managerController.setLocalIdentityPlugin(localIdentityPlugin);
-		managerController.setLocalCredentailsPlugin(localCredentialsPlugin);
+		managerController.setLocalCredentailsPlugin(mapperPlugin);
 		
 		ArrayList<FederationMember> items = new ArrayList<FederationMember>();
 		for (int i = 0; i < 10; i++) {
@@ -1430,7 +1430,7 @@ public class TestManagerController {
 	@SuppressWarnings({ "unchecked", "unused", "rawtypes" })
 	@Test
 	public void testGetManyItemsAccordingToLocalCredentailsPlugin() throws CertificateException, IOException {
-		LocalCredentialsPlugin localCredentialsPlugin = Mockito.mock(LocalCredentialsPlugin.class);
+		MapperPlugin mapperPlugin = Mockito.mock(MapperPlugin.class);
 		String accessId1 = "accessId1";
 		String accessId2 = "accessId2";
 		Map<String, String> occiAtt = xOCCIAtt;
@@ -1441,9 +1441,8 @@ public class TestManagerController {
 		Map<String, String> credentialTwo = MapUtils.putAll(new HashMap(), new String[][] { {
 				"456", "654" } });
 		allCredentails.put("two", credentialTwo);
-//		Mockito.when(localCredentialsPlugin.getAllLocalCredentials()).thenReturn(allCredentails);
-		Mockito.when(localCredentialsPlugin.getLocalCredentials(accessId1)).thenReturn(credentialOne);
-		Mockito.when(localCredentialsPlugin.getLocalCredentials(accessId2)).thenReturn(credentialTwo);
+		Mockito.when(mapperPlugin.getLocalCredentials(accessId1)).thenReturn(credentialOne);
+		Mockito.when(mapperPlugin.getLocalCredentials(accessId2)).thenReturn(credentialTwo);
 		
 		IdentityPlugin localIdentityPlugin = Mockito.mock(IdentityPlugin.class);
 		Token tokenOne = new Token("One", "", new Date(), null);
@@ -1460,7 +1459,7 @@ public class TestManagerController {
 		
 		managerController.setComputePlugin(computePlugin);
 		managerController.setLocalIdentityPlugin(localIdentityPlugin);
-		managerController.setLocalCredentailsPlugin(localCredentialsPlugin);
+		managerController.setLocalCredentailsPlugin(mapperPlugin);
 		
 		ArrayList<FederationMember> items = new ArrayList<FederationMember>();
 		for (int i = 0; i < 10; i++) {
@@ -1501,7 +1500,7 @@ public class TestManagerController {
 	@SuppressWarnings({ "unchecked", "unused", "rawtypes" })
 	@Test
 	public void testGetManyItemsBasedOnLocalCredentailsPluginLocalMember() throws CertificateException, IOException {
-		LocalCredentialsPlugin localCredentialsPlugin = Mockito.mock(LocalCredentialsPlugin.class);
+		MapperPlugin mapperPlugin = Mockito.mock(MapperPlugin.class);
 		String accessId1 = "accessId1";
 		String accessId2 = "accessId2";		
 		Map<String, String> occiAtt = xOCCIAtt;
@@ -1509,8 +1508,8 @@ public class TestManagerController {
 				"123", "321" } });
 		Map<String, String> credentialTwo = MapUtils.putAll(new HashMap(), new String[][] { {
 				"456", "654" } });
-		Mockito.when(localCredentialsPlugin.getLocalCredentials(accessId1)).thenReturn(credentialOne);
-		Mockito.when(localCredentialsPlugin.getLocalCredentials(accessId2)).thenReturn(credentialTwo);
+		Mockito.when(mapperPlugin.getLocalCredentials(accessId1)).thenReturn(credentialOne);
+		Mockito.when(mapperPlugin.getLocalCredentials(accessId2)).thenReturn(credentialTwo);
 		
 		IdentityPlugin localIdentityPlugin = Mockito.mock(IdentityPlugin.class);
 		Token tokenOne = new Token("One", "", new Date(), null);
@@ -1527,7 +1526,7 @@ public class TestManagerController {
 		
 		managerController.setComputePlugin(computePlugin);
 		managerController.setLocalIdentityPlugin(localIdentityPlugin);
-		managerController.setLocalCredentailsPlugin(localCredentialsPlugin);
+		managerController.setLocalCredentailsPlugin(mapperPlugin);
 		
 		ArrayList<FederationMember> items = new ArrayList<FederationMember>();
 		for (int i = 0; i < 10; i++) {
@@ -2629,8 +2628,8 @@ public class TestManagerController {
 
 	@Test
 	public void testGetAllFogbowFedertionInstances() {
-		LocalCredentialsPlugin localCredentialsPlugin = Mockito
-				.mock(LocalCredentialsPlugin.class);
+		MapperPlugin mapperPlugin = Mockito
+				.mock(MapperPlugin.class);
 		Map<String, Map<String, String>> fedUsersCredentials = new HashMap<String, Map<String,String>>();
 		HashMap<String, String> credentialsOne = new HashMap<String, String>();
 		credentialsOne.put("one", "x1");
@@ -2641,8 +2640,8 @@ public class TestManagerController {
 		fedUsersCredentials.put("One", credentialsOne);
 		fedUsersCredentials.put("two", credentialsTwo);
 		fedUsersCredentials.put("three", credentialsThree);
-		Mockito.when(localCredentialsPlugin.getAllLocalCredentials()).thenReturn(fedUsersCredentials);
-		managerController.setLocalCredentailsPlugin(localCredentialsPlugin);
+		Mockito.when(mapperPlugin.getAllLocalCredentials()).thenReturn(fedUsersCredentials);
+		managerController.setLocalCredentailsPlugin(mapperPlugin);
 				
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Token tokenOne = new Token("One", "", null, null);
@@ -2666,8 +2665,8 @@ public class TestManagerController {
 	
 	@Test
 	public void testGetAllFogbowFedertionInstancesWithWrongCrendentials() {
-		LocalCredentialsPlugin localCredentialsPlugin = Mockito
-				.mock(LocalCredentialsPlugin.class);
+		MapperPlugin mapperPlugin = Mockito
+				.mock(MapperPlugin.class);
 		Map<String, Map<String, String>> fedUsersCredentials = new HashMap<String, Map<String,String>>();
 		HashMap<String, String> credentialsOne = new HashMap<String, String>();
 		credentialsOne.put("one", "x1");
@@ -2680,9 +2679,9 @@ public class TestManagerController {
 		fedUsersCredentials.put("two",credentialsTwo);
 		fedUsersCredentials.put("three",credentialsTree);
 		fedUsersCredentials.put("four",credentialsFour);		
-		Mockito.when(localCredentialsPlugin.getAllLocalCredentials())
+		Mockito.when(mapperPlugin.getAllLocalCredentials())
 				.thenReturn(fedUsersCredentials);
-		managerController.setLocalCredentailsPlugin(localCredentialsPlugin);
+		managerController.setLocalCredentailsPlugin(mapperPlugin);
 				
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Token tokenOne = new Token("One", "", null, null);
@@ -2705,8 +2704,8 @@ public class TestManagerController {
 	
 	@Test
 	public void testGetTokenPerInstance() {
-		LocalCredentialsPlugin localCredentialsPlugin = Mockito
-				.mock(LocalCredentialsPlugin.class);
+		MapperPlugin mapperPlugin = Mockito
+				.mock(MapperPlugin.class);
 		Map<String, Map<String, String>> fedUsersCredentials = new HashMap<String, Map<String,String>>();
 		HashMap<String, String> credentialsOne = new HashMap<String, String>();
 		credentialsOne.put("one", "x1");
@@ -2714,8 +2713,8 @@ public class TestManagerController {
 		credentialsTwo.put("two", "y1");
 		fedUsersCredentials.put("one", credentialsOne);
 		fedUsersCredentials.put("two", credentialsTwo);
-		Mockito.when(localCredentialsPlugin.getAllLocalCredentials()).thenReturn(fedUsersCredentials);
-		managerController.setLocalCredentailsPlugin(localCredentialsPlugin);
+		Mockito.when(mapperPlugin.getAllLocalCredentials()).thenReturn(fedUsersCredentials);
+		managerController.setLocalCredentailsPlugin(mapperPlugin);
 				
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Token tokenOne = new Token("One", "", null, null);
@@ -3472,8 +3471,8 @@ public class TestManagerController {
 	
 	@Test
 	public void testGetResourceInfo() {
-		LocalCredentialsPlugin localCredentialsPlugin = Mockito
-				.mock(LocalCredentialsPlugin.class);
+		MapperPlugin mapperPlugin = Mockito
+				.mock(MapperPlugin.class);
 		Map<String, Map<String, String>> fedUsersCredentials = new HashMap<String, Map<String,String>>();
 		HashMap<String, String> credentialsOne = new HashMap<String, String>();
 		credentialsOne.put("one", "x1");
@@ -3484,8 +3483,8 @@ public class TestManagerController {
 		fedUsersCredentials.put("one", credentialsOne);
 		fedUsersCredentials.put("two", credentialsTwo);
 		fedUsersCredentials.put("three", credentialsTree);
-		Mockito.when(localCredentialsPlugin.getAllLocalCredentials()).thenReturn(fedUsersCredentials);
-		managerController.setLocalCredentailsPlugin(localCredentialsPlugin);
+		Mockito.when(mapperPlugin.getAllLocalCredentials()).thenReturn(fedUsersCredentials);
+		managerController.setLocalCredentailsPlugin(mapperPlugin);
 				
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Token tokenOne = new Token("One", "", null, null);
@@ -3513,8 +3512,8 @@ public class TestManagerController {
 	
 	@Test
 	public void testGetResourceInfoWorngCredentials() {
-		LocalCredentialsPlugin localCredentialsPlugin = Mockito
-				.mock(LocalCredentialsPlugin.class);
+		MapperPlugin mapperPlugin = Mockito
+				.mock(MapperPlugin.class);
 		Map<String, Map<String, String>> fedUsersCredentials = new HashMap<String, Map<String,String>>();
 		HashMap<String, String> credentialsOne = new HashMap<String, String>();
 		credentialsOne.put("one", "x1");
@@ -3526,9 +3525,9 @@ public class TestManagerController {
 		fedUsersCredentials.put("two", credentialsTwo);
 		fedUsersCredentials.put("three", credentialsTree);
 		fedUsersCredentials.put("four", credentialsFour);
-		Mockito.when(localCredentialsPlugin.getAllLocalCredentials())
+		Mockito.when(mapperPlugin.getAllLocalCredentials())
 					.thenReturn(fedUsersCredentials);
-		managerController.setLocalCredentailsPlugin(localCredentialsPlugin);
+		managerController.setLocalCredentailsPlugin(mapperPlugin);
 				
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Token tokenOne = new Token("One", "", null, null);

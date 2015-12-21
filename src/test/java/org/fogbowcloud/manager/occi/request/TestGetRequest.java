@@ -20,7 +20,7 @@ import org.apache.http.util.EntityUtils;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
-import org.fogbowcloud.manager.core.plugins.LocalCredentialsPlugin;
+import org.fogbowcloud.manager.core.plugins.MapperPlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.model.Category;
@@ -68,13 +68,13 @@ public class TestGetRequest {
 
 		Mockito.when(identityPlugin.getToken(OCCITestHelper.ACCESS_TOKEN)).thenReturn(userToken);
 
-		LocalCredentialsPlugin localCredentialsPlugin = Mockito
-				.mock(LocalCredentialsPlugin.class);
+		MapperPlugin mapperPlugin = Mockito
+				.mock(MapperPlugin.class);
 		Map<String, Map<String, String>> defaultFederationUsersCrendetials = 
 				new HashMap<String, Map<String,String>>();
 		HashMap<String, String> credentails = new HashMap<String, String>();
 		defaultFederationUsersCrendetials.put("one", credentails);
-		Mockito.when(localCredentialsPlugin.getAllLocalCredentials()).thenReturn(
+		Mockito.when(mapperPlugin.getAllLocalCredentials()).thenReturn(
 				defaultFederationUsersCrendetials);
 		Mockito.when(identityPlugin.createToken(credentails)).thenReturn(
 				new Token("id", OCCITestHelper.USER_MOCK, new Date(), new HashMap<String, String>()));		
@@ -84,7 +84,7 @@ public class TestGetRequest {
 		
 		BenchmarkingPlugin benchmarkingPlugin = Mockito.mock(BenchmarkingPlugin.class);
 		this.requestHelper.initializeComponentExecutorSameThread(computePlugin, identityPlugin,
-				authorizationPlugin, benchmarkingPlugin, localCredentialsPlugin);
+				authorizationPlugin, benchmarkingPlugin, mapperPlugin);
 	}
 
 	@Test

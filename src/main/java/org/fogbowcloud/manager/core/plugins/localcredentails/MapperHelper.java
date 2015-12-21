@@ -6,9 +6,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-public class LocalCredentialsHelper {
+public class MapperHelper {
 	
-	public static String LOCAL_CREDENTIAL_PREFIX = "local_credential_";
+	public static String MAPPER_PREFIX = "mapper_";
 	public static String UNDERLINE = "_";
 	public static String FOGBOW_DEFAULTS = "defaults";
 
@@ -22,8 +22,8 @@ public class LocalCredentialsHelper {
 		}
 		for (Object key : properties.keySet()) {
 			String keyStr = key.toString();
-			if (keyStr.startsWith(LOCAL_CREDENTIAL_PREFIX)) {
-				String[] splitKeys = keyStr.replace(LOCAL_CREDENTIAL_PREFIX, "").split("_");
+			if (keyStr.startsWith(MAPPER_PREFIX)) {
+				String[] splitKeys = keyStr.replace(MAPPER_PREFIX, "").split("_");
 				if (splitKeys.length <= 1) {
 					continue;
 				}
@@ -48,7 +48,7 @@ public class LocalCredentialsHelper {
 			Properties properties, String relatedLocalName) {
 		Map<String, String> credentials = new HashMap<String, String>();
 		for (Object key : properties.keySet()) {
-			String prefix = LOCAL_CREDENTIAL_PREFIX + relatedLocalName + "_";
+			String prefix = MAPPER_PREFIX + relatedLocalName + "_";
 			if (key.toString().startsWith(prefix)) {
 				String crendentialKey = key.toString().replace(prefix, "");
 				credentials.put(crendentialKey.toString(), properties.get(

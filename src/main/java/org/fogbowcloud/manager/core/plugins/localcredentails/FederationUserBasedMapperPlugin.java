@@ -6,16 +6,16 @@ import java.util.Properties;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
-import org.fogbowcloud.manager.core.plugins.LocalCredentialsPlugin;
+import org.fogbowcloud.manager.core.plugins.MapperPlugin;
 import org.fogbowcloud.manager.occi.request.Request;
 
-public class FederationUserBasedLocalCrendentialsPlugin implements LocalCredentialsPlugin {
+public class FederationUserBasedMapperPlugin implements MapperPlugin {
 
 	private Properties properties;
 	private IdentityPlugin federationIdentityPlugin;
-	private static final Logger LOGGER = Logger.getLogger(FederationUserBasedLocalCrendentialsPlugin.class);
+	private static final Logger LOGGER = Logger.getLogger(FederationUserBasedMapperPlugin.class);
 	
-	public FederationUserBasedLocalCrendentialsPlugin(Properties properties) {
+	public FederationUserBasedMapperPlugin(Properties properties) {
 		this.properties = properties;
 		
 		LOGGER.debug("Using FederationUserBasedLocalCredentialsPlugin");
@@ -50,40 +50,40 @@ public class FederationUserBasedLocalCrendentialsPlugin implements LocalCredenti
 
 	@Override
 	public Map<String, String> getLocalCredentials(Request request) {
-		String normalizedUser = LocalCredentialsHelper.normalizeUser(request.getFederationToken()
+		String normalizedUser = MapperHelper.normalizeUser(request.getFederationToken()
 				.getUser());
 
 		LOGGER.debug("normalizedFederationUser=" + normalizedUser);
-		Map<String, String> credentialsPerMember = LocalCredentialsHelper
+		Map<String, String> credentialsPerMember = MapperHelper
 				.getCredentialsPerRelatedLocalName(this.properties, normalizedUser);
 
 		LOGGER.debug("Credentials for " + normalizedUser + " are " + credentialsPerMember);
 		if (!credentialsPerMember.isEmpty()) {
 			return credentialsPerMember;
 		}
-		return LocalCredentialsHelper.getCredentialsPerRelatedLocalName(this.properties,
-				LocalCredentialsHelper.FOGBOW_DEFAULTS);
+		return MapperHelper.getCredentialsPerRelatedLocalName(this.properties,
+				MapperHelper.FOGBOW_DEFAULTS);
 	}
 
 	@Override
 	public Map<String, Map<String, String>> getAllLocalCredentials() {
-		return LocalCredentialsHelper.getLocalCredentials(properties, null);
+		return MapperHelper.getLocalCredentials(properties, null);
 	}
 
 	@Override
 	public Map<String, String> getLocalCredentials(String accessId) {
-		String normalizedUser = LocalCredentialsHelper.normalizeUser(federationIdentityPlugin
+		String normalizedUser = MapperHelper.normalizeUser(federationIdentityPlugin
 				.getToken(accessId).getUser());
 		LOGGER.debug("normalizeFederationUser=" + normalizedUser);
 
-		Map<String, String> credentialsPerMember = LocalCredentialsHelper
+		Map<String, String> credentialsPerMember = MapperHelper
 				.getCredentialsPerRelatedLocalName(this.properties, normalizedUser);
 
 		LOGGER.debug("Credentials for " + normalizedUser + " are " + credentialsPerMember);
 		if (!credentialsPerMember.isEmpty()) {
 			return credentialsPerMember;
 		}
-		return LocalCredentialsHelper.getCredentialsPerRelatedLocalName(this.properties,
-				LocalCredentialsHelper.FOGBOW_DEFAULTS);
+		return MapperHelper.getCredentialsPerRelatedLocalName(this.properties,
+				MapperHelper.FOGBOW_DEFAULTS);
 	}
 }

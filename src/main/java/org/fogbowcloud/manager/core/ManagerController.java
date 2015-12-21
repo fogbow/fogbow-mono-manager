@@ -50,7 +50,7 @@ import org.fogbowcloud.manager.core.plugins.FederationMemberAuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.FederationMemberPickerPlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
-import org.fogbowcloud.manager.core.plugins.LocalCredentialsPlugin;
+import org.fogbowcloud.manager.core.plugins.MapperPlugin;
 import org.fogbowcloud.manager.core.plugins.PrioritizationPlugin;
 import org.fogbowcloud.manager.core.plugins.accounting.ResourceUsage;
 import org.fogbowcloud.manager.core.plugins.util.SshClientPool;
@@ -123,7 +123,7 @@ public class ManagerController {
 	private IdentityPlugin localIdentityPlugin;
 	private IdentityPlugin federationIdentityPlugin;
 	private PrioritizationPlugin prioritizationPlugin;
-	private LocalCredentialsPlugin localCredentialsPlugin;
+	private MapperPlugin mapperPlugin;
 	private Properties properties;
 	private AsyncPacketSender packetSender;
 	private FederationMemberAuthorizationPlugin validator;
@@ -340,7 +340,7 @@ public class ManagerController {
 	protected List<Instance> getAllFogbowFederationInstances() {
 		this.instanceIdToToken = new HashMap<String, Token>();
 		List<Instance> federationInstances = new ArrayList<Instance>();
-		Map<String, Map<String, String>> allLocalCredentials = this.localCredentialsPlugin.getAllLocalCredentials();
+		Map<String, Map<String, String>> allLocalCredentials = this.mapperPlugin.getAllLocalCredentials();
 		for (String localName : allLocalCredentials.keySet()) {
 			Map<String, String> credentials = allLocalCredentials.get(localName);
 			List<Instance> instances = null;
@@ -471,7 +471,7 @@ public class ManagerController {
 	}
 
 	public Map<String, String> getLocalCredentials(String accessId) {
-		return localCredentialsPlugin.getLocalCredentials(accessId);
+		return mapperPlugin.getLocalCredentials(accessId);
 	}
 
 	public ResourcesInfo getResourcesInfo() {
@@ -488,7 +488,7 @@ public class ManagerController {
 			return totalResourcesInfo;
 		}
 
-		Map<String, Map<String, String>> allLocalCredentials = this.localCredentialsPlugin.getAllLocalCredentials();
+		Map<String, Map<String, String>> allLocalCredentials = this.mapperPlugin.getAllLocalCredentials();
 		List<Map<String, String>> credentialsUsed = new ArrayList<Map<String, String>>();
 		for (String localName : allLocalCredentials.keySet()) {
 			Map<String, String> credentials = allLocalCredentials.get(localName);
@@ -992,7 +992,7 @@ public class ManagerController {
 
 	protected Token getFederationUserToken(Request request) {
 		LOGGER.debug("Getting federation user token.");
-		return localIdentityPlugin.createToken(localCredentialsPlugin.getLocalCredentials(request));
+		return localIdentityPlugin.createToken(mapperPlugin.getLocalCredentials(request));
 	}
 
 	public Instance getInstanceForRemoteMember(String instanceId) {
@@ -1640,12 +1640,12 @@ public class ManagerController {
 		return requests.getAllServedRequests();
 	}
 
-	public LocalCredentialsPlugin getLocalCredentailsPlugin() {
-		return localCredentialsPlugin;
+	public MapperPlugin getLocalCredentailsPlugin() {
+		return mapperPlugin;
 	}
 
-	public void setLocalCredentailsPlugin(LocalCredentialsPlugin localCredentialsPlugin) {
-		this.localCredentialsPlugin = localCredentialsPlugin;
+	public void setLocalCredentailsPlugin(MapperPlugin mapperPlugin) {
+		this.mapperPlugin = mapperPlugin;
 	}
 
 	public List<Resource> getAllResouces(String accessId) {

@@ -19,7 +19,7 @@ import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
-import org.fogbowcloud.manager.core.plugins.LocalCredentialsPlugin;
+import org.fogbowcloud.manager.core.plugins.MapperPlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
@@ -95,11 +95,11 @@ public class TestDeleteCompute {
 		AccountingPlugin accountingPlugin = Mockito.mock(AccountingPlugin.class);
 		BenchmarkingPlugin benchmarkingPlugin = Mockito.mock(BenchmarkingPlugin.class);
 		
-		LocalCredentialsPlugin localCredentialsPlugin = Mockito
-				.mock(LocalCredentialsPlugin.class);
+		MapperPlugin mapperPlugin = Mockito
+				.mock(MapperPlugin.class);
 		Map<String, String> crendentials = new HashMap<String, String>();
 		Mockito.when(
-				localCredentialsPlugin.getLocalCredentials(Mockito.any(Request.class)))
+				mapperPlugin.getLocalCredentials(Mockito.any(Request.class)))
 				.thenReturn(crendentials);
 		Mockito.when(identityPlugin.createToken(crendentials)).thenReturn(tokenTwo);
 		
@@ -109,7 +109,7 @@ public class TestDeleteCompute {
 		instanceDB = new InstanceDataStore(INSTANCE_DB_URL);
 		facade = this.helper.initializeComponentCompute(computePlugin, identityPlugin, authorizationPlugin,
 				imageStoragePlugin, accountingPlugin, benchmarkingPlugin, requestsToAdd,
-				localCredentialsPlugin);
+				mapperPlugin);
 		
 	}
 
@@ -199,6 +199,7 @@ public class TestDeleteCompute {
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 	
+	@SuppressWarnings("deprecation")
 	@Test
 	public void testDeletePostCompute() throws Exception {
 		
@@ -231,6 +232,7 @@ public class TestDeleteCompute {
 		Assert.assertEquals(0, instanceDB.getAllByUser(fakeUser).size());
 	}
 	
+	@SuppressWarnings("deprecation")
 	@Test
 	public void testDeleteSpecificPostCompute() throws Exception {
 		

@@ -148,26 +148,26 @@ federation_user_credentail_class=org.fogbowcloud.manager.core.plugins.localcrede
 ## Mandatory for Local Credentails
 
 # Local credentials for openstack
-local_credential_defaults_username=fogbow
-local_credential_defaults_password=fogbow
-local_credential_defaults_tenantName=fogbow
+mapper_defaults_username=fogbow
+mapper_defaults_password=fogbow
+mapper_defaults_tenantName=fogbow
 
 # Local credentials for opennebula
-# local_credential_defaults_username=fogbow
-# local_credential_defaults_password=fogbowpass
+# mapper_defaults_username=fogbow
+# mapper_defaults_password=fogbowpass
 
 ## Local credentials for (EC2)
-# local_credential_defaults_accessKey=AKIALSKQLKFD7AHQLKEUO
-# local_credential_defaults_secretKey=Iuaooiad&891/2309asd0123+akplkdh
+# mapper_defaults_accessKey=AKIALSKQLKFD7AHQLKEUO
+# mapper_defaults_secretKey=Iuaooiad&891/2309asd0123+akplkdh
 
 ## Local credentials for Cloudstack
-# local_credential_defaults_apiKey=user_api_key
-# local_credential_defaults_secretKey=user_secret_key
+# mapper_defaults_apiKey=user_api_key
+# mapper_defaults_secretKey=user_secret_key
 
 ## Optional for Local Credentails
-# local_credential_other_username=
-# local_credential_other_password=
-# local_credential_other_tenantName=
+# mapper_other_username=
+# mapper_other_password=
+# mapper_other_tenantName=
 
 ## Authorization Plugin
 federation_authorization_class=org.fogbowcloud.manager.core.plugins.authorization.AllowAllAuthorizationPlugin
@@ -188,9 +188,9 @@ federation_identity_url=http://localhost:5000
 
 ## Identity (Azure)
 # federation_identity_class=org.fogbowcloud.manager.core.plugins.identity.azure.AzureIdentityPlugin
-# local_credential_defaults_subscription_id=subscription_id
-# local_credential_defaults_keystore_path=/etc/keystore/azure
-# local_credential_defaults_keystore_password=test123
+# mapper_defaults_subscription_id=subscription_id
+# mapper_defaults_keystore_path=/etc/keystore/azure
+# mapper_defaults_keystore_password=test123
 
 ## Member Validator
 member_validator_class=org.fogbowcloud.manager.core.plugins.memberauthorization.DefaultMemberAuthorizationPlugin

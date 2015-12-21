@@ -4,7 +4,7 @@ import java.util.Map;
 
 import org.fogbowcloud.manager.occi.request.Request;
 
-public interface LocalCredentialsPlugin {
+public interface MapperPlugin {
 
 	public Map<String, String> getLocalCredentials(Request request);
 

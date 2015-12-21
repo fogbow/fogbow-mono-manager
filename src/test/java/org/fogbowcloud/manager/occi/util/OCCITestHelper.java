@@ -31,7 +31,7 @@ import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
-import org.fogbowcloud.manager.core.plugins.LocalCredentialsPlugin;
+import org.fogbowcloud.manager.core.plugins.MapperPlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.OCCIApplication;
 import org.fogbowcloud.manager.occi.model.HeaderUtils;
@@ -74,7 +74,7 @@ public class OCCITestHelper {
 
 	public void initializeComponentExecutorSameThread(ComputePlugin computePlugin, IdentityPlugin identityPlugin,
 			AuthorizationPlugin authorizationPlugin, BenchmarkingPlugin benchmarkingPlugin,
-			LocalCredentialsPlugin localCredentialsPlugin) throws Exception {
+			MapperPlugin mapperPlugin) throws Exception {
 		component = new Component();
 		component.getServers().add(Protocol.HTTP, ENDPOINT_PORT);
 
@@ -101,7 +101,7 @@ public class OCCITestHelper {
 		ManagerController facade = new ManagerController(properties, executor);
 		ResourceRepository.init(properties);
 		facade.setComputePlugin(computePlugin);
-		facade.setLocalCredentailsPlugin(localCredentialsPlugin);
+		facade.setLocalCredentailsPlugin(mapperPlugin);
 		facade.setAuthorizationPlugin(authorizationPlugin);
 		facade.setLocalIdentityPlugin(identityPlugin);
 		facade.setFederationIdentityPlugin(identityPlugin);
@@ -138,15 +138,15 @@ public class OCCITestHelper {
 	public ManagerController initializeComponentCompute(ComputePlugin computePlugin, IdentityPlugin identityPlugin,
 			AuthorizationPlugin authorizationPlugin, ImageStoragePlugin imageStoragePlugin,
 			AccountingPlugin accountingPlugin, BenchmarkingPlugin benchmarkingPlugin, Map<String, List<Request>> requestsToAdd,
-			LocalCredentialsPlugin localCredentialsPlugin) throws Exception {
+			MapperPlugin mapperPlugin) throws Exception {
 		return initializeComponentCompute(computePlugin, identityPlugin, authorizationPlugin,
 				imageStoragePlugin, accountingPlugin, benchmarkingPlugin, requestsToAdd,
-				localCredentialsPlugin, null);
+				mapperPlugin, null);
 	}
 	public ManagerController initializeComponentCompute(ComputePlugin computePlugin, IdentityPlugin identityPlugin,
 			AuthorizationPlugin authorizationPlugin, ImageStoragePlugin imageStoragePlugin,
 			AccountingPlugin accountingPlugin, BenchmarkingPlugin benchmarkingPlugin, Map<String, List<Request>> requestsToAdd,
-			LocalCredentialsPlugin localCredentialsPlugin, Properties properties) throws Exception {
+			MapperPlugin mapperPlugin, Properties properties) throws Exception {
 		component = new Component();
 		component.getServers().add(Protocol.HTTP, ENDPOINT_PORT);
 
@@ -168,7 +168,7 @@ public class OCCITestHelper {
 		ManagerController facade = new ManagerController(properties);
 		facade.setComputePlugin(computePlugin);
 		facade.setAuthorizationPlugin(authorizationPlugin);
-		facade.setLocalCredentailsPlugin(localCredentialsPlugin);
+		facade.setLocalCredentailsPlugin(mapperPlugin);
 		facade.setLocalIdentityPlugin(identityPlugin);
 		facade.setFederationIdentityPlugin(identityPlugin);
 		facade.setImageStoragePlugin(imageStoragePlugin);
@@ -192,14 +192,14 @@ public class OCCITestHelper {
 
 	public void initializeComponentMember(ComputePlugin computePlugin, IdentityPlugin identityPlugin,
 			AuthorizationPlugin authorizationPlugin, AccountingPlugin accountingPlugin,
-			List<FederationMember> federationMembers, LocalCredentialsPlugin localCredentialsPlugin) throws Exception {
+			List<FederationMember> federationMembers, MapperPlugin mapperPlugin) throws Exception {
 		initializeComponentMember(computePlugin, identityPlugin, authorizationPlugin,
-				accountingPlugin, federationMembers, localCredentialsPlugin, null);
+				accountingPlugin, federationMembers, mapperPlugin, null);
 	}
 	
 	public void initializeComponentMember(ComputePlugin computePlugin, IdentityPlugin identityPlugin,
 			AuthorizationPlugin authorizationPlugin, AccountingPlugin accountingPlugin,
-			List<FederationMember> federationMembers, LocalCredentialsPlugin localCredentialsPlugin, AsyncPacketSender packetSender) throws Exception {
+			List<FederationMember> federationMembers, MapperPlugin mapperPlugin, AsyncPacketSender packetSender) throws Exception {
 		component = new Component();
 		component.getServers().add(Protocol.HTTP, ENDPOINT_PORT);
 
@@ -211,7 +211,7 @@ public class OCCITestHelper {
 		facade.setFederationIdentityPlugin(identityPlugin);
 		facade.setAuthorizationPlugin(authorizationPlugin);
 		facade.setAccountingPlugin(accountingPlugin);
-		facade.setLocalCredentailsPlugin(localCredentialsPlugin);
+		facade.setLocalCredentailsPlugin(mapperPlugin);
 		facade.updateMembers(federationMembers);
 		
 		if (packetSender != null) {

@@ -1,0 +1,3 @@
+mapper_CN->GiovanniFarias,OU->DSC,O->UFCG,O->UFFBrGridCA,O->ICPEDU,C->BR_username=user1
+mapper_CN->GiovanniFarias,OU->DSC,O->UFCG,O->UFFBrGridCA,O->ICPEDU,C->BR_password=userpass1
+mapper_CN->GiovanniFarias,OU->DSC,O->UFCG,O->UFFBrGridCA,O->ICPEDU,C->BR_tenantName=usertenant1

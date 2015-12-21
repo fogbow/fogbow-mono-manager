@@ -26,7 +26,7 @@ import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
-import org.fogbowcloud.manager.core.plugins.LocalCredentialsPlugin;
+import org.fogbowcloud.manager.core.plugins.MapperPlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.ErrorType;
@@ -59,11 +59,12 @@ public class TestPostCompute {
 	private IdentityPlugin identityPlugin;
 	private OCCITestHelper helper;
 	private ImageStoragePlugin imageStoragePlugin;
-	private LocalCredentialsPlugin localCredentialsPlugin;
+	private MapperPlugin mapperPlugin;
 
 	@Rule
 	public final ExpectedException exception = ExpectedException.none();
 	
+	@SuppressWarnings("unchecked")
 	@Before
 	public void setup() throws Exception {
 		this.helper = new OCCITestHelper();
@@ -104,8 +105,8 @@ public class TestPostCompute {
 		authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
 		Mockito.when(authorizationPlugin.isAuthorized(Mockito.any(Token.class))).thenReturn(true);
 
-		localCredentialsPlugin = Mockito.mock(LocalCredentialsPlugin.class);
-		Mockito.when(localCredentialsPlugin.getLocalCredentials(Mockito.any(Request.class)))
+		mapperPlugin = Mockito.mock(MapperPlugin.class);
+		Mockito.when(mapperPlugin.getLocalCredentials(Mockito.any(Request.class)))
 				.thenReturn(new HashMap<String, String>());
 
 		imageStoragePlugin = Mockito.mock(ImageStoragePlugin.class);
@@ -115,7 +116,7 @@ public class TestPostCompute {
 
 		this.helper.initializeComponentCompute(computePlugin, identityPlugin, authorizationPlugin,
 				imageStoragePlugin, Mockito.mock(AccountingPlugin.class), Mockito.mock(BenchmarkingPlugin.class),
-				requestsToAdd, localCredentialsPlugin);
+				requestsToAdd, mapperPlugin);
 
 	}
 

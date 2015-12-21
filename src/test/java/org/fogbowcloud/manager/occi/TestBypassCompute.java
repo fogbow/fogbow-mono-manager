@@ -25,7 +25,7 @@ import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
-import org.fogbowcloud.manager.core.plugins.LocalCredentialsPlugin;
+import org.fogbowcloud.manager.core.plugins.MapperPlugin;
 import org.fogbowcloud.manager.core.plugins.compute.openstack.OpenStackConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.compute.openstack.OpenStackOCCIComputePlugin;
 import org.fogbowcloud.manager.core.plugins.compute.openstack.OpenstackOCCITestHelper;
@@ -64,7 +64,7 @@ public class TestBypassCompute {
 	private AuthorizationPlugin authorizationPlugin;
 	private Token defaultToken;
 	private ImageStoragePlugin imageStoragePlugin;
-	private LocalCredentialsPlugin localCredentialsPlugin;
+	private MapperPlugin mapperPlugin;
 	
 	@Before
 	public void setup() throws Exception{
@@ -116,8 +116,8 @@ public class TestBypassCompute {
 		//initializing fake Cloud Compute Application
 		pluginHelper.initializeOCCIComputeComponent(expectedInstanceIds);
 		
-		localCredentialsPlugin = Mockito.mock(LocalCredentialsPlugin.class);
-		Mockito.when(localCredentialsPlugin.getLocalCredentials(Mockito.any(Request.class)))
+		mapperPlugin = Mockito.mock(MapperPlugin.class);
+		Mockito.when(mapperPlugin.getLocalCredentials(Mockito.any(Request.class)))
 				.thenReturn(new HashMap<String, String>());
 		
 		authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
@@ -134,7 +134,7 @@ public class TestBypassCompute {
 		helper = new OCCITestHelper();
 		helper.initializeComponentCompute(computePlugin, identityPlugin, authorizationPlugin,
 				imageStoragePlugin, Mockito.mock(AccountingPlugin.class),
-				Mockito.mock(BenchmarkingPlugin.class), requestsToAdd, localCredentialsPlugin);
+				Mockito.mock(BenchmarkingPlugin.class), requestsToAdd, mapperPlugin);
 	}
 
 	@After

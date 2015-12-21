@@ -5,26 +5,26 @@ import java.util.Date;
 import java.util.Map;
 import java.util.Properties;
 
-import org.fogbowcloud.manager.core.plugins.LocalCredentialsPlugin;
+import org.fogbowcloud.manager.core.plugins.MapperPlugin;
 import org.fogbowcloud.manager.occi.request.Request;
 
-public class SingleLocalCrendentialsPlugin implements LocalCredentialsPlugin {
+public class SingleMapperPlugin implements MapperPlugin {
 
 	private Properties properties;
 	
-	public SingleLocalCrendentialsPlugin(Properties properties) {
+	public SingleMapperPlugin(Properties properties) {
 		this.properties = properties;
 	}
 
 	@Override
 	public Map<String, String> getLocalCredentials(Request request) {
-		return LocalCredentialsHelper.getCredentialsPerRelatedLocalName(this.properties, LocalCredentialsHelper.FOGBOW_DEFAULTS);
+		return MapperHelper.getCredentialsPerRelatedLocalName(this.properties, MapperHelper.FOGBOW_DEFAULTS);
 	}
 
 	@Override
 	public Map<String, Map<String, String>> getAllLocalCredentials() {
-		return LocalCredentialsHelper.getLocalCredentials(properties,
-				Arrays.asList(new String[] { LocalCredentialsHelper.FOGBOW_DEFAULTS }));
+		return MapperHelper.getLocalCredentials(properties,
+				Arrays.asList(new String[] { MapperHelper.FOGBOW_DEFAULTS }));
 	}
 
 	@Override

@@ -9,16 +9,16 @@ import java.util.Properties;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestLocalCredentialsHelper {
+public class TestMapperHelper {
 
 	@Test
 	public void testGetCredentialsPerRelatedLocalName() {
 		Properties p = new Properties();
-		p.put("local_credential_eubrazilcc_username", "fogbow");
-		p.put("local_credential_eubrazilcc_password", "fogbow");
-		p.put("local_credential_eubrazilcc_tenantName", "fogbow");
+		p.put(MapperHelper.MAPPER_PREFIX + "eubrazilcc_username", "fogbow");
+		p.put(MapperHelper.MAPPER_PREFIX + "eubrazilcc_password", "fogbow");
+		p.put(MapperHelper.MAPPER_PREFIX + "eubrazilcc_tenantName", "fogbow");
 		
-		Map<String, String> localCredentials = LocalCredentialsHelper.getCredentialsPerRelatedLocalName(p,
+		Map<String, String> localCredentials = MapperHelper.getCredentialsPerRelatedLocalName(p,
 				"eubrazilcc");
 		
 		Map<String, String> expectedCredentials = new HashMap<String, String>();
@@ -32,11 +32,11 @@ public class TestLocalCredentialsHelper {
 	@Test
 	public void testGetCredentialsPerComplexLocalName() {
 		Properties p = new Properties();
-		p.put("local_credential_CN=Giovanni Farias, OU=DSC, O=UFCG, O=UFF BrGrid CA, O=ICPEDU, C=BR_username", "fogbow");
-		p.put("local_credential_CN=Giovanni Farias, OU=DSC, O=UFCG, O=UFF BrGrid CA, O=ICPEDU, C=BR_password", "fogbow");
-		p.put("local_credential_CN=Giovanni Farias, OU=DSC, O=UFCG, O=UFF BrGrid CA, O=ICPEDU, C=BR_tenantName", "fogbow");
+		p.put(MapperHelper.MAPPER_PREFIX + "CN=Giovanni Farias, OU=DSC, O=UFCG, O=UFF BrGrid CA, O=ICPEDU, C=BR_username", "fogbow");
+		p.put(MapperHelper.MAPPER_PREFIX + "CN=Giovanni Farias, OU=DSC, O=UFCG, O=UFF BrGrid CA, O=ICPEDU, C=BR_password", "fogbow");
+		p.put(MapperHelper.MAPPER_PREFIX + "CN=Giovanni Farias, OU=DSC, O=UFCG, O=UFF BrGrid CA, O=ICPEDU, C=BR_tenantName", "fogbow");
 		
-		Map<String, String> localCredentials = LocalCredentialsHelper.getCredentialsPerRelatedLocalName(p,
+		Map<String, String> localCredentials = MapperHelper.getCredentialsPerRelatedLocalName(p,
 				"CN=Giovanni Farias, OU=DSC, O=UFCG, O=UFF BrGrid CA, O=ICPEDU, C=BR");
 		
 		Map<String, String> expectedCredentials = new HashMap<String, String>();
@@ -49,15 +49,15 @@ public class TestLocalCredentialsHelper {
 	
 	@Test
 	public void testGetCredentialsFromFile() throws IOException {		
-		String propertiesFile = "src/test/resources/local_credentials/fake_properties";
+		String propertiesFile = "src/test/resources/mapper/fake_properties";
 
 		Properties properties = new Properties();
 		FileInputStream input = new FileInputStream(propertiesFile);
 		properties.load(input);
 
-		String normalizeUser = LocalCredentialsHelper
+		String normalizeUser = MapperHelper
 				.normalizeUser("CN=Giovanni Farias, OU=DSC, O=UFCG, O=UFF BrGrid CA, O=ICPEDU, C=BR");
-		Map<String, String> localCredentials = LocalCredentialsHelper
+		Map<String, String> localCredentials = MapperHelper
 				.getCredentialsPerRelatedLocalName(properties, normalizeUser);
 
 		Map<String, String> expectedCredentials = new HashMap<String, String>();
