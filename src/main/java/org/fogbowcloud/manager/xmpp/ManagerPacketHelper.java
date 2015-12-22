@@ -58,7 +58,8 @@ public class ManagerPacketHelper {
 			return null;
 		}
 
-		return response.getElement().element("query").element(I_AM_ALIVE_PERIOD).getText();
+		Element aIamALivePeriod = response.getElement().element("query").element(I_AM_ALIVE_PERIOD);
+		return aIamALivePeriod != null ? aIamALivePeriod.getText() : "";
 	}
 
 	public static void wakeUpSleepingHost(int minCPU, int minRAM, String greenAddress, PacketSender packetSender) {

@@ -20,7 +20,7 @@ public class RoundRobinMemberPickerPlugin implements FederationMemberPickerPlugi
 
 	@Override
 	public synchronized FederationMember pick(List<FederationMember> members) {
-		if (members == null) {
+		if (members == null || members.isEmpty()) {
 			return null;
 		}
 		ArrayList<FederationMember> membersListCopy = new ArrayList<FederationMember>(members);
