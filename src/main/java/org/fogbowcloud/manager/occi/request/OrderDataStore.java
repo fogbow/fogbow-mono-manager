@@ -1,6 +1,7 @@
 package org.fogbowcloud.manager.occi.request;
 
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -14,13 +15,14 @@ import java.util.Properties;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.occi.JSONHelper;
 import org.fogbowcloud.manager.occi.model.Token;
-import org.h2.jdbcx.JdbcConnectionPool;
 import org.json.JSONException;
 
 public class OrderDataStore {
 
 	private static final Logger LOGGER = Logger.getLogger(OrderDataStore.class);
 	protected static final String ORDER_DATASTORE_URL = "order_datastore_url";
+	protected static final String ORDER_DATASTORE_URL_DEFAULT = "jdbc:sqlite:/tmp/dbOrderSQLite.db";
+	protected static final String ORDER_DATASTORE_SQLITE_DRIVER = "org.sqlite.JDBC";
 	protected static final String ORDER_TABLE_NAME = "t_order";
 	protected static final String ORDER_ID = "order_id";
 	protected static final String PROVIDING_MEMBER_ID = "providing_member_id";
@@ -35,18 +37,17 @@ public class OrderDataStore {
 	protected static final String UPDATED = "updated";
 	
 	private String dataStoreURL;
-	private JdbcConnectionPool cp;
 
 	public OrderDataStore(Properties properties) {
-		this.dataStoreURL = properties.getProperty(ORDER_DATASTORE_URL);
+		this.dataStoreURL = properties.getProperty(ORDER_DATASTORE_URL, ORDER_DATASTORE_URL_DEFAULT);
 		
 		Statement statement = null;
 		Connection connection = null;
 		try {
 			LOGGER.debug("DatastoreURL: " + dataStoreURL);
+			LOGGER.debug("DatastoreDriver: " + ORDER_DATASTORE_SQLITE_DRIVER);
 
-			Class.forName("org.h2.Driver");
-			this.cp = JdbcConnectionPool.create(dataStoreURL, "sa", "");
+			Class.forName(ORDER_DATASTORE_SQLITE_DRIVER);
 
 			connection = getConnection();
 			statement = connection.createStatement();
@@ -133,8 +134,7 @@ public class OrderDataStore {
 			String ordersStmtStr = GET_ORDERS_SQL;
 			
 			ordersStmt = connection.prepareStatement(ordersStmtStr);
-			ordersStmt.executeQuery();
-			ResultSet resultSet = ordersStmt.getResultSet();
+			ResultSet resultSet = ordersStmt.executeQuery();
 			while (resultSet.next()) {
 				resultSet.getString(1);
 				
@@ -324,7 +324,7 @@ public class OrderDataStore {
 	
 	public Connection getConnection() throws SQLException {
 		try {
-			return cp.getConnection();
+			return DriverManager.getConnection(this.dataStoreURL);
 		} catch (SQLException e) {
 			LOGGER.error("Error while getting a new connection from the connection pool.", e);
 			throw e;
@@ -351,10 +351,6 @@ public class OrderDataStore {
 				LOGGER.error("Couldn't close connection");
 			}
 		}
-	}
-
-	public void dispose() {
-		cp.dispose();
 	}
 
 }

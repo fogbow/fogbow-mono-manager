@@ -13,9 +13,14 @@ public class TestRoundRobinMemberPicker {
 	@Test
 	public void testListMembersNull() {
 		RoundRobinMemberPickerPlugin roundRobinMemberPicker = new RoundRobinMemberPickerPlugin(null, null);
-		Assert.assertNull(roundRobinMemberPicker.pick(null));
-		
+		Assert.assertNull(roundRobinMemberPicker.pick(null));	
 	}
+	
+	@Test
+	public void testListMembersEmpty() {
+		RoundRobinMemberPickerPlugin roundRobinMemberPicker = new RoundRobinMemberPickerPlugin(null, null);
+		Assert.assertNull(roundRobinMemberPicker.pick(new ArrayList<FederationMember>()));	
+	}	
 	
 	@Test
 	public void testPick() {

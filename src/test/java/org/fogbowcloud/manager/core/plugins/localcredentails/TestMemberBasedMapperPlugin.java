@@ -3,16 +3,17 @@ package org.fogbowcloud.manager.core.plugins.localcredentails;
 import java.util.Map;
 import java.util.Properties;
 
-import org.fogbowcloud.manager.core.plugins.localcredentails.LocalCredentialsHelper;
-import org.fogbowcloud.manager.core.plugins.localcredentails.MemberBasedLocalCrendetialsPlugin;
+import org.fogbowcloud.manager.core.plugins.localcredentails.MapperHelper;
+import org.fogbowcloud.manager.core.plugins.localcredentails.MemberBasedMapperPlugin;
+import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-public class TestMemberBasedLocalCrendetialsPlugin {
+public class TestMemberBasedMapperPlugin {
 	
-	private MemberBasedLocalCrendetialsPlugin memberBasedLocalCrendetialsPlugin;
+	private MemberBasedMapperPlugin memberBasedMapperPlugin;
 	private final String CREDENTIAL_ONE = "credOne";
 	private final String CREDENTIAL_TWO = "credTwo";
 	private String MEMBER_ONE = "memberOne";
@@ -28,34 +29,34 @@ public class TestMemberBasedLocalCrendetialsPlugin {
 	@Before
 	public void setUp() {
 		this.properties = new Properties();
-		properties.put(LocalCredentialsHelper.LOCAL_CREDENTIAL_PREFIX + LocalCredentialsHelper.FOGBOW_DEFAULTS + LocalCredentialsHelper.UNDERLINE
+		properties.put(MapperHelper.MAPPER_PREFIX + MapperHelper.FOGBOW_DEFAULTS + MapperHelper.UNDERLINE
 				+ CREDENTIAL_ONE, VALUE_ONE_FOGBOW);
-		properties.put(LocalCredentialsHelper.LOCAL_CREDENTIAL_PREFIX + LocalCredentialsHelper.FOGBOW_DEFAULTS + LocalCredentialsHelper.UNDERLINE
+		properties.put(MapperHelper.MAPPER_PREFIX + MapperHelper.FOGBOW_DEFAULTS + MapperHelper.UNDERLINE
 				+ CREDENTIAL_TWO, VALUE_TWO_FOGBOW);		
-		properties.put(LocalCredentialsHelper.LOCAL_CREDENTIAL_PREFIX + MEMBER_ONE + LocalCredentialsHelper.UNDERLINE
+		properties.put(MapperHelper.MAPPER_PREFIX + MEMBER_ONE + MapperHelper.UNDERLINE
 				+ CREDENTIAL_ONE, VALUE_ONE);
-		properties.put(LocalCredentialsHelper.LOCAL_CREDENTIAL_PREFIX + MEMBER_ONE + LocalCredentialsHelper.UNDERLINE
+		properties.put(MapperHelper.MAPPER_PREFIX + MEMBER_ONE + MapperHelper.UNDERLINE
 				+ CREDENTIAL_TWO, VALUE_TWO);
-		properties.put(LocalCredentialsHelper.LOCAL_CREDENTIAL_PREFIX + MEMBER_TWO + LocalCredentialsHelper.UNDERLINE
+		properties.put(MapperHelper.MAPPER_PREFIX + MEMBER_TWO + MapperHelper.UNDERLINE
 				+ CREDENTIAL_ONE, VALUE_THREE);
-		properties.put(LocalCredentialsHelper.LOCAL_CREDENTIAL_PREFIX + MEMBER_TWO + LocalCredentialsHelper.UNDERLINE
+		properties.put(MapperHelper.MAPPER_PREFIX + MEMBER_TWO + MapperHelper.UNDERLINE
 				+ CREDENTIAL_TWO, VALUE_FOUR);
-		properties.put(LocalCredentialsHelper.LOCAL_CREDENTIAL_PREFIX + "wrong" + LocalCredentialsHelper.UNDERLINE
+		properties.put(MapperHelper.MAPPER_PREFIX + "wrong" + MapperHelper.UNDERLINE
 				+ CREDENTIAL_TWO, VALUE_FOUR);
-		properties.put(LocalCredentialsHelper.LOCAL_CREDENTIAL_PREFIX + "wr" + LocalCredentialsHelper.UNDERLINE + "ong" + LocalCredentialsHelper.UNDERLINE
-				+ "trash " + LocalCredentialsHelper.UNDERLINE +  CREDENTIAL_TWO, VALUE_FOUR);		
-		properties.put(LocalCredentialsHelper.LOCAL_CREDENTIAL_PREFIX + "without-underline", VALUE_FOUR);				
-		this.memberBasedLocalCrendetialsPlugin = new MemberBasedLocalCrendetialsPlugin(properties);		
+		properties.put(MapperHelper.MAPPER_PREFIX + "wr" + MapperHelper.UNDERLINE + "ong" + MapperHelper.UNDERLINE
+				+ "trash " + MapperHelper.UNDERLINE +  CREDENTIAL_TWO, VALUE_FOUR);		
+		properties.put(MapperHelper.MAPPER_PREFIX + "without-underline", VALUE_FOUR);				
+		this.memberBasedMapperPlugin = new MemberBasedMapperPlugin(properties);		
 	}
 	
 	@Test
 	public void testGetAllLocalCredentials() {
-		Map<String, Map<String, String>> allLocalCredentials = this.memberBasedLocalCrendetialsPlugin
+		Map<String, Map<String, String>> allLocalCredentials = this.memberBasedMapperPlugin
 				.getAllLocalCredentials();
 		Assert.assertEquals(VALUE_ONE_FOGBOW, allLocalCredentials.get(
-				LocalCredentialsHelper.FOGBOW_DEFAULTS).get(CREDENTIAL_ONE));
+				MapperHelper.FOGBOW_DEFAULTS).get(CREDENTIAL_ONE));
 		Assert.assertEquals(VALUE_TWO_FOGBOW, allLocalCredentials.get(
-				LocalCredentialsHelper.FOGBOW_DEFAULTS).get(CREDENTIAL_TWO));		
+				MapperHelper.FOGBOW_DEFAULTS).get(CREDENTIAL_TWO));		
 		Assert.assertEquals(VALUE_ONE, allLocalCredentials.get(MEMBER_ONE)
 				.get(CREDENTIAL_ONE));
 		Assert.assertEquals(VALUE_TWO, allLocalCredentials.get(MEMBER_ONE)
@@ -70,12 +71,12 @@ public class TestMemberBasedLocalCrendetialsPlugin {
 	@Test
 	public void testGetLocalCredentials() {
 		Request request = new Request(null, null, null, null, false, MEMBER_ONE);
-		Map<String, String> localCredentials = this.memberBasedLocalCrendetialsPlugin.getLocalCredentials(request);
+		Map<String, String> localCredentials = this.memberBasedMapperPlugin.getLocalCredentials(request);
 		Assert.assertEquals(VALUE_ONE, localCredentials.get(CREDENTIAL_ONE));
 		Assert.assertEquals(VALUE_TWO, localCredentials.get(CREDENTIAL_TWO));
 		
 		request = new Request(null, null, null, null, false, MEMBER_TWO);
-		localCredentials = this.memberBasedLocalCrendetialsPlugin.getLocalCredentials(request);
+		localCredentials = this.memberBasedMapperPlugin.getLocalCredentials(request);
 		Assert.assertEquals(VALUE_THREE, localCredentials.get(CREDENTIAL_ONE));
 		Assert.assertEquals(VALUE_FOUR, localCredentials.get(CREDENTIAL_TWO));
 	}
@@ -83,23 +84,39 @@ public class TestMemberBasedLocalCrendetialsPlugin {
 	@Test
 	public void testGetLocalCredentialsNotFountWithDefaultValue() {
 		Request request = new Request(null, null, null, null, false, "notfound");
-		Map<String, String> localCredentials = this.memberBasedLocalCrendetialsPlugin.getLocalCredentials(request);
+		Map<String, String> localCredentials = this.memberBasedMapperPlugin.getLocalCredentials(request);
 		Assert.assertEquals(VALUE_ONE_FOGBOW, localCredentials.get(CREDENTIAL_ONE));
 		Assert.assertEquals(VALUE_TWO_FOGBOW, localCredentials.get(CREDENTIAL_TWO));
 	}	
 	
 	@Test
 	public void testGetAllLocalCredentialsNotFoundWithoutDefaultValue() {
-		memberBasedLocalCrendetialsPlugin = new MemberBasedLocalCrendetialsPlugin(new Properties()); 
-		Map<String, Map<String, String>> allLocalCredentials = memberBasedLocalCrendetialsPlugin.getAllLocalCredentials();
+		memberBasedMapperPlugin = new MemberBasedMapperPlugin(new Properties()); 
+		Map<String, Map<String, String>> allLocalCredentials = memberBasedMapperPlugin.getAllLocalCredentials();
 		Assert.assertTrue(allLocalCredentials.isEmpty());		
 	}	
 	
 	@Test
 	public void testGetLocalCredentialsNotFoundWithoutDefaultValue() {
-		memberBasedLocalCrendetialsPlugin = new MemberBasedLocalCrendetialsPlugin(new Properties()); 
+		memberBasedMapperPlugin = new MemberBasedMapperPlugin(new Properties()); 
 		Request request = new Request(null, null, null, null, false, null);
-		Map<String, String> localCredentials = this.memberBasedLocalCrendetialsPlugin.getLocalCredentials(request);
+		Map<String, String> localCredentials = this.memberBasedMapperPlugin.getLocalCredentials(request);
 		Assert.assertTrue(localCredentials.isEmpty());
 	}	
+	
+	@Test
+
+	public void testGetLocalCrendetialsWithAccessId() {
+		Assert.assertNull(memberBasedMapperPlugin.getLocalCredentials("accessId"));
+	}
+
+	@Test
+	public void testGetLocalCredentialsRequestNull() {
+		Map<String, String> localCredentials = this.memberBasedMapperPlugin
+				.getLocalCredentials(new Request(null, new Token("", null, null, null), null, null,
+						false, null));
+		Assert.assertEquals(VALUE_ONE_FOGBOW, localCredentials.get(CREDENTIAL_ONE));
+		Assert.assertEquals(VALUE_TWO_FOGBOW, localCredentials.get(CREDENTIAL_TWO));		
+	}		
+
 }

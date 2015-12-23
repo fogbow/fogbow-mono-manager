@@ -40,7 +40,7 @@ public class UsageServerResource extends ServerResource {
 		HttpRequest req = (HttpRequest) getRequest();
 		Series<Header> headers = req.getHeaders();
 		
-		String federationAccessToken = HeaderUtils.getFederationAuthToken(headers, getResponse(),
+		String federationAccessToken = HeaderUtils.getAuthToken(headers, getResponse(),
 				application.getAuthenticationURI());
 		String option = (String) getRequestAttributes().get("option");
 

@@ -1,6 +1,7 @@
 package org.fogbowcloud.manager.occi.instance;
 
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -10,12 +11,12 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.occi.JSONHelper;
-import org.h2.jdbcx.JdbcConnectionPool;
 import org.json.JSONArray;
 import org.json.JSONException;
 
 public class InstanceDataStore {
 
+	public static final String INSTANCE_DATASTORE_DRIVER = "org.sqlite.JDBC";
 	public static final String INSTANCE_ORDER_TABLE_NAME = "instance_order";
 	public static final String INSTANCE_ID = "intance_id";
 	public static final String ORDER_ID = "order_id";
@@ -55,7 +56,6 @@ public class InstanceDataStore {
 	private static final Logger LOGGER = Logger.getLogger(InstanceDataStore.class);
 
 	private String instanceDataStoreURL;
-	private JdbcConnectionPool cp;
 
 	public InstanceDataStore(String instanceDataStoreURL) {
 
@@ -66,8 +66,7 @@ public class InstanceDataStore {
 		try {
 			LOGGER.debug("instanceDataStoreURL: " + this.instanceDataStoreURL);
 
-			Class.forName("org.h2.Driver");
-			this.cp = JdbcConnectionPool.create(this.instanceDataStoreURL, "sa", "");
+			Class.forName(INSTANCE_DATASTORE_DRIVER);
 
 			connection = getConnection();
 			statement = connection.createStatement();
@@ -97,6 +96,7 @@ public class InstanceDataStore {
 		Connection connection = null;
 		try {
 			connection = getConnection();
+			connection.setAutoCommit(false);
 			preparedStatement = connection.prepareStatement(INSERT_INSTANCE_TABLE_SQL);
 			preparedStatement.setString(1, fedInstanceState.getFedInstanceId());
 			preparedStatement.setString(2, fedInstanceState.getOrderId());
@@ -419,7 +419,7 @@ public class InstanceDataStore {
 	 */
 	public Connection getConnection() throws SQLException {
 		try {
-			return cp.getConnection();
+			return DriverManager.getConnection(instanceDataStoreURL);
 		} catch (SQLException e) {
 			LOGGER.error("Error while getting a new connection from the connection pool.", e);
 			throw e;
@@ -446,10 +446,6 @@ public class InstanceDataStore {
 				LOGGER.error("Couldn't close connection");
 			}
 		}
-	}
-
-	public void dispose() {
-		cp.dispose();
 	}
 
 }

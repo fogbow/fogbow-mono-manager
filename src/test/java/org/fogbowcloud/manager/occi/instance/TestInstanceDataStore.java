@@ -6,6 +6,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,8 +18,8 @@ import org.junit.Test;
 
 public class TestInstanceDataStore {
 
-	//private static final String DATA_STORE_FILE = "~/src/test/resources/persistance/instanceOrder.db";
-	private static final String DATA_STORE_URL = "jdbc:h2:mem:";
+	private static final String DATA_STORE_FILE = "src/test/resources/testInstanceOrder.sqlite";
+	private static final String DATA_STORE_URL = "jdbc:sqlite:" + DATA_STORE_FILE;
 	private InstanceDataStore instanceDb;
 	
 	@Before
@@ -31,6 +32,10 @@ public class TestInstanceDataStore {
 	@After
 	public void tearDown() throws Exception {
 		instanceDb.deleteAll();
+		File dbFile = new File(DATA_STORE_FILE);
+		if (dbFile.exists()) {
+			dbFile.delete();
+		}
 	}
 	
 	@Test

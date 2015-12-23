@@ -75,7 +75,7 @@ public class ComputeServerResource extends ServerResource {
 
 		OCCIApplication application = (OCCIApplication) getApplication();
 		HttpRequest req = (HttpRequest) getRequest();
-		String federationAuthToken = HeaderUtils.getFederationAuthToken(req.getHeaders(), getResponse(),
+		String federationAuthToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse(),
 				application.getAuthenticationURI());
 		String instanceId = (String) getRequestAttributes().get("instanceId");
 		List<String> acceptContent = HeaderUtils.getAccept(req.getHeaders());
@@ -342,7 +342,8 @@ public class ComputeServerResource extends ServerResource {
 		String fogbowRequirements = getRequirements(properties, resourceTplResources);		
 		requestXOCCIAtt.put(RequestAttribute.REQUIREMENTS.getValue(), fogbowRequirements);
 		requestXOCCIAtt.put(RequestAttribute.INSTANCE_COUNT.getValue(), DEFAULT_INSTANCE_COUNT);
-
+		requestXOCCIAtt.put(RequestAttribute.TYPE.getValue(), RequestConstants.DEFAULT_TYPE);
+		
 		Map<String, String> xOCCIAtt = HeaderUtils.getXOCCIAtributes(req.getHeaders());
 		if (xOCCIAtt.keySet().contains("occi.core.title")) {
 			requestXOCCIAtt.put("occi.core.title", xOCCIAtt.get("occi.core.title"));
@@ -351,7 +352,7 @@ public class ComputeServerResource extends ServerResource {
 		convertPublicKey(properties, resources, requestCategories, requestXOCCIAtt, xOCCIAtt);
 		convertUserData(properties, resources, requestCategories, requestXOCCIAtt, xOCCIAtt);
 
-		String federationAuthToken = HeaderUtils.getFederationAuthToken(req.getHeaders(), getResponse(),
+		String federationAuthToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse(),
 				application.getAuthenticationURI());
 
 		Instance instance = new Instance(FED_INSTANCE_PREFIX + UUID.randomUUID().toString());
@@ -649,7 +650,7 @@ public class ComputeServerResource extends ServerResource {
 	public String remove() {
 		OCCIApplication application = (OCCIApplication) getApplication();
 		HttpRequest req = (HttpRequest) getRequest();
-		String federationAuthToken = HeaderUtils.getFederationAuthToken(req.getHeaders(), getResponse(),
+		String federationAuthToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse(),
 				application.getAuthenticationURI());
 		String instanceId = (String) getRequestAttributes().get("instanceId");
 

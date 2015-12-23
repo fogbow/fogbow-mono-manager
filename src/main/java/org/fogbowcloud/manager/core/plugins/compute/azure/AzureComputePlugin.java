@@ -325,6 +325,9 @@ public class AzureComputePlugin implements ComputePlugin {
 	@Override
 	public Instance getInstance(Token token, String instanceId) {
 		ComputeManagementClient computeManagementClient = createComputeManagementClient(token);
+		
+		getFlavors(token);
+		
 		try {
 			return getInstance(token, instanceId, computeManagementClient);
 		} finally {

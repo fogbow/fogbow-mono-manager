@@ -299,6 +299,10 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 	public Instance getInstance(Token token, String instanceId) {
 		LOGGER.debug("Getting instance " + instanceId + " of token: " + token);
 
+		if (getFlavors() == null || getFlavors().isEmpty() ) {
+			updateFlavors(token);
+		}
+		
 		Client oneClient = clientFactory.createClient(token.getAccessId(), openNebulaEndpoint);
 		VirtualMachine vm = clientFactory.createVirtualMachine(oneClient, instanceId);
 		return mountInstance(vm);
@@ -417,6 +421,12 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		String memGroupInUseStr = group.xpath("VM_QUOTA/VM/MEMORY_USED");
 		String maxGroupVMsStr = group.xpath("VM_QUOTA/VM/VMS");
 		String vmsGroupInUseStr = group.xpath("VM_QUOTA/VM/VMS_USED");
+		
+		LOGGER.debug("Information about quota : MaxUserCpu = " + maxUserCpuStr + ", CPUUserInUse = " + cpuUserInUseStr
+				+ ", MaxUserMem = " + maxUserMemStr + ", MemUserInUse = " + memUserInUseStr + ", MaxUserInUser = " + maxUserVMsStr
+				+ ", VmsYserInUse = " + vmsUserInUseStr + ", MaxGroupCpu = " + maxGroupCpuStr + ", CpuGroupInUse = " + cpuGroupInUseStr
+				+ ", MaxGroupMem = " + maxGroupMemStr + ", MemGroupInUse = " + memGroupInUseStr + ", MaxGroupVms = " + maxGroupVMsStr
+				+ ", VmsGroupInUse" + vmsGroupInUseStr + ".");
 		
 		ResourceQuota resourceQuota = getQuota(maxUserCpuStr, cpuUserInUseStr, maxGroupCpuStr, cpuGroupInUseStr);
 		double maxCpu = resourceQuota.getMax();
@@ -648,10 +658,12 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 				continue;
 			}
 			
-			if (!templateType.equals(OPENNEBULA_TEMPLATES_TYPE_ALL) && !validTemplates.contains(name)) {
+			if (templateType != null 
+					&& !templateType.equals(OPENNEBULA_TEMPLATES_TYPE_ALL)
+					&& !validTemplates.contains(name)) {
 				continue;
 			}
-						
+
 			int diskIndex = 1;
 			int allDiskSize = 0;
 			while (true) {

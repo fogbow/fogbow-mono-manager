@@ -226,6 +226,11 @@
 		<version>1.4.186</version>
 	</dependency>
 	<dependency>
+		<groupId>org.xerial</groupId>
+		<artifactId>sqlite-jdbc</artifactId>
+		<version>3.8.11.2</version>
+	</dependency>		
+	<dependency>
 		<groupId>javax.mail</groupId>
 		<artifactId>mail</artifactId>
 		<version>1.4</version>

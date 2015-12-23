@@ -1,46 +1,53 @@
 package org.fogbowcloud.manager.core.plugins.localcredentails;
 
 import java.security.cert.X509Certificate;
+import java.util.Date;
 import java.util.Map;
 import java.util.Properties;
 
 import org.fogbowcloud.manager.core.plugins.CertificateUtils;
-import org.fogbowcloud.manager.core.plugins.LocalCredentialsPlugin;
+import org.fogbowcloud.manager.core.plugins.MapperPlugin;
 import org.fogbowcloud.manager.core.plugins.identity.voms.VomsIdentityPlugin;
+import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.request.Request;
 import org.italiangrid.voms.VOMSAttribute;
 
-public class VOBasedLocalCrendentialsPlugin implements LocalCredentialsPlugin {
+public class VOBasedMapperPlugin implements MapperPlugin {
 
 	private Properties properties;
 	private VomsIdentityPlugin vomsIdentityPlugin;
 	
-	public VOBasedLocalCrendentialsPlugin(Properties properties) {
+	public VOBasedMapperPlugin(Properties properties) {
 		this.properties = properties;
 		this.vomsIdentityPlugin = new VomsIdentityPlugin(properties);
 	}
 
 	@Override
 	public Map<String, String> getLocalCredentials(Request request) {
+		if (request == null) {
+			return MapperHelper.getCredentialsPerRelatedLocalName(
+					this.properties, MapperHelper.FOGBOW_DEFAULTS);			
+		}
+		
 		String member = getVO(request);
-		Map<String, String> credentialsPerMember = LocalCredentialsHelper
+		Map<String, String> credentialsPerMember = MapperHelper
 				.getCredentialsPerRelatedLocalName(this.properties, member);
 		if (!credentialsPerMember.isEmpty()) {
 			return credentialsPerMember;
 		}
-		return LocalCredentialsHelper.getCredentialsPerRelatedLocalName(this.properties,
-				LocalCredentialsHelper.FOGBOW_DEFAULTS);
+		return MapperHelper.getCredentialsPerRelatedLocalName(
+				this.properties, MapperHelper.FOGBOW_DEFAULTS);
 	}
 
 	@Override
 	public Map<String, Map<String, String>> getAllLocalCredentials() {
-		return LocalCredentialsHelper.getLocalCredentials(properties, null);
+		return MapperHelper.getLocalCredentials(properties, null);
 	}
 	
 	protected String getVO(Request request) {
 		String accessId = request.getFederationToken().getAccessId();
 		if (!vomsIdentityPlugin.isValid(accessId)) {
-			return LocalCredentialsHelper.FOGBOW_DEFAULTS;
+			return MapperHelper.FOGBOW_DEFAULTS;
 		}	
 
 		X509Certificate[] theChain = null;
@@ -52,6 +59,13 @@ public class VOBasedLocalCrendentialsPlugin implements LocalCredentialsPlugin {
 			}
 		} catch (Exception e) {}		
 		
-		return LocalCredentialsHelper.FOGBOW_DEFAULTS;
+		return MapperHelper.FOGBOW_DEFAULTS;
+	}
+
+	@Override
+	public Map<String, String> getLocalCredentials(String accessId) {
+		Token token = new Token(accessId, "", new Date(), null);
+		return getLocalCredentials(new Request("", token, "", "", "", 
+				new Date().getTime(), false, null, null, null));
 	}
 }

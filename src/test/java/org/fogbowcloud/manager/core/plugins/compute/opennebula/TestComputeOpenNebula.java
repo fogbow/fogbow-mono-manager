@@ -686,6 +686,12 @@ public class TestComputeOpenNebula {
 
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
 
+		List<Flavor> flavorsComputeOpennebula = new ArrayList<Flavor>();
+		flavorsComputeOpennebula.add(new Flavor(RequestConstants.SMALL_TERM, "1.0", "128.0", 0));
+		flavorsComputeOpennebula.add(new Flavor(RequestConstants.MEDIUM_TERM, "2.0", "256.0", 0));
+		flavorsComputeOpennebula.add(new Flavor(RequestConstants.LARGE_TERM, "4.0", "512.0", 0));
+		computeOpenNebula.setFlavors(flavorsComputeOpennebula);
+		
 		// getting instance
 		computeOpenNebula.getInstance(defaultToken, "not_found");
 	}
@@ -702,8 +708,15 @@ public class TestComputeOpenNebula {
 		Mockito.when(clientFactory.createVirtualMachine(oneClient, "instance")).thenThrow(
 				new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED_USER));
 
+		
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
 
+		List<Flavor> flavorsComputeOpennebula = new ArrayList<Flavor>();
+		flavorsComputeOpennebula.add(new Flavor(RequestConstants.SMALL_TERM, "1.0", "128.0", 0));
+		flavorsComputeOpennebula.add(new Flavor(RequestConstants.MEDIUM_TERM, "2.0", "256.0", 0));
+		flavorsComputeOpennebula.add(new Flavor(RequestConstants.LARGE_TERM, "4.0", "512.0", 0));
+		computeOpenNebula.setFlavors(flavorsComputeOpennebula);
+		
 		// getting instance
 		computeOpenNebula.getInstance(defaultToken, "instance");
 	}

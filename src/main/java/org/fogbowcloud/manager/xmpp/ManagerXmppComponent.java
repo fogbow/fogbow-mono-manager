@@ -19,6 +19,8 @@ public class ManagerXmppComponent extends XMPPComponent implements AsyncPacketSe
 	public static final String GETINSTANCE_NAMESPACE = "http://fogbowcloud.org/manager/getinstance";
 	public static final String REMOVEINSTANCE_NAMESPACE = "http://fogbowcloud.org/manager/removeinstance";
 	public static final String INSTANCEBEINGUSED_NAMESPACE = "http://fogbowcloud.org/manager/instancebeingused";
+	public static final String REMOVEREQUEST_NAMESPACE = "http://fogbowcloud.org/manager/removerequest";
+	public static final String GETREMOTEUSERQUOTA_NAMESPACE = "http://fogbowcloud.org/manager/getremoteuserquota";
 
 	private static long PERIOD = 30000;
 	private static Logger LOGGER = Logger.getLogger(ManagerXmppComponent.class);
@@ -38,16 +40,25 @@ public class ManagerXmppComponent extends XMPPComponent implements AsyncPacketSe
 		addSetHandler(new RemoveInstanceHandler(managerFacade));
 		addSetHandler(new RequestInstanceHandler(managerFacade));
 		addGetHandler(new InstanceBeingUsedHandler(managerFacade));
-		
+		addSetHandler(new RemoveRequestHandler(managerFacade));
+		addGetHandler(new GetRemoteUserQuotaHandler(managerFacade));	
 	}
 
 	public void init() {
 		scheduleIamAlive();
 	}
 
-	public void iAmAlive() throws CertificateException, Exception {
-		ManagerPacketHelper.iAmAlive(managerFacade.getResourcesInfo(),
-				rendezvousAddress, managerFacade.getProperties(), this);
+	public long iAmAlive() throws CertificateException, Exception {
+		String iAmAlivePeriodStr = ManagerPacketHelper
+				.iAmAlive(rendezvousAddress, managerFacade.getProperties(), this);
+		
+		try {
+			return Long.parseLong(iAmAlivePeriodStr);
+		} catch (Exception e) {
+			LOGGER.warn("Error while trying to convert String(" + iAmAlivePeriodStr + ") to Long.",
+					e);
+		}	
+		return PERIOD;
 	}
 	
 	@Override
@@ -73,21 +84,30 @@ public class ManagerXmppComponent extends XMPPComponent implements AsyncPacketSe
 	}
 	
 	private void scheduleIamAlive() {
+		scheduleIamAlive(0, PERIOD);
+	}
+	
+	private void scheduleIamAlive(final long delay, final long period) {
 		timer.schedule(new TimerTask() {
 			@Override
 			public void run() {
 				try {
-					iAmAlive();
+					long currentIAmAlivePeriod = iAmAlive();
+					
+					if (period != currentIAmAlivePeriod) {
+						scheduleIamAlive(currentIAmAlivePeriod, currentIAmAlivePeriod);
+						this.cancel();
+					}					
 				} catch (Exception e) {
-					LOGGER.error("Failure during IAmAlive().");
+					LOGGER.error("Failure during IAmAlive().", e);
 				}
 				try {
 					whoIsalive();
 				} catch (Exception e) {
-					LOGGER.error("Failure during whoIsAlive()."); 
+					LOGGER.error("Failure during whoIsAlive().", e); 
 				}
 			}
-		}, 0, PERIOD);
+		}, delay, period);
 	}
 
 	public void setRendezvousAddress(String address) {

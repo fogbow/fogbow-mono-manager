@@ -20,7 +20,10 @@ public class MemberServerResource extends ServerResource {
 		HttpRequest req = (HttpRequest) getRequest();
 		HeaderUtils.checkOCCIContentType(req.getHeaders());
 		
-		List<FederationMember> federationMembers = application.getFederationMembers();
+		String federationAuthToken = HeaderUtils.getAuthToken(
+				req.getHeaders(), getResponse(), application.getAuthenticationURI());
+		
+		List<FederationMember> federationMembers = application.getFederationMembers(federationAuthToken);
 		if (federationMembers.size() == 0) {
 			return new String();
 		}
@@ -33,7 +36,7 @@ public class MemberServerResource extends ServerResource {
 		for (FederationMember federationMember : federationMembers) {
 			Map<String, String> resourcesInfoMap = new HashMap<String, String>();
 			ResourcesInfo resourcesInfo = federationMember.getResourcesInfo();
-			resourcesInfoMap.put("id", resourcesInfo.getId());
+			resourcesInfoMap.put("id", federationMember.getId());
 			resourcesInfoMap.put("cpuIdle", resourcesInfo.getCpuIdle());
 			resourcesInfoMap.put("cpuInUse", resourcesInfo.getCpuInUse());
 			resourcesInfoMap.put("memIdle", resourcesInfo.getMemIdle());

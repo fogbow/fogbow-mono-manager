@@ -8,7 +8,6 @@ import org.apache.http.HttpStatus;
 import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.Flavor;
-import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.accounting.ResourceUsage;
 import org.fogbowcloud.manager.occi.instance.ComputeServerResource;
 import org.fogbowcloud.manager.occi.instance.Instance;
@@ -109,12 +108,12 @@ public class OCCIApplication extends Application {
 	public static void normalizeHeadersForBypass(org.restlet.Request request) {
 		Series<Header> requestHeaders = (Series<Header>) request.getAttributes().get("org.restlet.http.headers");
 		requestHeaders.add(OCCIHeaders.X_AUTH_TOKEN, requestHeaders.getFirstValue(HeaderUtils
-				.normalize(OCCIHeaders.X_FEDERATION_AUTH_TOKEN)));
-		requestHeaders.removeFirst(HeaderUtils.normalize(OCCIHeaders.X_FEDERATION_AUTH_TOKEN));
+				.normalize(OCCIHeaders.X_AUTH_TOKEN)));
+		requestHeaders.removeFirst(HeaderUtils.normalize(OCCIHeaders.X_AUTH_TOKEN));
 	}
 	
-	public List<FederationMember> getFederationMembers() {		
-		return managerFacade.getMembers();
+	public List<FederationMember> getFederationMembers(String accessId) {		
+		return managerFacade.getMembers(accessId);
 	}
 
 	public Request getRequest(String authToken, String requestId) {
@@ -192,12 +191,7 @@ public class OCCIApplication extends Application {
 		return managerFacade.getUsersUsage(authToken);
 	}
 
-	public ResourcesInfo getLocalUserQuota(String localAccessToken) {
-		return managerFacade.getLocalUserQuota(localAccessToken);
-	}
-
 	public String getUser(String authToken) {
 		return managerFacade.getUser(authToken);
 	}
-
 }

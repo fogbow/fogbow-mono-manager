@@ -7,7 +7,7 @@ rendezvous_jid=rendezvous.test.com
 greensitter_jid=greensitter.test.com
 
 ## Order database
-order_datastore_url=jdbc:h2:/home/chicog/Backup/dbmanager
+order_datastore_url=jdbc:sqlite:/tmp/dbOrderSQLite.db
 order_bd_updater_period=30000
 
 ## Static mapping from flavors to requirements (Optional)
@@ -62,6 +62,7 @@ compute_novav2_network_id=ea51ed0c-0e8a-448d-8202-c79777109ffe
 # compute_cloudstack_image_download_base_path=/var/www/downloads/
 # compute_cloudstack_hypervisor=KVM
 # compute_cloudstack_image_download_os_type_id=ea51ed0c-0e8a-448d-8202-c79777109ffe
+# compute_cloudstack_expunge_on_destroy=true
 
 ##Compute Plugin (Azure)
 # compute_class=org.fogbowcloud.manager.core.plugins.compute.cloudstack.AzureComputePlugin
@@ -118,6 +119,8 @@ local_prioritization_plugin_class=org.fogbowcloud.manager.core.plugins.prioritiz
 remote_prioritization_plugin_class=org.fogbowcloud.manager.core.plugins.prioritization.nof.NoFPrioritizationPlugin
 nof_prioritize_local=true
 
+instance_datastore_url=jdbc:sqlite:/tmp/federated_instance
+
 ## If you are using NoFMemberPicker or NoFPrioritizationPlugin classes
 nof_trustworthy=false
 
@@ -137,34 +140,34 @@ local_identity_url=http://localhost:5000
 # local_identity_class=org.fogbowcloud.manager.core.plugins.identity.cloudstack.CloudStackIdentityPlugin
 # local_identity_url=http://127.0.0.1:8080/client/api/
 
-## Local Credentials
-federation_user_credentail_class=org.fogbowcloud.manager.core.plugins.localcredentails.SingleLocalCrendentialsPlugin
-# federation_user_credentail_class=org.fogbowcloud.manager.core.plugins.localcredentails.MemberBasedLocalCrendetialsPlugin
-# federation_user_credentail_class=org.fogbowcloud.manager.core.plugins.localcredentails.VOBasedLocalCrendentialsPlugin
+## Mapper Plugin / Local Credentials
+federation_user_credentail_class=org.fogbowcloud.manager.core.plugins.localcredentails.SingleMapperPlugin
+# federation_user_credentail_class=org.fogbowcloud.manager.core.plugins.localcredentails.MemberBasedMapperPlugin
+# federation_user_credentail_class=org.fogbowcloud.manager.core.plugins.localcredentails.VOBasedMapperPlugin
 
 ## Mandatory for Local Credentails
 
-# Local credentials for openstack
-local_credential_defaults_username=fogbow
-local_credential_defaults_password=fogbow
-local_credential_defaults_tenantName=fogbow
+# Mapper Plugin / Local credentials for openstack
+mapper_defaults_username=fogbow
+mapper_defaults_password=fogbow
+mapper_defaults_tenantName=fogbow
 
-# Local credentials for opennebula
-# local_credential_defaults_username=fogbow
-# local_credential_defaults_password=fogbowpass
+# Mapper Plugin / Local credentials for opennebula
+# mapper_defaults_username=fogbow
+# mapper_defaults_password=fogbowpass
 
-## Local credentials for (EC2)
-# local_credential_defaults_accessKey=AKIALSKQLKFD7AHQLKEUO
-# local_credential_defaults_secretKey=Iuaooiad&891/2309asd0123+akplkdh
+## Mapper Plugin / Local credentials for (EC2)
+# mapper_defaults_accessKey=AKIALSKQLKFD7AHQLKEUO
+# mapper_defaults_secretKey=Iuaooiad&891/2309asd0123+akplkdh
 
-## Local credentials for Cloudstack
-# local_credential_defaults_apiKey=user_api_key
-# local_credential_defaults_secret_key=user_secret_key
+## Mapper Plugin / Local credentials for Cloudstack
+# mapper_defaults_apiKey=user_api_key
+# mapper_defaults_secretKey=user_secret_key
 
-## Optional for Local Credentails
-# local_credential_other_username=
-# local_credential_other_password=
-# local_credential_other_tenantName=
+## Mapper Plugin / Optional for Local Credentails
+# mapper_other_username=
+# mapper_other_password=
+# mapper_other_tenantName=
 
 ## Authorization Plugin
 federation_authorization_class=org.fogbowcloud.manager.core.plugins.authorization.AllowAllAuthorizationPlugin
@@ -185,9 +188,9 @@ federation_identity_url=http://localhost:5000
 
 ## Identity (Azure)
 # federation_identity_class=org.fogbowcloud.manager.core.plugins.identity.azure.AzureIdentityPlugin
-# local_credential_defaults_subscription_id=subscription_id
-# local_credential_defaults_keystore_path=/etc/keystore/azure
-# local_credential_defaults_keystore_password=test123
+# mapper_defaults_subscription_id=subscription_id
+# mapper_defaults_keystore_path=/etc/keystore/azure
+# mapper_defaults_keystore_password=test123
 
 ## Member Validator
 member_validator_class=org.fogbowcloud.manager.core.plugins.memberauthorization.DefaultMemberAuthorizationPlugin
@@ -203,18 +206,18 @@ my_ip=127.0.0.1
 ## Accounting Plugin
 accounting_class=org.fogbowcloud.manager.core.plugins.accounting.FCUAccountingPlugin
 accounting_update_period=300000
-accounting_datastore_url=jdbc:h2:/tmp/usage
+accounting_datastore_url=jdbc:sqlite:/tmp/usage
 
 ## Benchmarking (SSH Benchmarking plugin)
-benchmarking_class=org.fogbowcloud.manager.core.plugins.benchmarking.SSHBenchmarkingPlugin
+# benchmarking_class=org.fogbowcloud.manager.core.plugins.benchmarking.SSHBenchmarkingPlugin
 ## Benchmarking script to use with SSH Benchmarking plugin
-ssh_benchmarking_script_url=http://downloads.fogbowcloud.org/benchmark/script_ssh_benchmarking.sh
+# ssh_benchmarking_script_url=http://downloads.fogbowcloud.org/benchmark/script_ssh_benchmarking.sh
 ## Manager public and private keys
-ssh_private_key=/etc/fogbow-manager/ssh/id_rsa
-ssh_public_key=/etc/fogbow-manager/ssh/id_rsa.pub
+# ssh_private_key=/etc/fogbow-manager/ssh/id_rsa
+# ssh_public_key=/etc/fogbow-manager/ssh/id_rsa.pub
 
 ## Benchmarking (Vanilla Benchmarking Plugin)
-# benchmarking_class=org.fogbowcloud.manager.core.plugins.benchmarking.VanillaBenchmarkingPlugin
+benchmarking_class=org.fogbowcloud.manager.core.plugins.benchmarking.VanillaBenchmarkingPlugin
 
 
 ## OCCI extra resources

@@ -20,7 +20,7 @@ public class RoundRobinMemberPickerPlugin implements FederationMemberPickerPlugi
 
 	@Override
 	public synchronized FederationMember pick(List<FederationMember> members) {
-		if (members == null) {
+		if (members == null || members.isEmpty()) {
 			return null;
 		}
 		ArrayList<FederationMember> membersListCopy = new ArrayList<FederationMember>(members);
@@ -28,7 +28,7 @@ public class RoundRobinMemberPickerPlugin implements FederationMemberPickerPlugi
 		boolean containsInList = false;
 		if (lastMember != null) {
 			for (FederationMember federationMember : membersListCopy) {
-				if (federationMember.getResourcesInfo().getId().equals(lastMember)) {
+				if (federationMember.getId().equals(lastMember)) {
 					containsInList = true;
 					break;
 				}
@@ -43,16 +43,16 @@ public class RoundRobinMemberPickerPlugin implements FederationMemberPickerPlugi
 
 		if (lastMember == null && !membersListCopy.isEmpty()) {
 			FederationMember federationMember = membersListCopy.get(0);
-			lastMember = federationMember.getResourcesInfo().getId();
+			lastMember = federationMember.getId();
 			return federationMember;
 		}
 		
 		for (int i = 0; i < membersListCopy.size(); i++) {
 			FederationMember federationMember = membersListCopy.get(i);
-			String memberName = federationMember.getResourcesInfo().getId();
+			String memberName = federationMember.getId();
 			if (memberName.equals(lastMember)) {
 				FederationMember nextMember = membersListCopy.get((i + 1) % membersListCopy.size());
-				lastMember = nextMember.getResourcesInfo().getId();
+				lastMember = nextMember.getId();
 				return nextMember;
 			}
 		}
@@ -63,8 +63,8 @@ public class RoundRobinMemberPickerPlugin implements FederationMemberPickerPlugi
 		@Override
 		public int compare(FederationMember federationMemberOne,
 				FederationMember federationMemberTwo) {
-			String memberNameOne = federationMemberOne.getResourcesInfo().getId();
-			String memberNameTwo = federationMemberTwo.getResourcesInfo().getId();
+			String memberNameOne = federationMemberOne.getId();
+			String memberNameTwo = federationMemberTwo.getId();
 			return memberNameOne.compareTo(memberNameTwo);
 		}
 	}

@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.plugins.accounting.TestDataStore;
 import org.fogbowcloud.manager.occi.model.Category;
@@ -25,7 +24,8 @@ public class TestOrderDataStore {
 
 	private static final Logger LOGGER = Logger.getLogger(TestDataStore.class);
 	 
-	private final String DATASTORE_PATH = "src/test/resources/managerdb/";
+	private final String DATASTORE_PATH = "src/test/resources/testOrderDataStore.sqlite";
+	private final String DATASTORE_URL = "jdbc:sqlite:" + DATASTORE_PATH;
 	
 	private Request orderOne;
 	private Request orderTwo;
@@ -38,18 +38,18 @@ public class TestOrderDataStore {
 	@Before
 	public void initialize() {		
 		LOGGER.debug("Creating data store.");
-		new File(DATASTORE_PATH).mkdir();
 		properties = new Properties();
-		properties.put(OrderDataStore.ORDER_DATASTORE_URL , "jdbc:h2:mem:"
-				+ new File(DATASTORE_PATH).getAbsolutePath() + "order");
+		properties.put(OrderDataStore.ORDER_DATASTORE_URL , DATASTORE_URL);
 		database = new OrderDataStore(properties);
 		initializeOrders();
 	}
 	
 	@After
 	public void tearDown() throws IOException{
-		FileUtils.cleanDirectory(new File (DATASTORE_PATH));
-		database.dispose();
+		File dbFile = new File(DATASTORE_PATH);
+		if (dbFile.exists()) {
+			dbFile.delete();
+		}
 	}
 	
 	@Test

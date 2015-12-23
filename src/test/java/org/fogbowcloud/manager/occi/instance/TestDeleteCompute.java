@@ -19,7 +19,7 @@ import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
-import org.fogbowcloud.manager.core.plugins.LocalCredentialsPlugin;
+import org.fogbowcloud.manager.core.plugins.MapperPlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
@@ -57,7 +57,7 @@ public class TestDeleteCompute {
 	@Before
 	public void setup() throws Exception {
 		this.helper = new OCCITestHelper();
-		Token token = new Token(OCCITestHelper.FED_ACCESS_TOKEN,
+		Token token = new Token(OCCITestHelper.ACCESS_TOKEN,
 				OCCITestHelper.USER_MOCK, DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
 				new HashMap<String, String>());
 		
@@ -71,11 +71,11 @@ public class TestDeleteCompute {
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Token tokenTwo = new Token("1", OCCITestHelper.USER_MOCK, new Date(),
 		new HashMap<String, String>());
-		Mockito.when(identityPlugin.getToken(OCCITestHelper.FED_ACCESS_TOKEN))
+		Mockito.when(identityPlugin.getToken(OCCITestHelper.ACCESS_TOKEN))
 				.thenReturn(tokenTwo);
 
 		List<Request> requests = new LinkedList<Request>();
-		Request request1 = new Request("1", new Token(OCCITestHelper.FED_ACCESS_TOKEN,
+		Request request1 = new Request("1", new Token(OCCITestHelper.ACCESS_TOKEN,
 				OCCITestHelper.USER_MOCK, DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
 				new HashMap<String, String>()), null, null, true, "");
 		request1.setInstanceId(INSTANCE_ID);
@@ -95,11 +95,11 @@ public class TestDeleteCompute {
 		AccountingPlugin accountingPlugin = Mockito.mock(AccountingPlugin.class);
 		BenchmarkingPlugin benchmarkingPlugin = Mockito.mock(BenchmarkingPlugin.class);
 		
-		LocalCredentialsPlugin localCredentialsPlugin = Mockito
-				.mock(LocalCredentialsPlugin.class);
+		MapperPlugin mapperPlugin = Mockito
+				.mock(MapperPlugin.class);
 		Map<String, String> crendentials = new HashMap<String, String>();
 		Mockito.when(
-				localCredentialsPlugin.getLocalCredentials(Mockito.any(Request.class)))
+				mapperPlugin.getLocalCredentials(Mockito.any(Request.class)))
 				.thenReturn(crendentials);
 		Mockito.when(identityPlugin.createToken(crendentials)).thenReturn(tokenTwo);
 		
@@ -109,7 +109,7 @@ public class TestDeleteCompute {
 		instanceDB = new InstanceDataStore(INSTANCE_DB_URL);
 		facade = this.helper.initializeComponentCompute(computePlugin, identityPlugin, authorizationPlugin,
 				imageStoragePlugin, accountingPlugin, benchmarkingPlugin, requestsToAdd,
-				localCredentialsPlugin);
+				mapperPlugin);
 		
 	}
 
@@ -123,7 +123,7 @@ public class TestDeleteCompute {
 	public void testDelete() throws Exception {
 		HttpDelete httpDelete = new HttpDelete(OCCITestHelper.URI_FOGBOW_COMPUTE);
 		httpDelete.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		httpDelete.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
+		httpDelete.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(httpDelete);
 
@@ -135,7 +135,7 @@ public class TestDeleteCompute {
 		HttpDelete httpDelete = new HttpDelete(OCCITestHelper.URI_FOGBOW_COMPUTE
 				+ OTHER_INSTANCE_ID + Request.SEPARATOR_GLOBAL_ID + OCCITestHelper.MEMBER_ID);
 		httpDelete.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		httpDelete.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
+		httpDelete.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(httpDelete);
 
@@ -147,7 +147,7 @@ public class TestDeleteCompute {
 		HttpDelete httpDelete = new HttpDelete(OCCITestHelper.URI_FOGBOW_COMPUTE + INSTANCE_ID
 				+ Request.SEPARATOR_GLOBAL_ID + OCCITestHelper.MEMBER_ID);
 		httpDelete.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		httpDelete.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
+		httpDelete.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(httpDelete);
 
@@ -158,7 +158,7 @@ public class TestDeleteCompute {
 	public void testDeleteSpecificInstanceNotFound() throws Exception {
 		HttpDelete httpDelete = new HttpDelete(OCCITestHelper.URI_FOGBOW_COMPUTE + "wrong");
 		httpDelete.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		httpDelete.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
+		httpDelete.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(httpDelete);
 
@@ -170,7 +170,7 @@ public class TestDeleteCompute {
 		HttpDelete httpDelete = new HttpDelete(OCCITestHelper.URI_FOGBOW_COMPUTE + INSTANCE_ID
 				+ Request.SEPARATOR_GLOBAL_ID + OCCITestHelper.MEMBER_ID);
 		httpDelete.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		httpDelete.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, "wrong");
+		httpDelete.addHeader(OCCIHeaders.X_AUTH_TOKEN, "wrong");
 		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(httpDelete);
 
@@ -181,7 +181,7 @@ public class TestDeleteCompute {
 	public void testEmptyAccessToken() throws Exception {
 		HttpDelete httpDelete = new HttpDelete(OCCITestHelper.URI_FOGBOW_COMPUTE);
 		httpDelete.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		httpDelete.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, "");
+		httpDelete.addHeader(OCCIHeaders.X_AUTH_TOKEN, "");
 		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(httpDelete);
 
@@ -192,13 +192,14 @@ public class TestDeleteCompute {
 	public void testAnyContentType() throws Exception {
 		HttpDelete get = new HttpDelete(OCCITestHelper.URI_FOGBOW_COMPUTE);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, "any");
-		get.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
+		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(get);
 
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 	
+	@SuppressWarnings("deprecation")
 	@Test
 	public void testDeletePostCompute() throws Exception {
 		
@@ -223,7 +224,7 @@ public class TestDeleteCompute {
 		
 		HttpDelete httpDelete = new HttpDelete(OCCITestHelper.URI_FOGBOW_COMPUTE);
 		httpDelete.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		httpDelete.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
+		httpDelete.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(httpDelete);
 
@@ -231,6 +232,7 @@ public class TestDeleteCompute {
 		Assert.assertEquals(0, instanceDB.getAllByUser(fakeUser).size());
 	}
 	
+	@SuppressWarnings("deprecation")
 	@Test
 	public void testDeleteSpecificPostCompute() throws Exception {
 		
@@ -260,19 +262,19 @@ public class TestDeleteCompute {
 
 		instanceDB.insert(fakeFedInstanceStateList);
 		
-		Assert.assertNotNull(facade.getRequest(OCCITestHelper.FED_ACCESS_TOKEN, fakeOrderId_A));
+		Assert.assertNotNull(facade.getRequest(OCCITestHelper.ACCESS_TOKEN, fakeOrderId_A));
 		Assert.assertEquals(2, instanceDB.getAllByUser(fakeUser).size());
 		
 		HttpDelete httpDelete = new HttpDelete(OCCITestHelper.URI_FOGBOW_COMPUTE+fakeInstanceId_A);
 		httpDelete.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		httpDelete.addHeader(OCCIHeaders.X_FEDERATION_AUTH_TOKEN, OCCITestHelper.FED_ACCESS_TOKEN);
+		httpDelete.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(httpDelete);
 
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 		Assert.assertEquals(1, instanceDB.getAllByUser(fakeUser).size());
 		try {
-			facade.getRequest(OCCITestHelper.FED_ACCESS_TOKEN, fakeOrderId_A);
+			facade.getRequest(OCCITestHelper.ACCESS_TOKEN, fakeOrderId_A);
 			fail();
 		} catch (OCCIException e) {
 			

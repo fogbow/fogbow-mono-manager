@@ -7,13 +7,32 @@ public class FederationMember {
 
 	private long lastTime;
 	private ResourcesInfo resourcesInfo;
+	private String id;
 
+	public FederationMember() {
+		lastTime = new DateUtils().currentTimeMillis();
+	}
+	
 	public FederationMember(ResourcesInfo resourcesInfo) {
+		this();
 		if (resourcesInfo == null) {
 			throw new IllegalArgumentException();
 		}
-		lastTime = new DateUtils().currentTimeMillis();
+		setId(resourcesInfo.getId());
 		this.resourcesInfo = resourcesInfo;
+	}
+	
+	public FederationMember(String id) {
+		this();
+		setId(id);
+	}
+
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
 	}
 
 	public ResourcesInfo getResourcesInfo() {
@@ -48,6 +67,6 @@ public class FederationMember {
 	
 	@Override
 	public String toString() {
-		return this.resourcesInfo.getId();
+		return getId();
 	}
 }

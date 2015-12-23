@@ -306,6 +306,7 @@ public class TestCloudStackComputePlugin {
 				CloudStackTestHelper.CLOUDSTACK_URL,
 				CloudStackComputePlugin.DESTROY_VM_COMMAND);
 		uriBuilder.addParameter(CloudStackComputePlugin.VM_ID, VM_ID);
+		uriBuilder.addParameter(CloudStackComputePlugin.VM_EXPUNGE, "true");
 		CloudStackHelper.sign(uriBuilder, token.getAccessId());
 
 		HttpClientWrapper httpClient = Mockito.mock(HttpClientWrapper.class);

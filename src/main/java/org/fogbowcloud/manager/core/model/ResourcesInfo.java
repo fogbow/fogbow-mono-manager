@@ -11,7 +11,7 @@ public class ResourcesInfo {
 	private String instancesIdle;
 	private String instancesInUse;
 	
-	private final String ZERO = "0";
+	private static final String ZERO = "0";
 	
 	public ResourcesInfo() {
 		setId(ZERO);
@@ -55,12 +55,15 @@ public class ResourcesInfo {
 		setInstancesInUse(calculateStringValues(getInstancesInUse(), resourcesInfo.getInstancesInUse()));
 	}
 	
-	// Test for this one
-	private String calculateStringValues(String valueOne, String ValueTwo) {
+	protected static String calculateStringValues(String valueOne, String ValueTwo) {
 		try {			
 			return String.valueOf(Integer.parseInt(valueOne) + Integer.parseInt(ValueTwo));
 		} catch (Exception e) {
-			return ZERO;
+			try {
+				return String.valueOf(Double.parseDouble(valueOne) + Double.parseDouble(ValueTwo));				
+			} catch (Exception e2) {
+				return ZERO;
+			}
 		}
 	}
 
@@ -135,4 +138,12 @@ public class ResourcesInfo {
 	public String getInstancesInUse() {
 		return instancesInUse;
 	}
+
+	@Override
+	public String toString() {
+		return "ResourcesInfo [id=" + id + ", cpuIdle=" + cpuIdle + ", cpuInUse=" + cpuInUse + ", memIdle=" + memIdle
+				+ ", memInUse=" + memInUse + ", instancesIdle=" + instancesIdle + ", instancesInUse=" + instancesInUse
+				+ ", ZERO=" + ZERO + "]";
+	}
+	
 }

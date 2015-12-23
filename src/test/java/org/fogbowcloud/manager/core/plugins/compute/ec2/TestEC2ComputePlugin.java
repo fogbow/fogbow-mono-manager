@@ -748,6 +748,8 @@ public class TestEC2ComputePlugin {
 		Mockito.doReturn(response).when(clientWrapper).doGet(Mockito.anyString());
 		
 		EC2ComputePlugin computePlugin = Mockito.spy(new EC2ComputePlugin(properties));
+		Mockito.doReturn(clientWrapper).when(computePlugin).getHttpClient();
+		
 		return computePlugin;
 	}
 }
