@@ -209,15 +209,15 @@ accounting_update_period=300000
 accounting_datastore_url=jdbc:sqlite:/tmp/usage
 
 ## Benchmarking (SSH Benchmarking plugin)
-benchmarking_class=org.fogbowcloud.manager.core.plugins.benchmarking.SSHBenchmarkingPlugin
+# benchmarking_class=org.fogbowcloud.manager.core.plugins.benchmarking.SSHBenchmarkingPlugin
 ## Benchmarking script to use with SSH Benchmarking plugin
-ssh_benchmarking_script_url=http://downloads.fogbowcloud.org/benchmark/script_ssh_benchmarking.sh
+# ssh_benchmarking_script_url=http://downloads.fogbowcloud.org/benchmark/script_ssh_benchmarking.sh
 ## Manager public and private keys
-ssh_private_key=/etc/fogbow-manager/ssh/id_rsa
-ssh_public_key=/etc/fogbow-manager/ssh/id_rsa.pub
+# ssh_private_key=/etc/fogbow-manager/ssh/id_rsa
+# ssh_public_key=/etc/fogbow-manager/ssh/id_rsa.pub
 
 ## Benchmarking (Vanilla Benchmarking Plugin)
-# benchmarking_class=org.fogbowcloud.manager.core.plugins.benchmarking.VanillaBenchmarkingPlugin
+benchmarking_class=org.fogbowcloud.manager.core.plugins.benchmarking.VanillaBenchmarkingPlugin
 
 
 ## OCCI extra resources
