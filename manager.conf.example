@@ -140,31 +140,31 @@ local_identity_url=http://localhost:5000
 # local_identity_class=org.fogbowcloud.manager.core.plugins.identity.cloudstack.CloudStackIdentityPlugin
 # local_identity_url=http://127.0.0.1:8080/client/api/
 
-## Local Credentials
-federation_user_credentail_class=org.fogbowcloud.manager.core.plugins.localcredentails.SingleLocalCrendentialsPlugin
-# federation_user_credentail_class=org.fogbowcloud.manager.core.plugins.localcredentails.MemberBasedLocalCrendetialsPlugin
-# federation_user_credentail_class=org.fogbowcloud.manager.core.plugins.localcredentails.VOBasedLocalCrendentialsPlugin
+## Mapper Plugin / Local Credentials
+federation_user_credentail_class=org.fogbowcloud.manager.core.plugins.localcredentails.SingleMapperPlugin
+# federation_user_credentail_class=org.fogbowcloud.manager.core.plugins.localcredentails.MemberBasedMapperPlugin
+# federation_user_credentail_class=org.fogbowcloud.manager.core.plugins.localcredentails.VOBasedMapperPlugin
 
 ## Mandatory for Local Credentails
 
-# Local credentials for openstack
+# Mapper Plugin / Local credentials for openstack
 mapper_defaults_username=fogbow
 mapper_defaults_password=fogbow
 mapper_defaults_tenantName=fogbow
 
-# Local credentials for opennebula
+# Mapper Plugin / Local credentials for opennebula
 # mapper_defaults_username=fogbow
 # mapper_defaults_password=fogbowpass
 
-## Local credentials for (EC2)
+## Mapper Plugin / Local credentials for (EC2)
 # mapper_defaults_accessKey=AKIALSKQLKFD7AHQLKEUO
 # mapper_defaults_secretKey=Iuaooiad&891/2309asd0123+akplkdh
 
-## Local credentials for Cloudstack
+## Mapper Plugin / Local credentials for Cloudstack
 # mapper_defaults_apiKey=user_api_key
 # mapper_defaults_secretKey=user_secret_key
 
-## Optional for Local Credentails
+## Mapper Plugin / Optional for Local Credentails
 # mapper_other_username=
 # mapper_other_password=
 # mapper_other_tenantName=
