@@ -221,9 +221,29 @@ public class Instance {
 		public String toOCCIMessageFormatLink() {
 			String itensMessageFormat = "";
 			int cont = 0;
-			for (String key : this.attributes.keySet()) {
-				itensMessageFormat += " " + key + "=\"" + this.attributes.get(key) + "\"";				
-				if(cont < this.attributes.keySet().size() - 1){
+			HashMap<String, String> attrsCopy = new HashMap<String, String>(attributes);
+			int numberOfAttrs = attrsCopy.size();
+			String relAttr = attrsCopy.remove("rel");
+			if (relAttr != null) {
+				itensMessageFormat += " rel=\"" + relAttr + "\";";
+				cont++;
+			}
+			
+			String selfAttr = attrsCopy.remove("self");
+			if (selfAttr != null) {
+				itensMessageFormat += " self=\"" + selfAttr + "\";";
+				cont++;
+			}
+			
+			String categoryAttr = attrsCopy.remove("category");
+			if (categoryAttr != null) {
+				itensMessageFormat += " category=\"" + categoryAttr + "\";";
+				cont++;
+			}
+			
+			for (String key : attrsCopy.keySet()) {
+				itensMessageFormat += " " + key + "=\"" + attrsCopy.get(key) + "\"";				
+				if(cont < numberOfAttrs - 1){
 					itensMessageFormat += ";";						
 				}	
 				cont++;
@@ -248,12 +268,13 @@ public class Instance {
 		}
 
 		public JSONObject toJSON() throws JSONException {
+			System.err.println("");
 			return new JSONObject().put("name", name).put("attributes", attributes.toString());
 		}
 
 		public static Link fromJSON(String linkJSON) throws JSONException {
 			JSONObject jsonObject = new JSONObject(linkJSON);
-			return new Link(jsonObject.optString("name"), JSONHelper.toMap("attributes"));
+			return new Link(jsonObject.optString("name"), JSONHelper.toMap(jsonObject.optString("attributes")));
 		}
 	}
 

@@ -220,14 +220,14 @@ public class ComputeServerResource extends ServerResource {
 		if (links.isEmpty() && sshInformation != null) {
 			links = generateFakeLink(fedInstanceState.getFedInstanceId(), instance);
 			fedInstanceState.setLinks(links);			
-			Resource linkRresource = ResourceRepository.getInstance().get(RequestConstants.LINK_TERM);
-			if (linkRresource != null) {
-				fedInstanceState.addCategory(linkRresource.getCategory());
-			}
-			Resource networkInterfaceResource = ResourceRepository.getInstance().get(RequestConstants.NETWORK_INTERFACE_TERM);
-			if (networkInterfaceResource != null) {
-				fedInstanceState.addCategory(networkInterfaceResource.getCategory());			
-			}
+//			Resource linkRresource = ResourceRepository.getInstance().get(RequestConstants.LINK_TERM);
+//			if (linkRresource != null) {
+//				fedInstanceState.addCategory(linkRresource.getCategory());
+//			}
+//			Resource networkInterfaceResource = ResourceRepository.getInstance().get(RequestConstants.NETWORK_INTERFACE_TERM);
+//			if (networkInterfaceResource != null) {
+//				fedInstanceState.addCategory(networkInterfaceResource.getCategory());			
+//			}
 			instanceDB.update(fedInstanceState);
 		}
 		
@@ -239,23 +239,26 @@ public class ComputeServerResource extends ServerResource {
 	private List<Link> generateFakeLink(String fedInstanceId, Instance instance) {
 		String sshInformation = instance.getAttributes().get(Instance.SSH_PUBLIC_ADDRESS_ATT);
 
-		String[] addressInfo = sshInformation.split(":");
-		String host = addressInfo[0];
+//		String[] addressInfo = sshInformation.split(":");
+//		String host = addressInfo[0];
 		
 		Map<String, String> linkAttrs = new HashMap<String, String>();
+		linkAttrs.put("rel", "http://schemas.ogf.org/occi/infrastructure#network");
+		String fakeLinkId = "/network/interface/" + UUID.randomUUID().toString();
+		linkAttrs.put("self", fakeLinkId);
+		linkAttrs.put("category", "http://schemas.ogf.org/occi/infrastructure#networkinterface http://schemas.ogf.org/occi/infrastructure/networkinterface#ipnetworkinterface");
 		linkAttrs.put("occi.networkinterface.gateway", "Not defined");
-		linkAttrs.put("occi.networkinterface.mac", "Not defined");
+		linkAttrs.put("occi.networkinterface.mac", "00:0a:95:9d:68:16");
 		linkAttrs.put("occi.networkinterface.interface", "eth0");
 		linkAttrs.put("occi.networkinterface.state", "active");
 		linkAttrs.put("occi.networkinterface.allocation", "static");
-		linkAttrs.put("occi.networkinterface.address", host);
+		linkAttrs.put("occi.networkinterface.address", sshInformation);
 		linkAttrs.put("occi.core.source", "/compute/" + fedInstanceId);
-		linkAttrs.put("occi.core.target", "/network/public");
-		String fakeLinkId = "/network/interface/" + UUID.randomUUID().toString();
+		linkAttrs.put("occi.core.target", "</network/public>");
 		linkAttrs.put("occi.core.id", fakeLinkId);
 		
 		ArrayList<Link> links = new ArrayList<Link>();
-		links.add(new Link(fakeLinkId, linkAttrs));
+		links.add(new Link("</network/public>", linkAttrs));
 		return links;
 	}
 
