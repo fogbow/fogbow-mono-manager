@@ -11,6 +11,7 @@ import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.plugins.accounting.ResourceUsage;
 import org.fogbowcloud.manager.occi.instance.ComputeServerResource;
 import org.fogbowcloud.manager.occi.instance.Instance;
+import org.fogbowcloud.manager.occi.member.MemberServerResource;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.HeaderUtils;
 import org.fogbowcloud.manager.occi.model.OCCIHeaders;
@@ -45,6 +46,7 @@ public class OCCIApplication extends Application {
 		router.attach("/" + RequestConstants.COMPUTE_TERM + "/", ComputeServerResource.class);
 		router.attach("/" + RequestConstants.COMPUTE_TERM + "/{instanceId}", ComputeServerResource.class);
 		router.attach("/members", MemberServerResource.class);
+		router.attach("/members/{memberId}/quota", MemberServerResource.class);
 		//TODO remove this endpoint
 		router.attach("/token", TokenServerResource.class);
 		router.attach("/-/", QueryServerResource.class);
@@ -111,10 +113,15 @@ public class OCCIApplication extends Application {
 				.normalize(OCCIHeaders.X_AUTH_TOKEN)));
 		requestHeaders.removeFirst(HeaderUtils.normalize(OCCIHeaders.X_AUTH_TOKEN));
 	}
+
 	
 	public List<FederationMember> getFederationMembers(String accessId) {		
-		return managerFacade.getMembers(accessId);
+		return managerFacade.getRendezvousMembersInfo();
 	}
+	
+	public FederationMember getFederationMemberQuota(String federationMemberId, String accessId) {		
+		return managerFacade.getFederationMemberQuota(federationMemberId, accessId);
+	}	
 
 	public Request getRequest(String authToken, String requestId) {
 		return managerFacade.getRequest(authToken, requestId);

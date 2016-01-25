@@ -62,7 +62,7 @@ public class FederationMember {
 			return false;
 		}
 		FederationMember otherMember = (FederationMember) obj;
-		return getResourcesInfo().getId().equals(otherMember.getResourcesInfo().getId());
+		return getId().equals(otherMember.getId());
 	}
 	
 	@Override

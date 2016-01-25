@@ -414,7 +414,6 @@ public class ManagerController {
 		}
 	}
 
-	// TODO only In test. Remove?
 	public List<FederationMember> getRendezvousMembersInfo() {
 		List<FederationMember> membersCopy = null;
 		synchronized (this.members) {
@@ -434,6 +433,23 @@ public class ManagerController {
 		return membersCopy;
 	}
 	
+	public FederationMember getFederationMemberQuota(String federationMemberId, String accessId) {
+		try {
+			if (federationMemberId.equals(properties
+					.getProperty(ConfigurationConstants.XMPP_JID_KEY))) {
+				return new FederationMember(getResourcesInfo(this.getLocalCredentials(accessId)));
+			}
+			
+			return new FederationMember(ManagerPacketHelper.getRemoteUserQuota
+					(accessId, federationMemberId, packetSender));
+		} catch (Exception e) {
+			LOGGER.error("Error while trying to get member [" + accessId + "] quota from ["
+					+ federationMemberId + "]");
+			return null;
+		}
+	}
+	
+	@Deprecated
 	public List<FederationMember> getMembers(String accessId) {
 		
 		List<FederationMember> membersQuote =  new LinkedList<FederationMember>();

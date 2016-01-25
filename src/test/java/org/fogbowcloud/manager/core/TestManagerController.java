@@ -57,6 +57,7 @@ import org.jamppa.component.PacketCallback;
 import org.json.JSONException;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
@@ -3669,7 +3670,7 @@ public class TestManagerController {
 		Request requestOPENFive = new Request("Five", federationTokenTwo, "555",
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, new Date().getTime(), true,
-				RequestState.OPEN, null, null);			
+				RequestState.OPEN, null, null);
 		RequestRepository requestRepository = new RequestRepository();
 		requestRepository.addRequest(requestOneUserOne.getFederationToken().getUser(), requestOneUserOne);
 		requestRepository.addRequest(requestThreeUserTwo.getFederationToken().getUser(), requestThreeUserTwo);
@@ -3684,5 +3685,40 @@ public class TestManagerController {
 		Mockito.verify(database, Mockito.times(1)).addOrder(Mockito.any(Request.class));
 		Mockito.verify(database, Mockito.times(2)).updateOrder(Mockito.any(Request.class));
 	}
+	
+	@Ignore
+	@Test
+	public void testGetFederationMemberQuota() {
+		String federationMemberId = "";
+		String accessId = "";
+		managerController.getFederationMemberQuota(federationMemberId, accessId);
+	}
+	
+	@Test
+	public void testGetRendezvousMembersInfo() {
+		ArrayList<FederationMember> items = new ArrayList<FederationMember>();
+		String prefix = "user";
+		int cont = 10;
+		for (int i = 0; i < cont; i++) {
+			items.add(new FederationMember(prefix + i));
+		}
+
+		managerController.updateMembers(items);
+
+		List<FederationMember> rendezvousMembersInfo = managerController.getRendezvousMembersInfo();
+		Assert.assertEquals(11, rendezvousMembersInfo.size());
+		Assert.assertTrue(rendezvousMembersInfo.contains(new FederationMember(
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL)));
+		for (int i = 0; i < cont; i++) {
+			Assert.assertTrue(rendezvousMembersInfo.contains(new FederationMember(prefix + i)));
+		}
+	}
+
+	@Test
+	public void testGetRendezvousMembersInfoOnlyYourself() {
+		List<FederationMember> rendezvousMembersInfo = managerController.getRendezvousMembersInfo();
+		Assert.assertEquals(1, rendezvousMembersInfo.size());
+		Assert.assertTrue(rendezvousMembersInfo.contains(new FederationMember(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL)));
+	}		
 	
 }

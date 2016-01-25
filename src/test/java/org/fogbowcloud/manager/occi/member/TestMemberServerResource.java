@@ -1,4 +1,4 @@
-package org.fogbowcloud.manager.occi;
+package org.fogbowcloud.manager.occi.member;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,8 +19,8 @@ import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
-import org.fogbowcloud.manager.core.plugins.MapperPlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
+import org.fogbowcloud.manager.core.plugins.MapperPlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.model.OCCIHeaders;
 import org.fogbowcloud.manager.occi.model.Token;
@@ -46,16 +46,15 @@ public class TestMemberServerResource {
 	private AccountingPlugin accoutingPlugin;
 	private AuthorizationPlugin authorizationPlugin;
 	private MapperPlugin mapperPlugin;
-	
+
 	@Before
 	public void setup() throws Exception {
 		this.computePlugin = Mockito.mock(ComputePlugin.class);
 		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class))).thenReturn(
-				new ResourcesInfo(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, 
-						"", "", "", "", "", ""));
+				new ResourcesInfo(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, "", "", "",
+						"", "", ""));
 		this.mapperPlugin = Mockito.mock(MapperPlugin.class);
-		Map<String, Map<String, String>> defaultFederationUsersCrendetials = 
-				new HashMap<String, Map<String,String>>();
+		Map<String, Map<String, String>> defaultFederationUsersCrendetials = new HashMap<String, Map<String, String>>();
 		HashMap<String, String> localUserCredentials = new HashMap<String, String>();
 		defaultFederationUsersCrendetials.put("one", localUserCredentials);
 		Mockito.when(mapperPlugin.getAllLocalCredentials()).thenReturn(
@@ -63,7 +62,6 @@ public class TestMemberServerResource {
 		Mockito.when(mapperPlugin.getLocalCredentials("x_federation_auth_token")).thenReturn(
 				localUserCredentials);
 
-		
 		this.identityPlugin = Mockito.mock(IdentityPlugin.class);
 		this.accoutingPlugin = Mockito.mock(AccountingPlugin.class);
 		this.authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
@@ -88,12 +86,12 @@ public class TestMemberServerResource {
 		List<ResourcesInfo> resourcesInfo = new ArrayList<ResourcesInfo>();
 		resourcesInfo.add(resourcesInfo1);
 		resourcesInfo.add(resourcesInfo2);
-		
+
 		AsyncPacketSender packetSender = createPacketSenderMock(resourcesInfo);
-		
+
 		this.helper.initializeComponentMember(computePlugin, identityPlugin, authorizationPlugin,
-				accoutingPlugin, federationMembers, mapperPlugin, packetSender);		
-		
+				accoutingPlugin, federationMembers, mapperPlugin, packetSender);
+
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_MEMBER);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, "x_federation_auth_token");
@@ -103,7 +101,6 @@ public class TestMemberServerResource {
 		String responseStr = EntityUtils.toString(response.getEntity(),
 				String.valueOf(Charsets.UTF_8));
 
-		Assert.assertTrue(checkResponse(responseStr));
 		Assert.assertTrue(responseStr.contains(ID_RESOURCEINFO1));
 		Assert.assertTrue(responseStr.contains(ID_RESOURCEINFO2));
 		Assert.assertTrue(responseStr.contains(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL));
@@ -141,7 +138,7 @@ public class TestMemberServerResource {
 		IQ firstResponse = responses.remove(0);
 		IQ[] nextResponses = new IQ[responses.size()];
 		responses.toArray(nextResponses);
-		
+
 		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);
 		Mockito.when(packetSender.syncSendPacket(Mockito.any(IQ.class))).thenReturn(firstResponse,
 				nextResponses);
@@ -153,7 +150,7 @@ public class TestMemberServerResource {
 		List<FederationMember> federationMembers = new ArrayList<FederationMember>();
 		this.helper.initializeComponentMember(computePlugin, identityPlugin, authorizationPlugin,
 				accoutingPlugin, federationMembers, mapperPlugin);
-		
+
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_MEMBER);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, "x_federation_auth_token");
@@ -166,26 +163,26 @@ public class TestMemberServerResource {
 		Assert.assertTrue(responseStr.contains(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL));
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
-	
+
 	@Test
 	public void testGetMemberWithoutFederationToken() throws Exception {
 		List<FederationMember> federationMembers = new ArrayList<FederationMember>();
 		this.helper.initializeComponentMember(computePlugin, identityPlugin, authorizationPlugin,
 				accoutingPlugin, federationMembers, mapperPlugin);
-		
+
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_MEMBER);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(get);
 
 		Assert.assertEquals(HttpStatus.SC_UNAUTHORIZED, response.getStatusLine().getStatusCode());
-	}	
-	
+	}
+
 	@Test
 	public void testGetMemberWrongContentType() throws Exception {
 		this.helper.initializeComponentMember(computePlugin, identityPlugin, authorizationPlugin,
 				accoutingPlugin, new LinkedList<FederationMember>(), mapperPlugin);
-		
+
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_MEMBER);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, "wrong");
 		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, "x_federation_auth_token");
@@ -194,15 +191,59 @@ public class TestMemberServerResource {
 
 		Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusLine().getStatusCode());
 	}
-	
-	
-	private boolean checkResponse(String response) {
-		String[] tokens = response.split("\n");
+
+	@Test
+	public void testGetSpecificMemberQuota() throws Exception {
+		List<FederationMember> federationMembers = new ArrayList<FederationMember>();
+		String cpuIdle = "2";
+		String cpuInUse = "1";
+		String memIdle = "100";
+		String memInUse = "35";
+		String instancesIdle = "1";
+		String instancesInUse = "10";
+		ResourcesInfo resourcesInfo1 = new ResourcesInfo(ID_RESOURCEINFO1, cpuIdle, cpuInUse,
+				memIdle, memInUse, instancesIdle, instancesInUse);
+		ResourcesInfo resourcesInfo2 = new ResourcesInfo(ID_RESOURCEINFO2, cpuIdle, cpuInUse,
+				memIdle, memInUse, "", "");
+		federationMembers.add(new FederationMember(resourcesInfo1));
+		federationMembers.add(new FederationMember(resourcesInfo2));
+
+		List<ResourcesInfo> resourcesInfo = new ArrayList<ResourcesInfo>();
+		resourcesInfo.add(resourcesInfo1);
+		resourcesInfo.add(resourcesInfo2);
+
+		AsyncPacketSender packetSender = createPacketSenderMock(resourcesInfo);
+
+		this.helper.initializeComponentMember(computePlugin, identityPlugin, authorizationPlugin,
+				accoutingPlugin, federationMembers, mapperPlugin, packetSender);
+
+		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_MEMBER + "/" + ID_RESOURCEINFO1 + "/quota");
+		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
+		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, "x_federation_auth_token");
+		HttpClient client = HttpClients.createMinimal();
+		HttpResponse response = client.execute(get);
+
+		String responseStr = EntityUtils.toString(response.getEntity(),
+				String.valueOf(Charsets.UTF_8));
+
+		Assert.assertEquals(cpuIdle, getValueByKey(responseStr, "cpuIdle"));
+		Assert.assertEquals(cpuInUse, getValueByKey(responseStr, "cpuInUse"));
+		Assert.assertEquals(memIdle, getValueByKey(responseStr, "memIdle"));
+		Assert.assertEquals(memInUse, getValueByKey(responseStr, "memInUse"));
+		Assert.assertEquals(instancesIdle, getValueByKey(responseStr, "instancesIdle"));
+		Assert.assertEquals(instancesInUse, getValueByKey(responseStr, "instancesInUse"));
+		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());			
+	}
+
+	private String getValueByKey(String responseStr, String key) {
+		String[] tokens = responseStr.split("\n");
 		for (String token : tokens) {
-			if (!token.contains("id=")) {
-				return false;
+			String prefix = OCCIHeaders.X_OCCI_ATTRIBUTE + ": " + key;
+			if (token.startsWith(prefix)) {
+				return token.replace(prefix + "=", "");
 			}
 		}
-		return true;
+		return null;
 	}
+
 }
