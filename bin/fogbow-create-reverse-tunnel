@@ -19,7 +19,14 @@ autossh() {
       continue
     fi
     echo "Starting tunnel in port \$REMOTE_PORT"
-    read PORT SSH_SERVER_PORT <<<$(IFS=":"; echo $REMOTE_PORT)
+    
+    OLD_IFS=$IFS              # save internal field separator
+    IFS=":"                   # set it to ':'
+    set -- $REMOTE_PORT       # make the result positional parameters
+    IFS=$OLD_IFS              # restore IFS
+    PORT=$1
+    SSH_SERVER_PORT=$2
+    
     echo "Command: ssh $SSH_OPTIONS -N -R 0.0.0.0:\$PORT:localhost:22 #TOKEN_ID#@#TOKEN_HOST# -p $SSH_SERVER_PORT"
     ssh $SSH_OPTIONS -N -R 0.0.0.0:\$PORT:localhost:22 #TOKEN_ID#@#TOKEN_HOST# -p $SSH_SERVER_PORT
     sleep 5
