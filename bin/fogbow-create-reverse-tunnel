@@ -19,8 +19,9 @@ autossh() {
       continue
     fi
     echo "Starting tunnel in port \$REMOTE_PORT"
-    echo "Command: ssh $SSH_OPTIONS -N -R 0.0.0.0:\$REMOTE_PORT:localhost:22 #TOKEN_ID#@#TOKEN_HOST# -p #TOKEN_HOST_SSH_PORT#"
-    ssh $SSH_OPTIONS -N -R 0.0.0.0:\$REMOTE_PORT:localhost:22 #TOKEN_ID#@#TOKEN_HOST# -p #TOKEN_HOST_SSH_PORT#
+    read PORT SSH_SERVER_PORT <<<$(IFS=":"; echo $REMOTE_PORT)
+    echo "Command: ssh $SSH_OPTIONS -N -R 0.0.0.0:\$PORT:localhost:22 #TOKEN_ID#@#TOKEN_HOST# -p $SSH_SERVER_PORT"
+    ssh $SSH_OPTIONS -N -R 0.0.0.0:\$PORT:localhost:22 #TOKEN_ID#@#TOKEN_HOST# -p $SSH_SERVER_PORT
     sleep 5
   done
 }
@@ -31,6 +32,7 @@ setsid /bin/fogbow-autossh
 cat > /bin/create-fogbow-tunnel << EOL
 #!/bin/sh
 REMOTE_PORT=\$(curl -X POST #TOKEN_HOST#:#TOKEN_HOST_HTTP_PORT#/token/#TOKEN_ID#-\${1})
-ssh $SSH_OPTIONS -f -N -R 0.0.0.0:\$REMOTE_PORT:localhost:\${2} #TOKEN_ID#-\${1}@#TOKEN_HOST# -p #TOKEN_HOST_SSH_PORT#
+read PORT SSH_SERVER_PORT <<<$(IFS=":"; echo $REMOTE_PORT)read PORT SSH_SERVER_PORT <<<$(IFS=":"; echo $REMOTE_PORT)
+ssh $SSH_OPTIONS -f -N -R 0.0.0.0:\$PORT:localhost:\${2} #TOKEN_ID#-\${1}@#TOKEN_HOST# -p SSH_SERVER_PORT
 EOL
 chmod +x /bin/create-fogbow-tunnel
