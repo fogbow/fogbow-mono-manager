@@ -63,7 +63,6 @@ public class MemberServerResource extends ServerResource {
 		response.append("\n");
 		response.append(OCCIHeaders.X_OCCI_ATTRIBUTE + ": instancesInUse="
 				+ federationMember.getResourcesInfo().getInstancesInUse());
-		response.append("\n");				
 		
 		return response.toString().trim();
 	}

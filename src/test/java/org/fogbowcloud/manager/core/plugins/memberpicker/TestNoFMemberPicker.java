@@ -37,12 +37,12 @@ public class TestNoFMemberPicker {
 	@Test
 	public void testEmptyMembers() {
 		// mocking
-		Mockito.when(facade.getMembers(null)).thenReturn(new ArrayList<FederationMember>());
+		Mockito.when(facade.getRendezvousMembers()).thenReturn(new ArrayList<FederationMember>());
 		Mockito.when(accountingPlugin.getMembersUsage()).thenReturn(
 				new HashMap<String, ResourceUsage>());
 		
 		NoFMemberPickerPlugin nofPicker = new NoFMemberPickerPlugin(properties, accountingPlugin);
-		Assert.assertNull(nofPicker.pick(facade.getMembers(null)));
+		Assert.assertNull(nofPicker.pick(facade.getRendezvousMembers()));
 		Assert.assertFalse(nofPicker.getTrustworthy());
 	}
 
@@ -54,12 +54,12 @@ public class TestNoFMemberPicker {
 		ArrayList<FederationMember> membersToReturn = new ArrayList<FederationMember>();
 		membersToReturn.add(localMember);
 		
-		Mockito.when(facade.getMembers(null)).thenReturn(membersToReturn);
+		Mockito.when(facade.getRendezvousMembers()).thenReturn(membersToReturn);
 		Mockito.when(accountingPlugin.getMembersUsage()).thenReturn(
 				new HashMap<String, ResourceUsage>());
 		
 		NoFMemberPickerPlugin nofPicker = new NoFMemberPickerPlugin(properties, accountingPlugin);
-		Assert.assertNull(nofPicker.pick(facade.getMembers(null)));
+		Assert.assertNull(nofPicker.pick(facade.getRendezvousMembers()));
 		Assert.assertFalse(nofPicker.getTrustworthy());
 	}
 	
@@ -73,7 +73,7 @@ public class TestNoFMemberPicker {
 		ArrayList<FederationMember> membersToReturn = new ArrayList<FederationMember>();
 		membersToReturn.add(localMember);
 		membersToReturn.add(remoteMember);
-		Mockito.when(facade.getMembers(null)).thenReturn(membersToReturn);
+		Mockito.when(facade.getRendezvousMembers()).thenReturn(membersToReturn);
 		
 		// mocking accounting		
 		HashMap<String, ResourceUsage> membersUsageToReturn = new HashMap<String, ResourceUsage>();
@@ -85,7 +85,7 @@ public class TestNoFMemberPicker {
 				membersUsageToReturn);
 		
 		NoFMemberPickerPlugin nofPicker = new NoFMemberPickerPlugin(properties, accountingPlugin);
-		Assert.assertEquals(remoteMember, nofPicker.pick(facade.getMembers(null)));
+		Assert.assertEquals(remoteMember, nofPicker.pick(facade.getRendezvousMembers()));
 		Assert.assertFalse(nofPicker.getTrustworthy());
 	}
 	
@@ -102,7 +102,7 @@ public class TestNoFMemberPicker {
 		membersToReturn.add(localMember);
 		membersToReturn.add(remoteMember1);
 		membersToReturn.add(remoteMember2);
-		Mockito.when(facade.getMembers(null)).thenReturn(membersToReturn);
+		Mockito.when(facade.getRendezvousMembers()).thenReturn(membersToReturn);
 		
 		// mocking accounting		
 		HashMap<String, ResourceUsage> membersUsageToReturn = new HashMap<String, ResourceUsage>();
@@ -118,7 +118,7 @@ public class TestNoFMemberPicker {
 				membersUsageToReturn);
 		
 		NoFMemberPickerPlugin nofPicker = new NoFMemberPickerPlugin(properties, accountingPlugin);
-		Assert.assertEquals(remoteMember1, nofPicker.pick(facade.getMembers(null)));
+		Assert.assertEquals(remoteMember1, nofPicker.pick(facade.getRendezvousMembers()));
 		Assert.assertFalse(nofPicker.getTrustworthy());
 	}
 }
