@@ -414,8 +414,7 @@ public class ManagerController {
 		}
 	}
 
-	// TODO only In test. Remove?
-	public List<FederationMember> getRendezvousMembersInfo() {
+	public List<FederationMember> getRendezvousMembers() {
 		List<FederationMember> membersCopy = null;
 		synchronized (this.members) {
 			membersCopy = new LinkedList<FederationMember>(members);
@@ -434,40 +433,20 @@ public class ManagerController {
 		return membersCopy;
 	}
 	
-	public List<FederationMember> getMembers(String accessId) {
-		
-		List<FederationMember> membersQuote =  new LinkedList<FederationMember>();
-
-		// getting local resource info
-		Map<String, String> localCredentials = this.getLocalCredentials(accessId);
-		if (localCredentials != null) {
-			ResourcesInfo localResourcesInfo = getResourcesInfo(localCredentials);
-			if (localResourcesInfo != null) {
-				membersQuote.add(new FederationMember(localResourcesInfo));
+	public FederationMember getFederationMemberQuota(String federationMemberId, String accessId) {
+		try {
+			if (federationMemberId.equals(properties
+					.getProperty(ConfigurationConstants.XMPP_JID_KEY))) {
+				return new FederationMember(getResourcesInfo(this.getLocalCredentials(accessId)));
 			}
+			
+			return new FederationMember(ManagerPacketHelper.getRemoteUserQuota
+					(accessId, federationMemberId, packetSender));
+		} catch (Exception e) {
+			LOGGER.error("Error while trying to get member [" + accessId + "] quota from ["
+					+ federationMemberId + "]", e);
+			return null;
 		}
-
-		// getting resources info from other members
-		List<FederationMember> membersCopy = null;
-		synchronized (this.members) {
-			membersCopy = new LinkedList<FederationMember>(members);
-		}
-		for (FederationMember member : membersCopy) {
-			if (!member.getId()
-					.equals(properties.getProperty(ConfigurationConstants.XMPP_JID_KEY))) {
-				try {
-					ResourcesInfo resourcesInfo = ManagerPacketHelper.getRemoteUserQuota(accessId,
-							member.getId(), packetSender);
-					if (resourcesInfo != null) {
-						membersQuote.add(new FederationMember(resourcesInfo));
-					}
-				} catch (Exception e) {
-					LOGGER.error("Error while trying to get member [" + accessId + "] quota from ["
-							+ member.getId() + "]");
-				}
-			}
-		}
-		return membersQuote;
 	}
 
 	public Map<String, String> getLocalCredentials(String accessId) {

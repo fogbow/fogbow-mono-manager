@@ -17,7 +17,6 @@ import java.util.Map;
 import javax.mail.MessagingException;
 
 import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.collections.MapUtils;
 import org.apache.commons.io.IOUtils;
 import org.dom4j.Element;
 import org.fogbowcloud.manager.core.ManagerController.FailedBatchType;
@@ -66,6 +65,7 @@ import org.mockito.stubbing.Answer;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.IQ.Type;
 import org.xmpp.packet.Packet;
+import org.xmpp.packet.PacketError;
 import org.xmpp.packet.PacketError.Condition;
 
 public class TestManagerController {
@@ -1254,28 +1254,21 @@ public class TestManagerController {
 	}
 
 	@Test
-	public void testGet0ItemsFromIQ() {
+	public void testGet1ItemsFromRendezvous() {
 		managerController.updateMembers(new LinkedList<FederationMember>());
 		// There is a single member which is the manager itself
-		Assert.assertEquals(1, managerController.getMembers(null).size());
+		Assert.assertEquals(1, managerController.getRendezvousMembers().size());
 	}
 
 	@Test
-	public void testGet1ItemFromIQ() throws CertificateException, IOException {
-		FederationMember managerItem = new FederationMember(managerTestHelper.getResources());
-		List<FederationMember> items = new LinkedList<FederationMember>();
-		items.add(managerItem);
-		
-		AsyncPacketSender packetSender = mockGetRemoteResourceInfo(items);
-		managerController.setPacketSender(packetSender);
-		managerController.updateMembers(items);
-
-		List<FederationMember> members = managerController.getMembers(managerTestHelper
-				.getDefaultFederationToken().getAccessId());
+	public void testGet2ItemFromRendezvous() throws CertificateException, IOException {
+		String id = "abc";	
+		managerController.updateMembers(Arrays.asList(new FederationMember[] {new FederationMember(id)}));
+		List<FederationMember> members = managerController.getRendezvousMembers();
 		Assert.assertEquals(2, members.size());
 		Assert.assertEquals(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, 
-				members.get(0).getResourcesInfo().getId());
-		Assert.assertEquals("abc", members.get(1).getResourcesInfo().getId());
+				members.get(members.size() - 1).getId());
+		Assert.assertEquals(id, members.get(0).getId());
 	}
 	
 
@@ -1329,239 +1322,14 @@ public class TestManagerController {
 		managerController.setPacketSender(packetSender);
 		managerController.updateMembers(items);
 
-		List<FederationMember> members = managerController.getMembers(managerTestHelper
-				.getDefaultFederationToken().getAccessId());
+		List<FederationMember> members = managerController.getRendezvousMembers();
 		Assert.assertEquals(11, members.size());
 		Assert.assertEquals(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, 
-				members.get(0).getResourcesInfo().getId());
-		for (int i = 1; i < 11; i++) {
-			Assert.assertEquals("abc", members.get(i).getResourcesInfo().getId());
-		}
-	}
-	
-	@Test
-	public void testGetManyItemsFromIQFoundLocalCredentailsPlugin() throws CertificateException, IOException {
-		MapperPlugin mapperPlugin = Mockito.mock(MapperPlugin.class);
-		String accessId = "accessId";
-		Map<String, String> credentails = new HashMap<String, String>();
-		credentails.put("123", "321");
-		Mockito.when(mapperPlugin.getLocalCredentials(accessId)).thenReturn(credentails);		
-		
-		IdentityPlugin localIdentityPlugin = Mockito.mock(IdentityPlugin.class);
-		Token token = new Token("", "", new Date(), null);
-		Mockito.when(localIdentityPlugin.createToken(credentails)).thenReturn(token);
-		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
-		String value = "100";
-		ResourcesInfo resourcesInfo = new ResourcesInfo(value, value,value,value ,value ,value);
-		Mockito.when(computePlugin.getResourcesInfo(token)).thenReturn(resourcesInfo);
-		
-		managerController.setComputePlugin(computePlugin);
-		managerController.setLocalIdentityPlugin(localIdentityPlugin);
-		managerController.setLocalCredentailsPlugin(mapperPlugin);
-		
-		ArrayList<FederationMember> items = new ArrayList<FederationMember>();
+				members.get(members.size() -1 ).getId());
 		for (int i = 0; i < 10; i++) {
-			items.add(new FederationMember(managerTestHelper.getResources()));
-		}
-
-		AsyncPacketSender packetSender = mockGetRemoteResourceInfo(items);
-		managerController.setPacketSender(packetSender);
-		managerController.updateMembers(items);
-
-		List<FederationMember> members = managerController.getMembers(accessId);
-		Assert.assertEquals(11, members.size());
-		Assert.assertEquals(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, members.get(0)
-				.getResourcesInfo().getId());
-		Assert.assertEquals(value, members.get(0).getResourcesInfo().getCpuIdle());
-		Assert.assertEquals(value, members.get(0).getResourcesInfo().getMemIdle());
-		Assert.assertEquals(value, members.get(0).getResourcesInfo().getInstancesIdle());
-
-		for (int i = 1; i < 11; i++) {
-			Assert.assertEquals("abc", members.get(i).getResourcesInfo().getId());
-		}
-	}
-	
-	@Test
-	public void testGetManyItemsFromIQFoundLocalCredentailsPluginWithLocalMember() throws CertificateException, IOException {
-		MapperPlugin mapperPlugin = Mockito.mock(MapperPlugin.class);
-		String accessId = "accessId";
-		Map<String, String> credentails = new HashMap<String, String>();
-		credentails.put("123", "321");
-		Mockito.when(mapperPlugin.getLocalCredentials(accessId)).thenReturn(credentails);		
-		
-		IdentityPlugin localIdentityPlugin = Mockito.mock(IdentityPlugin.class);
-		Token token = new Token("", "", new Date(), null);
-		Mockito.when(localIdentityPlugin.createToken(credentails)).thenReturn(token);
-		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
-		String value = "100";
-		ResourcesInfo resourcesInfo = new ResourcesInfo(value, value,value,value ,value ,value);
-		Mockito.when(computePlugin.getResourcesInfo(token)).thenReturn(resourcesInfo);
-		
-		managerController.setComputePlugin(computePlugin);
-		managerController.setLocalIdentityPlugin(localIdentityPlugin);
-		managerController.setLocalCredentailsPlugin(mapperPlugin);
-		
-		ArrayList<FederationMember> items = new ArrayList<FederationMember>();
-		for (int i = 0; i < 10; i++) {
-			items.add(new FederationMember(managerTestHelper.getResources()));
-		}
-		items.add(new FederationMember(new ResourcesInfo(
-				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, value, 
-				value, value, value, value, value)));
-
-		AsyncPacketSender packetSender = mockGetRemoteResourceInfo(items);
-		managerController.setPacketSender(packetSender);
-		managerController.updateMembers(items);
-		
-		List<FederationMember> members = managerController.getMembers(accessId);
-		
-		Assert.assertEquals(11, members.size());
-		Assert.assertEquals(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, members.get(0)
-				.getResourcesInfo().getId());
-		Assert.assertEquals(value, members.get(0).getResourcesInfo().getCpuIdle());
-		Assert.assertEquals(value, members.get(0).getResourcesInfo().getMemIdle());
-		Assert.assertEquals(value, members.get(0).getResourcesInfo().getInstancesIdle());
-		
-		for (int i = 1; i < 11; i++) {
-			Assert.assertEquals("abc", members.get(i).getResourcesInfo().getId());
+			Assert.assertEquals("abc", members.get(i).getId());
 		}
 	}	
-	
-	@SuppressWarnings({ "unchecked", "unused", "rawtypes" })
-	@Test
-	public void testGetManyItemsAccordingToLocalCredentailsPlugin() throws CertificateException, IOException {
-		MapperPlugin mapperPlugin = Mockito.mock(MapperPlugin.class);
-		String accessId1 = "accessId1";
-		String accessId2 = "accessId2";
-		Map<String, String> occiAtt = xOCCIAtt;
-		Map<String, Map<String, String>> allCredentails = new HashMap<String, Map<String,String>>();
-		Map<String, String> credentialOne = MapUtils.putAll(new HashMap(), new String[][] { {
-				"123", "321" } });
-		allCredentails.put("one", credentialOne);
-		Map<String, String> credentialTwo = MapUtils.putAll(new HashMap(), new String[][] { {
-				"456", "654" } });
-		allCredentails.put("two", credentialTwo);
-		Mockito.when(mapperPlugin.getLocalCredentials(accessId1)).thenReturn(credentialOne);
-		Mockito.when(mapperPlugin.getLocalCredentials(accessId2)).thenReturn(credentialTwo);
-		
-		IdentityPlugin localIdentityPlugin = Mockito.mock(IdentityPlugin.class);
-		Token tokenOne = new Token("One", "", new Date(), null);
-		Mockito.when(localIdentityPlugin.createToken(credentialOne)).thenReturn(tokenOne);
-		Token tokenTwo = new Token("Two", "", new Date(), null);
-		Mockito.when(localIdentityPlugin.createToken(credentialTwo)).thenReturn(tokenTwo);
-		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
-		String valueOne = "100";
-		String valueTwo = "200";
-		ResourcesInfo resourcesInfo = new ResourcesInfo(valueOne, valueOne,valueOne,valueOne ,valueOne ,valueOne);
-		Mockito.when(computePlugin.getResourcesInfo(tokenOne)).thenReturn(resourcesInfo);
-		ResourcesInfo resourcesInfoTwo = new ResourcesInfo(valueTwo, valueTwo,valueTwo,valueTwo ,valueTwo ,valueTwo);
-		Mockito.when(computePlugin.getResourcesInfo(tokenTwo)).thenReturn(resourcesInfoTwo);
-		
-		managerController.setComputePlugin(computePlugin);
-		managerController.setLocalIdentityPlugin(localIdentityPlugin);
-		managerController.setLocalCredentailsPlugin(mapperPlugin);
-		
-		ArrayList<FederationMember> items = new ArrayList<FederationMember>();
-		for (int i = 0; i < 10; i++) {
-			items.add(new FederationMember(managerTestHelper.getResources()));
-		}
-		
-		AsyncPacketSender packetSender = mockGetRemoteResourceInfo(items);
-		managerController.setPacketSender(packetSender);
-		managerController.updateMembers(items);
-
-		//accessId 1
-		List<FederationMember> members = managerController.getMembers(accessId1);
-		Assert.assertEquals(11, members.size());
-		Assert.assertEquals("100", members.get(0).getResourcesInfo().getCpuIdle());
-		Assert.assertEquals("100", members.get(0).getResourcesInfo().getMemIdle());
-		Assert.assertEquals("100", members.get(0).getResourcesInfo().getInstancesIdle());
-		Assert.assertEquals(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, members.get(0)
-				.getResourcesInfo().getId());
-
-		for (int i = 1; i < 11; i++) {
-			Assert.assertEquals("abc", members.get(i).getResourcesInfo().getId());
-		}
-		
-		// accessId 2
-		members = managerController.getMembers(accessId2);
-		Assert.assertEquals(11, members.size());
-		Assert.assertEquals("200", members.get(0).getResourcesInfo().getCpuIdle());
-		Assert.assertEquals("200", members.get(0).getResourcesInfo().getMemIdle());
-		Assert.assertEquals("200", members.get(0).getResourcesInfo().getInstancesIdle());
-		Assert.assertEquals(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, members.get(0)
-				.getResourcesInfo().getId());
-
-		for (int i = 1; i < 11; i++) {
-			Assert.assertEquals("abc", members.get(i).getResourcesInfo().getId());
-		}
-	}
-	
-	@SuppressWarnings({ "unchecked", "unused", "rawtypes" })
-	@Test
-	public void testGetManyItemsBasedOnLocalCredentailsPluginLocalMember() throws CertificateException, IOException {
-		MapperPlugin mapperPlugin = Mockito.mock(MapperPlugin.class);
-		String accessId1 = "accessId1";
-		String accessId2 = "accessId2";		
-		Map<String, String> occiAtt = xOCCIAtt;
-		Map<String, String> credentialOne = MapUtils.putAll(new HashMap(), new String[][] { {
-				"123", "321" } });
-		Map<String, String> credentialTwo = MapUtils.putAll(new HashMap(), new String[][] { {
-				"456", "654" } });
-		Mockito.when(mapperPlugin.getLocalCredentials(accessId1)).thenReturn(credentialOne);
-		Mockito.when(mapperPlugin.getLocalCredentials(accessId2)).thenReturn(credentialTwo);
-		
-		IdentityPlugin localIdentityPlugin = Mockito.mock(IdentityPlugin.class);
-		Token tokenOne = new Token("One", "", new Date(), null);
-		Mockito.when(localIdentityPlugin.createToken(credentialOne)).thenReturn(tokenOne);
-		Token tokenTwo = new Token("Two", "", new Date(), null);
-		Mockito.when(localIdentityPlugin.createToken(credentialTwo)).thenReturn(tokenTwo);
-		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
-		String valueOne = "100";
-		String valueTwo = "200";
-		ResourcesInfo resourcesInfo = new ResourcesInfo(valueOne, valueOne,valueOne,valueOne ,valueOne ,valueOne);
-		Mockito.when(computePlugin.getResourcesInfo(tokenOne)).thenReturn(resourcesInfo);
-		ResourcesInfo resourcesInfoTwo = new ResourcesInfo(valueTwo, valueTwo,valueTwo,valueTwo ,valueTwo ,valueTwo);
-		Mockito.when(computePlugin.getResourcesInfo(tokenTwo)).thenReturn(resourcesInfoTwo);
-		
-		managerController.setComputePlugin(computePlugin);
-		managerController.setLocalIdentityPlugin(localIdentityPlugin);
-		managerController.setLocalCredentailsPlugin(mapperPlugin);
-		
-		ArrayList<FederationMember> items = new ArrayList<FederationMember>();
-		for (int i = 0; i < 10; i++) {
-			items.add(new FederationMember(managerTestHelper.getResources()));
-		}
-
-		AsyncPacketSender packetSender = mockGetRemoteResourceInfo(items);
-		managerController.setPacketSender(packetSender);
-		managerController.updateMembers(items);
-
-		// accessId 1
-		List<FederationMember> members = managerController.getMembers(accessId1);
-		Assert.assertEquals(11, members.size());
-		Assert.assertEquals(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, members.get(0)
-				.getResourcesInfo().getId());
-		Assert.assertEquals("100", members.get(0).getResourcesInfo().getCpuIdle());
-		Assert.assertEquals("100", members.get(0).getResourcesInfo().getMemIdle());
-		Assert.assertEquals("100", members.get(0).getResourcesInfo().getInstancesIdle());
-		for (int i = 1; i < 11; i++) {
-			Assert.assertEquals("abc", members.get(i).getResourcesInfo().getId());
-		}
-		
-		// accessId 2
-		members = managerController.getMembers(accessId2);
-		Assert.assertEquals(11, members.size());
-		Assert.assertEquals(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, members.get(0)
-				.getResourcesInfo().getId());
-		Assert.assertEquals("200", members.get(0).getResourcesInfo().getCpuIdle());
-		Assert.assertEquals("200", members.get(0).getResourcesInfo().getMemIdle());
-		Assert.assertEquals("200", members.get(0).getResourcesInfo().getInstancesIdle());
-		for (int i = 1; i < 11; i++) {
-			Assert.assertEquals("abc", members.get(i).getResourcesInfo().getId());
-		}
-
-	}		
 
 	@Test
 	public void testGetRequestsByUser() throws InterruptedException {
@@ -3669,7 +3437,7 @@ public class TestManagerController {
 		Request requestOPENFive = new Request("Five", federationTokenTwo, "555",
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, new Date().getTime(), true,
-				RequestState.OPEN, null, null);			
+				RequestState.OPEN, null, null);
 		RequestRepository requestRepository = new RequestRepository();
 		requestRepository.addRequest(requestOneUserOne.getFederationToken().getUser(), requestOneUserOne);
 		requestRepository.addRequest(requestThreeUserTwo.getFederationToken().getUser(), requestThreeUserTwo);
@@ -3684,5 +3452,140 @@ public class TestManagerController {
 		Mockito.verify(database, Mockito.times(1)).addOrder(Mockito.any(Request.class));
 		Mockito.verify(database, Mockito.times(2)).updateOrder(Mockito.any(Request.class));
 	}
+	
+	@Test
+	public void testGetFederationMemberQuota() {
+		String federationMemberId = "anyonemember";
+		String accessId = "access_id";
+		
+		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
+		String cpuIdle = "1";
+		String cpuInUse = "2";
+		String memIdle = "3";
+		String memInUse = "4";
+		String instancesIdle = "5";
+		String instancesInUse = "6";
+		ResourcesInfo resourceInfo = new ResourcesInfo(cpuIdle, cpuInUse, memIdle, memInUse, instancesIdle, instancesInUse);
+		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class)))
+				.thenReturn(resourceInfo);
+
+		managerController.setPacketSender(generateRemoteQuotaResponse(resourceInfo));
+		managerController.setComputePlugin(computePlugin);
+		FederationMember federationMemberQuota = managerController.getFederationMemberQuota(federationMemberId, accessId);
+		Assert.assertEquals(cpuIdle, federationMemberQuota.getResourcesInfo().getCpuIdle());
+		Assert.assertEquals(cpuInUse, federationMemberQuota.getResourcesInfo().getCpuInUse());
+		Assert.assertEquals(memIdle, federationMemberQuota.getResourcesInfo().getMemIdle());
+		Assert.assertEquals(memInUse, federationMemberQuota.getResourcesInfo().getMemInUse());
+		Assert.assertEquals(instancesIdle, federationMemberQuota.getResourcesInfo().getInstancesIdle());
+		Assert.assertEquals(instancesInUse, federationMemberQuota.getResourcesInfo().getInstancesInUse());
+	}
+	
+	@Test
+	public void testGetFederationMemberQuotaOwnMember() {
+		String federationMemberId = DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL;
+		String accessId = "access_id";
+		
+		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
+		String cpuIdle = "1";
+		String cpuInUse = "2";
+		String memIdle = "3";
+		String memInUse = "4";
+		String instancesIdle = "5";
+		String instancesInUse = "6";
+		ResourcesInfo resourceInfo = new ResourcesInfo(cpuIdle, cpuInUse, memIdle, memInUse, instancesIdle, instancesInUse);
+		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class)))
+				.thenReturn(resourceInfo);
+
+		managerController.setComputePlugin(computePlugin);
+		FederationMember federationMemberQuota = managerController.getFederationMemberQuota(federationMemberId, accessId);
+		Assert.assertEquals(cpuIdle, federationMemberQuota.getResourcesInfo().getCpuIdle());
+		Assert.assertEquals(cpuInUse, federationMemberQuota.getResourcesInfo().getCpuInUse());
+		Assert.assertEquals(memIdle, federationMemberQuota.getResourcesInfo().getMemIdle());
+		Assert.assertEquals(memInUse, federationMemberQuota.getResourcesInfo().getMemInUse());
+		Assert.assertEquals(instancesIdle, federationMemberQuota.getResourcesInfo().getInstancesIdle());
+		Assert.assertEquals(instancesInUse, federationMemberQuota.getResourcesInfo().getInstancesInUse());
+	}		
+	
+	@Test
+	public void testGetFederationMemberQuotaException() {
+		String federationMemberId = "anyonemember";
+		String accessId = "access_id";
+		
+		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
+		String cpuIdle = "1";
+		String cpuInUse = "2";
+		String memIdle = "3";
+		String memInUse = "4";
+		String instancesIdle = "5";
+		String instancesInUse = "6";
+		ResourcesInfo resourceInfo = new ResourcesInfo(cpuIdle, cpuInUse, memIdle, memInUse, instancesIdle, instancesInUse);
+		resourceInfo.setId("id");
+		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class)))
+				.thenReturn(resourceInfo);
+
+		
+		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);
+		Packet response = Mockito.mock(Packet.class);
+		Mockito.when(response.getError()).thenReturn(new PacketError(Condition.bad_request , org.xmpp.packet.PacketError.Type.continue_processing));
+		Mockito.when(packetSender.syncSendPacket(Mockito.any(IQ.class))).thenReturn(response);
+		managerController.setPacketSender(packetSender);
+		managerController.setComputePlugin(computePlugin);
+		FederationMember federationMemberQuota = managerController.getFederationMemberQuota(federationMemberId, accessId);
+		Assert.assertNull(federationMemberQuota);
+	}			
+	
+	private AsyncPacketSender generateRemoteQuotaResponse(ResourcesInfo resourcesInfo) {
+		IQ iq = new IQ();
+		iq.setTo(resourcesInfo.getId());
+		iq.setType(Type.get);
+		Element queryEl = iq.getElement().addElement("query",
+				ManagerXmppComponent.GETREMOTEUSERQUOTA_NAMESPACE);
+		Element userEl = queryEl.addElement("token");
+		userEl.addElement("accessId").setText("auth_token");
+
+		IQ response = IQ.createResultIQ(iq);
+		queryEl = response.getElement().addElement("query",
+				ManagerXmppComponent.GETREMOTEUSERQUOTA_NAMESPACE);
+		Element resourceEl = queryEl.addElement("resourcesInfo");
+
+		resourceEl.addElement("id").setText("id");
+		resourceEl.addElement("cpuIdle").setText(resourcesInfo.getCpuIdle());
+		resourceEl.addElement("cpuInUse").setText(resourcesInfo.getCpuInUse());
+		resourceEl.addElement("instancesIdle").setText(resourcesInfo.getInstancesIdle());
+		resourceEl.addElement("instancesInUse").setText(resourcesInfo.getInstancesInUse());
+		resourceEl.addElement("memIdle").setText(resourcesInfo.getMemIdle());
+		resourceEl.addElement("memInUse").setText(resourcesInfo.getMemInUse());			
+		
+		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);
+		Mockito.when(packetSender.syncSendPacket(Mockito.any(IQ.class))).thenReturn(response);
+		return packetSender;		
+	}
+	
+	@Test
+	public void testGetRendezvousMembersInfo() {
+		ArrayList<FederationMember> items = new ArrayList<FederationMember>();
+		String prefix = "user";
+		int cont = 10;
+		for (int i = 0; i < cont; i++) {
+			items.add(new FederationMember(prefix + i));
+		}
+
+		managerController.updateMembers(items);
+
+		List<FederationMember> rendezvousMembersInfo = managerController.getRendezvousMembers();
+		Assert.assertEquals(11, rendezvousMembersInfo.size());
+		Assert.assertTrue(rendezvousMembersInfo.contains(new FederationMember(
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL)));
+		for (int i = 0; i < cont; i++) {
+			Assert.assertTrue(rendezvousMembersInfo.contains(new FederationMember(prefix + i)));
+		}
+	}
+
+	@Test
+	public void testGetRendezvousMembersInfoOnlyYourself() {
+		List<FederationMember> rendezvousMembersInfo = managerController.getRendezvousMembers();
+		Assert.assertEquals(1, rendezvousMembersInfo.size());
+		Assert.assertTrue(rendezvousMembersInfo.contains(new FederationMember(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL)));
+	}		
 	
 }
