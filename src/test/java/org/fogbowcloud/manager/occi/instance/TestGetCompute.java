@@ -583,7 +583,8 @@ public class TestGetCompute {
 		Map<String, String> linkAttrs = OCCITestHelper.getLinkAttributes(response);
 
 		assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
-		assertEquals("\""+FAKE_POST_INSTANCE_HOST+"\"", linkAttrs.get("occi.networkinterface.address"));
+		assertEquals("\"" + FAKE_POST_INSTANCE_HOST + ":" + FAKE_POST_INSTANCE_PORT + "\"",
+				linkAttrs.get("occi.networkinterface.address"));
 	}
 	
 	@Test
