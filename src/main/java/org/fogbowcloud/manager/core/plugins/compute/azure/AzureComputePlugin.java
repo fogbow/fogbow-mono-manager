@@ -31,7 +31,7 @@ import org.fogbowcloud.manager.occi.model.Resource;
 import org.fogbowcloud.manager.occi.model.ResourceRepository;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.fogbowcloud.manager.occi.model.Token;
-import org.fogbowcloud.manager.occi.request.RequestAttribute;
+import org.fogbowcloud.manager.occi.order.OrderAttribute;
 import org.restlet.Request;
 import org.restlet.Response;
 
@@ -177,7 +177,7 @@ public class AzureComputePlugin implements ComputePlugin {
 		
 		Flavor flavor = RequirementsHelper.findSmallestFlavor(
 				new LinkedList<Flavor>(getFlavors(token)), 
-				xOCCIAtt.get(RequestAttribute.REQUIREMENTS.getValue()));
+				xOCCIAtt.get(OrderAttribute.REQUIREMENTS.getValue()));
 
 		if (Integer.parseInt(resourcesInfo.getCpuIdle()) < Integer
 				.parseInt(flavor.getCpu())
@@ -195,7 +195,7 @@ public class AzureComputePlugin implements ComputePlugin {
 					"It was not possible to create the Hosted Service");
 		}
 		
-		String userData = xOCCIAtt.get(RequestAttribute.USER_DATA_ATT
+		String userData = xOCCIAtt.get(OrderAttribute.USER_DATA_ATT
 				.getValue());	
 		deploymentParameters.setDeploymentSlot(DeploymentSlot.STAGING);
 		deploymentParameters.setName(deploymentName);

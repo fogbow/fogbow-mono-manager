@@ -4,7 +4,7 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.fogbowcloud.manager.core.plugins.MapperPlugin;
-import org.fogbowcloud.manager.occi.request.Request;
+import org.fogbowcloud.manager.occi.order.Order;
 
 public class MemberBasedMapperPlugin implements MapperPlugin {
 	
@@ -15,13 +15,13 @@ public class MemberBasedMapperPlugin implements MapperPlugin {
 	}
 
 	@Override
-	public Map<String, String> getLocalCredentials(Request request) {
-		if (request == null) {
+	public Map<String, String> getLocalCredentials(Order order) {
+		if (order == null) {
 			return MapperHelper.getCredentialsPerRelatedLocalName(
 					this.properties, MapperHelper.FOGBOW_DEFAULTS);	
 		}
 		Map<String, String> credentialsPerMember = MapperHelper.getCredentialsPerRelatedLocalName(
-				this.properties, request.getRequestingMemberId());
+				this.properties, order.getRequestingMemberId());
 		if (!credentialsPerMember.isEmpty()) {
 			return credentialsPerMember;
 		}

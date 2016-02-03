@@ -37,10 +37,10 @@ import org.fogbowcloud.manager.occi.OCCIApplication;
 import org.fogbowcloud.manager.occi.model.HeaderUtils;
 import org.fogbowcloud.manager.occi.model.OCCIHeaders;
 import org.fogbowcloud.manager.occi.model.ResourceRepository;
-import org.fogbowcloud.manager.occi.request.Request;
-import org.fogbowcloud.manager.occi.request.RequestAttribute;
-import org.fogbowcloud.manager.occi.request.RequestConstants;
-import org.fogbowcloud.manager.occi.request.RequestRepository;
+import org.fogbowcloud.manager.occi.order.Order;
+import org.fogbowcloud.manager.occi.order.OrderAttribute;
+import org.fogbowcloud.manager.occi.order.OrderConstants;
+import org.fogbowcloud.manager.occi.order.OrderRepository;
 import org.fogbowcloud.manager.xmpp.AsyncPacketSender;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -56,7 +56,7 @@ public class OCCITestHelper {
 	public static final String ACCESS_TOKEN = "HgjhgYUDFTGBgrbelihBDFGB40uyrb";
 	public static final String POST_FED_ACCESS_TOKEN = "POST_HgjhgYUDFTGBgrbelihBDFGB40uyrb";
 	public static final String INVALID_TOKEN = "invalid-token";
-	public static final String URI_FOGBOW_REQUEST = "http://localhost:" + ENDPOINT_PORT + "/" + RequestConstants.TERM
+	public static final String URI_FOGBOW_ORDER = "http://localhost:" + ENDPOINT_PORT + "/" + OrderConstants.TERM
 			+ "/";
 	public static final String URI_FOGBOW_COMPUTE = "http://localhost:" + ENDPOINT_PORT + "/compute/";
 	public static final String URI_FOGBOW_MEMBER = "http://localhost:" + ENDPOINT_PORT + "/member";
@@ -69,7 +69,7 @@ public class OCCITestHelper {
 	public static final String USER_MOCK = "user_mock";
 
 	private Component component;
-	private RequestRepository requests;
+	private OrderRepository orders;
 
 	public void initializeComponentExecutorSameThread(ComputePlugin computePlugin, IdentityPlugin identityPlugin,
 			AuthorizationPlugin authorizationPlugin, BenchmarkingPlugin benchmarkingPlugin,
@@ -136,15 +136,15 @@ public class OCCITestHelper {
 
 	public ManagerController initializeComponentCompute(ComputePlugin computePlugin, IdentityPlugin identityPlugin,
 			AuthorizationPlugin authorizationPlugin, ImageStoragePlugin imageStoragePlugin,
-			AccountingPlugin accountingPlugin, BenchmarkingPlugin benchmarkingPlugin, Map<String, List<Request>> requestsToAdd,
+			AccountingPlugin accountingPlugin, BenchmarkingPlugin benchmarkingPlugin, Map<String, List<Order>> ordersToAdd,
 			MapperPlugin mapperPlugin) throws Exception {
 		return initializeComponentCompute(computePlugin, identityPlugin, authorizationPlugin,
-				imageStoragePlugin, accountingPlugin, benchmarkingPlugin, requestsToAdd,
+				imageStoragePlugin, accountingPlugin, benchmarkingPlugin, ordersToAdd,
 				mapperPlugin, null);
 	}
 	public ManagerController initializeComponentCompute(ComputePlugin computePlugin, IdentityPlugin identityPlugin,
 			AuthorizationPlugin authorizationPlugin, ImageStoragePlugin imageStoragePlugin,
-			AccountingPlugin accountingPlugin, BenchmarkingPlugin benchmarkingPlugin, Map<String, List<Request>> requestsToAdd,
+			AccountingPlugin accountingPlugin, BenchmarkingPlugin benchmarkingPlugin, Map<String, List<Order>> ordersToAdd,
 			MapperPlugin mapperPlugin, Properties properties) throws Exception {
 		component = new Component();
 		component.getServers().add(Protocol.HTTP, ENDPOINT_PORT);
@@ -158,7 +158,7 @@ public class OCCITestHelper {
 			
 			properties.put(ConfigurationConstants.INSTANCE_DATA_STORE_URL, "jdbc:h2:file:./src/test/resources/fedInstance.db");
 			properties.put(ConfigurationConstants.OCCI_EXTRA_RESOURCES_KEY_PATH, "./src/test/resources/post-compute/occi-fake-resources.txt");
-			//Image OCCI to FogbowRequest
+			//Image OCCI to FogbowOrder
 			properties.put(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + "fbc85206-fbcc-4ad9-ae93-54946fdd5df7", "fogbow-ubuntu");
 			properties.put(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + "m1-xlarge", "Glue2vCPU >= 4 && Glue2RAM >= 8192");
 			properties.put(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + "m1-medium", "Glue2vCPU >= 2 && Glue2RAM >= 8096");
@@ -174,11 +174,11 @@ public class OCCITestHelper {
 		facade.setAccountingPlugin(accountingPlugin);
 		facade.setBenchmarkingPlugin(benchmarkingPlugin);
 
-		requests = new RequestRepository();
-		facade.setRequests(requests);
-		for (Entry<String, List<Request>> entry : requestsToAdd.entrySet()) {
-			for (Request request : entry.getValue())
-				requests.addRequest(entry.getKey(), request);
+		orders = new OrderRepository();
+		facade.setOrders(orders);
+		for (Entry<String, List<Order>> entry : ordersToAdd.entrySet()) {
+			for (Order order : entry.getValue())
+				orders.addOrder(entry.getKey(), order);
 		}
 
 		ResourceRepository.init(properties);
@@ -236,20 +236,20 @@ public class OCCITestHelper {
 			return new ArrayList<String>();
 		}
 
-		List<String> requestIds = new ArrayList<String>();
+		List<String> orderIds = new ArrayList<String>();
 		if (responseStr.contains(HeaderUtils.X_OCCI_LOCATION_PREFIX)) {
 			String[] tokens = responseStr.split(HeaderUtils.X_OCCI_LOCATION_PREFIX);
 
 			for (int i = 0; i < tokens.length; i++) {
 				if (!tokens[i].equals("")) {
-					requestIds.add(tokens[i].trim());
+					orderIds.add(tokens[i].trim());
 				}
 			}
 		}
-		return requestIds;
+		return orderIds;
 	}
 
-	public static List<String> getRequestIdsPerLocationHeader(HttpResponse response)
+	public static List<String> getOrderIdsPerLocationHeader(HttpResponse response)
 			throws ParseException, IOException {
 		String locationHeaderValue = "";
 		Header[] allHeaders = response.getAllHeaders();
@@ -259,16 +259,16 @@ public class OCCITestHelper {
 			}
 		}
 
-		List<String> requestIds = new ArrayList<String>();
-		if (locationHeaderValue.contains(RequestConstants.TERM)) {
+		List<String> orderIds = new ArrayList<String>();
+		if (locationHeaderValue.contains(OrderConstants.TERM)) {
 			String[] tokens = locationHeaderValue.split(",");
 			for (int i = 0; i < tokens.length; i++) {
 				if (!tokens[i].equals("")) {
-					requestIds.add(tokens[i].trim());
+					orderIds.add(tokens[i].trim());
 				}
 			}
 		}
-		return requestIds;
+		return orderIds;
 	}
 
 	public static String getInstanceIdPerLocationHeader(HttpResponse response) throws ParseException, IOException {
@@ -347,8 +347,8 @@ public class OCCITestHelper {
 		return attsMap;
 	}
 
-	public String getStateFromRequestDetails(String requestDetails) {
-		StringTokenizer st = new StringTokenizer(requestDetails, "\n");
+	public String getStateFromOrderDetails(String orderDetails) {
+		StringTokenizer st = new StringTokenizer(orderDetails, "\n");
 		Map<String, String> occiAttributes = new HashMap<String, String>();
 		while (st.hasMoreElements()) {
 			String line = st.nextToken().trim();
@@ -364,7 +364,7 @@ public class OCCITestHelper {
 				}
 			}
 		}
-		return occiAttributes.get(RequestAttribute.STATE.getValue());
+		return occiAttributes.get(OrderAttribute.STATE.getValue());
 	}
 
 	public static List<URI> getURIList(HttpResponse response) throws URISyntaxException {
@@ -375,15 +375,15 @@ public class OCCITestHelper {
 			return new ArrayList<URI>();
 		}
 
-		List<URI> requestURIs = new ArrayList<URI>();
+		List<URI> orderURIs = new ArrayList<URI>();
 		String[] tokens = responseStr.trim().split("\n");
 
 		for (int i = 0; i < tokens.length; i++) {
 			if (!tokens[i].equals("")) {
-				requestURIs.add(new URI(tokens[i].trim()));
+				orderURIs.add(new URI(tokens[i].trim()));
 			}
 		}
 
-		return requestURIs;
+		return orderURIs;
 	}
 }

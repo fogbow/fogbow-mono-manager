@@ -23,10 +23,10 @@ import org.fogbowcloud.manager.occi.model.OCCIHeaders;
 import org.fogbowcloud.manager.occi.model.Resource;
 import org.fogbowcloud.manager.occi.model.ResourceRepository;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;
-import org.fogbowcloud.manager.occi.request.Request;
-import org.fogbowcloud.manager.occi.request.RequestAttribute;
-import org.fogbowcloud.manager.occi.request.RequestConstants;
-import org.fogbowcloud.manager.occi.request.RequestState;
+import org.fogbowcloud.manager.occi.order.Order;
+import org.fogbowcloud.manager.occi.order.OrderAttribute;
+import org.fogbowcloud.manager.occi.order.OrderConstants;
+import org.fogbowcloud.manager.occi.order.OrderState;
 import org.restlet.Response;
 import org.restlet.data.MediaType;
 import org.restlet.data.Status;
@@ -108,8 +108,8 @@ public class ComputeServerResource extends ServerResource {
 				
 				String globalId = currentInstance.getGlobalInstanceId();
 				if (globalId == null || globalId.isEmpty()) {
-					Request relatedOrder = application.getRequest(federationAuthToken, currentInstance.getOrderId());
-					if (relatedOrder.getState().in(RequestState.FULFILLED)) {
+					Order relatedOrder = application.getOrder(federationAuthToken, currentInstance.getOrderId());
+					if (relatedOrder.getState().in(OrderState.FULFILLED)) {
 						globalId = relatedOrder.getGlobalInstanceId();
 					}					
 				}
@@ -128,7 +128,7 @@ public class ComputeServerResource extends ServerResource {
 
 		}
 
-		Request relatedOrder = null;
+		Order relatedOrder = null;
 
 		if (instanceId.startsWith(FED_INSTANCE_PREFIX)) {
 			String user = application.getUser(normalizeAuthToken(federationAuthToken));
@@ -142,8 +142,8 @@ public class ComputeServerResource extends ServerResource {
 				throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
 			}
 			
-			relatedOrder = application.getRequest(federationAuthToken, fedInstanceState.getOrderId());
-			if (!relatedOrder.getState().in(RequestState.FULFILLED)) {
+			relatedOrder = application.getOrder(federationAuthToken, fedInstanceState.getOrderId());
+			if (!relatedOrder.getState().in(OrderState.FULFILLED)) {
 				// instance is not ready for using yet
 				return new StringRepresentation(generateInactiveInstanceResponse(fedInstanceState, relatedOrder),
 						MediaType.TEXT_PLAIN);
@@ -212,7 +212,7 @@ public class ComputeServerResource extends ServerResource {
 		throw new OCCIException(ErrorType.NOT_ACCEPTABLE, ResponseConstants.ACCEPT_NOT_ACCEPTABLE);
 	}
 
-	private String generateFedInstanceResponse(FedInstanceState fedInstanceState, Request relatedOrder,
+	private String generateFedInstanceResponse(FedInstanceState fedInstanceState, Order relatedOrder,
 			Instance instance) {
 		
 		String sshInformation = instance.getAttributes().get(Instance.SSH_PUBLIC_ADDRESS_ATT);
@@ -220,14 +220,6 @@ public class ComputeServerResource extends ServerResource {
 		if (links.isEmpty() && sshInformation != null) {
 			links = generateFakeLink(fedInstanceState.getFedInstanceId(), instance);
 			fedInstanceState.setLinks(links);			
-//			Resource linkRresource = ResourceRepository.getInstance().get(RequestConstants.LINK_TERM);
-//			if (linkRresource != null) {
-//				fedInstanceState.addCategory(linkRresource.getCategory());
-//			}
-//			Resource networkInterfaceResource = ResourceRepository.getInstance().get(RequestConstants.NETWORK_INTERFACE_TERM);
-//			if (networkInterfaceResource != null) {
-//				fedInstanceState.addCategory(networkInterfaceResource.getCategory());			
-//			}
 			instanceDB.update(fedInstanceState);
 		}
 		
@@ -238,9 +230,6 @@ public class ComputeServerResource extends ServerResource {
 
 	private List<Link> generateFakeLink(String fedInstanceId, Instance instance) {
 		String sshInformation = instance.getAttributes().get(Instance.SSH_PUBLIC_ADDRESS_ATT);
-
-//		String[] addressInfo = sshInformation.split(":");
-//		String host = addressInfo[0];
 		
 		Map<String, String> linkAttrs = new HashMap<String, String>();
 		linkAttrs.put("rel", "http://schemas.ogf.org/occi/infrastructure#network");
@@ -262,7 +251,7 @@ public class ComputeServerResource extends ServerResource {
 		return links;
 	}
 
-	private String generateInactiveInstanceResponse(FedInstanceState fedInstanceState, Request order) {
+	private String generateInactiveInstanceResponse(FedInstanceState fedInstanceState, Order order) {
 		Map<String, String> instanceAttrs = new HashMap<String, String>();
 		instanceAttrs.put("occi.core.id", fedInstanceState.getFedInstanceId());
 		
@@ -307,7 +296,7 @@ public class ComputeServerResource extends ServerResource {
 
 		boolean computeWasFound = false;
 		for (Category category : categories) {
-			if (category.getTerm().equals(RequestConstants.COMPUTE_TERM)) {
+			if (category.getTerm().equals(OrderConstants.COMPUTE_TERM)) {
 				computeWasFound = true;
 				break;
 			}
@@ -317,14 +306,14 @@ public class ComputeServerResource extends ServerResource {
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}
 
-		List<Category> requestCategories = new ArrayList<Category>();
-		requestCategories
-				.add(new Category(RequestConstants.TERM, RequestConstants.SCHEME, RequestConstants.KIND_CLASS));
+		List<Category> orderCategories = new ArrayList<Category>();
+		orderCategories
+				.add(new Category(OrderConstants.TERM, OrderConstants.SCHEME, OrderConstants.KIND_CLASS));
 
-		Map<String, String> requestXOCCIAtt = new HashMap<String, String>();
+		Map<String, String> orderXOCCIAtt = new HashMap<String, String>();
 
 		// os tpl
-		List<Resource> osTplResources = filterByRelProperty(RequestConstants.OS_TPL_OCCI_SCHEME, resources);
+		List<Resource> osTplResources = filterByRelProperty(OrderConstants.OS_TPL_OCCI_SCHEME, resources);
 		if (osTplResources.size() != 1) {
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}
@@ -336,36 +325,36 @@ public class ComputeServerResource extends ServerResource {
 					ResponseConstants.PROPERTY_NOT_SPECIFIED_FOR_EXTRA_OCCI_RESOURCE
 							+ osTplResources.get(0).getCategory());
 		}
-		requestCategories
-				.add(new Category(imageName, RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
+		orderCategories
+				.add(new Category(imageName, OrderConstants.TEMPLATE_OS_SCHEME, OrderConstants.MIXIN_CLASS));
 
 		// resource tpl
-		List<Resource> resourceTplResources = filterByRelProperty(RequestConstants.RESOURCE_TPL_OCCI_SCHEME,
+		List<Resource> resourceTplResources = filterByRelProperty(OrderConstants.RESOURCE_TPL_OCCI_SCHEME,
 				resources);
 		String fogbowRequirements = getRequirements(properties, resourceTplResources);		
-		requestXOCCIAtt.put(RequestAttribute.REQUIREMENTS.getValue(), fogbowRequirements);
-		requestXOCCIAtt.put(RequestAttribute.INSTANCE_COUNT.getValue(), DEFAULT_INSTANCE_COUNT);
-		requestXOCCIAtt.put(RequestAttribute.TYPE.getValue(), RequestConstants.DEFAULT_TYPE);
+		orderXOCCIAtt.put(OrderAttribute.REQUIREMENTS.getValue(), fogbowRequirements);
+		orderXOCCIAtt.put(OrderAttribute.INSTANCE_COUNT.getValue(), DEFAULT_INSTANCE_COUNT);
+		orderXOCCIAtt.put(OrderAttribute.TYPE.getValue(), OrderConstants.DEFAULT_TYPE);
 		
 		Map<String, String> xOCCIAtt = HeaderUtils.getXOCCIAtributes(req.getHeaders());
 		if (xOCCIAtt.keySet().contains("occi.core.title")) {
-			requestXOCCIAtt.put("occi.core.title", xOCCIAtt.get("occi.core.title"));
+			orderXOCCIAtt.put("occi.core.title", xOCCIAtt.get("occi.core.title"));
 		}
 
-		convertPublicKey(properties, resources, requestCategories, requestXOCCIAtt, xOCCIAtt);
-		convertUserData(properties, resources, requestCategories, requestXOCCIAtt, xOCCIAtt);
+		convertPublicKey(properties, resources, orderCategories, orderXOCCIAtt, xOCCIAtt);
+		convertUserData(properties, resources, orderCategories, orderXOCCIAtt, xOCCIAtt);
 
 		String federationAuthToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse(),
 				application.getAuthenticationURI());
 
 		Instance instance = new Instance(FED_INSTANCE_PREFIX + UUID.randomUUID().toString());
-		List<Request> newRequest = application.createRequests(federationAuthToken, requestCategories, requestXOCCIAtt);
+		List<Order> newOrder = application.createOrders(federationAuthToken, orderCategories, orderXOCCIAtt);
 
-		if (newRequest != null && !newRequest.isEmpty()) {
+		if (newOrder != null && !newOrder.isEmpty()) {
 			setStatus(Status.SUCCESS_CREATED);
 		}
 
-		Request relatedOrder = newRequest.get(0);
+		Order relatedOrder = newOrder.get(0);
 		FedInstanceState fedInstanceState = new FedInstanceState(instance.getId(),
 				relatedOrder.getId(), categories, new ArrayList<Link>(), "", relatedOrder
 						.getFederationToken().getUser());
@@ -373,7 +362,8 @@ public class ComputeServerResource extends ServerResource {
 
 		if (acceptType.equals(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE)) {
 			String requestEndpoint = getHostRef(req) + req.getHttpCall().getRequestUri();
-			return new StringRepresentation(HeaderUtils.X_OCCI_LOCATION_PREFIX+generateLocationHeader(instance, requestEndpoint), new MediaType(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE));
+			return new StringRepresentation(HeaderUtils.X_OCCI_LOCATION_PREFIX+generateLocationHeader(instance, requestEndpoint)
+					, new MediaType(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE));
 		}
 
 		setLocationHeader(instance, req);
@@ -404,18 +394,18 @@ public class ComputeServerResource extends ServerResource {
 
 	protected void convertUserData(Properties properties,
 			List<Resource> resources, List<Category> requestCategories,
-			Map<String, String> requestXOCCIAtt, Map<String, String> xOCCIAtt) {
+			Map<String, String> orderXOCCIAtt, Map<String, String> xOCCIAtt) {
 		String userdataTerm = properties
-				.getProperty(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + RequestConstants.USER_DATA_TERM);
+				.getProperty(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + OrderConstants.USER_DATA_TERM);
 
 		if (userdataTerm != null && !userdataTerm.isEmpty()) {
 			Resource userDataResource = filterByTerm(userdataTerm, resources);
 			if (userDataResource != null) {
-				requestCategories.add(new Category(RequestConstants.USER_DATA_TERM, RequestConstants.SCHEME,
-						RequestConstants.MIXIN_CLASS));
+				requestCategories.add(new Category(OrderConstants.USER_DATA_TERM, OrderConstants.SCHEME,
+						OrderConstants.MIXIN_CLASS));
 
 				String userdataDataAtt = properties.getProperty(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX
-						+ RequestAttribute.EXTRA_USER_DATA_ATT.getValue());
+						+ OrderAttribute.EXTRA_USER_DATA_ATT.getValue());
 				
 				String userDataContenEncoded = xOCCIAtt.get(userdataDataAtt);
 				if (userDataContenEncoded == null) {
@@ -430,34 +420,34 @@ public class ComputeServerResource extends ServerResource {
 				String userData = userDataContent.replace("\n", UserdataUtils.USER_DATA_LINE_BREAKER);
 				userData = new String(Base64.encodeBase64(userData.getBytes()));
 
-				requestXOCCIAtt.put(RequestAttribute.EXTRA_USER_DATA_ATT.getValue(), userData);
-				requestXOCCIAtt.put(RequestAttribute.EXTRA_USER_DATA_CONTENT_TYPE_ATT.getValue(), userDataContentType);
+				orderXOCCIAtt.put(OrderAttribute.EXTRA_USER_DATA_ATT.getValue(), userData);
+				orderXOCCIAtt.put(OrderAttribute.EXTRA_USER_DATA_CONTENT_TYPE_ATT.getValue(), userDataContentType);
 			}
 		}
 	}
 
 	protected void convertPublicKey(Properties properties,
-			List<Resource> resources, List<Category> requestCategories,
-			Map<String, String> requestXOCCIAtt, Map<String, String> xOCCIAtt) {
+			List<Resource> resources, List<Category> orderCategories,
+			Map<String, String> orderXOCCIAtt, Map<String, String> xOCCIAtt) {
 		String publicKeyTerm = properties
 				.getProperty(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX
-						+ RequestConstants.PUBLIC_KEY_TERM);
+						+ OrderConstants.PUBLIC_KEY_TERM);
 		if (publicKeyTerm != null && !publicKeyTerm.isEmpty()) {
 			Resource publicKeyResource = filterByTerm(publicKeyTerm, resources);
 
 			if (publicKeyResource != null) {
-				requestCategories.add(new Category(RequestConstants.PUBLIC_KEY_TERM,
-						RequestConstants.CREDENTIALS_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
+				orderCategories.add(new Category(OrderConstants.PUBLIC_KEY_TERM,
+						OrderConstants.CREDENTIALS_RESOURCE_SCHEME, OrderConstants.MIXIN_CLASS));
 
 				String publicKeyDataAtt = properties.getProperty(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX
-						+ RequestAttribute.DATA_PUBLIC_KEY.getValue());
+						+ OrderAttribute.DATA_PUBLIC_KEY.getValue());
 				
 				String publicKeyContent = xOCCIAtt.get(publicKeyDataAtt);
 				if (publicKeyContent == null) {
 					throw new OCCIException(ErrorType.BAD_REQUEST,
 							"public-key content mus not be null");					
 				}
-				requestXOCCIAtt.put(RequestAttribute.DATA_PUBLIC_KEY.getValue(), publicKeyContent);
+				orderXOCCIAtt.put(OrderAttribute.DATA_PUBLIC_KEY.getValue(), publicKeyContent);
 			}
 		}
 	}
@@ -503,8 +493,8 @@ public class ComputeServerResource extends ServerResource {
 
 	public static void normalizeURIForBypass(HttpRequest req) {
 		String path = req.getResourceRef().getPath();
-		if (path != null && path.contains(org.fogbowcloud.manager.occi.request.Request.SEPARATOR_GLOBAL_ID)) {
-			String[] partOfInstanceId = path.split(org.fogbowcloud.manager.occi.request.Request.SEPARATOR_GLOBAL_ID);
+		if (path != null && path.contains(org.fogbowcloud.manager.occi.order.Order.SEPARATOR_GLOBAL_ID)) {
+			String[] partOfInstanceId = path.split(org.fogbowcloud.manager.occi.order.Order.SEPARATOR_GLOBAL_ID);
 			path = partOfInstanceId[0];
 		}
 		req.getResourceRef().setPath(path);
@@ -614,7 +604,7 @@ public class ComputeServerResource extends ServerResource {
 						for (int i = 0; i < tokens.length; i++) {
 							if (!tokens[i].equals("")) {
 								localInstances.add(new Instance(normalizeInstanceId(tokens[i].trim()
-										+ org.fogbowcloud.manager.occi.request.Request.SEPARATOR_GLOBAL_ID + application
+										+ org.fogbowcloud.manager.occi.order.Order.SEPARATOR_GLOBAL_ID + application
 												.getProperties().getProperty(ConfigurationConstants.XMPP_JID_KEY))));
 							}
 						}
@@ -682,7 +672,7 @@ public class ComputeServerResource extends ServerResource {
 			}
 			instanceDB.deleteByIntanceId(instanceId, user);
 			try {
-				application.removeRequest(federationAuthToken, fedInstanceState.getOrderId());
+				application.removeOrder(federationAuthToken, fedInstanceState.getOrderId());
 				if (fedInstanceState.getGlobalInstanceId() != null) {
 					LOGGER.debug("Federated instance " + instanceId + " is related to "
 							+ fedInstanceState.getGlobalInstanceId());

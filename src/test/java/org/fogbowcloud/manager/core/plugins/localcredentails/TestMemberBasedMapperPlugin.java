@@ -6,7 +6,7 @@ import java.util.Properties;
 import org.fogbowcloud.manager.core.plugins.localcredentails.MapperHelper;
 import org.fogbowcloud.manager.core.plugins.localcredentails.MemberBasedMapperPlugin;
 import org.fogbowcloud.manager.occi.model.Token;
-import org.fogbowcloud.manager.occi.request.Request;
+import org.fogbowcloud.manager.occi.order.Order;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -70,21 +70,21 @@ public class TestMemberBasedMapperPlugin {
 	
 	@Test
 	public void testGetLocalCredentials() {
-		Request request = new Request(null, null, null, null, false, MEMBER_ONE);
-		Map<String, String> localCredentials = this.memberBasedMapperPlugin.getLocalCredentials(request);
+		Order order = new Order(null, null, null, null, false, MEMBER_ONE);
+		Map<String, String> localCredentials = this.memberBasedMapperPlugin.getLocalCredentials(order);
 		Assert.assertEquals(VALUE_ONE, localCredentials.get(CREDENTIAL_ONE));
 		Assert.assertEquals(VALUE_TWO, localCredentials.get(CREDENTIAL_TWO));
 		
-		request = new Request(null, null, null, null, false, MEMBER_TWO);
-		localCredentials = this.memberBasedMapperPlugin.getLocalCredentials(request);
+		order = new Order(null, null, null, null, false, MEMBER_TWO);
+		localCredentials = this.memberBasedMapperPlugin.getLocalCredentials(order);
 		Assert.assertEquals(VALUE_THREE, localCredentials.get(CREDENTIAL_ONE));
 		Assert.assertEquals(VALUE_FOUR, localCredentials.get(CREDENTIAL_TWO));
 	}
 	
 	@Test
 	public void testGetLocalCredentialsNotFountWithDefaultValue() {
-		Request request = new Request(null, null, null, null, false, "notfound");
-		Map<String, String> localCredentials = this.memberBasedMapperPlugin.getLocalCredentials(request);
+		Order order = new Order(null, null, null, null, false, "notfound");
+		Map<String, String> localCredentials = this.memberBasedMapperPlugin.getLocalCredentials(order);
 		Assert.assertEquals(VALUE_ONE_FOGBOW, localCredentials.get(CREDENTIAL_ONE));
 		Assert.assertEquals(VALUE_TWO_FOGBOW, localCredentials.get(CREDENTIAL_TWO));
 	}	
@@ -99,8 +99,8 @@ public class TestMemberBasedMapperPlugin {
 	@Test
 	public void testGetLocalCredentialsNotFoundWithoutDefaultValue() {
 		memberBasedMapperPlugin = new MemberBasedMapperPlugin(new Properties()); 
-		Request request = new Request(null, null, null, null, false, null);
-		Map<String, String> localCredentials = this.memberBasedMapperPlugin.getLocalCredentials(request);
+		Order order = new Order(null, null, null, null, false, null);
+		Map<String, String> localCredentials = this.memberBasedMapperPlugin.getLocalCredentials(order);
 		Assert.assertTrue(localCredentials.isEmpty());
 	}	
 	
@@ -111,9 +111,9 @@ public class TestMemberBasedMapperPlugin {
 	}
 
 	@Test
-	public void testGetLocalCredentialsRequestNull() {
+	public void testGetLocalCredentialsOrderNull() {
 		Map<String, String> localCredentials = this.memberBasedMapperPlugin
-				.getLocalCredentials(new Request(null, new Token("", null, null, null), null, null,
+				.getLocalCredentials(new Order(null, new Token("", null, null, null), null, null,
 						false, null));
 		Assert.assertEquals(VALUE_ONE_FOGBOW, localCredentials.get(CREDENTIAL_ONE));
 		Assert.assertEquals(VALUE_TWO_FOGBOW, localCredentials.get(CREDENTIAL_TWO));		

@@ -8,12 +8,12 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-import org.fogbowcloud.manager.core.AsynchronousRequestCallback;
+import org.fogbowcloud.manager.core.AsynchronousOrderCallback;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.core.util.ManagerTestHelper;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.Token;
-import org.fogbowcloud.manager.occi.request.Request;
+import org.fogbowcloud.manager.occi.order.Order;
 import org.fogbowcloud.manager.occi.util.OCCITestHelper;
 import org.jivesoftware.smack.XMPPException;
 import org.junit.After;
@@ -22,7 +22,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-public class TestRequestRemoteInstance {
+public class TestOrderRemoteInstance {
 
 	public static final String MANAGER_COMPONENT_URL = "manager.test.com";
 
@@ -44,9 +44,9 @@ public class TestRequestRemoteInstance {
 	
 	@SuppressWarnings("unchecked")
 	@Test
-	public void testRequestRemoteInstanceAsynchronously() throws Exception {
+	public void testOrderRemoteInstanceAsynchronously() throws Exception {
 		managerTestHelper.initializeXMPPManagerComponent(false);
-		Request request = createRequest();
+		Order order = createOrder();
 
 		Mockito.when(
 				managerTestHelper.getComputePlugin().requestInstance(Mockito.any(Token.class),
@@ -55,10 +55,10 @@ public class TestRequestRemoteInstance {
 
 		final BlockingQueue<String> bq = new LinkedBlockingQueue<String>();
 
-		ManagerPacketHelper.asynchronousRemoteRequest(request.getId(), request.getCategories(), 
-				request.getxOCCIAtt(), DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, 
-				request.getFederationToken(), managerTestHelper.createPacketSender(), 
-				new AsynchronousRequestCallback() {
+		ManagerPacketHelper.asynchronousRemoteOrder(order.getId(), order.getCategories(), 
+				order.getxOCCIAtt(), DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, 
+				order.getFederationToken(), managerTestHelper.createPacketSender(), 
+				new AsynchronousOrderCallback() {
 					
 					@Override
 					public void success(String instanceId) {
@@ -75,17 +75,17 @@ public class TestRequestRemoteInstance {
 		Assert.assertEquals(INSTANCE_DEFAULT, instanceId);
 	}
 
-	private Request createRequest() {
+	private Order createOrder() {
 		List<Category> categories = new ArrayList<Category>();
 		categories.add(new Category("term1", "scheme1", "class1"));
 		Map<String, String> attributes = new HashMap<String, String>();
 		attributes.put("key1", "value1");
 		attributes.put("key2", "value2");
-		Request request = new Request("id", new Token("anyvalue",
+		Order order = new Order("id", new Token("anyvalue",
 				OCCITestHelper.USER_MOCK,
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
 				new HashMap<String, String>()), categories, attributes, true, DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
-		request.setInstanceId(INSTANCE_DEFAULT);
-		return request;
+		order.setInstanceId(INSTANCE_DEFAULT);
+		return order;
 	}
 }

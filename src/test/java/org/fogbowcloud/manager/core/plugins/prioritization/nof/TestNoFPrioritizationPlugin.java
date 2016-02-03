@@ -11,8 +11,8 @@ import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.accounting.ResourceUsage;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.model.Token;
-import org.fogbowcloud.manager.occi.request.Request;
-import org.fogbowcloud.manager.occi.request.RequestState;
+import org.fogbowcloud.manager.occi.order.Order;
+import org.fogbowcloud.manager.occi.order.OrderState;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -35,33 +35,33 @@ public class TestNoFPrioritizationPlugin {
 	}
 	
 	@Test
-	public void testServedRequestsNull() {
+	public void testServedOrdersNull() {
 		//mocking accounting
 		Mockito.when(accountingPlugin.getMembersUsage()).thenReturn(
 				new HashMap<String, ResourceUsage>());
 		
-		Request newRequest = new Request("newID", new Token("newAccessId", "newRemoteUserId", null,
+		Order newOrder = new Order("newID", new Token("newAccessId", "newRemoteUserId", null,
 				new HashMap<String, String>()), null, null, false, "memberId");
 		
 		NoFPrioritizationPlugin nofPlugin = new NoFPrioritizationPlugin(properties, accountingPlugin);
-		Assert.assertNull(nofPlugin.takeFrom(newRequest, null));
+		Assert.assertNull(nofPlugin.takeFrom(newOrder, null));
 	}
 	
 	@Test
-	public void testEmptyServedRequests() {
+	public void testEmptyServedOrders() {
 		//mocking accounting
 		Mockito.when(accountingPlugin.getMembersUsage()).thenReturn(
 				new HashMap<String, ResourceUsage>());
 		
-		Request newRequest = new Request("newID", new Token("newAccessId", "newRemoteUserId", null,
+		Order newOrder = new Order("newID", new Token("newAccessId", "newRemoteUserId", null,
 				new HashMap<String, String>()), null, null, false, "memberId");
 		
 		NoFPrioritizationPlugin nofPlugin = new NoFPrioritizationPlugin(properties, accountingPlugin);
-		Assert.assertNull(nofPlugin.takeFrom(newRequest, new ArrayList<Request>()));
+		Assert.assertNull(nofPlugin.takeFrom(newOrder, new ArrayList<Order>()));
 	}
 			
 	@Test
-	public void testTakeFromOneServedRequest() {
+	public void testTakeFromOneServedOrder() {
 		//mocking accounting
 		HashMap<String, ResourceUsage> membersUsage = new HashMap<String, ResourceUsage>();
 		ResourceUsage member1Usage = new ResourceUsage("member1");
@@ -79,19 +79,19 @@ public class TestNoFPrioritizationPlugin {
 		
 		NoFPrioritizationPlugin nofPlugin = new NoFPrioritizationPlugin(properties, accountingPlugin);
 		
-		Request servedRequest = new Request("id", new Token("accessId", "remoteUserId", null,
+		Order servedOrder = new Order("id", new Token("accessId", "remoteUserId", null,
 				new HashMap<String, String>()), null, null, false, "member1");
-		servedRequest.setInstanceId("instanceId");
-		servedRequest.setState(RequestState.FULFILLED);
-		servedRequest.setProvidingMemberId("localMemberId");
+		servedOrder.setInstanceId("instanceId");
+		servedOrder.setState(OrderState.FULFILLED);
+		servedOrder.setProvidingMemberId("localMemberId");
 		
-		List<Request> requests = new ArrayList<Request>();
-		requests.add(servedRequest);
+		List<Order> orders = new ArrayList<Order>();
+		orders.add(servedOrder);
 		
-		Request newRequest = new Request("newID", new Token("newAccessId", "newRemoteUserId", null,
+		Order newOrder = new Order("newID", new Token("newAccessId", "newRemoteUserId", null,
 				new HashMap<String, String>()), null, null, false, "member2");
 		
-		Assert.assertEquals(servedRequest, nofPlugin.takeFrom(newRequest, requests));
+		Assert.assertEquals(servedOrder, nofPlugin.takeFrom(newOrder, orders));
 	}
 	
 	@Test
@@ -113,23 +113,23 @@ public class TestNoFPrioritizationPlugin {
 		
 		NoFPrioritizationPlugin nofPlugin = new NoFPrioritizationPlugin(properties, accountingPlugin);
 		
-		Request servedRequest = new Request("id", new Token("accessId", "remoteUserId", null,
+		Order servedOrder = new Order("id", new Token("accessId", "remoteUserId", null,
 				new HashMap<String, String>()), null, null, false, "member1");
-		servedRequest.setInstanceId("instanceId");
-		servedRequest.setState(RequestState.FULFILLED);
-		servedRequest.setProvidingMemberId("localMemberId");
+		servedOrder.setInstanceId("instanceId");
+		servedOrder.setState(OrderState.FULFILLED);
+		servedOrder.setProvidingMemberId("localMemberId");
 		
-		List<Request> requests = new ArrayList<Request>();
-		requests.add(servedRequest);
+		List<Order> orders = new ArrayList<Order>();
+		orders.add(servedOrder);
 		
-		Request newRequest = new Request("newID", new Token("newAccessId", "newRemoteUserId", null,
+		Order newOrder = new Order("newID", new Token("newAccessId", "newRemoteUserId", null,
 				new HashMap<String, String>()), null, null, false, "member2");
 		
-		Assert.assertNull(nofPlugin.takeFrom(newRequest, requests));
+		Assert.assertNull(nofPlugin.takeFrom(newOrder, orders));
 	}
 	
 	@Test
-	public void testTakeFromMostRecentServedRequest() {
+	public void testTakeFromMostRecentServedOrder() {
 		//mocking accounting
 		HashMap<String, ResourceUsage> membersUsage = new HashMap<String, ResourceUsage>();
 		ResourceUsage member1Usage = new ResourceUsage("member1");
@@ -152,34 +152,34 @@ public class TestNoFPrioritizationPlugin {
 		DateUtils dateUtils = Mockito.mock(DateUtils.class);
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 		
-		Request servedRequest1 = new Request("id1", new Token("accessId", "remoteUserId", null,
+		Order servedOrder1 = new Order("id1", new Token("accessId", "remoteUserId", null,
 				new HashMap<String, String>()), null, null, false, "member1", dateUtils);
-		servedRequest1.setInstanceId("instanceId1");
-		servedRequest1.setState(RequestState.FULFILLED);
-		servedRequest1.setProvidingMemberId("localMemberId");
+		servedOrder1.setInstanceId("instanceId1");
+		servedOrder1.setState(OrderState.FULFILLED);
+		servedOrder1.setProvidingMemberId("localMemberId");
 		
 		// mocking dateUtils
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now + 30);
 		
-		Request servedRequest2 = new Request("id2", new Token("accessId", "remoteUserId", null,
+		Order servedOrder2 = new Order("id2", new Token("accessId", "remoteUserId", null,
 				new HashMap<String, String>()), null, null, false, "member1", dateUtils);
-		servedRequest2.setInstanceId("instanceId2");
-		servedRequest2.setState(RequestState.FULFILLED);
-		servedRequest2.setProvidingMemberId("localMemberId");
+		servedOrder2.setInstanceId("instanceId2");
+		servedOrder2.setState(OrderState.FULFILLED);
+		servedOrder2.setProvidingMemberId("localMemberId");
 		
-		List<Request> requests = new ArrayList<Request>();
-		requests.add(servedRequest1);
-		requests.add(servedRequest2);
+		List<Order> orders = new ArrayList<Order>();
+		orders.add(servedOrder1);
+		orders.add(servedOrder2);
 		
-		Request newRequest = new Request("newID", new Token("newAccessId", "newRemoteUserId", null,
+		Order newOrder = new Order("newID", new Token("newAccessId", "newRemoteUserId", null,
 				new HashMap<String, String>()), null, null, false, "member2");
 		
-		// checking if take from most recent request
-		Assert.assertEquals(servedRequest2, nofPlugin.takeFrom(newRequest, requests));
+		// checking if take from most recent order
+		Assert.assertEquals(servedOrder2, nofPlugin.takeFrom(newOrder, orders));
 	}
 	
 	@Test
-	public void testMoreThanOneTakeFromServedRequest() {
+	public void testMoreThanOneTakeFromServedOrder() {
 		//mocking accounting
 		HashMap<String, ResourceUsage> membersUsage = new HashMap<String, ResourceUsage>();
 		ResourceUsage member1Usage = new ResourceUsage("member1");
@@ -202,40 +202,40 @@ public class TestNoFPrioritizationPlugin {
 		DateUtils dateUtils = Mockito.mock(DateUtils.class);
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 		
-		Request servedRequest1 = new Request("id1", new Token("accessId", "remoteUserId", null,
+		Order servedOrder1 = new Order("id1", new Token("accessId", "remoteUserId", null,
 				new HashMap<String, String>()), null, null, false, "member1", dateUtils);
-		servedRequest1.setInstanceId("instanceId1");
-		servedRequest1.setState(RequestState.FULFILLED);
-		servedRequest1.setProvidingMemberId("localMemberId");
+		servedOrder1.setInstanceId("instanceId1");
+		servedOrder1.setState(OrderState.FULFILLED);
+		servedOrder1.setProvidingMemberId("localMemberId");
 		
 		// mocking dateUtils
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now + 30);
 		
-		Request servedRequest2 = new Request("id2", new Token("accessId", "remoteUserId", null,
+		Order servedOrder2 = new Order("id2", new Token("accessId", "remoteUserId", null,
 				new HashMap<String, String>()), null, null, false, "member1", dateUtils);
-		servedRequest2.setInstanceId("instanceId2");
-		servedRequest2.setState(RequestState.FULFILLED);
-		servedRequest2.setProvidingMemberId("localMemberId");
+		servedOrder2.setInstanceId("instanceId2");
+		servedOrder2.setState(OrderState.FULFILLED);
+		servedOrder2.setProvidingMemberId("localMemberId");
 		
-		List<Request> requests = new ArrayList<Request>();
-		requests.add(servedRequest1);
-		requests.add(servedRequest2);
+		List<Order> orders = new ArrayList<Order>();
+		orders.add(servedOrder1);
+		orders.add(servedOrder2);
 		
-		Request newRequest = new Request("newID", new Token("newAccessId", "newRemoteUserId", null,
+		Order newOrder = new Order("newID", new Token("newAccessId", "newRemoteUserId", null,
 				new HashMap<String, String>()), null, null, false, "member2");
 		
-		// checking if take from most recent request
-		Assert.assertEquals(servedRequest2, nofPlugin.takeFrom(newRequest, requests));
+		// checking if take from most recent order
+		Assert.assertEquals(servedOrder2, nofPlugin.takeFrom(newOrder, orders));
 		
-		requests.remove(servedRequest2);
-		Assert.assertEquals(servedRequest1, nofPlugin.takeFrom(newRequest, requests));
+		orders.remove(servedOrder2);
+		Assert.assertEquals(servedOrder1, nofPlugin.takeFrom(newOrder, orders));
 		
-		requests.remove(servedRequest1);
-		Assert.assertNull(nofPlugin.takeFrom(newRequest, requests));
+		orders.remove(servedOrder1);
+		Assert.assertNull(nofPlugin.takeFrom(newOrder, orders));
 	}
 	
 	@Test
-	public void testPrioritizeLocalRequest() {
+	public void testPrioritizeLocalOrder() {
 		//mocking accounting
 		HashMap<String, ResourceUsage> membersUsage = new HashMap<String, ResourceUsage>();
 		ResourceUsage member1Usage = new ResourceUsage("member1");
@@ -253,23 +253,23 @@ public class TestNoFPrioritizationPlugin {
 		
 		NoFPrioritizationPlugin nofPlugin = new NoFPrioritizationPlugin(properties, accountingPlugin);
 		
-		Request servedRequest = new Request("id", new Token("accessId", "remoteUserId", null,
+		Order servedOrder = new Order("id", new Token("accessId", "remoteUserId", null,
 				new HashMap<String, String>()), null, null, false, "member1");
-		servedRequest.setInstanceId("instanceId");
-		servedRequest.setState(RequestState.FULFILLED);
-		servedRequest.setProvidingMemberId("localMemberId");
+		servedOrder.setInstanceId("instanceId");
+		servedOrder.setState(OrderState.FULFILLED);
+		servedOrder.setProvidingMemberId("localMemberId");
 		
-		List<Request> requests = new ArrayList<Request>();
-		requests.add(servedRequest);
+		List<Order> orders = new ArrayList<Order>();
+		orders.add(servedOrder);
 		
-		Request newRequest = new Request("newID", new Token("newAccessId", "newLocalUserId", null,
+		Order newOrder = new Order("newID", new Token("newAccessId", "newLocalUserId", null,
 				new HashMap<String, String>()), null, null, true, DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		
-		Assert.assertEquals(servedRequest, nofPlugin.takeFrom(newRequest, requests));
+		Assert.assertEquals(servedOrder, nofPlugin.takeFrom(newOrder, orders));
 	}
 	
 	@Test
-	public void testPrioritizeLocalRequestWithThanOneServedRequest() {
+	public void testPrioritizeLocalOrderWithThanOneServedOrder() {
 		//mocking accounting
 		HashMap<String, ResourceUsage> membersUsage = new HashMap<String, ResourceUsage>();
 		ResourceUsage member1Usage = new ResourceUsage("member1");
@@ -292,35 +292,35 @@ public class TestNoFPrioritizationPlugin {
 		DateUtils dateUtils = Mockito.mock(DateUtils.class);
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 		
-		Request servedRequest1 = new Request("id1", new Token("accessId", "remoteUserId", null,
+		Order servedOrder1 = new Order("id1", new Token("accessId", "remoteUserId", null,
 				new HashMap<String, String>()), null, null, false, "member1", dateUtils);
-		servedRequest1.setInstanceId("instanceId1");
-		servedRequest1.setState(RequestState.FULFILLED);
-		servedRequest1.setProvidingMemberId("localMemberId");
+		servedOrder1.setInstanceId("instanceId1");
+		servedOrder1.setState(OrderState.FULFILLED);
+		servedOrder1.setProvidingMemberId("localMemberId");
 		
 		// mocking dateUtils
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now + 30);
 		
-		Request servedRequest2 = new Request("id2", new Token("accessId", "remoteUserId", null,
+		Order servedOrder2 = new Order("id2", new Token("accessId", "remoteUserId", null,
 				new HashMap<String, String>()), null, null, false, "member1", dateUtils);
-		servedRequest2.setInstanceId("instanceId2");
-		servedRequest2.setState(RequestState.FULFILLED);
-		servedRequest2.setProvidingMemberId("localMemberId");
+		servedOrder2.setInstanceId("instanceId2");
+		servedOrder2.setState(OrderState.FULFILLED);
+		servedOrder2.setProvidingMemberId("localMemberId");
 		
-		List<Request> requests = new ArrayList<Request>();
-		requests.add(servedRequest1);
-		requests.add(servedRequest2);
+		List<Order> orders = new ArrayList<Order>();
+		orders.add(servedOrder1);
+		orders.add(servedOrder2);
 		
-		Request newRequest = new Request("newID", new Token("newAccessId", "newLocalUserId", null,
+		Order newOrder = new Order("newID", new Token("newAccessId", "newLocalUserId", null,
 				new HashMap<String, String>()), null, null, true, DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		
-		// checking if take from most recent request
-		Assert.assertEquals(servedRequest2, nofPlugin.takeFrom(newRequest, requests));
+		// checking if take from most recent order
+		Assert.assertEquals(servedOrder2, nofPlugin.takeFrom(newOrder, orders));
 		
-		requests.remove(servedRequest2);
-		Assert.assertEquals(servedRequest1, nofPlugin.takeFrom(newRequest, requests));
+		orders.remove(servedOrder2);
+		Assert.assertEquals(servedOrder1, nofPlugin.takeFrom(newOrder, orders));
 		
-		requests.remove(servedRequest1);
-		Assert.assertNull(nofPlugin.takeFrom(newRequest, requests));
+		orders.remove(servedOrder1);
+		Assert.assertNull(nofPlugin.takeFrom(newOrder, orders));
 	}
 }

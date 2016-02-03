@@ -6,7 +6,7 @@ import java.util.Properties;
 
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.model.Flavor;
-import org.fogbowcloud.manager.occi.request.RequestConstants;
+import org.fogbowcloud.manager.occi.order.OrderConstants;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -35,8 +35,8 @@ public class TestResourceRepository {
 	
 	@Test
 	public void testGetOneResource() {
-		Category category = new Category(RequestConstants.TERM, RequestConstants.SCHEME,
-				RequestConstants.KIND_CLASS);
+		Category category = new Category(OrderConstants.TERM, OrderConstants.SCHEME,
+				OrderConstants.KIND_CLASS);
 		headers.add(HeaderUtils.normalize(OCCIHeaders.CATEGORY), category.toHeader());
 
 		List<Category> categories = HeaderUtils.getCategories(headers);
@@ -46,19 +46,19 @@ public class TestResourceRepository {
 
 	@Test
 	public void testGetSpecificResource() {
-		Category category = new Category(RequestConstants.TERM, RequestConstants.SCHEME,
-				RequestConstants.KIND_CLASS);
+		Category category = new Category(OrderConstants.TERM, OrderConstants.SCHEME,
+				OrderConstants.KIND_CLASS);
 		headers.add(HeaderUtils.normalize(OCCIHeaders.CATEGORY), category.toHeader());
 
-		Resource resourceEquals = ResourceRepository.getInstance().get(RequestConstants.TERM);
+		Resource resourceEquals = ResourceRepository.getInstance().get(OrderConstants.TERM);
 
 		Assert.assertTrue(category.equals(resourceEquals.getCategory()));
 	}
 	
 	@Test
 	public void testGetUnknownSpecificResource() {
-		Category category = new Category(RequestConstants.TERM, RequestConstants.SCHEME,
-				RequestConstants.KIND_CLASS);
+		Category category = new Category(OrderConstants.TERM, OrderConstants.SCHEME,
+				OrderConstants.KIND_CLASS);
 		headers.add(HeaderUtils.normalize(OCCIHeaders.CATEGORY), category.toHeader());
 
 		Resource resourceEquals = ResourceRepository.getInstance().get("unknown");
@@ -96,8 +96,8 @@ public class TestResourceRepository {
 		String flavorName = "flavor";
 		Resource flavorResource = ResourceRepository.generateFlavorResource(flavorName);
 		Assert.assertEquals(flavorName, flavorResource.getCategory().getTerm());
-		Assert.assertEquals(RequestConstants.TEMPLATE_RESOURCE_SCHEME, flavorResource.getCategory().getScheme());
-		Assert.assertEquals(RequestConstants.MIXIN_CLASS, flavorResource.getCategory().getCatClass());		
+		Assert.assertEquals(OrderConstants.TEMPLATE_RESOURCE_SCHEME, flavorResource.getCategory().getScheme());
+		Assert.assertEquals(OrderConstants.MIXIN_CLASS, flavorResource.getCategory().getCatClass());		
 	}
 	
 	@Test

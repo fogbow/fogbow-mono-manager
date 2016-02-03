@@ -5,7 +5,7 @@ import java.util.Properties;
 
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.PrioritizationPlugin;
-import org.fogbowcloud.manager.occi.request.Request;
+import org.fogbowcloud.manager.occi.order.Order;
 
 public class FCFSPrioritizationPlugin implements PrioritizationPlugin {
 
@@ -13,7 +13,7 @@ public class FCFSPrioritizationPlugin implements PrioritizationPlugin {
 	}
 
 	@Override
-	public Request takeFrom(Request newRequest, List<Request> requestsWithInstance) {
+	public Order takeFrom(Order newOrder, List<Order> ordersWithInstance) {
 		return null;
 	}
 }

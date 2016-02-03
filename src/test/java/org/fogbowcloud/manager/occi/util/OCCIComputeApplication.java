@@ -14,7 +14,7 @@ import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.OCCIHeaders;
 import org.fogbowcloud.manager.occi.model.Resource;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;
-import org.fogbowcloud.manager.occi.request.RequestConstants;
+import org.fogbowcloud.manager.occi.order.OrderConstants;
 import org.restlet.Application;
 import org.restlet.Restlet;
 import org.restlet.data.MediaType;
@@ -68,22 +68,22 @@ public class OCCIComputeApplication extends Application {
 		computeActions.add("http://schemas.ogf.org/occi/infrastructure/compute/action#suspend");
 		
 		Resource compute = new Resource("compute", "http://schemas.ogf.org/occi/infrastructure#",
-				RequestConstants.KIND_CLASS, computeAttributes, computeActions, "http://localhost:8787/compute/",
+				OrderConstants.KIND_CLASS, computeAttributes, computeActions, "http://localhost:8787/compute/",
 				"Compute Resource", "http://schemas.ogf.org/occi/core#resource");
 		resources.add(compute);
 		
 		resources.add(new Resource(SMALL_FLAVOR_TERM, RESOURCE_SCHEME,
-				RequestConstants.MIXIN_CLASS, new ArrayList<String>(), new ArrayList<String>(),
+				OrderConstants.MIXIN_CLASS, new ArrayList<String>(), new ArrayList<String>(),
 				"http://localhost:8787/m1-small/", "Flavor: m1.small ",
 				"http://schemas.ogf.org/occi/infrastructure#resource_tpl"));
 
 		resources.add(new Resource(MEDIUM_FLAVOR_TERM, RESOURCE_SCHEME,
-				RequestConstants.MIXIN_CLASS, new ArrayList<String>(), new ArrayList<String>(),
+				OrderConstants.MIXIN_CLASS, new ArrayList<String>(), new ArrayList<String>(),
 				"http://localhost:8787/m1-medium/", "Flavor: m1.medium ",
 				"http://schemas.ogf.org/occi/infrastructure#resource_tpl"));
 		
 		resources.add(new Resource(LARGE_FLAVOR_TERM, RESOURCE_SCHEME,
-				RequestConstants.MIXIN_CLASS, new ArrayList<String>(), new ArrayList<String>(),
+				OrderConstants.MIXIN_CLASS, new ArrayList<String>(), new ArrayList<String>(),
 				"http://localhost:8787/m1-large/", "Flavor: m1.large ",
 				"http://schemas.ogf.org/occi/infrastructure#resource_tpl"));
 		
@@ -97,12 +97,12 @@ public class OCCIComputeApplication extends Application {
 		networkActions.add("http://schemas.ogf.org/occi/infrastructure/network/action#down");
 
 		Resource network = new Resource("netowrk", "http://schemas.ogf.org/occi/infrastructure#",
-				RequestConstants.KIND_CLASS, networkAttributes, networkActions, "http://localhost:8787/network/",
+				OrderConstants.KIND_CLASS, networkAttributes, networkActions, "http://localhost:8787/network/",
 				"Network Resource", "http://schemas.ogf.org/occi/core#resource");
 		resources.add(network);
 		
 		resources.add(new Resource("os_tpl", "http://schemas.ogf.org/occi/infrastructure#",
-				RequestConstants.MIXIN_CLASS, new ArrayList<String>(), new ArrayList<String>(),
+				OrderConstants.MIXIN_CLASS, new ArrayList<String>(), new ArrayList<String>(),
 				"http://localhost:8787/os_tpl/", "", ""));
 
 		List<String> restartAttributes = new ArrayList<String>();
@@ -315,7 +315,7 @@ public class OCCIComputeApplication extends Application {
 				return generateResponse(
 						computeApplication.getAllInstanceIds(userToken), req);
 			}
-			LOGGER.info("Getting request(" + instanceId + ") of token :" + userToken);
+			LOGGER.info("Getting order(" + instanceId + ") of token :" + userToken);
 			return computeApplication.getInstanceDetails(userToken, instanceId);
 		}
 		
@@ -364,7 +364,7 @@ public class OCCIComputeApplication extends Application {
 			String instanceId = (String) getRequestAttributes().get("instanceid");
 
 			if (instanceId == null) {
-				LOGGER.info("Removing all requests of token :" + userToken);
+				LOGGER.info("Removing all orders of token :" + userToken);
 				computeApplication.removeAllInstances(userToken);
 				return ResponseConstants.OK;
 			}

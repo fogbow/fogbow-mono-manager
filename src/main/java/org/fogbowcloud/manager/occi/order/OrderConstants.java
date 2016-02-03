@@ -1,13 +1,13 @@
-package org.fogbowcloud.manager.occi.request;
+package org.fogbowcloud.manager.occi.order;
 
-public class RequestConstants {
+public class OrderConstants {
 
-	// request
-	public static final String TERM = "fogbow_request";
-	public static final String SCHEME = "http://schemas.fogbowcloud.org/request#";
+	// order
+	public static final String TERM = "order";
+	public static final String SCHEME = "http://schemas.fogbowcloud.org/order#";
 	public static final String KIND_CLASS = "kind";
 	public static final Integer DEFAULT_INSTANCE_COUNT = 1;
-	public static final String DEFAULT_TYPE = RequestType.ONE_TIME.getValue();
+	public static final String DEFAULT_TYPE = OrderType.ONE_TIME.getValue();
 
 	// size flavors
 	public static final String TEMPLATE_RESOURCE_SCHEME = "http://schemas.fogbowcloud.org/template/resource#";

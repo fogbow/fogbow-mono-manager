@@ -37,8 +37,8 @@ import org.fogbowcloud.manager.occi.model.OCCIHeaders;
 import org.fogbowcloud.manager.occi.model.ResourceRepository;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.fogbowcloud.manager.occi.model.Token;
-import org.fogbowcloud.manager.occi.request.RequestAttribute;
-import org.fogbowcloud.manager.occi.request.RequestConstants;
+import org.fogbowcloud.manager.occi.order.OrderAttribute;
+import org.fogbowcloud.manager.occi.order.OrderConstants;
 import org.restlet.Client;
 import org.restlet.Request;
 import org.restlet.data.ClientInfo;
@@ -83,44 +83,44 @@ public class OCCIComputePlugin implements ComputePlugin {
 		networkId = properties
 				.getProperty(OpenStackConfigurationConstants.COMPUTE_OCCI_NETWORK_KEY);
 
-		fogTermToCategory.put(RequestConstants.USER_DATA_TERM, new Category("user_data",
-				instanceScheme, RequestConstants.MIXIN_CLASS));
+		fogTermToCategory.put(OrderConstants.USER_DATA_TERM, new Category("user_data",
+				instanceScheme, OrderConstants.MIXIN_CLASS));
 	}
 
 	@Override
-	public String requestInstance(Token token, List<Category> requestCategories,
+	public String requestInstance(Token token, List<Category> orderCategories,
 			Map<String, String> xOCCIAtt, String localImageId) {
 		LOGGER.debug("Requesting instance with token=" + token + "; categories="
-				+ requestCategories + "; xOCCIAtt=" + xOCCIAtt);
+				+ orderCategories + "; xOCCIAtt=" + xOCCIAtt);
 
 		List<Category> occiCategories = new ArrayList<Category>();
 
 		Category categoryCompute = new Category(TERM_COMPUTE, SCHEME_COMPUTE,
-				RequestConstants.KIND_CLASS);
+				OrderConstants.KIND_CLASS);
 		occiCategories.add(categoryCompute);
 
 		// removing fogbow-request category
-		requestCategories.remove(new Category(RequestConstants.TERM, RequestConstants.SCHEME,
-				RequestConstants.KIND_CLASS));
+		orderCategories.remove(new Category(OrderConstants.TERM, OrderConstants.SCHEME,
+				OrderConstants.KIND_CLASS));
 
 		if (localImageId == null) {
 			throw new OCCIException(ErrorType.BAD_REQUEST, 
 					ResponseConstants.IRREGULAR_SYNTAX);
 		}
-		occiCategories.add(new Category(localImageId, osScheme, RequestConstants.MIXIN_CLASS));
+		occiCategories.add(new Category(localImageId, osScheme, OrderConstants.MIXIN_CLASS));
 				
 		// Finding and adding flavor
 		
-		Flavor flavorRef = getFlavor(token, xOCCIAtt.get(RequestAttribute.REQUIREMENTS.getValue()));
+		Flavor flavorRef = getFlavor(token, xOCCIAtt.get(OrderAttribute.REQUIREMENTS.getValue()));
 		if (flavorRef != null) {
-			occiCategories.add(new Category(flavorRef.getName(), resourceScheme, RequestConstants.MIXIN_CLASS));						
+			occiCategories.add(new Category(flavorRef.getName(), resourceScheme, OrderConstants.MIXIN_CLASS));						
 		}
 		
 		Set<Header> headers = new HashSet<Header>();
 		
-		for (Category category : new ArrayList<Category>(requestCategories)) {
-			if (category.getScheme().equals(RequestConstants.TEMPLATE_RESOURCE_SCHEME)) {
-				requestCategories.remove(category);
+		for (Category category : new ArrayList<Category>(orderCategories)) {
+			if (category.getScheme().equals(OrderConstants.TEMPLATE_RESOURCE_SCHEME)) {
+				orderCategories.remove(category);
 				continue;
 			}			
 			if (fogTermToCategory.get(category.getTerm()) == null) {
@@ -130,7 +130,7 @@ public class OCCIComputePlugin implements ComputePlugin {
 			occiCategories.add(fogTermToCategory.get(category.getTerm()));
 		}
 		
-		headers.addAll(getExtraHeaders(requestCategories, xOCCIAtt, token));
+		headers.addAll(getExtraHeaders(orderCategories, xOCCIAtt, token));
 		
 			
 		for (Category category : occiCategories) {
@@ -178,7 +178,7 @@ public class OCCIComputePlugin implements ComputePlugin {
 		return newHeaders;
 	}
 
-	protected Set<Header> getExtraHeaders(List<Category> requestCategories,
+	protected Set<Header> getExtraHeaders(List<Category> orderCategories,
 			Map<String, String> xOCCIAtt, Token token) {
 		return new HashSet<Header>();
 	}
@@ -228,7 +228,7 @@ public class OCCIComputePlugin implements ComputePlugin {
 
 	protected Category createFlavorCategory(String flavorPropName, Properties properties) {
 		return new Category(properties.getProperty(flavorPropName), resourceScheme,
-				RequestConstants.MIXIN_CLASS);
+				OrderConstants.MIXIN_CLASS);
 	}
 
 	protected Response doRequest(String method, String endpoint, String authToken) {

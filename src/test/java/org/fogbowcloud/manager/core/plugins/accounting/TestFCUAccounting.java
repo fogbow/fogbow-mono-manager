@@ -11,8 +11,8 @@ import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
 import org.fogbowcloud.manager.occi.model.Token;
-import org.fogbowcloud.manager.occi.request.Request;
-import org.fogbowcloud.manager.occi.request.RequestState;
+import org.fogbowcloud.manager.occi.order.Order;
+import org.fogbowcloud.manager.occi.order.OrderState;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -46,9 +46,9 @@ public class TestFCUAccounting {
 	}
 
 	@Test
-	public void testEmptyRequests() {
+	public void testEmptyOrders() {
 		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin);
-		accountingPlugin.update(new ArrayList<Request>());
+		accountingPlugin.update(new ArrayList<Order>());
 
 		Assert.assertNotNull(accountingPlugin.getMembersUsage());
 		Assert.assertEquals(0, accountingPlugin.getMembersUsage().size());
@@ -56,7 +56,7 @@ public class TestFCUAccounting {
 	}
 
 	@Test
-	public void testOneRequestFulfielledByRemoteAndEmptyServedRequests() {
+	public void testOneOrderFulfielledByRemoteAndEmptyServedOrders() {
 		long now = System.currentTimeMillis();
 
 		DateUtils dateUtils = Mockito.mock(DateUtils.class);
@@ -65,22 +65,22 @@ public class TestFCUAccounting {
 
 		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin, dateUtils);
 
-		Request request1 = new Request("id1", new Token("accessId", "userId", null,
+		Order order1 = new Order("id1", new Token("accessId", "userId", null,
 				new HashMap<String, String>()), null, null, true, "localMemberId");
-		request1.setDateUtils(dateUtils);
-		request1.setState(RequestState.FULFILLED);
-		request1.setProvidingMemberId("remoteMemberId");
-		request1.setInstanceId("instanceId");
+		order1.setDateUtils(dateUtils);
+		order1.setState(OrderState.FULFILLED);
+		order1.setProvidingMemberId("remoteMemberId");
+		order1.setInstanceId("instanceId");
 
-		List<Request> requests = new ArrayList<Request>();
-		requests.add(request1);
+		List<Order> orders = new ArrayList<Order>();
+		orders.add(order1);
 
 		// updating dateUtils
 		long twoMinutesInMili = 1000 * 60 * 2;
 		now += twoMinutesInMili;
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 
-		accountingPlugin.update(requests);
+		accountingPlugin.update(orders);
 
 		// checking usage
 		double expectedConsumption = benchmarkingPlugin.getPower("instanceId@remoteMemberId") * 2;
@@ -94,7 +94,7 @@ public class TestFCUAccounting {
 	}
 
 	@Test
-	public void testOneRequestFulfielledByLocalAndEmptyServedRequests() {
+	public void testOneOrderFulfielledByLocalAndEmptyServedOrders() {
 		long now = System.currentTimeMillis();
 
 		DateUtils dateUtils = Mockito.mock(DateUtils.class);
@@ -103,22 +103,22 @@ public class TestFCUAccounting {
 
 		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin, dateUtils);
 
-		Request request1 = new Request("id1", new Token("accessId", "userId", null,
+		Order order1 = new Order("id1", new Token("accessId", "userId", null,
 				new HashMap<String, String>()), null, null, true, "localMemberId");
-		request1.setDateUtils(dateUtils);
-		request1.setState(RequestState.FULFILLED);
-		request1.setInstanceId("instanceId");
-		request1.setProvidingMemberId("localMemberId");
+		order1.setDateUtils(dateUtils);
+		order1.setState(OrderState.FULFILLED);
+		order1.setInstanceId("instanceId");
+		order1.setProvidingMemberId("localMemberId");
 
-		List<Request> requests = new ArrayList<Request>();
-		requests.add(request1);
+		List<Order> orders = new ArrayList<Order>();
+		orders.add(order1);
 
 		// updating dateUtils
 		long twoMinutesInMili = 1000 * 60 * 2;
 		now += twoMinutesInMili;
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 
-		accountingPlugin.update(requests);
+		accountingPlugin.update(orders);
 
 		// checking usage
 		double expectedConsumption = benchmarkingPlugin.getPower("instanceId@localMemberId") * 2;
@@ -132,7 +132,7 @@ public class TestFCUAccounting {
 	}
 	
 	@Test
-	public void testSomeRequestsFulfielledByLocalAndEmptyServedRequests() {
+	public void testSomeOrdersFulfielledByLocalAndEmptyServedOrders() {
 		long now = System.currentTimeMillis();
 
 		DateUtils dateUtils = Mockito.mock(DateUtils.class);
@@ -142,30 +142,30 @@ public class TestFCUAccounting {
 
 		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin, dateUtils);
 
-		Request request1 = new Request("id1", new Token("accessId", "userId1", null,
+		Order order1 = new Order("id1", new Token("accessId", "userId1", null,
 				new HashMap<String, String>()), null, null, true, "localMemberId");
-		request1.setDateUtils(dateUtils);
-		request1.setState(RequestState.FULFILLED);
-		request1.setInstanceId("instanceId1");
-		request1.setProvidingMemberId("localMemberId");
+		order1.setDateUtils(dateUtils);
+		order1.setState(OrderState.FULFILLED);
+		order1.setInstanceId("instanceId1");
+		order1.setProvidingMemberId("localMemberId");
 		
-		Request request2 = new Request("id2", new Token("accessId", "userId2", null,
+		Order order2 = new Order("id2", new Token("accessId", "userId2", null,
 				new HashMap<String, String>()), null, null, true, "localMemberId");
-		request2.setDateUtils(dateUtils);
-		request2.setState(RequestState.FULFILLED);
-		request2.setInstanceId("instanceId2");
-		request2.setProvidingMemberId("localMemberId");
+		order2.setDateUtils(dateUtils);
+		order2.setState(OrderState.FULFILLED);
+		order2.setInstanceId("instanceId2");
+		order2.setProvidingMemberId("localMemberId");
 
-		List<Request> requests = new ArrayList<Request>();
-		requests.add(request1);
-		requests.add(request2);
+		List<Order> orders = new ArrayList<Order>();
+		orders.add(order1);
+		orders.add(order2);
 
 		// updating dateUtils
 		long twoMinutesInMili = 1000 * 60 * 2;
 		now += twoMinutesInMili;
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 
-		accountingPlugin.update(requests);
+		accountingPlugin.update(orders);
 
 		// checking usage
 		double expectedConsumptionForUser1 = benchmarkingPlugin.getPower("instanceId1@localMemberId") * 2;
@@ -182,7 +182,7 @@ public class TestFCUAccounting {
 	}
 	
 	@Test
-	public void testEmptyRequestAndOneServedRequest() {
+	public void testEmptyOrderAndOneServedOrder() {
 		long now = System.currentTimeMillis();
 
 		DateUtils dateUtils = Mockito.mock(DateUtils.class);
@@ -191,20 +191,20 @@ public class TestFCUAccounting {
 
 		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin, dateUtils);
 
-		Request servedRequest = new Request("instanceToken", new Token("accessId", "userId1", null,
+		Order servedOrder = new Order("instanceToken", new Token("accessId", "userId1", null,
 				new HashMap<String, String>()), null, null, false, "remoteMemberId", dateUtils);
-		servedRequest.setInstanceId("instanceId");
-		servedRequest.setProvidingMemberId("localMemberId");
+		servedOrder.setInstanceId("instanceId");
+		servedOrder.setProvidingMemberId("localMemberId");
 
-		List<Request> servedRequests = new ArrayList<Request>();
-		servedRequests.add(servedRequest);
+		List<Order> servedOrders = new ArrayList<Order>();
+		servedOrders.add(servedOrder);
 
 		// updating dateUtils
 		long twoMinutesInMili = 1000 * 60 * 2;
 		now += twoMinutesInMili;
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 
-		accountingPlugin.update(servedRequests);
+		accountingPlugin.update(servedOrders);
 
 		// checking usage
 		double expectedDonation = benchmarkingPlugin.getPower("instanceId@localMemberId") * 2;
@@ -218,7 +218,7 @@ public class TestFCUAccounting {
 	}
 
 	@Test
-	public void testOneRequestFulfilledByRemoteAndOneServedRequest() {
+	public void testOneOrderFulfilledByRemoteAndOneServedOrder() {
 		long now = System.currentTimeMillis();
 
 		DateUtils dateUtils = Mockito.mock(DateUtils.class);
@@ -228,29 +228,29 @@ public class TestFCUAccounting {
 
 		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin, dateUtils);
 
-		Request request1 = new Request("id1", new Token("accessId", "userId", null,
+		Order order1 = new Order("id1", new Token("accessId", "userId", null,
 				new HashMap<String, String>()), null, null, true, "localMemberId", dateUtils);
-		request1.setState(RequestState.FULFILLED);
-		request1.setProvidingMemberId("remoteMemberId");
-		request1.setInstanceId("instanceId1");
+		order1.setState(OrderState.FULFILLED);
+		order1.setProvidingMemberId("remoteMemberId");
+		order1.setInstanceId("instanceId1");
 		
-		List<Request> requestsWithInstance = new ArrayList<Request>();
-		requestsWithInstance.add(request1);
+		List<Order> ordersWithInstance = new ArrayList<Order>();
+		ordersWithInstance.add(order1);
 
-		Request servedRequest = new Request("instanceToken", new Token("accessId", "userId1", null,
+		Order servedOrder = new Order("instanceToken", new Token("accessId", "userId1", null,
 				new HashMap<String, String>()), null, null, false, "remoteMemberId", dateUtils);
-		servedRequest.setInstanceId("instanceId2");
-		servedRequest.setState(RequestState.FULFILLED);
-		servedRequest.setProvidingMemberId("localMemberId");
+		servedOrder.setInstanceId("instanceId2");
+		servedOrder.setState(OrderState.FULFILLED);
+		servedOrder.setProvidingMemberId("localMemberId");
 
-		requestsWithInstance.add(servedRequest);
+		ordersWithInstance.add(servedOrder);
 
 		// updating dateUtils
 		long twoMinutesInMilli = 1000 * 60 * 2;
 		now += twoMinutesInMilli;
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 
-		accountingPlugin.update(requestsWithInstance);
+		accountingPlugin.update(ordersWithInstance);
 
 		// checking usage
 		double expectedConsumption = benchmarkingPlugin.getPower("instanceId1@remoteMemberId") * 2;
@@ -265,7 +265,7 @@ public class TestFCUAccounting {
 	}
 
 	@Test
-	public void testOneRequestFulfilledByLocalAndOneServedRequest() {
+	public void testOneOrderFulfilledByLocalAndOneServedOrder() {
 		long now = System.currentTimeMillis();
 
 		DateUtils dateUtils = Mockito.mock(DateUtils.class);
@@ -275,30 +275,30 @@ public class TestFCUAccounting {
 
 		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin, dateUtils);
 
-		Request request1 = new Request("id1", new Token("accessId", "userId", null,
+		Order order1 = new Order("id1", new Token("accessId", "userId", null,
 				new HashMap<String, String>()), null, null, true, "");
-		request1.setDateUtils(dateUtils);
-		request1.setState(RequestState.FULFILLED);
-		request1.setInstanceId("instanceId1");
-		request1.setProvidingMemberId("localMemberId");
+		order1.setDateUtils(dateUtils);
+		order1.setState(OrderState.FULFILLED);
+		order1.setInstanceId("instanceId1");
+		order1.setProvidingMemberId("localMemberId");
 
-		List<Request> requestsWithInstance = new ArrayList<Request>();
-		requestsWithInstance.add(request1);
+		List<Order> ordersWithInstance = new ArrayList<Order>();
+		ordersWithInstance.add(order1);
 
-		Request servedRequest = new Request("instanceToken", new Token("accessId", "userId1", null,
+		Order servedOrder = new Order("instanceToken", new Token("accessId", "userId1", null,
 				new HashMap<String, String>()), null, null, false, "remoteMemberId", dateUtils);
-		servedRequest.setInstanceId("instanceId2");
-		servedRequest.setState(RequestState.FULFILLED);
-		servedRequest.setProvidingMemberId("localMemberId");
+		servedOrder.setInstanceId("instanceId2");
+		servedOrder.setState(OrderState.FULFILLED);
+		servedOrder.setProvidingMemberId("localMemberId");
 				
-		requestsWithInstance.add(servedRequest);
+		ordersWithInstance.add(servedOrder);
 
 		// updating dateUtils
 		long twoMinutesInMilli = 1000 * 60 * 2;
 		now += twoMinutesInMilli;
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 
-		accountingPlugin.update(requestsWithInstance);
+		accountingPlugin.update(ordersWithInstance);
 
 		// checking usage
 		double expectedConsumption = benchmarkingPlugin.getPower("instanceId1@localMemberId") * 2;
@@ -315,7 +315,7 @@ public class TestFCUAccounting {
 	}
 	
 	@Test
-	public void testRequestsFulfilledByRemoteAndServedRequestMoreThanOneMember() {
+	public void testOrdersFulfilledByRemoteAndServedOrderMoreThanOneMember() {
 		long now = System.currentTimeMillis();
 
 		DateUtils dateUtils = Mockito.mock(DateUtils.class);
@@ -325,30 +325,30 @@ public class TestFCUAccounting {
 
 		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin, dateUtils);
 
-		Request request1 = new Request("id1", new Token("accessId", "userId", null,
+		Order order1 = new Order("id1", new Token("accessId", "userId", null,
 				new HashMap<String, String>()), null, null, true, "localMemberId");
-		request1.setDateUtils(dateUtils);
-		request1.setState(RequestState.FULFILLED);
-		request1.setProvidingMemberId("remoteMemberId1");
-		request1.setInstanceId("instanceId1");
+		order1.setDateUtils(dateUtils);
+		order1.setState(OrderState.FULFILLED);
+		order1.setProvidingMemberId("remoteMemberId1");
+		order1.setInstanceId("instanceId1");
 
-		List<Request> requestsWithInstance = new ArrayList<Request>();
-		requestsWithInstance.add(request1);
+		List<Order> ordersWithInstance = new ArrayList<Order>();
+		ordersWithInstance.add(order1);
 
-		Request servedRequest = new Request("instanceToken", new Token("accessId", "userId1", null,
+		Order servedOrder = new Order("instanceToken", new Token("accessId", "userId1", null,
 				new HashMap<String, String>()), null, null, false, "remoteMemberId2", dateUtils);
-		servedRequest.setInstanceId("instanceId2");
-		servedRequest.setState(RequestState.FULFILLED);
-		servedRequest.setProvidingMemberId("localMemberId");
+		servedOrder.setInstanceId("instanceId2");
+		servedOrder.setState(OrderState.FULFILLED);
+		servedOrder.setProvidingMemberId("localMemberId");
 		
-		requestsWithInstance.add(servedRequest);
+		ordersWithInstance.add(servedOrder);
 
 		// updating dateUtils
 		long twoMinutesInMilli = 1000 * 60 * 2;
 		now += twoMinutesInMilli;
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 
-		accountingPlugin.update(requestsWithInstance);
+		accountingPlugin.update(ordersWithInstance);
 
 		// checking usage
 		double expectedConsumptionFromMember1 = benchmarkingPlugin.getPower("instanceId1@remoteMemberId1") * 2;
@@ -368,7 +368,7 @@ public class TestFCUAccounting {
 	}
 	
 	@Test
-	public void testRequestsFulfilledByLocalAndServedRequestMoreThanOneMember() {
+	public void testOrdersFulfilledByLocalAndServedOrderMoreThanOneMember() {
 		long now = System.currentTimeMillis();
 
 		DateUtils dateUtils = Mockito.mock(DateUtils.class);
@@ -378,30 +378,30 @@ public class TestFCUAccounting {
 
 		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin, dateUtils);
 
-		Request request1 = new Request("id1", new Token("accessId", "userId", null,
+		Order order1 = new Order("id1", new Token("accessId", "userId", null,
 				new HashMap<String, String>()), null, null, true, "localMemberId");
-		request1.setDateUtils(dateUtils);
-		request1.setState(RequestState.FULFILLED);
-		request1.setInstanceId("instanceId1");
-		request1.setProvidingMemberId("localMemberId");
+		order1.setDateUtils(dateUtils);
+		order1.setState(OrderState.FULFILLED);
+		order1.setInstanceId("instanceId1");
+		order1.setProvidingMemberId("localMemberId");
 
-		List<Request> requestsWithInstance = new ArrayList<Request>();
-		requestsWithInstance.add(request1);
+		List<Order> ordersWithInstance = new ArrayList<Order>();
+		ordersWithInstance.add(order1);
 
-		Request servedRequest = new Request("instanceToken", new Token("accessId", "userId1", null,
+		Order servedOrder = new Order("instanceToken", new Token("accessId", "userId1", null,
 				new HashMap<String, String>()), null, null, false, "remoteMemberId", dateUtils);
-		servedRequest.setInstanceId("instanceId2");
-		servedRequest.setState(RequestState.FULFILLED);
-		servedRequest.setProvidingMemberId("localMemberId");
+		servedOrder.setInstanceId("instanceId2");
+		servedOrder.setState(OrderState.FULFILLED);
+		servedOrder.setProvidingMemberId("localMemberId");
 
-		requestsWithInstance.add(servedRequest);
+		ordersWithInstance.add(servedOrder);
 
 		// updating dateUtils
 		long twoMinutesInMilli = 1000 * 60 * 2;
 		now += twoMinutesInMilli;
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 
-		accountingPlugin.update(requestsWithInstance);
+		accountingPlugin.update(ordersWithInstance);
 
 		// checking usage
 		double expectedConsumptionForUserId = benchmarkingPlugin.getPower("instanceId1@localMemberId") * 2;
@@ -421,7 +421,7 @@ public class TestFCUAccounting {
 	}
 
 	@Test
-	public void testRequestFulfilledByRemoteAndServedRequestMoreThanOneUpdate() {
+	public void testOrderFulfilledByRemoteAndServedOrderMoreThanOneUpdate() {
 		long now = System.currentTimeMillis();
 
 		DateUtils dateUtils = Mockito.mock(DateUtils.class);
@@ -431,36 +431,36 @@ public class TestFCUAccounting {
 
 		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin, dateUtils);
 
-		Request request1 = new Request("id1", new Token("accessId", "userId", null,
+		Order order1 = new Order("id1", new Token("accessId", "userId", null,
 				new HashMap<String, String>()), null, null, true, "localMemberId");
-		request1.setDateUtils(dateUtils);
-		request1.setState(RequestState.FULFILLED);
-		request1.setProvidingMemberId("remoteMemberId");
-		request1.setInstanceId("instanceId1");
+		order1.setDateUtils(dateUtils);
+		order1.setState(OrderState.FULFILLED);
+		order1.setProvidingMemberId("remoteMemberId");
+		order1.setInstanceId("instanceId1");
 
-		List<Request> requestsWithInstance = new ArrayList<Request>();
-		requestsWithInstance.add(request1);
+		List<Order> ordersWithInstance = new ArrayList<Order>();
+		ordersWithInstance.add(order1);
 		
-		Request servedRequest = new Request("instanceToken", new Token("accessId", "userId1", null,
+		Order servedOrder = new Order("instanceToken", new Token("accessId", "userId1", null,
 				new HashMap<String, String>()), null, null, false, "remoteMemberId", dateUtils);
-		servedRequest.setInstanceId("instanceId2");
-		servedRequest.setState(RequestState.FULFILLED);
-		servedRequest.setProvidingMemberId("localMemberId");
+		servedOrder.setInstanceId("instanceId2");
+		servedOrder.setState(OrderState.FULFILLED);
+		servedOrder.setProvidingMemberId("localMemberId");
 
-		requestsWithInstance.add(servedRequest);
+		ordersWithInstance.add(servedOrder);
 
 		// updating dateUtils
 		long twoMinutesInMilli = 1000 * 60 * 2;
 		now += twoMinutesInMilli;
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 
-		accountingPlugin.update(requestsWithInstance);
+		accountingPlugin.update(ordersWithInstance);
 
 		// updating dateUtils
 		now += 1000 * 60 * 5; // adding grain Time (5 min)
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 
-		accountingPlugin.update(requestsWithInstance);
+		accountingPlugin.update(ordersWithInstance);
 
 		// checking usage is considering 7 minutes
 		double expectedConsumption = benchmarkingPlugin.getPower("instanceId1@remoteMemberId") * 7;
@@ -475,7 +475,7 @@ public class TestFCUAccounting {
 	}
 	
 	@Test
-	public void testRequestsFulfilledAndServedRequestMoreThanOneUpdate() {
+	public void testOrdersFulfilledAndServedOrderMoreThanOneUpdate() {
 		long now = System.currentTimeMillis();
 
 		DateUtils dateUtils = Mockito.mock(DateUtils.class);
@@ -486,44 +486,44 @@ public class TestFCUAccounting {
 
 		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin, dateUtils);
 
-		Request request1 = new Request("id1", new Token("accessId", "userId", null,
+		Order order1 = new Order("id1", new Token("accessId", "userId", null,
 				new HashMap<String, String>()), null, null, true, "localMemberId");
-		request1.setDateUtils(dateUtils);
-		request1.setState(RequestState.FULFILLED);
-		request1.setProvidingMemberId("remoteMemberId");
-		request1.setInstanceId("instanceId1");
+		order1.setDateUtils(dateUtils);
+		order1.setState(OrderState.FULFILLED);
+		order1.setProvidingMemberId("remoteMemberId");
+		order1.setInstanceId("instanceId1");
 		
-		Request request2 = new Request("id2", new Token("accessId", "userId", null,
+		Order order2 = new Order("id2", new Token("accessId", "userId", null,
 				new HashMap<String, String>()), null, null, true, "localMemberId");
-		request2.setDateUtils(dateUtils);
-		request2.setState(RequestState.FULFILLED);
-		request2.setInstanceId("instanceId3");
-		request2.setProvidingMemberId("localMemberId");
+		order2.setDateUtils(dateUtils);
+		order2.setState(OrderState.FULFILLED);
+		order2.setInstanceId("instanceId3");
+		order2.setProvidingMemberId("localMemberId");
 
-		List<Request> requestsWithInstance = new ArrayList<Request>();
-		requestsWithInstance.add(request1);
-		requestsWithInstance.add(request2);
+		List<Order> ordersWithInstance = new ArrayList<Order>();
+		ordersWithInstance.add(order1);
+		ordersWithInstance.add(order2);
 
-		Request servedRequest = new Request("instanceToken", new Token("accessId", "userId1", null,
+		Order servedOrder = new Order("instanceToken", new Token("accessId", "userId1", null,
 				new HashMap<String, String>()), null, null, false, "remoteMemberId", dateUtils);
-		servedRequest.setInstanceId("instanceId2");
-		servedRequest.setState(RequestState.FULFILLED);
-		servedRequest.setProvidingMemberId("localMemberId");
+		servedOrder.setInstanceId("instanceId2");
+		servedOrder.setState(OrderState.FULFILLED);
+		servedOrder.setProvidingMemberId("localMemberId");
 		
-		requestsWithInstance.add(servedRequest);
+		ordersWithInstance.add(servedOrder);
 
 		// updating dateUtils
 		long twoMinutesInMilli = 1000 * 60 * 2;
 		now += twoMinutesInMilli;
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 
-		accountingPlugin.update(requestsWithInstance);
+		accountingPlugin.update(ordersWithInstance);
 
 		// updating dateUtils
 		now += 1000 * 60 * 5; // adding grain Time (5 min)
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 
-		accountingPlugin.update(requestsWithInstance);
+		accountingPlugin.update(ordersWithInstance);
 
 		// checking usage is considering 7 minutes
 		double expectedConsumptionForMember = benchmarkingPlugin.getPower("instanceId1@remoteMemberId") * 7;
@@ -543,7 +543,7 @@ public class TestFCUAccounting {
 	}
 	
 	@Test
-	public void testRequestFulfilledByLocalAndServedRequestMoreThanOneUpdate() {
+	public void testOrderFulfilledByLocalAndServedOrderMoreThanOneUpdate() {
 		long now = System.currentTimeMillis();
 
 		DateUtils dateUtils = Mockito.mock(DateUtils.class);
@@ -553,36 +553,36 @@ public class TestFCUAccounting {
 
 		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin, dateUtils);
 
-		Request request1 = new Request("id1", new Token("accessId", "userId", null,
+		Order order1 = new Order("id1", new Token("accessId", "userId", null,
 				new HashMap<String, String>()), null, null, true, "localMemberId");
-		request1.setDateUtils(dateUtils);
-		request1.setState(RequestState.FULFILLED);
-		request1.setInstanceId("instanceId1");
-		request1.setProvidingMemberId("localMemberId");
+		order1.setDateUtils(dateUtils);
+		order1.setState(OrderState.FULFILLED);
+		order1.setInstanceId("instanceId1");
+		order1.setProvidingMemberId("localMemberId");
 
-		List<Request> requestsWithInstance = new ArrayList<Request>();
-		requestsWithInstance.add(request1);
+		List<Order> ordersWithInstance = new ArrayList<Order>();
+		ordersWithInstance.add(order1);
 
-		Request servedRequest = new Request("instanceToken", new Token("accessId", "userId1", null,
+		Order servedOrder = new Order("instanceToken", new Token("accessId", "userId1", null,
 				new HashMap<String, String>()), null, null, false, "remoteMemberId", dateUtils);
-		servedRequest.setInstanceId("instanceId2");
-		servedRequest.setState(RequestState.FULFILLED);
-		servedRequest.setProvidingMemberId("localMemberId");
+		servedOrder.setInstanceId("instanceId2");
+		servedOrder.setState(OrderState.FULFILLED);
+		servedOrder.setProvidingMemberId("localMemberId");
 		
-		requestsWithInstance.add(servedRequest);
+		ordersWithInstance.add(servedOrder);
 
 		// updating dateUtils
 		long twoMinutesInMilli = 1000 * 60 * 2;
 		now += twoMinutesInMilli;
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 
-		accountingPlugin.update(requestsWithInstance);
+		accountingPlugin.update(ordersWithInstance);
 
 		// updating dateUtils
 		now += 1000 * 60 * 5; // adding grain Time (5 min)
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 
-		accountingPlugin.update(requestsWithInstance);
+		accountingPlugin.update(ordersWithInstance);
 
 		// checking usage is considering 7 minutes
 		double expectedConsumption = benchmarkingPlugin.getPower("instanceId1@localMemberId") * 7;

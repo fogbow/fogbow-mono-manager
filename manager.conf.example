@@ -227,10 +227,10 @@ benchmarking_class=org.fogbowcloud.manager.core.plugins.benchmarking.VanillaBenc
 public_key; scheme="http://schemas.openstack.org/instance/credentials#"; class="mixin"; 
 org.openstack.credentials.publickey.data
 
-# Request public key properties
+# Order public key properties
 occi_extra_resource_fogbow_public_key=public_key
 occi_extra_resource_org.fogbowcloud.credentials.publickey.data=org.openstack.credentials.publickey.data
 
-# Request userdata properties
+# Order userdata properties
 occi_extra_resource_fogbow_userdata=user_data
 occi_extra_resource_org.fogbowcloud.request.extra-user-data=org.openstack.compute.user_data

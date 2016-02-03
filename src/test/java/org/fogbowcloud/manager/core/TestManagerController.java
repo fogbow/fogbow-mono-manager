@@ -43,13 +43,13 @@ import org.fogbowcloud.manager.occi.model.Resource;
 import org.fogbowcloud.manager.occi.model.ResourceRepository;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.fogbowcloud.manager.occi.model.Token;
-import org.fogbowcloud.manager.occi.request.OrderDataStore;
-import org.fogbowcloud.manager.occi.request.Request;
-import org.fogbowcloud.manager.occi.request.RequestAttribute;
-import org.fogbowcloud.manager.occi.request.RequestConstants;
-import org.fogbowcloud.manager.occi.request.RequestRepository;
-import org.fogbowcloud.manager.occi.request.RequestState;
-import org.fogbowcloud.manager.occi.request.RequestType;
+import org.fogbowcloud.manager.occi.order.Order;
+import org.fogbowcloud.manager.occi.order.OrderDataStore;
+import org.fogbowcloud.manager.occi.order.OrderAttribute;
+import org.fogbowcloud.manager.occi.order.OrderConstants;
+import org.fogbowcloud.manager.occi.order.OrderRepository;
+import org.fogbowcloud.manager.occi.order.OrderState;
+import org.fogbowcloud.manager.occi.order.OrderType;
 import org.fogbowcloud.manager.xmpp.AsyncPacketSender;
 import org.fogbowcloud.manager.xmpp.ManagerXmppComponent;
 import org.jamppa.component.PacketCallback;
@@ -90,8 +90,8 @@ public class TestManagerController {
 		managerController = managerTestHelper.createDefaultManagerController();
 		// default instance count value is 1
 		xOCCIAtt = new HashMap<String, String>();
-		xOCCIAtt.put(RequestAttribute.INSTANCE_COUNT.getValue(),
-				String.valueOf(RequestConstants.DEFAULT_INSTANCE_COUNT));
+		xOCCIAtt.put(OrderAttribute.INSTANCE_COUNT.getValue(),
+				String.valueOf(OrderConstants.DEFAULT_INSTANCE_COUNT));
 	}
 
 	@Test
@@ -114,7 +114,7 @@ public class TestManagerController {
 	
 	@SuppressWarnings("unchecked")
 	@Test
-	public void testSubmitFederationUserRequests() throws InterruptedException {
+	public void testSubmitFederationUserOrders() throws InterruptedException {
 		ResourcesInfo resourcesInfo = new ResourcesInfo("", "", "", "", "", "");
 		resourcesInfo.setId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		
@@ -133,26 +133,26 @@ public class TestManagerController {
 		listMembers.add(federationMember);
 		managerController.updateMembers(listMembers);
 
-		checkRequestPerUserToken(managerTestHelper.getDefaultFederationToken());
+		checkOrderPerUserToken(managerTestHelper.getDefaultFederationToken());
 	}
 	
-	private void checkRequestPerUserToken(Token token) {
-		Request request1 = new Request("id1", token, new ArrayList<Category>(),
+	private void checkOrderPerUserToken(Token token) {
+		Order order1 = new Order("id1", token, new ArrayList<Category>(),
 				new HashMap<String, String>(), true, "");
-		request1.setState(RequestState.OPEN);
-		Request request2 = new Request("id2", token, new ArrayList<Category>(),
+		order1.setState(OrderState.OPEN);
+		Order order2 = new Order("id2", token, new ArrayList<Category>(),
 				new HashMap<String, String>(), true, "");
-		request2.setState(RequestState.OPEN);
-		RequestRepository requestRepository = new RequestRepository();
-		requestRepository.addRequest(token.getUser(), request1);
-		requestRepository.addRequest(token.getUser(), request2);
-		managerController.setRequests(requestRepository);
+		order2.setState(OrderState.OPEN);
+		OrderRepository orderRepository = new OrderRepository();
+		orderRepository.addOrder(token.getUser(), order1);
+		orderRepository.addOrder(token.getUser(), order2);
+		managerController.setOrders(orderRepository);
 
-		managerController.checkAndSubmitOpenRequests();
+		managerController.checkAndSubmitOpenOrders();
 
-		List<Request> requestsFromUser = managerController.getRequestsFromUser(token.getAccessId());
-		for (Request request : requestsFromUser) {
-			Assert.assertEquals(RequestState.FULFILLED, request.getState());
+		List<Order> ordersFromUser = managerController.getOrdersFromUser(token.getAccessId());
+		for (Order order : ordersFromUser) {
+			Assert.assertEquals(OrderState.FULFILLED, order.getState());
 		}
 	}
 	
@@ -186,14 +186,14 @@ public class TestManagerController {
 		managerController.updateMembers(listMembers);
 		
 		HashMap<String, String> attributes = new HashMap<String, String>(xOCCIAtt);
-		attributes.put(RequestAttribute.REQUIREMENTS.getValue(), "true");
-		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), new ArrayList<Category>(),
+		attributes.put(OrderAttribute.REQUIREMENTS.getValue(), "true");
+		Order order1 = new Order("id1", managerTestHelper.getDefaultFederationToken(), new ArrayList<Category>(),
 				attributes, true, "");
-		request1.setState(RequestState.OPEN);
-		RequestRepository requestRepository = new RequestRepository();
-		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(), request1);
-		managerController.setRequests(requestRepository);
-		managerController.checkAndSubmitOpenRequests();
+		order1.setState(OrderState.OPEN);
+		OrderRepository orderRepository = new OrderRepository();
+		orderRepository.addOrder(managerTestHelper.getDefaultFederationToken().getUser(), order1);
+		managerController.setOrders(orderRepository);
+		managerController.checkAndSubmitOpenOrders();
 		        
 		Mockito.verify(packetSender, VerificationModeFactory.times(1)).sendPacket(Mockito.argThat(new ArgumentMatcher<IQ>() {
 			@Override
@@ -244,14 +244,14 @@ public class TestManagerController {
 		managerController.updateMembers(listMembers);
 		
 		HashMap<String, String> attributes = new HashMap<String, String>(xOCCIAtt);
-		attributes.put(RequestAttribute.REQUIREMENTS.getValue(), "Glue2vCPU >= 1 && Glue2RAM >= 1024");
-		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), new ArrayList<Category>(),
+		attributes.put(OrderAttribute.REQUIREMENTS.getValue(), "Glue2vCPU >= 1 && Glue2RAM >= 1024");
+		Order order1 = new Order("id1", managerTestHelper.getDefaultFederationToken(), new ArrayList<Category>(),
 				attributes, true, "");
-		request1.setState(RequestState.OPEN);
-		RequestRepository requestRepository = new RequestRepository();
-		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(), request1);
-		managerController.setRequests(requestRepository);
-		managerController.checkAndSubmitOpenRequests();
+		order1.setState(OrderState.OPEN);
+		OrderRepository orderRepository = new OrderRepository();
+		orderRepository.addOrder(managerTestHelper.getDefaultFederationToken().getUser(), order1);
+		managerController.setOrders(orderRepository);
+		managerController.checkAndSubmitOpenOrders();
 		        
 		Mockito.verify(packetSender, VerificationModeFactory.times(1)).sendPacket(Mockito.argThat(new ArgumentMatcher<IQ>() {
 			@Override
@@ -274,7 +274,7 @@ public class TestManagerController {
 	
 	@SuppressWarnings("unchecked")
 	@Test
-	public void testRemoveLocalAndRemoteRequests() {
+	public void testRemoveLocalAndRemoteOrders() {
 		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);
 		managerController.setPacketSender(packetSender);
 		
@@ -334,16 +334,16 @@ public class TestManagerController {
 				new FederationMember(remoteResourcesInfoThree));
 		managerController.setMemberPickerPlugin(memberPicker );
 
-		final String requestId = "requestId";
-		Request requestOne = new Request(requestId, managerTestHelper.getDefaultFederationToken(),
+		final String orderId = "orderId";
+		Order orderOne = new Order(orderId, managerTestHelper.getDefaultFederationToken(),
 				new ArrayList<Category>(),
 				new HashMap<String, String>(), true,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
-		requestOne.setState(RequestState.OPEN);
-		RequestRepository requestRepository = new RequestRepository();
-		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(),
-				requestOne);
-		managerController.setRequests(requestRepository);
+		orderOne.setState(OrderState.OPEN);
+		OrderRepository orderRepository = new OrderRepository();
+		orderRepository.addOrder(managerTestHelper.getDefaultFederationToken().getUser(),
+				orderOne);
+		managerController.setOrders(orderRepository);
 
 		// mocking date
 		long now = System.currentTimeMillis();
@@ -352,26 +352,26 @@ public class TestManagerController {
 		managerController.setDateUtils(dateUtils);
 		
 		// Send to first member
-		managerController.checkAndSubmitOpenRequests();
+		managerController.checkAndSubmitOpenOrders();
 
-		List<Request> requestsFromUser = managerController.getRequestsFromUser(managerTestHelper
+		List<Order> ordersFromUser = managerController.getOrdersFromUser(managerTestHelper
 				.getDefaultFederationToken().getAccessId());
-		for (Request request : requestsFromUser) {
-			Assert.assertEquals(RequestState.PENDING, request.getState());
+		for (Order order : ordersFromUser) {
+			Assert.assertEquals(OrderState.PENDING, order.getState());
 		}
-		Assert.assertTrue(managerController.isRequestForwardedtoRemoteMember(requestOne.getId()));
+		Assert.assertTrue(managerController.isOrderForwardedtoRemoteMember(orderOne.getId()));
 
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(
-				now + ManagerController.DEFAULT_ASYNC_REQUEST_WAITING_INTERVAL + 100);		
+				now + ManagerController.DEFAULT_ASYNC_ORDER_WAITING_INTERVAL + 100);		
 		
 		// Timeout expired
-		managerController.checkPedingRequests();		
+		managerController.checkPedingOrders();		
 		
-		for (Request request : requestsFromUser) {
-			Assert.assertEquals(RequestState.OPEN, request.getState());
-			Assert.assertTrue(managerController.isRequestForwardedtoRemoteMember(request.getId()));
+		for (Order order : ordersFromUser) {
+			Assert.assertEquals(OrderState.OPEN, order.getState());
+			Assert.assertTrue(managerController.isOrderForwardedtoRemoteMember(order.getId()));
 		}
-		Assert.assertTrue(managerController.isRequestForwardedtoRemoteMember(requestOne.getId()));
+		Assert.assertTrue(managerController.isOrderForwardedtoRemoteMember(orderOne.getId()));
 		
 		// mocking date
 		now = System.currentTimeMillis();
@@ -380,41 +380,41 @@ public class TestManagerController {
 		managerController.setDateUtils(dateUtils);
 		
 		// Send to second member
-		managerController.checkAndSubmitOpenRequests();
+		managerController.checkAndSubmitOpenOrders();
 
-		requestsFromUser = managerController.getRequestsFromUser(managerTestHelper
+		ordersFromUser = managerController.getOrdersFromUser(managerTestHelper
 				.getDefaultFederationToken().getAccessId());
-		for (Request request : requestsFromUser) {
-			Assert.assertEquals(RequestState.PENDING, request.getState());
+		for (Order order : ordersFromUser) {
+			Assert.assertEquals(OrderState.PENDING, order.getState());
 		}
-		Assert.assertTrue(managerController.isRequestForwardedtoRemoteMember(requestOne.getId()));		
+		Assert.assertTrue(managerController.isOrderForwardedtoRemoteMember(orderOne.getId()));		
 
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(
-				now + ManagerController.DEFAULT_ASYNC_REQUEST_WAITING_INTERVAL + 100);		
+				now + ManagerController.DEFAULT_ASYNC_ORDER_WAITING_INTERVAL + 100);		
 		
 		// Timeout expired
-		managerController.checkPedingRequests();		
+		managerController.checkPedingOrders();		
 		
-		for (Request request : requestsFromUser) {
-			Assert.assertEquals(RequestState.OPEN, request.getState());
-			Assert.assertTrue(managerController.isRequestForwardedtoRemoteMember(request.getId()));
+		for (Order order : ordersFromUser) {
+			Assert.assertEquals(OrderState.OPEN, order.getState());
+			Assert.assertTrue(managerController.isOrderForwardedtoRemoteMember(order.getId()));
 		}
-		Assert.assertTrue(managerController.isRequestForwardedtoRemoteMember(requestOne.getId()));
+		Assert.assertTrue(managerController.isOrderForwardedtoRemoteMember(orderOne.getId()));
 		
 		// Send to third member
-		managerController.checkAndSubmitOpenRequests();
+		managerController.checkAndSubmitOpenOrders();
 
-		requestsFromUser = managerController.getRequestsFromUser(managerTestHelper
+		ordersFromUser = managerController.getOrdersFromUser(managerTestHelper
 				.getDefaultFederationToken().getAccessId());
-		for (Request request : requestsFromUser) {
-			Assert.assertEquals(RequestState.PENDING, request.getState());
+		for (Order order : ordersFromUser) {
+			Assert.assertEquals(OrderState.PENDING, order.getState());
 		}
-		Assert.assertTrue(managerController.isRequestForwardedtoRemoteMember(requestOne.getId()));			
+		Assert.assertTrue(managerController.isOrderForwardedtoRemoteMember(orderOne.getId()));			
 		
 		AsyncPacketSender packetSenderTwo = Mockito.mock(AsyncPacketSender.class);
 		managerController.setPacketSender(packetSenderTwo);				
 		
-		managerController.removeRequest(managerTestHelper.getDefaultFederationToken().getAccessId(), requestId);
+		managerController.removeOrder(managerTestHelper.getDefaultFederationToken().getAccessId(), orderId);
 		
 		Mockito.verify(packetSenderTwo, VerificationModeFactory.times(3)).sendPacket(Mockito.argThat(new ArgumentMatcher<IQ>() {
 			@Override
@@ -424,22 +424,22 @@ public class TestManagerController {
 				if (queryEl == null) {
 					return false;
 				}
-				String requestId = queryEl.element("request").elementText("id");
+				String orderId = queryEl.element("request").elementText("id");
 				String accessId = queryEl.element("token").elementText("accessId");			
 				
-				if (requestId.equals(requestId) 
+				if (orderId.equals(orderId) 
 						&& iq.getTo().toBareJID().equals(DefaultDataTestHelper.REMOTE_MANAGER_TWO_COMPONENT_URL)
 						&& accessId.equals(managerTestHelper.getDefaultFederationToken().getAccessId())) {
 					return true;
 				}
 				
-				if (requestId.equals(requestId) 
+				if (orderId.equals(orderId) 
 						&& iq.getTo().toBareJID().equals(DefaultDataTestHelper.REMOTE_MANAGER_THREE_COMPONENT_URL)
 						&& accessId.equals(managerTestHelper.getDefaultFederationToken().getAccessId())) {
 					return true;
 				}
 				
-				if (requestId.equals(requestId) 
+				if (orderId.equals(orderId) 
 						&& iq.getTo().toBareJID().equals(DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL)
 						&& accessId.equals(managerTestHelper.getDefaultFederationToken().getAccessId())) {
 					return true;
@@ -453,7 +453,7 @@ public class TestManagerController {
 	
 	@SuppressWarnings("unchecked")
 	@Test
-	public void testSubmitRequestToRemoteMemberAndRemovingAllRequestsInOthersMembers() throws InterruptedException {
+	public void testSubmitOrderToRemoteMemberAndRemovingAllRequestsInOthersMembers() throws InterruptedException {
 		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);
 		managerController.setPacketSender(packetSender);
 		
@@ -513,16 +513,16 @@ public class TestManagerController {
 				new FederationMember(remoteResourcesInfoThree));
 		managerController.setMemberPickerPlugin(memberPicker );
 
-		final String requestId = "requestId";
-		Request requestOne = new Request(requestId, managerTestHelper.getDefaultFederationToken(),
+		final String orderId = "orderId";
+		Order orderOne = new Order(orderId, managerTestHelper.getDefaultFederationToken(),
 				new ArrayList<Category>(),
 				new HashMap<String, String>(), true,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
-		requestOne.setState(RequestState.OPEN);
-		RequestRepository requestRepository = new RequestRepository();
-		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(),
-				requestOne);
-		managerController.setRequests(requestRepository);
+		orderOne.setState(OrderState.OPEN);
+		OrderRepository orderRepository = new OrderRepository();
+		orderRepository.addOrder(managerTestHelper.getDefaultFederationToken().getUser(),
+				orderOne);
+		managerController.setOrders(orderRepository);
 
 		// mocking date
 		long now = System.currentTimeMillis();
@@ -531,26 +531,26 @@ public class TestManagerController {
 		managerController.setDateUtils(dateUtils);
 		
 		// Send to first member
-		managerController.checkAndSubmitOpenRequests();
+		managerController.checkAndSubmitOpenOrders();
 
-		List<Request> requestsFromUser = managerController.getRequestsFromUser(managerTestHelper
+		List<Order> ordersFromUser = managerController.getOrdersFromUser(managerTestHelper
 				.getDefaultFederationToken().getAccessId());
-		for (Request request : requestsFromUser) {
-			Assert.assertEquals(RequestState.PENDING, request.getState());
+		for (Order order : ordersFromUser) {
+			Assert.assertEquals(OrderState.PENDING, order.getState());
 		}
-		Assert.assertTrue(managerController.isRequestForwardedtoRemoteMember(requestOne.getId()));
+		Assert.assertTrue(managerController.isOrderForwardedtoRemoteMember(orderOne.getId()));
 
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(
-				now + ManagerController.DEFAULT_ASYNC_REQUEST_WAITING_INTERVAL + 100);		
+				now + ManagerController.DEFAULT_ASYNC_ORDER_WAITING_INTERVAL + 100);		
 		
 		// Timeout expired
-		managerController.checkPedingRequests();		
+		managerController.checkPedingOrders();		
 		
-		for (Request request : requestsFromUser) {
-			Assert.assertEquals(RequestState.OPEN, request.getState());
-			Assert.assertTrue(managerController.isRequestForwardedtoRemoteMember(request.getId()));
+		for (Order order : ordersFromUser) {
+			Assert.assertEquals(OrderState.OPEN, order.getState());
+			Assert.assertTrue(managerController.isOrderForwardedtoRemoteMember(order.getId()));
 		}
-		Assert.assertTrue(managerController.isRequestForwardedtoRemoteMember(requestOne.getId()));
+		Assert.assertTrue(managerController.isOrderForwardedtoRemoteMember(orderOne.getId()));
 		
 		// mocking date
 		now = System.currentTimeMillis();
@@ -559,50 +559,50 @@ public class TestManagerController {
 		managerController.setDateUtils(dateUtils);
 		
 		// Send to second member
-		managerController.checkAndSubmitOpenRequests();
+		managerController.checkAndSubmitOpenOrders();
 
-		requestsFromUser = managerController.getRequestsFromUser(managerTestHelper
+		ordersFromUser = managerController.getOrdersFromUser(managerTestHelper
 				.getDefaultFederationToken().getAccessId());
-		for (Request request : requestsFromUser) {
-			Assert.assertEquals(RequestState.PENDING, request.getState());
+		for (Order order : ordersFromUser) {
+			Assert.assertEquals(OrderState.PENDING, order.getState());
 		}
-		Assert.assertTrue(managerController.isRequestForwardedtoRemoteMember(requestOne.getId()));		
+		Assert.assertTrue(managerController.isOrderForwardedtoRemoteMember(orderOne.getId()));		
 
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(
-				now + ManagerController.DEFAULT_ASYNC_REQUEST_WAITING_INTERVAL + 100);		
+				now + ManagerController.DEFAULT_ASYNC_ORDER_WAITING_INTERVAL + 100);		
 		
 		// Timeout expired
-		managerController.checkPedingRequests();		
+		managerController.checkPedingOrders();		
 		
-		for (Request request : requestsFromUser) {
-			Assert.assertEquals(RequestState.OPEN, request.getState());
-			Assert.assertTrue(managerController.isRequestForwardedtoRemoteMember(request.getId()));
+		for (Order order : ordersFromUser) {
+			Assert.assertEquals(OrderState.OPEN, order.getState());
+			Assert.assertTrue(managerController.isOrderForwardedtoRemoteMember(order.getId()));
 		}
-		Assert.assertTrue(managerController.isRequestForwardedtoRemoteMember(requestOne.getId()));
+		Assert.assertTrue(managerController.isOrderForwardedtoRemoteMember(orderOne.getId()));
 		
 		// Send to third member
-		managerController.checkAndSubmitOpenRequests();
+		managerController.checkAndSubmitOpenOrders();
 
-		requestsFromUser = managerController.getRequestsFromUser(managerTestHelper
+		ordersFromUser = managerController.getOrdersFromUser(managerTestHelper
 				.getDefaultFederationToken().getAccessId());
-		for (Request request : requestsFromUser) {
-			Assert.assertEquals(RequestState.PENDING, request.getState());
+		for (Order order : ordersFromUser) {
+			Assert.assertEquals(OrderState.PENDING, order.getState());
 		}
-		Assert.assertTrue(managerController.isRequestForwardedtoRemoteMember(requestOne.getId()));			
+		Assert.assertTrue(managerController.isOrderForwardedtoRemoteMember(orderOne.getId()));			
 		
 		AsyncPacketSender packetSenderTwo = Mockito.mock(AsyncPacketSender.class);
 		managerController.setPacketSender(packetSenderTwo);
 		
 		IQ iq = new IQ();
 		queryEl = iq.getElement().addElement("query",
-				ManagerXmppComponent.REQUEST_NAMESPACE);
+				ManagerXmppComponent.ORDER_NAMESPACE);
 		instanceEl = queryEl.addElement("instance");
 		instanceEl.addElement("id").setText("newinstanceid");
 		callbacks.get(0).handle(iq);
 		
-		for (Request request : requestsFromUser) {
-			Assert.assertEquals(RequestState.FULFILLED, request.getState());
-			Assert.assertFalse(managerController.isRequestForwardedtoRemoteMember(request.getId()));
+		for (Order order : ordersFromUser) {
+			Assert.assertEquals(OrderState.FULFILLED, order.getState());
+			Assert.assertFalse(managerController.isOrderForwardedtoRemoteMember(order.getId()));
 		}
 		
 		Mockito.verify(packetSenderTwo, VerificationModeFactory.times(2)).sendPacket(Mockito.argThat(new ArgumentMatcher<IQ>() {
@@ -613,16 +613,16 @@ public class TestManagerController {
 				if (queryEl == null) {
 					return false;
 				}
-				String requestId = queryEl.element("request").elementText("id");
+				String orderId = queryEl.element("request").elementText("id");
 				String accessId = queryEl.element("token").elementText("accessId");			
 				
-				if (requestId.equals(requestId) 
+				if (orderId.equals(orderId) 
 						&& iq.getTo().toBareJID().equals(DefaultDataTestHelper.REMOTE_MANAGER_TWO_COMPONENT_URL)
 						&& accessId.equals(managerTestHelper.getDefaultFederationToken().getAccessId())) {
 					return true;
 				}
 				
-				if (requestId.equals(requestId) 
+				if (orderId.equals(orderId) 
 						&& iq.getTo().toBareJID().equals(DefaultDataTestHelper.REMOTE_MANAGER_THREE_COMPONENT_URL)
 						&& accessId.equals(managerTestHelper.getDefaultFederationToken().getAccessId())) {
 					return true;
@@ -636,7 +636,7 @@ public class TestManagerController {
 	
 	@SuppressWarnings("unchecked")
 	@Test
-	public void testSubmitRequestToRemoteMember() throws InterruptedException {
+	public void testSubmitOrderToRemoteMember() throws InterruptedException {
 		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);
 		managerController.setPacketSender(packetSender);
 
@@ -682,41 +682,41 @@ public class TestManagerController {
 		listMembers.add(new FederationMember(remoteResourcesInfo));
 		managerController.updateMembers(listMembers);
 
-		Request requestOne = new Request("id1", managerTestHelper.getDefaultFederationToken(),
+		Order orderOne = new Order("id1", managerTestHelper.getDefaultFederationToken(),
 				new ArrayList<Category>(),
 				new HashMap<String, String>(), true,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
-		requestOne.setState(RequestState.OPEN);
-		RequestRepository requestRepository = new RequestRepository();
-		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(),
-				requestOne);
-		managerController.setRequests(requestRepository);
+		orderOne.setState(OrderState.OPEN);
+		OrderRepository orderRepository = new OrderRepository();
+		orderRepository.addOrder(managerTestHelper.getDefaultFederationToken().getUser(),
+				orderOne);
+		managerController.setOrders(orderRepository);
 
-		managerController.checkAndSubmitOpenRequests();
+		managerController.checkAndSubmitOpenOrders();
 
-		List<Request> requestsFromUser = managerController.getRequestsFromUser(managerTestHelper
+		List<Order> ordersFromUser = managerController.getOrdersFromUser(managerTestHelper
 				.getDefaultFederationToken().getAccessId());
-		for (Request request : requestsFromUser) {
-			Assert.assertEquals(RequestState.PENDING, request.getState());
+		for (Order order : ordersFromUser) {
+			Assert.assertEquals(OrderState.PENDING, order.getState());
 		}
-		Assert.assertTrue(managerController.isRequestForwardedtoRemoteMember(requestOne.getId()));
+		Assert.assertTrue(managerController.isOrderForwardedtoRemoteMember(orderOne.getId()));
 
 		IQ iq = new IQ();
 		queryEl = iq.getElement().addElement("query",
-				ManagerXmppComponent.REQUEST_NAMESPACE);
+				ManagerXmppComponent.ORDER_NAMESPACE);
 		instanceEl = queryEl.addElement("instance");
 		instanceEl.addElement("id").setText("newinstanceid");
 		callbacks.get(0).handle(iq);
 	
-		for (Request request : requestsFromUser) {
-			Assert.assertEquals(RequestState.FULFILLED, request.getState());
-			Assert.assertFalse(managerController.isRequestForwardedtoRemoteMember(request.getId()));
+		for (Order order : ordersFromUser) {
+			Assert.assertEquals(OrderState.FULFILLED, order.getState());
+			Assert.assertFalse(managerController.isOrderForwardedtoRemoteMember(order.getId()));
 		}
 	}
 	
 	@SuppressWarnings("unchecked")
 	@Test
-	public void testRemoveForwardedRequestAfterTimeout() throws InterruptedException {
+	public void testRemoveForwardedOrderAfterTimeout() throws InterruptedException {
 		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);
 		managerController.setPacketSender(packetSender);
 		
@@ -741,12 +741,12 @@ public class TestManagerController {
 		listMembers.add(new FederationMember(remoteResourcesInfo));
 		managerController.updateMembers(listMembers);
 
-		Request requestOne = new Request("id1", managerTestHelper.getDefaultFederationToken(), new ArrayList<Category>(),
+		Order orderOne = new Order("id1", managerTestHelper.getDefaultFederationToken(), new ArrayList<Category>(),
 				new HashMap<String, String>(), true, "");
-		requestOne.setState(RequestState.OPEN);
-		RequestRepository requestRepository = new RequestRepository();
-		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(), requestOne);
-		managerController.setRequests(requestRepository);
+		orderOne.setState(OrderState.OPEN);
+		OrderRepository orderRepository = new OrderRepository();
+		orderRepository.addOrder(managerTestHelper.getDefaultFederationToken().getUser(), orderOne);
+		managerController.setOrders(orderRepository);
 
 		// mocking date
 		long now = System.currentTimeMillis();
@@ -754,31 +754,31 @@ public class TestManagerController {
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 		managerController.setDateUtils(dateUtils);
 
-		managerController.checkAndSubmitOpenRequests();
+		managerController.checkAndSubmitOpenOrders();
 
-		List<Request> requestsFromUser = managerController.getRequestsFromUser(
+		List<Order> ordersFromUser = managerController.getOrdersFromUser(
 				managerTestHelper.getDefaultFederationToken().getAccessId());
-		for (Request request : requestsFromUser) {
-			Assert.assertEquals(RequestState.PENDING, request.getState());
+		for (Order order : ordersFromUser) {
+			Assert.assertEquals(OrderState.PENDING, order.getState());
 		}
-		Assert.assertTrue(managerController.isRequestForwardedtoRemoteMember(
-				requestOne.getId()));
+		Assert.assertTrue(managerController.isOrderForwardedtoRemoteMember(
+				orderOne.getId()));
 		
 		//updating time
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(
-				now + ManagerController.DEFAULT_ASYNC_REQUEST_WAITING_INTERVAL + 100);
+				now + ManagerController.DEFAULT_ASYNC_ORDER_WAITING_INTERVAL + 100);
 		
-		managerController.checkPedingRequests();	
+		managerController.checkPedingOrders();	
 		
-		for (Request request : requestsFromUser) {
-			Assert.assertEquals(RequestState.OPEN, request.getState());
-			Assert.assertTrue(managerController.isRequestForwardedtoRemoteMember(request.getId()));
+		for (Order order : ordersFromUser) {
+			Assert.assertEquals(OrderState.OPEN, order.getState());
+			Assert.assertTrue(managerController.isOrderForwardedtoRemoteMember(order.getId()));
 		}
 	}
 		
 	@SuppressWarnings("unchecked")
 	@Test
-	public void testSubmitRequestToRemoteMemberReturningNotFound() throws InterruptedException {
+	public void testSubmitOrderToRemoteMemberReturningNotFound() throws InterruptedException {
 		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);
 		managerController.setPacketSender(packetSender);
 
@@ -813,41 +813,41 @@ public class TestManagerController {
 		listMembers.add(new FederationMember(remoteResourcesInfo));
 		managerController.updateMembers(listMembers);
 
-		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(),
+		Order order1 = new Order("id1", managerTestHelper.getDefaultFederationToken(),
 				new ArrayList<Category>(), new HashMap<String, String>(), true, "");
-		request1.setState(RequestState.OPEN);
-		RequestRepository requestRepository = new RequestRepository();
-		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(),
-				request1);
-		managerController.setRequests(requestRepository);
+		order1.setState(OrderState.OPEN);
+		OrderRepository orderRepository = new OrderRepository();
+		orderRepository.addOrder(managerTestHelper.getDefaultFederationToken().getUser(),
+				order1);
+		managerController.setOrders(orderRepository);
 
-		managerController.checkAndSubmitOpenRequests();
+		managerController.checkAndSubmitOpenOrders();
 
-		List<Request> requestsFromUser = managerController.getRequestsFromUser(managerTestHelper
+		List<Order> ordersFromUser = managerController.getOrdersFromUser(managerTestHelper
 				.getDefaultFederationToken().getAccessId());
-		for (Request request : requestsFromUser) {
-			Assert.assertEquals(RequestState.PENDING, request.getState());
+		for (Order order : ordersFromUser) {
+			Assert.assertEquals(OrderState.PENDING, order.getState());
 		}
-		Assert.assertTrue(managerController.isRequestForwardedtoRemoteMember(
-				request1.getId()));
+		Assert.assertTrue(managerController.isOrderForwardedtoRemoteMember(
+				order1.getId()));
 		
 		IQ iq = new IQ();
 		Element queryEl = iq.getElement().addElement("query",
-				ManagerXmppComponent.REQUEST_NAMESPACE);
+				ManagerXmppComponent.ORDER_NAMESPACE);
 		Element instanceEl = queryEl.addElement("instance");
 		instanceEl.addElement("id").setText("newinstanceid");
 		iq.setError(Condition.item_not_found);
 		callbacks.get(0).handle(iq);
 		
-		for (Request request : requestsFromUser) {
-			Assert.assertEquals(RequestState.OPEN, request.getState());
-			Assert.assertTrue(managerController.isRequestForwardedtoRemoteMember(request.getId()));
+		for (Order order : ordersFromUser) {
+			Assert.assertEquals(OrderState.OPEN, order.getState());
+			Assert.assertTrue(managerController.isOrderForwardedtoRemoteMember(order.getId()));
 		}
 	}
 	
 	@SuppressWarnings("unchecked")
 	@Test
-	public void testSubmitRequestToRemoteMemberReturningException() throws InterruptedException {
+	public void testSubmitOrderToRemoteMemberReturningException() throws InterruptedException {
 		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);
 		managerController.setPacketSender(packetSender);
 
@@ -892,90 +892,90 @@ public class TestManagerController {
 		managerController.setLocalIdentityPlugin(identityPlugin);
 		managerController.setFederationIdentityPlugin(federationIdentityPlugin);
 
-		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(),
+		Order order1 = new Order("id1", managerTestHelper.getDefaultFederationToken(),
 				new ArrayList<Category>(), new HashMap<String, String>(), true, "");
-		request1.setState(RequestState.OPEN);
-		RequestRepository requestRepository = new RequestRepository();
-		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(), request1);
-		managerController.setRequests(requestRepository);
+		order1.setState(OrderState.OPEN);
+		OrderRepository orderRepository = new OrderRepository();
+		orderRepository.addOrder(managerTestHelper.getDefaultFederationToken().getUser(), order1);
+		managerController.setOrders(orderRepository);
 
-		managerController.checkAndSubmitOpenRequests();
+		managerController.checkAndSubmitOpenOrders();
 
-		List<Request> requestsFromUser = managerController.getRequestsFromUser(
+		List<Order> ordersFromUser = managerController.getOrdersFromUser(
 				managerTestHelper.getDefaultFederationToken().getAccessId());
-		for (Request request : requestsFromUser) {
-			Assert.assertEquals(RequestState.PENDING, request.getState());
+		for (Order order : ordersFromUser) {
+			Assert.assertEquals(OrderState.PENDING, order.getState());
 		}
-		Assert.assertTrue(managerController.isRequestForwardedtoRemoteMember(
-				request1.getId()));
+		Assert.assertTrue(managerController.isOrderForwardedtoRemoteMember(
+				order1.getId()));
 		
 		IQ iq = new IQ();
 		Element queryEl = iq.getElement().addElement("query",
-				ManagerXmppComponent.REQUEST_NAMESPACE);
+				ManagerXmppComponent.ORDER_NAMESPACE);
 		Element instanceEl = queryEl.addElement("instance");
 		instanceEl.addElement("id").setText("newinstanceid");
 		iq.setError(Condition.bad_request);
 		callbacks.get(0).handle(iq);
 		
-		for (Request request : requestsFromUser) {
-			Assert.assertEquals(RequestState.OPEN, request.getState());
-			Assert.assertTrue(managerController.isRequestForwardedtoRemoteMember(request.getId()));
+		for (Order order : ordersFromUser) {
+			Assert.assertEquals(OrderState.OPEN, order.getState());
+			Assert.assertTrue(managerController.isOrderForwardedtoRemoteMember(order.getId()));
 		}
 	}
 	
 	@Test
-	public void testDeleteClosedRequest() throws InterruptedException {
-		// setting request repository
-		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), null, null, true, "");
-		request1.setState(RequestState.CLOSED);
-		Request request2 = new Request("id2", managerTestHelper.getDefaultFederationToken(), null, null, true, "");
-		request2.setState(RequestState.CLOSED);
+	public void testDeleteClosedOrder() throws InterruptedException {
+		// setting order repository
+		Order order1 = new Order("id1", managerTestHelper.getDefaultFederationToken(), null, null, true, "");
+		order1.setState(OrderState.CLOSED);
+		Order order2 = new Order("id2", managerTestHelper.getDefaultFederationToken(), null, null, true, "");
+		order2.setState(OrderState.CLOSED);
 
-		RequestRepository requestRepository = new RequestRepository();
-		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(), request1);
-		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(), request2);
-		managerController.setRequests(requestRepository);
+		OrderRepository orderRepository = new OrderRepository();
+		orderRepository.addOrder(managerTestHelper.getDefaultFederationToken().getUser(), order1);
+		orderRepository.addOrder(managerTestHelper.getDefaultFederationToken().getUser(), order2);
+		managerController.setOrders(orderRepository);
 
-		// checking closed requests
-		List<Request> requestsFromUser = managerController.getRequestsFromUser(managerTestHelper
+		// checking closed orders
+		List<Order> ordersFromUser = managerController.getOrdersFromUser(managerTestHelper
 				.getDefaultFederationToken().getAccessId());
-		Assert.assertEquals(2, requestsFromUser.size());
-		Assert.assertEquals(RequestState.CLOSED, requestsFromUser.get(0).getState());
-		Assert.assertEquals(RequestState.CLOSED, requestsFromUser.get(1).getState());
+		Assert.assertEquals(2, ordersFromUser.size());
+		Assert.assertEquals(OrderState.CLOSED, ordersFromUser.get(0).getState());
+		Assert.assertEquals(OrderState.CLOSED, ordersFromUser.get(1).getState());
 
-		managerController.removeRequest(managerTestHelper.getDefaultFederationToken().getAccessId(), "id1");
+		managerController.removeOrder(managerTestHelper.getDefaultFederationToken().getAccessId(), "id1");
 
-		// making sure one request was removed
-		requestsFromUser = managerController.getRequestsFromUser(managerTestHelper
+		// making sure one order was removed
+		ordersFromUser = managerController.getOrdersFromUser(managerTestHelper
 				.getDefaultFederationToken().getAccessId());
-		Assert.assertEquals(1, requestsFromUser.size());
-		Assert.assertEquals(RequestState.CLOSED, requestsFromUser.get(0).getState());
-		Assert.assertEquals("id2", requestsFromUser.get(0).getId());
+		Assert.assertEquals(1, ordersFromUser.size());
+		Assert.assertEquals(OrderState.CLOSED, ordersFromUser.get(0).getState());
+		Assert.assertEquals("id2", ordersFromUser.get(0).getId());
 		
-		managerController.removeRequest(managerTestHelper.getDefaultFederationToken().getAccessId(), "id2");
+		managerController.removeOrder(managerTestHelper.getDefaultFederationToken().getAccessId(), "id2");
 
-		// making sure the last request was removed
-		requestsFromUser = managerController.getRequestsFromUser(managerTestHelper
+		// making sure the last order was removed
+		ordersFromUser = managerController.getOrdersFromUser(managerTestHelper
 				.getDefaultFederationToken().getAccessId());
-		Assert.assertEquals(0, requestsFromUser.size());
+		Assert.assertEquals(0, ordersFromUser.size());
 	}
 
 	@Test
-	public void testMonitorDeletedRequestWithInstance() throws InterruptedException {
-		// setting request repository
-		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), null, null, true, "");
-		request1.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
-		request1.setState(RequestState.DELETED);
-		request1.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
-		Request request2 = new Request("id2", managerTestHelper.getDefaultFederationToken(), null, null, true, "");
-		request2.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
-		request2.setState(RequestState.DELETED);
-		request2.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+	public void testMonitorDeletedOrderWithInstance() throws InterruptedException {
+		// setting order repository
+		Order order1 = new Order("id1", managerTestHelper.getDefaultFederationToken(), null, null, true, "");
+		order1.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
+		order1.setState(OrderState.DELETED);
+		order1.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		Order order2 = new Order("id2", managerTestHelper.getDefaultFederationToken(), null, null, true, "");
+		order2.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
+		order2.setState(OrderState.DELETED);
+		order2.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 
-		RequestRepository requestRepository = new RequestRepository();
-		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(), request1);
-		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(), request2);
-		managerController.setRequests(requestRepository);
+		OrderRepository orderRepository = new OrderRepository();
+		orderRepository.addOrder(managerTestHelper.getDefaultFederationToken().getUser(), order1);
+		orderRepository.addOrder(managerTestHelper.getDefaultFederationToken().getUser(), order2);
+		managerController.setOrders(orderRepository);
 
 		// updating compute mock
 		Mockito.when(
@@ -983,41 +983,41 @@ public class TestManagerController {
 						Mockito.anyString())).thenReturn(
 				new Instance(DefaultDataTestHelper.INSTANCE_ID));
 
-		// checking deleted requests
-		List<Request> requestsFromUser = managerController.getRequestsFromUser(managerTestHelper
+		// checking deleted orders
+		List<Order> ordersFromUser = managerController.getOrdersFromUser(managerTestHelper
 				.getDefaultFederationToken().getAccessId());
-		Assert.assertEquals(2, requestsFromUser.size());
-		Assert.assertEquals(RequestState.DELETED, requestsFromUser.get(0).getState());
-		Assert.assertEquals(RequestState.DELETED, requestsFromUser.get(1).getState());
+		Assert.assertEquals(2, ordersFromUser.size());
+		Assert.assertEquals(OrderState.DELETED, ordersFromUser.get(0).getState());
+		Assert.assertEquals(OrderState.DELETED, ordersFromUser.get(1).getState());
 
-		managerController.monitorInstancesForLocalRequests();
+		managerController.monitorInstancesForLocalOrders();
 
-		// making sure the requests were not removed
-		requestsFromUser = managerController.getRequestsFromUser(managerTestHelper
+		// making sure the orders were not removed
+		ordersFromUser = managerController.getOrdersFromUser(managerTestHelper
 				.getDefaultFederationToken().getAccessId());
-		Assert.assertEquals(2, requestsFromUser.size());
-		Assert.assertEquals(RequestState.DELETED, requestsFromUser.get(0).getState());
-		Assert.assertEquals(RequestState.DELETED, requestsFromUser.get(1).getState());
+		Assert.assertEquals(2, ordersFromUser.size());
+		Assert.assertEquals(OrderState.DELETED, ordersFromUser.get(0).getState());
+		Assert.assertEquals(OrderState.DELETED, ordersFromUser.get(1).getState());
 	}
 
 	@Test
-	public void testMonitorDeletedRequestWithoutInstance() throws InterruptedException {
-		// setting request repository
-		Request request1 = new Request("id1",
+	public void testMonitorDeletedOrderWithoutInstance() throws InterruptedException {
+		// setting order repository
+		Order order1 = new Order("id1",
 				managerTestHelper.getDefaultFederationToken(), null, null, true, "");
-		request1.setState(RequestState.DELETED);
-		Request request2 = new Request("id2",
+		order1.setState(OrderState.DELETED);
+		Order order2 = new Order("id2",
 				managerTestHelper.getDefaultFederationToken(), null, null, true, "");
-		request2.setState(RequestState.DELETED);
-		Request request3 = new Request("id3",
+		order2.setState(OrderState.DELETED);
+		Order order3 = new Order("id3",
 				managerTestHelper.getDefaultFederationToken(), null, null, true, "");
-		request3.setState(RequestState.OPEN);
+		order3.setState(OrderState.OPEN);
 
-		RequestRepository requestRepository = new RequestRepository();
-		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(), request1);
-		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(), request2);
-		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(), request3);
-		managerController.setRequests(requestRepository);
+		OrderRepository orderRepository = new OrderRepository();
+		orderRepository.addOrder(managerTestHelper.getDefaultFederationToken().getUser(), order1);
+		orderRepository.addOrder(managerTestHelper.getDefaultFederationToken().getUser(), order2);
+		orderRepository.addOrder(managerTestHelper.getDefaultFederationToken().getUser(), order3);
+		managerController.setOrders(orderRepository);
 
 		// updating compute mock
 		Mockito.when(
@@ -1025,50 +1025,50 @@ public class TestManagerController {
 						Mockito.anyString())).thenThrow(
 				new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND));
 
-		// checking if requests still have the initial state
+		// checking if orders still have the initial state
 		Assert.assertEquals(
 				3,
-				managerController.getRequestsFromUser(
+				managerController.getOrdersFromUser(
 						managerTestHelper.getDefaultFederationToken().getAccessId()).size());
 		Assert.assertEquals(
-				RequestState.DELETED,
-				managerController.getRequest(managerTestHelper.getDefaultFederationToken().getAccessId(),
+				OrderState.DELETED,
+				managerController.getOrder(managerTestHelper.getDefaultFederationToken().getAccessId(),
 						"id1").getState());
 		Assert.assertEquals(
-				RequestState.DELETED,
-				managerController.getRequest(managerTestHelper.getDefaultFederationToken().getAccessId(),
+				OrderState.DELETED,
+				managerController.getOrder(managerTestHelper.getDefaultFederationToken().getAccessId(),
 						"id2").getState());
 		Assert.assertEquals(
-				RequestState.OPEN,
-				managerController.getRequest(managerTestHelper.getDefaultFederationToken().getAccessId(),
+				OrderState.OPEN,
+				managerController.getOrder(managerTestHelper.getDefaultFederationToken().getAccessId(),
 						"id3").getState());
 
-		managerController.monitorInstancesForLocalRequests();
+		managerController.monitorInstancesForLocalOrders();
 
-		// checking if deleted requests were removed
+		// checking if deleted orders were removed
 		Assert.assertEquals(
 				1,
-				managerController.getRequestsFromUser(
+				managerController.getOrdersFromUser(
 						managerTestHelper.getDefaultFederationToken().getAccessId()).size());
 		Assert.assertEquals(
-				RequestState.OPEN,
+				OrderState.OPEN,
 				managerController
-						.getRequestsFromUser(managerTestHelper.getDefaultFederationToken().getAccessId())
+						.getOrdersFromUser(managerTestHelper.getDefaultFederationToken().getAccessId())
 						.get(0).getState());
 	}
 
 	@Test
-	public void testMonitorFulfilledRequestWithoutInstance() throws InterruptedException {
-		// setting request repository
-		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), null, null, true, "");
-		request1.setState(RequestState.FULFILLED);
-		Request request2 = new Request("id2", managerTestHelper.getDefaultFederationToken(), null, null, true, "");
-		request2.setState(RequestState.FULFILLED);
+	public void testMonitorFulfilledOrderWithoutInstance() throws InterruptedException {
+		// setting orders repository
+		Order order1 = new Order("id1", managerTestHelper.getDefaultFederationToken(), null, null, true, "");
+		order1.setState(OrderState.FULFILLED);
+		Order order2 = new Order("id2", managerTestHelper.getDefaultFederationToken(), null, null, true, "");
+		order2.setState(OrderState.FULFILLED);
 
-		RequestRepository requestRepository = new RequestRepository();
-		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(), request1);
-		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(), request2);
-		managerController.setRequests(requestRepository);
+		OrderRepository orderRepository = new OrderRepository();
+		orderRepository.addOrder(managerTestHelper.getDefaultFederationToken().getUser(), order1);
+		orderRepository.addOrder(managerTestHelper.getDefaultFederationToken().getUser(), order2);
+		managerController.setOrders(orderRepository);
 
 		// updating compute mock
 		Mockito.when(
@@ -1076,38 +1076,38 @@ public class TestManagerController {
 						Mockito.anyString())).thenThrow(
 				new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND));
 
-		// checking if requests were fulfilled
-		List<Request> requestsFromUser = managerController
-				.getRequestsFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
-		Assert.assertEquals(2, requestsFromUser.size());
-		for (Request request : requestsFromUser) {
-			Assert.assertTrue(request.getState().equals(RequestState.FULFILLED));
+		// checking if orders were fulfilled
+		List<Order> ordersFromUser = managerController
+				.getOrdersFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
+		Assert.assertEquals(2, ordersFromUser.size());
+		for (Order order : ordersFromUser) {
+			Assert.assertTrue(order.getState().equals(OrderState.FULFILLED));
 		}
 
-		managerController.monitorInstancesForLocalRequests();
+		managerController.monitorInstancesForLocalOrders();
 
-		// checking if requests were closed
-		requestsFromUser = managerController
-				.getRequestsFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
-		Assert.assertEquals(2, requestsFromUser.size());
-		for (Request request : requestsFromUser) {
-			Assert.assertTrue(request.getState().equals(RequestState.CLOSED));
+		// checking if orders were closed
+		ordersFromUser = managerController
+				.getOrdersFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
+		Assert.assertEquals(2, ordersFromUser.size());
+		for (Order order : ordersFromUser) {
+			Assert.assertTrue(order.getState().equals(OrderState.CLOSED));
 		}
 	}
 
 	@SuppressWarnings("unchecked")
 	@Test
-	public void testMonitorFulfilledAndPersistentRequest() throws InterruptedException {
+	public void testMonitorFulfilledAndPersistentOrder() throws InterruptedException {
 		Map<String, String> attributes = new HashMap<String, String>();
-		attributes.put(RequestAttribute.TYPE.getValue(), RequestType.PERSISTENT.getValue());
+		attributes.put(OrderAttribute.TYPE.getValue(), OrderType.PERSISTENT.getValue());
 
-		// setting request repository
-		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), new ArrayList<Category>(), attributes, true, "");
-		request1.setState(RequestState.FULFILLED);
+		// setting order repository
+		Order order1 = new Order("id1", managerTestHelper.getDefaultFederationToken(), new ArrayList<Category>(), attributes, true, "");
+		order1.setState(OrderState.FULFILLED);
 
-		RequestRepository requestRepository = new RequestRepository();
-		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(), request1);
-		managerController.setRequests(requestRepository);
+		OrderRepository orderRepository = new OrderRepository();
+		orderRepository.addOrder(managerTestHelper.getDefaultFederationToken().getUser(), order1);
+		managerController.setOrders(orderRepository);
 
 		// updating compute mock
 		Mockito.when(
@@ -1115,19 +1115,19 @@ public class TestManagerController {
 						Mockito.anyString())).thenThrow(
 				new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND));
 
-		// checking if request is fulfilled
-		List<Request> requestsFromUser = managerController
-				.getRequestsFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
-		Assert.assertEquals(1, requestsFromUser.size());
-		Assert.assertEquals(RequestState.FULFILLED, requestsFromUser.get(0).getState());
+		// checking if order is fulfilled
+		List<Order> ordersFromUser = managerController
+				.getOrdersFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
+		Assert.assertEquals(1, ordersFromUser.size());
+		Assert.assertEquals(OrderState.FULFILLED, ordersFromUser.get(0).getState());
 
-		managerController.monitorInstancesForLocalRequests();
+		managerController.monitorInstancesForLocalOrders();
 
-		// checking if request has lost its instance
-		requestsFromUser = managerController
-				.getRequestsFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
-		Assert.assertEquals(1, requestsFromUser.size());
-		Assert.assertEquals(RequestState.OPEN, requestsFromUser.get(0).getState());
+		// checking if order has lost its instance
+		ordersFromUser = managerController
+				.getOrdersFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
+		Assert.assertEquals(1, ordersFromUser.size());
+		Assert.assertEquals(OrderState.OPEN, ordersFromUser.get(0).getState());
 
 		// updating compute mock
 		Mockito.reset(managerTestHelper.getComputePlugin());
@@ -1140,34 +1140,34 @@ public class TestManagerController {
 						Mockito.eq(DefaultDataTestHelper.INSTANCE_ID))).thenReturn(
 				new Instance(DefaultDataTestHelper.INSTANCE_ID));
 
-		// getting instance for request
-		managerController.checkAndSubmitOpenRequests();
+		// getting instance for order
+		managerController.checkAndSubmitOpenOrders();
 
-		// checking if request has been fulfilled again
-		requestsFromUser = managerController
-				.getRequestsFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
-		Assert.assertEquals(1, requestsFromUser.size());
-		Assert.assertEquals(RequestState.FULFILLED, requestsFromUser.get(0).getState());
+		// checking if order has been fulfilled again
+		ordersFromUser = managerController
+				.getOrdersFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
+		Assert.assertEquals(1, ordersFromUser.size());
+		Assert.assertEquals(OrderState.FULFILLED, ordersFromUser.get(0).getState());
 	}
 
 	@Test
-	public void testMonitorFulfilledRequestWithInstance() throws InterruptedException {
+	public void testMonitorFulfilledOrderWithInstance() throws InterruptedException {
 		final String SECOND_INSTANCE_ID = "secondInstanceId";
 
-		// setting request repository
-		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), null, null, true, "");
-		request1.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
-		request1.setState(RequestState.FULFILLED);
-		request1.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
-		Request request2 = new Request("id2", managerTestHelper.getDefaultFederationToken(), null, null, true, "");
-		request2.setInstanceId(SECOND_INSTANCE_ID);
-		request2.setState(RequestState.FULFILLED);
-		request2.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		// setting order repository
+		Order order1 = new Order("id1", managerTestHelper.getDefaultFederationToken(), null, null, true, "");
+		order1.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
+		order1.setState(OrderState.FULFILLED);
+		order1.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		Order order2 = new Order("id2", managerTestHelper.getDefaultFederationToken(), null, null, true, "");
+		order2.setInstanceId(SECOND_INSTANCE_ID);
+		order2.setState(OrderState.FULFILLED);
+		order2.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 
-		RequestRepository requestRepository = new RequestRepository();
-		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(), request1);
-		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(), request2);
-		managerController.setRequests(requestRepository);
+		OrderRepository orderRepository = new OrderRepository();
+		orderRepository.addOrder(managerTestHelper.getDefaultFederationToken().getUser(), order1);
+		orderRepository.addOrder(managerTestHelper.getDefaultFederationToken().getUser(), order2);
+		managerController.setOrders(orderRepository);
 
 		// updating compute mock
 		Mockito.when(
@@ -1175,57 +1175,57 @@ public class TestManagerController {
 						Mockito.anyString())).thenReturn(
 				new Instance(DefaultDataTestHelper.INSTANCE_ID));
 
-		managerController.monitorInstancesForLocalRequests();
+		managerController.monitorInstancesForLocalOrders();
 
-		// checking if requests are still fulfilled
-		List<Request> requestsFromUser = managerController
-				.getRequestsFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
-		Assert.assertEquals(2, requestsFromUser.size());
-		for (Request request : requestsFromUser) {
-			Assert.assertEquals(RequestState.FULFILLED, request.getState());
+		// checking if orders are still fulfilled
+		List<Order> ordersFromUser = managerController
+				.getOrdersFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
+		Assert.assertEquals(2, ordersFromUser.size());
+		for (Order order : ordersFromUser) {
+			Assert.assertEquals(OrderState.FULFILLED, order.getState());
 		}
 
-		managerController.monitorInstancesForLocalRequests();
+		managerController.monitorInstancesForLocalOrders();
 
-		// checking if requests' state haven't been changed
-		requestsFromUser = managerController
-				.getRequestsFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
-		Assert.assertEquals(2, requestsFromUser.size());
-		for (Request request : requestsFromUser) {
-			Assert.assertTrue(request.getState().equals(RequestState.FULFILLED));
+		// checking if orders' state haven't been changed
+		ordersFromUser = managerController
+				.getOrdersFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
+		Assert.assertEquals(2, ordersFromUser.size());
+		for (Order order : ordersFromUser) {
+			Assert.assertTrue(order.getState().equals(OrderState.FULFILLED));
 		}
 	}
 	
 	@Test
 	public void testMonitorWontRethrowException() throws InterruptedException {
-		// setting request repository
-		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), null, null, true, "");
-		request1.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
-		request1.setState(RequestState.FULFILLED);
+		// setting order repository
+		Order order1 = new Order("id1", managerTestHelper.getDefaultFederationToken(), null, null, true, "");
+		order1.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
+		order1.setState(OrderState.FULFILLED);
 
-		RequestRepository requestRepository = new RequestRepository();
-		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(), request1);
-		managerController.setRequests(requestRepository);
+		OrderRepository orderRepository = new OrderRepository();
+		orderRepository.addOrder(managerTestHelper.getDefaultFederationToken().getUser(), order1);
+		managerController.setOrders(orderRepository);
 
 		// updating compute mock
 		Mockito.when(
 				managerTestHelper.getComputePlugin().getInstance(Mockito.any(Token.class),
 						Mockito.anyString())).thenThrow(new RuntimeException());
 
-		managerController.monitorInstancesForLocalRequests();
+		managerController.monitorInstancesForLocalOrders();
 	}
 	
 	@Test
 	public void testMonitorWillRemoveLocalFailedInstance() throws InterruptedException {
-		// setting request repository
-		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), null, null, true, "");
-		request1.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
-		request1.setState(RequestState.FULFILLED);
-		request1.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		// setting order repository
+		Order order1 = new Order("id1", managerTestHelper.getDefaultFederationToken(), null, null, true, "");
+		order1.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
+		order1.setState(OrderState.FULFILLED);
+		order1.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 
-		RequestRepository requestRepository = new RequestRepository();
-		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(), request1);
-		managerController.setRequests(requestRepository);
+		OrderRepository orderRepository = new OrderRepository();
+		orderRepository.addOrder(managerTestHelper.getDefaultFederationToken().getUser(), order1);
+		managerController.setOrders(orderRepository);
 
 		// updating compute mock
 		Instance expectedInstance = new Instance(DefaultDataTestHelper.INSTANCE_ID, new LinkedList<Resource>(), 
@@ -1233,18 +1233,18 @@ public class TestManagerController {
 		Mockito.when(managerTestHelper.getComputePlugin().getInstance(Mockito.any(Token.class),
 						Mockito.anyString())).thenReturn(expectedInstance);
 
-		managerController.monitorInstancesForLocalRequests();
+		managerController.monitorInstancesForLocalOrders();
 		
 		// checking if instance was properly removed
 		Mockito.verify(managerTestHelper.getComputePlugin()).removeInstance(
 				Mockito.any(Token.class), Mockito.eq(DefaultDataTestHelper.INSTANCE_ID));
 		
-		// checking if request is closed
-		List<Request> requestsFromUser = managerController
-				.getRequestsFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
-		Assert.assertEquals(1, requestsFromUser.size());
-		for (Request request : requestsFromUser) {
-			Assert.assertTrue(request.getState().equals(RequestState.CLOSED));
+		// checking if order is closed
+		List<Order> ordersFromUser = managerController
+				.getOrdersFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
+		Assert.assertEquals(1, ordersFromUser.size());
+		for (Order order : ordersFromUser) {
+			Assert.assertTrue(order.getState().equals(OrderState.CLOSED));
 		}
 	}
 
@@ -1332,42 +1332,42 @@ public class TestManagerController {
 	}	
 
 	@Test
-	public void testGetRequestsByUser() throws InterruptedException {
-		mockRequestInstance();
+	public void testGetOrdersByUser() throws InterruptedException {
+		mockOrderInstance();
 
-		// creating request
-		managerController.createRequests(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
+		// creating order
+		managerController.createOrders(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
 				new ArrayList<Category>(), xOCCIAtt);
-		managerController.checkAndSubmitOpenRequests();		
+		managerController.checkAndSubmitOpenOrders();		
 
-		List<Request> requests = managerController
-				.getRequestsFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
+		List<Order> orders = managerController
+				.getOrdersFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
 
-		// checking if request was created
-		Assert.assertEquals(1, requests.size());
-		Assert.assertEquals(DefaultDataTestHelper.FED_USER_NAME, requests.get(0).getFederationToken().getUser());
-		Assert.assertEquals(DefaultDataTestHelper.INSTANCE_ID, requests.get(0).getInstanceId());
-		Assert.assertEquals(RequestState.FULFILLED, requests.get(0).getState());
-		Assert.assertNotNull(requests.get(0).getProvidingMemberId());
+		// checking if order was created
+		Assert.assertEquals(1, orders.size());
+		Assert.assertEquals(DefaultDataTestHelper.FED_USER_NAME, orders.get(0).getFederationToken().getUser());
+		Assert.assertEquals(DefaultDataTestHelper.INSTANCE_ID, orders.get(0).getInstanceId());
+		Assert.assertEquals(OrderState.FULFILLED, orders.get(0).getState());
+		Assert.assertNotNull(orders.get(0).getProvidingMemberId());
 	}
 
 
 	@Test
-	public void testOneTimeRequestSetFulfilledAndClosed() throws InterruptedException {
-		mockRequestInstance();
+	public void testOneTimeOrderSetFulfilledAndClosed() throws InterruptedException {
+		mockOrderInstance();
 
-		// creating request
-		managerController.createRequests(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
+		// creating order
+		managerController.createOrders(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
 				new ArrayList<Category>(), xOCCIAtt);
-		managerController.checkAndSubmitOpenRequests();
+		managerController.checkAndSubmitOpenOrders();
 		
-		// checking if request was properly created
-		List<Request> requests = managerController
-				.getRequestsFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
-		Assert.assertEquals(1, requests.size());
-		Assert.assertEquals(DefaultDataTestHelper.INSTANCE_ID, requests.get(0).getInstanceId());
-		Assert.assertEquals(RequestState.FULFILLED, requests.get(0).getState());
-		Assert.assertNotNull(requests.get(0).getProvidingMemberId());
+		// checking if order was properly created
+		List<Order> orders = managerController
+				.getOrdersFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
+		Assert.assertEquals(1, orders.size());
+		Assert.assertEquals(DefaultDataTestHelper.INSTANCE_ID, orders.get(0).getInstanceId());
+		Assert.assertEquals(OrderState.FULFILLED, orders.get(0).getState());
+		Assert.assertNotNull(orders.get(0).getProvidingMemberId());
 
 		// updating compute mock
 		Mockito.doNothing().when(managerTestHelper.getComputePlugin()).removeInstance(
@@ -1375,38 +1375,38 @@ public class TestManagerController {
 
 		// removing instance
 		managerController.removeInstance(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
-				DefaultDataTestHelper.INSTANCE_ID  + Request.SEPARATOR_GLOBAL_ID
+				DefaultDataTestHelper.INSTANCE_ID  + Order.SEPARATOR_GLOBAL_ID
 	            + DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 
-		requests = managerController.getRequestsFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
+		orders = managerController.getOrdersFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
 
-		Assert.assertEquals(1, requests.size());
-		Assert.assertEquals(RequestState.CLOSED, requests.get(0).getState());
-		Assert.assertNull(requests.get(0).getInstanceId());
-		Assert.assertNull(requests.get(0).getProvidingMemberId());
+		Assert.assertEquals(1, orders.size());
+		Assert.assertEquals(OrderState.CLOSED, orders.get(0).getState());
+		Assert.assertNull(orders.get(0).getInstanceId());
+		Assert.assertNull(orders.get(0).getProvidingMemberId());
 	}
 
 	@SuppressWarnings("unchecked")
 	@Test
-	public void testPersistentRequestSetFulfilledAndOpen() throws InterruptedException {
-		mockRequestInstance();
-		xOCCIAtt.put(RequestAttribute.TYPE.getValue(),
-				String.valueOf(RequestType.PERSISTENT.getValue()));
+	public void testPersistentOrderSetFulfilledAndOpen() throws InterruptedException {
+		mockOrderInstance();
+		xOCCIAtt.put(OrderAttribute.TYPE.getValue(),
+				String.valueOf(OrderType.PERSISTENT.getValue()));
 
-		// creating request
-		managerController.createRequests(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
+		// creating order
+		managerController.createOrders(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
 				new ArrayList<Category>(), xOCCIAtt);
-		managerController.checkAndSubmitOpenRequests();
+		managerController.checkAndSubmitOpenOrders();
 
-		// checking if request was properly created
-		List<Request> requests = managerController
-				.getRequestsFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
-		Assert.assertEquals(1, requests.size());
-		Assert.assertEquals(DefaultDataTestHelper.INSTANCE_ID, requests.get(0).getInstanceId());
-		Assert.assertEquals(RequestType.PERSISTENT.getValue(),
-				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
-		Assert.assertEquals(RequestState.FULFILLED, requests.get(0).getState());
-		Assert.assertNotNull(requests.get(0).getProvidingMemberId());
+		// checking if order was properly created
+		List<Order> orders = managerController
+				.getOrdersFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
+		Assert.assertEquals(1, orders.size());
+		Assert.assertEquals(DefaultDataTestHelper.INSTANCE_ID, orders.get(0).getInstanceId());
+		Assert.assertEquals(OrderType.PERSISTENT.getValue(),
+				orders.get(0).getAttValue(OrderAttribute.TYPE.getValue()));
+		Assert.assertEquals(OrderState.FULFILLED, orders.get(0).getState());
+		Assert.assertNotNull(orders.get(0).getProvidingMemberId());
 
 		// updating compute mock
 		Mockito.reset(managerTestHelper.getComputePlugin());
@@ -1420,43 +1420,43 @@ public class TestManagerController {
 
 		// removing instance
 		managerController.removeInstance(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
-				DefaultDataTestHelper.INSTANCE_ID + Request.SEPARATOR_GLOBAL_ID
+				DefaultDataTestHelper.INSTANCE_ID + Order.SEPARATOR_GLOBAL_ID
 	            + DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 
-		// checking request state was set to open
-		requests = managerController.getRequestsFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
-		Assert.assertEquals(1, requests.size());
-		Assert.assertEquals(RequestType.PERSISTENT.getValue(),
-				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
-		Assert.assertEquals(RequestState.OPEN, requests.get(0).getState());
-		Assert.assertNull(requests.get(0).getInstanceId());
-		Assert.assertNull(requests.get(0).getProvidingMemberId());
+		// checking order state was set to open
+		orders = managerController.getOrdersFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
+		Assert.assertEquals(1, orders.size());
+		Assert.assertEquals(OrderType.PERSISTENT.getValue(),
+				orders.get(0).getAttValue(OrderAttribute.TYPE.getValue()));
+		Assert.assertEquals(OrderState.OPEN, orders.get(0).getState());
+		Assert.assertNull(orders.get(0).getInstanceId());
+		Assert.assertNull(orders.get(0).getProvidingMemberId());
 	}
 
 	@SuppressWarnings("unchecked")
 	@Test
-	public void testPersistentRequestSetFulfilledAndOpenAndFulfilled() throws InterruptedException {
+	public void testPersistentOrderSetFulfilledAndOpenAndFulfilled() throws InterruptedException {
 		final String SECOND_INSTANCE_ID = "rt22e67-5fgt-457a-3rt6-gt78124fhj9p";
-		xOCCIAtt.put(RequestAttribute.TYPE.getValue(),
-				String.valueOf(RequestType.PERSISTENT.getValue()));
+		xOCCIAtt.put(OrderAttribute.TYPE.getValue(),
+				String.valueOf(OrderType.PERSISTENT.getValue()));
 
 		// mocking compute
-		mockRequestInstance();
+		mockOrderInstance();
 
-		// creating requests
-		managerController.createRequests(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
+		// creating orders
+		managerController.createOrders(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
 				new ArrayList<Category>(), xOCCIAtt);
- 		managerController.checkAndSubmitOpenRequests();
+ 		managerController.checkAndSubmitOpenOrders();
 
-		// checking if request was fulfilled with instanceID
-		List<Request> requests = managerController
-				.getRequestsFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
-		Assert.assertEquals(1, requests.size());
-		Assert.assertEquals(DefaultDataTestHelper.INSTANCE_ID, requests.get(0).getInstanceId());
-		Assert.assertEquals(RequestType.PERSISTENT.getValue(),
-				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
-		Assert.assertEquals(RequestState.FULFILLED, requests.get(0).getState());
-		Assert.assertNotNull(requests.get(0).getProvidingMemberId());
+		// checking if order was fulfilled with instanceID
+		List<Order> orders = managerController
+				.getOrdersFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
+		Assert.assertEquals(1, orders.size());
+		Assert.assertEquals(DefaultDataTestHelper.INSTANCE_ID, orders.get(0).getInstanceId());
+		Assert.assertEquals(OrderType.PERSISTENT.getValue(),
+				orders.get(0).getAttValue(OrderAttribute.TYPE.getValue()));
+		Assert.assertEquals(OrderState.FULFILLED, orders.get(0).getState());
+		Assert.assertNotNull(orders.get(0).getProvidingMemberId());
 
 		// updating compute mock
 		Mockito.reset(managerTestHelper.getComputePlugin());
@@ -1470,17 +1470,17 @@ public class TestManagerController {
 		
 		// removing instance
 		managerController.removeInstance(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
-				DefaultDataTestHelper.INSTANCE_ID  + Request.SEPARATOR_GLOBAL_ID
+				DefaultDataTestHelper.INSTANCE_ID  + Order.SEPARATOR_GLOBAL_ID
 	            + DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 
-		// checking if request state was set to open
-		requests = managerController.getRequestsFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
-		Assert.assertEquals(1, requests.size());
-		Assert.assertEquals(RequestType.PERSISTENT.getValue(),
-				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
-		Assert.assertEquals(RequestState.OPEN, requests.get(0).getState());
-		Assert.assertNull(requests.get(0).getInstanceId());
-		Assert.assertNull(requests.get(0).getProvidingMemberId());
+		// checking if order state was set to open
+		orders = managerController.getOrdersFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
+		Assert.assertEquals(1, orders.size());
+		Assert.assertEquals(OrderType.PERSISTENT.getValue(),
+				orders.get(0).getAttValue(OrderAttribute.TYPE.getValue()));
+		Assert.assertEquals(OrderState.OPEN, orders.get(0).getState());
+		Assert.assertNull(orders.get(0).getInstanceId());
+		Assert.assertNull(orders.get(0).getProvidingMemberId());
 
 		// updating compute mock
 		Mockito.reset(managerTestHelper.getComputePlugin());
@@ -1490,87 +1490,87 @@ public class TestManagerController {
 				SECOND_INSTANCE_ID);
 
 		// getting second instance
-		managerController.checkAndSubmitOpenRequests();
+		managerController.checkAndSubmitOpenOrders();
 
-		// checking if request was fulfilled with secondInstance
-		requests = managerController.getRequestsFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
-		Assert.assertEquals(1, requests.size());
-		Assert.assertEquals(SECOND_INSTANCE_ID, requests.get(0).getInstanceId());
-		Assert.assertEquals(RequestType.PERSISTENT.getValue(),
-				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
-		Assert.assertEquals(RequestState.FULFILLED, requests.get(0).getState());
-		Assert.assertNotNull(requests.get(0).getProvidingMemberId());
+		// checking if order was fulfilled with secondInstance
+		orders = managerController.getOrdersFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
+		Assert.assertEquals(1, orders.size());
+		Assert.assertEquals(SECOND_INSTANCE_ID, orders.get(0).getInstanceId());
+		Assert.assertEquals(OrderType.PERSISTENT.getValue(),
+				orders.get(0).getAttValue(OrderAttribute.TYPE.getValue()));
+		Assert.assertEquals(OrderState.FULFILLED, orders.get(0).getState());
+		Assert.assertNotNull(orders.get(0).getProvidingMemberId());
 	}
 
 	@Test
-	public void testPersistentRequestSetOpenAndClosed() throws InterruptedException {
-		long expirationRequestTime = System.currentTimeMillis()
+	public void testPersistentOrderSetOpenAndClosed() throws InterruptedException {
+		long expirationOrderTime = System.currentTimeMillis()
 				+ DefaultDataTestHelper.SCHEDULER_PERIOD;
 
-		// setting request attributes
-		xOCCIAtt.put(RequestAttribute.TYPE.getValue(),
-				String.valueOf(RequestType.PERSISTENT.getValue()));
-		xOCCIAtt.put(RequestAttribute.VALID_UNTIL.getValue(),
-				String.valueOf(DateUtils.getDateISO8601Format(expirationRequestTime)));
+		// setting order attributes
+		xOCCIAtt.put(OrderAttribute.TYPE.getValue(),
+				String.valueOf(OrderType.PERSISTENT.getValue()));
+		xOCCIAtt.put(OrderAttribute.VALID_UNTIL.getValue(),
+				String.valueOf(DateUtils.getDateISO8601Format(expirationOrderTime)));
 
-		// creating request
-		managerController.createRequests(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
+		// creating order
+		managerController.createOrders(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
 				new ArrayList<Category>(), xOCCIAtt);
 
-		// checking if request is OPEN
-		List<Request> requests = managerController
-				.getRequestsFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
-		Assert.assertEquals(1, requests.size());
-		Assert.assertEquals(RequestType.PERSISTENT.getValue(),
-				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
-		Assert.assertEquals(RequestState.OPEN, requests.get(0).getState());
-		Assert.assertNull(requests.get(0).getInstanceId());
-		Assert.assertNull(requests.get(0).getProvidingMemberId());
+		// checking if order is OPEN
+		List<Order> orders = managerController
+				.getOrdersFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
+		Assert.assertEquals(1, orders.size());
+		Assert.assertEquals(OrderType.PERSISTENT.getValue(),
+				orders.get(0).getAttValue(OrderAttribute.TYPE.getValue()));
+		Assert.assertEquals(OrderState.OPEN, orders.get(0).getState());
+		Assert.assertNull(orders.get(0).getInstanceId());
+		Assert.assertNull(orders.get(0).getProvidingMemberId());
 
 		// waiting expiration time
 		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD + DefaultDataTestHelper.GRACE_TIME);
-		managerController.checkAndSubmitOpenRequests();
-		requests = managerController.getRequestsFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
+		managerController.checkAndSubmitOpenOrders();
+		orders = managerController.getOrdersFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
 
-		// checking if request was closed
-		Assert.assertEquals(1, requests.size());
-		Assert.assertEquals(RequestType.PERSISTENT.getValue(),
-				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
-		Assert.assertEquals(RequestState.CLOSED, requests.get(0).getState());
-		Assert.assertNull(requests.get(0).getInstanceId());
-		Assert.assertNull(requests.get(0).getProvidingMemberId());
+		// checking if order was closed
+		Assert.assertEquals(1, orders.size());
+		Assert.assertEquals(OrderType.PERSISTENT.getValue(),
+				orders.get(0).getAttValue(OrderAttribute.TYPE.getValue()));
+		Assert.assertEquals(OrderState.CLOSED, orders.get(0).getState());
+		Assert.assertNull(orders.get(0).getInstanceId());
+		Assert.assertNull(orders.get(0).getProvidingMemberId());
 	}
 
 	@SuppressWarnings("unchecked")
 	@Test
-	public void testPersistentRequestSetFulfilledAndClosed() throws InterruptedException {
-		long expirationRequestTime = System.currentTimeMillis()
+	public void testPersistentOrderSetFulfilledAndClosed() throws InterruptedException {
+		long expirationOrderTime = System.currentTimeMillis()
 				+ DefaultDataTestHelper.SCHEDULER_PERIOD + DefaultDataTestHelper.GRACE_TIME;
 
-		// setting request attributes
-		xOCCIAtt.put(RequestAttribute.TYPE.getValue(),
-				String.valueOf(RequestType.PERSISTENT.getValue()));
-		xOCCIAtt.put(RequestAttribute.VALID_UNTIL.getValue(),
-				DateUtils.getDateISO8601Format(expirationRequestTime));
+		// setting order attributes
+		xOCCIAtt.put(OrderAttribute.TYPE.getValue(),
+				String.valueOf(OrderType.PERSISTENT.getValue()));
+		xOCCIAtt.put(OrderAttribute.VALID_UNTIL.getValue(),
+				DateUtils.getDateISO8601Format(expirationOrderTime));
 
-		mockRequestInstance();
+		mockOrderInstance();
 
-		// creating request
-		managerController.createRequests(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
+		// creating order
+		managerController.createOrders(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
 				new ArrayList<Category>(), xOCCIAtt);
 
 		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD);
-		managerController.checkAndSubmitOpenRequests();
+		managerController.checkAndSubmitOpenOrders();
 
-		// checking request is fulfilled
-		List<Request> requests = managerController
-				.getRequestsFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
-		Assert.assertEquals(1, requests.size());
-		Assert.assertEquals(DefaultDataTestHelper.INSTANCE_ID, requests.get(0).getInstanceId());
-		Assert.assertEquals(RequestType.PERSISTENT.getValue(),
-				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
-		Assert.assertEquals(RequestState.FULFILLED, requests.get(0).getState());
-		Assert.assertNotNull(requests.get(0).getProvidingMemberId());
+		// checking order is fulfilled
+		List<Order> orders = managerController
+				.getOrdersFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
+		Assert.assertEquals(1, orders.size());
+		Assert.assertEquals(DefaultDataTestHelper.INSTANCE_ID, orders.get(0).getInstanceId());
+		Assert.assertEquals(OrderType.PERSISTENT.getValue(),
+				orders.get(0).getAttValue(OrderAttribute.TYPE.getValue()));
+		Assert.assertEquals(OrderState.FULFILLED, orders.get(0).getState());
+		Assert.assertNotNull(orders.get(0).getProvidingMemberId());
 
 		// waiting expiration time
 		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD);
@@ -1587,22 +1587,22 @@ public class TestManagerController {
 
 		// removing instance
 		managerController.removeInstance(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
-				DefaultDataTestHelper.INSTANCE_ID  + Request.SEPARATOR_GLOBAL_ID
+				DefaultDataTestHelper.INSTANCE_ID  + Order.SEPARATOR_GLOBAL_ID
 	            + DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
-		managerController.checkAndSubmitOpenRequests();
+		managerController.checkAndSubmitOpenOrders();
 
-		// checking if request state was set to closed
-		requests = managerController.getRequestsFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
-		Assert.assertEquals(1, requests.size());
-		Assert.assertEquals(RequestType.PERSISTENT.getValue(),
-				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
-		Assert.assertEquals(RequestState.CLOSED, requests.get(0).getState());
-		Assert.assertNull(requests.get(0).getInstanceId());
-		Assert.assertNull(requests.get(0).getProvidingMemberId());
+		// checking if order state was set to closed
+		orders = managerController.getOrdersFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
+		Assert.assertEquals(1, orders.size());
+		Assert.assertEquals(OrderType.PERSISTENT.getValue(),
+				orders.get(0).getAttValue(OrderAttribute.TYPE.getValue()));
+		Assert.assertEquals(OrderState.CLOSED, orders.get(0).getState());
+		Assert.assertNull(orders.get(0).getInstanceId());
+		Assert.assertNull(orders.get(0).getProvidingMemberId());
 	}
 
 	@SuppressWarnings("unchecked")
-	private void mockRequestInstance() {
+	private void mockOrderInstance() {
 		Mockito.reset(managerTestHelper.getComputePlugin());
 		Mockito.when(
 				managerTestHelper.getComputePlugin().requestInstance(Mockito.any(Token.class),
@@ -1615,200 +1615,200 @@ public class TestManagerController {
 	}
 
 	@Test
-	public void testOneTimeRequestSetOpenAndClosed() throws InterruptedException {
-		long expirationRequestTime = System.currentTimeMillis()
+	public void testOneTimeOrderSetOpenAndClosed() throws InterruptedException {
+		long expirationOrderTime = System.currentTimeMillis()
 				+ DefaultDataTestHelper.SCHEDULER_PERIOD;
 
-		// setting request attributes
-		xOCCIAtt.put(RequestAttribute.TYPE.getValue(), RequestType.ONE_TIME.getValue());
-		xOCCIAtt.put(RequestAttribute.VALID_UNTIL.getValue(),
-				DateUtils.getDateISO8601Format(expirationRequestTime));
+		// setting order attributes
+		xOCCIAtt.put(OrderAttribute.TYPE.getValue(), OrderType.ONE_TIME.getValue());
+		xOCCIAtt.put(OrderAttribute.VALID_UNTIL.getValue(),
+				DateUtils.getDateISO8601Format(expirationOrderTime));
 
-		// creating request
-		managerController.createRequests(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
+		// creating order
+		managerController.createOrders(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
 				new ArrayList<Category>(), xOCCIAtt);
 
-		// checking if request was properly created
-		List<Request> requests = managerController
-				.getRequestsFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
-		Assert.assertEquals(1, requests.size());
-		Assert.assertEquals(RequestType.ONE_TIME.getValue(),
-				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
-		Assert.assertEquals(RequestState.OPEN, requests.get(0).getState());
-		Assert.assertNull(requests.get(0).getInstanceId());
-		Assert.assertNull(requests.get(0).getProvidingMemberId());
+		// checking if order was properly created
+		List<Order> orders = managerController
+				.getOrdersFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
+		Assert.assertEquals(1, orders.size());
+		Assert.assertEquals(OrderType.ONE_TIME.getValue(),
+				orders.get(0).getAttValue(OrderAttribute.TYPE.getValue()));
+		Assert.assertEquals(OrderState.OPEN, orders.get(0).getState());
+		Assert.assertNull(orders.get(0).getInstanceId());
+		Assert.assertNull(orders.get(0).getProvidingMemberId());
 
 		// waiting expiration time
 		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD + DefaultDataTestHelper.GRACE_TIME);
 
-		managerController.checkAndSubmitOpenRequests();
+		managerController.checkAndSubmitOpenOrders();
 		
-		// checking if request state was set to closed
-		requests = managerController.getRequestsFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
-		Assert.assertEquals(1, requests.size());
-		Assert.assertEquals(RequestType.ONE_TIME.getValue(),
-				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
-		Assert.assertEquals(RequestState.CLOSED, requests.get(0).getState());
-		Assert.assertNull(requests.get(0).getInstanceId());
-		Assert.assertNull(requests.get(0).getProvidingMemberId());
+		// checking if order state was set to closed
+		orders = managerController.getOrdersFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
+		Assert.assertEquals(1, orders.size());
+		Assert.assertEquals(OrderType.ONE_TIME.getValue(),
+				orders.get(0).getAttValue(OrderAttribute.TYPE.getValue()));
+		Assert.assertEquals(OrderState.CLOSED, orders.get(0).getState());
+		Assert.assertNull(orders.get(0).getInstanceId());
+		Assert.assertNull(orders.get(0).getProvidingMemberId());
 	}
 
 	@Test
-	public void testOneTimeRequestWithValidFromAttInFuture() throws InterruptedException {
+	public void testOneTimeOrderWithValidFromAttInFuture() throws InterruptedException {
 		long now = System.currentTimeMillis();
-		long startRequestTime = now + (DefaultDataTestHelper.SCHEDULER_PERIOD * 2);
-		long expirationRequestTime = now + DefaultDataTestHelper.LONG_TIME;
+		long startOrderTime = now + (DefaultDataTestHelper.SCHEDULER_PERIOD * 2);
+		long expirationOrderTime = now + DefaultDataTestHelper.LONG_TIME;
 
-		// setting request attributes
-		xOCCIAtt.put(RequestAttribute.TYPE.getValue(),
-				String.valueOf(RequestType.ONE_TIME.getValue()));
-		xOCCIAtt.put(RequestAttribute.VALID_FROM.getValue(),
-				DateUtils.getDateISO8601Format(startRequestTime));
-		xOCCIAtt.put(RequestAttribute.VALID_UNTIL.getValue(),
-				DateUtils.getDateISO8601Format(expirationRequestTime));
+		// setting order attributes
+		xOCCIAtt.put(OrderAttribute.TYPE.getValue(),
+				String.valueOf(OrderType.ONE_TIME.getValue()));
+		xOCCIAtt.put(OrderAttribute.VALID_FROM.getValue(),
+				DateUtils.getDateISO8601Format(startOrderTime));
+		xOCCIAtt.put(OrderAttribute.VALID_UNTIL.getValue(),
+				DateUtils.getDateISO8601Format(expirationOrderTime));
 
-		mockRequestInstance();
+		mockOrderInstance();
 
-		// creating request
-		managerController.createRequests(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
+		// creating order
+		managerController.createOrders(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
 				new ArrayList<Category>(), xOCCIAtt);
 
-		// checking if request was properly created
-		List<Request> requests = managerController
-				.getRequestsFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
-		Assert.assertEquals(1, requests.size());
-		Assert.assertEquals(RequestType.ONE_TIME.getValue(),
-				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
-		Assert.assertEquals(RequestState.OPEN, requests.get(0).getState());
-		Assert.assertNull(requests.get(0).getInstanceId());
-		Assert.assertNull(requests.get(0).getProvidingMemberId());
+		// checking if order was properly created
+		List<Order> orders = managerController
+				.getOrdersFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
+		Assert.assertEquals(1, orders.size());
+		Assert.assertEquals(OrderType.ONE_TIME.getValue(),
+				orders.get(0).getAttValue(OrderAttribute.TYPE.getValue()));
+		Assert.assertEquals(OrderState.OPEN, orders.get(0).getState());
+		Assert.assertNull(orders.get(0).getInstanceId());
+		Assert.assertNull(orders.get(0).getProvidingMemberId());
 
-		// sleeping for a time and request not valid yet
+		// sleeping for a time and order not valid yet
 		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD + DefaultDataTestHelper.GRACE_TIME);
-		managerController.checkAndSubmitOpenRequests();
+		managerController.checkAndSubmitOpenOrders();
 
-		// check that request is not in valid period yet
-		requests = managerController.getRequestsFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
-		Assert.assertEquals(1, requests.size());
-		Assert.assertEquals(RequestType.ONE_TIME.getValue(),
-				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
-		Assert.assertEquals(RequestState.OPEN, requests.get(0).getState());
-		Assert.assertNull(requests.get(0).getInstanceId());
-		Assert.assertNull(requests.get(0).getProvidingMemberId());
+		// check that order is not in valid period yet
+		orders = managerController.getOrdersFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
+		Assert.assertEquals(1, orders.size());
+		Assert.assertEquals(OrderType.ONE_TIME.getValue(),
+				orders.get(0).getAttValue(OrderAttribute.TYPE.getValue()));
+		Assert.assertEquals(OrderState.OPEN, orders.get(0).getState());
+		Assert.assertNull(orders.get(0).getInstanceId());
+		Assert.assertNull(orders.get(0).getProvidingMemberId());
 
-		// sleeping for the scheduler period and submitting request
+		// sleeping for the scheduler period and submitting order
 		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD + DefaultDataTestHelper.GRACE_TIME);
-		managerController.checkAndSubmitOpenRequests();
+		managerController.checkAndSubmitOpenOrders();
 
-		// check if request is in valid period
-		requests = managerController.getRequestsFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
-		Assert.assertEquals(1, requests.size());
-		Assert.assertEquals(RequestType.ONE_TIME.getValue(),
-				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
-		Assert.assertEquals(RequestState.FULFILLED, requests.get(0).getState());
-		Assert.assertEquals(DefaultDataTestHelper.INSTANCE_ID, requests.get(0).getInstanceId());
-		Assert.assertNotNull(requests.get(0).getProvidingMemberId());
+		// check if order is in valid period
+		orders = managerController.getOrdersFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
+		Assert.assertEquals(1, orders.size());
+		Assert.assertEquals(OrderType.ONE_TIME.getValue(),
+				orders.get(0).getAttValue(OrderAttribute.TYPE.getValue()));
+		Assert.assertEquals(OrderState.FULFILLED, orders.get(0).getState());
+		Assert.assertEquals(DefaultDataTestHelper.INSTANCE_ID, orders.get(0).getInstanceId());
+		Assert.assertNotNull(orders.get(0).getProvidingMemberId());
 	}
 
 	@Test
-	public void testPersistentRequestWithValidFromAttInFuture() throws InterruptedException {
+	public void testPersistentOrderWithValidFromAttInFuture() throws InterruptedException {
 		long now = System.currentTimeMillis();
-		long startRequestTime = now + (DefaultDataTestHelper.SCHEDULER_PERIOD * 2);
-		long expirationRequestTime = now + DefaultDataTestHelper.LONG_TIME;
+		long startOrderTime = now + (DefaultDataTestHelper.SCHEDULER_PERIOD * 2);
+		long expirationOrderTime = now + DefaultDataTestHelper.LONG_TIME;
 
-		// setting request attributes
-		xOCCIAtt.put(RequestAttribute.TYPE.getValue(), RequestType.PERSISTENT.getValue());
-		xOCCIAtt.put(RequestAttribute.VALID_FROM.getValue(),
-				DateUtils.getDateISO8601Format(startRequestTime));
-		xOCCIAtt.put(RequestAttribute.VALID_UNTIL.getValue(),
-				DateUtils.getDateISO8601Format(expirationRequestTime));
+		// setting order attributes
+		xOCCIAtt.put(OrderAttribute.TYPE.getValue(), OrderType.PERSISTENT.getValue());
+		xOCCIAtt.put(OrderAttribute.VALID_FROM.getValue(),
+				DateUtils.getDateISO8601Format(startOrderTime));
+		xOCCIAtt.put(OrderAttribute.VALID_UNTIL.getValue(),
+				DateUtils.getDateISO8601Format(expirationOrderTime));
 
-		mockRequestInstance();
+		mockOrderInstance();
 
-		// creating request
-		managerController.createRequests(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
+		// creating order
+		managerController.createOrders(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
 				new ArrayList<Category>(), xOCCIAtt);
 
-		// checking if request was rightly created
-		List<Request> requests = managerController
-				.getRequestsFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
-		Assert.assertEquals(1, requests.size());
-		Assert.assertEquals(RequestType.PERSISTENT.getValue(),
-				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
-		Assert.assertEquals(RequestState.OPEN, requests.get(0).getState());
-		Assert.assertNull(requests.get(0).getInstanceId());
-		Assert.assertNull(requests.get(0).getProvidingMemberId());
+		// checking if order was rightly created
+		List<Order> orders = managerController
+				.getOrdersFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
+		Assert.assertEquals(1, orders.size());
+		Assert.assertEquals(OrderType.PERSISTENT.getValue(),
+				orders.get(0).getAttValue(OrderAttribute.TYPE.getValue()));
+		Assert.assertEquals(OrderState.OPEN, orders.get(0).getState());
+		Assert.assertNull(orders.get(0).getInstanceId());
+		Assert.assertNull(orders.get(0).getProvidingMemberId());
 
-		// sleeping for a time and request not valid yet
+		// sleeping for a time and order not valid yet
 		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD + DefaultDataTestHelper.GRACE_TIME);
-		managerController.checkAndSubmitOpenRequests();
+		managerController.checkAndSubmitOpenOrders();
 
-		// check request is not in valid period yet
-		requests = managerController.getRequestsFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
-		Assert.assertEquals(1, requests.size());
-		Assert.assertEquals(RequestType.PERSISTENT.getValue(),
-				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
-		Assert.assertEquals(RequestState.OPEN, requests.get(0).getState());
-		Assert.assertNull(requests.get(0).getInstanceId());
-		Assert.assertNull(requests.get(0).getProvidingMemberId());
+		// check order is not in valid period yet
+		orders = managerController.getOrdersFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
+		Assert.assertEquals(1, orders.size());
+		Assert.assertEquals(OrderType.PERSISTENT.getValue(),
+				orders.get(0).getAttValue(OrderAttribute.TYPE.getValue()));
+		Assert.assertEquals(OrderState.OPEN, orders.get(0).getState());
+		Assert.assertNull(orders.get(0).getInstanceId());
+		Assert.assertNull(orders.get(0).getProvidingMemberId());
 
-		// sleeping for the scheduler period and submitting request
+		// sleeping for the scheduler period and submitting order
 		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD + DefaultDataTestHelper.GRACE_TIME);
-		managerController.checkAndSubmitOpenRequests();
+		managerController.checkAndSubmitOpenOrders();
 
-		// check if request is in valid period
-		requests = managerController.getRequestsFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
-		Assert.assertEquals(1, requests.size());
-		Assert.assertEquals(RequestType.PERSISTENT.getValue(),
-				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
-		Assert.assertEquals(RequestState.FULFILLED, requests.get(0).getState());
-		Assert.assertEquals(DefaultDataTestHelper.INSTANCE_ID, requests.get(0).getInstanceId());
-		Assert.assertNotNull(requests.get(0).getProvidingMemberId());
+		// check if order is in valid period
+		orders = managerController.getOrdersFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
+		Assert.assertEquals(1, orders.size());
+		Assert.assertEquals(OrderType.PERSISTENT.getValue(),
+				orders.get(0).getAttValue(OrderAttribute.TYPE.getValue()));
+		Assert.assertEquals(OrderState.FULFILLED, orders.get(0).getState());
+		Assert.assertEquals(DefaultDataTestHelper.INSTANCE_ID, orders.get(0).getInstanceId());
+		Assert.assertNotNull(orders.get(0).getProvidingMemberId());
 	}
 
 	@SuppressWarnings("unchecked")
 	@Test
-	public void testOneTimeRequestValidityPeriodInFuture() throws InterruptedException {
+	public void testOneTimeOrderValidityPeriodInFuture() throws InterruptedException {
 		long now = System.currentTimeMillis();
-		long startRequestTime = now + (DefaultDataTestHelper.SCHEDULER_PERIOD * 3);
-		long expirationRequestTime = now + (DefaultDataTestHelper.SCHEDULER_PERIOD * 6);
+		long startOrderTime = now + (DefaultDataTestHelper.SCHEDULER_PERIOD * 3);
+		long expirationOrderTime = now + (DefaultDataTestHelper.SCHEDULER_PERIOD * 6);
 
-		// setting request attributes
-		xOCCIAtt.put(RequestAttribute.TYPE.getValue(), RequestType.ONE_TIME.getValue());
-		xOCCIAtt.put(RequestAttribute.VALID_FROM.getValue(),
-				DateUtils.getDateISO8601Format(startRequestTime));
-		xOCCIAtt.put(RequestAttribute.VALID_UNTIL.getValue(),
-				DateUtils.getDateISO8601Format(expirationRequestTime));
+		// setting order attributes
+		xOCCIAtt.put(OrderAttribute.TYPE.getValue(), OrderType.ONE_TIME.getValue());
+		xOCCIAtt.put(OrderAttribute.VALID_FROM.getValue(),
+				DateUtils.getDateISO8601Format(startOrderTime));
+		xOCCIAtt.put(OrderAttribute.VALID_UNTIL.getValue(),
+				DateUtils.getDateISO8601Format(expirationOrderTime));
 
-		mockRequestInstance();
+		mockOrderInstance();
 
-		// creating request
-		managerController.createRequests(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
+		// creating order
+		managerController.createOrders(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
 				new ArrayList<Category>(), xOCCIAtt);
 
-		// request is not in valid period yet
-		List<Request> requests = managerController
-				.getRequestsFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
-		Assert.assertEquals(1, requests.size());
-		Assert.assertEquals(RequestType.ONE_TIME.getValue(),
-				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
-		Assert.assertEquals(RequestState.OPEN, requests.get(0).getState());
-		Assert.assertNull(requests.get(0).getInstanceId());
-		Assert.assertNull(requests.get(0).getProvidingMemberId());
+		// order is not in valid period yet
+		List<Order> orders = managerController
+				.getOrdersFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
+		Assert.assertEquals(1, orders.size());
+		Assert.assertEquals(OrderType.ONE_TIME.getValue(),
+				orders.get(0).getAttValue(OrderAttribute.TYPE.getValue()));
+		Assert.assertEquals(OrderState.OPEN, orders.get(0).getState());
+		Assert.assertNull(orders.get(0).getInstanceId());
+		Assert.assertNull(orders.get(0).getProvidingMemberId());
 
-		// sleeping for the scheduler period and submitting request
+		// sleeping for the scheduler period and submitting order
 		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD * 3 + DefaultDataTestHelper.GRACE_TIME);
 
-		managerController.checkAndSubmitOpenRequests();
+		managerController.checkAndSubmitOpenOrders();
 		
-		// checking is request is fulfilled
-		requests = managerController.getRequestsFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
-		Assert.assertEquals(1, requests.size());
-		Assert.assertEquals(RequestType.ONE_TIME.getValue(),
-				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
-		Assert.assertEquals(RequestState.FULFILLED, requests.get(0).getState());
-		Assert.assertEquals(DefaultDataTestHelper.INSTANCE_ID, requests.get(0).getInstanceId());
-		Assert.assertNotNull(requests.get(0).getProvidingMemberId());
+		// checking is order is fulfilled
+		orders = managerController.getOrdersFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
+		Assert.assertEquals(1, orders.size());
+		Assert.assertEquals(OrderType.ONE_TIME.getValue(),
+				orders.get(0).getAttValue(OrderAttribute.TYPE.getValue()));
+		Assert.assertEquals(OrderState.FULFILLED, orders.get(0).getState());
+		Assert.assertEquals(DefaultDataTestHelper.INSTANCE_ID, orders.get(0).getInstanceId());
+		Assert.assertNotNull(orders.get(0).getProvidingMemberId());
 
 		// updating compute mock
 		Mockito.when(
@@ -1821,64 +1821,64 @@ public class TestManagerController {
 
 		// removing instance
 		managerController.removeInstance(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
-				DefaultDataTestHelper.INSTANCE_ID  + Request.SEPARATOR_GLOBAL_ID
+				DefaultDataTestHelper.INSTANCE_ID  + Order.SEPARATOR_GLOBAL_ID
 	            + DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 
-		// waiting for a time and request is not into valid period anymore
+		// waiting for a time and order is not into valid period anymore
 		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD + DefaultDataTestHelper.GRACE_TIME);
 
-		// checking if request is not in valid period anymore
-		requests = managerController.getRequestsFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
-		Assert.assertEquals(1, requests.size());
-		Assert.assertEquals(RequestType.ONE_TIME.getValue(),
-				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
-		Assert.assertEquals(RequestState.CLOSED, requests.get(0).getState());
-		Assert.assertNull(requests.get(0).getInstanceId());
-		Assert.assertNull(requests.get(0).getProvidingMemberId());
+		// checking if order is not in valid period anymore
+		orders = managerController.getOrdersFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
+		Assert.assertEquals(1, orders.size());
+		Assert.assertEquals(OrderType.ONE_TIME.getValue(),
+				orders.get(0).getAttValue(OrderAttribute.TYPE.getValue()));
+		Assert.assertEquals(OrderState.CLOSED, orders.get(0).getState());
+		Assert.assertNull(orders.get(0).getInstanceId());
+		Assert.assertNull(orders.get(0).getProvidingMemberId());
 	}
 
 	@SuppressWarnings("unchecked")
 	@Test
-	public void testPersistentRequestValidityPeriodInFuture() throws InterruptedException {
+	public void testPersistentOrderValidityPeriodInFuture() throws InterruptedException {
 		long now = System.currentTimeMillis();
-		long startRequestTime = now + (DefaultDataTestHelper.SCHEDULER_PERIOD * 2);
-		long expirationRequestTime = now + (DefaultDataTestHelper.SCHEDULER_PERIOD * 4);
+		long startOrderTime = now + (DefaultDataTestHelper.SCHEDULER_PERIOD * 2);
+		long expirationOrderTime = now + (DefaultDataTestHelper.SCHEDULER_PERIOD * 4);
 
-		// setting request attributes
-		xOCCIAtt.put(RequestAttribute.TYPE.getValue(), RequestType.PERSISTENT.getValue());
-		xOCCIAtt.put(RequestAttribute.VALID_FROM.getValue(),
-				DateUtils.getDateISO8601Format(startRequestTime));
-		xOCCIAtt.put(RequestAttribute.VALID_UNTIL.getValue(),
-				DateUtils.getDateISO8601Format(expirationRequestTime));
+		// setting order attributes
+		xOCCIAtt.put(OrderAttribute.TYPE.getValue(), OrderType.PERSISTENT.getValue());
+		xOCCIAtt.put(OrderAttribute.VALID_FROM.getValue(),
+				DateUtils.getDateISO8601Format(startOrderTime));
+		xOCCIAtt.put(OrderAttribute.VALID_UNTIL.getValue(),
+				DateUtils.getDateISO8601Format(expirationOrderTime));
 
-		mockRequestInstance();
+		mockOrderInstance();
 
-		// creating request
-		managerController.createRequests(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
+		// creating order
+		managerController.createOrders(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
 				new ArrayList<Category>(), xOCCIAtt);
 
-		// request is not in valid period yet
-		List<Request> requests = managerController
-				.getRequestsFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
-		Assert.assertEquals(1, requests.size());
-		Assert.assertEquals(RequestType.PERSISTENT.getValue(),
-				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
-		Assert.assertEquals(RequestState.OPEN, requests.get(0).getState());
-		Assert.assertNull(requests.get(0).getInstanceId());
-		Assert.assertNull(requests.get(0).getProvidingMemberId());
+		// order is not in valid period yet
+		List<Order> orders = managerController
+				.getOrdersFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
+		Assert.assertEquals(1, orders.size());
+		Assert.assertEquals(OrderType.PERSISTENT.getValue(),
+				orders.get(0).getAttValue(OrderAttribute.TYPE.getValue()));
+		Assert.assertEquals(OrderState.OPEN, orders.get(0).getState());
+		Assert.assertNull(orders.get(0).getInstanceId());
+		Assert.assertNull(orders.get(0).getProvidingMemberId());
 
-		// waiting for a time and request is into valid period
+		// waiting for a time and order is into valid period
 		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD * 2 + DefaultDataTestHelper.GRACE_TIME);
-		managerController.checkAndSubmitOpenRequests();
+		managerController.checkAndSubmitOpenOrders();
 
-		// checking is request is fulfilled
-		requests = managerController.getRequestsFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
-		Assert.assertEquals(1, requests.size());
-		Assert.assertEquals(RequestType.PERSISTENT.getValue(),
-				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
-		Assert.assertEquals(RequestState.FULFILLED, requests.get(0).getState());
-		Assert.assertEquals(DefaultDataTestHelper.INSTANCE_ID, requests.get(0).getInstanceId());
-		Assert.assertNotNull(requests.get(0).getProvidingMemberId());
+		// checking is order is fulfilled
+		orders = managerController.getOrdersFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
+		Assert.assertEquals(1, orders.size());
+		Assert.assertEquals(OrderType.PERSISTENT.getValue(),
+				orders.get(0).getAttValue(OrderAttribute.TYPE.getValue()));
+		Assert.assertEquals(OrderState.FULFILLED, orders.get(0).getState());
+		Assert.assertEquals(DefaultDataTestHelper.INSTANCE_ID, orders.get(0).getInstanceId());
+		Assert.assertNotNull(orders.get(0).getProvidingMemberId());
 
 		// updating compute mock
 		Mockito.when(
@@ -1890,32 +1890,32 @@ public class TestManagerController {
 				.when(managerTestHelper.getComputePlugin())
 				.removeInstance(
 						managerTestHelper.getDefaultFederationToken(),
-						DefaultDataTestHelper.INSTANCE_ID + Request.SEPARATOR_GLOBAL_ID
+						DefaultDataTestHelper.INSTANCE_ID + Order.SEPARATOR_GLOBAL_ID
 								+ DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 
 		// removing instance
 		managerController.removeInstance(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
-				DefaultDataTestHelper.INSTANCE_ID  + Request.SEPARATOR_GLOBAL_ID
+				DefaultDataTestHelper.INSTANCE_ID  + Order.SEPARATOR_GLOBAL_ID
 	            + DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 
-		// waiting for the scheduler period so that request is not into valid period anymore
+		// waiting for the scheduler period so that order is not into valid period anymore
 		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD * 2 + DefaultDataTestHelper.GRACE_TIME);
 
-		managerController.checkAndSubmitOpenRequests();
+		managerController.checkAndSubmitOpenOrders();
 		
-		// checking if request is not in valid period anymore
-		requests = managerController.getRequestsFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
-		Assert.assertEquals(1, requests.size());
-		Assert.assertEquals(RequestType.PERSISTENT.getValue(),
-				requests.get(0).getAttValue(RequestAttribute.TYPE.getValue()));
-		Assert.assertEquals(RequestState.CLOSED, requests.get(0).getState());
-		Assert.assertNull(requests.get(0).getInstanceId());
-		Assert.assertNull(requests.get(0).getProvidingMemberId());
+		// checking if order is not in valid period anymore
+		orders = managerController.getOrdersFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
+		Assert.assertEquals(1, orders.size());
+		Assert.assertEquals(OrderType.PERSISTENT.getValue(),
+				orders.get(0).getAttValue(OrderAttribute.TYPE.getValue()));
+		Assert.assertEquals(OrderState.CLOSED, orders.get(0).getState());
+		Assert.assertNull(orders.get(0).getInstanceId());
+		Assert.assertNull(orders.get(0).getProvidingMemberId());
 	}
 
 	@SuppressWarnings("unchecked")
 	@Test
-	public void testSubmitRequestForRemoteMemberValidation() {
+	public void testSubmitOrderForRemoteMemberValidation() {
 
 		FederationMember member = Mockito.mock(FederationMember.class);
 		Mockito.doReturn("abc").when(member).getId();
@@ -1936,20 +1936,20 @@ public class TestManagerController {
 		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);
 		managerController.setPacketSender(packetSender);
 		
-		Request request = new Request("id1", null, new ArrayList<Category>(), xOCCIAtt,
+		Order order = new Order("id1", null, new ArrayList<Category>(), xOCCIAtt,
 				false, "abc");
 		
-		Assert.assertTrue(managerController.createLocalInstanceWithFederationUser(request));
+		Assert.assertTrue(managerController.createLocalInstanceWithFederationUser(order));
 
 		Mockito.doReturn(false).when(validatorMock).canDonateTo(Mockito.eq(member), Mockito.any(Token.class));
 		managerController.setValidator(validatorMock);
 		
-		Assert.assertFalse(managerController.createLocalInstanceWithFederationUser(request));
+		Assert.assertFalse(managerController.createLocalInstanceWithFederationUser(order));
 	}
 		
 	@SuppressWarnings("unchecked")
 	@Test
-	public void testReplyToServedRequestWithSuccess() {
+	public void testReplyToServedOrderWithSuccess() {
 		FederationMember member = Mockito.mock(FederationMember.class);
 		Mockito.doReturn("abc").when(member).getId();
 		List<FederationMember> list = new LinkedList<FederationMember>();
@@ -1969,10 +1969,10 @@ public class TestManagerController {
 		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);
 		managerController.setPacketSender(packetSender);
 		
-		Request request = new Request("id1", null, new ArrayList<Category>(), xOCCIAtt,
+		Order order = new Order("id1", null, new ArrayList<Category>(), xOCCIAtt,
 				false, "abc");
 		
-		Assert.assertTrue(managerController.createLocalInstanceWithFederationUser(request));
+		Assert.assertTrue(managerController.createLocalInstanceWithFederationUser(order));
 
 		Mockito.verify(packetSender).sendPacket(Mockito.argThat(new ArgumentMatcher<IQ>() {
 			@Override
@@ -1992,7 +1992,7 @@ public class TestManagerController {
 	
 	@SuppressWarnings("unchecked")
 	@Test
-	public void testReplyToServedRequestWithoutSuccess() {
+	public void testReplyToServedOrderWithoutSuccess() {
 		FederationMember member = Mockito.mock(FederationMember.class);
 		Mockito.doReturn("abc").when(member).getId();
 		List<FederationMember> list = new LinkedList<FederationMember>();
@@ -2012,10 +2012,10 @@ public class TestManagerController {
 		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);
 		managerController.setPacketSender(packetSender);
 		
-		Request request = new Request("id1", null, new ArrayList<Category>(), xOCCIAtt,
+		Order order = new Order("id1", null, new ArrayList<Category>(), xOCCIAtt,
 				false, "abc");
 		
-		Assert.assertFalse(managerController.createLocalInstanceWithFederationUser(request));
+		Assert.assertFalse(managerController.createLocalInstanceWithFederationUser(order));
 
 		Mockito.verify(packetSender).sendPacket(Mockito.argThat(new ArgumentMatcher<IQ>() {
 			@Override
@@ -2033,92 +2033,92 @@ public class TestManagerController {
 	}
 	
 	@Test
-	public void testRemoveAllOpenRequests() {
+	public void testRemoveAllOpenOrders() {
 		
 		managerTestHelper.useSameThreadExecutor();
 		
-		// setting request repository
-		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), null, null, true, "");
-		request1.setState(RequestState.OPEN);
-		Request request2 = new Request("id2", managerTestHelper.getDefaultFederationToken(), null, null, true, "");
-		request2.setState(RequestState.OPEN);
+		// setting order repository
+		Order order1 = new Order("id1", managerTestHelper.getDefaultFederationToken(), null, null, true, "");
+		order1.setState(OrderState.OPEN);
+		Order order2 = new Order("id2", managerTestHelper.getDefaultFederationToken(), null, null, true, "");
+		order2.setState(OrderState.OPEN);
 
-		RequestRepository requestRepository = new RequestRepository();
-		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(), request1);
-		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(), request2);
-		managerController.setRequests(requestRepository);
+		OrderRepository orderRepository = new OrderRepository();
+		orderRepository.addOrder(managerTestHelper.getDefaultFederationToken().getUser(), order1);
+		orderRepository.addOrder(managerTestHelper.getDefaultFederationToken().getUser(), order2);
+		managerController.setOrders(orderRepository);
 
-		// checking open requests
-		List<Request> requestsFromUser = managerController.getRequestsFromUser(managerTestHelper
+		// checking open orders
+		List<Order> ordersFromUser = managerController.getOrdersFromUser(managerTestHelper
 				.getDefaultFederationToken().getAccessId());
-		Assert.assertEquals(2, requestsFromUser.size());
-		Assert.assertEquals(RequestState.OPEN, requestsFromUser.get(0).getState());
-		Assert.assertEquals(RequestState.OPEN, requestsFromUser.get(1).getState());
+		Assert.assertEquals(2, ordersFromUser.size());
+		Assert.assertEquals(OrderState.OPEN, ordersFromUser.get(0).getState());
+		Assert.assertEquals(OrderState.OPEN, ordersFromUser.get(1).getState());
 
 		Mockito.when(
 				managerTestHelper.getComputePlugin().getInstance(Mockito.any(Token.class),
 						Mockito.anyString())).thenThrow(new OCCIException(ErrorType.BAD_REQUEST, ""));
 		
-		// removing all requests
-		managerController.removeAllRequests(managerTestHelper.getDefaultFederationToken().getAccessId());
+		// removing all orders
+		managerController.removeAllOrders(managerTestHelper.getDefaultFederationToken().getAccessId());
 		
-		requestsFromUser = managerController.getRequestsFromUser(managerTestHelper
+		ordersFromUser = managerController.getOrdersFromUser(managerTestHelper
 				.getDefaultFederationToken().getAccessId());
 		
-		Assert.assertEquals(0, requestsFromUser.size());
+		Assert.assertEquals(0, ordersFromUser.size());
 	}
 	
 	@Test
-	public void testRemoveOneOpenRequestAndAfterThatRemoveAllOpenRequests() {
+	public void testRemoveOneOpenOrderAndAfterThatRemoveAllOpenOrders() {
 		
 		managerTestHelper.useSameThreadExecutor();
 		
-		// setting request repository
+		// setting order repository
 		String id1 = "id1";
 		String id2 = "id2";
 		String id3 = "id3";
-		Request request1 = new Request(id1, managerTestHelper.getDefaultFederationToken(), null, null, true, "");
-		request1.setState(RequestState.OPEN);
-		Request request2 = new Request(id2, managerTestHelper.getDefaultFederationToken(), null, null, true, "");
-		request2.setState(RequestState.OPEN);
-		Request request3 = new Request(id3, managerTestHelper.getDefaultFederationToken(), null, null, true, "");
-		request3.setState(RequestState.OPEN);
+		Order order1 = new Order(id1, managerTestHelper.getDefaultFederationToken(), null, null, true, "");
+		order1.setState(OrderState.OPEN);
+		Order order2 = new Order(id2, managerTestHelper.getDefaultFederationToken(), null, null, true, "");
+		order2.setState(OrderState.OPEN);
+		Order order3 = new Order(id3, managerTestHelper.getDefaultFederationToken(), null, null, true, "");
+		order3.setState(OrderState.OPEN);
 
-		RequestRepository requestRepository = new RequestRepository();
-		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(), request1);
-		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(), request2);
-		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(), request3);
-		managerController.setRequests(requestRepository);
+		OrderRepository orderRepository = new OrderRepository();
+		orderRepository.addOrder(managerTestHelper.getDefaultFederationToken().getUser(), order1);
+		orderRepository.addOrder(managerTestHelper.getDefaultFederationToken().getUser(), order2);
+		orderRepository.addOrder(managerTestHelper.getDefaultFederationToken().getUser(), order3);
+		managerController.setOrders(orderRepository);
 
-		// checking open requests
-		List<Request> requestsFromUser = managerController.getRequestsFromUser(managerTestHelper
+		// checking open orders
+		List<Order> ordersFromUser = managerController.getOrdersFromUser(managerTestHelper
 				.getDefaultFederationToken().getAccessId());
-		Assert.assertEquals(3, requestsFromUser.size());
-		Assert.assertEquals(RequestState.OPEN, requestsFromUser.get(0).getState());
-		Assert.assertEquals(RequestState.OPEN, requestsFromUser.get(1).getState());
-		Assert.assertEquals(RequestState.OPEN, requestsFromUser.get(2).getState());
+		Assert.assertEquals(3, ordersFromUser.size());
+		Assert.assertEquals(OrderState.OPEN, ordersFromUser.get(0).getState());
+		Assert.assertEquals(OrderState.OPEN, ordersFromUser.get(1).getState());
+		Assert.assertEquals(OrderState.OPEN, ordersFromUser.get(2).getState());
 
 		Mockito.when(
 				managerTestHelper.getComputePlugin().getInstance(Mockito.any(Token.class),
 						Mockito.anyString())).thenThrow(new OCCIException(ErrorType.BAD_REQUEST, ""));
 		
-		// removing one request 
-		managerController.removeRequest(managerTestHelper.getDefaultFederationToken().getAccessId(), id1);
+		// removing one orders 
+		managerController.removeOrder(managerTestHelper.getDefaultFederationToken().getAccessId(), id1);
 
-		requestsFromUser = managerController.getRequestsFromUser(managerTestHelper
+		ordersFromUser = managerController.getOrdersFromUser(managerTestHelper
 				.getDefaultFederationToken().getAccessId());
-		Assert.assertEquals(2, requestsFromUser.size());
-		Assert.assertEquals(RequestState.OPEN, requestsFromUser.get(0).getState());
-		Assert.assertEquals(RequestState.OPEN, requestsFromUser.get(1).getState());
+		Assert.assertEquals(2, ordersFromUser.size());
+		Assert.assertEquals(OrderState.OPEN, ordersFromUser.get(0).getState());
+		Assert.assertEquals(OrderState.OPEN, ordersFromUser.get(1).getState());
 	
-		// removing the rest of requests
-		managerController.removeRequest(managerTestHelper.getDefaultFederationToken().getAccessId(), id2);
-		managerController.removeRequest(managerTestHelper.getDefaultFederationToken().getAccessId(), id3);
+		// removing the rest of orders
+		managerController.removeOrder(managerTestHelper.getDefaultFederationToken().getAccessId(), id2);
+		managerController.removeOrder(managerTestHelper.getDefaultFederationToken().getAccessId(), id3);
 		
-		requestsFromUser = managerController.getRequestsFromUser(managerTestHelper
+		ordersFromUser = managerController.getOrdersFromUser(managerTestHelper
 				.getDefaultFederationToken().getAccessId());
 		
-		Assert.assertEquals(0, requestsFromUser.size());
+		Assert.assertEquals(0, ordersFromUser.size());
 	}
 	
 	@Test
@@ -2179,44 +2179,44 @@ public class TestManagerController {
 		Assert.assertEquals(2, allowedFederationMembers.size());	
 	}	
 	
-	public void testInstanceIsBeingUsedByFulfilledRequest(){
-		// setting request repository
-		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), null, null, true, "");
-		request1.setState(RequestState.FULFILLED);
-		request1.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
-		request1.setProvidingMemberId("remote-manager.test.com");
+	public void testInstanceIsBeingUsedByFulfilledOrder(){
+		// setting order repository
+		Order order1 = new Order("id1", managerTestHelper.getDefaultFederationToken(), null, null, true, "");
+		order1.setState(OrderState.FULFILLED);
+		order1.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
+		order1.setProvidingMemberId("remote-manager.test.com");
 		
-		RequestRepository requestRepository = new RequestRepository();
-		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(), request1);
-		managerController.setRequests(requestRepository);
+		OrderRepository orderRepository = new OrderRepository();
+		orderRepository.addOrder(managerTestHelper.getDefaultFederationToken().getUser(), order1);
+		managerController.setOrders(orderRepository);
 		
-		Assert.assertTrue(managerController.instanceHasRequestRelatedTo(request1.getId(), DefaultDataTestHelper.INSTANCE_ID
-				+ Request.SEPARATOR_GLOBAL_ID + "remote-manager.test.com"));
-		Assert.assertFalse(managerController.instanceHasRequestRelatedTo(request1.getId(), "any_value"
-				+ Request.SEPARATOR_GLOBAL_ID + "remote-manager.test.com"));
+		Assert.assertTrue(managerController.instanceHasOrderRelatedTo(order1.getId(), DefaultDataTestHelper.INSTANCE_ID
+				+ Order.SEPARATOR_GLOBAL_ID + "remote-manager.test.com"));
+		Assert.assertFalse(managerController.instanceHasOrderRelatedTo(order1.getId(), "any_value"
+				+ Order.SEPARATOR_GLOBAL_ID + "remote-manager.test.com"));
 	}
 	
 	@Test
-	public void testInstanceIsBeingUsedByDeletedRequest(){
-		// setting request repository
-		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), null, null, true, "");
-		request1.setState(RequestState.DELETED);
-		request1.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
-		request1.setProvidingMemberId("remote-manager.test.com");
+	public void testInstanceIsBeingUsedByDeletedOrder(){
+		// setting order repository
+		Order order1 = new Order("id1", managerTestHelper.getDefaultFederationToken(), null, null, true, "");
+		order1.setState(OrderState.DELETED);
+		order1.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
+		order1.setProvidingMemberId("remote-manager.test.com");
 		
-		RequestRepository requestRepository = new RequestRepository();
-		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(), request1);
-		managerController.setRequests(requestRepository);
+		OrderRepository orderRepository = new OrderRepository();
+		orderRepository.addOrder(managerTestHelper.getDefaultFederationToken().getUser(), order1);
+		managerController.setOrders(orderRepository);
 				
-		Assert.assertTrue(managerController.instanceHasRequestRelatedTo(request1.getId(), DefaultDataTestHelper.INSTANCE_ID
-				+ Request.SEPARATOR_GLOBAL_ID + "remote-manager.test.com"));
-		Assert.assertFalse(managerController.instanceHasRequestRelatedTo(request1.getId(), "any_value"
-				+ Request.SEPARATOR_GLOBAL_ID + "remote-manager.test.com"));
+		Assert.assertTrue(managerController.instanceHasOrderRelatedTo(order1.getId(), DefaultDataTestHelper.INSTANCE_ID
+				+ Order.SEPARATOR_GLOBAL_ID + "remote-manager.test.com"));
+		Assert.assertFalse(managerController.instanceHasOrderRelatedTo(order1.getId(), "any_value"
+				+ Order.SEPARATOR_GLOBAL_ID + "remote-manager.test.com"));
 	}
 	
 	@SuppressWarnings("unchecked")
 	@Test
-	public void testInstanceIsNotBeingUsedButRequestWasForwarded(){
+	public void testInstanceIsNotBeingUsedButOrderWasForwarded(){
 		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);
 		managerController.setPacketSender(packetSender);
 		
@@ -2241,12 +2241,12 @@ public class TestManagerController {
 		listMembers.add(new FederationMember(remoteResourcesInfo));
 		managerController.updateMembers(listMembers);
 
-		Request requestOne = new Request("id1", managerTestHelper.getDefaultFederationToken(), new ArrayList<Category>(),
+		Order orderOne = new Order("id1", managerTestHelper.getDefaultFederationToken(), new ArrayList<Category>(),
 				new HashMap<String, String>(), true, "");
-		requestOne.setState(RequestState.OPEN);
-		RequestRepository requestRepository = new RequestRepository();
-		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(), requestOne);
-		managerController.setRequests(requestRepository);
+		orderOne.setState(OrderState.OPEN);
+		OrderRepository orderRepository = new OrderRepository();
+		orderRepository.addOrder(managerTestHelper.getDefaultFederationToken().getUser(), orderOne);
+		managerController.setOrders(orderRepository);
 
 		// mocking date
 		long now = System.currentTimeMillis();
@@ -2254,48 +2254,48 @@ public class TestManagerController {
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 		managerController.setDateUtils(dateUtils);
 
-		// submiting requests
-		managerController.checkAndSubmitOpenRequests();
+		// submiting orders
+		managerController.checkAndSubmitOpenOrders();
 
-		// checking if request was forwarded to remote member
-		List<Request> requestsFromUser = managerController.getRequestsFromUser(
+		// checking if order was forwarded to remote member
+		List<Order> ordersFromUser = managerController.getOrdersFromUser(
 				managerTestHelper.getDefaultFederationToken().getAccessId());
-		for (Request request : requestsFromUser) {
-			Assert.assertEquals(RequestState.PENDING, request.getState());
+		for (Order order : ordersFromUser) {
+			Assert.assertEquals(OrderState.PENDING, order.getState());
 		}
-		Assert.assertTrue(managerController.isRequestForwardedtoRemoteMember(
-				requestOne.getId()));
+		Assert.assertTrue(managerController.isOrderForwardedtoRemoteMember(
+				orderOne.getId()));
 		
-		// checking if forwarded request is being considered while checking if
+		// checking if forwarded orders is being considered while checking if
 		// instance is being used
-		Assert.assertTrue(managerController.instanceHasRequestRelatedTo(requestOne.getId(),
-				DefaultDataTestHelper.INSTANCE_ID + Request.SEPARATOR_GLOBAL_ID
+		Assert.assertTrue(managerController.instanceHasOrderRelatedTo(orderOne.getId(),
+				DefaultDataTestHelper.INSTANCE_ID + Order.SEPARATOR_GLOBAL_ID
 						+ DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL));
-		Assert.assertTrue(managerController.instanceHasRequestRelatedTo(requestOne.getId(),
-				"any_value" + Request.SEPARATOR_GLOBAL_ID
+		Assert.assertTrue(managerController.instanceHasOrderRelatedTo(orderOne.getId(),
+				"any_value" + Order.SEPARATOR_GLOBAL_ID
 						+ DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL));
 	}
 	
 	@Test
 	public void testInstanceIsNotBeingUsed(){
-		// setting request repository
-		Request request1 = new Request("id1",
+		// setting orders repository
+		Order order1 = new Order("id1",
 				managerTestHelper.getDefaultFederationToken(), null, null, true, "");
-		request1.setState(RequestState.OPEN);
+		order1.setState(OrderState.OPEN);
 		
-		RequestRepository requestRepository = new RequestRepository();
-		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(), request1);
-		managerController.setRequests(requestRepository);
+		OrderRepository orderRepository = new OrderRepository();
+		orderRepository.addOrder(managerTestHelper.getDefaultFederationToken().getUser(), order1);
+		managerController.setOrders(orderRepository);
 		
-		Assert.assertFalse(managerController.instanceHasRequestRelatedTo(request1.getId(), "instanceId"));
+		Assert.assertFalse(managerController.instanceHasOrderRelatedTo(order1.getId(), "instanceId"));
 	}
 	
 	@Test
-	public void testMonitorServedRequestRemovingRequest() throws InterruptedException{
-		// checking there is not served request
-		Assert.assertEquals(0, managerController.getServedRequests().size());
+	public void testMonitorServedOrderRemovingOrder() throws InterruptedException{
+		// checking there is not served order
+		Assert.assertEquals(0, managerController.getServedOrders().size());
 		
-		mockRequestInstance();
+		mockOrderInstance();
 		
 		// mocking packet sender
 		IQ iq = new IQ();
@@ -2313,34 +2313,34 @@ public class TestManagerController {
 		Mockito.when(packetSender.syncSendPacket(Mockito.any(IQ.class))).thenReturn(response);
 		managerController.setPacketSender(packetSender);
 				
-		managerController.queueServedRequest("manager1-test.com", new ArrayList<Category>(),
+		managerController.queueServedOrder("manager1-test.com", new ArrayList<Category>(),
 				xOCCIAtt, "id1", managerTestHelper.getDefaultFederationToken());
-		managerController.checkAndSubmitOpenRequests();
+		managerController.checkAndSubmitOpenOrders();
 		
-		// checking there is one served request
-		Assert.assertEquals(1, managerController.getServedRequests().size());
+		// checking there is one served order
+		Assert.assertEquals(1, managerController.getServedOrders().size());
 		Assert.assertEquals("manager1-test.com",
-				getRequestByInstanceId(managerController.getServedRequests(),
+				getOrderByInstanceId(managerController.getServedOrders(),
 						DefaultDataTestHelper.INSTANCE_ID).getRequestingMemberId());
 		Assert.assertEquals(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
-				getRequestByInstanceId(managerController.getServedRequests(),
+				getOrderByInstanceId(managerController.getServedOrders(),
 						DefaultDataTestHelper.INSTANCE_ID).getProvidingMemberId());
-		Assert.assertEquals("id1", getRequestByInstanceId(managerController.getServedRequests(),
+		Assert.assertEquals("id1", getOrderByInstanceId(managerController.getServedOrders(),
 						DefaultDataTestHelper.INSTANCE_ID).getId());
 
-		// monitoring served requests
-		managerController.monitorServedRequests();
+		// monitoring served orders
+		managerController.monitorServedOrders();
 	
-		// checking there is not served request		
-		Assert.assertEquals(0, managerController.getServedRequests().size());		
+		// checking there is not served order		
+		Assert.assertEquals(0, managerController.getServedOrders().size());		
 	}
 	
 	@Test
-	public void testMonitorServedRequestKeepingRequest() throws InterruptedException{
-		// checking there is not served request
-		Assert.assertEquals(0, managerController.getServedRequests().size());
+	public void testMonitorServedOrderKeepingOrder() throws InterruptedException{
+		// checking there is not served order
+		Assert.assertEquals(0, managerController.getServedOrders().size());
 		
-		mockRequestInstance();
+		mockOrderInstance();
 		
 		// mocking packet sender
 		IQ iq = new IQ();
@@ -2357,38 +2357,38 @@ public class TestManagerController {
 		Mockito.when(packetSender.syncSendPacket(Mockito.any(IQ.class))).thenReturn(response);
 		managerController.setPacketSender(packetSender);
 		
-		managerController.queueServedRequest("manager1-test.com", new ArrayList<Category>(),
+		managerController.queueServedOrder("manager1-test.com", new ArrayList<Category>(),
 				xOCCIAtt, "id1", managerTestHelper.getDefaultFederationToken());		
-		managerController.checkAndSubmitOpenRequests();
+		managerController.checkAndSubmitOpenOrders();
 				
-		// checking there is one served request
-		Assert.assertEquals(1, managerController.getServedRequests().size());
+		// checking there is one served order
+		Assert.assertEquals(1, managerController.getServedOrders().size());
 		Assert.assertEquals("manager1-test.com",
-				getRequestByInstanceId(managerController.getServedRequests(),
+				getOrderByInstanceId(managerController.getServedOrders(),
 						DefaultDataTestHelper.INSTANCE_ID).getRequestingMemberId());
 		Assert.assertEquals(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
-				getRequestByInstanceId(managerController.getServedRequests(),
+				getOrderByInstanceId(managerController.getServedOrders(),
 						DefaultDataTestHelper.INSTANCE_ID).getProvidingMemberId());
-		Assert.assertEquals("id1", getRequestByInstanceId(managerController.getServedRequests(),
+		Assert.assertEquals("id1", getOrderByInstanceId(managerController.getServedOrders(),
 						DefaultDataTestHelper.INSTANCE_ID).getId());
 
-		// monitoring served requests
-		managerController.monitorServedRequests();
+		// monitoring served orders
+		managerController.monitorServedOrders();
 	
-		// checking there is not served request		
-		Assert.assertEquals(1, managerController.getServedRequests().size());
+		// checking there is not served order		
+		Assert.assertEquals(1, managerController.getServedOrders().size());
 		Assert.assertEquals("manager1-test.com",
-				getRequestByInstanceId(managerController.getServedRequests(),
+				getOrderByInstanceId(managerController.getServedOrders(),
 						DefaultDataTestHelper.INSTANCE_ID).getRequestingMemberId());
 		Assert.assertEquals(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
-				getRequestByInstanceId(managerController.getServedRequests(),
+				getOrderByInstanceId(managerController.getServedOrders(),
 						DefaultDataTestHelper.INSTANCE_ID).getProvidingMemberId());
 	}
 	
-	private Request getRequestByInstanceId(List<Request> remoteRequests, String instanceId) {
-		for (Request request : remoteRequests) {
-			if (instanceId.equals(request.getInstanceId())){
-				return request;
+	private Order getOrderByInstanceId(List<Order> remoteOrders, String instanceId) {
+		for (Order order : remoteOrders) {
+			if (instanceId.equals(order.getInstanceId())){
+				return order;
 			}
 		}
 		return null;
@@ -2510,17 +2510,17 @@ public class TestManagerController {
 	
 	@Test
 	public void testGarbageCollector(){
-		// setting request repository
+		// setting order repository
 		Token federationToken = new Token(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
 				DefaultDataTestHelper.FED_USER_NAME, new Date(), new HashMap<String, String>());
 		
-		Request request1 = new Request("id1", federationToken,  null, null, true, "");
-		request1.setState(RequestState.FULFILLED);
-		request1.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
+		Order order1 = new Order("id1", federationToken,  null, null, true, "");
+		order1.setState(OrderState.FULFILLED);
+		order1.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
 		
-		RequestRepository requestRepository = new RequestRepository();
-		requestRepository.addRequest(federationToken.getUser(), request1);
-		managerController.setRequests(requestRepository);
+		OrderRepository orderRepository = new OrderRepository();
+		orderRepository.addOrder(federationToken.getUser(), order1);
+		managerController.setOrders(orderRepository);
 
 		// mocking getInstances
 		Mockito.reset(managerTestHelper.getComputePlugin());
@@ -2533,7 +2533,7 @@ public class TestManagerController {
 		
 		// checking if there is one instance for federation token 
 		Assert.assertEquals(1, managerController.getInstances(federationToken.getAccessId()).size());
-		Assert.assertEquals(DefaultDataTestHelper.INSTANCE_ID + Request.SEPARATOR_GLOBAL_ID
+		Assert.assertEquals(DefaultDataTestHelper.INSTANCE_ID + Order.SEPARATOR_GLOBAL_ID
 				+ DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, managerController
 				.getInstances(federationToken.getAccessId()).get(0).getId());
 
@@ -2541,7 +2541,7 @@ public class TestManagerController {
 		
 		// checking if garbage collector does not remove the instance 
 		Assert.assertEquals(1, managerController.getInstances(federationToken.getAccessId()).size());
-		Assert.assertEquals(DefaultDataTestHelper.INSTANCE_ID + Request.SEPARATOR_GLOBAL_ID
+		Assert.assertEquals(DefaultDataTestHelper.INSTANCE_ID + Order.SEPARATOR_GLOBAL_ID
 				+ DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, managerController
 				.getInstances(federationToken.getAccessId()).get(0).getId());
 	}
@@ -2549,17 +2549,17 @@ public class TestManagerController {
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testGarbageCollectorRemovingInstance(){
-		// setting request repository
+		// setting order repository
 		Token federationToken = new Token(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
 				DefaultDataTestHelper.FED_USER_NAME, new Date(), new HashMap<String, String>());
 		
-		Request request1 = new Request("id1", federationToken, null, null, true, "");
-		request1.setState(RequestState.FULFILLED);
-		request1.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
+		Order order1 = new Order("id1", federationToken, null, null, true, "");
+		order1.setState(OrderState.FULFILLED);
+		order1.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
 		
-		RequestRepository requestRepository = new RequestRepository();
-		requestRepository.addRequest(federationToken.getUser(), request1);
-		managerController.setRequests(requestRepository);
+		OrderRepository orderRepository = new OrderRepository();
+		orderRepository.addOrder(federationToken.getUser(), order1);
+		managerController.setOrders(orderRepository);
 
 		// mocking getInstances
 		Mockito.reset(managerTestHelper.getComputePlugin());
@@ -2594,9 +2594,9 @@ public class TestManagerController {
 	
 	@SuppressWarnings("unchecked")
 	@Test
-	public void testGarbageCollectorWithServedRequest() {
-		// checking there is not served request
-		Assert.assertEquals(0, managerController.getServedRequests().size());
+	public void testGarbageCollectorWithServedOrder() {
+		// checking there is not served order
+		Assert.assertEquals(0, managerController.getServedOrders().size());
 		
 		// mocking getInstances
 		Mockito.reset(managerTestHelper.getComputePlugin());
@@ -2616,19 +2616,19 @@ public class TestManagerController {
 						.thenReturn(twoInstances, twoInstances, oneInstance);
 		
 		// creating instance for remote member 
-		managerController.queueServedRequest("manager1-test.com", new ArrayList<Category>(),
+		managerController.queueServedOrder("manager1-test.com", new ArrayList<Category>(),
 				xOCCIAtt, "id1", managerTestHelper.getDefaultFederationToken());		
-		managerController.checkAndSubmitOpenRequests();
+		managerController.checkAndSubmitOpenOrders();
 				
-		// checking there is one served request
-		Assert.assertEquals(1, managerController.getServedRequests().size());
+		// checking there is one served order
+		Assert.assertEquals(1, managerController.getServedOrders().size());
 		Assert.assertEquals("manager1-test.com",
-				getRequestByInstanceId(managerController.getServedRequests(),
+				getOrderByInstanceId(managerController.getServedOrders(),
 						DefaultDataTestHelper.INSTANCE_ID).getRequestingMemberId());
 		Assert.assertEquals(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
-				getRequestByInstanceId(managerController.getServedRequests(),
+				getOrderByInstanceId(managerController.getServedOrders(),
 						DefaultDataTestHelper.INSTANCE_ID).getProvidingMemberId());
-		Assert.assertEquals("id1", getRequestByInstanceId(managerController.getServedRequests(),
+		Assert.assertEquals("id1", getOrderByInstanceId(managerController.getServedOrders(),
 						DefaultDataTestHelper.INSTANCE_ID).getId());
 				
 		// updating compute mock
@@ -2648,19 +2648,19 @@ public class TestManagerController {
 		resultInstances = managerTestHelper.getComputePlugin().getInstances(managerTestHelper.getDefaultFederationToken());
 		Assert.assertEquals(1, resultInstances.size());
 		Assert.assertEquals(DefaultDataTestHelper.INSTANCE_ID, resultInstances.get(0).getId());
-		// checking there is one served request
-		Assert.assertEquals(1, managerController.getServedRequests().size());
+		// checking there is one served order
+		Assert.assertEquals(1, managerController.getServedOrders().size());
 		Assert.assertEquals("manager1-test.com",
-				getRequestByInstanceId(managerController.getServedRequests(),
+				getOrderByInstanceId(managerController.getServedOrders(),
 						DefaultDataTestHelper.INSTANCE_ID).getRequestingMemberId());
 		Assert.assertEquals(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
-				getRequestByInstanceId(managerController.getServedRequests(),
+				getOrderByInstanceId(managerController.getServedOrders(),
 						DefaultDataTestHelper.INSTANCE_ID).getProvidingMemberId());
 	}
 	
 	@Test
 	@SuppressWarnings("unchecked")
-	public void testSSHKeyReplacementWhenOriginalRequestHasPublicKey() 
+	public void testSSHKeyReplacementWhenOriginalOrderHasPublicKey() 
 			throws FileNotFoundException, IOException, MessagingException {
 		Map<String, String> extraProperties = new HashMap<String, String>();
 		extraProperties.put(ConfigurationConstants.SSH_PUBLIC_KEY_PATH, 
@@ -2668,14 +2668,14 @@ public class TestManagerController {
 		ManagerController localManagerController = 
 				managerTestHelper.createDefaultManagerController(extraProperties);
 		ManagerController spiedManageController = Mockito.spy(localManagerController);
-		String remoteRequestId = "id1";
+		String remoteOrderId = "id1";
 		
 		Map<String,String> newXOCCIAttr = new HashMap<String,String>(this.xOCCIAtt);
 		ArrayList<Category> categories = new ArrayList<Category>();
-		final Category publicKeyCategory = new Category(RequestConstants.PUBLIC_KEY_TERM, 
-				RequestConstants.CREDENTIALS_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS);
+		final Category publicKeyCategory = new Category(OrderConstants.PUBLIC_KEY_TERM, 
+				OrderConstants.CREDENTIALS_RESOURCE_SCHEME, OrderConstants.MIXIN_CLASS);
 		categories.add(publicKeyCategory);
-		newXOCCIAttr.put(RequestAttribute.DATA_PUBLIC_KEY.getValue(), "public-key");
+		newXOCCIAttr.put(OrderAttribute.DATA_PUBLIC_KEY.getValue(), "public-key");
 		
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		String newInstanceId = "newinstanceid";
@@ -2684,21 +2684,21 @@ public class TestManagerController {
 						Mockito.anyList(), Mockito.anyMap(), Mockito.anyString())).thenReturn(newInstanceId);
 		spiedManageController.setComputePlugin(computePlugin);
 		
-		Request servedRequest = new Request(remoteRequestId, managerTestHelper.getDefaultFederationToken(), categories,
+		Order servedOrder = new Order(remoteOrderId, managerTestHelper.getDefaultFederationToken(), categories,
 				newXOCCIAttr, true,
 				DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL);
-		servedRequest.setState(RequestState.FULFILLED);
-		servedRequest.setInstanceId(newInstanceId);
-		servedRequest.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		servedOrder.setState(OrderState.FULFILLED);
+		servedOrder.setInstanceId(newInstanceId);
+		servedOrder.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		
 		Instance instance = new Instance(newInstanceId);
 		instance.addAttribute(Instance.SSH_PUBLIC_ADDRESS_ATT, "127.0.0.1:5555");
 		instance.addAttribute(Instance.SSH_USERNAME_ATT, "fogbow");
 		
-		Mockito.when(spiedManageController.waitForSSHPublicAddress(Mockito.any(Request.class))).thenReturn(instance);
+		Mockito.when(spiedManageController.waitForSSHPublicAddress(Mockito.any(Order.class))).thenReturn(instance);
 		Mockito.doNothing().when(spiedManageController).waitForSSHConnectivity(instance);
 		
-		spiedManageController.createLocalInstanceWithFederationUser(servedRequest);
+		spiedManageController.createLocalInstanceWithFederationUser(servedOrder);
 		
 		final String localManagerPublicKeyData = IOUtils.toString(new FileInputStream(
 				new File(DefaultDataTestHelper.LOCAL_MANAGER_SSH_PUBLIC_KEY_PATH)));
@@ -2717,27 +2717,27 @@ public class TestManagerController {
 					public boolean matches(Object argument) {
 						Map<String, String> xOCCIAttr = (Map<String, String>) argument;
 						String publicKeyValue = xOCCIAttr
-								.get(RequestAttribute.DATA_PUBLIC_KEY
+								.get(OrderAttribute.DATA_PUBLIC_KEY
 										.getValue());
 						return publicKeyValue == null;
 					}
 				}), Mockito.anyString());
 		
 		String base64UserDataCmd = new String(Base64.decodeBase64(localManagerController
-				.createUserDataUtilsCommand(servedRequest)), "UTF-8");
+				.createUserDataUtilsCommand(servedOrder)), "UTF-8");
 		Assert.assertTrue(base64UserDataCmd.contains(localManagerPublicKeyData));
 	}
 	
 	@Test
 	@SuppressWarnings("unchecked")
-	public void testSSHKeyReplacementWhenOriginalRequestHasNoPublicKey() 
+	public void testSSHKeyReplacementWhenOriginalOrderHasNoPublicKey() 
 			throws FileNotFoundException, IOException, MessagingException {
 		Map<String, String> extraProperties = new HashMap<String, String>();
 		extraProperties.put(ConfigurationConstants.SSH_PUBLIC_KEY_PATH, 
 				DefaultDataTestHelper.LOCAL_MANAGER_SSH_PUBLIC_KEY_PATH);
 		ManagerController localManagerController = 
 				managerTestHelper.createDefaultManagerController(extraProperties);
-		String remoteRequestId = "id1";
+		String remoteOrderId = "id1";
 		ManagerController spiedManageController = Mockito.spy(localManagerController);
 		
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
@@ -2747,27 +2747,27 @@ public class TestManagerController {
 				Mockito.anyList(), Mockito.anyMap(), Mockito.anyString())).thenReturn(newInstanceId);
 		spiedManageController.setComputePlugin(computePlugin);
 		
-		Request servedRequest = new Request(remoteRequestId, managerTestHelper.getDefaultFederationToken(), new ArrayList<Category>(),
+		Order servedOrder = new Order(remoteOrderId, managerTestHelper.getDefaultFederationToken(), new ArrayList<Category>(),
 				xOCCIAtt, true,
 				DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL);
-		servedRequest.setState(RequestState.FULFILLED);
-		servedRequest.setInstanceId(newInstanceId);
-		servedRequest.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		servedOrder.setState(OrderState.FULFILLED);
+		servedOrder.setInstanceId(newInstanceId);
+		servedOrder.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		
 		Instance instance = new Instance(newInstanceId);
 		instance.addAttribute(Instance.SSH_PUBLIC_ADDRESS_ATT, "127.0.0.1:5555");
 		instance.addAttribute(Instance.SSH_USERNAME_ATT, "fogbow");
 		
-		Mockito.when(spiedManageController.waitForSSHPublicAddress(Mockito.any(Request.class))).thenReturn(instance);
+		Mockito.when(spiedManageController.waitForSSHPublicAddress(Mockito.any(Order.class))).thenReturn(instance);
 		Mockito.doNothing().when(spiedManageController).waitForSSHConnectivity(instance);
 		
-		spiedManageController.createLocalInstanceWithFederationUser(servedRequest);
+		spiedManageController.createLocalInstanceWithFederationUser(servedOrder);
 		
 		final String localManagerPublicKeyData = IOUtils.toString(new FileInputStream(
 				new File(DefaultDataTestHelper.LOCAL_MANAGER_SSH_PUBLIC_KEY_PATH)));
 		
-		final Category publicKeyCategory = new Category(RequestConstants.PUBLIC_KEY_TERM, 
-				RequestConstants.CREDENTIALS_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS);
+		final Category publicKeyCategory = new Category(OrderConstants.PUBLIC_KEY_TERM, 
+				OrderConstants.CREDENTIALS_RESOURCE_SCHEME, OrderConstants.MIXIN_CLASS);
 		
 		Mockito.verify(computePlugin).requestInstance(Mockito.any(Token.class),
 				Mockito.argThat(new ArgumentMatcher<List<Category>>() {
@@ -2783,14 +2783,14 @@ public class TestManagerController {
 					public boolean matches(Object argument) {
 						Map<String, String> xOCCIAttr = (Map<String, String>) argument;
 						String publicKeyValue = xOCCIAttr
-								.get(RequestAttribute.DATA_PUBLIC_KEY
+								.get(OrderAttribute.DATA_PUBLIC_KEY
 										.getValue());
 						return publicKeyValue == null;
 					}
 				}), Mockito.anyString());
 		
 		String base64UserDataCmd = new String(Base64.decodeBase64(localManagerController
-				.createUserDataUtilsCommand(servedRequest)), "UTF-8");
+				.createUserDataUtilsCommand(servedOrder)), "UTF-8");
 		Assert.assertTrue(base64UserDataCmd.contains(localManagerPublicKeyData));
 	}
 	
@@ -2807,29 +2807,29 @@ public class TestManagerController {
 						Mockito.anyMap(), Mockito.anyString())).thenReturn(instanceId);
 		managerControllerSpy.setComputePlugin(computePlugin);
 		
-		String servedRequestId = "id1";
-		Request servedRequest = new Request(servedRequestId, managerTestHelper.getDefaultFederationToken(), new ArrayList<Category>(),
+		String servedOrderId = "id1";
+		Order servedOrder = new Order(servedOrderId, managerTestHelper.getDefaultFederationToken(), new ArrayList<Category>(),
 				xOCCIAtt, true,
 				DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL);
-		servedRequest.setState(RequestState.FULFILLED);
-		servedRequest.setInstanceId(instanceId);
-		servedRequest.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		servedOrder.setState(OrderState.FULFILLED);
+		servedOrder.setInstanceId(instanceId);
+		servedOrder.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		
-		managerControllerSpy.createLocalInstanceWithFederationUser(servedRequest);
+		managerControllerSpy.createLocalInstanceWithFederationUser(servedOrder);
 		
-		Mockito.verify(managerControllerSpy, Mockito.never()).waitForSSHPublicAddress(Mockito.eq(servedRequest));
+		Mockito.verify(managerControllerSpy, Mockito.never()).waitForSSHPublicAddress(Mockito.eq(servedOrder));
 		
 		final String localManagerPublicKeyData = IOUtils.toString(new FileInputStream(
 				new File(DefaultDataTestHelper.LOCAL_MANAGER_SSH_PUBLIC_KEY_PATH)));
 		
 		String base64UserDataCmd = new String(Base64.decodeBase64(managerController
-				.createUserDataUtilsCommand(servedRequest)), "UTF-8");
+				.createUserDataUtilsCommand(servedOrder)), "UTF-8");
 		Assert.assertFalse(base64UserDataCmd.contains(localManagerPublicKeyData));
 	}
 	
 	@Test
 	@SuppressWarnings("unchecked")
-	public void testSSHKeyReplacementLocallyWhenOriginalRequestHasPublicKey() throws FileNotFoundException, IOException, MessagingException {
+	public void testSSHKeyReplacementLocallyWhenOriginalOrderHasPublicKey() throws FileNotFoundException, IOException, MessagingException {
 		Map<String, String> extraProperties = new HashMap<String, String>();
 		extraProperties.put(ConfigurationConstants.SSH_PUBLIC_KEY_PATH, 
 				DefaultDataTestHelper.LOCAL_MANAGER_SSH_PUBLIC_KEY_PATH);
@@ -2837,14 +2837,14 @@ public class TestManagerController {
 				managerTestHelper.createDefaultManagerController(extraProperties);
 		ManagerController spiedManageController = Mockito.spy(localManagerController);
 		
-		String localRequestId = "id1";
+		String localOrderId = "id1";
 		
 		Map<String,String> newXOCCIAttr = new HashMap<String,String>(this.xOCCIAtt);
 		ArrayList<Category> categories = new ArrayList<Category>();
-		final Category publicKeyCategory = new Category(RequestConstants.PUBLIC_KEY_TERM, 
-				RequestConstants.CREDENTIALS_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS);
+		final Category publicKeyCategory = new Category(OrderConstants.PUBLIC_KEY_TERM, 
+				OrderConstants.CREDENTIALS_RESOURCE_SCHEME, OrderConstants.MIXIN_CLASS);
 		categories.add(publicKeyCategory);
-		newXOCCIAttr.put(RequestAttribute.DATA_PUBLIC_KEY.getValue(), "public-key");
+		newXOCCIAttr.put(OrderAttribute.DATA_PUBLIC_KEY.getValue(), "public-key");
 		
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		String newInstanceId = "newinstanceid";
@@ -2853,21 +2853,21 @@ public class TestManagerController {
 						Mockito.anyList(), Mockito.anyMap(), Mockito.anyString())).thenReturn(newInstanceId);
 		spiedManageController.setComputePlugin(computePlugin);
 		
-		Request localRequest = new Request(localRequestId, managerTestHelper.getDefaultFederationToken(), categories,
+		Order localOrder = new Order(localOrderId, managerTestHelper.getDefaultFederationToken(), categories,
 				newXOCCIAttr, true,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
-		localRequest.setState(RequestState.FULFILLED);
-		localRequest.setInstanceId(newInstanceId);
-		localRequest.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		localOrder.setState(OrderState.FULFILLED);
+		localOrder.setInstanceId(newInstanceId);
+		localOrder.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		
 		Instance instance = new Instance(newInstanceId);
 		instance.addAttribute(Instance.SSH_PUBLIC_ADDRESS_ATT, "127.0.0.1:5555");
 		instance.addAttribute(Instance.SSH_USERNAME_ATT, "fogbow");
 		
-		Mockito.when(spiedManageController.waitForSSHPublicAddress(Mockito.any(Request.class))).thenReturn(instance);
+		Mockito.when(spiedManageController.waitForSSHPublicAddress(Mockito.any(Order.class))).thenReturn(instance);
 		Mockito.doNothing().when(spiedManageController).waitForSSHConnectivity(instance);
 		
-		spiedManageController.createLocalInstanceWithFederationUser(localRequest);
+		spiedManageController.createLocalInstanceWithFederationUser(localOrder);
 		
 		final String localManagerPublicKeyData = IOUtils.toString(new FileInputStream(
 				new File(DefaultDataTestHelper.LOCAL_MANAGER_SSH_PUBLIC_KEY_PATH)));
@@ -2886,27 +2886,27 @@ public class TestManagerController {
 					public boolean matches(Object argument) {
 						Map<String, String> xOCCIAttr = (Map<String, String>) argument;
 						String publicKeyValue = xOCCIAttr
-								.get(RequestAttribute.DATA_PUBLIC_KEY
+								.get(OrderAttribute.DATA_PUBLIC_KEY
 										.getValue());
 						return publicKeyValue == null;
 					}
 				}), Mockito.anyString());
 		
 		String base64UserDataCmd = new String(Base64.decodeBase64(localManagerController
-				.createUserDataUtilsCommand(localRequest)), "UTF-8");
+				.createUserDataUtilsCommand(localOrder)), "UTF-8");
 		Assert.assertTrue(base64UserDataCmd.contains(localManagerPublicKeyData));
 	}
 
 	@Test
 	@SuppressWarnings("unchecked")
-	public void testSSHKeyReplacementLocallyWhenOriginalRequestHasNoPublicKey() 
+	public void testSSHKeyReplacementLocallyWhenOriginalOrderHasNoPublicKey() 
 			throws FileNotFoundException, IOException, MessagingException {
 		Map<String, String> extraProperties = new HashMap<String, String>();
 		extraProperties.put(ConfigurationConstants.SSH_PUBLIC_KEY_PATH, 
 				DefaultDataTestHelper.LOCAL_MANAGER_SSH_PUBLIC_KEY_PATH);
 		ManagerController localManagerController = 
 				managerTestHelper.createDefaultManagerController(extraProperties);
-		String localRequestId = "id1";
+		String localOrderId = "id1";
 		ManagerController spiedManageController = Mockito.spy(localManagerController);	
 		
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
@@ -2916,27 +2916,27 @@ public class TestManagerController {
 				Mockito.anyList(), Mockito.anyMap(), Mockito.anyString())).thenReturn(newInstanceId);
 		spiedManageController.setComputePlugin(computePlugin);
 		
-		Request localRequest = new Request(localRequestId, managerTestHelper.getDefaultFederationToken(), new ArrayList<Category>(),
+		Order localOrder = new Order(localOrderId, managerTestHelper.getDefaultFederationToken(), new ArrayList<Category>(),
 				xOCCIAtt, true,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
-		localRequest.setState(RequestState.FULFILLED);
-		localRequest.setInstanceId(newInstanceId);
-		localRequest.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		localOrder.setState(OrderState.FULFILLED);
+		localOrder.setInstanceId(newInstanceId);
+		localOrder.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		
 		Instance instance = new Instance(newInstanceId);
 		instance.addAttribute(Instance.SSH_PUBLIC_ADDRESS_ATT, "127.0.0.1:5555");
 		instance.addAttribute(Instance.SSH_USERNAME_ATT, "fogbow");
 		
-		Mockito.when(spiedManageController.waitForSSHPublicAddress(Mockito.any(Request.class))).thenReturn(instance);
+		Mockito.when(spiedManageController.waitForSSHPublicAddress(Mockito.any(Order.class))).thenReturn(instance);
 		Mockito.doNothing().when(spiedManageController).waitForSSHConnectivity(instance);
 		
-		spiedManageController.createLocalInstanceWithFederationUser(localRequest);
+		spiedManageController.createLocalInstanceWithFederationUser(localOrder);
 		
 		final String localManagerPublicKeyData = IOUtils.toString(new FileInputStream(
 				new File(DefaultDataTestHelper.LOCAL_MANAGER_SSH_PUBLIC_KEY_PATH)));
 		
-		final Category publicKeyCategory = new Category(RequestConstants.PUBLIC_KEY_TERM, 
-				RequestConstants.CREDENTIALS_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS);
+		final Category publicKeyCategory = new Category(OrderConstants.PUBLIC_KEY_TERM, 
+				OrderConstants.CREDENTIALS_RESOURCE_SCHEME, OrderConstants.MIXIN_CLASS);
 		
 		Mockito.verify(computePlugin).requestInstance(Mockito.any(Token.class),
 				Mockito.argThat(new ArgumentMatcher<List<Category>>() {
@@ -2952,14 +2952,14 @@ public class TestManagerController {
 					public boolean matches(Object argument) {
 						Map<String, String> xOCCIAttr = (Map<String, String>) argument;
 						String publicKeyValue = xOCCIAttr
-								.get(RequestAttribute.DATA_PUBLIC_KEY
+								.get(OrderAttribute.DATA_PUBLIC_KEY
 										.getValue());
 						return publicKeyValue == null;
 					}
 				}), Mockito.anyString());
 		
 		String base64UserDataCmd = new String(Base64.decodeBase64(localManagerController
-				.createUserDataUtilsCommand(localRequest)), "UTF-8");
+				.createUserDataUtilsCommand(localOrder)), "UTF-8");
 		Assert.assertTrue(base64UserDataCmd.contains(localManagerPublicKeyData));
 	}
 	
@@ -2976,92 +2976,92 @@ public class TestManagerController {
 						Mockito.anyMap(), Mockito.anyString())).thenReturn(instanceId);
 		managerControllerSpy.setComputePlugin(computePlugin);
 		
-		String localRequestId = "id1";
-		Request localRequest = new Request(localRequestId, managerTestHelper.getDefaultFederationToken(), new ArrayList<Category>(),
+		String localOrderId = "id1";
+		Order localOrder = new Order(localOrderId, managerTestHelper.getDefaultFederationToken(), new ArrayList<Category>(),
 				xOCCIAtt, true,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
-		localRequest.setState(RequestState.FULFILLED);
-		localRequest.setInstanceId(instanceId);
-		localRequest.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		localOrder.setState(OrderState.FULFILLED);
+		localOrder.setInstanceId(instanceId);
+		localOrder.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		
-		managerControllerSpy.createLocalInstanceWithFederationUser(localRequest);
+		managerControllerSpy.createLocalInstanceWithFederationUser(localOrder);
 		
-		Mockito.verify(managerControllerSpy, Mockito.never()).waitForSSHPublicAddress(Mockito.eq(localRequest));
+		Mockito.verify(managerControllerSpy, Mockito.never()).waitForSSHPublicAddress(Mockito.eq(localOrder));
 		
 		final String localManagerPublicKeyData = IOUtils.toString(new FileInputStream(
 				new File(DefaultDataTestHelper.LOCAL_MANAGER_SSH_PUBLIC_KEY_PATH)));
 		
 		String base64UserDataCmd = new String(Base64.decodeBase64(managerController
-				.createUserDataUtilsCommand(localRequest)), "UTF-8");
+				.createUserDataUtilsCommand(localOrder)), "UTF-8");
 		Assert.assertFalse(base64UserDataCmd.contains(localManagerPublicKeyData));
 	}
 	
 	public void testPreemption() {
-		Request localRequest = new Request("id1", managerTestHelper.getDefaultFederationToken(), new ArrayList<Category>(),
+		Order localOrder = new Order("id1", managerTestHelper.getDefaultFederationToken(), new ArrayList<Category>(),
 				new HashMap<String, String>(), true,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
-		localRequest.setState(RequestState.FULFILLED);
-		localRequest.setInstanceId("instance1");
-		localRequest.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		localOrder.setState(OrderState.FULFILLED);
+		localOrder.setInstanceId("instance1");
+		localOrder.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		
-		Request servedRequest1 = new Request("id2", managerTestHelper.getDefaultFederationToken(), new ArrayList<Category>(),
+		Order servedOrder1 = new Order("id2", managerTestHelper.getDefaultFederationToken(), new ArrayList<Category>(),
 				new HashMap<String, String>(), false,
 				DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL);
-		servedRequest1.setState(RequestState.FULFILLED);
-		servedRequest1.setInstanceId("instance2");
-		servedRequest1.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		servedOrder1.setState(OrderState.FULFILLED);
+		servedOrder1.setInstanceId("instance2");
+		servedOrder1.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		
-		Request servedRequest2 = new Request("id3", managerTestHelper.getDefaultFederationToken(), new ArrayList<Category>(),
+		Order servedOrder2 = new Order("id3", managerTestHelper.getDefaultFederationToken(), new ArrayList<Category>(),
 				new HashMap<String, String>(), false,
 				DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL);
-		servedRequest2.setState(RequestState.FULFILLED);
-		servedRequest2.setInstanceId("instance3");
-		servedRequest2.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		servedOrder2.setState(OrderState.FULFILLED);
+		servedOrder2.setInstanceId("instance3");
+		servedOrder2.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		
-		RequestRepository requestRepository = new RequestRepository();
-		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(), localRequest);
-		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(), servedRequest1);
-		requestRepository.addRequest(managerTestHelper.getDefaultFederationToken().getUser(), servedRequest2);
+		OrderRepository orderRepository = new OrderRepository();
+		orderRepository.addOrder(managerTestHelper.getDefaultFederationToken().getUser(), localOrder);
+		orderRepository.addOrder(managerTestHelper.getDefaultFederationToken().getUser(), servedOrder1);
+		orderRepository.addOrder(managerTestHelper.getDefaultFederationToken().getUser(), servedOrder2);
 
-		// check requests
-		managerController.setRequests(requestRepository);
-		Assert.assertEquals(1, requestRepository.getAllLocalRequests().size());
-		Assert.assertTrue(requestRepository.getAllLocalRequests().contains(localRequest));
-		Assert.assertEquals(RequestState.FULFILLED, localRequest.getState());
-		Assert.assertEquals(2, requestRepository.getAllServedRequests().size());
-		Assert.assertTrue(requestRepository.getAllServedRequests().contains(servedRequest1));
-		Assert.assertTrue(requestRepository.getAllServedRequests().contains(servedRequest2));
+		// check orders
+		managerController.setOrders(orderRepository);
+		Assert.assertEquals(1, orderRepository.getAllLocalOrders().size());
+		Assert.assertTrue(orderRepository.getAllLocalOrders().contains(localOrder));
+		Assert.assertEquals(OrderState.FULFILLED, localOrder.getState());
+		Assert.assertEquals(2, orderRepository.getAllServedOrders().size());
+		Assert.assertTrue(orderRepository.getAllServedOrders().contains(servedOrder1));
+		Assert.assertTrue(orderRepository.getAllServedOrders().contains(servedOrder2));
 		
-		// preempt servedRequest1
-		managerController.preemption(servedRequest1);
-		Assert.assertEquals(1, requestRepository.getAllLocalRequests().size());
-		Assert.assertTrue(requestRepository.getAllLocalRequests().contains(localRequest));
-		Assert.assertEquals(RequestState.FULFILLED, localRequest.getState());
-		Assert.assertEquals(1, requestRepository.getAllServedRequests().size());
-		Assert.assertFalse(requestRepository.getAllServedRequests().contains(servedRequest1));
-		Assert.assertTrue(requestRepository.getAllServedRequests().contains(servedRequest2));
+		// preempt servedOrder1
+		managerController.preemption(servedOrder1);
+		Assert.assertEquals(1, orderRepository.getAllLocalOrders().size());
+		Assert.assertTrue(orderRepository.getAllLocalOrders().contains(localOrder));
+		Assert.assertEquals(OrderState.FULFILLED, localOrder.getState());
+		Assert.assertEquals(1, orderRepository.getAllServedOrders().size());
+		Assert.assertFalse(orderRepository.getAllServedOrders().contains(servedOrder1));
+		Assert.assertTrue(orderRepository.getAllServedOrders().contains(servedOrder2));
 
-		// preempt servedRequest2
-		managerController.preemption(servedRequest2);
-		Assert.assertEquals(1, requestRepository.getAllLocalRequests().size());
-		Assert.assertTrue(requestRepository.getAllLocalRequests().contains(localRequest));
-		Assert.assertEquals(RequestState.FULFILLED, localRequest.getState());
-		Assert.assertTrue(requestRepository.getAllServedRequests().isEmpty());
-		Assert.assertFalse(requestRepository.getAllServedRequests().contains(servedRequest1));
-		Assert.assertFalse(requestRepository.getAllServedRequests().contains(servedRequest2));
+		// preempt servedOrder2
+		managerController.preemption(servedOrder2);
+		Assert.assertEquals(1, orderRepository.getAllLocalOrders().size());
+		Assert.assertTrue(orderRepository.getAllLocalOrders().contains(localOrder));
+		Assert.assertEquals(OrderState.FULFILLED, localOrder.getState());
+		Assert.assertTrue(orderRepository.getAllServedOrders().isEmpty());
+		Assert.assertFalse(orderRepository.getAllServedOrders().contains(servedOrder1));
+		Assert.assertFalse(orderRepository.getAllServedOrders().contains(servedOrder2));
 		
-		// preempt localRequest
-		managerController.preemption(localRequest);
-		Assert.assertEquals(1, requestRepository.getAllLocalRequests().size());
-		Assert.assertTrue(requestRepository.getAllLocalRequests().contains(localRequest));
-		Assert.assertEquals(RequestState.CLOSED, localRequest.getState());
-		Assert.assertTrue(requestRepository.getAllServedRequests().isEmpty());
-		Assert.assertFalse(requestRepository.getAllServedRequests().contains(servedRequest1));
-		Assert.assertFalse(requestRepository.getAllServedRequests().contains(servedRequest2));
+		// preempt localOrder
+		managerController.preemption(localOrder);
+		Assert.assertEquals(1, orderRepository.getAllLocalOrders().size());
+		Assert.assertTrue(orderRepository.getAllLocalOrders().contains(localOrder));
+		Assert.assertEquals(OrderState.CLOSED, localOrder.getState());
+		Assert.assertTrue(orderRepository.getAllServedOrders().isEmpty());
+		Assert.assertFalse(orderRepository.getAllServedOrders().contains(servedOrder1));
+		Assert.assertFalse(orderRepository.getAllServedOrders().contains(servedOrder2));
 	}
 	
 	@Test
-	public void createRequests() {
+	public void createOrders() {
 		IdentityPlugin federationIdentityPlugin = Mockito.mock(IdentityPlugin.class);
 		IdentityPlugin localIdentityPlugin = Mockito.mock(IdentityPlugin.class);
 		String federationUser = "user";
@@ -3073,10 +3073,10 @@ public class TestManagerController {
 				new OCCIException(ErrorType.UNAUTHORIZED, ""));
 		managerController.setLocalIdentityPlugin(localIdentityPlugin);
 		managerController.setFederationIdentityPlugin(federationIdentityPlugin);
-		managerController.createRequests(ACCESS_TOKEN_ID_2, new ArrayList<Category>(), xOCCIAtt);
+		managerController.createOrders(ACCESS_TOKEN_ID_2, new ArrayList<Category>(), xOCCIAtt);
 
-		for (Request request : managerController.getRequestsFromUser(federationToken.getAccessId())) {
-			if (request.getFederationToken().getAccessId().isEmpty()) {
+		for (Order order : managerController.getOrdersFromUser(federationToken.getAccessId())) {
+			if (order.getFederationToken().getAccessId().isEmpty()) {
 				Assert.fail();
 			}
 		}
@@ -3084,7 +3084,7 @@ public class TestManagerController {
 	
 	@SuppressWarnings("unchecked")
 	@Test
-	public void testSubmitRequestsSameBatchIdFailingCreateFederationUser() throws InterruptedException {
+	public void testSubmitOrdersSameBatchIdFailingCreateFederationUser() throws InterruptedException {
 		ResourcesInfo resourcesInfo = new ResourcesInfo("", "", "", "", "", "");
 		resourcesInfo.setId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		
@@ -3101,36 +3101,36 @@ public class TestManagerController {
 
 		String batchId = "batchIdOne";
 		HashMap<String, String> xOCCIAtt = new HashMap<String, String>();
-		xOCCIAtt.put(RequestAttribute.BATCH_ID.getValue(), batchId);
+		xOCCIAtt.put(OrderAttribute.BATCH_ID.getValue(), batchId);
 		Token token = managerTestHelper.getDefaultFederationToken();
-		Request request1 = new Request("id1", token, new ArrayList<Category>(),
+		Order order1 = new Order("id1", token, new ArrayList<Category>(),
 				xOCCIAtt, true, "");
-		request1.setState(RequestState.OPEN);
-		Request request2 = new Request("id2", token, new ArrayList<Category>(),
+		order1.setState(OrderState.OPEN);
+		Order order2 = new Order("id2", token, new ArrayList<Category>(),
 				xOCCIAtt, true, "");
-		request2.setState(RequestState.OPEN);
-		Request request3 = new Request("id3", token, new ArrayList<Category>(),
+		order2.setState(OrderState.OPEN);
+		Order order3 = new Order("id3", token, new ArrayList<Category>(),
 				xOCCIAtt, true, "");
-		request3.setState(RequestState.OPEN);		
-		RequestRepository requestRepository = new RequestRepository();
-		requestRepository.addRequest(token.getUser(), request1);
-		requestRepository.addRequest(token.getUser(), request2);
-		requestRepository.addRequest(token.getUser(), request3);
-		managerController.setRequests(requestRepository);
+		order3.setState(OrderState.OPEN);		
+		OrderRepository orderRepository = new OrderRepository();
+		orderRepository.addOrder(token.getUser(), order1);
+		orderRepository.addOrder(token.getUser(), order2);
+		orderRepository.addOrder(token.getUser(), order3);
+		managerController.setOrders(orderRepository);
 
-		managerController.checkAndSubmitOpenRequests();
+		managerController.checkAndSubmitOpenOrders();
 
-		List<Request> requestsFromUser = managerController.getRequestsFromUser(token.getAccessId());
-		Assert.assertEquals(RequestState.FULFILLED, requestsFromUser.get(0).getState());
-		Assert.assertEquals(RequestState.OPEN, requestsFromUser.get(1).getState());
-		Assert.assertEquals(RequestState.OPEN, requestsFromUser.get(2).getState());
+		List<Order> ordersFromUser = managerController.getOrdersFromUser(token.getAccessId());
+		Assert.assertEquals(OrderState.FULFILLED, ordersFromUser.get(0).getState());
+		Assert.assertEquals(OrderState.OPEN, ordersFromUser.get(1).getState());
+		Assert.assertEquals(OrderState.OPEN, ordersFromUser.get(2).getState());
 		Assert.assertEquals(batchId, managerController.getFailedBatches()
 				.getFailedBatchIdsPerType(FailedBatchType.FEDERATION_USER).get(0));	
 	}	
 	
 	@SuppressWarnings("unchecked")
 	@Test
-	public void testSubmitRemoteRequestsSameBatchIdFailingCreateFederationUser()
+	public void testSubmitRemoteOrdersSameBatchIdFailingCreateFederationUser()
 			throws InterruptedException {
 		ResourcesInfo resourcesInfo = new ResourcesInfo("", "", "", "", "", "");
 		resourcesInfo.setId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
@@ -3146,24 +3146,24 @@ public class TestManagerController {
 
 		String batchId = "batchIdOne";
 		HashMap<String, String> xOCCIAtt = new HashMap<String, String>();
-		xOCCIAtt.put(RequestAttribute.BATCH_ID.getValue(), batchId);
+		xOCCIAtt.put(OrderAttribute.BATCH_ID.getValue(), batchId);
 		Token token = managerTestHelper.getDefaultFederationToken();
-		Request request1 = new Request("id1", token, new ArrayList<Category>(), xOCCIAtt,
+		Order order1 = new Order("id1", token, new ArrayList<Category>(), xOCCIAtt,
 				false, "");
-		request1.setState(RequestState.OPEN);
-		Request request2 = new Request("id2", token, new ArrayList<Category>(), xOCCIAtt,
+		order1.setState(OrderState.OPEN);
+		Order order2 = new Order("id2", token, new ArrayList<Category>(), xOCCIAtt,
 				false, "");
-		request2.setState(RequestState.OPEN);
-		RequestRepository requestRepository = new RequestRepository();
-		requestRepository.addRequest(token.getUser(), request1);
-		requestRepository.addRequest(token.getUser(), request2);
-		managerController.setRequests(requestRepository);
+		order2.setState(OrderState.OPEN);
+		OrderRepository orderRepository = new OrderRepository();
+		orderRepository.addOrder(token.getUser(), order1);
+		orderRepository.addOrder(token.getUser(), order2);
+		managerController.setOrders(orderRepository);
 
-		managerController.checkAndSubmitOpenRequests();
+		managerController.checkAndSubmitOpenOrders();
 
-		List<Request> requestsFromUser = managerController.getRequestsFromUser(token.getAccessId());
-		for (Request request : requestsFromUser) {
-			Assert.assertEquals(RequestState.OPEN, request.getState());
+		List<Order> ordersFromUser = managerController.getOrdersFromUser(token.getAccessId());
+		for (Order order : ordersFromUser) {
+			Assert.assertEquals(OrderState.OPEN, order.getState());
 		}
 
 		Assert.assertEquals(batchId, managerController.getFailedBatches()
@@ -3172,7 +3172,7 @@ public class TestManagerController {
 	
 	@SuppressWarnings("unchecked")
 	@Test
-	public void testSubmitRequestsSameBatchIdFailingCreateFederationUserTryingAgain() throws InterruptedException {
+	public void testSubmitOrdersSameBatchIdFailingCreateFederationUserTryingAgain() throws InterruptedException {
 		ResourcesInfo resourcesInfo = new ResourcesInfo("", "", "", "", "", "");
 		resourcesInfo.setId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		
@@ -3190,38 +3190,38 @@ public class TestManagerController {
 
 		String batchId = "batchIdOne";
 		HashMap<String, String> xOCCIAtt = new HashMap<String, String>();
-		xOCCIAtt.put(RequestAttribute.BATCH_ID.getValue(), batchId);
+		xOCCIAtt.put(OrderAttribute.BATCH_ID.getValue(), batchId);
 		Token token = managerTestHelper.getDefaultFederationToken();
-		Request request1 = new Request("id1", token, new ArrayList<Category>(),
+		Order order1 = new Order("id1", token, new ArrayList<Category>(),
 				xOCCIAtt, true, "");
-		request1.setState(RequestState.OPEN);
-		Request request2 = new Request("id2", token, new ArrayList<Category>(),
+		order1.setState(OrderState.OPEN);
+		Order order2 = new Order("id2", token, new ArrayList<Category>(),
 				xOCCIAtt, true, "");
-		request2.setState(RequestState.OPEN);
-		Request request3 = new Request("id3", token, new ArrayList<Category>(),
+		order2.setState(OrderState.OPEN);
+		Order order3 = new Order("id3", token, new ArrayList<Category>(),
 				xOCCIAtt, true, "");
-		request3.setState(RequestState.OPEN);		
-		RequestRepository requestRepository = new RequestRepository();
-		requestRepository.addRequest(token.getUser(), request1);
-		requestRepository.addRequest(token.getUser(), request2);
-		requestRepository.addRequest(token.getUser(), request3);
-		managerController.setRequests(requestRepository);
+		order3.setState(OrderState.OPEN);		
+		OrderRepository orderRepository = new OrderRepository();
+		orderRepository.addOrder(token.getUser(), order1);
+		orderRepository.addOrder(token.getUser(), order2);
+		orderRepository.addOrder(token.getUser(), order3);
+		managerController.setOrders(orderRepository);
 
-		managerController.checkAndSubmitOpenRequests();
+		managerController.checkAndSubmitOpenOrders();
 
-		List<Request> requestsFromUser = managerController.getRequestsFromUser(token.getAccessId());
-		Assert.assertEquals(RequestState.FULFILLED, requestsFromUser.get(0).getState());
-		Assert.assertEquals(RequestState.OPEN, requestsFromUser.get(1).getState());
-		Assert.assertEquals(RequestState.OPEN, requestsFromUser.get(2).getState());
+		List<Order> ordersFromUser = managerController.getOrdersFromUser(token.getAccessId());
+		Assert.assertEquals(OrderState.FULFILLED, ordersFromUser.get(0).getState());
+		Assert.assertEquals(OrderState.OPEN, ordersFromUser.get(1).getState());
+		Assert.assertEquals(OrderState.OPEN, ordersFromUser.get(2).getState());
 		Assert.assertEquals(batchId, managerController.getFailedBatches()
 				.getFailedBatchIdsPerType(FailedBatchType.FEDERATION_USER).get(0));
 		
-		managerController.checkAndSubmitOpenRequests();
+		managerController.checkAndSubmitOpenOrders();
 
-		requestsFromUser = managerController.getRequestsFromUser(token.getAccessId());
-		Assert.assertEquals(RequestState.FULFILLED, requestsFromUser.get(0).getState());
-		Assert.assertEquals(RequestState.FULFILLED, requestsFromUser.get(1).getState());
-		Assert.assertEquals(RequestState.OPEN, requestsFromUser.get(2).getState());
+		ordersFromUser = managerController.getOrdersFromUser(token.getAccessId());
+		Assert.assertEquals(OrderState.FULFILLED, ordersFromUser.get(0).getState());
+		Assert.assertEquals(OrderState.FULFILLED, ordersFromUser.get(1).getState());
+		Assert.assertEquals(OrderState.OPEN, ordersFromUser.get(2).getState());
 		Assert.assertEquals(batchId, managerController.getFailedBatches()
 				.getFailedBatchIdsPerType(FailedBatchType.FEDERATION_USER).get(0));			
 	}
@@ -3230,11 +3230,11 @@ public class TestManagerController {
 	public void testNormalizeBatchId() {
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
 		String batchId = "batchId";
-		xOCCIAtt.put(RequestAttribute.BATCH_ID.getValue(), batchId);
+		xOCCIAtt.put(OrderAttribute.BATCH_ID.getValue(), batchId);
 		managerController.normalizeBatchId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
 				xOCCIAtt);
 		Assert.assertEquals(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL + "@" + batchId,
-				xOCCIAtt.get(RequestAttribute.BATCH_ID.getValue()));
+				xOCCIAtt.get(OrderAttribute.BATCH_ID.getValue()));
 	}
 	
 	@Test
@@ -3326,7 +3326,7 @@ public class TestManagerController {
 	@Test
 	public void testInitializeManager() throws SQLException, JSONException {
 		OrderDataStore database = Mockito.mock(OrderDataStore.class);
-		List<Request> requests = new ArrayList<Request>();
+		List<Order> orders = new ArrayList<Order>();
 		String userOne = "userOne";
 		String accessIdOne = "One";
 		Token federationTokenOne = new Token(accessIdOne, userOne , new Date(), null);
@@ -3337,32 +3337,32 @@ public class TestManagerController {
 		String instanceIdTwo = "instTwo";
 		String instanceIdThree = "instThree";
 		String instanceIdFive = "instFive";
-		Request requestOneUserOne = new Request("One", federationTokenOne, instanceIdOne,
+		Order orderOneUserOne = new Order("One", federationTokenOne, instanceIdOne,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, new Date().getTime(), true,
-				RequestState.FULFILLED, null, null);
-		Request requestTwoUserOne = new Request("Two", federationTokenOne, instanceIdTwo,
+				OrderState.FULFILLED, null, null);
+		Order orderTwoUserOne = new Order("Two", federationTokenOne, instanceIdTwo,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, new Date().getTime(), true,
-				RequestState.FULFILLED, null, null);
-		Request requestThreeUserTwo = new Request("Three", federationTokenTwo, instanceIdThree,
+				OrderState.FULFILLED, null, null);
+		Order orderThreeUserTwo = new Order("Three", federationTokenTwo, instanceIdThree,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, new Date().getTime(), true,
-				RequestState.FULFILLED, null, null);
-		Request requestOPENFour = new Request("Four", federationTokenTwo, "444",
+				OrderState.FULFILLED, null, null);
+		Order orderOPENFour = new Order("Four", federationTokenTwo, "444",
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, new Date().getTime(), true,
-				RequestState.OPEN, null, null);
-		Request requestFiveDELETEDUserTwo = new Request("Five", federationTokenTwo, instanceIdFive,
+				OrderState.OPEN, null, null);
+		Order orderFiveDELETEDUserTwo = new Order("Five", federationTokenTwo, instanceIdFive,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, new Date().getTime(), true,
-				RequestState.DELETED, null, null);		
-		requests.add(requestOneUserOne);
-		requests.add(requestTwoUserOne);
-		requests.add(requestThreeUserTwo);
-		requests.add(requestOPENFour);
-		requests.add(requestFiveDELETEDUserTwo);
-		Mockito.when(database.getOrders()).thenReturn(requests);
+				OrderState.DELETED, null, null);		
+		orders.add(orderOneUserOne);
+		orders.add(orderTwoUserOne);
+		orders.add(orderThreeUserTwo);
+		orders.add(orderOPENFour);
+		orders.add(orderFiveDELETEDUserTwo);
+		Mockito.when(database.getOrders()).thenReturn(orders);
 		managerController.setDatabase(database);
 		
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
@@ -3378,22 +3378,22 @@ public class TestManagerController {
 
 		managerController.initializeManager();
 		
-		List<Request> requestsFromUser = managerController.getRequestsFromUser(federationTokenOne.getAccessId());
-		Assert.assertEquals(2, requestsFromUser.size());
-		Assert.assertEquals(RequestState.FULFILLED, requestsFromUser.get(0).getState());
-		Assert.assertEquals(RequestState.CLOSED, requestsFromUser.get(1).getState());
+		List<Order> ordersFromUser = managerController.getOrdersFromUser(federationTokenOne.getAccessId());
+		Assert.assertEquals(2, ordersFromUser.size());
+		Assert.assertEquals(OrderState.FULFILLED, ordersFromUser.get(0).getState());
+		Assert.assertEquals(OrderState.CLOSED, ordersFromUser.get(1).getState());
 		
-		requestsFromUser = managerController.getRequestsFromUser(federationTokenTwo.getAccessId());
-		Assert.assertEquals(2, requestsFromUser.size());
-		Assert.assertEquals(RequestState.CLOSED, requestsFromUser.get(0).getState());
-		Assert.assertEquals(null, requestsFromUser.get(0).getInstanceId());
-		Assert.assertEquals(RequestState.OPEN, requestsFromUser.get(1).getState());		
+		ordersFromUser = managerController.getOrdersFromUser(federationTokenTwo.getAccessId());
+		Assert.assertEquals(2, ordersFromUser.size());
+		Assert.assertEquals(OrderState.CLOSED, ordersFromUser.get(0).getState());
+		Assert.assertEquals(null, ordersFromUser.get(0).getInstanceId());
+		Assert.assertEquals(OrderState.OPEN, ordersFromUser.get(1).getState());		
 	}
 	
 	@Test
 	public void testDBUpdater() throws SQLException, JSONException {		
 		OrderDataStore database = Mockito.mock(OrderDataStore.class);
-		List<Request> requestsBD = new ArrayList<Request>();
+		List<Order> ordersBD = new ArrayList<Order>();
 		String userOne = "userOne";
 		String accessIdOne = "One";
 		Token federationTokenOne = new Token(accessIdOne, userOne , new Date(), null);
@@ -3403,30 +3403,30 @@ public class TestManagerController {
 		String instanceIdOne = "instOne";
 		String instanceIdTwo = "instTwo";
 		String instanceIdThree = "instThree";
-		Request requestOneUserOne = new Request("One", federationTokenOne, instanceIdOne,
+		Order orderOneUserOne = new Order("One", federationTokenOne, instanceIdOne,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, new Date().getTime(), true,
-				RequestState.FULFILLED, null, null);
-		Request requestTwoUserOne = new Request("Two", federationTokenOne, instanceIdTwo,
+				OrderState.FULFILLED, null, null);
+		Order orderTwoUserOne = new Order("Two", federationTokenOne, instanceIdTwo,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, new Date().getTime(), true,
-				RequestState.FULFILLED, null, null);
-		Request requestThreeUserTwo = new Request("Three", federationTokenTwo, instanceIdThree,
+				OrderState.FULFILLED, null, null);
+		Order orderThreeUserTwo = new Order("Three", federationTokenTwo, instanceIdThree,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, new Date().getTime(), true,
-				RequestState.FULFILLED, null, null);
-		Request requestOPENFour = new Request("Four", federationTokenTwo, "444",
+				OrderState.FULFILLED, null, null);
+		Order orderOPENFour = new Order("Four", federationTokenTwo, "444",
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, new Date().getTime(), true,
-				RequestState.OPEN, null, null);
-		requestsBD.add(requestOneUserOne);
-		requestsBD.add(requestTwoUserOne);
-		requestsBD.add(requestThreeUserTwo);
-		requestsBD.add(requestOPENFour);
-		Mockito.when(database.getOrders()).thenReturn(requestsBD);
-		Mockito.when(database.addOrder(Mockito.any(Request.class))).thenReturn(true);
-		Mockito.when(database.updateOrder(Mockito.any(Request.class))).thenReturn(true);
-		Mockito.when(database.removeOrder(Mockito.any(Request.class))).thenReturn(true);
+				OrderState.OPEN, null, null);
+		ordersBD.add(orderOneUserOne);
+		ordersBD.add(orderTwoUserOne);
+		ordersBD.add(orderThreeUserTwo);
+		ordersBD.add(orderOPENFour);
+		Mockito.when(database.getOrders()).thenReturn(ordersBD);
+		Mockito.when(database.addOrder(Mockito.any(Order.class))).thenReturn(true);
+		Mockito.when(database.updateOrder(Mockito.any(Order.class))).thenReturn(true);
+		Mockito.when(database.removeOrder(Mockito.any(Order.class))).thenReturn(true);
 		managerController.setDatabase(database);
 		
 		IdentityPlugin federationIdentityPlugin = Mockito.mock(IdentityPlugin.class);
@@ -3434,23 +3434,23 @@ public class TestManagerController {
 		Mockito.when(federationIdentityPlugin.getToken(accessIdTwo)).thenReturn(federationTokenTwo);
 		managerController.setFederationIdentityPlugin(federationIdentityPlugin);		
 		
-		Request requestOPENFive = new Request("Five", federationTokenTwo, "555",
+		Order orderOPENFive = new Order("Five", federationTokenTwo, "555",
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, new Date().getTime(), true,
-				RequestState.OPEN, null, null);
-		RequestRepository requestRepository = new RequestRepository();
-		requestRepository.addRequest(requestOneUserOne.getFederationToken().getUser(), requestOneUserOne);
-		requestRepository.addRequest(requestThreeUserTwo.getFederationToken().getUser(), requestThreeUserTwo);
-		requestRepository.addRequest(requestOPENFive.getFederationToken().getUser(), requestOPENFive);		
-		managerController.setRequests(requestRepository);
+				OrderState.OPEN, null, null);
+		OrderRepository orderRepository = new OrderRepository();
+		orderRepository.addOrder(orderOneUserOne.getFederationToken().getUser(), orderOneUserOne);
+		orderRepository.addOrder(orderThreeUserTwo.getFederationToken().getUser(), orderThreeUserTwo);
+		orderRepository.addOrder(orderOPENFive.getFederationToken().getUser(), orderOPENFive);		
+		managerController.setOrders(orderRepository);
 		
-		managerController.updateRequestDB();
+		managerController.updateOrderDB();
 		
-		Assert.assertEquals(1, managerController.getRequestsFromUser(federationTokenOne.getAccessId()).size());
-		Assert.assertEquals(2, managerController.getRequestsFromUser(federationTokenTwo.getAccessId()).size());
-		Mockito.verify(database, Mockito.times(2)).removeOrder(Mockito.any(Request.class));
-		Mockito.verify(database, Mockito.times(1)).addOrder(Mockito.any(Request.class));
-		Mockito.verify(database, Mockito.times(2)).updateOrder(Mockito.any(Request.class));
+		Assert.assertEquals(1, managerController.getOrdersFromUser(federationTokenOne.getAccessId()).size());
+		Assert.assertEquals(2, managerController.getOrdersFromUser(federationTokenTwo.getAccessId()).size());
+		Mockito.verify(database, Mockito.times(2)).removeOrder(Mockito.any(Order.class));
+		Mockito.verify(database, Mockito.times(1)).addOrder(Mockito.any(Order.class));
+		Mockito.verify(database, Mockito.times(2)).updateOrder(Mockito.any(Order.class));
 	}
 	
 	@Test
