@@ -14,7 +14,7 @@ import org.fogbowcloud.manager.core.plugins.accounting.DataStore;
 
 public class UserBasedAccountingDataStore implements AccountingDataSatore {
 
-	public static final String ACCOUNTING_DATASTORE_URL = "accounting_consume_datastore_url";
+	public static final String ACCOUNTING_DATASTORE_URL = "accounting_datastore_url";
 	public static final String ACCOUNTING_DATASTORE_URL_DEFAULT = "jdbc:sqlite:/tmp/usage";
 	public static final String ACCOUNTING_DATASTORE_SQLITE_DRIVER = "org.sqlite.JDBC";
 	
@@ -33,11 +33,15 @@ public class UserBasedAccountingDataStore implements AccountingDataSatore {
 			Class.forName(ACCOUNTING_DATASTORE_SQLITE_DRIVER);
 
 			connection = getConnection();
-//			statement = connection.createStatement();
-//			statement
-//					.execute("CREATE TABLE IF NOT EXISTS " + MEMBER_TABLE_NAME + "(" + MEMBER_ID
-//							+ " VARCHAR(255) PRIMARY KEY, " + CONSUMED + " DOUBLE, " + DONATED
-//							+ " DOUBLE)");
+			statement = connection.createStatement();
+			statement
+					.execute("CREATE TABLE IF NOT EXISTS usage("
+							+ "user VARCHAR(255) NOT NULL, "
+							+ "requesting_member VARCHAR(255), "
+							+ "providing_member VARCHAR(255), "
+							+ "value DOUBLE,"
+							+ "PRIMARY KEY (user, requesting_member, providing_member)"
+							+ ")");
 //			statement.execute("CREATE TABLE IF NOT EXISTS " + USER_TABLE_NAME + "(" + USER_ID
 //					+ " VARCHAR(255) PRIMARY KEY, " + CONSUMED + " DOUBLE)");
 			statement.close();
