@@ -20,8 +20,8 @@ import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.plugins.util.CloudInitUserDataBuilder;
 import org.fogbowcloud.manager.core.plugins.util.CloudInitUserDataBuilder.FileType;
-import org.fogbowcloud.manager.occi.request.Request;
-import org.fogbowcloud.manager.occi.request.RequestAttribute;
+import org.fogbowcloud.manager.occi.order.Order;
+import org.fogbowcloud.manager.occi.order.OrderAttribute;
 
 public class UserdataUtils {
 	
@@ -51,13 +51,13 @@ public class UserdataUtils {
 		return sshCommonUser == null ? ManagerController.DEFAULT_COMMON_SSH_USER : sshCommonUser;
 	}
 	
-	public static String createBase64Command(Request request, Properties properties) throws IOException, MessagingException {
-		String tokenId = request.getId();
+	public static String createBase64Command(Order order, Properties properties) throws IOException, MessagingException {
+		String tokenId = order.getId();
 		String sshPrivateHostIP = properties.getProperty(ConfigurationConstants.TOKEN_HOST_PRIVATE_ADDRESS_KEY);
 		String sshRemoteHostPort = properties.getProperty(ConfigurationConstants.TOKEN_HOST_PORT_KEY);
 		String sshRemoteHostHttpPort = properties.getProperty(ConfigurationConstants.TOKEN_HOST_HTTP_PORT_KEY);
 		String managerPublicKeyFilePath = getManagerSSHPublicKeyFilePath(properties);
-		String userPublicKey = request.getAttValue(RequestAttribute.DATA_PUBLIC_KEY.getValue());
+		String userPublicKey = order.getAttValue(OrderAttribute.DATA_PUBLIC_KEY.getValue());
 		String sshCommonUser = getSSHCommonUser(properties);
 		
 		String sshTunnelCmdFilePath = "bin/fogbow-create-reverse-tunnel";
@@ -76,13 +76,13 @@ public class UserdataUtils {
 			cloudInitUserDataBuilder.addCloudConfig(new FileReader(new File(cloudConfigFilePath)));
 		}
 		
-		String extraUserdata = request.getAttValue(RequestAttribute.EXTRA_USER_DATA_ATT.getValue());
+		String extraUserdata = order.getAttValue(OrderAttribute.EXTRA_USER_DATA_ATT.getValue());
 		String extraUserdataNormalized = null;
 		if (extraUserdata != null) {
 			extraUserdataNormalized = new String(Base64.decodeBase64(extraUserdata));			
 		}
-		String extraUserDataContentType = request.getAttValue(
-				RequestAttribute.EXTRA_USER_DATA_CONTENT_TYPE_ATT.getValue());
+		String extraUserDataContentType = order.getAttValue(
+				OrderAttribute.EXTRA_USER_DATA_CONTENT_TYPE_ATT.getValue());
 		
 		addExtraUserData(cloudInitUserDataBuilder, extraUserdataNormalized, extraUserDataContentType);
 		

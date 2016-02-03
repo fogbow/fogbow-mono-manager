@@ -12,7 +12,7 @@ import org.apache.http.HttpStatus;
 import org.apache.log4j.Logger;
 import org.dom4j.Attribute;
 import org.dom4j.Element;
-import org.fogbowcloud.manager.core.AsynchronousRequestCallback;
+import org.fogbowcloud.manager.core.AsynchronousOrderCallback;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.occi.instance.Instance;
@@ -24,7 +24,7 @@ import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.Resource;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.fogbowcloud.manager.occi.model.Token;
-import org.fogbowcloud.manager.occi.request.Request;
+import org.fogbowcloud.manager.occi.order.Order;
 import org.jamppa.component.PacketCallback;
 import org.jamppa.component.PacketSender;
 import org.xmpp.packet.IQ;
@@ -121,9 +121,9 @@ public class ManagerPacketHelper {
 		return aliveItems;
 	}
 
-	public static void asynchronousRemoteRequest(String requestId, List<Category> categories,
+	public static void asynchronousRemoteOrder(String orderId, List<Category> categories,
 			Map<String, String> xOCCIAttr, String memberAddress, Token userFederationToken,
-			AsyncPacketSender packetSender, final AsynchronousRequestCallback callback) {
+			AsyncPacketSender packetSender, final AsynchronousOrderCallback callback) {
 
 		if (packetSender == null) {
 			LOGGER.warn("Packet sender not set.");
@@ -131,10 +131,10 @@ public class ManagerPacketHelper {
 		}
 
 		IQ iq = new IQ();
-		iq.setID(requestId);
+		iq.setID(orderId);
 		iq.setTo(memberAddress);
 		iq.setType(Type.set);
-		Element queryEl = iq.getElement().addElement("query", ManagerXmppComponent.REQUEST_NAMESPACE);
+		Element queryEl = iq.getElement().addElement("query", ManagerXmppComponent.ORDER_NAMESPACE);
 		for (Category category : categories) {
 			Element categoryEl = queryEl.addElement("category");
 			categoryEl.addElement("class").setText(category.getCatClass());
@@ -146,8 +146,8 @@ public class ManagerPacketHelper {
 			attributeEl.addAttribute("var", xOCCIEntry.getKey());
 			attributeEl.addElement("value").setText(xOCCIEntry.getValue());
 		}
-		Element requestEl = queryEl.addElement("request");
-		requestEl.addElement("id").setText(requestId);
+		Element orderEl = queryEl.addElement("request");
+		orderEl.addElement("id").setText(orderId);
 
 		if (userFederationToken != null) {
 			Element tokenEl = queryEl.addElement("token");
@@ -173,8 +173,8 @@ public class ManagerPacketHelper {
 		packetSender.sendPacket(iq);
 	}
 
-	protected static Instance getRemoteInstance(Request request, PacketSender packetSender) {
-		return getRemoteInstance(request.getProvidingMemberId(), request.getInstanceId(), packetSender);
+	protected static Instance getRemoteInstance(Order order, PacketSender packetSender) {
+		return getRemoteInstance(order.getProvidingMemberId(), order.getInstanceId(), packetSender);
 	}
 
 	public static Instance getRemoteInstance(String memberId, String instanceId, PacketSender packetSender) {
@@ -207,7 +207,7 @@ public class ManagerPacketHelper {
 		return parseInstance(response.getElement().element("query").element("instance"));
 	}
 
-	public static void deleteRemoteInstace(Request request, PacketSender packetSender) {
+	public static void deleteRemoteInstace(Order order, PacketSender packetSender) {
 
 		if (packetSender == null) {
 			LOGGER.warn("Packet sender not set.");
@@ -215,11 +215,11 @@ public class ManagerPacketHelper {
 		}
 
 		IQ iq = new IQ();
-		iq.setTo(request.getProvidingMemberId());
+		iq.setTo(order.getProvidingMemberId());
 		iq.setType(Type.set);
 		Element queryEl = iq.getElement().addElement("query", ManagerXmppComponent.REMOVEINSTANCE_NAMESPACE);
 		Element instanceEl = queryEl.addElement("instance");
-		instanceEl.addElement("id").setText(request.getInstanceId());
+		instanceEl.addElement("id").setText(order.getInstanceId());
 
 		IQ response = (IQ) packetSender.syncSendPacket(iq);
 		if (response.getError() != null) {
@@ -325,7 +325,7 @@ public class ManagerPacketHelper {
 		}
 	}
 
-	public static void checkIfInstanceIsBeingUsedByRemoteMember(String instanceId, Request servedRequest,
+	public static void checkIfInstanceIsBeingUsedByRemoteMember(String instanceId, Order servedOrder,
 			PacketSender packetSender) {
 
 		if (packetSender == null) {
@@ -334,11 +334,11 @@ public class ManagerPacketHelper {
 		}
 
 		IQ iq = new IQ();
-		iq.setTo(servedRequest.getRequestingMemberId());
+		iq.setTo(servedOrder.getRequestingMemberId());
 		iq.setType(Type.get);
 		Element queryEl = iq.getElement().addElement("query", ManagerXmppComponent.INSTANCEBEINGUSED_NAMESPACE);
-		Element requestEl = queryEl.addElement("request");
-		requestEl.addElement("id").setText(servedRequest.getId());
+		Element orderEl = queryEl.addElement("request");
+		orderEl.addElement("id").setText(servedOrder.getId());
 		if (instanceId != null) {
 			Element instanceEl = queryEl.addElement("instance");
 			instanceEl.addElement("id").setText(instanceId);
@@ -349,22 +349,22 @@ public class ManagerPacketHelper {
 		}
 	}
 
-	public static void replyToServedRequest(Request request, PacketSender packetSender) {
+	public static void replyToServedOrder(Order order, PacketSender packetSender) {
 
 		if (packetSender == null) {
 			LOGGER.warn("Packet sender not set.");
 			throw new IllegalArgumentException("Packet sender not set.");
 		}
 
-		IQ response = new IQ(Type.result, request.getId());
-		response.setFrom(request.getProvidingMemberId());
-		response.setTo(request.getRequestingMemberId());
+		IQ response = new IQ(Type.result, order.getId());
+		response.setFrom(order.getProvidingMemberId());
+		response.setTo(order.getRequestingMemberId());
 
-		if (request.getInstanceId() == null) {
+		if (order.getInstanceId() == null) {
 			response.setError(Condition.item_not_found);
 		} else {
-			Element queryResponseEl = response.getElement().addElement("query", ManagerXmppComponent.REQUEST_NAMESPACE);
-			queryResponseEl.addElement("instance").addElement("id").setText(request.getInstanceId());
+			Element queryResponseEl = response.getElement().addElement("query", ManagerXmppComponent.ORDER_NAMESPACE);
+			queryResponseEl.addElement("instance").addElement("id").setText(order.getInstanceId());
 		}
 		packetSender.sendPacket(response);
 	}
@@ -404,8 +404,8 @@ public class ManagerPacketHelper {
 		return new ResourcesInfo(id, cpuIdle, cpuInUse, memIdle, memInUse, instancesIdle, instancesInUse);
 	}
 	
-	public static void deleteRemoteRequest(String providingMember, Request request, 
-			AsyncPacketSender packetSender, final AsynchronousRequestCallback callback) {
+	public static void deleteRemoteOrder(String providingMember, Order order, 
+			AsyncPacketSender packetSender, final AsynchronousOrderCallback callback) {
 		if (packetSender == null) {
 			LOGGER.warn("Packet sender not set.");
 			throw new IllegalArgumentException("Packet sender not set.");
@@ -415,11 +415,11 @@ public class ManagerPacketHelper {
 		iq.setTo(providingMember);
 		iq.setType(Type.set);
 		Element queryEl = iq.getElement().addElement("query",
-				ManagerXmppComponent.REMOVEREQUEST_NAMESPACE);
-		Element requestEl = queryEl.addElement("request");
-		requestEl.addElement("id").setText(request.getId());
+				ManagerXmppComponent.REMOVEORDER_NAMESPACE);
+		Element orderEl = queryEl.addElement("request");
+		orderEl.addElement("id").setText(order.getId());
 		Element tokenEl = queryEl.addElement("token");
-		tokenEl.addElement("accessId").setText(request.getFederationToken().getAccessId());
+		tokenEl.addElement("accessId").setText(order.getFederationToken().getAccessId());
 		
 		packetSender.addPacketCallback(iq, new PacketCallback() {		
 			@Override

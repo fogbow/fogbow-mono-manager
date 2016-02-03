@@ -8,8 +8,8 @@ import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.core.util.ManagerTestHelper;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.Token;
-import org.fogbowcloud.manager.occi.request.Request;
-import org.fogbowcloud.manager.occi.request.RequestState;
+import org.fogbowcloud.manager.occi.order.Order;
+import org.fogbowcloud.manager.occi.order.OrderState;
 import org.fogbowcloud.manager.xmpp.AsyncPacketSender;
 import org.fogbowcloud.manager.xmpp.ManagerPacketHelper;
 import org.junit.Before;
@@ -31,12 +31,12 @@ public class TestForwardedToken {
 	public void testTokenBeingForwarded() {
 		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);
 		
-		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), new ArrayList<Category>(),
+		Order order1 = new Order("id1", managerTestHelper.getDefaultFederationToken(), new ArrayList<Category>(),
 				new HashMap<String, String>(), true, DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
-		request1.setState(RequestState.OPEN);
+		order1.setState(OrderState.OPEN);
         
-		ManagerPacketHelper.asynchronousRemoteRequest(request1.getId(), request1.getCategories(), 
-				request1.getxOCCIAtt(), "member1", new Token("accessId", "user", 
+		ManagerPacketHelper.asynchronousRemoteOrder(order1.getId(), order1.getCategories(), 
+				order1.getxOCCIAtt(), "member1", new Token("accessId", "user", 
 				null, null), packetSender, null);
 		
 		Mockito.verify(packetSender).sendPacket(Mockito.argThat(new ArgumentMatcher<IQ>() {
@@ -58,12 +58,12 @@ public class TestForwardedToken {
 	public void testTokenNotBeingForwarded() {
 		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);
 		
-		Request request1 = new Request("id1", managerTestHelper.getDefaultFederationToken(), new ArrayList<Category>(),
+		Order order1 = new Order("id1", managerTestHelper.getDefaultFederationToken(), new ArrayList<Category>(),
 				new HashMap<String, String>(), true, DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
-		request1.setState(RequestState.OPEN);
+		order1.setState(OrderState.OPEN);
         
-		ManagerPacketHelper.asynchronousRemoteRequest(request1.getId(), request1.getCategories(), 
-				request1.getxOCCIAtt(), "member1", null, packetSender, null);
+		ManagerPacketHelper.asynchronousRemoteOrder(order1.getId(), order1.getCategories(), 
+				order1.getxOCCIAtt(), "member1", null, packetSender, null);
 		
 		Mockito.verify(packetSender).sendPacket(Mockito.argThat(new ArgumentMatcher<IQ>() {
 			@Override

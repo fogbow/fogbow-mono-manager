@@ -35,9 +35,9 @@ import org.fogbowcloud.manager.occi.model.OCCIHeaders;
 import org.fogbowcloud.manager.occi.model.Resource;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.fogbowcloud.manager.occi.model.Token;
-import org.fogbowcloud.manager.occi.request.Request;
-import org.fogbowcloud.manager.occi.request.RequestAttribute;
-import org.fogbowcloud.manager.occi.request.RequestConstants;
+import org.fogbowcloud.manager.occi.order.Order;
+import org.fogbowcloud.manager.occi.order.OrderAttribute;
+import org.fogbowcloud.manager.occi.order.OrderConstants;
 import org.fogbowcloud.manager.occi.util.OCCITestHelper;
 import org.junit.After;
 import org.junit.Assert;
@@ -85,38 +85,38 @@ public class TestPostCompute {
 		AuthorizationPlugin authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
 		Mockito.when(authorizationPlugin.isAuthorized(Mockito.any(Token.class))).thenReturn(true);
 
-		List<Request> requests = new LinkedList<Request>();
+		List<Order> orders = new LinkedList<Order>();
 		Token token = new Token(OCCITestHelper.ACCESS_TOKEN, OCCITestHelper.USER_MOCK,
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>());
-		Request request1 = new Request("1", token, null, null, true, "");
-		request1.setInstanceId(INSTANCE_1_ID);
-		request1.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
-		requests.add(request1);
-		Request request2 = new Request("2", token, null, null, true, "");
-		request2.setInstanceId(INSTANCE_2_ID);
-		request2.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
-		requests.add(request2);
-		Request request3 = new Request("3", new Token("token", "user", DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
+		Order order1 = new Order("1", token, null, null, true, "");
+		order1.setInstanceId(INSTANCE_1_ID);
+		order1.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
+		orders.add(order1);
+		Order order2 = new Order("2", token, null, null, true, "");
+		order2.setInstanceId(INSTANCE_2_ID);
+		order2.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
+		orders.add(order2);
+		Order order3 = new Order("3", new Token("token", "user", DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
 				new HashMap<String, String>()), null, null, true, "");
-		request3.setInstanceId(INSTANCE_3_ID_WITHOUT_USER);
-		request3.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
-		requests.add(request3);
+		order3.setInstanceId(INSTANCE_3_ID_WITHOUT_USER);
+		order3.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
+		orders.add(order3);
 
 		authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
 		Mockito.when(authorizationPlugin.isAuthorized(Mockito.any(Token.class))).thenReturn(true);
 
 		mapperPlugin = Mockito.mock(MapperPlugin.class);
-		Mockito.when(mapperPlugin.getLocalCredentials(Mockito.any(Request.class)))
+		Mockito.when(mapperPlugin.getLocalCredentials(Mockito.any(Order.class)))
 				.thenReturn(new HashMap<String, String>());
 
 		imageStoragePlugin = Mockito.mock(ImageStoragePlugin.class);
 
-		Map<String, List<Request>> requestsToAdd = new HashMap<String, List<Request>>();
-		requestsToAdd.put(OCCITestHelper.USER_MOCK, requests);
+		Map<String, List<Order>> ordersToAdd = new HashMap<String, List<Order>>();
+		ordersToAdd.put(OCCITestHelper.USER_MOCK, orders);
 
 		this.helper.initializeComponentCompute(computePlugin, identityPlugin, authorizationPlugin,
 				imageStoragePlugin, Mockito.mock(AccountingPlugin.class), Mockito.mock(BenchmarkingPlugin.class),
-				requestsToAdd, mapperPlugin);
+				ordersToAdd, mapperPlugin);
 
 	}
 
@@ -270,28 +270,28 @@ public class TestPostCompute {
 		Resource occiUserdataResource = new Resource("user_data; scheme=\"http://schemas.openstack.org/compute/instance#\"; class=\"mixin\"");
 
 		Properties properties = new Properties();
-		properties.put(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + RequestConstants.USER_DATA_TERM,
+		properties.put(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + OrderConstants.USER_DATA_TERM,
 				"user_data");
 		properties.put(
-				ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + RequestAttribute.EXTRA_USER_DATA_ATT.getValue(),
+				ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + OrderAttribute.EXTRA_USER_DATA_ATT.getValue(),
 				FED_COMPUTE_USER_DATA);
 		
 		List<Resource> resources = new ArrayList<Resource>();
 		resources.add(occiUserdataResource);
-		List<Category> requestCategories = new ArrayList<Category>();
-		Map<String, String> requestXOCCIAtt = new HashMap<String, String>();
+		List<Category> orderCategories = new ArrayList<Category>();
+		Map<String, String> orderXOCCIAtt = new HashMap<String, String>();
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
 		xOCCIAtt.put(FED_COMPUTE_USER_DATA, fakeScriptEncoded);
 
 		ComputeServerResource csr = new ComputeServerResource();
-		csr.convertUserData(properties, resources, requestCategories, requestXOCCIAtt,
+		csr.convertUserData(properties, resources, orderCategories, orderXOCCIAtt,
 				xOCCIAtt);
 		
-		assertEquals(1, requestCategories.size());
-		assertEquals(new Category(RequestConstants.USER_DATA_TERM, RequestConstants.SCHEME, RequestConstants.MIXIN_CLASS), requestCategories.get(0));
-		assertEquals(2, requestXOCCIAtt.size());
-		assertEquals(fakeScriptEncoded, requestXOCCIAtt.get(RequestAttribute.EXTRA_USER_DATA_ATT.getValue()));
-		assertEquals(MIMEMultipartArchive.SHELLSCRIPT.getType(), requestXOCCIAtt.get(RequestAttribute.EXTRA_USER_DATA_CONTENT_TYPE_ATT.getValue()));
+		assertEquals(1, orderCategories.size());
+		assertEquals(new Category(OrderConstants.USER_DATA_TERM, OrderConstants.SCHEME, OrderConstants.MIXIN_CLASS), orderCategories.get(0));
+		assertEquals(2, orderXOCCIAtt.size());
+		assertEquals(fakeScriptEncoded, orderXOCCIAtt.get(OrderAttribute.EXTRA_USER_DATA_ATT.getValue()));
+		assertEquals(MIMEMultipartArchive.SHELLSCRIPT.getType(), orderXOCCIAtt.get(OrderAttribute.EXTRA_USER_DATA_CONTENT_TYPE_ATT.getValue()));
 	}
 	
 	@Test
@@ -301,20 +301,20 @@ public class TestPostCompute {
 		Resource occiUserdataResource = new Resource("user_data; scheme=\"http://schemas.openstack.org/compute/instance#\"; class=\"mixin\"");
 
 		Properties properties = new Properties();
-		properties.put(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + RequestConstants.USER_DATA_TERM,
+		properties.put(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + OrderConstants.USER_DATA_TERM,
 				"user_data");
 		properties.put(
-				ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + RequestAttribute.EXTRA_USER_DATA_ATT.getValue(),
+				ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + OrderAttribute.EXTRA_USER_DATA_ATT.getValue(),
 				FED_COMPUTE_USER_DATA);
 		
 		List<Resource> resources = new ArrayList<Resource>();
 		resources.add(occiUserdataResource);
-		List<Category> requestCategories = new ArrayList<Category>();
-		Map<String, String> requestXOCCIAtt = new HashMap<String, String>();
+		List<Category> orderCategories = new ArrayList<Category>();
+		Map<String, String> orderXOCCIAtt = new HashMap<String, String>();
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
 
 		ComputeServerResource csr = new ComputeServerResource();
-		csr.convertUserData(properties, resources, requestCategories, requestXOCCIAtt,
+		csr.convertUserData(properties, resources, orderCategories, orderXOCCIAtt,
 				xOCCIAtt);
 		
 	}
@@ -327,27 +327,27 @@ public class TestPostCompute {
 		Resource fogbowPublicKey = new Resource("public_key; scheme=\"http://schemas.openstack.org/instance/credentials#\"; class=\"mixin\"");	
 
 		Properties properties = new Properties();
-		properties.put(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + RequestConstants.PUBLIC_KEY_TERM,
+		properties.put(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + OrderConstants.PUBLIC_KEY_TERM,
 				"public_key");
 		properties.put(
-				ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + RequestAttribute.DATA_PUBLIC_KEY.getValue(),
+				ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + OrderAttribute.DATA_PUBLIC_KEY.getValue(),
 				FED_COMPUTE_ATT_PUBLICKEY_NAME);
 
 		List<Resource> resources = new ArrayList<Resource>();
 		resources.add(fogbowPublicKey);
-		List<Category> requestCategories = new ArrayList<Category>();
-		Map<String, String> requestXOCCIAtt = new HashMap<String, String>();
+		List<Category> orderCategories = new ArrayList<Category>();
+		Map<String, String> orderXOCCIAtt = new HashMap<String, String>();
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
 		xOCCIAtt.put(FED_COMPUTE_ATT_PUBLICKEY_NAME, fakePublicKey);
 		
 		ComputeServerResource csr = new ComputeServerResource();
-		csr.convertPublicKey(properties, resources, requestCategories, requestXOCCIAtt,
+		csr.convertPublicKey(properties, resources, orderCategories, orderXOCCIAtt,
 				xOCCIAtt);
 		
-		assertEquals(1, requestCategories.size());
-		assertEquals(RequestConstants.PUBLIC_KEY_TERM, requestCategories.get(0).getTerm());
-		assertEquals(1, requestXOCCIAtt.size());
-		assertEquals(fakePublicKey, requestXOCCIAtt.get(RequestAttribute.DATA_PUBLIC_KEY.getValue()));
+		assertEquals(1, orderCategories.size());
+		assertEquals(OrderConstants.PUBLIC_KEY_TERM, orderCategories.get(0).getTerm());
+		assertEquals(1, orderXOCCIAtt.size());
+		assertEquals(fakePublicKey, orderXOCCIAtt.get(OrderAttribute.DATA_PUBLIC_KEY.getValue()));
 
 	}
 	
@@ -359,20 +359,20 @@ public class TestPostCompute {
 		Resource fogbowPublicKey = new Resource("public_key; scheme=\"http://schemas.openstack.org/instance/credentials#\"; class=\"mixin\"");	
 
 		Properties properties = new Properties();
-		properties.put(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + RequestConstants.PUBLIC_KEY_TERM,
+		properties.put(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + OrderConstants.PUBLIC_KEY_TERM,
 				"public_key");
 		properties.put(
-				ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + RequestAttribute.DATA_PUBLIC_KEY.getValue(),
+				ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + OrderAttribute.DATA_PUBLIC_KEY.getValue(),
 				FED_COMPUTE_ATT_PUBLICKEY_NAME);
 
 		List<Resource> resources = new ArrayList<Resource>();
 		resources.add(fogbowPublicKey);
-		List<Category> requestCategories = new ArrayList<Category>();
-		Map<String, String> requestXOCCIAtt = new HashMap<String, String>();
+		List<Category> orderCategories = new ArrayList<Category>();
+		Map<String, String> orderXOCCIAtt = new HashMap<String, String>();
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
 		
 		ComputeServerResource csr = new ComputeServerResource();
-		csr.convertPublicKey(properties, resources, requestCategories, requestXOCCIAtt,
+		csr.convertPublicKey(properties, resources, orderCategories, orderXOCCIAtt,
 				xOCCIAtt);
 
 	}

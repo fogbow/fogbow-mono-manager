@@ -12,12 +12,12 @@ import org.fogbowcloud.manager.occi.model.Token;
 import org.jamppa.component.handler.AsyncQueryHandler;
 import org.xmpp.packet.IQ;
 
-public class RequestInstanceHandler extends AsyncQueryHandler {
+public class OrderInstanceHandler extends AsyncQueryHandler {
 
 	private ManagerController facade;
 
-	public RequestInstanceHandler(ManagerController facade) {
-		super(ManagerXmppComponent.REQUEST_NAMESPACE);
+	public OrderInstanceHandler(ManagerController facade) {
+		super(ManagerXmppComponent.ORDER_NAMESPACE);
 		this.facade = facade;
 	}
 
@@ -38,7 +38,7 @@ public class RequestInstanceHandler extends AsyncQueryHandler {
 			xOCCIAtt.put(attributeEl.attributeValue("var"), attributeEl.element("value").getText());
 		}	
 		
-		String requestId = queryEl.element("request").element("id").getText();
+		String orderId = queryEl.element("request").element("id").getText();
 
 		Element tokenEl = queryEl.element("token");
 		Token userToken = null;
@@ -46,7 +46,7 @@ public class RequestInstanceHandler extends AsyncQueryHandler {
 			userToken = new Token(tokenEl.elementText("accessId"), tokenEl.elementText("user"),
 					null, new HashMap<String, String>());
 		}
-		facade.queueServedRequest(iq.getFrom().toBareJID(), categories, xOCCIAtt, requestId,
+		facade.queueServedOrder(iq.getFrom().toBareJID(), categories, xOCCIAtt, orderId,
 				userToken);
 	}
 }

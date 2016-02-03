@@ -33,8 +33,8 @@ import org.fogbowcloud.manager.occi.model.OCCIHeaders;
 import org.fogbowcloud.manager.occi.model.Resource;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.fogbowcloud.manager.occi.model.Token;
-import org.fogbowcloud.manager.occi.request.Request;
-import org.fogbowcloud.manager.occi.request.RequestState;
+import org.fogbowcloud.manager.occi.order.Order;
+import org.fogbowcloud.manager.occi.order.OrderState;
 import org.fogbowcloud.manager.occi.util.OCCITestHelper;
 import org.junit.After;
 import org.junit.Assert;
@@ -106,57 +106,57 @@ public class TestGetCompute {
 		
 		Mockito.when(identityPlugin.getAuthenticationURI()).thenReturn("Keystone uri='http://localhost:5000/'");
 
-		List<Request> requestsA = new LinkedList<Request>();
-		List<Request> requestsB = new LinkedList<Request>();
+		List<Order> ordersA = new LinkedList<Order>();
+		List<Order> ordersB = new LinkedList<Order>();
 		
 		Token token = new Token(OCCITestHelper.ACCESS_TOKEN, OCCITestHelper.USER_MOCK,
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>());
 		
 		
-		Request request1 = new Request("1", token, null, null, true, "");
-		request1.setInstanceId(INSTANCE_1_ID);
-		request1.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
-		requestsA.add(request1);
-		Request request2 = new Request("2", token, null, null, true, "");
-		request2.setInstanceId(INSTANCE_2_ID);
-		request2.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
-		requestsA.add(request2);
-		Request request3 = new Request("3", new Token("token", "user", DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
+		Order order1 = new Order("1", token, null, null, true, "");
+		order1.setInstanceId(INSTANCE_1_ID);
+		order1.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
+		ordersA.add(order1);
+		Order order2 = new Order("2", token, null, null, true, "");
+		order2.setInstanceId(INSTANCE_2_ID);
+		order2.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
+		ordersA.add(order2);
+		Order order3 = new Order("3", new Token("token", "user", DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
 				new HashMap<String, String>()), null, null, true, "");
-		request3.setInstanceId(INSTANCE_3_ID_WITHOUT_USER);
-		request3.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
-		requestsA.add(request3);
-		Request requestPostCompute1 = new Request("Order1", postToken, null, null, true, "");
-		requestPostCompute1.setInstanceId(POST_INSTANCE_1_ID);
-		requestPostCompute1.setState(RequestState.FULFILLED);
-		requestPostCompute1.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
-		requestsB.add(requestPostCompute1);
-		Request requestPostCompute2 = new Request("Order2", postToken, null, null, true, "");
-		requestPostCompute2.setInstanceId(POST_INSTANCE_2_ID);
-		requestPostCompute2.setState(RequestState.FULFILLED);
-		requestPostCompute2.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
-		requestsB.add(requestPostCompute2);
-		Request requestPostCompute3 = new Request("Order3", postToken, null, null, true, "");
-		requestPostCompute3.setInstanceId(null);
-		requestPostCompute3.setState(RequestState.OPEN);
-		requestPostCompute3.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
-		requestsB.add(requestPostCompute3);
+		order3.setInstanceId(INSTANCE_3_ID_WITHOUT_USER);
+		order3.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
+		ordersA.add(order3);
+		Order orderPostCompute1 = new Order("Order1", postToken, null, null, true, "");
+		orderPostCompute1.setInstanceId(POST_INSTANCE_1_ID);
+		orderPostCompute1.setState(OrderState.FULFILLED);
+		orderPostCompute1.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
+		ordersB.add(orderPostCompute1);
+		Order orderPostCompute2 = new Order("Order2", postToken, null, null, true, "");
+		orderPostCompute2.setInstanceId(POST_INSTANCE_2_ID);
+		orderPostCompute2.setState(OrderState.FULFILLED);
+		orderPostCompute2.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
+		ordersB.add(orderPostCompute2);
+		Order orderPostCompute3 = new Order("Order3", postToken, null, null, true, "");
+		orderPostCompute3.setInstanceId(null);
+		orderPostCompute3.setState(OrderState.OPEN);
+		orderPostCompute3.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
+		ordersB.add(orderPostCompute3);
 
 		authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
 		Mockito.when(authorizationPlugin.isAuthorized(Mockito.any(Token.class))).thenReturn(true);
 
 		mapperPlugin = Mockito.mock(MapperPlugin.class);
-		Mockito.when(mapperPlugin.getLocalCredentials(Mockito.any(Request.class)))
+		Mockito.when(mapperPlugin.getLocalCredentials(Mockito.any(Order.class)))
 				.thenReturn(new HashMap<String, String>());
 
 		imageStoragePlugin = Mockito.mock(ImageStoragePlugin.class);
 
-		Map<String, List<Request>> requestsToAdd = new HashMap<String, List<Request>>();
-		requestsToAdd.put(OCCITestHelper.USER_MOCK, requestsA);
-		requestsToAdd.put(OCCITestHelper.USER_MOCK+"_post", requestsB);
+		Map<String, List<Order>> ordersToAdd = new HashMap<String, List<Order>>();
+		ordersToAdd.put(OCCITestHelper.USER_MOCK, ordersA);
+		ordersToAdd.put(OCCITestHelper.USER_MOCK+"_post", ordersB);
 		
 		this.helper.initializeComponentCompute(computePlugin, identityPlugin, authorizationPlugin, imageStoragePlugin,
-				Mockito.mock(AccountingPlugin.class), Mockito.mock(BenchmarkingPlugin.class), requestsToAdd,
+				Mockito.mock(AccountingPlugin.class), Mockito.mock(BenchmarkingPlugin.class), ordersToAdd,
 				mapperPlugin);
 
 		instanceDB = new InstanceDataStore(INSTANCE_DB_URL);
@@ -331,13 +331,13 @@ public class TestGetCompute {
 
 		// reseting component
 		helper.stopComponent();
-		List<Request> requests = new LinkedList<Request>();
+		List<Order> orders = new LinkedList<Order>();
 		
-		Map<String, List<Request>> requestsToAdd = new HashMap<String, List<Request>>();
-		requestsToAdd.put(OCCITestHelper.USER_MOCK, requests);
+		Map<String, List<Order>> ordersToAdd = new HashMap<String, List<Order>>();
+		ordersToAdd.put(OCCITestHelper.USER_MOCK, orders);
 		
 		helper.initializeComponentCompute(computePlugin, identityPlugin, authorizationPlugin, imageStoragePlugin,
-				Mockito.mock(AccountingPlugin.class), Mockito.mock(BenchmarkingPlugin.class), requestsToAdd, null);
+				Mockito.mock(AccountingPlugin.class), Mockito.mock(BenchmarkingPlugin.class), ordersToAdd, null);
 
 		// test
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE);
@@ -358,7 +358,7 @@ public class TestGetCompute {
 		Mockito.doNothing().when(computePlugin).bypass(Mockito.any(org.restlet.Request.class),
 				Mockito.any(Response.class));
 
-		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE + INSTANCE_1_ID + Request.SEPARATOR_GLOBAL_ID
+		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE + INSTANCE_1_ID + Order.SEPARATOR_GLOBAL_ID
 				+ OCCITestHelper.MEMBER_ID);
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
@@ -373,7 +373,7 @@ public class TestGetCompute {
 		Mockito.doThrow(new OCCIException(ErrorType.METHOD_NOT_ALLOWED, ResponseConstants.METHOD_NOT_SUPPORTED))
 				.when(computePlugin).bypass(Mockito.any(org.restlet.Request.class), Mockito.any(Response.class));
 
-		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE + INSTANCE_1_ID + Request.SEPARATOR_GLOBAL_ID
+		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE + INSTANCE_1_ID + Order.SEPARATOR_GLOBAL_ID
 				+ OCCITestHelper.MEMBER_ID);
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpGet.addHeader(OCCIHeaders.ACCEPT, OCCIHeaders.TEXT_URI_LIST_CONTENT_TYPE);
@@ -404,7 +404,7 @@ public class TestGetCompute {
 				Mockito.any(Response.class));
 
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE + INSTANCE_3_ID_WITHOUT_USER
-				+ Request.SEPARATOR_GLOBAL_ID + OCCITestHelper.MEMBER_ID);
+				+ Order.SEPARATOR_GLOBAL_ID + OCCITestHelper.MEMBER_ID);
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		HttpClient client = HttpClients.createMinimal();

@@ -215,7 +215,7 @@ public class NovaV2ComputeApplication extends Application {
 				LOGGER.info("Getting all instance ids from token :" + authToken);
 				return computeApplication.getAllInstancesJson(authToken);
 			}
-			LOGGER.info("Getting request(" + instanceId + ") of token :" + authToken);
+			LOGGER.info("Getting order(" + instanceId + ") of token :" + authToken);
 			return computeApplication.getInstanceJson(authToken, instanceId);
 		}
 		
@@ -253,7 +253,7 @@ public class NovaV2ComputeApplication extends Application {
 			String instanceId = (String) getRequestAttributes().get("serverid");
 
 			if (instanceId == null) {
-				LOGGER.info("Removing all requests of token :" + authToken);
+				LOGGER.info("Removing all orders of token :" + authToken);
 				computeApplication.removeAllInstances(authToken);
 				return ResponseConstants.OK;
 			}
@@ -282,7 +282,7 @@ public class NovaV2ComputeApplication extends Application {
 			String flavorJson;
 			try {
 				flavorJson = PluginHelper.getContentFile(testDirPath + "/response.getflavor." + flavorid);				
-				LOGGER.info("Getting request(" + flavorid + "):" + flavorJson);
+				LOGGER.info("Getting order(" + flavorid + "):" + flavorJson);
 				return flavorJson;
 			} catch (IOException e) {
 				LOGGER.error("Error while getting flavor.", e);

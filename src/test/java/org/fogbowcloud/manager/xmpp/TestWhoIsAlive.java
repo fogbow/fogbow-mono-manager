@@ -186,7 +186,7 @@ public class TestWhoIsAlive {
 	}
 	
 	@Test
-	public void testWhoIsAliveRequestSecondPage() throws Exception {
+	public void testWhoIsAliveOrderSecondPage() throws Exception {
 		managerXmppComponent = managerTestHelper
 				.initializeXMPPManagerComponent(false);
 		final XMPPClient xmppClient = managerTestHelper.createXMPPClient();

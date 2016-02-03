@@ -17,9 +17,9 @@ import org.fogbowcloud.manager.occi.model.HeaderUtils;
 import org.fogbowcloud.manager.occi.model.OCCIHeaders;
 import org.fogbowcloud.manager.occi.model.Resource;
 import org.fogbowcloud.manager.occi.model.Token;
-import org.fogbowcloud.manager.occi.request.Request;
-import org.fogbowcloud.manager.occi.request.RequestConstants;
-import org.fogbowcloud.manager.occi.request.RequestServerResource;
+import org.fogbowcloud.manager.occi.order.Order;
+import org.fogbowcloud.manager.occi.order.OrderConstants;
+import org.fogbowcloud.manager.occi.order.OrderServerResource;
 import org.restlet.Application;
 import org.restlet.Response;
 import org.restlet.Restlet;
@@ -39,12 +39,12 @@ public class OCCIApplication extends Application {
 	@Override
 	public Restlet createInboundRoot() {
 		Router router = new Router(getContext());
-		router.attach("/" + RequestConstants.TERM, RequestServerResource.class);
-		router.attach("/" + RequestConstants.TERM + "/", RequestServerResource.class);
-		router.attach("/" + RequestConstants.TERM + "/{requestId}", RequestServerResource.class);
-		router.attach("/" + RequestConstants.COMPUTE_TERM, ComputeServerResource.class);
-		router.attach("/" + RequestConstants.COMPUTE_TERM + "/", ComputeServerResource.class);
-		router.attach("/" + RequestConstants.COMPUTE_TERM + "/{instanceId}", ComputeServerResource.class);
+		router.attach("/" + OrderConstants.TERM, OrderServerResource.class);
+		router.attach("/" + OrderConstants.TERM + "/", OrderServerResource.class);
+		router.attach("/" + OrderConstants.TERM + "/{orderId}", OrderServerResource.class);
+		router.attach("/" + OrderConstants.COMPUTE_TERM, ComputeServerResource.class);
+		router.attach("/" + OrderConstants.COMPUTE_TERM + "/", ComputeServerResource.class);
+		router.attach("/" + OrderConstants.COMPUTE_TERM + "/{instanceId}", ComputeServerResource.class);
 		router.attach("/member", MemberServerResource.class);
 		router.attach("/member/{memberId}/quota", MemberServerResource.class);
 		//TODO remove this endpoint
@@ -72,7 +72,7 @@ public class OCCIApplication extends Application {
 		 * private cloud does not treat fogbow_request requests.
 		 */
 		if (response.getStatus().getCode() == HttpStatus.SC_METHOD_NOT_ALLOWED
-				&& !request.getOriginalRef().getPath().startsWith("/" + RequestConstants.TERM)) {
+				&& !request.getOriginalRef().getPath().startsWith("/" + OrderConstants.TERM)) {
 			normalizeBypass(request, response);
 		}
 	}
@@ -123,25 +123,25 @@ public class OCCIApplication extends Application {
 		return managerFacade.getFederationMemberQuota(federationMemberId, accessId);
 	}	
 
-	public Request getRequest(String authToken, String requestId) {
-		return managerFacade.getRequest(authToken, requestId);
+	public Order getOrder(String authToken, String orderId) {
+		return managerFacade.getOrder(authToken, orderId);
 	}
 
-	public List<Request> createRequests(String federationAuthToken, List<Category> categories,
+	public List<Order> createOrders(String federationAuthToken, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
-		return managerFacade.createRequests(federationAuthToken, categories, xOCCIAtt);
+		return managerFacade.createOrders(federationAuthToken, categories, xOCCIAtt);
 	}
 
-	public List<Request> getRequestsFromUser(String authToken) {
-		return managerFacade.getRequestsFromUser(authToken);
+	public List<Order> getOrdersFromUser(String authToken) {
+		return managerFacade.getOrdersFromUser(authToken);
 	}
 
-	public void removeAllRequests(String authToken) {
-		managerFacade.removeAllRequests(authToken);
+	public void removeAllOrders(String authToken) {
+		managerFacade.removeAllOrders(authToken);
 	}
 
-	public void removeRequest(String authToken, String requestId) {
-		managerFacade.removeRequest(authToken, requestId);
+	public void removeOrder(String authToken, String orderId) {
+		managerFacade.removeOrder(authToken, orderId);
 	}
 
 	public List<Instance> getInstances(String authToken) {

@@ -10,8 +10,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
-import org.fogbowcloud.manager.occi.request.RequestAttribute;
-import org.fogbowcloud.manager.occi.request.RequestConstants;
+import org.fogbowcloud.manager.occi.order.OrderAttribute;
+import org.fogbowcloud.manager.occi.order.OrderConstants;
 import org.restlet.Response;
 import org.restlet.data.MediaType;
 import org.restlet.engine.header.Header;
@@ -21,7 +21,7 @@ public class HeaderUtils {
 
 	private static final Logger LOGGER = Logger.getLogger(HeaderUtils.class);
 
-	public static final String REQUEST_DATE_FORMAT = "yyyy-MM-dd";
+	public static final String ORDER_DATE_FORMAT = "yyyy-MM-dd";
 	public static final String X_OCCI_LOCATION_PREFIX = "X-OCCI-Location: ";
 	public static final String WWW_AUTHENTICATE = "WWW-Authenticate";
 	private static final String AUTHORIZATION = "Authorization"; 
@@ -91,7 +91,7 @@ public class HeaderUtils {
 				
 				String attName = line.substring(0, line.indexOf("=")).trim();
 				String attValue = line.substring(line.indexOf("=") + 1);
-				if (!RequestAttribute.REQUIREMENTS.getValue().equals(attName)) {
+				if (!OrderAttribute.REQUIREMENTS.getValue().equals(attName)) {
 					attValue = attValue.replace("\"", "").trim();					
 				}
 				mapAttributes.put(attName, attValue);
@@ -129,7 +129,7 @@ public class HeaderUtils {
 		List<Category> categoriesCopy = new LinkedList<Category>();
 		for (Category category : categories) {
 			if (category.getScheme().equals(
-					RequestConstants.TEMPLATE_OS_SCHEME)) {
+					OrderConstants.TEMPLATE_OS_SCHEME)) {
 				continue;
 			}
 			categoriesCopy.add(category);
@@ -159,7 +159,7 @@ public class HeaderUtils {
 	public static void checkDateValue(String dataString) {
 		try {
 			if (dataString != null && !dataString.equals("")) {
-				DateFormat formatter = new SimpleDateFormat(REQUEST_DATE_FORMAT);
+				DateFormat formatter = new SimpleDateFormat(ORDER_DATE_FORMAT);
 				formatter.parse(dataString);
 			}
 		} catch (ParseException e) {

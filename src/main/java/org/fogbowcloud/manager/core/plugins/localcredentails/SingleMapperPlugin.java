@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.fogbowcloud.manager.core.plugins.MapperPlugin;
-import org.fogbowcloud.manager.occi.request.Request;
+import org.fogbowcloud.manager.occi.order.Order;
 
 public class SingleMapperPlugin implements MapperPlugin {
 
@@ -17,7 +17,7 @@ public class SingleMapperPlugin implements MapperPlugin {
 	}
 
 	@Override
-	public Map<String, String> getLocalCredentials(Request request) {
+	public Map<String, String> getLocalCredentials(Order order) {
 		return MapperHelper.getCredentialsPerRelatedLocalName(this.properties, MapperHelper.FOGBOW_DEFAULTS);
 	}
 
@@ -29,7 +29,7 @@ public class SingleMapperPlugin implements MapperPlugin {
 
 	@Override
 	public Map<String, String> getLocalCredentials(String accessId) {
-		return getLocalCredentials(new Request("", null, "", "", "", 
+		return getLocalCredentials(new Order("", null, "", "", "", 
 				new Date().getTime(), false, null, null, null));
 	}
 }

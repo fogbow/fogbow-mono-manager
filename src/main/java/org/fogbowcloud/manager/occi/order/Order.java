@@ -1,4 +1,4 @@
-package org.fogbowcloud.manager.occi.request;
+package org.fogbowcloud.manager.occi.order;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -12,7 +12,7 @@ import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.Token;
 
-public class Request {
+public class Order {
 
 	public static String SEPARATOR_GLOBAL_ID = "@";
 	
@@ -23,14 +23,14 @@ public class Request {
 	private final String requestingMemberId;
 	private long fulfilledTime = 0;
 	private final boolean isLocal;
-	private RequestState state;
+	private OrderState state;
 	private List<Category> categories;
 	private Map<String, String> xOCCIAtt;
 	
 	private DateUtils dateUtils = new DateUtils();
 		
-	public Request(String id, Token federationToken, String instanceId, String providingMemberId,
-			String requestingMemberId, long fulfilledTime, boolean isLocal, RequestState state,
+	public Order(String id, Token federationToken, String instanceId, String providingMemberId,
+			String requestingMemberId, long fulfilledTime, boolean isLocal, OrderState state,
 			List<Category> categories, Map<String, String> xOCCIAtt) {
 		this.id = id;
 		this.federationToken = federationToken;
@@ -44,12 +44,12 @@ public class Request {
 		this.xOCCIAtt = xOCCIAtt;
 	}
 
-	public Request(String id, Token federationToken, 
+	public Order(String id, Token federationToken, 
 			List<Category> categories, Map<String, String> xOCCIAtt, boolean isLocal, String requestingMemberId) {
 		this(id, federationToken, categories, xOCCIAtt, isLocal, requestingMemberId, new DateUtils());
 	}
 	
-	public Request(String id, Token federationToken, 
+	public Order(String id, Token federationToken, 
 			List<Category> categories, Map<String, String> xOCCIAtt, boolean isLocal, String requestingMemberId, DateUtils dateUtils) {
 		this.id = id;
 		this.federationToken = federationToken;
@@ -58,12 +58,12 @@ public class Request {
 		this.isLocal = isLocal;
 		this.requestingMemberId = requestingMemberId;
 		this.dateUtils = dateUtils;
-		setState(RequestState.OPEN);		
+		setState(OrderState.OPEN);		
 	}
 	
-	public Request(Request request) {
-		this(request.getId(), request.getFederationToken(), request.getCategories(), 
-				request.getxOCCIAtt(), request.isLocal, request.getRequestingMemberId());
+	public Order(Order order) {
+		this(order.getId(), order.getFederationToken(), order.getCategories(), 
+				order.getxOCCIAtt(), order.isLocal, order.getRequestingMemberId());
 	}
 
 	public List<Category> getCategories() {
@@ -83,11 +83,11 @@ public class Request {
 	}
 
 	public String getRequirements() {
-		return xOCCIAtt.get(RequestAttribute.REQUIREMENTS.getValue());
+		return xOCCIAtt.get(OrderAttribute.REQUIREMENTS.getValue());
 	}
 	
 	public String getBatchId() {
-		return xOCCIAtt.get(RequestAttribute.BATCH_ID.getValue());
+		return xOCCIAtt.get(OrderAttribute.BATCH_ID.getValue());
 	}
 	
 	public String getInstanceId() {
@@ -113,14 +113,14 @@ public class Request {
 		return isLocal;
 	}
 
-	public RequestState getState() {
+	public OrderState getState() {
 		return state;
 	}
 
-	public void setState(RequestState state) {
-		if (state.in(RequestState.FULFILLED)) {
+	public void setState(OrderState state) {
+		if (state.in(OrderState.FULFILLED)) {
 			fulfilledTime = dateUtils.currentTimeMillis();
-		} else if (state.in(RequestState.OPEN)) {
+		} else if (state.in(OrderState.OPEN)) {
 			fulfilledTime = 0;
 		}
 		this.state = state;
@@ -180,7 +180,7 @@ public class Request {
 	}
 
 	public boolean isIntoValidPeriod() {
-		String startDateStr = xOCCIAtt.get(RequestAttribute.VALID_FROM.getValue());
+		String startDateStr = xOCCIAtt.get(OrderAttribute.VALID_FROM.getValue());
 		Date startDate = DateUtils.getDateFromISO8601Format(startDateStr);
 		if (startDate == null) {
 			if (startDateStr != null) {
@@ -193,7 +193,7 @@ public class Request {
 	}
 
 	public boolean isExpired() {
-		String expirationDateStr = xOCCIAtt.get(RequestAttribute.VALID_UNTIL.getValue());
+		String expirationDateStr = xOCCIAtt.get(OrderAttribute.VALID_UNTIL.getValue());
 		Date expirationDate = DateUtils.getDateFromISO8601Format(expirationDateStr);
 		if (expirationDateStr == null) {
 			return false;
@@ -214,7 +214,7 @@ public class Request {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		Request other = (Request) obj;
+		Order other = (Order) obj;
 		if (categories == null) {
 			if (other.categories != null)
 				return false;

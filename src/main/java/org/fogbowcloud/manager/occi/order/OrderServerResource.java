@@ -1,4 +1,4 @@
-package org.fogbowcloud.manager.occi.request;
+package org.fogbowcloud.manager.occi.order;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -31,12 +31,12 @@ import org.restlet.resource.Post;
 import org.restlet.resource.ServerResource;
 import org.restlet.util.Series;
 
-public class RequestServerResource extends ServerResource {
+public class OrderServerResource extends ServerResource {
 
 	private static final String OCCI_CORE_TITLE = "occi.core.title";
 	private static final String OCCI_CORE_ID = "occi.core.id";
-	protected static final String NO_REQUESTS_MESSAGE = "There are not requests.";
-	private static final Logger LOGGER = Logger.getLogger(RequestServerResource.class);
+	protected static final String NO_ORDERS_MESSAGE = "There are not orders.";
+	private static final Logger LOGGER = Logger.getLogger(OrderServerResource.class);
 	
 	@Get
 	public StringRepresentation fetch() {
@@ -45,17 +45,17 @@ public class RequestServerResource extends ServerResource {
 		String federationAccessToken = HeaderUtils.getAuthToken(
 				req.getHeaders(), getResponse(),
 				application.getAuthenticationURI());
-		String requestId = (String) getRequestAttributes().get("requestId");
+		String OrderId = (String) getRequestAttributes().get("orderId");
 		List<String> acceptContent = HeaderUtils.getAccept(req.getHeaders());
 		LOGGER.debug("accept contents:" + acceptContent);
 		
-		if (requestId == null) {
-			LOGGER.info("Getting all requests of token :" + federationAccessToken);
+		if (OrderId == null) {
+			LOGGER.info("Getting all orders of token :" + federationAccessToken);
 			boolean verbose = false;
 			try {
 				verbose = Boolean.parseBoolean(getQuery().getValues("verbose"));
 			} catch (Exception e) {}
-			List<Request> requestsFromUser = application.getRequestsFromUser(federationAccessToken);
+			List<Order> ordersFromUser = application.getOrdersFromUser(federationAccessToken);
 			
 			List<String> filterCategory = HeaderUtils.getValueHeaderPerName(OCCIHeaders.CATEGORY,
 					req.getHeaders());
@@ -63,18 +63,18 @@ public class RequestServerResource extends ServerResource {
 					OCCIHeaders.X_OCCI_ATTRIBUTE, req.getHeaders());
 			
 			if (filterCategory.size() != 0 || filterAttribute.size() != 0) {
-				requestsFromUser = filterRequests(requestsFromUser, filterCategory, filterAttribute);
+				ordersFromUser = filterOrders(ordersFromUser, filterCategory, filterAttribute);
 			}
 			
 			if (acceptContent.size() == 0
 					|| acceptContent.contains(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE)) {
 				return new StringRepresentation(generateTextPlainResponse(
-						requestsFromUser, req, verbose),
+						ordersFromUser, req, verbose),
 						MediaType.TEXT_PLAIN);
 			} else if (acceptContent.contains(OCCIHeaders.TEXT_URI_LIST_CONTENT_TYPE)) {
 				getResponse().setStatus(new Status(HttpStatus.SC_OK));
 				return new StringRepresentation(generateURIListResponse(
-						requestsFromUser, req, verbose),
+						ordersFromUser, req, verbose),
 						MediaType.TEXT_URI_LIST);
 			} else {
 				throw new OCCIException(ErrorType.NOT_ACCEPTABLE,
@@ -82,25 +82,25 @@ public class RequestServerResource extends ServerResource {
 			}
 		}
 
-		LOGGER.info("Getting request(" + requestId + ") of token :" + federationAccessToken);
-		Request request = application.getRequest(federationAccessToken, requestId);		
+		LOGGER.info("Getting order(" + OrderId + ") of token :" + federationAccessToken);
+		Order order = application.getOrder(federationAccessToken, OrderId);		
 		if (acceptContent.size() == 0 || acceptContent.contains(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE)) {
-			return new StringRepresentation(generateTextPlainResponseOneRequest(request), MediaType.TEXT_PLAIN);				
+			return new StringRepresentation(generateTextPlainResponseOneOrder(order), MediaType.TEXT_PLAIN);				
 		}
 		throw new OCCIException(ErrorType.NOT_ACCEPTABLE,
 				ResponseConstants.ACCEPT_NOT_ACCEPTABLE);
 	}
 
-	private List<Request> filterRequests(List<Request> requestsFromUser,
+	private List<Order> filterOrders(List<Order> ordersFromUser,
 			List<String> filterCategory, List<String> filterAttribute) {
-		List<Request> requestsFiltrated = new ArrayList<Request>();
+		List<Order> ordersFiltrated = new ArrayList<Order>();
 		boolean thereIsntCategory = true;
-		for (Request request : requestsFromUser) {
+		for (Order order : ordersFromUser) {
 			if (filterCategory.size() != 0) {
 				for (String valueCategoryFilter : filterCategory) {
-					for (Category category : request.getCategories()) {
+					for (Category category : order.getCategories()) {
 						if (valueCategoryFilter.contains(category.getTerm())) {
-							requestsFiltrated.add(request);
+							ordersFiltrated.add(order);
 							thereIsntCategory = false;
 						}
 					}
@@ -108,13 +108,13 @@ public class RequestServerResource extends ServerResource {
 			}
 			if (filterAttribute.size() != 0) {
 				for (String valueAttributeFilter : filterAttribute) {
-					Map<String, String> mapAttributes = request.getxOCCIAtt();
+					Map<String, String> mapAttributes = order.getxOCCIAtt();
 					for (String keyAttribute : mapAttributes.keySet()) {
 						if (valueAttributeFilter.contains(keyAttribute)
 								&& valueAttributeFilter.endsWith(HeaderUtils
 								.normalizeValueAttributeFilter(mapAttributes
 								.get(keyAttribute.trim())))) {
-							requestsFiltrated.add(request);
+							ordersFiltrated.add(order);
 						}
 					}
 				}
@@ -124,47 +124,47 @@ public class RequestServerResource extends ServerResource {
 			throw new OCCIException(ErrorType.BAD_REQUEST,
 					ResponseConstants.CATEGORY_IS_NOT_REGISTERED);
 		}
-		return requestsFiltrated;
+		return ordersFiltrated;
 	}
 	
-	private String generateURIListResponse(List<Request> requests, HttpRequest req, boolean verbose) {
-		if (requests == null || requests.isEmpty()) { 
+	private String generateURIListResponse(List<Order> orders, HttpRequest req, boolean verbose) {
+		if (orders == null || orders.isEmpty()) { 
 			return "\n";
 		}
 		String requestEndpoint = req.getHostRef() + req.getHttpCall().getRequestUri();
 		String result = "";
-		Iterator<Request> requestIt = requests.iterator();
-		while(requestIt.hasNext()){
-			Request request = requestIt.next();
+		Iterator<Order> orderIt = orders.iterator();
+		while(orderIt.hasNext()){
+			Order order = orderIt.next();
 			if (!requestEndpoint.endsWith("/")){
 				requestEndpoint += requestEndpoint + "/";
 			}
 			if (verbose) {
-				String providingMemberId = (request.getProvidingMemberId() == null) ? "None"
-						: request.getProvidingMemberId();
+				String providingMemberId = (order.getProvidingMemberId() == null) ? "None"
+						: order.getProvidingMemberId();
 
-				result += requestEndpoint + request.getId() + "; " + "State="
-						+ request.getState() + "; " + RequestAttribute.TYPE.getValue() + "="
-						+ request.getAttValue(RequestAttribute.TYPE.getValue()) + "; "
-						+ RequestAttribute.REQUESTING_MEMBER.getValue() + "=" + request.getRequestingMemberId() + "; "
-						+ RequestAttribute.PROVIDING_MEMBER.getValue() + "=" + providingMemberId + "; "
-						+ RequestAttribute.INSTANCE_ID.getValue() + "="
-						+ request.getGlobalInstanceId() + "\n";
+				result += requestEndpoint + order.getId() + "; " + "State="
+						+ order.getState() + "; " + OrderAttribute.TYPE.getValue() + "="
+						+ order.getAttValue(OrderAttribute.TYPE.getValue()) + "; "
+						+ OrderAttribute.REQUESTING_MEMBER.getValue() + "=" + order.getRequestingMemberId() + "; "
+						+ OrderAttribute.PROVIDING_MEMBER.getValue() + "=" + providingMemberId + "; "
+						+ OrderAttribute.INSTANCE_ID.getValue() + "="
+						+ order.getGlobalInstanceId() + "\n";
 						
 			}else {			
-				result += requestEndpoint + request.getId() + "\n";
+				result += requestEndpoint + order.getId() + "\n";
 			}
 		}
 		return result.length() > 0 ? result.trim() : "\n";
 	}
 	
-	private String generateTextPlainResponseOneRequest(Request request) {
-		LOGGER.debug("Generating response to request: " + request);
-		String requestOCCIFormat = "\n";
-		for (Category category : request.getCategories()) {
-			LOGGER.debug("Category of request: " + request);
+	private String generateTextPlainResponseOneOrder(Order order) {
+		LOGGER.debug("Generating response to order: " + order);
+		String orderOCCIFormat = "\n";
+		for (Category category : order.getCategories()) {
+			LOGGER.debug("Category of order: " + order);
 			Resource resource = ResourceRepository.getInstance().get(category.getTerm());
-			if (resource == null && category.getScheme().equals(RequestConstants.TEMPLATE_OS_SCHEME)) {
+			if (resource == null && category.getScheme().equals(OrderConstants.TEMPLATE_OS_SCHEME)) {
 				resource = ResourceRepository.createImageResource(category.getTerm());
 			}
 			LOGGER.debug("Resource exists? " + (resource != null));
@@ -173,40 +173,40 @@ public class RequestServerResource extends ServerResource {
 			}
 			LOGGER.debug("Resource to header: " + resource.toHeader());
 			try {
-				requestOCCIFormat += "Category: " + resource.toHeader() + "\n";
+				orderOCCIFormat += "Category: " + resource.toHeader() + "\n";
 			} catch (Exception e) {
 				LOGGER.error(e);
 			}
 		}	
 		
 		Map<String, String> attToOutput = new HashMap<String, String>();		
-		attToOutput.put(OCCI_CORE_ID, request.getId());
-		if (request.getAttValue(OCCI_CORE_TITLE) != null){
-			attToOutput.put(OCCI_CORE_TITLE, request.getAttValue(OCCI_CORE_TITLE));	
+		attToOutput.put(OCCI_CORE_ID, order.getId());
+		if (order.getAttValue(OCCI_CORE_TITLE) != null){
+			attToOutput.put(OCCI_CORE_TITLE, order.getAttValue(OCCI_CORE_TITLE));	
 		}
-		for (String attributeName : RequestAttribute.getValues()) {
-			if (request.getAttValue(attributeName) == null){
+		for (String attributeName : OrderAttribute.getValues()) {
+			if (order.getAttValue(attributeName) == null){
 				attToOutput.put(attributeName, "Not defined");	
 			} else {
-				attToOutput.put(attributeName, request.getAttValue(attributeName));
+				attToOutput.put(attributeName, order.getAttValue(attributeName));
 			}
 		}
 		
-		attToOutput.put(RequestAttribute.STATE.getValue(), request.getState().getValue());
-		attToOutput.put(RequestAttribute.REQUESTING_MEMBER.getValue(), request.getRequestingMemberId());
-		if (request.getProvidingMemberId() == null) {
-			attToOutput.put(RequestAttribute.PROVIDING_MEMBER.getValue(), "None");
+		attToOutput.put(OrderAttribute.STATE.getValue(), order.getState().getValue());
+		attToOutput.put(OrderAttribute.REQUESTING_MEMBER.getValue(), order.getRequestingMemberId());
+		if (order.getProvidingMemberId() == null) {
+			attToOutput.put(OrderAttribute.PROVIDING_MEMBER.getValue(), "None");
 		} else {
-			attToOutput.put(RequestAttribute.PROVIDING_MEMBER.getValue(), request.getProvidingMemberId());
+			attToOutput.put(OrderAttribute.PROVIDING_MEMBER.getValue(), order.getProvidingMemberId());
 		}
-		attToOutput.put(RequestAttribute.INSTANCE_ID.getValue(), request.getGlobalInstanceId());		
+		attToOutput.put(OrderAttribute.INSTANCE_ID.getValue(), order.getGlobalInstanceId());		
 		
 		for (String attName : attToOutput.keySet()) {
-			requestOCCIFormat += OCCIHeaders.X_OCCI_ATTRIBUTE + ": " + attName + "=\""
+			orderOCCIFormat += OCCIHeaders.X_OCCI_ATTRIBUTE + ": " + attName + "=\""
 					+ attToOutput.get(attName) + "\" \n";	
 		}
 			
-		return "\n" + requestOCCIFormat.trim();
+		return "\n" + orderOCCIFormat.trim();
 	}
 
 	@Delete
@@ -215,30 +215,30 @@ public class RequestServerResource extends ServerResource {
 		HttpRequest req = (HttpRequest) getRequest();
 		String federationAccessToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse(),
 				application.getAuthenticationURI());
-		String requestId = (String) getRequestAttributes().get("requestId");
+		String orderId = (String) getRequestAttributes().get("orderId");
 
-		if (requestId == null) {
-			LOGGER.info("Removing all requests of token :" + federationAccessToken);
-			application.removeAllRequests(federationAccessToken);
+		if (orderId == null) {
+			LOGGER.info("Removing all orders of token :" + federationAccessToken);
+			application.removeAllOrders(federationAccessToken);
 			return ResponseConstants.OK;
 		}
 
-		LOGGER.info("Removing request(" + requestId + ") of token :" + federationAccessToken);
-		application.removeRequest(federationAccessToken, requestId);
+		LOGGER.info("Removing order(" + orderId + ") of token :" + federationAccessToken);
+		application.removeOrder(federationAccessToken, orderId);
 		return ResponseConstants.OK;
 	}
 
 	@SuppressWarnings("null")
 	@Post
 	public StringRepresentation post() {
-		LOGGER.info("Posting a new request...");
+		LOGGER.info("Posting a new order...");
 		OCCIApplication application = (OCCIApplication) getApplication();
 		HttpRequest req = (HttpRequest) getRequest();
 		String acceptType = getAccept(HeaderUtils.getAccept(req.getHeaders()));
 		
 		List<Category> categories = HeaderUtils.getCategories(req.getHeaders());
 		LOGGER.debug("Categories: " + categories);
-		HeaderUtils.checkCategories(categories, RequestConstants.TERM);
+		HeaderUtils.checkCategories(categories, OrderConstants.TERM);
 		HeaderUtils.checkOCCIContentType(req.getHeaders());		
 		
 		Map<String, String> xOCCIAtt = HeaderUtils.getXOCCIAtributes(req.getHeaders());
@@ -249,11 +249,11 @@ public class RequestServerResource extends ServerResource {
 		String federationAuthToken = HeaderUtils.getAuthToken(
 				req.getHeaders(), getResponse(), application.getAuthenticationURI());
 		
-		List<Request> currentRequests = application.createRequests(federationAuthToken, categories, xOCCIAtt);
-		if (currentRequests != null || !currentRequests.isEmpty()) {
+		List<Order> currentOrders = application.createOrders(federationAuthToken, categories, xOCCIAtt);
+		if (currentOrders != null || !currentOrders.isEmpty()) {
 			setStatus(Status.SUCCESS_CREATED);
 		}		
-		setLocationHeader(currentRequests, req);
+		setLocationHeader(currentOrders, req);
 		
 		if (acceptType.equals(OCCIHeaders.OCCI_ACCEPT)) {
 			return new StringRepresentation(ResponseConstants.OK, new MediaType(
@@ -263,7 +263,7 @@ public class RequestServerResource extends ServerResource {
 	}
 
 	static protected Map<String, String> normalizeRequirements(List<Category> categories, Map<String, String> xOCCIAtt, List<Flavor> listFlavorsFogbow) {
-		String requirementsAttr = xOCCIAtt.get(RequestAttribute.REQUIREMENTS.getValue());
+		String requirementsAttr = xOCCIAtt.get(OrderAttribute.REQUIREMENTS.getValue());
 		if (requirementsAttr != null) {
 			if (!RequirementsHelper.checkSyntax(requirementsAttr)) {
 				throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.UNSUPPORTED_ATTRIBUTES);
@@ -273,7 +273,7 @@ public class RequestServerResource extends ServerResource {
 		String flavorTerm = null;
 		List<Category> copyListCategory = new ArrayList<Category>(categories);
 		for (Category category : copyListCategory) {
-			if (category.getScheme().equals(RequestConstants.TEMPLATE_RESOURCE_SCHEME)) {
+			if (category.getScheme().equals(OrderConstants.TEMPLATE_RESOURCE_SCHEME)) {
 				flavorTerm = category.getTerm();
 				break;
 			}
@@ -301,14 +301,14 @@ public class RequestServerResource extends ServerResource {
 		}
 		
 		if (requirementsAttr != null) {
-			xOCCIAtt.put(RequestAttribute.REQUIREMENTS.getValue(), requirementsAttr);			
+			xOCCIAtt.put(OrderAttribute.REQUIREMENTS.getValue(), requirementsAttr);			
 		}
 		
 		return xOCCIAtt;
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private void setLocationHeader(List<Request> requests, HttpRequest req) {
+	private void setLocationHeader(List<Order> orders, HttpRequest req) {
 		String requestEndpoint = getHostRef(req) + req.getHttpCall().getRequestUri();
 		Series<Header> responseHeaders = (Series<Header>) getResponse().getAttributes().get(
 				"org.restlet.http.headers");
@@ -318,17 +318,17 @@ public class RequestServerResource extends ServerResource {
 		}
 
 		responseHeaders.add(new Header("Location",
-				generateLocationHeader(requests, requestEndpoint)));
+				generateLocationHeader(orders, requestEndpoint)));
 	}
 
-	protected String generateLocationHeader(List<Request> requests, String requestEndpoint) {
+	protected String generateLocationHeader(List<Order> orders, String requestEndpoint) {
 		String response = "";
-		for (Request request : requests) {
+		for (Order order : orders) {
 			String prefix = requestEndpoint;
 			if (!prefix.endsWith("/")){
 				prefix += "/";
 			}			
-			String locationHeader = prefix + request.getId();		
+			String locationHeader = prefix + order.getId();		
 			
 			response += locationHeader + ",";
 		}
@@ -352,23 +352,23 @@ public class RequestServerResource extends ServerResource {
 	
 	public static Map<String, String> normalizeXOCCIAtt(Map<String, String> xOCCIAtt) {
 		Map<String, String> defOCCIAtt = new HashMap<String, String>();
-		defOCCIAtt.put(RequestAttribute.TYPE.getValue(), RequestConstants.DEFAULT_TYPE);
-		defOCCIAtt.put(RequestAttribute.INSTANCE_COUNT.getValue(),
-				RequestConstants.DEFAULT_INSTANCE_COUNT.toString());
+		defOCCIAtt.put(OrderAttribute.TYPE.getValue(), OrderConstants.DEFAULT_TYPE);
+		defOCCIAtt.put(OrderAttribute.INSTANCE_COUNT.getValue(),
+				OrderConstants.DEFAULT_INSTANCE_COUNT.toString());
 
 		defOCCIAtt.putAll(xOCCIAtt);
 
-		checkRequestType(defOCCIAtt.get(RequestAttribute.TYPE.getValue()));
-		HeaderUtils.checkDateValue(defOCCIAtt.get(RequestAttribute.VALID_FROM.getValue()));
-		HeaderUtils.checkDateValue(defOCCIAtt.get(RequestAttribute.VALID_UNTIL.getValue()));
-		HeaderUtils.checkIntegerValue(defOCCIAtt.get(RequestAttribute.INSTANCE_COUNT.getValue()));
+		checkOrderType(defOCCIAtt.get(OrderAttribute.TYPE.getValue()));
+		HeaderUtils.checkDateValue(defOCCIAtt.get(OrderAttribute.VALID_FROM.getValue()));
+		HeaderUtils.checkDateValue(defOCCIAtt.get(OrderAttribute.VALID_UNTIL.getValue()));
+		HeaderUtils.checkIntegerValue(defOCCIAtt.get(OrderAttribute.INSTANCE_COUNT.getValue()));
 
 		LOGGER.debug("Checking if all attributes are supported. OCCI attributes: " + defOCCIAtt);
 
-		List<Resource> requestResources = ResourceRepository.getInstance().getAll();
+		List<Resource> orderResources = ResourceRepository.getInstance().getAll();
 		for (String attributeName : xOCCIAtt.keySet()) {
 			boolean supportedAtt = false;
-			for (Resource resource : requestResources) {
+			for (Resource resource : orderResources) {
 				if (resource.supportAtt(attributeName) || isOCCIAttribute(attributeName)) {
 					supportedAtt = true;
 					break;
@@ -387,24 +387,24 @@ public class RequestServerResource extends ServerResource {
 		return attributeName.equals(OCCI_CORE_ID) || attributeName.equals(OCCI_CORE_TITLE);
 	}
 
-	protected static void checkRequestType(String enumString) {
-		for (int i = 0; i < RequestType.values().length; i++) {
-			if (enumString.equals(RequestType.values()[i].getValue())) {
+	protected static void checkOrderType(String enumString) {
+		for (int i = 0; i < OrderType.values().length; i++) {
+			if (enumString.equals(OrderType.values()[i].getValue())) {
 				return;
 			}
 		}
 		throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 	}
 
-	protected String generateTextPlainResponse(List<Request> requests, HttpRequest req, boolean verbose) {
-		if (requests == null || requests.isEmpty()) { 
-			return NO_REQUESTS_MESSAGE;
+	protected String generateTextPlainResponse(List<Order> orders, HttpRequest req, boolean verbose) {
+		if (orders == null || orders.isEmpty()) { 
+			return NO_ORDERS_MESSAGE;
 		}
 		String requestEndpoint = getHostRef(req) + req.getHttpCall().getRequestUri();
 		String response = "";
-		Iterator<Request> requestIt = requests.iterator();
-		while(requestIt.hasNext()){			
-			Request request = requestIt.next();
+		Iterator<Order> orderIt = orders.iterator();
+		while(orderIt.hasNext()){			
+			Order order = orderIt.next();
 			String prefixOCCILocation = "";
 			if (requestEndpoint.endsWith("/")){
 				prefixOCCILocation += HeaderUtils.X_OCCI_LOCATION_PREFIX + requestEndpoint;
@@ -412,14 +412,14 @@ public class RequestServerResource extends ServerResource {
 				prefixOCCILocation += HeaderUtils.X_OCCI_LOCATION_PREFIX + requestEndpoint + "/";
 			}
 			if (verbose) {
-				response += prefixOCCILocation + request.getId() + "; "
-						+ RequestAttribute.STATE.getValue() + "=" + request.getState() + "; "
-						+ RequestAttribute.TYPE.getValue() + "="
-						+ request.getAttValue(RequestAttribute.TYPE.getValue()) + "; "
-						+ RequestAttribute.INSTANCE_ID.getValue() + "=" + request.getGlobalInstanceId()
+				response += prefixOCCILocation + order.getId() + "; "
+						+ OrderAttribute.STATE.getValue() + "=" + order.getState() + "; "
+						+ OrderAttribute.TYPE.getValue() + "="
+						+ order.getAttValue(OrderAttribute.TYPE.getValue()) + "; "
+						+ OrderAttribute.INSTANCE_ID.getValue() + "=" + order.getGlobalInstanceId()
 						+ "\n";
 			}else {			
-				response += prefixOCCILocation + request.getId() + "\n";
+				response += prefixOCCILocation + order.getId() + "\n";
 			}
 		}
 		return response.length() > 0 ? response.trim() : "\n";

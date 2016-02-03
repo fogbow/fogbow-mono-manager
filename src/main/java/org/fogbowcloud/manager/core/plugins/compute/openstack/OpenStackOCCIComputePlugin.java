@@ -22,8 +22,8 @@ import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.OCCIHeaders;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.fogbowcloud.manager.occi.model.Token;
-import org.fogbowcloud.manager.occi.request.RequestAttribute;
-import org.fogbowcloud.manager.occi.request.RequestConstants;
+import org.fogbowcloud.manager.occi.order.OrderAttribute;
+import org.fogbowcloud.manager.occi.order.OrderConstants;
 import org.restlet.Client;
 import org.restlet.Request;
 import org.restlet.data.ClientInfo;
@@ -44,8 +44,8 @@ public class OpenStackOCCIComputePlugin extends OCCIComputePlugin{
 	public OpenStackOCCIComputePlugin(Properties properties) {
 		super(properties);
 		openStackNovaV2ComputePlugin = new OpenStackNovaV2ComputePlugin(properties);
-		super.fogTermToCategory.put(RequestConstants.PUBLIC_KEY_TERM, new Category(
-				PUBLIC_KEY_TERM, PUBLIC_KEY_SCHEME, RequestConstants.MIXIN_CLASS));
+		super.fogTermToCategory.put(OrderConstants.PUBLIC_KEY_TERM, new Category(
+				PUBLIC_KEY_TERM, PUBLIC_KEY_SCHEME, OrderConstants.MIXIN_CLASS));
 	}
 	
 	protected Set<Header> getExtraHeaders(List<Category> requestCategories,
@@ -56,14 +56,14 @@ public class OpenStackOCCIComputePlugin extends OCCIComputePlugin{
 			openStackCategories.add(super.fogTermToCategory.get(category.getTerm()));
 			
 			// adding ssh public key
-			if (category.getTerm().equals(RequestConstants.PUBLIC_KEY_TERM)) {		
+			if (category.getTerm().equals(OrderConstants.PUBLIC_KEY_TERM)) {		
 				xOCCIAtt.put(NAME_PUBLIC_KEY_ATTRIBUTE, NAME_PUBLIC_KEY_DEFAULT);
-				xOCCIAtt.put(DATA_PUBLIC_KEY_ATTRIBUTE, xOCCIAtt.get(RequestAttribute.DATA_PUBLIC_KEY.getValue()));
-				xOCCIAtt.remove(RequestAttribute.DATA_PUBLIC_KEY.getValue());
+				xOCCIAtt.put(DATA_PUBLIC_KEY_ATTRIBUTE, xOCCIAtt.get(OrderAttribute.DATA_PUBLIC_KEY.getValue()));
+				xOCCIAtt.remove(OrderAttribute.DATA_PUBLIC_KEY.getValue());
 			}
 		}
 
-		String userdataBase64 = xOCCIAtt.remove(RequestAttribute.USER_DATA_ATT.getValue());
+		String userdataBase64 = xOCCIAtt.remove(OrderAttribute.USER_DATA_ATT.getValue());
 		
 		if (userdataBase64 != null) {
 			xOCCIAtt.put("org.openstack.compute.user_data", userdataBase64);				
