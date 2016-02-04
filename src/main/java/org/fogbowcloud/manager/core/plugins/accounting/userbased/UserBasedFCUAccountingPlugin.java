@@ -11,7 +11,6 @@ import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
-import org.fogbowcloud.manager.core.plugins.accounting.AccountingDataSatore;
 import org.fogbowcloud.manager.core.plugins.accounting.AccountingInfo;
 import org.fogbowcloud.manager.core.plugins.accounting.ResourceUsage;
 import org.fogbowcloud.manager.occi.request.Request;
@@ -19,7 +18,7 @@ import org.fogbowcloud.manager.occi.request.Request;
 public class UserBasedFCUAccountingPlugin implements AccountingPlugin {
 
 	private BenchmarkingPlugin benchmarkingPlugin;
-	private AccountingDataSatore db;
+	private AccountingDataStore db;
 	private DateUtils dateUtils;
 	private long lastUpdate;
 
@@ -31,7 +30,7 @@ public class UserBasedFCUAccountingPlugin implements AccountingPlugin {
 		this.dateUtils = dateUtils;
 		this.lastUpdate = dateUtils.currentTimeMillis();
 
-		db = new UserBasedAccountingDataStore(properties);
+		db = new AccountingDataStore(properties);
 	}
 
 	@Override
@@ -41,7 +40,7 @@ public class UserBasedFCUAccountingPlugin implements AccountingPlugin {
 		double updatingInterval = ((double) TimeUnit.MILLISECONDS.toSeconds(now - lastUpdate) / 60);
 		LOGGER.debug("updating interval=" + updatingInterval);
 
-		Map<UserAccountingDBKey, AccountingInfo> usage = new HashMap<UserAccountingDBKey, AccountingInfo>();
+		Map<AccountingEntryKey, AccountingInfo> usage = new HashMap<AccountingEntryKey, AccountingInfo>();
 
 		for (Request request : requestsWithInstance) {
 
@@ -49,7 +48,7 @@ public class UserBasedFCUAccountingPlugin implements AccountingPlugin {
 					- request.getFulfilledTime()) / 60);
 
 			String user = request.getFederationToken().getUser();
-			UserAccountingDBKey current = new UserAccountingDBKey(user,
+			AccountingEntryKey current = new AccountingEntryKey(user,
 					request.getRequestingMemberId(), request.getProvidingMemberId());
 
 			if (!usage.keySet().contains(current)) {
@@ -78,8 +77,8 @@ public class UserBasedFCUAccountingPlugin implements AccountingPlugin {
 	}
 
 	@Override
-	public AccountingInfo getAccountingInfo(Object userKey) {
-		return db.getAccountingInfo(userKey);
+	public AccountingInfo getAccountingInfo(Object entryKey) {
+		return db.getAccountingInfo(entryKey);
 	}
 
 	@Override
