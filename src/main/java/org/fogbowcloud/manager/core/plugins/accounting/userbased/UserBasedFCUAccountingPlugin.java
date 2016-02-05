@@ -24,6 +24,10 @@ public class UserBasedFCUAccountingPlugin implements AccountingPlugin {
 
 	private static final Logger LOGGER = Logger.getLogger(UserBasedFCUAccountingPlugin.class);
 
+	public UserBasedFCUAccountingPlugin(Properties properties, BenchmarkingPlugin benchmarkingPlugin) {
+		this(properties, benchmarkingPlugin, new DateUtils());
+	}
+	
 	public UserBasedFCUAccountingPlugin(Properties properties,
 			BenchmarkingPlugin benchmarkingPlugin, DateUtils dateUtils) {
 		this.benchmarkingPlugin = benchmarkingPlugin;
