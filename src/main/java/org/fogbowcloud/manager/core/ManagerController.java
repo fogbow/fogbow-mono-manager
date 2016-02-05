@@ -1193,6 +1193,12 @@ public class ManagerController {
 
 						order.setInstanceId(instanceId);
 						order.setProvidingMemberId(memberAddress);
+						
+						/*
+						 * TODO We need to differentiate compute remote request from storage
+						 * remote request to execute benchmarking only for compute instances.
+						 */
+						
 						try {
 							execBenchmark(order);
 						} catch (Throwable e) {
@@ -1376,10 +1382,12 @@ public class ManagerController {
 			Map<String, String> xOCCIAtt = order.getxOCCIAtt();
 			if (order.isIntoValidPeriod()) {
 				boolean isFulfilled = false;
+		
 				if (order.isLocal()) {
-					for (String keyAttributes : OrderAttribute.getValues()) {
-						xOCCIAtt.remove(keyAttributes);
-					}
+					//TODO this code was moved to inside createInstance method
+//					for (String keyAttributes : OrderAttribute.getValues()) {
+//						xOCCIAtt.remove(keyAttributes);
+//					}
 
 					String requirements = order.getRequirements();
 					List<FederationMember> allowedFederationMembers = getAllowedFederationMembers(requirements);
@@ -1526,64 +1534,77 @@ public class ManagerController {
 				+ order.getxOCCIAtt() + " for requesting member: " + order.getRequestingMemberId()
 				+ " with requestingToken " + order.getRequestingMemberId());
 
-		try {
+		boolean isComputeOrder = OrderConstants.COMPUTE_TERM.equals(order.getAttValue(OrderAttribute.KIND.getValue()));
+		
+		for (String keyAttributes : OrderAttribute.getValues()) {
+			order.getxOCCIAtt().remove(keyAttributes);
+		}
+		
+		if (isComputeOrder) {
 			try {
-				String command = createUserDataUtilsCommand(order);
-				order.putAttValue(OrderAttribute.USER_DATA_ATT.getValue(), command);
-				order.addCategory(new Category(OrderConstants.USER_DATA_TERM, OrderConstants.SCHEME,
-						OrderConstants.MIXIN_CLASS));
-			} catch (Exception e) {
-				LOGGER.warn("Exception while creating userdata.", e);
-				return false;
-			}
-
-			Token federationUserToken = getFederationUserToken(order);
-			String localImageId = getLocalImageId(order.getCategories(), federationUserToken);
-			List<Category> categories = new LinkedList<Category>();
-			for (Category category : order.getCategories()) {
-				if (category.getScheme().equals(OrderConstants.TEMPLATE_OS_SCHEME)) {
-					continue;
+				try {
+					String command = createUserDataUtilsCommand(order);
+					order.putAttValue(OrderAttribute.USER_DATA_ATT.getValue(), command);
+					order.addCategory(new Category(OrderConstants.USER_DATA_TERM, OrderConstants.SCHEME,
+							OrderConstants.MIXIN_CLASS));
+				} catch (Exception e) {
+					LOGGER.warn("Exception while creating userdata.", e);
+					return false;
 				}
-				categories.add(category);
-			}
-
-			Map<String, String> xOCCIAttCopy = new HashMap<String, String>(order.getxOCCIAtt());
-			removePublicKeyFromCategoriesAndAttributes(xOCCIAttCopy, categories);
-			String instanceId = computePlugin.requestInstance(federationUserToken, categories, xOCCIAttCopy,
-					localImageId);
-			order.setState(OrderState.SPAWNING);
-			order.setInstanceId(instanceId);
-			order.setProvidingMemberId(properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
-			execBenchmark(order);
-			return instanceId != null;
-		} catch (OCCIException e) {
-			ErrorType errorType = e.getType();
-			if (errorType == ErrorType.QUOTA_EXCEEDED) {
-				LOGGER.warn("Order failed locally for quota exceeded.", e);
-				ArrayList<Order> ordersWithInstances = new ArrayList<Order>(
-						orderRepository.getOrdersIn(OrderState.FULFILLED, OrderState.DELETED));
-				Order orderToPreempt = prioritizationPlugin.takeFrom(order, ordersWithInstances);
-				if (orderToPreempt == null) {
-					throw e;
+				
+				Token federationUserToken = getFederationUserToken(order);
+				String localImageId = getLocalImageId(order.getCategories(), federationUserToken);
+				List<Category> categories = new LinkedList<Category>();
+				for (Category category : order.getCategories()) {
+					if (category.getScheme().equals(OrderConstants.TEMPLATE_OS_SCHEME)) {
+						continue;
+					}
+					categories.add(category);
 				}
-				preemption(orderToPreempt);
-				return createInstance(order);
-			} else if (errorType == ErrorType.UNAUTHORIZED) {
-				LOGGER.warn("Order failed locally for user unauthorized.", e);
-				return false;
-			} else if (errorType == ErrorType.BAD_REQUEST) {
-				LOGGER.warn("Order failed locally for image not found.", e);
-				return false;
-			} else if (errorType == ErrorType.NO_VALID_HOST_FOUND) {
-				LOGGER.warn(
-						"Order failed because no valid host was found," + " we will try to wake up a sleeping host.",
-						e);
-				wakeUpSleepingHosts(order);
-				return false;
-			} else {
-				LOGGER.warn("Order failed locally for an unknown reason.", e);
-				return false;
+				
+				Map<String, String> xOCCIAttCopy = new HashMap<String, String>(order.getxOCCIAtt());
+				removePublicKeyFromCategoriesAndAttributes(xOCCIAttCopy, categories);
+				String instanceId = computePlugin.requestInstance(federationUserToken, categories, xOCCIAttCopy,
+						localImageId);
+				order.setState(OrderState.SPAWNING);
+				order.setInstanceId(instanceId);
+				order.setProvidingMemberId(properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
+				execBenchmark(order);
+				return instanceId != null;
+			} catch (OCCIException e) {
+				ErrorType errorType = e.getType();
+				if (errorType == ErrorType.QUOTA_EXCEEDED) {
+					LOGGER.warn("Order failed locally for quota exceeded.", e);
+					ArrayList<Order> ordersWithInstances = new ArrayList<Order>(
+							orderRepository.getOrdersIn(OrderState.FULFILLED, OrderState.DELETED));
+					Order orderToPreempt = prioritizationPlugin.takeFrom(order, ordersWithInstances);
+					if (orderToPreempt == null) {
+						throw e;
+					}
+					preemption(orderToPreempt);
+					return createInstance(order);
+				} else if (errorType == ErrorType.UNAUTHORIZED) {
+					LOGGER.warn("Order failed locally for user unauthorized.", e);
+					return false;
+				} else if (errorType == ErrorType.BAD_REQUEST) {
+					LOGGER.warn("Order failed locally for image not found.", e);
+					return false;
+				} else if (errorType == ErrorType.NO_VALID_HOST_FOUND) {
+					LOGGER.warn(
+							"Order failed because no valid host was found," + " we will try to wake up a sleeping host.",
+							e);
+					wakeUpSleepingHosts(order);
+					return false;
+				} else {
+					LOGGER.warn("Order failed locally for an unknown reason.", e);
+					return false;
+				}
 			}
+		} else {
+			/*
+			 * TODO treat storage order 
+			 */
+			return false;
 		}
 	}
 

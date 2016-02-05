@@ -18,7 +18,8 @@ public enum OrderAttribute {
 	REQUIREMENTS("org.fogbowcloud.request.requirements"),
 	BATCH_ID("org.fogbowcloud.request.batch-id"),
 	REQUESTING_MEMBER("org.fogbowcloud.request.requesting-member"),
-	PROVIDING_MEMBER("org.fogbowcloud.request.providing-member");
+	PROVIDING_MEMBER("org.fogbowcloud.request.providing-member"),
+	KIND("org.fogbowcloud.order.kind");
 	
 	private String value;
 	
