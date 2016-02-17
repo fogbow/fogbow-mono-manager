@@ -370,6 +370,9 @@ public class TestGetOrder {
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
 		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, OrderAttribute.INSTANCE_COUNT.getValue()
 				+ " = 1");
+		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, OrderAttribute.RESOURCE_KIND.getValue() + "=" 
+				+ OrderConstants.COMPUTE_TERM);		
+		
 		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(post);
 		// Get

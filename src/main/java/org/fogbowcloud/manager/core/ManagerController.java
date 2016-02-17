@@ -52,6 +52,7 @@ import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
 import org.fogbowcloud.manager.core.plugins.MapperPlugin;
 import org.fogbowcloud.manager.core.plugins.PrioritizationPlugin;
+import org.fogbowcloud.manager.core.plugins.StoragePlugin;
 import org.fogbowcloud.manager.core.plugins.accounting.ResourceUsage;
 import org.fogbowcloud.manager.core.plugins.util.SshClientPool;
 import org.fogbowcloud.manager.occi.instance.Instance;
@@ -120,6 +121,7 @@ public class ManagerController {
 	private ImageStoragePlugin imageStoragePlugin;
 	private AuthorizationPlugin authorizationPlugin;
 	private ComputePlugin computePlugin;
+	private StoragePlugin storagePlugin;
 	private IdentityPlugin localIdentityPlugin;
 	private IdentityPlugin federationIdentityPlugin;
 	private PrioritizationPlugin prioritizationPlugin;
@@ -1199,6 +1201,12 @@ public class ManagerController {
 						 * remote request to execute benchmarking only for compute instances.
 						 */
 						
+						boolean isStorageOrder = OrderConstants.STORAGE_TERM.equals(order
+								.getAttValue(OrderAttribute.RESOURCE_KIND.getValue()));
+						if (isStorageOrder) {
+							return;
+						}
+						
 						try {
 							execBenchmark(order);
 						} catch (Throwable e) {
@@ -1379,16 +1387,10 @@ public class ManagerController {
 			}
 
 			LOGGER.debug(order.getId() + " being considered for scheduling.");
-			Map<String, String> xOCCIAtt = order.getxOCCIAtt();
 			if (order.isIntoValidPeriod()) {
 				boolean isFulfilled = false;
 		
 				if (order.isLocal()) {
-					//TODO this code was moved to inside createInstance method
-//					for (String keyAttributes : OrderAttribute.getValues()) {
-//						xOCCIAtt.remove(keyAttributes);
-//					}
-
 					String requirements = order.getRequirements();
 					List<FederationMember> allowedFederationMembers = getAllowedFederationMembers(requirements);
 
@@ -1534,11 +1536,16 @@ public class ManagerController {
 				+ order.getxOCCIAtt() + " for requesting member: " + order.getRequestingMemberId()
 				+ " with requestingToken " + order.getRequestingMemberId());
 
-		boolean isComputeOrder = OrderConstants.COMPUTE_TERM.equals(order.getAttValue(OrderAttribute.KIND.getValue()));
+		boolean isComputeOrder = OrderConstants.COMPUTE_TERM.equals(order
+				.getAttValue(OrderAttribute.RESOURCE_KIND.getValue()));
+		boolean isStorageOrder = OrderConstants.STORAGE_TERM.equals(order
+				.getAttValue(OrderAttribute.RESOURCE_KIND.getValue()));
 		
 		for (String keyAttributes : OrderAttribute.getValues()) {
 			order.getxOCCIAtt().remove(keyAttributes);
 		}
+		
+		Token federationUserToken = getFederationUserToken(order);
 		
 		if (isComputeOrder) {
 			try {
@@ -1552,7 +1559,6 @@ public class ManagerController {
 					return false;
 				}
 				
-				Token federationUserToken = getFederationUserToken(order);
 				String localImageId = getLocalImageId(order.getCategories(), federationUserToken);
 				List<Category> categories = new LinkedList<Category>();
 				for (Category category : order.getCategories()) {
@@ -1600,10 +1606,22 @@ public class ManagerController {
 					return false;
 				}
 			}
-		} else {
+		} else if (isStorageOrder) {
+			
 			/*
 			 * TODO treat storage order 
 			 */
+			
+			try {
+				String stogageId = storagePlugin.requestInstance(federationUserToken, 
+						order.getCategories(), order.getxOCCIAtt());
+				
+				return stogageId != null ? true : false;
+			} catch (OCCIException e) {
+				return false;
+			}			
+			
+		} else {
 			return false;
 		}
 	}

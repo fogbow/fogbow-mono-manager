@@ -33,7 +33,7 @@ public class OpenStackConfigurationConstants {
 
 	// url
 	public static final String COMPUTE_NOVAV2_URL_KEY = "compute_novav2_url";
-	public static final String COMPUTE_GLANCEV2_URL_KEY = "compute_glancev2_url";
+	public static final String COMPUTE_GLANCEV2_URL_KEY = "compute_glancev2_url";	
 	
 	//images visibility
 	public static final String COMPUTE_GLANCEV2_IMAGE_VISIBILITY = "compute_glancev2_image_visibility";

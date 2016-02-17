@@ -171,6 +171,10 @@ public class Order {
 	public void setProvidingMemberId(String providingMemberId) {
 		this.providingMemberId = providingMemberId;
 	}
+	
+	public void setxOCCIAtt(Map<String, String> xOCCIAtt) {
+		this.xOCCIAtt = xOCCIAtt;
+	}
 
 	public String toString() {
 		return "id: " + id + ", token: " + federationToken + ", instanceId: " + instanceId

@@ -43,8 +43,7 @@ public class OrderServerResource extends ServerResource {
 		OCCIApplication application = (OCCIApplication) getApplication();
 		HttpRequest req = (HttpRequest) getRequest();
 		String federationAccessToken = HeaderUtils.getAuthToken(
-				req.getHeaders(), getResponse(),
-				application.getAuthenticationURI());
+				req.getHeaders(), getResponse(), application.getAuthenticationURI());
 		String OrderId = (String) getRequestAttributes().get("orderId");
 		List<String> acceptContent = HeaderUtils.getAccept(req.getHeaders());
 		LOGGER.debug("accept contents:" + acceptContent);

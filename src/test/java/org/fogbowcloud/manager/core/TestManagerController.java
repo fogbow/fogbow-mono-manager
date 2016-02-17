@@ -92,6 +92,7 @@ public class TestManagerController {
 		xOCCIAtt = new HashMap<String, String>();
 		xOCCIAtt.put(OrderAttribute.INSTANCE_COUNT.getValue(),
 				String.valueOf(OrderConstants.DEFAULT_INSTANCE_COUNT));
+		xOCCIAtt.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.COMPUTE_TERM);
 	}
 
 	@Test
@@ -137,15 +138,19 @@ public class TestManagerController {
 	}
 	
 	private void checkOrderPerUserToken(Token token) {
-		Order order1 = new Order("id1", token, new ArrayList<Category>(),
+		Order orderOne = new Order("id1", token, new ArrayList<Category>(),
 				new HashMap<String, String>(), true, "");
-		order1.setState(OrderState.OPEN);
-		Order order2 = new Order("id2", token, new ArrayList<Category>(),
+		HashMap<String, String> xOCCIAtt = new HashMap<String, String>();
+		xOCCIAtt.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.COMPUTE_TERM);
+		orderOne.setxOCCIAtt(xOCCIAtt);
+		orderOne.setState(OrderState.OPEN);
+		Order orderTwo = new Order("id2", token, new ArrayList<Category>(),
 				new HashMap<String, String>(), true, "");
-		order2.setState(OrderState.OPEN);
+		orderTwo.setxOCCIAtt(xOCCIAtt);
+		orderTwo.setState(OrderState.OPEN);
 		OrderRepository orderRepository = new OrderRepository();
-		orderRepository.addOrder(token.getUser(), order1);
-		orderRepository.addOrder(token.getUser(), order2);
+		orderRepository.addOrder(token.getUser(), orderOne);
+		orderRepository.addOrder(token.getUser(), orderTwo);
 		managerController.setOrders(orderRepository);
 
 		managerController.checkAndSubmitOpenOrders();
@@ -1100,6 +1105,7 @@ public class TestManagerController {
 	public void testMonitorFulfilledAndPersistentOrder() throws InterruptedException {
 		Map<String, String> attributes = new HashMap<String, String>();
 		attributes.put(OrderAttribute.TYPE.getValue(), OrderType.PERSISTENT.getValue());
+		attributes.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.COMPUTE_TERM);
 
 		// setting order repository
 		Order order1 = new Order("id1", managerTestHelper.getDefaultFederationToken(), new ArrayList<Category>(), attributes, true, "");
@@ -1552,6 +1558,7 @@ public class TestManagerController {
 				String.valueOf(OrderType.PERSISTENT.getValue()));
 		xOCCIAtt.put(OrderAttribute.VALID_UNTIL.getValue(),
 				DateUtils.getDateISO8601Format(expirationOrderTime));
+		xOCCIAtt.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.COMPUTE_TERM);
 
 		mockOrderInstance();
 
@@ -1722,6 +1729,7 @@ public class TestManagerController {
 				DateUtils.getDateISO8601Format(startOrderTime));
 		xOCCIAtt.put(OrderAttribute.VALID_UNTIL.getValue(),
 				DateUtils.getDateISO8601Format(expirationOrderTime));
+		xOCCIAtt.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.COMPUTE_TERM);
 
 		mockOrderInstance();
 
@@ -2845,6 +2853,7 @@ public class TestManagerController {
 				OrderConstants.CREDENTIALS_RESOURCE_SCHEME, OrderConstants.MIXIN_CLASS);
 		categories.add(publicKeyCategory);
 		newXOCCIAttr.put(OrderAttribute.DATA_PUBLIC_KEY.getValue(), "public-key");
+		newXOCCIAttr.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.COMPUTE_TERM);
 		
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		String newInstanceId = "newinstanceid";
@@ -3102,6 +3111,7 @@ public class TestManagerController {
 		String batchId = "batchIdOne";
 		HashMap<String, String> xOCCIAtt = new HashMap<String, String>();
 		xOCCIAtt.put(OrderAttribute.BATCH_ID.getValue(), batchId);
+		xOCCIAtt.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.COMPUTE_TERM);
 		Token token = managerTestHelper.getDefaultFederationToken();
 		Order order1 = new Order("id1", token, new ArrayList<Category>(),
 				xOCCIAtt, true, "");
@@ -3190,6 +3200,7 @@ public class TestManagerController {
 
 		String batchId = "batchIdOne";
 		HashMap<String, String> xOCCIAtt = new HashMap<String, String>();
+		xOCCIAtt.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.COMPUTE_TERM);
 		xOCCIAtt.put(OrderAttribute.BATCH_ID.getValue(), batchId);
 		Token token = managerTestHelper.getDefaultFederationToken();
 		Order order1 = new Order("id1", token, new ArrayList<Category>(),

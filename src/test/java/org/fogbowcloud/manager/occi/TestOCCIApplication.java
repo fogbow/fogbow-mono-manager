@@ -77,6 +77,8 @@ public class TestOCCIApplication {
 		xOCCIAtt = new HashMap<String, String>();
 		xOCCIAtt.put(OrderAttribute.INSTANCE_COUNT.getValue(),
 				String.valueOf(OrderConstants.DEFAULT_INSTANCE_COUNT));
+		xOCCIAtt.put(OrderAttribute.RESOURCE_KIND.getValue(),
+				String.valueOf(OrderConstants.COMPUTE_TERM));		
 
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		Mockito.when(

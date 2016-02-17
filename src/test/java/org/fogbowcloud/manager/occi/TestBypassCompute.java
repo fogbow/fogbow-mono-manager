@@ -191,10 +191,14 @@ public class TestBypassCompute {
 				+ RequirementsHelper.GLUE_MEM_RAM_TERM + " > 500 && "
 				+ RequirementsHelper.GLUE_VCPU_TERM + " > 0");
 		
+		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE , OrderAttribute.RESOURCE_KIND.getValue() 
+				+ "=" + OrderConstants.COMPUTE_TERM);
+		
+		
 		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(post);
 		List<String> orderIDs = OCCITestHelper.getOrderIdsPerLocationHeader(response);
-
+		
 		Assert.assertEquals(1, orderIDs.size());
 		Assert.assertEquals(HttpStatus.SC_CREATED, response.getStatusLine().getStatusCode());
 		
@@ -203,10 +207,20 @@ public class TestBypassCompute {
 				+ RequirementsHelper.GLUE_MEM_RAM_TERM + " > 500 && "
 				+ RequirementsHelper.GLUE_VCPU_TERM + " > 0";
 		xOCCIAttr.put(OrderAttribute.REQUIREMENTS.getValue(), requirementsStr);
+		xOCCIAttr.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.COMPUTE_TERM);
 		
-		Thread.sleep(LITTLE_SCHEDULE_TIME + 15);
+		boolean fail = true;
+		for (int i = 0; i < 5; i++) {
+			Thread.sleep(LITTLE_SCHEDULE_TIME / 2);
+			if (computePlugin.getInstances(defaultToken).size() == 1) {
+				fail = false;
+				break;				
+			}
+		}
 		
-		Assert.assertEquals(1, computePlugin.getInstances(defaultToken).size());
+		if (fail) {
+			Assert.fail();
+		}
 		
 		//adding instances directly on compute endpoint
 		List<Category> categories = new ArrayList<Category>();		
@@ -231,7 +245,7 @@ public class TestBypassCompute {
 	}
 
 	@Test
-	public void testBypassGetSpecificComputeOK() throws URISyntaxException, HttpException, IOException {
+	public void testBypassGetSpecificComputeOK() throws URISyntaxException, HttpException, IOException, InterruptedException {
 		//adding instances directly on compute endpoint
 		List<Category> categories = new ArrayList<Category>();		
 		
@@ -359,6 +373,8 @@ public class TestBypassCompute {
 				+ RequirementsHelper.GLUE_DISK_TERM + " >= 10 && "
 				+ RequirementsHelper.GLUE_MEM_RAM_TERM + " > 500 && "
 				+ RequirementsHelper.GLUE_VCPU_TERM + " > 0");
+		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, OrderAttribute.RESOURCE_KIND.getValue() + "=" 
+				+ OrderConstants.COMPUTE_TERM);
 		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(post);
 		List<String> orderIDs = OCCITestHelper.getOrderIdsPerLocationHeader(response);

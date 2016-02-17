@@ -198,7 +198,7 @@ public class TestQueryServerResource {
 		String categorySmall = OCCITestHelper.FOGBOW_SMALL_IMAGE + "; " + 
 				"scheme=\"http://schemas.fogbowcloud.org/template/resource#\"; class=\"mixin\";";
 		String categoryFogbowOrder = OrderConstants.TERM + "; " + 
-				"scheme=\"http://schemas.fogbowcloud.org/order#\"; class=\"kind\";";
+				"scheme=\"http://schemas.fogbowcloud.org/request#\"; class=\"kind\";";
 
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_QUERY);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
