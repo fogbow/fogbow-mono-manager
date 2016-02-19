@@ -42,7 +42,7 @@ public class TestDeleteOrder {
 
 	OCCITestHelper orderHelper;
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "deprecation" })
 	@Before
 	public void setup() throws Exception {
 		this.orderHelper = new OCCITestHelper();
@@ -111,6 +111,8 @@ public class TestDeleteOrder {
 		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
+		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE,
+				OrderAttribute.RESOURCE_KIND.getValue() + "=" + OrderConstants.COMPUTE_TERM);
 		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(post);
 		List<String> orderLocations = OCCITestHelper.getOrderIdsPerLocationHeader(response);
@@ -150,6 +152,8 @@ public class TestDeleteOrder {
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
 		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, OrderAttribute.INSTANCE_COUNT.getValue()
 				+ " = " + defaultAmount);
+		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE,
+				OrderAttribute.RESOURCE_KIND.getValue() + "=" + OrderConstants.COMPUTE_TERM);		
 		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(post);
 		List<String> orderLocations = OCCITestHelper.getOrderIdsPerLocationHeader(response);
@@ -191,6 +195,8 @@ public class TestDeleteOrder {
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
 		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, OrderAttribute.INSTANCE_COUNT.getValue()
 				+ " = " + createdMount);
+		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE,
+				OrderAttribute.RESOURCE_KIND.getValue() + "=" + OrderConstants.COMPUTE_TERM);		
 		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(post);
 		List<String> orderIDs = OCCITestHelper.getOrderIdsPerLocationHeader(response);

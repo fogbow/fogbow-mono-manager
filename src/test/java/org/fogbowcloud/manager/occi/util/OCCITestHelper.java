@@ -32,6 +32,7 @@ import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
 import org.fogbowcloud.manager.core.plugins.MapperPlugin;
+import org.fogbowcloud.manager.core.plugins.StoragePlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.OCCIApplication;
 import org.fogbowcloud.manager.occi.model.HeaderUtils;
@@ -59,6 +60,7 @@ public class OCCITestHelper {
 	public static final String URI_FOGBOW_ORDER = "http://localhost:" + ENDPOINT_PORT + "/" + OrderConstants.TERM
 			+ "/";
 	public static final String URI_FOGBOW_COMPUTE = "http://localhost:" + ENDPOINT_PORT + "/compute/";
+	public static final String URI_FOGBOW_STORAGE = "http://localhost:" + ENDPOINT_PORT + "/storage/";
 	public static final String URI_FOGBOW_MEMBER = "http://localhost:" + ENDPOINT_PORT + "/member";
 	public static final String URI_FOGBOW_USAGE = "http://localhost:" + ENDPOINT_PORT + "/usage";
 	public static final String URI_FOGBOW_TOKEN = "http://localhost:" + ENDPOINT_PORT + "/token";
@@ -138,11 +140,21 @@ public class OCCITestHelper {
 			AuthorizationPlugin authorizationPlugin, ImageStoragePlugin imageStoragePlugin,
 			AccountingPlugin accountingPlugin, BenchmarkingPlugin benchmarkingPlugin, Map<String, List<Order>> ordersToAdd,
 			MapperPlugin mapperPlugin) throws Exception {
-		return initializeComponentCompute(computePlugin, identityPlugin, authorizationPlugin,
+		return initializeComponentCompute(computePlugin, null,identityPlugin, authorizationPlugin,
 				imageStoragePlugin, accountingPlugin, benchmarkingPlugin, ordersToAdd,
 				mapperPlugin, null);
 	}
-	public ManagerController initializeComponentCompute(ComputePlugin computePlugin, IdentityPlugin identityPlugin,
+	
+	public ManagerController initializeComponentCompute(ComputePlugin computePlugin, StoragePlugin storagePlugin
+			, IdentityPlugin identityPlugin, AuthorizationPlugin authorizationPlugin, ImageStoragePlugin imageStoragePlugin,
+			AccountingPlugin accountingPlugin, BenchmarkingPlugin benchmarkingPlugin, Map<String, List<Order>> ordersToAdd,
+			MapperPlugin mapperPlugin) throws Exception {
+		return initializeComponentCompute(computePlugin, storagePlugin,identityPlugin, authorizationPlugin,
+				imageStoragePlugin, accountingPlugin, benchmarkingPlugin, ordersToAdd,
+				mapperPlugin, null);
+	}	
+	
+	public ManagerController initializeComponentCompute(ComputePlugin computePlugin, StoragePlugin storagePlugin, IdentityPlugin identityPlugin,
 			AuthorizationPlugin authorizationPlugin, ImageStoragePlugin imageStoragePlugin,
 			AccountingPlugin accountingPlugin, BenchmarkingPlugin benchmarkingPlugin, Map<String, List<Order>> ordersToAdd,
 			MapperPlugin mapperPlugin, Properties properties) throws Exception {
@@ -173,6 +185,7 @@ public class OCCITestHelper {
 		facade.setImageStoragePlugin(imageStoragePlugin);
 		facade.setAccountingPlugin(accountingPlugin);
 		facade.setBenchmarkingPlugin(benchmarkingPlugin);
+		facade.setStoragePlugin(storagePlugin);
 
 		orders = new OrderRepository();
 		facade.setOrders(orders);

@@ -194,6 +194,14 @@ public class ManagerController {
 	public void setBenchmarkingPlugin(BenchmarkingPlugin benchmarkingPlugin) {
 		this.benchmarkingPlugin = benchmarkingPlugin;
 	}
+	
+	public StoragePlugin getStoragePlugin() {
+		return storagePlugin;
+	}
+	
+	public void setStoragePlugin(StoragePlugin storagePlugin) {
+		this.storagePlugin = storagePlugin;
+	}
 
 	public void setAccountingPlugin(AccountingPlugin accountingPlugin) {
 		this.accountingPlugin = accountingPlugin;
@@ -558,9 +566,23 @@ public class ManagerController {
 	}
 
 	public List<Instance> getInstances(String accessId) {
-		LOGGER.debug("Retrieving instances of token " + accessId);
+		return getInstances(accessId, null);
+	}
+	
+	public List<Instance> getInstances(String accessId, String resourceKind) {
+		resourceKind = resourceKind == null ? OrderConstants.COMPUTE_TERM : resourceKind;
+		
+		LOGGER.debug("Retrieving instances(" + resourceKind + ") of token " + accessId);
 		List<Instance> instances = new ArrayList<Instance>();
 		for (Order order : orderRepository.getByUser(getUser(accessId))) {
+			
+			String orderResourceKind = order.getAttValue(OrderAttribute.RESOURCE_KIND.getValue());
+			//TODO retirar essa primeira condiçao
+			if (orderResourceKind == null && !resourceKind.equals(OrderConstants.COMPUTE_TERM) 
+					|| orderResourceKind != null && !orderResourceKind.equals(resourceKind)) {
+				continue;
+			}
+			
 			String instanceId = order.getInstanceId();
 			if (instanceId == null) {
 				continue;
@@ -586,8 +608,12 @@ public class ManagerController {
 	}
 
 	public Instance getInstance(String accessId, String instanceId) {
-		Order order = getOrderForInstance(accessId, instanceId);
-		return getInstance(order);
+		return getInstance(accessId, instanceId, null);
+	}
+	
+	public Instance getInstance(String accessId, String instanceId, String resourceKind) {
+		Order order = getOrderForInstance(accessId, instanceId);			
+		return getInstance(order, resourceKind);
 	}
 
 	private Instance getInstanceSSHAddress(Order order) {
@@ -610,22 +636,39 @@ public class ManagerController {
 	}
 
 	private Instance getInstance(Order order) {
+		return getInstance(order, null);
+	}
+	
+	private Instance getInstance(Order order, String resourceKind) {
+		
+		resourceKind = resourceKind == null ? OrderConstants.COMPUTE_TERM : resourceKind;				
+		//TODO retirar essa primeira condiçao
+		String orderResourceKind = order.getAttValue(OrderAttribute.RESOURCE_KIND.getValue());		
+		if (orderResourceKind != null && !orderResourceKind.equals(resourceKind)) {
+			throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
+		}
+		
 		Instance instance = null;
 		if (isFulfilledByLocalMember(order)) {
-			LOGGER.debug(order.getInstanceId() + " is local, getting its information in the local cloud.");
-			instance = this.computePlugin.getInstance(getFederationUserToken(order), order.getInstanceId());
-
-			instance.addAttribute(Instance.SSH_USERNAME_ATT, getSSHCommonUser());
-			Map<String, String> serviceAddresses = getExternalServiceAddresses(order.getId());
-			if (serviceAddresses != null) {
-				instance.addAttribute(Instance.SSH_PUBLIC_ADDRESS_ATT, serviceAddresses.get(SSH_SERVICE_NAME));
-				serviceAddresses.remove(SSH_SERVICE_NAME);
-				instance.addAttribute(Instance.EXTRA_PORTS_ATT, new JSONObject(serviceAddresses).toString());
-			}
-
-			Category osCategory = getImageCategory(order.getCategories());
-			if (osCategory != null) {
-				instance.addResource(ResourceRepository.createImageResource(osCategory.getTerm()));
+			if (resourceKind.equals(OrderConstants.COMPUTE_TERM)) {
+				LOGGER.debug(order.getInstanceId() + " is local, getting its information in the local cloud.");
+				instance = this.computePlugin.getInstance(getFederationUserToken(order), order.getInstanceId());
+				
+				instance.addAttribute(Instance.SSH_USERNAME_ATT, getSSHCommonUser());
+				Map<String, String> serviceAddresses = getExternalServiceAddresses(order.getId());
+				if (serviceAddresses != null) {
+					instance.addAttribute(Instance.SSH_PUBLIC_ADDRESS_ATT, serviceAddresses.get(SSH_SERVICE_NAME));
+					serviceAddresses.remove(SSH_SERVICE_NAME);
+					instance.addAttribute(Instance.EXTRA_PORTS_ATT, new JSONObject(serviceAddresses).toString());
+				}
+				
+				Category osCategory = getImageCategory(order.getCategories());
+				if (osCategory != null) {
+					instance.addResource(ResourceRepository.createImageResource(osCategory.getTerm()));
+				}				
+			} else if (resourceKind.equals(OrderConstants.STORAGE_TERM)) {
+				LOGGER.debug(order.getInstanceId() + " is local, getting its information in the local cloud.");
+				instance = this.storagePlugin.getInstance(getFederationUserToken(order), order.getInstanceId());				
 			}
 
 		} else {
@@ -714,14 +757,20 @@ public class ManagerController {
 	}
 
 	public void removeInstances(String accessId) {
+		removeInstances(accessId, null);
+	}
+	
+	public void removeInstances(String accessId, String resourceKind) {
+		resourceKind = resourceKind == null ? OrderConstants.COMPUTE_TERM : resourceKind;
+		
 		String user = getUser(accessId);
-		LOGGER.debug("Removing instances of user: " + user);
+		LOGGER.debug("Removing instances(" + resourceKind + ") of user: " + user);
 		for (Order order : orderRepository.getByUser(user)) {
 			String instanceId = order.getInstanceId();
 			if (instanceId == null) {
 				continue;
 			}
-			removeInstance(normalizeInstanceId(instanceId), order);
+			removeInstance(normalizeInstanceId(instanceId), order, resourceKind);
 		}
 	}
 
@@ -734,14 +783,28 @@ public class ManagerController {
 	}
 
 	public void removeInstance(String federationToken, String instanceId) {
+		removeInstance(federationToken, instanceId, null);
+	}
+	
+	public void removeInstance(String federationToken, String instanceId, String resourceKind) {
 		Order order = getOrderForInstance(federationToken, instanceId);
 		instanceId = normalizeInstanceId(instanceId);
-		removeInstance(instanceId, order);
+		removeInstance(instanceId, order, resourceKind);
 	}
 
 	private void removeInstance(String instanceId, Order order) {
+		removeInstance(instanceId, order, null);
+	}
+	
+	private void removeInstance(String instanceId, Order order, String resourceKind) {
+		resourceKind = resourceKind == null ? OrderConstants.COMPUTE_TERM : resourceKind;
+		
 		if (isFulfilledByLocalMember(order)) {
-			this.computePlugin.removeInstance(getFederationUserToken(order), instanceId);
+			if (resourceKind.equals(OrderConstants.COMPUTE_TERM)) {
+				this.computePlugin.removeInstance(getFederationUserToken(order), instanceId);				
+			} else if (resourceKind.equals(OrderConstants.STORAGE_TERM)) {
+				this.storagePlugin.removeInstance(getFederationUserToken(order), instanceId);
+			}
 		} else {
 			removeRemoteInstance(order);
 		}
@@ -980,20 +1043,29 @@ public class ManagerController {
 		LOGGER.info("Getting instance " + instanceId + " for remote member.");
 		try {
 			Order servedOrder = orderRepository.getOrderByInstance(instanceId);
-			Instance instance = computePlugin.getInstance(getFederationUserToken(servedOrder), instanceId);
-			if (servedOrder != null) {
-				Map<String, String> serviceAddresses = getExternalServiceAddresses(servedOrder.getId());
-				if (serviceAddresses != null) {
-					instance.addAttribute(Instance.SSH_PUBLIC_ADDRESS_ATT, serviceAddresses.get(SSH_SERVICE_NAME));
-					instance.addAttribute(Instance.SSH_USERNAME_ATT, getSSHCommonUser());
-					serviceAddresses.remove(SSH_SERVICE_NAME);
-					instance.addAttribute(Instance.EXTRA_PORTS_ATT, new JSONObject(serviceAddresses).toString());
+			Token federationUserToken = getFederationUserToken(servedOrder);
+			String orderResourceKind = servedOrder != null ? servedOrder
+					.getAttValue(OrderAttribute.RESOURCE_KIND.getValue()): null;
+			Instance instance = null;
+			if (orderResourceKind == null || orderResourceKind.equals(OrderConstants.COMPUTE_TERM)) {
+				instance = computePlugin.getInstance(federationUserToken, instanceId);
+				if (servedOrder != null) {
+					Map<String, String> serviceAddresses = getExternalServiceAddresses(servedOrder.getId());
+					if (serviceAddresses != null) {
+						instance.addAttribute(Instance.SSH_PUBLIC_ADDRESS_ATT, serviceAddresses.get(SSH_SERVICE_NAME));
+						instance.addAttribute(Instance.SSH_USERNAME_ATT, getSSHCommonUser());
+						serviceAddresses.remove(SSH_SERVICE_NAME);
+						instance.addAttribute(Instance.EXTRA_PORTS_ATT, new JSONObject(serviceAddresses).toString());
+					}
+					
+					Category osCategory = getImageCategory(servedOrder.getCategories());
+					if (osCategory != null) {
+						instance.addResource(ResourceRepository.createImageResource(osCategory.getTerm()));
+					}
 				}
-
-				Category osCategory = getImageCategory(servedOrder.getCategories());
-				if (osCategory != null) {
-					instance.addResource(ResourceRepository.createImageResource(osCategory.getTerm()));
-				}
+				return instance;				
+			} else if (orderResourceKind.equals(OrderConstants.STORAGE_TERM)) {
+				instance = storagePlugin.getInstance(federationUserToken, instanceId);
 			}
 			return instance;
 		} catch (OCCIException e) {
@@ -1006,11 +1078,19 @@ public class ManagerController {
 	}
 	
 	public void removeInstanceForRemoteMember(String instanceId) {
-		LOGGER.info("Removing instance " + instanceId + " for remote member.");
+		Order order = orderRepository.getOrderByInstance(instanceId);
+		String resourceKind = order != null ? order.getAttValue(OrderAttribute.RESOURCE_KIND.getValue()) : null;
+		resourceKind = resourceKind == null ? OrderConstants.COMPUTE_TERM : resourceKind;
+		LOGGER.info("Removing instance(" + resourceKind + ") " + instanceId + " for remote member.");
 
-		updateAccounting();
-		benchmarkingPlugin.remove(instanceId);
-		computePlugin.removeInstance(getFederationUserToken(orderRepository.getOrderByInstance(instanceId)), instanceId);
+		Token federationUserToken = getFederationUserToken(order);
+		if (OrderConstants.COMPUTE_TERM.equals(resourceKind)) {
+			updateAccounting();
+			benchmarkingPlugin.remove(instanceId);
+			computePlugin.removeInstance(federationUserToken, instanceId);			
+		} else if (OrderConstants.STORAGE_TERM.equals(resourceKind)) {
+			storagePlugin.removeInstance(federationUserToken, instanceId);
+		}
 	}
 
 	public Token getTokenFromFederationIdP(String accessId) {
@@ -1607,16 +1687,14 @@ public class ManagerController {
 				}
 			}
 		} else if (isStorageOrder) {
-			
-			/*
-			 * TODO treat storage order 
-			 */
-			
 			try {
-				String stogageId = storagePlugin.requestInstance(federationUserToken, 
+				String instanceId = storagePlugin.requestInstance(federationUserToken, 
 						order.getCategories(), order.getxOCCIAtt());
 				
-				return stogageId != null ? true : false;
+				order.setState(OrderState.FULFILLED);
+				order.setInstanceId(instanceId);
+				order.setProvidingMemberId(properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
+				return instanceId != null;
 			} catch (OCCIException e) {
 				return false;
 			}			

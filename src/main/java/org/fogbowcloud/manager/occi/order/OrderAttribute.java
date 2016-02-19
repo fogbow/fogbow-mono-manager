@@ -19,7 +19,8 @@ public enum OrderAttribute {
 	BATCH_ID("org.fogbowcloud.request.batch-id"),
 	REQUESTING_MEMBER("org.fogbowcloud.request.requesting-member"),
 	PROVIDING_MEMBER("org.fogbowcloud.request.providing-member"),
-	RESOURCE_KIND("org.fogbowcloud.order.kind");
+	RESOURCE_KIND("org.fogbowcloud.order.resource-kind"),
+	STORAGE_SIZE("org.fogbowcloud.order.storage-size");
 	
 	private String value;
 	

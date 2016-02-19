@@ -350,6 +350,18 @@ public class OrderServerResource extends ServerResource {
 	}
 	
 	public static Map<String, String> normalizeXOCCIAtt(Map<String, String> xOCCIAtt) {
+		String resourceKind = xOCCIAtt.get(OrderAttribute.RESOURCE_KIND.getValue());
+		if (resourceKind != null) {
+			if (resourceKind.equals(OrderConstants.STORAGE_TERM)
+					&& xOCCIAtt.get(OrderAttribute.STORAGE_SIZE.getValue()) == null) {
+				throw new OCCIException(ErrorType.BAD_REQUEST,
+						ResponseConstants.NOT_FOUND_STORAGE_SIZE_ATTRIBUTE);
+			}
+		} else {
+			throw new OCCIException(ErrorType.BAD_REQUEST,
+					ResponseConstants.NOT_FOUND_RESOURCE_KIND);
+		}
+ 		
 		Map<String, String> defOCCIAtt = new HashMap<String, String>();
 		defOCCIAtt.put(OrderAttribute.TYPE.getValue(), OrderConstants.DEFAULT_TYPE);
 		defOCCIAtt.put(OrderAttribute.INSTANCE_COUNT.getValue(),

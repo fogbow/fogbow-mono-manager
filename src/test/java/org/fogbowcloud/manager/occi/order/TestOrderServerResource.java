@@ -36,6 +36,8 @@ public class TestOrderServerResource {
 		headers.add(HeaderUtils.normalize(OCCIHeaders.CATEGORY), category.toHeader());
 		headers.add(HeaderUtils.normalize(OCCIHeaders.X_OCCI_ATTRIBUTE),
 				OrderAttribute.INSTANCE_COUNT.getValue() + "=10");
+		headers.add(HeaderUtils.normalize(OCCIHeaders.X_OCCI_ATTRIBUTE),
+				OrderAttribute.RESOURCE_KIND.getValue() + "=" + OrderConstants.COMPUTE_TERM);
 
 		Map<String, String> xOCCIAtt = HeaderUtils.getXOCCIAtributes(headers);
 		xOCCIAtt = OrderServerResource.normalizeXOCCIAtt(xOCCIAtt);
@@ -68,6 +70,8 @@ public class TestOrderServerResource {
 	public void testValidAttributeInstaces() {
 		headers.add(HeaderUtils.normalize(OCCIHeaders.X_OCCI_ATTRIBUTE),
 				OrderAttribute.INSTANCE_COUNT.getValue() + " = 6");
+		headers.add(HeaderUtils.normalize(OCCIHeaders.X_OCCI_ATTRIBUTE),
+				OrderAttribute.RESOURCE_KIND.getValue() + "=" + OrderConstants.COMPUTE_TERM);
 
 		Map<String, String> xOCCIAtt = HeaderUtils.getXOCCIAtributes(headers);
 		xOCCIAtt = OrderServerResource.normalizeXOCCIAtt(xOCCIAtt);
@@ -78,6 +82,8 @@ public class TestOrderServerResource {
 
 	@Test
 	public void testValidAttributeInstacesValeuDefault() {
+		headers.add(HeaderUtils.normalize(OCCIHeaders.X_OCCI_ATTRIBUTE),
+				OrderAttribute.RESOURCE_KIND.getValue() + "=" + OrderConstants.COMPUTE_TERM);
 		Map<String, String> xOCCIAtt = HeaderUtils.getXOCCIAtributes(headers);
 		xOCCIAtt = OrderServerResource.normalizeXOCCIAtt(xOCCIAtt);
 		int instances = Integer.valueOf(xOCCIAtt.get(OrderAttribute.INSTANCE_COUNT.getValue()));
@@ -107,6 +113,8 @@ public class TestOrderServerResource {
 	public void testCheckAttributes() {
 		headers.add(HeaderUtils.normalize(OCCIHeaders.X_OCCI_ATTRIBUTE),
 				OrderAttribute.TYPE.getValue() + "=\"one-time\"");
+		headers.add(HeaderUtils.normalize(OCCIHeaders.X_OCCI_ATTRIBUTE),
+				OrderAttribute.RESOURCE_KIND.getValue() + "=" + OrderConstants.COMPUTE_TERM);
 		Map<String, String> xOCCIAtt = HeaderUtils.getXOCCIAtributes(headers);
 
 		OrderServerResource.normalizeXOCCIAtt(xOCCIAtt);
@@ -127,6 +135,8 @@ public class TestOrderServerResource {
 				OrderAttribute.VALID_FROM.getValue() + "=\"2014-04-01\"");
 		headers.add(HeaderUtils.normalize(OCCIHeaders.X_OCCI_ATTRIBUTE),
 				OrderAttribute.VALID_UNTIL.getValue() + "=\"2014-03-30\"");
+		headers.add(HeaderUtils.normalize(OCCIHeaders.X_OCCI_ATTRIBUTE),
+				OrderAttribute.RESOURCE_KIND.getValue() + "=" + OrderConstants.COMPUTE_TERM);
 		Map<String, String> xOCCIAtt = HeaderUtils.getXOCCIAtributes(headers);
 
 		OrderServerResource.normalizeXOCCIAtt(xOCCIAtt);

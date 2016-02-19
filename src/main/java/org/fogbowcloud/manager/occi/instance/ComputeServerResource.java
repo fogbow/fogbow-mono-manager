@@ -585,7 +585,7 @@ public class ComputeServerResource extends ServerResource {
 		return allInstances;
 	}
 
-	private String normalizeAuthToken(String authToken) {
+	public static String normalizeAuthToken(String authToken) {
 		if (authToken.contains("Basic ")) {
 			authToken = new String(Base64.decodeBase64(authToken.replace("Basic ", "")));
 		}
@@ -625,7 +625,7 @@ public class ComputeServerResource extends ServerResource {
 		return splitInstanceId[splitInstanceId.length - 1];
 	}
 
-	private String generateURIListResponse(List<Instance> instances, HttpRequest req) {
+	public static String generateURIListResponse(List<Instance> instances, HttpRequest req) {
 		String requestEndpoint = req.getHostRef() + req.getHttpCall().getRequestUri();
 		Iterator<Instance> instanceIt = instances.iterator();
 		String result = "";
@@ -728,7 +728,7 @@ public class ComputeServerResource extends ServerResource {
 		return ResponseConstants.OK;
 	}
 
-	protected static String generateResponse(List<Instance> instances) {
+	public static String generateResponse(List<Instance> instances) {
 		if (instances == null || instances.isEmpty()) {
 			return NO_INSTANCES_MESSAGE;
 		}

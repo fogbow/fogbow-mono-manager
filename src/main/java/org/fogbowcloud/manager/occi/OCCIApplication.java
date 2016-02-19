@@ -20,6 +20,7 @@ import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.order.Order;
 import org.fogbowcloud.manager.occi.order.OrderConstants;
 import org.fogbowcloud.manager.occi.order.OrderServerResource;
+import org.fogbowcloud.manager.occi.storage.StorageServerResource;
 import org.restlet.Application;
 import org.restlet.Response;
 import org.restlet.Restlet;
@@ -41,7 +42,10 @@ public class OCCIApplication extends Application {
 		Router router = new Router(getContext());
 		router.attach("/" + OrderConstants.TERM, OrderServerResource.class);
 		router.attach("/" + OrderConstants.TERM + "/", OrderServerResource.class);
-		router.attach("/" + OrderConstants.TERM + "/{orderId}", OrderServerResource.class);
+		router.attach("/" + OrderConstants.TERM + "/{orderId}", OrderServerResource.class);		
+		router.attach("/" + OrderConstants.STORAGE_TERM, StorageServerResource.class);
+		router.attach("/" + OrderConstants.STORAGE_TERM + "/", StorageServerResource.class);
+		router.attach("/" + OrderConstants.STORAGE_TERM + "/{storageId}", StorageServerResource.class);
 		router.attach("/" + OrderConstants.COMPUTE_TERM, ComputeServerResource.class);
 		router.attach("/" + OrderConstants.COMPUTE_TERM + "/", ComputeServerResource.class);
 		router.attach("/" + OrderConstants.COMPUTE_TERM + "/{instanceId}", ComputeServerResource.class);
@@ -145,7 +149,11 @@ public class OCCIApplication extends Application {
 	}
 
 	public List<Instance> getInstances(String authToken) {
-		return managerFacade.getInstances(authToken);
+		return getInstances(authToken, null);
+	}
+	
+	public List<Instance> getInstances(String authToken, String resourceKind) {
+		return managerFacade.getInstances(authToken, resourceKind);
 	}
 	
 	public List<Instance> getInstancesFullInfo(String authToken) {
@@ -153,15 +161,27 @@ public class OCCIApplication extends Application {
 	}
 
 	public Instance getInstance(String authToken, String instanceId) {
-		return managerFacade.getInstance(authToken, instanceId);
+		return getInstance(authToken, instanceId, null);
+	}
+	
+	public Instance getInstance(String authToken, String instanceId, String resourceKind) {
+		return managerFacade.getInstance(authToken, instanceId, resourceKind);
 	}
 
 	public void removeInstances(String authToken) {
-		managerFacade.removeInstances(authToken);
+		removeInstances(authToken, null);
+	}
+	
+	public void removeInstances(String authToken, String resourceKind) {
+		managerFacade.removeInstances(authToken, resourceKind);
 	}
 
 	public void removeInstance(String authToken, String instanceId) {
-		managerFacade.removeInstance(authToken, instanceId);
+		removeInstance(authToken, instanceId, null);
+	}
+	
+	public void removeInstance(String authToken, String instanceId, String resourceKind) {
+		managerFacade.removeInstance(authToken, instanceId, resourceKind);
 	}
 
 	public List<Resource> getAllResources(String authToken) {

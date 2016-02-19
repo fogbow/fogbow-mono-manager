@@ -197,6 +197,8 @@ public class TestGetOrder {
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
 		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, OrderAttribute.INSTANCE_COUNT.getValue()
 				+ " = 2");
+		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE,
+				OrderAttribute.RESOURCE_KIND.getValue() + "=" + OrderConstants.COMPUTE_TERM);		
 		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(post);
 		// Get		
@@ -225,6 +227,8 @@ public class TestGetOrder {
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
 		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, OrderAttribute.INSTANCE_COUNT.getValue()
 				+ " = 2");
+		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE,
+				OrderAttribute.RESOURCE_KIND.getValue() + "=" + OrderConstants.COMPUTE_TERM);		
 		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(post);
 		// Get
@@ -252,6 +256,8 @@ public class TestGetOrder {
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
 		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, OrderAttribute.INSTANCE_COUNT.getValue()
 				+ " = 30");
+		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE,
+				OrderAttribute.RESOURCE_KIND.getValue() + "=" + OrderConstants.COMPUTE_TERM);		
 		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(post);
 		// Get
@@ -278,6 +284,8 @@ public class TestGetOrder {
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
 		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, OrderAttribute.INSTANCE_COUNT.getValue()
 				+ " = 50");
+		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE,
+				OrderAttribute.RESOURCE_KIND.getValue() + "=" + OrderConstants.COMPUTE_TERM);		
 		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(post);
 		// Get
@@ -306,6 +314,8 @@ public class TestGetOrder {
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
 		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, OrderAttribute.INSTANCE_COUNT.getValue()
 				+ " = 1");
+		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE,
+				OrderAttribute.RESOURCE_KIND.getValue() + "=" + OrderConstants.COMPUTE_TERM);		
 		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(post);
 		// Get
@@ -333,6 +343,8 @@ public class TestGetOrder {
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
 		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, OrderAttribute.INSTANCE_COUNT.getValue()
 				+ " = 1");
+		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE,
+				OrderAttribute.RESOURCE_KIND.getValue() + "=" + OrderConstants.COMPUTE_TERM);		
 		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(post);
 		// Get
@@ -401,6 +413,8 @@ public class TestGetOrder {
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
 		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, OrderAttribute.INSTANCE_COUNT.getValue()
 				+ " = 2");
+		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE,
+				OrderAttribute.RESOURCE_KIND.getValue() + "=" + OrderConstants.COMPUTE_TERM);		
 				
 		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(post);
@@ -465,6 +479,8 @@ public class TestGetOrder {
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
 		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, OrderAttribute.INSTANCE_COUNT.getValue()
 				+ " = 2");
+		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE,
+				OrderAttribute.RESOURCE_KIND.getValue() + "=" + OrderConstants.COMPUTE_TERM);		
 		Category categoryFilter = new Category(OCCITestHelper.FOGBOW_SMALL_IMAGE,
 				"http://schemas.fogbowcloud.org/template/resource#", "mixin");
 		post.addHeader(OCCIHeaders.CATEGORY, categoryFilter.toHeader());

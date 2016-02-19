@@ -22,8 +22,6 @@ import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.OCCIHeaders;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.fogbowcloud.manager.occi.model.Token;
-import org.fogbowcloud.manager.occi.order.OrderAttribute;
-import org.fogbowcloud.manager.occi.order.OrderConstants;
 import org.fogbowcloud.manager.occi.util.OCCITestHelper;
 import org.junit.After;
 import org.junit.Assert;
@@ -67,6 +65,8 @@ public class TestPostOrder {
 		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.ACCEPT, MediaType.TEXT_PLAIN.toString());
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
+		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE,
+				OrderAttribute.RESOURCE_KIND.getValue() + "=" + OrderConstants.COMPUTE_TERM);
 		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(post);
 		List<String> orderIDs = OCCITestHelper.getOrderIdsPerLocationHeader(response);
@@ -85,6 +85,8 @@ public class TestPostOrder {
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
 		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE,
 				OrderAttribute.INSTANCE_COUNT.getValue() + " = 2");
+		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE,
+				OrderAttribute.RESOURCE_KIND.getValue() + "=" + OrderConstants.COMPUTE_TERM);		
 		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(post);
 		List<String> orderIDs = OCCITestHelper.getOrderIdsPerLocationHeader(response);
@@ -104,6 +106,8 @@ public class TestPostOrder {
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
 		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE,
 				OrderAttribute.INSTANCE_COUNT.getValue() + " = 200");
+		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE,
+				OrderAttribute.RESOURCE_KIND.getValue() + "=" + OrderConstants.COMPUTE_TERM);		
 		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(post);
 		List<String> orderIDs = OCCITestHelper.getOrderIdsPerLocationHeader(response);
@@ -183,6 +187,8 @@ public class TestPostOrder {
 		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.INVALID_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
+		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE,
+				OrderAttribute.RESOURCE_KIND.getValue() + "=" + OrderConstants.COMPUTE_TERM);		
 		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(post);
 
@@ -289,6 +295,8 @@ public class TestPostOrder {
 				OrderAttribute.VALID_FROM.getValue() + "=\"2014-04-01\"");
 		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE,
 				OrderAttribute.VALID_UNTIL.getValue() + "=\"2014-03-30\"");
+		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE,
+				OrderAttribute.RESOURCE_KIND.getValue() + "=" + OrderConstants.COMPUTE_TERM);		
 		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(post);
 

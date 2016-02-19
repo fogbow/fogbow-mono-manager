@@ -29,6 +29,7 @@ import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.OCCIHeaders;
 import org.fogbowcloud.manager.occi.model.Token;
+import org.fogbowcloud.manager.occi.order.OrderAttribute;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -79,10 +80,9 @@ public class TestOpenStackV2StoragePlugin {
 		request.addHeader(OCCIHeaders.X_AUTH_TOKEN, tokenDefault.getAccessId());				
 		expectedRequest = new HttpUriRequestMatcher(request, openStackV2StoragePlugin
 				.generateJsonEntityToRequest(SIZE).toString());	
-		
-		
+				
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
-		xOCCIAtt.put(OpenStackV2StoragePlugin.SIZE, SIZE);
+		xOCCIAtt.put(OrderAttribute.STORAGE_SIZE.getValue(), SIZE);
 		try {
 			openStackV2StoragePlugin.requestInstance(tokenDefault, null, xOCCIAtt);			
 		} catch (Exception e) {

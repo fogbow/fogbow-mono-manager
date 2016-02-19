@@ -1,6 +1,7 @@
 package org.fogbowcloud.manager.core.plugins.storage.openstack;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -24,6 +25,7 @@ import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.OCCIHeaders;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.fogbowcloud.manager.occi.model.Token;
+import org.fogbowcloud.manager.occi.order.OrderAttribute;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -37,7 +39,7 @@ public class OpenStackV2StoragePlugin implements StoragePlugin {
 	protected static final String SUFIX_ENDPOINT_VOLUMES = "/volumes";
 	protected static final String COMPUTE_V2_API_ENDPOINT = "/v2/";
 	
-	public static final String STORAGE_NOVAV2_URL_KEY = "storage_novav2_url";
+	public static final String STORAGE_NOVAV2_URL_KEY = "storage_v2_url";
 	
 	// TODO Refactor ? The same occi attribute than the compute plugin
 	protected static final String TENANT_ID = "tenantId";
@@ -64,7 +66,7 @@ public class OpenStackV2StoragePlugin implements StoragePlugin {
 		if (tenantId == null) {
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.INVALID_TOKEN);
 		}		
-		String size = xOCCIAtt.get(SIZE);
+		String size = xOCCIAtt.get(OrderAttribute.STORAGE_SIZE.getValue());
 		
 		JSONObject jsonRequest = null;
 		try {			
@@ -229,10 +231,17 @@ public class OpenStackV2StoragePlugin implements StoragePlugin {
 			JSONObject rootServer = new JSONObject(json);
 			JSONObject volumeJson = rootServer.getJSONObject(KEY_JSON_VOLUME);
 			String id = volumeJson.getString(KEY_JSON_ID);
+			
+			Map<String, String> attributes = new HashMap<String, String>();
+			// CPU Architecture of the instance
+			attributes.put("occi.storage.name", volumeJson.optString("name"));
+			attributes.put("occi.storage.status", volumeJson.optString("status"));
+			attributes.put("occi.storage.size", volumeJson.optString("size"));
+			attributes.put("occi.core.id", id);
 
-			return new Instance(id, null, null, new ArrayList<Instance.Link>(), null);
+			return new Instance(id, null, attributes, new ArrayList<Instance.Link>(), null);
 		} catch (JSONException e) {
-			LOGGER.warn("There was an exception while getting instance from json.", e);
+			LOGGER.warn("There was an exception while getting instance storage from json.", e);
 		}
 		return null;
 	}	

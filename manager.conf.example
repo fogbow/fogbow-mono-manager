@@ -15,6 +15,10 @@ order_bd_updater_period=30000
 # flavor_fogbow_medium={mem=1024, cpu=2}
 # flavor_fogbow_large={mem=2048, cpu=4}
 
+## Storage Plugin (Openstack)
+storage_class=org.fogbowcloud.manager.core.plugins.storage.openstack.OpenStackV2StoragePlugin
+storage_v2_url=http://localhost:8776
+
 ## Compute Plugin (Openstack)
 compute_class=org.fogbowcloud.manager.core.plugins.compute.openstack.OpenStackNovaV2ComputePlugin
 compute_novav2_url=http://localhost:8774
