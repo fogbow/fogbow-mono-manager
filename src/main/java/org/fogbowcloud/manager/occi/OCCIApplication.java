@@ -8,6 +8,7 @@ import org.apache.http.HttpStatus;
 import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.Flavor;
+import org.fogbowcloud.manager.core.plugins.accounting.AccountingInfo;
 import org.fogbowcloud.manager.core.plugins.accounting.ResourceUsage;
 import org.fogbowcloud.manager.occi.instance.ComputeServerResource;
 import org.fogbowcloud.manager.occi.instance.Instance;
@@ -45,6 +46,7 @@ public class OCCIApplication extends Application {
 		router.attach("/" + RequestConstants.COMPUTE_TERM, ComputeServerResource.class);
 		router.attach("/" + RequestConstants.COMPUTE_TERM + "/", ComputeServerResource.class);
 		router.attach("/" + RequestConstants.COMPUTE_TERM + "/{instanceId}", ComputeServerResource.class);
+		router.attach("/member/{memberId}/", AccountingServerResource.class);
 		router.attach("/member", MemberServerResource.class);
 		router.attach("/member/{memberId}/quota", MemberServerResource.class);
 		//TODO remove this endpoint
@@ -200,5 +202,9 @@ public class OCCIApplication extends Application {
 
 	public String getUser(String authToken) {
 		return managerFacade.getUser(authToken);
+	}
+
+	public List<AccountingInfo> getAccountingInfo(String authToken) {
+		return managerFacade.getAccountingInfo(authToken);
 	}
 }
