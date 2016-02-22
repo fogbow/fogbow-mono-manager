@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import javax.mail.MessagingException;
 
@@ -24,12 +25,14 @@ import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
+import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.FederationMemberAuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.FederationMemberPickerPlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.MapperPlugin;
+import org.fogbowcloud.manager.core.plugins.accounting.AccountingInfo;
 import org.fogbowcloud.manager.core.plugins.compute.openstack.OpenStackOCCIComputePlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.core.util.ManagerTestHelper;
@@ -3586,6 +3589,98 @@ public class TestManagerController {
 		List<FederationMember> rendezvousMembersInfo = managerController.getRendezvousMembers();
 		Assert.assertEquals(1, rendezvousMembersInfo.size());
 		Assert.assertTrue(rendezvousMembersInfo.contains(new FederationMember(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL)));
-	}		
+	}
 	
+	@Test(expected=OCCIException.class)
+	public void testGetAccountingInvalidAdminUser() {
+		managerController.getAccountingInfo("invalid_admin_user");
+	}
+	
+	@Test
+	public void testGetAccountingValidAdminUser() {
+		// mocking accountingPlugin
+		AccountingPlugin accountingPlugin = managerTestHelper.getAccountingPlugin();
+		List<AccountingInfo> expectedAccounting = new ArrayList<AccountingInfo>();
+		AccountingInfo accountingInfo = new AccountingInfo(DefaultDataTestHelper.FED_USER_NAME, "localMember", "remoteMember1");
+		accountingInfo.addConsuption(50);
+		expectedAccounting.add(accountingInfo);
+		accountingInfo = new AccountingInfo("user2", "localMember", "remoteMember1");
+		accountingInfo.addConsuption(30);
+		expectedAccounting.add(accountingInfo);
+		
+		Mockito.when(accountingPlugin.getAccountingInfo()).thenReturn(expectedAccounting );
+				
+		List<AccountingInfo> returnedAccounting = managerController.getAccountingInfo(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
+		
+		// checking accounting
+		Assert.assertEquals(2, returnedAccounting.size());
+		Assert.assertEquals(expectedAccounting, returnedAccounting);
+	}
+		
+	@Test
+	public void testGetAccountingMoreThanOneValidAdminUser() {
+		// mocking accountingPlugin
+		AccountingPlugin accountingPlugin = managerTestHelper.getAccountingPlugin();
+		List<AccountingInfo> expectedAccounting = new ArrayList<AccountingInfo>();
+		AccountingInfo accountingInfo = new AccountingInfo(DefaultDataTestHelper.FED_USER_NAME, "localMember", "remoteMember1");
+		accountingInfo.addConsuption(50);
+		expectedAccounting.add(accountingInfo);
+		accountingInfo = new AccountingInfo("user2", "localMember", "remoteMember1");
+		accountingInfo.addConsuption(30);
+		expectedAccounting.add(accountingInfo);
+		
+		Mockito.when(accountingPlugin.getAccountingInfo()).thenReturn(expectedAccounting );
+		
+		// mocking identity to allow admin user authentication
+		Token adminToken = new Token("admin_access_id", "admin_user", new Date(),
+				new HashMap<String, String>());
+		IdentityPlugin federationIdentityPlugin = managerTestHelper.getFederationIdentityPlugin();
+		Mockito.when(federationIdentityPlugin.getToken("admin_access_id")).thenReturn(adminToken);
+		IdentityPlugin identityPlugin = managerTestHelper.getIdentityPlugin();
+		Mockito.when(identityPlugin.getToken("admin_access_id")).thenReturn(adminToken);
+		
+		// checking return of admin_user 1
+		List<AccountingInfo> returnedAccounting = managerController.getAccountingInfo(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
+		Assert.assertEquals(2, returnedAccounting.size());
+		Assert.assertEquals(expectedAccounting, returnedAccounting);
+	
+		// checking return of admin_user 2
+		returnedAccounting = managerController.getAccountingInfo("admin_access_id");
+		Assert.assertEquals(2, returnedAccounting.size());
+		Assert.assertEquals(expectedAccounting, returnedAccounting);
+	}
+	
+	@Test
+	public void testGetAdminUsersFromFile() throws IOException {
+		String propertiesFile = "src/test/resources/accounting/fake_properties1";
+		
+		Properties properties = new Properties();
+		FileInputStream input = new FileInputStream(propertiesFile);
+		properties.load(input);
+
+		managerController = new ManagerController(properties);
+		
+		Assert.assertTrue(managerController.isAdminUser(new Token("access_id",
+				"CN=Giovanni Farias, OU=DSC, O=UFCG, O=UFF BrGrid CA, O=ICPEDU, C=BR", new Date(),
+				new HashMap<String, String>())));
+	}
+	
+	@Test
+	public void testGetMoreThanOneAdminUsersFromFile() throws IOException {
+		String propertiesFile = "src/test/resources/accounting/fake_properties2";
+
+		Properties properties = new Properties();
+		FileInputStream input = new FileInputStream(propertiesFile);
+		properties.load(input);
+
+		managerController = new ManagerController(properties);
+		
+		Assert.assertTrue(managerController.isAdminUser(new Token("access_id1",
+				"CN=Giovanni Farias, OU=DSC, O=UFCG, O=UFF BrGrid CA, O=ICPEDU, C=BR", new Date(),
+				new HashMap<String, String>())));
+		
+		Assert.assertTrue(managerController.isAdminUser(new Token("access_id2",
+				"CN=Marcos Nobrega, OU=DSC, O=UFCG, O=UFF BrGrid CA, O=ICPEDU, C=BR", new Date(),
+				new HashMap<String, String>())));
+	}
 }

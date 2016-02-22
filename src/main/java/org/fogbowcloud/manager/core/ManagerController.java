@@ -15,6 +15,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.StringTokenizer;
 import java.util.TimerTask;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -52,7 +53,9 @@ import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
 import org.fogbowcloud.manager.core.plugins.MapperPlugin;
 import org.fogbowcloud.manager.core.plugins.PrioritizationPlugin;
+import org.fogbowcloud.manager.core.plugins.accounting.AccountingInfo;
 import org.fogbowcloud.manager.core.plugins.accounting.ResourceUsage;
+import org.fogbowcloud.manager.core.plugins.localcredentails.MapperHelper;
 import org.fogbowcloud.manager.core.plugins.util.SshClientPool;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.instance.InstanceState;
@@ -1696,6 +1699,34 @@ public class ManagerController {
 	public List<ResourceUsage> getMembersUsage(String federationAccessId) {
 		checkFederationAccessId(federationAccessId);
 		return new ArrayList<ResourceUsage>(accountingPlugin.getMembersUsage().values());
+	}
+
+	public List<AccountingInfo> getAccountingInfo(String federationAccessId) {
+		Token federationToken = getTokenFromFederationIdP(federationAccessId);
+		if (federationToken == null) {
+			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
+		}
+		
+		if (!isAdminUser(federationToken)) {
+			throw new OCCIException(ErrorType.FORBIDDEN, ResponseConstants.FORBIDDEN);
+		}
+		return accountingPlugin.getAccountingInfo();
+	}
+
+	protected boolean isAdminUser(Token federationToken) {
+		String adminUserStr = properties.getProperty(ConfigurationConstants.ADMIN_USERS);
+		if (adminUserStr == null || adminUserStr.isEmpty()) {
+			return true;
+		}
+		System.out.println(adminUserStr);
+		String normalizedUser = MapperHelper.normalizeUser(federationToken.getUser());
+		StringTokenizer st = new StringTokenizer(adminUserStr, ";");
+		while (st.hasMoreTokens()) {
+			if (normalizedUser.equals(st.nextToken().trim())) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private void checkFederationAccessId(String federationAccessId) {
