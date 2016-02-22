@@ -55,6 +55,7 @@ import org.fogbowcloud.manager.core.plugins.MapperPlugin;
 import org.fogbowcloud.manager.core.plugins.PrioritizationPlugin;
 import org.fogbowcloud.manager.core.plugins.accounting.AccountingInfo;
 import org.fogbowcloud.manager.core.plugins.accounting.ResourceUsage;
+import org.fogbowcloud.manager.core.plugins.localcredentails.MapperHelper;
 import org.fogbowcloud.manager.core.plugins.util.SshClientPool;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.instance.InstanceState;
@@ -1712,13 +1713,19 @@ public class ManagerController {
 		return accountingPlugin.getAccountingInfo();
 	}
 
-	private boolean isAdminUser(Token federationToken) {
-		String adminUserStr = properties.getProperty("admin_users");
+	protected boolean isAdminUser(Token federationToken) {
+		String adminUserStr = properties.getProperty(ConfigurationConstants.ADMIN_USERS);
 		if (adminUserStr == null || adminUserStr.isEmpty()) {
 			return true;
 		}
+		System.out.println(adminUserStr);
+		String normalizedUser = MapperHelper.normalizeUser(federationToken.getUser());
 		StringTokenizer st = new StringTokenizer(adminUserStr, ";");
-		// TODO develop here
+		while (st.hasMoreTokens()) {
+			if (normalizedUser.equals(st.nextToken().trim())) {
+				return true;
+			}
+		}
 		return false;
 	}
 
