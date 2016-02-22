@@ -1,9 +1,9 @@
-package org.fogbowcloud.manager.occi.request;
+package org.fogbowcloud.manager.occi.order;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public enum RequestAttribute {
+public enum OrderAttribute {
 	
 	INSTANCE_COUNT("org.fogbowcloud.request.instance-count"), 
 	TYPE("org.fogbowcloud.request.type"),
@@ -22,7 +22,7 @@ public enum RequestAttribute {
 	
 	private String value;
 	
-	private RequestAttribute(String value) {
+	private OrderAttribute(String value) {
 		this.value = value;
 	}
 	
@@ -32,8 +32,8 @@ public enum RequestAttribute {
 	
 	public static List<String> getValues() {	
 		List<String> values = new ArrayList<String>();		
-		RequestAttribute[] elements = values();
-		for (RequestAttribute attribute : elements) {
+		OrderAttribute[] elements = values();
+		for (OrderAttribute attribute : elements) {
 			values.add(attribute.getValue());
 		}
 		return values;

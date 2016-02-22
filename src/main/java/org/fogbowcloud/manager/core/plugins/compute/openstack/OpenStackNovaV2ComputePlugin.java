@@ -38,8 +38,8 @@ import org.fogbowcloud.manager.occi.model.Resource;
 import org.fogbowcloud.manager.occi.model.ResourceRepository;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.fogbowcloud.manager.occi.model.Token;
-import org.fogbowcloud.manager.occi.request.RequestAttribute;
-import org.fogbowcloud.manager.occi.request.RequestConstants;
+import org.fogbowcloud.manager.occi.order.OrderAttribute;
+import org.fogbowcloud.manager.occi.order.OrderConstants;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -96,10 +96,10 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 						PRIVATE);
 		
 		// userdata
-		fogbowTermToOpenStack.put(RequestConstants.USER_DATA_TERM, "user_data");
+		fogbowTermToOpenStack.put(OrderConstants.USER_DATA_TERM, "user_data");
 		
 		//ssh public key
-		fogbowTermToOpenStack.put(RequestConstants.PUBLIC_KEY_TERM, "ssh-public-key");
+		fogbowTermToOpenStack.put(OrderConstants.PUBLIC_KEY_TERM, "ssh-public-key");
 		
 		flavors = new ArrayList<Flavor>();	
 		
@@ -123,12 +123,12 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.INVALID_TOKEN);
 		}
 		
-		// removing fogbow-request category
-		categories.remove(new Category(RequestConstants.TERM, RequestConstants.SCHEME,
-				RequestConstants.KIND_CLASS));
+		// removing fogbow-order category
+		categories.remove(new Category(OrderConstants.TERM, OrderConstants.SCHEME,
+				OrderConstants.KIND_CLASS));
 		
 		Flavor foundFlavor = getFlavor(token,
-				xOCCIAtt.get(RequestAttribute.REQUIREMENTS.getValue()));
+				xOCCIAtt.get(OrderAttribute.REQUIREMENTS.getValue()));
 		String flavorId = null;
 		if (foundFlavor != null) {
 			flavorId = foundFlavor.getId();
@@ -136,22 +136,22 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		
 		// TODO Think about ! Is necessary ?
 		for (Category category : categories) {
-			if (category.getScheme().equals(RequestConstants.TEMPLATE_RESOURCE_SCHEME)) {
+			if (category.getScheme().equals(OrderConstants.TEMPLATE_RESOURCE_SCHEME)) {
 				continue;
 			}		
 			String openstackRef = fogbowTermToOpenStack.get(category.getTerm());
 			if (openstackRef == null
-					&& !category.getScheme().equals(RequestConstants.TEMPLATE_OS_SCHEME)
-					&& !category.getScheme().equals(RequestConstants.TEMPLATE_RESOURCE_SCHEME)) {
+					&& !category.getScheme().equals(OrderConstants.TEMPLATE_OS_SCHEME)
+					&& !category.getScheme().equals(OrderConstants.TEMPLATE_RESOURCE_SCHEME)) {
 				throw new OCCIException(ErrorType.BAD_REQUEST,
 						ResponseConstants.CLOUD_NOT_SUPPORT_CATEGORY + category.getTerm());
 			}
 		}		
 
-		String publicKey = xOCCIAtt.get(RequestAttribute.DATA_PUBLIC_KEY.getValue());
+		String publicKey = xOCCIAtt.get(OrderAttribute.DATA_PUBLIC_KEY.getValue());
 		String keyName = getKeyname(token, publicKey);
 				
-		String userdata = xOCCIAtt.get(RequestAttribute.USER_DATA_ATT.getValue());		
+		String userdata = xOCCIAtt.get(OrderAttribute.USER_DATA_ATT.getValue());		
 		try {
 			JSONObject json = generateJsonRequest(imageRef, flavorId, userdata, keyName);
 			String requestEndpoint = computeV2APIEndpoint + tenantId + "/servers";

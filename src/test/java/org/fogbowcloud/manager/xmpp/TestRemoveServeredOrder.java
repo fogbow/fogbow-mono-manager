@@ -8,14 +8,14 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-import org.fogbowcloud.manager.core.AsynchronousRequestCallback;
+import org.fogbowcloud.manager.core.AsynchronousOrderCallback;
 import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.core.util.ManagerTestHelper;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.Token;
-import org.fogbowcloud.manager.occi.request.Request;
-import org.fogbowcloud.manager.occi.request.RequestRepository;
+import org.fogbowcloud.manager.occi.order.Order;
+import org.fogbowcloud.manager.occi.order.OrderRepository;
 import org.fogbowcloud.manager.occi.util.OCCITestHelper;
 import org.jivesoftware.smack.XMPPException;
 import org.junit.After;
@@ -25,11 +25,11 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import org.mockito.internal.verification.VerificationModeFactory;
 
-public class TestRemoveServeredRequest {
+public class TestRemoveServeredOrder {
 
 	private static final String INSTANCE_ID = "instanceId";
 	private static final String ACCESS_ID = "accessId";
-	private static final String REQUEST_ID = "requestId";
+	private static final String ORDER_ID = "orderId";
 
 	private ManagerTestHelper managerTestHelper;
 
@@ -44,13 +44,13 @@ public class TestRemoveServeredRequest {
 	}
 	
 	@Test
-	public void testRemoveServeredRequest() throws Exception {
+	public void testRemoveServeredOrder() throws Exception {
 		ManagerXmppComponent initializeXMPPManagerComponent = managerTestHelper.initializeXMPPManagerComponent(false);
-		Request request = createRequest();
-		RequestRepository requests = new RequestRepository();
-		requests.addRequest(request.getFederationToken().getUser(), request);
+		Order order = createOrder();
+		OrderRepository orders = new OrderRepository();
+		orders.addOrder(order.getFederationToken().getUser(), order);
 		ManagerController managerFacade = initializeXMPPManagerComponent.getManagerFacade();
-		managerFacade.setRequests(requests);
+		managerFacade.setOrders(orders);
 
 		Token token = new Token(ACCESS_ID, OCCITestHelper.USER_MOCK, null, new HashMap<String, String>());
 		
@@ -61,12 +61,12 @@ public class TestRemoveServeredRequest {
 		Mockito.when(managerTestHelper.getAuthorizationPlugin().isAuthorized(token)).thenReturn(true);			
 
 		Assert.assertEquals(1, initializeXMPPManagerComponent.getManagerFacade()
-				.getRequestsFromUser(token.getAccessId(), false).size());
+				.getOrdersFromUser(token.getAccessId(), false).size());
 		
 		final BlockingQueue<String> bq = new LinkedBlockingQueue<String>();
 
-		ManagerPacketHelper.deleteRemoteRequest(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
-				request, managerTestHelper.createPacketSender(), new AsynchronousRequestCallback() {
+		ManagerPacketHelper.deleteRemoteOrder(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
+				order, managerTestHelper.createPacketSender(), new AsynchronousOrderCallback() {
 
 					@Override
 					public void success(String instanceId) {
@@ -81,7 +81,7 @@ public class TestRemoveServeredRequest {
 		String instanceId = bq.poll(1500, TimeUnit.SECONDS);
 		
 		Assert.assertEquals(0, initializeXMPPManagerComponent.getManagerFacade()
-				.getRequestsFromUser(token.getAccessId(), false).size());
+				.getOrdersFromUser(token.getAccessId(), false).size());
 
 		Mockito.verify(managerTestHelper.getComputePlugin(), VerificationModeFactory.times(1))
 				.removeInstance(token, INSTANCE_ID);
@@ -89,18 +89,18 @@ public class TestRemoveServeredRequest {
 		Assert.assertEquals("", instanceId);
 	}
 
-	private Request createRequest() {
+	private Order createOrder() {
 		List<Category> categories = new ArrayList<Category>();
 		categories.add(new Category("term1", "scheme1", "class1"));
 		Map<String, String> attributes = new HashMap<String, String>();
 		attributes.put("key1", "value1");
 		attributes.put("key2", "value2");
-		Request request = new Request(REQUEST_ID, new Token(ACCESS_ID,
+		Order order = new Order(ORDER_ID, new Token(ACCESS_ID,
 				OCCITestHelper.USER_MOCK,
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
 				new HashMap<String, String>()), categories, attributes, false, DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
-		request.setInstanceId(INSTANCE_ID);
-		return request;
+		order.setInstanceId(INSTANCE_ID);
+		return order;
 	}	
 	
 }

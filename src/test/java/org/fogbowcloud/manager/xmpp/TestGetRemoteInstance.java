@@ -16,7 +16,7 @@ import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.Resource;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.fogbowcloud.manager.occi.model.Token;
-import org.fogbowcloud.manager.occi.request.Request;
+import org.fogbowcloud.manager.occi.order.Order;
 import org.fogbowcloud.manager.occi.util.OCCITestHelper;
 import org.jivesoftware.smack.XMPPException;
 import org.junit.After;
@@ -77,13 +77,13 @@ public class TestGetRemoteInstance {
 
 		Token token = new Token("anyvalue", OCCITestHelper.USER_MOCK,
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>());
-		Request request = new Request("anyvalue", token, null, null, true, "");
-		request.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
-		request.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		Order order = new Order("anyvalue", token, null, null, true, "");
+		order.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
+		order.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 
 		Instance remoteInstance = null;
 		try {
-			remoteInstance = ManagerPacketHelper.getRemoteInstance(request,
+			remoteInstance = ManagerPacketHelper.getRemoteInstance(order,
 					managerTestHelper.createPacketSender());
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -99,10 +99,10 @@ public class TestGetRemoteInstance {
 	
 	@Test(expected=OCCIException.class)
 	public void testGetRemoteInstaceNotFound() throws Exception {
-		Request request = new Request("anyvalue", new Token(WRONG_TOKEN, OCCITestHelper.USER_MOCK,
+		Order order = new Order("anyvalue", new Token(WRONG_TOKEN, OCCITestHelper.USER_MOCK,
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), null, null, true, "");
-		request.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
-		request.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		order.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
+		order.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 
 		managerTestHelper.initializeXMPPManagerComponent(false);
 
@@ -110,16 +110,16 @@ public class TestGetRemoteInstance {
 				.when(this.managerTestHelper.getComputePlugin())
 				.getInstance(Mockito.any(Token.class), Mockito.anyString());
 
-		ManagerPacketHelper.getRemoteInstance(request, managerTestHelper.createPacketSender());
+		ManagerPacketHelper.getRemoteInstance(order, managerTestHelper.createPacketSender());
 	}
 
 	@Test(expected = OCCIException.class)
 	public void testGetRemoteInstanceUnauthorized() throws Exception {
 		Token token = new Token(WRONG_TOKEN, OCCITestHelper.USER_MOCK,
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>());
-		Request request = new Request("anyvalue", token, null, null, true, "");
-		request.setInstanceId(INSTANCE_OTHER_USER);
-		request.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		Order order = new Order("anyvalue", token, null, null, true, "");
+		order.setInstanceId(INSTANCE_OTHER_USER);
+		order.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 
 		managerTestHelper.initializeXMPPManagerComponent(false);
 
@@ -128,6 +128,6 @@ public class TestGetRemoteInstance {
 				.getInstance(Mockito.eq(token),
 						Mockito.eq(INSTANCE_OTHER_USER));
 
-		ManagerPacketHelper.getRemoteInstance(request, managerTestHelper.createPacketSender());
+		ManagerPacketHelper.getRemoteInstance(order, managerTestHelper.createPacketSender());
 	}
 }

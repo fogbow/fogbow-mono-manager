@@ -7,7 +7,7 @@ import java.util.Properties;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.prioritization.fcfs.FCFSPrioritizationPlugin;
 import org.fogbowcloud.manager.core.plugins.prioritization.nof.NoFPrioritizationPlugin;
-import org.fogbowcloud.manager.occi.request.Request;
+import org.fogbowcloud.manager.occi.order.Order;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -48,10 +48,10 @@ public class TestTwoFoldPrioritizationPlugin {
 	@Test
 	public void testTakeFrom() {
 		twoFoldPrioritizationPlugin = new TwoFoldPrioritizationPlugin(null, null);
-		Request newRequest = null;
-		List<Request> requestsWithInstance = new ArrayList<Request>();
-		requestsWithInstance.add(new Request("One", null, null, null, true, null));
-		requestsWithInstance.add(new Request("Two", null, null, null, false, null));
-		Assert.assertNull(twoFoldPrioritizationPlugin.takeFrom(newRequest, requestsWithInstance));
+		Order newOrder = null;
+		List<Order> ordersWithInstance = new ArrayList<Order>();
+		ordersWithInstance.add(new Order("One", null, null, null, true, null));
+		ordersWithInstance.add(new Order("Two", null, null, null, false, null));
+		Assert.assertNull(twoFoldPrioritizationPlugin.takeFrom(newOrder, ordersWithInstance));
 	}
 }

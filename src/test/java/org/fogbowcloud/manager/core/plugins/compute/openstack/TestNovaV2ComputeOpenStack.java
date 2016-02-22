@@ -37,8 +37,8 @@ import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.Resource;
 import org.fogbowcloud.manager.occi.model.ResourceRepository;
 import org.fogbowcloud.manager.occi.model.Token;
-import org.fogbowcloud.manager.occi.request.RequestAttribute;
-import org.fogbowcloud.manager.occi.request.RequestConstants;
+import org.fogbowcloud.manager.occi.order.OrderAttribute;
+import org.fogbowcloud.manager.occi.order.OrderConstants;
 import org.fogbowcloud.manager.occi.util.NovaV2ComputeApplication;
 import org.fogbowcloud.manager.occi.util.PluginHelper;
 import org.json.JSONObject;
@@ -71,7 +71,7 @@ public class TestNovaV2ComputeOpenStack {
 		novaV2ComputeOpenStack = new OpenStackNovaV2ComputePlugin(properties);
 		
 		List<Flavor> flavors = new ArrayList<Flavor>();
-		Flavor flavorSmall = new Flavor(RequestConstants.SMALL_TERM, "1", "1000", "10");
+		Flavor flavorSmall = new Flavor(OrderConstants.SMALL_TERM, "1", "1000", "10");
 		flavorSmall.setId(SECOND_INSTANCE_ID);
 		flavors.add(flavorSmall); 
 		Flavor flavorMedium = new Flavor("medium", "2", "2000", "20");
@@ -149,14 +149,14 @@ public class TestNovaV2ComputeOpenStack {
 		
 		//requesting one default instance
 		List<Category> categories = new ArrayList<Category>();
-		categories.add(new Category(RequestConstants.SMALL_TERM,
-				RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
+		categories.add(new Category(OrderConstants.SMALL_TERM,
+				OrderConstants.TEMPLATE_RESOURCE_SCHEME, OrderConstants.MIXIN_CLASS));
 		
 		try {
 			//Last request will fail
 			for (int i = 0; i < NovaV2ComputeApplication.MAX_INSTANCE_COUNT + 1; i++) {
 				HashMap<String, String> xOCCIAtt = new HashMap<String, String>();
-				xOCCIAtt.put(RequestAttribute.DATA_PUBLIC_KEY.getValue(), "public key data");
+				xOCCIAtt.put(OrderAttribute.DATA_PUBLIC_KEY.getValue(), "public key data");
 				novaV2ComputeOpenStack.requestInstance(
 						defaultToken, new LinkedList<Category>(categories), xOCCIAtt, 
 						PluginHelper.LINUX_X86_TERM);
@@ -173,7 +173,7 @@ public class TestNovaV2ComputeOpenStack {
 		Assert.assertEquals(0, novaV2ComputeOpenStack.getInstances(defaultToken).size());
 		
 		HashMap<String, String> xOCCIAtt = new HashMap<String, String>();
-		xOCCIAtt.put(RequestAttribute.DATA_PUBLIC_KEY.getValue(), "public key data");
+		xOCCIAtt.put(OrderAttribute.DATA_PUBLIC_KEY.getValue(), "public key data");
 		Assert.assertEquals(FIRST_INSTANCE_ID, novaV2ComputeOpenStack.requestInstance(
 				defaultToken, new ArrayList<Category>(), xOCCIAtt, PluginHelper.LINUX_X86_TERM));
 		
@@ -203,7 +203,7 @@ public class TestNovaV2ComputeOpenStack {
 		String mem = RequirementsHelper.GLUE_MEM_RAM_TERM;
 		String vCpu = RequirementsHelper.GLUE_VCPU_TERM;
 		String requirementsStr = disk + " >= 10 && " + mem + " > 500 && " + vCpu + " > 0";
-		mapAttr.put(RequestAttribute.REQUIREMENTS.getValue(), requirementsStr);
+		mapAttr.put(OrderAttribute.REQUIREMENTS.getValue(), requirementsStr);
 		
 		Assert.assertEquals(FIRST_INSTANCE_ID, novaV2ComputeOpenStack.requestInstance(
 				defaultToken, new ArrayList<Category>(), mapAttr, PluginHelper.LINUX_X86_TERM));
@@ -241,7 +241,7 @@ public class TestNovaV2ComputeOpenStack {
 		List<Resource> resources = new ArrayList<Resource>();
 		resources.add(ResourceRepository.getInstance().get("compute"));
 		resources.add(ResourceRepository.getInstance().get("os_tpl"));
-		resources.add(ResourceRepository.generateFlavorResource(RequestConstants.SMALL_TERM));
+		resources.add(ResourceRepository.generateFlavorResource(OrderConstants.SMALL_TERM));
 		
 		for (Resource resource : resources) {
 			Assert.assertTrue(instance.getResources().contains(resource));		
@@ -270,7 +270,7 @@ public class TestNovaV2ComputeOpenStack {
 		//requesting one default instance
 		List<Category> categories = new ArrayList<Category>();
 		categories.add(new Category(PluginHelper.LINUX_X86_TERM,
-				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS));
+				OrderConstants.TEMPLATE_OS_SCHEME, OrderConstants.MIXIN_CLASS));
 		
 		Assert.assertEquals(FIRST_INSTANCE_ID, novaV2ComputeOpenStack.requestInstance(
 				defaultToken, categories, new HashMap<String, String>(), PluginHelper.LINUX_X86_TERM));

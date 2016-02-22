@@ -17,7 +17,7 @@ public class InstanceBeingUsedHandler extends AbstractQueryHandler {
 
 	@Override
 	public IQ handle(IQ query) {
-		String requestId = query.getElement().element("query").element("request")
+		String orderId = query.getElement().element("query").element("request")
 				.elementText("id");
 		String instanceId = null;
 		Element instanceEl = query.getElement().element("query").element("instance");
@@ -25,7 +25,7 @@ public class InstanceBeingUsedHandler extends AbstractQueryHandler {
 			instanceId = instanceEl.elementText("id");
 		}
 		IQ response = IQ.createResultIQ(query);
-		if (!facade.instanceHasRequestRelatedTo(requestId, instanceId)) {
+		if (!facade.instanceHasOrderRelatedTo(orderId, instanceId)) {
 			response.setError(Condition.item_not_found);
 		}
 		return response;

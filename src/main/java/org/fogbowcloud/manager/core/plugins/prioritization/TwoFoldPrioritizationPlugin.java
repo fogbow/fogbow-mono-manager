@@ -8,7 +8,7 @@ import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.PrioritizationPlugin;
 import org.fogbowcloud.manager.core.plugins.prioritization.fcfs.FCFSPrioritizationPlugin;
-import org.fogbowcloud.manager.occi.request.Request;
+import org.fogbowcloud.manager.occi.order.Order;
 
 public class TwoFoldPrioritizationPlugin implements PrioritizationPlugin {
 
@@ -47,19 +47,19 @@ public class TwoFoldPrioritizationPlugin implements PrioritizationPlugin {
 	}
 
 	@Override
-	public Request takeFrom(Request newRequest, List<Request> requestsWithInstance) {
-		List<Request> localRequests = new ArrayList<Request>();
-		List<Request> servedRequests = new ArrayList<Request>();
-		for (Request currentRequest : requestsWithInstance) {
-			if (currentRequest.isLocal()) {
-				localRequests.add(currentRequest);
+	public Order takeFrom(Order newOrder, List<Order> ordersWithInstance) {
+		List<Order> localOrders = new ArrayList<Order>();
+		List<Order> servedOrders = new ArrayList<Order>();
+		for (Order currentOrder : ordersWithInstance) {
+			if (currentOrder.isLocal()) {
+				localOrders.add(currentOrder);
 			} else {
-				servedRequests.add(currentRequest);
+				servedOrders.add(currentOrder);
 			}
 		}
-		Request localPreemption = localPrioritizationPlugin.takeFrom(newRequest, localRequests);
+		Order localPreemption = localPrioritizationPlugin.takeFrom(newOrder, localOrders);
 		return (localPreemption != null) ? localPreemption : 
-			remotePrioritizationPlugin.takeFrom(newRequest, servedRequests);
+			remotePrioritizationPlugin.takeFrom(newOrder, servedOrders);
 	}
 	
 	protected PrioritizationPlugin getLocalPrioritizationPlugin() {

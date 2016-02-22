@@ -17,7 +17,7 @@ import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.Token;
-import org.fogbowcloud.manager.occi.request.RequestAttribute;
+import org.fogbowcloud.manager.occi.order.OrderAttribute;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -148,7 +148,7 @@ public class TestAzureComputePlugin {
 		Token token = createToken(null);
 		String userData = UUID.randomUUID().toString();
 		HashMap<String, String> occiAtt = new HashMap<String, String>();
-		occiAtt.put(RequestAttribute.USER_DATA_ATT.getValue(), userData);
+		occiAtt.put(OrderAttribute.USER_DATA_ATT.getValue(), userData);
 		String imageName = plugin.requestInstance(token,
 				new LinkedList<Category>(), occiAtt,
 				VM_DEFAULT_ID_1);

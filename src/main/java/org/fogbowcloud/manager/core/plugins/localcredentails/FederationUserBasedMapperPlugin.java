@@ -7,7 +7,7 @@ import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.MapperPlugin;
-import org.fogbowcloud.manager.occi.request.Request;
+import org.fogbowcloud.manager.occi.order.Order;
 
 public class FederationUserBasedMapperPlugin implements MapperPlugin {
 
@@ -49,8 +49,8 @@ public class FederationUserBasedMapperPlugin implements MapperPlugin {
 	}
 
 	@Override
-	public Map<String, String> getLocalCredentials(Request request) {
-		String normalizedUser = MapperHelper.normalizeUser(request.getFederationToken()
+	public Map<String, String> getLocalCredentials(Order order) {
+		String normalizedUser = MapperHelper.normalizeUser(order.getFederationToken()
 				.getUser());
 
 		LOGGER.debug("normalizedFederationUser=" + normalizedUser);

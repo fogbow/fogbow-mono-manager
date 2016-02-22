@@ -1,4 +1,4 @@
-package org.fogbowcloud.manager.occi.request;
+package org.fogbowcloud.manager.occi.order;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,6 +14,9 @@ import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.plugins.accounting.TestDataStore;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.Token;
+import org.fogbowcloud.manager.occi.order.Order;
+import org.fogbowcloud.manager.occi.order.OrderDataStore;
+import org.fogbowcloud.manager.occi.order.OrderState;
 import org.json.JSONException;
 import org.junit.After;
 import org.junit.Assert;
@@ -27,10 +30,10 @@ public class TestOrderDataStore {
 	private final String DATASTORE_PATH = "src/test/resources/testOrderDataStore.sqlite";
 	private final String DATASTORE_URL = "jdbc:sqlite:" + DATASTORE_PATH;
 	
-	private Request orderOne;
-	private Request orderTwo;
-	private Request orderThree;
-	private Request orderFour;	
+	private Order orderOne;
+	private Order orderTwo;
+	private Order orderThree;
+	private Order orderFour;	
 	
 	private Properties properties = null;
 	private OrderDataStore database = null; 
@@ -55,7 +58,7 @@ public class TestOrderDataStore {
 	@Test
 	public void testAddOrder() throws SQLException, JSONException {
 		database.addOrder(orderOne);
-		List<Request> orders = database.getOrders();
+		List<Order> orders = database.getOrders();
 		Assert.assertEquals(1, orders.size());
 
 		Assert.assertTrue(orderOne.equals(orders.get(0)));
@@ -63,12 +66,12 @@ public class TestOrderDataStore {
 	
 	@Test
 	public void testGetOrders() throws SQLException, JSONException {
-		List<Request> orders = new ArrayList<Request>();
+		List<Order> orders = new ArrayList<Order>();
 		orders.add(orderOne);
 		orders.add(orderTwo);
 		orders.add(orderThree);
 		
-		for (Request order : orders) {
+		for (Order order : orders) {
 			database.addOrder(order);
 		}
 		
@@ -82,7 +85,7 @@ public class TestOrderDataStore {
 	@Test
 	public void testUpdateOrder() throws SQLException, JSONException {
 		database.addOrder(orderOne);
-		List<Request> orders = database.getOrders();
+		List<Order> orders = database.getOrders();
 		Assert.assertEquals(1, orders.size());
 		Assert.assertTrue(orderOne.equals(orders.get(0)));
 		
@@ -101,16 +104,16 @@ public class TestOrderDataStore {
 	
 	@Test
 	public void testRemoveOrder() throws SQLException, JSONException {
-		List<Request> orders = new ArrayList<Request>();
+		List<Order> orders = new ArrayList<Order>();
 		orders.add(orderOne);
 		orders.add(orderTwo);
 		orders.add(orderThree);
 		
-		for (Request order : orders) {
+		for (Order order : orders) {
 			database.addOrder(order);
 		}
 		
-		List<Request> ordersDB = database.getOrders();
+		List<Order> ordersDB = database.getOrders();
 		Assert.assertEquals(3, ordersDB.size());
 		
 		database.removeOrder(orderOne);
@@ -127,16 +130,16 @@ public class TestOrderDataStore {
 	
 	@Test
 	public void testRemoveAllOrder() throws SQLException, JSONException {
-		List<Request> orders = new ArrayList<Request>();
+		List<Order> orders = new ArrayList<Order>();
 		orders.add(orderOne);
 		orders.add(orderTwo);
 		orders.add(orderThree);
 		
-		for (Request order : orders) {
+		for (Order order : orders) {
 			database.addOrder(order);
 		}
 		
-		List<Request> ordersDB = database.getOrders();
+		List<Order> ordersDB = database.getOrders();
 		Assert.assertEquals(3, ordersDB.size());
 		
 		database.removeAllOrder();
@@ -147,35 +150,35 @@ public class TestOrderDataStore {
 	
 	@Test
 	public void testCountOrder() throws SQLException, JSONException {
-		List<Request> orders = new ArrayList<Request>();
+		List<Order> orders = new ArrayList<Order>();
 		orders.add(orderOne);
 		orders.add(orderTwo);
 		orders.add(orderThree);
 		orders.add(orderFour);
 		
-		for (Request order : orders) {
+		for (Order order : orders) {
 			database.addOrder(order);
 		}
 		
-		List<RequestState> requestStates = new ArrayList<RequestState>();
-		int count = database.countOrder(requestStates);
+		List<OrderState> orderStates = new ArrayList<OrderState>();
+		int count = database.countOrder(orderStates);
 		Assert.assertEquals(orders.size(), count);
 		
-		requestStates.add(RequestState.FULFILLED);
+		orderStates.add(OrderState.FULFILLED);
 		
-		count = database.countOrder(requestStates);
+		count = database.countOrder(orderStates);
 		Assert.assertEquals(1, count);
 		
-		requestStates.add(RequestState.DELETED);
+		orderStates.add(OrderState.DELETED);
 		
-		count = database.countOrder(requestStates);
+		count = database.countOrder(orderStates);
 		Assert.assertEquals(2, count);
 		
-		requestStates.clear();
+		orderStates.clear();
 		
-		requestStates.add(RequestState.OPEN);
+		orderStates.add(OrderState.OPEN);
 		
-		count = database.countOrder(requestStates);
+		count = database.countOrder(orderStates);
 		Assert.assertEquals(2, count);
 	}
 	
@@ -191,17 +194,17 @@ public class TestOrderDataStore {
 		xOCCIAttributes.put("occiAttr2.occi", "occiValue2=");
 		xOCCIAttributes.put("occiAttr3.occi", "x>=1 && y=1");
 		Token token = new Token("accessIdToken", "user", new Date(), attributes);
-		orderOne =  new Request("requstIdOne", token , "instanceIdOne", "providerOne", "memberOne",
-				new Date().getTime(), true, RequestState.OPEN, categories, xOCCIAttributes);
-		orderTwo =  new Request("requstIdTwo", token , "instanceIdTwo", "providerTwo", "memberTwo",
-				new Date().getTime(), true, RequestState.OPEN, categories, xOCCIAttributes);
-		orderThree = new Request("requstIdThree", token, "instanceIdThree", "providerThree",
-				"memberThree", new Date().getTime(), true, RequestState.FULFILLED,
+		orderOne =  new Order("requstIdOne", token , "instanceIdOne", "providerOne", "memberOne",
+				new Date().getTime(), true, OrderState.OPEN, categories, xOCCIAttributes);
+		orderTwo =  new Order("requstIdTwo", token , "instanceIdTwo", "providerTwo", "memberTwo",
+				new Date().getTime(), true, OrderState.OPEN, categories, xOCCIAttributes);
+		orderThree = new Order("requstIdThree", token, "instanceIdThree", "providerThree",
+				"memberThree", new Date().getTime(), true, OrderState.FULFILLED,
 				new ArrayList<Category>(), new HashMap<String, String>());
 		HashMap<String, String> xOCCIAttributesTwo = new HashMap<String, String>();
 		xOCCIAttributesTwo.put("1.22.3.5.1", "#@$#gv=.j0");
-		orderFour = new Request("requstIdFour", token, "instanceIdThree", "providerThree",
-				"memberThree", new Date().getTime(), true, RequestState.DELETED,
+		orderFour = new Order("requstIdFour", token, "instanceIdThree", "providerThree",
+				"memberThree", new Date().getTime(), true, OrderState.DELETED,
 				new ArrayList<Category>(), xOCCIAttributesTwo);		
 	}
 	

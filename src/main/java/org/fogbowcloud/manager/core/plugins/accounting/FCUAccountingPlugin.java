@@ -10,7 +10,7 @@ import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
-import org.fogbowcloud.manager.occi.request.Request;
+import org.fogbowcloud.manager.occi.order.Order;
 
 public class FCUAccountingPlugin implements AccountingPlugin {
 
@@ -37,8 +37,8 @@ public class FCUAccountingPlugin implements AccountingPlugin {
 	}
 
 	@Override
-	public void update(List<Request> requestsWithInstance) {
-		LOGGER.debug("Updating account with requests=" + requestsWithInstance);
+	public void update(List<Order> ordersWithInstance) {
+		LOGGER.debug("Updating account with orders=" + ordersWithInstance);
 		long now = dateUtils.currentTimeMillis();
 		double updatingInterval = ((double) TimeUnit.MILLISECONDS.toSeconds(now - lastUpdate) / 60);
 		LOGGER.debug("updating interval=" + updatingInterval);
@@ -46,23 +46,23 @@ public class FCUAccountingPlugin implements AccountingPlugin {
 		Map<String, ResourceUsage> usageOfMembers = new HashMap<String, ResourceUsage>();
 		Map<String, Double> usageOfUsers = new HashMap<String, Double>();
 
-		for (Request request : requestsWithInstance) {
+		for (Order order : ordersWithInstance) {
 			//consumption
-			if (request.isLocal()) { 
+			if (order.isLocal()) { 
 				double consumptionInterval = ((double) TimeUnit.MILLISECONDS.toSeconds(now
-						- request.getFulfilledTime()) / 60);
+						- order.getFulfilledTime()) / 60);
 				
-				updateUsage(request.getGlobalInstanceId(),
-						Math.min(consumptionInterval, updatingInterval), false, request.getProvidingMemberId(),
-						request.getFederationToken().getUser(), usageOfMembers, usageOfUsers);
+				updateUsage(order.getGlobalInstanceId(),
+						Math.min(consumptionInterval, updatingInterval), false, order.getProvidingMemberId(),
+						order.getFederationToken().getUser(), usageOfMembers, usageOfUsers);
 				
 			} else { //donation
 				double donationInterval = ((double) TimeUnit.MILLISECONDS.toSeconds(now
-						- request.getFulfilledTime()) / 60);
+						- order.getFulfilledTime()) / 60);
 				
-				updateUsage(request.getGlobalInstanceId(),
+				updateUsage(order.getGlobalInstanceId(),
 						Math.min(donationInterval, updatingInterval), true,
-						request.getRequestingMemberId(), null, usageOfMembers, usageOfUsers);
+						order.getRequestingMemberId(), null, usageOfMembers, usageOfUsers);
 				
 			}			
 		}

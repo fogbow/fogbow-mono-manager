@@ -5,7 +5,7 @@ import java.util.Properties;
 
 import org.fogbowcloud.manager.core.plugins.localcredentails.MapperHelper;
 import org.fogbowcloud.manager.core.plugins.localcredentails.SingleMapperPlugin;
-import org.fogbowcloud.manager.occi.request.Request;
+import org.fogbowcloud.manager.occi.order.Order;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -61,16 +61,16 @@ public class TestSingleMapperPlugin {
 	
 	@Test
 	public void testGetLocalCredentials() {
-		Request request = new Request(null, null, null, null, false, null);
-		Map<String, String> localCredentials = this.singleMapperPlugin.getLocalCredentials(request);
+		Order order = new Order(null, null, null, null, false, null);
+		Map<String, String> localCredentials = this.singleMapperPlugin.getLocalCredentials(order);
 		Assert.assertEquals(VALUE_ONE_FOGBOW, localCredentials.get(CREDENTIAL_ONE));
 		Assert.assertEquals(VALUE_TWO_FOGBOW, localCredentials.get(CREDENTIAL_TWO));		
 	}
 	
 	@Test
 	public void testGetLocalCredentialsNotFountWithDefaultValue() {
-		Request request = new Request(null, null, null, null, false, null);
-		Map<String, String> localCredentials = this.singleMapperPlugin.getLocalCredentials(request);
+		Order order = new Order(null, null, null, null, false, null);
+		Map<String, String> localCredentials = this.singleMapperPlugin.getLocalCredentials(order);
 		Assert.assertEquals(VALUE_ONE_FOGBOW, localCredentials.get(CREDENTIAL_ONE));
 		Assert.assertEquals(VALUE_TWO_FOGBOW, localCredentials.get(CREDENTIAL_TWO));
 	}	
@@ -85,8 +85,8 @@ public class TestSingleMapperPlugin {
 	@Test
 	public void testGetLocalCredentialsNotFoundWithoutDefaultValue() {
 		singleMapperPlugin = new SingleMapperPlugin(new Properties()); 
-		Request request = new Request(null, null, null, null, false, null);
-		Map<String, String> localCredentials = this.singleMapperPlugin.getLocalCredentials(request);
+		Order order = new Order(null, null, null, null, false, null);
+		Map<String, String> localCredentials = this.singleMapperPlugin.getLocalCredentials(order);
 		Assert.assertTrue(localCredentials.isEmpty());
 	}	
 	

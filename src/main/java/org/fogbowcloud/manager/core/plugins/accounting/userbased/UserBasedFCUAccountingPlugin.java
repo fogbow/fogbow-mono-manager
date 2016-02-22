@@ -13,7 +13,7 @@ import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
 import org.fogbowcloud.manager.core.plugins.accounting.AccountingInfo;
 import org.fogbowcloud.manager.core.plugins.accounting.ResourceUsage;
-import org.fogbowcloud.manager.occi.request.Request;
+import org.fogbowcloud.manager.occi.order.Order;
 
 public class UserBasedFCUAccountingPlugin implements AccountingPlugin {
 
@@ -38,15 +38,15 @@ public class UserBasedFCUAccountingPlugin implements AccountingPlugin {
 	}
 
 	@Override
-	public void update(List<Request> requestsWithInstance) {
-		LOGGER.debug("Updating account with requests=" + requestsWithInstance);
+	public void update(List<Order> ordersWithInstance) {
+		LOGGER.debug("Updating account with requests=" + ordersWithInstance);
 		long now = dateUtils.currentTimeMillis();
 		double updatingInterval = ((double) TimeUnit.MILLISECONDS.toSeconds(now - lastUpdate) / 60);
 		LOGGER.debug("updating interval=" + updatingInterval);
 
 		Map<AccountingEntryKey, AccountingInfo> usage = new HashMap<AccountingEntryKey, AccountingInfo>();
 
-		for (Request request : requestsWithInstance) {
+		for (Order request : ordersWithInstance) {
 
 			double consumptionInterval = ((double) TimeUnit.MILLISECONDS.toSeconds(now
 					- request.getFulfilledTime()) / 60);

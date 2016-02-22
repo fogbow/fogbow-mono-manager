@@ -12,8 +12,8 @@ import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
 import org.fogbowcloud.manager.core.plugins.accounting.AccountingInfo;
 import org.fogbowcloud.manager.occi.model.Token;
-import org.fogbowcloud.manager.occi.request.Request;
-import org.fogbowcloud.manager.occi.request.RequestState;
+import org.fogbowcloud.manager.occi.order.Order;
+import org.fogbowcloud.manager.occi.order.OrderState;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -48,7 +48,7 @@ public class TestUserBasedFCUAccountingPlugin {
 
 	@Test
 	public void testEmptyOrders() {
-		accountingPlugin.update(new ArrayList<Request>());
+		accountingPlugin.update(new ArrayList<Order>());
 
 		Assert.assertNotNull(accountingPlugin.getAccountingInfo());
 		Assert.assertEquals(0, accountingPlugin.getAccountingInfo().size());
@@ -66,14 +66,14 @@ public class TestUserBasedFCUAccountingPlugin {
 		accountingPlugin = new UserBasedFCUAccountingPlugin(properties, benchmarkingPlugin,
 				dateUtils);
 
-		Request order = new Request("id1", new Token("accessId", "userId", null,
+		Order order = new Order("id1", new Token("accessId", "userId", null,
 				new HashMap<String, String>()), null, null, true, "localMemberId");
 		order.setDateUtils(dateUtils);
-		order.setState(RequestState.FULFILLED);
+		order.setState(OrderState.FULFILLED);
 		order.setProvidingMemberId("remoteMemberId");
 		order.setInstanceId("instanceId");
 
-		List<Request> orders = new ArrayList<Request>();
+		List<Order> orders = new ArrayList<Order>();
 		orders.add(order);
 
 		// updating dateUtils
@@ -107,14 +107,14 @@ public class TestUserBasedFCUAccountingPlugin {
 		accountingPlugin = new UserBasedFCUAccountingPlugin(properties, benchmarkingPlugin,
 				dateUtils);
 
-		Request order = new Request("id1", new Token("accessId", "userId", null,
+		Order order = new Order("id1", new Token("accessId", "userId", null,
 				new HashMap<String, String>()), null, null, false, "remoteMemberId");
 		order.setDateUtils(dateUtils);
-		order.setState(RequestState.FULFILLED);
+		order.setState(OrderState.FULFILLED);
 		order.setProvidingMemberId("localMemberId");
 		order.setInstanceId("instanceId");
 
-		List<Request> orders = new ArrayList<Request>();
+		List<Order> orders = new ArrayList<Order>();
 		orders.add(order);
 
 		// updating dateUtils
@@ -149,21 +149,21 @@ public class TestUserBasedFCUAccountingPlugin {
 		accountingPlugin = new UserBasedFCUAccountingPlugin(properties, benchmarkingPlugin,
 				dateUtils);
 
-		Request localOrder = new Request("localId1", new Token("accessId", "localUserId", null,
+		Order localOrder = new Order("localId1", new Token("accessId", "localUserId", null,
 				new HashMap<String, String>()), null, null, true, "localMemberId");
 		localOrder.setDateUtils(dateUtils);
-		localOrder.setState(RequestState.FULFILLED);
+		localOrder.setState(OrderState.FULFILLED);
 		localOrder.setProvidingMemberId("remoteMemberId");
 		localOrder.setInstanceId("instanceId");
 
-		Request servedOrder = new Request("remtoeId1", new Token("accessId", "remoteUserId", null,
+		Order servedOrder = new Order("remtoeId1", new Token("accessId", "remoteUserId", null,
 				new HashMap<String, String>()), null, null, false, "remoteMemberId");
 		servedOrder.setDateUtils(dateUtils);
-		servedOrder.setState(RequestState.FULFILLED);
+		servedOrder.setState(OrderState.FULFILLED);
 		servedOrder.setProvidingMemberId("localMemberId");
 		servedOrder.setInstanceId("instanceId");
 
-		List<Request> orders = new ArrayList<Request>();
+		List<Order> orders = new ArrayList<Order>();
 		orders.add(localOrder);
 		orders.add(servedOrder);
 
@@ -227,28 +227,28 @@ public class TestUserBasedFCUAccountingPlugin {
 		accountingPlugin = new UserBasedFCUAccountingPlugin(properties, benchmarkingPlugin,
 				dateUtils);
 
-		Request localOrder1 = new Request("localId1", new Token("accessId", "userId", null,
+		Order localOrder1 = new Order("localId1", new Token("accessId", "userId", null,
 				new HashMap<String, String>()), null, null, true, "localMemberId");
 		localOrder1.setDateUtils(dateUtils);
-		localOrder1.setState(RequestState.FULFILLED);
+		localOrder1.setState(OrderState.FULFILLED);
 		localOrder1.setProvidingMemberId("remote1MemberId");
 		localOrder1.setInstanceId("instanceId");
 
-		Request localOrder2 = new Request("localId1", new Token("accessId", "userId", null,
+		Order localOrder2 = new Order("localId1", new Token("accessId", "userId", null,
 				new HashMap<String, String>()), null, null, true, "localMemberId");
 		localOrder2.setDateUtils(dateUtils);
-		localOrder2.setState(RequestState.FULFILLED);
+		localOrder2.setState(OrderState.FULFILLED);
 		localOrder2.setProvidingMemberId("remote2MemberId");
 		localOrder2.setInstanceId("instanceId");
 
-		Request servedOrder = new Request("remtoeId1", new Token("accessId", "userId", null,
+		Order servedOrder = new Order("remtoeId1", new Token("accessId", "userId", null,
 				new HashMap<String, String>()), null, null, false, "remote1MemberId");
 		servedOrder.setDateUtils(dateUtils);
-		servedOrder.setState(RequestState.FULFILLED);
+		servedOrder.setState(OrderState.FULFILLED);
 		servedOrder.setProvidingMemberId("localMemberId");
 		servedOrder.setInstanceId("instanceId");
 
-		List<Request> orders = new ArrayList<Request>();
+		List<Order> orders = new ArrayList<Order>();
 		orders.add(localOrder1);
 		orders.add(localOrder2);
 		orders.add(servedOrder);
@@ -312,35 +312,35 @@ public class TestUserBasedFCUAccountingPlugin {
 		accountingPlugin = new UserBasedFCUAccountingPlugin(properties, benchmarkingPlugin,
 				dateUtils);
 
-		Request localOrderUser1 = new Request("localId1", new Token("accessId", "userId1", null,
+		Order localOrderUser1 = new Order("localId1", new Token("accessId", "userId1", null,
 				new HashMap<String, String>()), null, null, true, "localMemberId");
 		localOrderUser1.setDateUtils(dateUtils);
-		localOrderUser1.setState(RequestState.FULFILLED);
+		localOrderUser1.setState(OrderState.FULFILLED);
 		localOrderUser1.setProvidingMemberId("localMemberId");
 		localOrderUser1.setInstanceId("instanceId1");
 
-		Request localOrderUser2 = new Request("localId1", new Token("accessId", "userId2", null,
+		Order localOrderUser2 = new Order("localId1", new Token("accessId", "userId2", null,
 				new HashMap<String, String>()), null, null, true, "localMemberId");
 		localOrderUser2.setDateUtils(dateUtils);
-		localOrderUser2.setState(RequestState.FULFILLED);
+		localOrderUser2.setState(OrderState.FULFILLED);
 		localOrderUser2.setProvidingMemberId("localMemberId");
 		localOrderUser2.setInstanceId("instanceId2");
 
-		Request servedOrderUser1 = new Request("remtoeId1", new Token("accessId", "userId1", null,
+		Order servedOrderUser1 = new Order("remtoeId1", new Token("accessId", "userId1", null,
 				new HashMap<String, String>()), null, null, false, "remoteMemberId");
 		servedOrderUser1.setDateUtils(dateUtils);
-		servedOrderUser1.setState(RequestState.FULFILLED);
+		servedOrderUser1.setState(OrderState.FULFILLED);
 		servedOrderUser1.setProvidingMemberId("localMemberId");
 		servedOrderUser1.setInstanceId("instanceId3");
 
-		Request servedOrderUser2 = new Request("remtoeId2", new Token("accessId", "userId2", null,
+		Order servedOrderUser2 = new Order("remtoeId2", new Token("accessId", "userId2", null,
 				new HashMap<String, String>()), null, null, false, "remoteMemberId");
 		servedOrderUser2.setDateUtils(dateUtils);
-		servedOrderUser2.setState(RequestState.FULFILLED);
+		servedOrderUser2.setState(OrderState.FULFILLED);
 		servedOrderUser2.setProvidingMemberId("localMemberId");
 		servedOrderUser2.setInstanceId("instanceId4");
 
-		List<Request> orders = new ArrayList<Request>();
+		List<Order> orders = new ArrayList<Order>();
 		orders.add(localOrderUser1);
 		orders.add(localOrderUser2);
 		orders.add(servedOrderUser1);
@@ -412,21 +412,21 @@ public class TestUserBasedFCUAccountingPlugin {
 		accountingPlugin = new UserBasedFCUAccountingPlugin(properties, benchmarkingPlugin,
 				dateUtils);
 
-		Request localOrder = new Request("localId1", new Token("accessId", "localUserId", null,
+		Order localOrder = new Order("localId1", new Token("accessId", "localUserId", null,
 				new HashMap<String, String>()), null, null, true, "localMemberId");
 		localOrder.setDateUtils(dateUtils);
-		localOrder.setState(RequestState.FULFILLED);
+		localOrder.setState(OrderState.FULFILLED);
 		localOrder.setProvidingMemberId("remoteMemberId");
 		localOrder.setInstanceId("instanceId");
 
-		Request servedOrder = new Request("remtoeId1", new Token("accessId", "remoteUserId", null,
+		Order servedOrder = new Order("remtoeId1", new Token("accessId", "remoteUserId", null,
 				new HashMap<String, String>()), null, null, false, "remoteMemberId");
 		servedOrder.setDateUtils(dateUtils);
-		servedOrder.setState(RequestState.FULFILLED);
+		servedOrder.setState(OrderState.FULFILLED);
 		servedOrder.setProvidingMemberId("localMemberId");
 		servedOrder.setInstanceId("instanceId");
 
-		List<Request> orders = new ArrayList<Request>();
+		List<Order> orders = new ArrayList<Order>();
 		orders.add(localOrder);
 		orders.add(servedOrder);
 
@@ -500,21 +500,21 @@ public class TestUserBasedFCUAccountingPlugin {
 		accountingPlugin = new UserBasedFCUAccountingPlugin(properties, benchmarkingPlugin,
 				dateUtils);
 
-		Request localOrder = new Request("localId1", new Token("accessId", "localUserId", null,
+		Order localOrder = new Order("localId1", new Token("accessId", "localUserId", null,
 				new HashMap<String, String>()), null, null, true, "localMemberId");
 		localOrder.setDateUtils(dateUtils);
-		localOrder.setState(RequestState.FULFILLED);
+		localOrder.setState(OrderState.FULFILLED);
 		localOrder.setProvidingMemberId("remoteMemberId");
 		localOrder.setInstanceId("instanceId");
 
-		Request servedOrder = new Request("remtoeId1", new Token("accessId", "remoteUserId", null,
+		Order servedOrder = new Order("remtoeId1", new Token("accessId", "remoteUserId", null,
 				new HashMap<String, String>()), null, null, false, "remoteMemberId");
 		servedOrder.setDateUtils(dateUtils);
-		servedOrder.setState(RequestState.FULFILLED);
+		servedOrder.setState(OrderState.FULFILLED);
 		servedOrder.setProvidingMemberId("localMemberId");
 		servedOrder.setInstanceId("instanceId");
 
-		List<Request> orders = new ArrayList<Request>();
+		List<Order> orders = new ArrayList<Order>();
 		orders.add(localOrder);
 		orders.add(servedOrder);
 
@@ -547,10 +547,10 @@ public class TestUserBasedFCUAccountingPlugin {
 		Assert.assertEquals(usageByRemoteUser, accountingInfo.getUsage(), ACCEPTABLE_ERROR);
 
 		// adding order
-		Request localOrder2 = new Request("localId2", new Token("accessId", "localUserId2", null,
+		Order localOrder2 = new Order("localId2", new Token("accessId", "localUserId2", null,
 				new HashMap<String, String>()), null, null, true, "localMemberId");
 		localOrder2.setDateUtils(dateUtils);
-		localOrder2.setState(RequestState.FULFILLED);
+		localOrder2.setState(OrderState.FULFILLED);
 		localOrder2.setProvidingMemberId("remoteMemberId");
 		localOrder2.setInstanceId("instanceId2");
 
@@ -607,21 +607,21 @@ public class TestUserBasedFCUAccountingPlugin {
 		accountingPlugin = new UserBasedFCUAccountingPlugin(properties, benchmarkingPlugin,
 				dateUtils);
 
-		Request localOrder = new Request("localId1", new Token("accessId", "userId", null,
+		Order localOrder = new Order("localId1", new Token("accessId", "userId", null,
 				new HashMap<String, String>()), null, null, true, "localMemberId");
 		localOrder.setDateUtils(dateUtils);
-		localOrder.setState(RequestState.FULFILLED);
+		localOrder.setState(OrderState.FULFILLED);
 		localOrder.setProvidingMemberId("remoteMemberId");
 		localOrder.setInstanceId("instanceId1");
 
-		Request servedOrder = new Request("remtoeId1", new Token("accessId", "userId", null,
+		Order servedOrder = new Order("remtoeId1", new Token("accessId", "userId", null,
 				new HashMap<String, String>()), null, null, false, "remoteMemberId");
 		servedOrder.setDateUtils(dateUtils);
-		servedOrder.setState(RequestState.FULFILLED);
+		servedOrder.setState(OrderState.FULFILLED);
 		servedOrder.setProvidingMemberId("localMemberId");
 		servedOrder.setInstanceId("instanceId1");
 
-		List<Request> orders = new ArrayList<Request>();
+		List<Order> orders = new ArrayList<Order>();
 		orders.add(localOrder);
 		orders.add(servedOrder);
 
@@ -654,10 +654,10 @@ public class TestUserBasedFCUAccountingPlugin {
 		Assert.assertEquals(usageOnRemoteMember, accountingInfo.getUsage(), ACCEPTABLE_ERROR);
 
 		// adding local order
-		Request localOrder2 = new Request("localId2", new Token("accessId", "userId", null,
+		Order localOrder2 = new Order("localId2", new Token("accessId", "userId", null,
 				new HashMap<String, String>()), null, null, true, "localMemberId");
 		localOrder2.setDateUtils(dateUtils);
-		localOrder2.setState(RequestState.FULFILLED);
+		localOrder2.setState(OrderState.FULFILLED);
 		localOrder2.setProvidingMemberId("remoteMemberId");
 		localOrder2.setInstanceId("instanceId2");
 
@@ -692,10 +692,10 @@ public class TestUserBasedFCUAccountingPlugin {
 		Assert.assertEquals(usageOnRemoteMember, accountingInfo.getUsage(), ACCEPTABLE_ERROR);
 
 		// adding served order
-		Request servedOrder2 = new Request("remoteId2", new Token("accessId", "userId", null,
+		Order servedOrder2 = new Order("remoteId2", new Token("accessId", "userId", null,
 				new HashMap<String, String>()), null, null, false, "remoteMemberId");
 		servedOrder2.setDateUtils(dateUtils);
-		servedOrder2.setState(RequestState.FULFILLED);
+		servedOrder2.setState(OrderState.FULFILLED);
 		servedOrder2.setProvidingMemberId("localMemberId");
 		servedOrder2.setInstanceId("instanceId2");
 

@@ -29,8 +29,8 @@ import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.OCCIHeaders;
 import org.fogbowcloud.manager.occi.model.Token;
-import org.fogbowcloud.manager.occi.request.RequestAttribute;
-import org.fogbowcloud.manager.occi.request.RequestConstants;
+import org.fogbowcloud.manager.occi.order.OrderAttribute;
+import org.fogbowcloud.manager.occi.order.OrderConstants;
 import org.fogbowcloud.manager.occi.util.OCCIComputeApplication;
 import org.fogbowcloud.manager.occi.util.PluginHelper;
 import org.junit.Before;
@@ -120,7 +120,7 @@ public class TestComputeOpenNebulaOCCI {
 		String requirementsStr = RequirementsHelper.GLUE_DISK_TERM + " >= 10 && "
 				+ RequirementsHelper.GLUE_MEM_RAM_TERM + " > 500 && "
 				+ RequirementsHelper.GLUE_VCPU_TERM + " > 0";
-		xOCCIAtt.put(RequestAttribute.REQUIREMENTS.getValue(), requirementsStr);
+		xOCCIAtt.put(OrderAttribute.REQUIREMENTS.getValue(), requirementsStr);
 
 		Token token = new Token(ACCESS_TOKEN_ID, "user", new Date(), new HashMap<String, String>());
 		try {
@@ -150,14 +150,14 @@ public class TestComputeOpenNebulaOCCI {
 		expectedRequest = new HttpUriRequestMatcher(request);
 
 		List<Category> requestCategories = new ArrayList<Category>();
-		requestCategories.add(new Category(RequestConstants.PUBLIC_KEY_TERM,
-				RequestConstants.CREDENTIALS_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS));
+		requestCategories.add(new Category(OrderConstants.PUBLIC_KEY_TERM,
+				OrderConstants.CREDENTIALS_RESOURCE_SCHEME, OrderConstants.MIXIN_CLASS));
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
-		xOCCIAtt.put(RequestAttribute.DATA_PUBLIC_KEY.getValue(), publicKey);
+		xOCCIAtt.put(OrderAttribute.DATA_PUBLIC_KEY.getValue(), publicKey);
 		String requirementsStr = RequirementsHelper.GLUE_DISK_TERM + " >= 10 && "
 				+ RequirementsHelper.GLUE_MEM_RAM_TERM + " > 500 && "
 				+ RequirementsHelper.GLUE_VCPU_TERM + " > 0";
-		xOCCIAtt.put(RequestAttribute.REQUIREMENTS.getValue(), requirementsStr);
+		xOCCIAtt.put(OrderAttribute.REQUIREMENTS.getValue(), requirementsStr);
 
 		Token token = new Token(ACCESS_TOKEN_ID, "user", new Date(), new HashMap<String, String>());
 		try {
@@ -174,15 +174,15 @@ public class TestComputeOpenNebulaOCCI {
 			URISyntaxException {
 
 		List<Category> requestCategories = new ArrayList<Category>();
-		requestCategories.add(new Category(RequestConstants.PUBLIC_KEY_TERM + "; scheme=\""
-				+ RequestConstants.CREDENTIALS_RESOURCE_SCHEME + "\"; class=\""
-				+ RequestConstants.MIXIN_CLASS + "\""));
+		requestCategories.add(new Category(OrderConstants.PUBLIC_KEY_TERM + "; scheme=\""
+				+ OrderConstants.CREDENTIALS_RESOURCE_SCHEME + "\"; class=\""
+				+ OrderConstants.MIXIN_CLASS + "\""));
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
-		xOCCIAtt.put(RequestAttribute.DATA_PUBLIC_KEY.getValue(), "=" + PUBLIC_KEY);
+		xOCCIAtt.put(OrderAttribute.DATA_PUBLIC_KEY.getValue(), "=" + PUBLIC_KEY);
 		String requirementsStr = RequirementsHelper.GLUE_DISK_TERM + " >= 10 && "
 				+ RequirementsHelper.GLUE_MEM_RAM_TERM + " > 500 && "
 				+ RequirementsHelper.GLUE_VCPU_TERM + " > 0";
-		xOCCIAtt.put(RequestAttribute.REQUIREMENTS.getValue(), requirementsStr);
+		xOCCIAtt.put(OrderAttribute.REQUIREMENTS.getValue(), requirementsStr);
 
 		HttpUriRequest request = new HttpPost(DEFAULT_URL + "/" + COMPUTE_TERM);
 		request.addHeader(OCCIHeaders.AUTHORIZATION,

@@ -1,4 +1,4 @@
-package org.fogbowcloud.manager.occi.request;
+package org.fogbowcloud.manager.occi.order;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -78,7 +78,7 @@ public class OrderDataStore {
 			+ UPDATED + "," + XOCCI_ATTRIBUTES + ")"			
 			+ " VALUES (?,?,?,?,?,?,?,?,?,?,?)";
 	
-	public boolean addOrder(Request order) throws SQLException, JSONException {
+	public boolean addOrder(Order order) throws SQLException, JSONException {
 		PreparedStatement orderStmt = null;
 		Connection connection = null;
 		try {
@@ -123,10 +123,10 @@ public class OrderDataStore {
 			+ IS_LOCAL + ", " + STATE + ", " + CATEGORIES + ", " + XOCCI_ATTRIBUTES
 			+ " FROM " + ORDER_TABLE_NAME;
 	
-	public List<Request> getOrders() throws SQLException, JSONException {
+	public List<Order> getOrders() throws SQLException, JSONException {
 		PreparedStatement ordersStmt = null;
 		Connection connection = null;
-		List<Request> orders = new ArrayList<Request>();
+		List<Order> orders = new ArrayList<Order>();
 		try {
 			connection = getConnection();
 			connection.setAutoCommit(false);
@@ -138,9 +138,9 @@ public class OrderDataStore {
 			while (resultSet.next()) {
 				resultSet.getString(1);
 				
-				orders.add(new Request(resultSet.getString(1), Token.fromJSON(resultSet
+				orders.add(new Order(resultSet.getString(1), Token.fromJSON(resultSet
 						.getString(5)), resultSet.getString(2), resultSet.getString(3), resultSet
-						.getString(4), resultSet.getLong(6), resultSet.getBoolean(7), RequestState
+						.getString(4), resultSet.getLong(6), resultSet.getBoolean(7), OrderState
 						.getState(resultSet.getString(8)), JSONHelper.getCategoriesFromJSON(resultSet
 						.getString(9)), JSONHelper.getXOCCIAttrFromJSON(resultSet.getString(10))));
 			}
@@ -168,7 +168,7 @@ public class OrderDataStore {
 			+ " FROM " + ORDER_TABLE_NAME 
 			+ " WHERE " + ORDER_ID + " = ?";
 	
-	public boolean removeOrder(Request order) throws SQLException {
+	public boolean removeOrder(Order order) throws SQLException {
 		PreparedStatement removeOrderStmt = null;
 		Connection connection = null;
 		try {
@@ -234,7 +234,7 @@ public class OrderDataStore {
 			+ "=? ," + IS_LOCAL + "=? ," + STATE + "=? ," + CATEGORIES + "=?," + UPDATED
 			+ "=?," + XOCCI_ATTRIBUTES + "=?" + " WHERE " + ORDER_ID + "=?";
 	
-	public boolean updateOrder(Request order) throws SQLException, JSONException {
+	public boolean updateOrder(Order order) throws SQLException, JSONException {
 		PreparedStatement updateOrderStmt = null;
 		Connection connection = null;
 		try {
@@ -276,7 +276,7 @@ public class OrderDataStore {
 	
 	private static final String COUNT_ORDER_SQL = "SELECT COUNT(*) FROM " + ORDER_TABLE_NAME;	
 
-	public int countOrder(List<RequestState> requestStates) throws SQLException, JSONException {
+	public int countOrder(List<OrderState> orderStates) throws SQLException, JSONException {
 		PreparedStatement countOrderStmt = null;
 		Connection connection = null;
 		try {
@@ -286,13 +286,13 @@ public class OrderDataStore {
 			StringBuilder stringBuilder = new StringBuilder(COUNT_ORDER_SQL);
 			
 			int auxCount = 0;
-			for (RequestState requestState : requestStates) {
+			for (OrderState orderState : orderStates) {
 				if (auxCount++ == 0) {
 					stringBuilder.append(" ");
-					stringBuilder.append("WHERE " + STATE + "=\'" + requestState.toString() + "\'");
+					stringBuilder.append("WHERE " + STATE + "=\'" + orderState.toString() + "\'");
 					continue;
 				}
-				stringBuilder.append(" OR " + STATE + "=\'" + requestState.toString() + "\'");
+				stringBuilder.append(" OR " + STATE + "=\'" + orderState.toString() + "\'");
 			}
 			countOrderStmt = connection.prepareStatement(stringBuilder.toString());
 			ResultSet resultSet = countOrderStmt.executeQuery();

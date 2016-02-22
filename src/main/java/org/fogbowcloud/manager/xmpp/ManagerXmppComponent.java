@@ -15,11 +15,11 @@ public class ManagerXmppComponent extends XMPPComponent implements AsyncPacketSe
 
 	public static final String WHOISALIVE_NAMESPACE = "http://fogbowcloud.org/rendezvous/whoisalive";
 	public static final String IAMALIVE_NAMESPACE = "http://fogbowcloud.org/rendezvous/iamalive";
-	public static final String REQUEST_NAMESPACE = "http://fogbowcloud.org/manager/request";
+	public static final String ORDER_NAMESPACE = "http://fogbowcloud.org/manager/request";
 	public static final String GETINSTANCE_NAMESPACE = "http://fogbowcloud.org/manager/getinstance";
 	public static final String REMOVEINSTANCE_NAMESPACE = "http://fogbowcloud.org/manager/removeinstance";
 	public static final String INSTANCEBEINGUSED_NAMESPACE = "http://fogbowcloud.org/manager/instancebeingused";
-	public static final String REMOVEREQUEST_NAMESPACE = "http://fogbowcloud.org/manager/removerequest";
+	public static final String REMOVEORDER_NAMESPACE = "http://fogbowcloud.org/manager/removerequest";
 	public static final String GETREMOTEUSERQUOTA_NAMESPACE = "http://fogbowcloud.org/manager/getremoteuserquota";
 
 	private static long PERIOD = 30000;
@@ -38,9 +38,9 @@ public class ManagerXmppComponent extends XMPPComponent implements AsyncPacketSe
 		}
 		addGetHandler(new GetInstanceHandler(managerFacade));
 		addSetHandler(new RemoveInstanceHandler(managerFacade));
-		addSetHandler(new RequestInstanceHandler(managerFacade));
+		addSetHandler(new OrderInstanceHandler(managerFacade));
 		addGetHandler(new InstanceBeingUsedHandler(managerFacade));
-		addSetHandler(new RemoveRequestHandler(managerFacade));
+		addSetHandler(new RemoveOrderHandler(managerFacade));
 		addGetHandler(new GetRemoteUserQuotaHandler(managerFacade));	
 	}
 

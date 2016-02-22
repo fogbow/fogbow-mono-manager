@@ -23,8 +23,8 @@ import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.OCCIHeaders;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.fogbowcloud.manager.occi.model.Token;
-import org.fogbowcloud.manager.occi.request.RequestAttribute;
-import org.fogbowcloud.manager.occi.request.RequestConstants;
+import org.fogbowcloud.manager.occi.order.OrderAttribute;
+import org.fogbowcloud.manager.occi.order.OrderConstants;
 import org.restlet.Client;
 import org.restlet.Request;
 import org.restlet.data.ClientInfo;
@@ -47,25 +47,25 @@ public class OpenNebulaOCCIComputePlugin extends OCCIComputePlugin {
 		setFlavorsProvided(properties);
 
 		this.openNebulaComputePlugin = new OpenNebulaComputePlugin(properties);
-		super.fogTermToCategory.put(RequestConstants.PUBLIC_KEY_TERM, new Category(PUBLIC_KEY_TERM,
-				PUBLIC_KEY_SCHEME, RequestConstants.MIXIN_CLASS));
+		super.fogTermToCategory.put(OrderConstants.PUBLIC_KEY_TERM, new Category(PUBLIC_KEY_TERM,
+				PUBLIC_KEY_SCHEME, OrderConstants.MIXIN_CLASS));
 	}
 
-	protected Set<Header> getExtraHeaders(List<Category> requestCategories,
+	protected Set<Header> getExtraHeaders(List<Category> orderCategories,
 			Map<String, String> xOCCIAtt, Token token) {
 		
 		HashSet<Header> headers = new HashSet<Header>();
 		List<Category> occiCategories = new ArrayList<Category>();
 		
 		String headerShhPublic = "";
-		for (Category category : requestCategories) {			
+		for (Category category : orderCategories) {			
 			occiCategories.add(super.fogTermToCategory.get(category.getTerm()));
 		
 			// adding ssh public key
-			if (category.getTerm().equals(RequestConstants.PUBLIC_KEY_TERM)) {
+			if (category.getTerm().equals(OrderConstants.PUBLIC_KEY_TERM)) {
 				headerShhPublic += NAME_PUBLIC_KEY_ATTRIBUTE + "=" + "\"public_key_one\",";
 				headerShhPublic += DATA_PUBLIC_KEY_ATTRIBUTE + "=\""
-						+ xOCCIAtt.get(RequestAttribute.DATA_PUBLIC_KEY.getValue()) + "\"";
+						+ xOCCIAtt.get(OrderAttribute.DATA_PUBLIC_KEY.getValue()) + "\"";
 			}
 		}
 		
@@ -77,7 +77,7 @@ public class OpenNebulaOCCIComputePlugin extends OCCIComputePlugin {
 			headerAttribute += "," + headerShhPublic;
 		}
 		
-		String userdataBase64 = xOCCIAtt.get(RequestAttribute.USER_DATA_ATT.getValue());		
+		String userdataBase64 = xOCCIAtt.get(OrderAttribute.USER_DATA_ATT.getValue());		
 		if (userdataBase64 != null) {
 			headerAttribute += ",org.openstack.compute.user_data=\"" + userdataBase64 + "\"";					
 		}

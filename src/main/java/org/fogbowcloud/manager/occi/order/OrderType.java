@@ -1,12 +1,12 @@
-package org.fogbowcloud.manager.occi.request;
+package org.fogbowcloud.manager.occi.order;
 
-public enum RequestType {
+public enum OrderType {
 	
 	ONE_TIME("one-time"), PERSISTENT("persistent");
 	
 	private String value;
 	
-	RequestType(String value) {
+	OrderType(String value) {
 		this.value = value;
 	}
 	

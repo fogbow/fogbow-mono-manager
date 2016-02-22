@@ -37,7 +37,7 @@ import org.fogbowcloud.manager.occi.model.ErrorType;
 import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.fogbowcloud.manager.occi.model.Token;
-import org.fogbowcloud.manager.occi.request.Request;
+import org.fogbowcloud.manager.occi.order.Order;
 import org.fogbowcloud.manager.xmpp.AsyncPacketSender;
 import org.fogbowcloud.manager.xmpp.ManagerXmppComponent;
 import org.jamppa.client.XMPPClient;
@@ -374,8 +374,8 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		properties.put(ConfigurationConstants.PREFIX_FLAVORS + "small", VALUE_FLAVOR_SMALL);
 		properties.put(ConfigurationConstants.PREFIX_FLAVORS + "medium", VALUE_FLAVOR_MEDIUM);
 		properties.put(ConfigurationConstants.PREFIX_FLAVORS + "large", VALUE_FLAVOR_LARGE);
-		properties.put(ConfigurationConstants.SERVED_REQUEST_MONITORING_PERIOD_KEY,
-				String.valueOf(DefaultDataTestHelper.SERVED_REQUEST_MONITORING_PERIOD));
+		properties.put(ConfigurationConstants.SERVED_ORDER_MONITORING_PERIOD_KEY,
+				String.valueOf(DefaultDataTestHelper.SERVED_ORDER_MONITORING_PERIOD));
 		properties.put(ConfigurationConstants.GREEN_SITTER_JID, DefaultDataTestHelper.GREEN_SITTER_JID);
 		properties.put(ConfigurationConstants.ADMIN_USERS, DefaultDataTestHelper.FED_USER_NAME + ";" + "admin_user");
 		
@@ -414,7 +414,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		Mockito.when(mapperPlugin.getAllLocalCredentials()).thenReturn(
 				this.defaultFederationAllUsersCrendetials);
 		Mockito.when(
-				mapperPlugin.getLocalCredentials(Mockito.any(Request.class)))
+				mapperPlugin.getLocalCredentials(Mockito.any(Order.class)))
 				.thenReturn(this.defaultFederationUserCrendetials);
 		Mockito.when(identityPlugin.createToken(this.defaultFederationUserCrendetials)).thenReturn(defaultFederationToken);
 		

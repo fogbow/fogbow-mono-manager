@@ -26,7 +26,7 @@ import org.fogbowcloud.manager.occi.model.Resource;
 import org.fogbowcloud.manager.occi.model.ResourceRepository;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.fogbowcloud.manager.occi.model.Token;
-import org.fogbowcloud.manager.occi.request.RequestAttribute;
+import org.fogbowcloud.manager.occi.order.OrderAttribute;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -141,7 +141,7 @@ public class EC2ComputePlugin implements ComputePlugin {
 		
 		Flavor flavor = RequirementsHelper.findSmallestFlavor(
 				new LinkedList<Flavor>(getFlavors().values()), 
-				xOCCIAtt.get(RequestAttribute.REQUIREMENTS.getValue()));
+				xOCCIAtt.get(OrderAttribute.REQUIREMENTS.getValue()));
 		
 		if (Integer.parseInt(resourcesInfo.getCpuIdle()) < Integer.parseInt(flavor.getCpu()) || 
 				Integer.parseInt(resourcesInfo.getMemIdle()) < Integer.parseInt(flavor.getMem())) {
@@ -170,7 +170,7 @@ public class EC2ComputePlugin implements ComputePlugin {
 			runInstancesRequest.withNetworkInterfaces(networkSpec);
 		}
 				
-		String userData = xOCCIAtt.get(RequestAttribute.USER_DATA_ATT.getValue());
+		String userData = xOCCIAtt.get(OrderAttribute.USER_DATA_ATT.getValue());
 		if (userData != null) {
 			runInstancesRequest.withUserData(userData);
 		}

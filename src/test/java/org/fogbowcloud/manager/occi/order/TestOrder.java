@@ -1,4 +1,4 @@
-package org.fogbowcloud.manager.occi.request;
+package org.fogbowcloud.manager.occi.order;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -8,6 +8,8 @@ import java.util.Map;
 
 import org.fogbowcloud.manager.occi.JSONHelper;
 import org.fogbowcloud.manager.occi.model.Category;
+import org.fogbowcloud.manager.occi.order.Order;
+import org.fogbowcloud.manager.occi.order.OrderConstants;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -15,18 +17,18 @@ import org.junit.Assert;
 import org.junit.Test;
 
 
-public class TestRequest {
+public class TestOrder {
 
 	@Test
 	public void testAddCategoryTwice() {
-		Request request = new Request("id", null, new LinkedList<Category>(),
+		Order order = new Order("id", null, new LinkedList<Category>(),
 				new HashMap<String, String>(), true, null);
-		request.addCategory(new Category(RequestConstants.USER_DATA_TERM,
-				RequestConstants.SCHEME, RequestConstants.MIXIN_CLASS));
-		Assert.assertEquals(1, request.getCategories().size());
-		request.addCategory(new Category(RequestConstants.USER_DATA_TERM,
-				RequestConstants.SCHEME, RequestConstants.MIXIN_CLASS));
-		Assert.assertEquals(1, request.getCategories().size());
+		order.addCategory(new Category(OrderConstants.USER_DATA_TERM,
+				OrderConstants.SCHEME, OrderConstants.MIXIN_CLASS));
+		Assert.assertEquals(1, order.getCategories().size());
+		order.addCategory(new Category(OrderConstants.USER_DATA_TERM,
+				OrderConstants.SCHEME, OrderConstants.MIXIN_CLASS));
+		Assert.assertEquals(1, order.getCategories().size());
 	}
 	
 	@Test

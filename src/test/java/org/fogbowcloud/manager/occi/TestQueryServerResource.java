@@ -20,6 +20,7 @@ import org.fogbowcloud.manager.occi.model.OCCIHeaders;
 import org.fogbowcloud.manager.occi.model.Resource;
 import org.fogbowcloud.manager.occi.model.ResourceRepository;
 import org.fogbowcloud.manager.occi.model.Token;
+import org.fogbowcloud.manager.occi.order.OrderConstants;
 import org.fogbowcloud.manager.occi.util.OCCITestHelper;
 import org.junit.After;
 import org.junit.Assert;
@@ -196,21 +197,21 @@ public class TestQueryServerResource {
 	public void testGetQueryFiltratedTwoCategories() throws Exception {
 		String categorySmall = OCCITestHelper.FOGBOW_SMALL_IMAGE + "; " + 
 				"scheme=\"http://schemas.fogbowcloud.org/template/resource#\"; class=\"mixin\";";
-		String categoryFogboeRequest = "fogbow_request; " + 
-				"scheme=\"http://schemas.fogbowcloud.org/request#\"; class=\"kind\";";
+		String categoryFogbowOrder = OrderConstants.TERM + "; " + 
+				"scheme=\"http://schemas.fogbowcloud.org/order#\"; class=\"kind\";";
 
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_QUERY);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		get.addHeader(OCCIHeaders.CATEGORY, categorySmall);
-		get.addHeader(OCCIHeaders.CATEGORY, categoryFogboeRequest);		
+		get.addHeader(OCCIHeaders.CATEGORY, categoryFogbowOrder);		
 		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(get);
 		
 		String responseStr = EntityUtils.toString(response.getEntity());			
-		
+
 		Assert.assertTrue(responseStr.contains(categorySmall));
-		Assert.assertTrue(responseStr.contains(categoryFogboeRequest));
+		Assert.assertTrue(responseStr.contains(categoryFogbowOrder));
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 	

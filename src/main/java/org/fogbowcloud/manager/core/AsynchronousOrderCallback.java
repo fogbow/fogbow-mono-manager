@@ -1,6 +1,6 @@
 package org.fogbowcloud.manager.core;
 
-public interface AsynchronousRequestCallback {
+public interface AsynchronousOrderCallback {
 	
 	public void success(String instanceId);
 	

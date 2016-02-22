@@ -5,11 +5,11 @@ import java.util.Map;
 
 import org.fogbowcloud.manager.core.plugins.accounting.AccountingInfo;
 import org.fogbowcloud.manager.core.plugins.accounting.ResourceUsage;
-import org.fogbowcloud.manager.occi.request.Request;
+import org.fogbowcloud.manager.occi.order.Order;
 
 public interface AccountingPlugin {
 	
-	public void update(List<Request> requestsWithInstance);
+	public void update(List<Order> ordersWithInstance);
 
 	public List<AccountingInfo> getAccountingInfo();
 	

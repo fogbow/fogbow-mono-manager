@@ -66,13 +66,13 @@ import org.fogbowcloud.manager.occi.model.Resource;
 import org.fogbowcloud.manager.occi.model.ResourceRepository;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.fogbowcloud.manager.occi.model.Token;
-import org.fogbowcloud.manager.occi.request.OrderDataStore;
-import org.fogbowcloud.manager.occi.request.Request;
-import org.fogbowcloud.manager.occi.request.RequestAttribute;
-import org.fogbowcloud.manager.occi.request.RequestConstants;
-import org.fogbowcloud.manager.occi.request.RequestRepository;
-import org.fogbowcloud.manager.occi.request.RequestState;
-import org.fogbowcloud.manager.occi.request.RequestType;
+import org.fogbowcloud.manager.occi.order.Order;
+import org.fogbowcloud.manager.occi.order.OrderDataStore;
+import org.fogbowcloud.manager.occi.order.OrderAttribute;
+import org.fogbowcloud.manager.occi.order.OrderConstants;
+import org.fogbowcloud.manager.occi.order.OrderRepository;
+import org.fogbowcloud.manager.occi.order.OrderState;
+import org.fogbowcloud.manager.occi.order.OrderType;
 import org.fogbowcloud.manager.xmpp.AsyncPacketSender;
 import org.fogbowcloud.manager.xmpp.ManagerPacketHelper;
 import org.json.JSONException;
@@ -82,7 +82,7 @@ import org.restlet.Response;
 public class ManagerController {
 
 	private static final String SSH_SERVICE_NAME = "ssh";
-	protected final int MAX_REQUESTS_PER_THREAD = 25;
+	protected final int MAX_ORDERS_PER_THREAD = 25;
 
 	public static final String DEFAULT_COMMON_SSH_USER = "fogbow";
 
@@ -91,11 +91,11 @@ public class ManagerController {
 	private static final int DEFAULT_MAX_WHOISALIVE_MANAGER_COUNT = 100;
 	private static final long DEFAULT_BD_UPDATE_PERIOD = 300000; // 5 minute
 	private static final long DEFAULT_SCHEDULER_PERIOD = 30000; // 30 seconds
-	protected static final int DEFAULT_ASYNC_REQUEST_WAITING_INTERVAL = 300000; // 5
+	protected static final int DEFAULT_ASYNC_ORDER_WAITING_INTERVAL = 300000; // 5
 																				// minutes
 	private static final long DEFAULT_INSTANCE_MONITORING_PERIOD = 120000; // 2
 																			// minutes
-	private static final long DEFAULT_SERVED_REQUEST_MONITORING_PERIOD = 120000; // 2
+	private static final long DEFAULT_SERVED_ORDER_MONITORING_PERIOD = 120000; // 2
 																					// minutes
 	private static final long DEFAULT_GARBAGE_COLLECTOR_PERIOD = 240000; // 4
 																			// minutes
@@ -106,16 +106,16 @@ public class ManagerController {
 																			// minutes
 	public static final int DEFAULT_MAX_POOL = 200;
 
-	private final ManagerTimer requestSchedulerTimer;
+	private final ManagerTimer orderSchedulerTimer;
 	private final ManagerTimer instanceMonitoringTimer;
-	private final ManagerTimer servedRequestMonitoringTimer;
+	private final ManagerTimer servedOrderMonitoringTimer;
 	private final ManagerTimer garbageCollectorTimer;
 	private final ManagerTimer accountingUpdaterTimer;
-	private final ManagerTimer requestDBUpdaterTimer;
+	private final ManagerTimer orderDBUpdaterTimer;
 
 	private Map<String, Token> instanceIdToToken = new HashMap<String, Token>();
 	private final List<FederationMember> members = Collections.synchronizedList(new LinkedList<FederationMember>());
-	private RequestRepository requests = new RequestRepository();
+	private OrderRepository orderRepository = new OrderRepository();
 	private FederationMemberPickerPlugin memberPickerPlugin;
 	private List<Flavor> flavorsProvided;
 	private BenchmarkingPlugin benchmarkingPlugin;
@@ -134,13 +134,13 @@ public class ManagerController {
 	private SshClientPool sshClientPool = new SshClientPool();
 	private FailedBatch failedBatch = new FailedBatch();
 
-	private Map<String, ForwardedRequest> asynchronousRequests = new ConcurrentHashMap<String, ForwardedRequest>();
+	private Map<String, ForwardedOrder> asynchronousOrders = new ConcurrentHashMap<String, ForwardedOrder>();
 
 	private DateUtils dateUtils = new DateUtils();
 
 	private PoolingHttpClientConnectionManager cm;
 
-	private OrderDataStore requestDB;
+	private OrderDataStore orderDB;
 
 	public ManagerController(Properties properties) {
 		this(properties, null);
@@ -153,27 +153,27 @@ public class ManagerController {
 		this.properties = properties;
 		setFlavorsProvided(ResourceRepository.getStaticFlavors(properties));
 		if (executor == null) {
-			this.requestSchedulerTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
+			this.orderSchedulerTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
 			this.instanceMonitoringTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
-			this.servedRequestMonitoringTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
+			this.servedOrderMonitoringTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
 			this.garbageCollectorTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
 			this.accountingUpdaterTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
-			this.requestDBUpdaterTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
+			this.orderDBUpdaterTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
 		} else {
-			this.requestSchedulerTimer = new ManagerTimer(executor);
+			this.orderSchedulerTimer = new ManagerTimer(executor);
 			this.instanceMonitoringTimer = new ManagerTimer(executor);
-			this.servedRequestMonitoringTimer = new ManagerTimer(executor);
+			this.servedOrderMonitoringTimer = new ManagerTimer(executor);
 			this.garbageCollectorTimer = new ManagerTimer(executor);
 			this.accountingUpdaterTimer = new ManagerTimer(executor);
-			this.requestDBUpdaterTimer = new ManagerTimer(executor);
+			this.orderDBUpdaterTimer = new ManagerTimer(executor);
 		}
-		requestDB = new OrderDataStore(properties);
-		recoverPreviousRequests();
-		triggerRequestDBUpdater();
+		orderDB = new OrderDataStore(properties);
+		recoverPreviousOrders();
+		triggerOrderDBUpdater();
 	}
 
 	public void setDatabase(OrderDataStore database) {
-		this.requestDB = database;
+		this.orderDB = database;
 	}
 
 	public void setBenchmarkExecutor(ExecutorService benchmarkExecutor) {
@@ -204,42 +204,42 @@ public class ManagerController {
 		}
 	}
 
-	private void recoverPreviousRequests() {
+	private void recoverPreviousOrders() {
 		new Thread(new Runnable() {
 			@Override
 			public void run() {
 				try {
 					initializeManager();
 				} catch (Exception e) {
-					LOGGER.error("Could not recover requests.", e);
+					LOGGER.error("Could not recover orders.", e);
 				}
 			}
 		}).start();
 	}
 
 	protected void initializeManager() throws SQLException, JSONException {
-		LOGGER.debug("Recovering previous requests.");
-		for (Request request : this.requestDB.getOrders()) {
+		LOGGER.debug("Recovering previous orders.");
+		for (Order order : this.orderDB.getOrders()) {
 			Instance instance = null;
 			try {
-				if (request.getState().equals(RequestState.FULFILLED)
-						|| request.getState().equals(RequestState.DELETED)) {
-					instance = getInstance(request);
-					LOGGER.debug(instance.getId() + " was recovered to request " + request.getId());
+				if (order.getState().equals(OrderState.FULFILLED)
+						|| order.getState().equals(OrderState.DELETED)) {
+					instance = getInstance(order);
+					LOGGER.debug(instance.getId() + " was recovered to request " + order.getId());
 				}
 			} catch (Exception e) {
-				LOGGER.debug(request.getGlobalInstanceId() + " does not exist anymore.");
-				if (request.getState().equals(RequestState.DELETED)) {
+				LOGGER.debug(order.getGlobalInstanceId() + " does not exist anymore.");
+				if (order.getState().equals(OrderState.DELETED)) {
 					continue;
 				}
-				instanceRemoved(request);
+				instanceRemoved(order);
 			}
-			requests.addRequest(request.getFederationToken().getUser(), request);
+			orderRepository.addOrder(order.getFederationToken().getUser(), order);
 		}
-		if (!requestSchedulerTimer.isScheduled() && requests.getRequestsIn(RequestState.OPEN).size() > 0) {
-			triggerRequestScheduler();
+		if (!orderSchedulerTimer.isScheduled() && orderRepository.getOrdersIn(OrderState.OPEN).size() > 0) {
+			triggerOrderScheduler();
 		}
-		LOGGER.debug("Previous requests recovered.");
+		LOGGER.debug("Previous orders recovered.");
 	}
 
 	private String getSSHCommonUser() {
@@ -265,15 +265,15 @@ public class ManagerController {
 	}
 
 	private void updateAccounting() {
-		List<Request> requestsWithInstances = new ArrayList<Request>(
-				requests.getRequestsIn(RequestState.FULFILLED, RequestState.DELETED));
-		List<String> requestIds = new LinkedList<String>();
-		for (Request request : requestsWithInstances) {
-			requestIds.add(request.getId());
+		List<Order> ordersWithInstances = new ArrayList<Order>(
+				orderRepository.getOrdersIn(OrderState.FULFILLED, OrderState.DELETED));
+		List<String> orderIds = new LinkedList<String>();
+		for (Order order : ordersWithInstances) {
+			orderIds.add(order.getId());
 		}
-		LOGGER.debug("Usage accounting is about to be updated. " + "The following requests do have instances: "
-				+ requestIds);
-		accountingPlugin.update(requestsWithInstances);
+		LOGGER.debug("Usage accounting is about to be updated. " + "The following orders do have instances: "
+				+ orderIds);
+		accountingPlugin.update(ordersWithInstances);
 	}
 
 	public void setAuthorizationPlugin(AuthorizationPlugin authorizationPlugin) {
@@ -324,10 +324,10 @@ public class ManagerController {
 			LOGGER.debug("Number of federation instances = " + federationInstances.size());
 			for (Instance instance : federationInstances) {
 				LOGGER.debug("federation instance=" + instance.getId());
-				Request request = requests.getRequestByInstance(instance.getId());
-				LOGGER.debug("request for instance " + instance.getId() + " is " + request);
-				if ((!instanceHasRequestRelatedTo(null, generateGlobalId(instance.getId(), null)) && request != null
-						&& !request.isLocal()) || request == null) {
+				Order order = orderRepository.getOrderByInstance(instance.getId());
+				LOGGER.debug("Order for instance " + instance.getId() + " is " + order);
+				if ((!instanceHasOrderRelatedTo(null, generateGlobalId(instance.getId(), null)) && order != null
+						&& !order.isLocal()) || order == null) {
 					// this is an orphan instance
 					LOGGER.debug("Removing the orphan instance " + instance.getId());
 					this.computePlugin.removeInstance(getTokenPerInstance(instance.getId()), instance.getId());
@@ -363,40 +363,40 @@ public class ManagerController {
 		return federationInstances;
 	}
 
-	public boolean instanceHasRequestRelatedTo(String requestId, String instanceId) {
-		LOGGER.debug("Checking if instance " + instanceId + " is related to request " + requestId);
+	public boolean instanceHasOrderRelatedTo(String orderId, String instanceId) {
+		LOGGER.debug("Checking if instance " + instanceId + " is related to order " + orderId);
 		// checking federation local user instances for local users
-		if (requestId == null) {
-			for (Request request : requests.getAllRequests()) {
-				if (request.getState().in(RequestState.FULFILLED, RequestState.DELETED, RequestState.SPAWNING)) {
-					String reqInstanceId = generateGlobalId(request.getInstanceId(), request.getProvidingMemberId());
+		if (orderId == null) {
+			for (Order order : orderRepository.getAllOrders()) {
+				if (order.getState().in(OrderState.FULFILLED, OrderState.DELETED, OrderState.SPAWNING)) {
+					String reqInstanceId = generateGlobalId(order.getInstanceId(), order.getProvidingMemberId());
 					if (reqInstanceId != null && reqInstanceId.equals(instanceId)) {
-						LOGGER.debug("The instance " + instanceId + " is related to request " + request.getId());
+						LOGGER.debug("The instance " + instanceId + " is related to order " + order.getId());
 						return true;
 					}
 				}
 			}
 		} else {
 			// checking federation local users instances for remote members
-			Request request = requests.get(requestId);
-			LOGGER.debug("The request with id " + requestId + " is " + request);
-			if (request == null) {
+			Order order = orderRepository.get(orderId);
+			LOGGER.debug("The order with id " + orderId + " is " + order);
+			if (order == null) {
 				return false;
 			}
 			if (instanceId == null) {
 				return true;
 			}
 
-			// it is possible that the asynchronous request has not received
+			// it is possible that the asynchronous order has not received
 			// instanceId yet
-			if ((request.getState().in(RequestState.OPEN) || request.getState().in(RequestState.PENDING)) 
-						&& asynchronousRequests.containsKey(requestId)) {
-				LOGGER.debug("The instance " + instanceId + " is related to request " + request.getId());
+			if ((order.getState().in(OrderState.OPEN) || order.getState().in(OrderState.PENDING)) 
+						&& asynchronousOrders.containsKey(orderId)) {
+				LOGGER.debug("The instance " + instanceId + " is related to order " + order.getId());
 				return true;
-			} else if (request.getState().in(RequestState.FULFILLED, RequestState.DELETED, RequestState.SPAWNING)) {
-				String reqInstanceId = generateGlobalId(request.getInstanceId(), request.getProvidingMemberId());
+			} else if (order.getState().in(OrderState.FULFILLED, OrderState.DELETED, OrderState.SPAWNING)) {
+				String reqInstanceId = generateGlobalId(order.getInstanceId(), order.getProvidingMemberId());
 				if (reqInstanceId != null && reqInstanceId.equals(instanceId)) {
-					LOGGER.debug("The instance " + instanceId + " is related to request " + request.getId());
+					LOGGER.debug("The instance " + instanceId + " is related to order " + order.getId());
 					return true;
 				}
 			}
@@ -498,62 +498,62 @@ public class ManagerController {
 		return token.getUser();
 	}
 
-	public List<Request> getRequestsFromUser(String federationAccessToken) {
-		return getRequestsFromUser(federationAccessToken, true);
+	public List<Order> getOrdersFromUser(String federationAccessToken) {
+		return getOrdersFromUser(federationAccessToken, true);
 	}
 	
-	public List<Request> getRequestsFromUser(String federationAccessToken, boolean findLocalRequest) {
+	public List<Order> getOrdersFromUser(String federationAccessToken, boolean findLocalOrder) {
 		String user = getUser(federationAccessToken);
-		return requests.getByUser(user, findLocalRequest);
+		return orderRepository.getByUser(user, findLocalOrder);
 	}
 
-	public void removeAllRequests(String accessId) {
+	public void removeAllOrders(String accessId) {
 		String user = getUser(accessId);
-		LOGGER.debug("Removing all requests of user: " + user);
-		requests.removeByUser(user);
+		LOGGER.debug("Removing all orders of user: " + user);
+		orderRepository.removeByUser(user);
 		if (!instanceMonitoringTimer.isScheduled()) {
 			triggerInstancesMonitor();
 		}
 	}
 
-	public void removeRequest(String accessId, String requestId) {
-		LOGGER.debug("Removing requestId: " + requestId);
-		checkRequestId(accessId, requestId);
-		Request request = requests.get(requestId);
-		if (request != null 
-				&& request.getProvidingMemberId() != null 
-				&& (request.getState().equals(RequestState.OPEN) 
-						|| request.getState().equals(RequestState.PENDING))) {
-			removeAsynchronousRemoteRequests(request, true);
+	public void removeOrder(String accessId, String orderId) {
+		LOGGER.debug("Removing orderId: " + orderId);
+		checkOrderId(accessId, orderId);
+		Order order = orderRepository.get(orderId);
+		if (order != null 
+				&& order.getProvidingMemberId() != null 
+				&& (order.getState().equals(OrderState.OPEN) 
+						|| order.getState().equals(OrderState.PENDING))) {
+			removeAsynchronousRemoteOrders(order, true);
 		}
-		requests.remove(requestId);
+		orderRepository.remove(orderId);
 		if (!instanceMonitoringTimer.isScheduled()) {
 			triggerInstancesMonitor();
 		}
 	}
 	
-	public void removeRequestForRemoteMember(String accessId, String requestId) {
-		LOGGER.debug("Removing requestId for remote member: " + requestId);
-		checkRequestId(accessId, requestId, false);
-		Request request = requests.get(requestId, false);
-		if (request != null && request.getInstanceId() != null) {
+	public void removeOrderForRemoteMember(String accessId, String orderId) {
+		LOGGER.debug("Removing orderId for remote member: " + orderId);
+		checkOrderId(accessId, orderId, false);
+		Order order = orderRepository.get(orderId, false);
+		if (order != null && order.getInstanceId() != null) {
 			try {
 				computePlugin.removeInstance(localIdentityPlugin.getToken(accessId), 
-						request.getInstanceId());				
+						order.getInstanceId());				
 			} catch (Exception e) { 
 			}
 		}
-		requests.exclude(request.getId());
+		orderRepository.exclude(order.getId());
 	}	
 
-	private void checkRequestId(String accessId, String requestId) {
-		checkRequestId(accessId, requestId, true);
+	private void checkOrderId(String accessId, String orderId) {
+		checkOrderId(accessId, orderId, true);
 	}
 	
-	private void checkRequestId(String accessId, String requestId, boolean lookingForLocalRequest) {
+	private void checkOrderId(String accessId, String orderId, boolean lookingForLocalOrder) {
 		String user = getUser(accessId);
-		if (requests.get(user, requestId, lookingForLocalRequest) == null) {
-			LOGGER.debug("User " + user + " does not have requesId " + requestId);
+		if (orderRepository.get(user, orderId, lookingForLocalOrder) == null) {
+			LOGGER.debug("User " + user + " does not have requesId " + orderId);
 			throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
 		}
 	}
@@ -561,13 +561,13 @@ public class ManagerController {
 	public List<Instance> getInstances(String accessId) {
 		LOGGER.debug("Retrieving instances of token " + accessId);
 		List<Instance> instances = new ArrayList<Instance>();
-		for (Request request : requests.getByUser(getUser(accessId))) {
-			String instanceId = request.getInstanceId();
+		for (Order order : orderRepository.getByUser(getUser(accessId))) {
+			String instanceId = order.getInstanceId();
 			if (instanceId == null) {
 				continue;
 			}
 			try {
-				instances.add(generateInstanceWithGlobalId(request.getInstanceId(), request.getProvidingMemberId()));
+				instances.add(generateInstanceWithGlobalId(order.getInstanceId(), order.getProvidingMemberId()));
 			} catch (Exception e) {
 				LOGGER.warn("Exception thown while retrieving instance " + instanceId + ".", e);
 			}
@@ -583,19 +583,19 @@ public class ManagerController {
 		if (memberId == null) {
 			memberId = this.properties.get(ConfigurationConstants.XMPP_JID_KEY).toString();
 		}
-		return instanceId + Request.SEPARATOR_GLOBAL_ID + memberId;
+		return instanceId + Order.SEPARATOR_GLOBAL_ID + memberId;
 	}
 
 	public Instance getInstance(String accessId, String instanceId) {
-		Request request = getRequestForInstance(accessId, instanceId);
-		return getInstance(request);
+		Order order = getOrderForInstance(accessId, instanceId);
+		return getInstance(order);
 	}
 
-	private Instance getInstanceSSHAddress(Request request) {
+	private Instance getInstanceSSHAddress(Order order) {
 		Instance instance = null;
-		if (isFulfilledByLocalMember(request)) {
-			instance = new Instance(request.getInstanceId());
-			Map<String, String> serviceAddresses = getExternalServiceAddresses(request.getId());
+		if (isFulfilledByLocalMember(order)) {
+			instance = new Instance(order.getInstanceId());
+			Map<String, String> serviceAddresses = getExternalServiceAddresses(order.getId());
 			if (serviceAddresses != null) {
 				instance.addAttribute(Instance.SSH_PUBLIC_ADDRESS_ATT, serviceAddresses.get(SSH_SERVICE_NAME));
 				instance.addAttribute(Instance.SSH_USERNAME_ATT, getSSHCommonUser());
@@ -603,36 +603,36 @@ public class ManagerController {
 				instance.addAttribute(Instance.EXTRA_PORTS_ATT, new JSONObject(serviceAddresses).toString());
 			}
 		} else {
-			LOGGER.debug(request.getInstanceId() + " is remote, going out to " + request.getProvidingMemberId()
+			LOGGER.debug(order.getInstanceId() + " is remote, going out to " + order.getProvidingMemberId()
 					+ " to get its information.");
-			instance = getRemoteInstance(request);
+			instance = getRemoteInstance(order);
 		}
 		return instance;
 	}
 
-	private Instance getInstance(Request request) {
+	private Instance getInstance(Order order) {
 		Instance instance = null;
-		if (isFulfilledByLocalMember(request)) {
-			LOGGER.debug(request.getInstanceId() + " is local, getting its information in the local cloud.");
-			instance = this.computePlugin.getInstance(getFederationUserToken(request), request.getInstanceId());
+		if (isFulfilledByLocalMember(order)) {
+			LOGGER.debug(order.getInstanceId() + " is local, getting its information in the local cloud.");
+			instance = this.computePlugin.getInstance(getFederationUserToken(order), order.getInstanceId());
 
 			instance.addAttribute(Instance.SSH_USERNAME_ATT, getSSHCommonUser());
-			Map<String, String> serviceAddresses = getExternalServiceAddresses(request.getId());
+			Map<String, String> serviceAddresses = getExternalServiceAddresses(order.getId());
 			if (serviceAddresses != null) {
 				instance.addAttribute(Instance.SSH_PUBLIC_ADDRESS_ATT, serviceAddresses.get(SSH_SERVICE_NAME));
 				serviceAddresses.remove(SSH_SERVICE_NAME);
 				instance.addAttribute(Instance.EXTRA_PORTS_ATT, new JSONObject(serviceAddresses).toString());
 			}
 
-			Category osCategory = getImageCategory(request.getCategories());
+			Category osCategory = getImageCategory(order.getCategories());
 			if (osCategory != null) {
 				instance.addResource(ResourceRepository.createImageResource(osCategory.getTerm()));
 			}
 
 		} else {
-			LOGGER.debug(request.getInstanceId() + " is remote, going out to " + request.getProvidingMemberId()
+			LOGGER.debug(order.getInstanceId() + " is remote, going out to " + order.getProvidingMemberId()
 					+ " to get its information.");
-			instance = getRemoteInstance(request);
+			instance = getRemoteInstance(order);
 		}
 		return instance;
 	}
@@ -643,7 +643,7 @@ public class ManagerController {
 		}
 		Category osCategory = null;
 		for (Category category : categories) {
-			if (category.getScheme().equals(RequestConstants.TEMPLATE_OS_SCHEME)) {
+			if (category.getScheme().equals(OrderConstants.TEMPLATE_OS_SCHEME)) {
 				osCategory = category;
 				break;
 			}
@@ -706,8 +706,8 @@ public class ManagerController {
 		return null;
 	}
 
-	private Instance getRemoteInstance(Request request) {
-		return getRemoteInstance(request.getProvidingMemberId(), request.getInstanceId());
+	private Instance getRemoteInstance(Order order) {
+		return getRemoteInstance(order.getProvidingMemberId(), order.getInstanceId());
 	}
 
 	private Instance getRemoteInstance(String memberId, String instanceId) {
@@ -717,112 +717,112 @@ public class ManagerController {
 	public void removeInstances(String accessId) {
 		String user = getUser(accessId);
 		LOGGER.debug("Removing instances of user: " + user);
-		for (Request request : requests.getByUser(user)) {
-			String instanceId = request.getInstanceId();
+		for (Order order : orderRepository.getByUser(user)) {
+			String instanceId = order.getInstanceId();
 			if (instanceId == null) {
 				continue;
 			}
-			removeInstance(normalizeInstanceId(instanceId), request);
+			removeInstance(normalizeInstanceId(instanceId), order);
 		}
 	}
 
 	private static String normalizeInstanceId(String instanceId) {
-		if (instanceId.contains(Request.SEPARATOR_GLOBAL_ID)) {
-			String[] partsInstanceId = instanceId.split(Request.SEPARATOR_GLOBAL_ID);
+		if (instanceId.contains(Order.SEPARATOR_GLOBAL_ID)) {
+			String[] partsInstanceId = instanceId.split(Order.SEPARATOR_GLOBAL_ID);
 			instanceId = partsInstanceId[0];
 		}
 		return instanceId;
 	}
 
 	public void removeInstance(String federationToken, String instanceId) {
-		Request request = getRequestForInstance(federationToken, instanceId);
+		Order order = getOrderForInstance(federationToken, instanceId);
 		instanceId = normalizeInstanceId(instanceId);
-		removeInstance(instanceId, request);
+		removeInstance(instanceId, order);
 	}
 
-	private void removeInstance(String instanceId, Request request) {
-		if (isFulfilledByLocalMember(request)) {
-			this.computePlugin.removeInstance(getFederationUserToken(request), instanceId);
+	private void removeInstance(String instanceId, Order order) {
+		if (isFulfilledByLocalMember(order)) {
+			this.computePlugin.removeInstance(getFederationUserToken(order), instanceId);
 		} else {
-			removeRemoteInstance(request);
+			removeRemoteInstance(order);
 		}
-		instanceRemoved(request);
+		instanceRemoved(order);
 	}
 
-	private boolean isFulfilledByLocalMember(Request request) {
-		if (request.getProvidingMemberId() != null
-				&& request.getProvidingMemberId().equals(properties.get(ConfigurationConstants.XMPP_JID_KEY))) {
+	private boolean isFulfilledByLocalMember(Order order) {
+		if (order.getProvidingMemberId() != null
+				&& order.getProvidingMemberId().equals(properties.get(ConfigurationConstants.XMPP_JID_KEY))) {
 			return true;
 		}
 		return false;
 	}
 
-	private void instanceRemoved(Request request) {
+	private void instanceRemoved(Order order) {
 		updateAccounting();
-		benchmarkingPlugin.remove(request.getInstanceId());
+		benchmarkingPlugin.remove(order.getInstanceId());
 
-		request.setInstanceId(null);
-		request.setProvidingMemberId(null);
+		order.setInstanceId(null);
+		order.setProvidingMemberId(null);
 
-		if (request.getState().equals(RequestState.DELETED) || !request.isLocal()) {
-			requests.exclude(request.getId());
-		} else if (isPersistent(request)) {
-			LOGGER.debug("Request: " + request + ", setting state to " + RequestState.OPEN);
-			request.setState(RequestState.OPEN);
-			if (!requestSchedulerTimer.isScheduled()) {
-				triggerRequestScheduler();
+		if (order.getState().equals(OrderState.DELETED) || !order.isLocal()) {
+			orderRepository.exclude(order.getId());
+		} else if (isPersistent(order)) {
+			LOGGER.debug("Order: " + order + ", setting state to " + OrderState.OPEN);
+			order.setState(OrderState.OPEN);
+			if (!orderSchedulerTimer.isScheduled()) {
+				triggerOrderScheduler();
 			}
 		} else {
-			LOGGER.debug("Request: " + request + ", setting state to " + RequestState.CLOSED);
-			request.setState(RequestState.CLOSED);
+			LOGGER.debug("Order: " + order + ", setting state to " + OrderState.CLOSED);
+			order.setState(OrderState.CLOSED);
 		}
 	}
 
-	private boolean isPersistent(Request request) {
-		return request.getAttValue(RequestAttribute.TYPE.getValue()) != null
-				&& request.getAttValue(RequestAttribute.TYPE.getValue()).equals(RequestType.PERSISTENT.getValue());
+	private boolean isPersistent(Order order) {
+		return order.getAttValue(OrderAttribute.TYPE.getValue()) != null
+				&& order.getAttValue(OrderAttribute.TYPE.getValue()).equals(OrderType.PERSISTENT.getValue());
 	}
 
-	private void removeRemoteRequest(final String providingMember, final Request request) {
-		ManagerPacketHelper.deleteRemoteRequest(providingMember ,request, packetSender, new AsynchronousRequestCallback() {
+	private void removeRemoteOrder(final String providingMember, final Order order) {
+		ManagerPacketHelper.deleteRemoteOrder(providingMember ,order, packetSender, new AsynchronousOrderCallback() {
 			
 			@Override
 			public void success(String instanceId) {
-				LOGGER.info("Servered request id " + request.getId() + " on " + providingMember + " removed");
+				LOGGER.info("Servered order id " + order.getId() + " on " + providingMember + " removed");
 			}
 			
 			@Override
 			public void error(Throwable t) {
-				LOGGER.warn("Error while removing servered request id " + request.getId() + " on " + providingMember);
+				LOGGER.warn("Error while removing servered order id " + order.getId() + " on " + providingMember);
 			}
 		});
 	}
 	
-	private void removeRemoteInstance(Request request) {
-		ManagerPacketHelper.deleteRemoteInstace(request, packetSender);
+	private void removeRemoteInstance(Order order) {
+		ManagerPacketHelper.deleteRemoteInstace(order, packetSender);
 	}
 
-	public Request getRequestForInstance(String federationToken, String instanceId) {
+	public Order getOrderForInstance(String federationToken, String instanceId) {
 		String user = getUser(federationToken);
 		LOGGER.debug("Getting instance " + instanceId + " of user " + user);
-		List<Request> userRequests = requests.getAllLocalRequests();
+		List<Order> userOrders = orderRepository.getAllLocalOrders();
 
-		for (Request request : userRequests) {
+		for (Order order : userOrders) {
 			if (instanceId
-					.equals(request.getInstanceId() + Request.SEPARATOR_GLOBAL_ID + request.getProvidingMemberId())) {
-				if (!request.getFederationToken().getUser().equals(user)) {
+					.equals(order.getInstanceId() + Order.SEPARATOR_GLOBAL_ID + order.getProvidingMemberId())) {
+				if (!order.getFederationToken().getUser().equals(user)) {
 					throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 				}
-				return request;
+				return order;
 			}
 		}
 		throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
 	}
 
-	public Request getRequest(String accessId, String requestId) {
-		LOGGER.debug("Getting requestId " + requestId);
-		checkRequestId(accessId, requestId);
-		return requests.get(requestId);
+	public Order getOrder(String accessId, String orderId) {
+		LOGGER.debug("Getting orderId " + orderId);
+		checkOrderId(accessId, orderId);
+		return orderRepository.get(orderId);
 	}
 
 	public FederationMember getFederationMember(String memberId) {
@@ -837,30 +837,30 @@ public class ManagerController {
 		return null;
 	}
 
-	public void queueServedRequest(String requestingMemberId, List<Category> categories, Map<String, String> xOCCIAtt,
-			String requestId, Token requestingUserToken) {
+	public void queueServedOrder(String requestingMemberId, List<Category> categories, Map<String, String> xOCCIAtt,
+			String orderId, Token requestingUserToken) {
 
 		normalizeBatchId(requestingMemberId, xOCCIAtt);
 
-		LOGGER.info("Queueing request with categories: " + categories + " and xOCCIAtt: " + xOCCIAtt
+		LOGGER.info("Queueing order with categories: " + categories + " and xOCCIAtt: " + xOCCIAtt
 				+ " for requesting member: " + requestingMemberId + " with requestingToken " + requestingUserToken);
-		Request request = new Request(requestId, requestingUserToken, categories, xOCCIAtt, false, requestingMemberId);
-		requests.addRequest(requestingUserToken.getUser(), request);
+		Order order = new Order(orderId, requestingUserToken, categories, xOCCIAtt, false, requestingMemberId);
+		orderRepository.addOrder(requestingUserToken.getUser(), order);
 
-		if (!requestSchedulerTimer.isScheduled()) {
-			triggerRequestScheduler();
+		if (!orderSchedulerTimer.isScheduled()) {
+			triggerOrderScheduler();
 		}
 	}
 
-	protected String createUserDataUtilsCommand(Request request) throws IOException, MessagingException {
-		return UserdataUtils.createBase64Command(request, properties);
+	protected String createUserDataUtilsCommand(Order order) throws IOException, MessagingException {
+		return UserdataUtils.createBase64Command(order, properties);
 	}
 
-	protected Instance waitForSSHPublicAddress(Request request) {
+	protected Instance waitForSSHPublicAddress(Order order) {
 		int remainingTries = DEFAULT_MAX_IP_MONITORING_TRIES;
 		while (remainingTries-- > 0) {
 			try {
-				Instance instance = getInstanceSSHAddress(request);
+				Instance instance = getInstanceSSHAddress(order);
 				Map<String, String> attributes = instance.getAttributes();
 				if (attributes != null) {
 					String sshPublicAddress = attributes.get(Instance.SSH_PUBLIC_ADDRESS_ATT);
@@ -902,10 +902,10 @@ public class ManagerController {
 	}
 
 	private void removePublicKeyFromCategoriesAndAttributes(Map<String, String> xOCCIAtt, List<Category> categories) {
-		xOCCIAtt.remove(RequestAttribute.DATA_PUBLIC_KEY.getValue());
+		xOCCIAtt.remove(OrderAttribute.DATA_PUBLIC_KEY.getValue());
 		Category toRemove = null;
 		for (Category category : categories) {
-			if (category.getTerm().equals(RequestConstants.PUBLIC_KEY_TERM)) {
+			if (category.getTerm().equals(OrderConstants.PUBLIC_KEY_TERM)) {
 				toRemove = category;
 				break;
 			}
@@ -917,8 +917,8 @@ public class ManagerController {
 
 	protected void normalizeBatchId(String jidKey, Map<String, String> xOCCIAtt) {
 		// adding xmpp jid key in the batch id
-		xOCCIAtt.put(RequestAttribute.BATCH_ID.getValue(),
-				jidKey + "@" + xOCCIAtt.get(RequestAttribute.BATCH_ID.getValue()));
+		xOCCIAtt.put(OrderAttribute.BATCH_ID.getValue(),
+				jidKey + "@" + xOCCIAtt.get(OrderAttribute.BATCH_ID.getValue()));
 	}
 
 	private void populateWithManagerPublicKey(Map<String, String> xOCCIAtt, List<Category> categories) {
@@ -926,36 +926,36 @@ public class ManagerController {
 		if (publicKey == null) {
 			return;
 		}
-		xOCCIAtt.put(RequestAttribute.DATA_PUBLIC_KEY.getValue(), publicKey);
+		xOCCIAtt.put(OrderAttribute.DATA_PUBLIC_KEY.getValue(), publicKey);
 		for (Category category : categories) {
-			if (category.getTerm().equals(RequestConstants.PUBLIC_KEY_TERM)) {
+			if (category.getTerm().equals(OrderConstants.PUBLIC_KEY_TERM)) {
 				return;
 			}
 		}
-		categories.add(new Category(RequestConstants.PUBLIC_KEY_TERM, RequestConstants.CREDENTIALS_RESOURCE_SCHEME,
-				RequestConstants.MIXIN_CLASS));
+		categories.add(new Category(OrderConstants.PUBLIC_KEY_TERM, OrderConstants.CREDENTIALS_RESOURCE_SCHEME,
+				OrderConstants.MIXIN_CLASS));
 	}
 
-	protected void preemption(Request requestToPreemption) {
-		removeInstance(requestToPreemption.getInstanceId(), requestToPreemption);
+	protected void preemption(Order orderToPreemption) {
+		removeInstance(orderToPreemption.getInstanceId(), orderToPreemption);
 	}
 
-	private void triggerServedRequestMonitoring() {
-		String servedRequestMonitoringPeriodStr = properties
-				.getProperty(ConfigurationConstants.SERVED_REQUEST_MONITORING_PERIOD_KEY);
-		final long servedRequestMonitoringPeriod = servedRequestMonitoringPeriodStr == null
-				? DEFAULT_SERVED_REQUEST_MONITORING_PERIOD : Long.valueOf(servedRequestMonitoringPeriodStr);
+	private void triggerServedOrderMonitoring() {
+		String servedOrderMonitoringPeriodStr = properties
+				.getProperty(ConfigurationConstants.SERVED_ORDER_MONITORING_PERIOD_KEY);
+		final long servedOrderMonitoringPeriod = servedOrderMonitoringPeriodStr == null
+				? DEFAULT_SERVED_ORDER_MONITORING_PERIOD : Long.valueOf(servedOrderMonitoringPeriodStr);
 
-		servedRequestMonitoringTimer.scheduleAtFixedRate(new TimerTask() {
+		servedOrderMonitoringTimer.scheduleAtFixedRate(new TimerTask() {
 			@Override
 			public void run() {	
 				try {
-					monitorServedRequests();
+					monitorServedOrders();
 				} catch (Throwable e) {
-					LOGGER.error("Erro while monitoring served requests", e);
+					LOGGER.error("Erro while monitoring served orders", e);
 				}
 			}
-		}, 0, servedRequestMonitoringPeriod);
+		}, 0, servedOrderMonitoringPeriod);
 	}
 
 	private String getLocalImageId(List<Category> categories, Token federationUserToken) {
@@ -972,18 +972,18 @@ public class ManagerController {
 		return localImageId;
 	}
 
-	protected Token getFederationUserToken(Request request) {
+	protected Token getFederationUserToken(Order order) {
 		LOGGER.debug("Getting federation user token.");
-		return localIdentityPlugin.createToken(mapperPlugin.getLocalCredentials(request));
+		return localIdentityPlugin.createToken(mapperPlugin.getLocalCredentials(order));
 	}
 
 	public Instance getInstanceForRemoteMember(String instanceId) {
 		LOGGER.info("Getting instance " + instanceId + " for remote member.");
 		try {
-			Request servedRequest = requests.getRequestByInstance(instanceId);
-			Instance instance = computePlugin.getInstance(getFederationUserToken(servedRequest), instanceId);
-			if (servedRequest != null) {
-				Map<String, String> serviceAddresses = getExternalServiceAddresses(servedRequest.getId());
+			Order servedOrder = orderRepository.getOrderByInstance(instanceId);
+			Instance instance = computePlugin.getInstance(getFederationUserToken(servedOrder), instanceId);
+			if (servedOrder != null) {
+				Map<String, String> serviceAddresses = getExternalServiceAddresses(servedOrder.getId());
 				if (serviceAddresses != null) {
 					instance.addAttribute(Instance.SSH_PUBLIC_ADDRESS_ATT, serviceAddresses.get(SSH_SERVICE_NAME));
 					instance.addAttribute(Instance.SSH_USERNAME_ATT, getSSHCommonUser());
@@ -991,7 +991,7 @@ public class ManagerController {
 					instance.addAttribute(Instance.EXTRA_PORTS_ATT, new JSONObject(serviceAddresses).toString());
 				}
 
-				Category osCategory = getImageCategory(servedRequest.getCategories());
+				Category osCategory = getImageCategory(servedOrder.getCategories());
 				if (osCategory != null) {
 					instance.addResource(ResourceRepository.createImageResource(osCategory.getTerm()));
 				}
@@ -1011,7 +1011,7 @@ public class ManagerController {
 
 		updateAccounting();
 		benchmarkingPlugin.remove(instanceId);
-		computePlugin.removeInstance(getFederationUserToken(requests.getRequestByInstance(instanceId)), instanceId);
+		computePlugin.removeInstance(getFederationUserToken(orderRepository.getOrderByInstance(instanceId)), instanceId);
 	}
 
 	public Token getTokenFromFederationIdP(String accessId) {
@@ -1022,41 +1022,41 @@ public class ManagerController {
 		return token;
 	}
 
-	public List<Request> createRequests(String federationAccessTokenStr, List<Category> categories,
+	public List<Order> createOrders(String federationAccessTokenStr, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
 		Token federationToken = getTokenFromFederationIdP(federationAccessTokenStr);
 
 		LOGGER.debug("Federation User Token: " + federationToken);
 
-		Integer instanceCount = Integer.valueOf(xOCCIAtt.get(RequestAttribute.INSTANCE_COUNT.getValue()));
-		LOGGER.info("Request " + instanceCount + " instances");
+		Integer instanceCount = Integer.valueOf(xOCCIAtt.get(OrderAttribute.INSTANCE_COUNT.getValue()));
+		LOGGER.info("Order " + instanceCount + " instances");
 
-		xOCCIAtt.put(RequestAttribute.BATCH_ID.getValue(), String.valueOf(UUID.randomUUID()));
+		xOCCIAtt.put(OrderAttribute.BATCH_ID.getValue(), String.valueOf(UUID.randomUUID()));
 
-		List<Request> currentRequests = new ArrayList<Request>();
+		List<Order> currentOrders = new ArrayList<Order>();
 		for (int i = 0; i < instanceCount; i++) {
-			String requestId = String.valueOf(UUID.randomUUID());
-			Request request = new Request(requestId, federationToken, new LinkedList<Category>(categories),
+			String orderId = String.valueOf(UUID.randomUUID());
+			Order order = new Order(orderId, federationToken, new LinkedList<Category>(categories),
 					new HashMap<String, String>(xOCCIAtt), true, properties.getProperty("xmpp_jid"));
-			LOGGER.info("Created request: " + request);
-			currentRequests.add(request);
-			requests.addRequest(federationToken.getUser(), request);
+			LOGGER.info("Created order: " + order);
+			currentOrders.add(order);
+			orderRepository.addOrder(federationToken.getUser(), order);
 		}
-		if (!requestSchedulerTimer.isScheduled()) {
-			triggerRequestScheduler();
+		if (!orderSchedulerTimer.isScheduled()) {
+			triggerOrderScheduler();
 		}
 
-		return currentRequests;
+		return currentOrders;
 	}
 
-	private void triggerRequestDBUpdater() {
+	private void triggerOrderDBUpdater() {
 		String bdUpdaterPeriodStr = properties.getProperty(ConfigurationConstants.ORDER_BD_UPDATER_PERIOD_KEY);
 		long schedulerPeriod = bdUpdaterPeriodStr == null ? DEFAULT_BD_UPDATE_PERIOD : Long.valueOf(bdUpdaterPeriodStr);
-		requestDBUpdaterTimer.scheduleAtFixedRate(new TimerTask() {
+		orderDBUpdaterTimer.scheduleAtFixedRate(new TimerTask() {
 			@Override
 			public void run() {
 				try {
-					updateRequestDB();
+					updateOrderDB();
 				} catch (Throwable e) {
 					LOGGER.error("Could not update the database.", e);
 				}
@@ -1064,24 +1064,24 @@ public class ManagerController {
 		}, 60000, schedulerPeriod);
 	}
 
-	protected void updateRequestDB() throws SQLException, JSONException {
+	protected void updateOrderDB() throws SQLException, JSONException {
 		LOGGER.debug("Database update start.");
-		List<Request> orders = this.requestDB.getOrders();
-		Map<String, Request> ordersDB = new HashMap<String, Request>();
-		for (Request request : orders) {
-			ordersDB.put(request.getId(), request);
+		List<Order> orders = this.orderDB.getOrders();
+		Map<String, Order> ordersDB = new HashMap<String, Order>();
+		for (Order order : orders) {
+			ordersDB.put(order.getId(), order);
 		}
-		List<Request> allRequests = new ArrayList<Request>(requests.getAllRequests());
-		for (Request request : allRequests) {
-			if (ordersDB.get(request.getId()) == null) {
-				requestDB.addOrder(request);
+		List<Order> allOrders = new ArrayList<Order>(orderRepository.getAllOrders());
+		for (Order order : allOrders) {
+			if (ordersDB.get(order.getId()) == null) {
+				orderDB.addOrder(order);
 			} else {
-				requestDB.updateOrder(request);
-				ordersDB.remove(request.getId());
+				orderDB.updateOrder(order);
+				ordersDB.remove(order.getId());
 			}
 		}
 		for (String key : ordersDB.keySet()) {
-			requestDB.removeOrder(ordersDB.get(key));
+			orderDB.removeOrder(ordersDB.get(key));
 		}
 		LOGGER.debug("Database update finish.");
 	}
@@ -1096,47 +1096,47 @@ public class ManagerController {
 			@Override
 			public void run() {
 				try {
-					monitorInstancesForLocalRequests();					
+					monitorInstancesForLocalOrders();					
 				} catch (Throwable e) {
-					LOGGER.error("Erro while monitoring instances for local requests", e);
+					LOGGER.error("Erro while monitoring instances for local orders", e);
 				}
 			}
 		}, 0, instanceMonitoringPeriod);
 	}
 
-	protected void monitorInstancesForLocalRequests() {
+	protected void monitorInstancesForLocalOrders() {
 		boolean turnOffTimer = true;
 		LOGGER.info("Monitoring instances.");
 
-		for (Request request : requests.getAllLocalRequests()) {
-			if (request.getState().in(RequestState.FULFILLED, RequestState.DELETED, RequestState.SPAWNING)) {
+		for (Order order : orderRepository.getAllLocalOrders()) {
+			if (order.getState().in(OrderState.FULFILLED, OrderState.DELETED, OrderState.SPAWNING)) {
 				turnOffTimer = false;
 			}
 
-			if (request.getState().in(RequestState.FULFILLED, RequestState.DELETED)) {
+			if (order.getState().in(OrderState.FULFILLED, OrderState.DELETED)) {
 				try {
-					LOGGER.debug("Monitoring instance of request: " + request);
-					removeFailedInstance(request, getInstance(request));
+					LOGGER.debug("Monitoring instance of order: " + order);
+					removeFailedInstance(order, getInstance(order));
 				} catch (Throwable e) {
-					LOGGER.debug("Error while getInstance of " + request.getInstanceId(), e);
-					instanceRemoved(requests.get(request.getId()));
+					LOGGER.debug("Error while getInstance of " + order.getInstanceId(), e);
+					instanceRemoved(orderRepository.get(order.getId()));
 				}
 			}
 		}
 
 		if (turnOffTimer) {
-			LOGGER.info("There are no requests.");
+			LOGGER.info("There are no orders.");
 			instanceMonitoringTimer.cancel();
 		}
 	}
 
-	private void removeFailedInstance(Request request, Instance instance) {
+	private void removeFailedInstance(Order order, Instance instance) {
 		if (instance == null) {
 			return;
 		}
 		if (InstanceState.FAILED.equals(instance.getState())) {
 			try {
-				removeInstance(instance.getId(), request);
+				removeInstance(instance.getId(), order);
 			} catch (Throwable t) {
 				// Best effort
 				LOGGER.warn("Error while removing stale instance.", t);
@@ -1144,7 +1144,7 @@ public class ManagerController {
 		}
 	}
 
-	private void createAsynchronousRemoteInstance(final Request request, List<FederationMember> allowedMembers) {
+	private void createAsynchronousRemoteInstance(final Order order, List<FederationMember> allowedMembers) {
 		if (packetSender == null) {
 			return;
 		}
@@ -1156,53 +1156,53 @@ public class ManagerController {
 
 		final String memberAddress = member.getId();
 
-		Map<String, String> xOCCIAttCopy = new HashMap<String, String>(request.getxOCCIAtt());
-		List<Category> categoriesCopy = new LinkedList<Category>(request.getCategories());
+		Map<String, String> xOCCIAttCopy = new HashMap<String, String>(order.getxOCCIAtt());
+		List<Category> categoriesCopy = new LinkedList<Category>(order.getCategories());
 		populateWithManagerPublicKey(xOCCIAttCopy, categoriesCopy);
-		request.setProvidingMemberId(memberAddress);
-		request.setState(RequestState.PENDING);
+		order.setProvidingMemberId(memberAddress);
+		order.setState(OrderState.PENDING);
 
-		LOGGER.info("Submiting request " + request + " to member " + memberAddress);
+		LOGGER.info("Submiting order " + order + " to member " + memberAddress);
 		
-		ForwardedRequest forwardedRequest = new ForwardedRequest(request, dateUtils.currentTimeMillis());
-		ForwardedRequest forwardedRequestBefore = asynchronousRequests.get(request.getId());
-		forwardedRequest.addMembersServered(
-				forwardedRequestBefore != null ? forwardedRequestBefore.getMembersServered() : null);
+		ForwardedOrder forwardedOrder = new ForwardedOrder(order, dateUtils.currentTimeMillis());
+		ForwardedOrder forwardedOrderBefore = asynchronousOrders.get(order.getId());
+		forwardedOrder.addMembersServered(
+				forwardedOrderBefore != null ? forwardedOrderBefore.getMembersServered() : null);
 		
-		asynchronousRequests.put(request.getId(),forwardedRequest);
-		ManagerPacketHelper.asynchronousRemoteRequest(request.getId(), categoriesCopy, xOCCIAttCopy, memberAddress, 
-				federationIdentityPlugin.getForwardableToken(request.getFederationToken()), 
-				packetSender, new AsynchronousRequestCallback() {
+		asynchronousOrders.put(order.getId(),forwardedOrder);
+		ManagerPacketHelper.asynchronousRemoteOrder(order.getId(), categoriesCopy, xOCCIAttCopy, memberAddress, 
+				federationIdentityPlugin.getForwardableToken(order.getFederationToken()), 
+				packetSender, new AsynchronousOrderCallback() {
 					@Override
 					public void success(String instanceId) {
-						LOGGER.debug("The request " + request + " forwarded to " + memberAddress + " gets instance "
+						LOGGER.debug("The order " + order + " forwarded to " + memberAddress + " gets instance "
 								+ instanceId);
-						if (asynchronousRequests.get(request.getId()) == null) {
+						if (asynchronousOrders.get(order.getId()) == null) {
 							return;
 						}
 						if (instanceId == null) {
-							if (request.getState().equals(RequestState.PENDING)) {
-								request.setState(RequestState.OPEN);								
+							if (order.getState().equals(OrderState.PENDING)) {
+								order.setState(OrderState.OPEN);								
 							}
 							return;
 						}
 
-						if (request.getState().in(RequestState.DELETED)) {
+						if (order.getState().in(OrderState.DELETED)) {
 							return;
 						}
 
 						// reseting time stamp
-						asynchronousRequests.get(request.getId()).setTimeStamp(dateUtils.currentTimeMillis());
+						asynchronousOrders.get(order.getId()).setTimeStamp(dateUtils.currentTimeMillis());
 
-						request.setInstanceId(instanceId);
-						request.setProvidingMemberId(memberAddress);
+						order.setInstanceId(instanceId);
+						order.setProvidingMemberId(memberAddress);
 						try {
-							execBenchmark(request);
+							execBenchmark(order);
 						} catch (Throwable e) {
 							LOGGER.error("Error while executing the benchmark in " + instanceId
 									+ " from member " + memberAddress + ".", e);
-							if (request.getState().equals(RequestState.PENDING)) {
-								request.setState(RequestState.OPEN);
+							if (order.getState().equals(OrderState.PENDING)) {
+								order.setState(OrderState.OPEN);
 							}
 							return;
 						}
@@ -1210,101 +1210,101 @@ public class ManagerController {
 
 					@Override
 					public void error(Throwable t) {
-						LOGGER.debug("The request " + request + " forwarded to " + memberAddress
+						LOGGER.debug("The order " + order + " forwarded to " + memberAddress
 								+ " gets error ", t);
-						if (request.getState().equals(RequestState.PENDING)) {
-							request.setState(RequestState.OPEN);
+						if (order.getState().equals(OrderState.PENDING)) {
+							order.setState(OrderState.OPEN);
 						}
-						request.setProvidingMemberId(null);
+						order.setProvidingMemberId(null);
 					}
 				});
 	}
 
-	protected boolean isRequestForwardedtoRemoteMember(String requestId) {
-		return asynchronousRequests.containsKey(requestId);
+	protected boolean isOrderForwardedtoRemoteMember(String orderId) {
+		return asynchronousOrders.containsKey(orderId);
 	}
 
-	private void wakeUpSleepingHosts(Request request) {
+	private void wakeUpSleepingHosts(Order order) {
 		String greenSitterJID = properties.getProperty("greensitter_jid");
 		if (greenSitterJID != null && packetSender != null) {
-			String vcpu = RequirementsHelper.getSmallestValueForAttribute(request.getRequirements(),
+			String vcpu = RequirementsHelper.getSmallestValueForAttribute(order.getRequirements(),
 					RequirementsHelper.GLUE_VCPU_TERM);
-			String mem = RequirementsHelper.getSmallestValueForAttribute(request.getRequirements(),
+			String mem = RequirementsHelper.getSmallestValueForAttribute(order.getRequirements(),
 					RequirementsHelper.GLUE_MEM_RAM_TERM);
 			ManagerPacketHelper.wakeUpSleepingHost(Integer.valueOf(vcpu), Integer.valueOf(mem), greenSitterJID,
 					packetSender);
 		}
 	}
 
-	private void execBenchmark(final Request request) {
+	private void execBenchmark(final Order order) {
 
 		benchmarkExecutor.execute(new Runnable() {
 			@Override
 			public void run() {
 				Instance instance = null;
 				if (getManagerSSHPublicKey() != null) {
-					instance = waitForSSHPublicAddress(request);
+					instance = waitForSSHPublicAddress(order);
 					waitForSSHConnectivity(instance);
 				}
 
 				try {
-					benchmarkingPlugin.run(request.getGlobalInstanceId(), instance);
+					benchmarkingPlugin.run(order.getGlobalInstanceId(), instance);
 				} catch (Exception e) {
 					LOGGER.warn("Couldn't run benchmark.", e);
 				}
 
 				if (instance != null) {
-					LOGGER.debug("Replacing public keys on " + request.getId());
-					replacePublicKeys(instance.getAttributes().get(Instance.SSH_PUBLIC_ADDRESS_ATT), request);
-					LOGGER.debug("Public keys replaced on " + request.getId());
+					LOGGER.debug("Replacing public keys on " + order.getId());
+					replacePublicKeys(instance.getAttributes().get(Instance.SSH_PUBLIC_ADDRESS_ATT), order);
+					LOGGER.debug("Public keys replaced on " + order.getId());
 				}
 
-				if (request.isLocal() && !isFulfilledByLocalMember(request)) {
-					removeAsynchronousRemoteRequests(request, false);
-					asynchronousRequests.remove(request.getId());
+				if (order.isLocal() && !isFulfilledByLocalMember(order)) {
+					removeAsynchronousRemoteOrders(order, false);
+					asynchronousOrders.remove(order.getId());
 				}
 
-				if (!request.isLocal()) {
-					ManagerPacketHelper.replyToServedRequest(request, packetSender);
+				if (!order.isLocal()) {
+					ManagerPacketHelper.replyToServedOrder(order, packetSender);
 				}
 
-				if (!request.getState().in(RequestState.DELETED)) {
-					request.setState(RequestState.FULFILLED);
+				if (!order.getState().in(OrderState.DELETED)) {
+					order.setState(OrderState.FULFILLED);
 				}
 
-				LOGGER.debug("Fulfilled Request: " + request);
+				LOGGER.debug("Fulfilled order: " + order);
 			}
 		});
 
-		if (request.isLocal() && !instanceMonitoringTimer.isScheduled()) {
+		if (order.isLocal() && !instanceMonitoringTimer.isScheduled()) {
 			triggerInstancesMonitor();
 		}
 
-		if (!request.isLocal() && !servedRequestMonitoringTimer.isScheduled()) {
-			triggerServedRequestMonitoring();
+		if (!order.isLocal() && !servedOrderMonitoringTimer.isScheduled()) {
+			triggerServedOrderMonitoring();
 		}
 	}
 	
-	private void removeAsynchronousRemoteRequests(final Request request, boolean removeAll) {
-		ForwardedRequest forwardedRequest = asynchronousRequests.get(request.getId());
-		for (String memberServered : forwardedRequest != null ? forwardedRequest.getMembersServered() : new ArrayList<String>()) {						
-			if (memberServered == null || forwardedRequest.getRequest() == null 
-					|| (!removeAll && request.getProvidingMemberId().equals(memberServered) )) {
+	private void removeAsynchronousRemoteOrders(final Order order, boolean removeAll) {
+		ForwardedOrder forwardedOrder = asynchronousOrders.get(order.getId());
+		for (String memberServered : forwardedOrder != null ? forwardedOrder.getMembersServered() : new ArrayList<String>()) {						
+			if (memberServered == null || forwardedOrder.getOrder() == null 
+					|| (!removeAll && order.getProvidingMemberId().equals(memberServered) )) {
 				continue;
 			}
 			try {
-				removeRemoteRequest(memberServered, request);		
+				removeRemoteOrder(memberServered, order);		
 			} catch (Exception e) {
 			}
 		}
 	}	
 	
-	protected void replacePublicKeys(String sshPublicAddress, Request request) {
-		String requestPublicKey = request.getAttValue(RequestAttribute.DATA_PUBLIC_KEY.getValue());
-		if (requestPublicKey == null) {
-			requestPublicKey = "";
+	protected void replacePublicKeys(String sshPublicAddress, Order order) {
+		String orderPublicKey = order.getAttValue(OrderAttribute.DATA_PUBLIC_KEY.getValue());
+		if (orderPublicKey == null) {
+			orderPublicKey = "";
 		}
-		String sshCmd = "echo \"" + requestPublicKey + "\" > ~/.ssh/authorized_keys";
+		String sshCmd = "echo \"" + orderPublicKey + "\" > ~/.ssh/authorized_keys";
 		try {
 			Command sshOutput = execOnInstance(sshPublicAddress, sshCmd);
 			if (sshOutput.getExitStatus() != 0) {
@@ -1347,78 +1347,78 @@ public class ManagerController {
 		return command;
 	}
 
-	private void triggerRequestScheduler() {
+	private void triggerOrderScheduler() {
 		String schedulerPeriodStr = properties.getProperty(ConfigurationConstants.SCHEDULER_PERIOD_KEY);
 		long schedulerPeriod = schedulerPeriodStr == null ? DEFAULT_SCHEDULER_PERIOD : Long.valueOf(schedulerPeriodStr);
-		requestSchedulerTimer.scheduleAtFixedRate(new TimerTask() {
+		orderSchedulerTimer.scheduleAtFixedRate(new TimerTask() {
 			@Override
 			public void run() {
 				try {
-					checkAndSubmitOpenRequests();					
+					checkAndSubmitOpenOrders();					
 				} catch (Throwable e) {
-					LOGGER.error("Erro while checking and submitting open requests", e);
+					LOGGER.error("Erro while checking and submitting open orders", e);
 				}
 			}
 		}, 0, schedulerPeriod);
 	}
 
-	protected void checkAndSubmitOpenRequests() {
+	protected void checkAndSubmitOpenOrders() {
 		boolean allFulfilled = true;
 		failedBatch.clear();
-		LOGGER.debug("Checking and submiting requests.");
+		LOGGER.debug("Checking and submiting orders.");
 
-		// removing requests that reach timeout
-		checkPedingRequests();
-		for (Request request : new ArrayList<Request>(requests.getRequestsIn(RequestState.OPEN))) {
-			if (!request.getState().equals(RequestState.OPEN)) {
-				LOGGER.debug("The request " + request.getId() + " is no longer open.");
+		// removing orders that reach timeout
+		checkPedingOrders();
+		for (Order order : new ArrayList<Order>(orderRepository.getOrdersIn(OrderState.OPEN))) {
+			if (!order.getState().equals(OrderState.OPEN)) {
+				LOGGER.debug("The order " + order.getId() + " is no longer open.");
 				continue;
 			}
 
-			LOGGER.debug(request.getId() + " being considered for scheduling.");
-			Map<String, String> xOCCIAtt = request.getxOCCIAtt();
-			if (request.isIntoValidPeriod()) {
+			LOGGER.debug(order.getId() + " being considered for scheduling.");
+			Map<String, String> xOCCIAtt = order.getxOCCIAtt();
+			if (order.isIntoValidPeriod()) {
 				boolean isFulfilled = false;
-				if (request.isLocal()) {
-					for (String keyAttributes : RequestAttribute.getValues()) {
+				if (order.isLocal()) {
+					for (String keyAttributes : OrderAttribute.getValues()) {
 						xOCCIAtt.remove(keyAttributes);
 					}
 
-					String requirements = request.getRequirements();
+					String requirements = order.getRequirements();
 					List<FederationMember> allowedFederationMembers = getAllowedFederationMembers(requirements);
 
 					if (RequirementsHelper.matchLocation(requirements,
 							properties.getProperty(ConfigurationConstants.XMPP_JID_KEY))) {
 
 						if (!isFulfilled
-								&& !failedBatch.batchExists(request.getBatchId(), FailedBatchType.FEDERATION_USER)) {
-							isFulfilled = createLocalInstanceWithFederationUser(request);
+								&& !failedBatch.batchExists(order.getBatchId(), FailedBatchType.FEDERATION_USER)) {
+							isFulfilled = createLocalInstanceWithFederationUser(order);
 							if (!isFulfilled) {
-								failedBatch.failBatch(request.getBatchId(), FailedBatchType.FEDERATION_USER);
+								failedBatch.failBatch(order.getBatchId(), FailedBatchType.FEDERATION_USER);
 							}
 						}
 					}
 					if (!isFulfilled) {
-						createAsynchronousRemoteInstance(request, allowedFederationMembers);
+						createAsynchronousRemoteInstance(order, allowedFederationMembers);
 					}
 					allFulfilled &= isFulfilled;
-				} else { // it is served Request
-					if (!failedBatch.batchExists(request.getBatchId(), FailedBatchType.FEDERATION_USER)) {
-						isFulfilled = createLocalInstanceWithFederationUser(request);
+				} else { // it is served Order
+					if (!failedBatch.batchExists(order.getBatchId(), FailedBatchType.FEDERATION_USER)) {
+						isFulfilled = createLocalInstanceWithFederationUser(order);
 						if (!isFulfilled) {
-							failedBatch.failBatch(request.getBatchId(), FailedBatchType.FEDERATION_USER);
+							failedBatch.failBatch(order.getBatchId(), FailedBatchType.FEDERATION_USER);
 						}
 					}
 					allFulfilled &= isFulfilled;
 				}
-			} else if (request.isExpired()) {
-				request.setState(RequestState.CLOSED);
+			} else if (order.isExpired()) {
+				order.setState(OrderState.CLOSED);
 			} else {
 				allFulfilled = false;
 			}
 		}
 		if (allFulfilled) {
-			LOGGER.info("All requests fulfilled.");
+			LOGGER.info("All orders fulfilled.");
 		}
 	}
 
@@ -1441,47 +1441,47 @@ public class ManagerController {
 		return allowedFederationMembers;
 	}
 
-	protected void monitorServedRequests() {
-		LOGGER.info("Monitoring served requests.");
+	protected void monitorServedOrders() {
+		LOGGER.info("Monitoring served orders.");
 
-		List<Request> servedRequests = requests.getAllServedRequests();
-		for (Request request : servedRequests) {
-			if (!isInstanceBeingUsedByRemoteMember(request)) {
-				LOGGER.debug("The instance " + request.getInstanceId() + " is not being used anymore by "
-						+ request.getRequestingMemberId() + " and will be removed.");
-				if (request.getInstanceId() != null) {
+		List<Order> servedOrders = orderRepository.getAllServedOrders();
+		for (Order order : servedOrders) {
+			if (!isInstanceBeingUsedByRemoteMember(order)) {
+				LOGGER.debug("The instance " + order.getInstanceId() + " is not being used anymore by "
+						+ order.getRequestingMemberId() + " and will be removed.");
+				if (order.getInstanceId() != null) {
 					try {
-						removeInstanceForRemoteMember(request.getInstanceId());						
+						removeInstanceForRemoteMember(order.getInstanceId());						
 					} catch (Exception e) {}
 				}
-				requests.exclude(request.getId());
+				orderRepository.exclude(order.getId());
 			}
 		}
 
-		if (requests.getAllServedRequests().isEmpty()) {
-			LOGGER.info("There are no remote requests. Canceling remote request monitoring.");
-			servedRequestMonitoringTimer.cancel();
+		if (orderRepository.getAllServedOrders().isEmpty()) {
+			LOGGER.info("There are no remote orders. Canceling remote order monitoring.");
+			servedOrderMonitoringTimer.cancel();
 		}
 	}
 
-	private boolean isInstanceBeingUsedByRemoteMember(Request servedRequest) {
+	private boolean isInstanceBeingUsedByRemoteMember(Order servedOrder) {
 		try {
-			String globalInstanceId = servedRequest.getGlobalInstanceId();
-			ManagerPacketHelper.checkIfInstanceIsBeingUsedByRemoteMember(globalInstanceId, servedRequest, packetSender);
+			String globalInstanceId = servedOrder.getGlobalInstanceId();
+			ManagerPacketHelper.checkIfInstanceIsBeingUsedByRemoteMember(globalInstanceId, servedOrder, packetSender);
 			return true;
 		} catch (OCCIException e) {
 			return false;
 		}
 	}
 
-	protected void checkPedingRequests() {
-		Collection<ForwardedRequest> forwardedRequests = asynchronousRequests.values();
-		for (ForwardedRequest forwardedRequest : forwardedRequests) {
-			if (timoutReached(forwardedRequest.getTimeStamp()) 
-					&& forwardedRequest.getRequest().getState().equals(RequestState.PENDING)){
-				LOGGER.debug("The forwarded request " + forwardedRequest.getRequest().getId()
-						+ " reached timeout and is been removed from asynchronousRequests list.");
-				forwardedRequest.getRequest().setState(RequestState.OPEN);
+	protected void checkPedingOrders() {
+		Collection<ForwardedOrder> forwardedOrders = asynchronousOrders.values();
+		for (ForwardedOrder forwardedOrder : forwardedOrders) {
+			if (timoutReached(forwardedOrder.getTimeStamp()) 
+					&& forwardedOrder.getOrder().getState().equals(OrderState.PENDING)){
+				LOGGER.debug("The forwarded order " + forwardedOrder.getOrder().getId()
+						+ " reached timeout and is been removed from asynchronousOrders list.");
+				forwardedOrder.getOrder().setState(OrderState.OPEN);
 			}
 		}
 	}
@@ -1490,10 +1490,10 @@ public class ManagerController {
 		long nowMilli = dateUtils.currentTimeMillis();
 		Date now = new Date(nowMilli);
 
-		String asyncRequestWaitingIntervalStr = properties
-				.getProperty(ConfigurationConstants.ASYNC_REQUEST_WAITING_INTERVAL_KEY);
-		final int asyncRequestWaitingInterval = asyncRequestWaitingIntervalStr == null
-				? DEFAULT_ASYNC_REQUEST_WAITING_INTERVAL : Integer.valueOf(asyncRequestWaitingIntervalStr);
+		String asyncOrderWaitingIntervalStr = properties
+				.getProperty(ConfigurationConstants.ASYNC_ORDER_WAITING_INTERVAL_KEY);
+		final int asyncRequestWaitingInterval = asyncOrderWaitingIntervalStr == null
+				? DEFAULT_ASYNC_ORDER_WAITING_INTERVAL : Integer.valueOf(asyncOrderWaitingIntervalStr);
 
 		Calendar c = Calendar.getInstance();
 		c.setTime(new Date(timeStamp));		
@@ -1501,90 +1501,90 @@ public class ManagerController {
 		return now.after(c.getTime());
 	}
 
-	protected boolean createLocalInstanceWithFederationUser(Request request) {
-		LOGGER.info("Submitting request " + request + " with federation user locally.");
+	protected boolean createLocalInstanceWithFederationUser(Order order) {
+		LOGGER.info("Submitting order " + order + " with federation user locally.");
 
 		FederationMember member = null;
-		boolean isRemoteDonation = !properties.getProperty("xmpp_jid").equals(request.getRequestingMemberId());
+		boolean isRemoteDonation = !properties.getProperty("xmpp_jid").equals(order.getRequestingMemberId());
 		try {
-			member = getFederationMember(request.getRequestingMemberId());
+			member = getFederationMember(order.getRequestingMemberId());
 		} catch (Exception e) {
 		}
 
-		if (isRemoteDonation && !validator.canDonateTo(member, request.getFederationToken())) {
+		if (isRemoteDonation && !validator.canDonateTo(member, order.getFederationToken())) {
 			return false;
 		}
 
 		try {
-			return createInstance(request);
+			return createInstance(order);
 		} catch (Exception e) {
 			LOGGER.info("Could not create instance with federation user locally. ", e);
 			return false;
 		}
 	}
 
-	protected boolean createInstance(Request request) {
+	protected boolean createInstance(Order order) {
 
-		LOGGER.debug("Submiting request with categories: " + request.getCategories() + " and xOCCIAtt: "
-				+ request.getxOCCIAtt() + " for requesting member: " + request.getRequestingMemberId()
-				+ " with requestingToken " + request.getRequestingMemberId());
+		LOGGER.debug("Submiting order with categories: " + order.getCategories() + " and xOCCIAtt: "
+				+ order.getxOCCIAtt() + " for requesting member: " + order.getRequestingMemberId()
+				+ " with requestingToken " + order.getRequestingMemberId());
 
 		try {
 			try {
-				String command = createUserDataUtilsCommand(request);
-				request.putAttValue(RequestAttribute.USER_DATA_ATT.getValue(), command);
-				request.addCategory(new Category(RequestConstants.USER_DATA_TERM, RequestConstants.SCHEME,
-						RequestConstants.MIXIN_CLASS));
+				String command = createUserDataUtilsCommand(order);
+				order.putAttValue(OrderAttribute.USER_DATA_ATT.getValue(), command);
+				order.addCategory(new Category(OrderConstants.USER_DATA_TERM, OrderConstants.SCHEME,
+						OrderConstants.MIXIN_CLASS));
 			} catch (Exception e) {
 				LOGGER.warn("Exception while creating userdata.", e);
 				return false;
 			}
 
-			Token federationUserToken = getFederationUserToken(request);
-			String localImageId = getLocalImageId(request.getCategories(), federationUserToken);
+			Token federationUserToken = getFederationUserToken(order);
+			String localImageId = getLocalImageId(order.getCategories(), federationUserToken);
 			List<Category> categories = new LinkedList<Category>();
-			for (Category category : request.getCategories()) {
-				if (category.getScheme().equals(RequestConstants.TEMPLATE_OS_SCHEME)) {
+			for (Category category : order.getCategories()) {
+				if (category.getScheme().equals(OrderConstants.TEMPLATE_OS_SCHEME)) {
 					continue;
 				}
 				categories.add(category);
 			}
 
-			Map<String, String> xOCCIAttCopy = new HashMap<String, String>(request.getxOCCIAtt());
+			Map<String, String> xOCCIAttCopy = new HashMap<String, String>(order.getxOCCIAtt());
 			removePublicKeyFromCategoriesAndAttributes(xOCCIAttCopy, categories);
 			String instanceId = computePlugin.requestInstance(federationUserToken, categories, xOCCIAttCopy,
 					localImageId);
-			request.setState(RequestState.SPAWNING);
-			request.setInstanceId(instanceId);
-			request.setProvidingMemberId(properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
-			execBenchmark(request);
+			order.setState(OrderState.SPAWNING);
+			order.setInstanceId(instanceId);
+			order.setProvidingMemberId(properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
+			execBenchmark(order);
 			return instanceId != null;
 		} catch (OCCIException e) {
 			ErrorType errorType = e.getType();
 			if (errorType == ErrorType.QUOTA_EXCEEDED) {
-				LOGGER.warn("Request failed locally for quota exceeded.", e);
-				ArrayList<Request> requestsWithInstances = new ArrayList<Request>(
-						requests.getRequestsIn(RequestState.FULFILLED, RequestState.DELETED));
-				Request requestToPreempt = prioritizationPlugin.takeFrom(request, requestsWithInstances);
-				if (requestToPreempt == null) {
+				LOGGER.warn("Order failed locally for quota exceeded.", e);
+				ArrayList<Order> ordersWithInstances = new ArrayList<Order>(
+						orderRepository.getOrdersIn(OrderState.FULFILLED, OrderState.DELETED));
+				Order orderToPreempt = prioritizationPlugin.takeFrom(order, ordersWithInstances);
+				if (orderToPreempt == null) {
 					throw e;
 				}
-				preemption(requestToPreempt);
-				return createInstance(request);
+				preemption(orderToPreempt);
+				return createInstance(order);
 			} else if (errorType == ErrorType.UNAUTHORIZED) {
-				LOGGER.warn("Request failed locally for user unauthorized.", e);
+				LOGGER.warn("Order failed locally for user unauthorized.", e);
 				return false;
 			} else if (errorType == ErrorType.BAD_REQUEST) {
-				LOGGER.warn("Request failed locally for image not found.", e);
+				LOGGER.warn("Order failed locally for image not found.", e);
 				return false;
 			} else if (errorType == ErrorType.NO_VALID_HOST_FOUND) {
 				LOGGER.warn(
-						"Request failed because no valid host was found," + " we will try to wake up a sleeping host.",
+						"Order failed because no valid host was found," + " we will try to wake up a sleeping host.",
 						e);
-				wakeUpSleepingHosts(request);
+				wakeUpSleepingHosts(order);
 				return false;
 			} else {
-				LOGGER.warn("Request failed locally for an unknown reason.", e);
+				LOGGER.warn("Order failed locally for an unknown reason.", e);
 				return false;
 			}
 		}
@@ -1594,8 +1594,8 @@ public class ManagerController {
 		this.packetSender = packetSender;
 	}
 
-	public void setRequests(RequestRepository requests) {
-		this.requests = requests;
+	public void setOrders(OrderRepository orders) {
+		this.orderRepository = orders;
 	}
 
 	public Token getToken(Map<String, String> attributesToken) {
@@ -1618,8 +1618,8 @@ public class ManagerController {
 		this.validator = validator;
 	}
 
-	protected List<Request> getServedRequests() {
-		return requests.getAllServedRequests();
+	protected List<Order> getServedOrders() {
+		return orderRepository.getAllServedOrders();
 	}
 
 	public MapperPlugin getLocalCredentailsPlugin() {
@@ -1661,16 +1661,16 @@ public class ManagerController {
 	}
 
 	public List<Instance> getInstancesFullInfo(String authToken) {
-		List<Request> requestsFromUser = getRequestsFromUser(authToken);
+		List<Order> ordersFromUser = getOrdersFromUser(authToken);
 		List<Instance> allFullInstances = new ArrayList<Instance>();
 		LOGGER.debug("Getting all instances and your information.");
-		for (Request request : requestsFromUser) {
+		for (Order order : ordersFromUser) {
 			Instance instance = null;
-			if (isFulfilledByLocalMember(request)) {
-				LOGGER.debug(request.getInstanceId() + " is local, getting its information in the local cloud.");
-				instance = this.computePlugin.getInstance(getFederationUserToken(request), request.getInstanceId());
+			if (isFulfilledByLocalMember(order)) {
+				LOGGER.debug(order.getInstanceId() + " is local, getting its information in the local cloud.");
+				instance = this.computePlugin.getInstance(getFederationUserToken(order), order.getInstanceId());
 
-				Map<String, String> serviceAddresses = getExternalServiceAddresses(request.getId());
+				Map<String, String> serviceAddresses = getExternalServiceAddresses(order.getId());
 				if (serviceAddresses != null) {
 					instance.addAttribute(Instance.SSH_PUBLIC_ADDRESS_ATT, serviceAddresses.get(SSH_SERVICE_NAME));
 					instance.addAttribute(Instance.SSH_USERNAME_ATT, getSSHCommonUser());
@@ -1678,14 +1678,14 @@ public class ManagerController {
 					instance.addAttribute(Instance.EXTRA_PORTS_ATT, new JSONObject(serviceAddresses).toString());
 				}
 
-				Category osCategory = getImageCategory(request.getCategories());
+				Category osCategory = getImageCategory(order.getCategories());
 				if (osCategory != null) {
 					instance.addResource(ResourceRepository.createImageResource(osCategory.getTerm()));
 				}
 			} else {
-				LOGGER.debug(request.getInstanceId() + " is remote, going out to " + request.getProvidingMemberId()
+				LOGGER.debug(order.getInstanceId() + " is remote, going out to " + order.getProvidingMemberId()
 						+ " to get its information.");
-				instance = getRemoteInstance(request);
+				instance = getRemoteInstance(order);
 			}
 			allFullInstances.add(instance);
 		}
@@ -1783,15 +1783,15 @@ public class ManagerController {
 
 	protected enum FailedBatchType { FEDERATION_USER }
 
-	private static class ForwardedRequest {
+	private static class ForwardedOrder {
 
-		private Request request;
+		private Order order;
 		private long timeStamp;
 		private List<String> membersServered;
 
 
-		public ForwardedRequest(Request request, long timeStamp) {
-			this.request = request;
+		public ForwardedOrder(Order order, long timeStamp) {
+			this.order = order;
 			this.timeStamp = timeStamp;
 			this.membersServered = new ArrayList<String>();
 		}
@@ -1800,8 +1800,8 @@ public class ManagerController {
 			this.timeStamp = timeStamp;
 		}
 
-		public Request getRequest() {
-			return request;
+		public Order getOrder() {
+			return order;
 		}
 
 		public long getTimeStamp() {
@@ -1813,8 +1813,8 @@ public class ManagerController {
 		}
 
 		public void addMembersServered(List<String> membersServered) {
-			if (membersServered == null || !membersServered.contains(request.getProvidingMemberId())) {
-				this.membersServered.add(request.getProvidingMemberId());
+			if (membersServered == null || !membersServered.contains(order.getProvidingMemberId())) {
+				this.membersServered.add(order.getProvidingMemberId());
 			}
 			if (membersServered == null) {
 				return;

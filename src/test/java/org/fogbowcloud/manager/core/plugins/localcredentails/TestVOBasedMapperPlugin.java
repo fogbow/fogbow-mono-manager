@@ -11,7 +11,7 @@ import org.fogbowcloud.manager.core.plugins.identity.voms.VomsIdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.localcredentails.MapperHelper;
 import org.fogbowcloud.manager.core.plugins.localcredentails.VOBasedMapperPlugin;
 import org.fogbowcloud.manager.occi.model.Token;
-import org.fogbowcloud.manager.occi.request.Request;
+import org.fogbowcloud.manager.occi.order.Order;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -36,7 +36,7 @@ public class TestVOBasedMapperPlugin {
 	private String VALUE_THREE = "valueThree";
 	private String VALUE_FOUR = "valueFour";
 	private Properties properties;
-	private Request requestDefault;
+	private Order orderDefault;
 	private String accessId;
 	
 	@Before
@@ -74,13 +74,13 @@ public class TestVOBasedMapperPlugin {
 		this.accessId = CertificateUtils.generateAccessId(
 				Arrays.asList(proxy.getCertificateChain()), proxy.getCredential());
 		
-		this.requestDefault = new Request(this.accessId, new Token(accessId, null, null, null),
+		this.orderDefault = new Order(this.accessId, new Token(accessId, null, null, null),
 				null, null, false, null);
 	}
 	
 	@Test
 	public void testGetMember() {
-		String member = this.vOBasedMapperPlugin.getVO(requestDefault);
+		String member = this.vOBasedMapperPlugin.getVO(orderDefault);
 		Assert.assertEquals(MEMBER_ONE, member);
 	}
 	
@@ -104,32 +104,32 @@ public class TestVOBasedMapperPlugin {
 	
 	@Test
 	public void testGetLocalCredentials() {
-		Map<String, String> localCredentials = this.vOBasedMapperPlugin.getLocalCredentials(this.requestDefault);
+		Map<String, String> localCredentials = this.vOBasedMapperPlugin.getLocalCredentials(this.orderDefault);
 		Assert.assertEquals(VALUE_ONE, localCredentials.get(CREDENTIAL_ONE));
 		Assert.assertEquals(VALUE_TWO, localCredentials.get(CREDENTIAL_TWO));		
 	}
 	
 	@Test
 	public void testGetLocalCredentialsWithVomsTokenInvalid() {
-		this.requestDefault.setFederationToken(new Token(this.accessId.replace("4","0"), null, null, null));
-		Map<String, String> localCredentials = this.vOBasedMapperPlugin.getLocalCredentials(this.requestDefault);
+		this.orderDefault.setFederationToken(new Token(this.accessId.replace("4","0"), null, null, null));
+		Map<String, String> localCredentials = this.vOBasedMapperPlugin.getLocalCredentials(this.orderDefault);
 		Assert.assertEquals(VALUE_ONE_FOGBOW, localCredentials.get(CREDENTIAL_ONE));
 		Assert.assertEquals(VALUE_TWO_FOGBOW, localCredentials.get(CREDENTIAL_TWO));		
 	}
 	
 	@Test
 	public void testGetLocalCredentialsTokenWrong() {
-		this.requestDefault.setFederationToken(new Token("123", null, null, null));
-		Map<String, String> localCredentials = this.vOBasedMapperPlugin.getLocalCredentials(this.requestDefault);
+		this.orderDefault.setFederationToken(new Token("123", null, null, null));
+		Map<String, String> localCredentials = this.vOBasedMapperPlugin.getLocalCredentials(this.orderDefault);
 		Assert.assertEquals(VALUE_ONE_FOGBOW, localCredentials.get(CREDENTIAL_ONE));
 		Assert.assertEquals(VALUE_TWO_FOGBOW, localCredentials.get(CREDENTIAL_TWO));		
 	}
 	
 	@Test
 	public void testGetLocalCredentialsNotFountWithDefaultValue() {
-		Request request = new Request(null, new Token("", null, null, null), null, null, false, null);
-		request.setProvidingMemberId("notfound");
-		Map<String, String> localCredentials = this.vOBasedMapperPlugin.getLocalCredentials(request);
+		Order order = new Order(null, new Token("", null, null, null), null, null, false, null);
+		order.setProvidingMemberId("notfound");
+		Map<String, String> localCredentials = this.vOBasedMapperPlugin.getLocalCredentials(order);
 		Assert.assertEquals(VALUE_ONE_FOGBOW, localCredentials.get(CREDENTIAL_ONE));
 		Assert.assertEquals(VALUE_TWO_FOGBOW, localCredentials.get(CREDENTIAL_TWO));
 	}	
@@ -144,15 +144,15 @@ public class TestVOBasedMapperPlugin {
 	@Test
 	public void testGetLocalCredentialsNotFoundWithoutDefaultValue() {
 		vOBasedMapperPlugin = new VOBasedMapperPlugin(new Properties()); 
-		Request request = new Request(null, new Token("", null, null, null), null, null, false, null);
-		Map<String, String> localCredentials = this.vOBasedMapperPlugin.getLocalCredentials(request);
+		Order order = new Order(null, new Token("", null, null, null), null, null, false, null);
+		Map<String, String> localCredentials = this.vOBasedMapperPlugin.getLocalCredentials(order);
 		Assert.assertTrue(localCredentials.isEmpty());
 	}
 	
 	@Test
-	public void testGetLocalCredentialsRequestNull() { 
+	public void testGetLocalCredentialsOrderNull() { 
 		Map<String, String> localCredentials = this.vOBasedMapperPlugin
-				.getLocalCredentials(new Request(null, new Token("", null, null, null), null, null,
+				.getLocalCredentials(new Order(null, new Token("", null, null, null), null, null,
 						false, null));
 		Assert.assertEquals(VALUE_ONE_FOGBOW, localCredentials.get(CREDENTIAL_ONE));
 		Assert.assertEquals(VALUE_TWO_FOGBOW, localCredentials.get(CREDENTIAL_TWO));	

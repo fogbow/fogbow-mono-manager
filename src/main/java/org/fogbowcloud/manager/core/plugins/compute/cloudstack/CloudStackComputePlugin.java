@@ -28,8 +28,8 @@ import org.fogbowcloud.manager.occi.model.Resource;
 import org.fogbowcloud.manager.occi.model.ResourceRepository;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.fogbowcloud.manager.occi.model.Token;
-import org.fogbowcloud.manager.occi.request.RequestAttribute;
-import org.fogbowcloud.manager.occi.request.RequestConstants;
+import org.fogbowcloud.manager.occi.order.OrderAttribute;
+import org.fogbowcloud.manager.occi.order.OrderConstants;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -118,21 +118,21 @@ public class CloudStackComputePlugin implements ComputePlugin {
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}
 		
-		categories.remove(new Category(RequestConstants.TERM, RequestConstants.SCHEME,
-				RequestConstants.KIND_CLASS));
+		categories.remove(new Category(OrderConstants.TERM, OrderConstants.SCHEME,
+				OrderConstants.KIND_CLASS));
 		
 		URIBuilder uriBuilder = createURIBuilder(endpoint, DEPLOY_VM_COMMAND);
 		uriBuilder.addParameter(TEMPLATE_ID, imageId);
 		uriBuilder.addParameter(ZONE_ID, zoneId);
 		
 		Flavor serviceOffering = getFlavor(token,
-				xOCCIAtt.get(RequestAttribute.REQUIREMENTS.getValue()));
+				xOCCIAtt.get(OrderAttribute.REQUIREMENTS.getValue()));
 		String serviceOfferingId = null;
 		if (serviceOffering != null) {
 			serviceOfferingId = serviceOffering.getId();
 		}
 		uriBuilder.addParameter(SERVICE_OFFERING_ID, serviceOfferingId);
-		String userdata = xOCCIAtt.get(RequestAttribute.USER_DATA_ATT.getValue());
+		String userdata = xOCCIAtt.get(OrderAttribute.USER_DATA_ATT.getValue());
 		if (userdata != null) {
 			uriBuilder.addParameter(USERDATA, userdata);
 		}
