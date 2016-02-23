@@ -33,8 +33,10 @@ public class AccountingServerResource extends ServerResource {
 		List<String> listAccept = HeaderUtils.getAccept(req.getHeaders());
 		String acceptType = getAccept(listAccept);
 		if (acceptType.equals(OCCIHeaders.JSON_CONTENT_TYPE)) {
+			LOGGER.debug("Response will be returned in Json format.");
 			return generateJsonResponse(accountingInfo);
 		} else if (acceptType.equals(MediaType.TEXT_PLAIN.toString())) {
+			LOGGER.debug("Response will be returned in Text Plain format.");
 			return generateTextPlainResponse(accountingInfo);
 		} 
 		throw new OCCIException(ErrorType.NOT_ACCEPTABLE,
