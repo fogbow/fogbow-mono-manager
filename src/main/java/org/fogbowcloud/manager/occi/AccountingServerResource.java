@@ -9,6 +9,7 @@ import org.fogbowcloud.manager.occi.model.HeaderUtils;
 import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.OCCIHeaders;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;
+import org.json.JSONException;
 import org.restlet.data.MediaType;
 import org.restlet.engine.adapter.HttpRequest;
 import org.restlet.representation.StringRepresentation;
@@ -27,7 +28,7 @@ public class AccountingServerResource extends ServerResource {
 	
 		String authToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse(),
 				application.getAuthenticationURI());
-		
+				
 		List<AccountingInfo> accountingInfo = application.getAccountingInfo(authToken);
 		
 		List<String> listAccept = HeaderUtils.getAccept(req.getHeaders());
@@ -59,13 +60,28 @@ public class AccountingServerResource extends ServerResource {
 	}
 
 	private StringRepresentation generateTextPlainResponse(List<AccountingInfo> accountingInfo) {
-		// TODO Auto-generated method stub
-		return null;
+		if (accountingInfo.isEmpty()) {
+			return new StringRepresentation("There is not accounting information.", MediaType.TEXT_PLAIN);
+		}
+		StringBuilder response = new StringBuilder();
+		response.append("<<FORMAT: USER; REQUESTING MEMBER; PROVIDING MEMBER; USAGE>>\n");
+		for (AccountingInfo current : accountingInfo) {
+			response.append(current.getUser() + "; " + current.getRequestingMember() + "; "
+					+ current.getProvidingMember() + "; " + current.getUsage());
+			response.append("\n");
+		}
+		return new StringRepresentation(response.toString(), MediaType.TEXT_PLAIN);
 	}
-	
+		
 	private StringRepresentation generateJsonResponse(List<AccountingInfo> accountingInfo) {
-		// TODO Auto-generated method stub
-		return null;
+		try {
+			return new StringRepresentation(JSONHelper.mountAccountingInfoJSON(accountingInfo)
+					.toString(), MediaType.APPLICATION_JSON);
+		} catch (JSONException e) {
+			LOGGER.error("Error while mounting JSON response.", e);
+			throw new OCCIException(ErrorType.INTERNAL_SERVER_ERROR,
+					"Error while mounting JSON response.");
+		}
 	}
 }
 

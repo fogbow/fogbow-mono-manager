@@ -1,5 +1,8 @@
 package org.fogbowcloud.manager.core.plugins.accounting;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 
 public class AccountingInfo {
 	
@@ -45,5 +48,18 @@ public class AccountingInfo {
 					&& (getUsage() - other.getUsage() <= 0.00000001); 
 		}
 		return false;
+	}
+
+	public JSONObject toJSON() throws JSONException {
+		return new JSONObject().put("user", user).put("requestingMember", requestingMember)
+				.put("providingMember", providingMember).put("usage", usage);
+	}
+	
+	public static AccountingInfo fromJSON(String accountingEntryJSON) throws JSONException {
+		JSONObject jsonObject = new JSONObject(accountingEntryJSON);
+		AccountingInfo accountingEntry = new AccountingInfo(jsonObject.optString("user"),
+				jsonObject.optString("requestingMember"), jsonObject.optString("providingMember"));
+		accountingEntry.addConsuption(Double.parseDouble(jsonObject.optString("usage")));
+		return accountingEntry;
 	}
 }
