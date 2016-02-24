@@ -1718,7 +1718,6 @@ public class ManagerController {
 		if (adminUserStr == null || adminUserStr.isEmpty()) {
 			return true;
 		}
-		System.out.println(adminUserStr);
 		String normalizedUser = MapperHelper.normalizeUser(federationToken.getUser());
 		StringTokenizer st = new StringTokenizer(adminUserStr, ";");
 		while (st.hasMoreTokens()) {

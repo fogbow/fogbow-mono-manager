@@ -22,6 +22,8 @@ public class OCCIException extends ResourceException {
 		switch (type) {
 		case UNAUTHORIZED:
 			return HttpStatus.SC_UNAUTHORIZED;
+		case FORBIDDEN:
+			return HttpStatus.SC_FORBIDDEN;
 		case NOT_FOUND:
 			return HttpStatus.SC_NOT_FOUND;
 		case BAD_REQUEST:

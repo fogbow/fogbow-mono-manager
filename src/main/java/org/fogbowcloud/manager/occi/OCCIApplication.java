@@ -46,7 +46,8 @@ public class OCCIApplication extends Application {
 		router.attach("/" + OrderConstants.COMPUTE_TERM, ComputeServerResource.class);
 		router.attach("/" + OrderConstants.COMPUTE_TERM + "/", ComputeServerResource.class);
 		router.attach("/" + OrderConstants.COMPUTE_TERM + "/{instanceId}", ComputeServerResource.class);
-		router.attach("/member/{memberId}/", AccountingServerResource.class);
+		router.attach("/member/accounting", AccountingServerResource.class);
+		router.attach("/member/accounting/", AccountingServerResource.class);
 		router.attach("/member", MemberServerResource.class);
 		router.attach("/member/{memberId}/quota", MemberServerResource.class);
 		//TODO remove this endpoint
