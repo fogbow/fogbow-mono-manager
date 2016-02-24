@@ -50,6 +50,7 @@ public class ConfigurationConstants {
 
 	public static final String HTTP_PORT_KEY = "http_port";
 	
+	public static final String ADMIN_USERS = "admin_users";
 	public static final String PROP_MAX_WHOISALIVE_MANAGER_COUNT = "max_whoisalive_manager_count";
 	
 	// OCCI extra resource

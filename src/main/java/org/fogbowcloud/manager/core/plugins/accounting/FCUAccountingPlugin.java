@@ -121,4 +121,16 @@ public class FCUAccountingPlugin implements AccountingPlugin {
 	public Map<String, Double> getUsersUsage() {
 		return db.getUsersUsage();
 	}
+
+	@Override
+	public List<AccountingInfo> getAccountingInfo() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public AccountingInfo getAccountingInfo(Object userKey) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

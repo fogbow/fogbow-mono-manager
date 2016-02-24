@@ -59,7 +59,7 @@ public class MapperHelper {
 	}
 	
 
-	protected static String normalizeUser(String federationUser) {
+	public static String normalizeUser(String federationUser) {
 		return federationUser.replaceAll("=", "->").replaceAll(" ", "");
 	}
 }
