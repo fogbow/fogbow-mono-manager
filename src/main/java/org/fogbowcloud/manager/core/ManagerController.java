@@ -1734,7 +1734,22 @@ public class ManagerController {
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}
 	}
-
+	
+	public double getUsage(String federationAccessId, String providingMember) {
+		Token federationToken = getTokenFromFederationIdP(federationAccessId);
+		if (federationToken == null) {
+			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
+		}
+		
+		AccountingInfo userAccounting = accountingPlugin.getAccountingInfo(
+				federationToken.getUser(),
+				properties.getProperty(ConfigurationConstants.XMPP_JID_KEY), providingMember);
+		if (userAccounting == null) {
+			return 0;
+		}
+		return userAccounting.getUsage();
+	}
+	
 	public Map<String, Double> getUsersUsage(String federationAccessId) {
 		checkFederationAccessId(federationAccessId);
 
@@ -1821,5 +1836,4 @@ public class ManagerController {
 			this.membersServered.addAll(membersServered);
 		}
 	}
-
 }

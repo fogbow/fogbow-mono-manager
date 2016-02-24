@@ -129,8 +129,10 @@ public class FCUAccountingPlugin implements AccountingPlugin {
 	}
 
 	@Override
-	public AccountingInfo getAccountingInfo(Object userKey) {
+	public AccountingInfo getAccountingInfo(String user, String requestingMember,
+			String providingMember) {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
 }

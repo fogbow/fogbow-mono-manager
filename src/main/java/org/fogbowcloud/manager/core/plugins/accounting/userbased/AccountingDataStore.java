@@ -192,41 +192,41 @@ public class AccountingDataStore {
 	private static final String SELECT_SPECIFIC_USAGE_SQL = "SELECT * FROM " + USAGE_TABLE_NAME
 			+ " WHERE user = ? AND requesting_member = ? AND providing_member = ?";
 	
-	public AccountingInfo getAccountingInfo(Object key) {
+	private AccountingInfo getAccountingInfo(AccountingEntryKey key) {
 		LOGGER.debug("Getting accountingInfo to " + key);
-		
-		if (key instanceof AccountingEntryKey) {
-			AccountingEntryKey entryKey = (AccountingEntryKey) key;
-			
-			PreparedStatement statement = null;
-			Connection conn = null;
-			try {
-				conn = getConnection();
-				statement = conn.prepareStatement(SELECT_SPECIFIC_USAGE_SQL);
-				statement.setString(1, entryKey.getUser());
-				statement.setString(2, entryKey.getRequestingMember());
-				statement.setString(3, entryKey.getProvidingMember());
-				statement.execute();
-				
-				ResultSet rs = statement.getResultSet();
 
-				if (rs.next()) {
-					String user = rs.getString(USER_COL);
-					String requestingMember = rs.getString(REQUESTING_MEMBER_COL);
-					String providingMember = rs.getString(PROVIDING_MEMBER_COL);
-					double usage = rs.getDouble(USAGE_COL);
-					
-					AccountingInfo accountingInfo = new AccountingInfo(user, requestingMember, providingMember);
-					accountingInfo.addConsuption(usage);
-					return accountingInfo;
-				}
-			} catch (SQLException e) {
-				LOGGER.error("Couldn't get keys from DB.", e);
-				return null;
-			} finally {
-				close(statement, conn);
+		AccountingEntryKey entryKey = (AccountingEntryKey) key;
+
+		PreparedStatement statement = null;
+		Connection conn = null;
+		try {
+			conn = getConnection();
+			statement = conn.prepareStatement(SELECT_SPECIFIC_USAGE_SQL);
+			statement.setString(1, entryKey.getUser());
+			statement.setString(2, entryKey.getRequestingMember());
+			statement.setString(3, entryKey.getProvidingMember());
+			statement.execute();
+
+			ResultSet rs = statement.getResultSet();
+
+			if (rs.next()) {
+				String user = rs.getString(USER_COL);
+				String requestingMember = rs.getString(REQUESTING_MEMBER_COL);
+				String providingMember = rs.getString(PROVIDING_MEMBER_COL);
+				double usage = rs.getDouble(USAGE_COL);
+
+				AccountingInfo accountingInfo = new AccountingInfo(user, requestingMember,
+						providingMember);
+				accountingInfo.addConsuption(usage);
+				return accountingInfo;
 			}
+		} catch (SQLException e) {
+			LOGGER.error("Couldn't get keys from DB.", e);
+			return null;
+		} finally {
+			close(statement, conn);
 		}
+
 		return null;
 	}
 
@@ -282,6 +282,11 @@ public class AccountingDataStore {
 			return null;
 		}
 		return accounting;
+	}
+
+	public AccountingInfo getAccountingInfo(String user, String requestingMember,
+			String providingMember) {
+		return getAccountingInfo(new AccountingEntryKey(user, requestingMember, providingMember));
 	}
 }
 

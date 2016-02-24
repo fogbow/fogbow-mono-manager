@@ -13,7 +13,8 @@ public interface AccountingPlugin {
 
 	public List<AccountingInfo> getAccountingInfo();
 	
-	public AccountingInfo getAccountingInfo(Object userKey);
+	public AccountingInfo getAccountingInfo(String user, String requestingMember, String providingMember);
+//	public AccountingInfo getAccountingInfo(Object userKey);
 	
 	@Deprecated
 	public Map<String, ResourceUsage> getMembersUsage();

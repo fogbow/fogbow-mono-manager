@@ -81,10 +81,11 @@ public class UserBasedFCUAccountingPlugin implements AccountingPlugin {
 	}
 
 	@Override
-	public AccountingInfo getAccountingInfo(Object entryKey) {
-		return db.getAccountingInfo(entryKey);
+	public AccountingInfo getAccountingInfo(String user, String requestingMember,
+			String providingMember) {
+		return db.getAccountingInfo(user, requestingMember, providingMember);
 	}
-
+	
 	@Override
 	public Map<String, ResourceUsage> getMembersUsage() {
 		// TODO Auto-generated method stub
