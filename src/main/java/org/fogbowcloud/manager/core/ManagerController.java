@@ -1695,11 +1695,6 @@ public class ManagerController {
 		return this.flavorsProvided;
 	}
 
-//	public List<ResourceUsage> getMembersUsage(String federationAccessId) {
-//		checkFederationAccessId(federationAccessId);
-//		return new ArrayList<ResourceUsage>(accountingPlugin.getMembersUsage().values());
-//	}
-
 	public List<AccountingInfo> getAccountingInfo(String federationAccessId) {
 		Token federationToken = getTokenFromFederationIdP(federationAccessId);
 		if (federationToken == null) {
@@ -1727,13 +1722,6 @@ public class ManagerController {
 		return false;
 	}
 
-	private void checkFederationAccessId(String federationAccessId) {
-		Token federationToken = getTokenFromFederationIdP(federationAccessId);
-		if (federationToken == null) {
-			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
-		}
-	}
-	
 	public double getUsage(String federationAccessId, String providingMember) {
 		Token federationToken = getTokenFromFederationIdP(federationAccessId);
 		if (federationToken == null) {
@@ -1748,12 +1736,6 @@ public class ManagerController {
 		}
 		return userAccounting.getUsage();
 	}
-	
-//	public Map<String, Double> getUsersUsage(String federationAccessId) {
-//		checkFederationAccessId(federationAccessId);
-//
-//		return accountingPlugin.getUsersUsage();
-//	}
 	
 	public ResourcesInfo getResourceInfoForRemoteMember(String accessId) {		
 		Map<String, String> localCredentials = getLocalCredentials(accessId);
