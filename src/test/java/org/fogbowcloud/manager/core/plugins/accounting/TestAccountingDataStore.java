@@ -1,4 +1,4 @@
-package org.fogbowcloud.manager.core.plugins.accounting.userbased;
+package org.fogbowcloud.manager.core.plugins.accounting;
 
 import java.io.File;
 import java.io.IOException;
@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Properties;
 
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.core.plugins.accounting.AccountingDataStore;
 import org.fogbowcloud.manager.core.plugins.accounting.AccountingInfo;
 import org.junit.After;
 import org.junit.Assert;

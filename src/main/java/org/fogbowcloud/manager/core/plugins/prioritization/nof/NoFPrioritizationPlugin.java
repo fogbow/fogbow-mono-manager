@@ -11,6 +11,7 @@ import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.PrioritizationPlugin;
+import org.fogbowcloud.manager.core.plugins.accounting.AccountingInfo;
 import org.fogbowcloud.manager.core.plugins.accounting.ResourceUsage;
 import org.fogbowcloud.manager.occi.order.Order;
 
@@ -54,7 +55,8 @@ public class NoFPrioritizationPlugin implements PrioritizationPlugin {
 		
 		List<String> servedMemberIds = getServedMemberIds(ordersWithInstance);
 		LOGGER.debug("Current servedMemberIds=" + servedMemberIds);
-		Map<String, ResourceUsage> membersUsage = accountingPlugin.getMembersUsage();
+		List<AccountingInfo> accounting = accountingPlugin.getAccountingInfo();
+		Map<String, ResourceUsage> membersUsage = NoFHelper.calculateMembersUsage(localMemberId, accounting);
 		LOGGER.debug("Current membersUsage=" + membersUsage);		
 		LinkedList<FederationMemberDebt> memberDebts = calctMemberDebts(servedMemberIds, membersUsage);
 		if (memberDebts.isEmpty()) {

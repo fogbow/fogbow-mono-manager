@@ -1,4 +1,4 @@
-package org.fogbowcloud.manager.core.plugins.accounting.userbased;
+package org.fogbowcloud.manager.core.plugins.accounting;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Properties;
 
 import org.apache.log4j.Logger;
-import org.fogbowcloud.manager.core.plugins.accounting.AccountingInfo;
 
 public class AccountingDataStore {
 

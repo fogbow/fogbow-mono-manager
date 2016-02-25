@@ -1,4 +1,4 @@
-package org.fogbowcloud.manager.core.plugins.accounting.userbased;
+package org.fogbowcloud.manager.core.plugins.accounting;
 
 import java.io.File;
 import java.io.IOException;
@@ -11,6 +11,7 @@ import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
 import org.fogbowcloud.manager.core.plugins.accounting.AccountingInfo;
+import org.fogbowcloud.manager.core.plugins.accounting.FCUAccountingPlugin;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.order.Order;
 import org.fogbowcloud.manager.occi.order.OrderState;
@@ -20,12 +21,12 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-public class TestUserBasedFCUAccountingPlugin {
+public class TestFCUAccountingPlugin {
 
 	private static final double ACCEPTABLE_ERROR = 0.0;
 	private static final String FAKE_DB_PATH = "src/test/resources/testdbaccounting.sqlite";
 	private BenchmarkingPlugin benchmarkingPlugin;
-	private UserBasedFCUAccountingPlugin accountingPlugin;
+	private FCUAccountingPlugin accountingPlugin;
 	Properties properties;
 
 	@Before
@@ -35,7 +36,7 @@ public class TestUserBasedFCUAccountingPlugin {
 		properties.put("accounting_datastore_url", "jdbc:sqlite:" + FAKE_DB_PATH);
 		properties.put(ConfigurationConstants.XMPP_JID_KEY, "localMemberId");
 
-		accountingPlugin = new UserBasedFCUAccountingPlugin(properties, benchmarkingPlugin);
+		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin);
 	}
 
 	@After
@@ -63,7 +64,7 @@ public class TestUserBasedFCUAccountingPlugin {
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 		Mockito.when(benchmarkingPlugin.getPower("instanceId@remoteMemberId")).thenReturn(2d);
 
-		accountingPlugin = new UserBasedFCUAccountingPlugin(properties, benchmarkingPlugin,
+		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin,
 				dateUtils);
 
 		Order order = new Order("id1", new Token("accessId", "userId", null,
@@ -104,7 +105,7 @@ public class TestUserBasedFCUAccountingPlugin {
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 		Mockito.when(benchmarkingPlugin.getPower("instanceId@localMemberId")).thenReturn(2d);
 
-		accountingPlugin = new UserBasedFCUAccountingPlugin(properties, benchmarkingPlugin,
+		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin,
 				dateUtils);
 
 		Order order = new Order("id1", new Token("accessId", "userId", null,
@@ -146,7 +147,7 @@ public class TestUserBasedFCUAccountingPlugin {
 		Mockito.when(benchmarkingPlugin.getPower("instanceId@localMemberId")).thenReturn(2d);
 		Mockito.when(benchmarkingPlugin.getPower("instanceId@remoteMemberId")).thenReturn(3d);
 
-		accountingPlugin = new UserBasedFCUAccountingPlugin(properties, benchmarkingPlugin,
+		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin,
 				dateUtils);
 
 		Order localOrder = new Order("localId1", new Token("accessId", "localUserId", null,
@@ -224,7 +225,7 @@ public class TestUserBasedFCUAccountingPlugin {
 		Mockito.when(benchmarkingPlugin.getPower("instanceId@remote1MemberId")).thenReturn(3d);
 		Mockito.when(benchmarkingPlugin.getPower("instanceId@remote2MemberId")).thenReturn(5d);
 
-		accountingPlugin = new UserBasedFCUAccountingPlugin(properties, benchmarkingPlugin,
+		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin,
 				dateUtils);
 
 		Order localOrder1 = new Order("localId1", new Token("accessId", "userId", null,
@@ -309,7 +310,7 @@ public class TestUserBasedFCUAccountingPlugin {
 		Mockito.when(benchmarkingPlugin.getPower("instanceId3@localMemberId")).thenReturn(4d);
 		Mockito.when(benchmarkingPlugin.getPower("instanceId4@localMemberId")).thenReturn(5d);
 
-		accountingPlugin = new UserBasedFCUAccountingPlugin(properties, benchmarkingPlugin,
+		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin,
 				dateUtils);
 
 		Order localOrderUser1 = new Order("localId1", new Token("accessId", "userId1", null,
@@ -409,7 +410,7 @@ public class TestUserBasedFCUAccountingPlugin {
 		Mockito.when(benchmarkingPlugin.getPower("instanceId@localMemberId")).thenReturn(2d);
 		Mockito.when(benchmarkingPlugin.getPower("instanceId@remoteMemberId")).thenReturn(3d);
 
-		accountingPlugin = new UserBasedFCUAccountingPlugin(properties, benchmarkingPlugin,
+		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin,
 				dateUtils);
 
 		Order localOrder = new Order("localId1", new Token("accessId", "localUserId", null,
@@ -497,7 +498,7 @@ public class TestUserBasedFCUAccountingPlugin {
 		Mockito.when(benchmarkingPlugin.getPower("instanceId@remoteMemberId")).thenReturn(3d);
 		Mockito.when(benchmarkingPlugin.getPower("instanceId2@remoteMemberId")).thenReturn(4d);
 
-		accountingPlugin = new UserBasedFCUAccountingPlugin(properties, benchmarkingPlugin,
+		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin,
 				dateUtils);
 
 		Order localOrder = new Order("localId1", new Token("accessId", "localUserId", null,
@@ -604,7 +605,7 @@ public class TestUserBasedFCUAccountingPlugin {
 		Mockito.when(benchmarkingPlugin.getPower("instanceId1@remoteMemberId")).thenReturn(3d);
 		Mockito.when(benchmarkingPlugin.getPower("instanceId2@remoteMemberId")).thenReturn(4d);
 
-		accountingPlugin = new UserBasedFCUAccountingPlugin(properties, benchmarkingPlugin,
+		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin,
 				dateUtils);
 
 		Order localOrder = new Order("localId1", new Token("accessId", "userId", null,

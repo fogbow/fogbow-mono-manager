@@ -1,5 +1,9 @@
 package org.fogbowcloud.manager.occi.member;
 
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.util.Locale;
+
 import org.fogbowcloud.manager.occi.OCCIApplication;
 import org.fogbowcloud.manager.occi.model.ErrorType;
 import org.fogbowcloud.manager.occi.model.HeaderUtils;
@@ -10,11 +14,18 @@ import org.restlet.resource.Get;
 
 public class UsageServerResource extends MemberServerResource {
 
+	public static final DecimalFormat USAGE_FORMAT;
+	
+	static {
+		DecimalFormatSymbols formatSymbols = new DecimalFormatSymbols(Locale.US);
+		formatSymbols.setDecimalSeparator('.');
+		USAGE_FORMAT = new DecimalFormat("0.000000", formatSymbols);
+	}
+	
 	@Get
 	public String fetch() {
 		OCCIApplication application = (OCCIApplication) getApplication();
 		HttpRequest req = (HttpRequest) getRequest();
-		HeaderUtils.checkOCCIContentType(req.getHeaders());
 
 		String memberId = (String) getRequestAttributes().get("memberId");
 
@@ -32,8 +43,12 @@ public class UsageServerResource extends MemberServerResource {
 		StringBuilder response = new StringBuilder();
 		response.append(OCCIHeaders.X_OCCI_ATTRIBUTE + ": memberId=" + memberId);
 		response.append("\n");
-		response.append(OCCIHeaders.X_OCCI_ATTRIBUTE + ": usage=" + usage);
+		response.append(OCCIHeaders.X_OCCI_ATTRIBUTE + ": usage=" + formatDouble(usage));
 
 		return response.toString().trim();
+	}
+	
+	public static double formatDouble(double doubleValue) {
+		return Double.valueOf(USAGE_FORMAT.format(doubleValue));
 	}
 }

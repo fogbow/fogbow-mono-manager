@@ -54,7 +54,6 @@ import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
 import org.fogbowcloud.manager.core.plugins.MapperPlugin;
 import org.fogbowcloud.manager.core.plugins.PrioritizationPlugin;
 import org.fogbowcloud.manager.core.plugins.accounting.AccountingInfo;
-import org.fogbowcloud.manager.core.plugins.accounting.ResourceUsage;
 import org.fogbowcloud.manager.core.plugins.localcredentails.MapperHelper;
 import org.fogbowcloud.manager.core.plugins.util.SshClientPool;
 import org.fogbowcloud.manager.occi.instance.Instance;
@@ -67,9 +66,9 @@ import org.fogbowcloud.manager.occi.model.ResourceRepository;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.order.Order;
-import org.fogbowcloud.manager.occi.order.OrderDataStore;
 import org.fogbowcloud.manager.occi.order.OrderAttribute;
 import org.fogbowcloud.manager.occi.order.OrderConstants;
+import org.fogbowcloud.manager.occi.order.OrderDataStore;
 import org.fogbowcloud.manager.occi.order.OrderRepository;
 import org.fogbowcloud.manager.occi.order.OrderState;
 import org.fogbowcloud.manager.occi.order.OrderType;
@@ -1696,10 +1695,10 @@ public class ManagerController {
 		return this.flavorsProvided;
 	}
 
-	public List<ResourceUsage> getMembersUsage(String federationAccessId) {
-		checkFederationAccessId(federationAccessId);
-		return new ArrayList<ResourceUsage>(accountingPlugin.getMembersUsage().values());
-	}
+//	public List<ResourceUsage> getMembersUsage(String federationAccessId) {
+//		checkFederationAccessId(federationAccessId);
+//		return new ArrayList<ResourceUsage>(accountingPlugin.getMembersUsage().values());
+//	}
 
 	public List<AccountingInfo> getAccountingInfo(String federationAccessId) {
 		Token federationToken = getTokenFromFederationIdP(federationAccessId);
@@ -1750,11 +1749,11 @@ public class ManagerController {
 		return userAccounting.getUsage();
 	}
 	
-	public Map<String, Double> getUsersUsage(String federationAccessId) {
-		checkFederationAccessId(federationAccessId);
-
-		return accountingPlugin.getUsersUsage();
-	}
+//	public Map<String, Double> getUsersUsage(String federationAccessId) {
+//		checkFederationAccessId(federationAccessId);
+//
+//		return accountingPlugin.getUsersUsage();
+//	}
 	
 	public ResourcesInfo getResourceInfoForRemoteMember(String accessId) {		
 		Map<String, String> localCredentials = getLocalCredentials(accessId);

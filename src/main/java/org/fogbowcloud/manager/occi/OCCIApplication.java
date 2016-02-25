@@ -197,13 +197,13 @@ public class OCCIApplication extends Application {
 		return managerFacade.getFlavorsProvided();
 	}
 
-	public List<ResourceUsage> getMembersUsage(String authToken) {
-		return managerFacade.getMembersUsage(authToken);
-	}
-
-	public Map<String, Double> getUsersUsage(String authToken) {		
-		return managerFacade.getUsersUsage(authToken);
-	}
+//	public List<ResourceUsage> getMembersUsage(String authToken) {
+//		return managerFacade.getMembersUsage(authToken);
+//	}
+//
+//	public Map<String, Double> getUsersUsage(String authToken) {		
+//		return managerFacade.getUsersUsage(authToken);
+//	}
 
 	public String getUser(String authToken) {
 		return managerFacade.getUser(authToken);

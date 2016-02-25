@@ -15,7 +15,6 @@ public class QuotaServerResource extends MemberServerResource {
 	public String fetch() {
 		OCCIApplication application = (OCCIApplication) getApplication();
 		HttpRequest req = (HttpRequest) getRequest();
-		HeaderUtils.checkOCCIContentType(req.getHeaders());
 		
 		String memberId = (String) getRequestAttributes().get("memberId");
 		
