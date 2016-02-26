@@ -127,7 +127,7 @@ public class AccountingDataStore {
 		
 		List<AccountingEntryKey> entryKeys = getEntryKeys();
 
-		LOGGER.debug("Databa entry keys=" + entryKeys);
+		LOGGER.debug("Database entry keys=" + entryKeys);
 		
 		// preprocessing data
 		Map<AccountingEntryKey, AccountingInfo> processedUsage = new HashMap<AccountingEntryKey, AccountingInfo>();
@@ -146,11 +146,6 @@ public class AccountingDataStore {
 			} else { // update operation
 				processedUsage.put(currentKey, accountingInfo);
 			}
-		}
-		
-		System.out.println(processedUsage);
-		for (AccountingEntryKey accountingEntryKey : processedUsage.keySet()) {
-			System.out.println(accountingEntryKey);
 		}
 		
 		// creating statements
