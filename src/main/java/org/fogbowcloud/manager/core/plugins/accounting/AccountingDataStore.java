@@ -136,16 +136,24 @@ public class AccountingDataStore {
 			// insert operation
 			AccountingEntryKey currentKey = new AccountingEntryKey(accountingInfo.getUser(), accountingInfo
 					.getRequestingMember(), accountingInfo.getProvidingMember());
-			if (!entryKeys.contains(currentKey)) {				
+			System.out.println("1");
+			System.out.println(currentKey);
+			if (!entryKeys.contains(currentKey)) {
+				System.out.println("2");	
 				if (processedUsage.containsKey(currentKey)) {
+					System.out.println("3");
 					processedUsage.get(currentKey).addConsuption(accountingInfo.getUsage());
 				} else {
+					System.out.println("4");
 					processedUsage.put(currentKey, accountingInfo);
 				}				
 			} else { // update operation
+				System.out.println("5");
 				processedUsage.put(currentKey, accountingInfo);
 			}
 		}
+		
+		System.out.println(processedUsage);
 		
 		// creating statements
 		for (AccountingEntryKey currentKey : processedUsage.keySet()) {
@@ -346,6 +354,11 @@ class AccountingEntryKey {
 					&& getRequestingMember().equals(other.getRequestingMember());
 		}
 		return false;
+	}
+	
+	@Override
+	public int hashCode() {
+		return toString().hashCode();
 	}
 	
 	@Override

@@ -5,12 +5,12 @@ import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import org.apache.log4j.Logger;
-import org.fogbowcloud.manager.core.plugins.accounting.AccountingDataStore;
-import org.fogbowcloud.manager.core.plugins.accounting.AccountingInfo;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -201,6 +201,41 @@ public class TestAccountingDataStore {
 		Assert.assertEquals("requestingMember2", accountingInfo2.getRequestingMember());
 		Assert.assertEquals("providingMember2", accountingInfo2.getProvidingMember());
 		Assert.assertEquals(usage2, accountingInfo2.getUsage(), ACCEPTABLE_ERROR);
+	}
+	
+	@Test
+	public void testUpdateInsertingSameUserMoreInstances() throws SQLException {
+		List<AccountingInfo> usage = new ArrayList<AccountingInfo>();
+		AccountingInfo accountingInfo1 = new AccountingInfo("user1", "requestingMember1",
+				"providingMember1");
+		int initialUsage1 = 10;
+		accountingInfo1.addConsuption(initialUsage1);
+		usage.add(accountingInfo1);
+		
+		accountingInfo1 = new AccountingInfo("user1", "requestingMember1",
+				"providingMember1");
+		int initialUsage2 = 20;
+		accountingInfo1.addConsuption(initialUsage2);
+		usage.add(accountingInfo1);
+
+		Assert.assertTrue(db.update(usage));
+
+		String sql = "select * from " + AccountingDataStore.USAGE_TABLE_NAME;
+		ResultSet rs = db.getConnection().createStatement().executeQuery(sql);
+		List<AccountingInfo> accounting = db.createAccounting(rs);
+
+		Assert.assertEquals(1, accounting.size());
+		Assert.assertEquals("user1", accounting.get(0).getUser());
+		Assert.assertEquals("requestingMember1", accounting.get(0).getRequestingMember());
+		Assert.assertEquals("providingMember1", accounting.get(0).getProvidingMember());
+		Assert.assertEquals(initialUsage1 + initialUsage2, accounting.get(0).getUsage(), ACCEPTABLE_ERROR);
+	}
+	
+	@Test
+	public void testEqualsAccountingEntryKey(){
+		AccountingEntryKey entryKey1 = new AccountingEntryKey("user1", "member1", "member2");
+		AccountingEntryKey entryKey2 = new AccountingEntryKey("user1", "member1", "member2");
+		Assert.assertEquals(entryKey1, entryKey2);
 	}
 
 	@Test
