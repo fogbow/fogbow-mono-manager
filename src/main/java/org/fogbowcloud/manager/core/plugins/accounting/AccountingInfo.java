@@ -62,4 +62,10 @@ public class AccountingInfo {
 		accountingEntry.addConsuption(Double.parseDouble(jsonObject.optString("usage")));
 		return accountingEntry;
 	}
+	
+	@Override
+	public String toString() {
+		return "User=" + getUser() + "; requestingMember=" + getRequestingMember()
+				+ "; providingMember=" + getProvidingMember() + "; usage=" + getUsage();
+	}
 }
