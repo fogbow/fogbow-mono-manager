@@ -10,10 +10,13 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.occi.OCCIApplication;
 import org.fogbowcloud.manager.occi.order.OrderAttribute;
 import org.fogbowcloud.manager.occi.order.OrderConstants;
 import org.restlet.Response;
 import org.restlet.data.MediaType;
+import org.restlet.engine.adapter.HttpRequest;
+import org.restlet.engine.adapter.ServerCall;
 import org.restlet.engine.header.Header;
 import org.restlet.util.Series;
 
@@ -219,4 +222,12 @@ public class HeaderUtils {
 	public static String normalizeValueAttributeFilter(String value) {
 		return "\"" + value + "\"";
 	}	
+	
+	public static String getHostRef(OCCIApplication application, HttpRequest req) {
+		String myIp = application.getProperties().getProperty("my_ip");
+		ServerCall httpCall = req.getHttpCall();
+		String hostDomain = myIp == null ? httpCall.getHostDomain() : myIp;
+		return req.getProtocol().getSchemeName() + "://" + hostDomain + ":" + httpCall.getHostPort();
+	}	
+	
 }

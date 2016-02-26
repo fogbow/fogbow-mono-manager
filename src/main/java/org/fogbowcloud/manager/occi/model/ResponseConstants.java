@@ -35,5 +35,8 @@ public class ResponseConstants {
 	public static final String PROPERTY_NOT_SPECIFIED_FOR_EXTRA_OCCI_RESOURCE = "There is not any property specified at manager conf file for OCCI resource: ";
 	public static final String NOT_FOUND_RESOURCE_KIND = "Resource kind not found.";
 	public static final String NOT_FOUND_STORAGE_SIZE_ATTRIBUTE = "Storage size not found.";
+	public static final String NOT_FOUND_STORAGE_LINK_ATTRIBUTE = "Target or source not found.";
+	
+	public static final String INVALID_STORAGE_LINK_DIFERENT_LOCATION = "The same size is required in the post of storage link.";
 
 }

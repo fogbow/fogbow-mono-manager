@@ -26,6 +26,7 @@ import org.fogbowcloud.manager.occi.model.OCCIHeaders;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.order.OrderAttribute;
+import org.fogbowcloud.manager.occi.storage.StorageAttribute;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -34,9 +35,14 @@ public class OpenStackV2StoragePlugin implements StoragePlugin {
 
 	protected static final String KEY_JSON_ID = "id";
 	protected static final String KEY_JSON_SIZE = "size";
+	protected static final String KEY_JSON_OS_ATTACH = "os-attach";
+	protected static final String KEY_JSON_OS_DEATTACH = "os-force_detach";
+	protected static final String KEY_JSON_INSTANCE_UUID = "instance_uuid";
+	protected static final String KEY_JSON_MOUNTPOINT = "mountpoint";
 	protected static final String KEY_JSON_VOLUME = "volume";
 	protected static final String KEY_JSON_VOLUMES = "volumes";
 	protected static final String SUFIX_ENDPOINT_VOLUMES = "/volumes";
+	protected static final String SUFIX_ENDPOINT_ACTION = "/action";
 	protected static final String COMPUTE_V2_API_ENDPOINT = "/v2/";
 	
 	public static final String STORAGE_NOVAV2_URL_KEY = "storage_v2_url";
@@ -70,7 +76,7 @@ public class OpenStackV2StoragePlugin implements StoragePlugin {
 		
 		JSONObject jsonRequest = null;
 		try {			
-			jsonRequest = generateJsonEntityToRequest(size);
+			jsonRequest = generateJsonEntityToCreateInstance(size);
 		} catch (JSONException e) {
 			LOGGER.error("An error occurred when generating json.", e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
@@ -128,14 +134,47 @@ public class OpenStackV2StoragePlugin implements StoragePlugin {
 
 	@Override
 	public void attach(Token token, List<Category> categories, Map<String, String> xOCCIAtt) {
-		// TODO Auto-generated method stub
+		String tenantId = token.getAttributes().get(TENANT_ID);
+		if (tenantId == null) {
+			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.INVALID_TOKEN);
+		}	
 		
+		String instanceUUID = xOCCIAtt.get(StorageAttribute.SOURCE.getValue());
+		String storageId = xOCCIAtt.get(StorageAttribute.TARGET.getValue());
+		
+		JSONObject jsonRequest = null;
+		try {			
+			jsonRequest = generateJsonEntityToAttach(instanceUUID);
+		} catch (JSONException e) {
+			LOGGER.error("An error occurred when generating json.", e);
+			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
+		}			
+		
+		String endpoint = this.storageV2APIEndpoint + tenantId + SUFIX_ENDPOINT_VOLUMES
+				+ "/" +  storageId + SUFIX_ENDPOINT_ACTION;
+		doPostRequest(endpoint, token.getAccessId(), jsonRequest);
 	}
 
 	@Override
 	public void dettach(Token token, List<Category> categories, Map<String, String> xOCCIAtt) {
-		// TODO Auto-generated method stub
+		String tenantId = token.getAttributes().get(TENANT_ID);
+		if (tenantId == null) {
+			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.INVALID_TOKEN);
+		}	
 		
+		String storageId = xOCCIAtt.get(StorageAttribute.TARGET.getValue());
+				
+		JSONObject jsonRequest = null;
+		try {			
+			jsonRequest = generateJsonEntityToDeattach();
+		} catch (JSONException e) {
+			LOGGER.error("An error occurred when generating json.", e);
+			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
+		}	
+		
+		String endpoint = this.storageV2APIEndpoint + tenantId 
+				+ SUFIX_ENDPOINT_VOLUMES + "/" +  storageId + SUFIX_ENDPOINT_ACTION;
+		doPostRequest(endpoint, token.getAccessId(), jsonRequest);
 	}
 
 	protected String doPostRequest(String endpoint, String authToken, JSONObject json) {
@@ -225,6 +264,7 @@ public class OpenStackV2StoragePlugin implements StoragePlugin {
 			throw new OCCIException(ErrorType.BAD_REQUEST, response.getStatusLine().toString());
 		}
 	}	
+
 	
 	protected Instance getInstanceFromJson(String json) {
 		try {
@@ -263,7 +303,7 @@ public class OpenStackV2StoragePlugin implements StoragePlugin {
 		return null;
 	}		
 	
-	protected JSONObject generateJsonEntityToRequest(String size) throws JSONException {
+	protected JSONObject generateJsonEntityToCreateInstance(String size) throws JSONException {
 
 		JSONObject volumeContent = new JSONObject();
 		volumeContent.put(KEY_JSON_SIZE, size);
@@ -273,6 +313,31 @@ public class OpenStackV2StoragePlugin implements StoragePlugin {
 		
 		return volume;
 	}
+	
+	protected JSONObject generateJsonEntityToAttach(String instance) throws JSONException {
+
+		JSONObject osAttachContent = new JSONObject();
+		osAttachContent.put(KEY_JSON_INSTANCE_UUID, instance);
+		osAttachContent.put(KEY_JSON_MOUNTPOINT, "/dev/vdc");		
+
+		JSONObject osAttach = new JSONObject();
+		osAttach.put(KEY_JSON_OS_ATTACH, osAttachContent);
+		
+		return osAttach;
+	}	
+	
+
+	private JSONObject generateJsonEntityToDeattach() throws JSONException {
+		
+		JSONObject osDeattachContent = new JSONObject();
+		osDeattachContent.put("attachment_id", "");
+		osDeattachContent.put("connector", "");
+		
+		JSONObject osDeattach = new JSONObject();
+		osDeattach.put(KEY_JSON_OS_DEATTACH, osDeattachContent);
+		
+		return osDeattach;
+	}	
 	
 	private void initClient() {
 		client = HttpClients.createMinimal();

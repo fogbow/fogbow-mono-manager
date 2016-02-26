@@ -71,6 +71,9 @@ import org.fogbowcloud.manager.occi.order.OrderConstants;
 import org.fogbowcloud.manager.occi.order.OrderRepository;
 import org.fogbowcloud.manager.occi.order.OrderState;
 import org.fogbowcloud.manager.occi.order.OrderType;
+import org.fogbowcloud.manager.occi.storage.StorageAttribute;
+import org.fogbowcloud.manager.occi.storage.StorageLinkRepository;
+import org.fogbowcloud.manager.occi.storage.StorageLinkRepository.StorageLink;
 import org.fogbowcloud.manager.xmpp.AsyncPacketSender;
 import org.fogbowcloud.manager.xmpp.ManagerPacketHelper;
 import org.json.JSONException;
@@ -114,6 +117,7 @@ public class ManagerController {
 	private Map<String, Token> instanceIdToToken = new HashMap<String, Token>();
 	private final List<FederationMember> members = Collections.synchronizedList(new LinkedList<FederationMember>());
 	private OrderRepository orderRepository = new OrderRepository();
+	private StorageLinkRepository storageLinkRepository = new StorageLinkRepository();
 	private FederationMemberPickerPlugin memberPickerPlugin;
 	private List<Flavor> flavorsProvided;
 	private BenchmarkingPlugin benchmarkingPlugin;
@@ -505,6 +509,14 @@ public class ManagerController {
 		return token.getUser();
 	}
 
+	public List<StorageLink> getStorageLinkFromUser(String accessId) {
+		String user = getUser(accessId);
+		if (!federationIdentityPlugin.isValid(accessId)) {
+			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
+		}
+		return storageLinkRepository.getByUser(user);
+	}
+	
 	public List<Order> getOrdersFromUser(String federationAccessToken) {
 		return getOrdersFromUser(federationAccessToken, true);
 	}
@@ -775,7 +787,7 @@ public class ManagerController {
 	}
 
 	private static String normalizeInstanceId(String instanceId) {
-		if (instanceId.contains(Order.SEPARATOR_GLOBAL_ID)) {
+		if (instanceId != null && instanceId.contains(Order.SEPARATOR_GLOBAL_ID)) {
 			String[] partsInstanceId = instanceId.split(Order.SEPARATOR_GLOBAL_ID);
 			instanceId = partsInstanceId[0];
 		}
@@ -804,6 +816,8 @@ public class ManagerController {
 				this.computePlugin.removeInstance(getFederationUserToken(order), instanceId);				
 			} else if (resourceKind.equals(OrderConstants.STORAGE_TERM)) {
 				this.storagePlugin.removeInstance(getFederationUserToken(order), instanceId);
+				
+				// TODO se nao é permitido deleter, pois estah anexado, avisar !!!
 			}
 		} else {
 			removeRemoteInstance(order);
@@ -885,6 +899,14 @@ public class ManagerController {
 		LOGGER.debug("Getting orderId " + orderId);
 		checkOrderId(accessId, orderId);
 		return orderRepository.get(orderId);
+	}
+	
+	public StorageLink getStorageLink(String accessId, String storageLinkId) {
+		LOGGER.debug("Getting storageLinkId " + storageLinkId);		
+		if (!federationIdentityPlugin.isValid(accessId)) {
+			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
+		}
+		return storageLinkRepository.get(storageLinkId);
 	}
 
 	public FederationMember getFederationMember(String memberId) {
@@ -1192,7 +1214,12 @@ public class ManagerController {
 				turnOffTimer = false;
 			}
 
+			// TODO implementar o monitoramento de storage
+			
 			if (order.getState().in(OrderState.FULFILLED, OrderState.DELETED)) {
+				if (order.getResourceKing() != null && !order.getResourceKing().equals(OrderConstants.COMPUTE_TERM)) {
+					return;
+				}
 				try {
 					LOGGER.debug("Monitoring instance of order: " + order);
 					removeFailedInstance(order, getInstance(order));
@@ -1711,6 +1738,11 @@ public class ManagerController {
 	public void setOrders(OrderRepository orders) {
 		this.orderRepository = orders;
 	}
+	
+	public void setStorageLinkRepository(
+			StorageLinkRepository storageLinkRepository) {
+		this.storageLinkRepository = storageLinkRepository;
+	}
 
 	public Token getToken(Map<String, String> attributesToken) {
 		return localIdentityPlugin.createToken(attributesToken);
@@ -1805,10 +1837,84 @@ public class ManagerController {
 		}
 		return allFullInstances;
 	}
+	
+	public void createStorageLink(String accessId,
+			List<Category> categories, Map<String, String> xOCCIAtt) {
+		
+		
+		
+		String normalizeTargetAttr = normalizeInstanceId(xOCCIAtt.get(StorageAttribute.TARGET.getValue()));
+		xOCCIAtt.put(StorageAttribute.TARGET.getValue(), normalizeTargetAttr);
+		String normalizeSourceAttr = normalizeInstanceId(xOCCIAtt.get(StorageAttribute.SOURCE.getValue()));
+		xOCCIAtt.put(StorageAttribute.SOURCE.getValue(), normalizeSourceAttr);		
+		Order storageOrder = orderRepository.getOrderByInstance(normalizeTargetAttr);
+		Order computeOrder = orderRepository.getOrderByInstance(normalizeSourceAttr);
+		
+		if (!storageOrder.getProvidingMemberId().equals(computeOrder.getProvidingMemberId())) {
+			// TODO review the constant response
+			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.INVALID_STORAGE_LINK_DIFERENT_LOCATION);
+		} 	
+				
+		if (storageOrder == null || computeOrder == null 
+				|| (!storageOrder.isLocal() || !computeOrder.isLocal())) {
+			throw new OCCIException(ErrorType.BAD_REQUEST, "...");
+		}
+		
+		Token federationUserToken = getFederationUserToken(computeOrder);
+		if (federationUserToken == null) {
+			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
+		}		
+		
+		storagePlugin.attach(federationUserToken, categories, xOCCIAtt);
+		storageLinkRepository.addStorageLink(federationIdentityPlugin
+				.getToken(accessId).getUser(), new StorageLink(xOCCIAtt));		
+	}
 
 	public List<Flavor> getFlavorsProvided() {
 		return this.flavorsProvided;
 	}
+	
+	public void removeStorageLink(String accessId, String storageLinkId) {
+		LOGGER.debug("Removing storageId: " + storageLinkId);		
+		
+		Token token = federationIdentityPlugin.getToken(accessId);
+		if (token == null) {
+			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
+		}
+		StorageLink storageLink = storageLinkRepository.get(normalizeInstanceId(storageLinkId), token.getUser());
+		
+		if (storageLink == null) {
+			throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
+		}
+		
+		String storageId = normalizeInstanceId(storageLink.getTarget());
+		Order storageOrder = orderRepository.getOrderByInstance(storageId);
+		Token federationUserToken = getFederationUserToken(storageOrder);
+		
+		Map<String, String> xOCCIAtt = new HashMap<String, String>();
+		xOCCIAtt.put(StorageAttribute.TARGET.getValue(), storageId);
+		storagePlugin.dettach(federationUserToken, null, xOCCIAtt);
+		storageLinkRepository.remove(storageLinkId);
+		
+////		checkOrderId(accessId, storageLinkId);
+//		StorageLink storageLink = storageLinkRepository.get(storageLinkId);
+//		if (storageLink != null 
+////				&& storageLink.getProvidingMemberId() != null 
+//				&& (storageLink.getState().equals(OrderState.OPEN) 
+//						|| storageLink.getState().equals(OrderState.PENDING))) {
+//			removeAsynchronousRemoteOrders(storageLink, true);
+//		}
+//		storageLinkRepository.remove(storageLinkId);
+//		if (!instanceMonitoringTimer.isScheduled()) {
+//			triggerInstancesMonitor();
+//		}
+	}	
+	
+	public void removeAllStorageLink(String accessId) {
+//		String user = getUser(accessId);
+//		LOGGER.debug("Removing all storage links of user: " + user);
+//		storageLinkRepository.removeByUser(user);
+	}	
 
 	public List<ResourceUsage> getMembersUsage(String federationAccessId) {
 		checkFederationAccessId(federationAccessId);

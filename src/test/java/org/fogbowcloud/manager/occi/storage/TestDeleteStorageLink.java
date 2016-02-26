@@ -1,5 +1,6 @@
 package org.fogbowcloud.manager.occi.storage;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -20,12 +21,10 @@ import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
 import org.fogbowcloud.manager.core.plugins.MapperPlugin;
 import org.fogbowcloud.manager.core.plugins.StoragePlugin;
-import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.model.OCCIHeaders;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.order.Order;
-import org.fogbowcloud.manager.occi.order.OrderAttribute;
-import org.fogbowcloud.manager.occi.order.OrderConstants;
+import org.fogbowcloud.manager.occi.storage.StorageLinkRepository.StorageLink;
 import org.fogbowcloud.manager.occi.util.OCCITestHelper;
 import org.junit.After;
 import org.junit.Assert;
@@ -33,10 +32,14 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-public class TestDeleteStorage {
+public class TestDeleteStorageLink {
 
-	public static String INSTANCE_ID = "1234567ujhgf45hdb4w";
-	public static String OTHER_INSTANCE_ID = "otherInstanceId";
+	private static final String OTHER_ACCESS_TOKEN = "other_token";
+	
+	public static String STORAGE_LINK_ID_ONE = "SL_ONE";
+	public static String STORAGE_LINK_ID_TWO = "SL_TWO";
+	public static String STORAGE_LINK_ID_TRHEE = "SL_TRHEE";
+	public static String STORAGE_LINK_ID_FOUR = "SL_FOUR";
 
 	private OCCITestHelper helper;
 	private ImageStoragePlugin imageStoragePlugin;
@@ -48,41 +51,38 @@ public class TestDeleteStorage {
 	@Before
 	public void setup() throws Exception {
 		this.helper = new OCCITestHelper();
-		Token token = new Token(OCCITestHelper.ACCESS_TOKEN,
-				OCCITestHelper.USER_MOCK, DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
-				new HashMap<String, String>());
 		
 		storagePlugin = Mockito.mock(StoragePlugin.class);
-		Mockito.doNothing().when(storagePlugin).removeInstances(token);
-		Mockito.doNothing().when(storagePlugin)
-				.removeInstance(token, INSTANCE_ID);
 		
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Token tokenTwo = new Token("1", OCCITestHelper.USER_MOCK, new Date(),
 		new HashMap<String, String>());
 		Mockito.when(identityPlugin.getToken(OCCITestHelper.ACCESS_TOKEN))
 				.thenReturn(tokenTwo);
+		Mockito.when(identityPlugin.getToken(OTHER_ACCESS_TOKEN))
+		.thenReturn(tokenTwo);		
+		Token otherToken = new Token("other", "other", null, null);
+		Mockito.when(identityPlugin.getToken(OTHER_ACCESS_TOKEN)).thenReturn(otherToken);
+		Mockito.when(identityPlugin.isValid(OCCITestHelper.ACCESS_TOKEN)).thenReturn(true);	
+		
+		
+		storagePlugin = Mockito.mock(StoragePlugin.class);
 
 		List<Order> orders = new LinkedList<Order>();
-		HashMap<String, String> attributes = new HashMap<String, String>();
-		attributes.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.STORAGE_TERM);
 		
-		Order orderOne = new Order("1", new Token(OCCITestHelper.ACCESS_TOKEN,
-				OCCITestHelper.USER_MOCK, DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
-				attributes), null, attributes, true, "");
-		orderOne.setInstanceId(INSTANCE_ID);
-		orderOne.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
-		orders.add(orderOne);
-		Order orderTwo = new Order("2", new Token("otherToken", "otherUser",
-				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, attributes), null, attributes, true, "");
-		orderTwo.setInstanceId(OTHER_INSTANCE_ID);
-		orderTwo.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
-		orders.add(orderTwo);
-
 		AuthorizationPlugin authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
 		Mockito.when(authorizationPlugin.isAuthorized(Mockito.any(Token.class))).thenReturn(true);
 		
 		imageStoragePlugin = Mockito.mock(ImageStoragePlugin.class);
+		
+		List<StorageLink> storageLinks = new ArrayList<StorageLinkRepository.StorageLink>();
+		storageLinks.add(new StorageLink(STORAGE_LINK_ID_ONE, "sourceOne", "targetOne", "deviceOne"));
+		storageLinks.add(new StorageLink(STORAGE_LINK_ID_TWO, "sourceTwo", "targetTwo", "deviceTwo"));
+		storageLinks.add(new StorageLink(STORAGE_LINK_ID_TRHEE, "sourceThree", "targetThree", "deviceThree"));
+		storageLinks.add(new StorageLink(STORAGE_LINK_ID_FOUR, "sourceFour", "targetFour", "deviceFour"));
+		
+		Map<String, List<StorageLink>> storageLinksToAdd = new HashMap<String, List<StorageLink>>();
+		storageLinksToAdd.put(OCCITestHelper.USER_MOCK, storageLinks);			
 		
 		AccountingPlugin accountingPlugin = Mockito.mock(AccountingPlugin.class);
 		BenchmarkingPlugin benchmarkingPlugin = Mockito.mock(BenchmarkingPlugin.class);
@@ -99,7 +99,7 @@ public class TestDeleteStorage {
 		ordersToAdd.put(OCCITestHelper.USER_MOCK, orders);
 		
 		facade = this.helper.initializeComponentCompute(null, storagePlugin, identityPlugin, authorizationPlugin,
-				imageStoragePlugin, accountingPlugin, benchmarkingPlugin, ordersToAdd,
+				imageStoragePlugin, accountingPlugin, benchmarkingPlugin, ordersToAdd, storageLinksToAdd,
 				mapperPlugin);		
 	}
 
@@ -109,17 +109,17 @@ public class TestDeleteStorage {
 	}
 
 	@Test
-	public void testDelete() throws Exception {
-		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_STORAGE);
+	public void testDeleteSpecificStorageLink() throws Exception {
+		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_STORAGE_LINK);
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(httpGet);
 
-		Assert.assertEquals(2, OCCITestHelper.getLocationIds(response).size());
+		Assert.assertEquals(4, OCCITestHelper.getLocationIds(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 		
-		HttpDelete httpDelete = new HttpDelete(OCCITestHelper.URI_FOGBOW_STORAGE);
+		HttpDelete httpDelete = new HttpDelete(OCCITestHelper.URI_FOGBOW_STORAGE_LINK + STORAGE_LINK_ID_ONE);
 		httpDelete.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpDelete.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		client = HttpClients.createMinimal();
@@ -127,71 +127,32 @@ public class TestDeleteStorage {
 
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 		
-		httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_STORAGE);
+		httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_STORAGE_LINK);
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		client = HttpClients.createMinimal();
 		response = client.execute(httpGet);
 
-		Assert.assertEquals(0, OCCITestHelper.getLocationIds(response).size());
-		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
-				
+		Assert.assertEquals(3, OCCITestHelper.getLocationIds(response).size());
+		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());		
 	}
 
 	@Test
 	public void testDeleteSpecificInstanceOtherUser() throws Exception {		
-		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_STORAGE);
-		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
-		HttpClient client = HttpClients.createMinimal();
-		HttpResponse response = client.execute(httpGet);
-
-		Assert.assertEquals(2, OCCITestHelper.getLocationIds(response).size());
-		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());		
-		
-		HttpDelete httpDelete = new HttpDelete(OCCITestHelper.URI_FOGBOW_STORAGE
-				+ OTHER_INSTANCE_ID + Order.SEPARATOR_GLOBAL_ID + OCCITestHelper.MEMBER_ID);
+		HttpDelete httpDelete = new HttpDelete(OCCITestHelper.URI_FOGBOW_STORAGE_LINK
+				+ STORAGE_LINK_ID_ONE + Order.SEPARATOR_GLOBAL_ID + OCCITestHelper.MEMBER_ID);
 		httpDelete.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		httpDelete.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
-		client = HttpClients.createMinimal();
-		response = client.execute(httpDelete);
-
-		Assert.assertEquals(HttpStatus.SC_UNAUTHORIZED, response.getStatusLine().getStatusCode());
-	}
-
-	@Test
-	public void testDeleteSpecificInstanceFound() throws Exception {
-		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_STORAGE);
-		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		httpDelete.addHeader(OCCIHeaders.X_AUTH_TOKEN, OTHER_ACCESS_TOKEN);
 		HttpClient client = HttpClients.createMinimal();
-		HttpResponse response = client.execute(httpGet);
+		HttpResponse response = client.execute(httpDelete);
 
-		Assert.assertEquals(2, OCCITestHelper.getLocationIds(response).size());
-		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());		
-		
-		HttpDelete httpDelete = new HttpDelete(OCCITestHelper.URI_FOGBOW_STORAGE + INSTANCE_ID
-				+ Order.SEPARATOR_GLOBAL_ID + OCCITestHelper.MEMBER_ID);
-		httpDelete.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		httpDelete.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
-		client = HttpClients.createMinimal();
-		response = client.execute(httpDelete);
-
-		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
-		
-		httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_STORAGE);
-		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
-		client = HttpClients.createMinimal();
-		response = client.execute(httpGet);
-
-		Assert.assertEquals(1, OCCITestHelper.getLocationIds(response).size());
-		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());		
+		Assert.assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatusLine().getStatusCode());
 	}
 
 	@Test
 	public void testDeleteSpecificInstanceNotFound() throws Exception {
-		HttpDelete httpDelete = new HttpDelete(OCCITestHelper.URI_FOGBOW_STORAGE + "wrong");
+		HttpDelete httpDelete = new HttpDelete(OCCITestHelper.URI_FOGBOW_STORAGE_LINK + "wrong"
+						+ Order.SEPARATOR_GLOBAL_ID + OCCITestHelper.MEMBER_ID);
 		httpDelete.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpDelete.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		HttpClient client = HttpClients.createMinimal();
@@ -202,7 +163,7 @@ public class TestDeleteStorage {
 
 	@Test
 	public void testWrongAccessToken() throws Exception {
-		HttpDelete httpDelete = new HttpDelete(OCCITestHelper.URI_FOGBOW_STORAGE + INSTANCE_ID
+		HttpDelete httpDelete = new HttpDelete(OCCITestHelper.URI_FOGBOW_STORAGE_LINK + STORAGE_LINK_ID_ONE
 				+ Order.SEPARATOR_GLOBAL_ID + OCCITestHelper.MEMBER_ID);
 		httpDelete.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpDelete.addHeader(OCCIHeaders.X_AUTH_TOKEN, "wrong");
@@ -214,7 +175,7 @@ public class TestDeleteStorage {
 
 	@Test
 	public void testEmptyAccessToken() throws Exception {
-		HttpDelete httpDelete = new HttpDelete(OCCITestHelper.URI_FOGBOW_STORAGE);
+		HttpDelete httpDelete = new HttpDelete(OCCITestHelper.URI_FOGBOW_STORAGE_LINK);
 		httpDelete.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpDelete.addHeader(OCCIHeaders.X_AUTH_TOKEN, "");
 		HttpClient client = HttpClients.createMinimal();

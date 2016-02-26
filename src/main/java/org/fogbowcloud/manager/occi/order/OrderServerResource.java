@@ -436,6 +436,7 @@ public class OrderServerResource extends ServerResource {
 		return response.length() > 0 ? response.trim() : "\n";
 	}
 
+	// TODO remove this method, because there is the same method in the headerUtils class.
 	private String getHostRef(HttpRequest req) {
 		OCCIApplication application = (OCCIApplication) getApplication();
 		String myIp = application.getProperties().getProperty("my_ip");

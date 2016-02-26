@@ -20,6 +20,8 @@ import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.order.Order;
 import org.fogbowcloud.manager.occi.order.OrderConstants;
 import org.fogbowcloud.manager.occi.order.OrderServerResource;
+import org.fogbowcloud.manager.occi.storage.StorageLinkRepository.StorageLink;
+import org.fogbowcloud.manager.occi.storage.StorageLinkServerResource;
 import org.fogbowcloud.manager.occi.storage.StorageServerResource;
 import org.restlet.Application;
 import org.restlet.Response;
@@ -46,6 +48,10 @@ public class OCCIApplication extends Application {
 		router.attach("/" + OrderConstants.STORAGE_TERM, StorageServerResource.class);
 		router.attach("/" + OrderConstants.STORAGE_TERM + "/", StorageServerResource.class);
 		router.attach("/" + OrderConstants.STORAGE_TERM + "/{storageId}", StorageServerResource.class);
+		router.attach("/" + OrderConstants.STORAGE_TERM + "/" + OrderConstants.STORAGE_LINK_TERM + "/"
+				, StorageLinkServerResource.class);
+		router.attach("/" + OrderConstants.STORAGE_TERM + "/" + OrderConstants.STORAGE_LINK_TERM
+				+ "/{storageLinkId}", StorageLinkServerResource.class);
 		router.attach("/" + OrderConstants.COMPUTE_TERM, ComputeServerResource.class);
 		router.attach("/" + OrderConstants.COMPUTE_TERM + "/", ComputeServerResource.class);
 		router.attach("/" + OrderConstants.COMPUTE_TERM + "/{instanceId}", ComputeServerResource.class);
@@ -127,15 +133,28 @@ public class OCCIApplication extends Application {
 		return managerFacade.getFederationMemberQuota(federationMemberId, accessId);
 	}	
 
+	public StorageLink getStorageLink(String authToken, String storageLinkId) {
+		return managerFacade.getStorageLink(authToken, storageLinkId);
+	}
+	
 	public Order getOrder(String authToken, String orderId) {
 		return managerFacade.getOrder(authToken, orderId);
 	}
 
+	public void createStorageLink(String federationAuthToken, List<Category> categories,
+			Map<String, String> xOCCIAtt) {
+		managerFacade.createStorageLink(federationAuthToken, categories, xOCCIAtt);
+	}
+	
 	public List<Order> createOrders(String federationAuthToken, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
 		return managerFacade.createOrders(federationAuthToken, categories, xOCCIAtt);
 	}
 
+	public List<StorageLink> getStorageLinksFromUser(String authToken) {
+		return managerFacade.getStorageLinkFromUser(authToken);
+	}
+	
 	public List<Order> getOrdersFromUser(String authToken) {
 		return managerFacade.getOrdersFromUser(authToken);
 	}
@@ -143,10 +162,18 @@ public class OCCIApplication extends Application {
 	public void removeAllOrders(String authToken) {
 		managerFacade.removeAllOrders(authToken);
 	}
+	
+	public void removeAllStorageLink(String authToken) {
+		managerFacade.removeAllOrders(authToken);
+	}	
 
 	public void removeOrder(String authToken, String orderId) {
 		managerFacade.removeOrder(authToken, orderId);
 	}
+	
+	public void removeStorageLink(String authToken, String orderId) {
+		managerFacade.removeStorageLink(authToken, orderId);
+	}	
 
 	public List<Instance> getInstances(String authToken) {
 		return getInstances(authToken, null);

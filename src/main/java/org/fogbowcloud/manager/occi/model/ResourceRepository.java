@@ -39,6 +39,16 @@ public class ResourceRepository {
 				FOGBOWCLOUD_ENDPOINT + "/" + OrderConstants.TERM + "/", "Order new Instances",
 				OrderConstants.RESOURCE_OCCI_SCHEME);
 		
+		Resource fogbowStorage = new Resource(OrderConstants.STORAGE_TERM, OrderConstants.INFRASTRUCTURE_OCCI_SCHEME,
+				OrderConstants.KIND_CLASS, OrderAttribute.getValues(), new ArrayList<String>(),
+				FOGBOWCLOUD_ENDPOINT + "/" + OrderConstants.STORAGE_TERM + "/", "Storage Instances",
+				OrderConstants.INFRASTRUCTURE_OCCI_SCHEME);		
+		
+		Resource fogbowStorageLink = new Resource(OrderConstants.STORAGELINK_TERM, OrderConstants.INFRASTRUCTURE_OCCI_SCHEME,
+				OrderConstants.KIND_CLASS, OrderAttribute.getValues(), new ArrayList<String>(),
+				FOGBOWCLOUD_ENDPOINT + "/" + OrderConstants.STORAGELINK_TERM + "/", "Storage link Instances",
+				OrderConstants.INFRASTRUCTURE_OCCI_SCHEME);				
+		
 		//TODO implement properties of attributes. For example, {immutable}
 		List<String> computeAttributes = new ArrayList<String>();
 		computeAttributes.add("occi.compute.architecture");
@@ -89,6 +99,8 @@ public class ResourceRepository {
 		
 		//TODO add actions	
 		resources.add(fogbowOrder);
+		resources.add(fogbowStorageLink);
+		resources.add(fogbowStorage);
 		resources.add(compute);
 		resources.add(fogbowUserdata);
 

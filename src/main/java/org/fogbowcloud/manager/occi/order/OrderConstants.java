@@ -10,6 +10,9 @@ public class OrderConstants {
 	public static final Integer DEFAULT_INSTANCE_COUNT = 1;
 	public static final String DEFAULT_TYPE = OrderType.ONE_TIME.getValue();
 
+	// storage link
+	public static final String STORAGELINK_TERM = "storagelink";
+	
 	// size flavors
 	public static final String TEMPLATE_RESOURCE_SCHEME = "http://schemas.fogbowcloud.org/template/resource#";
 	public static final String SMALL_TERM = "fogbow_small";
@@ -30,6 +33,7 @@ public class OrderConstants {
 	// OCCI constants
 	public static final String COMPUTE_TERM = "compute";
 	public static final String STORAGE_TERM = "storage";
+	public static final String STORAGE_LINK_TERM = "link";
 	public static final String INFRASTRUCTURE_OCCI_SCHEME = "http://schemas.ogf.org/occi/infrastructure#";
 	public static final String RESOURCE_TPL_OCCI_SCHEME = "http://schemas.ogf.org/occi/infrastructure#resource_tpl";
 	public static final String RESOURCE_OCCI_SCHEME = "http://schemas.ogf.org/occi/core#resource";

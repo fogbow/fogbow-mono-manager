@@ -79,7 +79,7 @@ public class TestOpenStackV2StoragePlugin {
 		request.addHeader(OCCIHeaders.ACCEPT, OCCIHeaders.JSON_CONTENT_TYPE);
 		request.addHeader(OCCIHeaders.X_AUTH_TOKEN, tokenDefault.getAccessId());				
 		expectedRequest = new HttpUriRequestMatcher(request, openStackV2StoragePlugin
-				.generateJsonEntityToRequest(SIZE).toString());	
+				.generateJsonEntityToCreateInstance(SIZE).toString());	
 				
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
 		xOCCIAtt.put(OrderAttribute.STORAGE_SIZE.getValue(), SIZE);
@@ -99,7 +99,7 @@ public class TestOpenStackV2StoragePlugin {
 	
 	@Test
 	public void testGenerateJsonEntityToRequest() throws JSONException {
-		JSONObject jsonEntity = openStackV2StoragePlugin.generateJsonEntityToRequest(SIZE);
+		JSONObject jsonEntity = openStackV2StoragePlugin.generateJsonEntityToCreateInstance(SIZE);
 		Assert.assertEquals(SIZE, jsonEntity.getJSONObject(OpenStackV2StoragePlugin.KEY_JSON_VOLUME)
 				.getString(OpenStackV2StoragePlugin.KEY_JSON_SIZE));
 	}
