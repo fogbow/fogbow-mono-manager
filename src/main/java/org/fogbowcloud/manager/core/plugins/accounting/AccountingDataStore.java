@@ -7,7 +7,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import org.apache.log4j.Logger;
@@ -87,6 +89,7 @@ public class AccountingDataStore {
 
 			if (hasBatchExecutionError(insertMemberStatement.executeBatch())
 					| hasBatchExecutionError(updateMemberStatement.executeBatch())) {
+				LOGGER.debug("Rollback will be executed.");
 				connection.rollback();
 				return false;
 			}
@@ -125,22 +128,44 @@ public class AccountingDataStore {
 		List<AccountingEntryKey> entryKeys = getEntryKeys();
 
 		LOGGER.debug("Databa entry keys=" + entryKeys);
+		
+		// preprocessing data
+		Map<AccountingEntryKey, AccountingInfo> processedUsage = new HashMap<AccountingEntryKey, AccountingInfo>();
+		
 		for (AccountingInfo accountingInfo : usage) {
+			// insert operation
+			AccountingEntryKey currentKey = new AccountingEntryKey(accountingInfo.getUser(), accountingInfo
+					.getRequestingMember(), accountingInfo.getProvidingMember());
+			if (!entryKeys.contains(currentKey)) {				
+				if (processedUsage.containsKey(currentKey)) {
+					processedUsage.get(currentKey).addConsuption(accountingInfo.getUsage());
+				} else {
+					processedUsage.put(currentKey, accountingInfo);
+				}				
+			} else { // update operation
+				processedUsage.put(currentKey, accountingInfo);
+			}
+		}
+		
+		// creating statements
+		for (AccountingEntryKey currentKey : processedUsage.keySet()) {
+			AccountingInfo accountingEntry = processedUsage.get(currentKey);
 			// inserting new usage entry
-			if (!entryKeys.contains(new AccountingEntryKey(accountingInfo.getUser(), accountingInfo
-					.getRequestingMember(), accountingInfo.getProvidingMember()))) {
+			if (!entryKeys.contains(currentKey)) {
 
-				insertMemberStatement.setString(1, accountingInfo.getUser());
-				insertMemberStatement.setString(2, accountingInfo.getRequestingMember());
-				insertMemberStatement.setString(3, accountingInfo.getProvidingMember());
-				insertMemberStatement.setDouble(4, accountingInfo.getUsage());
+				LOGGER.debug("New accountingEntry=" + accountingEntry);
+				insertMemberStatement.setString(1, accountingEntry.getUser());
+				insertMemberStatement.setString(2, accountingEntry.getRequestingMember());
+				insertMemberStatement.setString(3, accountingEntry.getProvidingMember());
+				insertMemberStatement.setDouble(4, accountingEntry.getUsage());
 				insertMemberStatement.addBatch();
 				
 			} else { // updating an existing entry
-				updateMemberStatement.setDouble(1, accountingInfo.getUsage());
-				updateMemberStatement.setString(2, accountingInfo.getUser());
-				updateMemberStatement.setString(3, accountingInfo.getRequestingMember());
-				updateMemberStatement.setString(4, accountingInfo.getProvidingMember());
+				LOGGER.debug("Existing accountingEntry=" + accountingEntry);
+				updateMemberStatement.setDouble(1, accountingEntry.getUsage());
+				updateMemberStatement.setString(2, accountingEntry.getUser());
+				updateMemberStatement.setString(3, accountingEntry.getRequestingMember());
+				updateMemberStatement.setString(4, accountingEntry.getProvidingMember());
 				updateMemberStatement.addBatch();
 			}
 		}
