@@ -1,4 +1,4 @@
-package org.fogbowcloud.manager.core.plugins.accounting.userbased;
+package org.fogbowcloud.manager.core.plugins.accounting;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -7,11 +7,12 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import org.apache.log4j.Logger;
-import org.fogbowcloud.manager.core.plugins.accounting.AccountingInfo;
 
 public class AccountingDataStore {
 
@@ -88,6 +89,7 @@ public class AccountingDataStore {
 
 			if (hasBatchExecutionError(insertMemberStatement.executeBatch())
 					| hasBatchExecutionError(updateMemberStatement.executeBatch())) {
+				LOGGER.debug("Rollback will be executed.");
 				connection.rollback();
 				return false;
 			}
@@ -125,23 +127,46 @@ public class AccountingDataStore {
 		
 		List<AccountingEntryKey> entryKeys = getEntryKeys();
 
-		LOGGER.debug("Databa entry keys=" + entryKeys);
+		LOGGER.debug("Database entry keys=" + entryKeys);
+		
+		// preprocessing data
+		Map<AccountingEntryKey, AccountingInfo> processedUsage = new HashMap<AccountingEntryKey, AccountingInfo>();
+		
 		for (AccountingInfo accountingInfo : usage) {
-			// inserting new usage entry
-			if (!entryKeys.contains(new AccountingEntryKey(accountingInfo.getUser(), accountingInfo
-					.getRequestingMember(), accountingInfo.getProvidingMember()))) {
+			// insert operation
+			AccountingEntryKey currentKey = new AccountingEntryKey(accountingInfo.getUser(), accountingInfo
+					.getRequestingMember(), accountingInfo.getProvidingMember());
+			if (!entryKeys.contains(currentKey)) {
 
-				insertMemberStatement.setString(1, accountingInfo.getUser());
-				insertMemberStatement.setString(2, accountingInfo.getRequestingMember());
-				insertMemberStatement.setString(3, accountingInfo.getProvidingMember());
-				insertMemberStatement.setDouble(4, accountingInfo.getUsage());
+				if (processedUsage.containsKey(currentKey)) {
+					processedUsage.get(currentKey).addConsuption(accountingInfo.getUsage());
+				} else {
+					processedUsage.put(currentKey, accountingInfo);
+				}				
+			} else { // update operation
+				processedUsage.put(currentKey, accountingInfo);
+			}
+		}
+		
+		// creating statements
+		for (AccountingEntryKey currentKey : processedUsage.keySet()) {
+			AccountingInfo accountingEntry = processedUsage.get(currentKey);
+			// inserting new usage entry
+			if (!entryKeys.contains(currentKey)) {
+
+				LOGGER.debug("New accountingEntry=" + accountingEntry);
+				insertMemberStatement.setString(1, accountingEntry.getUser());
+				insertMemberStatement.setString(2, accountingEntry.getRequestingMember());
+				insertMemberStatement.setString(3, accountingEntry.getProvidingMember());
+				insertMemberStatement.setDouble(4, accountingEntry.getUsage());
 				insertMemberStatement.addBatch();
 				
 			} else { // updating an existing entry
-				updateMemberStatement.setDouble(1, accountingInfo.getUsage());
-				updateMemberStatement.setString(2, accountingInfo.getUser());
-				updateMemberStatement.setString(3, accountingInfo.getRequestingMember());
-				updateMemberStatement.setString(4, accountingInfo.getProvidingMember());
+				LOGGER.debug("Existing accountingEntry=" + accountingEntry);
+				updateMemberStatement.setDouble(1, accountingEntry.getUsage());
+				updateMemberStatement.setString(2, accountingEntry.getUser());
+				updateMemberStatement.setString(3, accountingEntry.getRequestingMember());
+				updateMemberStatement.setString(4, accountingEntry.getProvidingMember());
 				updateMemberStatement.addBatch();
 			}
 		}
@@ -192,41 +217,41 @@ public class AccountingDataStore {
 	private static final String SELECT_SPECIFIC_USAGE_SQL = "SELECT * FROM " + USAGE_TABLE_NAME
 			+ " WHERE user = ? AND requesting_member = ? AND providing_member = ?";
 	
-	public AccountingInfo getAccountingInfo(Object key) {
+	private AccountingInfo getAccountingInfo(AccountingEntryKey key) {
 		LOGGER.debug("Getting accountingInfo to " + key);
-		
-		if (key instanceof AccountingEntryKey) {
-			AccountingEntryKey entryKey = (AccountingEntryKey) key;
-			
-			PreparedStatement statement = null;
-			Connection conn = null;
-			try {
-				conn = getConnection();
-				statement = conn.prepareStatement(SELECT_SPECIFIC_USAGE_SQL);
-				statement.setString(1, entryKey.getUser());
-				statement.setString(2, entryKey.getRequestingMember());
-				statement.setString(3, entryKey.getProvidingMember());
-				statement.execute();
-				
-				ResultSet rs = statement.getResultSet();
 
-				if (rs.next()) {
-					String user = rs.getString(USER_COL);
-					String requestingMember = rs.getString(REQUESTING_MEMBER_COL);
-					String providingMember = rs.getString(PROVIDING_MEMBER_COL);
-					double usage = rs.getDouble(USAGE_COL);
-					
-					AccountingInfo accountingInfo = new AccountingInfo(user, requestingMember, providingMember);
-					accountingInfo.addConsuption(usage);
-					return accountingInfo;
-				}
-			} catch (SQLException e) {
-				LOGGER.error("Couldn't get keys from DB.", e);
-				return null;
-			} finally {
-				close(statement, conn);
+		AccountingEntryKey entryKey = (AccountingEntryKey) key;
+
+		PreparedStatement statement = null;
+		Connection conn = null;
+		try {
+			conn = getConnection();
+			statement = conn.prepareStatement(SELECT_SPECIFIC_USAGE_SQL);
+			statement.setString(1, entryKey.getUser());
+			statement.setString(2, entryKey.getRequestingMember());
+			statement.setString(3, entryKey.getProvidingMember());
+			statement.execute();
+
+			ResultSet rs = statement.getResultSet();
+
+			if (rs.next()) {
+				String user = rs.getString(USER_COL);
+				String requestingMember = rs.getString(REQUESTING_MEMBER_COL);
+				String providingMember = rs.getString(PROVIDING_MEMBER_COL);
+				double usage = rs.getDouble(USAGE_COL);
+
+				AccountingInfo accountingInfo = new AccountingInfo(user, requestingMember,
+						providingMember);
+				accountingInfo.addConsuption(usage);
+				return accountingInfo;
 			}
+		} catch (SQLException e) {
+			LOGGER.error("Couldn't get keys from DB.", e);
+			return null;
+		} finally {
+			close(statement, conn);
 		}
+
 		return null;
 	}
 
@@ -250,7 +275,7 @@ public class AccountingDataStore {
 					statement.close();
 				}
 			} catch (SQLException e) {
-				LOGGER.error("Couldn't close statement");
+				LOGGER.error("Couldn't close statement", e);
 			}
 		}
 
@@ -260,7 +285,7 @@ public class AccountingDataStore {
 					conn.close();
 				}
 			} catch (SQLException e) {
-				LOGGER.error("Couldn't close connection");
+				LOGGER.error("Couldn't close connection", e);
 			}
 		}
 	}
@@ -282,6 +307,11 @@ public class AccountingDataStore {
 			return null;
 		}
 		return accounting;
+	}
+
+	public AccountingInfo getAccountingInfo(String user, String requestingMember,
+			String providingMember) {
+		return getAccountingInfo(new AccountingEntryKey(user, requestingMember, providingMember));
 	}
 }
 
@@ -317,6 +347,11 @@ class AccountingEntryKey {
 					&& getRequestingMember().equals(other.getRequestingMember());
 		}
 		return false;
+	}
+	
+	@Override
+	public int hashCode() {
+		return toString().hashCode();
 	}
 	
 	@Override

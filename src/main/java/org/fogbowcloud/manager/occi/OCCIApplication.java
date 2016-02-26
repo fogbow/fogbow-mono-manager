@@ -9,10 +9,11 @@ import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.plugins.accounting.AccountingInfo;
-import org.fogbowcloud.manager.core.plugins.accounting.ResourceUsage;
 import org.fogbowcloud.manager.occi.instance.ComputeServerResource;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.member.MemberServerResource;
+import org.fogbowcloud.manager.occi.member.QuotaServerResource;
+import org.fogbowcloud.manager.occi.member.UsageServerResource;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.HeaderUtils;
 import org.fogbowcloud.manager.occi.model.OCCIHeaders;
@@ -49,13 +50,13 @@ public class OCCIApplication extends Application {
 		router.attach("/member/accounting", AccountingServerResource.class);
 		router.attach("/member/accounting/", AccountingServerResource.class);
 		router.attach("/member", MemberServerResource.class);
-		router.attach("/member/{memberId}/quota", MemberServerResource.class);
+		router.attach("/member/{memberId}/quota", QuotaServerResource.class);
+		router.attach("/member/{memberId}/quota/", QuotaServerResource.class);
+		router.attach("/member/{memberId}/usage", UsageServerResource.class);
 		//TODO remove this endpoint
 		router.attach("/token", TokenServerResource.class);
 		router.attach("/-/", QueryServerResource.class);
 		router.attach("/.well-known/org/ogf/occi/-/", QueryServerResource.class);
-		router.attach("/usage", UsageServerResource.class);
-		router.attach("/usage/{option}", UsageServerResource.class);
 		router.attachDefault(new Restlet() {
 			@Override
 			public void handle(org.restlet.Request request, Response response) {
@@ -193,19 +194,15 @@ public class OCCIApplication extends Application {
 		return managerFacade.getFlavorsProvided();
 	}
 
-	public List<ResourceUsage> getMembersUsage(String authToken) {
-		return managerFacade.getMembersUsage(authToken);
-	}
-
-	public Map<String, Double> getUsersUsage(String authToken) {		
-		return managerFacade.getUsersUsage(authToken);
-	}
-
 	public String getUser(String authToken) {
 		return managerFacade.getUser(authToken);
 	}
 
 	public List<AccountingInfo> getAccountingInfo(String authToken) {
 		return managerFacade.getAccountingInfo(authToken);
+	}
+
+	public double getUsage(String authToken, String memberId) {
+		return managerFacade.getUsage(authToken, memberId);
 	}
 }

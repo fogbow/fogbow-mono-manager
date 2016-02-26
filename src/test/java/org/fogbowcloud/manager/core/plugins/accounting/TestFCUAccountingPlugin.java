@@ -1,4 +1,4 @@
-package org.fogbowcloud.manager.core.plugins.accounting.userbased;
+package org.fogbowcloud.manager.core.plugins.accounting;
 
 import java.io.File;
 import java.io.IOException;
@@ -11,6 +11,7 @@ import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
 import org.fogbowcloud.manager.core.plugins.accounting.AccountingInfo;
+import org.fogbowcloud.manager.core.plugins.accounting.FCUAccountingPlugin;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.order.Order;
 import org.fogbowcloud.manager.occi.order.OrderState;
@@ -20,12 +21,12 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-public class TestUserBasedFCUAccountingPlugin {
+public class TestFCUAccountingPlugin {
 
 	private static final double ACCEPTABLE_ERROR = 0.0;
 	private static final String FAKE_DB_PATH = "src/test/resources/testdbaccounting.sqlite";
 	private BenchmarkingPlugin benchmarkingPlugin;
-	private UserBasedFCUAccountingPlugin accountingPlugin;
+	private FCUAccountingPlugin accountingPlugin;
 	Properties properties;
 
 	@Before
@@ -35,7 +36,7 @@ public class TestUserBasedFCUAccountingPlugin {
 		properties.put("accounting_datastore_url", "jdbc:sqlite:" + FAKE_DB_PATH);
 		properties.put(ConfigurationConstants.XMPP_JID_KEY, "localMemberId");
 
-		accountingPlugin = new UserBasedFCUAccountingPlugin(properties, benchmarkingPlugin);
+		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin);
 	}
 
 	@After
@@ -63,7 +64,7 @@ public class TestUserBasedFCUAccountingPlugin {
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 		Mockito.when(benchmarkingPlugin.getPower("instanceId@remoteMemberId")).thenReturn(2d);
 
-		accountingPlugin = new UserBasedFCUAccountingPlugin(properties, benchmarkingPlugin,
+		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin,
 				dateUtils);
 
 		Order order = new Order("id1", new Token("accessId", "userId", null,
@@ -104,7 +105,7 @@ public class TestUserBasedFCUAccountingPlugin {
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 		Mockito.when(benchmarkingPlugin.getPower("instanceId@localMemberId")).thenReturn(2d);
 
-		accountingPlugin = new UserBasedFCUAccountingPlugin(properties, benchmarkingPlugin,
+		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin,
 				dateUtils);
 
 		Order order = new Order("id1", new Token("accessId", "userId", null,
@@ -146,7 +147,7 @@ public class TestUserBasedFCUAccountingPlugin {
 		Mockito.when(benchmarkingPlugin.getPower("instanceId@localMemberId")).thenReturn(2d);
 		Mockito.when(benchmarkingPlugin.getPower("instanceId@remoteMemberId")).thenReturn(3d);
 
-		accountingPlugin = new UserBasedFCUAccountingPlugin(properties, benchmarkingPlugin,
+		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin,
 				dateUtils);
 
 		Order localOrder = new Order("localId1", new Token("accessId", "localUserId", null,
@@ -224,7 +225,7 @@ public class TestUserBasedFCUAccountingPlugin {
 		Mockito.when(benchmarkingPlugin.getPower("instanceId@remote1MemberId")).thenReturn(3d);
 		Mockito.when(benchmarkingPlugin.getPower("instanceId@remote2MemberId")).thenReturn(5d);
 
-		accountingPlugin = new UserBasedFCUAccountingPlugin(properties, benchmarkingPlugin,
+		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin,
 				dateUtils);
 
 		Order localOrder1 = new Order("localId1", new Token("accessId", "userId", null,
@@ -265,8 +266,8 @@ public class TestUserBasedFCUAccountingPlugin {
 
 		// checking usage on remote1
 		double usageOnRemote1 = benchmarkingPlugin.getPower("instanceId@remote1MemberId") * 2;
-		AccountingInfo accountingInfo = accountingPlugin.getAccountingInfo(new AccountingEntryKey(
-				"userId", "localMemberId", "remote1MemberId"));
+		AccountingInfo accountingInfo = accountingPlugin.getAccountingInfo("userId",
+				"localMemberId", "remote1MemberId");
 
 		Assert.assertNotNull(accountingInfo);
 		Assert.assertEquals("localMemberId", accountingInfo.getRequestingMember());
@@ -276,8 +277,8 @@ public class TestUserBasedFCUAccountingPlugin {
 
 		// checking usage on remote1
 		double usageOnRemote2 = benchmarkingPlugin.getPower("instanceId@remote2MemberId") * 2;
-		accountingInfo = accountingPlugin.getAccountingInfo(new AccountingEntryKey("userId",
-				"localMemberId", "remote2MemberId"));
+		accountingInfo = accountingPlugin.getAccountingInfo("userId", "localMemberId",
+				"remote2MemberId");
 
 		Assert.assertNotNull(accountingInfo);
 		Assert.assertEquals("localMemberId", accountingInfo.getRequestingMember());
@@ -287,8 +288,8 @@ public class TestUserBasedFCUAccountingPlugin {
 
 		// checking usage on local
 		double usageOnLocal = benchmarkingPlugin.getPower("instanceId@localMemberId") * 2;
-		accountingInfo = accountingPlugin.getAccountingInfo(new AccountingEntryKey("userId",
-				"remote1MemberId", "localMemberId"));
+		accountingInfo = accountingPlugin.getAccountingInfo("userId", "remote1MemberId",
+				"localMemberId");
 
 		Assert.assertNotNull(accountingInfo);
 		Assert.assertEquals("remote1MemberId", accountingInfo.getRequestingMember());
@@ -309,7 +310,7 @@ public class TestUserBasedFCUAccountingPlugin {
 		Mockito.when(benchmarkingPlugin.getPower("instanceId3@localMemberId")).thenReturn(4d);
 		Mockito.when(benchmarkingPlugin.getPower("instanceId4@localMemberId")).thenReturn(5d);
 
-		accountingPlugin = new UserBasedFCUAccountingPlugin(properties, benchmarkingPlugin,
+		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin,
 				dateUtils);
 
 		Order localOrderUser1 = new Order("localId1", new Token("accessId", "userId1", null,
@@ -358,8 +359,8 @@ public class TestUserBasedFCUAccountingPlugin {
 
 		// checking usage of userId1
 		double usageOrderingOnLocal = benchmarkingPlugin.getPower("instanceId1@localMemberId") * 2;
-		AccountingInfo accountingInfo = accountingPlugin.getAccountingInfo(new AccountingEntryKey(
-				"userId1", "localMemberId", "localMemberId"));
+		AccountingInfo accountingInfo = accountingPlugin.getAccountingInfo("userId1",
+				"localMemberId", "localMemberId");
 
 		Assert.assertNotNull(accountingInfo);
 		Assert.assertEquals("localMemberId", accountingInfo.getRequestingMember());
@@ -368,8 +369,8 @@ public class TestUserBasedFCUAccountingPlugin {
 		Assert.assertEquals(usageOrderingOnLocal, accountingInfo.getUsage(), ACCEPTABLE_ERROR);
 
 		double usageOrderingOnRemote = benchmarkingPlugin.getPower("instanceId3@localMemberId") * 2;
-		accountingInfo = accountingPlugin.getAccountingInfo(new AccountingEntryKey("userId1",
-				"remoteMemberId", "localMemberId"));
+		accountingInfo = accountingPlugin.getAccountingInfo("userId1", "remoteMemberId",
+				"localMemberId");
 
 		Assert.assertNotNull(accountingInfo);
 		Assert.assertEquals("remoteMemberId", accountingInfo.getRequestingMember());
@@ -379,8 +380,8 @@ public class TestUserBasedFCUAccountingPlugin {
 
 		// checking usage of userId2
 		usageOrderingOnLocal = benchmarkingPlugin.getPower("instanceId2@localMemberId") * 2;
-		accountingInfo = accountingPlugin.getAccountingInfo(new AccountingEntryKey("userId2",
-				"localMemberId", "localMemberId"));
+		accountingInfo = accountingPlugin.getAccountingInfo("userId2", "localMemberId",
+				"localMemberId");
 
 		Assert.assertNotNull(accountingInfo);
 		Assert.assertEquals("localMemberId", accountingInfo.getRequestingMember());
@@ -389,8 +390,8 @@ public class TestUserBasedFCUAccountingPlugin {
 		Assert.assertEquals(usageOrderingOnLocal, accountingInfo.getUsage(), ACCEPTABLE_ERROR);
 
 		usageOrderingOnRemote = benchmarkingPlugin.getPower("instanceId4@localMemberId") * 2;
-		accountingInfo = accountingPlugin.getAccountingInfo(new AccountingEntryKey("userId2",
-				"remoteMemberId", "localMemberId"));
+		accountingInfo = accountingPlugin.getAccountingInfo("userId2", "remoteMemberId",
+				"localMemberId");
 
 		Assert.assertNotNull(accountingInfo);
 		Assert.assertEquals("remoteMemberId", accountingInfo.getRequestingMember());
@@ -409,7 +410,7 @@ public class TestUserBasedFCUAccountingPlugin {
 		Mockito.when(benchmarkingPlugin.getPower("instanceId@localMemberId")).thenReturn(2d);
 		Mockito.when(benchmarkingPlugin.getPower("instanceId@remoteMemberId")).thenReturn(3d);
 
-		accountingPlugin = new UserBasedFCUAccountingPlugin(properties, benchmarkingPlugin,
+		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin,
 				dateUtils);
 
 		Order localOrder = new Order("localId1", new Token("accessId", "localUserId", null,
@@ -442,8 +443,8 @@ public class TestUserBasedFCUAccountingPlugin {
 
 		// checking usage of local user
 		double usageByLocalUser = benchmarkingPlugin.getPower("instanceId@remoteMemberId") * 2;
-		AccountingInfo accountingInfo = accountingPlugin.getAccountingInfo(new AccountingEntryKey(
-				"localUserId", "localMemberId", "remoteMemberId"));
+		AccountingInfo accountingInfo = accountingPlugin.getAccountingInfo("localUserId",
+				"localMemberId", "remoteMemberId");
 		Assert.assertEquals("localMemberId", accountingInfo.getRequestingMember());
 		Assert.assertEquals("remoteMemberId", accountingInfo.getProvidingMember());
 		Assert.assertEquals("localUserId", accountingInfo.getUser());
@@ -451,8 +452,8 @@ public class TestUserBasedFCUAccountingPlugin {
 
 		// checking usage of remote user
 		double usageByRemoteUser = benchmarkingPlugin.getPower("instanceId@localMemberId") * 2;
-		accountingInfo = accountingPlugin.getAccountingInfo(new AccountingEntryKey("remoteUserId",
-				"remoteMemberId", "localMemberId"));
+		accountingInfo = accountingPlugin.getAccountingInfo("remoteUserId", "remoteMemberId",
+				"localMemberId");
 		Assert.assertEquals("remoteMemberId", accountingInfo.getRequestingMember());
 		Assert.assertEquals("localMemberId", accountingInfo.getProvidingMember());
 		Assert.assertEquals("remoteUserId", accountingInfo.getUser());
@@ -469,8 +470,8 @@ public class TestUserBasedFCUAccountingPlugin {
 
 		// checking usage of local user
 		usageByLocalUser = benchmarkingPlugin.getPower("instanceId@remoteMemberId") * 4;
-		accountingInfo = accountingPlugin.getAccountingInfo(new AccountingEntryKey("localUserId",
-				"localMemberId", "remoteMemberId"));
+		accountingInfo = accountingPlugin.getAccountingInfo("localUserId", "localMemberId",
+				"remoteMemberId");
 		Assert.assertEquals("localMemberId", accountingInfo.getRequestingMember());
 		Assert.assertEquals("remoteMemberId", accountingInfo.getProvidingMember());
 		Assert.assertEquals("localUserId", accountingInfo.getUser());
@@ -478,8 +479,8 @@ public class TestUserBasedFCUAccountingPlugin {
 
 		// checking usage of remote user
 		usageByRemoteUser = benchmarkingPlugin.getPower("instanceId@localMemberId") * 4;
-		accountingInfo = accountingPlugin.getAccountingInfo(new AccountingEntryKey("remoteUserId",
-				"remoteMemberId", "localMemberId"));
+		accountingInfo = accountingPlugin.getAccountingInfo("remoteUserId", "remoteMemberId",
+				"localMemberId");
 		Assert.assertEquals("remoteMemberId", accountingInfo.getRequestingMember());
 		Assert.assertEquals("localMemberId", accountingInfo.getProvidingMember());
 		Assert.assertEquals("remoteUserId", accountingInfo.getUser());
@@ -497,7 +498,7 @@ public class TestUserBasedFCUAccountingPlugin {
 		Mockito.when(benchmarkingPlugin.getPower("instanceId@remoteMemberId")).thenReturn(3d);
 		Mockito.when(benchmarkingPlugin.getPower("instanceId2@remoteMemberId")).thenReturn(4d);
 
-		accountingPlugin = new UserBasedFCUAccountingPlugin(properties, benchmarkingPlugin,
+		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin,
 				dateUtils);
 
 		Order localOrder = new Order("localId1", new Token("accessId", "localUserId", null,
@@ -530,8 +531,8 @@ public class TestUserBasedFCUAccountingPlugin {
 
 		// checking usage of local user
 		double usageByLocalUser = benchmarkingPlugin.getPower("instanceId@remoteMemberId") * 2;
-		AccountingInfo accountingInfo = accountingPlugin.getAccountingInfo(new AccountingEntryKey(
-				"localUserId", "localMemberId", "remoteMemberId"));
+		AccountingInfo accountingInfo = accountingPlugin.getAccountingInfo("localUserId",
+				"localMemberId", "remoteMemberId");
 		Assert.assertEquals("localMemberId", accountingInfo.getRequestingMember());
 		Assert.assertEquals("remoteMemberId", accountingInfo.getProvidingMember());
 		Assert.assertEquals("localUserId", accountingInfo.getUser());
@@ -539,8 +540,8 @@ public class TestUserBasedFCUAccountingPlugin {
 
 		// checking usage of remote user
 		double usageByRemoteUser = benchmarkingPlugin.getPower("instanceId@localMemberId") * 2;
-		accountingInfo = accountingPlugin.getAccountingInfo(new AccountingEntryKey("remoteUserId",
-				"remoteMemberId", "localMemberId"));
+		accountingInfo = accountingPlugin.getAccountingInfo("remoteUserId", "remoteMemberId",
+				"localMemberId");
 		Assert.assertEquals("remoteMemberId", accountingInfo.getRequestingMember());
 		Assert.assertEquals("localMemberId", accountingInfo.getProvidingMember());
 		Assert.assertEquals("remoteUserId", accountingInfo.getUser());
@@ -567,8 +568,8 @@ public class TestUserBasedFCUAccountingPlugin {
 
 		// checking usage of local user
 		usageByLocalUser = benchmarkingPlugin.getPower("instanceId@remoteMemberId") * 4;
-		accountingInfo = accountingPlugin.getAccountingInfo(new AccountingEntryKey("localUserId",
-				"localMemberId", "remoteMemberId"));
+		accountingInfo = accountingPlugin.getAccountingInfo("localUserId", "localMemberId",
+				"remoteMemberId");
 		Assert.assertEquals("localMemberId", accountingInfo.getRequestingMember());
 		Assert.assertEquals("remoteMemberId", accountingInfo.getProvidingMember());
 		Assert.assertEquals("localUserId", accountingInfo.getUser());
@@ -576,8 +577,8 @@ public class TestUserBasedFCUAccountingPlugin {
 
 		// checking usage of remote user
 		usageByRemoteUser = benchmarkingPlugin.getPower("instanceId@localMemberId") * 4;
-		accountingInfo = accountingPlugin.getAccountingInfo(new AccountingEntryKey("remoteUserId",
-				"remoteMemberId", "localMemberId"));
+		accountingInfo = accountingPlugin.getAccountingInfo("remoteUserId", "remoteMemberId",
+				"localMemberId");
 		Assert.assertEquals("remoteMemberId", accountingInfo.getRequestingMember());
 		Assert.assertEquals("localMemberId", accountingInfo.getProvidingMember());
 		Assert.assertEquals("remoteUserId", accountingInfo.getUser());
@@ -585,8 +586,8 @@ public class TestUserBasedFCUAccountingPlugin {
 
 		// checking usage of local user 2
 		usageByLocalUser = benchmarkingPlugin.getPower("instanceId2@remoteMemberId") * 2;
-		accountingInfo = accountingPlugin.getAccountingInfo(new AccountingEntryKey("localUserId2",
-				"localMemberId", "remoteMemberId"));
+		accountingInfo = accountingPlugin.getAccountingInfo("localUserId2", "localMemberId",
+				"remoteMemberId");
 		Assert.assertEquals("localMemberId", accountingInfo.getRequestingMember());
 		Assert.assertEquals("remoteMemberId", accountingInfo.getProvidingMember());
 		Assert.assertEquals("localUserId2", accountingInfo.getUser());
@@ -604,7 +605,7 @@ public class TestUserBasedFCUAccountingPlugin {
 		Mockito.when(benchmarkingPlugin.getPower("instanceId1@remoteMemberId")).thenReturn(3d);
 		Mockito.when(benchmarkingPlugin.getPower("instanceId2@remoteMemberId")).thenReturn(4d);
 
-		accountingPlugin = new UserBasedFCUAccountingPlugin(properties, benchmarkingPlugin,
+		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin,
 				dateUtils);
 
 		Order localOrder = new Order("localId1", new Token("accessId", "userId", null,
@@ -637,8 +638,8 @@ public class TestUserBasedFCUAccountingPlugin {
 
 		// checking usage on local member
 		double usageOnLocalMember = benchmarkingPlugin.getPower("instanceId1@localMemberId") * 2;
-		AccountingInfo accountingInfo = accountingPlugin.getAccountingInfo(new AccountingEntryKey(
-				"userId", "remoteMemberId", "localMemberId"));
+		AccountingInfo accountingInfo = accountingPlugin.getAccountingInfo("userId",
+				"remoteMemberId", "localMemberId");
 		Assert.assertEquals("remoteMemberId", accountingInfo.getRequestingMember());
 		Assert.assertEquals("localMemberId", accountingInfo.getProvidingMember());
 		Assert.assertEquals("userId", accountingInfo.getUser());
@@ -646,8 +647,8 @@ public class TestUserBasedFCUAccountingPlugin {
 
 		// checking usage on remote member
 		double usageOnRemoteMember = benchmarkingPlugin.getPower("instanceId1@remoteMemberId") * 2;
-		accountingInfo = accountingPlugin.getAccountingInfo(new AccountingEntryKey("userId",
-				"localMemberId", "remoteMemberId"));
+		accountingInfo = accountingPlugin.getAccountingInfo("userId", "localMemberId",
+				"remoteMemberId");
 		Assert.assertEquals("localMemberId", accountingInfo.getRequestingMember());
 		Assert.assertEquals("remoteMemberId", accountingInfo.getProvidingMember());
 		Assert.assertEquals("userId", accountingInfo.getUser());
@@ -674,8 +675,8 @@ public class TestUserBasedFCUAccountingPlugin {
 
 		// checking usage on local member
 		usageOnLocalMember = benchmarkingPlugin.getPower("instanceId1@localMemberId") * 4;
-		accountingInfo = accountingPlugin.getAccountingInfo(new AccountingEntryKey("userId",
-				"remoteMemberId", "localMemberId"));
+		accountingInfo = accountingPlugin.getAccountingInfo("userId", "remoteMemberId",
+				"localMemberId");
 		Assert.assertEquals("remoteMemberId", accountingInfo.getRequestingMember());
 		Assert.assertEquals("localMemberId", accountingInfo.getProvidingMember());
 		Assert.assertEquals("userId", accountingInfo.getUser());
@@ -684,8 +685,8 @@ public class TestUserBasedFCUAccountingPlugin {
 		// checking usage on remote member
 		usageOnRemoteMember = benchmarkingPlugin.getPower("instanceId1@remoteMemberId") * 4
 				+ benchmarkingPlugin.getPower("instanceId2@remoteMemberId") * 2;
-		accountingInfo = accountingPlugin.getAccountingInfo(new AccountingEntryKey("userId",
-				"localMemberId", "remoteMemberId"));
+		accountingInfo = accountingPlugin.getAccountingInfo("userId", "localMemberId",
+				"remoteMemberId");
 		Assert.assertEquals("localMemberId", accountingInfo.getRequestingMember());
 		Assert.assertEquals("remoteMemberId", accountingInfo.getProvidingMember());
 		Assert.assertEquals("userId", accountingInfo.getUser());
@@ -713,8 +714,8 @@ public class TestUserBasedFCUAccountingPlugin {
 		// checking usage on local member
 		usageOnLocalMember = benchmarkingPlugin.getPower("instanceId1@localMemberId") * 6
 				+ benchmarkingPlugin.getPower("instanceId2@localMemberId") * 2;
-		accountingInfo = accountingPlugin.getAccountingInfo(new AccountingEntryKey("userId",
-				"remoteMemberId", "localMemberId"));
+		accountingInfo = accountingPlugin.getAccountingInfo("userId", "remoteMemberId",
+				"localMemberId");
 		Assert.assertEquals("remoteMemberId", accountingInfo.getRequestingMember());
 		Assert.assertEquals("localMemberId", accountingInfo.getProvidingMember());
 		Assert.assertEquals("userId", accountingInfo.getUser());
@@ -723,8 +724,8 @@ public class TestUserBasedFCUAccountingPlugin {
 		// checking usage on remote member
 		usageOnRemoteMember = benchmarkingPlugin.getPower("instanceId1@remoteMemberId") * 6
 				+ benchmarkingPlugin.getPower("instanceId2@remoteMemberId") * 4;
-		accountingInfo = accountingPlugin.getAccountingInfo(new AccountingEntryKey("userId",
-				"localMemberId", "remoteMemberId"));
+		accountingInfo = accountingPlugin.getAccountingInfo("userId", "localMemberId",
+				"remoteMemberId");
 		Assert.assertEquals("localMemberId", accountingInfo.getRequestingMember());
 		Assert.assertEquals("remoteMemberId", accountingInfo.getProvidingMember());
 		Assert.assertEquals("userId", accountingInfo.getUser());

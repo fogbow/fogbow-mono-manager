@@ -8,7 +8,7 @@ import java.util.Properties;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
-import org.fogbowcloud.manager.core.plugins.accounting.ResourceUsage;
+import org.fogbowcloud.manager.core.plugins.accounting.AccountingInfo;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.order.Order;
@@ -37,8 +37,8 @@ public class TestNoFPrioritizationPlugin {
 	@Test
 	public void testServedOrdersNull() {
 		//mocking accounting
-		Mockito.when(accountingPlugin.getMembersUsage()).thenReturn(
-				new HashMap<String, ResourceUsage>());
+		Mockito.when(accountingPlugin.getAccountingInfo()).thenReturn(
+				new ArrayList<AccountingInfo>());
 		
 		Order newOrder = new Order("newID", new Token("newAccessId", "newRemoteUserId", null,
 				new HashMap<String, String>()), null, null, false, "memberId");
@@ -50,8 +50,8 @@ public class TestNoFPrioritizationPlugin {
 	@Test
 	public void testEmptyServedOrders() {
 		//mocking accounting
-		Mockito.when(accountingPlugin.getMembersUsage()).thenReturn(
-				new HashMap<String, ResourceUsage>());
+		Mockito.when(accountingPlugin.getAccountingInfo()).thenReturn(
+				new ArrayList<AccountingInfo>());
 		
 		Order newOrder = new Order("newID", new Token("newAccessId", "newRemoteUserId", null,
 				new HashMap<String, String>()), null, null, false, "memberId");
@@ -63,19 +63,29 @@ public class TestNoFPrioritizationPlugin {
 	@Test
 	public void testTakeFromOneServedOrder() {
 		//mocking accounting
-		HashMap<String, ResourceUsage> membersUsage = new HashMap<String, ResourceUsage>();
-		ResourceUsage member1Usage = new ResourceUsage("member1");
-		member1Usage.addConsumption(20);
-		member1Usage.addDonation(10);
+		List<AccountingInfo> accounting = new ArrayList<AccountingInfo>();
+		AccountingInfo accountingEntry = new AccountingInfo("user",
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, "member1");
+		accountingEntry.addConsuption(20);
+		accounting.add(accountingEntry);
+
+		accountingEntry = new AccountingInfo("user", "member1",
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		accountingEntry.addConsuption(10);
+		accounting.add(accountingEntry);
+
+		accountingEntry = new AccountingInfo("user",
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, "member2");
+		accountingEntry.addConsuption(30);
+		accounting.add(accountingEntry);
+
+		accountingEntry = new AccountingInfo("user", "member2",
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		accountingEntry.addConsuption(10);
+		accounting.add(accountingEntry);
 		
-		ResourceUsage member2Usage = new ResourceUsage("member2");
-		member2Usage.addConsumption(30);
-		member2Usage.addDonation(10);
-		
-		membersUsage.put("member1", member1Usage);
-		membersUsage.put("member2", member2Usage);
-		Mockito.when(accountingPlugin.getMembersUsage()).thenReturn(
-				membersUsage);
+		Mockito.when(accountingPlugin.getAccountingInfo()).thenReturn(
+				accounting);
 		
 		NoFPrioritizationPlugin nofPlugin = new NoFPrioritizationPlugin(properties, accountingPlugin);
 		
@@ -97,19 +107,29 @@ public class TestNoFPrioritizationPlugin {
 	@Test
 	public void testNoTakeFromBecauseDebtIsTheSame() {
 		//mocking accounting
-		HashMap<String, ResourceUsage> membersUsage = new HashMap<String, ResourceUsage>();
-		ResourceUsage member1Usage = new ResourceUsage("member1");
-		member1Usage.addConsumption(30);
-		member1Usage.addDonation(10);
+		List<AccountingInfo> accounting = new ArrayList<AccountingInfo>();
+		AccountingInfo accountingEntry = new AccountingInfo("user",
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, "member1");
+		accountingEntry.addConsuption(30);
+		accounting.add(accountingEntry);
+
+		accountingEntry = new AccountingInfo("user", "member1",
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		accountingEntry.addConsuption(10);
+		accounting.add(accountingEntry);
+
+		accountingEntry = new AccountingInfo("user",
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, "member2");
+		accountingEntry.addConsuption(30);
+		accounting.add(accountingEntry);
+
+		accountingEntry = new AccountingInfo("user", "member2",
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		accountingEntry.addConsuption(10);
+		accounting.add(accountingEntry);
 		
-		ResourceUsage member2Usage = new ResourceUsage("member2");
-		member2Usage.addConsumption(30);
-		member2Usage.addDonation(10);
-		
-		membersUsage.put("member1", member1Usage);
-		membersUsage.put("member2", member2Usage);
-		Mockito.when(accountingPlugin.getMembersUsage()).thenReturn(
-				membersUsage);
+		Mockito.when(accountingPlugin.getAccountingInfo()).thenReturn(
+				accounting);
 		
 		NoFPrioritizationPlugin nofPlugin = new NoFPrioritizationPlugin(properties, accountingPlugin);
 		
@@ -131,20 +151,30 @@ public class TestNoFPrioritizationPlugin {
 	@Test
 	public void testTakeFromMostRecentServedOrder() {
 		//mocking accounting
-		HashMap<String, ResourceUsage> membersUsage = new HashMap<String, ResourceUsage>();
-		ResourceUsage member1Usage = new ResourceUsage("member1");
-		member1Usage.addConsumption(20);
-		member1Usage.addDonation(10);
+		List<AccountingInfo> accounting = new ArrayList<AccountingInfo>();
+		AccountingInfo accountingEntry = new AccountingInfo("user",
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, "member1");
+		accountingEntry.addConsuption(20);
+		accounting.add(accountingEntry);
+
+		accountingEntry = new AccountingInfo("user", "member1",
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		accountingEntry.addConsuption(10);
+		accounting.add(accountingEntry);
+
+		accountingEntry = new AccountingInfo("user",
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, "member2");
+		accountingEntry.addConsuption(30);
+		accounting.add(accountingEntry);
+
+		accountingEntry = new AccountingInfo("user", "member2",
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		accountingEntry.addConsuption(10);
+		accounting.add(accountingEntry);
 		
-		ResourceUsage member2Usage = new ResourceUsage("member2");
-		member2Usage.addConsumption(30);
-		member2Usage.addDonation(10);
-		
-		membersUsage.put("member1", member1Usage);
-		membersUsage.put("member2", member2Usage);
-		Mockito.when(accountingPlugin.getMembersUsage()).thenReturn(
-				membersUsage);
-		
+		Mockito.when(accountingPlugin.getAccountingInfo()).thenReturn(
+				accounting);
+
 		NoFPrioritizationPlugin nofPlugin = new NoFPrioritizationPlugin(properties, accountingPlugin);
 		
 		// mocking dateUtils
@@ -181,19 +211,29 @@ public class TestNoFPrioritizationPlugin {
 	@Test
 	public void testMoreThanOneTakeFromServedOrder() {
 		//mocking accounting
-		HashMap<String, ResourceUsage> membersUsage = new HashMap<String, ResourceUsage>();
-		ResourceUsage member1Usage = new ResourceUsage("member1");
-		member1Usage.addConsumption(20);
-		member1Usage.addDonation(10);
+		List<AccountingInfo> accounting = new ArrayList<AccountingInfo>();
+		AccountingInfo accountingEntry = new AccountingInfo("user",
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, "member1");
+		accountingEntry.addConsuption(20);
+		accounting.add(accountingEntry);
+
+		accountingEntry = new AccountingInfo("user", "member1",
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		accountingEntry.addConsuption(10);
+		accounting.add(accountingEntry);
+
+		accountingEntry = new AccountingInfo("user",
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, "member2");
+		accountingEntry.addConsuption(30);
+		accounting.add(accountingEntry);
+
+		accountingEntry = new AccountingInfo("user", "member2",
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		accountingEntry.addConsuption(10);
+		accounting.add(accountingEntry);
 		
-		ResourceUsage member2Usage = new ResourceUsage("member2");
-		member2Usage.addConsumption(30);
-		member2Usage.addDonation(10);
-		
-		membersUsage.put("member1", member1Usage);
-		membersUsage.put("member2", member2Usage);
-		Mockito.when(accountingPlugin.getMembersUsage()).thenReturn(
-				membersUsage);
+		Mockito.when(accountingPlugin.getAccountingInfo()).thenReturn(
+				accounting);
 		
 		NoFPrioritizationPlugin nofPlugin = new NoFPrioritizationPlugin(properties, accountingPlugin);
 		
@@ -237,19 +277,29 @@ public class TestNoFPrioritizationPlugin {
 	@Test
 	public void testPrioritizeLocalOrder() {
 		//mocking accounting
-		HashMap<String, ResourceUsage> membersUsage = new HashMap<String, ResourceUsage>();
-		ResourceUsage member1Usage = new ResourceUsage("member1");
-		member1Usage.addConsumption(20);
-		member1Usage.addDonation(10);
+		List<AccountingInfo> accounting = new ArrayList<AccountingInfo>();
+		AccountingInfo accountingEntry = new AccountingInfo("user",
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, "member1");
+		accountingEntry.addConsuption(20);
+		accounting.add(accountingEntry);
+
+		accountingEntry = new AccountingInfo("user", "member1",
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		accountingEntry.addConsuption(10);
+		accounting.add(accountingEntry);
+
+		accountingEntry = new AccountingInfo("user",
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, "member2");
+		accountingEntry.addConsuption(30);
+		accounting.add(accountingEntry);
+
+		accountingEntry = new AccountingInfo("user", "member2",
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		accountingEntry.addConsuption(10);
+		accounting.add(accountingEntry);
 		
-		ResourceUsage member2Usage = new ResourceUsage("member2");
-		member2Usage.addConsumption(30);
-		member2Usage.addDonation(10);
-		
-		membersUsage.put("member1", member1Usage);
-		membersUsage.put("member2", member2Usage);
-		Mockito.when(accountingPlugin.getMembersUsage()).thenReturn(
-				membersUsage);
+		Mockito.when(accountingPlugin.getAccountingInfo()).thenReturn(
+				accounting);
 		
 		NoFPrioritizationPlugin nofPlugin = new NoFPrioritizationPlugin(properties, accountingPlugin);
 		
@@ -271,19 +321,29 @@ public class TestNoFPrioritizationPlugin {
 	@Test
 	public void testPrioritizeLocalOrderWithThanOneServedOrder() {
 		//mocking accounting
-		HashMap<String, ResourceUsage> membersUsage = new HashMap<String, ResourceUsage>();
-		ResourceUsage member1Usage = new ResourceUsage("member1");
-		member1Usage.addConsumption(20);
-		member1Usage.addDonation(10);
+		List<AccountingInfo> accounting = new ArrayList<AccountingInfo>();
+		AccountingInfo accountingEntry = new AccountingInfo("user",
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, "member1");
+		accountingEntry.addConsuption(20);
+		accounting.add(accountingEntry);
+
+		accountingEntry = new AccountingInfo("user", "member1",
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		accountingEntry.addConsuption(10);
+		accounting.add(accountingEntry);
+
+		accountingEntry = new AccountingInfo("user",
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, "member2");
+		accountingEntry.addConsuption(30);
+		accounting.add(accountingEntry);
+
+		accountingEntry = new AccountingInfo("user", "member2",
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		accountingEntry.addConsuption(10);
+		accounting.add(accountingEntry);
 		
-		ResourceUsage member2Usage = new ResourceUsage("member2");
-		member2Usage.addConsumption(30);
-		member2Usage.addDonation(10);
-		
-		membersUsage.put("member1", member1Usage);
-		membersUsage.put("member2", member2Usage);
-		Mockito.when(accountingPlugin.getMembersUsage()).thenReturn(
-				membersUsage);
+		Mockito.when(accountingPlugin.getAccountingInfo()).thenReturn(
+				accounting);
 		
 		NoFPrioritizationPlugin nofPlugin = new NoFPrioritizationPlugin(properties, accountingPlugin);
 		
