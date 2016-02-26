@@ -44,14 +44,19 @@ public class FCUAccountingPlugin implements AccountingPlugin {
 
 		Map<AccountingEntryKey, AccountingInfo> usage = new HashMap<AccountingEntryKey, AccountingInfo>();
 
-		for (Order request : ordersWithInstance) {
+		for (Order order : ordersWithInstance) {
 
+			if (order.getRequestingMemberId() == null || order.getProvidingMemberId() == null
+					|| order.getGlobalInstanceId() == null) {
+				continue;
+			}
+			
 			double consumptionInterval = ((double) TimeUnit.MILLISECONDS.toSeconds(now
-					- request.getFulfilledTime()) / 60);
+					- order.getFulfilledTime()) / 60);
 
-			String user = request.getFederationToken().getUser();
+			String user = order.getFederationToken().getUser();
 			AccountingEntryKey current = new AccountingEntryKey(user,
-					request.getRequestingMemberId(), request.getProvidingMemberId());
+					order.getRequestingMemberId(), order.getProvidingMemberId());
 
 			if (!usage.keySet().contains(current)) {
 				AccountingInfo accountingInfo = new AccountingInfo(current.getUser(),
@@ -59,7 +64,7 @@ public class FCUAccountingPlugin implements AccountingPlugin {
 				usage.put(current, accountingInfo);
 			}
 
-			double instancePower = benchmarkingPlugin.getPower(request.getGlobalInstanceId());
+			double instancePower = benchmarkingPlugin.getPower(order.getGlobalInstanceId());
 			double instanceUsage = instancePower * Math.min(consumptionInterval, updatingInterval);
 
 			usage.get(current).addConsuption(instanceUsage);

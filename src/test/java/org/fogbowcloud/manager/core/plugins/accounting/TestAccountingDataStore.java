@@ -5,9 +5,7 @@ import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 
 import org.apache.log4j.Logger;
@@ -229,6 +227,76 @@ public class TestAccountingDataStore {
 		Assert.assertEquals("requestingMember1", accounting.get(0).getRequestingMember());
 		Assert.assertEquals("providingMember1", accounting.get(0).getProvidingMember());
 		Assert.assertEquals(initialUsage1 + initialUsage2, accounting.get(0).getUsage(), ACCEPTABLE_ERROR);
+	}
+
+	@Test
+	public void testUpdateInsertingSameUserMoreInstancesAndUpdateExisting() throws SQLException {
+		List<AccountingInfo> usage = new ArrayList<AccountingInfo>();
+		AccountingInfo accountingInfo1 = new AccountingInfo("user1", "requestingMember1",
+				"providingMember1");
+		int initialUsage1 = 10;
+		accountingInfo1.addConsuption(initialUsage1);
+		usage.add(accountingInfo1);
+
+		Assert.assertTrue(db.update(usage));
+
+		String sql = "select * from " + AccountingDataStore.USAGE_TABLE_NAME;
+		ResultSet rs = db.getConnection().createStatement().executeQuery(sql);
+		List<AccountingInfo> accounting = db.createAccounting(rs);
+
+		// checking initial accounting
+		Assert.assertEquals(1, accounting.size());
+		Assert.assertEquals("user1", accounting.get(0).getUser());
+		Assert.assertEquals("requestingMember1", accounting.get(0).getRequestingMember());
+		Assert.assertEquals("providingMember1", accounting.get(0).getProvidingMember());
+		Assert.assertEquals(initialUsage1, accounting.get(0).getUsage(), ACCEPTABLE_ERROR);
+
+		// new usage and consuption to existing user
+		usage = new ArrayList<AccountingInfo>();
+		accountingInfo1 = new AccountingInfo("user1", "requestingMember1", "providingMember1");
+		int finalUsage1 = 30;
+		accountingInfo1.addConsuption(finalUsage1);
+		usage.add(accountingInfo1);
+
+		AccountingInfo accountingInfo2 = new AccountingInfo("user2", "requestingMember2",
+				"providingMember2");
+		int initialUsage2 = 20;
+		accountingInfo2.addConsuption(initialUsage2);
+		usage.add(accountingInfo2);
+
+		accountingInfo2 = new AccountingInfo("user2", "requestingMember2",
+				"providingMember2");
+		int finalUsage2 = 20;
+		accountingInfo2.addConsuption(finalUsage2);
+		usage.add(accountingInfo2);
+		
+		Assert.assertTrue(db.update(usage));
+
+		sql = "select * from " + AccountingDataStore.USAGE_TABLE_NAME;
+		rs = db.getConnection().createStatement().executeQuery(sql);
+		accounting = db.createAccounting(rs);
+
+		// checking accounting was updated
+		Assert.assertEquals(2, accounting.size());
+		if (accounting.get(0).getUser().equals("user1")) {
+			accountingInfo1 = accounting.get(0);
+			accountingInfo2 = accounting.get(1);
+		} else {
+			accountingInfo1 = accounting.get(1);
+			accountingInfo2 = accounting.get(0);
+		}
+
+		// checking
+		Assert.assertEquals("user1", accountingInfo1.getUser());
+		Assert.assertEquals("requestingMember1", accountingInfo1.getRequestingMember());
+		Assert.assertEquals("providingMember1", accountingInfo1.getProvidingMember());
+		Assert.assertEquals(initialUsage1 + finalUsage1, accountingInfo1.getUsage(),
+				ACCEPTABLE_ERROR);
+
+		Assert.assertEquals("user2", accountingInfo2.getUser());
+		Assert.assertEquals("requestingMember2", accountingInfo2.getRequestingMember());
+		Assert.assertEquals("providingMember2", accountingInfo2.getProvidingMember());
+		Assert.assertEquals(initialUsage2 + finalUsage2, accountingInfo2.getUsage(), ACCEPTABLE_ERROR);
 	}
 	
 	@Test

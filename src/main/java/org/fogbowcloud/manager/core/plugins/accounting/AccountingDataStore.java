@@ -136,24 +136,22 @@ public class AccountingDataStore {
 			// insert operation
 			AccountingEntryKey currentKey = new AccountingEntryKey(accountingInfo.getUser(), accountingInfo
 					.getRequestingMember(), accountingInfo.getProvidingMember());
-			System.out.println("1");
-			System.out.println(currentKey);
 			if (!entryKeys.contains(currentKey)) {
-				System.out.println("2");	
+
 				if (processedUsage.containsKey(currentKey)) {
-					System.out.println("3");
 					processedUsage.get(currentKey).addConsuption(accountingInfo.getUsage());
 				} else {
-					System.out.println("4");
 					processedUsage.put(currentKey, accountingInfo);
 				}				
 			} else { // update operation
-				System.out.println("5");
 				processedUsage.put(currentKey, accountingInfo);
 			}
 		}
 		
 		System.out.println(processedUsage);
+		for (AccountingEntryKey accountingEntryKey : processedUsage.keySet()) {
+			System.out.println(accountingEntryKey);
+		}
 		
 		// creating statements
 		for (AccountingEntryKey currentKey : processedUsage.keySet()) {
@@ -282,7 +280,7 @@ public class AccountingDataStore {
 					statement.close();
 				}
 			} catch (SQLException e) {
-				LOGGER.error("Couldn't close statement");
+				LOGGER.error("Couldn't close statement", e);
 			}
 		}
 
@@ -292,7 +290,7 @@ public class AccountingDataStore {
 					conn.close();
 				}
 			} catch (SQLException e) {
-				LOGGER.error("Couldn't close connection");
+				LOGGER.error("Couldn't close connection", e);
 			}
 		}
 	}
