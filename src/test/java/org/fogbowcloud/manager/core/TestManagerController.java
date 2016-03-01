@@ -138,15 +138,11 @@ public class TestManagerController {
 	}
 	
 	private void checkOrderPerUserToken(Token token) {
-		Order orderOne = new Order("id1", token, new ArrayList<Category>(),
-				new HashMap<String, String>(), true, "");
 		HashMap<String, String> xOCCIAtt = new HashMap<String, String>();
 		xOCCIAtt.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.COMPUTE_TERM);
-		orderOne.setxOCCIAtt(xOCCIAtt);
+		Order orderOne = new Order("id1", token, new ArrayList<Category>(), xOCCIAtt, true, "");
 		orderOne.setState(OrderState.OPEN);
-		Order orderTwo = new Order("id2", token, new ArrayList<Category>(),
-				new HashMap<String, String>(), true, "");
-		orderTwo.setxOCCIAtt(xOCCIAtt);
+		Order orderTwo = new Order("id2", token, new ArrayList<Category>(), xOCCIAtt, true, "");
 		orderTwo.setState(OrderState.OPEN);
 		OrderRepository orderRepository = new OrderRepository();
 		orderRepository.addOrder(token.getUser(), orderOne);

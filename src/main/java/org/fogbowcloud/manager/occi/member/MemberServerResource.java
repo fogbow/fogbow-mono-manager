@@ -20,14 +20,6 @@ public class MemberServerResource extends ServerResource {
 		HttpRequest req = (HttpRequest) getRequest();
 		HeaderUtils.checkOCCIContentType(req.getHeaders());
 		
-		try {
-			System.out.println("Esperando...");
-			Thread.sleep(6000);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
 		String memberId = (String) getRequestAttributes().get("memberId");
 		
 		String federationAuthToken = HeaderUtils.getAuthToken(

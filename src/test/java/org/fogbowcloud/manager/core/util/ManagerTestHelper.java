@@ -30,6 +30,7 @@ import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.FederationMemberPickerPlugin;
 import org.fogbowcloud.manager.core.plugins.MapperPlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
+import org.fogbowcloud.manager.core.plugins.StoragePlugin;
 import org.fogbowcloud.manager.core.plugins.identity.openstack.KeystoneIdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.memberauthorization.DefaultMemberAuthorizationPlugin;
 import org.fogbowcloud.manager.occi.instance.Instance;
@@ -63,6 +64,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 	public static final int MAX_WHOISALIVE_MANAGER_COUNT = 100;
 	private ManagerXmppComponent managerXmppComponent;
 	private ComputePlugin computePlugin;
+	private StoragePlugin storagePlugin;
 	private IdentityPlugin identityPlugin;
 	private MapperPlugin mapperPlugin;
 	private IdentityPlugin federationIdentityPlugin;
@@ -130,7 +132,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 				PacketCollector response = xmppClient.getConnection().createPacketCollector(
 						responseFilter);
 				xmppClient.send(packet);
-				Packet result = response.nextResult(5000);
+				Packet result = response.nextResult(50000);
 				response.cancel();
 				return result;
 			}
@@ -167,6 +169,10 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 
 	public IdentityPlugin getIdentityPlugin() {
 		return identityPlugin;
+	}
+	
+	public StoragePlugin getStoragePlugin() {
+		return storagePlugin;
 	}
 	
 	public IdentityPlugin getFederationIdentityPlugin() {
@@ -212,7 +218,8 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 	
 	@SuppressWarnings("unchecked")
 	public ManagerXmppComponent initializeXMPPManagerComponent(boolean init, ManagerController managerFacade) throws Exception {
-				
+		
+		this.storagePlugin = Mockito.mock(StoragePlugin.class);
 		this.computePlugin = Mockito.mock(ComputePlugin.class);
 		this.identityPlugin = Mockito.mock(IdentityPlugin.class);
 		this.federationIdentityPlugin = Mockito.mock(IdentityPlugin.class);
@@ -228,8 +235,8 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		Mockito.when(mapperPlugin.getAllLocalCredentials()).thenReturn(
 				this.defaultFederationAllUsersCrendetials);
 		Mockito.when(identityPlugin.createToken(Mockito.anyMap())).thenReturn(
-				defaultFederationToken);
-
+				defaultFederationToken);		
+		
 		// mocking benchmark executor
 		ExecutorService benchmarkExecutor = new CurrentThreadExecutorService();
 				
@@ -242,6 +249,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		managerFacade.setAuthorizationPlugin(authorizationPlugin);
 		managerFacade.setValidator(new DefaultMemberAuthorizationPlugin(null));
 		managerFacade.setLocalCredentailsPlugin(mapperPlugin);
+		managerFacade.setStoragePlugin(storagePlugin);
 				
 		managerXmppComponent = Mockito.spy(new ManagerXmppComponent(LOCAL_MANAGER_COMPONENT_URL,
 				MANAGER_COMPONENT_PASS, SERVER_HOST, SERVER_COMPONENT_PORT, managerFacade));

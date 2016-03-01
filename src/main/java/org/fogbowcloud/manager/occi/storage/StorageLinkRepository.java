@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.occi.model.Token;
 
 public class StorageLinkRepository {
 
@@ -121,6 +122,9 @@ public class StorageLinkRepository {
 		private String source;
 		private String target;
 		private String deviceId;
+		private String provadingMemberId;
+		private Token federationToken;
+		private boolean isLocal;
 
 		public StorageLink(Map<String, String> xOCCIAttributes) {
 			this.id = String.valueOf(UUID.randomUUID());
@@ -130,12 +134,17 @@ public class StorageLinkRepository {
 		}
 
 		public StorageLink(String id, String source, String target, String deviceId) {
+			this(id, source, target, deviceId, false);
+		}
+		
+		public StorageLink(String id, String source, String target, String deviceId, boolean isLocal) {
 			super();
 			this.id = id;
 			this.source = source;
 			this.target = target;
 			this.deviceId = deviceId;
-		}
+			this.isLocal = isLocal;
+		}		
 
 		public String getSource() {
 			return source;
@@ -168,6 +177,30 @@ public class StorageLinkRepository {
 		public void setId(String id) {
 			this.id = id;
 		}
-				
+
+		public String getProvadingMemberId() {
+			return provadingMemberId;
+		}
+
+		public void setProvadingMemberId(String provadingMemberId) {
+			this.provadingMemberId = provadingMemberId;
+		}
+
+		public Token getFederationToken() {
+			return federationToken;
+		}
+
+		public void setFederationToken(Token federationToken) {
+			this.federationToken = federationToken;
+		}
+
+		public boolean isLocal() {
+			return isLocal;
+		}
+
+		public void setLocal(boolean isLocal) {
+			this.isLocal = isLocal;
+		}
+								
 	}
 }

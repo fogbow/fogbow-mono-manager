@@ -175,6 +175,14 @@ public class ManagerController {
 		triggerOrderDBUpdater();
 	}
 
+	public MapperPlugin getMapperPlugin() {
+		return mapperPlugin;
+	}
+	
+	public IdentityPlugin getLocalIdentityPlugin() {
+		return localIdentityPlugin;
+	}
+	
 	public void setDatabase(OrderDataStore database) {
 		this.orderDB = database;
 	}
@@ -557,8 +565,13 @@ public class ManagerController {
 		Order order = orderRepository.get(orderId, false);
 		if (order != null && order.getInstanceId() != null) {
 			try {
-				computePlugin.removeInstance(localIdentityPlugin.getToken(accessId), 
-						order.getInstanceId());				
+				Token token = localIdentityPlugin.getToken(accessId);
+				String instanceId = order.getInstanceId();
+				if (order.getResourceKing().equals(OrderConstants.COMPUTE_TERM)) {
+					computePlugin.removeInstance(token, instanceId);					
+				} else if (order.getResourceKing().equals(OrderConstants.STORAGE_TERM)) {
+					storagePlugin.removeInstance(token, instanceId);
+				}
 			} catch (Exception e) { 
 			}
 		}
@@ -815,8 +828,7 @@ public class ManagerController {
 			if (resourceKind.equals(OrderConstants.COMPUTE_TERM)) {
 				this.computePlugin.removeInstance(getFederationUserToken(order), instanceId);				
 			} else if (resourceKind.equals(OrderConstants.STORAGE_TERM)) {
-				this.storagePlugin.removeInstance(getFederationUserToken(order), instanceId);
-				
+				this.storagePlugin.removeInstance(getFederationUserToken(order), instanceId);				
 				// TODO se nao é permitido deleter, pois estah anexado, avisar !!!
 			}
 		} else {
@@ -833,10 +845,17 @@ public class ManagerController {
 		return false;
 	}
 
-	private void instanceRemoved(Order order) {
-		updateAccounting();
-		benchmarkingPlugin.remove(order.getInstanceId());
-
+	private void instanceRemoved(Order order) {			
+		if (order.getResourceKing() == null || order.getResourceKing().equals(OrderConstants.COMPUTE_TERM)) {
+//			try {
+				updateAccounting();				
+//			} catch (Exception e) {
+//				e.printStackTrace();
+//				//TODO review this exception
+//			}
+			benchmarkingPlugin.remove(order.getInstanceId());			
+		}
+		
 		order.setInstanceId(null);
 		order.setProvidingMemberId(null);
 
@@ -1242,7 +1261,7 @@ public class ManagerController {
 		}
 		if (InstanceState.FAILED.equals(instance.getState())) {
 			try {
-				removeInstance(instance.getId(), order);
+				removeInstance(instance.getId(), order, order.getResourceKing());
 			} catch (Throwable t) {
 				// Best effort
 				LOGGER.warn("Error while removing stale instance.", t);
@@ -1309,8 +1328,10 @@ public class ManagerController {
 						 */
 						
 						boolean isStorageOrder = OrderConstants.STORAGE_TERM.equals(order
-								.getAttValue(OrderAttribute.RESOURCE_KIND.getValue()));
+								.getResourceKing());
 						if (isStorageOrder) {
+							asynchronousOrders.remove(order.getId());
+							order.setState(OrderState.FULFILLED);
 							return;
 						}
 						
@@ -1496,7 +1517,7 @@ public class ManagerController {
 			LOGGER.debug(order.getId() + " being considered for scheduling.");
 			if (order.isIntoValidPeriod()) {
 				boolean isFulfilled = false;
-		
+				
 				if (order.isLocal()) {
 					String requirements = order.getRequirements();
 					List<FederationMember> allowedFederationMembers = getAllowedFederationMembers(requirements);
@@ -1643,10 +1664,8 @@ public class ManagerController {
 				+ order.getxOCCIAtt() + " for requesting member: " + order.getRequestingMemberId()
 				+ " with requestingToken " + order.getRequestingMemberId());
 
-		boolean isComputeOrder = OrderConstants.COMPUTE_TERM.equals(order
-				.getAttValue(OrderAttribute.RESOURCE_KIND.getValue()));
-		boolean isStorageOrder = OrderConstants.STORAGE_TERM.equals(order
-				.getAttValue(OrderAttribute.RESOURCE_KIND.getValue()));
+		boolean isComputeOrder = OrderConstants.COMPUTE_TERM.equals(order.getResourceKing());
+		boolean isStorageOrder = OrderConstants.STORAGE_TERM.equals(order.getResourceKing());
 		
 		for (String keyAttributes : OrderAttribute.getValues()) {
 			order.getxOCCIAtt().remove(keyAttributes);
@@ -1721,6 +1740,10 @@ public class ManagerController {
 				order.setState(OrderState.FULFILLED);
 				order.setInstanceId(instanceId);
 				order.setProvidingMemberId(properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
+				if (!order.isLocal()) {
+					ManagerPacketHelper.replyToServedOrder(order, packetSender);
+				}
+				
 				return instanceId != null;
 			} catch (OCCIException e) {
 				return false;
@@ -1841,33 +1864,43 @@ public class ManagerController {
 	public void createStorageLink(String accessId,
 			List<Category> categories, Map<String, String> xOCCIAtt) {
 		
-		
-		
-		String normalizeTargetAttr = normalizeInstanceId(xOCCIAtt.get(StorageAttribute.TARGET.getValue()));
+		String target = xOCCIAtt.get(StorageAttribute.TARGET.getValue());
+		String normalizeTargetAttr = normalizeInstanceId(target);
 		xOCCIAtt.put(StorageAttribute.TARGET.getValue(), normalizeTargetAttr);
 		String normalizeSourceAttr = normalizeInstanceId(xOCCIAtt.get(StorageAttribute.SOURCE.getValue()));
 		xOCCIAtt.put(StorageAttribute.SOURCE.getValue(), normalizeSourceAttr);		
 		Order storageOrder = orderRepository.getOrderByInstance(normalizeTargetAttr);
 		Order computeOrder = orderRepository.getOrderByInstance(normalizeSourceAttr);
 		
-		if (!storageOrder.getProvidingMemberId().equals(computeOrder.getProvidingMemberId())) {
-			// TODO review the constant response
-			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.INVALID_STORAGE_LINK_DIFERENT_LOCATION);
-		} 	
-				
-		if (storageOrder == null || computeOrder == null 
-				|| (!storageOrder.isLocal() || !computeOrder.isLocal())) {
+		if (storageOrder == null || computeOrder == null) {
 			throw new OCCIException(ErrorType.BAD_REQUEST, "...");
 		}
 		
+		if (!storageOrder.getProvidingMemberId().equals(computeOrder.getProvidingMemberId())) {
+			// TODO review the constant response
+			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.INVALID_STORAGE_LINK_DIFERENT_LOCATION);
+		}
+
 		Token federationUserToken = getFederationUserToken(computeOrder);
 		if (federationUserToken == null) {
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
-		}		
-		
+		}
+				
+		if (!computeOrder.getProvidingMemberId().equals(properties.get(ConfigurationConstants.XMPP_JID_KEY))) {
+			ManagerPacketHelper.remoteStorageLink(new StorageLink(xOCCIAtt), 
+						computeOrder.getProvidingMemberId(), federationUserToken, packetSender);
+		} else {
+			attachStorage(categories, xOCCIAtt, federationUserToken);			
+		}
+						
+		StorageLink storageLink = new StorageLink(xOCCIAtt);
+		storageLink.setProvadingMemberId(computeOrder.getProvidingMemberId());
+		storageLinkRepository.addStorageLink(federationIdentityPlugin.getToken(accessId).getUser(), storageLink);	
+	}
+
+	public void attachStorage(List<Category> categories,
+			Map<String, String> xOCCIAtt, Token federationUserToken) {		
 		storagePlugin.attach(federationUserToken, categories, xOCCIAtt);
-		storageLinkRepository.addStorageLink(federationIdentityPlugin
-				.getToken(accessId).getUser(), new StorageLink(xOCCIAtt));		
 	}
 
 	public List<Flavor> getFlavorsProvided() {
@@ -1877,44 +1910,36 @@ public class ManagerController {
 	public void removeStorageLink(String accessId, String storageLinkId) {
 		LOGGER.debug("Removing storageId: " + storageLinkId);		
 		
-		Token token = federationIdentityPlugin.getToken(accessId);
-		if (token == null) {
+		Token federationToken = federationIdentityPlugin.getToken(accessId);
+		if (federationToken == null) {
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}
-		StorageLink storageLink = storageLinkRepository.get(normalizeInstanceId(storageLinkId), token.getUser());
+		StorageLink storageLink = storageLinkRepository.get(normalizeInstanceId(storageLinkId), federationToken.getUser());
 		
 		if (storageLink == null) {
 			throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
 		}
 		
-		String storageId = normalizeInstanceId(storageLink.getTarget());
-		Order storageOrder = orderRepository.getOrderByInstance(storageId);
-		Token federationUserToken = getFederationUserToken(storageOrder);
+		if (!storageLink.isLocal()) {
+			storageLink.setFederationToken(federationToken);
+			ManagerPacketHelper.deleteRemoteStorageLink(storageLink, packetSender);
+		} else {
+			String storageIdNormalized = normalizeInstanceId(storageLink.getTarget());		
+			storageLink.setTarget(storageIdNormalized);
+			
+			detachStorage(storageLink, storageLink.getFederationToken());			
+		}		
 		
+		storageLinkRepository.remove(storageLinkId);	
+	}
+
+	public void detachStorage(StorageLink storageLink, Token federationUserToken) {		
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
-		xOCCIAtt.put(StorageAttribute.TARGET.getValue(), storageId);
-		storagePlugin.dettach(federationUserToken, null, xOCCIAtt);
-		storageLinkRepository.remove(storageLinkId);
 		
-////		checkOrderId(accessId, storageLinkId);
-//		StorageLink storageLink = storageLinkRepository.get(storageLinkId);
-//		if (storageLink != null 
-////				&& storageLink.getProvidingMemberId() != null 
-//				&& (storageLink.getState().equals(OrderState.OPEN) 
-//						|| storageLink.getState().equals(OrderState.PENDING))) {
-//			removeAsynchronousRemoteOrders(storageLink, true);
-//		}
-//		storageLinkRepository.remove(storageLinkId);
-//		if (!instanceMonitoringTimer.isScheduled()) {
-//			triggerInstancesMonitor();
-//		}
-	}	
-	
-	public void removeAllStorageLink(String accessId) {
-//		String user = getUser(accessId);
-//		LOGGER.debug("Removing all storage links of user: " + user);
-//		storageLinkRepository.removeByUser(user);
-	}	
+		
+		xOCCIAtt.put(StorageAttribute.TARGET.getValue(), storageLink.getTarget());
+		storagePlugin.dettach(federationUserToken, null, xOCCIAtt);
+	}		
 
 	public List<ResourceUsage> getMembersUsage(String federationAccessId) {
 		checkFederationAccessId(federationAccessId);

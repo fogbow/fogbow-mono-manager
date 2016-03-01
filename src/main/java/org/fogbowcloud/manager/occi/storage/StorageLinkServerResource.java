@@ -123,15 +123,16 @@ public class StorageLinkServerResource extends ServerResource {
 		}
 		Resource resource = ResourceRepository.getInstance().get(OrderConstants.STORAGELINK_TERM);
 		responseOCCIFormat.append(resource.toHeader());
+		responseOCCIFormat.append("\n");
 				
 		Map<String, String> attToOutput = new HashMap<String, String>();
+		attToOutput.put(StorageAttribute.DEVICE_ID.getValue(), storageLink.getDeviceId());		
 		attToOutput.put(StorageAttribute.SOURCE.getValue(), storageLink.getSource());
 		attToOutput.put(StorageAttribute.TARGET.getValue(), storageLink.getTarget());
-		attToOutput.put(StorageAttribute.DEVICE_ID.getValue(), storageLink.getDeviceId());
 		for (String attName : attToOutput.keySet()) {
-			String attrValue = attToOutput.get(attName);
-			responseOCCIFormat.append(OCCIHeaders.X_OCCI_ATTRIBUTE + ": " + attName + "=\""
-					+ attrValue != null ? attrValue : "null" + "\"");	
+			String attrValue = attToOutput.get(attName) != null ? attToOutput.get(attName) : null;
+			responseOCCIFormat.append(OCCIHeaders.X_OCCI_ATTRIBUTE + ": " 
+					+ attName + "=\"" + attrValue + "\"");
 			responseOCCIFormat.append("\n");
 		}
 		
