@@ -182,6 +182,10 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 	public AuthorizationPlugin getAuthorizationPlugin() {
 		return authorizationPlugin;
 	}
+	
+	public AccountingPlugin getAccountingPlugin() {
+		return accountingPlugin;
+	}
 
 	public ManagerXmppComponent initializeXMPPManagerComponent(boolean init) throws Exception {
 
@@ -381,6 +385,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		properties.put(ConfigurationConstants.SERVED_ORDER_MONITORING_PERIOD_KEY,
 				String.valueOf(DefaultDataTestHelper.SERVED_ORDER_MONITORING_PERIOD));
 		properties.put(ConfigurationConstants.GREEN_SITTER_JID, DefaultDataTestHelper.GREEN_SITTER_JID);
+		properties.put(ConfigurationConstants.ADMIN_USERS, DefaultDataTestHelper.FED_USER_NAME + ";" + "admin_user");
 		
 		if (extraProperties != null) {
 			for (Entry<String, String> entry : extraProperties.entrySet()) {

@@ -11,12 +11,8 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.apache.log4j.Logger;
-import org.fogbowcloud.manager.core.plugins.accounting.TestDataStore;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.Token;
-import org.fogbowcloud.manager.occi.order.Order;
-import org.fogbowcloud.manager.occi.order.OrderDataStore;
-import org.fogbowcloud.manager.occi.order.OrderState;
 import org.json.JSONException;
 import org.junit.After;
 import org.junit.Assert;
@@ -25,7 +21,7 @@ import org.junit.Test;
 
 public class TestOrderDataStore {
 
-	private static final Logger LOGGER = Logger.getLogger(TestDataStore.class);
+	private static final Logger LOGGER = Logger.getLogger(TestOrderDataStore.class);
 	 
 	private final String DATASTORE_PATH = "src/test/resources/testOrderDataStore.sqlite";
 	private final String DATASTORE_URL = "jdbc:sqlite:" + DATASTORE_PATH;

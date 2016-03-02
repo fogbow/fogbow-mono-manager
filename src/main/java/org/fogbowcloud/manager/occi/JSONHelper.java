@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.fogbowcloud.manager.core.plugins.accounting.AccountingInfo;
 import org.fogbowcloud.manager.occi.instance.Instance.Link;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.json.JSONArray;
@@ -76,5 +77,16 @@ public class JSONHelper {
 			links.add(Link.fromJSON(jsonArray.getString(i)));
 		}
 		return links;
+	}
+	
+	public static JSONObject mountAccountingInfoJSON(List<AccountingInfo> accountingInfo)
+			throws JSONException {
+		
+		List<JSONObject> accountingObj = new ArrayList<JSONObject>();
+		for (AccountingInfo accountingInfoEntry : accountingInfo != null ? accountingInfo
+				: new ArrayList<AccountingInfo>()) {
+			accountingObj.add(accountingInfoEntry.toJSON());
+		}
+		return new JSONObject().put("accounting", new JSONArray(accountingObj));
 	}
 }
