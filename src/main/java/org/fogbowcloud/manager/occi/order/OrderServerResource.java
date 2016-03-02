@@ -427,7 +427,9 @@ public class OrderServerResource extends ServerResource {
 						+ OrderAttribute.STATE.getValue() + "=" + order.getState() + "; "
 						+ OrderAttribute.TYPE.getValue() + "="
 						+ order.getAttValue(OrderAttribute.TYPE.getValue()) + "; "
-						+ OrderAttribute.INSTANCE_ID.getValue() + "=" + order.getGlobalInstanceId()
+						+ OrderAttribute.INSTANCE_ID.getValue() + "=" + order.getGlobalInstanceId() + "; "
+						+ OrderAttribute.RESOURCE_KIND.getValue() + "=" 
+						+ order.getAttValue(OrderAttribute.RESOURCE_KIND.getValue()) 
 						+ "\n";
 			}else {			
 				response += prefixOCCILocation + order.getId() + "\n";
