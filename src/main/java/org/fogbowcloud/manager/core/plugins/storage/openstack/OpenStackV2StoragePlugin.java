@@ -23,9 +23,12 @@ import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.ErrorType;
 import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.OCCIHeaders;
+import org.fogbowcloud.manager.occi.model.Resource;
+import org.fogbowcloud.manager.occi.model.ResourceRepository;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.order.OrderAttribute;
+import org.fogbowcloud.manager.occi.order.OrderConstants;
 import org.fogbowcloud.manager.occi.storage.StorageAttribute;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -33,6 +36,7 @@ import org.json.JSONObject;
 
 public class OpenStackV2StoragePlugin implements StoragePlugin {
 
+	protected static final String MOUNTPOINT_DEFAULT = "/dev/vdc";
 	protected static final String KEY_JSON_ID = "id";
 	protected static final String KEY_JSON_SIZE = "size";
 	protected static final String KEY_JSON_OS_ATTACH = "os-attach";
@@ -47,7 +51,6 @@ public class OpenStackV2StoragePlugin implements StoragePlugin {
 	
 	public static final String STORAGE_NOVAV2_URL_KEY = "storage_v2_url";
 	
-	// TODO Refactor ? The same occi attribute than the compute plugin
 	protected static final String TENANT_ID = "tenantId";
 
 	private HttpClient client;
@@ -141,10 +144,11 @@ public class OpenStackV2StoragePlugin implements StoragePlugin {
 		
 		String instanceUUID = xOCCIAtt.get(StorageAttribute.SOURCE.getValue());
 		String storageId = xOCCIAtt.get(StorageAttribute.TARGET.getValue());
+		String mountpoint = xOCCIAtt.get(StorageAttribute.DEVICE_ID.getValue());
 		
 		JSONObject jsonRequest = null;
 		try {			
-			jsonRequest = generateJsonEntityToAttach(instanceUUID);
+			jsonRequest = generateJsonEntityToAttach(instanceUUID, mountpoint);
 		} catch (JSONException e) {
 			LOGGER.error("An error occurred when generating json.", e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
@@ -272,6 +276,9 @@ public class OpenStackV2StoragePlugin implements StoragePlugin {
 			JSONObject volumeJson = rootServer.getJSONObject(KEY_JSON_VOLUME);
 			String id = volumeJson.getString(KEY_JSON_ID);
 			
+			List<Resource> resources = new ArrayList<Resource>();
+			resources.add(ResourceRepository.getInstance().get(OrderConstants.STORAGE_TERM));
+			
 			Map<String, String> attributes = new HashMap<String, String>();
 			// CPU Architecture of the instance
 			attributes.put("occi.storage.name", volumeJson.optString("name"));
@@ -279,7 +286,7 @@ public class OpenStackV2StoragePlugin implements StoragePlugin {
 			attributes.put("occi.storage.size", volumeJson.optString("size"));
 			attributes.put("occi.core.id", id);
 
-			return new Instance(id, null, attributes, new ArrayList<Instance.Link>(), null);
+			return new Instance(id, resources, attributes, new ArrayList<Instance.Link>(), null);
 		} catch (JSONException e) {
 			LOGGER.warn("There was an exception while getting instance storage from json.", e);
 		}
@@ -314,11 +321,15 @@ public class OpenStackV2StoragePlugin implements StoragePlugin {
 		return volume;
 	}
 	
-	protected JSONObject generateJsonEntityToAttach(String instance) throws JSONException {
+	protected JSONObject generateJsonEntityToAttach(String instance,
+			String mountpoint) throws JSONException {
 
 		JSONObject osAttachContent = new JSONObject();
 		osAttachContent.put(KEY_JSON_INSTANCE_UUID, instance);
-		osAttachContent.put(KEY_JSON_MOUNTPOINT, "/dev/vdc");		
+		osAttachContent
+				.put(KEY_JSON_MOUNTPOINT,
+						mountpoint != null && !mountpoint.equals("null") ? mountpoint
+								: MOUNTPOINT_DEFAULT);		
 
 		JSONObject osAttach = new JSONObject();
 		osAttach.put(KEY_JSON_OS_ATTACH, osAttachContent);
@@ -327,7 +338,7 @@ public class OpenStackV2StoragePlugin implements StoragePlugin {
 	}	
 	
 
-	private JSONObject generateJsonEntityToDeattach() throws JSONException {
+	protected JSONObject generateJsonEntityToDeattach() throws JSONException {
 		
 		JSONObject osDeattachContent = new JSONObject();
 		osDeattachContent.put("attachment_id", "");

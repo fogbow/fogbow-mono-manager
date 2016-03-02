@@ -347,6 +347,8 @@ public class ComputeServerResource extends ServerResource {
 		String federationAuthToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse(),
 				application.getAuthenticationURI());
 
+		orderXOCCIAtt.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.COMPUTE_TERM);
+		
 		Instance instance = new Instance(FED_INSTANCE_PREFIX + UUID.randomUUID().toString());
 		List<Order> newOrder = application.createOrders(federationAuthToken, orderCategories, orderXOCCIAtt);
 
@@ -520,7 +522,7 @@ public class ComputeServerResource extends ServerResource {
 		return prefix + instance.getId();
 	}
 
-	private String getHostRef(HttpRequest req) {
+	public String getHostRef(HttpRequest req) {
 		OCCIApplication application = (OCCIApplication) getApplication();
 		String myIp = application.getProperties().getProperty("my_ip");
 		ServerCall httpCall = req.getHttpCall();

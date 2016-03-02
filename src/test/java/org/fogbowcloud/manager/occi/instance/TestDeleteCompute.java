@@ -31,6 +31,8 @@ import org.fogbowcloud.manager.occi.model.OCCIHeaders;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.order.Order;
+import org.fogbowcloud.manager.occi.order.OrderAttribute;
+import org.fogbowcloud.manager.occi.order.OrderConstants;
 import org.fogbowcloud.manager.occi.util.OCCITestHelper;
 import org.junit.After;
 import org.junit.Assert;
@@ -75,14 +77,17 @@ public class TestDeleteCompute {
 				.thenReturn(tokenTwo);
 
 		List<Order> orders = new LinkedList<Order>();
+		HashMap<String, String> xOCCIAttr = new HashMap<String, String>();
+		xOCCIAttr.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.COMPUTE_TERM);
 		Order order1 = new Order("1", new Token(OCCITestHelper.ACCESS_TOKEN,
 				OCCITestHelper.USER_MOCK, DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
-				new HashMap<String, String>()), null, null, true, "");
+				xOCCIAttr), null, xOCCIAttr, true, "");
 		order1.setInstanceId(INSTANCE_ID);
+		System.out.println(order1.getResourceKing());
 		order1.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
 		orders.add(order1);
 		Order order2 = new Order("2", new Token("otherToken", "otherUser",
-				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), null, null, true, "");
+				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, xOCCIAttr), null, xOCCIAttr, true, "");
 		order2.setInstanceId(OTHER_INSTANCE_ID);
 		order2.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
 		orders.add(order2);

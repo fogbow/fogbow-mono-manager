@@ -95,26 +95,11 @@ public class StorageLinkRepository {
 				StorageLink storageLinks = (StorageLink) iterator.next();
 				if (storageLinks.getId().equals(storageLinkId)) {
 					iterator.remove();
-//					if (storageLinks.getState().equals(OrderState.CLOSED)) { 
-//						LOGGER.debug("Order " + storageLinkId + " does not have an instance. Excluding order.");
-//						iterator.remove();
-//					} else {
-//						storageLinks.setState(OrderState.DELETED);
-//					}
 					return;
 				}
 			}
 		}
 	}	
-	
-//	public void removeByUser(String user) {
-//		List<StorageLink> storageLinksByUser = storageLinks.get(user);
-//		if (storageLinksByUser != null) {
-//			for (StorageLink storageLink : storageLinksByUser) {
-//				remove(storageLink.getId());
-//			}
-//		}
-//	}	
 	
 	public static class StorageLink {
 
@@ -157,7 +142,7 @@ public class StorageLinkRepository {
 		public String getTarget() {
 			return target;
 		}
-
+	
 		public void setTarget(String target) {
 			this.target = target;
 		}
@@ -200,7 +185,6 @@ public class StorageLinkRepository {
 
 		public void setLocal(boolean isLocal) {
 			this.isLocal = isLocal;
-		}
-								
+		}							
 	}
 }

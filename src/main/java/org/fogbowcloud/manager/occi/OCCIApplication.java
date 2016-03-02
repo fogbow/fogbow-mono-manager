@@ -141,9 +141,9 @@ public class OCCIApplication extends Application {
 		return managerFacade.getOrder(authToken, orderId);
 	}
 
-	public void createStorageLink(String federationAuthToken, List<Category> categories,
+	public StorageLink createStorageLink(String federationAuthToken, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
-		managerFacade.createStorageLink(federationAuthToken, categories, xOCCIAtt);
+		return managerFacade.createStorageLink(federationAuthToken, categories, xOCCIAtt);
 	}
 	
 	public List<Order> createOrders(String federationAuthToken, List<Category> categories,
@@ -171,12 +171,12 @@ public class OCCIApplication extends Application {
 		managerFacade.removeOrder(authToken, orderId);
 	}
 	
-	public void removeStorageLink(String authToken, String orderId) {
-		managerFacade.removeStorageLink(authToken, orderId);
+	public void removeStorageLink(String authToken, String storageLinkId) {
+		managerFacade.removeStorageLink(authToken, storageLinkId);
 	}	
 
 	public List<Instance> getInstances(String authToken) {
-		return getInstances(authToken, null);
+		return getInstances(authToken, OrderConstants.COMPUTE_TERM);
 	}
 	
 	public List<Instance> getInstances(String authToken, String resourceKind) {
@@ -188,7 +188,7 @@ public class OCCIApplication extends Application {
 	}
 
 	public Instance getInstance(String authToken, String instanceId) {
-		return getInstance(authToken, instanceId, null);
+		return getInstance(authToken, instanceId, OrderConstants.COMPUTE_TERM);
 	}
 	
 	public Instance getInstance(String authToken, String instanceId, String resourceKind) {
@@ -196,7 +196,7 @@ public class OCCIApplication extends Application {
 	}
 
 	public void removeInstances(String authToken) {
-		removeInstances(authToken, null);
+		removeInstances(authToken, OrderConstants.COMPUTE_TERM);
 	}
 	
 	public void removeInstances(String authToken, String resourceKind) {
@@ -204,7 +204,7 @@ public class OCCIApplication extends Application {
 	}
 
 	public void removeInstance(String authToken, String instanceId) {
-		removeInstance(authToken, instanceId, null);
+		removeInstance(authToken, instanceId, OrderConstants.COMPUTE_TERM);
 	}
 	
 	public void removeInstance(String authToken, String instanceId, String resourceKind) {

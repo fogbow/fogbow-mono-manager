@@ -243,7 +243,7 @@ public class ManagerController {
 			try {
 				if (order.getState().equals(OrderState.FULFILLED)
 						|| order.getState().equals(OrderState.DELETED)) {
-					instance = getInstance(order);
+					instance = getInstance(order, order.getResourceKing());
 					LOGGER.debug(instance.getId() + " was recovered to request " + order.getId());
 				}
 			} catch (Exception e) {
@@ -595,16 +595,12 @@ public class ManagerController {
 	}
 	
 	public List<Instance> getInstances(String accessId, String resourceKind) {
-		resourceKind = resourceKind == null ? OrderConstants.COMPUTE_TERM : resourceKind;
 		
 		LOGGER.debug("Retrieving instances(" + resourceKind + ") of token " + accessId);
 		List<Instance> instances = new ArrayList<Instance>();
 		for (Order order : orderRepository.getByUser(getUser(accessId))) {
 			
-			String orderResourceKind = order.getAttValue(OrderAttribute.RESOURCE_KIND.getValue());
-			//TODO retirar essa primeira condiçao
-			if (orderResourceKind == null && !resourceKind.equals(OrderConstants.COMPUTE_TERM) 
-					|| orderResourceKind != null && !orderResourceKind.equals(resourceKind)) {
+			if (!order.getResourceKing().equals(resourceKind)) {
 				continue;
 			}
 			
@@ -659,17 +655,11 @@ public class ManagerController {
 		}
 		return instance;
 	}
-
-	private Instance getInstance(Order order) {
-		return getInstance(order, null);
-	}
 	
 	private Instance getInstance(Order order, String resourceKind) {
 		
-		resourceKind = resourceKind == null ? OrderConstants.COMPUTE_TERM : resourceKind;				
-		//TODO retirar essa primeira condiçao
-		String orderResourceKind = order.getAttValue(OrderAttribute.RESOURCE_KIND.getValue());		
-		if (orderResourceKind != null && !orderResourceKind.equals(resourceKind)) {
+		String orderResourceKind = order.getAttValue(OrderAttribute.RESOURCE_KIND.getValue());
+		if (!orderResourceKind.equals(resourceKind)) {
 			throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
 		}
 		
@@ -828,8 +818,7 @@ public class ManagerController {
 			if (resourceKind.equals(OrderConstants.COMPUTE_TERM)) {
 				this.computePlugin.removeInstance(getFederationUserToken(order), instanceId);				
 			} else if (resourceKind.equals(OrderConstants.STORAGE_TERM)) {
-				this.storagePlugin.removeInstance(getFederationUserToken(order), instanceId);				
-				// TODO se nao é permitido deleter, pois estah anexado, avisar !!!
+				this.storagePlugin.removeInstance(getFederationUserToken(order), instanceId);
 			}
 		} else {
 			removeRemoteInstance(order);
@@ -846,13 +835,8 @@ public class ManagerController {
 	}
 
 	private void instanceRemoved(Order order) {			
-		if (order.getResourceKing() == null || order.getResourceKing().equals(OrderConstants.COMPUTE_TERM)) {
-//			try {
-				updateAccounting();				
-//			} catch (Exception e) {
-//				e.printStackTrace();
-//				//TODO review this exception
-//			}
+		if (order.getResourceKing().equals(OrderConstants.COMPUTE_TERM)) {
+			updateAccounting();
 			benchmarkingPlugin.remove(order.getInstanceId());			
 		}
 		
@@ -925,7 +909,7 @@ public class ManagerController {
 		if (!federationIdentityPlugin.isValid(accessId)) {
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}
-		return storageLinkRepository.get(storageLinkId);
+		return storageLinkRepository.get(normalizeInstanceId(storageLinkId));
 	}
 
 	public FederationMember getFederationMember(String memberId) {
@@ -1232,16 +1216,14 @@ public class ManagerController {
 			if (order.getState().in(OrderState.FULFILLED, OrderState.DELETED, OrderState.SPAWNING)) {
 				turnOffTimer = false;
 			}
-
-			// TODO implementar o monitoramento de storage
 			
 			if (order.getState().in(OrderState.FULFILLED, OrderState.DELETED)) {
-				if (order.getResourceKing() != null && !order.getResourceKing().equals(OrderConstants.COMPUTE_TERM)) {
-					return;
-				}
+//				if (order.getResourceKing() != null && !order.getResourceKing().equals(OrderConstants.COMPUTE_TERM)) {
+//					return;
+//				}
 				try {
 					LOGGER.debug("Monitoring instance of order: " + order);
-					removeFailedInstance(order, getInstance(order));
+					removeFailedInstance(order, getInstance(order, order.getResourceKing()));
 				} catch (Throwable e) {
 					LOGGER.debug("Error while getInstance of " + order.getInstanceId(), e);
 					instanceRemoved(orderRepository.get(order.getId()));
@@ -1320,12 +1302,7 @@ public class ManagerController {
 						asynchronousOrders.get(order.getId()).setTimeStamp(dateUtils.currentTimeMillis());
 
 						order.setInstanceId(instanceId);
-						order.setProvidingMemberId(memberAddress);
-						
-						/*
-						 * TODO We need to differentiate compute remote request from storage
-						 * remote request to execute benchmarking only for compute instances.
-						 */
+						order.setProvidingMemberId(memberAddress);						
 						
 						boolean isStorageOrder = OrderConstants.STORAGE_TERM.equals(order
 								.getResourceKing());
@@ -1834,6 +1811,10 @@ public class ManagerController {
 		List<Instance> allFullInstances = new ArrayList<Instance>();
 		LOGGER.debug("Getting all instances and your information.");
 		for (Order order : ordersFromUser) {
+			if (!order.getResourceKing().equals(OrderConstants.COMPUTE_TERM)) {
+				continue;
+			}
+			
 			Instance instance = null;
 			if (isFulfilledByLocalMember(order)) {
 				LOGGER.debug(order.getInstanceId() + " is local, getting its information in the local cloud.");
@@ -1861,7 +1842,7 @@ public class ManagerController {
 		return allFullInstances;
 	}
 	
-	public void createStorageLink(String accessId,
+	public StorageLink createStorageLink(String accessId,
 			List<Category> categories, Map<String, String> xOCCIAtt) {
 		
 		String target = xOCCIAtt.get(StorageAttribute.TARGET.getValue());
@@ -1873,7 +1854,11 @@ public class ManagerController {
 		Order computeOrder = orderRepository.getOrderByInstance(normalizeSourceAttr);
 		
 		if (storageOrder == null || computeOrder == null) {
-			throw new OCCIException(ErrorType.BAD_REQUEST, "...");
+			throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND_INSTANCE);
+		}
+		
+		if (!storageOrder.getRequestingMemberId().equals(computeOrder.getRequestingMemberId())) {			
+			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.INVALID_INSTANCE_OWN);
 		}
 		
 		if (!storageOrder.getProvidingMemberId().equals(computeOrder.getProvidingMemberId())) {
@@ -1886,7 +1871,9 @@ public class ManagerController {
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}
 				
+		boolean isLocal = true;
 		if (!computeOrder.getProvidingMemberId().equals(properties.get(ConfigurationConstants.XMPP_JID_KEY))) {
+			isLocal = false;
 			ManagerPacketHelper.remoteStorageLink(new StorageLink(xOCCIAtt), 
 						computeOrder.getProvidingMemberId(), federationUserToken, packetSender);
 		} else {
@@ -1894,8 +1881,11 @@ public class ManagerController {
 		}
 						
 		StorageLink storageLink = new StorageLink(xOCCIAtt);
+		storageLink.setLocal(isLocal);
 		storageLink.setProvadingMemberId(computeOrder.getProvidingMemberId());
 		storageLinkRepository.addStorageLink(federationIdentityPlugin.getToken(accessId).getUser(), storageLink);	
+		
+		return storageLink;
 	}
 
 	public void attachStorage(List<Category> categories,
@@ -1926,8 +1916,9 @@ public class ManagerController {
 		} else {
 			String storageIdNormalized = normalizeInstanceId(storageLink.getTarget());		
 			storageLink.setTarget(storageIdNormalized);
-			
-			detachStorage(storageLink, storageLink.getFederationToken());			
+									
+			detachStorage(storageLink, getFederationUserToken(orderRepository
+					.getOrderByInstance(normalizeInstanceId(storageLink.getSource()))));
 		}		
 		
 		storageLinkRepository.remove(storageLinkId);	

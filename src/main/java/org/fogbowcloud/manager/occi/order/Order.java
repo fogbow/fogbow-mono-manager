@@ -43,6 +43,11 @@ public class Order {
 		this.state = state;
 		this.categories = categories;
 		this.xOCCIAtt = xOCCIAtt;
+		if (this.xOCCIAtt == null) {
+			this.resourceKing = null;			
+		} else {
+			this.resourceKing = this.xOCCIAtt.get(OrderAttribute.RESOURCE_KIND.getValue());					
+		}		
 	}
 
 	public Order(String id, Token federationToken, 

@@ -71,4 +71,20 @@ public class TestOrder {
 		
 		Assert.assertTrue(fromXOCCIAttrJSON.isEmpty());
 	}
+	
+	@Test
+	public void testOrderContructorSetResourceKind() {
+		Map<String, String> xOCCIAtt = new HashMap<String, String>();
+		xOCCIAtt.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.COMPUTE_TERM);
+		Order order = new Order("id", null, null, xOCCIAtt, true, "requestingMemberId");
+		
+		Assert.assertEquals(OrderConstants.COMPUTE_TERM, order.getResourceKing());
+		
+		xOCCIAtt.clear();
+		xOCCIAtt = new HashMap<String, String>();
+		xOCCIAtt.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.STORAGE_TERM);
+		order = new Order("id", null, null, xOCCIAtt, true, "requestingMemberId");
+		
+		Assert.assertEquals(OrderConstants.STORAGE_TERM, order.getResourceKing());
+	}
 }
