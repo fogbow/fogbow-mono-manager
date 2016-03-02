@@ -77,7 +77,7 @@ public class TestGetRemoteInstance {
 
 		Token token = new Token("anyvalue", OCCITestHelper.USER_MOCK,
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>());
-		Order order = new Order("anyvalue", token, null, null, true, "");
+		Order order = new Order("anyvalue", token, null, new HashMap<String, String>(), true, "");
 		order.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
 		order.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 

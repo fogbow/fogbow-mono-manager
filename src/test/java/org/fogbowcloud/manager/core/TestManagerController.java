@@ -95,6 +95,7 @@ public class TestManagerController {
 		xOCCIAtt = new HashMap<String, String>();
 		xOCCIAtt.put(OrderAttribute.INSTANCE_COUNT.getValue(),
 				String.valueOf(OrderConstants.DEFAULT_INSTANCE_COUNT));
+		xOCCIAtt.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.COMPUTE_TERM);
 	}
 
 	@Test
@@ -140,15 +141,15 @@ public class TestManagerController {
 	}
 	
 	private void checkOrderPerUserToken(Token token) {
-		Order order1 = new Order("id1", token, new ArrayList<Category>(),
-				new HashMap<String, String>(), true, "");
-		order1.setState(OrderState.OPEN);
-		Order order2 = new Order("id2", token, new ArrayList<Category>(),
-				new HashMap<String, String>(), true, "");
-		order2.setState(OrderState.OPEN);
+		HashMap<String, String> xOCCIAtt = new HashMap<String, String>();
+		xOCCIAtt.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.COMPUTE_TERM);
+		Order orderOne = new Order("id1", token, new ArrayList<Category>(), xOCCIAtt, true, "");
+		orderOne.setState(OrderState.OPEN);
+		Order orderTwo = new Order("id2", token, new ArrayList<Category>(), xOCCIAtt, true, "");
+		orderTwo.setState(OrderState.OPEN);
 		OrderRepository orderRepository = new OrderRepository();
-		orderRepository.addOrder(token.getUser(), order1);
-		orderRepository.addOrder(token.getUser(), order2);
+		orderRepository.addOrder(token.getUser(), orderOne);
+		orderRepository.addOrder(token.getUser(), orderTwo);
 		managerController.setOrders(orderRepository);
 
 		managerController.checkAndSubmitOpenOrders();
@@ -966,11 +967,11 @@ public class TestManagerController {
 	@Test
 	public void testMonitorDeletedOrderWithInstance() throws InterruptedException {
 		// setting order repository
-		Order order1 = new Order("id1", managerTestHelper.getDefaultFederationToken(), null, null, true, "");
+		Order order1 = new Order("id1", managerTestHelper.getDefaultFederationToken(), null, xOCCIAtt, true, "");
 		order1.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
 		order1.setState(OrderState.DELETED);
 		order1.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
-		Order order2 = new Order("id2", managerTestHelper.getDefaultFederationToken(), null, null, true, "");
+		Order order2 = new Order("id2", managerTestHelper.getDefaultFederationToken(), null, xOCCIAtt, true, "");
 		order2.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
 		order2.setState(OrderState.DELETED);
 		order2.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
@@ -1007,13 +1008,13 @@ public class TestManagerController {
 	public void testMonitorDeletedOrderWithoutInstance() throws InterruptedException {
 		// setting order repository
 		Order order1 = new Order("id1",
-				managerTestHelper.getDefaultFederationToken(), null, null, true, "");
+				managerTestHelper.getDefaultFederationToken(), null, xOCCIAtt, true, "");
 		order1.setState(OrderState.DELETED);
 		Order order2 = new Order("id2",
-				managerTestHelper.getDefaultFederationToken(), null, null, true, "");
+				managerTestHelper.getDefaultFederationToken(), null, xOCCIAtt, true, "");
 		order2.setState(OrderState.DELETED);
 		Order order3 = new Order("id3",
-				managerTestHelper.getDefaultFederationToken(), null, null, true, "");
+				managerTestHelper.getDefaultFederationToken(), null, xOCCIAtt, true, "");
 		order3.setState(OrderState.OPEN);
 
 		OrderRepository orderRepository = new OrderRepository();
@@ -1063,9 +1064,9 @@ public class TestManagerController {
 	@Test
 	public void testMonitorFulfilledOrderWithoutInstance() throws InterruptedException {
 		// setting orders repository
-		Order order1 = new Order("id1", managerTestHelper.getDefaultFederationToken(), null, null, true, "");
+		Order order1 = new Order("id1", managerTestHelper.getDefaultFederationToken(), null, xOCCIAtt, true, "");
 		order1.setState(OrderState.FULFILLED);
-		Order order2 = new Order("id2", managerTestHelper.getDefaultFederationToken(), null, null, true, "");
+		Order order2 = new Order("id2", managerTestHelper.getDefaultFederationToken(), null, xOCCIAtt, true, "");
 		order2.setState(OrderState.FULFILLED);
 
 		OrderRepository orderRepository = new OrderRepository();
@@ -1103,6 +1104,7 @@ public class TestManagerController {
 	public void testMonitorFulfilledAndPersistentOrder() throws InterruptedException {
 		Map<String, String> attributes = new HashMap<String, String>();
 		attributes.put(OrderAttribute.TYPE.getValue(), OrderType.PERSISTENT.getValue());
+		attributes.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.COMPUTE_TERM);
 
 		// setting order repository
 		Order order1 = new Order("id1", managerTestHelper.getDefaultFederationToken(), new ArrayList<Category>(), attributes, true, "");
@@ -1158,11 +1160,13 @@ public class TestManagerController {
 		final String SECOND_INSTANCE_ID = "secondInstanceId";
 
 		// setting order repository
-		Order order1 = new Order("id1", managerTestHelper.getDefaultFederationToken(), null, null, true, "");
+		HashMap<String, String> xOCCIAttr = new HashMap<String, String>();
+		xOCCIAttr.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.COMPUTE_TERM);
+		Order order1 = new Order("id1", managerTestHelper.getDefaultFederationToken(), null, xOCCIAtt, true, "");
 		order1.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
 		order1.setState(OrderState.FULFILLED);
 		order1.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
-		Order order2 = new Order("id2", managerTestHelper.getDefaultFederationToken(), null, null, true, "");
+		Order order2 = new Order("id2", managerTestHelper.getDefaultFederationToken(), null, xOCCIAtt, true, "");
 		order2.setInstanceId(SECOND_INSTANCE_ID);
 		order2.setState(OrderState.FULFILLED);
 		order2.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
@@ -1202,7 +1206,7 @@ public class TestManagerController {
 	@Test
 	public void testMonitorWontRethrowException() throws InterruptedException {
 		// setting order repository
-		Order order1 = new Order("id1", managerTestHelper.getDefaultFederationToken(), null, null, true, "");
+		Order order1 = new Order("id1", managerTestHelper.getDefaultFederationToken(), null, xOCCIAtt, true, "");
 		order1.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
 		order1.setState(OrderState.FULFILLED);
 
@@ -1221,7 +1225,9 @@ public class TestManagerController {
 	@Test
 	public void testMonitorWillRemoveLocalFailedInstance() throws InterruptedException {
 		// setting order repository
-		Order order1 = new Order("id1", managerTestHelper.getDefaultFederationToken(), null, null, true, "");
+		HashMap<String, String> xOCCIAttr = new HashMap<String, String>();
+		xOCCIAttr.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.COMPUTE_TERM);
+		Order order1 = new Order("id1", managerTestHelper.getDefaultFederationToken(), null, xOCCIAtt, true, "");
 		order1.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
 		order1.setState(OrderState.FULFILLED);
 		order1.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
@@ -1555,6 +1561,7 @@ public class TestManagerController {
 				String.valueOf(OrderType.PERSISTENT.getValue()));
 		xOCCIAtt.put(OrderAttribute.VALID_UNTIL.getValue(),
 				DateUtils.getDateISO8601Format(expirationOrderTime));
+		xOCCIAtt.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.COMPUTE_TERM);
 
 		mockOrderInstance();
 
@@ -1725,6 +1732,7 @@ public class TestManagerController {
 				DateUtils.getDateISO8601Format(startOrderTime));
 		xOCCIAtt.put(OrderAttribute.VALID_UNTIL.getValue(),
 				DateUtils.getDateISO8601Format(expirationOrderTime));
+		xOCCIAtt.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.COMPUTE_TERM);
 
 		mockOrderInstance();
 
@@ -2041,9 +2049,9 @@ public class TestManagerController {
 		managerTestHelper.useSameThreadExecutor();
 		
 		// setting order repository
-		Order order1 = new Order("id1", managerTestHelper.getDefaultFederationToken(), null, null, true, "");
+		Order order1 = new Order("id1", managerTestHelper.getDefaultFederationToken(), null, xOCCIAtt, true, "");
 		order1.setState(OrderState.OPEN);
-		Order order2 = new Order("id2", managerTestHelper.getDefaultFederationToken(), null, null, true, "");
+		Order order2 = new Order("id2", managerTestHelper.getDefaultFederationToken(), null, xOCCIAtt, true, "");
 		order2.setState(OrderState.OPEN);
 
 		OrderRepository orderRepository = new OrderRepository();
@@ -2080,11 +2088,11 @@ public class TestManagerController {
 		String id1 = "id1";
 		String id2 = "id2";
 		String id3 = "id3";
-		Order order1 = new Order(id1, managerTestHelper.getDefaultFederationToken(), null, null, true, "");
+		Order order1 = new Order(id1, managerTestHelper.getDefaultFederationToken(), null, xOCCIAtt, true, "");
 		order1.setState(OrderState.OPEN);
-		Order order2 = new Order(id2, managerTestHelper.getDefaultFederationToken(), null, null, true, "");
+		Order order2 = new Order(id2, managerTestHelper.getDefaultFederationToken(), null, xOCCIAtt, true, "");
 		order2.setState(OrderState.OPEN);
-		Order order3 = new Order(id3, managerTestHelper.getDefaultFederationToken(), null, null, true, "");
+		Order order3 = new Order(id3, managerTestHelper.getDefaultFederationToken(), null, xOCCIAtt, true, "");
 		order3.setState(OrderState.OPEN);
 
 		OrderRepository orderRepository = new OrderRepository();
@@ -2517,7 +2525,7 @@ public class TestManagerController {
 		Token federationToken = new Token(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
 				DefaultDataTestHelper.FED_USER_NAME, new Date(), new HashMap<String, String>());
 		
-		Order order1 = new Order("id1", federationToken,  null, null, true, "");
+		Order order1 = new Order("id1", federationToken,  null, xOCCIAtt, true, "");
 		order1.setState(OrderState.FULFILLED);
 		order1.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
 		
@@ -2534,19 +2542,23 @@ public class TestManagerController {
 						managerTestHelper.getDefaultFederationToken())).thenReturn(
 				federationInstances);
 		
-		// checking if there is one instance for federation token 
-		Assert.assertEquals(1, managerController.getInstances(federationToken.getAccessId()).size());
-		Assert.assertEquals(DefaultDataTestHelper.INSTANCE_ID + Order.SEPARATOR_GLOBAL_ID
-				+ DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, managerController
-				.getInstances(federationToken.getAccessId()).get(0).getId());
+		// checking if there is one instance for federation token
+		Assert.assertEquals(1, managerController.getInstances(federationToken.getAccessId(),
+						OrderConstants.COMPUTE_TERM).size());
+		Assert.assertEquals(
+				DefaultDataTestHelper.INSTANCE_ID + Order.SEPARATOR_GLOBAL_ID
+						+ DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,managerController
+						.getInstances(federationToken.getAccessId(),OrderConstants.COMPUTE_TERM).get(0).getId());
 
 		managerController.garbageCollector();
-		
-		// checking if garbage collector does not remove the instance 
-		Assert.assertEquals(1, managerController.getInstances(federationToken.getAccessId()).size());
-		Assert.assertEquals(DefaultDataTestHelper.INSTANCE_ID + Order.SEPARATOR_GLOBAL_ID
-				+ DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, managerController
-				.getInstances(federationToken.getAccessId()).get(0).getId());
+
+		// checking if garbage collector does not remove the instance
+		Assert.assertEquals(1, managerController.getInstances(federationToken.getAccessId(),
+						OrderConstants.COMPUTE_TERM).size());
+		Assert.assertEquals(
+				DefaultDataTestHelper.INSTANCE_ID + Order.SEPARATOR_GLOBAL_ID
+						+ DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, managerController
+						.getInstances(federationToken.getAccessId(), OrderConstants.COMPUTE_TERM).get(0).getId());
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -2848,6 +2860,7 @@ public class TestManagerController {
 				OrderConstants.CREDENTIALS_RESOURCE_SCHEME, OrderConstants.MIXIN_CLASS);
 		categories.add(publicKeyCategory);
 		newXOCCIAttr.put(OrderAttribute.DATA_PUBLIC_KEY.getValue(), "public-key");
+		newXOCCIAttr.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.COMPUTE_TERM);
 		
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		String newInstanceId = "newinstanceid";
@@ -3105,6 +3118,7 @@ public class TestManagerController {
 		String batchId = "batchIdOne";
 		HashMap<String, String> xOCCIAtt = new HashMap<String, String>();
 		xOCCIAtt.put(OrderAttribute.BATCH_ID.getValue(), batchId);
+		xOCCIAtt.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.COMPUTE_TERM);
 		Token token = managerTestHelper.getDefaultFederationToken();
 		Order order1 = new Order("id1", token, new ArrayList<Category>(),
 				xOCCIAtt, true, "");
@@ -3193,6 +3207,7 @@ public class TestManagerController {
 
 		String batchId = "batchIdOne";
 		HashMap<String, String> xOCCIAtt = new HashMap<String, String>();
+		xOCCIAtt.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.COMPUTE_TERM);
 		xOCCIAtt.put(OrderAttribute.BATCH_ID.getValue(), batchId);
 		Token token = managerTestHelper.getDefaultFederationToken();
 		Order order1 = new Order("id1", token, new ArrayList<Category>(),
@@ -3343,23 +3358,23 @@ public class TestManagerController {
 		Order orderOneUserOne = new Order("One", federationTokenOne, instanceIdOne,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, new Date().getTime(), true,
-				OrderState.FULFILLED, null, null);
+				OrderState.FULFILLED, null, xOCCIAtt);
 		Order orderTwoUserOne = new Order("Two", federationTokenOne, instanceIdTwo,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, new Date().getTime(), true,
-				OrderState.FULFILLED, null, null);
+				OrderState.FULFILLED, null, xOCCIAtt);
 		Order orderThreeUserTwo = new Order("Three", federationTokenTwo, instanceIdThree,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, new Date().getTime(), true,
-				OrderState.FULFILLED, null, null);
+				OrderState.FULFILLED, null, xOCCIAtt);
 		Order orderOPENFour = new Order("Four", federationTokenTwo, "444",
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, new Date().getTime(), true,
-				OrderState.OPEN, null, null);
+				OrderState.OPEN, null, xOCCIAtt);
 		Order orderFiveDELETEDUserTwo = new Order("Five", federationTokenTwo, instanceIdFive,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, new Date().getTime(), true,
-				OrderState.DELETED, null, null);		
+				OrderState.DELETED, null, xOCCIAtt);		
 		orders.add(orderOneUserOne);
 		orders.add(orderTwoUserOne);
 		orders.add(orderThreeUserTwo);

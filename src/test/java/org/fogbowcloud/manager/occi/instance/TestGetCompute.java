@@ -34,6 +34,8 @@ import org.fogbowcloud.manager.occi.model.Resource;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.order.Order;
+import org.fogbowcloud.manager.occi.order.OrderAttribute;
+import org.fogbowcloud.manager.occi.order.OrderConstants;
 import org.fogbowcloud.manager.occi.order.OrderState;
 import org.fogbowcloud.manager.occi.util.OCCITestHelper;
 import org.junit.After;
@@ -112,31 +114,32 @@ public class TestGetCompute {
 		Token token = new Token(OCCITestHelper.ACCESS_TOKEN, OCCITestHelper.USER_MOCK,
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>());
 		
-		
-		Order order1 = new Order("1", token, null, null, true, "");
+		HashMap<String, String> xOCCIAttr = new HashMap<String, String>();
+		xOCCIAttr.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.COMPUTE_TERM);
+		Order order1 = new Order("1", token, null, xOCCIAttr, true, "");
 		order1.setInstanceId(INSTANCE_1_ID);
 		order1.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
 		ordersA.add(order1);
-		Order order2 = new Order("2", token, null, null, true, "");
+		Order order2 = new Order("2", token, null, xOCCIAttr, true, "");
 		order2.setInstanceId(INSTANCE_2_ID);
 		order2.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
 		ordersA.add(order2);
 		Order order3 = new Order("3", new Token("token", "user", DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
-				new HashMap<String, String>()), null, null, true, "");
+				new HashMap<String, String>()), null, xOCCIAttr, true, "");
 		order3.setInstanceId(INSTANCE_3_ID_WITHOUT_USER);
 		order3.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
 		ordersA.add(order3);
-		Order orderPostCompute1 = new Order("Order1", postToken, null, null, true, "");
+		Order orderPostCompute1 = new Order("Order1", postToken, null, xOCCIAttr, true, "");
 		orderPostCompute1.setInstanceId(POST_INSTANCE_1_ID);
 		orderPostCompute1.setState(OrderState.FULFILLED);
 		orderPostCompute1.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
 		ordersB.add(orderPostCompute1);
-		Order orderPostCompute2 = new Order("Order2", postToken, null, null, true, "");
+		Order orderPostCompute2 = new Order("Order2", postToken, null, xOCCIAttr, true, "");
 		orderPostCompute2.setInstanceId(POST_INSTANCE_2_ID);
 		orderPostCompute2.setState(OrderState.FULFILLED);
 		orderPostCompute2.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
 		ordersB.add(orderPostCompute2);
-		Order orderPostCompute3 = new Order("Order3", postToken, null, null, true, "");
+		Order orderPostCompute3 = new Order("Order3", postToken, null, xOCCIAttr, true, "");
 		orderPostCompute3.setInstanceId(null);
 		orderPostCompute3.setState(OrderState.OPEN);
 		orderPostCompute3.setProvidingMemberId(OCCITestHelper.MEMBER_ID);

@@ -43,8 +43,7 @@ public class OrderServerResource extends ServerResource {
 		OCCIApplication application = (OCCIApplication) getApplication();
 		HttpRequest req = (HttpRequest) getRequest();
 		String federationAccessToken = HeaderUtils.getAuthToken(
-				req.getHeaders(), getResponse(),
-				application.getAuthenticationURI());
+				req.getHeaders(), getResponse(), application.getAuthenticationURI());
 		String OrderId = (String) getRequestAttributes().get("orderId");
 		List<String> acceptContent = HeaderUtils.getAccept(req.getHeaders());
 		LOGGER.debug("accept contents:" + acceptContent);
@@ -351,6 +350,18 @@ public class OrderServerResource extends ServerResource {
 	}
 	
 	public static Map<String, String> normalizeXOCCIAtt(Map<String, String> xOCCIAtt) {
+		String resourceKind = xOCCIAtt.get(OrderAttribute.RESOURCE_KIND.getValue());
+		if (resourceKind != null) {
+			if (resourceKind.equals(OrderConstants.STORAGE_TERM)
+					&& xOCCIAtt.get(OrderAttribute.STORAGE_SIZE.getValue()) == null) {
+				throw new OCCIException(ErrorType.BAD_REQUEST,
+						ResponseConstants.NOT_FOUND_STORAGE_SIZE_ATTRIBUTE);
+			}
+		} else {
+			throw new OCCIException(ErrorType.BAD_REQUEST,
+					ResponseConstants.NOT_FOUND_RESOURCE_KIND);
+		}
+ 		
 		Map<String, String> defOCCIAtt = new HashMap<String, String>();
 		defOCCIAtt.put(OrderAttribute.TYPE.getValue(), OrderConstants.DEFAULT_TYPE);
 		defOCCIAtt.put(OrderAttribute.INSTANCE_COUNT.getValue(),
@@ -416,7 +427,9 @@ public class OrderServerResource extends ServerResource {
 						+ OrderAttribute.STATE.getValue() + "=" + order.getState() + "; "
 						+ OrderAttribute.TYPE.getValue() + "="
 						+ order.getAttValue(OrderAttribute.TYPE.getValue()) + "; "
-						+ OrderAttribute.INSTANCE_ID.getValue() + "=" + order.getGlobalInstanceId()
+						+ OrderAttribute.INSTANCE_ID.getValue() + "=" + order.getGlobalInstanceId() + "; "
+						+ OrderAttribute.RESOURCE_KIND.getValue() + "=" 
+						+ order.getAttValue(OrderAttribute.RESOURCE_KIND.getValue()) 
 						+ "\n";
 			}else {			
 				response += prefixOCCILocation + order.getId() + "\n";
@@ -425,6 +438,7 @@ public class OrderServerResource extends ServerResource {
 		return response.length() > 0 ? response.trim() : "\n";
 	}
 
+	// TODO remove this method, because there is the same method in the headerUtils class.
 	private String getHostRef(HttpRequest req) {
 		OCCIApplication application = (OCCIApplication) getApplication();
 		String myIp = application.getProperties().getProperty("my_ip");

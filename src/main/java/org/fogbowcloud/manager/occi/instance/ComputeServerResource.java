@@ -347,6 +347,8 @@ public class ComputeServerResource extends ServerResource {
 		String federationAuthToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse(),
 				application.getAuthenticationURI());
 
+		orderXOCCIAtt.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.COMPUTE_TERM);
+		
 		Instance instance = new Instance(FED_INSTANCE_PREFIX + UUID.randomUUID().toString());
 		List<Order> newOrder = application.createOrders(federationAuthToken, orderCategories, orderXOCCIAtt);
 
@@ -520,7 +522,7 @@ public class ComputeServerResource extends ServerResource {
 		return prefix + instance.getId();
 	}
 
-	private String getHostRef(HttpRequest req) {
+	public String getHostRef(HttpRequest req) {
 		OCCIApplication application = (OCCIApplication) getApplication();
 		String myIp = application.getProperties().getProperty("my_ip");
 		ServerCall httpCall = req.getHttpCall();
@@ -585,7 +587,7 @@ public class ComputeServerResource extends ServerResource {
 		return allInstances;
 	}
 
-	private String normalizeAuthToken(String authToken) {
+	public static String normalizeAuthToken(String authToken) {
 		if (authToken.contains("Basic ")) {
 			authToken = new String(Base64.decodeBase64(authToken.replace("Basic ", "")));
 		}
@@ -625,7 +627,7 @@ public class ComputeServerResource extends ServerResource {
 		return splitInstanceId[splitInstanceId.length - 1];
 	}
 
-	private String generateURIListResponse(List<Instance> instances, HttpRequest req) {
+	public static String generateURIListResponse(List<Instance> instances, HttpRequest req) {
 		String requestEndpoint = req.getHostRef() + req.getHttpCall().getRequestUri();
 		Iterator<Instance> instanceIt = instances.iterator();
 		String result = "";
@@ -728,7 +730,7 @@ public class ComputeServerResource extends ServerResource {
 		return ResponseConstants.OK;
 	}
 
-	protected static String generateResponse(List<Instance> instances) {
+	public static String generateResponse(List<Instance> instances) {
 		if (instances == null || instances.isEmpty()) {
 			return NO_INSTANCES_MESSAGE;
 		}

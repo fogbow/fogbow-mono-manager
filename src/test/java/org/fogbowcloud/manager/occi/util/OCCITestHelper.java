@@ -32,6 +32,7 @@ import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
 import org.fogbowcloud.manager.core.plugins.MapperPlugin;
+import org.fogbowcloud.manager.core.plugins.StoragePlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.OCCIApplication;
 import org.fogbowcloud.manager.occi.model.HeaderUtils;
@@ -41,6 +42,8 @@ import org.fogbowcloud.manager.occi.order.Order;
 import org.fogbowcloud.manager.occi.order.OrderAttribute;
 import org.fogbowcloud.manager.occi.order.OrderConstants;
 import org.fogbowcloud.manager.occi.order.OrderRepository;
+import org.fogbowcloud.manager.occi.storage.StorageLinkRepository;
+import org.fogbowcloud.manager.occi.storage.StorageLinkRepository.StorageLink;
 import org.fogbowcloud.manager.xmpp.AsyncPacketSender;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -59,16 +62,21 @@ public class OCCITestHelper {
 	public static final String URI_FOGBOW_ORDER = "http://localhost:" + ENDPOINT_PORT + "/" + OrderConstants.TERM
 			+ "/";
 	public static final String URI_FOGBOW_COMPUTE = "http://localhost:" + ENDPOINT_PORT + "/compute/";
+	public static final String URI_FOGBOW_STORAGE = "http://localhost:" + ENDPOINT_PORT + "/storage/";
 	public static final String URI_FOGBOW_MEMBER = "http://localhost:" + ENDPOINT_PORT + "/member";
 	public static final String URI_FOGBOW_TOKEN = "http://localhost:" + ENDPOINT_PORT + "/token";
 	public static final String URI_FOGBOW_QUERY = "http://localhost:" + ENDPOINT_PORT + "/-/";
 	public static final String URI_FOGBOW_LOCAL_QUOTA = "http://localhost:" + ENDPOINT_PORT + "/quota";
+	public static final String URI_FOGBOW_STORAGE_LINK = "http://localhost:"
+			+ ENDPOINT_PORT + "/" + OrderConstants.STORAGE_TERM + "/"
+			+ OrderConstants.LINK_TERM + "/";
 	public static final String URI_FOGBOW_QUERY_TYPE_TWO = "http://localhost:" + ENDPOINT_PORT
 			+ "/.well-known/org/ogf/occi/-/";
 	public static final String USER_MOCK = "user_mock";
 
 	private Component component;
 	private OrderRepository orders;
+	private StorageLinkRepository storageLinkRespository;
 
 	public void initializeComponentExecutorSameThread(ComputePlugin computePlugin, IdentityPlugin identityPlugin,
 			AuthorizationPlugin authorizationPlugin, BenchmarkingPlugin benchmarkingPlugin,
@@ -137,14 +145,40 @@ public class OCCITestHelper {
 			AuthorizationPlugin authorizationPlugin, ImageStoragePlugin imageStoragePlugin,
 			AccountingPlugin accountingPlugin, BenchmarkingPlugin benchmarkingPlugin, Map<String, List<Order>> ordersToAdd,
 			MapperPlugin mapperPlugin) throws Exception {
-		return initializeComponentCompute(computePlugin, identityPlugin, authorizationPlugin,
+		return initializeComponentCompute(computePlugin, null,identityPlugin, authorizationPlugin,
 				imageStoragePlugin, accountingPlugin, benchmarkingPlugin, ordersToAdd,
-				mapperPlugin, null);
+				mapperPlugin, null, new HashMap<String, List<StorageLink>>());
 	}
-	public ManagerController initializeComponentCompute(ComputePlugin computePlugin, IdentityPlugin identityPlugin,
+	
+	public ManagerController initializeComponentCompute(
+			ComputePlugin computePlugin, StoragePlugin storagePlugin,
+			IdentityPlugin identityPlugin,
+			AuthorizationPlugin authorizationPlugin,
+			ImageStoragePlugin imageStoragePlugin,
+			AccountingPlugin accountingPlugin,
+			BenchmarkingPlugin benchmarkingPlugin,
+			Map<String, List<Order>> ordersToAdd,
+			Map<String, List<StorageLink>> storageLinksToAdd,
+			MapperPlugin mapperPlugin) throws Exception {
+		return initializeComponentCompute(computePlugin, storagePlugin,
+				identityPlugin, authorizationPlugin, imageStoragePlugin,
+				accountingPlugin, benchmarkingPlugin, ordersToAdd,
+				mapperPlugin, null, storageLinksToAdd);
+	}
+	
+	public ManagerController initializeComponentCompute(ComputePlugin computePlugin, StoragePlugin storagePlugin
+			, IdentityPlugin identityPlugin, AuthorizationPlugin authorizationPlugin, ImageStoragePlugin imageStoragePlugin,
+			AccountingPlugin accountingPlugin, BenchmarkingPlugin benchmarkingPlugin, Map<String, List<Order>> ordersToAdd,
+			MapperPlugin mapperPlugin) throws Exception {
+		return initializeComponentCompute(computePlugin, storagePlugin,identityPlugin, authorizationPlugin,
+				imageStoragePlugin, accountingPlugin, benchmarkingPlugin, ordersToAdd,
+				mapperPlugin, null, new HashMap<String, List<StorageLink>>());
+	}	
+	
+	public ManagerController initializeComponentCompute(ComputePlugin computePlugin, StoragePlugin storagePlugin, IdentityPlugin identityPlugin,
 			AuthorizationPlugin authorizationPlugin, ImageStoragePlugin imageStoragePlugin,
 			AccountingPlugin accountingPlugin, BenchmarkingPlugin benchmarkingPlugin, Map<String, List<Order>> ordersToAdd,
-			MapperPlugin mapperPlugin, Properties properties) throws Exception {
+			MapperPlugin mapperPlugin, Properties properties, Map<String, List<StorageLink>> storageLinksToAdd) throws Exception {
 		component = new Component();
 		component.getServers().add(Protocol.HTTP, ENDPOINT_PORT);
 
@@ -172,7 +206,15 @@ public class OCCITestHelper {
 		facade.setImageStoragePlugin(imageStoragePlugin);
 		facade.setAccountingPlugin(accountingPlugin);
 		facade.setBenchmarkingPlugin(benchmarkingPlugin);
-
+		facade.setStoragePlugin(storagePlugin);				
+		
+		storageLinkRespository = new StorageLinkRepository();
+		facade.setStorageLinkRepository(storageLinkRespository);
+		for (Entry<String, List<StorageLink>> entry : storageLinksToAdd.entrySet()) {
+			for (StorageLink storageLink : entry.getValue())
+				storageLinkRespository.addStorageLink(entry.getKey(), storageLink);
+		}
+		
 		orders = new OrderRepository();
 		facade.setOrders(orders);
 		for (Entry<String, List<Order>> entry : ordersToAdd.entrySet()) {

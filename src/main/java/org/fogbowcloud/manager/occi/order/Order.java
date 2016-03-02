@@ -25,7 +25,8 @@ public class Order {
 	private final boolean isLocal;
 	private OrderState state;
 	private List<Category> categories;
-	private Map<String, String> xOCCIAtt;
+	private Map<String, String> xOCCIAtt;	
+	private String resourceKing;
 	
 	private DateUtils dateUtils = new DateUtils();
 		
@@ -42,6 +43,11 @@ public class Order {
 		this.state = state;
 		this.categories = categories;
 		this.xOCCIAtt = xOCCIAtt;
+		if (this.xOCCIAtt == null) {
+			this.resourceKing = null;			
+		} else {
+			this.resourceKing = this.xOCCIAtt.get(OrderAttribute.RESOURCE_KIND.getValue());					
+		}		
 	}
 
 	public Order(String id, Token federationToken, 
@@ -59,6 +65,11 @@ public class Order {
 		this.requestingMemberId = requestingMemberId;
 		this.dateUtils = dateUtils;
 		setState(OrderState.OPEN);		
+		if (this.xOCCIAtt == null) {
+			this.resourceKing = null;			
+		} else {
+			this.resourceKing = this.xOCCIAtt.get(OrderAttribute.RESOURCE_KIND.getValue());					
+		}
 	}
 	
 	public Order(Order order) {
@@ -171,6 +182,18 @@ public class Order {
 	public void setProvidingMemberId(String providingMemberId) {
 		this.providingMemberId = providingMemberId;
 	}
+	
+	public void setxOCCIAtt(Map<String, String> xOCCIAtt) {
+		this.xOCCIAtt = xOCCIAtt;
+	}
+	
+	public String getResourceKing() {
+		return resourceKing;
+	}
+	
+	public void setResourceKing(String resourceKing) {
+		this.resourceKing = resourceKing;
+	}
 
 	public String toString() {
 		return "id: " + id + ", token: " + federationToken + ", instanceId: " + instanceId
@@ -178,6 +201,7 @@ public class Order {
 				+ requestingMemberId + ", state: " + state + ", isLocal " + isLocal
 				+ ", categories: " + categories + ", xOCCIAtt: " + xOCCIAtt;
 	}
+
 
 	public boolean isIntoValidPeriod() {
 		String startDateStr = xOCCIAtt.get(OrderAttribute.VALID_FROM.getValue());
