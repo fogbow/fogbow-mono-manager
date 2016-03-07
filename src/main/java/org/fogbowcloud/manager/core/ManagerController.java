@@ -1073,7 +1073,7 @@ public class ManagerController {
 			Token federationUserToken = getFederationUserToken(servedOrder);
 			String orderResourceKind = servedOrder != null ? servedOrder.getResourceKing(): null;
 			Instance instance = null;
-			if (orderResourceKind.equals(OrderConstants.COMPUTE_TERM)) {
+			if (orderResourceKind == null || orderResourceKind.equals(OrderConstants.COMPUTE_TERM)) {
 				instance = computePlugin.getInstance(federationUserToken, instanceId);
 				if (servedOrder != null) {
 					Map<String, String> serviceAddresses = getExternalServiceAddresses(servedOrder.getId());
@@ -1090,7 +1090,7 @@ public class ManagerController {
 					}
 				}
 				return instance;				
-			} else if (orderResourceKind.equals(OrderConstants.STORAGE_TERM)) {
+			} else if (orderResourceKind != null && orderResourceKind.equals(OrderConstants.STORAGE_TERM)) {
 				instance = storagePlugin.getInstance(federationUserToken, instanceId);
 			}
 			return instance;
@@ -1201,7 +1201,7 @@ public class ManagerController {
 			@Override
 			public void run() {
 				try {
-					//monitorInstancesForLocalOrders();					
+					monitorInstancesForLocalOrders();					
 				} catch (Throwable e) {
 					LOGGER.error("Erro while monitoring instances for local orders", e);
 				}
