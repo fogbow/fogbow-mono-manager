@@ -95,13 +95,20 @@ public class StorageLinkServerResource extends ServerResource {
 		List<String> acceptContent = HeaderUtils.getAccept(req.getHeaders());
 		LOGGER.debug("accept contents:" + acceptContent);
 		
+		boolean verbose = false;
+		try {
+			verbose = Boolean.parseBoolean(getQuery().getValues("verbose"));
+		} catch (Exception e) {}
+		
 		if (storageLinkId == null) {
 			LOGGER.info("Getting all storage link of token :" + federationAccessToken);
 			List<StorageLink> storageLinkFromUser = application.getStorageLinksFromUser(federationAccessToken);
 			
 			if (acceptContent.size() == 0
 					|| acceptContent.contains(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE)) {
-				return new StringRepresentation(generateResponse(storageLinkFromUser), MediaType.TEXT_PLAIN);
+				return new StringRepresentation(generateTextPlainResponse(
+						storageLinkFromUser, req, verbose),
+						MediaType.TEXT_PLAIN);
 			} else {
 				throw new OCCIException(ErrorType.NOT_ACCEPTABLE, ResponseConstants.ACCEPT_NOT_ACCEPTABLE);				
 			}
@@ -161,8 +168,8 @@ public class StorageLinkServerResource extends ServerResource {
 		return response;
 	}
 	
-	private CharSequence generateUriListResponse(
-			List<StorageLink> storageLinks, HttpRequest req) {
+	private CharSequence generateTextPlainResponse(
+			List<StorageLink> storageLinks, HttpRequest req, boolean verbose) {
 		if (storageLinks == null || storageLinks.isEmpty()) { 
 			return NO_STORAGE_MESSAGE;
 		}
@@ -179,7 +186,19 @@ public class StorageLinkServerResource extends ServerResource {
 				prefixOCCILocation += HeaderUtils.X_OCCI_LOCATION_PREFIX + requestEndpoint + "/";
 			}
 			
-			response += prefixOCCILocation + storageLInk.getId() + "\n";			
+			response += prefixOCCILocation + storageLInk.getId();
+			if (verbose) {
+				String deviceId = storageLInk.getDeviceId();
+				deviceId = deviceId != null && deviceId != "null" ? deviceId : OrderConstants.DEVICE_ID_DEFAULT;
+				response += ";" 
+						+ StorageAttribute.TARGET.getValue() + "=" + storageLInk.getTarget() + "; "
+						+ StorageAttribute.SOURCE.getValue() + "=" + storageLInk.getSource() + "; "
+						+ StorageAttribute.DEVICE_ID.getValue() + "=" + deviceId + "; "
+						+ StorageAttribute.PROVADING_MEMBER_ID.getValue() + "=" + storageLInk.getProvadingMemberId() + "; "
+						+ "\n";
+			} else {
+				response += "\n";
+			}
 		}
 		return response.length() > 0 ? response.trim() : "\n";
 	}

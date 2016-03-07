@@ -53,10 +53,9 @@ import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
 import org.fogbowcloud.manager.core.plugins.MapperPlugin;
 import org.fogbowcloud.manager.core.plugins.PrioritizationPlugin;
+import org.fogbowcloud.manager.core.plugins.StoragePlugin;
 import org.fogbowcloud.manager.core.plugins.accounting.AccountingInfo;
 import org.fogbowcloud.manager.core.plugins.localcredentails.MapperHelper;
-import org.fogbowcloud.manager.core.plugins.StoragePlugin;
-import org.fogbowcloud.manager.core.plugins.accounting.ResourceUsage;
 import org.fogbowcloud.manager.core.plugins.util.SshClientPool;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.instance.InstanceState;
@@ -661,7 +660,7 @@ public class ManagerController {
 	
 	private Instance getInstance(Order order, String resourceKind) {
 		
-		String orderResourceKind = order.getAttValue(OrderAttribute.RESOURCE_KIND.getValue());
+		String orderResourceKind = order.getResourceKing();
 		if (!orderResourceKind.equals(resourceKind)) {
 			throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
 		}
@@ -1072,10 +1071,9 @@ public class ManagerController {
 		try {
 			Order servedOrder = orderRepository.getOrderByInstance(instanceId);
 			Token federationUserToken = getFederationUserToken(servedOrder);
-			String orderResourceKind = servedOrder != null ? servedOrder
-					.getAttValue(OrderAttribute.RESOURCE_KIND.getValue()): null;
+			String orderResourceKind = servedOrder != null ? servedOrder.getResourceKing(): null;
 			Instance instance = null;
-			if (orderResourceKind == null || orderResourceKind.equals(OrderConstants.COMPUTE_TERM)) {
+			if (orderResourceKind.equals(OrderConstants.COMPUTE_TERM)) {
 				instance = computePlugin.getInstance(federationUserToken, instanceId);
 				if (servedOrder != null) {
 					Map<String, String> serviceAddresses = getExternalServiceAddresses(servedOrder.getId());
@@ -1203,7 +1201,7 @@ public class ManagerController {
 			@Override
 			public void run() {
 				try {
-					monitorInstancesForLocalOrders();					
+					//monitorInstancesForLocalOrders();					
 				} catch (Throwable e) {
 					LOGGER.error("Erro while monitoring instances for local orders", e);
 				}
@@ -1221,9 +1219,6 @@ public class ManagerController {
 			}
 			
 			if (order.getState().in(OrderState.FULFILLED, OrderState.DELETED)) {
-//				if (order.getResourceKing() != null && !order.getResourceKing().equals(OrderConstants.COMPUTE_TERM)) {
-//					return;
-//				}
 				try {
 					LOGGER.debug("Monitoring instance of order: " + order);
 					removeFailedInstance(order, getInstance(order, order.getResourceKing()));
@@ -1865,7 +1860,6 @@ public class ManagerController {
 		}
 		
 		if (!storageOrder.getProvidingMemberId().equals(computeOrder.getProvidingMemberId())) {
-			// TODO review the constant response
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.INVALID_STORAGE_LINK_DIFERENT_LOCATION);
 		}
 
