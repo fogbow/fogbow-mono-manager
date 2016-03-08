@@ -19,6 +19,7 @@ import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
+import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
 import org.fogbowcloud.manager.core.plugins.MapperPlugin;
@@ -38,8 +39,6 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 public class TestPostStorageLink {
-//	private static final String STORAGE_ID_CREATED = "storage";
-
 	private static final String OTHER_ACCESS_TOKEN = "other_token";
 
 	private static final String INSTANCE_STORAGE_ONE = "Instance_storage_one";
@@ -48,14 +47,13 @@ public class TestPostStorageLink {
 	private static final String INSTANCE_COMPUTE_THREE = "Instance_storage_three";
 	private static final String INSTANCE_COMPUTE_FOUR = "Instance_storage_four";
 
-//	private static final String ACCESS_TOKEN_UNAUTHORIZED = "tokenUnauthorized";
-
 	private OCCITestHelper helper;
 	private ImageStoragePlugin imageStoragePlugin;
 	
 	@SuppressWarnings("unused")
 	private ManagerController facade;
 	private StoragePlugin storagePlugin;
+	private ComputePlugin computePlugin;
 	
 	@Before
 	public void setup() throws Exception {
@@ -75,8 +73,7 @@ public class TestPostStorageLink {
 		Mockito.when(identityPlugin.isValid(OCCITestHelper.ACCESS_TOKEN)).thenReturn(true);	
 				
 		storagePlugin = Mockito.mock(StoragePlugin.class);
-//		Mockito.when(storagePlugin.requestInstance(Mockito.any(Token.class),
-//						Mockito.anyList(), Mockito.anyMap())).thenReturn(STORAGE_ID_CREATED);
+		computePlugin = Mockito.mock(ComputePlugin.class);
 
 		List<Order> orders = new LinkedList<Order>();
 		Token tokenUserOne = new Token("accessIdUserOne", "userOne", null, null);
@@ -131,7 +128,7 @@ public class TestPostStorageLink {
 		Map<String, List<Order>> ordersToAdd = new HashMap<String, List<Order>>();
 		ordersToAdd.put(OCCITestHelper.USER_MOCK, orders);
 		
-		facade = this.helper.initializeComponentCompute(null, storagePlugin, identityPlugin, authorizationPlugin,
+		facade = this.helper.initializeComponentCompute(computePlugin, storagePlugin, identityPlugin, authorizationPlugin,
 				imageStoragePlugin, accountingPlugin, benchmarkingPlugin, ordersToAdd, storageLinksToAdd,
 				mapperPlugin);		
 	}
@@ -179,28 +176,6 @@ public class TestPostStorageLink {
 		Assert.assertEquals(1, OCCITestHelper.getLocationIds(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());		
 	}
-	
-//	@Test
-//	public void testPostStorageLinka() throws Exception {
-//		
-//		HttpPost httpPost = new HttpPost(OCCITestHelper.URI_FOGBOW_STORAGE_LINK);
-//		httpPost.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-//		httpPost.addHeader(OCCIHeaders.X_AUTH_TOKEN, ACCESS_TOKEN_UNAUTHORIZED);
-//		httpPost.addHeader("Category", OrderConstants.STORAGELINK_TERM + "; scheme=\""
-//				+ OrderConstants.INFRASTRUCTURE_OCCI_SCHEME + "\"; class=\"" + OrderConstants.KIND_CLASS
-//				+ "\"");	
-//		httpPost.addHeader("X-OCCI-Attribute",
-//				StorageAttribute.SOURCE.getValue() + "=" + INSTANCE_COMPUTE_THREE);
-//		httpPost.addHeader("X-OCCI-Attribute",
-//				StorageAttribute.TARGET.getValue() + "=" + INSTANCE_STORAGE_ONE);		
-//		httpPost.addHeader("X-OCCI-Attribute",
-//				StorageAttribute.DEVICE_ID.getValue() + "=" + "aaa");				
-//		
-//		HttpClient client = HttpClients.createMinimal();
-//		HttpResponse response = client.execute(httpPost);
-//
-//		Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusLine().getStatusCode());	
-//	}
 	
 	@Test
 	public void testPostStorageLinkBadRequestWithoutTargetAttr() throws Exception {

@@ -29,18 +29,14 @@ import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.order.OrderAttribute;
 import org.fogbowcloud.manager.occi.order.OrderConstants;
-import org.fogbowcloud.manager.occi.storage.StorageAttribute;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 public class OpenStackV2StoragePlugin implements StoragePlugin {
 
-	protected static final String MOUNTPOINT_DEFAULT = "/dev/vdc";
 	protected static final String KEY_JSON_ID = "id";
 	protected static final String KEY_JSON_SIZE = "size";
-	protected static final String KEY_JSON_OS_ATTACH = "os-attach";
-	protected static final String KEY_JSON_OS_DEATTACH = "os-force_detach";
 	protected static final String KEY_JSON_INSTANCE_UUID = "instance_uuid";
 	protected static final String KEY_JSON_MOUNTPOINT = "mountpoint";
 	protected static final String KEY_JSON_VOLUME = "volume";
@@ -133,52 +129,6 @@ public class OpenStackV2StoragePlugin implements StoragePlugin {
 		for (Instance instance : getInstances(token)) {
 			removeInstance(token, instance.getId());
 		}		
-	}
-
-	@Override
-	public void attach(Token token, List<Category> categories, Map<String, String> xOCCIAtt) {
-		String tenantId = token.getAttributes().get(TENANT_ID);
-		if (tenantId == null) {
-			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.INVALID_TOKEN);
-		}	
-		
-		String instanceUUID = xOCCIAtt.get(StorageAttribute.SOURCE.getValue());
-		String storageId = xOCCIAtt.get(StorageAttribute.TARGET.getValue());
-		String mountpoint = xOCCIAtt.get(StorageAttribute.DEVICE_ID.getValue());
-		
-		JSONObject jsonRequest = null;
-		try {			
-			jsonRequest = generateJsonEntityToAttach(instanceUUID, mountpoint);
-		} catch (JSONException e) {
-			LOGGER.error("An error occurred when generating json.", e);
-			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
-		}			
-		
-		String endpoint = this.storageV2APIEndpoint + tenantId + SUFIX_ENDPOINT_VOLUMES
-				+ "/" +  storageId + SUFIX_ENDPOINT_ACTION;
-		doPostRequest(endpoint, token.getAccessId(), jsonRequest);
-	}
-
-	@Override
-	public void dettach(Token token, List<Category> categories, Map<String, String> xOCCIAtt) {
-		String tenantId = token.getAttributes().get(TENANT_ID);
-		if (tenantId == null) {
-			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.INVALID_TOKEN);
-		}	
-		
-		String storageId = xOCCIAtt.get(StorageAttribute.TARGET.getValue());
-				
-		JSONObject jsonRequest = null;
-		try {			
-			jsonRequest = generateJsonEntityToDeattach();
-		} catch (JSONException e) {
-			LOGGER.error("An error occurred when generating json.", e);
-			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
-		}	
-		
-		String endpoint = this.storageV2APIEndpoint + tenantId 
-				+ SUFIX_ENDPOINT_VOLUMES + "/" +  storageId + SUFIX_ENDPOINT_ACTION;
-		doPostRequest(endpoint, token.getAccessId(), jsonRequest);
 	}
 
 	protected String doPostRequest(String endpoint, String authToken, JSONObject json) {
@@ -319,35 +269,6 @@ public class OpenStackV2StoragePlugin implements StoragePlugin {
 		volume.put(KEY_JSON_VOLUME, volumeContent);
 		
 		return volume;
-	}
-	
-	protected JSONObject generateJsonEntityToAttach(String instance,
-			String mountpoint) throws JSONException {
-
-		JSONObject osAttachContent = new JSONObject();
-		osAttachContent.put(KEY_JSON_INSTANCE_UUID, instance);
-		osAttachContent
-				.put(KEY_JSON_MOUNTPOINT,
-						mountpoint != null && !mountpoint.equals("null") ? mountpoint
-								: MOUNTPOINT_DEFAULT);		
-
-		JSONObject osAttach = new JSONObject();
-		osAttach.put(KEY_JSON_OS_ATTACH, osAttachContent);
-		
-		return osAttach;
-	}	
-	
-
-	protected JSONObject generateJsonEntityToDeattach() throws JSONException {
-		
-		JSONObject osDeattachContent = new JSONObject();
-		osDeattachContent.put("attachment_id", "");
-		osDeattachContent.put("connector", "");
-		
-		JSONObject osDeattach = new JSONObject();
-		osDeattach.put(KEY_JSON_OS_DEATTACH, osDeattachContent);
-		
-		return osDeattach;
 	}	
 	
 	private void initClient() {

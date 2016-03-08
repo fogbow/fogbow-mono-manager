@@ -32,7 +32,6 @@ public class TestDeleteRemoteStorageLink {
 		this.managerTestHelper.shutdown();
 	}
 	
-	@SuppressWarnings("unchecked")
 	@Test
 	public void testRemoteStorageLink() throws Exception {
 		managerTestHelper.initializeXMPPManagerComponent(false);
@@ -44,9 +43,6 @@ public class TestDeleteRemoteStorageLink {
 		xOCCIAtt.put(StorageAttribute.TARGET.getValue(), target);
 		xOCCIAtt.put(StorageAttribute.SOURCE.getValue(), source);
 		xOCCIAtt.put(StorageAttribute.DEVICE_ID.getValue(), deviceId);
-		
-		Mockito.doNothing().when(managerTestHelper.getStoragePlugin()).dettach(
-				Mockito.any(Token.class), Mockito.any(List.class), Mockito.eq(xOCCIAtt));
 
 		Token federationToken = new Token("accessId", OCCITestHelper.USER_MOCK,
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
@@ -73,7 +69,7 @@ public class TestDeleteRemoteStorageLink {
 		xOCCIAtt.put(StorageAttribute.DEVICE_ID.getValue(), deviceId);
 		
 		Mockito.doThrow(new OCCIException(ErrorType.BAD_REQUEST, ""))
-				.when(managerTestHelper.getStoragePlugin())
+				.when(managerTestHelper.getComputePlugin())
 				.dettach(Mockito.any(Token.class), Mockito.any(List.class), Mockito.anyMap());
 
 		Token federationToken = new Token("accessId", OCCITestHelper.USER_MOCK,

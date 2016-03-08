@@ -112,7 +112,6 @@ public class StorageLinkRepository {
 		private boolean isLocal;
 
 		public StorageLink(Map<String, String> xOCCIAttributes) {
-			this.id = String.valueOf(UUID.randomUUID());
 			this.source = xOCCIAttributes.get(StorageAttribute.SOURCE.getValue());
 			this.target = xOCCIAttributes.get(StorageAttribute.TARGET.getValue());
 			this.deviceId = xOCCIAttributes.get(StorageAttribute.DEVICE_ID.getValue());

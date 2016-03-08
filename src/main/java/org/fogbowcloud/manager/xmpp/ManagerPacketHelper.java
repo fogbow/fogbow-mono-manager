@@ -183,7 +183,7 @@ public class ManagerPacketHelper {
 		packetSender.sendPacket(iq);
 	}
 	
-	public static void remoteStorageLink(StorageLink storageLink, String memberAddress, 
+	public static String remoteStorageLink(StorageLink storageLink, String memberAddress, 
 			Token userFederationToken, PacketSender packetSender) {
 
 		if (packetSender == null) {
@@ -192,13 +192,11 @@ public class ManagerPacketHelper {
 		}
 
 		IQ iq = new IQ();
-		iq.setID(storageLink.getId());
 		iq.setTo(memberAddress);
 		iq.setType(Type.set);
 		Element queryEl = iq.getElement().addElement("query", ManagerXmppComponent.STORAGE_LINK_NAMESPACE);
 		
 		Element storageLinkEl = queryEl.addElement(STORAGE_LINK_EL);
-		storageLinkEl.addElement(ID_EL).setText(storageLink.getId());
 		storageLinkEl.addElement(TARGET_EL).setText(storageLink.getTarget());
 		storageLinkEl.addElement(SOURCE_EL).setText(storageLink.getSource());
 		storageLinkEl.addElement(DEVICE_ID_EL).setText(storageLink.getDeviceId());
@@ -211,9 +209,15 @@ public class ManagerPacketHelper {
 
 		IQ response = (IQ) packetSender.syncSendPacket(iq);
 		 
-		if (response == null || (response.toString().contains("error"))) {
+		if (response == null) {
+			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.XMPP_RESPONSE_NULL);
+		}
+		if (response != null && (response.toString().contains("error"))) {
 			raiseException(response.getError());
 		}
+		
+		return response.getElement().element("query").element(StorageLinkHandler.ATTACHMENT)
+				.element(StorageLinkHandler.ID).getText();
 	}	
 
 	protected static Instance getRemoteInstance(Order order, PacketSender packetSender) {

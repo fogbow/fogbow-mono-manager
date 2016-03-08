@@ -460,5 +460,19 @@ public class CloudStackComputePlugin implements ComputePlugin {
 			throw new OCCIException(ErrorType.BAD_REQUEST, statusLine.getReasonPhrase());
 		}
 	}
+
+	@Override
+	public String attach(Token token, List<Category> categories,
+			Map<String, String> xOCCIAtt) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void dettach(Token token, List<Category> categories,
+			Map<String, String> xOCCIAtt) {
+		// TODO Auto-generated method stub
+		
+	}
 	
 }
