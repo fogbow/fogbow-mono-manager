@@ -192,7 +192,6 @@ public class ManagerPacketHelper {
 		}
 
 		IQ iq = new IQ();
-		iq.setID(storageLink.getId());
 		iq.setTo(memberAddress);
 		iq.setType(Type.set);
 		Element queryEl = iq.getElement().addElement("query", ManagerXmppComponent.STORAGE_LINK_NAMESPACE);
