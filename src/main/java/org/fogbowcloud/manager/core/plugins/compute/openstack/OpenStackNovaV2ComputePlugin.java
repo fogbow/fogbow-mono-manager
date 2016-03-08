@@ -759,7 +759,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		
 		JSONObject jsonRequest = null;
 		try {			
-			jsonRequest = generateJson2(storageIdd, mountpoint);
+			jsonRequest = generateJsonToAttach(storageIdd, mountpoint);
 		} catch (JSONException e) {
 			LOGGER.error("An error occurred when generating json.", e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
@@ -782,11 +782,10 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		}
 	}
 
-	protected JSONObject generateJson2(String volume, String mountpoint) throws JSONException {
+	protected JSONObject generateJsonToAttach(String volume, String mountpoint) throws JSONException {
 
 		JSONObject osAttachContent = new JSONObject();
 		osAttachContent.put("volumeId", volume);
-		osAttachContent.put("device", mountpoint);
 
 		JSONObject osAttach = new JSONObject();
 		osAttach.put("volumeAttachment", osAttachContent);
