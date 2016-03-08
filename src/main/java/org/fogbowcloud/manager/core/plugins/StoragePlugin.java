@@ -19,10 +19,4 @@ public interface StoragePlugin {
 	public void removeInstance(Token token, String instanceId);
 
 	public void removeInstances(Token token);
-
-	public void attach(Token token, List<Category> categories,
-			Map<String, String> xOCCIAtt);
-
-	public void dettach(Token token, List<Category> categories,
-			Map<String, String> xOCCIAtt);
 }

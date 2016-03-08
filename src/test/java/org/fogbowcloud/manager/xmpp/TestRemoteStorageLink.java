@@ -14,6 +14,7 @@ import org.fogbowcloud.manager.occi.storage.StorageLinkRepository.StorageLink;
 import org.fogbowcloud.manager.occi.util.OCCITestHelper;
 import org.jivesoftware.smack.XMPPException;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -45,8 +46,11 @@ public class TestRemoteStorageLink {
 		xOCCIAtt.put(StorageAttribute.SOURCE.getValue(), source);
 		xOCCIAtt.put(StorageAttribute.DEVICE_ID.getValue(), deviceId);
 		
-		Mockito.doNothing().when(managerTestHelper.getStoragePlugin()).attach(
-				Mockito.any(Token.class), Mockito.any(List.class), Mockito.eq(xOCCIAtt));
+		String storageLinkIdExpected = "attachmentIdExpected";
+		
+		Mockito.when(managerTestHelper.getComputePlugin().attach(
+						Mockito.any(Token.class), Mockito.any(List.class),
+						Mockito.eq(xOCCIAtt))).thenReturn(storageLinkIdExpected);
 
 		Token token = new Token("accessId", OCCITestHelper.USER_MOCK,
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
@@ -54,8 +58,10 @@ public class TestRemoteStorageLink {
 		
 		StorageLink storageLink = new StorageLink("id", source, target, deviceId);
 				
-		ManagerPacketHelper.remoteStorageLink(storageLink, DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
-				token, managerTestHelper.createPacketSender());				
+		String storageLinkId = ManagerPacketHelper.remoteStorageLink(storageLink, DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
+				token, managerTestHelper.createPacketSender());
+		
+		Assert.assertEquals(storageLinkIdExpected, storageLinkId);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -67,10 +73,9 @@ public class TestRemoteStorageLink {
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
 		xOCCIAtt.put(StorageAttribute.TARGET.getValue(), target);
 		
-		Mockito.doThrow(new OCCIException(ErrorType.BAD_REQUEST, "bad"))
-				.when(managerTestHelper.getStoragePlugin())
-				.attach(Mockito.any(Token.class), Mockito.any(List.class),
-						Mockito.anyMap());
+		Mockito.doThrow(new OCCIException(ErrorType.BAD_REQUEST, ""))
+				.when(managerTestHelper.getComputePlugin())
+				.dettach(Mockito.any(Token.class), Mockito.any(List.class), Mockito.anyMap());
 
 		Token token = new Token("accessId", OCCITestHelper.USER_MOCK,
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,

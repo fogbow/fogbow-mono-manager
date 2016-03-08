@@ -8,6 +8,7 @@ public enum StorageAttribute {
 	TARGET("occi.core.target"),
 	SOURCE("occi.core.source"),
 	DEVICE_ID("occi.storagelink.deviceid"),
+	ATTACHMENT_ID("occi.storagelink.attachmentId"),
 	PROVADING_MEMBER_ID("occi.storagelink.provadingMemberId");
 	
 	private String value;

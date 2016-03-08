@@ -1869,15 +1869,17 @@ public class ManagerController {
 		}
 				
 		boolean isLocal = true;
+		String attachmentId = null;
 		if (!computeOrder.getProvidingMemberId().equals(properties.get(ConfigurationConstants.XMPP_JID_KEY))) {
 			isLocal = false;
-			ManagerPacketHelper.remoteStorageLink(new StorageLink(xOCCIAtt), 
+			attachmentId = ManagerPacketHelper.remoteStorageLink(new StorageLink(xOCCIAtt), 
 						computeOrder.getProvidingMemberId(), federationUserToken, packetSender);
 		} else {
-			attachStorage(categories, xOCCIAtt, federationUserToken);			
+			attachmentId = attachStorage(categories, xOCCIAtt, federationUserToken);			
 		}
 						
 		StorageLink storageLink = new StorageLink(xOCCIAtt);
+		storageLink.setId(attachmentId);
 		storageLink.setLocal(isLocal);
 		storageLink.setProvadingMemberId(computeOrder.getProvidingMemberId());
 		storageLinkRepository.addStorageLink(federationIdentityPlugin.getToken(accessId).getUser(), storageLink);	
@@ -1885,9 +1887,9 @@ public class ManagerController {
 		return storageLink;
 	}
 
-	public void attachStorage(List<Category> categories,
+	public String attachStorage(List<Category> categories,
 			Map<String, String> xOCCIAtt, Token federationUserToken) {		
-		storagePlugin.attach(federationUserToken, categories, xOCCIAtt);
+		return computePlugin.attach(federationUserToken, categories, xOCCIAtt);
 	}
 
 	public List<Flavor> getFlavorsProvided() {
@@ -1923,10 +1925,11 @@ public class ManagerController {
 
 	public void detachStorage(StorageLink storageLink, Token federationUserToken) {		
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
-		
-		
+				
+		xOCCIAtt.put(StorageAttribute.ATTACHMENT_ID.getValue(), storageLink.getId());
+		xOCCIAtt.put(StorageAttribute.SOURCE.getValue(), storageLink.getSource());
 		xOCCIAtt.put(StorageAttribute.TARGET.getValue(), storageLink.getTarget());
-		storagePlugin.dettach(federationUserToken, null, xOCCIAtt);
+		computePlugin.dettach(federationUserToken, null, xOCCIAtt);
 	}		
 
 	public List<AccountingInfo> getAccountingInfo(String federationAccessId) {

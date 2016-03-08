@@ -65,7 +65,7 @@ public class TestStorageLinkRepository {
 		StorageLink storageLinkTwo = new StorageLink("idTwo", "source", "target", "deviceId");
 		this.storageLinkRepository.addStorageLink(user, storageLink);
 		this.storageLinkRepository.addStorageLink(user, storageLinkTwo);
-		this.storageLinkRepository.addStorageLink(user, new StorageLink(new HashMap<String, String>()));
+		this.storageLinkRepository.addStorageLink(user, new StorageLink("", "", "", ""));
 		Assert.assertEquals(1, storageLinkRepository.getStorageLinks().size());
 		Assert.assertEquals(3, this.storageLinkRepository.getByUser(user).size());
 		

@@ -51,4 +51,10 @@ public interface ComputePlugin {
 	
 	public ImageState getImageState(Token token, String imageName);
 	
+	public String attach(Token token, List<Category> categories,
+			Map<String, String> xOCCIAtt);
+
+	public void dettach(Token token, List<Category> categories,
+			Map<String, String> xOCCIAtt);	
+	
 }
