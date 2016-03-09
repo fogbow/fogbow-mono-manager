@@ -642,6 +642,7 @@ public class ManagerController {
 	private Instance getInstanceSSHAddress(Order order) {
 		Instance instance = null;
 		if (isFulfilledByLocalMember(order)) {
+			// TODO Check vanilla is working fine.
 			instance = new Instance(order.getInstanceId());
 			Map<String, String> serviceAddresses = getExternalServiceAddresses(order.getId());
 			if (serviceAddresses != null) {
@@ -1929,7 +1930,7 @@ public class ManagerController {
 		xOCCIAtt.put(StorageAttribute.ATTACHMENT_ID.getValue(), storageLink.getId());
 		xOCCIAtt.put(StorageAttribute.SOURCE.getValue(), storageLink.getSource());
 		xOCCIAtt.put(StorageAttribute.TARGET.getValue(), storageLink.getTarget());
-		computePlugin.dettach(federationUserToken, null, xOCCIAtt);
+		computePlugin.dettach(federationUserToken, new ArrayList<Category>(), xOCCIAtt);
 	}		
 
 	public List<AccountingInfo> getAccountingInfo(String federationAccessId) {

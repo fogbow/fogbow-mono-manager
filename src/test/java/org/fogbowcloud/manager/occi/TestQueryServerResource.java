@@ -210,7 +210,6 @@ public class TestQueryServerResource {
 		
 		String responseStr = EntityUtils.toString(response.getEntity());			
 
-		System.out.println(responseStr);
 		Assert.assertTrue(responseStr.contains(categorySmall));
 		Assert.assertTrue(responseStr.contains(categoryFogbowOrder));
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());

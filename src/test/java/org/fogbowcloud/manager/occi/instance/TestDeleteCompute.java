@@ -83,7 +83,6 @@ public class TestDeleteCompute {
 				OCCITestHelper.USER_MOCK, DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
 				xOCCIAttr), null, xOCCIAttr, true, "");
 		order1.setInstanceId(INSTANCE_ID);
-		System.out.println(order1.getResourceKing());
 		order1.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
 		orders.add(order1);
 		Order order2 = new Order("2", new Token("otherToken", "otherUser",

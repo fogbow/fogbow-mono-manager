@@ -210,10 +210,6 @@ public class TestInstanceDataStore {
 		FedInstanceState fedInstanceState = instanceDb.getByInstanceId(fakeInstanceId_B, fakeUserB);
 		
 		assertNotNull(fedInstanceState);
-		System.out.println(categories);
-		System.out.println(fedInstanceState.getCategories());
-		System.out.println(categories);
-		System.out.println(fedInstanceState.getLinks());
 		assertEquals(fedInstanceStateB, fedInstanceState);
 		
 	}
