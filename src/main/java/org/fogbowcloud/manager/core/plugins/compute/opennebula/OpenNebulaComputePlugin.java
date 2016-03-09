@@ -1,5 +1,6 @@
 package org.fogbowcloud.manager.core.plugins.compute.opennebula;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
@@ -40,6 +41,7 @@ import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.order.OrderAttribute;
 import org.fogbowcloud.manager.occi.order.OrderConstants;
+import org.fogbowcloud.manager.occi.storage.StorageAttribute;
 import org.opennebula.client.Client;
 import org.opennebula.client.OneResponse;
 import org.opennebula.client.group.Group;
@@ -55,6 +57,8 @@ import org.restlet.Response;
 import org.restlet.data.Status;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 public class OpenNebulaComputePlugin implements ComputePlugin {
 
@@ -804,15 +808,73 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 	@Override
 	public String attach(Token token, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
-		// TODO Auto-generated method stub
-		return null;
+		String instanceId = xOCCIAtt.get(StorageAttribute.SOURCE.getValue());
+		String storageId = xOCCIAtt.get(StorageAttribute.TARGET.getValue());
+		Client client = clientFactory.createClient(token.getAccessId(), openNebulaEndpoint);
+		String diskTemplate = generateDiskTemplate(storageId);
+		OneResponse attachResponse = VirtualMachine.diskAttach(client, Integer.valueOf(instanceId), diskTemplate);
+		if (attachResponse.isError()) {
+			throw new OCCIException(ErrorType.BAD_REQUEST, attachResponse.getMessage());
+		}
+		
+		String attachmentId = attachResponse.getMessage();
+		attachmentId = getAttachmentId(instanceId, storageId, client);
+		
+		return UUID.randomUUID().toString() + "-disk-" + attachmentId;
+	}
+
+	private String getAttachmentId(String instanceId, String storageId,
+			Client client) {
+		OneResponse vmInfo = VirtualMachine.info(client, Integer.valueOf(instanceId));
+		if (vmInfo.isError()) {
+			throw new OCCIException(ErrorType.BAD_REQUEST, vmInfo.getMessage());
+		}
+		try {
+			DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+			DocumentBuilder documentBuilder = dbf.newDocumentBuilder();
+			StringBuilder xmlStringBuilder = new StringBuilder();
+			xmlStringBuilder.append(vmInfo.getMessage());
+			ByteArrayInputStream inputStream = new ByteArrayInputStream(xmlStringBuilder.toString().getBytes("UTF-8"));
+			Document document = documentBuilder.parse(inputStream);
+			NodeList templateElements = document.getElementsByTagName("TEMPLATE");
+			if (templateElements.getLength() > 0) {
+				Element vmTemplate = (Element) templateElements.item(0);
+				NodeList diskElements = vmTemplate.getElementsByTagName("DISK");
+				for (int i = 0; i < diskElements.getLength(); i++) {
+					Element disk = (Element) diskElements.item(i);
+					NodeList imageIdElements = disk.getElementsByTagName("IMAGE_ID");
+					if (imageIdElements.getLength() > 0) {
+						Node imageID = imageIdElements.item(0);
+						if (imageID.getTextContent().equals(storageId)) {
+							return disk.getElementsByTagName("DISK_ID").item(0).getTextContent();
+						}
+					}
+				}
+			}
+		} catch (Exception e) {
+			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
+		}
+		return instanceId;
+	}
+	
+	private String generateDiskTemplate(String volumeId) {
+		return "DISK=[IMAGE_ID=" + volumeId + "]";
 	}
 
 	@Override
 	public void dettach(Token token, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
-		// TODO Auto-generated method stub
+		String instanceId = xOCCIAtt.get(StorageAttribute.SOURCE.getValue());
+		String attachmentId = xOCCIAtt.get(StorageAttribute.ATTACHMENT_ID.getValue());
 		
+		String[] attachmentIdPieces = attachmentId.split("-disk-");
+		String diskId = attachmentIdPieces[attachmentIdPieces.length-1];
+		
+		Client client = clientFactory.createClient(token.getAccessId(), openNebulaEndpoint);
+		OneResponse response = VirtualMachine.diskDetach(client, Integer.parseInt(instanceId), Integer.parseInt(diskId));
+		if (response.isError()) {
+			throw new OCCIException(ErrorType.BAD_REQUEST, response.getMessage());
+		}
 	}
 	
 }
