@@ -26,6 +26,7 @@ public class RemoveStorageLinkHandler extends AbstractQueryHandler {
 		
 		String id = storageEl.elementText(ManagerPacketHelper.ID_EL);
 		String storageId = storageEl.elementText(ManagerPacketHelper.TARGET_EL);
+		String instanceId = storageEl.elementText(ManagerPacketHelper.SOURCE_EL);
 
 		Element tokenEl = queryEl.element(ManagerPacketHelper.TOKEN_EL);
 		Token userToken = null;
@@ -36,10 +37,9 @@ public class RemoveStorageLinkHandler extends AbstractQueryHandler {
 		
 		IQ response = IQ.createResultIQ(query);
 		try {
-			StorageLink storageLink = new StorageLink(id, "", storageId, "");
+			StorageLink storageLink = new StorageLink(id, instanceId, storageId, "");
 			facade.detachStorage(storageLink,facade.getLocalIdentityPlugin().createToken(
-							facade.getMapperPlugin().getLocalCredentials(
-							userToken.getAccessId())));	
+							facade.getMapperPlugin().getLocalCredentials(userToken.getAccessId())));	
 		} catch (OCCIException e) {
 			response.setError(ManagerPacketHelper.getCondition(e));
 		}

@@ -135,9 +135,7 @@ public class TestUsageServerResource {
 				String[] tokens = line.split("=");
 				consuption = Double.parseDouble(tokens[1].trim());
 			}
-		}
-
-		System.out.println(responseStr);
+		}		
 		
 		Assert.assertNotEquals("", providingMember);
 		Assert.assertNotEquals(-1, consuption, 0.00000);

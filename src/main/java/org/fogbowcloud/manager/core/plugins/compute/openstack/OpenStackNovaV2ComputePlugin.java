@@ -40,6 +40,7 @@ import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.order.OrderAttribute;
 import org.fogbowcloud.manager.occi.order.OrderConstants;
+import org.fogbowcloud.manager.occi.storage.StorageAttribute;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -49,6 +50,8 @@ import org.restlet.data.Status;
 
 public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 
+	private static final String OS_VOLUME_ATTACHMENTS = "/os-volume_attachments";
+	private static final String SERVERS = "/servers";
 	private static final String SUFIX_ENDPOINT_FLAVORS = "/flavors";
 	private static final String NO_VALID_HOST_WAS_FOUND = "No valid host was found";
 	private static final String STATUS_JSON_FIELD = "status";
@@ -154,7 +157,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		String userdata = xOCCIAtt.get(OrderAttribute.USER_DATA_ATT.getValue());		
 		try {
 			JSONObject json = generateJsonRequest(imageRef, flavorId, userdata, keyName);
-			String requestEndpoint = computeV2APIEndpoint + tenantId + "/servers";
+			String requestEndpoint = computeV2APIEndpoint + tenantId + SERVERS;
 			String jsonResponse = doPostRequest(requestEndpoint, token.getAccessId(), json);
 			return getAttFromJson(ID_JSON_FIELD, jsonResponse);
 		} catch (JSONException e) {
@@ -343,7 +346,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 	@Override
 	public List<Instance> getInstances(Token token) {
 		String requestEndpoint = computeV2APIEndpoint + token.getAttributes().get(TENANT_ID)
-				+ "/servers";
+				+ SERVERS;
 		String jsonResponse = doGetRequest(requestEndpoint, token.getAccessId());
 		return getInstancesFromJson(jsonResponse);
 	}
@@ -733,13 +736,75 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 					} else if ("queued".equalsIgnoreCase(imageStatus)
 							|| "saving".equalsIgnoreCase(imageStatus)) {
 						return ImageState.PENDING;
-					}
-					return ImageState.FAILED;
+					}					return ImageState.FAILED;
 				}
 			}
 		} catch (JSONException e) {
 			LOGGER.error("Error while parsing JSONObject for image state.", e);
 		}
 		return null;	
+	}
+
+	@Override
+	public String attach(Token token, List<Category> categories,
+			Map<String, String> xOCCIAtt) {
+		String tenantId = token.getAttributes().get(TENANT_ID);
+		if (tenantId == null) {
+			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.INVALID_TOKEN);
+		}	
+		
+		String storageIdd = xOCCIAtt.get(StorageAttribute.TARGET.getValue());
+		String instanceId = xOCCIAtt.get(StorageAttribute.SOURCE.getValue());
+		String mountpoint = xOCCIAtt.get(StorageAttribute.DEVICE_ID.getValue());
+		
+		JSONObject jsonRequest = null;
+		try {			
+			jsonRequest = generateJsonToAttach(storageIdd, mountpoint);
+		} catch (JSONException e) {
+			LOGGER.error("An error occurred when generating json.", e);
+			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
+		}			
+		
+		String prefixEndpoint = this.computeV2APIEndpoint;
+		String endpoint = prefixEndpoint + tenantId + SERVERS
+				+ "/" +  instanceId + OS_VOLUME_ATTACHMENTS;
+		String responseStr = doPostRequest(endpoint, token.getAccessId(), jsonRequest);
+		
+		return getAttAttachmentIdJson(responseStr);
+	}
+	
+	private String getAttAttachmentIdJson(String responseStr) {
+		try {
+			JSONObject root = new JSONObject(responseStr);
+			return root.getJSONObject("volumeAttachment").getString("id").toString();
+		} catch (JSONException e) {
+			return null;
+		}
+	}
+
+	protected JSONObject generateJsonToAttach(String volume, String mountpoint) throws JSONException {
+
+		JSONObject osAttachContent = new JSONObject();
+		osAttachContent.put("volumeId", volume);
+
+		JSONObject osAttach = new JSONObject();
+		osAttach.put("volumeAttachment", osAttachContent);
+		
+		return osAttach;
+	}			
+	
+	@Override
+	public void dettach(Token token, List<Category> categories, Map<String, String> xOCCIAtt) {
+		String tenantId = token.getAttributes().get(TENANT_ID);
+		if (tenantId == null) {
+			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.INVALID_TOKEN);
+		}	
+		
+		String instanceId = xOCCIAtt.get(StorageAttribute.SOURCE.getValue());
+		String attachmentId = xOCCIAtt.get(StorageAttribute.ATTACHMENT_ID.getValue());		
+		
+		String endpoint = this.computeV2APIEndpoint + tenantId + SERVERS + 
+				"/" + instanceId + OS_VOLUME_ATTACHMENTS + "/" + attachmentId;
+		doDeleteRequest(endpoint, token.getAccessId());		
 	}
 }

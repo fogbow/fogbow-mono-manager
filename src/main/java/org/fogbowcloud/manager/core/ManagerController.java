@@ -53,10 +53,9 @@ import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
 import org.fogbowcloud.manager.core.plugins.MapperPlugin;
 import org.fogbowcloud.manager.core.plugins.PrioritizationPlugin;
+import org.fogbowcloud.manager.core.plugins.StoragePlugin;
 import org.fogbowcloud.manager.core.plugins.accounting.AccountingInfo;
 import org.fogbowcloud.manager.core.plugins.localcredentails.MapperHelper;
-import org.fogbowcloud.manager.core.plugins.StoragePlugin;
-import org.fogbowcloud.manager.core.plugins.accounting.ResourceUsage;
 import org.fogbowcloud.manager.core.plugins.util.SshClientPool;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.instance.InstanceState;
@@ -643,6 +642,7 @@ public class ManagerController {
 	private Instance getInstanceSSHAddress(Order order) {
 		Instance instance = null;
 		if (isFulfilledByLocalMember(order)) {
+			// TODO Check vanilla is working fine.
 			instance = new Instance(order.getInstanceId());
 			Map<String, String> serviceAddresses = getExternalServiceAddresses(order.getId());
 			if (serviceAddresses != null) {
@@ -661,7 +661,7 @@ public class ManagerController {
 	
 	private Instance getInstance(Order order, String resourceKind) {
 		
-		String orderResourceKind = order.getAttValue(OrderAttribute.RESOURCE_KIND.getValue());
+		String orderResourceKind = order.getResourceKing();
 		if (!orderResourceKind.equals(resourceKind)) {
 			throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
 		}
@@ -1072,8 +1072,7 @@ public class ManagerController {
 		try {
 			Order servedOrder = orderRepository.getOrderByInstance(instanceId);
 			Token federationUserToken = getFederationUserToken(servedOrder);
-			String orderResourceKind = servedOrder != null ? servedOrder
-					.getAttValue(OrderAttribute.RESOURCE_KIND.getValue()): null;
+			String orderResourceKind = servedOrder != null ? servedOrder.getResourceKing(): null;
 			Instance instance = null;
 			if (orderResourceKind == null || orderResourceKind.equals(OrderConstants.COMPUTE_TERM)) {
 				instance = computePlugin.getInstance(federationUserToken, instanceId);
@@ -1092,7 +1091,7 @@ public class ManagerController {
 					}
 				}
 				return instance;				
-			} else if (orderResourceKind.equals(OrderConstants.STORAGE_TERM)) {
+			} else if (orderResourceKind != null && orderResourceKind.equals(OrderConstants.STORAGE_TERM)) {
 				instance = storagePlugin.getInstance(federationUserToken, instanceId);
 			}
 			return instance;
@@ -1221,9 +1220,6 @@ public class ManagerController {
 			}
 			
 			if (order.getState().in(OrderState.FULFILLED, OrderState.DELETED)) {
-//				if (order.getResourceKing() != null && !order.getResourceKing().equals(OrderConstants.COMPUTE_TERM)) {
-//					return;
-//				}
 				try {
 					LOGGER.debug("Monitoring instance of order: " + order);
 					removeFailedInstance(order, getInstance(order, order.getResourceKing()));
@@ -1865,7 +1861,6 @@ public class ManagerController {
 		}
 		
 		if (!storageOrder.getProvidingMemberId().equals(computeOrder.getProvidingMemberId())) {
-			// TODO review the constant response
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.INVALID_STORAGE_LINK_DIFERENT_LOCATION);
 		}
 
@@ -1875,15 +1870,17 @@ public class ManagerController {
 		}
 				
 		boolean isLocal = true;
+		String attachmentId = null;
 		if (!computeOrder.getProvidingMemberId().equals(properties.get(ConfigurationConstants.XMPP_JID_KEY))) {
 			isLocal = false;
-			ManagerPacketHelper.remoteStorageLink(new StorageLink(xOCCIAtt), 
+			attachmentId = ManagerPacketHelper.remoteStorageLink(new StorageLink(xOCCIAtt), 
 						computeOrder.getProvidingMemberId(), federationUserToken, packetSender);
 		} else {
-			attachStorage(categories, xOCCIAtt, federationUserToken);			
+			attachmentId = attachStorage(categories, xOCCIAtt, federationUserToken);			
 		}
 						
 		StorageLink storageLink = new StorageLink(xOCCIAtt);
+		storageLink.setId(attachmentId);
 		storageLink.setLocal(isLocal);
 		storageLink.setProvadingMemberId(computeOrder.getProvidingMemberId());
 		storageLinkRepository.addStorageLink(federationIdentityPlugin.getToken(accessId).getUser(), storageLink);	
@@ -1891,9 +1888,9 @@ public class ManagerController {
 		return storageLink;
 	}
 
-	public void attachStorage(List<Category> categories,
+	public String attachStorage(List<Category> categories,
 			Map<String, String> xOCCIAtt, Token federationUserToken) {		
-		storagePlugin.attach(federationUserToken, categories, xOCCIAtt);
+		return computePlugin.attach(federationUserToken, categories, xOCCIAtt);
 	}
 
 	public List<Flavor> getFlavorsProvided() {
@@ -1929,10 +1926,11 @@ public class ManagerController {
 
 	public void detachStorage(StorageLink storageLink, Token federationUserToken) {		
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
-		
-		
+				
+		xOCCIAtt.put(StorageAttribute.ATTACHMENT_ID.getValue(), storageLink.getId());
+		xOCCIAtt.put(StorageAttribute.SOURCE.getValue(), storageLink.getSource());
 		xOCCIAtt.put(StorageAttribute.TARGET.getValue(), storageLink.getTarget());
-		storagePlugin.dettach(federationUserToken, null, xOCCIAtt);
+		computePlugin.dettach(federationUserToken, new ArrayList<Category>(), xOCCIAtt);
 	}		
 
 	public List<AccountingInfo> getAccountingInfo(String federationAccessId) {

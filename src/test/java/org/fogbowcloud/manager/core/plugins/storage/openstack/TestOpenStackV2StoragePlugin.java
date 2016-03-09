@@ -30,7 +30,6 @@ import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.OCCIHeaders;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.order.OrderAttribute;
-import org.fogbowcloud.manager.occi.storage.StorageAttribute;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -232,95 +231,7 @@ public class TestOpenStackV2StoragePlugin {
 	public void testRemoveInstanceWithoutTenantId() throws Exception {
 		tokenDefault.getAttributes().clear();
 		openStackV2StoragePlugin.removeInstance(tokenDefault, "instanceId");			
-	}		
-	
-	@Test
-	public void testAttach() throws Exception {
-		String instance = "instanceId";
-		String volume = "volumeId";
-		String mountpoint = "mountpoint";
-		HttpUriRequest request = new HttpPost(STORAGE_URL
-				+ OpenStackV2StoragePlugin.COMPUTE_V2_API_ENDPOINT + TENANT_ID
-				+ OpenStackV2StoragePlugin.SUFIX_ENDPOINT_VOLUMES + "/"
-				+ volume + OpenStackV2StoragePlugin.SUFIX_ENDPOINT_ACTION);
-		request.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.JSON_CONTENT_TYPE);
-		request.addHeader(OCCIHeaders.ACCEPT, OCCIHeaders.JSON_CONTENT_TYPE);
-		request.addHeader(OCCIHeaders.X_AUTH_TOKEN, tokenDefault.getAccessId());				
-		expectedRequest = new HttpUriRequestMatcher(request, openStackV2StoragePlugin
-				.generateJsonEntityToAttach(instance, mountpoint).toString());
-				
-		Map<String, String> xOCCIAtt = new HashMap<String, String>();
-		xOCCIAtt.put(StorageAttribute.TARGET.getValue(), volume);
-		xOCCIAtt.put(StorageAttribute.SOURCE.getValue(), instance);
-		xOCCIAtt.put(StorageAttribute.DEVICE_ID.getValue(), mountpoint);
-		try {
-			openStackV2StoragePlugin.attach(tokenDefault, null, xOCCIAtt);			
-		} catch (Exception e) {
-		}
-		
-		Mockito.verify(client).execute(Mockito.argThat(expectedRequest));		
-	}
-	
-	@Test
-	public void testAttachDefaultMountpoint() throws Exception {
-		String instance = "instanceId";
-		String volume = "volumeId";
-		HttpUriRequest request = new HttpPost(STORAGE_URL
-				+ OpenStackV2StoragePlugin.COMPUTE_V2_API_ENDPOINT + TENANT_ID
-				+ OpenStackV2StoragePlugin.SUFIX_ENDPOINT_VOLUMES + "/"
-				+ volume + OpenStackV2StoragePlugin.SUFIX_ENDPOINT_ACTION);
-		request.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.JSON_CONTENT_TYPE);
-		request.addHeader(OCCIHeaders.ACCEPT, OCCIHeaders.JSON_CONTENT_TYPE);
-		request.addHeader(OCCIHeaders.X_AUTH_TOKEN, tokenDefault.getAccessId());
-		expectedRequest = new HttpUriRequestMatcher(request,
-				openStackV2StoragePlugin.generateJsonEntityToAttach(instance,
-				OpenStackV2StoragePlugin.MOUNTPOINT_DEFAULT).toString());
-				
-		Map<String, String> xOCCIAtt = new HashMap<String, String>();
-		xOCCIAtt.put(StorageAttribute.TARGET.getValue(), volume);
-		xOCCIAtt.put(StorageAttribute.SOURCE.getValue(), instance);
-		try {
-			openStackV2StoragePlugin.attach(tokenDefault, null, xOCCIAtt);			
-		} catch (Exception e) {
-		}
-		
-		Mockito.verify(client).execute(Mockito.argThat(expectedRequest));		
-	}	
-	
-	@Test(expected=OCCIException.class)
-	public void testAttachWithoutTenantId() throws Exception {
-		tokenDefault.getAttributes().clear();
-		openStackV2StoragePlugin.attach(tokenDefault, null, null);			
-	}			
-	
-	@Test
-	public void testDetach() throws Exception {
-		String volume = "volumeId";
-		HttpUriRequest request = new HttpPost(STORAGE_URL
-				+ OpenStackV2StoragePlugin.COMPUTE_V2_API_ENDPOINT + TENANT_ID
-				+ OpenStackV2StoragePlugin.SUFIX_ENDPOINT_VOLUMES + "/"
-				+ volume + OpenStackV2StoragePlugin.SUFIX_ENDPOINT_ACTION);
-		request.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.JSON_CONTENT_TYPE);
-		request.addHeader(OCCIHeaders.ACCEPT, OCCIHeaders.JSON_CONTENT_TYPE);
-		request.addHeader(OCCIHeaders.X_AUTH_TOKEN, tokenDefault.getAccessId());				
-		expectedRequest = new HttpUriRequestMatcher(request, openStackV2StoragePlugin
-				.generateJsonEntityToDeattach().toString());
-				
-		Map<String, String> xOCCIAtt = new HashMap<String, String>();
-		xOCCIAtt.put(StorageAttribute.TARGET.getValue(), volume);
-		try {
-			openStackV2StoragePlugin.dettach(tokenDefault, null, xOCCIAtt);			
-		} catch (Exception e) {
-		}
-		
-		Mockito.verify(client).execute(Mockito.argThat(expectedRequest));		
-	}	
-	
-	@Test(expected=OCCIException.class)
-	public void testDettachWithoutTenantId() throws Exception {
-		tokenDefault.getAttributes().clear();
-		openStackV2StoragePlugin.dettach(tokenDefault, null, null);			
-	}			
+	}					
 	
 	private JSONObject generateInstancesJsonResponse(List<Instance> instances) throws JSONException {
 		JSONArray instancesArray = new JSONArray();

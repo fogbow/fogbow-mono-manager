@@ -417,4 +417,18 @@ public class OCCIComputePlugin implements ComputePlugin {
 		return null;
 	}
 
+	@Override
+	public String attach(Token token, List<Category> categories,
+			Map<String, String> xOCCIAtt) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void dettach(Token token, List<Category> categories,
+			Map<String, String> xOCCIAtt) {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

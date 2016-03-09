@@ -12,6 +12,7 @@ public class OrderConstants {
 
 	// storage link
 	public static final String STORAGELINK_TERM = "storagelink";
+	public static final String DEVICE_ID_DEFAULT = "/dev/vdc";
 	
 	// size flavors
 	public static final String TEMPLATE_RESOURCE_SCHEME = "http://schemas.fogbowcloud.org/template/resource#";

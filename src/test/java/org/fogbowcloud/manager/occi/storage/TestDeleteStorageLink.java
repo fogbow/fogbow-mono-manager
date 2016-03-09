@@ -17,6 +17,7 @@ import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
+import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
 import org.fogbowcloud.manager.core.plugins.MapperPlugin;
@@ -47,6 +48,7 @@ public class TestDeleteStorageLink {
 	@SuppressWarnings("unused")
 	private ManagerController facade;
 	private StoragePlugin storagePlugin;
+	private ComputePlugin computePlugin;
 	
 	@Before
 	public void setup() throws Exception {
@@ -65,7 +67,7 @@ public class TestDeleteStorageLink {
 		Mockito.when(identityPlugin.getToken(OTHER_ACCESS_TOKEN)).thenReturn(otherToken);
 		Mockito.when(identityPlugin.isValid(OCCITestHelper.ACCESS_TOKEN)).thenReturn(true);	
 		
-		
+		computePlugin = Mockito.mock(ComputePlugin.class);
 		storagePlugin = Mockito.mock(StoragePlugin.class);
 
 		List<Order> orders = new LinkedList<Order>();
@@ -98,7 +100,7 @@ public class TestDeleteStorageLink {
 		Map<String, List<Order>> ordersToAdd = new HashMap<String, List<Order>>();
 		ordersToAdd.put(OCCITestHelper.USER_MOCK, orders);
 		
-		facade = this.helper.initializeComponentCompute(null, storagePlugin, identityPlugin, authorizationPlugin,
+		facade = this.helper.initializeComponentCompute(computePlugin, storagePlugin, identityPlugin, authorizationPlugin,
 				imageStoragePlugin, accountingPlugin, benchmarkingPlugin, ordersToAdd, storageLinksToAdd,
 				mapperPlugin);		
 	}

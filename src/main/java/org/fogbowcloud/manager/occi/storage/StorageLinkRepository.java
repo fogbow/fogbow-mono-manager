@@ -7,7 +7,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.occi.model.Token;
@@ -112,7 +111,6 @@ public class StorageLinkRepository {
 		private boolean isLocal;
 
 		public StorageLink(Map<String, String> xOCCIAttributes) {
-			this.id = String.valueOf(UUID.randomUUID());
 			this.source = xOCCIAttributes.get(StorageAttribute.SOURCE.getValue());
 			this.target = xOCCIAttributes.get(StorageAttribute.TARGET.getValue());
 			this.deviceId = xOCCIAttributes.get(StorageAttribute.DEVICE_ID.getValue());
