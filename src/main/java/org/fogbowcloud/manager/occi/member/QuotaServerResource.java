@@ -40,17 +40,26 @@ public class QuotaServerResource extends MemberServerResource {
 		response.append(OCCIHeaders.X_OCCI_ATTRIBUTE + ": cpuInUse="
 				+ member.getResourcesInfo().getCpuInUse());
 		response.append("\n");
+		response.append(OCCIHeaders.X_OCCI_ATTRIBUTE + ": cpuInUseByUser="
+				+ member.getResourcesInfo().getCpuInUseByUser());
+		response.append("\n");		
 		response.append(OCCIHeaders.X_OCCI_ATTRIBUTE + ": memIdle="
 				+ member.getResourcesInfo().getMemIdle());
 		response.append("\n");
 		response.append(OCCIHeaders.X_OCCI_ATTRIBUTE + ": memInUse="
 				+ member.getResourcesInfo().getMemInUse());
 		response.append("\n");
+		response.append(OCCIHeaders.X_OCCI_ATTRIBUTE + ": memInUseByUser="
+				+ member.getResourcesInfo().getMemInUseByUser());
+		response.append("\n");		
 		response.append(OCCIHeaders.X_OCCI_ATTRIBUTE + ": instancesIdle="
 				+ member.getResourcesInfo().getInstancesIdle());
 		response.append("\n");
 		response.append(OCCIHeaders.X_OCCI_ATTRIBUTE + ": instancesInUse="
 				+ member.getResourcesInfo().getInstancesInUse());
+		response.append("\n");
+		response.append(OCCIHeaders.X_OCCI_ATTRIBUTE + ": instancesInUseByUser="
+				+ member.getResourcesInfo().getInstancesInUseByUser());		
 
 		return response.toString().trim();
 	}

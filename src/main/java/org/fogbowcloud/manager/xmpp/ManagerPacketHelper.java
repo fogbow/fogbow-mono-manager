@@ -36,6 +36,16 @@ import org.xmpp.packet.PacketError.Condition;
 
 public class ManagerPacketHelper {
 
+	public static final String MEM_IN_USE_BY_USER = "memInUseByUser";
+	public static final String MEM_IN_USE = "memInUse";
+	public static final String MEM_IDLE = "memIdle";
+	public static final String INSTANCES_IN_USE_BY_USER = "instancesInUseByUser";
+	public static final String INSTANCES_IN_USE = "instancesInUse";
+	public static final String INSTANCES_IDLE = "instancesIdle";
+	public static final String CPU_IN_USE_BY_USER = "cpuInUseByUser";
+	public static final String CPU_IN_USE = "cpuInUse";
+	public static final String CPU_IDLE = "cpuIdle";
+	
 	public static final String USER_EL = "user";
 	public static final String ACCESS_ID_EL = "accessId";
 	public static final String TOKEN_EL = "token";
@@ -474,14 +484,18 @@ public class ManagerPacketHelper {
 	
 	private static ResourcesInfo parseResourcesInfo(Element instanceEl) {
 		String id = instanceEl.element(ID_EL).getText();
-		String cpuIdle = instanceEl.element("cpuIdle").getText();
-		String cpuInUse = instanceEl.element("cpuInUse").getText();
-		String instancesIdle = instanceEl.element("instancesIdle").getText();
-		String instancesInUse = instanceEl.element("instancesInUse").getText();
-		String memIdle = instanceEl.element("memIdle").getText();
-		String memInUse = instanceEl.element("memInUse").getText();
+		String cpuIdle = instanceEl.element(CPU_IDLE).getText();
+		String cpuInUse = instanceEl.element(CPU_IN_USE).getText();
+		String cpuInUseByUser = instanceEl.element(CPU_IN_USE_BY_USER).getText();
+		String instancesIdle = instanceEl.element(INSTANCES_IDLE).getText();
+		String instancesInUse = instanceEl.element(INSTANCES_IN_USE).getText();
+		String instancesInUseByUser = instanceEl.element(INSTANCES_IN_USE_BY_USER).getText();
+		String memIdle = instanceEl.element(MEM_IDLE).getText();
+		String memInUse = instanceEl.element(MEM_IN_USE).getText();
+		String memInUseByUser = instanceEl.element(MEM_IN_USE_BY_USER).getText();
 
-		return new ResourcesInfo(id, cpuIdle, cpuInUse, memIdle, memInUse, instancesIdle, instancesInUse);
+		return new ResourcesInfo(id, cpuIdle, cpuInUse, memIdle, memInUse, instancesIdle, instancesInUse,
+				cpuInUseByUser, memInUseByUser, instancesInUseByUser);
 	}
 	
 	public static void deleteRemoteOrder(String providingMember, Order order, 

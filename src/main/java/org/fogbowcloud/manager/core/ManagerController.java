@@ -461,7 +461,7 @@ public class ManagerController {
 		try {
 			if (federationMemberId.equals(properties
 					.getProperty(ConfigurationConstants.XMPP_JID_KEY))) {
-				return new FederationMember(getResourcesInfo(this.getLocalCredentials(accessId)));
+				return new FederationMember(getResourcesInfo(this.getLocalCredentials(accessId), accessId, true));
 			}
 			
 			return new FederationMember(ManagerPacketHelper.getRemoteUserQuota
@@ -477,40 +477,86 @@ public class ManagerController {
 		return mapperPlugin.getLocalCredentials(accessId);
 	}
 
-	public ResourcesInfo getResourcesInfo() {
-		return getResourcesInfo(null);
+	public ResourcesInfo getResourcesInfo(String accessId, boolean isLocal) {
+		return getResourcesInfo(null, accessId, isLocal);
 	}
 
-	public ResourcesInfo getResourcesInfo(Map<String, String> localCredentials) {
+	public ResourcesInfo getResourcesInfo(Map<String, String> localCredentials, String accessId, boolean isLocal) {
 		ResourcesInfo totalResourcesInfo = new ResourcesInfo();
 		totalResourcesInfo.setId(properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
+		Token federationToken = federationIdentityPlugin.getToken(accessId);
 
 		if (localCredentials != null) {
-			totalResourcesInfo
-					.addResource(computePlugin.getResourcesInfo(localIdentityPlugin.createToken(localCredentials)));
-			return totalResourcesInfo;
-		}
-
-		Map<String, Map<String, String>> allLocalCredentials = this.mapperPlugin.getAllLocalCredentials();
-		List<Map<String, String>> credentialsUsed = new ArrayList<Map<String, String>>();
-		for (String localName : allLocalCredentials.keySet()) {
-			Map<String, String> credentials = allLocalCredentials.get(localName);
-			if (credentialsUsed.contains(credentials)) {
-				continue;
-			}
-			credentialsUsed.add(credentials);
-
-			ResourcesInfo resourcesInfo = null;
+			Token localToken = localIdentityPlugin.createToken(localCredentials);
+			totalResourcesInfo.addResource(computePlugin.getResourcesInfo(localToken));
+			
 			try {
-				resourcesInfo = computePlugin.getResourcesInfo(localIdentityPlugin.createToken(credentials));
+				totalResourcesInfo.addResource(getResourceInfoInUseByUser(localToken, federationToken, isLocal));			
 			} catch (Exception e) {
-				LOGGER.warn("Does not possible get resources info with credentials of " + localName);
+				LOGGER.warn("Did not possible get informations about instances, CPUs and memories in use by user.");
 			}
-			totalResourcesInfo.addResource(resourcesInfo);
+		} else {
+			Map<String, Map<String, String>> allLocalCredentials = this.mapperPlugin.getAllLocalCredentials();
+			List<Map<String, String>> credentialsUsed = new ArrayList<Map<String, String>>();
+			for (String localName : allLocalCredentials.keySet()) {
+				Map<String, String> credentials = allLocalCredentials.get(localName);
+				if (credentialsUsed.contains(credentials)) {
+					continue;
+				}
+				credentialsUsed.add(credentials);
+				
+				ResourcesInfo resourcesInfo = null;
+				Token localToken = null;
+				try {
+					localToken = localIdentityPlugin.createToken(credentials);
+					resourcesInfo = computePlugin.getResourcesInfo(localToken);
+				} catch (Exception e) {
+					LOGGER.warn("Does not possible get resources info with credentials of " + localName);
+				}
+				totalResourcesInfo.addResource(resourcesInfo);
+
+				try {
+					totalResourcesInfo.addResource(getResourceInfoInUseByUser(localToken, federationToken, isLocal));			
+				} catch (Exception e) {
+					LOGGER.warn("Did not possible get informations about instances, CPUs and memories in use by user.");
+				}				
+			}			
 		}
+
+		
 		return totalResourcesInfo;
 	}
-
+	
+	protected ResourcesInfo getResourceInfoInUseByUser(Token localToken, Token federationToken, boolean isLocal) {
+		List<Order> localOrders = orderRepository.getByUser(federationToken.getUser(), isLocal);
+		int contInstance = 0;
+		double contCpu = 0;
+		double contMem = 0;
+		for (Order order: localOrders) {
+			if ((isLocal && !order.isLocal()) || (!isLocal && order.isLocal())) {
+				continue;
+			}
+			String instanceId = order.getInstanceId();
+			if (instanceId == null || instanceId.isEmpty() || !order.getResourceKing().equals(OrderConstants.COMPUTE_TERM) ) {
+				continue;
+			}
+			Instance instance = null;
+			try {
+				instance = computePlugin.getInstance(localToken, instanceId);								
+			} catch (Exception e) {
+				continue;
+			}
+			contInstance ++;
+			try {
+				contMem += Double.parseDouble(instance.getAttributes().get("occi.compute.memory")) * 1024;				
+			} catch (Exception e) {}
+			try {
+				contCpu += Double.parseDouble(instance.getAttributes().get("occi.compute.cores"));				
+			} catch (Exception e) {}
+		}
+		return new ResourcesInfo(String.valueOf(contCpu), String.valueOf(contMem), String.valueOf(contInstance));
+	}
+	
 	public String getUser(String accessId) {
 		Token token = getTokenFromFederationIdP(accessId);
 		if (token == null) {
@@ -922,7 +968,8 @@ public class ManagerController {
 			}
 		}
 		if (memberId.equals(properties.get(ConfigurationConstants.XMPP_JID_KEY))) {
-			return new FederationMember(getResourcesInfo());
+			//TODO review this
+			return new FederationMember(getResourcesInfo(null, true));
 		}
 		return null;
 	}
@@ -1977,7 +2024,7 @@ public class ManagerController {
 	
 	public ResourcesInfo getResourceInfoForRemoteMember(String accessId) {		
 		Map<String, String> localCredentials = getLocalCredentials(accessId);
-		return getResourcesInfo(localCredentials);
+		return getResourcesInfo(localCredentials, accessId, false);
 	}
 
 	protected FailedBatch getFailedBatches() {

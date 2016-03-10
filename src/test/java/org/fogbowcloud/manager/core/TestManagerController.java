@@ -54,6 +54,7 @@ import org.fogbowcloud.manager.occi.order.OrderRepository;
 import org.fogbowcloud.manager.occi.order.OrderState;
 import org.fogbowcloud.manager.occi.order.OrderType;
 import org.fogbowcloud.manager.xmpp.AsyncPacketSender;
+import org.fogbowcloud.manager.xmpp.ManagerPacketHelper;
 import org.fogbowcloud.manager.xmpp.ManagerXmppComponent;
 import org.jamppa.component.PacketCallback;
 import org.json.JSONException;
@@ -3287,19 +3288,101 @@ public class TestManagerController {
 		Mockito.when(computePlugin.getResourcesInfo(tokenTwo)).thenReturn(resourcesInfoTwo);
 		managerController.setComputePlugin(computePlugin);
 		
-		ResourcesInfo resourcesInfo = managerController.getResourcesInfo();
+		ResourcesInfo resourcesInfo = managerController.getResourcesInfo(null, true);
+		Assert.assertEquals("40", resourcesInfo.getCpuInUse());
+		Assert.assertEquals("30", resourcesInfo.getCpuIdle());
+		Assert.assertEquals("40", resourcesInfo.getMemInUse());
+		Assert.assertEquals("30", resourcesInfo.getMemIdle());
+		Assert.assertEquals("40", resourcesInfo.getInstancesInUse());
+		Assert.assertEquals("30", resourcesInfo.getInstancesIdle());		
+	}
+	
+	@Test
+	public void testGetResourceInfoWithResourceInfoByUser() {
+		MapperPlugin mapperPlugin = Mockito
+				.mock(MapperPlugin.class);
+		Map<String, Map<String, String>> fedUsersCredentials = new HashMap<String, Map<String,String>>();
+		HashMap<String, String> credentialsOne = new HashMap<String, String>();
+		credentialsOne.put("one", "x1");
+		HashMap<String, String> credentialsTwo = new HashMap<String, String>();
+		credentialsTwo.put("two", "y1");
+		HashMap<String, String> credentialsTree = new HashMap<String, String>();
+		credentialsTree.put("two", "y1");
+		fedUsersCredentials.put("one", credentialsOne);
+		fedUsersCredentials.put("two", credentialsTwo);
+		fedUsersCredentials.put("three", credentialsTree);
+		Mockito.when(mapperPlugin.getAllLocalCredentials()).thenReturn(fedUsersCredentials);
+		managerController.setLocalCredentailsPlugin(mapperPlugin);		
+				
+		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
+		Token tokenOne = new Token("One", "user", null, null);
+		Mockito.when(identityPlugin.createToken(credentialsOne)).thenReturn(tokenOne);
+		Token tokenTwo = new Token("Two", "user", null, null);
+		Mockito.when(identityPlugin.createToken(credentialsTwo)).thenReturn(tokenTwo);
+		Mockito.when(identityPlugin.createToken(credentialsTree)).thenReturn(tokenTwo);
+		managerController.setLocalIdentityPlugin(identityPlugin);
+		
+		String accessId = "accessId";
+		IdentityPlugin federationIdentityPlugin = Mockito.mock(IdentityPlugin.class);
+		Token federationToken = new Token(accessId, "user", new Date(), new HashMap<String, String>());
+		Mockito.when(federationIdentityPlugin.getToken(Mockito.eq(accessId))).thenReturn(federationToken);
+		managerController.setFederationIdentityPlugin(federationIdentityPlugin);			
+		
+		Order orderOne = new Order("idOne", federationToken, new ArrayList<Category>(), xOCCIAtt, true, "");
+		orderOne.setState(OrderState.OPEN);
+		String instanceIdOne = "instanceIdOne";
+		orderOne.setInstanceId(instanceIdOne);
+		Order orderTwo = new Order("idTwo", federationToken, new ArrayList<Category>(), xOCCIAtt, true, "");
+		orderTwo.setState(OrderState.OPEN);
+		String instanceIdTwo = "instanceIdTwo";
+		orderTwo.setInstanceId(instanceIdTwo);		
+		OrderRepository orderRepository = new OrderRepository();
+		orderRepository.addOrder(federationToken.getUser(), orderOne);
+		orderRepository.addOrder(federationToken.getUser(), orderTwo);
+		managerController.setOrders(orderRepository);				
+		
+		Map<String, String> attributesOne = new HashMap<String, String>();
+		double memInstanceOne = 2.0;
+		attributesOne.put("occi.compute.memory", String.valueOf(memInstanceOne));
+		double cpuInstanceOne = 10.0;
+		attributesOne.put("occi.compute.cores", String.valueOf(cpuInstanceOne));
+		
+		Map<String, String> attributesTwo = new HashMap<String, String>();
+		double memInstanceTwo = 3.0;
+		attributesTwo.put("occi.compute.memory", String.valueOf(memInstanceTwo));
+		double cpuInstanceTwo = 5.0;
+		attributesTwo.put("occi.compute.cores", String.valueOf(cpuInstanceTwo));		
+		Instance instanceOne = new Instance("idOne", new ArrayList<Resource>(), attributesOne, new ArrayList<Instance.Link>(), InstanceState.RUNNING);
+		Mockito.when(managerTestHelper.getComputePlugin().getInstance(Mockito.any(Token.class), Mockito.eq(instanceIdOne))).thenReturn(instanceOne);
+		Instance instanceTwo = new Instance("idTwo", new ArrayList<Resource>(), attributesTwo, new ArrayList<Instance.Link>(), InstanceState.RUNNING);
+		Mockito.when(managerTestHelper.getComputePlugin().getInstance(Mockito.any(Token.class), Mockito.eq(instanceIdTwo))).thenReturn(instanceTwo);
+		
+		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
+		ResourcesInfo resourcesInfoOne = new ResourcesInfo("10", "20", "10", "20", "10", "20");
+		Mockito.when(computePlugin.getResourcesInfo(tokenOne)).thenReturn(resourcesInfoOne);
+		ResourcesInfo resourcesInfoTwo = new ResourcesInfo("20", "20", "20", "20", "20", "20");
+		Mockito.when(computePlugin.getResourcesInfo(tokenTwo)).thenReturn(resourcesInfoTwo);
+		
+		Mockito.when(computePlugin.getInstance(Mockito.any(Token.class), Mockito.eq(instanceIdOne))).thenReturn(instanceOne);
+		Mockito.when(computePlugin.getInstance(Mockito.any(Token.class), Mockito.eq(instanceIdTwo))).thenReturn(instanceTwo);
+		managerController.setComputePlugin(computePlugin);
+		
+		ResourcesInfo resourcesInfo = managerController.getResourcesInfo("accessId", true);
 		Assert.assertEquals("40", resourcesInfo.getCpuInUse());
 		Assert.assertEquals("30", resourcesInfo.getCpuIdle());
 		Assert.assertEquals("40", resourcesInfo.getMemInUse());
 		Assert.assertEquals("30", resourcesInfo.getMemIdle());
 		Assert.assertEquals("40", resourcesInfo.getInstancesInUse());
 		Assert.assertEquals("30", resourcesInfo.getInstancesIdle());
-	}
+		// two times
+		Assert.assertEquals("4", resourcesInfo.getInstancesInUseByUser());
+		Assert.assertEquals(String.valueOf(cpuInstanceOne * 1024), resourcesInfo.getMemInUseByUser());
+		Assert.assertEquals("30.0", resourcesInfo.getCpuInUseByUser());
+	}	
 	
 	@Test
 	public void testGetResourceInfoWorngCredentials() {
-		MapperPlugin mapperPlugin = Mockito
-				.mock(MapperPlugin.class);
+		MapperPlugin mapperPlugin = Mockito.mock(MapperPlugin.class);
 		Map<String, Map<String, String>> fedUsersCredentials = new HashMap<String, Map<String,String>>();
 		HashMap<String, String> credentialsOne = new HashMap<String, String>();
 		credentialsOne.put("one", "x1");
@@ -3325,6 +3408,10 @@ public class TestManagerController {
 				new OCCIException(ErrorType.UNAUTHORIZED, ""));
 		managerController.setLocalIdentityPlugin(identityPlugin);
 		
+		IdentityPlugin federationIdentityPlugin = Mockito.mock(IdentityPlugin.class);
+		Mockito.when(federationIdentityPlugin.getToken(Mockito.anyString())).thenReturn(tokenOne);
+		managerController.setFederationIdentityPlugin(federationIdentityPlugin);
+		
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		ResourcesInfo resourcesInfoOne = new ResourcesInfo("10", "20", "10", "20", "10", "20");
 		Mockito.when(computePlugin.getResourcesInfo(tokenOne)).thenReturn(resourcesInfoOne);
@@ -3332,7 +3419,7 @@ public class TestManagerController {
 		Mockito.when(computePlugin.getResourcesInfo(tokenTwo)).thenReturn(resourcesInfoTwo);
 		managerController.setComputePlugin(computePlugin);
 		
-		ResourcesInfo resourcesInfo = managerController.getResourcesInfo();
+		ResourcesInfo resourcesInfo = managerController.getResourcesInfo("", true);
 		Assert.assertEquals("40", resourcesInfo.getCpuInUse());
 		Assert.assertEquals("30", resourcesInfo.getCpuIdle());
 		Assert.assertEquals("40", resourcesInfo.getMemInUse());
@@ -3483,7 +3570,11 @@ public class TestManagerController {
 		String memInUse = "4";
 		String instancesIdle = "5";
 		String instancesInUse = "6";
-		ResourcesInfo resourceInfo = new ResourcesInfo(cpuIdle, cpuInUse, memIdle, memInUse, instancesIdle, instancesInUse);
+		String cpuInUseByUser = "7";
+		String memInUseByUser = "8";
+		String instancesInUseByUser = "9";
+		ResourcesInfo resourceInfo = new ResourcesInfo("id" ,cpuIdle, cpuInUse, memIdle, memInUse, instancesIdle,
+				instancesInUse, cpuInUseByUser, memInUseByUser, instancesInUseByUser);
 		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class)))
 				.thenReturn(resourceInfo);
 
@@ -3492,10 +3583,13 @@ public class TestManagerController {
 		FederationMember federationMemberQuota = managerController.getFederationMemberQuota(federationMemberId, accessId);
 		Assert.assertEquals(cpuIdle, federationMemberQuota.getResourcesInfo().getCpuIdle());
 		Assert.assertEquals(cpuInUse, federationMemberQuota.getResourcesInfo().getCpuInUse());
+		Assert.assertEquals(cpuInUseByUser, federationMemberQuota.getResourcesInfo().getCpuInUseByUser());
 		Assert.assertEquals(memIdle, federationMemberQuota.getResourcesInfo().getMemIdle());
 		Assert.assertEquals(memInUse, federationMemberQuota.getResourcesInfo().getMemInUse());
+		Assert.assertEquals(memInUseByUser, federationMemberQuota.getResourcesInfo().getMemInUseByUser());
 		Assert.assertEquals(instancesIdle, federationMemberQuota.getResourcesInfo().getInstancesIdle());
 		Assert.assertEquals(instancesInUse, federationMemberQuota.getResourcesInfo().getInstancesInUse());
+		Assert.assertEquals(instancesInUseByUser, federationMemberQuota.getResourcesInfo().getInstancesInUseByUser());
 	}
 	
 	@Test
@@ -3569,10 +3663,13 @@ public class TestManagerController {
 		resourceEl.addElement("id").setText("id");
 		resourceEl.addElement("cpuIdle").setText(resourcesInfo.getCpuIdle());
 		resourceEl.addElement("cpuInUse").setText(resourcesInfo.getCpuInUse());
+		resourceEl.addElement(ManagerPacketHelper.CPU_IN_USE_BY_USER).setText(resourcesInfo.getCpuInUseByUser());
 		resourceEl.addElement("instancesIdle").setText(resourcesInfo.getInstancesIdle());
 		resourceEl.addElement("instancesInUse").setText(resourcesInfo.getInstancesInUse());
+		resourceEl.addElement(ManagerPacketHelper.MEM_IN_USE_BY_USER).setText(resourcesInfo.getMemInUseByUser());
 		resourceEl.addElement("memIdle").setText(resourcesInfo.getMemIdle());
 		resourceEl.addElement("memInUse").setText(resourcesInfo.getMemInUse());			
+		resourceEl.addElement(ManagerPacketHelper.INSTANCES_IN_USE_BY_USER).setText(resourcesInfo.getInstancesInUseByUser());			
 		
 		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);
 		Mockito.when(packetSender.syncSendPacket(Mockito.any(IQ.class))).thenReturn(response);
@@ -3698,4 +3795,157 @@ public class TestManagerController {
 				"CN=Marcos Nobrega, OU=DSC, O=UFCG, O=UFF BrGrid CA, O=ICPEDU, C=BR", new Date(),
 				new HashMap<String, String>())));
 	}
+	
+	@Test
+	public void testGetResourceInfoInUseByUser() {
+		Token token = new Token("accessId", "user", new Date(), new HashMap<String, String>());		
+		HashMap<String, String> xOCCIAtt = new HashMap<String, String>();
+		xOCCIAtt.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.COMPUTE_TERM);
+		String instanceIdOne = "instanceOne";
+		String instanceIdTwo = "instanceTwo";
+		
+		Order orderOne = new Order("idOne", token, new ArrayList<Category>(), xOCCIAtt, true, "");
+		orderOne.setState(OrderState.OPEN);
+		orderOne.setInstanceId(instanceIdOne);
+		Order orderTwo = new Order("idTwo", token, new ArrayList<Category>(), xOCCIAtt, true, "");
+		orderTwo.setState(OrderState.OPEN);
+		orderTwo.setInstanceId(instanceIdTwo);
+		Order orderThreeWithoutInstanceId = new Order("idThree", token, new ArrayList<Category>(), xOCCIAtt, true, "");
+		orderThreeWithoutInstanceId.setState(OrderState.OPEN);		
+		OrderRepository orderRepository = new OrderRepository();
+		orderRepository.addOrder(token.getUser(), orderOne);
+		orderRepository.addOrder(token.getUser(), orderTwo);
+		managerController.setOrders(orderRepository);		
+		
+		Map<String, String> attributesOne = new HashMap<String, String>();
+		double memInstanceOne = 2.0;
+		attributesOne.put("occi.compute.memory", String.valueOf(memInstanceOne));
+		double cpuInstanceOne = 10.0;
+		attributesOne.put("occi.compute.cores", String.valueOf(cpuInstanceOne));
+		
+		Map<String, String> attributesTwo = new HashMap<String, String>();
+		double memInstanceTwo = 3.0;
+		attributesTwo.put("occi.compute.memory", String.valueOf(memInstanceTwo));
+		double cpuInstanceTwo = 5.0;
+		attributesTwo.put("occi.compute.cores", String.valueOf(cpuInstanceTwo));		
+		Instance instanceOne = new Instance("idOne", new ArrayList<Resource>(), attributesOne, new ArrayList<Instance.Link>(), InstanceState.RUNNING);
+		Mockito.when(managerTestHelper.getComputePlugin().getInstance(Mockito.any(Token.class), Mockito.eq(instanceIdOne))).thenReturn(instanceOne);
+		Instance instanceTwo = new Instance("idTwo", new ArrayList<Resource>(), attributesTwo, new ArrayList<Instance.Link>(), InstanceState.RUNNING);
+		Mockito.when(managerTestHelper.getComputePlugin().getInstance(Mockito.any(Token.class), Mockito.eq(instanceIdTwo))).thenReturn(instanceTwo);
+		
+		ResourcesInfo resourceInfoExtra = managerController.getResourceInfoInUseByUser(token, token, true);
+		
+		Assert.assertEquals(String.valueOf(memInstanceOne * 1024 + memInstanceTwo * 1024), resourceInfoExtra.getMemInUseByUser());
+		Assert.assertEquals(String.valueOf(2), resourceInfoExtra.getInstancesInUseByUser());
+		Assert.assertEquals(String.valueOf(cpuInstanceOne + cpuInstanceTwo), resourceInfoExtra.getCpuInUseByUser());
+	}
+	
+	@Test
+	public void testGetResourceInfoInUseByUserWithGetInstanceError() {
+		Token token = new Token("accessId", "user", new Date(), new HashMap<String, String>());		
+		HashMap<String, String> xOCCIAtt = new HashMap<String, String>();
+		xOCCIAtt.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.COMPUTE_TERM);
+		String instanceIdOne = "instanceOne";
+		String instanceIdTwo = "instanceTwo";
+		
+		Order orderOne = new Order("idOne", token, new ArrayList<Category>(), xOCCIAtt, true, "");
+		orderOne.setState(OrderState.OPEN);
+		orderOne.setInstanceId(instanceIdOne);
+		Order orderTwo = new Order("idTwo", token, new ArrayList<Category>(), xOCCIAtt, true, "");
+		orderTwo.setState(OrderState.OPEN);
+		orderTwo.setInstanceId(instanceIdTwo);
+		Order orderThreeWithoutInstanceId = new Order("idThree", token, new ArrayList<Category>(), xOCCIAtt, true, "");
+		orderThreeWithoutInstanceId.setState(OrderState.OPEN);		
+		OrderRepository orderRepository = new OrderRepository();
+		orderRepository.addOrder(token.getUser(), orderOne);
+		orderRepository.addOrder(token.getUser(), orderTwo);
+		managerController.setOrders(orderRepository);		
+		
+		Map<String, String> attributesOne = new HashMap<String, String>();
+		double memInstanceOne = 2.0;
+		attributesOne.put("occi.compute.memory", String.valueOf(memInstanceOne));
+		double cpuInstanceOne = 10.0;
+		attributesOne.put("occi.compute.cores", String.valueOf(cpuInstanceOne));
+		
+		Map<String, String> attributesTwo = new HashMap<String, String>();
+		double memInstanceTwo = 3.0;
+		attributesTwo.put("occi.compute.memory", String.valueOf(memInstanceTwo));
+		double cpuInstanceTwo = 5.0;
+		attributesTwo.put("occi.compute.cores", String.valueOf(cpuInstanceTwo));		
+		Instance instanceOne = new Instance("idOne", new ArrayList<Resource>(),
+				attributesOne, new ArrayList<Instance.Link>(),
+				InstanceState.RUNNING);
+		Mockito.when(managerTestHelper.getComputePlugin().getInstance(
+				Mockito.any(Token.class), Mockito.eq(instanceIdOne)))
+				.thenReturn(instanceOne);
+		@SuppressWarnings("unused")
+		Instance instanceTwo = new Instance("idTwo", new ArrayList<Resource>(),
+				attributesTwo, new ArrayList<Instance.Link>(),
+				InstanceState.RUNNING);
+		Mockito.when(managerTestHelper.getComputePlugin().getInstance(
+				Mockito.any(Token.class), Mockito.eq(instanceIdTwo)))
+				.thenThrow(new OCCIException(ErrorType.BAD_REQUEST, ""));
+		
+		ResourcesInfo resourceInfoExtra = managerController.getResourceInfoInUseByUser(token, token, true);
+		
+		Assert.assertEquals(String.valueOf(memInstanceOne * 1024), resourceInfoExtra.getMemInUseByUser());
+		Assert.assertEquals(String.valueOf(1), resourceInfoExtra.getInstancesInUseByUser());
+		Assert.assertEquals(String.valueOf(cpuInstanceOne), resourceInfoExtra.getCpuInUseByUser());
+	}
+	
+	@Test
+	public void testGetResourceInfoInUseByUserWithDoubleValueConvertError() {
+		Token token = new Token("accessId", "user", new Date(), new HashMap<String, String>());		
+		HashMap<String, String> xOCCIAtt = new HashMap<String, String>();
+		xOCCIAtt.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.COMPUTE_TERM);
+		String instanceIdOne = "instanceOne";
+		String instanceIdTwo = "instanceTwo";
+		
+		Order orderOne = new Order("idOne", token, new ArrayList<Category>(), xOCCIAtt, true, "");
+		orderOne.setState(OrderState.OPEN);
+		orderOne.setInstanceId(instanceIdOne);
+		Order orderTwo = new Order("idTwo", token, new ArrayList<Category>(), xOCCIAtt, true, "");
+		orderTwo.setState(OrderState.OPEN);
+		orderTwo.setInstanceId(instanceIdTwo);
+		Order orderThreeWithoutInstanceId = new Order("idThree", token, new ArrayList<Category>(), xOCCIAtt, true, "");
+		orderThreeWithoutInstanceId.setState(OrderState.OPEN);		
+		OrderRepository orderRepository = new OrderRepository();
+		orderRepository.addOrder(token.getUser(), orderOne);
+		orderRepository.addOrder(token.getUser(), orderTwo);
+		managerController.setOrders(orderRepository);		
+		
+		Map<String, String> attributesOne = new HashMap<String, String>();
+		attributesOne.put("occi.compute.memory", "wrong");
+		double cpuInstanceOne = 10.0;
+		attributesOne.put("occi.compute.cores", String.valueOf(cpuInstanceOne));
+		
+		Map<String, String> attributesTwo = new HashMap<String, String>();
+		double memInstanceTwo = 3.0;
+		attributesTwo.put("occi.compute.memory", String.valueOf(memInstanceTwo));
+		attributesTwo.put("occi.compute.cores", "wrong");		
+		Instance instanceOne = new Instance("idOne", new ArrayList<Resource>(),
+				attributesOne, new ArrayList<Instance.Link>(), InstanceState.RUNNING);
+		Mockito.when(managerTestHelper.getComputePlugin().getInstance(
+				Mockito.any(Token.class), Mockito.eq(instanceIdOne))).thenReturn(instanceOne);
+		Instance instanceTwo = new Instance("idTwo", new ArrayList<Resource>(),
+				attributesTwo, new ArrayList<Instance.Link>(), InstanceState.RUNNING);
+		Mockito.when(managerTestHelper.getComputePlugin().getInstance(
+				Mockito.any(Token.class), Mockito.eq(instanceIdTwo))).thenReturn(instanceTwo);
+		
+		ResourcesInfo resourceInfoExtra = managerController.getResourceInfoInUseByUser(token, token, true);
+		
+		Assert.assertEquals(String.valueOf(memInstanceTwo * 1024), resourceInfoExtra.getMemInUseByUser());
+		Assert.assertEquals(String.valueOf(2), resourceInfoExtra.getInstancesInUseByUser());
+		Assert.assertEquals(String.valueOf(cpuInstanceOne), resourceInfoExtra.getCpuInUseByUser());
+	}	
+	
+	@Test
+	public void testGetResourceInfoInUseByUserWithOrdersEmpty() {
+		Token token = new Token("accessId", "user", new Date(), new HashMap<String, String>());		
+		ResourcesInfo resourceInfoExtra = managerController.getResourceInfoInUseByUser(token, token, true);
+		
+		Assert.assertEquals(String.valueOf(0.0), resourceInfoExtra.getMemInUseByUser());
+		Assert.assertEquals(String.valueOf(0), resourceInfoExtra.getInstancesInUseByUser());
+		Assert.assertEquals(String.valueOf(0.0), resourceInfoExtra.getCpuInUseByUser());
+	}			
 }
