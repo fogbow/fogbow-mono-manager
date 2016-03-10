@@ -217,18 +217,56 @@ public class ComputeServerResource extends ServerResource {
 		
 		String sshInformation = instance.getAttributes().get(Instance.SSH_PUBLIC_ADDRESS_ATT);
 		List<Link> links = fedInstanceState.getLinks();
-		if (links.isEmpty() && sshInformation != null) {
-			links = generateFakeLink(fedInstanceState.getFedInstanceId(), instance);
+		
+		if (!containsLink(links, "</network/public>") && sshInformation != null) {
+			links.add(generateFakePublicLink(fedInstanceState.getFedInstanceId(), instance));
 			fedInstanceState.setLinks(links);			
 			instanceDB.update(fedInstanceState);
 		}
+		
+		String privateInformation = instance.getAttributes().get(Instance.LOCAL_IP_ADDRESS_ATT);
+		if (!containsLink(links, "</network/private>") && privateInformation != null) {
+			links.add(generateFakePrivateLink(fedInstanceState.getFedInstanceId(), instance));
+			fedInstanceState.setLinks(links);			
+			instanceDB.update(fedInstanceState);
+		}	
 		
 		return new Instance(fedInstanceState.getFedInstanceId(), ResourceRepository.getInstance()
 				.get(fedInstanceState.getCategories()), instance.getAttributes(), links,
 				instance.getState()).toOCCIMessageFormatDetails();
 	}
 
-	private List<Link> generateFakeLink(String fedInstanceId, Instance instance) {
+	private boolean containsLink(List<Link> links, String linkName) {
+		for (Link link : links) {
+			if (link.getName().equals(linkName)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private Link generateFakePrivateLink(String fedInstanceId, Instance instance) {
+		String privateInformation = instance.getAttributes().get(Instance.LOCAL_IP_ADDRESS_ATT);
+		
+		Map<String, String> linkAttrs = new HashMap<String, String>();
+		linkAttrs.put("rel", "http://schemas.ogf.org/occi/infrastructure#network");
+		String fakeLinkId = "/network/interface/" + UUID.randomUUID().toString();
+		linkAttrs.put("self", fakeLinkId);
+		linkAttrs.put("category", "http://schemas.ogf.org/occi/infrastructure#networkinterface http://schemas.ogf.org/occi/infrastructure/networkinterface#ipnetworkinterface");
+		linkAttrs.put("occi.networkinterface.gateway", "Not defined");
+		linkAttrs.put("occi.networkinterface.mac", "00:0a:95:9d:68:16");
+		linkAttrs.put("occi.networkinterface.interface", "eth0");
+		linkAttrs.put("occi.networkinterface.state", "active");
+		linkAttrs.put("occi.networkinterface.allocation", "static");
+		linkAttrs.put("occi.networkinterface.address", privateInformation);
+		linkAttrs.put("occi.core.source", "/compute/" + fedInstanceId);
+		linkAttrs.put("occi.core.target", "</network/private>");
+		linkAttrs.put("occi.core.id", fakeLinkId);
+
+		return new Link("</network/private>", linkAttrs);
+	}
+	
+	private Link generateFakePublicLink(String fedInstanceId, Instance instance) {
 		String sshInformation = instance.getAttributes().get(Instance.SSH_PUBLIC_ADDRESS_ATT);
 		
 		Map<String, String> linkAttrs = new HashMap<String, String>();
@@ -245,10 +283,8 @@ public class ComputeServerResource extends ServerResource {
 		linkAttrs.put("occi.core.source", "/compute/" + fedInstanceId);
 		linkAttrs.put("occi.core.target", "</network/public>");
 		linkAttrs.put("occi.core.id", fakeLinkId);
-		
-		ArrayList<Link> links = new ArrayList<Link>();
-		links.add(new Link("</network/public>", linkAttrs));
-		return links;
+
+		return new Link("</network/public>", linkAttrs);
 	}
 
 	private String generateInactiveInstanceResponse(FedInstanceState fedInstanceState, Order order) {
@@ -348,7 +384,7 @@ public class ComputeServerResource extends ServerResource {
 				application.getAuthenticationURI());
 
 		orderXOCCIAtt.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.COMPUTE_TERM);
-		
+		 
 		Instance instance = new Instance(FED_INSTANCE_PREFIX + UUID.randomUUID().toString());
 		List<Order> newOrder = application.createOrders(federationAuthToken, orderCategories, orderXOCCIAtt);
 

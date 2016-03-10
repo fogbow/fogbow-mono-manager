@@ -415,6 +415,20 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 			attributes.put("occi.compute.hostname",
 					rootServer.getJSONObject("server").getString(NAME_JSON_FIELD));
 			attributes.put("occi.core.id", id);
+			
+			if (rootServer.getJSONObject("server").getJSONObject("addresses").has("private")) {
+				JSONArray privateAddrJson = rootServer.getJSONObject("server").getJSONObject("addresses").getJSONArray("private");
+				
+				if (privateAddrJson != null) {
+					for (int i = 0; i < privateAddrJson.length(); i++) {
+						String addr = privateAddrJson.getJSONObject(i).getString("addr");
+						if (addr != null && !addr.isEmpty()) {
+							attributes.put(Instance.LOCAL_IP_ADDRESS_ATT, addr);
+							break;
+						}
+					}
+				}				
+			}
 
 			List<Resource> resources = new ArrayList<Resource>();
 			resources.add(ResourceRepository.getInstance().get("compute"));
@@ -629,6 +643,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 			doPutRequest(glanceV2APIEndpoint + V2_IMAGES + "/" + id + V2_IMAGES_FILE,
 					token.getAccessId(), imagePath);			
 		} catch (Exception e) {
+			LOGGER.error("Error while registering image.", e);
 			doDeleteRequest(glanceV2APIEndpoint + V2_IMAGES + "/" + id, token.getAccessId());
 			throw new OCCIException(ErrorType.BAD_REQUEST, "Upload failed.");
 		}
