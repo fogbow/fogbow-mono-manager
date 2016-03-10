@@ -165,7 +165,7 @@ public class TestComputeOpenNebula {
 		Mockito.when(template.xpath("TEMPLATE/CPU")).thenReturn("2");
 		Mockito.when(template.xpath("TEMPLATE/DISK[1]/IMAGE")).thenReturn(imageOne);
 		Mockito.when(template.xpath("TEMPLATE/DISK[2]/SIZE")).thenReturn("100");
-		Mockito.when(template.xpath("TEMPLATE/DISK[2]")).thenReturn("NotNull");		
+		Mockito.when(template.xpath("TEMPLATE/DISK[2]")).thenReturn("NotNull");
 		
 		TemplatePool templatePool = Mockito.mock(TemplatePool.class);
 		Iterator<Template> templateMockIterator = Mockito.mock(Iterator.class);

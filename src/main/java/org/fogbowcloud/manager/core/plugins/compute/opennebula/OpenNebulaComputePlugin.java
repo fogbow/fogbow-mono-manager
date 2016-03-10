@@ -319,8 +319,9 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		String cpu = vm.xpath("TEMPLATE/CPU");
 		String image = vm.xpath("TEMPLATE/DISK/IMAGE");
 		String arch = vm.xpath("TEMPLATE/OS/ARCH");
+		String privateIp = vm.xpath("TEMPLATE/NIC/IP");
 		
-		LOGGER.debug("mem=" + mem + ", cpu=" + cpu + ", image=" + image + ", arch=" + arch);
+		LOGGER.debug("mem=" + mem + ", cpu=" + cpu + ", image=" + image + ", arch=" + arch + ", privateIP=" + privateIp);
 
 		// TODO To get information about network when it'll be necessary
 		// vm.xpath("TEMPLATE/NIC/NETWORK");
@@ -337,6 +338,7 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		attributes.put("occi.compute.cores", cpu);
 		attributes.put("occi.compute.hostname", vm.getName());
 		attributes.put("occi.core.id", vm.getId());
+		attributes.put(Instance.LOCAL_IP_ADDRESS_ATT, privateIp);
 
 		List<Resource> resources = new ArrayList<Resource>();
 		resources.add(ResourceRepository.getInstance().get("compute"));
