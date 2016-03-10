@@ -26,6 +26,7 @@ import org.fogbowcloud.manager.occi.model.OCCIHeaders;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.util.OCCITestHelper;
 import org.fogbowcloud.manager.xmpp.AsyncPacketSender;
+import org.fogbowcloud.manager.xmpp.ManagerPacketHelper;
 import org.fogbowcloud.manager.xmpp.ManagerXmppComponent;
 import org.junit.After;
 import org.junit.Assert;
@@ -128,10 +129,13 @@ public class TestMemberServerResource {
 			resourceEl.addElement("id").setText(resourceInfo.getId());
 			resourceEl.addElement("cpuIdle").setText(resourceInfo.getCpuIdle());
 			resourceEl.addElement("cpuInUse").setText(resourceInfo.getCpuInUse());
+			resourceEl.addElement(ManagerPacketHelper.CPU_IN_USE_BY_USER).setText(resourceInfo.getCpuInUseByUser());
 			resourceEl.addElement("instancesIdle").setText(resourceInfo.getInstancesIdle());
 			resourceEl.addElement("instancesInUse").setText(resourceInfo.getInstancesInUse());
+			resourceEl.addElement(ManagerPacketHelper.INSTANCES_IN_USE_BY_USER).setText(resourceInfo.getInstancesInUseByUser());
 			resourceEl.addElement("memIdle").setText(resourceInfo.getMemIdle());
 			resourceEl.addElement("memInUse").setText(resourceInfo.getMemInUse());
+			resourceEl.addElement(ManagerPacketHelper.MEM_IN_USE_BY_USER).setText(resourceInfo.getMemInUseByUser());
 			responses.add(response);
 		}
 
