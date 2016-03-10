@@ -16,6 +16,7 @@ public class Instance {
 
 	public static final String PREFIX_DEFAULT_INSTANCE = "X-OCCI-Location: ";
 	public static final String SSH_PUBLIC_ADDRESS_ATT = "org.fogbowcloud.request.ssh-public-address";
+	public static final String LOCAL_IP_ADDRESS_ATT = "org.fogbowcloud.request.local-ip-address";
 	public static final String SSH_USERNAME_ATT = "org.fogbowcloud.request.ssh-username";
 	public static final String EXTRA_PORTS_ATT = "org.fogbowcloud.request.extra-ports";
 
