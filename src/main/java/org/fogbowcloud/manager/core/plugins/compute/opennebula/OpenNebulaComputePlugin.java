@@ -454,7 +454,7 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 	}
 	
 	private ResourceQuota getQuota(String maxUserResource, String resourceUserInUse, String maxGroupResource, String resourceGroupInUse) {
-		if (isValidNumber(maxUserResource) && isValidNumber(maxGroupResource)) {	
+		if (isValidNumber(maxUserResource) && isValidNumber(maxGroupResource)) {
 			if (isUnlimitedOrDefaultQuota(maxUserResource)){
 				maxUserResource = String.valueOf(DEFAULT_RESOURCE_MAX_VALUE);
 			}

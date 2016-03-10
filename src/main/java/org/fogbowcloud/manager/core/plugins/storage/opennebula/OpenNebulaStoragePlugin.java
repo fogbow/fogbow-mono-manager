@@ -23,6 +23,7 @@ import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.ErrorType;
 import org.fogbowcloud.manager.occi.model.OCCIException;
+import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.order.OrderAttribute;
 import org.opennebula.client.Client;
@@ -71,14 +72,9 @@ public class OpenNebulaStoragePlugin implements StoragePlugin {
 		
 		String volumeTemplate = generateVolumeTemplate(templateProperties);
 		Client client = this.clientFactory.createClient(token.getAccessId(), openNebulaEndpoint);
-
-		OneResponse response = Image.allocate(client, volumeTemplate, dataStoreId);
-		if (response.isError()) {
-			throw new OCCIException(ErrorType.BAD_REQUEST, response.getErrorMessage());
-		}
 		
-		Image.chmod(client, response.getIntMessage(), 744);
-		return response.getMessage();
+		LOGGER.debug("Creating datablock image with template: " + volumeTemplate);
+		return clientFactory.allocateImage(client, volumeTemplate, dataStoreId);
 	}
 	
 	protected String generateVolumeTemplate(Map<String, String> templateProperties) {
@@ -131,6 +127,7 @@ public class OpenNebulaStoragePlugin implements StoragePlugin {
 
 	@Override
 	public List<Instance> getInstances(Token token) {
+		LOGGER.debug("Getting all datablock images.");
 		Client client = clientFactory.createClient(token.getAccessId(), openNebulaEndpoint);
 		ImagePool imagePool = clientFactory.createImagePool(client);
 		List<Instance> instances = new LinkedList<Instance>();
@@ -144,32 +141,49 @@ public class OpenNebulaStoragePlugin implements StoragePlugin {
 
 	@Override
 	public Instance getInstance(Token token, String instanceId) {
+		LOGGER.debug("Getting datablock image ID: " + instanceId);
 		List<Instance> instances = getInstances(token);
 		for (Instance instance : instances) {
 			if (instance.getId().equals(instanceId)) {
+				LOGGER.debug("Datablock image found: ID " + instance.getId());
 				return instance;
 			}
 		}
+		LOGGER.debug("Datablock image with ID " + instanceId + " not found.");
 		return null;
 	}
 
 	@Override
 	public void removeInstance(Token token, String instanceId) {
-		Client client = clientFactory.createClient(token.getAccessId(), openNebulaEndpoint);
-		OneResponse response = Image.delete(client, Integer.valueOf(instanceId));
-		if (response.isError()) {
-			throw new OCCIException(ErrorType.BAD_REQUEST, response.getErrorMessage());
+		LOGGER.debug("Removing datablock image ID: " + instanceId);
+		Client oneClient = clientFactory.createClient(token.getAccessId(), openNebulaEndpoint);
+		ImagePool imagePool = clientFactory.createImagePool(oneClient);
+		for (Image image : imagePool) {
+			if (image.typeStr().equals(
+					OpenNebulaStoragePlugin.OPENNEBULA_DATABLOCK_IMAGE_TYPE)
+					&& image.getId().equals(instanceId)) {
+				OneResponse deleteResponse = image.delete();
+				if (deleteResponse.isError()) {
+					throw new OCCIException(ErrorType.BAD_REQUEST, deleteResponse.getMessage());
+				}
+				return;
+			}
 		}
+		throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND_INSTANCE);
 	}
 
 	@Override
 	public void removeInstances(Token token) {
-		List<Instance> instances = getInstances(token);
-		Client client = clientFactory.createClient(token.getAccessId(), openNebulaEndpoint);
-		for (Instance instance : instances) {
-			OneResponse response = Image.delete(client, Integer.valueOf(instance.getId()));
-			if (response.isError()) {
-				LOGGER.debug("Error while trying to delete the volume ID: " + instance.getId());
+		LOGGER.debug("Removing all datablock images.");
+		Client oneClient = clientFactory.createClient(token.getAccessId(), openNebulaEndpoint);
+		ImagePool createImagePool = clientFactory.createImagePool(oneClient);
+		for (Image image : createImagePool) {
+			if (image.typeStr().equals(
+					OpenNebulaStoragePlugin.OPENNEBULA_DATABLOCK_IMAGE_TYPE)) {
+				OneResponse deleteResponse = image.delete();
+				if (deleteResponse.isError()) {
+					LOGGER.debug("Could not delete datablock image: " + image.getName() + ", ID: " + image.getId());
+				}
 			}
 		}
 	}
