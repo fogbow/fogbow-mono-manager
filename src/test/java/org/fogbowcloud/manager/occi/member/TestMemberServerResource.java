@@ -199,16 +199,17 @@ public class TestMemberServerResource {
 	@Test
 	public void testGetSpecificMemberQuota() throws Exception {
 		List<FederationMember> federationMembers = new ArrayList<FederationMember>();
-		String cpuIdle = "2";
-		String cpuInUse = "1";
-		String memIdle = "100";
-		String memInUse = "35";
-		String instancesIdle = "1";
-		String instancesInUse = "10";
-		ResourcesInfo resourcesInfo1 = new ResourcesInfo(ID_RESOURCEINFO1, cpuIdle, cpuInUse,
-				memIdle, memInUse, instancesIdle, instancesInUse);
-		ResourcesInfo resourcesInfo2 = new ResourcesInfo(ID_RESOURCEINFO2, cpuIdle, cpuInUse,
-				memIdle, memInUse, "", "");
+		int cpuIdle = 2;
+		int cpuInUse = 1;
+		int memIdle = 100;
+		int memInUse = 35;
+		int instancesIdle = 1;
+		int instancesInUse = 10;
+		ResourcesInfo resourcesInfo1 = new ResourcesInfo(ID_RESOURCEINFO1, String.valueOf(cpuIdle),
+				String.valueOf(cpuInUse), String.valueOf(memIdle), String.valueOf(memInUse),
+				String.valueOf(instancesIdle), String.valueOf(instancesInUse));
+		ResourcesInfo resourcesInfo2 = new ResourcesInfo(ID_RESOURCEINFO2, String.valueOf(cpuIdle),
+				String.valueOf(cpuInUse), String.valueOf(memIdle), String.valueOf(memInUse), "", "");
 		federationMembers.add(new FederationMember(resourcesInfo1));
 		federationMembers.add(new FederationMember(resourcesInfo2));
 
@@ -221,7 +222,8 @@ public class TestMemberServerResource {
 		this.helper.initializeComponentMember(computePlugin, identityPlugin, authorizationPlugin,
 				accoutingPlugin, federationMembers, mapperPlugin, packetSender);
 
-		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_MEMBER + "/" + ID_RESOURCEINFO1 + "/quota");
+		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_MEMBER + "/" + ID_RESOURCEINFO1
+				+ "/quota");
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, "x_federation_auth_token");
 		HttpClient client = HttpClients.createMinimal();
@@ -230,13 +232,17 @@ public class TestMemberServerResource {
 		String responseStr = EntityUtils.toString(response.getEntity(),
 				String.valueOf(Charsets.UTF_8));
 
-		Assert.assertEquals(cpuIdle + cpuInUse, getValueByKey(responseStr, "cpuQuota"));
-		Assert.assertEquals(cpuInUse, getValueByKey(responseStr, "cpuInUse"));
-		Assert.assertEquals(memIdle + memInUse, getValueByKey(responseStr, "memQuota"));
-		Assert.assertEquals(memInUse, getValueByKey(responseStr, "memInUse"));
-		Assert.assertEquals(instancesIdle + instancesInUse, getValueByKey(responseStr, "instancesQuota"));
-		Assert.assertEquals(instancesInUse, getValueByKey(responseStr, "instancesInUse"));
-		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());			
+		Assert.assertEquals(String.valueOf(cpuIdle + cpuInUse),
+				getValueByKey(responseStr, "cpuQuota"));
+		Assert.assertEquals(String.valueOf(cpuInUse), getValueByKey(responseStr, "cpuInUse"));
+		Assert.assertEquals(String.valueOf(memIdle + memInUse),
+				getValueByKey(responseStr, "memQuota"));
+		Assert.assertEquals(String.valueOf(memInUse), getValueByKey(responseStr, "memInUse"));
+		Assert.assertEquals(String.valueOf(instancesIdle + instancesInUse),
+				getValueByKey(responseStr, "instancesQuota"));
+		Assert.assertEquals(String.valueOf(instancesInUse),
+				getValueByKey(responseStr, "instancesInUse"));
+		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 
 	private String getValueByKey(String responseStr, String key) {

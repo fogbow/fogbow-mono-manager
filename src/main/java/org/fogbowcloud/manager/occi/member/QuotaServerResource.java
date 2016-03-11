@@ -34,32 +34,38 @@ public class QuotaServerResource extends MemberServerResource {
 		}
 
 		StringBuilder response = new StringBuilder();
-		response.append(OCCIHeaders.X_OCCI_ATTRIBUTE + ": cpuQuota="
-				+ member.getResourcesInfo().getCpuIdle() + member.getResourcesInfo().getCpuInUse());
+		response.append(OCCIHeaders.X_OCCI_ATTRIBUTE
+				+ ": cpuQuota="
+				+ (Integer.parseInt(member.getResourcesInfo().getCpuIdle()) + Integer
+						.parseInt(member.getResourcesInfo().getCpuInUse())));
 		response.append("\n");
 		response.append(OCCIHeaders.X_OCCI_ATTRIBUTE + ": cpuInUse="
 				+ member.getResourcesInfo().getCpuInUse());
 		response.append("\n");
 		response.append(OCCIHeaders.X_OCCI_ATTRIBUTE + ": cpuInUseByUser="
 				+ member.getResourcesInfo().getCpuInUseByUser());
-		response.append("\n");		
-		response.append(OCCIHeaders.X_OCCI_ATTRIBUTE + ": memQuota="
-				+ member.getResourcesInfo().getMemIdle() + member.getResourcesInfo().getMemInUse());
+		response.append("\n");
+		response.append(OCCIHeaders.X_OCCI_ATTRIBUTE
+				+ ": memQuota="
+				+ (Integer.parseInt(member.getResourcesInfo().getMemIdle()) + Integer
+						.parseInt(member.getResourcesInfo().getMemInUse())));
 		response.append("\n");
 		response.append(OCCIHeaders.X_OCCI_ATTRIBUTE + ": memInUse="
 				+ member.getResourcesInfo().getMemInUse());
 		response.append("\n");
 		response.append(OCCIHeaders.X_OCCI_ATTRIBUTE + ": memInUseByUser="
 				+ member.getResourcesInfo().getMemInUseByUser());
-		response.append("\n");		
-		response.append(OCCIHeaders.X_OCCI_ATTRIBUTE + ": instancesQuota="
-				+ member.getResourcesInfo().getInstancesIdle() + member.getResourcesInfo().getInstancesInUse());
+		response.append("\n");
+		response.append(OCCIHeaders.X_OCCI_ATTRIBUTE
+				+ ": instancesQuota="
+				+ (Integer.parseInt(member.getResourcesInfo().getInstancesIdle()) + Integer
+						.parseInt(member.getResourcesInfo().getInstancesInUse())));
 		response.append("\n");
 		response.append(OCCIHeaders.X_OCCI_ATTRIBUTE + ": instancesInUse="
 				+ member.getResourcesInfo().getInstancesInUse());
 		response.append("\n");
 		response.append(OCCIHeaders.X_OCCI_ATTRIBUTE + ": instancesInUseByUser="
-				+ member.getResourcesInfo().getInstancesInUseByUser());		
+				+ member.getResourcesInfo().getInstancesInUseByUser());
 
 		return response.toString().trim();
 	}
