@@ -42,10 +42,13 @@ public class OpenNebulaStoragePlugin implements StoragePlugin {
 	public static final String OPENNEBULA_DATABLOCK_IMAGE_TYPE = "DATABLOCK";
 	public static final String OPENNEBULA_RAW_FSTYPE = "raw";
 	public static final String OPENNEBULA_BLOCK_DISK_TYPE = "BLOCK";
+	public static final String OPENNEBULA_DATASTORE_DEFAULT_DEVICE_PREFIX = "vd";
+	
 	
 	private OpenNebulaClientFactory clientFactory;
 	private String openNebulaEndpoint;
 	private Integer dataStoreId;
+	private String devicePrefix;
 
 	
 	public OpenNebulaStoragePlugin(Properties properties) {
@@ -58,6 +61,8 @@ public class OpenNebulaStoragePlugin implements StoragePlugin {
 		this.clientFactory = openNebulaClientFactory;
 		String dataStoreIdStr = properties.getProperty(OneConfigurationConstants.COMPUTE_ONE_DATASTORE_ID);
 		dataStoreId = dataStoreIdStr == null ? null: Integer.valueOf(dataStoreIdStr);
+		devicePrefix = properties.getProperty(OneConfigurationConstants.STORAGE_ONE_DATASTORE_DEFAULT_DEVICE_PREFIX, 
+				OPENNEBULA_DATASTORE_DEFAULT_DEVICE_PREFIX);
 	}
 
 	@Override
@@ -113,6 +118,10 @@ public class OpenNebulaStoragePlugin implements StoragePlugin {
 			Element disktypeElement = doc.createElement("DISK_TYPE");
 			disktypeElement.appendChild(doc.createTextNode(templateProperties.get("volume_disk_type")));
 			rootElement.appendChild(disktypeElement);
+			
+			Element devicePrefix = doc.createElement("DEV_PREFIX");
+			devicePrefix.appendChild(doc.createTextNode(this.devicePrefix));
+			rootElement.appendChild(devicePrefix);
 
 			TransformerFactory transformerFactory = TransformerFactory.newInstance();
 			Transformer transformer = transformerFactory.newTransformer();
