@@ -6,7 +6,6 @@ import org.fogbowcloud.manager.occi.model.ErrorType;
 import org.fogbowcloud.manager.occi.model.HeaderUtils;
 import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.OCCIHeaders;
-import org.owasp.esapi.Logger;
 import org.restlet.engine.adapter.HttpRequest;
 import org.restlet.resource.Get;
 
@@ -36,9 +35,9 @@ public class QuotaServerResource extends MemberServerResource {
 
 		StringBuilder response = new StringBuilder();
 		try {
-			int cpuQuota = Integer.parseInt(member.getResourcesInfo().getCpuIdle())
-					+ Integer.parseInt(member.getResourcesInfo().getCpuInUse());
-			response.append(OCCIHeaders.X_OCCI_ATTRIBUTE + ": cpuQuota=" + cpuQuota);
+			double cpuQuota = Double.parseDouble(member.getResourcesInfo().getCpuIdle())
+					+ Double.parseDouble(member.getResourcesInfo().getCpuInUse());
+			response.append(OCCIHeaders.X_OCCI_ATTRIBUTE + ": cpuQuota=" + (int) cpuQuota);
 		} catch (Exception e) {
 			response.append(OCCIHeaders.X_OCCI_ATTRIBUTE + ": cpuQuota=" + (-2));
 		}
@@ -50,9 +49,9 @@ public class QuotaServerResource extends MemberServerResource {
 				+ member.getResourcesInfo().getCpuInUseByUser());
 		response.append("\n");
 		try {
-			int memQuota = Integer.parseInt(member.getResourcesInfo().getMemIdle())
-					+ Integer.parseInt(member.getResourcesInfo().getMemInUse());
-			response.append(OCCIHeaders.X_OCCI_ATTRIBUTE + ": memQuota=" + memQuota);
+			double memQuota = Double.parseDouble(member.getResourcesInfo().getMemIdle())
+					+ Double.parseDouble(member.getResourcesInfo().getMemInUse());
+			response.append(OCCIHeaders.X_OCCI_ATTRIBUTE + ": memQuota=" + (int) memQuota);
 		} catch (Exception e) {
 			response.append(OCCIHeaders.X_OCCI_ATTRIBUTE + ": memQuota=" + (-2));
 		}
@@ -64,9 +63,9 @@ public class QuotaServerResource extends MemberServerResource {
 				+ member.getResourcesInfo().getMemInUseByUser());
 		response.append("\n");
 		try {
-			int instanceQuota = Integer.parseInt(member.getResourcesInfo().getInstancesIdle())
-					+ Integer.parseInt(member.getResourcesInfo().getInstancesInUse());
-			response.append(OCCIHeaders.X_OCCI_ATTRIBUTE + ": instancesQuota=" + instanceQuota);
+			double instanceQuota = Double.parseDouble(member.getResourcesInfo().getInstancesIdle())
+					+ Double.parseDouble(member.getResourcesInfo().getInstancesInUse());
+			response.append(OCCIHeaders.X_OCCI_ATTRIBUTE + ": instancesQuota=" + (int) instanceQuota);
 		} catch (Exception e) {
 			response.append(OCCIHeaders.X_OCCI_ATTRIBUTE + ": instanceQuota=" + (-2));
 		}
@@ -75,7 +74,7 @@ public class QuotaServerResource extends MemberServerResource {
 				+ member.getResourcesInfo().getInstancesInUse());
 		response.append("\n");
 		response.append(OCCIHeaders.X_OCCI_ATTRIBUTE + ": instancesInUseByUser="
-				+ member.getResourcesInfo().getInstancesInUseByUser());
+				+ Integer.parseInt(member.getResourcesInfo().getInstancesInUseByUser()));
 
 		return response.toString().trim();
 	}
