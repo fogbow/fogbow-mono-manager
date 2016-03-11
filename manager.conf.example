@@ -19,6 +19,9 @@ order_bd_updater_period=30000
 storage_class=org.fogbowcloud.manager.core.plugins.storage.openstack.OpenStackV2StoragePlugin
 storage_v2_url=http://localhost:8776
 
+## Storage Plugin (OpenNebula)
+# storage_class=org.fogbowcloud.manager.core.plugins.storage.opennebula.OpenNebulaStoragePlugin
+
 ## Compute Plugin (Openstack)
 compute_class=org.fogbowcloud.manager.core.plugins.compute.openstack.OpenStackNovaV2ComputePlugin
 compute_novav2_url=http://localhost:8774
