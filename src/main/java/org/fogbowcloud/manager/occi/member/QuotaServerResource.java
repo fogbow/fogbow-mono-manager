@@ -43,10 +43,10 @@ public class QuotaServerResource extends MemberServerResource {
 		}
 		response.append("\n");
 		response.append(OCCIHeaders.X_OCCI_ATTRIBUTE + ": cpuInUse="
-				+ member.getResourcesInfo().getCpuInUse());
+				+ (int) Double.parseDouble(member.getResourcesInfo().getCpuInUse()));
 		response.append("\n");
 		response.append(OCCIHeaders.X_OCCI_ATTRIBUTE + ": cpuInUseByUser="
-				+ member.getResourcesInfo().getCpuInUseByUser());
+				+ (int) Double.parseDouble(member.getResourcesInfo().getCpuInUseByUser()));
 		response.append("\n");
 		try {
 			double memQuota = Double.parseDouble(member.getResourcesInfo().getMemIdle())
@@ -57,10 +57,10 @@ public class QuotaServerResource extends MemberServerResource {
 		}
 		response.append("\n");
 		response.append(OCCIHeaders.X_OCCI_ATTRIBUTE + ": memInUse="
-				+ member.getResourcesInfo().getMemInUse());
+				+ (int) Double.parseDouble(member.getResourcesInfo().getMemInUse()));
 		response.append("\n");
 		response.append(OCCIHeaders.X_OCCI_ATTRIBUTE + ": memInUseByUser="
-				+ member.getResourcesInfo().getMemInUseByUser());
+				+ (int) Double.parseDouble(member.getResourcesInfo().getMemInUseByUser()));
 		response.append("\n");
 		try {
 			double instanceQuota = Double.parseDouble(member.getResourcesInfo().getInstancesIdle())
@@ -71,10 +71,10 @@ public class QuotaServerResource extends MemberServerResource {
 		}
 		response.append("\n");
 		response.append(OCCIHeaders.X_OCCI_ATTRIBUTE + ": instancesInUse="
-				+ member.getResourcesInfo().getInstancesInUse());
+				+ (int) Double.parseDouble(member.getResourcesInfo().getInstancesInUse()));
 		response.append("\n");
 		response.append(OCCIHeaders.X_OCCI_ATTRIBUTE + ": instancesInUseByUser="
-				+ Integer.parseInt(member.getResourcesInfo().getInstancesInUseByUser()));
+				+ (int) Double.parseDouble(member.getResourcesInfo().getInstancesInUseByUser()));
 
 		return response.toString().trim();
 	}
