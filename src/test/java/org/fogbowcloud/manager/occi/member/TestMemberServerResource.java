@@ -230,11 +230,11 @@ public class TestMemberServerResource {
 		String responseStr = EntityUtils.toString(response.getEntity(),
 				String.valueOf(Charsets.UTF_8));
 
-		Assert.assertEquals(cpuIdle, getValueByKey(responseStr, "cpuIdle"));
+		Assert.assertEquals(cpuIdle + cpuInUse, getValueByKey(responseStr, "cpuQuota"));
 		Assert.assertEquals(cpuInUse, getValueByKey(responseStr, "cpuInUse"));
-		Assert.assertEquals(memIdle, getValueByKey(responseStr, "memIdle"));
+		Assert.assertEquals(memIdle + memInUse, getValueByKey(responseStr, "memQuota"));
 		Assert.assertEquals(memInUse, getValueByKey(responseStr, "memInUse"));
-		Assert.assertEquals(instancesIdle, getValueByKey(responseStr, "instancesIdle"));
+		Assert.assertEquals(instancesIdle + instancesInUse, getValueByKey(responseStr, "instancesQuota"));
 		Assert.assertEquals(instancesInUse, getValueByKey(responseStr, "instancesInUse"));
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());			
 	}
