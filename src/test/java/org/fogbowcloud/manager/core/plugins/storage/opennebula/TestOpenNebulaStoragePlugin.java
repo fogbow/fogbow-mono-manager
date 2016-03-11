@@ -6,6 +6,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.UUID;
 
 import org.fogbowcloud.manager.core.plugins.compute.opennebula.OneConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.compute.opennebula.OpenNebulaClientFactory;
@@ -79,10 +80,18 @@ public class TestOpenNebulaStoragePlugin {
 		Image vol = Mockito.mock(Image.class);
 		Mockito.when(vol.getId()).thenReturn(VOLUME_ID);
 		Mockito.when(vol.typeStr()).thenReturn(OpenNebulaStoragePlugin.OPENNEBULA_DATABLOCK_IMAGE_TYPE);
+		Mockito.when(vol.getName()).thenReturn("fogbow-volume-" + UUID.randomUUID().toString());
+		Mockito.when(vol.stateString()).thenReturn("Ready");
+		Mockito.when(vol.info()).thenReturn(new OneResponse(true, ""));
+		Mockito.when(vol.xpath("SIZE")).thenReturn("1024");
 		
 		Image vol2 = Mockito.mock(Image.class);
 		Mockito.when(vol2.getId()).thenReturn(VOLUME_ID2);
 		Mockito.when(vol2.typeStr()).thenReturn(OpenNebulaStoragePlugin.OPENNEBULA_DATABLOCK_IMAGE_TYPE);
+		Mockito.when(vol2.getName()).thenReturn("fogbow-volume-" + UUID.randomUUID().toString());
+		Mockito.when(vol2.stateString()).thenReturn("Ready");
+		Mockito.when(vol2.info()).thenReturn(new OneResponse(true, ""));
+		Mockito.when(vol2.xpath("SIZE")).thenReturn("1024");
 		
 		ImagePool imagePool = Mockito.mock(ImagePool.class);
 		Iterator<Image> imageIterator = Mockito.mock(Iterator.class);
@@ -108,10 +117,18 @@ public class TestOpenNebulaStoragePlugin {
 		Image vol = Mockito.mock(Image.class);
 		Mockito.when(vol.getId()).thenReturn(VOLUME_ID);
 		Mockito.when(vol.typeStr()).thenReturn(OpenNebulaStoragePlugin.OPENNEBULA_DATABLOCK_IMAGE_TYPE);
+		Mockito.when(vol.getName()).thenReturn("fogbow-volume-" + UUID.randomUUID().toString());
+		Mockito.when(vol.stateString()).thenReturn("Ready");
+		Mockito.when(vol.info()).thenReturn(new OneResponse(true, ""));
+		Mockito.when(vol.xpath("SIZE")).thenReturn("1024");
 		
 		Image vol2 = Mockito.mock(Image.class);
 		Mockito.when(vol2.getId()).thenReturn(VOLUME_ID2);
 		Mockito.when(vol2.typeStr()).thenReturn(OpenNebulaStoragePlugin.OPENNEBULA_DATABLOCK_IMAGE_TYPE);
+		Mockito.when(vol2.getName()).thenReturn("fogbow-volume-" + UUID.randomUUID().toString());
+		Mockito.when(vol2.stateString()).thenReturn("Ready");
+		Mockito.when(vol2.info()).thenReturn(new OneResponse(true, ""));
+		Mockito.when(vol2.xpath("SIZE")).thenReturn("1024");
 		
 		ImagePool imagePool = Mockito.mock(ImagePool.class);
 		Iterator<Image> imageIterator = Mockito.mock(Iterator.class);

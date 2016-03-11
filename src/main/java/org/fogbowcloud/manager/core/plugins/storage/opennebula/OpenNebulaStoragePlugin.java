@@ -157,7 +157,7 @@ public class OpenNebulaStoragePlugin implements StoragePlugin {
 		List<Resource> resources = new ArrayList<Resource>();
 		resources.add(ResourceRepository.getInstance().get(OrderConstants.STORAGE_TERM));
 		
-		OneResponse info = oneImage.info();
+		oneImage.info();
 		Map<String, String> attributes = new HashMap<String, String>();
 		// CPU Architecture of the instance
 		attributes.put("occi.storage.name", oneImage.getName());
