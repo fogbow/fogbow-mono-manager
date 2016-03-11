@@ -108,10 +108,14 @@ public class ComputeServerResource extends ServerResource {
 				
 				String globalId = currentInstance.getGlobalInstanceId();
 				if (globalId == null || globalId.isEmpty()) {
-					Order relatedOrder = application.getOrder(federationAuthToken, currentInstance.getOrderId());
-					if (relatedOrder.getState().in(OrderState.FULFILLED)) {
-						globalId = relatedOrder.getGlobalInstanceId();
-					}					
+					try {
+						Order relatedOrder = application.getOrder(federationAuthToken, currentInstance.getOrderId());
+						if (relatedOrder.getState().in(OrderState.FULFILLED)) {
+							globalId = relatedOrder.getGlobalInstanceId();
+						}					
+					} catch (Exception e) {
+						LOGGER.error("Error while getting the relatedOrder of this instance.", e);
+					}
 				}
 
 				if (globalId != null && allInstances.contains(new Instance(globalId))) {
@@ -216,6 +220,7 @@ public class ComputeServerResource extends ServerResource {
 			Instance instance) {
 		
 		String sshInformation = instance.getAttributes().get(Instance.SSH_PUBLIC_ADDRESS_ATT);
+		LOGGER.debug("sshInformation for federated instance: " + sshInformation);
 		List<Link> links = fedInstanceState.getLinks();
 		
 		if (!containsLink(links, "</network/public>") && sshInformation != null) {
@@ -225,9 +230,10 @@ public class ComputeServerResource extends ServerResource {
 		}
 		
 		String privateInformation = instance.getAttributes().get(Instance.LOCAL_IP_ADDRESS_ATT);
+		LOGGER.debug("privateInformation for federated instance: " + sshInformation);
 		if (!containsLink(links, "</network/private>") && privateInformation != null) {
 			links.add(generateFakePrivateLink(fedInstanceState.getFedInstanceId(), instance));
-			fedInstanceState.setLinks(links);			
+			fedInstanceState.setLinks(links);
 			instanceDB.update(fedInstanceState);
 		}	
 		
