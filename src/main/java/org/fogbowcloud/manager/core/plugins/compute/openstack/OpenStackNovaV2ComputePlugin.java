@@ -416,18 +416,21 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 					rootServer.getJSONObject("server").getString(NAME_JSON_FIELD));
 			attributes.put("occi.core.id", id);
 			
-			if (rootServer.getJSONObject("server").getJSONObject("addresses").has("private")) {
-				JSONArray privateAddrJson = rootServer.getJSONObject("server").getJSONObject("addresses").getJSONArray("private");
-				
-				if (privateAddrJson != null) {
-					for (int i = 0; i < privateAddrJson.length(); i++) {
-						String addr = privateAddrJson.getJSONObject(i).getString("addr");
+			// getting local private IP
+			JSONArray addressesNamesArray = rootServer.getJSONObject("server").getJSONObject("addresses").names();
+			if (addressesNamesArray != null && addressesNamesArray.length() > 0) {
+				String networkName = rootServer.getJSONObject("server").getJSONObject("addresses").names().getString(0);
+							
+				JSONArray networkArray = rootServer.getJSONObject("server").getJSONObject("addresses").getJSONArray(networkName);
+				if (networkArray != null) {
+					for (int i = 0; i < networkArray.length(); i++) {
+						String addr = networkArray.getJSONObject(i).getString("addr");
 						if (addr != null && !addr.isEmpty()) {
 							attributes.put(Instance.LOCAL_IP_ADDRESS_ATT, addr);
 							break;
 						}
 					}
-				}				
+				}
 			}
 
 			List<Resource> resources = new ArrayList<Resource>();
@@ -444,7 +447,6 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 			LOGGER.warn("There was an exception while getting instances from json.", e);
 		}
 		return null;
-
 	}
 
 	protected String getUsedFlavor(String flavorId) {
