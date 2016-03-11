@@ -21,6 +21,8 @@ storage_v2_url=http://localhost:8776
 
 ## Storage Plugin (OpenNebula)
 # storage_class=org.fogbowcloud.manager.core.plugins.storage.opennebula.OpenNebulaStoragePlugin
+## Default device prefix to use when attaching volumes, values: hd (IDE), sd (SCSI), vd (KVM), vxd (XEN)
+# storage_one_datastore_default_device_prefix=vd
 
 ## Compute Plugin (Openstack)
 compute_class=org.fogbowcloud.manager.core.plugins.compute.openstack.OpenStackNovaV2ComputePlugin
