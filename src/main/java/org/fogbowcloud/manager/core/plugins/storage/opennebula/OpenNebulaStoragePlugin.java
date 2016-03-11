@@ -1,6 +1,7 @@
 package org.fogbowcloud.manager.core.plugins.storage.opennebula;
 
 import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -23,9 +24,12 @@ import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.ErrorType;
 import org.fogbowcloud.manager.occi.model.OCCIException;
+import org.fogbowcloud.manager.occi.model.Resource;
+import org.fogbowcloud.manager.occi.model.ResourceRepository;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.order.OrderAttribute;
+import org.fogbowcloud.manager.occi.order.OrderConstants;
 import org.opennebula.client.Client;
 import org.opennebula.client.OneResponse;
 import org.opennebula.client.image.Image;
@@ -133,10 +137,28 @@ public class OpenNebulaStoragePlugin implements StoragePlugin {
 		List<Instance> instances = new LinkedList<Instance>();
 		for (Image image : imagePool) {
 			if (image.typeStr().equalsIgnoreCase(OPENNEBULA_DATABLOCK_IMAGE_TYPE)) {
-				instances.add(new Instance(image.getId()));
+				instances.add(createInstance(image));
 			}
 		}
 		return instances;
+	}
+	
+	private Instance createInstance(Image oneImage) {
+		String id = oneImage.getId();
+		List<Resource> resources = new ArrayList<Resource>();
+		resources.add(ResourceRepository.getInstance().get(OrderConstants.STORAGE_TERM));
+		
+		OneResponse info = oneImage.info();
+		Map<String, String> attributes = new HashMap<String, String>();
+		// CPU Architecture of the instance
+		attributes.put("occi.storage.name", oneImage.getName());
+		attributes.put("occi.storage.status", oneImage.stateString());
+		String sizeInMB = oneImage.xpath("SIZE");
+		Integer sizeInGB = (Integer.valueOf(sizeInMB) / 1024);
+		attributes.put("occi.storage.size", String.valueOf(sizeInGB));
+		attributes.put("occi.core.id", id);
+		
+		return new Instance(id, resources, attributes, new ArrayList<Instance.Link>(), null);
 	}
 
 	@Override
