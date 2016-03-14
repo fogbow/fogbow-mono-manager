@@ -39,15 +39,30 @@ public class ResourceRepository {
 				FOGBOWCLOUD_ENDPOINT + "/" + OrderConstants.TERM + "/", "Order new Instances",
 				OrderConstants.RESOURCE_OCCI_SCHEME);
 		
-		Resource fogbowStorage = new Resource(OrderConstants.STORAGE_TERM, OrderConstants.INFRASTRUCTURE_OCCI_SCHEME,
-				OrderConstants.KIND_CLASS, OrderAttribute.getValues(), new ArrayList<String>(),
-				FOGBOWCLOUD_ENDPOINT + "/" + OrderConstants.STORAGE_TERM + "/", "Storage Instances",
-				OrderConstants.INFRASTRUCTURE_OCCI_SCHEME);		
+		// TODO implement properties of attributes. For example, {immutable}
+		List<String> storageAttributes = new ArrayList<String>();
+		storageAttributes.add("occi.storage.state{immutable}");
+		storageAttributes.add("occi.storage.size");
+
+		List<String> storageActions = new ArrayList<String>();
+		storageActions.add("http://schemas.ogf.org/occi/infrastructure/storage/action#online");
+		storageActions.add("http://schemas.ogf.org/occi/infrastructure/storage/action#offline");
+		storageActions.add("http://schemas.ogf.org/occi/infrastructure/storage/action#backup");
+		storageActions.add("http://schemas.ogf.org/occi/infrastructure/storage/action#snapshot");
+		storageActions.add("http://schemas.ogf.org/occi/infrastructure/storage/action#resize");			
 		
-		Resource fogbowStorageLink = new Resource(OrderConstants.STORAGELINK_TERM, OrderConstants.INFRASTRUCTURE_OCCI_SCHEME,
-				OrderConstants.KIND_CLASS, OrderAttribute.getValues(), new ArrayList<String>(),
-				FOGBOWCLOUD_ENDPOINT + "/" + OrderConstants.STORAGELINK_TERM + "/", "Storage link Instances",
-				OrderConstants.INFRASTRUCTURE_OCCI_SCHEME);				
+		Resource storage = new Resource(OrderConstants.STORAGE_TERM, OrderConstants.INFRASTRUCTURE_OCCI_SCHEME,
+				OrderConstants.KIND_CLASS, storageAttributes, storageActions, FOGBOWCLOUD_ENDPOINT + "/" + "storage/",
+				"Storage Resource", OrderConstants.RESOURCE_OCCI_SCHEME);
+
+		List<String> storageLinkAttributes = new ArrayList<String>();
+		storageLinkAttributes.add("occi.storagelink.state{immutable}");
+		storageLinkAttributes.add("occi.storagelink.mountpoint");
+		storageLinkAttributes.add("occi.storagelink.deviceid");
+
+		Resource storageLink = new Resource(OrderConstants.STORAGELINK_TERM, OrderConstants.INFRASTRUCTURE_OCCI_SCHEME,
+				OrderConstants.KIND_CLASS, storageLinkAttributes, new ArrayList<String>(), FOGBOWCLOUD_ENDPOINT + "/" + "storage/link/",
+				"A link to a storage resource", "http://schemas.ogf.org/occi/core#link");
 		
 		//TODO implement properties of attributes. For example, {immutable}
 		List<String> computeAttributes = new ArrayList<String>();
@@ -99,8 +114,8 @@ public class ResourceRepository {
 		
 		//TODO add actions	
 		resources.add(fogbowOrder);
-		resources.add(fogbowStorageLink);
-		resources.add(fogbowStorage);
+		resources.add(storageLink);
+		resources.add(storage);
 		resources.add(compute);
 		resources.add(fogbowUserdata);
 
