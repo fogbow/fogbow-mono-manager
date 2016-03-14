@@ -249,4 +249,41 @@ public class TestOrderServerResource {
 		OrderServerResource.normalizeRequirements(categories, new HashMap<String, String>(),
 				listFlavorsFogbow).get(OrderAttribute.REQUIREMENTS.getValue());
 	}	
+	
+	@Test
+	public void testCheckAttributesResourceKindDefault() {
+		headers.add(HeaderUtils.normalize(OCCIHeaders.X_OCCI_ATTRIBUTE),
+				OrderAttribute.INSTANCE_COUNT.getValue() + "=\"1\"");
+		Map<String, String> xOCCIAtt = HeaderUtils.getXOCCIAtributes(headers);
+
+		Map<String, String> normalizeXOCCIAtt = OrderServerResource.normalizeXOCCIAtt(xOCCIAtt);
+		Assert.assertEquals(OrderConstants.COMPUTE_TERM, normalizeXOCCIAtt.get(OrderAttribute.RESOURCE_KIND.getValue()));
+	}
+
+	@Test
+	public void testCheckAttributesResourceKindStorage() {
+		headers.add(HeaderUtils.normalize(OCCIHeaders.X_OCCI_ATTRIBUTE),
+				OrderAttribute.INSTANCE_COUNT.getValue() + "=\"1\"");
+		headers.add(HeaderUtils.normalize(OCCIHeaders.X_OCCI_ATTRIBUTE),
+				OrderAttribute.RESOURCE_KIND.getValue() + "=\"" + OrderConstants.STORAGE_TERM + "\"");		
+		String value = "2";
+		headers.add(HeaderUtils.normalize(OCCIHeaders.X_OCCI_ATTRIBUTE),
+				OrderAttribute.STORAGE_SIZE.getValue() + "=\"" + value + "\"");		
+		Map<String, String> xOCCIAtt = HeaderUtils.getXOCCIAtributes(headers);
+
+		Map<String, String> normalizeXOCCIAtt = OrderServerResource.normalizeXOCCIAtt(xOCCIAtt);
+		Assert.assertEquals(OrderConstants.STORAGE_TERM, normalizeXOCCIAtt.get(OrderAttribute.RESOURCE_KIND.getValue()));
+		Assert.assertEquals(value, normalizeXOCCIAtt.get(OrderAttribute.STORAGE_SIZE.getValue()));
+	}
+	
+	@Test(expected=OCCIException.class)
+	public void testCheckAttributesResourceKindStorageWithoutSizeAttribute() {
+		headers.add(HeaderUtils.normalize(OCCIHeaders.X_OCCI_ATTRIBUTE),
+				OrderAttribute.INSTANCE_COUNT.getValue() + "=\"1\"");
+		headers.add(HeaderUtils.normalize(OCCIHeaders.X_OCCI_ATTRIBUTE),
+				OrderAttribute.RESOURCE_KIND.getValue() + "=\"" + OrderConstants.STORAGE_TERM + "\"");		
+		Map<String, String> xOCCIAtt = HeaderUtils.getXOCCIAtributes(headers);
+
+		OrderServerResource.normalizeXOCCIAtt(xOCCIAtt);
+	}		
 }
