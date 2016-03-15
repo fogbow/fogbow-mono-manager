@@ -341,6 +341,6 @@ public class KeystoneIdentityPlugin implements IdentityPlugin {
 
 	@Override
 	public Token getForwardableToken(Token originalToken) {
-		return null;
+		return originalToken;
 	}	
  }

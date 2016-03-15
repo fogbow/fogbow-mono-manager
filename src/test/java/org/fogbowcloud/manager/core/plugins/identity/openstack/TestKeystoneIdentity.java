@@ -118,4 +118,11 @@ public class TestKeystoneIdentity {
 		Assert.assertEquals(PluginHelper.TENANT_ID, token.get(KeystoneIdentityPlugin.TENANT_ID));
 		Assert.assertEquals(PluginHelper.TENANT_NAME, token.get(KeystoneIdentityPlugin.TENANT_NAME));
 	}
+	
+	@Test
+	public void testGetForwardableToken() throws JSONException {
+		Token originalToken = new Token("accessId", "user", new Date(), new HashMap<String, String>());
+		Token token = this.keystoneIdentity.getForwardableToken(originalToken);
+		Assert.assertEquals(originalToken, token);
+	}	
 }
