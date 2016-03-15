@@ -360,7 +360,7 @@ public class OrderServerResource extends ServerResource {
 						ResponseConstants.NOT_FOUND_STORAGE_SIZE_ATTRIBUTE);
 			}
 		} else {
-			defOCCIAtt.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.COMPUTE_TERM);
+			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.NOT_FOUND_RESOURCE_KIND);
 		}
  		
 		defOCCIAtt.put(OrderAttribute.TYPE.getValue(), OrderConstants.DEFAULT_TYPE);

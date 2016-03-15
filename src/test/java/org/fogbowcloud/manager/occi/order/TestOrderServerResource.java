@@ -250,14 +250,13 @@ public class TestOrderServerResource {
 				listFlavorsFogbow).get(OrderAttribute.REQUIREMENTS.getValue());
 	}	
 	
-	@Test
+	@Test(expected=OCCIException.class)
 	public void testCheckAttributesResourceKindDefault() {
 		headers.add(HeaderUtils.normalize(OCCIHeaders.X_OCCI_ATTRIBUTE),
 				OrderAttribute.INSTANCE_COUNT.getValue() + "=\"1\"");
 		Map<String, String> xOCCIAtt = HeaderUtils.getXOCCIAtributes(headers);
 
-		Map<String, String> normalizeXOCCIAtt = OrderServerResource.normalizeXOCCIAtt(xOCCIAtt);
-		Assert.assertEquals(OrderConstants.COMPUTE_TERM, normalizeXOCCIAtt.get(OrderAttribute.RESOURCE_KIND.getValue()));
+		OrderServerResource.normalizeXOCCIAtt(xOCCIAtt);
 	}
 
 	@Test
