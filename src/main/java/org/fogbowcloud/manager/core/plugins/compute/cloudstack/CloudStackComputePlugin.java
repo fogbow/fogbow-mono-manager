@@ -6,6 +6,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.UUID;
 
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
@@ -30,11 +31,13 @@ import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.order.OrderAttribute;
 import org.fogbowcloud.manager.occi.order.OrderConstants;
+import org.fogbowcloud.manager.occi.storage.StorageAttribute;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.restlet.Request;
 import org.restlet.Response;
+import org.restlet.data.Status;
 
 public class CloudStackComputePlugin implements ComputePlugin {
 
@@ -48,6 +51,9 @@ public class CloudStackComputePlugin implements ComputePlugin {
 	protected static final String LIST_TEMPLATES_COMMAND = "listTemplates";
 	protected static final String REGISTER_TEMPLATE_COMMAND = "registerTemplate";
 	protected static final String LIST_OS_TYPES_COMMAND = "listOsTypes";
+	protected static final String ATTACH_VOLUME_COMMAND = "attachVolume";
+	protected static final String DETACH_VOLUME_COMMAND = "detachVolume";
+	protected static final String QUERY_ASYNC_JOB_RESULT = "queryAsyncJobResult";
 	
 	protected static final String COMMAND = "command";
 	protected static final String TEMPLATE_ID = "templateid";
@@ -64,6 +70,10 @@ public class CloudStackComputePlugin implements ComputePlugin {
 	protected static final String FORMAT = "format";
 	protected static final String DISPLAY_TEXT = "displaytext";
 	protected static final String USERDATA = "userdata";
+	protected static final String ATTACH_VOLUME_ID = "id";
+	protected static final String ATTACH_VM_ID = "virtualmachineid";
+	protected static final String ATTACH_DEVICE_ID = "deviceid";
+	protected static final String JOB_ID = "jobid";
 	
 	private static final int LIMIT_TYPE_INSTANCES = 0;
 	private static final int LIMIT_TYPE_MEMORY = 9;
@@ -331,7 +341,8 @@ public class CloudStackComputePlugin implements ComputePlugin {
 
 	@Override
 	public void bypass(Request request, Response response) {
-		throw new UnsupportedOperationException();
+		response.setStatus(new Status(HttpStatus.SC_BAD_REQUEST),
+				ResponseConstants.CLOUD_NOT_SUPPORT_OCCI_INTERFACE);
 	}
 
 	@Override
@@ -444,7 +455,7 @@ public class CloudStackComputePlugin implements ComputePlugin {
     private static final int SC_INSUFFICIENT_CAPACITY_ERROR = 533;
 	private static final int SC_RESOURCE_UNAVAILABLE_ERROR = 534;
 	private static final int SC_RESOURCE_ALLOCATION_ERROR = 535;
-	
+
 	protected void checkStatusResponse(StatusLine statusLine) {
 		if (statusLine.getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
@@ -464,15 +475,87 @@ public class CloudStackComputePlugin implements ComputePlugin {
 	@Override
 	public String attach(Token token, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
-		// TODO Auto-generated method stub
+		String storageId = xOCCIAtt.get(StorageAttribute.TARGET.getValue());
+		String instanceId = xOCCIAtt.get(StorageAttribute.SOURCE.getValue());
+		
+		URIBuilder uriBuilder = createURIBuilder(endpoint, ATTACH_VOLUME_COMMAND);
+		uriBuilder.addParameter(ATTACH_VOLUME_ID, storageId);
+		uriBuilder.addParameter(ATTACH_VM_ID, instanceId);
+		
+		CloudStackHelper.sign(uriBuilder, token.getAccessId());
+		HttpResponseWrapper response = httpClient.doGet(uriBuilder.toString());
+		checkStatusResponse(response.getStatusLine());
+		try {
+			JSONObject responseJson = new JSONObject(response.getContent())
+				.optJSONObject("attachvolumeresponse");
+			JSONObject asyncJobStatus = getAsyncJobStatus(responseJson, token);
+			int jobStatus = asyncJobStatus.optInt("jobstatus");
+			if (jobStatus == 1) {
+				String deviceId = asyncJobStatus.optJSONObject("jobresult").optJSONObject("volume").optString("deviceid");
+				return UUID.randomUUID().toString() + "-device-" + deviceId;
+			}
+			throw new OCCIException(ErrorType.BAD_REQUEST, 
+					"Could not attach disk. CloudStack job status: " + jobStatus);
+		} catch (JSONException e) {
+			LOGGER.debug("Could not attach volume " + storageId + ". " + response.getContent());
+			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
+		}
+	}
+	
+	private static final long GET_ASYNC_JOB_STATUS_DELAY = 4000;
+
+	private JSONObject getAsyncJobStatus(JSONObject responseJson, Token token) {
+		if (responseJson.has("jobid")) {
+			try {
+				Thread.sleep(GET_ASYNC_JOB_STATUS_DELAY);
+			} catch (InterruptedException e1) {}
+			URIBuilder uriBuilder = createURIBuilder(endpoint, QUERY_ASYNC_JOB_RESULT);
+			uriBuilder.addParameter(JOB_ID, responseJson.optString("jobid"));
+			CloudStackHelper.sign(uriBuilder, token.getAccessId());
+			
+			HttpResponseWrapper response = httpClient.doGet(uriBuilder.toString());	
+			checkStatusResponse(response.getStatusLine());
+			try {
+				// jobstatus 0 = still processing, 1 complete, 2 failure
+				//TODO check what we can do when this asyn joc is not completed
+				JSONObject asyncJobResponse = new JSONObject(response.getContent()).optJSONObject("queryasyncjobresultresponse");
+				LOGGER.debug("CloudStack asyn job status: " + asyncJobResponse.toString());
+				return asyncJobResponse;
+			} catch (JSONException e) {
+				LOGGER.debug("Could not parse async job response to json", e);
+			}
+		}
 		return null;
 	}
 
 	@Override
 	public void dettach(Token token, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
-		// TODO Auto-generated method stub
+		String storageId = xOCCIAtt.get(StorageAttribute.TARGET.getValue());
 		
+		URIBuilder uriBuilder = createURIBuilder(endpoint, DETACH_VOLUME_COMMAND);
+		uriBuilder.addParameter(ATTACH_VOLUME_ID, storageId);
+		
+		CloudStackHelper.sign(uriBuilder, token.getAccessId());
+		HttpResponseWrapper response = httpClient.doGet(uriBuilder.toString());
+		checkStatusResponse(response.getStatusLine());
+		try {
+			JSONObject responseJson = new JSONObject(
+					response.getContent()).optJSONObject("detachvolumeresponse");
+			JSONObject asyncJobStatus = getAsyncJobStatus(responseJson, token);
+			int jobStatus = asyncJobStatus.optInt("jobstatus");
+			if (jobStatus != 1) {
+				String errorText = "Async job is not complete yet.";
+				if (jobStatus == 2) {
+					errorText = asyncJobStatus.optJSONObject("jobresult").optString("errortext");
+				}
+				throw new OCCIException(ErrorType.BAD_REQUEST, 
+						"Could not detach disk. " + errorText);
+			}
+		} catch (JSONException e) {
+			LOGGER.debug("Could not detach volume " + storageId + ". " + e.getMessage());
+			throw new OCCIException(ErrorType.BAD_REQUEST, response.getContent());
+		}
 	}
 	
 }

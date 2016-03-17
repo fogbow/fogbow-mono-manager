@@ -638,10 +638,6 @@ public class ManagerController {
 		}
 	}
 
-	public List<Instance> getInstances(String accessId) {
-		return getInstances(accessId, null);
-	}
-	
 	public List<Instance> getInstances(String accessId, String resourceKind) {
 		
 		LOGGER.debug("Retrieving instances(" + resourceKind + ") of token " + accessId);
@@ -676,10 +672,6 @@ public class ManagerController {
 		return instanceId + Order.SEPARATOR_GLOBAL_ID + memberId;
 	}
 
-	public Instance getInstance(String accessId, String instanceId) {
-		return getInstance(accessId, instanceId, null);
-	}
-	
 	public Instance getInstance(String accessId, String instanceId, String resourceKind) {
 		Order order = getOrderForInstance(accessId, instanceId);			
 		return getInstance(order, resourceKind);
