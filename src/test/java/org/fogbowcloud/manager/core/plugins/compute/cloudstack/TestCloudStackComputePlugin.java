@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
 
+import org.apache.http.HttpStatus;
 import org.apache.http.client.utils.URIBuilder;
 import org.fogbowcloud.manager.core.model.ImageState;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
@@ -16,6 +17,7 @@ import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.instance.InstanceState;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.OCCIException;
+import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.order.OrderAttribute;
 import org.fogbowcloud.manager.occi.order.OrderConstants;
@@ -23,6 +25,8 @@ import org.fogbowcloud.manager.occi.util.PluginHelper;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.restlet.Request;
+import org.restlet.Response;
 
 public class TestCloudStackComputePlugin {
 
@@ -407,10 +411,14 @@ public class TestCloudStackComputePlugin {
 		Assert.assertEquals("0", ri.getCpuInUse());
 	}
 
-	@Test(expected = UnsupportedOperationException.class)
+	@Test
 	public void testBypass() {
 		CloudStackComputePlugin cscp = createPlugin(null, null);
-		cscp.bypass(null, null);
+		Response response = new Response(new Request());
+		cscp.bypass(null, response);
+		Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatus().getCode());
+		Assert.assertEquals(ResponseConstants.CLOUD_NOT_SUPPORT_OCCI_INTERFACE, 
+				response.getStatus().getDescription());
 	}
 
 	private static final String IMAGE_NAME = "name";
