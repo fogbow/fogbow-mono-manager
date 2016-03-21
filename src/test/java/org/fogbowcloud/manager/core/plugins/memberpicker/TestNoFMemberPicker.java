@@ -1,7 +1,7 @@
 package org.fogbowcloud.manager.core.plugins.memberpicker;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.List;
 import java.util.Properties;
 
 import org.fogbowcloud.manager.core.ConfigurationConstants;
@@ -9,7 +9,7 @@ import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
-import org.fogbowcloud.manager.core.plugins.accounting.ResourceUsage;
+import org.fogbowcloud.manager.core.plugins.accounting.AccountingInfo;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.junit.Assert;
 import org.junit.Before;
@@ -37,12 +37,12 @@ public class TestNoFMemberPicker {
 	@Test
 	public void testEmptyMembers() {
 		// mocking
-		Mockito.when(facade.getMembers(null)).thenReturn(new ArrayList<FederationMember>());
-		Mockito.when(accountingPlugin.getMembersUsage()).thenReturn(
-				new HashMap<String, ResourceUsage>());
+		Mockito.when(facade.getRendezvousMembers()).thenReturn(new ArrayList<FederationMember>());
+		Mockito.when(accountingPlugin.getAccountingInfo()).thenReturn(
+				new ArrayList<AccountingInfo>());
 		
 		NoFMemberPickerPlugin nofPicker = new NoFMemberPickerPlugin(properties, accountingPlugin);
-		Assert.assertNull(nofPicker.pick(facade.getMembers(null)));
+		Assert.assertNull(nofPicker.pick(facade.getRendezvousMembers()));
 		Assert.assertFalse(nofPicker.getTrustworthy());
 	}
 
@@ -54,12 +54,12 @@ public class TestNoFMemberPicker {
 		ArrayList<FederationMember> membersToReturn = new ArrayList<FederationMember>();
 		membersToReturn.add(localMember);
 		
-		Mockito.when(facade.getMembers(null)).thenReturn(membersToReturn);
-		Mockito.when(accountingPlugin.getMembersUsage()).thenReturn(
-				new HashMap<String, ResourceUsage>());
+		Mockito.when(facade.getRendezvousMembers()).thenReturn(membersToReturn);
+		Mockito.when(accountingPlugin.getAccountingInfo()).thenReturn(
+				new ArrayList<AccountingInfo>());
 		
 		NoFMemberPickerPlugin nofPicker = new NoFMemberPickerPlugin(properties, accountingPlugin);
-		Assert.assertNull(nofPicker.pick(facade.getMembers(null)));
+		Assert.assertNull(nofPicker.pick(facade.getRendezvousMembers()));
 		Assert.assertFalse(nofPicker.getTrustworthy());
 	}
 	
@@ -73,19 +73,27 @@ public class TestNoFMemberPicker {
 		ArrayList<FederationMember> membersToReturn = new ArrayList<FederationMember>();
 		membersToReturn.add(localMember);
 		membersToReturn.add(remoteMember);
-		Mockito.when(facade.getMembers(null)).thenReturn(membersToReturn);
+		Mockito.when(facade.getRendezvousMembers()).thenReturn(membersToReturn);
 		
 		// mocking accounting		
-		HashMap<String, ResourceUsage> membersUsageToReturn = new HashMap<String, ResourceUsage>();
-		ResourceUsage resUsage = new ResourceUsage(DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL);
-		resUsage.addConsumption(4);
-		resUsage.addDonation(16);
-		membersUsageToReturn.put(DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL, resUsage);
-		Mockito.when(accountingPlugin.getMembersUsage()).thenReturn(
-				membersUsageToReturn);
+		List<AccountingInfo> accounting = new ArrayList<AccountingInfo>();
+		AccountingInfo accountingEntry = new AccountingInfo("user",
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
+				DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL);
+		accountingEntry.addConsuption(4);
+		accounting.add(accountingEntry);
+		
+		accountingEntry = new AccountingInfo("user",
+				DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL,
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		accountingEntry.addConsuption(16);
+		accounting.add(accountingEntry);
+		
+		Mockito.when(accountingPlugin.getAccountingInfo()).thenReturn(
+				accounting);
 		
 		NoFMemberPickerPlugin nofPicker = new NoFMemberPickerPlugin(properties, accountingPlugin);
-		Assert.assertEquals(remoteMember, nofPicker.pick(facade.getMembers(null)));
+		Assert.assertEquals(remoteMember, nofPicker.pick(facade.getRendezvousMembers()));
 		Assert.assertFalse(nofPicker.getTrustworthy());
 	}
 	
@@ -102,23 +110,39 @@ public class TestNoFMemberPicker {
 		membersToReturn.add(localMember);
 		membersToReturn.add(remoteMember1);
 		membersToReturn.add(remoteMember2);
-		Mockito.when(facade.getMembers(null)).thenReturn(membersToReturn);
+		Mockito.when(facade.getRendezvousMembers()).thenReturn(membersToReturn);
 		
 		// mocking accounting		
-		HashMap<String, ResourceUsage> membersUsageToReturn = new HashMap<String, ResourceUsage>();
-		ResourceUsage resUsage1 = new ResourceUsage(DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL + "1");
-		resUsage1.addConsumption(4);
-		resUsage1.addDonation(16);
-		membersUsageToReturn.put(DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL + "1", resUsage1);		
-		ResourceUsage resUsage2 = new ResourceUsage(DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL + "2");
-		resUsage2.addConsumption(10);
-		resUsage2.addDonation(16);
-		membersUsageToReturn.put(DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL + "2", resUsage2);		
-		Mockito.when(accountingPlugin.getMembersUsage()).thenReturn(
-				membersUsageToReturn);
+		List<AccountingInfo> accounting = new ArrayList<AccountingInfo>();
+		AccountingInfo accountingEntry = new AccountingInfo("user",
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
+				DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL + "1");
+		accountingEntry.addConsuption(4);
+		accounting.add(accountingEntry);
+		
+		accountingEntry = new AccountingInfo("user",
+				DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL + "1",
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		accountingEntry.addConsuption(16);
+		accounting.add(accountingEntry);
+		
+		accountingEntry = new AccountingInfo("user",
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
+				DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL + "2");
+		accountingEntry.addConsuption(10);
+		accounting.add(accountingEntry);
+		
+		accountingEntry = new AccountingInfo("user",
+				DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL + "2",
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		accountingEntry.addConsuption(16);
+		accounting.add(accountingEntry);
+		
+		Mockito.when(accountingPlugin.getAccountingInfo()).thenReturn(
+				accounting);
 		
 		NoFMemberPickerPlugin nofPicker = new NoFMemberPickerPlugin(properties, accountingPlugin);
-		Assert.assertEquals(remoteMember1, nofPicker.pick(facade.getMembers(null)));
+		Assert.assertEquals(remoteMember1, nofPicker.pick(facade.getRendezvousMembers()));
 		Assert.assertFalse(nofPicker.getTrustworthy());
 	}
 }

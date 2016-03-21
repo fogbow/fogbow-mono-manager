@@ -9,7 +9,7 @@ import org.fogbowcloud.manager.core.plugins.CertificateUtils;
 import org.fogbowcloud.manager.core.plugins.MapperPlugin;
 import org.fogbowcloud.manager.core.plugins.identity.voms.VomsIdentityPlugin;
 import org.fogbowcloud.manager.occi.model.Token;
-import org.fogbowcloud.manager.occi.request.Request;
+import org.fogbowcloud.manager.occi.order.Order;
 import org.italiangrid.voms.VOMSAttribute;
 
 public class VOBasedMapperPlugin implements MapperPlugin {
@@ -23,13 +23,13 @@ public class VOBasedMapperPlugin implements MapperPlugin {
 	}
 
 	@Override
-	public Map<String, String> getLocalCredentials(Request request) {
-		if (request == null) {
+	public Map<String, String> getLocalCredentials(Order order) {
+		if (order == null) {
 			return MapperHelper.getCredentialsPerRelatedLocalName(
 					this.properties, MapperHelper.FOGBOW_DEFAULTS);			
 		}
 		
-		String member = getVO(request);
+		String member = getVO(order);
 		Map<String, String> credentialsPerMember = MapperHelper
 				.getCredentialsPerRelatedLocalName(this.properties, member);
 		if (!credentialsPerMember.isEmpty()) {
@@ -44,8 +44,8 @@ public class VOBasedMapperPlugin implements MapperPlugin {
 		return MapperHelper.getLocalCredentials(properties, null);
 	}
 	
-	protected String getVO(Request request) {
-		String accessId = request.getFederationToken().getAccessId();
+	protected String getVO(Order order) {
+		String accessId = order.getFederationToken().getAccessId();
 		if (!vomsIdentityPlugin.isValid(accessId)) {
 			return MapperHelper.FOGBOW_DEFAULTS;
 		}	
@@ -65,7 +65,7 @@ public class VOBasedMapperPlugin implements MapperPlugin {
 	@Override
 	public Map<String, String> getLocalCredentials(String accessId) {
 		Token token = new Token(accessId, "", new Date(), null);
-		return getLocalCredentials(new Request("", token, "", "", "", 
+		return getLocalCredentials(new Order("", token, "", "", "", 
 				new Date().getTime(), false, null, null, null));
 	}
 }

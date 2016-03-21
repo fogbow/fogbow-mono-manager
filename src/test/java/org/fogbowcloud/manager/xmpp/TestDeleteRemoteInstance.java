@@ -8,7 +8,7 @@ import org.fogbowcloud.manager.occi.model.ErrorType;
 import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.fogbowcloud.manager.occi.model.Token;
-import org.fogbowcloud.manager.occi.request.Request;
+import org.fogbowcloud.manager.occi.order.Order;
 import org.fogbowcloud.manager.occi.util.OCCITestHelper;
 import org.jivesoftware.smack.XMPPException;
 import org.junit.After;
@@ -35,21 +35,21 @@ public class TestDeleteRemoteInstance {
 
 	@Test
 	public void testDeleteRemoteInstance() throws Exception {
-		Request request = new Request("anyvalue", new Token("anyvalue", OCCITestHelper.USER_MOCK,
+		Order order = new Order("anyvalue", new Token("anyvalue", OCCITestHelper.USER_MOCK,
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), null, null, true, "");
-		request.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
-		request.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		order.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
+		order.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 
 		managerTestHelper.initializeXMPPManagerComponent(false);
-		ManagerPacketHelper.deleteRemoteInstace(request, managerTestHelper.createPacketSender());
+		ManagerPacketHelper.deleteRemoteInstace(order, managerTestHelper.createPacketSender());
 	}
 
 	@Test(expected = OCCIException.class)
 	public void testDeleteRemoteInstaceNotFound() throws Exception {
-		Request request = new Request("anyvalue", new Token(WRONG_TOKEN, OCCITestHelper.USER_MOCK,
+		Order order = new Order("anyvalue", new Token(WRONG_TOKEN, OCCITestHelper.USER_MOCK,
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), null, null, true, "");
-		request.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
-		request.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		order.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
+		order.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 
 		managerTestHelper.initializeXMPPManagerComponent(false);
 
@@ -57,15 +57,15 @@ public class TestDeleteRemoteInstance {
 				.when(this.managerTestHelper.getComputePlugin())
 				.removeInstance(Mockito.any(Token.class), Mockito.anyString());
 
-		ManagerPacketHelper.deleteRemoteInstace(request, managerTestHelper.createPacketSender());
+		ManagerPacketHelper.deleteRemoteInstace(order, managerTestHelper.createPacketSender());
 	}
 
 	@Test(expected = OCCIException.class)
 	public void testDeleteRemoteInstanceUnauthorized() throws Exception {
-		Request request = new Request("anyvalue", new Token(WRONG_TOKEN, OCCITestHelper.USER_MOCK,
+		Order order = new Order("anyvalue", new Token(WRONG_TOKEN, OCCITestHelper.USER_MOCK,
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), null, null, true, "");
-		request.setInstanceId(INSTANCE_OTHER_USER);
-		request.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		order.setInstanceId(INSTANCE_OTHER_USER);
+		order.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 
 		managerTestHelper.initializeXMPPManagerComponent(false);
 
@@ -73,6 +73,6 @@ public class TestDeleteRemoteInstance {
 				.when(this.managerTestHelper.getComputePlugin())
 				.removeInstance(Mockito.any(Token.class), Mockito.eq(INSTANCE_OTHER_USER));
 
-		ManagerPacketHelper.deleteRemoteInstace(request, managerTestHelper.createPacketSender());
+		ManagerPacketHelper.deleteRemoteInstace(order, managerTestHelper.createPacketSender());
 	}
 }

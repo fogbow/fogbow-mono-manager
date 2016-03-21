@@ -11,9 +11,11 @@ import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.FederationMemberPickerPlugin;
+import org.fogbowcloud.manager.core.plugins.accounting.AccountingInfo;
 import org.fogbowcloud.manager.core.plugins.accounting.ResourceUsage;
 import org.fogbowcloud.manager.core.plugins.prioritization.nof.FederationMemberDebt;
 import org.fogbowcloud.manager.core.plugins.prioritization.nof.FederationMemberDebtComparator;
+import org.fogbowcloud.manager.core.plugins.prioritization.nof.NoFHelper;
 
 public class NoFMemberPickerPlugin implements FederationMemberPickerPlugin {
 		
@@ -35,7 +37,9 @@ public class NoFMemberPickerPlugin implements FederationMemberPickerPlugin {
 	
 	@Override
 	public FederationMember pick(List<FederationMember> members) {
-		Map<String, ResourceUsage> membersUsage = accoutingPlugin.getMembersUsage();
+		List<AccountingInfo> accounting = accoutingPlugin.getAccountingInfo();
+		Map<String, ResourceUsage> membersUsage = NoFHelper.calculateMembersUsage(localMemberId,
+				accounting);
 		LinkedList<FederationMemberDebt> reputableMembers = new LinkedList<FederationMemberDebt>();
 
 		for (FederationMember currentMember : members) {			

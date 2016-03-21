@@ -11,8 +11,9 @@ import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.PrioritizationPlugin;
+import org.fogbowcloud.manager.core.plugins.accounting.AccountingInfo;
 import org.fogbowcloud.manager.core.plugins.accounting.ResourceUsage;
-import org.fogbowcloud.manager.occi.request.Request;
+import org.fogbowcloud.manager.occi.order.Order;
 
 public class NoFPrioritizationPlugin implements PrioritizationPlugin {
 
@@ -45,16 +46,17 @@ public class NoFPrioritizationPlugin implements PrioritizationPlugin {
 	}
 	
 	@Override
-	public Request takeFrom(Request newRequest, List<Request> requestsWithInstance) {
-		LOGGER.debug("Choosing request to take instance from requestsWithInstance="
-				+ requestsWithInstance + " for requestMember=" + newRequest.getRequestingMemberId());
-		if (requestsWithInstance == null) {			
+	public Order takeFrom(Order newOrder, List<Order> ordersWithInstance) {
+		LOGGER.debug("Choosing order to take instance from ordersWithInstance="
+				+ ordersWithInstance + " for requestMember=" + newOrder.getRequestingMemberId());
+		if (ordersWithInstance == null) {			
 			return null;
 		}
 		
-		List<String> servedMemberIds = getServedMemberIds(requestsWithInstance);
+		List<String> servedMemberIds = getServedMemberIds(ordersWithInstance);
 		LOGGER.debug("Current servedMemberIds=" + servedMemberIds);
-		Map<String, ResourceUsage> membersUsage = accountingPlugin.getMembersUsage();
+		List<AccountingInfo> accounting = accountingPlugin.getAccountingInfo();
+		Map<String, ResourceUsage> membersUsage = NoFHelper.calculateMembersUsage(localMemberId, accounting);
 		LOGGER.debug("Current membersUsage=" + membersUsage);		
 		LinkedList<FederationMemberDebt> memberDebts = calctMemberDebts(servedMemberIds, membersUsage);
 		if (memberDebts.isEmpty()) {
@@ -65,13 +67,13 @@ public class NoFPrioritizationPlugin implements PrioritizationPlugin {
 		Collections.sort(memberDebts, new FederationMemberDebtComparator());
 		LOGGER.debug("Current memberDebts=" + memberDebts);
 		
-		double requestingMemberDebt = calcDebt(membersUsage, newRequest.getRequestingMemberId());
+		double requestingMemberDebt = calcDebt(membersUsage, newOrder.getRequestingMemberId());
 		LOGGER.debug("Requesting member debt=" + requestingMemberDebt);
 		FederationMemberDebt firstMember = memberDebts.getFirst();
 		if (firstMember.getDebt() < requestingMemberDebt) {
 			String memberId = firstMember.getMember().getResourcesInfo().getId();
-			List<Request> memberRequests = filterByRequestingMember(memberId, requestsWithInstance);
-			return getMostRecentRequest(memberRequests);
+			List<Order> memberRequests = filterByRequestingMember(memberId, ordersWithInstance);
+			return getMostRecentOrder(memberRequests);
 		}
 		return null;
 	}
@@ -89,11 +91,11 @@ public class NoFPrioritizationPlugin implements PrioritizationPlugin {
 		return memberDebts;
 	}
 
-	private List<String> getServedMemberIds(List<Request> requests) {
+	private List<String> getServedMemberIds(List<Order> orders) {
 		List<String> servedMemberIds = new LinkedList<String>();
-		for (Request currentRequest : requests) {
-			if (!servedMemberIds.contains(currentRequest.getRequestingMemberId())) {
-				servedMemberIds.add(currentRequest.getRequestingMemberId());
+		for (Order currentOrder : orders) {
+			if (!servedMemberIds.contains(currentOrder.getRequestingMemberId())) {
+				servedMemberIds.add(currentOrder.getRequestingMemberId());
 			}
 		}
 		return servedMemberIds;
@@ -120,26 +122,26 @@ public class NoFPrioritizationPlugin implements PrioritizationPlugin {
 		return debt;
 	}
 
-	private Request getMostRecentRequest(List<Request> memberRequests) {
-		if (memberRequests.isEmpty()) {
+	private Order getMostRecentOrder(List<Order> memberorders) {
+		if (memberorders.isEmpty()) {
 			return null;
 		}
-		Request mostRecentRequest = memberRequests.get(0);
-		for (Request currentRequest : memberRequests) {
-			if (new Date(mostRecentRequest.getFulfilledTime()).compareTo(new Date(currentRequest.getFulfilledTime())) < 0) {
-				mostRecentRequest = currentRequest;
+		Order mostRecentOrder = memberorders.get(0);
+		for (Order currentOrder : memberorders) {
+			if (new Date(mostRecentOrder.getFulfilledTime()).compareTo(new Date(currentOrder.getFulfilledTime())) < 0) {
+				mostRecentOrder = currentOrder;
 			}
 		}
-		return mostRecentRequest;
+		return mostRecentOrder;
 	}
 
-	private List<Request> filterByRequestingMember(String requestingMemberId, List<Request> requests) {
-		List<Request> filteredRequests = new LinkedList<Request>();
-		for (Request currentRequest : requests) {
-			if (currentRequest.getRequestingMemberId().equals(requestingMemberId)){
-				filteredRequests.add(currentRequest);
+	private List<Order> filterByRequestingMember(String requestingMemberId, List<Order> orders) {
+		List<Order> filteredOrders = new LinkedList<Order>();
+		for (Order currentOrder : orders) {
+			if (currentOrder.getRequestingMemberId().equals(requestingMemberId)){
+				filteredOrders.add(currentOrder);
 			}
 		}
-		return filteredRequests;
+		return filteredOrders;
 	}
 }

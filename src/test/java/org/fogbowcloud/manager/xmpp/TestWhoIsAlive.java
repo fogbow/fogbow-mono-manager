@@ -85,7 +85,7 @@ public class TestWhoIsAlive {
 
 		// The other member and the manager itself
 		Assert.assertEquals(2, managerXmppComponent.getManagerFacade()
-				.getRendezvousMembersInfo().size());
+				.getRendezvousMembers().size());
 		xmppClient.disconnect();
 	}
 
@@ -133,7 +133,7 @@ public class TestWhoIsAlive {
 		Assert.assertTrue(semaphore.tryAcquire(20000, TimeUnit.MILLISECONDS));
 		// The other member and the manager itself
 		Assert.assertEquals(2, managerXmppComponent.getManagerFacade()
-				.getRendezvousMembersInfo().size());
+				.getRendezvousMembers().size());
 		xmppClient.disconnect();
 	}
 	
@@ -186,7 +186,7 @@ public class TestWhoIsAlive {
 	}
 	
 	@Test
-	public void testWhoIsAliveRequestSecondPage() throws Exception {
+	public void testWhoIsAliveOrderSecondPage() throws Exception {
 		managerXmppComponent = managerTestHelper
 				.initializeXMPPManagerComponent(false);
 		final XMPPClient xmppClient = managerTestHelper.createXMPPClient();

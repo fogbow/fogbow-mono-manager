@@ -1,0 +1,5 @@
+{"listvolumesresponse":{"count":1,"volume":[{"id":"dad76621-edcd-4968-a152-74d877d1961b","name":"ca43bccc-21a6-4f88-8fac-c88ea386a451",
+"zoneid":"0de489ed-756a-4837-a7b9-30bfac6fd08b","zonename":"Zona Oportunista LSD","type":"DATADISK","provisioningtype":"thin","size":1073741824,
+"created":"2016-03-17T10:17:08-0300","state":"Allocated","account":"fogbowteste","domainid":"2743ef6a-e7bf-11e5-bbf5-60a44c51716e","domain":"ROOT",
+"storagetype":"shared","diskofferingid":"5879a4e8-a3c4-40dd-afc3-5ae261a2cf08","diskofferingname":"Custom","diskofferingdisplaytext":"Custom Disk",
+"destroyed":false,"isextractable":true,"tags":[],"quiescevm":false}]}}

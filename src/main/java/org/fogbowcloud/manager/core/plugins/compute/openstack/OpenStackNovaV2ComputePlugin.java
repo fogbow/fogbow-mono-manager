@@ -38,8 +38,9 @@ import org.fogbowcloud.manager.occi.model.Resource;
 import org.fogbowcloud.manager.occi.model.ResourceRepository;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.fogbowcloud.manager.occi.model.Token;
-import org.fogbowcloud.manager.occi.request.RequestAttribute;
-import org.fogbowcloud.manager.occi.request.RequestConstants;
+import org.fogbowcloud.manager.occi.order.OrderAttribute;
+import org.fogbowcloud.manager.occi.order.OrderConstants;
+import org.fogbowcloud.manager.occi.storage.StorageAttribute;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -49,6 +50,8 @@ import org.restlet.data.Status;
 
 public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 
+	private static final String OS_VOLUME_ATTACHMENTS = "/os-volume_attachments";
+	private static final String SERVERS = "/servers";
 	private static final String SUFIX_ENDPOINT_FLAVORS = "/flavors";
 	private static final String NO_VALID_HOST_WAS_FOUND = "No valid host was found";
 	private static final String STATUS_JSON_FIELD = "status";
@@ -96,10 +99,10 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 						PRIVATE);
 		
 		// userdata
-		fogbowTermToOpenStack.put(RequestConstants.USER_DATA_TERM, "user_data");
+		fogbowTermToOpenStack.put(OrderConstants.USER_DATA_TERM, "user_data");
 		
 		//ssh public key
-		fogbowTermToOpenStack.put(RequestConstants.PUBLIC_KEY_TERM, "ssh-public-key");
+		fogbowTermToOpenStack.put(OrderConstants.PUBLIC_KEY_TERM, "ssh-public-key");
 		
 		flavors = new ArrayList<Flavor>();	
 		
@@ -123,12 +126,12 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.INVALID_TOKEN);
 		}
 		
-		// removing fogbow-request category
-		categories.remove(new Category(RequestConstants.TERM, RequestConstants.SCHEME,
-				RequestConstants.KIND_CLASS));
+		// removing fogbow-order category
+		categories.remove(new Category(OrderConstants.TERM, OrderConstants.SCHEME,
+				OrderConstants.KIND_CLASS));
 		
 		Flavor foundFlavor = getFlavor(token,
-				xOCCIAtt.get(RequestAttribute.REQUIREMENTS.getValue()));
+				xOCCIAtt.get(OrderAttribute.REQUIREMENTS.getValue()));
 		String flavorId = null;
 		if (foundFlavor != null) {
 			flavorId = foundFlavor.getId();
@@ -136,25 +139,25 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		
 		// TODO Think about ! Is necessary ?
 		for (Category category : categories) {
-			if (category.getScheme().equals(RequestConstants.TEMPLATE_RESOURCE_SCHEME)) {
+			if (category.getScheme().equals(OrderConstants.TEMPLATE_RESOURCE_SCHEME)) {
 				continue;
 			}		
 			String openstackRef = fogbowTermToOpenStack.get(category.getTerm());
 			if (openstackRef == null
-					&& !category.getScheme().equals(RequestConstants.TEMPLATE_OS_SCHEME)
-					&& !category.getScheme().equals(RequestConstants.TEMPLATE_RESOURCE_SCHEME)) {
+					&& !category.getScheme().equals(OrderConstants.TEMPLATE_OS_SCHEME)
+					&& !category.getScheme().equals(OrderConstants.TEMPLATE_RESOURCE_SCHEME)) {
 				throw new OCCIException(ErrorType.BAD_REQUEST,
 						ResponseConstants.CLOUD_NOT_SUPPORT_CATEGORY + category.getTerm());
 			}
 		}		
 
-		String publicKey = xOCCIAtt.get(RequestAttribute.DATA_PUBLIC_KEY.getValue());
+		String publicKey = xOCCIAtt.get(OrderAttribute.DATA_PUBLIC_KEY.getValue());
 		String keyName = getKeyname(token, publicKey);
 				
-		String userdata = xOCCIAtt.get(RequestAttribute.USER_DATA_ATT.getValue());		
+		String userdata = xOCCIAtt.get(OrderAttribute.USER_DATA_ATT.getValue());		
 		try {
 			JSONObject json = generateJsonRequest(imageRef, flavorId, userdata, keyName);
-			String requestEndpoint = computeV2APIEndpoint + tenantId + "/servers";
+			String requestEndpoint = computeV2APIEndpoint + tenantId + SERVERS;
 			String jsonResponse = doPostRequest(requestEndpoint, token.getAccessId(), json);
 			return getAttFromJson(ID_JSON_FIELD, jsonResponse);
 		} catch (JSONException e) {
@@ -343,7 +346,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 	@Override
 	public List<Instance> getInstances(Token token) {
 		String requestEndpoint = computeV2APIEndpoint + token.getAttributes().get(TENANT_ID)
-				+ "/servers";
+				+ SERVERS;
 		String jsonResponse = doGetRequest(requestEndpoint, token.getAccessId());
 		return getInstancesFromJson(jsonResponse);
 	}
@@ -412,6 +415,23 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 			attributes.put("occi.compute.hostname",
 					rootServer.getJSONObject("server").getString(NAME_JSON_FIELD));
 			attributes.put("occi.core.id", id);
+			
+			// getting local private IP
+			JSONArray addressesNamesArray = rootServer.getJSONObject("server").getJSONObject("addresses").names();
+			if (addressesNamesArray != null && addressesNamesArray.length() > 0) {
+				String networkName = rootServer.getJSONObject("server").getJSONObject("addresses").names().getString(0);
+							
+				JSONArray networkArray = rootServer.getJSONObject("server").getJSONObject("addresses").getJSONArray(networkName);
+				if (networkArray != null) {
+					for (int i = 0; i < networkArray.length(); i++) {
+						String addr = networkArray.getJSONObject(i).getString("addr");
+						if (addr != null && !addr.isEmpty()) {
+							attributes.put(Instance.LOCAL_IP_ADDRESS_ATT, addr);
+							break;
+						}
+					}
+				}
+			}
 
 			List<Resource> resources = new ArrayList<Resource>();
 			resources.add(ResourceRepository.getInstance().get("compute"));
@@ -427,7 +447,6 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 			LOGGER.warn("There was an exception while getting instances from json.", e);
 		}
 		return null;
-
 	}
 
 	protected String getUsedFlavor(String flavorId) {
@@ -626,6 +645,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 			doPutRequest(glanceV2APIEndpoint + V2_IMAGES + "/" + id + V2_IMAGES_FILE,
 					token.getAccessId(), imagePath);			
 		} catch (Exception e) {
+			LOGGER.error("Error while registering image.", e);
 			doDeleteRequest(glanceV2APIEndpoint + V2_IMAGES + "/" + id, token.getAccessId());
 			throw new OCCIException(ErrorType.BAD_REQUEST, "Upload failed.");
 		}
@@ -733,13 +753,75 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 					} else if ("queued".equalsIgnoreCase(imageStatus)
 							|| "saving".equalsIgnoreCase(imageStatus)) {
 						return ImageState.PENDING;
-					}
-					return ImageState.FAILED;
+					}					return ImageState.FAILED;
 				}
 			}
 		} catch (JSONException e) {
 			LOGGER.error("Error while parsing JSONObject for image state.", e);
 		}
 		return null;	
+	}
+
+	@Override
+	public String attach(Token token, List<Category> categories,
+			Map<String, String> xOCCIAtt) {
+		String tenantId = token.getAttributes().get(TENANT_ID);
+		if (tenantId == null) {
+			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.INVALID_TOKEN);
+		}	
+		
+		String storageIdd = xOCCIAtt.get(StorageAttribute.TARGET.getValue());
+		String instanceId = xOCCIAtt.get(StorageAttribute.SOURCE.getValue());
+		String mountpoint = xOCCIAtt.get(StorageAttribute.DEVICE_ID.getValue());
+		
+		JSONObject jsonRequest = null;
+		try {			
+			jsonRequest = generateJsonToAttach(storageIdd, mountpoint);
+		} catch (JSONException e) {
+			LOGGER.error("An error occurred when generating json.", e);
+			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
+		}			
+		
+		String prefixEndpoint = this.computeV2APIEndpoint;
+		String endpoint = prefixEndpoint + tenantId + SERVERS
+				+ "/" +  instanceId + OS_VOLUME_ATTACHMENTS;
+		String responseStr = doPostRequest(endpoint, token.getAccessId(), jsonRequest);
+		
+		return getAttAttachmentIdJson(responseStr);
+	}
+	
+	private String getAttAttachmentIdJson(String responseStr) {
+		try {
+			JSONObject root = new JSONObject(responseStr);
+			return root.getJSONObject("volumeAttachment").getString("id").toString();
+		} catch (JSONException e) {
+			return null;
+		}
+	}
+
+	protected JSONObject generateJsonToAttach(String volume, String mountpoint) throws JSONException {
+
+		JSONObject osAttachContent = new JSONObject();
+		osAttachContent.put("volumeId", volume);
+
+		JSONObject osAttach = new JSONObject();
+		osAttach.put("volumeAttachment", osAttachContent);
+		
+		return osAttach;
+	}			
+	
+	@Override
+	public void dettach(Token token, List<Category> categories, Map<String, String> xOCCIAtt) {
+		String tenantId = token.getAttributes().get(TENANT_ID);
+		if (tenantId == null) {
+			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.INVALID_TOKEN);
+		}	
+		
+		String instanceId = xOCCIAtt.get(StorageAttribute.SOURCE.getValue());
+		String attachmentId = xOCCIAtt.get(StorageAttribute.ATTACHMENT_ID.getValue());		
+		
+		String endpoint = this.computeV2APIEndpoint + tenantId + SERVERS + 
+				"/" + instanceId + OS_VOLUME_ATTACHMENTS + "/" + attachmentId;
+		doDeleteRequest(endpoint, token.getAccessId());		
 	}
 }

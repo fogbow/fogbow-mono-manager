@@ -21,7 +21,7 @@ import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.Token;
-import org.fogbowcloud.manager.occi.request.RequestAttribute;
+import org.fogbowcloud.manager.occi.order.OrderAttribute;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
@@ -369,7 +369,7 @@ public class TestEC2ComputePlugin {
 		}));
 
 		HashMap<String, String> xOCCIAtt = new HashMap<String, String>();
-		xOCCIAtt.put(RequestAttribute.USER_DATA_ATT.getValue(), "userData");
+		xOCCIAtt.put(OrderAttribute.USER_DATA_ATT.getValue(), "userData");
 		final String instanceId = computePlugin.requestInstance(token, new LinkedList<Category>(), 
 				xOCCIAtt, "image");
 		
@@ -409,7 +409,7 @@ public class TestEC2ComputePlugin {
 		}));
 
 		HashMap<String, String> xOCCIAtt = new HashMap<String, String>();
-		xOCCIAtt.put(RequestAttribute.USER_DATA_ATT.getValue(), "userData");
+		xOCCIAtt.put(OrderAttribute.USER_DATA_ATT.getValue(), "userData");
 		final String instanceId = computePlugin.requestInstance(token, new LinkedList<Category>(), 
 				xOCCIAtt, "image");
 		

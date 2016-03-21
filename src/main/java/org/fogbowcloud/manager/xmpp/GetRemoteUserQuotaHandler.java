@@ -32,13 +32,16 @@ public class GetRemoteUserQuotaHandler extends AbstractQueryHandler {
 		Element queryEl = response.getElement().addElement("query", ManagerXmppComponent.GETREMOTEUSERQUOTA_NAMESPACE);
 		Element resourceEl = queryEl.addElement("resourcesInfo");
 
-		resourceEl.addElement("id").setText(resourcesInfo.getId());
-		resourceEl.addElement("cpuIdle").setText(resourcesInfo.getCpuIdle());
-		resourceEl.addElement("cpuInUse").setText(resourcesInfo.getCpuInUse());
-		resourceEl.addElement("instancesIdle").setText(resourcesInfo.getInstancesIdle());
-		resourceEl.addElement("instancesInUse").setText(resourcesInfo.getInstancesInUse());
-		resourceEl.addElement("memIdle").setText(resourcesInfo.getMemIdle());
-		resourceEl.addElement("memInUse").setText(resourcesInfo.getMemInUse());
+		resourceEl.addElement(ManagerPacketHelper.ID_EL).setText(resourcesInfo.getId());
+		resourceEl.addElement(ManagerPacketHelper.CPU_IDLE).setText(resourcesInfo.getCpuIdle());
+		resourceEl.addElement(ManagerPacketHelper.CPU_IN_USE).setText(resourcesInfo.getCpuInUse());
+		resourceEl.addElement(ManagerPacketHelper.CPU_IN_USE_BY_USER).setText(resourcesInfo.getCpuInUseByUser());
+		resourceEl.addElement(ManagerPacketHelper.INSTANCES_IDLE).setText(resourcesInfo.getInstancesIdle());
+		resourceEl.addElement(ManagerPacketHelper.INSTANCES_IN_USE).setText(resourcesInfo.getInstancesInUse());
+		resourceEl.addElement(ManagerPacketHelper.INSTANCES_IN_USE_BY_USER).setText(resourcesInfo.getInstancesInUseByUser());
+		resourceEl.addElement(ManagerPacketHelper.MEM_IDLE).setText(resourcesInfo.getMemIdle());
+		resourceEl.addElement(ManagerPacketHelper.MEM_IN_USE).setText(resourcesInfo.getMemInUse());
+		resourceEl.addElement(ManagerPacketHelper.MEM_IN_USE_BY_USER).setText(resourcesInfo.getMemInUseByUser());
 		return response;
 	}
 

@@ -15,6 +15,21 @@ order_bd_updater_period=30000
 # flavor_fogbow_medium={mem=1024, cpu=2}
 # flavor_fogbow_large={mem=2048, cpu=4}
 
+## Storage Plugin (Openstack)
+storage_class=org.fogbowcloud.manager.core.plugins.storage.openstack.OpenStackV2StoragePlugin
+storage_v2_url=http://localhost:8776
+
+## Storage Plugin (OpenNebula)
+# storage_class=org.fogbowcloud.manager.core.plugins.storage.opennebula.OpenNebulaStoragePlugin
+## Default device prefix to use when attaching volumes, values: hd (IDE), sd (SCSI), vd (KVM), vxd (XEN)
+# storage_one_datastore_default_device_prefix=vd
+
+## Storage Plugin (CloudStack)
+# storage_class=org.fogbowcloud.manager.core.plugins.storage.cloudstack.CloudStackStoragePlugin
+
+## Storage Plugin (NoCloud)
+# storage_class=org.fogbowcloud.manager.core.plugins.storage.nocloud.NoCloudStoragePlugin
+
 ## Compute Plugin (Openstack)
 compute_class=org.fogbowcloud.manager.core.plugins.compute.openstack.OpenStackNovaV2ComputePlugin
 compute_novav2_url=http://localhost:8774
@@ -202,6 +217,7 @@ token_host_http_port=2223
 token_host_port=2222
 
 my_ip=127.0.0.1
+#admin_users=user1;user2
 
 ## Accounting Plugin
 accounting_class=org.fogbowcloud.manager.core.plugins.accounting.FCUAccountingPlugin
@@ -227,10 +243,10 @@ benchmarking_class=org.fogbowcloud.manager.core.plugins.benchmarking.VanillaBenc
 public_key; scheme="http://schemas.openstack.org/instance/credentials#"; class="mixin"; 
 org.openstack.credentials.publickey.data
 
-# Request public key properties
+# Order public key properties
 occi_extra_resource_fogbow_public_key=public_key
 occi_extra_resource_org.fogbowcloud.credentials.publickey.data=org.openstack.credentials.publickey.data
 
-# Request userdata properties
+# Order userdata properties
 occi_extra_resource_fogbow_userdata=user_data
 occi_extra_resource_org.fogbowcloud.request.extra-user-data=org.openstack.compute.user_data

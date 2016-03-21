@@ -30,6 +30,7 @@ import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.FederationMemberPickerPlugin;
 import org.fogbowcloud.manager.core.plugins.MapperPlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
+import org.fogbowcloud.manager.core.plugins.StoragePlugin;
 import org.fogbowcloud.manager.core.plugins.identity.openstack.KeystoneIdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.memberauthorization.DefaultMemberAuthorizationPlugin;
 import org.fogbowcloud.manager.occi.instance.Instance;
@@ -37,7 +38,7 @@ import org.fogbowcloud.manager.occi.model.ErrorType;
 import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.fogbowcloud.manager.occi.model.Token;
-import org.fogbowcloud.manager.occi.request.Request;
+import org.fogbowcloud.manager.occi.order.Order;
 import org.fogbowcloud.manager.xmpp.AsyncPacketSender;
 import org.fogbowcloud.manager.xmpp.ManagerXmppComponent;
 import org.jamppa.client.XMPPClient;
@@ -63,6 +64,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 	public static final int MAX_WHOISALIVE_MANAGER_COUNT = 100;
 	private ManagerXmppComponent managerXmppComponent;
 	private ComputePlugin computePlugin;
+	private StoragePlugin storagePlugin;
 	private IdentityPlugin identityPlugin;
 	private MapperPlugin mapperPlugin;
 	private IdentityPlugin federationIdentityPlugin;
@@ -130,7 +132,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 				PacketCollector response = xmppClient.getConnection().createPacketCollector(
 						responseFilter);
 				xmppClient.send(packet);
-				Packet result = response.nextResult(5000);
+				Packet result = response.nextResult(50000);
 				response.cancel();
 				return result;
 			}
@@ -169,12 +171,20 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		return identityPlugin;
 	}
 	
+	public StoragePlugin getStoragePlugin() {
+		return storagePlugin;
+	}
+	
 	public IdentityPlugin getFederationIdentityPlugin() {
 		return federationIdentityPlugin;
 	}
 	
 	public AuthorizationPlugin getAuthorizationPlugin() {
 		return authorizationPlugin;
+	}
+	
+	public AccountingPlugin getAccountingPlugin() {
+		return accountingPlugin;
 	}
 
 	public ManagerXmppComponent initializeXMPPManagerComponent(boolean init) throws Exception {
@@ -212,7 +222,8 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 	
 	@SuppressWarnings("unchecked")
 	public ManagerXmppComponent initializeXMPPManagerComponent(boolean init, ManagerController managerFacade) throws Exception {
-				
+		
+		this.storagePlugin = Mockito.mock(StoragePlugin.class);
 		this.computePlugin = Mockito.mock(ComputePlugin.class);
 		this.identityPlugin = Mockito.mock(IdentityPlugin.class);
 		this.federationIdentityPlugin = Mockito.mock(IdentityPlugin.class);
@@ -228,8 +239,8 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		Mockito.when(mapperPlugin.getAllLocalCredentials()).thenReturn(
 				this.defaultFederationAllUsersCrendetials);
 		Mockito.when(identityPlugin.createToken(Mockito.anyMap())).thenReturn(
-				defaultFederationToken);
-
+				defaultFederationToken);		
+		
 		// mocking benchmark executor
 		ExecutorService benchmarkExecutor = new CurrentThreadExecutorService();
 				
@@ -242,6 +253,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		managerFacade.setAuthorizationPlugin(authorizationPlugin);
 		managerFacade.setValidator(new DefaultMemberAuthorizationPlugin(null));
 		managerFacade.setLocalCredentailsPlugin(mapperPlugin);
+		managerFacade.setStoragePlugin(storagePlugin);
 				
 		managerXmppComponent = Mockito.spy(new ManagerXmppComponent(LOCAL_MANAGER_COMPONENT_URL,
 				MANAGER_COMPONENT_PASS, SERVER_HOST, SERVER_COMPONENT_PORT, managerFacade));
@@ -370,9 +382,10 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		properties.put(ConfigurationConstants.PREFIX_FLAVORS + "small", VALUE_FLAVOR_SMALL);
 		properties.put(ConfigurationConstants.PREFIX_FLAVORS + "medium", VALUE_FLAVOR_MEDIUM);
 		properties.put(ConfigurationConstants.PREFIX_FLAVORS + "large", VALUE_FLAVOR_LARGE);
-		properties.put(ConfigurationConstants.SERVED_REQUEST_MONITORING_PERIOD_KEY,
-				String.valueOf(DefaultDataTestHelper.SERVED_REQUEST_MONITORING_PERIOD));
+		properties.put(ConfigurationConstants.SERVED_ORDER_MONITORING_PERIOD_KEY,
+				String.valueOf(DefaultDataTestHelper.SERVED_ORDER_MONITORING_PERIOD));
 		properties.put(ConfigurationConstants.GREEN_SITTER_JID, DefaultDataTestHelper.GREEN_SITTER_JID);
+		properties.put(ConfigurationConstants.ADMIN_USERS, DefaultDataTestHelper.FED_USER_NAME + ";" + "admin_user");
 		
 		if (extraProperties != null) {
 			for (Entry<String, String> entry : extraProperties.entrySet()) {
@@ -409,7 +422,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		Mockito.when(mapperPlugin.getAllLocalCredentials()).thenReturn(
 				this.defaultFederationAllUsersCrendetials);
 		Mockito.when(
-				mapperPlugin.getLocalCredentials(Mockito.any(Request.class)))
+				mapperPlugin.getLocalCredentials(Mockito.any(Order.class)))
 				.thenReturn(this.defaultFederationUserCrendetials);
 		Mockito.when(identityPlugin.createToken(this.defaultFederationUserCrendetials)).thenReturn(defaultFederationToken);
 		

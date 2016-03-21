@@ -25,10 +25,10 @@ import org.fogbowcloud.manager.occi.model.ErrorType;
 import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.fogbowcloud.manager.occi.model.Token;
-import org.fogbowcloud.manager.occi.request.Request;
-import org.fogbowcloud.manager.occi.request.RequestAttribute;
-import org.fogbowcloud.manager.occi.request.RequestConstants;
-import org.fogbowcloud.manager.occi.request.RequestState;
+import org.fogbowcloud.manager.occi.order.Order;
+import org.fogbowcloud.manager.occi.order.OrderAttribute;
+import org.fogbowcloud.manager.occi.order.OrderConstants;
+import org.fogbowcloud.manager.occi.order.OrderState;
 import org.fogbowcloud.manager.occi.util.OCCITestHelper;
 import org.junit.Assert;
 import org.junit.Before;
@@ -75,8 +75,10 @@ public class TestOCCIApplication {
 
 		// default instance count value is 1
 		xOCCIAtt = new HashMap<String, String>();
-		xOCCIAtt.put(RequestAttribute.INSTANCE_COUNT.getValue(),
-				String.valueOf(RequestConstants.DEFAULT_INSTANCE_COUNT));
+		xOCCIAtt.put(OrderAttribute.INSTANCE_COUNT.getValue(),
+				String.valueOf(OrderConstants.DEFAULT_INSTANCE_COUNT));
+		xOCCIAtt.put(OrderAttribute.RESOURCE_KIND.getValue(),
+				String.valueOf(OrderConstants.COMPUTE_TERM));		
 
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		Mockito.when(
@@ -103,7 +105,7 @@ public class TestOCCIApplication {
 		ExecutorService benchmarkExecutor = new CurrentThreadExecutorService();
 		
 		MapperPlugin mapperPlugin = Mockito.mock(MapperPlugin.class);
-		Mockito.when(mapperPlugin.getLocalCredentials(Mockito.any(Request.class)))
+		Mockito.when(mapperPlugin.getLocalCredentials(Mockito.any(Order.class)))
 				.thenReturn(new HashMap<String, String>());
 		
 		managerFacade.setAuthorizationPlugin(authorizationPlugin);
@@ -117,102 +119,102 @@ public class TestOCCIApplication {
 	}
 
 	@Test
-	public void testGetRequestDetails() throws InterruptedException {
-		occiApplication.createRequests(OCCITestHelper.ACCESS_TOKEN, new ArrayList<Category>(),
+	public void testGetOrderDetails() throws InterruptedException {
+		occiApplication.createOrders(OCCITestHelper.ACCESS_TOKEN, new ArrayList<Category>(),
 				xOCCIAtt);
-		List<Request> requests = occiApplication.getRequestsFromUser(OCCITestHelper.ACCESS_TOKEN);
-		Assert.assertEquals(1, requests.size());
-		String requestId = requests.get(0).getId();
-		Request requestDetails = occiApplication.getRequest(OCCITestHelper.ACCESS_TOKEN, requestId);
+		List<Order> orders = occiApplication.getOrdersFromUser(OCCITestHelper.ACCESS_TOKEN);
+		Assert.assertEquals(1, orders.size());
+		String orderId = orders.get(0).getId();
+		Order orderDetails = occiApplication.getOrder(OCCITestHelper.ACCESS_TOKEN, orderId);
 
-		Assert.assertEquals(requestId, requestDetails.getId());
-		Assert.assertNull(requestDetails.getInstanceId());
-		Assert.assertEquals(RequestState.OPEN, requestDetails.getState());
+		Assert.assertEquals(orderId, orderDetails.getId());
+		Assert.assertNull(orderDetails.getInstanceId());
+		Assert.assertEquals(OrderState.OPEN, orderDetails.getState());
 	}
 
 	@SuppressWarnings("unchecked")
 	@Test
-	public void testGetRequestDetailsAfterPeriod() throws InterruptedException {
+	public void testGetOrderDetailsAfterPeriod() throws InterruptedException {
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		Mockito.when(
 				computePlugin.requestInstance(Mockito.any(Token.class), Mockito.any(List.class),
 						Mockito.any(Map.class), Mockito.anyString())).thenReturn(INSTANCE_ID);
 
 		managerFacade.setComputePlugin(computePlugin);
-		occiApplication.createRequests(OCCITestHelper.ACCESS_TOKEN, new ArrayList<Category>(), xOCCIAtt);
-		List<Request> requests = occiApplication.getRequestsFromUser(OCCITestHelper.ACCESS_TOKEN);
-		Assert.assertEquals(1, requests.size());
-		String requestId = requests.get(0).getId();
-		Request requestDetails = occiApplication.getRequest(OCCITestHelper.ACCESS_TOKEN, requestId);
+		occiApplication.createOrders(OCCITestHelper.ACCESS_TOKEN, new ArrayList<Category>(), xOCCIAtt);
+		List<Order> orders = occiApplication.getOrdersFromUser(OCCITestHelper.ACCESS_TOKEN);
+		Assert.assertEquals(1, orders.size());
+		String orderId = orders.get(0).getId();
+		Order orderDetails = occiApplication.getOrder(OCCITestHelper.ACCESS_TOKEN, orderId);
 
 		Thread.sleep(SCHEDULER_PERIOD * 2);
 
-		Assert.assertEquals(requestId, requestDetails.getId());
-		Assert.assertEquals(INSTANCE_ID, requestDetails.getInstanceId());
-		Assert.assertEquals(RequestState.FULFILLED, requestDetails.getState());
+		Assert.assertEquals(orderId, orderDetails.getId());
+		Assert.assertEquals(INSTANCE_ID, orderDetails.getInstanceId());
+		Assert.assertEquals(OrderState.FULFILLED, orderDetails.getState());
 	}
 
 	@Test
-	public void testResquestUser() {
-		this.occiApplication.createRequests(OCCITestHelper.ACCESS_TOKEN, new ArrayList<Category>(),
+	public void testOrderUser() {
+		this.occiApplication.createOrders(OCCITestHelper.ACCESS_TOKEN, new ArrayList<Category>(),
 				xOCCIAtt);
-		List<Request> requestsFromUser = occiApplication
-				.getRequestsFromUser(OCCITestHelper.ACCESS_TOKEN);
+		List<Order> ordersFromUser = occiApplication
+				.getOrdersFromUser(OCCITestHelper.ACCESS_TOKEN);
 
-		Assert.assertEquals(1, requestsFromUser.size());
+		Assert.assertEquals(1, ordersFromUser.size());
 	}
 
 	@Test
-	public void testManyResquestUser() {
+	public void testManyOrderUser() {
 		int numberOfInstances = 10;
-		xOCCIAtt.put(RequestAttribute.INSTANCE_COUNT.getValue(), String.valueOf(numberOfInstances));
-		this.occiApplication.createRequests(OCCITestHelper.ACCESS_TOKEN, new ArrayList<Category>(),
+		xOCCIAtt.put(OrderAttribute.INSTANCE_COUNT.getValue(), String.valueOf(numberOfInstances));
+		this.occiApplication.createOrders(OCCITestHelper.ACCESS_TOKEN, new ArrayList<Category>(),
 				xOCCIAtt);
-		List<Request> requestsFromUser = occiApplication
-				.getRequestsFromUser(OCCITestHelper.ACCESS_TOKEN);
+		List<Order> ordersFromUser = occiApplication
+				.getOrdersFromUser(OCCITestHelper.ACCESS_TOKEN);
 
-		Assert.assertEquals(numberOfInstances, requestsFromUser.size());
+		Assert.assertEquals(numberOfInstances, ordersFromUser.size());
 	}
 
 	@Test
-	public void testRemoveAllRequest() throws InterruptedException {
+	public void testRemoveAllOrder() throws InterruptedException {
 		int numberOfInstances = 10;
-		xOCCIAtt.put(RequestAttribute.INSTANCE_COUNT.getValue(), String.valueOf(numberOfInstances));
-		occiApplication.createRequests(OCCITestHelper.ACCESS_TOKEN, new ArrayList<Category>(),
+		xOCCIAtt.put(OrderAttribute.INSTANCE_COUNT.getValue(), String.valueOf(numberOfInstances));
+		occiApplication.createOrders(OCCITestHelper.ACCESS_TOKEN, new ArrayList<Category>(),
 				xOCCIAtt);
 
-		List<Request> requestsFromUser = occiApplication
-				.getRequestsFromUser(OCCITestHelper.ACCESS_TOKEN);
+		List<Order> ordersFromUser = occiApplication
+				.getOrdersFromUser(OCCITestHelper.ACCESS_TOKEN);
 
-		Assert.assertEquals(numberOfInstances, requestsFromUser.size());
-		occiApplication.removeAllRequests(OCCITestHelper.ACCESS_TOKEN);
-		requestsFromUser = occiApplication.getRequestsFromUser(OCCITestHelper.ACCESS_TOKEN);
+		Assert.assertEquals(numberOfInstances, ordersFromUser.size());
+		occiApplication.removeAllOrders(OCCITestHelper.ACCESS_TOKEN);
+		ordersFromUser = occiApplication.getOrdersFromUser(OCCITestHelper.ACCESS_TOKEN);
 
-		Assert.assertEquals(numberOfInstances, counterDeletedRequests(requestsFromUser));
+		Assert.assertEquals(numberOfInstances, counterDeletedOrders(ordersFromUser));
 	}
 
 	@Test
-	public void testRemoveSpecificRequest() {
+	public void testRemoveSpecificOrder() {
 		int numberOfInstances = 10;
-		xOCCIAtt.put(RequestAttribute.INSTANCE_COUNT.getValue(), String.valueOf(numberOfInstances));
-		occiApplication.createRequests(OCCITestHelper.ACCESS_TOKEN, new ArrayList<Category>(),
+		xOCCIAtt.put(OrderAttribute.INSTANCE_COUNT.getValue(), String.valueOf(numberOfInstances));
+		occiApplication.createOrders(OCCITestHelper.ACCESS_TOKEN, new ArrayList<Category>(),
 				xOCCIAtt);
 
-		List<Request> requestsFromUser = occiApplication
-				.getRequestsFromUser(OCCITestHelper.ACCESS_TOKEN);
+		List<Order> ordersFromUser = occiApplication
+				.getOrdersFromUser(OCCITestHelper.ACCESS_TOKEN);
 
-		Assert.assertEquals(numberOfInstances, requestsFromUser.size());
+		Assert.assertEquals(numberOfInstances, ordersFromUser.size());
 
-		occiApplication.removeRequest(OCCITestHelper.ACCESS_TOKEN, requestsFromUser.get(1).getId());
-		requestsFromUser = occiApplication.getRequestsFromUser(OCCITestHelper.ACCESS_TOKEN);
+		occiApplication.removeOrder(OCCITestHelper.ACCESS_TOKEN, ordersFromUser.get(1).getId());
+		ordersFromUser = occiApplication.getOrdersFromUser(OCCITestHelper.ACCESS_TOKEN);
 
-		Assert.assertEquals(1, counterDeletedRequests(requestsFromUser));
+		Assert.assertEquals(1, counterDeletedOrders(ordersFromUser));
 	}
 
-	private int counterDeletedRequests(List<Request> requestsFromUser) {
+	private int counterDeletedOrders(List<Order> ordersFromUser) {
 		int count = 0;
-		for (Request request : requestsFromUser) {
-			if (request.getState().equals(RequestState.DELETED)) {
+		for (Order order : ordersFromUser) {
+			if (order.getState().equals(OrderState.DELETED)) {
 				count++;
 			}
 		}

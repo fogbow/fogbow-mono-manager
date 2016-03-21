@@ -8,17 +8,23 @@ import org.apache.http.HttpStatus;
 import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.Flavor;
-import org.fogbowcloud.manager.core.plugins.accounting.ResourceUsage;
+import org.fogbowcloud.manager.core.plugins.accounting.AccountingInfo;
 import org.fogbowcloud.manager.occi.instance.ComputeServerResource;
 import org.fogbowcloud.manager.occi.instance.Instance;
+import org.fogbowcloud.manager.occi.member.MemberServerResource;
+import org.fogbowcloud.manager.occi.member.QuotaServerResource;
+import org.fogbowcloud.manager.occi.member.UsageServerResource;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.HeaderUtils;
 import org.fogbowcloud.manager.occi.model.OCCIHeaders;
 import org.fogbowcloud.manager.occi.model.Resource;
 import org.fogbowcloud.manager.occi.model.Token;
-import org.fogbowcloud.manager.occi.request.Request;
-import org.fogbowcloud.manager.occi.request.RequestConstants;
-import org.fogbowcloud.manager.occi.request.RequestServerResource;
+import org.fogbowcloud.manager.occi.order.Order;
+import org.fogbowcloud.manager.occi.order.OrderConstants;
+import org.fogbowcloud.manager.occi.order.OrderServerResource;
+import org.fogbowcloud.manager.occi.storage.StorageLinkRepository.StorageLink;
+import org.fogbowcloud.manager.occi.storage.StorageLinkServerResource;
+import org.fogbowcloud.manager.occi.storage.StorageServerResource;
 import org.restlet.Application;
 import org.restlet.Response;
 import org.restlet.Restlet;
@@ -38,19 +44,29 @@ public class OCCIApplication extends Application {
 	@Override
 	public Restlet createInboundRoot() {
 		Router router = new Router(getContext());
-		router.attach("/" + RequestConstants.TERM, RequestServerResource.class);
-		router.attach("/" + RequestConstants.TERM + "/", RequestServerResource.class);
-		router.attach("/" + RequestConstants.TERM + "/{requestId}", RequestServerResource.class);
-		router.attach("/" + RequestConstants.COMPUTE_TERM, ComputeServerResource.class);
-		router.attach("/" + RequestConstants.COMPUTE_TERM + "/", ComputeServerResource.class);
-		router.attach("/" + RequestConstants.COMPUTE_TERM + "/{instanceId}", ComputeServerResource.class);
-		router.attach("/members", MemberServerResource.class);
+		router.attach("/" + OrderConstants.TERM, OrderServerResource.class);
+		router.attach("/" + OrderConstants.TERM + "/", OrderServerResource.class);
+		router.attach("/" + OrderConstants.TERM + "/{orderId}", OrderServerResource.class);		
+		router.attach("/" + OrderConstants.STORAGE_TERM, StorageServerResource.class);
+		router.attach("/" + OrderConstants.STORAGE_TERM + "/", StorageServerResource.class);
+		router.attach("/" + OrderConstants.STORAGE_TERM + "/{storageId}", StorageServerResource.class);
+		router.attach("/" + OrderConstants.STORAGE_TERM + "/" + OrderConstants.STORAGE_LINK_TERM + "/"
+				, StorageLinkServerResource.class);
+		router.attach("/" + OrderConstants.STORAGE_TERM + "/" + OrderConstants.STORAGE_LINK_TERM
+				+ "/{storageLinkId}", StorageLinkServerResource.class);
+		router.attach("/" + OrderConstants.COMPUTE_TERM, ComputeServerResource.class);
+		router.attach("/" + OrderConstants.COMPUTE_TERM + "/", ComputeServerResource.class);
+		router.attach("/" + OrderConstants.COMPUTE_TERM + "/{instanceId}", ComputeServerResource.class);
+		router.attach("/member/accounting", AccountingServerResource.class);
+		router.attach("/member/accounting/", AccountingServerResource.class);
+		router.attach("/member", MemberServerResource.class);
+		router.attach("/member/{memberId}/quota", QuotaServerResource.class);
+		router.attach("/member/{memberId}/quota/", QuotaServerResource.class);
+		router.attach("/member/{memberId}/usage", UsageServerResource.class);
 		//TODO remove this endpoint
 		router.attach("/token", TokenServerResource.class);
 		router.attach("/-/", QueryServerResource.class);
 		router.attach("/.well-known/org/ogf/occi/-/", QueryServerResource.class);
-		router.attach("/usage", UsageServerResource.class);
-		router.attach("/usage/{option}", UsageServerResource.class);
 		router.attachDefault(new Restlet() {
 			@Override
 			public void handle(org.restlet.Request request, Response response) {
@@ -70,7 +86,7 @@ public class OCCIApplication extends Application {
 		 * private cloud does not treat fogbow_request requests.
 		 */
 		if (response.getStatus().getCode() == HttpStatus.SC_METHOD_NOT_ALLOWED
-				&& !request.getOriginalRef().getPath().startsWith("/" + RequestConstants.TERM)) {
+				&& !request.getOriginalRef().getPath().startsWith("/" + OrderConstants.TERM)) {
 			normalizeBypass(request, response);
 		}
 	}
@@ -111,34 +127,64 @@ public class OCCIApplication extends Application {
 				.normalize(OCCIHeaders.X_AUTH_TOKEN)));
 		requestHeaders.removeFirst(HeaderUtils.normalize(OCCIHeaders.X_AUTH_TOKEN));
 	}
+
 	
 	public List<FederationMember> getFederationMembers(String accessId) {		
-		return managerFacade.getMembers(accessId);
+		return managerFacade.getRendezvousMembers();
+	}
+	
+	public FederationMember getFederationMemberQuota(String federationMemberId, String accessId) {		
+		return managerFacade.getFederationMemberQuota(federationMemberId, accessId);
+	}	
+
+	public StorageLink getStorageLink(String authToken, String storageLinkId) {
+		return managerFacade.getStorageLink(authToken, storageLinkId);
+	}
+	
+	public Order getOrder(String authToken, String orderId) {
+		return managerFacade.getOrder(authToken, orderId);
 	}
 
-	public Request getRequest(String authToken, String requestId) {
-		return managerFacade.getRequest(authToken, requestId);
-	}
-
-	public List<Request> createRequests(String federationAuthToken, List<Category> categories,
+	public StorageLink createStorageLink(String federationAuthToken, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
-		return managerFacade.createRequests(federationAuthToken, categories, xOCCIAtt);
+		return managerFacade.createStorageLink(federationAuthToken, categories, xOCCIAtt);
+	}
+	
+	public List<Order> createOrders(String federationAuthToken, List<Category> categories,
+			Map<String, String> xOCCIAtt) {
+		return managerFacade.createOrders(federationAuthToken, categories, xOCCIAtt);
 	}
 
-	public List<Request> getRequestsFromUser(String authToken) {
-		return managerFacade.getRequestsFromUser(authToken);
+	public List<StorageLink> getStorageLinksFromUser(String authToken) {
+		return managerFacade.getStorageLinkFromUser(authToken);
+	}
+	
+	public List<Order> getOrdersFromUser(String authToken) {
+		return managerFacade.getOrdersFromUser(authToken);
 	}
 
-	public void removeAllRequests(String authToken) {
-		managerFacade.removeAllRequests(authToken);
+	public void removeAllOrders(String authToken) {
+		managerFacade.removeAllOrders(authToken);
 	}
+	
+	public void removeAllStorageLink(String authToken) {
+		managerFacade.removeAllOrders(authToken);
+	}	
 
-	public void removeRequest(String authToken, String requestId) {
-		managerFacade.removeRequest(authToken, requestId);
+	public void removeOrder(String authToken, String orderId) {
+		managerFacade.removeOrder(authToken, orderId);
 	}
+	
+	public void removeStorageLink(String authToken, String storageLinkId) {
+		managerFacade.removeStorageLink(authToken, storageLinkId);
+	}	
 
 	public List<Instance> getInstances(String authToken) {
-		return managerFacade.getInstances(authToken);
+		return getInstances(authToken, OrderConstants.COMPUTE_TERM);
+	}
+	
+	public List<Instance> getInstances(String authToken, String resourceKind) {
+		return managerFacade.getInstances(authToken, resourceKind);
 	}
 	
 	public List<Instance> getInstancesFullInfo(String authToken) {
@@ -146,15 +192,27 @@ public class OCCIApplication extends Application {
 	}
 
 	public Instance getInstance(String authToken, String instanceId) {
-		return managerFacade.getInstance(authToken, instanceId);
+		return getInstance(authToken, instanceId, OrderConstants.COMPUTE_TERM);
+	}
+	
+	public Instance getInstance(String authToken, String instanceId, String resourceKind) {
+		return managerFacade.getInstance(authToken, instanceId, resourceKind);
 	}
 
 	public void removeInstances(String authToken) {
-		managerFacade.removeInstances(authToken);
+		removeInstances(authToken, OrderConstants.COMPUTE_TERM);
+	}
+	
+	public void removeInstances(String authToken, String resourceKind) {
+		managerFacade.removeInstances(authToken, resourceKind);
 	}
 
 	public void removeInstance(String authToken, String instanceId) {
-		managerFacade.removeInstance(authToken, instanceId);
+		removeInstance(authToken, instanceId, OrderConstants.COMPUTE_TERM);
+	}
+	
+	public void removeInstance(String authToken, String instanceId, String resourceKind) {
+		managerFacade.removeInstance(authToken, instanceId, resourceKind);
 	}
 
 	public List<Resource> getAllResources(String authToken) {
@@ -183,15 +241,15 @@ public class OCCIApplication extends Application {
 		return managerFacade.getFlavorsProvided();
 	}
 
-	public List<ResourceUsage> getMembersUsage(String authToken) {
-		return managerFacade.getMembersUsage(authToken);
-	}
-
-	public Map<String, Double> getUsersUsage(String authToken) {		
-		return managerFacade.getUsersUsage(authToken);
-	}
-
 	public String getUser(String authToken) {
 		return managerFacade.getUser(authToken);
+	}
+
+	public List<AccountingInfo> getAccountingInfo(String authToken) {
+		return managerFacade.getAccountingInfo(authToken);
+	}
+
+	public double getUsage(String authToken, String memberId) {
+		return managerFacade.getUsage(authToken, memberId);
 	}
 }

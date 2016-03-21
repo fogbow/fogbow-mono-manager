@@ -17,6 +17,7 @@ import org.fogbowcloud.manager.core.plugins.MapperPlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
 import org.fogbowcloud.manager.core.plugins.PrioritizationPlugin;
+import org.fogbowcloud.manager.core.plugins.StoragePlugin;
 import org.fogbowcloud.manager.core.plugins.accounting.FCUAccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.benchmarking.VanillaBenchmarkingPlugin;
 import org.fogbowcloud.manager.core.plugins.imagestorage.http.HTTPDownloadImageStoragePlugin;
@@ -144,6 +145,15 @@ public class Main {
 			LOGGER.warn("Federation user crendetail plugin not specified in properties. Using the default one.", e);
 		}		
 		
+		StoragePlugin storagePlugin = null;
+		try {
+			storagePlugin = (StoragePlugin) createInstance(
+					ConfigurationConstants.STORAGE_CLASS_KEY, properties);
+		} catch (Exception e) {
+			LOGGER.warn("Storage Plugin not especified in the properties.", e);
+			System.exit(EXIT_ERROR_CODE);
+		}			
+		
 		String occiExtraResourcesPath = properties
 				.getProperty(ConfigurationConstants.OCCI_EXTRA_RESOURCES_KEY_PATH);
 		if (occiExtraResourcesPath != null && !occiExtraResourcesPath.isEmpty()) {
@@ -169,6 +179,7 @@ public class Main {
 		facade.setMemberPickerPlugin(memberPickerPlugin);
 		facade.setPrioritizationPlugin(prioritizationPlugin);
 		facade.setLocalCredentailsPlugin(mapperPlugin);
+		facade.setStoragePlugin(storagePlugin);
 		
 		String xmppHost = properties.getProperty(ConfigurationConstants.XMPP_HOST_KEY);
 		String xmppJid = properties.getProperty(ConfigurationConstants.XMPP_JID_KEY);

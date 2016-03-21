@@ -11,6 +11,10 @@ public class ResourcesInfo {
 	private String instancesIdle;
 	private String instancesInUse;
 	
+	private String cpuInUseByUser;
+	private String memInUseByUser;
+	private String instancesInUseByUser;
+	
 	private static final String ZERO = "0";
 	
 	public ResourcesInfo() {
@@ -21,11 +25,27 @@ public class ResourcesInfo {
 		setMemInUse(ZERO);
 		setInstancesIdle(ZERO);
 		setInstancesInUse(ZERO);
+		
+		setCpuInUseByUser(ZERO);
+		setMemInUseByUser(ZERO);
+		setInstancesInUseByUser(ZERO);
 	}
-	
+		
+	public ResourcesInfo(String id, String cpuIdle, String cpuInUse,
+			String memIdle, String memInUse, String instancesIdle,
+			String instancesInUse, String cpuInUseByUser,
+			String memInUseByUser, String instancesInUseByUser) {
+		this(id, cpuIdle, cpuInUse, memIdle, memInUse, instancesIdle, instancesInUse);
+		this.cpuInUseByUser = cpuInUseByUser;
+		this.memInUseByUser = memInUseByUser;
+		this.instancesInUseByUser = instancesInUseByUser;
+		
+	}
+
 	public ResourcesInfo(String id, String cpuIdle, String cpuInUse,
 			String memIdle, String memInUse, 
 			String instancesIdle, String instancesInUse) {
+		this();
 		setId(id);
 		setCpuIdle(cpuIdle);
 		setCpuInUse(cpuInUse);
@@ -42,6 +62,14 @@ public class ResourcesInfo {
 				instancesIdle, instancesInUse);
 	}
 	
+	public ResourcesInfo(String cpuInUseByUser, String memInUseByUser,
+			String instancesInUseByUser) {
+		this();
+		this.cpuInUseByUser = cpuInUseByUser;
+		this.memInUseByUser = memInUseByUser;
+		this.instancesInUseByUser = instancesInUseByUser;
+	}
+
 	// Create test to this method
 	public void addResource(ResourcesInfo resourcesInfo) {
 		if (resourcesInfo == null) {
@@ -53,6 +81,10 @@ public class ResourcesInfo {
 		setMemInUse(calculateStringValues(getMemInUse(), resourcesInfo.getMemInUse()));
 		setInstancesIdle(calculateStringValues(getInstancesIdle(), resourcesInfo.getInstancesIdle()));
 		setInstancesInUse(calculateStringValues(getInstancesInUse(), resourcesInfo.getInstancesInUse()));
+		
+		setInstancesInUseByUser(calculateStringValues(getInstancesInUseByUser(), resourcesInfo.getInstancesInUseByUser()));
+		setCpuInUseByUser(calculateStringValues(getCpuInUseByUser(), resourcesInfo.getCpuInUseByUser()));
+		setMemInUseByUser(calculateStringValues(getMemInUseByUser(), resourcesInfo.getMemInUseByUser()));
 	}
 	
 	protected static String calculateStringValues(String valueOne, String ValueTwo) {
@@ -139,10 +171,35 @@ public class ResourcesInfo {
 		return instancesInUse;
 	}
 
+	public String getCpuInUseByUser() {
+		return cpuInUseByUser;
+	}
+
+	public void setCpuInUseByUser(String cpuInUseByUser) {
+		this.cpuInUseByUser = cpuInUseByUser;
+	}
+
+	public String getMemInUseByUser() {
+		return memInUseByUser;
+	}
+
+	public void setMemInUseByUser(String memInUseByUser) {
+		this.memInUseByUser = memInUseByUser;
+	}
+
+	public String getInstancesInUseByUser() {
+		return instancesInUseByUser;
+	}
+
+	public void setInstancesInUseByUser(String insntacesInUseByUser) {
+		this.instancesInUseByUser = insntacesInUseByUser;
+	}
+
 	@Override
 	public String toString() {
-		return "ResourcesInfo [id=" + id + ", cpuIdle=" + cpuIdle + ", cpuInUse=" + cpuInUse + ", memIdle=" + memIdle
-				+ ", memInUse=" + memInUse + ", instancesIdle=" + instancesIdle + ", instancesInUse=" + instancesInUse
+		return "ResourcesInfo [id=" + id + ", cpuIdle=" + cpuIdle + ", cpuInUse=" + cpuInUse + ", cpuInUseByUser=" + cpuInUseByUser 
+				+ ", memIdle=" + memIdle + ", memInUse=" + memInUse + ", memInUseByUser=" + memInUseByUser + ", instancesIdle=" 
+				+ instancesIdle + ", instancesInUse=" + instancesInUse + ", instancesInUseByUser=" + instancesInUseByUser
 				+ ", ZERO=" + ZERO + "]";
 	}
 	

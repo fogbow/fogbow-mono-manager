@@ -20,6 +20,7 @@ public class ConfigurationConstants {
 	public static final String IDENTITY_CLASS_KEY = "identity_class";
 	public static final String MEMBER_VALIDATOR_CLASS_KEY = "member_validator_class";
 	public static final String LOCAL_CREDENTIALS_CLASS_KEY = "federation_user_credentail_class";
+	public static final String STORAGE_CLASS_KEY = "storage_class";
 
 	// prefixs
 	public static final String LOCAL_PREFIX = "local_";
@@ -32,10 +33,10 @@ public class ConfigurationConstants {
 	public static final String SCHEDULER_PERIOD_KEY = "scheduler_period";
 	public static final String INSTANCE_MONITORING_PERIOD_KEY = "instance_monitoring_period";
 	public static final String TOKEN_UPDATE_PERIOD_KEY = "token_update_period";
-	public static final String SERVED_REQUEST_MONITORING_PERIOD_KEY = "served_request_monitoring_period";
+	public static final String SERVED_ORDER_MONITORING_PERIOD_KEY = "served_request_monitoring_period";
 	public static final String GARBAGE_COLLECTOR_PERIOD_KEY = "garbage_collector_period";
 	public static final String ACCOUNTING_UPDATE_PERIOD_KEY = "accounting_update_period";
-	public static final String ASYNC_REQUEST_WAITING_INTERVAL_KEY = "async_request_waiting_interval";
+	public static final String ASYNC_ORDER_WAITING_INTERVAL_KEY = "async_request_waiting_interval";
 
 	// token host
 	public static final String TOKEN_HOST_PRIVATE_ADDRESS_KEY = "token_host_private_address";
@@ -50,6 +51,7 @@ public class ConfigurationConstants {
 
 	public static final String HTTP_PORT_KEY = "http_port";
 	
+	public static final String ADMIN_USERS = "admin_users";
 	public static final String PROP_MAX_WHOISALIVE_MANAGER_COUNT = "max_whoisalive_manager_count";
 	
 	// OCCI extra resource

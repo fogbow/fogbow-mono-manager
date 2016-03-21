@@ -1,0 +1,2 @@
+{ "listdiskofferingsresponse" : {"id":"2bc5cf33-9ae4-4fa8-8e90-f271bdd2dbce","jobid":"7aca8c95-6eb4-43be-98ab-320af00bb3e0", 
+	"diskoffering": [{"id": "62d5f174-2f1e-42f0-931e-07600a05470e", "disksize":0, "iscustomized": "true"}] } }

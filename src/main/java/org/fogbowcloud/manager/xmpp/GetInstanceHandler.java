@@ -1,5 +1,6 @@
 package org.fogbowcloud.manager.xmpp;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
 
@@ -46,7 +47,7 @@ public class GetInstanceHandler extends AbstractQueryHandler {
 		Element queryEl = response.getElement().addElement("query", 
 				ManagerXmppComponent.GETINSTANCE_NAMESPACE);
 		Element instanceEl = queryEl.addElement("instance");
-		instanceEl.addElement("state").setText(instance.getState().toString());
+		instanceEl.addElement("state").setText(instance.getState() != null ? instance.getState().toString() : "null");
 		instanceEl.addElement("id").setText(instanceId);
 		
 		List<Link> links = instance.getLinks();
@@ -61,7 +62,7 @@ public class GetInstanceHandler extends AbstractQueryHandler {
 		}
 		
 		List<Resource> resources = instance.getResources();
-		for (Resource resource : resources) {
+		for (Resource resource : resources != null ? resources : new ArrayList<Resource>()) {
 			Element resourceEl = instanceEl.addElement("resource");
 			Element categoryEl = resourceEl.addElement("category");
 			

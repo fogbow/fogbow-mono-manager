@@ -16,9 +16,10 @@ public class Instance {
 
 	public static final String PREFIX_DEFAULT_INSTANCE = "X-OCCI-Location: ";
 	public static final String SSH_PUBLIC_ADDRESS_ATT = "org.fogbowcloud.request.ssh-public-address";
+	public static final String LOCAL_IP_ADDRESS_ATT = "org.fogbowcloud.request.local-ip-address";
 	public static final String SSH_USERNAME_ATT = "org.fogbowcloud.request.ssh-username";
 	public static final String EXTRA_PORTS_ATT = "org.fogbowcloud.request.extra-ports";
-	
+
 	private static final String PREFIX_DEFAULT_ATTRIBUTE = "X-OCCI-Attribute: ";
 	private static final String CATEGORY = "Category:";
 
@@ -27,13 +28,8 @@ public class Instance {
 	private List<Link> links;
 	private InstanceState state = InstanceState.PENDING;
 	/**
-	 * Attributes:
-	 * - occi.core.id
-	 * - occi.compute.state
-	 * - occi.compute.speed
-	 * - occi.compute.cores
-	 * - occi.compute.hostname
-	 * - occi.compute.memory
+	 * Attributes: - occi.core.id - occi.compute.state - occi.compute.speed -
+	 * occi.compute.cores - occi.compute.hostname - occi.compute.memory
 	 */
 	private Map<String, String> attributes;
 
@@ -41,16 +37,15 @@ public class Instance {
 		this.id = id;
 	}
 
-	public Instance(String id, List<Resource> resources, 
-			Map<String, String> attributes, List<Link> links, 
-			InstanceState instanceState) {
+	public Instance(String id, List<Resource> resources, Map<String, String> attributes,
+			List<Link> links, InstanceState instanceState) {
 		this(id);
 		this.resources = resources;
 		this.attributes = attributes;
 		this.links = links;
 		this.state = instanceState;
 	}
-	
+
 	public InstanceState getState() {
 		return state;
 	}
@@ -59,7 +54,7 @@ public class Instance {
 		return new Instance(textResponse.replace(PREFIX_DEFAULT_INSTANCE, "").trim());
 	}
 
-	//TODO refactor it
+	// TODO refactor it
 	public static Instance parseInstance(String id, String textResponse) {
 		List<Resource> resources = new ArrayList<Resource>();
 		Map<String, String> attributes = new LinkedHashMap<String, String>();
@@ -70,7 +65,7 @@ public class Instance {
 			if (line.contains("Category:")) {
 				String[] blockLine = line.split(";");
 				Map<String, String> blocks = new HashMap<String, String>();
-				
+
 				for (String block : blockLine) {
 					if (block.contains(CATEGORY)) {
 						String[] blockValues = block.split(":");
@@ -88,21 +83,21 @@ public class Instance {
 				String rel = emptyIfNull(blocks.get("rel"));
 				String location = emptyIfNull(blocks.get("location"));
 				String term = emptyIfNull(blocks.get("term"));
-				
+
 				String attributeBlocks = blocks.get("attributes");
 				if (attributeBlocks != null) {
 					for (String attribute : attributeBlocks.split(" ")) {
 						attributesResource.add(attribute);
 					}
 				}
-				
+
 				String actionBlocks = blocks.get("actions");
 				if (actionBlocks != null) {
 					for (String action : actionBlocks.split(" ")) {
 						actionsResource.add(action);
 					}
 				}
-				
+
 				Category category = new Category(term, scheme, catClass);
 				resources.add(new Resource(category, attributesResource, actionsResource, location,
 						title, rel));
@@ -113,10 +108,10 @@ public class Instance {
 				attributes.put(blockLine[0], blockLine[1].replace("\"", "").trim());
 			}
 		}
-		return new Instance(id, resources, attributes, links, 
+		return new Instance(id, resources, attributes, links,
 				InstanceState.fromOCCIState(attributes.get("occi.compute.state")));
 	}
-	
+
 	private static String emptyIfNull(String input) {
 		return input == null ? new String() : input;
 	}
@@ -137,9 +132,10 @@ public class Instance {
 				messageFormat += link.toOCCIMessageFormatLink() + "\n";
 			}
 		}
-		if (attributes != null){
+		if (attributes != null) {
 			for (String key : this.attributes.keySet()) {
-				messageFormat += PREFIX_DEFAULT_ATTRIBUTE + key + "=\"" + attributes.get(key) + "\"\n";
+				messageFormat += PREFIX_DEFAULT_ATTRIBUTE + key + "=\"" + attributes.get(key)
+						+ "\"\n";
 			}
 		}
 
@@ -149,7 +145,7 @@ public class Instance {
 	public List<Resource> getResources() {
 		return resources;
 	}
-	
+
 	public void addResource(Resource resource) {
 		resources.add(resource);
 	}
@@ -157,7 +153,7 @@ public class Instance {
 	public Map<String, String> getAttributes() {
 		return attributes;
 	}
-	
+
 	public void addAttribute(String key, String value) {
 		if (attributes == null) {
 			attributes = new HashMap<String, String>();
@@ -172,10 +168,10 @@ public class Instance {
 	public List<Link> getLinks() {
 		return links;
 	}
-	
+
 	@Override
 	public boolean equals(Object obj) {
-		if (obj instanceof Instance){
+		if (obj instanceof Instance) {
 			Instance otherInst = (Instance) obj;
 			return getId().equals(otherInst.getId());
 		}
@@ -208,7 +204,7 @@ public class Instance {
 					link.setName(blockValues[1].replace("\"", "").trim());
 				} else {
 					String[] blockValues = block.split("=");
-					if (blockValues.length == 2){
+					if (blockValues.length == 2) {
 						itens.put(blockValues[0].replace("\"", "").trim(),
 								blockValues[1].replace("\"", "").trim());
 					}
@@ -221,11 +217,31 @@ public class Instance {
 		public String toOCCIMessageFormatLink() {
 			String itensMessageFormat = "";
 			int cont = 0;
-			for (String key : this.attributes.keySet()) {
-				itensMessageFormat += " " + key + "=\"" + this.attributes.get(key) + "\"";				
-				if(cont < this.attributes.keySet().size() - 1){
-					itensMessageFormat += ";";						
-				}	
+			HashMap<String, String> attrsCopy = new HashMap<String, String>(attributes);
+			int numberOfAttrs = attrsCopy.size();
+			String relAttr = attrsCopy.remove("rel");
+			if (relAttr != null) {
+				itensMessageFormat += " rel=\"" + relAttr + "\";";
+				cont++;
+			}
+
+			String selfAttr = attrsCopy.remove("self");
+			if (selfAttr != null) {
+				itensMessageFormat += " self=\"" + selfAttr + "\";";
+				cont++;
+			}
+
+			String categoryAttr = attrsCopy.remove("category");
+			if (categoryAttr != null) {
+				itensMessageFormat += " category=\"" + categoryAttr + "\";";
+				cont++;
+			}
+
+			for (String key : attrsCopy.keySet()) {
+				itensMessageFormat += " " + key + "=\"" + attrsCopy.get(key) + "\"";
+				if (cont < numberOfAttrs - 1) {
+					itensMessageFormat += ";";
+				}
 				cont++;
 			}
 			return NAME_LINK + " " + this.name + ";" + itensMessageFormat;
@@ -253,7 +269,8 @@ public class Instance {
 
 		public static Link fromJSON(String linkJSON) throws JSONException {
 			JSONObject jsonObject = new JSONObject(linkJSON);
-			return new Link(jsonObject.optString("name"), JSONHelper.toMap("attributes"));
+			return new Link(jsonObject.optString("name"), JSONHelper.toMap(jsonObject
+					.optString("attributes")));
 		}
 	}
 

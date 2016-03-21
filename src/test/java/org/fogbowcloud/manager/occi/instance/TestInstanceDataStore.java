@@ -8,7 +8,10 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 import org.fogbowcloud.manager.occi.instance.Instance.Link;
 import org.fogbowcloud.manager.occi.model.Category;
@@ -207,12 +210,84 @@ public class TestInstanceDataStore {
 		FedInstanceState fedInstanceState = instanceDb.getByInstanceId(fakeInstanceId_B, fakeUserB);
 		
 		assertNotNull(fedInstanceState);
-		System.out.println(categories);
-		System.out.println(fedInstanceState.getCategories());
-		System.out.println(categories);
-		System.out.println(fedInstanceState.getLinks());
 		assertEquals(fedInstanceStateB, fedInstanceState);
 		
+	}
+	
+	@Test
+	public void testGetByInstanceIdWithCategoriesAndLinks(){
+		
+		String fakeInstanceId_A = "InstanceA";
+		String fakeInstanceId_B = "InstanceB";
+		String fakeOrderId_A = "OrderA";
+		String fakeOrderId_B = "OrderB";
+		String fakeGlobalInstanceId_A = "GlobalInstanceIdA";
+		String fakeGlobalInstanceId_B = "GlobalInstanceIdB";
+		String fakeUserA = "UserA";
+		String fakeUserB = "UserB";
+		
+		List<Category> categories = new ArrayList<Category>();
+		categories.add(new Category("term1", "scheme1", "class1"));
+		categories.add(new Category("term2", "scheme2", "class2"));
+		
+		Map<String, String> linkAttrsForInstanceA = new HashMap<String, String>();
+		linkAttrsForInstanceA.put("occi.networkinterface.gateway", "Not defined");
+		linkAttrsForInstanceA.put("occi.networkinterface.mac", "Not defined");
+		linkAttrsForInstanceA.put("occi.networkinterface.interface", "eth0");
+		linkAttrsForInstanceA.put("occi.networkinterface.state", "active");
+		linkAttrsForInstanceA.put("occi.networkinterface.allocation", "static");
+		linkAttrsForInstanceA.put("occi.networkinterface.address", "host");
+		linkAttrsForInstanceA.put("occi.core.source", "/compute/" + fakeInstanceId_A);
+		linkAttrsForInstanceA.put("occi.core.target", "/network/public");
+		String fakeLinkIdForA = "/network/interface/" + UUID.randomUUID().toString();
+		linkAttrsForInstanceA.put("occi.core.id", fakeLinkIdForA);		
+		ArrayList<Link> linksForInstanceA = new ArrayList<Link>();
+		linksForInstanceA.add(new Link(fakeLinkIdForA, linkAttrsForInstanceA));
+
+		Map<String, String> linkAttrsForInstanceB = new HashMap<String, String>();
+		linkAttrsForInstanceB.put("occi.networkinterface.gateway", "Not defined");
+		linkAttrsForInstanceB.put("occi.networkinterface.mac", "Not defined");
+		linkAttrsForInstanceB.put("occi.networkinterface.interface", "eth0");
+		linkAttrsForInstanceB.put("occi.networkinterface.state", "active");
+		linkAttrsForInstanceB.put("occi.networkinterface.allocation", "static");
+		linkAttrsForInstanceB.put("occi.networkinterface.address", "host");
+		linkAttrsForInstanceB.put("occi.core.source", "/compute/" + fakeInstanceId_B);
+		linkAttrsForInstanceB.put("occi.core.target", "/network/public");
+		String fakeLinkIdForB = "/network/interface/" + UUID.randomUUID().toString();
+		linkAttrsForInstanceB.put("occi.core.id", fakeLinkIdForB);		
+		ArrayList<Link> linksForInstanceB = new ArrayList<Link>();
+		linksForInstanceB.add(new Link(fakeLinkIdForB, linkAttrsForInstanceB));
+		
+		FedInstanceState fedInstanceStateA = new FedInstanceState(fakeInstanceId_A, fakeOrderId_A, categories, linksForInstanceA, fakeGlobalInstanceId_A, fakeUserA);
+		FedInstanceState fedInstanceStateB = new FedInstanceState(fakeInstanceId_B, fakeOrderId_B, categories, linksForInstanceB, fakeGlobalInstanceId_B, fakeUserB);
+		
+		List<FedInstanceState> fakeFedInstanceStateList =  new ArrayList<FedInstanceState>();
+		fakeFedInstanceStateList.add(fedInstanceStateA);
+		fakeFedInstanceStateList.add(fedInstanceStateB);
+		
+		instanceDb.insert(fakeFedInstanceStateList);
+		
+		FedInstanceState fedInstanceState = instanceDb.getByInstanceId(fakeInstanceId_B, fakeUserB);
+		
+		assertNotNull(fedInstanceState);
+		assertEquals(fakeInstanceId_B, fedInstanceState.getFedInstanceId());
+		assertEquals(fakeOrderId_B, fedInstanceState.getOrderId());
+		assertEquals(fakeUserB, fedInstanceState.getUser());
+		assertEquals(categories, fedInstanceState.getCategories());
+		assertEquals(linksForInstanceB.size(), fedInstanceState.getLinks().size());
+		assertEquals(linksForInstanceB.get(0).getAttributes(), fedInstanceState.getLinks().get(0).getAttributes());
+		assertEquals(linksForInstanceB.get(0).getName(), fedInstanceState.getLinks().get(0).getName());
+		
+		fedInstanceState = instanceDb.getByInstanceId(fakeInstanceId_A, fakeUserA);
+		
+		assertNotNull(fedInstanceState);
+		assertEquals(fakeInstanceId_A, fedInstanceState.getFedInstanceId());
+		assertEquals(fakeOrderId_A, fedInstanceState.getOrderId());
+		assertEquals(fakeUserA, fedInstanceState.getUser());
+		assertEquals(categories, fedInstanceState.getCategories());
+		assertEquals(linksForInstanceA.size(), fedInstanceState.getLinks().size());
+		assertEquals(linksForInstanceA.get(0).getAttributes(), fedInstanceState.getLinks().get(0).getAttributes());
+		assertEquals(linksForInstanceA.get(0).getName(), fedInstanceState.getLinks().get(0).getName());		
 	}
 	
 	@Test

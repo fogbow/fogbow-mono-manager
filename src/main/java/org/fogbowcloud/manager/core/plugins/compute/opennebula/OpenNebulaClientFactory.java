@@ -1,6 +1,7 @@
 package org.fogbowcloud.manager.core.plugins.compute.opennebula;
 
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.core.plugins.storage.opennebula.OpenNebulaStoragePlugin;
 import org.fogbowcloud.manager.occi.model.ErrorType;
 import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;
@@ -9,6 +10,7 @@ import org.opennebula.client.ClientConfigurationException;
 import org.opennebula.client.OneResponse;
 import org.opennebula.client.group.Group;
 import org.opennebula.client.group.GroupPool;
+import org.opennebula.client.image.Image;
 import org.opennebula.client.image.ImagePool;
 import org.opennebula.client.template.TemplatePool;
 import org.opennebula.client.user.User;
@@ -145,5 +147,18 @@ public class OpenNebulaClientFactory {
 		}
 		group.info();		
 		return group;
+	}
+	
+	public String allocateImage(Client oneClient, String vmTemplate, Integer datastoreId) {
+		OneResponse response = Image.allocate(oneClient, vmTemplate, datastoreId);
+		if (response.isError()) {
+			String errorMessage = response.getErrorMessage();
+			LOGGER.error("Error while creating an image from template: " + vmTemplate);
+			LOGGER.error("Error message is: " + errorMessage);
+			throw new OCCIException(ErrorType.BAD_REQUEST, errorMessage);
+		}
+		
+		Image.chmod(oneClient, response.getIntMessage(), 744);
+		return response.getMessage();
 	}
 }

@@ -33,5 +33,13 @@ public class ResponseConstants {
 	public static final String INVALID_TOKEN = "Token type is not valid for this cloud manager";
 	public static final String INVALID_STATE = "Current state is not valid.";
 	public static final String PROPERTY_NOT_SPECIFIED_FOR_EXTRA_OCCI_RESOURCE = "There is not any property specified at manager conf file for OCCI resource: ";
+	public static final String FORBIDDEN = "You don't have necessary permissions for the resource.";
+	public static final String NOT_FOUND_RESOURCE_KIND = "Resource kind not found.";
+	public static final String NOT_FOUND_STORAGE_SIZE_ATTRIBUTE = "Storage size not found.";
+	public static final String NOT_FOUND_STORAGE_LINK_ATTRIBUTE = "Target or source not found.";
+	public static final String NOT_FOUND_INSTANCE = "Instance(compute/storage) not found..";
+	public static final String INVALID_STORAGE_LINK_DIFERENT_LOCATION = "The same size is required in the post of storage link.";
+	public static final String INVALID_INSTANCE_OWN = "The same own of instance is required.";
+	public static final String XMPP_RESPONSE_NULL = "Without response.";
 
 }

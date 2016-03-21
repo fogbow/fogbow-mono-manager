@@ -37,9 +37,9 @@ import org.fogbowcloud.manager.occi.model.Resource;
 import org.fogbowcloud.manager.occi.model.ResourceRepository;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.fogbowcloud.manager.occi.model.Token;
-import org.fogbowcloud.manager.occi.request.Request;
-import org.fogbowcloud.manager.occi.request.RequestAttribute;
-import org.fogbowcloud.manager.occi.request.RequestConstants;
+import org.fogbowcloud.manager.occi.order.Order;
+import org.fogbowcloud.manager.occi.order.OrderAttribute;
+import org.fogbowcloud.manager.occi.order.OrderConstants;
 import org.fogbowcloud.manager.occi.util.OCCIComputeApplication;
 import org.fogbowcloud.manager.occi.util.OCCITestHelper;
 import org.fogbowcloud.manager.occi.util.PluginHelper;
@@ -68,11 +68,11 @@ public class TestBypassCompute {
 	
 	@Before
 	public void setup() throws Exception{
-		setup(new ArrayList<Request>());
+		setup(new ArrayList<Order>());
 	}
 	
 	@SuppressWarnings("unchecked")
-	private void setup(List<Request> requests) throws Exception {		
+	private void setup(List<Order> orders) throws Exception {		
 		Properties properties = new Properties();
 		properties.put(OpenStackConfigurationConstants.COMPUTE_OCCI_URL_KEY, PluginHelper.COMPUTE_OCCI_URL);
 		properties.put(OpenStackConfigurationConstants.COMPUTE_OCCI_INSTANCE_SCHEME_KEY, OCCIComputeApplication.INSTANCE_SCHEME);
@@ -92,7 +92,7 @@ public class TestBypassCompute {
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>());
 		
 		List<Flavor> flavors = new ArrayList<Flavor>();
-		Flavor flavorSmall = new Flavor(RequestConstants.SMALL_TERM, "1", "1000", "10");
+		Flavor flavorSmall = new Flavor(OrderConstants.SMALL_TERM, "1", "1000", "10");
 		flavorSmall.setId(SECOND_INSTANCE_ID);
 		flavors.add(flavorSmall); 
 		flavors.add(new Flavor("medium", "2", "2000", "20"));
@@ -117,7 +117,7 @@ public class TestBypassCompute {
 		pluginHelper.initializeOCCIComputeComponent(expectedInstanceIds);
 		
 		mapperPlugin = Mockito.mock(MapperPlugin.class);
-		Mockito.when(mapperPlugin.getLocalCredentials(Mockito.any(Request.class)))
+		Mockito.when(mapperPlugin.getLocalCredentials(Mockito.any(Order.class)))
 				.thenReturn(new HashMap<String, String>());
 		
 		authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
@@ -127,14 +127,14 @@ public class TestBypassCompute {
 		Mockito.when(imageStoragePlugin.getLocalId(Mockito.any(
 				Token.class), Mockito.anyString())).thenReturn(PluginHelper.CIRROS_IMAGE_TERM);
 		
-		Map<String, List<Request>> requestsToAdd = new HashMap<String, List<Request>>();
-		requestsToAdd.put(OCCITestHelper.USER_MOCK, requests);
+		Map<String, List<Order>> ordersToAdd = new HashMap<String, List<Order>>();
+		ordersToAdd.put(OCCITestHelper.USER_MOCK, orders);
 		
 		//initializing fogbow OCCI Application
 		helper = new OCCITestHelper();
 		helper.initializeComponentCompute(computePlugin, identityPlugin, authorizationPlugin,
 				imageStoragePlugin, Mockito.mock(AccountingPlugin.class),
-				Mockito.mock(BenchmarkingPlugin.class), requestsToAdd, mapperPlugin);
+				Mockito.mock(BenchmarkingPlugin.class), ordersToAdd, mapperPlugin);
 	}
 
 	@After
@@ -152,7 +152,7 @@ public class TestBypassCompute {
 		String requirementsStr = RequirementsHelper.GLUE_DISK_TERM + " >= 10 && "
 				+ RequirementsHelper.GLUE_MEM_RAM_TERM + " > 500 && "
 				+ RequirementsHelper.GLUE_VCPU_TERM + " > 0";
-		xOCCIAttr.put(RequestAttribute.REQUIREMENTS.getValue(), requirementsStr);
+		xOCCIAttr.put(OrderAttribute.REQUIREMENTS.getValue(), requirementsStr);
 		
 		Assert.assertEquals(FIRST_INSTANCE_ID, computePlugin.requestInstance(
 				defaultToken, categories, xOCCIAttr, PluginHelper.CIRROS_IMAGE_TERM));
@@ -179,34 +179,48 @@ public class TestBypassCompute {
 	@Test
 	public void testGetBypassGetComputeOK() throws Exception {
 		//adding instance through fogbow endpoint
-		HttpPost post = new HttpPost(OCCITestHelper.URI_FOGBOW_REQUEST);
+		HttpPost post = new HttpPost(OCCITestHelper.URI_FOGBOW_ORDER);
 		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, PluginHelper.ACCESS_ID);
-		post.addHeader(OCCIHeaders.CATEGORY, new Category(RequestConstants.TERM,
-				RequestConstants.SCHEME, RequestConstants.KIND_CLASS).toHeader());
+		post.addHeader(OCCIHeaders.CATEGORY, new Category(OrderConstants.TERM,
+				OrderConstants.SCHEME, OrderConstants.KIND_CLASS).toHeader());
 		post.addHeader(OCCIHeaders.CATEGORY, new Category(PluginHelper.LINUX_X86_TERM,
-				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS).toHeader());
-		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, RequestAttribute.REQUIREMENTS.getValue() + "="
+				OrderConstants.TEMPLATE_OS_SCHEME, OrderConstants.MIXIN_CLASS).toHeader());
+		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, OrderAttribute.REQUIREMENTS.getValue() + "="
 				+ RequirementsHelper.GLUE_DISK_TERM + " >= 10 && "
 				+ RequirementsHelper.GLUE_MEM_RAM_TERM + " > 500 && "
 				+ RequirementsHelper.GLUE_VCPU_TERM + " > 0");
 		
+		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE , OrderAttribute.RESOURCE_KIND.getValue() 
+				+ "=" + OrderConstants.COMPUTE_TERM);
+		
+		
 		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(post);
-		List<String> requestIDs = OCCITestHelper.getRequestIdsPerLocationHeader(response);
-
-		Assert.assertEquals(1, requestIDs.size());
+		List<String> orderIDs = OCCITestHelper.getOrderIdsPerLocationHeader(response);
+		
+		Assert.assertEquals(1, orderIDs.size());
 		Assert.assertEquals(HttpStatus.SC_CREATED, response.getStatusLine().getStatusCode());
 		
 		Map<String, String> xOCCIAttr = new HashMap<String, String>();
 		String requirementsStr = RequirementsHelper.GLUE_DISK_TERM + " >= 10 && "
 				+ RequirementsHelper.GLUE_MEM_RAM_TERM + " > 500 && "
 				+ RequirementsHelper.GLUE_VCPU_TERM + " > 0";
-		xOCCIAttr.put(RequestAttribute.REQUIREMENTS.getValue(), requirementsStr);
+		xOCCIAttr.put(OrderAttribute.REQUIREMENTS.getValue(), requirementsStr);
+		xOCCIAttr.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.COMPUTE_TERM);
 		
-		Thread.sleep(LITTLE_SCHEDULE_TIME + 15);
+		boolean fail = true;
+		for (int i = 0; i < 5; i++) {
+			Thread.sleep(LITTLE_SCHEDULE_TIME / 2);
+			if (computePlugin.getInstances(defaultToken).size() == 1) {
+				fail = false;
+				break;				
+			}
+		}
 		
-		Assert.assertEquals(1, computePlugin.getInstances(defaultToken).size());
+		if (fail) {
+			Assert.fail();
+		}
 		
 		//adding instances directly on compute endpoint
 		List<Category> categories = new ArrayList<Category>();		
@@ -231,7 +245,7 @@ public class TestBypassCompute {
 	}
 
 	@Test
-	public void testBypassGetSpecificComputeOK() throws URISyntaxException, HttpException, IOException {
+	public void testBypassGetSpecificComputeOK() throws URISyntaxException, HttpException, IOException, InterruptedException {
 		//adding instances directly on compute endpoint
 		List<Category> categories = new ArrayList<Category>();		
 		
@@ -239,7 +253,7 @@ public class TestBypassCompute {
 		String requirementsStr = RequirementsHelper.GLUE_DISK_TERM + " >= 10 && "
 				+ RequirementsHelper.GLUE_MEM_RAM_TERM + " > 500 && "
 				+ RequirementsHelper.GLUE_VCPU_TERM + " > 0";
-		xOCCIAttr.put(RequestAttribute.REQUIREMENTS.getValue(), requirementsStr);
+		xOCCIAttr.put(OrderAttribute.REQUIREMENTS.getValue(), requirementsStr);
 		
 		Assert.assertEquals(FIRST_INSTANCE_ID, computePlugin.requestInstance(
 				defaultToken, categories, xOCCIAttr, PluginHelper.CIRROS_IMAGE_TERM));
@@ -308,7 +322,7 @@ public class TestBypassCompute {
 		String requirementsStr = RequirementsHelper.GLUE_DISK_TERM + " >= 10 && "
 				+ RequirementsHelper.GLUE_MEM_RAM_TERM + " > 500 && "
 				+ RequirementsHelper.GLUE_VCPU_TERM + " > 0";
-		xOCCIAttr.put(RequestAttribute.REQUIREMENTS.getValue(), requirementsStr);
+		xOCCIAttr.put(OrderAttribute.REQUIREMENTS.getValue(), requirementsStr);
 		
 		Assert.assertEquals(FIRST_INSTANCE_ID, computePlugin.requestInstance(
 				defaultToken, categories, xOCCIAttr, PluginHelper.CIRROS_IMAGE_TERM));
@@ -348,22 +362,24 @@ public class TestBypassCompute {
 	public void testBypassDeleteComputeCreatedThroughFogbowAndCompute() throws URISyntaxException,
 			HttpException, IOException, InterruptedException {
 		//adding one instance through fogbow endpoint
-		HttpPost post = new HttpPost(OCCITestHelper.URI_FOGBOW_REQUEST);
+		HttpPost post = new HttpPost(OCCITestHelper.URI_FOGBOW_ORDER);
 		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, PluginHelper.ACCESS_ID);
-		post.addHeader(OCCIHeaders.CATEGORY, new Category(RequestConstants.TERM,
-				RequestConstants.SCHEME, RequestConstants.KIND_CLASS).toHeader());
+		post.addHeader(OCCIHeaders.CATEGORY, new Category(OrderConstants.TERM,
+				OrderConstants.SCHEME, OrderConstants.KIND_CLASS).toHeader());
 		post.addHeader(OCCIHeaders.CATEGORY, new Category(PluginHelper.LINUX_X86_TERM,
-				RequestConstants.TEMPLATE_OS_SCHEME, RequestConstants.MIXIN_CLASS).toHeader());
-		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, RequestAttribute.REQUIREMENTS.getValue() + "="
+				OrderConstants.TEMPLATE_OS_SCHEME, OrderConstants.MIXIN_CLASS).toHeader());
+		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, OrderAttribute.REQUIREMENTS.getValue() + "="
 				+ RequirementsHelper.GLUE_DISK_TERM + " >= 10 && "
 				+ RequirementsHelper.GLUE_MEM_RAM_TERM + " > 500 && "
 				+ RequirementsHelper.GLUE_VCPU_TERM + " > 0");
+		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, OrderAttribute.RESOURCE_KIND.getValue() + "=" 
+				+ OrderConstants.COMPUTE_TERM);
 		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(post);
-		List<String> requestIDs = OCCITestHelper.getRequestIdsPerLocationHeader(response);
+		List<String> orderIDs = OCCITestHelper.getOrderIdsPerLocationHeader(response);
 
-		Assert.assertEquals(1, requestIDs.size());
+		Assert.assertEquals(1, orderIDs.size());
 		Assert.assertEquals(HttpStatus.SC_CREATED, response.getStatusLine().getStatusCode());
 		
 		Thread.sleep(LITTLE_SCHEDULE_TIME + 200);
@@ -413,7 +429,7 @@ public class TestBypassCompute {
 		String requirementsStr = RequirementsHelper.GLUE_DISK_TERM + " >= 10 && "
 				+ RequirementsHelper.GLUE_MEM_RAM_TERM + " > 500 && "
 				+ RequirementsHelper.GLUE_VCPU_TERM + " > 0";
-		xOCCIAttr.put(RequestAttribute.REQUIREMENTS.getValue(), requirementsStr);
+		xOCCIAttr.put(OrderAttribute.REQUIREMENTS.getValue(), requirementsStr);
 		
 		Assert.assertEquals(FIRST_INSTANCE_ID, computePlugin.requestInstance(
 				defaultToken, categories, xOCCIAttr, PluginHelper.CIRROS_IMAGE_TERM));
@@ -458,7 +474,7 @@ public class TestBypassCompute {
 		String requirementsStr = RequirementsHelper.GLUE_DISK_TERM + " >= 10 && "
 				+ RequirementsHelper.GLUE_MEM_RAM_TERM + " > 500 && "
 				+ RequirementsHelper.GLUE_VCPU_TERM + " > 0";
-		xOCCIAttr.put(RequestAttribute.REQUIREMENTS.getValue(), requirementsStr);
+		xOCCIAttr.put(OrderAttribute.REQUIREMENTS.getValue(), requirementsStr);
 		
 		Assert.assertEquals(FIRST_INSTANCE_ID, computePlugin.requestInstance(
 				defaultToken, categories, xOCCIAttr, PluginHelper.CIRROS_IMAGE_TERM));

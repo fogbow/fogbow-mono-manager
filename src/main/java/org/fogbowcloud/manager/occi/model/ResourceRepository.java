@@ -10,8 +10,8 @@ import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.model.Flavor;
-import org.fogbowcloud.manager.occi.request.RequestAttribute;
-import org.fogbowcloud.manager.occi.request.RequestConstants;
+import org.fogbowcloud.manager.occi.order.OrderAttribute;
+import org.fogbowcloud.manager.occi.order.OrderConstants;
 import org.json.JSONObject;
 
 public class ResourceRepository {
@@ -34,10 +34,35 @@ public class ResourceRepository {
 	
 	private ResourceRepository(Properties properties){
 		//kind resources
-		Resource fogbowRequest = new Resource(RequestConstants.TERM, RequestConstants.SCHEME,
-				RequestConstants.KIND_CLASS, RequestAttribute.getValues(), new ArrayList<String>(),
-				FOGBOWCLOUD_ENDPOINT + "/" + RequestConstants.TERM + "/", "Request new Instances",
-				RequestConstants.RESOURCE_OCCI_SCHEME);
+		Resource fogbowOrder = new Resource(OrderConstants.TERM, OrderConstants.SCHEME,
+				OrderConstants.KIND_CLASS, OrderAttribute.getValues(), new ArrayList<String>(),
+				FOGBOWCLOUD_ENDPOINT + "/" + OrderConstants.TERM + "/", "Order new Instances",
+				OrderConstants.RESOURCE_OCCI_SCHEME);
+		
+		// TODO implement properties of attributes. For example, {immutable}
+		List<String> storageAttributes = new ArrayList<String>();
+		storageAttributes.add("occi.storage.state{immutable}");
+		storageAttributes.add("occi.storage.size");
+
+		List<String> storageActions = new ArrayList<String>();
+		storageActions.add("http://schemas.ogf.org/occi/infrastructure/storage/action#online");
+		storageActions.add("http://schemas.ogf.org/occi/infrastructure/storage/action#offline");
+		storageActions.add("http://schemas.ogf.org/occi/infrastructure/storage/action#backup");
+		storageActions.add("http://schemas.ogf.org/occi/infrastructure/storage/action#snapshot");
+		storageActions.add("http://schemas.ogf.org/occi/infrastructure/storage/action#resize");			
+		
+		Resource storage = new Resource(OrderConstants.STORAGE_TERM, OrderConstants.INFRASTRUCTURE_OCCI_SCHEME,
+				OrderConstants.KIND_CLASS, storageAttributes, storageActions, FOGBOWCLOUD_ENDPOINT + "/" + "storage/",
+				"Storage Resource", OrderConstants.RESOURCE_OCCI_SCHEME);
+
+		List<String> storageLinkAttributes = new ArrayList<String>();
+		storageLinkAttributes.add("occi.storagelink.state{immutable}");
+		storageLinkAttributes.add("occi.storagelink.mountpoint");
+		storageLinkAttributes.add("occi.storagelink.deviceid");
+
+		Resource storageLink = new Resource(OrderConstants.STORAGELINK_TERM, OrderConstants.INFRASTRUCTURE_OCCI_SCHEME,
+				OrderConstants.KIND_CLASS, storageLinkAttributes, new ArrayList<String>(), FOGBOWCLOUD_ENDPOINT + "/" + "storage/link/",
+				"A link to a storage resource", "http://schemas.ogf.org/occi/core#link");
 		
 		//TODO implement properties of attributes. For example, {immutable}
 		List<String> computeAttributes = new ArrayList<String>();
@@ -54,23 +79,23 @@ public class ResourceRepository {
 		computeActions.add("http://schemas.ogf.org/occi/infrastructure/compute/action#restart");
 		computeActions.add("http://schemas.ogf.org/occi/infrastructure/compute/action#suspend");
 
-		Resource compute = new Resource(RequestConstants.COMPUTE_TERM, RequestConstants.INFRASTRUCTURE_OCCI_SCHEME,
-				RequestConstants.KIND_CLASS, computeAttributes, computeActions, FOGBOWCLOUD_ENDPOINT + "/" + "compute/",
-				"Compute Resource", RequestConstants.RESOURCE_OCCI_SCHEME);
+		Resource compute = new Resource(OrderConstants.COMPUTE_TERM, OrderConstants.INFRASTRUCTURE_OCCI_SCHEME,
+				OrderConstants.KIND_CLASS, computeAttributes, computeActions, FOGBOWCLOUD_ENDPOINT + "/" + "compute/",
+				"Compute Resource", OrderConstants.RESOURCE_OCCI_SCHEME);
 		
 		//userdata
-		Resource fogbowUserdata = new Resource(RequestConstants.USER_DATA_TERM,
-				RequestConstants.SCHEME, RequestConstants.MIXIN_CLASS,
+		Resource fogbowUserdata = new Resource(OrderConstants.USER_DATA_TERM,
+				OrderConstants.SCHEME, OrderConstants.MIXIN_CLASS,
 				new ArrayList<String>(), new ArrayList<String>(), FOGBOWCLOUD_ENDPOINT + "/"
-						+ RequestConstants.USER_DATA_TERM + "/", "", "");
+						+ OrderConstants.USER_DATA_TERM + "/", "", "");
 						
 		//public-key
 		List<String> publicKeyAttributes = new ArrayList<String>();
-		publicKeyAttributes.add(RequestAttribute.DATA_PUBLIC_KEY.getValue());
-		Resource fogbowPublicKey = new Resource(RequestConstants.PUBLIC_KEY_TERM,
-				RequestConstants.CREDENTIALS_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS,
+		publicKeyAttributes.add(OrderAttribute.DATA_PUBLIC_KEY.getValue());
+		Resource fogbowPublicKey = new Resource(OrderConstants.PUBLIC_KEY_TERM,
+				OrderConstants.CREDENTIALS_RESOURCE_SCHEME, OrderConstants.MIXIN_CLASS,
 				publicKeyAttributes, new ArrayList<String>(), FOGBOWCLOUD_ENDPOINT + "/"
-						+ RequestConstants.PUBLIC_KEY_TERM + "/", "", "");		
+						+ OrderConstants.PUBLIC_KEY_TERM + "/", "", "");		
 		resources.add(fogbowPublicKey);
 		
 		// Flavors
@@ -78,9 +103,9 @@ public class ResourceRepository {
 		List<Resource> flavorsResources = new ArrayList<Resource>();
 		for (Flavor flavor : getStaticFlavors(properties)) {
 			flavorsResources.add(new Resource(flavor.getName(),
-					RequestConstants.TEMPLATE_RESOURCE_SCHEME, RequestConstants.MIXIN_CLASS,
+					OrderConstants.TEMPLATE_RESOURCE_SCHEME, OrderConstants.MIXIN_CLASS,
 					new ArrayList<String>(), new ArrayList<String>(), FOGBOWCLOUD_ENDPOINT + "/"
-							+ flavor.getName() + "/", flavor.getName(), RequestConstants.RESOURCE_TPL_OCCI_SCHEME));
+							+ flavor.getName() + "/", flavor.getName(), OrderConstants.RESOURCE_TPL_OCCI_SCHEME));
 		}
 		
 		if (!flavorsResources.isEmpty()) {
@@ -88,21 +113,23 @@ public class ResourceRepository {
 		}	
 		
 		//TODO add actions	
-		resources.add(fogbowRequest);
+		resources.add(fogbowOrder);
+		resources.add(storageLink);
+		resources.add(storage);
 		resources.add(compute);
 		resources.add(fogbowUserdata);
 
-		Resource resourceTlp = new Resource(RequestConstants.RESOURCE_TPL_TERM,
-				RequestConstants.INFRASTRUCTURE_OCCI_SCHEME, RequestConstants.MIXIN_CLASS,
+		Resource resourceTlp = new Resource(OrderConstants.RESOURCE_TPL_TERM,
+				OrderConstants.INFRASTRUCTURE_OCCI_SCHEME, OrderConstants.MIXIN_CLASS,
 				new ArrayList<String>(), new ArrayList<String>(), FOGBOWCLOUD_ENDPOINT + "/resource_tpl/",
 				"", "");
-		Resource osTlp = new Resource(RequestConstants.OS_TPL_TERM,
-				RequestConstants.INFRASTRUCTURE_OCCI_SCHEME, RequestConstants.MIXIN_CLASS,
+		Resource osTlp = new Resource(OrderConstants.OS_TPL_TERM,
+				OrderConstants.INFRASTRUCTURE_OCCI_SCHEME, OrderConstants.MIXIN_CLASS,
 				new ArrayList<String>(), new ArrayList<String>(), FOGBOWCLOUD_ENDPOINT + "/os_tpl/",
 				"", "");
 		
 		Resource resource = new Resource("resource", "http://schemas.ogf.org/occi/core#",
-				RequestConstants.KIND_CLASS, new ArrayList<String>(), new ArrayList<String>(),
+				OrderConstants.KIND_CLASS, new ArrayList<String>(), new ArrayList<String>(),
 				FOGBOWCLOUD_ENDPOINT + "/resource/", "Resource",
 				"http://schemas.ogf.org/occi/core#entity");
 
@@ -110,14 +137,14 @@ public class ResourceRepository {
 		entityAtt.add("occi.core.id");
 		entityAtt.add("occi.core.title");
 		Resource entity = new Resource("entity", "http://schemas.ogf.org/occi/core#",
-				RequestConstants.KIND_CLASS, entityAtt, new ArrayList<String>(),
+				OrderConstants.KIND_CLASS, entityAtt, new ArrayList<String>(),
 				FOGBOWCLOUD_ENDPOINT + "/entity/", "Entity", "");
 
 		List<String> linkAtt = new ArrayList<String>();
 		linkAtt.add("occi.core.source");
 		linkAtt.add("occi.core.target");
-		Resource link = new Resource(RequestConstants.LINK_TERM, "http://schemas.ogf.org/occi/core#",
-				RequestConstants.KIND_CLASS, linkAtt, new ArrayList<String>(), FOGBOWCLOUD_ENDPOINT
+		Resource link = new Resource(OrderConstants.LINK_TERM, "http://schemas.ogf.org/occi/core#",
+				OrderConstants.KIND_CLASS, linkAtt, new ArrayList<String>(), FOGBOWCLOUD_ENDPOINT
 						+ "/link/", "Link", "http://schemas.ogf.org/occi/core#entity");
 		
 		resources.add(resource);
@@ -169,9 +196,9 @@ public class ResourceRepository {
 		if (flavorName == null || flavorName.isEmpty()) {
 			return null;
 		}
-		return new Resource(flavorName, RequestConstants.TEMPLATE_RESOURCE_SCHEME,
-				RequestConstants.MIXIN_CLASS, new ArrayList<String>(), new ArrayList<String>(),
-				FOGBOWCLOUD_ENDPOINT + "/" + flavorName + "/", flavorName, RequestConstants.RESOURCE_TPL_OCCI_SCHEME);
+		return new Resource(flavorName, OrderConstants.TEMPLATE_RESOURCE_SCHEME,
+				OrderConstants.MIXIN_CLASS, new ArrayList<String>(), new ArrayList<String>(),
+				FOGBOWCLOUD_ENDPOINT + "/" + flavorName + "/", flavorName, OrderConstants.RESOURCE_TPL_OCCI_SCHEME);
 	}
 	
 	public void addImageResource(String imageName){
@@ -183,9 +210,9 @@ public class ResourceRepository {
 	}
 
 	public static Resource createImageResource(String imageName) {
-		Resource imageResource = new Resource(imageName, RequestConstants.TEMPLATE_OS_SCHEME,
-				RequestConstants.MIXIN_CLASS, new ArrayList<String>(), new ArrayList<String>(),
-				FOGBOWCLOUD_ENDPOINT + "/" + imageName + "/", imageName + " image", RequestConstants.OS_TPL_OCCI_SCHEME);
+		Resource imageResource = new Resource(imageName, OrderConstants.TEMPLATE_OS_SCHEME,
+				OrderConstants.MIXIN_CLASS, new ArrayList<String>(), new ArrayList<String>(),
+				FOGBOWCLOUD_ENDPOINT + "/" + imageName + "/", imageName + " image", OrderConstants.OS_TPL_OCCI_SCHEME);
 		return imageResource;
 	}
 	
@@ -200,16 +227,16 @@ public class ResourceRepository {
 
 	public List<Resource> get(List<Category> categories) {
 		List<Resource> allResources = getAll();
-		List<Resource> requestResources = new ArrayList<Resource>();
-		for (Category requestCategory : categories) {
+		List<Resource> orderResources = new ArrayList<Resource>();
+		for (Category orderCategory : categories) {
 			for (Resource resource : allResources) {
-				if (resource.matches(requestCategory)) {
-					requestResources.add(resource);
+				if (resource.matches(orderCategory)) {
+					orderResources.add(resource);
 					break;
 				}
 			}
 		}
-		return requestResources;
+		return orderResources;
 	}
 
 	public Resource get(String term) {
