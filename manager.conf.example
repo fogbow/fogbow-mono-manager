@@ -30,6 +30,9 @@ storage_v2_url=http://localhost:8776
 ## Storage Plugin (NoCloud)
 # storage_class=org.fogbowcloud.manager.core.plugins.storage.nocloud.NoCloudStoragePlugin
 
+## Storage Plugin (EC2)
+# storage_class=org.fogbowcloud.manager.core.plugins.storage.ec2.EC2StoragePlugin
+
 ## Compute Plugin (Openstack)
 compute_class=org.fogbowcloud.manager.core.plugins.compute.openstack.OpenStackNovaV2ComputePlugin
 compute_novav2_url=http://localhost:8774
@@ -88,6 +91,7 @@ compute_novav2_network_id=ea51ed0c-0e8a-448d-8202-c79777109ffe
 # compute_azure_storage_key=abcd12345
 
 ## Compute Plugin (EC2)
+# compute_class=org.fogbowcloud.manager.core.plugins.compute.ec2.EC2ComputePlugin
 # compute_ec2_region=us-east-1
 # compute_ec2_security_group_id=sg-12345678
 # compute_ec2_subnet_id=subnet-12345678
@@ -235,13 +239,8 @@ accounting_datastore_url=jdbc:sqlite:/tmp/usage
 ## Benchmarking (Vanilla Benchmarking Plugin)
 benchmarking_class=org.fogbowcloud.manager.core.plugins.benchmarking.VanillaBenchmarkingPlugin
 
-
 ## OCCI extra resources
 #occi_extra_resource_file_path=
-
-
-public_key; scheme="http://schemas.openstack.org/instance/credentials#"; class="mixin"; 
-org.openstack.credentials.publickey.data
 
 # Order public key properties
 occi_extra_resource_fogbow_public_key=public_key
