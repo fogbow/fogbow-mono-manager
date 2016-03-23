@@ -10,6 +10,7 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.occi.model.Token;
+import org.fogbowcloud.manager.occi.order.OrderConstants;
 
 public class StorageLinkRepository {
 
@@ -71,6 +72,21 @@ public class StorageLinkRepository {
 		LOGGER.debug("Storage link id " + storageLinkId + " was not found.");
 		return null;
 	}
+	
+	public StorageLink getByInstance(String instanceId, String type) {
+		Collection<List<StorageLink>> storageLinkColection = new ArrayList<List<StorageLink>>(storageLinks.values());
+		for (List<StorageLink> userStorageLinks : storageLinkColection) {
+			for (StorageLink storageLink : userStorageLinks) {
+				if (type.equals(OrderConstants.COMPUTE_TERM) && instanceId.equals(storageLink.getSource()) 
+						|| type.equals(OrderConstants.STORAGE_TERM) && instanceId.equals(storageLink.getTarget())) {
+					LOGGER.debug("Getting storage link id " + storageLink);
+					return storageLink;					
+				} 
+			}
+		}
+		LOGGER.debug("Storage link id, by instance id : (" + instanceId + "), was not found.");
+		return null;
+	}	
 	
 	public List<StorageLink> getByUser(String user) {
 		LOGGER.debug("Getting local storage links by user " + user);

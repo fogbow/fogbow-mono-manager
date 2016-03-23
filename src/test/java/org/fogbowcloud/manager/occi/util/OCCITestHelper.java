@@ -141,11 +141,11 @@ public class OCCITestHelper {
 		component.start();
 	}
 
-	public ManagerController initializeComponentCompute(ComputePlugin computePlugin, IdentityPlugin identityPlugin,
+	public ManagerController initializeComponentCompute(ComputePlugin computePlugin, IdentityPlugin identityPlugin, IdentityPlugin federationIdentityPlugin,
 			AuthorizationPlugin authorizationPlugin, ImageStoragePlugin imageStoragePlugin,
 			AccountingPlugin accountingPlugin, BenchmarkingPlugin benchmarkingPlugin, Map<String, List<Order>> ordersToAdd,
 			MapperPlugin mapperPlugin) throws Exception {
-		return initializeComponentCompute(computePlugin, null,identityPlugin, authorizationPlugin,
+		return initializeComponentCompute(computePlugin, null,identityPlugin, federationIdentityPlugin, authorizationPlugin,
 				imageStoragePlugin, accountingPlugin, benchmarkingPlugin, ordersToAdd,
 				mapperPlugin, null, new HashMap<String, List<StorageLink>>());
 	}
@@ -161,7 +161,7 @@ public class OCCITestHelper {
 			Map<String, List<StorageLink>> storageLinksToAdd,
 			MapperPlugin mapperPlugin) throws Exception {
 		return initializeComponentCompute(computePlugin, storagePlugin,
-				identityPlugin, authorizationPlugin, imageStoragePlugin,
+				identityPlugin, identityPlugin, authorizationPlugin, imageStoragePlugin,
 				accountingPlugin, benchmarkingPlugin, ordersToAdd,
 				mapperPlugin, null, storageLinksToAdd);
 	}
@@ -170,13 +170,13 @@ public class OCCITestHelper {
 			, IdentityPlugin identityPlugin, AuthorizationPlugin authorizationPlugin, ImageStoragePlugin imageStoragePlugin,
 			AccountingPlugin accountingPlugin, BenchmarkingPlugin benchmarkingPlugin, Map<String, List<Order>> ordersToAdd,
 			MapperPlugin mapperPlugin) throws Exception {
-		return initializeComponentCompute(computePlugin, storagePlugin,identityPlugin, authorizationPlugin,
+		return initializeComponentCompute(computePlugin, storagePlugin,identityPlugin, identityPlugin, authorizationPlugin,
 				imageStoragePlugin, accountingPlugin, benchmarkingPlugin, ordersToAdd,
 				mapperPlugin, null, new HashMap<String, List<StorageLink>>());
 	}	
 	
 	public ManagerController initializeComponentCompute(ComputePlugin computePlugin, StoragePlugin storagePlugin, IdentityPlugin identityPlugin,
-			AuthorizationPlugin authorizationPlugin, ImageStoragePlugin imageStoragePlugin,
+			IdentityPlugin federationIdentityPlugin, AuthorizationPlugin authorizationPlugin, ImageStoragePlugin imageStoragePlugin,
 			AccountingPlugin accountingPlugin, BenchmarkingPlugin benchmarkingPlugin, Map<String, List<Order>> ordersToAdd,
 			MapperPlugin mapperPlugin, Properties properties, Map<String, List<StorageLink>> storageLinksToAdd) throws Exception {
 		component = new Component();
@@ -202,11 +202,11 @@ public class OCCITestHelper {
 		facade.setAuthorizationPlugin(authorizationPlugin);
 		facade.setLocalCredentailsPlugin(mapperPlugin);
 		facade.setLocalIdentityPlugin(identityPlugin);
-		facade.setFederationIdentityPlugin(identityPlugin);
+		facade.setFederationIdentityPlugin(federationIdentityPlugin);
 		facade.setImageStoragePlugin(imageStoragePlugin);
 		facade.setAccountingPlugin(accountingPlugin);
 		facade.setBenchmarkingPlugin(benchmarkingPlugin);
-		facade.setStoragePlugin(storagePlugin);				
+		facade.setStoragePlugin(storagePlugin);
 		
 		storageLinkRespository = new StorageLinkRepository();
 		facade.setStorageLinkRepository(storageLinkRespository);

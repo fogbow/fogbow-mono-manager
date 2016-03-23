@@ -114,7 +114,7 @@ public class TestPostCompute {
 		Map<String, List<Order>> ordersToAdd = new HashMap<String, List<Order>>();
 		ordersToAdd.put(OCCITestHelper.USER_MOCK, orders);
 
-		this.helper.initializeComponentCompute(computePlugin, identityPlugin, authorizationPlugin,
+		this.helper.initializeComponentCompute(computePlugin, identityPlugin, identityPlugin, authorizationPlugin,
 				imageStoragePlugin, Mockito.mock(AccountingPlugin.class), Mockito.mock(BenchmarkingPlugin.class),
 				ordersToAdd, mapperPlugin);
 

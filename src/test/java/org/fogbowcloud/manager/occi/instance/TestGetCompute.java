@@ -158,7 +158,7 @@ public class TestGetCompute {
 		ordersToAdd.put(OCCITestHelper.USER_MOCK, ordersA);
 		ordersToAdd.put(OCCITestHelper.USER_MOCK+"_post", ordersB);
 		
-		this.helper.initializeComponentCompute(computePlugin, identityPlugin, authorizationPlugin, imageStoragePlugin,
+		this.helper.initializeComponentCompute(computePlugin, identityPlugin, identityPlugin, authorizationPlugin, imageStoragePlugin,
 				Mockito.mock(AccountingPlugin.class), Mockito.mock(BenchmarkingPlugin.class), ordersToAdd,
 				mapperPlugin);
 
@@ -339,7 +339,7 @@ public class TestGetCompute {
 		Map<String, List<Order>> ordersToAdd = new HashMap<String, List<Order>>();
 		ordersToAdd.put(OCCITestHelper.USER_MOCK, orders);
 		
-		helper.initializeComponentCompute(computePlugin, identityPlugin, authorizationPlugin, imageStoragePlugin,
+		helper.initializeComponentCompute(computePlugin, identityPlugin, identityPlugin, authorizationPlugin, imageStoragePlugin,
 				Mockito.mock(AccountingPlugin.class), Mockito.mock(BenchmarkingPlugin.class), ordersToAdd, null);
 
 		// test

@@ -3,6 +3,7 @@ package org.fogbowcloud.manager.occi.storage;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.fogbowcloud.manager.occi.order.OrderConstants;
 import org.fogbowcloud.manager.occi.storage.StorageLinkRepository.StorageLink;
 import org.junit.Assert;
 import org.junit.Before;
@@ -53,6 +54,39 @@ public class TestStorageLinkRepository {
 		
 		Assert.assertNull(this.storageLinkRepository.get("wrong"));
 	}
+	
+	@Test
+	public void testGetByInstanceStorageLink() {
+		String user = "user";
+		String id = "id";
+		String source = "source";
+		String target = "target";
+		String deviceId = "deviceId";
+		StorageLink storageLink = new StorageLink(id, source, target, deviceId);
+		this.storageLinkRepository.addStorageLink(user, storageLink);
+		this.storageLinkRepository.addStorageLink("idTwo", new StorageLink("idTwo", "sourceTwo", "targetTwo", "deviceIdTwo"));
+		this.storageLinkRepository.addStorageLink("idThree", new StorageLink("idThree", "sourceThree", "targetThree", "deviceIdThree"));
+		this.storageLinkRepository.addStorageLink("idFour", new StorageLink("idFour", "sourceFour", "targetFour", "deviceIdFour"));
+		this.storageLinkRepository.addStorageLink("idFour", new StorageLink("idFourTwo", "sourceFourTwo", "targetFourTwo", "deviceIdFourTwo"));		
+		
+		Assert.assertEquals(4, storageLinkRepository.getStorageLinks().size());
+		
+		StorageLink storageLinkFound = this.storageLinkRepository.getByInstance(source, OrderConstants.COMPUTE_TERM);
+		Assert.assertNotNull(storageLinkFound);
+		Assert.assertEquals(id, storageLinkFound.getId());
+		Assert.assertEquals(source, storageLinkFound.getSource());
+		Assert.assertEquals(target, storageLinkFound.getTarget());
+		Assert.assertEquals(deviceId, storageLinkFound.getDeviceId());
+		
+		storageLinkFound = this.storageLinkRepository.getByInstance(target, OrderConstants.STORAGE_TERM);
+		Assert.assertNotNull(storageLinkFound);
+		Assert.assertEquals(id, storageLinkFound.getId());
+		Assert.assertEquals(source, storageLinkFound.getSource());
+		Assert.assertEquals(target, storageLinkFound.getTarget());
+		Assert.assertEquals(deviceId, storageLinkFound.getDeviceId());		
+		
+		Assert.assertNull(this.storageLinkRepository.getByInstance("", ""));
+	}	
 	
 	@Test
 	public void testRemoveStorageLink() {
