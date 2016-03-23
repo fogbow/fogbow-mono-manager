@@ -32,6 +32,7 @@ storage_v2_url=http://localhost:8776
 
 ## Storage Plugin (EC2)
 # storage_class=org.fogbowcloud.manager.core.plugins.storage.ec2.EC2StoragePlugin
+# storage_ec2_availability_zone=us-east-1b
 
 ## Compute Plugin (Openstack)
 compute_class=org.fogbowcloud.manager.core.plugins.compute.openstack.OpenStackNovaV2ComputePlugin
