@@ -41,6 +41,6 @@ public class ResponseConstants {
 	public static final String INVALID_STORAGE_LINK_DIFERENT_LOCATION = "The same size is required in the post of storage link.";
 	public static final String INVALID_INSTANCE_OWN = "The same own of instance is required.";
 	public static final String XMPP_RESPONSE_NULL = "Without response.";
-	public static final String EXISTING_ATTACHMENT = "Operation does not possible because there is a attachment.";
+	public static final String EXISTING_ATTACHMENT = "Operation does not possible because there are attachments.";
 
 }

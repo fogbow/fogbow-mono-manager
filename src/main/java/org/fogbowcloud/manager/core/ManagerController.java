@@ -854,12 +854,12 @@ public class ManagerController {
 	
 	private void removeInstance(String instanceId, Order order, String resourceKind) {
 		resourceKind = resourceKind == null ? OrderConstants.COMPUTE_TERM : resourceKind;
-		
-		
-		StorageLink storageLink = storageLinkRepository.getByInstance(instanceId, resourceKind);
-		if (storageLink != null) {
+				
+		List<StorageLink> storageLinks = storageLinkRepository.getAllByInstance(instanceId, resourceKind);
+		if (storageLinks != null && !storageLinks.isEmpty()) {
 			throw new OCCIException(ErrorType.BAD_REQUEST,
-					ResponseConstants.EXISTING_ATTACHMENT + " Attachment ID : " + storageLink.getId());			
+					ResponseConstants.EXISTING_ATTACHMENT + " Attachment IDs : " 
+					+ StorageLinkRepository.Util.storageLInkstoString(storageLinks));			
 		}
 				
 		Token localToken = getFederationUserToken(order);
