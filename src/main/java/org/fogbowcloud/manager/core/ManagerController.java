@@ -852,18 +852,26 @@ public class ManagerController {
 		removeInstance(instanceId, order, null);
 	}
 	
-	private void removeInstance(String instanceId, Order order, String resourceKind) {
-		resourceKind = resourceKind == null ? OrderConstants.COMPUTE_TERM : resourceKind;
-		
+	private void removeInstance(String instanceId, Order order, String resourceKind) {				
+		List<StorageLink> storageLinks = storageLinkRepository.getAllByInstance(instanceId, resourceKind);
+		if (!storageLinks.isEmpty()) {
+			throw new OCCIException(ErrorType.BAD_REQUEST,
+					ResponseConstants.EXISTING_ATTACHMENT + " Attachment IDs : " 
+					+ StorageLinkRepository.Util.storageLinkstoString(storageLinks));			
+		}
+				
+		Token localToken = getFederationUserToken(order);
 		if (isFulfilledByLocalMember(order)) {
 			if (resourceKind.equals(OrderConstants.COMPUTE_TERM)) {
-				this.computePlugin.removeInstance(getFederationUserToken(order), instanceId);				
+				this.computePlugin.removeInstance(localToken, instanceId);				
 			} else if (resourceKind.equals(OrderConstants.STORAGE_TERM)) {
-				this.storagePlugin.removeInstance(getFederationUserToken(order), instanceId);
+				this.storagePlugin.removeInstance(localToken, instanceId);
 			}
-		} else {
+		} else {					
 			removeRemoteInstance(order);
 		}
+		
+		
 		instanceRemoved(order);
 	}
 
@@ -1775,6 +1783,10 @@ public class ManagerController {
 
 	public void setOrders(OrderRepository orders) {
 		this.orderRepository = orders;
+	}
+	
+	public StorageLinkRepository getStorageLinkRepository() {
+		return storageLinkRepository;
 	}
 	
 	public void setStorageLinkRepository(

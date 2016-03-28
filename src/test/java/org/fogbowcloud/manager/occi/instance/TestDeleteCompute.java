@@ -1,6 +1,6 @@
 package org.fogbowcloud.manager.occi.instance;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -19,9 +19,9 @@ import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
-import org.fogbowcloud.manager.core.plugins.MapperPlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
+import org.fogbowcloud.manager.core.plugins.MapperPlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.instance.Instance.Link;
 import org.fogbowcloud.manager.occi.model.Category;
@@ -33,13 +33,19 @@ import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.order.Order;
 import org.fogbowcloud.manager.occi.order.OrderAttribute;
 import org.fogbowcloud.manager.occi.order.OrderConstants;
+import org.fogbowcloud.manager.occi.order.OrderState;
+import org.fogbowcloud.manager.occi.storage.StorageLinkRepository;
+import org.fogbowcloud.manager.occi.storage.StorageLinkRepository.StorageLink;
 import org.fogbowcloud.manager.occi.util.OCCITestHelper;
+import org.fogbowcloud.manager.xmpp.AsyncPacketSender;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.restlet.Response;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.Packet;
 
 public class TestDeleteCompute {
 
@@ -54,6 +60,7 @@ public class TestDeleteCompute {
 	private InstanceDataStore instanceDB;
 	private ManagerController facade;
 	private ComputePlugin computePlugin;
+	private IdentityPlugin federationIdenityPlugin;
 	
 	@SuppressWarnings("deprecation")
 	@Before
@@ -79,17 +86,19 @@ public class TestDeleteCompute {
 		List<Order> orders = new LinkedList<Order>();
 		HashMap<String, String> xOCCIAttr = new HashMap<String, String>();
 		xOCCIAttr.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.COMPUTE_TERM);
-		Order order1 = new Order("1", new Token(OCCITestHelper.ACCESS_TOKEN,
+		Order orderOne = new Order("1", new Token(OCCITestHelper.ACCESS_TOKEN,
 				OCCITestHelper.USER_MOCK, DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
 				xOCCIAttr), null, xOCCIAttr, true, "");
-		order1.setInstanceId(INSTANCE_ID);
-		order1.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
-		orders.add(order1);
-		Order order2 = new Order("2", new Token("otherToken", "otherUser",
+		orderOne.setInstanceId(INSTANCE_ID);
+		orderOne.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
+		orderOne.setState(OrderState.FULFILLED);
+		orders.add(orderOne);
+		Order orderTwo = new Order("2", new Token("otherToken", "otherUser",
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, xOCCIAttr), null, xOCCIAttr, true, "");
-		order2.setInstanceId(OTHER_INSTANCE_ID);
-		order2.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
-		orders.add(order2);
+		orderTwo.setInstanceId(OTHER_INSTANCE_ID);
+		orderTwo.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
+		orderTwo.setState(OrderState.FULFILLED);
+		orders.add(orderTwo);
 
 		AuthorizationPlugin authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
 		Mockito.when(authorizationPlugin.isAuthorized(Mockito.any(Token.class))).thenReturn(true);
@@ -107,14 +116,15 @@ public class TestDeleteCompute {
 				.thenReturn(crendentials);
 		Mockito.when(identityPlugin.createToken(crendentials)).thenReturn(tokenTwo);
 		
+		federationIdenityPlugin = Mockito.mock(IdentityPlugin.class);
+		
 		Map<String, List<Order>> ordersToAdd = new HashMap<String, List<Order>>();
 		ordersToAdd.put(OCCITestHelper.USER_MOCK, orders);
 		
 		instanceDB = new InstanceDataStore(INSTANCE_DB_URL);
-		facade = this.helper.initializeComponentCompute(computePlugin, identityPlugin, authorizationPlugin,
-				imageStoragePlugin, accountingPlugin, benchmarkingPlugin, ordersToAdd,
-				mapperPlugin);
-		
+		facade = this.helper.initializeComponentCompute(computePlugin, identityPlugin, identityPlugin, 
+				authorizationPlugin, imageStoragePlugin, accountingPlugin, benchmarkingPlugin, ordersToAdd,
+				mapperPlugin);		
 	}
 
 	@After
@@ -124,7 +134,7 @@ public class TestDeleteCompute {
 	}
 
 	@Test
-	public void testDelete() throws Exception {
+	public void testDelete() throws Exception {		
 		HttpDelete httpDelete = new HttpDelete(OCCITestHelper.URI_FOGBOW_COMPUTE);
 		httpDelete.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpDelete.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
@@ -134,6 +144,56 @@ public class TestDeleteCompute {
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 
+	@Test
+	public void testDeleteWithRemoteAttachment() throws Exception {	
+		StorageLinkRepository storageLinkRepository = new StorageLinkRepository();
+		StorageLink storageLink = new StorageLink("id", INSTANCE_ID, "target", "deviceId");
+		storageLink.setLocal(false);
+		storageLinkRepository.addStorageLink(OCCITestHelper.USER_MOCK, storageLink);
+		facade.setStorageLinkRepository(storageLinkRepository);
+		
+		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);
+		facade.setPacketSender(packetSender);
+		IQ iq = Mockito.mock(IQ.class);
+		Mockito.when(iq.getError()).thenReturn(null);
+		Mockito.when(packetSender.syncSendPacket(Mockito.any(Packet.class))).thenReturn(iq);
+		
+		Assert.assertEquals(1, facade.getStorageLinkRepository().getByUser(OCCITestHelper.USER_MOCK).size());
+		
+		Token token = new Token("accessId", "user", new Date(), new HashMap<String, String>());
+		Mockito.when(federationIdenityPlugin.getToken(Mockito.anyString())).thenReturn(token);
+		
+		HttpDelete httpDelete = new HttpDelete(OCCITestHelper.URI_FOGBOW_COMPUTE);
+		httpDelete.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
+		httpDelete.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		HttpClient client = HttpClients.createMinimal();
+		HttpResponse response = client.execute(httpDelete);
+	
+		Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusLine().getStatusCode());
+	}
+	
+	@Test
+	public void testDeleteWithAttachment() throws Exception {	
+		StorageLinkRepository storageLinkRepository = new StorageLinkRepository();
+		StorageLink storageLink = new StorageLink("id", INSTANCE_ID, "target", "deviceId");
+		storageLink.setLocal(true);
+		storageLinkRepository.addStorageLink(OCCITestHelper.USER_MOCK, storageLink);
+		facade.setStorageLinkRepository(storageLinkRepository);	
+		
+		Assert.assertEquals(1, facade.getStorageLinkRepository().getByUser(OCCITestHelper.USER_MOCK).size());
+		
+		Token token = new Token("accessId", "user", new Date(), new HashMap<String, String>());
+		Mockito.when(federationIdenityPlugin.getToken(Mockito.anyString())).thenReturn(token);
+		
+		HttpDelete httpDelete = new HttpDelete(OCCITestHelper.URI_FOGBOW_COMPUTE);
+		httpDelete.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
+		httpDelete.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		HttpClient client = HttpClients.createMinimal();
+		HttpResponse response = client.execute(httpDelete);
+	
+		Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusLine().getStatusCode());
+	}	
+	
 	@Test
 	public void testDeleteSpecificInstanceOtherUser() throws Exception {		
 		HttpDelete httpDelete = new HttpDelete(OCCITestHelper.URI_FOGBOW_COMPUTE

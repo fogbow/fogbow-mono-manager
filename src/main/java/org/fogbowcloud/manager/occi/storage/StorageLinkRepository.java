@@ -10,6 +10,7 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.occi.model.Token;
+import org.fogbowcloud.manager.occi.order.OrderConstants;
 
 public class StorageLinkRepository {
 
@@ -72,6 +73,37 @@ public class StorageLinkRepository {
 		return null;
 	}
 	
+	public StorageLink getByInstance(String instanceId, String type) {
+		Collection<List<StorageLink>> storageLinkColection = new ArrayList<List<StorageLink>>(storageLinks.values());
+		for (List<StorageLink> userStorageLinks : storageLinkColection) {
+			for (StorageLink storageLink : userStorageLinks) {
+				if (type.equals(OrderConstants.COMPUTE_TERM) && instanceId.equals(storageLink.getSource()) 
+						|| type.equals(OrderConstants.STORAGE_TERM) && instanceId.equals(storageLink.getTarget())) {
+					LOGGER.debug("Getting storage link id " + storageLink);
+					return storageLink;					
+				} 
+			}
+		}
+		LOGGER.debug("Storage link id, by instance id : (" + instanceId + "), was not found.");
+		return null;
+	}
+	
+	public List<StorageLink> getAllByInstance(String instanceId, String type) {
+		Collection<List<StorageLink>> storageLinkColection = new ArrayList<List<StorageLink>>(storageLinks.values());
+		List<StorageLink> storageLinks = new ArrayList<StorageLinkRepository.StorageLink>();
+		for (List<StorageLink> userStorageLinks : storageLinkColection) {
+			for (StorageLink storageLink : userStorageLinks) {
+				if (type.equals(OrderConstants.COMPUTE_TERM) && instanceId.equals(storageLink.getSource()) 
+						|| type.equals(OrderConstants.STORAGE_TERM) && instanceId.equals(storageLink.getTarget())) {
+					LOGGER.debug("Getting storage link id " + storageLink);
+					storageLinks.add(storageLink);					
+				} 
+			}
+		}
+		LOGGER.debug("Storage link id, by instance id : (" + instanceId + "), was not found.");
+		return storageLinks;
+	}	
+	
 	public List<StorageLink> getByUser(String user) {
 		LOGGER.debug("Getting local storage links by user " + user);
 		List<StorageLink> userStorageLinks = storageLinks.get(user);
@@ -99,6 +131,21 @@ public class StorageLinkRepository {
 			}
 		}
 	}	
+	
+	public static class Util {
+		
+		public static String storageLinkstoString(List<StorageLink> storageLinks) {
+			StringBuilder stringBuilder = new StringBuilder();
+			for (StorageLink storageLink : storageLinks) {
+				if (stringBuilder.length() != 0) {
+					stringBuilder.append(", ");
+				}
+				stringBuilder.append(storageLink.getId());
+			}
+			return stringBuilder.toString();
+		}
+		
+	}
 	
 	public static class StorageLink {
 
