@@ -1386,7 +1386,7 @@ public class TestManagerController {
 		// removing instance
 		managerController.removeInstance(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
 				DefaultDataTestHelper.INSTANCE_ID  + Order.SEPARATOR_GLOBAL_ID
-	            + DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+	            + DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, OrderConstants.COMPUTE_TERM);
 
 		orders = managerController.getOrdersFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
 
@@ -1431,7 +1431,7 @@ public class TestManagerController {
 		// removing instance
 		managerController.removeInstance(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
 				DefaultDataTestHelper.INSTANCE_ID + Order.SEPARATOR_GLOBAL_ID
-	            + DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+	            + DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, OrderConstants.COMPUTE_TERM);
 
 		// checking order state was set to open
 		orders = managerController.getOrdersFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
@@ -1481,7 +1481,7 @@ public class TestManagerController {
 		// removing instance
 		managerController.removeInstance(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
 				DefaultDataTestHelper.INSTANCE_ID  + Order.SEPARATOR_GLOBAL_ID
-	            + DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+	            + DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, OrderConstants.COMPUTE_TERM);
 
 		// checking if order state was set to open
 		orders = managerController.getOrdersFromUser(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
@@ -1599,7 +1599,7 @@ public class TestManagerController {
 		// removing instance
 		managerController.removeInstance(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
 				DefaultDataTestHelper.INSTANCE_ID  + Order.SEPARATOR_GLOBAL_ID
-	            + DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+	            + DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, OrderConstants.COMPUTE_TERM);
 		managerController.checkAndSubmitOpenOrders();
 
 		// checking if order state was set to closed
@@ -1834,7 +1834,7 @@ public class TestManagerController {
 		// removing instance
 		managerController.removeInstance(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
 				DefaultDataTestHelper.INSTANCE_ID  + Order.SEPARATOR_GLOBAL_ID
-	            + DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+	            + DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, OrderConstants.COMPUTE_TERM);
 
 		// waiting for a time and order is not into valid period anymore
 		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD + DefaultDataTestHelper.GRACE_TIME);
@@ -1908,7 +1908,7 @@ public class TestManagerController {
 		// removing instance
 		managerController.removeInstance(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
 				DefaultDataTestHelper.INSTANCE_ID  + Order.SEPARATOR_GLOBAL_ID
-	            + DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+	            + DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, OrderConstants.COMPUTE_TERM);
 
 		// waiting for the scheduler period so that order is not into valid period anymore
 		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD * 2 + DefaultDataTestHelper.GRACE_TIME);

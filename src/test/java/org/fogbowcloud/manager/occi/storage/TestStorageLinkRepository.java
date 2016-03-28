@@ -138,7 +138,7 @@ public class TestStorageLinkRepository {
 		this.storageLinkRepository.addStorageLink(user, new StorageLink(idFourTwo, "sourceFourTwo", "targetFourTwo", "deviceIdFourTwo"));
 		
 		Assert.assertEquals(idTwo + ", " + idThree + ", " + idFour + ", " + idFourTwo, 
-				StorageLinkRepository.Util.storageLInkstoString(storageLinkRepository.getByUser(user)));
+				StorageLinkRepository.Util.storageLinkstoString(storageLinkRepository.getByUser(user)));
 	}
 	
 	@Test

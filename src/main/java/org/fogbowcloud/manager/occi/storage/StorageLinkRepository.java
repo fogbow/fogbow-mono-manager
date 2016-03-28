@@ -134,7 +134,7 @@ public class StorageLinkRepository {
 	
 	public static class Util {
 		
-		public static String storageLInkstoString(List<StorageLink> storageLinks) {
+		public static String storageLinkstoString(List<StorageLink> storageLinks) {
 			StringBuilder stringBuilder = new StringBuilder();
 			for (StorageLink storageLink : storageLinks) {
 				if (stringBuilder.length() != 0) {
