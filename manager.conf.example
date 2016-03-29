@@ -84,7 +84,7 @@ compute_novav2_network_id=ea51ed0c-0e8a-448d-8202-c79777109ffe
 # compute_cloudstack_expunge_on_destroy=true
 
 ##Compute Plugin (Azure)
-# compute_class=org.fogbowcloud.manager.core.plugins.compute.cloudstack.AzureComputePlugin
+# compute_class=org.fogbowcloud.manager.core.plugins.compute.azure.AzureComputePlugin
 # compute_azure_max_vcpu=10
 # compute_azure_max_ram=10240
 # compute_azure_region=East US
