@@ -57,7 +57,7 @@ import org.fogbowcloud.manager.core.plugins.StoragePlugin;
 import org.fogbowcloud.manager.core.plugins.accounting.AccountingInfo;
 import org.fogbowcloud.manager.core.plugins.localcredentails.MapperHelper;
 import org.fogbowcloud.manager.core.plugins.util.SshClientPool;
-import org.fogbowcloud.manager.occi.StorageLinkDataStore;
+import org.fogbowcloud.manager.occi.ManagerDataStore;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.instance.InstanceState;
 import org.fogbowcloud.manager.occi.model.Category;
@@ -70,7 +70,6 @@ import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.order.Order;
 import org.fogbowcloud.manager.occi.order.OrderAttribute;
 import org.fogbowcloud.manager.occi.order.OrderConstants;
-import org.fogbowcloud.manager.occi.order.OrderDataStore;
 import org.fogbowcloud.manager.occi.order.OrderRepository;
 import org.fogbowcloud.manager.occi.order.OrderState;
 import org.fogbowcloud.manager.occi.order.OrderType;
@@ -146,8 +145,8 @@ public class ManagerController {
 
 	private PoolingHttpClientConnectionManager cm;
 
-	private OrderDataStore orderDatabase;
-	private StorageLinkDataStore storageLinkDatabase;
+	private ManagerDataStore managerDatabase;
+//	private StorageLinkDataStore storageLinkDatabase;
 
 	public ManagerController(Properties properties) {
 		this(properties, null);
@@ -174,8 +173,8 @@ public class ManagerController {
 			this.accountingUpdaterTimer = new ManagerTimer(executor);
 			this.orderDBUpdaterTimer = new ManagerTimer(executor);
 		}
-		orderDatabase = new OrderDataStore(properties);
-		storageLinkDatabase = new StorageLinkDataStore(properties);
+		managerDatabase = new ManagerDataStore(properties);
+//		storageLinkDatabase = new StorageLinkDataStore(properties);
 		recoverPreviousOrders();
 		triggerOrderDBUpdater();
 	}
@@ -188,13 +187,13 @@ public class ManagerController {
 		return localIdentityPlugin;
 	}
 	
-	public void setDatabase(OrderDataStore database) {
-		this.orderDatabase = database;
+	public void setDatabase(ManagerDataStore database) {
+		this.managerDatabase = database;
 	}
 	
-	public void setStorageLinkDatabase(StorageLinkDataStore storageLinkDatabase) {
-		this.storageLinkDatabase = storageLinkDatabase;
-	}
+//	public void setStorageLinkDatabase(StorageLinkDataStore storageLinkDatabase) {
+//		this.storageLinkDatabase = storageLinkDatabase;
+//	}
 
 	public void setBenchmarkExecutor(ExecutorService benchmarkExecutor) {
 		this.benchmarkExecutor = benchmarkExecutor;
@@ -252,7 +251,7 @@ public class ManagerController {
 
 	protected void initializeStorageLinks() throws SQLException, JSONException {
 		LOGGER.debug("Recovering previous storage link.");
-		for (StorageLink storageLink : new ArrayList<StorageLink>(storageLinkDatabase.getStorageLinks())) {
+		for (StorageLink storageLink : new ArrayList<StorageLink>(managerDatabase.getStorageLinks())) {
 			storageLinkRepository.addStorageLink(storageLink.getFederationToken().getUser(), storageLink);
 		}
 		LOGGER.debug("Previous storage link recovered.");
@@ -260,7 +259,7 @@ public class ManagerController {
 
 	private void initializeOrders() throws SQLException, JSONException {
 		LOGGER.debug("Recovering previous orders.");
-		for (Order order : this.orderDatabase.getOrders()) {
+		for (Order order : this.managerDatabase.getOrders()) {
 			Instance instance = null;
 			try {
 				if (order.getState().equals(OrderState.FULFILLED)
@@ -1237,12 +1236,12 @@ public class ManagerController {
 				try {
 					updateOrderDB();
 				} catch (Throwable e) {
-					LOGGER.error("Could not update the order database.", e);
+					LOGGER.error("Could not update orders in database.", e);
 				}
 				try {
 					updateStorageLinkDB();
 				} catch (Throwable e) {
-					LOGGER.error("Could not update the storage link database.", e);
+					LOGGER.error("Could not update storage links in database.", e);
 				}				
 			}
 		}, 60000, schedulerPeriod);
@@ -1250,30 +1249,30 @@ public class ManagerController {
 
 	protected void updateStorageLinkDB() throws SQLException, JSONException {
 		LOGGER.debug("Storage link database update start.");
-		Map<String, StorageLink> storageLinksDB = new HashMap<String, StorageLinkRepository.StorageLink>(); 
-		for (StorageLink storageLink : new ArrayList<StorageLink>(this.storageLinkDatabase.getStorageLinks())) {
-			storageLinksDB.put(storageLink.getId(), storageLink);
+		Map<String, StorageLink> storageLinksDBtoRemove = new HashMap<String, StorageLinkRepository.StorageLink>(); 
+		for (StorageLink storageLink : new ArrayList<StorageLink>(this.managerDatabase.getStorageLinks())) {
+			storageLinksDBtoRemove.put(storageLink.getId(), storageLink);
 		}
 		
 		List<StorageLink> allManagerStorageLinks = new ArrayList<StorageLink>(
 				storageLinkRepository.getAllStorageLinks());
 		for (StorageLink storageLink : allManagerStorageLinks) {
-			if (storageLinksDB.get(storageLink.getId()) == null) {
-				storageLinkDatabase.addStorageLink(storageLink);
+			if (storageLinksDBtoRemove.get(storageLink.getId()) == null) {
+				this.managerDatabase.addStorageLink(storageLink);
 			} else {
-				storageLinkDatabase.updateStorageLink(storageLink);
-				storageLinksDB.remove(storageLink.getId());
+				this.managerDatabase.updateStorageLink(storageLink);
+				storageLinksDBtoRemove.remove(storageLink.getId());
 			}
 		}
-		for (String key : storageLinksDB.keySet()) {
-			storageLinkDatabase.removeStorageLink(storageLinksDB.get(key));
+		for (String key : storageLinksDBtoRemove.keySet()) {
+			this.managerDatabase.removeStorageLink(storageLinksDBtoRemove.get(key));
 		}
 		LOGGER.debug("Storage link database update finish.");
 	}
 
 	protected void updateOrderDB() throws SQLException, JSONException {
 		LOGGER.debug("Order database update start.");
-		List<Order> orders = this.orderDatabase.getOrders();
+		List<Order> orders = this.managerDatabase.getOrders();
 		Map<String, Order> ordersDB = new HashMap<String, Order>();
 		for (Order order : orders) {
 			ordersDB.put(order.getId(), order);
@@ -1282,14 +1281,14 @@ public class ManagerController {
 		List<Order> allOrders = new ArrayList<Order>(orderRepository.getAllOrders());
 		for (Order order : allOrders) {
 			if (ordersDB.get(order.getId()) == null) {
-				orderDatabase.addOrder(order);
+				managerDatabase.addOrder(order);
 			} else {
-				orderDatabase.updateOrder(order);
+				managerDatabase.updateOrder(order);
 				ordersDB.remove(order.getId());
 			}
 		}
 		for (String key : ordersDB.keySet()) {
-			orderDatabase.removeOrder(ordersDB.get(key));
+			managerDatabase.removeOrder(ordersDB.get(key));
 		}
 		LOGGER.debug("Order database update finish.");
 	}

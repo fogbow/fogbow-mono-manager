@@ -6,11 +6,8 @@ xmpp_port=5347
 rendezvous_jid=rendezvous.test.com
 greensitter_jid=greensitter.test.com
 
-## Order database
-order_datastore_url=jdbc:sqlite:/tmp/dbOrderSQLite.db
-
-## Storage Link database
-storagelink_datastore_url=jdbc:sqlite:/tmp/dbStorageLinkSQLite.db
+## Manager database
+manager_datastore_url=jdbc:sqlite:/tmp/dbManagerSQLite.db
 
 bd_updater_period=30000
 

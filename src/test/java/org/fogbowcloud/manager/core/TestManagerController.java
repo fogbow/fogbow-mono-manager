@@ -36,7 +36,7 @@ import org.fogbowcloud.manager.core.plugins.accounting.AccountingInfo;
 import org.fogbowcloud.manager.core.plugins.compute.openstack.OpenStackOCCIComputePlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.core.util.ManagerTestHelper;
-import org.fogbowcloud.manager.occi.StorageLinkDataStore;
+import org.fogbowcloud.manager.occi.ManagerDataStore;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.instance.Instance.Link;
 import org.fogbowcloud.manager.occi.instance.InstanceState;
@@ -48,7 +48,6 @@ import org.fogbowcloud.manager.occi.model.ResourceRepository;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.order.Order;
-import org.fogbowcloud.manager.occi.order.OrderDataStore;
 import org.fogbowcloud.manager.occi.order.OrderAttribute;
 import org.fogbowcloud.manager.occi.order.OrderConstants;
 import org.fogbowcloud.manager.occi.order.OrderRepository;
@@ -3433,7 +3432,7 @@ public class TestManagerController {
 	
 	@Test
 	public void testInitializeManager() throws SQLException, JSONException {
-		OrderDataStore database = Mockito.mock(OrderDataStore.class);
+		ManagerDataStore database = Mockito.mock(ManagerDataStore.class);
 		List<Order> orders = new ArrayList<Order>();
 		String userOne = "userOne";
 		String accessIdOne = "One";
@@ -3500,7 +3499,7 @@ public class TestManagerController {
 	
 	@Test
 	public void testInitializeManagerWithAttachmentAndOrderClosed() throws SQLException, JSONException {
-		OrderDataStore database = Mockito.mock(OrderDataStore.class);
+		ManagerDataStore database = Mockito.mock(ManagerDataStore.class);
 		List<Order> orders = new ArrayList<Order>();
 		String userOne = "userOne";
 		String accessIdOne = "One";
@@ -3538,8 +3537,7 @@ public class TestManagerController {
 		orders.add(orderOPENFour);
 		orders.add(orderFiveDELETEDUserTwo);
 		Mockito.when(database.getOrders()).thenReturn(orders);
-		managerController.setDatabase(database);
-		
+			
 		StorageLink storageLinkOne = new StorageLink("idOne", instanceIdThree,
 				"targetOne", "deviceIdOne", "provadingMemberIdOne", federationTokenOne, true);
 		StorageLink storageLinkTwo = new StorageLink("idTwo", instanceIdThree,
@@ -3551,9 +3549,8 @@ public class TestManagerController {
 		storageLinks.add(storageLinkTwo);
 		storageLinks.add(storageLinkThree);
 		
-		StorageLinkDataStore storageLinkDatabase = Mockito.mock(StorageLinkDataStore.class);
-		Mockito.when(storageLinkDatabase.getStorageLinks()).thenReturn(storageLinks);
-		managerController.setStorageLinkDatabase(storageLinkDatabase);		
+		Mockito.when(database.getStorageLinks()).thenReturn(storageLinks);
+		managerController.setDatabase(database);		
 		
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		Mockito.when(computePlugin.getInstance(Mockito.any(Token.class), Mockito.anyString()))
@@ -3596,9 +3593,9 @@ public class TestManagerController {
 		storageLinks.add(storageLinkTwo);
 		storageLinks.add(storageLinkThree);
 		
-		StorageLinkDataStore storageLinkDatabase = Mockito.mock(StorageLinkDataStore.class);
-		Mockito.when(storageLinkDatabase.getStorageLinks()).thenReturn(storageLinks);
-		managerController.setStorageLinkDatabase(storageLinkDatabase);		
+		ManagerDataStore managerDatabase = Mockito.mock(ManagerDataStore.class);
+		Mockito.when(managerDatabase.getStorageLinks()).thenReturn(storageLinks);
+		managerController.setDatabase(managerDatabase);		
 		
 		managerController.initializeStorageLinks();
 		
@@ -3607,7 +3604,7 @@ public class TestManagerController {
 	
 	@Test
 	public void testOrderDBUpdater() throws SQLException, JSONException {		
-		OrderDataStore database = Mockito.mock(OrderDataStore.class);
+		ManagerDataStore database = Mockito.mock(ManagerDataStore.class);
 		List<Order> ordersBD = new ArrayList<Order>();
 		String userOne = "userOne";
 		String accessIdOne = "One";
@@ -3670,7 +3667,7 @@ public class TestManagerController {
 	
 	@Test
 	public void testStorageLinkDBUpdater() throws SQLException, JSONException {		
-		StorageLinkDataStore databaseStorageLink = Mockito.mock(StorageLinkDataStore.class);
+		ManagerDataStore database = Mockito.mock(ManagerDataStore.class);
 		String userOne = "userOne";
 		String accessIdOne = "One";
 		Token federationTokenOne = new Token(accessIdOne, userOne , new Date(), null);
@@ -3688,11 +3685,11 @@ public class TestManagerController {
 		storageLinksBD.add(storageLinkOne);
 		storageLinksBD.add(storageLinkTwo);
 		storageLinksBD.add(storageLinkThree);
-		Mockito.when(databaseStorageLink.getStorageLinks()).thenReturn(storageLinksBD);
-		Mockito.when(databaseStorageLink.addStorageLink(Mockito.any(StorageLink.class))).thenReturn(true);
-		Mockito.when(databaseStorageLink.updateStorageLink(Mockito.any(StorageLink.class))).thenReturn(true);
-		Mockito.when(databaseStorageLink.removeStorageLink(Mockito.any(StorageLink.class))).thenReturn(true);
-		managerController.setStorageLinkDatabase(databaseStorageLink);
+		Mockito.when(database.getStorageLinks()).thenReturn(storageLinksBD);
+		Mockito.when(database.addStorageLink(Mockito.any(StorageLink.class))).thenReturn(true);
+		Mockito.when(database.updateStorageLink(Mockito.any(StorageLink.class))).thenReturn(true);
+		Mockito.when(database.removeStorageLink(Mockito.any(StorageLink.class))).thenReturn(true);
+		managerController.setDatabase(database);
 		
 		IdentityPlugin federationIdentityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(federationIdentityPlugin.getToken(accessIdOne)).thenReturn(federationTokenOne);
@@ -3709,9 +3706,9 @@ public class TestManagerController {
 		
 		managerController.updateStorageLinkDB();
 		
-		Mockito.verify(databaseStorageLink, Mockito.times(1)).removeStorageLink(Mockito.any(StorageLink.class));
-		Mockito.verify(databaseStorageLink, Mockito.times(1)).addStorageLink(Mockito.any(StorageLink.class));
-		Mockito.verify(databaseStorageLink, Mockito.times(2)).updateStorageLink(Mockito.any(StorageLink.class));
+		Mockito.verify(database, Mockito.times(1)).removeStorageLink(Mockito.any(StorageLink.class));
+		Mockito.verify(database, Mockito.times(1)).addStorageLink(Mockito.any(StorageLink.class));
+		Mockito.verify(database, Mockito.times(2)).updateStorageLink(Mockito.any(StorageLink.class));
 	}	
 	
 	@Test
