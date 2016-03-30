@@ -146,7 +146,6 @@ public class ManagerController {
 	private PoolingHttpClientConnectionManager cm;
 
 	private ManagerDataStore managerDatabase;
-//	private StorageLinkDataStore storageLinkDatabase;
 
 	public ManagerController(Properties properties) {
 		this(properties, null);
@@ -174,7 +173,6 @@ public class ManagerController {
 			this.orderDBUpdaterTimer = new ManagerTimer(executor);
 		}
 		managerDatabase = new ManagerDataStore(properties);
-//		storageLinkDatabase = new StorageLinkDataStore(properties);
 		recoverPreviousOrders();
 		triggerOrderDBUpdater();
 	}
@@ -190,10 +188,6 @@ public class ManagerController {
 	public void setDatabase(ManagerDataStore database) {
 		this.managerDatabase = database;
 	}
-	
-//	public void setStorageLinkDatabase(StorageLinkDataStore storageLinkDatabase) {
-//		this.storageLinkDatabase = storageLinkDatabase;
-//	}
 
 	public void setBenchmarkExecutor(ExecutorService benchmarkExecutor) {
 		this.benchmarkExecutor = benchmarkExecutor;
