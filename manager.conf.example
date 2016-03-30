@@ -8,7 +8,11 @@ greensitter_jid=greensitter.test.com
 
 ## Order database
 order_datastore_url=jdbc:sqlite:/tmp/dbOrderSQLite.db
-order_bd_updater_period=30000
+
+## Storage Link database
+storagelink_datastore_url=jdbc:sqlite:/tmp/dbStorageLinkSQLite.db
+
+bd_updater_period=30000
 
 ## Static mapping from flavors to requirements (Optional)
 # flavor_fogbow_small={mem=512, cpu=1}

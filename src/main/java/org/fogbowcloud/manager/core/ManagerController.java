@@ -57,6 +57,7 @@ import org.fogbowcloud.manager.core.plugins.StoragePlugin;
 import org.fogbowcloud.manager.core.plugins.accounting.AccountingInfo;
 import org.fogbowcloud.manager.core.plugins.localcredentails.MapperHelper;
 import org.fogbowcloud.manager.core.plugins.util.SshClientPool;
+import org.fogbowcloud.manager.occi.StorageLinkDataStore;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.instance.InstanceState;
 import org.fogbowcloud.manager.occi.model.Category;
@@ -145,7 +146,8 @@ public class ManagerController {
 
 	private PoolingHttpClientConnectionManager cm;
 
-	private OrderDataStore orderDB;
+	private OrderDataStore orderDatabase;
+	private StorageLinkDataStore storageLinkDatabase;
 
 	public ManagerController(Properties properties) {
 		this(properties, null);
@@ -172,7 +174,8 @@ public class ManagerController {
 			this.accountingUpdaterTimer = new ManagerTimer(executor);
 			this.orderDBUpdaterTimer = new ManagerTimer(executor);
 		}
-		orderDB = new OrderDataStore(properties);
+		orderDatabase = new OrderDataStore(properties);
+		storageLinkDatabase = new StorageLinkDataStore(properties);
 		recoverPreviousOrders();
 		triggerOrderDBUpdater();
 	}
@@ -186,7 +189,11 @@ public class ManagerController {
 	}
 	
 	public void setDatabase(OrderDataStore database) {
-		this.orderDB = database;
+		this.orderDatabase = database;
+	}
+	
+	public void setStorageLinkDatabase(StorageLinkDataStore storageLinkDatabase) {
+		this.storageLinkDatabase = storageLinkDatabase;
 	}
 
 	public void setBenchmarkExecutor(ExecutorService benchmarkExecutor) {
@@ -239,8 +246,21 @@ public class ManagerController {
 	}
 
 	protected void initializeManager() throws SQLException, JSONException {
+		initializeStorageLinks();
+		initializeOrders();
+	}
+
+	protected void initializeStorageLinks() throws SQLException, JSONException {
+		LOGGER.debug("Recovering previous storage link.");
+		for (StorageLink storageLink : new ArrayList<StorageLink>(storageLinkDatabase.getStorageLinks())) {
+			storageLinkRepository.addStorageLink(storageLink.getFederationToken().getUser(), storageLink);
+		}
+		LOGGER.debug("Previous storage link recovered.");
+	}
+
+	private void initializeOrders() throws SQLException, JSONException {
 		LOGGER.debug("Recovering previous orders.");
-		for (Order order : this.orderDB.getOrders()) {
+		for (Order order : this.orderDatabase.getOrders()) {
 			Instance instance = null;
 			try {
 				if (order.getState().equals(OrderState.FULFILLED)
@@ -289,7 +309,7 @@ public class ManagerController {
 		List<Order> ordersWithInstances = new ArrayList<Order>(
 				orderRepository.getOrdersIn(OrderState.FULFILLED, OrderState.DELETED));
 		List<String> orderIds = new LinkedList<String>();
-		for (Order order : ordersWithInstances) {
+		for (Order order: ordersWithInstances) {
 			orderIds.add(order.getId());
 		}
 		LOGGER.debug("Usage accounting is about to be updated. " + "The following orders do have instances: "
@@ -883,12 +903,13 @@ public class ManagerController {
 		return false;
 	}
 
-	private void instanceRemoved(Order order) {			
+	protected void instanceRemoved(Order order) {			
 		if (order.getResourceKing().equals(OrderConstants.COMPUTE_TERM)) {
 			updateAccounting();
 			benchmarkingPlugin.remove(order.getInstanceId());			
 		}
 		
+		String instanceId = order.getInstanceId();
 		order.setInstanceId(null);
 		order.setProvidingMemberId(null);
 
@@ -903,6 +924,11 @@ public class ManagerController {
 		} else {
 			LOGGER.debug("Order: " + order + ", setting state to " + OrderState.CLOSED);
 			order.setState(OrderState.CLOSED);
+		}
+		
+		if (instanceId != null) {
+			storageLinkRepository.removeAllByInstance(
+					normalizeInstanceId(instanceId), order.getResourceKing());			
 		}
 	}
 
@@ -1203,7 +1229,7 @@ public class ManagerController {
 	}
 
 	private void triggerOrderDBUpdater() {
-		String bdUpdaterPeriodStr = properties.getProperty(ConfigurationConstants.ORDER_BD_UPDATER_PERIOD_KEY);
+		String bdUpdaterPeriodStr = properties.getProperty(ConfigurationConstants.BD_UPDATER_PERIOD_KEY);
 		long schedulerPeriod = bdUpdaterPeriodStr == null ? DEFAULT_BD_UPDATE_PERIOD : Long.valueOf(bdUpdaterPeriodStr);
 		orderDBUpdaterTimer.scheduleAtFixedRate(new TimerTask() {
 			@Override
@@ -1211,32 +1237,61 @@ public class ManagerController {
 				try {
 					updateOrderDB();
 				} catch (Throwable e) {
-					LOGGER.error("Could not update the database.", e);
+					LOGGER.error("Could not update the order database.", e);
 				}
+				try {
+					updateStorageLinkDB();
+				} catch (Throwable e) {
+					LOGGER.error("Could not update the storage link database.", e);
+				}				
 			}
 		}, 60000, schedulerPeriod);
 	}
 
+	protected void updateStorageLinkDB() throws SQLException, JSONException {
+		LOGGER.debug("Storage link database update start.");
+		Map<String, StorageLink> storageLinksDB = new HashMap<String, StorageLinkRepository.StorageLink>(); 
+		for (StorageLink storageLink : new ArrayList<StorageLink>(this.storageLinkDatabase.getStorageLinks())) {
+			storageLinksDB.put(storageLink.getId(), storageLink);
+		}
+		
+		List<StorageLink> allManagerStorageLinks = new ArrayList<StorageLink>(
+				storageLinkRepository.getAllStorageLinks());
+		for (StorageLink storageLink : allManagerStorageLinks) {
+			if (storageLinksDB.get(storageLink.getId()) == null) {
+				storageLinkDatabase.addStorageLink(storageLink);
+			} else {
+				storageLinkDatabase.updateStorageLink(storageLink);
+				storageLinksDB.remove(storageLink.getId());
+			}
+		}
+		for (String key : storageLinksDB.keySet()) {
+			storageLinkDatabase.removeStorageLink(storageLinksDB.get(key));
+		}
+		LOGGER.debug("Storage link database update finish.");
+	}
+
 	protected void updateOrderDB() throws SQLException, JSONException {
-		LOGGER.debug("Database update start.");
-		List<Order> orders = this.orderDB.getOrders();
+		LOGGER.debug("Order database update start.");
+		List<Order> orders = this.orderDatabase.getOrders();
 		Map<String, Order> ordersDB = new HashMap<String, Order>();
 		for (Order order : orders) {
 			ordersDB.put(order.getId(), order);
 		}
+		
 		List<Order> allOrders = new ArrayList<Order>(orderRepository.getAllOrders());
 		for (Order order : allOrders) {
 			if (ordersDB.get(order.getId()) == null) {
-				orderDB.addOrder(order);
+				orderDatabase.addOrder(order);
 			} else {
-				orderDB.updateOrder(order);
+				orderDatabase.updateOrder(order);
 				ordersDB.remove(order.getId());
 			}
 		}
 		for (String key : ordersDB.keySet()) {
-			orderDB.removeOrder(ordersDB.get(key));
+			orderDatabase.removeOrder(ordersDB.get(key));
 		}
-		LOGGER.debug("Database update finish.");
+		LOGGER.debug("Order database update finish.");
 	}
 
 	protected void triggerInstancesMonitor() {
@@ -1915,8 +1970,8 @@ public class ManagerController {
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.INVALID_STORAGE_LINK_DIFERENT_LOCATION);
 		}
 
-		Token federationUserToken = getFederationUserToken(computeOrder);
-		if (federationUserToken == null) {
+		Token federationLocalToken = getFederationUserToken(computeOrder);
+		if (federationLocalToken == null) {
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}
 				
@@ -1925,16 +1980,18 @@ public class ManagerController {
 		if (!computeOrder.getProvidingMemberId().equals(properties.get(ConfigurationConstants.XMPP_JID_KEY))) {
 			isLocal = false;
 			attachmentId = ManagerPacketHelper.remoteStorageLink(new StorageLink(xOCCIAtt), 
-						computeOrder.getProvidingMemberId(), federationUserToken, packetSender);
+						computeOrder.getProvidingMemberId(), federationLocalToken, packetSender);
 		} else {
-			attachmentId = attachStorage(categories, xOCCIAtt, federationUserToken);			
+			attachmentId = attachStorage(categories, xOCCIAtt, federationLocalToken);			
 		}
 						
 		StorageLink storageLink = new StorageLink(xOCCIAtt);
 		storageLink.setId(attachmentId);
 		storageLink.setLocal(isLocal);
 		storageLink.setProvadingMemberId(computeOrder.getProvidingMemberId());
-		storageLinkRepository.addStorageLink(federationIdentityPlugin.getToken(accessId).getUser(), storageLink);	
+		Token federationToken = federationIdentityPlugin.getToken(accessId);
+		storageLink.setFederationToken(federationToken);
+		storageLinkRepository.addStorageLink(federationToken.getUser(), storageLink);	
 		
 		return storageLink;
 	}

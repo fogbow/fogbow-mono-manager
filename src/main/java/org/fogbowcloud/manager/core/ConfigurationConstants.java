@@ -29,7 +29,7 @@ public class ConfigurationConstants {
 	public static final String OCCI_EXTRA_RESOURCES_PREFIX = "occi_extra_resource_";
 
 	// periods
-	public static final String ORDER_BD_UPDATER_PERIOD_KEY = "order_bd_updater_period";
+	public static final String BD_UPDATER_PERIOD_KEY = "bd_updater_period";
 	public static final String SCHEDULER_PERIOD_KEY = "scheduler_period";
 	public static final String INSTANCE_MONITORING_PERIOD_KEY = "instance_monitoring_period";
 	public static final String TOKEN_UPDATE_PERIOD_KEY = "token_update_period";

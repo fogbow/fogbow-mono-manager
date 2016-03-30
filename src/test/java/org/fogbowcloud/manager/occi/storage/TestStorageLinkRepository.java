@@ -1,9 +1,11 @@
 package org.fogbowcloud.manager.occi.storage;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.order.OrderConstants;
 import org.fogbowcloud.manager.occi.storage.StorageLinkRepository.StorageLink;
 import org.junit.Assert;
@@ -194,4 +196,21 @@ public class TestStorageLinkRepository {
 		Assert.assertEquals(source, storageLink.getSource());
 	}	
 	
+	@Test
+	public void testGetAllStorageLink() {
+		Token federationTokenOne = new Token("accessIdOne", "userOne", new Date(), null);
+		Token federationTokenTwo = new Token("accessIdTwo", "userTwo", new Date(), null);
+		StorageLink storageLinkOne = new StorageLink("idOne", "sourceOne", "targetOne",
+				"deviceIdOne", "provadingMemberIdOne", federationTokenOne, true);
+		StorageLink storageLinkTwo = new StorageLink("idTwo", "sourceTwo", "targetTwo",
+				"deviceIdTwo", "provadingMemberIdTwo", federationTokenOne, true);
+		StorageLink storageLinkThree = new StorageLink("idThree", "sourceThree", "targetThree",
+				"deviceIdThree", "provadingMemberIdThree", federationTokenTwo, true);		
+		storageLinkRepository.addStorageLink(storageLinkOne.getFederationToken().getUser(), storageLinkOne);
+		storageLinkRepository.addStorageLink(storageLinkTwo.getFederationToken().getUser(), storageLinkTwo);
+		storageLinkRepository.addStorageLink(storageLinkThree.getFederationToken().getUser(), storageLinkThree);
+		this.storageLinkRepository.getAllStorageLinks();
+		
+		Assert.assertEquals(3, this.storageLinkRepository.getAllStorageLinks().size());
+	}	
 }

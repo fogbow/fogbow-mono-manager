@@ -52,6 +52,16 @@ public class StorageLinkRepository {
 		return get(storageLinkId, null);
 	}
 	
+	public List<StorageLink> getAllStorageLinks() {
+		List<StorageLink> allStorageLinks = new LinkedList<StorageLink>();
+		for (List<StorageLink> userStorageLinks : storageLinks.values()) {
+			for (StorageLink storageLink : userStorageLinks) {
+				allStorageLinks.add(storageLink);
+			}
+		}
+		return allStorageLinks;
+	}	
+	
 	public StorageLink get(String storageLinkId, String user) {
 		Collection<List<StorageLink>> storageLinkColection = new ArrayList<List<StorageLink>>();
 		if (user != null) {
@@ -72,6 +82,7 @@ public class StorageLinkRepository {
 		LOGGER.debug("Storage link id " + storageLinkId + " was not found.");
 		return null;
 	}
+	
 	
 	public StorageLink getByInstance(String instanceId, String type) {
 		Collection<List<StorageLink>> storageLinkColection = new ArrayList<List<StorageLink>>(storageLinks.values());
@@ -103,6 +114,22 @@ public class StorageLinkRepository {
 		LOGGER.debug("Storage link id, by instance id : (" + instanceId + "), was not found.");
 		return storageLinks;
 	}	
+	
+	public void removeAllByInstance(String instanceId, String type) {
+		Collection<List<StorageLink>> storageLinkColection = new ArrayList<List<StorageLink>>(
+				storageLinks.values());
+		for (List<StorageLink> userStorageLinks : storageLinkColection) {
+			for (StorageLink storageLink : new ArrayList<StorageLink>(
+					userStorageLinks)) {
+				if (type.equals(OrderConstants.COMPUTE_TERM) && instanceId.equals(storageLink.getSource()) 
+						|| type.equals(OrderConstants.STORAGE_TERM) && instanceId.equals(storageLink.getTarget())) {				
+					remove(storageLink.getId());
+				}
+			}
+		}
+		LOGGER.debug("Removing all storage link with id "
+				+ "(" + instanceId + ") and type (" + type + ").");
+	}
 	
 	public List<StorageLink> getByUser(String user) {
 		LOGGER.debug("Getting local storage links by user " + user);
@@ -175,6 +202,19 @@ public class StorageLinkRepository {
 			this.deviceId = deviceId;
 			this.isLocal = isLocal;
 		}		
+				
+		public StorageLink(String id, String source, String target,
+				String deviceId, String provadingMemberId,
+				Token federationToken, boolean isLocal) {
+			super();
+			this.id = id;
+			this.source = source;
+			this.target = target;
+			this.deviceId = deviceId;
+			this.provadingMemberId = provadingMemberId;
+			this.federationToken = federationToken;
+			this.isLocal = isLocal;
+		}
 
 		public String getSource() {
 			return source;
@@ -230,6 +270,51 @@ public class StorageLinkRepository {
 
 		public void setLocal(boolean isLocal) {
 			this.isLocal = isLocal;
-		}							
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			StorageLink other = (StorageLink) obj;
+			if (deviceId == null) {
+				if (other.deviceId != null)
+					return false;
+			} else if (!deviceId.equals(other.deviceId))
+				return false;
+			if (federationToken == null) {
+				if (other.federationToken != null)
+					return false;
+			} else if (!federationToken.equals(other.federationToken))
+				return false;
+			if (id == null) {
+				if (other.id != null)
+					return false;
+			} else if (!id.equals(other.id))
+				return false;
+			if (isLocal != other.isLocal)
+				return false;
+			if (provadingMemberId == null) {
+				if (other.provadingMemberId != null)
+					return false;
+			} else if (!provadingMemberId.equals(other.provadingMemberId))
+				return false;
+			if (source == null) {
+				if (other.source != null)
+					return false;
+			} else if (!source.equals(other.source))
+				return false;
+			if (target == null) {
+				if (other.target != null)
+					return false;
+			} else if (!target.equals(other.target))
+				return false;
+			return true;
+		}			
+					
 	}
 }
