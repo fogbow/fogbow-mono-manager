@@ -80,13 +80,13 @@ public class TestNoFMemberPicker {
 		AccountingInfo accountingEntry = new AccountingInfo("user",
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
 				DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL);
-		accountingEntry.addConsuption(4);
+		accountingEntry.addConsumption(4);
 		accounting.add(accountingEntry);
 		
 		accountingEntry = new AccountingInfo("user",
 				DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
-		accountingEntry.addConsuption(16);
+		accountingEntry.addConsumption(16);
 		accounting.add(accountingEntry);
 		
 		Mockito.when(accountingPlugin.getAccountingInfo()).thenReturn(
@@ -117,25 +117,25 @@ public class TestNoFMemberPicker {
 		AccountingInfo accountingEntry = new AccountingInfo("user",
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
 				DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL + "1");
-		accountingEntry.addConsuption(4);
+		accountingEntry.addConsumption(4);
 		accounting.add(accountingEntry);
 		
 		accountingEntry = new AccountingInfo("user",
 				DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL + "1",
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
-		accountingEntry.addConsuption(16);
+		accountingEntry.addConsumption(16);
 		accounting.add(accountingEntry);
 		
 		accountingEntry = new AccountingInfo("user",
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
 				DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL + "2");
-		accountingEntry.addConsuption(10);
+		accountingEntry.addConsumption(10);
 		accounting.add(accountingEntry);
 		
 		accountingEntry = new AccountingInfo("user",
 				DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL + "2",
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
-		accountingEntry.addConsuption(16);
+		accountingEntry.addConsumption(16);
 		accounting.add(accountingEntry);
 		
 		Mockito.when(accountingPlugin.getAccountingInfo()).thenReturn(

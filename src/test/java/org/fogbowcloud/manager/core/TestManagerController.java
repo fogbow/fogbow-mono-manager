@@ -3714,10 +3714,10 @@ public class TestManagerController {
 		AccountingPlugin accountingPlugin = managerTestHelper.getAccountingPlugin();
 		List<AccountingInfo> expectedAccounting = new ArrayList<AccountingInfo>();
 		AccountingInfo accountingInfo = new AccountingInfo(DefaultDataTestHelper.FED_USER_NAME, "localMember", "remoteMember1");
-		accountingInfo.addConsuption(50);
+		accountingInfo.addConsumption(50);
 		expectedAccounting.add(accountingInfo);
 		accountingInfo = new AccountingInfo("user2", "localMember", "remoteMember1");
-		accountingInfo.addConsuption(30);
+		accountingInfo.addConsumption(30);
 		expectedAccounting.add(accountingInfo);
 		
 		Mockito.when(accountingPlugin.getAccountingInfo()).thenReturn(expectedAccounting );
@@ -3735,10 +3735,10 @@ public class TestManagerController {
 		AccountingPlugin accountingPlugin = managerTestHelper.getAccountingPlugin();
 		List<AccountingInfo> expectedAccounting = new ArrayList<AccountingInfo>();
 		AccountingInfo accountingInfo = new AccountingInfo(DefaultDataTestHelper.FED_USER_NAME, "localMember", "remoteMember1");
-		accountingInfo.addConsuption(50);
+		accountingInfo.addConsumption(50);
 		expectedAccounting.add(accountingInfo);
 		accountingInfo = new AccountingInfo("user2", "localMember", "remoteMember1");
-		accountingInfo.addConsuption(30);
+		accountingInfo.addConsumption(30);
 		expectedAccounting.add(accountingInfo);
 		
 		Mockito.when(accountingPlugin.getAccountingInfo()).thenReturn(expectedAccounting );

@@ -67,7 +67,7 @@ public class FCUAccountingPlugin implements AccountingPlugin {
 			double instancePower = benchmarkingPlugin.getPower(order.getGlobalInstanceId());
 			double instanceUsage = instancePower * Math.min(consumptionInterval, updatingInterval);
 
-			usage.get(current).addConsuption(instanceUsage);
+			usage.get(current).addConsumption(instanceUsage);
 		}
 
 		LOGGER.debug("current usage=" + usage);

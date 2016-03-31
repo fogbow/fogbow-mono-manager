@@ -139,7 +139,7 @@ public class AccountingDataStore {
 			if (!entryKeys.contains(currentKey)) {
 
 				if (processedUsage.containsKey(currentKey)) {
-					processedUsage.get(currentKey).addConsuption(accountingInfo.getUsage());
+					processedUsage.get(currentKey).addConsumption(accountingInfo.getUsage());
 				} else {
 					processedUsage.put(currentKey, accountingInfo);
 				}				
@@ -242,7 +242,7 @@ public class AccountingDataStore {
 
 				AccountingInfo accountingInfo = new AccountingInfo(user, requestingMember,
 						providingMember);
-				accountingInfo.addConsuption(usage);
+				accountingInfo.addConsumption(usage);
 				return accountingInfo;
 			}
 		} catch (SQLException e) {
@@ -299,7 +299,7 @@ public class AccountingDataStore {
 				String providingMember = rs.getString(PROVIDING_MEMBER_COL);
 				AccountingInfo userAccounting = new AccountingInfo(user, requestingMember,
 						providingMember);
-				userAccounting.addConsuption(rs.getDouble(USAGE_COL));
+				userAccounting.addConsumption(rs.getDouble(USAGE_COL));
 				accounting.add(userAccounting);
 			}
 		} catch (SQLException e) {
