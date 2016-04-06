@@ -1,7 +1,6 @@
 package org.fogbowcloud.manager.core.plugins.capacitycontroller.fairnessdriven;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -18,8 +17,8 @@ public class PairwiseFairnessDrivenController extends FairnessDrivenCapacityCont
 	private Map<FederationMember, HillClimbingAlgorithm> controllers;
 	
 	public PairwiseFairnessDrivenController(AccountingPlugin accountingPlugin, Properties properties, double deltaC,
-			double minimumThreshold, double maximumThreshold, double maximumCapacityOfPeer) {
-		super(accountingPlugin, properties, new DateUtils());
+			double minimumThreshold, double maximumThreshold, double maximumCapacityOfPeer, DateUtils dateUtils) {
+		super(accountingPlugin, properties, dateUtils);
 		controllers = new HashMap<FederationMember, HillClimbingAlgorithm>();	
 		
 		this.deltaC = deltaC;

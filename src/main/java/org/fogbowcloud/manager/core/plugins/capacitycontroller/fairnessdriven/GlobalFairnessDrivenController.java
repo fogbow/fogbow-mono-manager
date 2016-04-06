@@ -15,8 +15,8 @@ public class GlobalFairnessDrivenController extends FairnessDrivenCapacityContro
 	private HillClimbingAlgorithm controller;
 	
 	public GlobalFairnessDrivenController(AccountingPlugin accountingPlugin, Properties properties, double deltaC,
-			double minimumThreshold, double maximumThreshold, double maximumCapacityOfPeer) {
-		super(accountingPlugin, properties, new DateUtils());
+			double minimumThreshold, double maximumThreshold, double maximumCapacityOfPeer, DateUtils dateUtils) {
+		super(accountingPlugin, properties, dateUtils);
 		lastUpdated = -1;		
 		controller = new HillClimbingAlgorithm(deltaC, minimumThreshold, maximumThreshold, maximumCapacityOfPeer);
 	}

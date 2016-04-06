@@ -53,7 +53,9 @@ public class FCUAccountingPlugin implements AccountingPlugin {
 			
 			double consumptionInterval = ((double) TimeUnit.MILLISECONDS.toSeconds(now
 					- order.getFulfilledTime()) / 60);
-
+			final double ACCEPTABLE_ERROR = 0.000001;
+			consumptionInterval = consumptionInterval<ACCEPTABLE_ERROR?0:consumptionInterval;
+			
 			String user = order.getFederationToken().getUser();
 			AccountingEntryKey current = new AccountingEntryKey(user,
 					order.getRequestingMemberId(), order.getProvidingMemberId());

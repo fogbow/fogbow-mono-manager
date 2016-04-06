@@ -240,6 +240,14 @@ accounting_datastore_url=jdbc:sqlite:/tmp/usage
 ## Benchmarking (Vanilla Benchmarking Plugin)
 benchmarking_class=org.fogbowcloud.manager.core.plugins.benchmarking.VanillaBenchmarkingPlugin
 
+#Capacity controller plugin
+capacitycontroller_class=org.fogbowcloud.manager.core.plugins.capacitycontroller.fairnessdriven.TwoFoldFairnessDrivenController
+## Pairwise 
+pairwise_capacitycontroller_class=org.fogbowcloud.manager.core.plugins.capacitycontroller.fairnessdriven.PairwiseFairnessDrivenController
+## Global
+global_capacitycontroller_class=org.fogbowcloud.manager.core.plugins.capacitycontroller.fairnessdriven.GlobalFairnessDrivenController
+
+
 ## OCCI extra resources
 #occi_extra_resource_file_path=
 
