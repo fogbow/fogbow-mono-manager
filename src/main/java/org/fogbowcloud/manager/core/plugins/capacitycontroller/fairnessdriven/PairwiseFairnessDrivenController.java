@@ -1,7 +1,6 @@
 package org.fogbowcloud.manager.core.plugins.capacitycontroller.fairnessdriven;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
