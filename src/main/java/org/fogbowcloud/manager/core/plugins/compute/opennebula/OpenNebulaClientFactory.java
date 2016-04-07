@@ -1,7 +1,6 @@
 package org.fogbowcloud.manager.core.plugins.compute.opennebula;
 
 import org.apache.log4j.Logger;
-import org.fogbowcloud.manager.core.plugins.storage.opennebula.OpenNebulaStoragePlugin;
 import org.fogbowcloud.manager.occi.model.ErrorType;
 import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;

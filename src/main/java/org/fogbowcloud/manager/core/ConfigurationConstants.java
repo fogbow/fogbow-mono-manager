@@ -15,7 +15,8 @@ public class ConfigurationConstants {
 	public static final String AUTHORIZATION_CLASS_KEY = "federation_authorization_class";
 	public static final String IMAGE_STORAGE_PLUGIN_CLASS = "image_storage_class";
 	public static final String BENCHMARKING_PLUGIN_CLASS_KEY = "benchmarking_class";
-	public static final String ACCOUNTING_PLUGIN_CLASS_KEY = "accounting_class";
+	public static final String COMPUTE_ACCOUNTING_PLUGIN_CLASS_KEY = "compute_accounting_class";
+	public static final String STORAGE_ACCOUNTING_PLUGIN_CLASS_KEY = "storage_accounting_class";
 	public static final String MEMBER_PICKER_PLUGIN_CLASS_KEY = "member_picker_class";
 	public static final String IDENTITY_CLASS_KEY = "identity_class";
 	public static final String MEMBER_VALIDATOR_CLASS_KEY = "member_validator_class";

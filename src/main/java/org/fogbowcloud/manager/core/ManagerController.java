@@ -60,6 +60,7 @@ import org.fogbowcloud.manager.core.plugins.util.SshClientPool;
 import org.fogbowcloud.manager.occi.ManagerDataStore;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.instance.InstanceState;
+import org.fogbowcloud.manager.occi.member.UsageServerResource.UsageContainer;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.ErrorType;
 import org.fogbowcloud.manager.occi.model.OCCIException;
@@ -123,7 +124,8 @@ public class ManagerController {
 	private FederationMemberPickerPlugin memberPickerPlugin;
 	private List<Flavor> flavorsProvided;
 	private BenchmarkingPlugin benchmarkingPlugin;
-	private AccountingPlugin accountingPlugin;
+	private AccountingPlugin computeAccountingPlugin;
+	private AccountingPlugin storageAccountingPlugin;
 	private ImageStoragePlugin imageStoragePlugin;
 	private AuthorizationPlugin authorizationPlugin;
 	private ComputePlugin computePlugin;
@@ -217,12 +219,20 @@ public class ManagerController {
 		this.storagePlugin = storagePlugin;
 	}
 
-	public void setAccountingPlugin(AccountingPlugin accountingPlugin) {
-		this.accountingPlugin = accountingPlugin;
+	public void setComputeAccountingPlugin(AccountingPlugin computeAccountingPlugin) {
+		this.computeAccountingPlugin = computeAccountingPlugin;
 		// accounging updater may starting only after set accounting plugin
 		if (!accountingUpdaterTimer.isScheduled()) {
 			triggerAccountingUpdater();
 		}
+	}
+	
+	public void setStorageAccountingPlugin(AccountingPlugin storageAccountingPlugin) {
+		this.storageAccountingPlugin = storageAccountingPlugin;
+		
+		if (!accountingUpdaterTimer.isScheduled()) {
+			triggerAccountingUpdater();
+		}		
 	}
 
 	private void recoverPreviousOrders() {
@@ -299,15 +309,44 @@ public class ManagerController {
 	}
 
 	private void updateAccounting() {
-		List<Order> ordersWithInstances = new ArrayList<Order>(
-				orderRepository.getOrdersIn(OrderState.FULFILLED, OrderState.DELETED));
-		List<String> orderIds = new LinkedList<String>();
-		for (Order order: ordersWithInstances) {
-			orderIds.add(order.getId());
+		try {
+			updateComputeAccouting();			
+		} catch (Exception e) {
+			LOGGER.warn("Could not update compute accounting.");
+		}		
+		try {
+			updateStorageAccouting();					
+		} catch (Exception e) {
+			LOGGER.warn("Could not update storage accounting.");
 		}
-		LOGGER.debug("Usage accounting is about to be updated. " + "The following orders do have instances: "
-				+ orderIds);
-		accountingPlugin.update(ordersWithInstances);
+	}
+
+	private void updateStorageAccouting() {
+		List<Order> ordersStorageWithInstances = new ArrayList<Order>(
+				orderRepository.getOrdersIn(OrderConstants.STORAGE_TERM,
+				OrderState.FULFILLED, OrderState.DELETED));
+		List<String> orderStorageIds = new LinkedList<String>();
+		for (Order order: ordersStorageWithInstances) {
+			orderStorageIds.add(order.getId());
+		}
+		LOGGER.debug("Usage accounting is about to be updated. "
+				+ "The following orders storage do have instances: "
+				+ orderStorageIds);
+		storageAccountingPlugin.update(ordersStorageWithInstances);
+	}
+
+	private void updateComputeAccouting() {
+		List<Order> ordersComputeWithInstances = new ArrayList<Order>(
+				orderRepository.getOrdersIn(OrderConstants.COMPUTE_TERM,
+				OrderState.FULFILLED, OrderState.DELETED));
+		List<String> orderComputeIds = new LinkedList<String>();
+		for (Order order: ordersComputeWithInstances) {
+			orderComputeIds.add(order.getId());
+		}
+		LOGGER.debug("Usage accounting is about to be updated. "
+				+ "The following orders compute do have instances: "
+				+ orderComputeIds);
+		computeAccountingPlugin.update(ordersComputeWithInstances);
 	}
 
 	public void setAuthorizationPlugin(AuthorizationPlugin authorizationPlugin) {
@@ -2034,7 +2073,7 @@ public class ManagerController {
 		computePlugin.dettach(federationUserToken, new ArrayList<Category>(), xOCCIAtt);
 	}		
 
-	public List<AccountingInfo> getAccountingInfo(String federationAccessId) {
+	public List<AccountingInfo> getAccountingInfo(String federationAccessId, String resourceKing) {
 		Token federationToken = getTokenFromFederationIdP(federationAccessId);
 		if (federationToken == null) {
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
@@ -2043,7 +2082,13 @@ public class ManagerController {
 		if (!isAdminUser(federationToken)) {
 			throw new OCCIException(ErrorType.FORBIDDEN, ResponseConstants.FORBIDDEN);
 		}
-		return accountingPlugin.getAccountingInfo();
+		
+		if (resourceKing.equals(OrderConstants.COMPUTE_TERM)) {
+			return computeAccountingPlugin.getAccountingInfo();
+		} else {
+			return storageAccountingPlugin.getAccountingInfo();
+		}
+		
 	}
 
 	protected boolean isAdminUser(Token federationToken) {
@@ -2060,20 +2105,26 @@ public class ManagerController {
 		}
 		return false;
 	}
-
-	public double getUsage(String federationAccessId, String providingMember) {
+	
+	public double getUsage(String federationAccessId, String providingMember, AccountingPlugin accountingPlugin) {
 		Token federationToken = getTokenFromFederationIdP(federationAccessId);
 		if (federationToken == null) {
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}
 		
-		AccountingInfo userAccounting = accountingPlugin.getAccountingInfo(
-				federationToken.getUser(),
+		AccountingInfo userAccounting = accountingPlugin.getAccountingInfo(federationToken.getUser(),
 				properties.getProperty(ConfigurationConstants.XMPP_JID_KEY), providingMember);
 		if (userAccounting == null) {
 			return 0;
 		}
 		return userAccounting.getUsage();
+	}
+	
+	public UsageContainer getUsages(String federationAccessId, String providingMember) {
+		double computeUsage = getUsage(federationAccessId, providingMember, computeAccountingPlugin);
+		double storageUsage = getUsage(federationAccessId, providingMember, storageAccountingPlugin);
+				
+		return new UsageContainer(computeUsage, storageUsage);		
 	}
 	
 	public ResourcesInfo getResourceInfoForRemoteMember(String accessId) {		

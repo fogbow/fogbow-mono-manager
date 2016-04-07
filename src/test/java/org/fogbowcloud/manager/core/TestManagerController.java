@@ -3858,7 +3858,7 @@ public class TestManagerController {
 	
 	@Test(expected=OCCIException.class)
 	public void testGetAccountingInvalidAdminUser() {
-		managerController.getAccountingInfo("invalid_admin_user");
+		managerController.getAccountingInfo("invalid_admin_user", OrderConstants.COMPUTE_TERM);
 	}
 	
 	@Test
@@ -3875,7 +3875,9 @@ public class TestManagerController {
 		
 		Mockito.when(accountingPlugin.getAccountingInfo()).thenReturn(expectedAccounting );
 				
-		List<AccountingInfo> returnedAccounting = managerController.getAccountingInfo(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
+		List<AccountingInfo> returnedAccounting = managerController
+				.getAccountingInfo(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
+				OrderConstants.COMPUTE_TERM);
 		
 		// checking accounting
 		Assert.assertEquals(2, returnedAccounting.size());
@@ -3905,12 +3907,14 @@ public class TestManagerController {
 		Mockito.when(identityPlugin.getToken("admin_access_id")).thenReturn(adminToken);
 		
 		// checking return of admin_user 1
-		List<AccountingInfo> returnedAccounting = managerController.getAccountingInfo(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID);
+		List<AccountingInfo> returnedAccounting = managerController
+				.getAccountingInfo(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
+				OrderConstants.COMPUTE_TERM);
 		Assert.assertEquals(2, returnedAccounting.size());
 		Assert.assertEquals(expectedAccounting, returnedAccounting);
 	
 		// checking return of admin_user 2
-		returnedAccounting = managerController.getAccountingInfo("admin_access_id");
+		returnedAccounting = managerController.getAccountingInfo("admin_access_id", OrderConstants.COMPUTE_TERM);
 		Assert.assertEquals(2, returnedAccounting.size());
 		Assert.assertEquals(expectedAccounting, returnedAccounting);
 	}

@@ -43,10 +43,17 @@ public class OrderRepository {
 	}
 
 	public List<Order> getOrdersIn(OrderState... states) {
+		return getOrdersIn(null, states);
+	}
+	
+	public List<Order> getOrdersIn(String resourceKind, OrderState... states) {
 		List<Order> allOrdersInState = new LinkedList<Order>();
 		for (List<Order> userOrders : orders.values()) {
 			for (Order order : userOrders) {
 				if (order.getState().in(states)) {
+					if (resourceKind != null && !resourceKind.equals(order.getResourceKing())) {
+						continue;
+					}
 					allOrdersInState.add(order);
 				}
 			}

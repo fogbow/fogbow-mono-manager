@@ -33,22 +33,53 @@ public class UsageServerResource extends MemberServerResource {
 				application.getAuthenticationURI());
 
 		if (memberId != null) {
-			return generateResponse(memberId, application.getUsage(authToken, memberId));
+			UsageContainer usageContainer = application.getUsages(authToken, memberId);
+			return generateResponse(memberId, usageContainer);
 		}
 
 		throw new OCCIException(ErrorType.BAD_REQUEST, "The memberId was not specified.");
 	}
 
-	private String generateResponse(String memberId, double usage) {
+	private String generateResponse(String memberId, UsageContainer usageContainer) {
 		StringBuilder response = new StringBuilder();
 		response.append(OCCIHeaders.X_OCCI_ATTRIBUTE + ": memberId=" + memberId);
 		response.append("\n");
-		response.append(OCCIHeaders.X_OCCI_ATTRIBUTE + ": usage=" + formatDouble(usage));
+		response.append(OCCIHeaders.X_OCCI_ATTRIBUTE + ": compute usage=" + formatDouble(usageContainer.getComputeUsage()));
+		response.append("\n");
+		response.append(OCCIHeaders.X_OCCI_ATTRIBUTE + ": storage usage=" + formatDouble(usageContainer.getStorageUsage()));
 
 		return response.toString().trim();
 	}
 	
 	public static double formatDouble(double doubleValue) {
 		return Double.valueOf(USAGE_FORMAT.format(doubleValue));
+	}
+
+	public static class UsageContainer {
+
+		private double computeUsage;
+		private double storageUsage;
+
+		public UsageContainer(double computeUsage, double storageUsage) {
+			this.computeUsage = computeUsage;
+			this.storageUsage = storageUsage;
+		}
+
+		public double getComputeUsage() {
+			return computeUsage;
+		}
+
+		public void setComputeUsage(double computeUsage) {
+			this.computeUsage = computeUsage;
+		}
+
+		public double getStorageUsage() {
+			return storageUsage;
+		}
+
+		public void setStorageUsage(double storageUsage) {
+			this.storageUsage = storageUsage;
+		}
+
 	}
 }

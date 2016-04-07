@@ -61,6 +61,7 @@ public class OCCITestHelper {
 	public static final String INVALID_TOKEN = "invalid-token";
 	public static final String URI_FOGBOW_ORDER = "http://localhost:" + ENDPOINT_PORT + "/" + OrderConstants.TERM
 			+ "/";
+	public static final String URI_FOGBOW_ACCOUNTING = "http://localhost:" + ENDPOINT_PORT + "/member/accounting/";
 	public static final String URI_FOGBOW_COMPUTE = "http://localhost:" + ENDPOINT_PORT + "/compute/";
 	public static final String URI_FOGBOW_STORAGE = "http://localhost:" + ENDPOINT_PORT + "/storage/";
 	public static final String URI_FOGBOW_MEMBER = "http://localhost:" + ENDPOINT_PORT + "/member";
@@ -143,10 +144,10 @@ public class OCCITestHelper {
 
 	public ManagerController initializeComponentCompute(ComputePlugin computePlugin, IdentityPlugin identityPlugin, IdentityPlugin federationIdentityPlugin,
 			AuthorizationPlugin authorizationPlugin, ImageStoragePlugin imageStoragePlugin,
-			AccountingPlugin accountingPlugin, BenchmarkingPlugin benchmarkingPlugin, Map<String, List<Order>> ordersToAdd,
+			AccountingPlugin accountingPlugin, AccountingPlugin storageAccountingPlugin, BenchmarkingPlugin benchmarkingPlugin, Map<String, List<Order>> ordersToAdd,
 			MapperPlugin mapperPlugin) throws Exception {
 		return initializeComponentCompute(computePlugin, null,identityPlugin, federationIdentityPlugin, authorizationPlugin,
-				imageStoragePlugin, accountingPlugin, benchmarkingPlugin, ordersToAdd,
+				imageStoragePlugin, accountingPlugin, storageAccountingPlugin, benchmarkingPlugin, ordersToAdd,
 				mapperPlugin, null, new HashMap<String, List<StorageLink>>());
 	}
 	
@@ -162,7 +163,7 @@ public class OCCITestHelper {
 			MapperPlugin mapperPlugin) throws Exception {
 		return initializeComponentCompute(computePlugin, storagePlugin,
 				identityPlugin, identityPlugin, authorizationPlugin, imageStoragePlugin,
-				accountingPlugin, benchmarkingPlugin, ordersToAdd,
+				accountingPlugin, accountingPlugin, benchmarkingPlugin, ordersToAdd,
 				mapperPlugin, null, storageLinksToAdd);
 	}
 	
@@ -171,13 +172,13 @@ public class OCCITestHelper {
 			AccountingPlugin accountingPlugin, BenchmarkingPlugin benchmarkingPlugin, Map<String, List<Order>> ordersToAdd,
 			MapperPlugin mapperPlugin) throws Exception {
 		return initializeComponentCompute(computePlugin, storagePlugin,identityPlugin, identityPlugin, authorizationPlugin,
-				imageStoragePlugin, accountingPlugin, benchmarkingPlugin, ordersToAdd,
+				imageStoragePlugin, accountingPlugin, accountingPlugin, benchmarkingPlugin, ordersToAdd,
 				mapperPlugin, null, new HashMap<String, List<StorageLink>>());
 	}	
 	
 	public ManagerController initializeComponentCompute(ComputePlugin computePlugin, StoragePlugin storagePlugin, IdentityPlugin identityPlugin,
 			IdentityPlugin federationIdentityPlugin, AuthorizationPlugin authorizationPlugin, ImageStoragePlugin imageStoragePlugin,
-			AccountingPlugin accountingPlugin, BenchmarkingPlugin benchmarkingPlugin, Map<String, List<Order>> ordersToAdd,
+			AccountingPlugin accountingPlugin, AccountingPlugin storageAccountingPlugin, BenchmarkingPlugin benchmarkingPlugin, Map<String, List<Order>> ordersToAdd,
 			MapperPlugin mapperPlugin, Properties properties, Map<String, List<StorageLink>> storageLinksToAdd) throws Exception {
 		component = new Component();
 		component.getServers().add(Protocol.HTTP, ENDPOINT_PORT);
@@ -204,7 +205,8 @@ public class OCCITestHelper {
 		facade.setLocalIdentityPlugin(identityPlugin);
 		facade.setFederationIdentityPlugin(federationIdentityPlugin);
 		facade.setImageStoragePlugin(imageStoragePlugin);
-		facade.setAccountingPlugin(accountingPlugin);
+		facade.setComputeAccountingPlugin(accountingPlugin);
+		facade.setStorageAccountingPlugin(storageAccountingPlugin);
 		facade.setBenchmarkingPlugin(benchmarkingPlugin);
 		facade.setStoragePlugin(storagePlugin);
 		
@@ -250,7 +252,8 @@ public class OCCITestHelper {
 		facade.setLocalIdentityPlugin(identityPlugin);
 		facade.setFederationIdentityPlugin(identityPlugin);
 		facade.setAuthorizationPlugin(authorizationPlugin);
-		facade.setAccountingPlugin(accountingPlugin);
+		facade.setStorageAccountingPlugin(accountingPlugin);
+		facade.setComputeAccountingPlugin(accountingPlugin);
 		facade.setLocalCredentailsPlugin(mapperPlugin);
 		facade.updateMembers(federationMembers);
 		

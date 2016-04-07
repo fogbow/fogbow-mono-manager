@@ -115,8 +115,8 @@ public class TestPostCompute {
 		ordersToAdd.put(OCCITestHelper.USER_MOCK, orders);
 
 		this.helper.initializeComponentCompute(computePlugin, identityPlugin, identityPlugin, authorizationPlugin,
-				imageStoragePlugin, Mockito.mock(AccountingPlugin.class), Mockito.mock(BenchmarkingPlugin.class),
-				ordersToAdd, mapperPlugin);
+				imageStoragePlugin, Mockito.mock(AccountingPlugin.class), Mockito.mock(AccountingPlugin.class), 
+				Mockito.mock(BenchmarkingPlugin.class), ordersToAdd, mapperPlugin);
 
 	}
 

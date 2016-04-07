@@ -123,7 +123,7 @@ public class TestDeleteCompute {
 		
 		instanceDB = new InstanceDataStore(INSTANCE_DB_URL);
 		facade = this.helper.initializeComponentCompute(computePlugin, identityPlugin, identityPlugin, 
-				authorizationPlugin, imageStoragePlugin, accountingPlugin, benchmarkingPlugin, ordersToAdd,
+				authorizationPlugin, imageStoragePlugin, accountingPlugin, accountingPlugin, benchmarkingPlugin, ordersToAdd,
 				mapperPlugin);		
 	}
 

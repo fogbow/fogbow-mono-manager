@@ -2,6 +2,7 @@ package org.fogbowcloud.manager.occi.order;
 
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 
 import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.order.Order;
@@ -88,10 +89,30 @@ public class TestOrderRepository {
 		Assert.assertEquals(2, orderRepository.getByUser(USER, false).size());
 	}	
 	
+	@Test
+	public void testGetOrderInState() {
+		String user = "user";
+		orderRepository.addOrder(user, createOrder("idThree", user, true, OrderConstants.STORAGE_TERM));
+		orderRepository.addOrder(user, createOrder("idFOur", user, true, OrderConstants.STORAGE_TERM));
+		List<Order> ordersCompute = orderRepository.getOrdersIn(
+				OrderConstants.COMPUTE_TERM, OrderState.OPEN);
+		List<Order> ordersStorage = orderRepository.getOrdersIn(
+				OrderConstants.STORAGE_TERM, OrderState.OPEN);		
+		Assert.assertEquals(5, ordersCompute.size());
+		Assert.assertEquals(2, ordersStorage.size());
+		
+	}
+	
 	private Order createOrder(String id, String user, boolean isLocal) {
-		Token federationToken = new Token("1", user, new Date(), new HashMap<String, String>());
+		return createOrder(id, user, isLocal, OrderConstants.COMPUTE_TERM);
+	}
+	
+	private Order createOrder(String id, String user, boolean isLocal, String resourceKind) {
+		HashMap<String, String> attributes = new HashMap<String, String>();
+		attributes.put(OrderAttribute.RESOURCE_KIND.getValue(), resourceKind);
+		Token federationToken = new Token("1", user, new Date(), attributes);
 		Order order = new Order(id, federationToken, "", "", "", new Date().getTime(),
-				isLocal, OrderState.OPEN, null, null);
+				isLocal, OrderState.OPEN, null, attributes);
 		return order;
 	}
 	
