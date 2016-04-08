@@ -38,11 +38,9 @@ public class ManagerDataStore {
 	protected static final String XOCCI_ATTRIBUTES = "xocci_attributes";
 	protected static final String UPDATED = "updated";
 	
-	protected static final String STORAGELINK_DATASTORE_URL_DEFAULT = "jdbc:sqlite:/tmp/dbStorageLinkSQLite.db";
-	protected static final String STORAGELINK_DATASTORE_SQLITE_DRIVER = "org.sqlite.JDBC";
 	protected static final String STORAGELINK_TABLE_NAME = "t_storagelink";
-	protected static final String STORAGELINK_ID = "id";
-	protected static final String TARGER = "target";
+	protected static final String STORAGELINK_ID = "storage_link_id";
+	protected static final String TARGET = "target";
 	protected static final String DEVICE_ID = "device_id";
 	protected static final String SOURCE = "source";
 	
@@ -76,7 +74,7 @@ public class ManagerDataStore {
 			statement.execute("CREATE TABLE IF NOT EXISTS " + STORAGELINK_TABLE_NAME + "(" 
 							+ STORAGELINK_ID + " VARCHAR(255) PRIMARY KEY, "
 							+ SOURCE + " VARCHAR(255), "
-							+ TARGER + " VARCHAR(255), "
+							+ TARGET + " VARCHAR(255), "
 							+ DEVICE_ID + " VARCHAR(255), "
 							+ FEDERATION_TOKEN + " TEXT, "
 							+ PROVIDING_MEMBER_ID + " VARCHAR(255), "
@@ -167,7 +165,7 @@ public class ManagerDataStore {
 			return orders;
 		} catch (SQLException e) {
 			e.printStackTrace();
-			LOGGER.error("Couldn't retrive orders.", e);
+			LOGGER.error("Couldn't retrieve orders.", e);
 			try {
 				if (connection != null) {
 					connection.rollback();
@@ -340,7 +338,7 @@ public class ManagerDataStore {
 	 */
 	
 	private static final String INSERT_STORAGELINK_SQL = "INSERT INTO " + STORAGELINK_TABLE_NAME
-			+ " (" + STORAGELINK_ID + "," + PROVIDING_MEMBER_ID + "," + SOURCE + "," + TARGER + ","
+			+ " (" + STORAGELINK_ID + "," + PROVIDING_MEMBER_ID + "," + SOURCE + "," + TARGET + ","
 			+ FEDERATION_TOKEN + "," + DEVICE_ID + "," + IS_LOCAL + ")" 
 			+ " VALUES (?,?,?,?,?,?,?)";
 	
@@ -353,7 +351,7 @@ public class ManagerDataStore {
 			
 			storageLinkStmt = connection.prepareStatement(INSERT_STORAGELINK_SQL);
 			storageLinkStmt.setString(1, storageLink.getId());
-			storageLinkStmt.setString(2, storageLink.getProvadingMemberId());
+			storageLinkStmt.setString(2, storageLink.getProvidingMemberId());
 			storageLinkStmt.setString(3, storageLink.getSource());
 			storageLinkStmt.setString(4, storageLink.getTarget());
 			Token federationToken = storageLink.getFederationToken();
@@ -381,7 +379,7 @@ public class ManagerDataStore {
 	}
 	
 	private static final String GET_STORAGELINK_SQL = "SELECT " + STORAGELINK_ID + ", " 
-			+ PROVIDING_MEMBER_ID + ", " + SOURCE + ", " + TARGER + ", " + FEDERATION_TOKEN + ", " 
+			+ PROVIDING_MEMBER_ID + ", " + SOURCE + ", " + TARGET + ", " + FEDERATION_TOKEN + ", " 
 			+ IS_LOCAL + ", " + DEVICE_ID  
 			+ " FROM " + STORAGELINK_TABLE_NAME;
 	
@@ -400,7 +398,7 @@ public class ManagerDataStore {
 			while (resultSet.next()) {
 				String tokenJsonStr = resultSet.getString(FEDERATION_TOKEN);
 				storageLinks.add(new StorageLink(resultSet.getString(STORAGELINK_ID),
-						resultSet.getString(SOURCE), resultSet.getString(TARGER),
+						resultSet.getString(SOURCE), resultSet.getString(TARGET),
 						resultSet.getString(DEVICE_ID), resultSet.getString(PROVIDING_MEMBER_ID), 
 						tokenJsonStr != null ? Token.fromJSON(tokenJsonStr) : null, resultSet.getBoolean(IS_LOCAL)));
 			}
@@ -409,7 +407,7 @@ public class ManagerDataStore {
 			
 			return storageLinks;
 		} catch (SQLException e) {
-			LOGGER.error("Couldn't retrive storage links.", e);
+			LOGGER.error("Couldn't retrieve storage links.", e);
 			try {
 				if (connection != null) {
 					connection.rollback();
@@ -455,7 +453,7 @@ public class ManagerDataStore {
 	}		
 	
 	private static final String UPDATE_STORAGELINK_SQL = "UPDATE " + STORAGELINK_TABLE_NAME + " SET "
-			+ PROVIDING_MEMBER_ID + "=?," + SOURCE + "=?," + FEDERATION_TOKEN + "=? ," + TARGER
+			+ PROVIDING_MEMBER_ID + "=?," + SOURCE + "=?," + FEDERATION_TOKEN + "=? ," + TARGET
 			+ "=? ," + IS_LOCAL + "=?," + DEVICE_ID + "=?" + " WHERE " + STORAGELINK_ID + "=?";
 	
 	public boolean updateStorageLink(StorageLink storageLink) throws SQLException, JSONException {
@@ -466,7 +464,7 @@ public class ManagerDataStore {
 			connection.setAutoCommit(false);
 			
 			updateStorageLinkStmt = connection.prepareStatement(UPDATE_STORAGELINK_SQL);
-			updateStorageLinkStmt.setString(1, storageLink.getProvadingMemberId());
+			updateStorageLinkStmt.setString(1, storageLink.getProvidingMemberId());
 			updateStorageLinkStmt.setString(2, storageLink.getSource());
 			Token federationToken = storageLink.getFederationToken();
 			updateStorageLinkStmt.setString(3, federationToken != null ? 

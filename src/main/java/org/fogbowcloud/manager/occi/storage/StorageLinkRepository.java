@@ -18,15 +18,11 @@ public class StorageLinkRepository {
 	
 	private Map<String, List<StorageLink>> storageLinks = new HashMap<String, List<StorageLink>>();
 		
-	public Map<String, List<StorageLink>> getStorageLinks() {
+	protected Map<String, List<StorageLink>> getStorageLinks() {
 		return storageLinks;
 	}
 	
-	public void setStorageLinks(Map<String, List<StorageLink>> storageLinks) {
-		this.storageLinks = storageLinks;
-	}
-	
-	protected boolean storageLinkExists(List<StorageLink> storageLinks, StorageLink userStorageLink) {
+	private boolean storageLinkExists(List<StorageLink> storageLinks, StorageLink userStorageLink) {
 		for (StorageLink storageLink : storageLinks) {
 			if (storageLink.getId().equals(userStorageLink.getId())) {
 				return true;
@@ -35,7 +31,7 @@ public class StorageLinkRepository {
 		return false;
 	}
 	
-	public void addStorageLink(String user, StorageLink storageLink) {
+	public boolean addStorageLink(String user, StorageLink storageLink) {
 		LOGGER.debug("Adding storage link " + storageLink.getId() + " to user " + user);
 		List<StorageLink> userStorageLinks = storageLinks.get(user);
 		if (userStorageLinks == null) {
@@ -43,15 +39,12 @@ public class StorageLinkRepository {
 			storageLinks.put(user, userStorageLinks);
 		}
 		if (storageLinkExists(userStorageLinks, storageLink)) {
-			return;
+			return false;
 		}
 		userStorageLinks.add(storageLink);
+		return true;
 	}
-	
-	public StorageLink get(String storageLinkId) {
-		return get(storageLinkId, null);
-	}
-	
+		
 	public List<StorageLink> getAllStorageLinks() {
 		List<StorageLink> allStorageLinks = new LinkedList<StorageLink>();
 		for (List<StorageLink> userStorageLinks : storageLinks.values()) {
@@ -60,9 +53,13 @@ public class StorageLinkRepository {
 			}
 		}
 		return allStorageLinks;
-	}	
+	}
 	
-	public StorageLink get(String storageLinkId, String user) {
+	public StorageLink get(String storageLinkId) {
+		return get(null, storageLinkId);
+	}
+	
+	public StorageLink get(String user, String storageLinkId) {
 		Collection<List<StorageLink>> storageLinkColection = new ArrayList<List<StorageLink>>();
 		if (user != null) {
 			List<StorageLink> storageLinkbyUser = getByUser(user);
@@ -80,22 +77,6 @@ public class StorageLinkRepository {
 			}
 		}
 		LOGGER.debug("Storage link id " + storageLinkId + " was not found.");
-		return null;
-	}
-	
-	
-	public StorageLink getByInstance(String instanceId, String type) {
-		Collection<List<StorageLink>> storageLinkColection = new ArrayList<List<StorageLink>>(storageLinks.values());
-		for (List<StorageLink> userStorageLinks : storageLinkColection) {
-			for (StorageLink storageLink : userStorageLinks) {
-				if (type.equals(OrderConstants.COMPUTE_TERM) && instanceId.equals(storageLink.getSource()) 
-						|| type.equals(OrderConstants.STORAGE_TERM) && instanceId.equals(storageLink.getTarget())) {
-					LOGGER.debug("Getting storage link id " + storageLink);
-					return storageLink;					
-				} 
-			}
-		}
-		LOGGER.debug("Storage link id, by instance id : (" + instanceId + "), was not found.");
 		return null;
 	}
 	
@@ -137,10 +118,6 @@ public class StorageLinkRepository {
 		if (userStorageLinks == null) {
 			return new LinkedList<StorageLink>();
 		}		
-		LinkedList<StorageLink> userLocalStorageLinks = new LinkedList<StorageLink>();
-		for (StorageLink storageLinks : userStorageLinks) {
-			userLocalStorageLinks.add(storageLinks);
-		}
 		return userStorageLinks;
 	}
 	
@@ -161,7 +138,7 @@ public class StorageLinkRepository {
 	
 	public static class Util {
 		
-		public static String storageLinkstoString(List<StorageLink> storageLinks) {
+		public static String storageLinksToString(List<StorageLink> storageLinks) {
 			StringBuilder stringBuilder = new StringBuilder();
 			for (StorageLink storageLink : storageLinks) {
 				if (stringBuilder.length() != 0) {
@@ -191,22 +168,12 @@ public class StorageLinkRepository {
 		}
 
 		public StorageLink(String id, String source, String target, String deviceId) {
-			this(id, source, target, deviceId, false);
-		}
-		
-		public StorageLink(String id, String source, String target, String deviceId, boolean isLocal) {
-			super();
-			this.id = id;
-			this.source = source;
-			this.target = target;
-			this.deviceId = deviceId;
-			this.isLocal = isLocal;
+			this(id, source, target, deviceId, null, null, false);
 		}		
 				
 		public StorageLink(String id, String source, String target,
 				String deviceId, String provadingMemberId,
 				Token federationToken, boolean isLocal) {
-			super();
 			this.id = id;
 			this.source = source;
 			this.target = target;
@@ -248,7 +215,7 @@ public class StorageLinkRepository {
 			this.id = id;
 		}
 
-		public String getProvadingMemberId() {
+		public String getProvidingMemberId() {
 			return provadingMemberId;
 		}
 

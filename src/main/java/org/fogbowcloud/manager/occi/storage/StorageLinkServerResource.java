@@ -140,7 +140,7 @@ public class StorageLinkServerResource extends ServerResource {
 		attToOutput.put(StorageAttribute.DEVICE_ID.getValue(), storageLink.getDeviceId());		
 		attToOutput.put(StorageAttribute.SOURCE.getValue(), storageLink.getSource());
 		attToOutput.put(StorageAttribute.TARGET.getValue(), storageLink.getTarget());
-		attToOutput.put(StorageAttribute.PROVADING_MEMBER_ID.getValue(), storageLink.getProvadingMemberId());
+		attToOutput.put(StorageAttribute.PROVADING_MEMBER_ID.getValue(), storageLink.getProvidingMemberId());
 		for (String attName : attToOutput.keySet()) {
 			String attrValue = attToOutput.get(attName) != null ? attToOutput.get(attName) : null;
 			responseOCCIFormat.append(OCCIHeaders.X_OCCI_ATTRIBUTE + ": " 
@@ -160,7 +160,7 @@ public class StorageLinkServerResource extends ServerResource {
 		while(storageLinkIt.hasNext()){			
 			StorageLink storageLink = storageLinkIt.next();
 			response += HeaderUtils.X_OCCI_LOCATION_PREFIX + storageLink.getId() 
-					 + Order.SEPARATOR_GLOBAL_ID + storageLink.getProvadingMemberId();
+					 + Order.SEPARATOR_GLOBAL_ID + storageLink.getProvidingMemberId();
 			if (storageLinkIt.hasNext()) {
 				response += "\n";
 			}
@@ -194,7 +194,7 @@ public class StorageLinkServerResource extends ServerResource {
 						+ StorageAttribute.TARGET.getValue() + "=" + storageLInk.getTarget() + "; "
 						+ StorageAttribute.SOURCE.getValue() + "=" + storageLInk.getSource() + "; "
 						+ StorageAttribute.DEVICE_ID.getValue() + "=" + deviceId + "; "
-						+ StorageAttribute.PROVADING_MEMBER_ID.getValue() + "=" + storageLInk.getProvadingMemberId() + "; "
+						+ StorageAttribute.PROVADING_MEMBER_ID.getValue() + "=" + storageLInk.getProvidingMemberId() + "; "
 						+ "\n";
 			} else {
 				response += "\n";
@@ -214,7 +214,7 @@ public class StorageLinkServerResource extends ServerResource {
 		}
 
 		responseHeaders.add(new Header("Location", requestEndpoint + "/"
-				+ storageLink.getId() + Order.SEPARATOR_GLOBAL_ID + storageLink.getProvadingMemberId()));
+				+ storageLink.getId() + Order.SEPARATOR_GLOBAL_ID + storageLink.getProvidingMemberId()));
 	}
 	
 	public String getHostRef(HttpRequest req) {

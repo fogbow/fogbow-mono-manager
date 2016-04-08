@@ -187,7 +187,7 @@ public class ManagerController {
 		return localIdentityPlugin;
 	}
 	
-	public void setDatabase(ManagerDataStore database) {
+	protected void setDatabase(ManagerDataStore database) {
 		this.managerDatabase = database;
 	}
 
@@ -257,6 +257,7 @@ public class ManagerController {
 		LOGGER.debug("Recovering previous storage link.");
 		for (StorageLink storageLink : new ArrayList<StorageLink>(managerDatabase.getStorageLinks())) {
 			storageLinkRepository.addStorageLink(storageLink.getFederationToken().getUser(), storageLink);
+			LOGGER.debug("Storage link (" + storageLink.getId() + ") was recovered.");
 		}
 		LOGGER.debug("Previous storage link recovered.");
 	}
@@ -264,19 +265,19 @@ public class ManagerController {
 	private void initializeOrders() throws SQLException, JSONException {
 		LOGGER.debug("Recovering previous orders.");
 		for (Order order : this.managerDatabase.getOrders()) {
-			Instance instance = null;
 			try {
+				Instance instance = null;
 				if (order.getState().equals(OrderState.FULFILLED)
 						|| order.getState().equals(OrderState.DELETED)) {
 					instance = getInstance(order, order.getResourceKing());
 					LOGGER.debug(instance.getId() + " was recovered to request " + order.getId());
 				}
-			} catch (Exception e) {
-				LOGGER.debug(order.getGlobalInstanceId() + " does not exist anymore.");
+			} catch (OCCIException e) {
+				LOGGER.debug(order.getGlobalInstanceId() + " does not exist anymore.", e);
+				instanceRemoved(order);
 				if (order.getState().equals(OrderState.DELETED)) {
 					continue;
 				}
-				instanceRemoved(order);
 			}
 			orderRepository.addOrder(order.getFederationToken().getUser(), order);
 		}
@@ -909,7 +910,7 @@ public class ManagerController {
 		if (!storageLinks.isEmpty()) {
 			throw new OCCIException(ErrorType.BAD_REQUEST,
 					ResponseConstants.EXISTING_ATTACHMENT + " Attachment IDs : " 
-					+ StorageLinkRepository.Util.storageLinkstoString(storageLinks));			
+					+ StorageLinkRepository.Util.storageLinksToString(storageLinks));			
 		}
 				
 		Token localToken = getFederationUserToken(order);
@@ -1290,15 +1291,15 @@ public class ManagerController {
 		List<StorageLink> allManagerStorageLinks = new ArrayList<StorageLink>(
 				storageLinkRepository.getAllStorageLinks());
 		for (StorageLink storageLink : allManagerStorageLinks) {
-			if (storageLinksDBtoRemove.get(storageLink.getId()) == null) {
+			if (!storageLinksDBtoRemove.containsKey(storageLink.getId())) {
 				this.managerDatabase.addStorageLink(storageLink);
 			} else {
 				this.managerDatabase.updateStorageLink(storageLink);
 				storageLinksDBtoRemove.remove(storageLink.getId());
 			}
 		}
-		for (String key : storageLinksDBtoRemove.keySet()) {
-			this.managerDatabase.removeStorageLink(storageLinksDBtoRemove.get(key));
+		for (StorageLink storageLink : storageLinksDBtoRemove.values()) {
+			this.managerDatabase.removeStorageLink(storageLink);
 		}
 		LOGGER.debug("Storage link database update finish.");
 	}
@@ -1313,15 +1314,15 @@ public class ManagerController {
 		
 		List<Order> allOrders = new ArrayList<Order>(orderRepository.getAllOrders());
 		for (Order order : allOrders) {
-			if (ordersDB.get(order.getId()) == null) {
+			if (!ordersDB.containsKey(order.getId())) {
 				managerDatabase.addOrder(order);
 			} else {
 				managerDatabase.updateOrder(order);
 				ordersDB.remove(order.getId());
 			}
 		}
-		for (String key : ordersDB.keySet()) {
-			managerDatabase.removeOrder(ordersDB.get(key));
+		for (Order order: ordersDB.values()) {
+			managerDatabase.removeOrder(order);
 		}
 		LOGGER.debug("Order database update finish.");
 	}
@@ -2044,7 +2045,7 @@ public class ManagerController {
 		if (federationToken == null) {
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}
-		StorageLink storageLink = storageLinkRepository.get(normalizeInstanceId(storageLinkId), federationToken.getUser());
+		StorageLink storageLink = storageLinkRepository.get(federationToken.getUser(), normalizeInstanceId(storageLinkId));
 		
 		if (storageLink == null) {
 			throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);

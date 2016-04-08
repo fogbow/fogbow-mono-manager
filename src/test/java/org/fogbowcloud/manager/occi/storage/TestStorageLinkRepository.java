@@ -32,7 +32,7 @@ public class TestStorageLinkRepository {
 		Assert.assertEquals(1, storageLinkRepository.getStorageLinks().size());
 		Assert.assertEquals(1, storageLinkRepository.getStorageLinks().get(user).size());
 		
-		StorageLink storageLinkTwo = new StorageLink("x", "x", "x", "x", false);
+		StorageLink storageLinkTwo = new StorageLink("x", "x", "x", "x", null, null, false);
 		this.storageLinkRepository.addStorageLink("Two", storageLinkTwo);
 		Assert.assertEquals(2, storageLinkRepository.getStorageLinks().size());
 	}
@@ -57,39 +57,6 @@ public class TestStorageLinkRepository {
 		
 		Assert.assertNull(this.storageLinkRepository.get("wrong"));
 	}
-	
-	@Test
-	public void testGetByInstanceStorageLink() {
-		String user = "user";
-		String id = "id";
-		String source = "source";
-		String target = "target";
-		String deviceId = "deviceId";
-		StorageLink storageLink = new StorageLink(id, source, target, deviceId);
-		this.storageLinkRepository.addStorageLink(user, storageLink);
-		this.storageLinkRepository.addStorageLink("idTwo", new StorageLink("idTwo", "sourceTwo", "targetTwo", "deviceIdTwo"));
-		this.storageLinkRepository.addStorageLink("idThree", new StorageLink("idThree", "sourceThree", "targetThree", "deviceIdThree"));
-		this.storageLinkRepository.addStorageLink("idFour", new StorageLink("idFour", "sourceFour", "targetFour", "deviceIdFour"));
-		this.storageLinkRepository.addStorageLink("idFour", new StorageLink("idFourTwo", "sourceFourTwo", "targetFourTwo", "deviceIdFourTwo"));		
-		
-		Assert.assertEquals(4, storageLinkRepository.getStorageLinks().size());
-		
-		StorageLink storageLinkFound = this.storageLinkRepository.getByInstance(source, OrderConstants.COMPUTE_TERM);
-		Assert.assertNotNull(storageLinkFound);
-		Assert.assertEquals(id, storageLinkFound.getId());
-		Assert.assertEquals(source, storageLinkFound.getSource());
-		Assert.assertEquals(target, storageLinkFound.getTarget());
-		Assert.assertEquals(deviceId, storageLinkFound.getDeviceId());
-		
-		storageLinkFound = this.storageLinkRepository.getByInstance(target, OrderConstants.STORAGE_TERM);
-		Assert.assertNotNull(storageLinkFound);
-		Assert.assertEquals(id, storageLinkFound.getId());
-		Assert.assertEquals(source, storageLinkFound.getSource());
-		Assert.assertEquals(target, storageLinkFound.getTarget());
-		Assert.assertEquals(deviceId, storageLinkFound.getDeviceId());		
-		
-		Assert.assertNull(this.storageLinkRepository.getByInstance("", ""));
-	}	
 	
 	@Test
 	public void testGetAllByInstanceStorageLink() {
@@ -140,7 +107,7 @@ public class TestStorageLinkRepository {
 		this.storageLinkRepository.addStorageLink(user, new StorageLink(idFourTwo, "sourceFourTwo", "targetFourTwo", "deviceIdFourTwo"));
 		
 		Assert.assertEquals(idTwo + ", " + idThree + ", " + idFour + ", " + idFourTwo, 
-				StorageLinkRepository.Util.storageLinkstoString(storageLinkRepository.getByUser(user)));
+				StorageLinkRepository.Util.storageLinksToString(storageLinkRepository.getByUser(user)));
 	}
 	
 	@Test
@@ -212,5 +179,23 @@ public class TestStorageLinkRepository {
 		this.storageLinkRepository.getAllStorageLinks();
 		
 		Assert.assertEquals(3, this.storageLinkRepository.getAllStorageLinks().size());
-	}	
+	}
+	
+	@Test
+	public void testRemoveAllByInstance() {
+		String instanceId = "sourceOne";
+		Token federationTokenOne = new Token("accessIdOne", "userOne", new Date(), null);
+		StorageLink storageLinkOne = new StorageLink("idOne", instanceId, "targetOne",
+				"deviceIdOne", "provadingMemberIdOne", federationTokenOne, true);
+		StorageLink storageLinkTwo = new StorageLink("idTwo", instanceId, "targetTwo",
+				"deviceIdTwo", "provadingMemberIdTwo", federationTokenOne, true);	
+		storageLinkRepository.addStorageLink(storageLinkOne.getFederationToken().getUser(), storageLinkOne);
+		storageLinkRepository.addStorageLink(storageLinkTwo.getFederationToken().getUser(), storageLinkTwo);		
+		this.storageLinkRepository.getAllStorageLinks();
+		Assert.assertEquals(2, this.storageLinkRepository.getAllStorageLinks().size());
+		
+		this.storageLinkRepository.removeAllByInstance(instanceId, OrderConstants.COMPUTE_TERM);
+		
+		Assert.assertEquals(0, this.storageLinkRepository.getAllStorageLinks().size());
+	}
 }
