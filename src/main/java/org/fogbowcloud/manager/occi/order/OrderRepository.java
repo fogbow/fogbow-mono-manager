@@ -12,6 +12,7 @@ public class OrderRepository {
 
 	private static final Logger LOGGER = Logger.getLogger(OrderRepository.class);
 
+	// TODO refactor list to map
 	private Map<String, List<Order>> orders = new HashMap<String, List<Order>>();
 
 	/*

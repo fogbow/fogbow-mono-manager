@@ -16,6 +16,7 @@ public class StorageLinkRepository {
 
 	private static final Logger LOGGER = Logger.getLogger(StorageLinkRepository.class);
 	
+	// TODO refactor list to map
 	private Map<String, List<StorageLink>> storageLinks = new HashMap<String, List<StorageLink>>();
 		
 	protected Map<String, List<StorageLink>> getStorageLinks() {

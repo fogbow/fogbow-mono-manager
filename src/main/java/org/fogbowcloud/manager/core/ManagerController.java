@@ -303,7 +303,7 @@ public class ManagerController {
 				try {
 					updateAccounting();					
 				} catch (Throwable e) {
-					LOGGER.warn("Erro while updating accounting", e);
+					LOGGER.warn("Error while updating accounting", e);
 				}
 			}
 		}, 0, accountingUpdaterPeriod);
@@ -383,7 +383,7 @@ public class ManagerController {
 				try {
 					garbageCollector();					
 				} catch (Throwable e) {
-					LOGGER.error("Erro while executing garbage collector", e);
+					LOGGER.error("Error while executing garbage collector", e);
 				}
 			}
 		}, 0, garbageCollectorPeriod);
@@ -1148,7 +1148,7 @@ public class ManagerController {
 				try {
 					monitorServedOrders();
 				} catch (Throwable e) {
-					LOGGER.error("Erro while monitoring served orders", e);
+					LOGGER.error("Error while monitoring served orders", e);
 				}
 			}
 		}, 0, servedOrderMonitoringPeriod);
@@ -1339,7 +1339,7 @@ public class ManagerController {
 				try {
 					monitorInstancesForLocalOrders();					
 				} catch (Throwable e) {
-					LOGGER.error("Erro while monitoring instances for local orders", e);
+					LOGGER.error("Error while monitoring instances for local orders", e);
 				}
 			}
 		}, 0, instanceMonitoringPeriod);
@@ -1606,7 +1606,7 @@ public class ManagerController {
 				try {
 					checkAndSubmitOpenOrders();					
 				} catch (Throwable e) {
-					LOGGER.error("Erro while checking and submitting open orders", e);
+					LOGGER.error("Error while checking and submitting open orders", e);
 				}
 			}
 		}, 0, schedulerPeriod);
