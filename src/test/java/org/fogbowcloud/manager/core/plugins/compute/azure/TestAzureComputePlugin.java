@@ -20,6 +20,7 @@ import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.order.OrderAttribute;
+import org.fogbowcloud.manager.occi.storage.StorageAttribute;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -30,8 +31,10 @@ import com.microsoft.windowsazure.core.OperationStatusResponse;
 import com.microsoft.windowsazure.management.compute.ComputeManagementClient;
 import com.microsoft.windowsazure.management.compute.DeploymentOperations;
 import com.microsoft.windowsazure.management.compute.HostedServiceOperations;
+import com.microsoft.windowsazure.management.compute.VirtualMachineDiskOperations;
 import com.microsoft.windowsazure.management.compute.VirtualMachineOSImageOperations;
 import com.microsoft.windowsazure.management.compute.VirtualMachineOperations;
+import com.microsoft.windowsazure.management.compute.models.DataVirtualHardDisk;
 import com.microsoft.windowsazure.management.compute.models.DeploymentGetResponse;
 import com.microsoft.windowsazure.management.compute.models.DeploymentStatus;
 import com.microsoft.windowsazure.management.compute.models.HostedServiceListResponse;
@@ -39,6 +42,8 @@ import com.microsoft.windowsazure.management.compute.models.HostedServiceListRes
 import com.microsoft.windowsazure.management.compute.models.HostedServiceProperties;
 import com.microsoft.windowsazure.management.compute.models.RoleInstance;
 import com.microsoft.windowsazure.management.compute.models.VirtualMachineCreateDeploymentParameters;
+import com.microsoft.windowsazure.management.compute.models.VirtualMachineDataDiskCreateParameters;
+import com.microsoft.windowsazure.management.compute.models.VirtualMachineGetResponse;
 import com.microsoft.windowsazure.management.compute.models.VirtualMachineOSImageCreateParameters;
 import com.microsoft.windowsazure.management.compute.models.VirtualMachineOSImageGetResponse;
 
@@ -51,6 +56,8 @@ public class TestAzureComputePlugin {
 	private static final String VM_DEFAULT_PREFIX = "fogbow";
 	private static final String VM_DEFAULT_ID_1 = "id1";
 	private static final String VM_DEFAULT_ID_2 = "id2";
+	
+	private static final String STORAGE_DEFAULT_ID_1 = "storageId1";
 
 	private static final String TOKEN_DEFAULT_ACCESS_ID = "accessId";
 	private static final String TOKEN_DEFAULT_USERNAME = "token";
@@ -272,6 +279,91 @@ public class TestAzureComputePlugin {
 
 		Assert.assertEquals(1, instance.size());
 	}
+	
+	@Test
+	public void testAttachVolume() throws Exception {
+		AzureComputePlugin plugin = createAzureComputePlugin();
+		ComputeManagementClient computeManagementClient = Mockito
+				.mock(ComputeManagementClient.class);
+		Mockito.doReturn(computeManagementClient).when(plugin)
+				.createComputeManagementClient(Mockito.any(Token.class));
+		VirtualMachineOperations vmOperation = Mockito
+				.mock(VirtualMachineOperations.class);
+		Mockito.doReturn(vmOperation).when(computeManagementClient)
+			.getVirtualMachinesOperations();
+		
+		VirtualMachineGetResponse vmGetResponse = Mockito.mock(VirtualMachineGetResponse.class);
+		ArrayList<DataVirtualHardDisk> vmDataDisks = new ArrayList<DataVirtualHardDisk>();
+		Mockito.when(vmGetResponse.getDataVirtualHardDisks()).thenReturn(vmDataDisks);
+		Mockito.when(vmOperation.get(Mockito.anyString(), Mockito.anyString(), 
+				Mockito.anyString())).thenReturn(vmGetResponse);
+		
+		VirtualMachineDiskOperations vmDiskOperations = 
+				Mockito.mock(VirtualMachineDiskOperations.class);
+		OperationStatusResponse operationStatusResponse = 
+				Mockito.mock(OperationStatusResponse.class);
+		Mockito.when(operationStatusResponse.getStatusCode())
+			.thenReturn(HttpStatus.SC_OK);
+		Mockito.when(vmDiskOperations.createDataDisk(Mockito.anyString(), 
+				Mockito.anyString(), Mockito.anyString(), Mockito.any(
+						VirtualMachineDataDiskCreateParameters.class)))
+						.thenReturn(operationStatusResponse);
+		Mockito.when(computeManagementClient.getVirtualMachineDisksOperations())
+			.thenReturn(vmDiskOperations);
+		
+		Token token = createToken(null);
+		List<Category> categories = new ArrayList<Category>();
+		Map<String, String> xOCCIAtt = new HashMap<String, String>();
+		xOCCIAtt.put(StorageAttribute.SOURCE.getValue(), VM_DEFAULT_ID_1);
+		xOCCIAtt.put(StorageAttribute.TARGET.getValue(), STORAGE_DEFAULT_ID_1);
+		plugin.attach(token, categories, xOCCIAtt);
+		Mockito.verify(vmDiskOperations).createDataDisk(Mockito.anyString(), 
+				Mockito.anyString(), Mockito.anyString(), 
+				Mockito.any(VirtualMachineDataDiskCreateParameters.class));
+	}
+	
+	@Test
+	public void testDetachVolume() throws Exception {
+		AzureComputePlugin plugin = createAzureComputePlugin();
+		ComputeManagementClient computeManagementClient = Mockito
+				.mock(ComputeManagementClient.class);
+		Mockito.doReturn(computeManagementClient).when(plugin)
+				.createComputeManagementClient(Mockito.any(Token.class));
+		VirtualMachineOperations vmOperation = Mockito
+				.mock(VirtualMachineOperations.class);
+		Mockito.doReturn(vmOperation).when(computeManagementClient)
+			.getVirtualMachinesOperations();
+		
+		VirtualMachineDiskOperations vmDiskOperations = 
+				Mockito.mock(VirtualMachineDiskOperations.class);
+		Mockito.when(computeManagementClient
+				.getVirtualMachineDisksOperations()).thenReturn(vmDiskOperations);
+		OperationStatusResponse deleteDataDiskResponse = Mockito.mock(OperationStatusResponse.class);
+		Mockito.when(deleteDataDiskResponse.getHttpStatusCode()).thenReturn(HttpStatus.SC_OK);
+		Mockito.when(vmDiskOperations.deleteDataDisk(Mockito.anyString(), 
+				Mockito.anyString(), Mockito.anyString(), 
+				Mockito.anyInt(), Mockito.anyBoolean())).thenReturn(deleteDataDiskResponse);
+		
+		
+		VirtualMachineGetResponse vmGetResponse = Mockito.mock(VirtualMachineGetResponse.class);
+		ArrayList<DataVirtualHardDisk> vmDataDisks = new ArrayList<DataVirtualHardDisk>();
+		DataVirtualHardDisk dataVHD = Mockito.mock(DataVirtualHardDisk.class);
+		Mockito.when(dataVHD.getName()).thenReturn(STORAGE_DEFAULT_ID_1);
+		vmDataDisks.add(dataVHD);
+		Mockito.when(vmGetResponse.getDataVirtualHardDisks()).thenReturn(vmDataDisks);
+		Mockito.when(vmOperation.get(Mockito.anyString(), Mockito.anyString(), 
+				Mockito.anyString())).thenReturn(vmGetResponse);
+		
+		Token token = createToken(null);
+		List<Category> categories = new ArrayList<Category>();
+		Map<String, String> xOCCIAtt = new HashMap<String, String>();
+		xOCCIAtt.put(StorageAttribute.SOURCE.getValue(), VM_DEFAULT_ID_1);
+		xOCCIAtt.put(StorageAttribute.TARGET.getValue(), STORAGE_DEFAULT_ID_1);
+		plugin.dettach(token, categories, xOCCIAtt);
+		Mockito.verify(vmDiskOperations).deleteDataDisk(
+				Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), 
+				Mockito.anyInt(), Mockito.anyBoolean());
+	}
 
 	private void recordInstances(
 			ComputeManagementClient computeManagementClient,
@@ -342,7 +434,7 @@ public class TestAzureComputePlugin {
 		flavors.add(extraSmall);
 		azureComputePlugin.flavors = flavors;
 	}
-
+	
 	private static final String IMAGE_ID = "randomID";
 
 	private ComputeManagementClient createComputeManagementClient(
@@ -354,12 +446,12 @@ public class TestAzureComputePlugin {
 		
 		VirtualMachineOperations vmOperation = Mockito
 				.mock(VirtualMachineOperations.class);
+		
 		Mockito.doReturn(vmOperation).when(computeManagementClient)
 				.getVirtualMachinesOperations();
 		Mockito.doReturn(new OperationStatusResponse())
 				.when(vmOperation)
-				.createDeployment(
-						Mockito.anyString(),
+				.createDeployment(Mockito.anyString(),
 						(VirtualMachineCreateDeploymentParameters) Mockito
 								.any(Map.class));
 		

@@ -747,6 +747,7 @@ public class AzureComputePlugin implements ComputePlugin {
 			return UUID.randomUUID().toString();
 		} catch (Exception e) {
 			LOGGER.debug("Could not attach disk to the virtual machine.", e);
+			e.printStackTrace();
 			throw new OCCIException(ErrorType.BAD_REQUEST, 
 					ResponseConstants.IRREGULAR_SYNTAX);
 		}
@@ -816,6 +817,7 @@ public class AzureComputePlugin implements ComputePlugin {
 			throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND_INSTANCE);
 		} catch (Exception e) {
 			LOGGER.debug("Could not detach disk " + storageId + " from VM " + instanceId, e);
+			e.printStackTrace();
 			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
 		}
 	}
