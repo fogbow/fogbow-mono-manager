@@ -52,7 +52,7 @@ public class TestSimpleStorageAccountingPlugin {
 	}
 
 	@Test
-	public void testOneOrderFulfielledByRemote() {
+	public void testOneOrderFulfilledByRemote() {
 		// mocking dateUtils
 		long now = System.currentTimeMillis();
 		String requestingMemberId = "localMemberId";
@@ -90,10 +90,12 @@ public class TestSimpleStorageAccountingPlugin {
 		Assert.assertEquals("localMemberId", accountingInfo.get(0).getRequestingMember());
 		Assert.assertEquals("remoteMemberId", accountingInfo.get(0).getProvidingMember());
 		Assert.assertEquals("userId", accountingInfo.get(0).getUser());
-		Assert.assertEquals(Double.parseDouble(sizeStr) * minutes, accountingInfo.get(0).getUsage(), ACCEPTABLE_ERROR);
+		AccountingInfo accountingInfo1 = accountingInfo.get(0);
+		double usage = accountingInfo1.getUsage();
+		Assert.assertEquals(Double.parseDouble(sizeStr) * minutes, usage, ACCEPTABLE_ERROR);		
 	}
 	
-	@Test(expected=Exception.class)
+	@Test
 	public void testOneOrderFulfielledWithoutSizeAttribute() {
 		// mocking dateUtils
 		long now = System.currentTimeMillis();
@@ -118,10 +120,21 @@ public class TestSimpleStorageAccountingPlugin {
 		orders.add(order);
 
 		accountingPlugin.update(orders);
+		
+		List<AccountingInfo> accountingInfo = accountingPlugin.getAccountingInfo();
+		
+		Assert.assertEquals(1, accountingInfo.size());
+		Assert.assertEquals("localMemberId", accountingInfo.get(0).getRequestingMember());
+		Assert.assertEquals("remoteMemberId", accountingInfo.get(0).getProvidingMember());
+		Assert.assertEquals("userId", accountingInfo.get(0).getUser());
+		AccountingInfo accountingInfo1 = accountingInfo.get(0);
+		double usage = accountingInfo1.getUsage();
+		Assert.assertEquals(0, usage, ACCEPTABLE_ERROR);			
+		
 	}	
 	
 	@Test
-	public void testOneOrderOpen() {
+	public void testOneOrderFulfilledWithoutInstanceId() {
 		// mocking dateUtils
 		long now = System.currentTimeMillis();
 		String requestingMemberId = "localMemberId";

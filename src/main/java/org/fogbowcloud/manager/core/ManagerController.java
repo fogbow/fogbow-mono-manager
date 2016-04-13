@@ -60,7 +60,7 @@ import org.fogbowcloud.manager.core.plugins.util.SshClientPool;
 import org.fogbowcloud.manager.occi.ManagerDataStore;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.instance.InstanceState;
-import org.fogbowcloud.manager.occi.member.UsageServerResource.UsageContainer;
+import org.fogbowcloud.manager.occi.member.UsageServerResource.ResourceUsage;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.ErrorType;
 import org.fogbowcloud.manager.occi.model.OCCIException;
@@ -303,7 +303,7 @@ public class ManagerController {
 				try {
 					updateAccounting();					
 				} catch (Throwable e) {
-					LOGGER.error("Erro while updating accounting", e);
+					LOGGER.warn("Erro while updating accounting", e);
 				}
 			}
 		}, 0, accountingUpdaterPeriod);
@@ -311,18 +311,18 @@ public class ManagerController {
 
 	private void updateAccounting() {
 		try {
-			updateComputeAccouting();			
-		} catch (Exception e) {
-			LOGGER.warn("Could not update compute accounting.");
+			updateComputeAccounting();			
+		} catch (Throwable e) {
+			LOGGER.warn("Could not update compute accounting.", e);
 		}		
 		try {
-			updateStorageAccouting();					
-		} catch (Exception e) {
-			LOGGER.warn("Could not update storage accounting.");
+			updateStorageAccounting();					
+		} catch (Throwable e) {
+			LOGGER.warn("Could not update storage accounting.", e);
 		}
 	}
 
-	private void updateStorageAccouting() {
+	private void updateStorageAccounting() {
 		List<Order> ordersStorageWithInstances = new ArrayList<Order>(
 				orderRepository.getOrdersIn(OrderConstants.STORAGE_TERM,
 				OrderState.FULFILLED, OrderState.DELETED));
@@ -330,13 +330,12 @@ public class ManagerController {
 		for (Order order: ordersStorageWithInstances) {
 			orderStorageIds.add(order.getId());
 		}
-		LOGGER.debug("Usage accounting is about to be updated. "
-				+ "The following orders storage do have instances: "
+		LOGGER.debug("Usage accounting is about to be updated. The following storage orders do have instances:"
 				+ orderStorageIds);
 		storageAccountingPlugin.update(ordersStorageWithInstances);
 	}
 
-	private void updateComputeAccouting() {
+	private void updateComputeAccounting() {
 		List<Order> ordersComputeWithInstances = new ArrayList<Order>(
 				orderRepository.getOrdersIn(OrderConstants.COMPUTE_TERM,
 				OrderState.FULFILLED, OrderState.DELETED));
@@ -344,8 +343,7 @@ public class ManagerController {
 		for (Order order: ordersComputeWithInstances) {
 			orderComputeIds.add(order.getId());
 		}
-		LOGGER.debug("Usage accounting is about to be updated. "
-				+ "The following orders compute do have instances: "
+		LOGGER.debug("Usage accounting is about to be updated. The following compute orders do have instances: "
 				+ orderComputeIds);
 		computeAccountingPlugin.update(ordersComputeWithInstances);
 	}
@@ -2088,9 +2086,8 @@ public class ManagerController {
 		
 		if (resourceKing.equals(OrderConstants.COMPUTE_TERM)) {
 			return computeAccountingPlugin.getAccountingInfo();
-		} else {
-			return storageAccountingPlugin.getAccountingInfo();
 		}
+		return storageAccountingPlugin.getAccountingInfo();
 		
 	}
 
@@ -2123,11 +2120,11 @@ public class ManagerController {
 		return userAccounting.getUsage();
 	}
 	
-	public UsageContainer getUsages(String federationAccessId, String providingMember) {
+	public ResourceUsage getUsages(String federationAccessId, String providingMember) {
 		double computeUsage = getUsage(federationAccessId, providingMember, computeAccountingPlugin);
 		double storageUsage = getUsage(federationAccessId, providingMember, storageAccountingPlugin);
 				
-		return new UsageContainer(computeUsage, storageUsage);		
+		return new ResourceUsage(computeUsage, storageUsage);		
 	}
 	
 	public ResourcesInfo getResourceInfoForRemoteMember(String accessId, String user) {		

@@ -33,14 +33,14 @@ public class UsageServerResource extends MemberServerResource {
 				application.getAuthenticationURI());
 
 		if (memberId != null) {
-			UsageContainer usageContainer = application.getUsages(authToken, memberId);
+			ResourceUsage usageContainer = application.getUsages(authToken, memberId);
 			return generateResponse(memberId, usageContainer);
 		}
 
 		throw new OCCIException(ErrorType.BAD_REQUEST, "The memberId was not specified.");
 	}
 
-	private String generateResponse(String memberId, UsageContainer usageContainer) {
+	private String generateResponse(String memberId, ResourceUsage usageContainer) {
 		StringBuilder response = new StringBuilder();
 		response.append(OCCIHeaders.X_OCCI_ATTRIBUTE + ": memberId=" + memberId);
 		response.append("\n");
@@ -55,12 +55,12 @@ public class UsageServerResource extends MemberServerResource {
 		return Double.valueOf(USAGE_FORMAT.format(doubleValue));
 	}
 
-	public static class UsageContainer {
+	public final static class ResourceUsage {
 
 		private double computeUsage;
 		private double storageUsage;
 
-		public UsageContainer(double computeUsage, double storageUsage) {
+		public ResourceUsage(double computeUsage, double storageUsage) {
 			this.computeUsage = computeUsage;
 			this.storageUsage = storageUsage;
 		}
@@ -69,17 +69,8 @@ public class UsageServerResource extends MemberServerResource {
 			return computeUsage;
 		}
 
-		public void setComputeUsage(double computeUsage) {
-			this.computeUsage = computeUsage;
-		}
-
 		public double getStorageUsage() {
 			return storageUsage;
 		}
-
-		public void setStorageUsage(double storageUsage) {
-			this.storageUsage = storageUsage;
-		}
-
 	}
 }

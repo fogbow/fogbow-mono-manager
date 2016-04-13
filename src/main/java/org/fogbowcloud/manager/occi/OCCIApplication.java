@@ -14,7 +14,7 @@ import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.member.MemberServerResource;
 import org.fogbowcloud.manager.occi.member.QuotaServerResource;
 import org.fogbowcloud.manager.occi.member.UsageServerResource;
-import org.fogbowcloud.manager.occi.member.UsageServerResource.UsageContainer;
+import org.fogbowcloud.manager.occi.member.UsageServerResource.ResourceUsage;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.HeaderUtils;
 import org.fogbowcloud.manager.occi.model.OCCIHeaders;
@@ -250,7 +250,7 @@ public class OCCIApplication extends Application {
 		return managerFacade.getAccountingInfo(authToken, resourceKing);
 	}
 
-	public UsageContainer getUsages(String authToken, String memberId) {
+	public ResourceUsage getUsages(String authToken, String memberId) {
 		return managerFacade.getUsages(authToken, memberId);
 	}
 }

@@ -34,7 +34,7 @@ public class FCUAccountingPlugin implements AccountingPlugin {
 		this.lastUpdate = dateUtils.currentTimeMillis();
 
 		properties.put(AccountingDataStore.ACCOUNTING_DATASTORE_URL, 
-				properties.getProperty(ACCOUNTING_DATASTORE_URL));
+				properties.getProperty(getDataStoreUrl()));
 		db = new AccountingDataStore(properties);
 	}
 
@@ -67,8 +67,7 @@ public class FCUAccountingPlugin implements AccountingPlugin {
 				usage.put(current, accountingInfo);
 			}
 
-			double instancePower = benchmarkingPlugin.getPower(order.getGlobalInstanceId());
-			double instanceUsage = instancePower * Math.min(consumptionInterval, updatingInterval);
+			double instanceUsage = getUsage(order, updatingInterval, consumptionInterval);
 
 			usage.get(current).addConsuption(instanceUsage);
 		}
@@ -81,6 +80,15 @@ public class FCUAccountingPlugin implements AccountingPlugin {
 		}
 	}
 
+	private double getUsage(Order order, double updatingInterval , double consumptionInterval) {
+		double instancePower = benchmarkingPlugin.getPower(order.getGlobalInstanceId());
+		return instancePower * Math.min(consumptionInterval, updatingInterval);
+	}	
+	
+	protected String getDataStoreUrl() {
+		return ACCOUNTING_DATASTORE_URL;
+	}	
+	
 	@Override
 	public List<AccountingInfo> getAccountingInfo() {
 		return db.getAccountingInfo();

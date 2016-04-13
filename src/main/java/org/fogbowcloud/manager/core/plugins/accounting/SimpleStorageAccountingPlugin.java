@@ -31,7 +31,7 @@ public class SimpleStorageAccountingPlugin implements AccountingPlugin {
 		this.lastUpdate = dateUtils.currentTimeMillis();
 
 		properties.put(AccountingDataStore.ACCOUNTING_DATASTORE_URL, 
-				properties.getProperty(ACCOUNTING_DATASTORE_URL));
+				properties.getProperty(getDataStoreUrl()));
 		db = new AccountingDataStore(properties);
 	}
 
@@ -63,10 +63,14 @@ public class SimpleStorageAccountingPlugin implements AccountingPlugin {
 						current.getRequestingMember(), current.getProvidingMember());
 				usage.put(current, accountingInfo);
 			}
-
-			double instanceUsage = Double.parseDouble(order.getAttValue(
-					OrderAttribute.STORAGE_SIZE.getValue()))
-					* Math.min(consumptionInterval, updatingInterval);
+			
+			double instanceUsage = 0; 
+			try {
+				instanceUsage = getUsage(order, updatingInterval, consumptionInterval);				
+			} catch (Exception e) {
+				LOGGER.warn("Could not possible get usage of order : " + order.toString());
+				continue;
+			}
 
 			usage.get(current).addConsuption(instanceUsage);
 		}
@@ -77,6 +81,16 @@ public class SimpleStorageAccountingPlugin implements AccountingPlugin {
 			this.lastUpdate = now;
 			LOGGER.debug("Updating lastUpdate to " + this.lastUpdate);
 		}
+	}
+
+	private double getUsage(Order order, double updatingInterval, double consumptionInterval) {
+		double instanceUsage = Double.parseDouble(order.getAttValue(
+				OrderAttribute.STORAGE_SIZE.getValue()))* Math.min(consumptionInterval, updatingInterval);
+		return instanceUsage;
+	}
+	
+	protected String getDataStoreUrl() {
+		return ACCOUNTING_DATASTORE_URL;
 	}
 
 	@Override
