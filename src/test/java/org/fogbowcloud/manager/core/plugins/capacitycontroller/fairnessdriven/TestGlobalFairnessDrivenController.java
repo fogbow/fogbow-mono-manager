@@ -45,7 +45,7 @@ public class TestGlobalFairnessDrivenController {
 		properties = new Properties();
 		properties.put("accounting_datastore_url", "jdbc:sqlite:" + FAKE_DB_PATH);
 		properties.put(ConfigurationConstants.XMPP_JID_KEY, "localMemberId");
-
+		
 		dateUtils = Mockito.mock(DateUtils.class);
 		now = 0;
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
@@ -59,7 +59,13 @@ public class TestGlobalFairnessDrivenController {
 		minimumThreshold = 0.8;
 		maximumThreshold = 1;
 		maximumCapacityOfPeer = 5;
-		fdController = new GlobalFairnessDrivenController(accountingPlugin, properties, deltaC, minimumThreshold, maximumThreshold, maximumCapacityOfPeer, dateUtils);
+		properties.put(FairnessDrivenCapacityController.CONTROLLER_DELTA, deltaC+"");
+		properties.put(FairnessDrivenCapacityController.CONTROLLER_MINIMUM_THRESHOLD, minimumThreshold+"");
+		properties.put(FairnessDrivenCapacityController.CONTROLLER_MAXIMUM_THRESHOLD, maximumThreshold+"");
+		properties.put(FairnessDrivenCapacityController.CONTROLLER_MAXIMUM_CAPACITY, maximumCapacityOfPeer+"");
+		
+		fdController = new GlobalFairnessDrivenController(properties, accountingPlugin);
+		fdController.setDateUtils(dateUtils);
 	}
 	
 	@After

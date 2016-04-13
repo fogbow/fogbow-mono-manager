@@ -8,15 +8,19 @@ import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.CapacityControllerPlugin;
 
 public abstract class FairnessDrivenCapacityController implements CapacityControllerPlugin{
+	
+	protected static final String CONTROLLER_DELTA = "controller_delta";
+	protected static final String CONTROLLER_MINIMUM_THRESHOLD = "controller_minimum_threshold";
+	protected static final String CONTROLLER_MAXIMUM_THRESHOLD = "controller_maximum_threshold";
+	protected static final String CONTROLLER_MAXIMUM_CAPACITY = "controller_maximum_capacity";
 
 	protected AccountingPlugin accountingPlugin;
 	protected Properties properties;
 	protected DateUtils dateUtils; 
 	
-	public FairnessDrivenCapacityController(AccountingPlugin accountingPlugin, Properties properties, DateUtils dateUtils) {
-		this.accountingPlugin = accountingPlugin;
+	public FairnessDrivenCapacityController(Properties properties, AccountingPlugin accountingPlugin) {
 		this.properties = properties;
-		this.dateUtils = dateUtils;
+		this.accountingPlugin = accountingPlugin;
 	}
 	
 	public abstract double getCurrentFairness(FederationMember member);
@@ -30,5 +34,9 @@ public abstract class FairnessDrivenCapacityController implements CapacityContro
 			return -1;		
 		else
 			return consumed/donated;
-	}	
+	}
+	
+	public void setDateUtils(DateUtils dateUtils) {
+		this.dateUtils = dateUtils;
+	}
 }

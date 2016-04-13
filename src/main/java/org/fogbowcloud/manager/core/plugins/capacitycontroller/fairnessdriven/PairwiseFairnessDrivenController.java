@@ -16,15 +16,14 @@ public class PairwiseFairnessDrivenController extends FairnessDrivenCapacityCont
 	
 	private Map<FederationMember, HillClimbingAlgorithm> controllers;
 	
-	public PairwiseFairnessDrivenController(AccountingPlugin accountingPlugin, Properties properties, double deltaC,
-			double minimumThreshold, double maximumThreshold, double maximumCapacityOfPeer, DateUtils dateUtils) {
-		super(accountingPlugin, properties, dateUtils);
+	public PairwiseFairnessDrivenController(Properties properties, AccountingPlugin accountingPlugin) {
+		super(properties, accountingPlugin);
 		controllers = new HashMap<FederationMember, HillClimbingAlgorithm>();	
 		
-		this.deltaC = deltaC;
-		this.minimumThreshold = minimumThreshold;
-		this.maximumThreshold = maximumThreshold;
-		this.maximumCapacityOfPeer = maximumCapacityOfPeer;
+		this.deltaC = Double.parseDouble(properties.getProperty(CONTROLLER_DELTA));
+		this.minimumThreshold = Double.parseDouble(properties.getProperty(CONTROLLER_MINIMUM_THRESHOLD));
+		this.maximumThreshold = Double.parseDouble(properties.getProperty(CONTROLLER_MAXIMUM_THRESHOLD));
+		this.maximumCapacityOfPeer = Double.parseDouble(properties.getProperty(CONTROLLER_MAXIMUM_CAPACITY));
 	}
 
 	@Override

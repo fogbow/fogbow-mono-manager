@@ -35,7 +35,7 @@ public class TestTwoFoldFairnessDrivenController {
 	
 	long t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12;
 	
-	TwoFoldFairnessDrivenController twoFoldFdController;
+	TwoFoldCapacityController twoFoldFdController;
 	
 	FederationMember local, remote1, remote2;
 	
@@ -61,9 +61,15 @@ public class TestTwoFoldFairnessDrivenController {
 		minimumThreshold = 0.8;
 		maximumThreshold = 1;
 		maximumCapacityOfPeer = 5;
-		GlobalFairnessDrivenController globalFdController = new GlobalFairnessDrivenController(accountingPlugin, properties, deltaC, minimumThreshold, maximumThreshold, maximumCapacityOfPeer, dateUtils);
-		PairwiseFairnessDrivenController pairwiseFdController = new PairwiseFairnessDrivenController(accountingPlugin, properties, deltaC, minimumThreshold, maximumThreshold, maximumCapacityOfPeer, dateUtils);
-		twoFoldFdController = new TwoFoldFairnessDrivenController(pairwiseFdController, globalFdController);
+		properties.put(FairnessDrivenCapacityController.CONTROLLER_DELTA, deltaC+"");
+		properties.put(FairnessDrivenCapacityController.CONTROLLER_MINIMUM_THRESHOLD, minimumThreshold+"");
+		properties.put(FairnessDrivenCapacityController.CONTROLLER_MAXIMUM_THRESHOLD, maximumThreshold+"");
+		properties.put(FairnessDrivenCapacityController.CONTROLLER_MAXIMUM_CAPACITY, maximumCapacityOfPeer+"");
+		
+		properties.put(twoFoldFdController.LONG_KNOWN_PEER_CAPACITY_CONTROLLER_PLUGIN_CLASS, "org.fogbowcloud.manager.core.plugins.capacitycontroller.fairnessdriven.PairwiseFairnessDrivenController");
+		properties.put(twoFoldFdController.NEWCOMERS_CAPACITY_CONTROLLER_PLUGIN_CLASS, "org.fogbowcloud.manager.core.plugins.capacitycontroller.fairnessdriven.GlobalFairnessDrivenController");
+		twoFoldFdController = new TwoFoldCapacityController(properties, accountingPlugin);
+		twoFoldFdController.setDateUtils(dateUtils);
 		
 		t0 = 0;
 		t1 = 10 * TIME_UNIT;

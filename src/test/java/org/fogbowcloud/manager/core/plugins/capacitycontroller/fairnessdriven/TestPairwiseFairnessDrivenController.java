@@ -60,7 +60,13 @@ public class TestPairwiseFairnessDrivenController {
 		minimumThreshold = 0.8;
 		maximumThreshold = 1;
 		maximumCapacityOfPeer = 5;
-		fdController = new PairwiseFairnessDrivenController(accountingPlugin, properties, deltaC, minimumThreshold, maximumThreshold, maximumCapacityOfPeer, dateUtils);
+		properties.put(FairnessDrivenCapacityController.CONTROLLER_DELTA, deltaC+"");
+		properties.put(FairnessDrivenCapacityController.CONTROLLER_MINIMUM_THRESHOLD, minimumThreshold+"");
+		properties.put(FairnessDrivenCapacityController.CONTROLLER_MAXIMUM_THRESHOLD, maximumThreshold+"");
+		properties.put(FairnessDrivenCapacityController.CONTROLLER_MAXIMUM_CAPACITY, maximumCapacityOfPeer+"");
+		
+		fdController = new PairwiseFairnessDrivenController(properties, accountingPlugin);
+		fdController.setDateUtils(dateUtils);
 		
 		t0 = 0;
 		t1 = 10 * TIME_UNIT;

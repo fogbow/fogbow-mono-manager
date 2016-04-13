@@ -14,10 +14,15 @@ public class GlobalFairnessDrivenController extends FairnessDrivenCapacityContro
 	private long lastUpdated;	
 	private HillClimbingAlgorithm controller;
 	
-	public GlobalFairnessDrivenController(AccountingPlugin accountingPlugin, Properties properties, double deltaC,
-			double minimumThreshold, double maximumThreshold, double maximumCapacityOfPeer, DateUtils dateUtils) {
-		super(accountingPlugin, properties, dateUtils);
+	public GlobalFairnessDrivenController(Properties properties, AccountingPlugin accountingPlugin) {
+		super(properties, accountingPlugin);
 		lastUpdated = -1;		
+		
+		double deltaC, minimumThreshold, maximumThreshold, maximumCapacityOfPeer;
+		deltaC = Double.parseDouble(properties.getProperty(CONTROLLER_DELTA));
+		minimumThreshold = Double.parseDouble(properties.getProperty(CONTROLLER_MINIMUM_THRESHOLD));
+		maximumThreshold = Double.parseDouble(properties.getProperty(CONTROLLER_MAXIMUM_THRESHOLD));
+		maximumCapacityOfPeer = Double.parseDouble(properties.getProperty(CONTROLLER_MAXIMUM_CAPACITY));
 		controller = new HillClimbingAlgorithm(deltaC, minimumThreshold, maximumThreshold, maximumCapacityOfPeer);
 	}
 
