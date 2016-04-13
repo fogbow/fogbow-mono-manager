@@ -512,13 +512,15 @@ public class ManagerController {
 	
 	public FederationMember getFederationMemberQuota(String federationMemberId, String accessId) {
 		try {
+			Token token = federationIdentityPlugin.getToken(accessId);
 			if (federationMemberId.equals(properties
 					.getProperty(ConfigurationConstants.XMPP_JID_KEY))) {
-				return new FederationMember(getResourcesInfo(this.getLocalCredentials(accessId), accessId, true));
+				return new FederationMember(getResourcesInfo(
+						this.getLocalCredentials(accessId), token.getUser(), true));
 			}
 			
 			return new FederationMember(ManagerPacketHelper.getRemoteUserQuota
-					(accessId, federationMemberId, packetSender));
+					(token, federationMemberId, packetSender));
 		} catch (Exception e) {
 			LOGGER.error("Error while trying to get member [" + accessId + "] quota from ["
 					+ federationMemberId + "]", e);
@@ -530,23 +532,23 @@ public class ManagerController {
 		return mapperPlugin.getLocalCredentials(accessId);
 	}
 
-	public ResourcesInfo getResourcesInfo(String accessId, boolean isLocal) {
-		return getResourcesInfo(null, accessId, isLocal);
+	public ResourcesInfo getResourcesInfo(String user, boolean isLocal) {
+		return getResourcesInfo(null, user, isLocal);
 	}
 
-	public ResourcesInfo getResourcesInfo(Map<String, String> localCredentials, String accessId, boolean isLocal) {
+	public ResourcesInfo getResourcesInfo(Map<String, String> localCredentials, String user, boolean isLocal) {
 		ResourcesInfo totalResourcesInfo = new ResourcesInfo();
 		totalResourcesInfo.setId(properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
-		Token federationToken = federationIdentityPlugin.getToken(accessId);
 
 		if (localCredentials != null) {
 			Token localToken = localIdentityPlugin.createToken(localCredentials);
 			totalResourcesInfo.addResource(computePlugin.getResourcesInfo(localToken));
 			
 			try {
-				totalResourcesInfo.addResource(getResourceInfoInUseByUser(localToken, federationToken, isLocal));			
+				totalResourcesInfo.addResource(getResourceInfoInUseByUser(localToken, user, isLocal));			
 			} catch (Exception e) {
-				LOGGER.warn("Did not possible get informations about instances, CPUs and memories in use by user.");
+				LOGGER.warn("Did not possible get informations about instances, CPUs and "
+						+ "memories in use by user(" + user + ").");
 			}
 		} else {
 			Map<String, Map<String, String>> allLocalCredentials = this.mapperPlugin.getAllLocalCredentials();
@@ -569,9 +571,10 @@ public class ManagerController {
 				totalResourcesInfo.addResource(resourcesInfo);
 
 				try {
-					totalResourcesInfo.addResource(getResourceInfoInUseByUser(localToken, federationToken, isLocal));			
+					totalResourcesInfo.addResource(getResourceInfoInUseByUser(localToken, user, isLocal));			
 				} catch (Exception e) {
-					LOGGER.warn("Did not possible get informations about instances, CPUs and memories in use by user.");
+					LOGGER.warn("Did not possible get informations about instances, CPUs and "
+							+ "memories in use by user(" + user + ").");
 				}				
 			}			
 		}
@@ -580,8 +583,8 @@ public class ManagerController {
 		return totalResourcesInfo;
 	}
 	
-	protected ResourcesInfo getResourceInfoInUseByUser(Token localToken, Token federationToken, boolean isLocal) {
-		List<Order> localOrders = orderRepository.getByUser(federationToken.getUser(), isLocal);
+	protected ResourcesInfo getResourceInfoInUseByUser(Token localToken, String user, boolean isLocal) {
+		List<Order> localOrders = orderRepository.getByUser(user, isLocal);
 		int contInstance = 0;
 		double contCpu = 0;
 		double contMem = 0;
@@ -662,11 +665,10 @@ public class ManagerController {
 	
 	public void removeOrderForRemoteMember(String accessId, String orderId) {
 		LOGGER.debug("Removing orderId for remote member: " + orderId);
-		checkOrderId(accessId, orderId, false);
 		Order order = orderRepository.get(orderId, false);
 		if (order != null && order.getInstanceId() != null) {
 			try {
-				Token token = localIdentityPlugin.getToken(accessId);
+				Token token = localIdentityPlugin.createToken(mapperPlugin.getLocalCredentials(accessId));
 				String instanceId = order.getInstanceId();
 				if (order.getResourceKing().equals(OrderConstants.COMPUTE_TERM)) {
 					computePlugin.removeInstance(token, instanceId);					
@@ -686,7 +688,7 @@ public class ManagerController {
 	private void checkOrderId(String accessId, String orderId, boolean lookingForLocalOrder) {
 		String user = getUser(accessId);
 		if (orderRepository.get(user, orderId, lookingForLocalOrder) == null) {
-			LOGGER.debug("User " + user + " does not have requesId " + orderId);
+			LOGGER.debug("User " + user + " does not have orderId " + orderId);
 			throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
 		}
 	}
@@ -2128,9 +2130,9 @@ public class ManagerController {
 		return new UsageContainer(computeUsage, storageUsage);		
 	}
 	
-	public ResourcesInfo getResourceInfoForRemoteMember(String accessId) {		
+	public ResourcesInfo getResourceInfoForRemoteMember(String accessId, String user) {		
 		Map<String, String> localCredentials = getLocalCredentials(accessId);
-		return getResourcesInfo(localCredentials, accessId, false);
+		return getResourcesInfo(localCredentials, user, false);
 	}
 
 	protected FailedBatch getFailedBatches() {

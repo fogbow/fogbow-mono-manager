@@ -187,6 +187,10 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 	public AccountingPlugin getAccountingPlugin() {
 		return computeAccountingPlugin;
 	}
+	
+	public MapperPlugin getMapperPlugin() {
+		return mapperPlugin;
+	}
 
 	public ManagerXmppComponent initializeXMPPManagerComponent(boolean init) throws Exception {
 

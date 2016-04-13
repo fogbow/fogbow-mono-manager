@@ -1295,8 +1295,9 @@ public class TestManagerController {
 			iq.setType(Type.get);
 			Element queryEl = iq.getElement().addElement("query",
 					ManagerXmppComponent.GETREMOTEUSERQUOTA_NAMESPACE);
-			Element userEl = queryEl.addElement("token");
-			userEl.addElement("accessId").setText("x_federation_auth_token");
+			Element tokenEl = queryEl.addElement("token");
+			tokenEl.addElement("accessId").setText("x_federation_auth_token");
+			tokenEl.addElement("user").setText("user");
 
 			IQ response = IQ.createResultIQ(iq);
 			queryEl = response.getElement().addElement("query",
@@ -3369,7 +3370,7 @@ public class TestManagerController {
 		Mockito.when(computePlugin.getInstance(Mockito.any(Token.class), Mockito.eq(instanceIdTwo))).thenReturn(instanceTwo);
 		managerController.setComputePlugin(computePlugin);
 		
-		ResourcesInfo resourcesInfo = managerController.getResourcesInfo("accessId", true);
+		ResourcesInfo resourcesInfo = managerController.getResourcesInfo(federationToken.getUser(), true);
 		Assert.assertEquals("40", resourcesInfo.getCpuInUse());
 		Assert.assertEquals("30", resourcesInfo.getCpuIdle());
 		Assert.assertEquals("40", resourcesInfo.getMemInUse());
@@ -3720,9 +3721,14 @@ public class TestManagerController {
 				instancesInUse, cpuInUseByUser, memInUseByUser, instancesInUseByUser);
 		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class)))
 				.thenReturn(resourceInfo);
+		
+		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
+		Token token = new Token(accessId, "user", new Date(), new HashMap<String, String>());
+		Mockito.when(identityPlugin.getToken(Mockito.eq(accessId))).thenReturn(token);
 
 		managerController.setPacketSender(generateRemoteQuotaResponse(resourceInfo));
 		managerController.setComputePlugin(computePlugin);
+		managerController.setFederationIdentityPlugin(identityPlugin);
 		FederationMember federationMemberQuota = managerController.getFederationMemberQuota(federationMemberId, accessId);
 		Assert.assertEquals(cpuIdle, federationMemberQuota.getResourcesInfo().getCpuIdle());
 		Assert.assertEquals(cpuInUse, federationMemberQuota.getResourcesInfo().getCpuInUse());
@@ -3750,8 +3756,13 @@ public class TestManagerController {
 		ResourcesInfo resourceInfo = new ResourcesInfo(cpuIdle, cpuInUse, memIdle, memInUse, instancesIdle, instancesInUse);
 		Mockito.when(computePlugin.getResourcesInfo(Mockito.any(Token.class)))
 				.thenReturn(resourceInfo);
+		
+		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
+		Token token = new Token(accessId, "user", new Date(), new HashMap<String, String>());
+		Mockito.when(identityPlugin.getToken(Mockito.eq(accessId))).thenReturn(token);
 
 		managerController.setComputePlugin(computePlugin);
+		managerController.setFederationIdentityPlugin(identityPlugin);
 		FederationMember federationMemberQuota = managerController.getFederationMemberQuota(federationMemberId, accessId);
 		Assert.assertEquals(cpuIdle, federationMemberQuota.getResourcesInfo().getCpuIdle());
 		Assert.assertEquals(cpuInUse, federationMemberQuota.getResourcesInfo().getCpuInUse());
@@ -3795,8 +3806,9 @@ public class TestManagerController {
 		iq.setType(Type.get);
 		Element queryEl = iq.getElement().addElement("query",
 				ManagerXmppComponent.GETREMOTEUSERQUOTA_NAMESPACE);
-		Element userEl = queryEl.addElement("token");
-		userEl.addElement("accessId").setText("auth_token");
+		Element tokenEl = queryEl.addElement("token");
+		tokenEl.addElement("accessId").setText("auth_token");
+		tokenEl.addElement("user").setText("user");
 
 		IQ response = IQ.createResultIQ(iq);
 		queryEl = response.getElement().addElement("query",
@@ -3980,7 +3992,7 @@ public class TestManagerController {
 		Instance instanceTwo = new Instance("idTwo", new ArrayList<Resource>(), attributesTwo, new ArrayList<Instance.Link>(), InstanceState.RUNNING);
 		Mockito.when(managerTestHelper.getComputePlugin().getInstance(Mockito.any(Token.class), Mockito.eq(instanceIdTwo))).thenReturn(instanceTwo);
 		
-		ResourcesInfo resourceInfoExtra = managerController.getResourceInfoInUseByUser(token, token, true);
+		ResourcesInfo resourceInfoExtra = managerController.getResourceInfoInUseByUser(token, token.getUser(), true);
 		
 		Assert.assertEquals(String.valueOf(memInstanceOne * 1024 + memInstanceTwo * 1024), resourceInfoExtra.getMemInUseByUser());
 		Assert.assertEquals(String.valueOf(2), resourceInfoExtra.getInstancesInUseByUser());
@@ -4033,7 +4045,7 @@ public class TestManagerController {
 				Mockito.any(Token.class), Mockito.eq(instanceIdTwo)))
 				.thenThrow(new OCCIException(ErrorType.BAD_REQUEST, ""));
 		
-		ResourcesInfo resourceInfoExtra = managerController.getResourceInfoInUseByUser(token, token, true);
+		ResourcesInfo resourceInfoExtra = managerController.getResourceInfoInUseByUser(token, token.getUser(), true);
 		
 		Assert.assertEquals(String.valueOf(memInstanceOne * 1024), resourceInfoExtra.getMemInUseByUser());
 		Assert.assertEquals(String.valueOf(1), resourceInfoExtra.getInstancesInUseByUser());
@@ -4079,7 +4091,7 @@ public class TestManagerController {
 		Mockito.when(managerTestHelper.getComputePlugin().getInstance(
 				Mockito.any(Token.class), Mockito.eq(instanceIdTwo))).thenReturn(instanceTwo);
 		
-		ResourcesInfo resourceInfoExtra = managerController.getResourceInfoInUseByUser(token, token, true);
+		ResourcesInfo resourceInfoExtra = managerController.getResourceInfoInUseByUser(token, token.getUser(), true);
 		
 		Assert.assertEquals(String.valueOf(memInstanceTwo * 1024), resourceInfoExtra.getMemInUseByUser());
 		Assert.assertEquals(String.valueOf(2), resourceInfoExtra.getInstancesInUseByUser());
@@ -4089,7 +4101,7 @@ public class TestManagerController {
 	@Test
 	public void testGetResourceInfoInUseByUserWithOrdersEmpty() {
 		Token token = new Token("accessId", "user", new Date(), new HashMap<String, String>());		
-		ResourcesInfo resourceInfoExtra = managerController.getResourceInfoInUseByUser(token, token, true);
+		ResourcesInfo resourceInfoExtra = managerController.getResourceInfoInUseByUser(token, token.getUser(), true);
 		
 		Assert.assertEquals(String.valueOf(0.0), resourceInfoExtra.getMemInUseByUser());
 		Assert.assertEquals(String.valueOf(0), resourceInfoExtra.getInstancesInUseByUser());

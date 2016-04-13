@@ -459,7 +459,7 @@ public class ManagerPacketHelper {
 		packetSender.sendPacket(response);
 	}
 
-	public static ResourcesInfo getRemoteUserQuota(String accessId, String memberId, PacketSender packetSender)
+	public static ResourcesInfo getRemoteUserQuota(Token token, String memberId, PacketSender packetSender)
 			throws Exception {
 		if (packetSender == null) {
 			LOGGER.warn("Packet sender not set.");
@@ -470,8 +470,9 @@ public class ManagerPacketHelper {
 		iq.setTo(memberId);
 		iq.setType(Type.get);
 		Element queryEl = iq.getElement().addElement("query", ManagerXmppComponent.GETREMOTEUSERQUOTA_NAMESPACE);
-		Element userEl = queryEl.addElement(TOKEN_EL);
-		userEl.addElement(ACCESS_ID_EL).setText(accessId);
+		Element tokenEl = queryEl.addElement(TOKEN_EL);
+		tokenEl.addElement(ACCESS_ID_EL).setText(token.getAccessId());
+		tokenEl.addElement(USER_EL).setText(token.getUser());
 
 		IQ response = (IQ) packetSender.syncSendPacket(iq);
 		if (response.getError() != null) {
