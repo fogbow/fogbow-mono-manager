@@ -32,8 +32,10 @@ import org.fogbowcloud.manager.occi.model.ResourceRepository;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.order.OrderAttribute;
+import org.fogbowcloud.manager.occi.storage.StorageAttribute;
 import org.restlet.Request;
 import org.restlet.Response;
+import org.restlet.data.Status;
 
 import com.microsoft.azure.storage.CloudStorageAccount;
 import com.microsoft.azure.storage.StorageCredentials;
@@ -42,6 +44,7 @@ import com.microsoft.azure.storage.blob.CloudBlobClient;
 import com.microsoft.azure.storage.blob.CloudBlobContainer;
 import com.microsoft.azure.storage.blob.CloudPageBlob;
 import com.microsoft.windowsazure.Configuration;
+import com.microsoft.windowsazure.core.OperationStatusResponse;
 import com.microsoft.windowsazure.core.utils.KeyStoreType;
 import com.microsoft.windowsazure.exception.ServiceException;
 import com.microsoft.windowsazure.management.ManagementClient;
@@ -53,6 +56,7 @@ import com.microsoft.windowsazure.management.compute.DeploymentOperations;
 import com.microsoft.windowsazure.management.compute.HostedServiceOperations;
 import com.microsoft.windowsazure.management.compute.models.ConfigurationSet;
 import com.microsoft.windowsazure.management.compute.models.ConfigurationSetTypes;
+import com.microsoft.windowsazure.management.compute.models.DataVirtualHardDisk;
 import com.microsoft.windowsazure.management.compute.models.DeploymentGetResponse;
 import com.microsoft.windowsazure.management.compute.models.DeploymentSlot;
 import com.microsoft.windowsazure.management.compute.models.DeploymentStatus;
@@ -64,8 +68,11 @@ import com.microsoft.windowsazure.management.compute.models.InputEndpointTranspo
 import com.microsoft.windowsazure.management.compute.models.OSVirtualHardDisk;
 import com.microsoft.windowsazure.management.compute.models.Role;
 import com.microsoft.windowsazure.management.compute.models.RoleInstance;
+import com.microsoft.windowsazure.management.compute.models.VirtualHardDiskHostCaching;
 import com.microsoft.windowsazure.management.compute.models.VirtualIPAddress;
 import com.microsoft.windowsazure.management.compute.models.VirtualMachineCreateDeploymentParameters;
+import com.microsoft.windowsazure.management.compute.models.VirtualMachineDataDiskCreateParameters;
+import com.microsoft.windowsazure.management.compute.models.VirtualMachineGetResponse;
 import com.microsoft.windowsazure.management.compute.models.VirtualMachineOSImageCreateParameters;
 import com.microsoft.windowsazure.management.compute.models.VirtualMachineOSImageGetResponse;
 import com.microsoft.windowsazure.management.configuration.ManagementConfiguration;
@@ -441,7 +448,8 @@ public class AzureComputePlugin implements ComputePlugin {
 
 	@Override
 	public void bypass(Request request, Response response) {
-		throw new UnsupportedOperationException();
+		response.setStatus(new Status(HttpStatus.SC_BAD_REQUEST),
+				ResponseConstants.CLOUD_NOT_SUPPORT_OCCI_INTERFACE);
 	}
 
 	@Override
@@ -714,15 +722,104 @@ public class AzureComputePlugin implements ComputePlugin {
 	@Override
 	public String attach(Token token, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
-		// TODO Auto-generated method stub
+		String instanceId = xOCCIAtt.get(StorageAttribute.SOURCE.getValue());
+		String storageId = xOCCIAtt.get(StorageAttribute.TARGET.getValue());
+		LOGGER.debug("Trying to attach disk " + storageId + " to VM " + instanceId);
+		
+		ComputeManagementClient computeManagementClient = 
+				createComputeManagementClient(token);
+		try {
+			VirtualMachineDataDiskCreateParameters parameters = 
+					new VirtualMachineDataDiskCreateParameters();
+			parameters.setHostCaching(VirtualHardDiskHostCaching.READWRITE);
+			parameters.setName(storageId);
+			parameters.setMediaLinkUri(new URI(""));
+			Integer nextLUN = findNextLUN(instanceId, computeManagementClient);
+			parameters.setLogicalUnitNumber(nextLUN);
+			
+			OperationStatusResponse operationStatusResponse = computeManagementClient
+					.getVirtualMachineDisksOperations()
+				.createDataDisk(instanceId, instanceId, instanceId, parameters);
+			if (operationStatusResponse.getStatusCode() != HttpStatus.SC_OK) {
+				throw new OCCIException(ErrorType.BAD_REQUEST, 
+						operationStatusResponse.getError().getMessage());
+			}
+			return UUID.randomUUID().toString();
+		} catch (Exception e) {
+			LOGGER.debug("Could not attach disk to the virtual machine.", e);
+			e.printStackTrace();
+			throw new OCCIException(ErrorType.BAD_REQUEST, 
+					ResponseConstants.IRREGULAR_SYNTAX);
+		}
+	}
+
+	private Integer findNextLUN(String instanceId,
+			ComputeManagementClient computeManagementClient)
+			throws Exception {
+		VirtualMachineGetResponse vmGetResponse = computeManagementClient
+				.getVirtualMachinesOperations().get(instanceId, instanceId, instanceId);
+		ArrayList<DataVirtualHardDisk> dataVHDs = vmGetResponse.getDataVirtualHardDisks();
+		List<Integer> lunsInUse = new ArrayList<Integer>();
+		for (DataVirtualHardDisk dataVHD : dataVHDs) {
+			Integer logicalUnitNumber = dataVHD.getLogicalUnitNumber();
+			if (logicalUnitNumber == null) {
+				logicalUnitNumber = new Integer(0);
+			}
+			lunsInUse.add(logicalUnitNumber);
+		}
+		for (int i = 0; i <= 31; i++) {
+			Integer currentLUN = new Integer(i);
+			if (!lunsInUse.contains(currentLUN)) {
+				return currentLUN;
+			}
+		}
 		return null;
 	}
 
 	@Override
 	public void dettach(Token token, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
-		// TODO Auto-generated method stub
+		String instanceId = xOCCIAtt.get(StorageAttribute.SOURCE.getValue());
+		String storageId = xOCCIAtt.get(StorageAttribute.TARGET.getValue());
+		LOGGER.debug("Trying to detach disk " + storageId + " from VM " + instanceId);
 		
+		ComputeManagementClient computeManagementClient = 
+				createComputeManagementClient(token);
+		boolean deleteFromStorage = false;
+		try {
+			VirtualMachineGetResponse vmGetResponse = computeManagementClient.getVirtualMachinesOperations()
+				.get(instanceId, instanceId, instanceId);
+			ArrayList<DataVirtualHardDisk> dataVirtualHardDisks = vmGetResponse.getDataVirtualHardDisks();
+			for (DataVirtualHardDisk dataVHD : dataVirtualHardDisks) {
+				if (dataVHD.getName().equals(storageId)) {
+					Integer logicalUnitNumber = dataVHD.getLogicalUnitNumber();
+					if (logicalUnitNumber == null) {
+						logicalUnitNumber = 0;
+					}
+					OperationStatusResponse deleteDataDiskResponse = computeManagementClient
+							.getVirtualMachineDisksOperations().deleteDataDisk(
+									instanceId,instanceId, instanceId, 
+									logicalUnitNumber, 
+									deleteFromStorage);
+					if (deleteDataDiskResponse.getHttpStatusCode() == HttpStatus.SC_OK) {
+						LOGGER.debug("Disk successfully detached.");
+						return;
+					}
+					
+					LOGGER.debug("Could not detach disk " + storageId + " from VM " 
+							+ instanceId + ". Http code: " + deleteDataDiskResponse.getHttpStatusCode() 
+							+ ". " + deleteDataDiskResponse.getError().getMessage());
+					throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND_INSTANCE);
+				}
+			}
+			LOGGER.debug("Could not detach disk " + storageId + " from VM " 
+					+ instanceId + ". The disk does not exists.");
+			throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND_INSTANCE);
+		} catch (Exception e) {
+			LOGGER.debug("Could not detach disk " + storageId + " from VM " + instanceId, e);
+			e.printStackTrace();
+			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
+		}
 	}
 
 }

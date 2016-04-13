@@ -24,12 +24,12 @@ public class AzureIdentityPlugin implements IdentityPlugin {
 	
 	private static final Logger LOGGER = Logger.getLogger(AzureIdentityPlugin.class);
 	
-	protected Map<String, Map<String, String>> accessIDs;	
+	protected Map<String, Map<String, String>> accessIDs;
 	private Properties properties;
 	
 	public AzureIdentityPlugin(Properties properties) {
 		this.accessIDs = new HashMap<String, Map<String,String>>();
-		createTokens(properties);		
+		createTokens(properties);
 		this.properties = properties;
 	}
 
