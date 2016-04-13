@@ -10,17 +10,21 @@ import java.util.UUID;
 
 import javax.ws.rs.core.UriBuilder;
 
+import org.apache.http.HttpStatus;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ImageState;
 import org.fogbowcloud.manager.core.plugins.common.azure.AzureAttributes;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.OCCIException;
+import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.order.OrderAttribute;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.restlet.Request;
+import org.restlet.Response;
 
 import com.microsoft.windowsazure.core.OperationStatusResponse;
 import com.microsoft.windowsazure.management.compute.ComputeManagementClient;
@@ -75,10 +79,14 @@ public class TestAzureComputePlugin {
 		new AzureComputePlugin(properties);
 	}
 
-	@Test(expected = UnsupportedOperationException.class)
+	@Test
 	public void testBypass() {
 		AzureComputePlugin plugin = createAzureComputePlugin();
-		plugin.bypass(null, null);
+		Response response = new Response(new Request());
+		plugin.bypass(null, response);
+		Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatus().getCode());
+		Assert.assertEquals(ResponseConstants.CLOUD_NOT_SUPPORT_OCCI_INTERFACE, 
+				response.getStatus().getDescription());
 	}
 
 	private static final String UPLOAD_URI = "http://URI";
