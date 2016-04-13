@@ -33,7 +33,7 @@ public class TestFCUAccountingPlugin {
 	public void setUp() throws IOException {
 		benchmarkingPlugin = Mockito.mock(BenchmarkingPlugin.class);
 		properties = new Properties();
-		properties.put("accounting_datastore_url", "jdbc:sqlite:" + FAKE_DB_PATH);
+		properties.put(FCUAccountingPlugin.ACCOUNTING_DATASTORE_URL, "jdbc:sqlite:" + FAKE_DB_PATH);
 		properties.put(ConfigurationConstants.XMPP_JID_KEY, "localMemberId");
 
 		accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin);

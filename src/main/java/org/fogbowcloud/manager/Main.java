@@ -19,6 +19,7 @@ import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
 import org.fogbowcloud.manager.core.plugins.PrioritizationPlugin;
 import org.fogbowcloud.manager.core.plugins.StoragePlugin;
 import org.fogbowcloud.manager.core.plugins.accounting.FCUAccountingPlugin;
+import org.fogbowcloud.manager.core.plugins.accounting.SimpleStorageAccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.benchmarking.VanillaBenchmarkingPlugin;
 import org.fogbowcloud.manager.core.plugins.imagestorage.http.HTTPDownloadImageStoragePlugin;
 import org.fogbowcloud.manager.core.plugins.localcredentails.SingleMapperPlugin;
@@ -117,22 +118,31 @@ public class Main {
 			LOGGER.warn("Benchmarking plugin not specified in properties. Using the default one.", e);
 		}
 				
-		AccountingPlugin accountingPlugin = null;
+		AccountingPlugin computeAccountingPlugin = null;
 		try {
-			accountingPlugin = (AccountingPlugin) createInstanceWithBenchmarkingPlugin(
-					ConfigurationConstants.ACCOUNTING_PLUGIN_CLASS_KEY, properties, benchmarkingPlugin);
+			computeAccountingPlugin = (AccountingPlugin) createInstanceWithBenchmarkingPlugin(
+					ConfigurationConstants.COMPUTE_ACCOUNTING_PLUGIN_CLASS_KEY, properties, benchmarkingPlugin);
 		} catch (Exception e) {
-			accountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin);
-			LOGGER.warn("Accounting plugin not specified in properties. Using the default one.", e);
+			computeAccountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin);
+			LOGGER.warn("Accounting plugin (compute) not specified in properties. Using the default one.", e);
 		}
+		
+		AccountingPlugin storageccountingPlugin = null;
+		try {
+			storageccountingPlugin = (AccountingPlugin) createInstance(
+					ConfigurationConstants.STORAGE_ACCOUNTING_PLUGIN_CLASS_KEY, properties);
+		} catch (Exception e) {
+			storageccountingPlugin = new SimpleStorageAccountingPlugin(properties);
+			LOGGER.warn("Accounting plugin (storage) not specified in properties. Using the default one.", e);
+		}		
 		
 		FederationMemberPickerPlugin memberPickerPlugin = null;
 		try {
 			memberPickerPlugin = (FederationMemberPickerPlugin) createInstanceWithAccoutingPlugin(
 					ConfigurationConstants.MEMBER_PICKER_PLUGIN_CLASS_KEY, properties,
-					accountingPlugin);
+					computeAccountingPlugin);
 		} catch (Exception e) {
-			memberPickerPlugin = new RoundRobinMemberPickerPlugin(properties, accountingPlugin);
+			memberPickerPlugin = new RoundRobinMemberPickerPlugin(properties, computeAccountingPlugin);
 			LOGGER.warn("Member picker plugin not specified in properties. Using the default one.", e);
 		}
 		
@@ -165,7 +175,7 @@ public class Main {
 		}
 		
 		PrioritizationPlugin prioritizationPlugin = new TwoFoldPrioritizationPlugin(properties,
-				accountingPlugin);
+				computeAccountingPlugin);
 
 		ManagerController facade = new ManagerController(properties);
 		facade.setComputePlugin(computePlugin);
@@ -175,7 +185,8 @@ public class Main {
 		facade.setImageStoragePlugin(imageStoragePlugin);
 		facade.setValidator(validator);
 		facade.setBenchmarkingPlugin(benchmarkingPlugin);
-		facade.setAccountingPlugin(accountingPlugin);
+		facade.setComputeAccountingPlugin(computeAccountingPlugin);
+		facade.setStorageAccountingPlugin(storageccountingPlugin);
 		facade.setMemberPickerPlugin(memberPickerPlugin);
 		facade.setPrioritizationPlugin(prioritizationPlugin);
 		facade.setLocalCredentailsPlugin(mapperPlugin);

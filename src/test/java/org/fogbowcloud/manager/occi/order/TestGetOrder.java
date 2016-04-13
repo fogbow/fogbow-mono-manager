@@ -87,6 +87,10 @@ public class TestGetOrder {
 		Mockito.when(authorizationPlugin.isAuthorized(Mockito.any(Token.class))).thenReturn(true);
 		
 		BenchmarkingPlugin benchmarkingPlugin = Mockito.mock(BenchmarkingPlugin.class);
+		
+		//TODO review
+		Mockito.doThrow(new OCCIException(ErrorType.BAD_REQUEST, "")).when(benchmarkingPlugin).remove(Mockito.anyString());
+		
 		this.orderHelper.initializeComponentExecutorSameThread(computePlugin, identityPlugin,
 				authorizationPlugin, benchmarkingPlugin, mapperPlugin);
 	}

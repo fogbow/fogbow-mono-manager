@@ -65,8 +65,8 @@ public class HeaderUtils {
 				throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 			} else {
 				String authorizationHeader = headers.getValues(HeaderUtils.AUTHORIZATION);
-				LOGGER.debug("authorization-header=" + authorizationHeader);
 				if (authorizationHeader == null) {
+					LOGGER.debug("authorization-header=" + authorizationHeader);
 					throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 				}
 				token = authorizationHeader;

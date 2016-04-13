@@ -159,7 +159,7 @@ public class TestGetCompute {
 		ordersToAdd.put(OCCITestHelper.USER_MOCK+"_post", ordersB);
 		
 		this.helper.initializeComponentCompute(computePlugin, identityPlugin, identityPlugin, authorizationPlugin, imageStoragePlugin,
-				Mockito.mock(AccountingPlugin.class), Mockito.mock(BenchmarkingPlugin.class), ordersToAdd,
+				Mockito.mock(AccountingPlugin.class), Mockito.mock(AccountingPlugin.class), Mockito.mock(BenchmarkingPlugin.class), ordersToAdd,
 				mapperPlugin);
 
 		instanceDB = new InstanceDataStore(INSTANCE_DB_URL);
@@ -340,7 +340,8 @@ public class TestGetCompute {
 		ordersToAdd.put(OCCITestHelper.USER_MOCK, orders);
 		
 		helper.initializeComponentCompute(computePlugin, identityPlugin, identityPlugin, authorizationPlugin, imageStoragePlugin,
-				Mockito.mock(AccountingPlugin.class), Mockito.mock(BenchmarkingPlugin.class), ordersToAdd, null);
+				Mockito.mock(AccountingPlugin.class), Mockito.mock(AccountingPlugin.class), Mockito.mock(BenchmarkingPlugin.class), 
+				ordersToAdd, null);
 
 		// test
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_COMPUTE);

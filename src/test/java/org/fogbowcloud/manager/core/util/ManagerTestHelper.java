@@ -70,7 +70,8 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 	private IdentityPlugin federationIdentityPlugin;
 	private AuthorizationPlugin authorizationPlugin;
 	private BenchmarkingPlugin benchmarkingPlugin;
-	private AccountingPlugin accountingPlugin;
+	private AccountingPlugin computeAccountingPlugin;
+	private AccountingPlugin storageAccountingPlugin;
 	private FederationMemberPickerPlugin memberPickerPlugin;
 	private Token defaultFederationToken;
 	private Map<String, Map<String, String>> defaultFederationAllUsersCrendetials;
@@ -184,7 +185,11 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 	}
 	
 	public AccountingPlugin getAccountingPlugin() {
-		return accountingPlugin;
+		return computeAccountingPlugin;
+	}
+	
+	public MapperPlugin getMapperPlugin() {
+		return mapperPlugin;
 	}
 
 	public ManagerXmppComponent initializeXMPPManagerComponent(boolean init) throws Exception {
@@ -228,7 +233,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		this.identityPlugin = Mockito.mock(IdentityPlugin.class);
 		this.federationIdentityPlugin = Mockito.mock(IdentityPlugin.class);
 		this.benchmarkingPlugin = Mockito.mock(BenchmarkingPlugin.class);
-		this.accountingPlugin = Mockito.mock(AccountingPlugin.class);
+		this.computeAccountingPlugin = Mockito.mock(AccountingPlugin.class);
 		this.mapperPlugin = Mockito.mock(MapperPlugin.class);
 		this.authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
 		
@@ -245,7 +250,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		ExecutorService benchmarkExecutor = new CurrentThreadExecutorService();
 				
 		managerFacade.setComputePlugin(computePlugin);
-		managerFacade.setAccountingPlugin(accountingPlugin);
+		managerFacade.setComputeAccountingPlugin(computeAccountingPlugin);
 		managerFacade.setLocalIdentityPlugin(identityPlugin);
 		managerFacade.setBenchmarkExecutor(benchmarkExecutor);
 		managerFacade.setBenchmarkingPlugin(benchmarkingPlugin);
@@ -431,7 +436,8 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		
 		benchmarkingPlugin = Mockito.mock(BenchmarkingPlugin.class);
 		
-		accountingPlugin = Mockito.mock(AccountingPlugin.class);
+		computeAccountingPlugin = Mockito.mock(AccountingPlugin.class);
+		storageAccountingPlugin = Mockito.mock(AccountingPlugin.class);
 		
 		memberPickerPlugin = Mockito.mock(FederationMemberPickerPlugin.class);
 		Mockito.when(memberPickerPlugin.pick(Mockito.any(List.class))).thenReturn(
@@ -447,7 +453,8 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		managerController.setLocalCredentailsPlugin(mapperPlugin);
 		managerController.setComputePlugin(computePlugin);
 		managerController.setBenchmarkingPlugin(benchmarkingPlugin);
-		managerController.setAccountingPlugin(accountingPlugin);
+		managerController.setComputeAccountingPlugin(computeAccountingPlugin);
+		managerController.setStorageAccountingPlugin(storageAccountingPlugin);
 		managerController.setValidator(new DefaultMemberAuthorizationPlugin(null));
 		managerController.setMemberPickerPlugin(memberPickerPlugin);
 		managerController.setBenchmarkExecutor(benchmarkExecutor);

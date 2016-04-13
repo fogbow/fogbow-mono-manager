@@ -14,6 +14,7 @@ import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.member.MemberServerResource;
 import org.fogbowcloud.manager.occi.member.QuotaServerResource;
 import org.fogbowcloud.manager.occi.member.UsageServerResource;
+import org.fogbowcloud.manager.occi.member.UsageServerResource.ResourceUsage;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.HeaderUtils;
 import org.fogbowcloud.manager.occi.model.OCCIHeaders;
@@ -57,8 +58,8 @@ public class OCCIApplication extends Application {
 		router.attach("/" + OrderConstants.COMPUTE_TERM, ComputeServerResource.class);
 		router.attach("/" + OrderConstants.COMPUTE_TERM + "/", ComputeServerResource.class);
 		router.attach("/" + OrderConstants.COMPUTE_TERM + "/{instanceId}", ComputeServerResource.class);
-		router.attach("/member/accounting", AccountingServerResource.class);
-		router.attach("/member/accounting/", AccountingServerResource.class);
+		router.attach("/member/accounting/" + OrderConstants.COMPUTE_TERM, AccountingServerResource.class);
+		router.attach("/member/accounting/" + OrderConstants.STORAGE_TERM, AccountingServerResource.class);
 		router.attach("/member", MemberServerResource.class);
 		router.attach("/member/{memberId}/quota", QuotaServerResource.class);
 		router.attach("/member/{memberId}/quota/", QuotaServerResource.class);
@@ -245,11 +246,11 @@ public class OCCIApplication extends Application {
 		return managerFacade.getUser(authToken);
 	}
 
-	public List<AccountingInfo> getAccountingInfo(String authToken) {
-		return managerFacade.getAccountingInfo(authToken);
+	public List<AccountingInfo> getAccountingInfo(String authToken, String resourceKing) {
+		return managerFacade.getAccountingInfo(authToken, resourceKing);
 	}
 
-	public double getUsage(String authToken, String memberId) {
-		return managerFacade.getUsage(authToken, memberId);
+	public ResourceUsage getUsages(String authToken, String memberId) {
+		return managerFacade.getUsages(authToken, memberId);
 	}
 }
