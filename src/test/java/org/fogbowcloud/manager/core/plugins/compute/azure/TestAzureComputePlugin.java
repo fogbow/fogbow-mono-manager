@@ -472,10 +472,16 @@ public class TestAzureComputePlugin {
 
 	private AzureComputePlugin createAzureComputePlugin() {
 		Properties properties = new Properties();
-		properties.put("compute_azure_storage_account_name", "ana123");
-		properties.put("compute_azure_max_vcpu", "3");
-		properties.put("compute_azure_max_ram", "3500");
-		properties.put("compute_azure_max_instances", "2");
+		properties.put(AzureConfigurationConstants
+				.AZURE_STORAGE_ACCOUNT_NAME, "ana123");
+		properties.put(AzureConfigurationConstants
+				.AZURE_STORAGE_KEY, "a2V5MTIz");
+		properties.put(AzureConfigurationConstants
+				.COMPUTE_AZURE_MAX_VCPU, "3");
+		properties.put(AzureConfigurationConstants
+				.COMPUTE_AZURE_MAX_RAM, "3500");
+		properties.put(AzureConfigurationConstants
+				.COMPUTE_AZURE_MAX_INSTANCES, "2");
 		AzureComputePlugin computePlugin = Mockito.spy(new AzureComputePlugin(
 				properties));
 		return computePlugin;

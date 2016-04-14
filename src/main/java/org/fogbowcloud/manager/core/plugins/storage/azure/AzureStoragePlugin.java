@@ -2,6 +2,8 @@ package org.fogbowcloud.manager.core.plugins.storage.azure;
 
 import java.io.ByteArrayInputStream;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.security.InvalidKeyException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -13,6 +15,7 @@ import org.apache.http.HttpStatus;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.plugins.StoragePlugin;
 import org.fogbowcloud.manager.core.plugins.common.azure.AzureAttributes;
+import org.fogbowcloud.manager.core.plugins.compute.azure.AzureConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.util.VhdFooter;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.model.Category;
@@ -46,8 +49,6 @@ import com.microsoft.windowsazure.management.configuration.ManagementConfigurati
 public class AzureStoragePlugin implements StoragePlugin {
 	private static final Logger LOGGER = Logger.getLogger(AzureStoragePlugin.class);
 	
-	private static final String BASE_URL = "https://management.core.windows.net/";
-	private static final String STORAGE_CONTAINER = "vhd-store";
 	private static final String DISK_STATUS_AVAILABLE = "available";
 	private static final String DISK_STATUS_INUSE = "in_use";
 	private static final long ONE_GB_IN_BYTES = 1024 * 1024 * 1024;
@@ -58,29 +59,35 @@ public class AzureStoragePlugin implements StoragePlugin {
 	
 	public AzureStoragePlugin(Properties properties) {
 		String storageAccountName = properties
-				.getProperty("compute_azure_storage_account_name");
+				.getProperty(AzureConfigurationConstants.AZURE_STORAGE_ACCOUNT_NAME);
 		if (storageAccountName == null) {
-			LOGGER.error("Property compute_azure_storage_account_name must be set");
 			throw new IllegalArgumentException(
 					"Property compute_azure_storage_account_name must be set");
 		}
 		this.storageAccountName = storageAccountName;
-		this.storageKey = properties.getProperty("compute_azure_storage_key");
+		String storageKey = properties.getProperty(
+				AzureConfigurationConstants.AZURE_STORAGE_KEY);
+		if (storageKey == null) {
+			throw new IllegalArgumentException(
+					"Property compute_azure_storage_key must be set");
+		}
+		this.storageKey = storageKey;
 		this.storageConnectionString =
 			    "DefaultEndpointsProtocol=http;" +
 			    "AccountName=" + this.storageAccountName + ";" +
 			    "AccountKey=" + this.storageKey;
 	}
 	
-	protected static Configuration createConfiguration(Token token) {
+	private static Configuration createConfiguration(Token token) {
 		try {
-			return ManagementConfiguration.configure(new URI(BASE_URL),
+			return ManagementConfiguration.configure(new URI(
+					AzureConfigurationConstants.AZURE_BASE_URL),
 					token.get(AzureAttributes.SUBSCRIPTION_ID_KEY),
 					token.get(AzureAttributes.KEYSTORE_PATH_KEY),
 					token.get(AzureAttributes.KEYSTORE_PASSWORD_KEY),
 					KeyStoreType.jks);
 		} catch (Exception e) {
-			throw new OCCIException(ErrorType.BAD_REQUEST, "Can't create azure configuration");
+			throw new OCCIException(ErrorType.BAD_REQUEST, "Cannot create azure configuration");
 		}
 	}
 
@@ -99,10 +106,8 @@ public class AzureStoragePlugin implements StoragePlugin {
 		String uuid = UUID.randomUUID().toString();
 		String diskId = "fogbow-disk-" + uuid;
 		String size = xOCCIAtt.get(OrderAttribute.STORAGE_SIZE.getValue());
+		
 		CloudBlob blob = createVHD(size, diskId);
-		if (blob == null) {
-			throw new OCCIException(ErrorType.BAD_REQUEST, "Cloud not create VHD blob file in the storage account.");
-		}
 		try {
 			VirtualMachineDiskCreateParameters parameters = 
 					new VirtualMachineDiskCreateParameters();
@@ -116,7 +121,7 @@ public class AzureStoragePlugin implements StoragePlugin {
 				return diskId;
 			}
 		} catch (Exception e) {
-			LOGGER.debug("Could not create instance.", e);
+			LOGGER.error("Could not create instance.", e);
 			deleteVHD(diskId);
 		}
 		return null;
@@ -126,7 +131,8 @@ public class AzureStoragePlugin implements StoragePlugin {
 		try {
 			CloudStorageAccount storageAccount = CloudStorageAccount.parse(this.storageConnectionString);
 			CloudBlobClient blobClient = storageAccount.createCloudBlobClient();
-			CloudBlobContainer containerReference = blobClient.getContainerReference(STORAGE_CONTAINER);
+			CloudBlobContainer containerReference = blobClient.getContainerReference(
+					AzureConfigurationConstants.AZURE_STORAGE_CONTAINER);
 			containerReference.createIfNotExists();
 			CloudPageBlob pageBlob = containerReference.getPageBlobReference(diskId + ".vhd");
 			long sizeInBytes = Long.parseLong(size) * ONE_GB_IN_BYTES;
@@ -134,22 +140,31 @@ public class AzureStoragePlugin implements StoragePlugin {
 			byte[] vhdFooterArray = VhdFooter.create(sizeInBytes).array();
 			pageBlob.uploadPages(new ByteArrayInputStream(vhdFooterArray), sizeInBytes - vhdFooterArray.length, vhdFooterArray.length);
 			return pageBlob;
+		} catch (InvalidKeyException e) {
+			LOGGER.error("Could not create the VHD file to use in new storage instance.", e);
+			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
+		} catch (URISyntaxException e) {
+			LOGGER.error("Could not create the VHD file to use in new storage instance.", e);
+			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
 		} catch (Exception e) {
-			LOGGER.debug("Could not create VHD blob file in the Azure Storage Account.", e);
+			// StorageException, IOException
+			LOGGER.error("Could not create the VHD file to use in new storage instance.", e);
+			throw new OCCIException(ErrorType.INTERNAL_SERVER_ERROR, e.getMessage());
 		}
-		return null;
 	}
 	
-	private void deleteVHD(String diskId) {
+	private boolean deleteVHD(String diskId) {
 		try {
 			CloudStorageAccount storageAccount = CloudStorageAccount.parse(this.storageConnectionString);
 			CloudBlobClient blobClient = storageAccount.createCloudBlobClient();
-			CloudBlobContainer containerReference = blobClient.getContainerReference(STORAGE_CONTAINER);
+			CloudBlobContainer containerReference = blobClient.getContainerReference(
+					AzureConfigurationConstants.AZURE_STORAGE_CONTAINER);
 			CloudPageBlob pageBlob = containerReference.getPageBlobReference(diskId + ".vhd");
-			pageBlob.deleteIfExists();
+			return pageBlob.deleteIfExists();
 		} catch (Exception e) {
-			LOGGER.debug("Could not delete VHD.", e);
+			LOGGER.error("Cloud not delete the VHD.", e);
 		}
+		return false;
 	}
 
 	@Override
@@ -160,16 +175,15 @@ public class AzureStoragePlugin implements StoragePlugin {
 			VirtualMachineDiskListResponse diskListResponse = computeManagementClient.getVirtualMachineDisksOperations().listDisks();
 			ArrayList<VirtualMachineDisk> disks = diskListResponse.getDisks();
 			for (VirtualMachineDisk virtualMachineDisk : disks) {
-				instances.add(mountInstance(virtualMachineDisk));
+				instances.add(createOCCIInstance(virtualMachineDisk));
 			}
 		} catch (Exception e) {
-			LOGGER.debug("Cloud not list disks.", e);
-			e.printStackTrace();
+			LOGGER.error("Cloud not list disks.", e);
 		}
 		return instances;
 	}
 	
-	private Instance mountInstance(VirtualMachineDisk disk) {
+	private Instance createOCCIInstance(VirtualMachineDisk disk) {
 		String id = disk.getName();
 		List<Resource> resources = new ArrayList<Resource>();
 		resources.add(ResourceRepository.getInstance().get(OrderConstants.STORAGE_TERM));
@@ -183,6 +197,7 @@ public class AzureStoragePlugin implements StoragePlugin {
 		attributes.put("occi.storage.status", diskStatus);
 		attributes.put("occi.storage.size", String.valueOf(disk.getLogicalSizeInGB()));
 		attributes.put("occi.core.id", id);
+		//FIXME: precisamos adicionar os links? ou seja, getInstance precisar mostrar os attrs de links? 
 		return new Instance(id, resources, attributes, new ArrayList<Instance.Link>(), null);
 	}
 
@@ -198,7 +213,7 @@ public class AzureStoragePlugin implements StoragePlugin {
 	}
 
 	@Override
-	public void removeInstance(Token token, String instanceId) {
+	public void removeInstance(Token token, String instanceId) throws OCCIException {
 		ComputeManagementClient computeManagementClient = createComputeManagementClient(token);
 		
 		Instance instance = getInstance(token, instanceId);
@@ -208,14 +223,15 @@ public class AzureStoragePlugin implements StoragePlugin {
 		}
 		
 		try {
-			OperationResponse operationResponse = computeManagementClient.getVirtualMachineDisksOperations()
-				.deleteDisk(instanceId, true);
+			OperationResponse operationResponse = computeManagementClient
+					.getVirtualMachineDisksOperations()
+					.deleteDisk(instanceId, true);
 			int statusCode = operationResponse.getStatusCode();
-			LOGGER.debug("Deleted disk: " + statusCode);
+			LOGGER.debug("Azure disk deleted. Http status code: " + statusCode);
 		} catch (Exception e) {
-			LOGGER.debug("Could not delete instance " + instanceId, e);
-			throw new OCCIException(ErrorType.BAD_REQUEST, 
-					ResponseConstants.IRREGULAR_SYNTAX);
+			// IOException, ServiceException
+			LOGGER.error("Could not remove storage instance.", e);
+			throw new OCCIException(ErrorType.INTERNAL_SERVER_ERROR, e.getMessage());
 		}
 	}
 
@@ -223,7 +239,11 @@ public class AzureStoragePlugin implements StoragePlugin {
 	public void removeInstances(Token token) {
 		List<Instance> instances = getInstances(token);
 		for (Instance instance : instances) {
-			removeInstance(token, instance.getId());
+			try {
+				removeInstance(token, instance.getId());
+			} catch (OCCIException e) {
+				LOGGER.error("Could not remove storage instance id: " + instance.getId());
+			}
 		}
 	}
 }

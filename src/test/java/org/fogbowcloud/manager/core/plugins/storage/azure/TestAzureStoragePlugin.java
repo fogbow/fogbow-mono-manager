@@ -10,6 +10,7 @@ import java.util.Properties;
 
 import org.apache.http.HttpStatus;
 import org.fogbowcloud.manager.core.plugins.common.azure.AzureAttributes;
+import org.fogbowcloud.manager.core.plugins.compute.azure.AzureConfigurationConstants;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.Token;
@@ -48,8 +49,8 @@ public class TestAzureStoragePlugin {
 		xOCCIAtt.put(OrderAttribute.STORAGE_SIZE.getValue(), DEFAULT_DISK_SIZE);
 
 		CloudPageBlob pageBlob = new CloudPageBlob(new URI(FAKE_RESOURCE_URI));
-		Mockito.when(plugin.createVHD(Mockito.anyString(), 
-				Mockito.anyString())).thenReturn(pageBlob);
+		Mockito.doReturn(pageBlob).when(plugin)
+			.createVHD(Mockito.anyString(), Mockito.anyString());
 		
 		VirtualMachineDiskOperations vmDiskOperations = Mockito.mock(
 				VirtualMachineDiskOperations.class);
@@ -207,10 +208,10 @@ public class TestAzureStoragePlugin {
 	
 	private AzureStoragePlugin createAzureStoragePlugin() {
 		Properties properties = new Properties();
-		properties.put("compute_azure_storage_account_name", "ana123");
-		properties.put("compute_azure_max_vcpu", "3");
-		properties.put("compute_azure_max_ram", "3500");
-		properties.put("compute_azure_max_instances", "2");
+		properties.put(AzureConfigurationConstants
+				.AZURE_STORAGE_ACCOUNT_NAME, "ana123");
+		properties.put(AzureConfigurationConstants
+				.AZURE_STORAGE_KEY, "a2V5MTIz");
 		AzureStoragePlugin storagePlugin = Mockito.spy(
 				new AzureStoragePlugin(properties));
 		return storagePlugin;
