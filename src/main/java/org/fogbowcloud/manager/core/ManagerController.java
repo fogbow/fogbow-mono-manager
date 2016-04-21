@@ -52,6 +52,7 @@ import org.fogbowcloud.manager.core.plugins.FederationMemberPickerPlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
 import org.fogbowcloud.manager.core.plugins.MapperPlugin;
+import org.fogbowcloud.manager.core.plugins.NetworkPlugin;
 import org.fogbowcloud.manager.core.plugins.PrioritizationPlugin;
 import org.fogbowcloud.manager.core.plugins.StoragePlugin;
 import org.fogbowcloud.manager.core.plugins.accounting.AccountingInfo;
@@ -130,6 +131,7 @@ public class ManagerController {
 	private AuthorizationPlugin authorizationPlugin;
 	private ComputePlugin computePlugin;
 	private StoragePlugin storagePlugin;
+	private NetworkPlugin networkPlugin;
 	private IdentityPlugin localIdentityPlugin;
 	private IdentityPlugin federationIdentityPlugin;
 	private PrioritizationPlugin prioritizationPlugin;
@@ -211,12 +213,12 @@ public class ManagerController {
 		this.benchmarkingPlugin = benchmarkingPlugin;
 	}
 	
-	public StoragePlugin getStoragePlugin() {
-		return storagePlugin;
-	}
-	
 	public void setStoragePlugin(StoragePlugin storagePlugin) {
 		this.storagePlugin = storagePlugin;
+	}
+	
+	public void setNetworkPlugin(NetworkPlugin networkPlugin) {
+		this.networkPlugin = networkPlugin;
 	}
 
 	public void setComputeAccountingPlugin(AccountingPlugin computeAccountingPlugin) {
@@ -672,6 +674,8 @@ public class ManagerController {
 					computePlugin.removeInstance(token, instanceId);					
 				} else if (order.getResourceKing().equals(OrderConstants.STORAGE_TERM)) {
 					storagePlugin.removeInstance(token, instanceId);
+				} else if (order.getResourceKing().equals(OrderConstants.NETWORK_TERM)) {
+					networkPlugin.removeInstance(token, instanceId);
 				}
 			} catch (Exception e) { 
 			}
@@ -759,8 +763,8 @@ public class ManagerController {
 		
 		Instance instance = null;
 		if (isFulfilledByLocalMember(order)) {
+			LOGGER.debug(order.getInstanceId() + " is local, getting its information in the local cloud.");
 			if (resourceKind.equals(OrderConstants.COMPUTE_TERM)) {
-				LOGGER.debug(order.getInstanceId() + " is local, getting its information in the local cloud.");
 				instance = this.computePlugin.getInstance(getFederationUserToken(order), order.getInstanceId());
 				
 				instance.addAttribute(Instance.SSH_USERNAME_ATT, getSSHCommonUser());
@@ -776,8 +780,9 @@ public class ManagerController {
 					instance.addResource(ResourceRepository.createImageResource(osCategory.getTerm()));
 				}				
 			} else if (resourceKind.equals(OrderConstants.STORAGE_TERM)) {
-				LOGGER.debug(order.getInstanceId() + " is local, getting its information in the local cloud.");
 				instance = this.storagePlugin.getInstance(getFederationUserToken(order), order.getInstanceId());				
+			} else if (resourceKind.equals(OrderConstants.NETWORK_TERM)) {
+				instance = this.networkPlugin.getInstance(getFederationUserToken(order), order.getInstanceId());			
 			}
 
 		} else {
@@ -919,6 +924,8 @@ public class ManagerController {
 				this.computePlugin.removeInstance(localToken, instanceId);				
 			} else if (resourceKind.equals(OrderConstants.STORAGE_TERM)) {
 				this.storagePlugin.removeInstance(localToken, instanceId);
+			} else if (resourceKind.equals(OrderConstants.NETWORK_TERM)) {
+				this.networkPlugin.removeInstance(localToken, instanceId);
 			}
 		} else {					
 			removeRemoteInstance(order);
@@ -1199,6 +1206,8 @@ public class ManagerController {
 				return instance;				
 			} else if (orderResourceKind != null && orderResourceKind.equals(OrderConstants.STORAGE_TERM)) {
 				instance = storagePlugin.getInstance(federationUserToken, instanceId);
+			} else if (orderResourceKind != null && orderResourceKind.equals(OrderConstants.NETWORK_TERM)) {
+				instance = networkPlugin.getInstance(federationUserToken, instanceId);
 			}
 			return instance;
 		} catch (OCCIException e) {
@@ -1223,6 +1232,8 @@ public class ManagerController {
 			computePlugin.removeInstance(federationUserToken, instanceId);			
 		} else if (OrderConstants.STORAGE_TERM.equals(resourceKind)) {
 			storagePlugin.removeInstance(federationUserToken, instanceId);
+		} else if (OrderConstants.NETWORK_TERM.equals(resourceKind)) {
+			networkPlugin.removeInstance(federationUserToken, instanceId);			
 		}
 	}
 
@@ -1438,9 +1449,9 @@ public class ManagerController {
 						order.setInstanceId(instanceId);
 						order.setProvidingMemberId(memberAddress);						
 						
-						boolean isStorageOrder = OrderConstants.STORAGE_TERM.equals(order
-								.getResourceKing());
-						if (isStorageOrder) {
+						boolean isStorageOrder = OrderConstants.STORAGE_TERM.equals(order.getResourceKing());
+						boolean isNetworkOrder = OrderConstants.NETWORK_TERM.equals(order.getResourceKing());						
+						if (isStorageOrder || isNetworkOrder) {
 							asynchronousOrders.remove(order.getId());
 							order.setState(OrderState.FULFILLED);
 							return;
@@ -1777,6 +1788,7 @@ public class ManagerController {
 
 		boolean isComputeOrder = OrderConstants.COMPUTE_TERM.equals(order.getResourceKing());
 		boolean isStorageOrder = OrderConstants.STORAGE_TERM.equals(order.getResourceKing());
+		boolean isNetworkOrder = OrderConstants.NETWORK_TERM.equals(order.getResourceKing());
 		
 		for (String keyAttributes : OrderAttribute.getValues()) {
 			order.getxOCCIAtt().remove(keyAttributes);
@@ -1859,7 +1871,24 @@ public class ManagerController {
 			} catch (OCCIException e) {
 				return false;
 			}			
-			
+		
+		} else if (isNetworkOrder) {
+			try {
+				String instanceId = networkPlugin.requestInstance(federationUserToken, 
+						order.getCategories(),order.getxOCCIAtt());
+
+				// TODO review. refactor this code 
+				order.setState(OrderState.FULFILLED);
+				order.setInstanceId(instanceId);
+				order.setProvidingMemberId(properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
+				if (!order.isLocal()) {
+					ManagerPacketHelper.replyToServedOrder(order, packetSender);
+				}
+				
+				return instanceId != null;
+			} catch (OCCIException e) {
+				return false;
+			}
 		} else {
 			return false;
 		}
