@@ -10,7 +10,7 @@ public class OCCIConstants {
 	public static final String NETWORK_STATE = "occi.network.state";
 	public static final String NETWORK_ADDRESS = "occi.network.address";
 	public static final String NETWORK_GATEWAY = "occi.network.gateway";
-	public static final String NETWORK_ALLOCANTION = "occi.network.allocation";
+	public static final String NETWORK_ALLOCATION = "occi.network.allocation";
 	
 	public enum NetworkState {
 		ACTIVE("active"), INACTIVE("inactive");
