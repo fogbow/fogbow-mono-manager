@@ -586,6 +586,10 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 			Element pathElement = doc.createElement("PATH");
 			pathElement.appendChild(doc.createTextNode(templateProperties.get("image_path")));
 			rootElement.appendChild(pathElement);
+			
+			Element driverElement = doc.createElement("DRIVER");
+			driverElement.appendChild(doc.createTextNode("qcow2"));
+			rootElement.appendChild(driverElement);
 
 			Element sizeElement = doc.createElement("SIZE");
 			sizeElement.appendChild(doc.createTextNode(templateProperties.get("image_size")));

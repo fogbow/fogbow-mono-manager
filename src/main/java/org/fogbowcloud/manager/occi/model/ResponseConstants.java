@@ -42,5 +42,8 @@ public class ResponseConstants {
 	public static final String INVALID_INSTANCE_OWN = "The same own of instance is required.";
 	public static final String XMPP_RESPONSE_NULL = "Without response.";
 	public static final String EXISTING_ATTACHMENT = "Remove operation aborted. There are attachments in use.";
+	public static final String NETWORK_ADDRESS_INVALID_VALUE = "Network address with invalid value";
+	public static final String NETWORK_GATEWAY_INVALID_VALUE = "Network gateway with invalid value";
+	public static final String NETWORK_ALLOCATION_INVALID_VALUE = "Network allocation with invalid value";
 
 }

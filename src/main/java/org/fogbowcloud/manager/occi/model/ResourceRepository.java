@@ -68,6 +68,9 @@ public class ResourceRepository {
 		networkAttributes.add("occi.network.vlan");
 		networkAttributes.add("occi.network.label");
 		networkAttributes.add("occi.network.state");
+		networkAttributes.add("occi.network.address");
+		networkAttributes.add("occi.network.gateway");
+		networkAttributes.add("occi.network.allocation");
 		
 		List<String> networkActions = new ArrayList<String>();
 		networkActions.add("http://schemas.ogf.org/occi/infrastructure/network/action#up");
