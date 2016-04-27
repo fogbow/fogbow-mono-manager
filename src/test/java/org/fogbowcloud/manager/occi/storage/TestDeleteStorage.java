@@ -42,6 +42,7 @@ public class TestDeleteStorage {
 
 	public static String INSTANCE_ID = "1234567ujhgf45hdb4w";
 	public static String OTHER_INSTANCE_ID = "otherInstanceId";
+	public static String FED_STORAGE_PREFIX = "federated_storage_";
 
 	private OCCITestHelper helper;
 	private ImageStoragePlugin imageStoragePlugin;

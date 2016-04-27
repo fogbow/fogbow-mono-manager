@@ -42,5 +42,6 @@ public class ResponseConstants {
 	public static final String INVALID_INSTANCE_OWN = "The same own of instance is required.";
 	public static final String XMPP_RESPONSE_NULL = "Without response.";
 	public static final String EXISTING_ATTACHMENT = "Remove operation aborted. There are attachments in use.";
-
+	public static final String STORAGE_NOT_READY = "Storage not Ready yet.";
+	public static final String INTERNAL_ERROR = "Internal Server Error";
 }
