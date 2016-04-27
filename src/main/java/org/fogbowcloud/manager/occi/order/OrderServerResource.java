@@ -8,9 +8,11 @@ import java.util.Map;
 
 import org.apache.http.HttpStatus;
 import org.apache.log4j.Logger;
+import org.bouncycastle.util.IPAddress;
 import org.fogbowcloud.manager.core.RequirementsHelper;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.occi.OCCIApplication;
+import org.fogbowcloud.manager.occi.OCCIConstants;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.ErrorType;
 import org.fogbowcloud.manager.occi.model.HeaderUtils;
@@ -352,16 +354,7 @@ public class OrderServerResource extends ServerResource {
 	public static Map<String, String> normalizeXOCCIAtt(Map<String, String> xOCCIAtt) {
 		Map<String, String> defOCCIAtt = new HashMap<String, String>();
 		
-		String resourceKind = xOCCIAtt.get(OrderAttribute.RESOURCE_KIND.getValue());
-		if (resourceKind != null) {
-			if (resourceKind.equals(OrderConstants.STORAGE_TERM)
-					&& xOCCIAtt.get(OrderAttribute.STORAGE_SIZE.getValue()) == null) {
-				throw new OCCIException(ErrorType.BAD_REQUEST,
-						ResponseConstants.NOT_FOUND_STORAGE_SIZE_ATTRIBUTE);
-			}
-		} else {
-			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.NOT_FOUND_RESOURCE_KIND);
-		}
+		checkOCCIAtt(xOCCIAtt);
  		
 		defOCCIAtt.put(OrderAttribute.TYPE.getValue(), OrderConstants.DEFAULT_TYPE);
 		defOCCIAtt.put(OrderAttribute.INSTANCE_COUNT.getValue(),
@@ -392,6 +385,43 @@ public class OrderServerResource extends ServerResource {
 			}
 		}
 		return defOCCIAtt;
+	}
+
+	private static void checkOCCIAtt(Map<String, String> xOCCIAtt) {
+		
+		String resourceKind = xOCCIAtt.get(OrderAttribute.RESOURCE_KIND.getValue());
+		if (resourceKind != null) {
+			if (resourceKind.equals(OrderConstants.STORAGE_TERM)
+					&& xOCCIAtt.get(OrderAttribute.STORAGE_SIZE.getValue()) == null) {
+				throw new OCCIException(ErrorType.BAD_REQUEST,
+						ResponseConstants.NOT_FOUND_STORAGE_SIZE_ATTRIBUTE);
+			}
+			if (resourceKind.equals(OrderConstants.NETWORK_TERM)){
+				
+				String address = xOCCIAtt.get(OCCIConstants.NETWORK_ADDRESS);
+				if(address == null || !validateIpCidr(address)){
+					throw new OCCIException(ErrorType.BAD_REQUEST,
+							ResponseConstants.NETWORK_ADDRESS_INVALID_VALUE);
+				}
+				
+				String gateway = xOCCIAtt.get(OCCIConstants.NETWORK_GATEWAY);
+				if(gateway == null || !validateIp(gateway)){
+					throw new OCCIException(ErrorType.BAD_REQUEST,
+							ResponseConstants.NETWORK_GATEWAY_INVALID_VALUE);
+				}
+				
+				String allocation = xOCCIAtt.get(OCCIConstants.NETWORK_ALLOCATION);
+				if(allocation == null || 
+						(!OCCIConstants.NetworkAllocation.DYNAMIC.getValue().equals(allocation) 
+								&& !OCCIConstants.NetworkAllocation.STATIC.getValue().equals(allocation))
+						){
+					throw new OCCIException(ErrorType.BAD_REQUEST,
+							ResponseConstants.NETWORK_ALLOCATION_INVALID_VALUE);
+				}
+			}
+		} else {
+			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.NOT_FOUND_RESOURCE_KIND);
+		}
 	}
 
 	private static boolean isOCCIAttribute(String attributeName) {
@@ -445,5 +475,14 @@ public class OrderServerResource extends ServerResource {
 		ServerCall httpCall = req.getHttpCall();
 		String hostDomain = myIp == null ? httpCall.getHostDomain() : myIp;
 		return req.getProtocol().getSchemeName() + "://" + hostDomain + ":" + httpCall.getHostPort();
-	}	
+	}
+	
+
+	private static boolean validateIpCidr(String value){
+		return IPAddress.isValidIPv4WithNetmask(value) || IPAddress.isValidIPv6WithNetmask(value);
+	}
+	
+	private static boolean validateIp(String value){
+		return IPAddress.isValidIPv4(value) || IPAddress.isValidIPv6(value);
+	}
 }
