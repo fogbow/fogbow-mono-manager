@@ -294,7 +294,7 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		Client oneClient = clientFactory.createClient(token.getAccessId(), openNebulaEndpoint);
 		VirtualMachinePool vmPool = clientFactory.createVirtualMachinePool(oneClient);
 		for (VirtualMachine virtualMachine : vmPool) {
-			instances.add(mountInstance(virtualMachine));
+			instances.add(createVMInstance(virtualMachine));
 		}
 		return instances;
 	}
@@ -309,10 +309,10 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		
 		Client oneClient = clientFactory.createClient(token.getAccessId(), openNebulaEndpoint);
 		VirtualMachine vm = clientFactory.createVirtualMachine(oneClient, instanceId);
-		return mountInstance(vm);
+		return createVMInstance(vm);
 	}
 
-	private Instance mountInstance(VirtualMachine vm) {
+	private Instance createVMInstance(VirtualMachine vm) {
 		LOGGER.debug("Mounting instance structure of instanceId: " + vm.getId());
 
 		String mem = vm.xpath("TEMPLATE/MEMORY");

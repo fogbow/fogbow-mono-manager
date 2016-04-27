@@ -16,6 +16,7 @@ import org.opennebula.client.user.User;
 import org.opennebula.client.user.UserPool;
 import org.opennebula.client.vm.VirtualMachine;
 import org.opennebula.client.vm.VirtualMachinePool;
+import org.opennebula.client.vnet.VirtualNetwork;
 
 public class OpenNebulaClientFactory {
 	
@@ -159,5 +160,42 @@ public class OpenNebulaClientFactory {
 		
 		Image.chmod(oneClient, response.getIntMessage(), 744);
 		return response.getMessage();
+	}
+	
+	public String allocateNetwork(Client oneClient, String networkTemplate) {
+		OneResponse response = VirtualNetwork.allocate(oneClient, networkTemplate);
+		if (response.isError()) {
+			String errorMessage = response.getErrorMessage();
+			LOGGER.error("Error while creating a network from template: " + networkTemplate);
+			LOGGER.error("Error message is: " + errorMessage);
+			throw new OCCIException(ErrorType.BAD_REQUEST, errorMessage);
+		}
+		
+		VirtualNetwork.chmod(oneClient, response.getIntMessage(), 744);
+		return response.getMessage();
+	}
+	
+	public VirtualNetwork createVirtualNetwork (Client oneClient, String instanceIdStr) {
+		int instanceId;
+		try {
+			instanceId = Integer.parseInt(instanceIdStr);
+		} catch (Exception e) {
+			LOGGER.error("Error while converting instanceid " + instanceIdStr + " to integer.");
+			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
+		}
+		VirtualNetwork virtualNetwork = new VirtualNetwork(instanceId, oneClient);
+		OneResponse response = virtualNetwork.info();
+		
+		if (response.isError()) {
+			String errorMessage = response.getErrorMessage(); 
+			LOGGER.error(errorMessage);
+			//Not authorized to perform
+			if (errorMessage.contains("Not authorized")){
+				throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED_USER);
+			}
+			//Error getting virtual machine
+			throw new OCCIException(ErrorType.NOT_FOUND, errorMessage);
+		}
+		return virtualNetwork;
 	}
 }
