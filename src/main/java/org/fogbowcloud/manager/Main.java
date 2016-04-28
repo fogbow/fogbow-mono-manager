@@ -16,6 +16,7 @@ import org.fogbowcloud.manager.core.plugins.FederationMemberPickerPlugin;
 import org.fogbowcloud.manager.core.plugins.MapperPlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
+import org.fogbowcloud.manager.core.plugins.NetworkPlugin;
 import org.fogbowcloud.manager.core.plugins.PrioritizationPlugin;
 import org.fogbowcloud.manager.core.plugins.StoragePlugin;
 import org.fogbowcloud.manager.core.plugins.accounting.FCUAccountingPlugin;
@@ -162,7 +163,16 @@ public class Main {
 		} catch (Exception e) {
 			LOGGER.warn("Storage Plugin not especified in the properties.", e);
 			System.exit(EXIT_ERROR_CODE);
-		}			
+		}		
+		
+		NetworkPlugin networkPlugin = null;
+		try {
+			networkPlugin = (NetworkPlugin) createInstance(
+					ConfigurationConstants.NETWORK_CLASS_KEY, properties);
+		} catch (Exception e) {
+			LOGGER.warn("Network Plugin not especified in the properties.", e);
+			System.exit(EXIT_ERROR_CODE);
+		}		
 		
 		String occiExtraResourcesPath = properties
 				.getProperty(ConfigurationConstants.OCCI_EXTRA_RESOURCES_KEY_PATH);
@@ -191,6 +201,7 @@ public class Main {
 		facade.setPrioritizationPlugin(prioritizationPlugin);
 		facade.setLocalCredentailsPlugin(mapperPlugin);
 		facade.setStoragePlugin(storagePlugin);
+		facade.setNetworkPlugin(networkPlugin);
 		
 		String xmppHost = properties.getProperty(ConfigurationConstants.XMPP_HOST_KEY);
 		String xmppJid = properties.getProperty(ConfigurationConstants.XMPP_JID_KEY);
