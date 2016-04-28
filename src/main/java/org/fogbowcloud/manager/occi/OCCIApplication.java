@@ -57,6 +57,7 @@ public class OCCIApplication extends Application {
 		router.attach("/" + OrderConstants.STORAGE_TERM + "/" + OrderConstants.STORAGE_LINK_TERM
 				+ "/{storageLinkId}", StorageLinkServerResource.class);
 		router.attach("/" + OrderConstants.NETWORK_TERM + "/", NetworkServerResource.class);
+		router.attach("/" + OrderConstants.NETWORK_TERM + "/{networkId}", NetworkServerResource.class);
 		router.attach("/" + OrderConstants.COMPUTE_TERM, ComputeServerResource.class);
 		router.attach("/" + OrderConstants.COMPUTE_TERM + "/", ComputeServerResource.class);
 		router.attach("/" + OrderConstants.COMPUTE_TERM + "/{instanceId}", ComputeServerResource.class);
