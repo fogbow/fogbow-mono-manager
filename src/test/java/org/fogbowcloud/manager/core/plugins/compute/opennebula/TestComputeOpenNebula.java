@@ -1703,6 +1703,8 @@ public class TestComputeOpenNebula {
 		templateProperties.put("image-id", imageId);
 		String imageDisk = "1";
 		templateProperties.put("image-disk", imageDisk);
+		String networkId = "networkId";
+		templateProperties.put("network-id", networkId);
 		String template = computeOpenNebula.generateTemplate(templateProperties);
 		Assert.assertTrue(template.contains(sshPublicKey));
 		Assert.assertTrue(template.contains(userdata));

@@ -13,6 +13,7 @@ import org.fogbowcloud.manager.core.RequirementsHelper;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.occi.OCCIApplication;
 import org.fogbowcloud.manager.occi.OCCIConstants;
+import org.fogbowcloud.manager.occi.instance.Instance.Link;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.ErrorType;
 import org.fogbowcloud.manager.occi.model.HeaderUtils;
@@ -237,12 +238,18 @@ public class OrderServerResource extends ServerResource {
 		HttpRequest req = (HttpRequest) getRequest();
 		String acceptType = getAccept(HeaderUtils.getAccept(req.getHeaders()));
 		
+		List<Link> networkLinks = HeaderUtils.getLinks(req.getHeaders(), OrderConstants.NETWORK_TERM);
+		LOGGER.debug("Network links: " + networkLinks);
+		
 		List<Category> categories = HeaderUtils.getCategories(req.getHeaders());
 		LOGGER.debug("Categories: " + categories);
 		HeaderUtils.checkCategories(categories, OrderConstants.TERM);
 		HeaderUtils.checkOCCIContentType(req.getHeaders());		
 		
 		Map<String, String> xOCCIAtt = HeaderUtils.getXOCCIAtributes(req.getHeaders());
+		for (Link link : networkLinks) {
+			xOCCIAtt.put(OrderAttribute.NETWORK_ID.getValue(), link.getId());
+		}
 		xOCCIAtt = normalizeXOCCIAtt(xOCCIAtt);
 		
 		xOCCIAtt = normalizeRequirements(categories, xOCCIAtt, application.getFlavorsProvided());

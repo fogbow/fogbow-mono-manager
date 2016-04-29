@@ -11,6 +11,7 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.occi.OCCIApplication;
+import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.order.OrderAttribute;
 import org.fogbowcloud.manager.occi.order.OrderConstants;
 import org.restlet.Response;
@@ -115,12 +116,49 @@ public class HeaderUtils {
 				} catch (IllegalArgumentException e) {
 					throw new OCCIException(ErrorType.BAD_REQUEST,
 							ResponseConstants.IRREGULAR_SYNTAX);
-				}				
+				}
 			}
 		}
 		return categories;
 	}
-
+	
+	public static List<Instance.Link> getLinks(Series<Header> headers) {
+		List<Instance.Link> links = new ArrayList<Instance.Link>();
+		String[] headerValues = headers.getValuesArray(normalize(OCCIHeaders.LINK));
+		for (int i = 0; i < headerValues.length; i++) {
+			String[] eachHeaderValue = headerValues[i].split(",");
+			for (int j = 0; j < eachHeaderValue.length; j++){	
+				try {
+					links.add(Instance.Link.parseOCCILink(eachHeaderValue[j].trim()));
+				} catch (IllegalArgumentException e) {
+					throw new OCCIException(ErrorType.BAD_REQUEST,
+							ResponseConstants.IRREGULAR_SYNTAX);
+				}
+			}
+		}
+		return links;
+	}
+	
+	public static List<Instance.Link> getLinks(Series<Header> headers, String linkType) {
+		List<Instance.Link> links = new ArrayList<Instance.Link>();
+		String[] headerValues = headers.getValuesArray(normalize(OCCIHeaders.LINK));
+		for (int i = 0; i < headerValues.length; i++) {
+			String[] eachHeaderValue = headerValues[i].split(",");
+			for (int j = 0; j < eachHeaderValue.length; j++){	
+				try {
+					String headerValue = eachHeaderValue[j].trim();
+					if (headerValue.contains(linkType)) {
+						links.add(Instance.Link.parseOCCILink(headerValue));
+					}
+				} catch (IllegalArgumentException e) {
+					throw new OCCIException(ErrorType.BAD_REQUEST,
+							ResponseConstants.IRREGULAR_SYNTAX);
+				}
+			}
+		}
+		return links;
+	}
+	
 	public static String normalize(String headerName) {
 		String lowerHeader = headerName.toLowerCase();
 		char[] lowerHeaderArray = lowerHeader.toCharArray();

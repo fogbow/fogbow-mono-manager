@@ -182,6 +182,7 @@ public class Instance {
 
 		private static final String NAME_LINK = "Link:";
 
+		private String id;
 		private String name;
 		private Map<String, String> attributes;
 
@@ -202,6 +203,27 @@ public class Instance {
 				if (block.contains(NAME_LINK)) {
 					String[] blockValues = block.split(":");
 					link.setName(blockValues[1].replace("\"", "").trim());
+				} else {
+					String[] blockValues = block.split("=");
+					if (blockValues.length == 2) {
+						itens.put(blockValues[0].replace("\"", "").trim(),
+								blockValues[1].replace("\"", "").trim());
+					}
+				}
+			}
+			link.setAttributes(itens);
+			return link;
+		}
+		
+		public static Link parseOCCILink(String line) {
+			Link link = new Link();
+			Map<String, String> itens = new LinkedHashMap<String, String>();
+
+			String[] blockLine = line.split(";");
+			for (String block : blockLine) {
+				if (block.startsWith("</") && block.endsWith(">")) {
+					String[] blockValues = block.split("/");
+					link.setId(blockValues[2].replace(">", "").trim());
 				} else {
 					String[] blockValues = block.split("=");
 					if (blockValues.length == 2) {
@@ -245,6 +267,14 @@ public class Instance {
 				cont++;
 			}
 			return NAME_LINK + " " + this.name + ";" + itensMessageFormat;
+		}
+		
+		public void setId(String id) {
+			this.id = id;
+		}
+		
+		public String getId() {
+			return this.id;
 		}
 
 		public void setName(String name) {

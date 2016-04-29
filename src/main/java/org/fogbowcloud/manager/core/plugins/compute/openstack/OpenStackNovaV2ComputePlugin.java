@@ -153,10 +153,15 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 
 		String publicKey = xOCCIAtt.get(OrderAttribute.DATA_PUBLIC_KEY.getValue());
 		String keyName = getKeyname(token, publicKey);
-				
-		String userdata = xOCCIAtt.get(OrderAttribute.USER_DATA_ATT.getValue());		
+		
+		String userdata = xOCCIAtt.get(OrderAttribute.USER_DATA_ATT.getValue());
+		
+		String orderNetworkId = xOCCIAtt.get(OrderAttribute.NETWORK_ID.getValue());
+		if (orderNetworkId == null) {
+			orderNetworkId = this.networkId;
+		}
 		try {
-			JSONObject json = generateJsonRequest(imageRef, flavorId, userdata, keyName);
+			JSONObject json = generateJsonRequest(imageRef, flavorId, userdata, keyName, orderNetworkId);
 			String requestEndpoint = computeV2APIEndpoint + tenantId + SERVERS;
 			String jsonResponse = doPostRequest(requestEndpoint, token.getAccessId(), json);
 			return getAttFromJson(ID_JSON_FIELD, jsonResponse);
@@ -316,7 +321,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 	}
 
 	private JSONObject generateJsonRequest(String imageRef, String flavorRef, String userdata,
-			String keyName) throws JSONException {
+			String keyName, String networkId) throws JSONException {
 
 		JSONObject server = new JSONObject();
 		server.put(NAME_JSON_FIELD, "fogbow-instance-" + UUID.randomUUID().toString());

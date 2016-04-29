@@ -168,12 +168,19 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		}
 		
 		String userdata = xOCCIAtt.get(OrderAttribute.USER_DATA_ATT.getValue());
+		
+		//network id
+		String orderNetworkId = xOCCIAtt.get(OrderAttribute.NETWORK_ID.getValue());
+		if (orderNetworkId == null) {
+			orderNetworkId = this.networkId;
+		}
 
 		templateProperties.put("mem", String.valueOf(foundFlavor.getMem()));
 		templateProperties.put("cpu", String.valueOf(foundFlavor.getCpu()));
 		templateProperties.put("userdata", userdata);
 		templateProperties.put("image-id", localImageId);
 		templateProperties.put("disk-size", String.valueOf(foundFlavor.getDisk()));
+		templateProperties.put("network-id", orderNetworkId);
 
 		Client oneClient = clientFactory.createClient(token.getAccessId(), openNebulaEndpoint);
 		String vmTemplate = generateTemplate(templateProperties);	
@@ -263,7 +270,8 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 			templateElement.appendChild(nicElement);
 			// network
 			Element networkElement = doc.createElement("NETWORK_ID");
-			networkElement.appendChild(doc.createTextNode(networkId));
+			networkElement.appendChild(doc.createTextNode(
+					templateProperties.get("network-id")));
 			nicElement.appendChild(networkElement);			
 			// getting xml template 
 			TransformerFactory transformerFactory = TransformerFactory.newInstance();
