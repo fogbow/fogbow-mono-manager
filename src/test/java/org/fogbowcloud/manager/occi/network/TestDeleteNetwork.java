@@ -211,6 +211,36 @@ public class TestDeleteNetwork {
 
 		Assert.assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatusLine().getStatusCode());
 
+	}
+	
+	@Test
+	public void testDeleteNetworkNotOkUnathorized() throws Exception {
+		
+		String INSTANCE_1_ID = "network01";
+		
+		Map<String, String> xOCCIAtt = new HashMap<String, String>();
+		
+		List<Order> userOrders = new ArrayList<Order>();
+		Order order1 = new Order("1", tokenA, null, xOCCIAtt, true, "");
+		order1.setInstanceId(INSTANCE_1_ID);
+		order1.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
+		order1.setResourceKing(OrderConstants.NETWORK_TERM);
+		userOrders.add(order1);
+		
+		OrderRepository orders = new OrderRepository();
+		for (Order order : userOrders){
+			orders.addOrder(tokenA.getUser(), order);
+		}
+		facade.setOrders(orders);
+	
+		HttpDelete httpDelete = new HttpDelete(OCCITestHelper.URI_FOGBOW_NETWORK + INSTANCE_1_ID+"Invalid" + Order.SEPARATOR_GLOBAL_ID
+				+ OCCITestHelper.MEMBER_ID);
+		httpDelete.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
+		httpDelete.addHeader(OCCIHeaders.X_AUTH_TOKEN, ACCESS_TOKEN+"Unauthorized");
+		HttpClient client = HttpClients.createMinimal();
+		HttpResponse response = client.execute(httpDelete);
+
+		Assert.assertEquals(HttpStatus.SC_UNAUTHORIZED, response.getStatusLine().getStatusCode());
 
 	}
 	

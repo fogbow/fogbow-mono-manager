@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.commons.codec.Charsets;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
@@ -39,7 +40,7 @@ import org.mockito.internal.verification.VerificationModeFactory;
 
 public class TestGetNetwork {
 
-	private static final String USER_WITHOUT_ORDERS = "withoutInstances";
+	private static final String BASIC_TOKEN = "Basic token";
 	private static final String ACCESS_TOKEN = "access_token";
 
 	private NetworkPlugin networkPlugin;
@@ -63,10 +64,10 @@ public class TestGetNetwork {
 		mapperPlugin = Mockito.mock(MapperPlugin.class);
 		
 		ordersToAdd = new HashMap<String, List<Order>>();
-		ordersToAdd.put(USER_WITHOUT_ORDERS, new ArrayList<Order>());
+		ordersToAdd.put(BASIC_TOKEN, new ArrayList<Order>());
 		
 		tokenA = new Token("id_one", OCCITestHelper.USER_MOCK, DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>());
-		tokenB = new Token("id_two", USER_WITHOUT_ORDERS, DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>());
+		tokenB = new Token("id_two", BASIC_TOKEN, DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>());
 		
 		//Moking
 		identityPlugin = Mockito.mock(IdentityPlugin.class);
@@ -75,7 +76,9 @@ public class TestGetNetwork {
 		Mockito.when(identityPlugin.createToken(Mockito.anyMap()))
 				.thenReturn(tokenA);
 		
-		Mockito.when(identityPlugin.getToken(USER_WITHOUT_ORDERS))
+		String basicAuthToken = new String(Base64.decodeBase64(BASIC_TOKEN.replace("Basic ", "")));
+		
+		Mockito.when(identityPlugin.getToken(basicAuthToken))
 				.thenReturn(tokenB);
 		
 		authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
@@ -151,6 +154,39 @@ public class TestGetNetwork {
 		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(httpGet);
 
+		Assert.assertEquals(1, OCCITestHelper.getLocationIds(response).size());
+		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+	}
+	
+	@Test
+	public void testGetNetworkOkTokenBasic() throws Exception {
+		
+		String INSTANCE_1_ID = "network01";
+		
+		String authToken = new String(Base64.decodeBase64(BASIC_TOKEN.replace("Basic ", "")));
+		
+		Map<String, String> xOCCIAtt = new HashMap<String, String>();
+		List<Order> userOrders = new ArrayList<Order>();
+		Order order1 = new Order("1", tokenB, null, xOCCIAtt, true, "");
+		order1.setInstanceId(INSTANCE_1_ID);
+		order1.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
+		order1.setResourceKing(OrderConstants.NETWORK_TERM);
+		
+		userOrders.add(order1);
+		
+		OrderRepository orders = new OrderRepository();
+		for (Order order : userOrders){
+			orders.addOrder(order.getFederationToken().getUser(), order);
+		}
+		facade.setOrders(orders);
+		
+		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_NETWORK);
+		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
+		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, BASIC_TOKEN);
+		httpGet.addHeader(OCCIHeaders.ACCEPT, OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE);
+		HttpClient client = HttpClients.createMinimal();
+		HttpResponse response = client.execute(httpGet);
+		
 		Assert.assertEquals(1, OCCITestHelper.getLocationIds(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
