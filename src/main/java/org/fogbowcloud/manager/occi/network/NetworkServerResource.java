@@ -105,7 +105,7 @@ public class NetworkServerResource extends ServerResource {
 		}
 
 		LOGGER.info("Removing instance(network) " + networkId);
-		application.removeInstance(federationAuthToken, networkId, OrderConstants.STORAGE_TERM);
+		application.removeInstance(federationAuthToken, networkId, OrderConstants.NETWORK_TERM);
 		return ResponseConstants.OK;
 	}
 

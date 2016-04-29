@@ -32,6 +32,7 @@ import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
 import org.fogbowcloud.manager.core.plugins.MapperPlugin;
+import org.fogbowcloud.manager.core.plugins.NetworkPlugin;
 import org.fogbowcloud.manager.core.plugins.StoragePlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.OCCIApplication;
@@ -64,6 +65,7 @@ public class OCCITestHelper {
 	public static final String URI_FOGBOW_ACCOUNTING = "http://localhost:" + ENDPOINT_PORT + "/member/accounting/";
 	public static final String URI_FOGBOW_COMPUTE = "http://localhost:" + ENDPOINT_PORT + "/compute/";
 	public static final String URI_FOGBOW_STORAGE = "http://localhost:" + ENDPOINT_PORT + "/storage/";
+	public static final String URI_FOGBOW_NETWORK = "http://localhost:" + ENDPOINT_PORT + "/network/";
 	public static final String URI_FOGBOW_MEMBER = "http://localhost:" + ENDPOINT_PORT + "/member";
 	public static final String URI_FOGBOW_TOKEN = "http://localhost:" + ENDPOINT_PORT + "/token";
 	public static final String URI_FOGBOW_QUERY = "http://localhost:" + ENDPOINT_PORT + "/-/";
@@ -231,6 +233,52 @@ public class OCCITestHelper {
 
 		return facade;
 	}
+	
+	public ManagerController initializeComponentNetwork(NetworkPlugin networkPlugin, IdentityPlugin identityPlugin,
+			AuthorizationPlugin authorizationPlugin, Map<String, List<Order>> ordersToAdd,
+			MapperPlugin mapperPlugin, Properties properties) throws Exception {
+		component = new Component();
+		component.getServers().add(Protocol.HTTP, ENDPOINT_PORT);
+
+		if (properties == null) {
+			properties = new Properties();
+			properties.put(ConfigurationConstants.XMPP_JID_KEY, MEMBER_ID);
+			properties.put(ConfigurationConstants.TOKEN_HOST_PRIVATE_ADDRESS_KEY, DefaultDataTestHelper.SERVER_HOST);
+			properties.put(ConfigurationConstants.TOKEN_HOST_HTTP_PORT_KEY,
+					String.valueOf(DefaultDataTestHelper.TOKEN_SERVER_HTTP_PORT));
+			
+			properties.put(ConfigurationConstants.INSTANCE_DATA_STORE_URL, "jdbc:h2:file:./src/test/resources/fedInstance.db");
+			properties.put(ConfigurationConstants.OCCI_EXTRA_RESOURCES_KEY_PATH, "./src/test/resources/post-compute/occi-fake-resources.txt");
+			//Image OCCI to FogbowOrder
+			properties.put(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + "fbc85206-fbcc-4ad9-ae93-54946fdd5df7", "fogbow-ubuntu");
+			properties.put(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + "m1-xlarge", "Glue2vCPU >= 4 && Glue2RAM >= 8192");
+			properties.put(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + "m1-medium", "Glue2vCPU >= 2 && Glue2RAM >= 8096");
+		}
+
+		ManagerController facade = new ManagerController(properties);
+		facade.setNetworkPlugin(networkPlugin);
+		facade.setAuthorizationPlugin(authorizationPlugin);
+		facade.setLocalCredentailsPlugin(mapperPlugin);
+		facade.setLocalIdentityPlugin(identityPlugin);
+		facade.setFederationIdentityPlugin(identityPlugin);
+		
+		storageLinkRespository = new StorageLinkRepository();
+		facade.setStorageLinkRepository(storageLinkRespository);
+
+		orders = new OrderRepository();
+		facade.setOrders(orders);
+		for (Entry<String, List<Order>> entry : ordersToAdd.entrySet()) {
+			for (Order order : entry.getValue())
+				orders.addOrder(entry.getKey(), order);
+		}
+
+		ResourceRepository.init(properties);
+
+		component.getDefaultHost().attach(new OCCIApplication(facade));
+		component.start();
+
+		return facade;
+	}
 
 	public void initializeComponentMember(ComputePlugin computePlugin, IdentityPlugin identityPlugin,
 			AuthorizationPlugin authorizationPlugin, AccountingPlugin accountingPlugin,
@@ -347,6 +395,23 @@ public class OCCITestHelper {
 		}
 		
 		Scanner sc = new Scanner(responseStr);
+		boolean notFound = true;
+		while (sc.hasNextLine() && notFound) {
+			String line = sc.nextLine().trim();
+			if (line.contains(OCCIHeaders.X_OCCI_ATTRIBUTE) && line.contains(attribute)) {
+				String[] tokens = line.split(attribute+"=");
+				attValue = tokens.length > 1 ? tokens[1] : null;
+				notFound = true;
+			}
+		}
+		sc.close();
+		
+		return attValue;
+	}
+	
+	public static String getOCCIAttByBodyString(String responseBody, String attribute) throws ParseException, IOException {
+		String attValue = null;
+		Scanner sc = new Scanner(responseBody);
 		boolean notFound = true;
 		while (sc.hasNextLine() && notFound) {
 			String line = sc.nextLine().trim();
