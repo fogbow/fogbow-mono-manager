@@ -9,6 +9,7 @@ import java.util.Map;
 import org.apache.http.HttpStatus;
 import org.apache.log4j.Logger;
 import org.bouncycastle.util.IPAddress;
+import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.RequirementsHelper;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.occi.OCCIApplication;
@@ -248,7 +249,7 @@ public class OrderServerResource extends ServerResource {
 		
 		Map<String, String> xOCCIAtt = HeaderUtils.getXOCCIAtributes(req.getHeaders());
 		for (Link link : networkLinks) {
-			xOCCIAtt.put(OrderAttribute.NETWORK_ID.getValue(), link.getId());
+			xOCCIAtt.put(OrderAttribute.NETWORK_ID.getValue(), ManagerController.normalizeInstanceId(link.getId()));
 		}
 		xOCCIAtt = normalizeXOCCIAtt(xOCCIAtt);
 		

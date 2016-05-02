@@ -888,7 +888,7 @@ public class ManagerController {
 		}
 	}
 
-	private static String normalizeInstanceId(String instanceId) {
+	public static String normalizeInstanceId(String instanceId) {
 		if (instanceId != null && instanceId.contains(Order.SEPARATOR_GLOBAL_ID)) {
 			String[] partsInstanceId = instanceId.split(Order.SEPARATOR_GLOBAL_ID);
 			instanceId = partsInstanceId[0];

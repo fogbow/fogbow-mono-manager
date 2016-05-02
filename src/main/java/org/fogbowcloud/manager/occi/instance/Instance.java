@@ -184,6 +184,7 @@ public class Instance {
 
 		private String id;
 		private String name;
+		private String type;
 		private Map<String, String> attributes;
 
 		public Link() {
@@ -221,9 +222,15 @@ public class Instance {
 
 			String[] blockLine = line.split(";");
 			for (String block : blockLine) {
-				if (block.startsWith("</") && block.endsWith(">")) {
-					String[] blockValues = block.split("/");
-					link.setId(blockValues[2].replace(">", "").trim());
+				if (blockLine[0].equals(block)) {
+					block = block.replace("</", "").replace(">", "");
+					String[] blockPieces = block.split("/");
+					if (blockPieces.length > 1) {
+						link.setType(blockPieces[0]);
+						link.setId(blockPieces[1]);
+					} else {
+						link.setId(blockPieces[0]);						
+					}
 				} else {
 					String[] blockValues = block.split("=");
 					if (blockValues.length == 2) {
@@ -283,6 +290,14 @@ public class Instance {
 
 		public String getName() {
 			return name;
+		}
+		
+		public void setType(String type) {
+			this.type = type;
+		}
+		
+		public String getType() {
+			return type;
 		}
 
 		public void setAttributes(Map<String, String> attributes) {
