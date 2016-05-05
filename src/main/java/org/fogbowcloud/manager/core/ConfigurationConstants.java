@@ -61,4 +61,7 @@ public class ConfigurationConstants {
 	
 	// Instance Data Store
 	public static final String INSTANCE_DATA_STORE_URL = "instance_datastore_url";
+	
+	//Network Data Store
+	public static final String NETWORK_DATA_STORE_URL = "network_datastore_url";
 }

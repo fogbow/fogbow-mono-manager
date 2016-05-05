@@ -248,6 +248,7 @@ public class OCCITestHelper {
 					String.valueOf(DefaultDataTestHelper.TOKEN_SERVER_HTTP_PORT));
 			
 			properties.put(ConfigurationConstants.INSTANCE_DATA_STORE_URL, "jdbc:h2:file:./src/test/resources/fedInstance.db");
+			properties.put(ConfigurationConstants.NETWORK_DATA_STORE_URL, "jdbc:h2:file:./src/test/resources/fedNetwork.db");
 			properties.put(ConfigurationConstants.OCCI_EXTRA_RESOURCES_KEY_PATH, "./src/test/resources/post-compute/occi-fake-resources.txt");
 			//Image OCCI to FogbowOrder
 			properties.put(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + "fbc85206-fbcc-4ad9-ae93-54946fdd5df7", "fogbow-ubuntu");
