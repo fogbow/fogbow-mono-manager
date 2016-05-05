@@ -134,11 +134,11 @@ public class TestInstance {
 	public void testInstanceLink() {
 		String linkId = "linkId00";
 		String linkType = "network";
-		String linkIdBlock = "</" + linkType + "/" + linkId + ">";
+		String linkIdBlock = "Link: </" + linkType + "/" + linkId + ">";
 		String rel = "rel00";
 		String category = "category00";
 		String line = linkIdBlock  + "; rel=\"" + rel + "\"; category=\"" + category  + "\"";
-		Link link = Instance.Link.parseOCCILink(line);
+		Link link = Instance.Link.parseLink(line);
 		Assert.assertEquals(linkId, link.getId());
 		Assert.assertEquals(linkType, link.getType());
 		Assert.assertEquals(rel, link.getAttributes().get("rel"));

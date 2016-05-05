@@ -239,7 +239,7 @@ public class OrderServerResource extends ServerResource {
 		HttpRequest req = (HttpRequest) getRequest();
 		String acceptType = getAccept(HeaderUtils.getAccept(req.getHeaders()));
 		
-		List<Link> networkLinks = HeaderUtils.getLinks(req.getHeaders(), OrderConstants.NETWORK_TERM);
+		List<Link> networkLinks = HeaderUtils.getLinks(req.getHeaders());
 		LOGGER.debug("Network links: " + networkLinks);
 		
 		List<Category> categories = HeaderUtils.getCategories(req.getHeaders());

@@ -12,6 +12,10 @@ public class OCCIConstants {
 	public static final String NETWORK_GATEWAY = "occi.network.gateway";
 	public static final String NETWORK_ALLOCATION = "occi.network.allocation";
 	
+	public static final String NETWORK_INTERFACE_MAC = "occi.networkinterface.mac";
+	public static final String NETWORK_INTERFACE_INTERFACE = "occi.networkinterface.interface";
+	public static final String NETWORK_INTERFACE_STATE = "occi.networkinterface.state";
+	
 	public enum NetworkState {
 		ACTIVE("active"), INACTIVE("inactive");
 		

@@ -29,6 +29,7 @@ import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ImageState;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
+import org.fogbowcloud.manager.occi.OCCIConstants;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.instance.Instance.Link;
 import org.fogbowcloud.manager.occi.instance.InstanceState;
@@ -332,8 +333,9 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		LOGGER.debug("mem=" + mem + ", cpu=" + cpu + ", image=" + image + ", arch=" + arch + ", privateIP=" + privateIp);
 
 		// TODO To get information about network when it'll be necessary
-		// vm.xpath("TEMPLATE/NIC/NETWORK");
-		// vm.xpath("TEMPLATE/NIC/NETWORK_ID");
+		String network = vm.xpath("TEMPLATE/NIC/NETWORK");
+		String networkId = vm.xpath("TEMPLATE/NIC/NETWORK_ID");
+		String networkMac = vm.xpath("TEMPLATE/NIC/MAC");
 
 		Map<String, String> attributes = new HashMap<String, String>();
 		// CPU Architecture of the instance
@@ -357,7 +359,27 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 			resources.add(flavorResource);
 		}
 		
-		return new Instance(vm.getId(), resources, attributes, new ArrayList<Link>(), state);
+		Link privateIpLink = new Link();
+		privateIpLink.setType(OrderConstants.NETWORK_TERM);
+		privateIpLink.setId(networkId);
+		privateIpLink.setName("</" + OrderConstants.NETWORK_TERM + "/" + networkId + ">");
+		
+		Map<String, String> linkAttributes = new HashMap<String, String>();
+		linkAttributes.put("rel", OrderConstants.INFRASTRUCTURE_OCCI_SCHEME 
+				+ OrderConstants.NETWORK_TERM);
+		linkAttributes.put("category", OrderConstants.INFRASTRUCTURE_OCCI_SCHEME 
+				+ OrderConstants.NETWORK_INTERFACE_TERM);
+		linkAttributes.put(OCCIConstants.NETWORK_INTERFACE_INTERFACE, "eth0");
+		linkAttributes.put(OCCIConstants.NETWORK_INTERFACE_MAC, networkMac);
+		linkAttributes.put(OCCIConstants.NETWORK_INTERFACE_STATE, 
+				OCCIConstants.NetworkState.ACTIVE.getValue());
+		
+		privateIpLink.setAttributes(linkAttributes);
+		
+		ArrayList<Link> links = new ArrayList<Link>();
+		links.add(privateIpLink);
+		
+		return new Instance(vm.getId(), resources, attributes, links, state);
 	}
 
 	private String getArch(String arch) {		

@@ -19,6 +19,7 @@ import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.message.BasicStatusLine;
+import org.fogbowcloud.manager.core.plugins.compute.openstack.OpenStackConfigurationConstants;
 import org.fogbowcloud.manager.occi.OCCIConstants;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.model.OCCIException;
@@ -47,7 +48,7 @@ public class TestOpenStackV2NetworkPlugin {
 	public void setUp() {
 		Properties properties = new Properties();
 		properties.put(OpenStackV2NetworkPlugin.KEY_EXTERNAL_GATEWAY_INFO, DEFAULT_GATEWAY_INFO);
-		properties.put(OpenStackV2NetworkPlugin.NETWORK_V2_URL_KEY, DEFAULT_NETWORK_URL);
+		properties.put(OpenStackConfigurationConstants.NETWORK_NOVAV2_URL_KEY, DEFAULT_NETWORK_URL);
 		this.openStackV2NetworkPlugin = new OpenStackV2NetworkPlugin(properties);
 	
 		this.client = Mockito.mock(HttpClient.class);

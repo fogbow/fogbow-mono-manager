@@ -204,6 +204,10 @@ public class Instance {
 				if (block.contains(NAME_LINK)) {
 					String[] blockValues = block.split(":");
 					link.setName(blockValues[1].replace("\"", "").trim());
+					String cleanedLinkId = blockValues[1].replace("</", "").replace(">", "");
+					String[] idAndType = cleanedLinkId.split("/");
+					link.setType(idAndType[0].trim());
+					link.setId(idAndType[1].trim());
 				} else {
 					String[] blockValues = block.split("=");
 					if (blockValues.length == 2) {
@@ -216,33 +220,6 @@ public class Instance {
 			return link;
 		}
 		
-		public static Link parseOCCILink(String line) {
-			Link link = new Link();
-			Map<String, String> itens = new LinkedHashMap<String, String>();
-
-			String[] blockLine = line.split(";");
-			for (String block : blockLine) {
-				if (blockLine[0].equals(block)) {
-					block = block.replace("</", "").replace(">", "");
-					String[] blockPieces = block.split("/");
-					if (blockPieces.length > 1) {
-						link.setType(blockPieces[0]);
-						link.setId(blockPieces[1]);
-					} else {
-						link.setId(blockPieces[0]);						
-					}
-				} else {
-					String[] blockValues = block.split("=");
-					if (blockValues.length == 2) {
-						itens.put(blockValues[0].replace("\"", "").trim(),
-								blockValues[1].replace("\"", "").trim());
-					}
-				}
-			}
-			link.setAttributes(itens);
-			return link;
-		}
-
 		public String toOCCIMessageFormatLink() {
 			String itensMessageFormat = "";
 			int cont = 0;

@@ -564,7 +564,8 @@ public class TestComputeOpenNebula {
 		for (Resource resource : resources) {
 			Assert.assertTrue(instance.getResources().contains(resource));
 		}
-		Assert.assertTrue(instance.getLinks().isEmpty());
+		//Check if it has one link, related to the network interface
+		Assert.assertEquals(1, instance.getLinks().size());
 		
 		// checking the amount of flavors
 		Assert.assertEquals(2, computeOpenNebula.getFlavors().size());
@@ -666,7 +667,8 @@ public class TestComputeOpenNebula {
 		for (Resource resource : resources) {
 			Assert.assertTrue(instance.getResources().contains(resource));
 		}
-		Assert.assertTrue(instance.getLinks().isEmpty());
+		//check if it has one link, related to the network interface
+		Assert.assertEquals(1, instance.getLinks().size());
 		
 		// checking the amount of flavors
 		Assert.assertEquals(1, computeOpenNebula.getFlavors().size());

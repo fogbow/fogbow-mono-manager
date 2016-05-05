@@ -20,6 +20,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.plugins.NetworkPlugin;
+import org.fogbowcloud.manager.core.plugins.compute.openstack.OpenStackConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.storage.openstack.OpenStackV2StoragePlugin;
 import org.fogbowcloud.manager.occi.OCCIConstants;
 import org.fogbowcloud.manager.occi.instance.Instance;
@@ -42,10 +43,9 @@ public class OpenStackV2NetworkPlugin implements NetworkPlugin {
 
 	private static final Logger LOGGER = Logger.getLogger(OpenStackV2StoragePlugin.class);
 	
-	protected static final String NETWORK_V2_URL_KEY = "network_openstack_v2_url";
 	private static final String SUFIX_ENDPOINT_ADD_ROUTER_INTERFACE_ADD = "add_router_interface";
 	private static final String SUFIX_ENDPOINT_REMOVE_ROUTER_INTERFACE_ADD = "remove_router_interface";
-	protected static final String SUFIX_ENDPOINT_NETWORK = "/networks";
+	protected static final String SUFFIX_ENDPOINT_NETWORK = "/networks";
 	protected static final String SUFIX_ENDPOINT_SUBNET = "/subnets";
 	protected static final String SUFIX_ENDPOINT_ROUTER = "/routers";
 	protected static final String SUFIX_ENDPOINT_PORTS = "/ports";
@@ -90,7 +90,8 @@ public class OpenStackV2NetworkPlugin implements NetworkPlugin {
 		
 	public OpenStackV2NetworkPlugin(Properties properties) {
 		this.externalNetworkId = properties.getProperty(KEY_EXTERNAL_GATEWAY_INFO);
-		this.networkV2APIEndpoint = properties.getProperty(NETWORK_V2_URL_KEY) + V2_API_ENDPOINT;
+		this.networkV2APIEndpoint = properties.getProperty(
+				OpenStackConfigurationConstants.NETWORK_NOVAV2_URL_KEY) + V2_API_ENDPOINT;
 		
 		setDNSList(properties);
 		
@@ -132,7 +133,7 @@ public class OpenStackV2NetworkPlugin implements NetworkPlugin {
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}		
 		try {
-			endpoint = this.networkV2APIEndpoint + SUFIX_ENDPOINT_NETWORK;
+			endpoint = this.networkV2APIEndpoint + SUFFIX_ENDPOINT_NETWORK;
 			responseStr = doPostRequest(endpoint, token.getAccessId(), jsonRequest);			
 		} catch (OCCIException e) {
 			removeRouter(token, routerId, false);
@@ -180,7 +181,7 @@ public class OpenStackV2NetworkPlugin implements NetworkPlugin {
 	private void removeNetwork(Token token, String networkId, boolean throwException) {
 		String endpoint;
 		try {
-			endpoint = this.networkV2APIEndpoint + SUFIX_ENDPOINT_NETWORK + "/" + networkId;
+			endpoint = this.networkV2APIEndpoint + SUFFIX_ENDPOINT_NETWORK + "/" + networkId;
 			doDeleteRequest(endpoint, token.getAccessId());										
 		} catch (OCCIException e) {
 			LOGGER.error("Could not possible remove network.", e);
@@ -203,13 +204,13 @@ public class OpenStackV2NetworkPlugin implements NetworkPlugin {
 
 	@Override
 	public Instance getInstance(Token token, String instanceId) {
-		String endpoint = this.networkV2APIEndpoint + SUFIX_ENDPOINT_NETWORK + "/" + instanceId ;
+		String endpoint = this.networkV2APIEndpoint + SUFFIX_ENDPOINT_NETWORK + "/" + instanceId ;
 		String responseStr = doGetRequest(endpoint, token.getAccessId());				
 		return getInstanceFromJson(responseStr, token);
 	}
 
 	@Override
-	public void removeInstance(Token token, String instanceId) {		
+	public void removeInstance(Token token, String instanceId) {
 		String tenantId = token.getAttributes().get(TENANT_ID);
 		if (tenantId == null) {
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.INVALID_TOKEN);
