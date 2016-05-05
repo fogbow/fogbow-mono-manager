@@ -54,6 +54,10 @@ public class TestDeleteNetwork {
 		
 		this.helper = new OCCITestHelper();
 		
+		NetworkDataStore networkDB = new NetworkDataStore("jdbc:h2:file:./src/test/resources/fedNetwork.db");
+		networkDB.deleteAll();
+		networkDB = null;
+		
 		networkPlugin = Mockito.mock(NetworkPlugin.class);
 		identityPlugin = Mockito.mock(IdentityPlugin.class);
 		authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
@@ -83,6 +87,7 @@ public class TestDeleteNetwork {
 				.thenReturn(new HashMap<String, String>());
 		
 		facade = this.helper.initializeComponentNetwork(networkPlugin, identityPlugin, authorizationPlugin, ordersToAdd, mapperPlugin, null);
+		
 		
 	}
 

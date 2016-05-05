@@ -58,6 +58,10 @@ public class TestGetNetwork {
 		
 		this.helper = new OCCITestHelper();
 		
+		NetworkDataStore networkDB = new NetworkDataStore("jdbc:h2:file:./src/test/resources/fedNetwork.db");
+		networkDB.deleteAll();
+		networkDB = null;
+		
 		networkPlugin = Mockito.mock(NetworkPlugin.class);
 		identityPlugin = Mockito.mock(IdentityPlugin.class);
 		authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
