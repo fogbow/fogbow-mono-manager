@@ -15,11 +15,6 @@
 			<name>Public online Restlet repository</name>
 			<url>http://maven.restlet.com</url>
 		</repository>
-		<repository>
-			<id>contrail</id>
-			<name>Contrail repository</name>
-			<url>http://contrail.ow2.org/repositories/thirdparty</url>
-		</repository>
 	</repositories>
 
 	<build>
