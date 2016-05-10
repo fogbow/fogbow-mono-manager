@@ -16,6 +16,12 @@ bd_updater_period=30000
 # flavor_fogbow_medium={mem=1024, cpu=2}
 # flavor_fogbow_large={mem=2048, cpu=4}
 
+
+## network Plugin (Openstack)
+network_class=org.fogbowcloud.manager.core.plugins.network.opennebula.OpenNebulaNetworkPlugin
+network_openstack_v2_url=http://localhost:9696
+external_gateway_info=ea51ed0c-0e8a-448d-8202-c79777109ffe
+
 ## Storage Plugin (Openstack)
 storage_class=org.fogbowcloud.manager.core.plugins.storage.openstack.OpenStackV2StoragePlugin
 storage_v2_url=http://localhost:8776
@@ -141,6 +147,7 @@ remote_prioritization_plugin_class=org.fogbowcloud.manager.core.plugins.prioriti
 nof_prioritize_local=true
 
 instance_datastore_url=jdbc:sqlite:/tmp/federated_instance
+network_datastore_url=jdbc:sqlite:/tmp/federated_network
 
 ## If you are using NoFMemberPicker or NoFPrioritizationPlugin classes
 nof_trustworthy=false

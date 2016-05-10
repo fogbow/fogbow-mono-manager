@@ -32,6 +32,7 @@ import org.fogbowcloud.manager.core.plugins.FederationMemberAuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.FederationMemberPickerPlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.MapperPlugin;
+import org.fogbowcloud.manager.core.plugins.NetworkPlugin;
 import org.fogbowcloud.manager.core.plugins.accounting.AccountingInfo;
 import org.fogbowcloud.manager.core.plugins.compute.openstack.OpenStackOCCIComputePlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
@@ -4137,4 +4138,398 @@ public class TestManagerController {
 		Assert.assertEquals(1, managerController.getStorageLinkRepository().getAllStorageLinks().size());
 		
 	}
+	
+	
+	@SuppressWarnings("unchecked")
+	@Test
+	public void testSubmitNetworkOrders() throws InterruptedException {
+		
+		String newResourceId = "networkid-01";
+		Token token = managerTestHelper.getDefaultFederationToken();
+		
+		ResourcesInfo resourcesInfo = new ResourcesInfo("", "", "", "", "", "");
+		resourcesInfo.setId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		
+		NetworkPlugin networkPlugin = Mockito.mock(NetworkPlugin.class);
+		
+		Mockito.when(
+				networkPlugin.requestInstance(Mockito.any(Token.class),
+						Mockito.anyList(), Mockito.anyMap()))
+				.thenReturn(newResourceId);
+		managerController.setNetworkPlugin(networkPlugin);
+
+		List<FederationMember> listMembers = new ArrayList<FederationMember>();
+		FederationMember federationMember = new FederationMember(resourcesInfo);
+		listMembers.add(federationMember);
+		managerController.updateMembers(listMembers);
+
+		HashMap<String, String> xOCCIAtt = new HashMap<String, String>();
+		xOCCIAtt.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.NETWORK_TERM);
+		Order orderOne = new Order("idA", token, new ArrayList<Category>(), xOCCIAtt, true, "");
+		orderOne.setState(OrderState.OPEN);
+		OrderRepository orderRepository = new OrderRepository();
+		orderRepository.addOrder(token.getUser(), orderOne);
+		managerController.setOrders(orderRepository);
+
+		managerController.checkAndSubmitOpenOrders();
+		
+		List<Order> ordersFromUser = managerController.getOrdersFromUser(token.getAccessId());
+		Assert.assertEquals(1,ordersFromUser.size());
+		for (Order order : ordersFromUser) {
+			Assert.assertEquals(OrderState.FULFILLED, order.getState());
+			Assert.assertEquals(newResourceId, order.getInstanceId());
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Test
+	public void testSubmitFederatedNetworkOrders() throws InterruptedException {
+		
+		String newResourceId = "networkid-01";
+		Token token = managerTestHelper.getDefaultFederationToken();
+		
+		ResourcesInfo resourcesInfo = new ResourcesInfo("", "", "", "", "", "");
+		resourcesInfo.setId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		
+		NetworkPlugin networkPlugin = Mockito.mock(NetworkPlugin.class);
+		
+		Mockito.when(
+				networkPlugin.requestInstance(Mockito.any(Token.class),
+						Mockito.anyList(), Mockito.anyMap()))
+				.thenReturn(newResourceId);
+		managerController.setNetworkPlugin(networkPlugin);
+
+		List<FederationMember> listMembers = new ArrayList<FederationMember>();
+		FederationMember federationMember = new FederationMember(resourcesInfo);
+		listMembers.add(federationMember);
+		managerController.updateMembers(listMembers);
+
+		HashMap<String, String> xOCCIAtt = new HashMap<String, String>();
+		xOCCIAtt.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.NETWORK_TERM);
+		Order orderOne = new Order("idA", token, new ArrayList<Category>(), xOCCIAtt, false, "");
+		orderOne.setState(OrderState.OPEN);
+		OrderRepository orderRepository = new OrderRepository();
+		orderRepository.addOrder(token.getUser(), orderOne);
+		managerController.setOrders(orderRepository);
+
+		managerController.checkAndSubmitOpenOrders();
+		
+		List<Order> ordersFromUser = managerController.getOrdersFromUser(token.getAccessId(), false);
+		Assert.assertEquals(1,ordersFromUser.size());
+		for (Order order : ordersFromUser) {
+			Assert.assertEquals(OrderState.FULFILLED, order.getState());
+			Assert.assertEquals(newResourceId, order.getInstanceId());
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Test
+	public void testRemoveNetworkOrderForRemoteMember() throws InterruptedException {
+		
+		String newResourceId = "networkid-01";
+		Token token = managerTestHelper.getDefaultFederationToken();
+		String orderId = "idA";
+
+		Order orderOne = new Order(orderId, token, new ArrayList<Category>(), xOCCIAtt, false, "");
+		orderOne.setState(OrderState.FULFILLED);
+		orderOne.setInstanceId(newResourceId);
+		orderOne.setResourceKing(OrderConstants.NETWORK_TERM);
+		OrderRepository orderRepository = new OrderRepository();
+		orderRepository.addOrder(token.getUser(), orderOne);
+		managerController.setOrders(orderRepository);
+		
+		NetworkPlugin networkPlugin = Mockito.mock(NetworkPlugin.class);
+		managerController.setNetworkPlugin(networkPlugin);
+		
+		managerController.removeOrderForRemoteMember(token.getAccessId(), orderId);
+		
+		Mockito.verify(networkPlugin, Mockito.times(1)).removeInstance(token, newResourceId);
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Test
+	public void testGetNetworkInstance() throws InterruptedException {
+		
+		String newResourceId = "networkid-01";
+		Token token = managerTestHelper.getDefaultFederationToken();
+		String orderId = "idA";
+		String providingMemberId = "manager.test.com";
+
+		Order orderOne = new Order(orderId, token, new ArrayList<Category>(), xOCCIAtt, true, "");
+		orderOne.setState(OrderState.FULFILLED);
+		orderOne.setInstanceId(newResourceId);
+		orderOne.setResourceKing(OrderConstants.NETWORK_TERM);
+		orderOne.setFederationToken(token);
+		orderOne.setProvidingMemberId(providingMemberId);
+		OrderRepository orderRepository = new OrderRepository();
+		orderRepository.addOrder(token.getUser(), orderOne);
+		managerController.setOrders(orderRepository);
+		
+		String completeId = orderOne.getInstanceId() + Order.SEPARATOR_GLOBAL_ID + orderOne.getProvidingMemberId();
+		
+		Instance instance = new Instance(completeId);
+		
+		NetworkPlugin networkPlugin = Mockito.mock(NetworkPlugin.class);
+		Mockito.when(
+				networkPlugin.getInstance(token, newResourceId)).thenReturn(instance);
+		
+		managerController.setNetworkPlugin(networkPlugin);
+		
+		Instance returned = managerController.getInstance(token.getAccessId(), completeId, OrderConstants.NETWORK_TERM);
+		
+		Mockito.verify(networkPlugin, Mockito.times(1)).getInstance(token, newResourceId);
+		Assert.assertNotNull(returned);
+		Assert.assertEquals(completeId, returned.getId());
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Test
+	public void testRemoveNetworkInstance() {
+		
+		//Constants
+		String newResourceId = "networkid-01";
+		Token token = managerTestHelper.getDefaultFederationToken();
+		String orderId = "idA";
+		String providingMemberId = "manager.test.com";
+		String completeId = newResourceId + Order.SEPARATOR_GLOBAL_ID + providingMemberId;
+		
+		//Returns
+		List<StorageLink> storageLinksReturn = new ArrayList<StorageLinkRepository.StorageLink>();
+		
+		StorageLinkRepository storageLinkRepository = Mockito.mock(StorageLinkRepository.class);
+		Mockito.when(
+				storageLinkRepository.getAllByInstance(newResourceId, OrderConstants.NETWORK_INTERFACE_TERM)).thenReturn(storageLinksReturn);
+		
+		Order orderOne = new Order(orderId, token, new ArrayList<Category>(), xOCCIAtt, true, "");
+		orderOne.setState(OrderState.FULFILLED);
+		orderOne.setInstanceId(newResourceId);
+		orderOne.setResourceKing(OrderConstants.NETWORK_TERM);
+		orderOne.setFederationToken(token);
+		orderOne.setProvidingMemberId(providingMemberId);
+		OrderRepository orderRepository = new OrderRepository();
+		orderRepository.addOrder(token.getUser(), orderOne);
+		managerController.setOrders(orderRepository);
+		
+		NetworkPlugin networkPlugin = Mockito.mock(NetworkPlugin.class);
+		
+		managerController.setNetworkPlugin(networkPlugin);
+		
+		managerController.removeInstance(token.getAccessId(), completeId, OrderConstants.NETWORK_TERM);
+		
+		Mockito.verify(networkPlugin, Mockito.times(1)).removeInstance(token, newResourceId);
+		
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Test
+	public void testRemoveRemoteNetworkInstance() {
+		
+		//Constants
+		String newResourceId = "networkid-01";
+		Token token = managerTestHelper.getDefaultFederationToken();
+		String orderId = "idA";
+		String providingMemberId = "manager.remote.test.com";
+		String completeId = newResourceId + Order.SEPARATOR_GLOBAL_ID + providingMemberId;
+		
+		//Returns & Mocks
+		List<StorageLink> storageLinksReturn = new ArrayList<StorageLinkRepository.StorageLink>();
+		
+		StorageLinkRepository storageLinkRepository = Mockito.mock(StorageLinkRepository.class);
+		Mockito.when(
+				storageLinkRepository.getAllByInstance(newResourceId, OrderConstants.NETWORK_INTERFACE_TERM)).thenReturn(storageLinksReturn);
+		
+		NetworkPlugin networkPlugin = Mockito.mock(NetworkPlugin.class);
+		AsyncPacketSender asyncPacketSender = Mockito.mock(AsyncPacketSender.class);
+		IQ response = new IQ();
+		Mockito.when(
+				asyncPacketSender.syncSendPacket(Mockito.any(IQ.class))).thenReturn(response);
+		
+		Order orderOne = new Order(orderId, token, new ArrayList<Category>(), xOCCIAtt, true, "");
+		orderOne.setState(OrderState.FULFILLED);
+		orderOne.setInstanceId(newResourceId);
+		orderOne.setResourceKing(OrderConstants.NETWORK_TERM);
+		orderOne.setFederationToken(token);
+		orderOne.setProvidingMemberId(providingMemberId);
+		OrderRepository orderRepository = new OrderRepository();
+		orderRepository.addOrder(token.getUser(), orderOne);
+		
+		managerController.setOrders(orderRepository);
+		managerController.setNetworkPlugin(networkPlugin);
+		managerController.setPacketSender(asyncPacketSender);
+		
+		managerController.removeInstance(token.getAccessId(), completeId, OrderConstants.NETWORK_TERM);
+		
+		Mockito.verify(asyncPacketSender, Mockito.times(1)).syncSendPacket(Mockito.any(IQ.class));
+		
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Test
+	public void testRemoveNetworkInstanceForRemoteMember() {
+		
+		//Constants
+		String instanceId = "networkid-01";
+		Token token = managerTestHelper.getDefaultFederationToken();
+		String orderId = "idA";
+		String providingMemberId = "manager.test.com";
+		String completeId = instanceId + Order.SEPARATOR_GLOBAL_ID + providingMemberId;
+		
+		//Returns
+		List<StorageLink> storageLinksReturn = new ArrayList<StorageLinkRepository.StorageLink>();
+		
+		StorageLinkRepository storageLinkRepository = Mockito.mock(StorageLinkRepository.class);
+		Mockito.when(
+				storageLinkRepository.getAllByInstance(instanceId, OrderConstants.NETWORK_INTERFACE_TERM)).thenReturn(storageLinksReturn);
+		
+		xOCCIAtt.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.NETWORK_TERM);
+		
+		Order orderOne = new Order(orderId, token, new ArrayList<Category>(), xOCCIAtt, true, "");
+		orderOne.setState(OrderState.FULFILLED);
+		orderOne.setInstanceId(instanceId);
+		orderOne.setResourceKing(OrderConstants.NETWORK_TERM);
+		orderOne.setFederationToken(token);
+		orderOne.setProvidingMemberId(providingMemberId);
+		OrderRepository orderRepository = new OrderRepository();
+		orderRepository.addOrder(token.getUser(), orderOne);
+		managerController.setOrders(orderRepository);
+		
+		NetworkPlugin networkPlugin = Mockito.mock(NetworkPlugin.class);
+		AsyncPacketSender asyncPacketSender = Mockito.mock(AsyncPacketSender.class);
+		
+		managerController.setNetworkPlugin(networkPlugin);
+		
+		managerController.removeInstanceForRemoteMember(instanceId);
+		
+		Mockito.verify(networkPlugin, Mockito.times(1)).removeInstance(token, instanceId);
+		
+	}
+	
+	
+	@SuppressWarnings("unchecked")
+	@Test
+	public void testCheckAndSubmitOpenNetworkOrdersToRemoteMember() {
+		
+		String INSTANCE_ID = "newinstanceid";
+		
+		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);
+		managerController.setPacketSender(packetSender);
+		
+		// mocking getRemoteInstance for running benchmarking
+		IQ response = new IQ(); 
+		response.setType(Type.result);
+		Element queryEl = response.getElement().addElement("query", 
+				ManagerXmppComponent.GETINSTANCE_NAMESPACE);
+		Element instanceEl = queryEl.addElement("instance");
+		instanceEl.addElement("id").setText(INSTANCE_ID);
+		
+		Mockito.when(packetSender.syncSendPacket(Mockito.any(IQ.class))).thenReturn(response);
+
+		final List<PacketCallback> callbacks = new LinkedList<PacketCallback>();
+		
+		Mockito.doAnswer(new Answer<Void>() {
+			@Override
+			public Void answer(InvocationOnMock invocation) throws Throwable {
+				callbacks.add((PacketCallback) invocation.getArguments()[1]);
+				return null;
+			}
+		}).when(packetSender).addPacketCallback(Mockito.any(Packet.class), Mockito.any(PacketCallback.class));
+		
+		ResourcesInfo localResourcesInfo = new ResourcesInfo("", "", "", "", "", "");
+		localResourcesInfo.setId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		
+		ResourcesInfo remoteResourcesInfoOne = new ResourcesInfo("", "", "", "", "", "");
+		remoteResourcesInfoOne.setId(DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL);
+		
+		NetworkPlugin networkPlugin = Mockito.mock(NetworkPlugin.class);
+
+		managerController.setNetworkPlugin(networkPlugin);
+
+		final List<FederationMember> listMembers = new ArrayList<FederationMember>();
+		listMembers.add(new FederationMember(localResourcesInfo));
+		listMembers.add(new FederationMember(remoteResourcesInfoOne));
+		managerController.updateMembers(listMembers);
+		
+		FederationMemberPickerPlugin memberPicker = Mockito.mock(FederationMemberPickerPlugin.class);
+		Mockito.when(memberPicker.pick(Mockito.anyList())).thenReturn(
+				new FederationMember(remoteResourcesInfoOne));
+		managerController.setMemberPickerPlugin(memberPicker );
+
+		final String orderId = "orderId";
+		Order orderOne = new Order(orderId, managerTestHelper.getDefaultFederationToken(),
+				new ArrayList<Category>(),
+				new HashMap<String, String>(), true,
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		orderOne.setState(OrderState.OPEN);
+		orderOne.setResourceKing(OrderConstants.NETWORK_TERM);
+		OrderRepository orderRepository = new OrderRepository();
+		orderRepository.addOrder(managerTestHelper.getDefaultFederationToken().getUser(),
+				orderOne);
+		managerController.setOrders(orderRepository);
+		
+		// Send to first member
+		managerController.checkAndSubmitOpenOrders();
+
+		List<Order> ordersFromUser = managerController.getOrdersFromUser(managerTestHelper
+				.getDefaultFederationToken().getAccessId());
+		for (Order order : ordersFromUser) {
+			Assert.assertEquals(OrderState.PENDING, order.getState());
+		}
+		Assert.assertTrue(managerController.isOrderForwardedtoRemoteMember(orderOne.getId()));			
+		
+		AsyncPacketSender packetSenderTwo = Mockito.mock(AsyncPacketSender.class);
+		managerController.setPacketSender(packetSenderTwo);
+		
+		IQ iq = new IQ();
+		queryEl = iq.getElement().addElement("query",
+				ManagerXmppComponent.ORDER_NAMESPACE);
+		instanceEl = queryEl.addElement("instance");
+		instanceEl.addElement("id").setText(INSTANCE_ID);
+		callbacks.get(0).handle(iq);
+		
+		for (Order order : ordersFromUser) {
+			Assert.assertEquals(OrderState.FULFILLED, order.getState());
+			Assert.assertFalse(managerController.isOrderForwardedtoRemoteMember(order.getId()));
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	public void getInstanceForRemoteMember() {
+
+		//Constants
+		String instanceId = "networkid-01";
+		Token token = managerTestHelper.getDefaultFederationToken();
+		String orderId = "idA";
+		String providingMemberId = "manager.test.com";
+		String completeId = instanceId + Order.SEPARATOR_GLOBAL_ID + providingMemberId;
+
+		//Returns
+		List<StorageLink> storageLinksReturn = new ArrayList<StorageLinkRepository.StorageLink>();
+
+		StorageLinkRepository storageLinkRepository = Mockito.mock(StorageLinkRepository.class);
+		Mockito.when(
+				storageLinkRepository.getAllByInstance(instanceId, OrderConstants.NETWORK_INTERFACE_TERM)).thenReturn(storageLinksReturn);
+
+		xOCCIAtt.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.NETWORK_TERM);
+
+		Order orderOne = new Order(orderId, token, new ArrayList<Category>(), xOCCIAtt, true, "");
+		orderOne.setState(OrderState.FULFILLED);
+		orderOne.setInstanceId(instanceId);
+		orderOne.setResourceKing(OrderConstants.NETWORK_TERM);
+		orderOne.setFederationToken(token);
+		orderOne.setProvidingMemberId(providingMemberId);
+		OrderRepository orderRepository = new OrderRepository();
+		orderRepository.addOrder(token.getUser(), orderOne);
+		managerController.setOrders(orderRepository);
+
+		NetworkPlugin networkPlugin = Mockito.mock(NetworkPlugin.class);
+		AsyncPacketSender asyncPacketSender = Mockito.mock(AsyncPacketSender.class);
+
+		managerController.setNetworkPlugin(networkPlugin);
+
+		managerController.getInstanceForRemoteMember(instanceId);
+
+		Mockito.verify(networkPlugin, Mockito.times(1)).getInstance(token, instanceId);
+	}
+	
 }

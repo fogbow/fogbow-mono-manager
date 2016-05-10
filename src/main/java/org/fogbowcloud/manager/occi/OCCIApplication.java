@@ -20,6 +20,7 @@ import org.fogbowcloud.manager.occi.model.HeaderUtils;
 import org.fogbowcloud.manager.occi.model.OCCIHeaders;
 import org.fogbowcloud.manager.occi.model.Resource;
 import org.fogbowcloud.manager.occi.model.Token;
+import org.fogbowcloud.manager.occi.network.NetworkServerResource;
 import org.fogbowcloud.manager.occi.order.Order;
 import org.fogbowcloud.manager.occi.order.OrderConstants;
 import org.fogbowcloud.manager.occi.order.OrderServerResource;
@@ -55,6 +56,8 @@ public class OCCIApplication extends Application {
 				, StorageLinkServerResource.class);
 		router.attach("/" + OrderConstants.STORAGE_TERM + "/" + OrderConstants.STORAGE_LINK_TERM
 				+ "/{storageLinkId}", StorageLinkServerResource.class);
+		router.attach("/" + OrderConstants.NETWORK_TERM + "/", NetworkServerResource.class);
+		router.attach("/" + OrderConstants.NETWORK_TERM + "/{networkId}", NetworkServerResource.class);
 		router.attach("/" + OrderConstants.COMPUTE_TERM, ComputeServerResource.class);
 		router.attach("/" + OrderConstants.COMPUTE_TERM + "/", ComputeServerResource.class);
 		router.attach("/" + OrderConstants.COMPUTE_TERM + "/{instanceId}", ComputeServerResource.class);

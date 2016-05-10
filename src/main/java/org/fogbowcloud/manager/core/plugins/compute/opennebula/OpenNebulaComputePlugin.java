@@ -29,6 +29,7 @@ import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ImageState;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
+import org.fogbowcloud.manager.occi.OCCIConstants;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.instance.Instance.Link;
 import org.fogbowcloud.manager.occi.instance.InstanceState;
@@ -168,12 +169,19 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		}
 		
 		String userdata = xOCCIAtt.get(OrderAttribute.USER_DATA_ATT.getValue());
+		
+		//network id
+		String orderNetworkId = xOCCIAtt.get(OrderAttribute.NETWORK_ID.getValue());
+		if (orderNetworkId == null) {
+			orderNetworkId = this.networkId;
+		}
 
 		templateProperties.put("mem", String.valueOf(foundFlavor.getMem()));
 		templateProperties.put("cpu", String.valueOf(foundFlavor.getCpu()));
 		templateProperties.put("userdata", userdata);
 		templateProperties.put("image-id", localImageId);
 		templateProperties.put("disk-size", String.valueOf(foundFlavor.getDisk()));
+		templateProperties.put("network-id", orderNetworkId);
 
 		Client oneClient = clientFactory.createClient(token.getAccessId(), openNebulaEndpoint);
 		String vmTemplate = generateTemplate(templateProperties);	
@@ -263,7 +271,8 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 			templateElement.appendChild(nicElement);
 			// network
 			Element networkElement = doc.createElement("NETWORK_ID");
-			networkElement.appendChild(doc.createTextNode(networkId));
+			networkElement.appendChild(doc.createTextNode(
+					templateProperties.get("network-id")));
 			nicElement.appendChild(networkElement);			
 			// getting xml template 
 			TransformerFactory transformerFactory = TransformerFactory.newInstance();
@@ -294,7 +303,7 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		Client oneClient = clientFactory.createClient(token.getAccessId(), openNebulaEndpoint);
 		VirtualMachinePool vmPool = clientFactory.createVirtualMachinePool(oneClient);
 		for (VirtualMachine virtualMachine : vmPool) {
-			instances.add(mountInstance(virtualMachine));
+			instances.add(createVMInstance(virtualMachine));
 		}
 		return instances;
 	}
@@ -309,10 +318,10 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		
 		Client oneClient = clientFactory.createClient(token.getAccessId(), openNebulaEndpoint);
 		VirtualMachine vm = clientFactory.createVirtualMachine(oneClient, instanceId);
-		return mountInstance(vm);
+		return createVMInstance(vm);
 	}
 
-	private Instance mountInstance(VirtualMachine vm) {
+	private Instance createVMInstance(VirtualMachine vm) {
 		LOGGER.debug("Mounting instance structure of instanceId: " + vm.getId());
 
 		String mem = vm.xpath("TEMPLATE/MEMORY");
@@ -324,8 +333,9 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		LOGGER.debug("mem=" + mem + ", cpu=" + cpu + ", image=" + image + ", arch=" + arch + ", privateIP=" + privateIp);
 
 		// TODO To get information about network when it'll be necessary
-		// vm.xpath("TEMPLATE/NIC/NETWORK");
-		// vm.xpath("TEMPLATE/NIC/NETWORK_ID");
+		String network = vm.xpath("TEMPLATE/NIC/NETWORK");
+		String networkId = vm.xpath("TEMPLATE/NIC/NETWORK_ID");
+		String networkMac = vm.xpath("TEMPLATE/NIC/MAC");
 
 		Map<String, String> attributes = new HashMap<String, String>();
 		// CPU Architecture of the instance
@@ -349,7 +359,27 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 			resources.add(flavorResource);
 		}
 		
-		return new Instance(vm.getId(), resources, attributes, new ArrayList<Link>(), state);
+		Link privateIpLink = new Link();
+		privateIpLink.setType(OrderConstants.NETWORK_TERM);
+		privateIpLink.setId(networkId);
+		privateIpLink.setName("</" + OrderConstants.NETWORK_TERM + "/" + networkId + ">");
+		
+		Map<String, String> linkAttributes = new HashMap<String, String>();
+		linkAttributes.put("rel", OrderConstants.INFRASTRUCTURE_OCCI_SCHEME 
+				+ OrderConstants.NETWORK_TERM);
+		linkAttributes.put("category", OrderConstants.INFRASTRUCTURE_OCCI_SCHEME 
+				+ OrderConstants.NETWORK_INTERFACE_TERM);
+		linkAttributes.put(OCCIConstants.NETWORK_INTERFACE_INTERFACE, "eth0");
+		linkAttributes.put(OCCIConstants.NETWORK_INTERFACE_MAC, networkMac);
+		linkAttributes.put(OCCIConstants.NETWORK_INTERFACE_STATE, 
+				OCCIConstants.NetworkState.ACTIVE.getValue());
+		
+		privateIpLink.setAttributes(linkAttributes);
+		
+		ArrayList<Link> links = new ArrayList<Link>();
+		links.add(privateIpLink);
+		
+		return new Instance(vm.getId(), resources, attributes, links, state);
 	}
 
 	private String getArch(String arch) {		
@@ -586,6 +616,10 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 			Element pathElement = doc.createElement("PATH");
 			pathElement.appendChild(doc.createTextNode(templateProperties.get("image_path")));
 			rootElement.appendChild(pathElement);
+			
+			Element driverElement = doc.createElement("DRIVER");
+			driverElement.appendChild(doc.createTextNode("qcow2"));
+			rootElement.appendChild(driverElement);
 
 			Element sizeElement = doc.createElement("SIZE");
 			sizeElement.appendChild(doc.createTextNode(templateProperties.get("image_size")));

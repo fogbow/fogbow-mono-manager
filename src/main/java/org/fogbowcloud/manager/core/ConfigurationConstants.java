@@ -22,6 +22,7 @@ public class ConfigurationConstants {
 	public static final String MEMBER_VALIDATOR_CLASS_KEY = "member_validator_class";
 	public static final String LOCAL_CREDENTIALS_CLASS_KEY = "federation_user_credentail_class";
 	public static final String STORAGE_CLASS_KEY = "storage_class";
+	public static final String NETWORK_CLASS_KEY = "network_class";
 
 	// prefixs
 	public static final String LOCAL_PREFIX = "local_";
@@ -63,4 +64,7 @@ public class ConfigurationConstants {
 	
 	// Storage Data Store
 	public static final String STORAGE_DATA_STORE_URL = "storage_datastore_url";
+
+	//Network Data Store
+	public static final String NETWORK_DATA_STORE_URL = "network_datastore_url";
 }
