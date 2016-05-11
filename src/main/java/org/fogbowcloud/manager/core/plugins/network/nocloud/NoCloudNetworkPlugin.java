@@ -2,6 +2,7 @@ package org.fogbowcloud.manager.core.plugins.network.nocloud;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import org.fogbowcloud.manager.core.plugins.NetworkPlugin;
 import org.fogbowcloud.manager.occi.instance.Instance;
@@ -12,6 +13,8 @@ import org.fogbowcloud.manager.occi.model.Token;
 
 public class NoCloudNetworkPlugin implements NetworkPlugin {
 
+	public NoCloudNetworkPlugin(Properties properties) {}
+	
 	@Override
 	public String requestInstance(Token token, List<Category> categories,
 			Map<String, String> xOCCIAtt) {

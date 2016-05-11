@@ -11,7 +11,7 @@ public class TestNoCloudNetworkPlugin {
 	
 	@Before
 	public void setUp() {
-		this.noCloudNetworkPlugin = new NoCloudNetworkPlugin();
+		this.noCloudNetworkPlugin = new NoCloudNetworkPlugin(null);
 	}
 	
 	@Test
