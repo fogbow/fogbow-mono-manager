@@ -50,6 +50,8 @@ public class OpenNebulaNetworkPlugin implements NetworkPlugin {
 	private static final String NETWORK_ADDRESS = "network_address";
 	private static final String NETWORK_GATEWAY = "network_gateway";
 	
+	private static final String DEFAULT_NETWORK_TYPE = "RANGED";
+	
 	private OpenNebulaClientFactory clientFactory;
 	private Properties properties;
 	private String openNebulaEndpoint;
@@ -115,6 +117,10 @@ public class OpenNebulaNetworkPlugin implements NetworkPlugin {
 			Element description = doc.createElement("DESCRIPTION");
 			description.appendChild(doc.createTextNode(templateProperties.get(NETWORK_DESCRIPTION)));
 			template.appendChild(description);
+			
+			Element type = doc.createElement("TYPE");
+			type.appendChild(doc.createTextNode(DEFAULT_NETWORK_TYPE));
+			template.appendChild(type);
 			
 			Element bridge = doc.createElement("BRIDGE");
 			bridge.appendChild(doc.createTextNode(templateProperties.get(NETWORK_BRIDGE)));
