@@ -70,7 +70,7 @@ public class OpenNebulaNetworkPlugin implements NetworkPlugin {
 	public String requestInstance(Token token, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
 		LOGGER.debug("Requesting network instance with token=" + token + "; categories="
-				+ categories + "; xOCCIAtt=" + xOCCIAtt);
+				+ categories + "; xOCCIAtt=" + xOCCIAtt + "; bridge=" + bridge);
 		
 		String address = xOCCIAtt.get(OCCIConstants.NETWORK_ADDRESS);
 		String gateway = xOCCIAtt.get(OCCIConstants.NETWORK_GATEWAY);
