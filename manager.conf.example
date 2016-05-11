@@ -22,6 +22,10 @@ network_class=org.fogbowcloud.manager.core.plugins.network.opennebula.OpenNebula
 network_openstack_v2_url=http://localhost:9696
 external_gateway_info=ea51ed0c-0e8a-448d-8202-c79777109ffe
 
+# Network plugin (OpenNebula)
+network_class=org.fogbowcloud.manager.core.plugins.network.opennebula.OpenNebulaNetworkPlugin
+network_one_bridge=br0
+
 ## Storage Plugin (Openstack)
 storage_class=org.fogbowcloud.manager.core.plugins.storage.openstack.OpenStackV2StoragePlugin
 storage_v2_url=http://localhost:8776

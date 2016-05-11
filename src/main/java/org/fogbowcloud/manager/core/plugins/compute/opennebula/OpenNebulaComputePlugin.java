@@ -172,7 +172,7 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		
 		//network id
 		String orderNetworkId = xOCCIAtt.get(OrderAttribute.NETWORK_ID.getValue());
-		if (orderNetworkId == null) {
+		if (orderNetworkId == null || orderNetworkId.isEmpty()) {
 			orderNetworkId = this.networkId;
 		}
 
