@@ -165,7 +165,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		String userdata = xOCCIAtt.get(OrderAttribute.USER_DATA_ATT.getValue());
 		
 		String orderNetworkId = xOCCIAtt.get(OrderAttribute.NETWORK_ID.getValue());
-		if (orderNetworkId == null) {
+		if (orderNetworkId == null || orderNetworkId.isEmpty()) {
 			orderNetworkId = this.networkId;
 		}
 		try {
