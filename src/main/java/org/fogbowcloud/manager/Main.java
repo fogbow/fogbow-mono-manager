@@ -22,6 +22,7 @@ import org.fogbowcloud.manager.core.plugins.StoragePlugin;
 import org.fogbowcloud.manager.core.plugins.accounting.FCUAccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.benchmarking.VanillaBenchmarkingPlugin;
 import org.fogbowcloud.manager.core.plugins.capacitycontroller.fairnessdriven.TwoFoldCapacityController;
+import org.fogbowcloud.manager.core.plugins.capacitycontroller.satisfactiondriven.SatisfactionDrivenCapacityControllerPlugin;
 import org.fogbowcloud.manager.core.plugins.imagestorage.http.HTTPDownloadImageStoragePlugin;
 import org.fogbowcloud.manager.core.plugins.localcredentails.SingleMapperPlugin;
 import org.fogbowcloud.manager.core.plugins.memberauthorization.DefaultMemberAuthorizationPlugin;
@@ -169,7 +170,14 @@ public class Main {
 		PrioritizationPlugin prioritizationPlugin = new TwoFoldPrioritizationPlugin(properties,
 				accountingPlugin);
 		
-		CapacityControllerPlugin capacityControllerPlugin = new TwoFoldCapacityController(properties, accountingPlugin);
+		CapacityControllerPlugin capacityControllerPlugin = null;
+		try {
+			capacityControllerPlugin = (CapacityControllerPlugin) createInstanceWithAccountingPlugin(
+					ConfigurationConstants.CAPACITY_CONTROLLER_PLUGIN_CLASS, properties, accountingPlugin);
+		} catch (Exception e) {
+			capacityControllerPlugin = new SatisfactionDrivenCapacityControllerPlugin();
+			LOGGER.warn("Capacity Controller plugin not specified in properties. Using the default one.", e);
+		}
 		
 
 		ManagerController facade = new ManagerController(properties);
@@ -185,6 +193,7 @@ public class Main {
 		facade.setPrioritizationPlugin(prioritizationPlugin);
 		facade.setLocalCredentailsPlugin(mapperPlugin);
 		facade.setStoragePlugin(storagePlugin);
+		facade.setCapacityControllerPlugin(capacityControllerPlugin);
 		
 		String xmppHost = properties.getProperty(ConfigurationConstants.XMPP_HOST_KEY);
 		String xmppJid = properties.getProperty(ConfigurationConstants.XMPP_JID_KEY);
@@ -262,7 +271,7 @@ public class Main {
 			AccountingPlugin accoutingPlugin) throws Exception {
 		return Class.forName(properties.getProperty(propName)).getConstructor(Properties.class, AccountingPlugin.class)
 				.newInstance(properties, accoutingPlugin);
-	}
+	}	
 
 	private static void configureLog4j() {
 		ConsoleAppender console = new ConsoleAppender();

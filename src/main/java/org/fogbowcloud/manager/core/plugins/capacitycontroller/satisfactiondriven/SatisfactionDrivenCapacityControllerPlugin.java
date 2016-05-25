@@ -9,5 +9,8 @@ public class SatisfactionDrivenCapacityControllerPlugin implements CapacityContr
 	public double getMaxCapacityToSupply(FederationMember member) {
 		return Double.MAX_VALUE;
 	}
+	
+	@Override
+	public void updateCapacity(FederationMember member) {}
 
 }

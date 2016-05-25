@@ -28,14 +28,17 @@ public class GlobalFairnessDrivenController extends FairnessDrivenCapacityContro
 
 	@Override
 	public double getMaxCapacityToSupply(FederationMember member) {
+		return controller.getMaximumCapacityToSupply();	
+	}
+	
+	@Override
+	public void updateCapacity(FederationMember member) {
 		if(lastUpdated!=dateUtils.currentTimeMillis()){
 			//time is different, then we must compute the new maxCapacity
 			lastUpdated = dateUtils.currentTimeMillis();
 			updateFairness();
-			return controller.getMaxCapacityFromFairness();
+			controller.updateCapacity();
 		}	
-		//time is equal, then the maxCapacity was already computed, here we just return
-		return controller.getMaximumCapacityToSupply();	
 	}
 	
 	protected void updateFairness(){

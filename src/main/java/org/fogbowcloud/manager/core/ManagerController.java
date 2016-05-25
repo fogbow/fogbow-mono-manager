@@ -46,6 +46,7 @@ import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
+import org.fogbowcloud.manager.core.plugins.CapacityControllerPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.FederationMemberAuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.FederationMemberPickerPlugin;
@@ -107,6 +108,9 @@ public class ManagerController {
 	private static final int DEFAULT_MAX_IP_MONITORING_TRIES = 90; // 30 tries
 	private static final long DEFAULT_ACCOUNTING_UPDATE_PERIOD = 300000; // 5
 																			// minutes
+	
+	private static final long DEFAULT_CAPACITY_CONTROLLER_UPDATE_PERIOD = 600000; // 10 minutes
+	
 	public static final int DEFAULT_MAX_POOL = 200;
 
 	private final ManagerTimer orderSchedulerTimer;
@@ -115,6 +119,7 @@ public class ManagerController {
 	private final ManagerTimer garbageCollectorTimer;
 	private final ManagerTimer accountingUpdaterTimer;
 	private final ManagerTimer orderDBUpdaterTimer;
+	private final ManagerTimer capacityControllerUpdaterTimer;
 
 	private Map<String, Token> instanceIdToToken = new HashMap<String, Token>();
 	private final List<FederationMember> members = Collections.synchronizedList(new LinkedList<FederationMember>());
@@ -132,6 +137,7 @@ public class ManagerController {
 	private IdentityPlugin federationIdentityPlugin;
 	private PrioritizationPlugin prioritizationPlugin;
 	private MapperPlugin mapperPlugin;
+	private CapacityControllerPlugin capacityControllerPlugin;
 	private Properties properties;
 	private AsyncPacketSender packetSender;
 	private FederationMemberAuthorizationPlugin validator;
@@ -164,6 +170,7 @@ public class ManagerController {
 			this.garbageCollectorTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
 			this.accountingUpdaterTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
 			this.orderDBUpdaterTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
+			this.capacityControllerUpdaterTimer = new ManagerTimer(Executors.newScheduledThreadPool(1)); 
 		} else {
 			this.orderSchedulerTimer = new ManagerTimer(executor);
 			this.instanceMonitoringTimer = new ManagerTimer(executor);
@@ -171,6 +178,7 @@ public class ManagerController {
 			this.garbageCollectorTimer = new ManagerTimer(executor);
 			this.accountingUpdaterTimer = new ManagerTimer(executor);
 			this.orderDBUpdaterTimer = new ManagerTimer(executor);
+			this.capacityControllerUpdaterTimer = new ManagerTimer(executor);
 		}
 		orderDB = new OrderDataStore(properties);
 		recoverPreviousOrders();
@@ -296,6 +304,33 @@ public class ManagerController {
 				+ orderIds);
 		accountingPlugin.update(ordersWithInstances);
 	}
+	
+	private void triggerCapacityControllerUpdater() {
+		String capacityControllerUpdaterPeriodStr = properties.getProperty(ConfigurationConstants.CAPACITY_CONTROLLER_UPDATE_PERIOD_KEY);
+		final long capacityControllerUpdaterPeriod = capacityControllerUpdaterPeriodStr == null ? DEFAULT_CAPACITY_CONTROLLER_UPDATE_PERIOD
+				: Long.valueOf(capacityControllerUpdaterPeriodStr);
+
+		capacityControllerUpdaterTimer.scheduleAtFixedRate(new TimerTask() {
+			@Override
+			public void run() {
+				try {
+					updateVirtualQuotas();					
+				} catch (Throwable e) {
+					LOGGER.error("Erro while updating accounting", e);
+				}
+			}
+		}, 0, capacityControllerUpdaterPeriod);
+	}
+	
+	private void updateVirtualQuotas() {
+		LOGGER.debug("Updating virtual quotas (capacity controller plugin).");
+		for(FederationMember member : members){
+			if(!(member.getId().equals(properties.getProperty(ConfigurationConstants.XMPP_JID_KEY)))){
+				capacityControllerPlugin.updateCapacity(member);
+				LOGGER.debug("Member: " +member.getId() + "Quota: "+capacityControllerPlugin.getMaxCapacityToSupply(member));
+			}
+		}
+	}
 
 	public void setAuthorizationPlugin(AuthorizationPlugin authorizationPlugin) {
 		this.authorizationPlugin = authorizationPlugin;
@@ -319,6 +354,14 @@ public class ManagerController {
 
 	public void setFederationIdentityPlugin(IdentityPlugin federationIdentityPlugin) {
 		this.federationIdentityPlugin = federationIdentityPlugin;
+	}
+	
+	public void setCapacityControllerPlugin(CapacityControllerPlugin capacityControllerPlugin) {
+		this.capacityControllerPlugin = capacityControllerPlugin;
+		// capacity controller updater should start only after setting capacity controller plugin
+		if (!capacityControllerUpdaterTimer.isScheduled()) {
+			triggerCapacityControllerUpdater();
+		}
 	}
 
 	private void triggerGarbageCollector() {
@@ -975,18 +1018,45 @@ public class ManagerController {
 	}
 
 	public void queueServedOrder(String requestingMemberId, List<Category> categories, Map<String, String> xOCCIAtt,
-			String orderId, Token requestingUserToken) {
-
+			String orderId, Token requestingUserToken) {		
+		
 		normalizeBatchId(requestingMemberId, xOCCIAtt);
 
 		LOGGER.info("Queueing order with categories: " + categories + " and xOCCIAtt: " + xOCCIAtt
 				+ " for requesting member: " + requestingMemberId + " with requestingToken " + requestingUserToken);
 		Order order = new Order(orderId, requestingUserToken, categories, xOCCIAtt, false, requestingMemberId);
+		
+		if(!isThereEnoughQuota(requestingMemberId)){
+			ManagerPacketHelper.replyToServedOrder(order, packetSender);
+			return;
+		}
+		
 		orderRepository.addOrder(requestingUserToken.getUser(), order);
 
 		if (!orderSchedulerTimer.isScheduled()) {
 			triggerOrderScheduler();
 		}
+	}
+	
+	public boolean isThereEnoughQuota(String requestingMemberId){
+		int instancesFulfilled = 0;
+		List<Order> allServedOrders = orderRepository.getAllServedOrders();
+		for (Order order : allServedOrders) {
+			if (order.getRequestingMemberId().equals(requestingMemberId) && 
+					order.getState().equals(OrderState.FULFILLED)) 
+				instancesFulfilled++;
+		}
+		FederationMember requestingMember = null;
+		for(FederationMember member : members){
+			if(member.getId().equals(requestingMemberId)){
+				requestingMember = member;
+				break;
+			}
+		}
+		
+		//TODO different instances sizes should be considered?
+				
+		return (instancesFulfilled+1)<=capacityControllerPlugin.getMaxCapacityToSupply(requestingMember);
 	}
 
 	protected String createUserDataUtilsCommand(Order order) throws IOException, MessagingException {

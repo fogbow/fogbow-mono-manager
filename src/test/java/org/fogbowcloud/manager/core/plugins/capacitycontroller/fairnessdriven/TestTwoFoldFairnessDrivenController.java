@@ -66,8 +66,6 @@ public class TestTwoFoldFairnessDrivenController {
 		properties.put(FairnessDrivenCapacityController.CONTROLLER_MAXIMUM_THRESHOLD, maximumThreshold+"");
 		properties.put(FairnessDrivenCapacityController.CONTROLLER_MAXIMUM_CAPACITY, maximumCapacityOfPeer+"");
 		
-		properties.put(twoFoldFdController.LONG_KNOWN_PEER_CAPACITY_CONTROLLER_PLUGIN_CLASS, "org.fogbowcloud.manager.core.plugins.capacitycontroller.fairnessdriven.PairwiseFairnessDrivenController");
-		properties.put(twoFoldFdController.NEWCOMERS_CAPACITY_CONTROLLER_PLUGIN_CLASS, "org.fogbowcloud.manager.core.plugins.capacitycontroller.fairnessdriven.GlobalFairnessDrivenController");
 		twoFoldFdController = new TwoFoldCapacityController(properties, accountingPlugin);
 		twoFoldFdController.setDateUtils(dateUtils);
 		
@@ -163,53 +161,71 @@ public class TestTwoFoldFairnessDrivenController {
 		
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t1); 	// updating dateUtils				
 		accountingPlugin.update(orders);
+		twoFoldFdController.updateCapacity(remote1);
 		assertEquals(maximumCapacityOfPeer, twoFoldFdController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
+		twoFoldFdController.updateCapacity(remote2);
 		assertEquals(maximumCapacityOfPeer, twoFoldFdController.getMaxCapacityToSupply(remote2), ACCEPTABLE_ERROR);
 		
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t2); 		
 		accountingPlugin.update(orders);
+		twoFoldFdController.updateCapacity(remote1);
 		assertEquals(4.5, twoFoldFdController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
+		twoFoldFdController.updateCapacity(remote2);
 		assertEquals(4.5, twoFoldFdController.getMaxCapacityToSupply(remote2), ACCEPTABLE_ERROR);
 		
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t3); 		
 		accountingPlugin.update(orders);
+		twoFoldFdController.updateCapacity(remote1);
 		assertEquals(4, twoFoldFdController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
+		twoFoldFdController.updateCapacity(remote2);
 		assertEquals(4, twoFoldFdController.getMaxCapacityToSupply(remote2), ACCEPTABLE_ERROR);
 		
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t4); 		
 		accountingPlugin.update(orders);
+		twoFoldFdController.updateCapacity(remote1);
 		assertEquals(4.5, twoFoldFdController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
+		twoFoldFdController.updateCapacity(remote2);
 		assertEquals(3.5, twoFoldFdController.getMaxCapacityToSupply(remote2), ACCEPTABLE_ERROR);
 		
 		orders.remove(remoteMember2DonatesToLocalMemberOrder1Spy);
 		
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t5); 		
 		accountingPlugin.update(orders);
+		twoFoldFdController.updateCapacity(remote1);
 		assertEquals(maximumCapacityOfPeer, twoFoldFdController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
+		twoFoldFdController.updateCapacity(remote2);
 		assertEquals(3, twoFoldFdController.getMaxCapacityToSupply(remote2), ACCEPTABLE_ERROR);
 		
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t6); 		
 		accountingPlugin.update(orders);
+		twoFoldFdController.updateCapacity(remote1);
 		assertEquals(maximumCapacityOfPeer, twoFoldFdController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
+		twoFoldFdController.updateCapacity(remote2);
 		assertEquals(2.5, twoFoldFdController.getMaxCapacityToSupply(remote2), ACCEPTABLE_ERROR);
 		
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t7); 		
 		accountingPlugin.update(orders);
+		twoFoldFdController.updateCapacity(remote1);
 		assertEquals(maximumCapacityOfPeer, twoFoldFdController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
+		twoFoldFdController.updateCapacity(remote2);
 		assertEquals(2, twoFoldFdController.getMaxCapacityToSupply(remote2), ACCEPTABLE_ERROR);
 		
 		orders.remove(remoteMember1DonatesToLocalMemberOrder1Spy);
 		
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t8); 		
 		accountingPlugin.update(orders);
+		twoFoldFdController.updateCapacity(remote1);
 		assertEquals(maximumCapacityOfPeer, twoFoldFdController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
+		twoFoldFdController.updateCapacity(remote2);
 		assertEquals(1.5, twoFoldFdController.getMaxCapacityToSupply(remote2), ACCEPTABLE_ERROR);
 		
 		orders.remove(remoteMember1DonatesToLocalMemberOrder2Spy);
 		
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t9); 		
 		accountingPlugin.update(orders);
+		twoFoldFdController.updateCapacity(remote1);
 		assertEquals(maximumCapacityOfPeer, twoFoldFdController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
+		twoFoldFdController.updateCapacity(remote2);
 		assertEquals(1, twoFoldFdController.getMaxCapacityToSupply(remote2), ACCEPTABLE_ERROR);
 		
 		orders.remove(localDonatesToRemoteMember1Order1Spy);
@@ -217,17 +233,23 @@ public class TestTwoFoldFairnessDrivenController {
 		
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t10); 		
 		accountingPlugin.update(orders);
+		twoFoldFdController.updateCapacity(remote1);
 		assertEquals(maximumCapacityOfPeer, twoFoldFdController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
+		twoFoldFdController.updateCapacity(remote2);
 		assertEquals(0.5, twoFoldFdController.getMaxCapacityToSupply(remote2), ACCEPTABLE_ERROR);
 		
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t11); 		
 		accountingPlugin.update(orders);
+		twoFoldFdController.updateCapacity(remote1);
 		assertEquals(maximumCapacityOfPeer, twoFoldFdController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
+		twoFoldFdController.updateCapacity(remote2);
 		assertEquals(0, twoFoldFdController.getMaxCapacityToSupply(remote2), ACCEPTABLE_ERROR);
 		
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t12); 		
 		accountingPlugin.update(orders);
+		twoFoldFdController.updateCapacity(remote1);
 		assertEquals(maximumCapacityOfPeer, twoFoldFdController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
+		twoFoldFdController.updateCapacity(remote2);
 		assertEquals(0, twoFoldFdController.getMaxCapacityToSupply(remote2), ACCEPTABLE_ERROR);
 	}
 

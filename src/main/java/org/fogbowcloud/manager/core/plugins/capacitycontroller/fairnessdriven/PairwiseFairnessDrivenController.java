@@ -27,7 +27,12 @@ public class PairwiseFairnessDrivenController extends FairnessDrivenCapacityCont
 	}
 
 	@Override
-	public double getMaxCapacityToSupply(FederationMember member) {		
+	public double getMaxCapacityToSupply(FederationMember member) {
+		return controllers.get(member).getMaximumCapacityToSupply();				
+	}
+	
+	@Override
+	public void updateCapacity(FederationMember member) {
 		if(controllers.containsKey(member) && controllers.get(member).getLastUpdated() == dateUtils.currentTimeMillis())
 			throw new IllegalStateException("The controller of member ("+properties.getProperty(ConfigurationConstants.XMPP_JID_KEY)+") is running more than once at the same time step for member("+member.getId()+").");
 		else if(!controllers.containsKey(member))
@@ -35,7 +40,7 @@ public class PairwiseFairnessDrivenController extends FairnessDrivenCapacityCont
 		
 		controllers.get(member).setLastUpdated(dateUtils.currentTimeMillis());
 		updateFairness(member);	
-		return controllers.get(member).getMaxCapacityFromFairness();				
+		controllers.get(member).updateCapacity();		
 	}
 	
 	protected void updateFairness(FederationMember member){

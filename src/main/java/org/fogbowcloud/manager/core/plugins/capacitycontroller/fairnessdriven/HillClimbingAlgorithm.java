@@ -34,7 +34,7 @@ public class HillClimbingAlgorithm {
 				+ "maximumThreshold: "+maximumThreshold+", deltaC: "+deltaC+".";
 	}
 	
-	public double getMaxCapacityFromFairness(){
+	public void updateCapacity(){
 		if(currentFairness>=0 && lastFairness>=0){
 			if(currentFairness < minimumThreshold)
 				increasing = false;
@@ -48,8 +48,6 @@ public class HillClimbingAlgorithm {
 			else
 				maximumCapacityToSupply = Math.max(0, maximumCapacityToSupply - (deltaC * MAXIMUM_CAPACITY));
 		}
-		
-		return maximumCapacityToSupply;				
 	}
 	
 	public double getMaximumCapacityToSupply() {

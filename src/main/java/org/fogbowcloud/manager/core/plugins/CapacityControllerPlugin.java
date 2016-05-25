@@ -5,5 +5,7 @@ import org.fogbowcloud.manager.core.model.FederationMember;
 public interface CapacityControllerPlugin {
 	
 	public double getMaxCapacityToSupply(FederationMember member);
+	
+	public void updateCapacity(FederationMember member);
 
 }

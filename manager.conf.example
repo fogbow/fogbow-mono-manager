@@ -241,20 +241,13 @@ accounting_datastore_url=jdbc:sqlite:/tmp/usage
 benchmarking_class=org.fogbowcloud.manager.core.plugins.benchmarking.VanillaBenchmarkingPlugin
 
 #Capacity controller plugin
-long_known_peer_capacity_controller_plugin_class=org.fogbowcloud.manager.core.plugins.capacitycontroller.fairnessdriven.PairwiseFairnessDrivenController
-newcomers_capacity_controller_plugin_class=org.fogbowcloud.manager.core.plugins.capacitycontroller.fairnessdriven.GlobalFairnessDrivenController
+capacity_controller_class=org.fogbowcloud.manager.core.plugins.capacitycontroller.fairnessdriven.TwoFoldCapacityController
+capacity_controller_update_period=600000
 #parameters of loopback control
-controller_delta=0.1
+controller_delta=0.05
 controller_minimum_threshold=0.8
-controller_maximum_threshold=1
+controller_maximum_threshold=0.95
 controller_maximum_capacity=100
-
-capacity_controller_class=org.fogbowcloud.manager.core.plugins.capacitycontroller.fairnessdriven.TwoFoldFairnessDrivenController
-knownpeers_capacity_controller_class=org.fogbowcloud.manager.core.plugins.capacitycontroller.fairnessdriven.PairwiseFairnessDrivenController
-newcomers_capacity_controller_class=org.fogbowcloud.manager.core.plugins.capacitycontroller.fairnessdriven.GlobalFairnessDrivenController
-newcomers_capacity_controller_class=org.fogbowcloud.manager.core.plugins.capacitycontroller.satisfactiondriven
-
-#deltaC, minimumThreshold, maximumThreshold, maximumCapacityOfPeer
 
 
 ## OCCI extra resources
