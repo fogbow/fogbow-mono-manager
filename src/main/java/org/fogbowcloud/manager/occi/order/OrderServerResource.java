@@ -189,9 +189,19 @@ public class OrderServerResource extends ServerResource {
 		}
 		for (String attributeName : OrderAttribute.getValues()) {
 			if (order.getAttValue(attributeName) == null){
-				attToOutput.put(attributeName, "Not defined");	
+				if(OrderAttribute.NETWORK_ID.getValue().equals(attributeName)){
+					attToOutput.put(attributeName, "Network default");
+				}else{
+					attToOutput.put(attributeName, "Not defined");	
+				}
 			} else {
-				attToOutput.put(attributeName, order.getAttValue(attributeName));
+				
+				if(OrderAttribute.NETWORK_ID.getValue().equals(attributeName) &&
+						order.getAttValue(attributeName).isEmpty()){
+					attToOutput.put(attributeName, "Network default");
+				}else{
+					attToOutput.put(attributeName, order.getAttValue(attributeName));
+				}
 			}
 		}
 		
