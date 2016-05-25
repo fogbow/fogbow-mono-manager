@@ -1,5 +1,9 @@
 package org.fogbowcloud.manager.occi;
 
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
+
 public class OCCIConstants {
 
 	public static final String ID = "occi.core.id";
@@ -44,4 +48,19 @@ public class OCCIConstants {
 		}
 	}
 	
+	public static List<String> getValues() {	
+		List<String> values = new ArrayList<String>();		
+		
+		Field[] fields = OCCIConstants.class.getDeclaredFields();
+	    for(Field f: fields) {
+	    	f.setAccessible(true);
+	    	try {
+	    		values.add((String) f.get(null));
+	    	} catch (Exception e) {
+	    		continue;
+	    	}
+	    }
+	    return values;
+		
+	}
 }

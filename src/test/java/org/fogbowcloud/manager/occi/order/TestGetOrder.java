@@ -2,6 +2,7 @@ package org.fogbowcloud.manager.occi.order;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -17,12 +18,14 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.MapperPlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
+import org.fogbowcloud.manager.occi.OCCIConstants;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.ErrorType;
 import org.fogbowcloud.manager.occi.model.HeaderUtils;
@@ -49,6 +52,8 @@ public class TestGetOrder {
 			+ OCCITestHelper.ENDPOINT_PORT + OCCIComputeApplication.COMPUTE_TARGET
 			+ "/b122f3ad-503c-4abb-8a55-ba8d90cfce9f";
 
+	private ManagerController facade;
+	
 	@SuppressWarnings("unchecked")
 	@Before
 	public void setup() throws Exception {
@@ -91,7 +96,7 @@ public class TestGetOrder {
 		//TODO review
 		Mockito.doThrow(new OCCIException(ErrorType.BAD_REQUEST, "")).when(benchmarkingPlugin).remove(Mockito.anyString());
 		
-		this.orderHelper.initializeComponentExecutorSameThread(computePlugin, identityPlugin,
+		facade = this.orderHelper.initializeComponentExecutorSameThread(computePlugin, identityPlugin,
 				authorizationPlugin, benchmarkingPlugin, mapperPlugin);
 	}
 
@@ -516,6 +521,56 @@ public class TestGetOrder {
 		response = client.execute(get);
 
 		Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatusLine().getStatusCode());
+	}
+	
+	@Test
+	public void testGetOCCIOrderAttributes() throws URISyntaxException, HttpException, IOException {
+		
+		String orderId="1";
+		String instanceId="instance01";
+		String networkAddress = "10.10.10.10";
+		String networkGateway = "10.10.10.1";
+		
+		
+		HashMap<String, String> attributes = new HashMap<String, String>();
+		attributes.put(OCCIConstants.NETWORK_ADDRESS, networkAddress);
+		attributes.put(OCCIConstants.NETWORK_GATEWAY, networkGateway);
+		Token federationToken = new Token("1", OCCITestHelper.ACCESS_TOKEN, new Date(), attributes);
+		
+		Category category =  new Category(OrderConstants.TERM, OrderConstants.SCHEME,
+				OrderConstants.KIND_CLASS);
+		
+		List<Category> categories = new ArrayList<Category>();
+		
+		Order order = new Order(orderId, federationToken, instanceId, "", "", new Date().getTime(),
+				true, OrderState.OPEN, categories, attributes);
+		
+		
+		
+		OrderRepository orderRepository = new OrderRepository();
+		orderRepository.addOrder(OCCITestHelper.USER_MOCK, order);
+		
+		facade.setOrders(orderRepository);
+		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_ORDER+orderId);
+		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
+		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		HttpClient client = HttpClients.createMinimal();
+		HttpResponse response = client.execute(get);
+
+		String responseStr = null;
+		responseStr = EntityUtils.toString(response.getEntity(), String.valueOf(Charsets.UTF_8));
+		
+		Assert.assertEquals(0, OCCITestHelper.getLocationIds(response).size());
+		Assert.assertEquals("\""+networkAddress+"\"", OCCITestHelper.getOCCIAttByBodyString(responseStr, OCCIConstants.NETWORK_ADDRESS));
+		Assert.assertEquals("\""+networkGateway+"\"", OCCITestHelper.getOCCIAttByBodyString(responseStr, OCCIConstants.NETWORK_GATEWAY));
+		
+		for(String attrib : OCCIConstants.getValues()){
+			if(!OCCIConstants.NETWORK_ADDRESS.equals(attrib) && !OCCIConstants.NETWORK_GATEWAY.equals(attrib)){
+				Assert.assertEquals("\"Not defined\"", OCCITestHelper.getOCCIAttByBodyString(responseStr, attrib));
+			}
+		}
+		
+		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());	
 	}
 	
 	@After

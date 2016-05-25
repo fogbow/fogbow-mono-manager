@@ -195,6 +195,14 @@ public class OrderServerResource extends ServerResource {
 			}
 		}
 		
+		for (String attributeName : OCCIConstants.getValues()) {
+			if (order.getAttValue(attributeName) == null){
+				attToOutput.put(attributeName, "Not defined");	
+			} else {
+				attToOutput.put(attributeName, order.getAttValue(attributeName));
+			}
+		}
+		
 		attToOutput.put(OrderAttribute.STATE.getValue(), order.getState().getValue());
 		attToOutput.put(OrderAttribute.REQUESTING_MEMBER.getValue(), order.getRequestingMemberId());
 		if (order.getProvidingMemberId() == null) {

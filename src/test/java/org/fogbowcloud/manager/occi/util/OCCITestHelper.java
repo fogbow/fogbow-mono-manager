@@ -81,7 +81,7 @@ public class OCCITestHelper {
 	private OrderRepository orders;
 	private StorageLinkRepository storageLinkRespository;
 
-	public void initializeComponentExecutorSameThread(ComputePlugin computePlugin, IdentityPlugin identityPlugin,
+	public ManagerController initializeComponentExecutorSameThread(ComputePlugin computePlugin, IdentityPlugin identityPlugin,
 			AuthorizationPlugin authorizationPlugin, BenchmarkingPlugin benchmarkingPlugin,
 			MapperPlugin mapperPlugin) throws Exception {
 		component = new Component();
@@ -119,6 +119,7 @@ public class OCCITestHelper {
 
 		component.getDefaultHost().attach(new OCCIApplication(facade));
 		component.start();
+		return facade;
 	}
 
 	public void initializeComponent(ComputePlugin computePlugin, IdentityPlugin identityPlugin,
