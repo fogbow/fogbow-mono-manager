@@ -226,12 +226,13 @@ public class OpenStackV2NetworkPlugin implements NetworkPlugin {
 			JSONObject rootServer = new JSONObject(responseStr);
 			JSONArray routersJSONArray = rootServer.optJSONArray(KEY_JSON_PORTS);
 			for (int i = 0; i < routersJSONArray.length(); i++) {
-				networkIdToRemove = routersJSONArray.optJSONObject(i).optString(KEY_NETWORK_ID);
+				String networkId = routersJSONArray.optJSONObject(i).optString(KEY_NETWORK_ID);
 				String deviceOwner = routersJSONArray.optJSONObject(i).optString(KEY_DEVICE_OWNER);				
 				String routerId = routersJSONArray.optJSONObject(i).optString(KEY_DEVICE_ID);
 				
-				if (networkIdToRemove.equals(instanceId) && !deviceOwner.equals(NETWORK_DHCP)) {
+				if (networkId.equals(instanceId) && !deviceOwner.equals(NETWORK_DHCP)) {
 					routerIdToRemove = routerId;
+					networkIdToRemove = networkId;
 					
 					String subnetId = routersJSONArray.optJSONObject(i)
 							.optJSONArray(KEY_FIXES_IPS).optJSONObject(0)
