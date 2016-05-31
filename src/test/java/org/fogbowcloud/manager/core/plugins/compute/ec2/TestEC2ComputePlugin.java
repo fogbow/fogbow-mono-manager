@@ -377,8 +377,52 @@ public class TestEC2ComputePlugin {
 	}
 	
 	@Test
-	public void testRequestInstanceWithUserDataAndSubnetId() {
+	public void testRequestInstanceWithUserDataAndSubnetIdInAttributes() {
 		Map<String, String> extraProps = new HashMap<String, String>();
+		extraProps.put("compute_ec2_subnet_id", "net-123");
+		final String networkId = "networkId";
+		
+		EC2ComputePlugin computePlugin = createEC2ComputePlugin(extraProps);
+		AmazonEC2Client ec2Client = createEC2Client(computePlugin);
+		
+		Token token = createToken();		
+		Mockito.doReturn(new ResourcesInfo("1", "1", 
+				"1024", "1024", "1", "1")).when(computePlugin).getResourcesInfo(token);
+		
+		Reservation reservation = new Reservation();
+		com.amazonaws.services.ec2.model.Instance instance = 
+				new com.amazonaws.services.ec2.model.Instance();
+		instance.setInstanceId("instanceId");
+		reservation.withInstances(ImmutableList.of(instance));
+		RunInstancesResult runInstancesResult = new RunInstancesResult();
+		runInstancesResult.withReservation(reservation);
+		
+		Mockito.doReturn(runInstancesResult).when(ec2Client).runInstances(Mockito.argThat(
+				new ArgumentMatcher<RunInstancesRequest>() {
+					@Override
+					public boolean matches(Object argument) {
+						RunInstancesRequest requestArg = (RunInstancesRequest) argument;
+								return requestArg.getInstanceType().equals("t2.micro")
+										&& requestArg.getImageId().equals("image")
+										&& requestArg.getUserData().equals("userData")
+										&& requestArg.getNetworkInterfaces().get(0).getSubnetId().equals(networkId);
+					}
+		}));
+
+		HashMap<String, String> xOCCIAtt = new HashMap<String, String>();
+		xOCCIAtt.put(OrderAttribute.USER_DATA_ATT.getValue(), "userData");
+		// subnet id in the order attributes
+		xOCCIAtt.put(OrderAttribute.NETWORK_ID.getValue(), networkId);
+		final String instanceId = computePlugin.requestInstance(token, new LinkedList<Category>(), 
+				xOCCIAtt, "image");
+		
+		Assert.assertEquals("instanceId", instanceId);
+	}	
+	
+	@Test
+	public void testRequestInstanceWithUserDataAndSubnetIdInProperties() {
+		Map<String, String> extraProps = new HashMap<String, String>();
+		// subnet id in the properties
 		extraProps.put("compute_ec2_subnet_id", "net-123");
 		
 		EC2ComputePlugin computePlugin = createEC2ComputePlugin(extraProps);
