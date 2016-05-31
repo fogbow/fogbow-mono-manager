@@ -78,10 +78,14 @@ public class TestDeleteStorageLink {
 		imageStoragePlugin = Mockito.mock(ImageStoragePlugin.class);
 		
 		List<StorageLink> storageLinks = new ArrayList<StorageLinkRepository.StorageLink>();
-		storageLinks.add(new StorageLink(STORAGE_LINK_ID_ONE, "sourceOne", "targetOne", "deviceOne", true));
-		storageLinks.add(new StorageLink(STORAGE_LINK_ID_TWO, "sourceTwo", "targetTwo", "deviceTwo", true));
-		storageLinks.add(new StorageLink(STORAGE_LINK_ID_TRHEE, "sourceThree", "targetThree", "deviceThree", true));
-		storageLinks.add(new StorageLink(STORAGE_LINK_ID_FOUR, "sourceFour", "targetFour", "deviceFour", true));
+		storageLinks.add(new StorageLink(STORAGE_LINK_ID_ONE, "sourceOne",
+				"targetOne", "deviceOne", null, null, true));
+		storageLinks.add(new StorageLink(STORAGE_LINK_ID_TWO, "sourceTwo",
+				"targetTwo", "deviceTwo", null, null, true));
+		storageLinks.add(new StorageLink(STORAGE_LINK_ID_TRHEE, "sourceThree",
+				"targetThree", "deviceThree", null, null, true));
+		storageLinks.add(new StorageLink(STORAGE_LINK_ID_FOUR, "sourceFour",
+				"targetFour", "deviceFour", null, null, true));
 		
 		Map<String, List<StorageLink>> storageLinksToAdd = new HashMap<String, List<StorageLink>>();
 		storageLinksToAdd.put(OCCITestHelper.USER_MOCK, storageLinks);			

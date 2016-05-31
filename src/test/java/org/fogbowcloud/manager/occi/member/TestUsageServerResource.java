@@ -23,6 +23,7 @@ import org.fogbowcloud.manager.core.plugins.accounting.AccountingInfo;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.model.OCCIHeaders;
 import org.fogbowcloud.manager.occi.model.Token;
+import org.fogbowcloud.manager.occi.order.OrderConstants;
 import org.fogbowcloud.manager.occi.util.OCCITestHelper;
 import org.junit.After;
 import org.junit.Assert;
@@ -101,7 +102,7 @@ public class TestUsageServerResource {
 				String.valueOf(Charsets.UTF_8));
 		
 		// checking usage
-		AccountingInfo memberUsageByUser = getUsageFrom(defaultToken.getUser(), responseStr);
+		AccountingInfo memberUsageByUser = getUsageFrom(defaultToken.getUser(), responseStr, OrderConstants.COMPUTE_TERM);
 		Assert.assertEquals(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, memberUsageByUser.getRequestingMember());
 		Assert.assertEquals(ID_RESOURCEINFO1, memberUsageByUser.getProvidingMember());
 		Assert.assertEquals(0, memberUsageByUser.getUsage(), ACCEPTABLE_ERROR);
@@ -116,13 +117,13 @@ public class TestUsageServerResource {
 				String.valueOf(Charsets.UTF_8));
 		
 		// checking usage
-		memberUsageByUser = getUsageFrom(defaultToken.getUser(), responseStr);
+		memberUsageByUser = getUsageFrom(defaultToken.getUser(), responseStr, OrderConstants.COMPUTE_TERM);
 		Assert.assertEquals(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, memberUsageByUser.getRequestingMember());
 		Assert.assertEquals(ID_RESOURCEINFO2, memberUsageByUser.getProvidingMember());
 		Assert.assertEquals(0, memberUsageByUser.getUsage(), ACCEPTABLE_ERROR);
 	}
 	
-	public static AccountingInfo getUsageFrom(String user, String responseStr) {
+	public static AccountingInfo getUsageFrom(String user, String responseStr, String resourceKing) {
 		StringTokenizer st = new StringTokenizer(responseStr, "\n");
 		String providingMember = "";
 		double consuption = -1;
@@ -131,10 +132,17 @@ public class TestUsageServerResource {
 			if (line.contains(OCCIHeaders.X_OCCI_ATTRIBUTE + ": memberId=")) {
 				String[] tokens = line.split("=");
 				providingMember = tokens[1].trim();
-			} else if (line.contains(OCCIHeaders.X_OCCI_ATTRIBUTE + ": usage=")) {
+			} else if (line.contains(OCCIHeaders.X_OCCI_ATTRIBUTE + ": compute usage=")) {
 				String[] tokens = line.split("=");
-				consuption = Double.parseDouble(tokens[1].trim());
-			}
+				if (resourceKing.equals(OrderConstants.COMPUTE_TERM)) {
+					consuption = Double.parseDouble(tokens[1].trim());
+				}				
+			} else if (line.contains(OCCIHeaders.X_OCCI_ATTRIBUTE + ": storage usage=")) {
+				String[] tokens = line.split("=");
+				if (resourceKing.equals(OrderConstants.STORAGE_TERM)) {
+					consuption = Double.parseDouble(tokens[1].trim());
+				}
+			}			
 		}		
 		
 		Assert.assertNotEquals("", providingMember);
@@ -182,7 +190,7 @@ public class TestUsageServerResource {
 				String.valueOf(Charsets.UTF_8));
 
 		// checking usage
-		AccountingInfo memberUsageByUser = getUsageFrom(defaultToken.getUser(), responseStr);
+		AccountingInfo memberUsageByUser = getUsageFrom(defaultToken.getUser(), responseStr, OrderConstants.COMPUTE_TERM);
 		Assert.assertEquals(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
 				memberUsageByUser.getRequestingMember());
 		Assert.assertEquals(ID_RESOURCEINFO1, memberUsageByUser.getProvidingMember());
@@ -199,7 +207,7 @@ public class TestUsageServerResource {
 				String.valueOf(Charsets.UTF_8));
 
 		// checking usage
-		memberUsageByUser = getUsageFrom(defaultToken.getUser(), responseStr);
+		memberUsageByUser = getUsageFrom(defaultToken.getUser(), responseStr, OrderConstants.COMPUTE_TERM);
 		Assert.assertEquals(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
 				memberUsageByUser.getRequestingMember());
 		Assert.assertEquals(ID_RESOURCEINFO2, memberUsageByUser.getProvidingMember());
@@ -241,7 +249,7 @@ public class TestUsageServerResource {
 				String.valueOf(Charsets.UTF_8));
 
 		// checking usage
-		AccountingInfo memberUsageByUser = getUsageFrom(defaultToken.getUser(), responseStr);
+		AccountingInfo memberUsageByUser = getUsageFrom(defaultToken.getUser(), responseStr, OrderConstants.COMPUTE_TERM);
 		Assert.assertEquals(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
 				memberUsageByUser.getRequestingMember());
 		Assert.assertEquals(ID_RESOURCEINFO1, memberUsageByUser.getProvidingMember());
@@ -255,13 +263,17 @@ public class TestUsageServerResource {
 		response = client.execute(get);
 
 		responseStr = EntityUtils.toString(response.getEntity(),
-				String.valueOf(Charsets.UTF_8));
+				String.valueOf(Charsets.UTF_8));		
 
 		// checking usage
-		memberUsageByUser = getUsageFrom(defaultToken.getUser(), responseStr);
+		memberUsageByUser = getUsageFrom(defaultToken.getUser(), responseStr,
+				OrderConstants.COMPUTE_TERM);
+		AccountingInfo memberStorageUsageByUser = getUsageFrom(defaultToken.getUser(), responseStr,
+				OrderConstants.STORAGE_TERM);
 		Assert.assertEquals(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
 				memberUsageByUser.getRequestingMember());
 		Assert.assertEquals(ID_RESOURCEINFO2, memberUsageByUser.getProvidingMember());
 		Assert.assertEquals(20.5, memberUsageByUser.getUsage(), ACCEPTABLE_ERROR);
+		Assert.assertEquals(20.5, memberStorageUsageByUser.getUsage(), ACCEPTABLE_ERROR);
 	}
 }

@@ -136,7 +136,7 @@ public class EC2ComputePlugin implements ComputePlugin {
 	public String requestInstance(Token token, List<Category> categories,
 			Map<String, String> xOCCIAtt, String imageId) {
 		
-		if (imageId == null) {
+		if (imageId == null) { 
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}
 		
@@ -164,6 +164,8 @@ public class EC2ComputePlugin implements ComputePlugin {
 				.withMinCount(1)
 				.withMaxCount(1);
 		
+		String orderNetworkId = xOCCIAtt.get(OrderAttribute.NETWORK_ID.getValue());
+		subnetId = orderNetworkId != null && !orderNetworkId.isEmpty() ? orderNetworkId: subnetId;
 		if (subnetId != null || securityGroupId != null) {
 			InstanceNetworkInterfaceSpecification networkSpec = 
 					new InstanceNetworkInterfaceSpecification();

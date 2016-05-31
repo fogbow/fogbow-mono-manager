@@ -45,7 +45,7 @@ public class TestTwoFoldFairnessDrivenController {
 	public void setUp() throws Exception {
 		benchmarkingPlugin = Mockito.mock(BenchmarkingPlugin.class);
 		properties = new Properties();
-		properties.put("accounting_datastore_url", "jdbc:sqlite:" + FAKE_DB_PATH);
+		properties.put(FCUAccountingPlugin.ACCOUNTING_DATASTORE_URL, "jdbc:sqlite:" + FAKE_DB_PATH);
 		properties.put(ConfigurationConstants.XMPP_JID_KEY, "localMemberId");
 
 		dateUtils = Mockito.mock(DateUtils.class);

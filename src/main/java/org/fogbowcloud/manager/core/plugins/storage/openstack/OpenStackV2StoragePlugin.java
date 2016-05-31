@@ -43,7 +43,7 @@ public class OpenStackV2StoragePlugin implements StoragePlugin {
 	protected static final String KEY_JSON_VOLUMES = "volumes";
 	protected static final String SUFIX_ENDPOINT_VOLUMES = "/volumes";
 	protected static final String SUFIX_ENDPOINT_ACTION = "/action";
-	protected static final String COMPUTE_V2_API_ENDPOINT = "/v2/";
+	protected static final String V2_API_ENDPOINT = "/v2/";
 	
 	public static final String STORAGE_NOVAV2_URL_KEY = "storage_v2_url";
 	
@@ -58,7 +58,7 @@ public class OpenStackV2StoragePlugin implements StoragePlugin {
 	public OpenStackV2StoragePlugin(Properties properties) {
 		this.storageV2APIEndpoint = properties
 				.getProperty(STORAGE_NOVAV2_URL_KEY)
-				+ COMPUTE_V2_API_ENDPOINT;
+				+ V2_API_ENDPOINT;
 		
 		initClient();
 	}

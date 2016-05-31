@@ -45,6 +45,7 @@ public class TestRemoveServeredOrder {
 		this.managerTestHelper.shutdown();
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testRemoveServeredOrderResourceKingCompute() throws Exception {
 		ManagerXmppComponent initializeXMPPManagerComponent = managerTestHelper.initializeXMPPManagerComponent(false);
@@ -58,8 +59,12 @@ public class TestRemoveServeredOrder {
 		
 		Mockito.when(managerTestHelper.getFederationIdentityPlugin().getToken(ACCESS_ID))
 				.thenReturn(token);
-		Mockito.when(managerTestHelper.getIdentityPlugin().getToken(ACCESS_ID))
-		.thenReturn(token);
+		Mockito.when(managerTestHelper.getMapperPlugin().getLocalCredentials(Mockito.anyString()))
+				.thenReturn(new HashMap<String, String>());		
+		Mockito.when(managerTestHelper.getMapperPlugin().getLocalCredentials(
+				Mockito.anyString())).thenReturn(new HashMap<String, String>());
+		Mockito.when(managerTestHelper.getIdentityPlugin().createToken(
+				Mockito.anyMap())).thenReturn(token);		
 		Mockito.when(managerTestHelper.getAuthorizationPlugin().isAuthorized(token)).thenReturn(true);			
 
 		Assert.assertEquals(1, initializeXMPPManagerComponent.getManagerFacade()
@@ -91,6 +96,7 @@ public class TestRemoveServeredOrder {
 		Assert.assertEquals("", instanceId);
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testRemoveServeredOrderResourceKingStorage() throws Exception {
 		ManagerXmppComponent initializeXMPPManagerComponent = managerTestHelper.initializeXMPPManagerComponent(false);
@@ -104,8 +110,10 @@ public class TestRemoveServeredOrder {
 		
 		Mockito.when(managerTestHelper.getFederationIdentityPlugin().getToken(ACCESS_ID))
 				.thenReturn(token);
-		Mockito.when(managerTestHelper.getIdentityPlugin().getToken(ACCESS_ID))
-		.thenReturn(token);
+		Mockito.when(managerTestHelper.getMapperPlugin().getLocalCredentials(
+				Mockito.anyString())).thenReturn(new HashMap<String, String>());
+		Mockito.when(managerTestHelper.getIdentityPlugin().createToken(
+				Mockito.anyMap())).thenReturn(token);
 		Mockito.when(managerTestHelper.getAuthorizationPlugin().isAuthorized(token)).thenReturn(true);			
 
 		Assert.assertEquals(1, initializeXMPPManagerComponent.getManagerFacade()

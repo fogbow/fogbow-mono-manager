@@ -45,6 +45,7 @@ public class InstanceDataStore {
 
 	private static final String GET_INSTANCE_BY_USER = GET_ALL_INSTANCE + " WHERE " + USER + " = ? ";
 	private static final String GET_INSTANCE_BY_INSTANCE_ID = GET_ALL_INSTANCE + " WHERE " + INSTANCE_ID + " = ? AND " + USER + " = ?";
+	private static final String GET_INSTANCE_BY_GLOBAL_ID = GET_ALL_INSTANCE + " WHERE " + GLOBAL_INSTANCE_ID + " like ? AND " + USER + " = ?";
 	private static final String GET_INSTANCE_BY_ORDER_ID = GET_ALL_INSTANCE + " WHERE " + ORDER_ID + " = ? AND " + USER + " = ?";
 
 	private static final String DELETE_ALL_INSTANCE_TABLE_SQL = "DELETE FROM " + INSTANCE_ORDER_TABLE_NAME;
@@ -216,6 +217,19 @@ public class InstanceDataStore {
 
 		String queryStatement = GET_INSTANCE_BY_INSTANCE_ID;
 		List<FedInstanceState> fedInstanceStateList = executeQueryStatement(queryStatement, instanceId, user);
+		if (fedInstanceStateList != null && !fedInstanceStateList.isEmpty()) {
+			return fedInstanceStateList.get(0);
+		}
+		return null;
+
+	}
+
+	public FedInstanceState getByGlobalId(String globalId, String user) {
+
+		LOGGER.debug("Getting instances id with related orders by Global ID [" + globalId + "]");
+
+		String queryStatement = GET_INSTANCE_BY_GLOBAL_ID;
+		List<FedInstanceState> fedInstanceStateList = executeQueryStatement(queryStatement, "%"+globalId+"%", user);
 		if (fedInstanceStateList != null && !fedInstanceStateList.isEmpty()) {
 			return fedInstanceStateList.get(0);
 		}

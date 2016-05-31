@@ -9,6 +9,7 @@ import org.fogbowcloud.manager.occi.model.HeaderUtils;
 import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.OCCIHeaders;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;
+import org.fogbowcloud.manager.occi.order.OrderConstants;
 import org.json.JSONException;
 import org.restlet.data.MediaType;
 import org.restlet.engine.adapter.HttpRequest;
@@ -25,11 +26,17 @@ public class AccountingServerResource extends ServerResource {
 		LOGGER.debug("Executing the accounting fetch method");
 		OCCIApplication application = (OCCIApplication) getApplication();
 		HttpRequest req = (HttpRequest) getRequest();
-	
+		
 		String authToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse(),
 				application.getAuthenticationURI());
-				
-		List<AccountingInfo> accountingInfo = application.getAccountingInfo(authToken);
+		
+		List<AccountingInfo> accountingInfo = null;
+		String uri = getRequest().getOriginalRef().toString();
+		if (uri.endsWith(OrderConstants.COMPUTE_TERM)) {
+			accountingInfo = application.getAccountingInfo(authToken, OrderConstants.COMPUTE_TERM);
+		} else if (uri.endsWith(OrderConstants.STORAGE_TERM)) {
+			accountingInfo = application.getAccountingInfo(authToken, OrderConstants.STORAGE_TERM);
+		}		
 		
 		List<String> listAccept = HeaderUtils.getAccept(req.getHeaders());
 		String acceptType = getAccept(listAccept);

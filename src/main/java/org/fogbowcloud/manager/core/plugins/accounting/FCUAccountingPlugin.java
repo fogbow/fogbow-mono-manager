@@ -21,6 +21,7 @@ public class FCUAccountingPlugin implements AccountingPlugin {
 	private long lastUpdate;
 
 	private static final Logger LOGGER = Logger.getLogger(FCUAccountingPlugin.class);
+	public static final String ACCOUNTING_DATASTORE_URL = "fcu_accounting_datastore_url";
 
 	public FCUAccountingPlugin(Properties properties, BenchmarkingPlugin benchmarkingPlugin) {
 		this(properties, benchmarkingPlugin, new DateUtils());
@@ -32,12 +33,14 @@ public class FCUAccountingPlugin implements AccountingPlugin {
 		this.dateUtils = dateUtils;
 		this.lastUpdate = dateUtils.currentTimeMillis();
 
+		properties.put(AccountingDataStore.ACCOUNTING_DATASTORE_URL, 
+				properties.getProperty(getDataStoreUrl()));
 		db = new AccountingDataStore(properties);
 	}
 
 	@Override
 	public void update(List<Order> ordersWithInstance) {
-		LOGGER.debug("Updating account with requests=" + ordersWithInstance);
+		LOGGER.debug("Updating account with orders=" + ordersWithInstance);
 		long now = dateUtils.currentTimeMillis();
 		double updatingInterval = ((double) TimeUnit.MILLISECONDS.toSeconds(now - lastUpdate) / 60);
 		LOGGER.debug("updating interval=" + updatingInterval);
@@ -66,8 +69,7 @@ public class FCUAccountingPlugin implements AccountingPlugin {
 				usage.put(current, accountingInfo);
 			}
 
-			double instancePower = benchmarkingPlugin.getPower(order.getGlobalInstanceId());
-			double instanceUsage = instancePower * Math.min(consumptionInterval, updatingInterval);
+			double instanceUsage = getUsage(order, updatingInterval, consumptionInterval);
 
 			usage.get(current).addConsumption(instanceUsage);
 		}
@@ -80,6 +82,15 @@ public class FCUAccountingPlugin implements AccountingPlugin {
 		}
 	}
 
+	private double getUsage(Order order, double updatingInterval , double consumptionInterval) {
+		double instancePower = benchmarkingPlugin.getPower(order.getGlobalInstanceId());
+		return instancePower * Math.min(consumptionInterval, updatingInterval);
+	}	
+	
+	protected String getDataStoreUrl() {
+		return ACCOUNTING_DATASTORE_URL;
+	}	
+	
 	@Override
 	public List<AccountingInfo> getAccountingInfo() {
 		return db.getAccountingInfo();
