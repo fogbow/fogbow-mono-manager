@@ -21,7 +21,7 @@ public class FCUAccountingPlugin implements AccountingPlugin {
 	private long lastUpdate;
 
 	private static final Logger LOGGER = Logger.getLogger(FCUAccountingPlugin.class);
-	protected static final String ACCOUNTING_DATASTORE_URL = "fcu_accounting_datastore_url";
+	public static final String ACCOUNTING_DATASTORE_URL = "fcu_accounting_datastore_url";
 
 	public FCUAccountingPlugin(Properties properties, BenchmarkingPlugin benchmarkingPlugin) {
 		this(properties, benchmarkingPlugin, new DateUtils());
@@ -56,7 +56,9 @@ public class FCUAccountingPlugin implements AccountingPlugin {
 			
 			double consumptionInterval = ((double) TimeUnit.MILLISECONDS.toSeconds(now
 					- order.getFulfilledTime()) / 60);
-
+			final double ACCEPTABLE_ERROR = 0.000001;
+			consumptionInterval = consumptionInterval<ACCEPTABLE_ERROR?0:consumptionInterval;
+			
 			String user = order.getFederationToken().getUser();
 			AccountingEntryKey current = new AccountingEntryKey(user,
 					order.getRequestingMemberId(), order.getProvidingMemberId());
@@ -69,7 +71,7 @@ public class FCUAccountingPlugin implements AccountingPlugin {
 
 			double instanceUsage = getUsage(order, updatingInterval, consumptionInterval);
 
-			usage.get(current).addConsuption(instanceUsage);
+			usage.get(current).addConsumption(instanceUsage);
 		}
 
 		LOGGER.debug("current usage=" + usage);

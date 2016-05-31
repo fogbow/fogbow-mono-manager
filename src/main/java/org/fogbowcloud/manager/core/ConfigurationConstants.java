@@ -22,6 +22,7 @@ public class ConfigurationConstants {
 	public static final String MEMBER_VALIDATOR_CLASS_KEY = "member_validator_class";
 	public static final String LOCAL_CREDENTIALS_CLASS_KEY = "federation_user_credentail_class";
 	public static final String STORAGE_CLASS_KEY = "storage_class";
+	public static final String CAPACITY_CONTROLLER_PLUGIN_CLASS = "capacity_controller_class";
 	public static final String NETWORK_CLASS_KEY = "network_class";
 
 	// prefixs
@@ -38,6 +39,7 @@ public class ConfigurationConstants {
 	public static final String SERVED_ORDER_MONITORING_PERIOD_KEY = "served_request_monitoring_period";
 	public static final String GARBAGE_COLLECTOR_PERIOD_KEY = "garbage_collector_period";
 	public static final String ACCOUNTING_UPDATE_PERIOD_KEY = "accounting_update_period";
+	public static final String CAPACITY_CONTROLLER_UPDATE_PERIOD_KEY = "capacity_controller_update_period";
 	public static final String ASYNC_ORDER_WAITING_INTERVAL_KEY = "async_request_waiting_interval";
 
 	// token host

@@ -150,7 +150,7 @@ public class TestUsageServerResource {
 
 		AccountingInfo accountingInfo = new AccountingInfo(user,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, providingMember);
-		accountingInfo.addConsuption(consuption);
+		accountingInfo.addConsumption(consuption);
 		return accountingInfo;
 	}
 
@@ -161,10 +161,10 @@ public class TestUsageServerResource {
 				.thenReturn(defaultToken);
 		
 		AccountingInfo accountingEntry1 = new AccountingInfo(defaultToken.getUser(), DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, ID_RESOURCEINFO1);
-		accountingEntry1.addConsuption(0);
+		accountingEntry1.addConsumption(0);
 		
 		AccountingInfo accountingEntry2 = new AccountingInfo(defaultToken.getUser(), DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, ID_RESOURCEINFO2);
-		accountingEntry2.addConsuption(20.5);
+		accountingEntry2.addConsumption(20.5);
 		
 		Mockito.when(accountingPlugin.getAccountingInfo(defaultToken.getUser(),
 						DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, ID_RESOURCEINFO1))
@@ -221,10 +221,10 @@ public class TestUsageServerResource {
 				.thenReturn(defaultToken);
 		
 		AccountingInfo accountingEntry1 = new AccountingInfo(defaultToken.getUser(), DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, ID_RESOURCEINFO1);
-		accountingEntry1.addConsuption(10.5);
+		accountingEntry1.addConsumption(10.5);
 		
 		AccountingInfo accountingEntry2 = new AccountingInfo(defaultToken.getUser(), DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, ID_RESOURCEINFO2);
-		accountingEntry2.addConsuption(20.5);
+		accountingEntry2.addConsumption(20.5);
 		
 		Mockito.when(accountingPlugin.getAccountingInfo(defaultToken.getUser(),
 						DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, ID_RESOURCEINFO1))

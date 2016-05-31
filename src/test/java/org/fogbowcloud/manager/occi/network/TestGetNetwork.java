@@ -1,18 +1,16 @@
 package org.fogbowcloud.manager.occi.network;
 
+import java.io.File;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
@@ -21,27 +19,26 @@ import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.MapperPlugin;
 import org.fogbowcloud.manager.core.plugins.NetworkPlugin;
-import org.fogbowcloud.manager.core.plugins.StoragePlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
+import org.fogbowcloud.manager.occi.OCCIConstants;
+import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.model.OCCIHeaders;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.order.Order;
 import org.fogbowcloud.manager.occi.order.OrderConstants;
 import org.fogbowcloud.manager.occi.order.OrderRepository;
 import org.fogbowcloud.manager.occi.util.OCCITestHelper;
-import org.fogbowcloud.manager.occi.OCCIConstants;
-import org.fogbowcloud.manager.occi.instance.Instance;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.mockito.internal.verification.VerificationModeFactory;
 
 public class TestGetNetwork {
 
 	private static final String BASIC_TOKEN = "Basic token";
 	private static final String ACCESS_TOKEN = "access_token";
+	private static final String INSTANCE_DB_FILE = "./src/test/resources/fedNetwork.db";
 
 	private NetworkPlugin networkPlugin;
 	private IdentityPlugin identityPlugin;
@@ -58,7 +55,7 @@ public class TestGetNetwork {
 		
 		this.helper = new OCCITestHelper();
 		
-		NetworkDataStore networkDB = new NetworkDataStore("jdbc:h2:file:./src/test/resources/fedNetwork.db");
+		NetworkDataStore networkDB = new NetworkDataStore("jdbc:h2:file:" + INSTANCE_DB_FILE);
 		networkDB.deleteAll();
 		networkDB = null;
 		
@@ -98,6 +95,10 @@ public class TestGetNetwork {
 
 	@After
 	public void tearDown() throws Exception {
+		File dbFile = new File(INSTANCE_DB_FILE + ".mv.db");
+		if (dbFile.exists()) {
+			dbFile.delete();
+		}		
 		this.helper.stopComponent();
 	}
 

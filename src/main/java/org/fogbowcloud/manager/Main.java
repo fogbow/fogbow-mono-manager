@@ -10,6 +10,7 @@ import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
+import org.fogbowcloud.manager.core.plugins.CapacityControllerPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.FederationMemberAuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.FederationMemberPickerPlugin;
@@ -22,6 +23,7 @@ import org.fogbowcloud.manager.core.plugins.StoragePlugin;
 import org.fogbowcloud.manager.core.plugins.accounting.FCUAccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.accounting.SimpleStorageAccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.benchmarking.VanillaBenchmarkingPlugin;
+import org.fogbowcloud.manager.core.plugins.capacitycontroller.satisfactiondriven.SatisfactionDrivenCapacityControllerPlugin;
 import org.fogbowcloud.manager.core.plugins.imagestorage.http.HTTPDownloadImageStoragePlugin;
 import org.fogbowcloud.manager.core.plugins.localcredentails.SingleMapperPlugin;
 import org.fogbowcloud.manager.core.plugins.memberauthorization.DefaultMemberAuthorizationPlugin;
@@ -139,7 +141,7 @@ public class Main {
 		
 		FederationMemberPickerPlugin memberPickerPlugin = null;
 		try {
-			memberPickerPlugin = (FederationMemberPickerPlugin) createInstanceWithAccoutingPlugin(
+			memberPickerPlugin = (FederationMemberPickerPlugin) createInstanceWithAccountingPlugin(
 					ConfigurationConstants.MEMBER_PICKER_PLUGIN_CLASS_KEY, properties,
 					computeAccountingPlugin);
 		} catch (Exception e) {
@@ -163,7 +165,8 @@ public class Main {
 		} catch (Exception e) {
 			LOGGER.warn("Storage Plugin not especified in the properties.", e);
 			System.exit(EXIT_ERROR_CODE);
-		}		
+		}
+			
 		
 		NetworkPlugin networkPlugin = null;
 		try {
@@ -173,6 +176,7 @@ public class Main {
 			LOGGER.warn("Network Plugin not especified in the properties.", e);
 			System.exit(EXIT_ERROR_CODE);
 		}		
+
 		
 		String occiExtraResourcesPath = properties
 				.getProperty(ConfigurationConstants.OCCI_EXTRA_RESOURCES_KEY_PATH);
@@ -184,8 +188,16 @@ public class Main {
 			}
 		}
 		
-		PrioritizationPlugin prioritizationPlugin = new TwoFoldPrioritizationPlugin(properties,
-				computeAccountingPlugin);
+		PrioritizationPlugin prioritizationPlugin = new TwoFoldPrioritizationPlugin(properties,	computeAccountingPlugin);
+		
+		CapacityControllerPlugin capacityControllerPlugin = null;
+		try {
+			capacityControllerPlugin = (CapacityControllerPlugin) createInstanceWithAccountingPlugin(
+					ConfigurationConstants.CAPACITY_CONTROLLER_PLUGIN_CLASS, properties, computeAccountingPlugin);
+		} catch (Exception e) {
+			capacityControllerPlugin = new SatisfactionDrivenCapacityControllerPlugin();
+			LOGGER.warn("Capacity Controller plugin not specified in properties. Using the default one.", e);
+		}
 
 		ManagerController facade = new ManagerController(properties);
 		facade.setComputePlugin(computePlugin);
@@ -201,6 +213,7 @@ public class Main {
 		facade.setPrioritizationPlugin(prioritizationPlugin);
 		facade.setLocalCredentailsPlugin(mapperPlugin);
 		facade.setStoragePlugin(storagePlugin);
+		facade.setCapacityControllerPlugin(capacityControllerPlugin);
 		facade.setNetworkPlugin(networkPlugin);
 		
 		String xmppHost = properties.getProperty(ConfigurationConstants.XMPP_HOST_KEY);
@@ -274,12 +287,12 @@ public class Main {
 				.newInstance(properties, benchmarkingPlugin);
 	}
 	
-	private static Object createInstanceWithAccoutingPlugin(
+	public static Object createInstanceWithAccountingPlugin(
 			String propName, Properties properties,
 			AccountingPlugin accoutingPlugin) throws Exception {
 		return Class.forName(properties.getProperty(propName)).getConstructor(Properties.class, AccountingPlugin.class)
 				.newInstance(properties, accoutingPlugin);
-	}
+	}	
 
 	private static void configureLog4j() {
 		ConsoleAppender console = new ConsoleAppender();

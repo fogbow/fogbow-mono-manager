@@ -262,6 +262,16 @@ simple_storage_accounting_datastore_url=jdbc:sqlite:/tmp/storageusage
 ## Benchmarking (Vanilla Benchmarking Plugin)
 benchmarking_class=org.fogbowcloud.manager.core.plugins.benchmarking.VanillaBenchmarkingPlugin
 
+#Capacity controller plugin
+capacity_controller_class=org.fogbowcloud.manager.core.plugins.capacitycontroller.fairnessdriven.TwoFoldCapacityController
+capacity_controller_update_period=600000
+#parameters of loopback control
+controller_delta=0.05
+controller_minimum_threshold=0.8
+controller_maximum_threshold=0.95
+controller_maximum_capacity=100
+
+
 ## OCCI extra resources
 #occi_extra_resource_file_path=
 

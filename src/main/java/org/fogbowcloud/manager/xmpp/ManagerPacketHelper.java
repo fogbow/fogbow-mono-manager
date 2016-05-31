@@ -179,7 +179,7 @@ public class ManagerPacketHelper {
 
 			@Override
 			public void handle(Packet response) {
-				if (response.getError() != null) {
+				if (response.getError() != null) {								
 					if (response.getError().getCondition().equals(Condition.item_not_found)) {
 						callback.success(null);
 					} else {
@@ -451,6 +451,7 @@ public class ManagerPacketHelper {
 		response.setTo(order.getRequestingMemberId());
 
 		if (order.getInstanceId() == null) {
+			//TODO should every error return item_not_found?	
 			response.setError(Condition.item_not_found);
 		} else {
 			Element queryResponseEl = response.getElement().addElement("query", ManagerXmppComponent.ORDER_NAMESPACE);

@@ -2308,8 +2308,11 @@ public class TestManagerController {
 	
 	@Test
 	public void testMonitorServedOrderRemovingOrder() throws InterruptedException{
+		
+		ManagerController managerControllerSpy = Mockito.spy(managerController);
+		
 		// checking there is not served order
-		Assert.assertEquals(0, managerController.getServedOrders().size());
+		Assert.assertEquals(0, managerControllerSpy.getServedOrders().size());
 		
 		mockOrderInstance();
 		
@@ -2327,34 +2330,38 @@ public class TestManagerController {
 		
 		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);
 		Mockito.when(packetSender.syncSendPacket(Mockito.any(IQ.class))).thenReturn(response);
-		managerController.setPacketSender(packetSender);
+		managerControllerSpy.setPacketSender(packetSender);
 				
-		managerController.queueServedOrder("manager1-test.com", new ArrayList<Category>(),
+		Mockito.doReturn(true).when(managerControllerSpy).isThereEnoughQuota("manager1-test.com");
+		managerControllerSpy.queueServedOrder("manager1-test.com", new ArrayList<Category>(),
 				xOCCIAtt, "id1", managerTestHelper.getDefaultFederationToken());
-		managerController.checkAndSubmitOpenOrders();
+		managerControllerSpy.checkAndSubmitOpenOrders();
 		
 		// checking there is one served order
-		Assert.assertEquals(1, managerController.getServedOrders().size());
+		Assert.assertEquals(1, managerControllerSpy.getServedOrders().size());
 		Assert.assertEquals("manager1-test.com",
-				getOrderByInstanceId(managerController.getServedOrders(),
+				getOrderByInstanceId(managerControllerSpy.getServedOrders(),
 						DefaultDataTestHelper.INSTANCE_ID).getRequestingMemberId());
 		Assert.assertEquals(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
-				getOrderByInstanceId(managerController.getServedOrders(),
+				getOrderByInstanceId(managerControllerSpy.getServedOrders(),
 						DefaultDataTestHelper.INSTANCE_ID).getProvidingMemberId());
-		Assert.assertEquals("id1", getOrderByInstanceId(managerController.getServedOrders(),
+		Assert.assertEquals("id1", getOrderByInstanceId(managerControllerSpy.getServedOrders(),
 						DefaultDataTestHelper.INSTANCE_ID).getId());
 
 		// monitoring served orders
-		managerController.monitorServedOrders();
+		managerControllerSpy.monitorServedOrders();
 	
 		// checking there is not served order		
-		Assert.assertEquals(0, managerController.getServedOrders().size());		
+		Assert.assertEquals(0, managerControllerSpy.getServedOrders().size());		
 	}
 	
 	@Test
 	public void testMonitorServedOrderKeepingOrder() throws InterruptedException{
+		
+		ManagerController managerControllerSpy = Mockito.spy(managerController);
+		
 		// checking there is not served order
-		Assert.assertEquals(0, managerController.getServedOrders().size());
+		Assert.assertEquals(0, managerControllerSpy.getServedOrders().size());
 		
 		mockOrderInstance();
 		
@@ -2371,33 +2378,34 @@ public class TestManagerController {
 		
 		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);
 		Mockito.when(packetSender.syncSendPacket(Mockito.any(IQ.class))).thenReturn(response);
-		managerController.setPacketSender(packetSender);
+		managerControllerSpy.setPacketSender(packetSender);
 		
-		managerController.queueServedOrder("manager1-test.com", new ArrayList<Category>(),
+		Mockito.doReturn(true).when(managerControllerSpy).isThereEnoughQuota("manager1-test.com");
+		managerControllerSpy.queueServedOrder("manager1-test.com", new ArrayList<Category>(),
 				xOCCIAtt, "id1", managerTestHelper.getDefaultFederationToken());		
-		managerController.checkAndSubmitOpenOrders();
+		managerControllerSpy.checkAndSubmitOpenOrders();
 				
 		// checking there is one served order
-		Assert.assertEquals(1, managerController.getServedOrders().size());
+		Assert.assertEquals(1, managerControllerSpy.getServedOrders().size());
 		Assert.assertEquals("manager1-test.com",
-				getOrderByInstanceId(managerController.getServedOrders(),
+				getOrderByInstanceId(managerControllerSpy.getServedOrders(),
 						DefaultDataTestHelper.INSTANCE_ID).getRequestingMemberId());
 		Assert.assertEquals(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
-				getOrderByInstanceId(managerController.getServedOrders(),
+				getOrderByInstanceId(managerControllerSpy.getServedOrders(),
 						DefaultDataTestHelper.INSTANCE_ID).getProvidingMemberId());
-		Assert.assertEquals("id1", getOrderByInstanceId(managerController.getServedOrders(),
+		Assert.assertEquals("id1", getOrderByInstanceId(managerControllerSpy.getServedOrders(),
 						DefaultDataTestHelper.INSTANCE_ID).getId());
 
 		// monitoring served orders
-		managerController.monitorServedOrders();
+		managerControllerSpy.monitorServedOrders();
 	
 		// checking there is not served order		
-		Assert.assertEquals(1, managerController.getServedOrders().size());
+		Assert.assertEquals(1, managerControllerSpy.getServedOrders().size());
 		Assert.assertEquals("manager1-test.com",
-				getOrderByInstanceId(managerController.getServedOrders(),
+				getOrderByInstanceId(managerControllerSpy.getServedOrders(),
 						DefaultDataTestHelper.INSTANCE_ID).getRequestingMemberId());
 		Assert.assertEquals(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
-				getOrderByInstanceId(managerController.getServedOrders(),
+				getOrderByInstanceId(managerControllerSpy.getServedOrders(),
 						DefaultDataTestHelper.INSTANCE_ID).getProvidingMemberId());
 	}
 	
@@ -2615,8 +2623,12 @@ public class TestManagerController {
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testGarbageCollectorWithServedOrder() {
+		
+		ManagerController managerControllerSpy = Mockito.spy(managerController);
+		Mockito.doReturn(true).when(managerControllerSpy).isThereEnoughQuota("manager1-test.com");
+		
 		// checking there is not served order
-		Assert.assertEquals(0, managerController.getServedOrders().size());
+		Assert.assertEquals(0, managerControllerSpy.getServedOrders().size());
 		
 		// mocking getInstances
 		Mockito.reset(managerTestHelper.getComputePlugin());
@@ -2636,19 +2648,19 @@ public class TestManagerController {
 						.thenReturn(twoInstances, twoInstances, oneInstance);
 		
 		// creating instance for remote member 
-		managerController.queueServedOrder("manager1-test.com", new ArrayList<Category>(),
+		managerControllerSpy.queueServedOrder("manager1-test.com", new ArrayList<Category>(),
 				xOCCIAtt, "id1", managerTestHelper.getDefaultFederationToken());		
-		managerController.checkAndSubmitOpenOrders();
+		managerControllerSpy.checkAndSubmitOpenOrders();
 				
 		// checking there is one served order
-		Assert.assertEquals(1, managerController.getServedOrders().size());
+		Assert.assertEquals(1, managerControllerSpy.getServedOrders().size());
 		Assert.assertEquals("manager1-test.com",
-				getOrderByInstanceId(managerController.getServedOrders(),
+				getOrderByInstanceId(managerControllerSpy.getServedOrders(),
 						DefaultDataTestHelper.INSTANCE_ID).getRequestingMemberId());
 		Assert.assertEquals(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
-				getOrderByInstanceId(managerController.getServedOrders(),
+				getOrderByInstanceId(managerControllerSpy.getServedOrders(),
 						DefaultDataTestHelper.INSTANCE_ID).getProvidingMemberId());
-		Assert.assertEquals("id1", getOrderByInstanceId(managerController.getServedOrders(),
+		Assert.assertEquals("id1", getOrderByInstanceId(managerControllerSpy.getServedOrders(),
 						DefaultDataTestHelper.INSTANCE_ID).getId());
 				
 		// updating compute mock
@@ -2662,19 +2674,19 @@ public class TestManagerController {
 			Assert.assertTrue(resultInstances.contains(instance));
 		}
 
-		managerController.garbageCollector();
+		managerControllerSpy.garbageCollector();
 		
 		// checking if garbage collector does not remove the instance
 		resultInstances = managerTestHelper.getComputePlugin().getInstances(managerTestHelper.getDefaultFederationToken());
 		Assert.assertEquals(1, resultInstances.size());
 		Assert.assertEquals(DefaultDataTestHelper.INSTANCE_ID, resultInstances.get(0).getId());
 		// checking there is one served order
-		Assert.assertEquals(1, managerController.getServedOrders().size());
+		Assert.assertEquals(1, managerControllerSpy.getServedOrders().size());
 		Assert.assertEquals("manager1-test.com",
-				getOrderByInstanceId(managerController.getServedOrders(),
+				getOrderByInstanceId(managerControllerSpy.getServedOrders(),
 						DefaultDataTestHelper.INSTANCE_ID).getRequestingMemberId());
 		Assert.assertEquals(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
-				getOrderByInstanceId(managerController.getServedOrders(),
+				getOrderByInstanceId(managerControllerSpy.getServedOrders(),
 						DefaultDataTestHelper.INSTANCE_ID).getProvidingMemberId());
 	}
 	
@@ -2818,14 +2830,14 @@ public class TestManagerController {
 	@Test
 	public void testSSHKeyReplacementWhenManagerKeyIsNotDefined() 
 			throws FileNotFoundException, IOException, MessagingException {
-		ManagerController managerControllerSpy = Mockito.spy(managerController);
+		ManagerController spiedManagerController = Mockito.spy(managerController);
 		
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		String instanceId = "instance1";
 		Mockito.when(
 				computePlugin.requestInstance(Mockito.any(Token.class), Mockito.anyList(),
 						Mockito.anyMap(), Mockito.anyString())).thenReturn(instanceId);
-		managerControllerSpy.setComputePlugin(computePlugin);
+		spiedManagerController.setComputePlugin(computePlugin);
 		
 		String servedOrderId = "id1";
 		Order servedOrder = new Order(servedOrderId, managerTestHelper.getDefaultFederationToken(), new ArrayList<Category>(),
@@ -2835,9 +2847,9 @@ public class TestManagerController {
 		servedOrder.setInstanceId(instanceId);
 		servedOrder.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		
-		managerControllerSpy.createLocalInstanceWithFederationUser(servedOrder);
+		spiedManagerController.createLocalInstanceWithFederationUser(servedOrder);
 		
-		Mockito.verify(managerControllerSpy, Mockito.never()).waitForSSHPublicAddress(Mockito.eq(servedOrder));
+		Mockito.verify(spiedManagerController, Mockito.never()).waitForSSHPublicAddress(Mockito.eq(servedOrder));
 		
 		final String localManagerPublicKeyData = IOUtils.toString(new FileInputStream(
 				new File(DefaultDataTestHelper.LOCAL_MANAGER_SSH_PUBLIC_KEY_PATH)));
@@ -3870,10 +3882,10 @@ public class TestManagerController {
 		AccountingPlugin accountingPlugin = managerTestHelper.getAccountingPlugin();
 		List<AccountingInfo> expectedAccounting = new ArrayList<AccountingInfo>();
 		AccountingInfo accountingInfo = new AccountingInfo(DefaultDataTestHelper.FED_USER_NAME, "localMember", "remoteMember1");
-		accountingInfo.addConsuption(50);
+		accountingInfo.addConsumption(50);
 		expectedAccounting.add(accountingInfo);
 		accountingInfo = new AccountingInfo("user2", "localMember", "remoteMember1");
-		accountingInfo.addConsuption(30);
+		accountingInfo.addConsumption(30);
 		expectedAccounting.add(accountingInfo);
 		
 		Mockito.when(accountingPlugin.getAccountingInfo()).thenReturn(expectedAccounting );
@@ -3893,10 +3905,10 @@ public class TestManagerController {
 		AccountingPlugin accountingPlugin = managerTestHelper.getAccountingPlugin();
 		List<AccountingInfo> expectedAccounting = new ArrayList<AccountingInfo>();
 		AccountingInfo accountingInfo = new AccountingInfo(DefaultDataTestHelper.FED_USER_NAME, "localMember", "remoteMember1");
-		accountingInfo.addConsuption(50);
+		accountingInfo.addConsumption(50);
 		expectedAccounting.add(accountingInfo);
 		accountingInfo = new AccountingInfo("user2", "localMember", "remoteMember1");
-		accountingInfo.addConsuption(30);
+		accountingInfo.addConsumption(30);
 		expectedAccounting.add(accountingInfo);
 		
 		Mockito.when(accountingPlugin.getAccountingInfo()).thenReturn(expectedAccounting );
@@ -4107,7 +4119,27 @@ public class TestManagerController {
 		Assert.assertEquals(String.valueOf(0.0), resourceInfoExtra.getMemInUseByUser());
 		Assert.assertEquals(String.valueOf(0), resourceInfoExtra.getInstancesInUseByUser());
 		Assert.assertEquals(String.valueOf(0.0), resourceInfoExtra.getCpuInUseByUser());
-	}	
+	}
+	
+	@Test
+	public void testIsThereEnoughQuota(){
+		ManagerController managerControllerSpy = Mockito.spy(managerController);
+		
+		//preencher order repository com orders
+		OrderRepository orderRepository = new OrderRepository();
+		Order order1 = new Order("", null, "", "",
+				"requestingMember1", 0, false, OrderState.FULFILLED,
+				null, null);
+		Order order2 = new Order("", null, "", "",
+				"requestingMember1", 0, false, OrderState.FULFILLED,
+				null, null);
+		
+		orderRepository.addOrder("", order1);
+		orderRepository.addOrder("", order2);
+		
+		//FIXME
+		
+	}
 	
 	@Test
 	public void testInstanceRemovedWithAttachment() {
@@ -4531,5 +4563,4 @@ public class TestManagerController {
 
 		Mockito.verify(networkPlugin, Mockito.times(1)).getInstance(token, instanceId);
 	}
-	
 }

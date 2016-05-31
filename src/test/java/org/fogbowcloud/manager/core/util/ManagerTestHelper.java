@@ -31,6 +31,7 @@ import org.fogbowcloud.manager.core.plugins.FederationMemberPickerPlugin;
 import org.fogbowcloud.manager.core.plugins.MapperPlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.StoragePlugin;
+import org.fogbowcloud.manager.core.plugins.capacitycontroller.satisfactiondriven.SatisfactionDrivenCapacityControllerPlugin;
 import org.fogbowcloud.manager.core.plugins.identity.openstack.KeystoneIdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.memberauthorization.DefaultMemberAuthorizationPlugin;
 import org.fogbowcloud.manager.occi.instance.Instance;
@@ -259,6 +260,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		managerFacade.setValidator(new DefaultMemberAuthorizationPlugin(null));
 		managerFacade.setLocalCredentailsPlugin(mapperPlugin);
 		managerFacade.setStoragePlugin(storagePlugin);
+		managerFacade.setCapacityControllerPlugin(new SatisfactionDrivenCapacityControllerPlugin());
 				
 		managerXmppComponent = Mockito.spy(new ManagerXmppComponent(LOCAL_MANAGER_COMPONENT_URL,
 				MANAGER_COMPONENT_PASS, SERVER_HOST, SERVER_COMPONENT_PORT, managerFacade));

@@ -95,10 +95,10 @@ public class TestAccountingServerResource {
 		Mockito.when(authorizationPlugin.isAuthorized(Mockito.any(Token.class))).thenReturn(true);
 		List<AccountingInfo> accountingInfos = new ArrayList<AccountingInfo>();
 		AccountingInfo accountingInfoOne = new AccountingInfo("userOne", "requestingMemberOne", "providingMemberOne");
-		accountingInfoOne.addConsuption(10.0);
+		accountingInfoOne.addConsumption(10.0);
 		accountingInfos.add(accountingInfoOne);
 		AccountingInfo accountingInfoTwo = new AccountingInfo("userTwo", "requestingMemberTwo", "providingMemberTwo");
-		accountingInfoTwo.addConsuption(20.0);
+		accountingInfoTwo.addConsumption(20.0);
 		accountingInfos.add(accountingInfoTwo);
 		Mockito.when(computeAccountingPlugin.getAccountingInfo()).thenReturn(accountingInfos);
 		
@@ -130,10 +130,10 @@ public class TestAccountingServerResource {
 		Mockito.when(authorizationPlugin.isAuthorized(Mockito.any(Token.class))).thenReturn(true);
 		List<AccountingInfo> accountingInfos = new ArrayList<AccountingInfo>();
 		AccountingInfo accountingInfoOne = new AccountingInfo("userOne", "requestingMemberOne", "providingMemberOne");
-		accountingInfoOne.addConsuption(10.0);
+		accountingInfoOne.addConsumption(10.0);
 		accountingInfos.add(accountingInfoOne);
 		AccountingInfo accountingInfoTwo = new AccountingInfo("userTwo", "requestingMemberTwo", "providingMemberTwo");
-		accountingInfoTwo.addConsuption(20.0);
+		accountingInfoTwo.addConsumption(20.0);
 		accountingInfos.add(accountingInfoTwo);
 		Mockito.when(storageAccountingPlugin.getAccountingInfo()).thenReturn(accountingInfos);
 		

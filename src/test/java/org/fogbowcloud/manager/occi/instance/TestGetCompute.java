@@ -3,6 +3,7 @@ package org.fogbowcloud.manager.occi.instance;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -168,6 +169,10 @@ public class TestGetCompute {
 	@After
 	public void tearDown() throws Exception {
 		instanceDB.deleteAll();
+		File dbFile = new File(INSTANCE_DB_FILE);
+		if (dbFile.exists()) {
+			dbFile.delete();
+		}		
 		this.helper.stopComponent();
 	}
 

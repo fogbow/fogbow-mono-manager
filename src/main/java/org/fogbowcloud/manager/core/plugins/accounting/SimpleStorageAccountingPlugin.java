@@ -72,7 +72,7 @@ public class SimpleStorageAccountingPlugin implements AccountingPlugin {
 				continue;
 			}
 
-			usage.get(current).addConsuption(instanceUsage);
+			usage.get(current).addConsumption(instanceUsage);
 		}
 
 		LOGGER.debug("current usage=" + usage);
