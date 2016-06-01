@@ -2,6 +2,7 @@ package org.fogbowcloud.manager.occi.instance;
 
 import static org.junit.Assert.fail;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -130,6 +131,10 @@ public class TestDeleteCompute {
 	@After
 	public void tearDown() throws Exception {
 		instanceDB.deleteAll();
+		File dbFile = new File(INSTANCE_DB_FILE + ".mv.db");
+		if (dbFile.exists()) {
+			dbFile.delete();
+		}				
 		this.helper.stopComponent();
 	}
 

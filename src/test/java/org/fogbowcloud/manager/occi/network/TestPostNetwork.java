@@ -3,6 +3,7 @@ package org.fogbowcloud.manager.occi.network;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -41,6 +42,7 @@ public class TestPostNetwork {
 
 	private static final String BASIC_TOKEN = "Basic token";
 	private static final String ACCESS_TOKEN = "access_token";
+	private static final String INSTANCE_DB_FILE = "./src/test/resources/fedNetwork.db";
 
 	private NetworkPlugin networkPlugin;
 	private IdentityPlugin identityPlugin;
@@ -58,7 +60,7 @@ public class TestPostNetwork {
 		
 		this.helper = new OCCITestHelper();
 		
-		NetworkDataStore networkDB = new NetworkDataStore("jdbc:h2:file:./src/test/resources/fedNetwork.db");
+		NetworkDataStore networkDB = new NetworkDataStore("jdbc:h2:file:" + INSTANCE_DB_FILE);
 		networkDB.deleteAll();
 		networkDB = null;
 		
@@ -99,6 +101,10 @@ public class TestPostNetwork {
 
 	@After
 	public void tearDown() throws Exception {
+		File dbFile = new File(INSTANCE_DB_FILE + ".mv.db");
+		if (dbFile.exists()) {
+			dbFile.delete();
+		}				
 		this.helper.stopComponent();
 	}
 

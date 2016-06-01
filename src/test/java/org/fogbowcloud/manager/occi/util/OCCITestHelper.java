@@ -76,6 +76,7 @@ public class OCCITestHelper {
 	public static final String URI_FOGBOW_QUERY_TYPE_TWO = "http://localhost:" + ENDPOINT_PORT
 			+ "/.well-known/org/ogf/occi/-/";
 	public static final String USER_MOCK = "user_mock";
+	public static final String INSTANCE_DB_FILE = "./src/test/resources/fedInstance.db";
 
 	private Component component;
 	private OrderRepository orders;
@@ -192,8 +193,8 @@ public class OCCITestHelper {
 			properties.put(ConfigurationConstants.TOKEN_HOST_PRIVATE_ADDRESS_KEY, DefaultDataTestHelper.SERVER_HOST);
 			properties.put(ConfigurationConstants.TOKEN_HOST_HTTP_PORT_KEY,
 					String.valueOf(DefaultDataTestHelper.TOKEN_SERVER_HTTP_PORT));
-			
-			properties.put(ConfigurationConstants.INSTANCE_DATA_STORE_URL, "jdbc:h2:file:./src/test/resources/fedInstance.db");
+						
+			properties.put(ConfigurationConstants.INSTANCE_DATA_STORE_URL, "jdbc:h2:file:" + INSTANCE_DB_FILE);
 			properties.put(ConfigurationConstants.OCCI_EXTRA_RESOURCES_KEY_PATH, "./src/test/resources/post-compute/occi-fake-resources.txt");
 			//Image OCCI to FogbowOrder
 			properties.put(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + "fbc85206-fbcc-4ad9-ae93-54946fdd5df7", "fogbow-ubuntu");

@@ -59,7 +59,7 @@ public class TestGetCompute {
 	private static final String POST_INSTANCE_3_ID = "postInstance3";
 
 	private static final String INSTANCE_DB_FILE = "./src/test/resources/fedInstance.db";
-	private static final String INSTANCE_DB_URL = "jdbc:h2:file:"+INSTANCE_DB_FILE;
+	private static final String INSTANCE_DB_URL = "jdbc:h2:file:" + INSTANCE_DB_FILE;	
 
 	private ComputePlugin computePlugin;
 	private IdentityPlugin identityPlugin;
@@ -169,7 +169,7 @@ public class TestGetCompute {
 	@After
 	public void tearDown() throws Exception {
 		instanceDB.deleteAll();
-		File dbFile = new File(INSTANCE_DB_FILE);
+		File dbFile = new File(INSTANCE_DB_FILE + ".mv.db");
 		if (dbFile.exists()) {
 			dbFile.delete();
 		}		
