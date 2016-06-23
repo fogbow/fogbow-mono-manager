@@ -948,10 +948,6 @@ public class ManagerController {
 		instanceId = normalizeInstanceId(instanceId);
 		removeInstance(instanceId, order, resourceKind);
 	}
-
-	private void removeInstance(String instanceId, Order order) {
-		removeInstance(instanceId, order, null);
-	}
 	
 	private void removeInstance(String instanceId, Order order, String resourceKind) {				
 		List<StorageLink> storageLinks = storageLinkRepository.getAllByInstance(instanceId, resourceKind);
@@ -1210,7 +1206,7 @@ public class ManagerController {
 	}
 
 	protected void preemption(Order orderToPreemption) {
-		removeInstance(orderToPreemption.getInstanceId(), orderToPreemption);
+		removeInstance(orderToPreemption.getInstanceId(), orderToPreemption, OrderConstants.COMPUTE_TERM);
 	}
 
 	private void triggerServedOrderMonitoring() {
