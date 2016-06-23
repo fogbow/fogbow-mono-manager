@@ -15,11 +15,6 @@
 			<name>Public online Restlet repository</name>
 			<url>http://maven.restlet.com</url>
 		</repository>
-		<repository>
-			<id>contrail</id>
-			<name>Contrail repository</name>
-			<url>http://contrail.ow2.org/repositories/thirdparty</url>
-		</repository>
 	</repositories>
 
 	<build>
@@ -255,16 +250,16 @@
 	    <artifactId>azure-management</artifactId>
 	    <version>0.8.0</version>
 	</dependency>
-    	<dependency>
+   	<dependency>
 		<groupId>org.opensaml</groupId>
 		<artifactId>opensaml</artifactId>
 		<version>2.6.4</version>
-            	<exclusions>
-        	    <exclusion>
-              		<groupId>org.bouncycastle</groupId>
-                   	<artifactId>bcprov-jdk15on</artifactId>
-                    </exclusion>
-            	</exclusions>
+        <exclusions>
+			<exclusion>
+				<groupId>org.bouncycastle</groupId>
+   				<artifactId>bcprov-jdk15on</artifactId>
+    		</exclusion>
+		</exclusions>
 	</dependency>
   </dependencies>
   

@@ -130,6 +130,21 @@ public class TestInstance {
 		Assert.assertEquals(InstanceState.SUSPENDED, instanceSuspended.getState());
 	}
 	
+	@Test
+	public void testInstanceLink() {
+		String linkId = "linkId00";
+		String linkType = "network";
+		String linkIdBlock = "Link: </" + linkType + "/" + linkId + ">";
+		String rel = "rel00";
+		String category = "category00";
+		String line = linkIdBlock  + "; rel=\"" + rel + "\"; category=\"" + category  + "\"";
+		Link link = Instance.Link.parseLink(line);
+		Assert.assertEquals(linkId, link.getId());
+		Assert.assertEquals(linkType, link.getType());
+		Assert.assertEquals(rel, link.getAttributes().get("rel"));
+		Assert.assertEquals(category, link.getAttributes().get("category"));
+	}
+	
 	private String getFormatedResources() {
 		String textResponse = "";
 		for (Resource resource : resources) {

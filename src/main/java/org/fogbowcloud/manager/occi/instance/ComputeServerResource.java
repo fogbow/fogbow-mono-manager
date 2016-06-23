@@ -46,7 +46,7 @@ public class ComputeServerResource extends ServerResource {
 	private static final String DEFAULT_INSTANCE_COUNT = "1";
 	protected static final String NO_INSTANCES_MESSAGE = "There are not instances.";
 	private static final Logger LOGGER = Logger.getLogger(ComputeServerResource.class);
-	protected static final String FED_INSTANCE_PREFIX = "federated_instance_";
+	public static final String FED_INSTANCE_PREFIX = "federated_instance_";
 
 	protected static final String OCCI_NETWORK_INTERFACE_GATEWAY = "occi.networkinterface.gateway";
 	protected static final String OCCI_NETWORK_INTERFACE_MAC = "occi.networkinterface.mac";
