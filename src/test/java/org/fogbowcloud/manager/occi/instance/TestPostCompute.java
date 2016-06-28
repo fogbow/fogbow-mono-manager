@@ -5,6 +5,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -114,14 +115,18 @@ public class TestPostCompute {
 		Map<String, List<Order>> ordersToAdd = new HashMap<String, List<Order>>();
 		ordersToAdd.put(OCCITestHelper.USER_MOCK, orders);
 
-		this.helper.initializeComponentCompute(computePlugin, identityPlugin, authorizationPlugin,
-				imageStoragePlugin, Mockito.mock(AccountingPlugin.class), Mockito.mock(BenchmarkingPlugin.class),
-				ordersToAdd, mapperPlugin);
+		this.helper.initializeComponentCompute(computePlugin, identityPlugin, identityPlugin, authorizationPlugin,
+				imageStoragePlugin, Mockito.mock(AccountingPlugin.class), Mockito.mock(AccountingPlugin.class), 
+				Mockito.mock(BenchmarkingPlugin.class), ordersToAdd, mapperPlugin);
 
 	}
 
 	@After
 	public void tearDown() throws Exception {
+		File dbFile = new File(OCCITestHelper.INSTANCE_DB_FILE + ".mv.db");
+		if (dbFile.exists()) {
+			dbFile.delete();
+		}		
 		this.helper.stopComponent();
 	}
 

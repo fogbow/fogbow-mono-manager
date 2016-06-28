@@ -132,8 +132,8 @@ public class TestBypassCompute {
 		
 		//initializing fogbow OCCI Application
 		helper = new OCCITestHelper();
-		helper.initializeComponentCompute(computePlugin, identityPlugin, authorizationPlugin,
-				imageStoragePlugin, Mockito.mock(AccountingPlugin.class),
+		helper.initializeComponentCompute(computePlugin, identityPlugin, identityPlugin, authorizationPlugin,
+				imageStoragePlugin, Mockito.mock(AccountingPlugin.class), Mockito.mock(AccountingPlugin.class),
 				Mockito.mock(BenchmarkingPlugin.class), ordersToAdd, mapperPlugin);
 	}
 

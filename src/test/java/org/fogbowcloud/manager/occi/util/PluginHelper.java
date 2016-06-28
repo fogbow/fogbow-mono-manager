@@ -32,6 +32,7 @@ public class PluginHelper {
 	public static final String LINUX_X86_TERM = "linuxx86";
 	public static final String COMPUTE_OCCI_URL = "http://localhost:" + PORT_ENDPOINT;
 	public static final String COMPUTE_NOVAV2_URL = "http://localhost:" + PORT_ENDPOINT;
+	public static final String NETWORK_NOVAV2_URL = "http://localhost:" + PORT_ENDPOINT;
 
 	public static final String ACCESS_ID = "HgfugGJHgJgHJGjGJgJg-857GHGYHjhHjH";
 	public static final String TENANT_ID = "fc394f2ab2df4114bde39905f800dc57";

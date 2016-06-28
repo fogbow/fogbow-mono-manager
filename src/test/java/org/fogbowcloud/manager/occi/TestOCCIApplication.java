@@ -117,6 +117,10 @@ public class TestOCCIApplication {
 		managerFacade.setMemberPickerPlugin(memberPickerPlugin);
 		managerFacade.setBenchmarkExecutor(benchmarkExecutor);
 	}
+	
+	public ManagerController getManagerFacade() {
+		return managerFacade;
+	}
 
 	@Test
 	public void testGetOrderDetails() throws InterruptedException {
@@ -140,6 +144,11 @@ public class TestOCCIApplication {
 				computePlugin.requestInstance(Mockito.any(Token.class), Mockito.any(List.class),
 						Mockito.any(Map.class), Mockito.anyString())).thenReturn(INSTANCE_ID);
 
+		BenchmarkingPlugin benchmarkingPlugin = Mockito.mock(BenchmarkingPlugin.class);
+		Mockito.doThrow(new OCCIException(ErrorType.BAD_REQUEST, ""))
+				.when(benchmarkingPlugin).remove(Mockito.anyString());
+		getManagerFacade().setBenchmarkingPlugin(benchmarkingPlugin);
+		
 		managerFacade.setComputePlugin(computePlugin);
 		occiApplication.createOrders(OCCITestHelper.ACCESS_TOKEN, new ArrayList<Category>(), xOCCIAtt);
 		List<Order> orders = occiApplication.getOrdersFromUser(OCCITestHelper.ACCESS_TOKEN);
@@ -182,6 +191,11 @@ public class TestOCCIApplication {
 		xOCCIAtt.put(OrderAttribute.INSTANCE_COUNT.getValue(), String.valueOf(numberOfInstances));
 		occiApplication.createOrders(OCCITestHelper.ACCESS_TOKEN, new ArrayList<Category>(),
 				xOCCIAtt);
+				
+		BenchmarkingPlugin benchmarkingPlugin = Mockito.mock(BenchmarkingPlugin.class);
+		Mockito.doThrow(new OCCIException(ErrorType.BAD_REQUEST, ""))
+				.when(benchmarkingPlugin).remove(Mockito.anyString());
+		getManagerFacade().setBenchmarkingPlugin(benchmarkingPlugin);
 
 		List<Order> ordersFromUser = occiApplication
 				.getOrdersFromUser(OCCITestHelper.ACCESS_TOKEN);
@@ -200,6 +214,11 @@ public class TestOCCIApplication {
 		occiApplication.createOrders(OCCITestHelper.ACCESS_TOKEN, new ArrayList<Category>(),
 				xOCCIAtt);
 
+		BenchmarkingPlugin benchmarkingPlugin = Mockito.mock(BenchmarkingPlugin.class);
+		Mockito.doThrow(new OCCIException(ErrorType.BAD_REQUEST, ""))
+				.when(benchmarkingPlugin).remove(Mockito.anyString());
+		getManagerFacade().setBenchmarkingPlugin(benchmarkingPlugin);		
+		
 		List<Order> ordersFromUser = occiApplication
 				.getOrdersFromUser(OCCITestHelper.ACCESS_TOKEN);
 
