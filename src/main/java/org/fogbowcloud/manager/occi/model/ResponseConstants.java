@@ -41,5 +41,11 @@ public class ResponseConstants {
 	public static final String INVALID_STORAGE_LINK_DIFERENT_LOCATION = "The same size is required in the post of storage link.";
 	public static final String INVALID_INSTANCE_OWN = "The same own of instance is required.";
 	public static final String XMPP_RESPONSE_NULL = "Without response.";
-
+	public static final String EXISTING_ATTACHMENT = "Remove operation aborted. There are attachments in use.";
+	public static final String STORAGE_NOT_READY = "Storage not Ready yet.";
+	public static final String INTERNAL_ERROR = "Internal Server Error";
+	public static final String NETWORK_ADDRESS_INVALID_VALUE = "Network address with invalid value";
+	public static final String NETWORK_GATEWAY_INVALID_VALUE = "Network gateway with invalid value";
+	public static final String NETWORK_ALLOCATION_INVALID_VALUE = "Network allocation with invalid value";
+	public static final String ORDER_NOT_CREATED = "Order not created";
 }

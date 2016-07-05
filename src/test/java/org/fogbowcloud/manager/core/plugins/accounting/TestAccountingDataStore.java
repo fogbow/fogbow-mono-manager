@@ -121,7 +121,7 @@ public class TestAccountingDataStore {
 		Assert.assertEquals(0, accounting.get(0).getUsage(), ACCEPTABLE_ERROR);
 
 		// adding consuption
-		usage.get(0).addConsuption(20);
+		usage.get(0).addConsumption(20);
 
 		Assert.assertTrue(db.update(usage));
 
@@ -143,7 +143,7 @@ public class TestAccountingDataStore {
 		AccountingInfo accountingInfo1 = new AccountingInfo("user1", "requestingMember1",
 				"providingMember1");
 		int initialUsage1 = 10;
-		accountingInfo1.addConsuption(initialUsage1);
+		accountingInfo1.addConsumption(initialUsage1);
 		usage.add(accountingInfo1);
 
 		Assert.assertTrue(db.update(usage));
@@ -163,12 +163,12 @@ public class TestAccountingDataStore {
 		usage = new ArrayList<AccountingInfo>();
 		accountingInfo1 = new AccountingInfo("user1", "requestingMember1", "providingMember1");
 		int finalUsage1 = 30;
-		accountingInfo1.addConsuption(finalUsage1);
+		accountingInfo1.addConsumption(finalUsage1);
 
 		AccountingInfo accountingInfo2 = new AccountingInfo("user2", "requestingMember2",
 				"providingMember2");
 		int usage2 = 20;
-		accountingInfo2.addConsuption(usage2);
+		accountingInfo2.addConsumption(usage2);
 		usage.add(accountingInfo1);
 		usage.add(accountingInfo2);
 
@@ -207,13 +207,13 @@ public class TestAccountingDataStore {
 		AccountingInfo accountingInfo1 = new AccountingInfo("user1", "requestingMember1",
 				"providingMember1");
 		int initialUsage1 = 10;
-		accountingInfo1.addConsuption(initialUsage1);
+		accountingInfo1.addConsumption(initialUsage1);
 		usage.add(accountingInfo1);
 		
 		accountingInfo1 = new AccountingInfo("user1", "requestingMember1",
 				"providingMember1");
 		int initialUsage2 = 20;
-		accountingInfo1.addConsuption(initialUsage2);
+		accountingInfo1.addConsumption(initialUsage2);
 		usage.add(accountingInfo1);
 
 		Assert.assertTrue(db.update(usage));
@@ -235,7 +235,7 @@ public class TestAccountingDataStore {
 		AccountingInfo accountingInfo1 = new AccountingInfo("user1", "requestingMember1",
 				"providingMember1");
 		int initialUsage1 = 10;
-		accountingInfo1.addConsuption(initialUsage1);
+		accountingInfo1.addConsumption(initialUsage1);
 		usage.add(accountingInfo1);
 
 		Assert.assertTrue(db.update(usage));
@@ -255,19 +255,19 @@ public class TestAccountingDataStore {
 		usage = new ArrayList<AccountingInfo>();
 		accountingInfo1 = new AccountingInfo("user1", "requestingMember1", "providingMember1");
 		int finalUsage1 = 30;
-		accountingInfo1.addConsuption(finalUsage1);
+		accountingInfo1.addConsumption(finalUsage1);
 		usage.add(accountingInfo1);
 
 		AccountingInfo accountingInfo2 = new AccountingInfo("user2", "requestingMember2",
 				"providingMember2");
 		int initialUsage2 = 20;
-		accountingInfo2.addConsuption(initialUsage2);
+		accountingInfo2.addConsumption(initialUsage2);
 		usage.add(accountingInfo2);
 
 		accountingInfo2 = new AccountingInfo("user2", "requestingMember2",
 				"providingMember2");
 		int finalUsage2 = 20;
-		accountingInfo2.addConsuption(finalUsage2);
+		accountingInfo2.addConsumption(finalUsage2);
 		usage.add(accountingInfo2);
 		
 		Assert.assertTrue(db.update(usage));
@@ -340,12 +340,12 @@ public class TestAccountingDataStore {
 		List<AccountingInfo> usage = new ArrayList<AccountingInfo>();
 		AccountingInfo expectedAccountingInfo1 = new AccountingInfo("user1", "requestingMember1",
 				"providingMember1");
-		expectedAccountingInfo1.addConsuption(50);
+		expectedAccountingInfo1.addConsumption(50);
 		usage.add(expectedAccountingInfo1);
 
 		AccountingInfo expectedAccountingInfo2 = new AccountingInfo("user2", "requestingMember2",
 				"providingMember2");
-		expectedAccountingInfo2.addConsuption(100);
+		expectedAccountingInfo2.addConsumption(100);
 		usage.add(expectedAccountingInfo2);
 
 		for (int i = 3; i < 53; i++) {
@@ -430,7 +430,7 @@ public class TestAccountingDataStore {
 		for (int i = 0; i < 100; i++) {
 			AccountingInfo accountingInfo = new AccountingInfo("user" + i, "requestingMember" + i,
 					"providingMember" + i);
-			accountingInfo.addConsuption(i);
+			accountingInfo.addConsumption(i);
 			usage.add(accountingInfo);
 		}
 
@@ -448,7 +448,7 @@ public class TestAccountingDataStore {
 		for (int i = 0; i < 100; i++) {
 			AccountingInfo expectedAccountingInfo = new AccountingInfo("user" + i,
 					"requestingMember" + i, "providingMember" + i);
-			expectedAccountingInfo.addConsuption(i);
+			expectedAccountingInfo.addConsumption(i);
 
 			Assert.assertTrue(returnedAccounting.contains(expectedAccountingInfo));
 		}

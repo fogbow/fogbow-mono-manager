@@ -7,7 +7,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.UUID;
 
+import org.apache.http.HttpStatus;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.RequirementsHelper;
 import org.fogbowcloud.manager.core.model.Flavor;
@@ -15,6 +17,7 @@ import org.fogbowcloud.manager.core.model.ImageState;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.identity.ec2.EC2IdentityPlugin;
+import org.fogbowcloud.manager.core.plugins.storage.ec2.EC2StoragePlugin;
 import org.fogbowcloud.manager.core.plugins.util.HttpClientWrapper;
 import org.fogbowcloud.manager.core.plugins.util.HttpResponseWrapper;
 import org.fogbowcloud.manager.occi.instance.Instance;
@@ -27,16 +30,19 @@ import org.fogbowcloud.manager.occi.model.ResourceRepository;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.order.OrderAttribute;
+import org.fogbowcloud.manager.occi.storage.StorageAttribute;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.restlet.Request;
 import org.restlet.Response;
+import org.restlet.data.Status;
 
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.ec2.AmazonEC2Client;
+import com.amazonaws.services.ec2.model.AttachVolumeRequest;
 import com.amazonaws.services.ec2.model.CreateTagsRequest;
 import com.amazonaws.services.ec2.model.DescribeImagesRequest;
 import com.amazonaws.services.ec2.model.DescribeImagesResult;
@@ -44,6 +50,7 @@ import com.amazonaws.services.ec2.model.DescribeImportImageTasksRequest;
 import com.amazonaws.services.ec2.model.DescribeImportImageTasksResult;
 import com.amazonaws.services.ec2.model.DescribeInstancesRequest;
 import com.amazonaws.services.ec2.model.DescribeInstancesResult;
+import com.amazonaws.services.ec2.model.DetachVolumeRequest;
 import com.amazonaws.services.ec2.model.Filter;
 import com.amazonaws.services.ec2.model.Image;
 import com.amazonaws.services.ec2.model.ImageDiskContainer;
@@ -129,7 +136,7 @@ public class EC2ComputePlugin implements ComputePlugin {
 	public String requestInstance(Token token, List<Category> categories,
 			Map<String, String> xOCCIAtt, String imageId) {
 		
-		if (imageId == null) {
+		if (imageId == null) { 
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}
 		
@@ -157,6 +164,8 @@ public class EC2ComputePlugin implements ComputePlugin {
 				.withMinCount(1)
 				.withMaxCount(1);
 		
+		String orderNetworkId = xOCCIAtt.get(OrderAttribute.NETWORK_ID.getValue());
+		subnetId = orderNetworkId != null && !orderNetworkId.isEmpty() ? orderNetworkId: subnetId;
 		if (subnetId != null || securityGroupId != null) {
 			InstanceNetworkInterfaceSpecification networkSpec = 
 					new InstanceNetworkInterfaceSpecification();
@@ -309,7 +318,8 @@ public class EC2ComputePlugin implements ComputePlugin {
 
 	@Override
 	public void bypass(Request request, Response response) {
-		throw new UnsupportedOperationException();
+		response.setStatus(new Status(HttpStatus.SC_BAD_REQUEST),
+				ResponseConstants.CLOUD_NOT_SUPPORT_OCCI_INTERFACE);
 	}
 
 	@Override
@@ -572,15 +582,42 @@ public class EC2ComputePlugin implements ComputePlugin {
 	@Override
 	public String attach(Token token, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
-		// TODO Auto-generated method stub
-		return null;
+		String instanceId = xOCCIAtt.get(StorageAttribute.SOURCE.getValue());
+		String storageId = xOCCIAtt.get(StorageAttribute.TARGET.getValue());
+		
+		AttachVolumeRequest attachVolumeRequest = new AttachVolumeRequest();
+		attachVolumeRequest.withDevice(EC2StoragePlugin.DEFAULT_ATTACHMENT_DEVICE)
+			.withInstanceId(instanceId)
+			.withVolumeId(storageId);
+		
+		AmazonEC2Client ec2Client = createEC2Client(token);
+		try {
+			ec2Client.attachVolume(attachVolumeRequest);
+			return UUID.randomUUID().toString();
+		} catch (Exception e) {
+			LOGGER.debug("Could not attach storage " 
+					+ storageId + " to instance " + instanceId);
+			throw new OCCIException(ErrorType.BAD_REQUEST, 
+					ResponseConstants.IRREGULAR_SYNTAX);
+		}
 	}
 
 	@Override
 	public void dettach(Token token, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
-		// TODO Auto-generated method stub
+		String storageId = xOCCIAtt.get(StorageAttribute.TARGET.getValue());
 		
+		DetachVolumeRequest detachVolumeRequest = new DetachVolumeRequest();
+		detachVolumeRequest.withVolumeId(storageId);
+		
+		AmazonEC2Client ec2Client = createEC2Client(token);
+		try {
+			ec2Client.detachVolume(detachVolumeRequest);
+		} catch (Exception e) {
+			LOGGER.debug("Could not detach storage " + storageId);
+			throw new OCCIException(ErrorType.BAD_REQUEST, 
+					ResponseConstants.IRREGULAR_SYNTAX);
+		}
 	}
 	
 }

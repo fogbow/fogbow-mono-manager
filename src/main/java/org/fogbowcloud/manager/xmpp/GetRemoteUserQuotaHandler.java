@@ -19,10 +19,12 @@ public class GetRemoteUserQuotaHandler extends AbstractQueryHandler {
 	@Override
 	public IQ handle(IQ query) {
 	
-		String accessId = query.getElement().element("query").element("token").elementText("accessId");
+		Element tokenEl = query.getElement().element("query").element("token");
+		String accessId = tokenEl.elementText("accessId");
+		String user = tokenEl.elementText("user");
 
 		IQ response = IQ.createResultIQ(query);
-		ResourcesInfo resourcesInfo = facade.getResourceInfoForRemoteMember(accessId);
+		ResourcesInfo resourcesInfo = facade.getResourceInfoForRemoteMember(accessId, user);
 		
 		if (resourcesInfo == null) {
 			response.setError(Condition.item_not_found);

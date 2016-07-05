@@ -26,4 +26,6 @@ public class OneConfigurationConstants {
 	public static final String COMPUTE_ONE_SSH_TARGET_TEMP_FOLDER = "compute_one_ssh_target_temp_folder";
 
 	public static final String STORAGE_ONE_DATASTORE_DEFAULT_DEVICE_PREFIX = "storage_one_datastore_default_device_prefix";
+
+	public static final String NETWORK_ONE_BRIDGE = "network_one_bridge";
 }
