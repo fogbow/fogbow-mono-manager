@@ -33,9 +33,11 @@ import org.fogbowcloud.manager.occi.OCCIApplication;
 import org.fogbowcloud.manager.occi.model.ResourceRepository;
 import org.fogbowcloud.manager.xmpp.ManagerXmppComponent;
 import org.restlet.Component;
+import org.restlet.Server;
 import org.restlet.data.Protocol;
 import org.restlet.engine.Engine;
 import org.restlet.ext.slf4j.Slf4jLoggerFacade;
+import org.restlet.util.Series;
 import org.xmpp.component.ComponentException;
 
 public class Main {
@@ -43,6 +45,7 @@ public class Main {
 	private static final Logger LOGGER = Logger.getLogger(Main.class);
 	private static final int EXIT_ERROR_CODE = 128;
 	private static final int DEFAULT_HTTP_PORT = 8182;
+	private static final int DEFAULT_HTTPS_PORT = 8183;
 	
 	public static void main(String[] args) throws Exception {
 		configureLog4j();
@@ -247,6 +250,15 @@ public class Main {
 			Component http = new Component();
 			String httpPort = properties.getProperty(ConfigurationConstants.HTTP_PORT_KEY);			
 			http.getServers().add(Protocol.HTTP, httpPort == null ? DEFAULT_HTTP_PORT : Integer.parseInt(httpPort));
+			Server httpsServer = http.getServers().add(Protocol.HTTPS, DEFAULT_HTTPS_PORT);
+			
+			Series parameters = httpsServer.getContext().getParameters();
+			parameters.add("sslContextFactory", "org.restlet.engine.ssl.DefaultSslContextFactory");
+			parameters.add("keyStorePath", "/home/marcosancj/managerhttps/martelo.jks");
+			parameters.add("keyStorePassword", "password");
+			parameters.add("keyPassword", "password");
+			parameters.add("keyStoreType", "JKS");
+			
 			http.getDefaultHost().attach(application);
 			http.start();
 		} catch (Exception e) {
