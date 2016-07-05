@@ -4563,4 +4563,46 @@ public class TestManagerController {
 
 		Mockito.verify(networkPlugin, Mockito.times(1)).getInstance(token, instanceId);
 	}
+	
+	@Test
+	public void testCheckInstancePreempted() {
+		Token federationUserToken = new Token("accessId", "user", new Date(), null);
+		String instanceId = "instanceId00";
+		Order orderToPreempt = new Order("id", federationUserToken, instanceId, "providingMemberId"
+				, "requestingMemberId", new Date().getTime(), true, OrderState.FULFILLED, null, xOCCIAtt);
+		
+		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
+		Mockito.when(computePlugin.getInstance(federationUserToken, instanceId))
+				.thenReturn(new Instance(instanceId), null);
+		managerController.setComputePlugin(computePlugin);
+		
+		long now = System.currentTimeMillis();
+		managerController.checkInstancePreempted(federationUserToken, orderToPreempt);
+		long after = System.currentTimeMillis();
+		
+		long executionTime = after - now;
+		Assert.assertTrue(executionTime >= ManagerController.DEFAULT_CHECK_STILL_ALIVE_WAIT_TIME 
+				&& executionTime < ManagerController.DEFAULT_CHECK_STILL_ALIVE_WAIT_TIME * 2 - 1);
+	}
+	
+	@Test
+	public void testCheckInstancePreemptedQuotaExceeded() {
+		Token federationUserToken = new Token("accessId", "user", new Date(), null);
+		String instanceId = "instanceId00";
+		Order orderToPreempt = new Order("id", federationUserToken, instanceId, "providingMemberId"
+				, "requestingMemberId", new Date().getTime(), true, OrderState.FULFILLED, null, xOCCIAtt);
+		
+		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
+		Mockito.when(computePlugin.getInstance(federationUserToken, instanceId))
+				.thenThrow(new OCCIException(ErrorType.QUOTA_EXCEEDED, ""));
+		managerController.setComputePlugin(computePlugin);
+		
+		long now = System.currentTimeMillis();
+		managerController.checkInstancePreempted(federationUserToken, orderToPreempt);
+		long after = System.currentTimeMillis();
+		
+		long executionTime = after - now;
+		Assert.assertTrue(executionTime < ManagerController.DEFAULT_CHECK_STILL_ALIVE_WAIT_TIME);
+	}	
+	
 }

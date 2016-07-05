@@ -111,6 +111,9 @@ public class ManagerController {
 	private static final long DEFAULT_ACCOUNTING_UPDATE_PERIOD = 300000; // 5
 																			// minutes
 	
+	protected static final int DEFAULT_CHECK_STILL_ALIVE_WAIT_TIME = 1000; // 1 second
+	private static final int DEFAULT_CHECK_STILL_ALIVE_TIMES = 5; // 5 times
+	
 	private static final long DEFAULT_CAPACITY_CONTROLLER_UPDATE_PERIOD = 600000; // 10 minutes
 	
 	public static final int DEFAULT_MAX_POOL = 200;
@@ -1903,6 +1906,7 @@ public class ManagerController {
 						throw e;
 					}
 					preemption(orderToPreempt);
+					checkInstancePreempted(federationUserToken, orderToPreempt);
 					return createInstance(order);
 				} else if (errorType == ErrorType.UNAUTHORIZED) {
 					LOGGER.warn("Order failed locally for user unauthorized.", e);
@@ -1958,6 +1962,26 @@ public class ManagerController {
 		} else {
 			return false;
 		}
+	}
+
+	protected void checkInstancePreempted(Token federationUserToken, Order orderToPreempt) {
+		int cont = 1;
+		Instance instance = null;
+		do {
+			LOGGER.debug("Checking if the instance(" + orderToPreempt.getInstanceId() + ") still alive. Trying " 
+					+ cont + " time(s) of " + DEFAULT_CHECK_STILL_ALIVE_TIMES + ".");
+			cont++;
+			try {
+				instance = computePlugin.getInstance(federationUserToken, orderToPreempt.getInstanceId());							
+			} catch (OCCIException e) {}
+			if (instance == null) {
+				break;
+			}
+			try {
+				Thread.sleep(DEFAULT_CHECK_STILL_ALIVE_WAIT_TIME);
+			} catch (InterruptedException e) {}
+		} while (cont <= DEFAULT_CHECK_STILL_ALIVE_TIMES);
+		LOGGER.debug("Instance(" + orderToPreempt.getInstanceId() + ") completely removed. " + instance);
 	}
 
 	public void setPacketSender(AsyncPacketSender packetSender) {
