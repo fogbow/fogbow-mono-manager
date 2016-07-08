@@ -3,7 +3,6 @@ package org.fogbowcloud.manager.core.plugins.identity.naf;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.security.GeneralSecurityException;
 import java.security.InvalidKeyException;
@@ -15,17 +14,10 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.Signature;
 import java.security.SignatureException;
-import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
-import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
-import java.util.Arrays;
-
-import javax.crypto.Cipher;
 
 import org.apache.commons.codec.binary.Base64;
-import org.bouncycastle.util.io.pem.PemObject;
-import org.bouncycastle.util.io.pem.PemWriter;
 
 public class RSAUtils {
 
@@ -35,53 +27,10 @@ public class RSAUtils {
 		BufferedReader br = new BufferedReader(new FileReader(filename));
 		String line;
 		while ((line = br.readLine()) != null) {
-			strKeyPEM += line + "n";
+			strKeyPEM += line;
 		}
 		br.close();
 		return strKeyPEM;
-	}
-
-	/**
-	 * Constructs a private key (RSA) from the given file
-	 * 
-	 * @param filename
-	 *            PEM Private Key
-	 * @return RSA Private Key
-	 * @throws IOException
-	 * @throws GeneralSecurityException
-	 */
-	public static RSAPrivateKey getPrivateKey(String filename)
-			throws IOException, GeneralSecurityException {
-		String privateKeyPEM = getKey(filename);
-		return getPrivateKeyFromString(privateKeyPEM);
-	}
-
-	/**
-	 * Constructs a private key (RSA) from the given string
-	 * 
-	 * @param key
-	 *            PEM Private Key
-	 * @return RSA Private Key
-	 * @throws IOException
-	 * @throws GeneralSecurityException
-	 */
-	public static RSAPrivateKey getPrivateKeyFromString(String key)
-			throws IOException, GeneralSecurityException {
-		String privateKeyPEM = key;
-
-		// Remove the first and last lines
-		privateKeyPEM = privateKeyPEM
-				.replace("-----BEGIN PRIVATE KEY-----", "");
-		privateKeyPEM = privateKeyPEM.replace("-----END PRIVATE KEY-----", "");
-
-		// Base64 decode data
-		byte[] encoded = org.bouncycastle.util.encoders.Base64
-				.decode(privateKeyPEM);
-
-		KeyFactory kf = KeyFactory.getInstance("RSA");
-		RSAPrivateKey privKey = (RSAPrivateKey) kf
-				.generatePrivate(new PKCS8EncodedKeySpec(encoded));
-		return privKey;
 	}
 
 	/**
@@ -164,42 +113,6 @@ public class RSAUtils {
 		return sign.verify(Base64.decodeBase64(signature.getBytes("UTF-8")));
 	}
 
-	/**
-	 * Encrypts the text with the public key (RSA)
-	 * 
-	 * @param rawText
-	 *            Text to be encrypted
-	 * @param publicKey
-	 * @return
-	 * @throws IOException
-	 * @throws GeneralSecurityException
-	 */
-	public static String encrypt(String rawText, PublicKey publicKey)
-			throws IOException, GeneralSecurityException {
-		Cipher cipher = Cipher.getInstance("RSA");
-		cipher.init(Cipher.ENCRYPT_MODE, publicKey);
-		return new String(org.bouncycastle.util.encoders.Base64.encode(cipher
-				.doFinal(rawText.getBytes("UTF-8"))));
-	}
-
-	/**
-	 * Decrypts the text with the private key (RSA)
-	 * 
-	 * @param cipherText
-	 *            Text to be decrypted
-	 * @param privateKey
-	 * @return Decrypted text (Base64 encoded)
-	 * @throws IOException
-	 * @throws GeneralSecurityException
-	 */
-	public static String decrypt(String cipherText, PrivateKey privateKey)
-			throws IOException, GeneralSecurityException {
-		Cipher cipher = Cipher.getInstance("RSA");
-		cipher.init(Cipher.DECRYPT_MODE, privateKey);
-		return new String(cipher.doFinal(org.bouncycastle.util.encoders.Base64
-				.decode(cipherText)), "UTF-8");
-	}
-
 	public static KeyPair generateKeyPair() throws NoSuchAlgorithmException {
 		KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
 		keyGen.initialize(1024);
@@ -207,17 +120,6 @@ public class RSAUtils {
 		return keyPair;
 	}
 
-	public static String savePrivateKey(PrivateKey priv)
-			throws GeneralSecurityException {
-		KeyFactory fact = KeyFactory.getInstance("RSA");
-		PKCS8EncodedKeySpec spec = fact.getKeySpec(priv, PKCS8EncodedKeySpec.class);
-		byte[] packed = spec.getEncoded();
-		String key64 = new String(
-				org.bouncycastle.util.encoders.Base64.encode(packed));
-
-		Arrays.fill(packed, (byte) 0);
-		return key64;
-	}
 
 	public static String savePublicKey(PublicKey publ)
 			throws GeneralSecurityException {
@@ -227,14 +129,4 @@ public class RSAUtils {
 				.getEncoded()));
 	}
 
-	public static String savePublicKeyInPEMFormat(PublicKey publicKey)
-			throws IOException {
-		StringWriter writer = new StringWriter();
-		PemWriter pemWriter = new PemWriter(writer);
-		pemWriter.writeObject(new PemObject("PUBLIC KEY", publicKey
-				.getEncoded()));
-		pemWriter.flush();
-		pemWriter.close();
-		return writer.toString();
-	}
 }

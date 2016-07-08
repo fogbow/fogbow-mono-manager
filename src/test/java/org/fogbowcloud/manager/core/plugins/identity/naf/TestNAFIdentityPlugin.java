@@ -100,6 +100,12 @@ public class TestNAFIdentityPlugin {
 		Assert.assertNull(this.nafIdentityPlugin.getAuthenticationURI());
 	}
 	
+	@Test
+	public void testReIssueToken() {
+		Token originalToken = new Token("accessId", "user", new Date(), new HashMap<String, String>());		
+		Assert.assertEquals(originalToken, this.nafIdentityPlugin.reIssueToken(originalToken));		
+	}
+	
 	private String createAccessId() throws Exception {
 		JSONObject jsonObject = new JSONObject();
 		jsonObject.put(NAFIdentityPlugin.NAME, DEFAULT_USER);
