@@ -81,7 +81,7 @@ public class HeaderUtils {
 	}
 	
 	public static Map<String, String> getXOCCIAtributes(Series<Header> headers) {
-		String[] headerValues = headers.getValuesArray(normalize(OCCIHeaders.X_OCCI_ATTRIBUTE));		
+		String[] headerValues = headers.getValuesArray(normalize(OCCIHeaders.X_OCCI_ATTRIBUTE), true);
 		Map<String, String> mapAttributes = new HashMap<String, String>();
 		for (int i = 0; i < headerValues.length; i++) {
 			String[] eachHeaderValue = headerValues[i].split(",");			
@@ -107,7 +107,7 @@ public class HeaderUtils {
 
 	public static List<Category> getCategories(Series<Header> headers) {
 		List<Category> categories = new ArrayList<Category>();
-		String[] headerValues = headers.getValuesArray(normalize(OCCIHeaders.CATEGORY));
+		String[] headerValues = headers.getValuesArray(normalize(OCCIHeaders.CATEGORY), true);
 		for (int i = 0; i < headerValues.length; i++) {
 			String[] eachHeaderValue = headerValues[i].split(",");
 			for (int j = 0; j < eachHeaderValue.length; j++){	
