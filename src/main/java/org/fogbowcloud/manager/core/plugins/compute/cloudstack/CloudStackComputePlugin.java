@@ -74,6 +74,7 @@ public class CloudStackComputePlugin implements ComputePlugin {
 	protected static final String ATTACH_VM_ID = "virtualmachineid";
 	protected static final String ATTACH_DEVICE_ID = "deviceid";
 	protected static final String JOB_ID = "jobid";
+	protected static final String NETWORK_IDS = "networkids";
 	
 	private static final int LIMIT_TYPE_INSTANCES = 0;
 	private static final int LIMIT_TYPE_MEMORY = 9;
@@ -92,6 +93,7 @@ public class CloudStackComputePlugin implements ComputePlugin {
 	private String hypervisor;
 	private String osTypeId;
 	private String expungeOnDestroy;
+	private String defaultNetworkId;
 
 	public CloudStackComputePlugin(Properties properties) {
 		this(properties, new HttpClientWrapper());
@@ -109,6 +111,7 @@ public class CloudStackComputePlugin implements ComputePlugin {
 		this.osTypeId = this.properties.getProperty("compute_cloudstack_image_download_os_type_id");
 		this.expungeOnDestroy = this.properties.getProperty(
 				"compute_cloudstack_expunge_on_destroy", DEFAULT_EXPUNGE_ON_DESTROY);
+		this.defaultNetworkId = this.properties.getProperty("compute_cloudstack_default_networkid");
 	}
 	
 	@Override
@@ -146,6 +149,14 @@ public class CloudStackComputePlugin implements ComputePlugin {
 		if (userdata != null) {
 			uriBuilder.addParameter(USERDATA, userdata);
 		}
+		
+		String networId = xOCCIAtt.get(OrderAttribute.NETWORK_ID.getValue());
+		
+		if(networId == null || networId.isEmpty()){
+			networId = defaultNetworkId;
+		}
+		uriBuilder.addParameter(NETWORK_IDS, networId);
+		
 		CloudStackHelper.sign(uriBuilder, token.getAccessId());
 		HttpResponseWrapper response = httpClient.doPost(uriBuilder.toString());
 		checkStatusResponse(response.getStatusLine());

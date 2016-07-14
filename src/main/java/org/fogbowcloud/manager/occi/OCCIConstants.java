@@ -20,6 +20,8 @@ public class OCCIConstants {
 	public static final String NETWORK_INTERFACE_INTERFACE = "occi.networkinterface.interface";
 	public static final String NETWORK_INTERFACE_STATE = "occi.networkinterface.state";
 	
+	public static final String NETWORK_TYPE = "network";
+	
 	public enum NetworkState {
 		ACTIVE("active"), INACTIVE("inactive");
 		

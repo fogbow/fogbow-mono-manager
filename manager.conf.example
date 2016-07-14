@@ -16,6 +16,11 @@ bd_updater_period=30000
 # flavor_fogbow_medium={mem=1024, cpu=2}
 # flavor_fogbow_large={mem=2048, cpu=4}
 
+# Network plugin (Cloudstack)
+#network_class=org.fogbowcloud.manager.core.plugins.network.cloudstack.CloudStackNetworkPlugin
+#network_cloudstack_api_url=http://127.0.0.1:8080/client/api
+#network_cloudstack_zone_id=5fe3f471-e79f-4f70-898e-cc4d3b4cfb58
+#network_cloudstack_netoffering_id=c98fdf8a-7f57-4fbb-b550-c4fc17398ded
 
 ## network Plugin (Openstack)
 network_class=org.fogbowcloud.manager.core.plugins.network.openstack.OpenStackV2NetworkPlugin
@@ -93,6 +98,7 @@ compute_novav2_network_id=ea51ed0c-0e8a-448d-8202-c79777109ffe
 # compute_cloudstack_hypervisor=KVM
 # compute_cloudstack_image_download_os_type_id=ea51ed0c-0e8a-448d-8202-c79777109ffe
 # compute_cloudstack_expunge_on_destroy=true
+# compute_cloudstack_default_networkid=6aac906e-6fb8-4180-945a-8e841c0fa32e
 
 ##Compute Plugin (Azure)
 # compute_class=org.fogbowcloud.manager.core.plugins.compute.azure.AzureComputePlugin
@@ -224,10 +230,6 @@ federation_identity_url=http://localhost:5000
 # mapper_defaults_subscription_id=subscription_id
 # mapper_defaults_keystore_path=/etc/keystore/azure
 # mapper_defaults_keystore_password=test123
-
-## Federation Identity (Simple Token Identity PLugin)
-# federation_identity_class=org.fogbowcloud.manager.core.plugins.identity.simpletoken.SimpleTokenIdentityPlugin
-# simple_token_identity_valid_token_id=9398ybc43r-c9871btr7
 
 ## Member Validator
 member_validator_class=org.fogbowcloud.manager.core.plugins.memberauthorization.DefaultMemberAuthorizationPlugin

@@ -5,15 +5,19 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
+import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpStatus;
 import org.apache.log4j.Logger;
 import org.bouncycastle.util.IPAddress;
+import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.RequirementsHelper;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.occi.OCCIApplication;
 import org.fogbowcloud.manager.occi.OCCIConstants;
+import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.instance.Instance.Link;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.ErrorType;
@@ -23,6 +27,8 @@ import org.fogbowcloud.manager.occi.model.OCCIHeaders;
 import org.fogbowcloud.manager.occi.model.Resource;
 import org.fogbowcloud.manager.occi.model.ResourceRepository;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;
+import org.fogbowcloud.manager.occi.network.FedNetworkState;
+import org.fogbowcloud.manager.occi.network.NetworkDataStore;
 import org.restlet.data.MediaType;
 import org.restlet.data.Status;
 import org.restlet.engine.adapter.HttpRequest;
@@ -32,6 +38,7 @@ import org.restlet.representation.StringRepresentation;
 import org.restlet.resource.Delete;
 import org.restlet.resource.Get;
 import org.restlet.resource.Post;
+import org.restlet.resource.ResourceException;
 import org.restlet.resource.ServerResource;
 import org.restlet.util.Series;
 
@@ -40,7 +47,19 @@ public class OrderServerResource extends ServerResource {
 	private static final String OCCI_CORE_TITLE = "occi.core.title";
 	private static final String OCCI_CORE_ID = "occi.core.id";
 	protected static final String NO_ORDERS_MESSAGE = "There are not orders.";
+	protected static final String FED_NETWORK_PREFIX = "federated_network_";
+	
 	private static final Logger LOGGER = Logger.getLogger(OrderServerResource.class);
+	private NetworkDataStore networkDB;
+	
+	protected void doInit() throws ResourceException {
+
+		Properties properties = ((OCCIApplication) getApplication()).getProperties();
+		String networkDataStoreUrl = properties
+				.getProperty(ConfigurationConstants.NETWORK_DATA_STORE_URL);
+		networkDB = new NetworkDataStore(networkDataStoreUrl);
+
+	};
 	
 	@Get
 	public StringRepresentation fetch() {
@@ -265,16 +284,39 @@ public class OrderServerResource extends ServerResource {
 		HeaderUtils.checkCategories(categories, OrderConstants.TERM);
 		HeaderUtils.checkOCCIContentType(req.getHeaders());		
 		
+		String federationAuthToken = HeaderUtils.getAuthToken(
+				req.getHeaders(), getResponse(), application.getAuthenticationURI());
+		
+		String user = application.getUser(normalizeAuthToken(federationAuthToken));
+		
+		//TODO verificar se o ID da network é federado
 		Map<String, String> xOCCIAtt = HeaderUtils.getXOCCIAtributes(req.getHeaders());
 		for (Link link : networkLinks) {
-			xOCCIAtt.put(OrderAttribute.NETWORK_ID.getValue(), ManagerController.normalizeInstanceId(link.getId()));
+			
+			String networkId;
+			
+			networkId = link.getId(); 
+			
+			if(networkId != null && networkId.startsWith(FED_NETWORK_PREFIX)){
+				
+				FedNetworkState fedNetworkState = networkDB.getByFedNetworkId(networkId, user);
+
+				if (fedNetworkState == null) {
+					throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
+				}
+				
+				Order relatedOrder = application.getOrder(federationAuthToken, fedNetworkState.getOrderId());
+				
+				networkId = relatedOrder.getGlobalInstanceId(); 
+			}
+			
+			networkId = ManagerController.normalizeInstanceId(networkId);
+			
+			xOCCIAtt.put(OrderAttribute.NETWORK_ID.getValue(), networkId);
 		}
 		xOCCIAtt = normalizeXOCCIAtt(xOCCIAtt);
 		
 		xOCCIAtt = normalizeRequirements(categories, xOCCIAtt, application.getFlavorsProvided());
-		
-		String federationAuthToken = HeaderUtils.getAuthToken(
-				req.getHeaders(), getResponse(), application.getAuthenticationURI());
 		
 		List<Order> currentOrders = application.createOrders(federationAuthToken, categories, xOCCIAtt);
 		if (currentOrders != null || !currentOrders.isEmpty()) {
@@ -510,5 +552,12 @@ public class OrderServerResource extends ServerResource {
 	
 	private static boolean validateIp(String value){
 		return IPAddress.isValidIPv4(value) || IPAddress.isValidIPv6(value);
+	}
+	
+	private String normalizeAuthToken(String authToken) {
+		if (authToken.contains("Basic ")) {
+			authToken = new String(Base64.decodeBase64(authToken.replace("Basic ", "")));
+		}
+		return authToken;
 	}
 }
