@@ -19,3 +19,5 @@ Category: compute; scheme="http://schemas.ogf.org/occi/infrastructure#"; class="
 Category: os_tpl; scheme="http://schemas.ogf.org/occi/infrastructure#"; class="mixin"; location="http://localhost:8787/os_tpl/"
 Category: os_net_link; scheme="http://schemas.openstack.org/network/instance#"; class="mixin"; location="http://localhost:8787/os_net_link/"; attributes="org.openstack.network.floating.pool{required}"
 Category: m1-medium; scheme="http://schemas.openstack.org/template/resource#"; class="mixin"; title="Flavor: m1.medium "; rel="http://schemas.ogf.org/occi/infrastructure#resource_tpl"; location="http://localhost:8787/m1-medium/"
+
+

@@ -393,7 +393,7 @@ public class ComputeServerResource extends ServerResource {
 		String networkId = null;
 		List<Instance.Link> links = HeaderUtils.getLinks(req.getHeaders());
 		for (Link link : links) {
-			if(OCCIConstants.NETWORK_TYPE.equals(link.getType())){
+			if(OCCIConstants.NETWORK_TERM.equals(link.getType())){
 				
 				networkId = link.getId(); 
 				

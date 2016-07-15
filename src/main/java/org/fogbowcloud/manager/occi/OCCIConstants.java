@@ -9,6 +9,8 @@ public class OCCIConstants {
 	public static final String ID = "occi.core.id";
 	public static final String TITLE = "occi.core.title";
 	
+	public static final String OCCI_INFRASTRUCTURE_SCHEME = "http://schemas.ogf.org/occi/infrastructure#";
+	
 	public static final String NETWORK_VLAN = "occi.network.vlan";
 	public static final String NETWORK_LABEL = "occi.network.label";
 	public static final String NETWORK_STATE = "occi.network.state";
@@ -20,7 +22,10 @@ public class OCCIConstants {
 	public static final String NETWORK_INTERFACE_INTERFACE = "occi.networkinterface.interface";
 	public static final String NETWORK_INTERFACE_STATE = "occi.networkinterface.state";
 	
-	public static final String NETWORK_TYPE = "network";
+	public static final String NETWORK_TERM = "network";
+	public static final String NETWORK_INTERFACE_TERM = "networkinterface";
+	
+	
 	
 	public enum NetworkState {
 		ACTIVE("active"), INACTIVE("inactive");
