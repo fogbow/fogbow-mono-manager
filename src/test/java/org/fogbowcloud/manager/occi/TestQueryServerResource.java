@@ -116,7 +116,6 @@ public class TestQueryServerResource {
 	
 	@Test
 	public void testGetQueryInvalidAccept() throws Exception {
-
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_QUERY);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
@@ -172,11 +171,10 @@ public class TestQueryServerResource {
 		head.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(head);
-
+		
 		Assert.assertEquals(HttpStatus.SC_UNAUTHORIZED, response.getStatusLine().getStatusCode());
 		Assert.assertEquals("Keystone uri='http://localhost:5000/'",
 				response.getFirstHeader(HeaderUtils.WWW_AUTHENTICATE).getValue());
-		Assert.assertEquals("0", response.getFirstHeader("Content-length").getValue());
 	}
 	
 	@Test

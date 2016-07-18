@@ -25,7 +25,7 @@ import org.fogbowcloud.manager.occi.order.OrderState;
 import org.restlet.data.MediaType;
 import org.restlet.data.Status;
 import org.restlet.engine.adapter.HttpRequest;
-import org.restlet.engine.header.Header;
+import org.restlet.data.Header;
 import org.restlet.representation.StringRepresentation;
 import org.restlet.resource.Delete;
 import org.restlet.resource.Get;

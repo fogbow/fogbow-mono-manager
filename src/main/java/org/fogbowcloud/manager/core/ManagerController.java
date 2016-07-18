@@ -268,6 +268,7 @@ public class ManagerController {
 
 	protected void initializeStorageLinks() throws SQLException, JSONException {
 		LOGGER.debug("Recovering previous storage link.");
+		
 		for (StorageLink storageLink : new ArrayList<StorageLink>(managerDatabase.getStorageLinks())) {
 			storageLinkRepository.addStorageLink(storageLink.getFederationToken().getUser(), storageLink);
 			LOGGER.debug("Storage link (" + storageLink.getId() + ") was recovered.");
@@ -1704,7 +1705,7 @@ public class ManagerController {
 				LOGGER.debug("The order " + order.getId() + " is no longer open.");
 				continue;
 			}
-
+			
 			LOGGER.debug(order.getId() + " being considered for scheduling.");
 			if (order.isIntoValidPeriod()) {
 				boolean isFulfilled = false;
@@ -1829,9 +1830,10 @@ public class ManagerController {
 
 	protected boolean createLocalInstanceWithFederationUser(Order order) {
 		LOGGER.info("Submitting order " + order + " with federation user locally.");
-
+		
 		FederationMember member = null;
 		boolean isRemoteDonation = !properties.getProperty("xmpp_jid").equals(order.getRequestingMemberId());
+		
 		try {
 			member = getFederationMember(order.getRequestingMemberId());
 		} catch (Exception e) {

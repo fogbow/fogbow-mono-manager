@@ -36,7 +36,7 @@ import org.restlet.data.MediaType;
 import org.restlet.data.Status;
 import org.restlet.engine.adapter.HttpRequest;
 import org.restlet.engine.adapter.ServerCall;
-import org.restlet.engine.header.Header;
+import org.restlet.data.Header;
 import org.restlet.representation.StringRepresentation;
 import org.restlet.resource.Delete;
 import org.restlet.resource.Get;
@@ -90,7 +90,7 @@ public class ComputeServerResource extends ServerResource {
 				application.getAuthenticationURI());
 		String instanceId = (String) getRequestAttributes().get("instanceId");
 		List<String> acceptContent = HeaderUtils.getAccept(req.getHeaders());
-
+		
 		if (instanceId == null) {
 			LOGGER.info("Getting all instances of token :" + federationAuthToken);
 

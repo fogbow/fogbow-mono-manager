@@ -50,10 +50,12 @@ import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.restlet.Component;
+import org.restlet.Server;
 import org.restlet.data.Protocol;
 
 public class OCCITestHelper {
 
+	private static final int DEFAULT_RESPONSE_HEADER_SIZE = 1024*1024;
 	public static final String FOGBOW_SMALL_IMAGE = "fogbow_small";
 	public static final String MEMBER_ID = "memberId";
 	public static final int ENDPOINT_PORT = PluginHelper.getAvailablePort();
@@ -126,7 +128,8 @@ public class OCCITestHelper {
 	public void initializeComponent(ComputePlugin computePlugin, IdentityPlugin identityPlugin,
 			AuthorizationPlugin authorizationPlugin) throws Exception {
 		component = new Component();
-		component.getServers().add(Protocol.HTTP, ENDPOINT_PORT);
+		Server server = component.getServers().add(Protocol.HTTP, ENDPOINT_PORT);
+		server.getContext().getParameters().add("http.responseHeaderSize", String.valueOf(DEFAULT_RESPONSE_HEADER_SIZE));
 
 		Properties properties = new Properties();
 		properties.put(ConfigurationConstants.TOKEN_HOST_PRIVATE_ADDRESS_KEY, DefaultDataTestHelper.SERVER_HOST);
@@ -217,8 +220,9 @@ public class OCCITestHelper {
 		storageLinkRespository = new StorageLinkRepository();
 		facade.setStorageLinkRepository(storageLinkRespository);
 		for (Entry<String, List<StorageLink>> entry : storageLinksToAdd.entrySet()) {
-			for (StorageLink storageLink : entry.getValue())
+			for (StorageLink storageLink : entry.getValue()) {
 				storageLinkRespository.addStorageLink(entry.getKey(), storageLink);
+			}
 		}
 		
 		orders = new OrderRepository();

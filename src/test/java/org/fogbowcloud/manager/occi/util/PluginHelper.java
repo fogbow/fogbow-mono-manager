@@ -21,9 +21,12 @@ import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.util.OCCIComputeApplication.InstanceIdGenerator;
 import org.mockito.Mockito;
 import org.restlet.Component;
+import org.restlet.Server;
 import org.restlet.data.Protocol;
 
 public class PluginHelper {
+
+	private static final int DEFAULT_REQUEST_HEADER_SIZE = 1024*1024;
 
 	private Component component;
 
@@ -102,7 +105,8 @@ public class PluginHelper {
 
 	public void initializeOCCIComputeComponent(List<String> expectedInstanceIds) throws Exception {
 		this.component = new Component();
-		this.component.getServers().add(Protocol.HTTP, PORT_ENDPOINT);
+		Server server = this.component.getServers().add(Protocol.HTTP, PORT_ENDPOINT);
+		server.getContext().getParameters().add("http.requestHeaderSize", String.valueOf(DEFAULT_REQUEST_HEADER_SIZE));
 
 		OCCIComputeApplication occiComputeApplication = new OCCIComputeApplication();
 

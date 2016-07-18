@@ -18,7 +18,7 @@ import org.restlet.Response;
 import org.restlet.data.MediaType;
 import org.restlet.engine.adapter.HttpRequest;
 import org.restlet.engine.adapter.ServerCall;
-import org.restlet.engine.header.Header;
+import org.restlet.data.Header;
 import org.restlet.util.Series;
 
 public class HeaderUtils {
@@ -124,7 +124,7 @@ public class HeaderUtils {
 	
 	public static List<Instance.Link> getLinks(Series<Header> headers) {
 		List<Instance.Link> links = new ArrayList<Instance.Link>();
-		String[] headerValues = headers.getValuesArray(normalize(OCCIHeaders.LINK));
+		String[] headerValues = headers.getValuesArray(normalize(OCCIHeaders.LINK), true);
 		for (int i = 0; i < headerValues.length; i++) {
 			String[] eachHeaderValue = headerValues[i].split(",");
 			for (int j = 0; j < eachHeaderValue.length; j++){	
@@ -197,7 +197,7 @@ public class HeaderUtils {
 	}
 
 	public static List<String> getAccept(Series<Header> headers) {
-		String[] headerValues = headers.getValuesArray(normalize(OCCIHeaders.ACCEPT));		
+		String[] headerValues = headers.getValuesArray(normalize(OCCIHeaders.ACCEPT), true);		
 		List<String> acceptContents = new ArrayList<String>();
 		for (int i = 0; i < headerValues.length; i++) {
 			String[] eachHeaderValue = headerValues[i].split(",");			
@@ -230,7 +230,7 @@ public class HeaderUtils {
 	public static List<String> getValueHeaderPerName(String nameHeader,Series<Header> headers) {
 		List<String> listValuesHeaders = new ArrayList<String>();
 		for (Header header : headers) {
-			if (header.getName().equals(HeaderUtils.normalize(nameHeader))) {
+			if (header.getName().equalsIgnoreCase(HeaderUtils.normalize(nameHeader))) {
 				listValuesHeaders.add(header.getValue());
 			}
 		}

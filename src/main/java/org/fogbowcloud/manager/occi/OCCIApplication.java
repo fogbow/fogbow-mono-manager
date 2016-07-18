@@ -30,7 +30,7 @@ import org.fogbowcloud.manager.occi.storage.StorageServerResource;
 import org.restlet.Application;
 import org.restlet.Response;
 import org.restlet.Restlet;
-import org.restlet.engine.header.Header;
+import org.restlet.data.Header;
 import org.restlet.engine.header.HeaderConstants;
 import org.restlet.routing.Router;
 import org.restlet.util.Series;
@@ -102,13 +102,13 @@ public class OCCIApplication extends Application {
 		
 		bypass(request, newResponse);
 
-		Series<org.restlet.engine.header.Header> responseHeaders = (Series<org.restlet.engine.header.Header>) newResponse
+		Series<org.restlet.data.Header> responseHeaders = (Series<org.restlet.data.Header>) newResponse
 				.getAttributes().get("org.restlet.http.headers");
 		if (responseHeaders != null) {
 			// removing restlet default headers that will be added automatically
 			responseHeaders.removeAll(HeaderConstants.HEADER_CONTENT_LENGTH);
 			responseHeaders.removeAll(HeaderConstants.HEADER_CONTENT_TYPE);
-			responseHeaders.removeAll(HeaderUtils.normalize(HeaderConstants.HEADER_CONTENT_TYPE));
+			responseHeaders.removeAll(HeaderUtils.normalize(HeaderConstants.HEADER_CONTENT_TYPE), true);
 			responseHeaders.removeAll(HeaderConstants.HEADER_DATE);
 			responseHeaders.removeAll(HeaderConstants.HEADER_SERVER);
 			responseHeaders.removeAll(HeaderConstants.HEADER_VARY);
@@ -128,7 +128,7 @@ public class OCCIApplication extends Application {
 	public static void normalizeHeadersForBypass(org.restlet.Request request) {
 		Series<Header> requestHeaders = (Series<Header>) request.getAttributes().get("org.restlet.http.headers");
 		requestHeaders.add(OCCIHeaders.X_AUTH_TOKEN, requestHeaders.getFirstValue(HeaderUtils
-				.normalize(OCCIHeaders.X_AUTH_TOKEN)));
+				.normalize(OCCIHeaders.X_AUTH_TOKEN), true));
 		requestHeaders.removeFirst(HeaderUtils.normalize(OCCIHeaders.X_AUTH_TOKEN));
 	}
 

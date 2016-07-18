@@ -55,8 +55,6 @@ public class TestDeleteStorageLink {
 	public void setup() throws Exception {
 		this.helper = new OCCITestHelper();
 		
-		storagePlugin = Mockito.mock(StoragePlugin.class);
-		
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Token tokenTwo = new Token("1", OCCITestHelper.USER_MOCK, new Date(),
 		new HashMap<String, String>());
