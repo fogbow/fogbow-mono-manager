@@ -256,6 +256,7 @@ name_user_token_generator=
 password_user_token_generator=
 # token generator endpoint
 endpoint_token_generator=
+naf_identity_public_key=
 
 ## Member Validator
 member_validator_class=org.fogbowcloud.manager.core.plugins.memberauthorization.DefaultMemberAuthorizationPlugin
