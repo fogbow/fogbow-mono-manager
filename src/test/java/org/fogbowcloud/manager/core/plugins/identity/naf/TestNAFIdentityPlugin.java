@@ -43,17 +43,17 @@ import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
 
 public class TestNAFIdentityPlugin {
-	
+
 	private static final String DEFAULT_FILE_PUBLIC_KEY_PATH = "src/test/resources/public-key";
 	private NAFIdentityPlugin nafIdentityPlugin;
 	private KeyPair keyPair;
-	
+
 	private final String DEFAULT_USER = "fulano";
 	private Map<String, String> defaultSamlAttributes;
 	private static final String ATTRIBUTE_ONE_SAML_ATTRIBUTE = "attributeOne";
 	private long defaultCTime;
 	private Properties properties;
-	
+
 	@Before
 	public void setUp() throws Exception {
 		try {
@@ -61,48 +61,48 @@ public class TestNAFIdentityPlugin {
 		} catch (NoSuchAlgorithmException e) {
 			Assert.fail();
 		}
-				
+
 		this.defaultCTime = System.currentTimeMillis();
 		this.defaultSamlAttributes = new HashMap<String, String>();
 		this.defaultSamlAttributes.put(ATTRIBUTE_ONE_SAML_ATTRIBUTE, "valueAttributeOne");
-		
-		writePublicKeyToFile(RSAUtils.savePublicKey(this.keyPair.getPublic()));		
+
+		writePublicKeyToFile(RSAUtils.savePublicKey(this.keyPair.getPublic()));
 		this.properties = new Properties();
 		this.properties.put(NAFIdentityPlugin.NAF_PUBLIC_KEY, DEFAULT_FILE_PUBLIC_KEY_PATH);
 		this.nafIdentityPlugin = Mockito.spy(new NAFIdentityPlugin(this.properties));
 	}
-	
+
 	@After
 	public void tearDown() throws IOException{
 		File dbFile = new File(DEFAULT_FILE_PUBLIC_KEY_PATH);
 		if (dbFile.exists()) {
 			dbFile.delete();
 		}
-	}	
-	
+	}
+
 	@Test
 	public void testIsValid() throws Exception {
 		Assert.assertTrue(this.nafIdentityPlugin.isValid(createAccessId()));
 	}
 
-	
+
 	@Test
 	public void testIsInvalid() throws Exception {
 		Assert.assertFalse(this.nafIdentityPlugin.isValid("wrong_token"));
-	}	
-	
+	}
+
 	@Test
 	public void testIsInvalidWithoutublicKey() throws Exception {
 		this.nafIdentityPlugin = new NAFIdentityPlugin(new Properties());
 		Assert.assertFalse(this.nafIdentityPlugin.isValid("wrong_token"));
 	}
-	
+
 	@Test
 	public void testIsValidWithTokenGenerator() throws Exception {
 		this.properties.put(NAFIdentityPlugin.ENDPOINT_TOKEN_GENERATOR, "https://localhost:0000");
 		this.properties.put(NAFIdentityPlugin.NAME_USER_TOKEN_GENERATOR, "name");
 		this.properties.put(NAFIdentityPlugin.PASSWORD_USER_TOKEN_GENERATOR, "password");
-		
+
 		HttpClient client = Mockito.mock(HttpClient.class);
 		HttpResponse httpResponse = Mockito.mock(HttpResponse.class);
 		HttpEntity httpEntity = Mockito.mock(HttpEntity.class);
@@ -116,11 +116,11 @@ public class TestNAFIdentityPlugin {
 		Mockito.when(httpResponse.getStatusLine()).thenReturn(basicStatus);
 		Mockito.when(client.execute((Mockito.any(HttpUriRequest.class)))).thenReturn(
 				httpResponse);
-		
+
 		this.nafIdentityPlugin.setClient(client);
 		Assert.assertTrue(this.nafIdentityPlugin.isValid(createAccessIdTokenGenerator()));
 	}
-	
+
 	@Test
 	public void testIsInvalidWithTokenGenerator() throws Exception {
 		String url = "https://localhost:0000";
@@ -129,7 +129,7 @@ public class TestNAFIdentityPlugin {
 		this.properties.put(NAFIdentityPlugin.NAME_USER_TOKEN_GENERATOR, name);
 		String password = "password";
 		this.properties.put(NAFIdentityPlugin.PASSWORD_USER_TOKEN_GENERATOR, password);
-		
+
 		HttpClient client = Mockito.mock(HttpClient.class);
 		HttpResponse httpResponse = Mockito.mock(HttpResponse.class);
 		HttpEntity httpEntity = Mockito.mock(HttpEntity.class);
@@ -140,13 +140,13 @@ public class TestNAFIdentityPlugin {
 		BasicStatusLine basicStatus = new BasicStatusLine(new ProtocolVersion("", 0, 0), HttpStatus.SC_OK, "");
 		Mockito.when(httpResponse.getStatusLine()).thenReturn(basicStatus);
 		Mockito.when(client.execute((Mockito.any(HttpUriRequest.class)))).thenReturn(httpResponse);
-				
+
 		this.nafIdentityPlugin.setClient(client);
-				
+
 		String accessIdTokenGenerator = createAccessIdTokenGenerator();
-		Assert.assertFalse(this.nafIdentityPlugin.isValid(accessIdTokenGenerator));	
-	}	
-	
+		Assert.assertFalse(this.nafIdentityPlugin.isValid(accessIdTokenGenerator));
+	}
+
 	@Test
 	public void testCheckUrlTokenGenerator() throws Exception {
 		String url = "https://localhost:0000";
@@ -155,20 +155,20 @@ public class TestNAFIdentityPlugin {
 		this.properties.put(NAFIdentityPlugin.NAME_USER_TOKEN_GENERATOR, name);
 		String password = "password";
 		this.properties.put(NAFIdentityPlugin.PASSWORD_USER_TOKEN_GENERATOR, password);
-		
+
 		String accessIdTokenGenerator = createAccessIdTokenGenerator();
-		HttpUriRequest request = new HttpGet(url + NAFIdentityPlugin.TOKEN_URL_OPERATION 
+		HttpUriRequest request = new HttpGet(url + NAFIdentityPlugin.TOKEN_URL_OPERATION
 				+ URLEncoder.encode(accessIdTokenGenerator, "UTF-8") + NAFIdentityPlugin.METHOD_GET_VALIDITY_CHECK);
 		request.addHeader(NAFIdentityPlugin.NAME, name);
 		request.addHeader(NAFIdentityPlugin.PASSWORD, password);
 		HttpUriRequestMatcher expectedRequest = new HttpUriRequestMatcher(request);
-		
+
 		this.nafIdentityPlugin.setClient(Mockito.spy(HttpClients.createMinimal()));
 		Assert.assertFalse(this.nafIdentityPlugin.isValid(accessIdTokenGenerator));
 		Mockito.verify(this.nafIdentityPlugin.getClient(), Mockito.times(1)).
 				execute(Mockito.argThat(expectedRequest));
 	}
-	
+
 	@Test
 	public void testGetToken() throws Exception {
 		String accessId = createAccessId();
@@ -176,93 +176,93 @@ public class TestNAFIdentityPlugin {
 		Assert.assertNotNull(token);
 		Assert.assertEquals(DEFAULT_USER, token.getUser());
 		Assert.assertEquals(new Date(this.defaultCTime), token.getExpirationDate());
-		Assert.assertEquals(this.defaultSamlAttributes.get(ATTRIBUTE_ONE_SAML_ATTRIBUTE), 
+		Assert.assertEquals(this.defaultSamlAttributes.get(ATTRIBUTE_ONE_SAML_ATTRIBUTE),
 				token.getAttributes().get(ATTRIBUTE_ONE_SAML_ATTRIBUTE));
 		Assert.assertEquals(accessId, token.getAccessId());
 	}
-	
+
 	@Test(expected=OCCIException.class)
 	public void testGetTokenInvalidToken() throws Exception {
 		this.nafIdentityPlugin.getToken("");
-	}	
-	
+	}
+
 	@Test
 	public void testGetCredentials() {
 		Credential[] credentials = this.nafIdentityPlugin.getCredentials();
 		Assert.assertEquals(1, credentials.length);
 	}
-	
+
 	@Test
 	public void testGetForwardableToken() {
-		Token originalToken = new Token("accessId", "user", new Date(), new HashMap<String, String>());		
+		Token originalToken = new Token("accessId", "user", new Date(), new HashMap<String, String>());
 		Assert.assertEquals(originalToken, this.nafIdentityPlugin.getForwardableToken(originalToken));
 	}
-	
+
 	@Test
 	public void testCreateToken() {
 		Assert.assertNull(this.nafIdentityPlugin.createToken(new HashMap<String, String>()));
 	}
-	
+
 	@Test
 	public void testGetAuthenticationURI() {
 		Assert.assertNull(this.nafIdentityPlugin.getAuthenticationURI());
 	}
-	
+
 	@Test
 	public void testReIssueToken() {
-		Token originalToken = new Token("accessId", "user", new Date(), new HashMap<String, String>());		
-		Assert.assertEquals(originalToken, this.nafIdentityPlugin.reIssueToken(originalToken));		
+		Token originalToken = new Token("accessId", "user", new Date(), new HashMap<String, String>());
+		Assert.assertEquals(originalToken, this.nafIdentityPlugin.reIssueToken(originalToken));
 	}
-	
+
 	@Test
 	public void testCheckStatusResponseUnauthorized() {
 		HttpResponse response = Mockito.mock(HttpResponse.class);
 		int httpStatusCode = HttpStatus.SC_UNAUTHORIZED;
-		StatusLine statusLine = new BasicStatusLine(new ProtocolVersion("", 0, 0), 
+		StatusLine statusLine = new BasicStatusLine(new ProtocolVersion("", 0, 0),
 				httpStatusCode, "");
 		Mockito.when(response.getStatusLine()).thenReturn(statusLine);
 		try {
-			this.nafIdentityPlugin.checkStatusResponse(response, "");			
+			this.nafIdentityPlugin.checkStatusResponse(response, "");
 		} catch (OCCIException e) {
 			Assert.assertEquals(httpStatusCode, e.getStatus().getCode());
 			return;
 		}
 		Assert.fail();
 	}
-	
+
 	@Test
 	public void testCheckStatusResponseBadRequest() {
 		HttpResponse response = Mockito.mock(HttpResponse.class);
 		int httpStatusCode = HttpStatus.SC_BAD_REQUEST;
-		StatusLine statusLine = new BasicStatusLine(new ProtocolVersion("", 0, 0), 
+		StatusLine statusLine = new BasicStatusLine(new ProtocolVersion("", 0, 0),
 				httpStatusCode, "");
 		Mockito.when(response.getStatusLine()).thenReturn(statusLine);
 		try {
-			this.nafIdentityPlugin.checkStatusResponse(response, "");			
+			this.nafIdentityPlugin.checkStatusResponse(response, "");
 		} catch (OCCIException e) {
 			Assert.assertEquals(httpStatusCode, e.getStatus().getCode());
 			return;
 		}
 		Assert.fail();
-	}	
-	
+	}
+
 	private String createAccessId() throws Exception {
 		JSONObject jsonObject = new JSONObject();
 		jsonObject.put(NAFIdentityPlugin.NAME, DEFAULT_USER);
-		jsonObject.put(NAFIdentityPlugin.TOKEN_ETIME_JSONOBJECT, this.defaultCTime);		
+		jsonObject.put(NAFIdentityPlugin.TOKEN_ETIME_JSONOBJECT, this.defaultCTime);
 		jsonObject.put(NAFIdentityPlugin.SAML_ATTRIBUTES_JSONOBJECT, this.defaultSamlAttributes);
 		String message = jsonObject.toString();
-		
+
 		return createFinalToken(message);
 	}
-	
+
 	private String createAccessIdTokenGenerator() throws Exception {
 		JSONObject jsonObject = new JSONObject();
 		jsonObject.put(NAFIdentityPlugin.NAME, DEFAULT_USER);
-		jsonObject.put(NAFIdentityPlugin.TOKEN_ETIME_JSONOBJECT, this.defaultCTime);		
+		jsonObject.put(NAFIdentityPlugin.TOKEN_ETIME_JSONOBJECT, this.defaultCTime);
 		jsonObject.put(NAFIdentityPlugin.TYPE, NAFIdentityPlugin.DEFAULT_TYPE_TOKEN_GENERATOR);
 		String message = jsonObject.toString();
-		
+
 		return createFinalToken(message);
 	}
 
@@ -272,8 +272,8 @@ public class TestNAFIdentityPlugin {
 		String signature = RSAUtils.sign(keyPair.getPrivate(), message);
 		String accessIdStr = message + NAFIdentityPlugin.STRING_SEPARATOR + signature;
 		return Base64.encode(accessIdStr.getBytes());
-	}	
-	
+	}
+
 	public void writePublicKeyToFile(String content) throws IOException {
 		File file = new File(DEFAULT_FILE_PUBLIC_KEY_PATH);
 
@@ -285,8 +285,8 @@ public class TestNAFIdentityPlugin {
 		BufferedWriter bw = new BufferedWriter(fw);
 		bw.write(content);
 		bw.close();
-	}	
-	
+	}
+
 	private class HttpUriRequestMatcher extends ArgumentMatcher<HttpUriRequest> {
 
 		private HttpUriRequest request;
@@ -319,7 +319,7 @@ public class TestNAFIdentityPlugin {
 							headerEquals = true;
 							break;
 						}
-					} else 
+					} else
 					if (header.getName().equals(comparedHeader.getName())
 							&& header.getValue().equals(comparedHeader.getValue())) {
 						headerEquals = true;
@@ -332,6 +332,6 @@ public class TestNAFIdentityPlugin {
 			}
 			return true;
 		}
-	}	
-	
+	}
+
 }

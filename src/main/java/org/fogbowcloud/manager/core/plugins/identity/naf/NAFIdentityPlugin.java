@@ -42,14 +42,14 @@ public class NAFIdentityPlugin implements IdentityPlugin {
 	protected static final String TOKEN_ETIME_JSONOBJECT = "token_etime";
 	protected static final String PASSWORD = "password";
 	protected static final String NAME = "name";
-	
+
 	private static final Logger LOGGER = Logger.getLogger(NAFIdentityPlugin.class);
 	protected static final String NAF_PUBLIC_KEY = "naf_identity_public_key";
 	protected static final String STRING_SEPARATOR = "!#!";
-	
+
 	private Properties properties;
 	private HttpClient client;
-	
+
 	public NAFIdentityPlugin(Properties properties) {
 		this.properties = properties;
 		initClient();
@@ -58,15 +58,15 @@ public class NAFIdentityPlugin implements IdentityPlugin {
 	private void initClient() {
 		client = HttpClients.createMinimal();
 	}
-	
+
 	protected HttpClient getClient() {
 		return client;
 	}
-	
+
 	protected void setClient(HttpClient client) {
 		this.client = client;
 	}
-	
+
 	@Override
 	public Token createToken(Map<String, String> userCredentials) {
 		return null;
@@ -84,14 +84,14 @@ public class NAFIdentityPlugin implements IdentityPlugin {
 		}
 		if (!isValid(accessId)) {
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
-		}		
-			
+		}
+
 		JSONObject jsonObject;
 		String user = null;
 		Date date = null;
 		Map<String, String> attributes = null;
 		try {
-			String accessIdDecoded = new String(Base64.decode(accessId.getBytes()), Charset.forName("UTF-8")); 
+			String accessIdDecoded = new String(Base64.decode(accessId.getBytes()), Charset.forName("UTF-8"));
 			AccessIdFormat accessIdFormat = new AccessIdFormat(accessIdDecoded);
 			jsonObject = new JSONObject(accessIdFormat.getMessage());
 			user = jsonObject.getString(NAME);
@@ -101,16 +101,16 @@ public class NAFIdentityPlugin implements IdentityPlugin {
 			LOGGER.error("Could not create token by accessId.", e);
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}
-		
+
 		return new Token(accessId, user, date, attributes);
 	}
 
 	@Override
-	public boolean isValid(String accessId) {	
+	public boolean isValid(String accessId) {
 		if (accessId == null || accessId.isEmpty()) {
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}
-		String accessIdDecoded = new String(Base64.decode(accessId.getBytes()), Charset.forName("UTF-8")); 		
+		String accessIdDecoded = new String(Base64.decode(accessId.getBytes()), Charset.forName("UTF-8"));
 		RSAPublicKey publicKey = null;
 		try {
 			publicKey = RSAUtils.getPublicKey(properties.getProperty(NAF_PUBLIC_KEY));
@@ -118,43 +118,43 @@ public class NAFIdentityPlugin implements IdentityPlugin {
 			LOGGER.warn("Could not create RSA public key.", e);
 			return false;
 		}
-		
+
 		AccessIdFormat accessIdFormat = null;
 		try {
 			accessIdFormat = new AccessIdFormat(accessIdDecoded);
 			RSAUtils.verify(publicKey, accessIdFormat.getMessage(), accessIdFormat.getSignature());
-		} catch (Exception e) {			
+		} catch (Exception e) {
 			LOGGER.warn("Could not verify access id.", e);
 			return false;
 		}
-		
+
 		try {
 			String jsonTokenSlice = accessIdFormat.getMessage();
 			String type = new JSONObject(jsonTokenSlice).optString(TYPE);
 			if (jsonTokenSlice != null && type != null && type.equals(DEFAULT_TYPE_TOKEN_GENERATOR)) {
 				if (!isValidTokenGenerator(accessIdFormat.getMessage(), URLEncoder.encode(accessId, "UTF-8"))) {
 					return false;
-				}				
+				}
 			}
 		} catch (Exception e) {
 			LOGGER.warn("Could not check if is token generator.", e);
 			return false;
 		}
-		
+
 		return true;
 	}
 
-	private boolean isValidTokenGenerator(String json, String accessId) throws JSONException {		
+	private boolean isValidTokenGenerator(String json, String accessId) throws JSONException {
 		String endpoint = this.properties.getProperty(ENDPOINT_TOKEN_GENERATOR);
 		String username = this.properties.getProperty(NAME_USER_TOKEN_GENERATOR);
 		String password = this.properties.getProperty(PASSWORD_USER_TOKEN_GENERATOR);
-		String responseStr = doGetRequest(endpoint + TOKEN_URL_OPERATION + accessId 
+		String responseStr = doGetRequest(endpoint + TOKEN_URL_OPERATION + accessId
 				+ METHOD_GET_VALIDITY_CHECK, username, password);
-				
+
 		if (!responseStr.equals(VALID_RESPONSE_TOKEN_GENERATOR)) {
 			return false;
 		}
-		
+
 		return true;
 	}
 
@@ -171,29 +171,29 @@ public class NAFIdentityPlugin implements IdentityPlugin {
 	@Override
 	public Token getForwardableToken(Token originalToken) {
 		return originalToken;
-	}	
-	
+	}
+
 	@SuppressWarnings("unchecked")
 	protected static Map<String, String> toMap(JSONObject jsonObject) throws JSONException {
 		if (jsonObject == null) {
 			return null;
 		}
-	    Map<String, String> map = new HashMap<String, String>();
+		Map<String, String> map = new HashMap<String, String>();
 
 		Iterator<String> keysItr = jsonObject.keys();
-	    while(keysItr.hasNext()) {
-	        String key = keysItr.next();
-	        String value = jsonObject.getString(key);
-	        map.put(key, value);
-	    }
-	    return map;
-	}	
-	
+		while(keysItr.hasNext()) {
+			String key = keysItr.next();
+			String value = jsonObject.getString(key);
+			map.put(key, value);
+		}
+		return map;
+	}
+
 	protected String doGetRequest(String endpoint, String username, String password) {
 		HttpResponse response = null;
 		String responseStr = null;
 		try {
-			HttpUriRequest request = new HttpGet(endpoint);			
+			HttpUriRequest request = new HttpGet(endpoint);
 			request.addHeader(NAME, username);
 			request.addHeader(PASSWORD, password);
 			response = client.execute(request);
@@ -210,21 +210,21 @@ public class NAFIdentityPlugin implements IdentityPlugin {
 		}
 		checkStatusResponse(response, responseStr);
 		return responseStr;
-	}	
-	
+	}
+
 	protected void checkStatusResponse(HttpResponse response, String message) {
 		if (response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		} else if (response.getStatusLine().getStatusCode() > 204) {
 			throw new OCCIException(ErrorType.BAD_REQUEST, response.getStatusLine().toString());
 		}
-	}	
-	
+	}
+
 	private class AccessIdFormat {
-		
+
 		private String signature;
 		private String message;
-		
+
 		public AccessIdFormat(String accessIdStr) throws Exception {
 			int signatureIndex = 1;
 			int messageIndex = 0;
@@ -235,14 +235,14 @@ public class NAFIdentityPlugin implements IdentityPlugin {
 			this.signature = partiesAccessId[signatureIndex];
 			this.message = partiesAccessId[messageIndex];
 		}
-		
+
 		public String getSignature() {
 			return signature;
 		}
-		
+
 		public String getMessage() {
 			return message;
 		}
-		
+
 	}
 }
