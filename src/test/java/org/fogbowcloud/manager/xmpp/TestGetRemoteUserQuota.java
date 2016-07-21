@@ -50,17 +50,18 @@ public class TestGetRemoteUserQuota {
 
 		managerTestHelper.initializeXMPPManagerComponent(false);
 
-		String acessId = "accessId";
+		String accessId = "accessId";
+		String user = "user";
 
 		Map<String, String> localCredentials = new HashMap<String, String>();
 		localCredentials.put("Cred", "Test");
 
-		Token token = new Token("accessId", "user", new Date(), new HashMap<String, String>());
+		Token token = new Token(accessId, user, new Date(), new HashMap<String, String>());
 
 		ResourcesInfo resourcesInfo = new ResourcesInfo(id, cpuIdle, cpuInUse, memIdle, memInUse, instancesIdle,
 				instancesInUse);
 
-		Mockito.when(managerTestHelper.getLocalCredentialsPlugin().getLocalCredentials(Mockito.eq(acessId)))
+		Mockito.when(managerTestHelper.getLocalCredentialsPlugin().getLocalCredentials(Mockito.eq(accessId)))
 				.thenReturn(localCredentials);
 
 		Mockito.when(managerTestHelper.getIdentityPlugin().createToken(Mockito.eq(localCredentials))).thenReturn(token);
@@ -69,7 +70,7 @@ public class TestGetRemoteUserQuota {
 
 		ResourcesInfo ReturnedResourcesInfo;
 
-		ReturnedResourcesInfo = ManagerPacketHelper.getRemoteUserQuota(acessId,
+		ReturnedResourcesInfo = ManagerPacketHelper.getRemoteUserQuota(token,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, managerTestHelper.createPacketSender());
 
 		assertEquals(id, ReturnedResourcesInfo.getId());
@@ -97,21 +98,22 @@ public class TestGetRemoteUserQuota {
 		
 		managerTestHelper.initializeXMPPManagerComponent(false);
 
-		String acessId = "accessId";
+		String accessId = "accessId";
+		String user = "user";
 		
 		Map<String, String> localCredentials = new HashMap<String, String>();
 		localCredentials.put("Test", "Test");
 		Map<String, Map<String, String>> allLocalCredentials = new HashMap<String, Map<String, String>>(); 
 		allLocalCredentials.put("Cred", localCredentials);
 		
-		Token token = new Token("accessId", "user", new Date(), new HashMap<String, String>());
-
+		Token token = new Token(accessId, user, new Date(), new HashMap<String, String>());
+		
 		ResourcesInfo resourcesInfo = new ResourcesInfo(id, cpuIdle, cpuInUse,
 				memIdle, memInUse, 
 				instancesIdle, instancesInUse);
 		
 		Mockito.when(managerTestHelper.getLocalCredentialsPlugin().getLocalCredentials(
-						Mockito.eq(acessId))).thenReturn(null);
+						Mockito.eq(accessId))).thenReturn(null);
 		Mockito.when(managerTestHelper.getLocalCredentialsPlugin().getAllLocalCredentials())
 				.thenReturn(allLocalCredentials);
 		
@@ -123,7 +125,7 @@ public class TestGetRemoteUserQuota {
 		
 		ResourcesInfo ReturnedResourcesInfo;
 
-		ReturnedResourcesInfo = ManagerPacketHelper.getRemoteUserQuota(acessId, 
+		ReturnedResourcesInfo = ManagerPacketHelper.getRemoteUserQuota(token, 
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, 
 				managerTestHelper.createPacketSender());
 		
@@ -146,13 +148,15 @@ public class TestGetRemoteUserQuota {
 		
 		ManagerController mc = Mockito.mock(ManagerController.class);
 		Mockito.when(mc.getResourceInfoForRemoteMember(
-				Mockito.any(String.class))).thenReturn(null);
+				Mockito.any(String.class), Mockito.any(String.class))).thenReturn(null);
 		
 		managerTestHelper.initializeXMPPManagerComponentFacadeMocki(false, mc);
 
-		String acessId = "accessId";
+		String accessId = "accessId";
+		String user = "user";		
+		Token token = new Token(accessId, user, new Date(), new HashMap<String, String>());
 		
-		ManagerPacketHelper.getRemoteUserQuota(acessId, 
+		ManagerPacketHelper.getRemoteUserQuota(token, 
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, 
 				managerTestHelper.createPacketSender());
 		

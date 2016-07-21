@@ -28,7 +28,9 @@ import org.fogbowcloud.manager.core.model.ImageState;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.util.HttpPatch;
+import org.fogbowcloud.manager.occi.OCCIConstants;
 import org.fogbowcloud.manager.occi.instance.Instance;
+import org.fogbowcloud.manager.occi.instance.Instance.Link;
 import org.fogbowcloud.manager.occi.instance.InstanceState;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.ErrorType;
@@ -52,7 +54,8 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 
 	private static final String OS_VOLUME_ATTACHMENTS = "/os-volume_attachments";
 	private static final String SERVERS = "/servers";
-	private static final String SUFIX_ENDPOINT_FLAVORS = "/flavors";
+	private static final String SUFFIX_ENDPOINT_FLAVORS = "/flavors";
+	private static final String SUFFIX_ENDPOINT_NETWORKS = "/networks";
 	private static final String NO_VALID_HOST_WAS_FOUND = "No valid host was found";
 	private static final String STATUS_JSON_FIELD = "status";
 	private static final String IMAGES_JSON_FIELD = "images";
@@ -69,6 +72,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 	protected static final String NAME_JSON_FIELD = "name";
 	protected static final String V2_IMAGES_FILE = "/file";
 	protected static final String V2_IMAGES = "/v2/images";
+	private static final String NETWORK_V2_API_ENDPOINT = "/v2.0";
 
 	private final String COMPUTE_V2_API_ENDPOINT = "/v2/";
 	protected static final String TENANT_ID = "tenantId";
@@ -76,6 +80,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 	private String glanceV2APIEndpoint;
 	private String glanceV2ImageVisibility;
 	private String computeV2APIEndpoint;
+	private String networkV2APIEndpoint;
 	private String networkId;
 	private Map<String, String> fogbowTermToOpenStack = new HashMap<String, String>();
 	private HttpClient client;
@@ -97,6 +102,9 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		glanceV2ImageVisibility = properties
 				.getProperty(OpenStackConfigurationConstants.COMPUTE_GLANCEV2_IMAGE_VISIBILITY, 
 						PRIVATE);
+		
+		networkV2APIEndpoint = properties.getProperty(
+				OpenStackConfigurationConstants.NETWORK_NOVAV2_URL_KEY) + NETWORK_V2_API_ENDPOINT;
 		
 		// userdata
 		fogbowTermToOpenStack.put(OrderConstants.USER_DATA_TERM, "user_data");
@@ -153,10 +161,15 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 
 		String publicKey = xOCCIAtt.get(OrderAttribute.DATA_PUBLIC_KEY.getValue());
 		String keyName = getKeyname(token, publicKey);
-				
-		String userdata = xOCCIAtt.get(OrderAttribute.USER_DATA_ATT.getValue());		
+		
+		String userdata = xOCCIAtt.get(OrderAttribute.USER_DATA_ATT.getValue());
+		
+		String orderNetworkId = xOCCIAtt.get(OrderAttribute.NETWORK_ID.getValue());
+		if (orderNetworkId == null || orderNetworkId.isEmpty()) {
+			orderNetworkId = this.networkId;
+		}
 		try {
-			JSONObject json = generateJsonRequest(imageRef, flavorId, userdata, keyName);
+			JSONObject json = generateJsonRequest(imageRef, flavorId, userdata, keyName, orderNetworkId);
 			String requestEndpoint = computeV2APIEndpoint + tenantId + SERVERS;
 			String jsonResponse = doPostRequest(requestEndpoint, token.getAccessId(), json);
 			return getAttFromJson(ID_JSON_FIELD, jsonResponse);
@@ -181,7 +194,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 				return;
 			}
 			
-			String endpoint = computeV2APIEndpoint + tenantId + SUFIX_ENDPOINT_FLAVORS;
+			String endpoint = computeV2APIEndpoint + tenantId + SUFFIX_ENDPOINT_FLAVORS;
 			String authToken = token.getAccessId();
 			String jsonResponseFlavors = doGetRequest(endpoint, authToken);
 
@@ -300,7 +313,8 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 			throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
 		} else if (response.getStatusLine().getStatusCode() == HttpStatus.SC_BAD_REQUEST) {
 			throw new OCCIException(ErrorType.BAD_REQUEST, message);
-		} else if (response.getStatusLine().getStatusCode() == HttpStatus.SC_REQUEST_TOO_LONG) {
+		} else if (response.getStatusLine().getStatusCode() == HttpStatus.SC_REQUEST_TOO_LONG 
+				|| response.getStatusLine().getStatusCode() == HttpStatus.SC_FORBIDDEN) {
 			if (message.contains(ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES)) {
 				throw new OCCIException(ErrorType.QUOTA_EXCEEDED,
 						ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES);
@@ -316,7 +330,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 	}
 
 	private JSONObject generateJsonRequest(String imageRef, String flavorRef, String userdata,
-			String keyName) throws JSONException {
+			String keyName, String networkId) throws JSONException {
 
 		JSONObject server = new JSONObject();
 		server.put(NAME_JSON_FIELD, "fogbow-instance-" + UUID.randomUUID().toString());
@@ -418,13 +432,17 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 			
 			// getting local private IP
 			JSONArray addressesNamesArray = rootServer.getJSONObject("server").getJSONObject("addresses").names();
+			String networkMac = "";
+			String networkName = null;
 			if (addressesNamesArray != null && addressesNamesArray.length() > 0) {
-				String networkName = rootServer.getJSONObject("server").getJSONObject("addresses").names().getString(0);
+				networkName = rootServer.getJSONObject("server").getJSONObject("addresses").names().getString(0);
 							
 				JSONArray networkArray = rootServer.getJSONObject("server").getJSONObject("addresses").getJSONArray(networkName);
 				if (networkArray != null) {
 					for (int i = 0; i < networkArray.length(); i++) {
-						String addr = networkArray.getJSONObject(i).getString("addr");
+						JSONObject networkObject = networkArray.getJSONObject(i);
+						String addr = networkObject.getString("addr");
+						networkMac = networkObject.getString("OS-EXT-IPS-MAC:mac_addr");
 						if (addr != null && !addr.isEmpty()) {
 							attributes.put(Instance.LOCAL_IP_ADDRESS_ATT, addr);
 							break;
@@ -442,9 +460,55 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 
 			LOGGER.debug("Instance resources: " + resources);
 
-			return new Instance(id, resources, attributes, new ArrayList<Instance.Link>(), state);
+			ArrayList<Link> links = new ArrayList<Instance.Link>();
+			
+			Link privateIpLink = new Link();
+			privateIpLink.setType(OrderConstants.NETWORK_TERM);
+			String serverNetworkId = getNetworkIdByName(token, networkName);
+			privateIpLink.setId(serverNetworkId);
+			privateIpLink.setName("</" + OrderConstants.NETWORK_TERM + "/" + serverNetworkId + ">");
+			
+			Map<String, String> linkAttributes = new HashMap<String, String>();
+			linkAttributes.put("rel", OrderConstants.INFRASTRUCTURE_OCCI_SCHEME 
+					+ OrderConstants.NETWORK_TERM);
+			linkAttributes.put("category", OrderConstants.INFRASTRUCTURE_OCCI_SCHEME 
+					+ OrderConstants.NETWORK_INTERFACE_TERM);
+			linkAttributes.put(OCCIConstants.NETWORK_INTERFACE_INTERFACE, "eth0");
+			linkAttributes.put(OCCIConstants.NETWORK_INTERFACE_MAC, networkMac);
+			linkAttributes.put(OCCIConstants.NETWORK_INTERFACE_STATE, 
+					OCCIConstants.NetworkState.ACTIVE.getValue());
+			
+			privateIpLink.setAttributes(linkAttributes);
+			links.add(privateIpLink);
+			
+			return new Instance(id, resources, attributes, links, state);
 		} catch (JSONException e) {
 			LOGGER.warn("There was an exception while getting instances from json.", e);
+		}
+		return null;
+	}
+
+	private String getNetworkIdByName(Token token, String networkName) {
+		
+		if (networkName == null) {
+			return null;
+		}
+		
+		String requestEndpoint = networkV2APIEndpoint 
+				+ SUFFIX_ENDPOINT_NETWORKS;
+		String json = doGetRequest(requestEndpoint, token.getAccessId());
+		try {
+			JSONObject rootNetworks = new JSONObject(json);
+			JSONArray jsonArray = rootNetworks.getJSONArray("networks");
+			for (int i = 0; i < jsonArray.length(); i++) {
+				JSONObject networkJSONObject = jsonArray.getJSONObject(i);
+				if (networkJSONObject.getString("name")
+						.equals(networkName)) {
+					return networkJSONObject.getString("id");
+				}
+			}
+		} catch (JSONException e) {
+			LOGGER.error("Could not retrieve network details.", e);
 		}
 		return null;
 	}

@@ -66,22 +66,22 @@ public class TestNoFPrioritizationPlugin {
 		List<AccountingInfo> accounting = new ArrayList<AccountingInfo>();
 		AccountingInfo accountingEntry = new AccountingInfo("user",
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, "member1");
-		accountingEntry.addConsuption(20);
+		accountingEntry.addConsumption(20);
 		accounting.add(accountingEntry);
 
 		accountingEntry = new AccountingInfo("user", "member1",
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
-		accountingEntry.addConsuption(10);
+		accountingEntry.addConsumption(10);
 		accounting.add(accountingEntry);
 
 		accountingEntry = new AccountingInfo("user",
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, "member2");
-		accountingEntry.addConsuption(30);
+		accountingEntry.addConsumption(30);
 		accounting.add(accountingEntry);
 
 		accountingEntry = new AccountingInfo("user", "member2",
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
-		accountingEntry.addConsuption(10);
+		accountingEntry.addConsumption(10);
 		accounting.add(accountingEntry);
 		
 		Mockito.when(accountingPlugin.getAccountingInfo()).thenReturn(
@@ -110,22 +110,22 @@ public class TestNoFPrioritizationPlugin {
 		List<AccountingInfo> accounting = new ArrayList<AccountingInfo>();
 		AccountingInfo accountingEntry = new AccountingInfo("user",
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, "member1");
-		accountingEntry.addConsuption(30);
+		accountingEntry.addConsumption(30);
 		accounting.add(accountingEntry);
 
 		accountingEntry = new AccountingInfo("user", "member1",
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
-		accountingEntry.addConsuption(10);
+		accountingEntry.addConsumption(10);
 		accounting.add(accountingEntry);
 
 		accountingEntry = new AccountingInfo("user",
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, "member2");
-		accountingEntry.addConsuption(30);
+		accountingEntry.addConsumption(30);
 		accounting.add(accountingEntry);
 
 		accountingEntry = new AccountingInfo("user", "member2",
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
-		accountingEntry.addConsuption(10);
+		accountingEntry.addConsumption(10);
 		accounting.add(accountingEntry);
 		
 		Mockito.when(accountingPlugin.getAccountingInfo()).thenReturn(
@@ -154,22 +154,22 @@ public class TestNoFPrioritizationPlugin {
 		List<AccountingInfo> accounting = new ArrayList<AccountingInfo>();
 		AccountingInfo accountingEntry = new AccountingInfo("user",
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, "member1");
-		accountingEntry.addConsuption(20);
+		accountingEntry.addConsumption(20);
 		accounting.add(accountingEntry);
 
 		accountingEntry = new AccountingInfo("user", "member1",
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
-		accountingEntry.addConsuption(10);
+		accountingEntry.addConsumption(10);
 		accounting.add(accountingEntry);
 
 		accountingEntry = new AccountingInfo("user",
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, "member2");
-		accountingEntry.addConsuption(30);
+		accountingEntry.addConsumption(30);
 		accounting.add(accountingEntry);
 
 		accountingEntry = new AccountingInfo("user", "member2",
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
-		accountingEntry.addConsuption(10);
+		accountingEntry.addConsumption(10);
 		accounting.add(accountingEntry);
 		
 		Mockito.when(accountingPlugin.getAccountingInfo()).thenReturn(
@@ -214,22 +214,22 @@ public class TestNoFPrioritizationPlugin {
 		List<AccountingInfo> accounting = new ArrayList<AccountingInfo>();
 		AccountingInfo accountingEntry = new AccountingInfo("user",
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, "member1");
-		accountingEntry.addConsuption(20);
+		accountingEntry.addConsumption(20);
 		accounting.add(accountingEntry);
 
 		accountingEntry = new AccountingInfo("user", "member1",
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
-		accountingEntry.addConsuption(10);
+		accountingEntry.addConsumption(10);
 		accounting.add(accountingEntry);
 
 		accountingEntry = new AccountingInfo("user",
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, "member2");
-		accountingEntry.addConsuption(30);
+		accountingEntry.addConsumption(30);
 		accounting.add(accountingEntry);
 
 		accountingEntry = new AccountingInfo("user", "member2",
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
-		accountingEntry.addConsuption(10);
+		accountingEntry.addConsumption(10);
 		accounting.add(accountingEntry);
 		
 		Mockito.when(accountingPlugin.getAccountingInfo()).thenReturn(
@@ -280,22 +280,22 @@ public class TestNoFPrioritizationPlugin {
 		List<AccountingInfo> accounting = new ArrayList<AccountingInfo>();
 		AccountingInfo accountingEntry = new AccountingInfo("user",
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, "member1");
-		accountingEntry.addConsuption(20);
+		accountingEntry.addConsumption(20);
 		accounting.add(accountingEntry);
 
 		accountingEntry = new AccountingInfo("user", "member1",
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
-		accountingEntry.addConsuption(10);
+		accountingEntry.addConsumption(10);
 		accounting.add(accountingEntry);
 
 		accountingEntry = new AccountingInfo("user",
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, "member2");
-		accountingEntry.addConsuption(30);
+		accountingEntry.addConsumption(30);
 		accounting.add(accountingEntry);
 
 		accountingEntry = new AccountingInfo("user", "member2",
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
-		accountingEntry.addConsuption(10);
+		accountingEntry.addConsumption(10);
 		accounting.add(accountingEntry);
 		
 		Mockito.when(accountingPlugin.getAccountingInfo()).thenReturn(
@@ -324,22 +324,22 @@ public class TestNoFPrioritizationPlugin {
 		List<AccountingInfo> accounting = new ArrayList<AccountingInfo>();
 		AccountingInfo accountingEntry = new AccountingInfo("user",
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, "member1");
-		accountingEntry.addConsuption(20);
+		accountingEntry.addConsumption(20);
 		accounting.add(accountingEntry);
 
 		accountingEntry = new AccountingInfo("user", "member1",
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
-		accountingEntry.addConsuption(10);
+		accountingEntry.addConsumption(10);
 		accounting.add(accountingEntry);
 
 		accountingEntry = new AccountingInfo("user",
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, "member2");
-		accountingEntry.addConsuption(30);
+		accountingEntry.addConsumption(30);
 		accounting.add(accountingEntry);
 
 		accountingEntry = new AccountingInfo("user", "member2",
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
-		accountingEntry.addConsuption(10);
+		accountingEntry.addConsumption(10);
 		accounting.add(accountingEntry);
 		
 		Mockito.when(accountingPlugin.getAccountingInfo()).thenReturn(

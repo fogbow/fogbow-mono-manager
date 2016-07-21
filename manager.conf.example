@@ -6,14 +6,25 @@ xmpp_port=5347
 rendezvous_jid=rendezvous.test.com
 greensitter_jid=greensitter.test.com
 
-## Order database
-order_datastore_url=jdbc:sqlite:/tmp/dbOrderSQLite.db
-order_bd_updater_period=30000
+## Manager database
+manager_datastore_url=jdbc:sqlite:/tmp/dbManagerSQLite.db
+
+bd_updater_period=30000
 
 ## Static mapping from flavors to requirements (Optional)
 # flavor_fogbow_small={mem=512, cpu=1}
 # flavor_fogbow_medium={mem=1024, cpu=2}
 # flavor_fogbow_large={mem=2048, cpu=4}
+
+
+## network Plugin (Openstack)
+network_class=org.fogbowcloud.manager.core.plugins.network.openstack.OpenStackV2NetworkPlugin
+network_openstack_v2_url=http://localhost:9696
+external_gateway_info=ea51ed0c-0e8a-448d-8202-c79777109ffe
+
+# Network plugin (OpenNebula)
+network_class=org.fogbowcloud.manager.core.plugins.network.opennebula.OpenNebulaNetworkPlugin
+network_one_bridge=br0
 
 ## Storage Plugin (Openstack)
 storage_class=org.fogbowcloud.manager.core.plugins.storage.openstack.OpenStackV2StoragePlugin
@@ -29,6 +40,10 @@ storage_v2_url=http://localhost:8776
 
 ## Storage Plugin (NoCloud)
 # storage_class=org.fogbowcloud.manager.core.plugins.storage.nocloud.NoCloudStoragePlugin
+
+## Storage Plugin (EC2)
+# storage_class=org.fogbowcloud.manager.core.plugins.storage.ec2.EC2StoragePlugin
+# storage_ec2_availability_zone=us-east-1b
 
 ## Compute Plugin (Openstack)
 compute_class=org.fogbowcloud.manager.core.plugins.compute.openstack.OpenStackNovaV2ComputePlugin
@@ -80,7 +95,7 @@ compute_novav2_network_id=ea51ed0c-0e8a-448d-8202-c79777109ffe
 # compute_cloudstack_expunge_on_destroy=true
 
 ##Compute Plugin (Azure)
-# compute_class=org.fogbowcloud.manager.core.plugins.compute.cloudstack.AzureComputePlugin
+# compute_class=org.fogbowcloud.manager.core.plugins.compute.azure.AzureComputePlugin
 # compute_azure_max_vcpu=10
 # compute_azure_max_ram=10240
 # compute_azure_region=East US
@@ -88,6 +103,7 @@ compute_novav2_network_id=ea51ed0c-0e8a-448d-8202-c79777109ffe
 # compute_azure_storage_key=abcd12345
 
 ## Compute Plugin (EC2)
+# compute_class=org.fogbowcloud.manager.core.plugins.compute.ec2.EC2ComputePlugin
 # compute_ec2_region=us-east-1
 # compute_ec2_security_group_id=sg-12345678
 # compute_ec2_subnet_id=subnet-12345678
@@ -135,6 +151,8 @@ remote_prioritization_plugin_class=org.fogbowcloud.manager.core.plugins.prioriti
 nof_prioritize_local=true
 
 instance_datastore_url=jdbc:sqlite:/tmp/federated_instance
+storage_datastore_url=jdbc:sqlite:/tmp/federated_storage
+network_datastore_url=jdbc:sqlite:/tmp/federated_network
 
 ## If you are using NoFMemberPicker or NoFPrioritizationPlugin classes
 nof_trustworthy=false
@@ -207,6 +225,10 @@ federation_identity_url=http://localhost:5000
 # mapper_defaults_keystore_path=/etc/keystore/azure
 # mapper_defaults_keystore_password=test123
 
+## Federation Identity (Simple Token Identity PLugin)
+# federation_identity_class=org.fogbowcloud.manager.core.plugins.identity.simpletoken.SimpleTokenIdentityPlugin
+# simple_token_identity_valid_token_id=9398ybc43r-c9871btr7
+
 ## Member Validator
 member_validator_class=org.fogbowcloud.manager.core.plugins.memberauthorization.DefaultMemberAuthorizationPlugin
 member_validator_ca_dir=
@@ -220,9 +242,14 @@ my_ip=127.0.0.1
 #admin_users=user1;user2
 
 ## Accounting Plugin
+## Compute accounting plugin
 accounting_class=org.fogbowcloud.manager.core.plugins.accounting.FCUAccountingPlugin
 accounting_update_period=300000
-accounting_datastore_url=jdbc:sqlite:/tmp/usage
+fcu_accounting_datastore_url=jdbc:sqlite:/tmp/computeusage
+
+## Storage accounting plugin
+storage_accounting_class=org.fogbowcloud.manager.core.plugins.accounting.SimpleStorageAccountingPlugin
+simple_storage_accounting_datastore_url=jdbc:sqlite:/tmp/storageusage
 
 ## Benchmarking (SSH Benchmarking plugin)
 # benchmarking_class=org.fogbowcloud.manager.core.plugins.benchmarking.SSHBenchmarkingPlugin
@@ -235,13 +262,18 @@ accounting_datastore_url=jdbc:sqlite:/tmp/usage
 ## Benchmarking (Vanilla Benchmarking Plugin)
 benchmarking_class=org.fogbowcloud.manager.core.plugins.benchmarking.VanillaBenchmarkingPlugin
 
+#Capacity controller plugin
+capacity_controller_class=org.fogbowcloud.manager.core.plugins.capacitycontroller.fairnessdriven.TwoFoldCapacityController
+capacity_controller_update_period=600000
+#parameters of loopback control
+controller_delta=0.05
+controller_minimum_threshold=0.8
+controller_maximum_threshold=0.95
+controller_maximum_capacity=100
+
 
 ## OCCI extra resources
 #occi_extra_resource_file_path=
-
-
-public_key; scheme="http://schemas.openstack.org/instance/credentials#"; class="mixin"; 
-org.openstack.credentials.publickey.data
 
 # Order public key properties
 occi_extra_resource_fogbow_public_key=public_key
