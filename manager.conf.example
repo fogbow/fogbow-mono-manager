@@ -234,6 +234,14 @@ federation_identity_url=http://localhost:5000
 # mapper_defaults_keystore_path=/etc/keystore/azure
 # mapper_defaults_keystore_password=test123
 
+## Federation Identity (Simple Token Identity Plugin)
+# federation_identity_class=org.fogbowcloud.manager.core.plugins.identity.simpletoken.SimpleTokenIdentityPlugin
+# simple_token_identity_valid_token_id=9398ybc43r-c9871btr7
+
+## Federation Identity (NAF Identity Plugin)
+federation_identity_class=org.fogbowcloud.manager.core.plugins.identity.naf.NAFIdentityPlugin
+naf_identity_plublic_key=
+
 ## Member Validator
 member_validator_class=org.fogbowcloud.manager.core.plugins.memberauthorization.DefaultMemberAuthorizationPlugin
 member_validator_ca_dir=

@@ -8,8 +8,10 @@ import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
+import org.apache.xml.security.utils.Base64;
 import org.fogbowcloud.manager.core.plugins.util.Credential;
 import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.Token;
@@ -21,10 +23,15 @@ import org.junit.Test;
 
 public class TestNAFIdentityPlugin {
 
+	
 	private static final String DEFAULT_FILE_PUBLIC_KEY_PATH = "src/test/resources/public-key";
 	private NAFIdentityPlugin nafIdentityPlugin;
-	private String DEFAULT_USER = "fulano";
 	private KeyPair keyPair;
+	
+	private final String DEFAULT_USER = "fulano";
+	private Map<String, String> defaultSamlAttributes;
+	private static final String ATTRIBUTE_ONE_SAML_ATTRIBUTE = "attributeOne";
+	private long defaultCTime;
 	
 	@Before
 	public void setUp() throws Exception {
@@ -34,6 +41,10 @@ public class TestNAFIdentityPlugin {
 			Assert.fail();
 		}
 				
+		this.defaultCTime = System.currentTimeMillis();
+		this.defaultSamlAttributes = new HashMap<String, String>();
+		this.defaultSamlAttributes.put(ATTRIBUTE_ONE_SAML_ATTRIBUTE, "valueAttributeOne");
+		
 		writePublicKeyToFile(RSAUtils.savePublicKey(this.keyPair.getPublic()));		
 		Properties properties = new Properties();
 		properties.put(NAFIdentityPlugin.NAF_PUBLIC_KEY, DEFAULT_FILE_PUBLIC_KEY_PATH);
@@ -55,13 +66,13 @@ public class TestNAFIdentityPlugin {
 	
 	@Test
 	public void testIsInvalid() throws Exception {
-		Assert.assertFalse(this.nafIdentityPlugin.isValid(""));
+		Assert.assertFalse(this.nafIdentityPlugin.isValid("wrong_token"));
 	}	
 	
 	@Test
 	public void testIsInvalidWithoutublicKey() throws Exception {
 		this.nafIdentityPlugin = new NAFIdentityPlugin(new Properties());
-		Assert.assertFalse(this.nafIdentityPlugin.isValid(""));
+		Assert.assertFalse(this.nafIdentityPlugin.isValid("wrong_token"));
 	}	
 	
 	@Test
@@ -70,6 +81,9 @@ public class TestNAFIdentityPlugin {
 		Token token = this.nafIdentityPlugin.getToken(accessId);
 		Assert.assertNotNull(token);
 		Assert.assertEquals(DEFAULT_USER, token.getUser());
+		Assert.assertEquals(new Date(this.defaultCTime), token.getExpirationDate());
+		Assert.assertEquals(this.defaultSamlAttributes.get(ATTRIBUTE_ONE_SAML_ATTRIBUTE), 
+				token.getAttributes().get(ATTRIBUTE_ONE_SAML_ATTRIBUTE));
 		Assert.assertEquals(accessId, token.getAccessId());
 	}
 	
@@ -109,10 +123,13 @@ public class TestNAFIdentityPlugin {
 	private String createAccessId() throws Exception {
 		JSONObject jsonObject = new JSONObject();
 		jsonObject.put(NAFIdentityPlugin.NAME, DEFAULT_USER);
+		jsonObject.put(NAFIdentityPlugin.TOKEN_CTIME_JSONOBJECT, this.defaultCTime);		
+		jsonObject.put(NAFIdentityPlugin.SAML_ATTRIBUTES_JSONOBJECT, this.defaultSamlAttributes);
 		String message = jsonObject.toString();
 		
 		String signature = RSAUtils.sign(keyPair.getPrivate(), message);
-		return message + NAFIdentityPlugin.STRING_SEPARATOR + signature;
+		String accessIdStr = message + NAFIdentityPlugin.STRING_SEPARATOR + signature;
+		return Base64.encode(accessIdStr.getBytes());
 	}
 	
 	public void writePublicKeyToFile(String content) throws IOException {
