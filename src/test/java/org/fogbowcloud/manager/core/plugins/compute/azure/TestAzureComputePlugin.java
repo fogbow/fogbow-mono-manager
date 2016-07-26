@@ -148,7 +148,7 @@ public class TestAzureComputePlugin {
 		Assert.assertTrue(imageName.contains(VM_DEFAULT_PREFIX));
 		Mockito.verify(plugin).createRoleList(imageName, imageName,
 				VM_DEFAULT_PASSWORD, VM_DEFAULT_ID_1, FLAVOR_NAME_EXTRA_SMALL,
-				null, computeManagementClient);
+				null, null, computeManagementClient);
 	}
 	
 	@Test
@@ -160,17 +160,20 @@ public class TestAzureComputePlugin {
 		List<AzureTestInstanceConfigurationSet> instances = createDefaultInstances();
 		recordInstances(computeManagementClient, instances);
 
+		String networkId = "network1";
+		
 		Token token = createToken(null);
 		String userData = UUID.randomUUID().toString();
 		HashMap<String, String> occiAtt = new HashMap<String, String>();
 		occiAtt.put(OrderAttribute.USER_DATA_ATT.getValue(), userData);
+		occiAtt.put(OrderAttribute.NETWORK_ID.getValue(), networkId);
 		String imageName = plugin.requestInstance(token,
 				new LinkedList<Category>(), occiAtt,
 				VM_DEFAULT_ID_1);
 		Assert.assertTrue(imageName.contains(VM_DEFAULT_PREFIX));
 		Mockito.verify(plugin).createRoleList(imageName, imageName,
 				VM_DEFAULT_PASSWORD, VM_DEFAULT_ID_1, FLAVOR_NAME_EXTRA_SMALL,
-				userData, computeManagementClient);
+				userData, networkId, computeManagementClient);
 	}
 
 	@Test(expected = OCCIException.class)

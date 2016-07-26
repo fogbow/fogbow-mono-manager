@@ -24,6 +24,7 @@ import org.fogbowcloud.manager.core.model.ImageState;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.common.azure.AzureAttributes;
+import org.fogbowcloud.manager.core.plugins.network.azure.AzureNetworkPlugin;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.instance.InstanceState;
 import org.fogbowcloud.manager.occi.model.Category;
@@ -71,6 +72,8 @@ import com.microsoft.windowsazure.management.compute.models.InputEndpointTranspo
 import com.microsoft.windowsazure.management.compute.models.OSVirtualHardDisk;
 import com.microsoft.windowsazure.management.compute.models.Role;
 import com.microsoft.windowsazure.management.compute.models.RoleInstance;
+import com.microsoft.windowsazure.management.compute.models.SshSettingPublicKey;
+import com.microsoft.windowsazure.management.compute.models.SshSettings;
 import com.microsoft.windowsazure.management.compute.models.VirtualHardDiskHostCaching;
 import com.microsoft.windowsazure.management.compute.models.VirtualIPAddress;
 import com.microsoft.windowsazure.management.compute.models.VirtualMachineCreateDeploymentParameters;
@@ -78,6 +81,8 @@ import com.microsoft.windowsazure.management.compute.models.VirtualMachineDataDi
 import com.microsoft.windowsazure.management.compute.models.VirtualMachineGetResponse;
 import com.microsoft.windowsazure.management.compute.models.VirtualMachineOSImageCreateParameters;
 import com.microsoft.windowsazure.management.compute.models.VirtualMachineOSImageGetResponse;
+import com.microsoft.windowsazure.management.compute.models.VirtualMachineOSImageListResponse;
+import com.microsoft.windowsazure.management.compute.models.VirtualMachineOSImageListResponse.VirtualMachineOSImage;
 import com.microsoft.windowsazure.management.configuration.ManagementConfiguration;
 import com.microsoft.windowsazure.management.models.RoleSizeListResponse;
 import com.microsoft.windowsazure.management.models.RoleSizeListResponse.RoleSize;
@@ -191,6 +196,7 @@ public class AzureComputePlugin implements ComputePlugin {
 		String userpassword = getPassword();
 		
 		VirtualMachineCreateDeploymentParameters deploymentParameters = new VirtualMachineCreateDeploymentParameters();
+		
 
 		ResourcesInfo resourcesInfo = getResourcesInfo(token, computeManagementClient);
 		if (Integer.parseInt(resourcesInfo.getInstancesIdle()) == 0) {
@@ -220,13 +226,19 @@ public class AzureComputePlugin implements ComputePlugin {
 		
 		String userData = xOCCIAtt.get(OrderAttribute.USER_DATA_ATT
 				.getValue());	
+		
+		String networId = xOCCIAtt.get(OrderAttribute.NETWORK_ID.getValue());
+		
 		deploymentParameters.setDeploymentSlot(DeploymentSlot.STAGING);
 		deploymentParameters.setName(deploymentName);
 		deploymentParameters.setLabel(AZURE_VM_DEFAULT_LABEL);
+		if(networId != null){
+			deploymentParameters.setVirtualNetworkName(networId);
+		}
 
 		try {
 			ArrayList<Role> rolelist = createRoleList(deploymentName, userName,
-					userpassword, imageId, flavor.getName(), userData,
+					userpassword, imageId, flavor.getName(), userData, networId,
 					computeManagementClient);
 			deploymentParameters.setRoles(rolelist);
 			computeManagementClient
@@ -618,7 +630,7 @@ public class AzureComputePlugin implements ComputePlugin {
 
 	protected ArrayList<Role> createRoleList(String virtualMachineName,
 			String username, String userPassword, String imageID,
-			String roleSizeName, String userData,
+			String roleSizeName, String userData, String networkId,
 			ComputeManagementClient computeManagementClient) throws Exception {
 		int random = (int) (Math.random() * 100);
 		ArrayList<Role> roleList = new ArrayList<Role>();
@@ -644,7 +656,7 @@ public class AzureComputePlugin implements ComputePlugin {
 		
 		configurationSet.setHostName(virtualMachineName + ".cloudapp.net");
 		configurationSetList.add(configurationSet);
-		configurationSetList.add(createSSHConfiguration());
+		configurationSetList.add(createSSHConfiguration(networkId));
 
 		OSVirtualHardDisk oSVirtualHardDisk = new OSVirtualHardDisk();
 		oSVirtualHardDisk.setName(osVHarddiskName);
@@ -661,7 +673,7 @@ public class AzureComputePlugin implements ComputePlugin {
 		return roleList;
 	}
 	
-	private ConfigurationSet createSSHConfiguration() {
+	private ConfigurationSet createSSHConfiguration(String networkId) {
 		ConfigurationSet configurationSet = new ConfigurationSet();
 		configurationSet.setConfigurationSetType(ConfigurationSetTypes.NETWORKCONFIGURATION);
 		InputEndpoint inputEndpoint = new InputEndpoint();
@@ -673,6 +685,15 @@ public class AzureComputePlugin implements ComputePlugin {
 		ArrayList<InputEndpoint> endpoints = configurationSet.getInputEndpoints();
 		endpoints.add(inputEndpoint);
 		configurationSet.setInputEndpoints(endpoints);
+		
+		if(networkId != null && !networkId.isEmpty()){
+			
+			String subnetName = AzureNetworkPlugin.AZURESUB_NETWORK_DEFAULT_PREFIX_NAME+networkId;
+			ArrayList<String> subnateList = new ArrayList<String>();
+			subnateList.add(subnetName);
+			configurationSet.setSubnetNames(subnateList);
+		}
+		
 		return configurationSet;
 	}
 
