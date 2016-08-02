@@ -1,8 +1,12 @@
 package org.fogbowcloud.manager.core.plugins.identity.ldap;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.security.GeneralSecurityException;
+import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.SignatureException;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.Date;
@@ -95,14 +99,13 @@ public class LdapIdentityPlugin implements IdentityPlugin {
 		
 		try {
 			
-			RSAPrivateKey privateKey = null;
 			
 			JSONObject json = new JSONObject();
 			json.put("name", uid);
 			json.put("expirationDate", expirationDate.getTime());
 			
-			privateKey = RSAUtils.getPrivateKey(privateKeyPath);
-			String signature = RSAUtils.sign(privateKey, json.toString());
+			String signature = createSignature(json);
+			
 			String accessId = json.toString()+ACCESSID_SEPARATOR+signature;
 			
 			accessId = new String(Base64.encodeBase64(accessId.getBytes(Charsets.UTF_8), false, false),
@@ -154,7 +157,7 @@ public class LdapIdentityPlugin implements IdentityPlugin {
 		
 	}
 
-	private void ldapAuthenticate(String uid, String password) throws Exception {
+	protected void ldapAuthenticate(String uid, String password) throws Exception {
 
 		Hashtable env = new Hashtable();
 		env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
@@ -204,7 +207,6 @@ public class LdapIdentityPlugin implements IdentityPlugin {
 			ctx.close();
 		}
 
-
 	}
 
 	private String encryptPassword(String password) throws NoSuchAlgorithmException, UnsupportedEncodingException {
@@ -234,8 +236,16 @@ public class LdapIdentityPlugin implements IdentityPlugin {
 			return false;
 		}
 	}
+
+	protected String createSignature(JSONObject json) throws IOException, GeneralSecurityException,
+			NoSuchAlgorithmException, InvalidKeyException, SignatureException, UnsupportedEncodingException {
+		RSAPrivateKey privateKey = null;
+		privateKey = RSAUtils.getPrivateKey(privateKeyPath);
+		String signature = RSAUtils.sign(privateKey, json.toString());
+		return signature;
+	}
 	
-	private boolean verifySign(String tokenMessage, String signature) {
+	protected boolean verifySign(String tokenMessage, String signature) {
 		RSAPublicKey publicKey = null;
 		try {
 			publicKey = RSAUtils.getPublicKey(publicKeyPath);
