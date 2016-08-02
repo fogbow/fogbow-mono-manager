@@ -240,7 +240,12 @@ federation_identity_url=http://localhost:5000
 
 ## Federation Identity (NAF Identity Plugin)
 federation_identity_class=org.fogbowcloud.manager.core.plugins.identity.naf.NAFIdentityPlugin
-naf_identity_plublic_key=
+# public key admin
+naf_identity_public_key=
+name_user_token_generator=
+password_user_token_generator=
+# token generator endpoint
+endpoint_token_generator=
 
 ## Member Validator
 member_validator_class=org.fogbowcloud.manager.core.plugins.memberauthorization.DefaultMemberAuthorizationPlugin
