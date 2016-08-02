@@ -159,6 +159,10 @@ local_prioritization_plugin_class=org.fogbowcloud.manager.core.plugins.prioritiz
 remote_prioritization_plugin_class=org.fogbowcloud.manager.core.plugins.prioritization.nof.NoFPrioritizationPlugin
 nof_prioritize_local=true
 
+## Signature information
+private_key_path=
+public_key_path=
+
 instance_datastore_url=jdbc:sqlite:/tmp/federated_instance
 storage_datastore_url=jdbc:sqlite:/tmp/federated_storage
 network_datastore_url=jdbc:sqlite:/tmp/federated_network
@@ -181,6 +185,12 @@ local_identity_url=http://localhost:5000
 ## Local Identity (Cloudstack Identity Plugin)
 # local_identity_class=org.fogbowcloud.manager.core.plugins.identity.cloudstack.CloudStackIdentityPlugin
 # local_identity_url=http://127.0.0.1:8080/client/api/
+
+## Local Identity (LDAP Identity Plugin)
+# local_identity_class=org.fogbowcloud.manager.core.plugins.identity.ldap.LdapIdentityPlugin
+# local_identity_url=ldap://ldap.org.edu.br
+# ldap_base=dc=org,dc=edu,dc=br
+# ldap_encrypt_type=SHA
 
 ## Mapper Plugin / Local Credentials
 federation_user_credentail_class=org.fogbowcloud.manager.core.plugins.localcredentails.SingleMapperPlugin
