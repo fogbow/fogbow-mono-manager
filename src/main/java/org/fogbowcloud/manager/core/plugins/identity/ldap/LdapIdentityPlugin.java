@@ -39,6 +39,10 @@ import org.json.JSONObject;
 
 public class LdapIdentityPlugin implements IdentityPlugin {
 
+	private static final String ATT_EXPIRATION_DATE = "expirationDate";
+	private static final String ATT_NAME = "name";
+	private static final String ATT_LOGIN = "lognin";
+	
 	private static final Logger LOGGER = Logger.getLogger(LdapIdentityPlugin.class);
 	private static final long EXPIRATION_INTERVAL = TimeUnit.DAYS.toMillis(365); // One year
 
@@ -82,12 +86,13 @@ public class LdapIdentityPlugin implements IdentityPlugin {
 		
 		String uid = userCredentials.get(CRED_USERNAME);
 		String password = userCredentials.get(CRED_PASSWORD);
+		String name = null;
 		
 		parseCredentials(userCredentials);
 		
 		try {
 
-			ldapAuthenticate(uid, password);
+			name = ldapAuthenticate(uid, password);
 
 		} catch (Exception e) {
 			LOGGER.error("Couldn't load account summary from LDAP Server.", e);
@@ -101,8 +106,9 @@ public class LdapIdentityPlugin implements IdentityPlugin {
 			
 			
 			JSONObject json = new JSONObject();
-			json.put("name", uid);
-			json.put("expirationDate", expirationDate.getTime());
+			json.put(ATT_LOGIN, uid);
+			json.put(ATT_NAME, name);
+			json.put(ATT_EXPIRATION_DATE, expirationDate.getTime());
 			
 			String signature = createSignature(json);
 			
@@ -135,29 +141,31 @@ public class LdapIdentityPlugin implements IdentityPlugin {
 			
 			String split[] = decodedAccessId.split(ACCESSID_SEPARATOR);
 			if(split == null || split.length < 2){
-				throw new OCCIException(ErrorType.BAD_REQUEST, "Invalid accessID: "+decodedAccessId);
+				LOGGER.error("Invalid accessID: "+decodedAccessId);
+				throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 			}
 			
 			String tokenMessage = split[0];
 			String signature = split[1];
 			
 			JSONObject root = new JSONObject(tokenMessage);
-			Date expirationDate = new Date(root.getLong("expirationDate"));
+			Date expirationDate = new Date(root.getLong(ATT_EXPIRATION_DATE));
 			
 			if(!verifySign(tokenMessage, signature)){
-				throw new OCCIException(ErrorType.BAD_REQUEST, "Invalid accessID: "+decodedAccessId);
+				LOGGER.error("Invalid accessID: "+decodedAccessId);
+				throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 			}
-			return new Token(accessId, root.getString("name"), expirationDate, new HashMap<String, String>());
+			return new Token(accessId, root.getString(ATT_NAME), expirationDate, new HashMap<String, String>());
 			
 		} catch (JSONException e) {
 			LOGGER.error("Exception while getting token from json.", e);
-			return null;
+			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}
 		
 		
 	}
 
-	protected void ldapAuthenticate(String uid, String password) throws Exception {
+	protected String ldapAuthenticate(String uid, String password) throws Exception {
 
 		Hashtable env = new Hashtable();
 		env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
@@ -165,7 +173,7 @@ public class LdapIdentityPlugin implements IdentityPlugin {
 		env.put(Context.SECURITY_AUTHENTICATION, "simple");
 
 		DirContext ctx = null;
-
+		String name = null;
 		try {
 
 			password = encryptPassword(password);
@@ -185,13 +193,14 @@ public class LdapIdentityPlugin implements IdentityPlugin {
 			if (enm.hasMore()) {
 				SearchResult result = (SearchResult) enm.next();
 				dn = result.getNameInNamespace();
+				name = extractUserName(result);
 			}
 
 			if (dn == null || enm.hasMore()) {
 				// uid not found or not unique
 				throw new NamingException("Authentication failed");
 			}
-
+			
 			// Bind with found DN and given password
 			ctx.addToEnvironment(Context.SECURITY_PRINCIPAL, dn);
 			ctx.addToEnvironment(Context.SECURITY_CREDENTIALS, password);
@@ -200,6 +209,8 @@ public class LdapIdentityPlugin implements IdentityPlugin {
 
 			enm.close();
 
+			return name;
+			
 		} catch (Exception e) {
 			LOGGER.error("Error while authenticate " + uid +" - Error: "+e.getMessage());
 			throw e;
@@ -207,6 +218,17 @@ public class LdapIdentityPlugin implements IdentityPlugin {
 			ctx.close();
 		}
 
+	}
+
+	private String extractUserName(SearchResult result) {
+		String nameGroup[] = result.getName().split(",");
+		if(nameGroup != null && nameGroup.length > 0){
+			String cnName[] = nameGroup[0].split("=");
+			if(cnName != null && cnName.length > 1){
+				return cnName[1];
+			}
+		}
+		return null;
 	}
 
 	private String encryptPassword(String password) throws NoSuchAlgorithmException, UnsupportedEncodingException {
