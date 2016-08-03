@@ -117,7 +117,7 @@ public class LdapIdentityPlugin implements IdentityPlugin {
 			accessId = new String(Base64.encodeBase64(accessId.getBytes(Charsets.UTF_8), false, false),
 					Charsets.UTF_8);
 			
-			return new Token(accessId, uid, expirationDate, attributes);
+			return new Token(accessId, name, expirationDate, attributes);
 			
 		} catch (Exception e) {
 			LOGGER.error("Erro while trying to sign the token.", e);

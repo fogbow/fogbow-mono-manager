@@ -57,6 +57,7 @@ public class TestLdapIdentityPlugin {
 		
 		String name = "ldapUser";
 		String password = "ldapUserPass";
+		String userName = "User Full Name";
 		
 		Map<String, String> userCredentials = new HashMap<String, String>();
 		userCredentials.put(LdapIdentityPlugin.CRED_USERNAME, name);
@@ -67,13 +68,14 @@ public class TestLdapIdentityPlugin {
 		userCredentials.put(LdapIdentityPlugin.CRED_PRIVATE_KEY, "private_key_path");
 		userCredentials.put(LdapIdentityPlugin.CRED_PUBLIC_KEY, "public_key_path");
 		
-		doNothing().when(ldapStoneIdentity).ldapAuthenticate(Mockito.eq(name), Mockito.eq(password));
+		doReturn(userName).when(ldapStoneIdentity).ldapAuthenticate(Mockito.eq(name), Mockito.eq(password));
 		
 		Token token = ldapStoneIdentity.createToken(userCredentials);
 		
 		String decodedAccessId = decodeAccessId(token.getAccessId());
 		
 		assertTrue(decodedAccessId.contains(name));
+		assertTrue(decodedAccessId.contains(userName));
 		assertTrue(decodedAccessId.contains(MOCK_SIGNATURE));
 		
 	}
@@ -81,11 +83,12 @@ public class TestLdapIdentityPlugin {
 	@Test
 	public void testGetToken() throws Exception {
 		
-		String name = "ldapUser";
+		String login = "ldapUser";
 		String password = "ldapUserPass";
+		String userName = "User Full Name";
 		
 		Map<String, String> userCredentials = new HashMap<String, String>();
-		userCredentials.put(LdapIdentityPlugin.CRED_USERNAME, name);
+		userCredentials.put(LdapIdentityPlugin.CRED_USERNAME, login);
 		userCredentials.put(LdapIdentityPlugin.CRED_PASSWORD, password);
 		userCredentials.put(LdapIdentityPlugin.CRED_AUTH_URL, "ldapUrl");
 		userCredentials.put(LdapIdentityPlugin.CRED_LDAP_BASE, "ldapBase");
@@ -93,7 +96,7 @@ public class TestLdapIdentityPlugin {
 		userCredentials.put(LdapIdentityPlugin.CRED_PRIVATE_KEY, "private_key_path");
 		userCredentials.put(LdapIdentityPlugin.CRED_PUBLIC_KEY, "public_key_path");
 		
-		doNothing().when(ldapStoneIdentity).ldapAuthenticate(Mockito.eq(name), Mockito.eq(password));
+		doReturn(userName).when(ldapStoneIdentity).ldapAuthenticate(Mockito.eq(login), Mockito.eq(password));
 		
 		Token tokenA = ldapStoneIdentity.createToken(userCredentials);
 		
@@ -107,7 +110,8 @@ public class TestLdapIdentityPlugin {
 		Token tokenB = ldapStoneIdentity.getToken(tokenA.getAccessId());
 		
 		assertEquals(tokenA.getAccessId(), tokenB.getAccessId());
-		assertEquals(tokenA.getUser(), tokenB.getUser());
+		assertEquals(userName, tokenA.getUser());
+		assertEquals(userName, tokenB.getUser());
 		assertEquals(tokenA.getExpirationDate(), tokenB.getExpirationDate());
 		
 	}
@@ -117,6 +121,7 @@ public class TestLdapIdentityPlugin {
 		
 		String name = "ldapUser";
 		String password = "ldapUserPass";
+		String userName = "User Full Name";
 		
 		Map<String, String> userCredentials = new HashMap<String, String>();
 		userCredentials.put(LdapIdentityPlugin.CRED_USERNAME, name);
@@ -143,6 +148,7 @@ public class TestLdapIdentityPlugin {
 		
 		String name = "ldapUser";
 		String password = "ldapUserPass";
+		String userName = "User Full Name";
 		
 		Map<String, String> userCredentials = new HashMap<String, String>();
 		userCredentials.put(LdapIdentityPlugin.CRED_USERNAME, name);
@@ -153,7 +159,7 @@ public class TestLdapIdentityPlugin {
 		userCredentials.put(LdapIdentityPlugin.CRED_PRIVATE_KEY, "private_key_path");
 		userCredentials.put(LdapIdentityPlugin.CRED_PUBLIC_KEY, "public_key_path");
 		
-		doNothing().when(ldapStoneIdentity).ldapAuthenticate(Mockito.eq(name), Mockito.eq(password));
+		doReturn(userName).when(ldapStoneIdentity).ldapAuthenticate(Mockito.eq(name), Mockito.eq(password));
 		
 		Token tokenA = ldapStoneIdentity.createToken(userCredentials);
 		
