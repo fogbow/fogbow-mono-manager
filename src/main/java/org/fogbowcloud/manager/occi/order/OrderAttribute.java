@@ -20,7 +20,8 @@ public enum OrderAttribute {
 	REQUESTING_MEMBER("org.fogbowcloud.request.requesting-member"),
 	PROVIDING_MEMBER("org.fogbowcloud.request.providing-member"),
 	RESOURCE_KIND("org.fogbowcloud.order.resource-kind"),
-	STORAGE_SIZE("org.fogbowcloud.order.storage-size");
+	STORAGE_SIZE("org.fogbowcloud.order.storage-size"),
+	NETWORK_ID("org.fogbowcloud.order.network-id");
 	
 	private String value;
 	

@@ -182,7 +182,9 @@ public class Instance {
 
 		private static final String NAME_LINK = "Link:";
 
+		private String id;
 		private String name;
+		private String type;
 		private Map<String, String> attributes;
 
 		public Link() {
@@ -202,6 +204,10 @@ public class Instance {
 				if (block.contains(NAME_LINK)) {
 					String[] blockValues = block.split(":");
 					link.setName(blockValues[1].replace("\"", "").trim());
+					String cleanedLinkId = blockValues[1].replace("</", "").replace(">", "");
+					String[] idAndType = cleanedLinkId.split("/");
+					link.setType(idAndType[0].trim());
+					link.setId(idAndType[1].trim());
 				} else {
 					String[] blockValues = block.split("=");
 					if (blockValues.length == 2) {
@@ -213,7 +219,7 @@ public class Instance {
 			link.setAttributes(itens);
 			return link;
 		}
-
+		
 		public String toOCCIMessageFormatLink() {
 			String itensMessageFormat = "";
 			int cont = 0;
@@ -246,6 +252,14 @@ public class Instance {
 			}
 			return NAME_LINK + " " + this.name + ";" + itensMessageFormat;
 		}
+		
+		public void setId(String id) {
+			this.id = id;
+		}
+		
+		public String getId() {
+			return this.id;
+		}
 
 		public void setName(String name) {
 			this.name = name;
@@ -253,6 +267,14 @@ public class Instance {
 
 		public String getName() {
 			return name;
+		}
+		
+		public void setType(String type) {
+			this.type = type;
+		}
+		
+		public String getType() {
+			return type;
 		}
 
 		public void setAttributes(Map<String, String> attributes) {

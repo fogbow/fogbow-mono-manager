@@ -18,7 +18,7 @@ public class AccountingInfo {
 		this.usage = 0;
 	}
 	
-	public void addConsuption(double consuption) {
+	public void addConsumption(double consuption) {
 		this.usage += consuption;
 	}
 
@@ -59,7 +59,7 @@ public class AccountingInfo {
 		JSONObject jsonObject = new JSONObject(accountingEntryJSON);
 		AccountingInfo accountingEntry = new AccountingInfo(jsonObject.optString("user"),
 				jsonObject.optString("requestingMember"), jsonObject.optString("providingMember"));
-		accountingEntry.addConsuption(Double.parseDouble(jsonObject.optString("usage")));
+		accountingEntry.addConsumption(Double.parseDouble(jsonObject.optString("usage")));
 		return accountingEntry;
 	}
 	

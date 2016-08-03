@@ -5,12 +5,20 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
+import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpStatus;
 import org.apache.log4j.Logger;
+import org.bouncycastle.util.IPAddress;
+import org.fogbowcloud.manager.core.ConfigurationConstants;
+import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.RequirementsHelper;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.occi.OCCIApplication;
+import org.fogbowcloud.manager.occi.OCCIConstants;
+import org.fogbowcloud.manager.occi.instance.Instance;
+import org.fogbowcloud.manager.occi.instance.Instance.Link;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.ErrorType;
 import org.fogbowcloud.manager.occi.model.HeaderUtils;
@@ -19,6 +27,8 @@ import org.fogbowcloud.manager.occi.model.OCCIHeaders;
 import org.fogbowcloud.manager.occi.model.Resource;
 import org.fogbowcloud.manager.occi.model.ResourceRepository;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;
+import org.fogbowcloud.manager.occi.network.FedNetworkState;
+import org.fogbowcloud.manager.occi.network.NetworkDataStore;
 import org.restlet.data.MediaType;
 import org.restlet.data.Status;
 import org.restlet.engine.adapter.HttpRequest;
@@ -28,6 +38,7 @@ import org.restlet.representation.StringRepresentation;
 import org.restlet.resource.Delete;
 import org.restlet.resource.Get;
 import org.restlet.resource.Post;
+import org.restlet.resource.ResourceException;
 import org.restlet.resource.ServerResource;
 import org.restlet.util.Series;
 
@@ -36,7 +47,19 @@ public class OrderServerResource extends ServerResource {
 	private static final String OCCI_CORE_TITLE = "occi.core.title";
 	private static final String OCCI_CORE_ID = "occi.core.id";
 	protected static final String NO_ORDERS_MESSAGE = "There are not orders.";
+	protected static final String FED_NETWORK_PREFIX = "federated_network_";
+	
 	private static final Logger LOGGER = Logger.getLogger(OrderServerResource.class);
+	private NetworkDataStore networkDB;
+	
+	protected void doInit() throws ResourceException {
+
+		Properties properties = ((OCCIApplication) getApplication()).getProperties();
+		String networkDataStoreUrl = properties
+				.getProperty(ConfigurationConstants.NETWORK_DATA_STORE_URL);
+		networkDB = new NetworkDataStore(networkDataStoreUrl);
+
+	};
 	
 	@Get
 	public StringRepresentation fetch() {
@@ -185,6 +208,24 @@ public class OrderServerResource extends ServerResource {
 		}
 		for (String attributeName : OrderAttribute.getValues()) {
 			if (order.getAttValue(attributeName) == null){
+				if(OrderAttribute.NETWORK_ID.getValue().equals(attributeName)){
+					attToOutput.put(attributeName, "Network default");
+				}else{
+					attToOutput.put(attributeName, "Not defined");	
+				}
+			} else {
+				
+				if(OrderAttribute.NETWORK_ID.getValue().equals(attributeName) &&
+						order.getAttValue(attributeName).isEmpty()){
+					attToOutput.put(attributeName, "Network default");
+				}else{
+					attToOutput.put(attributeName, order.getAttValue(attributeName));
+				}
+			}
+		}
+		
+		for (String attributeName : OCCIConstants.getValues()) {
+			if (order.getAttValue(attributeName) == null){
 				attToOutput.put(attributeName, "Not defined");	
 			} else {
 				attToOutput.put(attributeName, order.getAttValue(attributeName));
@@ -235,18 +276,47 @@ public class OrderServerResource extends ServerResource {
 		HttpRequest req = (HttpRequest) getRequest();
 		String acceptType = getAccept(HeaderUtils.getAccept(req.getHeaders()));
 		
+		List<Link> networkLinks = HeaderUtils.getLinks(req.getHeaders());
+		LOGGER.debug("Network links: " + networkLinks);
+		
 		List<Category> categories = HeaderUtils.getCategories(req.getHeaders());
 		LOGGER.debug("Categories: " + categories);
 		HeaderUtils.checkCategories(categories, OrderConstants.TERM);
 		HeaderUtils.checkOCCIContentType(req.getHeaders());		
 		
+		String federationAuthToken = HeaderUtils.getAuthToken(
+				req.getHeaders(), getResponse(), application.getAuthenticationURI());
+		
+		String user = application.getUser(normalizeAuthToken(federationAuthToken));
+		
+		//TODO verificar se o ID da network é federado
 		Map<String, String> xOCCIAtt = HeaderUtils.getXOCCIAtributes(req.getHeaders());
+		for (Link link : networkLinks) {
+			
+			String networkId;
+			
+			networkId = link.getId(); 
+			
+			if(networkId != null && networkId.startsWith(FED_NETWORK_PREFIX)){
+				
+				FedNetworkState fedNetworkState = networkDB.getByFedNetworkId(networkId, user);
+
+				if (fedNetworkState == null) {
+					throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
+				}
+				
+				Order relatedOrder = application.getOrder(federationAuthToken, fedNetworkState.getOrderId());
+				
+				networkId = relatedOrder.getGlobalInstanceId(); 
+			}
+			
+			networkId = ManagerController.normalizeInstanceId(networkId);
+			
+			xOCCIAtt.put(OrderAttribute.NETWORK_ID.getValue(), networkId);
+		}
 		xOCCIAtt = normalizeXOCCIAtt(xOCCIAtt);
 		
 		xOCCIAtt = normalizeRequirements(categories, xOCCIAtt, application.getFlavorsProvided());
-		
-		String federationAuthToken = HeaderUtils.getAuthToken(
-				req.getHeaders(), getResponse(), application.getAuthenticationURI());
 		
 		List<Order> currentOrders = application.createOrders(federationAuthToken, categories, xOCCIAtt);
 		if (currentOrders != null || !currentOrders.isEmpty()) {
@@ -352,16 +422,7 @@ public class OrderServerResource extends ServerResource {
 	public static Map<String, String> normalizeXOCCIAtt(Map<String, String> xOCCIAtt) {
 		Map<String, String> defOCCIAtt = new HashMap<String, String>();
 		
-		String resourceKind = xOCCIAtt.get(OrderAttribute.RESOURCE_KIND.getValue());
-		if (resourceKind != null) {
-			if (resourceKind.equals(OrderConstants.STORAGE_TERM)
-					&& xOCCIAtt.get(OrderAttribute.STORAGE_SIZE.getValue()) == null) {
-				throw new OCCIException(ErrorType.BAD_REQUEST,
-						ResponseConstants.NOT_FOUND_STORAGE_SIZE_ATTRIBUTE);
-			}
-		} else {
-			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.NOT_FOUND_RESOURCE_KIND);
-		}
+		checkOCCIAtt(xOCCIAtt);
  		
 		defOCCIAtt.put(OrderAttribute.TYPE.getValue(), OrderConstants.DEFAULT_TYPE);
 		defOCCIAtt.put(OrderAttribute.INSTANCE_COUNT.getValue(),
@@ -392,6 +453,43 @@ public class OrderServerResource extends ServerResource {
 			}
 		}
 		return defOCCIAtt;
+	}
+
+	private static void checkOCCIAtt(Map<String, String> xOCCIAtt) {
+		
+		String resourceKind = xOCCIAtt.get(OrderAttribute.RESOURCE_KIND.getValue());
+		if (resourceKind != null) {
+			if (resourceKind.equals(OrderConstants.STORAGE_TERM)
+					&& xOCCIAtt.get(OrderAttribute.STORAGE_SIZE.getValue()) == null) {
+				throw new OCCIException(ErrorType.BAD_REQUEST,
+						ResponseConstants.NOT_FOUND_STORAGE_SIZE_ATTRIBUTE);
+			}
+			if (resourceKind.equals(OrderConstants.NETWORK_TERM)){
+				
+				String address = xOCCIAtt.get(OCCIConstants.NETWORK_ADDRESS);
+				if(address == null || !validateIpCidr(address)){
+					throw new OCCIException(ErrorType.BAD_REQUEST,
+							ResponseConstants.NETWORK_ADDRESS_INVALID_VALUE);
+				}
+				
+				String gateway = xOCCIAtt.get(OCCIConstants.NETWORK_GATEWAY);
+				if(gateway == null || !validateIp(gateway)){
+					throw new OCCIException(ErrorType.BAD_REQUEST,
+							ResponseConstants.NETWORK_GATEWAY_INVALID_VALUE);
+				}
+				
+				String allocation = xOCCIAtt.get(OCCIConstants.NETWORK_ALLOCATION);
+				if(allocation == null || 
+						(!OCCIConstants.NetworkAllocation.DYNAMIC.getValue().equals(allocation) 
+								&& !OCCIConstants.NetworkAllocation.STATIC.getValue().equals(allocation))
+						){
+					throw new OCCIException(ErrorType.BAD_REQUEST,
+							ResponseConstants.NETWORK_ALLOCATION_INVALID_VALUE);
+				}
+			}
+		} else {
+			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.NOT_FOUND_RESOURCE_KIND);
+		}
 	}
 
 	private static boolean isOCCIAttribute(String attributeName) {
@@ -445,5 +543,21 @@ public class OrderServerResource extends ServerResource {
 		ServerCall httpCall = req.getHttpCall();
 		String hostDomain = myIp == null ? httpCall.getHostDomain() : myIp;
 		return req.getProtocol().getSchemeName() + "://" + hostDomain + ":" + httpCall.getHostPort();
-	}	
+	}
+	
+
+	private static boolean validateIpCidr(String value){
+		return IPAddress.isValidIPv4WithNetmask(value) || IPAddress.isValidIPv6WithNetmask(value);
+	}
+	
+	private static boolean validateIp(String value){
+		return IPAddress.isValidIPv4(value) || IPAddress.isValidIPv6(value);
+	}
+	
+	private String normalizeAuthToken(String authToken) {
+		if (authToken.contains("Basic ")) {
+			authToken = new String(Base64.decodeBase64(authToken.replace("Basic ", "")));
+		}
+		return authToken;
+	}
 }

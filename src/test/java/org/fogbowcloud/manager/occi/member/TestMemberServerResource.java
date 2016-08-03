@@ -1,6 +1,7 @@
 package org.fogbowcloud.manager.occi.member;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -38,6 +39,7 @@ import org.xmpp.packet.IQ.Type;
 
 public class TestMemberServerResource {
 
+	private static final String X_FEDERATION_AUTH_TOKEN = "x_federation_auth_token";
 	private final String ID_RESOURCEINFO1 = "id1";
 	private final String ID_RESOURCEINFO2 = "id2";
 
@@ -60,7 +62,7 @@ public class TestMemberServerResource {
 		defaultFederationUsersCrendetials.put("one", localUserCredentials);
 		Mockito.when(mapperPlugin.getAllLocalCredentials()).thenReturn(
 				defaultFederationUsersCrendetials);
-		Mockito.when(mapperPlugin.getLocalCredentials("x_federation_auth_token")).thenReturn(
+		Mockito.when(mapperPlugin.getLocalCredentials(X_FEDERATION_AUTH_TOKEN)).thenReturn(
 				localUserCredentials);
 
 		this.identityPlugin = Mockito.mock(IdentityPlugin.class);
@@ -95,7 +97,7 @@ public class TestMemberServerResource {
 
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_MEMBER);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, "x_federation_auth_token");
+		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, X_FEDERATION_AUTH_TOKEN);
 		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(get);
 
@@ -119,7 +121,7 @@ public class TestMemberServerResource {
 			Element queryEl = iq.getElement().addElement("query",
 					ManagerXmppComponent.GETREMOTEUSERQUOTA_NAMESPACE);
 			Element userEl = queryEl.addElement("token");
-			userEl.addElement("accessId").setText("x_federation_auth_token");
+			userEl.addElement("accessId").setText(X_FEDERATION_AUTH_TOKEN);
 
 			IQ response = IQ.createResultIQ(iq);
 			queryEl = response.getElement().addElement("query",
@@ -157,7 +159,7 @@ public class TestMemberServerResource {
 
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_MEMBER);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, "x_federation_auth_token");
+		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, X_FEDERATION_AUTH_TOKEN);
 		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(get);
 
@@ -189,7 +191,7 @@ public class TestMemberServerResource {
 
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_MEMBER);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, "wrong");
-		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, "x_federation_auth_token");
+		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, X_FEDERATION_AUTH_TOKEN);
 		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(get);
 
@@ -219,13 +221,17 @@ public class TestMemberServerResource {
 
 		AsyncPacketSender packetSender = createPacketSenderMock(resourcesInfo);
 
+		String user = "user";
+		Token token = new Token(X_FEDERATION_AUTH_TOKEN, user, new Date(), new HashMap<String, String>());
+		Mockito.when(identityPlugin.getToken(X_FEDERATION_AUTH_TOKEN)).thenReturn(token);
+		
 		this.helper.initializeComponentMember(computePlugin, identityPlugin, authorizationPlugin,
 				accoutingPlugin, federationMembers, mapperPlugin, packetSender);
 
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_MEMBER + "/" + ID_RESOURCEINFO1
 				+ "/quota");
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, "x_federation_auth_token");
+		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, X_FEDERATION_AUTH_TOKEN);
 		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(get);
 

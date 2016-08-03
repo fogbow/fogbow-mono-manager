@@ -67,9 +67,9 @@ public class TestCloudStackStoragePlugin {
 		properties.put("compute_cloudstack_image_download_base_path",
 				CloudStackTestHelper.CLOUDSTACK_URL);
 		if (httpClient == null) {
-			return new CloudStackStoragePlugin(properties);
+			return Mockito.spy(new CloudStackStoragePlugin(properties));
 		} else {
-			return new CloudStackStoragePlugin(properties, httpClient);
+			return Mockito.spy(new CloudStackStoragePlugin(properties, httpClient));
 		}
 	}
 	
@@ -84,9 +84,12 @@ public class TestCloudStackStoragePlugin {
 
 		HttpClientWrapper httpClient = Mockito.mock(HttpClientWrapper.class);
 
+		String volumeName = "volName";
+		
 		String createVolumeUrl = CloudStackTestHelper.createURL(
 				CloudStackStoragePlugin.CREATE_VOLUME_COMMAND,
 				CloudStackStoragePlugin.ZONE_ID, ZONE_ID,
+				CloudStackStoragePlugin.VOLUME_NAME, volumeName,
 				CloudStackStoragePlugin.DISK_OFFERING_ID,
 				"62d5f174-2f1e-42f0-931e-07600a05470e", 
 				CloudStackStoragePlugin.VOLUME_SIZE, "1");
@@ -100,6 +103,9 @@ public class TestCloudStackStoragePlugin {
 
 		CloudStackStoragePlugin storagePlugin = createPlugin(httpClient,
 				extraProperties);
+		
+		Mockito.doReturn(volumeName).when(storagePlugin).generateName();
+		
 		storagePlugin.requestInstance(token, categories, xOCCIAtt);
 	}
 	

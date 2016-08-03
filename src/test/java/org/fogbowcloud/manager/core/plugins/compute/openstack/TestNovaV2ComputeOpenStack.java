@@ -64,6 +64,7 @@ public class TestNovaV2ComputeOpenStack {
 	public void setUp() throws Exception {
 		Properties properties = new Properties();
 		properties.put(OpenStackConfigurationConstants.COMPUTE_NOVAV2_URL_KEY, PluginHelper.COMPUTE_NOVAV2_URL);
+		properties.put(OpenStackConfigurationConstants.NETWORK_NOVAV2_URL_KEY, PluginHelper.NETWORK_NOVAV2_URL);
 		properties.put(OpenStackConfigurationConstants.COMPUTE_NOVAV2_IMAGE_PREFIX_KEY
 				+ PluginHelper.LINUX_X86_TERM, "imageid");
 		properties.put(OpenStackConfigurationConstants.COMPUTE_GLANCEV2_URL_KEY, GLACE_V2);
