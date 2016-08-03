@@ -83,6 +83,7 @@ public class TestCloudStackComputePlugin {
 				IMAGE_DOWNLOADED_BASE_PATH);
 		properties.put("compute_cloudstack_image_download_base_url",
 				IMAGE_DOWNLOADED_BASE_URL);
+		properties.put("compute_cloudstack_default_networkid", "01");
 		if (httpClient == null) {
 			return new CloudStackComputePlugin(properties);
 		} else {
@@ -110,7 +111,8 @@ public class TestCloudStackComputePlugin {
 				CloudStackComputePlugin.TEMPLATE_ID, imageId,
 				CloudStackComputePlugin.ZONE_ID, ZONE_ID,
 				SERVICE_OFFERING_PARAMETER,
-				"62d5f174-2f1e-42f0-931e-07600a05470e");
+				"62d5f174-2f1e-42f0-931e-07600a05470e",
+				CloudStackComputePlugin.NETWORK_IDS, "01");
 		CloudStackTestHelper.recordHTTPClientWrapperRequest(httpClient, token,
 				CloudStackTestHelper.POST, deployyVMUrl, RESPONSE_DEPLOY_VM, 200);
 
@@ -153,7 +155,8 @@ public class TestCloudStackComputePlugin {
 		Token token = new Token("api:key", null, new Date(), null);
 		Properties extraProperties = new Properties();
 		extraProperties.put("compute_cloudstack_zone_id", ZONE_ID);
-
+		extraProperties.put("compute_cloudstack_default_networkid", "01");
+		
 		HttpClientWrapper httpClient = Mockito.mock(HttpClientWrapper.class);
 
 		String deployyVMUrl = CloudStackTestHelper.createURL(
@@ -162,7 +165,8 @@ public class TestCloudStackComputePlugin {
 				CloudStackComputePlugin.ZONE_ID, ZONE_ID,
 				SERVICE_OFFERING_PARAMETER,
 				"62d5f174-2f1e-42f0-931e-07600a05470e",
-				CloudStackComputePlugin.USERDATA, "userdata");
+				CloudStackComputePlugin.USERDATA, "userdata",
+				CloudStackComputePlugin.NETWORK_IDS, "01");
 		CloudStackTestHelper.recordHTTPClientWrapperRequest(httpClient, token,
 				CloudStackTestHelper.POST, deployyVMUrl, RESPONSE_DEPLOY_VM, 200);
 		String getVMUrl = CloudStackTestHelper
@@ -191,6 +195,7 @@ public class TestCloudStackComputePlugin {
 		Token token = new Token("api:key", null, new Date(), null);
 		Properties extraProperties = new Properties();
 		extraProperties.put("compute_cloudstack_zone_id", ZONE_ID);
+		extraProperties.put("compute_cloudstack_default_networkid", "01");
 
 		HttpClientWrapper httpClient = Mockito.mock(HttpClientWrapper.class);
 
@@ -200,7 +205,8 @@ public class TestCloudStackComputePlugin {
 				CloudStackComputePlugin.ZONE_ID, ZONE_ID,
 				SERVICE_OFFERING_PARAMETER,
 				"62d5f174-2f1e-42f0-931e-07600a05470e",
-				CloudStackComputePlugin.USERDATA, "userdata");
+				CloudStackComputePlugin.USERDATA, "userdata",
+				CloudStackComputePlugin.NETWORK_IDS, "01");
 		CloudStackTestHelper.recordHTTPClientWrapperRequest(httpClient, token,
 				CloudStackTestHelper.POST, deployyVMUrl, BAD_RESPONSE_STRING, 200);
 		String getVMUrl = CloudStackTestHelper

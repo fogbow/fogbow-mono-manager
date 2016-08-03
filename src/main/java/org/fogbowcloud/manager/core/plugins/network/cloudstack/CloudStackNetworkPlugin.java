@@ -44,19 +44,19 @@ public class CloudStackNetworkPlugin implements NetworkPlugin {
 	private static final int SC_RESOURCE_UNAVAILABLE_ERROR = 534;
 	private static final int SC_RESOURCE_ALLOCATION_ERROR = 535;
 	
-	private static final String NETWORK_ID = "id";
-	private static final String NETWORK_DISPLAY_NAME = "displaytext";
-	private static final String NETWORK_NAME         = "name";
-	private static final String NETWORK_OFFERING_ID  = "networkofferingid";
-	private static final String NETWORK_ZONE_ID      = "zoneid";
-	private static final String NETWORK_START_IP     = "startip";
-	private static final String NETWORK_END_IP       = "endip";
-	private static final String NETWORK_GATEWAY      = "gateway";
-	private static final String NETWORK_NETMASK      = "netmask";
-	private static final String NETWORK_START_IPV6   = "startipv6";
-	private static final String NETWORK_END_IPV6     = "endipv6";
-	private static final String NETWORK_GATEWAY_IPV6 = "ip6gateway";
-	private static final String NETWORK_NETMASK_IPV6 = "ip6cidr";
+	protected static final String NETWORK_ID = "id";
+	protected static final String NETWORK_DISPLAY_NAME = "displaytext";
+	protected static final String NETWORK_NAME         = "name";
+	protected static final String NETWORK_OFFERING_ID  = "networkofferingid";
+	protected static final String NETWORK_ZONE_ID      = "zoneid";
+	protected static final String NETWORK_START_IP     = "startip";
+	protected static final String NETWORK_END_IP       = "endip";
+	protected static final String NETWORK_GATEWAY      = "gateway";
+	protected static final String NETWORK_NETMASK      = "netmask";
+	protected static final String NETWORK_START_IPV6   = "startipv6";
+	protected static final String NETWORK_END_IPV6     = "endipv6";
+	protected static final String NETWORK_GATEWAY_IPV6 = "ip6gateway";
+	protected static final String NETWORK_NETMASK_IPV6 = "ip6cidr";
 	
 	private Properties properties;
 	private HttpClientWrapper httpClient;
@@ -225,7 +225,6 @@ public class CloudStackNetworkPlugin implements NetworkPlugin {
 		}
 		
 		this.gateway = xOCCIAtt.get(OCCIConstants.NETWORK_GATEWAY);
-		//this.netmask = xOCCIAtt.get(OCCIConstants.NETWORK_ADDRESS);
 		
 	}
 	

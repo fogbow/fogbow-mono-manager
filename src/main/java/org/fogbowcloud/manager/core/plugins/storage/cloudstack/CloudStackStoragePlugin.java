@@ -32,19 +32,19 @@ import org.json.JSONObject;
 
 public class CloudStackStoragePlugin implements StoragePlugin {
 	private static final Logger LOGGER = Logger.getLogger(CloudStackStoragePlugin.class);
-	
+
 	protected static final String LIST_DISK_OFFERINGS_COMMAND = "listDiskOfferings";
 	protected static final String LIST_VOLUMES_COMMAND = "listVolumes";
 	protected static final String CREATE_VOLUME_COMMAND = "createVolume";
 	protected static final String DELETE_VOLUME_COMMAND = "deleteVolume";
-	
+
 	protected static final String COMMAND = "command";
 	protected static final String VOLUME_ID = "id";
 	protected static final String VOLUME_SIZE = "size";
 	protected static final String VOLUME_NAME = "name";
 	protected static final String DISK_OFFERING_ID = "diskofferingid";
 	protected static final String ZONE_ID = "zoneid";
-	
+
 	private Properties properties;
 	private HttpClientWrapper httpClient;
 	private String endpoint;
@@ -53,7 +53,7 @@ public class CloudStackStoragePlugin implements StoragePlugin {
 	public CloudStackStoragePlugin(Properties properties) {
 		this(properties, new HttpClientWrapper());
 	}
-	
+
 	public CloudStackStoragePlugin(Properties properties, HttpClientWrapper httpClient) {
 		this.properties = properties;
 		this.httpClient = httpClient;
@@ -66,21 +66,20 @@ public class CloudStackStoragePlugin implements StoragePlugin {
 			Map<String, String> xOCCIAtt) {
 		LOGGER.debug("Requesting storage instance with token=" + token + "; categories="
 				+ categories + "; xOCCIAtt=" + xOCCIAtt);
-		
+
 		if (zoneId == null) {
 			LOGGER.error("Default zone id must be specified.");
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}
-		
+
+		String name = generateName();
+
 		URIBuilder uriBuilder = createURIBuilder(endpoint, CREATE_VOLUME_COMMAND);
 		uriBuilder.addParameter(ZONE_ID, zoneId);
-		
-		String volumeName = "fogbow_volume_" + UUID.randomUUID();
-		uriBuilder.addParameter(VOLUME_NAME, volumeName);
-		
+		uriBuilder.addParameter(VOLUME_NAME, name);
 		getDiskOffering(token,
 				xOCCIAtt.get(OrderAttribute.STORAGE_SIZE.getValue()), uriBuilder);
-		
+
 		CloudStackHelper.sign(uriBuilder, token.getAccessId());
 		HttpResponseWrapper response = httpClient.doPost(uriBuilder.toString());
 		checkStatusResponse(response.getStatusLine());
@@ -94,8 +93,13 @@ public class CloudStackStoragePlugin implements StoragePlugin {
 		}
 	}
 
+	protected String generateName() {
+		String name = "fogbow_volume_"+UUID.randomUUID();
+		return name;
+	}
+
 	private void getDiskOffering(Token token, String volumeSize, URIBuilder createVolumeUriBuilder) {
-		LOGGER.debug("Getting disk offerings available in cloudstack with token: " 
+		LOGGER.debug("Getting disk offerings available in cloudstack with token: "
 				+ token + " and volume size: " + volumeSize);
 		URIBuilder uriBuilder = createURIBuilder(endpoint, LIST_DISK_OFFERINGS_COMMAND);
 		CloudStackHelper.sign(uriBuilder, token.getAccessId());
@@ -112,23 +116,23 @@ public class CloudStackStoragePlugin implements StoragePlugin {
 					diskOfferingId = diskOffering.optString("id");
 					break;
 				}
-				if (diskOffering.optBoolean("iscustomized") 
+				if (diskOffering.optBoolean("iscustomized")
 						&& diskOffering.optString("disksize").equals("0")) {
 					customDiskOfferingId = diskOffering.getString("id");
 				}
 			}
 		} catch (JSONException e) {
-			throw new OCCIException(ErrorType.BAD_REQUEST, 
+			throw new OCCIException(ErrorType.BAD_REQUEST,
 					ResponseConstants.IRREGULAR_SYNTAX);
 		}
-		
+
 		if (diskOfferingId != null) {
 			createVolumeUriBuilder.addParameter(DISK_OFFERING_ID, diskOfferingId);
 		} else if (customDiskOfferingId != null) {
 			createVolumeUriBuilder.addParameter(DISK_OFFERING_ID, customDiskOfferingId);
 			createVolumeUriBuilder.addParameter(VOLUME_SIZE, volumeSize);
 		} else {
-			throw new OCCIException(ErrorType.NOT_FOUND, 
+			throw new OCCIException(ErrorType.NOT_FOUND,
 					"No disk offering available to create this volume.");
 		}
 	}
@@ -138,20 +142,20 @@ public class CloudStackStoragePlugin implements StoragePlugin {
 		LOGGER.debug("Listing cloudstack volumes with access ID: " + token.getAccessId());
 		URIBuilder uriBuilder = createURIBuilder(endpoint, LIST_VOLUMES_COMMAND);
 		CloudStackHelper.sign(uriBuilder, token.getAccessId());
-		
+
 		HttpResponseWrapper response = httpClient.doGet(uriBuilder.toString());
 		checkStatusResponse(response.getStatusLine());
 		List<Instance> instances = new LinkedList<Instance>();
 		try {
 			JSONObject jsonResponse = new JSONObject(response.getContent());
 			JSONArray jsonVolumes = jsonResponse.optJSONObject(
-					"listvolumesresponse").optJSONArray("volume");			
+					"listvolumesresponse").optJSONArray("volume");
 			for (int i = 0; jsonVolumes != null && i < jsonVolumes.length(); i++) {
 				JSONObject instanceJson = jsonVolumes.optJSONObject(i);
 				instances.add(mountInstance(instanceJson));
 			}
 		} catch (JSONException e) {
-			throw new OCCIException(ErrorType.BAD_REQUEST, 
+			throw new OCCIException(ErrorType.BAD_REQUEST,
 					ResponseConstants.IRREGULAR_SYNTAX);
 		}
 		return instances;
@@ -161,7 +165,7 @@ public class CloudStackStoragePlugin implements StoragePlugin {
 		String id = instanceJson.optString("id");
 		List<Resource> resources = new ArrayList<Resource>();
 		resources.add(ResourceRepository.getInstance().get(OrderConstants.STORAGE_TERM));
-		
+
 		Map<String, String> attributes = new HashMap<String, String>();
 		attributes.put("occi.storage.name", instanceJson.optString("name"));
 		attributes.put("occi.storage.status", instanceJson.optString("state"));
@@ -188,7 +192,7 @@ public class CloudStackStoragePlugin implements StoragePlugin {
 		LOGGER.debug("Removing storage instance " + instanceId + ". With token: " + token);
 		URIBuilder uriBuilder = createURIBuilder(endpoint, DELETE_VOLUME_COMMAND);
 		uriBuilder.addParameter(VOLUME_ID, instanceId);
-		
+
 		CloudStackHelper.sign(uriBuilder, token.getAccessId());
 		HttpResponseWrapper response = httpClient.doGet(uriBuilder.toString());
 		try {
@@ -212,33 +216,33 @@ public class CloudStackStoragePlugin implements StoragePlugin {
 			removeInstance(token, instance.getId());
 		}
 	}
-	
+
 	protected static URIBuilder createURIBuilder(String endpoint, String command) {
 		try {
 			URIBuilder uriBuilder = new URIBuilder(endpoint);
 			uriBuilder.addParameter(COMMAND, command);
 			return uriBuilder;
 		} catch (Exception e) {
-			throw new OCCIException(ErrorType.BAD_REQUEST, 
+			throw new OCCIException(ErrorType.BAD_REQUEST,
 					ResponseConstants.IRREGULAR_SYNTAX);
 		}
 	}
-	
+
 	private static final int SC_PARAM_ERROR = 431;
     private static final int SC_INSUFFICIENT_CAPACITY_ERROR = 533;
 	private static final int SC_RESOURCE_UNAVAILABLE_ERROR = 534;
 	private static final int SC_RESOURCE_ALLOCATION_ERROR = 535;
-	
+
 	protected void checkStatusResponse(StatusLine statusLine) {
 		if (statusLine.getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		} else if (statusLine.getStatusCode() == SC_PARAM_ERROR) {
 			throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
-		} else if (statusLine.getStatusCode() == SC_INSUFFICIENT_CAPACITY_ERROR || 
+		} else if (statusLine.getStatusCode() == SC_INSUFFICIENT_CAPACITY_ERROR ||
 				statusLine.getStatusCode() == SC_RESOURCE_UNAVAILABLE_ERROR) {
 			throw new OCCIException(ErrorType.NO_VALID_HOST_FOUND, ResponseConstants.NO_VALID_HOST_FOUND);
 		} else if (statusLine.getStatusCode() == SC_RESOURCE_ALLOCATION_ERROR) {
-			throw new OCCIException(ErrorType.QUOTA_EXCEEDED, 
+			throw new OCCIException(ErrorType.QUOTA_EXCEEDED,
 					ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES);
 		} else if (statusLine.getStatusCode() > 204) {
 			throw new OCCIException(ErrorType.BAD_REQUEST, statusLine.getReasonPhrase());
