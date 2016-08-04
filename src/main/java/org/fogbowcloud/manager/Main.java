@@ -49,6 +49,7 @@ public class Main {
 	private static final int EXIT_ERROR_CODE = 128;
 	private static final int DEFAULT_HTTP_PORT = 8182;
 	private static final int DEFAULT_HTTPS_PORT = 8183;
+	private static final boolean DEFAULT_HTTPS_ENABLED = false;
 	
 	public static void main(String[] args) throws Exception {
 		configureLog4j();
@@ -251,38 +252,38 @@ public class Main {
 		
 		try {
 			Component http = new Component();
-			String httpsPort = properties.getProperty(ConfigurationConstants.HTTPS_PORT_KEY);
-			String httpPort = properties.getProperty(ConfigurationConstants.HTTP_PORT_KEY);
-			String requestHeaderSize = properties.getProperty(ConfigurationConstants.HTTP_REQUEST_HEADER_SIZE_KEY);
-			if (requestHeaderSize == null) {
-				requestHeaderSize = String.valueOf(DEFAULT_REQUEST_HEADER_SIZE);
-			} else {
-				requestHeaderSize = String.valueOf(Integer.parseInt(requestHeaderSize));
-			}
-			String responseHeaderSize = properties.getProperty(ConfigurationConstants.HTTP_RESPONSE_HEADER_SIZE_KEY);
-			if (responseHeaderSize == null) {
-				responseHeaderSize = String.valueOf(DEFAULT_RESPONSE_HEADER_SIZE);
-			} else {
-				responseHeaderSize = String.valueOf(Integer.parseInt(responseHeaderSize));
-			}
+			String httpPort = properties.getProperty(ConfigurationConstants.HTTP_PORT_KEY, 
+					String.valueOf(DEFAULT_HTTP_PORT));
+			String httpsPort = properties.getProperty(ConfigurationConstants.HTTPS_PORT_KEY, 
+					String.valueOf(DEFAULT_HTTPS_PORT));
+			Boolean httpsEnabled = Boolean.valueOf(properties.getProperty(ConfigurationConstants.HTTPS_ENABLED, 
+					String.valueOf(DEFAULT_HTTPS_ENABLED)));
+			String requestHeaderSize = String.valueOf(Integer.parseInt(
+					properties.getProperty(ConfigurationConstants.HTTP_REQUEST_HEADER_SIZE_KEY, 
+					String.valueOf(DEFAULT_REQUEST_HEADER_SIZE))));
+			String responseHeaderSize = String.valueOf(Integer.parseInt(properties.getProperty(
+					ConfigurationConstants.HTTP_RESPONSE_HEADER_SIZE_KEY, 
+					String.valueOf(DEFAULT_RESPONSE_HEADER_SIZE))));
 			
 			//Adding HTTP server
-			Server httpServer = http.getServers().add(Protocol.HTTP, httpPort == null ? DEFAULT_HTTP_PORT : Integer.parseInt(httpPort));
+			Server httpServer = http.getServers().add(Protocol.HTTP, Integer.parseInt(httpPort));
 			Series<Parameter> httpParameters = httpServer.getContext().getParameters();
 			httpParameters.add("http.requestHeaderSize", requestHeaderSize);
 			httpParameters.add("http.responseHeaderSize", responseHeaderSize);
 			
-			//Adding HTTPS server
-			Server httpsServer = http.getServers().add(Protocol.HTTPS, httpsPort == null ? DEFAULT_HTTPS_PORT : Integer.parseInt(httpsPort));
-			
-			Series parameters = httpsServer.getContext().getParameters();
-			parameters.add("sslContextFactory", "org.restlet.engine.ssl.DefaultSslContextFactory");
-			parameters.add("keyStorePath", "/home/marcosancj/managerhttps/martelo.jks");
-			parameters.add("keyStorePassword", "password");
-			parameters.add("keyPassword", "password");
-			parameters.add("keyStoreType", "JKS");
-			parameters.add("http.requestHeaderSize", requestHeaderSize);
-			parameters.add("http.responseHeaderSize", responseHeaderSize);
+			if (httpsEnabled) {
+				//Adding HTTPS server
+				Server httpsServer = http.getServers().add(Protocol.HTTPS, Integer.parseInt(httpsPort));
+				
+				Series parameters = httpsServer.getContext().getParameters();
+				parameters.add("sslContextFactory", "org.restlet.engine.ssl.DefaultSslContextFactory");
+				parameters.add("keyStorePath", "/home/marcosancj/managerhttps/martelo.jks");
+				parameters.add("keyStorePassword", "password");
+				parameters.add("keyPassword", "password");
+				parameters.add("keyStoreType", "JKS");
+				parameters.add("http.requestHeaderSize", requestHeaderSize);
+				parameters.add("http.responseHeaderSize", responseHeaderSize);
+			}
 			
 			http.getDefaultHost().attach(application);
 			http.start();
