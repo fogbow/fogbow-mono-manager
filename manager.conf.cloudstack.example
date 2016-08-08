@@ -1,0 +1,105 @@
+xmpp_jid=$manager.internal.mydomain
+xmpp_password=$xmpp_pass
+xmpp_host=$xmpp_address
+xmpp_port=$xmpp_port
+
+rendezvous_jid=$my-rendezvous.internal.mydomain
+
+## Order database
+order_datastore_url=jdbc:sqlite:$path_to_manager_db
+order_bd_updater_period=30000
+
+## Static mapping from flavors to requirements (Optional)
+#flavor_fogbow_small={mem=512, cpu=1}
+#flavor_fogbow_medium={mem=1024, cpu=2}
+#flavor_fogbow_large={mem=2048, cpu=4}
+
+## Image Storage Plugin (HTTPDownload)
+image_storage_class=org.fogbowcloud.manager.core.plugins.imagestorage.http.HTTPDownloadImageStoragePlugin
+image_storage_http_tmp_storage=$path_to_tmp
+image_storage_http_base_url=http://$image_store_address
+image_storage_http_accepted_formats=qcow2,raw,vmdk
+image_storage_http_conversion_output_format=$format
+
+## Static mapping between local image ids and image names
+## Applies to all image storage plugins
+image_storage_static_fogbow-ubuntu=$image_id
+
+## Mapper Plugin / Local Credentials
+federation_user_credentail_class=org.fogbowcloud.manager.core.plugins.localcredentails.SingleMapperPlugin
+
+## Authorization Plugin
+federation_authorization_class=org.fogbowcloud.manager.core.plugins.authorization.AllowAllAuthorizationPlugin
+
+## Member Validator
+member_validator_class=org.fogbowcloud.manager.core.plugins.memberauthorization.DefaultMemberAuthorizationPlugin
+member_validator_ca_dir=
+
+## Member Picker Plugin (Round Robin)
+member_picker_class=org.fogbowcloud.manager.core.plugins.memberpicker.RoundRobinMemberPickerPlugin
+
+## Member Picker Plugin (Nof Member Picker)
+# member_picker_class=org.fogbowcloud.manager.core.plugins.memberpicker.NoFMemberPickerPlugin
+
+## Local Prioritization Plugin
+local_prioritization_plugin_class=org.fogbowcloud.manager.core.plugins.prioritization.fcfs.FCFSPrioritizationPlugin
+## Remote Prioritization Plugin
+remote_prioritization_plugin_class=org.fogbowcloud.manager.core.plugins.prioritization.nof.NoFPrioritizationPlugin
+nof_prioritize_local=true
+
+## If you are using NoFMemberPicker or NoFPrioritizationPlugin classes
+nof_trustworthy=false
+
+token_host_public_address=$token_host_pub_address
+token_host_private_address=$token_host_priv_address
+token_host_http_port=$token_host_http_port
+token_host_port=$token_host_port
+
+my_ip=$manager_ip
+
+http_port=$manager_port
+
+## Accounting Plugin
+## Compute accounting plugin
+accounting_class=org.fogbowcloud.manager.core.plugins.accounting.FCUAccountingPlugin
+accounting_update_period=300000
+fcu_accounting_datastore_url=jdbc:h2:$path_to_compute_accounting_db
+
+## Storage accounting plugin
+storage_accounting_class=org.fogbowcloud.manager.core.plugins.accounting.SimpleStorageAccountingPlugin
+simple_storage_accounting_datastore_url=jdbc:h2:$path_to_storage_accounting_db
+
+## Benchmarking (Vanilla Benchmarking Plugin)
+benchmarking_class=org.fogbowcloud.manager.core.plugins.benchmarking.VanillaBenchmarkingPlugin
+# Benchmarking script to use with SSH Benchmarking plugin
+ssh_benchmarking_script_url=http://downloads.fogbowcloud.org/benchmark/script_ssh_benchmarking.sh
+
+## Compute Plugin
+compute_class=org.fogbowcloud.manager.core.plugins.compute.cloudstack.CloudStackComputePlugin
+compute_cloudstack_api_url=http://$address/client/api
+compute_cloudstack_zone_id=$zone_id
+compute_cloudstack_image_download_base_url=http://$address
+compute_cloudstack_image_download_base_path=$path_to_download_dir
+compute_cloudstack_hypervisor=$hypervisor_type
+compute_cloudstack_image_download_os_type_id=$os_type_id
+compute_cloudstack_expunge_on_destroy=true
+
+# Network Plugin
+network_class=org.fogbowcloud.manager.core.plugins.network.cloudstack.CloudStackNetworkPlugin
+network_cloudstack_api_url=https://$address/client/api
+network_cloudstack_zone_id=$zone_id
+network_cloudstack_netoffering_id=$offering_id
+
+## Storage Plugin
+storage_class=org.fogbowcloud.manager.core.plugins.storage.cloudstack.CloudStackStoragePlugin
+
+## Local Identity
+local_identity_class=org.fogbowcloud.manager.core.plugins.identity.cloudstack.CloudStackIdentityPlugin
+local_identity_url=http://$address/client/api/
+
+## Local Credentials
+federation_user_credentail_class=org.fogbowcloud.manager.core.plugins.localcredentails.SingleMapperPlugin
+
+## Mapper Plugin / Local credentials to be used when we miss information about a given user
+mapper_defaults_apiKey=$user_api_key
+mapper_defaults_secretKey=$user_secret_key
