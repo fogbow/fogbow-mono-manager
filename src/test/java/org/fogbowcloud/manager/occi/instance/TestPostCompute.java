@@ -5,6 +5,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -114,14 +115,18 @@ public class TestPostCompute {
 		Map<String, List<Order>> ordersToAdd = new HashMap<String, List<Order>>();
 		ordersToAdd.put(OCCITestHelper.USER_MOCK, orders);
 
-		this.helper.initializeComponentCompute(computePlugin, identityPlugin, authorizationPlugin,
-				imageStoragePlugin, Mockito.mock(AccountingPlugin.class), Mockito.mock(BenchmarkingPlugin.class),
-				ordersToAdd, mapperPlugin);
+		this.helper.initializeComponentCompute(computePlugin, identityPlugin, identityPlugin, authorizationPlugin,
+				imageStoragePlugin, Mockito.mock(AccountingPlugin.class), Mockito.mock(AccountingPlugin.class), 
+				Mockito.mock(BenchmarkingPlugin.class), ordersToAdd, mapperPlugin);
 
 	}
 
 	@After
 	public void tearDown() throws Exception {
+		File dbFile = new File(OCCITestHelper.INSTANCE_DB_FILE + ".mv.db");
+		if (dbFile.exists()) {
+			dbFile.delete();
+		}		
 		this.helper.stopComponent();
 	}
 
@@ -170,6 +175,54 @@ public class TestPostCompute {
 		assertEquals(HttpStatus.SC_CREATED, response.getStatusLine().getStatusCode());
 		assertNull(instanceIdHead);
 		assertNotNull(instanceIdBody);
+
+	}
+	
+	@Test
+	public void testPostComputeAcceptOcciWithNetworkOk() throws Exception {
+
+		HttpPost httpPost = new HttpPost(OCCITestHelper.URI_FOGBOW_COMPUTE);
+		httpPost.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
+		httpPost.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		httpPost.addHeader(OCCIHeaders.LINK,
+				"</network/123>; rel=\"http://schemas.ogf.org/occi/infrastructure#network\"; category=\"http://schemas.ogf.org/occi/infrastructure#networkinterface\"; ");
+		httpPost.addHeader(OCCIHeaders.CATEGORY,
+				"compute; scheme=\"http://schemas.ogf.org/occi/infrastructure#\"; class=\"kind\"; ");
+		httpPost.addHeader(OCCIHeaders.CATEGORY,
+				"fbc85206-fbcc-4ad9-ae93-54946fdd5df7; scheme=\"http://schemas.openstack.org/template/os#\"; class=\"mixin\"; ");
+		httpPost.addHeader(OCCIHeaders.CATEGORY,
+				"m1-medium; scheme=\"http://schemas.openstack.org/template/resource#\"; class=\"mixin\"; ");
+		httpPost.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, "occi.core.title=\"Title\"");
+		HttpClient client = HttpClients.createMinimal();
+		HttpResponse response = client.execute(httpPost);
+		String instanceId = OCCITestHelper.getInstanceIdPerLocationHeader(response);
+
+		assertEquals(HttpStatus.SC_CREATED, response.getStatusLine().getStatusCode());
+		assertNotNull(instanceId);
+		assertTrue(OCCITestHelper.getLocationIds(response).isEmpty());
+
+	}
+	
+	@Test
+	public void testPostComputeAcceptOcciWithNetworkNotFounded() throws Exception {
+
+		HttpPost httpPost = new HttpPost(OCCITestHelper.URI_FOGBOW_COMPUTE);
+		httpPost.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
+		httpPost.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		httpPost.addHeader(OCCIHeaders.LINK,
+				"</network/federated_network_123>; rel=\"http://schemas.ogf.org/occi/infrastructure#network\"; category=\"http://schemas.ogf.org/occi/infrastructure#networkinterface\"; ");
+		httpPost.addHeader(OCCIHeaders.CATEGORY,
+				"compute; scheme=\"http://schemas.ogf.org/occi/infrastructure#\"; class=\"kind\"; ");
+		httpPost.addHeader(OCCIHeaders.CATEGORY,
+				"fbc85206-fbcc-4ad9-ae93-54946fdd5df7; scheme=\"http://schemas.openstack.org/template/os#\"; class=\"mixin\"; ");
+		httpPost.addHeader(OCCIHeaders.CATEGORY,
+				"m1-medium; scheme=\"http://schemas.openstack.org/template/resource#\"; class=\"mixin\"; ");
+		httpPost.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, "occi.core.title=\"Title\"");
+		HttpClient client = HttpClients.createMinimal();
+		HttpResponse response = client.execute(httpPost);
+		String instanceId = OCCITestHelper.getInstanceIdPerLocationHeader(response);
+		assertNull(instanceId);
+		Assert.assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatusLine().getStatusCode());
 
 	}
 

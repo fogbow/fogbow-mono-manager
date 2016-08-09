@@ -12,8 +12,10 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpStatus;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
+import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.UserdataUtils;
 import org.fogbowcloud.manager.occi.OCCIApplication;
+import org.fogbowcloud.manager.occi.OCCIConstants;
 import org.fogbowcloud.manager.occi.instance.Instance.Link;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.ErrorType;
@@ -23,6 +25,8 @@ import org.fogbowcloud.manager.occi.model.OCCIHeaders;
 import org.fogbowcloud.manager.occi.model.Resource;
 import org.fogbowcloud.manager.occi.model.ResourceRepository;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;
+import org.fogbowcloud.manager.occi.network.FedNetworkState;
+import org.fogbowcloud.manager.occi.network.NetworkDataStore;
 import org.fogbowcloud.manager.occi.order.Order;
 import org.fogbowcloud.manager.occi.order.OrderAttribute;
 import org.fogbowcloud.manager.occi.order.OrderConstants;
@@ -32,7 +36,7 @@ import org.restlet.data.MediaType;
 import org.restlet.data.Status;
 import org.restlet.engine.adapter.HttpRequest;
 import org.restlet.engine.adapter.ServerCall;
-import org.restlet.engine.header.Header;
+import org.restlet.data.Header;
 import org.restlet.representation.StringRepresentation;
 import org.restlet.resource.Delete;
 import org.restlet.resource.Get;
@@ -46,7 +50,7 @@ public class ComputeServerResource extends ServerResource {
 	private static final String DEFAULT_INSTANCE_COUNT = "1";
 	protected static final String NO_INSTANCES_MESSAGE = "There are not instances.";
 	private static final Logger LOGGER = Logger.getLogger(ComputeServerResource.class);
-	protected static final String FED_INSTANCE_PREFIX = "federated_instance_";
+	public static final String FED_INSTANCE_PREFIX = "federated_instance_";
 
 	protected static final String OCCI_NETWORK_INTERFACE_GATEWAY = "occi.networkinterface.gateway";
 	protected static final String OCCI_NETWORK_INTERFACE_MAC = "occi.networkinterface.mac";
@@ -58,14 +62,21 @@ public class ComputeServerResource extends ServerResource {
 	protected static final String OCCI_CORE_TARGET = "occi.core.target";
 	protected static final String OCCI_CORE_ID = "occi.core.id";
 
+	protected static final String FED_NETWORK_PREFIX = "federated_network_";
+	
 	private InstanceDataStore instanceDB;
+	private NetworkDataStore networkDB;
 
 	protected void doInit() throws ResourceException {
 
 		Properties properties = ((OCCIApplication) getApplication()).getProperties();
 		String instanceDSUrl = properties
 				.getProperty(ConfigurationConstants.INSTANCE_DATA_STORE_URL);
+		String networkDataStoreUrl = properties
+				.getProperty(ConfigurationConstants.NETWORK_DATA_STORE_URL);
+		
 		instanceDB = new InstanceDataStore(instanceDSUrl);
+		networkDB = new NetworkDataStore(networkDataStoreUrl);
 
 	};
 
@@ -79,7 +90,7 @@ public class ComputeServerResource extends ServerResource {
 				application.getAuthenticationURI());
 		String instanceId = (String) getRequestAttributes().get("instanceId");
 		List<String> acceptContent = HeaderUtils.getAccept(req.getHeaders());
-
+		
 		if (instanceId == null) {
 			LOGGER.info("Getting all instances of token :" + federationAuthToken);
 
@@ -329,6 +340,10 @@ public class ComputeServerResource extends ServerResource {
 
 		HeaderUtils.checkOCCIContentType(req.getHeaders());
 
+		String federationAuthToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse(),
+				application.getAuthenticationURI());
+		String user = application.getUser(normalizeAuthToken(federationAuthToken));
+		
 		List<Resource> resources = ResourceRepository.getInstance().get(categories);
 		if (resources.size() != categories.size()) {
 			LOGGER.debug("Some categories was not found in available resources! Resources " + resources.size()
@@ -374,6 +389,31 @@ public class ComputeServerResource extends ServerResource {
 		List<Resource> resourceTplResources = filterByRelProperty(OrderConstants.RESOURCE_TPL_OCCI_SCHEME,
 				resources);
 		String fogbowRequirements = getRequirements(properties, resourceTplResources);		
+		
+		String networkId = null;
+		List<Instance.Link> links = HeaderUtils.getLinks(req.getHeaders());
+		for (Link link : links) {
+			if(OCCIConstants.NETWORK_TERM.equals(link.getType())){
+				
+				networkId = link.getId(); 
+				
+				if(networkId != null && networkId.startsWith(FED_NETWORK_PREFIX)){
+					
+					FedNetworkState fedNetworkState = networkDB.getByFedNetworkId(networkId, user);
+
+					if (fedNetworkState == null) {
+						throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
+					}
+					Order relatedOrder = application.getOrder(federationAuthToken, fedNetworkState.getOrderId());
+					networkId = relatedOrder.getGlobalInstanceId(); 
+				}
+				
+				networkId = ManagerController.normalizeInstanceId(networkId);
+				
+				orderXOCCIAtt.put(OrderAttribute.NETWORK_ID.getValue(), networkId);
+			}
+		}
+		
 		orderXOCCIAtt.put(OrderAttribute.REQUIREMENTS.getValue(), fogbowRequirements);
 		orderXOCCIAtt.put(OrderAttribute.INSTANCE_COUNT.getValue(), DEFAULT_INSTANCE_COUNT);
 		orderXOCCIAtt.put(OrderAttribute.TYPE.getValue(), OrderConstants.DEFAULT_TYPE);
@@ -385,9 +425,6 @@ public class ComputeServerResource extends ServerResource {
 
 		convertPublicKey(properties, resources, orderCategories, orderXOCCIAtt, xOCCIAtt);
 		convertUserData(properties, resources, orderCategories, orderXOCCIAtt, xOCCIAtt);
-
-		String federationAuthToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse(),
-				application.getAuthenticationURI());
 
 		orderXOCCIAtt.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.COMPUTE_TERM);
 		 

@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Properties;
 
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.Main;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.PrioritizationPlugin;
 import org.fogbowcloud.manager.core.plugins.prioritization.fcfs.FCFSPrioritizationPlugin;
@@ -21,7 +22,7 @@ public class TwoFoldPrioritizationPlugin implements PrioritizationPlugin {
 	
 	public TwoFoldPrioritizationPlugin(Properties properties, AccountingPlugin accountingPlugin) {
 		try {
-			localPrioritizationPlugin = (PrioritizationPlugin) createInstanceWithAccoutingPlugin(
+			localPrioritizationPlugin = (PrioritizationPlugin) Main.createInstanceWithAccountingPlugin(
 					LOCAL_PRIORITIZATION_PLUGIN_CLASS, properties, accountingPlugin);
 		} catch (Exception e) {
 			LOGGER.warn("A valid local prioritization plugin was not specified in properties. "
@@ -30,20 +31,13 @@ public class TwoFoldPrioritizationPlugin implements PrioritizationPlugin {
 		}
 		
 		try {
-			remotePrioritizationPlugin = (PrioritizationPlugin) createInstanceWithAccoutingPlugin(
+			remotePrioritizationPlugin = (PrioritizationPlugin) Main.createInstanceWithAccountingPlugin(
 					REMOTE_PRIORITIZATION_PLUGIN_CLASS, properties, accountingPlugin);
 		} catch (Exception e) {
 			LOGGER.warn("A valid remote prioritization plugin was not specified in properties. "
 					+ "Using the default one.",	e);
 			remotePrioritizationPlugin = new FCFSPrioritizationPlugin(properties, accountingPlugin);
 		}
-	}
-	
-	private static Object createInstanceWithAccoutingPlugin(
-			String propName, Properties properties,
-			AccountingPlugin accoutingPlugin) throws Exception {
-		return Class.forName(properties.getProperty(propName)).getConstructor(Properties.class, AccountingPlugin.class)
-				.newInstance(properties, accoutingPlugin);
 	}
 
 	@Override

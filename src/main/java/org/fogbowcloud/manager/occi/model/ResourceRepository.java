@@ -64,6 +64,23 @@ public class ResourceRepository {
 				OrderConstants.KIND_CLASS, storageLinkAttributes, new ArrayList<String>(), FOGBOWCLOUD_ENDPOINT + "/" + "storage/link/",
 				"A link to a storage resource", "http://schemas.ogf.org/occi/core#link");
 		
+		List<String> networkAttributes = new ArrayList<String>();
+		networkAttributes.add("occi.network.vlan");
+		networkAttributes.add("occi.network.label");
+		networkAttributes.add("occi.network.state");
+		networkAttributes.add("occi.network.address");
+		networkAttributes.add("occi.network.gateway");
+		networkAttributes.add("occi.network.allocation");
+		
+		List<String> networkActions = new ArrayList<String>();
+		networkActions.add("http://schemas.ogf.org/occi/infrastructure/network/action#up");
+		networkActions.add("http://schemas.ogf.org/occi/infrastructure/network/action#down");
+		
+		Resource network = new Resource(OrderConstants.NETWORK_TERM, OrderConstants.INFRASTRUCTURE_OCCI_SCHEME, 
+				OrderConstants.KIND_CLASS, networkAttributes, networkActions, 
+				FOGBOWCLOUD_ENDPOINT + "/" + OrderConstants.NETWORK_TERM + "/", 
+				"Network Resource", OrderConstants.RESOURCE_OCCI_SCHEME);
+		
 		//TODO implement properties of attributes. For example, {immutable}
 		List<String> computeAttributes = new ArrayList<String>();
 		computeAttributes.add("occi.compute.architecture");
@@ -118,6 +135,7 @@ public class ResourceRepository {
 		resources.add(storage);
 		resources.add(compute);
 		resources.add(fogbowUserdata);
+		resources.add(network);
 
 		Resource resourceTlp = new Resource(OrderConstants.RESOURCE_TPL_TERM,
 				OrderConstants.INFRASTRUCTURE_OCCI_SCHEME, OrderConstants.MIXIN_CLASS,

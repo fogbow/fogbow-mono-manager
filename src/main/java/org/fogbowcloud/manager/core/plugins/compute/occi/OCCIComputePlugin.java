@@ -321,10 +321,10 @@ public class OCCIComputePlugin implements ComputePlugin {
 			Request proxiedRequest = new Request(request.getMethod(), newRequestURI.toString());
 
 			// forwarding headers from cloud to response
-			Series<org.restlet.engine.header.Header> requestHeaders = (Series<org.restlet.engine.header.Header>) request
+			Series<org.restlet.data.Header> requestHeaders = (Series<org.restlet.data.Header>) request
 					.getAttributes().get("org.restlet.http.headers");
 
-			for (org.restlet.engine.header.Header header : requestHeaders) {
+			for (org.restlet.data.Header header : requestHeaders) {
 				if (header.getName().contains(OCCIHeaders.ACCEPT)) {
 					try {
 						String headerAccept = header.getValue();

@@ -34,7 +34,7 @@ import org.restlet.Request;
 import org.restlet.Response;
 import org.restlet.data.MediaType;
 import org.restlet.data.Method;
-import org.restlet.engine.header.Header;
+import org.restlet.data.Header;
 import org.restlet.util.Series;
 
 public class TestOCCIComputeOpenStack {
@@ -703,8 +703,8 @@ public class TestOCCIComputeOpenStack {
 		request.setEntity("Hello\n" 
 								+ OCCIHeaders.CATEGORY +": X \n " 
 								+ OCCIHeaders.X_OCCI_ATTRIBUTE + ":Y" , MediaType.TEXT_PLAIN);
-		Series<org.restlet.engine.header.Header> requestHeaders = new Series<org.restlet.engine.header.Header>(
-				org.restlet.engine.header.Header.class);
+		Series<org.restlet.data.Header> requestHeaders = new Series<org.restlet.data.Header>(
+				org.restlet.data.Header.class);
 		String valueOne = "One";
 		String valueTwo = "Two";
 		

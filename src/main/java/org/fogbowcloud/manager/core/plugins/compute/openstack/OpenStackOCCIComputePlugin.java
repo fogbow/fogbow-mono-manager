@@ -98,11 +98,11 @@ public class OpenStackOCCIComputePlugin extends OCCIComputePlugin{
 			Request proxiedRequest = new Request(request.getMethod(), newRequestURI.toString());
 		
 			// forwarding headers from cloud to response
-			Series<org.restlet.engine.header.Header> requestHeaders = (Series<org.restlet.engine.header.Header>) request
+			Series<org.restlet.data.Header> requestHeaders = (Series<org.restlet.data.Header>) request
 					.getAttributes().get("org.restlet.http.headers");			
 			
 			boolean convertToOcci = false;
-			for (org.restlet.engine.header.Header header : requestHeaders) {
+			for (org.restlet.data.Header header : requestHeaders) {
 				if (header.getName().contains("Content-type")
 						&& !header.getValue().equals(OCCIHeaders.OCCI_CONTENT_TYPE)
 						&& request.getMethod().getName()
@@ -128,8 +128,7 @@ public class OpenStackOCCIComputePlugin extends OCCIComputePlugin{
 			}
 			
 			// Removing one header if request has more than one (one normalized and other not normalized)
-			if (requestHeaders.getValuesArray(HeaderUtils.normalize(OCCIHeaders.X_AUTH_TOKEN)).length == 1
-					&& requestHeaders.getValuesArray(OCCIHeaders.X_AUTH_TOKEN).length == 1) {
+			if (requestHeaders.getValuesArray(HeaderUtils.normalize(OCCIHeaders.X_AUTH_TOKEN), true).length == 2) {
 				requestHeaders.removeFirst(OCCIHeaders.X_AUTH_TOKEN);
 			}
 			proxiedRequest.getAttributes().put("org.restlet.http.headers", requestHeaders);
@@ -153,7 +152,7 @@ public class OpenStackOCCIComputePlugin extends OCCIComputePlugin{
 		return openStackNovaV2ComputePlugin.getResourcesInfo(token);
 	}	
 
-	protected void convertRequestToOcci(Request request, Series<org.restlet.engine.header.Header> requestHeaders) {
+	protected void convertRequestToOcci(Request request, Series<org.restlet.data.Header> requestHeaders) {
 		try {
 			String entityAsText = request.getEntityAsText();
 			if (!entityAsText.contains(OCCIHeaders.CATEGORY)
@@ -176,9 +175,9 @@ public class OpenStackOCCIComputePlugin extends OCCIComputePlugin{
 							.trim() + "\n";
 				}
 			}
-			requestHeaders.add(new org.restlet.engine.header.Header(OCCIHeaders.CATEGORY,
+			requestHeaders.add(new org.restlet.data.Header(OCCIHeaders.CATEGORY,
 					category.trim().replace("\n", ",")));
-			requestHeaders.add(new org.restlet.engine.header.Header("X-occi-attribute",
+			requestHeaders.add(new org.restlet.data.Header("X-occi-attribute",
 					attribute.trim().replace("\n", ",")));
 			request.setEntity("", MediaType.TEXT_PLAIN);			
 		} catch (Exception e) {}

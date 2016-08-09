@@ -31,6 +31,7 @@ import org.fogbowcloud.manager.core.plugins.FederationMemberPickerPlugin;
 import org.fogbowcloud.manager.core.plugins.MapperPlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.StoragePlugin;
+import org.fogbowcloud.manager.core.plugins.capacitycontroller.satisfactiondriven.SatisfactionDrivenCapacityControllerPlugin;
 import org.fogbowcloud.manager.core.plugins.identity.openstack.KeystoneIdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.memberauthorization.DefaultMemberAuthorizationPlugin;
 import org.fogbowcloud.manager.occi.instance.Instance;
@@ -70,7 +71,8 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 	private IdentityPlugin federationIdentityPlugin;
 	private AuthorizationPlugin authorizationPlugin;
 	private BenchmarkingPlugin benchmarkingPlugin;
-	private AccountingPlugin accountingPlugin;
+	private AccountingPlugin computeAccountingPlugin;
+	private AccountingPlugin storageAccountingPlugin;
 	private FederationMemberPickerPlugin memberPickerPlugin;
 	private Token defaultFederationToken;
 	private Map<String, Map<String, String>> defaultFederationAllUsersCrendetials;
@@ -184,7 +186,11 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 	}
 	
 	public AccountingPlugin getAccountingPlugin() {
-		return accountingPlugin;
+		return computeAccountingPlugin;
+	}
+	
+	public MapperPlugin getMapperPlugin() {
+		return mapperPlugin;
 	}
 
 	public ManagerXmppComponent initializeXMPPManagerComponent(boolean init) throws Exception {
@@ -228,7 +234,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		this.identityPlugin = Mockito.mock(IdentityPlugin.class);
 		this.federationIdentityPlugin = Mockito.mock(IdentityPlugin.class);
 		this.benchmarkingPlugin = Mockito.mock(BenchmarkingPlugin.class);
-		this.accountingPlugin = Mockito.mock(AccountingPlugin.class);
+		this.computeAccountingPlugin = Mockito.mock(AccountingPlugin.class);
 		this.mapperPlugin = Mockito.mock(MapperPlugin.class);
 		this.authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
 		
@@ -245,7 +251,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		ExecutorService benchmarkExecutor = new CurrentThreadExecutorService();
 				
 		managerFacade.setComputePlugin(computePlugin);
-		managerFacade.setAccountingPlugin(accountingPlugin);
+		managerFacade.setComputeAccountingPlugin(computeAccountingPlugin);
 		managerFacade.setLocalIdentityPlugin(identityPlugin);
 		managerFacade.setBenchmarkExecutor(benchmarkExecutor);
 		managerFacade.setBenchmarkingPlugin(benchmarkingPlugin);
@@ -254,6 +260,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		managerFacade.setValidator(new DefaultMemberAuthorizationPlugin(null));
 		managerFacade.setLocalCredentailsPlugin(mapperPlugin);
 		managerFacade.setStoragePlugin(storagePlugin);
+		managerFacade.setCapacityControllerPlugin(new SatisfactionDrivenCapacityControllerPlugin());
 				
 		managerXmppComponent = Mockito.spy(new ManagerXmppComponent(LOCAL_MANAGER_COMPONENT_URL,
 				MANAGER_COMPONENT_PASS, SERVER_HOST, SERVER_COMPONENT_PORT, managerFacade));
@@ -431,7 +438,8 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		
 		benchmarkingPlugin = Mockito.mock(BenchmarkingPlugin.class);
 		
-		accountingPlugin = Mockito.mock(AccountingPlugin.class);
+		computeAccountingPlugin = Mockito.mock(AccountingPlugin.class);
+		storageAccountingPlugin = Mockito.mock(AccountingPlugin.class);
 		
 		memberPickerPlugin = Mockito.mock(FederationMemberPickerPlugin.class);
 		Mockito.when(memberPickerPlugin.pick(Mockito.any(List.class))).thenReturn(
@@ -447,7 +455,8 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		managerController.setLocalCredentailsPlugin(mapperPlugin);
 		managerController.setComputePlugin(computePlugin);
 		managerController.setBenchmarkingPlugin(benchmarkingPlugin);
-		managerController.setAccountingPlugin(accountingPlugin);
+		managerController.setComputeAccountingPlugin(computeAccountingPlugin);
+		managerController.setStorageAccountingPlugin(storageAccountingPlugin);
 		managerController.setValidator(new DefaultMemberAuthorizationPlugin(null));
 		managerController.setMemberPickerPlugin(memberPickerPlugin);
 		managerController.setBenchmarkExecutor(benchmarkExecutor);

@@ -1,5 +1,6 @@
 package org.fogbowcloud.manager.occi.storage;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -135,6 +136,10 @@ public class TestPostStorageLink {
 
 	@After
 	public void tearDown() throws Exception {
+		File dbFile = new File(OCCITestHelper.INSTANCE_DB_FILE + ".mv.db");
+		if (dbFile.exists()) {
+			dbFile.delete();
+		}				
 		this.helper.stopComponent();
 	}
 

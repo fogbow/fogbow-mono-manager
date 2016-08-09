@@ -1,4 +1,4 @@
-package org.fogbowcloud.manager.occi.order;
+package org.fogbowcloud.manager.occi;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -13,16 +13,18 @@ import java.util.List;
 import java.util.Properties;
 
 import org.apache.log4j.Logger;
-import org.fogbowcloud.manager.occi.JSONHelper;
 import org.fogbowcloud.manager.occi.model.Token;
+import org.fogbowcloud.manager.occi.order.Order;
+import org.fogbowcloud.manager.occi.order.OrderState;
+import org.fogbowcloud.manager.occi.storage.StorageLinkRepository.StorageLink;
 import org.json.JSONException;
 
-public class OrderDataStore {
+public class ManagerDataStore {
 
-	private static final Logger LOGGER = Logger.getLogger(OrderDataStore.class);
-	protected static final String ORDER_DATASTORE_URL = "order_datastore_url";
-	protected static final String ORDER_DATASTORE_URL_DEFAULT = "jdbc:sqlite:/tmp/dbOrderSQLite.db";
-	protected static final String ORDER_DATASTORE_SQLITE_DRIVER = "org.sqlite.JDBC";
+	private static final Logger LOGGER = Logger.getLogger(ManagerDataStore.class);
+	protected static final String MANAGER_DATASTORE_URL = "manager_datastore_url";
+	protected static final String MANAGER_DATASTORE_URL_DEFAULT = "jdbc:sqlite:/tmp/dbManagerSQLite.db";
+	protected static final String MANAGER_DATASTORE_SQLITE_DRIVER = "org.sqlite.JDBC";
 	protected static final String ORDER_TABLE_NAME = "t_order";
 	protected static final String ORDER_ID = "order_id";
 	protected static final String PROVIDING_MEMBER_ID = "providing_member_id";
@@ -36,18 +38,24 @@ public class OrderDataStore {
 	protected static final String XOCCI_ATTRIBUTES = "xocci_attributes";
 	protected static final String UPDATED = "updated";
 	
+	protected static final String STORAGELINK_TABLE_NAME = "t_storagelink";
+	protected static final String STORAGELINK_ID = "storage_link_id";
+	protected static final String TARGET = "target";
+	protected static final String DEVICE_ID = "device_id";
+	protected static final String SOURCE = "source";
+	
 	private String dataStoreURL;
 
-	public OrderDataStore(Properties properties) {
-		this.dataStoreURL = properties.getProperty(ORDER_DATASTORE_URL, ORDER_DATASTORE_URL_DEFAULT);
+	public ManagerDataStore(Properties properties) {
+		this.dataStoreURL = properties.getProperty(MANAGER_DATASTORE_URL, MANAGER_DATASTORE_URL_DEFAULT);
 		
 		Statement statement = null;
 		Connection connection = null;
 		try {
 			LOGGER.debug("DatastoreURL: " + dataStoreURL);
-			LOGGER.debug("DatastoreDriver: " + ORDER_DATASTORE_SQLITE_DRIVER);
+			LOGGER.debug("DatastoreDriver: " + MANAGER_DATASTORE_SQLITE_DRIVER);
 
-			Class.forName(ORDER_DATASTORE_SQLITE_DRIVER);
+			Class.forName(MANAGER_DATASTORE_SQLITE_DRIVER);
 
 			connection = getConnection();
 			statement = connection.createStatement();
@@ -63,9 +71,16 @@ public class OrderDataStore {
 							+ CATEGORIES + " TEXT, "
 							+ UPDATED + " TIMESTAMP, "
 							+ XOCCI_ATTRIBUTES + " TEXT)");
+			statement.execute("CREATE TABLE IF NOT EXISTS " + STORAGELINK_TABLE_NAME + "(" 
+							+ STORAGELINK_ID + " VARCHAR(255) PRIMARY KEY, "
+							+ SOURCE + " VARCHAR(255), "
+							+ TARGET + " VARCHAR(255), "
+							+ DEVICE_ID + " VARCHAR(255), "
+							+ FEDERATION_TOKEN + " TEXT, "
+							+ PROVIDING_MEMBER_ID + " VARCHAR(255), "
+							+ IS_LOCAL + " BOOLEAN)");			
 			statement.close();
 		} catch (Exception e) {
-			e.printStackTrace();
 			LOGGER.error("Error while initializing the DataStore.", e);
 		} finally {
 			close(statement, connection);
@@ -150,7 +165,7 @@ public class OrderDataStore {
 			return orders;
 		} catch (SQLException e) {
 			e.printStackTrace();
-			LOGGER.error("Couldn't retrive orders.", e);
+			LOGGER.error("Couldn't retrieve orders.", e);
 			try {
 				if (connection != null) {
 					connection.rollback();
@@ -321,6 +336,161 @@ public class OrderDataStore {
 	 * @return the connection
 	 * @throws SQLException
 	 */
+	
+	private static final String INSERT_STORAGELINK_SQL = "INSERT INTO " + STORAGELINK_TABLE_NAME
+			+ " (" + STORAGELINK_ID + "," + PROVIDING_MEMBER_ID + "," + SOURCE + "," + TARGET + ","
+			+ FEDERATION_TOKEN + "," + DEVICE_ID + "," + IS_LOCAL + ")" 
+			+ " VALUES (?,?,?,?,?,?,?)";
+	
+	public boolean addStorageLink(StorageLink storageLink) throws SQLException, JSONException {
+		PreparedStatement storageLinkStmt = null;
+		Connection connection = null;
+		try {
+			connection = getConnection();
+			connection.setAutoCommit(false);
+			
+			storageLinkStmt = connection.prepareStatement(INSERT_STORAGELINK_SQL);
+			storageLinkStmt.setString(1, storageLink.getId());
+			storageLinkStmt.setString(2, storageLink.getProvidingMemberId());
+			storageLinkStmt.setString(3, storageLink.getSource());
+			storageLinkStmt.setString(4, storageLink.getTarget());
+			Token federationToken = storageLink.getFederationToken();
+			storageLinkStmt.setString(5, federationToken != null ? federationToken.toJSON()
+							.toString() : null);
+			storageLinkStmt.setString(6, storageLink.getDeviceId());
+			storageLinkStmt.setBoolean(7, storageLink.isLocal());
+			storageLinkStmt.executeUpdate();
+			
+			connection.commit();
+			return true;
+		} catch (SQLException e) {
+			LOGGER.error("Couldn't create storage link.", e);
+			try {
+				if (connection != null) {
+					connection.rollback();
+				}
+			} catch (SQLException e1) {
+				LOGGER.error("Couldn't rollback transaction.", e1);
+			}
+		} finally {
+			close(storageLinkStmt, connection);
+		}
+		return false;
+	}
+	
+	private static final String GET_STORAGELINK_SQL = "SELECT " + STORAGELINK_ID + ", " 
+			+ PROVIDING_MEMBER_ID + ", " + SOURCE + ", " + TARGET + ", " + FEDERATION_TOKEN + ", " 
+			+ IS_LOCAL + ", " + DEVICE_ID  
+			+ " FROM " + STORAGELINK_TABLE_NAME;
+	
+	public List<StorageLink> getStorageLinks() throws SQLException, JSONException {
+		PreparedStatement storageLinksStmt = null;
+		Connection connection = null;
+		List<StorageLink> storageLinks = new ArrayList<StorageLink>();
+		try {
+			connection = getConnection();
+			connection.setAutoCommit(false);
+			
+			String storageLinksStmtStr = GET_STORAGELINK_SQL;
+			
+			storageLinksStmt = connection.prepareStatement(storageLinksStmtStr);
+			ResultSet resultSet = storageLinksStmt.executeQuery();
+			while (resultSet.next()) {
+				String tokenJsonStr = resultSet.getString(FEDERATION_TOKEN);
+				storageLinks.add(new StorageLink(resultSet.getString(STORAGELINK_ID),
+						resultSet.getString(SOURCE), resultSet.getString(TARGET),
+						resultSet.getString(DEVICE_ID), resultSet.getString(PROVIDING_MEMBER_ID), 
+						tokenJsonStr != null ? Token.fromJSON(tokenJsonStr) : null, resultSet.getBoolean(IS_LOCAL)));
+			}
+					
+			connection.commit();
+			
+			return storageLinks;
+		} catch (SQLException e) {
+			LOGGER.error("Couldn't retrieve storage links.", e);
+			try {
+				if (connection != null) {
+					connection.rollback();
+				}
+			} catch (SQLException e1) {
+				LOGGER.error("Couldn't rollback transaction.", e1);
+			}
+		} finally {
+			close(storageLinksStmt, connection);
+		}
+		return storageLinks;
+	}	
+	
+	private static final String REMOVE_STORAGELINK_SQL = "DELETE"
+			+ " FROM " + STORAGELINK_TABLE_NAME + " WHERE " + STORAGELINK_ID + " = ?";
+	
+	public boolean removeStorageLink(StorageLink storageLink) throws SQLException {
+		PreparedStatement removeStorageLinkStmt = null;
+		Connection connection = null;
+		try {	
+			connection = getConnection();
+			connection.setAutoCommit(false);
+			
+			removeStorageLinkStmt = connection.prepareStatement(REMOVE_STORAGELINK_SQL);
+			removeStorageLinkStmt.setString(1, storageLink.getId());
+			removeStorageLinkStmt.executeUpdate();
+			
+			connection.commit();
+			return true;
+		} catch (SQLException e) {
+			LOGGER.error("Couldn't remove storage link.", e);
+			try {
+				if (connection != null) {
+					connection.rollback();
+				}
+			} catch (SQLException e1) {
+				LOGGER.error("Couldn't rollback transaction.", e1);
+			}
+		} finally {
+			close(removeStorageLinkStmt, connection);
+		}
+		return false;
+	}		
+	
+	private static final String UPDATE_STORAGELINK_SQL = "UPDATE " + STORAGELINK_TABLE_NAME + " SET "
+			+ PROVIDING_MEMBER_ID + "=?," + SOURCE + "=?," + FEDERATION_TOKEN + "=? ," + TARGET
+			+ "=? ," + IS_LOCAL + "=?," + DEVICE_ID + "=?" + " WHERE " + STORAGELINK_ID + "=?";
+	
+	public boolean updateStorageLink(StorageLink storageLink) throws SQLException, JSONException {
+		PreparedStatement updateStorageLinkStmt = null;
+		Connection connection = null;
+		try {
+			connection = getConnection();
+			connection.setAutoCommit(false);
+			
+			updateStorageLinkStmt = connection.prepareStatement(UPDATE_STORAGELINK_SQL);
+			updateStorageLinkStmt.setString(1, storageLink.getProvidingMemberId());
+			updateStorageLinkStmt.setString(2, storageLink.getSource());
+			Token federationToken = storageLink.getFederationToken();
+			updateStorageLinkStmt.setString(3, federationToken != null ? 
+					federationToken.toJSON().toString() : null);
+			updateStorageLinkStmt.setString(4, storageLink.getTarget());
+			updateStorageLinkStmt.setBoolean(5, storageLink.isLocal());
+			updateStorageLinkStmt.setString(6, storageLink.getDeviceId());
+			updateStorageLinkStmt.setString(7, storageLink.getId());
+			updateStorageLinkStmt.executeUpdate();
+			
+			connection.commit();
+			return true;
+		} catch (SQLException e) {
+			LOGGER.error("Couldn't update storage link.", e);
+			try {
+				if (connection != null) {
+					connection.rollback();
+				}
+			} catch (SQLException e1) {
+				LOGGER.error("Couldn't rollback transaction.", e1);
+			}
+		} finally {
+			close(updateStorageLinkStmt, connection);
+		}
+		return false;
+	}	
 	
 	public Connection getConnection() throws SQLException {
 		try {

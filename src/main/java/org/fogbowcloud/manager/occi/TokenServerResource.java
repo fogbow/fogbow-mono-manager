@@ -6,7 +6,7 @@ import java.util.Map;
 import org.fogbowcloud.manager.occi.model.HeaderUtils;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.restlet.engine.adapter.HttpRequest;
-import org.restlet.engine.header.Header;
+import org.restlet.data.Header;
 import org.restlet.resource.Get;
 import org.restlet.resource.ServerResource;
 import org.restlet.util.Series;
