@@ -5,8 +5,14 @@ xmpp_port=$xmpp_port
 
 rendezvous_jid=$my-rendezvous.internal.mydomain
 
+## Manager databases
+manager_datastore_url=jdbc:sqlite:$path_to_manager_db
+instance_datastore_url=jdbc:sqlite:$path_to_instances_db
+storage_datastore_url=jdbc:sqlite:$path_to_storage_db
+network_datastore_url=jdbc:sqlite:$path_to_network_db
+
 ## Order database
-order_datastore_url=jdbc:sqlite:$path_to_manager_db
+order_datastore_url=jdbc:sqlite:$path_to_orders_db
 order_bd_updater_period=30000
 
 ## Static mapping from flavors to requirements (Optional)
