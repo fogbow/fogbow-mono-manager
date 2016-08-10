@@ -73,7 +73,7 @@ public class TestOpenStackV2StoragePlugin {
 	
 	@Test
 	public void testRequestInstance() throws Exception {
-		HttpUriRequest request = new HttpPost(STORAGE_URL + OpenStackV2StoragePlugin.COMPUTE_V2_API_ENDPOINT
+		HttpUriRequest request = new HttpPost(STORAGE_URL + OpenStackV2StoragePlugin.V2_API_ENDPOINT
 				+ TENANT_ID + OpenStackV2StoragePlugin.SUFIX_ENDPOINT_VOLUMES);
 		request.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.JSON_CONTENT_TYPE);
 		request.addHeader(OCCIHeaders.ACCEPT, OCCIHeaders.JSON_CONTENT_TYPE);
@@ -116,7 +116,7 @@ public class TestOpenStackV2StoragePlugin {
 	public void testGetInstance() throws Exception {
 		String instanceId = "intanceId";
 		
-		HttpUriRequest request = new HttpGet(STORAGE_URL + OpenStackV2StoragePlugin.COMPUTE_V2_API_ENDPOINT
+		HttpUriRequest request = new HttpGet(STORAGE_URL + OpenStackV2StoragePlugin.V2_API_ENDPOINT
 				+ TENANT_ID + OpenStackV2StoragePlugin.SUFIX_ENDPOINT_VOLUMES + "/" + instanceId);
 		request.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.JSON_CONTENT_TYPE);
 		request.addHeader(OCCIHeaders.ACCEPT, OCCIHeaders.JSON_CONTENT_TYPE);
@@ -139,7 +139,7 @@ public class TestOpenStackV2StoragePlugin {
 	
 	@Test
 	public void testGetInstances() throws Exception {
-		HttpUriRequest request = new HttpGet(STORAGE_URL + OpenStackV2StoragePlugin.COMPUTE_V2_API_ENDPOINT
+		HttpUriRequest request = new HttpGet(STORAGE_URL + OpenStackV2StoragePlugin.V2_API_ENDPOINT
 				+ TENANT_ID + OpenStackV2StoragePlugin.SUFIX_ENDPOINT_VOLUMES);
 		request.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.JSON_CONTENT_TYPE);
 		request.addHeader(OCCIHeaders.ACCEPT, OCCIHeaders.JSON_CONTENT_TYPE);
@@ -187,7 +187,7 @@ public class TestOpenStackV2StoragePlugin {
 	public void testRemoveInstance() throws Exception {
 		String instanceId = "intanceId";
 		
-		HttpUriRequest request = new HttpDelete(STORAGE_URL + OpenStackV2StoragePlugin.COMPUTE_V2_API_ENDPOINT
+		HttpUriRequest request = new HttpDelete(STORAGE_URL + OpenStackV2StoragePlugin.V2_API_ENDPOINT
 				+ TENANT_ID + OpenStackV2StoragePlugin.SUFIX_ENDPOINT_VOLUMES + "/" + instanceId);
 		request.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.JSON_CONTENT_TYPE);
 		request.addHeader(OCCIHeaders.ACCEPT, OCCIHeaders.JSON_CONTENT_TYPE);

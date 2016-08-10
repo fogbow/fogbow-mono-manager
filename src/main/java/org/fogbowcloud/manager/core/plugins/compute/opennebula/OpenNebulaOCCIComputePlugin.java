@@ -178,10 +178,10 @@ public class OpenNebulaOCCIComputePlugin extends OCCIComputePlugin {
 			Request proxiedRequest = new Request(request.getMethod(), newRequestURI.toString());
 
 			// forwarding headers from cloud to response
-			Series<org.restlet.engine.header.Header> requestHeaders = (Series<org.restlet.engine.header.Header>) request
+			Series<org.restlet.data.Header> requestHeaders = (Series<org.restlet.data.Header>) request
 					.getAttributes().get("org.restlet.http.headers");
 			String token = "";
-			for (org.restlet.engine.header.Header header : requestHeaders) {
+			for (org.restlet.data.Header header : requestHeaders) {
 				if (header.getName().contains(OCCIHeaders.ACCEPT)) {
 					try {
 						String headerAccept = header.getValue();
@@ -190,7 +190,7 @@ public class OpenNebulaOCCIComputePlugin extends OCCIComputePlugin {
 							clientInfo = new ClientInfo(MediaType.TEXT_PLAIN);
 						} else if ((headerAccept.contains(OCCIHeaders.TEXT_URI_LIST_CONTENT_TYPE))) {
 							requestHeaders.removeAll(OCCIHeaders.ACCEPT);
-							requestHeaders.add(new org.restlet.engine.header.Header(
+							requestHeaders.add(new org.restlet.data.Header(
 									OCCIHeaders.ACCEPT, OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE));
 							clientInfo = new ClientInfo(MediaType.TEXT_PLAIN);
 						} else {
@@ -209,20 +209,20 @@ public class OpenNebulaOCCIComputePlugin extends OCCIComputePlugin {
 			if (requestHeaders.getFirst(OCCIHeaders.AUTHORIZATION) != null
 					&& !requestHeaders.getFirstValue("Authorization").contains("Basic ")) {
 				requestHeaders.removeAll(OCCIHeaders.AUTHORIZATION);
-				requestHeaders.add(new org.restlet.engine.header.Header(OCCIHeaders.AUTHORIZATION,
+				requestHeaders.add(new org.restlet.data.Header(OCCIHeaders.AUTHORIZATION,
 						getAuthorization(token)));
 				requestHeaders.removeAll(HeaderUtils.normalize(OCCIHeaders.X_AUTH_TOKEN));
 			} else if (requestHeaders.getFirst("X-auth-token") != null
 					|| requestHeaders.getFirst("X-Auth-Token") != null) {
-				requestHeaders.add(new org.restlet.engine.header.Header(OCCIHeaders.AUTHORIZATION,
+				requestHeaders.add(new org.restlet.data.Header(OCCIHeaders.AUTHORIZATION,
 						getAuthorization(token)));
 				requestHeaders.removeAll(HeaderUtils.normalize(OCCIHeaders.X_AUTH_TOKEN));
 			}
 
 			if (requestHeaders.getFirst(HeaderUtils.normalize(OCCIHeaders.CONTENT_TYPE)) == null) {
-				requestHeaders.add(new org.restlet.engine.header.Header(HeaderUtils
+				requestHeaders.add(new org.restlet.data.Header(HeaderUtils
 						.normalize(OCCIHeaders.CONTENT_TYPE), OCCIHeaders.OCCI_CONTENT_TYPE));
-				requestHeaders.add(new org.restlet.engine.header.Header(OCCIHeaders.CONTENT_TYPE,
+				requestHeaders.add(new org.restlet.data.Header(OCCIHeaders.CONTENT_TYPE,
 						OCCIHeaders.OCCI_CONTENT_TYPE));
 			}
 

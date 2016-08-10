@@ -32,6 +32,7 @@ import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
 import org.fogbowcloud.manager.core.plugins.MapperPlugin;
+import org.fogbowcloud.manager.core.plugins.NetworkPlugin;
 import org.fogbowcloud.manager.core.plugins.StoragePlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.OCCIApplication;
@@ -49,10 +50,12 @@ import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.restlet.Component;
+import org.restlet.Server;
 import org.restlet.data.Protocol;
 
 public class OCCITestHelper {
 
+	private static final int DEFAULT_RESPONSE_HEADER_SIZE = 1024*1024;
 	public static final String FOGBOW_SMALL_IMAGE = "fogbow_small";
 	public static final String MEMBER_ID = "memberId";
 	public static final int ENDPOINT_PORT = PluginHelper.getAvailablePort();
@@ -61,8 +64,10 @@ public class OCCITestHelper {
 	public static final String INVALID_TOKEN = "invalid-token";
 	public static final String URI_FOGBOW_ORDER = "http://localhost:" + ENDPOINT_PORT + "/" + OrderConstants.TERM
 			+ "/";
+	public static final String URI_FOGBOW_ACCOUNTING = "http://localhost:" + ENDPOINT_PORT + "/member/accounting/";
 	public static final String URI_FOGBOW_COMPUTE = "http://localhost:" + ENDPOINT_PORT + "/compute/";
 	public static final String URI_FOGBOW_STORAGE = "http://localhost:" + ENDPOINT_PORT + "/storage/";
+	public static final String URI_FOGBOW_NETWORK = "http://localhost:" + ENDPOINT_PORT + "/network/";
 	public static final String URI_FOGBOW_MEMBER = "http://localhost:" + ENDPOINT_PORT + "/member";
 	public static final String URI_FOGBOW_TOKEN = "http://localhost:" + ENDPOINT_PORT + "/token";
 	public static final String URI_FOGBOW_QUERY = "http://localhost:" + ENDPOINT_PORT + "/-/";
@@ -73,12 +78,13 @@ public class OCCITestHelper {
 	public static final String URI_FOGBOW_QUERY_TYPE_TWO = "http://localhost:" + ENDPOINT_PORT
 			+ "/.well-known/org/ogf/occi/-/";
 	public static final String USER_MOCK = "user_mock";
+	public static final String INSTANCE_DB_FILE = "./src/test/resources/fedInstance.db";
 
 	private Component component;
 	private OrderRepository orders;
 	private StorageLinkRepository storageLinkRespository;
 
-	public void initializeComponentExecutorSameThread(ComputePlugin computePlugin, IdentityPlugin identityPlugin,
+	public ManagerController initializeComponentExecutorSameThread(ComputePlugin computePlugin, IdentityPlugin identityPlugin,
 			AuthorizationPlugin authorizationPlugin, BenchmarkingPlugin benchmarkingPlugin,
 			MapperPlugin mapperPlugin) throws Exception {
 		component = new Component();
@@ -116,12 +122,14 @@ public class OCCITestHelper {
 
 		component.getDefaultHost().attach(new OCCIApplication(facade));
 		component.start();
+		return facade;
 	}
 
 	public void initializeComponent(ComputePlugin computePlugin, IdentityPlugin identityPlugin,
 			AuthorizationPlugin authorizationPlugin) throws Exception {
 		component = new Component();
-		component.getServers().add(Protocol.HTTP, ENDPOINT_PORT);
+		Server server = component.getServers().add(Protocol.HTTP, ENDPOINT_PORT);
+		server.getContext().getParameters().add("http.responseHeaderSize", String.valueOf(DEFAULT_RESPONSE_HEADER_SIZE));
 
 		Properties properties = new Properties();
 		properties.put(ConfigurationConstants.TOKEN_HOST_PRIVATE_ADDRESS_KEY, DefaultDataTestHelper.SERVER_HOST);
@@ -141,12 +149,12 @@ public class OCCITestHelper {
 		component.start();
 	}
 
-	public ManagerController initializeComponentCompute(ComputePlugin computePlugin, IdentityPlugin identityPlugin,
+	public ManagerController initializeComponentCompute(ComputePlugin computePlugin, IdentityPlugin identityPlugin, IdentityPlugin federationIdentityPlugin,
 			AuthorizationPlugin authorizationPlugin, ImageStoragePlugin imageStoragePlugin,
-			AccountingPlugin accountingPlugin, BenchmarkingPlugin benchmarkingPlugin, Map<String, List<Order>> ordersToAdd,
+			AccountingPlugin accountingPlugin, AccountingPlugin storageAccountingPlugin, BenchmarkingPlugin benchmarkingPlugin, Map<String, List<Order>> ordersToAdd,
 			MapperPlugin mapperPlugin) throws Exception {
-		return initializeComponentCompute(computePlugin, null,identityPlugin, authorizationPlugin,
-				imageStoragePlugin, accountingPlugin, benchmarkingPlugin, ordersToAdd,
+		return initializeComponentCompute(computePlugin, null,identityPlugin, federationIdentityPlugin, authorizationPlugin,
+				imageStoragePlugin, accountingPlugin, storageAccountingPlugin, benchmarkingPlugin, ordersToAdd,
 				mapperPlugin, null, new HashMap<String, List<StorageLink>>());
 	}
 	
@@ -161,8 +169,8 @@ public class OCCITestHelper {
 			Map<String, List<StorageLink>> storageLinksToAdd,
 			MapperPlugin mapperPlugin) throws Exception {
 		return initializeComponentCompute(computePlugin, storagePlugin,
-				identityPlugin, authorizationPlugin, imageStoragePlugin,
-				accountingPlugin, benchmarkingPlugin, ordersToAdd,
+				identityPlugin, identityPlugin, authorizationPlugin, imageStoragePlugin,
+				accountingPlugin, accountingPlugin, benchmarkingPlugin, ordersToAdd,
 				mapperPlugin, null, storageLinksToAdd);
 	}
 	
@@ -170,14 +178,14 @@ public class OCCITestHelper {
 			, IdentityPlugin identityPlugin, AuthorizationPlugin authorizationPlugin, ImageStoragePlugin imageStoragePlugin,
 			AccountingPlugin accountingPlugin, BenchmarkingPlugin benchmarkingPlugin, Map<String, List<Order>> ordersToAdd,
 			MapperPlugin mapperPlugin) throws Exception {
-		return initializeComponentCompute(computePlugin, storagePlugin,identityPlugin, authorizationPlugin,
-				imageStoragePlugin, accountingPlugin, benchmarkingPlugin, ordersToAdd,
+		return initializeComponentCompute(computePlugin, storagePlugin,identityPlugin, identityPlugin, authorizationPlugin,
+				imageStoragePlugin, accountingPlugin, accountingPlugin, benchmarkingPlugin, ordersToAdd,
 				mapperPlugin, null, new HashMap<String, List<StorageLink>>());
 	}	
 	
 	public ManagerController initializeComponentCompute(ComputePlugin computePlugin, StoragePlugin storagePlugin, IdentityPlugin identityPlugin,
-			AuthorizationPlugin authorizationPlugin, ImageStoragePlugin imageStoragePlugin,
-			AccountingPlugin accountingPlugin, BenchmarkingPlugin benchmarkingPlugin, Map<String, List<Order>> ordersToAdd,
+			IdentityPlugin federationIdentityPlugin, AuthorizationPlugin authorizationPlugin, ImageStoragePlugin imageStoragePlugin,
+			AccountingPlugin accountingPlugin, AccountingPlugin storageAccountingPlugin, BenchmarkingPlugin benchmarkingPlugin, Map<String, List<Order>> ordersToAdd,
 			MapperPlugin mapperPlugin, Properties properties, Map<String, List<StorageLink>> storageLinksToAdd) throws Exception {
 		component = new Component();
 		component.getServers().add(Protocol.HTTP, ENDPOINT_PORT);
@@ -188,8 +196,8 @@ public class OCCITestHelper {
 			properties.put(ConfigurationConstants.TOKEN_HOST_PRIVATE_ADDRESS_KEY, DefaultDataTestHelper.SERVER_HOST);
 			properties.put(ConfigurationConstants.TOKEN_HOST_HTTP_PORT_KEY,
 					String.valueOf(DefaultDataTestHelper.TOKEN_SERVER_HTTP_PORT));
-			
-			properties.put(ConfigurationConstants.INSTANCE_DATA_STORE_URL, "jdbc:h2:file:./src/test/resources/fedInstance.db");
+						
+			properties.put(ConfigurationConstants.INSTANCE_DATA_STORE_URL, "jdbc:h2:file:" + INSTANCE_DB_FILE);
 			properties.put(ConfigurationConstants.OCCI_EXTRA_RESOURCES_KEY_PATH, "./src/test/resources/post-compute/occi-fake-resources.txt");
 			//Image OCCI to FogbowOrder
 			properties.put(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + "fbc85206-fbcc-4ad9-ae93-54946fdd5df7", "fogbow-ubuntu");
@@ -202,19 +210,68 @@ public class OCCITestHelper {
 		facade.setAuthorizationPlugin(authorizationPlugin);
 		facade.setLocalCredentailsPlugin(mapperPlugin);
 		facade.setLocalIdentityPlugin(identityPlugin);
-		facade.setFederationIdentityPlugin(identityPlugin);
+		facade.setFederationIdentityPlugin(federationIdentityPlugin);
 		facade.setImageStoragePlugin(imageStoragePlugin);
-		facade.setAccountingPlugin(accountingPlugin);
+		facade.setComputeAccountingPlugin(accountingPlugin);
+		facade.setStorageAccountingPlugin(storageAccountingPlugin);
 		facade.setBenchmarkingPlugin(benchmarkingPlugin);
-		facade.setStoragePlugin(storagePlugin);				
+		facade.setStoragePlugin(storagePlugin);
 		
 		storageLinkRespository = new StorageLinkRepository();
 		facade.setStorageLinkRepository(storageLinkRespository);
 		for (Entry<String, List<StorageLink>> entry : storageLinksToAdd.entrySet()) {
-			for (StorageLink storageLink : entry.getValue())
+			for (StorageLink storageLink : entry.getValue()) {
 				storageLinkRespository.addStorageLink(entry.getKey(), storageLink);
+			}
 		}
 		
+		orders = new OrderRepository();
+		facade.setOrders(orders);
+		for (Entry<String, List<Order>> entry : ordersToAdd.entrySet()) {
+			for (Order order : entry.getValue())
+				orders.addOrder(entry.getKey(), order);
+		}
+
+		ResourceRepository.init(properties);
+
+		component.getDefaultHost().attach(new OCCIApplication(facade));
+		component.start();
+
+		return facade;
+	}
+	
+	public ManagerController initializeComponentNetwork(NetworkPlugin networkPlugin, IdentityPlugin identityPlugin,
+			AuthorizationPlugin authorizationPlugin, Map<String, List<Order>> ordersToAdd,
+			MapperPlugin mapperPlugin, Properties properties) throws Exception {
+		component = new Component();
+		component.getServers().add(Protocol.HTTP, ENDPOINT_PORT);
+
+		if (properties == null) {
+			properties = new Properties();
+			properties.put(ConfigurationConstants.XMPP_JID_KEY, MEMBER_ID);
+			properties.put(ConfigurationConstants.TOKEN_HOST_PRIVATE_ADDRESS_KEY, DefaultDataTestHelper.SERVER_HOST);
+			properties.put(ConfigurationConstants.TOKEN_HOST_HTTP_PORT_KEY,
+					String.valueOf(DefaultDataTestHelper.TOKEN_SERVER_HTTP_PORT));
+			
+			properties.put(ConfigurationConstants.INSTANCE_DATA_STORE_URL, "jdbc:h2:file:./src/test/resources/fedInstance.db");
+			properties.put(ConfigurationConstants.NETWORK_DATA_STORE_URL, "jdbc:h2:file:./src/test/resources/fedNetwork.db");
+			properties.put(ConfigurationConstants.OCCI_EXTRA_RESOURCES_KEY_PATH, "./src/test/resources/post-compute/occi-fake-resources.txt");
+			//Image OCCI to FogbowOrder
+			properties.put(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + "fbc85206-fbcc-4ad9-ae93-54946fdd5df7", "fogbow-ubuntu");
+			properties.put(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + "m1-xlarge", "Glue2vCPU >= 4 && Glue2RAM >= 8192");
+			properties.put(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + "m1-medium", "Glue2vCPU >= 2 && Glue2RAM >= 8096");
+		}
+
+		ManagerController facade = new ManagerController(properties);
+		facade.setNetworkPlugin(networkPlugin);
+		facade.setAuthorizationPlugin(authorizationPlugin);
+		facade.setLocalCredentailsPlugin(mapperPlugin);
+		facade.setLocalIdentityPlugin(identityPlugin);
+		facade.setFederationIdentityPlugin(identityPlugin);
+		
+		storageLinkRespository = new StorageLinkRepository();
+		facade.setStorageLinkRepository(storageLinkRespository);
+
 		orders = new OrderRepository();
 		facade.setOrders(orders);
 		for (Entry<String, List<Order>> entry : ordersToAdd.entrySet()) {
@@ -250,7 +307,8 @@ public class OCCITestHelper {
 		facade.setLocalIdentityPlugin(identityPlugin);
 		facade.setFederationIdentityPlugin(identityPlugin);
 		facade.setAuthorizationPlugin(authorizationPlugin);
-		facade.setAccountingPlugin(accountingPlugin);
+		facade.setStorageAccountingPlugin(accountingPlugin);
+		facade.setComputeAccountingPlugin(accountingPlugin);
 		facade.setLocalCredentailsPlugin(mapperPlugin);
 		facade.updateMembers(federationMembers);
 		
@@ -344,6 +402,23 @@ public class OCCITestHelper {
 		}
 		
 		Scanner sc = new Scanner(responseStr);
+		boolean notFound = true;
+		while (sc.hasNextLine() && notFound) {
+			String line = sc.nextLine().trim();
+			if (line.contains(OCCIHeaders.X_OCCI_ATTRIBUTE) && line.contains(attribute)) {
+				String[] tokens = line.split(attribute+"=");
+				attValue = tokens.length > 1 ? tokens[1] : null;
+				notFound = true;
+			}
+		}
+		sc.close();
+		
+		return attValue;
+	}
+	
+	public static String getOCCIAttByBodyString(String responseBody, String attribute) throws ParseException, IOException {
+		String attValue = null;
+		Scanner sc = new Scanner(responseBody);
 		boolean notFound = true;
 		while (sc.hasNextLine() && notFound) {
 			String line = sc.nextLine().trim();

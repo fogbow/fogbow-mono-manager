@@ -14,11 +14,13 @@ import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.member.MemberServerResource;
 import org.fogbowcloud.manager.occi.member.QuotaServerResource;
 import org.fogbowcloud.manager.occi.member.UsageServerResource;
+import org.fogbowcloud.manager.occi.member.UsageServerResource.ResourceUsage;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.HeaderUtils;
 import org.fogbowcloud.manager.occi.model.OCCIHeaders;
 import org.fogbowcloud.manager.occi.model.Resource;
 import org.fogbowcloud.manager.occi.model.Token;
+import org.fogbowcloud.manager.occi.network.NetworkServerResource;
 import org.fogbowcloud.manager.occi.order.Order;
 import org.fogbowcloud.manager.occi.order.OrderConstants;
 import org.fogbowcloud.manager.occi.order.OrderServerResource;
@@ -28,7 +30,7 @@ import org.fogbowcloud.manager.occi.storage.StorageServerResource;
 import org.restlet.Application;
 import org.restlet.Response;
 import org.restlet.Restlet;
-import org.restlet.engine.header.Header;
+import org.restlet.data.Header;
 import org.restlet.engine.header.HeaderConstants;
 import org.restlet.routing.Router;
 import org.restlet.util.Series;
@@ -54,11 +56,13 @@ public class OCCIApplication extends Application {
 				, StorageLinkServerResource.class);
 		router.attach("/" + OrderConstants.STORAGE_TERM + "/" + OrderConstants.STORAGE_LINK_TERM
 				+ "/{storageLinkId}", StorageLinkServerResource.class);
+		router.attach("/" + OrderConstants.NETWORK_TERM + "/", NetworkServerResource.class);
+		router.attach("/" + OrderConstants.NETWORK_TERM + "/{networkId}", NetworkServerResource.class);
 		router.attach("/" + OrderConstants.COMPUTE_TERM, ComputeServerResource.class);
 		router.attach("/" + OrderConstants.COMPUTE_TERM + "/", ComputeServerResource.class);
 		router.attach("/" + OrderConstants.COMPUTE_TERM + "/{instanceId}", ComputeServerResource.class);
-		router.attach("/member/accounting", AccountingServerResource.class);
-		router.attach("/member/accounting/", AccountingServerResource.class);
+		router.attach("/member/accounting/" + OrderConstants.COMPUTE_TERM, AccountingServerResource.class);
+		router.attach("/member/accounting/" + OrderConstants.STORAGE_TERM, AccountingServerResource.class);
 		router.attach("/member", MemberServerResource.class);
 		router.attach("/member/{memberId}/quota", QuotaServerResource.class);
 		router.attach("/member/{memberId}/quota/", QuotaServerResource.class);
@@ -98,13 +102,13 @@ public class OCCIApplication extends Application {
 		
 		bypass(request, newResponse);
 
-		Series<org.restlet.engine.header.Header> responseHeaders = (Series<org.restlet.engine.header.Header>) newResponse
+		Series<org.restlet.data.Header> responseHeaders = (Series<org.restlet.data.Header>) newResponse
 				.getAttributes().get("org.restlet.http.headers");
 		if (responseHeaders != null) {
 			// removing restlet default headers that will be added automatically
 			responseHeaders.removeAll(HeaderConstants.HEADER_CONTENT_LENGTH);
 			responseHeaders.removeAll(HeaderConstants.HEADER_CONTENT_TYPE);
-			responseHeaders.removeAll(HeaderUtils.normalize(HeaderConstants.HEADER_CONTENT_TYPE));
+			responseHeaders.removeAll(HeaderUtils.normalize(HeaderConstants.HEADER_CONTENT_TYPE), true);
 			responseHeaders.removeAll(HeaderConstants.HEADER_DATE);
 			responseHeaders.removeAll(HeaderConstants.HEADER_SERVER);
 			responseHeaders.removeAll(HeaderConstants.HEADER_VARY);
@@ -124,7 +128,7 @@ public class OCCIApplication extends Application {
 	public static void normalizeHeadersForBypass(org.restlet.Request request) {
 		Series<Header> requestHeaders = (Series<Header>) request.getAttributes().get("org.restlet.http.headers");
 		requestHeaders.add(OCCIHeaders.X_AUTH_TOKEN, requestHeaders.getFirstValue(HeaderUtils
-				.normalize(OCCIHeaders.X_AUTH_TOKEN)));
+				.normalize(OCCIHeaders.X_AUTH_TOKEN), true));
 		requestHeaders.removeFirst(HeaderUtils.normalize(OCCIHeaders.X_AUTH_TOKEN));
 	}
 
@@ -245,11 +249,11 @@ public class OCCIApplication extends Application {
 		return managerFacade.getUser(authToken);
 	}
 
-	public List<AccountingInfo> getAccountingInfo(String authToken) {
-		return managerFacade.getAccountingInfo(authToken);
+	public List<AccountingInfo> getAccountingInfo(String authToken, String resourceKing) {
+		return managerFacade.getAccountingInfo(authToken, resourceKing);
 	}
 
-	public double getUsage(String authToken, String memberId) {
-		return managerFacade.getUsage(authToken, memberId);
+	public ResourceUsage getUsages(String authToken, String memberId) {
+		return managerFacade.getUsages(authToken, memberId);
 	}
 }

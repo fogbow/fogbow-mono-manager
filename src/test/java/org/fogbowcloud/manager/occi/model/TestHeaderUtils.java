@@ -9,7 +9,7 @@ import org.fogbowcloud.manager.occi.util.OCCITestHelper;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.restlet.engine.header.Header;
+import org.restlet.data.Header;
 import org.restlet.util.Series;
 
 public class TestHeaderUtils {

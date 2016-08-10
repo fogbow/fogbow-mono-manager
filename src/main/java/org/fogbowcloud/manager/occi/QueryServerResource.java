@@ -16,7 +16,8 @@ import org.restlet.data.MediaType;
 import org.restlet.data.Method;
 import org.restlet.data.Status;
 import org.restlet.engine.adapter.HttpRequest;
-import org.restlet.engine.header.Header;
+import org.restlet.data.Header;
+import org.restlet.representation.Representation;
 import org.restlet.representation.StringRepresentation;
 import org.restlet.resource.Get;
 import org.restlet.resource.ServerResource;
@@ -64,17 +65,21 @@ public class QueryServerResource extends ServerResource {
 
 		normalizeRequest();
 		if (req.getHeaders().getFirst(OCCIHeaders.X_AUTH_TOKEN) == null
-				|| req.getHeaders().getFirst(HeaderUtils.normalize(OCCIHeaders.X_AUTH_TOKEN)) == null) {
+				|| req.getHeaders().getFirst(HeaderUtils.normalize(OCCIHeaders.X_AUTH_TOKEN), true) == null) {
 			req.getHeaders().add(
 					new Header(OCCIHeaders.X_AUTH_TOKEN, req.getHeaders().getFirstValue(
 							HeaderUtils.normalize(OCCIHeaders.X_AUTH_TOKEN))));
 		}
 
-		application.bypass(req, response);			
+		application.bypass(req, response);
 
 		if (response.getStatus().getCode() == HttpStatus.SC_OK) {
 			try {
-				String localCloudResources = response.getEntity().getText();
+				String localCloudResources = "";
+				Representation entity = response.getEntity();
+				if (entity != null) {
+					localCloudResources = entity.getText();
+				}
 				LOGGER.debug("Local cloud resources: " + localCloudResources);
 				return generateResponse(allResources, localCloudResources, filterCategory,
 						acceptType);
@@ -88,7 +93,7 @@ public class QueryServerResource extends ServerResource {
 	
 	@SuppressWarnings("unchecked")
 	private void normalizeRequest() {
-		Series<org.restlet.engine.header.Header> requestHeaders = (Series<org.restlet.engine.header.Header>) getRequest()
+		Series<Header> requestHeaders = (Series<Header>) getRequest()
 				.getAttributes().get("org.restlet.http.headers");
 		requestHeaders.removeAll("Accept");
 		requestHeaders.add(new Header("Accept", "text/plain"));
