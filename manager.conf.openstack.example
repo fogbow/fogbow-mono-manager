@@ -11,9 +11,8 @@ instance_datastore_url=jdbc:sqlite:$path_to_instances_db
 storage_datastore_url=jdbc:sqlite:$path_to_storage_db
 network_datastore_url=jdbc:sqlite:$path_to_network_db
 
-## Order database
-order_datastore_url=jdbc:sqlite:$path_to_orders_db
-order_bd_updater_period=30000
+## database updater period
+bd_updater_period=30000
 
 ## Static mapping from flavors to requirements (Optional)
 #flavor_fogbow_small={mem=512, cpu=1}
