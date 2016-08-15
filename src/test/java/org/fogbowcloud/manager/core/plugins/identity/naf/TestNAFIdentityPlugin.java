@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
@@ -44,6 +43,7 @@ import org.mockito.Mockito;
 
 public class TestNAFIdentityPlugin {
 
+	private static final String UTF_8 = "UTF-8";
 	private static final String DEFAULT_FILE_PUBLIC_KEY_PATH = "src/test/resources/public-key";
 	private NAFIdentityPlugin nafIdentityPlugin;
 	private KeyPair keyPair;
@@ -107,8 +107,7 @@ public class TestNAFIdentityPlugin {
 		HttpResponse httpResponse = Mockito.mock(HttpResponse.class);
 		HttpEntity httpEntity = Mockito.mock(HttpEntity.class);
 		String content = NAFIdentityPlugin.VALID_RESPONSE_TOKEN_GENERATOR;
-		InputStream contentInputStream = new ByteArrayInputStream(content.getBytes(
-				StandardCharsets.UTF_8));;
+		InputStream contentInputStream = new ByteArrayInputStream(content.getBytes(UTF_8));
 		Mockito.when(httpEntity.getContent()).thenReturn(contentInputStream);
 		Mockito.when(httpResponse.getEntity()).thenReturn(httpEntity);
 		BasicStatusLine basicStatus = new BasicStatusLine(new ProtocolVersion("", 0, 0),
@@ -134,7 +133,7 @@ public class TestNAFIdentityPlugin {
 		HttpResponse httpResponse = Mockito.mock(HttpResponse.class);
 		HttpEntity httpEntity = Mockito.mock(HttpEntity.class);
 		String content = "Invalid";
-		InputStream contentInputStream = new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8));;
+		InputStream contentInputStream = new ByteArrayInputStream(content.getBytes(UTF_8));
 		Mockito.when(httpEntity.getContent()).thenReturn(contentInputStream);
 		Mockito.when(httpResponse.getEntity()).thenReturn(httpEntity);
 		BasicStatusLine basicStatus = new BasicStatusLine(new ProtocolVersion("", 0, 0), HttpStatus.SC_OK, "");
@@ -158,7 +157,7 @@ public class TestNAFIdentityPlugin {
 
 		String accessIdTokenGenerator = createAccessIdTokenGenerator();
 		HttpUriRequest request = new HttpGet(url + NAFIdentityPlugin.TOKEN_URL_OPERATION
-				+ URLEncoder.encode(accessIdTokenGenerator, "UTF-8") + NAFIdentityPlugin.METHOD_GET_VALIDITY_CHECK);
+				+ URLEncoder.encode(accessIdTokenGenerator, UTF_8) + NAFIdentityPlugin.METHOD_GET_VALIDITY_CHECK);
 		request.addHeader(NAFIdentityPlugin.NAME, name);
 		request.addHeader(NAFIdentityPlugin.PASSWORD, password);
 		HttpUriRequestMatcher expectedRequest = new HttpUriRequestMatcher(request);

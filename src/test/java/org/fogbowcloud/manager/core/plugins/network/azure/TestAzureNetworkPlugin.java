@@ -1,51 +1,28 @@
 package org.fogbowcloud.manager.core.plugins.network.azure;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import javax.xml.parsers.ParserConfigurationException;
-
-import org.apache.commons.httpclient.HttpStatus;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.ProtocolVersion;
-import org.apache.http.StatusLine;
-import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.message.BasicStatusLine;
 import org.fogbowcloud.manager.core.plugins.common.azure.AzureAttributes;
 import org.fogbowcloud.manager.core.plugins.compute.azure.AzureConfigurationConstants;
-import org.fogbowcloud.manager.core.plugins.network.openstack.OpenStackV2NetworkPlugin;
 import org.fogbowcloud.manager.occi.OCCIConstants;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.model.Category;
-import org.fogbowcloud.manager.occi.model.ErrorType;
 import org.fogbowcloud.manager.occi.model.OCCIException;
-import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.fogbowcloud.manager.occi.model.Token;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.xml.sax.SAXException;
 
 import com.microsoft.windowsazure.Configuration;
 import com.microsoft.windowsazure.core.OperationResponse;
-import com.microsoft.windowsazure.exception.ServiceException;
 import com.microsoft.windowsazure.management.network.NetworkManagementClient;
 import com.microsoft.windowsazure.management.network.NetworkOperations;
 import com.microsoft.windowsazure.management.network.models.NetworkListResponse;

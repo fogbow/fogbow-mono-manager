@@ -3,7 +3,6 @@ package org.fogbowcloud.manager.core.plugins.network.openstack;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
@@ -36,6 +35,7 @@ import org.mockito.Mockito;
 
 public class TestOpenStackV2NetworkPlugin {
 
+	private static final String UTF_8 = "UTF-8";
 	private static final String DEFAULT_GATEWAY_INFO = "000000-gateway_info";
 	private static final String DEFAULT_TENANT_ID = "tenantId";
 	private static final String DEFAULT_NETWORK_URL = "http://localhost:0000";
@@ -529,7 +529,7 @@ public class TestOpenStackV2NetworkPlugin {
 	private HttpResponse createHttpResponse(String content, int httpStatus) throws IOException {
 		HttpResponse httpResponse = Mockito.mock(HttpResponse.class);
 		HttpEntity httpEntity = Mockito.mock(HttpEntity.class);
-		InputStream inputStrem = new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8));;
+		InputStream inputStrem = new ByteArrayInputStream(content.getBytes(UTF_8));
 		Mockito.when(httpEntity.getContent()).thenReturn(inputStrem);
 		Mockito.when(httpResponse.getEntity()).thenReturn(httpEntity);
 		StatusLine statusLine = new BasicStatusLine(new ProtocolVersion("", 0, 0), httpStatus, "");
