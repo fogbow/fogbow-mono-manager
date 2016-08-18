@@ -256,6 +256,10 @@ public class Main {
 					String.valueOf(DEFAULT_HTTP_PORT));
 			String httpsPort = properties.getProperty(ConfigurationConstants.HTTPS_PORT_KEY, 
 					String.valueOf(DEFAULT_HTTPS_PORT));
+			String httpsKeystorePath = properties.getProperty(ConfigurationConstants.HTTPS_KEYSTORE_PATH);
+			String httpsKeystorePassword = properties.getProperty(ConfigurationConstants.HTTPS_KEYSTORE_PASSWORD);
+			String httpsKeyPassword = properties.getProperty(ConfigurationConstants.HTTPS_KEY_PASSWORD);
+			String httpsKeystoreType = properties.getProperty(ConfigurationConstants.HTTPS_KEYSTORE_TYPE, "JKS");
 			Boolean httpsEnabled = Boolean.valueOf(properties.getProperty(ConfigurationConstants.HTTPS_ENABLED, 
 					String.valueOf(DEFAULT_HTTPS_ENABLED)));
 			String requestHeaderSize = String.valueOf(Integer.parseInt(
@@ -277,10 +281,18 @@ public class Main {
 				
 				Series parameters = httpsServer.getContext().getParameters();
 				parameters.add("sslContextFactory", "org.restlet.engine.ssl.DefaultSslContextFactory");
-				parameters.add("keyStorePath", "/home/marcosancj/managerhttps/martelo.jks");
-				parameters.add("keyStorePassword", "password");
-				parameters.add("keyPassword", "password");
-				parameters.add("keyStoreType", "JKS");
+				if (httpsKeystorePath != null) {
+					parameters.add("keyStorePath", httpsKeystorePath);
+				}
+				if (httpsKeystorePassword != null) {
+					parameters.add("keyStorePassword", httpsKeystorePassword);
+				}
+				if (httpsKeyPassword != null) {
+					parameters.add("keyPassword", httpsKeyPassword);
+				}
+				if (httpsKeystoreType != null) {
+					parameters.add("keyStoreType", httpsKeystoreType);
+				}
 				parameters.add("http.requestHeaderSize", requestHeaderSize);
 				parameters.add("http.responseHeaderSize", responseHeaderSize);
 			}
