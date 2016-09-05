@@ -56,6 +56,10 @@ public class ConfigurationConstants {
 	public static final String HTTP_PORT_KEY = "http_port";
 	public static final String HTTPS_PORT_KEY = "https_port";
 	public static final String HTTPS_ENABLED = "https_enabled";
+	public static final String HTTPS_KEYSTORE_PATH = "https_keystore_path";
+	public static final String HTTPS_KEYSTORE_PASSWORD = "https_keystore_password";
+	public static final String HTTPS_KEY_PASSWORD = "https_key_password";
+	public static final String HTTPS_KEYSTORE_TYPE = "https_keystore_type";
 	
 	public static final String HTTP_REQUEST_HEADER_SIZE_KEY = "http_request_header_size";
 	public static final String HTTP_RESPONSE_HEADER_SIZE_KEY = "http_response_header_size";
