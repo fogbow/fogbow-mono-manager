@@ -1,7 +1,5 @@
-package org.fogbowcloud.manager.core.plugins.benchmarking;
+package org.fogbowcloud.manager.core.plugins.benchmarking.ssh;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
@@ -16,8 +14,6 @@ import org.fogbowcloud.manager.core.plugins.util.SshHelper;
 import org.fogbowcloud.manager.occi.instance.Instance;
 
 public class SSHBenchmarkingPlugin implements BenchmarkingPlugin {
-	
-	Map<String, Double> instanceToPower = new HashMap<String, Double>();
 
 	private static final Logger LOGGER = Logger.getLogger(SSHBenchmarkingPlugin.class);
 	private static final String SSH_BENCHMARKING_SCRIPT_URL = "ssh_benchmarking_script_url";
@@ -25,11 +21,15 @@ public class SSHBenchmarkingPlugin implements BenchmarkingPlugin {
 	private static final String STAGE_COMMAND = "curl %s -o exec;chmod +x exec;";
 	private static final String EXEC_COMMAND = "./exec; rm ./exec";
 	
-	private String scriptUrl;
+	private SHHBenchmarkingDataStore dataStore;
 	private String managerPrivateKeyFilePath;
 	private String sshCommonUser;
 	private SshHelper sshHelper;
 	private DateUtils dateUtils;
+	private String scriptUrl;
+	
+	// TODO Why this number ?
+	protected static final double MAGIC_NUMBER = 10.0;
 	
 	public SSHBenchmarkingPlugin(Properties properties) {
 		this.scriptUrl = properties.getProperty(
@@ -37,6 +37,7 @@ public class SSHBenchmarkingPlugin implements BenchmarkingPlugin {
 		this.managerPrivateKeyFilePath = properties.getProperty(
 				ConfigurationConstants.SSH_PRIVATE_KEY_PATH);
 		this.sshCommonUser = getSSHCommonUser(properties);
+		this.dataStore = new SHHBenchmarkingDataStore(properties);
 	}
 	
 	protected static String getSSHCommonUser(Properties properties) {
@@ -62,11 +63,11 @@ public class SSHBenchmarkingPlugin implements BenchmarkingPlugin {
 		}
 		
 		LOGGER.debug("Putting instanceId " + globalInstanceId + " and power " + power);
-		instanceToPower.put(globalInstanceId, power);
+		this.dataStore.addInstancePower(globalInstanceId, power);
 	}
 	
 	
-	private long sshBenchmarking(String ipAndPort, String user) {
+	protected long sshBenchmarking(String ipAndPort, String user) {
 		SshHelper ssh = getSshHelper();
 		long millis = 0;
 		try {
@@ -79,7 +80,8 @@ public class SSHBenchmarkingPlugin implements BenchmarkingPlugin {
 				Command executeBenchcmd = ssh.doSshExecution(EXEC_COMMAND);
 				long endTimestamp = this.dateUtils.currentTimeMillis();
 				if (executeBenchcmd.getExitStatus() == 0) {
-					LOGGER.debug("Benchmarking execution - " + ipAndPort + " - Time: " + (endTimestamp - startTimestamp));
+					LOGGER.debug("Benchmarking execution - " + ipAndPort + " - Time: " 
+							+ (endTimestamp - startTimestamp));
 					return endTimestamp - startTimestamp;
 				}
 			}
@@ -100,31 +102,25 @@ public class SSHBenchmarkingPlugin implements BenchmarkingPlugin {
 	 */
 	protected double getFCUsFromOutput(long milliseconds) {
 		double seconds = (double) TimeUnit.MILLISECONDS.toSeconds(milliseconds);
-		return (10.0 / seconds);
+		return (MAGIC_NUMBER / seconds);
 	}
 
 	@Override
 	public double getPower(String globalInstanceId) {
+		Double instanceToPower = this.dataStore.getPower(globalInstanceId);
 		LOGGER.debug("Getting power of instance " + globalInstanceId);
-		LOGGER.debug("Current instanceToPower=" + instanceToPower);
-		if (instanceToPower.get(globalInstanceId) == null) {
+		LOGGER.debug("Current instanceToPower=" + globalInstanceId + " - " 
+				+ instanceToPower);
+		if (instanceToPower == null) {
 			return UNDEFINED_POWER;
 		}
-		return instanceToPower.get(globalInstanceId);
+		return instanceToPower;
 	}
 
 	@Override
 	public void remove(String globalInstanceId) {
 		LOGGER.debug("Removing instance: " + globalInstanceId + " from benchmarking map.");
-		instanceToPower.remove(globalInstanceId);		
-	}
-	
-	protected void setInstanceToPower(Map<String, Double> instanceToPower) {
-		this.instanceToPower = instanceToPower;
-	}
-	
-	protected Map<String, Double> getInstanceToPower() {
-		return instanceToPower;
+		this.dataStore.removeInstancePower(globalInstanceId);
 	}
 	
 	protected void setSshHelper(SshHelper sshHelper) {
@@ -141,4 +137,8 @@ public class SSHBenchmarkingPlugin implements BenchmarkingPlugin {
 	protected void setDateUtils(DateUtils dateUtils) {
 		this.dateUtils = dateUtils;
 	}	
+	
+	protected SHHBenchmarkingDataStore getDataStore() {
+		return dataStore;
+	}
 }
