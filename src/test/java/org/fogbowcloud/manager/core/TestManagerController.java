@@ -27,6 +27,7 @@ import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
+import org.fogbowcloud.manager.core.plugins.CapacityControllerPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.FederationMemberAuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.FederationMemberPickerPlugin;
@@ -4122,26 +4123,6 @@ public class TestManagerController {
 	}
 	
 	@Test
-	public void testIsThereEnoughQuota(){
-		ManagerController managerControllerSpy = Mockito.spy(managerController);
-		
-		//preencher order repository com orders
-		OrderRepository orderRepository = new OrderRepository();
-		Order order1 = new Order("", null, "", "",
-				"requestingMember1", 0, false, OrderState.FULFILLED,
-				null, null);
-		Order order2 = new Order("", null, "", "",
-				"requestingMember1", 0, false, OrderState.FULFILLED,
-				null, null);
-		
-		orderRepository.addOrder("", order1);
-		orderRepository.addOrder("", order2);
-		
-		//FIXME
-		
-	}
-	
-	@Test
 	public void testInstanceRemovedWithAttachment() {
 		Token federationToken = new Token("accessId", "user", new Date(), null);
 		String instanceId = "instanceId";
@@ -4254,7 +4235,6 @@ public class TestManagerController {
 		}
 	}
 	
-	@SuppressWarnings("unchecked")
 	@Test
 	public void testRemoveNetworkOrderForRemoteMember() throws InterruptedException {
 		
@@ -4278,7 +4258,6 @@ public class TestManagerController {
 		Mockito.verify(networkPlugin, Mockito.times(1)).removeInstance(token, newResourceId);
 	}
 	
-	@SuppressWarnings("unchecked")
 	@Test
 	public void testGetNetworkInstance() throws InterruptedException {
 		
@@ -4314,7 +4293,6 @@ public class TestManagerController {
 		Assert.assertEquals(completeId, returned.getId());
 	}
 	
-	@SuppressWarnings("unchecked")
 	@Test
 	public void testRemoveNetworkInstance() {
 		
@@ -4352,7 +4330,6 @@ public class TestManagerController {
 		
 	}
 	
-	@SuppressWarnings("unchecked")
 	@Test
 	public void testRemoveRemoteNetworkInstance() {
 		
@@ -4395,7 +4372,6 @@ public class TestManagerController {
 		
 	}
 	
-	@SuppressWarnings("unchecked")
 	@Test
 	public void testRemoveNetworkInstanceForRemoteMember() {
 		
@@ -4404,7 +4380,6 @@ public class TestManagerController {
 		Token token = managerTestHelper.getDefaultFederationToken();
 		String orderId = "idA";
 		String providingMemberId = "manager.test.com";
-		String completeId = instanceId + Order.SEPARATOR_GLOBAL_ID + providingMemberId;
 		
 		//Returns
 		List<StorageLink> storageLinksReturn = new ArrayList<StorageLinkRepository.StorageLink>();
@@ -4426,7 +4401,6 @@ public class TestManagerController {
 		managerController.setOrders(orderRepository);
 		
 		NetworkPlugin networkPlugin = Mockito.mock(NetworkPlugin.class);
-		AsyncPacketSender asyncPacketSender = Mockito.mock(AsyncPacketSender.class);
 		
 		managerController.setNetworkPlugin(networkPlugin);
 		
@@ -4524,7 +4498,6 @@ public class TestManagerController {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	@Test
 	public void getInstanceForRemoteMember() {
 
@@ -4533,7 +4506,6 @@ public class TestManagerController {
 		Token token = managerTestHelper.getDefaultFederationToken();
 		String orderId = "idA";
 		String providingMemberId = "manager.test.com";
-		String completeId = instanceId + Order.SEPARATOR_GLOBAL_ID + providingMemberId;
 
 		//Returns
 		List<StorageLink> storageLinksReturn = new ArrayList<StorageLinkRepository.StorageLink>();
@@ -4555,7 +4527,6 @@ public class TestManagerController {
 		managerController.setOrders(orderRepository);
 
 		NetworkPlugin networkPlugin = Mockito.mock(NetworkPlugin.class);
-		AsyncPacketSender asyncPacketSender = Mockito.mock(AsyncPacketSender.class);
 
 		managerController.setNetworkPlugin(networkPlugin);
 
@@ -4604,5 +4575,47 @@ public class TestManagerController {
 		long executionTime = after - now;
 		Assert.assertTrue(executionTime < ManagerController.DEFAULT_CHECK_STILL_ALIVE_WAIT_TIME);
 	}	
+	
+	@Test
+	public void testIsThereEnoughQuotaInstancesOk() {
+		String requestingMemberId = "requesting_member_id";
+		OrderRepository orderRepository = new OrderRepository();
+		String user = "one_user";
+		Order orderServeredComputeFullfield = new Order("id_one", null, "instance_id_one", null, requestingMemberId, 
+				0, false, OrderState.FULFILLED, null, null);
+		orderServeredComputeFullfield.setResourceKing(OrderConstants.COMPUTE_TERM);
+		orderRepository.addOrder(user, orderServeredComputeFullfield);
+		Order orderServeredOtherMemberComputeFullfield = new Order("id_two", null, "instance_id_two", null, 
+				"other_requesting_member", 0, false, OrderState.FULFILLED, null, null);
+		orderServeredOtherMemberComputeFullfield.setResourceKing(OrderConstants.COMPUTE_TERM);
+		orderRepository.addOrder(user, orderServeredOtherMemberComputeFullfield);		
+		Order orderServeredStorageFullfield = new Order("id_three", null, "instance_id_three", null, requestingMemberId, 
+				0, false, OrderState.FULFILLED, null, null);
+		orderServeredStorageFullfield.setResourceKing(OrderConstants.STORAGE_LINK_TERM);
+		orderRepository.addOrder(user, orderServeredStorageFullfield);
+		Order orderServeredComputeOpen = new Order("id_four", null, "instance_id_four", null, requestingMemberId, 
+				0, false, OrderState.OPEN, null, null);
+		orderServeredComputeOpen.setResourceKing(OrderConstants.COMPUTE_TERM);
+		orderRepository.addOrder(user, orderServeredComputeOpen);				
+		this.managerController.setOrders(orderRepository);
+		
+		CapacityControllerPlugin capacityControllerPlugin = Mockito.mock(CapacityControllerPlugin.class);
+		// max instances
+		double maxCapacity = 2.0;
+		Mockito.when(capacityControllerPlugin.getMaxCapacityToSupply(
+				Mockito.any(FederationMember.class))).thenReturn(maxCapacity);
+		this.managerController.setCapacityControllerPlugin(capacityControllerPlugin);
+		
+		// One instance
+		Assert.assertTrue(this.managerController.isThereEnoughQuota(requestingMemberId));
+		
+		Order orderServeredComputeFullfieldOther = new Order("id_five", null, "instance_id_five", null, requestingMemberId, 
+				0, false, OrderState.FULFILLED, null, null);
+		orderServeredComputeFullfieldOther.setResourceKing(OrderConstants.COMPUTE_TERM);
+		orderRepository.addOrder(user, orderServeredComputeFullfieldOther);
+		
+		// Two instance
+		Assert.assertFalse(this.managerController.isThereEnoughQuota(requestingMemberId));
+	}
 	
 }

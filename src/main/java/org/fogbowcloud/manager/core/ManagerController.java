@@ -381,10 +381,11 @@ public class ManagerController {
 	
 	private void updateVirtualQuotas() {
 		LOGGER.debug("Updating virtual quotas (capacity controller plugin).");
-		for(FederationMember member : members){
+		for(FederationMember member : new ArrayList<FederationMember>(members)) {
 			if(!(member.getId().equals(properties.getProperty(ConfigurationConstants.XMPP_JID_KEY)))){
 				capacityControllerPlugin.updateCapacity(member);
-				LOGGER.debug("Member: " +member.getId() + "Quota: "+capacityControllerPlugin.getMaxCapacityToSupply(member));
+				LOGGER.debug("Member: " + member.getId() + "Quota: "
+						+ capacityControllerPlugin.getMaxCapacityToSupply(member));
 			}
 		}
 	}
@@ -1106,14 +1107,15 @@ public class ManagerController {
 	
 	public boolean isThereEnoughQuota(String requestingMemberId){
 		int instancesFulfilled = 0;
-		List<Order> allServedOrders = orderRepository.getAllServedOrders();
+		List<Order> allServedOrders = this.orderRepository.getAllServedOrders();
 		for (Order order : allServedOrders) {
 			if (order.getRequestingMemberId().equals(requestingMemberId) && 
-					order.getState().equals(OrderState.FULFILLED)) 
+					order.getState().equals(OrderState.FULFILLED) && 
+					order.getResourceKing().equals(OrderConstants.COMPUTE_TERM)) 
 				instancesFulfilled++;
 		}
 		FederationMember requestingMember = null;
-		for(FederationMember member : members){
+		for(FederationMember member : new ArrayList<FederationMember>(this.members)) {
 			if(member.getId().equals(requestingMemberId)){
 				requestingMember = member;
 				break;
@@ -1121,8 +1123,8 @@ public class ManagerController {
 		}
 		
 		//TODO different instances sizes should be considered?
-				
-		return (instancesFulfilled+1)<=capacityControllerPlugin.getMaxCapacityToSupply(requestingMember);
+		//TODO remove this magic number
+		return (instancesFulfilled + 1) <= capacityControllerPlugin.getMaxCapacityToSupply(requestingMember);
 	}
 
 	protected String createUserDataUtilsCommand(Order order) throws IOException, MessagingException {
