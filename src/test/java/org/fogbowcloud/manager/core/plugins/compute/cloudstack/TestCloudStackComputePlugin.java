@@ -16,6 +16,7 @@ import org.fogbowcloud.manager.core.plugins.util.HttpClientWrapper;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.instance.InstanceState;
 import org.fogbowcloud.manager.occi.model.Category;
+import org.fogbowcloud.manager.occi.model.ErrorType;
 import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.fogbowcloud.manager.occi.model.Token;
@@ -309,6 +310,31 @@ public class TestCloudStackComputePlugin {
 		computePlugin.getInstance(token, VM_ID);
 	}
 
+	@Test
+	public void testRemoveInstancesWithExceptionDontStop() {
+		Token token = new Token("api:key", null, null, null);
+
+		CloudStackComputePlugin cloudstackComputePlugin = Mockito.spy(
+				new CloudStackComputePlugin(new Properties()));
+		List<Instance> instances = new ArrayList<Instance>();
+		String instanceId = "One";
+		instances.add(new Instance(instanceId));
+		instances.add(new Instance("Two"));
+		instances.add(new Instance("Three"));
+		
+		Mockito.doNothing().when(cloudstackComputePlugin).removeInstance(
+				Mockito.eq(token), Mockito.anyString());
+		Mockito.doThrow(new OCCIException(ErrorType.BAD_REQUEST, "")).when(cloudstackComputePlugin)
+				.removeInstance(Mockito.eq(token), Mockito.anyString());
+		Mockito.doReturn(instances).when(cloudstackComputePlugin).getInstances(Mockito.eq(token));
+			
+		// action
+		cloudstackComputePlugin.removeInstances(token);
+		// check
+		Mockito.verify(cloudstackComputePlugin, Mockito.times(instances.size()))
+				.removeInstance(Mockito.any(Token.class), Mockito.anyString());
+	}
+	
 	@Test
 	public void testRemoveInstance() {
 		Token token = new Token("api:key", null, null, null);

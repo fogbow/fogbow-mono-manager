@@ -291,7 +291,11 @@ public class CloudStackComputePlugin implements ComputePlugin {
 	public void removeInstances(Token token) {
 		List<Instance> instances = getInstances(token);
 		for (Instance instance : instances) {
-			removeInstance(token, instance.getId());
+			try {
+				removeInstance(token, instance.getId());				
+			} catch (Exception e) {
+				LOGGER.warn("Does not possible delete compute instance: " + instance.getId() , e);
+			}
 		}
 	}
 
