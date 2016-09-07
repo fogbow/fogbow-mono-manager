@@ -383,6 +383,14 @@ public class ManagerController {
 		LOGGER.debug("Updating virtual quotas (capacity controller plugin).");
 		for(FederationMember member : new ArrayList<FederationMember>(members)) {
 			if(!(member.getId().equals(properties.getProperty(ConfigurationConstants.XMPP_JID_KEY)))){
+				Order order = new Order("id", null, "instanceId", "providingMemberId", "requestingMemberId", 0, false,
+						null, null, null);
+				ResourcesInfo resourcesInfo = computePlugin
+						.getResourcesInfo(localIdentityPlugin.createToken(mapperPlugin.getLocalCredentials(order)));
+				int maxCapacity = Integer.valueOf(resourcesInfo.getInstancesInUse())
+						+ Integer.valueOf(resourcesInfo.getCpuIdle());
+				capacityControllerPlugin.setMaxCapacityController(maxCapacity);
+				
 				capacityControllerPlugin.updateCapacity(member);
 				LOGGER.debug("Member: " + member.getId() + "Quota: "
 						+ capacityControllerPlugin.getMaxCapacityToSupply(member));

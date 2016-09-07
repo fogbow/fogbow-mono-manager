@@ -35,4 +35,10 @@ public class TwoFoldCapacityController implements CapacityControllerPlugin{
 		pairwiseController.setDateUtils(dateUtils);
 		((GlobalFairnessDrivenController)globalController).setDateUtils(dateUtils);
 	}
+
+	@Override
+	public void setMaxCapacityController(int maxCapacity) {
+		// TODO Auto-generated method stub
+		
+	}
 }

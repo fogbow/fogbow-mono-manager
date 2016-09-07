@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Properties;
 
 import org.fogbowcloud.manager.core.ConfigurationConstants;
-import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.accounting.AccountingInfo;
@@ -62,6 +61,12 @@ public class GlobalFairnessDrivenController extends FairnessDrivenCapacityContro
 	@Override
 	public double getLastFairness(FederationMember member) {
 		return controller.getLastFairness();
+	}
+
+	@Override
+	public void setMaxCapacityController(int maxCapacity) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

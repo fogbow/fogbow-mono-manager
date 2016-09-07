@@ -5,7 +5,6 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.fogbowcloud.manager.core.ConfigurationConstants;
-import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.accounting.AccountingInfo;
@@ -81,6 +80,12 @@ public class PairwiseFairnessDrivenController extends FairnessDrivenCapacityCont
 	
 	protected Map<FederationMember, HillClimbingAlgorithm> getControllers() {
 		return controllers;
+	}
+
+	@Override
+	public void setMaxCapacityController(int maxCapacity) {
+		// TODO Auto-generated method stub
+		
 	}
 	
 }
