@@ -8,6 +8,6 @@ public interface CapacityControllerPlugin {
 	
 	public void updateCapacity(FederationMember member);
 	
-	public void setMaxCapacityController(int maxCapacity);
+	public void setMaximumCapacity(double maximumCapacity);
 
 }

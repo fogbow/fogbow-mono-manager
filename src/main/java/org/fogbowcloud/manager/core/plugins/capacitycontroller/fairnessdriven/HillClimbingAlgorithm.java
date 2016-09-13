@@ -2,51 +2,58 @@ package org.fogbowcloud.manager.core.plugins.capacitycontroller.fairnessdriven;
 
 public class HillClimbingAlgorithm {
 	
+	private static final int INITIAL_VALUE = -1;
 	private boolean increasing;
 	private double deltaC;
 	private double minimumThreshold, maximumThreshold;
 	private double maximumCapacityToSupply;	
-	private final double MAXIMUM_CAPACITY;
 	
 	private double lastFairness, currentFairness;
 	private long lastUpdated;	
 	
-	public HillClimbingAlgorithm(double deltaC,
-			double minimumThreshold, double maximumThreshold, double maximumCapacityOfPeer) {
-		increasing = false;
+	public HillClimbingAlgorithm(double deltaC, double minimumThreshold, double maximumThreshold) {
+		this.increasing = false;
 		
-		if(minimumThreshold < 0 || maximumThreshold < 0 || deltaC > 1 || deltaC < 0)
-			throw new IllegalArgumentException("Unexpected argument for the FDController: "+this+"\n"
-					+ "Any of this conditions were (but shouldn't be) satisfied: minimumThreshold < 0 || maximumThreshold < 0 || deltaC > 1 || deltaC < 0");
+		if (minimumThreshold < 0 || maximumThreshold < 0 || deltaC > 1 || deltaC < 0)
+			throw new IllegalArgumentException("Unexpected argument for the FDController: " + 
+					this + "\n Any of this conditions were (but shouldn't be) satisfied: "
+					+ "minimumThreshold < 0 || maximumThreshold < 0 || deltaC > 1 || deltaC < 0");
 		this.deltaC = deltaC;
 		this.minimumThreshold = minimumThreshold;
 		this.maximumThreshold = maximumThreshold;
-		this.maximumCapacityToSupply = maximumCapacityOfPeer;
-		this.MAXIMUM_CAPACITY = maximumCapacityOfPeer;
 		
-		currentFairness = lastFairness = -1;
-		lastUpdated = 0;
+		this.maximumCapacityToSupply = INITIAL_VALUE;
+		this.currentFairness = INITIAL_VALUE; 
+		this.lastFairness = INITIAL_VALUE;
+		this.lastUpdated = 0;
 	}
 	
 	@Override
 	public String toString() {
-		return "Params of HillClimbing Algorithm - minimumThreshold: "+minimumThreshold+", "
-				+ "maximumThreshold: "+maximumThreshold+", deltaC: "+deltaC+".";
+		return "Params of HillClimbing Algorithm - minimumThreshold: "
+				+ minimumThreshold + ", " + "maximumThreshold: "
+				+ maximumThreshold + ", deltaC: " + deltaC + ".";
 	}
 	
-	public void updateCapacity(){
-		if(currentFairness>=0 && lastFairness>=0){
-			if(currentFairness < minimumThreshold)
-				increasing = false;
-			else if(currentFairness > maximumThreshold)
-				increasing = true;
-			else if(currentFairness <= lastFairness)
-					increasing = !increasing;
-			
-			if(increasing)
-				maximumCapacityToSupply = Math.min(MAXIMUM_CAPACITY, maximumCapacityToSupply + (deltaC * MAXIMUM_CAPACITY));
-			else
-				maximumCapacityToSupply = Math.max(0, maximumCapacityToSupply - (deltaC * MAXIMUM_CAPACITY));
+	public void updateCapacity(double maximumCapacity) {
+		if (this.maximumCapacityToSupply == INITIAL_VALUE) {
+			this.maximumCapacityToSupply = maximumCapacity;
+		}
+		if (this.currentFairness >= 0 && this.lastFairness >= 0) {
+			if(this.currentFairness < this.minimumThreshold) {
+				this.increasing = false;				
+			} else if (this.currentFairness > this.maximumThreshold) {
+				this.increasing = true;
+			} else if (this.currentFairness <= this.lastFairness) {
+				this.increasing = !this.increasing;
+			}
+			if (increasing) {
+				this.maximumCapacityToSupply = Math.min(maximumCapacity,
+						this.maximumCapacityToSupply + (this.deltaC * maximumCapacity));
+			} else {
+				this.maximumCapacityToSupply = Math.max(0,
+						this.maximumCapacityToSupply - (this.deltaC * maximumCapacity));
+			}
 		}
 	}
 	

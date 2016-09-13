@@ -11,6 +11,7 @@ public class TwoFoldCapacityController implements CapacityControllerPlugin{
 
 	private FairnessDrivenCapacityController pairwiseController;
 	private FairnessDrivenCapacityController globalController;
+	private double maxCapacity;
 		
 	public TwoFoldCapacityController(Properties properties, AccountingPlugin accountingPlugin){
 		this.pairwiseController = new PairwiseFairnessDrivenController(properties, accountingPlugin);
@@ -19,26 +20,29 @@ public class TwoFoldCapacityController implements CapacityControllerPlugin{
 	
 	@Override
 	public double getMaxCapacityToSupply(FederationMember member) {
-		if(pairwiseController.getCurrentFairness(member)>=0)
-			return pairwiseController.getMaxCapacityToSupply(member);
-		else
-			return globalController.getMaxCapacityToSupply(member);
+		if (this.pairwiseController.getCurrentFairness(member) >= 0) {
+			return this.pairwiseController.getMaxCapacityToSupply(member);
+		} else {
+			return this.globalController.getMaxCapacityToSupply(member);
+		}
 	}
 	
 	@Override
 	public void updateCapacity(FederationMember member) {
-		pairwiseController.updateCapacity(member);
-		globalController.updateCapacity(member);		
+		this.pairwiseController.setMaximumCapacity(this.maxCapacity);
+		this.pairwiseController.updateCapacity(member);
+		
+		this.globalController.setMaximumCapacity(this.maxCapacity);
+		this.globalController.updateCapacity(member);		
 	}
 	
 	public void setDateUtils(DateUtils dateUtils){
-		pairwiseController.setDateUtils(dateUtils);
-		((GlobalFairnessDrivenController)globalController).setDateUtils(dateUtils);
+		this.pairwiseController.setDateUtils(dateUtils);
+		this.globalController.setDateUtils(dateUtils);
 	}
 
 	@Override
-	public void setMaxCapacityController(int maxCapacity) {
-		// TODO Auto-generated method stub
-		
+	public void setMaximumCapacity(double maxCapacity) {
+		this.maxCapacity = maxCapacity;
 	}
 }

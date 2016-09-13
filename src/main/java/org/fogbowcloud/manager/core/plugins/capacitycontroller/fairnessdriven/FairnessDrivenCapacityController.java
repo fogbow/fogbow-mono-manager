@@ -12,7 +12,6 @@ public abstract class FairnessDrivenCapacityController implements CapacityContro
 	protected static final String CONTROLLER_DELTA = "controller_delta";
 	protected static final String CONTROLLER_MINIMUM_THRESHOLD = "controller_minimum_threshold";
 	protected static final String CONTROLLER_MAXIMUM_THRESHOLD = "controller_maximum_threshold";
-	protected static final String CONTROLLER_MAXIMUM_CAPACITY = "controller_maximum_capacity";
 
 	protected AccountingPlugin accountingPlugin;
 	protected Properties properties;
@@ -27,13 +26,15 @@ public abstract class FairnessDrivenCapacityController implements CapacityContro
 	public abstract double getLastFairness(FederationMember member);
 	
 	public double getFairness(double consumed, double donated){
-		if(donated < 0 || consumed < 0)
-			throw new IllegalArgumentException("Donated and consumed must be >=0. It should never be <0.\n"+
-					"Donated("+donated+") and Consumed("+consumed+")");
-		else if(donated == 0)
+		if(donated < 0 || consumed < 0) {
+			throw new IllegalArgumentException("Donated and consumed must be >=0. "
+					+ "It should never be <0.\n Donated(" + donated
+					+ ") and Consumed(" + consumed + ")");			
+		} else if(donated == 0) {
 			return -1;		
-		else
+		} else {
 			return consumed/donated;
+		}
 	}
 	
 	public void setDateUtils(DateUtils dateUtils) {

@@ -34,7 +34,7 @@ public class TestGlobalFairnessDrivenController {
 	DateUtils dateUtils;
 	long now;
 	
-	GlobalFairnessDrivenController fdController;
+	GlobalFairnessDrivenController globalFCapacityController;
 	FederationMember local, remote1, remote2;
 	
 	double deltaC, minimumThreshold, maximumThreshold, maximumCapacityOfPeer;
@@ -59,13 +59,16 @@ public class TestGlobalFairnessDrivenController {
 		minimumThreshold = 0.8;
 		maximumThreshold = 1;
 		maximumCapacityOfPeer = 5;
-		properties.put(FairnessDrivenCapacityController.CONTROLLER_DELTA, deltaC+"");
-		properties.put(FairnessDrivenCapacityController.CONTROLLER_MINIMUM_THRESHOLD, minimumThreshold+"");
-		properties.put(FairnessDrivenCapacityController.CONTROLLER_MAXIMUM_THRESHOLD, maximumThreshold+"");
-		properties.put(FairnessDrivenCapacityController.CONTROLLER_MAXIMUM_CAPACITY, maximumCapacityOfPeer+"");
+		properties.put(FairnessDrivenCapacityController.CONTROLLER_DELTA,
+				String.valueOf(deltaC));
+		properties.put(FairnessDrivenCapacityController.CONTROLLER_MINIMUM_THRESHOLD,
+				String.valueOf(minimumThreshold));
+		properties.put(FairnessDrivenCapacityController.CONTROLLER_MAXIMUM_THRESHOLD,
+				String.valueOf(maximumThreshold));
 		
-		fdController = new GlobalFairnessDrivenController(properties, accountingPlugin);
-		fdController.setDateUtils(dateUtils);
+		globalFCapacityController = new GlobalFairnessDrivenController(properties, accountingPlugin);
+		globalFCapacityController.setMaximumCapacity(maximumCapacityOfPeer);
+		globalFCapacityController.setDateUtils(dateUtils);
 	}
 	
 	@After
@@ -115,55 +118,55 @@ public class TestGlobalFairnessDrivenController {
 		
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t1);				
 		accountingPlugin.update(orders);
-		fdController.updateCapacity(remote1);
-		assertEquals(maximumCapacityOfPeer, fdController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);	
+		globalFCapacityController.updateCapacity(remote1);
+		assertEquals(maximumCapacityOfPeer, globalFCapacityController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);	
 
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t2);						
 		accountingPlugin.update(orders);
-		fdController.updateCapacity(remote1);
-		assertEquals(maximumCapacityOfPeer, fdController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
+		globalFCapacityController.updateCapacity(remote1);
+		assertEquals(maximumCapacityOfPeer, globalFCapacityController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
 		
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t3);						
 		accountingPlugin.update(orders);
-		fdController.updateCapacity(remote1);
-		assertEquals(4.5, fdController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
+		globalFCapacityController.updateCapacity(remote1);
+		assertEquals(4.5, globalFCapacityController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
 		
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t4);						
 		accountingPlugin.update(orders);
-		fdController.updateCapacity(remote1);
-		assertEquals(4, fdController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);		
+		globalFCapacityController.updateCapacity(remote1);
+		assertEquals(4, globalFCapacityController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);		
 		
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t5);						
 		accountingPlugin.update(orders);
-		fdController.updateCapacity(remote1);
-		assertEquals(3.5, fdController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
+		globalFCapacityController.updateCapacity(remote1);
+		assertEquals(3.5, globalFCapacityController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
 		
 		orders.remove(localDonatesToRemoteMemberOrderSpy);
 		
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t6);						
 		accountingPlugin.update(orders);
-		fdController.updateCapacity(remote1);
-		assertEquals(3, fdController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
+		globalFCapacityController.updateCapacity(remote1);
+		assertEquals(3, globalFCapacityController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
 		
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t7);						
 		accountingPlugin.update(orders);
-		fdController.updateCapacity(remote1);
-		assertEquals(2.5, fdController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
+		globalFCapacityController.updateCapacity(remote1);
+		assertEquals(2.5, globalFCapacityController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
 		
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t8);						
 		accountingPlugin.update(orders);
-		fdController.updateCapacity(remote1);
-		assertEquals(2, fdController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
+		globalFCapacityController.updateCapacity(remote1);
+		assertEquals(2, globalFCapacityController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
 		
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t9);						
 		accountingPlugin.update(orders);
-		fdController.updateCapacity(remote1);
-		assertEquals(1.5, fdController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
+		globalFCapacityController.updateCapacity(remote1);
+		assertEquals(1.5, globalFCapacityController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
 		
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t10);						
 		accountingPlugin.update(orders);
-		fdController.updateCapacity(remote1);
-		assertEquals(2, fdController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
+		globalFCapacityController.updateCapacity(remote1);
+		assertEquals(2, globalFCapacityController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
 	}	
 	
 	@Test
@@ -207,55 +210,55 @@ public class TestGlobalFairnessDrivenController {
 		
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t1);				
 		accountingPlugin.update(orders);
-		fdController.updateCapacity(remote1);
-		assertEquals(maximumCapacityOfPeer, fdController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);	
+		globalFCapacityController.updateCapacity(remote1);
+		assertEquals(maximumCapacityOfPeer, globalFCapacityController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);	
 
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t2);						
 		accountingPlugin.update(orders);
-		fdController.updateCapacity(remote1);
-		assertEquals(maximumCapacityOfPeer, fdController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
+		globalFCapacityController.updateCapacity(remote1);
+		assertEquals(maximumCapacityOfPeer, globalFCapacityController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
 		
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t3);						
 		accountingPlugin.update(orders);
-		fdController.updateCapacity(remote1);
-		assertEquals(4.5, fdController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
+		globalFCapacityController.updateCapacity(remote1);
+		assertEquals(4.5, globalFCapacityController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
 		
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t4);						
 		accountingPlugin.update(orders);
-		fdController.updateCapacity(remote1);
-		assertEquals(4, fdController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);		
+		globalFCapacityController.updateCapacity(remote1);
+		assertEquals(4, globalFCapacityController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);		
 		
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t5);						
 		accountingPlugin.update(orders);
-		fdController.updateCapacity(remote1);
-		assertEquals(3.5, fdController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
+		globalFCapacityController.updateCapacity(remote1);
+		assertEquals(3.5, globalFCapacityController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
 		
 		orders.remove(localDonatesToRemoteMemberOrderSpy);
 		
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t6);						
 		accountingPlugin.update(orders);
-		fdController.updateCapacity(remote1);
-		assertEquals(3, fdController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
+		globalFCapacityController.updateCapacity(remote1);
+		assertEquals(3, globalFCapacityController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
 		
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t7);						
 		accountingPlugin.update(orders);
-		fdController.updateCapacity(remote1);
-		assertEquals(2.5, fdController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
+		globalFCapacityController.updateCapacity(remote1);
+		assertEquals(2.5, globalFCapacityController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
 		
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t8);						
 		accountingPlugin.update(orders);
-		fdController.updateCapacity(remote1);
-		assertEquals(2, fdController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
+		globalFCapacityController.updateCapacity(remote1);
+		assertEquals(2, globalFCapacityController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
 		
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t9);						
 		accountingPlugin.update(orders);
-		fdController.updateCapacity(remote1);
-		assertEquals(1.5, fdController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
+		globalFCapacityController.updateCapacity(remote1);
+		assertEquals(1.5, globalFCapacityController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
 		
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t10);						
 		accountingPlugin.update(orders);
-		fdController.updateCapacity(remote1);
-		assertEquals(2, fdController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
+		globalFCapacityController.updateCapacity(remote1);
+		assertEquals(2, globalFCapacityController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
 	}	
 	
 	@Test
@@ -310,66 +313,66 @@ public class TestGlobalFairnessDrivenController {
 		
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t1);				
 		accountingPlugin.update(orders);
-		fdController.updateCapacity(remote1);
-		assertEquals(maximumCapacityOfPeer, fdController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);	
+		globalFCapacityController.updateCapacity(remote1);
+		assertEquals(maximumCapacityOfPeer, globalFCapacityController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);	
 		
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t2);						
 		accountingPlugin.update(orders);
-		fdController.updateCapacity(remote1);
-		assertEquals(4.5, fdController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
+		globalFCapacityController.updateCapacity(remote1);
+		assertEquals(4.5, globalFCapacityController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
 		
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t3);						
 		accountingPlugin.update(orders);
-		fdController.updateCapacity(remote1);
-		assertEquals(4, fdController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
+		globalFCapacityController.updateCapacity(remote1);
+		assertEquals(4, globalFCapacityController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
 		
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t4);						
 		accountingPlugin.update(orders);
-		fdController.updateCapacity(remote1);
-		assertEquals(3.5, fdController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);		
+		globalFCapacityController.updateCapacity(remote1);
+		assertEquals(3.5, globalFCapacityController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);		
 		
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t5);						
 		accountingPlugin.update(orders);
-		fdController.updateCapacity(remote1);
-		assertEquals(3, fdController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
+		globalFCapacityController.updateCapacity(remote1);
+		assertEquals(3, globalFCapacityController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
 		
 		orders.remove(localDonatesToRemoteMember1Order1Spy);
 		orders.remove(localDonatesToRemoteMember1Order2Spy);
 		
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t6);						
 		accountingPlugin.update(orders);
-		fdController.updateCapacity(remote1);
-		assertEquals(2.5, fdController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
+		globalFCapacityController.updateCapacity(remote1);
+		assertEquals(2.5, globalFCapacityController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
 		
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t7);						
 		accountingPlugin.update(orders);
-		fdController.updateCapacity(remote1);
-		assertEquals(2, fdController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
+		globalFCapacityController.updateCapacity(remote1);
+		assertEquals(2, globalFCapacityController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
 		
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t8);						
 		accountingPlugin.update(orders);
-		fdController.updateCapacity(remote1);
-		assertEquals(1.5, fdController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
+		globalFCapacityController.updateCapacity(remote1);
+		assertEquals(1.5, globalFCapacityController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
 		
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t9);						
 		accountingPlugin.update(orders);
-		fdController.updateCapacity(remote1);
-		assertEquals(1, fdController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
+		globalFCapacityController.updateCapacity(remote1);
+		assertEquals(1, globalFCapacityController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
 		
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t10);						
 		accountingPlugin.update(orders);
-		fdController.updateCapacity(remote1);
-		assertEquals(0.5, fdController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
+		globalFCapacityController.updateCapacity(remote1);
+		assertEquals(0.5, globalFCapacityController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
 		
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t11);						
 		accountingPlugin.update(orders);
-		fdController.updateCapacity(remote1);
-		assertEquals(0, fdController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
+		globalFCapacityController.updateCapacity(remote1);
+		assertEquals(0, globalFCapacityController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
 
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t12);						
 		accountingPlugin.update(orders);
-		fdController.updateCapacity(remote1);
-		assertEquals(0, fdController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
+		globalFCapacityController.updateCapacity(remote1);
+		assertEquals(0, globalFCapacityController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
 	}
 	
 	@Test
@@ -434,80 +437,80 @@ public class TestGlobalFairnessDrivenController {
 		
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t1);
 		accountingPlugin.update(orders);
-		fdController.updateCapacity(remote1);
-		assertEquals(maximumCapacityOfPeer, fdController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
-		assertEquals(maximumCapacityOfPeer, fdController.getMaxCapacityToSupply(remote2), ACCEPTABLE_ERROR);
+		globalFCapacityController.updateCapacity(remote1);
+		assertEquals(maximumCapacityOfPeer, globalFCapacityController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
+		assertEquals(maximumCapacityOfPeer, globalFCapacityController.getMaxCapacityToSupply(remote2), ACCEPTABLE_ERROR);
 		
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t2);
 		accountingPlugin.update(orders);
-		fdController.updateCapacity(remote1);
-		assertEquals(4.5, fdController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
-		assertEquals(4.5, fdController.getMaxCapacityToSupply(remote2), ACCEPTABLE_ERROR);
+		globalFCapacityController.updateCapacity(remote1);
+		assertEquals(4.5, globalFCapacityController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
+		assertEquals(4.5, globalFCapacityController.getMaxCapacityToSupply(remote2), ACCEPTABLE_ERROR);
 		
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t3);				
 		accountingPlugin.update(orders);
-		fdController.updateCapacity(remote1);
-		assertEquals(4, fdController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
-		assertEquals(4, fdController.getMaxCapacityToSupply(remote2), ACCEPTABLE_ERROR);
+		globalFCapacityController.updateCapacity(remote1);
+		assertEquals(4, globalFCapacityController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
+		assertEquals(4, globalFCapacityController.getMaxCapacityToSupply(remote2), ACCEPTABLE_ERROR);
 		
 		orders.remove(localDonatesToRemoteMember2Order3Spy);
 		
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t4);				
 		accountingPlugin.update(orders);
-		fdController.updateCapacity(remote1);
-		assertEquals(3.5, fdController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
-		assertEquals(3.5, fdController.getMaxCapacityToSupply(remote2), ACCEPTABLE_ERROR);
+		globalFCapacityController.updateCapacity(remote1);
+		assertEquals(3.5, globalFCapacityController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
+		assertEquals(3.5, globalFCapacityController.getMaxCapacityToSupply(remote2), ACCEPTABLE_ERROR);
 		
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t5);				
 		accountingPlugin.update(orders);
-		fdController.updateCapacity(remote1);
-		assertEquals(3, fdController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
-		assertEquals(3, fdController.getMaxCapacityToSupply(remote2), ACCEPTABLE_ERROR);
+		globalFCapacityController.updateCapacity(remote1);
+		assertEquals(3, globalFCapacityController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
+		assertEquals(3, globalFCapacityController.getMaxCapacityToSupply(remote2), ACCEPTABLE_ERROR);
 		
 		orders.remove(localDonatesToRemoteMember1Order1Spy);
 		orders.remove(remoteMember2DonatesToLocalMemberOrder4Spy);
 		
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t6);				
 		accountingPlugin.update(orders);
-		fdController.updateCapacity(remote1);
-		assertEquals(2.5, fdController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
-		assertEquals(2.5, fdController.getMaxCapacityToSupply(remote2), ACCEPTABLE_ERROR);
+		globalFCapacityController.updateCapacity(remote1);
+		assertEquals(2.5, globalFCapacityController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
+		assertEquals(2.5, globalFCapacityController.getMaxCapacityToSupply(remote2), ACCEPTABLE_ERROR);
 		
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t7);				
 		accountingPlugin.update(orders);
-		fdController.updateCapacity(remote1);
-		assertEquals(2, fdController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
-		assertEquals(2, fdController.getMaxCapacityToSupply(remote2), ACCEPTABLE_ERROR);
+		globalFCapacityController.updateCapacity(remote1);
+		assertEquals(2, globalFCapacityController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
+		assertEquals(2, globalFCapacityController.getMaxCapacityToSupply(remote2), ACCEPTABLE_ERROR);
 		
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t8);				
 		accountingPlugin.update(orders);
-		fdController.updateCapacity(remote1);
-		assertEquals(1.5, fdController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
-		assertEquals(1.5, fdController.getMaxCapacityToSupply(remote2), ACCEPTABLE_ERROR);
+		globalFCapacityController.updateCapacity(remote1);
+		assertEquals(1.5, globalFCapacityController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
+		assertEquals(1.5, globalFCapacityController.getMaxCapacityToSupply(remote2), ACCEPTABLE_ERROR);
 		
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t9);				
 		accountingPlugin.update(orders);
-		fdController.updateCapacity(remote1);
-		assertEquals(1, fdController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
-		assertEquals(1, fdController.getMaxCapacityToSupply(remote2), ACCEPTABLE_ERROR);
+		globalFCapacityController.updateCapacity(remote1);
+		assertEquals(1, globalFCapacityController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
+		assertEquals(1, globalFCapacityController.getMaxCapacityToSupply(remote2), ACCEPTABLE_ERROR);
 		
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t10);				
 		accountingPlugin.update(orders);
-		fdController.updateCapacity(remote1);
-		assertEquals(1.5, fdController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
-		assertEquals(1.5, fdController.getMaxCapacityToSupply(remote2), ACCEPTABLE_ERROR);
+		globalFCapacityController.updateCapacity(remote1);
+		assertEquals(1.5, globalFCapacityController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
+		assertEquals(1.5, globalFCapacityController.getMaxCapacityToSupply(remote2), ACCEPTABLE_ERROR);
 		
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t11);				
 		accountingPlugin.update(orders);
-		fdController.updateCapacity(remote1);
-		assertEquals(2, fdController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
-		assertEquals(2, fdController.getMaxCapacityToSupply(remote2), ACCEPTABLE_ERROR);
+		globalFCapacityController.updateCapacity(remote1);
+		assertEquals(2, globalFCapacityController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
+		assertEquals(2, globalFCapacityController.getMaxCapacityToSupply(remote2), ACCEPTABLE_ERROR);
 		
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t12);				
 		accountingPlugin.update(orders);
-		fdController.updateCapacity(remote1);
-		assertEquals(2.5, fdController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
-		assertEquals(2.5, fdController.getMaxCapacityToSupply(remote2), ACCEPTABLE_ERROR);
+		globalFCapacityController.updateCapacity(remote1);
+		assertEquals(2.5, globalFCapacityController.getMaxCapacityToSupply(remote1), ACCEPTABLE_ERROR);
+		assertEquals(2.5, globalFCapacityController.getMaxCapacityToSupply(remote2), ACCEPTABLE_ERROR);
 	}
 	
 	@Test
@@ -557,16 +560,16 @@ public class TestGlobalFairnessDrivenController {
 		// updating dateUtils		
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t1);				
 		accountingPlugin.update(orders);
-		assertEquals(-1, fdController.getCurrentFairness(null), ACCEPTABLE_ERROR);
-		fdController.updateFairness();
-		assertEquals(-1, fdController.getCurrentFairness(null), ACCEPTABLE_ERROR);		
+		assertEquals(-1, globalFCapacityController.getCurrentFairness(null), ACCEPTABLE_ERROR);
+		globalFCapacityController.updateFairness();
+		assertEquals(-1, globalFCapacityController.getCurrentFairness(null), ACCEPTABLE_ERROR);		
 
 		// updating dateUtils		
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t2);						
 		accountingPlugin.update(orders);
-		assertEquals(-1, fdController.getCurrentFairness(null), ACCEPTABLE_ERROR);
-		fdController.updateFairness();
-		assertEquals(-1, fdController.getCurrentFairness(null), ACCEPTABLE_ERROR);
+		assertEquals(-1, globalFCapacityController.getCurrentFairness(null), ACCEPTABLE_ERROR);
+		globalFCapacityController.updateFairness();
+		assertEquals(-1, globalFCapacityController.getCurrentFairness(null), ACCEPTABLE_ERROR);
 
 		// updating dateUtils		
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t3);
@@ -574,9 +577,9 @@ public class TestGlobalFairnessDrivenController {
 
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t4);
 		accountingPlugin.update(orders);
-		assertEquals(-1, fdController.getCurrentFairness(null), ACCEPTABLE_ERROR);
-		fdController.updateFairness();
-		assertEquals(35.0/20.0, fdController.getCurrentFairness(null), ACCEPTABLE_ERROR);		
+		assertEquals(-1, globalFCapacityController.getCurrentFairness(null), ACCEPTABLE_ERROR);
+		globalFCapacityController.updateFairness();
+		assertEquals(35.0/20.0, globalFCapacityController.getCurrentFairness(null), ACCEPTABLE_ERROR);		
 
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t5);		
 		accountingPlugin.update(orders);	
@@ -589,44 +592,44 @@ public class TestGlobalFairnessDrivenController {
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(t7);		
 		accountingPlugin.update(orders);
 		orders.remove(remoteMember2DonatesToLocalMemberOrderSpy);
-		assertEquals(35.0/20.0, fdController.getCurrentFairness(null), ACCEPTABLE_ERROR);
-		fdController.updateFairness();
-		assertEquals(4, fdController.getCurrentFairness(null), ACCEPTABLE_ERROR);	
+		assertEquals(35.0/20.0, globalFCapacityController.getCurrentFairness(null), ACCEPTABLE_ERROR);
+		globalFCapacityController.updateFairness();
+		assertEquals(4, globalFCapacityController.getCurrentFairness(null), ACCEPTABLE_ERROR);	
 	}
 
 	@Test
 	public void testGetCurrentFairness() {
-		assertEquals(-1, fdController.getCurrentFairness(remote1), ACCEPTABLE_ERROR);
-		assertEquals(-1, fdController.getCurrentFairness(remote2), ACCEPTABLE_ERROR);
+		assertEquals(-1, globalFCapacityController.getCurrentFairness(remote1), ACCEPTABLE_ERROR);
+		assertEquals(-1, globalFCapacityController.getCurrentFairness(remote2), ACCEPTABLE_ERROR);
 	}
 	
 	@Test
 	public void testGetLastFairness() {
-		assertEquals(-1, fdController.getLastFairness(remote1), ACCEPTABLE_ERROR);
-		assertEquals(-1, fdController.getLastFairness(remote2), ACCEPTABLE_ERROR);
+		assertEquals(-1, globalFCapacityController.getLastFairness(remote1), ACCEPTABLE_ERROR);
+		assertEquals(-1, globalFCapacityController.getLastFairness(remote2), ACCEPTABLE_ERROR);
 	}
 	
 	@Test
 	public void testGetFairness() {
-		assertEquals(1, fdController.getFairness(1, 1), ACCEPTABLE_ERROR);
-		assertEquals(0, fdController.getFairness(0, 1), ACCEPTABLE_ERROR);
-		assertEquals(-1, fdController.getFairness(1, 0), ACCEPTABLE_ERROR);
-		assertEquals(-1, fdController.getFairness(0, 0), ACCEPTABLE_ERROR);
+		assertEquals(1, globalFCapacityController.getFairness(1, 1), ACCEPTABLE_ERROR);
+		assertEquals(0, globalFCapacityController.getFairness(0, 1), ACCEPTABLE_ERROR);
+		assertEquals(-1, globalFCapacityController.getFairness(1, 0), ACCEPTABLE_ERROR);
+		assertEquals(-1, globalFCapacityController.getFairness(0, 0), ACCEPTABLE_ERROR);
 	}
 	
 	@Test(expected=IllegalArgumentException.class)
 	public void testGetFairnessWithNegativeConsumption() {
-		assertEquals(-1, fdController.getFairness(-1, 0), ACCEPTABLE_ERROR);
+		assertEquals(-1, globalFCapacityController.getFairness(-1, 0), ACCEPTABLE_ERROR);
 	}
 	
 	@Test(expected=IllegalArgumentException.class)
 	public void testGetFairnessWithNegativeDonation() {
-		assertEquals(-1, fdController.getFairness(0, -1), ACCEPTABLE_ERROR);
+		assertEquals(-1, globalFCapacityController.getFairness(0, -1), ACCEPTABLE_ERROR);
 	}
 	
 	@Test(expected=IllegalArgumentException.class)
 	public void testGetFairnessWithNegativeValues() {
-		assertEquals(-1, fdController.getFairness(-1, -1), ACCEPTABLE_ERROR);
+		assertEquals(-1, globalFCapacityController.getFairness(-1, -1), ACCEPTABLE_ERROR);
 	}
 
 }

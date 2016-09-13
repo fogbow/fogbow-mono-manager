@@ -11,81 +11,95 @@ import org.fogbowcloud.manager.core.plugins.accounting.AccountingInfo;
 
 public class PairwiseFairnessDrivenController extends FairnessDrivenCapacityController {
 
-	private double deltaC, minimumThreshold, maximumThreshold, maximumCapacityOfPeer;
+	private double deltaC, minimumThreshold, maximumThreshold;
 	
-	private Map<FederationMember, HillClimbingAlgorithm> controllers;
+	private Map<FederationMember, HillClimbingAlgorithm> hillClimbingControllers;
+	private double maxCapacity;
 	
 	public PairwiseFairnessDrivenController(Properties properties, AccountingPlugin accountingPlugin) {
 		super(properties, accountingPlugin);
-		controllers = new HashMap<FederationMember, HillClimbingAlgorithm>();	
+		this.hillClimbingControllers = new HashMap<FederationMember, HillClimbingAlgorithm>();	
 		
 		this.deltaC = Double.parseDouble(properties.getProperty(CONTROLLER_DELTA));
-		this.minimumThreshold = Double.parseDouble(properties.getProperty(CONTROLLER_MINIMUM_THRESHOLD));
-		this.maximumThreshold = Double.parseDouble(properties.getProperty(CONTROLLER_MAXIMUM_THRESHOLD));
-		this.maximumCapacityOfPeer = Double.parseDouble(properties.getProperty(CONTROLLER_MAXIMUM_CAPACITY));
+		this.minimumThreshold = Double.parseDouble(properties
+				.getProperty(CONTROLLER_MINIMUM_THRESHOLD));
+		this.maximumThreshold = Double.parseDouble(properties
+				.getProperty(CONTROLLER_MAXIMUM_THRESHOLD));
 	}
 
 	@Override
 	public double getMaxCapacityToSupply(FederationMember member) {
-		return controllers.get(member).getMaximumCapacityToSupply();				
+		return this.hillClimbingControllers.get(member).getMaximumCapacityToSupply();				
 	}
 	
 	@Override
 	public void updateCapacity(FederationMember member) {
-		if(controllers.containsKey(member) && controllers.get(member).getLastUpdated() == dateUtils.currentTimeMillis())
-			throw new IllegalStateException("The controller of member ("+properties.getProperty(ConfigurationConstants.XMPP_JID_KEY)+") is running more than once at the same time step for member("+member.getId()+").");
-		else if(!controllers.containsKey(member))
-			controllers.put(member, new HillClimbingAlgorithm(deltaC, minimumThreshold, maximumThreshold, maximumCapacityOfPeer));		
+		if (this.hillClimbingControllers.containsKey(member) 
+				&& this.hillClimbingControllers.get(member).getLastUpdated() 
+				== this.dateUtils.currentTimeMillis()) {
+			throw new IllegalStateException("The controller of member (" + 
+				properties.getProperty(ConfigurationConstants.XMPP_JID_KEY) + 
+				") is running more than once at the same time step for member(" + member.getId() + ").");
+		} else if (!hillClimbingControllers.containsKey(member)) {
+			this.hillClimbingControllers.put(member, new HillClimbingAlgorithm(
+					deltaC, minimumThreshold, maximumThreshold));
+		}
 		
-		controllers.get(member).setLastUpdated(dateUtils.currentTimeMillis());
+		this.hillClimbingControllers.get(member).setLastUpdated(this.dateUtils.currentTimeMillis());
 		updateFairness(member);	
-		controllers.get(member).updateCapacity();		
+		this.hillClimbingControllers.get(member).updateCapacity(this.maxCapacity);		
 	}
 	
 	protected void updateFairness(FederationMember member){
 		//update last fairness
-		controllers.get(member).setLastFairness(controllers.get(member).getCurrentFairness());
+		HillClimbingAlgorithm memberHillClimbing = this.hillClimbingControllers.get(member);
+		memberHillClimbing.setLastFairness(memberHillClimbing.getCurrentFairness());
 		double currentDonated = getCurrentDonated(member);
 		double currentConsumed = getCurrentConsumed(member);
-		controllers.get(member).setCurrentFairness(getFairness(currentConsumed, currentDonated));
+		this.hillClimbingControllers.get(member).setCurrentFairness(
+				getFairness(currentConsumed, currentDonated));
 	}
 	
 	private double getCurrentDonated(FederationMember member){
 		double donated = 0;
-		for(AccountingInfo acc : accountingPlugin.getAccountingInfo())
-			if(acc.getProvidingMember().equals(properties.getProperty(ConfigurationConstants.XMPP_JID_KEY)) &&
-					acc.getRequestingMember().equals(member.getId()))
-				donated += acc.getUsage();
+		for(AccountingInfo accountingInfo : this.accountingPlugin.getAccountingInfo())
+			if ( accountingInfo.getProvidingMember().equals(this.properties.getProperty(
+					ConfigurationConstants.XMPP_JID_KEY)) 
+					&& accountingInfo.getRequestingMember().equals(member.getId()))
+				donated += accountingInfo.getUsage();
 		return donated;
 	}
 	
 	private double getCurrentConsumed(FederationMember member){
 		double consumed = 0;
-		for(AccountingInfo acc : accountingPlugin.getAccountingInfo())
-			if(acc.getRequestingMember().equals(properties.getProperty(ConfigurationConstants.XMPP_JID_KEY)) &&
-					acc.getProvidingMember().equals(member.getId()))
-				consumed += acc.getUsage();
+		for (AccountingInfo accountingInfo : this.accountingPlugin.getAccountingInfo())
+			if (accountingInfo.getRequestingMember().equals(
+					this.properties.getProperty(ConfigurationConstants.XMPP_JID_KEY)) 
+					&& accountingInfo.getProvidingMember().equals(member.getId())) {				
+				consumed += accountingInfo.getUsage();				
+			}
 		return consumed;
 	}
 	
 	@Override
 	public double getCurrentFairness(FederationMember member) {		
-		return controllers.get(member)==null?-1:controllers.get(member).getCurrentFairness();
+		return this.hillClimbingControllers.get(member) == null ? -1
+				: this.hillClimbingControllers.get(member).getCurrentFairness();
 	}
 	
 	@Override
 	public double getLastFairness(FederationMember member) {
-		return controllers.get(member)==null?-1:controllers.get(member).getLastFairness();
+		return this.hillClimbingControllers.get(member) == null ? -1
+				: this.hillClimbingControllers.get(member).getLastFairness();
 	}
 	
 	protected Map<FederationMember, HillClimbingAlgorithm> getControllers() {
-		return controllers;
+		return hillClimbingControllers;
 	}
 
 	@Override
-	public void setMaxCapacityController(int maxCapacity) {
-		// TODO Auto-generated method stub
-		
+	public void setMaximumCapacity(double maximumCapacity) {
+		this.maxCapacity = maximumCapacity;	
 	}
 	
 }

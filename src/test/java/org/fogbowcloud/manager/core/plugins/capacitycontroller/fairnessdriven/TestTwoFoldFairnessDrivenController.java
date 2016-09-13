@@ -29,8 +29,8 @@ public class TestTwoFoldFairnessDrivenController {
 	private static final String FAKE_DB_PATH = "src/test/resources/testdbaccounting.sqlite";
 	private BenchmarkingPlugin benchmarkingPlugin;
 	private FCUAccountingPlugin accountingPlugin;
-	Properties properties;
-	DateUtils dateUtils;
+	private Properties properties;
+	private DateUtils dateUtils;
 	long now;
 	
 	long t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12;
@@ -61,12 +61,15 @@ public class TestTwoFoldFairnessDrivenController {
 		minimumThreshold = 0.8;
 		maximumThreshold = 1;
 		maximumCapacityOfPeer = 5;
-		properties.put(FairnessDrivenCapacityController.CONTROLLER_DELTA, deltaC+"");
-		properties.put(FairnessDrivenCapacityController.CONTROLLER_MINIMUM_THRESHOLD, minimumThreshold+"");
-		properties.put(FairnessDrivenCapacityController.CONTROLLER_MAXIMUM_THRESHOLD, maximumThreshold+"");
-		properties.put(FairnessDrivenCapacityController.CONTROLLER_MAXIMUM_CAPACITY, maximumCapacityOfPeer+"");
+		properties.put(FairnessDrivenCapacityController.CONTROLLER_DELTA,
+				String.valueOf(deltaC));
+		properties.put(FairnessDrivenCapacityController.CONTROLLER_MINIMUM_THRESHOLD,
+				String.valueOf(minimumThreshold));
+		properties.put(FairnessDrivenCapacityController.CONTROLLER_MAXIMUM_THRESHOLD,
+				String.valueOf(maximumThreshold));
 		
 		twoFoldFdController = new TwoFoldCapacityController(properties, accountingPlugin);
+		twoFoldFdController.setMaximumCapacity(maximumCapacityOfPeer);
 		twoFoldFdController.setDateUtils(dateUtils);
 		
 		t0 = 0;

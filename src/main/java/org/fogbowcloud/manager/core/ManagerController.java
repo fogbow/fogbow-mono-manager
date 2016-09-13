@@ -58,6 +58,7 @@ import org.fogbowcloud.manager.core.plugins.PrioritizationPlugin;
 import org.fogbowcloud.manager.core.plugins.StoragePlugin;
 import org.fogbowcloud.manager.core.plugins.accounting.AccountingInfo;
 import org.fogbowcloud.manager.core.plugins.localcredentails.MapperHelper;
+import org.fogbowcloud.manager.core.plugins.localcredentails.SingleMapperPlugin;
 import org.fogbowcloud.manager.core.plugins.util.SshClientPool;
 import org.fogbowcloud.manager.occi.ManagerDataStore;
 import org.fogbowcloud.manager.occi.instance.Instance;
@@ -382,20 +383,26 @@ public class ManagerController {
 	private void updateVirtualQuotas() {
 		LOGGER.debug("Updating virtual quotas (capacity controller plugin).");
 		for(FederationMember member : new ArrayList<FederationMember>(members)) {
-			if(!(member.getId().equals(properties.getProperty(ConfigurationConstants.XMPP_JID_KEY)))){
-				Order order = new Order("id", null, "instanceId", "providingMemberId", "requestingMemberId", 0, false,
-						null, null, null);
-				ResourcesInfo resourcesInfo = computePlugin
-						.getResourcesInfo(localIdentityPlugin.createToken(mapperPlugin.getLocalCredentials(order)));
-				int maxCapacity = Integer.valueOf(resourcesInfo.getInstancesInUse())
-						+ Integer.valueOf(resourcesInfo.getCpuIdle());
-				capacityControllerPlugin.setMaxCapacityController(maxCapacity);
-				
-				capacityControllerPlugin.updateCapacity(member);
+			if(!(member.getId().equals(properties.getProperty(ConfigurationConstants.XMPP_JID_KEY)))){				
+				this.capacityControllerPlugin.setMaximumCapacity(getMaxCapacityDefaultUser());				
+				this.capacityControllerPlugin.updateCapacity(member);
 				LOGGER.debug("Member: " + member.getId() + "Quota: "
-						+ capacityControllerPlugin.getMaxCapacityToSupply(member));
+						+ this.capacityControllerPlugin.getMaxCapacityToSupply(member));
 			}
 		}
+	}
+
+	private int getMaxCapacityDefaultUser() {
+		// Get default user's token
+		SingleMapperPlugin singleMapperPlugin = new SingleMapperPlugin(this.properties);
+		Order emptyOrder = null;
+		Token token = this.localIdentityPlugin.createToken(
+				singleMapperPlugin.getLocalCredentials(emptyOrder));
+		
+		ResourcesInfo resourcesInfo = this.computePlugin.getResourcesInfo(token);
+		int maxCapacity = Integer.valueOf(resourcesInfo.getInstancesInUse()) 
+				+ Integer.valueOf(resourcesInfo.getCpuIdle());
+		return maxCapacity;
 	}
 
 	public void setAuthorizationPlugin(AuthorizationPlugin authorizationPlugin) {

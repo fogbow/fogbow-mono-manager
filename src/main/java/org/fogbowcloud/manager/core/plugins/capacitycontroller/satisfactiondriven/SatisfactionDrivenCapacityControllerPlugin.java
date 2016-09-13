@@ -14,9 +14,6 @@ public class SatisfactionDrivenCapacityControllerPlugin implements CapacityContr
 	public void updateCapacity(FederationMember member) {}
 
 	@Override
-	public void setMaxCapacityController(int maxCapacity) {
-		// TODO Auto-generated method stub
-		
-	}
+	public void setMaximumCapacity(double maxCapacity) {}
 
 }
