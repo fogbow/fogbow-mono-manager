@@ -561,8 +561,10 @@ public class TestGetOrder {
 		responseStr = EntityUtils.toString(response.getEntity(), String.valueOf(Charsets.UTF_8));
 		
 		Assert.assertEquals(0, OCCITestHelper.getLocationIds(response).size());
-		Assert.assertEquals("\""+networkAddress+"\"", OCCITestHelper.getOCCIAttByBodyString(responseStr, OCCIConstants.NETWORK_ADDRESS));
-		Assert.assertEquals("\""+networkGateway+"\"", OCCITestHelper.getOCCIAttByBodyString(responseStr, OCCIConstants.NETWORK_GATEWAY));
+		Assert.assertEquals("\"" + networkAddress + "\"", OCCITestHelper
+				.getOCCIAttByBodyString(responseStr, OCCIConstants.NETWORK_ADDRESS));
+		Assert.assertEquals("\"" + networkGateway + "\"", OCCITestHelper
+				.getOCCIAttByBodyString(responseStr, OCCIConstants.NETWORK_GATEWAY));
 		
 		for(String attrib : OCCIConstants.getValues()){
 			if(!OCCIConstants.NETWORK_ADDRESS.equals(attrib) && !OCCIConstants.NETWORK_GATEWAY.equals(attrib)){

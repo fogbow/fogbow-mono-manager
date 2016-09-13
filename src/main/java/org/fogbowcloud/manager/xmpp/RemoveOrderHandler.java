@@ -16,7 +16,8 @@ public class RemoveOrderHandler extends AbstractQueryHandler {
 
 	@Override
 	public IQ handle(IQ query) {
-		String orderId = query.getElement().element("query").element("request").elementText("id");
+		String orderId = query.getElement().element("query").element(ManagerPacketHelper.ORDER_EL)
+				.elementText("id");
 		String accessId = query.getElement().element("query").element("token").elementText("accessId");
 		IQ response = IQ.createResultIQ(query);
 		try {

@@ -4,8 +4,8 @@ public class OrderConstants {
 
 	// order
 	// to continue working in the other manager
-	public static final String TERM = "fogbow_request";
-	public static final String SCHEME = "http://schemas.fogbowcloud.org/request#";
+	public static final String TERM = "order";
+	public static final String SCHEME = "http://schemas.fogbowcloud.org/order#";
 	public static final String KIND_CLASS = "kind";
 	public static final Integer DEFAULT_INSTANCE_COUNT = 1;
 	public static final String DEFAULT_TYPE = OrderType.ONE_TIME.getValue();
