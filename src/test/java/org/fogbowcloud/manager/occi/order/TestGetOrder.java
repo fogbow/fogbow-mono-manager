@@ -457,7 +457,7 @@ public class TestGetOrder {
 		get = new HttpGet(OCCITestHelper.URI_FOGBOW_ORDER);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
-		get.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, "org.fogbowcloud.request.type=\"one-time\"");
+		get.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, OrderAttribute.TYPE.getValue() + "=\"one-time\"");
 		client = HttpClients.createMinimal();
 		response = client.execute(get);
 
@@ -468,7 +468,7 @@ public class TestGetOrder {
 		get = new HttpGet(OCCITestHelper.URI_FOGBOW_ORDER);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
-		get.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, "org.fogbowcloud.request.type=\"notfound\"");
+		get.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, OrderAttribute.TYPE.getValue() + "=\"notfound\"");
 		client = HttpClients.createMinimal();
 		response = client.execute(get);
 		
@@ -535,10 +535,7 @@ public class TestGetOrder {
 		HashMap<String, String> attributes = new HashMap<String, String>();
 		attributes.put(OCCIConstants.NETWORK_ADDRESS, networkAddress);
 		attributes.put(OCCIConstants.NETWORK_GATEWAY, networkGateway);
-		Token federationToken = new Token("1", OCCITestHelper.ACCESS_TOKEN, new Date(), attributes);
-		
-		Category category =  new Category(OrderConstants.TERM, OrderConstants.SCHEME,
-				OrderConstants.KIND_CLASS);
+		Token federationToken = new Token("1", OCCITestHelper.ACCESS_TOKEN, new Date(), attributes);	
 		
 		List<Category> categories = new ArrayList<Category>();
 		
