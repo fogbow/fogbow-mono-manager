@@ -29,6 +29,7 @@ import org.fogbowcloud.manager.core.plugins.localcredentails.SingleMapperPlugin;
 import org.fogbowcloud.manager.core.plugins.memberauthorization.DefaultMemberAuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.memberpicker.RoundRobinMemberPickerPlugin;
 import org.fogbowcloud.manager.core.plugins.prioritization.TwoFoldPrioritizationPlugin;
+import org.fogbowcloud.manager.occi.DataStoreHelper;
 import org.fogbowcloud.manager.occi.OCCIApplication;
 import org.fogbowcloud.manager.occi.model.ResourceRepository;
 import org.fogbowcloud.manager.xmpp.ManagerXmppComponent;
@@ -56,6 +57,8 @@ public class Main {
 
 		Properties properties = new Properties();
 		FileInputStream input = new FileInputStream(args[0]);
+		// folder name default to datastores
+		DataStoreHelper.setDataStoreFolderExecution(DataStoreHelper.DATASTORES_FOLDER);
 		properties.load(input);
 		ResourceRepository.init(properties);
 		

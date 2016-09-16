@@ -10,8 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import org.apache.log4j.Logger;
-import org.fogbowcloud.manager.occi.ManagerDataStore;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.order.Order;
@@ -25,8 +23,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class TestManagerDataStore {
-
-	private static final Logger LOGGER = Logger.getLogger(TestManagerDataStore.class);
 	 
 	private final String DATASTORE_PATH = "src/test/resources/testManagerDataStore.sqlite";
 	private final String DATASTORE_URL = "jdbc:sqlite:" + DATASTORE_PATH;
@@ -45,10 +41,10 @@ public class TestManagerDataStore {
 	
 	@Before
 	public void initialize() {		
-		LOGGER.debug("Creating data store.");
-		properties = new Properties();
-		properties.put(ManagerDataStore.MANAGER_DATASTORE_URL , DATASTORE_URL);
-		database = new ManagerDataStore(properties);
+		TestDataStorageHelper.removeDefaultFolderDataStore();
+		this.properties = new Properties();
+		this.properties.put(ManagerDataStore.MANAGER_DATASTORE_URL , DATASTORE_URL);
+		this.database = new ManagerDataStore(properties);
 		initializeOrders();
 		initializeStorageLinks();
 	}
@@ -60,6 +56,19 @@ public class TestManagerDataStore {
 			dbFile.delete();
 		}
 	}
+	
+	@Test
+	public void testInitializeWithErrorDataStore() {
+		try {
+			Properties properties = new Properties();
+			properties.put(ManagerDataStore.MANAGER_DATASTORE_URL, "/dev/null");
+			new ManagerDataStore(properties);
+			Assert.fail();
+		} catch (Error e) {
+			Assert.assertEquals(ManagerDataStore.ERROR_WHILE_INITIALIZING_THE_DATA_STORE, 
+					e.getMessage());
+		}
+	}		
 	
 	@Test
 	public void testAddOrder() throws SQLException, JSONException {

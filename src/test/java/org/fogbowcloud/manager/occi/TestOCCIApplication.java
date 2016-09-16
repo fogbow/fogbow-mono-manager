@@ -70,7 +70,8 @@ public class TestOCCIApplication {
 			}
 		});
 		
-		managerFacade = new ManagerController(properties, executor);
+		boolean initializeBD = false;
+		managerFacade = new ManagerController(properties, executor, initializeBD);
 		occiApplication = new OCCIApplication(managerFacade);
 
 		// default instance count value is 1

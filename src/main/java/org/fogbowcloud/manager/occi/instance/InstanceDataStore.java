@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.occi.DataStoreHelper;
 import org.fogbowcloud.manager.occi.JSONHelper;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -55,12 +56,15 @@ public class InstanceDataStore {
 			+ INSTANCE_ID + " = ? AND " + USER_ID + " = ?";
 
 	private static final Logger LOGGER = Logger.getLogger(InstanceDataStore.class);
+	protected static final String ERROR_WHILE_INITIALIZING_THE_DATA_STORE = "Error while initializing the Instance DataStore.";
+	private static final String DEFAULT_DATASTORE_NAME = "datastore_instances.slite";
 
 	private String instanceDataStoreURL;
 
 	public InstanceDataStore(String instanceDataStoreURL) {
-
-		this.instanceDataStoreURL = instanceDataStoreURL;
+		
+		this.instanceDataStoreURL = DataStoreHelper.getDataStoreUrl(instanceDataStoreURL,
+				DEFAULT_DATASTORE_NAME);;
 
 		Statement statement = null;
 		Connection connection = null;
@@ -75,7 +79,8 @@ public class InstanceDataStore {
 			statement.close();
 
 		} catch (Exception e) {
-			LOGGER.error("Error while initializing the DataStore.", e);
+			LOGGER.error(ERROR_WHILE_INITIALIZING_THE_DATA_STORE, e);
+			throw new Error(ERROR_WHILE_INITIALIZING_THE_DATA_STORE);
 		} finally {
 			close(statement, connection);
 		}

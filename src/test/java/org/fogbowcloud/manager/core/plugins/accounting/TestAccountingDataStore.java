@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Properties;
 
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.occi.TestDataStorageHelper;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -27,12 +28,13 @@ public class TestAccountingDataStore {
 
 	@Before
 	public void initialize() {
+		TestDataStorageHelper.removeDefaultFolderDataStore();
 		LOGGER.debug("Creating data store.");
 		properties = new Properties();
 		properties.put("accounting_datastore_url", DATASTORE_URL);
 
 		db = new AccountingDataStore(properties);
-	}
+	}	
 
 	@After
 	public void tearDown() throws IOException {
@@ -41,6 +43,19 @@ public class TestAccountingDataStore {
 			dbFile.delete();
 		}
 	}
+	
+	@Test
+	public void testInitializeWithErrorDataStore() {
+		try {
+			Properties properties = new Properties();
+			properties.put(AccountingDataStore.ACCOUNTING_DATASTORE_URL, "/dev/null");
+			new AccountingDataStore(properties);
+			Assert.fail();
+		} catch (Error e) {
+			Assert.assertEquals(AccountingDataStore.ERROR_WHILE_INITIALIZING_THE_DATA_STORE, 
+					e.getMessage());
+		}
+	}	
 
 	@Test
 	public void testUpdateInsertingInvalidUser() throws SQLException {

@@ -161,10 +161,14 @@ public class ManagerController {
 	private ManagerDataStore managerDatabase;
 
 	public ManagerController(Properties properties) {
-		this(properties, null);
+		this(properties, null, true);
 	}
 
 	public ManagerController(Properties properties, ScheduledExecutorService executor) {
+		this(properties, executor, true);
+	}
+	
+	public ManagerController(Properties properties, ScheduledExecutorService executor, boolean initializeBD) {
 		if (properties == null) {
 			throw new IllegalArgumentException();
 		}
@@ -187,9 +191,15 @@ public class ManagerController {
 			this.orderDBUpdaterTimer = new ManagerTimer(executor);
 			this.capacityControllerUpdaterTimer = new ManagerTimer(executor);
 		}
-		managerDatabase = new ManagerDataStore(properties);
+		if (initializeBD) {
+			createManagerDataStore(properties);			
+		}
 		recoverPreviousOrders();
 		triggerOrderDBUpdater();
+	}
+
+	public void createManagerDataStore(Properties properties) {
+		this.managerDatabase = new ManagerDataStore(properties);
 	}
 
 	public MapperPlugin getMapperPlugin() {

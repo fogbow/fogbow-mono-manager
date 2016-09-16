@@ -38,6 +38,7 @@ import org.fogbowcloud.manager.core.plugins.compute.openstack.OpenStackOCCICompu
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.core.util.ManagerTestHelper;
 import org.fogbowcloud.manager.occi.ManagerDataStore;
+import org.fogbowcloud.manager.occi.TestDataStorageHelper;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.instance.Instance.Link;
 import org.fogbowcloud.manager.occi.instance.InstanceState;
@@ -61,6 +62,7 @@ import org.fogbowcloud.manager.xmpp.ManagerPacketHelper;
 import org.fogbowcloud.manager.xmpp.ManagerXmppComponent;
 import org.jamppa.component.PacketCallback;
 import org.json.JSONException;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -85,7 +87,8 @@ public class TestManagerController {
 
 	@Before
 	public void setUp() throws Exception {
-		managerTestHelper = new ManagerTestHelper();
+		TestDataStorageHelper.removeDefaultFolderDataStore();
+		this.managerTestHelper = new ManagerTestHelper();
 		
 		/*
 		 * Default manager controller: 
@@ -94,14 +97,32 @@ public class TestManagerController {
 		 *  schedulerPeriod and monitoringPeriod are long enough (a day) to avoid reeschudeling
 		 */
 
-		managerController = managerTestHelper.createDefaultManagerController();
+		this.managerController = managerTestHelper.createDefaultManagerController();
 		// default instance count value is 1
-		xOCCIAtt = new HashMap<String, String>();
-		xOCCIAtt.put(OrderAttribute.INSTANCE_COUNT.getValue(),
+		this.xOCCIAtt = new HashMap<String, String>();
+		this.xOCCIAtt.put(OrderAttribute.INSTANCE_COUNT.getValue(),
 				String.valueOf(OrderConstants.DEFAULT_INSTANCE_COUNT));
-		xOCCIAtt.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.COMPUTE_TERM);
+		this.xOCCIAtt.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.COMPUTE_TERM);
+	}
+	
+	@After
+	public void tearDown() {
+		TestDataStorageHelper.removeDefaultFolderDataStore();
 	}
 
+	@Test
+	public void testInitializeWithErrorDataStore() {
+		try {
+			Properties properties = new Properties();
+			properties.put(ManagerDataStore.MANAGER_DATASTORE_URL, "/dev/null");
+			new ManagerController(properties);
+			Assert.fail();
+		} catch (Error e) {
+			Assert.assertEquals(ManagerDataStore.ERROR_WHILE_INITIALIZING_THE_DATA_STORE, 
+					e.getMessage());
+		}
+	}
+	
 	@Test
 	public void testAuthorizedUser() {		
 		Token tokenFromFederationIdP = managerController
@@ -2310,7 +2331,7 @@ public class TestManagerController {
 	@Test
 	public void testMonitorServedOrderRemovingOrder() throws InterruptedException{
 		
-		ManagerController managerControllerSpy = Mockito.spy(managerController);
+		ManagerController managerControllerSpy = this.managerController;		
 		
 		// checking there is not served order
 		Assert.assertEquals(0, managerControllerSpy.getServedOrders().size());
@@ -2359,7 +2380,7 @@ public class TestManagerController {
 	@Test
 	public void testMonitorServedOrderKeepingOrder() throws InterruptedException{
 		
-		ManagerController managerControllerSpy = Mockito.spy(managerController);
+		ManagerController managerControllerSpy = this.managerController;				
 		
 		// checking there is not served order
 		Assert.assertEquals(0, managerControllerSpy.getServedOrders().size());
@@ -2627,7 +2648,7 @@ public class TestManagerController {
 	@Test
 	public void testGarbageCollectorWithServedOrder() {
 		
-		ManagerController managerControllerSpy = Mockito.spy(managerController);
+		ManagerController managerControllerSpy = this.managerController;			
 		Mockito.doReturn(true).when(managerControllerSpy).isThereEnoughQuota("manager1-test.com");
 		
 		// checking there is not served order
@@ -2702,7 +2723,8 @@ public class TestManagerController {
 				DefaultDataTestHelper.LOCAL_MANAGER_SSH_PUBLIC_KEY_PATH);
 		ManagerController localManagerController = 
 				managerTestHelper.createDefaultManagerController(extraProperties);
-		ManagerController spiedManageController = Mockito.spy(localManagerController);
+		ManagerController spiedManageController = this.managerController;		
+		
 		String remoteOrderId = "id1";
 		
 		Map<String,String> newXOCCIAttr = new HashMap<String,String>(this.xOCCIAtt);
@@ -2773,7 +2795,7 @@ public class TestManagerController {
 		ManagerController localManagerController = 
 				managerTestHelper.createDefaultManagerController(extraProperties);
 		String remoteOrderId = "id1";
-		ManagerController spiedManageController = Mockito.spy(localManagerController);
+		ManagerController spiedManageController = localManagerController;		
 		
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		String newInstanceId = "newinstanceid";
@@ -2833,7 +2855,7 @@ public class TestManagerController {
 	@Test
 	public void testSSHKeyReplacementWhenManagerKeyIsNotDefined() 
 			throws FileNotFoundException, IOException, MessagingException {
-		ManagerController spiedManagerController = Mockito.spy(managerController);
+		ManagerController spiedManagerController = this.managerController;				
 		
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		String instanceId = "instance1";
@@ -2870,7 +2892,7 @@ public class TestManagerController {
 				DefaultDataTestHelper.LOCAL_MANAGER_SSH_PUBLIC_KEY_PATH);
 		ManagerController localManagerController = 
 				managerTestHelper.createDefaultManagerController(extraProperties);
-		ManagerController spiedManageController = Mockito.spy(localManagerController);
+		ManagerController spiedManageController = localManagerController;		
 		
 		String localOrderId = "id1";
 		
@@ -2943,7 +2965,7 @@ public class TestManagerController {
 		ManagerController localManagerController = 
 				managerTestHelper.createDefaultManagerController(extraProperties);
 		String localOrderId = "id1";
-		ManagerController spiedManageController = Mockito.spy(localManagerController);	
+		ManagerController spiedManageController = localManagerController;		
 		
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		String newInstanceId = "newinstanceid";
@@ -3003,7 +3025,7 @@ public class TestManagerController {
 	@Test
 	public void testSSHKeyReplacementLocallyWhenManagerKeyIsNotDefined() 
 			throws FileNotFoundException, IOException, MessagingException {
-		ManagerController managerControllerSpy = Mockito.spy(managerController);
+		ManagerController managerControllerSpy = this.managerController;
 		
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		String instanceId = "instance1";
@@ -3945,7 +3967,8 @@ public class TestManagerController {
 		FileInputStream input = new FileInputStream(propertiesFile);
 		properties.load(input);
 
-		managerController = new ManagerController(properties);
+		boolean initializeBD = false;
+		managerController = new ManagerController(properties, null, initializeBD);
 		
 		String user = "CN=Giovanni Farias, OU=DSC, O=UFCG, O=UFF BrGrid CA, O=ICPEDU, C=BR";
 		Assert.assertTrue(managerController.isAdminUser(new Token("access_id",
@@ -3960,7 +3983,8 @@ public class TestManagerController {
 		FileInputStream input = new FileInputStream(propertiesFile);
 		properties.load(input);
 
-		managerController = new ManagerController(properties);
+		boolean initializeDB = false;
+		managerController = new ManagerController(properties, null, initializeDB);
 		
 		String userOne = "CN=Giovanni Farias, OU=DSC, O=UFCG, O=UFF BrGrid CA, O=ICPEDU, C=BR";
 		Assert.assertTrue(managerController.isAdminUser(new Token("access_id1",
@@ -4127,26 +4151,6 @@ public class TestManagerController {
 		Assert.assertEquals(String.valueOf(0.0), resourceInfoExtra.getMemInUseByUser());
 		Assert.assertEquals(String.valueOf(0), resourceInfoExtra.getInstancesInUseByUser());
 		Assert.assertEquals(String.valueOf(0.0), resourceInfoExtra.getCpuInUseByUser());
-	}
-	
-	@Test
-	public void testIsThereEnoughQuota(){
-		ManagerController managerControllerSpy = Mockito.spy(managerController);
-		
-		//preencher order repository com orders
-		OrderRepository orderRepository = new OrderRepository();
-		Order order1 = new Order("", null, "", "",
-				"requestingMember1", 0, false, OrderState.FULFILLED,
-				null, null);
-		Order order2 = new Order("", null, "", "",
-				"requestingMember1", 0, false, OrderState.FULFILLED,
-				null, null);
-		
-		orderRepository.addOrder("", order1);
-		orderRepository.addOrder("", order2);
-		
-		//FIXME
-		
 	}
 	
 	@Test

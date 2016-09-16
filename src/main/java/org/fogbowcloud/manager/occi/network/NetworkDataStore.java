@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.occi.DataStoreHelper;
 
 public class NetworkDataStore {
 
@@ -52,12 +53,14 @@ public class NetworkDataStore {
 			+ INSTANCE_ID + " = ? AND " + USER_ID + " = ?";
 
 	private static final Logger LOGGER = Logger.getLogger(NetworkDataStore.class);
+	private static final String DEFAULT_DATASTORE_NAME = "datastore_network.slite";
+	public static final String ERROR_WHILE_INITIALIZING_THE_DATA_STORE = "Error while initializing the Network DataStore.";
 
 	private String networkDataStoreURL;
 
 	public NetworkDataStore(String networkDataStoreURL) {
-
-		this.networkDataStoreURL = networkDataStoreURL;
+		this.networkDataStoreURL = DataStoreHelper.getDataStoreUrl(networkDataStoreURL,
+				DEFAULT_DATASTORE_NAME);
 
 		Statement statement = null;
 		Connection connection = null;
@@ -72,7 +75,8 @@ public class NetworkDataStore {
 			statement.close();
 
 		} catch (Exception e) {
-			LOGGER.error("Error while initializing the DataStore.", e);
+			LOGGER.error(ERROR_WHILE_INITIALIZING_THE_DATA_STORE, e);
+			throw new Error(ERROR_WHILE_INITIALIZING_THE_DATA_STORE);
 		} finally {
 			close(statement, connection);
 		}
