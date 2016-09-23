@@ -56,7 +56,7 @@ public class CloudStackIdentityPlugin implements IdentityPlugin {
 		String apiKey = userCredentials.get(API_KEY);
 		String secretKey = userCredentials.get(SECRET_KEY);
 		String accessId = apiKey + ":" + secretKey;
-		return new Token(accessId, apiKey, null, new HashMap<String, String>());
+		return new Token(accessId, new Token.User(apiKey, apiKey), null, new HashMap<String, String>());
 	}
 
 	@Override
@@ -84,7 +84,7 @@ public class CloudStackIdentityPlugin implements IdentityPlugin {
 		}
 		HttpResponseWrapper response = httpClient.doGet(requestEndpoint.toString());
 		checkStatusResponse(response.getStatusLine());
-		return new Token(accessId, apiKey, null, new HashMap<String, String>());
+		return new Token(accessId, new Token.User(apiKey, apiKey), null, new HashMap<String, String>());
 	}
 
 	@Override

@@ -16,7 +16,6 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.EntityUtils;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
@@ -73,7 +72,7 @@ public class TestGetCompute {
 	public void setup() throws Exception {
 		this.helper = new OCCITestHelper();
 
-		Token postToken = new Token(OCCITestHelper.POST_FED_ACCESS_TOKEN, OCCITestHelper.USER_MOCK+"_post",
+		Token postToken = new Token(OCCITestHelper.POST_FED_ACCESS_TOKEN, new Token.User(OCCITestHelper.USER_MOCK+"_post", "") ,
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>());
 		
 		List<Resource> list = new ArrayList<Resource>();
@@ -82,7 +81,8 @@ public class TestGetCompute {
 		Instance instance1 = new Instance(INSTANCE_1_ID, list, map, null, InstanceState.PENDING);
 
 		Map<String, String> postMap = new HashMap<String, String>();
-		postMap.put(Instance.SSH_PUBLIC_ADDRESS_ATT, FAKE_POST_INSTANCE_HOST+":"+FAKE_POST_INSTANCE_PORT);
+		postMap.put(Instance.SSH_PUBLIC_ADDRESS_ATT, FAKE_POST_INSTANCE_HOST
+				+ ":" + FAKE_POST_INSTANCE_PORT);
 		postMap.put("test", "test");
 
 		Instance postInstance1 = new Instance(POST_INSTANCE_1_ID, list, postMap, null, InstanceState.RUNNING);
@@ -103,16 +103,16 @@ public class TestGetCompute {
 
 		identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.getToken(OCCITestHelper.ACCESS_TOKEN))
-				.thenReturn(new Token("id", OCCITestHelper.USER_MOCK, new Date(), new HashMap<String, String>()));
+				.thenReturn(new Token("id", new Token.User(OCCITestHelper.USER_MOCK, ""), new Date(), new HashMap<String, String>()));
 		Mockito.when(identityPlugin.getToken(OCCITestHelper.POST_FED_ACCESS_TOKEN))
-		.thenReturn(new Token("id", OCCITestHelper.USER_MOCK+"_post", new Date(), new HashMap<String, String>()));
+		.thenReturn(new Token("id", new Token.User(OCCITestHelper.USER_MOCK + "_post", ""), new Date(), new HashMap<String, String>()));
 		
 		Mockito.when(identityPlugin.getAuthenticationURI()).thenReturn("Keystone uri='http://localhost:5000/'");
 
 		List<Order> ordersA = new LinkedList<Order>();
 		List<Order> ordersB = new LinkedList<Order>();
 		
-		Token token = new Token(OCCITestHelper.ACCESS_TOKEN, OCCITestHelper.USER_MOCK,
+		Token token = new Token(OCCITestHelper.ACCESS_TOKEN, new Token.User(OCCITestHelper.USER_MOCK, ""),
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>());
 		
 		HashMap<String, String> xOCCIAttr = new HashMap<String, String>();
@@ -125,7 +125,7 @@ public class TestGetCompute {
 		order2.setInstanceId(INSTANCE_2_ID);
 		order2.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
 		ordersA.add(order2);
-		Order order3 = new Order("3", new Token("token", "user", DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
+		Order order3 = new Order("3", new Token("token", new Token.User("user", ""), DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
 				new HashMap<String, String>()), null, xOCCIAttr, true, "");
 		order3.setInstanceId(INSTANCE_3_ID_WITHOUT_USER);
 		order3.setProvidingMemberId(OCCITestHelper.MEMBER_ID);

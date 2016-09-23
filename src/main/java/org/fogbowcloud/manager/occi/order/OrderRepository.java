@@ -12,7 +12,6 @@ public class OrderRepository {
 
 	private static final Logger LOGGER = Logger.getLogger(OrderRepository.class);
 
-	// TODO refactor list to map
 	private Map<String, List<Order>> orders = new HashMap<String, List<Order>>();
 
 	/*
@@ -30,12 +29,12 @@ public class OrderRepository {
 		return false;
 	}
 	
-	public void addOrder(String user, Order order) {
-		LOGGER.debug("Adding order " + order.getId() + " to user " + user);
-		List<Order> userOrders = orders.get(user);
+	public void addOrder(String userId, Order order) {
+		LOGGER.debug("Adding order " + order.getId() + " to user id " + userId);
+		List<Order> userOrders = orders.get(userId);
 		if (userOrders == null) {
 			userOrders = new LinkedList<Order>();
-			orders.put(user, userOrders);
+			orders.put(userId, userOrders);
 		}
 		if (orderExists(userOrders, order)) {
 			return;
@@ -82,36 +81,36 @@ public class OrderRepository {
 		return null;
 	}
 
-	public Order get(String user, String orderId) {
-		return get(user, orderId, true);
+	public Order get(String userId, String orderId) {
+		return get(userId, orderId, true);
 	}
 	
-	public Order get(String user, String orderId, boolean lookingForLocalOrder) {
-		List<Order> userOrders = orders.get(user);
+	public Order get(String userId, String orderId, boolean lookingForLocalOrder) {
+		List<Order> userOrders = orders.get(userId);
 		if (userOrders == null) {
-			LOGGER.debug("User " + user + " does not have orders.");
+			LOGGER.debug("User id " + userId + " does not have orders.");
 			return null;
 		}
 		for (Order order : userOrders) {
 			if (order.getId().equals(orderId)) {
 				if (lookingForLocalOrder && order.isLocal() 
 						|| !lookingForLocalOrder && !order.isLocal()) {
-					LOGGER.debug("Getting order " + order + " owner by user " + user);
+					LOGGER.debug("Getting order " + order + " owner by user id " + userId);
 					return order;					
 				}
 			}
 		}
-		LOGGER.debug("Order " + orderId + " owner by user " + user + " was not found.");
+		LOGGER.debug("Order " + orderId + " owner by user id " + userId + " was not found.");
 		return null;
 	}
 
-	public List<Order> getByUser(String user) {
-		return getByUser(user, true);
+	public List<Order> getByUserId(String userId) {
+		return getByUserId(userId, true);
 	}
 	
-	public List<Order> getByUser(String user, boolean lookingForLocalOrder) {
-		LOGGER.debug("Getting local orders by user " + user);
-		List<Order> userOrders = orders.get(user);
+	public List<Order> getByUserId(String userId, boolean lookingForLocalOrder) {
+		LOGGER.debug("Getting local orders by user id " + userId);
+		List<Order> userOrders = orders.get(userId);
 		if (userOrders == null) {
 			return new LinkedList<Order>();
 		}		
@@ -126,8 +125,8 @@ public class OrderRepository {
 		return userLocalOrders;
 	}
 
-	public void removeByUser(String user) {
-		List<Order> ordersByUser = orders.get(user);
+	public void removeByUserId(String userId) {
+		List<Order> ordersByUser = orders.get(userId);
 		if (ordersByUser != null) {
 			for (Order order : ordersByUser) {
 				if (order.isLocal()) {

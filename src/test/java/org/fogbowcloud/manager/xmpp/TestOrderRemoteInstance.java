@@ -69,8 +69,7 @@ public class TestOrderRemoteInstance {
 					
 					@Override
 					public void error(Throwable t) {
-						// TODO Auto-generated method stub
-						
+						// TODO Auto-generated method stub						
 					}
 				});
 		String instanceId = bq.poll(5, TimeUnit.SECONDS);
@@ -85,7 +84,7 @@ public class TestOrderRemoteInstance {
 		attributes.put("key2", "value2");
 		attributes.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.COMPUTE_TERM);
 		Order order = new Order("id", new Token("anyvalue",
-				OCCITestHelper.USER_MOCK,
+				new Token.User(OCCITestHelper.USER_MOCK, OCCITestHelper.USER_MOCK),
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
 				new HashMap<String, String>()), categories, attributes, true, DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		order.setInstanceId(INSTANCE_DEFAULT);

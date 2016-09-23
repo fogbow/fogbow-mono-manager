@@ -65,16 +65,17 @@ public class TestDeleteNetwork {
 		ordersToAdd = new HashMap<String, List<Order>>();
 		ordersToAdd.put(USER_WITHOUT_ORDERS, new ArrayList<Order>());
 		
-		tokenA = new Token("id_one", OCCITestHelper.USER_MOCK, DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>());
-		tokenB = new Token("id_two", USER_WITHOUT_ORDERS, DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>());
+		tokenA = new Token("id_one", new Token.User(OCCITestHelper.USER_MOCK, OCCITestHelper.USER_MOCK), 
+				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>());
+		tokenB = new Token("id_two", new Token.User(USER_WITHOUT_ORDERS, USER_WITHOUT_ORDERS), 
+				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>());
 		
 		//Moking
 		identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.getToken(ACCESS_TOKEN))
 				.thenReturn(tokenA);
 		Mockito.when(identityPlugin.createToken(Mockito.anyMap()))
-				.thenReturn(tokenA);
-		
+				.thenReturn(tokenA);		
 		Mockito.when(identityPlugin.getToken(USER_WITHOUT_ORDERS))
 				.thenReturn(tokenB);
 		
@@ -116,7 +117,7 @@ public class TestDeleteNetwork {
 		
 		OrderRepository orders = new OrderRepository();
 		for (Order order : userOrders){
-			orders.addOrder(tokenA.getUser(), order);
+			orders.addOrder(tokenA.getUser().getId(), order);
 		}
 		facade.setOrders(orders);
 	
@@ -163,7 +164,7 @@ public class TestDeleteNetwork {
 		
 		OrderRepository orders = new OrderRepository();
 		for (Order order : userOrders){
-			orders.addOrder(order.getFederationToken().getUser(), order);
+			orders.addOrder(order.getFederationToken().getUser().getId(), order);
 		}
 		facade.setOrders(orders);
 		
@@ -206,7 +207,7 @@ public class TestDeleteNetwork {
 		
 		OrderRepository orders = new OrderRepository();
 		for (Order order : userOrders){
-			orders.addOrder(tokenA.getUser(), order);
+			orders.addOrder(tokenA.getUser().getId(), order);
 		}
 		facade.setOrders(orders);
 	
@@ -237,7 +238,7 @@ public class TestDeleteNetwork {
 		
 		OrderRepository orders = new OrderRepository();
 		for (Order order : userOrders){
-			orders.addOrder(tokenA.getUser(), order);
+			orders.addOrder(tokenA.getUser().getId(), order);
 		}
 		facade.setOrders(orders);
 	

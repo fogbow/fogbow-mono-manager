@@ -287,7 +287,7 @@ public class OrderServerResource extends ServerResource {
 		String federationAuthToken = HeaderUtils.getAuthToken(
 				req.getHeaders(), getResponse(), application.getAuthenticationURI());
 		
-		String user = application.getUser(normalizeAuthToken(federationAuthToken));
+		String user = application.getUserId(normalizeAuthToken(federationAuthToken));
 		
 		//TODO verificar se o ID da network é federado
 		Map<String, String> xOCCIAtt = HeaderUtils.getXOCCIAtributes(req.getHeaders());

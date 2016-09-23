@@ -62,7 +62,7 @@ public class TestTokenServerResource {
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testGetToken() throws Exception {
-		Token token = new Token(ACCESS_TOKEN_ID, "user", DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
+		Token token = new Token(ACCESS_TOKEN_ID, new Token.User("user", ""), DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
 				new HashMap<String, String>());
 
 		Mockito.when(identityPlugin.createToken(Mockito.anyMap())).thenReturn(token);

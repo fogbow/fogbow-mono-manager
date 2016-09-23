@@ -96,7 +96,8 @@ public class TestTwoFoldFairnessDrivenController {
 	public void testGetMaxCapacityToSupply() {
 		
 		//second 40, during 50 seconds
-		Order localDonatesToRemoteMember1Order1 = new Order("order1", new Token("", "user@"+remote1.getId(), null, null), null, null, false, remote1.getId());
+		Order localDonatesToRemoteMember1Order1 = new Order("order1", new Token("", 
+				new Token.User("user@"+remote1.getId(), ""), null, null), null, null, false, remote1.getId());
 		localDonatesToRemoteMember1Order1.setState(OrderState.FULFILLED);
 		localDonatesToRemoteMember1Order1.setInstanceId("instanceId-order1");
 		localDonatesToRemoteMember1Order1.setProvidingMemberId(local.getId());
@@ -104,7 +105,8 @@ public class TestTwoFoldFairnessDrivenController {
 		Mockito.when(localDonatesToRemoteMember1Order1Spy.getFulfilledTime()).thenReturn(t4);
 
 		//second 20, during 50 seconds
-		Order remoteMember1DonatesToLocalMemberOrder1 = new Order("order2", new Token("", "user@"+local.getId(), null, null), null, null, false, local.getId());
+		Order remoteMember1DonatesToLocalMemberOrder1 = new Order("order2", new Token("", 
+				new Token.User("user@"+local.getId(), ""), null, null), null, null, false, local.getId());
 		remoteMember1DonatesToLocalMemberOrder1.setState(OrderState.FULFILLED);
 		remoteMember1DonatesToLocalMemberOrder1.setInstanceId("instanceId-order2");
 		remoteMember1DonatesToLocalMemberOrder1.setProvidingMemberId(remote1.getId());
@@ -112,7 +114,8 @@ public class TestTwoFoldFairnessDrivenController {
 		Mockito.when(remoteMember1DonatesToLocalMemberOrder1Spy.getFulfilledTime()).thenReturn(t2);
 		
 		//second 40, during 40 seconds
-		Order remoteMember1DonatesToLocalMemberOrder2 = new Order("order3", new Token("", "user@"+local.getId(), null, null), null, null, false, local.getId());
+		Order remoteMember1DonatesToLocalMemberOrder2 = new Order("order3", new Token("", 
+				new Token.User("user@"+local.getId(), ""), null, null), null, null, false, local.getId());
 		remoteMember1DonatesToLocalMemberOrder2.setState(OrderState.FULFILLED);
 		remoteMember1DonatesToLocalMemberOrder2.setInstanceId("instanceId-order3");
 		remoteMember1DonatesToLocalMemberOrder2.setProvidingMemberId(remote1.getId());
@@ -120,7 +123,8 @@ public class TestTwoFoldFairnessDrivenController {
 		Mockito.when(remoteMember1DonatesToLocalMemberOrder2Spy.getFulfilledTime()).thenReturn(t4);
 		
 		//second 100, during 20 seconds
-		Order remoteMember1DonatesToLocalMemberOrder3 = new Order("order4", new Token("", "user@"+local.getId(), null, null), null, null, false, local.getId());
+		Order remoteMember1DonatesToLocalMemberOrder3 = new Order("order4", new Token("", 
+				new Token.User("user@"+local.getId(), ""), null, null), null, null, false, local.getId());
 		remoteMember1DonatesToLocalMemberOrder3.setState(OrderState.FULFILLED);
 		remoteMember1DonatesToLocalMemberOrder3.setInstanceId("instanceId-order4");
 		remoteMember1DonatesToLocalMemberOrder3.setProvidingMemberId(remote1.getId());
@@ -128,7 +132,8 @@ public class TestTwoFoldFairnessDrivenController {
 		Mockito.when(remoteMember1DonatesToLocalMemberOrder3Spy.getFulfilledTime()).thenReturn(t10);
 		
 		//second 0, during 90 seconds
-		Order localDonatesToRemoteMember2Order1 = new Order("order5", new Token("", "user@"+remote2.getId(), null, null), null, null, false, remote2.getId());
+		Order localDonatesToRemoteMember2Order1 = new Order("order5", new Token("", 
+				new Token.User("user@"+remote2.getId(), ""), null, null), null, null, false, remote2.getId());
 		localDonatesToRemoteMember2Order1.setState(OrderState.FULFILLED);
 		localDonatesToRemoteMember2Order1.setInstanceId("instanceId-order5");
 		localDonatesToRemoteMember2Order1.setProvidingMemberId(local.getId());
@@ -136,7 +141,8 @@ public class TestTwoFoldFairnessDrivenController {
 		Mockito.when(localDonatesToRemoteMember2Order1Spy.getFulfilledTime()).thenReturn(t0);
 				
 		//second 10, during 30 seconds
-		Order remoteMember2DonatesToLocalMemberOrder1 = new Order("order6", new Token("", "user@"+local.getId(), null, null), null, null, false, local.getId());
+		Order remoteMember2DonatesToLocalMemberOrder1 = new Order("order6", new Token("", 
+				new Token.User("user@"+local.getId(), ""), null, null), null, null, false, local.getId());
 		remoteMember2DonatesToLocalMemberOrder1.setState(OrderState.FULFILLED);
 		remoteMember2DonatesToLocalMemberOrder1.setInstanceId("instanceId-order6");
 		remoteMember2DonatesToLocalMemberOrder1.setProvidingMemberId(remote2.getId());

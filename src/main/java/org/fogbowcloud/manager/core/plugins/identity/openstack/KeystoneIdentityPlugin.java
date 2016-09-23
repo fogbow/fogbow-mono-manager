@@ -103,6 +103,7 @@ public class KeystoneIdentityPlugin implements IdentityPlugin {
 		}
 		
 		String responseStr = doPostRequest(currentTokenEndpoint, json);
+		LOGGER.debug("@ Json response: " + responseStr);
 		Token token = getTokenFromJson(responseStr);
 		
 		return token;
@@ -195,7 +196,7 @@ public class KeystoneIdentityPlugin implements IdentityPlugin {
 	}
 
 	private Token getTokenFromJson(String responseStr) {
-		try {
+		try {			
 			JSONObject root = new JSONObject(responseStr);
 			JSONObject tokenKeyStone = root.getJSONObject(ACCESS_PROP).getJSONObject(TOKEN_PROP);
 			String accessId = tokenKeyStone.getString(ID_PROP);
@@ -217,15 +218,19 @@ public class KeystoneIdentityPlugin implements IdentityPlugin {
 			}
 			
 			String expirationDateToken = tokenKeyStone.getString(EXPIRES_PROP);
-			String user = root.getJSONObject(ACCESS_PROP).getJSONObject(
-					USER_PROP).getString(NAME_PROP);
+			JSONObject userJsonObject = root.getJSONObject(ACCESS_PROP)
+					.getJSONObject(USER_PROP);
+			String user = userJsonObject.getString(NAME_PROP);
+			String id = userJsonObject.getString(ID_PROP);
 
 			LOGGER.debug("json token: " + accessId);
 			LOGGER.debug("json user: " + user);
+			LOGGER.debug("json user id: " + id);
 			LOGGER.debug("json expirationDate: " + expirationDateToken);
 			LOGGER.debug("json attributes: " + tokenAtt);		
 			
-			return new Token(accessId, user, getDateFromOpenStackFormat(expirationDateToken), tokenAtt);
+			return new Token(accessId, new Token.User(id, user), 
+					getDateFromOpenStackFormat(expirationDateToken), tokenAtt);
 		} catch (Exception e) {
 			LOGGER.error("Exception while getting token from json.", e);
 			return null;

@@ -51,7 +51,9 @@ public class X509IdentityPlugin implements IdentityPlugin {
 			user = x509Certificate.getIssuerDN().getName();
 			break;
 		}
-		return new Token(accessId, user, expirationTime, new HashMap<String, String>());
+		
+		//TODO mudar o userId
+		return new Token(accessId, new Token.User(user, user), expirationTime, new HashMap<String, String>());
 	}
 
 	private Collection<X509Certificate> generateCertificateChain(Map<String, String> userCredentials) {
@@ -99,7 +101,8 @@ public class X509IdentityPlugin implements IdentityPlugin {
 		String user = x509Certificate.getIssuerDN().getName();
 		Date expirationTime = x509Certificate.getNotAfter();
 
-		return new Token(accessId, user, expirationTime, new HashMap<String, String>());
+		//TODO mudar o userId
+		return new Token(accessId, new Token.User(user, user), expirationTime, new HashMap<String, String>());
 	}
 
 	

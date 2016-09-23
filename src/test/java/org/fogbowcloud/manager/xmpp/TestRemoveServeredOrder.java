@@ -51,11 +51,11 @@ public class TestRemoveServeredOrder {
 		ManagerXmppComponent initializeXMPPManagerComponent = managerTestHelper.initializeXMPPManagerComponent(false);
 		Order order = createOrder(OrderConstants.COMPUTE_TERM);
 		OrderRepository orders = new OrderRepository();
-		orders.addOrder(order.getFederationToken().getUser(), order);
+		orders.addOrder(order.getFederationToken().getUser().getId(), order);
 		ManagerController managerFacade = initializeXMPPManagerComponent.getManagerFacade();
 		managerFacade.setOrders(orders);
 
-		Token token = new Token(ACCESS_ID, OCCITestHelper.USER_MOCK, null, new HashMap<String, String>());
+		Token token = new Token(ACCESS_ID, new Token.User(OCCITestHelper.USER_MOCK, ""), null, new HashMap<String, String>());
 		
 		Mockito.when(managerTestHelper.getFederationIdentityPlugin().getToken(ACCESS_ID))
 				.thenReturn(token);
@@ -102,11 +102,11 @@ public class TestRemoveServeredOrder {
 		ManagerXmppComponent initializeXMPPManagerComponent = managerTestHelper.initializeXMPPManagerComponent(false);
 		Order order = createOrder(OrderConstants.STORAGE_TERM);
 		OrderRepository orders = new OrderRepository();
-		orders.addOrder(order.getFederationToken().getUser(), order);
+		orders.addOrder(order.getFederationToken().getUser().getId(), order);
 		ManagerController managerFacade = initializeXMPPManagerComponent.getManagerFacade();
 		managerFacade.setOrders(orders);
 
-		Token token = new Token(ACCESS_ID, OCCITestHelper.USER_MOCK, null, new HashMap<String, String>());
+		Token token = new Token(ACCESS_ID, new Token.User(OCCITestHelper.USER_MOCK, ""), null, new HashMap<String, String>());
 		
 		Mockito.when(managerTestHelper.getFederationIdentityPlugin().getToken(ACCESS_ID))
 				.thenReturn(token);
@@ -153,7 +153,7 @@ public class TestRemoveServeredOrder {
 		attributes.put("key2", "value2");
 		attributes.put(OrderAttribute.RESOURCE_KIND.getValue(), resourceKing);
 		Order order = new Order(ORDER_ID, new Token(ACCESS_ID,
-				OCCITestHelper.USER_MOCK,
+				new Token.User(OCCITestHelper.USER_MOCK, ""),
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
 				new HashMap<String, String>()), categories, attributes, false, DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		order.setInstanceId(INSTANCE_ID);

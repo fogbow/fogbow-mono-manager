@@ -52,7 +52,7 @@ public class TestRemoteStorageLink {
 						Mockito.any(Token.class), Mockito.any(List.class),
 						Mockito.eq(xOCCIAtt))).thenReturn(storageLinkIdExpected);
 
-		Token token = new Token("accessId", OCCITestHelper.USER_MOCK,
+		Token token = new Token("accessId", new Token.User(OCCITestHelper.USER_MOCK, ""),
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
 				new HashMap<String, String>());
 		
@@ -77,7 +77,7 @@ public class TestRemoteStorageLink {
 				.when(managerTestHelper.getComputePlugin())
 				.dettach(Mockito.any(Token.class), Mockito.any(List.class), Mockito.anyMap());
 
-		Token token = new Token("accessId", OCCITestHelper.USER_MOCK,
+		Token token = new Token("accessId", new Token.User(OCCITestHelper.USER_MOCK, ""),
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
 				new HashMap<String, String>());
 		

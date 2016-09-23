@@ -56,7 +56,7 @@ public class TestOpenStackV2NetworkPlugin {
 		
 		Map<String, String> attributes = new HashMap<String, String>();
 		attributes.put(OpenStackV2NetworkPlugin.TENANT_ID, DEFAULT_TENANT_ID);
-		this.defaultToken = new Token("accessId", "user", new Date(), attributes);
+		this.defaultToken = new Token("accessId", new Token.User("user", "user") , new Date(), attributes);
 	}
 	
 	@After
@@ -66,7 +66,7 @@ public class TestOpenStackV2NetworkPlugin {
 	
 	@Test(expected=OCCIException.class)
 	public void testRequestInstanceWithoutTenantId() {
-		Token token = new Token("accessId", "user", new Date(), new HashMap<String, String>());
+		Token token = new Token("accessId", new Token.User("user", "user"), new Date(), new HashMap<String, String>());
 		openStackV2NetworkPlugin.requestInstance(token, null, null);
 	}
 	
@@ -294,7 +294,7 @@ public class TestOpenStackV2NetworkPlugin {
 	
 	@Test(expected=OCCIException.class)
 	public void testRemoveWithoutTenantId() {
-		Token token = new Token("accessId", "user", new Date(), new HashMap<String, String>());
+		Token token = new Token("accessId", new Token.User("user", "user"), new Date(), new HashMap<String, String>());
 		openStackV2NetworkPlugin.removeInstance(token, "instanceId");
 	}
 	

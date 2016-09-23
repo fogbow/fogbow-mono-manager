@@ -12,13 +12,9 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.log4j.Logger;
 import org.bouncycastle.util.IPAddress;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
-import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.occi.OCCIApplication;
 import org.fogbowcloud.manager.occi.OCCIConstants;
-import org.fogbowcloud.manager.occi.instance.FedInstanceState;
 import org.fogbowcloud.manager.occi.instance.Instance;
-import org.fogbowcloud.manager.occi.instance.InstanceState;
-import org.fogbowcloud.manager.occi.instance.Instance.Link;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.ErrorType;
 import org.fogbowcloud.manager.occi.model.HeaderUtils;
@@ -31,11 +27,11 @@ import org.fogbowcloud.manager.occi.order.Order;
 import org.fogbowcloud.manager.occi.order.OrderAttribute;
 import org.fogbowcloud.manager.occi.order.OrderConstants;
 import org.fogbowcloud.manager.occi.order.OrderState;
+import org.restlet.data.Header;
 import org.restlet.data.MediaType;
 import org.restlet.data.Status;
 import org.restlet.engine.adapter.HttpRequest;
 import org.restlet.engine.adapter.ServerCall;
-import org.restlet.data.Header;
 import org.restlet.representation.StringRepresentation;
 import org.restlet.resource.Delete;
 import org.restlet.resource.Get;
@@ -73,8 +69,8 @@ public class NetworkServerResource extends ServerResource {
 				application.getAuthenticationURI());
 		List<String> acceptContent = HeaderUtils.getAccept(request.getHeaders());
 
-		String user = application.getUser(normalizeAuthToken(federationAuthToken));
-		if (user == null) {
+		String userId = application.getUserId(normalizeAuthToken(federationAuthToken));
+		if (userId == null) {
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}
 
@@ -88,8 +84,8 @@ public class NetworkServerResource extends ServerResource {
 			LOGGER.debug("There are " + allInstances.size() + " networks related to auth_token " + federationAuthToken);
 			
 			//Verify federated networks.
-			List<FedNetworkState> fedPostNotworks = networkDB.getAllByUser(user);
-			LOGGER.debug("There are " + fedPostNotworks.size() + " federated networks owened by user " + user);
+			List<FedNetworkState> fedPostNotworks = networkDB.getAllByUser(userId);
+			LOGGER.debug("There are " + fedPostNotworks.size() + " federated networks owened by user id " + userId);
 
 			// replacing real instance id by fed_instance_id
 			for (FedNetworkState currentNetwork : fedPostNotworks) {
@@ -134,7 +130,7 @@ public class NetworkServerResource extends ServerResource {
 				
 				//String networkIdNormalized = 
 				
-				FedNetworkState fedNetworkState = networkDB.getByFedNetworkId(networkId, user);
+				FedNetworkState fedNetworkState = networkDB.getByFedNetworkId(networkId, userId);
 
 				if (fedNetworkState == null) {
 					throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
@@ -205,7 +201,7 @@ public class NetworkServerResource extends ServerResource {
 		
 		String federationAuthToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse(),
 				application.getAuthenticationURI());
-		String user = application.getUser(normalizeAuthToken(federationAuthToken));
+		String userId = application.getUserId(normalizeAuthToken(federationAuthToken));
 
 		List<Category> categories = HeaderUtils.getCategories(req.getHeaders());
 		LOGGER.debug("Categories: " + categories);
@@ -263,7 +259,7 @@ public class NetworkServerResource extends ServerResource {
 		Order relatedOrder = newOrder.get(0);
 		
 		FedNetworkState fedNetworkState = new FedNetworkState(instance.getId(),
-				relatedOrder.getId(), "", user, 
+				relatedOrder.getId(), "", userId, 
 				address, allocation, gateway);
 		networkDB.insert(fedNetworkState);
 
@@ -286,36 +282,32 @@ public class NetworkServerResource extends ServerResource {
 				application.getAuthenticationURI());
 		String networkId = (String) getRequestAttributes().get("networkId");
 
-		String user = application.getUser(normalizeAuthToken(federationAuthToken));
-		if (user == null) {
+		String userId = application.getUserId(normalizeAuthToken(federationAuthToken));
+		if (userId == null) {
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}
 
 		if (networkId == null) {
 			LOGGER.info("Removing all instances(network) of token :" + federationAuthToken);
-			networkDB.deleteAllFromUser(user);
-			return removeIntances(application, federationAuthToken);
-			
+			networkDB.deleteAllFromUser(userId);
+			return removeIntances(application, federationAuthToken);			
 		}
 
 		if (networkId.startsWith(FED_NETWORK_PREFIX)) {
 			LOGGER.info("Removing federated instance " + networkId);
-			
-			
-			FedNetworkState fedNetworkState = networkDB.getByFedNetworkId(networkId, user);
+						
+			FedNetworkState fedNetworkState = networkDB.getByFedNetworkId(networkId, userId);
 			
 			if (fedNetworkState == null) {
 				throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
 			}
 			
-			try {
-				
+			try {				
 				Order relatedOrder = application.getOrder(federationAuthToken, fedNetworkState.getOrderId());
 				
 				application.removeInstance(federationAuthToken, relatedOrder.getGlobalInstanceId(), OrderConstants.NETWORK_TERM);
 				application.removeOrder(federationAuthToken, relatedOrder.getId());
-				networkDB.deleteByIntanceId(networkId, user);
-				
+				networkDB.deleteByIntanceId(networkId, userId);				
 			} catch (Exception e) {
 				LOGGER.warn("Error while removing resources related to federated network " + networkId + ".", e);
 				if(e instanceof OCCIException){

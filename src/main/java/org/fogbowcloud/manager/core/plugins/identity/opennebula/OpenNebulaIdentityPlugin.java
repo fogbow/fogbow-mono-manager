@@ -46,7 +46,8 @@ public class OpenNebulaIdentityPlugin implements IdentityPlugin {
 		String username = userCredentials.get(USERNAME);
 		String userPass = userCredentials.get(USER_PASSWORD);
 		String accessId = username + ":" + userPass;
-		return new Token(accessId, username, null, new HashMap<String, String>());
+		return new Token(accessId, new Token.User(username, username), null, 
+				new HashMap<String, String>());
 	}
 
 	private void checkUserExists(String username, UserPool userPool) {
@@ -85,7 +86,8 @@ public class OpenNebulaIdentityPlugin implements IdentityPlugin {
 		}
 		String username = accessId.split(":")[0];
 		checkUserExists(username, userPool);
-		return new Token(accessId, username, null, new HashMap<String, String>());
+		return new Token(accessId, new Token.User(username, username), null, 
+				new HashMap<String, String>());
 	}
 
 	@Override

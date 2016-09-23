@@ -87,14 +87,14 @@ public class NAFIdentityPlugin implements IdentityPlugin {
 		}
 
 		JSONObject jsonObject;
-		String user = null;
+		String userName = null;
 		Date date = null;
 		Map<String, String> attributes = null;
 		try {
 			String accessIdDecoded = new String(Base64.decode(accessId.getBytes()), Charset.forName("UTF-8"));
 			AccessIdFormat accessIdFormat = new AccessIdFormat(accessIdDecoded);
 			jsonObject = new JSONObject(accessIdFormat.getMessage());
-			user = jsonObject.getString(NAME);
+			userName = jsonObject.getString(NAME);
 			date = new Date(Long.parseLong(jsonObject.getString(TOKEN_ETIME_JSONOBJECT)));
 			attributes = toMap(jsonObject.optJSONObject(SAML_ATTRIBUTES_JSONOBJECT));
 		} catch (Exception e) {
@@ -102,7 +102,7 @@ public class NAFIdentityPlugin implements IdentityPlugin {
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}
 
-		return new Token(accessId, user, date, attributes);
+		return new Token(accessId, new Token.User(userName, userName), date, attributes);
 	}
 
 	@Override

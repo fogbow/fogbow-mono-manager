@@ -89,7 +89,7 @@ public class TestOCCIApplication {
 
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		HashMap<String, String> tokenAttr = new HashMap<String, String>();
-		Token userToken = new Token(OCCITestHelper.ACCESS_TOKEN, OCCITestHelper.USER_MOCK,
+		Token userToken = new Token(OCCITestHelper.ACCESS_TOKEN, new Token.User(OCCITestHelper.USER_MOCK, ""),
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, tokenAttr);
 
 		Mockito.when(identityPlugin.getToken(Mockito.anyString())).thenReturn(userToken);

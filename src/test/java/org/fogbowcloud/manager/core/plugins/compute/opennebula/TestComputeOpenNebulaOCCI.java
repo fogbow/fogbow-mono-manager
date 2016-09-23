@@ -122,7 +122,8 @@ public class TestComputeOpenNebulaOCCI {
 				+ RequirementsHelper.GLUE_VCPU_TERM + " > 0";
 		xOCCIAtt.put(OrderAttribute.REQUIREMENTS.getValue(), requirementsStr);
 
-		Token token = new Token(ACCESS_TOKEN_ID, "user", new Date(), new HashMap<String, String>());
+		Token token = new Token(ACCESS_TOKEN_ID, new Token.User("user", "user"), new Date(), 
+				new HashMap<String, String>());
 		try {
 			openNebulaOCCIComputePlugin.requestInstance(token, requestCategories, xOCCIAtt,
 					UUID_CIRROS0_3_2_1);
@@ -159,7 +160,8 @@ public class TestComputeOpenNebulaOCCI {
 				+ RequirementsHelper.GLUE_VCPU_TERM + " > 0";
 		xOCCIAtt.put(OrderAttribute.REQUIREMENTS.getValue(), requirementsStr);
 
-		Token token = new Token(ACCESS_TOKEN_ID, "user", new Date(), new HashMap<String, String>());
+		Token token = new Token(ACCESS_TOKEN_ID, new Token.User("user", "user"), new Date(), 
+				new HashMap<String, String>());
 		try {
 			openNebulaOCCIComputePlugin.requestInstance(token, requestCategories, xOCCIAtt,
 					UUID_CIRROS0_3_2_1);
@@ -199,7 +201,8 @@ public class TestComputeOpenNebulaOCCI {
 		
 		expectedRequest = new HttpUriRequestMatcher(request);
 
-		Token token = new Token(ACCESS_TOKEN_ID, "user", new Date(), new HashMap<String, String>());
+		Token token = new Token(ACCESS_TOKEN_ID, new Token.User("user", "user"), new Date(),
+				new HashMap<String, String>());
 		try {			
 			openNebulaOCCIComputePlugin.requestInstance(token, requestCategories, xOCCIAtt,
 					UUID_CIRROS0_3_2_1);
@@ -218,7 +221,8 @@ public class TestComputeOpenNebulaOCCI {
 		request.addHeader(OCCIHeaders.X_AUTH_TOKEN, ACCESS_TOKEN_ID);
 		expectedRequest = new HttpUriRequestMatcher(request);
 
-		Token token = new Token(ACCESS_TOKEN_ID, "user", new Date(), new HashMap<String, String>());
+		Token token = new Token(ACCESS_TOKEN_ID, new Token.User("user", "user"), new Date(),
+				new HashMap<String, String>());
 		try {
 			openNebulaOCCIComputePlugin.getInstance(token, instanceId);
 		} catch (Exception e) {
@@ -235,7 +239,8 @@ public class TestComputeOpenNebulaOCCI {
 		request.addHeader(OCCIHeaders.X_AUTH_TOKEN, ACCESS_TOKEN_ID);
 		expectedRequest = new HttpUriRequestMatcher(request);
 
-		Token token = new Token(ACCESS_TOKEN_ID, "user", new Date(), new HashMap<String, String>());
+		Token token = new Token(ACCESS_TOKEN_ID, new Token.User("user", "user"), new Date(),
+				new HashMap<String, String>());
 		try {
 			openNebulaOCCIComputePlugin.removeInstances(token);
 		} catch (Exception e) {
@@ -253,7 +258,8 @@ public class TestComputeOpenNebulaOCCI {
 		request.addHeader(OCCIHeaders.X_AUTH_TOKEN, ACCESS_TOKEN_ID);
 		expectedRequest = new HttpUriRequestMatcher(request);
 
-		Token token = new Token(ACCESS_TOKEN_ID, "user", new Date(), new HashMap<String, String>());
+		Token token = new Token(ACCESS_TOKEN_ID, new Token.User("user", "user"), new Date(),
+				new HashMap<String, String>());
 		try {
 			openNebulaOCCIComputePlugin.removeInstance(token, instanceId);
 		} catch (Exception e) {
@@ -270,7 +276,8 @@ public class TestComputeOpenNebulaOCCI {
 		request.addHeader(OCCIHeaders.X_AUTH_TOKEN, ACCESS_TOKEN_ID);
 		expectedRequest = new HttpUriRequestMatcher(request);
 
-		Token token = new Token(ACCESS_TOKEN_ID, "user", new Date(), new HashMap<String, String>());
+		Token token = new Token(ACCESS_TOKEN_ID, new Token.User("user", "user"), new Date(),
+				new HashMap<String, String>());
 		try {
 			openNebulaOCCIComputePlugin.getInstances(token);
 		} catch (Exception e) {

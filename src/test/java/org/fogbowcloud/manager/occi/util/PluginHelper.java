@@ -41,6 +41,7 @@ public class PluginHelper {
 	public static final String TENANT_ID = "fc394f2ab2df4114bde39905f800dc57";
 	public static final String TENANT_NAME = "admin";
 
+	public static final String USER_ID = "user_id";
 	public static final String USERNAME = "admin";
 	public static final String USER_PASS = "reverse";
 
@@ -92,12 +93,12 @@ public class PluginHelper {
 		Map<String, String> tokenAttributes = new HashMap<String, String>();
 		tokenAttributes.put(KeystoneIdentityPlugin.TENANT_ID, TENANT_ID);
 		tokenAttributes.put(KeystoneIdentityPlugin.TENANT_NAME, TENANT_NAME);
-		Token token = new Token(ACCESS_ID, USERNAME,
+		Token token = new Token(ACCESS_ID, new Token.User(USER_ID, USERNAME),
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, tokenAttributes);
 
 		KeystoneApplication keystoneApplication = new KeystoneApplication(token, USER_PASS);
 
-		keystoneApplication.putTokenAndUser(ACCESS_ID, USERNAME);
+		keystoneApplication.putTokenAndUserId(ACCESS_ID, USER_ID);
 
 		this.component.getDefaultHost().attach(keystoneApplication);
 		this.component.start();

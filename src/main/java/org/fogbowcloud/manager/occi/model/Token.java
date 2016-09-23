@@ -16,11 +16,10 @@ public class Token {
 	 
 	private Map<String, String> attributes;
 	private String accessId;
-	private String user;
+	private User user;
 	private DateUtils dateUtils = new DateUtils();
 
-	// TODO Check invalid values
-	public Token(String accessId, String user, Date expirationTime, Map<String, String> attributes) {
+	public Token(String accessId, User user, Date expirationTime, Map<String, String> attributes) {
 		this.accessId = accessId;
 		this.user = user;		
 		this.attributes = attributes;
@@ -76,20 +75,21 @@ public class Token {
 				+ getExpirationDate() + ", attributes: " + attributes;
 	}
 
-	public String getUser() {
+	public User getUser() {
 		return this.user;
 	}
 
 	public JSONObject toJSON() throws JSONException {	
-		return new JSONObject().put("access_id", accessId).put("user", user)
+		return new JSONObject().put("access_id", accessId).put("user", user != null ? user.toJSON() : null)
 				.put("attributes", attributes != null ? attributes.toString() : null);			
 	}
 
 	public static Token fromJSON(String jsonStr) throws JSONException {
 		JSONObject jsonObject = new JSONObject(jsonStr);
 		String accessId = jsonObject.optString("access_id");
-		String user = jsonObject.optString("user");
-		return new Token(!accessId.isEmpty() ? accessId : null, !user.isEmpty() ? user : null,
+		JSONObject userJson = jsonObject.optJSONObject("user");
+		return new Token(!accessId.isEmpty() ? accessId : null, 
+				userJson != null ? User.fromJSON(userJson.toString()) : null,
 				null, JSONHelper.toMap(jsonObject.optString("attributes")));
 	}
 
@@ -124,6 +124,57 @@ public class Token {
 		} else if (!user.equals(other.user))
 			return false;
 		return true;
+	}
+	
+	/**
+	 * 
+	 * id : required and unique
+	 * name : required
+	 *
+	 */
+	public static class User {
+		
+		private String id;
+		private String name;
+		
+		public User(String id, String name) {	
+			this.id = id;
+			this.name = name;
+		}
+		
+		public String getId() {
+			return id;
+		}
+		
+		public String getName() {
+			return name;
+		}
+		
+		public JSONObject toJSON() throws JSONException {
+			return new JSONObject().put("id", this.id).put("name", this.name);
+		}
+		
+		public static User fromJSON(String jsonStr) throws JSONException {
+			JSONObject jsonObject = new JSONObject(jsonStr);
+			return new User(jsonObject.optString("id"), jsonObject.optString("name"));
+		}			
+		
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;			
+			User otherUser = (User) obj;
+			if (!id.equals(otherUser.getId()) 
+				|| !name.equals(otherUser.getName())) {
+				return false;
+			}
+			return true;
+		}
+		
 	}
 		
 }

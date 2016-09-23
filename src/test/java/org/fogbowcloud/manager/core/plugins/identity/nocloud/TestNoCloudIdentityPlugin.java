@@ -21,13 +21,13 @@ public class TestNoCloudIdentityPlugin {
 	@Test
 	public void testCreateToken() {
 		Token token = noCloudIdentityPlugin.createToken(null);
-		Assert.assertEquals(NoCloudIdentityPlugin.FAKE_USERNAME, token.getUser());
+		Assert.assertEquals(NoCloudIdentityPlugin.FAKE_USERNAME, token.getUser().getId());
 		Assert.assertEquals(DEFAULT_SIZE_RANDON_ID_GENERATED, token.getAccessId().length());
 	}
 	
 	@Test
 	public void testReIssueToken() {
-		Token token = new Token("accessId", "user", null, null);		
+		Token token = new Token("accessId", new Token.User("user", "user"), null, null);		
 		Assert.assertEquals(token, noCloudIdentityPlugin.reIssueToken(token));
 	}
 	

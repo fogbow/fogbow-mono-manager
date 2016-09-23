@@ -135,7 +135,8 @@ public class ShibbolethIdentityPlugin implements IdentityPlugin {
 			}
 		}
 		
-		return new Token(accessId, tokenAttrs.get(IDENTIFIER_ATTRIBUTE), 
+		String idAttr = tokenAttrs.get(IDENTIFIER_ATTRIBUTE);
+		return new Token(accessId, new Token.User(idAttr, idAttr), 
 				new Date(new Date().getTime() + DEFAULT_EXPIRATION_INTERVAL), 
 				tokenAttrs);
 	}

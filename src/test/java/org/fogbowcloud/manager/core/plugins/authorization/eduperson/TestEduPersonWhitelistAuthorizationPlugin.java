@@ -32,7 +32,8 @@ public class TestEduPersonWhitelistAuthorizationPlugin {
 		EduPersonWhitelistAuthorizationPlugin authorizationPlugin = 
 				new EduPersonWhitelistAuthorizationPlugin(properties);
 		
-		Token token = new Token("accessId", "user", new Date(), new HashMap<String, String>());
+		Token token = new Token("accessId", new Token.User("user", "user"), 
+				new Date(), new HashMap<String, String>());
 		Assert.assertFalse(authorizationPlugin.isAuthorized(token));
 	}
 	
@@ -45,7 +46,7 @@ public class TestEduPersonWhitelistAuthorizationPlugin {
 		
 		HashMap<String, String> attrs = new HashMap<String, String>();
 		attrs.put("eduPersonPrincipalName", "whatever");
-		Token token = new Token("accessId", "user", new Date(), attrs);
+		Token token = new Token("accessId", new Token.User("user", "user"), new Date(), attrs);
 		Assert.assertFalse(authorizationPlugin.isAuthorized(token));
 	}
 	
@@ -58,7 +59,7 @@ public class TestEduPersonWhitelistAuthorizationPlugin {
 		
 		HashMap<String, String> attrs = new HashMap<String, String>();
 		attrs.put("eduPersonPrincipalName", "whatever@idp1.com");
-		Token token = new Token("accessId", "user", new Date(), attrs);
+		Token token = new Token("accessId", new Token.User("user", "user"), new Date(), attrs);
 		Assert.assertFalse(authorizationPlugin.isAuthorized(token));
 	}
 	
@@ -71,7 +72,7 @@ public class TestEduPersonWhitelistAuthorizationPlugin {
 		
 		HashMap<String, String> attrs = new HashMap<String, String>();
 		attrs.put("eduPersonPrincipalName", "whatever@idp1.com");
-		Token token = new Token("accessId", "user", new Date(), attrs);
+		Token token = new Token("accessId", new Token.User("user", "user"), new Date(), attrs);
 		Assert.assertFalse(authorizationPlugin.isAuthorized(token));
 	}
 	
@@ -84,7 +85,7 @@ public class TestEduPersonWhitelistAuthorizationPlugin {
 		
 		HashMap<String, String> attrs = new HashMap<String, String>();
 		attrs.put("eduPersonPrincipalName", "whatever@idp1.com");
-		Token token = new Token("accessId", "user", new Date(), attrs);
+		Token token = new Token("accessId", new Token.User("user", "user"), new Date(), attrs);
 		Assert.assertTrue(authorizationPlugin.isAuthorized(token));
 	}
 }

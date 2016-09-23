@@ -66,13 +66,13 @@ public class TestGetOrder {
 		
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.getToken(OCCITestHelper.ACCESS_TOKEN))
-				.thenReturn(new Token("id", OCCITestHelper.USER_MOCK, new Date(),
+				.thenReturn(new Token("id", new Token.User(OCCITestHelper.USER_MOCK, ""), new Date(),
 								new HashMap<String, String>()));
 		Mockito.when(identityPlugin.getToken(OCCITestHelper.INVALID_TOKEN)).thenThrow(
 				new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED));
 
 		HashMap<String, String> tokenAttr = new HashMap<String, String>();
-		Token userToken = new Token(OCCITestHelper.ACCESS_TOKEN, OCCITestHelper.USER_MOCK,
+		Token userToken = new Token(OCCITestHelper.ACCESS_TOKEN, new Token.User(OCCITestHelper.USER_MOCK, ""),
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, tokenAttr);
 
 		Mockito.when(identityPlugin.getToken(OCCITestHelper.ACCESS_TOKEN)).thenReturn(userToken);
@@ -86,7 +86,7 @@ public class TestGetOrder {
 		Mockito.when(mapperPlugin.getAllLocalCredentials()).thenReturn(
 				defaultFederationUsersCrendetials);
 		Mockito.when(identityPlugin.createToken(credentails)).thenReturn(
-				new Token("id", OCCITestHelper.USER_MOCK, new Date(), new HashMap<String, String>()));		
+				new Token("id", new Token.User(OCCITestHelper.USER_MOCK, ""), new Date(), new HashMap<String, String>()));		
 		
 		AuthorizationPlugin authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
 		Mockito.when(authorizationPlugin.isAuthorized(Mockito.any(Token.class))).thenReturn(true);
@@ -535,7 +535,7 @@ public class TestGetOrder {
 		HashMap<String, String> attributes = new HashMap<String, String>();
 		attributes.put(OCCIConstants.NETWORK_ADDRESS, networkAddress);
 		attributes.put(OCCIConstants.NETWORK_GATEWAY, networkGateway);
-		Token federationToken = new Token("1", OCCITestHelper.ACCESS_TOKEN, new Date(), attributes);
+		Token federationToken = new Token("1", new Token.User(OCCITestHelper.ACCESS_TOKEN, ""), new Date(), attributes);
 		
 		Category category =  new Category(OrderConstants.TERM, OrderConstants.SCHEME,
 				OrderConstants.KIND_CLASS);

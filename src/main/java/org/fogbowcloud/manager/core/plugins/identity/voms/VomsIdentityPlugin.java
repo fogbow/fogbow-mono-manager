@@ -106,10 +106,12 @@ public class VomsIdentityPlugin implements IdentityPlugin {
 				Arrays.asList(proxyCert.getCertificateChain()), proxyCert.getCredential());
 
 		X509Certificate x509Certificate = proxyCert.getCertificateChain()[0];
-		String user = x509Certificate.getIssuerDN().getName();
+		String userId = x509Certificate.getIssuerDN().getName();
 		Date expirationTime = x509Certificate.getNotAfter();
+		String userNameCN = getUserNameInCertificate(x509Certificate);
 
-		return new Token(accessId, user, expirationTime, new HashMap<String, String>());
+		Token.User user = new Token.User(userId, userNameCN != null ? userNameCN : userId);
+		return new Token(accessId, user , expirationTime, new HashMap<String, String>());
 	}
 
 	@Override
@@ -142,9 +144,11 @@ public class VomsIdentityPlugin implements IdentityPlugin {
 		}
 
 		X509Certificate x509Certificate = certificates.iterator().next();
-		String user = x509Certificate.getIssuerDN().getName();
+		String userId = x509Certificate.getIssuerDN().getName();
 		Date expirationTime = x509Certificate.getNotAfter();
+		String userNameCN = getUserNameInCertificate(x509Certificate);
 
+		Token.User user = new Token.User(userId, userNameCN != null ? userNameCN : userId);
 		return new Token(accessId, user, expirationTime, new HashMap<String, String>());
 	}
 
@@ -164,6 +168,20 @@ public class VomsIdentityPlugin implements IdentityPlugin {
 		return isValid(chain, checkPrivateKey);
 	}
 
+	protected String getUserNameInCertificate(X509Certificate x509Certificate) {
+		try {
+			String issuerDn = x509Certificate.getIssuerDN().getName();
+			String[] slicesDn = issuerDn.split(",");
+			for (String sliceDn : slicesDn) {
+				String[] valueCn = sliceDn.split("CN=");
+				if (valueCn.length > 1) {
+					return valueCn[1].trim();
+				}
+			}		
+		} catch (Exception e) {}
+		return null;
+	}
+	
 	private boolean isValid(List<PemObject> chain, boolean checkPrivateKey) {
 		Collection<X509Certificate> certificates = null;
 		try {

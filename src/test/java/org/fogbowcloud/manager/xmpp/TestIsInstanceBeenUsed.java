@@ -46,10 +46,10 @@ public class TestIsInstanceBeenUsed {
 		order1.setInstanceId(INSTANCE_DEFAULT);
 		
 		OrderRepository orderRepository = new OrderRepository();
-		orderRepository.addOrder(managerTestHelper.getDefaultFederationToken().getUser(), order1);
+		orderRepository.addOrder(managerTestHelper.getDefaultFederationToken().getUser().getId(), order1);
 		managerController.setOrders(orderRepository);
 		
-		Order servedOrder = new Order(order1.getId(), new Token("accessId", "userId1", null,
+		Order servedOrder = new Order(order1.getId(), new Token("accessId", new Token.User("userId1", ""), null,
 				new HashMap<String, String>()), null, null, false, MANAGER_COMPONENT_URL);
 		servedOrder.setInstanceId(INSTANCE_DEFAULT);
 		servedOrder.setState(OrderState.FULFILLED);
@@ -73,10 +73,10 @@ public class TestIsInstanceBeenUsed {
 		order1.setInstanceId(INSTANCE_DEFAULT);
 		
 		OrderRepository orderRepository = new OrderRepository();
-		orderRepository.addOrder(managerTestHelper.getDefaultFederationToken().getUser(), order1);
+		orderRepository.addOrder(managerTestHelper.getDefaultFederationToken().getUser().getId(), order1);
 		managerController.setOrders(orderRepository);
 		
-		Order servedOrder = new Order(order1.getId(), new Token("accessId", "userId1", null,
+		Order servedOrder = new Order(order1.getId(), new Token("accessId", new Token.User("userId1", ""), null,
 				new HashMap<String, String>()), null, null, false, MANAGER_COMPONENT_URL);
 		servedOrder.setInstanceId(INSTANCE_DEFAULT);
 		servedOrder.setState(OrderState.FULFILLED);
@@ -99,10 +99,10 @@ public class TestIsInstanceBeenUsed {
 		order1.setState(OrderState.OPEN);
 		
 		OrderRepository orderRepository = new OrderRepository();
-		orderRepository.addOrder(managerTestHelper.getDefaultFederationToken().getUser(), order1);
+		orderRepository.addOrder(managerTestHelper.getDefaultFederationToken().getUser().getId(), order1);
 		managerController.setOrders(orderRepository);
 		
-		Order servedOrder = new Order(order1.getId(), new Token("accessId", "userId1", null,
+		Order servedOrder = new Order(order1.getId(), new Token("accessId", new Token.User("userId1", ""), null,
 				new HashMap<String, String>()), null, null, false, MANAGER_COMPONENT_URL);
 		servedOrder.setInstanceId(INSTANCE_DEFAULT);
 		servedOrder.setState(OrderState.FULFILLED);
@@ -119,7 +119,7 @@ public class TestIsInstanceBeenUsed {
 		
 		managerTestHelper.initializeXMPPManagerComponent(false, managerController);
 		
-		Order servedOrder = new Order("id1", new Token("accessId", "userId1", null,
+		Order servedOrder = new Order("id1", new Token("accessId", new Token.User("userId1", ""), null,
 				new HashMap<String, String>()), null, null, false, MANAGER_COMPONENT_URL);
 		servedOrder.setInstanceId(INSTANCE_DEFAULT);
 		servedOrder.setState(OrderState.FULFILLED);

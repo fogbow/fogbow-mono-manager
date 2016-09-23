@@ -91,8 +91,8 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		Map<String, String> tokenAttributes = new HashMap<String, String>();
 		tokenAttributes.put(KeystoneIdentityPlugin.TENANT_ID, "tenantId_r4fci3qhbcy3b");
 		
-		this.defaultFederationToken = new Token(FED_ACCESS_TOKEN_ID, FED_USER_NAME, new Date(),
-				new HashMap<String, String>());
+		this.defaultFederationToken = new Token(FED_ACCESS_TOKEN_ID, new Token.User(FED_USER_NAME,
+				FED_USER_NAME), new Date(), new HashMap<String, String>());
 		
 		this.defaultFederationAllUsersCrendetials = new HashMap<String, Map<String,String>>();
 		this.defaultFederationAllUsersCrendetials.put("one", defaultFederationUserCrendetials);

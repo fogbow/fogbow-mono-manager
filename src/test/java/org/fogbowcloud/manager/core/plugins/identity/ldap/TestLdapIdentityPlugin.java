@@ -110,8 +110,10 @@ public class TestLdapIdentityPlugin {
 		Token tokenB = ldapStoneIdentity.getToken(tokenA.getAccessId());
 		
 		assertEquals(tokenA.getAccessId(), tokenB.getAccessId());
-		assertEquals(userName, tokenA.getUser());
-		assertEquals(userName, tokenB.getUser());
+		assertEquals(login, tokenA.getUser().getId());
+		assertEquals(userName, tokenA.getUser().getName());
+		assertEquals(login, tokenB.getUser().getId());
+		assertEquals(userName, tokenB.getUser().getName());
 		assertEquals(tokenA.getExpirationDate(), tokenB.getExpirationDate());
 		
 	}

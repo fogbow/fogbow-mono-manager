@@ -35,7 +35,7 @@ public class TestDeleteRemoteInstance {
 
 	@Test
 	public void testDeleteRemoteInstance() throws Exception {
-		Order order = new Order("anyvalue", new Token("anyvalue", OCCITestHelper.USER_MOCK,
+		Order order = new Order("anyvalue", new Token("anyvalue", new Token.User(OCCITestHelper.USER_MOCK, ""),
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), null, null, true, "");
 		order.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
 		order.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
@@ -46,7 +46,7 @@ public class TestDeleteRemoteInstance {
 
 	@Test(expected = OCCIException.class)
 	public void testDeleteRemoteInstaceNotFound() throws Exception {
-		Order order = new Order("anyvalue", new Token(WRONG_TOKEN, OCCITestHelper.USER_MOCK,
+		Order order = new Order("anyvalue", new Token(WRONG_TOKEN, new Token.User(OCCITestHelper.USER_MOCK, ""),
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), null, null, true, "");
 		order.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
 		order.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
@@ -62,7 +62,7 @@ public class TestDeleteRemoteInstance {
 
 	@Test(expected = OCCIException.class)
 	public void testDeleteRemoteInstanceUnauthorized() throws Exception {
-		Order order = new Order("anyvalue", new Token(WRONG_TOKEN, OCCITestHelper.USER_MOCK,
+		Order order = new Order("anyvalue", new Token(WRONG_TOKEN, new Token.User(OCCITestHelper.USER_MOCK, ""),
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>()), null, null, true, "");
 		order.setInstanceId(INSTANCE_OTHER_USER);
 		order.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);

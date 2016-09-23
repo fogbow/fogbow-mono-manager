@@ -63,13 +63,13 @@ public class TestPostStorageLink {
 		storagePlugin = Mockito.mock(StoragePlugin.class);
 		
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
-		Token tokenTwo = new Token("1", OCCITestHelper.USER_MOCK, new Date(),
+		Token tokenTwo = new Token("1", new Token.User(OCCITestHelper.USER_MOCK, ""), new Date(),
 		new HashMap<String, String>());
 		Mockito.when(identityPlugin.getToken(OCCITestHelper.ACCESS_TOKEN))
 				.thenReturn(tokenTwo);
 		Mockito.when(identityPlugin.getToken(OTHER_ACCESS_TOKEN))
 		.thenReturn(tokenTwo);		
-		Token otherToken = new Token("other", "other", null, null);
+		Token otherToken = new Token("other", new Token.User("other", ""), null, null);
 		Mockito.when(identityPlugin.getToken(OTHER_ACCESS_TOKEN)).thenReturn(otherToken);
 		Mockito.when(identityPlugin.isValid(OCCITestHelper.ACCESS_TOKEN)).thenReturn(true);	
 				
@@ -77,7 +77,7 @@ public class TestPostStorageLink {
 		computePlugin = Mockito.mock(ComputePlugin.class);
 
 		List<Order> orders = new LinkedList<Order>();
-		Token tokenUserOne = new Token("accessIdUserOne", "userOne", null, null);
+		Token tokenUserOne = new Token("accessIdUserOne", new Token.User("userOne", ""), null, null);
 		// storage
 		HashMap<String, String> xOCCIAttStorage = new HashMap<String, String>();
 		xOCCIAttStorage.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.STORAGE_TERM);

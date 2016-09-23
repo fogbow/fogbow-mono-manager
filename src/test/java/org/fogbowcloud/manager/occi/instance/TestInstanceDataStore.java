@@ -272,7 +272,7 @@ public class TestInstanceDataStore {
 		assertNotNull(fedInstanceState);
 		assertEquals(fakeInstanceId_B, fedInstanceState.getFedInstanceId());
 		assertEquals(fakeOrderId_B, fedInstanceState.getOrderId());
-		assertEquals(fakeUserB, fedInstanceState.getUser());
+		assertEquals(fakeUserB, fedInstanceState.getUserId());
 		assertEquals(categories, fedInstanceState.getCategories());
 		assertEquals(linksForInstanceB.size(), fedInstanceState.getLinks().size());
 		assertEquals(linksForInstanceB.get(0).getAttributes(), fedInstanceState.getLinks().get(0).getAttributes());
@@ -283,7 +283,7 @@ public class TestInstanceDataStore {
 		assertNotNull(fedInstanceState);
 		assertEquals(fakeInstanceId_A, fedInstanceState.getFedInstanceId());
 		assertEquals(fakeOrderId_A, fedInstanceState.getOrderId());
-		assertEquals(fakeUserA, fedInstanceState.getUser());
+		assertEquals(fakeUserA, fedInstanceState.getUserId());
 		assertEquals(categories, fedInstanceState.getCategories());
 		assertEquals(linksForInstanceA.size(), fedInstanceState.getLinks().size());
 		assertEquals(linksForInstanceA.get(0).getAttributes(), fedInstanceState.getLinks().get(0).getAttributes());

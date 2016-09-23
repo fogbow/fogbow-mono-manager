@@ -32,10 +32,13 @@ public class StorageLinkHandler extends AbstractQueryHandler {
 		String target = storageLinkEl.element(ManagerPacketHelper.TARGET_EL).getText();				
 
 		Element tokenEl = queryEl.element(ManagerPacketHelper.TOKEN_EL);
+		Element userEl = tokenEl.element(ManagerPacketHelper.USER_EL);
 		Token userToken = null;
 		if (tokenEl != null) {
 			userToken = new Token(tokenEl.elementText(ManagerPacketHelper.ACCESS_ID_EL),
-					tokenEl.elementText(ManagerPacketHelper.USER_EL), null, new HashMap<String, String>());
+					new Token.User(userEl.elementText(ManagerPacketHelper.ID_EL), 
+					userEl.elementText(ManagerPacketHelper.NAME_EL)), null,
+					new HashMap<String, String>());
 		}
 		
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();

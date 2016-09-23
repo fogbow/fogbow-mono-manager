@@ -20,7 +20,7 @@ public class TestNoCloudStoragePlugin {
 	@Before
 	public void setUp() {
 		Properties properties = new Properties();
-		defaultToken = new Token("", "", null, null);
+		defaultToken = new Token("", new Token.User("", ""), null, null);
 		noCloudStoragePlugin = new NoCloudStoragePlugin(properties);
 	}
 	

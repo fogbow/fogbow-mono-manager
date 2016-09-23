@@ -35,8 +35,10 @@ public class TestForwardedToken {
 				new HashMap<String, String>(), true, DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		order1.setState(OrderState.OPEN);
         
+		final String userId = "user_id";
+		final String username = "user";
 		ManagerPacketHelper.asynchronousRemoteOrder(order1.getId(), order1.getCategories(), 
-				order1.getxOCCIAtt(), "member1", new Token("accessId", "user", 
+				order1.getxOCCIAtt(), "member1", new Token("accessId", new Token.User(userId, username), 
 				null, null), packetSender, null);
 		
 		Mockito.verify(packetSender).sendPacket(Mockito.argThat(new ArgumentMatcher<IQ>() {
@@ -48,7 +50,9 @@ public class TestForwardedToken {
 					return false;
 				}
 				Element tokenEl = queryEl.element("token");
-				return tokenEl.elementText("user").equals("user") && 
+				Element userEl = tokenEl.element("user");
+				return userEl.elementText(ManagerPacketHelper.ID_EL).equals(userId) &&
+						userEl.elementText(ManagerPacketHelper.NAME_EL).equals(username) &&
 						tokenEl.elementText("accessId").equals("accessId");
 			}
 		}));

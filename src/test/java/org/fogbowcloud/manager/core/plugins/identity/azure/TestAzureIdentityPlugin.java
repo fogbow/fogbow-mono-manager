@@ -71,7 +71,7 @@ public class TestAzureIdentityPlugin {
 		String accessId = azureIdentityPlugin.getAccessID(MapperHelper
 				.getLocalCredentials(properties, null).get(MapperHelper.FOGBOW_DEFAULTS));
 		Token token = azureIdentityPlugin.getToken(accessId);
-		Assert.assertEquals(DEFAULT_USER, token.getUser());
+		Assert.assertEquals(DEFAULT_USER, token.getUser().getId());
 		Assert.assertEquals(accessId, token.getAccessId());
 		Assert.assertEquals(4, token.getAttributes().size());
 	}

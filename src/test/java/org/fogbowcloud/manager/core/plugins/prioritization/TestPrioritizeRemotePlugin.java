@@ -40,8 +40,8 @@ public class TestPrioritizeRemotePlugin {
 		DateUtils dateUtils = Mockito.mock(DateUtils.class);
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 		
-		Order servedOrder1 = new Order("id1", new Token("accessId", "remoteUserId", null,
-				new HashMap<String, String>()), null, null, false, "member1", dateUtils);
+		Order servedOrder1 = new Order("id1", new Token("accessId", new Token.User("remoteUserId",
+				"remoteUserId") , null, new HashMap<String, String>()), null, null, false, "member1", dateUtils);
 		servedOrder1.setInstanceId("instanceId1");
 		servedOrder1.setState(OrderState.FULFILLED);
 		servedOrder1.setProvidingMemberId("localMemberId");
@@ -49,8 +49,8 @@ public class TestPrioritizeRemotePlugin {
 		// mocking dateUtils
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now + 30);
 		
-		Order servedOrder2 = new Order("id2", new Token("accessId", "remoteUserId", null,
-				new HashMap<String, String>()), null, null, false, "member1", dateUtils);
+		Order servedOrder2 = new Order("id2", new Token("accessId", new Token.User("remoteUserId",
+				"remoteUserId"), null, new HashMap<String, String>()), null, null, false, "member1", dateUtils);
 		servedOrder2.setInstanceId("instanceId2");
 		servedOrder2.setState(OrderState.FULFILLED);
 		servedOrder2.setProvidingMemberId("localMemberId");
@@ -59,8 +59,8 @@ public class TestPrioritizeRemotePlugin {
 		orders.add(servedOrder1);
 		orders.add(servedOrder2);
 		
-		Order newOrder = new Order("newID", new Token("newAccessId", "newRemoteUserId", null,
-				new HashMap<String, String>()), null, null, true,
+		Order newOrder = new Order("newID", new Token("newAccessId", new Token.User("newRemoteUserId",
+				"newRemoteUserId"), null, new HashMap<String, String>()), null, null, true,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, dateUtils);
 		
 		Assert.assertNull(plugin.takeFrom(newOrder, orders));
@@ -75,8 +75,8 @@ public class TestPrioritizeRemotePlugin {
 		DateUtils dateUtils = Mockito.mock(DateUtils.class);
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 		
-		Order servedOrder1 = new Order("id1", new Token("accessId", "remoteUserId", null,
-				new HashMap<String, String>()), null, null, false, "member1", dateUtils);
+		Order servedOrder1 = new Order("id1", new Token("accessId", new Token.User("remoteUserId",
+				"remoteUserId"), null, new HashMap<String, String>()), null, null, false, "member1", dateUtils);
 		servedOrder1.setInstanceId("instanceId1");
 		servedOrder1.setState(OrderState.FULFILLED);
 		servedOrder1.setProvidingMemberId("localMemberId");
@@ -84,8 +84,8 @@ public class TestPrioritizeRemotePlugin {
 		// mocking dateUtils
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now + 30);
 		
-		Order servedOrder2 = new Order("id2", new Token("accessId", "remoteUserId", null,
-				new HashMap<String, String>()), null, null, false, "member1", dateUtils);
+		Order servedOrder2 = new Order("id2", new Token("accessId", new Token.User("remoteUserId",
+				"remoteUserId"), null, new HashMap<String, String>()), null, null, false, "member1", dateUtils);
 		servedOrder2.setInstanceId("instanceId2");
 		servedOrder2.setState(OrderState.FULFILLED);
 		servedOrder2.setProvidingMemberId("localMemberId");
@@ -94,8 +94,8 @@ public class TestPrioritizeRemotePlugin {
 		orders.add(servedOrder1);
 		orders.add(servedOrder2);
 		
-		Order newOrder = new Order("newID", new Token("newAccessId", "newRemoteUserId", null,
-				new HashMap<String, String>()), null, null, false, "member2", dateUtils);
+		Order newOrder = new Order("newID", new Token("newAccessId", new Token.User("newRemoteUserId",
+				"newRemoteUserId"), null, new HashMap<String, String>()), null, null, false, "member2", dateUtils);
 		
 		// checking if take from most recent order
 		Assert.assertEquals(servedOrder2, plugin.takeFrom(newOrder, orders));
@@ -109,9 +109,9 @@ public class TestPrioritizeRemotePlugin {
 		long now = System.currentTimeMillis();
 		DateUtils dateUtils = Mockito.mock(DateUtils.class);
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
-		
-		Order order1 = new Order("id1", new Token("accessId", "localUserId", null,
-				new HashMap<String, String>()), null, null, true,
+				
+		Order order1 = new Order("id1", new Token("accessId", new Token.User("localUserId",
+				"localUserId"), null, new HashMap<String, String>()), null, null, true,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, dateUtils);
 		order1.setInstanceId("instanceId1");
 		order1.setState(OrderState.FULFILLED);
@@ -120,8 +120,8 @@ public class TestPrioritizeRemotePlugin {
 		// mocking dateUtils
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now + 30);
 		
-		Order order2 = new Order("id2", new Token("accessId", "localUserId", null,
-				new HashMap<String, String>()), null, null, true,
+		Order order2 = new Order("id2", new Token("accessId", new Token.User("localUserId",
+				"localUserId"), null, new HashMap<String, String>()), null, null, true,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, dateUtils);
 		order2.setInstanceId("instanceId2");
 		order2.setState(OrderState.FULFILLED);
@@ -131,8 +131,8 @@ public class TestPrioritizeRemotePlugin {
 		orders.add(order1);
 		orders.add(order2);
 		
-		Order newOrder = new Order("newID", new Token("newAccessId", "newRemoteUserId", null,
-				new HashMap<String, String>()), null, null, false, "member2", dateUtils);
+		Order newOrder = new Order("newID", new Token("newAccessId", new Token.User("newRemoteUserId",
+				"newRemoteUserId"), null, new HashMap<String, String>()), null, null, false, "member2", dateUtils);
 		
 		// checking if take from most recent order
 		Assert.assertEquals(order2, plugin.takeFrom(newOrder, orders));
@@ -147,8 +147,8 @@ public class TestPrioritizeRemotePlugin {
 		DateUtils dateUtils = Mockito.mock(DateUtils.class);
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 		
-		Order servedOrder1 = new Order("id1", new Token("accessId", "remoteUserId", null,
-				new HashMap<String, String>()), null, null, false, "member1", dateUtils);
+		Order servedOrder1 = new Order("id1", new Token("accessId", new Token.User("remoteUserId",
+				"remoteUserId"), null, new HashMap<String, String>()), null, null, false, "member1", dateUtils);
 		servedOrder1.setInstanceId("instanceId1");
 		servedOrder1.setState(OrderState.FULFILLED);
 		servedOrder1.setProvidingMemberId("localMemberId");
@@ -157,8 +157,8 @@ public class TestPrioritizeRemotePlugin {
 		now += 30;
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 		
-		Order order2 = new Order("id2", new Token("accessId", "localUserId", null,
-				new HashMap<String, String>()), null, null, true,
+		Order order2 = new Order("id2", new Token("accessId", new Token.User("localUserId",
+				"localUserId"), null, new HashMap<String, String>()), null, null, true,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, dateUtils);
 		order2.setInstanceId("instanceId2");
 		order2.setState(OrderState.FULFILLED);
@@ -168,8 +168,8 @@ public class TestPrioritizeRemotePlugin {
 		now += 30;
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 
-		Order order3 = new Order("id3", new Token("accessId", "localUserId", null,
-				new HashMap<String, String>()), null, null, true,
+		Order order3 = new Order("id3", new Token("accessId", new Token.User("localUserId",
+				"localUserId"), null, new HashMap<String, String>()), null, null, true,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, dateUtils);
 		order3.setInstanceId("instanceId3");
 		order3.setState(OrderState.FULFILLED);
@@ -180,8 +180,8 @@ public class TestPrioritizeRemotePlugin {
 		orders.add(order2);
 		orders.add(order3);
 		
-		Order newOrder = new Order("newID", new Token("newAccessId", "newRemoteUserId", null,
-				new HashMap<String, String>()), null, null, false, "member2", dateUtils);
+		Order newOrder = new Order("newID", new Token("newAccessId", new Token.User("newRemoteUserId",
+				"newRemoteUserId"), null, new HashMap<String, String>()), null, null, false, "member2", dateUtils);
 		
 		// checking if take from most recent order
 		Assert.assertEquals(order3, plugin.takeFrom(newOrder, orders));

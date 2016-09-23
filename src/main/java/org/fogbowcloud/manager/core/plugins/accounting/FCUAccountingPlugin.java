@@ -59,8 +59,8 @@ public class FCUAccountingPlugin implements AccountingPlugin {
 			final double ACCEPTABLE_ERROR = 0.000001;
 			consumptionInterval = consumptionInterval<ACCEPTABLE_ERROR?0:consumptionInterval;
 			
-			String user = order.getFederationToken().getUser();
-			AccountingEntryKey current = new AccountingEntryKey(user,
+			String userId = order.getFederationToken().getUser().getId();
+			AccountingEntryKey current = new AccountingEntryKey(userId,
 					order.getRequestingMemberId(), order.getProvidingMemberId());
 
 			if (!usage.keySet().contains(current)) {

@@ -44,7 +44,7 @@ public class TestDeleteRemoteStorageLink {
 		xOCCIAtt.put(StorageAttribute.SOURCE.getValue(), source);
 		xOCCIAtt.put(StorageAttribute.DEVICE_ID.getValue(), deviceId);
 
-		Token federationToken = new Token("accessId", OCCITestHelper.USER_MOCK,
+		Token federationToken = new Token("accessId", new Token.User(OCCITestHelper.USER_MOCK, ""),
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
 				new HashMap<String, String>());
 		
@@ -72,7 +72,7 @@ public class TestDeleteRemoteStorageLink {
 				.when(managerTestHelper.getComputePlugin())
 				.dettach(Mockito.any(Token.class), Mockito.any(List.class), Mockito.anyMap());
 
-		Token federationToken = new Token("accessId", OCCITestHelper.USER_MOCK,
+		Token federationToken = new Token("accessId", new Token.User(OCCITestHelper.USER_MOCK, ""),
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
 				new HashMap<String, String>());
 		

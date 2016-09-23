@@ -47,7 +47,7 @@ public class TestVOWhiteListAuthorizationPlugin {
 	
 	@Test
 	public void testIsAuthorized() {
-		Token token = new Token(accessId, "user", null, null);
+		Token token = new Token(accessId, new Token.User("user", "user"), null, null);
 		Assert.assertTrue(this.vOWhiteListAuthorizationPlugin.isAuthorized(token));
 	}
 
@@ -55,19 +55,19 @@ public class TestVOWhiteListAuthorizationPlugin {
 	public void testIsNotAuthorized() {
 		properties.put(VOWhiteListAuthorizationPlugin.AUTHORIZATION_VOMS_WHITELIST, "vo1,vo2,vo3");
 		this.vOWhiteListAuthorizationPlugin = new VOWhiteListAuthorizationPlugin(properties);
-		Token token = new Token(accessId, "user", null, null);
+		Token token = new Token(accessId, new Token.User("user", "user"), null, null);
 		Assert.assertFalse(this.vOWhiteListAuthorizationPlugin.isAuthorized(token));
 	}
 	
 	@Test
 	public void testWrongAccessId() {
-		Token token = new Token("123", "user", null, null);
+		Token token = new Token("123", new Token.User("user", "user"), null, null);
 		Assert.assertFalse(this.vOWhiteListAuthorizationPlugin.isAuthorized(token));
 	}
 	
 	@Test
 	public void testNullAccessId() {
-		Token token = new Token(null, "user", null, null);
+		Token token = new Token(null, new Token.User("user", "user"), null, null);
 		Assert.assertFalse(this.vOWhiteListAuthorizationPlugin.isAuthorized(token));
 	}		
 	

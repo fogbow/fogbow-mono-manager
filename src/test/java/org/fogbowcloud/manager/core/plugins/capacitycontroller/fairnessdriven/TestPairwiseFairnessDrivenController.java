@@ -95,7 +95,8 @@ public class TestPairwiseFairnessDrivenController {
 	public void testGetMaxCapacityToSupplyForOneConsumer() {
 		
 		//second 10, during 40 seconds
-		Order localDonatesToRemoteMember1Order = new Order("order1", new Token("", "user@"+remote1.getId(), null, null), null, null, false, remote1.getId());
+		Order localDonatesToRemoteMember1Order = new Order("order1", new Token("", 
+				new Token.User("user@" + remote1.getId(), ""), null, null), null, null, false, remote1.getId());
 		localDonatesToRemoteMember1Order.setState(OrderState.FULFILLED);
 		localDonatesToRemoteMember1Order.setInstanceId("instanceId-order1");
 		localDonatesToRemoteMember1Order.setProvidingMemberId(local.getId());
@@ -103,7 +104,8 @@ public class TestPairwiseFairnessDrivenController {
 		Mockito.when(localDonatesToRemoteMember1OrderSpy.getFulfilledTime()).thenReturn(t1);
 
 		//second 50, during 100 seconds
-		Order remoteMember1DonatesToLocalMemberOrder = new Order("order2", new Token("", "user@"+local.getId(), null, null), null, null, false, local.getId());
+		Order remoteMember1DonatesToLocalMemberOrder = new Order("order2", new Token("", 
+				new Token.User("user@"+local.getId(), ""), null, null), null, null, false, local.getId());
 		remoteMember1DonatesToLocalMemberOrder.setState(OrderState.FULFILLED);
 		remoteMember1DonatesToLocalMemberOrder.setInstanceId("instanceId-order2");
 		remoteMember1DonatesToLocalMemberOrder.setProvidingMemberId(remote1.getId());
@@ -186,7 +188,8 @@ public class TestPairwiseFairnessDrivenController {
 		t10 *= DOUBLE_TIME;
 		
 		//second 10, during 40 seconds
-		Order localDonatesToRemoteMember1Order = new Order("order1", new Token("", "user@"+remote1.getId(), null, null), null, null, false, remote1.getId());
+		Order localDonatesToRemoteMember1Order = new Order("order1", new Token("", 
+				new Token.User("user@"+remote1.getId(), ""), null, null), null, null, false, remote1.getId());
 		localDonatesToRemoteMember1Order.setState(OrderState.FULFILLED);
 		localDonatesToRemoteMember1Order.setInstanceId("instanceId-order1");
 		localDonatesToRemoteMember1Order.setProvidingMemberId(local.getId());
@@ -194,7 +197,8 @@ public class TestPairwiseFairnessDrivenController {
 		Mockito.when(localDonatesToRemoteMember1OrderSpy.getFulfilledTime()).thenReturn(t1);
 
 		//second 50, during 100 seconds
-		Order remoteMember1DonatesToLocalMemberOrder = new Order("order2", new Token("", "user@"+local.getId(), null, null), null, null, false, local.getId());
+		Order remoteMember1DonatesToLocalMemberOrder = new Order("order2", new Token("", 
+				new Token.User("user@"+local.getId(), ""), null, null), null, null, false, local.getId());
 		remoteMember1DonatesToLocalMemberOrder.setState(OrderState.FULFILLED);
 		remoteMember1DonatesToLocalMemberOrder.setInstanceId("instanceId-order2");
 		remoteMember1DonatesToLocalMemberOrder.setProvidingMemberId(remote1.getId());
@@ -265,7 +269,8 @@ public class TestPairwiseFairnessDrivenController {
 	public void testGetMaxCapacityToSupplyForOneConsumerWithTwoRequests() {
 		
 		//second 10, during 40 seconds
-		Order localDonatesToRemoteMember1Order1 = new Order("order1", new Token("", "user@"+remote1.getId(), null, null), null, null, false, remote1.getId());
+		Order localDonatesToRemoteMember1Order1 = new Order("order1", new Token("", 
+				new Token.User("user@"+remote1.getId(), ""), null, null), null, null, false, remote1.getId());
 		localDonatesToRemoteMember1Order1.setState(OrderState.FULFILLED);
 		localDonatesToRemoteMember1Order1.setInstanceId("instanceId-order1");
 		localDonatesToRemoteMember1Order1.setProvidingMemberId(local.getId());
@@ -273,7 +278,8 @@ public class TestPairwiseFairnessDrivenController {
 		Mockito.when(localDonatesToRemoteMember1Order1Spy.getFulfilledTime()).thenReturn(t1);
 
 		//second 50, during 100 seconds
-		Order remoteMember1DonatesToLocalMemberOrder = new Order("order2", new Token("", "user@"+local.getId(), null, null), null, null, false, local.getId());
+		Order remoteMember1DonatesToLocalMemberOrder = new Order("order2", new Token("", 
+				new Token.User("user@"+local.getId(), ""), null, null), null, null, false, local.getId());
 		remoteMember1DonatesToLocalMemberOrder.setState(OrderState.FULFILLED);
 		remoteMember1DonatesToLocalMemberOrder.setInstanceId("instanceId-order2");
 		remoteMember1DonatesToLocalMemberOrder.setProvidingMemberId(remote1.getId());
@@ -281,7 +287,8 @@ public class TestPairwiseFairnessDrivenController {
 		Mockito.when(remoteMember1DonatesToLocalMemberOrderSpy.getFulfilledTime()).thenReturn(t5);
 		
 		//second 0, during 50 seconds
-		Order localDonatesToRemoteMember1Order2 = new Order("order3", new Token("", "user@"+remote1.getId(), null, null), null, null, false, remote1.getId());
+		Order localDonatesToRemoteMember1Order2 = new Order("order3", new Token("", 
+				new Token.User("user@"+remote1.getId(), ""), null, null), null, null, false, remote1.getId());
 		localDonatesToRemoteMember1Order2.setState(OrderState.FULFILLED);
 		localDonatesToRemoteMember1Order2.setInstanceId("instanceId-order3");
 		localDonatesToRemoteMember1Order2.setProvidingMemberId(local.getId());
@@ -365,7 +372,8 @@ public class TestPairwiseFairnessDrivenController {
 	public void testGetMaxCapacityToSupplyForTwoConsumers() {
 		
 		//second 10, during 40 seconds
-		Order localDonatesToRemoteMember1Order1 = new Order("order1", new Token("", "user@"+remote1.getId(), null, null), null, null, false, remote1.getId());
+		Order localDonatesToRemoteMember1Order1 = new Order("order1", new Token("", 
+				new Token.User("user@"+remote1.getId(), ""), null, null), null, null, false, remote1.getId());
 		localDonatesToRemoteMember1Order1.setState(OrderState.FULFILLED);
 		localDonatesToRemoteMember1Order1.setInstanceId("instanceId-order1");
 		localDonatesToRemoteMember1Order1.setProvidingMemberId(local.getId());
@@ -373,7 +381,8 @@ public class TestPairwiseFairnessDrivenController {
 		Mockito.when(localDonatesToRemoteMember1Order1Spy.getFulfilledTime()).thenReturn(t1);
 
 		//second 50, during 100 seconds
-		Order remoteMember1DonatesToLocalMemberOrder = new Order("order2", new Token("", "user@"+local.getId(), null, null), null, null, false, local.getId());
+		Order remoteMember1DonatesToLocalMemberOrder = new Order("order2", new Token("", 
+				new Token.User("user@"+local.getId(), ""), null, null), null, null, false, local.getId());
 		remoteMember1DonatesToLocalMemberOrder.setState(OrderState.FULFILLED);
 		remoteMember1DonatesToLocalMemberOrder.setInstanceId("instanceId-order2");
 		remoteMember1DonatesToLocalMemberOrder.setProvidingMemberId(remote1.getId());
@@ -381,7 +390,8 @@ public class TestPairwiseFairnessDrivenController {
 		Mockito.when(remoteMember1DonatesToLocalMemberOrderSpy.getFulfilledTime()).thenReturn(t5);
 
 		//second 50, during 100 seconds
-		Order localDonatesToRemoteMember2Order1 = new Order("order3", new Token("", "user@"+remote2.getId(), null, null), null, null, false, remote2.getId());
+		Order localDonatesToRemoteMember2Order1 = new Order("order3", new Token("", 
+				new Token.User("user@"+remote2.getId(), ""), null, null), null, null, false, remote2.getId());
 		localDonatesToRemoteMember2Order1.setState(OrderState.FULFILLED);
 		localDonatesToRemoteMember2Order1.setInstanceId("instanceId-order3");
 		localDonatesToRemoteMember2Order1.setProvidingMemberId(local.getId());
@@ -389,7 +399,8 @@ public class TestPairwiseFairnessDrivenController {
 		Mockito.when(localDonatesToRemoteMember2Order1Spy.getFulfilledTime()).thenReturn(t5);
 		
 		//second 10, during 40 seconds
-		Order remoteMember2DonatesToLocalMemberOrder = new Order("order4", new Token("", "user@"+local.getId(), null, null), null, null, false, local.getId());
+		Order remoteMember2DonatesToLocalMemberOrder = new Order("order4", new Token("", 
+				new Token.User("user@"+local.getId(), ""), null, null), null, null, false, local.getId());
 		remoteMember2DonatesToLocalMemberOrder.setState(OrderState.FULFILLED);
 		remoteMember2DonatesToLocalMemberOrder.setInstanceId("instanceId-order4");
 		remoteMember2DonatesToLocalMemberOrder.setProvidingMemberId(remote2.getId());
@@ -498,7 +509,8 @@ public class TestPairwiseFairnessDrivenController {
 	public void testUpdateFairness() {
 		
 		//second 10, during 50 seconds
-		Order localDonatesToRemoteMember1Order = new Order("order1", new Token("", "user@"+remote1.getId(), null, null), null, null, false, remote1.getId());
+		Order localDonatesToRemoteMember1Order = new Order("order1", new Token("", 
+				new Token.User("user@"+remote1.getId(), ""), null, null), null, null, false, remote1.getId());
 		localDonatesToRemoteMember1Order.setState(OrderState.FULFILLED);
 		localDonatesToRemoteMember1Order.setInstanceId("instanceId-order1");
 		localDonatesToRemoteMember1Order.setProvidingMemberId(local.getId());
@@ -506,7 +518,8 @@ public class TestPairwiseFairnessDrivenController {
 		Mockito.when(localDonatesToRemoteMember1OrderSpy.getFulfilledTime()).thenReturn(t1);
 
 		//second 20, during 100 seconds
-		Order remoteMember1DonatesToLocalMemberOrder = new Order("order2", new Token("", "user@"+local.getId(), null, null), null, null, false, local.getId());
+		Order remoteMember1DonatesToLocalMemberOrder = new Order("order2", new Token("", 
+				new Token.User("user@"+local.getId(), ""), null, null), null, null, false, local.getId());
 		remoteMember1DonatesToLocalMemberOrder.setState(OrderState.FULFILLED);
 		remoteMember1DonatesToLocalMemberOrder.setInstanceId("instanceId-order2");
 		remoteMember1DonatesToLocalMemberOrder.setProvidingMemberId(remote1.getId());
