@@ -88,6 +88,8 @@ public class LdapIdentityPlugin implements IdentityPlugin {
 		String password = userCredentials.get(CRED_PASSWORD);
 		String name = null;
 		
+		extractLdapPropertiesFromCredentials(userCredentials);
+		
 		parseCredentials(userCredentials);
 		
 		try {
@@ -124,6 +126,24 @@ public class LdapIdentityPlugin implements IdentityPlugin {
 			throw new OCCIException(ErrorType.INTERNAL_SERVER_ERROR, "Erro while trying to sign the token.");
 		}
 		
+	}
+
+	private void extractLdapPropertiesFromCredentials(Map<String, String> userCredentials) {
+		if (ldapBase == null || ldapBase.isEmpty()) {
+			ldapBase = userCredentials.get(CRED_LDAP_BASE);
+		}
+		
+		if (ldapUrl == null || ldapUrl.isEmpty()) {
+			ldapUrl = userCredentials.get(CRED_AUTH_URL);
+		}
+		
+		if (privateKeyPath == null || privateKeyPath.isEmpty()) {
+			privateKeyPath = userCredentials.get(CRED_PRIVATE_KEY);
+		}
+		
+		if (publicKeyPath == null || publicKeyPath.isEmpty()) {
+			publicKeyPath = userCredentials.get(CRED_PUBLIC_KEY);
+		}
 	}
 
 	@Override
@@ -165,6 +185,7 @@ public class LdapIdentityPlugin implements IdentityPlugin {
 		
 	}
 
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	protected String ldapAuthenticate(String uid, String password) throws Exception {
 
 		Hashtable env = new Hashtable();
