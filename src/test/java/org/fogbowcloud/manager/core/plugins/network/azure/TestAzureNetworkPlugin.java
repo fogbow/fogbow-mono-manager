@@ -73,7 +73,8 @@ public class TestAzureNetworkPlugin {
 		attributes.put(AzureAttributes.SUBSCRIPTION_ID_KEY, subscriptionId);
 		attributes.put(AzureAttributes.KEYSTORE_PATH_KEY, keystorePath);
 		attributes.put(AzureAttributes.KEYSTORE_PASSWORD_KEY, keyStorePassword);
-		this.defaultToken = new Token("accessId", "user", new Date(), attributes);
+		this.defaultToken = new Token("accessId", new Token.User("user", "user"), 
+				new Date(), attributes);
 		
 	}
 	
@@ -84,7 +85,8 @@ public class TestAzureNetworkPlugin {
 	
 	@Test(expected=OCCIException.class)
 	public void testRequestInstanceWithoutTenantId() {
-		Token token = new Token("accessId", "user", new Date(), new HashMap<String, String>());
+		Token token = new Token("accessId", new Token.User("user", "user"), 
+				new Date(), new HashMap<String, String>());
 		azureNetworkPlugin.requestInstance(token, null, null);
 	}
 	

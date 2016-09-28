@@ -269,7 +269,7 @@ public class StorageLinkServerResource extends ServerResource {
 		
 		OCCIApplication application = (OCCIApplication) getApplication();
 		
-		String user = application.getUser(normalizeAuthToken(federationAuthToken));
+		String user = application.getUserId(normalizeAuthToken(federationAuthToken));
 		
 		if(target != null && target.startsWith(StorageServerResource.FED_STORAGE_PREFIX)){
 			FedStorageState fedStorageState = storageDB.getByStorageId(target, user);
@@ -298,7 +298,7 @@ public class StorageLinkServerResource extends ServerResource {
 		
 		OCCIApplication application = (OCCIApplication) getApplication();
 		
-		String user = application.getUser(normalizeAuthToken(federationAuthToken));
+		String user = application.getUserId(normalizeAuthToken(federationAuthToken));
 		
 		if(target != null){
 			FedStorageState fedStorageState = storageDB.getByGlobalId(target, user);

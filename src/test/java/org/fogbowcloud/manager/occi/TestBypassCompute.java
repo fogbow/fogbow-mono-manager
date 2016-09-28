@@ -88,7 +88,7 @@ public class TestBypassCompute {
 		properties.put(ConfigurationConstants.TOKEN_HOST_HTTP_PORT_KEY,
 				String.valueOf(DefaultDataTestHelper.TOKEN_SERVER_HTTP_PORT));
 		
-		defaultToken = new Token(PluginHelper.ACCESS_ID, PluginHelper.USERNAME,
+		defaultToken = new Token(PluginHelper.ACCESS_ID, new Token.User(PluginHelper.USERNAME, ""),
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>());
 		
 		List<Flavor> flavors = new ArrayList<Flavor>();

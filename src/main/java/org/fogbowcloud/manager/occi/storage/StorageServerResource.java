@@ -59,16 +59,16 @@ public class StorageServerResource extends ServerResource {
 		String storageId = (String) getRequestAttributes().get("storageId");
 		List<String> acceptContent = HeaderUtils.getAccept(req.getHeaders());
 
-		String user = application.getUser(ComputeServerResource.normalizeAuthToken(federationAuthToken));
+		String userId = application.getUserId(ComputeServerResource.normalizeAuthToken(federationAuthToken));
 		
-		if (user == null) {
+		if (userId == null) {
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}
 
 		if (storageId == null) {
-			return fetchWithoutStorageId(application, req, federationAuthToken, acceptContent, user);
+			return fetchWithoutStorageId(application, req, federationAuthToken, acceptContent, userId);
 		}else{
-			return fetchWithStorageId(application, federationAuthToken, storageId, acceptContent, user);
+			return fetchWithStorageId(application, federationAuthToken, storageId, acceptContent, userId);
 		}
 		
 	}
@@ -129,14 +129,14 @@ public class StorageServerResource extends ServerResource {
 	}
 
 	private StringRepresentation fetchWithoutStorageId(OCCIApplication application, HttpRequest req,
-			String federationAuthToken, List<String> acceptContent, String user) {
+			String federationAuthToken, List<String> acceptContent, String userId) {
 		LOGGER.info("Getting all instance(storage) of token :" + federationAuthToken);
 
 		List<Instance> allInstances = getInstances(application, federationAuthToken);
 		LOGGER.debug("There are " + allInstances.size() + " related to auth_token " + federationAuthToken);
 		
-		List<FedStorageState> fedPostStorages = storageDB.getAllByUser(user);
-		LOGGER.debug("There are " + fedPostStorages.size() + " owned by user " + user);
+		List<FedStorageState> fedPostStorages = storageDB.getAllByUser(userId);
+		LOGGER.debug("There are " + fedPostStorages.size() + " owned by user id " + userId);
 		// replacing real instance id by fed_instance_id
 		for (FedStorageState currentStorage : fedPostStorages) {
 			
@@ -186,9 +186,9 @@ public class StorageServerResource extends ServerResource {
 		String federationAuthToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse(),
 				application.getAuthenticationURI());
 
-		String user = application.getUser(ComputeServerResource.normalizeAuthToken(federationAuthToken));
+		String userId = application.getUserId(ComputeServerResource.normalizeAuthToken(federationAuthToken));
 		
-		if (user == null) {
+		if (userId == null) {
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}
 
@@ -232,7 +232,7 @@ public class StorageServerResource extends ServerResource {
 
 			Order relatedOrder = newOrder.get(0);
 			FedStorageState fedStorageState = new FedStorageState(FED_STORAGE_PREFIX + UUID.randomUUID().toString(),
-					relatedOrder.getId(), "", relatedOrder.getFederationToken().getUser());
+					relatedOrder.getId(), "", relatedOrder.getFederationToken().getUser().getId());
 			storageDB.insert(fedStorageState);
 
 			if (acceptType.equals(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE)) {
@@ -260,28 +260,28 @@ public class StorageServerResource extends ServerResource {
 				application.getAuthenticationURI());
 		String storageId = (String) getRequestAttributes().get("storageId");
 		
-		String user = application.getUser(ComputeServerResource.normalizeAuthToken(federationAuthToken));
-		if (user == null) {
+		String userId = application.getUserId(ComputeServerResource.normalizeAuthToken(federationAuthToken));
+		if (userId == null) {
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}
 
 		if (storageId == null) {
 			LOGGER.info("Removing all instances(storage) of token :" + federationAuthToken);
-			storageDB.deleteAllFromUser(user);
+			storageDB.deleteAllFromUser(userId);
 			return removeIntances(application, federationAuthToken);
 		}
 		
 		if (storageId.startsWith(FED_STORAGE_PREFIX)) {
 			LOGGER.info("Removing federated storage " + storageId);
 			
-			FedStorageState fedStorageState = storageDB.getByStorageId(storageId, user);
+			FedStorageState fedStorageState = storageDB.getByStorageId(storageId, userId);
 			
 			if (fedStorageState == null) {
 				throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
 			}
 			try {
 
-				storageDB.deleteByStorageId(storageId, user);
+				storageDB.deleteByStorageId(storageId, userId);
 				
 				Order relatedOrder = application.getOrder(federationAuthToken, fedStorageState.getOrderId());
 

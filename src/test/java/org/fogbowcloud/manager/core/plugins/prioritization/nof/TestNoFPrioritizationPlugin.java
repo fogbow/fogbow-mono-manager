@@ -40,8 +40,8 @@ public class TestNoFPrioritizationPlugin {
 		Mockito.when(accountingPlugin.getAccountingInfo()).thenReturn(
 				new ArrayList<AccountingInfo>());
 		
-		Order newOrder = new Order("newID", new Token("newAccessId", "newRemoteUserId", null,
-				new HashMap<String, String>()), null, null, false, "memberId");
+		Order newOrder = new Order("newID", new Token("newAccessId", new Token.User("newRemoteUserId", 
+				"newRemoteUserId"), null, new HashMap<String, String>()), null, null, false, "memberId");
 		
 		NoFPrioritizationPlugin nofPlugin = new NoFPrioritizationPlugin(properties, accountingPlugin);
 		Assert.assertNull(nofPlugin.takeFrom(newOrder, null));
@@ -53,8 +53,8 @@ public class TestNoFPrioritizationPlugin {
 		Mockito.when(accountingPlugin.getAccountingInfo()).thenReturn(
 				new ArrayList<AccountingInfo>());
 		
-		Order newOrder = new Order("newID", new Token("newAccessId", "newRemoteUserId", null,
-				new HashMap<String, String>()), null, null, false, "memberId");
+		Order newOrder = new Order("newID", new Token("newAccessId", new Token.User("newRemoteUserId", 
+				"newRemoteUserId"), null, new HashMap<String, String>()), null, null, false, "memberId");
 		
 		NoFPrioritizationPlugin nofPlugin = new NoFPrioritizationPlugin(properties, accountingPlugin);
 		Assert.assertNull(nofPlugin.takeFrom(newOrder, new ArrayList<Order>()));
@@ -89,8 +89,8 @@ public class TestNoFPrioritizationPlugin {
 		
 		NoFPrioritizationPlugin nofPlugin = new NoFPrioritizationPlugin(properties, accountingPlugin);
 		
-		Order servedOrder = new Order("id", new Token("accessId", "remoteUserId", null,
-				new HashMap<String, String>()), null, null, false, "member1");
+		Order servedOrder = new Order("id", new Token("accessId", new Token.User("remoteUserId", "remoteUserId"),
+				null, new HashMap<String, String>()), null, null, false, "member1");
 		servedOrder.setInstanceId("instanceId");
 		servedOrder.setState(OrderState.FULFILLED);
 		servedOrder.setProvidingMemberId("localMemberId");
@@ -98,8 +98,8 @@ public class TestNoFPrioritizationPlugin {
 		List<Order> orders = new ArrayList<Order>();
 		orders.add(servedOrder);
 		
-		Order newOrder = new Order("newID", new Token("newAccessId", "newRemoteUserId", null,
-				new HashMap<String, String>()), null, null, false, "member2");
+		Order newOrder = new Order("newID", new Token("newAccessId", new Token.User("newRemoteUserId", "newRemoteUserId"),
+				null, new HashMap<String, String>()), null, null, false, "member2");
 		
 		Assert.assertEquals(servedOrder, nofPlugin.takeFrom(newOrder, orders));
 	}
@@ -133,8 +133,8 @@ public class TestNoFPrioritizationPlugin {
 		
 		NoFPrioritizationPlugin nofPlugin = new NoFPrioritizationPlugin(properties, accountingPlugin);
 		
-		Order servedOrder = new Order("id", new Token("accessId", "remoteUserId", null,
-				new HashMap<String, String>()), null, null, false, "member1");
+		Order servedOrder = new Order("id", new Token("accessId", new Token.User("remoteUserId", "remoteUserId"),
+				null, new HashMap<String, String>()), null, null, false, "member1");
 		servedOrder.setInstanceId("instanceId");
 		servedOrder.setState(OrderState.FULFILLED);
 		servedOrder.setProvidingMemberId("localMemberId");
@@ -142,8 +142,8 @@ public class TestNoFPrioritizationPlugin {
 		List<Order> orders = new ArrayList<Order>();
 		orders.add(servedOrder);
 		
-		Order newOrder = new Order("newID", new Token("newAccessId", "newRemoteUserId", null,
-				new HashMap<String, String>()), null, null, false, "member2");
+		Order newOrder = new Order("newID", new Token("newAccessId", new Token.User("newRemoteUserId", 
+				"newRemoteUserId"), null, new HashMap<String, String>()), null, null, false, "member2");
 		
 		Assert.assertNull(nofPlugin.takeFrom(newOrder, orders));
 	}
@@ -182,8 +182,8 @@ public class TestNoFPrioritizationPlugin {
 		DateUtils dateUtils = Mockito.mock(DateUtils.class);
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 		
-		Order servedOrder1 = new Order("id1", new Token("accessId", "remoteUserId", null,
-				new HashMap<String, String>()), null, null, false, "member1", dateUtils);
+		Order servedOrder1 = new Order("id1", new Token("accessId", new Token.User("remoteUserId", "remoteUserId"), 
+				null, new HashMap<String, String>()), null, null, false, "member1", dateUtils);
 		servedOrder1.setInstanceId("instanceId1");
 		servedOrder1.setState(OrderState.FULFILLED);
 		servedOrder1.setProvidingMemberId("localMemberId");
@@ -191,8 +191,8 @@ public class TestNoFPrioritizationPlugin {
 		// mocking dateUtils
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now + 30);
 		
-		Order servedOrder2 = new Order("id2", new Token("accessId", "remoteUserId", null,
-				new HashMap<String, String>()), null, null, false, "member1", dateUtils);
+		Order servedOrder2 = new Order("id2", new Token("accessId", new Token.User("remoteUserId", "remoteUserId"),
+				null, new HashMap<String, String>()), null, null, false, "member1", dateUtils);
 		servedOrder2.setInstanceId("instanceId2");
 		servedOrder2.setState(OrderState.FULFILLED);
 		servedOrder2.setProvidingMemberId("localMemberId");
@@ -201,8 +201,8 @@ public class TestNoFPrioritizationPlugin {
 		orders.add(servedOrder1);
 		orders.add(servedOrder2);
 		
-		Order newOrder = new Order("newID", new Token("newAccessId", "newRemoteUserId", null,
-				new HashMap<String, String>()), null, null, false, "member2");
+		Order newOrder = new Order("newID", new Token("newAccessId", new Token.User("newRemoteUserId", "newRemoteUserId"), 
+				null, new HashMap<String, String>()), null, null, false, "member2");
 		
 		// checking if take from most recent order
 		Assert.assertEquals(servedOrder2, nofPlugin.takeFrom(newOrder, orders));
@@ -242,8 +242,8 @@ public class TestNoFPrioritizationPlugin {
 		DateUtils dateUtils = Mockito.mock(DateUtils.class);
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 		
-		Order servedOrder1 = new Order("id1", new Token("accessId", "remoteUserId", null,
-				new HashMap<String, String>()), null, null, false, "member1", dateUtils);
+		Order servedOrder1 = new Order("id1", new Token("accessId", new Token.User("remoteUserId",
+				"remoteUserId"), null, new HashMap<String, String>()), null, null, false, "member1", dateUtils);
 		servedOrder1.setInstanceId("instanceId1");
 		servedOrder1.setState(OrderState.FULFILLED);
 		servedOrder1.setProvidingMemberId("localMemberId");
@@ -251,8 +251,8 @@ public class TestNoFPrioritizationPlugin {
 		// mocking dateUtils
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now + 30);
 		
-		Order servedOrder2 = new Order("id2", new Token("accessId", "remoteUserId", null,
-				new HashMap<String, String>()), null, null, false, "member1", dateUtils);
+		Order servedOrder2 = new Order("id2", new Token("accessId", new Token.User("remoteUserId",
+				"remoteUserId"), null, new HashMap<String, String>()), null, null, false, "member1", dateUtils);
 		servedOrder2.setInstanceId("instanceId2");
 		servedOrder2.setState(OrderState.FULFILLED);
 		servedOrder2.setProvidingMemberId("localMemberId");
@@ -261,8 +261,8 @@ public class TestNoFPrioritizationPlugin {
 		orders.add(servedOrder1);
 		orders.add(servedOrder2);
 		
-		Order newOrder = new Order("newID", new Token("newAccessId", "newRemoteUserId", null,
-				new HashMap<String, String>()), null, null, false, "member2");
+		Order newOrder = new Order("newID", new Token("newAccessId", new Token.User("newRemoteUserId",
+				"newRemoteUserId"), null, new HashMap<String, String>()), null, null, false, "member2");
 		
 		// checking if take from most recent order
 		Assert.assertEquals(servedOrder2, nofPlugin.takeFrom(newOrder, orders));
@@ -303,17 +303,18 @@ public class TestNoFPrioritizationPlugin {
 		
 		NoFPrioritizationPlugin nofPlugin = new NoFPrioritizationPlugin(properties, accountingPlugin);
 		
-		Order servedOrder = new Order("id", new Token("accessId", "remoteUserId", null,
-				new HashMap<String, String>()), null, null, false, "member1");
+		Order servedOrder = new Order("id", new Token("accessId", new Token.User("remoteUserId", 
+				"remoteUserId"), null, new HashMap<String, String>()), null, null, false, "member1");
 		servedOrder.setInstanceId("instanceId");
 		servedOrder.setState(OrderState.FULFILLED);
 		servedOrder.setProvidingMemberId("localMemberId");
 		
 		List<Order> orders = new ArrayList<Order>();
 		orders.add(servedOrder);
-		
-		Order newOrder = new Order("newID", new Token("newAccessId", "newLocalUserId", null,
-				new HashMap<String, String>()), null, null, true, DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+				
+		Order newOrder = new Order("newID", new Token("newAccessId", new Token.User("newLocalUserId",
+				"newLocalUserId"), null, new HashMap<String, String>()), null, 
+				null, true, DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		
 		Assert.assertEquals(servedOrder, nofPlugin.takeFrom(newOrder, orders));
 	}
@@ -352,8 +353,8 @@ public class TestNoFPrioritizationPlugin {
 		DateUtils dateUtils = Mockito.mock(DateUtils.class);
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now);
 		
-		Order servedOrder1 = new Order("id1", new Token("accessId", "remoteUserId", null,
-				new HashMap<String, String>()), null, null, false, "member1", dateUtils);
+		Order servedOrder1 = new Order("id1", new Token("accessId", new Token.User("remoteUserId",
+				"remoteUserId"), null, new HashMap<String, String>()), null, null, false, "member1", dateUtils);
 		servedOrder1.setInstanceId("instanceId1");
 		servedOrder1.setState(OrderState.FULFILLED);
 		servedOrder1.setProvidingMemberId("localMemberId");
@@ -361,8 +362,8 @@ public class TestNoFPrioritizationPlugin {
 		// mocking dateUtils
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(now + 30);
 		
-		Order servedOrder2 = new Order("id2", new Token("accessId", "remoteUserId", null,
-				new HashMap<String, String>()), null, null, false, "member1", dateUtils);
+		Order servedOrder2 = new Order("id2", new Token("accessId", new Token.User("remoteUserId",
+				"remoteUserId"), null, new HashMap<String, String>()), null, null, false, "member1", dateUtils);
 		servedOrder2.setInstanceId("instanceId2");
 		servedOrder2.setState(OrderState.FULFILLED);
 		servedOrder2.setProvidingMemberId("localMemberId");
@@ -371,8 +372,9 @@ public class TestNoFPrioritizationPlugin {
 		orders.add(servedOrder1);
 		orders.add(servedOrder2);
 		
-		Order newOrder = new Order("newID", new Token("newAccessId", "newLocalUserId", null,
-				new HashMap<String, String>()), null, null, true, DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		Order newOrder = new Order("newID", new Token("newAccessId", new Token.User("newLocalUserId",
+				"newLocalUserId"), null, new HashMap<String, String>()), null,
+				null, true, DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		
 		// checking if take from most recent order
 		Assert.assertEquals(servedOrder2, nofPlugin.takeFrom(newOrder, orders));

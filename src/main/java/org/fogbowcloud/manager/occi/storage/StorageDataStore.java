@@ -18,34 +18,34 @@ public class StorageDataStore {
 	private static final String STORAGE_ID = "storage_id";
 	private static final String ORDER_ID = "order_id";
 	private static final String GLOBAL_STORAGE_ID = "global_storage_id";
-	private static final String USER = "user";
+	private static final String USER_ID = "user_id";
 
 
 	private final String CREATE_TABLE_STATEMENT = "CREATE TABLE IF NOT EXISTS " + STORAGE_ORDER_TABLE_NAME + "("
 					+ STORAGE_ID + " VARCHAR(255) PRIMARY KEY, " 
 					+ ORDER_ID + " VARCHAR (255), " 
 					+ GLOBAL_STORAGE_ID + " VARCHAR (255), "
-					+ USER + " VARCHAR (255) )";
+					+ USER_ID + " VARCHAR (255) )";
 
 	private static final String INSERT_STORAGE_TABLE_SQL = "INSERT INTO " + STORAGE_ORDER_TABLE_NAME
 			+ " VALUES(?, ?, ?, ?)";
 
 	private static final String UPDATE_STORAGE_TABLE_SQL = "UPDATE " + STORAGE_ORDER_TABLE_NAME
-			+ " SET " + ORDER_ID + " = ?, " + GLOBAL_STORAGE_ID + " = ?  WHERE " + STORAGE_ID + " = ? AND " + USER + " = ?";
+			+ " SET " + ORDER_ID + " = ?, " + GLOBAL_STORAGE_ID + " = ?  WHERE " + STORAGE_ID + " = ? AND " + USER_ID + " = ?";
 
 	private static final String GET_ALL_STORAGE = "SELECT " + STORAGE_ID + ", " + ORDER_ID + ", " + GLOBAL_STORAGE_ID
-			+ ", " + USER + " FROM " + STORAGE_ORDER_TABLE_NAME;
+			+ ", " + USER_ID + " FROM " + STORAGE_ORDER_TABLE_NAME;
 
-	private static final String GET_STORAGE_BY_USER = GET_ALL_STORAGE + " WHERE " + USER + " = ? ";
-	private static final String GET_STORAGE_BY_STORAGE_ID = GET_ALL_STORAGE + " WHERE " + STORAGE_ID + " = ? AND " + USER + " = ?";
-	private static final String GET_STORAGE_BY_ORDER_ID = GET_ALL_STORAGE + " WHERE " + ORDER_ID + " = ? AND " + USER + " = ?";
-	private static final String GET_STORAGE_BY_GLOBAL_ID = GET_ALL_STORAGE + " WHERE " + GLOBAL_STORAGE_ID + " like ? AND " + USER + " = ?";
+	private static final String GET_STORAGE_BY_USER = GET_ALL_STORAGE + " WHERE " + USER_ID + " = ? ";
+	private static final String GET_STORAGE_BY_STORAGE_ID = GET_ALL_STORAGE + " WHERE " + STORAGE_ID + " = ? AND " + USER_ID + " = ?";
+	private static final String GET_STORAGE_BY_ORDER_ID = GET_ALL_STORAGE + " WHERE " + ORDER_ID + " = ? AND " + USER_ID + " = ?";
+	private static final String GET_STORAGE_BY_GLOBAL_ID = GET_ALL_STORAGE + " WHERE " + GLOBAL_STORAGE_ID + " like ? AND " + USER_ID + " = ?";
 
 	private static final String DELETE_ALL_STORAGE_TABLE_SQL = "DELETE FROM " + STORAGE_ORDER_TABLE_NAME;
-	private static final String DELETE_BY_USER = "DELETE FROM " + STORAGE_ORDER_TABLE_NAME + " WHERE " + USER
+	private static final String DELETE_BY_USER = "DELETE FROM " + STORAGE_ORDER_TABLE_NAME + " WHERE " + USER_ID
 			+ " = ? ";
 	private static final String DELETE_BY_STORAGE_ID_SQL = "DELETE FROM " + STORAGE_ORDER_TABLE_NAME + " WHERE "
-			+ STORAGE_ID + " = ? AND " + USER + " = ?";
+			+ STORAGE_ID + " = ? AND " + USER_ID + " = ?";
 
 	private static final Logger LOGGER = Logger.getLogger(StorageDataStore.class);
 
@@ -77,7 +77,7 @@ public class StorageDataStore {
 	public boolean insert(FedStorageState fedStorageState) {
 
 		LOGGER.debug("Inserting STORAGE [" + fedStorageState.getFedStorageId() + "] with relate order ["
-				+ fedStorageState.getOrderId() + "]" + " - User [" + fedStorageState.getUser() + "]");
+				+ fedStorageState.getOrderId() + "]" + " - User id [" + fedStorageState.getUserId() + "]");
 
 		if(!validateFedStorageState(fedStorageState)){
 			return false;
@@ -92,7 +92,7 @@ public class StorageDataStore {
 			preparedStatement.setString(1, fedStorageState.getFedStorageId());
 			preparedStatement.setString(2, fedStorageState.getOrderId());
 			preparedStatement.setString(3, fedStorageState.getGlobalStorageId());
-			preparedStatement.setString(4, fedStorageState.getUser());
+			preparedStatement.setString(4, fedStorageState.getUserId());
 
 			preparedStatement.execute();
 			connection.commit();
@@ -129,7 +129,7 @@ public class StorageDataStore {
 
 		LOGGER.debug("Inserting STORAGE [" + fedStorageState.getFedStorageId() + "] with order ["
 				+ fedStorageState.getOrderId() + "]" + " Global Id [" + fedStorageState.getGlobalStorageId()
-				+ "] - User [" + fedStorageState.getUser() + "]");
+				+ "] - User id [" + fedStorageState.getUserId() + "]");
 
 		if(!validateFedStorageState(fedStorageState)){
 			return false;
@@ -145,7 +145,7 @@ public class StorageDataStore {
 			preparedStatement.setString(1, fedStorageState.getOrderId());
 			preparedStatement.setString(2, fedStorageState.getGlobalStorageId());
 			preparedStatement.setString(3, fedStorageState.getFedStorageId());
-			preparedStatement.setString(4, fedStorageState.getUser());
+			preparedStatement.setString(4, fedStorageState.getUserId());
 			
 			preparedStatement.execute();
 			connection.commit();
@@ -175,8 +175,8 @@ public class StorageDataStore {
 			LOGGER.warn("Order Id must not be null.");
 			return false;
 		}
-		if (fedStorageState.getUser() == null || fedStorageState.getUser().isEmpty()) {
-			LOGGER.warn("User must not be null.");
+		if (fedStorageState.getUserId() == null || fedStorageState.getUserId().isEmpty()) {
+			LOGGER.warn("User id must not be null.");
 			return false;
 		}
 		return true;
@@ -191,21 +191,21 @@ public class StorageDataStore {
 		return executeQueryStatement(queryStatement);
 	}
 
-	public List<FedStorageState> getAllByUser(String user) {
+	public List<FedStorageState> getAllByUser(String userId) {
 
-		LOGGER.debug("Getting all Storages id with related orders to user [" + user + "]");
+		LOGGER.debug("Getting all Storages id with related orders to user id [" + userId + "]");
 
 		String queryStatement = GET_STORAGE_BY_USER;
 
-		return executeQueryStatement(queryStatement, user);
+		return executeQueryStatement(queryStatement, userId);
 	}
 
-	public FedStorageState getByStorageId(String StorageId, String user) {
+	public FedStorageState getByStorageId(String StorageId, String userId) {
 
 		LOGGER.debug("Getting Storages id with related orders by STORAGE ID [" + StorageId + "]");
 
 		String queryStatement = GET_STORAGE_BY_STORAGE_ID;
-		List<FedStorageState> fedStorageStateList = executeQueryStatement(queryStatement, StorageId, user);
+		List<FedStorageState> fedStorageStateList = executeQueryStatement(queryStatement, StorageId, userId);
 		if (fedStorageStateList != null && !fedStorageStateList.isEmpty()) {
 			return fedStorageStateList.get(0);
 		}
@@ -240,7 +240,7 @@ public class StorageDataStore {
 		return null;
 	}
 
-	public boolean deleteAllFromUser(String user) {
+	public boolean deleteAllFromUser(String userId) {
 
 		LOGGER.debug("Deleting all Storages id with related orders.");
 
@@ -250,7 +250,7 @@ public class StorageDataStore {
 
 			conn = getConnection();
 			statement = conn.prepareStatement(DELETE_BY_USER);
-			statement.setString(1, user);
+			statement.setString(1, userId);
 			boolean result = statement.execute();
 			conn.commit();
 			return result;
@@ -263,7 +263,7 @@ public class StorageDataStore {
 		}
 	}
 
-	public boolean deleteByStorageId(String storageId, String user) {
+	public boolean deleteByStorageId(String storageId, String userId) {
 
 		LOGGER.debug("Deleting all Storages id with related orders with id");
 
@@ -274,7 +274,7 @@ public class StorageDataStore {
 			conn = getConnection();
 			statement = conn.prepareStatement(DELETE_BY_STORAGE_ID_SQL);
 			statement.setString(1, storageId);
-			statement.setString(2, user);
+			statement.setString(2, userId);
 			boolean result = statement.execute();
 			conn.commit();
 			return result;
@@ -303,7 +303,7 @@ public class StorageDataStore {
 				preparedStatement.setString(1, FedStorageState.getFedStorageId());
 				preparedStatement.setString(2, FedStorageState.getOrderId());
 				preparedStatement.setString(3, FedStorageState.getGlobalStorageId());
-				preparedStatement.setString(4, FedStorageState.getUser());
+				preparedStatement.setString(4, FedStorageState.getUserId());
 				preparedStatement.addBatch();
 
 			}
@@ -357,7 +357,7 @@ public class StorageDataStore {
 								rs.getString(STORAGE_ID),
 								rs.getString(ORDER_ID),
 								rs.getString(GLOBAL_STORAGE_ID),
-								rs.getString(USER));
+								rs.getString(USER_ID));
 						fedStorageStateList.add(FedStorageState);
 					}
 				} catch (Exception e) {

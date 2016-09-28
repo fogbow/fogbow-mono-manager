@@ -11,48 +11,55 @@ public class FedInstanceState {
 	private String fedInstanceId;
 	private String orderId;
 	private String globalInstanceId;
-	private String user;
+	private String userId;
 	private List<Category> categories = new ArrayList<Category>();
 	private List<Link> links = new ArrayList<Link>();
 	
-	public FedInstanceState(String fedInstanceId, String orderId, List<Category> categories, List<Link> links, String globalInstanceId, String user) {
+	public FedInstanceState(String fedInstanceId, String orderId, List<Category> categories, List<Link> links, String globalInstanceId, String userId) {
 		this.fedInstanceId = fedInstanceId;
 		this.orderId = orderId;
 		this.categories = categories;
 		this.links = links;
 		this.globalInstanceId = globalInstanceId;
-		this.user = user;
+		this.userId = userId;
 	}
 	
 	public String getFedInstanceId() {
 		return fedInstanceId;
 	}
+
 	public void setFedInstanceId(String fedInstanceId) {
 		this.fedInstanceId = fedInstanceId;
 	}
+
 	public String getOrderId() {
 		return orderId;
 	}
+
 	public void setOrderId(String orderId) {
 		this.orderId = orderId;
 	}
+
 	public String getGlobalInstanceId() {
 		return globalInstanceId;
 	}
+
 	public void setGlobalInstanceId(String globalInstanceId) {
 		this.globalInstanceId = globalInstanceId;
 	}
-	public String getUser() {
-		return user;
+
+	public String getUserId() {
+		return userId;
 	}
-	public void setUser(String user) {
-		this.user = user;
+
+	public void setUserId(String userId) {
+		this.userId = userId;
 	}
-	
+
 	public List<Category> getCategories() {
 		return this.categories;
 	}
-	
+
 	public List<Link> getLinks() {
 		return this.links;
 	}
@@ -89,10 +96,10 @@ public class FedInstanceState {
 				return false;
 		} else if (!orderId.equals(other.orderId))
 			return false;
-		if (user == null) {
-			if (other.user != null)
+		if (userId == null) {
+			if (other.userId != null)
 				return false;
-		} else if (!user.equals(other.user))
+		} else if (!userId.equals(other.userId))
 			return false;
 		if (categories == null) {
 			if (other.categories != null)

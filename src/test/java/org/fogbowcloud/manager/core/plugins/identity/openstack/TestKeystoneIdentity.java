@@ -40,8 +40,10 @@ public class TestKeystoneIdentity {
 
 	@Test
 	public void testValidToken() {
+		Assert.assertEquals(PluginHelper.USER_ID,
+				this.keystoneIdentity.getToken(PluginHelper.ACCESS_ID).getUser().getId());
 		Assert.assertEquals(PluginHelper.USERNAME,
-				this.keystoneIdentity.getToken(PluginHelper.ACCESS_ID).getUser());
+				this.keystoneIdentity.getToken(PluginHelper.ACCESS_ID).getUser().getName());		
 	}
 
 	@Test(expected = ResourceException.class)
@@ -52,7 +54,7 @@ public class TestKeystoneIdentity {
 	@Test
 	public void testGetNameUserFromToken() {
 		Assert.assertEquals(PluginHelper.USERNAME,
-				this.keystoneIdentity.getToken(PluginHelper.ACCESS_ID).getUser());
+				this.keystoneIdentity.getToken(PluginHelper.ACCESS_ID).getUser().getName());
 	}
 
 	@Test(expected = ResourceException.class)
@@ -114,14 +116,16 @@ public class TestKeystoneIdentity {
 	public void testGetTokenWithNoJson() throws JSONException {
 		Token token = this.keystoneIdentity.getToken(PluginHelper.ACCESS_ID);
 		Assert.assertNotNull(token);
-		Assert.assertEquals(PluginHelper.USERNAME, token.getUser());
+		Assert.assertEquals(PluginHelper.USER_ID, token.getUser().getId());
+		Assert.assertEquals(PluginHelper.USERNAME, token.getUser().getName());
 		Assert.assertEquals(PluginHelper.TENANT_ID, token.get(KeystoneIdentityPlugin.TENANT_ID));
 		Assert.assertEquals(PluginHelper.TENANT_NAME, token.get(KeystoneIdentityPlugin.TENANT_NAME));
 	}
 	
 	@Test
 	public void testGetForwardableToken() throws JSONException {
-		Token originalToken = new Token("accessId", "user", new Date(), new HashMap<String, String>());
+		Token originalToken = new Token("accessId", new Token.User("user", "user"), new Date(), 
+				new HashMap<String, String>());
 		Token token = this.keystoneIdentity.getForwardableToken(originalToken);
 		Assert.assertEquals(originalToken, token);
 	}	

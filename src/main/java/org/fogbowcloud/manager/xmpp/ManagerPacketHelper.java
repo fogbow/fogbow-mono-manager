@@ -53,6 +53,7 @@ public class ManagerPacketHelper {
 	public static final String SOURCE_EL = "source";
 	public static final String TARGET_EL = "target";
 	public static final String ID_EL = "id";
+	public static final String NAME_EL = "name";
 	public static final String STORAGE_LINK_EL = "storageLink";	
 	
 	public static final String I_AM_ALIVE_PERIOD = "iamalive-period";
@@ -172,7 +173,11 @@ public class ManagerPacketHelper {
 		if (userFederationToken != null) {
 			Element tokenEl = queryEl.addElement(TOKEN_EL);
 			tokenEl.addElement(ACCESS_ID_EL).setText(userFederationToken.getAccessId());
-			tokenEl.addElement(USER_EL).setText(userFederationToken.getUser());
+			Element UserEl = tokenEl.addElement(USER_EL);
+			UserEl.addElement(ID_EL).setText(
+					userFederationToken.getUser().getId());
+			UserEl.addElement(NAME_EL).setText(
+					userFederationToken.getUser().getName());			
 		}
 
 		packetSender.addPacketCallback(iq, new PacketCallback() {
@@ -214,7 +219,11 @@ public class ManagerPacketHelper {
 		if (userFederationToken != null) {
 			Element tokenEl = queryEl.addElement(TOKEN_EL);
 			tokenEl.addElement(ACCESS_ID_EL).setText(userFederationToken.getAccessId());
-			tokenEl.addElement(USER_EL).setText(userFederationToken.getUser());
+			Element userEl = tokenEl.addElement(USER_EL);
+			userEl.addElement(ID_EL).setText(
+					userFederationToken.getUser().getId());
+			userEl.addElement(NAME_EL).setText(
+					userFederationToken.getUser().getName());		
 		}
 
 		IQ response = (IQ) packetSender.syncSendPacket(iq);
@@ -304,7 +313,11 @@ public class ManagerPacketHelper {
 		if (userFederationToken != null) {
 			Element tokenEl = queryEl.addElement(TOKEN_EL);
 			tokenEl.addElement(ACCESS_ID_EL).setText(userFederationToken.getAccessId());
-			tokenEl.addElement(USER_EL).setText(userFederationToken.getUser());
+			Element userEl = tokenEl.addElement(USER_EL);
+			userEl.addElement(ID_EL).setText(
+					userFederationToken.getUser().getId());
+			userEl.addElement(NAME_EL).setText(
+					userFederationToken.getUser().getName());		
 		}
 		
 		IQ response = (IQ) packetSender.syncSendPacket(iq);			
@@ -473,15 +486,16 @@ public class ManagerPacketHelper {
 		Element queryEl = iq.getElement().addElement("query", ManagerXmppComponent.GETREMOTEUSERQUOTA_NAMESPACE);
 		Element tokenEl = queryEl.addElement(TOKEN_EL);
 		tokenEl.addElement(ACCESS_ID_EL).setText(token.getAccessId());
-		tokenEl.addElement(USER_EL).setText(token.getUser());
+		Element userEl = tokenEl.addElement(USER_EL);
+		userEl.addElement(ID_EL).setText(token.getUser().getId());
+		userEl.addElement(NAME_EL).setText(token.getUser().getName());		
 
 		IQ response = (IQ) packetSender.syncSendPacket(iq);
 		if (response.getError() != null) {
 			raiseException(response.getError());
 		}
 
-		return parseResourcesInfo(response.getElement().element("query").element("resourcesInfo"));
-		
+		return parseResourcesInfo(response.getElement().element("query").element("resourcesInfo"));		
 	}
 	
 	private static ResourcesInfo parseResourcesInfo(Element instanceEl) {

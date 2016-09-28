@@ -23,7 +23,7 @@ public class TestEC2IdentityPlugin {
 	@Test
 	public void testReIssueToken() {
 		EC2IdentityPlugin ec2IdentityPlugin = new EC2IdentityPlugin(new Properties());
-		Token token = new Token("AccessId:SecretKey", "AccessId", 
+		Token token = new Token("AccessId:SecretKey", new Token.User("AccessId", "AccessId"), 
 				new Date(), new HashMap<String, String>());
 		Assert.assertSame(token, ec2IdentityPlugin.reIssueToken(token));
 	}
@@ -46,7 +46,7 @@ public class TestEC2IdentityPlugin {
 	@Test
 	public void testGetForwardableToken() {
 		EC2IdentityPlugin ec2IdentityPlugin = new EC2IdentityPlugin(new Properties());
-		Token token = new Token("AccessId:SecretKey", "AccessId", 
+		Token token = new Token("AccessId:SecretKey", new Token.User("AccessId", "AccessId"), 
 				new Date(), new HashMap<String, String>());
 		Assert.assertNull(ec2IdentityPlugin.getForwardableToken(token));
 	}
@@ -126,7 +126,7 @@ public class TestEC2IdentityPlugin {
 		
 		Assert.assertNotNull(token);
 		Assert.assertEquals("AccessId:SecretKey", token.getAccessId());
-		Assert.assertEquals("AccessId", token.getUser());
+		Assert.assertEquals("AccessId", token.getUser().getId());
 		Assert.assertEquals("AccessId", token.get(EC2IdentityPlugin.CRED_ACCESS_KEY));
 		Assert.assertEquals("SecretKey", token.get(EC2IdentityPlugin.CRED_SECRET_KEY));
 	}

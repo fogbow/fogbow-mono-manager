@@ -72,8 +72,6 @@ import com.microsoft.windowsazure.management.compute.models.InputEndpointTranspo
 import com.microsoft.windowsazure.management.compute.models.OSVirtualHardDisk;
 import com.microsoft.windowsazure.management.compute.models.Role;
 import com.microsoft.windowsazure.management.compute.models.RoleInstance;
-import com.microsoft.windowsazure.management.compute.models.SshSettingPublicKey;
-import com.microsoft.windowsazure.management.compute.models.SshSettings;
 import com.microsoft.windowsazure.management.compute.models.VirtualHardDiskHostCaching;
 import com.microsoft.windowsazure.management.compute.models.VirtualIPAddress;
 import com.microsoft.windowsazure.management.compute.models.VirtualMachineCreateDeploymentParameters;
@@ -81,8 +79,6 @@ import com.microsoft.windowsazure.management.compute.models.VirtualMachineDataDi
 import com.microsoft.windowsazure.management.compute.models.VirtualMachineGetResponse;
 import com.microsoft.windowsazure.management.compute.models.VirtualMachineOSImageCreateParameters;
 import com.microsoft.windowsazure.management.compute.models.VirtualMachineOSImageGetResponse;
-import com.microsoft.windowsazure.management.compute.models.VirtualMachineOSImageListResponse;
-import com.microsoft.windowsazure.management.compute.models.VirtualMachineOSImageListResponse.VirtualMachineOSImage;
 import com.microsoft.windowsazure.management.configuration.ManagementConfiguration;
 import com.microsoft.windowsazure.management.models.RoleSizeListResponse;
 import com.microsoft.windowsazure.management.models.RoleSizeListResponse.RoleSize;

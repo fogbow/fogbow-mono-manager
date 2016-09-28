@@ -29,7 +29,7 @@ public class TestShibbolethIdentityPlugin {
 	@Test
 	public void testReissueToken() {
 		Properties props = new Properties();
-		Token t = new Token("_assertionId:_assertionKey", "foo", 
+		Token t = new Token("_assertionId:_assertionKey", new Token.User("foo", "foo"), 
 				new Date(), new HashMap<String, String>());
 		Token reIssuedToken = new ShibbolethIdentityPlugin(props).reIssueToken(t);
 		Assert.assertSame(t, reIssuedToken);
@@ -54,7 +54,7 @@ public class TestShibbolethIdentityPlugin {
 	
 	@Test
 	public void testGetForwardableToken() {
-		Token t = new Token("_assertionId:_assertionKey", "foo", 
+		Token t = new Token("_assertionId:_assertionKey", new Token.User("foo", "foo"), 
 				new Date(), new HashMap<String, String>());
 		Assert.assertNull(new ShibbolethIdentityPlugin(
 				new Properties()).getForwardableToken(t));
@@ -78,7 +78,7 @@ public class TestShibbolethIdentityPlugin {
 		ShibbolethIdentityPlugin sip = Mockito.spy(
 				new ShibbolethIdentityPlugin(new Properties()));
 		
-		Token t = new Token("_assertionId:_assertionKey", "foo", 
+		Token t = new Token("_assertionId:_assertionKey", new Token.User("foo", "foo"), 
 				new Date(), new HashMap<String, String>());
 		
 		Mockito.doReturn(t).when(sip).getToken(Mockito.anyString());

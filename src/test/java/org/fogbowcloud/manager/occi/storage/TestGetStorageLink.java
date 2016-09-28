@@ -75,7 +75,8 @@ public class TestGetStorageLink {
 
 		identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.getToken(OCCITestHelper.ACCESS_TOKEN))
-				.thenReturn(new Token("id", OCCITestHelper.USER_MOCK, new Date(), new HashMap<String, String>()));
+				.thenReturn(new Token("id", new Token.User(OCCITestHelper.USER_MOCK, ""), 
+				new Date(), new HashMap<String, String>()));
 		Mockito.when(identityPlugin.isValid(OCCITestHelper.ACCESS_TOKEN)).thenReturn(true);				
 				
 		Mockito.when(identityPlugin.getAuthenticationURI()).thenReturn("Keystone uri='http://localhost:5000/'");

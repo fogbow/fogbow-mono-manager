@@ -86,17 +86,17 @@ public class TestPostStorage {
 
 		identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.getToken(OCCITestHelper.ACCESS_TOKEN))
-				.thenReturn(new Token("id", OCCITestHelper.USER_MOCK, new Date(), new HashMap<String, String>()));
+				.thenReturn(new Token("id", new Token.User(OCCITestHelper.USER_MOCK, ""), new Date(), new HashMap<String, String>()));
 		
 		Mockito.when(identityPlugin.getToken(ACCESS_TOKEN))
-		.thenReturn(new Token("id_two", USER_WITHOUT_ORDERS, new Date(), new HashMap<String, String>()));		
+		.thenReturn(new Token("id_two", new Token.User(USER_WITHOUT_ORDERS, ""), new Date(), new HashMap<String, String>()));		
 		
 		
 		Mockito.when(identityPlugin.getAuthenticationURI()).thenReturn("Keystone uri='http://localhost:5000/'");
 
 		List<Order> ordersA = new LinkedList<Order>();
 		
-		Token token = new Token(OCCITestHelper.ACCESS_TOKEN, OCCITestHelper.USER_MOCK,
+		Token token = new Token(OCCITestHelper.ACCESS_TOKEN, new Token.User(OCCITestHelper.USER_MOCK, ""),
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>());
 		
 		
@@ -110,7 +110,7 @@ public class TestPostStorage {
 		order2.setInstanceId(INSTANCE_2_ID);
 		order2.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
 		ordersA.add(order2);
-		Order order3 = new Order("3", new Token("token", "user", DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
+		Order order3 = new Order("3", new Token("token", new Token.User("user", ""), DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
 				new HashMap<String, String>()), null, xOCCIAtt, true, "");
 		order3.setInstanceId(INSTANCE_3_ID_WITHOUT_USER);
 		order3.setProvidingMemberId(OCCITestHelper.MEMBER_ID);

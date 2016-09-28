@@ -67,8 +67,10 @@ public class TestGetNetwork {
 		ordersToAdd = new HashMap<String, List<Order>>();
 		ordersToAdd.put(BASIC_TOKEN, new ArrayList<Order>());
 		
-		tokenA = new Token("id_one", OCCITestHelper.USER_MOCK, DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>());
-		tokenB = new Token("id_two", BASIC_TOKEN, DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>());
+		tokenA = new Token("id_one", new Token.User(OCCITestHelper.USER_MOCK, ""),
+				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>());
+		tokenB = new Token("id_two", new Token.User(BASIC_TOKEN, ""),
+				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>());
 		
 		//Moking
 		identityPlugin = Mockito.mock(IdentityPlugin.class);
@@ -118,7 +120,7 @@ public class TestGetNetwork {
 		
 		OrderRepository orders = new OrderRepository();
 		for (Order order : userOrders){
-			orders.addOrder(tokenA.getUser(), order);
+			orders.addOrder(tokenA.getUser().getId(), order);
 		}
 		facade.setOrders(orders);
 		
@@ -148,7 +150,7 @@ public class TestGetNetwork {
 		
 		OrderRepository orders = new OrderRepository();
 		for (Order order : userOrders){
-			orders.addOrder(tokenA.getUser(), order);
+			orders.addOrder(tokenA.getUser().getId(), order);
 		}
 		facade.setOrders(orders);
 		
@@ -181,7 +183,7 @@ public class TestGetNetwork {
 		
 		OrderRepository orders = new OrderRepository();
 		for (Order order : userOrders){
-			orders.addOrder(order.getFederationToken().getUser(), order);
+			orders.addOrder(order.getFederationToken().getUser().getId(), order);
 		}
 		facade.setOrders(orders);
 		
@@ -226,7 +228,7 @@ public class TestGetNetwork {
 		
 		OrderRepository orders = new OrderRepository();
 		for (Order order : userOrders){
-			orders.addOrder(order.getFederationToken().getUser(), order);
+			orders.addOrder(order.getFederationToken().getUser().getId(), order);
 		}
 		facade.setOrders(orders);
 		
@@ -256,7 +258,7 @@ public class TestGetNetwork {
 		
 		OrderRepository orders = new OrderRepository();
 		for (Order order : userOrders){
-			orders.addOrder(tokenA.getUser(), order);
+			orders.addOrder(tokenA.getUser().getId(), order);
 		}
 		facade.setOrders(orders);
 		
@@ -297,7 +299,7 @@ public class TestGetNetwork {
 		
 		OrderRepository orders = new OrderRepository();
 		for (Order order : userOrders){
-			orders.addOrder(tokenA.getUser(), order);
+			orders.addOrder(tokenA.getUser().getId(), order);
 		}
 		facade.setOrders(orders);
 		
@@ -328,7 +330,7 @@ public class TestGetNetwork {
 		
 		OrderRepository orders = new OrderRepository();
 		for (Order order : userOrders){
-			orders.addOrder(tokenA.getUser(), order);
+			orders.addOrder(tokenA.getUser().getId(), order);
 		}
 		facade.setOrders(orders);
 		
@@ -358,7 +360,7 @@ public class TestGetNetwork {
 		
 		OrderRepository orders = new OrderRepository();
 		for (Order order : userOrders){
-			orders.addOrder(tokenA.getUser(), order);
+			orders.addOrder(tokenA.getUser().getId(), order);
 		}
 		facade.setOrders(orders);
 	
@@ -416,7 +418,7 @@ public class TestGetNetwork {
 		
 		OrderRepository orders = new OrderRepository();
 		for (Order order : userOrders){
-			orders.addOrder(tokenA.getUser(), order);
+			orders.addOrder(tokenA.getUser().getId(), order);
 		}
 		facade.setOrders(orders);
 	
@@ -465,7 +467,7 @@ public class TestGetNetwork {
 		
 		OrderRepository orders = new OrderRepository();
 		for (Order order : userOrders){
-			orders.addOrder(tokenA.getUser(), order);
+			orders.addOrder(tokenA.getUser().getId(), order);
 		}
 		facade.setOrders(orders);
 		

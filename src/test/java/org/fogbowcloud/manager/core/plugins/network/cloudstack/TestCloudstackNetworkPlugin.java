@@ -7,13 +7,9 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.apache.http.ProtocolVersion;
-import org.apache.http.StatusLine;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.message.BasicStatusLine;
 import org.fogbowcloud.manager.core.plugins.common.cloudstack.CloudStackHelper;
-import org.fogbowcloud.manager.core.plugins.compute.opennebula.OneConfigurationConstants;
-import org.fogbowcloud.manager.core.plugins.compute.opennebula.OpenNebulaClientFactory;
-import org.fogbowcloud.manager.core.plugins.network.opennebula.OpenNebulaNetworkPlugin;
 import org.fogbowcloud.manager.core.plugins.util.HttpClientWrapper;
 import org.fogbowcloud.manager.core.plugins.util.HttpResponseWrapper;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
@@ -21,14 +17,10 @@ import org.fogbowcloud.manager.occi.OCCIConstants;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.Token;
-import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.opennebula.client.Client;
-import org.opennebula.client.OneResponse;
-import org.opennebula.client.vnet.VirtualNetwork;
 
 public class TestCloudstackNetworkPlugin {
 	
@@ -39,12 +31,10 @@ public class TestCloudstackNetworkPlugin {
 	private Token defaultToken;
 	
 	@Before
-	public void setUp() {
-	
-		defaultToken = new Token("oneadmin:opennebula",
-				"oneadmin", DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
-				new HashMap<String, String>());
-		
+	public void setUp() {	
+		this.defaultToken = new Token("oneadmin:opennebula",
+				new Token.User("oneadmin", "oneadmin"), DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
+				new HashMap<String, String>());		
 	}
 	
 	@Test

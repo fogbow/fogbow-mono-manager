@@ -64,7 +64,7 @@ public class VOBasedMapperPlugin implements MapperPlugin {
 
 	@Override
 	public Map<String, String> getLocalCredentials(String accessId) {
-		Token token = new Token(accessId, "", new Date(), null);
+		Token token = new Token(accessId, new Token.User("", ""), new Date(), null);
 		return getLocalCredentials(new Order("", token, "", "", "", 
 				new Date().getTime(), false, null, null, null));
 	}

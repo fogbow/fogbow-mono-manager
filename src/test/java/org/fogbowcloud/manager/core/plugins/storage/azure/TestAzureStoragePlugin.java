@@ -234,7 +234,7 @@ public class TestAzureStoragePlugin {
 		}
 		attributes.put(AzureAttributes.SUBSCRIPTION_ID_KEY, "subscription_key");
 		attributes.put(AzureAttributes.KEYSTORE_PATH_KEY, "/path");
-		return new Token(TOKEN_DEFAULT_ACCESS_ID, TOKEN_DEFAULT_USERNAME, null,
-				attributes);
+		return new Token(TOKEN_DEFAULT_ACCESS_ID, new Token.User(TOKEN_DEFAULT_USERNAME,
+				TOKEN_DEFAULT_USERNAME), null, attributes);
 	}
 }

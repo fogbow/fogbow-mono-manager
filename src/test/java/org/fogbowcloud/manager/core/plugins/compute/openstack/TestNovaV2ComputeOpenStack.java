@@ -86,8 +86,8 @@ public class TestNovaV2ComputeOpenStack {
 		HashMap<String, String> tokenAtt = new HashMap<String, String>();
 		tokenAtt.put(KeystoneIdentityPlugin.TENANT_ID, "tenantid");
 		tokenAtt.put(KeystoneIdentityPlugin.TENANT_NAME, "tenantname");
-		defaultToken = new Token(PluginHelper.ACCESS_ID, PluginHelper.USERNAME,
-				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, tokenAtt);
+		defaultToken = new Token(PluginHelper.ACCESS_ID, new Token.User(PluginHelper.USERNAME, 
+				PluginHelper.USERNAME), DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, tokenAtt);
 	
 		pluginHelper = new PluginHelper();	
 		novaV2Server = pluginHelper.initializeNovaV2ComputeComponent("src/test/resources/openstack");
@@ -364,7 +364,8 @@ public class TestNovaV2ComputeOpenStack {
 				+ OpenStackNovaV2ComputePlugin.V2_IMAGES_FILE));
 		HttpUriRequestMatcher expectedRequests = new HttpUriRequestMatcher(requests);
 
-		novaV2ComputeOpenStack.uploadImage(new Token("", "", null, null), "", "image", "");
+		novaV2ComputeOpenStack.uploadImage(new Token("", new Token.User("", ""), null, null), 
+				"", "image", "");
 
 		Mockito.verify(httpClient, Mockito.times(3)).execute(Mockito.argThat(expectedRequests));
 	}
@@ -455,7 +456,7 @@ public class TestNovaV2ComputeOpenStack {
 		novaV2ComputeOpenStack.setClient(httpClient);
 				
 		Assert.assertEquals(ImageState.ACTIVE, novaV2ComputeOpenStack.getImageState(new Token("",
-				"", new Date(), new HashMap<String, String>()), imageOne));
+				new Token.User("", ""), new Date(), new HashMap<String, String>()), imageOne));
 	}
 	
 	@Test
@@ -480,7 +481,8 @@ public class TestNovaV2ComputeOpenStack {
 	
 	@Test(expected=OCCIException.class)
 	public void testUploadImageWithoutImage() throws Exception {
-		novaV2ComputeOpenStack.uploadImage(new Token("", "", null, null), "", null, "");
+		novaV2ComputeOpenStack.uploadImage(new Token("", new Token.User("", ""), null, null),
+				"", null, "");
 	}	
 	
 	@Test(expected=OCCIException.class)
@@ -494,7 +496,8 @@ public class TestNovaV2ComputeOpenStack {
 				httpResposeMock, httpResposeMockException, httpResposeMock);
 
 		novaV2ComputeOpenStack.setClient(httpClient);
-		novaV2ComputeOpenStack.uploadImage(new Token("", "", null, null), "", "image", "");
+		novaV2ComputeOpenStack.uploadImage(new Token("", new Token.User("", ""), null, null),
+				"", "image", "");
 	}	
 
 	private HttpResponse createHttpResponseMock(String responseStr, int statusCode) {

@@ -222,7 +222,7 @@ public class TestMemberServerResource {
 		AsyncPacketSender packetSender = createPacketSenderMock(resourcesInfo);
 
 		String user = "user";
-		Token token = new Token(X_FEDERATION_AUTH_TOKEN, user, new Date(), new HashMap<String, String>());
+		Token token = new Token(X_FEDERATION_AUTH_TOKEN, new Token.User(user, ""), new Date(), new HashMap<String, String>());
 		Mockito.when(identityPlugin.getToken(X_FEDERATION_AUTH_TOKEN)).thenReturn(token);
 		
 		this.helper.initializeComponentMember(computePlugin, identityPlugin, authorizationPlugin,

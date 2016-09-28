@@ -25,7 +25,7 @@ public class TestNoCloudComputePlugin {
 
 	@Test(expected = OCCIException.class)
 	public void testRequestInstance() {
-		Token token = new Token("", "", null, null);
+		Token token = new Token("", new Token.User("", ""), null, null);
 		noCloudComputePlugin.requestInstance(token, new ArrayList<Category>(),
 				new HashMap<String, String>(), "image");
 	}

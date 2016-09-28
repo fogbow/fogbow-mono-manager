@@ -47,8 +47,8 @@ public class TestOpenNebulaStoragePlugin {
 		xOCCIAtt.put(OrderAttribute.STORAGE_SIZE.getValue(), STORAGE_SIZE);
 		
 		defaultToken = new Token(PluginHelper.USERNAME + ":" + PluginHelper.USER_PASS,
-				PluginHelper.USERNAME, DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
-				new HashMap<String, String>());
+				new Token.User(PluginHelper.USERNAME, PluginHelper.USERNAME), 
+				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>());
 	}
 	
 	@Test

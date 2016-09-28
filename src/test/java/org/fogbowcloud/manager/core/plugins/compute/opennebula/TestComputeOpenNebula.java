@@ -78,7 +78,7 @@ public class TestComputeOpenNebula {
 				IMAGE1_ID);
 
 		defaultToken = new Token(PluginHelper.USERNAME + ":" + PluginHelper.USER_PASS,
-				PluginHelper.USERNAME, DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
+				new Token.User(PluginHelper.USERNAME, PluginHelper.USERNAME), DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
 				new HashMap<String, String>());
 
 		// default userdata
@@ -883,7 +883,7 @@ public class TestComputeOpenNebula {
 		computeOpenNebula.setFlavors(flavorsComputeOpennebula);
 		
 		// getting resources info
-		Token token = new Token(accessId, PluginHelper.USERNAME, null,
+		Token token = new Token(accessId, new Token.User(PluginHelper.USERNAME, PluginHelper.USERNAME), null,
 				new HashMap<String, String>());
 		ResourcesInfo resourcesInfo = computeOpenNebula.getResourcesInfo(token);
 
@@ -940,7 +940,7 @@ public class TestComputeOpenNebula {
 		computeOpenNebula.setFlavors(flavorsComputeOpennebula);
 		
 		// getting resources info
-		Token token = new Token(accessId, PluginHelper.USERNAME, null,
+		Token token = new Token(accessId, new Token.User(PluginHelper.USERNAME, PluginHelper.USERNAME), null,
 				new HashMap<String, String>());
 		ResourcesInfo resourcesInfo = computeOpenNebula.getResourcesInfo(token);
 
@@ -997,8 +997,8 @@ public class TestComputeOpenNebula {
 		computeOpenNebula.setFlavors(flavorsComputeOpennebula);
 		
 		// getting resources info
-		Token token = new Token(accessId, PluginHelper.USERNAME, null,
-				new HashMap<String, String>());
+		Token token = new Token(accessId, new Token.User(PluginHelper.USERNAME, PluginHelper.USERNAME),
+				null, new HashMap<String, String>());
 		ResourcesInfo resourcesInfo = computeOpenNebula.getResourcesInfo(token);
 
 		// checking resourcesInfo
@@ -1054,8 +1054,8 @@ public class TestComputeOpenNebula {
 		computeOpenNebula.setFlavors(flavorsComputeOpennebula);
 		
 		// getting resources info
-		Token token = new Token(accessId, PluginHelper.USERNAME, null,
-				new HashMap<String, String>());
+		Token token = new Token(accessId, new Token.User(PluginHelper.USERNAME, PluginHelper.USERNAME),
+				null, new HashMap<String, String>());
 		ResourcesInfo resourcesInfo = computeOpenNebula.getResourcesInfo(token);
 
 		// checking resourcesInfo
@@ -1111,8 +1111,8 @@ public class TestComputeOpenNebula {
 		computeOpenNebula.setFlavors(flavorsComputeOpennebula);
 
 		// getting resources info
-		Token token = new Token(accessId, PluginHelper.USERNAME, null,
-				new HashMap<String, String>());
+		Token token = new Token(accessId, new Token.User(PluginHelper.USERNAME, PluginHelper.USERNAME),
+				null, new HashMap<String, String>());
 		ResourcesInfo resourcesInfo = computeOpenNebula.getResourcesInfo(token);
 
 		// checking resourcesInfo
@@ -1168,8 +1168,8 @@ public class TestComputeOpenNebula {
 		computeOpenNebula.setFlavors(flavorsComputeOpennebula);
 		
 		// getting resources info
-		Token token = new Token(accessId, PluginHelper.USERNAME, null,
-				new HashMap<String, String>());
+		Token token = new Token(accessId, new Token.User(PluginHelper.USERNAME, PluginHelper.USERNAME),
+				null, new HashMap<String, String>());
 		ResourcesInfo resourcesInfo = computeOpenNebula.getResourcesInfo(token);
 
 		// checking resourcesInfo
@@ -1231,8 +1231,8 @@ public class TestComputeOpenNebula {
 		computeOpenNebula.setFlavors(flavorsComputeOpennebula);
 		
 		// getting resources info
-		Token token = new Token(accessId, PluginHelper.USERNAME, null,
-				new HashMap<String, String>());
+		Token token = new Token(accessId, new Token.User(PluginHelper.USERNAME, PluginHelper.USERNAME),
+				null, new HashMap<String, String>());
 		ResourcesInfo resourcesInfo = computeOpenNebula.getResourcesInfo(token);
 
 		// checking resourcesInfo
@@ -1279,8 +1279,8 @@ public class TestComputeOpenNebula {
 		computeOpenNebula.setFlavors(flavorsComputeOpennebula );
 		
 		// getting resources info
-		Token token = new Token(accessId, PluginHelper.USERNAME, null,
-				new HashMap<String, String>());
+		Token token = new Token(accessId, new Token.User(PluginHelper.USERNAME, PluginHelper.USERNAME),
+				null, new HashMap<String, String>());
 		ResourcesInfo resourcesInfo = computeOpenNebula.getResourcesInfo(token);
 
 		// checking resourcesInfo
@@ -1328,8 +1328,8 @@ public class TestComputeOpenNebula {
 		computeOpenNebula.setFlavors(flavorsComputeOpennebula);
 		
 		// getting resources info
-		Token token = new Token(accessId, PluginHelper.USERNAME, null,
-				new HashMap<String, String>());
+		Token token = new Token(accessId, new Token.User(PluginHelper.USERNAME, PluginHelper.USERNAME),
+				null, new HashMap<String, String>());
 		ResourcesInfo resourcesInfo = computeOpenNebula.getResourcesInfo(token);
 
 		// checking resourcesInfo with default values
@@ -1383,7 +1383,7 @@ public class TestComputeOpenNebula {
 		OpenNebulaClientFactory clientFactory = Mockito.mock(OpenNebulaClientFactory.class);
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
 
-		Token token = new Token("", "", new Date(), new HashMap<String, String>());
+		Token token = new Token("", new Token.User("", ""), new Date(), new HashMap<String, String>());
 		String requirements = RequirementsHelper.GLUE_VCPU_TERM + ">= 2 && "
 				+ RequirementsHelper.GLUE_MEM_RAM_TERM + ">= 2000";
 		Flavor flavor = computeOpenNebula.getFlavor(token, requirements);
@@ -1396,7 +1396,7 @@ public class TestComputeOpenNebula {
 		OpenNebulaClientFactory clientFactory = Mockito.mock(OpenNebulaClientFactory.class);
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
 
-		Token token = new Token("", "", new Date(), new HashMap<String, String>());
+		Token token = new Token("", new Token.User("", ""), new Date(), new HashMap<String, String>());
 		Flavor flavor = computeOpenNebula.getFlavor(token, null);
 		Assert.assertEquals("1", flavor.getCpu());
 		Assert.assertEquals("1024", flavor.getMem());
@@ -1407,7 +1407,7 @@ public class TestComputeOpenNebula {
 		OpenNebulaClientFactory clientFactory = Mockito.mock(OpenNebulaClientFactory.class);
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
 
-		Token token = new Token("", "", new Date(), new HashMap<String, String>());
+		Token token = new Token("", new Token.User("", ""), new Date(), new HashMap<String, String>());
 		String requirements = RequirementsHelper.GLUE_VCPU_TERM + ">= 2 && "
 				+ RequirementsHelper.GLUE_MEM_RAM_TERM + ">= 2000";
 		Flavor flavor = computeOpenNebula.getFlavor(token, requirements);
@@ -1467,7 +1467,7 @@ public class TestComputeOpenNebula {
 				OpenNebulaComputePlugin.OPENNEBULA_TEMPLATES_TYPE_ALL);
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
 
-		Token token = new Token(accessId, "", new Date(), new HashMap<String, String>());
+		Token token = new Token(accessId, new Token.User("", ""), new Date(), new HashMap<String, String>());
 		String requirements = RequirementsHelper.GLUE_VCPU_TERM + ">= 2 && "
 				+ RequirementsHelper.GLUE_MEM_RAM_TERM + ">= 2000";
 		Flavor flavor = computeOpenNebula.getFlavor(token, requirements);
@@ -1536,7 +1536,7 @@ public class TestComputeOpenNebula {
 		properties.put(OpenNebulaComputePlugin.OPENNEBULA_TEMPLATES, nameTamplateTwo + "," + nameTamplateThree);
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
 
-		Token token = new Token(accessId, "", new Date(), new HashMap<String, String>());
+		Token token = new Token(accessId, new Token.User("", ""), new Date(), new HashMap<String, String>());
 		String requirements = RequirementsHelper.GLUE_VCPU_TERM + ">= 2 && "
 				+ RequirementsHelper.GLUE_MEM_RAM_TERM + ">= 2000";
 		Flavor flavor = computeOpenNebula.getFlavor(token, requirements);
@@ -1643,7 +1643,7 @@ public class TestComputeOpenNebula {
 				OpenNebulaComputePlugin.OPENNEBULA_TEMPLATES_TYPE_ALL);
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
 
-		Token token = new Token(accessId, "", new Date(), new HashMap<String, String>());
+		Token token = new Token(accessId, new Token.User("", ""), new Date(), new HashMap<String, String>());
 		computeOpenNebula.updateFlavors(token);
 		
 		Assert.assertEquals(2, computeOpenNebula.getFlavors().size());
@@ -1744,7 +1744,7 @@ public class TestComputeOpenNebula {
 		Mockito.when(clientFactory.createImagePool(oneClient)).thenReturn(imagePool);
 
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
-		String imageId = computeOpenNebula.getImageId(new Token("0123", "", null,
+		String imageId = computeOpenNebula.getImageId(new Token("0123", new Token.User("", ""), null,
 				new HashMap<String, String>()), imageName);
 		Assert.assertEquals(id, imageId);
 	}
@@ -1784,16 +1784,16 @@ public class TestComputeOpenNebula {
 		Mockito.when(clientFactory.createImagePool(oneClient)).thenReturn(imagePool);
 
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
-		ImageState imageState = computeOpenNebula.getImageState(new Token("0123", "", null,
+		ImageState imageState = computeOpenNebula.getImageState(new Token("0123", new Token.User("", ""), null,
 				new HashMap<String, String>()), imageNameLOCKED);
 		Assert.assertEquals(ImageState.PENDING.getValue(), imageState.getValue());
 
 		computeOpenNebula = new OpenNebulaComputePlugin(properties, clientFactory);
-		imageState = computeOpenNebula.getImageState(new Token("01234", "", null,
+		imageState = computeOpenNebula.getImageState(new Token("01234", new Token.User("", ""), null,
 				new HashMap<String, String>()), imageNameREADY);
 		Assert.assertEquals(ImageState.ACTIVE.getValue(), imageState.getValue());
 
-		imageState = computeOpenNebula.getImageState(new Token("01235", "", null,
+		imageState = computeOpenNebula.getImageState(new Token("01235", new Token.User("", ""), null,
 				new HashMap<String, String>()), imageNameANYTHING);
 		Assert.assertEquals(ImageState.FAILED.getValue(), imageState.getValue());
 	}

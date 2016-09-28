@@ -165,17 +165,17 @@ public class TestStorageLinkRepository {
 	
 	@Test
 	public void testGetAllStorageLink() {
-		Token federationTokenOne = new Token("accessIdOne", "userOne", new Date(), null);
-		Token federationTokenTwo = new Token("accessIdTwo", "userTwo", new Date(), null);
+		Token federationTokenOne = new Token("accessIdOne", new Token.User("userOne", ""), new Date(), null);
+		Token federationTokenTwo = new Token("accessIdTwo", new Token.User("userTwo", ""), new Date(), null);
 		StorageLink storageLinkOne = new StorageLink("idOne", "sourceOne", "targetOne",
 				"deviceIdOne", "provadingMemberIdOne", federationTokenOne, true);
 		StorageLink storageLinkTwo = new StorageLink("idTwo", "sourceTwo", "targetTwo",
 				"deviceIdTwo", "provadingMemberIdTwo", federationTokenOne, true);
 		StorageLink storageLinkThree = new StorageLink("idThree", "sourceThree", "targetThree",
 				"deviceIdThree", "provadingMemberIdThree", federationTokenTwo, true);		
-		storageLinkRepository.addStorageLink(storageLinkOne.getFederationToken().getUser(), storageLinkOne);
-		storageLinkRepository.addStorageLink(storageLinkTwo.getFederationToken().getUser(), storageLinkTwo);
-		storageLinkRepository.addStorageLink(storageLinkThree.getFederationToken().getUser(), storageLinkThree);
+		storageLinkRepository.addStorageLink(storageLinkOne.getFederationToken().getUser().getId(), storageLinkOne);
+		storageLinkRepository.addStorageLink(storageLinkTwo.getFederationToken().getUser().getId(), storageLinkTwo);
+		storageLinkRepository.addStorageLink(storageLinkThree.getFederationToken().getUser().getId(), storageLinkThree);
 		this.storageLinkRepository.getAllStorageLinks();
 		
 		Assert.assertEquals(3, this.storageLinkRepository.getAllStorageLinks().size());
@@ -184,13 +184,13 @@ public class TestStorageLinkRepository {
 	@Test
 	public void testRemoveAllByInstance() {
 		String instanceId = "sourceOne";
-		Token federationTokenOne = new Token("accessIdOne", "userOne", new Date(), null);
+		Token federationTokenOne = new Token("accessIdOne", new Token.User("userOne", ""), new Date(), null);
 		StorageLink storageLinkOne = new StorageLink("idOne", instanceId, "targetOne",
 				"deviceIdOne", "provadingMemberIdOne", federationTokenOne, true);
 		StorageLink storageLinkTwo = new StorageLink("idTwo", instanceId, "targetTwo",
 				"deviceIdTwo", "provadingMemberIdTwo", federationTokenOne, true);	
-		storageLinkRepository.addStorageLink(storageLinkOne.getFederationToken().getUser(), storageLinkOne);
-		storageLinkRepository.addStorageLink(storageLinkTwo.getFederationToken().getUser(), storageLinkTwo);		
+		storageLinkRepository.addStorageLink(storageLinkOne.getFederationToken().getUser().getId(), storageLinkOne);
+		storageLinkRepository.addStorageLink(storageLinkTwo.getFederationToken().getUser().getId(), storageLinkTwo);		
 		this.storageLinkRepository.getAllStorageLinks();
 		Assert.assertEquals(2, this.storageLinkRepository.getAllStorageLinks().size());
 		

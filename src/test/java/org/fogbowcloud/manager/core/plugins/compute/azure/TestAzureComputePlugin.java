@@ -228,7 +228,7 @@ public class TestAzureComputePlugin {
 				createDefaultInstances(VM_DEFAULT_ID_1, VM_DEFAULT_ID_2));
 
 		plugin.getInstances(new Token(TOKEN_DEFAULT_ACCESS_ID,
-				TOKEN_DEFAULT_USERNAME, null, new HashMap<String, String>()));
+				new Token.User(TOKEN_DEFAULT_USERNAME, TOKEN_DEFAULT_USERNAME), null, new HashMap<String, String>()));
 	}
 
 	@Test
@@ -423,8 +423,8 @@ public class TestAzureComputePlugin {
 		}
 		attributes.put(AzureAttributes.SUBSCRIPTION_ID_KEY, "subscription_key");
 		attributes.put(AzureAttributes.KEYSTORE_PATH_KEY, "/path");
-		return new Token(TOKEN_DEFAULT_ACCESS_ID, TOKEN_DEFAULT_USERNAME, null,
-				attributes);
+		return new Token(TOKEN_DEFAULT_ACCESS_ID, new Token.User(TOKEN_DEFAULT_USERNAME, 
+				TOKEN_DEFAULT_USERNAME), null, attributes);
 	}
 
 	private void recordFlavors(AzureComputePlugin azureComputePlugin) {

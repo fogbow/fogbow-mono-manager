@@ -717,7 +717,7 @@ public class TestEC2ComputePlugin {
 	}
 	
 	private Token createToken() {
-		Token token = new Token("AccessKey:AccessSecret", "AccessKey", 
+		Token token = new Token("AccessKey:AccessSecret", new Token.User("AccessKey", "AccessKey"), 
 				new Date(), new HashMap<String, String>());
 		return token;
 	}

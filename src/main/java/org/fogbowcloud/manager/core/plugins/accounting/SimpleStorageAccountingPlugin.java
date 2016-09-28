@@ -54,8 +54,8 @@ public class SimpleStorageAccountingPlugin implements AccountingPlugin {
 			double consumptionInterval = ((double) TimeUnit.MILLISECONDS.toSeconds(now
 					- order.getFulfilledTime()) / 60);
 
-			String user = order.getFederationToken().getUser();
-			AccountingEntryKey current = new AccountingEntryKey(user,
+			String userId = order.getFederationToken().getUser().getId();
+			AccountingEntryKey current = new AccountingEntryKey(userId,
 					order.getRequestingMemberId(), order.getProvidingMemberId());
 
 			if (!usage.keySet().contains(current)) {

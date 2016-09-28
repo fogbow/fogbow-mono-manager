@@ -56,7 +56,7 @@ public class EC2IdentityPlugin implements IdentityPlugin {
 		attributes.put(CRED_ACCESS_KEY, accessKey);
 		attributes.put(CRED_SECRET_KEY, secretKey);
 		
-		return new Token(accessId, accessKey, 
+		return new Token(accessId, new Token.User(accessKey, accessKey), 
 				new Date(new Date().getTime() + EXPIRATION_INTERVAL), 
 				attributes);
 	}
