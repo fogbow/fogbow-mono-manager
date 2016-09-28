@@ -44,8 +44,8 @@ public class TestDeleteRemoteStorageLink {
 		xOCCIAtt.put(StorageAttribute.SOURCE.getValue(), source);
 		xOCCIAtt.put(StorageAttribute.DEVICE_ID.getValue(), deviceId);
 
-		Token federationToken = new Token("accessId", new Token.User(OCCITestHelper.USER_MOCK, ""),
-				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
+		Token federationToken = new Token("accessId", new Token.User(OCCITestHelper.USER_MOCK, 
+				OCCITestHelper.USER_MOCK), DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
 				new HashMap<String, String>());
 		
 		StorageLink storageLink = new StorageLink("id", source, target, deviceId);

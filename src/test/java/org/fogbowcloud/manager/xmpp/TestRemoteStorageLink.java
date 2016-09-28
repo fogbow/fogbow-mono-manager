@@ -52,14 +52,15 @@ public class TestRemoteStorageLink {
 						Mockito.any(Token.class), Mockito.any(List.class),
 						Mockito.eq(xOCCIAtt))).thenReturn(storageLinkIdExpected);
 
-		Token token = new Token("accessId", new Token.User(OCCITestHelper.USER_MOCK, ""),
-				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
+		Token token = new Token("accessId", new Token.User(OCCITestHelper.USER_MOCK, 
+				OCCITestHelper.USER_MOCK), DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
 				new HashMap<String, String>());
 		
 		StorageLink storageLink = new StorageLink("id", source, target, deviceId);
 				
-		String storageLinkId = ManagerPacketHelper.remoteStorageLink(storageLink, DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
-				token, managerTestHelper.createPacketSender());
+		String storageLinkId = ManagerPacketHelper.remoteStorageLink(storageLink, 
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, token,
+				managerTestHelper.createPacketSender());
 		
 		Assert.assertEquals(storageLinkIdExpected, storageLinkId);
 	}

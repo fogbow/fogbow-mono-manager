@@ -168,7 +168,7 @@ public class VomsIdentityPlugin implements IdentityPlugin {
 		return isValid(chain, checkPrivateKey);
 	}
 
-	protected String getUserNameInCertificate(X509Certificate x509Certificate) {
+	public static String getUserNameInCertificate(X509Certificate x509Certificate) {
 		try {
 			String issuerDn = x509Certificate.getIssuerDN().getName();
 			String[] slicesDn = issuerDn.split(",");
@@ -178,7 +178,9 @@ public class VomsIdentityPlugin implements IdentityPlugin {
 					return valueCn[1].trim();
 				}
 			}		
-		} catch (Exception e) {}
+		} catch (Exception e) {
+			LOGGER.warn("It is not possible get the CN.", e);
+		}
 		return null;
 	}
 	

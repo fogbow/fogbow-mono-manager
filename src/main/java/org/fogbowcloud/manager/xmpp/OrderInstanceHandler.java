@@ -40,12 +40,12 @@ public class OrderInstanceHandler extends AsyncQueryHandler {
 		
 		String orderId = queryEl.element("request").element("id").getText();
 
-		Element tokenEl = queryEl.element("token");
+		Element tokenEl = queryEl.element(ManagerPacketHelper.TOKEN_EL);
 		Token userToken = null;
 		if (tokenEl != null) {
-			Element userEl = tokenEl.element("user");
-			userToken = new Token(tokenEl.elementText("accessId"), new Token.User(userEl.elementText("id"), 
-					userEl.elementText("name")), null, new HashMap<String, String>());
+			Element userEl = tokenEl.element(ManagerPacketHelper.USER_EL);
+			userToken = new Token(tokenEl.elementText("accessId"), new Token.User(userEl.elementText(ManagerPacketHelper.ID_EL), 
+					userEl.elementText(ManagerPacketHelper.NAME_EL)), null, new HashMap<String, String>());
 		}
 		facade.queueServedOrder(iq.getFrom().toBareJID(), categories, xOCCIAtt, orderId,
 				userToken);

@@ -103,7 +103,6 @@ public class KeystoneIdentityPlugin implements IdentityPlugin {
 		}
 		
 		String responseStr = doPostRequest(currentTokenEndpoint, json);
-		LOGGER.debug("@ Json response: " + responseStr);
 		Token token = getTokenFromJson(responseStr);
 		
 		return token;
@@ -223,11 +222,9 @@ public class KeystoneIdentityPlugin implements IdentityPlugin {
 			String user = userJsonObject.getString(NAME_PROP);
 			String id = userJsonObject.getString(ID_PROP);
 
-			LOGGER.debug("json token: " + accessId);
-			LOGGER.debug("json user: " + user);
-			LOGGER.debug("json user id: " + id);
-			LOGGER.debug("json expirationDate: " + expirationDateToken);
-			LOGGER.debug("json attributes: " + tokenAtt);		
+			LOGGER.debug("json token: " + accessId + ", user name: " + user 
+					+ ", user id: " + id + ", expirationDate: " + expirationDateToken 
+					+ "json attributes: " + tokenAtt);
 			
 			return new Token(accessId, new Token.User(id, user), 
 					getDateFromOpenStackFormat(expirationDateToken), tokenAtt);

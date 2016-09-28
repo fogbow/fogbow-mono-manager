@@ -173,10 +173,10 @@ public class ManagerPacketHelper {
 		if (userFederationToken != null) {
 			Element tokenEl = queryEl.addElement(TOKEN_EL);
 			tokenEl.addElement(ACCESS_ID_EL).setText(userFederationToken.getAccessId());
-			Element UserElement = tokenEl.addElement(USER_EL);
-			UserElement.addElement(ID_EL).setText(
+			Element UserEl = tokenEl.addElement(USER_EL);
+			UserEl.addElement(ID_EL).setText(
 					userFederationToken.getUser().getId());
-			UserElement.addElement(NAME_EL).setText(
+			UserEl.addElement(NAME_EL).setText(
 					userFederationToken.getUser().getName());			
 		}
 
@@ -219,9 +219,10 @@ public class ManagerPacketHelper {
 		if (userFederationToken != null) {
 			Element tokenEl = queryEl.addElement(TOKEN_EL);
 			tokenEl.addElement(ACCESS_ID_EL).setText(userFederationToken.getAccessId());
-			tokenEl.addElement(USER_EL).addElement(ID_EL).setText(
+			Element userEl = tokenEl.addElement(USER_EL);
+			userEl.addElement(ID_EL).setText(
 					userFederationToken.getUser().getId());
-			tokenEl.addElement(USER_EL).addElement(NAME_EL).setText(
+			userEl.addElement(NAME_EL).setText(
 					userFederationToken.getUser().getName());		
 		}
 
@@ -312,9 +313,10 @@ public class ManagerPacketHelper {
 		if (userFederationToken != null) {
 			Element tokenEl = queryEl.addElement(TOKEN_EL);
 			tokenEl.addElement(ACCESS_ID_EL).setText(userFederationToken.getAccessId());
-			tokenEl.addElement(USER_EL).addElement(ID_EL).setText(
+			Element userEl = tokenEl.addElement(USER_EL);
+			userEl.addElement(ID_EL).setText(
 					userFederationToken.getUser().getId());
-			tokenEl.addElement(USER_EL).addElement(NAME_EL).setText(
+			userEl.addElement(NAME_EL).setText(
 					userFederationToken.getUser().getName());		
 		}
 		
@@ -484,8 +486,9 @@ public class ManagerPacketHelper {
 		Element queryEl = iq.getElement().addElement("query", ManagerXmppComponent.GETREMOTEUSERQUOTA_NAMESPACE);
 		Element tokenEl = queryEl.addElement(TOKEN_EL);
 		tokenEl.addElement(ACCESS_ID_EL).setText(token.getAccessId());
-		tokenEl.addElement(USER_EL).addElement(ID_EL).setText(token.getUser().getId());
-		tokenEl.addElement(USER_EL).addElement(NAME_EL).setText(token.getUser().getName());		
+		Element userEl = tokenEl.addElement(USER_EL);
+		userEl.addElement(ID_EL).setText(token.getUser().getId());
+		userEl.addElement(NAME_EL).setText(token.getUser().getName());		
 
 		IQ response = (IQ) packetSender.syncSendPacket(iq);
 		if (response.getError() != null) {

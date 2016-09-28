@@ -138,6 +138,10 @@ public class Token {
 		private String name;
 		
 		public User(String id, String name) {	
+			if (id == null || name == null) {
+				throw new IllegalArgumentException("User id (" + id + ") and "
+						+ "name (" + name + ") are not null.");
+			}
 			this.id = id;
 			this.name = name;
 		}

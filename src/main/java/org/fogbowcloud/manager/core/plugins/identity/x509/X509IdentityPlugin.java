@@ -23,6 +23,7 @@ import org.apache.log4j.Logger;
 import org.bouncycastle.util.io.pem.PemObject;
 import org.fogbowcloud.manager.core.plugins.CertificateUtils;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
+import org.fogbowcloud.manager.core.plugins.identity.voms.VomsIdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.util.Credential;
 import org.fogbowcloud.manager.occi.model.ErrorType;
 import org.fogbowcloud.manager.occi.model.OCCIException;
@@ -44,16 +45,18 @@ public class X509IdentityPlugin implements IdentityPlugin {
 	public Token createToken(Map<String, String> userCredentials) {
 		Collection<X509Certificate> certificateChain = generateCertificateChain(userCredentials);
 		String accessId = CertificateUtils.generateAccessId(certificateChain);
-		String user = null;
+		String userId = null;
+		String userNameCN = null;
 		Date expirationTime = null;
 		for (X509Certificate x509Certificate : certificateChain) {
 			expirationTime = x509Certificate.getNotAfter();
-			user = x509Certificate.getIssuerDN().getName();
+			userId = x509Certificate.getIssuerDN().getName();
+			userNameCN = VomsIdentityPlugin.getUserNameInCertificate(x509Certificate);
 			break;
 		}
 		
-		//TODO mudar o userId
-		return new Token(accessId, new Token.User(user, user), expirationTime, new HashMap<String, String>());
+		Token.User user = new Token.User(userId, userNameCN != null ? userNameCN : userId);
+		return new Token(accessId, user, expirationTime, new HashMap<String, String>());
 	}
 
 	private Collection<X509Certificate> generateCertificateChain(Map<String, String> userCredentials) {
@@ -98,11 +101,12 @@ public class X509IdentityPlugin implements IdentityPlugin {
 		}
 
 		X509Certificate x509Certificate = certificates.iterator().next();
-		String user = x509Certificate.getIssuerDN().getName();
+		String userId = x509Certificate.getIssuerDN().getName();
 		Date expirationTime = x509Certificate.getNotAfter();
+		String userNameCN = VomsIdentityPlugin.getUserNameInCertificate(x509Certificate);
 
-		//TODO mudar o userId
-		return new Token(accessId, new Token.User(user, user), expirationTime, new HashMap<String, String>());
+		Token.User user = new Token.User(userId, userNameCN != null ? userNameCN : userId);
+		return new Token(accessId, user, expirationTime, new HashMap<String, String>());
 	}
 
 	
