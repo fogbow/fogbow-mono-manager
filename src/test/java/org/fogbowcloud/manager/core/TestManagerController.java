@@ -114,6 +114,7 @@ public class TestManagerController {
 	public void testInitializeWithErrorDataStore() {
 		try {
 			Properties properties = new Properties();
+			// to force error with "/dev/null"
 			properties.put(ManagerDataStore.MANAGER_DATASTORE_URL, "/dev/null");
 			new ManagerController(properties);
 			Assert.fail();

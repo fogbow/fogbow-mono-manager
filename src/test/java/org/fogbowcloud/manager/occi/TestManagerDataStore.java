@@ -61,6 +61,7 @@ public class TestManagerDataStore {
 	public void testInitializeWithErrorDataStore() {
 		try {
 			Properties properties = new Properties();
+			// to force error with "/dev/null"
 			properties.put(ManagerDataStore.MANAGER_DATASTORE_URL, "/dev/null");
 			new ManagerDataStore(properties);
 			Assert.fail();

@@ -80,7 +80,7 @@ public class InstanceDataStore {
 
 		} catch (Exception e) {
 			LOGGER.error(ERROR_WHILE_INITIALIZING_THE_DATA_STORE, e);
-			throw new Error(ERROR_WHILE_INITIALIZING_THE_DATA_STORE);
+			throw new Error(ERROR_WHILE_INITIALIZING_THE_DATA_STORE, e);
 		} finally {
 			close(statement, connection);
 		}

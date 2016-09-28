@@ -50,6 +50,7 @@ public class TestInstanceDataStore {
 	public void testInitializeWithError() {
 		try {
 			Properties properties = new Properties();
+			// to force error with "/dev/null"
 			properties.put(ManagerDataStore.MANAGER_DATASTORE_URL, "/dev/null");
 			String urlImpossible = "/dev/null";
 			new InstanceDataStore(urlImpossible);

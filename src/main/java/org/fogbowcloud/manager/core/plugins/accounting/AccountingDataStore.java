@@ -18,7 +18,6 @@ import org.fogbowcloud.manager.occi.DataStoreHelper;
 public class AccountingDataStore {
 
 	public static final String ACCOUNTING_DATASTORE_URL = "accounting_datastore_url";
-	public static final String ACCOUNTING_DATASTORE_URL_DEFAULT = "jdbc:sqlite:/tmp/usage";
 	public static final String ACCOUNTING_DATASTORE_SQLITE_DRIVER = "org.sqlite.JDBC";
 	
 	protected static final String USAGE_TABLE_NAME = "usage";
@@ -35,8 +34,7 @@ public class AccountingDataStore {
 	public static final Logger LOGGER = Logger.getLogger(AccountingDataStore.class);
 	
 	public AccountingDataStore(Properties properties) {		
-		String dataStoreURLProperties = properties.getProperty(ACCOUNTING_DATASTORE_URL,
-				ACCOUNTING_DATASTORE_URL_DEFAULT);
+		String dataStoreURLProperties = properties.getProperty(ACCOUNTING_DATASTORE_URL);
 		this.dataStoreURL = DataStoreHelper.getDataStoreUrl(dataStoreURLProperties,
 				DEFAULT_DATASTORE_NAME);
 
@@ -60,7 +58,7 @@ public class AccountingDataStore {
 			statement.close();
 		} catch (Exception e) {
 			LOGGER.error(ERROR_WHILE_INITIALIZING_THE_DATA_STORE, e);
-			throw new Error(ERROR_WHILE_INITIALIZING_THE_DATA_STORE);
+			throw new Error(ERROR_WHILE_INITIALIZING_THE_DATA_STORE, e);
 		} finally {
 			close(statement, connection);
 		}

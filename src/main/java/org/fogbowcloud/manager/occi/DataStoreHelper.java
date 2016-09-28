@@ -10,6 +10,10 @@ public class DataStoreHelper {
 	protected static final String DATASTORES_TEST_FOLDER = "/datastores_test";
 	protected static final String PREFIX_DATASTORE_URL = "jdbc:sqlite:";
 
+	/**
+	 * @param dataStoreUrl coming from manager properties.
+	 * @param dataStoreName coming from each DataStore class.
+	 */
 	public static String getDataStoreUrl(String dataStoreUrl, String dataStoreName) {
 		if (dataStoreUrl == null || dataStoreUrl.isEmpty()) {
 			String pathFolderDatastores = getPathFolderDataStoresFogbowManager();
@@ -23,6 +27,11 @@ public class DataStoreHelper {
 		return dataStoreUrl;
 	}
 
+	/**
+	 * DataStoreHelper.dataStoreFolderExecution is only determined in the Main.class.
+	 * For main execution will used folder DATASTORES_FOLDER.
+	 * For tests will used the folder DATASTORES_TEST_FOLDER.
+	 */
 	protected static String getPathFolderDataStoresFogbowManager() {
 		String pathFogbowManager = System.getProperty("user.dir");
 		String dataStoreFolderExecution = DATASTORES_TEST_FOLDER;
