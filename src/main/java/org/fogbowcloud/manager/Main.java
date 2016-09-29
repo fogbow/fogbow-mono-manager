@@ -1,5 +1,6 @@
 package org.fogbowcloud.manager;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.util.Properties;
 
@@ -58,6 +59,24 @@ public class Main {
 		FileInputStream input = new FileInputStream(args[0]);
 		properties.load(input);
 		ResourceRepository.init(properties);
+		
+		String infraConfFilePath = properties.getProperty(ConfigurationConstants.INFRA_CONF_FILE);
+		String fedConfFilePath = properties.getProperty(ConfigurationConstants.FEDERATION_CONF_FILE);
+		
+		if((new File(infraConfFilePath)).exists()){
+			Properties infraProperties = new Properties();
+			FileInputStream infraInput = new FileInputStream(infraConfFilePath);
+			infraProperties.load(infraInput);
+			properties.putAll(infraProperties);
+
+		}
+
+		if((new File(fedConfFilePath)).exists()){
+			Properties fedProperties = new Properties();
+			FileInputStream fedInput = new FileInputStream(fedConfFilePath);
+			fedProperties.load(fedInput);
+			properties.putAll(fedProperties);
+		}
 		
 		ComputePlugin computePlugin = null;
 		try {

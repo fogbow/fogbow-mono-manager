@@ -2,6 +2,9 @@ package org.fogbowcloud.manager.core;
 
 public class ConfigurationConstants {
 
+	public static final String INFRA_CONF_FILE = "infrastructure_conf_file";  
+	public static final String FEDERATION_CONF_FILE = "federation_conf_file";
+	
 	// xmpp
 	public static final String XMPP_JID_KEY = "xmpp_jid";
 	public static final String XMPP_PASS_KEY = "xmpp_password";
