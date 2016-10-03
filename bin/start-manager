@@ -7,4 +7,4 @@ CONF_LOG=-Dlog4j.configuration=file:$LOG4J
 else
 CONF_LOG=
 fi
-java $CONF_LOG -cp target/manager-0.0.1-SNAPSHOT.jar:target/lib/* org.fogbowcloud.manager.Main manager.conf > /dev/null &
+java $CONF_LOG -cp target/manager-0.0.1-SNAPSHOT.jar:target/lib/* org.fogbowcloud.manager.Main manager.conf infrastructure.conf federation.conf > /dev/null &

@@ -1,0 +1,50 @@
+xmpp_jid=$manager.internal.mydomain
+xmpp_password=$xmpp_pass
+xmpp_host=$xmpp_address
+xmpp_port=$xmpp_port
+
+rendezvous_jid=$my-rendezvous.internal.mydomain
+
+# Federation Identity plugin class
+federation_identity_class=org.fogbowcloud.manager.core.plugins.openstack.KeystoneIdentityPlugin
+# Federation Identity endpoint
+federation_identity_url=http://$address:$keystone_port
+
+# Proxy account for remote requests @ the local identity provider
+local_proxy_account_user_name=$user_name
+# Password of such account
+local_proxy_account_password=$password
+# Tenant of such account
+local_proxy_account_tenant_name=$tenant_name
+
+## Authorization Plugin
+federation_authorization_class=org.fogbowcloud.manager.core.plugins.authorization.AllowAllAuthorizationPlugin
+
+## Member Validator
+member_validator_class=org.fogbowcloud.manager.core.plugins.memberauthorization.DefaultMemberAuthorizationPlugin
+member_validator_ca_dir=
+
+## Member Picker Plugin (Round Robin)
+member_picker_class=org.fogbowcloud.manager.core.plugins.memberpicker.RoundRobinMemberPickerPlugin
+
+## Member Picker Plugin (Nof Member Picker)
+# member_picker_class=org.fogbowcloud.manager.core.plugins.memberpicker.NoFMemberPickerPlugin
+			
+## If you are using NoFMemberPicker or NoFPrioritizationPlugin classes (NOF)
+nof_trustworthy=false
+
+## Local Prioritization Plugin
+local_prioritization_plugin_class=org.fogbowcloud.manager.core.plugins.prioritization.fcfs.FCFSPrioritizationPlugin
+## Remote Prioritization Plugin
+remote_prioritization_plugin_class=org.fogbowcloud.manager.core.plugins.prioritization.nof.NoFPrioritizationPlugin
+nof_prioritize_local=true
+
+## Storage accounting plugin (Funcionalidade de Accounting)
+storage_accounting_class=org.fogbowcloud.manager.core.plugins.accounting.SimpleStorageAccountingPlugin
+simple_storage_accounting_datastore_url=jdbc:h2:$path_to_storage_accounting_db
+
+## Accounting Plugin
+## Compute accounting plugin
+accounting_class=org.fogbowcloud.manager.core.plugins.accounting.FCUAccountingPlugin
+accounting_update_period=300000
+fcu_accounting_datastore_url=jdbc:h2:$path_to_compute_accounting_db

@@ -1,0 +1,50 @@
+## Image Storage Plugin (HTTPDownload)
+image_storage_class=org.fogbowcloud.manager.core.plugins.imagestorage.http.HTTPDownloadImageStoragePlugin
+image_storage_http_tmp_storage=$path_to_tmp
+image_storage_http_base_url=http://$image_store_address
+image_storage_http_accepted_formats=qcow2,raw,vmdk
+image_storage_http_conversion_output_format=$format
+
+## Compute Plugin
+compute_class=org.fogbowcloud.manager.core.plugins.compute.openstack.OpenStackNovaV2ComputePlugin
+compute_novav2_url=http://$address:$nova_port
+compute_glancev2_url=http://$address:$glance_port
+compute_glancev2_image_visibility=private
+compute_novav2_network_id=$network_id
+
+## Network Plugin
+network_class=org.fogbowcloud.manager.core.plugins.network.openstack.OpenStackV2NetworkPlugin
+network_openstack_v2_url=http://$address:$neutron_port
+external_gateway_info=$gateway_id
+
+## Storage Plugin
+storage_class=org.fogbowcloud.manager.core.plugins.storage.openstack.OpenStackV2StoragePlugin
+storage_v2_url=http://$address:$storage_port
+
+## Local Identity
+local_identity_class=org.fogbowcloud.manager.core.plugins.identity.openstack.KeystoneIdentityPlugin
+local_identity_url=http://$address:$keystone_port
+
+## Local Credentials
+federation_user_credentail_class=org.fogbowcloud.manager.core.plugins.localcredentails.SingleMapperPlugin
+
+## Mapper Plugin / Local credentials to be used when we miss information about a given user
+mapper_defaults_username=$user_name
+mapper_defaults_password=$user_pass
+mapper_defaults_tenantname=$tenant_name
+
+## Federation Identity
+federation_identity_class=org.fogbowcloud.manager.core.plugins.identity.openstack.KeystoneIdentityPlugin
+federation_identity_url=http://$address:$keystone_port				
+
+## Local Credentials
+federation_user_credentail_class=org.fogbowcloud.manager.core.plugins.localcredentails.SingleMapperPlugin
+
+## Static mapping between local image ids and image names
+## Applies to all image storage plugins
+image_storage_static_fogbow-ubuntu=$image_id
+
+## Static mapping from flavors to requirements (Optional)
+#flavor_fogbow_small={mem=512, cpu=1}
+#flavor_fogbow_medium={mem=1024, cpu=2}
+#flavor_fogbow_large={mem=2048, cpu=4}

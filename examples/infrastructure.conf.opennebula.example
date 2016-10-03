@@ -1,0 +1,55 @@
+## Image Storage Plugin (HTTPDownload)
+image_storage_class=org.fogbowcloud.manager.core.plugins.imagestorage.http.HTTPDownloadImageStoragePlugin
+image_storage_http_tmp_storage=$path_to_tmp
+image_storage_http_base_url=http://$image_store_address
+image_storage_http_accepted_formats=qcow2,raw,vmdk
+image_storage_http_conversion_output_format=$format
+
+## Compute Plugin
+compute_class=org.fogbowcloud.manager.core.plugins.compute.opennebula.OpenNebulaComputePlugin 
+compute_one_url=http://$address:$port/RPC2
+compute_one_network_id=$network_id
+compute_one_datastore_id=$datastore_id
+# Below properties allow the FM to copy download VM images to OpenNebula controller machine
+# (this is to be used when the FM and the OpenNebula controller run in different machines).
+#compute_one_ssh_host=$address
+#compute_one_ssh_port=$ssh_port
+#compute_one_ssh_username=$user_name
+#compute_one_ssh_key_file=$path_to_rsa_key
+#compute_one_ssh_target_temp_folder=$path_to_images
+
+# Network plugin
+network_class=org.fogbowcloud.manager.core.plugins.network.opennebula.OpenNebulaNetworkPlugin
+network_one_bridge=$bridge_id
+
+## Storage Plugin
+storage_class=org.fogbowcloud.manager.core.plugins.storage.opennebula.OpenNebulaStoragePlugin
+## Default device prefix to use when attaching volumes, values: hd (IDE), sd (SCSI), vd (KVM), vxd (XEN)
+storage_one_datastore_default_device_prefix=$prefix
+
+## Local Identity
+local_identity_class=org.fogbowcloud.manager.core.plugins.identity.opennebula.OpenNebulaIdentityPlugin
+local_identity_url=http://$address:$port/RPC2
+
+## Local Credentials
+federation_user_credentail_class=org.fogbowcloud.manager.core.plugins.localcredentails.SingleMapperPlugin
+
+# Mapper Plugin / Local credentials
+mapper_defaults_username=$user_name
+mapper_defaults_password=$user_pass
+
+## Federation Identity
+federation_identity_class=org.fogbowcloud.manager.core.plugins.opennebula.OpenNebulaIdentityPlugin
+federation_identity_url=http://$address:$port/RPC2				
+
+## Local Credentials
+federation_user_credentail_class=org.fogbowcloud.manager.core.plugins.localcredentails.SingleMapperPlugin
+
+## Static mapping between local image ids and image names
+## Applies to all image storage plugins
+image_storage_static_fogbow-ubuntu=$image_id
+
+## Static mapping from flavors to requirements (Optional)
+#flavor_fogbow_small={mem=512, cpu=1}
+#flavor_fogbow_medium={mem=1024, cpu=2}
+#flavor_fogbow_large={mem=2048, cpu=4}

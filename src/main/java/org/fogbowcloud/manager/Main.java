@@ -1,5 +1,6 @@
 package org.fogbowcloud.manager;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.util.Properties;
 
@@ -56,11 +57,44 @@ public class Main {
 		configureLog4j();
 
 		Properties properties = new Properties();
-		FileInputStream input = new FileInputStream(args[0]);
-		// folder name default to datastores
-		DataStoreHelper.setDataStoreFolderExecution(DataStoreHelper.DATASTORES_FOLDER);
+
+		String managerConfgFilePath = args[0];
+		String infrastructureConfgFilePath = args[1];
+		String federationConfgFilePath = args[2];
+		
+		File managerConfigFile = new File(managerConfgFilePath);
+		File infrastructureConfgFile = new File(infrastructureConfgFilePath);
+		File federationConfgFile = new File(federationConfgFilePath);
+		
+		if(!managerConfigFile.exists()){
+			LOGGER.warn("Informed path to manager.conf file must be valid.");
+			System.exit(EXIT_ERROR_CODE);
+		}
+		if(!infrastructureConfgFile.exists()){
+			LOGGER.warn("Informed path to infrastructure.conf file must be valid.");
+			System.exit(EXIT_ERROR_CODE);
+		}
+		if(!federationConfgFile.exists()){
+			LOGGER.warn("Informed path to federation.conf file must be valid.");
+			System.exit(EXIT_ERROR_CODE);
+		}
+		
+		FileInputStream input = new FileInputStream(managerConfigFile);
 		properties.load(input);
 		ResourceRepository.init(properties);
+		
+		Properties infraProperties = new Properties();
+		FileInputStream infraInput = new FileInputStream(infrastructureConfgFile);
+		infraProperties.load(infraInput);
+		properties.putAll(infraProperties);
+
+		Properties fedProperties = new Properties();
+		FileInputStream fedInput = new FileInputStream(federationConfgFile);
+		fedProperties.load(fedInput);
+		properties.putAll(fedProperties);
+		
+		//folder name default to datastores
+		DataStoreHelper.setDataStoreFolderExecution(DataStoreHelper.DATASTORES_FOLDER);
 		
 		ComputePlugin computePlugin = null;
 		try {
