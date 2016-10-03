@@ -17,7 +17,6 @@ import org.fogbowcloud.manager.core.RequirementsHelper;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.occi.OCCIApplication;
 import org.fogbowcloud.manager.occi.OCCIConstants;
-import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.instance.Instance.Link;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.ErrorType;
@@ -29,11 +28,11 @@ import org.fogbowcloud.manager.occi.model.ResourceRepository;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.fogbowcloud.manager.occi.network.FedNetworkState;
 import org.fogbowcloud.manager.occi.network.NetworkDataStore;
+import org.restlet.data.Header;
 import org.restlet.data.MediaType;
 import org.restlet.data.Status;
 import org.restlet.engine.adapter.HttpRequest;
 import org.restlet.engine.adapter.ServerCall;
-import org.restlet.data.Header;
 import org.restlet.representation.StringRepresentation;
 import org.restlet.resource.Delete;
 import org.restlet.resource.Get;
@@ -224,7 +223,7 @@ public class OrderServerResource extends ServerResource {
 			}
 		}
 		
-		for (String attributeName : OCCIConstants.getValues()) {
+		for (String attributeName : OCCIConstants.getOCCIValues()) {
 			if (order.getAttValue(attributeName) == null){
 				attToOutput.put(attributeName, "Not defined");	
 			} else {

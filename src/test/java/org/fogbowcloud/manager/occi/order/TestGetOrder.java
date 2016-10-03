@@ -563,7 +563,7 @@ public class TestGetOrder {
 		Assert.assertEquals("\"" + networkGateway + "\"", OCCITestHelper
 				.getOCCIAttByBodyString(responseStr, OCCIConstants.NETWORK_GATEWAY));
 		
-		for(String attrib : OCCIConstants.getValues()){
+		for(String attrib : OCCIConstants.getOCCIValues()){
 			if(!OCCIConstants.NETWORK_ADDRESS.equals(attrib) && !OCCIConstants.NETWORK_GATEWAY.equals(attrib)){
 				Assert.assertEquals("\"Not defined\"", OCCITestHelper.getOCCIAttByBodyString(responseStr, attrib));
 			}
