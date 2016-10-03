@@ -454,7 +454,7 @@ public class TestManagerController {
 				if (queryEl == null) {
 					return false;
 				}
-				String orderId = queryEl.element("request").elementText("id");
+				String orderId = queryEl.element(ManagerPacketHelper.ORDER_EL).elementText("id");
 				String accessId = queryEl.element("token").elementText("accessId");			
 				
 				if (orderId.equals(orderId) 
@@ -643,7 +643,7 @@ public class TestManagerController {
 				if (queryEl == null) {
 					return false;
 				}
-				String orderId = queryEl.element("request").elementText("id");
+				String orderId = queryEl.element(ManagerPacketHelper.ORDER_EL).elementText("id");
 				String accessId = queryEl.element("token").elementText("accessId");			
 				
 				if (orderId.equals(orderId) 

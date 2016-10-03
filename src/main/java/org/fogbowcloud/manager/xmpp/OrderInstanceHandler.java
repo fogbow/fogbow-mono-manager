@@ -38,7 +38,8 @@ public class OrderInstanceHandler extends AsyncQueryHandler {
 			xOCCIAtt.put(attributeEl.attributeValue("var"), attributeEl.element("value").getText());
 		}	
 		
-		String orderId = queryEl.element("request").element("id").getText();
+		String orderId = queryEl.element(ManagerPacketHelper.ORDER_EL)
+				.element("id").getText();
 
 		Element tokenEl = queryEl.element(ManagerPacketHelper.TOKEN_EL);
 		Token userToken = null;

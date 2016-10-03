@@ -223,7 +223,7 @@ public class OrderServerResource extends ServerResource {
 			}
 		}
 		
-		for (String attributeName : OCCIConstants.getValues()) {
+		for (String attributeName : OCCIConstants.getOCCIValues()) {
 			if (order.getAttValue(attributeName) == null){
 				attToOutput.put(attributeName, "Not defined");	
 			} else {

@@ -15,13 +15,13 @@ public class ManagerXmppComponent extends XMPPComponent implements AsyncPacketSe
 
 	public static final String WHOISALIVE_NAMESPACE = "http://fogbowcloud.org/rendezvous/whoisalive";
 	public static final String IAMALIVE_NAMESPACE = "http://fogbowcloud.org/rendezvous/iamalive";
-	public static final String ORDER_NAMESPACE = "http://fogbowcloud.org/manager/request";
+	public static final String ORDER_NAMESPACE = "http://fogbowcloud.org/manager/order";
 	public static final String STORAGE_LINK_NAMESPACE = "http://fogbowcloud.org/manager/storagelink";
 	public static final String GETINSTANCE_NAMESPACE = "http://fogbowcloud.org/manager/getinstance";
 	public static final String REMOVEINSTANCE_NAMESPACE = "http://fogbowcloud.org/manager/removeinstance";
 	public static final String REMOVESTORAGELINK_NAMESPACE = "http://fogbowcloud.org/manager/removestoragelink";
 	public static final String INSTANCEBEINGUSED_NAMESPACE = "http://fogbowcloud.org/manager/instancebeingused";
-	public static final String REMOVEORDER_NAMESPACE = "http://fogbowcloud.org/manager/removerequest";
+	public static final String REMOVEORDER_NAMESPACE = "http://fogbowcloud.org/manager/removeorder";
 	public static final String GETREMOTEUSERQUOTA_NAMESPACE = "http://fogbowcloud.org/manager/getremoteuserquota";
 
 	private static long PERIOD = 30000;

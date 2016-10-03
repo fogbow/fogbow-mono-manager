@@ -55,14 +55,18 @@ public class OCCIConstants {
 		}
 	}
 	
-	public static List<String> getValues() {	
+	public static List<String> getOCCIValues() {	
 		List<String> values = new ArrayList<String>();		
 		
 		Field[] fields = OCCIConstants.class.getDeclaredFields();
 	    for(Field f: fields) {
 	    	f.setAccessible(true);
 	    	try {
-	    		values.add((String) f.get(null));
+	    		String attribute = (String) f.get(null);
+	    		if (!attribute.startsWith("occi.")) {
+	    			continue;
+	    		}
+	    		values.add(attribute);	    			
 	    	} catch (Exception e) {
 	    		continue;
 	    	}

@@ -412,7 +412,7 @@ public class OCCITestHelper {
 		while (sc.hasNextLine() && notFound) {
 			String line = sc.nextLine().trim();
 			if (line.contains(OCCIHeaders.X_OCCI_ATTRIBUTE) && line.contains(attribute)) {
-				String[] tokens = line.split(attribute+"=");
+				String[] tokens = line.split(attribute + "=");
 				attValue = tokens.length > 1 ? tokens[1] : null;
 				notFound = true;
 			}
@@ -422,14 +422,16 @@ public class OCCITestHelper {
 		return attValue;
 	}
 	
-	public static String getOCCIAttByBodyString(String responseBody, String attribute) throws ParseException, IOException {
+	public static String getOCCIAttByBodyString(String responseBody, String attribute) 
+			throws ParseException, IOException {
 		String attValue = null;
 		Scanner sc = new Scanner(responseBody);
 		boolean notFound = true;
 		while (sc.hasNextLine() && notFound) {
 			String line = sc.nextLine().trim();
-			if (line.contains(OCCIHeaders.X_OCCI_ATTRIBUTE) && line.contains(attribute)) {
-				String[] tokens = line.split(attribute+"=");
+			String attributeToSplit = attribute + "=";
+			if (line.contains(OCCIHeaders.X_OCCI_ATTRIBUTE) && line.contains(attribute)) {				
+				String[] tokens = line.split(attributeToSplit);
 				attValue = tokens.length > 1 ? tokens[1] : null;
 				notFound = true;
 			}
