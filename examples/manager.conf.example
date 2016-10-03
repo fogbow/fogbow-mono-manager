@@ -1,6 +1,3 @@
-#################################### CONFIGURAÇÕES RELATIVAS A EXECUÇÃO DO FOGBOW MANAGER ####################################
-#
-
 ## Manager databases
 manager_datastore_url=jdbc:sqlite:$path_to_manager_db
 instance_datastore_url=jdbc:sqlite:$path_to_instances_db
@@ -23,7 +20,3 @@ http_port=$manager_port
 benchmarking_class=org.fogbowcloud.manager.core.plugins.benchmarking.VanillaBenchmarkingPlugin
 # Benchmarking script to use with SSH Benchmarking plugin
 ssh_benchmarking_script_url=http://downloads.fogbowcloud.org/benchmark/script_ssh_benchmarking.sh
-
-## Other properties files
-infrastructure_conf_file=infrastructure.conf
-federation_conf_file=federation.conf

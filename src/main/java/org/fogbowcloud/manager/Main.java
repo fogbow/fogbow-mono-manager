@@ -56,27 +56,41 @@ public class Main {
 		configureLog4j();
 
 		Properties properties = new Properties();
-		FileInputStream input = new FileInputStream(args[0]);
+		
+		String managerConfgFilePath = args[0];
+		String infrastructureConfgFilePath = args[1];
+		String federationConfgFilePath = args[2];
+		
+		File managerConfigFile = new File(managerConfgFilePath);
+		File infrastructureConfgFile = new File(infrastructureConfgFilePath);
+		File federationConfgFile = new File(federationConfgFilePath);
+		
+		if(!managerConfigFile.exists()){
+			LOGGER.warn("Informed path to manager.conf file must be valid.");
+			System.exit(EXIT_ERROR_CODE);
+		}
+		if(!infrastructureConfgFile.exists()){
+			LOGGER.warn("Informed path to infrastructure.conf file must be valid.");
+			System.exit(EXIT_ERROR_CODE);
+		}
+		if(!federationConfgFile.exists()){
+			LOGGER.warn("Informed path to federation.conf file must be valid.");
+			System.exit(EXIT_ERROR_CODE);
+		}
+		
+		FileInputStream input = new FileInputStream(managerConfigFile);
 		properties.load(input);
 		ResourceRepository.init(properties);
 		
-		String infraConfFilePath = properties.getProperty(ConfigurationConstants.INFRA_CONF_FILE);
-		String fedConfFilePath = properties.getProperty(ConfigurationConstants.FEDERATION_CONF_FILE);
-		
-		if((new File(infraConfFilePath)).exists()){
-			Properties infraProperties = new Properties();
-			FileInputStream infraInput = new FileInputStream(infraConfFilePath);
-			infraProperties.load(infraInput);
-			properties.putAll(infraProperties);
+		Properties infraProperties = new Properties();
+		FileInputStream infraInput = new FileInputStream(infrastructureConfgFile);
+		infraProperties.load(infraInput);
+		properties.putAll(infraProperties);
 
-		}
-
-		if((new File(fedConfFilePath)).exists()){
-			Properties fedProperties = new Properties();
-			FileInputStream fedInput = new FileInputStream(fedConfFilePath);
-			fedProperties.load(fedInput);
-			properties.putAll(fedProperties);
-		}
+		Properties fedProperties = new Properties();
+		FileInputStream fedInput = new FileInputStream(federationConfgFile);
+		fedProperties.load(fedInput);
+		properties.putAll(fedProperties);
 		
 		ComputePlugin computePlugin = null;
 		try {
