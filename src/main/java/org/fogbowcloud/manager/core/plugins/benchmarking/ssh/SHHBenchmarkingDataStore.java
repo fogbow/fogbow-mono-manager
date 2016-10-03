@@ -36,8 +36,8 @@ public class SHHBenchmarkingDataStore {
 		Statement statement = null;
 		Connection connection = null;
 		try {
-			LOGGER.debug("DatastoreURL: " + dataStoreURL);
-			LOGGER.debug("DatastoreDriver: " + MANAGER_DATASTORE_SQLITE_DRIVER);
+			LOGGER.debug("DatastoreURL: " + dataStoreURL 
+					+ " | DatastoreDriver: " + MANAGER_DATASTORE_SQLITE_DRIVER);
 
 			Class.forName(MANAGER_DATASTORE_SQLITE_DRIVER);
 

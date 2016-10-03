@@ -108,9 +108,8 @@ public class SSHBenchmarkingPlugin implements BenchmarkingPlugin {
 	@Override
 	public double getPower(String globalInstanceId) {
 		Double instanceToPower = this.dataStore.getPower(globalInstanceId);
-		LOGGER.debug("Getting power of instance " + globalInstanceId);
-		LOGGER.debug("Current instanceToPower=" + globalInstanceId + " - " 
-				+ instanceToPower);
+		LOGGER.debug("Getting power of instance " + globalInstanceId + " | " 
+				+ "Current instanceToPower=" + globalInstanceId + " - " + instanceToPower);
 		if (instanceToPower == null) {
 			return UNDEFINED_POWER;
 		}
