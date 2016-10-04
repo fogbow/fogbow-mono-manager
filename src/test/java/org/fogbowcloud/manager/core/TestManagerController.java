@@ -4618,4 +4618,36 @@ public class TestManagerController {
 		Assert.assertFalse(this.managerController.isThereEnoughQuota(requestingMemberId));
 	}
 	
+	@SuppressWarnings("unchecked")
+	@Test
+	public void testGetMaxCapacityDefaultUser() {
+		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
+		Token token = null;
+		Mockito.when(identityPlugin.createToken(Mockito.anyMap())).thenReturn(token);
+		this.managerController.setLocalIdentityPlugin(identityPlugin);
+		
+		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
+		int instancesIdle = 3;
+		int instancesInUse = 7;
+		ResourcesInfo resourceInfo = new ResourcesInfo("0", "0", "0", "0", 
+				String.valueOf(instancesIdle), String.valueOf(instancesInUse));
+		Mockito.when(computePlugin.getResourcesInfo(token)).thenReturn(resourceInfo);
+		this.managerController.setComputePlugin(computePlugin);
+		int maxCapacityDefaultUser = this.managerController.getMaxCapacityDefaultUser();
+		
+		Assert.assertEquals(instancesIdle + instancesInUse, maxCapacityDefaultUser);
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Test
+	public void testGetMaxCapacityDefaultUserWithException() {
+		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
+		Mockito.when(identityPlugin.createToken(Mockito.anyMap())).thenThrow(
+				new OCCIException(ErrorType.BAD_REQUEST, ""));
+		this.managerController.setLocalIdentityPlugin(identityPlugin);
+		int maxCapacityDefaultUser = this.managerController.getMaxCapacityDefaultUser();
+		
+		Assert.assertEquals(CapacityControllerPlugin.MAXIMUM_CAPACITY_VALUE_ERROR, maxCapacityDefaultUser);
+	}
+	
 }

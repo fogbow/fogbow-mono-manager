@@ -374,7 +374,7 @@ public class ManagerController {
 				try {
 					updateVirtualQuotas();					
 				} catch (Throwable e) {
-					LOGGER.error("Erro while updating accounting", e);
+					LOGGER.error("Erro while updating virtual quotas.", e);
 				}
 			}
 		}, 0, capacityControllerUpdaterPeriod);
@@ -382,27 +382,35 @@ public class ManagerController {
 	
 	private void updateVirtualQuotas() {
 		LOGGER.debug("Updating virtual quotas (capacity controller plugin).");
-		for(FederationMember member : new ArrayList<FederationMember>(members)) {
+		for(FederationMember member : new ArrayList<FederationMember>(this.members)) {
 			if(!(member.getId().equals(properties.getProperty(ConfigurationConstants.XMPP_JID_KEY)))){				
-				this.capacityControllerPlugin.setMaximumCapacity(getMaxCapacityDefaultUser());				
-				this.capacityControllerPlugin.updateCapacity(member);
+				int maxCapacity = getMaxCapacityDefaultUser();				
+				this.capacityControllerPlugin.updateCapacity(member, maxCapacity);
 				LOGGER.debug("Member: " + member.getId() + "Quota: "
 						+ this.capacityControllerPlugin.getMaxCapacityToSupply(member));
 			}
 		}
 	}
 
-	private int getMaxCapacityDefaultUser() {
-		// Get default user's token
-		SingleMapperPlugin singleMapperPlugin = new SingleMapperPlugin(this.properties);
-		Order emptyOrder = null;
-		Token token = this.localIdentityPlugin.createToken(
-				singleMapperPlugin.getLocalCredentials(emptyOrder));
-		
-		ResourcesInfo resourcesInfo = this.computePlugin.getResourcesInfo(token);
-		int maxCapacity = Integer.valueOf(resourcesInfo.getInstancesInUse()) 
-				+ Integer.valueOf(resourcesInfo.getCpuIdle());
-		return maxCapacity;
+	protected int getMaxCapacityDefaultUser() {
+		try {
+			SingleMapperPlugin singleMapperPlugin = new SingleMapperPlugin(this.properties);
+			Order emptyOrder = null;
+			Map<String, String> defaultUserLocalCredentials = singleMapperPlugin
+					.getLocalCredentials(emptyOrder);
+			// Get default user's token
+			Token token = this.localIdentityPlugin.createToken(
+					defaultUserLocalCredentials);
+			
+			ResourcesInfo resourcesInfo = this.computePlugin.getResourcesInfo(token);
+			int maxCapacity = Integer.valueOf(resourcesInfo.getInstancesInUse()) 
+					+ Integer.valueOf(resourcesInfo.getInstancesIdle());
+			
+			return maxCapacity;			
+		} catch (Exception e) {
+			LOGGER.warn("Could not possible get maximum capacity.", e);
+			return CapacityControllerPlugin.MAXIMUM_CAPACITY_VALUE_ERROR;
+		}
 	}
 
 	public void setAuthorizationPlugin(AuthorizationPlugin authorizationPlugin) {

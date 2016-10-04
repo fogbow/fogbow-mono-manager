@@ -8,15 +8,13 @@ import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.accounting.AccountingInfo;
 
+//TODO review all class
 public class GlobalFairnessDrivenController extends FairnessDrivenCapacityController{
 	
-	private long lastUpdated;	
 	private HillClimbingAlgorithm hillClimbingController;
-	private double maxCapacity;
 	
 	public GlobalFairnessDrivenController(Properties properties, AccountingPlugin accountingPlugin) {
 		super(properties, accountingPlugin);
-		this.lastUpdated = -1;		
 		
 		double deltaC, minimumThreshold, maximumThreshold;
 		deltaC = Double.parseDouble(properties.getProperty(CONTROLLER_DELTA));
@@ -29,19 +27,17 @@ public class GlobalFairnessDrivenController extends FairnessDrivenCapacityContro
 		return this.hillClimbingController.getMaximumCapacityToSupply();	
 	}
 	
-	public void updateCapacity(FederationMember member) {
-		if (this.lastUpdated != this.dateUtils.currentTimeMillis()) {
-			//time is different, then we must compute the new maxCapacity
-			this.lastUpdated = this.dateUtils.currentTimeMillis();
-			updateFairness();
-			this.hillClimbingController.updateCapacity(this.maxCapacity);
-		}	
+	public void updateCapacity(FederationMember member, double maximumCapacity) {
+		maximumCapacity = normalizeMaximumCapacity(maximumCapacity);
+		updateFairness();
+		this.hillClimbingController.updateCapacity(maximumCapacity);
 	}
 	
 	protected void updateFairness() {
 		this.hillClimbingController.setLastFairness(
 				this.hillClimbingController.getCurrentFairness());
-		double currentConsumed = 0, currentDonated = 0;
+		double currentConsumed = 0;
+		double currentDonated = 0;
 		List<AccountingInfo> accountingList = accountingPlugin.getAccountingInfo();
 		for(AccountingInfo accountingInfo : accountingList){
 			if (accountingInfo.getProvidingMember().equals(properties
@@ -63,11 +59,6 @@ public class GlobalFairnessDrivenController extends FairnessDrivenCapacityContro
 	@Override
 	public double getLastFairness(FederationMember member) {
 		return hillClimbingController.getLastFairness();
-	}
-
-	@Override
-	public void setMaximumCapacity(double maxCapacity) {
-		this.maxCapacity = maxCapacity;
 	}
 
 }

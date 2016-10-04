@@ -9,12 +9,13 @@ import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.accounting.AccountingInfo;
 
-public class PairwiseFairnessDrivenController extends FairnessDrivenCapacityController {
-
-	private double deltaC, minimumThreshold, maximumThreshold;
+public class PairwiseFairnessDrivenController extends FairnessDrivenCapacityController {	
 	
-	private Map<FederationMember, HillClimbingAlgorithm> hillClimbingControllers;
-	private double maxCapacity;
+	private double deltaC; 
+	private double minimumThreshold;
+	private double maximumThreshold;	
+	
+	private Map<FederationMember, HillClimbingAlgorithm> hillClimbingControllers;	
 	
 	public PairwiseFairnessDrivenController(Properties properties, AccountingPlugin accountingPlugin) {
 		super(properties, accountingPlugin);
@@ -33,21 +34,23 @@ public class PairwiseFairnessDrivenController extends FairnessDrivenCapacityCont
 	}
 	
 	@Override
-	public void updateCapacity(FederationMember member) {
-		if (this.hillClimbingControllers.containsKey(member) 
-				&& this.hillClimbingControllers.get(member).getLastUpdated() 
-				== this.dateUtils.currentTimeMillis()) {
+	public void updateCapacity(FederationMember member, double maximumCapacity) {
+		maximumCapacity = normalizeMaximumCapacity(maximumCapacity);
+		
+		if (this.hillClimbingControllers.containsKey(member) && 
+				this.hillClimbingControllers.get(member).getLastUpdated() == this.dateUtils.currentTimeMillis()) {
 			throw new IllegalStateException("The controller of member (" + 
 				properties.getProperty(ConfigurationConstants.XMPP_JID_KEY) + 
 				") is running more than once at the same time step for member(" + member.getId() + ").");
-		} else if (!hillClimbingControllers.containsKey(member)) {
+		} else if (!this.hillClimbingControllers.containsKey(member)) {
 			this.hillClimbingControllers.put(member, new HillClimbingAlgorithm(
-					deltaC, minimumThreshold, maximumThreshold));
+					this.deltaC, this.minimumThreshold, this.maximumThreshold));
 		}
 		
-		this.hillClimbingControllers.get(member).setLastUpdated(this.dateUtils.currentTimeMillis());
+		HillClimbingAlgorithm hillClimbingMember = this.hillClimbingControllers.get(member);
+		hillClimbingMember.setLastUpdated(this.dateUtils.currentTimeMillis());
 		updateFairness(member);	
-		this.hillClimbingControllers.get(member).updateCapacity(this.maxCapacity);		
+		hillClimbingMember.updateCapacity(maximumCapacity);		
 	}
 	
 	protected void updateFairness(FederationMember member){
@@ -95,11 +98,6 @@ public class PairwiseFairnessDrivenController extends FairnessDrivenCapacityCont
 	
 	protected Map<FederationMember, HillClimbingAlgorithm> getControllers() {
 		return hillClimbingControllers;
-	}
-
-	@Override
-	public void setMaximumCapacity(double maximumCapacity) {
-		this.maxCapacity = maximumCapacity;	
 	}
 	
 }

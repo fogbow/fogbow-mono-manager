@@ -16,8 +16,10 @@ public class HillClimbingAlgorithm {
 		
 		if (minimumThreshold < 0 || maximumThreshold < 0 || deltaC > 1 || deltaC < 0)
 			throw new IllegalArgumentException("Unexpected argument for the FDController: " + 
-					this + "\n Any of this conditions were (but shouldn't be) satisfied: "
-					+ "minimumThreshold < 0 || maximumThreshold < 0 || deltaC > 1 || deltaC < 0");
+					this + ". Any of this conditions were (but shouldn't be) satisfied: "
+					+ "minimumThreshold(" + minimumThreshold + ") < 0 "
+					+ "or maximumThreshold(" + maximumThreshold + ") < 0 "
+					+ "or deltaC(" + deltaC + ") > 1 or deltaC(" + deltaC +") < 0");
 		this.deltaC = deltaC;
 		this.minimumThreshold = minimumThreshold;
 		this.maximumThreshold = maximumThreshold;
@@ -30,9 +32,9 @@ public class HillClimbingAlgorithm {
 	
 	@Override
 	public String toString() {
-		return "Params of HillClimbing Algorithm - minimumThreshold: "
-				+ minimumThreshold + ", " + "maximumThreshold: "
-				+ maximumThreshold + ", deltaC: " + deltaC + ".";
+		return "minimumThreshold: " + this.minimumThreshold + ", " + 
+					  "maximumThreshold: " + this.maximumThreshold + 
+					  ", deltaC: " + this.deltaC + ".";
 	}
 	
 	public void updateCapacity(double maximumCapacity) {

@@ -2,18 +2,18 @@ package org.fogbowcloud.manager.core.plugins.capacitycontroller.fairnessdriven;
 
 import java.util.Properties;
 
-import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.CapacityControllerPlugin;
 
-public class TwoFoldCapacityController implements CapacityControllerPlugin{
+public class TwoFoldCapacityController implements CapacityControllerPlugin {
 
 	private FairnessDrivenCapacityController pairwiseController;
 	private FairnessDrivenCapacityController globalController;
-	private double maxCapacity;
 		
-	public TwoFoldCapacityController(Properties properties, AccountingPlugin accountingPlugin){
+	protected TwoFoldCapacityController() {}
+	
+	public TwoFoldCapacityController(Properties properties, AccountingPlugin accountingPlugin) {
 		this.pairwiseController = new PairwiseFairnessDrivenController(properties, accountingPlugin);
 		this.globalController = new GlobalFairnessDrivenController(properties, accountingPlugin);
 	}
@@ -28,21 +28,25 @@ public class TwoFoldCapacityController implements CapacityControllerPlugin{
 	}
 	
 	@Override
-	public void updateCapacity(FederationMember member) {
-		this.pairwiseController.setMaximumCapacity(this.maxCapacity);
-		this.pairwiseController.updateCapacity(member);
+	public void updateCapacity(FederationMember member, double maximumCapacity) {
+		this.pairwiseController.updateCapacity(member, maximumCapacity);
 		
-		this.globalController.setMaximumCapacity(this.maxCapacity);
-		this.globalController.updateCapacity(member);		
+		this.globalController.updateCapacity(member, maximumCapacity);		
 	}
 	
-	public void setDateUtils(DateUtils dateUtils){
-		this.pairwiseController.setDateUtils(dateUtils);
-		this.globalController.setDateUtils(dateUtils);
+	protected void setGlobalController(
+			FairnessDrivenCapacityController globalController) {
+		this.globalController = globalController;
 	}
+	
+	protected void setPairwiseController(
+			FairnessDrivenCapacityController pairwiseController) {
+		this.pairwiseController = pairwiseController;
+	}
+	
+//	public void setDateUtils(DateUtils dateUtils){
+//		this.pairwiseController.setDateUtils(dateUtils);
+//		this.globalController.setDateUtils(dateUtils);
+//	}
 
-	@Override
-	public void setMaximumCapacity(double maxCapacity) {
-		this.maxCapacity = maxCapacity;
-	}
 }
