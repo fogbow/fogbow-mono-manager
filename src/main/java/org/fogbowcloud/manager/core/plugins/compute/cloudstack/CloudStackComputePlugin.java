@@ -41,8 +41,14 @@ import org.restlet.data.Status;
 
 public class CloudStackComputePlugin implements ComputePlugin {
 
+
+
 	private static final Logger LOGGER = Logger.getLogger(CloudStackComputePlugin.class);
 	
+	public static final String COMPUTE_CLOUDSTACK_DEFAULT_NETWORKID = 
+			"compute_cloudstack_default_networkid";
+	protected static final String DEFAULT_NETWORK_ID_IS_EMPTY = "Default network id is empty. " 
+			+ COMPUTE_CLOUDSTACK_DEFAULT_NETWORKID + " is required.";
 	protected static final String LIST_VMS_COMMAND = "listVirtualMachines";
 	protected static final String DEPLOY_VM_COMMAND = "deployVirtualMachine";
 	protected static final String LIST_RESOURCE_LIMITS_COMMAND = "listResourceLimits";
@@ -111,7 +117,7 @@ public class CloudStackComputePlugin implements ComputePlugin {
 		this.osTypeId = this.properties.getProperty("compute_cloudstack_image_download_os_type_id");
 		this.expungeOnDestroy = this.properties.getProperty(
 				"compute_cloudstack_expunge_on_destroy", DEFAULT_EXPUNGE_ON_DESTROY);
-		this.defaultNetworkId = this.properties.getProperty("compute_cloudstack_default_networkid");
+		this.defaultNetworkId = this.properties.getProperty(COMPUTE_CLOUDSTACK_DEFAULT_NETWORKID);
 	}
 	
 	@Override
@@ -153,13 +159,16 @@ public class CloudStackComputePlugin implements ComputePlugin {
 		String networId = xOCCIAtt.get(OrderAttribute.NETWORK_ID.getValue());
 		
 		if(networId == null || networId.isEmpty()){
+			if (this.defaultNetworkId == null || this.defaultNetworkId.isEmpty()) {
+				throw new OCCIException(ErrorType.BAD_REQUEST, DEFAULT_NETWORK_ID_IS_EMPTY);
+			}
 			networId = defaultNetworkId;
 		}
 		uriBuilder.addParameter(NETWORK_IDS, networId);
 		
 		CloudStackHelper.sign(uriBuilder, token.getAccessId());
 		HttpResponseWrapper response = httpClient.doPost(uriBuilder.toString());
-		checkStatusResponse(response.getStatusLine());
+		checkStatusResponse(response);
 		try {
 			JSONObject vm = new JSONObject(response.getContent()).optJSONObject(
 					"deployvirtualmachineresponse");
@@ -174,7 +183,7 @@ public class CloudStackComputePlugin implements ComputePlugin {
 		URIBuilder uriBuilder = createURIBuilder(endpoint, LIST_SERVICE_OFFERINGS_COMMAND);
 		CloudStackHelper.sign(uriBuilder, token.getAccessId());
 		HttpResponseWrapper response = httpClient.doGet(uriBuilder.toString());
-		checkStatusResponse(response.getStatusLine());
+		checkStatusResponse(response);
 		List<Flavor> flavours = new LinkedList<Flavor>();
 		try {
 			JSONArray jsonOfferings = new JSONObject(response.getContent()).optJSONObject(
@@ -201,7 +210,7 @@ public class CloudStackComputePlugin implements ComputePlugin {
 		CloudStackHelper.sign(uriBuilder, token.getAccessId());
 		
 		HttpResponseWrapper response = httpClient.doGet(uriBuilder.toString());
-		checkStatusResponse(response.getStatusLine());
+		checkStatusResponse(response);
 		List<Instance> instances = new LinkedList<Instance>();
 		try {
 			JSONArray jsonVms = new JSONObject(response.getContent()).optJSONObject(
@@ -224,7 +233,7 @@ public class CloudStackComputePlugin implements ComputePlugin {
 		CloudStackHelper.sign(uriBuilder, token.getAccessId());
 		
 		HttpResponseWrapper response = httpClient.doGet(uriBuilder.toString());
-		checkStatusResponse(response.getStatusLine());
+		checkStatusResponse(response);
 		JSONObject instanceJson = null;
 		try {
 			JSONArray instancesJson = new JSONObject(response.getContent()).optJSONObject(
@@ -304,7 +313,7 @@ public class CloudStackComputePlugin implements ComputePlugin {
 		URIBuilder uriBuilder = createURIBuilder(endpoint, LIST_RESOURCE_LIMITS_COMMAND);
 		CloudStackHelper.sign(uriBuilder, token.getAccessId());
 		HttpResponseWrapper response = httpClient.doGet(uriBuilder.toString());
-		checkStatusResponse(response.getStatusLine());
+		checkStatusResponse(response);
 		
 		int instancesQuota = 0;
 		int cpuQuota = 0;
@@ -380,7 +389,7 @@ public class CloudStackComputePlugin implements ComputePlugin {
 		uriBuilder.addParameter(IS_PUBLIC, Boolean.TRUE.toString());
 		CloudStackHelper.sign(uriBuilder, token.getAccessId());
 		HttpResponseWrapper response = httpClient.doPost(uriBuilder.toString());
-		checkStatusResponse(response.getStatusLine());
+		checkStatusResponse(response);
 	}
 
 	@Override
@@ -431,7 +440,7 @@ public class CloudStackComputePlugin implements ComputePlugin {
 		URIBuilder uriBuilder = createURIBuilder(endpoint, LIST_OS_TYPES_COMMAND);
 		CloudStackHelper.sign(uriBuilder, token.getAccessId());
 		HttpResponseWrapper response = httpClient.doGet(uriBuilder.toString());
-		checkStatusResponse(response.getStatusLine());
+		checkStatusResponse(response);
 		try {
 			JSONArray jsonOsTypes = new JSONObject(response.getContent()).optJSONObject(
 					"listostypesresponse").optJSONArray("ostype");
@@ -471,18 +480,25 @@ public class CloudStackComputePlugin implements ComputePlugin {
 	private static final int SC_RESOURCE_UNAVAILABLE_ERROR = 534;
 	private static final int SC_RESOURCE_ALLOCATION_ERROR = 535;
 
-	protected void checkStatusResponse(StatusLine statusLine) {
+	protected void checkStatusResponse(HttpResponseWrapper response) {
+		StatusLine statusLine = response.getStatusLine();
+		String content = response.getContent();
 		if (statusLine.getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
+			LOGGER.error(content);
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		} else if (statusLine.getStatusCode() == SC_PARAM_ERROR) {
+			LOGGER.error(content);
 			throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
 		} else if (statusLine.getStatusCode() == SC_INSUFFICIENT_CAPACITY_ERROR || 
 				statusLine.getStatusCode() == SC_RESOURCE_UNAVAILABLE_ERROR) {
+			LOGGER.error(content);
 			throw new OCCIException(ErrorType.NO_VALID_HOST_FOUND, ResponseConstants.NO_VALID_HOST_FOUND);
 		} else if (statusLine.getStatusCode() == SC_RESOURCE_ALLOCATION_ERROR) {
+			LOGGER.error(content);
 			throw new OCCIException(ErrorType.QUOTA_EXCEEDED, 
 					ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES);
 		} else if (statusLine.getStatusCode() > 204) {
+			LOGGER.error(content);
 			throw new OCCIException(ErrorType.BAD_REQUEST, statusLine.getReasonPhrase());
 		}
 	}
@@ -499,7 +515,7 @@ public class CloudStackComputePlugin implements ComputePlugin {
 		
 		CloudStackHelper.sign(uriBuilder, token.getAccessId());
 		HttpResponseWrapper response = httpClient.doGet(uriBuilder.toString());
-		checkStatusResponse(response.getStatusLine());
+		checkStatusResponse(response);
 		try {
 			JSONObject responseJson = new JSONObject(response.getContent())
 				.optJSONObject("attachvolumeresponse");
@@ -529,7 +545,7 @@ public class CloudStackComputePlugin implements ComputePlugin {
 			CloudStackHelper.sign(uriBuilder, token.getAccessId());
 			
 			HttpResponseWrapper response = httpClient.doGet(uriBuilder.toString());	
-			checkStatusResponse(response.getStatusLine());
+			checkStatusResponse(response);
 			try {
 				// jobstatus 0 = still processing, 1 complete, 2 failure
 				//TODO check what we can do when this asyn joc is not completed
@@ -553,7 +569,7 @@ public class CloudStackComputePlugin implements ComputePlugin {
 		
 		CloudStackHelper.sign(uriBuilder, token.getAccessId());
 		HttpResponseWrapper response = httpClient.doGet(uriBuilder.toString());
-		checkStatusResponse(response.getStatusLine());
+		checkStatusResponse(response);
 		try {
 			JSONObject responseJson = new JSONObject(
 					response.getContent()).optJSONObject("detachvolumeresponse");
