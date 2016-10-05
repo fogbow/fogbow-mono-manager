@@ -72,9 +72,6 @@ public class TestCloudStackComputePlugin {
 	private CloudStackComputePlugin createPlugin(HttpClientWrapper httpClient,
 			Properties extraProperties) {
 		Properties properties = new Properties();
-		if (extraProperties != null) {
-			properties.putAll(extraProperties);
-		}
 		properties.put("compute_cloudstack_api_url",
 				CloudStackTestHelper.CLOUDSTACK_URL);
 		properties.put("compute_cloudstack_default_zone", COMPUTE_DEFAULT_ZONE);
@@ -85,6 +82,10 @@ public class TestCloudStackComputePlugin {
 		properties.put("compute_cloudstack_image_download_base_url",
 				IMAGE_DOWNLOADED_BASE_URL);
 		properties.put("compute_cloudstack_default_networkid", "01");
+		
+		if (extraProperties != null) {
+			properties.putAll(extraProperties);
+		}
 		if (httpClient == null) {
 			return new CloudStackComputePlugin(properties);
 		} else {
@@ -127,6 +128,48 @@ public class TestCloudStackComputePlugin {
 		computePlugin.requestInstance(token, categories,
 				new HashMap<String, String>(), imageId);
 	}
+	
+	@Test
+	public void testRequestInstaceWithEmptyDefaultNetworkId() {
+		List<Category> categories = new ArrayList<Category>();
+		String imageId = "imageId";
+		categories.add(new Category(OrderConstants.SMALL_TERM,
+				OrderConstants.TEMPLATE_RESOURCE_SCHEME,
+				OrderConstants.MIXIN_CLASS));
+		Token token = new Token("api:key", null, new Date(), null);
+		Properties extraProperties = new Properties();
+		extraProperties.put("compute_cloudstack_zone_id", ZONE_ID);
+		String emptyComputeCloudstackDefaultNetworkId = "";
+		extraProperties.put(CloudStackComputePlugin.COMPUTE_CLOUDSTACK_DEFAULT_NETWORKID, 
+				emptyComputeCloudstackDefaultNetworkId);
+
+		HttpClientWrapper httpClient = Mockito.mock(HttpClientWrapper.class);
+
+		String deployyVMUrl = CloudStackTestHelper.createURL(
+				CloudStackComputePlugin.DEPLOY_VM_COMMAND,
+				CloudStackComputePlugin.TEMPLATE_ID, imageId,
+				CloudStackComputePlugin.ZONE_ID, ZONE_ID,
+				SERVICE_OFFERING_PARAMETER,
+				"62d5f174-2f1e-42f0-931e-07600a05470e",
+				CloudStackComputePlugin.NETWORK_IDS, "01");
+		CloudStackTestHelper.recordHTTPClientWrapperRequest(httpClient, token,
+				CloudStackTestHelper.POST, deployyVMUrl, RESPONSE_DEPLOY_VM, 200);
+
+		String getVMUrl = CloudStackTestHelper
+				.createURL(CloudStackComputePlugin.LIST_SERVICE_OFFERINGS_COMMAND);
+		CloudStackTestHelper.recordHTTPClientWrapperRequest(httpClient, token,
+				CloudStackTestHelper.GET, getVMUrl, RESPONSE_GET_FLAVOR, 200);
+
+		CloudStackComputePlugin computePlugin = createPlugin(httpClient, extraProperties);
+		try {
+			computePlugin.requestInstance(token, categories, 
+					new HashMap<String, String>(), imageId);
+			Assert.fail();
+		} catch (OCCIException e) {	
+			Assert.assertEquals(CloudStackComputePlugin.DEFAULT_NETWORK_ID_IS_EMPTY, 
+					e.getStatus().getDescription());
+		}
+	}	
 
 	@Test(expected = OCCIException.class)
 	public void testRequestInstanceNullImageId() {
