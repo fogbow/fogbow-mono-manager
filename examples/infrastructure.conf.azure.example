@@ -27,7 +27,7 @@ mapper_defaults_keystore_path=$path_to_keystore
 mapper_defaults_keystore_password=$keystore_pass
 
 ## Local Identity
-local_identity_class=org.fogbowcloud.manager.core.plugins.identity.azure.AzureIdentityPlugin				
+local_identity_class=org.fogbowcloud.manager.core.plugins.identity.azure.AzureIdentityPlugin
 
 ## Local Credentials
 federation_user_credentail_class=org.fogbowcloud.manager.core.plugins.localcredentails.SingleMapperPlugin
