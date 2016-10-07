@@ -335,7 +335,7 @@ public class LdapIdentityPlugin implements IdentityPlugin {
 
 	@Override
 	public Token getForwardableToken(Token originalToken) {
-		return null;
+		return originalToken;
 	}
 
 }
