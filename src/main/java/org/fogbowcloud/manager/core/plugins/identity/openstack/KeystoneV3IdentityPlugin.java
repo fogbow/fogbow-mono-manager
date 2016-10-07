@@ -70,6 +70,9 @@ public class KeystoneV3IdentityPlugin implements IdentityPlugin {
 	
 	@Override
 	public Token createToken(Map<String, String> credentials) {			
+		
+		LOGGER.debug("Creating new Token");
+		
 		JSONObject json;
 		try {
 			json = mountJson(credentials);
@@ -90,72 +93,6 @@ public class KeystoneV3IdentityPlugin implements IdentityPlugin {
 		return token;
 	}
 
-	private Token getTokenFromJson(Response response) {
-		try {			
-			String accessId = null;
-			Header[] headers = response.getHeaders();
-			for (Header header : headers) {
-				if (header.getName().equals(X_SUBJECT_TOKEN)) {
-					accessId = header.getValue();
-				}
-			}
-			
-			JSONObject root = new JSONObject(response.getContent());
-			JSONObject token = root.getJSONObject(TOKEN_PROP);
-			
-			JSONObject user = token.getJSONObject(USER_PROP);
-			String userId = user.getString(ID_PROP);
-			String userName = user.getString(ID_PROP);
-			
-			Map<String, String> tokenAtt = new HashMap<String, String>();
-			String tenantId = null;
-			String tenantName = null;
-			try {
-				tenantId = token.getJSONObject(PROJECT_PROP).getString(ID_PROP);
-				tokenAtt.put(TENANT_ID, tenantId);
-			} catch (JSONException e) {
-				LOGGER.debug("There is no tenantId inside json response.");
-			}
-			try {
-				tenantName = token.getJSONObject(PROJECT_PROP).getString(NAME_PROP);
-				tokenAtt.put(TENANT_NAME, tenantName);
-			} catch (JSONException e) {
-				LOGGER.debug("There is no tenantName inside json response.");
-			}
-			
-			return new Token(accessId, new Token.User(userId, userName), new Date(), tokenAtt);
-		} catch (Exception e) {
-			LOGGER.error("Exception while getting token from json.", e);
-			return null;
-		}
-	}
-
-	protected JSONObject mountJson(Map<String, String> credentials) throws JSONException {
-		JSONObject projectId = new JSONObject();
-		projectId.put(ID_PROP, credentials.get(PROJECT_ID));
-		JSONObject project = new JSONObject();
-		project.put(PROJECT_PROP, projectId);
-		
-		
-		JSONObject userProperties = new JSONObject();
-		userProperties.put(PASSWORD_PROP, credentials.get(PASSWORD));
-		userProperties.put(ID_PROP, credentials.get(USER_ID));
-		JSONObject password = new JSONObject();
-		password.put(USER_PROP, userProperties);
-		
-		JSONObject identity = new JSONObject();
-		identity.put(METHODS_PROP, new JSONArray(new String[] { PASSWORD_PROP }));
-		identity.put(PASSWORD_PROP, password);
-		
-		JSONObject auth = new JSONObject();
-		auth.put(SCOPE_PROP, project);
-		auth.put(IDENTITY_PROP, identity);
-		
-		JSONObject root = new JSONObject();
-		root.put(AUTH_PROP, auth);
-		return root;
-	}
-
 	@Override
 	public Token reIssueToken(Token token) {
 		return token;
@@ -163,11 +100,13 @@ public class KeystoneV3IdentityPlugin implements IdentityPlugin {
 
 	@Override
 	public Token getToken(String accessId) {
+		//TODO Implement this method?
 		return null;
 	}
 
 	@Override
 	public boolean isValid(String accessId) {
+		//TODO Implement this method?
 		return true;
 	}
 
@@ -180,7 +119,13 @@ public class KeystoneV3IdentityPlugin implements IdentityPlugin {
 
 	@Override
 	public String getAuthenticationURI() {
-		return "Keystone uri='" + keystoneUrl +"'";
+		
+		StringBuilder sb = new StringBuilder();
+		sb.append("Keystone uri='");
+		sb.append(keystoneUrl);
+		sb.append("'");
+		
+		return sb.toString();
 	}
 
 	@Override
@@ -222,6 +167,72 @@ public class KeystoneV3IdentityPlugin implements IdentityPlugin {
 		}
 		return client;
 	}	
+	
+	protected JSONObject mountJson(Map<String, String> credentials) throws JSONException {
+		JSONObject projectId = new JSONObject();
+		projectId.put(ID_PROP, credentials.get(PROJECT_ID));
+		JSONObject project = new JSONObject();
+		project.put(PROJECT_PROP, projectId);
+		
+		
+		JSONObject userProperties = new JSONObject();
+		userProperties.put(PASSWORD_PROP, credentials.get(PASSWORD));
+		userProperties.put(ID_PROP, credentials.get(USER_ID));
+		JSONObject password = new JSONObject();
+		password.put(USER_PROP, userProperties);
+		
+		JSONObject identity = new JSONObject();
+		identity.put(METHODS_PROP, new JSONArray(new String[] { PASSWORD_PROP }));
+		identity.put(PASSWORD_PROP, password);
+		
+		JSONObject auth = new JSONObject();
+		auth.put(SCOPE_PROP, project);
+		auth.put(IDENTITY_PROP, identity);
+		
+		JSONObject root = new JSONObject();
+		root.put(AUTH_PROP, auth);
+		return root;
+	}
+	
+	private Token getTokenFromJson(Response response) {
+		try {			
+			String accessId = null;
+			Header[] headers = response.getHeaders();
+			for (Header header : headers) {
+				if (header.getName().equals(X_SUBJECT_TOKEN)) {
+					accessId = header.getValue();
+				}
+			}
+			
+			JSONObject root = new JSONObject(response.getContent());
+			JSONObject token = root.getJSONObject(TOKEN_PROP);
+			
+			JSONObject user = token.getJSONObject(USER_PROP);
+			String userId = user.getString(ID_PROP);
+			String userName = user.getString(ID_PROP);
+			
+			Map<String, String> tokenAtt = new HashMap<String, String>();
+			String tenantId = null;
+			String tenantName = null;
+			try {
+				tenantId = token.getJSONObject(PROJECT_PROP).getString(ID_PROP);
+				tokenAtt.put(TENANT_ID, tenantId);
+			} catch (JSONException e) {
+				LOGGER.debug("There is no tenantId inside json response.");
+			}
+			try {
+				tenantName = token.getJSONObject(PROJECT_PROP).getString(NAME_PROP);
+				tokenAtt.put(TENANT_NAME, tenantName);
+			} catch (JSONException e) {
+				LOGGER.debug("There is no tenantName inside json response.");
+			}
+			
+			return new Token(accessId, new Token.User(userId, userName), new Date(), tokenAtt);
+		} catch (Exception e) {
+			LOGGER.error("Exception while getting token from json.", e);
+			return null;
+		}
+	}
 	
 	private void checkStatusResponse(HttpResponse response) {
 		if (response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
