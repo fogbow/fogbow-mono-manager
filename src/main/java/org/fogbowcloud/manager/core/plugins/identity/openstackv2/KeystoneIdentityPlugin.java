@@ -1,4 +1,4 @@
-package org.fogbowcloud.manager.core.plugins.identity.openstack;
+package org.fogbowcloud.manager.core.plugins.identity.openstackv2;
 
 import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;

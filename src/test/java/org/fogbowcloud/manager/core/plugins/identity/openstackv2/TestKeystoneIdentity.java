@@ -1,10 +1,11 @@
-package org.fogbowcloud.manager.core.plugins.identity.openstack;
+package org.fogbowcloud.manager.core.plugins.identity.openstackv2;
 
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+import org.fogbowcloud.manager.core.plugins.identity.openstackv2.KeystoneIdentityPlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.Token;

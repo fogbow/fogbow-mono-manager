@@ -7,7 +7,7 @@ import java.util.Properties;
 
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.codec.binary.Base64;
-import org.fogbowcloud.manager.core.plugins.identity.openstack.KeystoneIdentityPlugin;
+import org.fogbowcloud.manager.core.plugins.identity.openstackv2.KeystoneIdentityPlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.model.ErrorType;
 import org.fogbowcloud.manager.occi.model.OCCIException;
@@ -24,6 +24,7 @@ import org.mockito.Mockito;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
+
 import org.restlet.resource.ResourceException;
 
 public class TestLdapIdentityPlugin {
