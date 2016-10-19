@@ -31,7 +31,7 @@ federation_user_credentail_class=org.fogbowcloud.manager.core.plugins.localcrede
 ## Mapper Plugin / Local credentials to be used when we miss information about a given user
 mapper_defaults_username=$user_name
 mapper_defaults_password=$user_pass
-mapper_defaults_tenantname=$tenant_name
+mapper_defaults_tenantName=$tenant_name
 
 ## Federation Identity
 federation_identity_class=org.fogbowcloud.manager.core.plugins.identity.openstack.KeystoneIdentityPlugin
