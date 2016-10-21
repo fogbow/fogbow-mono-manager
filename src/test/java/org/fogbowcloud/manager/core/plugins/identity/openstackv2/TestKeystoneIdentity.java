@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import org.fogbowcloud.manager.core.plugins.identity.openstackv2.KeystoneIdentityPlugin;
+import org.fogbowcloud.manager.core.plugins.localcredentails.MapperHelper;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.Token;
@@ -129,5 +129,43 @@ public class TestKeystoneIdentity {
 				new HashMap<String, String>());
 		Token token = this.keystoneIdentity.getForwardableToken(originalToken);
 		Assert.assertEquals(originalToken, token);
+	}	
+	
+	@Test
+	public void testCheckCredentials() {
+		Properties properties = new Properties();
+		String userOne = "fulano";
+		properties.put(MapperHelper.MAPPER_PREFIX + userOne + MapperHelper.UNDERLINE 
+				+ KeystoneIdentityPlugin.USERNAME, KeystoneIdentityPlugin.USERNAME);
+		properties.put(MapperHelper.MAPPER_PREFIX + userOne + MapperHelper.UNDERLINE 
+				+ KeystoneIdentityPlugin.PASSWORD, KeystoneIdentityPlugin.PASSWORD);
+		properties.put(MapperHelper.MAPPER_PREFIX + userOne + MapperHelper.UNDERLINE 
+				+ KeystoneIdentityPlugin.TENANT_NAME, KeystoneIdentityPlugin.TENANT_NAME);		
+
+		this.keystoneIdentity = new KeystoneIdentityPlugin(properties);		
+		this.keystoneIdentity.checkCredentialsInProperties();			
+	}
+	
+	@Test(expected=IllegalAccessError.class)
+	public void testCheckCredentialsWithError() {
+		Properties properties = new Properties();
+		// Credentials correct
+		String userOne = "fulano";
+		properties.put(MapperHelper.MAPPER_PREFIX + userOne + MapperHelper.UNDERLINE 
+				+ KeystoneIdentityPlugin.USERNAME, KeystoneIdentityPlugin.USERNAME);
+		properties.put(MapperHelper.MAPPER_PREFIX + userOne + MapperHelper.UNDERLINE 
+				+ KeystoneIdentityPlugin.PASSWORD, KeystoneIdentityPlugin.PASSWORD);
+		properties.put(MapperHelper.MAPPER_PREFIX + userOne + MapperHelper.UNDERLINE 
+				+ KeystoneIdentityPlugin.TENANT_NAME, KeystoneIdentityPlugin.TENANT_NAME);			
+
+		// Credentials wrong
+		String userTwo = "danio";
+		properties.put(MapperHelper.MAPPER_PREFIX + userTwo + MapperHelper.UNDERLINE 
+				+ KeystoneIdentityPlugin.USERNAME, KeystoneIdentityPlugin.USERNAME);
+		properties.put(MapperHelper.MAPPER_PREFIX + userTwo + MapperHelper.UNDERLINE 
+				+ KeystoneIdentityPlugin.PASSWORD, KeystoneIdentityPlugin.PASSWORD);
+
+		this.keystoneIdentity = new KeystoneIdentityPlugin(properties);		
+		this.keystoneIdentity.checkCredentialsInProperties();			
 	}	
 }

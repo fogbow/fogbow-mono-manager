@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.codec.binary.Base64;
@@ -20,6 +21,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
+import org.fogbowcloud.manager.core.plugins.localcredentails.MapperHelper;
 import org.fogbowcloud.manager.core.plugins.util.Credential;
 import org.fogbowcloud.manager.occi.model.ErrorType;
 import org.fogbowcloud.manager.occi.model.OCCIException;
@@ -60,6 +62,8 @@ public class KeystoneIdentityPlugin implements IdentityPlugin {
 	public static final String TENANT_ID = "tenantId";	
 
 	private static final int LAST_SUCCESSFUL_STATUS = 204;
+	protected static final String USER_CREDENTIALS_ARE_WRONG = "Missing user credentials. " 
+			+ USERNAME + ", " + PASSWORD + ", " + TENANT_NAME + " are required.";
 	private final static Logger LOGGER = Logger.getLogger(KeystoneIdentityPlugin.class);
 	/*
 	 * The json response format can be seen in the following link:
@@ -74,12 +78,14 @@ public class KeystoneIdentityPlugin implements IdentityPlugin {
 	private HttpClient client;
 	private Properties properties;
 
-	public KeystoneIdentityPlugin(Properties properties) {
+	public KeystoneIdentityPlugin(Properties properties) {		
 		this.properties = properties;
 		this.keystoneUrl = properties.getProperty("identity_url") == null ? 
 				properties.getProperty(AUTH_URL) : properties.getProperty("identity_url");
 		this.v2TokensEndpoint = keystoneUrl + V2_TOKENS_ENDPOINT_PATH;
 		this.v2TenantsEndpoint = keystoneUrl + V2_TENANTS_ENDPOINT_PATH;
+		
+		checkCredentialsInProperties();
 	}
 
 	public void setProperties(Properties properties) {
@@ -299,6 +305,25 @@ public class KeystoneIdentityPlugin implements IdentityPlugin {
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}
 	}
+	
+	protected void checkCredentialsInProperties() {
+		int crendentialsAmount = 3;
+		Map<String, Map<String, String>> allUsersToCredentials = 
+				MapperHelper.getLocalCredentials(this.properties, null);
+		
+		for (String userKey : allUsersToCredentials.keySet()) {
+			Map<String, String> individualUserToCredentials = allUsersToCredentials.get(userKey);
+			Set<String> credentials = individualUserToCredentials.keySet();
+			
+			if (individualUserToCredentials.size() != crendentialsAmount || 
+					!credentials.contains(USERNAME) ||
+					!credentials.contains(PASSWORD) ||
+					!credentials.contains(TENANT_NAME)) {
+				LOGGER.error(USER_CREDENTIALS_ARE_WRONG);
+				throw new IllegalAccessError(USER_CREDENTIALS_ARE_WRONG);
+			}
+		}
+	}	
 
 	@Override
 	public boolean isValid(String accessId) {
