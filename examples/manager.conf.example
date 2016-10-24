@@ -15,6 +15,7 @@ token_host_port=$token_host_port
 my_ip=$manager_ip
 
 http_port=$manager_port
+xmpp_timeout=5000
 
 ## Benchmarking (Vanilla Benchmarking Plugin)
 benchmarking_class=org.fogbowcloud.manager.core.plugins.benchmarking.VanillaBenchmarkingPlugin
