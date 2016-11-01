@@ -63,6 +63,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 	public  static final String VALUE_FLAVOR_MEDIUM = "{cpu=2,mem=4}";
 	public static final String VALUE_FLAVOR_SMALL = "{cpu=1,mem=1}";
 	public static final int MAX_WHOISALIVE_MANAGER_COUNT = 100;
+	private static final int DEFAULT_XMPP_TIMEOUT = 5000;
 	private ManagerXmppComponent managerXmppComponent;
 	private ComputePlugin computePlugin;
 	private StoragePlugin storagePlugin;
@@ -264,7 +265,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		managerFacade.setCapacityControllerPlugin(new SatisfactionDrivenCapacityControllerPlugin());
 				
 		managerXmppComponent = Mockito.spy(new ManagerXmppComponent(LOCAL_MANAGER_COMPONENT_URL,
-				MANAGER_COMPONENT_PASS, SERVER_HOST, SERVER_COMPONENT_PORT, managerFacade));
+				MANAGER_COMPONENT_PASS, SERVER_HOST, SERVER_COMPONENT_PORT, managerFacade, DEFAULT_XMPP_TIMEOUT));
 				
 		managerXmppComponent.setDescription("Manager Component");
 		managerXmppComponent.setName("Manager");
@@ -307,7 +308,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		managerFacade.setValidator(new DefaultMemberAuthorizationPlugin(null));
 
 		managerXmppComponent = Mockito.spy(new ManagerXmppComponent(LOCAL_MANAGER_COMPONENT_URL,
-				MANAGER_COMPONENT_PASS, SERVER_HOST, SERVER_COMPONENT_PORT, managerFacade));
+				MANAGER_COMPONENT_PASS, SERVER_HOST, SERVER_COMPONENT_PORT, managerFacade, DEFAULT_XMPP_TIMEOUT));
 		
 		managerXmppComponent.setDescription("Manager Component");
 		managerXmppComponent.setName("Manager");

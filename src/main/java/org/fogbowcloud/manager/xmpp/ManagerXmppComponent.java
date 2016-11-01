@@ -32,8 +32,8 @@ public class ManagerXmppComponent extends XMPPComponent implements AsyncPacketSe
 	private int maxWhoIsAliveManagerCount = 100;
 	
 	public ManagerXmppComponent(String jid, String password, String server,
-			int port, ManagerController managerFacade) {
-		super(jid, password, server, port);
+			int port, ManagerController managerFacade, long timeout) {
+		super(jid, password, server, port, timeout);
 		this.managerFacade = managerFacade;
 		if (managerFacade.getMaxWhoIsAliveManagerCount() != null) {
 			this.maxWhoIsAliveManagerCount = managerFacade.getMaxWhoIsAliveManagerCount();

@@ -49,6 +49,7 @@ public class Main {
 	private static final int DEFAULT_RESPONSE_HEADER_SIZE = 1024*1024;
 	private static final Logger LOGGER = Logger.getLogger(Main.class);
 	private static final int EXIT_ERROR_CODE = 128;
+	private static final int DEFAULT_XMPP_TIMEOUT = 15000; // 15 segundos
 	private static final int DEFAULT_HTTP_PORT = 8182;
 	private static final int DEFAULT_HTTPS_PORT = 8183;
 	private static final boolean DEFAULT_HTTPS_ENABLED = false;
@@ -264,12 +265,20 @@ public class Main {
 		String xmppJid = properties.getProperty(ConfigurationConstants.XMPP_JID_KEY);
 		
 		if (xmppHost != null && xmppJid != null) {
+			String timeoutStr = properties.getProperty(ConfigurationConstants.XMPP_TIMEOUT);
+			long timeout = 0L;
+			if (!timeoutStr.isEmpty() && timeoutStr != null) {
+				timeout = Long.parseLong(timeoutStr);
+			} else {
+				timeout = DEFAULT_XMPP_TIMEOUT;
+			}
 			ManagerXmppComponent xmpp = new ManagerXmppComponent(
 					xmppJid,
 					properties.getProperty(ConfigurationConstants.XMPP_PASS_KEY),
 					xmppHost,
 					Integer.parseInt(properties.getProperty(ConfigurationConstants.XMPP_PORT_KEY)),
-					facade);
+					facade, 
+					timeout);
 			xmpp.setRendezvousAddress(properties.getProperty(ConfigurationConstants.RENDEZVOUS_JID_KEY));
 			try {
 				xmpp.connect();			

@@ -70,9 +70,9 @@ public class Token {
 		this.dateUtils = dateUtils;
 	}
 
+	@Override
 	public String toString() {
-		return "AccessId: " + accessId + ", User: " + user + ", expirationDate: "
-				+ getExpirationDate() + ", attributes: " + attributes;
+		return "Token [attributes=" + attributes + ", " + ", user=" + user + "]";
 	}
 
 	public User getUser() {
@@ -92,7 +92,7 @@ public class Token {
 				userJson != null ? User.fromJSON(userJson.toString()) : null,
 				null, JSONHelper.toMap(jsonObject.optString("attributes")));
 	}
-
+	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
 	public boolean equals(Object obj) {
@@ -178,6 +178,11 @@ public class Token {
 			}
 			return true;
 		}
+
+		@Override
+		public String toString() {
+			return "User [id=" + id + ", name=" + name + "]";
+		}				
 		
 	}
 		

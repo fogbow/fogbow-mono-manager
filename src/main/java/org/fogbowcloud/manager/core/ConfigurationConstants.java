@@ -7,6 +7,7 @@ public class ConfigurationConstants {
 	
 	// xmpp
 	public static final String XMPP_JID_KEY = "xmpp_jid";
+	public static final String XMPP_TIMEOUT = "xmpp_timeout";
 	public static final String XMPP_PASS_KEY = "xmpp_password";
 	public static final String XMPP_HOST_KEY = "xmpp_host";
 	public static final String XMPP_PORT_KEY = "xmpp_port";
@@ -81,4 +82,5 @@ public class ConfigurationConstants {
 
 	//Network Data Store
 	public static final String NETWORK_DATA_STORE_URL = "network_datastore_url";
+	
 }
