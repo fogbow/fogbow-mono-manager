@@ -23,7 +23,9 @@ import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.order.OrderAttribute;
 import org.fogbowcloud.manager.occi.order.OrderConstants;
 import org.fogbowcloud.manager.occi.util.PluginHelper;
+import org.json.JSONObject;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.restlet.Request;
@@ -677,6 +679,23 @@ public class TestCloudStackComputePlugin {
 		ImageState imageState = computePlugin.getImageState(token,
 				INVALID_IMAGE_NAME);
 		Assert.assertNull(imageState);
+	}
+	
+	@Ignore
+	@Test
+	public void testGetAsyncJobStatus() {		
+		JSONObject jsonResponseStr = new JSONObject();
+		
+		HttpClientWrapper httpClient = Mockito.mock(HttpClientWrapper.class);
+		Token token = Mockito.mock(Token.class);
+		CloudStackTestHelper.recordHTTPClientWrapperRequest(httpClient, token,
+				CloudStackTestHelper.GET, "", jsonResponseStr.toString(), 200);
+		
+		CloudStackComputePlugin cloudStackComputePlugin = createPlugin(httpClient, null);
+		JSONObject responseJson = new JSONObject();
+		Mockito.when(responseJson.has(Mockito.anyString())).thenReturn(true);
+		Mockito.when(responseJson.opt(Mockito.anyString())).thenReturn("");
+		cloudStackComputePlugin.getAsyncJobStatus(responseJson , token);
 	}
 
 }

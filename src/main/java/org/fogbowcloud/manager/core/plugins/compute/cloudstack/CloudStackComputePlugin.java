@@ -12,6 +12,7 @@ import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.MainHelper;
 import org.fogbowcloud.manager.core.RequirementsHelper;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ImageState;
@@ -40,11 +41,12 @@ import org.restlet.Response;
 import org.restlet.data.Status;
 
 public class CloudStackComputePlugin implements ComputePlugin {
-
-
-
+	
 	private static final Logger LOGGER = Logger.getLogger(CloudStackComputePlugin.class);
 	
+	protected static final String JSON_QUERY_ASYNC_JOB_RESULT_RESPONSE = 
+			"queryasyncjobresultresponse";
+	protected static final String JSON_JOB_STATUS = "jobstatus";	
 	public static final String COMPUTE_CLOUDSTACK_DEFAULT_NETWORKID = 
 			"compute_cloudstack_default_networkid";
 	protected static final String DEFAULT_NETWORK_ID_IS_EMPTY = "Default network id is empty. " 
@@ -520,7 +522,7 @@ public class CloudStackComputePlugin implements ComputePlugin {
 			JSONObject responseJson = new JSONObject(response.getContent())
 				.optJSONObject("attachvolumeresponse");
 			JSONObject asyncJobStatus = getAsyncJobStatus(responseJson, token);
-			int jobStatus = asyncJobStatus.optInt("jobstatus");
+			int jobStatus = asyncJobStatus.optInt(JSON_JOB_STATUS);
 			if (jobStatus == 1) {
 				String deviceId = asyncJobStatus.optJSONObject("jobresult").optJSONObject("volume").optString("deviceid");
 				return UUID.randomUUID().toString() + "-device-" + deviceId;
@@ -533,30 +535,51 @@ public class CloudStackComputePlugin implements ComputePlugin {
 		}
 	}
 	
-	private static final long GET_ASYNC_JOB_STATUS_DELAY = 4000;
-
-	private JSONObject getAsyncJobStatus(JSONObject responseJson, Token token) {
+	protected JSONObject getAsyncJobStatus(JSONObject responseJson, Token token) {
 		if (responseJson.has("jobid")) {
-			try {
-				Thread.sleep(GET_ASYNC_JOB_STATUS_DELAY);
-			} catch (InterruptedException e1) {}
+			JSONObject asyncJobResponse = null;
+			HttpResponseWrapper response = null;			
+			final int statusComplete = 1;
+			final int statusFailure = 2;			
 			URIBuilder uriBuilder = createURIBuilder(endpoint, QUERY_ASYNC_JOB_RESULT);
 			uriBuilder.addParameter(JOB_ID, responseJson.optString("jobid"));
 			CloudStackHelper.sign(uriBuilder, token.getAccessId());
 			
-			HttpResponseWrapper response = httpClient.doGet(uriBuilder.toString());	
-			checkStatusResponse(response);
-			try {
-				// jobstatus 0 = still processing, 1 complete, 2 failure
-				//TODO check what we can do when this asyn joc is not completed
-				JSONObject asyncJobResponse = new JSONObject(response.getContent()).optJSONObject("queryasyncjobresultresponse");
-				LOGGER.debug("CloudStack asyn job status: " + asyncJobResponse.toString());
-				return asyncJobResponse;
-			} catch (JSONException e) {
-				LOGGER.debug("Could not parse async job response to json", e);
+			long elapsedTime = 0;
+			final long asyncJobStatusDelay = getAsyncJobStatusDelay();			
+			LOGGER.debug("Trying get CloudStack asyn job status within " + asyncJobStatusDelay + " milliseconds.");
+			final long startCount = System.currentTimeMillis();
+			while(elapsedTime <= asyncJobStatusDelay) {
+				
+				response = httpClient.doGet(uriBuilder.toString());	
+				try {
+					checkStatusResponse(response);
+					// jobstatus 0 = still processing, 1 complete, 2 failure
+					asyncJobResponse = new JSONObject(response.getContent())
+							.optJSONObject(JSON_QUERY_ASYNC_JOB_RESULT_RESPONSE);
+					int jobStatus = asyncJobResponse.optInt(JSON_JOB_STATUS);
+					if (jobStatus == statusComplete || jobStatus == statusFailure) {
+						LOGGER.debug("CloudStack asyn job status: " + asyncJobResponse.toString());
+						return asyncJobResponse;
+					}
+				} catch (Exception e) {
+					LOGGER.debug("Could not get async job status.", e);
+				}
+				
+				// Wait 1 second
+				try { Thread.sleep(1000); } catch (InterruptedException e1) {}
+				elapsedTime = System.currentTimeMillis() - startCount;
 			}
+			return asyncJobResponse;
 		}
 		return null;
+	}
+
+	protected long getAsyncJobStatusDelay() {
+		long xmppTimeout = MainHelper.getXMPPTimeout(this.properties);
+		// to prevent timeout
+		int decreaseTime = 2000;
+		return xmppTimeout - decreaseTime;
 	}
 
 	@Override
@@ -574,7 +597,7 @@ public class CloudStackComputePlugin implements ComputePlugin {
 			JSONObject responseJson = new JSONObject(
 					response.getContent()).optJSONObject("detachvolumeresponse");
 			JSONObject asyncJobStatus = getAsyncJobStatus(responseJson, token);
-			int jobStatus = asyncJobStatus.optInt("jobstatus");
+			int jobStatus = asyncJobStatus.optInt(JSON_JOB_STATUS);
 			if (jobStatus != 1) {
 				String errorText = "Async job is not complete yet.";
 				if (jobStatus == 2) {
