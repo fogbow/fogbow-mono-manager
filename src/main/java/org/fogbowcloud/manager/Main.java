@@ -49,7 +49,7 @@ public class Main {
 	private static final int DEFAULT_RESPONSE_HEADER_SIZE = 1024*1024;
 	private static final Logger LOGGER = Logger.getLogger(Main.class);
 	private static final int EXIT_ERROR_CODE = 128;
-	private static final int DEFAULT_XMPP_TIMEOUT = 5000; // 5 segundos
+	private static final int DEFAULT_XMPP_TIMEOUT = 15000; // 15 segundos
 	private static final int DEFAULT_HTTP_PORT = 8182;
 	private static final int DEFAULT_HTTPS_PORT = 8183;
 	private static final boolean DEFAULT_HTTPS_ENABLED = false;
