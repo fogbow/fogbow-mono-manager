@@ -42,8 +42,10 @@ import org.restlet.data.Status;
 
 public class CloudStackComputePlugin implements ComputePlugin {
 	
+
 	private static final Logger LOGGER = Logger.getLogger(CloudStackComputePlugin.class);
 	
+	private static final String JSON_JOB_ID = "jobid";
 	protected static final String JSON_QUERY_ASYNC_JOB_RESULT_RESPONSE = 
 			"queryasyncjobresultresponse";
 	protected static final String JSON_JOB_STATUS = "jobstatus";	
@@ -81,7 +83,7 @@ public class CloudStackComputePlugin implements ComputePlugin {
 	protected static final String ATTACH_VOLUME_ID = "id";
 	protected static final String ATTACH_VM_ID = "virtualmachineid";
 	protected static final String ATTACH_DEVICE_ID = "deviceid";
-	protected static final String JOB_ID = "jobid";
+	protected static final String JOB_ID = JSON_JOB_ID;
 	protected static final String NETWORK_IDS = "networkids";
 	
 	private static final int LIMIT_TYPE_INSTANCES = 0;
@@ -536,13 +538,13 @@ public class CloudStackComputePlugin implements ComputePlugin {
 	}
 	
 	protected JSONObject getAsyncJobStatus(JSONObject responseJson, Token token) {
-		if (responseJson.has("jobid")) {
+		if (responseJson.has(JSON_JOB_ID)) {
 			JSONObject asyncJobResponse = null;
 			HttpResponseWrapper response = null;			
 			final int statusComplete = 1;
 			final int statusFailure = 2;			
 			URIBuilder uriBuilder = createURIBuilder(endpoint, QUERY_ASYNC_JOB_RESULT);
-			uriBuilder.addParameter(JOB_ID, responseJson.optString("jobid"));
+			uriBuilder.addParameter(JOB_ID, responseJson.optString(JSON_JOB_ID));
 			CloudStackHelper.sign(uriBuilder, token.getAccessId());
 			
 			long elapsedTime = 0;

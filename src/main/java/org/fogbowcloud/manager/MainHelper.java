@@ -23,7 +23,7 @@ public class MainHelper {
 	public static long getXMPPTimeout(Properties properties) {
 		String timeoutStr = properties.getProperty(ConfigurationConstants.XMPP_TIMEOUT);
 		long timeout = 0L;
-		if (!timeoutStr.isEmpty() && timeoutStr != null) {
+		if (timeoutStr != null && !timeoutStr.isEmpty()) {
 			try {
 				timeout = Long.parseLong(timeoutStr);
 				if (timeout < MINIMUM_XMPP_TIMEOUT) {
