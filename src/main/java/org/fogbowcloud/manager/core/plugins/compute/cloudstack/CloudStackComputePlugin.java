@@ -537,6 +537,7 @@ public class CloudStackComputePlugin implements ComputePlugin {
 		}
 	}
 	
+	// FIXME This solution is temporary. We need investigate the behavior of the cloudstack. Implement other solution.
 	protected JSONObject getAsyncJobStatus(JSONObject responseJson, Token token) {
 		if (responseJson.has(JSON_JOB_ID)) {
 			JSONObject asyncJobResponse = null;

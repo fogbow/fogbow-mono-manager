@@ -27,7 +27,7 @@ public class MainHelper {
 			try {
 				timeout = Long.parseLong(timeoutStr);
 				if (timeout < MINIMUM_XMPP_TIMEOUT) {
-					throw new Error("Timeout is so small.");
+					throw new Error("Timeout is too small. " + MINIMUM_XMPP_TIMEOUT + " milliseconds is the minimum.");
 				}
 			} catch (Exception e) {
 				throw new Error("Could not get timeout.", e);
