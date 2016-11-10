@@ -1,6 +1,7 @@
 package org.fogbowcloud.manager.core.plugins.compute.cloudstack;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -8,11 +9,14 @@ import java.util.List;
 import java.util.Properties;
 
 import org.apache.http.HttpStatus;
+import org.apache.http.ProtocolVersion;
 import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.message.BasicStatusLine;
 import org.fogbowcloud.manager.core.model.ImageState;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.common.cloudstack.CloudStackHelper;
 import org.fogbowcloud.manager.core.plugins.util.HttpClientWrapper;
+import org.fogbowcloud.manager.core.plugins.util.HttpResponseWrapper;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.instance.InstanceState;
 import org.fogbowcloud.manager.occi.model.Category;
@@ -23,6 +27,8 @@ import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.order.OrderAttribute;
 import org.fogbowcloud.manager.occi.order.OrderConstants;
 import org.fogbowcloud.manager.occi.util.PluginHelper;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -677,6 +683,48 @@ public class TestCloudStackComputePlugin {
 		ImageState imageState = computePlugin.getImageState(token,
 				INVALID_IMAGE_NAME);
 		Assert.assertNull(imageState);
+	}
+	
+	@Test
+	public void testGetAsyncJobStatus() throws JSONException {		
+		JSONObject inProcessJson = new JSONObject();
+		JSONObject jobStatusJson = new JSONObject();
+		int inProcessStatus = 0;
+		jobStatusJson.put(CloudStackComputePlugin.JSON_JOB_STATUS, inProcessStatus);
+		inProcessJson.put(CloudStackComputePlugin.JSON_QUERY_ASYNC_JOB_RESULT_RESPONSE, jobStatusJson);
+		
+		JSONObject completeJson = new JSONObject();
+		jobStatusJson = new JSONObject();
+		int completeStatus = 1;
+		jobStatusJson.put(CloudStackComputePlugin.JSON_JOB_STATUS, completeStatus);
+		completeJson.put(CloudStackComputePlugin.JSON_QUERY_ASYNC_JOB_RESULT_RESPONSE, jobStatusJson);		
+		
+		// mock
+		HttpClientWrapper httpClient = Mockito.mock(HttpClientWrapper.class);
+		URIBuilder uriBuilder = null;
+		try {
+			uriBuilder = new URIBuilder("http://localhost:0000");
+		} catch (URISyntaxException e) {
+			throw new IllegalArgumentException(e);
+		}
+		final Token token = new Token("api:key", null, null, null);
+		final ProtocolVersion PROTO = new ProtocolVersion("HTTP", 1, 1);
+		CloudStackHelper.sign(uriBuilder, token.getAccessId());
+		final HttpResponseWrapper responseInProcess = new HttpResponseWrapper
+				(new BasicStatusLine(PROTO, 200, "test reason"), inProcessJson.toString());
+		final HttpResponseWrapper responseComplete = new HttpResponseWrapper
+				(new BasicStatusLine(PROTO, 200, "test reason"), completeJson.toString());		
+		Mockito.when(httpClient.doGet(Mockito.anyString())).thenReturn(responseInProcess, responseComplete);
+		
+		CloudStackComputePlugin cloudStackComputePlugin = createPlugin(httpClient, null);
+		JSONObject responseJson = Mockito.mock(JSONObject.class);
+		Mockito.when(responseJson.has(Mockito.anyString())).thenReturn(true);
+		Mockito.when(responseJson.optString(Mockito.anyString())).thenReturn("id=10");
+		JSONObject asyncJobStatus = cloudStackComputePlugin.getAsyncJobStatus(responseJson , token);
+		
+		String responseExpected = completeJson.getJSONObject(
+				CloudStackComputePlugin.JSON_QUERY_ASYNC_JOB_RESULT_RESPONSE).toString();
+		Assert.assertEquals(responseExpected, asyncJobStatus.toString());
 	}
 
 }

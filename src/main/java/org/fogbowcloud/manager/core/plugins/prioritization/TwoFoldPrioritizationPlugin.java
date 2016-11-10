@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Properties;
 
 import org.apache.log4j.Logger;
-import org.fogbowcloud.manager.Main;
+import org.fogbowcloud.manager.MainHelper;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.PrioritizationPlugin;
 import org.fogbowcloud.manager.core.plugins.prioritization.fcfs.FCFSPrioritizationPlugin;
@@ -22,7 +22,7 @@ public class TwoFoldPrioritizationPlugin implements PrioritizationPlugin {
 	
 	public TwoFoldPrioritizationPlugin(Properties properties, AccountingPlugin accountingPlugin) {
 		try {
-			localPrioritizationPlugin = (PrioritizationPlugin) Main.createInstanceWithAccountingPlugin(
+			localPrioritizationPlugin = (PrioritizationPlugin) MainHelper.createInstanceWithAccountingPlugin(
 					LOCAL_PRIORITIZATION_PLUGIN_CLASS, properties, accountingPlugin);
 		} catch (Exception e) {
 			LOGGER.warn("A valid local prioritization plugin was not specified in properties. "
@@ -31,7 +31,7 @@ public class TwoFoldPrioritizationPlugin implements PrioritizationPlugin {
 		}
 		
 		try {
-			remotePrioritizationPlugin = (PrioritizationPlugin) Main.createInstanceWithAccountingPlugin(
+			remotePrioritizationPlugin = (PrioritizationPlugin) MainHelper.createInstanceWithAccountingPlugin(
 					REMOTE_PRIORITIZATION_PLUGIN_CLASS, properties, accountingPlugin);
 		} catch (Exception e) {
 			LOGGER.warn("A valid remote prioritization plugin was not specified in properties. "
