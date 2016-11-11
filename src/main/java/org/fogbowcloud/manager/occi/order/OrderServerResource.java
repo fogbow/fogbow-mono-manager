@@ -309,7 +309,7 @@ public class OrderServerResource extends ServerResource {
 				networkId = relatedOrder.getGlobalInstanceId(); 
 			}
 			
-			networkId = ManagerController.normalizeInstanceId(networkId);
+			networkId = ManagerController.normalizeFogbowResourceId(networkId);
 			
 			xOCCIAtt.put(OrderAttribute.NETWORK_ID.getValue(), networkId);
 		}

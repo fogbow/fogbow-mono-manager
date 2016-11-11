@@ -408,7 +408,7 @@ public class ComputeServerResource extends ServerResource {
 					networkId = relatedOrder.getGlobalInstanceId(); 
 				}
 				
-				networkId = ManagerController.normalizeInstanceId(networkId);
+				networkId = ManagerController.normalizeFogbowResourceId(networkId);
 				
 				orderXOCCIAtt.put(OrderAttribute.NETWORK_ID.getValue(), networkId);
 			}

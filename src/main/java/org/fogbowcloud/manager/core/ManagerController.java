@@ -967,11 +967,11 @@ public class ManagerController {
 			if (instanceId == null) {
 				continue;
 			}
-			removeInstance(normalizeInstanceId(instanceId), order, resourceKind);
+			removeInstance(normalizeFogbowResourceId(instanceId), order, resourceKind);
 		}
 	}
 
-	public static String normalizeInstanceId(String instanceId) {
+	public static String normalizeFogbowResourceId(String instanceId) {
 		if (instanceId != null && instanceId.contains(Order.SEPARATOR_GLOBAL_ID)) {
 			String[] partsInstanceId = instanceId.split(Order.SEPARATOR_GLOBAL_ID);
 			instanceId = partsInstanceId[0];
@@ -985,7 +985,7 @@ public class ManagerController {
 	
 	public void removeInstance(String federationToken, String instanceId, String resourceKind) {
 		Order order = getOrderForInstance(federationToken, instanceId);
-		instanceId = normalizeInstanceId(instanceId);
+		instanceId = normalizeFogbowResourceId(instanceId);
 		removeInstance(instanceId, order, resourceKind);
 	}
 	
@@ -1047,7 +1047,7 @@ public class ManagerController {
 		
 		if (instanceId != null) {
 			storageLinkRepository.removeAllByInstance(
-					normalizeInstanceId(instanceId), order.getResourceKing());			
+					normalizeFogbowResourceId(instanceId), order.getResourceKing());			
 		}
 	}
 
@@ -1102,7 +1102,7 @@ public class ManagerController {
 		if (!federationIdentityPlugin.isValid(accessId)) {
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}
-		return storageLinkRepository.get(normalizeInstanceId(storageLinkId));
+		return storageLinkRepository.get(normalizeFogbowResourceId(storageLinkId));
 	}
 
 	public FederationMember getFederationMember(String memberId) {
@@ -2141,9 +2141,9 @@ public class ManagerController {
 			List<Category> categories, Map<String, String> xOCCIAtt) {
 		
 		String target = xOCCIAtt.get(StorageAttribute.TARGET.getValue());
-		String normalizeTargetAttr = normalizeInstanceId(target);
+		String normalizeTargetAttr = normalizeFogbowResourceId(target);
 		xOCCIAtt.put(StorageAttribute.TARGET.getValue(), normalizeTargetAttr);
-		String normalizeSourceAttr = normalizeInstanceId(xOCCIAtt.get(StorageAttribute.SOURCE.getValue()));
+		String normalizeSourceAttr = normalizeFogbowResourceId(xOCCIAtt.get(StorageAttribute.SOURCE.getValue()));
 		xOCCIAtt.put(StorageAttribute.SOURCE.getValue(), normalizeSourceAttr);		
 		Order storageOrder = orderRepository.getOrderByInstance(normalizeTargetAttr);
 		Order computeOrder = orderRepository.getOrderByInstance(normalizeSourceAttr);
@@ -2203,7 +2203,7 @@ public class ManagerController {
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}
 		StorageLink storageLink = storageLinkRepository.get(federationToken.getUser().getId(), 
-				normalizeInstanceId(storageLinkId));
+				normalizeFogbowResourceId(storageLinkId));
 		
 		if (storageLink == null) {
 			throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
@@ -2213,14 +2213,14 @@ public class ManagerController {
 			storageLink.setFederationToken(federationToken);
 			ManagerPacketHelper.deleteRemoteStorageLink(storageLink, packetSender);
 		} else {
-			String storageIdNormalized = normalizeInstanceId(storageLink.getTarget());		
+			String storageIdNormalized = normalizeFogbowResourceId(storageLink.getTarget());		
 			storageLink.setTarget(storageIdNormalized);
 									
 			detachStorage(storageLink, getFederationUserToken(orderRepository
-					.getOrderByInstance(normalizeInstanceId(storageLink.getSource()))));
+					.getOrderByInstance(normalizeFogbowResourceId(storageLink.getSource()))));
 		}		
 		
-		storageLinkRepository.remove(storageLinkId);	
+		storageLinkRepository.remove(normalizeFogbowResourceId(storageLinkId));	
 	}
 
 	public void detachStorage(StorageLink storageLink, Token federationUserToken) {		
