@@ -38,10 +38,6 @@ federation_user_credentail_class=org.fogbowcloud.manager.core.plugins.localcrede
 mapper_defaults_username=$user_name
 mapper_defaults_password=$user_pass
 
-## Federation Identity
-federation_identity_class=org.fogbowcloud.manager.core.plugins.opennebula.OpenNebulaIdentityPlugin
-federation_identity_url=http://$address:$port/RPC2				
-
 ## Local Credentials
 federation_user_credentail_class=org.fogbowcloud.manager.core.plugins.localcredentails.SingleMapperPlugin
 
