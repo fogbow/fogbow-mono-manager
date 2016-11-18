@@ -22,9 +22,6 @@ network_class=org.fogbowcloud.manager.core.plugins.network.ec2.EC2NetworkPlugin
 storage_class=org.fogbowcloud.manager.core.plugins.storage.ec2.EC2StoragePlugin
 storage_ec2_availability_zone=$ec2_storage_availability_zone_id
 
-## Identity
-federation_identity_class=org.fogbowcloud.manager.core.plugins.identity.nocloud.NoCloudIdentityPlugin
-
 ## Local Identity
 local_identity_class=org.fogbowcloud.manager.core.plugins.identity.ec2.EC2IdentityPlugin
 mapper_defaults_accessKey=$ec2_access_key
