@@ -21,7 +21,6 @@ compute_azure_storage_account_name=$storage_account_name
 compute_azure_storage_key=$key_content
 
 ## Identity
-federation_identity_class=org.fogbowcloud.manager.core.plugins.identity.azure.AzureIdentityPlugin
 mapper_defaults_subscription_id=$subscription_id
 mapper_defaults_keystore_path=$path_to_keystore
 mapper_defaults_keystore_password=$keystore_pass
