@@ -16,6 +16,7 @@ import condor.classad.RecordExpr;
 
 public class RequirementsHelper {
 	protected static final String ZERO = "0";
+	public static final String WITHOUT_CHECK = "-1";
 	public static final String GLUE_LOCATION_TERM = "Glue2CloudComputeManagerID";
 	public static final String GLUE_VCPU_TERM = "Glue2vCPU";
 	public static final String GLUE_DISK_TERM = "Glue2Disk";
@@ -103,11 +104,15 @@ public class RequirementsHelper {
 							listAttrSearched.add(attr);							
 						}
 					} else if (attr.equals(RequirementsHelper.GLUE_MEM_RAM_TERM)) {
-						listAttrSearched.add(attr);
 						value = flavor.getMem();
+						if (value != null && !value.equals(WITHOUT_CHECK) || value == null) {
+							listAttrSearched.add(attr);							
+						}
 					} else if (attr.equals(RequirementsHelper.GLUE_VCPU_TERM)) {
-						listAttrSearched.add(attr);
 						value = flavor.getCpu();
+						if (value != null && !value.equals(WITHOUT_CHECK) || value == null) {
+							listAttrSearched.add(attr);
+						}
 					}
 					env.push((RecordExpr) new ClassAdParser("[" + attr + " = " + value + "]").parse());
 				}
