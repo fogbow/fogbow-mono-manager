@@ -170,8 +170,7 @@ public class CloudStackComputePlugin implements ComputePlugin {
 			uriBuilder.addParameter(DISK_OFFERING_ID, diskOfferingId);
 		}
 		
-		String networId = xOCCIAtt.get(OrderAttribute.NETWORK_ID.getValue());
-		
+		String networId = xOCCIAtt.get(OrderAttribute.NETWORK_ID.getValue());		
 		if(networId == null || networId.isEmpty()){
 			if (this.defaultNetworkId == null || this.defaultNetworkId.isEmpty()) {
 				throw new OCCIException(ErrorType.BAD_REQUEST, DEFAULT_NETWORK_ID_IS_EMPTY);

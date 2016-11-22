@@ -150,6 +150,46 @@ public class TestCloudStackComputePlugin {
 	}
 	
 	@Test
+	public void testRequestInstaceIgnoringDiskOffering() {
+		List<Category> categories = new ArrayList<Category>();
+		String imageId = "imageId";
+		categories.add(new Category(OrderConstants.SMALL_TERM,
+				OrderConstants.TEMPLATE_RESOURCE_SCHEME,
+				OrderConstants.MIXIN_CLASS));
+		Token token = new Token("api:key", null, new Date(), null);
+		Properties extraProperties = new Properties();
+		extraProperties.put("compute_cloudstack_zone_id", ZONE_ID);
+
+		HttpClientWrapper httpClient = Mockito.mock(HttpClientWrapper.class);
+
+		String deployyVMUrl = CloudStackTestHelper.createURL(
+				CloudStackComputePlugin.DEPLOY_VM_COMMAND,
+				CloudStackComputePlugin.TEMPLATE_ID, imageId,
+				CloudStackComputePlugin.ZONE_ID, ZONE_ID,
+				CloudStackComputePlugin.SERVICE_OFFERING_ID,
+				DEFAULT_SERVICE_OFFERING,
+				CloudStackComputePlugin.NETWORK_IDS, "01");
+		CloudStackTestHelper.recordHTTPClientWrapperRequest(httpClient, token,
+				CloudStackTestHelper.POST, deployyVMUrl, RESPONSE_DEPLOY_VM, 200);
+
+		String getVMUrl = CloudStackTestHelper
+				.createURL(CloudStackComputePlugin.LIST_SERVICE_OFFERINGS_COMMAND);
+		CloudStackTestHelper.recordHTTPClientWrapperRequest(httpClient, token,
+				CloudStackTestHelper.GET, getVMUrl, RESPONSE_GET_FLAVOR, 200);
+
+		String getDiskOfeering = CloudStackTestHelper
+				.createURL(CloudStackComputePlugin.LIST_DISK_OFFERINGS_COMMAND);
+		CloudStackTestHelper.recordHTTPClientWrapperRequest(httpClient, token,
+				CloudStackTestHelper.GET, getDiskOfeering, RESPONSE_LIST_DISK_OFFERINGS, 200);
+		
+		CloudStackComputePlugin computePlugin = createPlugin(httpClient,
+				extraProperties);
+		HashMap<String, String> occiAttributes = new HashMap<String, String>();
+		computePlugin.requestInstance(token, categories,
+				occiAttributes, imageId);
+	}	
+	
+	@Test
 	public void testRequestInstaceWithEmptyDefaultNetworkId() {
 		List<Category> categories = new ArrayList<Category>();
 		String imageId = "imageId";
