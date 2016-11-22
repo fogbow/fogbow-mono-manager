@@ -153,7 +153,7 @@ public class TestRequirementsHelper {
 	
 	@Test
 	public void testCheckFlavorWithDiskEmpty() {
-		Flavor flavor = new Flavor("test", "12", "400", "0");
+		Flavor flavor = new Flavor("test", "12", "400", RequirementsHelper.VALUE_IGNORED);
 		String disk = RequirementsHelper.GLUE_DISK_TERM;
 		String mem = RequirementsHelper.GLUE_MEM_RAM_TERM;
 		String vCpu = RequirementsHelper.GLUE_VCPU_TERM;
@@ -258,9 +258,30 @@ public class TestRequirementsHelper {
 		String vCpu = RequirementsHelper.GLUE_VCPU_TERM;
 		String requirementsStr = disk + " > 5 && " + mem + " > 50 && " + vCpu + " > 0";
 
+		Flavor flavor = RequirementsHelper.findSmallestFlavor(flavors, requirementsStr);
+		Assert.assertEquals(firstValue, flavor.getId());
+	}	
+	
+	@Test
+	public void testFindFlavorWithDiskIgnoringSomeAttributesInFlavor() {
+		String firstValue = "1";
+		Flavor flavorOne = new Flavor("One", firstValue, RequirementsHelper.VALUE_IGNORED, RequirementsHelper.VALUE_IGNORED, "10");
+		Flavor flavorTwo = new Flavor("Two", "2", RequirementsHelper.VALUE_IGNORED, RequirementsHelper.VALUE_IGNORED, "1");
+		Flavor flavorThree = new Flavor("Three", "3", RequirementsHelper.VALUE_IGNORED, RequirementsHelper.VALUE_IGNORED, "2");
+
+		List<Flavor> flavors = new ArrayList<Flavor>();
+		flavors.add(flavorThree);
+		flavors.add(flavorOne);
+		flavors.add(flavorTwo);
+
+		String disk = RequirementsHelper.GLUE_DISK_TERM;
+		String mem = RequirementsHelper.GLUE_MEM_RAM_TERM;
+		String vCpu = RequirementsHelper.GLUE_VCPU_TERM;
+		String requirementsStr = disk + " >= 5 && " + mem + " > 50 && " + vCpu + " > 0";
+
 		Assert.assertEquals(firstValue, RequirementsHelper.findSmallestFlavor(flavors, requirementsStr)
 				.getId());
-	}	
+	}		
 	
 	@Test
 	public void testFindFlavorSameMenAndCore() {

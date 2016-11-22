@@ -43,14 +43,15 @@ public class TestCloudStackComputePlugin {
 	private static final String IMAGE_DOWNLOADED_BASE_PATH = "/var/www";
 	private static final String ZONE_ID = "zoneId";
 
-	private static String RESPONSE_ONE_INSTANCE;
+	private static String RESPONSE_LIST_DISK_OFFERINGS;
 	private static String RESPONSE_MULTIPLE_INSTANCES;
+	private static String RESPONSE_ONE_INSTANCE;
 	private static String RESPONSE_NO_INSTANCE;
 	private static String RESPONSE_DEPLOY_VM;
 	private static String RESPONSE_RESOURCES_INFO;
-	private static String RESPONSE_OS_TYPE;
 	private static String RESPONSE_LIST_TEMPLATES;
 	private static String RESPONSE_GET_FLAVOR;
+	private static String RESPONSE_OS_TYPE;
 
 	static {
 		try {
@@ -70,6 +71,8 @@ public class TestCloudStackComputePlugin {
 					.getContentFile("src/test/resources/cloudstack/response.get_flavor");
 			RESPONSE_DEPLOY_VM = PluginHelper
 					.getContentFile("src/test/resources/cloudstack/response.deploy_vm");
+			RESPONSE_LIST_DISK_OFFERINGS = PluginHelper
+					.getContentFile("src/test/resources/cloudstack/response.list_disk_offerings_complete");
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}

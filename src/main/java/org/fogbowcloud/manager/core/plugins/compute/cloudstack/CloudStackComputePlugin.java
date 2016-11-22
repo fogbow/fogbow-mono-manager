@@ -206,7 +206,7 @@ public class CloudStackComputePlugin implements ComputePlugin {
 						jsonOffering.optString("id"),
 						jsonOffering.optString("cpunumber"), 
 						jsonOffering.optString("memory"), 
-						Integer.valueOf(0).toString()));
+						RequirementsHelper.VALUE_IGNORED));
 			}
 		} catch (JSONException e) {
 			throw new OCCIException(ErrorType.BAD_REQUEST, 
@@ -220,6 +220,7 @@ public class CloudStackComputePlugin implements ComputePlugin {
 		URIBuilder uriBuilder = createURIBuilder(this.endpoint, LIST_DISK_OFFERINGS_COMMAND);
 		CloudStackHelper.sign(uriBuilder, token.getAccessId());
 		HttpResponseWrapper response = this.httpClient.doGet(uriBuilder.toString());
+		LOGGER.debug("@@@@@ -> " + response.getContent());
 		checkStatusResponse(response);
 		List<Flavor> flavours = new LinkedList<Flavor>();
 		try {
@@ -228,18 +229,21 @@ public class CloudStackComputePlugin implements ComputePlugin {
 			for (int i = 0; jsonOfferings != null && i < jsonOfferings.length(); i++) {
 				JSONObject jsonOffering = jsonOfferings.optJSONObject(i);
 				flavours.add(new Flavor(jsonOffering.optString(NAME), 
-						RequirementsHelper.WITHOUT_CHECK,
-						RequirementsHelper.WITHOUT_CHECK,
-						RequirementsHelper.WITHOUT_CHECK, 
+						jsonOffering.optString("id"),
+						RequirementsHelper.VALUE_IGNORED,
+						RequirementsHelper.VALUE_IGNORED, 
 						jsonOffering.optString("disksize")));
 			}
 		} catch (JSONException e) {
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}
 		
-		return RequirementsHelper.findSmallestFlavor(flavours, requirements).getId();
-	}	
-
+		LOGGER.debug("@@@@@ z -> " + flavours.size());
+		String name = RequirementsHelper.findSmallestFlavor(flavours, requirements).getId();
+		LOGGER.debug("@@@@@ n -> " + name);
+		return name;
+	}
+	
 	@Override
 	public List<Instance> getInstances(Token token) {
 		URIBuilder uriBuilder = createURIBuilder(endpoint, LIST_VMS_COMMAND);
