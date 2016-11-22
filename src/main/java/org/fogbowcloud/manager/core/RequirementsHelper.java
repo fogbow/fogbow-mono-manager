@@ -99,19 +99,25 @@ public class RequirementsHelper {
 				List<ValueAndOperator> findValuesInRequiremets = findValuesInRequiremets(expr, attr);
 				if (findValuesInRequiremets.size() > 0) {
 					listAttrSearched.add(attr);
-					if (attr.equals(RequirementsHelper.GLUE_DISK_TERM)) {
+					if (attr.equals(RequirementsHelper.GLUE_DISK_TERM) 
+							&& requirementsStr.contains(RequirementsHelper.GLUE_DISK_TERM)) {
 						value = flavor.getDisk();
-						if (value == null || value != null && value.equals(VALUE_IGNORED)) {
+						if (value == null || 
+								(value != null && value.equals(VALUE_IGNORED) || value.isEmpty())) {
 							listAttrSearched.remove(attr);							
 						}
-					} else if (attr.equals(RequirementsHelper.GLUE_MEM_RAM_TERM)) {
+					} else if (attr.equals(RequirementsHelper.GLUE_MEM_RAM_TERM) 
+							&& requirementsStr.contains(RequirementsHelper.GLUE_MEM_RAM_TERM)) {
 						value = flavor.getMem();
-						if (value == null || value != null && value.equals(VALUE_IGNORED)) {
+						if (value == null || 
+								value != null && (value.equals(VALUE_IGNORED) || value.isEmpty())) {
 							listAttrSearched.remove(attr);							
 						}
-					} else if (attr.equals(RequirementsHelper.GLUE_VCPU_TERM)) {
+					} else if (attr.equals(RequirementsHelper.GLUE_VCPU_TERM) 
+							&& requirementsStr.contains(RequirementsHelper.GLUE_VCPU_TERM)) {
 						value = flavor.getCpu();
-						if (value == null || value != null && value.equals(VALUE_IGNORED)) {
+						if (value == null || 
+								value != null && (value.equals(VALUE_IGNORED) || value.isEmpty())) {
 							listAttrSearched.remove(attr);
 						}
 					}

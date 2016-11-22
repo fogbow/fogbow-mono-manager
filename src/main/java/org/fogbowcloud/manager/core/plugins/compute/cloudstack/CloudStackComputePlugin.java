@@ -42,7 +42,6 @@ import org.restlet.data.Status;
 
 public class CloudStackComputePlugin implements ComputePlugin {
 	
-
 	private static final Logger LOGGER = Logger.getLogger(CloudStackComputePlugin.class);
 	
 	private static final String JSON_JOB_ID = "jobid";
@@ -156,16 +155,16 @@ public class CloudStackComputePlugin implements ComputePlugin {
 		if (serviceOffering != null) {
 			serviceOfferingId = serviceOffering.getId();
 		}
-		
-		String diskOfferingName = getDiskOfferingName(token, requirements);
-		if (diskOfferingName != null && !diskOfferingName.isEmpty()) {
-			uriBuilder.addParameter(DISK_OFFERING_ID, diskOfferingName);
-		}
-		
+				
 		uriBuilder.addParameter(SERVICE_OFFERING_ID, serviceOfferingId);
 		String userdata = xOCCIAtt.get(OrderAttribute.USER_DATA_ATT.getValue());
 		if (userdata != null) {
 			uriBuilder.addParameter(USERDATA, userdata);
+		}
+		
+		String diskOfferingName = getDiskOfferingId(token, requirements);
+		if (diskOfferingName != null && !diskOfferingName.isEmpty()) {
+			uriBuilder.addParameter(DISK_OFFERING_ID, diskOfferingName);
 		}
 		
 		String networId = xOCCIAtt.get(OrderAttribute.NETWORK_ID.getValue());
@@ -216,11 +215,10 @@ public class CloudStackComputePlugin implements ComputePlugin {
 		return RequirementsHelper.findSmallestFlavor(flavours, requirements);
 	}
 	
-	private String getDiskOfferingName(Token token, String requirements) {
+	private String getDiskOfferingId(Token token, String requirements) {
 		URIBuilder uriBuilder = createURIBuilder(this.endpoint, LIST_DISK_OFFERINGS_COMMAND);
 		CloudStackHelper.sign(uriBuilder, token.getAccessId());
 		HttpResponseWrapper response = this.httpClient.doGet(uriBuilder.toString());
-		LOGGER.debug("@@@@@ -> " + response.getContent());
 		checkStatusResponse(response);
 		List<Flavor> flavours = new LinkedList<Flavor>();
 		try {
@@ -229,19 +227,14 @@ public class CloudStackComputePlugin implements ComputePlugin {
 			for (int i = 0; jsonOfferings != null && i < jsonOfferings.length(); i++) {
 				JSONObject jsonOffering = jsonOfferings.optJSONObject(i);
 				flavours.add(new Flavor(jsonOffering.optString(NAME), 
-						jsonOffering.optString("id"),
-						RequirementsHelper.VALUE_IGNORED,
-						RequirementsHelper.VALUE_IGNORED, 
-						jsonOffering.optString("disksize")));
+						jsonOffering.optString("id"), RequirementsHelper.VALUE_IGNORED,
+						RequirementsHelper.VALUE_IGNORED, jsonOffering.optString("disksize")));
 			}
 		} catch (JSONException e) {
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}
 		
-		LOGGER.debug("@@@@@ z -> " + flavours.size());
-		String name = RequirementsHelper.findSmallestFlavor(flavours, requirements).getId();
-		LOGGER.debug("@@@@@ n -> " + name);
-		return name;
+		return RequirementsHelper.findSmallestFlavor(flavours, requirements).getId();
 	}
 	
 	@Override

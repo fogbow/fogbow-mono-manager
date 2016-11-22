@@ -150,6 +150,17 @@ public class TestRequirementsHelper {
 		Assert.assertTrue(RequirementsHelper.matches(flavor, requirementsStr));
 	}
 	
+	@Test
+	public void testCheckFlavorWithIrregularGlueAttributeAndDiscardThisOne() {
+		String diskExpected = "10";
+		String lessThanDiskExpected = "0";
+		Flavor flavor = new Flavor("test", "11", "400", lessThanDiskExpected);
+		String disk = "GlueDisk"; // Worng value
+		String mem = RequirementsHelper.GLUE_MEM_RAM_TERM;
+		String vCpu = RequirementsHelper.GLUE_VCPU_TERM;
+		String requirementsStr = disk + " > " + diskExpected + " && " + mem + " < 500 && " + vCpu + " >= 10";
+		Assert.assertTrue(RequirementsHelper.matches(flavor, requirementsStr));
+	}	
 	
 	@Test
 	public void testCheckFlavorWithDiskEmpty() {
@@ -160,8 +171,13 @@ public class TestRequirementsHelper {
 		String requirementsStr = disk + " > 10 && " + mem + " < 500 && " + vCpu + " >= 10";
 		Assert.assertTrue(RequirementsHelper.matches(flavor, requirementsStr));
 		
+		// null
 		flavor = new Flavor("test", "12", "400", "");
 		flavor.setDisk(null);
+		Assert.assertTrue(RequirementsHelper.matches(flavor, requirementsStr));
+		
+		// empty
+		flavor = new Flavor("test", "12", "400", "");
 		Assert.assertTrue(RequirementsHelper.matches(flavor, requirementsStr));
 	}
 	
@@ -234,18 +250,18 @@ public class TestRequirementsHelper {
 		String vCpu = RequirementsHelper.GLUE_VCPU_TERM;
 		String requirementsStr = disk + " > 5 && " + mem + " > 50 && " + vCpu + " > 0";
 
-		Assert.assertEquals(firstValue, RequirementsHelper.findSmallestFlavor(flavors, requirementsStr)
-				.getId());
+		Assert.assertEquals(firstValue, RequirementsHelper
+				.findSmallestFlavor(flavors, requirementsStr).getId());
 	}
 	
 	@Test
 	public void testFindFlavorWithOutDisk() {
 		String firstValue = "1";
-		Flavor flavorOne = new Flavor("One", firstValue, "1", "100", "10");
+		Flavor flavorOne = new Flavor("One", firstValue, "1", "100", "0");
 		flavorOne.setDisk(null);
-		Flavor flavorTwo = new Flavor("Two", "2", "2", "200", "20");
+		Flavor flavorTwo = new Flavor("Two", "2", "2", "200", "0");
 		flavorTwo.setDisk(null);
-		Flavor flavorThree = new Flavor("Three", "3", "30", "300", "30");
+		Flavor flavorThree = new Flavor("Three", "3", "30", "300", "0");
 		flavorThree.setDisk(null);
 
 		List<Flavor> flavors = new ArrayList<Flavor>();
