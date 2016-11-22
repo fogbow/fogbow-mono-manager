@@ -90,6 +90,7 @@ public class CloudStackComputePlugin implements ComputePlugin {
 	private static final int LIMIT_TYPE_INSTANCES = 0;
 	private static final int LIMIT_TYPE_MEMORY = 9;
 	private static final int LIMIT_TYPE_CPU = 8;
+	protected static final String ZERO_DYNAMIC_DISK_OFFERING = "0";
 
 	private static final String DEFAULT_HYPERVISOR = "KVM";
 	private static final String DEFAULT_OS_TYPE_NAME = "Other (64-bit)";
@@ -162,9 +163,11 @@ public class CloudStackComputePlugin implements ComputePlugin {
 			uriBuilder.addParameter(USERDATA, userdata);
 		}
 		
-		String diskOfferingName = getDiskOfferingId(token, requirements);
-		if (diskOfferingName != null && !diskOfferingName.isEmpty()) {
-			uriBuilder.addParameter(DISK_OFFERING_ID, diskOfferingName);
+		Flavor diskOffering = getDiskOfferingId(token, requirements);
+		String diskOfferingId = diskOffering.getId();		
+		boolean isDynamicDiskOffering = diskOffering.getDisk().equals(ZERO_DYNAMIC_DISK_OFFERING);
+		if (diskOfferingId != null && !diskOfferingId.isEmpty() && !isDynamicDiskOffering) { 
+			uriBuilder.addParameter(DISK_OFFERING_ID, diskOfferingId);
 		}
 		
 		String networId = xOCCIAtt.get(OrderAttribute.NETWORK_ID.getValue());
@@ -215,7 +218,7 @@ public class CloudStackComputePlugin implements ComputePlugin {
 		return RequirementsHelper.findSmallestFlavor(flavours, requirements);
 	}
 	
-	private String getDiskOfferingId(Token token, String requirements) {
+	private Flavor getDiskOfferingId(Token token, String requirements) {
 		URIBuilder uriBuilder = createURIBuilder(this.endpoint, LIST_DISK_OFFERINGS_COMMAND);
 		CloudStackHelper.sign(uriBuilder, token.getAccessId());
 		HttpResponseWrapper response = this.httpClient.doGet(uriBuilder.toString());
@@ -234,7 +237,7 @@ public class CloudStackComputePlugin implements ComputePlugin {
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}
 		
-		return RequirementsHelper.findSmallestFlavor(flavours, requirements).getId();
+		return RequirementsHelper.findSmallestFlavor(flavours, requirements);
 	}
 	
 	@Override

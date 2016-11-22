@@ -12,6 +12,7 @@ import org.apache.http.HttpStatus;
 import org.apache.http.ProtocolVersion;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.message.BasicStatusLine;
+import org.fogbowcloud.manager.core.RequirementsHelper;
 import org.fogbowcloud.manager.core.model.ImageState;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.common.cloudstack.CloudStackHelper;
@@ -38,7 +39,7 @@ import org.restlet.Response;
 public class TestCloudStackComputePlugin {
 
 	private static final String DEFAULT_SERVICE_OFFERING = "62d5f174-2f1e-42f0-931e-07600a05470e";
-	private static final String DEFAULT_SMALEST_DISK_OFFERING = "0a10fedf-83d1-48b0-9013-47b0c05c5c2a";
+	private static final String DEFAULT_SMALEST_DISK_OFFERING = "e9c2a08d-6ca4-4b81-8e21-5ff2a103b7cb";
 	private static final String COMPUTE_DEFAULT_ZONE = "root";
 	private static final String OS_TYPE = "Ubuntu";
 	private static final String IMAGE_DOWNLOADED_BASE_URL = "http://127.0.0.1";
@@ -141,8 +142,11 @@ public class TestCloudStackComputePlugin {
 		
 		CloudStackComputePlugin computePlugin = createPlugin(httpClient,
 				extraProperties);
+		HashMap<String, String> occiAttributes = new HashMap<String, String>();
+		occiAttributes.put(OrderAttribute.REQUIREMENTS.getValue(), 
+				RequirementsHelper.GLUE_DISK_TERM + " > " + CloudStackComputePlugin.ZERO_DYNAMIC_DISK_OFFERING);
 		computePlugin.requestInstance(token, categories,
-				new HashMap<String, String>(), imageId);
+				occiAttributes, imageId);
 	}
 	
 	@Test
@@ -252,6 +256,8 @@ public class TestCloudStackComputePlugin {
 		HashMap<String, String> occiAttributes = new HashMap<String, String>();
 		occiAttributes.put(OrderAttribute.USER_DATA_ATT.getValue(),
 				"userdata");
+		occiAttributes.put(OrderAttribute.REQUIREMENTS.getValue(), 
+				RequirementsHelper.GLUE_DISK_TERM + " > " + CloudStackComputePlugin.ZERO_DYNAMIC_DISK_OFFERING);		
 		CloudStackComputePlugin computePlugin = createPlugin(httpClient,
 				extraProperties);
 		computePlugin.requestInstance(token, categories, occiAttributes,
@@ -299,10 +305,10 @@ public class TestCloudStackComputePlugin {
 		CloudStackComputePlugin computePlugin = createPlugin(httpClient,
 				extraProperties);
 		HashMap<String, String> occiAttributes = new HashMap<String, String>();
-		occiAttributes.put(OrderAttribute.USER_DATA_ATT.getValue(),
-				"userdata");
-		computePlugin.requestInstance(token, categories, occiAttributes,
-				imageId);
+		occiAttributes.put(OrderAttribute.USER_DATA_ATT.getValue(), "userdata");
+		occiAttributes.put(OrderAttribute.REQUIREMENTS.getValue(), 
+				RequirementsHelper.GLUE_DISK_TERM + " > " + CloudStackComputePlugin.ZERO_DYNAMIC_DISK_OFFERING);
+		computePlugin.requestInstance(token, categories, occiAttributes, imageId);
 	}
 
 	@Test
