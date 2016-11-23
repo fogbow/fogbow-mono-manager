@@ -5,15 +5,16 @@ xmpp_port=$xmpp_port
 
 rendezvous_jid=$my-rendezvous.internal.mydomain
 
+## Federation Identity
+federation_identity_class=org.fogbowcloud.manager.core.plugins.identity.naf.NAFIdentityPlugin
+#Must be the public file to the private key .pem file of the TokenGenerator or Dashboard (portal NAF).
+naf_identity_public_key=$path_to_public key_pem_file
 #Only for TokenGenerator
 name_user_token_generator=$user_name_of_token_generetor
 #Only for TokenGenerator
 password_user_token_generator=$password_of_user_of_token_generetor
 #Only for TokenGenerator
 endpoint_token_generator=http://$address:$token_generator_port
-
-#Must be the public file to the private key .pem file of the TokenGenerator or Dashboard (portal NAF).
-naf_identity_public_key=$path_to_public key_pem_file
 
 ## Authorization Plugin
 federation_authorization_class=org.fogbowcloud.manager.core.plugins.authorization.AllowAllAuthorizationPlugin
