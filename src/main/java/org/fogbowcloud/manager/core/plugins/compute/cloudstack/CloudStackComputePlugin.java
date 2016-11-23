@@ -163,11 +163,13 @@ public class CloudStackComputePlugin implements ComputePlugin {
 			uriBuilder.addParameter(USERDATA, userdata);
 		}
 		
-		Flavor diskOffering = getDiskOfferingId(token, requirements);
-		String diskOfferingId = diskOffering.getId();		
-		boolean isDynamicDiskOffering = diskOffering.getDisk().equals(ZERO_DYNAMIC_DISK_OFFERING);
-		if (diskOfferingId != null && !diskOfferingId.isEmpty() && !isDynamicDiskOffering) { 
-			uriBuilder.addParameter(DISK_OFFERING_ID, diskOfferingId);
+		if (requirements!= null && requirements.contains(RequirementsHelper.GLUE_DISK_TERM)) {
+			Flavor diskOffering = getDiskOfferingId(token, requirements);
+			String diskOfferingId = diskOffering != null ? diskOffering.getId() : null;		
+			boolean isDynamicDiskOffering = diskOffering.getDisk().equals(ZERO_DYNAMIC_DISK_OFFERING);
+			if (diskOfferingId != null && !diskOfferingId.isEmpty() && !isDynamicDiskOffering) { 
+				uriBuilder.addParameter(DISK_OFFERING_ID, diskOfferingId);
+			}			
 		}
 		
 		String networId = xOCCIAtt.get(OrderAttribute.NETWORK_ID.getValue());		

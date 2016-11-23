@@ -211,8 +211,6 @@ public class TestCloudStackComputePlugin {
 				CloudStackComputePlugin.ZONE_ID, ZONE_ID,
 				CloudStackComputePlugin.SERVICE_OFFERING_ID,
 				DEFAULT_SERVICE_OFFERING,
-				CloudStackComputePlugin.DISK_OFFERING_ID,
-				DEFAULT_SMALEST_DISK_OFFERING,
 				CloudStackComputePlugin.NETWORK_IDS, "01");
 		CloudStackTestHelper.recordHTTPClientWrapperRequest(httpClient, token,
 				CloudStackTestHelper.POST, deployyVMUrl, RESPONSE_DEPLOY_VM, 200);
@@ -221,11 +219,6 @@ public class TestCloudStackComputePlugin {
 				.createURL(CloudStackComputePlugin.LIST_SERVICE_OFFERINGS_COMMAND);
 		CloudStackTestHelper.recordHTTPClientWrapperRequest(httpClient, token,
 				CloudStackTestHelper.GET, getVMUrl, RESPONSE_GET_FLAVOR, 200);
-
-		String getDiskOfeering = CloudStackTestHelper
-				.createURL(CloudStackComputePlugin.LIST_DISK_OFFERINGS_COMMAND);
-		CloudStackTestHelper.recordHTTPClientWrapperRequest(httpClient, token,
-				CloudStackTestHelper.GET, getDiskOfeering, RESPONSE_LIST_DISK_OFFERINGS, 200);
 		
 		CloudStackComputePlugin computePlugin = createPlugin(httpClient, extraProperties);
 		try {
@@ -297,7 +290,7 @@ public class TestCloudStackComputePlugin {
 		occiAttributes.put(OrderAttribute.USER_DATA_ATT.getValue(),
 				"userdata");
 		occiAttributes.put(OrderAttribute.REQUIREMENTS.getValue(), 
-				RequirementsHelper.GLUE_DISK_TERM + " > " + CloudStackComputePlugin.ZERO_DYNAMIC_DISK_OFFERING);		
+				RequirementsHelper.GLUE_DISK_TERM + " > 0");		
 		CloudStackComputePlugin computePlugin = createPlugin(httpClient,
 				extraProperties);
 		computePlugin.requestInstance(token, categories, occiAttributes,
