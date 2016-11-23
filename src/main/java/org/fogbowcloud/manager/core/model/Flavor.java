@@ -110,6 +110,6 @@ public class Flavor {
 	
 	@Override
 	public String toString() {
-		return "Name: " + getName() + ", cpu: " + cpu + ", mem: " + memInMB + ", capacity: " + capacity;
+		return "Name: " + getName() + ", cpu: " + cpu + ", mem: " + memInMB + ", disk: " + disk + ", capacity: " + capacity;
 	}
 }

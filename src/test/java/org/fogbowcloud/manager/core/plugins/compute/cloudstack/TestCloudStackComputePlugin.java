@@ -12,6 +12,7 @@ import org.apache.http.HttpStatus;
 import org.apache.http.ProtocolVersion;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.message.BasicStatusLine;
+import org.fogbowcloud.manager.core.RequirementsHelper;
 import org.fogbowcloud.manager.core.model.ImageState;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.common.cloudstack.CloudStackHelper;
@@ -37,20 +38,23 @@ import org.restlet.Response;
 
 public class TestCloudStackComputePlugin {
 
+	private static final String DEFAULT_SERVICE_OFFERING = "62d5f174-2f1e-42f0-931e-07600a05470e";
+	private static final String DEFAULT_SMALEST_DISK_OFFERING = "e9c2a08d-6ca4-4b81-8e21-5ff2a103b7cb";
 	private static final String COMPUTE_DEFAULT_ZONE = "root";
 	private static final String OS_TYPE = "Ubuntu";
 	private static final String IMAGE_DOWNLOADED_BASE_URL = "http://127.0.0.1";
 	private static final String IMAGE_DOWNLOADED_BASE_PATH = "/var/www";
 	private static final String ZONE_ID = "zoneId";
 
-	private static String RESPONSE_ONE_INSTANCE;
+	private static String RESPONSE_LIST_DISK_OFFERINGS;
 	private static String RESPONSE_MULTIPLE_INSTANCES;
+	private static String RESPONSE_ONE_INSTANCE;
 	private static String RESPONSE_NO_INSTANCE;
 	private static String RESPONSE_DEPLOY_VM;
 	private static String RESPONSE_RESOURCES_INFO;
-	private static String RESPONSE_OS_TYPE;
 	private static String RESPONSE_LIST_TEMPLATES;
 	private static String RESPONSE_GET_FLAVOR;
+	private static String RESPONSE_OS_TYPE;
 
 	static {
 		try {
@@ -70,6 +74,8 @@ public class TestCloudStackComputePlugin {
 					.getContentFile("src/test/resources/cloudstack/response.get_flavor");
 			RESPONSE_DEPLOY_VM = PluginHelper
 					.getContentFile("src/test/resources/cloudstack/response.deploy_vm");
+			RESPONSE_LIST_DISK_OFFERINGS = PluginHelper
+					.getContentFile("src/test/resources/cloudstack/response.list_disk_offerings_complete");
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -99,8 +105,6 @@ public class TestCloudStackComputePlugin {
 		}
 	}
 
-	private static final String SERVICE_OFFERING_PARAMETER = "serviceofferingid";
-
 	@Test
 	public void testRequestInstace() {
 		List<Category> categories = new ArrayList<Category>();
@@ -118,8 +122,10 @@ public class TestCloudStackComputePlugin {
 				CloudStackComputePlugin.DEPLOY_VM_COMMAND,
 				CloudStackComputePlugin.TEMPLATE_ID, imageId,
 				CloudStackComputePlugin.ZONE_ID, ZONE_ID,
-				SERVICE_OFFERING_PARAMETER,
-				"62d5f174-2f1e-42f0-931e-07600a05470e",
+				CloudStackComputePlugin.SERVICE_OFFERING_ID,
+				DEFAULT_SERVICE_OFFERING,
+				CloudStackComputePlugin.DISK_OFFERING_ID,
+				DEFAULT_SMALEST_DISK_OFFERING,
 				CloudStackComputePlugin.NETWORK_IDS, "01");
 		CloudStackTestHelper.recordHTTPClientWrapperRequest(httpClient, token,
 				CloudStackTestHelper.POST, deployyVMUrl, RESPONSE_DEPLOY_VM, 200);
@@ -129,11 +135,59 @@ public class TestCloudStackComputePlugin {
 		CloudStackTestHelper.recordHTTPClientWrapperRequest(httpClient, token,
 				CloudStackTestHelper.GET, getVMUrl, RESPONSE_GET_FLAVOR, 200);
 
+		String getDiskOfeering = CloudStackTestHelper
+				.createURL(CloudStackComputePlugin.LIST_DISK_OFFERINGS_COMMAND);
+		CloudStackTestHelper.recordHTTPClientWrapperRequest(httpClient, token,
+				CloudStackTestHelper.GET, getDiskOfeering, RESPONSE_LIST_DISK_OFFERINGS, 200);
+		
 		CloudStackComputePlugin computePlugin = createPlugin(httpClient,
 				extraProperties);
+		HashMap<String, String> occiAttributes = new HashMap<String, String>();
+		occiAttributes.put(OrderAttribute.REQUIREMENTS.getValue(), 
+				RequirementsHelper.GLUE_DISK_TERM + " > " + CloudStackComputePlugin.ZERO_DYNAMIC_DISK_OFFERING);
 		computePlugin.requestInstance(token, categories,
-				new HashMap<String, String>(), imageId);
+				occiAttributes, imageId);
 	}
+	
+	@Test
+	public void testRequestInstaceIgnoringDiskOffering() {
+		List<Category> categories = new ArrayList<Category>();
+		String imageId = "imageId";
+		categories.add(new Category(OrderConstants.SMALL_TERM,
+				OrderConstants.TEMPLATE_RESOURCE_SCHEME,
+				OrderConstants.MIXIN_CLASS));
+		Token token = new Token("api:key", null, new Date(), null);
+		Properties extraProperties = new Properties();
+		extraProperties.put("compute_cloudstack_zone_id", ZONE_ID);
+
+		HttpClientWrapper httpClient = Mockito.mock(HttpClientWrapper.class);
+
+		String deployyVMUrl = CloudStackTestHelper.createURL(
+				CloudStackComputePlugin.DEPLOY_VM_COMMAND,
+				CloudStackComputePlugin.TEMPLATE_ID, imageId,
+				CloudStackComputePlugin.ZONE_ID, ZONE_ID,
+				CloudStackComputePlugin.SERVICE_OFFERING_ID,
+				DEFAULT_SERVICE_OFFERING,
+				CloudStackComputePlugin.NETWORK_IDS, "01");
+		CloudStackTestHelper.recordHTTPClientWrapperRequest(httpClient, token,
+				CloudStackTestHelper.POST, deployyVMUrl, RESPONSE_DEPLOY_VM, 200);
+
+		String getVMUrl = CloudStackTestHelper
+				.createURL(CloudStackComputePlugin.LIST_SERVICE_OFFERINGS_COMMAND);
+		CloudStackTestHelper.recordHTTPClientWrapperRequest(httpClient, token,
+				CloudStackTestHelper.GET, getVMUrl, RESPONSE_GET_FLAVOR, 200);
+
+		String getDiskOfeering = CloudStackTestHelper
+				.createURL(CloudStackComputePlugin.LIST_DISK_OFFERINGS_COMMAND);
+		CloudStackTestHelper.recordHTTPClientWrapperRequest(httpClient, token,
+				CloudStackTestHelper.GET, getDiskOfeering, RESPONSE_LIST_DISK_OFFERINGS, 200);
+		
+		CloudStackComputePlugin computePlugin = createPlugin(httpClient,
+				extraProperties);
+		HashMap<String, String> occiAttributes = new HashMap<String, String>();
+		computePlugin.requestInstance(token, categories,
+				occiAttributes, imageId);
+	}	
 	
 	@Test
 	public void testRequestInstaceWithEmptyDefaultNetworkId() {
@@ -155,8 +209,8 @@ public class TestCloudStackComputePlugin {
 				CloudStackComputePlugin.DEPLOY_VM_COMMAND,
 				CloudStackComputePlugin.TEMPLATE_ID, imageId,
 				CloudStackComputePlugin.ZONE_ID, ZONE_ID,
-				SERVICE_OFFERING_PARAMETER,
-				"62d5f174-2f1e-42f0-931e-07600a05470e",
+				CloudStackComputePlugin.SERVICE_OFFERING_ID,
+				DEFAULT_SERVICE_OFFERING,
 				CloudStackComputePlugin.NETWORK_IDS, "01");
 		CloudStackTestHelper.recordHTTPClientWrapperRequest(httpClient, token,
 				CloudStackTestHelper.POST, deployyVMUrl, RESPONSE_DEPLOY_VM, 200);
@@ -165,7 +219,7 @@ public class TestCloudStackComputePlugin {
 				.createURL(CloudStackComputePlugin.LIST_SERVICE_OFFERINGS_COMMAND);
 		CloudStackTestHelper.recordHTTPClientWrapperRequest(httpClient, token,
 				CloudStackTestHelper.GET, getVMUrl, RESPONSE_GET_FLAVOR, 200);
-
+		
 		CloudStackComputePlugin computePlugin = createPlugin(httpClient, extraProperties);
 		try {
 			computePlugin.requestInstance(token, categories, 
@@ -205,7 +259,8 @@ public class TestCloudStackComputePlugin {
 		Token token = new Token("api:key", null, new Date(), null);
 		Properties extraProperties = new Properties();
 		extraProperties.put("compute_cloudstack_zone_id", ZONE_ID);
-		extraProperties.put("compute_cloudstack_default_networkid", "01");
+		String networkId = "01";
+		extraProperties.put("compute_cloudstack_default_networkid", networkId);
 		
 		HttpClientWrapper httpClient = Mockito.mock(HttpClientWrapper.class);
 
@@ -213,10 +268,12 @@ public class TestCloudStackComputePlugin {
 				CloudStackComputePlugin.DEPLOY_VM_COMMAND,
 				CloudStackComputePlugin.TEMPLATE_ID, imageId,
 				CloudStackComputePlugin.ZONE_ID, ZONE_ID,
-				SERVICE_OFFERING_PARAMETER,
-				"62d5f174-2f1e-42f0-931e-07600a05470e",
+				CloudStackComputePlugin.SERVICE_OFFERING_ID,
+				DEFAULT_SERVICE_OFFERING,
 				CloudStackComputePlugin.USERDATA, "userdata",
-				CloudStackComputePlugin.NETWORK_IDS, "01");
+				CloudStackComputePlugin.DISK_OFFERING_ID,
+				DEFAULT_SMALEST_DISK_OFFERING,
+				CloudStackComputePlugin.NETWORK_IDS, networkId);
 		CloudStackTestHelper.recordHTTPClientWrapperRequest(httpClient, token,
 				CloudStackTestHelper.POST, deployyVMUrl, RESPONSE_DEPLOY_VM, 200);
 		String getVMUrl = CloudStackTestHelper
@@ -224,9 +281,16 @@ public class TestCloudStackComputePlugin {
 		CloudStackTestHelper.recordHTTPClientWrapperRequest(httpClient, token,
 				CloudStackTestHelper.GET, getVMUrl, RESPONSE_GET_FLAVOR, 200);
 
+		String getDiskOfeering = CloudStackTestHelper
+				.createURL(CloudStackComputePlugin.LIST_DISK_OFFERINGS_COMMAND);
+		CloudStackTestHelper.recordHTTPClientWrapperRequest(httpClient, token,
+				CloudStackTestHelper.GET, getDiskOfeering, RESPONSE_LIST_DISK_OFFERINGS, 200);
+		
 		HashMap<String, String> occiAttributes = new HashMap<String, String>();
 		occiAttributes.put(OrderAttribute.USER_DATA_ATT.getValue(),
 				"userdata");
+		occiAttributes.put(OrderAttribute.REQUIREMENTS.getValue(), 
+				RequirementsHelper.GLUE_DISK_TERM + " > 0");		
 		CloudStackComputePlugin computePlugin = createPlugin(httpClient,
 				extraProperties);
 		computePlugin.requestInstance(token, categories, occiAttributes,
@@ -253,9 +317,11 @@ public class TestCloudStackComputePlugin {
 				CloudStackComputePlugin.DEPLOY_VM_COMMAND,
 				CloudStackComputePlugin.TEMPLATE_ID, imageId,
 				CloudStackComputePlugin.ZONE_ID, ZONE_ID,
-				SERVICE_OFFERING_PARAMETER,
-				"62d5f174-2f1e-42f0-931e-07600a05470e",
+				CloudStackComputePlugin.SERVICE_OFFERING_ID,
+				DEFAULT_SERVICE_OFFERING,
 				CloudStackComputePlugin.USERDATA, "userdata",
+				CloudStackComputePlugin.DISK_OFFERING_ID,
+				DEFAULT_SMALEST_DISK_OFFERING,
 				CloudStackComputePlugin.NETWORK_IDS, "01");
 		CloudStackTestHelper.recordHTTPClientWrapperRequest(httpClient, token,
 				CloudStackTestHelper.POST, deployyVMUrl, BAD_RESPONSE_STRING, 200);
@@ -264,13 +330,18 @@ public class TestCloudStackComputePlugin {
 		CloudStackTestHelper.recordHTTPClientWrapperRequest(httpClient, token,
 				CloudStackTestHelper.GET, getVMUrl, RESPONSE_GET_FLAVOR, 200);
 
+		String getDiskOfeering = CloudStackTestHelper
+				.createURL(CloudStackComputePlugin.LIST_DISK_OFFERINGS_COMMAND);
+		CloudStackTestHelper.recordHTTPClientWrapperRequest(httpClient, token,
+				CloudStackTestHelper.GET, getDiskOfeering, RESPONSE_LIST_DISK_OFFERINGS, 200);
+		
 		CloudStackComputePlugin computePlugin = createPlugin(httpClient,
 				extraProperties);
 		HashMap<String, String> occiAttributes = new HashMap<String, String>();
-		occiAttributes.put(OrderAttribute.USER_DATA_ATT.getValue(),
-				"userdata");
-		computePlugin.requestInstance(token, categories, occiAttributes,
-				imageId);
+		occiAttributes.put(OrderAttribute.USER_DATA_ATT.getValue(), "userdata");
+		occiAttributes.put(OrderAttribute.REQUIREMENTS.getValue(), 
+				RequirementsHelper.GLUE_DISK_TERM + " > " + CloudStackComputePlugin.ZERO_DYNAMIC_DISK_OFFERING);
+		computePlugin.requestInstance(token, categories, occiAttributes, imageId);
 	}
 
 	@Test
@@ -373,7 +444,7 @@ public class TestCloudStackComputePlugin {
 		
 		Mockito.doNothing().when(cloudstackComputePlugin).removeInstance(
 				Mockito.eq(token), Mockito.anyString());
-		Mockito.doThrow(new OCCIException(ErrorType.BAD_REQUEST, "")).when(cloudstackComputePlugin)
+		Mockito.doThrow(new OCCIException(ErrorType.BAD_REQUEST, DEFAULT_SMALEST_DISK_OFFERING)).when(cloudstackComputePlugin)
 				.removeInstance(Mockito.eq(token), Mockito.anyString());
 		Mockito.doReturn(instances).when(cloudstackComputePlugin).getInstances(Mockito.eq(token));
 			

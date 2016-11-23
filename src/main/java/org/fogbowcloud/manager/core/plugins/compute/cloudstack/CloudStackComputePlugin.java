@@ -42,7 +42,6 @@ import org.restlet.data.Status;
 
 public class CloudStackComputePlugin implements ComputePlugin {
 	
-
 	private static final Logger LOGGER = Logger.getLogger(CloudStackComputePlugin.class);
 	
 	private static final String JSON_JOB_ID = "jobid";
@@ -58,6 +57,7 @@ public class CloudStackComputePlugin implements ComputePlugin {
 	protected static final String LIST_RESOURCE_LIMITS_COMMAND = "listResourceLimits";
 	protected static final String DESTROY_VM_COMMAND = "destroyVirtualMachine";
 	protected static final String LIST_SERVICE_OFFERINGS_COMMAND = "listServiceOfferings";
+	protected static final String LIST_DISK_OFFERINGS_COMMAND = "listDiskOfferings";
 	protected static final String LIST_TEMPLATES_COMMAND = "listTemplates";
 	protected static final String REGISTER_TEMPLATE_COMMAND = "registerTemplate";
 	protected static final String LIST_OS_TYPES_COMMAND = "listOsTypes";
@@ -68,6 +68,7 @@ public class CloudStackComputePlugin implements ComputePlugin {
 	protected static final String COMMAND = "command";
 	protected static final String TEMPLATE_ID = "templateid";
 	protected static final String SERVICE_OFFERING_ID = "serviceofferingid";
+	protected static final String DISK_OFFERING_ID = "diskofferingid";	
 	protected static final String ZONE_ID = "zoneid";
 	protected static final String VM_ID = "id";
 	protected static final String VM_EXPUNGE = "expunge";
@@ -89,6 +90,7 @@ public class CloudStackComputePlugin implements ComputePlugin {
 	private static final int LIMIT_TYPE_INSTANCES = 0;
 	private static final int LIMIT_TYPE_MEMORY = 9;
 	private static final int LIMIT_TYPE_CPU = 8;
+	protected static final String ZERO_DYNAMIC_DISK_OFFERING = "0";
 
 	private static final String DEFAULT_HYPERVISOR = "KVM";
 	private static final String DEFAULT_OS_TYPE_NAME = "Other (64-bit)";
@@ -148,20 +150,29 @@ public class CloudStackComputePlugin implements ComputePlugin {
 		uriBuilder.addParameter(TEMPLATE_ID, imageId);
 		uriBuilder.addParameter(ZONE_ID, zoneId);
 		
-		Flavor serviceOffering = getFlavor(token,
-				xOCCIAtt.get(OrderAttribute.REQUIREMENTS.getValue()));
+		String requirements = xOCCIAtt.get(OrderAttribute.REQUIREMENTS.getValue());
+		Flavor serviceOffering = getServiceOffering(token, requirements);
 		String serviceOfferingId = null;
 		if (serviceOffering != null) {
 			serviceOfferingId = serviceOffering.getId();
 		}
+				
 		uriBuilder.addParameter(SERVICE_OFFERING_ID, serviceOfferingId);
 		String userdata = xOCCIAtt.get(OrderAttribute.USER_DATA_ATT.getValue());
 		if (userdata != null) {
 			uriBuilder.addParameter(USERDATA, userdata);
 		}
 		
-		String networId = xOCCIAtt.get(OrderAttribute.NETWORK_ID.getValue());
+		if (requirements!= null && requirements.contains(RequirementsHelper.GLUE_DISK_TERM)) {
+			Flavor diskOffering = getDiskOfferingId(token, requirements);
+			String diskOfferingId = diskOffering != null ? diskOffering.getId() : null;		
+			boolean isDynamicDiskOffering = diskOffering.getDisk().equals(ZERO_DYNAMIC_DISK_OFFERING);
+			if (diskOfferingId != null && !diskOfferingId.isEmpty() && !isDynamicDiskOffering) { 
+				uriBuilder.addParameter(DISK_OFFERING_ID, diskOfferingId);
+			}			
+		}
 		
+		String networId = xOCCIAtt.get(OrderAttribute.NETWORK_ID.getValue());		
 		if(networId == null || networId.isEmpty()){
 			if (this.defaultNetworkId == null || this.defaultNetworkId.isEmpty()) {
 				throw new OCCIException(ErrorType.BAD_REQUEST, DEFAULT_NETWORK_ID_IS_EMPTY);
@@ -183,7 +194,7 @@ public class CloudStackComputePlugin implements ComputePlugin {
 		}
 	}
 
-	private Flavor getFlavor(Token token, String requirements) {
+	private Flavor getServiceOffering(Token token, String requirements) {
 		URIBuilder uriBuilder = createURIBuilder(endpoint, LIST_SERVICE_OFFERINGS_COMMAND);
 		CloudStackHelper.sign(uriBuilder, token.getAccessId());
 		HttpResponseWrapper response = httpClient.doGet(uriBuilder.toString());
@@ -198,7 +209,7 @@ public class CloudStackComputePlugin implements ComputePlugin {
 						jsonOffering.optString("id"),
 						jsonOffering.optString("cpunumber"), 
 						jsonOffering.optString("memory"), 
-						Integer.valueOf(0).toString()));
+						RequirementsHelper.VALUE_IGNORED));
 			}
 		} catch (JSONException e) {
 			throw new OCCIException(ErrorType.BAD_REQUEST, 
@@ -207,7 +218,29 @@ public class CloudStackComputePlugin implements ComputePlugin {
 		
 		return RequirementsHelper.findSmallestFlavor(flavours, requirements);
 	}
-
+	
+	private Flavor getDiskOfferingId(Token token, String requirements) {
+		URIBuilder uriBuilder = createURIBuilder(this.endpoint, LIST_DISK_OFFERINGS_COMMAND);
+		CloudStackHelper.sign(uriBuilder, token.getAccessId());
+		HttpResponseWrapper response = this.httpClient.doGet(uriBuilder.toString());
+		checkStatusResponse(response);
+		List<Flavor> flavours = new LinkedList<Flavor>();
+		try {
+			JSONArray jsonOfferings = new JSONObject(response.getContent()).optJSONObject(
+					"listdiskofferingsresponse").optJSONArray("diskoffering");
+			for (int i = 0; jsonOfferings != null && i < jsonOfferings.length(); i++) {
+				JSONObject jsonOffering = jsonOfferings.optJSONObject(i);
+				flavours.add(new Flavor(jsonOffering.optString(NAME), 
+						jsonOffering.optString("id"), RequirementsHelper.VALUE_IGNORED,
+						RequirementsHelper.VALUE_IGNORED, jsonOffering.optString("disksize")));
+			}
+		} catch (JSONException e) {
+			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
+		}
+		
+		return RequirementsHelper.findSmallestFlavor(flavours, requirements);
+	}
+	
 	@Override
 	public List<Instance> getInstances(Token token) {
 		URIBuilder uriBuilder = createURIBuilder(endpoint, LIST_VMS_COMMAND);
