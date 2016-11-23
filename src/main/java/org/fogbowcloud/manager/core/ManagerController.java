@@ -1828,11 +1828,14 @@ public class ManagerController {
 	}
 
 	private boolean isInstanceBeingUsedByRemoteMember(Order servedOrder) {
+		String globalInstanceId = null;
 		try {
-			String globalInstanceId = servedOrder.getGlobalInstanceId();
+			globalInstanceId = servedOrder.getGlobalInstanceId();
 			ManagerPacketHelper.checkIfInstanceIsBeingUsedByRemoteMember(globalInstanceId, servedOrder, packetSender);
 			return true;
 		} catch (OCCIException e) {
+			LOGGER.error("Error while checking if instance " + globalInstanceId + " is being used by "
+							+ servedOrder.getRequestingMemberId(), e);
 			return false;
 		}
 	}
