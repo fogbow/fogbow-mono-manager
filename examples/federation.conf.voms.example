@@ -54,6 +54,6 @@ simple_storage_accounting_datastore_url=jdbc:h2:$path_to_storage_accounting_db
 
 ## Accounting Plugin
 ## Compute accounting plugin
-accounting_class=org.fogbowcloud.manager.core.plugins.accounting.FCUAccountingPlugin
+compute_accounting_class=org.fogbowcloud.manager.core.plugins.accounting.FCUAccountingPlugin
 accounting_update_period=300000
 fcu_accounting_datastore_url=jdbc:h2:$path_to_compute_accounting_db
