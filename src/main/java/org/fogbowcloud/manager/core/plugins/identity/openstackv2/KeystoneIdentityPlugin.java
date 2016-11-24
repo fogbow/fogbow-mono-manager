@@ -35,10 +35,6 @@ import org.json.JSONObject;
 public class KeystoneIdentityPlugin implements IdentityPlugin {
 
 	public static final String OPEN_STACK_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss'Z'";
-
-	public static final String FEDERATION_USER_NAME_KEY = "local_proxy_account_user_name";
-	public static final String FEDERATION_USER_PASS_KEY = "local_proxy_account_password";
-	public static final String FEDERATION_USER_TENANT_NAME_KEY = "local_proxy_account_tenant_name";
 	
 	// keystone json data
 	public static final String TENANT_NAME_PROP = "tenantName";

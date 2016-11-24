@@ -197,9 +197,6 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 	public ManagerXmppComponent initializeXMPPManagerComponent(boolean init) throws Exception {
 
 		Properties properties = new Properties();
-		properties.put(KeystoneIdentityPlugin.FEDERATION_USER_NAME_KEY, "fogbow");
-		properties.put(KeystoneIdentityPlugin.FEDERATION_USER_PASS_KEY, "fogbow");
-		properties.put(KeystoneIdentityPlugin.FEDERATION_USER_TENANT_NAME_KEY, "fogbow");
 		properties.put(ConfigurationConstants.XMPP_JID_KEY, MANAGER_TEST_JID);
 		properties.put(ConfigurationConstants.TOKEN_HOST_PRIVATE_ADDRESS_KEY,
 				DefaultDataTestHelper.SERVER_HOST);
@@ -215,9 +212,6 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 	public ManagerXmppComponent initializeXMPPManagerComponentFacadeMocki(boolean init, ManagerController managerFacade) throws Exception {
 
 		Properties properties = new Properties();
-		properties.put(KeystoneIdentityPlugin.FEDERATION_USER_NAME_KEY, "fogbow");
-		properties.put(KeystoneIdentityPlugin.FEDERATION_USER_PASS_KEY, "fogbow");
-		properties.put(KeystoneIdentityPlugin.FEDERATION_USER_TENANT_NAME_KEY, "fogbow");
 		properties.put(ConfigurationConstants.XMPP_JID_KEY, MANAGER_TEST_JID);
 		properties.put(ConfigurationConstants.TOKEN_HOST_PRIVATE_ADDRESS_KEY,
 				DefaultDataTestHelper.SERVER_HOST);
@@ -287,8 +281,6 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		this.mapperPlugin = Mockito.mock(MapperPlugin.class);
 
 		Properties properties = new Properties();
-		properties.put(KeystoneIdentityPlugin.FEDERATION_USER_NAME_KEY, "fogbow");
-		properties.put(KeystoneIdentityPlugin.FEDERATION_USER_PASS_KEY, "fogbow");
 		properties.put(ConfigurationConstants.XMPP_JID_KEY, MANAGER_TEST_JID);
 
 		Mockito.when(computePlugin.getInstances(Mockito.any(Token.class))).thenReturn(
@@ -376,12 +368,6 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		Properties properties = new Properties();
 		properties.put(ConfigurationConstants.XMPP_JID_KEY,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
-		properties.put(KeystoneIdentityPlugin.FEDERATION_USER_NAME_KEY,
-				DefaultDataTestHelper.FED_USER_NAME);
-		properties.put(KeystoneIdentityPlugin.FEDERATION_USER_PASS_KEY,
-				DefaultDataTestHelper.FED_USER_PASS);
-		properties.put(KeystoneIdentityPlugin.FEDERATION_USER_TENANT_NAME_KEY,
-				DefaultDataTestHelper.TENANT_NAME);
 		properties.put(ConfigurationConstants.SCHEDULER_PERIOD_KEY,
 				DefaultDataTestHelper.SCHEDULER_PERIOD.toString());
 		properties.put(ConfigurationConstants.INSTANCE_MONITORING_PERIOD_KEY,
