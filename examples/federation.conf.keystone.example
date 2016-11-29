@@ -6,7 +6,7 @@ xmpp_port=$xmpp_port
 rendezvous_jid=$my-rendezvous.internal.mydomain
 
 # Federation Identity plugin class
-federation_identity_class=org.fogbowcloud.manager.core.plugins.openstack.KeystoneIdentityPlugin
+federation_identity_class=org.fogbowcloud.manager.core.plugins.identity.openstackv2.KeystoneIdentityPlugin
 # Federation Identity endpoint
 federation_identity_url=http://$address:$keystone_port
 
