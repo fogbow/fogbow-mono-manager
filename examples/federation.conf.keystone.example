@@ -10,13 +10,6 @@ federation_identity_class=org.fogbowcloud.manager.core.plugins.identity.openstac
 # Federation Identity endpoint
 federation_identity_url=http://$address:$keystone_port
 
-# Proxy account for remote requests @ the local identity provider
-local_proxy_account_user_name=$user_name
-# Password of such account
-local_proxy_account_password=$password
-# Tenant of such account
-local_proxy_account_tenant_name=$tenant_name
-
 ## Authorization Plugin
 federation_authorization_class=org.fogbowcloud.manager.core.plugins.authorization.AllowAllAuthorizationPlugin
 
