@@ -29,9 +29,14 @@ local_identity_url=http://$address:$keystone_port
 federation_user_credentail_class=org.fogbowcloud.manager.core.plugins.localcredentails.SingleMapperPlugin
 
 ## Mapper Plugin / Local credentials to be used when we miss information about a given user
+# keystone V2
 mapper_defaults_username=$user_name
 mapper_defaults_password=$user_pass
 mapper_defaults_tenantName=$tenant_name			
+# or keystone V3
+# mapper_defaults_userId=$user_id
+# mapper_defaults_password=$user_pass
+# mapper_defaults_projectId=$project_id
 
 ## Local Credentials
 federation_user_credentail_class=org.fogbowcloud.manager.core.plugins.localcredentails.SingleMapperPlugin
