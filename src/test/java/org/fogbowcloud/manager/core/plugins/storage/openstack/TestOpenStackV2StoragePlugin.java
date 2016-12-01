@@ -68,7 +68,7 @@ public class TestOpenStackV2StoragePlugin {
 		
 		Map<String, String> attributes = new HashMap<String, String>();
 		attributes.put(OpenStackV2StoragePlugin.TENANT_ID, TENANT_ID);
-		tokenDefault = new Token(ACCESS_ID, "user", new Date(), attributes);
+		tokenDefault = new Token(ACCESS_ID, new Token.User("user", "user"), new Date(), attributes);
 	}
 	
 	@Test

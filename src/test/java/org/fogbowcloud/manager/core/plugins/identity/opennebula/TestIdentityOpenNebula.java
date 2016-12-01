@@ -57,7 +57,7 @@ public class TestIdentityOpenNebula {
 		userCredentials.put(OpenNebulaIdentityPlugin.USERNAME, PluginHelper.USERNAME);
 		userCredentials.put(OpenNebulaIdentityPlugin.USER_PASSWORD, PluginHelper.USER_PASS);
 		Token userToken = identityOpenNebula.createToken(userCredentials);
-		Assert.assertEquals(PluginHelper.USERNAME, userToken.getUser());
+		Assert.assertEquals(PluginHelper.USERNAME, userToken.getUser().getId());
 		Assert.assertEquals(null, userToken.getExpirationDate());
 		Assert.assertEquals(accessId, userToken.getAccessId());
 	}
@@ -77,8 +77,8 @@ public class TestIdentityOpenNebula {
 		identityOpenNebula = new OpenNebulaIdentityPlugin(properties, clientFactory);
 
 		// test reissuing token
-		Token token = new Token(tokenAccessId, PluginHelper.USERNAME, null,
-				new HashMap<String, String>());
+		Token token = new Token(tokenAccessId, new Token.User(PluginHelper.USERNAME, PluginHelper.USERNAME),
+				null, new HashMap<String, String>());
 
 		Token tokenReissued = identityOpenNebula.reIssueToken(token);
 		Assert.assertEquals(token.getAccessId(), tokenReissued.getAccessId());
@@ -104,7 +104,7 @@ public class TestIdentityOpenNebula {
 		// getting user token
 		Token userToken = identityOpenNebula.getToken(tokenAccessId);
 		Assert.assertEquals(tokenAccessId, userToken.getAccessId());
-		Assert.assertEquals(PluginHelper.USERNAME, userToken.getUser());
+		Assert.assertEquals(PluginHelper.USERNAME, userToken.getUser().getId());
 		Assert.assertNull(userToken.getExpirationDate());
 	}
 

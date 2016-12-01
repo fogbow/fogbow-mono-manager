@@ -12,6 +12,7 @@ import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.MainHelper;
 import org.fogbowcloud.manager.core.RequirementsHelper;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.model.ImageState;
@@ -40,14 +41,23 @@ import org.restlet.Response;
 import org.restlet.data.Status;
 
 public class CloudStackComputePlugin implements ComputePlugin {
-
+	
 	private static final Logger LOGGER = Logger.getLogger(CloudStackComputePlugin.class);
 	
+	private static final String JSON_JOB_ID = "jobid";
+	protected static final String JSON_QUERY_ASYNC_JOB_RESULT_RESPONSE = 
+			"queryasyncjobresultresponse";
+	protected static final String JSON_JOB_STATUS = "jobstatus";	
+	public static final String COMPUTE_CLOUDSTACK_DEFAULT_NETWORKID = 
+			"compute_cloudstack_default_networkid";
+	protected static final String DEFAULT_NETWORK_ID_IS_EMPTY = "Default network id is empty. " 
+			+ COMPUTE_CLOUDSTACK_DEFAULT_NETWORKID + " is required.";
 	protected static final String LIST_VMS_COMMAND = "listVirtualMachines";
 	protected static final String DEPLOY_VM_COMMAND = "deployVirtualMachine";
 	protected static final String LIST_RESOURCE_LIMITS_COMMAND = "listResourceLimits";
 	protected static final String DESTROY_VM_COMMAND = "destroyVirtualMachine";
 	protected static final String LIST_SERVICE_OFFERINGS_COMMAND = "listServiceOfferings";
+	protected static final String LIST_DISK_OFFERINGS_COMMAND = "listDiskOfferings";
 	protected static final String LIST_TEMPLATES_COMMAND = "listTemplates";
 	protected static final String REGISTER_TEMPLATE_COMMAND = "registerTemplate";
 	protected static final String LIST_OS_TYPES_COMMAND = "listOsTypes";
@@ -58,6 +68,7 @@ public class CloudStackComputePlugin implements ComputePlugin {
 	protected static final String COMMAND = "command";
 	protected static final String TEMPLATE_ID = "templateid";
 	protected static final String SERVICE_OFFERING_ID = "serviceofferingid";
+	protected static final String DISK_OFFERING_ID = "diskofferingid";	
 	protected static final String ZONE_ID = "zoneid";
 	protected static final String VM_ID = "id";
 	protected static final String VM_EXPUNGE = "expunge";
@@ -73,12 +84,13 @@ public class CloudStackComputePlugin implements ComputePlugin {
 	protected static final String ATTACH_VOLUME_ID = "id";
 	protected static final String ATTACH_VM_ID = "virtualmachineid";
 	protected static final String ATTACH_DEVICE_ID = "deviceid";
-	protected static final String JOB_ID = "jobid";
+	protected static final String JOB_ID = JSON_JOB_ID;
 	protected static final String NETWORK_IDS = "networkids";
 	
 	private static final int LIMIT_TYPE_INSTANCES = 0;
 	private static final int LIMIT_TYPE_MEMORY = 9;
 	private static final int LIMIT_TYPE_CPU = 8;
+	protected static final String ZERO_DYNAMIC_DISK_OFFERING = "0";
 
 	private static final String DEFAULT_HYPERVISOR = "KVM";
 	private static final String DEFAULT_OS_TYPE_NAME = "Other (64-bit)";
@@ -111,7 +123,7 @@ public class CloudStackComputePlugin implements ComputePlugin {
 		this.osTypeId = this.properties.getProperty("compute_cloudstack_image_download_os_type_id");
 		this.expungeOnDestroy = this.properties.getProperty(
 				"compute_cloudstack_expunge_on_destroy", DEFAULT_EXPUNGE_ON_DESTROY);
-		this.defaultNetworkId = this.properties.getProperty("compute_cloudstack_default_networkid");
+		this.defaultNetworkId = this.properties.getProperty(COMPUTE_CLOUDSTACK_DEFAULT_NETWORKID);
 	}
 	
 	@Override
@@ -138,28 +150,40 @@ public class CloudStackComputePlugin implements ComputePlugin {
 		uriBuilder.addParameter(TEMPLATE_ID, imageId);
 		uriBuilder.addParameter(ZONE_ID, zoneId);
 		
-		Flavor serviceOffering = getFlavor(token,
-				xOCCIAtt.get(OrderAttribute.REQUIREMENTS.getValue()));
+		String requirements = xOCCIAtt.get(OrderAttribute.REQUIREMENTS.getValue());
+		Flavor serviceOffering = getServiceOffering(token, requirements);
 		String serviceOfferingId = null;
 		if (serviceOffering != null) {
 			serviceOfferingId = serviceOffering.getId();
 		}
+				
 		uriBuilder.addParameter(SERVICE_OFFERING_ID, serviceOfferingId);
 		String userdata = xOCCIAtt.get(OrderAttribute.USER_DATA_ATT.getValue());
 		if (userdata != null) {
 			uriBuilder.addParameter(USERDATA, userdata);
 		}
 		
-		String networId = xOCCIAtt.get(OrderAttribute.NETWORK_ID.getValue());
+		if (requirements!= null && requirements.contains(RequirementsHelper.GLUE_DISK_TERM)) {
+			Flavor diskOffering = getDiskOfferingId(token, requirements);
+			String diskOfferingId = diskOffering != null ? diskOffering.getId() : null;		
+			boolean isDynamicDiskOffering = diskOffering.getDisk().equals(ZERO_DYNAMIC_DISK_OFFERING);
+			if (diskOfferingId != null && !diskOfferingId.isEmpty() && !isDynamicDiskOffering) { 
+				uriBuilder.addParameter(DISK_OFFERING_ID, diskOfferingId);
+			}			
+		}
 		
+		String networId = xOCCIAtt.get(OrderAttribute.NETWORK_ID.getValue());		
 		if(networId == null || networId.isEmpty()){
+			if (this.defaultNetworkId == null || this.defaultNetworkId.isEmpty()) {
+				throw new OCCIException(ErrorType.BAD_REQUEST, DEFAULT_NETWORK_ID_IS_EMPTY);
+			}
 			networId = defaultNetworkId;
 		}
 		uriBuilder.addParameter(NETWORK_IDS, networId);
 		
 		CloudStackHelper.sign(uriBuilder, token.getAccessId());
 		HttpResponseWrapper response = httpClient.doPost(uriBuilder.toString());
-		checkStatusResponse(response.getStatusLine());
+		checkStatusResponse(response);
 		try {
 			JSONObject vm = new JSONObject(response.getContent()).optJSONObject(
 					"deployvirtualmachineresponse");
@@ -170,11 +194,11 @@ public class CloudStackComputePlugin implements ComputePlugin {
 		}
 	}
 
-	private Flavor getFlavor(Token token, String requirements) {
+	private Flavor getServiceOffering(Token token, String requirements) {
 		URIBuilder uriBuilder = createURIBuilder(endpoint, LIST_SERVICE_OFFERINGS_COMMAND);
 		CloudStackHelper.sign(uriBuilder, token.getAccessId());
 		HttpResponseWrapper response = httpClient.doGet(uriBuilder.toString());
-		checkStatusResponse(response.getStatusLine());
+		checkStatusResponse(response);
 		List<Flavor> flavours = new LinkedList<Flavor>();
 		try {
 			JSONArray jsonOfferings = new JSONObject(response.getContent()).optJSONObject(
@@ -185,7 +209,7 @@ public class CloudStackComputePlugin implements ComputePlugin {
 						jsonOffering.optString("id"),
 						jsonOffering.optString("cpunumber"), 
 						jsonOffering.optString("memory"), 
-						Integer.valueOf(0).toString()));
+						RequirementsHelper.VALUE_IGNORED));
 			}
 		} catch (JSONException e) {
 			throw new OCCIException(ErrorType.BAD_REQUEST, 
@@ -194,14 +218,36 @@ public class CloudStackComputePlugin implements ComputePlugin {
 		
 		return RequirementsHelper.findSmallestFlavor(flavours, requirements);
 	}
-
+	
+	private Flavor getDiskOfferingId(Token token, String requirements) {
+		URIBuilder uriBuilder = createURIBuilder(this.endpoint, LIST_DISK_OFFERINGS_COMMAND);
+		CloudStackHelper.sign(uriBuilder, token.getAccessId());
+		HttpResponseWrapper response = this.httpClient.doGet(uriBuilder.toString());
+		checkStatusResponse(response);
+		List<Flavor> flavours = new LinkedList<Flavor>();
+		try {
+			JSONArray jsonOfferings = new JSONObject(response.getContent()).optJSONObject(
+					"listdiskofferingsresponse").optJSONArray("diskoffering");
+			for (int i = 0; jsonOfferings != null && i < jsonOfferings.length(); i++) {
+				JSONObject jsonOffering = jsonOfferings.optJSONObject(i);
+				flavours.add(new Flavor(jsonOffering.optString(NAME), 
+						jsonOffering.optString("id"), RequirementsHelper.VALUE_IGNORED,
+						RequirementsHelper.VALUE_IGNORED, jsonOffering.optString("disksize")));
+			}
+		} catch (JSONException e) {
+			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
+		}
+		
+		return RequirementsHelper.findSmallestFlavor(flavours, requirements);
+	}
+	
 	@Override
 	public List<Instance> getInstances(Token token) {
 		URIBuilder uriBuilder = createURIBuilder(endpoint, LIST_VMS_COMMAND);
 		CloudStackHelper.sign(uriBuilder, token.getAccessId());
 		
 		HttpResponseWrapper response = httpClient.doGet(uriBuilder.toString());
-		checkStatusResponse(response.getStatusLine());
+		checkStatusResponse(response);
 		List<Instance> instances = new LinkedList<Instance>();
 		try {
 			JSONArray jsonVms = new JSONObject(response.getContent()).optJSONObject(
@@ -224,7 +270,7 @@ public class CloudStackComputePlugin implements ComputePlugin {
 		CloudStackHelper.sign(uriBuilder, token.getAccessId());
 		
 		HttpResponseWrapper response = httpClient.doGet(uriBuilder.toString());
-		checkStatusResponse(response.getStatusLine());
+		checkStatusResponse(response);
 		JSONObject instanceJson = null;
 		try {
 			JSONArray instancesJson = new JSONObject(response.getContent()).optJSONObject(
@@ -291,7 +337,11 @@ public class CloudStackComputePlugin implements ComputePlugin {
 	public void removeInstances(Token token) {
 		List<Instance> instances = getInstances(token);
 		for (Instance instance : instances) {
-			removeInstance(token, instance.getId());
+			try {
+				removeInstance(token, instance.getId());				
+			} catch (Exception e) {
+				LOGGER.warn("Does not possible delete compute instance: " + instance.getId() , e);
+			}
 		}
 	}
 
@@ -300,7 +350,7 @@ public class CloudStackComputePlugin implements ComputePlugin {
 		URIBuilder uriBuilder = createURIBuilder(endpoint, LIST_RESOURCE_LIMITS_COMMAND);
 		CloudStackHelper.sign(uriBuilder, token.getAccessId());
 		HttpResponseWrapper response = httpClient.doGet(uriBuilder.toString());
-		checkStatusResponse(response.getStatusLine());
+		checkStatusResponse(response);
 		
 		int instancesQuota = 0;
 		int cpuQuota = 0;
@@ -376,7 +426,7 @@ public class CloudStackComputePlugin implements ComputePlugin {
 		uriBuilder.addParameter(IS_PUBLIC, Boolean.TRUE.toString());
 		CloudStackHelper.sign(uriBuilder, token.getAccessId());
 		HttpResponseWrapper response = httpClient.doPost(uriBuilder.toString());
-		checkStatusResponse(response.getStatusLine());
+		checkStatusResponse(response);
 	}
 
 	@Override
@@ -427,7 +477,7 @@ public class CloudStackComputePlugin implements ComputePlugin {
 		URIBuilder uriBuilder = createURIBuilder(endpoint, LIST_OS_TYPES_COMMAND);
 		CloudStackHelper.sign(uriBuilder, token.getAccessId());
 		HttpResponseWrapper response = httpClient.doGet(uriBuilder.toString());
-		checkStatusResponse(response.getStatusLine());
+		checkStatusResponse(response);
 		try {
 			JSONArray jsonOsTypes = new JSONObject(response.getContent()).optJSONObject(
 					"listostypesresponse").optJSONArray("ostype");
@@ -467,18 +517,25 @@ public class CloudStackComputePlugin implements ComputePlugin {
 	private static final int SC_RESOURCE_UNAVAILABLE_ERROR = 534;
 	private static final int SC_RESOURCE_ALLOCATION_ERROR = 535;
 
-	protected void checkStatusResponse(StatusLine statusLine) {
+	protected void checkStatusResponse(HttpResponseWrapper response) {
+		StatusLine statusLine = response.getStatusLine();
+		String content = response.getContent();
 		if (statusLine.getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
+			LOGGER.error(content);
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		} else if (statusLine.getStatusCode() == SC_PARAM_ERROR) {
+			LOGGER.error(content);
 			throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
 		} else if (statusLine.getStatusCode() == SC_INSUFFICIENT_CAPACITY_ERROR || 
 				statusLine.getStatusCode() == SC_RESOURCE_UNAVAILABLE_ERROR) {
+			LOGGER.error(content);
 			throw new OCCIException(ErrorType.NO_VALID_HOST_FOUND, ResponseConstants.NO_VALID_HOST_FOUND);
 		} else if (statusLine.getStatusCode() == SC_RESOURCE_ALLOCATION_ERROR) {
+			LOGGER.error(content);
 			throw new OCCIException(ErrorType.QUOTA_EXCEEDED, 
 					ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES);
 		} else if (statusLine.getStatusCode() > 204) {
+			LOGGER.error(content);
 			throw new OCCIException(ErrorType.BAD_REQUEST, statusLine.getReasonPhrase());
 		}
 	}
@@ -495,12 +552,12 @@ public class CloudStackComputePlugin implements ComputePlugin {
 		
 		CloudStackHelper.sign(uriBuilder, token.getAccessId());
 		HttpResponseWrapper response = httpClient.doGet(uriBuilder.toString());
-		checkStatusResponse(response.getStatusLine());
+		checkStatusResponse(response);
 		try {
 			JSONObject responseJson = new JSONObject(response.getContent())
 				.optJSONObject("attachvolumeresponse");
 			JSONObject asyncJobStatus = getAsyncJobStatus(responseJson, token);
-			int jobStatus = asyncJobStatus.optInt("jobstatus");
+			int jobStatus = asyncJobStatus.optInt(JSON_JOB_STATUS);
 			if (jobStatus == 1) {
 				String deviceId = asyncJobStatus.optJSONObject("jobresult").optJSONObject("volume").optString("deviceid");
 				return UUID.randomUUID().toString() + "-device-" + deviceId;
@@ -513,30 +570,52 @@ public class CloudStackComputePlugin implements ComputePlugin {
 		}
 	}
 	
-	private static final long GET_ASYNC_JOB_STATUS_DELAY = 4000;
-
-	private JSONObject getAsyncJobStatus(JSONObject responseJson, Token token) {
-		if (responseJson.has("jobid")) {
-			try {
-				Thread.sleep(GET_ASYNC_JOB_STATUS_DELAY);
-			} catch (InterruptedException e1) {}
+	// FIXME This solution is temporary. We need investigate the behavior of the cloudstack. Implement other solution.
+	protected JSONObject getAsyncJobStatus(JSONObject responseJson, Token token) {
+		if (responseJson.has(JSON_JOB_ID)) {
+			JSONObject asyncJobResponse = null;
+			HttpResponseWrapper response = null;			
+			final int statusComplete = 1;
+			final int statusFailure = 2;			
 			URIBuilder uriBuilder = createURIBuilder(endpoint, QUERY_ASYNC_JOB_RESULT);
-			uriBuilder.addParameter(JOB_ID, responseJson.optString("jobid"));
+			uriBuilder.addParameter(JOB_ID, responseJson.optString(JSON_JOB_ID));
 			CloudStackHelper.sign(uriBuilder, token.getAccessId());
 			
-			HttpResponseWrapper response = httpClient.doGet(uriBuilder.toString());	
-			checkStatusResponse(response.getStatusLine());
-			try {
-				// jobstatus 0 = still processing, 1 complete, 2 failure
-				//TODO check what we can do when this asyn joc is not completed
-				JSONObject asyncJobResponse = new JSONObject(response.getContent()).optJSONObject("queryasyncjobresultresponse");
-				LOGGER.debug("CloudStack asyn job status: " + asyncJobResponse.toString());
-				return asyncJobResponse;
-			} catch (JSONException e) {
-				LOGGER.debug("Could not parse async job response to json", e);
+			long elapsedTime = 0;
+			final long asyncJobStatusDelay = getAsyncJobStatusDelay();			
+			LOGGER.debug("Trying get CloudStack asyn job status within " + asyncJobStatusDelay + " milliseconds.");
+			final long startCount = System.currentTimeMillis();
+			while(elapsedTime <= asyncJobStatusDelay) {
+				
+				response = httpClient.doGet(uriBuilder.toString());	
+				try {
+					checkStatusResponse(response);
+					// jobstatus 0 = still processing, 1 complete, 2 failure
+					asyncJobResponse = new JSONObject(response.getContent())
+							.optJSONObject(JSON_QUERY_ASYNC_JOB_RESULT_RESPONSE);
+					int jobStatus = asyncJobResponse.optInt(JSON_JOB_STATUS);
+					if (jobStatus == statusComplete || jobStatus == statusFailure) {
+						LOGGER.debug("CloudStack asyn job status: " + asyncJobResponse.toString());
+						return asyncJobResponse;
+					}
+				} catch (Exception e) {
+					LOGGER.debug("Could not get async job status.", e);
+				}
+				
+				// Wait 1 second
+				try { Thread.sleep(1000); } catch (InterruptedException e1) {}
+				elapsedTime = System.currentTimeMillis() - startCount;
 			}
+			return asyncJobResponse;
 		}
 		return null;
+	}
+
+	protected long getAsyncJobStatusDelay() {
+		long xmppTimeout = MainHelper.getXMPPTimeout(this.properties);
+		// to prevent timeout
+		int decreaseTime = 2000;
+		return xmppTimeout - decreaseTime;
 	}
 
 	@Override
@@ -549,12 +628,12 @@ public class CloudStackComputePlugin implements ComputePlugin {
 		
 		CloudStackHelper.sign(uriBuilder, token.getAccessId());
 		HttpResponseWrapper response = httpClient.doGet(uriBuilder.toString());
-		checkStatusResponse(response.getStatusLine());
+		checkStatusResponse(response);
 		try {
 			JSONObject responseJson = new JSONObject(
 					response.getContent()).optJSONObject("detachvolumeresponse");
 			JSONObject asyncJobStatus = getAsyncJobStatus(responseJson, token);
-			int jobStatus = asyncJobStatus.optInt("jobstatus");
+			int jobStatus = asyncJobStatus.optInt(JSON_JOB_STATUS);
 			if (jobStatus != 1) {
 				String errorText = "Async job is not complete yet.";
 				if (jobStatus == 2) {

@@ -50,14 +50,14 @@ public class FederationUserBasedMapperPlugin implements MapperPlugin {
 
 	@Override
 	public Map<String, String> getLocalCredentials(Order order) {
-		String normalizedUser = MapperHelper.normalizeUser(order.getFederationToken()
-				.getUser());
+		String userName = order.getFederationToken().getUser().getName();
+		String normalizedUserName = MapperHelper.normalizeUser(userName);
 
-		LOGGER.debug("normalizedFederationUser=" + normalizedUser);
+		LOGGER.debug("NormalizedFederationUsername=" + normalizedUserName);
 		Map<String, String> credentialsPerMember = MapperHelper
-				.getCredentialsPerRelatedLocalName(this.properties, normalizedUser);
+				.getCredentialsPerRelatedLocalName(this.properties, normalizedUserName);
 
-		LOGGER.debug("Credentials for " + normalizedUser + " are " + credentialsPerMember);
+		LOGGER.debug("Credentials for " + normalizedUserName + " are " + credentialsPerMember);
 		if (!credentialsPerMember.isEmpty()) {
 			return credentialsPerMember;
 		}
@@ -72,14 +72,14 @@ public class FederationUserBasedMapperPlugin implements MapperPlugin {
 
 	@Override
 	public Map<String, String> getLocalCredentials(String accessId) {
-		String normalizedUser = MapperHelper.normalizeUser(federationIdentityPlugin
-				.getToken(accessId).getUser());
-		LOGGER.debug("normalizeFederationUser=" + normalizedUser);
+		String userName = this.federationIdentityPlugin.getToken(accessId).getUser().getName();
+		String normalizedUserName = MapperHelper.normalizeUser(userName);
+		LOGGER.debug("NormalizeFederationUserName=" + normalizedUserName);
 
 		Map<String, String> credentialsPerMember = MapperHelper
-				.getCredentialsPerRelatedLocalName(this.properties, normalizedUser);
+				.getCredentialsPerRelatedLocalName(this.properties, normalizedUserName);
 
-		LOGGER.debug("Credentials for " + normalizedUser + " are " + credentialsPerMember);
+		LOGGER.debug("Credentials for " + normalizedUserName + " are " + credentialsPerMember);
 		if (!credentialsPerMember.isEmpty()) {
 			return credentialsPerMember;
 		}

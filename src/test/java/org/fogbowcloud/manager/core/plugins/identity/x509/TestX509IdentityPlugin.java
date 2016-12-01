@@ -51,7 +51,7 @@ public class TestX509IdentityPlugin {
 		Token token = x509IdentityPlugin.createToken(userCredentials);
 
 		Assert.assertEquals(CERTIFICATE_ACCESS_ID, token.getAccessId());
-		Assert.assertEquals(CERTIFICATE_USER, token.getUser());
+		Assert.assertEquals(CERTIFICATE_USER, token.getUser().getId());
 		Assert.assertEquals(CERTIFICATE_EXPIRATION_DATE,
 				PluginHelper.formatExpirationDate(dateFormat, token));
 	}
@@ -81,7 +81,7 @@ public class TestX509IdentityPlugin {
 		Token token = x509IdentityPlugin.createToken(userCredentials);
 
 		Assert.assertEquals(CERTIFICATE_ACCESS_ID, token.getAccessId());
-		Assert.assertEquals(CERTIFICATE_USER, token.getUser());
+		Assert.assertEquals(CERTIFICATE_USER, token.getUser().getId());
 		Assert.assertEquals(CERTIFICATE_EXPIRATION_DATE,
 				PluginHelper.formatExpirationDate(dateFormat, token));
 
@@ -100,7 +100,7 @@ public class TestX509IdentityPlugin {
 		Token token = x509IdentityPlugin.getToken(CERTIFICATE_ACCESS_ID);
 
 		Assert.assertEquals(CERTIFICATE_ACCESS_ID, token.getAccessId());
-		Assert.assertEquals(CERTIFICATE_USER, token.getUser());
+		Assert.assertEquals(CERTIFICATE_USER, token.getUser().getId());
 		Assert.assertEquals(CERTIFICATE_EXPIRATION_DATE,
 				PluginHelper.formatExpirationDate(dateFormat, token));
 	}

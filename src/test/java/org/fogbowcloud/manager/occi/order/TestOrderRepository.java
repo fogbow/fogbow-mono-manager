@@ -19,18 +19,18 @@ public class TestOrderRepository {
 	private static final String ID3 = "ID3";
 	private static final String ID4 = "ID4";
 	private static final String ID5 = "ID5";
-	private static final String USER = "user";
+	private static final String USER_ID = "user";
 	
 	private OrderRepository orderRepository;
 	
 	@Before
 	public void setUp() {
 		orderRepository = new OrderRepository();
-		orderRepository.addOrder(USER, createOrder(ID1, USER, true));
-		orderRepository.addOrder(USER, createOrder(ID2, USER, true));
-		orderRepository.addOrder(USER, createOrder(ID3, USER, true));
-		orderRepository.addOrder(USER, createOrder(ID4, USER, false));
-		orderRepository.addOrder(USER, createOrder(ID5, USER, false));		
+		orderRepository.addOrder(USER_ID, createOrder(ID1, USER_ID, true));
+		orderRepository.addOrder(USER_ID, createOrder(ID2, USER_ID, true));
+		orderRepository.addOrder(USER_ID, createOrder(ID3, USER_ID, true));
+		orderRepository.addOrder(USER_ID, createOrder(ID4, USER_ID, false));
+		orderRepository.addOrder(USER_ID, createOrder(ID5, USER_ID, false));		
 	}
 
 	@Test
@@ -58,35 +58,35 @@ public class TestOrderRepository {
 	
 	@Test
 	public void testGetLocalOrderByUser() {	
-		Assert.assertNotNull(orderRepository.get(USER, ID1));
-		Assert.assertNotNull(orderRepository.get(USER, ID2));
-		Assert.assertNotNull(orderRepository.get(USER, ID3));
+		Assert.assertNotNull(orderRepository.get(USER_ID, ID1));
+		Assert.assertNotNull(orderRepository.get(USER_ID, ID2));
+		Assert.assertNotNull(orderRepository.get(USER_ID, ID3));
 	}
 
 	@Test
 	public void testTryGetLocalOrderByUser() {	
-		Assert.assertNull(orderRepository.get(USER, ID4));
-		Assert.assertNull(orderRepository.get(USER, ID5));
+		Assert.assertNull(orderRepository.get(USER_ID, ID4));
+		Assert.assertNull(orderRepository.get(USER_ID, ID5));
 	}	
 
 	@Test
 	public void testGetServeredOrderByUser() {	
-		Assert.assertNotNull(orderRepository.get(USER, ID4, false));
+		Assert.assertNotNull(orderRepository.get(USER_ID, ID4, false));
 	}
 	
 	@Test
 	public void testTryGetServeredOrderByUser() {	
-		Assert.assertNull(orderRepository.get(USER, ID1, false));
+		Assert.assertNull(orderRepository.get(USER_ID, ID1, false));
 	}		
 	
 	@Test
 	public void testGetByUser() {
-		Assert.assertEquals(3, orderRepository.getByUser(USER).size());
+		Assert.assertEquals(3, orderRepository.getByUserId(USER_ID).size());
 	}
 	
 	@Test
 	public void testGetByUserServeredOrder() {
-		Assert.assertEquals(2, orderRepository.getByUser(USER, false).size());
+		Assert.assertEquals(2, orderRepository.getByUserId(USER_ID, false).size());
 	}	
 	
 	@Test
@@ -110,7 +110,7 @@ public class TestOrderRepository {
 	private Order createOrder(String id, String user, boolean isLocal, String resourceKind) {
 		HashMap<String, String> attributes = new HashMap<String, String>();
 		attributes.put(OrderAttribute.RESOURCE_KIND.getValue(), resourceKind);
-		Token federationToken = new Token("1", user, new Date(), attributes);
+		Token federationToken = new Token("1", new Token.User(user, ""), new Date(), attributes);
 		Order order = new Order(id, federationToken, "", "", "", new Date().getTime(),
 				isLocal, OrderState.OPEN, null, attributes);
 		return order;

@@ -48,7 +48,7 @@ public class TestAccountingServerResource {
 		this.computeAccountingPlugin = Mockito.mock(AccountingPlugin.class);
 		this.storageAccountingPlugin = Mockito.mock(AccountingPlugin.class);
 		
-		defaultToken = new Token("accessId", "user", new Date(), null);
+		defaultToken = new Token("accessId", new Token.User("user", ""), new Date(), null);
 		
 		this.helper = new OCCITestHelper();
 	}

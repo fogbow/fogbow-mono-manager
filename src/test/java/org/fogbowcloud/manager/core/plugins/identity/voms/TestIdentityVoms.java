@@ -26,6 +26,8 @@ import eu.emi.security.authn.x509.proxy.ProxyCertificate;
 
 public class TestIdentityVoms {
 
+	private static final String ISSUER_DN = "CN=test0, O=IGI, C=IT";
+	private static final String ISSUER_DN_CN = "test0";
 	private static final long TWELVE_HOURS = 1000 * 60 * 60 * 12;
 	private static final long ONE_MINUTE = 1000 * 60;
 	public final String VOMS_PASSWORD = "pass";
@@ -52,7 +54,8 @@ public class TestIdentityVoms {
 
 	@Test
 	public void testReIssueToken() throws Exception {
-		Token token = new Token("accessId", "user", new Date(), new HashMap<String, String>());
+		Token token = new Token("accessId", new Token.User("user", "user"), 
+				new Date(), new HashMap<String, String>());
 		Assert.assertEquals(token, vomsIdentityPlugin.reIssueToken(token));
 	}
 
@@ -79,10 +82,10 @@ public class TestIdentityVoms {
 
 		Date after = new Date(System.currentTimeMillis() + TWELVE_HOURS);
 
-		Assert.assertEquals(
-				CertificateUtils.generateAccessId(Arrays.asList(proxy.getCertificateChain()),
-						proxy.getCredential()), token.getAccessId());
-		Assert.assertEquals("CN=test0, O=IGI, C=IT", token.getUser());
+		Assert.assertEquals(CertificateUtils.generateAccessId(Arrays.asList(
+				proxy.getCertificateChain()), proxy.getCredential()), token.getAccessId());
+		Assert.assertEquals(ISSUER_DN, token.getUser().getId());
+		Assert.assertEquals(ISSUER_DN_CN, token.getUser().getName());
 		Assert.assertTrue(token.getExpirationDate().after(before));
 		Assert.assertTrue(token.getExpirationDate().before(after));
 	}
@@ -103,7 +106,8 @@ public class TestIdentityVoms {
 		Token token = vomsIdentityPlugin.getToken(accessId);
 		Date after = new Date(System.currentTimeMillis() + TWELVE_HOURS);
 
-		Assert.assertEquals("CN=test0, O=IGI, C=IT", token.getUser());
+		Assert.assertEquals(ISSUER_DN, token.getUser().getId());
+		Assert.assertEquals(ISSUER_DN_CN, token.getUser().getName());
 		Assert.assertEquals(accessId, token.getAccessId());
 		Assert.assertTrue(token.getExpirationDate().after(before));
 		Assert.assertTrue(token.getExpirationDate().before(after));
@@ -191,5 +195,9 @@ public class TestIdentityVoms {
 				.getAccessId());
 
 		Assert.assertFalse(matcher.find());
+	}
+	
+	public void test() {
+		
 	}
 }

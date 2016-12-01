@@ -68,7 +68,7 @@ public class TestDeleteCompute {
 	public void setup() throws Exception {
 		this.helper = new OCCITestHelper();
 		Token token = new Token(OCCITestHelper.ACCESS_TOKEN,
-				OCCITestHelper.USER_MOCK, DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
+				new Token.User(OCCITestHelper.USER_MOCK, OCCITestHelper.USER_MOCK) , DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
 				new HashMap<String, String>());
 		
 		computePlugin = Mockito.mock(ComputePlugin.class);
@@ -79,7 +79,7 @@ public class TestDeleteCompute {
 				.when(computePlugin).bypass(Mockito.any(org.restlet.Request.class), Mockito.any(Response.class));
 		
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
-		Token tokenTwo = new Token("1", OCCITestHelper.USER_MOCK, new Date(),
+		Token tokenTwo = new Token("1", new Token.User(OCCITestHelper.USER_MOCK, OCCITestHelper.USER_MOCK), new Date(),
 		new HashMap<String, String>());
 		Mockito.when(identityPlugin.getToken(OCCITestHelper.ACCESS_TOKEN))
 				.thenReturn(tokenTwo);
@@ -88,13 +88,13 @@ public class TestDeleteCompute {
 		HashMap<String, String> xOCCIAttr = new HashMap<String, String>();
 		xOCCIAttr.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.COMPUTE_TERM);
 		Order orderOne = new Order("1", new Token(OCCITestHelper.ACCESS_TOKEN,
-				OCCITestHelper.USER_MOCK, DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
-				xOCCIAttr), null, xOCCIAttr, true, "");
+				new Token.User(OCCITestHelper.USER_MOCK, OCCITestHelper.USER_MOCK), 
+				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, xOCCIAttr), null, xOCCIAttr, true, "");
 		orderOne.setInstanceId(INSTANCE_ID);
 		orderOne.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
 		orderOne.setState(OrderState.FULFILLED);
 		orders.add(orderOne);
-		Order orderTwo = new Order("2", new Token("otherToken", "otherUser",
+		Order orderTwo = new Order("2", new Token("otherToken", new Token.User("otheruser", "otheruser"),
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, xOCCIAttr), null, xOCCIAttr, true, "");
 		orderTwo.setInstanceId(OTHER_INSTANCE_ID);
 		orderTwo.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
@@ -165,7 +165,7 @@ public class TestDeleteCompute {
 		
 		Assert.assertEquals(1, facade.getStorageLinkRepository().getByUser(OCCITestHelper.USER_MOCK).size());
 		
-		Token token = new Token("accessId", "user", new Date(), new HashMap<String, String>());
+		Token token = new Token("accessId", new Token.User("user", "user"), new Date(), new HashMap<String, String>());
 		Mockito.when(federationIdenityPlugin.getToken(Mockito.anyString())).thenReturn(token);
 		
 		HttpDelete httpDelete = new HttpDelete(OCCITestHelper.URI_FOGBOW_COMPUTE);
@@ -187,7 +187,7 @@ public class TestDeleteCompute {
 		
 		Assert.assertEquals(1, facade.getStorageLinkRepository().getByUser(OCCITestHelper.USER_MOCK).size());
 		
-		Token token = new Token("accessId", "user", new Date(), new HashMap<String, String>());
+		Token token = new Token("accessId", new Token.User("user", "user"), new Date(), new HashMap<String, String>());
 		Mockito.when(federationIdenityPlugin.getToken(Mockito.anyString())).thenReturn(token);
 		
 		HttpDelete httpDelete = new HttpDelete(OCCITestHelper.URI_FOGBOW_COMPUTE);

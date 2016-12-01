@@ -1,4 +1,4 @@
-package org.fogbowcloud.manager.core.plugins.identity.openstack;
+package org.fogbowcloud.manager.core.plugins.identity.openstackv2;
 
 import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.codec.binary.Base64;
@@ -20,6 +21,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
+import org.fogbowcloud.manager.core.plugins.localcredentails.MapperHelper;
 import org.fogbowcloud.manager.core.plugins.util.Credential;
 import org.fogbowcloud.manager.occi.model.ErrorType;
 import org.fogbowcloud.manager.occi.model.OCCIException;
@@ -33,10 +35,6 @@ import org.json.JSONObject;
 public class KeystoneIdentityPlugin implements IdentityPlugin {
 
 	public static final String OPEN_STACK_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss'Z'";
-
-	public static final String FEDERATION_USER_NAME_KEY = "local_proxy_account_user_name";
-	public static final String FEDERATION_USER_PASS_KEY = "local_proxy_account_password";
-	public static final String FEDERATION_USER_TENANT_NAME_KEY = "local_proxy_account_tenant_name";
 	
 	// keystone json data
 	public static final String TENANT_NAME_PROP = "tenantName";
@@ -60,6 +58,8 @@ public class KeystoneIdentityPlugin implements IdentityPlugin {
 	public static final String TENANT_ID = "tenantId";	
 
 	private static final int LAST_SUCCESSFUL_STATUS = 204;
+	protected static final String USER_CREDENTIALS_ARE_WRONG = "Missing user credentials. " 
+			+ USERNAME + ", " + PASSWORD + ", " + TENANT_NAME + " are required.";
 	private final static Logger LOGGER = Logger.getLogger(KeystoneIdentityPlugin.class);
 	/*
 	 * The json response format can be seen in the following link:
@@ -74,12 +74,14 @@ public class KeystoneIdentityPlugin implements IdentityPlugin {
 	private HttpClient client;
 	private Properties properties;
 
-	public KeystoneIdentityPlugin(Properties properties) {
+	public KeystoneIdentityPlugin(Properties properties) {		
 		this.properties = properties;
 		this.keystoneUrl = properties.getProperty("identity_url") == null ? 
 				properties.getProperty(AUTH_URL) : properties.getProperty("identity_url");
 		this.v2TokensEndpoint = keystoneUrl + V2_TOKENS_ENDPOINT_PATH;
 		this.v2TenantsEndpoint = keystoneUrl + V2_TENANTS_ENDPOINT_PATH;
+		
+		checkCredentialsInProperties();
 	}
 
 	public void setProperties(Properties properties) {
@@ -195,7 +197,7 @@ public class KeystoneIdentityPlugin implements IdentityPlugin {
 	}
 
 	private Token getTokenFromJson(String responseStr) {
-		try {
+		try {			
 			JSONObject root = new JSONObject(responseStr);
 			JSONObject tokenKeyStone = root.getJSONObject(ACCESS_PROP).getJSONObject(TOKEN_PROP);
 			String accessId = tokenKeyStone.getString(ID_PROP);
@@ -217,15 +219,17 @@ public class KeystoneIdentityPlugin implements IdentityPlugin {
 			}
 			
 			String expirationDateToken = tokenKeyStone.getString(EXPIRES_PROP);
-			String user = root.getJSONObject(ACCESS_PROP).getJSONObject(
-					USER_PROP).getString(NAME_PROP);
+			JSONObject userJsonObject = root.getJSONObject(ACCESS_PROP)
+					.getJSONObject(USER_PROP);
+			String user = userJsonObject.getString(NAME_PROP);
+			String id = userJsonObject.getString(ID_PROP);
 
-			LOGGER.debug("json token: " + accessId);
-			LOGGER.debug("json user: " + user);
-			LOGGER.debug("json expirationDate: " + expirationDateToken);
-			LOGGER.debug("json attributes: " + tokenAtt);		
+			LOGGER.debug("json token: " + accessId + ", user name: " + user 
+					+ ", user id: " + id + ", expirationDate: " + expirationDateToken 
+					+ "json attributes: " + tokenAtt);
 			
-			return new Token(accessId, user, getDateFromOpenStackFormat(expirationDateToken), tokenAtt);
+			return new Token(accessId, new Token.User(id, user), 
+					getDateFromOpenStackFormat(expirationDateToken), tokenAtt);
 		} catch (Exception e) {
 			LOGGER.error("Exception while getting token from json.", e);
 			return null;
@@ -297,6 +301,25 @@ public class KeystoneIdentityPlugin implements IdentityPlugin {
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		}
 	}
+	
+	protected void checkCredentialsInProperties() {
+		int crendentialsAmount = 3;
+		Map<String, Map<String, String>> allUsersToCredentials = 
+				MapperHelper.getLocalCredentials(this.properties, null);
+		
+		for (String userKey : allUsersToCredentials.keySet()) {
+			Map<String, String> individualUserToCredentials = allUsersToCredentials.get(userKey);
+			Set<String> credentials = individualUserToCredentials.keySet();
+			
+			if (individualUserToCredentials.size() != crendentialsAmount || 
+					!credentials.contains(USERNAME) ||
+					!credentials.contains(PASSWORD) ||
+					!credentials.contains(TENANT_NAME)) {
+				LOGGER.error(USER_CREDENTIALS_ARE_WRONG);
+				throw new IllegalAccessError(USER_CREDENTIALS_ARE_WRONG);
+			}
+		}
+	}	
 
 	@Override
 	public boolean isValid(String accessId) {

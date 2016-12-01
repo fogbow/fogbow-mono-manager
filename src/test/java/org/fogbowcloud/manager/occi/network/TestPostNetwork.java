@@ -73,8 +73,10 @@ public class TestPostNetwork {
 		ordersToAdd = new HashMap<String, List<Order>>();
 		ordersToAdd.put(BASIC_TOKEN, new ArrayList<Order>());
 		
-		tokenA = new Token("id_one", OCCITestHelper.USER_MOCK, DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>());
-		tokenB = new Token("id_two", BASIC_TOKEN, DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>());
+		tokenA = new Token("id_one", new Token.User(OCCITestHelper.USER_MOCK, ""),
+				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>());
+		tokenB = new Token("id_two", new Token.User(BASIC_TOKEN, ""), 
+				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>());
 		
 		//Moking
 		identityPlugin = Mockito.mock(IdentityPlugin.class);
@@ -237,7 +239,7 @@ public class TestPostNetwork {
 		List<Order> orders = new ArrayList<Order>();
 		orders.add(order);
 		
-		Mockito.when(orderRepositoryMock.getByUser(Mockito.anyString()))
+		Mockito.when(orderRepositoryMock.getByUserId(Mockito.anyString()))
 		.thenReturn(orders);
 		Mockito.when(orderRepositoryMock.get(Mockito.anyString(), Mockito.anyString(), Mockito.anyBoolean())).thenReturn(order);
 		Mockito.when(orderRepositoryMock.get(Mockito.anyString())).thenReturn(order);

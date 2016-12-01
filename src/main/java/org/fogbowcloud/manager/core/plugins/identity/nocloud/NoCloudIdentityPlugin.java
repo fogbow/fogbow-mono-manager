@@ -17,8 +17,8 @@ public class NoCloudIdentityPlugin implements IdentityPlugin {
 	
 	@Override
 	public Token createToken(Map<String, String> userCredentials) {
-		return new Token(String.valueOf(UUID.randomUUID()), FAKE_USERNAME, null,
-				new HashMap<String, String>());
+		return new Token(String.valueOf(UUID.randomUUID()), new Token.User(FAKE_USERNAME, FAKE_USERNAME), 
+				null, new HashMap<String, String>());
 	}
 
 	@Override
@@ -28,7 +28,8 @@ public class NoCloudIdentityPlugin implements IdentityPlugin {
 
 	@Override
 	public Token getToken(String accessId) {
-		return new Token(accessId, FAKE_USERNAME, null, new HashMap<String, String>());
+		return new Token(accessId, new Token.User(FAKE_USERNAME, FAKE_USERNAME), null, 
+				new HashMap<String, String>());
 	}
 
 	@Override

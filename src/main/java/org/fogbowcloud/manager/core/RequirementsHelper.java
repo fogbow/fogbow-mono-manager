@@ -16,6 +16,7 @@ import condor.classad.RecordExpr;
 
 public class RequirementsHelper {
 	protected static final String ZERO = "0";
+	public static final String VALUE_IGNORED = "-1";
 	public static final String GLUE_LOCATION_TERM = "Glue2CloudComputeManagerID";
 	public static final String GLUE_VCPU_TERM = "Glue2vCPU";
 	public static final String GLUE_DISK_TERM = "Glue2Disk";
@@ -97,17 +98,28 @@ public class RequirementsHelper {
 			for (String attr : listAttrProvided) {
 				List<ValueAndOperator> findValuesInRequiremets = findValuesInRequiremets(expr, attr);
 				if (findValuesInRequiremets.size() > 0) {
-					if (attr.equals(RequirementsHelper.GLUE_DISK_TERM)) {
+					listAttrSearched.add(attr);
+					if (attr.equals(RequirementsHelper.GLUE_DISK_TERM) 
+							&& requirementsStr.contains(RequirementsHelper.GLUE_DISK_TERM)) {
 						value = flavor.getDisk();
-						if (value != null && !value.equals(ZERO) ) {
-							listAttrSearched.add(attr);							
+						if (value == null || 
+								(value != null && value.equals(VALUE_IGNORED) || value.isEmpty())) {
+							listAttrSearched.remove(attr);							
 						}
-					} else if (attr.equals(RequirementsHelper.GLUE_MEM_RAM_TERM)) {
-						listAttrSearched.add(attr);
+					} else if (attr.equals(RequirementsHelper.GLUE_MEM_RAM_TERM) 
+							&& requirementsStr.contains(RequirementsHelper.GLUE_MEM_RAM_TERM)) {
 						value = flavor.getMem();
-					} else if (attr.equals(RequirementsHelper.GLUE_VCPU_TERM)) {
-						listAttrSearched.add(attr);
+						if (value == null || 
+								value != null && (value.equals(VALUE_IGNORED) || value.isEmpty())) {
+							listAttrSearched.remove(attr);							
+						}
+					} else if (attr.equals(RequirementsHelper.GLUE_VCPU_TERM) 
+							&& requirementsStr.contains(RequirementsHelper.GLUE_VCPU_TERM)) {
 						value = flavor.getCpu();
+						if (value == null || 
+								value != null && (value.equals(VALUE_IGNORED) || value.isEmpty())) {
+							listAttrSearched.remove(attr);
+						}
 					}
 					env.push((RecordExpr) new ClassAdParser("[" + attr + " = " + value + "]").parse());
 				}

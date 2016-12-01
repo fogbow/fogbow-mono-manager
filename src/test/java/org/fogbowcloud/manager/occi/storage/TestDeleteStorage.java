@@ -55,7 +55,7 @@ public class TestDeleteStorage {
 	public void setup() throws Exception {
 		this.helper = new OCCITestHelper();
 		Token token = new Token(OCCITestHelper.ACCESS_TOKEN,
-				OCCITestHelper.USER_MOCK, DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
+				new Token.User(OCCITestHelper.USER_MOCK, ""), DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
 				new HashMap<String, String>());
 		
 		storagePlugin = Mockito.mock(StoragePlugin.class);
@@ -63,7 +63,7 @@ public class TestDeleteStorage {
 		Mockito.doNothing().when(storagePlugin).removeInstance(token, INSTANCE_ID);
 		
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
-		Token tokenTwo = new Token("1", OCCITestHelper.USER_MOCK, new Date(),
+		Token tokenTwo = new Token("1", new Token.User(OCCITestHelper.USER_MOCK, ""), new Date(),
 		new HashMap<String, String>());
 		Mockito.when(identityPlugin.getToken(OCCITestHelper.ACCESS_TOKEN))
 				.thenReturn(tokenTwo);
@@ -73,13 +73,13 @@ public class TestDeleteStorage {
 		attributes.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.STORAGE_TERM);
 		
 		Order orderOne = new Order("1", new Token(OCCITestHelper.ACCESS_TOKEN,
-				OCCITestHelper.USER_MOCK, DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
+				new Token.User(OCCITestHelper.USER_MOCK, ""), DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
 				attributes), null, attributes, true, "");
 		orderOne.setInstanceId(INSTANCE_ID);
 		orderOne.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
 		orderOne.setState(OrderState.FULFILLED);
 		orders.add(orderOne);
-		Order orderTwo = new Order("2", new Token("otherToken", "otherUser",
+		Order orderTwo = new Order("2", new Token("otherToken", new Token.User("otherUser", ""),
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, attributes), null, attributes, true, "");
 		orderTwo.setInstanceId(OTHER_INSTANCE_ID);
 		orderTwo.setProvidingMemberId(OCCITestHelper.MEMBER_ID);

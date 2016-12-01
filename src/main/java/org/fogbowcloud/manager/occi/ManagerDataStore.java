@@ -21,9 +21,10 @@ import org.json.JSONException;
 
 public class ManagerDataStore {
 
+	public static final String ERROR_WHILE_INITIALIZING_THE_DATA_STORE = "Error while initializing the Manager DataStore.";
 	private static final Logger LOGGER = Logger.getLogger(ManagerDataStore.class);
-	protected static final String MANAGER_DATASTORE_URL = "manager_datastore_url";
-	protected static final String MANAGER_DATASTORE_URL_DEFAULT = "jdbc:sqlite:/tmp/dbManagerSQLite.db";
+	public static final String MANAGER_DATASTORE_URL = "manager_datastore_url";
+	private static final String DEFAULT_DATASTORE_NAME = "datastore_manager.slite";
 	protected static final String MANAGER_DATASTORE_SQLITE_DRIVER = "org.sqlite.JDBC";
 	protected static final String ORDER_TABLE_NAME = "t_order";
 	protected static final String ORDER_ID = "order_id";
@@ -47,12 +48,14 @@ public class ManagerDataStore {
 	private String dataStoreURL;
 
 	public ManagerDataStore(Properties properties) {
-		this.dataStoreURL = properties.getProperty(MANAGER_DATASTORE_URL, MANAGER_DATASTORE_URL_DEFAULT);
+		String dataStoreURLProperties = properties.getProperty(MANAGER_DATASTORE_URL);
+		this.dataStoreURL = DataStoreHelper.getDataStoreUrl(dataStoreURLProperties,
+				DEFAULT_DATASTORE_NAME);
 		
 		Statement statement = null;
 		Connection connection = null;
 		try {
-			LOGGER.debug("DatastoreURL: " + dataStoreURL);
+			LOGGER.debug("DatastoreURL: " + dataStoreURLProperties);
 			LOGGER.debug("DatastoreDriver: " + MANAGER_DATASTORE_SQLITE_DRIVER);
 
 			Class.forName(MANAGER_DATASTORE_SQLITE_DRIVER);
@@ -81,7 +84,8 @@ public class ManagerDataStore {
 							+ IS_LOCAL + " BOOLEAN)");			
 			statement.close();
 		} catch (Exception e) {
-			LOGGER.error("Error while initializing the DataStore.", e);
+			LOGGER.error(ERROR_WHILE_INITIALIZING_THE_DATA_STORE, e);
+			throw new Error(ERROR_WHILE_INITIALIZING_THE_DATA_STORE, e);
 		} finally {
 			close(statement, connection);
 		}
@@ -118,7 +122,6 @@ public class ManagerDataStore {
 			connection.commit();
 			return true;
 		} catch (SQLException e) {
-			e.printStackTrace();
 			LOGGER.error("Couldn't create order.", e);
 			try {
 				if (connection != null) {
@@ -164,7 +167,6 @@ public class ManagerDataStore {
 			
 			return orders;
 		} catch (SQLException e) {
-			e.printStackTrace();
 			LOGGER.error("Couldn't retrieve orders.", e);
 			try {
 				if (connection != null) {
@@ -197,7 +199,6 @@ public class ManagerDataStore {
 			connection.commit();
 			return true;
 		} catch (SQLException e) {
-			e.printStackTrace();
 			LOGGER.error("Couldn't remove order.", e);
 			try {
 				if (connection != null) {
@@ -228,7 +229,6 @@ public class ManagerDataStore {
 			connection.commit();
 			return true;
 		} catch (SQLException e) {
-			e.printStackTrace();
 			LOGGER.error("Couldn't remove all order.", e);
 			try {
 				if (connection != null) {
@@ -274,7 +274,6 @@ public class ManagerDataStore {
 			connection.commit();
 			return true;
 		} catch (SQLException e) {
-			e.printStackTrace();
 			LOGGER.error("Couldn't update order.", e);
 			try {
 				if (connection != null) {
@@ -317,7 +316,6 @@ public class ManagerDataStore {
 			
 			connection.commit();
 		} catch (SQLException e) {
-			e.printStackTrace();
 			LOGGER.error("Couldn't count order.", e);
 			try {
 				if (connection != null) {

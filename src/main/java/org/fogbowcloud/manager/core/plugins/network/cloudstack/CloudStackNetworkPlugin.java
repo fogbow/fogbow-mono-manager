@@ -123,10 +123,7 @@ public class CloudStackNetworkPlugin implements NetworkPlugin {
 		} catch (JSONException e) {
 			throw new OCCIException(ErrorType.BAD_REQUEST,
 					ResponseConstants.IRREGULAR_SYNTAX);
-		}
-		
-		
-		
+		}				
 	}
 	
 	@Override

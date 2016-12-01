@@ -14,10 +14,8 @@ import java.util.Map;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.EntityUtils;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
@@ -27,10 +25,8 @@ import org.fogbowcloud.manager.core.plugins.StoragePlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.instance.InstanceState;
-import org.fogbowcloud.manager.occi.model.HeaderUtils;
 import org.fogbowcloud.manager.occi.model.OCCIHeaders;
 import org.fogbowcloud.manager.occi.model.Resource;
-import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.order.Order;
 import org.fogbowcloud.manager.occi.order.OrderAttribute;
@@ -86,17 +82,17 @@ public class TestPostStorage {
 
 		identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.getToken(OCCITestHelper.ACCESS_TOKEN))
-				.thenReturn(new Token("id", OCCITestHelper.USER_MOCK, new Date(), new HashMap<String, String>()));
+				.thenReturn(new Token("id", new Token.User(OCCITestHelper.USER_MOCK, ""), new Date(), new HashMap<String, String>()));
 		
 		Mockito.when(identityPlugin.getToken(ACCESS_TOKEN))
-		.thenReturn(new Token("id_two", USER_WITHOUT_ORDERS, new Date(), new HashMap<String, String>()));		
+		.thenReturn(new Token("id_two", new Token.User(USER_WITHOUT_ORDERS, ""), new Date(), new HashMap<String, String>()));		
 		
 		
 		Mockito.when(identityPlugin.getAuthenticationURI()).thenReturn("Keystone uri='http://localhost:5000/'");
 
 		List<Order> ordersA = new LinkedList<Order>();
 		
-		Token token = new Token(OCCITestHelper.ACCESS_TOKEN, OCCITestHelper.USER_MOCK,
+		Token token = new Token(OCCITestHelper.ACCESS_TOKEN, new Token.User(OCCITestHelper.USER_MOCK, ""),
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>());
 		
 		
@@ -110,7 +106,7 @@ public class TestPostStorage {
 		order2.setInstanceId(INSTANCE_2_ID);
 		order2.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
 		ordersA.add(order2);
-		Order order3 = new Order("3", new Token("token", "user", DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
+		Order order3 = new Order("3", new Token("token", new Token.User("user", ""), DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
 				new HashMap<String, String>()), null, xOCCIAtt, true, "");
 		order3.setInstanceId(INSTANCE_3_ID_WITHOUT_USER);
 		order3.setProvidingMemberId(OCCITestHelper.MEMBER_ID);

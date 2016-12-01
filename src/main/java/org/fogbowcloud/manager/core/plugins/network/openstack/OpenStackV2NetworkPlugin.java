@@ -136,6 +136,7 @@ public class OpenStackV2NetworkPlugin implements NetworkPlugin {
 			endpoint = this.networkV2APIEndpoint + SUFFIX_ENDPOINT_NETWORK;
 			responseStr = doPostRequest(endpoint, token.getAccessId(), jsonRequest);			
 		} catch (OCCIException e) {
+			LOGGER.error("An error occurred when creating network.", e);
 			removeRouter(token, routerId, false);
 			throw e;
 		}		
@@ -152,6 +153,7 @@ public class OpenStackV2NetworkPlugin implements NetworkPlugin {
 			endpoint = this.networkV2APIEndpoint + SUFIX_ENDPOINT_SUBNET;
 			responseStr = doPostRequest(endpoint, token.getAccessId(), jsonRequest);				
 		} catch (OCCIException e) {
+			LOGGER.error("An error occurred when creating subnet.", e);
 			removeRouter(token, routerId, false);
 			removeNetwork(token, networkId, false);			
 			throw e;

@@ -17,7 +17,6 @@ import org.fogbowcloud.manager.core.RequirementsHelper;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.occi.OCCIApplication;
 import org.fogbowcloud.manager.occi.OCCIConstants;
-import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.instance.Instance.Link;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.ErrorType;
@@ -29,11 +28,11 @@ import org.fogbowcloud.manager.occi.model.ResourceRepository;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.fogbowcloud.manager.occi.network.FedNetworkState;
 import org.fogbowcloud.manager.occi.network.NetworkDataStore;
+import org.restlet.data.Header;
 import org.restlet.data.MediaType;
 import org.restlet.data.Status;
 import org.restlet.engine.adapter.HttpRequest;
 import org.restlet.engine.adapter.ServerCall;
-import org.restlet.data.Header;
 import org.restlet.representation.StringRepresentation;
 import org.restlet.resource.Delete;
 import org.restlet.resource.Get;
@@ -224,7 +223,7 @@ public class OrderServerResource extends ServerResource {
 			}
 		}
 		
-		for (String attributeName : OCCIConstants.getValues()) {
+		for (String attributeName : OCCIConstants.getOCCIValues()) {
 			if (order.getAttValue(attributeName) == null){
 				attToOutput.put(attributeName, "Not defined");	
 			} else {
@@ -287,7 +286,7 @@ public class OrderServerResource extends ServerResource {
 		String federationAuthToken = HeaderUtils.getAuthToken(
 				req.getHeaders(), getResponse(), application.getAuthenticationURI());
 		
-		String user = application.getUser(normalizeAuthToken(federationAuthToken));
+		String userId = application.getUserId(normalizeAuthToken(federationAuthToken));
 		
 		//TODO verificar se o ID da network é federado
 		Map<String, String> xOCCIAtt = HeaderUtils.getXOCCIAtributes(req.getHeaders());
@@ -299,7 +298,7 @@ public class OrderServerResource extends ServerResource {
 			
 			if(networkId != null && networkId.startsWith(FED_NETWORK_PREFIX)){
 				
-				FedNetworkState fedNetworkState = networkDB.getByFedNetworkId(networkId, user);
+				FedNetworkState fedNetworkState = networkDB.getByFedNetworkId(networkId, userId);
 
 				if (fedNetworkState == null) {
 					throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
@@ -310,7 +309,7 @@ public class OrderServerResource extends ServerResource {
 				networkId = relatedOrder.getGlobalInstanceId(); 
 			}
 			
-			networkId = ManagerController.normalizeInstanceId(networkId);
+			networkId = ManagerController.normalizeFogbowResourceId(networkId);
 			
 			xOCCIAtt.put(OrderAttribute.NETWORK_ID.getValue(), networkId);
 		}

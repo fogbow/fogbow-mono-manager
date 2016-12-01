@@ -107,7 +107,7 @@ public class ComputeServerResource extends ServerResource {
 			}			
 			LOGGER.debug("There are " + allInstances.size() + " related to auth_token " + federationAuthToken);
 
-			String user = application.getUser(normalizeAuthToken(federationAuthToken));
+			String user = application.getUserId(normalizeAuthToken(federationAuthToken));
 			if (user == null) {
 				throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 			}
@@ -146,7 +146,7 @@ public class ComputeServerResource extends ServerResource {
 		Order relatedOrder = null;
 
 		if (instanceId.startsWith(FED_INSTANCE_PREFIX)) {
-			String user = application.getUser(normalizeAuthToken(federationAuthToken));
+			String user = application.getUserId(normalizeAuthToken(federationAuthToken));
 			if (user == null) {
 				throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 			}
@@ -173,15 +173,15 @@ public class ComputeServerResource extends ServerResource {
 				Instance instance;
 				// if it is instance created by post-compute
 				if (relatedOrder != null) {
-					String user = application.getUser(normalizeAuthToken(federationAuthToken));
-					if (user == null) {
+					String userId = application.getUserId(normalizeAuthToken(federationAuthToken));
+					if (userId == null) {
 						throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 					}
 					
 					instance = application.getInstance(federationAuthToken, relatedOrder.getGlobalInstanceId());
 
 					// updating instance DB
-					FedInstanceState fedInstanceState = instanceDB.getByInstanceId(instanceId, user);
+					FedInstanceState fedInstanceState = instanceDB.getByInstanceId(instanceId, userId);
 					fedInstanceState.setGlobalInstanceId(relatedOrder.getGlobalInstanceId());
 					instanceDB.update(fedInstanceState);
 
@@ -342,7 +342,7 @@ public class ComputeServerResource extends ServerResource {
 
 		String federationAuthToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse(),
 				application.getAuthenticationURI());
-		String user = application.getUser(normalizeAuthToken(federationAuthToken));
+		String userId = application.getUserId(normalizeAuthToken(federationAuthToken));
 		
 		List<Resource> resources = ResourceRepository.getInstance().get(categories);
 		if (resources.size() != categories.size()) {
@@ -399,7 +399,7 @@ public class ComputeServerResource extends ServerResource {
 				
 				if(networkId != null && networkId.startsWith(FED_NETWORK_PREFIX)){
 					
-					FedNetworkState fedNetworkState = networkDB.getByFedNetworkId(networkId, user);
+					FedNetworkState fedNetworkState = networkDB.getByFedNetworkId(networkId, userId);
 
 					if (fedNetworkState == null) {
 						throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
@@ -408,7 +408,7 @@ public class ComputeServerResource extends ServerResource {
 					networkId = relatedOrder.getGlobalInstanceId(); 
 				}
 				
-				networkId = ManagerController.normalizeInstanceId(networkId);
+				networkId = ManagerController.normalizeFogbowResourceId(networkId);
 				
 				orderXOCCIAtt.put(OrderAttribute.NETWORK_ID.getValue(), networkId);
 			}
@@ -438,7 +438,7 @@ public class ComputeServerResource extends ServerResource {
 		Order relatedOrder = newOrder.get(0);
 		FedInstanceState fedInstanceState = new FedInstanceState(instance.getId(),
 				relatedOrder.getId(), categories, new ArrayList<Link>(), "", relatedOrder
-						.getFederationToken().getUser());
+						.getFederationToken().getUser().getId());
 		instanceDB.insert(fedInstanceState);
 
 		if (acceptType.equals(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE)) {
@@ -730,7 +730,7 @@ public class ComputeServerResource extends ServerResource {
 
 		if (instanceId == null) {
 			LOGGER.info("Removing all instances of token :" + federationAuthToken);
-			String user = application.getUser(normalizeAuthToken(federationAuthToken));
+			String user = application.getUserId(normalizeAuthToken(federationAuthToken));
 			if (user == null) {
 				throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 			}
@@ -741,7 +741,7 @@ public class ComputeServerResource extends ServerResource {
 		if (instanceId.startsWith(FED_INSTANCE_PREFIX)) {
 			LOGGER.info("Removing federated instance " + instanceId);
 			
-			String user = application.getUser(normalizeAuthToken(federationAuthToken));
+			String user = application.getUserId(normalizeAuthToken(federationAuthToken));
 			if (user == null) {
 				throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 			}

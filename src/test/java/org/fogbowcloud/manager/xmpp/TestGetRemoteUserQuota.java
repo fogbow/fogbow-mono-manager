@@ -56,7 +56,7 @@ public class TestGetRemoteUserQuota {
 		Map<String, String> localCredentials = new HashMap<String, String>();
 		localCredentials.put("Cred", "Test");
 
-		Token token = new Token(accessId, user, new Date(), new HashMap<String, String>());
+		Token token = new Token(accessId, new Token.User(user, ""), new Date(), new HashMap<String, String>());
 
 		ResourcesInfo resourcesInfo = new ResourcesInfo(id, cpuIdle, cpuInUse, memIdle, memInUse, instancesIdle,
 				instancesInUse);
@@ -106,7 +106,7 @@ public class TestGetRemoteUserQuota {
 		Map<String, Map<String, String>> allLocalCredentials = new HashMap<String, Map<String, String>>(); 
 		allLocalCredentials.put("Cred", localCredentials);
 		
-		Token token = new Token(accessId, user, new Date(), new HashMap<String, String>());
+		Token token = new Token(accessId, new Token.User(user, ""), new Date(), new HashMap<String, String>());
 		
 		ResourcesInfo resourcesInfo = new ResourcesInfo(id, cpuIdle, cpuInUse,
 				memIdle, memInUse, 
@@ -154,7 +154,7 @@ public class TestGetRemoteUserQuota {
 
 		String accessId = "accessId";
 		String user = "user";		
-		Token token = new Token(accessId, user, new Date(), new HashMap<String, String>());
+		Token token = new Token(accessId, new Token.User(user, ""), new Date(), new HashMap<String, String>());
 		
 		ManagerPacketHelper.getRemoteUserQuota(token, 
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, 

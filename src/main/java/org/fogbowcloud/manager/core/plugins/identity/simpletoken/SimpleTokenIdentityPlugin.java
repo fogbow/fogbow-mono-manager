@@ -29,7 +29,8 @@ public class SimpleTokenIdentityPlugin implements IdentityPlugin {
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}
 		TokenHelper tokenHelper = new TokenHelper(tokenCredential);
-		return new Token(tokenHelper.getId(), tokenHelper.getUser(),
+		String user = tokenHelper.getUser();
+		return new Token(tokenHelper.getId(), new Token.User(user, user),
 				new Date(), new HashMap<String, String>());
 	}
 
@@ -44,7 +45,7 @@ public class SimpleTokenIdentityPlugin implements IdentityPlugin {
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}
 		TokenHelper tokenHelper = new TokenHelper(accessId);
-		return new Token(tokenHelper.getId(), tokenHelper.getUser(),
+		return new Token(tokenHelper.getId(), new Token.User(tokenHelper.getUser(), tokenHelper.getUser()),
 				new Date(), new HashMap<String, String>());
 	}
 

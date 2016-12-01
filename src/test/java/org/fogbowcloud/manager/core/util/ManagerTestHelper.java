@@ -32,7 +32,7 @@ import org.fogbowcloud.manager.core.plugins.MapperPlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.StoragePlugin;
 import org.fogbowcloud.manager.core.plugins.capacitycontroller.satisfactiondriven.SatisfactionDrivenCapacityControllerPlugin;
-import org.fogbowcloud.manager.core.plugins.identity.openstack.KeystoneIdentityPlugin;
+import org.fogbowcloud.manager.core.plugins.identity.openstackv2.KeystoneIdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.memberauthorization.DefaultMemberAuthorizationPlugin;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.model.ErrorType;
@@ -63,6 +63,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 	public  static final String VALUE_FLAVOR_MEDIUM = "{cpu=2,mem=4}";
 	public static final String VALUE_FLAVOR_SMALL = "{cpu=1,mem=1}";
 	public static final int MAX_WHOISALIVE_MANAGER_COUNT = 100;
+	private static final int DEFAULT_XMPP_TIMEOUT = 5000;
 	private ManagerXmppComponent managerXmppComponent;
 	private ComputePlugin computePlugin;
 	private StoragePlugin storagePlugin;
@@ -91,8 +92,8 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		Map<String, String> tokenAttributes = new HashMap<String, String>();
 		tokenAttributes.put(KeystoneIdentityPlugin.TENANT_ID, "tenantId_r4fci3qhbcy3b");
 		
-		this.defaultFederationToken = new Token(FED_ACCESS_TOKEN_ID, FED_USER_NAME, new Date(),
-				new HashMap<String, String>());
+		this.defaultFederationToken = new Token(FED_ACCESS_TOKEN_ID, new Token.User(FED_USER_NAME,
+				FED_USER_NAME), new Date(), new HashMap<String, String>());
 		
 		this.defaultFederationAllUsersCrendetials = new HashMap<String, Map<String,String>>();
 		this.defaultFederationAllUsersCrendetials.put("one", defaultFederationUserCrendetials);
@@ -196,9 +197,6 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 	public ManagerXmppComponent initializeXMPPManagerComponent(boolean init) throws Exception {
 
 		Properties properties = new Properties();
-		properties.put(KeystoneIdentityPlugin.FEDERATION_USER_NAME_KEY, "fogbow");
-		properties.put(KeystoneIdentityPlugin.FEDERATION_USER_PASS_KEY, "fogbow");
-		properties.put(KeystoneIdentityPlugin.FEDERATION_USER_TENANT_NAME_KEY, "fogbow");
 		properties.put(ConfigurationConstants.XMPP_JID_KEY, MANAGER_TEST_JID);
 		properties.put(ConfigurationConstants.TOKEN_HOST_PRIVATE_ADDRESS_KEY,
 				DefaultDataTestHelper.SERVER_HOST);
@@ -206,16 +204,14 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 				String.valueOf(DefaultDataTestHelper.TOKEN_SERVER_HTTP_PORT));
 		properties.put("max_whoisalive_manager_count", MAX_WHOISALIVE_MANAGER_COUNT);
 		
-		ManagerController managerFacade = Mockito.spy(new ManagerController(properties));
+		boolean initilizeBD = false;
+		ManagerController managerFacade = Mockito.spy(new ManagerController(properties, null, initilizeBD));
 		return initializeXMPPManagerComponent(init, managerFacade);
 	}
 	
 	public ManagerXmppComponent initializeXMPPManagerComponentFacadeMocki(boolean init, ManagerController managerFacade) throws Exception {
 
 		Properties properties = new Properties();
-		properties.put(KeystoneIdentityPlugin.FEDERATION_USER_NAME_KEY, "fogbow");
-		properties.put(KeystoneIdentityPlugin.FEDERATION_USER_PASS_KEY, "fogbow");
-		properties.put(KeystoneIdentityPlugin.FEDERATION_USER_TENANT_NAME_KEY, "fogbow");
 		properties.put(ConfigurationConstants.XMPP_JID_KEY, MANAGER_TEST_JID);
 		properties.put(ConfigurationConstants.TOKEN_HOST_PRIVATE_ADDRESS_KEY,
 				DefaultDataTestHelper.SERVER_HOST);
@@ -263,7 +259,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		managerFacade.setCapacityControllerPlugin(new SatisfactionDrivenCapacityControllerPlugin());
 				
 		managerXmppComponent = Mockito.spy(new ManagerXmppComponent(LOCAL_MANAGER_COMPONENT_URL,
-				MANAGER_COMPONENT_PASS, SERVER_HOST, SERVER_COMPONENT_PORT, managerFacade));
+				MANAGER_COMPONENT_PASS, SERVER_HOST, SERVER_COMPONENT_PORT, managerFacade, DEFAULT_XMPP_TIMEOUT));
 				
 		managerXmppComponent.setDescription("Manager Component");
 		managerXmppComponent.setName("Manager");
@@ -285,8 +281,6 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		this.mapperPlugin = Mockito.mock(MapperPlugin.class);
 
 		Properties properties = new Properties();
-		properties.put(KeystoneIdentityPlugin.FEDERATION_USER_NAME_KEY, "fogbow");
-		properties.put(KeystoneIdentityPlugin.FEDERATION_USER_PASS_KEY, "fogbow");
 		properties.put(ConfigurationConstants.XMPP_JID_KEY, MANAGER_TEST_JID);
 
 		Mockito.when(computePlugin.getInstances(Mockito.any(Token.class))).thenReturn(
@@ -296,7 +290,9 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		Mockito.when(mapperPlugin.getAllLocalCredentials()).thenReturn(this.defaultFederationAllUsersCrendetials);
 		Mockito.when(identityPlugin.createToken(Mockito.anyMap())).thenReturn(defaultFederationToken);
 
-		ManagerController managerFacade = new ManagerController(properties);
+		boolean initializeBD = false;
+		ManagerController managerFacade = Mockito.spy(new ManagerController(properties, null, initializeBD));		
+		
 		managerFacade.setComputePlugin(computePlugin);
 		managerFacade.setLocalIdentityPlugin(identityPlugin);
 		managerFacade.setFederationIdentityPlugin(identityPlugin);
@@ -304,7 +300,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		managerFacade.setValidator(new DefaultMemberAuthorizationPlugin(null));
 
 		managerXmppComponent = Mockito.spy(new ManagerXmppComponent(LOCAL_MANAGER_COMPONENT_URL,
-				MANAGER_COMPONENT_PASS, SERVER_HOST, SERVER_COMPONENT_PORT, managerFacade));
+				MANAGER_COMPONENT_PASS, SERVER_HOST, SERVER_COMPONENT_PORT, managerFacade, DEFAULT_XMPP_TIMEOUT));
 		
 		managerXmppComponent.setDescription("Manager Component");
 		managerXmppComponent.setName("Manager");
@@ -372,12 +368,6 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		Properties properties = new Properties();
 		properties.put(ConfigurationConstants.XMPP_JID_KEY,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
-		properties.put(KeystoneIdentityPlugin.FEDERATION_USER_NAME_KEY,
-				DefaultDataTestHelper.FED_USER_NAME);
-		properties.put(KeystoneIdentityPlugin.FEDERATION_USER_PASS_KEY,
-				DefaultDataTestHelper.FED_USER_PASS);
-		properties.put(KeystoneIdentityPlugin.FEDERATION_USER_TENANT_NAME_KEY,
-				DefaultDataTestHelper.TENANT_NAME);
 		properties.put(ConfigurationConstants.SCHEDULER_PERIOD_KEY,
 				DefaultDataTestHelper.SCHEDULER_PERIOD.toString());
 		properties.put(ConfigurationConstants.INSTANCE_MONITORING_PERIOD_KEY,
@@ -401,8 +391,9 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		}
 		
 		this.executorService = Mockito.mock(ScheduledExecutorService.class);
-		ManagerController managerController = new ManagerController(properties,
-				executorService);
+		boolean notInitializeBD = false;
+		ManagerController managerController = Mockito.spy(new ManagerController(
+				properties, this.executorService, notInitializeBD));		
 
 		// mocking compute
 		computePlugin = Mockito.mock(ComputePlugin.class);

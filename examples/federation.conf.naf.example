@@ -1,0 +1,49 @@
+xmpp_jid=$manager.internal.mydomain
+xmpp_password=$xmpp_pass
+xmpp_host=$xmpp_address
+xmpp_port=$xmpp_port
+
+rendezvous_jid=$my-rendezvous.internal.mydomain
+
+## Federation Identity
+federation_identity_class=org.fogbowcloud.manager.core.plugins.identity.naf.NAFIdentityPlugin
+#Must be the public file to the private key .pem file of the TokenGenerator or Dashboard (portal NAF).
+naf_identity_public_key=$path_to_public key_pem_file
+#Only for TokenGenerator
+name_user_token_generator=$user_name_of_token_generetor
+#Only for TokenGenerator
+password_user_token_generator=$password_of_user_of_token_generetor
+#Only for TokenGenerator
+endpoint_token_generator=http://$address:$token_generator_port
+
+## Authorization Plugin
+federation_authorization_class=org.fogbowcloud.manager.core.plugins.authorization.AllowAllAuthorizationPlugin
+
+## Member Validator
+member_validator_class=org.fogbowcloud.manager.core.plugins.memberauthorization.DefaultMemberAuthorizationPlugin
+member_validator_ca_dir=
+
+## Member Picker Plugin (Round Robin)
+member_picker_class=org.fogbowcloud.manager.core.plugins.memberpicker.RoundRobinMemberPickerPlugin
+
+## Member Picker Plugin (Nof Member Picker)
+# member_picker_class=org.fogbowcloud.manager.core.plugins.memberpicker.NoFMemberPickerPlugin
+			
+## If you are using NoFMemberPicker or NoFPrioritizationPlugin classes (NOF)
+nof_trustworthy=false
+
+## Local Prioritization Plugin
+local_prioritization_plugin_class=org.fogbowcloud.manager.core.plugins.prioritization.fcfs.FCFSPrioritizationPlugin
+## Remote Prioritization Plugin
+remote_prioritization_plugin_class=org.fogbowcloud.manager.core.plugins.prioritization.nof.NoFPrioritizationPlugin
+nof_prioritize_local=true
+
+## Storage accounting plugin (Funcionalidade de Accounting)
+storage_accounting_class=org.fogbowcloud.manager.core.plugins.accounting.SimpleStorageAccountingPlugin
+simple_storage_accounting_datastore_url=jdbc:h2:$path_to_storage_accounting_db
+
+## Accounting Plugin
+## Compute accounting plugin
+compute_accounting_class=org.fogbowcloud.manager.core.plugins.accounting.FCUAccountingPlugin
+accounting_update_period=300000
+fcu_accounting_datastore_url=jdbc:h2:$path_to_compute_accounting_db

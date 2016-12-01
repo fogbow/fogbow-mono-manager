@@ -250,7 +250,7 @@ public class SAMLIdentityPlugin implements IdentityPlugin {
         	expirationTime = sessionNotOnOrAfter.toDate();
         }
         
-        Token token = new Token(accessId, user, expirationTime, 
+        Token token = new Token(accessId, new Token.User(user, user), expirationTime, 
         		new HashMap<String, String>());
         
 		return token;

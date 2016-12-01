@@ -29,6 +29,7 @@ import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
 import org.fogbowcloud.manager.core.plugins.MapperPlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
+import org.fogbowcloud.manager.occi.TestDataStorageHelper;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.ErrorType;
 import org.fogbowcloud.manager.occi.model.OCCIException;
@@ -68,6 +69,7 @@ public class TestPostCompute {
 	@SuppressWarnings("unchecked")
 	@Before
 	public void setup() throws Exception {
+		TestDataStorageHelper.removeDefaultFolderDataStore();
 		this.helper = new OCCITestHelper();
 
 		Map<String, String> map = new HashMap<String, String>();
@@ -79,7 +81,7 @@ public class TestPostCompute {
 
 		identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.getToken(OCCITestHelper.ACCESS_TOKEN))
-				.thenReturn(new Token("id", OCCITestHelper.USER_MOCK, new Date(), new HashMap<String, String>()));
+				.thenReturn(new Token("id", new Token.User(OCCITestHelper.USER_MOCK, ""), new Date(), new HashMap<String, String>()));
 		Mockito.when(identityPlugin.getToken(OCCITestHelper.INVALID_TOKEN))
 				.thenThrow(new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED));
 
@@ -87,7 +89,7 @@ public class TestPostCompute {
 		Mockito.when(authorizationPlugin.isAuthorized(Mockito.any(Token.class))).thenReturn(true);
 
 		List<Order> orders = new LinkedList<Order>();
-		Token token = new Token(OCCITestHelper.ACCESS_TOKEN, OCCITestHelper.USER_MOCK,
+		Token token = new Token(OCCITestHelper.ACCESS_TOKEN, new Token.User(OCCITestHelper.USER_MOCK, ""),
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>());
 		Order order1 = new Order("1", token, null, null, true, "");
 		order1.setInstanceId(INSTANCE_1_ID);
@@ -97,7 +99,7 @@ public class TestPostCompute {
 		order2.setInstanceId(INSTANCE_2_ID);
 		order2.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
 		orders.add(order2);
-		Order order3 = new Order("3", new Token("token", "user", DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
+		Order order3 = new Order("3", new Token("token", new Token.User("user", ""), DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
 				new HashMap<String, String>()), null, null, true, "");
 		order3.setInstanceId(INSTANCE_3_ID_WITHOUT_USER);
 		order3.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
@@ -123,6 +125,7 @@ public class TestPostCompute {
 
 	@After
 	public void tearDown() throws Exception {
+		TestDataStorageHelper.removeDefaultFolderDataStore();
 		File dbFile = new File(OCCITestHelper.INSTANCE_DB_FILE + ".mv.db");
 		if (dbFile.exists()) {
 			dbFile.delete();

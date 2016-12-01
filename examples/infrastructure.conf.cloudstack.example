@@ -1,0 +1,49 @@
+## Image Storage Plugin (HTTPDownload)
+image_storage_class=org.fogbowcloud.manager.core.plugins.imagestorage.http.HTTPDownloadImageStoragePlugin
+image_storage_http_tmp_storage=$path_to_tmp
+image_storage_http_base_url=http://$image_store_address
+image_storage_http_accepted_formats=qcow2,raw,vmdk
+image_storage_http_conversion_output_format=$format
+
+## Compute Plugin
+compute_class=org.fogbowcloud.manager.core.plugins.compute.cloudstack.CloudStackComputePlugin
+compute_cloudstack_api_url=http://$address/client/api
+compute_cloudstack_zone_id=$zone_id
+compute_cloudstack_image_download_base_url=http://$address
+compute_cloudstack_image_download_base_path=$path_to_download_dir
+compute_cloudstack_hypervisor=$hypervisor_type
+compute_cloudstack_image_download_os_type_id=$os_type_id
+compute_cloudstack_expunge_on_destroy=true
+compute_cloudstack_default_networkid=$id_of_default_network
+
+# Network Plugin
+network_class=org.fogbowcloud.manager.core.plugins.network.cloudstack.CloudStackNetworkPlugin
+network_cloudstack_api_url=https://$address/client/api
+network_cloudstack_zone_id=$zone_id
+network_cloudstack_netoffering_id=$offering_id
+
+## Storage Plugin
+storage_class=org.fogbowcloud.manager.core.plugins.storage.cloudstack.CloudStackStoragePlugin
+
+## Local Identity
+local_identity_class=org.fogbowcloud.manager.core.plugins.identity.cloudstack.CloudStackIdentityPlugin
+local_identity_url=http://$address/client/api/
+
+## Local Credentials
+federation_user_credentail_class=org.fogbowcloud.manager.core.plugins.localcredentails.SingleMapperPlugin
+
+## Mapper Plugin / Local credentials to be used when we miss information about a given user
+mapper_defaults_apiKey=$user_api_key
+mapper_defaults_secretKey=$user_secret_key
+
+## Local Credentials
+federation_user_credentail_class=org.fogbowcloud.manager.core.plugins.localcredentails.SingleMapperPlugin
+
+## Static mapping between local image ids and image names
+## Applies to all image storage plugins
+image_storage_static_fogbow-ubuntu=$image_id
+
+## Static mapping from flavors to requirements (Optional)
+#flavor_fogbow_small={mem=512, cpu=1}
+#flavor_fogbow_medium={mem=1024, cpu=2}
+#flavor_fogbow_large={mem=2048, cpu=4}

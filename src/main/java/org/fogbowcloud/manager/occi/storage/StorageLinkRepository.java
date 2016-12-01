@@ -32,12 +32,12 @@ public class StorageLinkRepository {
 		return false;
 	}
 	
-	public boolean addStorageLink(String user, StorageLink storageLink) {
-		LOGGER.debug("Adding storage link " + storageLink.getId() + " to user " + user);
-		List<StorageLink> userStorageLinks = storageLinks.get(user);
+	public boolean addStorageLink(String userId, StorageLink storageLink) {
+		LOGGER.debug("Adding storage link " + storageLink.getId() + " to user id " + userId);
+		List<StorageLink> userStorageLinks = storageLinks.get(userId);
 		if (userStorageLinks == null) {
 			userStorageLinks = new LinkedList<StorageLink>();
-			storageLinks.put(user, userStorageLinks);
+			storageLinks.put(userId, userStorageLinks);
 		}
 		if (storageLinkExists(userStorageLinks, storageLink)) {
 			return false;
@@ -60,10 +60,10 @@ public class StorageLinkRepository {
 		return get(null, storageLinkId);
 	}
 	
-	public StorageLink get(String user, String storageLinkId) {
+	public StorageLink get(String userId, String storageLinkId) {
 		Collection<List<StorageLink>> storageLinkColection = new ArrayList<List<StorageLink>>();
-		if (user != null) {
-			List<StorageLink> storageLinkbyUser = getByUser(user);
+		if (userId != null) {
+			List<StorageLink> storageLinkbyUser = getByUser(userId);
 			storageLinkColection.add(storageLinkbyUser != null ? storageLinkbyUser
 							: new ArrayList<StorageLinkRepository.StorageLink>());
 		} else {
@@ -113,9 +113,9 @@ public class StorageLinkRepository {
 				+ "(" + instanceId + ") and type (" + type + ").");
 	}
 	
-	public List<StorageLink> getByUser(String user) {
-		LOGGER.debug("Getting local storage links by user " + user);
-		List<StorageLink> userStorageLinks = storageLinks.get(user);
+	public List<StorageLink> getByUser(String userId) {
+		LOGGER.debug("Getting local storage links by user id " + userId);
+		List<StorageLink> userStorageLinks = storageLinks.get(userId);
 		if (userStorageLinks == null) {
 			return new LinkedList<StorageLink>();
 		}		

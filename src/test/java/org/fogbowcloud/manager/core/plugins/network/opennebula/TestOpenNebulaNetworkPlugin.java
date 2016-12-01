@@ -41,7 +41,7 @@ public class TestOpenNebulaNetworkPlugin {
 		properties.put(OneConfigurationConstants.NETWORK_ONE_BRIDGE, OPEN_NEBULA_NETWORK_BRIDGE);
 		
 		defaultToken = new Token("oneadmin:opennebula",
-				"oneadmin", DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
+				new Token.User("oneadmin", "oneadmin"), DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
 				new HashMap<String, String>());
 	}
 	

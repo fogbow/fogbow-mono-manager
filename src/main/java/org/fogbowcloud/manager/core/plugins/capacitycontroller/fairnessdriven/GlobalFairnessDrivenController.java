@@ -4,64 +4,61 @@ import java.util.List;
 import java.util.Properties;
 
 import org.fogbowcloud.manager.core.ConfigurationConstants;
-import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.accounting.AccountingInfo;
 
+//TODO review all class
 public class GlobalFairnessDrivenController extends FairnessDrivenCapacityController{
 	
-	private long lastUpdated;	
-	private HillClimbingAlgorithm controller;
+	private HillClimbingAlgorithm hillClimbingController;
 	
 	public GlobalFairnessDrivenController(Properties properties, AccountingPlugin accountingPlugin) {
 		super(properties, accountingPlugin);
-		lastUpdated = -1;		
 		
-		double deltaC, minimumThreshold, maximumThreshold, maximumCapacityOfPeer;
+		double deltaC, minimumThreshold, maximumThreshold;
 		deltaC = Double.parseDouble(properties.getProperty(CONTROLLER_DELTA));
 		minimumThreshold = Double.parseDouble(properties.getProperty(CONTROLLER_MINIMUM_THRESHOLD));
 		maximumThreshold = Double.parseDouble(properties.getProperty(CONTROLLER_MAXIMUM_THRESHOLD));
-		maximumCapacityOfPeer = Double.parseDouble(properties.getProperty(CONTROLLER_MAXIMUM_CAPACITY));
-		controller = new HillClimbingAlgorithm(deltaC, minimumThreshold, maximumThreshold, maximumCapacityOfPeer);
+		this.hillClimbingController = new HillClimbingAlgorithm(deltaC, minimumThreshold, maximumThreshold);
 	}
 
-	@Override
 	public double getMaxCapacityToSupply(FederationMember member) {
-		return controller.getMaximumCapacityToSupply();	
+		return this.hillClimbingController.getMaximumCapacityToSupply();	
 	}
 	
-	@Override
-	public void updateCapacity(FederationMember member) {
-		if(lastUpdated!=dateUtils.currentTimeMillis()){
-			//time is different, then we must compute the new maxCapacity
-			lastUpdated = dateUtils.currentTimeMillis();
-			updateFairness();
-			controller.updateCapacity();
-		}	
+	public void updateCapacity(FederationMember member, double maximumCapacity) {
+		maximumCapacity = normalizeMaximumCapacity(maximumCapacity);
+		updateFairness();
+		this.hillClimbingController.updateCapacity(maximumCapacity);
 	}
 	
-	protected void updateFairness(){
-		controller.setLastFairness(controller.getCurrentFairness());
-		double currentConsumed = 0, currentDonated = 0;
+	protected void updateFairness() {
+		this.hillClimbingController.setLastFairness(
+				this.hillClimbingController.getCurrentFairness());
+		double currentConsumed = 0;
+		double currentDonated = 0;
 		List<AccountingInfo> accountingList = accountingPlugin.getAccountingInfo();
-		for(AccountingInfo acc : accountingList){
-			if(acc.getProvidingMember().equals(properties.getProperty(ConfigurationConstants.XMPP_JID_KEY)))
-				currentDonated += acc.getUsage();
-			else
-				currentConsumed += acc.getUsage();			
+		for(AccountingInfo accountingInfo : accountingList){
+			if (accountingInfo.getProvidingMember().equals(properties
+					.getProperty(ConfigurationConstants.XMPP_JID_KEY))) {						
+				currentDonated += accountingInfo.getUsage();
+			} else {
+				currentConsumed += accountingInfo.getUsage();
+			}
 		}
-		controller.setCurrentFairness(getFairness(currentConsumed, currentDonated));
+		this.hillClimbingController.setCurrentFairness(
+				getFairness(currentConsumed, currentDonated));
 	}
 
 	@Override
 	public double getCurrentFairness(FederationMember member) {
-		return controller.getCurrentFairness();
+		return hillClimbingController.getCurrentFairness();
 	}
 
 	@Override
 	public double getLastFairness(FederationMember member) {
-		return controller.getLastFairness();
+		return hillClimbingController.getLastFairness();
 	}
 
 }

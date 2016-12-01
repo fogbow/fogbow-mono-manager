@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.http.HttpStatus;
-import org.fogbowcloud.manager.core.plugins.identity.openstack.KeystoneIdentityPlugin;
+import org.fogbowcloud.manager.core.plugins.identity.openstackv2.KeystoneIdentityPlugin;
 import org.fogbowcloud.manager.occi.model.OCCIHeaders;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.json.JSONArray;
@@ -52,7 +52,7 @@ public class KeystoneApplication extends Application {
 		return this.accessIdToUser.get(accessId);
 	}
 
-	public void putTokenAndUser(String authToken, String user) {
+	public void putTokenAndUserId(String authToken, String user) {
 		this.accessIdToUser.put(authToken, user);
 	}
 
@@ -73,7 +73,7 @@ public class KeystoneApplication extends Application {
 	}
 
 	public void checkAuthenticationCredentials(String username, String password, String tenantName) {
-		if (!defaultToken.getUser().equals(username) || !this.userPassword.equals(password)) {
+		if (!defaultToken.getUser().getName().equals(username) || !this.userPassword.equals(password)) {
 			throw new ResourceException(HttpStatus.SC_UNAUTHORIZED);
 		} else if (tenantName != null
 				&& !defaultToken.get(KeystoneIdentityPlugin.TENANT_NAME).equals(tenantName)) {
@@ -170,7 +170,8 @@ public class KeystoneApplication extends Application {
 				JSONObject rootAccess = new JSONObject();
 				rootAccess.put(KeystoneIdentityPlugin.TOKEN_PROP, rootIdToken);
 				JSONObject rootUserName = new JSONObject();
-				rootUserName.put(KeystoneIdentityPlugin.NAME_PROP, token.getUser());
+				rootUserName.put(KeystoneIdentityPlugin.NAME_PROP, token.getUser().getName());
+				rootUserName.put(KeystoneIdentityPlugin.ID_PROP, token.getUser().getId());
 				rootAccess.put(KeystoneIdentityPlugin.USER_PROP, rootUserName);
 				JSONObject rootMain = new JSONObject();
 				rootMain.put(KeystoneIdentityPlugin.ACCESS_PROP, rootAccess);

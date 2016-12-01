@@ -25,6 +25,7 @@ import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
 import org.fogbowcloud.manager.core.plugins.MapperPlugin;
 import org.fogbowcloud.manager.core.plugins.StoragePlugin;
+import org.fogbowcloud.manager.occi.TestDataStorageHelper;
 import org.fogbowcloud.manager.occi.model.OCCIHeaders;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.order.Order;
@@ -58,18 +59,19 @@ public class TestPostStorageLink {
 	
 	@Before
 	public void setup() throws Exception {
+		TestDataStorageHelper.removeDefaultFolderDataStore();
 		this.helper = new OCCITestHelper();
 		
 		storagePlugin = Mockito.mock(StoragePlugin.class);
 		
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
-		Token tokenTwo = new Token("1", OCCITestHelper.USER_MOCK, new Date(),
+		Token tokenTwo = new Token("1", new Token.User(OCCITestHelper.USER_MOCK, ""), new Date(),
 		new HashMap<String, String>());
 		Mockito.when(identityPlugin.getToken(OCCITestHelper.ACCESS_TOKEN))
 				.thenReturn(tokenTwo);
 		Mockito.when(identityPlugin.getToken(OTHER_ACCESS_TOKEN))
 		.thenReturn(tokenTwo);		
-		Token otherToken = new Token("other", "other", null, null);
+		Token otherToken = new Token("other", new Token.User("other", ""), null, null);
 		Mockito.when(identityPlugin.getToken(OTHER_ACCESS_TOKEN)).thenReturn(otherToken);
 		Mockito.when(identityPlugin.isValid(OCCITestHelper.ACCESS_TOKEN)).thenReturn(true);	
 				
@@ -77,7 +79,7 @@ public class TestPostStorageLink {
 		computePlugin = Mockito.mock(ComputePlugin.class);
 
 		List<Order> orders = new LinkedList<Order>();
-		Token tokenUserOne = new Token("accessIdUserOne", "userOne", null, null);
+		Token tokenUserOne = new Token("accessIdUserOne", new Token.User("userOne", ""), null, null);
 		// storage
 		HashMap<String, String> xOCCIAttStorage = new HashMap<String, String>();
 		xOCCIAttStorage.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.STORAGE_TERM);
@@ -136,6 +138,7 @@ public class TestPostStorageLink {
 
 	@After
 	public void tearDown() throws Exception {
+		TestDataStorageHelper.removeDefaultFolderDataStore();
 		File dbFile = new File(OCCITestHelper.INSTANCE_DB_FILE + ".mv.db");
 		if (dbFile.exists()) {
 			dbFile.delete();

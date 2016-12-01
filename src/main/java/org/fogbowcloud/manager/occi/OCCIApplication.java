@@ -245,8 +245,8 @@ public class OCCIApplication extends Application {
 		return managerFacade.getFlavorsProvided();
 	}
 
-	public String getUser(String authToken) {
-		return managerFacade.getUser(authToken);
+	public String getUserId(String authToken) {
+		return managerFacade.getUserId(authToken);
 	}
 
 	public List<AccountingInfo> getAccountingInfo(String authToken, String resourceKing) {

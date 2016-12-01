@@ -58,6 +58,7 @@ import org.fogbowcloud.manager.core.plugins.PrioritizationPlugin;
 import org.fogbowcloud.manager.core.plugins.StoragePlugin;
 import org.fogbowcloud.manager.core.plugins.accounting.AccountingInfo;
 import org.fogbowcloud.manager.core.plugins.localcredentails.MapperHelper;
+import org.fogbowcloud.manager.core.plugins.localcredentails.SingleMapperPlugin;
 import org.fogbowcloud.manager.core.plugins.util.SshClientPool;
 import org.fogbowcloud.manager.occi.ManagerDataStore;
 import org.fogbowcloud.manager.occi.instance.Instance;
@@ -161,10 +162,14 @@ public class ManagerController {
 	private ManagerDataStore managerDatabase;
 
 	public ManagerController(Properties properties) {
-		this(properties, null);
+		this(properties, null, true);
 	}
 
 	public ManagerController(Properties properties, ScheduledExecutorService executor) {
+		this(properties, executor, true);
+	}
+	
+	public ManagerController(Properties properties, ScheduledExecutorService executor, boolean initializeBD) {
 		if (properties == null) {
 			throw new IllegalArgumentException();
 		}
@@ -187,9 +192,15 @@ public class ManagerController {
 			this.orderDBUpdaterTimer = new ManagerTimer(executor);
 			this.capacityControllerUpdaterTimer = new ManagerTimer(executor);
 		}
-		managerDatabase = new ManagerDataStore(properties);
+		if (initializeBD) {
+			createManagerDataStore(properties);			
+		}
 		recoverPreviousOrders();
 		triggerOrderDBUpdater();
+	}
+
+	public void createManagerDataStore(Properties properties) {
+		this.managerDatabase = new ManagerDataStore(properties);
 	}
 
 	public MapperPlugin getMapperPlugin() {
@@ -270,7 +281,8 @@ public class ManagerController {
 		LOGGER.debug("Recovering previous storage link.");
 		
 		for (StorageLink storageLink : new ArrayList<StorageLink>(managerDatabase.getStorageLinks())) {
-			storageLinkRepository.addStorageLink(storageLink.getFederationToken().getUser(), storageLink);
+			String userId = storageLink.getFederationToken().getUser().getId();
+			storageLinkRepository.addStorageLink(userId, storageLink);
 			LOGGER.debug("Storage link (" + storageLink.getId() + ") was recovered.");
 		}
 		LOGGER.debug("Previous storage link recovered.");
@@ -293,7 +305,8 @@ public class ManagerController {
 					continue;
 				}
 			}
-			orderRepository.addOrder(order.getFederationToken().getUser(), order);
+			String userId = order.getFederationToken().getUser().getId();
+			orderRepository.addOrder(userId, order);
 		}
 		if (!orderSchedulerTimer.isScheduled() && orderRepository.getOrdersIn(OrderState.OPEN).size() > 0) {
 			triggerOrderScheduler();
@@ -373,7 +386,7 @@ public class ManagerController {
 				try {
 					updateVirtualQuotas();					
 				} catch (Throwable e) {
-					LOGGER.error("Erro while updating accounting", e);
+					LOGGER.error("Erro while updating virtual quotas.", e);
 				}
 			}
 		}, 0, capacityControllerUpdaterPeriod);
@@ -381,11 +394,34 @@ public class ManagerController {
 	
 	private void updateVirtualQuotas() {
 		LOGGER.debug("Updating virtual quotas (capacity controller plugin).");
-		for(FederationMember member : members){
-			if(!(member.getId().equals(properties.getProperty(ConfigurationConstants.XMPP_JID_KEY)))){
-				capacityControllerPlugin.updateCapacity(member);
-				LOGGER.debug("Member: " +member.getId() + "Quota: "+capacityControllerPlugin.getMaxCapacityToSupply(member));
+		for(FederationMember member : new ArrayList<FederationMember>(this.members)) {
+			if(!(member.getId().equals(properties.getProperty(ConfigurationConstants.XMPP_JID_KEY)))){				
+				int maxCapacity = getMaxCapacityDefaultUser();				
+				this.capacityControllerPlugin.updateCapacity(member, maxCapacity);
+				LOGGER.debug("Member: " + member.getId() + "Quota: "
+						+ this.capacityControllerPlugin.getMaxCapacityToSupply(member));
 			}
+		}
+	}
+
+	protected int getMaxCapacityDefaultUser() {
+		try {
+			SingleMapperPlugin singleMapperPlugin = new SingleMapperPlugin(this.properties);
+			Order emptyOrder = null;
+			Map<String, String> defaultUserLocalCredentials = singleMapperPlugin
+					.getLocalCredentials(emptyOrder);
+			// Get default user's token
+			Token token = this.localIdentityPlugin.createToken(
+					defaultUserLocalCredentials);
+			
+			ResourcesInfo resourcesInfo = this.computePlugin.getResourcesInfo(token);
+			int maxCapacity = Integer.valueOf(resourcesInfo.getInstancesInUse()) 
+					+ Integer.valueOf(resourcesInfo.getInstancesIdle());
+			
+			return maxCapacity;			
+		} catch (Exception e) {
+			LOGGER.warn("Could not possible get maximum capacity.", e);
+			return CapacityControllerPlugin.MAXIMUM_CAPACITY_VALUE_ERROR;
 		}
 	}
 
@@ -447,8 +483,8 @@ public class ManagerController {
 				LOGGER.debug("federation instance=" + instance.getId());
 				Order order = orderRepository.getOrderByInstance(instance.getId());
 				LOGGER.debug("Order for instance " + instance.getId() + " is " + order);
-				if ((!instanceHasOrderRelatedTo(null, generateGlobalId(instance.getId(), null)) && order != null
-						&& !order.isLocal()) || order == null) {
+				if ((!instanceHasOrderRelatedTo(null, generateGlobalId(instance.getId(), null)) 
+						&& order != null && !order.isLocal()) || order == null) {
 					// this is an orphan instance
 					LOGGER.debug("Removing the orphan instance " + instance.getId());
 					this.computePlugin.removeInstance(getTokenPerInstance(instance.getId()), instance.getId());
@@ -563,7 +599,7 @@ public class ManagerController {
 			if (federationMemberId.equals(properties
 					.getProperty(ConfigurationConstants.XMPP_JID_KEY))) {
 				return new FederationMember(getResourcesInfo(
-						this.getLocalCredentials(accessId), token.getUser(), true));
+						this.getLocalCredentials(accessId), token.getUser().getId(), true));
 			}
 			
 			return new FederationMember(ManagerPacketHelper.getRemoteUserQuota
@@ -579,11 +615,11 @@ public class ManagerController {
 		return mapperPlugin.getLocalCredentials(accessId);
 	}
 
-	public ResourcesInfo getResourcesInfo(String user, boolean isLocal) {
-		return getResourcesInfo(null, user, isLocal);
+	public ResourcesInfo getResourcesInfo(String userId, boolean isLocal) {
+		return getResourcesInfo(null, userId, isLocal);
 	}
 
-	public ResourcesInfo getResourcesInfo(Map<String, String> localCredentials, String user, boolean isLocal) {
+	public ResourcesInfo getResourcesInfo(Map<String, String> localCredentials, String userId, boolean isLocal) {
 		ResourcesInfo totalResourcesInfo = new ResourcesInfo();
 		totalResourcesInfo.setId(properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
 
@@ -592,10 +628,10 @@ public class ManagerController {
 			totalResourcesInfo.addResource(computePlugin.getResourcesInfo(localToken));
 			
 			try {
-				totalResourcesInfo.addResource(getResourceInfoInUseByUser(localToken, user, isLocal));			
+				totalResourcesInfo.addResource(getResourceInfoInUseByUserId(localToken, userId, isLocal));			
 			} catch (Exception e) {
 				LOGGER.warn("Did not possible get informations about instances, CPUs and "
-						+ "memories in use by user(" + user + ").");
+						+ "memories in use by user id (" + userId + ").");
 			}
 		} else {
 			Map<String, Map<String, String>> allLocalCredentials = this.mapperPlugin.getAllLocalCredentials();
@@ -618,10 +654,10 @@ public class ManagerController {
 				totalResourcesInfo.addResource(resourcesInfo);
 
 				try {
-					totalResourcesInfo.addResource(getResourceInfoInUseByUser(localToken, user, isLocal));			
+					totalResourcesInfo.addResource(getResourceInfoInUseByUserId(localToken, userId, isLocal));			
 				} catch (Exception e) {
 					LOGGER.warn("Did not possible get informations about instances, CPUs and "
-							+ "memories in use by user(" + user + ").");
+							+ "memories in use by user id (" + userId + ").");
 				}				
 			}			
 		}
@@ -630,8 +666,8 @@ public class ManagerController {
 		return totalResourcesInfo;
 	}
 	
-	protected ResourcesInfo getResourceInfoInUseByUser(Token localToken, String user, boolean isLocal) {
-		List<Order> localOrders = orderRepository.getByUser(user, isLocal);
+	protected ResourcesInfo getResourceInfoInUseByUserId(Token localToken, String userId, boolean isLocal) {
+		List<Order> localOrders = orderRepository.getByUserId(userId, isLocal);
 		int contInstance = 0;
 		double contCpu = 0;
 		double contMem = 0;
@@ -660,20 +696,20 @@ public class ManagerController {
 		return new ResourcesInfo(String.valueOf(contCpu), String.valueOf(contMem), String.valueOf(contInstance));
 	}
 	
-	public String getUser(String accessId) {
+	public String getUserId(String accessId) {
 		Token token = getTokenFromFederationIdP(accessId);
 		if (token == null) {
 			return null;
 		}
-		return token.getUser();
+		return token.getUser().getId();
 	}
 
 	public List<StorageLink> getStorageLinkFromUser(String accessId) {
-		String user = getUser(accessId);
+		String userId = getUserId(accessId);
 		if (!federationIdentityPlugin.isValid(accessId)) {
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}
-		return storageLinkRepository.getByUser(user);
+		return storageLinkRepository.getByUser(userId);
 	}
 	
 	public List<Order> getOrdersFromUser(String federationAccessToken) {
@@ -681,14 +717,14 @@ public class ManagerController {
 	}
 	
 	public List<Order> getOrdersFromUser(String federationAccessToken, boolean findLocalOrder) {
-		String user = getUser(federationAccessToken);
-		return orderRepository.getByUser(user, findLocalOrder);
+		String userId = getUserId(federationAccessToken);
+		return orderRepository.getByUserId(userId, findLocalOrder);
 	}
 
 	public void removeAllOrders(String accessId) {
-		String user = getUser(accessId);
-		LOGGER.debug("Removing all orders of user: " + user);
-		orderRepository.removeByUser(user);
+		String userId = getUserId(accessId);
+		LOGGER.debug("Removing all orders of user id: " + userId);
+		orderRepository.removeByUserId(userId);
 		if (!instanceMonitoringTimer.isScheduled()) {
 			triggerInstancesMonitor();
 		}
@@ -735,9 +771,9 @@ public class ManagerController {
 	}
 	
 	private void checkOrderId(String accessId, String orderId, boolean lookingForLocalOrder) {
-		String user = getUser(accessId);
-		if (orderRepository.get(user, orderId, lookingForLocalOrder) == null) {
-			LOGGER.debug("User " + user + " does not have orderId " + orderId);
+		String userId = getUserId(accessId);
+		if (orderRepository.get(userId, orderId, lookingForLocalOrder) == null) {
+			LOGGER.debug("User id " + userId + " does not have orderId " + orderId);
 			throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
 		}
 	}
@@ -746,7 +782,7 @@ public class ManagerController {
 		
 		LOGGER.debug("Retrieving instances(" + resourceKind + ") of token " + accessId);
 		List<Instance> instances = new ArrayList<Instance>();
-		for (Order order : orderRepository.getByUser(getUser(accessId))) {
+		for (Order order : orderRepository.getByUserId(getUserId(accessId))) {
 			
 			if (!order.getResourceKing().equals(resourceKind)) {
 				continue;
@@ -924,18 +960,18 @@ public class ManagerController {
 	public void removeInstances(String accessId, String resourceKind) {
 		resourceKind = resourceKind == null ? OrderConstants.COMPUTE_TERM : resourceKind;
 		
-		String user = getUser(accessId);
-		LOGGER.debug("Removing instances(" + resourceKind + ") of user: " + user);
-		for (Order order : orderRepository.getByUser(user)) {
+		String userId = getUserId(accessId);
+		LOGGER.debug("Removing instances(" + resourceKind + ") of user id: " + userId);
+		for (Order order : orderRepository.getByUserId(userId)) {
 			String instanceId = order.getInstanceId();
 			if (instanceId == null) {
 				continue;
 			}
-			removeInstance(normalizeInstanceId(instanceId), order, resourceKind);
+			removeInstance(normalizeFogbowResourceId(instanceId), order, resourceKind);
 		}
 	}
 
-	public static String normalizeInstanceId(String instanceId) {
+	public static String normalizeFogbowResourceId(String instanceId) {
 		if (instanceId != null && instanceId.contains(Order.SEPARATOR_GLOBAL_ID)) {
 			String[] partsInstanceId = instanceId.split(Order.SEPARATOR_GLOBAL_ID);
 			instanceId = partsInstanceId[0];
@@ -949,7 +985,7 @@ public class ManagerController {
 	
 	public void removeInstance(String federationToken, String instanceId, String resourceKind) {
 		Order order = getOrderForInstance(federationToken, instanceId);
-		instanceId = normalizeInstanceId(instanceId);
+		instanceId = normalizeFogbowResourceId(instanceId);
 		removeInstance(instanceId, order, resourceKind);
 	}
 	
@@ -1011,7 +1047,7 @@ public class ManagerController {
 		
 		if (instanceId != null) {
 			storageLinkRepository.removeAllByInstance(
-					normalizeInstanceId(instanceId), order.getResourceKing());			
+					normalizeFogbowResourceId(instanceId), order.getResourceKing());			
 		}
 	}
 
@@ -1040,14 +1076,13 @@ public class ManagerController {
 	}
 
 	public Order getOrderForInstance(String federationToken, String instanceId) {
-		String user = getUser(federationToken);
-		LOGGER.debug("Getting instance " + instanceId + " of user " + user);
+		String userId = getUserId(federationToken);
+		LOGGER.debug("Getting instance " + instanceId + " of user id " + userId);
 		List<Order> userOrders = orderRepository.getAllLocalOrders();
 
 		for (Order order : userOrders) {
-			if (instanceId
-					.equals(order.getInstanceId() + Order.SEPARATOR_GLOBAL_ID + order.getProvidingMemberId())) {
-				if (!order.getFederationToken().getUser().equals(user)) {
+			if (instanceId.equals(order.getInstanceId() + Order.SEPARATOR_GLOBAL_ID + order.getProvidingMemberId())) {
+				if (!order.getFederationToken().getUser().getId().equals(userId)) {
 					throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 				}
 				return order;
@@ -1067,7 +1102,7 @@ public class ManagerController {
 		if (!federationIdentityPlugin.isValid(accessId)) {
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}
-		return storageLinkRepository.get(normalizeInstanceId(storageLinkId));
+		return storageLinkRepository.get(normalizeFogbowResourceId(storageLinkId));
 	}
 
 	public FederationMember getFederationMember(String memberId) {
@@ -1097,7 +1132,7 @@ public class ManagerController {
 			return;
 		}
 		
-		orderRepository.addOrder(requestingUserToken.getUser(), order);
+		orderRepository.addOrder(requestingUserToken.getUser().getId(), order);
 
 		if (!orderSchedulerTimer.isScheduled()) {
 			triggerOrderScheduler();
@@ -1106,14 +1141,15 @@ public class ManagerController {
 	
 	public boolean isThereEnoughQuota(String requestingMemberId){
 		int instancesFulfilled = 0;
-		List<Order> allServedOrders = orderRepository.getAllServedOrders();
+		List<Order> allServedOrders = this.orderRepository.getAllServedOrders();
 		for (Order order : allServedOrders) {
 			if (order.getRequestingMemberId().equals(requestingMemberId) && 
-					order.getState().equals(OrderState.FULFILLED)) 
+					order.getState().equals(OrderState.FULFILLED) && 
+					order.getResourceKing().equals(OrderConstants.COMPUTE_TERM)) 
 				instancesFulfilled++;
 		}
 		FederationMember requestingMember = null;
-		for(FederationMember member : members){
+		for(FederationMember member : new ArrayList<FederationMember>(this.members)) {
 			if(member.getId().equals(requestingMemberId)){
 				requestingMember = member;
 				break;
@@ -1121,8 +1157,8 @@ public class ManagerController {
 		}
 		
 		//TODO different instances sizes should be considered?
-				
-		return (instancesFulfilled+1)<=capacityControllerPlugin.getMaxCapacityToSupply(requestingMember);
+		//TODO remove this magic number
+		return (instancesFulfilled + 1) <= capacityControllerPlugin.getMaxCapacityToSupply(requestingMember);
 	}
 
 	protected String createUserDataUtilsCommand(Order order) throws IOException, MessagingException {
@@ -1333,7 +1369,7 @@ public class ManagerController {
 					new HashMap<String, String>(xOCCIAtt), true, properties.getProperty("xmpp_jid"));
 			LOGGER.info("Created order: " + order);
 			currentOrders.add(order);
-			orderRepository.addOrder(federationToken.getUser(), order);
+			orderRepository.addOrder(federationToken.getUser().getId(), order);
 		}
 		if (!orderSchedulerTimer.isScheduled()) {
 			triggerOrderScheduler();
@@ -1792,11 +1828,14 @@ public class ManagerController {
 	}
 
 	private boolean isInstanceBeingUsedByRemoteMember(Order servedOrder) {
+		String globalInstanceId = null;
 		try {
-			String globalInstanceId = servedOrder.getGlobalInstanceId();
+			globalInstanceId = servedOrder.getGlobalInstanceId();
 			ManagerPacketHelper.checkIfInstanceIsBeingUsedByRemoteMember(globalInstanceId, servedOrder, packetSender);
 			return true;
 		} catch (OCCIException e) {
+			LOGGER.error("Error while checking if instance " + globalInstanceId + " is being used by "
+							+ servedOrder.getRequestingMemberId(), e);
 			return false;
 		}
 	}
@@ -2105,9 +2144,9 @@ public class ManagerController {
 			List<Category> categories, Map<String, String> xOCCIAtt) {
 		
 		String target = xOCCIAtt.get(StorageAttribute.TARGET.getValue());
-		String normalizeTargetAttr = normalizeInstanceId(target);
+		String normalizeTargetAttr = normalizeFogbowResourceId(target);
 		xOCCIAtt.put(StorageAttribute.TARGET.getValue(), normalizeTargetAttr);
-		String normalizeSourceAttr = normalizeInstanceId(xOCCIAtt.get(StorageAttribute.SOURCE.getValue()));
+		String normalizeSourceAttr = normalizeFogbowResourceId(xOCCIAtt.get(StorageAttribute.SOURCE.getValue()));
 		xOCCIAtt.put(StorageAttribute.SOURCE.getValue(), normalizeSourceAttr);		
 		Order storageOrder = orderRepository.getOrderByInstance(normalizeTargetAttr);
 		Order computeOrder = orderRepository.getOrderByInstance(normalizeSourceAttr);
@@ -2145,7 +2184,7 @@ public class ManagerController {
 		storageLink.setProvadingMemberId(computeOrder.getProvidingMemberId());
 		Token federationToken = federationIdentityPlugin.getToken(accessId);
 		storageLink.setFederationToken(federationToken);
-		storageLinkRepository.addStorageLink(federationToken.getUser(), storageLink);	
+		storageLinkRepository.addStorageLink(federationToken.getUser().getId(), storageLink);	
 		
 		return storageLink;
 	}
@@ -2166,7 +2205,8 @@ public class ManagerController {
 		if (federationToken == null) {
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}
-		StorageLink storageLink = storageLinkRepository.get(federationToken.getUser(), normalizeInstanceId(storageLinkId));
+		StorageLink storageLink = storageLinkRepository.get(federationToken.getUser().getId(), 
+				normalizeFogbowResourceId(storageLinkId));
 		
 		if (storageLink == null) {
 			throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
@@ -2176,14 +2216,14 @@ public class ManagerController {
 			storageLink.setFederationToken(federationToken);
 			ManagerPacketHelper.deleteRemoteStorageLink(storageLink, packetSender);
 		} else {
-			String storageIdNormalized = normalizeInstanceId(storageLink.getTarget());		
+			String storageIdNormalized = normalizeFogbowResourceId(storageLink.getTarget());		
 			storageLink.setTarget(storageIdNormalized);
 									
 			detachStorage(storageLink, getFederationUserToken(orderRepository
-					.getOrderByInstance(normalizeInstanceId(storageLink.getSource()))));
+					.getOrderByInstance(normalizeFogbowResourceId(storageLink.getSource()))));
 		}		
 		
-		storageLinkRepository.remove(storageLinkId);	
+		storageLinkRepository.remove(normalizeFogbowResourceId(storageLinkId));	
 	}
 
 	public void detachStorage(StorageLink storageLink, Token federationUserToken) {		
@@ -2217,7 +2257,7 @@ public class ManagerController {
 		if (adminUserStr == null || adminUserStr.isEmpty()) {
 			return true;
 		}
-		String normalizedUser = MapperHelper.normalizeUser(federationToken.getUser());
+		String normalizedUser = MapperHelper.normalizeUser(federationToken.getUser().getName());
 		StringTokenizer st = new StringTokenizer(adminUserStr, ";");
 		while (st.hasMoreTokens()) {
 			if (normalizedUser.equals(st.nextToken().trim())) {
@@ -2233,7 +2273,7 @@ public class ManagerController {
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		}
 		
-		AccountingInfo userAccounting = accountingPlugin.getAccountingInfo(federationToken.getUser(),
+		AccountingInfo userAccounting = accountingPlugin.getAccountingInfo(federationToken.getUser().getId(),
 				properties.getProperty(ConfigurationConstants.XMPP_JID_KEY), providingMember);
 		if (userAccounting == null) {
 			return 0;
@@ -2248,9 +2288,9 @@ public class ManagerController {
 		return new ResourceUsage(computeUsage, storageUsage);		
 	}
 	
-	public ResourcesInfo getResourceInfoForRemoteMember(String accessId, String user) {		
+	public ResourcesInfo getResourceInfoForRemoteMember(String accessId, String userId) {		
 		Map<String, String> localCredentials = getLocalCredentials(accessId);
-		return getResourcesInfo(localCredentials, user, false);
+		return getResourcesInfo(localCredentials, userId, false);
 	}
 
 	protected FailedBatch getFailedBatches() {

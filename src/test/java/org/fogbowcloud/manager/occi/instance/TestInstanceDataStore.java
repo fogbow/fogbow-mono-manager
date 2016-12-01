@@ -11,11 +11,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.UUID;
 
+import org.fogbowcloud.manager.occi.ManagerDataStore;
+import org.fogbowcloud.manager.occi.TestDataStorageHelper;
 import org.fogbowcloud.manager.occi.instance.Instance.Link;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -27,18 +31,34 @@ public class TestInstanceDataStore {
 	
 	@Before
 	public void setup() throws Exception {
-		
+		TestDataStorageHelper.removeDefaultFolderDataStore();
 		instanceDb = new InstanceDataStore(DATA_STORE_URL);
 		instanceDb.deleteAll();
 	}
 
 	@After
 	public void tearDown() throws Exception {
+		TestDataStorageHelper.removeDefaultFolderDataStore();
 		instanceDb.deleteAll();
 		File dbFile = new File(DATA_STORE_FILE);
 		if (dbFile.exists()) {
 			dbFile.delete();
 		}
+	}
+	
+	@Test
+	public void testInitializeWithError() {
+		try {
+			Properties properties = new Properties();
+			// to force error with "/dev/null"
+			properties.put(ManagerDataStore.MANAGER_DATASTORE_URL, "/dev/null");
+			String urlImpossible = "/dev/null";
+			new InstanceDataStore(urlImpossible);
+			Assert.fail();
+		} catch (Error e) {
+			Assert.assertEquals(InstanceDataStore.ERROR_WHILE_INITIALIZING_THE_DATA_STORE, 
+					e.getMessage());
+		}		
 	}
 	
 	@Test
@@ -272,7 +292,7 @@ public class TestInstanceDataStore {
 		assertNotNull(fedInstanceState);
 		assertEquals(fakeInstanceId_B, fedInstanceState.getFedInstanceId());
 		assertEquals(fakeOrderId_B, fedInstanceState.getOrderId());
-		assertEquals(fakeUserB, fedInstanceState.getUser());
+		assertEquals(fakeUserB, fedInstanceState.getUserId());
 		assertEquals(categories, fedInstanceState.getCategories());
 		assertEquals(linksForInstanceB.size(), fedInstanceState.getLinks().size());
 		assertEquals(linksForInstanceB.get(0).getAttributes(), fedInstanceState.getLinks().get(0).getAttributes());
@@ -283,7 +303,7 @@ public class TestInstanceDataStore {
 		assertNotNull(fedInstanceState);
 		assertEquals(fakeInstanceId_A, fedInstanceState.getFedInstanceId());
 		assertEquals(fakeOrderId_A, fedInstanceState.getOrderId());
-		assertEquals(fakeUserA, fedInstanceState.getUser());
+		assertEquals(fakeUserA, fedInstanceState.getUserId());
 		assertEquals(categories, fedInstanceState.getCategories());
 		assertEquals(linksForInstanceA.size(), fedInstanceState.getLinks().size());
 		assertEquals(linksForInstanceA.get(0).getAttributes(), fedInstanceState.getLinks().get(0).getAttributes());

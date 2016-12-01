@@ -30,7 +30,7 @@ public class TestSimpleTokenIdentityPlugin {
 		userCredentials.put(SimpleTokenIdentityPlugin.TOKEN, tokenId);
 		Token token = simpleTokenIdentityPlugin.createToken(userCredentials);
 		Assert.assertEquals(tokenId, token.getAccessId());
-		Assert.assertEquals(DEFAULT_USER, token.getUser());
+		Assert.assertEquals(DEFAULT_USER, token.getUser().getId());
 	}
 	
 	@Test
@@ -40,7 +40,7 @@ public class TestSimpleTokenIdentityPlugin {
 		userCredentials.put(SimpleTokenIdentityPlugin.TOKEN, accessId);
 		Token token = simpleTokenIdentityPlugin.getToken(accessId);
 		Assert.assertEquals(accessId, token.getAccessId());
-		Assert.assertEquals(DEFAULT_USER, token.getUser());
+		Assert.assertEquals(DEFAULT_USER, token.getUser().getId());
 	}
 	
 	@Test
@@ -62,7 +62,8 @@ public class TestSimpleTokenIdentityPlugin {
 	@Test
 	public void testReIssueToken() {
 		String accessId = DEFAULT_VALID_TOKEN + "@" + DEFAULT_USER;
-		Token token = new Token(accessId, DEFAULT_USER, new Date(), new HashMap<String, String>());
+		Token token = new Token(accessId, new Token.User(DEFAULT_USER, DEFAULT_USER), 
+				new Date(), new HashMap<String, String>());
 		Assert.assertEquals(token, simpleTokenIdentityPlugin.reIssueToken(token));
 	}
 	

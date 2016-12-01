@@ -56,13 +56,13 @@ public class TestDeleteStorageLink {
 		this.helper = new OCCITestHelper();
 		
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
-		Token tokenTwo = new Token("1", OCCITestHelper.USER_MOCK, new Date(),
+		Token tokenTwo = new Token("1", new Token.User(OCCITestHelper.USER_MOCK, ""), new Date(),
 		new HashMap<String, String>());
 		Mockito.when(identityPlugin.getToken(OCCITestHelper.ACCESS_TOKEN))
 				.thenReturn(tokenTwo);
 		Mockito.when(identityPlugin.getToken(OTHER_ACCESS_TOKEN))
 		.thenReturn(tokenTwo);		
-		Token otherToken = new Token("other", "other", null, null);
+		Token otherToken = new Token("other", new Token.User("other", ""), null, null);
 		Mockito.when(identityPlugin.getToken(OTHER_ACCESS_TOKEN)).thenReturn(otherToken);
 		Mockito.when(identityPlugin.isValid(OCCITestHelper.ACCESS_TOKEN)).thenReturn(true);	
 		

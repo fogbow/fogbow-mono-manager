@@ -67,7 +67,7 @@ public class TestSimpleStorageAccountingPlugin {
 		HashMap<String, String> xOCCIAtt = new HashMap<String, String>();
 		String sizeStr = "20";
 		xOCCIAtt.put(OrderAttribute.STORAGE_SIZE.getValue(), sizeStr);
-		Order order = new Order("id1", new Token("accessId", "userId", null,
+		Order order = new Order("id1", new Token("accessId", new Token.User("userId", "userId"), null,
 				new HashMap<String, String>()), null, xOCCIAtt, true, requestingMemberId);
 		order.setDateUtils(dateUtils);
 		order.setState(OrderState.FULFILLED);
@@ -109,7 +109,7 @@ public class TestSimpleStorageAccountingPlugin {
 		accountingPlugin = new SimpleStorageAccountingPlugin(properties, dateUtils);
 
 		HashMap<String, String> xOCCIAtt = new HashMap<String, String>();
-		Order order = new Order("id1", new Token("accessId", "userId", null,
+		Order order = new Order("id1", new Token("accessId", new Token.User("userId", "userId"), null,
 				new HashMap<String, String>()), null, xOCCIAtt, true, requestingMemberId);
 		order.setDateUtils(dateUtils);
 		order.setState(OrderState.FULFILLED);
@@ -148,7 +148,7 @@ public class TestSimpleStorageAccountingPlugin {
 		HashMap<String, String> xOCCIAtt = new HashMap<String, String>();
 		String sizeStr = "20";
 		xOCCIAtt.put(OrderAttribute.STORAGE_SIZE.getValue(), sizeStr);
-		Order order = new Order("id1", new Token("accessId", "userId", null,
+		Order order = new Order("id1", new Token("accessId", new Token.User("userId", "userId"), null,
 				new HashMap<String, String>()), null, xOCCIAtt, true, requestingMemberId);
 		order.setDateUtils(dateUtils);
 		order.setState(OrderState.FULFILLED);
@@ -187,14 +187,14 @@ public class TestSimpleStorageAccountingPlugin {
 		String sizeStr = "20";
 		xOCCIAtt.put(OrderAttribute.STORAGE_SIZE.getValue(), sizeStr);
 		String userId = "userId";
-		Order orderOne = new Order("id1", new Token("accessId", userId, null,
+		Order orderOne = new Order("id1", new Token("accessId", new Token.User(userId, userId), null,
 				new HashMap<String, String>()), null, xOCCIAtt, true, requestingMemberId);
 		orderOne.setDateUtils(dateUtils);
 		orderOne.setState(OrderState.FULFILLED);
 		orderOne.setProvidingMemberId(providingMemberId);
 		orderOne.setInstanceId(instanceId);
 		
-		Order orderTwo = new Order("id1", new Token("accessId", userId, null,
+		Order orderTwo = new Order("id1", new Token("accessId", new Token.User(userId, userId), null,
 				new HashMap<String, String>()), null, xOCCIAtt, true, requestingMemberId);
 		orderTwo.setDateUtils(dateUtils);
 		orderTwo.setState(OrderState.FULFILLED);
@@ -218,7 +218,8 @@ public class TestSimpleStorageAccountingPlugin {
 		Assert.assertEquals("localMemberId", accountingInfo.get(0).getRequestingMember());
 		Assert.assertEquals("remoteMemberId", accountingInfo.get(0).getProvidingMember());
 		Assert.assertEquals(userId, accountingInfo.get(0).getUser());
-		Assert.assertEquals((Double.parseDouble(sizeStr) * minutes) * orders.size(), accountingInfo.get(0).getUsage(), ACCEPTABLE_ERROR);
+		Assert.assertEquals((Double.parseDouble(sizeStr) * minutes) * orders.size(), 
+				accountingInfo.get(0).getUsage(), ACCEPTABLE_ERROR);
 	}
 	
 }

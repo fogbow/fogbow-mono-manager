@@ -61,7 +61,7 @@ public class AzureIdentityPlugin implements IdentityPlugin {
 		attributes.put(AzureAttributes.SUBSCRIPTION_ID_KEY, userCredentials.get(SUBSCRIPTION_ID_PATH));
 		attributes.put(AzureAttributes.KEYSTORE_PATH_KEY, userCredentials.get(KEYSTORE_PATH));
 		attributes.put(AzureAttributes.KEYSTORE_PASSWORD_KEY, userCredentials.get(KEYSTORE_PASSWORD));		
-		return new Token(accessID, USER, new Date(), attributes);			
+		return new Token(accessID, new Token.User(USER, USER), new Date(), attributes);			
 	}
 	
 	protected String getAccessID(Map<String, String> userCredentials) {

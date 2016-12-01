@@ -54,7 +54,7 @@ public class TestCloudStackIdentityPlugin {
 		tokenAttributes.put(CloudStackIdentityPlugin.SECRET_KEY, "key");
 		Token token = createPlugin(null).createToken(tokenAttributes);
 		Assert.assertEquals(VALID_ACCESS_ID, token.getAccessId());
-		Assert.assertEquals("api", token.getUser());
+		Assert.assertEquals("api", token.getUser().getId());
 	}
 	
 	@Test(expected=OCCIException.class)
@@ -87,7 +87,7 @@ public class TestCloudStackIdentityPlugin {
 		
 		CloudStackIdentityPlugin identityPlugin = createPlugin(httpClient);
 		Token token = identityPlugin.getToken(VALID_ACCESS_ID);	
-		Assert.assertEquals("api", token.getUser());
+		Assert.assertEquals("api", token.getUser().getId());
 	}
 	
 	@Test(expected=OCCIException.class)
@@ -160,7 +160,7 @@ public class TestCloudStackIdentityPlugin {
 		Token token = identityPlugin.createToken(userCredentials);
 		Assert.assertEquals(FEDERATION_API_KEY + ":" + FEDERATION_SECRET_KEY, 
 				token.getAccessId());
-		Assert.assertEquals(FEDERATION_API_KEY, token.getUser());
+		Assert.assertEquals(FEDERATION_API_KEY, token.getUser().getId());
 	}
 	
 	@Test

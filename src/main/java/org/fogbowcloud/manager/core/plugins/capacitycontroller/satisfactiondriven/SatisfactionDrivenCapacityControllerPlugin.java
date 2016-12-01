@@ -3,7 +3,7 @@ package org.fogbowcloud.manager.core.plugins.capacitycontroller.satisfactiondriv
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.plugins.CapacityControllerPlugin;
 
-public class SatisfactionDrivenCapacityControllerPlugin implements CapacityControllerPlugin{
+public class SatisfactionDrivenCapacityControllerPlugin implements CapacityControllerPlugin {
 	
 	@Override
 	public double getMaxCapacityToSupply(FederationMember member) {
@@ -11,6 +11,6 @@ public class SatisfactionDrivenCapacityControllerPlugin implements CapacityContr
 	}
 	
 	@Override
-	public void updateCapacity(FederationMember member) {}
+	public void updateCapacity(FederationMember member, double maximumCapacity) {}
 
 }

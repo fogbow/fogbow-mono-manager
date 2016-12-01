@@ -5,17 +5,17 @@ public class FedNetworkState {
 	private String fedNetworkId;
 	private String orderId;
 	private String globalInstanceId;
-	private String user;
+	private String userId;
 	private String address;
 	private String allocation;
 	private String gateway;
 
-	public FedNetworkState(String fedInstanceId, String orderId, String globalInstanceId, String user, 
+	public FedNetworkState(String fedInstanceId, String orderId, String globalInstanceId, String userId, 
 			String address, String allocation, String gateway) {
 		this.fedNetworkId = fedInstanceId;
 		this.orderId = orderId;
 		this.globalInstanceId = globalInstanceId;
-		this.user = user;
+		this.userId = userId;
 		this.address = address;
 		this.allocation = allocation;
 		this.gateway = gateway;
@@ -45,12 +45,12 @@ public class FedNetworkState {
 		this.globalInstanceId = globalInstanceId;
 	}
 	
-	public String getUser() {
-		return user;
+	public String getUserId() {
+		return userId;
 	}
 	
-	public void setUser(String user) {
-		this.user = user;
+	public void setUserId(String userId) {
+		this.userId = userId;
 	}
 
 	protected String getAddress() {

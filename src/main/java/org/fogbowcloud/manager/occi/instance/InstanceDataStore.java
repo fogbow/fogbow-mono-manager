@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.occi.DataStoreHelper;
 import org.fogbowcloud.manager.occi.JSONHelper;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -21,7 +22,7 @@ public class InstanceDataStore {
 	public static final String INSTANCE_ID = "intance_id";
 	public static final String ORDER_ID = "order_id";
 	public static final String GLOBAL_INSTANCE_ID = "global_intance_id";
-	public static final String USER = "user";
+	public static final String USER_ID = "user_id";
 	public static final String CATEGORIES = "categories";
 	public static final String LINKS = "links";
 
@@ -29,7 +30,7 @@ public class InstanceDataStore {
 					+ INSTANCE_ID + " VARCHAR(255) PRIMARY KEY, " 
 					+ ORDER_ID + " VARCHAR (255), " 
 					+ GLOBAL_INSTANCE_ID + " VARCHAR (255), " 
-					+ USER + " VARCHAR (255), " 
+					+ USER_ID + " VARCHAR (255), " 
 					+ CATEGORIES + " TEXT, "
 					+ LINKS + " TEXT)";
 
@@ -38,29 +39,32 @@ public class InstanceDataStore {
 
 	private static final String UPDATE_INSTANCE_TABLE_SQL = "UPDATE " + INSTANCE_ORDER_TABLE_NAME
 			+ " SET " + ORDER_ID + " = ?, " + GLOBAL_INSTANCE_ID + " = ?, " + CATEGORIES + " = ?, "
-			+ LINKS + " = ? WHERE " + INSTANCE_ID + " = ? AND " + USER + " = ?";
+			+ LINKS + " = ? WHERE " + INSTANCE_ID + " = ? AND " + USER_ID + " = ?";
 
 	private static final String GET_ALL_INSTANCE = "SELECT " + INSTANCE_ID + ", " + ORDER_ID + ", " + GLOBAL_INSTANCE_ID
-			+ ", " + USER + ", " + CATEGORIES + ", " + LINKS + "  FROM " + INSTANCE_ORDER_TABLE_NAME;
+			+ ", " + USER_ID + ", " + CATEGORIES + ", " + LINKS + "  FROM " + INSTANCE_ORDER_TABLE_NAME;
 
-	private static final String GET_INSTANCE_BY_USER = GET_ALL_INSTANCE + " WHERE " + USER + " = ? ";
-	private static final String GET_INSTANCE_BY_INSTANCE_ID = GET_ALL_INSTANCE + " WHERE " + INSTANCE_ID + " = ? AND " + USER + " = ?";
-	private static final String GET_INSTANCE_BY_GLOBAL_ID = GET_ALL_INSTANCE + " WHERE " + GLOBAL_INSTANCE_ID + " like ? AND " + USER + " = ?";
-	private static final String GET_INSTANCE_BY_ORDER_ID = GET_ALL_INSTANCE + " WHERE " + ORDER_ID + " = ? AND " + USER + " = ?";
+	private static final String GET_INSTANCE_BY_USER = GET_ALL_INSTANCE + " WHERE " + USER_ID + " = ? ";
+	private static final String GET_INSTANCE_BY_INSTANCE_ID = GET_ALL_INSTANCE + " WHERE " + INSTANCE_ID + " = ? AND " + USER_ID + " = ?";
+	private static final String GET_INSTANCE_BY_GLOBAL_ID = GET_ALL_INSTANCE + " WHERE " + GLOBAL_INSTANCE_ID + " like ? AND " + USER_ID + " = ?";
+	private static final String GET_INSTANCE_BY_ORDER_ID = GET_ALL_INSTANCE + " WHERE " + ORDER_ID + " = ? AND " + USER_ID + " = ?";
 
 	private static final String DELETE_ALL_INSTANCE_TABLE_SQL = "DELETE FROM " + INSTANCE_ORDER_TABLE_NAME;
-	private static final String DELETE_BY_USER = "DELETE FROM " + INSTANCE_ORDER_TABLE_NAME + " WHERE " + USER
+	private static final String DELETE_BY_USER = "DELETE FROM " + INSTANCE_ORDER_TABLE_NAME + " WHERE " + USER_ID
 			+ " = ? ";
 	private static final String DELETE_BY_INSTANCE_ID_SQL = "DELETE FROM " + INSTANCE_ORDER_TABLE_NAME + " WHERE "
-			+ INSTANCE_ID + " = ? AND " + USER + " = ?";
+			+ INSTANCE_ID + " = ? AND " + USER_ID + " = ?";
 
 	private static final Logger LOGGER = Logger.getLogger(InstanceDataStore.class);
+	protected static final String ERROR_WHILE_INITIALIZING_THE_DATA_STORE = "Error while initializing the Instance DataStore.";
+	private static final String DEFAULT_DATASTORE_NAME = "datastore_instances.slite";
 
 	private String instanceDataStoreURL;
 
 	public InstanceDataStore(String instanceDataStoreURL) {
-
-		this.instanceDataStoreURL = instanceDataStoreURL;
+		
+		this.instanceDataStoreURL = DataStoreHelper.getDataStoreUrl(instanceDataStoreURL,
+				DEFAULT_DATASTORE_NAME);;
 
 		Statement statement = null;
 		Connection connection = null;
@@ -75,7 +79,8 @@ public class InstanceDataStore {
 			statement.close();
 
 		} catch (Exception e) {
-			LOGGER.error("Error while initializing the DataStore.", e);
+			LOGGER.error(ERROR_WHILE_INITIALIZING_THE_DATA_STORE, e);
+			throw new Error(ERROR_WHILE_INITIALIZING_THE_DATA_STORE, e);
 		} finally {
 			close(statement, connection);
 		}
@@ -84,12 +89,12 @@ public class InstanceDataStore {
 	public boolean insert(FedInstanceState fedInstanceState) {
 
 		LOGGER.debug("Inserting instance [" + fedInstanceState.getFedInstanceId() + "] with relate order ["
-				+ fedInstanceState.getOrderId() + "]" + " - User [" + fedInstanceState.getUser() + "]");
+				+ fedInstanceState.getOrderId() + "]" + " - User id [" + fedInstanceState.getUserId() + "]");
 
 		if (fedInstanceState.getFedInstanceId() == null || fedInstanceState.getFedInstanceId().isEmpty()
 				|| fedInstanceState.getOrderId() == null || fedInstanceState.getOrderId().isEmpty()
-				|| fedInstanceState.getUser() == null || fedInstanceState.getUser().isEmpty()) {
-			LOGGER.warn("Intance Id, Order Id and User must not be null.");
+				|| fedInstanceState.getUserId() == null || fedInstanceState.getUserId().isEmpty()) {
+			LOGGER.warn("Intance Id, Order Id and User id must not be null.");
 			return false;
 		}
 
@@ -102,7 +107,7 @@ public class InstanceDataStore {
 			preparedStatement.setString(1, fedInstanceState.getFedInstanceId());
 			preparedStatement.setString(2, fedInstanceState.getOrderId());
 			preparedStatement.setString(3, fedInstanceState.getGlobalInstanceId());
-			preparedStatement.setString(4, fedInstanceState.getUser());
+			preparedStatement.setString(4, fedInstanceState.getUserId());
 			JSONArray jsonCategories = JSONHelper.mountCategoriesJSON(fedInstanceState.getCategories());
 			preparedStatement.setString(5, jsonCategories == null ? null : jsonCategories.toString());
 			JSONArray josnLink = JSONHelper.mountLinksJSON(fedInstanceState.getLinks());
@@ -146,12 +151,12 @@ public class InstanceDataStore {
 
 		LOGGER.debug("Inserting instance [" + fedInstanceState.getFedInstanceId() + "] with order ["
 				+ fedInstanceState.getOrderId() + "]" + " Global Id [" + fedInstanceState.getGlobalInstanceId()
-				+ "] - User [" + fedInstanceState.getUser() + "]");
+				+ "] - User id [" + fedInstanceState.getUserId() + "]");
 
 		if (fedInstanceState.getFedInstanceId() == null || fedInstanceState.getFedInstanceId().isEmpty()
 				|| fedInstanceState.getOrderId() == null || fedInstanceState.getOrderId().isEmpty()
-				|| fedInstanceState.getUser() == null || fedInstanceState.getUser().isEmpty()) {
-			LOGGER.warn("Intance Id, Order Id and User must not be null.");
+				|| fedInstanceState.getUserId() == null || fedInstanceState.getUserId().isEmpty()) {
+			LOGGER.warn("Intance Id, Order Id and User id must not be null.");
 			return false;
 		}
 
@@ -169,7 +174,7 @@ public class InstanceDataStore {
 			JSONArray josnLink = JSONHelper.mountLinksJSON(fedInstanceState.getLinks());
 			preparedStatement.setString(4, josnLink == null ? null : josnLink.toString());
 			preparedStatement.setString(5, fedInstanceState.getFedInstanceId());
-			preparedStatement.setString(6, fedInstanceState.getUser());
+			preparedStatement.setString(6, fedInstanceState.getUserId());
 			
 			preparedStatement.execute();
 			connection.commit();
@@ -202,21 +207,21 @@ public class InstanceDataStore {
 		return executeQueryStatement(queryStatement);
 	}
 
-	public List<FedInstanceState> getAllByUser(String user) {
+	public List<FedInstanceState> getAllByUser(String userId) {
 
-		LOGGER.debug("Getting all instances id with related orders to user [" + user + "]");
+		LOGGER.debug("Getting all instances id with related orders to user id [" + userId + "]");
 
 		String queryStatement = GET_INSTANCE_BY_USER;
 
-		return executeQueryStatement(queryStatement, user);
+		return executeQueryStatement(queryStatement, userId);
 	}
 
-	public FedInstanceState getByInstanceId(String instanceId, String user) {
+	public FedInstanceState getByInstanceId(String instanceId, String userId) {
 
 		LOGGER.debug("Getting instances id with related orders by Instance ID [" + instanceId + "]");
 
 		String queryStatement = GET_INSTANCE_BY_INSTANCE_ID;
-		List<FedInstanceState> fedInstanceStateList = executeQueryStatement(queryStatement, instanceId, user);
+		List<FedInstanceState> fedInstanceStateList = executeQueryStatement(queryStatement, instanceId, userId);
 		if (fedInstanceStateList != null && !fedInstanceStateList.isEmpty()) {
 			return fedInstanceStateList.get(0);
 		}
@@ -224,12 +229,12 @@ public class InstanceDataStore {
 
 	}
 
-	public FedInstanceState getByGlobalId(String globalId, String user) {
+	public FedInstanceState getByGlobalId(String globalId, String userId) {
 
 		LOGGER.debug("Getting instances id with related orders by Global ID [" + globalId + "]");
 
 		String queryStatement = GET_INSTANCE_BY_GLOBAL_ID;
-		List<FedInstanceState> fedInstanceStateList = executeQueryStatement(queryStatement, "%"+globalId+"%", user);
+		List<FedInstanceState> fedInstanceStateList = executeQueryStatement(queryStatement, "%"+globalId+"%", userId);
 		if (fedInstanceStateList != null && !fedInstanceStateList.isEmpty()) {
 			return fedInstanceStateList.get(0);
 		}
@@ -237,13 +242,13 @@ public class InstanceDataStore {
 
 	}
 
-	public FedInstanceState getByOrderId(String orderId, String user) {
+	public FedInstanceState getByOrderId(String orderId, String userId) {
 
 		LOGGER.debug("Getting instances id with related orders by Order ID [" + orderId + "]");
 
 		String queryStatement = GET_INSTANCE_BY_ORDER_ID;
 
-		List<FedInstanceState> fedInstanceStateList = executeQueryStatement(queryStatement, orderId, user);
+		List<FedInstanceState> fedInstanceStateList = executeQueryStatement(queryStatement, orderId, userId);
 
 		if (fedInstanceStateList != null && !fedInstanceStateList.isEmpty()) {
 			return fedInstanceStateList.get(0);
@@ -274,7 +279,7 @@ public class InstanceDataStore {
 		}
 	}
 
-	public boolean deleteAllFromUser(String user) {
+	public boolean deleteAllFromUser(String userId) {
 
 		LOGGER.debug("Deleting all instances id with related orders.");
 
@@ -284,7 +289,7 @@ public class InstanceDataStore {
 
 			conn = getConnection();
 			statement = conn.prepareStatement(DELETE_BY_USER);
-			statement.setString(1, user);
+			statement.setString(1, userId);
 			boolean result = statement.execute();
 			conn.commit();
 			return result;
@@ -297,7 +302,7 @@ public class InstanceDataStore {
 		}
 	}
 
-	public boolean deleteByIntanceId(String instanceId, String user) {
+	public boolean deleteByIntanceId(String instanceId, String userId) {
 
 		LOGGER.debug("Deleting all instances id with related orders with id");
 
@@ -308,7 +313,7 @@ public class InstanceDataStore {
 			conn = getConnection();
 			statement = conn.prepareStatement(DELETE_BY_INSTANCE_ID_SQL);
 			statement.setString(1, instanceId);
-			statement.setString(2, user);
+			statement.setString(2, userId);
 			boolean result = statement.execute();
 			conn.commit();
 			return result;
@@ -337,7 +342,7 @@ public class InstanceDataStore {
 				preparedStatement.setString(1, fedInstanceState.getFedInstanceId());
 				preparedStatement.setString(2, fedInstanceState.getOrderId());
 				preparedStatement.setString(3, fedInstanceState.getGlobalInstanceId());
-				preparedStatement.setString(4, fedInstanceState.getUser());
+				preparedStatement.setString(4, fedInstanceState.getUserId());
 				JSONArray jsonCategories = JSONHelper.mountCategoriesJSON(fedInstanceState.getCategories());
 				preparedStatement.setString(5, jsonCategories == null ? null : jsonCategories.toString());
 				JSONArray josnLink = JSONHelper.mountLinksJSON(fedInstanceState.getLinks());
@@ -400,7 +405,7 @@ public class InstanceDataStore {
 								JSONHelper.getCategoriesFromJSON(rs.getString(CATEGORIES)),
 								JSONHelper.getLinksFromJSON(rs.getString(LINKS)),
 								rs.getString(GLOBAL_INSTANCE_ID),
-								rs.getString(USER));
+								rs.getString(USER_ID));
 						fedInstanceStateList.add(fedInstanceState);
 					}
 				} catch (Exception e) {

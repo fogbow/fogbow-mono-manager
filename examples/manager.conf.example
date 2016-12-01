@@ -1,0 +1,22 @@
+## Manager databases
+manager_datastore_url=jdbc:sqlite:$path_to_manager_db
+instance_datastore_url=jdbc:sqlite:$path_to_instances_db
+storage_datastore_url=jdbc:sqlite:$path_to_storage_db
+network_datastore_url=jdbc:sqlite:$path_to_network_db
+
+## database updater period
+bd_updater_period=30000
+
+token_host_public_address=$token_host_pub_address
+token_host_private_address=$token_host_priv_address
+token_host_http_port=$token_host_http_port
+
+my_ip=$manager_ip
+
+http_port=$manager_port
+xmpp_timeout=15000
+
+## Benchmarking (Vanilla Benchmarking Plugin)
+benchmarking_class=org.fogbowcloud.manager.core.plugins.benchmarking.VanillaBenchmarkingPlugin
+# Benchmarking script to use with SSH Benchmarking plugin
+ssh_benchmarking_script_url=http://downloads.fogbowcloud.org/benchmark/script_ssh_benchmarking.sh

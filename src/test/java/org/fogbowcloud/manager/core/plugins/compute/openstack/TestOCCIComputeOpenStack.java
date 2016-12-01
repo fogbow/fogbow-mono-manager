@@ -74,8 +74,9 @@ public class TestOCCIComputeOpenStack {
 		flavors.add(new Flavor("big", "4", "4000", "40"));
 		occiComputeOpenStack.setFlavors(flavors );
 		
-		defaultToken = new Token(PluginHelper.ACCESS_ID, PluginHelper.USERNAME,
-				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>());
+		defaultToken = new Token(PluginHelper.ACCESS_ID, new Token.User(PluginHelper.USERNAME,
+				PluginHelper.USERNAME), DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
+				new HashMap<String, String>());
 		
 		// five first generated instance ids
 		expectedInstanceIds = new ArrayList<String>();

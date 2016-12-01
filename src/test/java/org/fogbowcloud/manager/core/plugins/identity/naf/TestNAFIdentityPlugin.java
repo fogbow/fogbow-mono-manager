@@ -173,7 +173,7 @@ public class TestNAFIdentityPlugin {
 		String accessId = createAccessId();
 		Token token = this.nafIdentityPlugin.getToken(accessId);
 		Assert.assertNotNull(token);
-		Assert.assertEquals(DEFAULT_USER, token.getUser());
+		Assert.assertEquals(DEFAULT_USER, token.getUser().getId());
 		Assert.assertEquals(new Date(this.defaultCTime), token.getExpirationDate());
 		Assert.assertEquals(this.defaultSamlAttributes.get(ATTRIBUTE_ONE_SAML_ATTRIBUTE),
 				token.getAttributes().get(ATTRIBUTE_ONE_SAML_ATTRIBUTE));
@@ -193,7 +193,8 @@ public class TestNAFIdentityPlugin {
 
 	@Test
 	public void testGetForwardableToken() {
-		Token originalToken = new Token("accessId", "user", new Date(), new HashMap<String, String>());
+		Token originalToken = new Token("accessId", new Token.User("user", "user"), new Date(), 
+				new HashMap<String, String>());
 		Assert.assertEquals(originalToken, this.nafIdentityPlugin.getForwardableToken(originalToken));
 	}
 
@@ -209,7 +210,8 @@ public class TestNAFIdentityPlugin {
 
 	@Test
 	public void testReIssueToken() {
-		Token originalToken = new Token("accessId", "user", new Date(), new HashMap<String, String>());
+		Token originalToken = new Token("accessId", new Token.User("user", "user"), new Date(), 
+				new HashMap<String, String>());
 		Assert.assertEquals(originalToken, this.nafIdentityPlugin.reIssueToken(originalToken));
 	}
 

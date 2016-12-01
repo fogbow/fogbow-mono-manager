@@ -45,7 +45,7 @@ public class TestUsageServerResource {
 	private MapperPlugin mapperPlugin;
 	
 	private List<FederationMember> federationMembers = new ArrayList<FederationMember>();
-	private Token defaultToken = new Token("access", "user", null, new HashMap<String, String>());
+	private Token defaultToken = new Token("access", new Token.User("user", ""), null, new HashMap<String, String>());
 	
 	@Before
 	public void setup() throws Exception {
@@ -102,7 +102,7 @@ public class TestUsageServerResource {
 				String.valueOf(Charsets.UTF_8));
 		
 		// checking usage
-		AccountingInfo memberUsageByUser = getUsageFrom(defaultToken.getUser(), responseStr, OrderConstants.COMPUTE_TERM);
+		AccountingInfo memberUsageByUser = getUsageFrom(defaultToken.getUser().getId(), responseStr, OrderConstants.COMPUTE_TERM);
 		Assert.assertEquals(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, memberUsageByUser.getRequestingMember());
 		Assert.assertEquals(ID_RESOURCEINFO1, memberUsageByUser.getProvidingMember());
 		Assert.assertEquals(0, memberUsageByUser.getUsage(), ACCEPTABLE_ERROR);
@@ -117,13 +117,13 @@ public class TestUsageServerResource {
 				String.valueOf(Charsets.UTF_8));
 		
 		// checking usage
-		memberUsageByUser = getUsageFrom(defaultToken.getUser(), responseStr, OrderConstants.COMPUTE_TERM);
+		memberUsageByUser = getUsageFrom(defaultToken.getUser().getId(), responseStr, OrderConstants.COMPUTE_TERM);
 		Assert.assertEquals(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, memberUsageByUser.getRequestingMember());
 		Assert.assertEquals(ID_RESOURCEINFO2, memberUsageByUser.getProvidingMember());
 		Assert.assertEquals(0, memberUsageByUser.getUsage(), ACCEPTABLE_ERROR);
 	}
 	
-	public static AccountingInfo getUsageFrom(String user, String responseStr, String resourceKing) {
+	public static AccountingInfo getUsageFrom(String userId, String responseStr, String resourceKing) {
 		StringTokenizer st = new StringTokenizer(responseStr, "\n");
 		String providingMember = "";
 		double consuption = -1;
@@ -148,7 +148,7 @@ public class TestUsageServerResource {
 		Assert.assertNotEquals("", providingMember);
 		Assert.assertNotEquals(-1, consuption, 0.00000);
 
-		AccountingInfo accountingInfo = new AccountingInfo(user,
+		AccountingInfo accountingInfo = new AccountingInfo(userId,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, providingMember);
 		accountingInfo.addConsumption(consuption);
 		return accountingInfo;
@@ -160,16 +160,18 @@ public class TestUsageServerResource {
 		Mockito.when(identityPlugin.getToken(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID))
 				.thenReturn(defaultToken);
 		
-		AccountingInfo accountingEntry1 = new AccountingInfo(defaultToken.getUser(), DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, ID_RESOURCEINFO1);
+		AccountingInfo accountingEntry1 = new AccountingInfo(defaultToken.getUser().getId(), 
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, ID_RESOURCEINFO1);
 		accountingEntry1.addConsumption(0);
 		
-		AccountingInfo accountingEntry2 = new AccountingInfo(defaultToken.getUser(), DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, ID_RESOURCEINFO2);
+		AccountingInfo accountingEntry2 = new AccountingInfo(defaultToken.getUser().getId(),
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, ID_RESOURCEINFO2);
 		accountingEntry2.addConsumption(20.5);
 		
-		Mockito.when(accountingPlugin.getAccountingInfo(defaultToken.getUser(),
+		Mockito.when(accountingPlugin.getAccountingInfo(defaultToken.getUser().getId(),
 						DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, ID_RESOURCEINFO1))
 				.thenReturn(accountingEntry1);
-		Mockito.when(accountingPlugin.getAccountingInfo(defaultToken.getUser(),
+		Mockito.when(accountingPlugin.getAccountingInfo(defaultToken.getUser().getId(),
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, ID_RESOURCEINFO2))
 		.thenReturn(accountingEntry2);
 
@@ -190,7 +192,7 @@ public class TestUsageServerResource {
 				String.valueOf(Charsets.UTF_8));
 
 		// checking usage
-		AccountingInfo memberUsageByUser = getUsageFrom(defaultToken.getUser(), responseStr, OrderConstants.COMPUTE_TERM);
+		AccountingInfo memberUsageByUser = getUsageFrom(defaultToken.getUser().getId(), responseStr, OrderConstants.COMPUTE_TERM);
 		Assert.assertEquals(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
 				memberUsageByUser.getRequestingMember());
 		Assert.assertEquals(ID_RESOURCEINFO1, memberUsageByUser.getProvidingMember());
@@ -207,7 +209,7 @@ public class TestUsageServerResource {
 				String.valueOf(Charsets.UTF_8));
 
 		// checking usage
-		memberUsageByUser = getUsageFrom(defaultToken.getUser(), responseStr, OrderConstants.COMPUTE_TERM);
+		memberUsageByUser = getUsageFrom(defaultToken.getUser().getId(), responseStr, OrderConstants.COMPUTE_TERM);
 		Assert.assertEquals(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
 				memberUsageByUser.getRequestingMember());
 		Assert.assertEquals(ID_RESOURCEINFO2, memberUsageByUser.getProvidingMember());
@@ -220,16 +222,18 @@ public class TestUsageServerResource {
 		Mockito.when(identityPlugin.getToken(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID))
 				.thenReturn(defaultToken);
 		
-		AccountingInfo accountingEntry1 = new AccountingInfo(defaultToken.getUser(), DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, ID_RESOURCEINFO1);
+		AccountingInfo accountingEntry1 = new AccountingInfo(defaultToken.getUser().getId(),
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, ID_RESOURCEINFO1);
 		accountingEntry1.addConsumption(10.5);
 		
-		AccountingInfo accountingEntry2 = new AccountingInfo(defaultToken.getUser(), DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, ID_RESOURCEINFO2);
+		AccountingInfo accountingEntry2 = new AccountingInfo(defaultToken.getUser().getId(),
+				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, ID_RESOURCEINFO2);
 		accountingEntry2.addConsumption(20.5);
 		
-		Mockito.when(accountingPlugin.getAccountingInfo(defaultToken.getUser(),
+		Mockito.when(accountingPlugin.getAccountingInfo(defaultToken.getUser().getId(),
 						DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, ID_RESOURCEINFO1))
 				.thenReturn(accountingEntry1);
-		Mockito.when(accountingPlugin.getAccountingInfo(defaultToken.getUser(),
+		Mockito.when(accountingPlugin.getAccountingInfo(defaultToken.getUser().getId(),
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, ID_RESOURCEINFO2))
 		.thenReturn(accountingEntry2);
 		Mockito.when(authorizationPlugin.isAuthorized(defaultToken)).thenReturn(true);
@@ -249,7 +253,8 @@ public class TestUsageServerResource {
 				String.valueOf(Charsets.UTF_8));
 
 		// checking usage
-		AccountingInfo memberUsageByUser = getUsageFrom(defaultToken.getUser(), responseStr, OrderConstants.COMPUTE_TERM);
+		AccountingInfo memberUsageByUser = getUsageFrom(defaultToken.getUser().getId(),
+				responseStr, OrderConstants.COMPUTE_TERM);
 		Assert.assertEquals(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
 				memberUsageByUser.getRequestingMember());
 		Assert.assertEquals(ID_RESOURCEINFO1, memberUsageByUser.getProvidingMember());
@@ -266,9 +271,9 @@ public class TestUsageServerResource {
 				String.valueOf(Charsets.UTF_8));		
 
 		// checking usage
-		memberUsageByUser = getUsageFrom(defaultToken.getUser(), responseStr,
+		memberUsageByUser = getUsageFrom(defaultToken.getUser().getId(), responseStr,
 				OrderConstants.COMPUTE_TERM);
-		AccountingInfo memberStorageUsageByUser = getUsageFrom(defaultToken.getUser(), responseStr,
+		AccountingInfo memberStorageUsageByUser = getUsageFrom(defaultToken.getUser().getId(), responseStr,
 				OrderConstants.STORAGE_TERM);
 		Assert.assertEquals(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
 				memberUsageByUser.getRequestingMember());

@@ -88,12 +88,12 @@ public class LdapIdentityPlugin implements IdentityPlugin {
 		String password = userCredentials.get(CRED_PASSWORD);
 		String name = null;
 		
+		extractLdapPropertiesFromCredentials(userCredentials);
+		
 		parseCredentials(userCredentials);
 		
 		try {
-
 			name = ldapAuthenticate(uid, password);
-
 		} catch (Exception e) {
 			LOGGER.error("Couldn't load account summary from LDAP Server.", e);
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
@@ -102,9 +102,7 @@ public class LdapIdentityPlugin implements IdentityPlugin {
 		Map<String, String> attributes = new HashMap<String, String>();
 		Date expirationDate = new Date(new Date().getTime() + EXPIRATION_INTERVAL);
 		
-		try {
-			
-			
+		try {					
 			JSONObject json = new JSONObject();
 			json.put(ATT_LOGIN, uid);
 			json.put(ATT_NAME, name);
@@ -112,18 +110,37 @@ public class LdapIdentityPlugin implements IdentityPlugin {
 			
 			String signature = createSignature(json);
 			
-			String accessId = json.toString()+ACCESSID_SEPARATOR+signature;
+			String accessId = json.toString() + ACCESSID_SEPARATOR + signature;
 			
-			accessId = new String(Base64.encodeBase64(accessId.getBytes(Charsets.UTF_8), false, false),
-					Charsets.UTF_8);
+			accessId = new String(Base64.encodeBase64(accessId.getBytes(Charsets.UTF_8), 
+					false, false), Charsets.UTF_8);
 			
-			return new Token(accessId, name, expirationDate, attributes);
+			return new Token(accessId, new Token.User(uid, name), expirationDate, attributes);
 			
 		} catch (Exception e) {
 			LOGGER.error("Erro while trying to sign the token.", e);
-			throw new OCCIException(ErrorType.INTERNAL_SERVER_ERROR, "Erro while trying to sign the token.");
+			throw new OCCIException(ErrorType.INTERNAL_SERVER_ERROR, 
+					"Erro while trying to sign the token.");
 		}
 		
+	}
+
+	private void extractLdapPropertiesFromCredentials(Map<String, String> userCredentials) {
+		if (ldapBase == null || ldapBase.isEmpty()) {
+			ldapBase = userCredentials.get(CRED_LDAP_BASE);
+		}
+		
+		if (ldapUrl == null || ldapUrl.isEmpty()) {
+			ldapUrl = userCredentials.get(CRED_AUTH_URL);
+		}
+		
+		if (privateKeyPath == null || privateKeyPath.isEmpty()) {
+			privateKeyPath = userCredentials.get(CRED_PRIVATE_KEY);
+		}
+		
+		if (publicKeyPath == null || publicKeyPath.isEmpty()) {
+			publicKeyPath = userCredentials.get(CRED_PUBLIC_KEY);
+		}
 	}
 
 	@Override
@@ -141,7 +158,7 @@ public class LdapIdentityPlugin implements IdentityPlugin {
 			
 			String split[] = decodedAccessId.split(ACCESSID_SEPARATOR);
 			if(split == null || split.length < 2){
-				LOGGER.error("Invalid accessID: "+decodedAccessId);
+				LOGGER.error("Invalid accessID: " + decodedAccessId);
 				throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 			}
 			
@@ -155,16 +172,18 @@ public class LdapIdentityPlugin implements IdentityPlugin {
 				LOGGER.error("Invalid accessID: "+decodedAccessId);
 				throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 			}
-			return new Token(accessId, root.getString(ATT_NAME), expirationDate, new HashMap<String, String>());
 			
+			String uuid = root.getString(ATT_LOGIN);
+			String name = root.getString(ATT_NAME);
+			return new Token(accessId, new Token.User(uuid, name), expirationDate, 
+					new HashMap<String, String>());			
 		} catch (JSONException e) {
 			LOGGER.error("Exception while getting token from json.", e);
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
-		}
-		
-		
+		}			
 	}
 
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	protected String ldapAuthenticate(String uid, String password) throws Exception {
 
 		Hashtable env = new Hashtable();
@@ -316,7 +335,7 @@ public class LdapIdentityPlugin implements IdentityPlugin {
 
 	@Override
 	public Token getForwardableToken(Token originalToken) {
-		return null;
+		return originalToken;
 	}
 
 }

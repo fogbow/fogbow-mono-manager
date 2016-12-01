@@ -13,11 +13,11 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.occi.DataStoreHelper;
 
 public class AccountingDataStore {
 
 	public static final String ACCOUNTING_DATASTORE_URL = "accounting_datastore_url";
-	public static final String ACCOUNTING_DATASTORE_URL_DEFAULT = "jdbc:sqlite:/tmp/usage";
 	public static final String ACCOUNTING_DATASTORE_SQLITE_DRIVER = "org.sqlite.JDBC";
 	
 	protected static final String USAGE_TABLE_NAME = "usage";
@@ -25,13 +25,18 @@ public class AccountingDataStore {
 	protected static final String REQUESTING_MEMBER_COL = "requesting_member";
 	protected static final String PROVIDING_MEMBER_COL = "providing_member";
 	protected static final String USAGE_COL = "usage";
+	private static final String DEFAULT_DATASTORE_NAME = "datastore_accounting.slite";
+	protected static final String ERROR_WHILE_INITIALIZING_THE_DATA_STORE = 
+			"Error while initializing the Accouting DataStore.";
 
 	private String dataStoreURL;
 
-	private static final Logger LOGGER = Logger.getLogger(AccountingDataStore.class);
+	public static final Logger LOGGER = Logger.getLogger(AccountingDataStore.class);
 	
 	public AccountingDataStore(Properties properties) {		
-		this.dataStoreURL = properties.getProperty(ACCOUNTING_DATASTORE_URL, ACCOUNTING_DATASTORE_URL_DEFAULT);
+		String dataStoreURLProperties = properties.getProperty(ACCOUNTING_DATASTORE_URL);
+		this.dataStoreURL = DataStoreHelper.getDataStoreUrl(dataStoreURLProperties,
+				DEFAULT_DATASTORE_NAME);
 
 		Statement statement = null;
 		Connection connection = null;
@@ -52,7 +57,8 @@ public class AccountingDataStore {
 							+ ")");
 			statement.close();
 		} catch (Exception e) {
-			LOGGER.error("Error while initializing the DataStore.", e);
+			LOGGER.error(ERROR_WHILE_INITIALIZING_THE_DATA_STORE, e);
+			throw new Error(ERROR_WHILE_INITIALIZING_THE_DATA_STORE, e);
 		} finally {
 			close(statement, connection);
 		}

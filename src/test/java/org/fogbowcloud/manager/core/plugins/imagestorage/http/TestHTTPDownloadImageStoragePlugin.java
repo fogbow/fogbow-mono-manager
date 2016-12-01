@@ -35,7 +35,7 @@ public class TestHTTPDownloadImageStoragePlugin {
 	public void testGetLocalIdInTheCloud() {
 		Properties properties = new Properties();
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
-		Token token = new Token("accessId", "user", null, null);
+		Token token = new Token("accessId", new Token.User("user", "user"), null, null);
 		String globalId = "globalId";
 		String localImage = "localId";
 		Mockito.when(computePlugin.getImageId(token, globalId)).thenReturn(localImage);
@@ -48,7 +48,7 @@ public class TestHTTPDownloadImageStoragePlugin {
 		Properties properties = new Properties();
 		properties.put("image_storage_http_base_url", "neto");
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
-		Token token = new Token("accessId", "user", null, null);
+		Token token = new Token("accessId", new Token.User("user", "user"), null, null);
 		String globalId = "http://globalId";
 		String localImage = "localId";
 		Mockito.when(computePlugin.getImageId(Mockito.any(Token.class), Mockito.anyString())).thenReturn(null, localImage);
@@ -60,7 +60,7 @@ public class TestHTTPDownloadImageStoragePlugin {
 	public void testGetLocalIdInTheCloudWithoutHttpBaseUrlPropertie() {
 		Properties properties = new Properties();
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
-		Token token = new Token("accessId", "user", null, null);
+		Token token = new Token("accessId", new Token.User("user", "user"), null, null);
 		String globalId = "http://globalId";
 		String localImage = "localId";
 		Mockito.when(computePlugin.getImageId(Mockito.any(Token.class), Mockito.anyString())).thenReturn(null, localImage);

@@ -1,9 +1,9 @@
 package org.fogbowcloud.manager;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.util.Properties;
 
-import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.ManagerController;
@@ -29,6 +29,7 @@ import org.fogbowcloud.manager.core.plugins.localcredentails.SingleMapperPlugin;
 import org.fogbowcloud.manager.core.plugins.memberauthorization.DefaultMemberAuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.memberpicker.RoundRobinMemberPickerPlugin;
 import org.fogbowcloud.manager.core.plugins.prioritization.TwoFoldPrioritizationPlugin;
+import org.fogbowcloud.manager.occi.DataStoreHelper;
 import org.fogbowcloud.manager.occi.OCCIApplication;
 import org.fogbowcloud.manager.occi.model.ResourceRepository;
 import org.fogbowcloud.manager.xmpp.ManagerXmppComponent;
@@ -43,65 +44,94 @@ import org.xmpp.component.ComponentException;
 
 public class Main {
 
-	private static final int DEFAULT_REQUEST_HEADER_SIZE = 1024*1024;
-	private static final int DEFAULT_RESPONSE_HEADER_SIZE = 1024*1024;
 	private static final Logger LOGGER = Logger.getLogger(Main.class);
-	private static final int EXIT_ERROR_CODE = 128;
-	private static final int DEFAULT_HTTP_PORT = 8182;
-	private static final int DEFAULT_HTTPS_PORT = 8183;
-	private static final boolean DEFAULT_HTTPS_ENABLED = false;
-	
+
 	public static void main(String[] args) throws Exception {
-		configureLog4j();
+		MainHelper.configureLog4j();
 
 		Properties properties = new Properties();
-		FileInputStream input = new FileInputStream(args[0]);
+
+		String managerConfgFilePath = args[0];
+		String infrastructureConfgFilePath = args[1];
+		String federationConfgFilePath = args[2];
+		
+		File managerConfigFile = new File(managerConfgFilePath);
+		File infrastructureConfgFile = new File(infrastructureConfgFilePath);
+		File federationConfgFile = new File(federationConfgFilePath);
+		
+		if(!managerConfigFile.exists()){
+			LOGGER.warn("Informed path to manager.conf file must be valid.");
+			System.exit(MainHelper.EXIT_ERROR_CODE);
+		}
+		if(!infrastructureConfgFile.exists()){
+			LOGGER.warn("Informed path to infrastructure.conf file must be valid.");
+			System.exit(MainHelper.EXIT_ERROR_CODE);
+		}
+		if(!federationConfgFile.exists()){
+			LOGGER.warn("Informed path to federation.conf file must be valid.");
+			System.exit(MainHelper.EXIT_ERROR_CODE);
+		}
+		
+		FileInputStream input = new FileInputStream(managerConfigFile);
 		properties.load(input);
 		ResourceRepository.init(properties);
 		
+		Properties infraProperties = new Properties();
+		FileInputStream infraInput = new FileInputStream(infrastructureConfgFile);
+		infraProperties.load(infraInput);
+		properties.putAll(infraProperties);
+
+		Properties fedProperties = new Properties();
+		FileInputStream fedInput = new FileInputStream(federationConfgFile);
+		fedProperties.load(fedInput);
+		properties.putAll(fedProperties);
+		
+		//folder name default to datastores
+		DataStoreHelper.setDataStoreFolderExecution(DataStoreHelper.DATASTORES_FOLDER);
+		
 		ComputePlugin computePlugin = null;
 		try {
-			computePlugin = (ComputePlugin) createInstance(
+			computePlugin = (ComputePlugin) MainHelper.createInstance(
 					ConfigurationConstants.COMPUTE_CLASS_KEY, properties);
 		} catch (Exception e) {
 			LOGGER.warn("Compute Plugin not especified in the properties.", e);
-			System.exit(EXIT_ERROR_CODE);
+			System.exit(MainHelper.EXIT_ERROR_CODE);
 		}
 
 		AuthorizationPlugin authorizationPlugin = null;
 		try {
-			authorizationPlugin = (AuthorizationPlugin) createInstance(
+			authorizationPlugin = (AuthorizationPlugin) MainHelper.createInstance(
 					ConfigurationConstants.AUTHORIZATION_CLASS_KEY, properties);
 		} catch (Exception e) {
 			LOGGER.warn("Authorization Plugin not especified in the properties.", e);
-			System.exit(EXIT_ERROR_CODE);
+			System.exit(MainHelper.EXIT_ERROR_CODE);
 		}
 		
 		IdentityPlugin localIdentityPlugin = null;
 		try {
-			localIdentityPlugin = (IdentityPlugin) getIdentityPluginByPrefix(properties,
+			localIdentityPlugin = (IdentityPlugin) MainHelper.getIdentityPluginByPrefix(properties,
 					ConfigurationConstants.LOCAL_PREFIX);
 		} catch (Exception e) {
 			LOGGER.warn("Local Identity Plugin not especified in the properties.", e);
-			System.exit(EXIT_ERROR_CODE);
+			System.exit(MainHelper.EXIT_ERROR_CODE);
 		}
 		
 		IdentityPlugin federationIdentityPlugin = null;
 		try {
-			federationIdentityPlugin = (IdentityPlugin) getIdentityPluginByPrefix(properties,
+			federationIdentityPlugin = (IdentityPlugin) MainHelper.getIdentityPluginByPrefix(properties,
 					ConfigurationConstants.FEDERATION_PREFIX);
 		} catch (Exception e) {
 			LOGGER.warn("Federation Identity Plugin not especified in the properties.", e);
-			System.exit(EXIT_ERROR_CODE);
+			System.exit(MainHelper.EXIT_ERROR_CODE);
 		}
 
 		FederationMemberAuthorizationPlugin validator = new DefaultMemberAuthorizationPlugin(properties);
 		try {
-			validator = (FederationMemberAuthorizationPlugin) createInstance(
+			validator = (FederationMemberAuthorizationPlugin) MainHelper.createInstance(
 					ConfigurationConstants.MEMBER_VALIDATOR_CLASS_KEY, properties);
 		} catch (Exception e) {
 			LOGGER.warn("Member Validator not especified in the properties.");
-			System.exit(EXIT_ERROR_CODE);
+			System.exit(MainHelper.EXIT_ERROR_CODE);
 		}
 		
 		if (properties.get(ConfigurationConstants.RENDEZVOUS_JID_KEY) == null
@@ -112,7 +142,7 @@ public class Main {
 		
 		ImageStoragePlugin imageStoragePlugin = null;
 		try {
-			imageStoragePlugin = (ImageStoragePlugin) createInstanceWithComputePlugin(
+			imageStoragePlugin = (ImageStoragePlugin) MainHelper.createInstanceWithComputePlugin(
 					ConfigurationConstants.IMAGE_STORAGE_PLUGIN_CLASS, properties, computePlugin);
 		} catch (Exception e) {
 			imageStoragePlugin = new HTTPDownloadImageStoragePlugin(properties, computePlugin);
@@ -121,7 +151,7 @@ public class Main {
 				
 		BenchmarkingPlugin benchmarkingPlugin = null;
 		try {
-			benchmarkingPlugin = (BenchmarkingPlugin) createInstance(
+			benchmarkingPlugin = (BenchmarkingPlugin) MainHelper.createInstance(
 					ConfigurationConstants.BENCHMARKING_PLUGIN_CLASS_KEY, properties);
 		} catch (Exception e) {
 			benchmarkingPlugin = new VanillaBenchmarkingPlugin(properties);
@@ -130,7 +160,7 @@ public class Main {
 				
 		AccountingPlugin computeAccountingPlugin = null;
 		try {
-			computeAccountingPlugin = (AccountingPlugin) createInstanceWithBenchmarkingPlugin(
+			computeAccountingPlugin = (AccountingPlugin) MainHelper.createInstanceWithBenchmarkingPlugin(
 					ConfigurationConstants.COMPUTE_ACCOUNTING_PLUGIN_CLASS_KEY, properties, benchmarkingPlugin);
 		} catch (Exception e) {
 			computeAccountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin);
@@ -139,7 +169,7 @@ public class Main {
 		
 		AccountingPlugin storageccountingPlugin = null;
 		try {
-			storageccountingPlugin = (AccountingPlugin) createInstance(
+			storageccountingPlugin = (AccountingPlugin) MainHelper.createInstance(
 					ConfigurationConstants.STORAGE_ACCOUNTING_PLUGIN_CLASS_KEY, properties);
 		} catch (Exception e) {
 			storageccountingPlugin = new SimpleStorageAccountingPlugin(properties);
@@ -148,7 +178,7 @@ public class Main {
 		
 		FederationMemberPickerPlugin memberPickerPlugin = null;
 		try {
-			memberPickerPlugin = (FederationMemberPickerPlugin) createInstanceWithAccountingPlugin(
+			memberPickerPlugin = (FederationMemberPickerPlugin) MainHelper.createInstanceWithAccountingPlugin(
 					ConfigurationConstants.MEMBER_PICKER_PLUGIN_CLASS_KEY, properties,
 					computeAccountingPlugin);
 		} catch (Exception e) {
@@ -158,7 +188,7 @@ public class Main {
 		
 		MapperPlugin mapperPlugin = null;
 		try {
-			mapperPlugin = (MapperPlugin) createInstance(
+			mapperPlugin = (MapperPlugin) MainHelper.createInstance(
 					ConfigurationConstants.LOCAL_CREDENTIALS_CLASS_KEY, properties);
 		} catch (Exception e) {
 			mapperPlugin = new SingleMapperPlugin(properties);
@@ -167,21 +197,21 @@ public class Main {
 		
 		StoragePlugin storagePlugin = null;
 		try {
-			storagePlugin = (StoragePlugin) createInstance(
+			storagePlugin = (StoragePlugin) MainHelper.createInstance(
 					ConfigurationConstants.STORAGE_CLASS_KEY, properties);
 		} catch (Exception e) {
 			LOGGER.warn("Storage Plugin not especified in the properties.", e);
-			System.exit(EXIT_ERROR_CODE);
+			System.exit(MainHelper.EXIT_ERROR_CODE);
 		}
 			
 		
 		NetworkPlugin networkPlugin = null;
 		try {
-			networkPlugin = (NetworkPlugin) createInstance(
+			networkPlugin = (NetworkPlugin) MainHelper.createInstance(
 					ConfigurationConstants.NETWORK_CLASS_KEY, properties);
 		} catch (Exception e) {
 			LOGGER.warn("Network Plugin not especified in the properties.", e);
-			System.exit(EXIT_ERROR_CODE);
+			System.exit(MainHelper.EXIT_ERROR_CODE);
 		}		
 
 		
@@ -191,7 +221,7 @@ public class Main {
 			if (properties.getProperty(ConfigurationConstants.INSTANCE_DATA_STORE_URL) == null) {
 				LOGGER.error("If OCCI extra resources was set for supporting post-compute, you must also set instance datastore property ("
 						+ ConfigurationConstants.INSTANCE_DATA_STORE_URL + ").");
-				System.exit(EXIT_ERROR_CODE);
+				System.exit(MainHelper.EXIT_ERROR_CODE);
 			}
 		}
 		
@@ -199,7 +229,7 @@ public class Main {
 		
 		CapacityControllerPlugin capacityControllerPlugin = null;
 		try {
-			capacityControllerPlugin = (CapacityControllerPlugin) createInstanceWithAccountingPlugin(
+			capacityControllerPlugin = (CapacityControllerPlugin) MainHelper.createInstanceWithAccountingPlugin(
 					ConfigurationConstants.CAPACITY_CONTROLLER_PLUGIN_CLASS, properties, computeAccountingPlugin);
 		} catch (Exception e) {
 			capacityControllerPlugin = new SatisfactionDrivenCapacityControllerPlugin();
@@ -227,18 +257,20 @@ public class Main {
 		String xmppJid = properties.getProperty(ConfigurationConstants.XMPP_JID_KEY);
 		
 		if (xmppHost != null && xmppJid != null) {
+			long timeout = MainHelper.getXMPPTimeout(properties);
 			ManagerXmppComponent xmpp = new ManagerXmppComponent(
 					xmppJid,
 					properties.getProperty(ConfigurationConstants.XMPP_PASS_KEY),
 					xmppHost,
 					Integer.parseInt(properties.getProperty(ConfigurationConstants.XMPP_PORT_KEY)),
-					facade);
+					facade, 
+					timeout);
 			xmpp.setRendezvousAddress(properties.getProperty(ConfigurationConstants.RENDEZVOUS_JID_KEY));
 			try {
 				xmpp.connect();			
 			} catch (ComponentException e) {
 				LOGGER.error("Conflict in the initialization of xmpp component.", e);
-				System.exit(EXIT_ERROR_CODE);
+				System.exit(MainHelper.EXIT_ERROR_CODE);
 			}
 			xmpp.process(false);
 			xmpp.init();
@@ -253,21 +285,21 @@ public class Main {
 		try {
 			Component http = new Component();
 			String httpPort = properties.getProperty(ConfigurationConstants.HTTP_PORT_KEY, 
-					String.valueOf(DEFAULT_HTTP_PORT));
+					String.valueOf(MainHelper.DEFAULT_HTTP_PORT));
 			String httpsPort = properties.getProperty(ConfigurationConstants.HTTPS_PORT_KEY, 
-					String.valueOf(DEFAULT_HTTPS_PORT));
+					String.valueOf(MainHelper.DEFAULT_HTTPS_PORT));
 			String httpsKeystorePath = properties.getProperty(ConfigurationConstants.HTTPS_KEYSTORE_PATH);
 			String httpsKeystorePassword = properties.getProperty(ConfigurationConstants.HTTPS_KEYSTORE_PASSWORD);
 			String httpsKeyPassword = properties.getProperty(ConfigurationConstants.HTTPS_KEY_PASSWORD);
 			String httpsKeystoreType = properties.getProperty(ConfigurationConstants.HTTPS_KEYSTORE_TYPE, "JKS");
 			Boolean httpsEnabled = Boolean.valueOf(properties.getProperty(ConfigurationConstants.HTTPS_ENABLED, 
-					String.valueOf(DEFAULT_HTTPS_ENABLED)));
+					String.valueOf(MainHelper.DEFAULT_HTTPS_ENABLED)));
 			String requestHeaderSize = String.valueOf(Integer.parseInt(
 					properties.getProperty(ConfigurationConstants.HTTP_REQUEST_HEADER_SIZE_KEY, 
-					String.valueOf(DEFAULT_REQUEST_HEADER_SIZE))));
+					String.valueOf(MainHelper.DEFAULT_REQUEST_HEADER_SIZE))));
 			String responseHeaderSize = String.valueOf(Integer.parseInt(properties.getProperty(
 					ConfigurationConstants.HTTP_RESPONSE_HEADER_SIZE_KEY, 
-					String.valueOf(DEFAULT_RESPONSE_HEADER_SIZE))));
+					String.valueOf(MainHelper.DEFAULT_RESPONSE_HEADER_SIZE))));
 			
 			//Adding HTTP server
 			Server httpServer = http.getServers().add(Protocol.HTTP, Integer.parseInt(httpPort));
@@ -279,6 +311,7 @@ public class Main {
 				//Adding HTTPS server
 				Server httpsServer = http.getServers().add(Protocol.HTTPS, Integer.parseInt(httpsPort));
 				
+				@SuppressWarnings("rawtypes")
 				Series parameters = httpsServer.getContext().getParameters();
 				parameters.add("sslContextFactory", "org.restlet.engine.ssl.DefaultSslContextFactory");
 				if (httpsKeystorePath != null) {
@@ -301,53 +334,8 @@ public class Main {
 			http.start();
 		} catch (Exception e) {
 			LOGGER.error("Conflict in the initialization of the HTTP component.", e);
-			System.exit(EXIT_ERROR_CODE);
+			System.exit(MainHelper.EXIT_ERROR_CODE);
 		}
 	}
-
-	private static Object getIdentityPluginByPrefix(Properties properties, String prefix)
-			throws Exception {
-		Properties pluginProperties = new Properties();
-		for (Object keyObj : properties.keySet()) {
-			String key = keyObj.toString();
-			pluginProperties.put(key, properties.get(key));
-			if (key.startsWith(prefix)) {
-				String newKey = key.replace(prefix, "");
-				pluginProperties.put(newKey, properties.get(key));
-			}
-		}
-		return createInstance(prefix + ConfigurationConstants.IDENTITY_CLASS_KEY, pluginProperties);
-	}
-
-	private static Object createInstance(String propName, Properties properties) throws Exception {
-		return Class.forName(properties.getProperty(propName)).getConstructor(Properties.class)
-				.newInstance(properties);
-	}
 	
-	private static Object createInstanceWithComputePlugin(String propName, 
-			Properties properties, ComputePlugin computePlugin) throws Exception {
-		return Class.forName(properties.getProperty(propName)).getConstructor(Properties.class, ComputePlugin.class)
-				.newInstance(properties, computePlugin);
-	}
-	
-	private static Object createInstanceWithBenchmarkingPlugin(
-			String propName, Properties properties,
-			BenchmarkingPlugin benchmarkingPlugin) throws Exception {
-		return Class.forName(properties.getProperty(propName)).getConstructor(Properties.class, BenchmarkingPlugin.class)
-				.newInstance(properties, benchmarkingPlugin);
-	}
-	
-	public static Object createInstanceWithAccountingPlugin(
-			String propName, Properties properties,
-			AccountingPlugin accoutingPlugin) throws Exception {
-		return Class.forName(properties.getProperty(propName)).getConstructor(Properties.class, AccountingPlugin.class)
-				.newInstance(properties, accoutingPlugin);
-	}	
-
-	private static void configureLog4j() {
-		ConsoleAppender console = new ConsoleAppender();
-		console.setThreshold(org.apache.log4j.Level.OFF);
-		console.activateOptions();
-		Logger.getRootLogger().addAppender(console);
-	}
 }

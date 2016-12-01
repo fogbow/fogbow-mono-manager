@@ -66,13 +66,13 @@ public class TestGetOrder {
 		
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.getToken(OCCITestHelper.ACCESS_TOKEN))
-				.thenReturn(new Token("id", OCCITestHelper.USER_MOCK, new Date(),
+				.thenReturn(new Token("id", new Token.User(OCCITestHelper.USER_MOCK, ""), new Date(),
 								new HashMap<String, String>()));
 		Mockito.when(identityPlugin.getToken(OCCITestHelper.INVALID_TOKEN)).thenThrow(
 				new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED));
 
 		HashMap<String, String> tokenAttr = new HashMap<String, String>();
-		Token userToken = new Token(OCCITestHelper.ACCESS_TOKEN, OCCITestHelper.USER_MOCK,
+		Token userToken = new Token(OCCITestHelper.ACCESS_TOKEN, new Token.User(OCCITestHelper.USER_MOCK, ""),
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, tokenAttr);
 
 		Mockito.when(identityPlugin.getToken(OCCITestHelper.ACCESS_TOKEN)).thenReturn(userToken);
@@ -86,7 +86,7 @@ public class TestGetOrder {
 		Mockito.when(mapperPlugin.getAllLocalCredentials()).thenReturn(
 				defaultFederationUsersCrendetials);
 		Mockito.when(identityPlugin.createToken(credentails)).thenReturn(
-				new Token("id", OCCITestHelper.USER_MOCK, new Date(), new HashMap<String, String>()));		
+				new Token("id", new Token.User(OCCITestHelper.USER_MOCK, ""), new Date(), new HashMap<String, String>()));		
 		
 		AuthorizationPlugin authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
 		Mockito.when(authorizationPlugin.isAuthorized(Mockito.any(Token.class))).thenReturn(true);
@@ -457,7 +457,7 @@ public class TestGetOrder {
 		get = new HttpGet(OCCITestHelper.URI_FOGBOW_ORDER);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
-		get.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, "org.fogbowcloud.request.type=\"one-time\"");
+		get.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, OrderAttribute.TYPE.getValue() + "=\"one-time\"");
 		client = HttpClients.createMinimal();
 		response = client.execute(get);
 
@@ -468,7 +468,7 @@ public class TestGetOrder {
 		get = new HttpGet(OCCITestHelper.URI_FOGBOW_ORDER);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
-		get.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, "org.fogbowcloud.request.type=\"notfound\"");
+		get.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE, OrderAttribute.TYPE.getValue() + "=\"notfound\"");
 		client = HttpClients.createMinimal();
 		response = client.execute(get);
 		
@@ -535,17 +535,14 @@ public class TestGetOrder {
 		HashMap<String, String> attributes = new HashMap<String, String>();
 		attributes.put(OCCIConstants.NETWORK_ADDRESS, networkAddress);
 		attributes.put(OCCIConstants.NETWORK_GATEWAY, networkGateway);
-		Token federationToken = new Token("1", OCCITestHelper.ACCESS_TOKEN, new Date(), attributes);
 		
-		Category category =  new Category(OrderConstants.TERM, OrderConstants.SCHEME,
-				OrderConstants.KIND_CLASS);
+		Token federationToken = new Token("1", 
+				new Token.User(OCCITestHelper.ACCESS_TOKEN, ""), new Date(), attributes);
 		
 		List<Category> categories = new ArrayList<Category>();
 		
 		Order order = new Order(orderId, federationToken, instanceId, "", "", new Date().getTime(),
 				true, OrderState.OPEN, categories, attributes);
-		
-		
 		
 		OrderRepository orderRepository = new OrderRepository();
 		orderRepository.addOrder(OCCITestHelper.USER_MOCK, order);
@@ -561,10 +558,12 @@ public class TestGetOrder {
 		responseStr = EntityUtils.toString(response.getEntity(), String.valueOf(Charsets.UTF_8));
 		
 		Assert.assertEquals(0, OCCITestHelper.getLocationIds(response).size());
-		Assert.assertEquals("\""+networkAddress+"\"", OCCITestHelper.getOCCIAttByBodyString(responseStr, OCCIConstants.NETWORK_ADDRESS));
-		Assert.assertEquals("\""+networkGateway+"\"", OCCITestHelper.getOCCIAttByBodyString(responseStr, OCCIConstants.NETWORK_GATEWAY));
+		Assert.assertEquals("\"" + networkAddress + "\"", OCCITestHelper
+				.getOCCIAttByBodyString(responseStr, OCCIConstants.NETWORK_ADDRESS));
+		Assert.assertEquals("\"" + networkGateway + "\"", OCCITestHelper
+				.getOCCIAttByBodyString(responseStr, OCCIConstants.NETWORK_GATEWAY));
 		
-		for(String attrib : OCCIConstants.getValues()){
+		for(String attrib : OCCIConstants.getOCCIValues()){
 			if(!OCCIConstants.NETWORK_ADDRESS.equals(attrib) && !OCCIConstants.NETWORK_GATEWAY.equals(attrib)){
 				Assert.assertEquals("\"Not defined\"", OCCITestHelper.getOCCIAttByBodyString(responseStr, attrib));
 			}

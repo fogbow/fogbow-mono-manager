@@ -10,8 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import org.apache.log4j.Logger;
-import org.fogbowcloud.manager.occi.ManagerDataStore;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.order.Order;
@@ -25,8 +23,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class TestManagerDataStore {
-
-	private static final Logger LOGGER = Logger.getLogger(TestManagerDataStore.class);
 	 
 	private final String DATASTORE_PATH = "src/test/resources/testManagerDataStore.sqlite";
 	private final String DATASTORE_URL = "jdbc:sqlite:" + DATASTORE_PATH;
@@ -45,10 +41,10 @@ public class TestManagerDataStore {
 	
 	@Before
 	public void initialize() {		
-		LOGGER.debug("Creating data store.");
-		properties = new Properties();
-		properties.put(ManagerDataStore.MANAGER_DATASTORE_URL , DATASTORE_URL);
-		database = new ManagerDataStore(properties);
+		TestDataStorageHelper.removeDefaultFolderDataStore();
+		this.properties = new Properties();
+		this.properties.put(ManagerDataStore.MANAGER_DATASTORE_URL , DATASTORE_URL);
+		this.database = new ManagerDataStore(properties);
 		initializeOrders();
 		initializeStorageLinks();
 	}
@@ -62,11 +58,27 @@ public class TestManagerDataStore {
 	}
 	
 	@Test
+	public void testInitializeWithErrorDataStore() {
+		try {
+			Properties properties = new Properties();
+			// to force error with "/dev/null"
+			properties.put(ManagerDataStore.MANAGER_DATASTORE_URL, "/dev/null");
+			new ManagerDataStore(properties);
+			Assert.fail();
+		} catch (Error e) {
+			Assert.assertEquals(ManagerDataStore.ERROR_WHILE_INITIALIZING_THE_DATA_STORE, 
+					e.getMessage());
+		}
+	}		
+	
+	@Test
 	public void testAddOrder() throws SQLException, JSONException {
 		database.addOrder(orderOne);
 		List<Order> orders = database.getOrders();
 		Assert.assertEquals(1, orders.size());
 
+		System.out.println(orderOne);
+		System.out.println(orders.get(0));
 		Assert.assertTrue(orderOne.equals(orders.get(0)));
 	}
 	
@@ -218,7 +230,7 @@ public class TestManagerDataStore {
 		Assert.assertEquals(1, storageLinks.size());
 		Assert.assertTrue(storageLinks.get(0).equals(storageLinkOne));
 		
-		Token federationToken = new Token("accessId", "user", new Date(), null);
+		Token federationToken = new Token("accessId", new Token.User("user", ""), new Date(), null);
 		storageLinkOne = new StorageLink(storageLinkOne.getId(), "source", "target", "deviceId", "provadingMemberId", federationToken, true);
 		
 		database.updateStorageLink(storageLinkOne);
@@ -249,7 +261,7 @@ public class TestManagerDataStore {
 	private void initializeStorageLinks() {
 		HashMap<String, String> attributes = new HashMap<String, String>();
 		attributes.put("key", "value");
-		Token federationToken = new Token("accessId", "user", new Date(),
+		Token federationToken = new Token("accessId", new Token.User("user", ""), new Date(),
 				attributes);
 		this.storageLinkOne = new StorageLink("one", "sourceOne", "targetOne",
 				"deviceIdOne", "provadingMemberIdOne", federationToken, true);
@@ -271,7 +283,7 @@ public class TestManagerDataStore {
 		xOCCIAttributes.put("occiAttr1.occi", "occiValue1");
 		xOCCIAttributes.put("occiAttr2.occi", "occiValue2=");
 		xOCCIAttributes.put("occiAttr3.occi", "x>=1 && y=1");
-		Token token = new Token("accessIdToken", "user", new Date(), attributes);
+		Token token = new Token("accessIdToken", new Token.User("user", ""), new Date(), attributes);
 		orderOne =  new Order("requstIdOne", token , "instanceIdOne", "providerOne", "memberOne",
 				new Date().getTime(), true, OrderState.OPEN, categories, xOCCIAttributes);
 		orderTwo =  new Order("requstIdTwo", token , "instanceIdTwo", "providerTwo", "memberTwo",

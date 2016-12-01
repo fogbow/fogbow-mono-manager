@@ -110,7 +110,8 @@ public class OCCITestHelper {
 
 		ExecutorService benchmarkExecutor = new CurrentThreadExecutorService();
 
-		ManagerController facade = new ManagerController(properties, executor);
+		boolean initializeBD = false;
+		ManagerController facade = new ManagerController(properties, executor, initializeBD);
 		ResourceRepository.init(properties);
 		facade.setComputePlugin(computePlugin);
 		facade.setLocalCredentailsPlugin(mapperPlugin);
@@ -139,7 +140,9 @@ public class OCCITestHelper {
 
 		ResourceRepository.init(properties);
 
-		ManagerController facade = new ManagerController(properties, Mockito.mock(ScheduledExecutorService.class));
+		boolean initializeBD = false;
+		ManagerController facade = new ManagerController(properties, 
+				Mockito.mock(ScheduledExecutorService.class), initializeBD );
 		facade.setComputePlugin(computePlugin);
 		facade.setAuthorizationPlugin(authorizationPlugin);
 		facade.setLocalIdentityPlugin(identityPlugin);
@@ -205,7 +208,8 @@ public class OCCITestHelper {
 			properties.put(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + "m1-medium", "Glue2vCPU >= 2 && Glue2RAM >= 8096");
 		}
 
-		ManagerController facade = new ManagerController(properties);
+		boolean initializeDB = false;
+		ManagerController facade = new ManagerController(properties, null, initializeDB);
 		facade.setComputePlugin(computePlugin);
 		facade.setAuthorizationPlugin(authorizationPlugin);
 		facade.setLocalCredentailsPlugin(mapperPlugin);
@@ -262,7 +266,8 @@ public class OCCITestHelper {
 			properties.put(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + "m1-medium", "Glue2vCPU >= 2 && Glue2RAM >= 8096");
 		}
 
-		ManagerController facade = new ManagerController(properties);
+		boolean initializeBD = false;
+		ManagerController facade = new ManagerController(properties, null, initializeBD);
 		facade.setNetworkPlugin(networkPlugin);
 		facade.setAuthorizationPlugin(authorizationPlugin);
 		facade.setLocalCredentailsPlugin(mapperPlugin);
@@ -302,7 +307,8 @@ public class OCCITestHelper {
 
 		Properties properties = new Properties();
 		properties.put(ConfigurationConstants.XMPP_JID_KEY, DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
-		ManagerController facade = new ManagerController(properties);
+		boolean initializeBD = false;
+		ManagerController facade = new ManagerController(properties, null, initializeBD);
 		facade.setComputePlugin(computePlugin);
 		facade.setLocalIdentityPlugin(identityPlugin);
 		facade.setFederationIdentityPlugin(identityPlugin);
@@ -406,7 +412,7 @@ public class OCCITestHelper {
 		while (sc.hasNextLine() && notFound) {
 			String line = sc.nextLine().trim();
 			if (line.contains(OCCIHeaders.X_OCCI_ATTRIBUTE) && line.contains(attribute)) {
-				String[] tokens = line.split(attribute+"=");
+				String[] tokens = line.split(attribute + "=");
 				attValue = tokens.length > 1 ? tokens[1] : null;
 				notFound = true;
 			}
@@ -416,14 +422,16 @@ public class OCCITestHelper {
 		return attValue;
 	}
 	
-	public static String getOCCIAttByBodyString(String responseBody, String attribute) throws ParseException, IOException {
+	public static String getOCCIAttByBodyString(String responseBody, String attribute) 
+			throws ParseException, IOException {
 		String attValue = null;
 		Scanner sc = new Scanner(responseBody);
 		boolean notFound = true;
 		while (sc.hasNextLine() && notFound) {
 			String line = sc.nextLine().trim();
-			if (line.contains(OCCIHeaders.X_OCCI_ATTRIBUTE) && line.contains(attribute)) {
-				String[] tokens = line.split(attribute+"=");
+			String attributeToSplit = attribute + "=";
+			if (line.contains(OCCIHeaders.X_OCCI_ATTRIBUTE) && line.contains(attribute)) {				
+				String[] tokens = line.split(attributeToSplit);
 				attValue = tokens.length > 1 ? tokens[1] : null;
 				notFound = true;
 			}
