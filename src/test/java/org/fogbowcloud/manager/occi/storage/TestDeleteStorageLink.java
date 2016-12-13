@@ -23,10 +23,10 @@ import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
 import org.fogbowcloud.manager.core.plugins.MapperPlugin;
 import org.fogbowcloud.manager.core.plugins.StoragePlugin;
+import org.fogbowcloud.manager.occi.TestDataStorageHelper;
 import org.fogbowcloud.manager.occi.model.OCCIHeaders;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.order.Order;
-import org.fogbowcloud.manager.occi.storage.StorageLinkRepository.StorageLink;
 import org.fogbowcloud.manager.occi.util.OCCITestHelper;
 import org.junit.After;
 import org.junit.Assert;
@@ -53,6 +53,8 @@ public class TestDeleteStorageLink {
 	
 	@Before
 	public void setup() throws Exception {
+		TestDataStorageHelper.removeDefaultFolderDataStore();
+		
 		this.helper = new OCCITestHelper();
 		
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
@@ -76,15 +78,15 @@ public class TestDeleteStorageLink {
 		
 		imageStoragePlugin = Mockito.mock(ImageStoragePlugin.class);
 		
-		List<StorageLink> storageLinks = new ArrayList<StorageLinkRepository.StorageLink>();
+		List<StorageLink> storageLinks = new ArrayList<StorageLink>();
 		storageLinks.add(new StorageLink(STORAGE_LINK_ID_ONE, "sourceOne",
-				"targetOne", "deviceOne", null, null, true));
+				"targetOne", "deviceOne", null, tokenTwo, true));
 		storageLinks.add(new StorageLink(STORAGE_LINK_ID_TWO, "sourceTwo",
-				"targetTwo", "deviceTwo", null, null, true));
+				"targetTwo", "deviceTwo", null, tokenTwo, true));
 		storageLinks.add(new StorageLink(STORAGE_LINK_ID_TRHEE, "sourceThree",
-				"targetThree", "deviceThree", null, null, true));
+				"targetThree", "deviceThree", null, tokenTwo, true));
 		storageLinks.add(new StorageLink(STORAGE_LINK_ID_FOUR, "sourceFour",
-				"targetFour", "deviceFour", null, null, true));
+				"targetFour", "deviceFour", null, tokenTwo, true));
 		
 		Map<String, List<StorageLink>> storageLinksToAdd = new HashMap<String, List<StorageLink>>();
 		storageLinksToAdd.put(OCCITestHelper.USER_MOCK, storageLinks);			
@@ -110,6 +112,8 @@ public class TestDeleteStorageLink {
 
 	@After
 	public void tearDown() throws Exception {
+		TestDataStorageHelper.removeDefaultFolderDataStore();
+		
 		File dbFile = new File(OCCITestHelper.INSTANCE_DB_FILE + ".mv.db");
 		if (dbFile.exists()) {
 			dbFile.delete();

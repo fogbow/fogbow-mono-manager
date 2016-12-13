@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -18,11 +19,13 @@ import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.MapperPlugin;
 import org.fogbowcloud.manager.core.plugins.NetworkPlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
+import org.fogbowcloud.manager.occi.ManagerDataStoreController;
+import org.fogbowcloud.manager.occi.TestDataStorageHelper;
 import org.fogbowcloud.manager.occi.model.OCCIHeaders;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.order.Order;
+import org.fogbowcloud.manager.occi.order.OrderAttribute;
 import org.fogbowcloud.manager.occi.order.OrderConstants;
-import org.fogbowcloud.manager.occi.order.OrderRepository;
 import org.fogbowcloud.manager.occi.util.OCCITestHelper;
 import org.junit.After;
 import org.junit.Assert;
@@ -50,6 +53,7 @@ public class TestDeleteNetwork {
 	@SuppressWarnings("unchecked")
 	@Before
 	public void setup() throws Exception {
+		TestDataStorageHelper.removeDefaultFolderDataStore();
 		
 		this.helper = new OCCITestHelper();
 		
@@ -93,6 +97,7 @@ public class TestDeleteNetwork {
 
 	@After
 	public void tearDown() throws Exception {
+		TestDataStorageHelper.removeDefaultFolderDataStore();
 		File dbFile = new File(INSTANCE_DB_FILE + ".mv.db");
 		if (dbFile.exists()) {
 			dbFile.delete();
@@ -107,19 +112,19 @@ public class TestDeleteNetwork {
 		String INSTANCE_1_ID = "network01";
 		
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
+		xOCCIAtt.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.NETWORK_TERM);
 		
 		List<Order> userOrders = new ArrayList<Order>();
 		Order order1 = new Order("1", tokenA, null, xOCCIAtt, true, "");
 		order1.setInstanceId(INSTANCE_1_ID);
 		order1.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
-		order1.setResourceKing(OrderConstants.NETWORK_TERM);
 		userOrders.add(order1);
 		
-		OrderRepository orders = new OrderRepository();
+		ManagerController managerController = new ManagerController(new Properties());
+		ManagerDataStoreController orders = managerController.getManagerDataStoreController();
 		for (Order order : userOrders){
-			orders.addOrder(tokenA.getUser().getId(), order);
+			orders.addOrder(order);
 		}
-		facade.setOrders(orders);
 	
 		HttpDelete httpDelete = new HttpDelete(OCCITestHelper.URI_FOGBOW_NETWORK + INSTANCE_1_ID + Order.SEPARATOR_GLOBAL_ID
 				+ OCCITestHelper.MEMBER_ID);
@@ -131,7 +136,6 @@ public class TestDeleteNetwork {
 		Mockito.verify(networkPlugin, VerificationModeFactory.times(1)).removeInstance(tokenA, INSTANCE_1_ID);
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 
-
 	}
 	
 	@Test
@@ -142,31 +146,28 @@ public class TestDeleteNetwork {
 		String INSTANCE_3_ID = "network03";
 		
 		Map<String, String> xOCCIAtt = new HashMap<String, String>();
+		xOCCIAtt.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.NETWORK_TERM);
 		
 		List<Order> userOrders = new ArrayList<Order>();
 		
 		Order order1 = new Order("1", tokenA, null, xOCCIAtt, true, "");
 		order1.setInstanceId(INSTANCE_1_ID);
 		order1.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
-		order1.setResourceKing(OrderConstants.NETWORK_TERM);
 		Order order2 = new Order("2", tokenA, null, xOCCIAtt, true, "");
 		order2.setInstanceId(INSTANCE_2_ID);
 		order2.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
-		order2.setResourceKing(OrderConstants.NETWORK_TERM);
 		Order order3 = new Order("3", tokenB, null, xOCCIAtt, true, "");
 		order3.setInstanceId(INSTANCE_3_ID);
 		order3.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
-		order3.setResourceKing(OrderConstants.NETWORK_TERM);
 		
 		userOrders.add(order1);
 		userOrders.add(order2);
 		userOrders.add(order3);
 		
-		OrderRepository orders = new OrderRepository();
+
 		for (Order order : userOrders){
-			orders.addOrder(order.getFederationToken().getUser().getId(), order);
+			facade.getManagerDataStoreController().addOrder(order);
 		}
-		facade.setOrders(orders);
 		
 		HttpGet httpGet = new HttpGet(OCCITestHelper.URI_FOGBOW_NETWORK);
 		httpGet.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
@@ -205,11 +206,9 @@ public class TestDeleteNetwork {
 		order1.setResourceKing(OrderConstants.NETWORK_TERM);
 		userOrders.add(order1);
 		
-		OrderRepository orders = new OrderRepository();
 		for (Order order : userOrders){
-			orders.addOrder(tokenA.getUser().getId(), order);
+			facade.getManagerDataStoreController().addOrder(order);
 		}
-		facade.setOrders(orders);
 	
 		HttpDelete httpDelete = new HttpDelete(OCCITestHelper.URI_FOGBOW_NETWORK + INSTANCE_1_ID+"Invalid" + Order.SEPARATOR_GLOBAL_ID
 				+ OCCITestHelper.MEMBER_ID);
@@ -236,11 +235,9 @@ public class TestDeleteNetwork {
 		order1.setResourceKing(OrderConstants.NETWORK_TERM);
 		userOrders.add(order1);
 		
-		OrderRepository orders = new OrderRepository();
 		for (Order order : userOrders){
-			orders.addOrder(tokenA.getUser().getId(), order);
+			facade.getManagerDataStoreController().addOrder(order);
 		}
-		facade.setOrders(orders);
 	
 		HttpDelete httpDelete = new HttpDelete(OCCITestHelper.URI_FOGBOW_NETWORK + INSTANCE_1_ID+"Invalid" + Order.SEPARATOR_GLOBAL_ID
 				+ OCCITestHelper.MEMBER_ID);

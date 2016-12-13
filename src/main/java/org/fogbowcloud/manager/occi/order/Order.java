@@ -168,6 +168,9 @@ public class Order {
 	}
 
 	public Map<String, String> getxOCCIAtt() {
+		if (xOCCIAtt == null) {
+			return new HashMap<String, String>();
+		}
 		return new HashMap<String, String>(xOCCIAtt);
 	}
 	

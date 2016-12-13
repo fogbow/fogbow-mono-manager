@@ -21,6 +21,7 @@ import org.apache.http.util.EntityUtils;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
+import org.fogbowcloud.manager.occi.TestDataStorageHelper;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.ErrorType;
 import org.fogbowcloud.manager.occi.model.OCCIException;
@@ -45,6 +46,8 @@ public class TestDeleteOrder {
 	@SuppressWarnings({ "unchecked", "deprecation" })
 	@Before
 	public void setup() throws Exception {
+		TestDataStorageHelper.removeDefaultFolderDataStore();
+		
 		this.orderHelper = new OCCITestHelper();
 
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
@@ -266,6 +269,7 @@ public class TestDeleteOrder {
 
 	@After
 	public void tearDown() throws Exception {
+		TestDataStorageHelper.removeDefaultFolderDataStore();
 		this.orderHelper.stopComponent();
 	}
 }

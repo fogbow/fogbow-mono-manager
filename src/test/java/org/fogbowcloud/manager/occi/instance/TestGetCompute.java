@@ -24,6 +24,7 @@ import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
 import org.fogbowcloud.manager.core.plugins.MapperPlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
+import org.fogbowcloud.manager.occi.TestDataStorageHelper;
 import org.fogbowcloud.manager.occi.instance.Instance.Link;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.ErrorType;
@@ -55,7 +56,6 @@ public class TestGetCompute {
 
 	private static final String POST_INSTANCE_1_ID = "postInstance1";
 	private static final String POST_INSTANCE_2_ID = "postInstance2";
-	private static final String POST_INSTANCE_3_ID = "postInstance3";
 
 	private static final String INSTANCE_DB_FILE = "./src/test/resources/fedInstance.db";
 	private static final String INSTANCE_DB_URL = "jdbc:h2:file:" + INSTANCE_DB_FILE;	
@@ -70,9 +70,11 @@ public class TestGetCompute {
 
 	@Before
 	public void setup() throws Exception {
+		TestDataStorageHelper.removeDefaultFolderDataStore();
+		
 		this.helper = new OCCITestHelper();
 
-		Token postToken = new Token(OCCITestHelper.POST_FED_ACCESS_TOKEN, new Token.User(OCCITestHelper.USER_MOCK+"_post", "") ,
+		Token postToken = new Token(OCCITestHelper.POST_FED_ACCESS_TOKEN, new Token.User(OCCITestHelper.USER_MOCK + "_post", "") ,
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>());
 		
 		List<Resource> list = new ArrayList<Resource>();
@@ -125,7 +127,7 @@ public class TestGetCompute {
 		order2.setInstanceId(INSTANCE_2_ID);
 		order2.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
 		ordersA.add(order2);
-		Order order3 = new Order("3", new Token("token", new Token.User("user", ""), DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
+		Order order3 = new Order("3", new Token("token", new Token.User("OtherUser", ""), DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
 				new HashMap<String, String>()), null, xOCCIAttr, true, "");
 		order3.setInstanceId(INSTANCE_3_ID_WITHOUT_USER);
 		order3.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
@@ -157,7 +159,7 @@ public class TestGetCompute {
 
 		Map<String, List<Order>> ordersToAdd = new HashMap<String, List<Order>>();
 		ordersToAdd.put(OCCITestHelper.USER_MOCK, ordersA);
-		ordersToAdd.put(OCCITestHelper.USER_MOCK+"_post", ordersB);
+		ordersToAdd.put(OCCITestHelper.USER_MOCK + "_post", ordersB);
 		
 		this.helper.initializeComponentCompute(computePlugin, identityPlugin, identityPlugin, authorizationPlugin, imageStoragePlugin,
 				Mockito.mock(AccountingPlugin.class), Mockito.mock(AccountingPlugin.class), Mockito.mock(BenchmarkingPlugin.class), ordersToAdd,
@@ -168,6 +170,8 @@ public class TestGetCompute {
 
 	@After
 	public void tearDown() throws Exception {
+		TestDataStorageHelper.removeDefaultFolderDataStore();
+		
 		instanceDB.deleteAll();
 		File dbFile = new File(INSTANCE_DB_FILE + ".mv.db");
 		if (dbFile.exists()) {
@@ -187,7 +191,7 @@ public class TestGetCompute {
 		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(httpGet);
 
-		Assert.assertEquals(3, OCCITestHelper.getLocationIds(response).size());
+		Assert.assertEquals(2, OCCITestHelper.getLocationIds(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 
@@ -216,7 +220,7 @@ public class TestGetCompute {
 		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(httpGet);
 
-		Assert.assertEquals(2, OCCITestHelper.getLocationIds(response).size());
+		Assert.assertEquals(1, OCCITestHelper.getLocationIds(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 
@@ -278,7 +282,7 @@ public class TestGetCompute {
 		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(httpGet);
 
-		Assert.assertEquals(2, OCCITestHelper.getLocationIds(response).size());
+		Assert.assertEquals(1, OCCITestHelper.getLocationIds(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 	}
 
@@ -326,7 +330,7 @@ public class TestGetCompute {
 		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(httpGet);
 
-		Assert.assertEquals(3, OCCITestHelper.getURIList(response).size());
+		Assert.assertEquals(2, OCCITestHelper.getURIList(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 		Assert.assertTrue(response.getFirstHeader(OCCIHeaders.CONTENT_TYPE).getValue()
 				.startsWith(OCCIHeaders.TEXT_URI_LIST_CONTENT_TYPE));
@@ -334,6 +338,8 @@ public class TestGetCompute {
 
 	@Test
 	public void testEmptyGetComputeWithAcceptURIList() throws Exception {
+		TestDataStorageHelper.removeDefaultFolderDataStore();
+		
 		Mockito.doNothing().when(computePlugin).bypass(Mockito.any(org.restlet.Request.class),
 				Mockito.any(Response.class));
 

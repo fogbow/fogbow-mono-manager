@@ -16,8 +16,9 @@ import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.order.Order;
 import org.fogbowcloud.manager.occi.order.OrderState;
-import org.fogbowcloud.manager.occi.storage.StorageLinkRepository.StorageLink;
+import org.fogbowcloud.manager.occi.storage.StorageLink;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 public class ManagerDataStore {
 
@@ -35,6 +36,7 @@ public class ManagerDataStore {
 	protected static final String FULFILLED_TIME = "fulfilled_time";
 	protected static final String IS_LOCAL = "is_local";
 	protected static final String STATE = "state";
+	protected static final String RESOURCE_KIND = "resource_kind";
 	protected static final String CATEGORIES = "categories";
 	protected static final String XOCCI_ATTRIBUTES = "xocci_attributes";
 	protected static final String UPDATED = "updated";
@@ -116,7 +118,8 @@ public class ManagerDataStore {
 					order.getState().toString() : null);
 			orderStmt.setString(9, JSONHelper.mountCategoriesJSON(order.getCategories()).toString());
 			orderStmt.setTimestamp(10, new Timestamp(new Date().getTime()));
-			orderStmt.setString(11, JSONHelper.mountXOCCIAttrJSON(order.getxOCCIAtt()).toString());
+			JSONObject xOCCIAtt = JSONHelper.mountXOCCIAttrJSON(order.getxOCCIAtt());
+			orderStmt.setString(11, xOCCIAtt != null ? xOCCIAtt.toString() : null);
 			orderStmt.executeUpdate();
 			
 			connection.commit();
@@ -179,6 +182,49 @@ public class ManagerDataStore {
 			close(ordersStmt, connection);
 		}
 		return orders;
+	}	
+	
+	private static final String GET_SPECIFIC_ORDER_SQL = GET_ORDERS_SQL + " WHERE " + ORDER_ID + "=?";
+			
+	public Order getOrder(String orderId) throws SQLException, JSONException  {
+		PreparedStatement ordersStmt = null;
+		Connection connection = null;
+		Order order = null;
+		try {
+			connection = getConnection();
+			connection.setAutoCommit(false);
+			
+			String specificOrderStmtStr = GET_SPECIFIC_ORDER_SQL;
+			
+			ordersStmt = connection.prepareStatement(specificOrderStmtStr);
+			ordersStmt.setString(1, orderId);
+			ResultSet resultSet = ordersStmt.executeQuery();
+			if (resultSet.next()) {
+				resultSet.getString(1);
+				
+				order = new Order(resultSet.getString(1), Token.fromJSON(resultSet
+						.getString(5)), resultSet.getString(2), resultSet.getString(3), resultSet
+						.getString(4), resultSet.getLong(6), resultSet.getBoolean(7), OrderState
+						.getState(resultSet.getString(8)), JSONHelper.getCategoriesFromJSON(resultSet
+						.getString(9)), JSONHelper.getXOCCIAttrFromJSON(resultSet.getString(10)));
+			}
+					
+			connection.commit();
+			
+			return order;
+		} catch (SQLException e) {
+			LOGGER.error("Couldn't retrieve order.", e);
+			try {
+				if (connection != null) {
+					connection.rollback();
+				}
+			} catch (SQLException e1) {
+				LOGGER.error("Couldn't rollback transaction.", e1);
+			}
+		} finally {
+			close(ordersStmt, connection);
+		}
+		return null;
 	}	
 
 	private static final String REMOVE_ORDER_SQL = "DELETE"

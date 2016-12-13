@@ -14,8 +14,7 @@ import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.order.Order;
 import org.fogbowcloud.manager.occi.order.OrderState;
-import org.fogbowcloud.manager.occi.storage.StorageLinkRepository;
-import org.fogbowcloud.manager.occi.storage.StorageLinkRepository.StorageLink;
+import org.fogbowcloud.manager.occi.storage.StorageLink;
 import org.json.JSONException;
 import org.junit.After;
 import org.junit.Assert;
@@ -99,6 +98,24 @@ public class TestManagerDataStore {
 		Assert.assertEquals(3, orders.get(0).getxOCCIAtt().size());
 		Assert.assertEquals(2, orders.get(0).getCategories().size());
 	}
+	
+	@Test
+	public void testGetOrder() throws SQLException, JSONException {
+		List<Order> orders = new ArrayList<Order>();
+		orders.add(orderOne);
+		orders.add(orderTwo);
+		orders.add(orderThree);
+		
+		for (Order order : orders) {
+			database.addOrder(order);
+		}
+		
+		
+		Order orderTwoExcepted = database.getOrder(orderTwo.getId());
+		Assert.assertEquals(this.orderTwo, orderTwoExcepted);
+		Order nullValeu = database.getOrder("");
+		Assert.assertNull(nullValeu);
+	}	
 	
 	@Test
 	public void testUpdateOrder() throws SQLException, JSONException {
@@ -202,7 +219,7 @@ public class TestManagerDataStore {
 	
 	@Test
 	public void getStorageLinks() throws SQLException, JSONException {
-		List<StorageLink> storageLinks = new ArrayList<StorageLinkRepository.StorageLink>();
+		List<StorageLink> storageLinks = new ArrayList<StorageLink>();
 		storageLinks.add(storageLinkOne);
 		storageLinks.add(storageLinkTwo);
 		
@@ -242,7 +259,7 @@ public class TestManagerDataStore {
 	
 	@Test
 	public void removeStorageLink() throws SQLException, JSONException {
-		List<StorageLink> storageLinks = new ArrayList<StorageLinkRepository.StorageLink>();
+		List<StorageLink> storageLinks = new ArrayList<StorageLink>();
 		storageLinks.add(storageLinkOne);
 		storageLinks.add(storageLinkTwo);
 		storageLinks.add(storageLinkThree);

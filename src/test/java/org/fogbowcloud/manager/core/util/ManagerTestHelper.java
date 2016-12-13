@@ -204,8 +204,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 				String.valueOf(DefaultDataTestHelper.TOKEN_SERVER_HTTP_PORT));
 		properties.put("max_whoisalive_manager_count", MAX_WHOISALIVE_MANAGER_COUNT);
 		
-		boolean initilizeBD = false;
-		ManagerController managerFacade = Mockito.spy(new ManagerController(properties, null, initilizeBD));
+		ManagerController managerFacade = Mockito.spy(new ManagerController(properties, null));
 		return initializeXMPPManagerComponent(init, managerFacade);
 	}
 	
@@ -290,8 +289,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		Mockito.when(mapperPlugin.getAllLocalCredentials()).thenReturn(this.defaultFederationAllUsersCrendetials);
 		Mockito.when(identityPlugin.createToken(Mockito.anyMap())).thenReturn(defaultFederationToken);
 
-		boolean initializeBD = false;
-		ManagerController managerFacade = Mockito.spy(new ManagerController(properties, null, initializeBD));		
+		ManagerController managerFacade = Mockito.spy(new ManagerController(properties, null));		
 		
 		managerFacade.setComputePlugin(computePlugin);
 		managerFacade.setLocalIdentityPlugin(identityPlugin);
@@ -391,9 +389,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		}
 		
 		this.executorService = Mockito.mock(ScheduledExecutorService.class);
-		boolean notInitializeBD = false;
-		ManagerController managerController = Mockito.spy(new ManagerController(
-				properties, this.executorService, notInitializeBD));		
+		ManagerController managerController = Mockito.spy(new ManagerController(properties, this.executorService));		
 
 		// mocking compute
 		computePlugin = Mockito.mock(ComputePlugin.class);

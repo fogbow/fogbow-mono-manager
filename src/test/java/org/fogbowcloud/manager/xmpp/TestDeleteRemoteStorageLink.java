@@ -10,7 +10,7 @@ import org.fogbowcloud.manager.occi.model.ErrorType;
 import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.storage.StorageAttribute;
-import org.fogbowcloud.manager.occi.storage.StorageLinkRepository.StorageLink;
+import org.fogbowcloud.manager.occi.storage.StorageLink;
 import org.fogbowcloud.manager.occi.util.OCCITestHelper;
 import org.jivesoftware.smack.XMPPException;
 import org.junit.After;

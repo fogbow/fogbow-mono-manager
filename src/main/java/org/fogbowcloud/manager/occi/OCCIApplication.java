@@ -24,7 +24,7 @@ import org.fogbowcloud.manager.occi.network.NetworkServerResource;
 import org.fogbowcloud.manager.occi.order.Order;
 import org.fogbowcloud.manager.occi.order.OrderConstants;
 import org.fogbowcloud.manager.occi.order.OrderServerResource;
-import org.fogbowcloud.manager.occi.storage.StorageLinkRepository.StorageLink;
+import org.fogbowcloud.manager.occi.storage.StorageLink;
 import org.fogbowcloud.manager.occi.storage.StorageLinkServerResource;
 import org.fogbowcloud.manager.occi.storage.StorageServerResource;
 import org.restlet.Application;
