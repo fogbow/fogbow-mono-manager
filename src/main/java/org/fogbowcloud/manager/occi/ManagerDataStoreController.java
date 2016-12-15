@@ -358,15 +358,6 @@ public class ManagerDataStoreController {
 				+ "(" + instanceId + ") and type (" + type + ").");
 	}
 	
-//	public List<StorageLink> getStorageLinkByUser(String userId) {
-//		LOGGER.debug("Getting local storage links by user id " + userId);
-//		List<StorageLink> userStorageLinks = getAllStorageLinks();
-//		if (userStorageLinks == null) {
-//			return new LinkedList<StorageLink>();
-//		}		
-//		return userStorageLinks;
-//	}
-	
 	public void removeStorageLink(String storageLinkId) {
 		LOGGER.debug("Removing storageLinkId " + storageLinkId);
 		
@@ -383,5 +374,72 @@ public class ManagerDataStoreController {
 				}
 			}			
 		}		
+	}
+
+	public List<Order> getOrdersByState(OrderState orderState) {
+		try {
+			return this.managerDatabase.getOrders(OrderState.PENDING);
+		} catch (Exception e) {
+			String errorMsg = "Error while try to get orders by status(" + orderState + ").";
+			LOGGER.error(errorMsg, e);
+			throw new OCCIException(ErrorType.BAD_REQUEST, errorMsg);			
+		}
+	}
+
+	public List<String> getFederationMembersServeredBy(String orderId) {
+		try {
+			return this.managerDatabase.getFederationMembersServeredBy(orderId);
+		} catch (Exception e) {
+			String errorMsg = "Error while try to get federation members of order id(" + orderId + ").";
+			LOGGER.error(errorMsg, e);
+			throw new OCCIException(ErrorType.BAD_REQUEST, errorMsg);			
+		}
+	}
+
+	public void addOrderSyncronous(String orderId, long syncronousTime, String federationMemberServered) {
+		try {
+			this.managerDatabase.updateOrderAsyncronous(orderId, syncronousTime, true);
+			this.managerDatabase.addFederationMemberServered(orderId, federationMemberServered);
+		} catch (Exception e) {
+			String errorMsg = "Error while try to update order syncronous(" + orderId + ").";
+			LOGGER.error(errorMsg, e);
+			throw new OCCIException(ErrorType.BAD_REQUEST, errorMsg);			
+		}
+	}
+	
+	public void removeOrderSyncronous(String orderId) {
+		int zero = 0;
+		boolean syncronousStatus = false;
+		updateOrderSyncronous(orderId, zero, syncronousStatus);
+	}
+
+	public void updateOrderSyncronous(String orderId, long currentTimeMillis) {
+		boolean syncronousStatus = true;
+		updateOrderSyncronous(orderId, currentTimeMillis, syncronousStatus);
+	}
+	
+	public void updateOrderSyncronous(String orderId, long currentTimeMillis, boolean syncronousStatus) {
+		try {
+			this.managerDatabase.updateOrderAsyncronous(orderId, currentTimeMillis, syncronousStatus);
+		} catch (Exception e) {
+			String errorMsg = "Error while try to remove/update order syncronous(" + orderId + ").";
+			LOGGER.error(errorMsg, e);
+			throw new OCCIException(ErrorType.BAD_REQUEST, errorMsg);	
+		} 		
+	}
+
+	public boolean isOrderSyncronous(String orderId) {
+		try {
+			boolean isOrderSyncronous = true;
+			Order order = this.managerDatabase.getOrder(orderId, isOrderSyncronous);
+			if (order != null) {
+				return true;
+			}
+			return false;
+		} catch (Exception e) {
+			String errorMsg = "Error while try to check order syncronous(" + orderId + ").";
+			LOGGER.error(errorMsg, e);
+			throw new OCCIException(ErrorType.BAD_REQUEST, errorMsg);	
+		} 	
 	}		
 }

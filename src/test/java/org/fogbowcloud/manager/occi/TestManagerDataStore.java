@@ -19,6 +19,7 @@ import org.json.JSONException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class TestManagerDataStore {
@@ -50,6 +51,7 @@ public class TestManagerDataStore {
 	
 	@After
 	public void tearDown() throws IOException{
+		TestDataStorageHelper.removeDefaultFolderDataStore();
 		File dbFile = new File(DATASTORE_PATH);
 		if (dbFile.exists()) {
 			dbFile.delete();
@@ -76,8 +78,6 @@ public class TestManagerDataStore {
 		List<Order> orders = database.getOrders();
 		Assert.assertEquals(1, orders.size());
 
-		System.out.println(orderOne);
-		System.out.println(orders.get(0));
 		Assert.assertTrue(orderOne.equals(orders.get(0)));
 	}
 	
@@ -100,6 +100,23 @@ public class TestManagerDataStore {
 	}
 	
 	@Test
+	public void testGetOrdersWithState() throws SQLException, JSONException {
+		List<Order> orders = new ArrayList<Order>();
+		orders.add(orderOne);
+		orders.add(orderTwo);
+		orders.add(orderThree);
+		orders.add(orderFour);
+		
+		for (Order order : orders) {
+			database.addOrder(order);
+		}
+		
+		Assert.assertEquals(4, database.getOrders().size());
+		Assert.assertEquals(2, database.getOrders(OrderState.OPEN).size());
+		Assert.assertEquals(1, database.getOrders(OrderState.FULFILLED).size());
+	}	
+	
+	@Test
 	public void testGetOrder() throws SQLException, JSONException {
 		List<Order> orders = new ArrayList<Order>();
 		orders.add(orderOne);
@@ -109,12 +126,33 @@ public class TestManagerDataStore {
 		for (Order order : orders) {
 			database.addOrder(order);
 		}
-		
-		
+				
 		Order orderTwoExcepted = database.getOrder(orderTwo.getId());
 		Assert.assertEquals(this.orderTwo, orderTwoExcepted);
 		Order nullValeu = database.getOrder("");
 		Assert.assertNull(nullValeu);
+	}	
+	
+	@Test
+	public void testGetSyncronousOrder() throws SQLException, JSONException {
+		List<Order> orders = new ArrayList<Order>();
+		orders.add(orderOne);
+		orders.add(orderTwo);
+		
+		for (Order order : orders) {
+			database.addOrder(order);
+		}
+		
+		orderTwo.setSyncronousStatus(true);
+		database.updateOrderAsyncronous(orderTwo.getId(), new Date().getTime(), true);
+				
+		boolean isOrderSyncronous = true;
+		Order orderTwoBD = database.getOrder(orderTwo.getId(), isOrderSyncronous);
+		System.out.println(orderTwo.toString());
+		System.out.println(orderTwoBD.toString());
+		Assert.assertEquals(this.orderTwo.getId(), orderTwoBD.getId());
+		Order orderOneBD = database.getOrder(orderOne.getId(), isOrderSyncronous);
+		Assert.assertNull(orderOneBD);
 	}	
 	
 	@Test
@@ -135,7 +173,19 @@ public class TestManagerDataStore {
 		Assert.assertEquals(1, orders.size());
 		Assert.assertEquals(orderOne, orders.get(0));	
 	}
-
+	
+	@Test
+	public void testUpdateOrderAsyncronous() throws SQLException, JSONException {
+		database.addOrder(orderOne);
+		
+		Order order = database.getOrder(orderOne.getId());
+		Assert.assertEquals(0L, order.getSyncronousTime());
+				
+		long syncronousTime = 100;
+		database.updateOrderAsyncronous(order.getId(), syncronousTime, true);
+		
+		Assert.assertEquals(syncronousTime, database.getOrder(order.getId()).getSyncronousTime());
+	}
 	
 	@Test
 	public void testRemoveOrder() throws SQLException, JSONException {
@@ -273,6 +323,126 @@ public class TestManagerDataStore {
 		database.removeStorageLink(storageLinkOne);
 		
 		Assert.assertEquals(2, database.getStorageLinks().size());
+	}
+	
+	@Test
+	public void addFederationMemberServered() throws SQLException, JSONException {
+		database.addOrder(orderOne);
+		List<String> federationMembersServered = database.getFederationMembersServeredBy(orderOne.getId());
+		Assert.assertEquals(0, federationMembersServered.size());
+		
+		String federationMemberServerd = "federationMemberServerdOne";
+		database.addFederationMemberServered(orderOne.getId(), federationMemberServerd);
+		
+		federationMembersServered = database.getFederationMembersServeredBy(orderOne.getId());
+		Assert.assertEquals(1, federationMembersServered.size());
+		Assert.assertEquals(federationMemberServerd, federationMembersServered.get(0));		
+	}
+	
+	@Test
+	public void addFederationMemberServeredWithSameName() throws SQLException, JSONException {
+		database.addOrder(orderOne);
+		List<String> federationMembersServered = database.getFederationMembersServeredBy(orderOne.getId());
+		Assert.assertEquals(0, federationMembersServered.size());
+		
+		String federationMemberServerd = "federationMemberServerdOne";
+		database.addFederationMemberServered(orderOne.getId(), federationMemberServerd);
+		database.addFederationMemberServered(orderOne.getId(), federationMemberServerd);
+		database.addFederationMemberServered(orderOne.getId(), federationMemberServerd);
+		database.addFederationMemberServered(orderOne.getId(), federationMemberServerd);
+		
+		federationMembersServered = database.getFederationMembersServeredBy(orderOne.getId());
+		Assert.assertEquals(1, federationMembersServered.size());
+		Assert.assertEquals(federationMemberServerd, federationMembersServered.get(0));		
+	}	
+	
+	@Test
+	public void getFederationMemberServeredBy() throws SQLException, JSONException {
+		database.addOrder(orderOne);
+		List<String> federationMembersServered = database.getFederationMembersServeredBy(orderOne.getId());
+		Assert.assertEquals(0, federationMembersServered.size());
+		
+		String federationMemberServerd = "federationMemberServerdOne";
+		database.addFederationMemberServered(orderOne.getId(), federationMemberServerd);
+		
+		federationMembersServered = database.getFederationMembersServeredBy(orderOne.getId());
+		Assert.assertEquals(1, federationMembersServered.size());
+		Assert.assertEquals(federationMemberServerd, federationMembersServered.get(0));
+		
+		database.addFederationMemberServered(orderOne.getId(), federationMemberServerd + "Two");
+		database.addFederationMemberServered(orderOne.getId(), federationMemberServerd + "Three");
+		database.addFederationMemberServered(orderOne.getId(), federationMemberServerd + "Four");
+		federationMembersServered = database.getFederationMembersServeredBy(orderOne.getId());
+		Assert.assertEquals(4, federationMembersServered.size());
+	}
+	
+	@Test
+	public void removeFederationMemberServeredBy() throws SQLException, JSONException {
+		database.addOrder(orderOne);
+		List<String> federationMembersServered = database.getFederationMembersServeredBy(orderOne.getId());
+		Assert.assertEquals(0, federationMembersServered.size());
+		
+		String federationMemberServerd = "federationMemberServerdOne";
+		database.addFederationMemberServered(orderOne.getId(), federationMemberServerd);
+		
+		federationMembersServered = database.getFederationMembersServeredBy(orderOne.getId());
+		Assert.assertEquals(1, federationMembersServered.size());
+		Assert.assertEquals(federationMemberServerd, federationMembersServered.get(0));
+		
+		String federationMemberServerdTwo = federationMemberServerd + "Two";
+		database.addFederationMemberServered(orderOne.getId(), federationMemberServerdTwo);
+		database.addFederationMemberServered(orderOne.getId(), federationMemberServerd + "Three");
+		database.addFederationMemberServered(orderOne.getId(), federationMemberServerd + "Four");
+		federationMembersServered = database.getFederationMembersServeredBy(orderOne.getId());
+		Assert.assertEquals(4, federationMembersServered.size());
+		
+		database.removeFederationMemberServed(federationMemberServerd);
+		federationMembersServered = database.getFederationMembersServeredBy(orderOne.getId());
+		Assert.assertEquals(3, federationMembersServered.size());
+		
+		database.removeFederationMemberServed(federationMemberServerdTwo);
+		federationMembersServered = database.getFederationMembersServeredBy(orderOne.getId());
+		Assert.assertEquals(2, federationMembersServered.size());		
+	}
+	
+	@Ignore
+	@Test
+	public void removeAllFederationMemberServeredInCastateRemovingTheOrder() throws SQLException, JSONException {
+		database.addOrder(orderOne);
+		List<String> federationMembersServered = database.getFederationMembersServeredBy(orderOne.getId());
+		Assert.assertEquals(0, federationMembersServered.size());
+		
+		String federationMemberServerd = "federationMemberServerdOne";
+		database.addFederationMemberServered(orderOne.getId(), federationMemberServerd);
+		
+		federationMembersServered = database.getFederationMembersServeredBy(orderOne.getId());
+		Assert.assertEquals(1, federationMembersServered.size());
+		Assert.assertEquals(federationMemberServerd, federationMembersServered.get(0));
+		
+		String federationMemberServerdTwo = federationMemberServerd + "Two";
+		database.addFederationMemberServered(orderOne.getId(), federationMemberServerdTwo);
+		database.addFederationMemberServered(orderOne.getId(), federationMemberServerd + "Three");
+		database.addFederationMemberServered(orderOne.getId(), federationMemberServerd + "Four");
+		federationMembersServered = database.getFederationMembersServeredBy(orderOne.getId());
+		Assert.assertEquals(4, federationMembersServered.size());
+		
+		database.removeOrder(orderOne);
+		federationMembersServered = database.getFederationMembersServeredBy(orderOne.getId());
+		Assert.assertEquals(0, federationMembersServered.size());
+	}	
+	
+	@Ignore
+	@Test
+	public void addFederationMemberServeredWithoutAddOrderInDB() throws SQLException, JSONException {
+		List<String> federationMembersServered = database.getFederationMembersServeredBy(orderOne.getId());
+		Assert.assertEquals(0, federationMembersServered.size());
+		
+		String federationMemberServerd = "federationMemberServerdOne";
+		database.addFederationMemberServered(orderOne.getId(), federationMemberServerd);
+		
+		federationMembersServered = database.getFederationMembersServeredBy(orderOne.getId());
+		Assert.assertEquals(0, federationMembersServered.size());
+		Assert.assertEquals(federationMemberServerd, federationMembersServered.get(0));
 	}
 	
 	private void initializeStorageLinks() {

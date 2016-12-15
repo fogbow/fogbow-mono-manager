@@ -668,6 +668,9 @@ public class TestManagerController {
 	public void testSubmitOrderToRemoteMember() throws InterruptedException {
 		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);
 		managerController.setPacketSender(packetSender);
+		FederationMemberPickerPlugin memberPicker = Mockito.mock(FederationMemberPickerPlugin.class);
+		Mockito.when(memberPicker.pick(Mockito.anyList())).thenReturn(new FederationMember("fedMember"));
+		managerController.setMemberPickerPlugin(memberPicker);
 
 		// mocking getRemoteInstance for running benchmarking
 		IQ response = new IQ(); 
@@ -794,7 +797,7 @@ public class TestManagerController {
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(
 				now + ManagerController.DEFAULT_ASYNC_ORDER_WAITING_INTERVAL + 100);
 		
-		managerController.checkPedingOrders();	
+		managerController.checkPedingOrders();
 		
 		ordersFromUser = managerController.getOrdersFromUser(managerTestHelper
 				.getDefaultFederationToken().getAccessId());
@@ -3441,8 +3444,6 @@ public class TestManagerController {
 	
 	@Test
 	public void testInitializeManager() throws SQLException, JSONException {
-		ManagerDataStore database = Mockito.mock(ManagerDataStore.class);
-		List<Order> orders = new ArrayList<Order>();
 		String userOne = "userOne";
 		String accessIdOne = "One";
 		Token federationTokenOne = new Token(accessIdOne, new Token.User(userOne, userOne), new Date(), null);
@@ -3473,13 +3474,11 @@ public class TestManagerController {
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, new Date().getTime(), true,
 				OrderState.DELETED, null, xOCCIAtt);		
-		orders.add(orderOneUserOne);
-		orders.add(orderTwoUserOne);
-		orders.add(orderThreeUserTwo);
-		orders.add(orderOPENFour);
-		orders.add(orderFiveDELETEDUserTwo);
-		Mockito.when(database.getOrders()).thenReturn(orders);
-		managerController.setDatabase(database);
+		managerController.getManagerDataStoreController().addOrder(orderOneUserOne);
+		managerController.getManagerDataStoreController().addOrder(orderTwoUserOne);
+		managerController.getManagerDataStoreController().addOrder(orderThreeUserTwo);
+		managerController.getManagerDataStoreController().addOrder(orderOPENFour);
+		managerController.getManagerDataStoreController().addOrder(orderFiveDELETEDUserTwo);
 		
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		Mockito.when(computePlugin.getInstance(Mockito.any(Token.class), Mockito.anyString()))
@@ -3511,8 +3510,6 @@ public class TestManagerController {
 	
 	@Test
 	public void testInitializeManagerWithAttachmentAndOrderClosed() throws SQLException, JSONException {
-		ManagerDataStore database = Mockito.mock(ManagerDataStore.class);
-		List<Order> orders = new ArrayList<Order>();
 		String userOne = "userOne";
 		String accessIdOne = "One";
 		Token federationTokenOne = new Token(accessIdOne, new Token.User(userOne, userOne) , new Date(), null);
@@ -3534,10 +3531,9 @@ public class TestManagerController {
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, new Date().getTime(), true,
 				OrderState.FULFILLED, null, xOCCIAtt);	
-		orders.add(orderOneUserOne);
-		orders.add(orderTwoUserOne);
-		orders.add(orderThreeUserTwo);
-		Mockito.when(database.getOrders()).thenReturn(orders);
+		managerController.getManagerDataStoreController().addOrder(orderOneUserOne);
+		managerController.getManagerDataStoreController().addOrder(orderTwoUserOne);
+		managerController.getManagerDataStoreController().addOrder(orderThreeUserTwo);
 			
 		StorageLink storageLinkOne = new StorageLink("idOne", instanceIdThree,
 				"targetOne", "deviceIdOne", "providerMemberIdOne", federationTokenOne, true);
@@ -3545,13 +3541,9 @@ public class TestManagerController {
 				"targetTwo", "deviceIdTwo", "providerMemberIdTwo", federationTokenOne, true);
 		StorageLink storageLinkThree = new StorageLink("idThree", "sourceThree",
 				"targetThree", "deviceIdThree", "providerMemberIdThree", federationTokenOne, true);
-		List<StorageLink> storageLinks = new ArrayList<StorageLink>();
-		storageLinks.add(storageLinkOne);
-		storageLinks.add(storageLinkTwo);
-		storageLinks.add(storageLinkThree);
-		
-		Mockito.when(database.getStorageLinks()).thenReturn(storageLinks);
-		managerController.setDatabase(database);		
+		managerController.getManagerDataStoreController().addStorageLink(storageLinkOne);
+		managerController.getManagerDataStoreController().addStorageLink(storageLinkTwo);
+		managerController.getManagerDataStoreController().addStorageLink(storageLinkThree);
 		
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
 		Mockito.when(computePlugin.getInstance(Mockito.any(Token.class), Mockito.anyString()))
@@ -3587,125 +3579,14 @@ public class TestManagerController {
 				"targetTwo", "deviceIdTwo", "providerMemberIdTwo", federationTokenOne, true);
 		StorageLink storageLinkThree = new StorageLink("idThree", "sourceThree",
 				"targetThree", "deviceIdThree", "providerMemberIdThree", federationTokenOne, true);
-		List<StorageLink> storageLinks = new ArrayList<StorageLink>();
-		storageLinks.add(storageLinkOne);
-		storageLinks.add(storageLinkTwo);
-		storageLinks.add(storageLinkThree);
-		
-		ManagerDataStore managerDatabase = Mockito.mock(ManagerDataStore.class);
-		Mockito.when(managerDatabase.getStorageLinks()).thenReturn(storageLinks);
-		managerController.setDatabase(managerDatabase);		
+		managerController.getManagerDataStoreController().addStorageLink(storageLinkOne);
+		managerController.getManagerDataStoreController().addStorageLink(storageLinkTwo);
+		managerController.getManagerDataStoreController().addStorageLink(storageLinkThree);	
 		
 		managerController.initializeStorageLinks();
 		
 		Assert.assertEquals(3, managerController.getManagerDataStoreController().getAllStorageLinks().size());
 	}
-	
-	@Test
-	public void testOrderDBUpdater() throws SQLException, JSONException {		
-		ManagerDataStore database = Mockito.mock(ManagerDataStore.class);
-		List<Order> ordersBD = new ArrayList<Order>();
-		String userOne = "userOne";
-		String accessIdOne = "One";
-		Token federationTokenOne = new Token(accessIdOne, new Token.User(userOne, userOne) , new Date(), null);
-		String userTwo = "userTwo";
-		String accessIdTwo = "Two";
-		Token federationTokenTwo = new Token(accessIdTwo, new Token.User(userTwo, userTwo)  , new Date(), null);
-		String instanceIdOne = "instOne";
-		String instanceIdTwo = "instTwo";
-		String instanceIdThree = "instThree";
-		Order orderOneUserOne = new Order("One", federationTokenOne, instanceIdOne,
-				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
-				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, new Date().getTime(), true,
-				OrderState.FULFILLED, null, null);
-		Order orderTwoUserOne = new Order("Two", federationTokenOne, instanceIdTwo,
-				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
-				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, new Date().getTime(), true,
-				OrderState.FULFILLED, null, null);
-		Order orderThreeUserTwo = new Order("Three", federationTokenTwo, instanceIdThree,
-				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
-				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, new Date().getTime(), true,
-				OrderState.FULFILLED, null, null);
-		Order orderOPENFour = new Order("Four", federationTokenTwo, "444",
-				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
-				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, new Date().getTime(), true,
-				OrderState.OPEN, null, null);
-		ordersBD.add(orderOneUserOne);
-		ordersBD.add(orderTwoUserOne);
-		ordersBD.add(orderThreeUserTwo);
-		ordersBD.add(orderOPENFour);
-		Mockito.when(database.getOrders()).thenReturn(ordersBD);
-		Mockito.when(database.addOrder(Mockito.any(Order.class))).thenReturn(true);
-		Mockito.when(database.updateOrder(Mockito.any(Order.class))).thenReturn(true);
-		Mockito.when(database.removeOrder(Mockito.any(Order.class))).thenReturn(true);
-		managerController.setDatabase(database);
-		
-		IdentityPlugin federationIdentityPlugin = Mockito.mock(IdentityPlugin.class);
-		Mockito.when(federationIdentityPlugin.getToken(accessIdOne)).thenReturn(federationTokenOne);
-		Mockito.when(federationIdentityPlugin.getToken(accessIdTwo)).thenReturn(federationTokenTwo);
-		managerController.setFederationIdentityPlugin(federationIdentityPlugin);		
-		
-		Order orderOPENFive = new Order("Five", federationTokenTwo, "555",
-				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
-				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, new Date().getTime(), true,
-				OrderState.OPEN, null, null);
-		ManagerDataStoreController managerDataStoreController = managerController.getManagerDataStoreController();
-		managerDataStoreController.addOrder(orderOneUserOne);
-		managerDataStoreController.addOrder(orderThreeUserTwo);
-		managerDataStoreController.addOrder(orderOPENFive);		
-
-		managerController.updateOrderDB();
-		
-		Assert.assertEquals(1, managerController.getOrdersFromUser(federationTokenOne.getAccessId()).size());
-		Assert.assertEquals(2, managerController.getOrdersFromUser(federationTokenTwo.getAccessId()).size());
-		Mockito.verify(database, Mockito.times(2)).removeOrder(Mockito.any(Order.class));
-		Mockito.verify(database, Mockito.times(1)).addOrder(Mockito.any(Order.class));
-		Mockito.verify(database, Mockito.times(2)).updateOrder(Mockito.any(Order.class));
-	}
-	
-	@Test
-	public void testStorageLinkDBUpdater() throws SQLException, JSONException {		
-		ManagerDataStore database = Mockito.mock(ManagerDataStore.class);
-		String userOne = "userOne";
-		String accessIdOne = "One";
-		Token federationTokenOne = new Token(accessIdOne, new Token.User(userOne, userOne) , new Date(), null);
-		String userTwo = "userTwo";
-		String accessIdTwo = "Two";
-		Token federationTokenTwo = new Token(accessIdTwo, new Token.User(userTwo, userTwo)  , new Date(), null);
-		List<StorageLink> storageLinksBD = new ArrayList<StorageLink>();
-		StorageLink storageLinkOne = new StorageLink("idOne", "sourceOne",
-				"targetOne", "deviceIdOne", "provadingMemberIdOne", federationTokenOne, true);
-		StorageLink storageLinkTwo = new StorageLink("idTwo", "sourceTwo",
-				"targetTwo", "deviceIdTwo", "provadingMemberIdTwo", federationTokenOne, true);
-		StorageLink storageLinkThree = new StorageLink("idThree",
-				"sourceThree", "targetThree", "deviceIdThree",
-				"provadingMemberIdThree", federationTokenTwo, true);
-		storageLinksBD.add(storageLinkOne);
-		storageLinksBD.add(storageLinkTwo);
-		storageLinksBD.add(storageLinkThree);
-		Mockito.when(database.getStorageLinks()).thenReturn(storageLinksBD);
-		Mockito.when(database.addStorageLink(Mockito.any(StorageLink.class))).thenReturn(true);
-		Mockito.when(database.updateStorageLink(Mockito.any(StorageLink.class))).thenReturn(true);
-		Mockito.when(database.removeStorageLink(Mockito.any(StorageLink.class))).thenReturn(true);
-		managerController.setDatabase(database);
-		
-		IdentityPlugin federationIdentityPlugin = Mockito.mock(IdentityPlugin.class);
-		Mockito.when(federationIdentityPlugin.getToken(accessIdOne)).thenReturn(federationTokenOne);
-		Mockito.when(federationIdentityPlugin.getToken(accessIdTwo)).thenReturn(federationTokenTwo);
-		managerController.setFederationIdentityPlugin(federationIdentityPlugin);		
-		
-		StorageLink storageLinkFive = new StorageLink("idFive", "sourceFive",
-				"targetFive", "deviceIdFive", "provadingMemberIdFive", federationTokenOne, true);
-		managerController.getManagerDataStoreController().addStorageLink(storageLinkOne);
-		managerController.getManagerDataStoreController().addStorageLink(storageLinkTwo);
-		managerController.getManagerDataStoreController().addStorageLink(storageLinkFive);
-		
-		managerController.updateStorageLinkDB();
-		
-		Mockito.verify(database, Mockito.times(1)).removeStorageLink(Mockito.any(StorageLink.class));
-		Mockito.verify(database, Mockito.times(1)).addStorageLink(Mockito.any(StorageLink.class));
-		Mockito.verify(database, Mockito.times(2)).updateStorageLink(Mockito.any(StorageLink.class));
-	}	
 	
 	@Test
 	public void testGetFederationMemberQuota() {

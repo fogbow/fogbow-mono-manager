@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -18,7 +17,6 @@ import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.TimerTask;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -60,7 +58,6 @@ import org.fogbowcloud.manager.core.plugins.accounting.AccountingInfo;
 import org.fogbowcloud.manager.core.plugins.localcredentails.MapperHelper;
 import org.fogbowcloud.manager.core.plugins.localcredentails.SingleMapperPlugin;
 import org.fogbowcloud.manager.core.plugins.util.SshClientPool;
-import org.fogbowcloud.manager.occi.ManagerDataStore;
 import org.fogbowcloud.manager.occi.ManagerDataStoreController;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.instance.InstanceState;
@@ -95,7 +92,6 @@ public class ManagerController {
 	private static final Logger LOGGER = Logger.getLogger(ManagerController.class);
 
 	private static final int DEFAULT_MAX_WHOISALIVE_MANAGER_COUNT = 100;
-	private static final long DEFAULT_BD_UPDATE_PERIOD = 300000; // 5 minute
 	private static final long DEFAULT_SCHEDULER_PERIOD = 30000; // 30 seconds
 	protected static final int DEFAULT_ASYNC_ORDER_WAITING_INTERVAL = 300000; // 5
 																				// minutes
@@ -123,7 +119,6 @@ public class ManagerController {
 	private final ManagerTimer servedOrderMonitoringTimer;
 	private final ManagerTimer garbageCollectorTimer;
 	private final ManagerTimer accountingUpdaterTimer;
-	private final ManagerTimer orderDBUpdaterTimer;
 	private final ManagerTimer capacityControllerUpdaterTimer;
 
 	private Map<String, Token> instanceIdToToken = new HashMap<String, Token>();
@@ -151,13 +146,9 @@ public class ManagerController {
 	private SshClientPool sshClientPool = new SshClientPool();
 	private FailedBatch failedBatch = new FailedBatch();
 
-	private Map<String, ForwardedOrder> asynchronousOrders = new ConcurrentHashMap<String, ForwardedOrder>();
-
 	private DateUtils dateUtils = new DateUtils();
 
 	private PoolingHttpClientConnectionManager cm;
-
-	private ManagerDataStore managerDatabase;
 
 	public ManagerController(Properties properties) {
 		this(properties, null);
@@ -175,7 +166,6 @@ public class ManagerController {
 			this.servedOrderMonitoringTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
 			this.garbageCollectorTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
 			this.accountingUpdaterTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
-			this.orderDBUpdaterTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
 			this.capacityControllerUpdaterTimer = new ManagerTimer(Executors.newScheduledThreadPool(1)); 
 		} else {
 			this.orderSchedulerTimer = new ManagerTimer(executor);
@@ -183,17 +173,11 @@ public class ManagerController {
 			this.servedOrderMonitoringTimer = new ManagerTimer(executor);
 			this.garbageCollectorTimer = new ManagerTimer(executor);
 			this.accountingUpdaterTimer = new ManagerTimer(executor);
-			this.orderDBUpdaterTimer = new ManagerTimer(executor);
 			this.capacityControllerUpdaterTimer = new ManagerTimer(executor);
 		}
 		this.managerDataStoreController = new ManagerDataStoreController(properties);
 		
 		recoverPreviousOrders();
-		triggerOrderDBUpdater();
-	}
-
-	public void createManagerDataStore(Properties properties) {
-		this.managerDatabase = new ManagerDataStore(properties);
 	}
 
 	public MapperPlugin getMapperPlugin() {
@@ -204,10 +188,6 @@ public class ManagerController {
 		return localIdentityPlugin;
 	}
 	
-	protected void setDatabase(ManagerDataStore database) {
-		this.managerDatabase = database;
-	}
-
 	public void setBenchmarkExecutor(ExecutorService benchmarkExecutor) {
 		this.benchmarkExecutor = benchmarkExecutor;
 	}
@@ -272,8 +252,8 @@ public class ManagerController {
 
 	protected void initializeStorageLinks() throws SQLException, JSONException {
 		LOGGER.debug("Recovering previous storage link.");
-		
-		for (StorageLink storageLink : new ArrayList<StorageLink>(managerDatabase.getStorageLinks())) {
+		for (StorageLink storageLink : 
+					new ArrayList<StorageLink>(this.managerDataStoreController.getAllStorageLinks())) {
 			this.managerDataStoreController.addStorageLink(storageLink);
 			LOGGER.debug("Storage link (" + storageLink.getId() + ") was recovered.");
 		}
@@ -282,7 +262,7 @@ public class ManagerController {
 
 	private void initializeOrders() throws SQLException, JSONException {
 		LOGGER.debug("Recovering previous orders.");
-		for (Order order : this.managerDatabase.getOrders()) {
+		for (Order order : this.managerDataStoreController.getAllOrders()) {
 			try {
 				Instance instance = null;
 				if (order.getState().equals(OrderState.FULFILLED)
@@ -535,10 +515,9 @@ public class ManagerController {
 				return true;
 			}
 
-			// it is possible that the asynchronous order has not received
-			// instanceId yet
+			// it is possible that the asynchronous order has not received instanceId yet
 			if ((order.getState().in(OrderState.OPEN) || order.getState().in(OrderState.PENDING)) 
-						&& asynchronousOrders.containsKey(orderId)) {
+						&& managerDataStoreController.isOrderSyncronous(orderId)) {
 				LOGGER.debug("The instance " + instanceId + " is related to order " + order.getId());
 				return true;
 			} else if (order.getState().in(OrderState.FULFILLED, OrderState.DELETED, OrderState.SPAWNING)) {
@@ -1370,72 +1349,6 @@ public class ManagerController {
 		return currentOrders;
 	}
 
-	private void triggerOrderDBUpdater() {
-		String bdUpdaterPeriodStr = properties.getProperty(ConfigurationConstants.BD_UPDATER_PERIOD_KEY);
-		long schedulerPeriod = bdUpdaterPeriodStr == null ? DEFAULT_BD_UPDATE_PERIOD : Long.valueOf(bdUpdaterPeriodStr);
-		orderDBUpdaterTimer.scheduleAtFixedRate(new TimerTask() {
-			@Override
-			public void run() {
-				try {
-					updateOrderDB();
-				} catch (Throwable e) {
-					LOGGER.error("Could not update orders in database.", e);
-				}
-				try {
-					updateStorageLinkDB();
-				} catch (Throwable e) {
-					LOGGER.error("Could not update storage links in database.", e);
-				}				
-			}
-		}, 60000, schedulerPeriod);
-	}
-
-	protected void updateStorageLinkDB() throws SQLException, JSONException {
-		LOGGER.debug("Storage link database update start.");
-		Map<String, StorageLink> storageLinksDBtoRemove = new HashMap<String, StorageLink>(); 
-		for (StorageLink storageLink : new ArrayList<StorageLink>(this.managerDatabase.getStorageLinks())) {
-			storageLinksDBtoRemove.put(storageLink.getId(), storageLink);
-		}
-		
-		List<StorageLink> allManagerStorageLinks = new ArrayList<StorageLink>(
-				this.managerDataStoreController.getAllStorageLinks());
-		for (StorageLink storageLink : allManagerStorageLinks) {
-			if (!storageLinksDBtoRemove.containsKey(storageLink.getId())) {
-				this.managerDatabase.addStorageLink(storageLink);
-			} else {
-				this.managerDatabase.updateStorageLink(storageLink);
-				storageLinksDBtoRemove.remove(storageLink.getId());
-			}
-		}
-		for (StorageLink storageLink : storageLinksDBtoRemove.values()) {
-			this.managerDatabase.removeStorageLink(storageLink);
-		}
-		LOGGER.debug("Storage link database update finish.");
-	}
-
-	protected void updateOrderDB() throws SQLException, JSONException {
-		LOGGER.debug("Order database update start.");
-		List<Order> orders = this.managerDatabase.getOrders();
-		Map<String, Order> ordersDB = new HashMap<String, Order>();
-		for (Order order : orders) {
-			ordersDB.put(order.getId(), order);
-		}
-		
-		List<Order> allOrders = new ArrayList<Order>(managerDataStoreController.getAllOrders());
-		for (Order order : allOrders) {
-			if (!ordersDB.containsKey(order.getId())) {
-				managerDatabase.addOrder(order);
-			} else {
-				managerDatabase.updateOrder(order);
-				ordersDB.remove(order.getId());
-			}
-		}
-		for (Order order: ordersDB.values()) {
-			managerDatabase.removeOrder(order);
-		}
-		LOGGER.debug("Order database update finish.");
-	}
-
 	protected void triggerInstancesMonitor() {
 		String instanceMonitoringPeriodStr = properties
 				.getProperty(ConfigurationConstants.INSTANCE_MONITORING_PERIOD_KEY);
@@ -1513,14 +1426,8 @@ public class ManagerController {
 		order.setState(OrderState.PENDING);
 		this.managerDataStoreController.updateOrder(order);
 
-		LOGGER.info("Submiting order " + order + " to member " + memberAddress);
-		
-		ForwardedOrder forwardedOrder = new ForwardedOrder(order, dateUtils.currentTimeMillis());
-		ForwardedOrder forwardedOrderBefore = asynchronousOrders.get(order.getId());
-		forwardedOrder.addMembersServered(
-				forwardedOrderBefore != null ? forwardedOrderBefore.getMembersServered() : null);
-		
-		asynchronousOrders.put(order.getId(),forwardedOrder);
+		LOGGER.info("Submiting order " + order + " to member " + memberAddress);		
+		this.managerDataStoreController.addOrderSyncronous(order.getId(), dateUtils.currentTimeMillis(), order.getProvidingMemberId());
 		ManagerPacketHelper.asynchronousRemoteOrder(order.getId(), categoriesCopy, xOCCIAttCopy, memberAddress, 
 				federationIdentityPlugin.getForwardableToken(order.getFederationToken()), 
 				packetSender, new AsynchronousOrderCallback() {
@@ -1528,7 +1435,7 @@ public class ManagerController {
 					public void success(String instanceId) {
 						LOGGER.debug("The order " + order + " forwarded to " + memberAddress + " gets instance "
 								+ instanceId);
-						if (asynchronousOrders.get(order.getId()) == null) {
+						if (managerDataStoreController.isOrderSyncronous(order.getId()) == false) {
 							return;
 						}
 						if (instanceId == null) {
@@ -1544,7 +1451,7 @@ public class ManagerController {
 						}
 
 						// reseting time stamp
-						asynchronousOrders.get(order.getId()).setTimeStamp(dateUtils.currentTimeMillis());
+						managerDataStoreController.updateOrderSyncronous(order.getId(), dateUtils.currentTimeMillis());
 
 						order.setInstanceId(instanceId);
 						order.setProvidingMemberId(memberAddress);
@@ -1552,7 +1459,7 @@ public class ManagerController {
 						boolean isStorageOrder = OrderConstants.STORAGE_TERM.equals(order.getResourceKing());
 						boolean isNetworkOrder = OrderConstants.NETWORK_TERM.equals(order.getResourceKing());						
 						if (isStorageOrder || isNetworkOrder) {
-							asynchronousOrders.remove(order.getId());
+							managerDataStoreController.removeOrderSyncronous(order.getId());
 							order.setState(OrderState.FULFILLED);
 							managerDataStoreController.updateOrder(order);
 							return;
@@ -1585,7 +1492,7 @@ public class ManagerController {
 	}
 
 	protected boolean isOrderForwardedtoRemoteMember(String orderId) {
-		return asynchronousOrders.containsKey(orderId);
+		return this.managerDataStoreController.isOrderSyncronous(orderId);
 	}
 
 	private void wakeUpSleepingHosts(Order order) {
@@ -1625,7 +1532,7 @@ public class ManagerController {
 
 				if (order.isLocal() && !isFulfilledByLocalMember(order)) {
 					removeAsynchronousRemoteOrders(order, false);
-					asynchronousOrders.remove(order.getId());
+					managerDataStoreController.removeOrderSyncronous(order.getId());
 				}
 
 				if (!order.isLocal()) {
@@ -1650,17 +1557,18 @@ public class ManagerController {
 		}
 	}
 	
-	private void removeAsynchronousRemoteOrders(final Order order, boolean removeAll) {
-		ForwardedOrder forwardedOrder = asynchronousOrders.get(order.getId());
-		for (String memberServered : forwardedOrder != null ? forwardedOrder.getMembersServered() : new ArrayList<String>()) {						
-			if (memberServered == null || forwardedOrder.getOrder() == null 
-					|| (!removeAll && order.getProvidingMemberId().equals(memberServered) )) {
+	private void removeAsynchronousRemoteOrders(Order order, boolean removeAll) {
+		List<String> federationMembersServered = this.managerDataStoreController.getFederationMembersServeredBy(order.getId());
+		if (federationMembersServered == null) {
+			return;
+		}
+		for (String federationMemberServered : federationMembersServered) {
+			if (!removeAll && order.getProvidingMemberId().equals(federationMemberServered)) {
 				continue;
 			}
 			try {
-				removeRemoteOrder(memberServered, order);		
-			} catch (Exception e) {
-			}
+				removeRemoteOrder(federationMemberServered, order);		
+			} catch (Exception e) {}
 		}
 	}	
 	
@@ -1840,16 +1748,14 @@ public class ManagerController {
 	}
 
 	protected void checkPedingOrders() {
-		Collection<ForwardedOrder> forwardedOrders = asynchronousOrders.values();
-		for (ForwardedOrder forwardedOrder : forwardedOrders) {
-			if (timoutReached(forwardedOrder.getTimeStamp()) 
-					&& forwardedOrder.getOrder().getState().equals(OrderState.PENDING)){
-				LOGGER.debug("The forwarded order " + forwardedOrder.getOrder().getId()
+		List<Order> ordersPedding = this.managerDataStoreController.getOrdersByState(OrderState.PENDING);
+		for (Order order : ordersPedding) {
+			if (timoutReached(order.getSyncronousTime())) {
+				LOGGER.debug("The forwarded order " + order.getId()
 						+ " reached timeout and is been removed from asynchronousOrders list.");
-				Order order = forwardedOrder.getOrder();
 				order.setState(OrderState.OPEN);
-				this.managerDataStoreController.updateOrder(order);
-			}
+				this.managerDataStoreController.updateOrder(order);		
+			}			
 		}
 	}
 
@@ -2040,19 +1946,6 @@ public class ManagerController {
 		this.managerDataStoreController = managerDataStoreController;
 	}
 	
-//	public void setOrders(ManagerDataStoreController orders) {
-//		this.managerDataStoreController = orders;
-//	}
-	
-//	public StorageLinkRepository getStorageLinkRepository() {
-//		return storageLinkRepository;
-//	}
-//	
-//	public void setStorageLinkRepository(
-//			StorageLinkRepository storageLinkRepository) {
-//		this.storageLinkRepository = storageLinkRepository;
-//	}
-
 	public Token getToken(Map<String, String> attributesToken) {
 		return localIdentityPlugin.createToken(attributesToken);
 	}
@@ -2340,43 +2233,4 @@ public class ManagerController {
 
 	protected enum FailedBatchType { FEDERATION_USER }
 
-	private static class ForwardedOrder {
-
-		private Order order;
-		private long timeStamp;
-		private List<String> membersServered;
-
-
-		public ForwardedOrder(Order order, long timeStamp) {
-			this.order = order;
-			this.timeStamp = timeStamp;
-			this.membersServered = new ArrayList<String>();
-		}
-
-		public void setTimeStamp(long timeStamp) {
-			this.timeStamp = timeStamp;
-		}
-
-		public Order getOrder() {
-			return order;
-		}
-
-		public long getTimeStamp() {
-			return timeStamp;
-		}
-
-		public List<String> getMembersServered() {
-			return membersServered;
-		}
-
-		public void addMembersServered(List<String> membersServered) {
-			if (membersServered == null || !membersServered.contains(order.getProvidingMemberId())) {
-				this.membersServered.add(order.getProvidingMemberId());
-			}
-			if (membersServered == null) {
-				return;
-			}
-			this.membersServered.addAll(membersServered);
-		}
-	}
 }
