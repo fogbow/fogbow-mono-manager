@@ -19,6 +19,7 @@ import org.fogbowcloud.manager.occi.order.OrderState;
 import org.fogbowcloud.manager.occi.storage.StorageLink;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.sqlite.SQLiteConfig;
 
 public class ManagerDataStore {
 
@@ -68,6 +69,7 @@ public class ManagerDataStore {
 
 			connection = getConnection();
 			statement = connection.createStatement();
+			statement.execute("PRAGMA foreign_keys = ON;");
 			statement.execute("CREATE TABLE IF NOT EXISTS " + ORDER_TABLE_NAME + "(" 
 							+ ORDER_ID + " VARCHAR(255) PRIMARY KEY, "
 							+ INSTANCE_ID + " VARCHAR(255), "
@@ -94,7 +96,7 @@ public class ManagerDataStore {
 							+ FEDERTION_MEMBER_ID + " VARCHAR(255) PRIMARY KEY, "
 							+ ORDER_ID + " VARCHAR(255) NOT NULL, "
 							+ "FOREIGN KEY (" + ORDER_ID + ") REFERENCES " 
-							+ ORDER_TABLE_NAME + "(" + ORDER_ID + ") ON DELETE CASCADE)");
+							+ ORDER_TABLE_NAME + "(" + ORDER_ID + ") ON DELETE CASCADE)");			
 			statement.close();
 		} catch (Exception e) {
 			LOGGER.error(ERROR_WHILE_INITIALIZING_THE_DATA_STORE, e);
@@ -721,7 +723,9 @@ public class ManagerDataStore {
 	
 	public Connection getConnection() throws SQLException {
 		try {
-			return DriverManager.getConnection(this.dataStoreURL);
+			SQLiteConfig config = new SQLiteConfig();
+			config.enforceForeignKeys(true);  
+			return DriverManager.getConnection(this.dataStoreURL, config.toProperties());
 		} catch (SQLException e) {
 			LOGGER.error("Error while getting a new connection from the connection pool.", e);
 			throw e;
