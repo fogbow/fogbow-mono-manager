@@ -50,7 +50,6 @@ public class TestOCCIApplication {
 	@SuppressWarnings("unchecked")
 	@Before
 	public void setUp() {
-		TestDataStorageHelper.removeDefaultFolderDataStore();
 		
 		Properties properties = new Properties();
 		properties.put("scheduler_period", SCHEDULER_PERIOD.toString());
@@ -74,6 +73,8 @@ public class TestOCCIApplication {
 		});
 		
 		managerFacade = new ManagerController(properties, executor);
+		TestDataStorageHelper.clearManagerDataStore(
+				managerFacade.getManagerDataStoreController().getManagerDatabase());
 		occiApplication = new OCCIApplication(managerFacade);
 
 		// default instance count value is 1
@@ -127,7 +128,8 @@ public class TestOCCIApplication {
 	
 	@After
 	public void tearDown() {
-		TestDataStorageHelper.removeDefaultFolderDataStore();
+		TestDataStorageHelper.clearManagerDataStore(
+				managerFacade.getManagerDataStoreController().getManagerDatabase());
 	}
 
 	@Test

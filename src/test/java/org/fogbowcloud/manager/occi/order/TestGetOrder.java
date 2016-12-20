@@ -53,9 +53,7 @@ public class TestGetOrder {
 	
 	@SuppressWarnings("unchecked")
 	@Before
-	public void setup() throws Exception {
-		TestDataStorageHelper.removeDefaultFolderDataStore();
-		
+	public void setup() throws Exception {		
 		this.orderHelper = new OCCITestHelper();
 
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
@@ -570,7 +568,8 @@ public class TestGetOrder {
 	
 	@After
 	public void tearDown() throws Exception {
-		TestDataStorageHelper.removeDefaultFolderDataStore();
+		TestDataStorageHelper.clearManagerDataStore(
+				this.facade.getManagerDataStoreController().getManagerDatabase());
 		this.orderHelper.stopComponent();
 	}
 

@@ -18,6 +18,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
@@ -41,13 +42,12 @@ import org.restlet.Response;
 
 public class TestDeleteOrder {
 
-	OCCITestHelper orderHelper;
+	private OCCITestHelper orderHelper;
+	private ManagerController managerController;
 
 	@SuppressWarnings({ "unchecked", "deprecation" })
 	@Before
-	public void setup() throws Exception {
-		TestDataStorageHelper.removeDefaultFolderDataStore();
-		
+	public void setup() throws Exception {		
 		this.orderHelper = new OCCITestHelper();
 
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
@@ -68,7 +68,7 @@ public class TestDeleteOrder {
 		
 		AuthorizationPlugin authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
 		Mockito.when(authorizationPlugin.isAuthorized(Mockito.any(Token.class))).thenReturn(true);
-		this.orderHelper.initializeComponent(computePlugin, identityPlugin, authorizationPlugin);
+		managerController = this.orderHelper.initializeComponent(computePlugin, identityPlugin, authorizationPlugin);
 	}
 
 	@Test
@@ -269,7 +269,8 @@ public class TestDeleteOrder {
 
 	@After
 	public void tearDown() throws Exception {
-		TestDataStorageHelper.removeDefaultFolderDataStore();
+		TestDataStorageHelper.clearManagerDataStore(
+				this.managerController.getManagerDataStoreController().getManagerDatabase());
 		this.orderHelper.stopComponent();
 	}
 }

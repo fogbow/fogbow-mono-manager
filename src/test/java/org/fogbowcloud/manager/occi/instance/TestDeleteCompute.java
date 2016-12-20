@@ -68,7 +68,6 @@ public class TestDeleteCompute {
 	@SuppressWarnings("deprecation")
 	@Before
 	public void setup() throws Exception {
-		TestDataStorageHelper.removeDefaultFolderDataStore();
 		
 		this.helper = new OCCITestHelper();
 		this.token = new Token(OCCITestHelper.ACCESS_TOKEN,
@@ -135,12 +134,13 @@ public class TestDeleteCompute {
 		instanceDB = new InstanceDataStore(INSTANCE_DB_URL);
 		facade = this.helper.initializeComponentCompute(computePlugin, identityPlugin, identityPlugin, 
 				authorizationPlugin, imageStoragePlugin, accountingPlugin, accountingPlugin, benchmarkingPlugin, ordersToAdd,
-				mapperPlugin);		
+				mapperPlugin);
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		TestDataStorageHelper.removeDefaultFolderDataStore();
+		TestDataStorageHelper.clearManagerDataStore(facade.getManagerDataStoreController()
+				.getManagerDatabase());
 		instanceDB.deleteAll();
 		File dbFile = new File(INSTANCE_DB_FILE + ".mv.db");
 		if (dbFile.exists()) {

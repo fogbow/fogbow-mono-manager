@@ -105,7 +105,8 @@ public class TestPostNetwork {
 
 	@After
 	public void tearDown() throws Exception {
-		TestDataStorageHelper.removeDefaultFolderDataStore();
+		TestDataStorageHelper.clearManagerDataStore(
+				facade.getManagerDataStoreController().getManagerDatabase());
 		File dbFile = new File(INSTANCE_DB_FILE + ".mv.db");
 		if (dbFile.exists()) {
 			dbFile.delete();
@@ -248,7 +249,7 @@ public class TestPostNetwork {
 				Mockito.anyString(), Mockito.anyBoolean())).thenReturn(order);
 		Mockito.when(managerDataStoreControllerMock.getOrder(Mockito.anyString())).thenReturn(order);
 		
-		facade.setDataStoreController(managerDataStoreControllerMock);
+		facade.setManagerDataStoreController(managerDataStoreControllerMock);
 		
 		HttpPost httpPost = new HttpPost(OCCITestHelper.URI_FOGBOW_NETWORK);
 		httpPost.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);

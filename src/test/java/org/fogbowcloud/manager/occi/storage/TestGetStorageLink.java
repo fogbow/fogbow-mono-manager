@@ -13,6 +13,7 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.HttpClients;
+import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
@@ -49,11 +50,10 @@ public class TestGetStorageLink {
 	private AuthorizationPlugin authorizationPlugin;
 	private OCCITestHelper helper;
 	private MapperPlugin mapperPlugin;
+	private ManagerController managerController;
 
 	@Before
 	public void setup() throws Exception {
-		TestDataStorageHelper.removeDefaultFolderDataStore();
-		
 		this.helper = new OCCITestHelper();
 		
 		List<Resource> list = new ArrayList<Resource>();
@@ -101,14 +101,15 @@ public class TestGetStorageLink {
 		Map<String, List<StorageLink>> storageLinksToAdd = new HashMap<String, List<StorageLink>>();
 		storageLinksToAdd.put(OCCITestHelper.USER_MOCK, storageLinks);	
 		
-		this.helper.initializeComponentCompute(computePlugin, storagePlugin,
+		managerController = this.helper.initializeComponentCompute(computePlugin, storagePlugin,
 				identityPlugin, authorizationPlugin, null, Mockito.mock(AccountingPlugin.class),
 				Mockito.mock(BenchmarkingPlugin.class), ordersToAdd, storageLinksToAdd, mapperPlugin);
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		TestDataStorageHelper.removeDefaultFolderDataStore();
+		TestDataStorageHelper.clearManagerDataStore(
+				this.managerController.getManagerDataStoreController().getManagerDatabase());
 		File dbFile = new File(OCCITestHelper.INSTANCE_DB_FILE + ".mv.db");
 		if (dbFile.exists()) {
 			dbFile.delete();

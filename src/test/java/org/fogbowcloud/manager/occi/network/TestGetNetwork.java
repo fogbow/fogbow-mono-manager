@@ -98,7 +98,8 @@ public class TestGetNetwork {
 
 	@After
 	public void tearDown() throws Exception {
-		TestDataStorageHelper.removeDefaultFolderDataStore();
+		TestDataStorageHelper.clearManagerDataStore(
+				facade.getManagerDataStoreController().getManagerDatabase());
 		File dbFile = new File(INSTANCE_DB_FILE + ".mv.db");
 		if (dbFile.exists()) {
 			dbFile.delete();

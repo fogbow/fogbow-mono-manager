@@ -54,8 +54,6 @@ public class TestDeleteStorage {
 	
 	@Before
 	public void setup() throws Exception {
-		TestDataStorageHelper.removeDefaultFolderDataStore();
-		
 		this.helper = new OCCITestHelper();
 		Token token = new Token(OCCITestHelper.ACCESS_TOKEN,
 				new Token.User(OCCITestHelper.USER_MOCK, ""), DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
@@ -126,7 +124,7 @@ public class TestDeleteStorage {
 
 	@After
 	public void tearDown() throws Exception {
-		TestDataStorageHelper.removeDefaultFolderDataStore();
+		TestDataStorageHelper.clearManagerDataStore(facade.getManagerDataStoreController().getManagerDatabase());
 		this.helper.stopComponent();
 	}
 

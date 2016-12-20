@@ -52,9 +52,7 @@ public class TestDeleteNetwork {
 	
 	@SuppressWarnings("unchecked")
 	@Before
-	public void setup() throws Exception {
-		TestDataStorageHelper.removeDefaultFolderDataStore();
-		
+	public void setup() throws Exception {		
 		this.helper = new OCCITestHelper();
 		
 		NetworkDataStore networkDB = new NetworkDataStore("jdbc:h2:file:" + INSTANCE_DB_FILE);
@@ -91,13 +89,11 @@ public class TestDeleteNetwork {
 				.thenReturn(new HashMap<String, String>());
 		
 		facade = this.helper.initializeComponentNetwork(networkPlugin, identityPlugin, authorizationPlugin, ordersToAdd, mapperPlugin, null);
-		
-		
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		TestDataStorageHelper.removeDefaultFolderDataStore();
+		TestDataStorageHelper.clearManagerDataStore(facade.getManagerDataStoreController().getManagerDatabase());
 		File dbFile = new File(INSTANCE_DB_FILE + ".mv.db");
 		if (dbFile.exists()) {
 			dbFile.delete();

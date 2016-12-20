@@ -33,9 +33,9 @@ public class TestManagerDataStoreController {
 	
 	@Before
 	public void setUp() {
-		TestDataStorageHelper.removeDefaultFolderDataStore();
 		// Create in default test path
 		managerDataStoreController = new ManagerDataStoreController(new Properties());
+		TestDataStorageHelper.clearManagerDataStore(managerDataStoreController.getManagerDatabase());
 		managerDataStoreController.addOrder(createOrder(ID1, USER_ID, true));
 		managerDataStoreController.addOrder(createOrder(ID2, USER_ID, true));
 		managerDataStoreController.addOrder(createOrder(ID3, USER_ID, true));
@@ -46,7 +46,7 @@ public class TestManagerDataStoreController {
 
 	@After
 	public void tearDown() {
-		TestDataStorageHelper.removeDefaultFolderDataStore();
+		TestDataStorageHelper.clearManagerDataStore(managerDataStoreController.getManagerDatabase());
 	}
  	
 	@Test

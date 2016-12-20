@@ -88,7 +88,6 @@ public class TestManagerController {
 
 	@Before
 	public void setUp() throws Exception {
-		TestDataStorageHelper.removeDefaultFolderDataStore();
 		this.managerTestHelper = new ManagerTestHelper();
 		
 		/*
@@ -104,11 +103,15 @@ public class TestManagerController {
 		this.xOCCIAtt.put(OrderAttribute.INSTANCE_COUNT.getValue(),
 				String.valueOf(OrderConstants.DEFAULT_INSTANCE_COUNT));
 		this.xOCCIAtt.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.COMPUTE_TERM);
+		
+		TestDataStorageHelper.clearManagerDataStore(this.managerController
+				.getManagerDataStoreController().getManagerDatabase());
 	}
 	
 	@After
 	public void tearDown() {
-		TestDataStorageHelper.removeDefaultFolderDataStore();
+		TestDataStorageHelper.clearManagerDataStore(this.managerController
+				.getManagerDataStoreController().getManagerDatabase());
 	}
 
 	@Test
@@ -1679,7 +1682,8 @@ public class TestManagerController {
 	@Test
 	public void testOneTimeOrderWithValidFromAttInFuture() throws InterruptedException {
 		long now = System.currentTimeMillis();
-		long startOrderTime = now + (DefaultDataTestHelper.SCHEDULER_PERIOD * 2);
+		long timeAddedInStartOrderTime = DefaultDataTestHelper.SCHEDULER_PERIOD * 3;
+		long startOrderTime = now + timeAddedInStartOrderTime;
 		long expirationOrderTime = now + DefaultDataTestHelper.LONG_TIME;
 
 		// setting order attributes
@@ -1720,7 +1724,7 @@ public class TestManagerController {
 		Assert.assertNull(orders.get(0).getProvidingMemberId());
 
 		// sleeping for the scheduler period and submitting order
-		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD + DefaultDataTestHelper.GRACE_TIME);
+		Thread.sleep(timeAddedInStartOrderTime);
 		managerController.checkAndSubmitOpenOrders();
 
 		// check if order is in valid period
@@ -1736,7 +1740,8 @@ public class TestManagerController {
 	@Test
 	public void testPersistentOrderWithValidFromAttInFuture() throws InterruptedException {
 		long now = System.currentTimeMillis();
-		long startOrderTime = now + (DefaultDataTestHelper.SCHEDULER_PERIOD * 2);
+		long timeAddedInStartOrderTime = DefaultDataTestHelper.SCHEDULER_PERIOD * 3;
+		long startOrderTime = now + timeAddedInStartOrderTime;
 		long expirationOrderTime = now + DefaultDataTestHelper.LONG_TIME;
 
 		// setting order attributes
@@ -1764,7 +1769,6 @@ public class TestManagerController {
 		Assert.assertNull(orders.get(0).getProvidingMemberId());
 
 		// sleeping for a time and order not valid yet
-		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD + DefaultDataTestHelper.GRACE_TIME);
 		managerController.checkAndSubmitOpenOrders();
 
 		// check order is not in valid period yet
@@ -1777,7 +1781,7 @@ public class TestManagerController {
 		Assert.assertNull(orders.get(0).getProvidingMemberId());
 
 		// sleeping for the scheduler period and submitting order
-		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD + DefaultDataTestHelper.GRACE_TIME);
+		Thread.sleep(timeAddedInStartOrderTime);
 		managerController.checkAndSubmitOpenOrders();
 
 		// check if order is in valid period

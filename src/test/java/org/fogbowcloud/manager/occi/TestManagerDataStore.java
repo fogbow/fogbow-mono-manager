@@ -19,7 +19,6 @@ import org.json.JSONException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 public class TestManagerDataStore {
@@ -281,7 +280,7 @@ public class TestManagerDataStore {
 	}
 	
 	@Test
-	public void addStorageLink() throws SQLException, JSONException {
+	public void testAddStorageLink() throws SQLException, JSONException {
 		database.addStorageLink(storageLinkOne);
 		List<StorageLink> storageLinks = database.getStorageLinks();
 		
@@ -442,6 +441,38 @@ public class TestManagerDataStore {
 		
 		String federationMemberServerd = "federationMemberServerdOne";
 		database.addFederationMemberServered(orderOne.getId(), federationMemberServerd);
+		
+		federationMembersServered = database.getFederationMembersServeredBy(orderOne.getId());
+		Assert.assertEquals(0, federationMembersServered.size());
+	}
+	
+	@Test
+	public void testRemoveAllValeusInAllTables() throws SQLException, JSONException {
+		database.addStorageLink(storageLinkOne);
+		List<StorageLink> storageLinks = database.getStorageLinks();
+		
+		Assert.assertEquals(1, storageLinks.size());
+		Assert.assertTrue(storageLinks.get(0).equals(storageLinkOne));
+		
+		database.addOrder(orderOne);
+		List<Order> orders = database.getOrders();
+		Assert.assertEquals(1, orders.size());
+		
+		String federationMemberServerd = "federationMemberServerdOne";
+		database.addFederationMemberServered(orderOne.getId(), federationMemberServerd);
+		
+		List<String> federationMembersServered = database.getFederationMembersServeredBy(orderOne.getId());
+		Assert.assertEquals(1, federationMembersServered.size());
+		Assert.assertEquals(federationMemberServerd, federationMembersServered.get(0));		
+
+		Assert.assertTrue(orderOne.equals(orders.get(0)));
+		
+		database.removeAllValuesInAllTable();
+		storageLinks = database.getStorageLinks();
+		Assert.assertEquals(0, storageLinks.size());
+		
+		orders = database.getOrders();
+		Assert.assertEquals(0, orders.size());
 		
 		federationMembersServered = database.getFederationMembersServeredBy(orderOne.getId());
 		Assert.assertEquals(0, federationMembersServered.size());

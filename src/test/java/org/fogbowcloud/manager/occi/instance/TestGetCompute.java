@@ -16,6 +16,7 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.HttpClients;
+import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
@@ -67,11 +68,10 @@ public class TestGetCompute {
 	private ImageStoragePlugin imageStoragePlugin;
 	private MapperPlugin mapperPlugin;
 	private InstanceDataStore instanceDB;
+	private ManagerController managerController;
 
 	@Before
-	public void setup() throws Exception {
-		TestDataStorageHelper.removeDefaultFolderDataStore();
-		
+	public void setup() throws Exception {		
 		this.helper = new OCCITestHelper();
 
 		Token postToken = new Token(OCCITestHelper.POST_FED_ACCESS_TOKEN, new Token.User(OCCITestHelper.USER_MOCK + "_post", "") ,
@@ -161,16 +161,17 @@ public class TestGetCompute {
 		ordersToAdd.put(OCCITestHelper.USER_MOCK, ordersA);
 		ordersToAdd.put(OCCITestHelper.USER_MOCK + "_post", ordersB);
 		
-		this.helper.initializeComponentCompute(computePlugin, identityPlugin, identityPlugin, authorizationPlugin, imageStoragePlugin,
+		this.managerController = this.helper.initializeComponentCompute(computePlugin, identityPlugin, identityPlugin, authorizationPlugin, imageStoragePlugin,
 				Mockito.mock(AccountingPlugin.class), Mockito.mock(AccountingPlugin.class), Mockito.mock(BenchmarkingPlugin.class), ordersToAdd,
 				mapperPlugin);
 
-		instanceDB = new InstanceDataStore(INSTANCE_DB_URL);
+		instanceDB = new InstanceDataStore(INSTANCE_DB_URL);		
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		TestDataStorageHelper.removeDefaultFolderDataStore();
+		TestDataStorageHelper.clearManagerDataStore(this.managerController
+				.getManagerDataStoreController().getManagerDatabase());
 		
 		instanceDB.deleteAll();
 		File dbFile = new File(INSTANCE_DB_FILE + ".mv.db");
@@ -338,7 +339,8 @@ public class TestGetCompute {
 
 	@Test
 	public void testEmptyGetComputeWithAcceptURIList() throws Exception {
-		TestDataStorageHelper.removeDefaultFolderDataStore();
+		TestDataStorageHelper.clearManagerDataStore(this.managerController
+				.getManagerDataStoreController().getManagerDatabase());
 		
 		Mockito.doNothing().when(computePlugin).bypass(Mockito.any(org.restlet.Request.class),
 				Mockito.any(Response.class));

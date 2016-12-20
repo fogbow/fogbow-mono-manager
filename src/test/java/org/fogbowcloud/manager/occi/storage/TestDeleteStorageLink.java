@@ -52,9 +52,7 @@ public class TestDeleteStorageLink {
 	private ComputePlugin computePlugin;
 	
 	@Before
-	public void setup() throws Exception {
-		TestDataStorageHelper.removeDefaultFolderDataStore();
-		
+	public void setup() throws Exception {		
 		this.helper = new OCCITestHelper();
 		
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
@@ -112,7 +110,7 @@ public class TestDeleteStorageLink {
 
 	@After
 	public void tearDown() throws Exception {
-		TestDataStorageHelper.removeDefaultFolderDataStore();
+		TestDataStorageHelper.clearManagerDataStore(facade.getManagerDataStoreController().getManagerDatabase());
 		
 		File dbFile = new File(OCCITestHelper.INSTANCE_DB_FILE + ".mv.db");
 		if (dbFile.exists()) {

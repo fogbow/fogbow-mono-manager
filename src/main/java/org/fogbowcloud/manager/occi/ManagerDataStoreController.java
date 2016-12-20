@@ -93,7 +93,6 @@ public class ManagerDataStoreController {
 				}
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
 			String errorMsg = "Error while try to get orders by states and resource king.";
 			LOGGER.error(errorMsg, e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, errorMsg);

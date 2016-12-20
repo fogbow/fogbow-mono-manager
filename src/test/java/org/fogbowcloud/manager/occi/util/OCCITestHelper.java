@@ -36,6 +36,7 @@ import org.fogbowcloud.manager.core.plugins.NetworkPlugin;
 import org.fogbowcloud.manager.core.plugins.StoragePlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.OCCIApplication;
+import org.fogbowcloud.manager.occi.TestDataStorageHelper;
 import org.fogbowcloud.manager.occi.model.HeaderUtils;
 import org.fogbowcloud.manager.occi.model.OCCIHeaders;
 import org.fogbowcloud.manager.occi.model.ResourceRepository;
@@ -107,6 +108,7 @@ public class OCCITestHelper {
 		ExecutorService benchmarkExecutor = new CurrentThreadExecutorService();
 
 		ManagerController facade = new ManagerController(properties, executor);
+		TestDataStorageHelper.clearManagerDataStore(facade.getManagerDataStoreController().getManagerDatabase());
 		ResourceRepository.init(properties);
 		facade.setComputePlugin(computePlugin);
 		facade.setLocalCredentailsPlugin(mapperPlugin);
@@ -121,7 +123,7 @@ public class OCCITestHelper {
 		return facade;
 	}
 
-	public void initializeComponent(ComputePlugin computePlugin, IdentityPlugin identityPlugin,
+	public ManagerController initializeComponent(ComputePlugin computePlugin, IdentityPlugin identityPlugin,
 			AuthorizationPlugin authorizationPlugin) throws Exception {
 		component = new Component();
 		Server server = component.getServers().add(Protocol.HTTP, ENDPOINT_PORT);
@@ -136,6 +138,7 @@ public class OCCITestHelper {
 		ResourceRepository.init(properties);
 
 		ManagerController facade = new ManagerController(properties, Mockito.mock(ScheduledExecutorService.class));
+		TestDataStorageHelper.clearManagerDataStore(facade.getManagerDataStoreController().getManagerDatabase());
 		facade.setComputePlugin(computePlugin);
 		facade.setAuthorizationPlugin(authorizationPlugin);
 		facade.setLocalIdentityPlugin(identityPlugin);
@@ -143,6 +146,8 @@ public class OCCITestHelper {
 
 		component.getDefaultHost().attach(new OCCIApplication(facade));
 		component.start();
+		
+		return facade;
 	}
 
 	public ManagerController initializeComponentCompute(ComputePlugin computePlugin, IdentityPlugin identityPlugin, IdentityPlugin federationIdentityPlugin,
@@ -202,6 +207,7 @@ public class OCCITestHelper {
 		}
 
 		ManagerController facade = new ManagerController(properties, null);
+		TestDataStorageHelper.clearManagerDataStore(facade.getManagerDataStoreController().getManagerDatabase());
 		facade.setComputePlugin(computePlugin);
 		facade.setAuthorizationPlugin(authorizationPlugin);
 		facade.setLocalCredentailsPlugin(mapperPlugin);
@@ -255,6 +261,7 @@ public class OCCITestHelper {
 		}
 
 		ManagerController facade = new ManagerController(properties, null);
+		TestDataStorageHelper.clearManagerDataStore(facade.getManagerDataStoreController().getManagerDatabase());
 		facade.setNetworkPlugin(networkPlugin);
 		facade.setAuthorizationPlugin(authorizationPlugin);
 		facade.setLocalCredentailsPlugin(mapperPlugin);

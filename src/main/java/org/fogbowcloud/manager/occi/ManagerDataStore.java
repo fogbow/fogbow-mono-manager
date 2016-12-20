@@ -721,6 +721,47 @@ public class ManagerDataStore {
 		return false;
 	}
 	
+	private static final String REMOVE_ALL_VALUES_FEDERATION_MEMBER_TABLE_SQL = "DELETE"
+			+ " FROM " + FEDERATION_MEMBER_SERVERED_TABLE_NAME;
+	private static final String REMOVE_ALL_VALUES_ORDER_TABLE_SQL = "DELETE"
+			+ " FROM " + ORDER_TABLE_NAME;
+	private static final String REMOVE_ALL_VALUES_STORAGELINK_TABLE_SQL = "DELETE"
+			+ " FROM " + STORAGELINK_TABLE_NAME;
+	
+	@SuppressWarnings("resource")
+	public boolean removeAllValuesInAllTable() {
+		PreparedStatement removeAllValueInAllTableStmt = null;
+		Connection connection = null;
+		try {
+			connection = getConnection();
+			connection.setAutoCommit(false);
+			
+			removeAllValueInAllTableStmt = connection.prepareStatement(REMOVE_ALL_VALUES_FEDERATION_MEMBER_TABLE_SQL);
+			removeAllValueInAllTableStmt.executeUpdate();
+			
+			removeAllValueInAllTableStmt = connection.prepareStatement(REMOVE_ALL_VALUES_ORDER_TABLE_SQL);
+			removeAllValueInAllTableStmt.executeUpdate();
+			
+			removeAllValueInAllTableStmt = connection.prepareStatement(REMOVE_ALL_VALUES_STORAGELINK_TABLE_SQL);
+			removeAllValueInAllTableStmt.executeUpdate();
+			
+			connection.commit();
+			return true;
+		} catch (SQLException e) {
+			LOGGER.error("Couldn't remove all values in all table servered.", e);
+			try {
+				if (connection != null) {
+					connection.rollback();
+				}
+			} catch (SQLException e1) {
+				LOGGER.error("Couldn't rollback transaction.", e1);
+			}
+		} finally {
+			close(removeAllValueInAllTableStmt, connection);
+		}
+		return false;		
+	}
+	
 	public Connection getConnection() throws SQLException {
 		try {
 			SQLiteConfig config = new SQLiteConfig();

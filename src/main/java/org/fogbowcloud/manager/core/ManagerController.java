@@ -1942,7 +1942,7 @@ public class ManagerController {
 		return this.managerDataStoreController;
 	}
 	
-	public void setDataStoreController(ManagerDataStoreController managerDataStoreController) {
+	public void setManagerDataStoreController(ManagerDataStoreController managerDataStoreController) {
 		this.managerDataStoreController = managerDataStoreController;
 	}
 	
