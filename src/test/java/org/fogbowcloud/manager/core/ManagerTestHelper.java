@@ -1,4 +1,4 @@
-package org.fogbowcloud.manager.core.util;
+package org.fogbowcloud.manager.core;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -19,7 +19,6 @@ import java.util.concurrent.TimeUnit;
 import org.dom4j.Attribute;
 import org.dom4j.Element;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
-import org.fogbowcloud.manager.core.CurrentThreadExecutorService;
 import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
@@ -34,6 +33,8 @@ import org.fogbowcloud.manager.core.plugins.StoragePlugin;
 import org.fogbowcloud.manager.core.plugins.capacitycontroller.satisfactiondriven.SatisfactionDrivenCapacityControllerPlugin;
 import org.fogbowcloud.manager.core.plugins.identity.openstackv2.KeystoneIdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.memberauthorization.DefaultMemberAuthorizationPlugin;
+import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
+import org.fogbowcloud.manager.core.util.FakeXMPPServer;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.model.ErrorType;
 import org.fogbowcloud.manager.occi.model.OCCIException;
@@ -391,6 +392,8 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		this.executorService = Mockito.mock(ScheduledExecutorService.class);
 		ManagerController managerController = Mockito.spy(new ManagerController(properties, this.executorService));		
 
+		Mockito.doNothing().when(managerController).triggerOrderScheduler();
+		
 		// mocking compute
 		computePlugin = Mockito.mock(ComputePlugin.class);
 		Mockito.when(

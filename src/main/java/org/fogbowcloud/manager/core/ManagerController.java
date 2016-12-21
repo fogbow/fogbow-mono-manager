@@ -1575,7 +1575,7 @@ public class ManagerController {
 		return command;
 	}
 
-	private void triggerOrderScheduler() {
+	protected void triggerOrderScheduler() {
 		String schedulerPeriodStr = properties.getProperty(ConfigurationConstants.SCHEDULER_PERIOD_KEY);
 		long schedulerPeriod = schedulerPeriodStr == null ? DEFAULT_SCHEDULER_PERIOD : Long.valueOf(schedulerPeriodStr);
 		orderSchedulerTimer.scheduleAtFixedRate(new TimerTask() {
@@ -2155,7 +2155,7 @@ public class ManagerController {
 	protected FailedBatch getFailedBatches() {
 		return failedBatch;
 	}
-
+	
 	protected class FailedBatch {
 		private Map<String, FailedBatchType> failedBatches = new HashMap<String, FailedBatchType>();
 

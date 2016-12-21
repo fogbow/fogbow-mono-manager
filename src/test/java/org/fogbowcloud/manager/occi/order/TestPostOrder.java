@@ -108,14 +108,14 @@ public class TestPostOrder {
 		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		post.addHeader(OCCIHeaders.CATEGORY, category.toHeader());
 		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE,
-				OrderAttribute.INSTANCE_COUNT.getValue() + " = 200");
+				OrderAttribute.INSTANCE_COUNT.getValue() + " = 20");
 		post.addHeader(OCCIHeaders.X_OCCI_ATTRIBUTE,
 				OrderAttribute.RESOURCE_KIND.getValue() + "=" + OrderConstants.COMPUTE_TERM);		
 		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(post);
 		List<String> orderIDs = OCCITestHelper.getOrderIdsPerLocationHeader(response);
 		
-		Assert.assertEquals(200, orderIDs.size());
+		Assert.assertEquals(20, orderIDs.size());
 		Assert.assertEquals(HttpStatus.SC_CREATED, response.getStatusLine().getStatusCode());
 	}
 

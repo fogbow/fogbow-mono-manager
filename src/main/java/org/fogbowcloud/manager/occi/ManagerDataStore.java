@@ -70,6 +70,7 @@ public class ManagerDataStore {
 			connection = getConnection();
 			statement = connection.createStatement();
 			statement.execute("PRAGMA foreign_keys = ON;");
+			statement.execute("PRAGMA busy_timeout=30000;");		
 			statement.execute("CREATE TABLE IF NOT EXISTS " + ORDER_TABLE_NAME + "(" 
 							+ ORDER_ID + " VARCHAR(255) PRIMARY KEY, "
 							+ INSTANCE_ID + " VARCHAR(255), "
@@ -632,7 +633,7 @@ public class ManagerDataStore {
 			
 			connection.commit();
 			return true;
-		} catch (SQLException e) {
+		} catch (SQLException e) {e.printStackTrace();
 			LOGGER.error("Couldn't create federation member.", e);
 			try {
 				if (connection != null) {
@@ -766,7 +767,8 @@ public class ManagerDataStore {
 		try {
 			SQLiteConfig config = new SQLiteConfig();
 			config.enforceForeignKeys(true);  
-			return DriverManager.getConnection(this.dataStoreURL, config.toProperties());
+			config.setBusyTimeout("30000");
+			return DriverManager.getConnection(this.dataStoreURL, config.toProperties());				
 		} catch (SQLException e) {
 			LOGGER.error("Error while getting a new connection from the connection pool.", e);
 			throw e;

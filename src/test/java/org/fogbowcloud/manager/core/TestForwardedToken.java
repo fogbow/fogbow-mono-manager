@@ -5,7 +5,6 @@ import java.util.HashMap;
 
 import org.dom4j.Element;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
-import org.fogbowcloud.manager.core.util.ManagerTestHelper;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.order.Order;

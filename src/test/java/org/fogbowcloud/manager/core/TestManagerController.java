@@ -37,7 +37,6 @@ import org.fogbowcloud.manager.core.plugins.NetworkPlugin;
 import org.fogbowcloud.manager.core.plugins.accounting.AccountingInfo;
 import org.fogbowcloud.manager.core.plugins.compute.openstack.OpenStackOCCIComputePlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
-import org.fogbowcloud.manager.core.util.ManagerTestHelper;
 import org.fogbowcloud.manager.occi.ManagerDataStore;
 import org.fogbowcloud.manager.occi.ManagerDataStoreController;
 import org.fogbowcloud.manager.occi.TestDataStorageHelper;
@@ -1643,7 +1642,7 @@ public class TestManagerController {
 	@Test
 	public void testOneTimeOrderSetOpenAndClosed() throws InterruptedException {
 		long expirationOrderTime = System.currentTimeMillis()
-				+ DefaultDataTestHelper.SCHEDULER_PERIOD;
+				+ DefaultDataTestHelper.GRACE_TIME;
 
 		// setting order attributes
 		xOCCIAtt.put(OrderAttribute.TYPE.getValue(), OrderType.ONE_TIME.getValue());
@@ -1665,8 +1664,7 @@ public class TestManagerController {
 		Assert.assertNull(orders.get(0).getProvidingMemberId());
 
 		// waiting expiration time
-		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD + DefaultDataTestHelper.GRACE_TIME);
-
+		Thread.sleep(DefaultDataTestHelper.GRACE_TIME * 2);
 		managerController.checkAndSubmitOpenOrders();
 		
 		// checking if order state was set to closed
@@ -4254,8 +4252,10 @@ public class TestManagerController {
 				, "requestingMemberId", new Date().getTime(), true, OrderState.FULFILLED, null, xOCCIAtt);
 		
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
+		Instance instanceNull = null;
+		Instance instance = new Instance(instanceId);
 		Mockito.when(computePlugin.getInstance(federationUserToken, instanceId))
-				.thenReturn(new Instance(instanceId), null);
+				.thenReturn(instance, instanceNull);
 		managerController.setComputePlugin(computePlugin);
 		
 		long now = System.currentTimeMillis();
@@ -4293,7 +4293,6 @@ public class TestManagerController {
 		HashMap<String, String> xOCCIAtt = new HashMap<String, String>();
 		xOCCIAtt.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.COMPUTE_TERM);
 		String requestingMemberId = "requesting_member_id";
-		String user = "one_user";
 		
 		ManagerDataStoreController managerDataStoreController = managerController.getManagerDataStoreController();
 		Order orderServeredComputeFullfield = new Order("id_one", token, "instance_id_one", null, requestingMemberId, 

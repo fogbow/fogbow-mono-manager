@@ -2,8 +2,8 @@ package org.fogbowcloud.manager.xmpp;
 
 import java.util.HashMap;
 
+import org.fogbowcloud.manager.core.ManagerTestHelper;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
-import org.fogbowcloud.manager.core.util.ManagerTestHelper;
 import org.fogbowcloud.manager.occi.model.ErrorType;
 import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;
