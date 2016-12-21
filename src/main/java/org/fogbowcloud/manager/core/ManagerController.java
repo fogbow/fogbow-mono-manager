@@ -99,8 +99,6 @@ public class ManagerController {
 																			// minutes
 	private static final long DEFAULT_SERVED_ORDER_MONITORING_PERIOD = 120000; // 2
 																					// minutes
-	private static final long DEFAULT_GARBAGE_COLLECTOR_PERIOD = 240000; // 4
-																			// minutes
 	private static final long DEFAULT_INSTANCE_IP_MONITORING_PERIOD = 10000; // 10
 																				// seconds
 	private static final int DEFAULT_MAX_IP_MONITORING_TRIES = 90; // 30 tries
@@ -117,7 +115,6 @@ public class ManagerController {
 	private final ManagerTimer orderSchedulerTimer;
 	private final ManagerTimer instanceMonitoringTimer;
 	private final ManagerTimer servedOrderMonitoringTimer;
-	private final ManagerTimer garbageCollectorTimer;
 	private final ManagerTimer accountingUpdaterTimer;
 	private final ManagerTimer capacityControllerUpdaterTimer;
 
@@ -164,14 +161,12 @@ public class ManagerController {
 			this.orderSchedulerTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
 			this.instanceMonitoringTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
 			this.servedOrderMonitoringTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
-			this.garbageCollectorTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
 			this.accountingUpdaterTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
 			this.capacityControllerUpdaterTimer = new ManagerTimer(Executors.newScheduledThreadPool(1)); 
 		} else {
 			this.orderSchedulerTimer = new ManagerTimer(executor);
 			this.instanceMonitoringTimer = new ManagerTimer(executor);
 			this.servedOrderMonitoringTimer = new ManagerTimer(executor);
-			this.garbageCollectorTimer = new ManagerTimer(executor);
 			this.accountingUpdaterTimer = new ManagerTimer(executor);
 			this.capacityControllerUpdaterTimer = new ManagerTimer(executor);
 		}
@@ -268,7 +263,7 @@ public class ManagerController {
 				if (order.getState().equals(OrderState.FULFILLED)
 						|| order.getState().equals(OrderState.DELETED)) {
 					instance = getInstance(order, order.getResourceKing());
-					LOGGER.debug(instance.getId() + " was recovered to request " + order.getId());
+					LOGGER.debug(instance.getId() + " was recovered to order " + order.getId());
 				}
 			} catch (OCCIException e) {
 				LOGGER.debug(order.getGlobalInstanceId() + " does not exist anymore.", e);
@@ -406,10 +401,6 @@ public class ManagerController {
 
 	public void setComputePlugin(ComputePlugin computePlugin) {
 		this.computePlugin = computePlugin;
-		// garbage collector may starting only after set compute plugin
-		if (!garbageCollectorTimer.isScheduled()) {
-			triggerGarbageCollector();
-		}
 	}
 
 	public void setLocalIdentityPlugin(IdentityPlugin identityPlugin) {
@@ -425,42 +416,6 @@ public class ManagerController {
 		// capacity controller updater should start only after setting capacity controller plugin
 		if (!capacityControllerUpdaterTimer.isScheduled()) {
 			triggerCapacityControllerUpdater();
-		}
-	}
-
-	private void triggerGarbageCollector() {
-		String garbageCollectorPeriodStr = properties.getProperty(ConfigurationConstants.GARBAGE_COLLECTOR_PERIOD_KEY);
-		final long garbageCollectorPeriod = garbageCollectorPeriodStr == null ? DEFAULT_GARBAGE_COLLECTOR_PERIOD
-				: Long.valueOf(garbageCollectorPeriodStr);
-
-		garbageCollectorTimer.scheduleAtFixedRate(new TimerTask() {
-			@Override
-			public void run() {	
-				try {
-					garbageCollector();					
-				} catch (Throwable e) {
-					LOGGER.error("Error while executing garbage collector", e);
-				}
-			}
-		}, 0, garbageCollectorPeriod);
-	}
-
-	protected void garbageCollector() {
-		LOGGER.debug("Garbage collector...");
-		if (computePlugin != null) {
-			List<Instance> federationInstances = getAllFogbowFederationInstances();
-			LOGGER.debug("Number of federation instances = " + federationInstances.size());
-			for (Instance instance : federationInstances) {
-				LOGGER.debug("federation instance=" + instance.getId());
-				Order order = managerDataStoreController.getOrderByInstance(instance.getId());
-				LOGGER.debug("Order for instance " + instance.getId() + " is " + order);
-				if ((!instanceHasOrderRelatedTo(null, generateGlobalId(instance.getId(), null)) 
-						&& order != null && !order.isLocal()) || order == null) {
-					// this is an orphan instance
-					LOGGER.debug("Removing the orphan instance " + instance.getId());
-					this.computePlugin.removeInstance(getTokenPerInstance(instance.getId()), instance.getId());
-				}
-			}
 		}
 	}
 

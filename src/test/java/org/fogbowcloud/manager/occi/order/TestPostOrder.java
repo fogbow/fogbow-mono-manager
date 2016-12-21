@@ -13,9 +13,11 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.HttpClients;
+import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
+import org.fogbowcloud.manager.occi.TestDataStorageHelper;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.ErrorType;
 import org.fogbowcloud.manager.occi.model.OCCIException;
@@ -33,6 +35,7 @@ import org.restlet.data.MediaType;
 public class TestPostOrder {
 
 	private OCCITestHelper orderHelper;
+	private ManagerController managerController;
 
 	@SuppressWarnings("unchecked")
 	@Before
@@ -53,7 +56,7 @@ public class TestPostOrder {
 
 		AuthorizationPlugin authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
 		Mockito.when(authorizationPlugin.isAuthorized(Mockito.any(Token.class))).thenReturn(true);
-		this.orderHelper.initializeComponent(computePlugin, identityPlugin, authorizationPlugin);
+		managerController = this.orderHelper.initializeComponent(computePlugin, identityPlugin, authorizationPlugin);
 	}
 
 	@Test
@@ -321,6 +324,7 @@ public class TestPostOrder {
 	
 	@After
 	public void tearDown() throws Exception {
+		TestDataStorageHelper.clearManagerDataStore(managerController.getManagerDataStoreController().getManagerDatabase());
 		this.orderHelper.stopComponent();
 	}
 }
