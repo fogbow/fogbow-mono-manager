@@ -1709,7 +1709,7 @@ public class TestManagerController {
 		Assert.assertNull(orders.get(0).getProvidingMemberId());
 
 		// sleeping for a time and order not valid yet
-		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD + DefaultDataTestHelper.GRACE_TIME);
+		Thread.sleep(DefaultDataTestHelper.GRACE_TIME);
 		managerController.checkAndSubmitOpenOrders();
 
 		// check that order is not in valid period yet
@@ -2357,6 +2357,65 @@ public class TestManagerController {
 	
 		// checking there is not served order		
 		Assert.assertEquals(0, managerControllerSpy.getServedOrders().size());		
+	}
+	
+	@Test
+	public void testMonitorServedBadRequestInComunication() throws InterruptedException{
+		
+		ManagerController managerControllerSpy = this.managerController;		
+		
+		// checking there is not served order
+		Assert.assertEquals(0, managerControllerSpy.getServedOrders().size());
+		
+		mockOrderInstance();
+		
+		// mocking packet sender
+		IQ iq = new IQ();
+		iq.setTo("manager1-test.com");
+		iq.setType(Type.get);
+		Element queryEl = iq.getElement().addElement("query",
+				ManagerXmppComponent.INSTANCEBEINGUSED_NAMESPACE);
+		Element instanceEl = queryEl.addElement("instance");
+		instanceEl.addElement("id").setText(DefaultDataTestHelper.INSTANCE_ID);
+
+		IQ response = IQ.createResultIQ(iq);
+		
+		// timeout for example
+		response.setError(Condition.bad_request);
+		
+		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);
+		Mockito.when(packetSender.syncSendPacket(Mockito.any(IQ.class))).thenReturn(response);
+		managerControllerSpy.setPacketSender(packetSender);
+				
+		Mockito.doReturn(true).when(managerControllerSpy).isThereEnoughQuota("manager1-test.com");
+		managerControllerSpy.queueServedOrder("manager1-test.com", new ArrayList<Category>(),
+				xOCCIAtt, "id1", managerTestHelper.getDefaultFederationToken());
+		managerControllerSpy.checkAndSubmitOpenOrders();
+		
+		// checking there is one served order
+		Assert.assertEquals(1, managerControllerSpy.getServedOrders().size());
+		Assert.assertEquals("manager1-test.com",
+				getOrderByInstanceId(managerControllerSpy.getServedOrders(),
+						DefaultDataTestHelper.INSTANCE_ID).getRequestingMemberId());
+		Assert.assertEquals(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
+				getOrderByInstanceId(managerControllerSpy.getServedOrders(),
+						DefaultDataTestHelper.INSTANCE_ID).getProvidingMemberId());
+		Assert.assertEquals("id1", getOrderByInstanceId(managerControllerSpy.getServedOrders(),
+						DefaultDataTestHelper.INSTANCE_ID).getId());
+
+		// monitoring served orders
+		managerControllerSpy.monitorServedOrders();
+	
+		// checking there is served order
+		Assert.assertEquals(1, managerControllerSpy.getServedOrders().size());	
+		Assert.assertEquals("manager1-test.com",
+				getOrderByInstanceId(managerControllerSpy.getServedOrders(),
+						DefaultDataTestHelper.INSTANCE_ID).getRequestingMemberId());
+		Assert.assertEquals(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
+				getOrderByInstanceId(managerControllerSpy.getServedOrders(),
+						DefaultDataTestHelper.INSTANCE_ID).getProvidingMemberId());
+		Assert.assertEquals("id1", getOrderByInstanceId(managerControllerSpy.getServedOrders(),
+						DefaultDataTestHelper.INSTANCE_ID).getId());		
 	}
 	
 	@Test

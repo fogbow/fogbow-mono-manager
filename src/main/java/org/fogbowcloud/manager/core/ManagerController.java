@@ -1698,7 +1698,11 @@ public class ManagerController {
 		} catch (OCCIException e) {
 			LOGGER.error("Error while checking if instance " + globalInstanceId + " is being used by "
 							+ servedOrder.getRequestingMemberId(), e);
-			return false;
+			
+			if (e.getType().equals(ErrorType.NOT_FOUND)) {
+				return false;
+			}
+			return true;
 		}
 	}
 
