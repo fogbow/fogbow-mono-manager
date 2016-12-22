@@ -68,9 +68,7 @@ public class ManagerDataStore {
 			Class.forName(MANAGER_DATASTORE_SQLITE_DRIVER);
 
 			connection = getConnection();
-			statement = connection.createStatement();
-			statement.execute("PRAGMA foreign_keys = ON;");
-			statement.execute("PRAGMA busy_timeout=30000;");		
+			statement = connection.createStatement();		
 			statement.execute("CREATE TABLE IF NOT EXISTS " + ORDER_TABLE_NAME + "(" 
 							+ ORDER_ID + " VARCHAR(255) PRIMARY KEY, "
 							+ INSTANCE_ID + " VARCHAR(255), "
