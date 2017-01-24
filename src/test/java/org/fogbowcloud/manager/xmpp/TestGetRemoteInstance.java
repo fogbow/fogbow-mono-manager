@@ -5,8 +5,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.fogbowcloud.manager.core.ManagerTestHelper;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
-import org.fogbowcloud.manager.core.util.ManagerTestHelper;
+import org.fogbowcloud.manager.occi.TestDataStorageHelper;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.instance.Instance.Link;
 import org.fogbowcloud.manager.occi.instance.InstanceState;
@@ -42,6 +43,7 @@ public class TestGetRemoteInstance {
 	@After
 	public void tearDown() throws Exception {
 		this.managerTestHelper.shutdown();
+		TestDataStorageHelper.removeDefaultFolderDataStore();
 	}
 
 	private Instance createInstance() {

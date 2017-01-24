@@ -30,6 +30,7 @@ import org.fogbowcloud.manager.occi.order.OrderAttribute;
 import org.fogbowcloud.manager.occi.order.OrderConstants;
 import org.fogbowcloud.manager.occi.order.OrderState;
 import org.fogbowcloud.manager.occi.util.OCCITestHelper;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -49,6 +50,7 @@ public class TestOCCIApplication {
 	@SuppressWarnings("unchecked")
 	@Before
 	public void setUp() {
+		
 		Properties properties = new Properties();
 		properties.put("scheduler_period", SCHEDULER_PERIOD.toString());
 		properties.put(ConfigurationConstants.XMPP_JID_KEY,
@@ -70,8 +72,9 @@ public class TestOCCIApplication {
 			}
 		});
 		
-		boolean initializeBD = false;
-		managerFacade = new ManagerController(properties, executor, initializeBD);
+		managerFacade = new ManagerController(properties, executor);
+		TestDataStorageHelper.clearManagerDataStore(
+				managerFacade.getManagerDataStoreController().getManagerDatabase());
 		occiApplication = new OCCIApplication(managerFacade);
 
 		// default instance count value is 1
@@ -121,6 +124,12 @@ public class TestOCCIApplication {
 	
 	public ManagerController getManagerFacade() {
 		return managerFacade;
+	}
+	
+	@After
+	public void tearDown() {
+		TestDataStorageHelper.clearManagerDataStore(
+				managerFacade.getManagerDataStoreController().getManagerDatabase());
 	}
 
 	@Test

@@ -10,9 +10,9 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 import org.dom4j.Element;
+import org.fogbowcloud.manager.core.ManagerTestHelper;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
-import org.fogbowcloud.manager.core.util.ManagerTestHelper;
 import org.jamppa.client.XMPPClient;
 import org.jivesoftware.smack.PacketListener;
 import org.jivesoftware.smack.XMPPException;

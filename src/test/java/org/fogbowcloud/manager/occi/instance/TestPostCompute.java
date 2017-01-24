@@ -21,6 +21,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.HttpClients;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
+import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
@@ -62,14 +63,14 @@ public class TestPostCompute {
 	private OCCITestHelper helper;
 	private ImageStoragePlugin imageStoragePlugin;
 	private MapperPlugin mapperPlugin;
+	private ManagerController managerController;
 
 	@Rule
 	public final ExpectedException exception = ExpectedException.none();
 	
 	@SuppressWarnings("unchecked")
 	@Before
-	public void setup() throws Exception {
-		TestDataStorageHelper.removeDefaultFolderDataStore();
+	public void setup() throws Exception {		
 		this.helper = new OCCITestHelper();
 
 		Map<String, String> map = new HashMap<String, String>();
@@ -117,7 +118,7 @@ public class TestPostCompute {
 		Map<String, List<Order>> ordersToAdd = new HashMap<String, List<Order>>();
 		ordersToAdd.put(OCCITestHelper.USER_MOCK, orders);
 
-		this.helper.initializeComponentCompute(computePlugin, identityPlugin, identityPlugin, authorizationPlugin,
+		this.managerController = this.helper.initializeComponentCompute(computePlugin, identityPlugin, identityPlugin, authorizationPlugin,
 				imageStoragePlugin, Mockito.mock(AccountingPlugin.class), Mockito.mock(AccountingPlugin.class), 
 				Mockito.mock(BenchmarkingPlugin.class), ordersToAdd, mapperPlugin);
 
@@ -125,7 +126,8 @@ public class TestPostCompute {
 
 	@After
 	public void tearDown() throws Exception {
-		TestDataStorageHelper.removeDefaultFolderDataStore();
+		TestDataStorageHelper.clearManagerDataStore(this.managerController
+				.getManagerDataStoreController().getManagerDatabase());
 		File dbFile = new File(OCCITestHelper.INSTANCE_DB_FILE + ".mv.db");
 		if (dbFile.exists()) {
 			dbFile.delete();

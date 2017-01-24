@@ -32,7 +32,6 @@ import org.fogbowcloud.manager.occi.order.Order;
 import org.fogbowcloud.manager.occi.order.OrderAttribute;
 import org.fogbowcloud.manager.occi.order.OrderConstants;
 import org.fogbowcloud.manager.occi.order.OrderState;
-import org.fogbowcloud.manager.occi.storage.StorageLinkRepository.StorageLink;
 import org.fogbowcloud.manager.occi.util.OCCITestHelper;
 import org.junit.After;
 import org.junit.Assert;
@@ -52,14 +51,12 @@ public class TestPostStorageLink {
 	private OCCITestHelper helper;
 	private ImageStoragePlugin imageStoragePlugin;
 	
-	@SuppressWarnings("unused")
 	private ManagerController facade;
 	private StoragePlugin storagePlugin;
 	private ComputePlugin computePlugin;
 	
 	@Before
 	public void setup() throws Exception {
-		TestDataStorageHelper.removeDefaultFolderDataStore();
 		this.helper = new OCCITestHelper();
 		
 		storagePlugin = Mockito.mock(StoragePlugin.class);
@@ -112,7 +109,7 @@ public class TestPostStorageLink {
 		
 		imageStoragePlugin = Mockito.mock(ImageStoragePlugin.class);
 		
-		List<StorageLink> storageLinks = new ArrayList<StorageLinkRepository.StorageLink>();
+		List<StorageLink> storageLinks = new ArrayList<StorageLink>();
 		
 		Map<String, List<StorageLink>> storageLinksToAdd = new HashMap<String, List<StorageLink>>();
 		storageLinksToAdd.put(OCCITestHelper.USER_MOCK, storageLinks);			
@@ -138,7 +135,8 @@ public class TestPostStorageLink {
 
 	@After
 	public void tearDown() throws Exception {
-		TestDataStorageHelper.removeDefaultFolderDataStore();
+		TestDataStorageHelper.clearManagerDataStore(
+				facade.getManagerDataStoreController().getManagerDatabase());
 		File dbFile = new File(OCCITestHelper.INSTANCE_DB_FILE + ".mv.db");
 		if (dbFile.exists()) {
 			dbFile.delete();

@@ -20,7 +20,14 @@ public class TestDataStorageHelper {
 		DataStoreHelper.dataStoreFolderExecution = null;
 	}
 	
-	public static void removeDefaultFolderDataStore() {		
+	public static void clearManagerDataStore(ManagerDataStore managerDataStore) {
+		if (managerDataStore == null) {
+			return;
+		}
+		managerDataStore.removeAllValuesInAllTable();
+	}
+	
+	public static void removeDefaultFolderDataStore() {
 		String pathFolderDataStores = DataStoreHelper.getPathFolderDataStoresFogbowManager();
 		File folder = new File(pathFolderDataStores);
 		File[] listFiles = folder.listFiles();

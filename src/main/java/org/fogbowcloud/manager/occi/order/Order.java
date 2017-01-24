@@ -27,6 +27,8 @@ public class Order {
 	private List<Category> categories;
 	private Map<String, String> xOCCIAtt;	
 	private String resourceKing;
+	private long syncronousTime;
+	private boolean syncronousStatus;
 	
 	private DateUtils dateUtils = new DateUtils();
 		
@@ -93,6 +95,22 @@ public class Order {
 		}
 	}
 
+	public boolean isSyncronousStatus() {
+		return syncronousStatus;
+	}
+	
+	public void setSyncronousStatus(boolean syncronousStatus) {
+		this.syncronousStatus = syncronousStatus;
+	}
+	
+	public long getSyncronousTime() {
+		return syncronousTime;
+	}
+	
+	public void setSyncronousTime(long syncronousTime) {
+		this.syncronousTime = syncronousTime;
+	}
+	
 	public String getRequirements() {
 		return xOCCIAtt.get(OrderAttribute.REQUIREMENTS.getValue());
 	}
@@ -168,6 +186,9 @@ public class Order {
 	}
 
 	public Map<String, String> getxOCCIAtt() {
+		if (xOCCIAtt == null) {
+			return new HashMap<String, String>();
+		}
 		return new HashMap<String, String>(xOCCIAtt);
 	}
 	

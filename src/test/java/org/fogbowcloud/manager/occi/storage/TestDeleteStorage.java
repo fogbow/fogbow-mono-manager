@@ -21,13 +21,13 @@ import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
 import org.fogbowcloud.manager.core.plugins.MapperPlugin;
 import org.fogbowcloud.manager.core.plugins.StoragePlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
+import org.fogbowcloud.manager.occi.TestDataStorageHelper;
 import org.fogbowcloud.manager.occi.model.OCCIHeaders;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.order.Order;
 import org.fogbowcloud.manager.occi.order.OrderAttribute;
 import org.fogbowcloud.manager.occi.order.OrderConstants;
 import org.fogbowcloud.manager.occi.order.OrderState;
-import org.fogbowcloud.manager.occi.storage.StorageLinkRepository.StorageLink;
 import org.fogbowcloud.manager.occi.util.OCCITestHelper;
 import org.fogbowcloud.manager.xmpp.AsyncPacketSender;
 import org.junit.After;
@@ -40,8 +40,9 @@ import org.xmpp.packet.Packet;
 
 public class TestDeleteStorage {
 
+	private static final String INSTANCE_ID_THREE = "u4gtffgcp1dijvbh9";
 	public static String INSTANCE_ID = "1234567ujhgf45hdb4w";
-	public static String OTHER_INSTANCE_ID = "otherInstanceId";
+	public static String INSTANCE_ID_TWO = "çljuokebvpdhqodkjh";
 	public static String FED_STORAGE_PREFIX = "federated_storage_";
 
 	private OCCITestHelper helper;
@@ -64,7 +65,7 @@ public class TestDeleteStorage {
 		
 		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Token tokenTwo = new Token("1", new Token.User(OCCITestHelper.USER_MOCK, ""), new Date(),
-		new HashMap<String, String>());
+				new HashMap<String, String>());
 		Mockito.when(identityPlugin.getToken(OCCITestHelper.ACCESS_TOKEN))
 				.thenReturn(tokenTwo);
 
@@ -72,20 +73,26 @@ public class TestDeleteStorage {
 		HashMap<String, String> attributes = new HashMap<String, String>();
 		attributes.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.STORAGE_TERM);
 		
-		Order orderOne = new Order("1", new Token(OCCITestHelper.ACCESS_TOKEN,
+		Order orderOne = new Order("orderIdOne", new Token(OCCITestHelper.ACCESS_TOKEN,
 				new Token.User(OCCITestHelper.USER_MOCK, ""), DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,
 				attributes), null, attributes, true, "");
 		orderOne.setInstanceId(INSTANCE_ID);
 		orderOne.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
 		orderOne.setState(OrderState.FULFILLED);
 		orders.add(orderOne);
-		Order orderTwo = new Order("2", new Token("otherToken", new Token.User("otherUser", ""),
+		Order orderTwo = new Order("orderIdTwo", new Token("otherToken", new Token.User(OCCITestHelper.USER_MOCK, ""),
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, attributes), null, attributes, true, "");
-		orderTwo.setInstanceId(OTHER_INSTANCE_ID);
+		orderTwo.setInstanceId(INSTANCE_ID_TWO);
 		orderTwo.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
 		orderTwo.setState(OrderState.FULFILLED);
 		orders.add(orderTwo);
-
+		Order orderThree = new Order("orderIdTrhee", new Token("otherTokenThree", new Token.User("Other", ""),
+				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, attributes), null, attributes, true, "");
+		orderThree.setInstanceId(INSTANCE_ID_THREE);
+		orderThree.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
+		orderThree.setState(OrderState.FULFILLED);
+		orders.add(orderThree);
+		
 		AuthorizationPlugin authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
 		Mockito.when(authorizationPlugin.isAuthorized(Mockito.any(Token.class))).thenReturn(true);
 		
@@ -117,6 +124,7 @@ public class TestDeleteStorage {
 
 	@After
 	public void tearDown() throws Exception {
+		TestDataStorageHelper.clearManagerDataStore(facade.getManagerDataStoreController().getManagerDatabase());
 		this.helper.stopComponent();
 	}
 
@@ -162,7 +170,7 @@ public class TestDeleteStorage {
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());		
 		
 		HttpDelete httpDelete = new HttpDelete(OCCITestHelper.URI_FOGBOW_STORAGE
-				+ OTHER_INSTANCE_ID + Order.SEPARATOR_GLOBAL_ID + OCCITestHelper.MEMBER_ID);
+				+ INSTANCE_ID_THREE + Order.SEPARATOR_GLOBAL_ID + OCCITestHelper.MEMBER_ID);
 		httpDelete.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		httpDelete.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		client = HttpClients.createMinimal();
@@ -209,11 +217,9 @@ public class TestDeleteStorage {
 		HttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(httpGet);
 		
-		StorageLinkRepository storageLinkRepository = new StorageLinkRepository();
-		StorageLink storageLink = new StorageLink("id", "source", INSTANCE_ID, "deviceId");
-		storageLink.setLocal(false);
-		storageLinkRepository.addStorageLink(OCCITestHelper.USER_MOCK, storageLink);
-		facade.setStorageLinkRepository(storageLinkRepository);
+		Token token = new Token("accessId", new Token.User(OCCITestHelper.USER_MOCK, ""), new Date(), null);
+		StorageLink storageLink = new StorageLink("id", "source", INSTANCE_ID, "deviceId", null, token, false);
+		facade.getManagerDataStoreController().addStorageLink(storageLink);
 		
 		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);
 		facade.setPacketSender(packetSender);
@@ -221,7 +227,7 @@ public class TestDeleteStorage {
 		Mockito.when(iq.getError()).thenReturn(null);
 		Mockito.when(packetSender.syncSendPacket(Mockito.any(Packet.class))).thenReturn(iq);
 		
-		Assert.assertEquals(1, facade.getStorageLinkRepository().getByUser(OCCITestHelper.USER_MOCK).size());		
+		Assert.assertEquals(1, facade.getManagerDataStoreController().getStorageLinksByUser(OCCITestHelper.USER_MOCK).size());		
 		
 		Assert.assertEquals(2, OCCITestHelper.getLocationIds(response).size());
 		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());		

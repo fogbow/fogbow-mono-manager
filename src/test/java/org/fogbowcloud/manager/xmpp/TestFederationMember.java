@@ -6,9 +6,9 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import org.fogbowcloud.manager.core.ManagerTestHelper;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
-import org.fogbowcloud.manager.core.util.ManagerTestHelper;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;

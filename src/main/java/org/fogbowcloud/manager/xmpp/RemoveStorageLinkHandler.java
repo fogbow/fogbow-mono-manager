@@ -6,7 +6,7 @@ import org.dom4j.Element;
 import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.Token;
-import org.fogbowcloud.manager.occi.storage.StorageLinkRepository.StorageLink;
+import org.fogbowcloud.manager.occi.storage.StorageLink;
 import org.jamppa.component.handler.AbstractQueryHandler;
 import org.xmpp.packet.IQ;
 

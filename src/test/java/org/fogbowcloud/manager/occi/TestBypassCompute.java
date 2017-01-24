@@ -68,6 +68,8 @@ public class TestBypassCompute {
 	
 	@Before
 	public void setup() throws Exception{
+		TestDataStorageHelper.removeDefaultFolderDataStore();
+		
 		setup(new ArrayList<Order>());
 	}
 	
@@ -296,10 +298,6 @@ public class TestBypassCompute {
 		Assert.assertEquals(HttpStatus.SC_UNAUTHORIZED, response.getStatusLine().getStatusCode());
 		Assert.assertEquals("Keystone uri='http://localhost:5000/'",
 				response.getFirstHeader(HeaderUtils.WWW_AUTHENTICATE).getValue());
-//		Assert.assertTrue(response.getFirstHeader(OCCIHeaders.CONTENT_TYPE).getValue()
-//				.startsWith(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE));
-//		Assert.assertEquals(ResponseConstants.UNAUTHORIZED,
-//				EntityUtils.toString(response.getEntity()));
 	}
 	
 	@Test

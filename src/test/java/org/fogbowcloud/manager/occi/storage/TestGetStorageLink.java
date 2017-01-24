@@ -13,6 +13,7 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.HttpClients;
+import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
@@ -20,13 +21,13 @@ import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.MapperPlugin;
 import org.fogbowcloud.manager.core.plugins.StoragePlugin;
+import org.fogbowcloud.manager.occi.TestDataStorageHelper;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.instance.InstanceState;
 import org.fogbowcloud.manager.occi.model.OCCIHeaders;
 import org.fogbowcloud.manager.occi.model.Resource;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.order.Order;
-import org.fogbowcloud.manager.occi.storage.StorageLinkRepository.StorageLink;
 import org.fogbowcloud.manager.occi.util.OCCITestHelper;
 import org.junit.After;
 import org.junit.Assert;
@@ -49,6 +50,7 @@ public class TestGetStorageLink {
 	private AuthorizationPlugin authorizationPlugin;
 	private OCCITestHelper helper;
 	private MapperPlugin mapperPlugin;
+	private ManagerController managerController;
 
 	@Before
 	public void setup() throws Exception {
@@ -74,9 +76,10 @@ public class TestGetStorageLink {
 				.thenReturn(new Instance(STORAGE_LINK_INSTANCE_2_ID));
 
 		identityPlugin = Mockito.mock(IdentityPlugin.class);
+		Token token = new Token("id", new Token.User(OCCITestHelper.USER_MOCK, ""), 
+		new Date(), new HashMap<String, String>());
 		Mockito.when(identityPlugin.getToken(OCCITestHelper.ACCESS_TOKEN))
-				.thenReturn(new Token("id", new Token.User(OCCITestHelper.USER_MOCK, ""), 
-				new Date(), new HashMap<String, String>()));
+				.thenReturn(token);
 		Mockito.when(identityPlugin.isValid(OCCITestHelper.ACCESS_TOKEN)).thenReturn(true);				
 				
 		Mockito.when(identityPlugin.getAuthenticationURI()).thenReturn("Keystone uri='http://localhost:5000/'");
@@ -89,22 +92,24 @@ public class TestGetStorageLink {
 		Map<String, List<Order>> ordersToAdd = new HashMap<String, List<Order>>();
 		ordersToAdd.put(OCCITestHelper.USER_MOCK, new LinkedList<Order>());
 		
-		List<StorageLink> storageLinks = new ArrayList<StorageLinkRepository.StorageLink>();
-		storageLinks.add(new StorageLink("One", "sourceOne", "targetOne", "deviceOne"));
-		storageLinks.add(new StorageLink("Two", "sourceTwo", "targetTwo", "deviceTwo"));
-		storageLinks.add(new StorageLink("Three", "sourceThree", "targetThree", "deviceThree"));
-		storageLinks.add(new StorageLink("Four", "sourceFour", "targetFour", "deviceFour"));
+		List<StorageLink> storageLinks = new ArrayList<StorageLink>();
+		storageLinks.add(new StorageLink("One", "sourceOne", "targetOne", "deviceOne", null, token, true));
+		storageLinks.add(new StorageLink("Two", "sourceTwo", "targetTwo", "deviceTwo", null, token, true));
+		storageLinks.add(new StorageLink("Three", "sourceThree", "targetThree", "deviceThree", null, token, true));
+		storageLinks.add(new StorageLink("Four", "sourceFour", "targetFour", "deviceFour", null, token, true));
 		
 		Map<String, List<StorageLink>> storageLinksToAdd = new HashMap<String, List<StorageLink>>();
 		storageLinksToAdd.put(OCCITestHelper.USER_MOCK, storageLinks);	
 		
-		this.helper.initializeComponentCompute(computePlugin, storagePlugin,
+		managerController = this.helper.initializeComponentCompute(computePlugin, storagePlugin,
 				identityPlugin, authorizationPlugin, null, Mockito.mock(AccountingPlugin.class),
 				Mockito.mock(BenchmarkingPlugin.class), ordersToAdd, storageLinksToAdd, mapperPlugin);
 	}
 
 	@After
 	public void tearDown() throws Exception {
+		TestDataStorageHelper.clearManagerDataStore(
+				this.managerController.getManagerDataStoreController().getManagerDatabase());
 		File dbFile = new File(OCCITestHelper.INSTANCE_DB_FILE + ".mv.db");
 		if (dbFile.exists()) {
 			dbFile.delete();

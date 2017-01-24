@@ -24,12 +24,13 @@ import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.MapperPlugin;
 import org.fogbowcloud.manager.core.plugins.NetworkPlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
+import org.fogbowcloud.manager.occi.ManagerDataStoreController;
 import org.fogbowcloud.manager.occi.OCCIConstants;
+import org.fogbowcloud.manager.occi.TestDataStorageHelper;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.OCCIHeaders;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.order.Order;
-import org.fogbowcloud.manager.occi.order.OrderRepository;
 import org.fogbowcloud.manager.occi.order.OrderState;
 import org.fogbowcloud.manager.occi.util.OCCITestHelper;
 import org.junit.After;
@@ -53,8 +54,9 @@ public class TestPostNetwork {
 	private Token tokenA;
 	private Token tokenB;
 	private ManagerController facade;
-	private OrderRepository orderRepositoryMock;
+	private ManagerDataStoreController managerDataStoreControllerMock;
 	
+	@SuppressWarnings("unchecked")
 	@Before
 	public void setup() throws Exception {
 		
@@ -68,7 +70,7 @@ public class TestPostNetwork {
 		identityPlugin = Mockito.mock(IdentityPlugin.class);
 		authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
 		mapperPlugin = Mockito.mock(MapperPlugin.class);
-		orderRepositoryMock = Mockito.mock(OrderRepository.class);
+		managerDataStoreControllerMock = Mockito.mock(ManagerDataStoreController.class);
 		
 		ordersToAdd = new HashMap<String, List<Order>>();
 		ordersToAdd.put(BASIC_TOKEN, new ArrayList<Order>());
@@ -103,6 +105,8 @@ public class TestPostNetwork {
 
 	@After
 	public void tearDown() throws Exception {
+		TestDataStorageHelper.clearManagerDataStore(
+				facade.getManagerDataStoreController().getManagerDatabase());
 		File dbFile = new File(INSTANCE_DB_FILE + ".mv.db");
 		if (dbFile.exists()) {
 			dbFile.delete();
@@ -239,12 +243,13 @@ public class TestPostNetwork {
 		List<Order> orders = new ArrayList<Order>();
 		orders.add(order);
 		
-		Mockito.when(orderRepositoryMock.getByUserId(Mockito.anyString()))
+		Mockito.when(managerDataStoreControllerMock.getOrdersByUserId(Mockito.anyString()))
 		.thenReturn(orders);
-		Mockito.when(orderRepositoryMock.get(Mockito.anyString(), Mockito.anyString(), Mockito.anyBoolean())).thenReturn(order);
-		Mockito.when(orderRepositoryMock.get(Mockito.anyString())).thenReturn(order);
+		Mockito.when(managerDataStoreControllerMock.getOrder(Mockito.anyString(), 
+				Mockito.anyString(), Mockito.anyBoolean())).thenReturn(order);
+		Mockito.when(managerDataStoreControllerMock.getOrder(Mockito.anyString())).thenReturn(order);
 		
-		facade.setOrders(orderRepositoryMock);
+		facade.setManagerDataStoreController(managerDataStoreControllerMock);
 		
 		HttpPost httpPost = new HttpPost(OCCITestHelper.URI_FOGBOW_NETWORK);
 		httpPost.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
