@@ -251,9 +251,9 @@ public class TestDeleteOrder {
 	private int deletedInstancesCounter(HttpResponse response) throws ParseException, IOException,
 			URISyntaxException, HttpException {
 		HttpClient client = HttpClients.createMinimal();
-		List<String> orderLocations2 = OCCITestHelper.getLocationIds(response);
+		List<String> orderLocations = OCCITestHelper.getLocationIds(response);
 		int countDeletedInscantes = 0;
-		for (String orderLocation : orderLocations2) {
+		for (String orderLocation : orderLocations) {
 			HttpGet getSpecific = new HttpGet(orderLocation);
 			getSpecific.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 			getSpecific.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);

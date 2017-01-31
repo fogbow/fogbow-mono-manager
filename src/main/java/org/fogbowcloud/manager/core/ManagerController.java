@@ -89,25 +89,15 @@ public class ManagerController {
 
 	public static final String DEFAULT_COMMON_SSH_USER = "fogbow";
 
-	private static final Logger LOGGER = Logger.getLogger(ManagerController.class);
-
 	private static final int DEFAULT_MAX_WHOISALIVE_MANAGER_COUNT = 100;
 	private static final long DEFAULT_SCHEDULER_PERIOD = 30000; // 30 seconds
-	protected static final int DEFAULT_ASYNC_ORDER_WAITING_INTERVAL = 300000; // 5
-																				// minutes
-	private static final long DEFAULT_INSTANCE_MONITORING_PERIOD = 120000; // 2
-																			// minutes
-	private static final long DEFAULT_SERVED_ORDER_MONITORING_PERIOD = 120000; // 2
-																					// minutes
-	private static final long DEFAULT_INSTANCE_IP_MONITORING_PERIOD = 10000; // 10
-																				// seconds
+	protected static final int DEFAULT_ASYNC_ORDER_WAITING_INTERVAL = 300000; // 5 minutes
+	private static final long DEFAULT_SERVED_ORDER_MONITORING_PERIOD = 120000; // 2 minutes
+	private static final long DEFAULT_INSTANCE_IP_MONITORING_PERIOD = 10000; // 10 seconds
 	private static final int DEFAULT_MAX_IP_MONITORING_TRIES = 90; // 30 tries
-	private static final long DEFAULT_ACCOUNTING_UPDATE_PERIOD = 300000; // 5
-																			// minutes
-	
+	private static final long DEFAULT_ACCOUNTING_UPDATE_PERIOD = 300000; // 5 minutes
 	protected static final int DEFAULT_CHECK_STILL_ALIVE_WAIT_TIME = 1000; // 1 second
 	private static final int DEFAULT_CHECK_STILL_ALIVE_TIMES = 5; // 5 times
-	
 	private static final long DEFAULT_CAPACITY_CONTROLLER_UPDATE_PERIOD = 600000; // 10 minutes
 	
 	public static final int DEFAULT_MAX_POOL = 200;
@@ -142,10 +132,13 @@ public class ManagerController {
 	private ExecutorService benchmarkExecutor = Executors.newCachedThreadPool();
 	private SshClientPool sshClientPool = new SshClientPool();
 	private FailedBatch failedBatch = new FailedBatch();
+	private ManagerControllerHelper.MonitoringHelper monitoringHelper;
 
 	private DateUtils dateUtils = new DateUtils();
 
 	private PoolingHttpClientConnectionManager cm;
+	
+	private static final Logger LOGGER = Logger.getLogger(ManagerController.class);
 
 	public ManagerController(Properties properties) {
 		this(properties, null);
@@ -156,6 +149,7 @@ public class ManagerController {
 			throw new IllegalArgumentException();
 		}
 		this.properties = properties;
+		this.monitoringHelper = new ManagerControllerHelper().new MonitoringHelper(this.properties);
 		setFlavorsProvided(ResourceRepository.getStaticFlavors(properties));
 		if (executor == null) {
 			this.orderSchedulerTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
@@ -1305,10 +1299,7 @@ public class ManagerController {
 	}
 
 	protected void triggerInstancesMonitor() {
-		String instanceMonitoringPeriodStr = properties
-				.getProperty(ConfigurationConstants.INSTANCE_MONITORING_PERIOD_KEY);
-		final long instanceMonitoringPeriod = instanceMonitoringPeriodStr == null ? DEFAULT_INSTANCE_MONITORING_PERIOD
-				: Long.valueOf(instanceMonitoringPeriodStr);
+		final long instanceMonitoringPeriod = ManagerControllerHelper.getInstanceMonitoringPeriod(this.properties);
 
 		instanceMonitoringTimer.scheduleAtFixedRate(new TimerTask() {
 			@Override
@@ -1325,19 +1316,34 @@ public class ManagerController {
 	protected void monitorInstancesForLocalOrders() {
 		boolean turnOffTimer = true;
 		LOGGER.info("Monitoring instances.");
-
-		for (Order order : managerDataStoreController.getAllLocalOrders()) {
+		this.monitoringHelper.checkDeadOrderAttempts();
+		
+		for (Order order : this.managerDataStoreController.getAllLocalOrders()) {
 			if (order.getState().in(OrderState.FULFILLED, OrderState.DELETED, OrderState.SPAWNING)) {
 				turnOffTimer = false;
 			}
 			
 			if (order.getState().in(OrderState.FULFILLED, OrderState.DELETED)) {
+				boolean isNotFound = false;
 				try {
 					LOGGER.debug("Monitoring instance of order: " + order);
 					removeFailedInstance(order, getInstance(order, order.getResourceKing()));
-				} catch (Throwable e) {
+					this.monitoringHelper.removeOrderAttempt(order);
+				} catch (OCCIException e) {
 					LOGGER.debug("Error while getInstance of " + order.getInstanceId(), e);
-					instanceRemoved(managerDataStoreController.getOrder(order.getId()));
+					
+					if (e.getType().equals(ErrorType.NOT_FOUND)) {
+						isNotFound = true;
+					} else {
+						this.monitoringHelper.addAttempt(order);
+					}
+				} catch (Throwable e) {
+					this.monitoringHelper.addAttempt(order);
+				}
+				
+				if (isNotFound || this.monitoringHelper.isMaximumAttempt(order)) {
+					instanceRemoved(this.managerDataStoreController.getOrder(order.getId()));
+					this.monitoringHelper.removeOrderAttempt(order);
 				}
 			}
 		}
@@ -1668,18 +1674,22 @@ public class ManagerController {
 
 	protected void monitorServedOrders() {
 		LOGGER.info("Monitoring served orders.");
+		monitoringHelper.checkDeadOrderAttempts();
 
 		List<Order> servedOrders = managerDataStoreController.getAllServedOrders();
 		for (Order order : servedOrders) {
-			if (!isInstanceBeingUsedByRemoteMember(order)) {
+			if (!isInstanceBeingUsedByRemoteMember(order) || monitoringHelper.isMaximumAttempt(order)) {
 				LOGGER.debug("The instance " + order.getInstanceId() + " is not being used anymore by "
 						+ order.getRequestingMemberId() + " and will be removed.");
 				if (order.getInstanceId() != null) {
 					try {
-						removeInstanceForRemoteMember(order.getInstanceId());						
+						removeInstanceForRemoteMember(order.getInstanceId());			
 					} catch (Exception e) {}
 				}
 				managerDataStoreController.excludeOrder(order.getId());
+				monitoringHelper.removeOrderAttempt(order);
+			} else {
+				monitoringHelper.addAttempt(order);
 			}
 		}
 

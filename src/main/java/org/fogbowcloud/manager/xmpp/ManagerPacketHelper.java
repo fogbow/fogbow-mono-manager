@@ -264,9 +264,8 @@ public class ManagerPacketHelper {
 
 		IQ response = (IQ) packetSender.syncSendPacket(iq);
 		if (response == null) {
-			throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
+			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.XMPP_RESPONSE_NULL);
 		}
-
 		if (response.getError() != null) {
 			raiseException(response.getError());
 		}
@@ -289,6 +288,9 @@ public class ManagerPacketHelper {
 		instanceEl.addElement(ID_EL).setText(order.getInstanceId());
 
 		IQ response = (IQ) packetSender.syncSendPacket(iq);
+		if (response == null) {
+			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.XMPP_RESPONSE_NULL);
+		}
 		if (response.getError() != null) {
 			raiseException(response.getError());
 		}
@@ -321,7 +323,10 @@ public class ManagerPacketHelper {
 					userFederationToken.getUser().getName());		
 		}
 		
-		IQ response = (IQ) packetSender.syncSendPacket(iq);			
+		IQ response = (IQ) packetSender.syncSendPacket(iq);
+		if (response == null) {
+			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.XMPP_RESPONSE_NULL);
+		}
 		if (response.getError() != null) {
 			raiseException(response.getError());
 		}
@@ -448,6 +453,9 @@ public class ManagerPacketHelper {
 			instanceEl.addElement(ID_EL).setText(instanceId);
 		}
 		IQ response = (IQ) packetSender.syncSendPacket(iq);
+		if (response == null) {
+			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.XMPP_RESPONSE_NULL);
+		}
 		if (response.getError() != null) {
 			raiseException(response.getError());
 		}
@@ -493,6 +501,9 @@ public class ManagerPacketHelper {
 		userEl.addElement(NAME_EL).setText(token.getUser().getName());		
 
 		IQ response = (IQ) packetSender.syncSendPacket(iq);
+		if (response == null) {
+			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.XMPP_RESPONSE_NULL);
+		}		
 		if (response.getError() != null) {
 			raiseException(response.getError());
 		}
