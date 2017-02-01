@@ -92,14 +92,12 @@ public class ManagerController {
 	private static final int DEFAULT_MAX_WHOISALIVE_MANAGER_COUNT = 100;
 	private static final long DEFAULT_SCHEDULER_PERIOD = 30000; // 30 seconds
 	protected static final int DEFAULT_ASYNC_ORDER_WAITING_INTERVAL = 300000; // 5 minutes
-	private static final long DEFAULT_SERVED_ORDER_MONITORING_PERIOD = 120000; // 2 minutes
 	private static final long DEFAULT_INSTANCE_IP_MONITORING_PERIOD = 10000; // 10 seconds
 	private static final int DEFAULT_MAX_IP_MONITORING_TRIES = 90; // 30 tries
 	private static final long DEFAULT_ACCOUNTING_UPDATE_PERIOD = 300000; // 5 minutes
 	protected static final int DEFAULT_CHECK_STILL_ALIVE_WAIT_TIME = 1000; // 1 second
 	private static final int DEFAULT_CHECK_STILL_ALIVE_TIMES = 5; // 5 times
 	private static final long DEFAULT_CAPACITY_CONTROLLER_UPDATE_PERIOD = 600000; // 10 minutes
-	
 	public static final int DEFAULT_MAX_POOL = 200;
 
 	private final ManagerTimer orderSchedulerTimer;
@@ -1170,10 +1168,7 @@ public class ManagerController {
 	}
 
 	private void triggerServedOrderMonitoring() {
-		String servedOrderMonitoringPeriodStr = properties
-				.getProperty(ConfigurationConstants.SERVED_ORDER_MONITORING_PERIOD_KEY);
-		final long servedOrderMonitoringPeriod = servedOrderMonitoringPeriodStr == null
-				? DEFAULT_SERVED_ORDER_MONITORING_PERIOD : Long.valueOf(servedOrderMonitoringPeriodStr);
+		final long servedOrderMonitoringPeriod = ManagerControllerHelper.getServerOrderMonitoringPeriod(this.properties);
 
 		servedOrderMonitoringTimer.scheduleAtFixedRate(new TimerTask() {
 			@Override
@@ -1316,7 +1311,8 @@ public class ManagerController {
 	protected void monitorInstancesForLocalOrders() {
 		boolean turnOffTimer = true;
 		LOGGER.info("Monitoring instances.");
-		this.monitoringHelper.checkDeadOrderAttempts();
+		long monitorPeriod = ManagerControllerHelper.getInstanceMonitoringPeriod(this.properties);
+		this.monitoringHelper.checkFailedMonitoring(monitorPeriod);
 		
 		for (Order order : this.managerDataStoreController.getAllLocalOrders()) {
 			if (order.getState().in(OrderState.FULFILLED, OrderState.DELETED, OrderState.SPAWNING)) {
@@ -1324,26 +1320,26 @@ public class ManagerController {
 			}
 			
 			if (order.getState().in(OrderState.FULFILLED, OrderState.DELETED)) {
-				boolean isNotFound = false;
+				boolean isNotFoundException = false;
 				try {
 					LOGGER.debug("Monitoring instance of order: " + order);
 					removeFailedInstance(order, getInstance(order, order.getResourceKing()));
-					this.monitoringHelper.removeOrderAttempt(order);
+					this.monitoringHelper.removeFailedMonitoringAttempts(order);
 				} catch (OCCIException e) {
 					LOGGER.debug("Error while getInstance of " + order.getInstanceId(), e);
 					
 					if (e.getType().equals(ErrorType.NOT_FOUND)) {
-						isNotFound = true;
+						isNotFoundException = true;
 					} else {
-						this.monitoringHelper.addAttempt(order);
+						this.monitoringHelper.addFailedMonitoringAttempts(order);
 					}
 				} catch (Throwable e) {
-					this.monitoringHelper.addAttempt(order);
+					this.monitoringHelper.addFailedMonitoringAttempts(order);
 				}
 				
-				if (isNotFound || this.monitoringHelper.isMaximumAttempt(order)) {
+				if (isNotFoundException || this.monitoringHelper.isMaximumFailedMonitoringAttempts(order)) {
 					instanceRemoved(this.managerDataStoreController.getOrder(order.getId()));
-					this.monitoringHelper.removeOrderAttempt(order);
+					this.monitoringHelper.removeFailedMonitoringAttempts(order);
 				}
 			}
 		}
@@ -1674,11 +1670,12 @@ public class ManagerController {
 
 	protected void monitorServedOrders() {
 		LOGGER.info("Monitoring served orders.");
-		monitoringHelper.checkDeadOrderAttempts();
+		long monitorPeriod = ManagerControllerHelper.getServerOrderMonitoringPeriod(this.properties);
+		monitoringHelper.checkFailedMonitoring(monitorPeriod);
 
 		List<Order> servedOrders = managerDataStoreController.getAllServedOrders();
 		for (Order order : servedOrders) {
-			if (!isInstanceBeingUsedByRemoteMember(order) || monitoringHelper.isMaximumAttempt(order)) {
+			if (!isInstanceBeingUsedByRemoteMember(order) || monitoringHelper.isMaximumFailedMonitoringAttempts(order)) {
 				LOGGER.debug("The instance " + order.getInstanceId() + " is not being used anymore by "
 						+ order.getRequestingMemberId() + " and will be removed.");
 				if (order.getInstanceId() != null) {
@@ -1687,9 +1684,9 @@ public class ManagerController {
 					} catch (Exception e) {}
 				}
 				managerDataStoreController.excludeOrder(order.getId());
-				monitoringHelper.removeOrderAttempt(order);
+				monitoringHelper.removeFailedMonitoringAttempts(order);
 			} else {
-				monitoringHelper.addAttempt(order);
+				monitoringHelper.addFailedMonitoringAttempts(order);
 			}
 		}
 

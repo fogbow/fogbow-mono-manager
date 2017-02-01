@@ -13,11 +13,11 @@ import org.fogbowcloud.manager.occi.order.Order;
 public class ManagerControllerHelper {
 
 	private static final long DEFAULT_INSTANCE_MONITORING_PERIOD = 120000; // 2 minutes
+	private static final long DEFAULT_SERVED_ORDER_MONITORING_PERIOD = 120000; // 2 minutes
 	
 	private static final Logger LOGGER = Logger.getLogger(ManagerControllerHelper.class);
 	
-	public ManagerControllerHelper() {
-	}
+	public ManagerControllerHelper() {}
 	
 	public static long getInstanceMonitoringPeriod(Properties properties) {
 		String instanceMonitoringPeriodStr = properties
@@ -27,6 +27,14 @@ public class ManagerControllerHelper {
 		return instanceMonitoringPeriod;
 	}
 	
+	public static long getServerOrderMonitoringPeriod(Properties properties) {
+		String servedOrderMonitoringPeriodStr = properties
+				.getProperty(ConfigurationConstants.SERVED_ORDER_MONITORING_PERIOD_KEY);
+		final long servedOrderMonitoringPeriod = servedOrderMonitoringPeriodStr == null
+				? DEFAULT_SERVED_ORDER_MONITORING_PERIOD : Long.valueOf(servedOrderMonitoringPeriodStr);
+		return servedOrderMonitoringPeriod;
+	}	
+	
 	// inner classes
 	public class MonitoringHelper {
 		
@@ -35,77 +43,76 @@ public class ManagerControllerHelper {
 		private static final long GRACE_TIME = 1000 * 60 * 20; // 20 minutes 
 		
 		private DateUtils dateUtils = new DateUtils();
-		private Map<String, OrderAttempt> orderFailedAttempts;
+		private Map<String, OrderAttempt> orderAttempts;
 		private Integer maximumAttempts;
-		private long instanceMonitoringPeriod;
 		
 		public MonitoringHelper(Properties properties) {
-			this.orderFailedAttempts = new HashMap<String, OrderAttempt>();
+			this.orderAttempts = new HashMap<String, OrderAttempt>();
 			try {
 				this.maximumAttempts = Integer.parseInt(properties.getProperty(MAXIMUM_ORDER_ATTEMPTS_PROPERTIES));				
 			} catch (Exception e) {
 				this.maximumAttempts = MAXIMUM_ORDER_ATTEMPTS_DEFAULT;
 			}
-			this.instanceMonitoringPeriod = getInstanceMonitoringPeriod(properties);
 		}
 		
-		public synchronized void addAttempt(Order order) {
+		public synchronized void addFailedMonitoringAttempts(Order order) {
 			String orderId = order.getId();
-			OrderAttempt orderAttempt = this.orderFailedAttempts.get(orderId);
+			OrderAttempt orderAttempt = this.orderAttempts.get(orderId);
 			if (orderAttempt == null) {
-				this.orderFailedAttempts.put(orderId, new OrderAttempt(1, this.dateUtils.currentTimeMillis())); 
+				this.orderAttempts.put(orderId, new OrderAttempt(1, this.dateUtils.currentTimeMillis())); 
 			} else {
 				orderAttempt.setAttempts(orderAttempt.getAttempts() + 1);
-				LOGGER.debug("This order failed " + orderAttempt.getAttempts() + " attempts.");
+				LOGGER.debug("Order (" + orderId + ") failed in monitoring: " 
+						+ orderAttempt.getAttempts() + " attempts of at most " + this.maximumAttempts);
 			}
 		}
 		
-		public synchronized boolean isMaximumAttempt(Order order) {
+		public synchronized boolean isMaximumFailedMonitoringAttempts(Order order) {
 			String orderId = order.getId();			
-			OrderAttempt orderAttempt = this.orderFailedAttempts.get(orderId);			
+			OrderAttempt orderAttempt = this.orderAttempts.get(orderId);			
 			if (orderAttempt != null && orderAttempt.getAttempts() >= this.maximumAttempts) {
-				this.orderFailedAttempts.remove(orderId);
+				this.orderAttempts.remove(orderId);
 				return true;
 			}
 			return false;
 		}
 		
-		public synchronized void removeOrderAttempt(Order order) {
+		public synchronized void removeFailedMonitoringAttempts(Order order) {
 			String orderId = order.getId();
-			OrderAttempt orderAttempt = this.orderFailedAttempts.get(orderId);
+			OrderAttempt orderAttempt = this.orderAttempts.get(orderId);
 			if (orderAttempt != null) {
-				this.orderFailedAttempts.remove(orderId);
+				this.orderAttempts.remove(orderId);
+				LOGGER.debug("Order (" + orderId + ") reset attempts in monitoring.");
 			}
 		}
 		
-		public synchronized void checkDeadOrderAttempts() {
+		public synchronized void checkFailedMonitoring(long monitorPeriod) {
 			try {
-				Set<String> keys = new HashSet<String> (this.orderFailedAttempts.keySet());
-				for (String key : keys) {
-					OrderAttempt orderAttempt = null;
-					orderAttempt = this.orderFailedAttempts.get(key);
-					if (orderAttempt.getInitTime() > this.getTimeout()) {
-						this.orderFailedAttempts.remove(key);
+				Set<String> keys = new HashSet<String> (this.orderAttempts.keySet());
+				for (String orderId : keys) {
+					OrderAttempt orderAttempt = this.orderAttempts.get(orderId);
+					if (orderAttempt.getInitTime() > this.getTimeout(monitorPeriod)) {
+						this.orderAttempts.remove(orderId);
 					}
 				}				
 			} catch (Exception e) {
-				LOGGER.warn("Error while checking dead orders.", e);
+				LOGGER.warn("Error while checking orders attempts.", e);
 			}
 		}
 		
-		protected long getTimeout() {
-			return this.dateUtils.currentTimeMillis() + (this.instanceMonitoringPeriod * this.maximumAttempts) + GRACE_TIME;
+		protected long getTimeout(long monitorPeriod) {
+			return this.dateUtils.currentTimeMillis() + (monitorPeriod * this.maximumAttempts) + GRACE_TIME;
 		}
 		
 		protected Map<String, OrderAttempt> getOrderFailedAttempts() {
-			return orderFailedAttempts;
+			return orderAttempts;
 		}
 		
 		public void setDateUtils(DateUtils dateUtils) {
 			this.dateUtils = dateUtils;
 		}
 		
-		private class OrderAttempt {
+		protected class OrderAttempt {
 
 			private Integer attempts;
 			private long initTime;
@@ -131,5 +138,4 @@ public class ManagerControllerHelper {
 		}
 		
 	}
-	
 }
