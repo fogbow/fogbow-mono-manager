@@ -33,7 +33,7 @@ public class TestManagerControllerHelper {
 		Order order = new Order("idOne", null, null, null, true, null);
 		int amountAdd = ORDER_ATTEMPTS - 1;
 		for (int i = 0; i < amountAdd ; i++) {
-			this.monitoringHelper.addFailedMonitoringAttempts(order);
+			this.monitoringHelper.addFailedMonitoringAttempt(order);
 		}
 		
 		Map<String, OrderAttempt> orderFailedAttempts = this.monitoringHelper.getOrderFailedAttempts();
@@ -41,7 +41,7 @@ public class TestManagerControllerHelper {
 		OrderAttempt orderOneAttempt = orderFailedAttempts.get(order.getId());
 		Assert.assertEquals(new Integer(amountAdd), orderOneAttempt.getAttempts());
 		
-		this.monitoringHelper.removeFailedMonitoringAttempts(order);
+		this.monitoringHelper.removeFailedMonitoringAttempt(order);
 		Assert.assertEquals(0, orderFailedAttempts.size());
 	}
 	
@@ -50,7 +50,7 @@ public class TestManagerControllerHelper {
 		Order order = new Order("idOne", null, null, null, true, null);
 		int amountAdd = ORDER_ATTEMPTS - 1;
 		for (int i = 0; i < amountAdd ; i++) {
-			this.monitoringHelper.addFailedMonitoringAttempts(order);
+			this.monitoringHelper.addFailedMonitoringAttempt(order);
 		}
 		
 		Map<String, OrderAttempt> orderFailedAttempts = this.monitoringHelper.getOrderFailedAttempts();
@@ -60,7 +60,7 @@ public class TestManagerControllerHelper {
 		
 		Assert.assertFalse(this.monitoringHelper.isMaximumFailedMonitoringAttempts(order));
 		
-		this.monitoringHelper.addFailedMonitoringAttempts(order);
+		this.monitoringHelper.addFailedMonitoringAttempt(order);
 		Assert.assertEquals(new Integer(ORDER_ATTEMPTS), orderOneAttempt.getAttempts());
 		
 		Assert.assertTrue(this.monitoringHelper.isMaximumFailedMonitoringAttempts(order));
@@ -72,20 +72,20 @@ public class TestManagerControllerHelper {
 		Assert.assertEquals(0, orderFailedAttempts.size());
 		
 		Order orderOne = new Order("idOne", null, null, null, true, null);
-		this.monitoringHelper.addFailedMonitoringAttempts(orderOne);
+		this.monitoringHelper.addFailedMonitoringAttempt(orderOne);
 		
 		Assert.assertEquals(1, orderFailedAttempts.size());
 		OrderAttempt orderOneAttempt = orderFailedAttempts.get(orderOne.getId());
 		Assert.assertEquals(new Integer(1), orderOneAttempt.getAttempts());
 		
-		this.monitoringHelper.addFailedMonitoringAttempts(orderOne);
+		this.monitoringHelper.addFailedMonitoringAttempt(orderOne);
 		
 		Assert.assertEquals(1, orderFailedAttempts.size());
 		orderOneAttempt = orderFailedAttempts.get(orderOne.getId());
 		Assert.assertEquals(new Integer(2), orderOneAttempt.getAttempts());		
 		
 		Order orderTwo = new Order("idTwo", null, null, null, true, null);
-		this.monitoringHelper.addFailedMonitoringAttempts(orderTwo);
+		this.monitoringHelper.addFailedMonitoringAttempt(orderTwo);
 		
 		Assert.assertEquals(2, orderFailedAttempts.size());
 	}
@@ -98,9 +98,9 @@ public class TestManagerControllerHelper {
 		Mockito.when(dateUtilsMock.currentTimeMillis()).thenReturn(now);
 		monitoringHelper.setDateUtils(dateUtilsMock);
 		Order orderOne = new Order("idOne", null, null, null, true, null);
-		monitoringHelper.addFailedMonitoringAttempts(orderOne);
+		monitoringHelper.addFailedMonitoringAttempt(orderOne);
 		Order orderTwo = new Order("idTwo", null, null, null, true, null);
-		monitoringHelper.addFailedMonitoringAttempts(orderTwo);
+		monitoringHelper.addFailedMonitoringAttempt(orderTwo);
 		
 		Mockito.reset(dateUtilsMock);
 		long monitorPeriod = ManagerControllerHelper.getInstanceMonitoringPeriod(this.propertiesDefault);
@@ -108,9 +108,9 @@ public class TestManagerControllerHelper {
 		Mockito.when(dateUtilsMock.currentTimeMillis()).thenReturn(now + halfTimeout);
 		monitoringHelper.setDateUtils(dateUtilsMock);
 		Order orderThree = new Order("idThree", null, null, null, true, null);
-		monitoringHelper.addFailedMonitoringAttempts(orderThree);
+		monitoringHelper.addFailedMonitoringAttempt(orderThree);
 		Order orderFour = new Order("idFour", null, null, null, true, null);
-		monitoringHelper.addFailedMonitoringAttempts(orderFour);
+		monitoringHelper.addFailedMonitoringAttempt(orderFour);
 
 		Mockito.reset(dateUtilsMock);
 		Mockito.when(dateUtilsMock.currentTimeMillis()).thenReturn(now);

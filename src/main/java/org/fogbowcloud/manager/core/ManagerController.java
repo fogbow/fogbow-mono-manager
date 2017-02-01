@@ -1324,22 +1324,22 @@ public class ManagerController {
 				try {
 					LOGGER.debug("Monitoring instance of order: " + order);
 					removeFailedInstance(order, getInstance(order, order.getResourceKing()));
-					this.monitoringHelper.removeFailedMonitoringAttempts(order);
+					this.monitoringHelper.removeFailedMonitoringAttempt(order);
 				} catch (OCCIException e) {
 					LOGGER.debug("Error while getInstance of " + order.getInstanceId(), e);
 					
 					if (e.getType().equals(ErrorType.NOT_FOUND)) {
 						isNotFoundException = true;
 					} else {
-						this.monitoringHelper.addFailedMonitoringAttempts(order);
+						this.monitoringHelper.addFailedMonitoringAttempt(order);
 					}
 				} catch (Throwable e) {
-					this.monitoringHelper.addFailedMonitoringAttempts(order);
+					this.monitoringHelper.addFailedMonitoringAttempt(order);
 				}
 				
 				if (isNotFoundException || this.monitoringHelper.isMaximumFailedMonitoringAttempts(order)) {
 					instanceRemoved(this.managerDataStoreController.getOrder(order.getId()));
-					this.monitoringHelper.removeFailedMonitoringAttempts(order);
+					this.monitoringHelper.removeFailedMonitoringAttempt(order);
 				}
 			}
 		}
@@ -1684,9 +1684,9 @@ public class ManagerController {
 					} catch (Exception e) {}
 				}
 				managerDataStoreController.excludeOrder(order.getId());
-				monitoringHelper.removeFailedMonitoringAttempts(order);
+				monitoringHelper.removeFailedMonitoringAttempt(order);
 			} else {
-				monitoringHelper.addFailedMonitoringAttempts(order);
+				monitoringHelper.addFailedMonitoringAttempt(order);
 			}
 		}
 

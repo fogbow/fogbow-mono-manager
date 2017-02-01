@@ -55,7 +55,7 @@ public class ManagerControllerHelper {
 			}
 		}
 		
-		public synchronized void addFailedMonitoringAttempts(Order order) {
+		public synchronized void addFailedMonitoringAttempt(Order order) {
 			String orderId = order.getId();
 			OrderAttempt orderAttempt = this.orderAttempts.get(orderId);
 			if (orderAttempt == null) {
@@ -77,7 +77,7 @@ public class ManagerControllerHelper {
 			return false;
 		}
 		
-		public synchronized void removeFailedMonitoringAttempts(Order order) {
+		public synchronized void removeFailedMonitoringAttempt(Order order) {
 			String orderId = order.getId();
 			OrderAttempt orderAttempt = this.orderAttempts.get(orderId);
 			if (orderAttempt != null) {

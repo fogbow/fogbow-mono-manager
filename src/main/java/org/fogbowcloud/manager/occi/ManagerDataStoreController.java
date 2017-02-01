@@ -107,8 +107,8 @@ public class ManagerDataStoreController {
 	public Order getOrder(String orderId, boolean lookingForLocalOrder) {
 		try {
 			Order order = this.managerDatabase.getOrder(orderId);
-			if (lookingForLocalOrder && order.isLocal() 
-					|| !lookingForLocalOrder && !order.isLocal()) {
+			if (order != null && 
+					(lookingForLocalOrder && order.isLocal() || !lookingForLocalOrder && !order.isLocal())) {
 				LOGGER.debug("Getting order id " + order);
 				return order;						
 			}

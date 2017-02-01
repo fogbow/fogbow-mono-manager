@@ -39,7 +39,7 @@ public class ConfigurationConstants {
 	public static final String SCHEDULER_PERIOD_KEY = "scheduler_period";
 	public static final String INSTANCE_MONITORING_PERIOD_KEY = "instance_monitoring_period";
 	public static final String TOKEN_UPDATE_PERIOD_KEY = "token_update_period";
-	public static final String SERVED_ORDER_MONITORING_PERIOD_KEY = "served_request_monitoring_period";
+	public static final String SERVED_ORDER_MONITORING_PERIOD_KEY = "served_order_monitoring_period";
 	public static final String GARBAGE_COLLECTOR_PERIOD_KEY = "garbage_collector_period";
 	public static final String ACCOUNTING_UPDATE_PERIOD_KEY = "accounting_update_period";
 	public static final String CAPACITY_CONTROLLER_UPDATE_PERIOD_KEY = "capacity_controller_update_period";
