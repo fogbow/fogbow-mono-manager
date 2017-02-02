@@ -1006,10 +1006,8 @@ public class TestManagerController {
 		managerController.getManagerDataStoreController().addOrder(order2);
 
 		// updating compute mock
-		Mockito.when(
-				managerTestHelper.getComputePlugin().getInstance(Mockito.any(Token.class),
-						Mockito.anyString())).thenReturn(
-				new Instance(DefaultDataTestHelper.INSTANCE_ID));
+		Mockito.when(managerTestHelper.getComputePlugin().getInstance(Mockito.any(Token.class),
+				Mockito.anyString())).thenReturn(new Instance(DefaultDataTestHelper.INSTANCE_ID));
 
 		// checking deleted orders
 		List<Order> ordersFromUser = managerController.getOrdersFromUser(managerTestHelper
@@ -1018,14 +1016,87 @@ public class TestManagerController {
 		Assert.assertEquals(OrderState.DELETED, ordersFromUser.get(0).getState());
 		Assert.assertEquals(OrderState.DELETED, ordersFromUser.get(1).getState());
 
+		Mockito.when(managerTestHelper.getComputePlugin().getInstance(Mockito.any(Token.class),
+				Mockito.anyString())).thenThrow(new OCCIException(ErrorType.NOT_FOUND, ""));	
+		
 		managerController.monitorInstancesForLocalOrders();
 
 		// making sure the orders were not removed
 		ordersFromUser = managerController.getOrdersFromUser(managerTestHelper
 				.getDefaultFederationToken().getAccessId());
+		Assert.assertEquals(0, ordersFromUser.size());
+	}
+	
+	@Test
+	public void testMonitorOrderWithMaximumAttemps() throws InterruptedException {
+		ComputePlugin computePlugin = managerTestHelper.getComputePlugin();
+		
+		// setting order repository
+		Order order1 = new Order("id1", managerTestHelper.getDefaultFederationToken(), null, xOCCIAtt, true, "");
+		order1.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
+		order1.setState(OrderState.FULFILLED);
+		order1.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		Order order2 = new Order("id2", managerTestHelper.getDefaultFederationToken(), null, xOCCIAtt, true, "");
+		order2.setInstanceId(DefaultDataTestHelper.INSTANCE_ID);
+		order2.setState(OrderState.FULFILLED);
+		order2.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		managerController.getManagerDataStoreController().addOrder(order1);
+		managerController.getManagerDataStoreController().addOrder(order2);
+
+		// return ok
+		Mockito.when(computePlugin.getInstance(Mockito.any(Token.class),
+				Mockito.anyString())).thenReturn(new Instance(DefaultDataTestHelper.INSTANCE_ID));
+		List<Order> ordersFromUser = managerController.getOrdersFromUser(managerTestHelper
+				.getDefaultFederationToken().getAccessId());
 		Assert.assertEquals(2, ordersFromUser.size());
-		Assert.assertEquals(OrderState.DELETED, ordersFromUser.get(0).getState());
-		Assert.assertEquals(OrderState.DELETED, ordersFromUser.get(1).getState());
+		Assert.assertEquals(OrderState.FULFILLED, ordersFromUser.get(0).getState());
+		Assert.assertEquals(OrderState.FULFILLED, ordersFromUser.get(1).getState());
+
+		// updating compute mock
+		// throwing exception
+		Mockito.when(computePlugin.getInstance(Mockito.any(Token.class),
+				Mockito.anyString())).thenThrow(new OCCIException(ErrorType.BAD_REQUEST, ""));		
+		int lessThenMaximumOrderAttents = ManagerTestHelper.MAXIMUM_ORDER_ATTEMPTS - 1;
+		for (int i = 0; i < lessThenMaximumOrderAttents; i++) {
+			managerController.monitorInstancesForLocalOrders();
+		}
+		ordersFromUser = managerController.getOrdersFromUser(managerTestHelper
+				.getDefaultFederationToken().getAccessId());
+		Assert.assertEquals(2, ordersFromUser.size());
+		Assert.assertEquals(OrderState.FULFILLED, ordersFromUser.get(0).getState());
+		Assert.assertEquals(OrderState.FULFILLED, ordersFromUser.get(1).getState());
+
+		// updating compute mock
+		// return ok
+		Mockito.reset(computePlugin);
+		Mockito.when(computePlugin.getInstance(Mockito.any(Token.class),
+				Mockito.anyString())).thenReturn(new Instance(DefaultDataTestHelper.INSTANCE_ID));			
+		
+		// pray attempts
+		managerController.monitorInstancesForLocalOrders();
+		
+		ordersFromUser = managerController.getOrdersFromUser(managerTestHelper
+				.getDefaultFederationToken().getAccessId());
+		Assert.assertEquals(2, ordersFromUser.size());
+		Assert.assertEquals(OrderState.FULFILLED, ordersFromUser.get(0).getState());
+		Assert.assertEquals(OrderState.FULFILLED, ordersFromUser.get(1).getState());
+		
+		// updating compute mock
+		// throwing exception
+		Mockito.reset(computePlugin);
+		Mockito.when(computePlugin.getInstance(Mockito.any(Token.class),
+				Mockito.anyString())).thenThrow(new NullPointerException());		
+		
+		int moreThenMaximumOrderAttemps = ManagerTestHelper.MAXIMUM_ORDER_ATTEMPTS + 1;
+		for (int i = 0; i < moreThenMaximumOrderAttemps; i++) {
+			managerController.monitorInstancesForLocalOrders();
+		}
+				
+		ordersFromUser = managerController.getOrdersFromUser(managerTestHelper
+				.getDefaultFederationToken().getAccessId());
+		Assert.assertEquals(2, ordersFromUser.size());
+		Assert.assertEquals(OrderState.CLOSED, ordersFromUser.get(0).getState());
+		Assert.assertEquals(OrderState.CLOSED, ordersFromUser.get(1).getState());	
 	}
 
 	@Test
@@ -1033,12 +1104,15 @@ public class TestManagerController {
 		// setting order repository
 		Order order1 = new Order("id1",
 				managerTestHelper.getDefaultFederationToken(), null, xOCCIAtt, true, "");
+		order1.setProvidingMemberId(ManagerTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		order1.setState(OrderState.DELETED);
 		Order order2 = new Order("id2",
 				managerTestHelper.getDefaultFederationToken(), null, xOCCIAtt, true, "");
+		order2.setProvidingMemberId(ManagerTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		order2.setState(OrderState.DELETED);
 		Order order3 = new Order("id3",
 				managerTestHelper.getDefaultFederationToken(), null, xOCCIAtt, true, "");
+		order3.setProvidingMemberId(ManagerTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		order3.setState(OrderState.OPEN);
 
 		managerController.getManagerDataStoreController().addOrder(order1);
@@ -1052,43 +1126,32 @@ public class TestManagerController {
 				new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND));
 
 		// checking if orders still have the initial state
-		Assert.assertEquals(
-				3,
-				managerController.getOrdersFromUser(
-						managerTestHelper.getDefaultFederationToken().getAccessId()).size());
-		Assert.assertEquals(
-				OrderState.DELETED,
-				managerController.getOrder(managerTestHelper.getDefaultFederationToken().getAccessId(),
-						"id1").getState());
-		Assert.assertEquals(
-				OrderState.DELETED,
-				managerController.getOrder(managerTestHelper.getDefaultFederationToken().getAccessId(),
-						"id2").getState());
-		Assert.assertEquals(
-				OrderState.OPEN,
-				managerController.getOrder(managerTestHelper.getDefaultFederationToken().getAccessId(),
-						"id3").getState());
+		Assert.assertEquals(3,managerController.getOrdersFromUser(
+				managerTestHelper.getDefaultFederationToken().getAccessId()).size());
+		Assert.assertEquals(OrderState.DELETED, managerController
+				.getOrder(managerTestHelper.getDefaultFederationToken().getAccessId(), "id1").getState());
+		Assert.assertEquals(OrderState.DELETED, managerController
+				.getOrder(managerTestHelper.getDefaultFederationToken().getAccessId(), "id2").getState());
+		Assert.assertEquals(OrderState.OPEN, managerController
+				.getOrder(managerTestHelper.getDefaultFederationToken().getAccessId(), "id3").getState());
 
 		managerController.monitorInstancesForLocalOrders();
 
 		// checking if deleted orders were removed
-		Assert.assertEquals(
-				1,
-				managerController.getOrdersFromUser(
-						managerTestHelper.getDefaultFederationToken().getAccessId()).size());
-		Assert.assertEquals(
-				OrderState.OPEN,
-				managerController
-						.getOrdersFromUser(managerTestHelper.getDefaultFederationToken().getAccessId())
-						.get(0).getState());
+		Assert.assertEquals(1, managerController.getOrdersFromUser(
+				managerTestHelper.getDefaultFederationToken().getAccessId()).size());
+		Assert.assertEquals(OrderState.OPEN, managerController.getOrdersFromUser(
+				managerTestHelper.getDefaultFederationToken().getAccessId()).get(0).getState());
 	}
 
 	@Test
 	public void testMonitorFulfilledOrderWithoutInstance() throws InterruptedException {
 		// setting orders repository
 		Order order1 = new Order("id1", managerTestHelper.getDefaultFederationToken(), null, xOCCIAtt, true, "");
+		order1.setProvidingMemberId(ManagerTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		order1.setState(OrderState.FULFILLED);
 		Order order2 = new Order("id2", managerTestHelper.getDefaultFederationToken(), null, xOCCIAtt, true, "");
+		order2.setProvidingMemberId(ManagerTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		order2.setState(OrderState.FULFILLED);
 
 		managerController.getManagerDataStoreController().addOrder(order1);
@@ -1129,6 +1192,7 @@ public class TestManagerController {
 		// setting order repository
 		Order order1 = new Order("id1", managerTestHelper.getDefaultFederationToken(), 
 				new ArrayList<Category>(), attributes, true, "");
+		order1.setProvidingMemberId(ManagerTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		order1.setState(OrderState.FULFILLED);
 
 		managerController.getManagerDataStoreController().addOrder(order1);
@@ -2066,8 +2130,10 @@ public class TestManagerController {
 		
 		// setting order repository
 		Order order1 = new Order("id1", managerTestHelper.getDefaultFederationToken(), null, xOCCIAtt, true, "");
+		order1.setProvidingMemberId(ManagerTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		order1.setState(OrderState.OPEN);
 		Order order2 = new Order("id2", managerTestHelper.getDefaultFederationToken(), null, xOCCIAtt, true, "");
+		order2.setProvidingMemberId(ManagerTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		order2.setState(OrderState.OPEN);
 
 		managerController.getManagerDataStoreController().addOrder(order1);
@@ -2090,7 +2156,11 @@ public class TestManagerController {
 		ordersFromUser = managerController.getOrdersFromUser(managerTestHelper
 				.getDefaultFederationToken().getAccessId());
 		
-		Assert.assertEquals(0, ordersFromUser.size());
+		order1 = ordersFromUser.get(0);
+		order2 = ordersFromUser.get(0);
+		Assert.assertEquals(2, ordersFromUser.size());
+		Assert.assertEquals(OrderState.DELETED, order1.getState());
+		Assert.assertEquals(OrderState.DELETED, order2.getState());
 	}
 	
 	@Test
@@ -2103,10 +2173,13 @@ public class TestManagerController {
 		String id2 = "id2";
 		String id3 = "id3";
 		Order order1 = new Order(id1, managerTestHelper.getDefaultFederationToken(), null, xOCCIAtt, true, "");
+		order1.setProvidingMemberId(ManagerTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		order1.setState(OrderState.OPEN);
 		Order order2 = new Order(id2, managerTestHelper.getDefaultFederationToken(), null, xOCCIAtt, true, "");
+		order2.setProvidingMemberId(ManagerTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		order2.setState(OrderState.OPEN);
 		Order order3 = new Order(id3, managerTestHelper.getDefaultFederationToken(), null, xOCCIAtt, true, "");
+		order3.setProvidingMemberId(ManagerTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		order3.setState(OrderState.OPEN);
 
 		ManagerDataStoreController managerDataStoreController = managerController.getManagerDataStoreController();
@@ -2131,9 +2204,10 @@ public class TestManagerController {
 
 		ordersFromUser = managerController.getOrdersFromUser(managerTestHelper
 				.getDefaultFederationToken().getAccessId());
-		Assert.assertEquals(2, ordersFromUser.size());
-		Assert.assertEquals(OrderState.OPEN, ordersFromUser.get(0).getState());
+		Assert.assertEquals(3, ordersFromUser.size());
+		Assert.assertEquals(OrderState.DELETED, ordersFromUser.get(0).getState());
 		Assert.assertEquals(OrderState.OPEN, ordersFromUser.get(1).getState());
+		Assert.assertEquals(OrderState.OPEN, ordersFromUser.get(2).getState());
 	
 		// removing the rest of orders
 		managerController.removeOrder(managerTestHelper.getDefaultFederationToken().getAccessId(), id2);
@@ -2142,7 +2216,10 @@ public class TestManagerController {
 		ordersFromUser = managerController.getOrdersFromUser(managerTestHelper
 				.getDefaultFederationToken().getAccessId());
 		
-		Assert.assertEquals(0, ordersFromUser.size());
+		Assert.assertEquals(3, ordersFromUser.size());
+		Assert.assertEquals(OrderState.DELETED, ordersFromUser.get(0).getState());
+		Assert.assertEquals(OrderState.DELETED, ordersFromUser.get(1).getState());
+		Assert.assertEquals(OrderState.DELETED, ordersFromUser.get(2).getState());		
 	}
 	
 	@Test
@@ -2416,6 +2493,12 @@ public class TestManagerController {
 						DefaultDataTestHelper.INSTANCE_ID).getProvidingMemberId());
 		Assert.assertEquals("id1", getOrderByInstanceId(managerControllerSpy.getServedOrders(),
 						DefaultDataTestHelper.INSTANCE_ID).getId());		
+		
+		for (int i = 0; i < ManagerTestHelper.MAXIMUM_ORDER_ATTEMPTS; i++) {
+			managerControllerSpy.monitorServedOrders();
+		}
+		
+		Assert.assertEquals(0, managerControllerSpy.getServedOrders().size());
 	}
 	
 	@Test

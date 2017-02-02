@@ -107,8 +107,8 @@ public class ManagerDataStoreController {
 	public Order getOrder(String orderId, boolean lookingForLocalOrder) {
 		try {
 			Order order = this.managerDatabase.getOrder(orderId);
-			if (lookingForLocalOrder && order.isLocal() 
-					|| !lookingForLocalOrder && !order.isLocal()) {
+			if (order != null && 
+					(lookingForLocalOrder && order.isLocal() || !lookingForLocalOrder && !order.isLocal())) {
 				LOGGER.debug("Getting order id " + order);
 				return order;						
 			}
@@ -180,7 +180,8 @@ public class ManagerDataStoreController {
 			List<Order> orders  = this.managerDatabase.getOrders();
 			for (Order order : orders) {					
 				if (order.getId().equals(orderId) && order.isLocal()) {
-					if (order.getState().equals(OrderState.CLOSED)) { 
+					if (order.getState().equals(OrderState.CLOSED)) {
+						
 						LOGGER.debug("Order " + orderId + " does not have an instance. Excluding order.");
 						this.managerDatabase.removeOrder(order);
 					} else {

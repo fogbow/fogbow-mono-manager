@@ -59,6 +59,7 @@ import org.xmpp.packet.Packet;
 
 public class ManagerTestHelper extends DefaultDataTestHelper {
 
+	public static final int MAXIMUM_ORDER_ATTEMPTS = 5;
 	public static final String MANAGER_TEST_JID = "manager.test.com";
 	public static final String VALUE_FLAVOR_LARGE = "{cpu=4,mem=8}";
 	public  static final String VALUE_FLAVOR_MEDIUM = "{cpu=2,mem=4}";
@@ -382,6 +383,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 				String.valueOf(DefaultDataTestHelper.SERVED_ORDER_MONITORING_PERIOD));
 		properties.put(ConfigurationConstants.GREEN_SITTER_JID, DefaultDataTestHelper.GREEN_SITTER_JID);
 		properties.put(ConfigurationConstants.ADMIN_USERS, DefaultDataTestHelper.FED_USER_NAME + ";" + "admin_user");
+		properties.put(ConfigurationConstants.MAXIMUM_ORDER_ATTEMPTS_PROPERTIES, String.valueOf(MAXIMUM_ORDER_ATTEMPTS));
 		
 		if (extraProperties != null) {
 			for (Entry<String, String> entry : extraProperties.entrySet()) {
