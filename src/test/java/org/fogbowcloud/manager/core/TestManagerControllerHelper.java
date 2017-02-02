@@ -29,7 +29,7 @@ public class TestManagerControllerHelper {
 	}
 	
 	@Test
-	public void testRemoveFailedMonitoringAttempts() {
+	public void testEraseFailedMonitoringAttempts() {
 		Order order = new Order("idOne", null, null, null, true, null);
 		int amountAdd = ORDER_ATTEMPTS - 1;
 		for (int i = 0; i < amountAdd ; i++) {
@@ -41,7 +41,7 @@ public class TestManagerControllerHelper {
 		OrderAttempt orderOneAttempt = orderFailedAttempts.get(order.getId());
 		Assert.assertEquals(new Integer(amountAdd), orderOneAttempt.getAttempts());
 		
-		this.monitoringHelper.removeFailedMonitoringAttempt(order);
+		this.monitoringHelper.eraseFailedMonitoringAttempts(order);
 		Assert.assertEquals(0, orderFailedAttempts.size());
 	}
 	

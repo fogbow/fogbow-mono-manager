@@ -1324,7 +1324,7 @@ public class ManagerController {
 				try {
 					LOGGER.debug("Monitoring instance of order: " + order);
 					removeFailedInstance(order, getInstance(order, order.getResourceKing()));
-					this.monitoringHelper.removeFailedMonitoringAttempt(order);
+					this.monitoringHelper.eraseFailedMonitoringAttempts(order);
 				} catch (OCCIException e) {
 					LOGGER.debug("Error while getInstance of " + order.getInstanceId(), e);
 					
@@ -1334,12 +1334,13 @@ public class ManagerController {
 						this.monitoringHelper.addFailedMonitoringAttempt(order);
 					}
 				} catch (Throwable e) {
+					LOGGER.debug("Error while getInstance of " + order.getInstanceId(), e);
 					this.monitoringHelper.addFailedMonitoringAttempt(order);
 				}
 				
 				if (isNotFoundException || this.monitoringHelper.isMaximumFailedMonitoringAttempts(order)) {
 					instanceRemoved(this.managerDataStoreController.getOrder(order.getId()));
-					this.monitoringHelper.removeFailedMonitoringAttempt(order);
+					this.monitoringHelper.eraseFailedMonitoringAttempts(order);
 				}
 			}
 		}
@@ -1684,7 +1685,7 @@ public class ManagerController {
 					} catch (Exception e) {}
 				}
 				managerDataStoreController.excludeOrder(order.getId());
-				monitoringHelper.removeFailedMonitoringAttempt(order);
+				monitoringHelper.eraseFailedMonitoringAttempts(order);
 			} else {
 				monitoringHelper.addFailedMonitoringAttempt(order);
 			}
