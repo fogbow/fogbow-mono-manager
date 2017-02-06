@@ -339,7 +339,7 @@ public class TestManagerDataStore {
 	}
 	
 	@Test
-	public void addFederationMemberServeredWithSameName() throws SQLException, JSONException {
+	public void getFederationMemberServeredWithSameName() throws SQLException, JSONException {
 		database.addOrder(orderOne);
 		List<String> federationMembersServered = database.getFederationMembersServeredBy(orderOne.getId());
 		Assert.assertEquals(0, federationMembersServered.size());

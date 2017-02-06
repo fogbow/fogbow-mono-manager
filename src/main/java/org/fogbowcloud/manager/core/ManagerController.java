@@ -1672,28 +1672,34 @@ public class ManagerController {
 	protected void monitorServedOrders() {
 		LOGGER.info("Monitoring served orders.");
 		long monitorPeriod = ManagerControllerHelper.getServerOrderMonitoringPeriod(this.properties);
-		monitoringHelper.checkFailedMonitoring(monitorPeriod);
+		this.monitoringHelper.checkFailedMonitoring(monitorPeriod);
 
-		List<Order> servedOrders = managerDataStoreController.getAllServedOrders();
+		List<Order> servedOrders = this.managerDataStoreController.getAllServedOrders();
 		for (Order order : servedOrders) {
-			if (!isInstanceBeingUsedByRemoteMember(order) || monitoringHelper.isMaximumFailedMonitoringAttempts(order)) {
-				LOGGER.debug("The instance " + order.getInstanceId() + " is not being used anymore by "
-						+ order.getRequestingMemberId() + " and will be removed.");
-				if (order.getInstanceId() != null) {
-					try {
-						removeInstanceForRemoteMember(order.getInstanceId());			
-					} catch (Exception e) {}
+			try {
+				isInstanceBeingUsedByRemoteMember(order);
+				this.monitoringHelper.eraseFailedMonitoringAttempts(order);
+				continue;
+			} catch (OCCIException e) {				
+				if (e.getType().equals(ErrorType.NOT_FOUND) || this.monitoringHelper.isMaximumFailedMonitoringAttempts(order)) {
+					LOGGER.debug("The instance " + order.getInstanceId() + " is not being used anymore by " 
+							+ order.getRequestingMemberId() + " and will be removed.");
+					
+					if (order.getInstanceId() != null) {
+						try {
+							removeInstanceForRemoteMember(order.getInstanceId());			
+						} catch (Exception ex) {}
+					}
+					this.managerDataStoreController.excludeOrder(order.getId());
+				} else {
+					this.monitoringHelper.addFailedMonitoringAttempt(order);
 				}
-				managerDataStoreController.excludeOrder(order.getId());
-				monitoringHelper.eraseFailedMonitoringAttempts(order);
-			} else {
-				monitoringHelper.addFailedMonitoringAttempt(order);
 			}
 		}
 
-		if (managerDataStoreController.getAllServedOrders().isEmpty()) {
+		if (this.managerDataStoreController.getAllServedOrders().isEmpty()) {
 			LOGGER.info("There are no remote orders. Canceling remote order monitoring.");
-			servedOrderMonitoringTimer.cancel();
+			this.servedOrderMonitoringTimer.cancel();
 		}
 	}
 
@@ -1706,11 +1712,7 @@ public class ManagerController {
 		} catch (OCCIException e) {
 			LOGGER.error("Error while checking if instance " + globalInstanceId + " is being used by "
 							+ servedOrder.getRequestingMemberId(), e);
-			
-			if (e.getType().equals(ErrorType.NOT_FOUND)) {
-				return false;
-			}
-			return true;
+			throw e;
 		}
 	}
 

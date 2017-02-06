@@ -2455,15 +2455,19 @@ public class TestManagerController {
 		Element instanceEl = queryEl.addElement("instance");
 		instanceEl.addElement("id").setText(DefaultDataTestHelper.INSTANCE_ID);
 
-		IQ response = IQ.createResultIQ(iq);
-		
+		// Response with error
 		// timeout for example
-		response.setError(Condition.bad_request);
+		IQ responseWithError = IQ.createResultIQ(iq);
+		responseWithError.setError(Condition.bad_request);
+		AsyncPacketSender packetSenderWithError = Mockito.mock(AsyncPacketSender.class);
+		Mockito.when(packetSenderWithError.syncSendPacket(Mockito.any(IQ.class))).thenReturn(responseWithError);		
 		
-		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);
-		Mockito.when(packetSender.syncSendPacket(Mockito.any(IQ.class))).thenReturn(response);
-		managerControllerSpy.setPacketSender(packetSender);
+		// response ok
+		IQ responseOk = IQ.createResultIQ(iq);			
+		AsyncPacketSender packetSenderOk = Mockito.mock(AsyncPacketSender.class);
+		Mockito.when(packetSenderOk.syncSendPacket(Mockito.any(IQ.class))).thenReturn(responseOk);
 				
+		managerControllerSpy.setPacketSender(packetSenderWithError);
 		Mockito.doReturn(true).when(managerControllerSpy).isThereEnoughQuota("manager1-test.com");
 		managerControllerSpy.queueServedOrder("manager1-test.com", new ArrayList<Category>(),
 				xOCCIAtt, "id1", managerTestHelper.getDefaultFederationToken());
@@ -2480,7 +2484,7 @@ public class TestManagerController {
 		Assert.assertEquals("id1", getOrderByInstanceId(managerControllerSpy.getServedOrders(),
 						DefaultDataTestHelper.INSTANCE_ID).getId());
 
-		// monitoring served orders
+		// monitoring served orders with failed
 		managerControllerSpy.monitorServedOrders();
 	
 		// checking there is served order
@@ -2494,7 +2498,22 @@ public class TestManagerController {
 		Assert.assertEquals("id1", getOrderByInstanceId(managerControllerSpy.getServedOrders(),
 						DefaultDataTestHelper.INSTANCE_ID).getId());		
 		
-		for (int i = 0; i < ManagerTestHelper.MAXIMUM_ORDER_ATTEMPTS; i++) {
+		for (int i = 0; i < ManagerTestHelper.MAXIMUM_ORDER_ATTEMPTS - 1; i++) {
+			managerControllerSpy.monitorServedOrders();
+		}	
+		
+		Assert.assertEquals(1, managerControllerSpy.getServedOrders().size());
+	
+		// Response ok
+		// Reset failed monitoring attempt
+		managerControllerSpy.setPacketSender(packetSenderOk);
+		// monitoring served orders ok
+		managerControllerSpy.monitorServedOrders();
+		Assert.assertEquals(1, managerControllerSpy.getServedOrders().size());
+		
+		// monitoring served orders with failed
+		managerControllerSpy.setPacketSender(packetSenderWithError);		
+		for (int i = 0; i < ManagerTestHelper.MAXIMUM_ORDER_ATTEMPTS + 1; i++) {
 			managerControllerSpy.monitorServedOrders();
 		}
 		

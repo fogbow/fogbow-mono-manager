@@ -92,7 +92,7 @@ public class ManagerDataStore {
 							+ PROVIDING_MEMBER_ID + " VARCHAR(255), "
 							+ IS_LOCAL + " BOOLEAN)");			
 			statement.execute("CREATE TABLE IF NOT EXISTS " + FEDERATION_MEMBER_SERVERED_TABLE_NAME + "(" 
-							+ FEDERTION_MEMBER_ID + " VARCHAR(255) PRIMARY KEY, "
+							+ FEDERTION_MEMBER_ID + " VARCHAR(255) NOT NULL, "
 							+ ORDER_ID + " VARCHAR(255) NOT NULL, "
 							+ "FOREIGN KEY (" + ORDER_ID + ") REFERENCES " 
 							+ ORDER_TABLE_NAME + "(" + ORDER_ID + ") ON DELETE CASCADE)");			
@@ -401,7 +401,7 @@ public class ManagerDataStore {
 				LOGGER.error("Couldn't rollback transaction.", e1);
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			
 		} finally {
 			close(updateOrderStmt, connection);
 		}
@@ -631,7 +631,7 @@ public class ManagerDataStore {
 			
 			connection.commit();
 			return true;
-		} catch (SQLException e) {e.printStackTrace();
+		} catch (SQLException e) {
 			LOGGER.error("Couldn't create federation member.", e);
 			try {
 				if (connection != null) {
@@ -666,7 +666,10 @@ public class ManagerDataStore {
 			while (resultSet.next()) {
 				resultSet.getString(1);
 				
-				federationMembersServered.add(resultSet.getString(1));
+				String fedMember = resultSet.getString(1);
+				if (!federationMembersServered.contains(fedMember)) {					
+					federationMembersServered.add(fedMember);
+				}
 			}
 					
 			connection.commit();
