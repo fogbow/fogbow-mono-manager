@@ -1123,7 +1123,7 @@ public class TestManagerController {
 		Mockito.when(
 				managerTestHelper.getComputePlugin().getInstance(Mockito.any(Token.class),
 						Mockito.anyString())).thenThrow(
-				new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND));
+				new OCCIException(ErrorType.BAD_REQUEST, "bad_request"));
 
 		// checking if orders still have the initial state
 		Assert.assertEquals(3,managerController.getOrdersFromUser(

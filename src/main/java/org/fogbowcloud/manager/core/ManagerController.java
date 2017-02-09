@@ -99,13 +99,14 @@ public class ManagerController {
 	private static final int DEFAULT_CHECK_STILL_ALIVE_TIMES = 5; // 5 times
 	private static final long DEFAULT_CAPACITY_CONTROLLER_UPDATE_PERIOD = 600000; // 10 minutes
 	public static final int DEFAULT_MAX_POOL = 200;
-
+	
 	private final ManagerTimer orderSchedulerTimer;
 	private final ManagerTimer instanceMonitoringTimer;
 	private final ManagerTimer servedOrderMonitoringTimer;
 	private final ManagerTimer accountingUpdaterTimer;
 	private final ManagerTimer capacityControllerUpdaterTimer;
 
+	private boolean forTest = false;
 	private Map<String, Token> instanceIdToToken = new HashMap<String, Token>();
 	private final List<FederationMember> members = Collections.synchronizedList(new LinkedList<FederationMember>());
 	private ManagerDataStoreController managerDataStoreController;
@@ -131,7 +132,7 @@ public class ManagerController {
 	private SshClientPool sshClientPool = new SshClientPool();
 	private FailedBatch failedBatch = new FailedBatch();
 	private ManagerControllerHelper.MonitoringHelper monitoringHelper;
-
+	
 	private DateUtils dateUtils = new DateUtils();
 
 	private PoolingHttpClientConnectionManager cm;
@@ -201,6 +202,10 @@ public class ManagerController {
 	
 	public void setNetworkPlugin(NetworkPlugin networkPlugin) {
 		this.networkPlugin = networkPlugin;
+	}
+	
+	public void setForTest(boolean forTest) {
+		this.forTest = forTest;
 	}
 
 	public void setComputeAccountingPlugin(AccountingPlugin computeAccountingPlugin) {
@@ -278,6 +283,7 @@ public class ManagerController {
 	}
 
 	private void triggerAccountingUpdater() {
+		if (this.forTest) { return; }
 		String accountingUpdaterPeriodStr = properties.getProperty(ConfigurationConstants.ACCOUNTING_UPDATE_PERIOD_KEY);
 		final long accountingUpdaterPeriod = accountingUpdaterPeriodStr == null ? DEFAULT_ACCOUNTING_UPDATE_PERIOD
 				: Long.valueOf(accountingUpdaterPeriodStr);
@@ -334,6 +340,7 @@ public class ManagerController {
 	}
 	
 	private void triggerCapacityControllerUpdater() {
+		if (this.forTest) { return; }
 		String capacityControllerUpdaterPeriodStr = properties.getProperty(ConfigurationConstants.CAPACITY_CONTROLLER_UPDATE_PERIOD_KEY);
 		final long capacityControllerUpdaterPeriod = capacityControllerUpdaterPeriodStr == null ? DEFAULT_CAPACITY_CONTROLLER_UPDATE_PERIOD
 				: Long.valueOf(capacityControllerUpdaterPeriodStr);
@@ -1168,6 +1175,7 @@ public class ManagerController {
 	}
 
 	private void triggerServedOrderMonitoring() {
+		if (this.forTest) { return; }
 		final long servedOrderMonitoringPeriod = ManagerControllerHelper.getServerOrderMonitoringPeriod(this.properties);
 
 		servedOrderMonitoringTimer.scheduleAtFixedRate(new TimerTask() {
@@ -1294,6 +1302,7 @@ public class ManagerController {
 	}
 
 	protected void triggerInstancesMonitor() {
+		if (this.forTest) { return; }
 		final long instanceMonitoringPeriod = ManagerControllerHelper.getInstanceMonitoringPeriod(this.properties);
 
 		instanceMonitoringTimer.scheduleAtFixedRate(new TimerTask() {
@@ -1338,7 +1347,8 @@ public class ManagerController {
 					this.monitoringHelper.addFailedMonitoringAttempt(order);
 				}
 				
-				if (isNotFoundException || this.monitoringHelper.isMaximumFailedMonitoringAttempts(order)) {
+				if (isNotFoundException || this.monitoringHelper.isMaximumFailedMonitoringAttempts(order) 
+						|| (order.getState().equals(OrderState.DELETED) && order.getInstanceId() == null)) {
 					instanceRemoved(this.managerDataStoreController.getOrder(order.getId()));
 					this.monitoringHelper.eraseFailedMonitoringAttempts(order);
 				}
@@ -1579,6 +1589,7 @@ public class ManagerController {
 	}
 
 	protected void triggerOrderScheduler() {
+		if (this.forTest) { return; }		
 		String schedulerPeriodStr = properties.getProperty(ConfigurationConstants.SCHEDULER_PERIOD_KEY);
 		long schedulerPeriod = schedulerPeriodStr == null ? DEFAULT_SCHEDULER_PERIOD : Long.valueOf(schedulerPeriodStr);
 		orderSchedulerTimer.scheduleAtFixedRate(new TimerTask() {
@@ -1683,7 +1694,7 @@ public class ManagerController {
 			} catch (OCCIException e) {				
 				if (e.getType().equals(ErrorType.NOT_FOUND) || this.monitoringHelper.isMaximumFailedMonitoringAttempts(order)) {
 					LOGGER.debug("The instance " + order.getInstanceId() + " is not being used anymore by " 
-							+ order.getRequestingMemberId() + " and will be removed.");
+							+ order.getRequestingMemberId() + " and will be removed.", e);
 					
 					if (order.getInstanceId() != null) {
 						try {

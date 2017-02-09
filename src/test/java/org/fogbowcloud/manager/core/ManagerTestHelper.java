@@ -452,6 +452,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		managerController.setValidator(new DefaultMemberAuthorizationPlugin(null));
 		managerController.setMemberPickerPlugin(memberPickerPlugin);
 		managerController.setBenchmarkExecutor(benchmarkExecutor);
+		managerController.setForTest(true);
 		
 		return managerController;
 	}
