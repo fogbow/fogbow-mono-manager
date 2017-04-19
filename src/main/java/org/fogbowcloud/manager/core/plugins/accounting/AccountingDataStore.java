@@ -7,6 +7,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -113,8 +114,9 @@ public class AccountingDataStore {
 			}
 			return false;
 		} finally {
-			close(updateMemberStatement, connection);
-			close(insertMemberStatement, connection);
+			List<Statement> statements = Arrays.asList(
+					new Statement[] { updateMemberStatement, insertMemberStatement });
+			close(statements, connection);
 		}
 	}
 	
@@ -275,13 +277,25 @@ public class AccountingDataStore {
 	}
 	
 	private void close(Statement statement, Connection conn) {
-		if (statement != null) {
-			try {
-				if (!statement.isClosed()) {
-					statement.close();
-				}
-			} catch (SQLException e) {
-				LOGGER.error("Couldn't close statement", e);
+		if (statement == null) {
+			LOGGER.error("Statement is null");
+			return;
+		}
+		
+		List<Statement> statements = Arrays.asList(new Statement[] { statement });
+		close(statements, conn);
+	}
+	
+	private void close(List<Statement> statements, Connection conn) {
+		if (statements != null && !statements.isEmpty()) {
+			for (Statement statement : statements) {
+				try {
+					if (!statement.isClosed()) {
+						statement.close();
+					}
+				} catch (SQLException e) {
+					LOGGER.error("Couldn't close statement", e);
+				}				
 			}
 		}
 

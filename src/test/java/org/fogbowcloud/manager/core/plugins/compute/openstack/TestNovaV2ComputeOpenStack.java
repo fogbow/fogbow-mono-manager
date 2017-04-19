@@ -499,6 +499,25 @@ public class TestNovaV2ComputeOpenStack {
 		novaV2ComputeOpenStack.uploadImage(new Token("", new Token.User("", ""), null, null),
 				"", "image", "");
 	}	
+	
+	@Test
+	public void testGetDefaultHttpClientTimeout() {
+		Properties properties = new Properties();		
+		novaV2ComputeOpenStack = new OpenStackNovaV2ComputePlugin(properties);		
+		
+		Assert.assertEquals(OpenStackNovaV2ComputePlugin.DEFAULT_HTTPCLIENT_TIMEOUT,
+				this.novaV2ComputeOpenStack.getHttpClientTimeout());
+	}
+	
+	@Test
+	public void testGettHttpClientTimeout() {
+		int timeout = 30000;
+		Properties properties = new Properties();
+		properties.put(OpenStackConfigurationConstants.COMPUTE_HTTPCLIENT_TIMEOUT, String.valueOf(timeout));
+		novaV2ComputeOpenStack = new OpenStackNovaV2ComputePlugin(properties);		
+		
+		Assert.assertEquals(timeout, this.novaV2ComputeOpenStack.getHttpClientTimeout());
+	}	
 
 	private HttpResponse createHttpResponseMock(String responseStr, int statusCode) {
 		HttpResponse httpResponse = Mockito.mock(HttpResponse.class);

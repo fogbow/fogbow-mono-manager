@@ -53,7 +53,7 @@ import org.restlet.data.Status;
 
 public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 
-	private static final int DEFAULT_HTTPCLIENT_TIMEOUT = 10000; // 10 seconds 
+	protected static final int DEFAULT_HTTPCLIENT_TIMEOUT = 10000; // 10 seconds 
 	
 	private static final String OS_VOLUME_ATTACHMENTS = "/os-volume_attachments";
 	private static final String SERVERS = "/servers";
@@ -89,7 +89,6 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 	private HttpClient client;
 	private int httpClientTimeout;
 	private List<Flavor> flavors;
-	private Properties properties;
 
 	private static final Logger LOGGER = Logger.getLogger(OpenStackNovaV2ComputePlugin.class);
 	
@@ -119,10 +118,10 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		
 		httpClientTimeout = DEFAULT_HTTPCLIENT_TIMEOUT;
 		try {
-			String timeoutStr = this.properties.getProperty(
+			String timeoutStr = properties.getProperty(
 					OpenStackConfigurationConstants.COMPUTE_HTTPCLIENT_TIMEOUT,
 					String.valueOf(DEFAULT_HTTPCLIENT_TIMEOUT));
-			httpClientTimeout = Integer.parseInt(timeoutStr); 			
+			httpClientTimeout = Integer.parseInt(timeoutStr);		
 		} catch (Exception e) {}
 		
 		flavors = new ArrayList<Flavor>();	
@@ -813,6 +812,10 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		updateFlavors(token);
 		// Finding flavor
 		return RequirementsHelper.findSmallestFlavor(getFlavors(), requirements);
+	}
+	
+	protected int getHttpClientTimeout() {
+		return httpClientTimeout;
 	}
 	
 	@Override
