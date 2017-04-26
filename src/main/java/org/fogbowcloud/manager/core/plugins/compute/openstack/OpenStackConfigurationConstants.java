@@ -50,6 +50,8 @@ public class OpenStackConfigurationConstants {
 	public static final String COMPUTE_NOVAV2_FLAVOR_MEDIUM_KEY = "compute_novav2_flavor_medium";
 	public static final String COMPUTE_NOVAV2_FLAVOR_LARGE_KEY = "compute_novav2_flavor_large";
 
+	public static final String COMPUTE_HTTPCLIENT_TIMEOUT = "compute_httpclient_timeout";
+	
 	/*
 	 * JSON Constants
 	 */

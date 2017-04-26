@@ -12,6 +12,7 @@ import org.apache.commons.io.Charsets;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -19,7 +20,7 @@ import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.FileEntity;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.RequirementsHelper;
@@ -52,6 +53,8 @@ import org.restlet.data.Status;
 
 public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 
+	protected static final int DEFAULT_HTTPCLIENT_TIMEOUT = 10000; // 10 seconds 
+	
 	private static final String OS_VOLUME_ATTACHMENTS = "/os-volume_attachments";
 	private static final String SERVERS = "/servers";
 	private static final String SUFFIX_ENDPOINT_FLAVORS = "/flavors";
@@ -84,6 +87,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 	private String networkId;
 	private Map<String, String> fogbowTermToOpenStack = new HashMap<String, String>();
 	private HttpClient client;
+	private int httpClientTimeout;
 	private List<Flavor> flavors;
 
 	private static final Logger LOGGER = Logger.getLogger(OpenStackNovaV2ComputePlugin.class);
@@ -111,6 +115,14 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		
 		//ssh public key
 		fogbowTermToOpenStack.put(OrderConstants.PUBLIC_KEY_TERM, "ssh-public-key");
+		
+		httpClientTimeout = DEFAULT_HTTPCLIENT_TIMEOUT;
+		try {
+			String timeoutStr = properties.getProperty(
+					OpenStackConfigurationConstants.COMPUTE_HTTPCLIENT_TIMEOUT,
+					String.valueOf(DEFAULT_HTTPCLIENT_TIMEOUT));
+			httpClientTimeout = Integer.parseInt(timeoutStr);		
+		} catch (Exception e) {}
 		
 		flavors = new ArrayList<Flavor>();	
 		
@@ -299,7 +311,12 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 	}
 
 	private void initClient() {
-		client = HttpClients.createMinimal();
+		RequestConfig.Builder requestBuilder = RequestConfig.custom();		
+		requestBuilder = requestBuilder.setSocketTimeout(this.httpClientTimeout);
+		
+		HttpClientBuilder builder = HttpClientBuilder.create();     
+		builder.setDefaultRequestConfig(requestBuilder.build());
+		client = builder.build();
 	}
 	
 	protected void setClient(HttpClient client) {
@@ -795,6 +812,10 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		updateFlavors(token);
 		// Finding flavor
 		return RequirementsHelper.findSmallestFlavor(getFlavors(), requirements);
+	}
+	
+	protected int getHttpClientTimeout() {
+		return httpClientTimeout;
 	}
 	
 	@Override
