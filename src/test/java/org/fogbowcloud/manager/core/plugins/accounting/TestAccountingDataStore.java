@@ -33,7 +33,7 @@ public class TestAccountingDataStore {
 		properties = new Properties();
 		properties.put("accounting_datastore_url", DATASTORE_URL);
 
-		db = new AccountingDataStore(properties);
+		db = new AccountingDataStore(properties, "test");
 	}	
 
 	@After
@@ -49,7 +49,7 @@ public class TestAccountingDataStore {
 		try {
 			Properties properties = new Properties();
 			properties.put(AccountingDataStore.ACCOUNTING_DATASTORE_URL, "/dev/null");
-			new AccountingDataStore(properties);
+			new AccountingDataStore(properties, "");
 			Assert.fail();
 		} catch (Error e) {
 			Assert.assertEquals(AccountingDataStore.ERROR_WHILE_INITIALIZING_THE_DATA_STORE, 
@@ -466,6 +466,22 @@ public class TestAccountingDataStore {
 			expectedAccountingInfo.addConsumption(i);
 
 			Assert.assertTrue(returnedAccounting.contains(expectedAccountingInfo));
+		}
+	}
+	
+	@Test
+	public void testDefaultDataStoreUrl() {
+		Properties emptyProperties = new Properties();
+		String someDatastoreNamePrefix[] = new String[] {
+				FCUAccountingPlugin.DEFAULT_NAME_DATASTORE_PREFIX, SimpleStorageAccountingPlugin.DEFAULT_NAME_DATASTORE_PREFIX };
+		
+		for (String defaultDatastoreNamePrefix : someDatastoreNamePrefix) {
+			this.db.setDataStoreURL(emptyProperties, defaultDatastoreNamePrefix);
+			
+			String sufixExpected = defaultDatastoreNamePrefix + "_" + AccountingDataStore.DEFAULT_DATASTORE_NAME;
+			String dataStoreURL = this.db.getDataStoreURL();
+			
+			Assert.assertTrue(dataStoreURL.endsWith(sufixExpected));			
 		}
 	}
 }

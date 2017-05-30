@@ -20,8 +20,10 @@ public class FCUAccountingPlugin implements AccountingPlugin {
 	private DateUtils dateUtils;
 	private long lastUpdate;
 
-	private static final Logger LOGGER = Logger.getLogger(FCUAccountingPlugin.class);
 	public static final String ACCOUNTING_DATASTORE_URL = "fcu_accounting_datastore_url";
+	protected static final String DEFAULT_NAME_DATASTORE_PREFIX = FCUAccountingPlugin.class.getSimpleName().toLowerCase();
+	
+	private static final Logger LOGGER = Logger.getLogger(FCUAccountingPlugin.class);
 
 	public FCUAccountingPlugin(Properties properties, BenchmarkingPlugin benchmarkingPlugin) {
 		this(properties, benchmarkingPlugin, new DateUtils());
@@ -35,7 +37,7 @@ public class FCUAccountingPlugin implements AccountingPlugin {
 
 		properties.put(AccountingDataStore.ACCOUNTING_DATASTORE_URL, 
 				properties.getProperty(getDataStoreUrl()));
-		db = new AccountingDataStore(properties);
+		db = new AccountingDataStore(properties, DEFAULT_NAME_DATASTORE_PREFIX);
 	}
 
 	@Override
@@ -100,6 +102,10 @@ public class FCUAccountingPlugin implements AccountingPlugin {
 	public AccountingInfo getAccountingInfo(String user, String requestingMember,
 			String providingMember) {
 		return db.getAccountingInfo(user, requestingMember, providingMember);
+	}
+	
+	public static void main(String[] args) {
+		System.out.println(AccountingDataStore.class.getSimpleName());
 	}
 	
 }

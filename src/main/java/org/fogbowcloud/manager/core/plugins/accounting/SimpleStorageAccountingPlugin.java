@@ -15,11 +15,13 @@ import org.fogbowcloud.manager.occi.order.OrderAttribute;
 
 public class SimpleStorageAccountingPlugin implements AccountingPlugin {
 
-	public static final String ACCOUNTING_DATASTORE_URL = "simple_storage_accounting_datastore_url";
 	private AccountingDataStore db;
 	private DateUtils dateUtils;
 	private long lastUpdate;
 
+	public static final String ACCOUNTING_DATASTORE_URL = "simple_storage_accounting_datastore_url";
+	protected static final String DEFAULT_NAME_DATASTORE_PREFIX = SimpleStorageAccountingPlugin.class.getSimpleName().toLowerCase();
+	
 	private static final Logger LOGGER = Logger.getLogger(SimpleStorageAccountingPlugin.class);
 
 	public SimpleStorageAccountingPlugin(Properties properties) {
@@ -32,7 +34,7 @@ public class SimpleStorageAccountingPlugin implements AccountingPlugin {
 
 		properties.put(AccountingDataStore.ACCOUNTING_DATASTORE_URL, 
 				properties.getProperty(getDataStoreUrl()));
-		db = new AccountingDataStore(properties);
+		db = new AccountingDataStore(properties, DEFAULT_NAME_DATASTORE_PREFIX);
 	}
 
 	@Override

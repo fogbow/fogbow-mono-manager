@@ -26,7 +26,7 @@ public class AccountingDataStore {
 	protected static final String REQUESTING_MEMBER_COL = "requesting_member";
 	protected static final String PROVIDING_MEMBER_COL = "providing_member";
 	protected static final String USAGE_COL = "usage";
-	private static final String DEFAULT_DATASTORE_NAME = "datastore_accounting.slite";
+	protected static final String DEFAULT_DATASTORE_NAME = "datastore_accounting.slite";
 	protected static final String ERROR_WHILE_INITIALIZING_THE_DATA_STORE = 
 			"Error while initializing the Accouting DataStore.";
 
@@ -34,10 +34,8 @@ public class AccountingDataStore {
 
 	public static final Logger LOGGER = Logger.getLogger(AccountingDataStore.class);
 	
-	public AccountingDataStore(Properties properties) {		
-		String dataStoreURLProperties = properties.getProperty(ACCOUNTING_DATASTORE_URL);
-		this.dataStoreURL = DataStoreHelper.getDataStoreUrl(dataStoreURLProperties,
-				DEFAULT_DATASTORE_NAME);
+	public AccountingDataStore(Properties properties, String defaultDatastoreNamePrefix) {		
+		setDataStoreURL(properties, defaultDatastoreNamePrefix);
 
 		Statement statement = null;
 		Connection connection = null;
@@ -332,6 +330,16 @@ public class AccountingDataStore {
 	public AccountingInfo getAccountingInfo(String user, String requestingMember,
 			String providingMember) {
 		return getAccountingInfo(new AccountingEntryKey(user, requestingMember, providingMember));
+	}
+	
+	protected void setDataStoreURL(Properties properties, String defaultDatastoreNamePrefix) {
+		String dataStoreURLProperties = properties.getProperty(ACCOUNTING_DATASTORE_URL);
+		this.dataStoreURL = DataStoreHelper.getDataStoreUrl(dataStoreURLProperties,
+				defaultDatastoreNamePrefix + "_" + DEFAULT_DATASTORE_NAME);
+	}
+	
+	protected String getDataStoreURL() {
+		return dataStoreURL;
 	}
 }
 
