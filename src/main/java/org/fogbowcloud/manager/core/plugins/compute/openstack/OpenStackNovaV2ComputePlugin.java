@@ -342,7 +342,8 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 			throw new OCCIException(ErrorType.NO_VALID_HOST_FOUND, ResponseConstants.NO_VALID_HOST_FOUND);
 		}
 		else if (response.getStatusLine().getStatusCode() > 204) {
-			throw new OCCIException(ErrorType.BAD_REQUEST, response.getStatusLine().toString());
+			throw new OCCIException(ErrorType.BAD_REQUEST, 
+					"Status code: " + response.getStatusLine().toString() + " | Message:" + message);
 		}
 	}
 

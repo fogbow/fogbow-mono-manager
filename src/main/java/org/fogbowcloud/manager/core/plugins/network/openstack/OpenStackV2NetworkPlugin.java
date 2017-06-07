@@ -540,7 +540,8 @@ public class OpenStackV2NetworkPlugin implements NetworkPlugin {
 			throw new OCCIException(ErrorType.BAD_REQUEST, message);
 		}
 		else if (response.getStatusLine().getStatusCode() > 204) {
-			throw new OCCIException(ErrorType.BAD_REQUEST, response.getStatusLine().toString());
+			throw new OCCIException(ErrorType.BAD_REQUEST, 
+					"Status code: " + response.getStatusLine().toString() + " | Message:" + message);
 		}
 	}		
 	
