@@ -37,11 +37,13 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class OpenStackV2NetworkPlugin implements NetworkPlugin {
+public class OpenStackV2NetworkPlugin implements NetworkPlugin {	
 
 	protected static final String STATUS_OPENSTACK_ACTIVE = "ACTIVE";
 
 	private static final Logger LOGGER = Logger.getLogger(OpenStackV2StoragePlugin.class);
+	private static final String MSG_LOG_ERROR_MANIPULATE_JSON = "An error occurred when manipulate json.";
+	protected static final String MSG_LOG_THERE_IS_INSTANCE_ASSOCIATED = "There is instance associated to the network ";
 	
 	private static final String SUFIX_ENDPOINT_ADD_ROUTER_INTERFACE_ADD = "add_router_interface";
 	private static final String SUFIX_ENDPOINT_REMOVE_ROUTER_INTERFACE_ADD = "remove_router_interface";
@@ -81,7 +83,9 @@ public class OpenStackV2NetworkPlugin implements NetworkPlugin {
 	protected static final String DEFAULT_SUBNET_NAME = "subnet-fogbow";
 	protected static final String[] DEFAULT_DNS_NAME_SERVERS = new String[] {"8.8.8.8",  "8.8.4.4"};
 	protected static final String DEFAULT_NETWORK_ADDRESS = "192.168.0.1/24";
-	private static final String NETWORK_DHCP = "network:dhcp";
+	protected static final String NETWORK_DHCP = "network:dhcp";
+	protected static final String COMPUTE_NOVA = "compute:nova";
+	protected static final String NETWORK_ROUTER = "network:ha_router_replicated_interface";
 
 	private HttpClient client;
 	private String networkV2APIEndpoint;
@@ -213,52 +217,70 @@ public class OpenStackV2NetworkPlugin implements NetworkPlugin {
 
 	@Override
 	public void removeInstance(Token token, String instanceId) {
+		String routerIdToRemove = null;
+		String networkIdToRemove = instanceId;
+		
 		String tenantId = token.getAttributes().get(TENANT_ID);
 		if (tenantId == null) {
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.INVALID_TOKEN);
-		}
-		
+		}		
 		String endpoint = this.networkV2APIEndpoint + SUFIX_ENDPOINT_PORTS
 				+ "?" + KEY_TENANT_ID + "=" + tenantId;
 		String responseStr = doGetRequest(endpoint, token.getAccessId());
 		
-		String routerIdToRemove = null;
-		String networkIdToRemove = null;
 		try {
+			List<String> subnets = new ArrayList<String>();
 			JSONObject rootServer = new JSONObject(responseStr);
-			JSONArray routersJSONArray = rootServer.optJSONArray(KEY_JSON_PORTS);
-			for (int i = 0; i < routersJSONArray.length(); i++) {
-				String networkId = routersJSONArray.optJSONObject(i).optString(KEY_NETWORK_ID);
-				String deviceOwner = routersJSONArray.optJSONObject(i).optString(KEY_DEVICE_OWNER);				
-				String routerId = routersJSONArray.optJSONObject(i).optString(KEY_DEVICE_ID);
+			JSONArray routerPortsJSONArray = rootServer.optJSONArray(KEY_JSON_PORTS);
+			for (int i = 0; i < routerPortsJSONArray.length(); i++) {
 				
-				if (networkId.equals(instanceId) && !deviceOwner.equals(NETWORK_DHCP)) {
-					routerIdToRemove = routerId;
-					networkIdToRemove = networkId;
+				String networkId = routerPortsJSONArray.optJSONObject(i).optString(KEY_NETWORK_ID);
+				
+				if (networkId.equals(instanceId)) {
+
+					String deviceOwner = routerPortsJSONArray.optJSONObject(i).optString(KEY_DEVICE_OWNER);				
+
+					boolean thereIsInstance = deviceOwner.equals(COMPUTE_NOVA);
+					if (thereIsInstance) {
+						throw new OCCIException(ErrorType.BAD_REQUEST, 
+								MSG_LOG_THERE_IS_INSTANCE_ASSOCIATED + "( " + instanceId + " ).");
+					}
 					
-					String subnetId = routersJSONArray.optJSONObject(i)
-							.optJSONArray(KEY_FIXES_IPS).optJSONObject(0)
-							.optString(KEY_JSON_SUBNET_ID);					
-					JSONObject jsonRequest = generateJsonEntitySubnetId(subnetId);		
+					if(NETWORK_ROUTER.equals(deviceOwner)){
+						routerIdToRemove = routerPortsJSONArray.optJSONObject(i).optString(KEY_DEVICE_ID);
+					}
 					
-					endpoint = this.networkV2APIEndpoint
-							+ SUFIX_ENDPOINT_ROUTER + "/" + routerId + "/"
-							+ SUFIX_ENDPOINT_REMOVE_ROUTER_INTERFACE_ADD;
-					doPutRequest(endpoint, token.getAccessId(), jsonRequest);
+					if (!deviceOwner.equals(NETWORK_DHCP)) {
+						String subnetId = routerPortsJSONArray.optJSONObject(i).optJSONArray(KEY_FIXES_IPS)
+								.optJSONObject(0).optString(KEY_JSON_SUBNET_ID);
+						subnets.add(subnetId);						
+					}
+					
 				}				
 			}			
+			
+			for (String subnetId : subnets) {
+				JSONObject jsonRequest = generateJsonEntitySubnetId(subnetId);		
+				if(routerIdToRemove != null){
+					endpoint = this.networkV2APIEndpoint + SUFIX_ENDPOINT_ROUTER + "/" 
+							+ routerIdToRemove + "/" + SUFIX_ENDPOINT_REMOVE_ROUTER_INTERFACE_ADD;
+					doPutRequest(endpoint, token.getAccessId(), jsonRequest);
+				}
+								
+			}
 		} catch (JSONException e) {
-			LOGGER.error("An error occurred when manipulate json.", e);
+			LOGGER.error(MSG_LOG_ERROR_MANIPULATE_JSON, e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		} catch (NullPointerException e) {
-			LOGGER.error("An error occurred when manipulate json.", e);
+			LOGGER.error(MSG_LOG_ERROR_MANIPULATE_JSON, e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
 		} catch (OCCIException e) {
 			LOGGER.error("An error occurred when removing router interface.", e);
 			throw e;
 		}
-		
-		removeRouter(token, routerIdToRemove, true);	
+		if(routerIdToRemove != null){
+			removeRouter(token, routerIdToRemove, false);	
+		}
 		removeNetwork(token, networkIdToRemove, true);
 	}
 
@@ -507,10 +529,14 @@ public class OpenStackV2NetworkPlugin implements NetworkPlugin {
 	
 	protected void doDeleteRequest(String endpoint, String authToken) {
 		HttpResponse response = null;
+		String responseStr = null;
 		try {
 			HttpDelete request = new HttpDelete(endpoint);
 			request.addHeader(OCCIHeaders.X_AUTH_TOKEN, authToken);
 			response = client.execute(request);
+			if (response.getStatusLine().getStatusCode() != HttpStatus.SC_NO_CONTENT) {
+				responseStr = EntityUtils.toString(response.getEntity(), Charsets.UTF_8);			
+			}
 		} catch (Exception e) {
 			LOGGER.error(e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
@@ -521,8 +547,7 @@ public class OpenStackV2NetworkPlugin implements NetworkPlugin {
 				// Do nothing
 			}
 		}
-		// delete message does not have message
-		checkStatusResponse(response, "");
+		checkStatusResponse(response, responseStr);
 	}		
 	
 	private void checkStatusResponse(HttpResponse response, String message) {
@@ -533,7 +558,7 @@ public class OpenStackV2NetworkPlugin implements NetworkPlugin {
 		} else if (response.getStatusLine().getStatusCode() == HttpStatus.SC_BAD_REQUEST) {
 			throw new OCCIException(ErrorType.BAD_REQUEST, message);
 		} else if (response.getStatusLine().getStatusCode() == HttpStatus.SC_REQUEST_TOO_LONG) {
-			if (message.contains(ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES)) {
+			if (message != null && message.contains(ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES)) {
 				throw new OCCIException(ErrorType.QUOTA_EXCEEDED,
 						ResponseConstants.QUOTA_EXCEEDED_FOR_INSTANCES);
 			}
@@ -556,5 +581,6 @@ public class OpenStackV2NetworkPlugin implements NetworkPlugin {
 	
 	protected String[] getDnsList() {
 		return dnsList;
-	}
+	}	
+	
 }
