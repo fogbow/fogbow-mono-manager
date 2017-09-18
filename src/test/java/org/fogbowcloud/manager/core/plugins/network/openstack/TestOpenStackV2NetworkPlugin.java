@@ -303,7 +303,7 @@ public class TestOpenStackV2NetworkPlugin {
 		JSONObject portOneJsonObject = new JSONObject();
 		String networkId = "networkId";
 		portOneJsonObject.put(OpenStackV2NetworkPlugin.KEY_NETWORK_ID, networkId);
-		portOneJsonObject.put(OpenStackV2NetworkPlugin.KEY_DEVICE_OWNER, "owner");
+		portOneJsonObject.put(OpenStackV2NetworkPlugin.KEY_DEVICE_OWNER, "network:ha_router_replicated_interface");
 		portOneJsonObject.put(OpenStackV2NetworkPlugin.KEY_DEVICE_ID, "routerId");			
 		JSONArray subnetsjsonArray = new JSONArray();
 		JSONObject subnetObject = new JSONObject();
@@ -336,7 +336,7 @@ public class TestOpenStackV2NetworkPlugin {
 		JSONObject portOneJsonObject = new JSONObject();
 		String networkId = "networkId";
 		portOneJsonObject.put(OpenStackV2NetworkPlugin.KEY_NETWORK_ID, networkId);
-		portOneJsonObject.put(OpenStackV2NetworkPlugin.KEY_DEVICE_OWNER, "owner");
+		portOneJsonObject.put(OpenStackV2NetworkPlugin.KEY_DEVICE_OWNER, "network:ha_router_replicated_interface");
 		portOneJsonObject.put(OpenStackV2NetworkPlugin.KEY_DEVICE_ID, "routerId");			
 		
 		JSONArray portsArrayJsonObject = new JSONArray();
@@ -368,7 +368,7 @@ public class TestOpenStackV2NetworkPlugin {
 		JSONObject portOneJsonObject = new JSONObject();
 		String networkId = "networkId";
 		portOneJsonObject.put(OpenStackV2NetworkPlugin.KEY_NETWORK_ID, networkId);
-		portOneJsonObject.put(OpenStackV2NetworkPlugin.KEY_DEVICE_OWNER, "owner");
+		portOneJsonObject.put(OpenStackV2NetworkPlugin.KEY_DEVICE_OWNER, "network:ha_router_replicated_interface");
 		portOneJsonObject.put(OpenStackV2NetworkPlugin.KEY_DEVICE_ID, "routerId");			
 		JSONArray subnetsjsonArray = new JSONArray();
 		JSONObject subnetObject = new JSONObject();
@@ -407,7 +407,7 @@ public class TestOpenStackV2NetworkPlugin {
 		JSONObject portOneJsonObject = new JSONObject();
 		String networkId = "networkId";
 		portOneJsonObject.put(OpenStackV2NetworkPlugin.KEY_NETWORK_ID, networkId);
-		portOneJsonObject.put(OpenStackV2NetworkPlugin.KEY_DEVICE_OWNER, "owner");
+		portOneJsonObject.put(OpenStackV2NetworkPlugin.KEY_DEVICE_OWNER, "network:ha_router_replicated_interface");
 		portOneJsonObject.put(OpenStackV2NetworkPlugin.KEY_DEVICE_ID, "routerId");		
 		JSONArray subnetsjsonArray = new JSONArray();
 		JSONObject subnetObject = new JSONObject();
@@ -438,7 +438,7 @@ public class TestOpenStackV2NetworkPlugin {
 			Assert.fail();
 		}
 		
-		Mockito.verify(client, Mockito.times(3)).execute(Mockito.any(HttpUriRequest.class));				
+		Mockito.verify(client, Mockito.times(4)).execute(Mockito.any(HttpUriRequest.class));				
 	}	
 	
 	@Test
