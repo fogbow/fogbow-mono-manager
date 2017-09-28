@@ -1844,9 +1844,8 @@ public class ManagerController {
 					LOGGER.warn("Order failed locally for image not found.", e);
 					return false;
 				} else if (errorType == ErrorType.NO_VALID_HOST_FOUND) {
-					LOGGER.warn(
-							"Order failed because no valid host was found," + " we will try to wake up a sleeping host.",
-							e);
+					LOGGER.warn("Order failed because no valid host was found," 
+							+ " we will try to wake up a sleeping host.", e);
 					wakeUpSleepingHosts(order);
 					return false;
 				} else {
@@ -1869,9 +1868,9 @@ public class ManagerController {
 				
 				return instanceId != null;
 			} catch (OCCIException e) {
+				LOGGER.warn("Order failed locally.", e);
 				return false;
-			}			
-		
+			}		
 		} else if (isNetworkOrder) {
 			try {
 				String instanceId = networkPlugin.requestInstance(federationUserToken, 
@@ -1887,6 +1886,7 @@ public class ManagerController {
 				
 				return instanceId != null;
 			} catch (OCCIException e) {
+				LOGGER.warn("Order failed locally.", e);
 				return false;
 			}
 		} else {

@@ -113,6 +113,7 @@ public class CloudStackNetworkPlugin implements NetworkPlugin {
 		}
 		
 		CloudStackHelper.sign(uriBuilder, token.getAccessId());
+		LOGGER.error("@@@@@@@@@@@@" + uriBuilder.toString());
 		HttpResponseWrapper response = httpClient.doPost(uriBuilder.toString());
 		checkStatusResponse(response.getStatusLine());
 		try {
@@ -300,13 +301,13 @@ public class CloudStackNetworkPlugin implements NetworkPlugin {
 					ResponseConstants.IRREGULAR_SYNTAX);
 		}
 	}
-
 	
 	protected void checkStatusResponse(StatusLine statusLine) {
 		if (statusLine.getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
 			throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 		} else if (statusLine.getStatusCode() == SC_PARAM_ERROR) {
-			throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
+			throw new OCCIException(ErrorType.NOT_FOUND, 
+					ResponseConstants.NOT_FOUND + " | Details: " + statusLine.getReasonPhrase());
 		} else if (statusLine.getStatusCode() == SC_INSUFFICIENT_CAPACITY_ERROR || 
 				statusLine.getStatusCode() == SC_RESOURCE_UNAVAILABLE_ERROR) {
 			throw new OCCIException(ErrorType.NO_VALID_HOST_FOUND, ResponseConstants.NO_VALID_HOST_FOUND);
@@ -317,8 +318,4 @@ public class CloudStackNetworkPlugin implements NetworkPlugin {
 			throw new OCCIException(ErrorType.BAD_REQUEST, statusLine.getReasonPhrase());
 		}
 	}
-
-
-	
-
 }
