@@ -184,7 +184,7 @@ public class OpenStackV2NetworkPlugin implements NetworkPlugin {
 		return networkId;
 	}
 
-	private void removeNetwork(Token token, String networkId, boolean throwException) {
+	protected void removeNetwork(Token token, String networkId, boolean throwException) {
 		String endpoint;
 		try {
 			endpoint = this.networkV2APIEndpoint + SUFFIX_ENDPOINT_NETWORK + "/" + networkId;
@@ -196,7 +196,7 @@ public class OpenStackV2NetworkPlugin implements NetworkPlugin {
 		}
 	}
 
-	private void removeRouter(Token token, String routerId, boolean throwException) {
+	protected void removeRouter(Token token, String routerId, boolean throwException) {
 		String endpoint;
 		try {
 			endpoint = this.networkV2APIEndpoint + SUFIX_ENDPOINT_ROUTER + "/" + routerId;
