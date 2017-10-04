@@ -53,6 +53,7 @@ public class OpenNebulaNetworkPlugin implements NetworkPlugin {
 	private static final String DEFAULT_NETWORK_TYPE = "RANGED";
 	
 	private OpenNebulaClientFactory clientFactory;
+	@SuppressWarnings("unused")
 	private Properties properties;
 	private String openNebulaEndpoint;
 	private String bridge;
@@ -76,9 +77,6 @@ public class OpenNebulaNetworkPlugin implements NetworkPlugin {
 		
 		String address = xOCCIAtt.get(OCCIConstants.NETWORK_ADDRESS);
 		String gateway = xOCCIAtt.get(OCCIConstants.NETWORK_GATEWAY);
-		String allocation = xOCCIAtt.get(OCCIConstants.NETWORK_ALLOCATION);
-		String label = xOCCIAtt.get(OCCIConstants.NETWORK_LABEL);
-		String vlanId = xOCCIAtt.get(OCCIConstants.NETWORK_VLAN);
 		
 		String networkName = "fogbow" + (int) (Math.random() * 100000);
 		

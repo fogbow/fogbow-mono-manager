@@ -14,10 +14,10 @@ import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.plugins.StoragePlugin;
+import org.fogbowcloud.manager.core.util.HttpRequestUtil;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.ErrorType;
@@ -273,7 +273,7 @@ public class OpenStackV2StoragePlugin implements StoragePlugin {
 	}	
 	
 	private void initClient() {
-		client = HttpClients.createMinimal();
+		client = HttpRequestUtil.createHttpClient();
 	}	
 	
 	public void setClient(HttpClient client) {

@@ -333,7 +333,6 @@ public class OpenNebulaComputePlugin implements ComputePlugin {
 		LOGGER.debug("mem=" + mem + ", cpu=" + cpu + ", image=" + image + ", arch=" + arch + ", privateIP=" + privateIp);
 
 		// TODO To get information about network when it'll be necessary
-		String network = vm.xpath("TEMPLATE/NIC/NETWORK");
 		String networkId = vm.xpath("TEMPLATE/NIC/NETWORK_ID");
 		String networkMac = vm.xpath("TEMPLATE/NIC/MAC");
 

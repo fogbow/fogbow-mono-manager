@@ -24,7 +24,6 @@ import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.order.OrderConstants;
 
 import com.microsoft.windowsazure.Configuration;
-import com.microsoft.windowsazure.core.OperationResponse;
 import com.microsoft.windowsazure.core.utils.KeyStoreType;
 import com.microsoft.windowsazure.management.configuration.ManagementConfiguration;
 import com.microsoft.windowsazure.management.network.NetworkManagementClient;
@@ -42,7 +41,6 @@ public class AzureNetworkPlugin implements NetworkPlugin {
 
 	public static final String AZURE_NETWORK_DEFAULT_PREFIX_NAME = "fogbow-azure-network";
 	public static final String AZURESUB_NETWORK_DEFAULT_PREFIX_NAME = "subnetwork_";
-	private final String PERSISTENT_NW_ROLE = "PersistentNWRole";
 
 	private final String DEFAULT_SECURITY_GROUP_LABEL = "Fogbow-network-label";
 
@@ -131,8 +129,7 @@ public class AzureNetworkPlugin implements NetworkPlugin {
 			NetworkSetConfigurationParameters networkConfigs = new NetworkSetConfigurationParameters(
 					networkConfigModel.toString());
 
-			OperationResponse response = networkManagementClient.getNetworksOperations()
-					.beginSettingConfiguration(networkConfigs);
+			networkManagementClient.getNetworksOperations().beginSettingConfiguration(networkConfigs);
 
 		} catch (Exception e) {
 			LOGGER.error("It was not possible to get the Azure Network with id " + instanceId, e);
@@ -167,9 +164,6 @@ public class AzureNetworkPlugin implements NetworkPlugin {
 			String subNetworkName) {
 
 		VirtualNetworkSite virtualNetworkSite = new VirtualNetworkSite();
-
-		String[] netmaskSplit = netmask.split("/");
-		String netCdir = netmaskSplit[1];
 
 		AddressSpace addressSpace = new AddressSpace();
 		ArrayList<String> addresses = new ArrayList<String>();

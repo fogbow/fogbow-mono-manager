@@ -13,9 +13,9 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.core.util.HttpRequestUtil;
 import org.fogbowcloud.manager.occi.model.ErrorType;
 import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;
@@ -117,12 +117,11 @@ public class HttpClientWrapper {
 	}
 
 	private HttpClient getClient(SSLConnectionSocketFactory sslSocketFactory) {
-		if (client == null) {
+		if (this.client == null) {
 			if (sslSocketFactory == null) {
-				client = HttpClients.createMinimal();
+				this.client = HttpRequestUtil.createHttpClient();
 			} else {
-				client = HttpClients.custom()
-						.setSSLSocketFactory(sslSocketFactory).build();
+				this.client = HttpRequestUtil.createHttpClient(sslSocketFactory);
 			}
 		}
 		return client;

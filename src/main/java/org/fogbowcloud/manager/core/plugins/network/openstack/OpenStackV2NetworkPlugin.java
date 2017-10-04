@@ -16,12 +16,12 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.plugins.NetworkPlugin;
 import org.fogbowcloud.manager.core.plugins.compute.openstack.OpenStackConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.storage.openstack.OpenStackV2StoragePlugin;
+import org.fogbowcloud.manager.core.util.HttpRequestUtil;
 import org.fogbowcloud.manager.occi.OCCIConstants;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.model.Category;
@@ -571,7 +571,7 @@ public class OpenStackV2NetworkPlugin implements NetworkPlugin {
 	}		
 	
 	private void initClient() {
-		client = HttpClients.createMinimal();
+		this.client = HttpRequestUtil.createHttpClient();
 	}		
 	
 	// only for test

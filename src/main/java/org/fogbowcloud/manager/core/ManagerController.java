@@ -33,7 +33,6 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
@@ -58,6 +57,7 @@ import org.fogbowcloud.manager.core.plugins.accounting.AccountingInfo;
 import org.fogbowcloud.manager.core.plugins.localcredentails.MapperHelper;
 import org.fogbowcloud.manager.core.plugins.localcredentails.SingleMapperPlugin;
 import org.fogbowcloud.manager.core.plugins.util.SshClientPool;
+import org.fogbowcloud.manager.core.util.HttpRequestUtil;
 import org.fogbowcloud.manager.occi.ManagerDataStoreController;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.instance.InstanceState;
@@ -135,7 +135,7 @@ public class ManagerController {
 	
 	private DateUtils dateUtils = new DateUtils();
 
-	private PoolingHttpClientConnectionManager cm;
+	private PoolingHttpClientConnectionManager connectionManager;
 	
 	private static final Logger LOGGER = Logger.getLogger(ManagerController.class);
 
@@ -148,6 +148,7 @@ public class ManagerController {
 			throw new IllegalArgumentException();
 		}
 		this.properties = properties;
+		HttpRequestUtil.init(this.properties);
 		this.monitoringHelper = new ManagerControllerHelper().new MonitoringHelper(this.properties);
 		setFlavorsProvided(ResourceRepository.getStaticFlavors(properties));
 		if (executor == null) {
@@ -815,10 +816,11 @@ public class ManagerController {
 	}
 
 	private CloseableHttpClient createReverseTunnelHttpClient() {
-		this.cm = new PoolingHttpClientConnectionManager();
-		cm.setMaxTotal(DEFAULT_MAX_POOL);
-		cm.setDefaultMaxPerRoute(DEFAULT_MAX_POOL);
-		return HttpClients.custom().setConnectionManager(cm).build();
+		this.connectionManager = new PoolingHttpClientConnectionManager();
+		this.connectionManager.setMaxTotal(DEFAULT_MAX_POOL);
+		this.connectionManager.setDefaultMaxPerRoute(DEFAULT_MAX_POOL);
+		
+		return HttpRequestUtil.createHttpClient(this.connectionManager);
 	}
 
 	private HttpClient reverseTunnelHttpClient = createReverseTunnelHttpClient();
