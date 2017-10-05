@@ -1,4 +1,4 @@
-package org.fogbowcloud.manager.core;
+package org.fogbowcloud.manager.core.util;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -18,6 +18,8 @@ import org.apache.commons.codec.Charsets;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.core.ConfigurationConstants;
+import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.plugins.util.CloudInitUserDataBuilder;
 import org.fogbowcloud.manager.core.plugins.util.CloudInitUserDataBuilder.FileType;
 import org.fogbowcloud.manager.occi.order.Order;

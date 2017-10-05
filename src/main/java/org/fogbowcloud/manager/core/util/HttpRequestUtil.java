@@ -32,7 +32,7 @@ public class HttpRequestUtil {
 			LOGGER.error("Is not possible to initialize HttpRequestUtil.", e);
 			throw e;
 		}
-		LOGGER.info("The HttpRequestUtil timeout is: " + timeoutHttpRequest + " ms.");
+		LOGGER.info("The default HttpRequestUtil timeout is: " + timeoutHttpRequest + " ms.");
 	}
 	
 	public static CloseableHttpClient createHttpClient() {
@@ -51,22 +51,34 @@ public class HttpRequestUtil {
 		if (timeoutHttpRequest == null) {
 			init(null); // Set to default timeout.
 		}
-		
 		HttpClientBuilder builder = HttpClientBuilder.create();
+		setDefaultResquestConfig(timeout, builder);
+		setSSLConnection(sslsf, builder);
+		setConnectionManager(connManager, builder);
 		
-		RequestConfig.Builder requestBuilder = RequestConfig.custom();
-		requestBuilder = requestBuilder.setSocketTimeout(timeout != null ? timeout : timeoutHttpRequest);
-		builder.setDefaultRequestConfig(requestBuilder.build());
-		
-		if (sslsf != null) {
-			builder.setSSLSocketFactory(sslsf);
+		return builder.build();
+	}
+
+	protected static void setDefaultResquestConfig(Integer timeout, HttpClientBuilder builder) {
+		RequestConfig.Builder requestBuilder = RequestConfig.custom();		
+		if (timeout == null) {
+			timeout = timeoutHttpRequest;
 		}
-		
+		LOGGER.debug("Creating httpclient with timeout: " + timeout);
+		requestBuilder = requestBuilder.setSocketTimeout(timeout);
+		builder.setDefaultRequestConfig(requestBuilder.build());
+	}
+
+	protected static void setConnectionManager(HttpClientConnectionManager connManager, HttpClientBuilder builder) {
 		if (connManager != null) {
 			builder.setConnectionManager(connManager);
 		}
-		
-		return builder.build();
+	}
+
+	protected static void setSSLConnection(SSLConnectionSocketFactory sslsf, HttpClientBuilder builder) {
+		if (sslsf != null) {
+			builder.setSSLSocketFactory(sslsf);
+		}
 	}
 	
 	protected static int getTimeoutHttpRequest() {

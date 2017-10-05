@@ -13,7 +13,7 @@ import org.apache.http.HttpStatus;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.ManagerController;
-import org.fogbowcloud.manager.core.UserdataUtils;
+import org.fogbowcloud.manager.core.util.UserdataUtils;
 import org.fogbowcloud.manager.occi.OCCIApplication;
 import org.fogbowcloud.manager.occi.OCCIConstants;
 import org.fogbowcloud.manager.occi.instance.Instance.Link;
