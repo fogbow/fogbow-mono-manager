@@ -148,8 +148,7 @@ public class ManagerController {
 		if (properties == null) {
 			throw new IllegalArgumentException();
 		}
-		this.properties = properties;
-		HttpRequestUtil.init(this.properties);
+		this.properties = properties;		
 		this.monitoringHelper = new ManagerControllerHelper().new MonitoringHelper(this.properties);
 		setFlavorsProvided(ResourceRepository.getStaticFlavors(properties));
 		if (executor == null) {

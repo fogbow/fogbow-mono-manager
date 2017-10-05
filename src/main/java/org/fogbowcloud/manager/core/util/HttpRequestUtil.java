@@ -13,7 +13,7 @@ import org.fogbowcloud.manager.core.ConfigurationConstants;
 public class HttpRequestUtil {
 	
 	private static final Logger LOGGER = Logger.getLogger(HttpRequestUtil.class);	
-	protected static int DEFAULT_TIMEOUT_REQUEST = 60000; // 1 minute
+	public static int DEFAULT_TIMEOUT_REQUEST = 60000; // 1 minute
 	
 	private static Integer timeoutHttpRequest;
 	
