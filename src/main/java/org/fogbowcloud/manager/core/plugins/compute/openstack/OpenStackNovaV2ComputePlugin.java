@@ -12,7 +12,6 @@ import org.apache.commons.io.Charsets;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -20,7 +19,6 @@ import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.FileEntity;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.RequirementsHelper;
@@ -29,6 +27,7 @@ import org.fogbowcloud.manager.core.model.ImageState;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.util.HttpPatch;
+import org.fogbowcloud.manager.core.util.HttpRequestUtil;
 import org.fogbowcloud.manager.occi.OCCIConstants;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.instance.Instance.Link;
@@ -87,7 +86,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 	private String networkId;
 	private Map<String, String> fogbowTermToOpenStack = new HashMap<String, String>();
 	private HttpClient client;
-	private int httpClientTimeout;
+	private Integer httpClientTimeout;
 	private List<Flavor> flavors;
 
 	private static final Logger LOGGER = Logger.getLogger(OpenStackNovaV2ComputePlugin.class);
@@ -311,12 +310,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 	}
 
 	private void initClient() {
-		RequestConfig.Builder requestBuilder = RequestConfig.custom();		
-		requestBuilder = requestBuilder.setSocketTimeout(this.httpClientTimeout);
-		
-		HttpClientBuilder builder = HttpClientBuilder.create();     
-		builder.setDefaultRequestConfig(requestBuilder.build());
-		client = builder.build();
+		this.client = HttpRequestUtil.createHttpClient(this.httpClientTimeout, null, null);
 	}
 	
 	protected void setClient(HttpClient client) {

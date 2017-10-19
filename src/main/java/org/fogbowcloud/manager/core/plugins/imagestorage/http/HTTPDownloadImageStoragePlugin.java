@@ -44,6 +44,7 @@ import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.model.ImageState;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.imagestorage.fixed.StaticImageStoragePlugin;
+import org.fogbowcloud.manager.core.util.HttpRequestUtil;
 import org.fogbowcloud.manager.occi.model.Token;
 
 public class HTTPDownloadImageStoragePlugin extends StaticImageStoragePlugin {
@@ -435,7 +436,8 @@ public class HTTPDownloadImageStoragePlugin extends StaticImageStoragePlugin {
                 .build();
         SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(
                 sslcontext);
-        return HttpClients.custom().setSSLSocketFactory(sslsf).build();
+        
+        return HttpRequestUtil.createHttpClient(sslsf);
 	}
 
 	protected String createURL(String globalId) {

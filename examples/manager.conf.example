@@ -17,3 +17,7 @@ xmpp_timeout=15000
 benchmarking_class=org.fogbowcloud.manager.core.plugins.benchmarking.VanillaBenchmarkingPlugin
 # Benchmarking script to use with SSH Benchmarking plugin
 ssh_benchmarking_script_url=http://downloads.fogbowcloud.org/benchmark/script_ssh_benchmarking.sh
+
+## timeout in milliseconds for any http request 
+## default : 60000 (ms) 
+timeout_http_request=

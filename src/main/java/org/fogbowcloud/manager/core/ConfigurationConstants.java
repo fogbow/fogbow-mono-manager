@@ -45,6 +45,7 @@ public class ConfigurationConstants {
 	public static final String CAPACITY_CONTROLLER_UPDATE_PERIOD_KEY = "capacity_controller_update_period";
 	public static final String ASYNC_ORDER_WAITING_INTERVAL_KEY = "async_request_waiting_interval";
 	public static final String MAXIMUM_ORDER_ATTEMPTS_PROPERTIES = ManagerControllerHelper.MonitoringHelper.MAXIMUM_ORDER_ATTEMPTS_PROPERTIES;
+	public static final String TIMEOUT_HTTP_REQUEST = "timeout_http_request";
 
 	// token host
 	public static final String TOKEN_HOST_PRIVATE_ADDRESS_KEY = "token_host_private_address";
