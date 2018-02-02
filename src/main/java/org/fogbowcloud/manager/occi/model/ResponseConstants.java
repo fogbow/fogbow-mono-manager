@@ -37,7 +37,7 @@ public class ResponseConstants {
 	public static final String NOT_FOUND_RESOURCE_KIND = "Resource kind not found.";
 	public static final String NOT_FOUND_STORAGE_SIZE_ATTRIBUTE = "Storage size not found.";
 	public static final String NOT_FOUND_STORAGE_LINK_ATTRIBUTE = "Target or source not found.";
-	public static final String NOT_FOUND_INSTANCE = "Instance(compute/storage) not found..";
+	public static final String NOT_FOUND_INSTANCE = "Instance(compute/storage) not found.";
 	public static final String INVALID_STORAGE_LINK_DIFERENT_LOCATION = "The same size is required in the post of storage link.";
 	public static final String INVALID_INSTANCE_OWN = "The same own of instance is required.";
 	public static final String XMPP_RESPONSE_NULL = "Without response.";
