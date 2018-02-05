@@ -64,6 +64,7 @@ public class UserdataUtils {
 		
 		String sshTunnelCmdFilePath = "bin/fogbow-create-reverse-tunnel";
 		String cloudConfigFilePath = "bin/fogbow-cloud-config.cfg";
+		String clientConfigFilePath = "bin/config-ipsec-client";
 
 		if (sshRemoteHostPort == null || sshRemoteHostPort.isEmpty()) {
 			sshRemoteHostPort = DEFAULT_SSH_HOST_PORT;
@@ -77,7 +78,12 @@ public class UserdataUtils {
 		if (managerPublicKeyFilePath != null || userPublicKey != null) {
 			cloudInitUserDataBuilder.addCloudConfig(new FileReader(new File(cloudConfigFilePath)));
 		}
-		
+
+		// Federated network in VM:
+		//if (federatedNetworkId != null){
+			cloudInitUserDataBuilder.addShellScript(new FileReader(clientConfigFilePath));
+		//}
+
 		String extraUserdata = order.getAttValue(OrderAttribute.EXTRA_USER_DATA_ATT.getValue());
 		String extraUserdataNormalized = null;
 		if (extraUserdata != null) {
