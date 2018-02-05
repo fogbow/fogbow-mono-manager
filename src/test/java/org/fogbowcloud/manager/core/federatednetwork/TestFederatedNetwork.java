@@ -1,5 +1,5 @@
-import movethese.FederatedNetwork;
-import movethese.SubnetAddressesCapacityReachedException;
+package org.fogbowcloud.manager.core.federatednetwork;
+
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -10,7 +10,7 @@ import static org.junit.Assert.fail;
 /**
  * Created by arnett on 05/02/18.
  */
-public class FederatedNetworkTest {
+public class TestFederatedNetwork {
 
     public static final String FIRST_IP_ADDRESS = "10.0.0.1";
     public static final String SECOND_IP_ADDRESS = "10.0.0.2";
