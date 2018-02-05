@@ -37,6 +37,7 @@ import org.fogbowcloud.manager.core.plugins.StoragePlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.OCCIApplication;
 import org.fogbowcloud.manager.occi.TestDataStorageHelper;
+import org.fogbowcloud.manager.occi.federatednetwork.FederatedNetworkConstants;
 import org.fogbowcloud.manager.occi.model.HeaderUtils;
 import org.fogbowcloud.manager.occi.model.OCCIHeaders;
 import org.fogbowcloud.manager.occi.model.ResourceRepository;
@@ -76,6 +77,10 @@ public class OCCITestHelper {
 			+ OrderConstants.LINK_TERM + "/";
 	public static final String URI_FOGBOW_QUERY_TYPE_TWO = "http://localhost:" + ENDPOINT_PORT
 			+ "/.well-known/org/ogf/occi/-/";
+	
+	public static final String URI_FOGBOW_FEDERATED_NETWORK = "http://localhost:" + ENDPOINT_PORT
+			+ "/" + FederatedNetworkConstants.FEDERATED_NETWORK_TERM;
+	
 	public static final String USER_MOCK = "user_mock";
 	public static final String INSTANCE_DB_FILE = "./src/test/resources/fedInstance.db";
 
