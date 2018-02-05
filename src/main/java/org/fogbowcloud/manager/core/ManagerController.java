@@ -1732,7 +1732,7 @@ public class ManagerController {
 	protected void checkPedingOrders() {
 		List<Order> ordersPedding = this.managerDataStoreController.getOrdersByState(OrderState.PENDING);
 		for (Order order : ordersPedding) {
-			if (timoutReached(order.getSyncronousTime())) {
+			if (timeoutReached(order.getSyncronousTime())) {
 				LOGGER.debug("The forwarded order " + order.getId()
 						+ " reached timeout and is been removed from asynchronousOrders list.");
 				order.setState(OrderState.OPEN);
@@ -1741,7 +1741,7 @@ public class ManagerController {
 		}
 	}
 
-	private boolean timoutReached(long timeStamp) {
+	private boolean timeoutReached(long timeStamp) {
 		long nowMilli = dateUtils.currentTimeMillis();
 		Date now = new Date(nowMilli);
 
