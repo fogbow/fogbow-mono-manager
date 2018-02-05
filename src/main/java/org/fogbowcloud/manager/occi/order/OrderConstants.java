@@ -36,6 +36,7 @@ public class OrderConstants {
 	public static final String STORAGE_TERM = "storage";
 	public static final String STORAGE_LINK_TERM = "link";
 	public static final String NETWORK_TERM = "network";
+	public static final String FEDERATED_NETWORK_TERM = "federatedNetwork";
 	public static final String INFRASTRUCTURE_OCCI_SCHEME = "http://schemas.ogf.org/occi/infrastructure#";
 	public static final String RESOURCE_TPL_OCCI_SCHEME = "http://schemas.ogf.org/occi/infrastructure#resource_tpl";
 	public static final String RESOURCE_OCCI_SCHEME = "http://schemas.ogf.org/occi/core#resource";

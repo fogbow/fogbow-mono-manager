@@ -4,19 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.StringTokenizer;
-import java.util.TimerTask;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -36,6 +24,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.core.federatednetwork.FederatedNetworkController;
 import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.Flavor;
@@ -108,11 +97,16 @@ public class ManagerController {
 	private final ManagerTimer capacityControllerUpdaterTimer;
 
 	private boolean forTest = false;
-	private Map<String, Token> instanceIdToToken = new HashMap<String, Token>();
-	private final List<FederationMember> members = Collections.synchronizedList(new LinkedList<FederationMember>());
-	private ManagerDataStoreController managerDataStoreController;
-	private FederationMemberPickerPlugin memberPickerPlugin;
+
 	private List<Flavor> flavorsProvided;
+	private Map<String, Token> instanceIdToToken = new HashMap<String, Token>();
+
+	private final List<FederationMember> members = Collections.synchronizedList(new LinkedList<FederationMember>());
+
+	private FederatedNetworkController federatedNetworkController;
+	private ManagerDataStoreController managerDataStoreController;
+
+	private FederationMemberPickerPlugin memberPickerPlugin;
 	private BenchmarkingPlugin benchmarkingPlugin;
 	private AccountingPlugin computeAccountingPlugin;
 	private AccountingPlugin storageAccountingPlugin;
@@ -126,7 +120,9 @@ public class ManagerController {
 	private PrioritizationPlugin prioritizationPlugin;
 	private MapperPlugin mapperPlugin;
 	private CapacityControllerPlugin capacityControllerPlugin;
+
 	private Properties properties;
+
 	private AsyncPacketSender packetSender;
 	private FederationMemberAuthorizationPlugin validator;
 	private ExecutorService benchmarkExecutor = Executors.newCachedThreadPool();
@@ -151,21 +147,17 @@ public class ManagerController {
 		this.properties = properties;		
 		this.monitoringHelper = new ManagerControllerHelper().new MonitoringHelper(this.properties);
 		setFlavorsProvided(ResourceRepository.getStaticFlavors(properties));
-		if (executor == null) {
-			this.orderSchedulerTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
-			this.instanceMonitoringTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
-			this.servedOrderMonitoringTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
-			this.accountingUpdaterTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
-			this.capacityControllerUpdaterTimer = new ManagerTimer(Executors.newScheduledThreadPool(1)); 
-		} else {
-			this.orderSchedulerTimer = new ManagerTimer(executor);
-			this.instanceMonitoringTimer = new ManagerTimer(executor);
-			this.servedOrderMonitoringTimer = new ManagerTimer(executor);
-			this.accountingUpdaterTimer = new ManagerTimer(executor);
-			this.capacityControllerUpdaterTimer = new ManagerTimer(executor);
-		}
+
+		executor = (executor == null ? Executors.newScheduledThreadPool(1) : executor);
+		this.orderSchedulerTimer = new ManagerTimer(executor);
+		this.instanceMonitoringTimer = new ManagerTimer(executor);
+		this.servedOrderMonitoringTimer = new ManagerTimer(executor);
+		this.accountingUpdaterTimer = new ManagerTimer(executor);
+		this.capacityControllerUpdaterTimer = new ManagerTimer(executor);
+
 		this.managerDataStoreController = new ManagerDataStoreController(properties);
-		
+
+		this.federatedNetworkController = new FederatedNetworkController();
 		recoverPreviousOrders();
 	}
 
@@ -1780,120 +1772,140 @@ public class ManagerController {
 	}
 
 	protected boolean createInstance(Order order) {
-
 		LOGGER.debug("Submiting order with categories: " + order.getCategories() + " and xOCCIAtt: "
 				+ order.getxOCCIAtt() + " for requesting member: " + order.getRequestingMemberId()
 				+ " with requestingToken " + order.getRequestingMemberId());
 
-		boolean isComputeOrder = OrderConstants.COMPUTE_TERM.equals(order.getResourceKing());
-		boolean isStorageOrder = OrderConstants.STORAGE_TERM.equals(order.getResourceKing());
-		boolean isNetworkOrder = OrderConstants.NETWORK_TERM.equals(order.getResourceKing());
-		
 		for (String keyAttributes : OrderAttribute.getValues()) {
 			order.getxOCCIAtt().remove(keyAttributes);
 		}
 		
-		Token federationUserToken = getFederationUserToken(order);
-		
-		if (isComputeOrder) {
-			try {
-				try {
-					String command = createUserDataUtilsCommand(order);
-					order.putAttValue(OrderAttribute.USER_DATA_ATT.getValue(), command);
-					order.addCategory(new Category(OrderConstants.USER_DATA_TERM, OrderConstants.SCHEME,
-							OrderConstants.MIXIN_CLASS));
-				} catch (Exception e) {
-					LOGGER.warn("Exception while creating userdata.", e);
-					return false;
-				}
-				
-				String localImageId = getLocalImageId(order.getCategories(), federationUserToken);
-				List<Category> categories = new LinkedList<Category>();
-				for (Category category : order.getCategories()) {
-					if (category.getScheme().equals(OrderConstants.TEMPLATE_OS_SCHEME)) {
-						continue;
-					}
-					categories.add(category);
-				}
-				
-				Map<String, String> xOCCIAttCopy = new HashMap<String, String>(order.getxOCCIAtt());
-				removePublicKeyFromCategoriesAndAttributes(xOCCIAttCopy, categories);
-				String instanceId = computePlugin.requestInstance(federationUserToken, categories, xOCCIAttCopy,
-						localImageId);
-				order.setState(OrderState.SPAWNING);
-				order.setInstanceId(instanceId);
-				order.setProvidingMemberId(properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
-				this.managerDataStoreController.updateOrder(order);
-				execBenchmark(order);
-				return instanceId != null;
-			} catch (OCCIException e) {
-				ErrorType errorType = e.getType();
-				if (errorType == ErrorType.QUOTA_EXCEEDED) {
-					LOGGER.warn("Order failed locally for quota exceeded.", e);
-					ArrayList<Order> ordersWithInstances = new ArrayList<Order>(
-							managerDataStoreController.getOrdersIn(OrderState.FULFILLED, OrderState.DELETED));
-					Order orderToPreempt = prioritizationPlugin.takeFrom(order, ordersWithInstances);
-					if (orderToPreempt == null) {
-						throw e;
-					}
-					preemption(orderToPreempt);
-					checkInstancePreempted(federationUserToken, orderToPreempt);
-					return createInstance(order);
-				} else if (errorType == ErrorType.UNAUTHORIZED) {
-					LOGGER.warn("Order failed locally for user unauthorized.", e);
-					return false;
-				} else if (errorType == ErrorType.BAD_REQUEST) {
-					LOGGER.warn("Order failed locally for image not found.", e);
-					return false;
-				} else if (errorType == ErrorType.NO_VALID_HOST_FOUND) {
-					LOGGER.warn("Order failed because no valid host was found," 
-							+ " we will try to wake up a sleeping host.", e);
-					wakeUpSleepingHosts(order);
-					return false;
-				} else {
-					LOGGER.warn("Order failed locally for an unknown reason.", e);
-					return false;
-				}
-			}
-		} else if (isStorageOrder) {
-			try {
-				String instanceId = storagePlugin.requestInstance(federationUserToken, 
-						order.getCategories(), order.getxOCCIAtt());
-				
-				order.setState(OrderState.FULFILLED);
-				order.setInstanceId(instanceId);
-				order.setProvidingMemberId(properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
-				this.managerDataStoreController.updateOrder(order);
-				if (!order.isLocal()) {
-					ManagerPacketHelper.replyToServedOrder(order, packetSender);
-				}
-				
-				return instanceId != null;
-			} catch (OCCIException e) {
-				LOGGER.warn("Order failed locally.", e);
+		switch (order.getResourceKing()) {
+			case OrderConstants.COMPUTE_TERM:
+				return handleComputeOrderCreation(order, getFederationUserToken(order));
+			case OrderConstants.STORAGE_TERM:
+				return handleStorageOrderCreation(order, getFederationUserToken(order));
+			case OrderConstants.NETWORK_TERM:
+				return handleNetworkOrderCreation(order, getFederationUserToken(order));
+			case OrderConstants.FEDERATED_NETWORK_TERM:
+				return handleFederatedNetworkOrderCreation(order, getFederationUserToken(order));
+			default:
 				return false;
-			}		
-		} else if (isNetworkOrder) {
+		}
+	}
+
+	private boolean handleComputeOrderCreation(Order order, Token federationUserToken) {
+		try {
 			try {
-				String instanceId = networkPlugin.requestInstance(federationUserToken, 
-						order.getCategories(),order.getxOCCIAtt());
-				
-				order.setState(OrderState.FULFILLED);
-				order.setInstanceId(instanceId);
-				order.setProvidingMemberId(properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
-				this.managerDataStoreController.updateOrder(order);
-				if (!order.isLocal()) {
-					ManagerPacketHelper.replyToServedOrder(order, packetSender);
-				}
-				
-				return instanceId != null;
-			} catch (OCCIException e) {
-				LOGGER.warn("Order failed locally.", e);
+				String command = createUserDataUtilsCommand(order);
+				order.putAttValue(OrderAttribute.USER_DATA_ATT.getValue(), command);
+				order.addCategory(new Category(OrderConstants.USER_DATA_TERM, OrderConstants.SCHEME,
+						OrderConstants.MIXIN_CLASS));
+			} catch (Exception e) {
+				LOGGER.warn("Exception while creating userdata.", e);
 				return false;
 			}
-		} else {
+
+			String localImageId = getLocalImageId(order.getCategories(), federationUserToken);
+			List<Category> categories = new LinkedList<Category>();
+			for (Category category : order.getCategories()) {
+				if (category.getScheme().equals(OrderConstants.TEMPLATE_OS_SCHEME)) {
+					continue;
+				}
+				categories.add(category);
+			}
+
+			Map<String, String> xOCCIAttCopy = new HashMap<String, String>(order.getxOCCIAtt());
+			removePublicKeyFromCategoriesAndAttributes(xOCCIAttCopy, categories);
+			String instanceId = computePlugin.requestInstance(federationUserToken, categories, xOCCIAttCopy,
+					localImageId);
+			order.setState(OrderState.SPAWNING);
+			order.setInstanceId(instanceId);
+			order.setProvidingMemberId(properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
+			this.managerDataStoreController.updateOrder(order);
+			execBenchmark(order);
+			return instanceId != null;
+		} catch (OCCIException e) {
+			ErrorType errorType = e.getType();
+			if (errorType == ErrorType.QUOTA_EXCEEDED) {
+				LOGGER.warn("Order failed locally for quota exceeded.", e);
+				ArrayList<Order> ordersWithInstances = new ArrayList<Order>(
+						managerDataStoreController.getOrdersIn(OrderState.FULFILLED, OrderState.DELETED));
+				Order orderToPreempt = prioritizationPlugin.takeFrom(order, ordersWithInstances);
+				if (orderToPreempt == null) {
+					throw e;
+				}
+				preemption(orderToPreempt);
+				checkInstancePreempted(federationUserToken, orderToPreempt);
+				return createInstance(order);
+			} else if (errorType == ErrorType.UNAUTHORIZED) {
+				LOGGER.warn("Order failed locally for user unauthorized.", e);
+				return false;
+			} else if (errorType == ErrorType.BAD_REQUEST) {
+				LOGGER.warn("Order failed locally for image not found.", e);
+				return false;
+			} else if (errorType == ErrorType.NO_VALID_HOST_FOUND) {
+				LOGGER.warn("Order failed because no valid host was found,"
+						+ " we will try to wake up a sleeping host.", e);
+				wakeUpSleepingHosts(order);
+				return false;
+			} else {
+				LOGGER.warn("Order failed locally for an unknown reason.", e);
+				return false;
+			}
+		}
+	}
+
+	private boolean handleStorageOrderCreation(Order order, Token federationUserToken) {
+		try {
+			String instanceId = storagePlugin.requestInstance(federationUserToken,
+					order.getCategories(), order.getxOCCIAtt());
+
+			order.setState(OrderState.FULFILLED);
+			order.setInstanceId(instanceId);
+			order.setProvidingMemberId(properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
+			this.managerDataStoreController.updateOrder(order);
+			if (!order.isLocal()) {
+				ManagerPacketHelper.replyToServedOrder(order, packetSender);
+			}
+
+			return instanceId != null;
+		} catch (OCCIException e) {
+			LOGGER.warn("Order failed locally.", e);
 			return false;
 		}
+	}
+
+	private boolean handleNetworkOrderCreation(Order order, Token federationUserToken) {
+		try {
+            String instanceId = networkPlugin.requestInstance(federationUserToken,
+                    order.getCategories(),order.getxOCCIAtt());
+
+            order.setState(OrderState.FULFILLED);
+            order.setInstanceId(instanceId);
+            order.setProvidingMemberId(properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
+            this.managerDataStoreController.updateOrder(order);
+            if (!order.isLocal()) {
+                ManagerPacketHelper.replyToServedOrder(order, packetSender);
+            }
+
+            return instanceId != null;
+        } catch (OCCIException e) {
+            LOGGER.warn("Order failed locally.", e);
+            return false;
+        }
+	}
+
+	private boolean handleFederatedNetworkOrderCreation(Order order, Token federationUserToken) {
+		String label = "hardcoded";
+		String cidrNotation = "10.0.0.0/30";
+		Set<String> members = new HashSet<String>(Arrays.asList(new String[] {"siteA", "siteB"}));
+
+		// notify agent of this federated network creation request
+		// if agent notifies success back
+		federatedNetworkController.createFederatedNetwork(label, cidrNotation, members);
+		// FIXME what should be done in this case?
+		return false;
 	}
 
 	protected void checkInstancePreempted(Token federationUserToken, Order orderToPreempt) {
