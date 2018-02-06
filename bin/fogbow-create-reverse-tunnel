@@ -64,3 +64,52 @@ auto_extra_port(){
 auto_extra_port &
 EOL
 chmod +x /bin/create-fogbow-tunnel
+
+config_setup="config setup
+ charondebug=all
+ uniqueids=yes
+ strictcrlpolicy=no
+conn %default
+conn tunnel"
+
+tunnel_param_configs=" left=#LEFT_IP#
+ leftsourceip=#LEFT_SOURCE_IP#
+ right=#RIGHT_IP#
+ rightsubnet=#RIGHT_SUBNET#"
+
+other_tunnel_configs=" ike=aes256-sha2_256-modp1024!
+ esp=aes256-sha2_256!
+ keyingtries=0
+ ikelifetime=1h
+ lifetime=8h
+ dpddelay=30
+ dpdtimeout=120
+ dpdaction=restart
+ authby=secret
+ auto=start
+ keyexchange=ikev2
+ type=tunnel
+ closeaction=restart"
+
+tmp_var="$config_setup
+$tunnel_param_configs
+$other_tunnel_configs"
+
+cat > /bin/fogbow-config-client-federated << EOL
+!/bin/sh
+
+if [ "true" = "#IS_FEDERATED_VM#" ]; then
+    apt update
+    apt install strongswan -y
+    apt install opensc -y
+    apt install libgmp10 -y
+    apt install libgmp-dev -y
+    apt install libssl-dev -y
+
+    echo "$tmp_var" > /etc/ipsec.conf
+
+    ipsec restart
+fi
+EOL
+chmod +x /bin/fogbow-config-client-federated
+setsid /bin/fogbow-config-client-federated
