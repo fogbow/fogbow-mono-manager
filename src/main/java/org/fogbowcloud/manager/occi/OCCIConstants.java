@@ -25,7 +25,9 @@ public class OCCIConstants {
 	public static final String NETWORK_TERM = "network";
 	public static final String NETWORK_INTERFACE_TERM = "networkinterface";
 	
-	
+	public static final String FEDERATED_NETWORK_LABEL = "occi.federatednetwork.label";
+	public static final String FEDERATED_NETWORK_CIDR = "occi.federatednetwork.cidr";
+	public static final String FEDERATED_NETWORK_MEMBER = "occi.federatednetwork.member";
 	
 	public enum NetworkState {
 		ACTIVE("active"), INACTIVE("inactive");
