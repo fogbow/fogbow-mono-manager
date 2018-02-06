@@ -109,7 +109,7 @@ if [ "true" = "#IS_FEDERATED_VM#" ]; then
     echo "$tmp_var" > /etc/ipsec.conf
 
     ipsec restart
-    EOL
-    chmod +x /bin/fogbow-config-client-federated
-    setsid /bin/fogbow-config-client-federated
 fi
+EOL
+chmod +x /bin/fogbow-config-client-federated
+setsid /bin/fogbow-config-client-federated
