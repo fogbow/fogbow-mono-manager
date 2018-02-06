@@ -1,9 +1,6 @@
 package org.fogbowcloud.manager.occi.model;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.*;
 
 import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.occi.JSONHelper;
@@ -177,6 +174,11 @@ public class Token {
 				return false;
 			}
 			return true;
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(id, name);
 		}
 
 		@Override

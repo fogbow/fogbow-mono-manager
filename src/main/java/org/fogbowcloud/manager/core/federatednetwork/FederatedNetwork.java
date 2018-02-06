@@ -1,10 +1,12 @@
 package org.fogbowcloud.manager.core.federatednetwork;
 
 import org.apache.commons.net.util.SubnetUtils;
+import org.fogbowcloud.manager.core.model.FederationMember;
 
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -13,14 +15,19 @@ import java.util.Queue;
  */
 public class FederatedNetwork {
 
+    private String label;
     private SubnetUtils.SubnetInfo subnetInfo;
     private Queue<String> freedIps;
     private int ipsServed;
+    private Collection<FederationMember> allowedMembers;
 
-    public FederatedNetwork(String cidrNotation) {
-        this.subnetInfo = new SubnetUtils(cidrNotation).getInfo();
+    public FederatedNetwork(String label, String cidrNotation, Collection<FederationMember> allowedMembers) {
         this.freedIps = new LinkedList<String>();
         this.ipsServed = 0;
+
+        this.label = label;
+        this.subnetInfo = new SubnetUtils(cidrNotation).getInfo();
+        this.allowedMembers = allowedMembers;
     }
 
     public String nextFreeIp() throws SubnetAddressesCapacityReachedException {
@@ -70,6 +77,14 @@ public class FederatedNetwork {
         } catch (UnknownHostException e) {
             return null;
         }
+    }
+
+    public String getLabel() {
+        return label;
+    }
+
+    public void setLabel(String label) {
+        this.label = label;
     }
 
 }

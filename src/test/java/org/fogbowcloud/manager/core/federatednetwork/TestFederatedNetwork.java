@@ -17,7 +17,7 @@ public class TestFederatedNetwork {
 
     @Test
     public void testNextIp() throws SubnetAddressesCapacityReachedException {
-        FederatedNetwork m = new FederatedNetwork("10.0.0.0/30");
+        FederatedNetwork m = new FederatedNetwork("label", "10.0.0.0/30", null);
 
         assertEquals(FIRST_IP_ADDRESS, m.nextFreeIp());
         assertEquals(SECOND_IP_ADDRESS, m.nextFreeIp());
@@ -33,7 +33,7 @@ public class TestFederatedNetwork {
 
     @Test
     public void testFreeIp() throws SubnetAddressesCapacityReachedException {
-        FederatedNetwork m = new FederatedNetwork("10.0.0.0/30");
+        FederatedNetwork m = new FederatedNetwork("label", "10.0.0.0/30", null);
         assertTrue(m.isIpAddressFree(FIRST_IP_ADDRESS));
         assertEquals(FIRST_IP_ADDRESS, m.nextFreeIp());
         assertFalse(m.isIpAddressFree(FIRST_IP_ADDRESS));
@@ -44,7 +44,7 @@ public class TestFederatedNetwork {
 
     @Test
     public void testGapBetweenFreeIps() throws SubnetAddressesCapacityReachedException {
-        FederatedNetwork m = new FederatedNetwork("10.0.0.0/30");
+        FederatedNetwork m = new FederatedNetwork("label", "10.0.0.0/30", null);
 
         assertTrue(m.isIpAddressFree(FIRST_IP_ADDRESS));
         assertEquals(FIRST_IP_ADDRESS, m.nextFreeIp());

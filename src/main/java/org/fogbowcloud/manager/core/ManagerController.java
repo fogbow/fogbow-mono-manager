@@ -24,7 +24,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
-import org.fogbowcloud.manager.core.federatednetwork.FederatedNetworkController;
+import org.fogbowcloud.manager.core.federatednetwork.FederatedNetworksController;
 import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.Flavor;
@@ -103,7 +103,7 @@ public class ManagerController {
 
 	private final List<FederationMember> members = Collections.synchronizedList(new LinkedList<FederationMember>());
 
-	private FederatedNetworkController federatedNetworkController;
+	private FederatedNetworksController federatedNetworksController;
 	private ManagerDataStoreController managerDataStoreController;
 
 	private FederationMemberPickerPlugin memberPickerPlugin;
@@ -157,7 +157,7 @@ public class ManagerController {
 
 		this.managerDataStoreController = new ManagerDataStoreController(properties);
 
-		this.federatedNetworkController = new FederatedNetworkController();
+		this.federatedNetworksController = new FederatedNetworksController();
 		recoverPreviousOrders();
 	}
 
@@ -1782,19 +1782,19 @@ public class ManagerController {
 		
 		switch (order.getResourceKing()) {
 			case OrderConstants.COMPUTE_TERM:
-				return handleComputeOrderCreation(order, getFederationUserToken(order));
+				return handleComputeInstanceCreation(order, getFederationUserToken(order));
 			case OrderConstants.STORAGE_TERM:
-				return handleStorageOrderCreation(order, getFederationUserToken(order));
+				return handleStorageInstanceCreation(order, getFederationUserToken(order));
 			case OrderConstants.NETWORK_TERM:
-				return handleNetworkOrderCreation(order, getFederationUserToken(order));
+				return handleNetworkInstanceCreation(order, getFederationUserToken(order));
 			case OrderConstants.FEDERATED_NETWORK_TERM:
-				return handleFederatedNetworkOrderCreation(order, getFederationUserToken(order));
+				return handleFederatedNetworkInstanceCreation(order, getFederationUserToken(order));
 			default:
 				return false;
 		}
 	}
 
-	private boolean handleComputeOrderCreation(Order order, Token federationUserToken) {
+	private boolean handleComputeInstanceCreation(Order order, Token federationUserToken) {
 		try {
 			try {
 				String command = createUserDataUtilsCommand(order);
@@ -1856,7 +1856,7 @@ public class ManagerController {
 		}
 	}
 
-	private boolean handleStorageOrderCreation(Order order, Token federationUserToken) {
+	private boolean handleStorageInstanceCreation(Order order, Token federationUserToken) {
 		try {
 			String instanceId = storagePlugin.requestInstance(federationUserToken,
 					order.getCategories(), order.getxOCCIAtt());
@@ -1876,7 +1876,7 @@ public class ManagerController {
 		}
 	}
 
-	private boolean handleNetworkOrderCreation(Order order, Token federationUserToken) {
+	private boolean handleNetworkInstanceCreation(Order order, Token federationUserToken) {
 		try {
             String instanceId = networkPlugin.requestInstance(federationUserToken,
                     order.getCategories(),order.getxOCCIAtt());
@@ -1896,16 +1896,27 @@ public class ManagerController {
         }
 	}
 
-	private boolean handleFederatedNetworkOrderCreation(Order order, Token federationUserToken) {
+	private void callFederatedNetworkAgent() {
+		String command = "ssh server -c command";
+		// ProcessBuilder builder = new ProcessBuilder(command);
+	}
+
+	private boolean handleFederatedNetworkInstanceCreation(Order order, Token federationUserToken) {
 		String label = "hardcoded";
 		String cidrNotation = "10.0.0.0/30";
 		Set<String> members = new HashSet<String>(Arrays.asList(new String[] {"siteA", "siteB"}));
 
 		// notify agent of this federated network creation request
 		// if agent notifies success back
-		federatedNetworkController.createFederatedNetwork(label, cidrNotation, members);
-		// FIXME what should be done in this case?
-		return false;
+		// FIXME what should be done if failure
+
+		Set<FederationMember> federationMembers = new HashSet<FederationMember>();
+		for (String member : members) {
+			federationMembers.add(getFederationMember(member));
+		}
+
+		Token.User user = federationUserToken.getUser();
+		return federatedNetworksController.create(user, label, cidrNotation, federationMembers);
 	}
 
 	protected void checkInstancePreempted(Token federationUserToken, Order orderToPreempt) {
