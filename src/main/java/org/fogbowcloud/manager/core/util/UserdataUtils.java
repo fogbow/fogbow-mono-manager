@@ -39,6 +39,7 @@ public class UserdataUtils {
 	protected static final String LEFT_SOURCE_IP_KEY = "#LEFT_SOURCE_IP#";
 	protected static final String RIGHT_KEY = "#RIGHT_IP#";
 	protected static final String RIGHT_SUBNET_KEY = "#RIGHT_SUBNET#";
+	protected static final String IS_FEDERATED_VM_KEY = "#IS_FEDERATED_VM#";
 	
 	public static final String USER_DATA_LINE_BREAKER = "[[\\n]]";
 	
@@ -65,6 +66,7 @@ public class UserdataUtils {
 		String managerPublicKeyFilePath = getManagerSSHPublicKeyFilePath(properties);
 		String userPublicKey = order.getAttValue(OrderAttribute.DATA_PUBLIC_KEY.getValue());
 		String sshCommonUser = getSSHCommonUser(properties);
+		String isFederatedVM = "true";
 		String leftIp = "left";
 		String virtualLeftIp = "virtual_left";
 		String rightIp = "right";
@@ -109,6 +111,7 @@ public class UserdataUtils {
 
 		// Federated network in VM:
 		//if (federatedNetworkId != null){
+		replacements.put(IS_FEDERATED_VM_KEY, isFederatedVM);
 		replacements.put(LEFT_KEY, leftIp);
 		replacements.put(LEFT_SOURCE_IP_KEY, virtualLeftIp);
 		replacements.put(RIGHT_KEY, rightIp);

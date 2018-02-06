@@ -97,17 +97,19 @@ $other_tunnel_configs"
 
 cat > /bin/fogbow-config-client-federated << EOL
 !/bin/sh
-apt update
-apt install strongswan -y
-apt install opensc -y
-apt install libgmp10 -y
-apt install libgmp-dev -y
-apt install libssl-dev -y
 
-echo "$tmp_var" > /etc/ipsec.conf
+if [ "true" = "#IS_FEDERATED_VM#" ]; then
+    apt update
+    apt install strongswan -y
+    apt install opensc -y
+    apt install libgmp10 -y
+    apt install libgmp-dev -y
+    apt install libssl-dev -y
 
-ipsec restart
-EOL
-chmod +x /bin/fogbow-config-client-federated
-setsid /bin/fogbow-config-client-federated
+    echo "$tmp_var" > /etc/ipsec.conf
 
+    ipsec restart
+    EOL
+    chmod +x /bin/fogbow-config-client-federated
+    setsid /bin/fogbow-config-client-federated
+fi
