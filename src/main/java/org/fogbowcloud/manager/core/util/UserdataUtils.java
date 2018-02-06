@@ -35,6 +35,10 @@ public class UserdataUtils {
 	protected static final String TOKEN_HOST_SSH_PORT_STR = "#TOKEN_HOST_SSH_PORT#";
 	protected static final String TOKEN_MANAGER_SSH_PUBLIC_KEY = "#TOKEN_MANAGER_SSH_PUBLIC_KEY#";
 	protected static final String TOKEN_MANAGER_SSH_USER = "#TOKEN_MANAGER_SSH_USER#";
+	protected static final String LEFT_KEY = "#LEFT_IP#";
+	protected static final String LEFT_SOURCE_IP_KEY = "#LEFT_SOURCE_IP#";
+	protected static final String RIGHT_KEY = "#RIGHT_IP#";
+	protected static final String RIGHT_SUBNET_KEY = "#RIGHT_SUBNET#";
 	
 	public static final String USER_DATA_LINE_BREAKER = "[[\\n]]";
 	
@@ -79,11 +83,6 @@ public class UserdataUtils {
 			cloudInitUserDataBuilder.addCloudConfig(new FileReader(new File(cloudConfigFilePath)));
 		}
 
-		// Federated network in VM:
-		//if (federatedNetworkId != null){
-			cloudInitUserDataBuilder.addShellScript(new FileReader(clientConfigFilePath));
-		//}
-
 		String extraUserdata = order.getAttValue(OrderAttribute.EXTRA_USER_DATA_ATT.getValue());
 		String extraUserdataNormalized = null;
 		if (extraUserdata != null) {
@@ -103,6 +102,16 @@ public class UserdataUtils {
 			replacements.put(TOKEN_HOST_SSH_PORT_STR, sshRemoteHostPort);
 			replacements.put(TOKEN_HOST_HTTP_PORT_STR, sshRemoteHostHttpPort);
 		}
+
+
+		// Federated network in VM:
+		//if (federatedNetworkId != null){
+			cloudInitUserDataBuilder.addShellScript(new FileReader(clientConfigFilePath));
+			replacements.put(LEFT_KEY, "left");
+			replacements.put(LEFT_SOURCE_IP_KEY, "virtual_left");
+			replacements.put(RIGHT_KEY, "right");
+			replacements.put(RIGHT_SUBNET_KEY, "virtual subnet");
+		//}
 		
 		String publicKeyToBeReplaced = null;
 		if (managerPublicKeyFilePath != null) {
