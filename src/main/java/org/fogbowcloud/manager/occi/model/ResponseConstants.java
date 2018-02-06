@@ -52,4 +52,5 @@ public class ResponseConstants {
 	public static final String INVALID_CIDR = "Invalid CIDR, null or more than one occurrence";
 	public static final String INVALID_LABEL = "Invalid Label, null or more than one occurrence";
 	public static final String INVALID_MEMBER = "Invalid Member, null";
+	public static final String INVALID_FEDERATED_NETWORK_ID = "Invalid Federated Network ID, null or empty";
 }
