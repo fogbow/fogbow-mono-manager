@@ -65,10 +65,13 @@ public class UserdataUtils {
 		String managerPublicKeyFilePath = getManagerSSHPublicKeyFilePath(properties);
 		String userPublicKey = order.getAttValue(OrderAttribute.DATA_PUBLIC_KEY.getValue());
 		String sshCommonUser = getSSHCommonUser(properties);
+		String leftIp = "left";
+		String virtualLeftIp = "virtual_left";
+		String rightIp = "right";
+		String virtualSubnet = "virtual_subnet";
 		
 		String sshTunnelCmdFilePath = "bin/fogbow-create-reverse-tunnel";
 		String cloudConfigFilePath = "bin/fogbow-cloud-config.cfg";
-		String clientConfigFilePath = "bin/config-ipsec-client";
 
 		if (sshRemoteHostPort == null || sshRemoteHostPort.isEmpty()) {
 			sshRemoteHostPort = DEFAULT_SSH_HOST_PORT;
@@ -106,11 +109,10 @@ public class UserdataUtils {
 
 		// Federated network in VM:
 		//if (federatedNetworkId != null){
-			cloudInitUserDataBuilder.addShellScript(new FileReader(clientConfigFilePath));
-			replacements.put(LEFT_KEY, "left");
-			replacements.put(LEFT_SOURCE_IP_KEY, "virtual_left");
-			replacements.put(RIGHT_KEY, "right");
-			replacements.put(RIGHT_SUBNET_KEY, "virtual subnet");
+		replacements.put(LEFT_KEY, leftIp);
+		replacements.put(LEFT_SOURCE_IP_KEY, virtualLeftIp);
+		replacements.put(RIGHT_KEY, rightIp);
+		replacements.put(RIGHT_SUBNET_KEY, virtualSubnet);
 		//}
 		
 		String publicKeyToBeReplaced = null;
