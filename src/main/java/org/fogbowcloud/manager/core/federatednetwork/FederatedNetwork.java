@@ -15,18 +15,22 @@ import java.util.Queue;
  */
 public class FederatedNetwork {
 
-    private String label;
-    private SubnetUtils.SubnetInfo subnetInfo;
-    private Queue<String> freedIps;
     private int ipsServed;
+    private Queue<String> freedIps;
+    private String label;
     private Collection<FederationMember> allowedMembers;
 
-    public FederatedNetwork(String label, String cidrNotation, Collection<FederationMember> allowedMembers) {
+    private SubnetUtils.SubnetInfo subnetInfo;
+
+    public FederatedNetwork(String cidrNotation, String label, Collection<FederationMember> allowedMembers) {
+        this.subnetInfo = new SubnetUtils(cidrNotation).getInfo();
+
+        // the reason for this to start at '1' is because the first ip is allocated
+        // as the virtual ip address
+        this.ipsServed = 1;
         this.freedIps = new LinkedList<String>();
-        this.ipsServed = 0;
 
         this.label = label;
-        this.subnetInfo = new SubnetUtils(cidrNotation).getInfo();
         this.allowedMembers = allowedMembers;
     }
 

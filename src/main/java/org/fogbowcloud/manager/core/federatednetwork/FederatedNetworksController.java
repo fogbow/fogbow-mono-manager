@@ -1,5 +1,6 @@
 package org.fogbowcloud.manager.core.federatednetwork;
 
+import org.apache.commons.net.util.SubnetUtils;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.occi.model.Token;
@@ -20,8 +21,15 @@ public class FederatedNetworksController {
     }
 
     public boolean create(Token.User user, String label, String cidrNotation, Set<FederationMember> members) {
-        //TODO:replace cidrNotation and virtualIpAddress
-        boolean createdSuccessfully = callFederatedNetworkAgent("192.168.2.0/24", "192.168.2.1");
+        SubnetUtils.SubnetInfo subnetInfo = getSubnetInfo(cidrNotation);
+
+        if (!isValid(subnetInfo)) {
+            return false;
+        }
+
+        // TODO: replace cidrNotation and virtualIpAddress
+        cidrNotation = "192.168.2.0/24";
+        boolean createdSuccessfully = callFederatedNetworkAgent(cidrNotation, subnetInfo.getLowAddress());
         if (createdSuccessfully) {
             FederatedNetwork federatedNetwork = new FederatedNetwork(label, cidrNotation, members);
             if (federatedNetworks.containsKey(user)) {
@@ -32,6 +40,7 @@ public class FederatedNetworksController {
             }
             return true;
         }
+
         return false;
     }
 
@@ -86,4 +95,15 @@ public class FederatedNetworksController {
 
         return null;
     }
+
+    private static SubnetUtils.SubnetInfo getSubnetInfo(String cidrNotation) {
+        return new SubnetUtils(cidrNotation).getInfo();
+    }
+
+    private static boolean isValid(SubnetUtils.SubnetInfo subnetInfo) {
+        int lowAddress = subnetInfo.asInteger(subnetInfo.getLowAddress());
+        int highAddress = subnetInfo.asInteger(subnetInfo.getHighAddress());
+        return highAddress - lowAddress > 1;
+    }
+
 }
