@@ -1,11 +1,13 @@
 package org.fogbowcloud.manager.occi;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
 import org.apache.http.HttpStatus;
 import org.fogbowcloud.manager.core.ManagerController;
+import org.fogbowcloud.manager.core.federatednetwork.FederatedNetwork;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.plugins.accounting.AccountingInfo;
@@ -267,5 +269,13 @@ public class OCCIApplication extends Application {
 
 	public ResourceUsage getUsages(String authToken, String memberId) {
 		return managerFacade.getUsages(authToken, memberId);
+	}
+
+	public Collection<FederatedNetwork> getAllFederatedNetworks() {
+		return managerFacade.getAllFederatedNetworks();
+	}
+
+	public FederatedNetwork getFederatedNetwork(String federatedNetworkId) {
+		return managerFacade.getFederatedNetwork(federatedNetworkId);
 	}
 }

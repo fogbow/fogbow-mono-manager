@@ -15,6 +15,7 @@ import java.util.Queue;
  */
 public class FederatedNetwork {
 
+    private String id;
     private int ipsServed;
     private Queue<String> freedIps;
     private String label;
@@ -22,7 +23,7 @@ public class FederatedNetwork {
 
     private SubnetUtils.SubnetInfo subnetInfo;
 
-    public FederatedNetwork(String cidrNotation, String label, Collection<FederationMember> allowedMembers) {
+    public FederatedNetwork(String id, String cidrNotation, String label, Collection<FederationMember> allowedMembers) {
         this.subnetInfo = new SubnetUtils(cidrNotation).getInfo();
 
         // the reason for this to start at '1' is because the first ip is allocated
@@ -30,6 +31,7 @@ public class FederatedNetwork {
         this.ipsServed = 1;
         this.freedIps = new LinkedList<String>();
 
+        this.id = id;
         this.label = label;
         this.allowedMembers = allowedMembers;
     }
@@ -87,8 +89,15 @@ public class FederatedNetwork {
         return label;
     }
 
-    public void setLabel(String label) {
-        this.label = label;
+    public String getId() {
+        return id;
     }
 
+    public String getCidr() {
+        return subnetInfo.getCidrSignature();
+    }
+
+    public Collection<FederationMember> getAllowedMembers() {
+        return allowedMembers;
+    }
 }

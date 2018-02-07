@@ -24,6 +24,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.core.federatednetwork.FederatedNetwork;
 import org.fogbowcloud.manager.core.federatednetwork.FederatedNetworksController;
 import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.core.model.FederationMember;
@@ -2220,7 +2221,15 @@ public class ManagerController {
 	protected FailedBatch getFailedBatches() {
 		return failedBatch;
 	}
-	
+
+	public Collection<FederatedNetwork> getAllFederatedNetworks() {
+		return federatedNetworksController.getAllFederatedNetworks();
+	}
+
+	public FederatedNetwork getFederatedNetwork(String federatedNetworkId) {
+		return federatedNetworksController.getFederatedNetwork(federatedNetworkId);
+	}
+
 	protected class FailedBatch {
 		private Map<String, FailedBatchType> failedBatches = new HashMap<String, FailedBatchType>();
 

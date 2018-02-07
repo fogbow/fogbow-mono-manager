@@ -113,7 +113,7 @@ public class TestFederatedNetworkResource {
 
 		String membersList[] = new String[] { "lsd.manager.something", "alemanha.naf.something" };
 		for (String member : membersList) {
-			post.addHeader(OCCIConstants.FEDERATED_NETWORK_MEMBER, member);
+			post.addHeader(OCCIConstants.FEDERATED_NETWORK_MEMBERS, member);
 		}
 
 		CloseableHttpClient client = HttpClients.createMinimal();
@@ -141,7 +141,7 @@ public class TestFederatedNetworkResource {
 
 		String membersList[] = new String[] { "lsd.manager.something", "alemanha.naf.something" };
 		for (String member : membersList) {
-			post.addHeader(OCCIConstants.FEDERATED_NETWORK_MEMBER, member);
+			post.addHeader(OCCIConstants.FEDERATED_NETWORK_MEMBERS, member);
 		}
 
 		CloseableHttpClient client = HttpClients.createMinimal();
@@ -162,7 +162,7 @@ public class TestFederatedNetworkResource {
 
 		String membersList[] = new String[] { "lsd.manager.something", "alemanha.naf.something" };
 		for (String member : membersList) {
-			post.addHeader(OCCIConstants.FEDERATED_NETWORK_MEMBER, member);
+			post.addHeader(OCCIConstants.FEDERATED_NETWORK_MEMBERS, member);
 		}
 
 		CloseableHttpClient client = HttpClients.createMinimal();
@@ -217,7 +217,7 @@ public class TestFederatedNetworkResource {
 
 		String membersList[] = new String[] { "lsd.manager.something", "alemanha.naf.something" };
 		for (String member : membersList) {
-			post.addHeader(OCCIConstants.FEDERATED_NETWORK_MEMBER, member);
+			post.addHeader(OCCIConstants.FEDERATED_NETWORK_MEMBERS, member);
 		}
 
 		CloseableHttpClient client = HttpClients.createMinimal();
@@ -237,7 +237,7 @@ public class TestFederatedNetworkResource {
 
 		String membersList[] = new String[] { "lsd.manager.something", "alemanha.naf.something" };
 		for (String member : membersList) {
-			post.addHeader(OCCIConstants.FEDERATED_NETWORK_MEMBER, member);
+			post.addHeader(OCCIConstants.FEDERATED_NETWORK_MEMBERS, member);
 		}
 
 		CloseableHttpClient client = HttpClients.createMinimal();
@@ -261,7 +261,7 @@ public class TestFederatedNetworkResource {
 
 		String membersList[] = new String[] { "lsd.manager.something", "alemanha.naf.something" };
 		for (String member : membersList) {
-			post.addHeader(OCCIConstants.FEDERATED_NETWORK_MEMBER, member);
+			post.addHeader(OCCIConstants.FEDERATED_NETWORK_MEMBERS, member);
 		}
 
 		CloseableHttpClient client = HttpClients.createMinimal();
