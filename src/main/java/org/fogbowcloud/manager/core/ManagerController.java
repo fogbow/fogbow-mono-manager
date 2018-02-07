@@ -198,7 +198,7 @@ public class ManagerController {
 		this.networkPlugin = networkPlugin;
 	}
 
-	protected void setFederatedNetworksController(FederatedNetworksController federatedNetworksController) {
+	public void setFederatedNetworksController(FederatedNetworksController federatedNetworksController) {
 		this.federatedNetworksController = federatedNetworksController;
 	}
 

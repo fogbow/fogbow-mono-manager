@@ -66,7 +66,7 @@ public class FederatedNetworkResource extends ServerResource {
         }
 
         String requestEndpoint = HeaderUtils.getHostRef(application, req) + req.getHttpCall().getRequestUri();
-        String response = "";
+        String response = new String();
         for (FederatedNetwork federatedNetwork : networks) {
             String prefixOCCILocation;
             if (requestEndpoint.endsWith("/")) {
@@ -81,23 +81,23 @@ public class FederatedNetworkResource extends ServerResource {
                 String[] values = new String[]{federatedNetwork.getCidr(),
                         federatedNetwork.getLabel(), formatMembers(federatedNetwork.getAllowedMembers())};
 
-                String attributeFormat = "%s=%s; ";
-                response = String.format("%s%s;", prefixOCCILocation, federatedNetwork.getId());
+                response += prefixOCCILocation + System.lineSeparator();
+
+                String attributeFormat = "X-OCCI-Attribute: %s=%s; ";
                 for (int i = 0; i < keys.length; i++) {
-                    response += String.format(attributeFormat, keys[i], values[i]);
+                    response += String.format(attributeFormat, keys[i], values[i]) + System.lineSeparator();
                 }
 
-                response += prefixOCCILocation + federatedNetwork.getId() + "; "
-                        + System.lineSeparator();
             } else {
-                response += prefixOCCILocation + federatedNetwork.getId() + System.lineSeparator();
+                response += prefixOCCILocation + System.lineSeparator();
             }
         }
         return response.length() > 0 ? response.trim() : System.lineSeparator();
     }
 
     private String formatMembers(Collection<FederationMember> members) {
-        return members.toString().substring(1, members.size() - 1);
+        String str = members.toString();
+        return str.substring(1, str.length() - 1);
     }
 
     @Post
