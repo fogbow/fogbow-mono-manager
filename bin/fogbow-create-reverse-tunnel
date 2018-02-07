@@ -96,8 +96,9 @@ $tunnel_param_configs
 $other_tunnel_configs"
 
 cat > /bin/fogbow-config-client-federated << EOL
-!/bin/sh
+#!/bin/sh
 
+set -e
 if [ "true" = "#IS_FEDERATED_VM#" ]; then
     apt update
     apt install strongswan -y

@@ -197,7 +197,11 @@ public class ManagerController {
 	public void setNetworkPlugin(NetworkPlugin networkPlugin) {
 		this.networkPlugin = networkPlugin;
 	}
-	
+
+	protected void setFederatedNetworksController(FederatedNetworksController federatedNetworksController) {
+		this.federatedNetworksController = federatedNetworksController;
+	}
+
 	public void setForTest(boolean forTest) {
 		this.forTest = forTest;
 	}
@@ -1632,6 +1636,7 @@ public class ManagerController {
 						}
 					}
 					if (!isFulfilled) {
+						// TODO check ORDER(resource kind=federated network). Only local create local instances !
 						createAsynchronousRemoteInstance(order, allowedFederationMembers);
 					}
 					allFulfilled &= isFulfilled;
@@ -1798,6 +1803,7 @@ public class ManagerController {
 	private boolean handleComputeInstanceCreation(Order order, Token federationUserToken) {
 		try {
 			try {
+				// TODO: add attributes to create federated VM
 				String command = createUserDataUtilsCommand(order);
 				order.putAttValue(OrderAttribute.USER_DATA_ATT.getValue(), command);
 				order.addCategory(new Category(OrderConstants.USER_DATA_TERM, OrderConstants.SCHEME,
@@ -1898,9 +1904,9 @@ public class ManagerController {
 	}
 
 	private boolean handleFederatedNetworkInstanceCreation(Order order, Token federationUserToken) {
-		String label = "hardcoded";
-		String cidrNotation = "10.0.0.0/30";
-		Set<String> members = new HashSet<String>(Arrays.asList(new String[] {"siteA", "siteB"}));
+		String label = order.getxOCCIAtt().get(OrderAttribute.FEDERATED_NETWORK_LABEL.getValue());
+		String cidrNotation = order.getxOCCIAtt().get(OrderAttribute.FEDERATED_NETWORK_CIDR_NOTATION_TERM.getValue());
+		Set<String> members = parseMembers(order.getxOCCIAtt().get(OrderAttribute.FEDERATED_NETWORK_MEMBERS_TERM.getValue()));
 
 		// notify agent of this federated network creation request
 		// if agent notifies success back
@@ -1912,7 +1918,21 @@ public class ManagerController {
 		}
 
 		Token.User user = federationUserToken.getUser();
-		return federatedNetworksController.create(user, label, cidrNotation, federationMembers);
+
+		// TODO check plugins (compute, network, storage).
+		federatedNetworksController.create(user, label, cidrNotation, federationMembers);
+
+		order.setState(OrderState.FULFILLED);
+		order.setInstanceId(label);
+		order.setProvidingMemberId(properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
+		this.managerDataStoreController.updateOrder(order);
+
+		return true;
+	}
+
+	private Set<String> parseMembers(String members){
+		String[] membersArray =  members.split(";");
+		return new HashSet<>(Arrays.asList(membersArray));
 	}
 
 	protected void checkInstancePreempted(Token federationUserToken, Order orderToPreempt) {

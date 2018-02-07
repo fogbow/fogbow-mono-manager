@@ -15,6 +15,11 @@ public class FederatedNetworksController {
     Map<Token.User, Collection<FederatedNetwork>> federatedNetworks;
     Properties properties;
 
+    public FederatedNetworksController() {
+        properties = new Properties();
+        federatedNetworks = new HashMap<>();
+    }
+
     public FederatedNetworksController(Properties properties) {
         this.properties = properties;
         federatedNetworks = new HashMap<>();
@@ -45,7 +50,7 @@ public class FederatedNetworksController {
         return false;
     }
 
-    private boolean callFederatedNetworkAgent(String cidrNotation, String virtualIpAddress) {
+    public boolean callFederatedNetworkAgent(String cidrNotation, String virtualIpAddress) {
         String permissionFilePath = getProperties().getProperty(ConfigurationConstants.FEDERATED_NETWORK_AGENT_PERMISSION_FILE_PATH);
         String user = getProperties().getProperty(ConfigurationConstants.FEDERATED_NETWORK_AGENT_USER);
         String serverAddress = getProperties().getProperty(ConfigurationConstants.FEDERATED_NETWORK_AGENT_ADDRESS);
