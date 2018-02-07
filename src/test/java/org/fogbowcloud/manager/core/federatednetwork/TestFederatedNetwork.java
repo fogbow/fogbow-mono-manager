@@ -1,5 +1,6 @@
 package org.fogbowcloud.manager.core.federatednetwork;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -12,15 +13,14 @@ import static org.junit.Assert.fail;
  */
 public class TestFederatedNetwork {
 
-    public static final String FIRST_IP_ADDRESS = "10.0.0.1";
-    public static final String SECOND_IP_ADDRESS = "10.0.0.2";
+    public static final String FIRST_IP_ADDRESS = "10.0.0.2";
+    public static final String SECOND_IP_ADDRESS = "10.0.0.3";
 
     @Test
     public void testNextIp() throws SubnetAddressesCapacityReachedException {
         FederatedNetwork m = new FederatedNetwork("fake-id", "10.0.0.0/30", "label", null);
 
         assertEquals(FIRST_IP_ADDRESS, m.nextFreeIp());
-        assertEquals(SECOND_IP_ADDRESS, m.nextFreeIp());
 
         try {
             m.nextFreeIp();
@@ -44,7 +44,7 @@ public class TestFederatedNetwork {
 
     @Test
     public void testGapBetweenFreeIps() throws SubnetAddressesCapacityReachedException {
-        FederatedNetwork m = new FederatedNetwork("fake-id", "10.0.0.0/30", "label", null);
+        FederatedNetwork m = new FederatedNetwork("fake-id", "10.0.0.0/29", "label", null);
 
         assertTrue(m.isIpAddressFree(FIRST_IP_ADDRESS));
         assertEquals(FIRST_IP_ADDRESS, m.nextFreeIp());
