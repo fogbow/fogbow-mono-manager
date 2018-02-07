@@ -9,6 +9,8 @@ import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.plugins.accounting.AccountingInfo;
+import org.fogbowcloud.manager.occi.federatednetwork.FederatedNetworkConstants;
+import org.fogbowcloud.manager.occi.federatednetwork.FederatedNetworkResource;
 import org.fogbowcloud.manager.occi.instance.ComputeServerResource;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.member.MemberServerResource;
@@ -71,6 +73,16 @@ public class OCCIApplication extends Application {
 		router.attach("/token", TokenServerResource.class);
 		router.attach("/-/", QueryServerResource.class);
 		router.attach("/.well-known/org/ogf/occi/-/", QueryServerResource.class);
+		
+		router.attach("/" + FederatedNetworkConstants.FEDERATED_NETWORK_TERM,
+				FederatedNetworkResource.class);
+		router.attach("/" + FederatedNetworkConstants.FEDERATED_NETWORK_TERM + "/",
+				FederatedNetworkResource.class);
+		router.attach(
+				"/" + FederatedNetworkConstants.FEDERATED_NETWORK_TERM + "/{"
+						+ FederatedNetworkConstants.FEDERATED_NETWORK_ID_TERM + "}",
+				FederatedNetworkResource.class);
+
 		router.attachDefault(new Restlet() {
 			@Override
 			public void handle(org.restlet.Request request, Response response) {

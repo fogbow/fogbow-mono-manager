@@ -289,6 +289,7 @@ public class OrderServerResource extends ServerResource {
 		String userId = application.getUserId(normalizeAuthToken(federationAuthToken));
 		
 		//TODO verificar se o ID da network é federado
+
 		Map<String, String> xOCCIAtt = HeaderUtils.getXOCCIAtributes(req.getHeaders());
 		for (Link link : networkLinks) {
 			

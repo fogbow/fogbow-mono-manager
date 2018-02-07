@@ -4106,7 +4106,44 @@ public class TestManagerController {
 			Assert.assertEquals(newResourceId, order.getInstanceId());
 		}
 	}
-	
+
+	@Test
+	public void testSubmitFederatedNetworkOrder() throws InterruptedException {
+		String newResourceId = "sampleFederatedNetwork";
+		Token token = managerTestHelper.getDefaultFederationToken();
+
+		ResourcesInfo resourcesInfo = new ResourcesInfo("", "", "", "", "", "");
+		resourcesInfo.setId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+
+		NetworkPlugin networkPlugin = Mockito.mock(NetworkPlugin.class);
+
+		Mockito.when(
+				networkPlugin.requestInstance(Mockito.any(Token.class),
+						Mockito.anyList(), Mockito.anyMap()))
+				.thenReturn(newResourceId);
+		managerController.setNetworkPlugin(networkPlugin);
+
+		List<FederationMember> listMembers = new ArrayList<FederationMember>();
+		FederationMember federationMember = new FederationMember(resourcesInfo);
+		listMembers.add(federationMember);
+		managerController.updateMembers(listMembers);
+
+		HashMap<String, String> xOCCIAtt = new HashMap<String, String>();
+		xOCCIAtt.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.FEDERATED_NETWORK_TERM);
+		Order orderOne = new Order("idA", token, new ArrayList<Category>(), xOCCIAtt, false, "");
+		orderOne.setState(OrderState.OPEN);
+		ManagerDataStoreController managerDataStoreController = managerController.getManagerDataStoreController();
+		managerDataStoreController.addOrder(orderOne);
+		managerController.checkAndSubmitOpenOrders();
+
+		List<Order> ordersFromUser = managerController.getOrdersFromUser(token.getAccessId(), false);
+		Assert.assertEquals(1, ordersFromUser.size());
+		for (Order order : ordersFromUser) {
+			Assert.assertEquals(OrderState.FULFILLED, order.getState());
+			Assert.assertEquals(newResourceId, order.getInstanceId());
+		}
+	}
+
 	@Test
 	public void testRemoveNetworkOrderForRemoteMember() throws InterruptedException {
 		
