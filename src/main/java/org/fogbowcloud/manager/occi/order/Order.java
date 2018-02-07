@@ -208,7 +208,7 @@ public class Order {
 		this.xOCCIAtt = xOCCIAtt;
 	}
 	
-	public String getResourceKing() {
+	public String getResourceKind() {
 		return resourceKing;
 	}
 	
