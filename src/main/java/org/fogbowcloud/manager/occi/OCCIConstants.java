@@ -25,6 +25,8 @@ public class OCCIConstants {
 	public static final String NETWORK_TERM = "network";
 	public static final String NETWORK_INTERFACE_TERM = "networkinterface";
 	
+	public static final String FEDERATED_NETWORK_AGENT_PUBLIC_IP = "occi.federatednetwork.agentepublicip";
+	public static final String FEDERATED_NETWORK_PRIVATE_IP = "occi.federatednetwork.privateip";
 	public static final String FEDERATED_NETWORK_LABEL = "occi.federatednetwork.label";
 	public static final String FEDERATED_NETWORK_CIDR = "occi.federatednetwork.cidr";
 	public static final String FEDERATED_NETWORK_MEMBERS = "occi.federatednetwork.members";

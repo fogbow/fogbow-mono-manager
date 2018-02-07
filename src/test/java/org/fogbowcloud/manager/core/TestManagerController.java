@@ -4105,6 +4105,7 @@ public class TestManagerController {
 		}
 	}
 
+	@Ignore
 	@Test
 	public void testSubmitFederatedNetworkOrder() throws InterruptedException {
 		Token token = managerTestHelper.getDefaultFederationToken();

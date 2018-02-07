@@ -20,6 +20,7 @@ public enum OrderAttribute {
 	REQUESTING_MEMBER("org.fogbowcloud.order.requesting-member"),
 	PROVIDING_MEMBER("org.fogbowcloud.order.providing-member"),
 	RESOURCE_KIND("org.fogbowcloud.order.resource-kind"),
+	FEDERATED_NETWORK_ID("org.fogbowcloud.order.federated-network-id"),
 	FEDERATED_NETWORK_LABEL("org.fogbowcloud.order.federated-network-label"),
 	FEDERATED_NETWORK_CIDR_NOTATION_TERM("org.fogbowcloud.order.federated-network-cidr-notation"),
 	FEDERATED_NETWORK_MEMBERS_TERM("org.fogbowcloud.order.federated-network-members"),

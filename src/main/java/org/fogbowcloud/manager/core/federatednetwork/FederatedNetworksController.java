@@ -7,13 +7,11 @@ import org.fogbowcloud.manager.occi.model.Token;
 
 import java.util.*;
 
-/**
- * Created by arnett on 05/02/18.
- */
 public class FederatedNetworksController {
 
-    Map<Token.User, Collection<FederatedNetwork>> federatedNetworks;
-    Properties properties;
+	public static final String FEDERATED_NETWORK_AGANTE_PUBLIC_IP_PROP = "federated_network_agante_public_ip";
+    private Map<Token.User, Collection<FederatedNetwork>> federatedNetworks;
+    private Properties properties;
 
     public FederatedNetworksController() {
         properties = new Properties();

@@ -4,7 +4,23 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+import java.util.StringTokenizer;
+import java.util.TimerTask;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -50,6 +66,7 @@ import org.fogbowcloud.manager.core.plugins.util.SshClientPool;
 import org.fogbowcloud.manager.core.util.HttpRequestUtil;
 import org.fogbowcloud.manager.core.util.UserdataUtils;
 import org.fogbowcloud.manager.occi.ManagerDataStoreController;
+import org.fogbowcloud.manager.occi.OCCIConstants;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.instance.InstanceState;
 import org.fogbowcloud.manager.occi.member.UsageServerResource.ResourceUsage;
@@ -1802,8 +1819,9 @@ public class ManagerController {
 
 	private boolean handleComputeInstanceCreation(Order order, Token federationUserToken) {
 		try {
+			normalizeOrderCompute(order);
+			
 			try {
-				// TODO: add attributes to create federated VM
 				String command = createUserDataUtilsCommand(order);
 				order.putAttValue(OrderAttribute.USER_DATA_ATT.getValue(), command);
 				order.addCategory(new Category(OrderConstants.USER_DATA_TERM, OrderConstants.SCHEME,
@@ -1860,6 +1878,22 @@ public class ManagerController {
 				LOGGER.warn("Order failed locally for an unknown reason.", e);
 				return false;
 			}
+		}
+	}
+
+	private void normalizeOrderCompute(Order order) {
+		try {
+			String federatedNetworkId = order.getAttValue(OrderAttribute.FEDERATED_NETWORK_ID.getValue());
+			if (federatedNetworkId != null) {
+				FederatedNetwork federatedNetwork = this.federatedNetworksController.getFederatedNetwork(federatedNetworkId);
+				String privateIp = federatedNetwork.nextFreeIp();
+				
+				order.putAttValue(OCCIConstants.FEDERATED_NETWORK_PRIVATE_IP, privateIp);
+				String agentPublicIp = getProperties().getProperty(FederatedNetworksController.FEDERATED_NETWORK_AGANTE_PUBLIC_IP_PROP);
+				order.putAttValue(OCCIConstants.FEDERATED_NETWORK_AGENT_PUBLIC_IP, agentPublicIp);				
+			}			
+		} catch (Exception e) {
+			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
 		}
 	}
 

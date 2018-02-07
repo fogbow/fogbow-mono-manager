@@ -23,7 +23,4 @@ ssh_benchmarking_script_url=http://downloads.fogbowcloud.org/benchmark/script_ss
 timeout_http_request=
 
 ## Federated network properties
-federated_network_agent_permission_file_path=
-federated_network_agent_user=
-federated_network_agent_private_address=
-federated_network_agent_address=
+federated_network_agante_public_ip=
