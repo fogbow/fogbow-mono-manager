@@ -1,3 +1,4 @@
+#!/bin/sh
 apt install strongswan -y
 apt install opensc -y
 apt install libgmp10 -y

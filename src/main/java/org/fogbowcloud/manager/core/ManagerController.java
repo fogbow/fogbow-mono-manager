@@ -157,7 +157,7 @@ public class ManagerController {
 
 		this.managerDataStoreController = new ManagerDataStoreController(properties);
 
-		this.federatedNetworksController = new FederatedNetworksController();
+		this.federatedNetworksController = new FederatedNetworksController(properties);
 		recoverPreviousOrders();
 	}
 
@@ -1894,11 +1894,6 @@ public class ManagerController {
             LOGGER.warn("Order failed locally.", e);
             return false;
         }
-	}
-
-	private void callFederatedNetworkAgent() {
-		String command = "ssh server -c command";
-		// ProcessBuilder builder = new ProcessBuilder(command);
 	}
 
 	private boolean handleFederatedNetworkInstanceCreation(Order order, Token federationUserToken) {

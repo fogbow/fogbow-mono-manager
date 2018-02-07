@@ -1,3 +1,4 @@
+#!/bin/sh
 left=$1
 leftid=$2
 leftsubnet=$3
