@@ -31,7 +31,8 @@ public class FederatedNetworksController {
         cidrNotation = "192.168.2.0/24";
         boolean createdSuccessfully = callFederatedNetworkAgent(cidrNotation, subnetInfo.getLowAddress());
         if (createdSuccessfully) {
-            FederatedNetwork federatedNetwork = new FederatedNetwork(label, cidrNotation, members);
+            String federatedNetworkId = String.valueOf(UUID.randomUUID());
+            FederatedNetwork federatedNetwork = new FederatedNetwork(federatedNetworkId, label, cidrNotation, members);
             if (federatedNetworks.containsKey(user)) {
                 federatedNetworks.get(user).add(federatedNetwork);
             } else {
@@ -104,6 +105,25 @@ public class FederatedNetworksController {
         int lowAddress = subnetInfo.asInteger(subnetInfo.getLowAddress());
         int highAddress = subnetInfo.asInteger(subnetInfo.getHighAddress());
         return highAddress - lowAddress > 1;
+    }
+
+    public Collection<FederatedNetwork> getAllFederatedNetworks() {
+        Collection<FederatedNetwork> allFederatedNetworks = new ArrayList<FederatedNetwork>();
+        for (Collection<FederatedNetwork> networks : federatedNetworks.values()) {
+            allFederatedNetworks.addAll(networks);
+        }
+        return allFederatedNetworks;
+    }
+
+    public FederatedNetwork getFederatedNetwork(String federatedNetworkId) {
+        Collection<FederatedNetwork> allFederatedNetworks = this.getAllFederatedNetworks();
+        FederatedNetwork federatedNetwork = null;
+        for (FederatedNetwork federatedNetworkIterator : allFederatedNetworks) {
+            if (federatedNetworkIterator.getId().equals(federatedNetworkId)) {
+                federatedNetwork = federatedNetworkIterator;
+            }
+        }
+        return federatedNetwork;
     }
 
 }
