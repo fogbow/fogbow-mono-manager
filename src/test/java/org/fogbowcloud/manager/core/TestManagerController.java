@@ -21,6 +21,7 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
 import org.dom4j.Element;
 import org.fogbowcloud.manager.core.ManagerController.FailedBatchType;
+import org.fogbowcloud.manager.core.federatednetwork.FederatedNetworksController;
 import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.Flavor;
@@ -62,10 +63,7 @@ import org.fogbowcloud.manager.xmpp.ManagerPacketHelper;
 import org.fogbowcloud.manager.xmpp.ManagerXmppComponent;
 import org.jamppa.component.PacketCallback;
 import org.json.JSONException;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
 import org.mockito.internal.verification.VerificationModeFactory;
@@ -4109,38 +4107,75 @@ public class TestManagerController {
 
 	@Test
 	public void testSubmitFederatedNetworkOrder() throws InterruptedException {
-		String newResourceId = "sampleFederatedNetwork";
 		Token token = managerTestHelper.getDefaultFederationToken();
-
-		ResourcesInfo resourcesInfo = new ResourcesInfo("", "", "", "", "", "");
-		resourcesInfo.setId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
-
-		NetworkPlugin networkPlugin = Mockito.mock(NetworkPlugin.class);
-
-		Mockito.when(
-				networkPlugin.requestInstance(Mockito.any(Token.class),
-						Mockito.anyList(), Mockito.anyMap()))
-				.thenReturn(newResourceId);
-		managerController.setNetworkPlugin(networkPlugin);
-
-		List<FederationMember> listMembers = new ArrayList<FederationMember>();
-		FederationMember federationMember = new FederationMember(resourcesInfo);
-		listMembers.add(federationMember);
-		managerController.updateMembers(listMembers);
 
 		HashMap<String, String> xOCCIAtt = new HashMap<String, String>();
 		xOCCIAtt.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.FEDERATED_NETWORK_TERM);
-		Order orderOne = new Order("idA", token, new ArrayList<Category>(), xOCCIAtt, false, "");
+		String label = "fednet-01";
+		xOCCIAtt.put(OrderAttribute.FEDERATED_NETWORK_LABEL.getValue(), label);
+		xOCCIAtt.put(OrderAttribute.FEDERATED_NETWORK_CIDR_NOTATION_TERM.getValue(), "10.10.10.0/24");
+		xOCCIAtt.put(OrderAttribute.FEDERATED_NETWORK_MEMBERS_TERM.getValue(), "siteA;siteB");
+		Order orderOne = new Order("idA", token, new ArrayList<Category>(), xOCCIAtt, true, "");
 		orderOne.setState(OrderState.OPEN);
+
+		HashMap<String, String> xOCCIAtt2 = new HashMap<String, String>();
+		xOCCIAtt2.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.FEDERATED_NETWORK_TERM);
+		String label2 = "fednet-02";
+		xOCCIAtt2.put(OrderAttribute.FEDERATED_NETWORK_LABEL.getValue(), label2);
+		xOCCIAtt2.put(OrderAttribute.FEDERATED_NETWORK_CIDR_NOTATION_TERM.getValue(), "10.10.10.0/24");
+		xOCCIAtt2.put(OrderAttribute.FEDERATED_NETWORK_MEMBERS_TERM.getValue(), "siteC;siteD");
+		Order orderTwo = new Order("idB", token, new ArrayList<Category>(), xOCCIAtt2, true, "");
+		orderTwo.setState(OrderState.OPEN);
+
 		ManagerDataStoreController managerDataStoreController = managerController.getManagerDataStoreController();
 		managerDataStoreController.addOrder(orderOne);
+		managerDataStoreController.addOrder(orderTwo);
+
+		/** SSH command mocked to return true value */
+		FederatedNetworksController fedNetController = Mockito.spy(FederatedNetworksController.class);
+		Mockito.when(fedNetController.callFederatedNetworkAgent(Mockito.anyString(), Mockito.anyString())).thenReturn(true);
+		this.managerController.setFederatedNetworksController(fedNetController);
+
 		managerController.checkAndSubmitOpenOrders();
 
-		List<Order> ordersFromUser = managerController.getOrdersFromUser(token.getAccessId(), false);
+		List<Order> ordersFromUser = managerController.getOrdersFromUser(token.getAccessId(), true);
 		Assert.assertEquals(1, ordersFromUser.size());
 		for (Order order : ordersFromUser) {
 			Assert.assertEquals(OrderState.FULFILLED, order.getState());
-			Assert.assertEquals(newResourceId, order.getInstanceId());
+			Assert.assertEquals(label, order.getInstanceId());
+		}
+	}
+
+	@Test
+	@Ignore
+	// TODO: Check the assert, must it be OPEN or FAILED? You may want to fix ManagerController, line: 1921
+	public void testSubmitFederatedNetworkOrder2() throws InterruptedException {
+		Token token = managerTestHelper.getDefaultFederationToken();
+
+		HashMap<String, String> xOCCIAtt2 = new HashMap<String, String>();
+		xOCCIAtt2.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.FEDERATED_NETWORK_TERM);
+		String label2 = "fednet-02";
+		xOCCIAtt2.put(OrderAttribute.FEDERATED_NETWORK_LABEL.getValue(), label2);
+		xOCCIAtt2.put(OrderAttribute.FEDERATED_NETWORK_CIDR_NOTATION_TERM.getValue(), "10.10.10.0/24");
+		xOCCIAtt2.put(OrderAttribute.FEDERATED_NETWORK_MEMBERS_TERM.getValue(), "siteC;siteD");
+		Order orderTwo = new Order("idB", token, new ArrayList<Category>(), xOCCIAtt2, true, "");
+		orderTwo.setState(OrderState.OPEN);
+
+		ManagerDataStoreController managerDataStoreController = managerController.getManagerDataStoreController();
+		managerDataStoreController.addOrder(orderTwo);
+
+		/** SSH command mocked to return true value */
+		FederatedNetworksController fedNetController = Mockito.spy(FederatedNetworksController.class);
+		Mockito.when(fedNetController.callFederatedNetworkAgent(Mockito.anyString(), Mockito.anyString())).thenReturn(false);
+		this.managerController.setFederatedNetworksController(fedNetController);
+
+		managerController.checkAndSubmitOpenOrders();
+
+		List<Order> ordersFromUser = managerController.getOrdersFromUser(token.getAccessId(), true);
+		Assert.assertEquals(1, ordersFromUser.size());
+		for (Order order : ordersFromUser) {
+			Assert.assertEquals(OrderState.FULFILLED, order.getState());
+			Assert.assertEquals(label2, order.getInstanceId());
 		}
 	}
 

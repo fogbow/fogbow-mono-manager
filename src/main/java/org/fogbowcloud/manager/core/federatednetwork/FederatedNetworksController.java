@@ -15,6 +15,11 @@ public class FederatedNetworksController {
     Map<Token.User, Collection<FederatedNetwork>> federatedNetworks;
     Properties properties;
 
+    public FederatedNetworksController() {
+        properties = new Properties();
+        federatedNetworks = new HashMap<>();
+    }
+
     public FederatedNetworksController(Properties properties) {
         this.properties = properties;
         federatedNetworks = new HashMap<>();
@@ -31,7 +36,7 @@ public class FederatedNetworksController {
         cidrNotation = "192.168.2.0/24";
         boolean createdSuccessfully = callFederatedNetworkAgent(cidrNotation, subnetInfo.getLowAddress());
         if (createdSuccessfully) {
-            FederatedNetwork federatedNetwork = new FederatedNetwork(label, cidrNotation, members);
+            FederatedNetwork federatedNetwork = new FederatedNetwork(cidrNotation, label, members);
             if (federatedNetworks.containsKey(user)) {
                 federatedNetworks.get(user).add(federatedNetwork);
             } else {
@@ -44,7 +49,7 @@ public class FederatedNetworksController {
         return false;
     }
 
-    private boolean callFederatedNetworkAgent(String cidrNotation, String virtualIpAddress) {
+    public boolean callFederatedNetworkAgent(String cidrNotation, String virtualIpAddress) {
         String permissionFilePath = getProperties().getProperty(ConfigurationConstants.FEDERATED_NETWORK_AGENT_PERMISSION_FILE_PATH);
         String user = getProperties().getProperty(ConfigurationConstants.FEDERATED_NETWORK_AGENT_USER);
         String serverAddress = getProperties().getProperty(ConfigurationConstants.FEDERATED_NETWORK_AGENT_ADDRESS);
