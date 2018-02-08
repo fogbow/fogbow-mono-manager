@@ -9,7 +9,9 @@ import org.apache.commons.net.util.SubnetUtils;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.model.FederationMember;
+import org.fogbowcloud.manager.occi.federatednetwork.FederatedNetworkConstants;
 import org.fogbowcloud.manager.occi.model.Token;
+import org.fogbowcloud.manager.occi.model.Token.User;
 
 public class FederatedNetworksController {
 
@@ -29,6 +31,11 @@ public class FederatedNetworksController {
     public FederatedNetworksController(Properties properties) {
         this.properties = properties;
         database = new FederatedNetworksDB(DATABASE_FILE_PATH);
+    }
+    
+    protected FederatedNetworksController(Properties properties, String databaseFilePath) {
+        this.properties = properties;
+        database = new FederatedNetworksDB(databaseFilePath);
     }
 
     public String create(Token.User user, String label, String cidrNotation, Set<FederationMember> members) {
@@ -111,5 +118,24 @@ public class FederatedNetworksController {
 
         return null;
     }
+
+	public void updateFederatedNetworkMembers(User user, String federatedNetworkId,
+			Set<String> membersSet) {
+		FederatedNetwork federatedNetwork = this.getFederatedNetwork(user, federatedNetworkId);
+		if (federatedNetwork == null) {
+			throw new IllegalArgumentException(
+					FederatedNetworkConstants.NOT_FOUND_FEDERATED_NETWORK_MESSAGE
+							+ federatedNetworkId);
+		}
+		for (String member : membersSet) {
+			federatedNetwork.addFederationNetworkMember(new FederationMember(member));
+		}
+
+		if (!this.database.addFederatedNetwork(federatedNetwork, user)) {
+			throw new IllegalArgumentException(
+					FederatedNetworkConstants.CANNOT_UPDATE_FEDERATED_NETWORK_IN_DATABASE
+							+ federatedNetworkId);
+		}
+	}
 
 }

@@ -94,7 +94,11 @@ public class FederatedNetwork {
             return null;
         }
     }
-
+    
+    public void addFederationNetworkMember(FederationMember member) {
+    	this.allowedMembers.add(member);
+    }
+    
     public String getLabel() {
         return label;
     }

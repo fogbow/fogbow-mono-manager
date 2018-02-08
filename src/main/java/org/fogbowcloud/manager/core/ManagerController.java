@@ -2293,6 +2293,12 @@ public class ManagerController {
 		Token token = this.getToken(authToken);
 		return federatedNetworksController.getFederatedNetwork(token.getUser(), federatedNetworkId);
 	}
+	
+	public void updateFederatedNetworkMembers(String authToken, String federatedNetworkId,
+			Set<String> membersSet) {
+		Token token = this.getToken(authToken);
+		federatedNetworksController.updateFederatedNetworkMembers(token.getUser(), federatedNetworkId, membersSet);
+	}
 
 	protected class FailedBatch {
 		private Map<String, FailedBatchType> failedBatches = new HashMap<String, FailedBatchType>();

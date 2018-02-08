@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 import org.apache.http.HttpStatus;
 import org.fogbowcloud.manager.core.ManagerController;
@@ -277,5 +278,10 @@ public class OCCIApplication extends Application {
 
 	public FederatedNetwork getFederatedNetwork(String authToken, String federatedNetworkId) {
 		return managerFacade.getFederatedNetwork(authToken, federatedNetworkId);
+	}
+
+	public void updateFederatedNetworkMembers(String authToken, String federatedNetworkId,
+			Set<String> membersSet) {
+		this.managerFacade.updateFederatedNetworkMembers(authToken, federatedNetworkId, membersSet);
 	}
 }
