@@ -1888,16 +1888,20 @@ public class ManagerController {
 
 	private void normalizeOrderCompute(Order order) {
 		try {
-			String federatedNetworkId = order.getAttValue(OrderAttribute.FEDERATED_NETWORK_ID.getValue());
+			String federatedNetworkId = order
+					.getAttValue(OrderAttribute.FEDERATED_NETWORK_ID.getValue());
 			if (federatedNetworkId != null) {
-				FederatedNetwork federatedNetwork = this.federatedNetworksController.getFederatedNetwork(federatedNetworkId);
+				FederatedNetwork federatedNetwork = this.federatedNetworksController
+						.getFederatedNetwork(order.getFederationToken(), federatedNetworkId);
 				String privateIp = federatedNetwork.nextFreeIp();
-				
-				order.putAttValue(OrderAttribute.FEDERATED_NETWORK_CIDR_NOTATION_TERM.getValue(), federatedNetwork.getCidr());
+
+				order.putAttValue(OrderAttribute.FEDERATED_NETWORK_CIDR_NOTATION_TERM.getValue(),
+						federatedNetwork.getCidr());
 				order.putAttValue(OCCIConstants.FEDERATED_NETWORK_PRIVATE_IP, privateIp);
-				String agentPublicIp = getProperties().getProperty(FederatedNetworksController.FEDERATED_NETWORK_AGANTE_PUBLIC_IP_PROP);
-				order.putAttValue(OCCIConstants.FEDERATED_NETWORK_AGENT_PUBLIC_IP, agentPublicIp);				
-			}			
+				String agentPublicIp = getProperties().getProperty(
+						FederatedNetworksController.FEDERATED_NETWORK_AGANTE_PUBLIC_IP_PROP);
+				order.putAttValue(OCCIConstants.FEDERATED_NETWORK_AGENT_PUBLIC_IP, agentPublicIp);
+			}
 		} catch (Exception e) {
 			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
 		}
