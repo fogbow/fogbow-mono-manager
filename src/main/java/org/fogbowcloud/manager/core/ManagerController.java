@@ -1803,15 +1803,16 @@ public class ManagerController {
 			order.getxOCCIAtt().remove(keyAttributes);
 		}
 		
+		Token federationUserToken = getFederationUserToken(order);
 		switch (order.getResourceKind()) {
 			case OrderConstants.COMPUTE_TERM:
-				return handleComputeInstanceCreation(order, getFederationUserToken(order));
+				return handleComputeInstanceCreation(order, federationUserToken);
 			case OrderConstants.STORAGE_TERM:
-				return handleStorageInstanceCreation(order, getFederationUserToken(order));
+				return handleStorageInstanceCreation(order, federationUserToken);
 			case OrderConstants.NETWORK_TERM:
-				return handleNetworkInstanceCreation(order, getFederationUserToken(order));
+				return handleNetworkInstanceCreation(order, federationUserToken);
 			case OrderConstants.FEDERATED_NETWORK_TERM:
-				return handleFederatedNetworkInstanceCreation(order, getFederationUserToken(order));
+				return handleFederatedNetworkInstanceCreation(order, federationUserToken);
 			default:
 				return false;
 		}
@@ -1954,8 +1955,8 @@ public class ManagerController {
 
 		Token.User user = federationUserToken.getUser();
 
-		// TODO check plugins (compute, network, storage).
-		String instanceId = federatedNetworksController.create(user, label, cidrNotation, federationMembers);		
+		// TODO check plugins/interface (compute, network, storage).
+		String instanceId = this.federatedNetworksController.create(user, label, cidrNotation, federationMembers);		
 		if (instanceId == null) {
 			LOGGER.error("Federated network not created.");
 			return false;

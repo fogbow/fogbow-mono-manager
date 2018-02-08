@@ -65,12 +65,18 @@ public class FederatedNetworksController {
         String serverPrivateAddress = getProperties().getProperty(ConfigurationConstants.FEDERATED_NETWORK_AGENT_PRIVATE_ADDRESS);
 
         ProcessBuilder builder = new ProcessBuilder("ssh", "-i", permissionFilePath, user + "@" + serverAddress,
-        		"sudo", "/home/ubuntu/config-ipsec", serverPrivateAddress, serverAddress, cidrNotation, virtualIpAddress);
+        		"sudo", "/home/ubuntu/config-ipsec", serverPrivateAddress, serverAddress, cidrNotation, virtualIpAddress);        
+        LOGGER.info("Trying to call agent with atts (" + cidrNotation + "): " + builder.command());
+        
         int resultCode = 0;
         try {
-            Process process = builder.start();
+            Process process = builder.start();            
+            LOGGER.info("Trying agent with atts (" + cidrNotation + "). Output : " + ProcessUtil.getOutput(process));
+            LOGGER.info("Trying agent with atts (" + cidrNotation + "). Error : " + ProcessUtil.getError(process));            
             resultCode = process.waitFor();
-            if (resultCode == 0 || resultCode == 2) return true;
+            if (resultCode == 0) {
+            	return true;
+            }
         } catch (Exception e) {
         	 LOGGER.error("", e);
         }
