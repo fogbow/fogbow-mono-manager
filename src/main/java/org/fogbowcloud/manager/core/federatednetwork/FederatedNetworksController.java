@@ -112,16 +112,12 @@ public class FederatedNetworksController {
         return highAddress - lowAddress > 1;
     }
 
-    public Collection<FederatedNetwork> getAllFederatedNetworks() {
-        Collection<FederatedNetwork> allFederatedNetworks = new ArrayList<FederatedNetwork>();
-        for (Collection<FederatedNetwork> networks : federatedNetworks.values()) {
-            allFederatedNetworks.addAll(networks);
-        }
-        return allFederatedNetworks;
+    public Collection<FederatedNetwork> getAllFederatedNetworks(Token token) {
+        return federatedNetworks.get(token.getUser());
     }
 
-    public FederatedNetwork getFederatedNetwork(String federatedNetworkId) {
-        Collection<FederatedNetwork> allFederatedNetworks = this.getAllFederatedNetworks();
+    public FederatedNetwork getFederatedNetwork(Token token, String federatedNetworkId) {
+        Collection<FederatedNetwork> allFederatedNetworks = this.getAllFederatedNetworks(token);
         FederatedNetwork federatedNetwork = null;
         for (FederatedNetwork federatedNetworkIterator : allFederatedNetworks) {
             if (federatedNetworkIterator.getId().equals(federatedNetworkId)) {

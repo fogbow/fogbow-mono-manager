@@ -41,7 +41,7 @@ public class FederatedNetworkResource extends ServerResource {
 				application.getAuthenticationURI());
 
 		LOGGER.debug("Federation Authentication Token: " + federationAuthToken);
-
+		
 		String federatedNetworkId = (String) getRequestAttributes()
 				.get(FederatedNetworkConstants.FEDERATED_NETWORK_ID_TERM);
 
@@ -50,11 +50,11 @@ public class FederatedNetworkResource extends ServerResource {
 		if (federatedNetworkId == null || federatedNetworkId.trim().isEmpty()) {
 			LOGGER.info("Getting all Federated Network IDs");
 
-			federatedNetworks = application.getAllFederatedNetworks();
+			federatedNetworks = application.getAllFederatedNetworks(federationAuthToken);
 		} else {
 			LOGGER.info("Getting details about Federated Network with ID: " + federatedNetworkId);
 
-			FederatedNetwork federatedNetwork = application.getFederatedNetwork(federatedNetworkId);
+			FederatedNetwork federatedNetwork = application.getFederatedNetwork(federationAuthToken, federatedNetworkId);
 
 			if (federatedNetwork != null) {
 				federatedNetworks = Arrays.asList(federatedNetwork);
@@ -239,5 +239,5 @@ public class FederatedNetworkResource extends ServerResource {
 		String label = labelList.get(0);
 		return label;
 	}
-
+	
 }
