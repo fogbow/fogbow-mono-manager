@@ -16,7 +16,6 @@ import org.restlet.data.MediaType;
 import org.restlet.engine.adapter.HttpRequest;
 import org.restlet.representation.StringRepresentation;
 import org.restlet.resource.Get;
-import org.restlet.resource.Post;
 import org.restlet.resource.Put;
 import org.restlet.resource.ServerResource;
 
@@ -29,7 +28,7 @@ public class FederatedNetworkResource extends ServerResource {
 
 	@Get
 	public StringRepresentation getFederatedNetworkDetails() {
-		LOGGER.info("Getting info about Federated Networks");
+		LOGGER.info("HTTP GET to Federated Network");
 
 		OCCIApplication application = (OCCIApplication) getApplication();
 		HttpRequest request = (HttpRequest) getRequest();
@@ -114,45 +113,11 @@ public class FederatedNetworkResource extends ServerResource {
 		return str.substring(1, str.length() - 1);
 	}
 
-	// TODO: remove this, HTTP Post to Federated Network will be implemented as a
-	// Order
-	// in OrderServerResource
-	@Post
-	public StringRepresentation postFederatedNetwork() {
-		LOGGER.info("Posting a new Federated Network");
-
-		OCCIApplication application = (OCCIApplication) getApplication();
-		HttpRequest request = (HttpRequest) getRequest();
-		String acceptType = getFederatedNetworkPostAccept(
-				HeaderUtils.getAccept(request.getHeaders()));
-
-		LOGGER.debug("Accept Contents: " + acceptType);
-
-		HeaderUtils.checkOCCIContentType(request.getHeaders());
-
-		String federationAuthToken = HeaderUtils.getAuthToken(request.getHeaders(), getResponse(),
-				application.getAuthenticationURI());
-
-		LOGGER.debug("Federation Authentication Token: " + federationAuthToken);
-
-		String label = getLabel(request);
-		LOGGER.info("Federated Network Request Label: " + label);
-
-		String cidr = getCIDR(request);
-		LOGGER.info("Federated Network Request CIDR: " + cidr);
-
-		Set<String> membersSet = getMembersSet(request);
-		LOGGER.info("Federated Network Request Members: " + membersSet.toString());
-
-		String response = "Posted a new Federated Network" + System.lineSeparator() + "Label: "
-				+ label + System.lineSeparator() + "CIDR: " + cidr + System.lineSeparator()
-				+ "Members: " + membersSet.toString();
-		return new StringRepresentation(response, MediaType.TEXT_PLAIN);
-	}
-
 	// TODO: review how it will be implemented (FederatedNetworksController)
 	@Put
 	public StringRepresentation putFederatedNetwork() {
+		LOGGER.info("HTTP Put to Federated Network");
+		
 		OCCIApplication application = (OCCIApplication) getApplication();
 		HttpRequest request = (HttpRequest) getRequest();
 		String acceptType = getFederatedNetworkPostAccept(
@@ -214,30 +179,6 @@ public class FederatedNetworkResource extends ServerResource {
 
 		Set<String> membersSet = new HashSet<String>(membersList);
 		return membersSet;
-	}
-
-	private String getCIDR(HttpRequest request) {
-		List<String> cidrList = HeaderUtils
-				.getValueHeaderPerName(OCCIConstants.FEDERATED_NETWORK_CIDR, request.getHeaders());
-
-		if (cidrList.size() != 1) {
-			throw new OCCIException(ErrorType.NOT_ACCEPTABLE, ResponseConstants.INVALID_CIDR);
-		}
-
-		String cidr = cidrList.get(0);
-		return cidr;
-	}
-
-	private String getLabel(HttpRequest request) {
-		List<String> labelList = HeaderUtils
-				.getValueHeaderPerName(OCCIConstants.FEDERATED_NETWORK_LABEL, request.getHeaders());
-
-		if (labelList.size() != 1) {
-			throw new OCCIException(ErrorType.NOT_ACCEPTABLE, ResponseConstants.INVALID_LABEL);
-		}
-
-		String label = labelList.get(0);
-		return label;
 	}
 	
 }
