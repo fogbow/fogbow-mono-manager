@@ -271,11 +271,11 @@ public class OCCIApplication extends Application {
 		return managerFacade.getUsages(authToken, memberId);
 	}
 
-	public Collection<FederatedNetwork> getAllFederatedNetworks() {
-		return managerFacade.getAllFederatedNetworks();
+	public Collection<FederatedNetwork> getAllFederatedNetworks(String authToken) {
+		return managerFacade.getAllFederatedNetworks(authToken);
 	}
 
-	public FederatedNetwork getFederatedNetwork(String federatedNetworkId) {
-		return managerFacade.getFederatedNetwork(federatedNetworkId);
+	public FederatedNetwork getFederatedNetwork(String authToken, String federatedNetworkId) {
+		return managerFacade.getFederatedNetwork(authToken, federatedNetworkId);
 	}
 }

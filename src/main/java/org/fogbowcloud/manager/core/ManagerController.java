@@ -215,7 +215,7 @@ public class ManagerController {
 		this.networkPlugin = networkPlugin;
 	}
 
-	protected void setFederatedNetworksController(FederatedNetworksController federatedNetworksController) {
+	public void setFederatedNetworksController(FederatedNetworksController federatedNetworksController) {
 		this.federatedNetworksController = federatedNetworksController;
 	}
 
@@ -641,6 +641,10 @@ public class ManagerController {
 			return null;
 		}
 		return token.getUser().getId();
+	}
+	
+	public Token getToken(String authToken) {
+		return getTokenFromFederationIdP(authToken);
 	}
 
 	public List<StorageLink> getStorageLinkFromUser(String accessId) {
@@ -2262,12 +2266,14 @@ public class ManagerController {
 		return failedBatch;
 	}
 
-	public Collection<FederatedNetwork> getAllFederatedNetworks() {
-		return federatedNetworksController.getAllFederatedNetworks();
+	public Collection<FederatedNetwork> getAllFederatedNetworks(String authToken) {
+		Token token = this.getToken(authToken);
+		return federatedNetworksController.getAllFederatedNetworks(token);
 	}
 
-	public FederatedNetwork getFederatedNetwork(String federatedNetworkId) {
-		return federatedNetworksController.getFederatedNetwork(federatedNetworkId);
+	public FederatedNetwork getFederatedNetwork(String authToken, String federatedNetworkId) {
+		Token token = this.getToken(authToken);
+		return federatedNetworksController.getFederatedNetwork(token, federatedNetworkId);
 	}
 
 	protected class FailedBatch {
