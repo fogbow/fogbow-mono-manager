@@ -2,12 +2,13 @@ package org.fogbowcloud.manager.core.federatednetwork;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+
+import org.apache.commons.lang.NotImplementedException;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
 import org.mapdb.HTreeMap;
 import org.mapdb.Serializer;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.io.File;
 import java.lang.reflect.Type;
