@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 
 import org.apache.http.HttpResponse;
@@ -28,11 +30,13 @@ import org.fogbowcloud.manager.occi.OCCIConstants;
 import org.fogbowcloud.manager.occi.TestDataStorageHelper;
 import org.fogbowcloud.manager.occi.model.OCCIHeaders;
 import org.fogbowcloud.manager.occi.util.OCCITestHelper;
+import org.fogbowcloud.manager.occi.model.Token;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
+
 
 public class TestFederatedNetworkResource {
 
@@ -80,7 +84,12 @@ public class TestFederatedNetworkResource {
 		FederatedNetwork fn = new FederatedNetwork(FNId, cidr, label, new HashSet<FederationMember>(
 				Arrays.asList(new FederationMember(members[0]), new FederationMember(members[1]))));
 		Mockito.doReturn(fn).when(this.federatedNetworksController)
-				.getFederatedNetwork(Mockito.anyString());
+				.getFederatedNetwork(Mockito.any(Token.class), Mockito.anyString());
+		
+		Token token = new Token("fake-acess-id", Mockito.mock(Token.User.class), new Date(), new HashMap<String, String>());
+		Mockito.doReturn(token).when(this.identityPlugin).getToken(Mockito.anyString());
+		
+		Mockito.doReturn(true).when(this.authorizationPlugin).isAuthorized(Mockito.any(Token.class));
 
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_FEDERATED_NETWORK + "/" + FNId);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
@@ -99,13 +108,18 @@ public class TestFederatedNetworkResource {
 		}
 		client.close();
 	}
-	
+
 	@Test
 	public void testGetNull() throws ClientProtocolException, IOException {
 		String FNId = "fake-id";
-		
+
 		Mockito.doReturn(null).when(this.federatedNetworksController)
-				.getFederatedNetwork(Mockito.anyString());
+				.getFederatedNetwork(Mockito.any(Token.class), Mockito.anyString());
+		
+		Token token = new Token("fake-acess-id", Mockito.mock(Token.User.class), new Date(), new HashMap<String, String>());
+		Mockito.doReturn(token).when(this.identityPlugin).getToken(Mockito.anyString());
+		
+		Mockito.doReturn(true).when(this.authorizationPlugin).isAuthorized(Mockito.any(Token.class));
 
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_FEDERATED_NETWORK + "/" + FNId);
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
@@ -137,7 +151,13 @@ public class TestFederatedNetworkResource {
 		fnList.add(fn1);
 		fnList.add(fn2);
 
-		Mockito.doReturn(fnList).when(this.federatedNetworksController).getAllFederatedNetworks();
+		Mockito.doReturn(fnList).when(this.federatedNetworksController)
+				.getAllFederatedNetworks(Mockito.any(Token.class));
+		
+		Token token = new Token("fake-acess-id", Mockito.mock(Token.User.class), new Date(), new HashMap<String, String>());
+		Mockito.doReturn(token).when(this.identityPlugin).getToken(Mockito.anyString());
+		
+		Mockito.doReturn(true).when(this.authorizationPlugin).isAuthorized(Mockito.any(Token.class));
 
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_FEDERATED_NETWORK + "/");
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
@@ -162,12 +182,18 @@ public class TestFederatedNetworkResource {
 		}
 		client.close();
 	}
-	
+
 	@Test
 	public void testGetWithoutFNIdEmpty() throws ClientProtocolException, IOException {
 		Collection<FederatedNetwork> fnList = new ArrayList<FederatedNetwork>();
 
-		Mockito.doReturn(fnList).when(this.federatedNetworksController).getAllFederatedNetworks();
+		Mockito.doReturn(fnList).when(this.federatedNetworksController)
+				.getAllFederatedNetworks(Mockito.any(Token.class));
+		
+		Token token = new Token("fake-acess-id", Mockito.mock(Token.User.class), new Date(), new HashMap<String, String>());
+		Mockito.doReturn(token).when(this.identityPlugin).getToken(Mockito.anyString());
+		
+		Mockito.doReturn(true).when(this.authorizationPlugin).isAuthorized(Mockito.any(Token.class));
 
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_FEDERATED_NETWORK + "/");
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
@@ -180,10 +206,16 @@ public class TestFederatedNetworkResource {
 		Assert.assertEquals(FederatedNetworkResource.NO_NETWORKS_MESSAGE, responseString);
 		client.close();
 	}
-	
+
 	@Test
 	public void testGetWithoutFNIdNull() throws ClientProtocolException, IOException {
-		Mockito.doReturn(null).when(this.federatedNetworksController).getAllFederatedNetworks();
+		Mockito.doReturn(null).when(this.federatedNetworksController)
+				.getAllFederatedNetworks(Mockito.any(Token.class));
+		
+		Token token = new Token("fake-acess-id", Mockito.mock(Token.User.class), new Date(), new HashMap<String, String>());
+		Mockito.doReturn(token).when(this.identityPlugin).getToken(Mockito.anyString());
+		
+		Mockito.doReturn(true).when(this.authorizationPlugin).isAuthorized(Mockito.any(Token.class));
 
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_FEDERATED_NETWORK + "/");
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
@@ -201,6 +233,33 @@ public class TestFederatedNetworkResource {
 	public void testGetWithoutAuthentication() throws ClientProtocolException, IOException {
 		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_FEDERATED_NETWORK + "/");
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
+		CloseableHttpClient client = HttpClients.createMinimal();
+		HttpResponse response = client.execute(get);
+
+		Assert.assertEquals(HttpStatus.SC_UNAUTHORIZED, response.getStatusLine().getStatusCode());
+		client.close();
+	}
+	
+	@Test
+	public void testGetUnauthorized() throws ClientProtocolException, IOException {
+		String FNId = "fake-id";
+		String cidr = "10.0.0.0/24";
+		String label = "fake-label";
+		String[] members = new String[] { "member01", "member02" };
+
+		FederatedNetwork fn = new FederatedNetwork(FNId, cidr, label, new HashSet<FederationMember>(
+				Arrays.asList(new FederationMember(members[0]), new FederationMember(members[1]))));
+		Mockito.doReturn(fn).when(this.federatedNetworksController)
+				.getFederatedNetwork(Mockito.any(Token.class), Mockito.anyString());
+		
+		Token token = new Token("fake-acess-id", Mockito.mock(Token.User.class), new Date(), new HashMap<String, String>());
+		Mockito.doReturn(token).when(this.identityPlugin).getToken(Mockito.anyString());
+		
+		Mockito.doReturn(false).when(this.authorizationPlugin).isAuthorized(Mockito.any(Token.class));
+
+		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_FEDERATED_NETWORK + "/" + FNId);
+		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
+		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		CloseableHttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(get);
 
