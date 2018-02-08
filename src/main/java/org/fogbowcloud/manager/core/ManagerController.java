@@ -1641,10 +1641,12 @@ public class ManagerController {
 			if (order.isIntoValidPeriod()) {
 				boolean isFulfilled = false;
 				
+				
 				if (order.isLocal()) {
 					String requirements = order.getRequirements();
 					List<FederationMember> allowedFederationMembers = getAllowedFederationMembers(requirements);
-
+					normalizeOrderCompute(order);					
+					
 					if (RequirementsHelper.matchLocation(requirements,
 							properties.getProperty(ConfigurationConstants.XMPP_JID_KEY))) {
 
@@ -1823,9 +1825,7 @@ public class ManagerController {
 	}
 
 	private boolean handleComputeInstanceCreation(Order order, Token federationUserToken) {
-		try {
-			normalizeOrderCompute(order);
-			
+		try {						
 			try {
 				String command = createUserDataUtilsCommand(order);
 				order.putAttValue(OrderAttribute.USER_DATA_ATT.getValue(), command);
@@ -1890,7 +1890,7 @@ public class ManagerController {
 		try {
 			String federatedNetworkId = order
 					.getAttValue(OrderAttribute.FEDERATED_NETWORK_ID.getValue());
-			if (federatedNetworkId != null) {
+			if (order.isLocal() && federatedNetworkId != null && !federatedNetworkId.isEmpty()) {
 				FederatedNetwork federatedNetwork = this.federatedNetworksController
 						.getFederatedNetwork(order.getFederationToken(), federatedNetworkId);
 				String privateIp = federatedNetwork.nextFreeIp();
