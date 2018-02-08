@@ -16,31 +16,31 @@ import java.util.Queue;
 public class FederatedNetwork {
 
     private String id;
-    private int ipsServed;
-    private Queue<String> freedIps;
+    private final String cidrNotation;
     private String label;
     private Collection<FederationMember> allowedMembers;
 
+    private int ipsServed;
+    private Queue<String> freedIps;
     private SubnetUtils.SubnetInfo subnetInfo;
 
     public FederatedNetwork(String id, String cidrNotation, String label, Collection<FederationMember> allowedMembers) {
-        this.subnetInfo = new SubnetUtils(cidrNotation).getInfo();
-
         // the reason for this to start at '1' is because the first ip is allocated
         // as the virtual ip address
         this.ipsServed = 1;
         this.freedIps = new LinkedList<String>();
 
         this.id = id;
+        this.cidrNotation = cidrNotation;
         this.label = label;
         this.allowedMembers = allowedMembers;
     }
 
     public String nextFreeIp() throws SubnetAddressesCapacityReachedException {
         if (freedIps.isEmpty()) {
-            int lowAddress = subnetInfo.asInteger(subnetInfo.getLowAddress());
+            int lowAddress = getSubnetInfo().asInteger(getSubnetInfo().getLowAddress());
             int candidateIpAddress = lowAddress + ipsServed;
-            if (!subnetInfo.isInRange(candidateIpAddress)) {
+            if (!getSubnetInfo().isInRange(candidateIpAddress)) {
                 throw new SubnetAddressesCapacityReachedException();
             } else {
                 ipsServed++;
@@ -51,13 +51,21 @@ public class FederatedNetwork {
         }
     }
 
+    private SubnetUtils.SubnetInfo getSubnetInfo() {
+        if (subnetInfo == null) {
+            subnetInfo = new SubnetUtils(cidrNotation).getInfo();
+        }
+
+        return subnetInfo;
+    }
+
     public boolean isIpAddressFree(String address) {
-        if (subnetInfo.isInRange(address)) {
+        if (getSubnetInfo().isInRange(address)) {
             if (freedIps.contains(address)) {
                 return true;
             } else {
-                int lowAddress = subnetInfo.asInteger(subnetInfo.getLowAddress());
-                if (subnetInfo.asInteger(address) >= lowAddress + ipsServed) {
+                int lowAddress = getSubnetInfo().asInteger(getSubnetInfo().getLowAddress());
+                if (getSubnetInfo().asInteger(address) >= lowAddress + ipsServed) {
                     return true;
                 }
             }
@@ -94,7 +102,7 @@ public class FederatedNetwork {
     }
 
     public String getCidr() {
-        return subnetInfo.getCidrSignature();
+        return getSubnetInfo().getCidrSignature();
     }
 
     public Collection<FederationMember> getAllowedMembers() {

@@ -30,7 +30,7 @@ public class TestFederatedNetworksController {
         assertTrue(controller.create(user, label, cidrNotation, members));
         assertEquals(1, controller.getUserNetworks(user).size());
 
-        assertTrue(controller.remove(label));
+        assertTrue(controller.delete(label));
         assertEquals(0, controller.getUserNetworks(user).size());
     }
 

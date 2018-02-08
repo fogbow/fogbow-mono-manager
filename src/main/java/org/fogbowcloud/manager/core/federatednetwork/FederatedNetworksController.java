@@ -12,17 +12,19 @@ import java.util.*;
  */
 public class FederatedNetworksController {
 
-    Map<Token.User, Collection<FederatedNetwork>> federatedNetworks;
+    private static final String DATABASE_FILE_PATH = "federated-networks.db";
+
+    FederatedNetworksDB database;
+
     Properties properties;
 
     public FederatedNetworksController() {
-        properties = new Properties();
-        federatedNetworks = new HashMap<>();
+        this(new Properties());
     }
 
     public FederatedNetworksController(Properties properties) {
         this.properties = properties;
-        federatedNetworks = new HashMap<>();
+        database = new FederatedNetworksDB(DATABASE_FILE_PATH);
     }
 
     public boolean create(Token.User user, String label, String cidrNotation, Set<FederationMember> members) {
@@ -38,13 +40,7 @@ public class FederatedNetworksController {
         if (createdSuccessfully) {
             String federatedNetworkId = String.valueOf(UUID.randomUUID());
             FederatedNetwork federatedNetwork = new FederatedNetwork(federatedNetworkId, label, cidrNotation, members);
-            if (federatedNetworks.containsKey(user)) {
-                federatedNetworks.get(user).add(federatedNetwork);
-            } else {
-                Collection<FederatedNetwork> networks = new HashSet<>(Arrays.asList(federatedNetwork));
-                federatedNetworks.put(user, networks);
-            }
-            return true;
+            return database.addFederatedNetwork(federatedNetwork, user);
         }
 
         return false;
@@ -75,31 +71,12 @@ public class FederatedNetworksController {
         return properties;
     }
 
-    public boolean remove(String label) {
-        for (Collection<FederatedNetwork> networks : federatedNetworks.values()) {
-            FederatedNetwork toBeRemoved = null;
-            for (FederatedNetwork network : networks) {
-                if (network.getLabel().equals(label)) {
-                    toBeRemoved = network;
-                    break;
-                }
-            }
-
-            if (toBeRemoved != null) {
-                networks.remove(toBeRemoved);
-                return true;
-            }
-        }
-
-        return false;
+    public boolean delete(String id) {
+        return database.delete(id);
     }
 
     public Collection<FederatedNetwork> getUserNetworks(Token.User user) {
-        if (user != null && federatedNetworks.containsKey(user)) {
-            return federatedNetworks.get(user);
-        }
-
-        return null;
+        return database.getUserNetworks(user);
     }
 
     private static SubnetUtils.SubnetInfo getSubnetInfo(String cidrNotation) {
@@ -113,11 +90,7 @@ public class FederatedNetworksController {
     }
 
     public Collection<FederatedNetwork> getAllFederatedNetworks() {
-        Collection<FederatedNetwork> allFederatedNetworks = new ArrayList<FederatedNetwork>();
-        for (Collection<FederatedNetwork> networks : federatedNetworks.values()) {
-            allFederatedNetworks.addAll(networks);
-        }
-        return allFederatedNetworks;
+        return database.getAllFederatedNetworks();
     }
 
     public FederatedNetwork getFederatedNetwork(String federatedNetworkId) {
