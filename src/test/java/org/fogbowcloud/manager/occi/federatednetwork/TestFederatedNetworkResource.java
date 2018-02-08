@@ -12,7 +12,6 @@ import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
@@ -134,7 +133,7 @@ public class TestFederatedNetworkResource {
 	}
 
 	@Test
-	public void testGetWithoutFNId() throws ClientProtocolException, IOException {
+	public void testGetWithoutFNIdVerbose() throws ClientProtocolException, IOException {
 		String[] FNIds = new String[] { "fake-id1", "fake-id2" };
 		String[] CIDRs = new String[] { "10.0.0.1/23", "10.0.0.0/0" };
 		String[] labels = new String[] { "fake-label1", "fake-label2" };
@@ -159,7 +158,7 @@ public class TestFederatedNetworkResource {
 		
 		Mockito.doReturn(true).when(this.authorizationPlugin).isAuthorized(Mockito.any(Token.class));
 
-		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_FEDERATED_NETWORK + "/");
+		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_FEDERATED_NETWORK + "?verbose=true");
 		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
 		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		CloseableHttpClient client = HttpClients.createMinimal();
@@ -179,6 +178,47 @@ public class TestFederatedNetworkResource {
 		}
 		for (String member : members) {
 			Assert.assertTrue(responseString.contains(member));
+		}
+		client.close();
+	}
+	
+	@Test
+	public void testGetWithoutFNIdNoVerbose() throws ClientProtocolException, IOException {
+		String[] FNIds = new String[] { "fake-id1", "fake-id2" };
+		String[] CIDRs = new String[] { "10.0.0.1/23", "10.0.0.0/0" };
+		String[] labels = new String[] { "fake-label1", "fake-label2" };
+		String[] members = new String[] { "member01", "member02", "member03", "member04" };
+		FederatedNetwork fn1 = new FederatedNetwork(FNIds[0], CIDRs[0], labels[0],
+				new HashSet<FederationMember>(Arrays.asList(new FederationMember(members[0]),
+						new FederationMember(members[1]))));
+
+		FederatedNetwork fn2 = new FederatedNetwork(FNIds[1], CIDRs[1], labels[1],
+				new HashSet<FederationMember>(Arrays.asList(new FederationMember(members[2]),
+						new FederationMember(members[3]))));
+
+		Collection<FederatedNetwork> fnList = new ArrayList<FederatedNetwork>();
+		fnList.add(fn1);
+		fnList.add(fn2);
+
+		Mockito.doReturn(fnList).when(this.federatedNetworksController)
+				.getAllFederatedNetworks(Mockito.any(Token.class));
+		
+		Token token = new Token("fake-acess-id", Mockito.mock(Token.User.class), new Date(), new HashMap<String, String>());
+		Mockito.doReturn(token).when(this.identityPlugin).getToken(Mockito.anyString());
+		
+		Mockito.doReturn(true).when(this.authorizationPlugin).isAuthorized(Mockito.any(Token.class));
+
+		HttpGet get = new HttpGet(OCCITestHelper.URI_FOGBOW_FEDERATED_NETWORK);
+		get.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
+		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
+		CloseableHttpClient client = HttpClients.createMinimal();
+		HttpResponse response = client.execute(get);
+		String responseString = EntityUtils.toString(response.getEntity(), "UTF-8");
+
+		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+		for (String FNId : FNIds) {
+			Assert.assertTrue(responseString.contains("/federatedNetwork/" + FNId + "/"));
+			Assert.assertTrue(responseString.contains(FNId));
 		}
 		client.close();
 	}
@@ -262,134 +302,6 @@ public class TestFederatedNetworkResource {
 		get.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
 		CloseableHttpClient client = HttpClients.createMinimal();
 		HttpResponse response = client.execute(get);
-
-		Assert.assertEquals(HttpStatus.SC_UNAUTHORIZED, response.getStatusLine().getStatusCode());
-		client.close();
-	}
-
-	@Test
-	public void testPost() throws ClientProtocolException, IOException {
-		HttpPost post = new HttpPost(OCCITestHelper.URI_FOGBOW_FEDERATED_NETWORK + "/");
-		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
-
-		String CIDR = "10.10.10.0/24";
-		post.addHeader(OCCIConstants.FEDERATED_NETWORK_CIDR, CIDR);
-
-		String label = "virtualized-network";
-		post.addHeader(OCCIConstants.FEDERATED_NETWORK_LABEL, label);
-
-		String membersList[] = new String[] { "lsd.manager.something", "alemanha.naf.something" };
-		for (String member : membersList) {
-			post.addHeader(OCCIConstants.FEDERATED_NETWORK_MEMBERS, member);
-		}
-
-		CloseableHttpClient client = HttpClients.createMinimal();
-		HttpResponse response = client.execute(post);
-		String responseString = EntityUtils.toString(response.getEntity(), "UTF-8");
-
-		Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
-		Assert.assertTrue(responseString.contains(CIDR));
-		Assert.assertTrue(responseString.contains(label));
-		for (String member : membersList) {
-			Assert.assertTrue(responseString.contains(member));
-		}
-
-		client.close();
-	}
-
-	@Test
-	public void testPostWithoutCIDR() throws ClientProtocolException, IOException {
-		HttpPost post = new HttpPost(OCCITestHelper.URI_FOGBOW_FEDERATED_NETWORK + "/");
-		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
-
-		String label = "virtualized-network";
-		post.addHeader(OCCIConstants.FEDERATED_NETWORK_LABEL, label);
-
-		String membersList[] = new String[] { "lsd.manager.something", "alemanha.naf.something" };
-		for (String member : membersList) {
-			post.addHeader(OCCIConstants.FEDERATED_NETWORK_MEMBERS, member);
-		}
-
-		CloseableHttpClient client = HttpClients.createMinimal();
-		HttpResponse response = client.execute(post);
-
-		Assert.assertEquals(HttpStatus.SC_NOT_ACCEPTABLE, response.getStatusLine().getStatusCode());
-		client.close();
-	}
-
-	@Test
-	public void testPostWithoutLabel() throws ClientProtocolException, IOException {
-		HttpPost post = new HttpPost(OCCITestHelper.URI_FOGBOW_FEDERATED_NETWORK + "/");
-		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
-
-		String CIDR = "10.10.10.0/24";
-		post.addHeader(OCCIConstants.FEDERATED_NETWORK_CIDR, CIDR);
-
-		String membersList[] = new String[] { "lsd.manager.something", "alemanha.naf.something" };
-		for (String member : membersList) {
-			post.addHeader(OCCIConstants.FEDERATED_NETWORK_MEMBERS, member);
-		}
-
-		CloseableHttpClient client = HttpClients.createMinimal();
-		HttpResponse response = client.execute(post);
-
-		Assert.assertEquals(HttpStatus.SC_NOT_ACCEPTABLE, response.getStatusLine().getStatusCode());
-		client.close();
-	}
-
-	@Test
-	public void testPostWithoutMember() throws ClientProtocolException, IOException {
-		HttpPost post = new HttpPost(OCCITestHelper.URI_FOGBOW_FEDERATED_NETWORK + "/");
-		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
-
-		String CIDR = "10.10.10.0/24";
-		post.addHeader(OCCIConstants.FEDERATED_NETWORK_CIDR, CIDR);
-
-		String label = "virtualized-network";
-		post.addHeader(OCCIConstants.FEDERATED_NETWORK_LABEL, label);
-
-		CloseableHttpClient client = HttpClients.createMinimal();
-		HttpResponse response = client.execute(post);
-
-		Assert.assertEquals(HttpStatus.SC_NOT_ACCEPTABLE, response.getStatusLine().getStatusCode());
-		client.close();
-	}
-
-	@Test
-	public void testPostIncomplete() throws ClientProtocolException, IOException {
-		HttpPost post = new HttpPost(OCCITestHelper.URI_FOGBOW_FEDERATED_NETWORK + "/");
-		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-		post.addHeader(OCCIHeaders.X_AUTH_TOKEN, OCCITestHelper.ACCESS_TOKEN);
-
-		CloseableHttpClient client = HttpClients.createMinimal();
-		HttpResponse response = client.execute(post);
-
-		Assert.assertEquals(HttpStatus.SC_NOT_ACCEPTABLE, response.getStatusLine().getStatusCode());
-		client.close();
-	}
-
-	@Test
-	public void testPostWithoutAuthentication() throws ClientProtocolException, IOException {
-		HttpPost post = new HttpPost(OCCITestHelper.URI_FOGBOW_FEDERATED_NETWORK + "/");
-		post.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.OCCI_CONTENT_TYPE);
-
-		String CIDR = "10.10.10.0/24";
-		post.addHeader(OCCIConstants.FEDERATED_NETWORK_CIDR, CIDR);
-
-		String label = "virtualized-network";
-		post.addHeader(OCCIConstants.FEDERATED_NETWORK_LABEL, label);
-
-		String membersList[] = new String[] { "lsd.manager.something", "alemanha.naf.something" };
-		for (String member : membersList) {
-			post.addHeader(OCCIConstants.FEDERATED_NETWORK_MEMBERS, member);
-		}
-
-		CloseableHttpClient client = HttpClients.createMinimal();
-		HttpResponse response = client.execute(post);
 
 		Assert.assertEquals(HttpStatus.SC_UNAUTHORIZED, response.getStatusLine().getStatusCode());
 		client.close();

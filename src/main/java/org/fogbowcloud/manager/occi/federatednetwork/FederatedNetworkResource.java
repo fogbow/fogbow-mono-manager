@@ -40,7 +40,7 @@ public class FederatedNetworkResource extends ServerResource {
 				application.getAuthenticationURI());
 
 		LOGGER.debug("Federation Authentication Token: " + federationAuthToken);
-		
+
 		String federatedNetworkId = (String) getRequestAttributes()
 				.get(FederatedNetworkConstants.FEDERATED_NETWORK_ID_TERM);
 
@@ -49,23 +49,29 @@ public class FederatedNetworkResource extends ServerResource {
 		if (federatedNetworkId == null || federatedNetworkId.trim().isEmpty()) {
 			LOGGER.info("Getting all Federated Network IDs");
 
+			boolean verbose;
+			try {
+				verbose = Boolean.parseBoolean(getQuery().getValues("verbose"));
+			} catch (Exception e) {
+				verbose = false;
+			}
+
 			federatedNetworks = application.getAllFederatedNetworks(federationAuthToken);
+			return new StringRepresentation(
+					generateTextPlainResponse(federatedNetworks, request, verbose, application),
+					MediaType.TEXT_PLAIN);
 		} else {
 			LOGGER.info("Getting details about Federated Network with ID: " + federatedNetworkId);
-
-			FederatedNetwork federatedNetwork = application.getFederatedNetwork(federationAuthToken, federatedNetworkId);
-
-			if (federatedNetwork != null) {
-				federatedNetworks = Arrays.asList(federatedNetwork);
-			}
+			FederatedNetwork federatedNetwork = application.getFederatedNetwork(federationAuthToken,
+					federatedNetworkId);
+			return new StringRepresentation(
+					generateTextPlainResponseOne(federatedNetwork, request, application),
+					MediaType.TEXT_PLAIN);
 		}
-		return new StringRepresentation(
-				generateTextPlainResponse(federatedNetworks, request, true, application),
-				MediaType.TEXT_PLAIN);
 	}
 
-	protected String generateTextPlainResponse(Collection<FederatedNetwork> networks,
-			HttpRequest req, boolean verbose, OCCIApplication application) {
+	private String generateTextPlainResponse(Collection<FederatedNetwork> networks, HttpRequest req,
+			boolean verbose, OCCIApplication application) {
 		if (networks == null || networks.isEmpty()) {
 			return NO_NETWORKS_MESSAGE;
 		}
@@ -85,6 +91,7 @@ public class FederatedNetworkResource extends ServerResource {
 						+ FederatedNetworkResource.FILE_SEPARATOR;
 			}
 
+			response += prefixOCCILocation;
 			if (verbose) {
 				String[] keys = new String[] { OCCIConstants.FEDERATED_NETWORK_CIDR,
 						OCCIConstants.FEDERATED_NETWORK_LABEL,
@@ -93,17 +100,45 @@ public class FederatedNetworkResource extends ServerResource {
 						federatedNetwork.getLabel(),
 						formatMembers(federatedNetwork.getAllowedMembers()) };
 
-				response += prefixOCCILocation + System.lineSeparator();
-
-				String attributeFormat = "X-OCCI-Attribute: %s=%s; ";
+				String attributeFormat = ";%s=%s ";
 				for (int i = 0; i < keys.length; i++) {
-					response += String.format(attributeFormat, keys[i], values[i])
-							+ System.lineSeparator();
+					response += String.format(attributeFormat, keys[i], values[i]);
 				}
-
-			} else {
-				response += prefixOCCILocation + System.lineSeparator();
 			}
+			response += ";" + System.lineSeparator();
+		}
+		return response.length() > 0 ? response.trim() : System.lineSeparator();
+	}
+	
+	private String generateTextPlainResponseOne(FederatedNetwork federatedNetwork, HttpRequest req,
+			OCCIApplication application) {
+		if (federatedNetwork == null) {
+			return NO_NETWORKS_MESSAGE;
+		}
+
+		String locationEndpoint = HeaderUtils.getHostRef(application, req)
+				+ FederatedNetworkResource.FILE_SEPARATOR
+				+ FederatedNetworkConstants.FEDERATED_NETWORK_TERM
+				+ FederatedNetworkResource.FILE_SEPARATOR + federatedNetwork.getId();
+
+		String prefixOCCILocation;
+		if (locationEndpoint.endsWith(FederatedNetworkResource.FILE_SEPARATOR)) {
+			prefixOCCILocation = HeaderUtils.X_OCCI_LOCATION_PREFIX + locationEndpoint;
+		} else {
+			prefixOCCILocation = HeaderUtils.X_OCCI_LOCATION_PREFIX + locationEndpoint
+					+ FederatedNetworkResource.FILE_SEPARATOR;
+		}
+
+		String[] keys = new String[] { OCCIConstants.FEDERATED_NETWORK_CIDR,
+				OCCIConstants.FEDERATED_NETWORK_LABEL, OCCIConstants.FEDERATED_NETWORK_MEMBERS };
+		String[] values = new String[] { federatedNetwork.getCidr(), federatedNetwork.getLabel(),
+				formatMembers(federatedNetwork.getAllowedMembers()) };
+
+		String response = prefixOCCILocation + System.lineSeparator();
+
+		String attributeFormat = "X-OCCI-Attribute: %s=%s; ";
+		for (int i = 0; i < keys.length; i++) {
+			response += String.format(attributeFormat, keys[i], values[i]) + System.lineSeparator();
 		}
 		return response.length() > 0 ? response.trim() : System.lineSeparator();
 	}
