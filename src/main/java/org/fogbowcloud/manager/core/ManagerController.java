@@ -1888,6 +1888,7 @@ public class ManagerController {
 				FederatedNetwork federatedNetwork = this.federatedNetworksController.getFederatedNetwork(federatedNetworkId);
 				String privateIp = federatedNetwork.nextFreeIp();
 				
+				order.putAttValue(OrderAttribute.FEDERATED_NETWORK_CIDR_NOTATION_TERM.getValue(), federatedNetwork.getCidr());
 				order.putAttValue(OCCIConstants.FEDERATED_NETWORK_PRIVATE_IP, privateIp);
 				String agentPublicIp = getProperties().getProperty(FederatedNetworksController.FEDERATED_NETWORK_AGANTE_PUBLIC_IP_PROP);
 				order.putAttValue(OCCIConstants.FEDERATED_NETWORK_AGENT_PUBLIC_IP, agentPublicIp);				
@@ -1954,10 +1955,14 @@ public class ManagerController {
 		Token.User user = federationUserToken.getUser();
 
 		// TODO check plugins (compute, network, storage).
-		federatedNetworksController.create(user, label, cidrNotation, federationMembers);
+		String instanceId = federatedNetworksController.create(user, label, cidrNotation, federationMembers);		
+		if (instanceId == null) {
+			LOGGER.error("Federated network not created.");
+			return false;
+		}
 
 		order.setState(OrderState.FULFILLED);
-		order.setInstanceId(label);
+		order.setInstanceId(instanceId);
 		order.setProvidingMemberId(properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
 		this.managerDataStoreController.updateOrder(order);
 
