@@ -67,6 +67,7 @@ import org.fogbowcloud.manager.core.util.HttpRequestUtil;
 import org.fogbowcloud.manager.core.util.UserdataUtils;
 import org.fogbowcloud.manager.occi.ManagerDataStoreController;
 import org.fogbowcloud.manager.occi.OCCIConstants;
+import org.fogbowcloud.manager.occi.federatednetwork.FederatedNetworkConstants;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.instance.InstanceState;
 import org.fogbowcloud.manager.occi.member.UsageServerResource.ResourceUsage;
@@ -1892,14 +1893,27 @@ public class ManagerController {
 					.getAttValue(OrderAttribute.FEDERATED_NETWORK_ID.getValue());
 			if (order.isLocal() && federatedNetworkId != null && !federatedNetworkId.isEmpty()) {
 				FederatedNetwork federatedNetwork = this.federatedNetworksController
-						.getFederatedNetwork(order.getFederationToken().getUser(), federatedNetworkId);
-				String privateIp = federatedNetwork.nextFreeIp();
+						.getFederatedNetwork(order.getFederationToken().getUser(),
+								federatedNetworkId);
+
+				if (federatedNetwork == null) {
+					throw new IllegalArgumentException(
+							FederatedNetworkConstants.NOT_FOUND_FEDERATED_NETWORK_MESSAGE
+									+ federatedNetworkId);
+				}
 
 				order.putAttValue(OrderAttribute.FEDERATED_NETWORK_CIDR_NOTATION_TERM.getValue(),
 						federatedNetwork.getCidr());
+
+				String privateIp = federatedNetwork.nextFreeIp();
 				order.putAttValue(OCCIConstants.FEDERATED_NETWORK_PRIVATE_IP, privateIp);
+
 				String agentPublicIp = getProperties().getProperty(
-						FederatedNetworksController.FEDERATED_NETWORK_AGANTE_PUBLIC_IP_PROP);
+						FederatedNetworksController.FEDERATED_NETWORK_AGENT_PUBLIC_IP_PROP);
+				if (agentPublicIp == null) {
+					throw new IllegalArgumentException(
+							FederatedNetworkConstants.NOT_FOUND_PUBLIC_AGENT_IP_MESSAGE);
+				}
 				order.putAttValue(OCCIConstants.FEDERATED_NETWORK_AGENT_PUBLIC_IP, agentPublicIp);
 			}
 		} catch (Exception e) {

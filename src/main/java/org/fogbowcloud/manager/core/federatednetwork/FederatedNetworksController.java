@@ -13,7 +13,7 @@ import org.fogbowcloud.manager.occi.model.Token;
 
 public class FederatedNetworksController {
 
-    public static final String FEDERATED_NETWORK_AGANTE_PUBLIC_IP_PROP = "federated_network_agent_public_ip";
+    public static final String FEDERATED_NETWORK_AGENT_PUBLIC_IP_PROP = "federated_network_agent_public_ip";
     private static final String DATABASE_FILE_PATH = "federated-networks.db";
 
     FederatedNetworksDB database;

@@ -23,6 +23,8 @@ public class FederatedNetwork {
     private int ipsServed;
     private Queue<String> freedIps;
     private SubnetUtils.SubnetInfo subnetInfo;
+    
+    public static final String NO_FREE_IPS_MESSAGE = "Subnet Addresses Capacity Reached, there isn't free IPs to attach";
 
     public FederatedNetwork(String id, String cidrNotation, String label, Collection<FederationMember> allowedMembers) {
         // the reason for this to start at '1' is because the first ip is allocated
@@ -41,7 +43,7 @@ public class FederatedNetwork {
             int lowAddress = getSubnetInfo().asInteger(getSubnetInfo().getLowAddress());
             int candidateIpAddress = lowAddress + ipsServed;
             if (!getSubnetInfo().isInRange(candidateIpAddress)) {
-                throw new SubnetAddressesCapacityReachedException();
+                throw new SubnetAddressesCapacityReachedException(FederatedNetwork.NO_FREE_IPS_MESSAGE);
             } else {
                 ipsServed++;
                 return toIpAddress(candidateIpAddress);
