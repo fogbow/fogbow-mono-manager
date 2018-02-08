@@ -1,10 +1,6 @@
 package org.fogbowcloud.manager.core.federatednetwork;
 
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
@@ -17,41 +13,41 @@ import org.fogbowcloud.manager.occi.model.Token;
 
 public class FederatedNetworksController {
 
-	public static final String FEDERATED_NETWORK_AGANTE_PUBLIC_IP_PROP = "federated_network_agent_public_ip";
-    private Map<Token.User, Collection<FederatedNetwork>> federatedNetworks;
+    public static final String FEDERATED_NETWORK_AGENT_PUBLIC_IP_PROP = "federated_network_agent_public_ip";
+    private static final String DATABASE_FILE_PATH = "federated-networks.db";
+
+    FederatedNetworksDB database;
+
     private Properties properties;
     
     private static final Logger LOGGER = Logger.getLogger(FederatedNetworksController.class);
 
     public FederatedNetworksController() {
-        properties = new Properties();
-        federatedNetworks = new HashMap<>();
+        this(new Properties());
     }
 
     public FederatedNetworksController(Properties properties) {
         this.properties = properties;
-        federatedNetworks = new HashMap<>();
+        database = new FederatedNetworksDB(DATABASE_FILE_PATH);
     }
 
     public String create(Token.User user, String label, String cidrNotation, Set<FederationMember> members) {
         SubnetUtils.SubnetInfo subnetInfo = getSubnetInfo(cidrNotation);
 
         if (!isValid(subnetInfo)) {
-        	LOGGER.error("Subnet( " + cidrNotation + " ) invalid");
+        	LOGGER.error("Subnet (" + cidrNotation + ") invalid");
             return null;
         }
 
         boolean createdSuccessfully = callFederatedNetworkAgent(cidrNotation, subnetInfo.getLowAddress());
         if (createdSuccessfully) {
             String federatedNetworkId = String.valueOf(UUID.randomUUID());
-            FederatedNetwork federatedNetwork = new FederatedNetwork(federatedNetworkId, cidrNotation, label, members);
-            if (federatedNetworks.containsKey(user)) {
-                federatedNetworks.get(user).add(federatedNetwork);
+            FederatedNetwork federatedNetwork = new FederatedNetwork(federatedNetworkId, label, cidrNotation, members);
+            if (database.addFederatedNetwork(federatedNetwork, user)) {
+                return federatedNetworkId;
             } else {
-                Collection<FederatedNetwork> networks = new HashSet<>(Arrays.asList(federatedNetwork));
-                federatedNetworks.put(user, networks);
+                return null;
             }
-            return federatedNetworkId;
         }
 
         return null;
@@ -87,31 +83,12 @@ public class FederatedNetworksController {
         return properties;
     }
 
-    public boolean remove(String label) {
-        for (Collection<FederatedNetwork> networks : federatedNetworks.values()) {
-            FederatedNetwork toBeRemoved = null;
-            for (FederatedNetwork network : networks) {
-                if (network.getLabel().equals(label)) {
-                    toBeRemoved = network;
-                    break;
-                }
-            }
-
-            if (toBeRemoved != null) {
-                networks.remove(toBeRemoved);
-                return true;
-            }
-        }
-
-        return false;
+    public boolean delete(String id) {
+        return database.delete(id);
     }
 
     public Collection<FederatedNetwork> getUserNetworks(Token.User user) {
-        if (user != null && federatedNetworks.containsKey(user)) {
-            return federatedNetworks.get(user);
-        }
-
-        return null;
+        return database.getUserNetworks(user);
     }
 
     private static SubnetUtils.SubnetInfo getSubnetInfo(String cidrNotation) {
@@ -124,19 +101,15 @@ public class FederatedNetworksController {
         return highAddress - lowAddress > 1;
     }
 
-    public Collection<FederatedNetwork> getAllFederatedNetworks(Token token) {
-        return federatedNetworks.get(token.getUser());
-    }
-
-    public FederatedNetwork getFederatedNetwork(Token token, String federatedNetworkId) {
-        Collection<FederatedNetwork> allFederatedNetworks = this.getAllFederatedNetworks(token);
-        FederatedNetwork federatedNetwork = null;
-        for (FederatedNetwork federatedNetworkIterator : allFederatedNetworks) {
-            if (federatedNetworkIterator.getId().equals(federatedNetworkId)) {
-                federatedNetwork = federatedNetworkIterator;
+    public FederatedNetwork getFederatedNetwork(Token.User user, String federatedNetworkId) {
+        Collection<FederatedNetwork> allFederatedNetworks = this.getUserNetworks(user);
+        for (FederatedNetwork federatedNetwork : allFederatedNetworks) {
+            if (federatedNetwork.getId().equals(federatedNetworkId)) {
+                return federatedNetwork;
             }
         }
-        return federatedNetwork;
+
+        return null;
     }
 
 }

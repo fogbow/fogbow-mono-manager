@@ -83,7 +83,7 @@ public class TestFederatedNetworkResource {
 		FederatedNetwork fn = new FederatedNetwork(FNId, cidr, label, new HashSet<FederationMember>(
 				Arrays.asList(new FederationMember(members[0]), new FederationMember(members[1]))));
 		Mockito.doReturn(fn).when(this.federatedNetworksController)
-				.getFederatedNetwork(Mockito.any(Token.class), Mockito.anyString());
+				.getFederatedNetwork(Mockito.any(Token.User.class), Mockito.anyString());
 		
 		Token token = new Token("fake-acess-id", Mockito.mock(Token.User.class), new Date(), new HashMap<String, String>());
 		Mockito.doReturn(token).when(this.identityPlugin).getToken(Mockito.anyString());
@@ -113,7 +113,7 @@ public class TestFederatedNetworkResource {
 		String FNId = "fake-id";
 
 		Mockito.doReturn(null).when(this.federatedNetworksController)
-				.getFederatedNetwork(Mockito.any(Token.class), Mockito.anyString());
+				.getFederatedNetwork(Mockito.any(Token.User.class), Mockito.anyString());
 		
 		Token token = new Token("fake-acess-id", Mockito.mock(Token.User.class), new Date(), new HashMap<String, String>());
 		Mockito.doReturn(token).when(this.identityPlugin).getToken(Mockito.anyString());
@@ -151,7 +151,7 @@ public class TestFederatedNetworkResource {
 		fnList.add(fn2);
 
 		Mockito.doReturn(fnList).when(this.federatedNetworksController)
-				.getAllFederatedNetworks(Mockito.any(Token.class));
+				.getUserNetworks(Mockito.any(Token.User.class));
 		
 		Token token = new Token("fake-acess-id", Mockito.mock(Token.User.class), new Date(), new HashMap<String, String>());
 		Mockito.doReturn(token).when(this.identityPlugin).getToken(Mockito.anyString());
@@ -201,7 +201,7 @@ public class TestFederatedNetworkResource {
 		fnList.add(fn2);
 
 		Mockito.doReturn(fnList).when(this.federatedNetworksController)
-				.getAllFederatedNetworks(Mockito.any(Token.class));
+				.getUserNetworks(Mockito.any(Token.User.class));
 		
 		Token token = new Token("fake-acess-id", Mockito.mock(Token.User.class), new Date(), new HashMap<String, String>());
 		Mockito.doReturn(token).when(this.identityPlugin).getToken(Mockito.anyString());
@@ -228,7 +228,7 @@ public class TestFederatedNetworkResource {
 		Collection<FederatedNetwork> fnList = new ArrayList<FederatedNetwork>();
 
 		Mockito.doReturn(fnList).when(this.federatedNetworksController)
-				.getAllFederatedNetworks(Mockito.any(Token.class));
+				.getUserNetworks(Mockito.any(Token.User.class));
 		
 		Token token = new Token("fake-acess-id", Mockito.mock(Token.User.class), new Date(), new HashMap<String, String>());
 		Mockito.doReturn(token).when(this.identityPlugin).getToken(Mockito.anyString());
@@ -250,7 +250,7 @@ public class TestFederatedNetworkResource {
 	@Test
 	public void testGetWithoutFNIdNull() throws ClientProtocolException, IOException {
 		Mockito.doReturn(null).when(this.federatedNetworksController)
-				.getAllFederatedNetworks(Mockito.any(Token.class));
+				.getUserNetworks(Mockito.any(Token.User.class));
 		
 		Token token = new Token("fake-acess-id", Mockito.mock(Token.User.class), new Date(), new HashMap<String, String>());
 		Mockito.doReturn(token).when(this.identityPlugin).getToken(Mockito.anyString());
@@ -290,7 +290,7 @@ public class TestFederatedNetworkResource {
 		FederatedNetwork fn = new FederatedNetwork(FNId, cidr, label, new HashSet<FederationMember>(
 				Arrays.asList(new FederationMember(members[0]), new FederationMember(members[1]))));
 		Mockito.doReturn(fn).when(this.federatedNetworksController)
-				.getFederatedNetwork(Mockito.any(Token.class), Mockito.anyString());
+				.getFederatedNetwork(Mockito.any(Token.User.class), Mockito.anyString());
 		
 		Token token = new Token("fake-acess-id", Mockito.mock(Token.User.class), new Date(), new HashMap<String, String>());
 		Mockito.doReturn(token).when(this.identityPlugin).getToken(Mockito.anyString());
