@@ -13,6 +13,11 @@ $tunnel_param_configs
 $other_tunnel_configs" > /etc/ipsec.conf
 sysctl net.ipv4.ip_forward=1
 sysctl net.ipv6.conf.all.forwarding=1
-ip l add dev veth0 type veth peer name veth1
-ip addr add $virtualAddress dev veth0
+
+veth_size=`ip link show | grep veth | wc -l`
+peer_veth=`expr "$veth_size" + "1"`
+ip l add dev veth$veth_size type veth peer name veth$peer_veth
+ip addr add $virtualAddress dev veth$veth_size
+ifconfig veth$veth_size up
 ipsec restart
+
