@@ -4597,4 +4597,25 @@ public class TestManagerController {
 		Assert.assertEquals(CapacityControllerPlugin.MAXIMUM_CAPACITY_VALUE_ERROR, maxCapacityDefaultUser);
 	}
 	
+	// TODO complete test
+	@Ignore
+	@Test
+	public void testNormalizeOrderCompute() {
+		User user = new User("id", "name");
+		Token federationToken = new Token("accessId", user, new Date(), new HashMap<String, String>());
+		List<Category> categories = new ArrayList<>();
+		Map<String, String> xOCCIAtt = new HashMap<>();
+		xOCCIAtt.put(OrderAttribute.FEDERATED_NETWORK_ID.getValue(), "federated_id");
+		Order order = new Order("id", federationToken, "instanceId", "providingMemberId",
+				"requestingMemberId", new Date().getTime(), true, OrderState.OPEN, categories, xOCCIAtt);
+		
+		FederatedNetworksController federatedNetworksController = Mockito.mock(FederatedNetworksController.class);
+		this.managerController.setFederatedNetworksController(federatedNetworksController);
+//		Mockito.when(federatedNetworksController.get)
+		
+		this.managerController.normalizeOrderCompute(order);
+		
+		
+	}
+	
 }

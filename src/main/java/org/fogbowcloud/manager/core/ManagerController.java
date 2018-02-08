@@ -1818,7 +1818,7 @@ public class ManagerController {
 			case OrderConstants.NETWORK_TERM:
 				return handleNetworkInstanceCreation(order, federationUserToken);
 			case OrderConstants.FEDERATED_NETWORK_TERM:
-				return handleFederatedNetworkInstanceCreation(order, federationUserToken);
+				return handleFederatedNetworkInstanceCreation(order, order.getFederationToken());
 			default:
 				return false;
 		}
@@ -1886,7 +1886,7 @@ public class ManagerController {
 		}
 	}
 
-	private void normalizeOrderCompute(Order order) {
+	protected void normalizeOrderCompute(Order order) {
 		try {
 			String federatedNetworkId = order
 					.getAttValue(OrderAttribute.FEDERATED_NETWORK_ID.getValue());
@@ -1947,7 +1947,7 @@ public class ManagerController {
         }
 	}
 
-	private boolean handleFederatedNetworkInstanceCreation(Order order, Token federationUserToken) {
+	private boolean handleFederatedNetworkInstanceCreation(Order order, Token federationToken) {
 		String label = order.getxOCCIAtt().get(OrderAttribute.FEDERATED_NETWORK_LABEL.getValue());
 		String cidrNotation = order.getxOCCIAtt().get(OrderAttribute.FEDERATED_NETWORK_CIDR_NOTATION_TERM.getValue());
 		Set<String> members = parseMembers(order.getxOCCIAtt().get(OrderAttribute.FEDERATED_NETWORK_MEMBERS_TERM.getValue()));
@@ -1961,7 +1961,7 @@ public class ManagerController {
 			federationMembers.add(getFederationMember(member));
 		}
 
-		Token.User user = federationUserToken.getUser();
+		Token.User user = federationToken.getUser();
 
 		// TODO check plugins/interface (compute, network, storage).
 		String instanceId = this.federatedNetworksController.create(user, label, cidrNotation, federationMembers);		

@@ -104,7 +104,8 @@ public class UserdataUtils {
 			replacements.put(TOKEN_HOST_HTTP_PORT_STR, sshRemoteHostHttpPort);
 		}
 
-		if (order.getAttValue(OrderAttribute.FEDERATED_NETWORK_ID.getValue()) != null) {
+		String federatedNetworkId = order.getAttValue(OrderAttribute.FEDERATED_NETWORK_ID.getValue());
+		if (federatedNetworkId != null && !federatedNetworkId.isEmpty()) {
 			String virtualLeftIp = order.getAttValue(OCCIConstants.FEDERATED_NETWORK_PRIVATE_IP);
 			String rightIp = order.getAttValue(OCCIConstants.FEDERATED_NETWORK_AGENT_PUBLIC_IP);
 			String virtualSubnet = order.getAttValue(OrderAttribute.FEDERATED_NETWORK_CIDR_NOTATION_TERM.getValue());
