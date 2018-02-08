@@ -19,6 +19,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.fogbowcloud.manager.core.ManagerController;
+import org.fogbowcloud.manager.core.federatednetwork.FederatedNetworksController;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
@@ -89,12 +90,14 @@ public class TestGetOrder {
 		Mockito.when(authorizationPlugin.isAuthorized(Mockito.any(Token.class))).thenReturn(true);
 		
 		BenchmarkingPlugin benchmarkingPlugin = Mockito.mock(BenchmarkingPlugin.class);
-		
+
+		FederatedNetworksController federatedNetworksController = Mockito.mock(FederatedNetworksController.class);
+
 		//TODO review
 		Mockito.doThrow(new OCCIException(ErrorType.BAD_REQUEST, "")).when(benchmarkingPlugin).remove(Mockito.anyString());
 		
 		facade = this.orderHelper.initializeComponentExecutorSameThread(computePlugin, identityPlugin,
-				authorizationPlugin, benchmarkingPlugin, mapperPlugin);
+				authorizationPlugin, benchmarkingPlugin, mapperPlugin, federatedNetworksController);
 	}
  
 	@Test

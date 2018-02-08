@@ -22,6 +22,7 @@ import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.plugins.util.CloudInitUserDataBuilder;
 import org.fogbowcloud.manager.core.plugins.util.CloudInitUserDataBuilder.FileType;
+import org.fogbowcloud.manager.occi.OCCIConstants;
 import org.fogbowcloud.manager.occi.order.Order;
 import org.fogbowcloud.manager.occi.order.OrderAttribute;
 
@@ -66,11 +67,6 @@ public class UserdataUtils {
 		String managerPublicKeyFilePath = getManagerSSHPublicKeyFilePath(properties);
 		String userPublicKey = order.getAttValue(OrderAttribute.DATA_PUBLIC_KEY.getValue());
 		String sshCommonUser = getSSHCommonUser(properties);
-		String isFederatedVM = "true";
-		String leftIp = "left";
-		String virtualLeftIp = "virtual_left";
-		String rightIp = "right";
-		String virtualSubnet = "virtual_subnet";
 		
 		String sshTunnelCmdFilePath = "bin/fogbow-create-reverse-tunnel";
 		String cloudConfigFilePath = "bin/fogbow-cloud-config.cfg";
@@ -108,15 +104,17 @@ public class UserdataUtils {
 			replacements.put(TOKEN_HOST_HTTP_PORT_STR, sshRemoteHostHttpPort);
 		}
 
-
-		// Federated network in VM:
-		//if (federatedNetworkId != null){
-		replacements.put(IS_FEDERATED_VM_KEY, isFederatedVM);
-		replacements.put(LEFT_KEY, leftIp);
-		replacements.put(LEFT_SOURCE_IP_KEY, virtualLeftIp);
-		replacements.put(RIGHT_KEY, rightIp);
-		replacements.put(RIGHT_SUBNET_KEY, virtualSubnet);
-		//}
+		String federatedNetworkId = order.getAttValue(OrderAttribute.FEDERATED_NETWORK_ID.getValue());
+		if (federatedNetworkId != null && !federatedNetworkId.isEmpty()) {
+			String virtualLeftIp = order.getAttValue(OCCIConstants.FEDERATED_NETWORK_PRIVATE_IP);
+			String rightIp = order.getAttValue(OCCIConstants.FEDERATED_NETWORK_AGENT_PUBLIC_IP);
+			String virtualSubnet = order.getAttValue(OrderAttribute.FEDERATED_NETWORK_CIDR_NOTATION_TERM.getValue());
+			String isFederatedVM = "true";
+			replacements.put(IS_FEDERATED_VM_KEY, isFederatedVM);
+			replacements.put(LEFT_SOURCE_IP_KEY, virtualLeftIp);
+			replacements.put(RIGHT_KEY, rightIp);
+			replacements.put(RIGHT_SUBNET_KEY, virtualSubnet);
+		}
 		
 		String publicKeyToBeReplaced = null;
 		if (managerPublicKeyFilePath != null) {

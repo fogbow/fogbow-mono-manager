@@ -72,7 +72,9 @@ config_setup="config setup
 conn %default
 conn tunnel"
 
-tunnel_param_configs=" left=#LEFT_IP#
+myIP=`ifconfig  | grep 'inet addr:'| grep -v '127.0.0.1' | cut -d: -f2 | awk '{ print $1}'`
+
+tunnel_param_configs=" left=$myIP
  leftsourceip=#LEFT_SOURCE_IP#
  right=#RIGHT_IP#
  rightsubnet=#RIGHT_SUBNET#"
@@ -96,8 +98,7 @@ $tunnel_param_configs
 $other_tunnel_configs"
 
 cat > /bin/fogbow-config-client-federated << EOL
-#!/bin/sh
-
+!/bin/sh
 set -e
 if [ "true" = "#IS_FEDERATED_VM#" ]; then
     apt update
@@ -109,6 +110,8 @@ if [ "true" = "#IS_FEDERATED_VM#" ]; then
 
     echo "$tmp_var" > /etc/ipsec.conf
 
+    echo ": PSK '123'" > /etc/ipsec.secrets
+    ipsec rereadsecrets
     ipsec restart
 fi
 EOL

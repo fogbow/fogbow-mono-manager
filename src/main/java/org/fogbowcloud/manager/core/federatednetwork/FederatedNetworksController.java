@@ -1,22 +1,26 @@
 package org.fogbowcloud.manager.core.federatednetwork;
 
+import java.util.Collection;
+import java.util.Properties;
+import java.util.Set;
+import java.util.UUID;
+
 import org.apache.commons.net.util.SubnetUtils;
+import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.occi.model.Token;
 
-import java.util.*;
-
-/**
- * Created by arnett on 05/02/18.
- */
 public class FederatedNetworksController {
 
+    public static final String FEDERATED_NETWORK_AGANTE_PUBLIC_IP_PROP = "federated_network_agent_public_ip";
     private static final String DATABASE_FILE_PATH = "federated-networks.db";
 
     FederatedNetworksDB database;
 
-    Properties properties;
+    private Properties properties;
+    
+    private static final Logger LOGGER = Logger.getLogger(FederatedNetworksController.class);
 
     public FederatedNetworksController() {
         this(new Properties());
@@ -27,23 +31,26 @@ public class FederatedNetworksController {
         database = new FederatedNetworksDB(DATABASE_FILE_PATH);
     }
 
-    public boolean create(Token.User user, String label, String cidrNotation, Set<FederationMember> members) {
+    public String create(Token.User user, String label, String cidrNotation, Set<FederationMember> members) {
         SubnetUtils.SubnetInfo subnetInfo = getSubnetInfo(cidrNotation);
 
         if (!isValid(subnetInfo)) {
-            return false;
+        	LOGGER.error("Subnet (" + cidrNotation + ") invalid");
+            return null;
         }
 
-        // TODO: replace cidrNotation and virtualIpAddress
-        cidrNotation = "192.168.2.0/24";
         boolean createdSuccessfully = callFederatedNetworkAgent(cidrNotation, subnetInfo.getLowAddress());
         if (createdSuccessfully) {
             String federatedNetworkId = String.valueOf(UUID.randomUUID());
             FederatedNetwork federatedNetwork = new FederatedNetwork(federatedNetworkId, label, cidrNotation, members);
-            return database.addFederatedNetwork(federatedNetwork, user);
+            if (database.addFederatedNetwork(federatedNetwork, user)) {
+                return federatedNetworkId;
+            } else {
+                return null;
+            }
         }
 
-        return false;
+        return null;
     }
 
     public boolean callFederatedNetworkAgent(String cidrNotation, String virtualIpAddress) {
@@ -52,18 +59,23 @@ public class FederatedNetworksController {
         String serverAddress = getProperties().getProperty(ConfigurationConstants.FEDERATED_NETWORK_AGENT_ADDRESS);
         String serverPrivateAddress = getProperties().getProperty(ConfigurationConstants.FEDERATED_NETWORK_AGENT_PRIVATE_ADDRESS);
 
-        String format = "ssh -i %s %s@%s -c sudo /home/ubuntu/config-ipsec %s %s %s %s";
-        String command = String.format(format, permissionFilePath, user, serverAddress, serverPrivateAddress, serverAddress,
-                cidrNotation, virtualIpAddress);
-
-        ProcessBuilder builder = new ProcessBuilder(command);
+        ProcessBuilder builder = new ProcessBuilder("ssh", "-i", permissionFilePath, user + "@" + serverAddress,
+        		"sudo", "/home/ubuntu/config-ipsec", serverPrivateAddress, serverAddress, cidrNotation, virtualIpAddress);        
+        LOGGER.info("Trying to call agent with atts (" + cidrNotation + "): " + builder.command());
+        
+        int resultCode = 0;
         try {
-            Process process = builder.start();
-            int resultCode = process.waitFor();
-            if (resultCode == 0) return true;
+            Process process = builder.start();            
+            LOGGER.info("Trying agent with atts (" + cidrNotation + "). Output : " + ProcessUtil.getOutput(process));
+            LOGGER.info("Trying agent with atts (" + cidrNotation + "). Error : " + ProcessUtil.getError(process));            
+            resultCode = process.waitFor();
+            if (resultCode == 0) {
+            	return true;
+            }
         } catch (Exception e) {
-            //TODO: info logs
+        	 LOGGER.error("", e);
         }
+        LOGGER.error("Is not possible call agent. Process command: " + resultCode);
         return false;
     }
 
@@ -89,19 +101,15 @@ public class FederatedNetworksController {
         return highAddress - lowAddress > 1;
     }
 
-    public Collection<FederatedNetwork> getAllFederatedNetworks() {
-        return database.getAllFederatedNetworks();
-    }
-
-    public FederatedNetwork getFederatedNetwork(String federatedNetworkId) {
-        Collection<FederatedNetwork> allFederatedNetworks = this.getAllFederatedNetworks();
-        FederatedNetwork federatedNetwork = null;
-        for (FederatedNetwork federatedNetworkIterator : allFederatedNetworks) {
-            if (federatedNetworkIterator.getId().equals(federatedNetworkId)) {
-                federatedNetwork = federatedNetworkIterator;
+    public FederatedNetwork getFederatedNetwork(Token.User user, String federatedNetworkId) {
+        Collection<FederatedNetwork> allFederatedNetworks = this.getUserNetworks(user);
+        for (FederatedNetwork federatedNetwork : allFederatedNetworks) {
+            if (federatedNetwork.getId().equals(federatedNetworkId)) {
+                return federatedNetwork;
             }
         }
-        return federatedNetwork;
+
+        return null;
     }
 
 }

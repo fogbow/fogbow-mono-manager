@@ -24,6 +24,8 @@ import org.apache.http.util.EntityUtils;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.CurrentThreadExecutorService;
 import org.fogbowcloud.manager.core.ManagerController;
+import org.fogbowcloud.manager.core.federatednetwork.FederatedNetwork;
+import org.fogbowcloud.manager.core.federatednetwork.FederatedNetworksController;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
@@ -87,8 +89,8 @@ public class OCCITestHelper {
 	private Component component;
 
 	public ManagerController initializeComponentExecutorSameThread(ComputePlugin computePlugin, IdentityPlugin identityPlugin,
-			AuthorizationPlugin authorizationPlugin, BenchmarkingPlugin benchmarkingPlugin,
-			MapperPlugin mapperPlugin) throws Exception {
+																   AuthorizationPlugin authorizationPlugin, BenchmarkingPlugin benchmarkingPlugin,
+																   MapperPlugin mapperPlugin, FederatedNetworksController federatedNetworkController) throws Exception {
 		component = new Component();
 		component.getServers().add(Protocol.HTTP, ENDPOINT_PORT);
 
@@ -122,6 +124,7 @@ public class OCCITestHelper {
 		facade.setFederationIdentityPlugin(identityPlugin);
 		facade.setBenchmarkingPlugin(benchmarkingPlugin);
 		facade.setBenchmarkExecutor(benchmarkExecutor);
+		facade.setFederatedNetworksController(federatedNetworkController);
 
 		component.getDefaultHost().attach(new OCCIApplication(facade));
 		component.start();

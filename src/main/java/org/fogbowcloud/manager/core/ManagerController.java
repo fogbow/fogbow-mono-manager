@@ -4,7 +4,23 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+import java.util.StringTokenizer;
+import java.util.TimerTask;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -50,6 +66,7 @@ import org.fogbowcloud.manager.core.plugins.util.SshClientPool;
 import org.fogbowcloud.manager.core.util.HttpRequestUtil;
 import org.fogbowcloud.manager.core.util.UserdataUtils;
 import org.fogbowcloud.manager.occi.ManagerDataStoreController;
+import org.fogbowcloud.manager.occi.OCCIConstants;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.instance.InstanceState;
 import org.fogbowcloud.manager.occi.member.UsageServerResource.ResourceUsage;
@@ -198,7 +215,7 @@ public class ManagerController {
 		this.networkPlugin = networkPlugin;
 	}
 
-	protected void setFederatedNetworksController(FederatedNetworksController federatedNetworksController) {
+	public void setFederatedNetworksController(FederatedNetworksController federatedNetworksController) {
 		this.federatedNetworksController = federatedNetworksController;
 	}
 
@@ -624,6 +641,10 @@ public class ManagerController {
 			return null;
 		}
 		return token.getUser().getId();
+	}
+	
+	public Token getToken(String authToken) {
+		return getTokenFromFederationIdP(authToken);
 	}
 
 	public List<StorageLink> getStorageLinkFromUser(String accessId) {
@@ -1620,10 +1641,12 @@ public class ManagerController {
 			if (order.isIntoValidPeriod()) {
 				boolean isFulfilled = false;
 				
+				
 				if (order.isLocal()) {
 					String requirements = order.getRequirements();
 					List<FederationMember> allowedFederationMembers = getAllowedFederationMembers(requirements);
-
+					normalizeOrderCompute(order);					
+					
 					if (RequirementsHelper.matchLocation(requirements,
 							properties.getProperty(ConfigurationConstants.XMPP_JID_KEY))) {
 
@@ -1786,24 +1809,24 @@ public class ManagerController {
 			order.getxOCCIAtt().remove(keyAttributes);
 		}
 		
+		Token federationUserToken = getFederationUserToken(order);
 		switch (order.getResourceKind()) {
 			case OrderConstants.COMPUTE_TERM:
-				return handleComputeInstanceCreation(order, getFederationUserToken(order));
+				return handleComputeInstanceCreation(order, federationUserToken);
 			case OrderConstants.STORAGE_TERM:
-				return handleStorageInstanceCreation(order, getFederationUserToken(order));
+				return handleStorageInstanceCreation(order, federationUserToken);
 			case OrderConstants.NETWORK_TERM:
-				return handleNetworkInstanceCreation(order, getFederationUserToken(order));
+				return handleNetworkInstanceCreation(order, federationUserToken);
 			case OrderConstants.FEDERATED_NETWORK_TERM:
-				return handleFederatedNetworkInstanceCreation(order, getFederationUserToken(order));
+				return handleFederatedNetworkInstanceCreation(order, order.getFederationToken());
 			default:
 				return false;
 		}
 	}
 
 	private boolean handleComputeInstanceCreation(Order order, Token federationUserToken) {
-		try {
+		try {						
 			try {
-				// TODO: add attributes to create federated VM
 				String command = createUserDataUtilsCommand(order);
 				order.putAttValue(OrderAttribute.USER_DATA_ATT.getValue(), command);
 				order.addCategory(new Category(OrderConstants.USER_DATA_TERM, OrderConstants.SCHEME,
@@ -1863,6 +1886,27 @@ public class ManagerController {
 		}
 	}
 
+	protected void normalizeOrderCompute(Order order) {
+		try {
+			String federatedNetworkId = order
+					.getAttValue(OrderAttribute.FEDERATED_NETWORK_ID.getValue());
+			if (order.isLocal() && federatedNetworkId != null && !federatedNetworkId.isEmpty()) {
+				FederatedNetwork federatedNetwork = this.federatedNetworksController
+						.getFederatedNetwork(order.getFederationToken().getUser(), federatedNetworkId);
+				String privateIp = federatedNetwork.nextFreeIp();
+
+				order.putAttValue(OrderAttribute.FEDERATED_NETWORK_CIDR_NOTATION_TERM.getValue(),
+						federatedNetwork.getCidr());
+				order.putAttValue(OCCIConstants.FEDERATED_NETWORK_PRIVATE_IP, privateIp);
+				String agentPublicIp = getProperties().getProperty(
+						FederatedNetworksController.FEDERATED_NETWORK_AGANTE_PUBLIC_IP_PROP);
+				order.putAttValue(OCCIConstants.FEDERATED_NETWORK_AGENT_PUBLIC_IP, agentPublicIp);
+			}
+		} catch (Exception e) {
+			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
+		}
+	}
+
 	private boolean handleStorageInstanceCreation(Order order, Token federationUserToken) {
 		try {
 			String instanceId = storagePlugin.requestInstance(federationUserToken,
@@ -1903,7 +1947,7 @@ public class ManagerController {
         }
 	}
 
-	private boolean handleFederatedNetworkInstanceCreation(Order order, Token federationUserToken) {
+	private boolean handleFederatedNetworkInstanceCreation(Order order, Token federationToken) {
 		String label = order.getxOCCIAtt().get(OrderAttribute.FEDERATED_NETWORK_LABEL.getValue());
 		String cidrNotation = order.getxOCCIAtt().get(OrderAttribute.FEDERATED_NETWORK_CIDR_NOTATION_TERM.getValue());
 		Set<String> members = parseMembers(order.getxOCCIAtt().get(OrderAttribute.FEDERATED_NETWORK_MEMBERS_TERM.getValue()));
@@ -1917,13 +1961,17 @@ public class ManagerController {
 			federationMembers.add(getFederationMember(member));
 		}
 
-		Token.User user = federationUserToken.getUser();
+		Token.User user = federationToken.getUser();
 
-		// TODO check plugins (compute, network, storage).
-		federatedNetworksController.create(user, label, cidrNotation, federationMembers);
+		// TODO check plugins/interface (compute, network, storage).
+		String instanceId = this.federatedNetworksController.create(user, label, cidrNotation, federationMembers);		
+		if (instanceId == null) {
+			LOGGER.error("Federated network not created.");
+			return false;
+		}
 
 		order.setState(OrderState.FULFILLED);
-		order.setInstanceId(label);
+		order.setInstanceId(instanceId);
 		order.setProvidingMemberId(properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
 		this.managerDataStoreController.updateOrder(order);
 
@@ -2222,12 +2270,14 @@ public class ManagerController {
 		return failedBatch;
 	}
 
-	public Collection<FederatedNetwork> getAllFederatedNetworks() {
-		return federatedNetworksController.getAllFederatedNetworks();
+	public Collection<FederatedNetwork> getAllFederatedNetworks(String authToken) {
+		Token token = this.getToken(authToken);
+		return federatedNetworksController.getUserNetworks(token.getUser());
 	}
 
-	public FederatedNetwork getFederatedNetwork(String federatedNetworkId) {
-		return federatedNetworksController.getFederatedNetwork(federatedNetworkId);
+	public FederatedNetwork getFederatedNetwork(String authToken, String federatedNetworkId) {
+		Token token = this.getToken(authToken);
+		return federatedNetworksController.getFederatedNetwork(token.getUser(), federatedNetworkId);
 	}
 
 	protected class FailedBatch {

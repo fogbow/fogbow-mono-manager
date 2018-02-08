@@ -81,6 +81,17 @@ public class ResourceRepository {
 				FOGBOWCLOUD_ENDPOINT + "/" + OrderConstants.NETWORK_TERM + "/", 
 				"Network Resource", OrderConstants.RESOURCE_OCCI_SCHEME);
 		
+		List<String> federatedNetworkAttributes = new ArrayList<String>();
+		
+		List<String> federatedNetworkActions = new ArrayList<String>();
+		networkActions.add("http://schemas.ogf.org/occi/infrastructure/federated_network/action#up");
+		networkActions.add("http://schemas.ogf.org/occi/infrastructure/federated_network/action#down");
+		
+		Resource federatedNetwork = new Resource(OrderConstants.FEDERATED_NETWORK_TERM, OrderConstants.INFRASTRUCTURE_OCCI_SCHEME, 
+				OrderConstants.KIND_CLASS, federatedNetworkAttributes, federatedNetworkActions, 
+				FOGBOWCLOUD_ENDPOINT + "/" + OrderConstants.FEDERATED_LABEL_TERM + "/", 
+				"Federated Network Resource", OrderConstants.RESOURCE_OCCI_SCHEME);
+		
 		//TODO implement properties of attributes. For example, {immutable}
 		List<String> computeAttributes = new ArrayList<String>();
 		computeAttributes.add("occi.compute.architecture");
@@ -136,6 +147,7 @@ public class ResourceRepository {
 		resources.add(compute);
 		resources.add(fogbowUserdata);
 		resources.add(network);
+		resources.add(federatedNetwork);
 
 		Resource resourceTlp = new Resource(OrderConstants.RESOURCE_TPL_TERM,
 				OrderConstants.INFRASTRUCTURE_OCCI_SCHEME, OrderConstants.MIXIN_CLASS,

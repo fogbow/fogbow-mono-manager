@@ -16,210 +16,204 @@ import org.restlet.data.MediaType;
 import org.restlet.engine.adapter.HttpRequest;
 import org.restlet.representation.StringRepresentation;
 import org.restlet.resource.Get;
-import org.restlet.resource.Post;
 import org.restlet.resource.Put;
 import org.restlet.resource.ServerResource;
 
 public class FederatedNetworkResource extends ServerResource {
 
-    private static final Logger LOGGER = Logger.getLogger(FederatedNetworkResource.class);
-    private static final String NO_NETWORKS_MESSAGE = "No federated networks.";
+	private static final Logger LOGGER = Logger.getLogger(FederatedNetworkResource.class);
+	private static final String FILE_SEPARATOR = "/";
 
-    @Get
-    public StringRepresentation getFederatedNetworkDetails() {
-        LOGGER.info("Getting info about Federated Networks");
+	public static final String NO_NETWORKS_MESSAGE = "No federated networks.";
 
-        OCCIApplication application = (OCCIApplication) getApplication();
-        HttpRequest request = (HttpRequest) getRequest();
-        List<String> acceptContent = HeaderUtils.getAccept(request.getHeaders());
+	@Get
+	public StringRepresentation getFederatedNetworkDetails() {
+		LOGGER.info("HTTP GET to Federated Network");
 
-        LOGGER.debug("Accept Contents: " + acceptContent);
+		OCCIApplication application = (OCCIApplication) getApplication();
+		HttpRequest request = (HttpRequest) getRequest();
+		List<String> acceptContent = HeaderUtils.getAccept(request.getHeaders());
 
-        String federationAuthToken = HeaderUtils.getAuthToken(request.getHeaders(), getResponse(),
-                application.getAuthenticationURI());
+		LOGGER.debug("Accept Contents: " + acceptContent);
 
-        LOGGER.debug("Federation Authentication Token: " + federationAuthToken);
+		String federationAuthToken = HeaderUtils.getAuthToken(request.getHeaders(), getResponse(),
+				application.getAuthenticationURI());
 
-        String federatedNetworkId = (String) getRequestAttributes()
-                .get(FederatedNetworkConstants.FEDERATED_NETWORK_ID_TERM);
+		LOGGER.debug("Federation Authentication Token: " + federationAuthToken);
 
-        Collection<FederatedNetwork> federatedNetworks = null;
+		String federatedNetworkId = (String) getRequestAttributes()
+				.get(FederatedNetworkConstants.FEDERATED_NETWORK_ID_TERM);
 
-        if (federatedNetworkId == null || federatedNetworkId.trim().isEmpty()) {
-            LOGGER.info("Getting all Federated Network IDs");
+		Collection<FederatedNetwork> federatedNetworks = null;
 
-            federatedNetworks = application.getAllFederatedNetworks();
-        } else {
-            LOGGER.info("Getting details about Federated Network with ID: " + federatedNetworkId);
+		if (federatedNetworkId == null || federatedNetworkId.trim().isEmpty()) {
+			LOGGER.info("Getting all Federated Network IDs");
 
-            FederatedNetwork federatedNetwork = application.getFederatedNetwork(federatedNetworkId);
+			boolean verbose;
+			try {
+				verbose = Boolean.parseBoolean(getQuery().getValues("verbose"));
+			} catch (Exception e) {
+				verbose = false;
+			}
 
-            federatedNetworks = Arrays.asList(federatedNetwork);
-        }
-        return new StringRepresentation(generateTextPlainResponse(
-                federatedNetworks, request, true, application), MediaType.TEXT_PLAIN);
-    }
+			federatedNetworks = application.getAllFederatedNetworks(federationAuthToken);
+			return new StringRepresentation(
+					generateTextPlainResponse(federatedNetworks, request, verbose, application),
+					MediaType.TEXT_PLAIN);
+		} else {
+			LOGGER.info("Getting details about Federated Network with ID: " + federatedNetworkId);
+			FederatedNetwork federatedNetwork = application.getFederatedNetwork(federationAuthToken,
+					federatedNetworkId);
+			return new StringRepresentation(
+					generateTextPlainResponseOne(federatedNetwork, request, application),
+					MediaType.TEXT_PLAIN);
+		}
+	}
 
-    protected String generateTextPlainResponse(Collection<FederatedNetwork> networks, HttpRequest req, boolean verbose, OCCIApplication application) {
-        if (networks == null || networks.isEmpty()) {
-            return NO_NETWORKS_MESSAGE;
-        }
+	private String generateTextPlainResponse(Collection<FederatedNetwork> networks, HttpRequest req,
+			boolean verbose, OCCIApplication application) {
+		if (networks == null || networks.isEmpty()) {
+			return NO_NETWORKS_MESSAGE;
+		}
 
-        String requestEndpoint = HeaderUtils.getHostRef(application, req) + req.getHttpCall().getRequestUri();
-        String response = "";
-        for (FederatedNetwork federatedNetwork : networks) {
-            String prefixOCCILocation;
-            if (requestEndpoint.endsWith("/")) {
-                prefixOCCILocation = HeaderUtils.X_OCCI_LOCATION_PREFIX + requestEndpoint;
-            } else {
-                prefixOCCILocation = HeaderUtils.X_OCCI_LOCATION_PREFIX + requestEndpoint + "/";
-            }
+		String response = new String();
+		for (FederatedNetwork federatedNetwork : networks) {
+			String locationEndpoint = HeaderUtils.getHostRef(application, req)
+					+ FederatedNetworkResource.FILE_SEPARATOR
+					+ FederatedNetworkConstants.FEDERATED_NETWORK_TERM
+					+ FederatedNetworkResource.FILE_SEPARATOR + federatedNetwork.getId();
 
-            if (verbose) {
-                String[] keys = new String[]{OCCIConstants.FEDERATED_NETWORK_CIDR,
-                        OCCIConstants.FEDERATED_NETWORK_LABEL, OCCIConstants.FEDERATED_NETWORK_MEMBERS};
-                String[] values = new String[]{federatedNetwork.getCidr(),
-                        federatedNetwork.getLabel(), formatMembers(federatedNetwork.getAllowedMembers())};
+			String prefixOCCILocation;
+			if (locationEndpoint.endsWith(FederatedNetworkResource.FILE_SEPARATOR)) {
+				prefixOCCILocation = HeaderUtils.X_OCCI_LOCATION_PREFIX + locationEndpoint;
+			} else {
+				prefixOCCILocation = HeaderUtils.X_OCCI_LOCATION_PREFIX + locationEndpoint
+						+ FederatedNetworkResource.FILE_SEPARATOR;
+			}
 
-                String attributeFormat = "%s=%s; ";
-                response = String.format("%s%s;", prefixOCCILocation, federatedNetwork.getId());
-                for (int i = 0; i < keys.length; i++) {
-                    response += String.format(attributeFormat, keys[i], values[i]);
-                }
+			response += prefixOCCILocation;
+			if (verbose) {
+				String[] keys = new String[] { OCCIConstants.FEDERATED_NETWORK_CIDR,
+						OCCIConstants.FEDERATED_NETWORK_LABEL,
+						OCCIConstants.FEDERATED_NETWORK_MEMBERS };
+				String[] values = new String[] { federatedNetwork.getCidr(),
+						federatedNetwork.getLabel(),
+						formatMembers(federatedNetwork.getAllowedMembers()) };
 
-                response += prefixOCCILocation + federatedNetwork.getId() + "; "
-                        + System.lineSeparator();
-            } else {
-                response += prefixOCCILocation + federatedNetwork.getId() + System.lineSeparator();
-            }
-        }
-        return response.length() > 0 ? response.trim() : System.lineSeparator();
-    }
+				String attributeFormat = ";%s=%s ";
+				for (int i = 0; i < keys.length; i++) {
+					response += String.format(attributeFormat, keys[i], values[i]);
+				}
+			}
+			response += ";" + System.lineSeparator();
+		}
+		return response.length() > 0 ? response.trim() : System.lineSeparator();
+	}
+	
+	private String generateTextPlainResponseOne(FederatedNetwork federatedNetwork, HttpRequest req,
+			OCCIApplication application) {
+		if (federatedNetwork == null) {
+			return NO_NETWORKS_MESSAGE;
+		}
 
-    private String formatMembers(Collection<FederationMember> members) {
-        return members.toString().substring(1, members.size() - 1);
-    }
+		String locationEndpoint = HeaderUtils.getHostRef(application, req)
+				+ FederatedNetworkResource.FILE_SEPARATOR
+				+ FederatedNetworkConstants.FEDERATED_NETWORK_TERM
+				+ FederatedNetworkResource.FILE_SEPARATOR + federatedNetwork.getId();
 
-    @Post
-    public StringRepresentation postFederatedNetwork() {
-        LOGGER.info("Posting a new Federated Network");
+		String prefixOCCILocation;
+		if (locationEndpoint.endsWith(FederatedNetworkResource.FILE_SEPARATOR)) {
+			prefixOCCILocation = HeaderUtils.X_OCCI_LOCATION_PREFIX + locationEndpoint;
+		} else {
+			prefixOCCILocation = HeaderUtils.X_OCCI_LOCATION_PREFIX + locationEndpoint
+					+ FederatedNetworkResource.FILE_SEPARATOR;
+		}
 
-        OCCIApplication application = (OCCIApplication) getApplication();
-        HttpRequest request = (HttpRequest) getRequest();
-        String acceptType = getFederatedNetworkPostAccept(
-                HeaderUtils.getAccept(request.getHeaders()));
+		String[] keys = new String[] { OCCIConstants.FEDERATED_NETWORK_CIDR,
+				OCCIConstants.FEDERATED_NETWORK_LABEL, OCCIConstants.FEDERATED_NETWORK_MEMBERS };
+		String[] values = new String[] { federatedNetwork.getCidr(), federatedNetwork.getLabel(),
+				formatMembers(federatedNetwork.getAllowedMembers()) };
 
-        LOGGER.debug("Accept Contents: " + acceptType);
+		String response = prefixOCCILocation + System.lineSeparator();
 
-        HeaderUtils.checkOCCIContentType(request.getHeaders());
+		String attributeFormat = "X-OCCI-Attribute: %s=%s; ";
+		for (int i = 0; i < keys.length; i++) {
+			response += String.format(attributeFormat, keys[i], values[i]) + System.lineSeparator();
+		}
+		return response.length() > 0 ? response.trim() : System.lineSeparator();
+	}
 
-        String federationAuthToken = HeaderUtils.getAuthToken(request.getHeaders(), getResponse(),
-                application.getAuthenticationURI());
+	private String formatMembers(Collection<FederationMember> members) {
+		String str = members.toString();
+		return str.substring(1, str.length() - 1);
+	}
 
-        LOGGER.debug("Federation Authentication Token: " + federationAuthToken);
+	// TODO: review how it will be implemented (FederatedNetworksController)
+	@Put
+	public StringRepresentation putFederatedNetwork() {
+		LOGGER.info("HTTP Put to Federated Network");
+		
+		OCCIApplication application = (OCCIApplication) getApplication();
+		HttpRequest request = (HttpRequest) getRequest();
+		String acceptType = getFederatedNetworkPostAccept(
+				HeaderUtils.getAccept(request.getHeaders()));
 
-        String label = getLabel(request);
-        LOGGER.info("Federated Network Request Label: " + label);
+		LOGGER.debug("Accept Contents: " + acceptType);
 
-        String cidr = getCIDR(request);
-        LOGGER.info("Federated Network Request CIDR: " + cidr);
+		HeaderUtils.checkOCCIContentType(request.getHeaders());
 
-        Set<String> membersSet = getMembersSet(request);
-        LOGGER.info("Federated Network Request Members: " + membersSet.toString());
+		String federationAuthToken = HeaderUtils.getAuthToken(request.getHeaders(), getResponse(),
+				application.getAuthenticationURI());
 
-        String response = "Posted a new Federated Network" + System.lineSeparator() + "Label: "
-                + label + System.lineSeparator() + "CIDR: " + cidr + System.lineSeparator()
-                + "Members: " + membersSet.toString();
-        return new StringRepresentation(response, MediaType.TEXT_PLAIN);
-    }
+		LOGGER.debug("Federation Authentication Token: " + federationAuthToken);
 
-    @Put
-    public StringRepresentation putFederatedNetwork() {
-        OCCIApplication application = (OCCIApplication) getApplication();
-        HttpRequest request = (HttpRequest) getRequest();
-        String acceptType = getFederatedNetworkPostAccept(
-                HeaderUtils.getAccept(request.getHeaders()));
+		String federatedNetworkId = getFederatedNetworkId();
+		LOGGER.info("Federated Network with ID: " + federatedNetworkId);
 
-        LOGGER.debug("Accept Contents: " + acceptType);
+		Set<String> membersSet = getMembersSet(request);
+		LOGGER.info("Federated Network Request Members: " + membersSet.toString());
 
-        HeaderUtils.checkOCCIContentType(request.getHeaders());
+		String response = "Puted into Federated Network ID: " + federatedNetworkId
+				+ System.lineSeparator() + "Members: " + membersSet.toString();
+		return new StringRepresentation(response, MediaType.TEXT_PLAIN);
+	}
 
-        String federationAuthToken = HeaderUtils.getAuthToken(request.getHeaders(), getResponse(),
-                application.getAuthenticationURI());
+	private String getFederatedNetworkPostAccept(List<String> listAccept) {
+		String result = "";
+		if (listAccept.size() > 0) {
+			if (listAccept.get(0).contains(MediaType.TEXT_PLAIN.toString())) {
+				result = MediaType.TEXT_PLAIN.toString();
+			} else if (listAccept.get(0).contains(OCCIHeaders.OCCI_CONTENT_TYPE)) {
+				result = OCCIHeaders.OCCI_CONTENT_TYPE;
+			} else {
+				throw new OCCIException(ErrorType.NOT_ACCEPTABLE,
+						ResponseConstants.ACCEPT_NOT_ACCEPTABLE);
+			}
+		}
+		return result;
+	}
 
-        LOGGER.debug("Federation Authentication Token: " + federationAuthToken);
+	private String getFederatedNetworkId() {
+		String federatedNetworkId = (String) getRequestAttributes()
+				.get(FederatedNetworkConstants.FEDERATED_NETWORK_ID_TERM);
 
-        String federatedNetworkId = getFederatedNetworkId();
-        LOGGER.info("Federated Network with ID: " + federatedNetworkId);
+		if (federatedNetworkId == null || federatedNetworkId.trim().isEmpty()) {
+			throw new OCCIException(ErrorType.NOT_ACCEPTABLE,
+					ResponseConstants.INVALID_FEDERATED_NETWORK_ID);
+		}
+		return federatedNetworkId;
+	}
 
-        Set<String> membersSet = getMembersSet(request);
-        LOGGER.info("Federated Network Request Members: " + membersSet.toString());
+	private Set<String> getMembersSet(HttpRequest request) {
+		List<String> membersList = HeaderUtils.getValueHeaderPerName(
+				OCCIConstants.FEDERATED_NETWORK_MEMBERS, request.getHeaders());
 
-        String response = "Puted into Federated Network ID: " + federatedNetworkId
-                + System.lineSeparator() + "Members: " + membersSet.toString();
-        return new StringRepresentation(response, MediaType.TEXT_PLAIN);
-    }
+		if (membersList == null || membersList.isEmpty()) {
+			throw new OCCIException(ErrorType.NOT_ACCEPTABLE, ResponseConstants.INVALID_MEMBER);
+		}
 
-    private String getFederatedNetworkPostAccept(List<String> listAccept) {
-        String result = "";
-        if (listAccept.size() > 0) {
-            if (listAccept.get(0).contains(MediaType.TEXT_PLAIN.toString())) {
-                result = MediaType.TEXT_PLAIN.toString();
-            } else if (listAccept.get(0).contains(OCCIHeaders.OCCI_CONTENT_TYPE)) {
-                result = OCCIHeaders.OCCI_CONTENT_TYPE;
-            } else {
-                throw new OCCIException(ErrorType.NOT_ACCEPTABLE,
-                        ResponseConstants.ACCEPT_NOT_ACCEPTABLE);
-            }
-        }
-        return result;
-    }
-
-    private String getFederatedNetworkId() {
-        String federatedNetworkId = (String) getRequestAttributes()
-                .get(FederatedNetworkConstants.FEDERATED_NETWORK_ID_TERM);
-
-        if (federatedNetworkId == null || federatedNetworkId.trim().isEmpty()) {
-            throw new OCCIException(ErrorType.NOT_ACCEPTABLE,
-                    ResponseConstants.INVALID_FEDERATED_NETWORK_ID);
-        }
-        return federatedNetworkId;
-    }
-
-    private Set<String> getMembersSet(HttpRequest request) {
-        List<String> membersList = HeaderUtils.getValueHeaderPerName(
-                OCCIConstants.FEDERATED_NETWORK_MEMBERS, request.getHeaders());
-
-        if (membersList == null || membersList.isEmpty()) {
-            throw new OCCIException(ErrorType.NOT_ACCEPTABLE, ResponseConstants.INVALID_MEMBER);
-        }
-
-        Set<String> membersSet = new HashSet<String>(membersList);
-        return membersSet;
-    }
-
-    private String getCIDR(HttpRequest request) {
-        List<String> cidrList = HeaderUtils
-                .getValueHeaderPerName(OCCIConstants.FEDERATED_NETWORK_CIDR, request.getHeaders());
-
-        if (cidrList.size() != 1) {
-            throw new OCCIException(ErrorType.NOT_ACCEPTABLE, ResponseConstants.INVALID_CIDR);
-        }
-
-        String cidr = cidrList.get(0);
-        return cidr;
-    }
-
-    private String getLabel(HttpRequest request) {
-        List<String> labelList = HeaderUtils
-                .getValueHeaderPerName(OCCIConstants.FEDERATED_NETWORK_LABEL, request.getHeaders());
-
-        if (labelList.size() != 1) {
-            throw new OCCIException(ErrorType.NOT_ACCEPTABLE, ResponseConstants.INVALID_LABEL);
-        }
-
-        String label = labelList.get(0);
-        return label;
-    }
-
+		Set<String> membersSet = new HashSet<String>(membersList);
+		return membersSet;
+	}
+	
 }
