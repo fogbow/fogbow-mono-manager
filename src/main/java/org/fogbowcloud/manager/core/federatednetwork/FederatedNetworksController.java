@@ -59,7 +59,7 @@ public class FederatedNetworksController {
         String serverAddress = getProperties().getProperty(ConfigurationConstants.FEDERATED_NETWORK_AGENT_ADDRESS);
         String serverPrivateAddress = getProperties().getProperty(ConfigurationConstants.FEDERATED_NETWORK_AGENT_PRIVATE_ADDRESS);
 
-        ProcessBuilder builder = new ProcessBuilder("ssh", "-i", permissionFilePath, user + "@" + serverAddress,
+        ProcessBuilder builder = new ProcessBuilder("ssh", "-o", "UserKnownHostsFile=/dev/null", "-o", "StrictHostKeyChecking=no", "-i", permissionFilePath, user + "@" + serverAddress,
         		"sudo", "/home/ubuntu/config-ipsec", serverPrivateAddress, serverAddress, cidrNotation, virtualIpAddress);        
         LOGGER.info("Trying to call agent with atts (" + cidrNotation + "): " + builder.command());
         
