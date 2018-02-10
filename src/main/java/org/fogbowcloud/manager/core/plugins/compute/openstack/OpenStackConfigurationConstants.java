@@ -62,4 +62,5 @@ public class OpenStackConfigurationConstants {
 	public static final String MAX_TOTAL_INSTANCES_ATT = "maxTotalInstances";
 	public static final String TOTAL_INSTANCES_USED_ATT = "totalInstancesUsed";
 
+	public static final String SECURITY_GROUPS_KEY = "security_groups";
 }
