@@ -348,7 +348,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 	}
 
 	private JSONObject generateJsonRequest(String imageRef, String flavorRef, String userdata,
-			String keyName, String networkId, String groups) throws JSONException {
+			String keyName, String networkId, String[] groups) throws JSONException {
 
 		JSONObject server = new JSONObject();
 		server.put(NAME_JSON_FIELD, "fogbow-instance-" + UUID.randomUUID().toString());
