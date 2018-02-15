@@ -49,7 +49,7 @@ public class FederatedNetworksController {
         boolean createdSuccessfully = callFederatedNetworkAgent(cidrNotation, subnetInfo.getLowAddress());
         if (createdSuccessfully) {
             String federatedNetworkId = String.valueOf(UUID.randomUUID());
-            FederatedNetwork federatedNetwork = new FederatedNetwork(federatedNetworkId, label, cidrNotation, members);
+            FederatedNetwork federatedNetwork = new FederatedNetwork(federatedNetworkId, cidrNotation, label, members);
             if (database.addFederatedNetwork(federatedNetwork, user)) {
                 return federatedNetworkId;
             } else {
