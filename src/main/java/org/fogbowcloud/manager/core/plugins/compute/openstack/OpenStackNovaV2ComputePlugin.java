@@ -184,10 +184,8 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 			orderNetworkId = this.networkId;
 		}
 		
-		String resourceKind = xOCCIAtt.get(OrderAttribute.RESOURCE_KIND.getValue());
 		String[] parsedGroups = null;
-		if (resourceKind != null && resourceKind.equals(OrderConstants.COMPUTE_TERM)
-				&& xOCCIAtt.containsKey(OrderAttribute.FEDERATED_NETWORK_ID.getValue())) {
+		if (xOCCIAtt.containsKey(OrderAttribute.FEDERATED_NETWORK_ID.getValue())) {
 			if (this.federatedNetworkSecurityGroups != null) {
 				parsedGroups = parseSecurityGroups(this.federatedNetworkSecurityGroups);
 			} else {
