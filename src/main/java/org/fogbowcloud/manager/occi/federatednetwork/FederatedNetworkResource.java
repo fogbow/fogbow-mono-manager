@@ -172,6 +172,13 @@ public class FederatedNetworkResource extends ServerResource {
 
 		Set<String> membersSet = getMembersSet(request);
 		LOGGER.info("Federated Network Request Members: " + membersSet.toString());
+		
+		try {
+			application.updateFederatedNetworkMembers(federationAuthToken, federatedNetworkId,
+					membersSet);
+		} catch (Exception e) {
+			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
+		}
 
 		String response = "Puted into Federated Network ID: " + federatedNetworkId
 				+ System.lineSeparator() + "Members: " + membersSet.toString();
