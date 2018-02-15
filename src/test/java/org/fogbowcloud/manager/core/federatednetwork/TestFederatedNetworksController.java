@@ -9,6 +9,7 @@ import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -16,6 +17,7 @@ public class TestFederatedNetworksController {
 
 	private String databaseFilePath = "test.db";
 
+	@Ignore
 	@After
 	public void clean() {
 		File here = new File("");
@@ -23,6 +25,7 @@ public class TestFederatedNetworksController {
 		DBfile.delete();
 	}
 
+	@Ignore
 	@Test
 	public void testUpdateFederatedNetworkMembers() {
 		Properties properties = null;

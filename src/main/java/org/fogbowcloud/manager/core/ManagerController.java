@@ -1905,9 +1905,6 @@ public class ManagerController {
 				order.putAttValue(OrderAttribute.FEDERATED_NETWORK_CIDR_NOTATION_TERM.getValue(),
 						federatedNetwork.getCidr());
 
-				String privateIp = federatedNetwork.nextFreeIp();
-				order.putAttValue(OCCIConstants.FEDERATED_NETWORK_PRIVATE_IP, privateIp);
-
 				String agentPublicIp = getProperties().getProperty(
 						FederatedNetworksController.FEDERATED_NETWORK_AGENT_PUBLIC_IP_PROP);
 				if (agentPublicIp == null) {
@@ -1915,6 +1912,9 @@ public class ManagerController {
 							FederatedNetworkConstants.NOT_FOUND_PUBLIC_AGENT_IP_MESSAGE);
 				}
 				order.putAttValue(OCCIConstants.FEDERATED_NETWORK_AGENT_PUBLIC_IP, agentPublicIp);
+				
+				String privateIp = federatedNetwork.nextFreeIp(order.getId());
+				order.putAttValue(OCCIConstants.FEDERATED_NETWORK_PRIVATE_IP, privateIp);
 			}
 		} catch (Exception e) {
 			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
