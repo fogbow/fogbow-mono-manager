@@ -88,7 +88,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 	private HttpClient client;
 	private Integer httpClientTimeout;
 	private List<Flavor> flavors;
-	private String securityGroups;
+	private String federatedNetworkSecurityGroups;
 
 	private static final Logger LOGGER = Logger.getLogger(OpenStackNovaV2ComputePlugin.class);
 	
@@ -110,7 +110,8 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		networkV2APIEndpoint = properties.getProperty(
 				OpenStackConfigurationConstants.NETWORK_NOVAV2_URL_KEY) + NETWORK_V2_API_ENDPOINT;
 
-		securityGroups = properties.getProperty(OpenStackConfigurationConstants.SECURITY_GROUPS_KEY);
+		federatedNetworkSecurityGroups = properties
+				.getProperty(OpenStackConfigurationConstants.FEDERATED_NETWORK_SECURITY_GROUPS_KEY);
 
 		// userdata
 		fogbowTermToOpenStack.put(OrderConstants.USER_DATA_TERM, "user_data");
@@ -182,8 +183,18 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		if (orderNetworkId == null || orderNetworkId.isEmpty()) {
 			orderNetworkId = this.networkId;
 		}
-
-		String[] parsedGroups = parseSecurityGroups(securityGroups);
+		
+		String resourceKind = xOCCIAtt.get(OrderAttribute.RESOURCE_KIND.getValue());
+		String[] parsedGroups = null;
+		if (resourceKind != null && resourceKind.equals(OrderConstants.COMPUTE_TERM)
+				&& xOCCIAtt.containsKey(OrderAttribute.FEDERATED_NETWORK_ID.getValue())) {
+			if (this.federatedNetworkSecurityGroups != null) {
+				parsedGroups = parseSecurityGroups(this.federatedNetworkSecurityGroups);
+			} else {
+				throw new IllegalArgumentException(
+						"Requesting Instance associated with a Federated Network Id, but there isn't Security Group in the Property File");
+			}
+		}
 
 		try {
 			JSONObject json = generateJsonRequest(imageRef, flavorId, userdata, keyName, orderNetworkId, parsedGroups);
@@ -370,13 +381,15 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 			server.put("key_name", keyName);
 		}
 
-		JSONArray jsonGroups = new JSONArray();
-		for (String group : groups) {
-			JSONObject jsonGroup = new JSONObject();
-			jsonGroup.put("name", group);
-			jsonGroups.put(jsonGroup);
+		if (groups != null) {
+			JSONArray jsonGroups = new JSONArray();
+			for (String group : groups) {
+				JSONObject jsonGroup = new JSONObject();
+				jsonGroup.put("name", group);
+				jsonGroups.put(jsonGroup);
+			}
+			server.put("security_groups", jsonGroups);
 		}
-		server.put("security_groups", jsonGroups);
 
 		JSONObject root = new JSONObject();
 		root.put("server", server);

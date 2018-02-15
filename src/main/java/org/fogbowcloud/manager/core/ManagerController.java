@@ -674,6 +674,7 @@ public class ManagerController {
 		}
 	}
 
+	//TODO: if order is Compute in a federated network, free associated Ip
 	public void removeOrder(String accessId, String orderId) {
 		LOGGER.debug("Removing orderId: " + orderId);
 		checkOrderId(accessId, orderId);
