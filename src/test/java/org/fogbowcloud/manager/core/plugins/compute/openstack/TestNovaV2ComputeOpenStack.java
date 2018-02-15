@@ -99,6 +99,82 @@ public class TestNovaV2ComputeOpenStack {
 	}
 	
 	@Test
+	public void testRequestInstanceWithFNId() throws Exception {
+		String federatedNetworkSecurityGroup = "FN-demo";
+		String federatedNetworkId = "fake-FNId";
+		Properties properties = new Properties();
+		properties.put(OpenStackConfigurationConstants.COMPUTE_NOVAV2_URL_KEY,
+				PluginHelper.COMPUTE_NOVAV2_URL);
+		properties.put(OpenStackConfigurationConstants.NETWORK_NOVAV2_URL_KEY,
+				PluginHelper.NETWORK_NOVAV2_URL);
+		properties.put(OpenStackConfigurationConstants.COMPUTE_NOVAV2_IMAGE_PREFIX_KEY
+				+ PluginHelper.LINUX_X86_TERM, "imageid");
+		properties.put(OpenStackConfigurationConstants.COMPUTE_GLANCEV2_URL_KEY, GLACE_V2);
+		properties.put(OpenStackConfigurationConstants.FEDERATED_NETWORK_SECURITY_GROUPS_KEY,
+				federatedNetworkSecurityGroup);
+
+		this.novaV2ComputeOpenStack = new OpenStackNovaV2ComputePlugin(properties);
+
+		List<Flavor> flavors = new ArrayList<Flavor>();
+		Flavor flavorSmall = new Flavor(OrderConstants.SMALL_TERM, "1", "1000", "10");
+		flavorSmall.setId(SECOND_INSTANCE_ID);
+		flavors.add(flavorSmall);
+		Flavor flavorMedium = new Flavor("medium", "2", "2000", "20");
+		flavorMedium.setId("2");
+		flavors.add(flavorMedium);
+		Flavor flavorBig = new Flavor("big", "4", "4000", "40");
+		flavorBig.setId("3");
+		flavors.add(flavorBig);
+		this.novaV2ComputeOpenStack.setFlavors(flavors);
+
+		Assert.assertEquals(0, this.novaV2ComputeOpenStack.getInstances(this.defaultToken).size());
+
+		Map<String, String> mapAttr = new HashMap<String, String>();
+		mapAttr.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.COMPUTE_TERM);
+		mapAttr.put(OrderAttribute.FEDERATED_NETWORK_ID.getValue(), federatedNetworkId);
+
+		Assert.assertEquals(FIRST_INSTANCE_ID,
+				this.novaV2ComputeOpenStack.requestInstance(this.defaultToken,
+						new ArrayList<Category>(), mapAttr, PluginHelper.LINUX_X86_TERM));
+	}
+	
+	@Test(expected = IllegalArgumentException.class)
+	public void testRequestInstanceWithFNIdAndWithoutSecurityGroup() throws Exception {
+		String federatedNetworkId = "fake-FNId";
+		Properties properties = new Properties();
+		properties.put(OpenStackConfigurationConstants.COMPUTE_NOVAV2_URL_KEY,
+				PluginHelper.COMPUTE_NOVAV2_URL);
+		properties.put(OpenStackConfigurationConstants.NETWORK_NOVAV2_URL_KEY,
+				PluginHelper.NETWORK_NOVAV2_URL);
+		properties.put(OpenStackConfigurationConstants.COMPUTE_NOVAV2_IMAGE_PREFIX_KEY
+				+ PluginHelper.LINUX_X86_TERM, "imageid");
+		properties.put(OpenStackConfigurationConstants.COMPUTE_GLANCEV2_URL_KEY, GLACE_V2);
+
+		this.novaV2ComputeOpenStack = new OpenStackNovaV2ComputePlugin(properties);
+
+		List<Flavor> flavors = new ArrayList<Flavor>();
+		Flavor flavorSmall = new Flavor(OrderConstants.SMALL_TERM, "1", "1000", "10");
+		flavorSmall.setId(SECOND_INSTANCE_ID);
+		flavors.add(flavorSmall);
+		Flavor flavorMedium = new Flavor("medium", "2", "2000", "20");
+		flavorMedium.setId("2");
+		flavors.add(flavorMedium);
+		Flavor flavorBig = new Flavor("big", "4", "4000", "40");
+		flavorBig.setId("3");
+		flavors.add(flavorBig);
+		this.novaV2ComputeOpenStack.setFlavors(flavors);
+
+		Assert.assertEquals(0, this.novaV2ComputeOpenStack.getInstances(this.defaultToken).size());
+
+		Map<String, String> mapAttr = new HashMap<String, String>();
+		mapAttr.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.COMPUTE_TERM);
+		mapAttr.put(OrderAttribute.FEDERATED_NETWORK_ID.getValue(), federatedNetworkId);
+
+		this.novaV2ComputeOpenStack.requestInstance(this.defaultToken, new ArrayList<Category>(),
+				mapAttr, PluginHelper.LINUX_X86_TERM);
+	}
+	
+	@Test
 	public void testRequestOneInstance(){
 		Assert.assertEquals(0, novaV2ComputeOpenStack.getInstances(defaultToken).size());
 		
@@ -205,6 +281,7 @@ public class TestNovaV2ComputeOpenStack {
 		String vCpu = RequirementsHelper.GLUE_VCPU_TERM;
 		String requirementsStr = disk + " >= 10 && " + mem + " > 500 && " + vCpu + " > 0";
 		mapAttr.put(OrderAttribute.REQUIREMENTS.getValue(), requirementsStr);
+		mapAttr.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.COMPUTE_TERM);
 		
 		Assert.assertEquals(FIRST_INSTANCE_ID, novaV2ComputeOpenStack.requestInstance(
 				defaultToken, new ArrayList<Category>(), mapAttr, PluginHelper.LINUX_X86_TERM));
