@@ -160,14 +160,17 @@ public class FederatedNetworksController {
 	
 	public String getPrivateIpFromFederatedNetwork(Token.User user, String federatedNetworkId,
 			String orderId) throws SubnetAddressesCapacityReachedException {
+		LOGGER.info("Getting FN Ip to Order: " + orderId);
 		FederatedNetwork federatedNetwork = this.getFederatedNetwork(user, federatedNetworkId);
 		if (federatedNetwork == null) {
 			throw new IllegalArgumentException(
 					FederatedNetworkConstants.NOT_FOUND_FEDERATED_NETWORK_MESSAGE
 							+ federatedNetworkId);
 		}
+		LOGGER.info("FederatedNetwork: " + federatedNetwork.toString());
 		String privateIp = null;
 		privateIp = federatedNetwork.nextFreeIp(orderId);
+		LOGGER.info("FederatedNetwork: " + federatedNetwork.toString());
 		if (!this.database.addFederatedNetwork(federatedNetwork, user)) {
 			throw new IllegalArgumentException(
 					FederatedNetworkConstants.CANNOT_UPDATE_FEDERATED_NETWORK_IN_DATABASE);
