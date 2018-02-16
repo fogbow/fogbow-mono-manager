@@ -9,28 +9,23 @@ import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.junit.After;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
 
 public class TestFederatedNetworksController {
 
-	private String databaseFilePath = "test.db";
+	public static final String DATABASE_FILE_PATH = "test-federated-networks-temp.db";
 
-	@Ignore
 	@After
 	public void clean() {
-		File here = new File("");
-		File DBfile = new File(here.getAbsolutePath() + "/" + this.databaseFilePath);
-		DBfile.delete();
+		new File(DATABASE_FILE_PATH).delete();
 	}
 
-	@Ignore
 	@Test
-	public void testUpdateFederatedNetworkMembers() {
+	public void testUpdateFederatedNetworkMembers() throws SubnetAddressesCapacityReachedException {
 		Properties properties = null;
 		FederatedNetworksController controller = Mockito
-				.spy(new FederatedNetworksController(properties, this.databaseFilePath));
+				.spy(new FederatedNetworksController(properties, DATABASE_FILE_PATH));
 		Mockito.doReturn(true).when(controller).callFederatedNetworkAgent(Mockito.anyString(),
 				Mockito.anyString());
 
@@ -49,8 +44,19 @@ public class TestFederatedNetworksController {
 		controller.updateFederatedNetworkMembers(user, federatedNetworkId, newMembers);
 
 		FederatedNetwork fn = controller.getFederatedNetwork(user, federatedNetworkId);
-
 		Assert.assertEquals(2, fn.getAllowedMembers().size());
+		
+		String ipOne = controller.getPrivateIpFromFederatedNetwork(user, federatedNetworkId,
+				"fake-orderId");
+		String ipTwo = controller.getPrivateIpFromFederatedNetwork(user, federatedNetworkId,
+				"fake-orderId2");
+
+		fn = controller.getFederatedNetwork(user, federatedNetworkId);
+		Assert.assertNotEquals(ipOne, ipTwo);
+		
+		String ipThree = controller.getPrivateIpFromFederatedNetwork(user, federatedNetworkId,
+				"fake-orderId3");
+		Assert.assertNotEquals(ipOne, ipThree);
 	}
 
 }
