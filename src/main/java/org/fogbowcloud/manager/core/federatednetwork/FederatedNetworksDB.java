@@ -45,15 +45,15 @@ public class FederatedNetworksDB {
             String jsonNetworks = userIdToFedNetworks.get(user.getId());
             federatedNetworks = parseFederatedNetworks(jsonNetworks);
         } else {
-            federatedNetworks = new HashSet<>();
+            federatedNetworks = new HashSet<FederatedNetwork>();
         }
 
         return federatedNetworks;
     }
 
-    private Set<FederatedNetwork> parseFederatedNetworks(String jsonArray) {
-        HashSet<FederatedNetwork> federatedNetworks;Type listType = new TypeToken<HashSet<FederatedNetwork>>(){}.getType();
-        federatedNetworks = gson.fromJson(jsonArray, listType);
+    protected Set<FederatedNetwork> parseFederatedNetworks(String jsonArray) {
+        Type listType = new TypeToken<Set<FederatedNetwork>>(){}.getType();
+        Set<FederatedNetwork> federatedNetworks = gson.fromJson(jsonArray, listType);
         return federatedNetworks;
     }
 
