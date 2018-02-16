@@ -139,8 +139,8 @@ public class TestNovaV2ComputeOpenStack {
 	}
 	
 	@Test(expected = IllegalArgumentException.class)
-	public void testRequestInstanceWithFNIdAndWithoutSecurityGroup() throws Exception {
-		String federatedNetworkId = "fake-FNId";
+	public void testRequestInstanceWithNetworkIdAndWithoutSecurityGroup() throws Exception {
+		String networkId = "fake-NId";
 		Properties properties = new Properties();
 		properties.put(OpenStackConfigurationConstants.COMPUTE_NOVAV2_URL_KEY,
 				PluginHelper.COMPUTE_NOVAV2_URL);
@@ -168,7 +168,7 @@ public class TestNovaV2ComputeOpenStack {
 
 		Map<String, String> mapAttr = new HashMap<String, String>();
 		mapAttr.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.COMPUTE_TERM);
-		mapAttr.put(OrderAttribute.FEDERATED_NETWORK_ID.getValue(), federatedNetworkId);
+		mapAttr.put(OrderAttribute.NETWORK_ID.getValue(), networkId);
 
 		this.novaV2ComputeOpenStack.requestInstance(this.defaultToken, new ArrayList<Category>(),
 				mapAttr, PluginHelper.LINUX_X86_TERM);
