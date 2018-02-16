@@ -1890,9 +1890,12 @@ public class ManagerController {
 
 	protected void normalizeOrderCompute(Order order) {
 		try {
+			LOGGER.info("Normalizing Order with Id: " + order.getId());
 			String federatedNetworkId = order
 					.getAttValue(OrderAttribute.FEDERATED_NETWORK_ID.getValue());
 			if (order.isLocal() && federatedNetworkId != null && !federatedNetworkId.isEmpty()) {
+				LOGGER.info("Order associated with Federated Network Id: " + federatedNetworkId);
+				
 				FederatedNetwork federatedNetwork = this.federatedNetworksController
 						.getFederatedNetwork(order.getFederationToken().getUser(),
 								federatedNetworkId);
@@ -1905,6 +1908,8 @@ public class ManagerController {
 
 				order.putAttValue(OrderAttribute.FEDERATED_NETWORK_CIDR_NOTATION_TERM.getValue(),
 						federatedNetwork.getCidr());
+				
+				LOGGER.info("Order CIDR: " + federatedNetwork.getCidr());
 
 				String agentPublicIp = getProperties().getProperty(
 						FederatedNetworksController.FEDERATED_NETWORK_AGENT_PUBLIC_IP_PROP);
@@ -1914,8 +1919,11 @@ public class ManagerController {
 				}
 				order.putAttValue(OCCIConstants.FEDERATED_NETWORK_AGENT_PUBLIC_IP, agentPublicIp);
 				
+				LOGGER.info("Order Public Agent: " + agentPublicIp);
+				
 				String privateIp = federatedNetwork.nextFreeIp(order.getId());
 				order.putAttValue(OCCIConstants.FEDERATED_NETWORK_PRIVATE_IP, privateIp);
+				LOGGER.info("Order Federated Network IP: " + privateIp);
 			}
 		} catch (Exception e) {
 			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
