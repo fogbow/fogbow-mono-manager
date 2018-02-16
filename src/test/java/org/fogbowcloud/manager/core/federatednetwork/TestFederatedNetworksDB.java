@@ -96,7 +96,16 @@ public class TestFederatedNetworksDB {
         
         retrievedNetwork = userNetworks.iterator().next();
         assertEquals(2, retrievedNetwork.getAllowedMembers().size());
-        Assert.assertNotEquals(firstIp, retrievedNetwork.nextFreeIp("fake-orderId1"));
+        String actual = retrievedNetwork.nextFreeIp("fake-orderId1");
+        Assert.assertNotEquals(firstIp, actual);
+    }
+    
+    @Test
+    public void testParseFederatedNetworks() {
+    	FederatedNetworksDB federatedNetworksDB = new FederatedNetworksDB(DATABASE_FILE_PATH);
+    	String jsonArray = new String("[{\"id\":\"4ba56476-cf53-4b9b-90ed-468e9d216940\",\"cidrNotation\":\"10.0.0.0/24\",\"label\":\"testetst\",\"allowedMembers\":[{\"lastTime\":1518809284222,\"id\":\"manager.atmosphere.secure.lsd.ufcg.edu.br\"},{\"lastTime\":1518809284222,\"id\":\"manager.atmosphere.lsd.ufcg.edu.br\"}],\"ipsServed\":1,\"freedIps\":[],\"orderIpMap\":{}}]");
+    	Set<FederatedNetwork> fn = federatedNetworksDB.parseFederatedNetworks(jsonArray);
+    	Assert.assertEquals(1, fn.size());
     }
 
 }
