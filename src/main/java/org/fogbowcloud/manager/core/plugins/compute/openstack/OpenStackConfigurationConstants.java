@@ -62,5 +62,5 @@ public class OpenStackConfigurationConstants {
 	public static final String MAX_TOTAL_INSTANCES_ATT = "maxTotalInstances";
 	public static final String TOTAL_INSTANCES_USED_ATT = "totalInstancesUsed";
 
-	public static final String FEDERATED_NETWORK_SECURITY_GROUPS_KEY = "federated_network_security_groups";
+	public static final String NETWORK_SECURITY_GROUPS_KEY = "network_security_groups";
 }

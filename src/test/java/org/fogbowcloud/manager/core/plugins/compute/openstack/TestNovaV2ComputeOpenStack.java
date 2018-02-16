@@ -110,7 +110,7 @@ public class TestNovaV2ComputeOpenStack {
 		properties.put(OpenStackConfigurationConstants.COMPUTE_NOVAV2_IMAGE_PREFIX_KEY
 				+ PluginHelper.LINUX_X86_TERM, "imageid");
 		properties.put(OpenStackConfigurationConstants.COMPUTE_GLANCEV2_URL_KEY, GLACE_V2);
-		properties.put(OpenStackConfigurationConstants.FEDERATED_NETWORK_SECURITY_GROUPS_KEY,
+		properties.put(OpenStackConfigurationConstants.NETWORK_SECURITY_GROUPS_KEY,
 				federatedNetworkSecurityGroup);
 
 		this.novaV2ComputeOpenStack = new OpenStackNovaV2ComputePlugin(properties);

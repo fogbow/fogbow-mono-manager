@@ -88,7 +88,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 	private HttpClient client;
 	private Integer httpClientTimeout;
 	private List<Flavor> flavors;
-	private String federatedNetworkSecurityGroups;
+	private String networkSecurityGroups;
 
 	private static final Logger LOGGER = Logger.getLogger(OpenStackNovaV2ComputePlugin.class);
 	
@@ -110,8 +110,8 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		networkV2APIEndpoint = properties.getProperty(
 				OpenStackConfigurationConstants.NETWORK_NOVAV2_URL_KEY) + NETWORK_V2_API_ENDPOINT;
 
-		federatedNetworkSecurityGroups = properties
-				.getProperty(OpenStackConfigurationConstants.FEDERATED_NETWORK_SECURITY_GROUPS_KEY);
+		networkSecurityGroups = properties
+				.getProperty(OpenStackConfigurationConstants.NETWORK_SECURITY_GROUPS_KEY);
 
 		// userdata
 		fogbowTermToOpenStack.put(OrderConstants.USER_DATA_TERM, "user_data");
@@ -179,18 +179,16 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		
 		String userdata = xOCCIAtt.get(OrderAttribute.USER_DATA_ATT.getValue());
 		
+		String[] parsedGroups = null;
 		String orderNetworkId = xOCCIAtt.get(OrderAttribute.NETWORK_ID.getValue());
 		if (orderNetworkId == null || orderNetworkId.isEmpty()) {
 			orderNetworkId = this.networkId;
-		}
-		
-		String[] parsedGroups = null;
-		if (xOCCIAtt.containsKey(OrderAttribute.FEDERATED_NETWORK_ID.getValue())) {
-			if (this.federatedNetworkSecurityGroups != null) {
-				parsedGroups = parseSecurityGroups(this.federatedNetworkSecurityGroups);
+		} else {
+			if (this.networkSecurityGroups != null) {
+				parsedGroups = parseSecurityGroups(this.networkSecurityGroups);
 			} else {
 				throw new IllegalArgumentException(
-						"Requesting Instance associated with a Federated Network Id, but there isn't Security Group in the Property File");
+						"Requesting Instance associated with a Network, but there isn't Security Group in the Property File");
 			}
 		}
 
