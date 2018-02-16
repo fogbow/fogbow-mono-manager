@@ -125,6 +125,13 @@ public class FederatedNetwork {
     }
     
     @Override
+	public String toString() {
+		return "FederatedNetwork [id=" + id + ", cidrNotation=" + cidrNotation + ", label=" + label
+				+ ", allowedMembers=" + allowedMembers + ", ipsServed=" + ipsServed + ", freedIps="
+				+ freedIps + ", orderIpMap=" + orderIpMap + "]";
+	}
+    
+    @Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
