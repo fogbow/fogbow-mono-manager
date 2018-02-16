@@ -24,7 +24,6 @@ public class FederatedNetwork {
 
     private int ipsServed;
     private Queue<String> freedIps;
-    private SubnetUtils.SubnetInfo subnetInfo;
     
     private Map<String, String> orderIpMap;
     
@@ -49,9 +48,10 @@ public class FederatedNetwork {
 		}
 		String freeIp = null;
 		if (freedIps.isEmpty()) {
-			int lowAddress = getSubnetInfo().asInteger(getSubnetInfo().getLowAddress());
+			SubnetUtils.SubnetInfo subnetInfo = this.getSubnetInfo();
+			int lowAddress = subnetInfo.asInteger(subnetInfo.getLowAddress());
 			int candidateIpAddress = lowAddress + ipsServed;
-			if (!getSubnetInfo().isInRange(candidateIpAddress)) {
+			if (!subnetInfo.isInRange(candidateIpAddress)) {
 				throw new SubnetAddressesCapacityReachedException(
 						FederatedNetwork.NO_FREE_IPS_MESSAGE);
 			} else {
@@ -66,20 +66,17 @@ public class FederatedNetwork {
 	}
 
     private SubnetUtils.SubnetInfo getSubnetInfo() {
-        if (subnetInfo == null) {
-            subnetInfo = new SubnetUtils(cidrNotation).getInfo();
-        }
-
-        return subnetInfo;
+        return new SubnetUtils(cidrNotation).getInfo();
     }
 
     public boolean isIpAddressFree(String address) {
-        if (getSubnetInfo().isInRange(address)) {
+    	SubnetUtils.SubnetInfo subnetInfo = this.getSubnetInfo();
+        if (subnetInfo.isInRange(address)) {
             if (freedIps.contains(address)) {
                 return true;
             } else {
-                int lowAddress = getSubnetInfo().asInteger(getSubnetInfo().getLowAddress());
-                if (getSubnetInfo().asInteger(address) >= lowAddress + ipsServed) {
+                int lowAddress = subnetInfo.asInteger(subnetInfo.getLowAddress());
+                if (subnetInfo.asInteger(address) >= lowAddress + ipsServed) {
                     return true;
                 }
             }
