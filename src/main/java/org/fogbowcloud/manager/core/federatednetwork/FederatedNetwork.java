@@ -6,21 +6,21 @@ import org.fogbowcloud.manager.core.model.FederationMember;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Queue;
+import java.util.Set;
 
 /**
  * Created by arnett on 05/02/18.
  */
 public class FederatedNetwork {
 
-    private String id;
+	private String id;
     private final String cidrNotation;
     private String label;
-    private Collection<FederationMember> allowedMembers;
+    private Set<FederationMember> allowedMembers;
 
     private int ipsServed;
     private Queue<String> freedIps;
@@ -30,7 +30,7 @@ public class FederatedNetwork {
     
     public static final String NO_FREE_IPS_MESSAGE = "Subnet Addresses Capacity Reached, there isn't free IPs to attach";
 
-    public FederatedNetwork(String id, String cidrNotation, String label, Collection<FederationMember> allowedMembers) {
+    public FederatedNetwork(String id, String cidrNotation, String label, Set<FederationMember> allowedMembers) {
         // the reason for this to start at '1' is because the first ip is allocated
         // as the virtual ip address
         this.ipsServed = 1;
@@ -123,7 +123,32 @@ public class FederatedNetwork {
         return getSubnetInfo().getCidrSignature();
     }
 
-    public Collection<FederationMember> getAllowedMembers() {
+    public Set<FederationMember> getAllowedMembers() {
         return allowedMembers;
     }
+    
+    @Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((id == null) ? 0 : id.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		FederatedNetwork other = (FederatedNetwork) obj;
+		if (id == null) {
+			if (other.id != null)
+				return false;
+		} else if (!id.equals(other.id))
+			return false;
+		return true;
+	}
 }

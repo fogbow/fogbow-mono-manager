@@ -107,7 +107,7 @@ public class FederatedNetworksController {
         int highAddress = subnetInfo.asInteger(subnetInfo.getHighAddress());
         return highAddress - lowAddress > 1;
     }
-
+    
     public FederatedNetwork getFederatedNetwork(Token.User user, String federatedNetworkId) {
         Collection<FederatedNetwork> allFederatedNetworks = this.getUserNetworks(user);
         for (FederatedNetwork federatedNetwork : allFederatedNetworks) {
@@ -136,6 +136,43 @@ public class FederatedNetworksController {
 					FederatedNetworkConstants.CANNOT_UPDATE_FEDERATED_NETWORK_IN_DATABASE
 							+ federatedNetworkId);
 		}
+	}
+
+	public String getCIDRFromFederatedNetwork(Token.User user, String federatedNetworkId) {
+		FederatedNetwork federatedNetwork = this.getFederatedNetwork(user, federatedNetworkId);
+		if (federatedNetwork == null) {
+			throw new IllegalArgumentException(
+					FederatedNetworkConstants.NOT_FOUND_FEDERATED_NETWORK_MESSAGE
+							+ federatedNetworkId);
+		}
+		return federatedNetwork.getCidr();
+	}
+
+	public String getAgentPublicIp() {
+		String agentPublicIp = getProperties()
+				.getProperty(FederatedNetworksController.FEDERATED_NETWORK_AGENT_PUBLIC_IP_PROP);
+		if (agentPublicIp == null) {
+			throw new IllegalArgumentException(
+					FederatedNetworkConstants.NOT_FOUND_PUBLIC_AGENT_IP_MESSAGE);
+		}
+		return agentPublicIp;
+	}
+	
+	public String getPrivateIpFromFederatedNetwork(Token.User user, String federatedNetworkId,
+			String orderId) throws SubnetAddressesCapacityReachedException {
+		FederatedNetwork federatedNetwork = this.getFederatedNetwork(user, federatedNetworkId);
+		if (federatedNetwork == null) {
+			throw new IllegalArgumentException(
+					FederatedNetworkConstants.NOT_FOUND_FEDERATED_NETWORK_MESSAGE
+							+ federatedNetworkId);
+		}
+		String privateIp = null;
+		privateIp = federatedNetwork.nextFreeIp(orderId);
+		if (!this.database.addFederatedNetwork(federatedNetwork, user)) {
+			throw new IllegalArgumentException(
+					FederatedNetworkConstants.CANNOT_UPDATE_FEDERATED_NETWORK_IN_DATABASE);
+		}
+		return privateIp;
 	}
 
 }

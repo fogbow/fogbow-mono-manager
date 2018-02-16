@@ -67,7 +67,6 @@ import org.fogbowcloud.manager.core.util.HttpRequestUtil;
 import org.fogbowcloud.manager.core.util.UserdataUtils;
 import org.fogbowcloud.manager.occi.ManagerDataStoreController;
 import org.fogbowcloud.manager.occi.OCCIConstants;
-import org.fogbowcloud.manager.occi.federatednetwork.FederatedNetworkConstants;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.instance.InstanceState;
 import org.fogbowcloud.manager.occi.member.UsageServerResource.ResourceUsage;
@@ -1895,33 +1894,20 @@ public class ManagerController {
 					.getAttValue(OrderAttribute.FEDERATED_NETWORK_ID.getValue());
 			if (order.isLocal() && federatedNetworkId != null && !federatedNetworkId.isEmpty()) {
 				LOGGER.info("Order associated with Federated Network Id: " + federatedNetworkId);
-				
-				FederatedNetwork federatedNetwork = this.federatedNetworksController
-						.getFederatedNetwork(order.getFederationToken().getUser(),
-								federatedNetworkId);
 
-				if (federatedNetwork == null) {
-					throw new IllegalArgumentException(
-							FederatedNetworkConstants.NOT_FOUND_FEDERATED_NETWORK_MESSAGE
-									+ federatedNetworkId);
-				}
-
+				String cidr = this.federatedNetworksController.getCIDRFromFederatedNetwork(
+						order.getFederationToken().getUser(), federatedNetworkId);
 				order.putAttValue(OrderAttribute.FEDERATED_NETWORK_CIDR_NOTATION_TERM.getValue(),
-						federatedNetwork.getCidr());
-				
-				LOGGER.info("Order CIDR: " + federatedNetwork.getCidr());
+						cidr);
+				LOGGER.info("Order CIDR: " + cidr);
 
-				String agentPublicIp = getProperties().getProperty(
-						FederatedNetworksController.FEDERATED_NETWORK_AGENT_PUBLIC_IP_PROP);
-				if (agentPublicIp == null) {
-					throw new IllegalArgumentException(
-							FederatedNetworkConstants.NOT_FOUND_PUBLIC_AGENT_IP_MESSAGE);
-				}
+				String agentPublicIp = this.federatedNetworksController.getAgentPublicIp();
 				order.putAttValue(OCCIConstants.FEDERATED_NETWORK_AGENT_PUBLIC_IP, agentPublicIp);
-				
 				LOGGER.info("Order Public Agent: " + agentPublicIp);
-				
-				String privateIp = federatedNetwork.nextFreeIp(order.getId());
+
+				String privateIp = this.federatedNetworksController
+						.getPrivateIpFromFederatedNetwork(order.getFederationToken().getUser(),
+								federatedNetworkId, order.getId());
 				order.putAttValue(OCCIConstants.FEDERATED_NETWORK_PRIVATE_IP, privateIp);
 				LOGGER.info("Order Federated Network IP: " + privateIp);
 			}
