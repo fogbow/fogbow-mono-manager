@@ -12,7 +12,10 @@ import org.fogbowcloud.manager.occi.model.HeaderUtils;
 import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.OCCIHeaders;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;
+import org.fogbowcloud.manager.occi.order.Order;
+import org.fogbowcloud.manager.occi.order.OrderAttribute;
 import org.fogbowcloud.manager.occi.order.OrderConstants;
+import org.fogbowcloud.manager.occi.order.OrderState;
 import org.restlet.data.MediaType;
 import org.restlet.engine.adapter.HttpRequest;
 import org.restlet.representation.StringRepresentation;
@@ -26,6 +29,7 @@ public class FederatedNetworkResource extends ServerResource {
 	private static final Logger LOGGER = Logger.getLogger(FederatedNetworkResource.class);
 	private static final String FILE_SEPARATOR = "/";
 
+	public static final String FEDERATED_NETWORK_IN_USE = "Federated network cannot be deleted because it is in use.";
 	public static final String NO_NETWORKS_MESSAGE = "No federated networks.";
 
 	@Get
@@ -246,6 +250,7 @@ public class FederatedNetworkResource extends ServerResource {
 			LOGGER.info("Federated Network ID not found.");
 			return ResponseConstants.NOT_FOUND;
 		}
+		checkIfFederatedNetworkIsInUse(application, federationAuthToken, federatedNetworkId);
 
 		try {
 			application.removeInstance(federationAuthToken, federatedNetworkId, OrderConstants.FEDERATED_NETWORK_TERM);
@@ -255,5 +260,22 @@ public class FederatedNetworkResource extends ServerResource {
 		LOGGER.info("Federated Network with ID: " + federatedNetworkId + " was deleted.");
 
 		return ResponseConstants.OK;
+	}
+
+	private void checkIfFederatedNetworkIsInUse(OCCIApplication application,
+												String federationAuthToken, String federatedNetworkId) {
+		List<Order> ordersFromUser = application.getOrdersFromUser(federationAuthToken);
+		for (Order order : ordersFromUser) {
+			OrderState orderState = order.getState();
+			if (order.getResourceKind()
+					.equals(OrderConstants.COMPUTE_TERM)
+					&& orderState.in(OrderState.FULFILLED)) {
+				String computeOrderFedNetworkId = order
+						.getAttValue(OrderAttribute.FEDERATED_NETWORK_ID.getValue());
+				if (computeOrderFedNetworkId.equals(federatedNetworkId)) {
+					throw new OCCIException(ErrorType.BAD_REQUEST, FEDERATED_NETWORK_IN_USE);
+				}
+			}
+		}
 	}
 }
