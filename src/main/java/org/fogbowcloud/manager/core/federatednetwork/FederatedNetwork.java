@@ -7,7 +7,9 @@ import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Queue;
 
 /**
@@ -24,6 +26,8 @@ public class FederatedNetwork {
     private Queue<String> freedIps;
     private SubnetUtils.SubnetInfo subnetInfo;
     
+    private Map<String, String> orderIpMap;
+    
     public static final String NO_FREE_IPS_MESSAGE = "Subnet Addresses Capacity Reached, there isn't free IPs to attach";
 
     public FederatedNetwork(String id, String cidrNotation, String label, Collection<FederationMember> allowedMembers) {
@@ -31,6 +35,7 @@ public class FederatedNetwork {
         // as the virtual ip address
         this.ipsServed = 1;
         this.freedIps = new LinkedList<String>();
+        this.orderIpMap = new HashMap<String, String>();
 
         this.id = id;
         this.cidrNotation = cidrNotation;
@@ -38,20 +43,27 @@ public class FederatedNetwork {
         this.allowedMembers = allowedMembers;
     }
 
-    public String nextFreeIp() throws SubnetAddressesCapacityReachedException {
-        if (freedIps.isEmpty()) {
-            int lowAddress = getSubnetInfo().asInteger(getSubnetInfo().getLowAddress());
-            int candidateIpAddress = lowAddress + ipsServed;
-            if (!getSubnetInfo().isInRange(candidateIpAddress)) {
-                throw new SubnetAddressesCapacityReachedException(FederatedNetwork.NO_FREE_IPS_MESSAGE);
-            } else {
-                ipsServed++;
-                return toIpAddress(candidateIpAddress);
-            }
-        } else {
-            return freedIps.poll();
-        }
-    }
+	public String nextFreeIp(String orderId) throws SubnetAddressesCapacityReachedException {
+		if (this.orderIpMap.containsKey(orderId)) {
+			return this.orderIpMap.get(orderId);
+		}
+		String freeIp = null;
+		if (freedIps.isEmpty()) {
+			int lowAddress = getSubnetInfo().asInteger(getSubnetInfo().getLowAddress());
+			int candidateIpAddress = lowAddress + ipsServed;
+			if (!getSubnetInfo().isInRange(candidateIpAddress)) {
+				throw new SubnetAddressesCapacityReachedException(
+						FederatedNetwork.NO_FREE_IPS_MESSAGE);
+			} else {
+				ipsServed++;
+				freeIp = toIpAddress(candidateIpAddress);
+			}
+		} else {
+			freeIp = freedIps.poll();
+		}
+		this.orderIpMap.put(orderId, freeIp);
+		return freeIp;
+	}
 
     private SubnetUtils.SubnetInfo getSubnetInfo() {
         if (subnetInfo == null) {
