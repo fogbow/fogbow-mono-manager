@@ -12,6 +12,7 @@ import org.fogbowcloud.manager.occi.model.HeaderUtils;
 import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.OCCIHeaders;
 import org.fogbowcloud.manager.occi.model.ResponseConstants;
+import org.fogbowcloud.manager.occi.order.OrderConstants;
 import org.restlet.data.MediaType;
 import org.restlet.engine.adapter.HttpRequest;
 import org.restlet.representation.StringRepresentation;
@@ -247,7 +248,7 @@ public class FederatedNetworkResource extends ServerResource {
 		}
 
 		try {
-			application.deleteFederatedNetwork(federationAuthToken, federatedNetworkId);
+			application.removeInstance(federationAuthToken, federatedNetworkId, OrderConstants.FEDERATED_NETWORK_TERM);
 		} catch (Exception e) {
 			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
 		}
