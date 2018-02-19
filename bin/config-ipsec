@@ -1,18 +1,35 @@
 #!/bin/sh
 set -e
+absoluteIpsecConfPath="/etc/ipsec.conf"
+firstNetwork() {
+        isFirst=$( cat $absoluteIpsecConfPath | grep "leftsubnet" | awk '(index($1, "#") != 0) {print 0}' )
+        if [ -n "$isFirst" ]; then
+                echo true
+        else
+		echo false
+        fi
+}
+
 left=$1
 leftid=$2
 leftsubnet=$3
 virtualAddress=$4
-config_setup="config setup\n charondebug="all"\n uniqueids=yes\n strictcrlpolicy=no\nconn %default\nconn tunnel"
-tunnel_param_configs=" left="$left"\n leftid"=$leftid"\n leftsubnet="$leftsubnet"\n right=%any\n rightsourceip=%config"
-other_tunnel_configs=" ike=aes256-sha2_256-modp1024!\n esp=aes256-sha2_256!\n keyingtries=0\n ikelifetime=1h\n lifetime=8h\n dpddelay=30\n dpdtimeout=120\n dpdaction=restart\n authby=secret\n auto=start\n keyexchange=ikev2\n type=tunnel"
+if [ "$( firstNetwork )" = "true" ]; then
+	config_setup="config setup\n charondebug="all"\n uniqueids=yes\n strictcrlpolicy=no\nconn %default\nconn tunnel"
+	tunnel_param_configs=" left="$left"\n leftid"=$leftid"\n leftsubnet="$leftsubnet"\n right=%any\n rightsourceip=%config"
+	other_tunnel_configs=" ike=aes256-sha2_256-modp1024!\n esp=aes256-sha2_256!\n keyingtries=0\n ikelifetime=1h\n lifetime=8h\n dpddelay=30\n dpdtimeout=120\n dpdaction=restart\n authby=secret\n auto=start\n keyexchange=ikev2\n type=tunnel"
 
-echo "$config_setup
-$tunnel_param_configs
-$other_tunnel_configs" > /etc/ipsec.conf
-sysctl net.ipv4.ip_forward=1
-sysctl net.ipv6.conf.all.forwarding=1
+	echo "$config_setup
+	$tunnel_param_configs
+	$other_tunnel_configs" > $absoluteIpsecConfPath
+	sysctl net.ipv4.ip_forward=1
+	sysctl net.ipv6.conf.all.forwarding=1
+else
+	leftSubnets=$( cat $absoluteIpsecConfPath | grep leftsubnet | awk '{split($0,a,"="); print a[2]}' )
+	newSubnet=",$leftsubnet"
+	awk -v old="$leftSubnets" -v new="$leftSubnets$newSubnet" '{sub(old, new)}1' $absoluteIpsecConfPath > $absoluteIpsecConfPath.tmp
+	mv $absoluteIpsecConfPath.tmp $absoluteIpsecConfPath
+fi
 
 veth_size=`ip link show | grep veth | wc -l`
 peer_veth=`expr "$veth_size" + "1"`
@@ -20,4 +37,3 @@ ip l add dev veth$veth_size type veth peer name veth$peer_veth
 ip addr add $virtualAddress dev veth$veth_size
 ifconfig veth$veth_size up
 ipsec restart
-
