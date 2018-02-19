@@ -17,6 +17,7 @@ import org.restlet.engine.adapter.HttpRequest;
 import org.restlet.representation.StringRepresentation;
 import org.restlet.resource.Get;
 import org.restlet.resource.Put;
+import org.restlet.resource.Delete;
 import org.restlet.resource.ServerResource;
 
 public class FederatedNetworkResource extends ServerResource {
@@ -175,7 +176,7 @@ public class FederatedNetworkResource extends ServerResource {
 
 		Set<String> membersSet = getMembersSet(request);
 		LOGGER.info("Federated Network Request Members: " + membersSet.toString());
-		
+
 		try {
 			application.updateFederatedNetworkMembers(federationAuthToken, federatedNetworkId,
 					membersSet);
@@ -225,5 +226,33 @@ public class FederatedNetworkResource extends ServerResource {
 		Set<String> membersSet = new HashSet<String>(membersList);
 		return membersSet;
 	}
-	
+
+	@Delete
+	public String deleteFederatedNetwork() {
+		LOGGER.info("HTTP Delete to Federated Network");
+
+		OCCIApplication application = (OCCIApplication) getApplication();
+		HttpRequest request = (HttpRequest) getRequest();
+		String federationAuthToken = HeaderUtils.getAuthToken(request.getHeaders(), getResponse(),
+				application.getAuthenticationURI());
+
+		LOGGER.debug("Federation Authentication Token: " + federationAuthToken);
+
+		String federatedNetworkId;
+		try{
+			federatedNetworkId = getFederatedNetworkId();
+		} catch (OCCIException e){
+			LOGGER.info("Federated Network ID not found.");
+			return ResponseConstants.NOT_FOUND;
+		}
+
+		try {
+			application.deleteFederatedNetwork(federationAuthToken, federatedNetworkId);
+		} catch (Exception e) {
+			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
+		}
+		LOGGER.info("Federated Network with ID: " + federatedNetworkId + " was deleted.");
+
+		return ResponseConstants.OK;
+	}
 }

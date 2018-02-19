@@ -2295,6 +2295,11 @@ public class ManagerController {
 		federatedNetworksController.updateFederatedNetworkMembers(token.getUser(), federatedNetworkId, membersSet);
 	}
 
+	public void deleteFederatedNetwork(String federationAuthToken, String federatedNetworkId) {
+		Token token = this.getToken(federationAuthToken);
+		federatedNetworksController.deleteFederatedNetwork(token.getUser(), federatedNetworkId);
+	}
+
 	protected class FailedBatch {
 		private Map<String, FailedBatchType> failedBatches = new HashMap<String, FailedBatchType>();
 

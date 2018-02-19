@@ -90,10 +90,6 @@ public class FederatedNetworksController {
         return properties;
     }
 
-    public boolean delete(String id) {
-        return database.delete(id);
-    }
-
     public Collection<FederatedNetwork> getUserNetworks(Token.User user) {
         return database.getUserNetworks(user);
     }
@@ -178,4 +174,20 @@ public class FederatedNetworksController {
 		return privateIp;
 	}
 
+    public void deleteFederatedNetwork(User user, String federatedNetworkId) {
+        LOGGER.info("Initializing delete method, user: " + user + ", federated network id: " + federatedNetworkId);
+        FederatedNetwork federatedNetwork = this.getFederatedNetwork(user, federatedNetworkId);
+        if (federatedNetwork == null) {
+            throw new IllegalArgumentException(
+                    FederatedNetworkConstants.NOT_FOUND_FEDERATED_NETWORK_MESSAGE
+                            + federatedNetworkId);
+        }
+        LOGGER.info("Trying to delete federated network: " + federatedNetwork.toString());
+        if (!this.database.delete(federatedNetwork, user)) {
+            LOGGER.info("Error to delete federated network: " + federatedNetwork.toString());
+            throw new IllegalArgumentException(
+                    FederatedNetworkConstants.CANNOT_UPDATE_FEDERATED_NETWORK_IN_DATABASE
+                            + federatedNetworkId);
+        }
+    }
 }
