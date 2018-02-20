@@ -950,6 +950,8 @@ public class ManagerController {
 				this.storagePlugin.removeInstance(localToken, instanceId);
 			} else if (resourceKind.equals(OrderConstants.NETWORK_TERM)) {
 				this.networkPlugin.removeInstance(localToken, instanceId);
+			} else if (resourceKind.equals(OrderConstants.FEDERATED_NETWORK_TERM)) {
+				this.federatedNetworksController.deleteFederatedNetwork(order.getFederationToken().getUser(), instanceId);
 			}
 		} else {					
 			removeRemoteInstance(order);
@@ -1027,7 +1029,10 @@ public class ManagerController {
 		List<Order> userOrders = managerDataStoreController.getAllLocalOrders();
 
 		for (Order order : userOrders) {
-			if (instanceId.equals(order.getInstanceId() + Order.SEPARATOR_GLOBAL_ID + order.getProvidingMemberId())) {
+			// TODO check when resource kind (federated network).
+			if ((order.getResourceKind().equals(OrderConstants.FEDERATED_NETWORK_TERM)
+					&&  instanceId.equals(order.getInstanceId())) ||
+					instanceId.equals(order.getInstanceId() + Order.SEPARATOR_GLOBAL_ID + order.getProvidingMemberId())) {
 				if (!order.getFederationToken().getUser().getId().equals(userId)) {
 					throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 				}
@@ -2318,7 +2323,16 @@ public class ManagerController {
 	public void updateFederatedNetworkMembers(String authToken, String federatedNetworkId,
 			Set<String> membersSet) {
 		Token token = this.getToken(authToken);
-		federatedNetworksController.updateFederatedNetworkMembers(token.getUser(), federatedNetworkId, membersSet);
+		Set<FederationMember> federationMemberSet = new HashSet<>();
+		for (String member : membersSet){
+			federationMemberSet.add(getFederationMember(member));
+		}
+		federatedNetworksController.updateFederatedNetworkMembers(token.getUser(), federatedNetworkId, federationMemberSet);
+	}
+
+	public void deleteFederatedNetwork(String federationAuthToken, String federatedNetworkId) {
+		Token token = this.getToken(federationAuthToken);
+		federatedNetworksController.deleteFederatedNetwork(token.getUser(), federatedNetworkId);
 	}
 
 	protected class FailedBatch {

@@ -14,6 +14,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -106,6 +107,45 @@ public class TestFederatedNetworksDB {
     	String jsonArray = new String("[{\"id\":\"4ba56476-cf53-4b9b-90ed-468e9d216940\",\"cidrNotation\":\"10.0.0.0/24\",\"label\":\"testetst\",\"allowedMembers\":[{\"lastTime\":1518809284222,\"id\":\"manager.atmosphere.secure.lsd.ufcg.edu.br\"},{\"lastTime\":1518809284222,\"id\":\"manager.atmosphere.lsd.ufcg.edu.br\"}],\"ipsServed\":1,\"freedIps\":[],\"orderIpMap\":{}}]");
     	Set<FederatedNetwork> fn = federatedNetworksDB.parseFederatedNetworks(jsonArray);
     	Assert.assertEquals(1, fn.size());
+    }
+
+
+    @Test
+    public void testRemoveFederatedNetworks() {
+        FederatedNetworksDB federatedNetworksDB = new FederatedNetworksDB(DATABASE_FILE_PATH);
+
+        Token.User user = new Token.User("userA", "A");
+
+        String id = "network-1";
+        String cidrNotation = "10.0.0.0/24";
+        String label = "fakeLabel";
+        Set<FederationMember> members = new HashSet<FederationMember>();
+        members.add(new FederationMember("memberA"));
+        FederatedNetwork fedNet = new FederatedNetwork(id, cidrNotation, label, members);
+
+        boolean added = federatedNetworksDB.addFederatedNetwork(fedNet, user);
+        assertTrue(added);
+
+        assertEquals(1, federatedNetworksDB.getAllFederatedNetworks().size());
+
+        Collection<FederatedNetwork> userNetworks = federatedNetworksDB.getUserNetworks(user);
+        assertEquals(1, userNetworks.size());
+
+        boolean removed = federatedNetworksDB.delete(fedNet, user);
+        assertTrue(removed);
+
+        assertEquals(0, federatedNetworksDB.getAllFederatedNetworks().size());
+
+        userNetworks = federatedNetworksDB.getUserNetworks(user);
+        assertEquals(0, userNetworks.size());
+
+        removed = federatedNetworksDB.delete(fedNet, user);
+        assertFalse(removed);
+
+        assertEquals(0, federatedNetworksDB.getAllFederatedNetworks().size());
+
+        userNetworks = federatedNetworksDB.getUserNetworks(user);
+        assertEquals(0, userNetworks.size());
     }
 
 }

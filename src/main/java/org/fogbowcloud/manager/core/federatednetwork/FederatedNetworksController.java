@@ -90,10 +90,6 @@ public class FederatedNetworksController {
         return properties;
     }
 
-    public boolean delete(String id) {
-        return database.delete(id);
-    }
-
     public Collection<FederatedNetwork> getUserNetworks(Token.User user) {
         return database.getUserNetworks(user);
     }
@@ -120,16 +116,17 @@ public class FederatedNetworksController {
     }
 
 	public void updateFederatedNetworkMembers(User user, String federatedNetworkId,
-			Set<String> membersSet) {
+			Set<FederationMember> federationMemberSet) {
 		FederatedNetwork federatedNetwork = this.getFederatedNetwork(user, federatedNetworkId);
 		if (federatedNetwork == null) {
 			throw new IllegalArgumentException(
 					FederatedNetworkConstants.NOT_FOUND_FEDERATED_NETWORK_MESSAGE
 							+ federatedNetworkId);
 		}
-		for (String member : membersSet) {
-			federatedNetwork.addFederationNetworkMember(new FederationMember(member));
-		}
+		if (federationMemberSet == null){
+
+        }
+        federatedNetwork.setAllowedMembers(federationMemberSet);
 
 		if (!this.database.addFederatedNetwork(federatedNetwork, user)) {
 			throw new IllegalArgumentException(
@@ -190,4 +187,50 @@ public class FederatedNetworksController {
 		return allowedMembers.contains(member);
 	}
 
+    public void deleteFederatedNetwork(User user, String federatedNetworkId) {
+        LOGGER.info("Initializing delete method, user: " + user + ", federated network id: " + federatedNetworkId);
+        FederatedNetwork federatedNetwork = this.getFederatedNetwork(user, federatedNetworkId);
+        if (federatedNetwork == null) {
+            throw new IllegalArgumentException(
+                    FederatedNetworkConstants.NOT_FOUND_FEDERATED_NETWORK_MESSAGE
+                            + federatedNetworkId);
+        }
+        LOGGER.info("Trying to delete federated network: " + federatedNetwork.toString());
+        //TODO: check if removeFederatedNetworkAgent is false (whether don't find script file, for example).
+        if(removeFederatedNetworkAgent(federatedNetwork.getCidr()) == true){
+            LOGGER.info("Successfully deleted federated network: " + federatedNetwork.toString() + " on agent.");
+            if (!this.database.delete(federatedNetwork, user)) {
+                LOGGER.info("Error to delete federated network: " + federatedNetwork.toString());
+                throw new IllegalArgumentException(
+                        FederatedNetworkConstants.CANNOT_UPDATE_FEDERATED_NETWORK_IN_DATABASE
+                                + federatedNetworkId);
+            }
+        }
+    }
+
+    public boolean removeFederatedNetworkAgent(String cidrNotation) {
+        String permissionFilePath = getProperties().getProperty(ConfigurationConstants.FEDERATED_NETWORK_AGENT_PERMISSION_FILE_PATH);
+        String user = getProperties().getProperty(ConfigurationConstants.FEDERATED_NETWORK_AGENT_USER);
+        String serverAddress = getProperties().getProperty(ConfigurationConstants.FEDERATED_NETWORK_AGENT_ADDRESS);
+
+        ProcessBuilder builder = new ProcessBuilder("ssh", "-o", "UserKnownHostsFile=/dev/null", "-o",
+                "StrictHostKeyChecking=no", "-i", permissionFilePath, user + "@" + serverAddress,
+                "sudo", "/home/ubuntu/remove-network", cidrNotation);
+        LOGGER.info("Trying to remove network on agent with atts (" + cidrNotation + "): " + builder.command());
+
+        int resultCode = 0;
+        try {
+            Process process = builder.start();
+            LOGGER.info("Trying remove network on agent with CIDR (" + cidrNotation + "). Output : " + ProcessUtil.getOutput(process));
+            LOGGER.info("Trying remove network on agent with CIDR (" + cidrNotation + "). Error : " + ProcessUtil.getError(process));
+            resultCode = process.waitFor();
+            if (resultCode == 0) {
+                return true;
+            }
+        } catch (Exception e) {
+            LOGGER.error("", e);
+        }
+        LOGGER.error("Is not possible remove network on agent. Process command: " + resultCode);
+        return false;
+    }
 }

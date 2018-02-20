@@ -77,8 +77,25 @@ public class FederatedNetworksDB {
 		return true;
 	}
 
-    public boolean delete(String id) {
-        throw new NotImplementedException();
+    public boolean delete(FederatedNetwork federatedNetwork, Token.User user) {
+        DB database = openDatabase();
+        HTreeMap<String, String> userIdToFedNetworks = extractHTreeMap(database);
+
+        try {
+            Set<FederatedNetwork> federatedNetworks = getFederatedNetworks(userIdToFedNetworks,
+                    user);
+            if (federatedNetworks.contains(federatedNetwork)) {
+                federatedNetworks.remove(federatedNetwork);
+            } else {
+                return false;
+            }
+            userIdToFedNetworks.put(user.getId(), gson.toJson(federatedNetworks));
+        } finally {
+            database.commit();
+            database.close();
+        }
+
+        return true;
     }
 
     public Set<FederatedNetwork> getUserNetworks(Token.User user) {
@@ -109,5 +126,4 @@ public class FederatedNetworksDB {
 
         return allFederatedNetworks;
     }
-
 }
