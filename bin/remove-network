@@ -1,0 +1,11 @@
+#!/bin/sh
+set -e
+
+absoluteIpsecConfPath="/etc/ipsec.conf"
+leftsubnet=$1
+sed -i 's@'$leftsubnet'@@g' $absoluteIpsecConfPath
+sed -i 's@[,]\{2,\}@,@g' $absoluteIpsecConfPath
+sed -i 's@=,@=@g' $absoluteIpsecConfPath
+sed -i 's@,$@@g' $absoluteIpsecConfPath
+ipsec restart
+
