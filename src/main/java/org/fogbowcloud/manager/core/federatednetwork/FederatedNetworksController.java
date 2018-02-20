@@ -177,5 +177,17 @@ public class FederatedNetworksController {
 		}
 		return privateIp;
 	}
+	
+	public boolean isMemberAllowedInFederatedNetwork(Token.User user, String federatedNetworkId,
+			FederationMember member) {
+		FederatedNetwork federatedNetwork = this.getFederatedNetwork(user, federatedNetworkId);
+		if (federatedNetwork == null) {
+			throw new IllegalArgumentException(
+					FederatedNetworkConstants.NOT_FOUND_FEDERATED_NETWORK_MESSAGE
+							+ federatedNetworkId);
+		}
+		Set<FederationMember> allowedMembers = federatedNetwork.getAllowedMembers();
+		return allowedMembers.contains(member);
+	}
 
 }

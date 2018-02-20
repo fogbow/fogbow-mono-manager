@@ -1642,11 +1642,10 @@ public class ManagerController {
 			if (order.isIntoValidPeriod()) {
 				boolean isFulfilled = false;
 				
-				
 				if (order.isLocal()) {
 					String requirements = order.getRequirements();
 					List<FederationMember> allowedFederationMembers = getAllowedFederationMembers(requirements);
-					normalizeOrderCompute(order);					
+					normalizeOrderCompute(order);				
 					
 					if (RequirementsHelper.matchLocation(requirements,
 							properties.getProperty(ConfigurationConstants.XMPP_JID_KEY))) {
@@ -1895,8 +1894,36 @@ public class ManagerController {
 			if (order.isLocal() && federatedNetworkId != null && !federatedNetworkId.isEmpty()) {
 				LOGGER.info("Order associated with Federated Network Id: " + federatedNetworkId);
 
-				String cidr = this.federatedNetworksController.getCIDRFromFederatedNetwork(
-						order.getFederationToken().getUser(), federatedNetworkId);
+				Token.User user = order.getFederationToken().getUser();
+				LOGGER.info("Order User: " + user);
+
+				FederationMember requestingMember = this
+						.getFederationMember(order.getRequestingMemberId());
+				if (requestingMember == null) {
+					throw new IllegalArgumentException("Null Requesting Member");
+				}
+				FederationMember providingMember = this
+						.getFederationMember(order.getProvidingMemberId());
+				if (providingMember == null) {
+					throw new IllegalArgumentException("Null Providing Member");
+				}
+
+				LOGGER.info("Order Requesting Member: " + requestingMember);
+				LOGGER.info("Order Providing Member: " + providingMember);
+
+				if (!this.federatedNetworksController.isMemberAllowedInFederatedNetwork(user,
+						federatedNetworkId, requestingMember)) {
+					throw new IllegalArgumentException("Member: " + requestingMember
+							+ " is not allowed in Federated Network: " + federatedNetworkId);
+				}
+				if (!this.federatedNetworksController.isMemberAllowedInFederatedNetwork(user,
+						federatedNetworkId, providingMember)) {
+					throw new IllegalArgumentException("Member: " + providingMember
+							+ " is not allowed in Federated Network: " + federatedNetworkId);
+				}
+
+				String cidr = this.federatedNetworksController.getCIDRFromFederatedNetwork(user,
+						federatedNetworkId);
 				order.putAttValue(OrderAttribute.FEDERATED_NETWORK_CIDR_NOTATION_TERM.getValue(),
 						cidr);
 				LOGGER.info("Order CIDR: " + cidr);
@@ -1906,8 +1933,7 @@ public class ManagerController {
 				LOGGER.info("Order Public Agent: " + agentPublicIp);
 
 				String privateIp = this.federatedNetworksController
-						.getPrivateIpFromFederatedNetwork(order.getFederationToken().getUser(),
-								federatedNetworkId, order.getId());
+						.getPrivateIpFromFederatedNetwork(user, federatedNetworkId, order.getId());
 				order.putAttValue(OCCIConstants.FEDERATED_NETWORK_PRIVATE_IP, privateIp);
 				LOGGER.info("Order Federated Network IP: " + privateIp);
 			}
