@@ -37,26 +37,46 @@ public class TestFederatedNetworksController {
 		String federatedNetworkId = controller.create(user, label, cidrNotation, members);
 		Assert.assertNotNull(federatedNetworkId);
 		Assert.assertEquals(1, controller.getUserNetworks(user).size());
+		int allowedMembersSize = getAllowedMembersInFederatedNetwork(controller, user,federatedNetworkId);
+		Assert.assertEquals(0, allowedMembersSize);
 
-		Set<String> newMembers = new HashSet<String>();
-		newMembers.add("fake-member01");
-		newMembers.add("fake-member02");
-		controller.updateFederatedNetworkMembers(user, federatedNetworkId, newMembers);
+		Set<FederationMember> federationMembers = new HashSet<>();
+		federationMembers.add(new FederationMember("fake-member01"));
+		federationMembers.add(new FederationMember("fake-member02"));
+		controller.updateFederatedNetworkMembers(user, federatedNetworkId, federationMembers);
+		allowedMembersSize = getAllowedMembersInFederatedNetwork(controller, user,federatedNetworkId);
+		Assert.assertEquals(2, allowedMembersSize);
 
-		FederatedNetwork fn = controller.getFederatedNetwork(user, federatedNetworkId);
-		Assert.assertEquals(2, fn.getAllowedMembers().size());
+		FederationMember thirdMember = new FederationMember("fake-member03");
+		federationMembers.add(thirdMember);
+		controller.updateFederatedNetworkMembers(user, federatedNetworkId, federationMembers);
+		allowedMembersSize = getAllowedMembersInFederatedNetwork(controller, user,federatedNetworkId);
+		Assert.assertEquals(3, allowedMembersSize);
+
+		federationMembers.remove(thirdMember);
+		controller.updateFederatedNetworkMembers(user, federatedNetworkId, federationMembers);
+		allowedMembersSize = getAllowedMembersInFederatedNetwork(controller, user,federatedNetworkId);
+		Assert.assertEquals(2, allowedMembersSize);
+
+		federationMembers.add(thirdMember);
+		controller.updateFederatedNetworkMembers(user, federatedNetworkId, federationMembers);
+
 
 		String ipOne = controller.getPrivateIpFromFederatedNetwork(user, federatedNetworkId,
 				"fake-orderId");
 		String ipTwo = controller.getPrivateIpFromFederatedNetwork(user, federatedNetworkId,
 				"fake-orderId2");
 
-		fn = controller.getFederatedNetwork(user, federatedNetworkId);
 		Assert.assertNotEquals(ipOne, ipTwo);
 
 		String ipThree = controller.getPrivateIpFromFederatedNetwork(user, federatedNetworkId,
 				"fake-orderId3");
 		Assert.assertNotEquals(ipOne, ipThree);
+	}
+
+	private int getAllowedMembersInFederatedNetwork(FederatedNetworksController controller, Token.User user, String federatedNetworkId){
+		FederatedNetwork fn = controller.getFederatedNetwork(user, federatedNetworkId);
+		return fn.getAllowedMembers().size();
 	}
 
 	@Test

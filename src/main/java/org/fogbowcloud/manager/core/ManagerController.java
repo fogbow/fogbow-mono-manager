@@ -2297,7 +2297,11 @@ public class ManagerController {
 	public void updateFederatedNetworkMembers(String authToken, String federatedNetworkId,
 			Set<String> membersSet) {
 		Token token = this.getToken(authToken);
-		federatedNetworksController.updateFederatedNetworkMembers(token.getUser(), federatedNetworkId, membersSet);
+		Set<FederationMember> federationMemberSet = new HashSet<>();
+		for (String member : membersSet){
+			federationMemberSet.add(getFederationMember(member));
+		}
+		federatedNetworksController.updateFederatedNetworkMembers(token.getUser(), federatedNetworkId, federationMemberSet);
 	}
 
 	public void deleteFederatedNetwork(String federationAuthToken, String federatedNetworkId) {

@@ -116,16 +116,17 @@ public class FederatedNetworksController {
     }
 
 	public void updateFederatedNetworkMembers(User user, String federatedNetworkId,
-			Set<String> membersSet) {
+			Set<FederationMember> federationMemberSet) {
 		FederatedNetwork federatedNetwork = this.getFederatedNetwork(user, federatedNetworkId);
 		if (federatedNetwork == null) {
 			throw new IllegalArgumentException(
 					FederatedNetworkConstants.NOT_FOUND_FEDERATED_NETWORK_MESSAGE
 							+ federatedNetworkId);
 		}
-		for (String member : membersSet) {
-			federatedNetwork.addFederationNetworkMember(new FederationMember(member));
-		}
+		if (federationMemberSet == null){
+
+        }
+        federatedNetwork.setAllowedMembers(federationMemberSet);
 
 		if (!this.database.addFederatedNetwork(federatedNetwork, user)) {
 			throw new IllegalArgumentException(

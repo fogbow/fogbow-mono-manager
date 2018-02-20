@@ -123,7 +123,19 @@ public class FederatedNetwork {
     public Set<FederationMember> getAllowedMembers() {
         return allowedMembers;
     }
-    
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public void setLabel(String label) {
+        this.label = label;
+    }
+
+    public void setAllowedMembers(Set<FederationMember> allowedMembers) {
+        this.allowedMembers = allowedMembers;
+    }
+
     @Override
 	public String toString() {
 		return "FederatedNetwork [id=" + id + ", cidrNotation=" + cidrNotation + ", label=" + label
