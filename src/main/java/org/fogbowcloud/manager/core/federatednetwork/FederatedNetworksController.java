@@ -124,7 +124,8 @@ public class FederatedNetworksController {
 							+ federatedNetworkId);
 		}
 		if (federationMemberSet == null){
-
+            throw new IllegalArgumentException(
+                    FederatedNetworkConstants.INVALID_MEMBER_FEDERATED_NETWORK_MESSAGE);
         }
         federatedNetwork.setAllowedMembers(federationMemberSet);
 
