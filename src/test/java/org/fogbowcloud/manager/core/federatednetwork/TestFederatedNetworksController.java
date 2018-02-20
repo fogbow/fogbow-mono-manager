@@ -58,5 +58,53 @@ public class TestFederatedNetworksController {
 				"fake-orderId3");
 		Assert.assertNotEquals(ipOne, ipThree);
 	}
+	
+	@Test
+	public void testIsMemberAllowedInFederatedNetwork() {
+		Properties properties = null;
+		FederatedNetworksController controller = Mockito
+				.spy(new FederatedNetworksController(properties, DATABASE_FILE_PATH));
+		Mockito.doReturn(true).when(controller).callFederatedNetworkAgent(Mockito.anyString(),
+				Mockito.anyString());
+
+		Token.User user = new Token.User("hardCodedId", "hardCodedName");
+		String label = "hardCodedLabel";
+		String cidrNotation = "10.0.0.0/24";
+		HashSet<FederationMember> members = new HashSet<>();
+
+		String federatedNetworkId = controller.create(user, label, cidrNotation, members);
+		Assert.assertNotNull(federatedNetworkId);
+		Assert.assertEquals(1, controller.getUserNetworks(user).size());
+		
+		Assert.assertFalse(controller.isMemberAllowedInFederatedNetwork(user, federatedNetworkId, new FederationMember("fake-member")));
+
+		Set<String> newMembers = new HashSet<String>();
+		newMembers.add("fake-member01");
+		newMembers.add("fake-member02");
+		controller.updateFederatedNetworkMembers(user, federatedNetworkId, newMembers);
+		
+		Assert.assertTrue(controller.isMemberAllowedInFederatedNetwork(user, federatedNetworkId, new FederationMember("fake-member01")));
+		Assert.assertTrue(controller.isMemberAllowedInFederatedNetwork(user, federatedNetworkId, new FederationMember("fake-member02")));
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testIsMemberAllowedInFederatedNetworkNullFN() {
+		Properties properties = null;
+		FederatedNetworksController controller = Mockito
+				.spy(new FederatedNetworksController(properties, DATABASE_FILE_PATH));
+		Mockito.doReturn(true).when(controller).callFederatedNetworkAgent(Mockito.anyString(),
+				Mockito.anyString());
+
+		Token.User user = new Token.User("hardCodedId", "hardCodedName");
+		String label = "hardCodedLabel";
+		String cidrNotation = "10.0.0.0/24";
+		HashSet<FederationMember> members = new HashSet<>();
+
+		String federatedNetworkId = controller.create(user, label, cidrNotation, members);
+		Assert.assertNotNull(federatedNetworkId);
+		Assert.assertEquals(1, controller.getUserNetworks(user).size());
+		
+		controller.isMemberAllowedInFederatedNetwork(user, federatedNetworkId + "error", new FederationMember("fake-member"));
+	}
 
 }
