@@ -228,7 +228,7 @@ public class HeaderUtils {
 	}
 
 	public static List<String> getValueHeaderPerName(String nameHeader,Series<Header> headers) {
-		List<String> listValuesHeaders = new ArrayList<String>();
+		List<String> listValuesHeaders = new ArrayList<>();
 		for (Header header : headers) {
 			if (header.getName().equalsIgnoreCase(HeaderUtils.normalize(nameHeader))) {
 				listValuesHeaders.add(header.getValue());

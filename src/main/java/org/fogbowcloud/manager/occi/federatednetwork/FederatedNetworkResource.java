@@ -4,6 +4,7 @@ import java.util.*;
 
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.federatednetwork.FederatedNetwork;
+import org.fogbowcloud.manager.core.federatednetwork.FederatedNetworkInUseException;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.occi.OCCIApplication;
 import org.fogbowcloud.manager.occi.OCCIConstants;
@@ -17,6 +18,7 @@ import org.fogbowcloud.manager.occi.order.OrderAttribute;
 import org.fogbowcloud.manager.occi.order.OrderConstants;
 import org.fogbowcloud.manager.occi.order.OrderState;
 import org.restlet.data.MediaType;
+import org.restlet.data.Status;
 import org.restlet.engine.adapter.HttpRequest;
 import org.restlet.representation.StringRepresentation;
 import org.restlet.resource.Get;
@@ -179,13 +181,16 @@ public class FederatedNetworkResource extends ServerResource {
 		String federatedNetworkId = getFederatedNetworkId();
 		LOGGER.info("Federated Network with ID: " + federatedNetworkId);
 
-		Set<String> membersSet = getMembersSet(request);
+		Set<String> membersSet = getMembersSet();
 		LOGGER.info("Federated Network Request Members: " + membersSet.toString());
 
 		try {
 			application.updateFederatedNetworkMembers(federationAuthToken, federatedNetworkId,
 					membersSet);
-		} catch (Exception e) {
+		} catch (FederatedNetworkInUseException e) {
+		    setStatus(Status.CLIENT_ERROR_PRECONDITION_FAILED);
+		    return new StringRepresentation(e.getMessage());
+        } catch (Exception e) {
 			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
 		}
 
@@ -210,8 +215,9 @@ public class FederatedNetworkResource extends ServerResource {
 	}
 
 	private String getFederatedNetworkId() {
-		String federatedNetworkId = (String) getRequestAttributes()
-				.get(FederatedNetworkConstants.FEDERATED_NETWORK_ID_TERM);
+        List<String> membersList = HeaderUtils.getValueHeaderPerName(
+                OrderAttribute.FEDERATED_NETWORK_ID.getValue(), getRequest().getHeaders());
+		String federatedNetworkId = membersList.get(0);
 
 		if (federatedNetworkId == null || federatedNetworkId.trim().isEmpty()) {
 			throw new OCCIException(ErrorType.NOT_ACCEPTABLE,
@@ -220,15 +226,17 @@ public class FederatedNetworkResource extends ServerResource {
 		return federatedNetworkId;
 	}
 
-	private Set<String> getMembersSet(HttpRequest request) {
+	private Set<String> getMembersSet() {
 		List<String> membersList = HeaderUtils.getValueHeaderPerName(
-				OCCIConstants.FEDERATED_NETWORK_MEMBERS, request.getHeaders());
+				OrderAttribute.FEDERATED_NETWORK_MEMBERS_TERM.getValue(), getRequest().getHeaders());
+        String memberString = membersList.get(0);
+        membersList = Arrays.asList(memberString.split(";"));
 
 		if (membersList == null || membersList.isEmpty()) {
 			throw new OCCIException(ErrorType.NOT_ACCEPTABLE, ResponseConstants.INVALID_MEMBER);
 		}
 
-		Set<String> membersSet = new HashSet<String>(membersList);
+		Set<String> membersSet = new HashSet<>(membersList);
 		return membersSet;
 	}
 

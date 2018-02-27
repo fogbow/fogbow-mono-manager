@@ -24,6 +24,8 @@ import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.mail.MessagingException;
 
@@ -41,6 +43,7 @@ import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.federatednetwork.FederatedNetwork;
+import org.fogbowcloud.manager.core.federatednetwork.FederatedNetworkInUseException;
 import org.fogbowcloud.manager.core.federatednetwork.FederatedNetworksController;
 import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.core.model.FederationMember;
@@ -725,7 +728,7 @@ public class ManagerController {
 	public List<Instance> getInstances(String accessId, String resourceKind) {
 		
 		LOGGER.debug("Retrieving instances(" + resourceKind + ") of token " + accessId);
-		List<Instance> instances = new ArrayList<Instance>();
+		List<Instance> instances = new ArrayList<>();
 		for (Order order : managerDataStoreController.getOrdersByUserId(getUserId(accessId))) {
 			
 			if (!order.getResourceKind().equals(resourceKind)) {
@@ -2321,11 +2324,32 @@ public class ManagerController {
 	}
 	
 	public void updateFederatedNetworkMembers(String authToken, String federatedNetworkId,
-			Set<String> membersSet) {
+			Set<String> membersSet) throws FederatedNetworkInUseException {
 		Token token = this.getToken(authToken);
 		Set<FederationMember> federationMemberSet = new HashSet<>();
 		for (String member : membersSet){
 			federationMemberSet.add(getFederationMember(member));
+		}
+		List<Order> orders = getOrdersFromUser(authToken);
+		for (Order order: orders) {
+			if (!order.getResourceKind().equals(OrderConstants.COMPUTE_TERM)) {
+				continue;
+			}
+			String fedNetworkConnectedTo = order.getxOCCIAtt().get(OrderAttribute.FEDERATED_NETWORK_ID.getValue());
+			if (fedNetworkConnectedTo != null && fedNetworkConnectedTo.equals(federatedNetworkId)) {
+				String providingMember = order.getProvidingMemberId();
+				if (providingMember == null) {
+					String orderReqs = order.getxOCCIAtt().get(OrderAttribute.REQUIREMENTS.getValue());
+					Pattern p = Pattern.compile(RequirementsHelper.GLUE_LOCATION_TERM+"==\"([a-zA-z0-9\\.\\-]*)\"");
+					Matcher m = p.matcher(orderReqs);
+					if (m.find()) {
+						providingMember = m.group(1);
+					}
+				}
+				if (providingMember != null && !membersSet.contains(providingMember)) {
+					throw new FederatedNetworkInUseException(federatedNetworkId, order.getId());
+				}
+			}
 		}
 		federatedNetworksController.updateFederatedNetworkMembers(token.getUser(), federatedNetworkId, federationMemberSet);
 	}

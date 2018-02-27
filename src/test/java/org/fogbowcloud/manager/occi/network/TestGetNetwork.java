@@ -145,7 +145,7 @@ public class TestGetNetwork {
 		Order orderOne = new Order("1", tokenA, null, xOCCIAtt, true, "");
 		orderOne.setInstanceId(INSTANCE_1_ID);
 		orderOne.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
-		orderOne.setResourceKing(OrderConstants.NETWORK_TERM);
+		orderOne.setResourceKind(OrderConstants.NETWORK_TERM);
 		xOCCIAtt.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.NETWORK_TERM);
 		
 		userOrders.add(orderOne);
@@ -175,7 +175,7 @@ public class TestGetNetwork {
 		Order orderOne = new Order("1", tokenB, null, xOCCIAtt, true, "");
 		orderOne.setInstanceId(INSTANCE_1_ID);
 		orderOne.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
-		orderOne.setResourceKing(OrderConstants.NETWORK_TERM);
+		orderOne.setResourceKind(OrderConstants.NETWORK_TERM);
 		xOCCIAtt.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.NETWORK_TERM);
 		
 		userOrders.add(orderOne);
@@ -246,7 +246,7 @@ public class TestGetNetwork {
 		Order order1 = new Order("1", tokenA, null, xOCCIAtt, true, "");
 		order1.setInstanceId(INSTANCE_1_ID);
 		order1.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
-		order1.setResourceKing(OrderConstants.NETWORK_TERM);
+		order1.setResourceKind(OrderConstants.NETWORK_TERM);
 		userOrders.add(order1);
 		
 		for (Order order : userOrders){
@@ -285,7 +285,7 @@ public class TestGetNetwork {
 		Order order1 = new Order("1", tokenA, null, xOCCIAtt, true, "");
 		order1.setInstanceId(INSTANCE_1_ID);
 		order1.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
-		order1.setResourceKing(OrderConstants.NETWORK_TERM);
+		order1.setResourceKind(OrderConstants.NETWORK_TERM);
 		userOrders.add(order1);
 		
 		for (Order order : userOrders){
@@ -398,7 +398,7 @@ public class TestGetNetwork {
 		Order order1 = new Order("1", tokenA, null, xOCCIAtt, true, "");
 		order1.setInstanceId(INSTANCE_1_ID);
 		order1.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
-		order1.setResourceKing(OrderConstants.NETWORK_TERM);
+		order1.setResourceKind(OrderConstants.NETWORK_TERM);
 		userOrders.add(order1);
 				
 		for (Order order : userOrders){
@@ -445,7 +445,7 @@ public class TestGetNetwork {
 		Order order1 = new Order("1", tokenA, null, xOCCIAtt, true, "");
 		order1.setInstanceId(INSTANCE_1_ID);
 		order1.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
-		order1.setResourceKing(OrderConstants.NETWORK_TERM);
+		order1.setResourceKind(OrderConstants.NETWORK_TERM);
 		userOrders.add(order1);
 		
 		for (Order order : userOrders){

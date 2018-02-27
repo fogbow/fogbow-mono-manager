@@ -26,7 +26,7 @@ public class Order {
 	private OrderState state;
 	private List<Category> categories;
 	private Map<String, String> xOCCIAtt;	
-	private String resourceKing;
+	private String resourceKind;
 	private long syncronousTime;
 	private boolean syncronousStatus;
 	
@@ -46,9 +46,9 @@ public class Order {
 		this.categories = categories;
 		this.xOCCIAtt = xOCCIAtt;
 		if (this.xOCCIAtt == null) {
-			this.resourceKing = null;			
+			this.resourceKind = null;
 		} else {
-			this.resourceKing = this.xOCCIAtt.get(OrderAttribute.RESOURCE_KIND.getValue());					
+			this.resourceKind = this.xOCCIAtt.get(OrderAttribute.RESOURCE_KIND.getValue());
 		}		
 	}
 
@@ -68,9 +68,9 @@ public class Order {
 		this.dateUtils = dateUtils;
 		setState(OrderState.OPEN);		
 		if (this.xOCCIAtt == null) {
-			this.resourceKing = null;			
+			this.resourceKind = null;
 		} else {
-			this.resourceKing = this.xOCCIAtt.get(OrderAttribute.RESOURCE_KIND.getValue());					
+			this.resourceKind = this.xOCCIAtt.get(OrderAttribute.RESOURCE_KIND.getValue());
 		}
 	}
 	
@@ -209,11 +209,11 @@ public class Order {
 	}
 	
 	public String getResourceKind() {
-		return resourceKing;
+		return resourceKind;
 	}
 	
-	public void setResourceKing(String resourceKing) {
-		this.resourceKing = resourceKing;
+	public void setResourceKind(String resourceKind) {
+		this.resourceKind = resourceKind;
 	}
 
 	public String toString() {

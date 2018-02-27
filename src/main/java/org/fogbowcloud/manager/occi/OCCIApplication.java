@@ -9,6 +9,7 @@ import java.util.Set;
 import org.apache.http.HttpStatus;
 import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.federatednetwork.FederatedNetwork;
+import org.fogbowcloud.manager.core.federatednetwork.FederatedNetworkInUseException;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.plugins.accounting.AccountingInfo;
@@ -281,7 +282,7 @@ public class OCCIApplication extends Application {
 	}
 
 	public void updateFederatedNetworkMembers(String authToken, String federatedNetworkId,
-			Set<String> membersSet) {
+			Set<String> membersSet) throws FederatedNetworkInUseException {
 		this.managerFacade.updateFederatedNetworkMembers(authToken, federatedNetworkId, membersSet);
 	}
 

@@ -199,7 +199,7 @@ public class TestDeleteNetwork {
 		Order order1 = new Order("1", tokenA, null, xOCCIAtt, true, "");
 		order1.setInstanceId(INSTANCE_1_ID);
 		order1.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
-		order1.setResourceKing(OrderConstants.NETWORK_TERM);
+		order1.setResourceKind(OrderConstants.NETWORK_TERM);
 		userOrders.add(order1);
 		
 		for (Order order : userOrders){
@@ -228,7 +228,7 @@ public class TestDeleteNetwork {
 		Order order1 = new Order("1", tokenA, null, xOCCIAtt, true, "");
 		order1.setInstanceId(INSTANCE_1_ID);
 		order1.setProvidingMemberId(OCCITestHelper.MEMBER_ID);
-		order1.setResourceKing(OrderConstants.NETWORK_TERM);
+		order1.setResourceKind(OrderConstants.NETWORK_TERM);
 		userOrders.add(order1);
 		
 		for (Order order : userOrders){

@@ -319,7 +319,7 @@ public class OrderServerResource extends ServerResource {
 		xOCCIAtt = normalizeRequirements(categories, xOCCIAtt, application.getFlavorsProvided());
 		
 		List<Order> currentOrders = application.createOrders(federationAuthToken, categories, xOCCIAtt);
-		if (currentOrders != null || !currentOrders.isEmpty()) {
+		if (currentOrders != null && !currentOrders.isEmpty()) {
 			setStatus(Status.SUCCESS_CREATED);
 		}		
 		setLocationHeader(currentOrders, req);

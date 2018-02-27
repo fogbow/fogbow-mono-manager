@@ -4258,7 +4258,7 @@ public class TestManagerController {
 		Order orderOne = new Order(orderId, token, new ArrayList<Category>(), xOCCIAtt, true, "");
 		orderOne.setState(OrderState.FULFILLED);
 		orderOne.setInstanceId(newResourceId);
-		orderOne.setResourceKing(OrderConstants.NETWORK_TERM);
+		orderOne.setResourceKind(OrderConstants.NETWORK_TERM);
 		orderOne.setFederationToken(token);
 		orderOne.setProvidingMemberId(providingMemberId);
 		ManagerDataStoreController managerDataStoreController = managerController.getManagerDataStoreController();
@@ -4301,7 +4301,7 @@ public class TestManagerController {
 		Order orderOne = new Order(orderId, token, new ArrayList<Category>(), xOCCIAtt, true, "");
 		orderOne.setState(OrderState.FULFILLED);
 		orderOne.setInstanceId(newResourceId);
-		orderOne.setResourceKing(OrderConstants.NETWORK_TERM);
+		orderOne.setResourceKind(OrderConstants.NETWORK_TERM);
 		orderOne.setFederationToken(token);
 		orderOne.setProvidingMemberId(providingMemberId);
 		ManagerDataStoreController managerDataStoreController = managerController.getManagerDataStoreController();
@@ -4338,7 +4338,7 @@ public class TestManagerController {
 		Order orderOne = new Order(orderId, token, new ArrayList<Category>(), xOCCIAtt, true, "");
 		orderOne.setState(OrderState.FULFILLED);
 		orderOne.setInstanceId(instanceId);
-		orderOne.setResourceKing(OrderConstants.NETWORK_TERM);
+		orderOne.setResourceKind(OrderConstants.NETWORK_TERM);
 		orderOne.setFederationToken(token);
 		orderOne.setProvidingMemberId(providingMemberId);
 		ManagerDataStoreController managerDataStoreController = managerController.getManagerDataStoreController();
@@ -4410,7 +4410,7 @@ public class TestManagerController {
 				new HashMap<String, String>(), true,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		orderOne.setState(OrderState.OPEN);
-		orderOne.setResourceKing(OrderConstants.NETWORK_TERM);
+		orderOne.setResourceKind(OrderConstants.NETWORK_TERM);
 		ManagerDataStoreController managerDataStoreController = managerController.getManagerDataStoreController();
 		managerDataStoreController.addOrder(orderOne);
 		
@@ -4464,7 +4464,7 @@ public class TestManagerController {
 		Order orderOne = new Order(orderId, token, new ArrayList<Category>(), xOCCIAtt, true, "");
 		orderOne.setState(OrderState.FULFILLED);
 		orderOne.setInstanceId(instanceId);
-		orderOne.setResourceKing(OrderConstants.NETWORK_TERM);
+		orderOne.setResourceKind(OrderConstants.NETWORK_TERM);
 		orderOne.setFederationToken(token);
 		orderOne.setProvidingMemberId(providingMemberId);
 		ManagerDataStoreController managerDataStoreController = managerController.getManagerDataStoreController();
@@ -4532,19 +4532,19 @@ public class TestManagerController {
 		ManagerDataStoreController managerDataStoreController = managerController.getManagerDataStoreController();
 		Order orderServeredComputeFullfield = new Order("id_one", token, "instance_id_one", null, requestingMemberId, 
 				0, false, OrderState.FULFILLED, null, xOCCIAtt);
-		orderServeredComputeFullfield.setResourceKing(OrderConstants.COMPUTE_TERM);
+		orderServeredComputeFullfield.setResourceKind(OrderConstants.COMPUTE_TERM);
 		managerDataStoreController.addOrder(orderServeredComputeFullfield);
 		Order orderServeredOtherMemberComputeFullfield = new Order("id_two", token, "instance_id_two", null, 
 				"other_requesting_member", 0, false, OrderState.FULFILLED, null, xOCCIAtt);
-		orderServeredOtherMemberComputeFullfield.setResourceKing(OrderConstants.COMPUTE_TERM);
+		orderServeredOtherMemberComputeFullfield.setResourceKind(OrderConstants.COMPUTE_TERM);
 		managerDataStoreController.addOrder(orderServeredOtherMemberComputeFullfield);		
 		Order orderServeredStorageFullfield = new Order("id_three", token, "instance_id_three", null, requestingMemberId, 
 				0, false, OrderState.FULFILLED, null, xOCCIAtt);
-		orderServeredStorageFullfield.setResourceKing(OrderConstants.STORAGE_LINK_TERM);
+		orderServeredStorageFullfield.setResourceKind(OrderConstants.STORAGE_LINK_TERM);
 		managerDataStoreController.addOrder(orderServeredStorageFullfield);
 		Order orderServeredComputeOpen = new Order("id_four", token, "instance_id_four", null, requestingMemberId, 
 				0, false, OrderState.OPEN, null, xOCCIAtt);
-		orderServeredComputeOpen.setResourceKing(OrderConstants.COMPUTE_TERM);
+		orderServeredComputeOpen.setResourceKind(OrderConstants.COMPUTE_TERM);
 		managerDataStoreController.addOrder(orderServeredComputeOpen);				
 		
 		CapacityControllerPlugin capacityControllerPlugin = Mockito.mock(CapacityControllerPlugin.class);
@@ -4559,7 +4559,7 @@ public class TestManagerController {
 		
 		Order orderServeredComputeFullfieldOther = new Order("id_five", token, "instance_id_five", null, requestingMemberId, 
 				0, false, OrderState.FULFILLED, null, xOCCIAtt);
-		orderServeredComputeFullfieldOther.setResourceKing(OrderConstants.COMPUTE_TERM);
+		orderServeredComputeFullfieldOther.setResourceKind(OrderConstants.COMPUTE_TERM);
 		managerDataStoreController.addOrder(orderServeredComputeFullfieldOther);
 		
 		// Two instance
