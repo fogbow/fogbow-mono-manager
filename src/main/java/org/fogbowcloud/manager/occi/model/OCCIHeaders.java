@@ -14,6 +14,7 @@ public class OCCIHeaders {
 	public static final String CATEGORY = "Category";
 	public static final String AUTHORIZATION = "Authorization";
 	public static final String LINK = "Link";
+	public static final String COOKIE = "Cookie";
 
 	// occi constants
 	public static final String ACTION_CLASS = "action";
@@ -24,5 +25,4 @@ public class OCCIHeaders {
 	public static final String TEXT_URI_LIST_CONTENT_TYPE = "text/uri-list";
 	public static final String JSON_CONTENT_TYPE = "application/json";
 	public static final String TEXT_PLAIN_CONTENT_TYPE = "text/plain";
-	
 }

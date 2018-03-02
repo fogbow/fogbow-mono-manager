@@ -1,17 +1,18 @@
 package org.fogbowcloud.manager.core.plugins.identity.vmware;
 
-import com.mashape.unirest.http.HttpResponse;
-import com.mashape.unirest.http.JsonNode;
-import com.mashape.unirest.http.exceptions.UnirestException;
+import com.amazonaws.util.StringInputStream;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.StatusLine;
 import org.fogbowcloud.manager.occi.model.ErrorType;
 import org.fogbowcloud.manager.occi.model.OCCIException;
-import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.fogbowcloud.manager.occi.model.Token;
-import org.json.JSONException;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -27,11 +28,17 @@ public class TestVMWareIdentityPlugin {
         String fakePassword = "fakePassword";
         String fakeToken = fakeUser+"-"+fakePassword;
 
-        JsonNode node = new JsonNode("{ 'value': '"+fakeToken+"' }");
+        InputStream node = new StringInputStream("{ 'value': '" + fakeToken + "' }");
 
-        HttpResponse<JsonNode> response = Mockito.mock(HttpResponse.class);
-        Mockito.doReturn(200).when(response).getStatus();
-        Mockito.doReturn(node).when(response).getBody();
+        StatusLine statusLine = Mockito.mock(StatusLine.class);
+        Mockito.doReturn(200).when(statusLine).getStatusCode();
+
+        HttpEntity entity = Mockito.mock(HttpEntity.class);
+        Mockito.doReturn(node).when(entity).getContent();
+
+        HttpResponse response = Mockito.mock(HttpResponse.class);
+        Mockito.doReturn(statusLine).when(response).getStatusLine();
+        Mockito.doReturn(entity).when(response).getEntity();
 
         VMWareIdentityPlugin vmidentity = Mockito.spy(new VMWareIdentityPlugin(properties));
         Mockito.doReturn(response).when(vmidentity).postRequest(Mockito.anyString(), Mockito.anyString());
@@ -55,8 +62,11 @@ public class TestVMWareIdentityPlugin {
         String fakeUser = "fakeUser";
         String fakePassword = "fakePassword";
 
-        HttpResponse<JsonNode> response = Mockito.mock(HttpResponse.class);
-        Mockito.doReturn(401).when(response).getStatus();
+        StatusLine statusLine = Mockito.mock(StatusLine.class);
+        Mockito.doReturn(401).when(statusLine).getStatusCode();
+
+        HttpResponse response = Mockito.mock(HttpResponse.class);
+        Mockito.doReturn(statusLine).when(response).getStatusLine();
 
         VMWareIdentityPlugin vmidentity = Mockito.spy(new VMWareIdentityPlugin(properties));
         Mockito.doReturn(response).when(vmidentity).postRequest(Mockito.anyString(), Mockito.anyString());
@@ -80,8 +90,11 @@ public class TestVMWareIdentityPlugin {
         String fakeUser = "fakeUser";
         String fakePassword = "fakePassword";
 
-        HttpResponse<JsonNode> response = Mockito.mock(HttpResponse.class);
-        Mockito.doReturn(503).when(response).getStatus();
+        StatusLine statusLine = Mockito.mock(StatusLine.class);
+        Mockito.doReturn(503).when(statusLine).getStatusCode();
+
+        HttpResponse response = Mockito.mock(HttpResponse.class);
+        Mockito.doReturn(statusLine).when(response).getStatusLine();
 
         VMWareIdentityPlugin vmidentity = Mockito.spy(new VMWareIdentityPlugin(properties));
         Mockito.doReturn(response).when(vmidentity).postRequest(Mockito.anyString(), Mockito.anyString());
@@ -112,8 +125,11 @@ public class TestVMWareIdentityPlugin {
         for (int i = 400; i < 600; i++) {
             if (i == 401 || i == 503) continue;
 
-            HttpResponse<JsonNode> response = Mockito.mock(HttpResponse.class);
-            Mockito.doReturn(i).when(response).getStatus();
+            StatusLine statusLine = Mockito.mock(StatusLine.class);
+            Mockito.doReturn(i).when(statusLine).getStatusCode();
+
+            HttpResponse response = Mockito.mock(HttpResponse.class);
+            Mockito.doReturn(statusLine).when(response).getStatusLine();
 
             VMWareIdentityPlugin vmidentity = Mockito.spy(new VMWareIdentityPlugin(properties));
             Mockito.doReturn(response).when(vmidentity).postRequest(Mockito.anyString(), Mockito.anyString());
@@ -139,7 +155,7 @@ public class TestVMWareIdentityPlugin {
         credentials.put("password", fakePassword);
 
         VMWareIdentityPlugin vmidentity = Mockito.spy(new VMWareIdentityPlugin(properties));
-        Mockito.doThrow(UnirestException.class).when(vmidentity).postRequest(Mockito.anyString(), Mockito.anyString());
+        Mockito.doThrow(IOException.class).when(vmidentity).postRequest(Mockito.anyString(), Mockito.anyString());
 
         try {
             vmidentity.createToken(credentials);
@@ -156,11 +172,17 @@ public class TestVMWareIdentityPlugin {
         String fakeUser = "fakeUser";
         String fakePassword = "fakePassword";
 
-        JsonNode node = new JsonNode("{ }");
+        InputStream node = new StringInputStream("{ }");
 
-        HttpResponse<JsonNode> response = Mockito.mock(HttpResponse.class);
-        Mockito.doReturn(200).when(response).getStatus();
-        Mockito.doReturn(node).when(response).getBody();
+        StatusLine statusLine = Mockito.mock(StatusLine.class);
+        Mockito.doReturn(200).when(statusLine).getStatusCode();
+
+        HttpEntity entity = Mockito.mock(HttpEntity.class);
+        Mockito.doReturn(node).when(entity).getContent();
+
+        HttpResponse response = Mockito.mock(HttpResponse.class);
+        Mockito.doReturn(statusLine).when(response).getStatusLine();
+        Mockito.doReturn(entity).when(response).getEntity();
 
         VMWareIdentityPlugin vmidentity = Mockito.spy(new VMWareIdentityPlugin(properties));
         Mockito.doReturn(response).when(vmidentity).postRequest(Mockito.anyString(), Mockito.anyString());

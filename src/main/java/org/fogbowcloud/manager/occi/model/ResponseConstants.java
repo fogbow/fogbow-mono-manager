@@ -48,7 +48,9 @@ public class ResponseConstants {
 	public static final String NETWORK_GATEWAY_INVALID_VALUE = "Network gateway with invalid value";
 	public static final String NETWORK_ALLOCATION_INVALID_VALUE = "Network allocation with invalid value";
 	public static final String ORDER_NOT_CREATED = "Order not created";
-	
+	public static final String SERVICE_UNAVAILABLE = "The service is unavailable.";
+
+
 	public static final String INVALID_CIDR = "Invalid CIDR, null or more than one occurrence";
 	public static final String INVALID_LABEL = "Invalid Label, null or more than one occurrence";
 	public static final String INVALID_MEMBER = "Invalid Member, null";

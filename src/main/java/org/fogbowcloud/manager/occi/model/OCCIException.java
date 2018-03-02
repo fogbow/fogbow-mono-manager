@@ -20,20 +20,24 @@ public class OCCIException extends ResourceException {
 
 	private static int getStatusCode(ErrorType type) {
 		switch (type) {
-		case UNAUTHORIZED:
-			return HttpStatus.SC_UNAUTHORIZED;
-		case FORBIDDEN:
-			return HttpStatus.SC_FORBIDDEN;
-		case NOT_FOUND:
-			return HttpStatus.SC_NOT_FOUND;
-		case BAD_REQUEST:
-			return HttpStatus.SC_BAD_REQUEST;
-		case QUOTA_EXCEEDED:
-			return HttpStatus.SC_INSUFFICIENT_SPACE_ON_RESOURCE;
-		case NOT_ACCEPTABLE:
-			return HttpStatus.SC_NOT_ACCEPTABLE;			
-		case METHOD_NOT_ALLOWED:
-			return HttpStatus.SC_METHOD_NOT_ALLOWED;
+		    case UNAUTHORIZED:
+			    return HttpStatus.SC_UNAUTHORIZED;
+		    case FORBIDDEN:
+			    return HttpStatus.SC_FORBIDDEN;
+		    case NOT_FOUND:
+			    return HttpStatus.SC_NOT_FOUND;
+		    case BAD_REQUEST:
+			    return HttpStatus.SC_BAD_REQUEST;
+		    case QUOTA_EXCEEDED:
+			    return HttpStatus.SC_INSUFFICIENT_SPACE_ON_RESOURCE;
+		    case NOT_ACCEPTABLE:
+			    return HttpStatus.SC_NOT_ACCEPTABLE;
+			case METHOD_NOT_ALLOWED:
+				return HttpStatus.SC_METHOD_NOT_ALLOWED;
+            case SERVICE_UNAVAILABLE:
+                return HttpStatus.SC_SERVICE_UNAVAILABLE;
+            case INTERNAL_SERVER_ERROR:
+				return HttpStatus.SC_INTERNAL_SERVER_ERROR;
 		default:
 			break;
 		}

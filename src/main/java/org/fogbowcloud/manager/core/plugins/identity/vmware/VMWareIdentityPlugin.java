@@ -1,19 +1,25 @@
 package org.fogbowcloud.manager.core.plugins.identity.vmware;
 
-import com.mashape.unirest.http.HttpResponse;
-import com.mashape.unirest.http.JsonNode;
-import com.mashape.unirest.http.Unirest;
-import com.mashape.unirest.http.exceptions.UnirestException;
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.io.Charsets;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.util.Credential;
-import org.fogbowcloud.manager.occi.model.ErrorType;
-import org.fogbowcloud.manager.occi.model.OCCIException;
-import org.fogbowcloud.manager.occi.model.ResponseConstants;
-import org.fogbowcloud.manager.occi.model.Token;
+import org.fogbowcloud.manager.core.util.HttpRequestUtil;
+import org.fogbowcloud.manager.occi.model.*;
+import org.jetbrains.annotations.NotNull;
 import org.json.JSONException;
+import org.json.JSONObject;
 
-import java.util.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
 
 public class VMWareIdentityPlugin implements IdentityPlugin {
 
@@ -24,6 +30,7 @@ public class VMWareIdentityPlugin implements IdentityPlugin {
     static final String IDENTITY_URL = "identity_url";
     static final String AUTH_URL = "authUrl";
 
+    private HttpClient client;
     private String vcenterUrl;
     private String vcenterTokenEndpoint;
 
@@ -32,7 +39,7 @@ public class VMWareIdentityPlugin implements IdentityPlugin {
         this.vcenterTokenEndpoint = vcenterUrl + VCENTER_AUTH_ENDPOINT;
     }
 
-    void readProperties(Properties properties) throws Exception {
+    private void readProperties(Properties properties) throws Exception {
         String identityUrl = properties.getProperty(IDENTITY_URL);
         if (identityUrl == null) {
             String authUrl = properties.getProperty(AUTH_URL);
@@ -51,21 +58,22 @@ public class VMWareIdentityPlugin implements IdentityPlugin {
         try {
             String username = userCredentials.get("username");
             String password = userCredentials.get("password");
-            HttpResponse<JsonNode> response = postRequest(username, password);
-            if (response.getStatus() >= 200 && response.getStatus() < 300) {
-                String tk = (String) response.getBody().getObject().get("value");;
+            HttpResponse response = postRequest(username, password);
+            if (response.getStatusLine().getStatusCode() >= 200 && response.getStatusLine().getStatusCode() < 300) {
+                JSONObject json = extractJsonFromResponse(response);
+                String tk = (String) json.get("value");
                 return new Token(tk, new Token.User(username, username), new Date(), new HashMap<>());
-            } else if (response.getStatus() == 401) {
+            } else if (response.getStatusLine().getStatusCode() == 401) {
                 LOGGER.error("VMWare Unauthorized");
                 throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.INVALID_USER_OR_PASSWORD);
-            } else if (response.getStatus() == 503) {
+            } else if (response.getStatusLine().getStatusCode() == 503) {
                 LOGGER.error("VMWare Failed to respond");
                 throw new OCCIException(ErrorType.INTERNAL_SERVER_ERROR, ResponseConstants.INTERNAL_ERROR);
             } else {
                 LOGGER.error("VMWare Respondend with unknown code");
                 throw new OCCIException(ErrorType.NO_VALID_HOST_FOUND, ResponseConstants.INTERNAL_ERROR);
             }
-        } catch (UnirestException e) {
+        } catch (IOException e) {
             LOGGER.error("Failed to generate token.", e);
             throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.IRREGULAR_SYNTAX);
         } catch (JSONException e) {
@@ -74,12 +82,29 @@ public class VMWareIdentityPlugin implements IdentityPlugin {
         }
     }
 
-    HttpResponse<JsonNode> postRequest(String username, String password) throws UnirestException {
-        return Unirest.post(vcenterTokenEndpoint)
-                .header("Accept", "application/json")
-                .header("Content-Type", "application/json")
-                .basicAuth(username, password)
-                .asJson();
+    @NotNull
+    JSONObject extractJsonFromResponse(HttpResponse response) throws IOException, JSONException {
+        InputStream body = response.getEntity().getContent();
+        byte[] bodyData = new byte[body.available()];
+        int read = body.read(bodyData);
+        if (read != bodyData.length) {
+            LOGGER.warn("Amount of data read from request response differs from how much it said was available");
+        }
+        return new JSONObject(new String(bodyData));
+    }
+
+    HttpResponse postRequest(String username, String password) throws IOException {
+        HttpPost request = new HttpPost(vcenterTokenEndpoint);
+        request.addHeader(OCCIHeaders.CONTENT_TYPE, OCCIHeaders.JSON_CONTENT_TYPE);
+        request.addHeader(OCCIHeaders.ACCEPT, OCCIHeaders.JSON_CONTENT_TYPE);
+        request.addHeader(OCCIHeaders.AUTHORIZATION, "BASIC " + makeBasicAuth(username, password));
+        return getClient().execute(request);
+    }
+
+    private String makeBasicAuth(String username, String password) {
+        return new String(
+                Base64.encodeBase64((username+":"+password).getBytes(Charsets.UTF_8))
+        );
     }
 
     @Override
@@ -113,5 +138,12 @@ public class VMWareIdentityPlugin implements IdentityPlugin {
     @Override
     public Token getForwardableToken(Token originalToken) {
         return null;
+    }
+
+    private HttpClient getClient() {
+        if (client == null) {
+            client = HttpRequestUtil.createHttpClient();
+        }
+        return client;
     }
 }
