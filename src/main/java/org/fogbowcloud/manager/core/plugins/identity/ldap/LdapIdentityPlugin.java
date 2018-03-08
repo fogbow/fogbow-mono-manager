@@ -324,8 +324,15 @@ public class LdapIdentityPlugin implements IdentityPlugin {
 
 	@Override
 	public Credential[] getCredentials() {
-		return new Credential[] { new Credential(CRED_USERNAME, true, null),
-				new Credential(CRED_PASSWORD, true, null) };
+		return new Credential[] { 
+				new Credential(CRED_USERNAME, true, null),
+				new Credential(CRED_PASSWORD, true, null), 
+				new Credential(CRED_AUTH_URL, true, null),
+				new Credential(CRED_LDAP_BASE, true, null),
+				new Credential(CRED_LDAP_ENCRYPT, false, null),
+				new Credential(CRED_PRIVATE_KEY, true, null),
+				new Credential(CRED_PUBLIC_KEY, false, null)
+		};
 	}
 
 	@Override
