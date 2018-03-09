@@ -84,6 +84,32 @@ public class VMWareComputePlugin implements ComputePlugin {
         return getClient().execute(request);
     }
 
+    @NotNull
+    JSONObject extractJsonFromResponse(HttpResponse response) {
+        LOGGER.trace("Extracting JSON from response");
+        byte[] bodyData;
+        try {
+            InputStream body = response.getEntity().getContent();
+            bodyData = new byte[body.available()];
+            int read = body.read(bodyData);
+            if (read != bodyData.length) {
+                LOGGER.warn("Amount of data read from request response differs from how much it said was available");
+            }
+        } catch (IOException e) {
+            LOGGER.error("Failed reading response from VMWare.", e);
+            throw new OCCIException(ErrorType.INTERNAL_SERVER_ERROR, ResponseConstants.INTERNAL_ERROR);
+        }
+
+        JSONObject json;
+        try {
+            json = new JSONObject(new String(bodyData));
+        } catch (JSONException e) {
+            LOGGER.error("Response from VMWare was not a JSON.", e);
+            throw new OCCIException(ErrorType.INTERNAL_SERVER_ERROR, ResponseConstants.IRREGULAR_SYNTAX);
+        }
+        return json;
+    }
+
     @Override
     public String requestInstance(Token token, List<Category> categories, Map<String, String> xOCCIAtt, String imageId) {
         LOGGER.trace("Requesting instance");
@@ -97,6 +123,7 @@ public class VMWareComputePlugin implements ComputePlugin {
 
         HttpResponse response;
         try {
+            // TODO set endpoint
             response = doRequest("", "POST", token.getAccessId(), data);
         } catch (IOException e) {
             LOGGER.error("Failed requesting instance to VMWare.", e);
@@ -165,32 +192,6 @@ public class VMWareComputePlugin implements ComputePlugin {
         }
     }
 
-    @NotNull
-    JSONObject extractJsonFromResponse(HttpResponse response) {
-        LOGGER.trace("Extracting JSON from response");
-        byte[] bodyData;
-        try {
-            InputStream body = response.getEntity().getContent();
-            bodyData = new byte[body.available()];
-            int read = body.read(bodyData);
-            if (read != bodyData.length) {
-                LOGGER.warn("Amount of data read from request response differs from how much it said was available");
-            }
-        } catch (IOException e) {
-            LOGGER.error("Failed reading response from VMWare.", e);
-            throw new OCCIException(ErrorType.INTERNAL_SERVER_ERROR, ResponseConstants.INTERNAL_ERROR);
-        }
-
-        JSONObject json;
-        try {
-            json = new JSONObject(new String(bodyData));
-        } catch (JSONException e) {
-            LOGGER.error("Response from VMWare was not a JSON.", e);
-            throw new OCCIException(ErrorType.INTERNAL_SERVER_ERROR, ResponseConstants.IRREGULAR_SYNTAX);
-        }
-        return json;
-    }
-
     JSONObject createInstanceRequestData(Map<String, String> xOCCIAtt,String imageId) throws JSONException {
         LOGGER.trace("Creating request data");
         JSONObject vmDetails = new JSONObject();
@@ -257,7 +258,46 @@ public class VMWareComputePlugin implements ComputePlugin {
 
     @Override
     public List<Instance> getInstances(Token token) {
-        return null;
+        HttpResponse response;
+        try {
+            // TODO set endpoint
+            response = doRequest("", "POST", token.getAccessId());
+        } catch (IOException e) {
+            LOGGER.error("Failed requesting instance to VMWare.", e);
+            throw new OCCIException(ErrorType.INTERNAL_SERVER_ERROR, ResponseConstants.INTERNAL_ERROR);
+        }
+
+        JSONObject json = extractJsonFromResponse(response);
+        return extractInstancesFromJson(json);
+    }
+
+    List<Instance> extractInstancesFromJson(JSONObject json) {
+        List<Instance> instances = new ArrayList<>();
+
+        JSONArray list;
+        try {
+            list = json.getJSONArray("value");
+        } catch (JSONException e) {
+            LOGGER.error("JSON did not contain an array of instances", e);
+            list = new JSONArray();
+        }
+
+        for (int i = 0; i < list.length(); i++) {
+            JSONObject instance;
+            try {
+                instance = list.getJSONObject(i);
+            } catch (JSONException e) {
+                LOGGER.error("An item in the array of instances was not a JSONObject", e);
+                continue;
+            }
+
+            try {
+                instances.add(new Instance(instance.getString("vm")));
+            } catch (JSONException e) {
+                LOGGER.error("JSON did not contain the VM id.", e);
+            }
+        }
+        return instances;
     }
 
     @Override
