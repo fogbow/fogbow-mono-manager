@@ -32,6 +32,7 @@ import org.restlet.data.MediaType;
 import org.restlet.data.Status;
 import org.restlet.engine.adapter.HttpRequest;
 import org.restlet.engine.adapter.ServerCall;
+import org.restlet.representation.Representation;
 import org.restlet.representation.StringRepresentation;
 import org.restlet.resource.Delete;
 import org.restlet.resource.Get;
@@ -123,7 +124,7 @@ public class NetworkServerResource extends ServerResource {
 					"Getting instance(network) with id [" + networkId + "] of token : [" + federationAuthToken + "]");
 
 
-			Instance instance = null;
+			Instance instance;
 
 			if(networkId.startsWith(FED_NETWORK_PREFIX)){
 
@@ -275,7 +276,7 @@ public class NetworkServerResource extends ServerResource {
 	
 
 	@Delete
-	public String remove() {
+	public Representation remove() {
 		OCCIApplication application = (OCCIApplication) getApplication();
 		HttpRequest req = (HttpRequest) getRequest();
 		String federationAuthToken = HeaderUtils.getAuthToken(req.getHeaders(), getResponse(),
@@ -290,7 +291,7 @@ public class NetworkServerResource extends ServerResource {
 		if (networkId == null) {
 			LOGGER.info("Removing all instances(network) of token :" + federationAuthToken);
 			networkDB.deleteAllFromUser(userId);
-			return removeIntances(application, federationAuthToken);			
+			return new StringRepresentation(removeInstances(application, federationAuthToken));
 		}
 
 		if (networkId.startsWith(FED_NETWORK_PREFIX)) {
@@ -299,7 +300,8 @@ public class NetworkServerResource extends ServerResource {
 			FedNetworkState fedNetworkState = networkDB.getByFedNetworkId(networkId, userId);
 			
 			if (fedNetworkState == null) {
-				throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
+                LOGGER.error("No federated network with id ["+networkId+"] was found.");
+                throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
 			}
 			
 			try {				
@@ -313,53 +315,55 @@ public class NetworkServerResource extends ServerResource {
 				if(e instanceof OCCIException){
 					throw (OCCIException) e;
 				}else{
-					return "Error while removing resources related to federated network " + networkId + ".";
+                    setStatus(Status.SERVER_ERROR_INTERNAL);
+                    return new StringRepresentation(
+                            "Error while removing resources related to federated network " + networkId + "."
+                    );
 				}
 			}
-			return ResponseConstants.OK;
+			return new StringRepresentation(ResponseConstants.OK);
 		}
 		
 		LOGGER.info("Removing instance(network) " + networkId);
 		application.removeInstance(federationAuthToken, networkId, OrderConstants.NETWORK_TERM);
-		return ResponseConstants.OK;
+		return new StringRepresentation(ResponseConstants.OK);
 	}
 
 	private List<Instance> getInstances(OCCIApplication application, String authToken) {
 		authToken = normalizeAuthToken(authToken);
-		List<Instance> allInstances = application.getInstances(authToken, OrderConstants.NETWORK_TERM);
-		return allInstances;
+        return application.getInstances(authToken, OrderConstants.NETWORK_TERM);
 	}
 
 	private String generateResponse(List<Instance> instances) {
 		if (instances == null || instances.isEmpty()) {
 			return NO_INSTANCES_MESSAGE;
 		}
-		String response = "";
+		StringBuilder response = new StringBuilder();
 		Iterator<Instance> instanceIt = instances.iterator();
 		while (instanceIt.hasNext()) {
-			response += instanceIt.next().toOCCIMessageFormatLocation();
+			response.append(instanceIt.next().toOCCIMessageFormatLocation());
 			if (instanceIt.hasNext()) {
-				response += "\n";
+				response.append("\n");
 			}
 		}
-		return response;
+		return response.toString();
 	}
 
 	private String generateURIListResponse(List<Instance> instances, HttpRequest req) {
 		String requestEndpoint = req.getHostRef() + req.getHttpCall().getRequestUri();
 		Iterator<Instance> instanceIt = instances.iterator();
-		String result = "";
+		StringBuilder result = new StringBuilder();
 		while (instanceIt.hasNext()) {
 			if (requestEndpoint.endsWith("/")) {
-				result += requestEndpoint + instanceIt.next().getId() + "\n";
+				result.append(requestEndpoint).append(instanceIt.next().getId()).append("\n");
 			} else {
-				result += requestEndpoint + "/" + instanceIt.next().getId() + "\n";
+				result.append(requestEndpoint).append("/").append(instanceIt.next().getId()).append("\n");
 			}
 		}
-		return result.length() > 0 ? result.trim() : "\n";
+		return result.length() > 0 ? result.toString().trim() : "\n";
 	}
 
-	private String removeIntances(OCCIApplication application, String authToken) {
+	private String removeInstances(OCCIApplication application, String authToken) {
 		application.removeInstances(authToken, OrderConstants.NETWORK_TERM);
 		return ResponseConstants.OK;
 	}
