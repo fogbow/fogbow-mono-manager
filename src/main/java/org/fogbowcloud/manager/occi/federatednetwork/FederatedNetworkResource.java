@@ -96,9 +96,12 @@ public class FederatedNetworkResource extends ServerResource {
 				String[] keys = new String[] { OCCIConstants.FEDERATED_NETWORK_CIDR,
 						OCCIConstants.FEDERATED_NETWORK_LABEL,
 						OCCIConstants.FEDERATED_NETWORK_MEMBERS };
-				String[] values = new String[] { federatedNetwork.getCidr(),
-						federatedNetwork.getLabel(),
-						formatMembers(federatedNetwork.getAllowedMembers()) };
+				
+				Set<FederationMember> allowedMembers = federatedNetwork.getAllowedMembers();
+				String formattedMembers = formatMembers(allowedMembers);
+				String label = federatedNetwork.getLabel();
+				String cidr = federatedNetwork.getCidr();
+				String[] values = new String[] { cidr, label, formattedMembers };
 
 				String attributeFormat = ";%s=%s ";
 				for (int i = 0; i < keys.length; i++) {
@@ -143,7 +146,7 @@ public class FederatedNetworkResource extends ServerResource {
 		return response.length() > 0 ? response.trim() : System.lineSeparator();
 	}
 
-	private String formatMembers(Collection<FederationMember> members) {
+	private String formatMembers(Set<FederationMember> members) {
 		String str = members.toString();
 		return str.substring(1, str.length() - 1);
 	}

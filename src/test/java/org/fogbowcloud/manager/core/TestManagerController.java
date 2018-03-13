@@ -4642,13 +4642,12 @@ public class TestManagerController {
 		Order order = new Order("id", federationToken, "instanceId", "providingMemberId",
 				"requestingMemberId", new Date().getTime(), true, OrderState.OPEN, categories,
 				xOCCIAtt);
-
+		
+		Properties properties = new Properties();
+		properties.put(FederatedNetworksController.FEDERATED_NETWORK_AGENT_PUBLIC_IP_PROP, "fake-IP");
 		FederatedNetworksController federatedNetworksController = Mockito
-				.mock(FederatedNetworksController.class);
+				.spy(new FederatedNetworksController(properties));
 		this.managerController.setFederatedNetworksController(federatedNetworksController);
-
-		Mockito.doReturn(null).when(federatedNetworksController)
-				.getFederatedNetwork(Mockito.any(Token.User.class), Mockito.anyString());
 
 		this.managerController.getProperties()
 				.put(FederatedNetworksController.FEDERATED_NETWORK_AGENT_PUBLIC_IP_PROP, "fake-IP");
@@ -4674,8 +4673,11 @@ public class TestManagerController {
 				"requestingMemberId", new Date().getTime(), true, OrderState.OPEN, categories,
 				xOCCIAtt);
 
+		Properties properties = new Properties();
+		properties.put(FederatedNetworksController.FEDERATED_NETWORK_AGENT_PUBLIC_IP_PROP, "fake-IP");
+		
 		FederatedNetworksController federatedNetworksController = Mockito
-				.mock(FederatedNetworksController.class);
+				.spy(new FederatedNetworksController(properties));
 		this.managerController.setFederatedNetworksController(federatedNetworksController);
 
 		FederatedNetwork federatedNetwork = new FederatedNetwork("federated_id", "10.0.0.0/32",
@@ -4711,7 +4713,7 @@ public class TestManagerController {
 				xOCCIAtt);
 
 		FederatedNetworksController federatedNetworksController = Mockito
-				.mock(FederatedNetworksController.class);
+				.spy(new FederatedNetworksController());
 		this.managerController.setFederatedNetworksController(federatedNetworksController);
 
 		FederatedNetwork federatedNetwork = new FederatedNetwork("federated_id", "10.0.0.0/24",

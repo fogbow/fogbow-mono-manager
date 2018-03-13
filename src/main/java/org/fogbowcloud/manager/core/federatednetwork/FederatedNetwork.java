@@ -6,31 +6,35 @@ import org.fogbowcloud.manager.core.model.FederationMember;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Queue;
+import java.util.Set;
 
 /**
  * Created by arnett on 05/02/18.
  */
 public class FederatedNetwork {
 
-    private String id;
+	private String id;
     private final String cidrNotation;
     private String label;
-    private Collection<FederationMember> allowedMembers;
+    private Set<FederationMember> allowedMembers;
 
     private int ipsServed;
     private Queue<String> freedIps;
-    private SubnetUtils.SubnetInfo subnetInfo;
+    
+    private Map<String, String> orderIpMap;
     
     public static final String NO_FREE_IPS_MESSAGE = "Subnet Addresses Capacity Reached, there isn't free IPs to attach";
 
-    public FederatedNetwork(String id, String cidrNotation, String label, Collection<FederationMember> allowedMembers) {
+    public FederatedNetwork(String id, String cidrNotation, String label, Set<FederationMember> allowedMembers) {
         // the reason for this to start at '1' is because the first ip is allocated
         // as the virtual ip address
         this.ipsServed = 1;
         this.freedIps = new LinkedList<String>();
+        this.orderIpMap = new HashMap<String, String>();
 
         this.id = id;
         this.cidrNotation = cidrNotation;
@@ -38,36 +42,41 @@ public class FederatedNetwork {
         this.allowedMembers = allowedMembers;
     }
 
-    public String nextFreeIp() throws SubnetAddressesCapacityReachedException {
-        if (freedIps.isEmpty()) {
-            int lowAddress = getSubnetInfo().asInteger(getSubnetInfo().getLowAddress());
-            int candidateIpAddress = lowAddress + ipsServed;
-            if (!getSubnetInfo().isInRange(candidateIpAddress)) {
-                throw new SubnetAddressesCapacityReachedException(FederatedNetwork.NO_FREE_IPS_MESSAGE);
-            } else {
-                ipsServed++;
-                return toIpAddress(candidateIpAddress);
-            }
-        } else {
-            return freedIps.poll();
-        }
-    }
+	public String nextFreeIp(String orderId) throws SubnetAddressesCapacityReachedException {
+		if (this.orderIpMap.containsKey(orderId)) {
+			return this.orderIpMap.get(orderId);
+		}
+		String freeIp = null;
+		if (freedIps.isEmpty()) {
+			SubnetUtils.SubnetInfo subnetInfo = this.getSubnetInfo();
+			int lowAddress = subnetInfo.asInteger(subnetInfo.getLowAddress());
+			int candidateIpAddress = lowAddress + ipsServed;
+			if (!subnetInfo.isInRange(candidateIpAddress)) {
+				throw new SubnetAddressesCapacityReachedException(
+						FederatedNetwork.NO_FREE_IPS_MESSAGE);
+			} else {
+				ipsServed++;
+				freeIp = toIpAddress(candidateIpAddress);
+			}
+		} else {
+			freeIp = freedIps.poll();
+		}
+		this.orderIpMap.put(orderId, freeIp);
+		return freeIp;
+	}
 
     private SubnetUtils.SubnetInfo getSubnetInfo() {
-        if (subnetInfo == null) {
-            subnetInfo = new SubnetUtils(cidrNotation).getInfo();
-        }
-
-        return subnetInfo;
+        return new SubnetUtils(cidrNotation).getInfo();
     }
 
     public boolean isIpAddressFree(String address) {
-        if (getSubnetInfo().isInRange(address)) {
+    	SubnetUtils.SubnetInfo subnetInfo = this.getSubnetInfo();
+        if (subnetInfo.isInRange(address)) {
             if (freedIps.contains(address)) {
                 return true;
             } else {
-                int lowAddress = getSubnetInfo().asInteger(getSubnetInfo().getLowAddress());
-                if (getSubnetInfo().asInteger(address) >= lowAddress + ipsServed) {
+                int lowAddress = subnetInfo.asInteger(subnetInfo.getLowAddress());
+                if (subnetInfo.asInteger(address) >= lowAddress + ipsServed) {
                     return true;
                 }
             }
@@ -111,7 +120,39 @@ public class FederatedNetwork {
         return getSubnetInfo().getCidrSignature();
     }
 
-    public Collection<FederationMember> getAllowedMembers() {
+    public Set<FederationMember> getAllowedMembers() {
         return allowedMembers;
     }
+    
+    @Override
+	public String toString() {
+		return "FederatedNetwork [id=" + id + ", cidrNotation=" + cidrNotation + ", label=" + label
+				+ ", allowedMembers=" + allowedMembers + ", ipsServed=" + ipsServed + ", freedIps="
+				+ freedIps + ", orderIpMap=" + orderIpMap + "]";
+	}
+    
+    @Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((id == null) ? 0 : id.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		FederatedNetwork other = (FederatedNetwork) obj;
+		if (id == null) {
+			if (other.id != null)
+				return false;
+		} else if (!id.equals(other.id))
+			return false;
+		return true;
+	}
 }

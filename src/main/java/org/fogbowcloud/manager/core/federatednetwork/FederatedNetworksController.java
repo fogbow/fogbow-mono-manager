@@ -49,7 +49,7 @@ public class FederatedNetworksController {
         boolean createdSuccessfully = callFederatedNetworkAgent(cidrNotation, subnetInfo.getLowAddress());
         if (createdSuccessfully) {
             String federatedNetworkId = String.valueOf(UUID.randomUUID());
-            FederatedNetwork federatedNetwork = new FederatedNetwork(federatedNetworkId, label, cidrNotation, members);
+            FederatedNetwork federatedNetwork = new FederatedNetwork(federatedNetworkId, cidrNotation, label, members);
             if (database.addFederatedNetwork(federatedNetwork, user)) {
                 return federatedNetworkId;
             } else {
@@ -66,7 +66,7 @@ public class FederatedNetworksController {
         String serverAddress = getProperties().getProperty(ConfigurationConstants.FEDERATED_NETWORK_AGENT_ADDRESS);
         String serverPrivateAddress = getProperties().getProperty(ConfigurationConstants.FEDERATED_NETWORK_AGENT_PRIVATE_ADDRESS);
 
-        ProcessBuilder builder = new ProcessBuilder("ssh", "-i", permissionFilePath, user + "@" + serverAddress,
+        ProcessBuilder builder = new ProcessBuilder("ssh", "-o", "UserKnownHostsFile=/dev/null", "-o", "StrictHostKeyChecking=no", "-i", permissionFilePath, user + "@" + serverAddress,
         		"sudo", "/home/ubuntu/config-ipsec", serverPrivateAddress, serverAddress, cidrNotation, virtualIpAddress);        
         LOGGER.info("Trying to call agent with atts (" + cidrNotation + "): " + builder.command());
         
@@ -107,7 +107,7 @@ public class FederatedNetworksController {
         int highAddress = subnetInfo.asInteger(subnetInfo.getHighAddress());
         return highAddress - lowAddress > 1;
     }
-
+    
     public FederatedNetwork getFederatedNetwork(Token.User user, String federatedNetworkId) {
         Collection<FederatedNetwork> allFederatedNetworks = this.getUserNetworks(user);
         for (FederatedNetwork federatedNetwork : allFederatedNetworks) {
@@ -136,6 +136,46 @@ public class FederatedNetworksController {
 					FederatedNetworkConstants.CANNOT_UPDATE_FEDERATED_NETWORK_IN_DATABASE
 							+ federatedNetworkId);
 		}
+	}
+
+	public String getCIDRFromFederatedNetwork(Token.User user, String federatedNetworkId) {
+		FederatedNetwork federatedNetwork = this.getFederatedNetwork(user, federatedNetworkId);
+		if (federatedNetwork == null) {
+			throw new IllegalArgumentException(
+					FederatedNetworkConstants.NOT_FOUND_FEDERATED_NETWORK_MESSAGE
+							+ federatedNetworkId);
+		}
+		return federatedNetwork.getCidr();
+	}
+
+	public String getAgentPublicIp() {
+		String agentPublicIp = getProperties()
+				.getProperty(FederatedNetworksController.FEDERATED_NETWORK_AGENT_PUBLIC_IP_PROP);
+		if (agentPublicIp == null) {
+			throw new IllegalArgumentException(
+					FederatedNetworkConstants.NOT_FOUND_PUBLIC_AGENT_IP_MESSAGE);
+		}
+		return agentPublicIp;
+	}
+	
+	public String getPrivateIpFromFederatedNetwork(Token.User user, String federatedNetworkId,
+			String orderId) throws SubnetAddressesCapacityReachedException {
+		LOGGER.info("Getting FN Ip to Order: " + orderId);
+		FederatedNetwork federatedNetwork = this.getFederatedNetwork(user, federatedNetworkId);
+		if (federatedNetwork == null) {
+			throw new IllegalArgumentException(
+					FederatedNetworkConstants.NOT_FOUND_FEDERATED_NETWORK_MESSAGE
+							+ federatedNetworkId);
+		}
+		LOGGER.info("FederatedNetwork: " + federatedNetwork.toString());
+		String privateIp = null;
+		privateIp = federatedNetwork.nextFreeIp(orderId);
+		LOGGER.info("FederatedNetwork: " + federatedNetwork.toString());
+		if (!this.database.addFederatedNetwork(federatedNetwork, user)) {
+			throw new IllegalArgumentException(
+					FederatedNetworkConstants.CANNOT_UPDATE_FEDERATED_NETWORK_IN_DATABASE);
+		}
+		return privateIp;
 	}
 
 }
