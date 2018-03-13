@@ -67,7 +67,6 @@ import org.fogbowcloud.manager.core.util.HttpRequestUtil;
 import org.fogbowcloud.manager.core.util.UserdataUtils;
 import org.fogbowcloud.manager.occi.ManagerDataStoreController;
 import org.fogbowcloud.manager.occi.OCCIConstants;
-import org.fogbowcloud.manager.occi.federatednetwork.FederatedNetworkConstants;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.instance.InstanceState;
 import org.fogbowcloud.manager.occi.member.UsageServerResource.ResourceUsage;
@@ -674,6 +673,7 @@ public class ManagerController {
 		}
 	}
 
+	//TODO: if order is Compute in a federated network, free associated Ip
 	public void removeOrder(String accessId, String orderId) {
 		LOGGER.debug("Removing orderId: " + orderId);
 		checkOrderId(accessId, orderId);
@@ -950,6 +950,8 @@ public class ManagerController {
 				this.storagePlugin.removeInstance(localToken, instanceId);
 			} else if (resourceKind.equals(OrderConstants.NETWORK_TERM)) {
 				this.networkPlugin.removeInstance(localToken, instanceId);
+			} else if (resourceKind.equals(OrderConstants.FEDERATED_NETWORK_TERM)) {
+				this.federatedNetworksController.deleteFederatedNetwork(order.getFederationToken().getUser(), instanceId);
 			}
 		} else {					
 			removeRemoteInstance(order);
@@ -1027,7 +1029,10 @@ public class ManagerController {
 		List<Order> userOrders = managerDataStoreController.getAllLocalOrders();
 
 		for (Order order : userOrders) {
-			if (instanceId.equals(order.getInstanceId() + Order.SEPARATOR_GLOBAL_ID + order.getProvidingMemberId())) {
+			// TODO check when resource kind (federated network).
+			if ((order.getResourceKind().equals(OrderConstants.FEDERATED_NETWORK_TERM)
+					&&  instanceId.equals(order.getInstanceId())) ||
+					instanceId.equals(order.getInstanceId() + Order.SEPARATOR_GLOBAL_ID + order.getProvidingMemberId())) {
 				if (!order.getFederationToken().getUser().getId().equals(userId)) {
 					throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
 				}
@@ -1642,11 +1647,10 @@ public class ManagerController {
 			if (order.isIntoValidPeriod()) {
 				boolean isFulfilled = false;
 				
-				
 				if (order.isLocal()) {
 					String requirements = order.getRequirements();
 					List<FederationMember> allowedFederationMembers = getAllowedFederationMembers(requirements);
-					normalizeOrderCompute(order);					
+					normalizeOrderCompute(order);				
 					
 					if (RequirementsHelper.matchLocation(requirements,
 							properties.getProperty(ConfigurationConstants.XMPP_JID_KEY))) {
@@ -1889,32 +1893,54 @@ public class ManagerController {
 
 	protected void normalizeOrderCompute(Order order) {
 		try {
+			LOGGER.info("Normalizing Order with Id: " + order.getId());
 			String federatedNetworkId = order
 					.getAttValue(OrderAttribute.FEDERATED_NETWORK_ID.getValue());
 			if (order.isLocal() && federatedNetworkId != null && !federatedNetworkId.isEmpty()) {
-				FederatedNetwork federatedNetwork = this.federatedNetworksController
-						.getFederatedNetwork(order.getFederationToken().getUser(),
-								federatedNetworkId);
+				LOGGER.info("Order associated with Federated Network Id: " + federatedNetworkId);
 
-				if (federatedNetwork == null) {
-					throw new IllegalArgumentException(
-							FederatedNetworkConstants.NOT_FOUND_FEDERATED_NETWORK_MESSAGE
-									+ federatedNetworkId);
+				Token.User user = order.getFederationToken().getUser();
+				LOGGER.info("Order User: " + user);
+
+				FederationMember requestingMember = this
+						.getFederationMember(order.getRequestingMemberId());
+				if (requestingMember == null) {
+					throw new IllegalArgumentException("Null Requesting Member");
+				}
+				FederationMember providingMember = this
+						.getFederationMember(order.getProvidingMemberId());
+				if (providingMember == null) {
+					throw new IllegalArgumentException("Null Providing Member");
 				}
 
+				LOGGER.info("Order Requesting Member: " + requestingMember);
+				LOGGER.info("Order Providing Member: " + providingMember);
+
+				if (!this.federatedNetworksController.isMemberAllowedInFederatedNetwork(user,
+						federatedNetworkId, requestingMember)) {
+					throw new IllegalArgumentException("Member: " + requestingMember
+							+ " is not allowed in Federated Network: " + federatedNetworkId);
+				}
+				if (!this.federatedNetworksController.isMemberAllowedInFederatedNetwork(user,
+						federatedNetworkId, providingMember)) {
+					throw new IllegalArgumentException("Member: " + providingMember
+							+ " is not allowed in Federated Network: " + federatedNetworkId);
+				}
+
+				String cidr = this.federatedNetworksController.getCIDRFromFederatedNetwork(user,
+						federatedNetworkId);
 				order.putAttValue(OrderAttribute.FEDERATED_NETWORK_CIDR_NOTATION_TERM.getValue(),
-						federatedNetwork.getCidr());
+						cidr);
+				LOGGER.info("Order CIDR: " + cidr);
 
-				String privateIp = federatedNetwork.nextFreeIp();
-				order.putAttValue(OCCIConstants.FEDERATED_NETWORK_PRIVATE_IP, privateIp);
-
-				String agentPublicIp = getProperties().getProperty(
-						FederatedNetworksController.FEDERATED_NETWORK_AGENT_PUBLIC_IP_PROP);
-				if (agentPublicIp == null) {
-					throw new IllegalArgumentException(
-							FederatedNetworkConstants.NOT_FOUND_PUBLIC_AGENT_IP_MESSAGE);
-				}
+				String agentPublicIp = this.federatedNetworksController.getAgentPublicIp();
 				order.putAttValue(OCCIConstants.FEDERATED_NETWORK_AGENT_PUBLIC_IP, agentPublicIp);
+				LOGGER.info("Order Public Agent: " + agentPublicIp);
+
+				String privateIp = this.federatedNetworksController
+						.getPrivateIpFromFederatedNetwork(user, federatedNetworkId, order.getId());
+				order.putAttValue(OCCIConstants.FEDERATED_NETWORK_PRIVATE_IP, privateIp);
+				LOGGER.info("Order Federated Network IP: " + privateIp);
 			}
 		} catch (Exception e) {
 			throw new OCCIException(ErrorType.BAD_REQUEST, e.getMessage());
@@ -2297,7 +2323,16 @@ public class ManagerController {
 	public void updateFederatedNetworkMembers(String authToken, String federatedNetworkId,
 			Set<String> membersSet) {
 		Token token = this.getToken(authToken);
-		federatedNetworksController.updateFederatedNetworkMembers(token.getUser(), federatedNetworkId, membersSet);
+		Set<FederationMember> federationMemberSet = new HashSet<>();
+		for (String member : membersSet){
+			federationMemberSet.add(getFederationMember(member));
+		}
+		federatedNetworksController.updateFederatedNetworkMembers(token.getUser(), federatedNetworkId, federationMemberSet);
+	}
+
+	public void deleteFederatedNetwork(String federationAuthToken, String federatedNetworkId) {
+		Token token = this.getToken(federationAuthToken);
+		federatedNetworksController.deleteFederatedNetwork(token.getUser(), federatedNetworkId);
 	}
 
 	protected class FailedBatch {

@@ -284,4 +284,8 @@ public class OCCIApplication extends Application {
 			Set<String> membersSet) {
 		this.managerFacade.updateFederatedNetworkMembers(authToken, federatedNetworkId, membersSet);
 	}
+
+	public void deleteFederatedNetwork(String federationAuthToken, String federatedNetworkId) {
+		this.managerFacade.deleteFederatedNetwork(federationAuthToken, federatedNetworkId);
+	}
 }

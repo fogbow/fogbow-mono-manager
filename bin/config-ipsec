@@ -22,8 +22,6 @@ if [ "$( firstNetwork )" = "true" ]; then
 	echo "$config_setup
 	$tunnel_param_configs
 	$other_tunnel_configs" > $absoluteIpsecConfPath
-	sysctl net.ipv4.ip_forward=1
-	sysctl net.ipv6.conf.all.forwarding=1
 else
 	leftSubnets=$( cat $absoluteIpsecConfPath | grep leftsubnet | awk '{split($0,a,"="); print a[2]}' )
 	newSubnet=",$leftsubnet"
@@ -31,6 +29,8 @@ else
 	mv $absoluteIpsecConfPath.tmp $absoluteIpsecConfPath
 fi
 
+sysctl net.ipv4.ip_forward=1
+sysctl net.ipv6.conf.all.forwarding=1
 veth_size=`ip link show | grep veth | wc -l`
 peer_veth=`expr "$veth_size" + "1"`
 ip l add dev veth$veth_size type veth peer name veth$peer_veth

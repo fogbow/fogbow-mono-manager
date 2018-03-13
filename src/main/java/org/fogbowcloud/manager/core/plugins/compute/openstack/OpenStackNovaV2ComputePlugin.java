@@ -88,6 +88,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 	private HttpClient client;
 	private Integer httpClientTimeout;
 	private List<Flavor> flavors;
+	private String networkSecurityGroups;
 
 	private static final Logger LOGGER = Logger.getLogger(OpenStackNovaV2ComputePlugin.class);
 	
@@ -108,7 +109,10 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		
 		networkV2APIEndpoint = properties.getProperty(
 				OpenStackConfigurationConstants.NETWORK_NOVAV2_URL_KEY) + NETWORK_V2_API_ENDPOINT;
-		
+
+		networkSecurityGroups = properties
+				.getProperty(OpenStackConfigurationConstants.NETWORK_SECURITY_GROUPS_KEY);
+
 		// userdata
 		fogbowTermToOpenStack.put(OrderConstants.USER_DATA_TERM, "user_data");
 		
@@ -175,12 +179,21 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		
 		String userdata = xOCCIAtt.get(OrderAttribute.USER_DATA_ATT.getValue());
 		
+		String[] parsedGroups = null;
 		String orderNetworkId = xOCCIAtt.get(OrderAttribute.NETWORK_ID.getValue());
 		if (orderNetworkId == null || orderNetworkId.isEmpty()) {
 			orderNetworkId = this.networkId;
+		} else {
+			if (this.networkSecurityGroups != null) {
+				parsedGroups = parseSecurityGroups(this.networkSecurityGroups);
+			} else {
+				throw new IllegalArgumentException(
+						"Requesting Instance associated with a Network, but there isn't Security Group in the Property File");
+			}
 		}
+
 		try {
-			JSONObject json = generateJsonRequest(imageRef, flavorId, userdata, keyName, orderNetworkId);
+			JSONObject json = generateJsonRequest(imageRef, flavorId, userdata, keyName, orderNetworkId, parsedGroups);
 			String requestEndpoint = computeV2APIEndpoint + tenantId + SERVERS;
 			String jsonResponse = doPostRequest(requestEndpoint, token.getAccessId(), json);
 			return getAttFromJson(ID_JSON_FIELD, jsonResponse);
@@ -342,7 +355,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 	}
 
 	private JSONObject generateJsonRequest(String imageRef, String flavorRef, String userdata,
-			String keyName, String networkId) throws JSONException {
+			String keyName, String networkId, String[] groups) throws JSONException {
 
 		JSONObject server = new JSONObject();
 		server.put(NAME_JSON_FIELD, "fogbow-instance-" + UUID.randomUUID().toString());
@@ -362,6 +375,16 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		
 		if (keyName != null && !keyName.isEmpty()){
 			server.put("key_name", keyName);
+		}
+
+		if (groups != null) {
+			JSONArray jsonGroups = new JSONArray();
+			for (String group : groups) {
+				JSONObject jsonGroup = new JSONObject();
+				jsonGroup.put("name", group);
+				jsonGroups.put(jsonGroup);
+			}
+			server.put("security_groups", jsonGroups);
 		}
 
 		JSONObject root = new JSONObject();
@@ -903,5 +926,15 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		String endpoint = this.computeV2APIEndpoint + tenantId + SERVERS + 
 				"/" + instanceId + OS_VOLUME_ATTACHMENTS + "/" + attachmentId;
 		doDeleteRequest(endpoint, token.getAccessId());		
+	}
+
+	private String[] parseSecurityGroups(String allGroups) {
+		String[] groups = allGroups.split("\\;");
+
+		for (int i = 0; i < groups.length; i++) {
+			groups[i] = groups[i].replaceAll("\\s", "");
+		}
+
+		return groups;
 	}
 }

@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -22,7 +21,6 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
 import org.dom4j.Element;
 import org.fogbowcloud.manager.core.ManagerController.FailedBatchType;
-import org.fogbowcloud.manager.core.federatednetwork.FederatedNetwork;
 import org.fogbowcloud.manager.core.federatednetwork.FederatedNetworksController;
 import org.fogbowcloud.manager.core.federatednetwork.SubnetAddressesCapacityReachedException;
 import org.fogbowcloud.manager.core.model.DateUtils;
@@ -44,7 +42,6 @@ import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.ManagerDataStore;
 import org.fogbowcloud.manager.occi.ManagerDataStoreController;
 import org.fogbowcloud.manager.occi.TestDataStorageHelper;
-import org.fogbowcloud.manager.occi.federatednetwork.FederatedNetworkConstants;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.instance.Instance.Link;
 import org.fogbowcloud.manager.occi.instance.InstanceState;
@@ -4602,7 +4599,7 @@ public class TestManagerController {
 	}
 	
 	@Test
-	public void testNormalizeOrderCompute() {
+	public void testNormalizeOrderCompute() throws SubnetAddressesCapacityReachedException {
 		User user = new User("id", "name");
 		Token federationToken = new Token("accessId", user, new Date(),
 				new HashMap<String, String>());
@@ -4613,26 +4610,36 @@ public class TestManagerController {
 				"requestingMemberId", new Date().getTime(), true, OrderState.OPEN, categories,
 				xOCCIAtt);
 
+		List<FederationMember> members = new ArrayList<FederationMember>();
+		members.add(new FederationMember("providingMemberId"));
+		members.add(new FederationMember("requestingMemberId"));
+		
+		this.managerController.updateMembers(members);
+		
 		FederatedNetworksController federatedNetworksController = Mockito
 				.mock(FederatedNetworksController.class);
 		this.managerController.setFederatedNetworksController(federatedNetworksController);
 
-		FederatedNetwork federatedNetwork = new FederatedNetwork("federated_id", "10.0.0.0/24",
-				"fake-label",
-				new HashSet<FederationMember>(Arrays.asList(new FederationMember("fake-member01"),
-						new FederationMember("fake-member02"))));
+		Mockito.doReturn(true).when(federatedNetworksController).isMemberAllowedInFederatedNetwork(
+				Mockito.any(Token.User.class), Mockito.anyString(), Mockito.any(FederationMember.class));
 
-		Mockito.doReturn(federatedNetwork).when(federatedNetworksController)
-				.getFederatedNetwork(Mockito.any(Token.User.class), Mockito.anyString());
-
+		Mockito.doReturn("fake-cidr").when(federatedNetworksController)
+				.getCIDRFromFederatedNetwork(Mockito.any(Token.User.class), Mockito.anyString());
+		
+		Mockito.doReturn("fake-public-agent").when(federatedNetworksController).getAgentPublicIp();
+		
+		Mockito.doReturn("fake-Ip").when(federatedNetworksController)
+				.getPrivateIpFromFederatedNetwork(Mockito.any(Token.User.class),
+						Mockito.anyString(), Mockito.anyString());
+		
 		this.managerController.getProperties()
 				.put(FederatedNetworksController.FEDERATED_NETWORK_AGENT_PUBLIC_IP_PROP, "fake-IP");
 
 		this.managerController.normalizeOrderCompute(order);
 	}
 	
-	@Test
-	public void testNormalizeOrderComputeNullFederatedNetwork() {
+	@Test(expected=OCCIException.class)
+	public void testNormalizeOrderComputeNullProvidingMember() throws SubnetAddressesCapacityReachedException {
 		User user = new User("id", "name");
 		Token federationToken = new Token("accessId", user, new Date(),
 				new HashMap<String, String>());
@@ -4643,27 +4650,35 @@ public class TestManagerController {
 				"requestingMemberId", new Date().getTime(), true, OrderState.OPEN, categories,
 				xOCCIAtt);
 
+		List<FederationMember> members = new ArrayList<FederationMember>();
+		
+		this.managerController.updateMembers(members);
+		members.add(new FederationMember("requestingMemberId"));
+		
 		FederatedNetworksController federatedNetworksController = Mockito
 				.mock(FederatedNetworksController.class);
 		this.managerController.setFederatedNetworksController(federatedNetworksController);
 
-		Mockito.doReturn(null).when(federatedNetworksController)
-				.getFederatedNetwork(Mockito.any(Token.User.class), Mockito.anyString());
+		Mockito.doReturn(true).when(federatedNetworksController).isMemberAllowedInFederatedNetwork(
+				Mockito.any(Token.User.class), Mockito.anyString(), Mockito.any(FederationMember.class));
 
+		Mockito.doReturn("fake-cidr").when(federatedNetworksController)
+				.getCIDRFromFederatedNetwork(Mockito.any(Token.User.class), Mockito.anyString());
+		
+		Mockito.doReturn("fake-public-agent").when(federatedNetworksController).getAgentPublicIp();
+		
+		Mockito.doReturn("fake-Ip").when(federatedNetworksController)
+				.getPrivateIpFromFederatedNetwork(Mockito.any(Token.User.class),
+						Mockito.anyString(), Mockito.anyString());
+		
 		this.managerController.getProperties()
 				.put(FederatedNetworksController.FEDERATED_NETWORK_AGENT_PUBLIC_IP_PROP, "fake-IP");
 
-		try {
-			this.managerController.normalizeOrderCompute(order);
-			Assert.fail();
-		} catch (OCCIException e) {
-			Assert.assertEquals(FederatedNetworkConstants.NOT_FOUND_FEDERATED_NETWORK_MESSAGE + "federated_id",
-					e.getStatus().getDescription());
-		}
+		this.managerController.normalizeOrderCompute(order);
 	}
 	
-	@Test
-	public void testNormalizeOrderComputeNoFreeIPs() throws SubnetAddressesCapacityReachedException {
+	@Test(expected=OCCIException.class)
+	public void testNormalizeOrderComputeNullRequestingMember() throws SubnetAddressesCapacityReachedException {
 		User user = new User("id", "name");
 		Token federationToken = new Token("accessId", user, new Date(),
 				new HashMap<String, String>());
@@ -4674,32 +4689,35 @@ public class TestManagerController {
 				"requestingMemberId", new Date().getTime(), true, OrderState.OPEN, categories,
 				xOCCIAtt);
 
+		List<FederationMember> members = new ArrayList<FederationMember>();
+		
+		this.managerController.updateMembers(members);
+		members.add(new FederationMember("providingMemberId"));
+		
 		FederatedNetworksController federatedNetworksController = Mockito
 				.mock(FederatedNetworksController.class);
 		this.managerController.setFederatedNetworksController(federatedNetworksController);
 
-		FederatedNetwork federatedNetwork = new FederatedNetwork("federated_id", "10.0.0.0/32",
-				"fake-label",
-				new HashSet<FederationMember>(Arrays.asList(new FederationMember("fake-member01"),
-						new FederationMember("fake-member02"))));
+		Mockito.doReturn(true).when(federatedNetworksController).isMemberAllowedInFederatedNetwork(
+				Mockito.any(Token.User.class), Mockito.anyString(), Mockito.any(FederationMember.class));
 
-		Mockito.doReturn(federatedNetwork).when(federatedNetworksController)
-				.getFederatedNetwork(Mockito.any(Token.User.class), Mockito.anyString());
-
+		Mockito.doReturn("fake-cidr").when(federatedNetworksController)
+				.getCIDRFromFederatedNetwork(Mockito.any(Token.User.class), Mockito.anyString());
+		
+		Mockito.doReturn("fake-public-agent").when(federatedNetworksController).getAgentPublicIp();
+		
+		Mockito.doReturn("fake-Ip").when(federatedNetworksController)
+				.getPrivateIpFromFederatedNetwork(Mockito.any(Token.User.class),
+						Mockito.anyString(), Mockito.anyString());
+		
 		this.managerController.getProperties()
 				.put(FederatedNetworksController.FEDERATED_NETWORK_AGENT_PUBLIC_IP_PROP, "fake-IP");
 
-		try {
-			this.managerController.normalizeOrderCompute(order);
-			Assert.fail();
-		} catch (OCCIException e) {
-			Assert.assertEquals(FederatedNetwork.NO_FREE_IPS_MESSAGE,
-					e.getStatus().getDescription());
-		}
+		this.managerController.normalizeOrderCompute(order);
 	}
 	
-	@Test
-	public void testNormalizeOrderComputeNoPublicAgentIP() {
+	@Test(expected=OCCIException.class)
+	public void testNormalizeOrderComputeNotAllowedMember() throws SubnetAddressesCapacityReachedException {
 		User user = new User("id", "name");
 		Token federationToken = new Token("accessId", user, new Date(),
 				new HashMap<String, String>());
@@ -4710,25 +4728,32 @@ public class TestManagerController {
 				"requestingMemberId", new Date().getTime(), true, OrderState.OPEN, categories,
 				xOCCIAtt);
 
+		List<FederationMember> members = new ArrayList<FederationMember>();
+		members.add(new FederationMember("providingMemberId"));
+		members.add(new FederationMember("requestingMemberId"));
+		
+		this.managerController.updateMembers(members);
+		
 		FederatedNetworksController federatedNetworksController = Mockito
 				.mock(FederatedNetworksController.class);
 		this.managerController.setFederatedNetworksController(federatedNetworksController);
 
-		FederatedNetwork federatedNetwork = new FederatedNetwork("federated_id", "10.0.0.0/24",
-				"fake-label",
-				new HashSet<FederationMember>(Arrays.asList(new FederationMember("fake-member01"),
-						new FederationMember("fake-member02"))));
+		Mockito.doReturn(false).when(federatedNetworksController).isMemberAllowedInFederatedNetwork(
+				Mockito.any(Token.User.class), Mockito.anyString(), Mockito.any(FederationMember.class));
 
-		Mockito.doReturn(federatedNetwork).when(federatedNetworksController)
-				.getFederatedNetwork(Mockito.any(Token.User.class), Mockito.anyString());
+		Mockito.doReturn("fake-cidr").when(federatedNetworksController)
+				.getCIDRFromFederatedNetwork(Mockito.any(Token.User.class), Mockito.anyString());
+		
+		Mockito.doReturn("fake-public-agent").when(federatedNetworksController).getAgentPublicIp();
+		
+		Mockito.doReturn("fake-Ip").when(federatedNetworksController)
+				.getPrivateIpFromFederatedNetwork(Mockito.any(Token.User.class),
+						Mockito.anyString(), Mockito.anyString());
+		
+		this.managerController.getProperties()
+				.put(FederatedNetworksController.FEDERATED_NETWORK_AGENT_PUBLIC_IP_PROP, "fake-IP");
 
-		try {
-			this.managerController.normalizeOrderCompute(order);
-			Assert.fail();
-		} catch (OCCIException e) {
-			Assert.assertEquals(FederatedNetworkConstants.NOT_FOUND_PUBLIC_AGENT_IP_MESSAGE,
-					e.getStatus().getDescription());
-		}
+		this.managerController.normalizeOrderCompute(order);
 	}
 	
 }
