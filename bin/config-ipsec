@@ -14,7 +14,6 @@ left=$1
 leftid=$2
 leftsubnet=$3
 virtualAddress=$4
-
 if [ "$( firstNetwork )" = "true" ]; then
 	config_setup="config setup\n charondebug="all"\n uniqueids=yes\n strictcrlpolicy=no\nconn %default\nconn tunnel"
 	tunnel_param_configs=" left="$left"\n leftid"=$leftid"\n leftsubnet="$leftsubnet"\n right=%any\n rightsourceip=%config"
