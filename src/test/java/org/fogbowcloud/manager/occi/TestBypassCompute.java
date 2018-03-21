@@ -17,7 +17,9 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
+import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.RequirementsHelper;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
@@ -51,6 +53,8 @@ import org.mockito.Mockito;
 
 public class TestBypassCompute {
 
+	private static final Logger LOGGER = Logger.getLogger(TestBypassCompute.class);
+
 	private static final int LITTLE_SCHEDULE_TIME = 100;
 	private static final String FIRST_INSTANCE_ID = "first-instance";
 	private static final String SECOND_INSTANCE_ID = "second-instance";
@@ -67,14 +71,14 @@ public class TestBypassCompute {
 	private MapperPlugin mapperPlugin;
 	
 	@Before
-	public void setup() throws Exception{
+	public void setup() throws Throwable{
 		TestDataStorageHelper.removeDefaultFolderDataStore();
 		
 		setup(new ArrayList<Order>());
 	}
 	
 	@SuppressWarnings("unchecked")
-	private void setup(List<Order> orders) throws Exception {		
+	private void setup(List<Order> orders) throws Throwable {		
 		Properties properties = new Properties();
 		properties.put(OpenStackConfigurationConstants.COMPUTE_OCCI_URL_KEY, PluginHelper.COMPUTE_OCCI_URL);
 		properties.put(OpenStackConfigurationConstants.COMPUTE_OCCI_INSTANCE_SCHEME_KEY, OCCIComputeApplication.INSTANCE_SCHEME);
@@ -134,9 +138,14 @@ public class TestBypassCompute {
 		
 		//initializing fogbow OCCI Application
 		helper = new OCCITestHelper();
-		helper.initializeComponentCompute(computePlugin, identityPlugin, identityPlugin, authorizationPlugin,
+		try {
+			helper.initializeComponentCompute(computePlugin, identityPlugin, identityPlugin, authorizationPlugin,
 				imageStoragePlugin, Mockito.mock(AccountingPlugin.class), Mockito.mock(AccountingPlugin.class),
 				Mockito.mock(BenchmarkingPlugin.class), ordersToAdd, mapperPlugin);
+		} catch (Error e) {
+			LOGGER.error(e.getMessage(), e.getCause());
+			throw e.getCause();
+		}
 	}
 
 	@After
