@@ -40,12 +40,14 @@ public class TestManagerDataStore {
 	
 	@Before
 	public void initialize() {		
-		TestDataStorageHelper.removeDefaultFolderDataStore();
-		this.properties = new Properties();
-		this.properties.put(ManagerDataStore.MANAGER_DATASTORE_URL , DATASTORE_URL);
-		this.database = new ManagerDataStore(properties);
-		initializeOrders();
-		initializeStorageLinks();
+		if(this.database == null) {
+			TestDataStorageHelper.removeDefaultFolderDataStore();
+			this.properties = new Properties();
+			this.properties.put(ManagerDataStore.MANAGER_DATASTORE_URL , DATASTORE_URL);
+			this.database = new ManagerDataStore(properties);
+			initializeOrders();
+			initializeStorageLinks();
+		}
 	}
 	
 	@After
