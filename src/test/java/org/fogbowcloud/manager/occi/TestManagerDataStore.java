@@ -23,7 +23,8 @@ import org.junit.Test;
 
 public class TestManagerDataStore {
 	 
-	private final String DATASTORE_PATH = "src/test/resources/testManagerDataStore.sqlite";
+	//private final String DATASTORE_PATH = "src/test/resources/testManagerDataStore.sqlite";
+	private final String DATASTORE_PATH = "/dev/shm/testManagerDataStore.sqlite";
 	private final String DATASTORE_URL = "jdbc:sqlite:" + DATASTORE_PATH;
 	
 	private Order orderOne;
@@ -40,14 +41,12 @@ public class TestManagerDataStore {
 	
 	@Before
 	public void initialize() {		
-		if(this.database == null) {
-			TestDataStorageHelper.removeDefaultFolderDataStore();
-			this.properties = new Properties();
-			this.properties.put(ManagerDataStore.MANAGER_DATASTORE_URL , DATASTORE_URL);
-			this.database = new ManagerDataStore(properties);
-			initializeOrders();
-			initializeStorageLinks();
-		}
+		TestDataStorageHelper.removeDefaultFolderDataStore();
+		this.properties = new Properties();
+		this.properties.put(ManagerDataStore.MANAGER_DATASTORE_URL , DATASTORE_URL);
+		this.database = new ManagerDataStore(properties);
+		initializeOrders();
+		initializeStorageLinks();
 	}
 	
 	@After
