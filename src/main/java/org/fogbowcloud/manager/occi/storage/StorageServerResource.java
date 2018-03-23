@@ -2,6 +2,7 @@ package org.fogbowcloud.manager.occi.storage;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -39,6 +40,7 @@ public class StorageServerResource extends ServerResource {
 	private static final Logger LOGGER = Logger.getLogger(StorageServerResource.class);
 	public static final String FED_STORAGE_PREFIX = "federated_storage_";
 	private static final String DEFAULT_INSTANCE_COUNT = "1";
+	protected static final String NO_INSTANCES_MESSAGE = "There are no storage instances.";
 	
 	private StorageDataStore storageDB;
 	
@@ -165,7 +167,7 @@ public class StorageServerResource extends ServerResource {
 		
 
 		if (acceptContent.size() == 0 || acceptContent.contains(OCCIHeaders.TEXT_PLAIN_CONTENT_TYPE)) {
-			return new StringRepresentation(ComputeServerResource.generateResponse(allInstances),
+			return new StringRepresentation(generateResponse(allInstances),
 					MediaType.TEXT_PLAIN);
 		} else if (acceptContent.contains(OCCIHeaders.TEXT_URI_LIST_CONTENT_TYPE)) {
 			return new StringRepresentation(ComputeServerResource.generateURIListResponse(allInstances, req),
@@ -174,6 +176,21 @@ public class StorageServerResource extends ServerResource {
 		throw new OCCIException(ErrorType.NOT_ACCEPTABLE, ResponseConstants.ACCEPT_NOT_ACCEPTABLE);
 	}
 
+	public static String generateResponse(List<Instance> instances) {
+		if (instances == null || instances.isEmpty()) {
+			return NO_INSTANCES_MESSAGE;
+		}
+		String response = "";
+		Iterator<Instance> instanceIt = instances.iterator();
+		while (instanceIt.hasNext()) {
+			response += instanceIt.next().toOCCIMessageFormatLocation();
+			if (instanceIt.hasNext()) {
+				response += "\n";
+			}
+		}
+		return response;
+	}
+	
 	@Post
 	public StringRepresentation post() {
 
