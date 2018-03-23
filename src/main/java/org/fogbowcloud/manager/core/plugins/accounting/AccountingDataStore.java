@@ -28,7 +28,7 @@ public class AccountingDataStore {
 	protected static final String USAGE_COL = "usage";
 	protected static final String DEFAULT_DATASTORE_NAME = "datastore_accounting.slite";
 	protected static final String ERROR_WHILE_INITIALIZING_THE_DATA_STORE = 
-			"Error while initializing the Accouting DataStore.";
+			"Error while initializing the Accounting DataStore.";
 
 	private String dataStoreURL;
 
@@ -54,7 +54,6 @@ public class AccountingDataStore {
 							+ "usage DOUBLE,"
 							+ "PRIMARY KEY (user, requesting_member, providing_member)"
 							+ ")");
-			statement.close();
 		} catch (Exception e) {
 			LOGGER.error(ERROR_WHILE_INITIALIZING_THE_DATA_STORE, e);
 			throw new Error(ERROR_WHILE_INITIALIZING_THE_DATA_STORE, e);
@@ -201,11 +200,13 @@ public class AccountingDataStore {
 		} catch (SQLException e) {
 			LOGGER.error("Couldn't get keys from DB.", e);
 			return null;
+		} finally {
+			close(statement, conn);
 		}
 	}
 
 	public List<AccountingInfo> getAccountingInfo() {
-		LOGGER.debug("Getting AccounintgInfo...");
+		LOGGER.debug("Getting AccountingInfo...");
 		Statement statement = null;
 		Connection conn = null;
 		try {
@@ -217,7 +218,9 @@ public class AccountingDataStore {
 		} catch (SQLException e) {
 			LOGGER.error("Couldn't get keys from DB.", e);
 			return null;
-		}	
+		} finally {
+			close(statement, conn);
+		}
 	}
 
 	private static final String SELECT_SPECIFIC_USAGE_SQL = "SELECT * FROM " + USAGE_TABLE_NAME
@@ -384,7 +387,7 @@ class AccountingEntryKey {
 	
 	@Override
 	public String toString() {
-		return "user=" + user + "; requestigMember=" + requestingMember + "; providingMember="
+		return "user=" + user + "; requestingMember=" + requestingMember + "; providingMember="
 				+ providingMember;
 	}
 }
