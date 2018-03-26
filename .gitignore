@@ -3,3 +3,6 @@
 .project
 .settings
 log4j.properties
+datastores/
+datastores_test/
+*.db
