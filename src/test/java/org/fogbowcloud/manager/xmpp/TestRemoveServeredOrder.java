@@ -46,7 +46,7 @@ public class TestRemoveServeredOrder {
 	
 	@SuppressWarnings("unchecked")
 	@Test
-	public void testRemoveServeredOrderResourceKingCompute() throws Exception {
+	public void testRemoveServeredOrderResourceKindCompute() throws Exception {
 		ManagerXmppComponent initializeXMPPManagerComponent = managerTestHelper.initializeXMPPManagerComponent(false);
 		Order order = createOrder(OrderConstants.COMPUTE_TERM);
 		ManagerController managerFacade = initializeXMPPManagerComponent.getManagerFacade();
@@ -95,7 +95,7 @@ public class TestRemoveServeredOrder {
 	
 	@SuppressWarnings("unchecked")
 	@Test
-	public void testRemoveServeredOrderResourceKingStorage() throws Exception {
+	public void testRemoveServeredOrderResourceKindStorage() throws Exception {
 		ManagerXmppComponent initializeXMPPManagerComponent = managerTestHelper.initializeXMPPManagerComponent(false);
 		Order order = createOrder(OrderConstants.STORAGE_TERM);
 		ManagerController managerFacade = initializeXMPPManagerComponent.getManagerFacade();
@@ -140,13 +140,13 @@ public class TestRemoveServeredOrder {
 		Assert.assertEquals("", instanceId);
 	}	
 
-	private Order createOrder(String resourceKing) {
+	private Order createOrder(String resourceKind) {
 		List<Category> categories = new ArrayList<Category>();
 		categories.add(new Category("term1", "scheme1", "class1"));
 		Map<String, String> attributes = new HashMap<String, String>();
 		attributes.put("key1", "value1");
 		attributes.put("key2", "value2");
-		attributes.put(OrderAttribute.RESOURCE_KIND.getValue(), resourceKing);
+		attributes.put(OrderAttribute.RESOURCE_KIND.getValue(), resourceKind);
 		Order order = new Order(ORDER_ID, new Token(ACCESS_ID,
 				new Token.User(OCCITestHelper.USER_MOCK, ""),
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,

@@ -249,8 +249,8 @@ public class OCCIApplication extends Application {
 		return managerFacade.getUserId(authToken);
 	}
 
-	public List<AccountingInfo> getAccountingInfo(String authToken, String resourceKing) {
-		return managerFacade.getAccountingInfo(authToken, resourceKing);
+	public List<AccountingInfo> getAccountingInfo(String authToken, String resourceKind) {
+		return managerFacade.getAccountingInfo(authToken, resourceKind);
 	}
 
 	public ResourceUsage getUsages(String authToken, String memberId) {

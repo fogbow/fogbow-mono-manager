@@ -85,7 +85,7 @@ public class ManagerDataStoreController {
 			List<Order> ordersDB = this.managerDatabase.getOrders();
 			for (Order order : ordersDB) {
 				if (order.getState().in(states)) {
-					if (resourceKind != null && !resourceKind.equals(order.getResourceKing())) {
+					if (resourceKind != null && !resourceKind.equals(order.getResourceKind())) {
 						continue;
 					}
 					

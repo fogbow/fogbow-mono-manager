@@ -123,7 +123,7 @@ public class TestUsageServerResource {
 		Assert.assertEquals(0, memberUsageByUser.getUsage(), ACCEPTABLE_ERROR);
 	}
 	
-	public static AccountingInfo getUsageFrom(String userId, String responseStr, String resourceKing) {
+	public static AccountingInfo getUsageFrom(String userId, String responseStr, String resourceKind) {
 		StringTokenizer st = new StringTokenizer(responseStr, "\n");
 		String providingMember = "";
 		double consuption = -1;
@@ -134,12 +134,12 @@ public class TestUsageServerResource {
 				providingMember = tokens[1].trim();
 			} else if (line.contains(OCCIHeaders.X_OCCI_ATTRIBUTE + ": compute usage=")) {
 				String[] tokens = line.split("=");
-				if (resourceKing.equals(OrderConstants.COMPUTE_TERM)) {
+				if (resourceKind.equals(OrderConstants.COMPUTE_TERM)) {
 					consuption = Double.parseDouble(tokens[1].trim());
 				}				
 			} else if (line.contains(OCCIHeaders.X_OCCI_ATTRIBUTE + ": storage usage=")) {
 				String[] tokens = line.split("=");
-				if (resourceKing.equals(OrderConstants.STORAGE_TERM)) {
+				if (resourceKind.equals(OrderConstants.STORAGE_TERM)) {
 					consuption = Double.parseDouble(tokens[1].trim());
 				}
 			}			
