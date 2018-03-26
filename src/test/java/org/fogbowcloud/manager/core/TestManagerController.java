@@ -1648,8 +1648,8 @@ public class TestManagerController {
 		managerController.createOrders(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
 				new ArrayList<Category>(), xOCCIAtt);
 
-		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD);
 		managerController.checkAndSubmitOpenOrders();
+        Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD);
 
 		// checking order is fulfilled
 		List<Order> orders = managerController
