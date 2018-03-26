@@ -33,26 +33,33 @@ public class TestRemoveServeredOrder {
 	private static final String ORDER_ID = "orderId";
 
 	private ManagerTestHelper managerTestHelper;
+	private ManagerXmppComponent XMPPManagerComponent;
 
 	@Before
-	public void setUp() throws XMPPException {
+	public void setUp() throws Exception {
 		this.managerTestHelper = new ManagerTestHelper();
-	}
+        this.XMPPManagerComponent = managerTestHelper.initializeXMPPManagerComponent(false);
+    }
 
 	@After
 	public void tearDown() throws Exception {
+	    this.XMPPManagerComponent = null;
 		this.managerTestHelper.shutdown();
 	}
 	
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testRemoveServeredOrderResourceKindCompute() throws Exception {
-		ManagerXmppComponent initializeXMPPManagerComponent = managerTestHelper.initializeXMPPManagerComponent(false);
 		Order order = createOrder(OrderConstants.COMPUTE_TERM);
-		ManagerController managerFacade = initializeXMPPManagerComponent.getManagerFacade();
+		ManagerController managerFacade = XMPPManagerComponent.getManagerFacade();
 		managerFacade.getManagerDataStoreController().addOrder(order);
 
-		Token token = new Token(ACCESS_ID, new Token.User(OCCITestHelper.USER_MOCK, ""), null, new HashMap<String, String>());
+		Token token = new Token(
+		        ACCESS_ID,
+                new Token.User(OCCITestHelper.USER_MOCK, ""),
+                null,
+                new HashMap<String, String>()
+        );
 		
 		Mockito.when(managerTestHelper.getFederationIdentityPlugin().getToken(ACCESS_ID))
 				.thenReturn(token);
@@ -64,17 +71,17 @@ public class TestRemoveServeredOrder {
 				Mockito.anyMap())).thenReturn(token);		
 		Mockito.when(managerTestHelper.getAuthorizationPlugin().isAuthorized(token)).thenReturn(true);			
 
-		Assert.assertEquals(1, initializeXMPPManagerComponent.getManagerFacade()
+		Assert.assertEquals(1, XMPPManagerComponent.getManagerFacade()
 				.getOrdersFromUser(token.getAccessId(), false).size());
 		
-		final BlockingQueue<String> bq = new LinkedBlockingQueue<String>();
+		final BlockingQueue<String> bq = new LinkedBlockingQueue<>();
 
 		ManagerPacketHelper.deleteRemoteOrder(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
 				order, managerTestHelper.createPacketSender(), new AsynchronousOrderCallback() {
 
 					@Override
 					public void success(String instanceId) {
-						bq.add(new String());
+						bq.add("");
 					}
 
 					@Override
@@ -84,21 +91,22 @@ public class TestRemoveServeredOrder {
 		
 		String instanceId = bq.poll(1500, TimeUnit.SECONDS);
 		
-		Assert.assertEquals(0, initializeXMPPManagerComponent.getManagerFacade()
+		Assert.assertEquals(0, XMPPManagerComponent.getManagerFacade()
 				.getOrdersFromUser(token.getAccessId(), false).size());
 
 		Mockito.verify(managerTestHelper.getComputePlugin(), VerificationModeFactory.times(1))
 				.removeInstance(token, INSTANCE_ID);
 		
 		Assert.assertEquals("", instanceId);
+
+
 	}
 	
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testRemoveServeredOrderResourceKindStorage() throws Exception {
-		ManagerXmppComponent initializeXMPPManagerComponent = managerTestHelper.initializeXMPPManagerComponent(false);
 		Order order = createOrder(OrderConstants.STORAGE_TERM);
-		ManagerController managerFacade = initializeXMPPManagerComponent.getManagerFacade();
+		ManagerController managerFacade = XMPPManagerComponent.getManagerFacade();
 		managerFacade.getManagerDataStoreController().addOrder(order);
 
 		Token token = new Token(ACCESS_ID, new Token.User(OCCITestHelper.USER_MOCK, ""), null, new HashMap<String, String>());
@@ -111,17 +119,17 @@ public class TestRemoveServeredOrder {
 				Mockito.anyMap())).thenReturn(token);
 		Mockito.when(managerTestHelper.getAuthorizationPlugin().isAuthorized(token)).thenReturn(true);			
 
-		Assert.assertEquals(1, initializeXMPPManagerComponent.getManagerFacade()
+		Assert.assertEquals(1, XMPPManagerComponent.getManagerFacade()
 				.getOrdersFromUser(token.getAccessId(), false).size());
 		
-		final BlockingQueue<String> bq = new LinkedBlockingQueue<String>();
+		final BlockingQueue<String> bq = new LinkedBlockingQueue<>();
 
 		ManagerPacketHelper.deleteRemoteOrder(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
 				order, managerTestHelper.createPacketSender(), new AsynchronousOrderCallback() {
 
 					@Override
 					public void success(String instanceId) {
-						bq.add(new String());
+						bq.add("");
 					}
 
 					@Override
@@ -131,7 +139,7 @@ public class TestRemoveServeredOrder {
 		
 		String instanceId = bq.poll(1500, TimeUnit.SECONDS);
 		
-		Assert.assertEquals(0, initializeXMPPManagerComponent.getManagerFacade()
+		Assert.assertEquals(0, XMPPManagerComponent.getManagerFacade()
 				.getOrdersFromUser(token.getAccessId(), false).size());
 
 		Mockito.verify(managerTestHelper.getStoragePlugin(), VerificationModeFactory.times(1))
@@ -141,9 +149,9 @@ public class TestRemoveServeredOrder {
 	}	
 
 	private Order createOrder(String resourceKind) {
-		List<Category> categories = new ArrayList<Category>();
+		List<Category> categories = new ArrayList<>();
 		categories.add(new Category("term1", "scheme1", "class1"));
-		Map<String, String> attributes = new HashMap<String, String>();
+		Map<String, String> attributes = new HashMap<>();
 		attributes.put("key1", "value1");
 		attributes.put("key2", "value2");
 		attributes.put(OrderAttribute.RESOURCE_KIND.getValue(), resourceKind);
