@@ -83,12 +83,12 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 	private String glanceV2ImageVisibility;
 	private String computeV2APIEndpoint;
 	private String networkV2APIEndpoint;
-	private String networkId;
+	private String defaultNetwork;
 	private Map<String, String> fogbowTermToOpenStack = new HashMap<String, String>();
 	private HttpClient client;
 	private Integer httpClientTimeout;
 	private List<Flavor> flavors;
-	private String networkSecurityGroups;	
+	private String[] securityGroups;
 
 	private static final Logger LOGGER = Logger.getLogger(OpenStackNovaV2ComputePlugin.class);
 	
@@ -100,7 +100,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 				.getProperty(OpenStackConfigurationConstants.COMPUTE_NOVAV2_URL_KEY)
 				+ COMPUTE_V2_API_ENDPOINT;
 
-		networkId = properties
+		defaultNetwork = properties
 				.getProperty(OpenStackConfigurationConstants.COMPUTE_NOVAV2_NETWORK_KEY);
 		
 		glanceV2ImageVisibility = properties
@@ -109,9 +109,15 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		
 		networkV2APIEndpoint = properties.getProperty(
 				OpenStackConfigurationConstants.NETWORK_NOVAV2_URL_KEY) + NETWORK_V2_API_ENDPOINT;
-		
-		networkSecurityGroups = properties
+
+		String networkSecurityGroups = properties
 				.getProperty(OpenStackConfigurationConstants.COMPUTE_NETWORK_SECURITY_GROUPS_KEY);
+
+		if (networkSecurityGroups == null) {
+			throw new IllegalArgumentException("There isn't Security Group in the Property File");
+		} else {
+			securityGroups = parseSecurityGroups(networkSecurityGroups);
+		}
 		
 		// userdata
 		fogbowTermToOpenStack.put(OrderConstants.USER_DATA_TERM, "user_data");
@@ -179,20 +185,13 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		
 		String userdata = xOCCIAtt.get(OrderAttribute.USER_DATA_ATT.getValue());
 		
-		String[] parsedGroups = null;		
 		String orderNetworkId = xOCCIAtt.get(OrderAttribute.NETWORK_ID.getValue());
 		if (orderNetworkId == null || orderNetworkId.isEmpty()) {
-			orderNetworkId = this.networkId;
-			
-			if (this.networkSecurityGroups != null) {
-				parsedGroups = parseSecurityGroups(this.networkSecurityGroups);
-			} else {
-				throw new IllegalArgumentException(
-						"Requesting Instance associated with a Network, but there isn't Security Group in the Property File");
-			}		
+			orderNetworkId = this.defaultNetwork;
 		}
+
 		try {
-			JSONObject json = generateJsonRequest(imageRef, flavorId, userdata, keyName, orderNetworkId, parsedGroups);
+			JSONObject json = generateJsonRequest(imageRef, flavorId, userdata, keyName, orderNetworkId);
 			String requestEndpoint = computeV2APIEndpoint + tenantId + SERVERS;
 			String jsonResponse = doPostRequest(requestEndpoint, token.getAccessId(), json);
 			return getAttFromJson(ID_JSON_FIELD, jsonResponse);
@@ -354,7 +353,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 	}
 
 	private JSONObject generateJsonRequest(String imageRef, String flavorRef, String userdata,
-			String keyName, String networkId, String[] securityGroups) throws JSONException {
+			String keyName, String networkId) throws JSONException {
 
 		JSONObject server = new JSONObject();
 		server.put(NAME_JSON_FIELD, "fogbow-instance-" + UUID.randomUUID().toString());
