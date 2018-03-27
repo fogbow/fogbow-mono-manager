@@ -83,7 +83,9 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 	private String glanceV2ImageVisibility;
 	private String computeV2APIEndpoint;
 	private String networkV2APIEndpoint;
-	private String defaultNetwork;
+	private String networkSecurityGroups;
+
+	private String defaultNetworkId;
 	private Map<String, String> fogbowTermToOpenStack = new HashMap<String, String>();
 	private HttpClient client;
 	private Integer httpClientTimeout;
@@ -100,7 +102,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 				.getProperty(OpenStackConfigurationConstants.COMPUTE_NOVAV2_URL_KEY)
 				+ COMPUTE_V2_API_ENDPOINT;
 
-		defaultNetwork = properties
+		defaultNetworkId = properties
 				.getProperty(OpenStackConfigurationConstants.COMPUTE_NOVAV2_NETWORK_KEY);
 		
 		glanceV2ImageVisibility = properties
@@ -110,15 +112,9 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		networkV2APIEndpoint = properties.getProperty(
 				OpenStackConfigurationConstants.NETWORK_NOVAV2_URL_KEY) + NETWORK_V2_API_ENDPOINT;
 
-		String networkSecurityGroups = properties
+		networkSecurityGroups = properties
 				.getProperty(OpenStackConfigurationConstants.COMPUTE_NETWORK_SECURITY_GROUPS_KEY);
 
-		if (networkSecurityGroups == null) {
-			throw new IllegalArgumentException("There isn't Security Group in the Property File");
-		} else {
-			securityGroups = parseSecurityGroups(networkSecurityGroups);
-		}
-		
 		// userdata
 		fogbowTermToOpenStack.put(OrderConstants.USER_DATA_TERM, "user_data");
 		
@@ -187,7 +183,13 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		
 		String orderNetworkId = xOCCIAtt.get(OrderAttribute.NETWORK_ID.getValue());
 		if (orderNetworkId == null || orderNetworkId.isEmpty()) {
-			orderNetworkId = this.defaultNetwork;
+			orderNetworkId = this.defaultNetworkId;
+
+			if (networkSecurityGroups != null) {
+				securityGroups = parseSecurityGroups(networkSecurityGroups);
+			} else {
+				LOGGER.error("Requesting Instance associated with a Network, but there isn't Security Group in the Property File");
+			}
 		}
 
 		try {
@@ -826,10 +828,6 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 
 	public String[] getSecurityGroups() {
 		return securityGroups;
-	}
-
-	public void setSecurityGroups(String[] securityGroups) {
-		this.securityGroups = securityGroups;
 	}
 
 	public Flavor getFlavor(Token token, String requirements) {

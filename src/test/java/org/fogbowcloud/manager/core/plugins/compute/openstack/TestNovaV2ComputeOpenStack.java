@@ -102,18 +102,21 @@ public class TestNovaV2ComputeOpenStack {
 		pluginHelper.disconnectComponent();
 	}
 
-	@Test(expected = IllegalArgumentException.class)
-	public void testNovaV2ComputeWithoutSecurityGroup() {
-		Properties properties = new Properties();
-		novaV2ComputeOpenStack = new OpenStackNovaV2ComputePlugin(properties);
-	}
-
 	@Test
 	public void testParseSecurityGroups() {
 		Properties properties = new Properties();
+		properties.put(OpenStackConfigurationConstants.COMPUTE_NOVAV2_URL_KEY, PluginHelper.COMPUTE_NOVAV2_URL);
+		properties.put(OpenStackConfigurationConstants.NETWORK_NOVAV2_URL_KEY, PluginHelper.NETWORK_NOVAV2_URL);
+		properties.put(OpenStackConfigurationConstants.COMPUTE_NOVAV2_IMAGE_PREFIX_KEY
+				+ PluginHelper.LINUX_X86_TERM, "imageid");
+		properties.put(OpenStackConfigurationConstants.COMPUTE_GLANCEV2_URL_KEY, GLACE_V2);
+
 		String federatedNetworkSecurityGroup = "security-group,security-group2,security group3";
 		properties.put(OpenStackConfigurationConstants.COMPUTE_NETWORK_SECURITY_GROUPS_KEY, federatedNetworkSecurityGroup);
 		novaV2ComputeOpenStack = new OpenStackNovaV2ComputePlugin(properties);
+
+		novaV2ComputeOpenStack.requestInstance(
+				defaultToken, new ArrayList<Category>(), new HashMap<String, String>(), PluginHelper.LINUX_X86_TERM);
 
 		String[] securityGroups = {"security-group", "security-group2", "securitygroup3"};
 
@@ -121,17 +124,41 @@ public class TestNovaV2ComputeOpenStack {
 	}
 
 	@Test
-	public void testGenerateJsonRequestWithOneSecurityGroup() {
+	public void testGenerateJsonRequestWithoutSecurityGroup() {
 		Properties properties = new Properties();
-		String federatedNetworkSecurityGroup = "security-group";
-		properties.put(OpenStackConfigurationConstants.COMPUTE_NETWORK_SECURITY_GROUPS_KEY, federatedNetworkSecurityGroup);
+		properties.put(OpenStackConfigurationConstants.COMPUTE_NOVAV2_URL_KEY, PluginHelper.COMPUTE_NOVAV2_URL);
+		properties.put(OpenStackConfigurationConstants.NETWORK_NOVAV2_URL_KEY, PluginHelper.NETWORK_NOVAV2_URL);
+		properties.put(OpenStackConfigurationConstants.COMPUTE_NOVAV2_IMAGE_PREFIX_KEY
+				+ PluginHelper.LINUX_X86_TERM, "imageid");
+		properties.put(OpenStackConfigurationConstants.COMPUTE_GLANCEV2_URL_KEY, GLACE_V2);
+
 		novaV2ComputeOpenStack = new OpenStackNovaV2ComputePlugin(properties);
+
+		novaV2ComputeOpenStack.requestInstance(
+				defaultToken, new ArrayList<Category>(), new HashMap<String, String>(), PluginHelper.LINUX_X86_TERM);
 
 		try {
 			JSONObject root = novaV2ComputeOpenStack.generateJsonRequest(
 					PluginHelper.LINUX_X86_TERM, "", "", "", "");
 
 			JSONObject server = root.getJSONObject("server");
+
+			Assert.assertFalse(server.has("security_groups"));
+		} catch (JSONException e) {}
+	}
+
+	@Test
+	public void testGenerateJsonRequestWithOneSecurityGroup() {
+		novaV2ComputeOpenStack.requestInstance(
+				defaultToken, new ArrayList<Category>(), new HashMap<String, String>(), PluginHelper.LINUX_X86_TERM);
+
+		try {
+			JSONObject root = novaV2ComputeOpenStack.generateJsonRequest(
+					PluginHelper.LINUX_X86_TERM, "", "", "", "");
+
+			JSONObject server = root.getJSONObject("server");
+
+			System.out.println(server.toString());
 
 			Assert.assertTrue(server.has("security_groups"));
 			Assert.assertEquals(server.get("security_groups").toString(), "[{\"name\":\"security-group\"}]");
@@ -141,9 +168,18 @@ public class TestNovaV2ComputeOpenStack {
 	@Test
 	public void testGenerateJsonRequestWithMoreSecurityGroups() {
 		Properties properties = new Properties();
+		properties.put(OpenStackConfigurationConstants.COMPUTE_NOVAV2_URL_KEY, PluginHelper.COMPUTE_NOVAV2_URL);
+		properties.put(OpenStackConfigurationConstants.NETWORK_NOVAV2_URL_KEY, PluginHelper.NETWORK_NOVAV2_URL);
+		properties.put(OpenStackConfigurationConstants.COMPUTE_NOVAV2_IMAGE_PREFIX_KEY
+				+ PluginHelper.LINUX_X86_TERM, "imageid");
+		properties.put(OpenStackConfigurationConstants.COMPUTE_GLANCEV2_URL_KEY, GLACE_V2);
+
 		String federatedNetworkSecurityGroup = "security-group1, security-group2, security-group3";
 		properties.put(OpenStackConfigurationConstants.COMPUTE_NETWORK_SECURITY_GROUPS_KEY, federatedNetworkSecurityGroup);
 		novaV2ComputeOpenStack = new OpenStackNovaV2ComputePlugin(properties);
+
+		novaV2ComputeOpenStack.requestInstance(
+				defaultToken, new ArrayList<Category>(), new HashMap<String, String>(), PluginHelper.LINUX_X86_TERM);
 
 		try {
 			JSONObject root = novaV2ComputeOpenStack.generateJsonRequest(
@@ -562,10 +598,7 @@ public class TestNovaV2ComputeOpenStack {
 	@Test
 	public void testGetDefaultHttpClientTimeout() {
 		Properties properties = new Properties();
-		String federatedNetworkSecurityGroup = "security-group";
-		properties.put(OpenStackConfigurationConstants.COMPUTE_NETWORK_SECURITY_GROUPS_KEY, federatedNetworkSecurityGroup);
-
-		novaV2ComputeOpenStack = new OpenStackNovaV2ComputePlugin(properties);		
+		novaV2ComputeOpenStack = new OpenStackNovaV2ComputePlugin(properties);
 		
 		Assert.assertEquals(OpenStackNovaV2ComputePlugin.DEFAULT_HTTPCLIENT_TIMEOUT,
 				this.novaV2ComputeOpenStack.getHttpClientTimeout());
@@ -577,10 +610,7 @@ public class TestNovaV2ComputeOpenStack {
 		Properties properties = new Properties();
 		properties.put(OpenStackConfigurationConstants.COMPUTE_HTTPCLIENT_TIMEOUT, String.valueOf(timeout));
 
-		String federatedNetworkSecurityGroup = "security-group";
-		properties.put(OpenStackConfigurationConstants.COMPUTE_NETWORK_SECURITY_GROUPS_KEY, federatedNetworkSecurityGroup);
-
-		novaV2ComputeOpenStack = new OpenStackNovaV2ComputePlugin(properties);		
+		novaV2ComputeOpenStack = new OpenStackNovaV2ComputePlugin(properties);
 		
 		Assert.assertEquals(timeout, this.novaV2ComputeOpenStack.getHttpClientTimeout());
 	}	
