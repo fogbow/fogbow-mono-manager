@@ -352,7 +352,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		}
 	}
 
-	private JSONObject generateJsonRequest(String imageRef, String flavorRef, String userdata,
+	protected JSONObject generateJsonRequest(String imageRef, String flavorRef, String userdata,
 			String keyName, String networkId) throws JSONException {
 
 		JSONObject server = new JSONObject();
@@ -823,7 +823,15 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 	public void setFlavors(List<Flavor> flavors) {
 		this.flavors = flavors;
 	}
-	
+
+	public String[] getSecurityGroups() {
+		return securityGroups;
+	}
+
+	public void setSecurityGroups(String[] securityGroups) {
+		this.securityGroups = securityGroups;
+	}
+
 	public Flavor getFlavor(Token token, String requirements) {
 		updateFlavors(token);
 		// Finding flavor
@@ -927,7 +935,7 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 	}
 	
 	private String[] parseSecurityGroups(String allGroups) {
-		String[] groups = allGroups.split("\\;");
+		String[] groups = allGroups.split("\\,");
 
 		for (int i = 0; i < groups.length; i++) {
 			groups[i] = groups[i].replaceAll("\\s", "");

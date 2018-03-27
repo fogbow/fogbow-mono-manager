@@ -69,7 +69,7 @@ public class TestNovaV2ComputeOpenStack {
 				+ PluginHelper.LINUX_X86_TERM, "imageid");
 		properties.put(OpenStackConfigurationConstants.COMPUTE_GLANCEV2_URL_KEY, GLACE_V2);
 		
-		String federatedNetworkSecurityGroup = "security-group";		
+		String federatedNetworkSecurityGroup = "security-group";
 		properties.put(OpenStackConfigurationConstants.COMPUTE_NETWORK_SECURITY_GROUPS_KEY, federatedNetworkSecurityGroup);
 		
 		novaV2ComputeOpenStack = new OpenStackNovaV2ComputePlugin(properties);
@@ -100,6 +100,24 @@ public class TestNovaV2ComputeOpenStack {
 	public void tearDown() throws Exception {
 		pluginHelper.disconnectComponent();
 	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void testNovaV2ComputeWithoutSecurityGroup() {
+		Properties properties = new Properties();
+		novaV2ComputeOpenStack = new OpenStackNovaV2ComputePlugin(properties);
+	}
+
+	@Test
+	public void testParseSecurityGroups() {
+		Properties properties = new Properties();
+		String federatedNetworkSecurityGroup = "security-group,security-group2,security group3";
+		properties.put(OpenStackConfigurationConstants.COMPUTE_NETWORK_SECURITY_GROUPS_KEY, federatedNetworkSecurityGroup);
+		novaV2ComputeOpenStack = new OpenStackNovaV2ComputePlugin(properties);
+
+		String[] securityGroups = {"security-group", "security-group2", "securitygroup3"};
+
+		Assert.assertArrayEquals(securityGroups, novaV2ComputeOpenStack.getSecurityGroups());
+	}
 	
 	@Test
 	public void testRequestOneInstance(){
@@ -110,7 +128,7 @@ public class TestNovaV2ComputeOpenStack {
 		
 		Assert.assertEquals(1, novaV2ComputeOpenStack.getInstances(defaultToken).size());
 	}
-	
+
 	@Test(expected = OCCIException.class)
 	public void testCreateRequestWithoutImage() {
 		novaV2ComputeOpenStack.requestInstance(defaultToken, new ArrayList<Category>(),
@@ -171,7 +189,7 @@ public class TestNovaV2ComputeOpenStack {
 		
 		Assert.assertEquals(0, novaV2Server.getPublicKeys().size());
 	}
-	
+
 	@Test
 	public void testRequestOneInstanceWithPublicKey(){
 		Assert.assertEquals(0, novaV2ComputeOpenStack.getInstances(defaultToken).size());
@@ -505,7 +523,10 @@ public class TestNovaV2ComputeOpenStack {
 	
 	@Test
 	public void testGetDefaultHttpClientTimeout() {
-		Properties properties = new Properties();		
+		Properties properties = new Properties();
+		String federatedNetworkSecurityGroup = "security-group";
+		properties.put(OpenStackConfigurationConstants.COMPUTE_NETWORK_SECURITY_GROUPS_KEY, federatedNetworkSecurityGroup);
+
 		novaV2ComputeOpenStack = new OpenStackNovaV2ComputePlugin(properties);		
 		
 		Assert.assertEquals(OpenStackNovaV2ComputePlugin.DEFAULT_HTTPCLIENT_TIMEOUT,
@@ -517,6 +538,10 @@ public class TestNovaV2ComputeOpenStack {
 		int timeout = 30000;
 		Properties properties = new Properties();
 		properties.put(OpenStackConfigurationConstants.COMPUTE_HTTPCLIENT_TIMEOUT, String.valueOf(timeout));
+
+		String federatedNetworkSecurityGroup = "security-group";
+		properties.put(OpenStackConfigurationConstants.COMPUTE_NETWORK_SECURITY_GROUPS_KEY, federatedNetworkSecurityGroup);
+
 		novaV2ComputeOpenStack = new OpenStackNovaV2ComputePlugin(properties);		
 		
 		Assert.assertEquals(timeout, this.novaV2ComputeOpenStack.getHttpClientTimeout());
