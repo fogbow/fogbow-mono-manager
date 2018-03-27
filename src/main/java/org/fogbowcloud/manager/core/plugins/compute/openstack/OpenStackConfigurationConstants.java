@@ -21,6 +21,7 @@ public class OpenStackConfigurationConstants {
 
 	// network
 	public static final String COMPUTE_OCCI_NETWORK_KEY = "compute_occi_network_id";
+	public static final String COMPUTE_NETWORK_SECURITY_GROUPS_KEY = "compute_network_security_groups";
 
 	// flavors
 	public static final String COMPUTE_OCCI_FLAVOR_SMALL_KEY = "compute_occi_flavor_small";

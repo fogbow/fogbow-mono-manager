@@ -69,6 +69,9 @@ public class TestNovaV2ComputeOpenStack {
 				+ PluginHelper.LINUX_X86_TERM, "imageid");
 		properties.put(OpenStackConfigurationConstants.COMPUTE_GLANCEV2_URL_KEY, GLACE_V2);
 		
+		String federatedNetworkSecurityGroup = "security-group";		
+		properties.put(OpenStackConfigurationConstants.COMPUTE_NETWORK_SECURITY_GROUPS_KEY, federatedNetworkSecurityGroup);
+		
 		novaV2ComputeOpenStack = new OpenStackNovaV2ComputePlugin(properties);
 		
 		List<Flavor> flavors = new ArrayList<Flavor>();

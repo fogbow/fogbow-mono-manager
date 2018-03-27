@@ -11,6 +11,7 @@ compute_novav2_url=http://$address:$nova_port
 compute_glancev2_url=http://$address:$glance_port
 compute_glancev2_image_visibility=private
 compute_novav2_network_id=$network_id
+compute_network_security_groups=$security_group_one,$security_group_two,$security_group_three
 
 ## Network Plugin
 network_class=org.fogbowcloud.manager.core.plugins.network.openstack.OpenStackV2NetworkPlugin
