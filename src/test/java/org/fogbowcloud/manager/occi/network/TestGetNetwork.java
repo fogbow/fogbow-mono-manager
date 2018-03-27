@@ -8,6 +8,7 @@ import java.util.Map;
 
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.io.FileUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
@@ -43,11 +44,8 @@ public class TestGetNetwork {
 
 	private NetworkPlugin networkPlugin;
 	private IdentityPlugin identityPlugin;
-	private AuthorizationPlugin authorizationPlugin;
-	private MapperPlugin mapperPlugin;
-	private OCCITestHelper helper;
-	private Map<String, List<Order>> ordersToAdd;
-	private Token tokenA;
+    private OCCITestHelper helper;
+    private Token tokenA;
 	private Token tokenB;
 	private ManagerController facade;
 	
@@ -59,14 +57,9 @@ public class TestGetNetwork {
 		
 		NetworkDataStore networkDB = new NetworkDataStore("jdbc:h2:file:" + INSTANCE_DB_FILE);
 		networkDB.deleteAll();
-		networkDB = null;
-		
-		networkPlugin = Mockito.mock(NetworkPlugin.class);
-		identityPlugin = Mockito.mock(IdentityPlugin.class);
-		authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
-		mapperPlugin = Mockito.mock(MapperPlugin.class);
-		
-		ordersToAdd = new HashMap<String, List<Order>>();
+
+
+        Map<String, List<Order>> ordersToAdd = new HashMap<>();
 		ordersToAdd.put(BASIC_TOKEN, new ArrayList<Order>());
 		
 		tokenA = new Token("id_one", new Token.User(OCCITestHelper.USER_MOCK, ""),
@@ -84,13 +77,15 @@ public class TestGetNetwork {
 		String basicAuthToken = new String(Base64.decodeBase64(BASIC_TOKEN.replace("Basic ", "")));
 		
 		Mockito.when(identityPlugin.getToken(basicAuthToken)).thenReturn(tokenB);
-		
-		authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
+
+        AuthorizationPlugin authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
 		Mockito.when(authorizationPlugin.isAuthorized(Mockito.any(Token.class))).thenReturn(true);
 
-		mapperPlugin = Mockito.mock(MapperPlugin.class);
+        MapperPlugin mapperPlugin = Mockito.mock(MapperPlugin.class);
 		Mockito.when(mapperPlugin.getLocalCredentials(Mockito.any(Order.class)))
 				.thenReturn(new HashMap<String, String>());
+
+		networkPlugin = Mockito.mock(NetworkPlugin.class);
 		
 		facade = this.helper.initializeComponentNetwork(networkPlugin, identityPlugin, authorizationPlugin, ordersToAdd, mapperPlugin, null);
 		
@@ -101,9 +96,11 @@ public class TestGetNetwork {
 		TestDataStorageHelper.clearManagerDataStore(
 				facade.getManagerDataStoreController().getManagerDatabase());
 		File dbFile = new File(INSTANCE_DB_FILE + ".mv.db");
-		if (dbFile.exists()) {
-			dbFile.delete();
-		}		
+        if (dbFile.exists()) {
+            if (!FileUtils.deleteQuietly(dbFile)) {
+                Assert.fail("Did no delete database file.");
+            }
+        }
 		this.helper.stopComponent();
 	}
 

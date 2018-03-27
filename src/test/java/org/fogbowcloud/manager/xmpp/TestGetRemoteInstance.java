@@ -77,7 +77,8 @@ public class TestGetRemoteInstance {
 		Mockito.when(
 				managerTestHelper.getComputePlugin().getInstance(
 						Mockito.any(Token.class),
-						Mockito.eq(DefaultDataTestHelper.INSTANCE_ID))).thenReturn(instance);
+						Mockito.eq(DefaultDataTestHelper.INSTANCE_ID))
+		).thenReturn(instance);
 
 		Token token = new Token("anyvalue", new Token.User(OCCITestHelper.USER_MOCK, ""),
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>());

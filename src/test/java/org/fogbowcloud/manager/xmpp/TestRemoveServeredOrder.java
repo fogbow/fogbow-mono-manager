@@ -1,5 +1,23 @@
 package org.fogbowcloud.manager.xmpp;
 
+import org.fogbowcloud.manager.core.AsynchronousOrderCallback;
+import org.fogbowcloud.manager.core.ManagerController;
+import org.fogbowcloud.manager.core.ManagerTestHelper;
+import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
+import org.fogbowcloud.manager.occi.TestDataStorageHelper;
+import org.fogbowcloud.manager.occi.model.Category;
+import org.fogbowcloud.manager.occi.model.Token;
+import org.fogbowcloud.manager.occi.order.Order;
+import org.fogbowcloud.manager.occi.order.OrderAttribute;
+import org.fogbowcloud.manager.occi.order.OrderConstants;
+import org.fogbowcloud.manager.occi.util.OCCITestHelper;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mockito;
+import org.mockito.internal.verification.VerificationModeFactory;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -7,24 +25,6 @@ import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-
-import org.fogbowcloud.manager.core.AsynchronousOrderCallback;
-import org.fogbowcloud.manager.core.ManagerController;
-import org.fogbowcloud.manager.core.ManagerTestHelper;
-import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
-import org.fogbowcloud.manager.occi.model.Category;
-import org.fogbowcloud.manager.occi.model.Token;
-import org.fogbowcloud.manager.occi.order.Order;
-import org.fogbowcloud.manager.occi.order.OrderAttribute;
-import org.fogbowcloud.manager.occi.order.OrderConstants;
-import org.fogbowcloud.manager.occi.util.OCCITestHelper;
-import org.jivesoftware.smack.XMPPException;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mockito;
-import org.mockito.internal.verification.VerificationModeFactory;
 
 public class TestRemoveServeredOrder {
 
@@ -39,11 +39,13 @@ public class TestRemoveServeredOrder {
 	public void setUp() throws Exception {
 		this.managerTestHelper = new ManagerTestHelper();
         this.XMPPManagerComponent = managerTestHelper.initializeXMPPManagerComponent(false);
+        TestDataStorageHelper.clearManagerDataStore(
+                XMPPManagerComponent.getManagerFacade().getManagerDataStoreController().getManagerDatabase()
+        );
     }
 
 	@After
 	public void tearDown() throws Exception {
-	    this.XMPPManagerComponent = null;
 		this.managerTestHelper.shutdown();
 	}
 	

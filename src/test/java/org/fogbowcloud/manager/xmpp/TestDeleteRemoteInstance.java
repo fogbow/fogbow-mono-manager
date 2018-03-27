@@ -24,7 +24,7 @@ public class TestDeleteRemoteInstance {
 	private ManagerTestHelper managerTestHelper;
 
 	@Before
-	public void setUp() throws XMPPException {
+	public void setUp() {
 		this.managerTestHelper = new ManagerTestHelper();
 	}
 

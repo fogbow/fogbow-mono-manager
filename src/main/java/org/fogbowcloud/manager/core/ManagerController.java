@@ -143,8 +143,12 @@ public class ManagerController {
 	public ManagerController(Properties properties) {
 		this(properties, null);
 	}
+
+    public ManagerController(Properties properties, ScheduledExecutorService executor) {
+        this(properties, executor, true);
+    }
 	
-	public ManagerController(Properties properties, ScheduledExecutorService executor) {
+	public ManagerController(Properties properties, ScheduledExecutorService executor, boolean shouldRecover) {
 		if (properties == null) {
 			throw new IllegalArgumentException();
 		}
@@ -166,7 +170,7 @@ public class ManagerController {
 		}
 		this.managerDataStoreController = new ManagerDataStoreController(properties);
 		
-		recoverPreviousOrders();
+		if (shouldRecover) recoverPreviousOrders();
 	}
 
 	public MapperPlugin getMapperPlugin() {

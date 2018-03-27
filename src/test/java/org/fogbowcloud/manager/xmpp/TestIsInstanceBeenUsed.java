@@ -25,7 +25,7 @@ public class TestIsInstanceBeenUsed {
 	private ManagerTestHelper managerTestHelper;
 
 	@Before
-	public void setUp() throws XMPPException {
+	public void setUp() {
 		TestDataStorageHelper.removeDefaultFolderDataStore();
 		this.managerTestHelper = new ManagerTestHelper();
 	}
@@ -138,9 +138,8 @@ public class TestIsInstanceBeenUsed {
 				String.valueOf(DefaultDataTestHelper.TOKEN_SERVER_HTTP_PORT));
 		properties.put("max_whoisalive_manager_count",
 				ManagerTestHelper.MAX_WHOISALIVE_MANAGER_COUNT);
-		
-		ManagerController managerFacade = new ManagerController(properties, null);
-		return managerFacade;
+
+        return new ManagerController(properties, null, false);
 	}
 
 }

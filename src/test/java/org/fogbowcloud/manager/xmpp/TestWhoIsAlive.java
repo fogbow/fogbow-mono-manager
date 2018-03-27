@@ -53,15 +53,8 @@ public class TestWhoIsAlive {
 				List<FederationMember> aliveIds = new ArrayList<FederationMember>();
 				aliveIds.add(new FederationMember("One"));
 				aliveIds.add(new FederationMember(ManagerTestHelper.MANAGER_TEST_JID));
-				IQ iq = null;
-				try {
-					iq = managerTestHelper.createWhoIsAliveResponse(
-							(ArrayList<FederationMember>) aliveIds, whoIsAlive);
-				} catch (CertificateException e) {
-					e.printStackTrace();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
+				IQ iq = managerTestHelper.createWhoIsAliveResponse(
+                        (ArrayList<FederationMember>) aliveIds, whoIsAlive);
 				xmppClient.send(iq);
 			}
 		};
@@ -99,15 +92,8 @@ public class TestWhoIsAlive {
 				List<FederationMember> aliveIds = new ArrayList<FederationMember>();
 				aliveIds.add(new FederationMember("One"));
 				aliveIds.add(new FederationMember(ManagerTestHelper.MANAGER_TEST_JID));				
-				IQ iq = null;
-				try {
-					iq = managerTestHelper.createWhoIsAliveResponse(
-							(ArrayList<FederationMember>) aliveIds, whoIsAlive);
-				} catch (CertificateException e1) {
-					e1.printStackTrace();
-				} catch (IOException e1) {
-					e1.printStackTrace();
-				}
+				IQ iq = managerTestHelper.createWhoIsAliveResponse(
+                        (ArrayList<FederationMember>) aliveIds, whoIsAlive);
 				try {
 					xmppClient.syncSend(iq);
 				} catch (XMPPException e) {

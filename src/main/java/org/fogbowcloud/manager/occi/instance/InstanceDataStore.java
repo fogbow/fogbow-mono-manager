@@ -64,7 +64,7 @@ public class InstanceDataStore {
 	public InstanceDataStore(String instanceDataStoreURL) {
 		
 		this.instanceDataStoreURL = DataStoreHelper.getDataStoreUrl(instanceDataStoreURL,
-				DEFAULT_DATASTORE_NAME);;
+				DEFAULT_DATASTORE_NAME);
 
 		Statement statement = null;
 		Connection connection = null;

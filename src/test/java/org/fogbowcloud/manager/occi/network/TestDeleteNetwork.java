@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
@@ -41,11 +42,7 @@ public class TestDeleteNetwork {
 	private static final String INSTANCE_DB_FILE = "./src/test/resources/fedNetwork.db";
 
 	private NetworkPlugin networkPlugin;
-	private IdentityPlugin identityPlugin;
-	private AuthorizationPlugin authorizationPlugin;
-	private MapperPlugin mapperPlugin;
 	private OCCITestHelper helper;
-	private Map<String, List<Order>> ordersToAdd;
 	private Token tokenA;
 	private Token tokenB;
 	private ManagerController facade;
@@ -57,14 +54,10 @@ public class TestDeleteNetwork {
 		
 		NetworkDataStore networkDB = new NetworkDataStore("jdbc:h2:file:" + INSTANCE_DB_FILE);
 		networkDB.deleteAll();
-		networkDB = null;
 		
 		networkPlugin = Mockito.mock(NetworkPlugin.class);
-		identityPlugin = Mockito.mock(IdentityPlugin.class);
-		authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
-		mapperPlugin = Mockito.mock(MapperPlugin.class);
-		
-		ordersToAdd = new HashMap<String, List<Order>>();
+
+		Map<String, List<Order>> ordersToAdd = new HashMap<>();
 		ordersToAdd.put(USER_WITHOUT_ORDERS, new ArrayList<Order>());
 		
 		tokenA = new Token("id_one", new Token.User(OCCITestHelper.USER_MOCK, OCCITestHelper.USER_MOCK), 
@@ -73,18 +66,18 @@ public class TestDeleteNetwork {
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>());
 		
 		//Moking
-		identityPlugin = Mockito.mock(IdentityPlugin.class);
+		IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.getToken(ACCESS_TOKEN))
 				.thenReturn(tokenA);
 		Mockito.when(identityPlugin.createToken(Mockito.anyMap()))
 				.thenReturn(tokenA);		
 		Mockito.when(identityPlugin.getToken(USER_WITHOUT_ORDERS))
 				.thenReturn(tokenB);
-		
-		authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
+
+		AuthorizationPlugin authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
 		Mockito.when(authorizationPlugin.isAuthorized(Mockito.any(Token.class))).thenReturn(true);
 
-		mapperPlugin = Mockito.mock(MapperPlugin.class);
+		MapperPlugin mapperPlugin = Mockito.mock(MapperPlugin.class);
 		Mockito.when(mapperPlugin.getLocalCredentials(Mockito.any(Order.class)))
 				.thenReturn(new HashMap<String, String>());
 		
@@ -96,8 +89,10 @@ public class TestDeleteNetwork {
 		TestDataStorageHelper.clearManagerDataStore(facade.getManagerDataStoreController().getManagerDatabase());
 		File dbFile = new File(INSTANCE_DB_FILE + ".mv.db");
 		if (dbFile.exists()) {
-			dbFile.delete();
-		}				
+            if (!FileUtils.deleteQuietly(dbFile)) {
+                Assert.fail("Did no delete database file.");
+            }
+		}
 		this.helper.stopComponent();
 	}
 
@@ -107,10 +102,10 @@ public class TestDeleteNetwork {
 		
 		String INSTANCE_1_ID = "network01";
 		
-		Map<String, String> xOCCIAtt = new HashMap<String, String>();
+		Map<String, String> xOCCIAtt = new HashMap<>();
 		xOCCIAtt.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.NETWORK_TERM);
 		
-		List<Order> userOrders = new ArrayList<Order>();
+		List<Order> userOrders = new ArrayList<>();
 		Order order1 = new Order("1", tokenA, null, xOCCIAtt, true, "");
 		order1.setInstanceId(INSTANCE_1_ID);
 		order1.setProvidingMemberId(OCCITestHelper.MEMBER_ID);

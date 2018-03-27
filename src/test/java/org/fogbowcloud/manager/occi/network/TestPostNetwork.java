@@ -11,6 +11,7 @@ import java.util.Map;
 
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.io.FileUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
@@ -45,15 +46,9 @@ public class TestPostNetwork {
 	private static final String ACCESS_TOKEN = "access_token";
 	private static final String INSTANCE_DB_FILE = "./src/test/resources/fedNetwork.db";
 
-	private NetworkPlugin networkPlugin;
-	private IdentityPlugin identityPlugin;
-	private AuthorizationPlugin authorizationPlugin;
-	private MapperPlugin mapperPlugin;
-	private OCCITestHelper helper;
-	private Map<String, List<Order>> ordersToAdd;
-	private Token tokenA;
-	private Token tokenB;
-	private ManagerController facade;
+    private OCCITestHelper helper;
+    private Token tokenA;
+    private ManagerController facade;
 	private ManagerDataStoreController managerDataStoreControllerMock;
 	
 	@SuppressWarnings("unchecked")
@@ -64,24 +59,17 @@ public class TestPostNetwork {
 		
 		NetworkDataStore networkDB = new NetworkDataStore("jdbc:h2:file:" + INSTANCE_DB_FILE);
 		networkDB.deleteAll();
-		networkDB = null;
-		
-		networkPlugin = Mockito.mock(NetworkPlugin.class);
-		identityPlugin = Mockito.mock(IdentityPlugin.class);
-		authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
-		mapperPlugin = Mockito.mock(MapperPlugin.class);
-		managerDataStoreControllerMock = Mockito.mock(ManagerDataStoreController.class);
-		
-		ordersToAdd = new HashMap<String, List<Order>>();
+
+        Map<String, List<Order>> ordersToAdd = new HashMap<>();
 		ordersToAdd.put(BASIC_TOKEN, new ArrayList<Order>());
 		
 		tokenA = new Token("id_one", new Token.User(OCCITestHelper.USER_MOCK, ""),
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>());
-		tokenB = new Token("id_two", new Token.User(BASIC_TOKEN, ""), 
-				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>());
+        Token tokenB = new Token("id_two", new Token.User(BASIC_TOKEN, ""),
+                DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>());
 		
 		//Moking
-		identityPlugin = Mockito.mock(IdentityPlugin.class);
+        IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.getToken(ACCESS_TOKEN))
 				.thenReturn(tokenA);
 		Mockito.when(identityPlugin.createToken(Mockito.anyMap()))
@@ -91,13 +79,17 @@ public class TestPostNetwork {
 		
 		Mockito.when(identityPlugin.getToken(basicAuthToken))
 				.thenReturn(tokenB);
-		
-		authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
+
+        AuthorizationPlugin authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
 		Mockito.when(authorizationPlugin.isAuthorized(Mockito.any(Token.class))).thenReturn(true);
 
-		mapperPlugin = Mockito.mock(MapperPlugin.class);
+        MapperPlugin mapperPlugin = Mockito.mock(MapperPlugin.class);
 		Mockito.when(mapperPlugin.getLocalCredentials(Mockito.any(Order.class)))
 				.thenReturn(new HashMap<String, String>());
+
+        NetworkPlugin networkPlugin = Mockito.mock(NetworkPlugin.class);
+
+		managerDataStoreControllerMock = Mockito.mock(ManagerDataStoreController.class);
 		
 		facade = this.helper.initializeComponentNetwork(networkPlugin, identityPlugin, authorizationPlugin, ordersToAdd, mapperPlugin, null);
 		
@@ -108,9 +100,11 @@ public class TestPostNetwork {
 		TestDataStorageHelper.clearManagerDataStore(
 				facade.getManagerDataStoreController().getManagerDatabase());
 		File dbFile = new File(INSTANCE_DB_FILE + ".mv.db");
-		if (dbFile.exists()) {
-			dbFile.delete();
-		}				
+        if (dbFile.exists()) {
+            if (!FileUtils.deleteQuietly(dbFile)) {
+                Assert.fail("Did no delete database file.");
+            }
+        }
 		this.helper.stopComponent();
 	}
 
@@ -240,7 +234,7 @@ public class TestPostNetwork {
 		Order order = new Order(orderId, tokenA, new ArrayList<Category>(), new HashMap<String, String>(), true, "local");
 		order.setState(OrderState.OPEN);
 		
-		List<Order> orders = new ArrayList<Order>();
+		List<Order> orders = new ArrayList<>();
 		orders.add(order);
 		
 		Mockito.when(managerDataStoreControllerMock.getOrdersByUserId(Mockito.anyString()))
@@ -278,7 +272,7 @@ public class TestPostNetwork {
 		httpGet.addHeader(OCCIHeaders.X_AUTH_TOKEN, ACCESS_TOKEN);
 		HttpResponse responseGet = client.execute(httpGet);
 		
-		String responseStr = null;
+		String responseStr;
 		responseStr = EntityUtils.toString(responseGet.getEntity(), String.valueOf(Charsets.UTF_8));
 		
 		Assert.assertEquals("\""+address+"\"", OCCITestHelper.getOCCIAttByBodyString(responseStr, OCCIConstants.NETWORK_ADDRESS));

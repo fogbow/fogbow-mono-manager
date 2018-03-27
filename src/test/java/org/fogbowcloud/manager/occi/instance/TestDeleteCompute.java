@@ -10,6 +10,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
@@ -56,7 +57,7 @@ public class TestDeleteCompute {
 
 	private OCCITestHelper helper;
 	private ImageStoragePlugin imageStoragePlugin;
-	
+
 	private static final String INSTANCE_DB_FILE = "./src/test/resources/fedInstance.db";
 	private static final String INSTANCE_DB_URL = "jdbc:h2:file:" + INSTANCE_DB_FILE;
 	private InstanceDataStore instanceDB;
@@ -120,7 +121,7 @@ public class TestDeleteCompute {
 		
 		MapperPlugin mapperPlugin = Mockito
 				.mock(MapperPlugin.class);
-		Map<String, String> crendentials = new HashMap<String, String>();
+		Map<String, String> crendentials = new HashMap<>();
 		Mockito.when(
 				mapperPlugin.getLocalCredentials(Mockito.any(Order.class)))
 				.thenReturn(crendentials);
@@ -128,7 +129,7 @@ public class TestDeleteCompute {
 		
 		federationIdenityPlugin = Mockito.mock(IdentityPlugin.class);
 		
-		Map<String, List<Order>> ordersToAdd = new HashMap<String, List<Order>>();
+		Map<String, List<Order>> ordersToAdd = new HashMap<>();
 		ordersToAdd.put(OCCITestHelper.USER_MOCK, orders);
 		
 		instanceDB = new InstanceDataStore(INSTANCE_DB_URL);
@@ -144,8 +145,10 @@ public class TestDeleteCompute {
 		instanceDB.deleteAll();
 		File dbFile = new File(INSTANCE_DB_FILE + ".mv.db");
 		if (dbFile.exists()) {
-			dbFile.delete();
-		}				
+			if (!FileUtils.deleteQuietly(dbFile)) {
+			    Assert.fail("Could not delete db file");
+            }
+		}
 		this.helper.stopComponent();
 	}
 
@@ -310,7 +313,7 @@ public class TestDeleteCompute {
 	@SuppressWarnings("deprecation")
 	@Test
 	public void testDeleteSpecificPostCompute() throws Exception {
-		
+
 		Mockito.doNothing().when(computePlugin).bypass(Mockito.any(org.restlet.Request.class),
 				Mockito.any(Response.class));
 		

@@ -24,6 +24,11 @@ public class TestDataStorageHelper {
 		if (managerDataStore == null) {
 			return;
 		}
+		try {
+			Thread.sleep(1000);
+		} catch (InterruptedException e) {
+			;
+		}
 		managerDataStore.removeAllValuesInAllTable();
 	}
 	

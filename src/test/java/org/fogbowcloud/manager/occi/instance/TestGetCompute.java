@@ -11,6 +11,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
@@ -59,7 +60,7 @@ public class TestGetCompute {
 	private static final String POST_INSTANCE_2_ID = "postInstance2";
 
 	private static final String INSTANCE_DB_FILE = "./src/test/resources/fedInstance.db";
-	private static final String INSTANCE_DB_URL = "jdbc:h2:file:" + INSTANCE_DB_FILE;	
+	private static final String INSTANCE_DB_URL = "jdbc:h2:file:" + INSTANCE_DB_FILE;
 
 	private ComputePlugin computePlugin;
 	private IdentityPlugin identityPlugin;
@@ -176,8 +177,10 @@ public class TestGetCompute {
 		instanceDB.deleteAll();
 		File dbFile = new File(INSTANCE_DB_FILE + ".mv.db");
 		if (dbFile.exists()) {
-			dbFile.delete();
-		}		
+			if (!FileUtils.deleteQuietly(dbFile)) {
+				Assert.fail("Did no delete database file.");
+			}
+		}
 		this.helper.stopComponent();
 	}
 

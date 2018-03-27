@@ -95,6 +95,8 @@ public class TestGetOrder {
 		
 		facade = this.orderHelper.initializeComponentExecutorSameThread(computePlugin, identityPlugin,
 				authorizationPlugin, benchmarkingPlugin, mapperPlugin);
+		TestDataStorageHelper.clearManagerDataStore(
+				this.facade.getManagerDataStoreController().getManagerDatabase());
 	}
  
 	@Test
@@ -579,8 +581,6 @@ public class TestGetOrder {
 	
 	@After
 	public void tearDown() throws Exception {
-		TestDataStorageHelper.clearManagerDataStore(
-				this.facade.getManagerDataStoreController().getManagerDatabase());
 		this.orderHelper.stopComponent();
 	}
 

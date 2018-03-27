@@ -197,7 +197,7 @@ public class OCCITestHelper {
 			properties.put(ConfigurationConstants.TOKEN_HOST_PRIVATE_ADDRESS_KEY, DefaultDataTestHelper.SERVER_HOST);
 			properties.put(ConfigurationConstants.TOKEN_HOST_HTTP_PORT_KEY,
 					String.valueOf(DefaultDataTestHelper.TOKEN_SERVER_HTTP_PORT));
-						
+
 			properties.put(ConfigurationConstants.INSTANCE_DATA_STORE_URL, "jdbc:h2:file:" + INSTANCE_DB_FILE);
 			properties.put(ConfigurationConstants.OCCI_EXTRA_RESOURCES_KEY_PATH, "./src/test/resources/post-compute/occi-fake-resources.txt");
 			//Image OCCI to FogbowOrder

@@ -97,18 +97,17 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		this.defaultFederationToken = new Token(FED_ACCESS_TOKEN_ID, new Token.User(FED_USER_NAME,
 				FED_USER_NAME), new Date(), new HashMap<String, String>());
 		
-		this.defaultFederationAllUsersCrendetials = new HashMap<String, Map<String,String>>();
+		this.defaultFederationAllUsersCrendetials = new HashMap<>();
 		this.defaultFederationAllUsersCrendetials.put("one", defaultFederationUserCrendetials);
 	}
 
-	public ResourcesInfo getResources() throws CertificateException, IOException {
+	public ResourcesInfo getResources() {
 		ResourcesInfo resources = new ResourcesInfo("abc", CPU_IDLE, CPU_INUSE, MEM_IDLE, 
 				MEM_INUSE, INSTANCES_IDLE, INSTANCES_INUSE);
 		return resources;
 	}
 
-	public IQ createWhoIsAliveResponse(ArrayList<FederationMember> aliveIds, IQ iq)
-			throws CertificateException, IOException {
+	public IQ createWhoIsAliveResponse(ArrayList<FederationMember> aliveIds, IQ iq) {
 		IQ resultIQ = IQ.createResultIQ(iq);
 		Element queryElement = resultIQ.getElement().addElement("query", WHOISALIVE_NAMESPACE);
 		for (FederationMember rendezvousItem : aliveIds) {
@@ -206,7 +205,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 				String.valueOf(DefaultDataTestHelper.TOKEN_SERVER_HTTP_PORT));
 		properties.put("max_whoisalive_manager_count", MAX_WHOISALIVE_MANAGER_COUNT);
 		
-		ManagerController managerFacade = Mockito.spy(new ManagerController(properties, null));
+		ManagerController managerFacade = Mockito.spy(new ManagerController(properties, null, false));
 		return initializeXMPPManagerComponent(init, managerFacade);
 	}
 	
@@ -315,7 +314,7 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		return response;
 	}
 
-	public void shutdown() throws ComponentException {
+	public void shutdown() {
 		fakeServer.disconnect(managerXmppComponent.getJID().toBareJID());
 	}
 

@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.io.FileUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
@@ -130,8 +131,10 @@ public class TestPostCompute {
 				.getManagerDataStoreController().getManagerDatabase());
 		File dbFile = new File(OCCITestHelper.INSTANCE_DB_FILE + ".mv.db");
 		if (dbFile.exists()) {
-			dbFile.delete();
-		}		
+			if (!FileUtils.deleteQuietly(dbFile)) {
+				Assert.fail("Did no delete database file.");
+			}
+		}
 		this.helper.stopComponent();
 	}
 

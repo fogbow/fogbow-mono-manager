@@ -102,23 +102,10 @@ public class TestIAmAlive {
 			public void processPacket(Packet packet) {
 				IQ whoIsAlive = (IQ) packet;
 				List<FederationMember> aliveIds = new ArrayList<FederationMember>();
-				try {
-					aliveIds.add(new FederationMember(managerTestHelper
-							.getResources()));
-				} catch (CertificateException e1) {
-					e1.printStackTrace();
-				} catch (IOException e1) {
-					e1.printStackTrace();
-				}
-				IQ iq = null;
-				try {
-					iq = managerTestHelper.createWhoIsAliveResponse(
-							(ArrayList<FederationMember>) aliveIds, whoIsAlive);
-				} catch (CertificateException e1) {
-					e1.printStackTrace();
-				} catch (IOException e1) {
-					e1.printStackTrace();
-				}
+				aliveIds.add(new FederationMember(managerTestHelper
+                        .getResources()));
+				IQ iq = managerTestHelper.createWhoIsAliveResponse(
+                        (ArrayList<FederationMember>) aliveIds, whoIsAlive);
 				try {
 					xmppClient.syncSend(iq);
 				} catch (XMPPException e) {

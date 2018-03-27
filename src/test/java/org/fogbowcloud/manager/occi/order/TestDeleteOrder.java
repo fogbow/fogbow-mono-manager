@@ -47,7 +47,7 @@ public class TestDeleteOrder {
 
 	@SuppressWarnings({ "unchecked", "deprecation" })
 	@Before
-	public void setup() throws Exception {		
+	public void setup() throws Exception {
 		this.orderHelper = new OCCITestHelper();
 
 		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
@@ -69,6 +69,8 @@ public class TestDeleteOrder {
 		AuthorizationPlugin authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
 		Mockito.when(authorizationPlugin.isAuthorized(Mockito.any(Token.class))).thenReturn(true);
 		managerController = this.orderHelper.initializeComponent(computePlugin, identityPlugin, authorizationPlugin);
+		TestDataStorageHelper.clearManagerDataStore(
+				this.managerController.getManagerDataStoreController().getManagerDatabase());
 	}
 
 	@Test
@@ -269,8 +271,6 @@ public class TestDeleteOrder {
 
 	@After
 	public void tearDown() throws Exception {
-		TestDataStorageHelper.clearManagerDataStore(
-				this.managerController.getManagerDataStoreController().getManagerDatabase());
 		this.orderHelper.stopComponent();
 	}
 }
