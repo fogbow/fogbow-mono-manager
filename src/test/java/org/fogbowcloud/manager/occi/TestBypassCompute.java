@@ -1,13 +1,5 @@
 package org.fogbowcloud.manager.occi;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-
 import org.apache.http.HttpException;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -19,26 +11,14 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
-import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.RequirementsHelper;
 import org.fogbowcloud.manager.core.model.Flavor;
-import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
-import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
-import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
-import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
-import org.fogbowcloud.manager.core.plugins.ImageStoragePlugin;
-import org.fogbowcloud.manager.core.plugins.MapperPlugin;
+import org.fogbowcloud.manager.core.plugins.*;
 import org.fogbowcloud.manager.core.plugins.compute.openstack.OpenStackConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.compute.openstack.OpenStackOCCIComputePlugin;
 import org.fogbowcloud.manager.core.plugins.compute.openstack.OpenstackOCCITestHelper;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
-import org.fogbowcloud.manager.occi.model.Category;
-import org.fogbowcloud.manager.occi.model.HeaderUtils;
-import org.fogbowcloud.manager.occi.model.OCCIHeaders;
-import org.fogbowcloud.manager.occi.model.Resource;
-import org.fogbowcloud.manager.occi.model.ResourceRepository;
-import org.fogbowcloud.manager.occi.model.ResponseConstants;
-import org.fogbowcloud.manager.occi.model.Token;
+import org.fogbowcloud.manager.occi.model.*;
 import org.fogbowcloud.manager.occi.order.Order;
 import org.fogbowcloud.manager.occi.order.OrderAttribute;
 import org.fogbowcloud.manager.occi.order.OrderConstants;
@@ -50,6 +30,10 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
+
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.util.*;
 
 public class TestBypassCompute {
 
@@ -64,19 +48,15 @@ public class TestBypassCompute {
 	private PluginHelper pluginHelper = new PluginHelper();
 	private OCCITestHelper helper;
 	private OpenStackOCCIComputePlugin computePlugin;
-	private IdentityPlugin identityPlugin;
-	private AuthorizationPlugin authorizationPlugin;
-	private Token defaultToken;
-	private ImageStoragePlugin imageStoragePlugin;
-	private MapperPlugin mapperPlugin;
-	
-	@Before
+    private Token defaultToken;
+
+    @Before
 	public void setup() throws Throwable{
 		TestDataStorageHelper.removeDefaultFolderDataStore();
 		
 		setup(new ArrayList<Order>());
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	private void setup(List<Order> orders) throws Throwable {		
 		Properties properties = new Properties();
@@ -97,7 +77,7 @@ public class TestBypassCompute {
 		defaultToken = new Token(PluginHelper.ACCESS_ID, new Token.User(PluginHelper.USERNAME, ""),
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION, new HashMap<String, String>());
 		
-		List<Flavor> flavors = new ArrayList<Flavor>();
+		List<Flavor> flavors = new ArrayList<>();
 		Flavor flavorSmall = new Flavor(OrderConstants.SMALL_TERM, "1", "1000", "10");
 		flavorSmall.setId(SECOND_INSTANCE_ID);
 		flavors.add(flavorSmall); 
@@ -105,15 +85,15 @@ public class TestBypassCompute {
 		flavors.add(new Flavor("big", "4", "4000", "40"));
 		
 		this.computePlugin = OpenstackOCCITestHelper.createComputePlugin(properties, flavors);
-				
-		identityPlugin = Mockito.mock(IdentityPlugin.class);
+
+        IdentityPlugin identityPlugin = Mockito.mock(IdentityPlugin.class);
 		Mockito.when(identityPlugin.getToken(PluginHelper.ACCESS_ID)).thenReturn(defaultToken);
 		Mockito.when(identityPlugin.createToken(Mockito.anyMap())).thenReturn(defaultToken);
 		Mockito.when(identityPlugin.getAuthenticationURI()).thenReturn("Keystone uri='http://localhost:5000/'");
 		
 		// three first generated instance ids
-		List<String> expectedInstanceIds = new ArrayList<String>();
-		expectedInstanceIds.add(FIRST_INSTANCE_ID);
+		List<String> expectedInstanceIds = new ArrayList<>();
+        expectedInstanceIds.add(FIRST_INSTANCE_ID);
 		expectedInstanceIds.add(SECOND_INSTANCE_ID);
 		expectedInstanceIds.add(THIRD_INSTANCE_ID);
 		expectedInstanceIds.add(FOURTH_INSTANCE_ID);
@@ -121,26 +101,26 @@ public class TestBypassCompute {
 		
 		//initializing fake Cloud Compute Application
 		pluginHelper.initializeOCCIComputeComponent(expectedInstanceIds);
-		
-		mapperPlugin = Mockito.mock(MapperPlugin.class);
+
+        MapperPlugin mapperPlugin = Mockito.mock(MapperPlugin.class);
 		Mockito.when(mapperPlugin.getLocalCredentials(Mockito.any(Order.class)))
 				.thenReturn(new HashMap<String, String>());
-		
-		authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
+
+        AuthorizationPlugin authorizationPlugin = Mockito.mock(AuthorizationPlugin.class);
 		Mockito.when(authorizationPlugin.isAuthorized(Mockito.any(Token.class))).thenReturn(true);
-		
-		imageStoragePlugin = Mockito.mock(ImageStoragePlugin.class);
+
+        ImageStoragePlugin imageStoragePlugin = Mockito.mock(ImageStoragePlugin.class);
 		Mockito.when(imageStoragePlugin.getLocalId(Mockito.any(
 				Token.class), Mockito.anyString())).thenReturn(PluginHelper.CIRROS_IMAGE_TERM);
 		
-		Map<String, List<Order>> ordersToAdd = new HashMap<String, List<Order>>();
+		Map<String, List<Order>> ordersToAdd = new HashMap<>();
 		ordersToAdd.put(OCCITestHelper.USER_MOCK, orders);
 		
 		//initializing fogbow OCCI Application
 		helper = new OCCITestHelper();
 		try {
 			helper.initializeComponentCompute(computePlugin, identityPlugin, identityPlugin, authorizationPlugin,
-				imageStoragePlugin, Mockito.mock(AccountingPlugin.class), Mockito.mock(AccountingPlugin.class),
+                    imageStoragePlugin, Mockito.mock(AccountingPlugin.class), Mockito.mock(AccountingPlugin.class),
 				Mockito.mock(BenchmarkingPlugin.class), ordersToAdd, mapperPlugin);
 		} catch (Error e) {
 			LOGGER.error(e.getMessage(), e.getCause());
@@ -155,11 +135,11 @@ public class TestBypassCompute {
 	}
 	
 	@Test
-	public void testBypassGetComputeOK() throws URISyntaxException, HttpException, IOException {
+	public void testBypassGetComputeOK() throws IOException {
 		//adding instances directly on compute endpoint
-		List<Category> categories = new ArrayList<Category>();	
-		
-		Map<String, String> xOCCIAttr = new HashMap<String, String>();
+		List<Category> categories = new ArrayList<>();
+
+		Map<String, String> xOCCIAttr = new HashMap<>();
 		String requirementsStr = RequirementsHelper.GLUE_DISK_TERM + " >= 10 && "
 				+ RequirementsHelper.GLUE_MEM_RAM_TERM + " > 500 && "
 				+ RequirementsHelper.GLUE_VCPU_TERM + " > 0";
