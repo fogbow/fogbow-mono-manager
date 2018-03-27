@@ -41,6 +41,7 @@ import org.fogbowcloud.manager.occi.order.OrderAttribute;
 import org.fogbowcloud.manager.occi.order.OrderConstants;
 import org.fogbowcloud.manager.occi.util.NovaV2ComputeApplication;
 import org.fogbowcloud.manager.occi.util.PluginHelper;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Assert;
@@ -118,7 +119,44 @@ public class TestNovaV2ComputeOpenStack {
 
 		Assert.assertArrayEquals(securityGroups, novaV2ComputeOpenStack.getSecurityGroups());
 	}
-	
+
+	@Test
+	public void testGenerateJsonRequestWithOneSecurityGroup() {
+		Properties properties = new Properties();
+		String federatedNetworkSecurityGroup = "security-group";
+		properties.put(OpenStackConfigurationConstants.COMPUTE_NETWORK_SECURITY_GROUPS_KEY, federatedNetworkSecurityGroup);
+		novaV2ComputeOpenStack = new OpenStackNovaV2ComputePlugin(properties);
+
+		try {
+			JSONObject root = novaV2ComputeOpenStack.generateJsonRequest(
+					PluginHelper.LINUX_X86_TERM, "", "", "", "");
+
+			JSONObject server = root.getJSONObject("server");
+
+			Assert.assertTrue(server.has("security_groups"));
+			Assert.assertEquals(server.get("security_groups").toString(), "[{\"name\":\"security-group\"}]");
+		} catch (JSONException e) {}
+	}
+
+	@Test
+	public void testGenerateJsonRequestWithMoreSecurityGroups() {
+		Properties properties = new Properties();
+		String federatedNetworkSecurityGroup = "security-group1, security-group2, security-group3";
+		properties.put(OpenStackConfigurationConstants.COMPUTE_NETWORK_SECURITY_GROUPS_KEY, federatedNetworkSecurityGroup);
+		novaV2ComputeOpenStack = new OpenStackNovaV2ComputePlugin(properties);
+
+		try {
+			JSONObject root = novaV2ComputeOpenStack.generateJsonRequest(
+					PluginHelper.LINUX_X86_TERM, "", "", "", "");
+
+			JSONObject server = root.getJSONObject("server");
+
+			Assert.assertTrue(server.has("security_groups"));
+			Assert.assertEquals(server.get("security_groups").toString(),
+					"[{\"name\":\"security-group1\"},{\"name\":\"security-group2\"},{\"name\":\"security-group3\"}]");
+		} catch (JSONException e) {}
+	}
+
 	@Test
 	public void testRequestOneInstance(){
 		Assert.assertEquals(0, novaV2ComputeOpenStack.getInstances(defaultToken).size());
