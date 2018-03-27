@@ -123,7 +123,7 @@ public class AzureNetworkPlugin implements NetworkPlugin {
 			NetworkConfigModel networkConfigModel = new NetworkConfigModel(networks);
 
 			if (!networkConfigModel.removeVirtualNetworkSite(instanceId)) {
-				throw new OCCIException(ErrorType.BAD_REQUEST, "Instance not founded");
+				throw new OCCIException(ErrorType.BAD_REQUEST, "Instance not found");
 			}
 
 			NetworkSetConfigurationParameters networkConfigs = new NetworkSetConfigurationParameters(

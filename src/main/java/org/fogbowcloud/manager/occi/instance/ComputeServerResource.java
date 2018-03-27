@@ -48,7 +48,7 @@ import org.restlet.util.Series;
 public class ComputeServerResource extends ServerResource {
 
 	private static final String DEFAULT_INSTANCE_COUNT = "1";
-	protected static final String NO_INSTANCES_MESSAGE = "There are not instances.";
+	protected static final String NO_INSTANCES_MESSAGE = "There are no compute instances.";
 	private static final Logger LOGGER = Logger.getLogger(ComputeServerResource.class);
 	public static final String FED_INSTANCE_PREFIX = "federated_instance_";
 

@@ -42,7 +42,7 @@ import org.restlet.util.Series;
 
 public class NetworkServerResource extends ServerResource {
 
-	protected static final String NO_INSTANCES_MESSAGE = "There are not instances.";
+	protected static final String NO_INSTANCES_MESSAGE = "There are no network instances.";
 	protected static final String FED_NETWORK_PREFIX = "federated_network_";
 	
 	private static final String DEFAULT_INSTANCE_COUNT = "1";
