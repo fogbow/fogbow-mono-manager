@@ -184,11 +184,11 @@ public class OpenStackNovaV2ComputePlugin implements ComputePlugin {
 		String orderNetworkId = xOCCIAtt.get(OrderAttribute.NETWORK_ID.getValue());
 		if (orderNetworkId == null || orderNetworkId.isEmpty()) {
 			orderNetworkId = this.defaultNetworkId;
-
-			if (networkSecurityGroups != null) {
+		} else {
+			if (networkSecurityGroups != null && !networkSecurityGroups.isEmpty()) {
 				securityGroups = parseSecurityGroups(networkSecurityGroups);
 			} else {
-				LOGGER.error("Requesting Instance associated with a Network, but there isn't Security Group in the Property File");
+				throw new IllegalArgumentException("Requesting Instance associated with a Network, but there isn't Security Group in the Property File");
 			}
 		}
 

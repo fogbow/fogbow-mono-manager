@@ -115,8 +115,11 @@ public class TestNovaV2ComputeOpenStack {
 		properties.put(OpenStackConfigurationConstants.COMPUTE_NETWORK_SECURITY_GROUPS_KEY, federatedNetworkSecurityGroup);
 		novaV2ComputeOpenStack = new OpenStackNovaV2ComputePlugin(properties);
 
+		Map<String, String> xOCCIAtt = new HashMap<>();
+		xOCCIAtt.put(OrderAttribute.NETWORK_ID.getValue(), "UUID");
+
 		novaV2ComputeOpenStack.requestInstance(
-				defaultToken, new ArrayList<Category>(), new HashMap<String, String>(), PluginHelper.LINUX_X86_TERM);
+				defaultToken, new ArrayList<Category>(), xOCCIAtt, PluginHelper.LINUX_X86_TERM);
 
 		String[] securityGroups = {"security-group", "security-group2", "securitygroup3"};
 
@@ -149,8 +152,11 @@ public class TestNovaV2ComputeOpenStack {
 
 	@Test
 	public void testGenerateJsonRequestWithOneSecurityGroup() {
+		Map<String, String> xOCCIAtt = new HashMap<>();
+		xOCCIAtt.put(OrderAttribute.NETWORK_ID.getValue(), "UUID");
+
 		novaV2ComputeOpenStack.requestInstance(
-				defaultToken, new ArrayList<Category>(), new HashMap<String, String>(), PluginHelper.LINUX_X86_TERM);
+				defaultToken, new ArrayList<Category>(), xOCCIAtt, PluginHelper.LINUX_X86_TERM);
 
 		try {
 			JSONObject root = novaV2ComputeOpenStack.generateJsonRequest(
@@ -178,8 +184,11 @@ public class TestNovaV2ComputeOpenStack {
 		properties.put(OpenStackConfigurationConstants.COMPUTE_NETWORK_SECURITY_GROUPS_KEY, federatedNetworkSecurityGroup);
 		novaV2ComputeOpenStack = new OpenStackNovaV2ComputePlugin(properties);
 
+		Map<String, String> xOCCIAtt = new HashMap<>();
+		xOCCIAtt.put(OrderAttribute.NETWORK_ID.getValue(), "UUID");
+
 		novaV2ComputeOpenStack.requestInstance(
-				defaultToken, new ArrayList<Category>(), new HashMap<String, String>(), PluginHelper.LINUX_X86_TERM);
+				defaultToken, new ArrayList<Category>(), xOCCIAtt, PluginHelper.LINUX_X86_TERM);
 
 		try {
 			JSONObject root = novaV2ComputeOpenStack.generateJsonRequest(
